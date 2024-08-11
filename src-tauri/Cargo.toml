@@ -1,0 +1,28 @@
+[package]
+name = "jc-photo"
+version = "0.1.0"
+description = "JC Photo App"
+authors = ["julyxx"]
+edition = "2021"
+
+# Exclude main.db from Cargo packaging
+exclude = ["main.db"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+tauri = { version = "1", features = [ "shell-open", "dialog"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32.0", features = ["bundled"] }
+chrono = "0.4"
+kamadak-exif = "0.5.5"
+native-dialog = "0.7.0"
+dirs = "5.0.1"
+
+[features]
+# This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
