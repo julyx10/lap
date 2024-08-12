@@ -87,16 +87,16 @@ pub fn open_file() -> Option<String> {
             let exit_data = db::ExifData {
                 thumbnail_id: 0,
                 make: exif.get_field(Tag::Make, In::PRIMARY)
-                    .map(|field| field.display_value().with_unit(&exif).to_string()),
+                    .map(|field| field.display_value().with_unit(&exif).to_string().replace("\"", "")),
                 model: exif.get_field(Tag::Model, In::PRIMARY)
-                    .map(|field| field.display_value().with_unit(&exif).to_string()),
+                    .map(|field| field.display_value().with_unit(&exif).to_string().replace("\"", "")),
                 date_time: exif.get_field(Tag::DateTime, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string()),
                 exposure_time: exif.get_field(Tag::ExposureTime, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string()),
                 f_number: exif.get_field(Tag::FNumber, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string()),
-                iso_speed: exif.get_field(Tag::ISOSpeed, In::PRIMARY)
+                iso_speed: exif.get_field(Tag::PhotographicSensitivity, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string()),
                 focal_length: exif.get_field(Tag::FocalLength, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string()),
