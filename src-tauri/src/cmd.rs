@@ -7,10 +7,10 @@
 use std::path::PathBuf;
 use std::fs::File;
 use std::io::BufReader;
-use native_dialog::{FileDialog, MessageDialog, MessageType};
+use native_dialog::FileDialog;
 use dirs;
-use chrono::{NaiveDateTime, Utc, Local};
-use exif::{Exif, In, Reader, Tag};
+use chrono::Utc;
+use exif::{In, Reader, Tag};
 use crate::db;
 
 

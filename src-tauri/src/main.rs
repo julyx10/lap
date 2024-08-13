@@ -18,7 +18,7 @@ mod db;
  */
 fn main() {
     tauri::Builder::default()
-        .setup(|app| {
+        .setup(|_app| {
             // Create the database on startup
             db::create_db().expect("error while creating the database");
             Ok(())

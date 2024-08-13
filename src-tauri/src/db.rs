@@ -70,6 +70,7 @@ impl Album {
 }
 
 // Define the Thumbnail struct
+#[allow(dead_code)]
 pub struct Thumbnail {
     // id: i32,
     album_id:       i32,
