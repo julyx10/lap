@@ -3,15 +3,6 @@
  * Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
  */
 
-// use tauri::{
-//     api::dialog::FileDialogBuilder,
-//     api::dialog::MessageDialogBuilder
-// };
-
-// use std::{
-//     sync::mpsc, 
-//     thread
-// };
 
 use std::path::PathBuf;
 use std::fs::File;
@@ -19,25 +10,28 @@ use std::io::BufReader;
 use native_dialog::{FileDialog, MessageDialog, MessageType};
 use dirs;
 use chrono::{NaiveDateTime, Utc, Local};
-use crate::db;
 use exif::{Exif, In, Reader, Tag};
+use crate::db;
 
 
 /**
- * The greet function is a simple example of a command that takes a string argument and returns a string.
- * The rename_all attribute is used to convert the function name to snake_case, which is the recommended 
- * naming convention for Tauri commands.
- */
-#[tauri::command(rename_all = "snake_case")]
-pub fn greet(name: &str) -> String {
-    format!("Hi, {}! You've been greeted from Rust!", name)
-}
-
-/**
- * open a folder
+ * get all albums
  */
 #[tauri::command]
-pub fn open_folder() -> Option<String> {
+pub fn get_albums() -> Result<Vec<db::Album>, String> {
+    // Call the database function and handle errors
+    match db::Album::get_all_albums() {
+        Ok(albums) => Ok(albums),
+        Err(e) => Err(format!("Error fetching albums: {}", e)),
+    }
+}
+
+
+/**
+ * add a folder
+ */
+#[tauri::command]
+pub fn add_folder() -> Option<String> {
     // get the desktop directory
     let desktop_dir = match dirs::desktop_dir() {
         Some(path) => path,
@@ -45,7 +39,7 @@ pub fn open_folder() -> Option<String> {
     };
     let result = FileDialog::new()
         .set_location(&desktop_dir)
-        .set_title("open a folder")
+        .set_title("add a folder")
         .show_open_single_dir();
 
     match result {

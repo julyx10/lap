@@ -3,14 +3,12 @@
  * 
  */
 
-use rusqlite::{params, Connection, Result };
-use chrono::{NaiveDateTime, Local};
-// use exif::{Reader, Tag};
-// use std::fs::File;
-// use std::io::BufReader;
+use rusqlite::{ params, Connection, Result };
+use serde::{Serialize, Deserialize};
 
 
 // Define the Album struct
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Album {
     // pub index:          i32,         // order in the list
     pub name:           String,         // folder name
@@ -39,29 +37,34 @@ impl Album {
         ).expect("error while instert the table.");
         Ok(())
     }
-}
 
-impl Album {
     /**
      * get all albums from the database
      */
     pub fn get_all_albums() -> Result<Vec<Album>> {
         let conn = get_conn()?;
-        let mut stmt = conn.prepare("SELECT * FROM albums")?;
-        let albums = stmt.query_map([], |row| {
+        
+        // Prepare the SQL query to fetch all albums
+        let mut stmt = conn.prepare("SELECT name, description, location, created_at, updated_at FROM albums")?;
+        
+        // Execute the query and map the result to Album structs
+        let albums_iter = stmt.query_map([], |row| {
             Ok(Album {
-                name: row.get(1)?,
-                description: row.get(2)?,
-                location: row.get(3)?,
-                created_at: row.get(4)?,
-                updated_at: row.get(5)?,
+                name: row.get(0)?,
+                description: row.get(1)?,
+                location: row.get(2)?,
+                created_at: row.get(3)?,
+                updated_at: row.get(4)?,
             })
         })?;
-        let mut result = Vec::new();
-        for album in albums {
-            result.push(album.unwrap());
+        
+        // Collect the results into a Vec<Album>
+        let mut albums = Vec::new();
+        for album in albums_iter {
+            albums.push(album?);
         }
-        Ok(result)
+
+        Ok(albums)
     }
     
 }
@@ -116,6 +119,15 @@ impl ExifData {
 
 
 /**
+ * get connection to the database
+ */
+fn get_conn() -> Result<Connection> {
+    let conn = Connection::open("./main.db")?;
+    Ok(conn)
+}
+
+
+/**
  * create all tables if not exists
  */
 pub fn create_db() -> Result<()> {
@@ -166,11 +178,3 @@ pub fn create_db() -> Result<()> {
     Ok(())
 }
 
-
-/**
- * get connection to the database
- */
-fn get_conn() -> Result<Connection> {
-    let conn = Connection::open("./main.db")?;
-    Ok(conn)
-}

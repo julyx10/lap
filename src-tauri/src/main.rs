@@ -8,6 +8,8 @@
  * GitHub:  /julyx10
  */
 
+
+// declare modules in root file
 mod cmd;
 mod db;
 
@@ -27,8 +29,8 @@ fn main() {
             window.show().unwrap();
         })
         .invoke_handler(tauri::generate_handler![
-            cmd::greet, 
-            cmd::open_folder, 
+            cmd::get_albums,
+            cmd::add_folder, 
             cmd::open_file]
         )
         .run(tauri::generate_context!())
