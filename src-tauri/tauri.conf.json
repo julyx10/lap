@@ -1,7 +1,7 @@
 {
   "build": {
-    "devPath": "../src",
-    "distDir": "../src",
+    "devPath": "http://localhost:3580",
+    "distDir": "../src-vite/dist",
     "withGlobalTauri": true
   },
   "package": {
