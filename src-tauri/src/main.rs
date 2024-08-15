@@ -1,5 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
+)]
 
 /**
  * project: jc-photo
@@ -8,6 +11,7 @@
  * GitHub:  /julyx10
  */
 
+use tauri::Manager;
 
 // declare modules in root file
 mod cmd;
@@ -18,9 +22,17 @@ mod db;
  */
 fn main() {
     tauri::Builder::default()
-        .setup(|_app| {
+        .setup(|app| {
             // Create the database on startup
             db::create_db().expect("error while creating the database");
+
+            let main_window = app.get_window("main").unwrap();
+            // Open devtools in development mode
+            #[cfg(debug_assertions)] // only include this block in debug builds
+            {
+                main_window.open_devtools();
+            }
+
             Ok(())
         })
         .on_page_load(|window, _payload| {

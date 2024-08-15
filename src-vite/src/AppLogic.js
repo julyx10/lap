@@ -1,21 +1,26 @@
 import { invoke } from '@tauri-apps/api';
+import { ref } from 'vue'
 
 export default {
-  data() {
-    return {
-      albums: [],
-      error: ''
-    };
-  },
-  methods: {
-    async fetchAlbums() {
+  // name: 'AppLogic',
+  setup () {
+    const albums = ref([]);
+    const error = ref(null);
+
+    const fetchAlbums = async () => {
+      console.log('Fetching albums...');
       try {
-        // Call the Tauri command using the global `invoke` function
-        this.albums = await invoke('get_albums');
+        albums.value = await invoke('get_albums');
       } catch (error) {
-        this.error = 'Failed to load albums: ' + error.message;
+        error.value = 'Failed to load albums: ' + error.message;
         console.error('Failed to fetch albums:', error);
       }
-    }
+    };
+
+    return {
+      albums,
+      error,
+      fetchAlbums
+    };
   }
 };

@@ -21,7 +21,7 @@
           "--manifest-path=./src-tauri/Cargo.toml",
           "--no-default-features"
         ]
-      },
+      }
       // task for the `beforeDevCommand` if used, must be configured in `.vscode/tasks.json`
       // "preLaunchTask": "ui:dev"
     },
@@ -34,6 +34,15 @@
     //   "cwd": "${workspaceFolder}/src-vite",
     //   "runtimeExecutable": null,
     //   "console": "integratedTerminal"
-    // }
+    // },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Vite",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/src-vite",
+      "console": "integratedTerminal"
+    }
   ]
 }

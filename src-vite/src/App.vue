@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div>
     <h1 class="text-3xl font-bold text-red-600">Albums</h1>
     
     <!-- Display the fetched albums -->
@@ -22,6 +22,7 @@
     <!-- Display error message if there is an error -->
     <p v-if="error" class="text-red-600">{{ error }}</p>
   </div>
+
 </template>
 
 <script>
