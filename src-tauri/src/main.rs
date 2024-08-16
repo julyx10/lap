@@ -11,7 +11,7 @@
  * GitHub:  /julyx10
  */
 
-use tauri::Manager;
+// use tauri::Manager;
 
 // declare modules in root file
 mod cmd;
@@ -22,16 +22,16 @@ mod db;
  */
 fn main() {
     tauri::Builder::default()
-        .setup(|app| {
+        .setup(|_app| {
             // Create the database on startup
             db::create_db().expect("error while creating the database");
 
-            let main_window = app.get_window("main").unwrap();
-            // Open devtools in development mode
-            #[cfg(debug_assertions)] // only include this block in debug builds
-            {
-                main_window.open_devtools();
-            }
+            // let main_window = app.get_window("main").unwrap();
+            // // Open devtools in development mode
+            // #[cfg(debug_assertions)] // only include this block in debug builds
+            // {
+            //     main_window.open_devtools();
+            // }
 
             Ok(())
         })
