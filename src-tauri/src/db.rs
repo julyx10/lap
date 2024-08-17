@@ -7,21 +7,21 @@ use rusqlite::{ params, Connection, Result };
 use serde::{Serialize, Deserialize};
 
 
-// Define the Album struct
+/// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Album {
-    // pub index:          i32,         // order in the list
+    // pub index:          i64,         // order in the list
+    pub id:             Option<i64>,    // unique id
     pub name:           String,         // folder name
-    pub description:    Option<String>,
+    pub description:    Option<String>, // folder description
     pub location:       String,         // folder location
     pub created_at:     i64,            // utc timestamp
     pub updated_at:     i64,            // utc timestamp
 }
 
 impl Album {
-    /**
-     * save a new album to the database
-     */
+
+    /// save a new album to the db
     pub fn save_to_db(&self) -> Result<()> {
         let conn = get_conn()?;
         conn.execute(
@@ -38,23 +38,22 @@ impl Album {
         Ok(())
     }
 
-    /**
-     * get all albums from the database
-     */
+    /// Get all albums from the db
     pub fn get_all_albums() -> Result<Vec<Album>> {
         let conn = get_conn()?;
         
         // Prepare the SQL query to fetch all albums
-        let mut stmt = conn.prepare("SELECT name, description, location, created_at, updated_at FROM albums")?;
+        let mut stmt = conn.prepare("SELECT id, name, description, location, created_at, updated_at FROM albums")?;
         
         // Execute the query and map the result to Album structs
         let albums_iter = stmt.query_map([], |row| {
             Ok(Album {
-                name: row.get(0)?,
-                description: row.get(1)?,
-                location: row.get(2)?,
-                created_at: row.get(3)?,
-                updated_at: row.get(4)?,
+                id: row.get(0)?,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                location: row.get(3)?,
+                created_at: row.get(4)?,
+                updated_at: row.get(5)?,
             })
         })?;
         
@@ -69,22 +68,24 @@ impl Album {
     
 }
 
-// Define the Thumbnail struct
+
+/// Define the Thumbnail struct
 #[allow(dead_code)]
 pub struct Thumbnail {
-    // id: i32,
-    album_id:       i32,
+    // id: i64,
+    id:             Option<i64>,    // unique id
+    album_id:       i64,
     name:           String,     // file name
-    size:           i32,        // file size
+    size:           i64,        // file size
     location:       String,     // file location
-    exifdata_id:    i32,        // exif metadata
+    exifdata_id:    i64,        // exif metadata
     created_at:     i64,        // utc timestamp
     updated_at:     i64,        // utc timestamp
 }
 
 pub struct ExifData {
-    // id: i32,
-    pub thumbnail_id:   i32,
+    pub id:             Option<i64>,        // unique id
+    pub thumbnail_id:   Option<i64>,
     pub make:           Option<String>,     // camera make
     pub model:          Option<String>,     // camera model
     pub date_time:      Option<String>,  
@@ -95,9 +96,8 @@ pub struct ExifData {
 }
 
 impl ExifData {
-    /**
-     * save a new exif data to the database
-     */
+
+    /// save a new exif data to the db
     pub fn save_to_db(&self) -> Result<()> {
         let conn = get_conn()?;
         conn.execute(
@@ -119,18 +119,14 @@ impl ExifData {
 }
 
 
-/**
- * get connection to the database
- */
+/// get connection to the db
 fn get_conn() -> Result<Connection> {
     let conn = Connection::open("./main.db")?;
     Ok(conn)
 }
 
 
-/**
- * create all tables if not exists
- */
+/// create all tables if not exists
 pub fn create_db() -> Result<()> {
     let conn = get_conn()?;
     conn.execute(

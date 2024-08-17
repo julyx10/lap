@@ -11,15 +11,12 @@
  * GitHub:  /julyx10
  */
 
-// use tauri::Manager;
-
-// declare modules in root file
 mod cmd;
 mod db;
+mod utils;
 
-/**
- * The main function is the entry point for the Tauri application.
- */
+
+/// The main function is the entry point for the Tauri application.
 fn main() {
     tauri::Builder::default()
         .setup(|_app| {
@@ -42,7 +39,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             cmd::get_albums,
-            cmd::add_folder, 
+            cmd::add_album, 
+            cmd::get_folder_tree,
             cmd::open_file]
         )
         .run(tauri::generate_context!())

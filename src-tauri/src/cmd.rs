@@ -3,20 +3,17 @@
  * Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
  */
 
-
-use std::path::PathBuf;
-use std::fs::File;
+use std::fs;
 use std::io::BufReader;
 use native_dialog::FileDialog;
-use dirs;
 use chrono::Utc;
 use exif::{In, Reader, Tag};
+
 use crate::db;
+use crate::utils;
 
 
-/**
- * get all albums
- */
+///  get all albums
 #[tauri::command]
 pub fn get_albums() -> Result<Vec<db::Album>, String> {
     // Call the database function and handle errors
@@ -27,24 +24,18 @@ pub fn get_albums() -> Result<Vec<db::Album>, String> {
 }
 
 
-/**
- * add a folder
- */
+/// add a album (folder)
 #[tauri::command]
-pub fn add_folder() -> Option<String> {
-    // get the desktop directory
-    let desktop_dir = match dirs::desktop_dir() {
-        Some(path) => path,
-        None => PathBuf::from("~"),
-    };
+pub fn add_album() -> Option<String> {
+    // show open folder dialog
     let result = FileDialog::new()
-        .set_location(&desktop_dir)
         .set_title("add a folder")
         .show_open_single_dir();
 
     match result {
         Ok(Some(path)) => {
             let album = db::Album {
+                id: None,
                 name: path.clone().file_name().unwrap().to_str().unwrap().to_string(),
                 description: None,
                 location: path.to_str().unwrap().to_string(),
@@ -59,9 +50,15 @@ pub fn add_folder() -> Option<String> {
     }
 }
 
-/**
- * open a picture file
- */
+
+/// read folder tree
+#[tauri::command]
+pub fn get_folder_tree(path: String) -> Result<utils::FileNode, String> {
+    utils::read_folder(path)
+}
+
+
+/// open a picture file
 #[tauri::command]
 pub fn open_file() -> Option<String> {
     let result = FileDialog::new()
@@ -72,14 +69,15 @@ pub fn open_file() -> Option<String> {
 
     match result {
         Ok(Some(path)) => {
-            let file = File::open(&path).ok()?;
+            let file = fs::File::open(&path).ok()?;
 
             // create an exif reader and read the exif data
             let mut bufreader = BufReader::new(file);
             let exif = Reader::new().read_from_container(&mut bufreader).ok()?;
 
             let exit_data = db::ExifData {
-                thumbnail_id: 0,
+                id: None,
+                thumbnail_id: None,
                 make: exif.get_field(Tag::Make, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string().replace("\"", "")),
                 model: exif.get_field(Tag::Model, In::PRIMARY)

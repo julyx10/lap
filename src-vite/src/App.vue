@@ -4,10 +4,11 @@
 
     <!-- left toolbar -->
     <div id="leftToolbar" class="w-12 min-w-12 h-full p-1 border-r border-gray-800">
-      <img src="/img64/pictures.png" alt="All pictures" class="p-1 my-2 hover:bg-gray-700 hover:rounded" />
+      <img @click="fetchAlbums" src="/img64/pictures.png"  alt="All pictures" class="p-1 my-2 hover:bg-gray-700 hover:rounded" />
       <img src="/img64/favorites.png" alt="favorites" class="p-1 my-2 hover:bg-gray-700 hover:rounded" />
-      <img src="/img64/folder.png" alt="folder" class="p-1 my-2 hover:bg-gray-700 hover:rounded" />
-      <img id="/img64/ltbAddFolder" src="/img64/add.png" alt="Add Folder" class="p-1 my-2 hover:bg-gray-700 hover:rounded" />
+      <img @click="fetchFolderTree" src="/img64/folder.png" alt="folder" class="p-1 my-2 hover:bg-gray-700 hover:rounded"/>
+      <!-- <img id="ltbAddFolder" src="/img64/add.png" alt="Add Folder" class="p-1 my-2 hover:bg-gray-700 hover:rounded" /> -->
+      
     </div>
 
     <!-- left pane -->
@@ -18,8 +19,8 @@
       <!-- Display the fetched albums -->
       <ul v-if="albums.length > 0">
         <li v-for="album in albums" :key="album.id">
-          {{ album.name }} - {{ album.location }}
-        </li>
+          {{ album.name }}
+        </li> 
       </ul>
 
       <!-- Display message if no albums are found -->
@@ -27,13 +28,13 @@
         No albums available.
       </p>
 
-      <!-- Button to fetch albums -->
-      <button @click="fetchAlbums" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-        Load Albums
-      </button>
-
       <!-- Display error message if there is an error -->
       <p v-if="error" class="text-red-600">{{ error }}</p>
+
+      <div>
+        <h1>Folder Tree</h1>
+        <FolderTree :folderTree="folderTree" />
+      </div>
 
     </div>
 
@@ -50,24 +51,40 @@
 </template>
 
 
-<!-- script of vue -->
 <script setup lang="ts">
 
-  import { ref } from 'vue';
-  import { invoke } from '@tauri-apps/api';
+import { ref, onMounted, shallowRef  } from 'vue';
+import { invoke } from '@tauri-apps/api';
+import FolderTree from './components/FolderTree.vue';
 
-  const albums = ref([]);
-  const error = ref(null);
+/// Albums
+const albums = ref([]);
+const error = ref(null);
 
-  const fetchAlbums = async () => {
-    console.log('Fetching albums...');
-    try {
-      albums.value = await invoke('get_albums');
-    } catch (error) {
-      error.value = 'Failed to load albums: ' + error.message;
-      console.error('Failed to fetch albums:', error);
-    }
-  };
+const fetchAlbums = async () => {
+  console.log('Fetching albums...');
+  try {
+    albums.value = await invoke('get_albums');
+  } catch (error) {
+    error.value = 'Failed to load albums: ' + error.message;
+    console.error('Failed to fetch albums:', error);
+  }
+};
+
+/// Folder Tree
+const folderTree = shallowRef({});
+
+const fetchFolderTree = async () => {
+  try {
+    const tree = await invoke('get_folder_tree', { path: 'C:\\Users\\liuli\\Pictures' });
+    console.log('Folder tree:', tree);
+    folderTree.value = tree;
+  } catch (error) {
+    console.error('Error fetching folder tree:', error);
+  }
+};
+
+// onMounted(fetchFolderTree);
 
 </script>
 
