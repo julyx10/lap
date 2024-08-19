@@ -14,7 +14,7 @@ pub struct Album {
     pub id:             Option<i64>,    // unique id
     pub name:           String,         // folder name
     pub description:    Option<String>, // folder description
-    pub location:       String,         // folder location
+    pub location:       String,         // folder path
     pub created_at:     i64,            // utc timestamp
     pub updated_at:     i64,            // utc timestamp
 }

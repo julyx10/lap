@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex h-screen m2 bg-gray-900 text-gray-500">
+  <div class="flex h-screen bg-gray-900 text-gray-400">
 
     <!-- left toolbar -->
     <div ref="toolbar" class="w-12 p-2 border-gray-800">
@@ -19,8 +19,8 @@
 
     <!-- left pane -->
     <div v-if="activeButtonId > 0" class="w-96 p-2 min-w-12 overflow-auto" :style="{ width: leftPaneWidth + 'px' }">
-      <FolderPane v-if="activeButtonId === 1" :titlebar="getButtonLabel"/>
-      <CalendarPane v-else-if="activeButtonId === 2" :titlebar="getButtonLabel"/>
+      <Folders v-if="activeButtonId === 1" :titlebar="getButtonLabel"/>
+      <Calendar v-else-if="activeButtonId === 2" :titlebar="getButtonLabel"/>
     </div>
 
     <!-- splitter -->
@@ -28,7 +28,7 @@
     
     <!-- right pane -->
     <div class="flex-1 p-4 bg-gray-800 overflow-auto">
-      <h2 class="text-xl fond-bold">Right Pane</h2>
+      <Files titlebar="Files"/>
     </div>
 
   </div>
@@ -39,8 +39,9 @@
 <script setup lang="ts">
 
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import FolderPane from './components/FolderPane.vue';
-import CalendarPane from './components/CalendarPane.vue';
+import Folders from './components/Folders.vue';
+import Calendar from './components/Calendar.vue';
+import Files from './components/Files.vue';
 
 /// Toolbar
 const buttons = ref([
@@ -52,7 +53,7 @@ const buttons = ref([
   // { id: 6, label: 'Settings', image: '/img64/settings.png' }
 ]);
 
-const activeButtonId = ref(null);
+const activeButtonId = ref(0);
 
 function markAsActive(buttonId) {
   activeButtonId.value = buttonId;

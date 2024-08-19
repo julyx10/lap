@@ -4,9 +4,10 @@ use std::path::Path;
 
 #[derive(serde::Serialize)]
 pub struct FileNode {
+    // id:   i64,      // unique id
     name: String,   // folder name
     path: String,   // folder path
-    is_dir: bool,
+    // is_dir: bool,
     is_callapsed: bool,
     children: Option<Vec<FileNode>>,
 }
@@ -41,7 +42,7 @@ pub fn read_folder(path: String) -> Result<FileNode, String> {
         Ok(FileNode {
             name,
             path: path_str,
-            is_dir,
+            // is_dir,
             is_callapsed,
             children,
         })
