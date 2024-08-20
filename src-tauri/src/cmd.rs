@@ -42,12 +42,21 @@ pub fn add_album() -> Option<String> {
                 created_at: Utc::now().timestamp(),
                 updated_at: Utc::now().timestamp()
             };
-            album.save_to_db().expect("error while saving to db");
+            album.add_album().expect("error while adding to db");
             Some(path.to_str().unwrap().to_string())
         },
         Ok(None) => None,
         Err(_) => None,
     }
+}
+
+
+/// remove a album (folder)
+#[tauri::command]
+pub fn remove_album(id: i64) -> Result<i64, String> {
+    let msg = format!("Error while deleting album with id: {}", id);
+    db::Album::delete_album(id).map_err(|_| msg)?;
+    Ok(id)
 }
 
 

@@ -6,9 +6,9 @@
       {{ titlebar }}
     </div>
     <div class="flex justify-end size-8">
-      <img src="/img64/add.png" alt="Add Folder" class="p-1 my-1 hover:bg-gray-700 hover:rounded" @click="addFolder" />
-      <img src="/img64/reduce.png" alt="Remove a Folder" class="p-1 my-1 hover:bg-gray-700 hover:rounded" @click="removeFolder"/>
-      <img src="/img64/refresh.png" alt="Refresh all Folders" class="p-1 my-1 hover:bg-gray-700 hover:rounded" @click="refreshFolders"/>
+      <img src="/img64/add.png" alt="Add Folder" class="p-1 my-1 hover:bg-gray-700 hover:rounded" @click="addAlbum" />
+      <img src="/img64/reduce.png" alt="Remove a Folder" class="p-1 my-1 hover:bg-gray-700 hover:rounded" @click="removeAlbum"/>
+      <img src="/img64/refresh.png" alt="Refresh all Folders" class="p-1 my-1 hover:bg-gray-700 hover:rounded" @click="refreshAlbum"/>
     </div>
   </div>
 
@@ -17,10 +17,11 @@
     <li v-for="(album, index) in albums" 
       :key="index" 
       style="user-select: none;" 
-      @click="fetchFolderTree(index)"
+      @click="selectAlbum(index)"
     >
-      <div class="flex items-center hover:bg-gray-700 hover:rounded">
-        <img class="size-8 p-1" src="/img64/folder.png" alt="Folder">
+      <div :class="['flex items-center whitespace-nowrap hover:bg-gray-700 hover:rounded',
+                     index === album_index ? 'bg-gray-800 rounded' : '']">
+        <img class="w-8 p-1" src="/img64/folder.png" alt="Folder">
         {{ album.name }}
       </div>
       <FolderTree v-if="albums[index].folders" :folders="albums[index].folders.children" />
@@ -52,12 +53,13 @@ const props = defineProps({
 });
 
 /// Albums
-const albums = ref([]);             // albums list
-const folders = shallowRef({});   // folders tree
+const albums = ref([]);           // albums list
+const album_index = ref(null);    // selected album index
+// const folders = shallowRef({});   // folders tree
 const error = ref(null);
 
 
-/// get folders
+/// get folders (on mount)
 const getAlbums = async () => {
   try {
     const fetchedAlbums = await invoke('get_albums');
@@ -76,33 +78,55 @@ const getAlbums = async () => {
 onMounted(getAlbums);
 
 
-/// Folder Tree
-const fetchFolderTree = async (index) => {
+/// Add albums
+const addAlbum = async () => {
   try {
+    const result = await invoke('add_album');
+    console.log('Add album:', result);
+
+    refreshAlbum(); // Refresh albums
+
+  } catch (error) {
+    console.error('Failed to add album:', error);
+  }
+};
+
+/// Remove albums
+const removeAlbum = async () => {
+  try {
+    if (album_index.value === null) {
+      console.error('No album selected', album_index.value);
+      return;
+    }
+    const result = await invoke('remove_album', { id: albums.value[album_index.value].id });
+    console.log('Remove album:', result);
+    album_index.value = null
+
+    refreshAlbum(); // Refresh albums
+
+  } catch (error) {
+    console.error('Failed to remove album:', error);
+  }
+};
+
+/// Refresh albums
+const refreshAlbum = async () => {
+  await getAlbums(); // Refresh albums
+  console.log('Refresh folders clicked');
+};
+
+
+/// Select album (on click)
+const selectAlbum = async (index) => {
+  try {
+    album_index.value = index;
+    // Fetch folder tree
     const folders = await invoke('get_folder_tree', { path: albums.value[index].location });
     albums.value[index].folders = folders;
-    console.log('fetchFolderTree...', albums.value);
+    console.log('Select album...', album_index.value, albums.value);
   } catch (error) {
     console.error('Error fetching folder tree:', error);
   }
-  console.log('fetch folder tree...', folders.value);
-};
-
-
-/// Add, Remove, Refresh Folders
-const addFolder = async () => {
-  // Implement add folder logic
-  console.log('Add folder clicked');
-};
-
-const removeFolder = async () => {
-  // Implement remove folder logic
-  console.log('Remove folder clicked');
-};
-
-const refreshFolders = async () => {
-  await getAlbums(); // Refresh albums
-  console.log('Refresh folders clicked');
 };
 
 </script>

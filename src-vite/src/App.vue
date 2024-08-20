@@ -18,13 +18,21 @@
     </div>
 
     <!-- left pane -->
-    <div v-if="activeButtonId > 0" class="w-96 p-2 min-w-12 overflow-auto" :style="{ width: leftPaneWidth + 'px' }">
+    <div 
+      v-if="activeButtonId > 0" 
+      class="w-96 p-2 min-w-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800" 
+      :style="{ width: leftPaneWidth + 'px' }"
+    >
       <Folders v-if="activeButtonId === 1" :titlebar="getButtonLabel"/>
       <Calendar v-else-if="activeButtonId === 2" :titlebar="getButtonLabel"/>
     </div>
 
     <!-- splitter -->
-    <div v-if="activeButtonId > 0" class="w-2 bg-gray-800 hover:bg-gray-700 cursor-ew-resize" @mousedown="startDragging" ></div>
+    <div 
+      v-if="activeButtonId > 0" 
+      class="w-2 bg-gray-800 hover:bg-gray-700 cursor-ew-resize" 
+      @mousedown="startDragging" 
+    ></div>
     
     <!-- right pane -->
     <div class="flex-1 p-4 bg-gray-800 overflow-auto">

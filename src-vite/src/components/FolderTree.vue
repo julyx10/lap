@@ -3,15 +3,14 @@
     <li 
       v-for="(folder, index) in folders" 
       :key="index"
+      class="pl-6"
       @click="toggleFolder(index)"
     >
-      <div class="pl-4 flex items-center hover:bg-gray-700 hover:rounded">
+      <div class="flex items-center whitespace-nowrap hover:bg-gray-700 hover:rounded">
         <img class="w-8 p-1" src="/img64/folder.png" alt="Folder">
         {{ folder.name }}
       </div>
       <FolderTree :folders="folders[index].children" />
-      <!-- Recursively display subfolders -->
-        <!-- <FolderTree v-if="expandedFolders.includes(folder.id)" :folders="folder.children" /> -->
     </li>
   </ul>
   <!-- <ul v-else-if="folders.length === 0">

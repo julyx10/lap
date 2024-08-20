@@ -40,6 +40,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             cmd::get_albums,
             cmd::add_album, 
+            cmd::remove_album,
             cmd::get_folder_tree,
             cmd::open_file]
         )

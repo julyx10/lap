@@ -21,8 +21,8 @@ pub struct Album {
 
 impl Album {
 
-    /// save a new album to the db
-    pub fn save_to_db(&self) -> Result<()> {
+    /// add a new album
+    pub fn add_album(&self) -> Result<()> {
         let conn = get_conn()?;
         conn.execute(
             "INSERT INTO albums (name, description, location, created_at, updated_at) 
@@ -37,6 +37,18 @@ impl Album {
         ).expect("error while instert the table.");
         Ok(())
     }
+
+
+    /// delete an album
+    pub fn delete_album(id: i64) -> Result<()> {
+        let conn = get_conn()?;
+        conn.execute(
+            "DELETE FROM albums WHERE id = ?1",
+            params![id],
+        )?;
+        Ok(())
+    }
+
 
     /// Get all albums from the db
     pub fn get_all_albums() -> Result<Vec<Album>> {
