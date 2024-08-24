@@ -5,6 +5,7 @@
 
 use rusqlite::{ params, Connection, Result };
 use serde::{Serialize, Deserialize};
+// use chrono::Utc;
 
 
 /// Define the Album struct
@@ -13,8 +14,8 @@ pub struct Album {
     // pub index:          i64,         // order in the list
     pub id:             Option<i64>,    // unique id
     pub name:           String,         // folder name
+    pub path:           String,         // folder path
     pub description:    Option<String>, // folder description
-    pub location:       String,         // folder path
     pub created_at:     i64,            // utc timestamp
     pub updated_at:     i64,            // utc timestamp
 }
@@ -25,12 +26,12 @@ impl Album {
     pub fn add_album(&self) -> Result<()> {
         let conn = get_conn()?;
         conn.execute(
-            "INSERT INTO albums (name, description, location, created_at, updated_at) 
+            "INSERT INTO albums (name, path, description, created_at, updated_at) 
              VALUES (?1, ?2, ?3, ?4, ?5)",
             params![
                 self.name,
+                self.path,
                 self.description,
-                self.location,
                 self.created_at,
                 self.updated_at,
             ],
@@ -55,15 +56,15 @@ impl Album {
         let conn = get_conn()?;
         
         // Prepare the SQL query to fetch all albums
-        let mut stmt = conn.prepare("SELECT id, name, description, location, created_at, updated_at FROM albums")?;
+        let mut stmt = conn.prepare("SELECT id, name, path, description, created_at, updated_at FROM albums")?;
         
         // Execute the query and map the result to Album structs
         let albums_iter = stmt.query_map([], |row| {
             Ok(Album {
                 id: row.get(0)?,
                 name: row.get(1)?,
-                description: row.get(2)?,
-                location: row.get(3)?,
+                path: row.get(2)?,
+                description: row.get(3)?,
                 created_at: row.get(4)?,
                 updated_at: row.get(5)?,
             })
@@ -84,12 +85,11 @@ impl Album {
 /// Define the Thumbnail struct
 #[allow(dead_code)]
 pub struct Thumbnail {
-    // id: i64,
     id:             Option<i64>,    // unique id
     album_id:       i64,
     name:           String,     // file name
+    path:           String,     // file path
     size:           i64,        // file size
-    location:       String,     // file location
     exifdata_id:    i64,        // exif metadata
     created_at:     i64,        // utc timestamp
     updated_at:     i64,        // utc timestamp
@@ -145,8 +145,8 @@ pub fn create_db() -> Result<()> {
         "CREATE TABLE IF NOT EXISTS albums (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            path TEXT NOT NULL,
             description TEXT,
-            location TEXT NOT NULL,
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
         )",
@@ -158,8 +158,8 @@ pub fn create_db() -> Result<()> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             album_id INTEGER NOT NULL,
             name TEXT NOT NULL,
+            path TEXT NOT NULL,
             size INTEGER NOT NULL,
-            location TEXT NOT NULL,
             exifdata_id INTEGER,
             created_at INTEGER,
             updated_at INTEGER,

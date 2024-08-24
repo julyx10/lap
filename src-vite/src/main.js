@@ -3,6 +3,8 @@ import App from './App.vue'
 import './style.css'
 import { invoke } from '@tauri-apps/api';
 
+
+/// create app
 const app = createApp(App);
 app.config.globalProperties.$invoke = invoke;
 app.mount('#app');

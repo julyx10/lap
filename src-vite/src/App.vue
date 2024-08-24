@@ -1,41 +1,40 @@
 <template>
 
-  <div class="flex h-screen bg-gray-900 text-gray-400">
+  <div class="flex h-screen bg-gray-900 text-gray-500">
 
     <!-- left toolbar -->
-    <div ref="toolbar" class="w-12 p-2 border-gray-800">
-      <img
-        v-for="button in buttons"
-        :key="button.id"
-        :src="button.image"
-        :alt="button.label"
-        @click="markAsActive(button.id)"
+    <div ref="toolbar" class="w-10 px-2 border-gray-800">
+      <component
+        v-for="(item, index) in icons"
+        :key="index"
+        :is="item.icon"
         :class="[
-          'p-1 my-2 hover:bg-gray-600 hover:rounded',
-          button.id === activeButtonId ? 'bg-gray-700 rounded' : ''
+          'my-5 hover:text-gray-100 transition-colors duration-300', 
+          activeButtonId === index ? 'text-gray-300' : ''
         ]"
+        @click="item.onClick"
       />
     </div>
-
-    <!-- left pane -->
+      
+    <!-- navigation pane -->
     <div 
       v-if="activeButtonId > 0" 
-      class="w-96 p-2 min-w-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800" 
+      class="w-96 p-2 min-w-10 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800" 
       :style="{ width: leftPaneWidth + 'px' }"
     >
-      <Folders v-if="activeButtonId === 1" :titlebar="getButtonLabel"/>
-      <Calendar v-else-if="activeButtonId === 2" :titlebar="getButtonLabel"/>
+      <Albums v-if="activeButtonId === 1" titlebar="Albums"/>
+      <Calendar v-else-if="activeButtonId === 2" titlebar="Calendar"/>
     </div>
 
     <!-- splitter -->
     <div 
       v-if="activeButtonId > 0" 
-      class="w-2 bg-gray-800 hover:bg-gray-700 cursor-ew-resize" 
+      class="w-1 hover:bg-sky-700 cursor-ew-resize" 
       @mousedown="startDragging" 
     ></div>
     
-    <!-- right pane -->
-    <div class="flex-1 p-4 bg-gray-800 overflow-auto">
+    <!-- content area -->
+    <div class="flex-1 p-4 bg-gray-800 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
       <Files titlebar="Files"/>
     </div>
 
@@ -46,30 +45,43 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import Folders from './components/Folders.vue';
-import Calendar from './components/Calendar.vue';
-import Files from './components/Files.vue';
+import { ref, provide, computed, onMounted, onBeforeUnmount } from 'vue';
+import Albums from '@/components/Albums.vue';
+import Calendar from '@/components/Calendar.vue';
+import Files from '@/components/Content.vue';
+
+
+/// global variables
+provide('g_albums', ref([]));
+provide('g_album_index', ref(-1));  // index of the selected album
+provide('g_child_id', ref(-1));     // id of the selected sub-folder
+
 
 /// Toolbar
-const buttons = ref([
-  { id: 0, label: 'All pictures', image: '/img64/pictures.png' },
-  { id: 1, label: 'Folders', image: '/img64/folder.png' },
-  { id: 2, label: 'Calendar', image: '/img64/calendar.png' },
-  // { id: 3, label: 'Favorites', image: '/img64/favorites.png' },
-  // { id: 4, label: 'Tags', image: '/img64/tags.png' },
-  // { id: 6, label: 'Settings', image: '/img64/settings.png' }
-]);
+// Import SVG files as a Vue component
+import IconHome from '@/assets/home.svg';
+import IconAlbums from '@/assets/photo.svg';
+import IconCalendar from '@/assets/calendar.svg';
+
+const icons = [
+  { icon: IconHome, onClick: clickHome },
+  { icon: IconAlbums, onClick: clickAlbums },
+  { icon: IconCalendar, onClick: clickCalendar },
+];
 
 const activeButtonId = ref(0);
 
-function markAsActive(buttonId) {
-  activeButtonId.value = buttonId;
+function clickHome() {
+  activeButtonId.value = 0;
 }
 
-const getButtonLabel = computed(() => {
-  return buttons.value[activeButtonId.value]?.label || '';
-});
+function clickAlbums() {
+  activeButtonId.value = 1;
+}
+
+function clickCalendar() {
+  activeButtonId.value = 2;
+}
 
 
 /// Splitter

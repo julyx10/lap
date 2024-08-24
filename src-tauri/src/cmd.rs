@@ -37,8 +37,8 @@ pub fn add_album() -> Option<String> {
             let album = db::Album {
                 id: None,
                 name: path.clone().file_name().unwrap().to_str().unwrap().to_string(),
+                path: path.to_str().unwrap().to_string(),
                 description: None,
-                location: path.to_str().unwrap().to_string(),
                 created_at: Utc::now().timestamp(),
                 updated_at: Utc::now().timestamp()
             };
