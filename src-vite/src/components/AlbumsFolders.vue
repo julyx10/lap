@@ -14,7 +14,7 @@
             child.is_expanded && child.children.length > 0 ? 'rotate-90' : ''
           ]"
         />
-        {{ child.name }} - {{ child.id }}
+        {{ child.name }}
       </div>
       <Folders v-if="child.is_expanded" :children="child.children" :album_index="album_index"/>
     </li>

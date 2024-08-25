@@ -1,0 +1,16 @@
+{
+  "home": "主页",
+  "album": "相册",
+  "calendar": "日历",
+  "people": "人物",
+  "map": "地点",
+  "camera": "相机",
+
+  "settings": "设置",
+  "debug": "调试",
+
+  "no_albums": "相册为空",
+
+  "files": "文件",
+  "allphotos": "所有照片"
+}

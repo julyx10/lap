@@ -41,7 +41,8 @@ fn main() {
             cmd::get_albums,
             cmd::add_album, 
             cmd::remove_album,
-            cmd::get_folder_tree,
+            cmd::read_folders,
+            // cmd::read_image_files,
             cmd::open_file]
         )
         .run(tauri::generate_context!())

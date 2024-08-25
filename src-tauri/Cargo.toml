@@ -22,6 +22,7 @@ chrono = "0.4"
 kamadak-exif = "0.5.5"
 native-dialog = "0.7.0"
 dirs = "5.0.1"
+walkdir = "2.5.0"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

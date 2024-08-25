@@ -3,39 +3,47 @@
   <div class="flex h-screen bg-gray-900 text-gray-500">
 
     <!-- left toolbar -->
-    <div ref="toolbar" class="w-10 px-2 border-gray-800">
-      <component
-        v-for="(item, index) in icons"
+    <div ref="toolbar" class="px-2 flex flex-col justify-between">
+      <div>
+        <component
+        v-for="(item, index) in toolbars"
         :key="index"
         :is="item.icon"
         :class="[
           'my-5 hover:text-gray-100 transition-colors duration-300', 
-          activeButtonId === index ? 'text-gray-300' : ''
+          toolbar_index === index ? 'text-gray-300' : ''
         ]"
-        @click="item.onClick"
+        @click="clickToolbar(index)"
       />
+      </div>
+      <div>
+        <IconSettings class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickSettings" />
+        <IconBug class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickDebug" />
+
+      </div>
+
     </div>
       
     <!-- navigation pane -->
     <div 
-      v-if="activeButtonId > 0" 
+      v-if="toolbar_index > 0" 
       class="w-96 p-2 min-w-10 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800" 
       :style="{ width: leftPaneWidth + 'px' }"
     >
-      <Albums v-if="activeButtonId === 1" titlebar="Albums"/>
-      <Calendar v-else-if="activeButtonId === 2" titlebar="Calendar"/>
+      <Album v-if="toolbar_index === 1" :titlebar="$t('album')"/>
+      <Calendar v-else-if="toolbar_index === 2" :titlebar="$t('calendar')"/>
     </div>
 
     <!-- splitter -->
     <div 
-      v-if="activeButtonId > 0" 
+      v-if="toolbar_index > 0" 
       class="w-1 hover:bg-sky-700 cursor-ew-resize" 
       @mousedown="startDragging" 
     ></div>
     
     <!-- content area -->
     <div class="flex-1 p-4 bg-gray-800 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
-      <Files titlebar="Files"/>
+      <Wall :titlebar="toolbars[toolbar_index].text"/>
     </div>
 
   </div>
@@ -45,14 +53,21 @@
 
 <script setup lang="ts">
 
-import { ref, provide, computed, onMounted, onBeforeUnmount } from 'vue';
-import Albums from '@/components/Albums.vue';
+import { ref, computed, provide, onMounted, onBeforeUnmount } from 'vue';
+
+/// i18n
+import { useI18n } from 'vue-i18n';
+const { locale, messages } = useI18n();
+const localeMessages = computed(() => messages.value[locale.value]);
+
+import Album from '@/components/Albums.vue';
 import Calendar from '@/components/Calendar.vue';
-import Files from '@/components/Content.vue';
+import Wall from '@/components/Wall.vue';
 
 
 /// global variables
-provide('g_albums', ref([]));
+// albums
+provide('g_albums', ref([]));       // all albums
 provide('g_album_index', ref(-1));  // index of the selected album
 provide('g_child_id', ref(-1));     // id of the selected sub-folder
 
@@ -60,31 +75,49 @@ provide('g_child_id', ref(-1));     // id of the selected sub-folder
 /// Toolbar
 // Import SVG files as a Vue component
 import IconHome from '@/assets/home.svg';
-import IconAlbums from '@/assets/photo.svg';
+import IconAlbum from '@/assets/photo.svg';
 import IconCalendar from '@/assets/calendar.svg';
+import IconPeople from '@/assets/user.svg';
+import IconMap from '@/assets/map-pin.svg';
+import IconCamera from '@/assets/camera.svg';
+import IconSettings from '@/assets/cog-6-tooth.svg';
+import IconBug from '@/assets/bug-ant.svg';
 
-const icons = [
-  { icon: IconHome, onClick: clickHome },
-  { icon: IconAlbums, onClick: clickAlbums },
-  { icon: IconCalendar, onClick: clickCalendar },
-];
+// toolbar 
+const toolbars = computed(() =>  [
+  { icon: IconHome,     text: localeMessages.value.home },
+  { icon: IconAlbum,    text: localeMessages.value.album },
+  { icon: IconCalendar, text: localeMessages.value.calendar },
+  { icon: IconPeople,   text: localeMessages.value.people }, 
+  { icon: IconMap,      text: localeMessages.value.map },
+  { icon: IconCamera,   text: localeMessages.value.camera },
+]);
 
-const activeButtonId = ref(0);
+const toolbar_index = ref(1); // index of the clicked icon
+provide('g_toolbar_index', toolbar_index);   
 
-function clickHome() {
-  activeButtonId.value = 0;
+
+function clickToolbar(index) {
+  console.log("clickToolbar...", toolbars.value[index].text);  
+  toolbar_index.value = index;
 }
 
-function clickAlbums() {
-  activeButtonId.value = 1;
+function clickSettings() {
+  console.log('clickSettings...')
 }
 
-function clickCalendar() {
-  activeButtonId.value = 2;
+function clickDebug() {
+  console.log('clickDebug...')
+
+  // toggle locales
+  if (locale.value === 'en') {
+    locale.value = 'zh'
+  } else {
+    locale.value = 'en'
+  }
 }
 
-
-/// Splitter
+/// Splitter for resizing the left pane
 const toolbar = ref(null);
 const leftPaneWidth = ref(300); // Default width of the left pane
 const isDragging = ref(false);

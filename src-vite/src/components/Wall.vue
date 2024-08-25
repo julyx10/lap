@@ -11,8 +11,12 @@
 </template>
   
 <script setup>
-
 import { ref, computed, inject  } from 'vue';
+
+/// i18n
+import { useI18n } from 'vue-i18n';
+const { locale, messages } = useI18n();
+const msg = computed(() => messages.value[locale.value]);
 
 // Import the SVG file as a Vue component
 import IconStar from '@/assets/star.svg';
@@ -22,25 +26,30 @@ const props = defineProps({
   titlebar: String
 });
 
+const g_toolbar_index = inject('g_toolbar_index'); // global toolbar index
 const g_albums = inject('g_albums');           // global albums
 const g_album_index = inject('g_album_index'); // global album index
-const g_child_id = inject('g_child_id');     // global folder id
+const g_child_id = inject('g_child_id');       // global folder id
 
 
 /// Display the titlebar
 const title = computed(() => {
-  // console.log('title:', props.titlebar, g_album_index.value, g_child_id.value);
-  if (g_album_index.value >= 0) {
-    if(g_child_id.value < 0) {
-      return g_albums.value[g_album_index.value].name;
+  // console.log('title:', msg.value);
+
+  // album view
+  if (g_toolbar_index.value === 1) {
+    if (g_album_index.value >= 0) {
+      if(g_child_id.value < 0) {
+        return g_albums.value[g_album_index.value].name + ' > ' + msg.value.allphotos;
+      } else {
+        // get the folder name
+        let subfolder = getChildren(g_albums.value[g_album_index.value], g_child_id.value);
+        console.log('subfolder:', subfolder);
+        return g_albums.value[g_album_index.value].name + ' > ' + subfolder.name;
+      }
     } else {
-      // get the folder name
-      let subfolder = getChildren(g_albums.value[g_album_index.value], g_child_id.value);
-      console.log('subfolder:', subfolder);
-      return g_albums.value[g_album_index.value].name + ' > ' + subfolder.name;
+      return props.titlebar;
     }
-  } else {
-    return props.titlebar;
   }
 });
 

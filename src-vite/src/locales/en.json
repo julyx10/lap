@@ -1,0 +1,16 @@
+{
+  "home": "Home",
+  "album": "Albums",
+  "calendar": "Calendar",
+  "people": "People",
+  "map": "Map",
+  "camera": "Camera",
+
+  "settings": "Settings",
+  "debug": "Debug",
+
+  "no_albums": "No albums available",
+
+  "files": "Files",
+  "allphotos": "All Photos"
+}

@@ -27,7 +27,7 @@
         ]"
         @click="selectAlbum(index)"
       >
-        <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="pr-1 flex-shrink-0" />
+        <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" />
         {{ album.name }}
       </div>
       <FolderTree 
@@ -40,7 +40,7 @@
 
   <!-- Display message if no albums are found -->
   <div v-else-if="g_albums.length === 0" class=" pt-12 text-center">
-    No albums available
+    {{ $t('no_albums') }}
   </div>
 
 </template>
@@ -85,7 +85,7 @@ onMounted(() => {
 const addAlbum = async () => {
   try {
     const result = await invoke('add_album');
-    refreshAlbum(); // Refresh albums
+    await refreshAlbum(); // Refresh albums
 
     console.log('Add album...', result);
   } catch (error) {
@@ -99,7 +99,7 @@ const removeAlbum = async () => {
   try {
     if (g_album_index.value >= 0) {
       const result = await invoke('remove_album', { id: g_albums.value[g_album_index.value].id });
-      refreshAlbum(); // Refresh albums
+      await refreshAlbum(); // Refresh albums
       
       g_album_index.value = - 1;
       console.log('Remove album...', result);
@@ -130,7 +130,7 @@ const selectAlbum = async (index) => {
     
     if (g_albums.value[index].is_expanded && !g_albums.value[index].children) {
       // Fetch folder tree
-      const folders = await invoke('get_folder_tree', { path: g_albums.value[index].path });
+      const folders = await invoke('read_folders', { path: g_albums.value[index].path });
       g_albums.value[index].children = folders.children;
     }
     console.log('Select album...', g_album_index, g_albums.value);
