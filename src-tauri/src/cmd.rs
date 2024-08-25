@@ -63,15 +63,14 @@ pub fn remove_album(id: i64) -> Result<i64, String> {
 /// read folder
 #[tauri::command]
 pub fn read_folders(path: String) -> Result<utils::FileNode, String> {
-    // utils::read_folders(path)
     utils::FileNode::read_folders(path)
 }
 
 /// read image files
-// #[tauri::command]
-// pub fn read_image_files(path: String) -> Result<utils::FileNode, String> {
-//     utils::read_image_files(path)
-// }
+#[tauri::command]
+pub fn read_image_files(path: String) -> Vec<String> {
+    utils::list_image_files(path)
+}
 
 
 /// open a picture file

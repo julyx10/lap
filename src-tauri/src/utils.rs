@@ -10,11 +10,38 @@ fn next_id() -> i64 {
     ID_COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
+/// Check if the entry is hidden (starts with a dot)
 fn is_hidden(entry: &DirEntry) -> bool {
-    // Check if the entry is hidden (starts with a dot)
+    
     entry.file_name().to_string_lossy().starts_with('.')
 }
 
+/// Check if a file extension is an image extension
+fn is_image_extension(extension: &str) -> bool {
+    match extension.to_lowercase().as_str() {
+        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" => true,
+        _ => false,
+    }
+}
+
+pub fn list_image_files(path: String) -> Vec<String> {
+    let mut image_files = Vec::new();
+
+    for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
+                if is_image_extension(extension) {
+                    if let Some(file_path) = path.to_str() {
+                        image_files.push(file_path.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    image_files
+}
 
 #[derive(serde::Serialize)]
 pub struct FileNode {
@@ -25,8 +52,6 @@ pub struct FileNode {
     is_expanded: bool,
     children: Option<Vec<FileNode>>,
 }
-
-
 
 impl FileNode {
     
@@ -40,11 +65,6 @@ impl FileNode {
             children: None,
         }
     }
-
-    // Function to generate a new unique ID
-    // fn new_id() -> i64 {
-    //     ID_COUNTER.fetch_add(1, Ordering::SeqCst)
-    // }
 
     pub fn read_folders(path: String) -> Result<FileNode, String> {
         let root_path = Path::new(&path);
@@ -107,65 +127,3 @@ impl FileNode {
 
 }
 
-/// read all folders and the path
-// pub fn read_folders(path: String) -> Result<FileNode, String> {
-//     fn build_tree(path: &Path) -> Result<FileNode, String> {
-//         // generate a unique ID
-//         let id = FileNode::new_id();
-        
-//         // get the file or directory metadata
-//         let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
-//         let is_dir = metadata.is_dir();
-
-//         // extract the file name and path
-//         let name = path.file_name()
-//             .ok_or_else(|| "Failed to get file name".to_string())?
-//             .to_string_lossy()
-//             .to_string();
-
-//         // convert the path to a string
-//         let path_str = path.to_string_lossy().to_string();
-
-//         // initialize the expanded flag
-//         let is_expanded = false;
-
-//         let children = if is_dir {
-//             let mut nodes = vec![];
-//             for entry in fs::read_dir(path).map_err(|e| e.to_string())? {
-//                 let entry = entry.map_err(|e| e.to_string())?;
-//                 let child_path = entry.path();
-//                 if child_path.is_dir() {
-//                     nodes.push(build_tree(&child_path)?);
-//                 }
-//             }
-//             Some(nodes)
-//         } else {
-//             None
-//         };
-
-//         Ok(FileNode {
-//             id,
-//             name,
-//             path: path_str,
-//             is_dir,
-//             is_expanded,
-//             children,
-//         })
-//     }
-
-//     let path = Path::new(&path);
-//     build_tree(path)
-// }
-
-
-/// read all image files in a directory
-// pub fn read_image_files(path: String) -> Result<FileNode, String> {
-//     Ok(vec![])
-// }
-
-fn is_image_extension(extension: &std::ffi::OsStr) -> bool {
-    match extension.to_str() {
-        Some("jpg") | Some("jpeg") | Some("png")| Some("gif") => true,
-        _ => false,
-    }
-}

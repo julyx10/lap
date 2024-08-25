@@ -42,7 +42,7 @@ fn main() {
             cmd::add_album, 
             cmd::remove_album,
             cmd::read_folders,
-            // cmd::read_image_files,
+            cmd::read_image_files,
             cmd::open_file]
         )
         .run(tauri::generate_context!())
