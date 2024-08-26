@@ -27,7 +27,11 @@ fn is_image_extension(extension: &str) -> bool {
 pub fn list_image_files(path: String) -> Vec<String> {
     let mut image_files = Vec::new();
 
-    for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
+    for entry in WalkDir::new(path)
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter().filter_map(|e| e.ok()) {
+        
         let path = entry.path();
         if path.is_file() {
             if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
@@ -108,7 +112,7 @@ impl FileNode {
                 let mut node = Self::build_file_node(&entry)?;
 
                 // Recursively process subdirectories
-                node.children = Some(Self::recurse_folders(entry.path())?);
+                // node.children = Some(Self::recurse_folders(entry.path())?);
                 nodes.push(node);
             }
         }

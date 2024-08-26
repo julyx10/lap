@@ -19,7 +19,6 @@
       <div>
         <IconSettings class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickSettings" />
         <IconBug class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickDebug" />
-
       </div>
 
     </div>
@@ -68,8 +67,8 @@ import Wall from '@/components/Wall.vue';
 /// global variables
 // albums
 provide('g_albums', ref([]));       // all albums
-provide('g_album_index', ref(-1));  // index of the selected album
-provide('g_child_id', ref(-1));     // id of the selected sub-folder
+provide('g_album_id', ref(null));   // current album id
+provide('g_folder_id', ref(null));  // current folder id
 
 
 /// Toolbar

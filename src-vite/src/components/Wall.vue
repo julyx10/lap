@@ -1,7 +1,7 @@
 <template>
 
 <div class="flex items-center justify-between">
-  {{ title }}, {{filelist.length}} files
+  {{ title }}
   <div class="flex">
     <IconStar class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
     <IconTag  class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
@@ -11,7 +11,7 @@
 <div>
   <h2></h2>
   <ul>
-    <li v-for="(file, index) in filelist" :key="index">
+    <li v-for="(file, index) in current_files" :key="index">
       <!-- <img :src="file" :alt="`Image ${index + 1}`" class="image-preview" /> -->
       <p>{{ (index + 1) + ' - ' + file }}</p>
     </li>
@@ -38,47 +38,32 @@ const props = defineProps({
 });
 
 const g_toolbar_index = inject('g_toolbar_index'); // global toolbar index
-const g_albums = inject('g_albums');               // global albums
-const g_album_index = inject('g_album_index'); // global album index
-const g_child_id = inject('g_child_id');       // global folder id
 
-const file_path = ref('');
-const filelist = ref([]);
+const g_albums = inject('g_albums');         // global albums
+const g_album_id = inject('g_album_id');     // global album id
+const g_folder_id = inject('g_folder_id');   // global folder id
 
-// Watch for changes in file_path and update filelist accordingly
-watch(file_path, async (newFilePath) => {
-  if (newFilePath) {
-    await getImageFiles(file_path.value);
-  }
-});
+const current_folder = ref('');
+const current_files = ref([]);
 
-async function getImageFiles(path) {
-  try {
-    const result = await invoke('read_image_files', { path: path });
-    filelist.value = result;
-    console.log('getImageFiles:', filelist.value);
-  } catch (error) {
-    console.error('getImageFiles error:', error);
-  }
-};
+const getAlbumById = (id) => g_albums.value.find(album => album.id === id);
 
 
 /// Display the titlebar
 const title = computed(() => {
-  console.log('wall title:', msg.value);
-
   // album view
   if (g_toolbar_index.value === 1) {
-    if (g_album_index.value >= 0) {
-      if(g_child_id.value < 0) {
-        return g_albums.value[g_album_index.value].name + ' > ' + msg.value.allphotos;
-      } else {
-        // get the folder path
-        let folder = getChildren(g_albums.value[g_album_index.value], g_child_id.value);
-        file_path.value = folder.path;
-        console.log('file_path...', file_path.value);
+    if (g_album_id.value) {
+      const album = getAlbumById(g_album_id.value);
 
-        return g_albums.value[g_album_index.value].name + ' > ' + folder.name;
+      if(g_folder_id.value) {
+        // get the select folder
+        current_folder.value = getFolder(album, g_folder_id.value);
+        console.log('current_folder...', current_folder.value);
+
+        return album.name + ' > ' + current_folder.value.name;
+      } else {
+        return album.name + ' > ' + msg.value.allphotos;
       }
     } else {
       return props.titlebar;
@@ -87,16 +72,13 @@ const title = computed(() => {
 });
 
 
-
-
-
 /// get the selected sub-folder of the album
-function getChildren(album, child_id) {
+function getFolder(album, child_id) {
   if (album.id === child_id) {
     return album;
   } else if (album.children) {
     for (let child of album.children) {
-        const result = getChildren(child, child_id);
+        const result = getFolder(child, child_id);
         if (result) {
           return result;
         }
@@ -104,6 +86,35 @@ function getChildren(album, child_id) {
   }
   return null;
 }
+
+// watch(g_folder_id, async (new_folder_id) => {
+//   if (!new_folder_id) {
+//     // current_folder.value = getFolder(getAlbumById(g_album_id.value), new_folder_id);
+//     console.log('current_folder... is null', new_folder_id);
+//     await getImageFiles(getAlbumById(g_album_id.value).path);
+
+//   } else {
+//     console.log('current_folder...', new_folder_id);
+//   }
+// });
+
+/// Watch for changes in file_path and update filelist accordingly
+watch(current_folder, async (new_folder) => {
+  if (new_folder) {
+    await getImageFiles(new_folder.path);
+  }
+});
+
+
+async function getImageFiles(path) {
+  try {
+    const result = await invoke('read_image_files', { path: path });
+    current_files.value = result;
+    console.log('getImageFiles:', current_files.value);
+  } catch (error) {
+    console.error('getImageFiles error:', error);
+  }
+};
 
 </script>
   
