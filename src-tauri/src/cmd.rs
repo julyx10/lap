@@ -5,6 +5,7 @@
 
 use std::fs;
 use std::io::BufReader;
+use std::string;
 use native_dialog::FileDialog;
 use chrono::Utc;
 use exif::{In, Reader, Tag};
@@ -26,27 +27,33 @@ pub fn get_albums() -> Result<Vec<db::Album>, String> {
 
 /// add a album (folder)
 #[tauri::command]
-pub fn add_album() -> Option<String> {
-    // show open folder dialog
+pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, String> {
+    // Show open folder dialog
     let result = FileDialog::new()
-        .set_title("add a folder")
+        .set_title(title.as_str())
+        .set_owner(&window)
         .show_open_single_dir();
 
     match result {
         Ok(Some(path)) => {
             let album = db::Album {
                 id: None,
-                name: path.clone().file_name().unwrap().to_str().unwrap().to_string(),
-                path: path.to_str().unwrap().to_string(),
+                name: path.file_name()
+                    .and_then(|os_str| os_str.to_str())
+                    .unwrap_or("")
+                    .to_string(),
+                path: path.to_str().unwrap_or("").to_string(),
                 description: None,
                 created_at: Utc::now().timestamp(),
-                updated_at: Utc::now().timestamp()
+                updated_at: Utc::now().timestamp(),
             };
-            album.add_album().expect("error while adding to db");
-            Some(path.to_str().unwrap().to_string())
+
+            // Add the album to the database and return the result
+            album.add_album()
+                .map_err(|e| format!("Error while adding to DB: {}", e))
         },
-        Ok(None) => None,
-        Err(_) => None,
+        Ok(None) => Err("No folder selected".to_string()),
+        Err(_) => Err("Failed to open folder dialog".to_string()),
     }
 }
 

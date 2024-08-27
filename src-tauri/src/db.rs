@@ -23,8 +23,20 @@ pub struct Album {
 impl Album {
 
     /// add a new album
-    pub fn add_album(&self) -> Result<()> {
-        let conn = get_conn()?;
+    pub fn add_album(&self) -> Result<Album, String> {
+        let conn = get_conn().map_err(|e| e.to_string())?;
+
+        // Check if the path already exists
+        let album_exists: bool = conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM albums WHERE path = ?1)",
+            params![self.path],
+            |row| row.get(0)
+        ).map_err(|e| e.to_string())?;
+
+        if album_exists {
+            return Err("The selected folder already exists.".to_string());
+        }
+
         conn.execute(
             "INSERT INTO albums (name, path, description, created_at, updated_at) 
              VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -36,7 +48,29 @@ impl Album {
                 self.updated_at,
             ],
         ).expect("error while instert the table.");
-        Ok(())
+
+        // Get the ID of the newly inserted album
+        let last_id: i64 = conn.last_insert_rowid();
+
+        // Fetch the newly inserted album from the database
+        let mut stmt = conn.prepare(
+            "SELECT id, name, path, description, created_at, updated_at
+                FROM albums
+                WHERE id = ?1"
+        ).map_err(|e| e.to_string())?;
+        
+        let album = stmt.query_row(params![last_id], |row| {
+            Ok(Album {
+                id: Some(row.get(0)?),
+                name: row.get(1)?,
+                path: row.get(2)?,
+                description: row.get(3)?,
+                created_at: row.get(4)?,
+                updated_at: row.get(5)?,
+            })
+        }).map_err(|e| e.to_string())?;
+
+        Ok(album)
     }
 
 
@@ -56,7 +90,9 @@ impl Album {
         let conn = get_conn()?;
         
         // Prepare the SQL query to fetch all albums
-        let mut stmt = conn.prepare("SELECT id, name, path, description, created_at, updated_at FROM albums")?;
+        let mut stmt = conn.prepare(
+            "SELECT id, name, path, description, created_at, updated_at FROM albums"
+        )?;
         
         // Execute the query and map the result to Album structs
         let albums_iter = stmt.query_map([], |row| {

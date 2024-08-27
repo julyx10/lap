@@ -17,7 +17,7 @@
           @click="clickExpandIcon($event, child)"
         />
 
-        {{ child.name }}
+        {{ child.name }} - {{ child.id }}
 
       </div>
 
@@ -33,7 +33,7 @@
 
 import { inject } from 'vue';
 import { invoke } from '@tauri-apps/api';
-import Folders from './AlbumsFolders.vue';
+import Folders from '@/components/AlbumsFolders.vue';
 
 // folder icon
 import IconRight from '@/assets/chevron-right.svg';

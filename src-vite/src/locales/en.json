@@ -11,6 +11,13 @@
 
   "no_albums": "No albums available",
 
+  "add_album_title": "Add album",
+
+  "remove_album_msgbox_title": "Remove album",
+  "remove_album_msgbox_content": "Are you sure you want to remove this album?",
+  "remove_album_msgbox_ok": "Yes",
+  "remove_album_msgbox_cancel": "No",
+  
   "files": "Files",
   "allphotos": "All Photos"
 }

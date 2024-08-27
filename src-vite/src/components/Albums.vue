@@ -12,7 +12,7 @@
           'p-1 ', 
           g_album_id ? 'hover:text-gray-200 transition-colors duration-300' : 'text-gray-700'
         ]" 
-        @click="clickRemove" />
+        @click="showRemoveAlbumMsgbox = true" />
       <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/>
     </div>
   </div>
@@ -29,7 +29,7 @@
         @dblclick="dblclickAlbum(album)"
       >
         <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" />
-        {{ album.name }}
+        {{ album.name }} - {{ album.id }}
       </div>
 
       <Folders v-if="album.is_expanded" :album_id="album.id" :children="album.children" />
@@ -41,14 +41,33 @@
     {{ $t('no_albums') }}
   </div>
 
+  <MessageBox
+    v-if="showRemoveAlbumMsgbox"
+    :visible="showRemoveAlbumMsgbox"
+    :title="$t('remove_album_msgbox_title')"
+    :message="$t('remove_album_msgbox_content')"
+    :confirmText="$t('remove_album_msgbox_ok')"
+    :cancelText="$t('remove_album_msgbox_cancel')"
+    @confirm="clickRemoveConfirm"
+    @cancel="showRemoveAlbumMsgbox = false"
+    @close="showRemoveAlbumMsgbox = false"
+  />
+
 </template>
 
 
 <script setup lang="ts">
 
-import { inject, onMounted  } from 'vue';
+import { ref, inject, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api';
-import Folders from './AlbumsFolders.vue';
+import { appWindow } from '@tauri-apps/api/window';
+import Folders from '@/components/AlbumsFolders.vue';
+import MessageBox from '@/components/MessageBox.vue';
+
+/// i18n
+import { useI18n } from 'vue-i18n';
+const { locale, messages } = useI18n();
+const localeMessages = computed(() => messages.value[locale.value]);
 
 // toolbar icons
 import IconAdd from '@/assets/folder-plus.svg';
@@ -59,6 +78,10 @@ import IconRefresh from '@/assets/arrow-path.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 
+const g_albums = inject('g_albums');         // global albums
+const g_album_id = inject('g_album_id');     // global album id
+const g_folder_id = inject('g_folder_id');   // global folder id
+
 const props = defineProps({
   titlebar: {
     type: String,
@@ -66,10 +89,7 @@ const props = defineProps({
   }
 });
 
-const g_albums = inject('g_albums');         // global albums
-const g_album_id = inject('g_album_id');     // global album id
-const g_folder_id = inject('g_folder_id');   // global folder id
-
+const showRemoveAlbumMsgbox = ref(false);
 
 // Fetch albums on mount
 onMounted(() => {
@@ -83,10 +103,10 @@ const getAlbumById = (id) => g_albums.value.find(album => album.id === id);
 /// Add albums
 const clickAdd = async () => {
   try {
-    const result = await invoke('add_album');
-    await clickRefresh(); // Refresh albums
+    const new_album = await invoke('add_album', { window: appWindow, title: localeMessages.value.add_album_title });
+    g_albums.value.push(new_album);
 
-    console.log('Add album...', result);
+    console.log('Add album...', new_album);
   } catch (error) {
     console.error('Failed to add album:', error);
   }
@@ -94,13 +114,15 @@ const clickAdd = async () => {
 
 
 /// Remove albums
-const clickRemove = async () => {
+const clickRemoveConfirm = async () => {
   try {
     if (g_album_id.value) {
       const result = await invoke('remove_album', { id: getAlbumById(g_album_id.value).id });
-      await clickRefresh(); // Refresh albums
-      
+
+      // delete the removed album from the list
+      g_albums.value = g_albums.value.filter(album => album.id !== g_album_id.value);
       g_album_id.value = null;
+
       console.log('Remove album...', result);
     } else {
       console.error('No album selected', g_album_id.value);
@@ -114,6 +136,10 @@ const clickRemove = async () => {
 /// Refresh albums
 const clickRefresh = async () => {
   await getAlbums(); // Refresh albums
+
+  g_album_id.value = null;
+  g_folder_id.value = null;
+
   console.log('Refresh albums');
 };
 
