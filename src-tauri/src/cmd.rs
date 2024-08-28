@@ -75,7 +75,7 @@ pub fn read_folders(path: String) -> Result<utils::FileNode, String> {
 
 /// read image files
 #[tauri::command]
-pub fn read_image_files(path: String) -> Vec<String> {
+pub fn read_image_files(path: String) -> Result<Vec<utils::FileInfo>, String> {
     utils::list_image_files(path)
 }
 

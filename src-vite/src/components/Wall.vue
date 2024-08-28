@@ -9,13 +9,30 @@
 </div>
 
 <div>
-  <h2></h2>
-  <ul>
-    <li v-for="(file, index) in current_files" :key="index">
-      <!-- <img :src="file" :alt="`Image ${index + 1}`" class="image-preview" /> -->
-      <p>{{ (index + 1) + ' - ' + file }}</p>
-    </li>
-  </ul>
+
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th class="p-1">Name</th>
+        <th class="p-1">Size</th>
+        <th class="p-1">Created</th>
+        <th class="p-1">Modified</th>
+        <th class="p-1">Accessed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(file, index) in current_files" :key="index">
+        <td>{{ index + 1 }}</td>
+        <td>{{ file.file_name }}</td>
+        <td>{{ file.file_size }}</td>
+        <td>{{ file.created.nanos_since_epoch }}</td>
+        <td>{{ file.modified }}</td>
+        <td>{{ file.accessed }}</td>
+      </tr>
+    </tbody>
+  </table>
+
 </div>
 
 </template>
