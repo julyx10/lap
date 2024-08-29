@@ -106,7 +106,7 @@ fn format_file_size(size: u64) -> String {
 
 
 pub fn list_image_files(path: String) -> Result<Vec<FileInfo>, String> {
-    let mut fileInfo: Vec<FileInfo> = Vec::new();
+    let mut file_info: Vec<FileInfo> = Vec::new();
 
     for entry in WalkDir::new(path)
         .min_depth(1)
@@ -117,13 +117,13 @@ pub fn list_image_files(path: String) -> Result<Vec<FileInfo>, String> {
         if path.is_file() {
             if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
                 if is_image_extension(extension) {
-                    fileInfo.push(get_file_info(path.to_str().unwrap().to_string()).unwrap());
+                    file_info.push(get_file_info(path.to_str().unwrap().to_string()).unwrap());
                 }
             }
         }
     }
 
-    Ok(fileInfo)
+    Ok(file_info)
 }
 
 
@@ -189,7 +189,7 @@ impl FileNode {
         {
             let entry = entry.map_err(|e| e.to_string())?;
             if entry.file_type().is_dir() {
-                let mut node = Self::build_file_node(&entry)?;
+                let node = Self::build_file_node(&entry)?;
 
                 // Recursively process subdirectories
                 // node.children = Some(Self::recurse_folders(entry.path())?);

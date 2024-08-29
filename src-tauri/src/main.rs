@@ -40,7 +40,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             cmd::get_albums,
             cmd::add_album, 
-            cmd::remove_album,
+            cmd::delete_album,
+            cmd::add_folder,            // add folder to db if clicking the folder name
             cmd::read_folders,
             cmd::read_image_files,
             cmd::open_file]

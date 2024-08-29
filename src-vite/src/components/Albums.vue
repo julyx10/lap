@@ -7,12 +7,12 @@
     </div>
     <div class="flex h-6">
       <IconAdd class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickAdd" />
-      <IconRemove  
+      <IconDelete  
         :class="[
           'p-1 ', 
           g_album_id ? 'hover:text-gray-200 transition-colors duration-300' : 'text-gray-700'
         ]" 
-        @click="showRemoveAlbumMsgbox = true" />
+        @click="showDeleteAlbumMsgbox = true" />
       <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/>
     </div>
   </div>
@@ -42,15 +42,15 @@
   </div>
 
   <MessageBox
-    v-if="showRemoveAlbumMsgbox"
-    :visible="showRemoveAlbumMsgbox"
-    :title="$t('remove_album_msgbox_title')"
-    :message="$t('remove_album_msgbox_content')"
-    :confirmText="$t('remove_album_msgbox_ok')"
-    :cancelText="$t('remove_album_msgbox_cancel')"
-    @confirm="clickRemoveConfirm"
-    @cancel="showRemoveAlbumMsgbox = false"
-    @close="showRemoveAlbumMsgbox = false"
+    v-if="showDeleteAlbumMsgbox"
+    :visible="showDeleteAlbumMsgbox"
+    :title="$t('delete_album_msgbox_title')"
+    :message="$t('delte_album_msgbox_content')"
+    :confirmText="$t('delete_album_msgbox_ok')"
+    :cancelText="$t('delete_album_msgbox_cancel')"
+    @confirm="clickDeleteConfirm"
+    @cancel="showDeleteAlbumMsgbox = false"
+    @close="showDeleteAlbumMsgbox = false"
   />
 
 </template>
@@ -71,7 +71,7 @@ const localeMessages = computed(() => messages.value[locale.value]);
 
 // toolbar icons
 import IconAdd from '@/assets/folder-plus.svg';
-import IconRemove from '@/assets/folder-minus.svg';
+import IconDelete from '@/assets/folder-minus.svg';
 import IconRefresh from '@/assets/arrow-path.svg';
 
 // folder icon
@@ -89,7 +89,7 @@ const props = defineProps({
   }
 });
 
-const showRemoveAlbumMsgbox = ref(false);
+const showDeleteAlbumMsgbox = ref(false);
 
 // Fetch albums on mount
 onMounted(() => {
@@ -113,22 +113,22 @@ const clickAdd = async () => {
 };
 
 
-/// Remove albums
-const clickRemoveConfirm = async () => {
+/// Delete an album
+const clickDeleteConfirm = async () => {
   try {
     if (g_album_id.value) {
-      const result = await invoke('remove_album', { id: getAlbumById(g_album_id.value).id });
+      const result = await invoke('delete_album', { id: getAlbumById(g_album_id.value).id });
 
-      // delete the removed album from the list
+      // delete the album from the list
       g_albums.value = g_albums.value.filter(album => album.id !== g_album_id.value);
       g_album_id.value = null;
 
-      console.log('Remove album...', result);
+      console.log('Delete album...', result);
     } else {
       console.error('No album selected', g_album_id.value);
     }
   } catch (error) {
-    console.error('Failed to remove album:', error);
+    console.error('Failed to delete album:', error);
   }
 };
 

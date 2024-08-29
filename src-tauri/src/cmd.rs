@@ -5,16 +5,14 @@
 
 use std::fs;
 use std::io::BufReader;
-use std::string;
 use native_dialog::FileDialog;
-use chrono::Utc;
 use exif::{In, Reader, Tag};
 
 use crate::db;
 use crate::utils;
 
 
-///  get all albums
+/// get all albums
 #[tauri::command]
 pub fn get_albums() -> Result<Vec<db::Album>, String> {
     // Call the database function and handle errors
@@ -25,7 +23,7 @@ pub fn get_albums() -> Result<Vec<db::Album>, String> {
 }
 
 
-/// add a album (folder)
+/// add an album
 #[tauri::command]
 pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, String> {
     // Show open folder dialog
@@ -38,19 +36,20 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
         Ok(Some(path)) => {
             let album = db::Album {
                 id: None,
+                order_id: None,
                 name: path.file_name()
                     .and_then(|os_str| os_str.to_str())
                     .unwrap_or("")
                     .to_string(),
                 path: path.to_str().unwrap_or("").to_string(),
                 description: None,
-                created_at: Utc::now().timestamp(),
-                updated_at: Utc::now().timestamp(),
+                created_at: None,
+                updated_at: None,
             };
 
             // Add the album to the database and return the result
             album.add_album()
-                .map_err(|e| format!("Error while adding to DB: {}", e))
+                .map_err(|e| format!("Error while adding album to DB: {}", e))
         },
         Ok(None) => Err("No folder selected".to_string()),
         Err(_) => Err("Failed to open folder dialog".to_string()),
@@ -58,14 +57,40 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
 }
 
 
-/// remove a album (folder)
+/// delete an album, including all folders
 #[tauri::command]
-pub fn remove_album(id: i64) -> Result<i64, String> {
-    let msg = format!("Error while deleting album with id: {}", id);
-    db::Album::delete_album(id).map_err(|_| msg)?;
+pub fn delete_album(id: i64) -> Result<i64, String> {
+    // Attempt to delete the album first
+    db::Album::delete_album(id).map_err(|e| {
+        format!("Error while deleting album with id {}: {}", id, e.to_string())
+    })?;
+
+    // Attempt to delete all folders associated with the album
+    db::Folder::delete_all_folders(id).map_err(|e| {
+        format!("Error while deleting folders for album with id {}: {}", id, e.to_string())
+    })?;
+
+    // If both operations succeed, return the album id
     Ok(id)
 }
 
+
+// click a folder of an album to add folder to db
+#[tauri::command]
+pub fn add_folder(album_id: i64, parent_id: i64, name: String, path: String) -> Result<db::Folder, String> {
+    let folder = db::Folder {
+        id: None,
+        album_id,
+        parent_id,
+        name,
+        path,
+        created_at: None,
+        updated_at: None,
+    };
+
+    folder.add_folder()
+        .map_err(|e| format!("Error while adding folder to DB: {}", e))
+}
 
 /// read folder
 #[tauri::command]

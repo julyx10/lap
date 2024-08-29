@@ -32,7 +32,7 @@
 <script setup lang="ts">
 
 import { inject } from 'vue';
-import { invoke } from '@tauri-apps/api';
+import { invoke, path } from '@tauri-apps/api';
 import Folders from '@/components/AlbumsFolders.vue';
 
 // folder icon
@@ -54,9 +54,21 @@ const g_folder_id = inject('g_folder_id'); // global folder id
 
 
 /// click folder to select
-const clickFolderName = (folder) => {
+const clickFolderName = async (folder) => {
   g_album_id.value = props.album_id;
   g_folder_id.value = folder.id;
+
+  try {
+    const result = await invoke('add_folder', { 
+      album_id: props.album_id, 
+      parent_id: 0,
+      name: folder.name,
+      path: folder.path
+    });
+  } catch (error) {
+    console.error("Error adding folder:", error);
+  }
+
   
   console.log('clickFolderName...', folder);
 };

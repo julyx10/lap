@@ -13,10 +13,10 @@
 
   "add_album_title": "添加相册",
 
-  "remove_album_msgbox_title": "删除相册",
-  "remove_album_msgbox_content": "确认要删除相册吗?",
-  "remove_album_msgbox_ok": "是",
-  "remove_album_msgbox_cancel": "否",
+  "delete_album_msgbox_title": "删除相册",
+  "delete_album_msgbox_content": "确认要删除相册吗?",
+  "delete_album_msgbox_ok": "是",
+  "delete_album_msgbox_cancel": "否",
 
   "files": "文件",
   "allphotos": "所有照片"
