@@ -3,9 +3,8 @@
  * 
  */
 
-use rusqlite::{ params, Connection, Result };
+use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{Serialize, Deserialize};
-
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -149,16 +148,27 @@ impl Folder {
     /// add a new folder
     pub fn add_folder(&self) -> Result<Folder, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
-
-        // Check if the path already exists
-        let folder_exists: bool = conn.query_row(
-            "SELECT EXISTS(SELECT 1 FROM folders WHERE path = ?1)",
+        
+        // Check if the folder exists
+        let existing_folder = conn.query_row(
+            "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM folders WHERE path = ?1",
             params![self.path],
-            |row| row.get(0)
-        ).map_err(|e| e.to_string())?;
+            |row| {
+                Ok(Folder {
+                    id: Some(row.get(0)?),
+                    album_id: row.get(1)?,
+                    parent_id: row.get(2)?,
+                    name: row.get(3)?,
+                    path: row.get(4)?,
+                    created_at: row.get(5)?,
+                    modified_at: row.get(6)?,
+                })
+            }
+        ).optional().map_err(|e| e.to_string())?;
 
-        if folder_exists {
-            return Err("The selected folder already exists.".to_string());
+        // If folder exists, return it
+        if let Some(folder) = existing_folder {
+            return Ok(folder);
         }
 
         // Insert the new folder into the database
@@ -180,24 +190,24 @@ impl Folder {
 
         // Fetch the newly inserted folder from the database
         let mut stmt = conn.prepare(
-            "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM folders
-            WHERE id = ?1"
+            "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM folders WHERE id = ?1"
         ).map_err(|e| e.to_string())?;
 
-        let folder = stmt.query_row(params![last_id], |row| {
+        let new_folder = stmt.query_row(params![last_id], |row| {
             Ok(Folder {
-                id: row.get(0)?,
+                id: Some(row.get(0)?),
                 album_id: row.get(1)?,
                 parent_id: row.get(2)?,
                 name: row.get(3)?,
                 path: row.get(4)?,
                 created_at: row.get(5)?,
-                modified_at: row.get(6)?
+                modified_at: row.get(6)?,
             })
         }).map_err(|e| e.to_string())?;
 
-        Ok(folder)
+        Ok(new_folder)
     }
+
 
     /// delete a folder
     pub fn delete_folder(id: i64) -> Result<()> {
@@ -238,6 +248,7 @@ pub struct File {
 /// Define the exif struct
 pub struct ExifData {
     pub id:             Option<i64>,        // unique id (autoincrement by db)
+    pub file_id:        i64,                // file id (from files table)
     pub make:           Option<String>,     // camera make
     pub model:          Option<String>,     // camera model
     pub date_time:      Option<String>,  
@@ -254,9 +265,10 @@ impl ExifData {
     pub fn save_to_db(&self) -> Result<()> {
         let conn = get_conn()?;
         conn.execute(
-            "INSERT INTO exif_data (make, model, date_time, exposure_time, f_number, iso_speed, focal_length) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT INTO exif_data (file_id, make, model, date_time, exposure_time, f_number, iso_speed, focal_length) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             params![
+                self.file_id,
                 self.make,
                 self.model,
                 self.date_time,
@@ -307,7 +319,7 @@ pub fn create_db() -> Result<String> {
             path TEXT NOT NULL,
             created_at INTEGER,
             modified_at INTEGER,
-            FOREIGN KEY (album_id) REFERENCES albums(id)
+            FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
         )",
         [],
     )?;
@@ -317,13 +329,11 @@ pub fn create_db() -> Result<String> {
         "CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             folder_id INTEGER NOT NULL,
-            exifdata_id INTEGER,
             name TEXT NOT NULL,
             size INTEGER NOT NULL,
             created_at INTEGER,
             modified_at INTEGER,
-            FOREIGN KEY (folder_id) REFERENCES folders(id),
-            FOREIGN KEY (exifdata_id) REFERENCES exif_data(id)
+            FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE
         )",
         [],
     )?;
@@ -339,7 +349,8 @@ pub fn create_db() -> Result<String> {
             exposure_time TEXT,
             f_number TEXT,
             iso_speed TEXT,
-            focal_length TEXT
+            focal_length TEXT,
+            FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
         )",
         [],
     )?;

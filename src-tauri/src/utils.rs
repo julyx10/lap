@@ -9,9 +9,9 @@ use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
 #[derive(serde::Serialize)]
 pub struct FileInfo {
     pub file_size: u64,
-    pub created: Option<SystemTime>,
-    pub modified: Option<SystemTime>,
-    pub accessed: Option<SystemTime>,
+    pub created:   Option<u64>,
+    pub modified:  Option<u64>,
+    // pub accessed:  Option<u64>,
     pub file_attributes: u32,
     // volume_serial_number: u32,  // identifies the disk or partition where the file is stored
     // number_of_links: u32,
@@ -29,7 +29,7 @@ pub fn get_file_info(path: String) -> io::Result<FileInfo> {
     let file_size = metadata.len();
     let created = metadata.created().ok();
     let modified = metadata.modified().ok();
-    let accessed = metadata.accessed().ok();
+    // let accessed = metadata.accessed().ok();
 
     // Windows-specific attributes
     let file_attributes = metadata.file_attributes();
@@ -39,9 +39,9 @@ pub fn get_file_info(path: String) -> io::Result<FileInfo> {
 
     Ok(FileInfo {
         file_size,
-        created,
-        modified,
-        accessed,
+        created:  systemtime_to_u64(created),
+        modified: systemtime_to_u64(modified),
+        // accessed: systemtime_to_u64(accessed),
         file_attributes,
         // volume_serial_number,
         // number_of_links,
@@ -81,42 +81,47 @@ pub fn get_path_name(path: String) -> String {
 
 /// Convert a SystemTime to a u64 timestamp (in seconds since UNIX_EPOCH)
 pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
-    time.and_then(|t| {
-        t.duration_since(UNIX_EPOCH)
-            .ok() // Convert Result to Option
-            .map(|d| d.as_secs()) // Convert Duration to u64 (in seconds)
-    })
-}
-
-
-/// Format a SystemTime into a human-readable string
-pub fn format_time(time: Option<SystemTime>) -> String {
     match time {
-        Some(time) => {
-            let datetime: chrono::DateTime<chrono::Local> = time.into();
-            datetime.format("%Y-%m-%d %H:%M").to_string()
-        },
-        None => "N/A".to_string(),
+        Some(t) => {
+            // Calculate the duration since UNIX_EPOCH
+            match t.duration_since(UNIX_EPOCH) {
+                Ok(duration) => Some(duration.as_secs()),
+                Err(_) => None, // Handle the case where `SystemTime` is before UNIX_EPOCH
+            }
+        }
+        None => None, // Return None if the input is None
     }
 }
 
 
-/// Format a file size into a human-readable string
-pub fn format_file_size(size: u64) -> String {
-    const KIB: u64 = 1024; // Kibibyte
-    const MIB: u64 = KIB * 1024; // Mebibyte
-    const GIB: u64 = MIB * 1024; // Gibibyte
+// /// Format a SystemTime into a human-readable string
+// pub fn format_time(time: Option<SystemTime>) -> String {
+//     match time {
+//         Some(time) => {
+//             let datetime: chrono::DateTime<chrono::Local> = time.into();
+//             datetime.format("%Y-%m-%d %H:%M").to_string()
+//         },
+//         None => "N/A".to_string(),
+//     }
+// }
 
-    if size < KIB {
-        format!("{} bytes", size)
-    } else if size < MIB {
-        format!("{:.2} KB", size as f64 / KIB as f64)
-    } else if size < GIB {
-        format!("{:.2} MB", size as f64 / MIB as f64)
-    } else {
-        format!("{:.2} GB", size as f64 / GIB as f64)
-    }
-}
+
+// /// Format a file size into a human-readable string
+// pub fn format_file_size(size: u64) -> String {
+//     const KIB: u64 = 1024; // Kibibyte
+//     const MIB: u64 = KIB * 1024; // Mebibyte
+//     const GIB: u64 = MIB * 1024; // Gibibyte
+
+//     if size < KIB {
+//         format!("{} bytes", size)
+//     } else if size < MIB {
+//         format!("{:.2} KB", size as f64 / KIB as f64)
+//     } else if size < GIB {
+//         format!("{:.2} MB", size as f64 / MIB as f64)
+//     } else {
+//         format!("{:.2} GB", size as f64 / GIB as f64)
+//     }
+// }
 
 
 /// List image files in a path

@@ -18,17 +18,15 @@
         <th class="p-1">Size</th>
         <th class="p-1">Created</th>
         <th class="p-1">Modified</th>
-        <th class="p-1">Accessed</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(file, index) in current_files" :key="index">
         <td>{{ index + 1 }}</td>
         <td>{{ file.file_name }}</td>
-        <td>{{ file.file_size }}</td>
-        <td>{{ file.created.nanos_since_epoch }}</td>
-        <td>{{ file.modified }}</td>
-        <td>{{ file.accessed }}</td>
+        <td>{{ formatFileSize(file.file_size) }}</td>
+        <td>{{ formatTimestamp(file.created) }}</td>
+        <td>{{ formatTimestamp(file.modified) }}</td>
       </tr>
     </tbody>
   </table>
@@ -40,6 +38,7 @@
 <script setup>
 import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
+import {formatTimestamp, formatFileSize } from '@/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';

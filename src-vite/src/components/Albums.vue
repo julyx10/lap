@@ -45,7 +45,7 @@
     v-if="showDeleteAlbumMsgbox"
     :visible="showDeleteAlbumMsgbox"
     :title="$t('delete_album_msgbox_title')"
-    :message="$t('delte_album_msgbox_content')"
+    :message="$t('delete_album_msgbox_content')"
     :confirmText="$t('delete_album_msgbox_ok')"
     :cancelText="$t('delete_album_msgbox_cancel')"
     @confirm="clickDeleteConfirm"

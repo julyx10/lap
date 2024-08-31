@@ -5,7 +5,7 @@
       <div 
         :class="[
           'm-1 flex items-center whitespace-nowrap hover:bg-gray-700', 
-          g_folder_id === child.id ? 'text-gray-300' : ''
+          child.id && g_folder_id === child.id ? 'text-gray-300' : ''
         ]" 
         @click="clickFolderName(child)"
       >
@@ -55,8 +55,9 @@ const g_folder_id = inject('g_folder_id'); // global folder id
 
 /// click folder to select
 const clickFolderName = async (folder) => {
-  g_album_id.value = props.album_id;
-  g_folder_id.value = folder.id;
+  // g_album_id.value = props.album_id;
+  // g_folder_id.value = folder.id;
+  // console.log('clickFolderName:', folder);
 
   try {
     const result = await invoke('add_folder', {
@@ -65,6 +66,12 @@ const clickFolderName = async (folder) => {
       name: folder.name,
       path: folder.path
     });
+
+    folder.id = result.id;
+    g_folder_id.value = folder.id;
+    g_album_id.value = props.album_id;
+
+    console.log('add_folder result:', result);
   } catch (error) {
     console.error("Error adding folder:", error);
   }

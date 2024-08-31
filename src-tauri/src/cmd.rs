@@ -9,7 +9,7 @@ use native_dialog::FileDialog;
 use exif::{In, Reader, Tag};
 use crate::db;
 use crate::utils;
-use crate::utils::systemtime_to_u64;
+// use crate::utils::systemtime_to_u64;
 
 
 /// get all albums
@@ -42,8 +42,8 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
                 description: None,
                 avatar_id: None,
                 display_order_id: None,
-                created_at: systemtime_to_u64(file_info.created),
-                modified_at: systemtime_to_u64(file_info.modified),
+                created_at: file_info.created,
+                modified_at: file_info.modified,
             };
 
             // Add the album to the database and return the result
@@ -65,9 +65,9 @@ pub fn delete_album(id: i64) -> Result<i64, String> {
     })?;
 
     // Attempt to delete all folders associated with the album
-    db::Folder::delete_all_folders(id).map_err(|e| {
-        format!("Error while deleting folders for album with id {}: {}", id, e.to_string())
-    })?;
+    // db::Folder::delete_all_folders(id).map_err(|e| {
+    //     format!("Error while deleting folders for album with id {}: {}", id, e.to_string())
+    // })?;
 
     // If both operations succeed, return the album id
     Ok(id)
@@ -85,8 +85,8 @@ pub fn add_folder(album_id: i64, parent_id: i64, name: String, path: String) -> 
         parent_id,
         name,
         path,
-        created_at: systemtime_to_u64(file_info.created),
-        modified_at: systemtime_to_u64(file_info.modified),
+        created_at: file_info.created,
+        modified_at: file_info.modified,
     };
 
     folder.add_folder()
@@ -125,6 +125,7 @@ pub fn open_file() -> Option<String> {
 
             let exit_data = db::ExifData {
                 id: None,
+                file_id: 0,
                 make: exif.get_field(Tag::Make, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string().replace("\"", "")),
                 model: exif.get_field(Tag::Model, In::PRIMARY)
