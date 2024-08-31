@@ -7,9 +7,9 @@ use std::fs;
 use std::io::BufReader;
 use native_dialog::FileDialog;
 use exif::{In, Reader, Tag};
-
 use crate::db;
 use crate::utils;
+use crate::utils::systemtime_to_u64;
 
 
 /// get all albums
@@ -34,17 +34,16 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
 
     match result {
         Ok(Some(path)) => {
+            let file_info = utils::get_file_info(path.to_string_lossy().to_string()).unwrap();
             let album = db::Album {
                 id: None,
-                order_id: None,
-                name: path.file_name()
-                    .and_then(|os_str| os_str.to_str())
-                    .unwrap_or("")
-                    .to_string(),
-                path: path.to_str().unwrap_or("").to_string(),
+                name: utils::get_path_name(path.to_string_lossy().to_string()),
+                path: path.to_string_lossy().to_string(),
                 description: None,
-                created_at: None,
-                updated_at: None,
+                avatar_id: None,
+                display_order_id: None,
+                created_at: systemtime_to_u64(file_info.created),
+                modified_at: systemtime_to_u64(file_info.modified),
             };
 
             // Add the album to the database and return the result
@@ -78,14 +77,16 @@ pub fn delete_album(id: i64) -> Result<i64, String> {
 // click a folder of an album to add folder to db
 #[tauri::command]
 pub fn add_folder(album_id: i64, parent_id: i64, name: String, path: String) -> Result<db::Folder, String> {
+    let file_info = utils::get_file_info(path.clone()).unwrap();
+
     let folder = db::Folder {
         id: None,
         album_id,
         parent_id,
         name,
         path,
-        created_at: None,
-        updated_at: None,
+        created_at: systemtime_to_u64(file_info.created),
+        modified_at: systemtime_to_u64(file_info.modified),
     };
 
     folder.add_folder()
@@ -124,7 +125,6 @@ pub fn open_file() -> Option<String> {
 
             let exit_data = db::ExifData {
                 id: None,
-                thumbnail_id: None,
                 make: exif.get_field(Tag::Make, In::PRIMARY)
                     .map(|field| field.display_value().with_unit(&exif).to_string().replace("\"", "")),
                 model: exif.get_field(Tag::Model, In::PRIMARY)

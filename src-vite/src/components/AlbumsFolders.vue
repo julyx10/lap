@@ -59,9 +59,9 @@ const clickFolderName = async (folder) => {
   g_folder_id.value = folder.id;
 
   try {
-    const result = await invoke('add_folder', { 
-      album_id: props.album_id, 
-      parent_id: 0,
+    const result = await invoke('add_folder', {
+      albumId: props.album_id, 
+      parentId: 0,
       name: folder.name,
       path: folder.path
     });
