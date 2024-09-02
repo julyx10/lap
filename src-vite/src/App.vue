@@ -6,19 +6,25 @@
     <div ref="toolbar" class="px-2 flex flex-col justify-between">
       <div>
         <component
-        v-for="(item, index) in toolbars"
-        :key="index"
-        :is="item.icon"
-        :class="[
-          'my-5 hover:text-gray-100 transition-colors duration-300', 
-          toolbar_index === index ? 'text-gray-300' : ''
-        ]"
-        @click="clickToolbar(index)"
-      />
+          v-for="(item, index) in toolbars"
+          :key="index"
+          :is="item.icon"
+          :class="[
+            'my-5 hover:text-gray-100 transition-colors duration-300', 
+            toolbar_index === index ? 'text-gray-300' : ''
+          ]" 
+          @click="clickToolbar(index)"
+        />
       </div>
       <div>
         <IconSettings class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickSettings" />
-        <IconBug class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickDebug" />
+        <IconBug 
+          :class="[
+            'my-5 hover:text-gray-100 transition-colors duration-300',
+            isDebugMenuOpen ? 'text-gray-300' : ''
+          ]" 
+          @click="clickDebug" 
+        />
       </div>
 
     </div>
@@ -45,6 +51,8 @@
       <Wall :titlebar="toolbars[toolbar_index].text"/>
     </div>
 
+    <!-- <ContextMenu :items="menuItems" @select="handleSelectedItem" /> -->
+
   </div>
 
 </template>
@@ -53,6 +61,7 @@
 <script setup lang="ts">
 
 import { ref, computed, provide, onMounted, onBeforeUnmount } from 'vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -96,25 +105,59 @@ const toolbar_index = ref(1); // index of the clicked icon
 provide('g_toolbar_index', toolbar_index);   
 
 
+/// click toolbar icons
 function clickToolbar(index) {
   console.log("clickToolbar...", toolbars.value[index].text);  
   toolbar_index.value = index;
 }
 
+/// click settings icon
 function clickSettings() {
   console.log('clickSettings...')
 }
 
-function clickDebug() {
-  console.log('clickDebug...')
 
-  // toggle locales
-  if (locale.value === 'en') {
-    locale.value = 'zh'
-  } else {
-    locale.value = 'en'
+const menuItems = ref([
+  { label: 'Toggle Locale', action: 'toggle-locale' },
+  { label: 'Option 2', action: 'option2' },
+  { label: 'Option 3', action: 'option3' },
+]);
+
+const handleSelectedItem = (item) => {
+  console.log('handleSelect:', item);
+  switch (item.action) {
+    case 'toggle-locale':
+      if (locale.value === 'en') {
+        locale.value = 'zh';
+      } else {
+        locale.value = 'en';
+      }
+  }
+};
+
+/// debug menu
+const isDebugMenuOpen = ref(false);
+
+function clickDebug() {
+  console.log('clickDebug...');
+  isDebugMenuOpen.value = !isDebugMenuOpen.value;
+}
+
+function menuAction(action) {
+  console.log('menuAction...', action);
+  switch (action) {
+    case 'locale':
+      if (locale.value === 'en') {
+        locale.value = 'zh';
+      } else {
+        locale.value = 'en';
+      }
+      break;
+    default:
+      console.log('menuAction...', action);
   }
 }
+
 
 /// Splitter for resizing the left pane
 const toolbar = ref(null);

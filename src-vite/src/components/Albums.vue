@@ -146,6 +146,7 @@ const clickRefresh = async () => {
 
 /// click a album to expand or collapse next level folders
 const clickAlbum = async (album) => {
+  console.log('clickAlbum...', album);
   try {
     g_album_id.value = album.id;
     g_folder_id.value = null;
@@ -158,7 +159,6 @@ const clickAlbum = async (album) => {
       const folders = await invoke('read_folders', { path: album.path });
       album.children = folders.children;
     }
-    console.log('click album...', album);
   } catch (error) {
     console.error('Error fetching folder tree:', error);
   }
@@ -167,22 +167,7 @@ const clickAlbum = async (album) => {
 
 /// double click a album to expand all levels sub-folders
 const dblclickAlbum = async (album) => {
-  // try {
-  //   g_album_index.value = index;
-  //   g_folder_id.value = -1;
-
-  //   // expand the album folder
-  //   g_albums.value[index].is_expanded = true; 
-    
-  //   if (!g_albums.value[index].children) {
-  //     // Fetch folder tree
-  //     const folders = await invoke('read_folders', { path: g_albums.value[index].path });
-  //     g_albums.value[index].children = folders.children;
-  //   }
-  //   console.log('dblclick album...', g_album_index, g_albums.value);
-  // } catch (error) {
-  //   console.error('Error fetching folder tree:', error);
-  // }
+  console.log('dblclickAlbum...', album);
 };
 
 
