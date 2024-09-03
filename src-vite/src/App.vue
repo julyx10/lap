@@ -53,6 +53,9 @@
 
     <!-- <ContextMenu :items="menuItems" @select="handleSelectedItem" /> -->
 
+    <div class="m-2 text-sm" v-if="isDebugMenuOpen">
+      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</button>
+    </div>
   </div>
 
 </template>

@@ -8,7 +8,8 @@ use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
 // file metadata struct
 #[derive(serde::Serialize)]
 pub struct FileInfo {
-    pub file_size: u64,
+    pub file_name: String,
+    pub file_type: Option<String>,
     pub created:   Option<u64>,
     pub modified:  Option<u64>,
     // pub accessed:  Option<u64>,
@@ -16,6 +17,7 @@ pub struct FileInfo {
     // volume_serial_number: u32,  // identifies the disk or partition where the file is stored
     // number_of_links: u32,
     // file_index: u64,   // uid of the file
+    pub file_size: u64,
 }
 
 
@@ -23,22 +25,24 @@ pub struct FileInfo {
 pub fn get_file_info(path: String) -> io::Result<FileInfo> {
     // Convert the string path into a Path object
     let path = Path::new(&path);
-
     let metadata = fs::metadata(path)?;
 
-    let file_size = metadata.len();
+    let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
+    let file_type = metadata.file_type().is_dir().then(|| "dir".to_string());
     let created = metadata.created().ok();
     let modified = metadata.modified().ok();
     // let accessed = metadata.accessed().ok();
-
+    
     // Windows-specific attributes
     let file_attributes = metadata.file_attributes();
     // let volume_serial_number = metadata.volume_serial_number();
     // let number_of_links = metadata.number_of_links();
     // let file_index = metadata.file_index();
+    let file_size = metadata.len();
 
     Ok(FileInfo {
-        file_size,
+        file_name,
+        file_type,
         created:  systemtime_to_u64(created),
         modified: systemtime_to_u64(modified),
         // accessed: systemtime_to_u64(accessed),
@@ -46,6 +50,7 @@ pub fn get_file_info(path: String) -> io::Result<FileInfo> {
         // volume_serial_number,
         // number_of_links,
         // file_index,
+        file_size,
     })
 }
 

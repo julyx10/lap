@@ -19,5 +19,8 @@
   "delete_album_msgbox_cancel": "否",
 
   "files": "文件",
-  "allphotos": "所有照片"
+  "allphotos": "所有照片",
+
+  "file_info_columns": ["ID", "名称", "类型", "创建时间", "修改时间", "大小"]
+
 }

@@ -19,5 +19,7 @@
   "delete_album_msgbox_cancel": "No",
   
   "files": "Files",
-  "allphotos": "All Photos"
+  "allphotos": "All Photos",
+
+  "file_info_columns": ["ID", "Name", "Type", "Created Time", "Modified Time", "Size"]
 }

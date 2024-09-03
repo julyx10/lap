@@ -10,23 +10,25 @@
 
 <div>
 
-  <table class="min-w-full divide-y divide-gray-200">
+  <table class="min-w-full divide-y divide-gray-600 cursor-pointer">
     <thead>
       <tr>
-        <th>ID</th>
-        <th class="p-1">Name</th>
-        <th class="p-1">Size</th>
-        <th class="p-1">Created</th>
-        <th class="p-1">Modified</th>
+        <th 
+          v-for="(column, index) in msg.file_info_columns" :key="index"
+          :class="['text-left',
+            index === 0  || index === 5 ? 'text-center' : '',
+          ]"
+        > {{ column }}</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(file, index) in current_files" :key="index">
-        <td>{{ index + 1 }}</td>
+      <tr v-for="(file, index) in current_files" :key="index" class="hover:bg-gray-700">
+        <td class="text-center py-1">{{ index + 1 }}</td>
         <td>{{ file.file_name }}</td>
-        <td>{{ formatFileSize(file.file_size) }}</td>
+        <td>{{ file.file_type }}</td>
         <td>{{ formatTimestamp(file.created) }}</td>
         <td>{{ formatTimestamp(file.modified) }}</td>
+        <td class="text-right">{{ formatFileSize(file.file_size) }}</td>
       </tr>
     </tbody>
   </table>
