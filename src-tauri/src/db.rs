@@ -6,6 +6,7 @@
 use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{Serialize, Deserialize};
 
+
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Album {
@@ -22,70 +23,73 @@ pub struct Album {
 
 impl Album {
 
-    /// add a new album
-    pub fn add_album(&self) -> Result<Album, String> {
-        let conn = get_conn().map_err(|e| e.to_string())?;
+    /// fetch an album from db by id
+    fn fetch(conn: &Connection, path: String) -> Result<Option<Album>, String> {
+        let album = conn.query_row(
+            "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at FROM albums WHERE path = ?1",
+            params![path],
+            |row| {
+                Ok(Album {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    path: row.get(2)?,
+                    description: row.get(3)?,
+                    avatar_id: row.get(4)?,
+                    display_order_id: row.get(5)?,
+                    created_at: row.get(6)?,
+                    modified_at: row.get(7)?
+                })
+            }
+        ).optional().map_err(|e| e.to_string())?;
+        Ok(album)
+    }
 
-        // Check if the path already exists
-        let album_exists: bool = conn.query_row(
-            "SELECT EXISTS(SELECT 1 FROM albums WHERE path = ?1)",
-            params![self.path],
-            |row| row.get(0)
+    /// insert an album into db
+    fn insert(&self, conn: &Connection) -> Result<usize, String> {
+        // Insert the new album into the db
+        let result = conn.execute(
+            "INSERT INTO albums (name, path, description, avatar_id, display_order_id, created_at, modified_at) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![
+                self.name,
+                self.path,
+                self.description,
+                self.avatar_id,
+                self.display_order_id,
+                self.created_at,
+                self.modified_at
+            ],
         ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
 
-        if album_exists {
-            return Err("The selected album already exists.".to_string());
+    /// insert the album into db if not exists
+    pub fn update_db(&mut self) -> Result<Album, String> {
+        let conn = get_conn().map_err(|e| e.to_string())?;
+        
+        // Check if the path already exists
+        let existing_album = Album::fetch(&conn, self.path.clone());
+        if let Ok(Some(album)) = existing_album {
+            return Err(format!("Album '{}' with the path '{}' already exists.", album.name, album.path));
         }
-
+                    
         // Determine the next display order id
-        let next_display_order_id: i64 = conn.query_row(
+        self.display_order_id = conn.query_row(
             "SELECT COALESCE(MAX(display_order_id), 0) + 1 FROM albums",
             params![],
             |row| row.get(0)
         ).map_err(|e| e.to_string())?;
 
         // Insert the new album into the database
-        conn.execute(
-            "INSERT INTO albums (name, path, description, avatar_id, display_order_id, created_at, modified_at) 
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            params![
-                self.name,
-                self.path,
-                self.description,
-                self.avatar_id,
-                next_display_order_id,
-                self.created_at,
-                self.modified_at
-            ],
-        ).map_err(|e| e.to_string())?;
+        Album::insert(&self, &conn)?;
 
-        // Get the ID of the newly inserted album
-        let last_id: i64 = conn.last_insert_rowid();
-
-        // Fetch the newly inserted album from the database
-        let mut stmt = conn.prepare(
-            "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at FROM albums
-            WHERE id = ?1"
-        ).map_err(|e| e.to_string())?;
-        
-        let album = stmt.query_row(params![last_id], |row| {
-            Ok(Album {
-                id:  row.get(0)?,
-                name: row.get(1)?,
-                path: row.get(2)?,
-                description: row.get(3)?,
-                avatar_id: row.get(4)?,
-                display_order_id: row.get(5)?,
-                created_at: row.get(6)?,
-                modified_at: row.get(7)?
-            })
-        }).map_err(|e| e.to_string())?;
-
-        Ok(album)
+        // return the newly inserted album
+        let new_album = Album::fetch(&conn, self.path.clone());
+        Ok(new_album.unwrap().unwrap())
     }
 
-    /// delete an album
-    pub fn delete_album(id: i64) -> Result<()> {
+    /// delete an album from the db
+    pub fn delete_from_db(id: i64) -> Result<()> {
         let conn = get_conn()?;
         conn.execute(
             "DELETE FROM albums WHERE id = ?1",
@@ -123,7 +127,6 @@ impl Album {
         for album in albums_iter {
             albums.push(album?);
         }
-
         Ok(albums)
     }
     
@@ -145,14 +148,11 @@ pub struct Folder {
 
 impl Folder {
 
-    /// add a new folder
-    pub fn add_folder(&self) -> Result<Folder, String> {
-        let conn = get_conn().map_err(|e| e.to_string())?;
-        
-        // Check if the folder exists
-        let existing_folder = conn.query_row(
+    /// fetch a folder row from db by path
+    fn fetch(conn: &Connection, path: String) -> Result<Option<Folder>, String> {
+        let folder = conn.query_row(
             "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM folders WHERE path = ?1",
-            params![self.path],
+            params![path],
             |row| {
                 Ok(Folder {
                     id: Some(row.get(0)?),
@@ -165,14 +165,13 @@ impl Folder {
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
+        Ok(folder)
+    }
 
-        // If folder exists, return it
-        if let Some(folder) = existing_folder {
-            return Ok(folder);
-        }
-
-        // Insert the new folder into the database
-        conn.execute(
+    /// insert a folder into db
+    fn insert(&self, conn: &Connection) -> Result<usize, String> {
+        // Insert the new folder into the db
+        let result = conn.execute(
             "INSERT INTO folders (album_id, parent_id, name, path, created_at, modified_at) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![
@@ -184,51 +183,36 @@ impl Folder {
                 self.modified_at
             ],
         ).map_err(|e| e.to_string())?;
-
-        // Get the ID of the newly inserted folder
-        let last_id: i64 = conn.last_insert_rowid();
-
-        // Fetch the newly inserted folder from the database
-        let mut stmt = conn.prepare(
-            "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM folders WHERE id = ?1"
-        ).map_err(|e| e.to_string())?;
-
-        let new_folder = stmt.query_row(params![last_id], |row| {
-            Ok(Folder {
-                id: Some(row.get(0)?),
-                album_id: row.get(1)?,
-                parent_id: row.get(2)?,
-                name: row.get(3)?,
-                path: row.get(4)?,
-                created_at: row.get(5)?,
-                modified_at: row.get(6)?,
-            })
-        }).map_err(|e| e.to_string())?;
-
-        Ok(new_folder)
+        Ok(result)
     }
 
+    /// insert the folder to db if not exists
+    pub fn update_db(&self) -> Result<Folder, String> {
+        let conn = get_conn().map_err(|e| e.to_string())?;
+        
+        // Check if the path already exists
+        let existing_folder = Folder::fetch(&conn, self.path.clone());
+        if let Ok(Some(folder)) = existing_folder {
+            return Ok(folder);
+        }
 
-    /// delete a folder
-    pub fn delete_folder(id: i64) -> Result<()> {
-        let conn = get_conn()?;
-        conn.execute(
-            "DELETE FROM folders WHERE id = ?1",
-            params![id],
-        )?;
-        Ok(())
+        // insert the new folder into the database
+        Folder::insert(&self, &conn)?;
+
+        // return the newly inserted folder
+        let new_folder = Folder::fetch(&conn, self.path.clone());
+        Ok(new_folder.unwrap().unwrap())
     }
 
-    /// delete all folders in an album
-    pub fn delete_all_folders(album_id: i64) -> Result<()> {
-        let conn = get_conn()?;
-        conn.execute(
-            "DELETE FROM folders WHERE album_id = ?1",
-            params![album_id],
-        )?;
-        Ok(())
-    }
-
+    // /// delete a folder from db
+    // pub fn delete_from_db(id: i64) -> Result<()> {
+    //     let conn = get_conn()?;
+    //     conn.execute(
+    //         "DELETE FROM folders WHERE id = ?1",
+    //         params![id],
+    //     )?;
+    //     Ok(())
+    // }
 }
 
 
@@ -237,11 +221,127 @@ impl Folder {
 pub struct File {
     pub id:             Option<i64>,    // unique id (autoincrement by db)
     pub folder_id:      i64,            // folder id (from folders table)
-    pub exifdata_id:    i64,            // exif metadata (from exif_data table)
     pub name:           String,         // file name
     pub size:           i64,            // file size
     pub created_at:     Option<u64>,    // file create time
     pub modified_at:    Option<u64>,    // file modified time
+}
+
+
+impl File {
+
+    /// fetch a file from db by folder_id and name
+    fn fetch(conn: &Connection, folder_id: i64, name: String) -> Result<Option<File>, String> {
+        let file = conn.query_row(
+            "SELECT id, folder_id, name, size, created_at, modified_at FROM files WHERE folder_id = ?1 AND name = ?2",
+            params![folder_id, name],
+            |row| {
+                Ok(File {
+                    id: Some(row.get(0)?),
+                    folder_id: row.get(1)?,
+                    name: row.get(2)?,
+                    size: row.get(3)?,
+                    created_at: row.get(4)?,
+                    modified_at: row.get(5)?,
+                })
+            }
+        ).optional().map_err(|e| e.to_string())?;
+        Ok(file)
+    }
+
+    /// insert a file into db
+    fn insert(&self, conn: &Connection) -> Result<usize, String> {
+        // Insert the new file into the db
+        let result = conn.execute(
+            "INSERT INTO files (folder_id, name, size, created_at, modified_at) 
+            VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                self.folder_id,
+                self.name,
+                self.size,
+                self.created_at,
+                self.modified_at
+            ],
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// insert a file info into db if not exists
+    pub fn update_db(&self) -> Result<File, String> {
+        let conn = get_conn().map_err(|e| e.to_string())?;
+        
+        // Check if the file exists
+        let existing_file = File::fetch(&conn, self.folder_id, self.name.clone());
+        if let Ok(Some(file)) = existing_file {
+            return Ok(file);
+        }
+
+        // If file exists, return it
+        if let Ok(Some(file)) = existing_file {
+            return Ok(file);
+        }
+
+        // insert the new file into the database
+        File::insert(&self, &conn)?;
+
+        // return the newly inserted file
+        let new_file = File::fetch(&conn, self.folder_id, self.name.clone());
+        Ok(new_file.unwrap().unwrap())
+    }
+
+}
+
+
+pub struct ThumbNail {
+    pub id:             Option<i64>,    // unique id (autoincrement by db)
+    pub file_id:        i64,            // file id (from files table)
+    pub thumb_data:     Vec<u8>,        // thumbnail data
+}
+
+
+impl ThumbNail {
+
+    /// fetch a thumbnail from db by file_id
+    fn fetch(conn: &Connection, file_id: i64) -> Result<Option<ThumbNail>, String> {
+        let thumbnail = conn.query_row(
+            "SELECT id, file_id, thumb_data FROM thumbnails WHERE file_id = ?1",
+            params![file_id],
+            |row| {
+                Ok(ThumbNail {
+                    id: Some(row.get(0)?),
+                    file_id: row.get(1)?,
+                    thumb_data: row.get(2)?,
+                })
+            }
+        ).optional().map_err(|e| e.to_string())?;
+        Ok(thumbnail)
+    }
+
+    /// insert a thumbnail into db if not exists
+    pub fn update_db(&self) -> Result<ThumbNail, String> {
+        let conn = get_conn().map_err(|e| e.to_string())?;
+        
+        // Check if the thumbnail exists
+        let existing_thumbnail = ThumbNail::fetch(&conn, self.file_id);
+        if let Ok(Some(thumbnail)) = existing_thumbnail {
+            return Ok(thumbnail);
+        }
+
+        // Insert the new thumbnail into the database
+        conn.execute(
+            "INSERT INTO thumbnails (file_id, thumb_data) 
+            VALUES (?1, ?2)",
+            params![
+                self.file_id,
+                self.thumb_data,
+            ],
+        ).map_err(|e| e.to_string())?;
+
+        // return the newly inserted thumbnail
+        let new_thumbnail = ThumbNail::fetch(&conn, self.file_id);
+        Ok(new_thumbnail.unwrap().unwrap())
+    }
+    
 }
 
 
@@ -261,8 +361,8 @@ pub struct ExifData {
 
 impl ExifData {
 
-    /// save a new exif data to the db
-    pub fn save_to_db(&self) -> Result<()> {
+    /// insert exif data into db
+    pub fn update_db(&self) -> Result<()> {
         let conn = get_conn()?;
         conn.execute(
             "INSERT INTO exif_data (file_id, make, model, date_time, exposure_time, f_number, iso_speed, focal_length) 
@@ -338,6 +438,17 @@ pub fn create_db() -> Result<String> {
         [],
     )?;
 
+    // thumbnail table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS thumbnails (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            thumb_data BLOB NOT NULL,
+            FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+        )",
+        [],
+    )?;
+    
     // exif_data table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS exif_data (

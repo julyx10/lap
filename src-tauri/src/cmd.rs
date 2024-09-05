@@ -34,8 +34,8 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
 
     match result {
         Ok(Some(path)) => {
-            let file_info = utils::get_file_info(path.to_string_lossy().to_string()).unwrap();
-            let album = db::Album {
+            let file_info = utils::FileInfo::new(path.to_string_lossy().to_string());
+            let mut album = db::Album {
                 id: None,
                 name: utils::get_path_name(path.to_string_lossy().to_string()),
                 path: path.to_string_lossy().to_string(),
@@ -47,7 +47,7 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
             };
 
             // Add the album to the database and return the result
-            album.add_album()
+            album.update_db()
                 .map_err(|e| format!("Error while adding album to DB: {}", e))
         },
         Ok(None) => Err("No folder selected".to_string()),
@@ -56,47 +56,41 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
 }
 
 
-/// delete an album, including all folders
+/// delete an album
 #[tauri::command]
 pub fn delete_album(id: i64) -> Result<i64, String> {
-    // Attempt to delete the album first
-    db::Album::delete_album(id).map_err(|e| {
+    db::Album::delete_from_db(id).map_err(|e| {
         format!("Error while deleting album with id {}: {}", id, e.to_string())
     })?;
 
-    // Attempt to delete all folders associated with the album
-    // db::Folder::delete_all_folders(id).map_err(|e| {
-    //     format!("Error while deleting folders for album with id {}: {}", id, e.to_string())
-    // })?;
-
-    // If both operations succeed, return the album id
+    // return the album id
     Ok(id)
 }
 
 
-// click a folder of an album to add folder to db
+// click a sub-folder under an album to add the folder to db
 #[tauri::command]
 pub fn add_folder(album_id: i64, parent_id: i64, name: String, path: String) -> Result<db::Folder, String> {
-    let file_info = utils::get_file_info(path.clone()).unwrap();
+    let file_info = utils::FileInfo::new(path.clone());
 
     let folder = db::Folder {
         id: None,
         album_id,
-        parent_id,
+        parent_id,  
         name,
         path,
         created_at: file_info.created,
         modified_at: file_info.modified,
     };
 
-    folder.add_folder()
+    folder.update_db()
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
 
-/// read folder
+/// Read folders from a path and build a FileNode
 #[tauri::command]
 pub fn read_folders(path: String) -> Result<utils::FileNode, String> {
-    utils::FileNode::read_folders(path)
+    utils::FileNode::build_nodes(path)
 }
 
 /// read image files
@@ -142,7 +136,7 @@ pub fn open_file() -> Option<String> {
                     .map(|field| field.display_value().with_unit(&exif).to_string()),
             };
 
-            exit_data.save_to_db().expect("error while saving to db");
+            exit_data.update_db().expect("error while saving to db");
             Some(path.to_str().unwrap().to_string())
         },
         Ok(None) => None,

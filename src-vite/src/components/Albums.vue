@@ -13,7 +13,7 @@
           g_album_id ? 'hover:text-gray-200 transition-colors duration-300' : 'text-gray-700'
         ]" 
         @click="showDeleteAlbumMsgbox = true" />
-      <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/>
+      <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
     </div>
   </div>
 
@@ -134,14 +134,14 @@ const clickDeleteConfirm = async () => {
 
 
 /// Refresh albums
-const clickRefresh = async () => {
-  await getAlbums(); // Refresh albums
+// const clickRefresh = async () => {
+//   await getAlbums(); // Refresh albums
 
-  g_album_id.value = null;
-  g_folder_id.value = null;
+//   g_album_id.value = null;
+//   g_folder_id.value = null;
 
-  console.log('Refresh albums');
-};
+//   console.log('Refresh albums');
+// };
 
 
 /// click a album to expand or collapse next level folders
