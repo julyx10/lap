@@ -25,19 +25,19 @@ pub fn get_albums() -> Result<Vec<db::Album>, String> {
 
 /// add an album
 #[tauri::command]
-pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, String> {
+pub fn add_album(window: tauri::Window, title: &str) -> Result<db::Album, String> {
     // Show open folder dialog
     let result = FileDialog::new()
-        .set_title(title.as_str())
+        .set_title(title)
         .set_owner(&window)
         .show_open_single_dir();
 
     match result {
         Ok(Some(path)) => {
-            let file_info = utils::FileInfo::new(path.to_string_lossy().to_string());
+            let file_info = utils::FileInfo::new(path.to_str().unwrap());
             let mut album = db::Album {
                 id: None,
-                name: utils::get_path_name(path.to_string_lossy().to_string()),
+                name: utils::get_path_name(path.to_str().unwrap()).to_string(),
                 path: path.to_string_lossy().to_string(),
                 description: None,
                 avatar_id: None,
@@ -47,7 +47,7 @@ pub fn add_album(window: tauri::Window, title: String) -> Result<db::Album, Stri
             };
 
             // Add the album to the database and return the result
-            album.update_db()
+            album.add_to_db()
                 .map_err(|e| format!("Error while adding album to DB: {}", e))
         },
         Ok(None) => Err("No folder selected".to_string()),
@@ -70,32 +70,32 @@ pub fn delete_album(id: i64) -> Result<i64, String> {
 
 // click a sub-folder under an album to add the folder to db
 #[tauri::command]
-pub fn add_folder(album_id: i64, parent_id: i64, name: String, path: String) -> Result<db::Folder, String> {
-    let file_info = utils::FileInfo::new(path.clone());
+pub fn add_folder(album_id: i64, parent_id: i64, name: &str, path: &str) -> Result<db::Folder, String> {
+    let file_info = utils::FileInfo::new(path);
 
     let folder = db::Folder {
         id: None,
         album_id,
         parent_id,  
-        name,
-        path,
+        name: name.to_string(),
+        path: path.to_string(),
         created_at: file_info.created,
         modified_at: file_info.modified,
     };
 
-    folder.update_db()
+    folder.add_to_db()
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
 
-/// Read folders from a path and build a FileNode
+/// expand folder from a path and build a FileNode
 #[tauri::command]
-pub fn read_folders(path: String) -> Result<utils::FileNode, String> {
+pub fn expand_folder(path: &str) -> Result<utils::FileNode, String> {
     utils::FileNode::build_nodes(path)
 }
 
 /// read image files
 #[tauri::command]
-pub fn read_image_files(path: String) -> Result<Vec<utils::FileInfo>, String> {
+pub fn read_image_files(path: &str) -> Result<Vec<utils::FileInfo>, String> {
     utils::list_image_files(path)
 }
 

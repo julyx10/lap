@@ -1,5 +1,4 @@
 use std::fs;
-use std::io;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use std::path::Path;
@@ -20,11 +19,11 @@ pub struct FileNode {
 impl FileNode {
     
     /// Create a new FileNode
-    fn new(name: String, path: String, is_dir: bool, is_expanded: bool) -> Self {
+    fn new(name: &str, path: &str, is_dir: bool, is_expanded: bool) -> Self {
         FileNode {
             id: None,
-            name,
-            path,
+            name: name.to_string(),
+            path: path.to_string(),
             is_dir,
             is_expanded,
             children: None,
@@ -32,7 +31,7 @@ impl FileNode {
     }
 
     /// Read folders from a path and build a FileNode
-    pub fn build_nodes(path: String) -> Result<FileNode, String> {
+    pub fn build_nodes(path: &str) -> Result<FileNode, String> {
         let root_path = Path::new(&path);
 
         // Check if the path exists and is a directory
@@ -46,8 +45,8 @@ impl FileNode {
 
         // // Create the root FileNode
         let mut root_node = FileNode::new(
-            get_path_name(path.clone()), 
-            path.clone(), 
+            get_path_name(path).as_str(), 
+            path, 
             true,
             false
         );
@@ -73,8 +72,8 @@ impl FileNode {
             if entry.file_type().is_dir() {
                 // let node = Self::build_file_node(&entry)?;
                 let node = FileNode::new(
-                    entry.file_name().to_string_lossy().into_owned(),
-                    entry.path().to_str().ok_or("Invalid path")?.to_string(),
+                    entry.file_name().to_string_lossy().as_ref(),
+                    entry.path().to_str().unwrap(),
                     entry.file_type().is_dir(),
                     false,
                 );
@@ -109,9 +108,9 @@ pub struct FileInfo {
 impl FileInfo {
 
     /// Get file info from a folder/file path (on Windows)
-    pub fn new(path: String) -> Self {
+    pub fn new(path: &str) -> Self {
         // Convert the string path into a Path object
-        let path = Path::new(&path);
+        let path = Path::new(path);
         let metadata = fs::metadata(path).unwrap();
 
         let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
@@ -154,7 +153,7 @@ fn is_image_extension(extension: &str) -> bool {
 
 
 /// List image files in a path
-pub fn list_image_files(path: String) -> Result<Vec<FileInfo>, String> {
+pub fn list_image_files(path: &str) -> Result<Vec<FileInfo>, String> {
     let mut files: Vec<FileInfo> = Vec::new();
 
     for entry in WalkDir::new(path)
@@ -166,7 +165,7 @@ pub fn list_image_files(path: String) -> Result<Vec<FileInfo>, String> {
         if path.is_file() {
             if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
                 if is_image_extension(extension) {
-                    files.push(FileInfo::new(path.to_str().unwrap().to_string()));
+                    files.push(FileInfo::new(path.to_str().unwrap()));
                 }
             }
         }
@@ -177,9 +176,9 @@ pub fn list_image_files(path: String) -> Result<Vec<FileInfo>, String> {
 
 
 /// Get the name from a folder or file path
-pub fn get_path_name(path: String) -> String {
+pub fn get_path_name(path: &str) -> String {
     // Convert the String into a Path object
-    let path = Path::new(&path);
+    let path = Path::new(path);
     
     // Extract the file name or last component of the path
     match path.file_name() {

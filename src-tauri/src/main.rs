@@ -42,7 +42,7 @@ fn main() {
             cmd::add_album, 
             cmd::delete_album,
             cmd::add_folder,
-            cmd::read_folders,
+            cmd::expand_folder,
             cmd::read_image_files,
             cmd::open_file]
         )

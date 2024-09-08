@@ -23,8 +23,8 @@ pub struct Album {
 
 impl Album {
 
-    /// fetch an album from db by id
-    fn fetch(conn: &Connection, path: String) -> Result<Option<Album>, String> {
+    /// fetch an album from db by path
+    fn fetch(conn: &Connection, path: &str) -> Result<Option<Album>, String> {
         let album = conn.query_row(
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at FROM albums WHERE path = ?1",
             params![path],
@@ -63,12 +63,12 @@ impl Album {
         Ok(result)
     }
 
-    /// insert the album into db if not exists
-    pub fn update_db(&mut self) -> Result<Album, String> {
+    /// add the album into db if not exists
+    pub fn add_to_db(&mut self) -> Result<Album, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
         // Check if the path already exists
-        let existing_album = Album::fetch(&conn, self.path.clone());
+        let existing_album = Album::fetch(&conn, self.path.as_str());
         if let Ok(Some(album)) = existing_album {
             return Err(format!("Album '{}' with the path '{}' already exists.", album.name, album.path));
         }
@@ -84,7 +84,7 @@ impl Album {
         Album::insert(&self, &conn)?;
 
         // return the newly inserted album
-        let new_album = Album::fetch(&conn, self.path.clone());
+        let new_album = Album::fetch(&conn, self.path.as_str());
         Ok(new_album.unwrap().unwrap())
     }
 
@@ -149,7 +149,7 @@ pub struct Folder {
 impl Folder {
 
     /// fetch a folder row from db by path
-    fn fetch(conn: &Connection, path: String) -> Result<Option<Folder>, String> {
+    fn fetch(conn: &Connection, path: &str) -> Result<Option<Folder>, String> {
         let folder = conn.query_row(
             "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM folders WHERE path = ?1",
             params![path],
@@ -187,11 +187,11 @@ impl Folder {
     }
 
     /// insert the folder to db if not exists
-    pub fn update_db(&self) -> Result<Folder, String> {
+    pub fn add_to_db(&self) -> Result<Folder, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
         // Check if the path already exists
-        let existing_folder = Folder::fetch(&conn, self.path.clone());
+        let existing_folder = Folder::fetch(&conn, self.path.as_str());
         if let Ok(Some(folder)) = existing_folder {
             return Ok(folder);
         }
@@ -200,7 +200,7 @@ impl Folder {
         Folder::insert(&self, &conn)?;
 
         // return the newly inserted folder
-        let new_folder = Folder::fetch(&conn, self.path.clone());
+        let new_folder = Folder::fetch(&conn, self.path.as_str());
         Ok(new_folder.unwrap().unwrap())
     }
 
@@ -231,7 +231,7 @@ pub struct File {
 impl File {
 
     /// fetch a file from db by folder_id and name
-    fn fetch(conn: &Connection, folder_id: i64, name: String) -> Result<Option<File>, String> {
+    fn fetch(conn: &Connection, folder_id: i64, name: &str) -> Result<Option<File>, String> {
         let file = conn.query_row(
             "SELECT id, folder_id, name, size, created_at, modified_at FROM files WHERE folder_id = ?1 AND name = ?2",
             params![folder_id, name],
@@ -267,11 +267,11 @@ impl File {
     }
 
     /// insert a file info into db if not exists
-    pub fn update_db(&self) -> Result<File, String> {
+    pub fn add_to_db(&self) -> Result<File, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
         // Check if the file exists
-        let existing_file = File::fetch(&conn, self.folder_id, self.name.clone());
+        let existing_file = File::fetch(&conn, self.folder_id, self.name.as_str());
         if let Ok(Some(file)) = existing_file {
             return Ok(file);
         }
@@ -285,7 +285,7 @@ impl File {
         File::insert(&self, &conn)?;
 
         // return the newly inserted file
-        let new_file = File::fetch(&conn, self.folder_id, self.name.clone());
+        let new_file = File::fetch(&conn, self.folder_id, self.name.as_str());
         Ok(new_file.unwrap().unwrap())
     }
 
@@ -318,7 +318,7 @@ impl ThumbNail {
     }
 
     /// insert a thumbnail into db if not exists
-    pub fn update_db(&self) -> Result<ThumbNail, String> {
+    pub fn add_to_db(&self) -> Result<ThumbNail, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
         // Check if the thumbnail exists
