@@ -126,8 +126,7 @@ watch(current_folder, async (new_folder) => {
 
 async function getImageFiles(path) {
   try {
-    const result = await invoke('read_image_files', { path: path });
-    current_files.value = result;
+    current_files.value = await invoke('read_image_files', { folderId: g_folder_id.value, path: path });;
     console.log('getImageFiles:', current_files.value);
   } catch (error) {
     console.error('getImageFiles error:', error);

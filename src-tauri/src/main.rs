@@ -11,9 +11,9 @@
  * GitHub:  /julyx10
  */
 
-mod cmd;
-mod db;
-mod utils;
+mod t_cmds;
+mod t_sqlite;
+mod t_utils;
 
 
 /// The main function is the entry point for the Tauri application.
@@ -21,7 +21,7 @@ fn main() {
     tauri::Builder::default()
         .setup(|_app| {
             // Create the database on startup
-            db::create_db().expect("error while creating the database");
+            t_sqlite::create_db().expect("error while creating the database");
 
             // let main_window = app.get_window("main").unwrap();
             // // Open devtools in development mode
@@ -38,14 +38,13 @@ fn main() {
             window.show().unwrap();
         })
         .invoke_handler(tauri::generate_handler![
-            cmd::get_albums,
-            cmd::add_album, 
-            cmd::delete_album,
-            cmd::add_folder,
-            cmd::expand_folder,
-            cmd::read_image_files,
-            cmd::open_file]
-        )
+            t_cmds::get_albums,
+            t_cmds::add_album, 
+            t_cmds::delete_album,
+            t_cmds::add_folder,
+            t_cmds::expand_folder,
+            t_cmds::read_image_files
+        ])
         .run(tauri::generate_context!())
         .expect("error while running application");
 }

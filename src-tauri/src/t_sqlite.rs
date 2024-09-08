@@ -2,9 +2,13 @@
  * The db.rs file is used to create a database and a table in it.
  * 
  */
+use std::path::Path;
 
 use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{Serialize, Deserialize};
+use exif::{In, Reader, Tag};
+
+use crate::t_utils::{self, FileInfo};
 
 
 /// Define the Album struct
@@ -133,9 +137,9 @@ impl Album {
 }
 
 
-/// Define the Folder struct
+/// Define the album's folder struct
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Folder {
+pub struct AFolder {
     pub id:             Option<i64>,    // unique id (autoincrement by db)
     pub album_id:       i64,            // album id (from albums table)
     pub parent_id:      i64,            // parent folder id
@@ -146,15 +150,15 @@ pub struct Folder {
 }
 
 
-impl Folder {
+impl AFolder {
 
     /// fetch a folder row from db by path
-    fn fetch(conn: &Connection, path: &str) -> Result<Option<Folder>, String> {
+    fn fetch(conn: &Connection, path: &str) -> Result<Option<AFolder>, String> {
         let folder = conn.query_row(
-            "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM folders WHERE path = ?1",
+            "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM afolders WHERE path = ?1",
             params![path],
             |row| {
-                Ok(Folder {
+                Ok(AFolder {
                     id: Some(row.get(0)?),
                     album_id: row.get(1)?,
                     parent_id: row.get(2)?,
@@ -172,7 +176,7 @@ impl Folder {
     fn insert(&self, conn: &Connection) -> Result<usize, String> {
         // Insert the new folder into the db
         let result = conn.execute(
-            "INSERT INTO folders (album_id, parent_id, name, path, created_at, modified_at) 
+            "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![
                 self.album_id,
@@ -187,20 +191,20 @@ impl Folder {
     }
 
     /// insert the folder to db if not exists
-    pub fn add_to_db(&self) -> Result<Folder, String> {
+    pub fn add_to_db(&self) -> Result<AFolder, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
         // Check if the path already exists
-        let existing_folder = Folder::fetch(&conn, self.path.as_str());
+        let existing_folder = AFolder::fetch(&conn, self.path.as_str());
         if let Ok(Some(folder)) = existing_folder {
             return Ok(folder);
         }
 
         // insert the new folder into the database
-        Folder::insert(&self, &conn)?;
+        AFolder::insert(&self, &conn)?;
 
         // return the newly inserted folder
-        let new_folder = Folder::fetch(&conn, self.path.as_str());
+        let new_folder = AFolder::fetch(&conn, self.path.as_str());
         Ok(new_folder.unwrap().unwrap())
     }
 
@@ -208,7 +212,7 @@ impl Folder {
     // pub fn delete_from_db(id: i64) -> Result<()> {
     //     let conn = get_conn()?;
     //     conn.execute(
-    //         "DELETE FROM folders WHERE id = ?1",
+    //         "DELETE FROM afolders WHERE id = ?1",
     //         params![id],
     //     )?;
     //     Ok(())
@@ -216,33 +220,89 @@ impl Folder {
 }
 
 
-/// Define the file struct
-#[allow(dead_code)]
-pub struct File {
+/// Define the album file struct
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AFile {
     pub id:             Option<i64>,    // unique id (autoincrement by db)
     pub folder_id:      i64,            // folder id (from folders table)
+
+    // file basic info
     pub name:           String,         // file name
-    pub size:           i64,            // file size
+    pub size:           u64,            // file size
     pub created_at:     Option<u64>,    // file create time
     pub modified_at:    Option<u64>,    // file modified time
+
+    // exif info
+    pub e_make:           Option<String>,   // camera make
+    pub e_model:          Option<String>,   // camera model
+    pub e_date_time:      Option<String>,   
+    pub e_exposure_time:  Option<String>,    
+    pub e_f_number:       Option<String>,
+    pub e_iso_speed:      Option<String>,
+    pub e_focal_length:   Option<String>,
 }
 
 
-impl File {
+impl AFile {
 
-    /// fetch a file from db by folder_id and name
-    fn fetch(conn: &Connection, folder_id: i64, name: &str) -> Result<Option<File>, String> {
+    /// create a new file info struct
+    pub fn new(folder_id: i64, path: &str) -> Self {
+        // file info
+        let file_info = FileInfo::new(path);
+
+        // parse exif info
+        let file = std::fs::File::open(path).unwrap();
+        let mut bufreader = std::io::BufReader::new(&file);
+        let exifreader = exif::Reader::new();
+        let exif = exifreader.read_from_container(&mut bufreader).unwrap();
+
+        AFile {
+            id: None,
+            folder_id: folder_id,
+            name: file_info.file_name,
+            size: file_info.file_size,
+            created_at:  file_info.created,
+            modified_at: file_info.modified,
+
+            e_make: exif.get_field(Tag::Make, In::PRIMARY)
+                .map(|field| field.display_value().with_unit(&exif).to_string().replace("\"", "")),
+            e_model: exif.get_field(Tag::Model, In::PRIMARY)
+                .map(|field| field.display_value().with_unit(&exif).to_string().replace("\"", "")),
+            e_date_time: exif.get_field(Tag::DateTime, In::PRIMARY)
+                .map(|field| field.display_value().with_unit(&exif).to_string()),
+            e_exposure_time: exif.get_field(Tag::ExposureTime, In::PRIMARY)
+                .map(|field| field.display_value().with_unit(&exif).to_string()),
+            e_f_number: exif.get_field(Tag::FNumber, In::PRIMARY)
+                .map(|field| field.display_value().with_unit(&exif).to_string()),
+            e_iso_speed: exif.get_field(Tag::PhotographicSensitivity, In::PRIMARY)
+                .map(|field| field.display_value().with_unit(&exif).to_string()),
+            e_focal_length: exif.get_field(Tag::FocalLength, In::PRIMARY)
+                .map(|field| field.display_value().with_unit(&exif).to_string()),            
+        }
+    }
+
+    /// fetch a file info from db by folder_id and file name
+    fn fetch(conn: &Connection, folder_id: i64, file_name: &str) -> Result<Option<AFile>, String> {
         let file = conn.query_row(
-            "SELECT id, folder_id, name, size, created_at, modified_at FROM files WHERE folder_id = ?1 AND name = ?2",
-            params![folder_id, name],
+            "SELECT id, folder_id, name, size, created_at, modified_at, 
+            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length 
+            FROM afiles WHERE folder_id = ?1 AND name = ?2",
+            params![folder_id, file_name],
             |row| {
-                Ok(File {
+                Ok(AFile {
                     id: Some(row.get(0)?),
                     folder_id: row.get(1)?,
                     name: row.get(2)?,
                     size: row.get(3)?,
                     created_at: row.get(4)?,
                     modified_at: row.get(5)?,
+                    e_make: row.get(6)?,
+                    e_model: row.get(7)?,
+                    e_date_time: row.get(8)?,
+                    e_exposure_time: row.get(9)?,
+                    e_f_number: row.get(10)?,
+                    e_iso_speed: row.get(11)?,
+                    e_focal_length: row.get(12)?,
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -253,61 +313,65 @@ impl File {
     fn insert(&self, conn: &Connection) -> Result<usize, String> {
         // Insert the new file into the db
         let result = conn.execute(
-            "INSERT INTO files (folder_id, name, size, created_at, modified_at) 
-            VALUES (?1, ?2, ?3, ?4, ?5)",
+            "INSERT INTO  afiles (folder_id, name, size, created_at, modified_at, 
+            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
                 self.folder_id,
                 self.name,
                 self.size,
                 self.created_at,
-                self.modified_at
+                self.modified_at,
+                self.e_make,
+                self.e_model,
+                self.e_date_time,
+                self.e_exposure_time,
+                self.e_f_number,
+                self.e_iso_speed,
+                self.e_focal_length,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// insert a file info into db if not exists
-    pub fn add_to_db(&self) -> Result<File, String> {
+    pub fn add_to_db(&self) -> Result<AFile, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
         // Check if the file exists
-        let existing_file = File::fetch(&conn, self.folder_id, self.name.as_str());
-        if let Ok(Some(file)) = existing_file {
-            return Ok(file);
-        }
-
-        // If file exists, return it
+        let existing_file = AFile::fetch(&conn, self.folder_id, self.name.as_str());
         if let Ok(Some(file)) = existing_file {
             return Ok(file);
         }
 
         // insert the new file into the database
-        File::insert(&self, &conn)?;
+        AFile::insert(&self, &conn)?;
 
         // return the newly inserted file
-        let new_file = File::fetch(&conn, self.folder_id, self.name.as_str());
+        let new_file = AFile::fetch(&conn, self.folder_id, self.name.as_str());
         Ok(new_file.unwrap().unwrap())
     }
 
 }
 
 
-pub struct ThumbNail {
+/// Define the album thumbnail struct
+pub struct AThumb {
     pub id:             Option<i64>,    // unique id (autoincrement by db)
     pub file_id:        i64,            // file id (from files table)
     pub thumb_data:     Vec<u8>,        // thumbnail data
 }
 
 
-impl ThumbNail {
+impl AThumb {
 
     /// fetch a thumbnail from db by file_id
-    fn fetch(conn: &Connection, file_id: i64) -> Result<Option<ThumbNail>, String> {
+    fn fetch(conn: &Connection, file_id: i64) -> Result<Option<AThumb>, String> {
         let thumbnail = conn.query_row(
-            "SELECT id, file_id, thumb_data FROM thumbnails WHERE file_id = ?1",
+            "SELECT id, file_id, thumb_data FROM athumbs WHERE file_id = ?1",
             params![file_id],
             |row| {
-                Ok(ThumbNail {
+                Ok(AThumb {
                     id: Some(row.get(0)?),
                     file_id: row.get(1)?,
                     thumb_data: row.get(2)?,
@@ -318,18 +382,18 @@ impl ThumbNail {
     }
 
     /// insert a thumbnail into db if not exists
-    pub fn add_to_db(&self) -> Result<ThumbNail, String> {
+    pub fn add_to_db(&self) -> Result<AThumb, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
         // Check if the thumbnail exists
-        let existing_thumbnail = ThumbNail::fetch(&conn, self.file_id);
+        let existing_thumbnail = AThumb::fetch(&conn, self.file_id);
         if let Ok(Some(thumbnail)) = existing_thumbnail {
             return Ok(thumbnail);
         }
 
         // Insert the new thumbnail into the database
         conn.execute(
-            "INSERT INTO thumbnails (file_id, thumb_data) 
+            "INSERT INTO athumbs (file_id, thumb_data) 
             VALUES (?1, ?2)",
             params![
                 self.file_id,
@@ -338,49 +402,12 @@ impl ThumbNail {
         ).map_err(|e| e.to_string())?;
 
         // return the newly inserted thumbnail
-        let new_thumbnail = ThumbNail::fetch(&conn, self.file_id);
+        let new_thumbnail = AThumb::fetch(&conn, self.file_id);
         Ok(new_thumbnail.unwrap().unwrap())
     }
     
 }
 
-
-/// Define the exif struct
-pub struct ExifData {
-    pub id:             Option<i64>,        // unique id (autoincrement by db)
-    pub file_id:        i64,                // file id (from files table)
-    pub make:           Option<String>,     // camera make
-    pub model:          Option<String>,     // camera model
-    pub date_time:      Option<String>,  
-    pub exposure_time:  Option<String>,
-    pub f_number:       Option<String>,
-    pub iso_speed:      Option<String>,
-    pub focal_length:   Option<String>,
-}
-
-
-impl ExifData {
-
-    /// insert exif data into db
-    pub fn update_db(&self) -> Result<()> {
-        let conn = get_conn()?;
-        conn.execute(
-            "INSERT INTO exif_data (file_id, make, model, date_time, exposure_time, f_number, iso_speed, focal_length) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                self.file_id,
-                self.make,
-                self.model,
-                self.date_time,
-                self.exposure_time,
-                self.f_number,
-                self.iso_speed,
-                self.focal_length,
-            ],
-        )?;
-        Ok(())
-    }
-}
 
 
 /// get connection to the db
@@ -409,9 +436,9 @@ pub fn create_db() -> Result<String> {
         [],
     )?;
 
-    // folders table
+    // album folders table
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS folders (
+        "CREATE TABLE IF NOT EXISTS afolders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             album_id INTEGER NOT NULL,
             parent_id INTEGER NOT NULL,
@@ -424,48 +451,38 @@ pub fn create_db() -> Result<String> {
         [],
     )?;
 
-    // files table
+    // album files table
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS files (
+        "CREATE TABLE IF NOT EXISTS afiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             folder_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             size INTEGER NOT NULL,
             created_at INTEGER,
             modified_at INTEGER,
-            FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE
+            e_make TEXT,
+            e_model TEXT,
+            e_date_time TEXT,
+            e_exposure_time TEXT,
+            e_f_number TEXT,
+            e_iso_speed TEXT,
+            e_focal_length TEXT,
+            FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
     )?;
 
-    // thumbnail table
+    // album thumbnail table
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS thumbnails (
+        "CREATE TABLE IF NOT EXISTS athumbs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_id INTEGER NOT NULL,
             thumb_data BLOB NOT NULL,
-            FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+            FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
         )",
         [],
     )?;
     
-    // exif_data table
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS exif_data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_id INTEGER NOT NULL,
-            make TEXT,
-            model TEXT,
-            date_time TEXT,
-            exposure_time TEXT,
-            f_number TEXT,
-            iso_speed TEXT,
-            focal_length TEXT,
-            FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
-        )",
-        [],
-    )?;
-
     Ok("Database created successfully.".to_string())
 }
 

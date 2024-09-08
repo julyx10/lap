@@ -93,6 +93,7 @@ impl FileNode {
 // file metadata struct
 #[derive(serde::Serialize)]
 pub struct FileInfo {
+    pub file_path: String,
     pub file_name: String,
     pub file_type: Option<String>,
     pub created:   Option<u64>,
@@ -108,11 +109,12 @@ pub struct FileInfo {
 impl FileInfo {
 
     /// Get file info from a folder/file path (on Windows)
-    pub fn new(path: &str) -> Self {
+    pub fn new(file_path: &str) -> Self {
         // Convert the string path into a Path object
-        let path = Path::new(path);
+        let path = Path::new(file_path);
         let metadata = fs::metadata(path).unwrap();
 
+        let file_path = file_path.to_string();
         let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
         let file_type = metadata.file_type().is_dir().then(|| "dir".to_string());
         let created = metadata.created().ok();
@@ -127,6 +129,7 @@ impl FileInfo {
         let file_size = metadata.len();
 
         FileInfo {
+            file_path,
             file_name,
             file_type,
             created:  systemtime_to_u64(created),
@@ -144,7 +147,7 @@ impl FileInfo {
 
 
 /// Check if a file extension is an image extension
-fn is_image_extension(extension: &str) -> bool {
+pub fn is_image_extension(extension: &str) -> bool {
     match extension.to_lowercase().as_str() {
         "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" => true,
         _ => false,
