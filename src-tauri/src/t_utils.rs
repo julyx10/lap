@@ -1,9 +1,11 @@
 use std::fs;
+use std::fs::File;
+use std::io::Cursor;
+use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
-use std::path::Path;
 use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
-
+use image::{GenericImageView, DynamicImage};
 
 /// FileNode struct to represent a file system node
 #[derive(serde::Serialize)]
@@ -180,4 +182,22 @@ pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
         }
         None => None, // Return None if the input is None
     }
+}
+
+
+/// Resize an image to create a thumbnail and return it as a vector of bytes
+pub fn get_thumbnail(image_path: &str, thumbnail_size: u32) -> Result<Vec<u8>, String> {
+    // Open the image file
+    let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+
+    // Resize the image to a thumbnail
+    let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
+
+    // Save thumbnail to an in-memory buffer as PNG
+    let mut buf = Vec::new();
+    thumbnail
+        .write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png)
+        .map_err(|e| format!("Failed to write thumbnail to buffer: {}", e))?;
+
+    Ok(buf)
 }

@@ -8,7 +8,7 @@ use std::io::BufReader;
 use native_dialog::FileDialog;
 use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
 use exif::{In, Reader, Tag};
-use crate::t_sqlite::{ Album, AFolder, AFile };
+use crate::t_sqlite::{ AFile, AFolder, AThumb, Album };
 use crate::t_utils;
 
 
@@ -110,9 +110,15 @@ pub fn add_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
         if entry_path.is_file() {
             if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
                 if t_utils::is_image_extension(extension) {
+
+                    // Create a new AFile instance and add it to the database
                     let file = AFile::new(folder_id, entry_path.to_str().unwrap()).map_err(|e| format!("Error while creating file: {}", e))?;
                     file.add_to_db().map_err(|e| format!("Error while adding file to DB: {}", e))?;
-
+                    
+                    // Create a thumbnail for the image
+                    let thumb = AThumb::new(file.id.unwrap(), entry_path.to_str().unwrap()).map_err(|e| format!("Error while creating thumb: {}", e))?;
+                    thumb.add_to_db().map_err(|e| format!("Error while adding thumb to DB: {}", e))?;
+                    
                     files.push(file);
                 }
             }

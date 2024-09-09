@@ -3,7 +3,7 @@
   "album": "相册",
   "calendar": "日历",
   "people": "人物",
-  "map": "地点",
+  "map": "地图",
   "camera": "相机",
 
   "settings": "设置",
@@ -21,6 +21,6 @@
   "files": "文件",
   "allphotos": "所有照片",
 
-  "file_info_columns": ["ID", "名称", "类型", "创建时间", "修改时间", "大小"]
+  "file_info_columns": ["ID", "名称", "创建时间", "修改时间", "照相机", "大小"]
 
 }

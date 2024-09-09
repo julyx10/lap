@@ -22,13 +22,19 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(file, index) in current_files" :key="index" class="hover:bg-gray-700">
+      <tr 
+        v-for="(file, index) in file_list" :key="index" 
+        :class="['hover:bg-gray-700', 
+          index === selected_file_index ? 'text-gray-300 bg-gray-600' : '',
+        ]" 
+        @click="clickFile(index)"
+      >
         <td class="text-center py-1">{{ index + 1 }}</td>
-        <td>{{ file.file_name }}</td>
-        <td>{{ file.file_type }}</td>
-        <td>{{ formatTimestamp(file.created) }}</td>
-        <td>{{ formatTimestamp(file.modified) }}</td>
-        <td class="text-right">{{ formatFileSize(file.file_size) }}</td>
+        <td>{{ file.name }}</td>
+        <td>{{ formatTimestamp(file.created_at) }}</td>
+        <td>{{ formatTimestamp(file.modified_at) }}</td>
+        <td>{{ file.e_model }}</td>
+        <td class="text-right">{{ formatFileSize(file.size) }}</td>
       </tr>
     </tbody>
   </table>
@@ -62,7 +68,8 @@ const g_album_id = inject('g_album_id');     // global album id
 const g_folder_id = inject('g_folder_id');   // global folder id
 
 const current_folder = ref('');
-const current_files = ref([]);
+const file_list = ref([]);
+const selected_file_index = ref(null);
 
 const getAlbumById = (id) => g_albums.value.find(album => album.id === id);
 
@@ -120,6 +127,8 @@ function getFolder(album, child_id) {
 watch(current_folder, async (new_folder) => {
   if (new_folder) {
     await addFiles(new_folder.path);
+
+    selected_file_index.value = null;
   }
 });
 
@@ -127,12 +136,25 @@ watch(current_folder, async (new_folder) => {
 /// try to add all files under the path
 async function addFiles(path) {
   try {
-    current_files.value = await invoke('add_files', { folderId: g_folder_id.value, path: path });;
-    console.log('addFiles:', current_files.value);
+    file_list.value = await invoke('add_files', { folderId: g_folder_id.value, path: path });;
+    console.log('addFiles:', file_list.value);
   } catch (error) {
     console.error('addFiles error:', error);
   }
 };
+
+
+/// Click a file
+function clickFile(index) {
+  selected_file_index.value = index;
+}
+
+/// Watch for changes in selected_file_index
+watch (selected_file_index, (new_index) => {
+  if (new_index !== null) {
+    console.log('selected_file_index...', file_list.value[new_index]);
+  }
+});
 
 </script>
   
