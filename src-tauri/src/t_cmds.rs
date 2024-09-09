@@ -8,15 +8,15 @@ use std::io::BufReader;
 use native_dialog::FileDialog;
 use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
 use exif::{In, Reader, Tag};
-use crate::t_sqlite;
+use crate::t_sqlite::{ Album, AFolder, AFile };
 use crate::t_utils;
 
 
 /// get all albums
 #[tauri::command]
-pub fn get_albums() -> Result<Vec<t_sqlite::Album>, String> {
+pub fn get_albums() -> Result<Vec<Album>, String> {
     // Call the database function and handle errors
-    match t_sqlite::Album::get_all_albums() {
+    match Album::get_all_albums() {
         Ok(albums) => Ok(albums),
         Err(e) => Err(format!("Error fetching albums: {}", e)),
     }
@@ -25,7 +25,7 @@ pub fn get_albums() -> Result<Vec<t_sqlite::Album>, String> {
 
 /// add an album
 #[tauri::command]
-pub fn add_album(window: tauri::Window, title: &str) -> Result<t_sqlite::Album, String> {
+pub fn add_album(window: tauri::Window, title: &str) -> Result<Album, String> {
     // Show open folder dialog
     let result = FileDialog::new()
         .set_title(title)
@@ -35,7 +35,7 @@ pub fn add_album(window: tauri::Window, title: &str) -> Result<t_sqlite::Album, 
     match result {
         Ok(Some(path)) => {
             let file_info = t_utils::FileInfo::new(path.to_str().unwrap());
-            let mut album = t_sqlite::Album {
+            let mut album = Album {
                 id: None,
                 name: t_utils::get_path_name(path.to_str().unwrap()).to_string(),
                 path: path.to_string_lossy().to_string(),
@@ -59,7 +59,7 @@ pub fn add_album(window: tauri::Window, title: &str) -> Result<t_sqlite::Album, 
 /// delete an album
 #[tauri::command]
 pub fn delete_album(id: i64) -> Result<i64, String> {
-    t_sqlite::Album::delete_from_db(id).map_err(|e| {
+    Album::delete_from_db(id).map_err(|e| {
         format!("Error while deleting album with id {}: {}", id, e.to_string())
     })?;
 
@@ -70,10 +70,10 @@ pub fn delete_album(id: i64) -> Result<i64, String> {
 
 // click a sub-folder under an album to add the folder to db
 #[tauri::command]
-pub fn add_folder(album_id: i64, parent_id: i64, name: &str, path: &str) -> Result<t_sqlite::AFolder, String> {
+pub fn add_folder(album_id: i64, parent_id: i64, name: &str, path: &str) -> Result<AFolder, String> {
     let file_info = t_utils::FileInfo::new(path);
 
-    let folder = t_sqlite::AFolder {
+    let folder = AFolder {
         id: None,
         album_id,
         parent_id,  
@@ -87,17 +87,20 @@ pub fn add_folder(album_id: i64, parent_id: i64, name: &str, path: &str) -> Resu
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
 
-/// expand folder from a path and build a FileNode
+
+/// expand folder to recurse sub-folders and build a FileNode
 #[tauri::command]
 pub fn expand_folder(path: &str) -> Result<t_utils::FileNode, String> {
     t_utils::FileNode::build_nodes(path)
 }
 
-/// read image files
-#[tauri::command]
-pub fn read_image_files(folder_id: i64, path: &str) -> Result<Vec<t_sqlite::AFile>, String> {
-    let mut files: Vec<t_sqlite::AFile> = Vec::new();
 
+/// add image files
+#[tauri::command]
+pub fn add_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
+    let mut files: Vec<AFile> = Vec::new();
+
+    // Use WalkDir to iterate over directory entries
     for entry in WalkDir::new(path)
         .min_depth(1)
         .max_depth(1)
@@ -107,10 +110,10 @@ pub fn read_image_files(folder_id: i64, path: &str) -> Result<Vec<t_sqlite::AFil
         if entry_path.is_file() {
             if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
                 if t_utils::is_image_extension(extension) {
-                    let a_file = t_sqlite::AFile::new(folder_id, entry_path.to_str().unwrap());
-                    a_file.add_to_db().map_err(|e| format!("Error while adding file to DB: {}", e))?;
+                    let file = AFile::new(folder_id, entry_path.to_str().unwrap()).map_err(|e| format!("Error while creating file: {}", e))?;
+                    file.add_to_db().map_err(|e| format!("Error while adding file to DB: {}", e))?;
 
-                    files.push(a_file);
+                    files.push(file);
                 }
             }
         }
@@ -119,3 +122,10 @@ pub fn read_image_files(folder_id: i64, path: &str) -> Result<Vec<t_sqlite::AFil
     Ok(files)
 }
 
+
+/// get files by folder id
+#[tauri::command]
+pub fn get_files(folder_id: i64) -> Result<Vec<AFile>, String> {
+    AFile::get_all_files(folder_id)
+        .map_err(|e| format!("Error while getting files: {}", e))
+}

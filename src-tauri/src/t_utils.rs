@@ -155,29 +155,6 @@ pub fn is_image_extension(extension: &str) -> bool {
 }
 
 
-/// List image files in a path
-pub fn list_image_files(path: &str) -> Result<Vec<FileInfo>, String> {
-    let mut files: Vec<FileInfo> = Vec::new();
-
-    for entry in WalkDir::new(path)
-        .min_depth(1)
-        .max_depth(1)
-        .into_iter().filter_map(|e| e.ok()) {
-        
-        let path = entry.path();
-        if path.is_file() {
-            if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
-                if is_image_extension(extension) {
-                    files.push(FileInfo::new(path.to_str().unwrap()));
-                }
-            }
-        }
-    }
-
-    Ok(files)
-}
-
-
 /// Get the name from a folder or file path
 pub fn get_path_name(path: &str) -> String {
     // Convert the String into a Path object

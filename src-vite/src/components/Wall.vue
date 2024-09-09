@@ -119,17 +119,18 @@ function getFolder(album, child_id) {
 /// Watch for changes in file_path and update filelist accordingly
 watch(current_folder, async (new_folder) => {
   if (new_folder) {
-    await getImageFiles(new_folder.path);
+    await addFiles(new_folder.path);
   }
 });
 
 
-async function getImageFiles(path) {
+/// try to add all files under the path
+async function addFiles(path) {
   try {
-    current_files.value = await invoke('read_image_files', { folderId: g_folder_id.value, path: path });;
-    console.log('getImageFiles:', current_files.value);
+    current_files.value = await invoke('add_files', { folderId: g_folder_id.value, path: path });;
+    console.log('addFiles:', current_files.value);
   } catch (error) {
-    console.error('getImageFiles error:', error);
+    console.error('addFiles error:', error);
   }
 };
 

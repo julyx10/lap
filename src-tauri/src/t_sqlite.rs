@@ -246,17 +246,28 @@ pub struct AFile {
 impl AFile {
 
     /// create a new file info struct
-    pub fn new(folder_id: i64, path: &str) -> Self {
+    pub fn new(folder_id: i64, path: &str) -> Result<Self, String> {
         // file info
         let file_info = FileInfo::new(path);
 
-        // parse exif info
-        let file = std::fs::File::open(path).unwrap();
-        let mut bufreader = std::io::BufReader::new(&file);
-        let exifreader = exif::Reader::new();
-        let exif = exifreader.read_from_container(&mut bufreader).unwrap();
+        // Attempt to open the file
+        let file = std::fs::File::open(path).map_err(|e| {
+            format!("Error opening file: {}", e)
+        })?;
 
-        AFile {
+        // Create a buffered reader
+        let mut bufreader = std::io::BufReader::new(&file);
+
+        // Create an EXIF reader and attempt to read EXIF data
+        let exifreader = exif::Reader::new();
+        let exif = match exifreader.read_from_container(&mut bufreader) {
+            Ok(exif) => exif,
+            Err(e) => {
+                return Err(format!("Error reading EXIF data: {}", e)); // Return the error
+            }
+        };
+
+        Ok(AFile {
             id: None,
             folder_id: folder_id,
             name: file_info.file_name,
@@ -278,7 +289,7 @@ impl AFile {
                 .map(|field| field.display_value().with_unit(&exif).to_string()),
             e_focal_length: exif.get_field(Tag::FocalLength, In::PRIMARY)
                 .map(|field| field.display_value().with_unit(&exif).to_string()),            
-        }
+        })
     }
 
     /// fetch a file info from db by folder_id and file name
@@ -334,7 +345,7 @@ impl AFile {
         Ok(result)
     }
 
-    /// insert a file info into db if not exists
+    /// insert a file into db if not exists
     pub fn add_to_db(&self) -> Result<AFile, String> {
         let conn = get_conn().map_err(|e| e.to_string())?;
         
@@ -350,6 +361,44 @@ impl AFile {
         // return the newly inserted file
         let new_file = AFile::fetch(&conn, self.folder_id, self.name.as_str());
         Ok(new_file.unwrap().unwrap())
+    }
+
+    /// Get all files from the db by folder_id
+    pub fn get_all_files(folder_id: i64) -> Result<Vec<AFile>> {
+        let conn = get_conn()?;
+        
+        // Prepare the SQL query to fetch all files by folder_id
+        let mut stmt = conn.prepare(
+            "SELECT id, folder_id, name, size, created_at, modified_at, 
+            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length 
+            FROM afiles WHERE folder_id = ?1"
+        )?;
+        
+        // Execute the query and map the result to AFile structs
+        let files_iter = stmt.query_map(params![folder_id], |row| {
+            Ok(AFile {
+                id: row.get(0)?,
+                folder_id: row.get(1)?,
+                name: row.get(2)?,
+                size: row.get(3)?,
+                created_at: row.get(4)?,
+                modified_at: row.get(5)?,
+                e_make: row.get(6)?,
+                e_model: row.get(7)?,
+                e_date_time: row.get(8)?,
+                e_exposure_time: row.get(9)?,
+                e_f_number: row.get(10)?,
+                e_iso_speed: row.get(11)?,
+                e_focal_length: row.get(12)?,
+            })
+        })?;
+        
+        // Collect the results into a Vec<AFile>
+        let mut files = Vec::new();
+        for file in files_iter {
+            files.push(file?);
+        }
+        Ok(files)
     }
 
 }
