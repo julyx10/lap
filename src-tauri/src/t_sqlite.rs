@@ -471,7 +471,10 @@ impl AThumb {
 
 /// get connection to the db
 fn get_conn() -> Connection {
-    Connection::open("./main.db").map_err(|e| e.to_string()).unwrap()
+    let conn = Connection::open("./main.db").map_err(|e| e.to_string()).unwrap();
+    conn.execute("PRAGMA foreign_keys = ON", []).unwrap();
+
+    conn
 }
 
 
