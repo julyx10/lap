@@ -1,11 +1,12 @@
 use std::fs;
-use std::fs::File;
-use std::io::Cursor;
+// use std::fs::File;
+// use std::io::Cursor;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
-use image::{GenericImageView, DynamicImage};
+// use image::{GenericImageView, DynamicImage};
+
 
 /// FileNode struct to represent a file system node
 #[derive(serde::Serialize)]
@@ -15,25 +16,25 @@ pub struct FileNode {
     path: String,           // folder path
     is_dir: bool,           // is directory
     is_expanded: bool,
-    children: Option<Vec<FileNode>>,
+    children: Option<Vec<Self>>,
 }
 
 impl FileNode {
     
     /// Create a new FileNode
-    fn new(name: &str, path: &str, is_dir: bool, is_expanded: bool) -> Self {
+    fn new(path: &str, is_dir: bool, is_expanded: bool) -> Self {
         FileNode {
             id: None,
-            name: name.to_string(),
+            name: get_path_name(path),
             path: path.to_string(),
-            is_dir,
+            is_dir: true,
             is_expanded,
             children: None,
         }
     }
 
     /// Read folders from a path and build a FileNode
-    pub fn build_nodes(path: &str) -> Result<FileNode, String> {
+    pub fn build_nodes(path: &str, is_recursive: bool) -> Result<Self, String> {
         let root_path = Path::new(&path);
 
         // Check if the path exists and is a directory
@@ -45,22 +46,17 @@ impl FileNode {
             return Err(format!("Path is not a directory: {}", path));
         }
 
-        // // Create the root FileNode
-        let mut root_node = FileNode::new(
-            get_path_name(path).as_str(), 
-            path, 
-            true,
-            false
-        );
+        // Create the root FileNode
+        let mut root_node = FileNode::new(path, root_path.is_dir(), false);
 
         // Recursively read subfolders and files
-        root_node.children = Some(Self::recurse_nodes(root_path)?);
+        root_node.children = Some(Self::recurse_nodes(root_path, is_recursive)?);
 
         Ok(root_node)
     }
 
     /// Recurse sub-folders 
-    fn recurse_nodes(path: &Path) -> Result<Vec<FileNode>, String> {
+    fn recurse_nodes(path: &Path, is_recursive: bool) -> Result<Vec<Self>, String> {
         let mut nodes: Vec<FileNode> = Vec::new();
 
         // Use WalkDir to iterate over directory entries
@@ -72,16 +68,17 @@ impl FileNode {
         {
             let entry = entry.map_err(|e| e.to_string())?;
             if entry.file_type().is_dir() {
-                // let node = Self::build_file_node(&entry)?;
-                let node = FileNode::new(
-                    entry.file_name().to_string_lossy().as_ref(),
+                let mut node = FileNode::new(
                     entry.path().to_str().unwrap(),
-                    entry.file_type().is_dir(),
+                    true,
                     false,
                 );
-
+                
                 // Recursively process subdirectories
-                // node.children = Some(Self::recurse_nodes(entry.path())?);
+                if is_recursive {
+                    node.children = Some(Self::recurse_nodes(entry.path(), is_recursive)?);
+                }
+
                 nodes.push(node);
             }
         }
@@ -101,6 +98,8 @@ pub struct FileInfo {
     pub created:   Option<u64>,
     pub modified:  Option<u64>,
     // pub accessed:  Option<u64>,
+
+    // Windows-specific attributes
     pub file_attributes: u32,
     // volume_serial_number: u32,  // identifies the disk or partition where the file is stored
     // number_of_links: u32,
@@ -116,32 +115,19 @@ impl FileInfo {
         let path = Path::new(file_path);
         let metadata = fs::metadata(path).unwrap();
 
-        let file_path = file_path.to_string();
-        let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
-        let file_type = metadata.file_type().is_dir().then(|| "dir".to_string());
-        let created = metadata.created().ok();
-        let modified = metadata.modified().ok();
-        // let accessed = metadata.accessed().ok();
-        
-        // Windows-specific attributes
-        let file_attributes = metadata.file_attributes();
-        // let volume_serial_number = metadata.volume_serial_number();
-        // let number_of_links = metadata.number_of_links();
-        // let file_index = metadata.file_index();
-        let file_size = metadata.len();
-
         FileInfo {
-            file_path,
-            file_name,
-            file_type,
-            created:  systemtime_to_u64(created),
-            modified: systemtime_to_u64(modified),
-            // accessed: systemtime_to_u64(accessed),
-            file_attributes,
-            // volume_serial_number,
-            // number_of_links,
-            // file_index,
-            file_size,
+            file_path: file_path.to_string(),
+            file_name: get_path_name(file_path),
+            file_type: metadata.file_type().is_dir().then(|| "dir".to_string()),
+            created:  systemtime_to_u64(metadata.created().ok()),
+            modified: systemtime_to_u64(metadata.modified().ok()),
+            // accessed: systemtime_to_u64(metadata.accessed().ok()),
+
+            file_attributes: metadata.file_attributes(),
+            // volume_serial_number: metadata.volume_serial_number(),
+            // number_of_links: metadata.number_of_links(),
+            // file_index: metadata.file_index(),
+            file_size: metadata.len(),
         }
     }
     
@@ -159,7 +145,6 @@ pub fn is_image_extension(extension: &str) -> bool {
 
 /// Get the name from a folder or file path
 pub fn get_path_name(path: &str) -> String {
-    // Convert the String into a Path object
     let path = Path::new(path);
     
     // Extract the file name or last component of the path
@@ -185,19 +170,4 @@ pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
 }
 
 
-/// Resize an image to create a thumbnail and return it as a vector of bytes
-pub fn get_thumbnail(image_path: &str, thumbnail_size: u32) -> Result<Vec<u8>, String> {
-    // Open the image file
-    let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
 
-    // Resize the image to a thumbnail
-    let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
-
-    // Save thumbnail to an in-memory buffer as PNG
-    let mut buf = Vec::new();
-    thumbnail
-        .write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png)
-        .map_err(|e| format!("Failed to write thumbnail to buffer: {}", e))?;
-
-    Ok(buf)
-}

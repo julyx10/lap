@@ -91,7 +91,7 @@ const clickExpandIcon = async (event: Event, folder) => {
   if (folder.is_expanded && !folder.children) {
     try {
       // Fetch subfolder tree
-      const subfolders = await invoke('expand_folder', { path: folder.path });
+      const subfolders = await invoke('expand_folder', { path: folder.path, isRecursive: false });
       folder.children = subfolders.children;
     } catch (error) {
       console.error('Error fetching subfolders:', error);

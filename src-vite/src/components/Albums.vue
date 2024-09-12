@@ -156,7 +156,7 @@ const clickAlbum = async (album) => {
     
     if (album.is_expanded && !album.children) {
       // Fetch folder tree
-      const folders = await invoke('expand_folder', { path: album.path });
+      const folders = await invoke('expand_folder', { path: album.path, isRecursive: false });
       album.children = folders.children;
     }
   } catch (error) {

@@ -2,11 +2,12 @@
  * The db.rs file is used to create a database and a table in it.
  * 
  */
+use std::io::Cursor;
 use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{Serialize, Deserialize};
-use exif::{In, Reader, Tag};
+use exif::Tag;
 
-use crate::t_utils::{self, FileInfo};
+use crate::t_utils;
 
 
 /// Define the Album struct
@@ -31,7 +32,7 @@ impl Album {
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at FROM albums WHERE path = ?1",
             params![path],
             |row| {
-                Ok(Album {
+                Ok(Self {
                     id: row.get(0)?,
                     name: row.get(1)?,
                     path: row.get(2)?,
@@ -70,7 +71,7 @@ impl Album {
         let conn = get_conn();
         
         // Check if the path already exists
-        let existing_album = Album::fetch(&conn, self.path.as_str());
+        let existing_album = Self::fetch(&conn, self.path.as_str());
         if let Ok(Some(album)) = existing_album {
             return Err(format!("Album '{}' with the path '{}' already exists.", album.name, album.path));
         }
@@ -83,10 +84,10 @@ impl Album {
         ).map_err(|e| e.to_string())?;
 
         // Insert the new album into the database
-        Album::insert(&self, &conn)?;
+        Self::insert(&self, &conn)?;
 
         // return the newly inserted album
-        let new_album = Album::fetch(&conn, self.path.as_str());
+        let new_album = Self::fetch(&conn, self.path.as_str());
         Ok(new_album.unwrap().unwrap())
     }
 
@@ -112,7 +113,7 @@ impl Album {
         
         // Execute the query and map the result to Album structs
         let albums_iter = stmt.query_map([], |row| {
-            Ok(Album {
+            Ok(Self {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
@@ -156,7 +157,7 @@ impl AFolder {
             "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM afolders WHERE path = ?1",
             params![path],
             |row| {
-                Ok(AFolder {
+                Ok(Self {
                     id: Some(row.get(0)?),
                     album_id: row.get(1)?,
                     parent_id: row.get(2)?,
@@ -193,16 +194,16 @@ impl AFolder {
         let conn = get_conn();
         
         // Check if the path already exists
-        let existing_folder = AFolder::fetch(&conn, self.path.as_str());
+        let existing_folder = Self::fetch(&conn, self.path.as_str());
         if let Ok(Some(folder)) = existing_folder {
             return Ok(folder);
         }
 
         // insert the new folder into the database
-        AFolder::insert(&self, &conn)?;
+        Self::insert(&self, &conn)?;
 
         // return the newly inserted folder
-        let new_folder = AFolder::fetch(&conn, self.path.as_str());
+        let new_folder = Self::fetch(&conn, self.path.as_str());
         Ok(new_folder.unwrap().unwrap())
     }
 
@@ -244,9 +245,9 @@ pub struct AFile {
 impl AFile {
 
     /// create a new file struct
-    pub fn new(folder_id: i64, path: &str) -> Result<Self, String> {
+    fn new(folder_id: i64, path: &str) -> Result<Self, String> {
         // file info
-        let file_info = FileInfo::new(path);
+        let file_info = t_utils::FileInfo::new(path);
 
         // Attempt to open the file
         let file = std::fs::File::open(path).map_err(|e| {
@@ -260,7 +261,7 @@ impl AFile {
         let exifreader = exif::Reader::new();
         let exif = exifreader.read_from_container(&mut bufreader).ok();
 
-        Ok(AFile {
+        Ok(Self {
             id: None,
             folder_id: folder_id,
             
@@ -294,7 +295,7 @@ impl AFile {
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
             params![folder_id, file_name],
             |row| {
-                Ok(AFile {
+                Ok(Self {
                     id: Some(row.get(0)?),
                     folder_id: row.get(1)?,
                     name: row.get(2)?,
@@ -315,46 +316,54 @@ impl AFile {
     }
 
     /// insert a file into db
-    fn insert(&self, conn: &Connection) -> Result<usize, String> {
+    fn insert(conn: &Connection, folder_id: i64, file_name: &str) -> Result<usize, String> {
+
+        let afile = Self::new(folder_id, file_name).map_err(|e| e.to_string())?;
+
         // Insert the new file into the db
         let result = conn.execute(
-            "INSERT INTO  afiles (folder_id, name, size, created_at, modified_at, 
+            "INSERT INTO afiles (folder_id, name, size, created_at, modified_at, 
             e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
-                self.folder_id,
-                self.name,
-                self.size,
-                self.created_at,
-                self.modified_at,
-                self.e_make,
-                self.e_model,
-                self.e_date_time,
-                self.e_exposure_time,
-                self.e_f_number,
-                self.e_iso_speed,
-                self.e_focal_length,
+                afile.folder_id,
+                afile.name,
+                afile.size,
+                afile.created_at,
+                afile.modified_at,
+                afile.e_make,
+                afile.e_model,
+                afile.e_date_time,
+                afile.e_exposure_time,
+                afile.e_f_number,
+                afile.e_iso_speed,
+                afile.e_focal_length,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// insert a file into db if not exists
-    pub fn add_to_db(&self) -> Result<Self, String> {
+    pub fn add_to_db(folder_id: i64, file_name: &str) -> Result<Self, String> {
         let conn = get_conn();
         
+        // TODO: check file modified time and update db if modified
+        
         // Check if the file exists
-        let existing_file = AFile::fetch(&conn, self.folder_id, self.name.as_str());
-        if let Ok(Some(file)) = existing_file {
+        let existing_file = Self::fetch(&conn, folder_id, file_name)?;
+        if let Some(file) = existing_file {
             return Ok(file);
         }
 
         // insert the new file into the database
-        AFile::insert(&self, &conn)?;
+        Self::insert(&conn, folder_id, file_name)?;
 
         // return the newly inserted file
-        let new_file = AFile::fetch(&conn, self.folder_id, self.name.as_str());
-        Ok(new_file.unwrap().unwrap())
+        let new_file = Self::fetch(&conn, folder_id, file_name)?;
+        match new_file {
+            Some(file) => Ok(file),
+            None => Err("Failed to fetch the newly inserted file.".to_string()),
+        }
     }
 
     /// Get all files from the db by folder_id
@@ -370,7 +379,7 @@ impl AFile {
         
         // Execute the query and map the result to AFile structs
         let files_iter = stmt.query_map(params![folder_id], |row| {
-            Ok(AFile {
+            Ok(Self {
                 id: row.get(0)?,
                 folder_id: row.get(1)?,
                 name: row.get(2)?,
@@ -408,10 +417,27 @@ pub struct AThumb {
 
 impl AThumb {
 
+    /// Resize an image to create a thumbnail and return it as a vector of bytes
+    fn get_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<Vec<u8>, String> {
+        // Open the image file
+        let img = image::open(file_path).map_err(|e| format!("Failed to open image: {}", e))?;
+
+        // Resize the image to a thumbnail
+        let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
+
+        // Save thumbnail to an in-memory buffer as PNG
+        let mut buf = Vec::new();
+        thumbnail
+            .write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png)
+            .map_err(|e| format!("Failed to write thumbnail to buffer: {}", e))?;
+
+        Ok(buf)
+    }
+
     /// create a new thumbnail struct
-    pub fn new(file_id: i64, file_path: &str) -> Result<Self> {
-        let thumb_data = t_utils::get_thumbnail(file_path, 100).unwrap();
-        Ok(AThumb {
+    fn new(file_id: i64, file_path: &str) -> Result<Self> {
+        let thumb_data = Self::get_thumbnail(file_path, 480).unwrap();
+        Ok(Self {
             id: None,
             file_id,
             thumb_data,
@@ -419,12 +445,12 @@ impl AThumb {
     }
 
     /// fetch a thumbnail from db by file_id
-    pub fn fetch(&self, conn: &Connection) -> Result<Option<Self>, String> {
+    pub fn fetch(conn: &Connection, file_id: i64) -> Result<Option<Self>, String> {
         let thumbnail = conn.query_row(
             "SELECT id, file_id, thumb_data FROM athumbs WHERE file_id = ?1",
-            params![self.file_id],
+            params![file_id],
             |row| {
-                Ok(AThumb {
+                Ok(Self {
                     id: Some(row.get(0)?),
                     file_id: row.get(1)?,
                     thumb_data: row.get(2)?,
@@ -435,34 +461,36 @@ impl AThumb {
     }
 
     /// insert a thumbnail into db
-    pub fn insert(&self, conn: &Connection) -> Result<usize, String> {
+    pub fn insert(conn: &Connection, file_id: i64, file_path: &str) -> Result<usize, String> {
+        let athumb = Self::new(file_id, file_path).map_err(|e| e.to_string())?;
+
         // Insert the new thumbnail into the db
         let result = conn.execute(
             "INSERT INTO athumbs (file_id, thumb_data) 
             VALUES (?1, ?2)",
             params![
-                self.file_id,
-                self.thumb_data,
+                athumb.file_id,
+                athumb.thumb_data,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// insert a thumbnail into db if not exists
-    pub fn add_to_db(&self) -> Result<Self, String> {
+    pub fn add_to_db(file_id: i64, file_path: &str) -> Result<Self, String> {
         let conn = get_conn();
         
         // Check if the thumbnail exists
-        let existing_thumbnail = Self::fetch(&self, &conn);
+        let existing_thumbnail = Self::fetch(&conn, file_id);
         if let Ok(Some(thumbnail)) = existing_thumbnail {
             return Ok(thumbnail);
         }
 
         // Insert the new thumbnail into the database
-        AThumb::insert(&self, &conn)?;
+        Self::insert(&conn, file_id, file_path)?;
 
         // return the newly inserted thumbnail
-        let new_thumbnail = Self::fetch(&self, &conn);
+        let new_thumbnail = Self::fetch(&conn, file_id);
         Ok(new_thumbnail.unwrap().unwrap())
     }
     
@@ -472,8 +500,6 @@ impl AThumb {
 /// get connection to the db
 fn get_conn() -> Connection {
     let conn = Connection::open("./main.db").map_err(|e| e.to_string()).unwrap();
-    conn.execute("PRAGMA foreign_keys = ON", []).unwrap();
-
     conn
 }
 

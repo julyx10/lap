@@ -90,15 +90,15 @@ pub fn add_folder(album_id: i64, parent_id: i64, name: &str, path: &str) -> Resu
 
 /// expand folder to recurse sub-folders and build a FileNode
 #[tauri::command]
-pub fn expand_folder(path: &str) -> Result<t_utils::FileNode, String> {
-    t_utils::FileNode::build_nodes(path)
+pub fn expand_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode, String> {
+    t_utils::FileNode::build_nodes(path, is_recursive)
 }
 
 
 /// add image files
 #[tauri::command]
 pub fn add_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
-    let mut files: Vec<AFile> = Vec::new();
+    let mut files: Vec<AFile> = Vec::new(); 
 
     // Use WalkDir to iterate over directory entries
     for entry in WalkDir::new(path)
@@ -113,12 +113,10 @@ pub fn add_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
                     let file_path = entry_path.to_str().unwrap();
 
                     // Create a new AFile instance and add it to the database
-                    let file = AFile::new(folder_id, file_path).map_err(|e| format!("Error while creating file: {}", e))?;
-                    file.add_to_db().map_err(|e| format!("Error while adding file to DB: {}", e))?;
-                    
+                    let file = AFile::add_to_db(folder_id, file_path).map_err(|e| format!("Error while adding file to DB: {}", e))?;
+
                     // Create a thumbnail for the image
-                    let thumb = AThumb::new(folder_id, file_path).map_err(|e| format!("Error while creating thumb: {}", e))?;
-                    thumb.add_to_db().map_err(|e| format!("Error while adding thumb to DB: {}", e))?;
+                    let _athumb = AThumb::add_to_db(file.id.unwrap(), file_path).map_err(|e| format!("Error while adding thumb to DB: {}", e))?;
 
                     files.push(file);
                 }
