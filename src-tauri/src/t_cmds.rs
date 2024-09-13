@@ -15,11 +15,7 @@ use crate::t_utils;
 /// get all albums
 #[tauri::command]
 pub fn get_albums() -> Result<Vec<Album>, String> {
-    // Call the database function and handle errors
-    match Album::get_all_albums() {
-        Ok(albums) => Ok(albums),
-        Err(e) => Err(format!("Error fetching albums: {}", e)),
-    }
+    Album::get_all_albums().map_err(|e| format!("Error while fetching albums: {}", e))
 }
 
 
@@ -34,20 +30,8 @@ pub fn add_album(window: tauri::Window, title: &str) -> Result<Album, String> {
 
     match result {
         Ok(Some(path)) => {
-            let file_info = t_utils::FileInfo::new(path.to_str().unwrap());
-            let mut album = Album {
-                id: None,
-                name: t_utils::get_path_name(path.to_str().unwrap()).to_string(),
-                path: path.to_string_lossy().to_string(),
-                description: None,
-                avatar_id: None,
-                display_order_id: None,
-                created_at: file_info.created,
-                modified_at: file_info.modified,
-            };
-
             // Add the album to the database and return the result
-            album.add_to_db()
+            Album::add_to_db(path.to_string_lossy().into_owned().as_str())
                 .map_err(|e| format!("Error while adding album to DB: {}", e))
         },
         Ok(None) => Err("No folder selected".to_string()),
@@ -58,32 +42,31 @@ pub fn add_album(window: tauri::Window, title: &str) -> Result<Album, String> {
 
 /// delete an album
 #[tauri::command]
-pub fn delete_album(id: i64) -> Result<i64, String> {
-    Album::delete_from_db(id).map_err(|e| {
+pub fn delete_album(id: i64) -> Result<usize, String> {
+    let result = Album::delete_from_db(id).map_err(|e| {
         format!("Error while deleting album with id {}: {}", id, e.to_string())
     })?;
 
-    // return the album id
-    Ok(id)
+    Ok(result)
 }
 
 
 // click a sub-folder under an album to add the folder to db
 #[tauri::command]
-pub fn add_folder(album_id: i64, parent_id: i64, name: &str, path: &str) -> Result<AFolder, String> {
-    let file_info = t_utils::FileInfo::new(path);
+pub fn add_folder(album_id: i64, parent_id: i64, path: &str) -> Result<AFolder, String> {
+    // let file_info = t_utils::FileInfo::new(path);
 
-    let folder = AFolder {
-        id: None,
-        album_id,
-        parent_id,  
-        name: name.to_string(),
-        path: path.to_string(),
-        created_at: file_info.created,
-        modified_at: file_info.modified,
-    };
+    // let folder = AFolder {
+    //     id: None,
+    //     album_id,
+    //     parent_id,  
+    //     name: name.to_string(),
+    //     path: path.to_string(),
+    //     created_at: file_info.created,
+    //     modified_at: file_info.modified,
+    // };
 
-    folder.add_to_db()
+    AFolder::add_to_db(album_id, parent_id, path)
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
 

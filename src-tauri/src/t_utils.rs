@@ -27,7 +27,7 @@ impl FileNode {
             id: None,
             name: get_path_name(path),
             path: path.to_string(),
-            is_dir: true,
+            is_dir,
             is_expanded,
             children: None,
         }
@@ -110,12 +110,12 @@ pub struct FileInfo {
 impl FileInfo {
 
     /// Get file info from a folder/file path (on Windows)
-    pub fn new(file_path: &str) -> Self {
+    pub fn new(file_path: &str) -> Result<Self, String> {
         // Convert the string path into a Path object
         let path = Path::new(file_path);
-        let metadata = fs::metadata(path).unwrap();
+        let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
 
-        FileInfo {
+        Ok(FileInfo {
             file_path: file_path.to_string(),
             file_name: get_path_name(file_path),
             file_type: metadata.file_type().is_dir().then(|| "dir".to_string()),
@@ -128,7 +128,7 @@ impl FileInfo {
             // number_of_links: metadata.number_of_links(),
             // file_index: metadata.file_index(),
             file_size: metadata.len(),
-        }
+        })
     }
     
 }
