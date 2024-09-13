@@ -3,11 +3,9 @@
  * Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
  */
 
-use std::fs;
-use std::io::BufReader;
 use native_dialog::FileDialog;
 use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
-use exif::{In, Reader, Tag};
+use base64::{Engine, engine::general_purpose};
 use crate::t_sqlite::{ AFile, AFolder, AThumb, Album };
 use crate::t_utils;
 
@@ -51,21 +49,9 @@ pub fn delete_album(id: i64) -> Result<usize, String> {
 }
 
 
-// click a sub-folder under an album to add the folder to db
+// click a sub-folder under an album
 #[tauri::command]
-pub fn add_folder(album_id: i64, parent_id: i64, path: &str) -> Result<AFolder, String> {
-    // let file_info = t_utils::FileInfo::new(path);
-
-    // let folder = AFolder {
-    //     id: None,
-    //     album_id,
-    //     parent_id,  
-    //     name: name.to_string(),
-    //     path: path.to_string(),
-    //     created_at: file_info.created,
-    //     modified_at: file_info.modified,
-    // };
-
+pub fn select_folder(album_id: i64, parent_id: i64, path: &str) -> Result<AFolder, String> {
     AFolder::add_to_db(album_id, parent_id, path)
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
@@ -78,9 +64,9 @@ pub fn expand_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode
 }
 
 
-/// add image files
+/// list image files
 #[tauri::command]
-pub fn add_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
+pub fn get_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
     let mut files: Vec<AFile> = Vec::new(); 
 
     // Use WalkDir to iterate over directory entries
@@ -98,9 +84,6 @@ pub fn add_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
                     // Create a new AFile instance and add it to the database
                     let file = AFile::add_to_db(folder_id, file_path).map_err(|e| format!("Error while adding file to DB: {}", e))?;
 
-                    // Create a thumbnail for the image
-                    let _athumb = AThumb::add_to_db(file.id.unwrap(), file_path).map_err(|e| format!("Error while adding thumb to DB: {}", e))?;
-
                     files.push(file);
                 }
             }
@@ -111,9 +94,15 @@ pub fn add_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
 }
 
 
-/// get files by folder id
+/// get a file's thumb image 
 #[tauri::command]
-pub fn get_files(folder_id: i64) -> Result<Vec<AFile>, String> {
-    AFile::get_all_files(folder_id)
-        .map_err(|e| format!("Error while getting files: {}", e))
+pub fn get_file_thumb(file_id: i64, path: &str) -> Result<String, String> {
+    // Add the thumb to the database and return the thumb data
+    let thumb = AThumb::add_to_db(file_id, path)
+        .map_err(|e| format!("Error while adding thumb to DB: {}", e))?;
+
+    // Convert the image data to base64 to send to the front-end
+    let base64_thumbnail = general_purpose::STANDARD.encode(&thumb.thumb_data);
+    Ok(base64_thumbnail)
 }
+

@@ -29,7 +29,7 @@
         ]" 
         @click="clickFile(index)"
       >
-        <td class="text-center py-1">{{ index + 1 }}</td>
+        <td v-if="file.thumbnail"> <img :src="file.thumbnail"/> </td>
         <td>{{ file.name }}</td>
         <td>{{ formatTimestamp(file.created_at) }}</td>
         <td>{{ formatTimestamp(file.modified_at) }}</td>
@@ -112,34 +112,37 @@ function getFolder(album, child_id) {
   return null;
 }
 
-// watch(g_folder_id, async (new_folder_id) => {
-//   if (!new_folder_id) {
-//     // current_folder.value = getFolder(getAlbumById(g_album_id.value), new_folder_id);
-//     console.log('current_folder... is null', new_folder_id);
-//     await getImageFiles(getAlbumById(g_album_id.value).path);
 
-//   } else {
-//     console.log('current_folder...', new_folder_id);
-//   }
-// });
+/// Watch for changes in album_id and update filelist accordingly
+watch(g_album_id, async (new_album_id) => {
+  if (!new_album_id) {
+    file_list.value = [];
+  } else {
+    // 
+    // await addFiles(getAlbumById(new_album_id).path);
+  }
+});
+
 
 /// Watch for changes in file_path and update filelist accordingly
 watch(current_folder, async (new_folder) => {
   if (new_folder) {
-    await addFiles(new_folder.path);
+    await getFiles(new_folder.path);
 
     selected_file_index.value = null;
   }
 });
 
 
-/// try to add all files under the path
-async function addFiles(path) {
+/// try to get all files under the path
+async function getFiles(path) {
   try {
-    file_list.value = await invoke('add_files', { folderId: g_folder_id.value, path: path });;
-    console.log('addFiles:', file_list.value);
+    file_list.value = await invoke('get_files', { folderId: g_folder_id.value, path: path });
+    console.log('getFiles:', file_list.value);
+
+    await getFileThumb();
   } catch (error) {
-    console.error('addFiles error:', error);
+    console.error('getFiles error:', error);
   }
 };
 
@@ -149,12 +152,30 @@ function clickFile(index) {
   selected_file_index.value = index;
 }
 
+
 /// Watch for changes in selected_file_index
 watch (selected_file_index, (new_index) => {
   if (new_index !== null) {
     console.log('selected_file_index...', file_list.value[new_index]);
   }
 });
+
+
+/// Get the thumbnail of the file
+async function getFileThumb() {
+  try {
+    for (let file of file_list.value) {
+      const file_path = current_folder.value.path + '\\' + file.name;
+      console.log('getFileThumb:', file, file_path);
+
+      const thumbnail = await invoke('get_file_thumb', { fileId: file.id, path: file_path });
+      // Convert each Base64 string into a data URL for display
+      file.thumbnail = `data:image/png;base64,${thumbnail}`;
+    }
+  } catch (error) {
+    console.error('getFileThumb error:', error);
+  }
+}
 
 </script>
   

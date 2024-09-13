@@ -60,7 +60,7 @@ const clickFolderName = async (folder) => {
   // console.log('clickFolderName:', folder);
 
   try {
-    const result = await invoke('add_folder', {
+    const result = await invoke('select_folder', {
       albumId: props.album_id, 
       parentId: 0,
       name: folder.name,

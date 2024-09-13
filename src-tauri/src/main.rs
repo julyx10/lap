@@ -41,10 +41,10 @@ fn main() {
             t_cmds::get_albums,
             t_cmds::add_album, 
             t_cmds::delete_album,
-            t_cmds::add_folder,
+            t_cmds::select_folder,
             t_cmds::expand_folder,
-            t_cmds::add_files,
             t_cmds::get_files,
+            t_cmds::get_file_thumb,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

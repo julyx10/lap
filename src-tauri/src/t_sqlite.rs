@@ -278,10 +278,8 @@ impl AFile {
 
         // Attempt to open the file
         let file = std::fs::File::open(path).map_err(|e| format!("Error opening file: {}", e))?;
-
         // Create a buffered reader
         let mut bufreader = std::io::BufReader::new(&file);
-
         // Create an EXIF reader and attempt to read EXIF data
         let exifreader = exif::Reader::new();
         let exif = exifreader.read_from_container(&mut bufreader).ok();
@@ -366,14 +364,29 @@ impl AFile {
         Ok(result)
     }
 
+    /// delete a file from db
+    fn delete(folder_id: i64) -> Result<usize, String> {
+        let conn = get_conn();
+        let result = conn.execute(
+            "DELETE FROM afiles WHERE folder_id = ?1",
+            params![folder_id],
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
     /// insert a file into db if not exists
     pub fn add_to_db(folder_id: i64, path: &str) -> Result<Self, String> {
-        // TODO: check file modified time and update db if modified
-        
         // Check if the file exists
         let existing_file = Self::fetch(folder_id, path)?;
         if let Some(file) = existing_file {
-            return Ok(file);
+            // check file modified time
+            let file_info = t_utils::FileInfo::new(path)?;
+            if file.modified_at != file_info.modified {
+                // delete the old file
+                Self::delete(folder_id)?;
+            } else {
+                return Ok(file);
+            }
         }
 
         // insert the new file into the database
@@ -384,43 +397,43 @@ impl AFile {
         Ok(new_file.unwrap())
     }
 
-    /// Get all files from the db by folder_id
-    pub fn get_all_files(folder_id: i64) -> Result<Vec<Self>> {
-        let conn = get_conn();
+    // /// Get all files from the db by folder_id
+    // pub fn get_all_files(folder_id: i64) -> Result<Vec<Self>> {
+    //     let conn = get_conn();
         
-        // Prepare the SQL query to fetch all files by folder_id
-        let mut stmt = conn.prepare(
-            "SELECT id, folder_id, name, size, created_at, modified_at, 
-            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length 
-            FROM afiles WHERE folder_id = ?1"
-        )?;
+    //     // Prepare the SQL query to fetch all files by folder_id
+    //     let mut stmt = conn.prepare(
+    //         "SELECT id, folder_id, name, size, created_at, modified_at, 
+    //         e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length 
+    //         FROM afiles WHERE folder_id = ?1"
+    //     )?;
         
-        // Execute the query and map the result to AFile structs
-        let files_iter = stmt.query_map(params![folder_id], |row| {
-            Ok(Self {
-                id: row.get(0)?,
-                folder_id: row.get(1)?,
-                name: row.get(2)?,
-                size: row.get(3)?,
-                created_at: row.get(4)?,
-                modified_at: row.get(5)?,
-                e_make: row.get(6)?,
-                e_model: row.get(7)?,
-                e_date_time: row.get(8)?,
-                e_exposure_time: row.get(9)?,
-                e_f_number: row.get(10)?,
-                e_iso_speed: row.get(11)?,
-                e_focal_length: row.get(12)?,
-            })
-        })?;
+    //     // Execute the query and map the result to AFile structs
+    //     let files_iter = stmt.query_map(params![folder_id], |row| {
+    //         Ok(Self {
+    //             id: row.get(0)?,
+    //             folder_id: row.get(1)?,
+    //             name: row.get(2)?,
+    //             size: row.get(3)?,
+    //             created_at: row.get(4)?,
+    //             modified_at: row.get(5)?,
+    //             e_make: row.get(6)?,
+    //             e_model: row.get(7)?,
+    //             e_date_time: row.get(8)?,
+    //             e_exposure_time: row.get(9)?,
+    //             e_f_number: row.get(10)?,
+    //             e_iso_speed: row.get(11)?,
+    //             e_focal_length: row.get(12)?,
+    //         })
+    //     })?;
         
-        // Collect the results into a Vec<AFile>
-        let mut files = Vec::new();
-        for file in files_iter {
-            files.push(file?);
-        }
-        Ok(files)
-    }
+    //     // Collect the results into a Vec<AFile>
+    //     let mut files = Vec::new();
+    //     for file in files_iter {
+    //         files.push(file?);
+    //     }
+    //     Ok(files)
+    // }
 
 }
 
@@ -437,7 +450,7 @@ impl AThumb {
 
     /// create a new thumbnail struct
     fn new(file_id: i64, path: &str) -> Result<Self, String> {
-        let thumb_data = Self::get_thumbnail(path, 480)?;
+        let thumb_data = Self::get_thumbnail(path, 100)?;
         Ok(Self {
             id: None,
             file_id,

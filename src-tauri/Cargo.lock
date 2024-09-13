@@ -1671,6 +1671,7 @@ dependencies = [
 name = "jc-photo"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "dirs",
  "image 0.25.2",

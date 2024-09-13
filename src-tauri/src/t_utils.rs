@@ -1,11 +1,8 @@
 use std::fs;
-// use std::fs::File;
-// use std::io::Cursor;
+use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
-// use image::{GenericImageView, DynamicImage};
 
 
 /// FileNode struct to represent a file system node
