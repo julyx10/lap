@@ -29,7 +29,11 @@
         ]" 
         @click="clickFile(index)"
       >
-        <td v-if="file.thumbnail"> <img :src="file.thumbnail"/> </td>
+        <td>
+          <div class="mx-2 my-1">
+            <img :src="file.thumbnail ? file.thumbnail : '../assets/photo.svg'" width="320" height="240" alt="Thumbnail"/>
+          </div>
+        </td>
         <td>{{ file.name }}</td>
         <td>{{ formatTimestamp(file.created_at) }}</td>
         <td>{{ formatTimestamp(file.modified_at) }}</td>
@@ -96,6 +100,37 @@ const title = computed(() => {
   }
 });
 
+/// Watch for changes in album_id and update filelist accordingly
+watch(g_album_id, async (new_album_id) => {
+  if (!new_album_id) {
+    file_list.value = [];
+  } else {
+    // 
+    // await addFiles(getAlbumById(new_album_id).path);
+  }
+});
+
+/// Watch for changes in file_path and update filelist accordingly
+watch(current_folder, async (new_folder) => {
+  if (new_folder) {
+    await getFiles(new_folder.path);
+
+    selected_file_index.value = null;
+  }
+});
+
+/// Watch for changes in selected_file_index
+watch (selected_file_index, (new_index) => {
+  if (new_index !== null) {
+    console.log('selected_file_index...', file_list.value[new_index]);
+  }
+});
+
+/// Click a file
+function clickFile(index) {
+  selected_file_index.value = index;
+}
+
 
 /// get the selected sub-folder of the album
 function getFolder(album, child_id) {
@@ -113,55 +148,23 @@ function getFolder(album, child_id) {
 }
 
 
-/// Watch for changes in album_id and update filelist accordingly
-watch(g_album_id, async (new_album_id) => {
-  if (!new_album_id) {
-    file_list.value = [];
-  } else {
-    // 
-    // await addFiles(getAlbumById(new_album_id).path);
-  }
-});
-
-
-/// Watch for changes in file_path and update filelist accordingly
-watch(current_folder, async (new_folder) => {
-  if (new_folder) {
-    await getFiles(new_folder.path);
-
-    selected_file_index.value = null;
-  }
-});
-
-
 /// try to get all files under the path
 async function getFiles(path) {
   try {
+    // Fetch the list of files from the backend (using Tauri invoke)
     file_list.value = await invoke('get_files', { folderId: g_folder_id.value, path: path });
     console.log('getFiles:', file_list.value);
 
-    await getFileThumb();
+    // Once files are retrieved, offload thumbnail fetching to a Web Worker
+    getFileThumb()
+    // getThumbnail()
+    // fetchThumbnailsWithWorker(path);
   } catch (error) {
     console.error('getFiles error:', error);
   }
 };
 
-
-/// Click a file
-function clickFile(index) {
-  selected_file_index.value = index;
-}
-
-
-/// Watch for changes in selected_file_index
-watch (selected_file_index, (new_index) => {
-  if (new_index !== null) {
-    console.log('selected_file_index...', file_list.value[new_index]);
-  }
-});
-
-
-/// Get the thumbnail of the file
+/// 
 async function getFileThumb() {
   try {
     for (let file of file_list.value) {
@@ -175,7 +178,71 @@ async function getFileThumb() {
   } catch (error) {
     console.error('getFileThumb error:', error);
   }
-}
+};
+
+// async function getThumbnail() {
+//   try {
+//     for (let file of file_list.value) {
+//       const file_path = current_folder.value.path + '\\' + file.name;
+//       console.log('getThumbnail:', file, file_path);
+
+//       // Send the task to the worker
+//       worker.postMessage({ fileId: file.id, path: file_path });
+
+//       // Handle the response from the worker
+//       worker.onmessage = function (event) {
+//         const { fileId, thumbnail } = event.data;
+//         const fileToUpdate = file_list.value.find(f => f.id === fileId);
+//         if (fileToUpdate) {
+//           fileToUpdate.thumbnail = `data:image/png;base64,${thumbnail}`;
+//         }
+//       };
+//     }
+//   } catch (error) {
+//     console.error('getThumbnail error:', error);
+//     }
+// }
+
+
+// // Function to fetch thumbnails using a Web Worker
+// function fetchThumbnailsWithWorker(path) {
+//   // const worker = new Worker('/thumbnailWorker.js');
+//   // Import the worker using Vite's special worker syntax
+//   const worker = new Worker(new URL('../workers/thumbnailWorker.js', import.meta.url), { type: 'module' });
+
+//   // Extract cloneable properties (id, name, etc.) from file_list
+//   const cloneableFileList = file_list.value.map(file => ({
+//     id: file.id,
+//     name: file.name
+//   }));
+
+//   // Post message to the worker with the simplified file list and folder path
+//   worker.postMessage({
+//     fileList: cloneableFileList, 
+//     currentFolderPath: path
+//   });
+
+//   // Listen for messages from the worker
+//   worker.onmessage = (e) => {
+//     const { success, data, error } = e.data;
+
+//     if (success) {
+//       // Update file_list with thumbnails returned by the worker
+//       data.forEach((item) => {
+//         const file = file_list.value.find(f => f.id === item.file.id);
+//         if (file) {
+//           file.thumbnail = item.thumbnail;
+//         }
+//       });
+//     } else {
+//       console.error('Thumbnail fetch failed:', error);
+//     }
+
+//     // Terminate the worker once done
+//     worker.terminate();
+//   };
+
+// }
 
 </script>
   

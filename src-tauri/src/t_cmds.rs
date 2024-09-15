@@ -96,7 +96,7 @@ pub fn get_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
 
 /// get a file's thumb image 
 #[tauri::command]
-pub fn get_file_thumb(file_id: i64, path: &str) -> Result<String, String> {
+pub async fn get_file_thumb(file_id: i64, path: &str) -> Result<String, String> {
     // Add the thumb to the database and return the thumb data
     let thumb = AThumb::add_to_db(file_id, path)
         .map_err(|e| format!("Error while adding thumb to DB: {}", e))?;

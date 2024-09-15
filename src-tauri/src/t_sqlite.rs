@@ -450,7 +450,7 @@ impl AThumb {
 
     /// create a new thumbnail struct
     fn new(file_id: i64, path: &str) -> Result<Self, String> {
-        let thumb_data = Self::get_thumbnail(path, 100)?;
+        let thumb_data = Self::get_thumbnail(path, 320)?;
         Ok(Self {
             id: None,
             file_id,
@@ -505,7 +505,6 @@ impl AThumb {
         Ok(new_thumbnail.unwrap())
     }
 
-
     /// Resize an image to create a thumbnail and return it as a vector of bytes
     fn get_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<Vec<u8>, String> {
         // Open the image file
@@ -517,12 +516,11 @@ impl AThumb {
         // Save thumbnail to an in-memory buffer as PNG
         let mut buf = Vec::new();
         thumbnail
-            .write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png)
+            .write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg)
             .map_err(|e| format!("Failed to write thumbnail to buffer: {}", e))?;
 
         Ok(buf)
     }
-
     
 }
 
