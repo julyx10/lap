@@ -26,36 +26,28 @@
           @click="clickDebug" 
         />
       </div>
-
     </div>
       
     <!-- navigation pane -->
-    <div 
-      v-if="toolbar_index > 0" 
-      class="w-96 p-2 min-w-10 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800" 
-      :style="{ width: leftPaneWidth + 'px' }"
-    >
+    <div v-if="toolbar_index > 0" class="flex relative h-screen w-96 min-w-10" :style="{ width: leftPaneWidth + 'px' }">
       <Album v-if="toolbar_index === 1" :titlebar="$t('album')"/>
       <Calendar v-else-if="toolbar_index === 2" :titlebar="$t('calendar')"/>
     </div>
 
     <!-- splitter -->
-    <div 
-      v-if="toolbar_index > 0" 
-      class="w-1 hover:bg-sky-700 cursor-ew-resize" 
-      @mousedown="startDragging" 
-    ></div>
+    <div v-if="toolbar_index > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
     
     <!-- content area -->
-    <div class="flex-1 p-4 bg-gray-800 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
-      <Wall :titlebar="toolbars[toolbar_index].text"/>
+    <div class="flex flex-1 relative h-screen bg-gray-800">
+      <Content :titlebar="toolbars[toolbar_index].text"/>
     </div>
 
-    <!-- <ContextMenu :items="menuItems" @select="handleSelectedItem" /> -->
-
+    <!-- debug area -->
     <div class="m-2 text-sm" v-if="isDebugMenuOpen">
       <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</button>
     </div>
+    
+    <!-- <ContextMenu :items="menuItems" @select="handleSelectedItem" /> -->
   </div>
 
 </template>
@@ -73,7 +65,7 @@ const localeMessages = computed(() => messages.value[locale.value]);
 
 import Album from '@/components/Albums.vue';
 import Calendar from '@/components/Calendar.vue';
-import Wall from '@/components/Wall.vue';
+import Content from '@/components/Content.vue';
 
 
 /// global variables

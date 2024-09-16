@@ -1,11 +1,11 @@
 <template>
     
-  <!-- folder pane title -->
-  <div class="flex px-1 py-3 items-center justify-between" style="user-select: none;">
+  <!-- title bar -->
+  <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full" style="user-select: none;">
     <div>
       {{ titlebar }}
     </div>
-    <div class="flex h-6">
+    <div class="flex flex-row h-6">
       <IconAdd class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickAdd" />
       <IconDelete  
         :class="[
@@ -17,27 +17,28 @@
     </div>
   </div>
 
-  <!-- Display the fetched albums -->
-  <ul v-if="g_albums.length > 0">
-    <li v-for="album in g_albums" :key="album.id" style="user-select: none;" >
-      <div 
-        :class="[
-          'p-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
-          g_album_id === album.id ? 'text-gray-300 bg-gray-800' : ''
-        ]"
-        @click="clickAlbum(album)"
-        @dblclick="dblclickAlbum(album)"
-      >
-        <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" />
-        {{ album.name }} - {{ album.id }}
-      </div>
-
-      <Folders v-if="album.is_expanded" :album_id="album.id" :children="album.children" />
-    </li>
-  </ul>
+  <!-- albums -->
+  <div v-if="g_albums.length > 0" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+    <ul>
+      <li v-for="album in g_albums" :key="album.id" style="user-select: none;" >
+        <div 
+          :class="[
+            'p-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
+            g_album_id === album.id ? 'text-gray-300 bg-gray-800' : ''
+          ]"
+          @click="clickAlbum(album)"
+          @dblclick="dblclickAlbum(album)"
+        >
+          <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" />
+          {{ album.name }} - {{ album.id }}
+        </div>
+        <Folders v-if="album.is_expanded" :album_id="album.id" :children="album.children" />
+      </li>
+    </ul>
+  </div>
 
   <!-- Display message if no albums are found -->
-  <div v-else class="pt-12 text-center">
+  <div v-else class="flex items-center justify-center w-full">
     {{ $t('no_albums') }}
   </div>
 

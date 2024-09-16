@@ -1,6 +1,7 @@
 <template>
 
-<div class="flex items-center justify-between">
+<!-- title bar -->
+<div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
   {{ title }}
   <div class="flex">
     <IconStar class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
@@ -8,8 +9,8 @@
   </div>
 </div>
 
-<div>
-
+<!-- list view -->
+<div ref="scrollableDiv" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
   <table class="min-w-full divide-y divide-gray-600 cursor-pointer">
     <thead>
       <tr>
@@ -29,10 +30,9 @@
         ]" 
         @click="clickFile(index)"
       >
-        <td>
-          <div class="mx-2 my-1">
-            <img :src="file.thumbnail ? file.thumbnail : '../assets/photo.svg'" width="320" height="240" alt="Thumbnail"/>
-          </div>
+        <td class="p-1">
+          <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
+          <!-- <img :src="file.thumbnail ? '/public/vite.svg': file.thumbnail" alt="Thumbnail"/> -->
         </td>
         <td>{{ file.name }}</td>
         <td>{{ formatTimestamp(file.created_at) }}</td>
@@ -42,7 +42,6 @@
       </tr>
     </tbody>
   </table>
-
 </div>
 
 </template>
@@ -74,6 +73,7 @@ const g_folder_id = inject('g_folder_id');   // global folder id
 const current_folder = ref('');
 const file_list = ref([]);
 const selected_file_index = ref(null);
+const scrollableDiv = ref(null);
 
 const getAlbumById = (id) => g_albums.value.find(album => album.id === id);
 
@@ -116,6 +116,9 @@ watch(current_folder, async (new_folder) => {
     await getFiles(new_folder.path);
 
     selected_file_index.value = null;
+
+    // set scrollbar position when change currrent folder
+    scrollableDiv.value.scrollTop = 0;
   }
 });
 
@@ -169,9 +172,9 @@ async function getFileThumb() {
   try {
     for (let file of file_list.value) {
       const file_path = current_folder.value.path + '\\' + file.name;
-      console.log('getFileThumb:', file, file_path);
-
+      
       const thumbnail = await invoke('get_file_thumb', { fileId: file.id, path: file_path });
+      console.log('getFileThumb:', file, file_path, thumbnail);
       // Convert each Base64 string into a data URL for display
       file.thumbnail = `data:image/png;base64,${thumbnail}`;
     }

@@ -98,11 +98,26 @@ pub fn get_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
 #[tauri::command]
 pub async fn get_file_thumb(file_id: i64, path: &str) -> Result<String, String> {
     // Add the thumb to the database and return the thumb data
-    let thumb = AThumb::add_to_db(file_id, path)
-        .map_err(|e| format!("Error while adding thumb to DB: {}", e))?;
-
-    // Convert the image data to base64 to send to the front-end
-    let base64_thumbnail = general_purpose::STANDARD.encode(&thumb.thumb_data);
-    Ok(base64_thumbnail)
+    match AThumb::add_to_db(file_id, path) {
+        Ok(thumb) => {
+            match thumb {
+                Some(t) => {
+                    match(t.thumb_data) {
+                        Some(data) => {
+                            let base64_thumbnail = general_purpose::STANDARD.encode(data);
+                            Ok(base64_thumbnail)
+                        },
+                        None => Err("No thumbnail data found".to_string())
+                    }
+                },
+                None => {
+                    Err("No thumbnail data found".to_string())
+                }
+            }
+        },
+        Err(e) => {
+            Err(format!("Error while adding thumb to DB: {}", e))
+        }
+    }
 }
 

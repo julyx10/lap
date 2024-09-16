@@ -440,22 +440,26 @@ impl AFile {
 
 /// Define the album thumbnail struct
 pub struct AThumb {
-    pub id:             Option<i64>,    // unique id (autoincrement by db)
-    pub file_id:        i64,            // file id (from files table)
-    pub thumb_data:     Vec<u8>,        // thumbnail data
+    pub id:             Option<i64>,     // unique id (autoincrement by db)
+    pub file_id:        i64,             // file id (from files table)
+    pub thumb_data:     Option<Vec<u8>>, // thumbnail data
 }
 
 
 impl AThumb {
 
     /// create a new thumbnail struct
-    fn new(file_id: i64, path: &str) -> Result<Self, String> {
-        let thumb_data = Self::get_thumbnail(path, 320)?;
-        Ok(Self {
-            id: None,
-            file_id,
-            thumb_data,
-        })
+    fn new(file_id: i64, path: &str) -> Result<Option<Self>, String> {
+       match Self::get_thumbnail(path, 320) {
+            Ok(data) => {
+                Ok(Some(Self {
+                    id: None,
+                    file_id,
+                    thumb_data: data,
+                }))
+            },
+            Err(_) => Ok(None),
+        }
     }
 
     /// fetch a thumbnail from db by file_id
@@ -490,36 +494,51 @@ impl AThumb {
     }
 
     /// insert a thumbnail into db if not exists
-    pub fn add_to_db(file_id: i64, path: &str) -> Result<Self, String> {
+    pub fn add_to_db(file_id: i64, path: &str) -> Result<Option<Self>, String> {
         // Check if the thumbnail exists
         let existing_thumbnail = Self::fetch(file_id);
         if let Ok(Some(thumbnail)) = existing_thumbnail {
-            return Ok(thumbnail);
+            return Ok(Some(thumbnail));
         }
 
         // Insert the new thumbnail into the database
-        Self::new(file_id, path)?.insert()?;
+        let new_thumbnail = Self::new(file_id, path);
+        if let Ok(Some(athumb)) = new_thumbnail {
+            athumb.insert();
+            Ok(Self::fetch(file_id)?)
+        } else {
+            Ok(None)
+        }
 
-        // return the newly inserted thumbnail
-        let new_thumbnail = Self::fetch(file_id)?;
-        Ok(new_thumbnail.unwrap())
+        // match Self::new(file_id, path) {
+        //     Ok(Some(data)) => {
+        //         data.insert()?;
+
+        //         // return the newly inserted thumbnail
+        //         let new_thumbnail = Self::fetch(file_id)?;
+        //         Ok(new_thumbnail)
+        //     },
+        //     Err(_) => Ok(None)
+        // }
     }
 
     /// Resize an image to create a thumbnail and return it as a vector of bytes
-    fn get_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<Vec<u8>, String> {
-        // Open the image file
-        let img = image::open(file_path).map_err(|e| format!("Failed to open image: {}", e))?;
+    fn get_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
+        // Attempt to open the image file
+        let img = match image::open(file_path) {
+            Ok(image) => image,
+            Err(_) => return Ok(None), // Return Ok(None) if the image fails to open
+        };
 
         // Resize the image to a thumbnail
         let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
 
-        // Save thumbnail to an in-memory buffer as PNG
+        // Save the thumbnail to an in-memory buffer as a JPEG
         let mut buf = Vec::new();
-        thumbnail
-            .write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg)
-            .map_err(|e| format!("Failed to write thumbnail to buffer: {}", e))?;
-
-        Ok(buf)
+        match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
+            Ok(()) => Ok(Some(buf)),  // Return Ok(Some(buf)) if writing is successful
+            Err(_) => Ok(None)        // Return Ok(None) if writing fails
+        }
     }
     
 }
@@ -592,7 +611,7 @@ pub fn create_db() -> Result<String> {
         "CREATE TABLE IF NOT EXISTS athumbs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_id INTEGER NOT NULL,
-            thumb_data BLOB NOT NULL,
+            thumb_data BLOB,
             FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
         )",
         [],
