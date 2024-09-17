@@ -442,7 +442,7 @@ impl AFile {
 pub struct AThumb {
     pub id:             Option<i64>,     // unique id (autoincrement by db)
     pub file_id:        i64,             // file id (from files table)
-    pub thumb_data:     Option<Vec<u8>>, // thumbnail data
+    pub thumb_data:     Vec<u8>,         // thumbnail data
 }
 
 
@@ -450,16 +450,14 @@ impl AThumb {
 
     /// create a new thumbnail struct
     fn new(file_id: i64, path: &str) -> Result<Option<Self>, String> {
-       match Self::get_thumbnail(path, 320) {
-            Ok(data) => {
-                Ok(Some(Self {
-                    id: None,
-                    file_id,
-                    thumb_data: data,
-                }))
-            },
-            Err(_) => Ok(None),
+        if let Ok(Some(data)) = Self::get_thumbnail(path, 320) {
+            return Ok(Some(Self {
+                id: None,
+                file_id,
+                thumb_data: data,                
+            }));
         }
+        Ok(None)
     }
 
     /// fetch a thumbnail from db by file_id
@@ -504,12 +502,11 @@ impl AThumb {
         // Insert the new thumbnail into the database
         let new_thumbnail = Self::new(file_id, path);
         if let Ok(Some(athumb)) = new_thumbnail {
-            athumb.insert();
-            Ok(Self::fetch(file_id)?)
-        } else {
-            Ok(None)
+            athumb.insert()?;
+            return Ok(Self::fetch(file_id)?);
         }
 
+        Ok(None)
         // match Self::new(file_id, path) {
         //     Ok(Some(data)) => {
         //         data.insert()?;
@@ -611,7 +608,7 @@ pub fn create_db() -> Result<String> {
         "CREATE TABLE IF NOT EXISTS athumbs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_id INTEGER NOT NULL,
-            thumb_data BLOB,
+            thumb_data BLOB NOT NULL,
             FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
         )",
         [],

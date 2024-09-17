@@ -29,7 +29,7 @@
     </div>
       
     <!-- navigation pane -->
-    <div v-if="toolbar_index > 0" class="flex relative h-screen w-96 min-w-10" :style="{ width: leftPaneWidth + 'px' }">
+    <div v-if="toolbar_index > 0" class="flex relative h-screen w-96 min-w-32" :style="{ width: leftPaneWidth + 'px' }">
       <Album v-if="toolbar_index === 1" :titlebar="$t('album')"/>
       <Calendar v-else-if="toolbar_index === 2" :titlebar="$t('calendar')"/>
     </div>

@@ -29,7 +29,7 @@
           @click="clickAlbum(album)"
           @dblclick="dblclickAlbum(album)"
         >
-          <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" />
+          <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0"  @click="clickExpandAlbum(album)"/>
           {{ album.name }} - {{ album.id }}
         </div>
         <Folders v-if="album.is_expanded" :album_id="album.id" :children="album.children" />
@@ -144,24 +144,30 @@ const clickDeleteConfirm = async () => {
 //   console.log('Refresh albums');
 // };
 
+/// click album icon to expand or collapse next level folders
+const clickExpandAlbum = async (album) => {
+  console.log('clickExpandAlbum...', album);
+
+  // Toggle album expansion
+  album.is_expanded = !album.is_expanded; 
+
+  if (album.is_expanded && !album.children) {
+    try {
+      const folders = await invoke('expand_folder', { path: album.path, isRecursive: false });
+      album.children = folders.children;
+    } catch (error) {
+      console.error('Error fetching folder tree:', error);
+    }
+  }
+};
 
 /// click a album to expand or collapse next level folders
 const clickAlbum = async (album) => {
   console.log('clickAlbum...', album);
-  try {
+
+  if (g_album_id.value != album.id) {
     g_album_id.value = album.id;
     g_folder_id.value = null;
-
-    // Toggle album expansion
-    album.is_expanded = !album.is_expanded; 
-    
-    if (album.is_expanded && !album.children) {
-      // Fetch folder tree
-      const folders = await invoke('expand_folder', { path: album.path, isRecursive: false });
-      album.children = folders.children;
-    }
-  } catch (error) {
-    console.error('Error fetching folder tree:', error);
   }
 };
 
@@ -169,6 +175,7 @@ const clickAlbum = async (album) => {
 /// double click a album to expand all levels sub-folders
 const dblclickAlbum = async (album) => {
   console.log('dblclickAlbum...', album);
+  clickExpandAlbum(album);
 };
 
 

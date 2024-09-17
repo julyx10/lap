@@ -1,3 +1,6 @@
+## TODO 2024-09-17
+- save album/folders' expanded status and current selected folder
+
 ## Skill Set
 - Rust, Tauri, Cargo
 - HTML, CSS, XML, JSON

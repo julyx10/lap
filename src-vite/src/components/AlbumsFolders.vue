@@ -14,7 +14,7 @@
             'p-1 flex-shrink-0 transition-transform', 
             child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
           ]"
-          @click="clickExpandIcon($event, child)"
+          @click="clickExpandFolder($event, child)"
         />
 
         {{ child.name }} - {{ child.id }}
@@ -81,7 +81,7 @@ const clickFolderName = async (folder) => {
 };
 
 /// click expand icon to toggle folder expansion
-const clickExpandIcon = async (event: Event, folder) => {
+const clickExpandFolder = async (event: Event, folder) => {
   // Prevents clickFolder() from being triggered
   event.stopPropagation(); 
 
