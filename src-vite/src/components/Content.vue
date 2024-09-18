@@ -4,9 +4,9 @@
   <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
     {{ title }}
     <div class="flex">
-      <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto(0)" />
-      <IconVideo  class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
-      <IconMusic  class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
+      <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
+      <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
+      <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
     </div>
   </div>
 
@@ -17,7 +17,6 @@
 
 <script setup>
 import { ref, watch, computed, inject  } from 'vue';
-import { WebviewWindow } from '@tauri-apps/api/window';
 // import { invoke } from '@tauri-apps/api/tauri';
 import { invoke } from '@tauri-apps/api';
 import TableView from '@/components/TableView.vue';
@@ -99,53 +98,14 @@ watch(current_folder, async (new_folder) => {
 
 
 /// click file to open a new windows to display the image
-async function clickPhoto(index) {
+async function clickPhoto() {
 
-  // Check if the index is valid
-  if(index < 0 || index >= file_list.value.length) {
-    return;
-  }
-
-  // Get the file path
-  const file_path = `${current_folder.value.path}\\${file_list.value[index].name}`;
-  console.log('clickFile...', file_path);
-
-  // Create a new window to display the image
-  const newWindow = new WebviewWindow('imageview', {
-    url: '/image',
-    title: 'Image Viewer',
-    width: 800,
-    height: 600,
-    resizable: true,
-  });
-
-  newWindow.once('tauri://created', async () => {
-    console.log('clickFile...created', newWindow);
-
-    try {
-      const imageBase64 = await invoke('get_file_image', { path: file_path });
-      newWindow.emit('image-data', { data: imageBase64 });
-      // console.log('clickFile...image-data', imageBase64);
-
-    } catch (error) {
-      console.error('Error fetching image data:', error);
-    }
-  });
-
-  newWindow.once('tauri://error', (e) => {
-    console.error('Error creating window:', e);
-  });
 }
 
+
+/// click video to open a new windows to display the video
 const clickVideo = () => {
-  const aboutWindow = new WebviewWindow('about', {
-    url: '/about', // This will route to the "About" page
-    width: 600,
-    height: 400,
-  });
-  aboutWindow.once('tauri://created', () => {
-    console.log('New window created');
-  });
+  console.log('clickVideo...');
 };
 
 

@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from './router'
+import router from '@/common/router'
 import { createI18n } from 'vue-i18n';
 import { invoke } from '@tauri-apps/api';
 import './style.css'

@@ -18,6 +18,7 @@
             index === selected_file_index ? 'text-gray-300 bg-gray-600' : '',
           ]" 
           @click="clickFile(index)"
+          @dblclick="dlbClickFile(index)"
         >
           <td class="p-1">
             <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
@@ -35,9 +36,11 @@
 
 
 <script setup lang="ts">
+
 import { ref, watch, computed, inject  } from 'vue';
+import { WebviewWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api';
-import {formatTimestamp, formatFileSize } from '@/utils';
+import {formatTimestamp, formatFileSize } from '@/common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -76,10 +79,46 @@ watch (selected_file_index, (new_index) => {
 });
 
 
-/// Click a file
+/// Click a file to select it
 function clickFile(index) {
   selected_file_index.value = index;
 }
+
+
+/// Double-click a file to open it
+function dlbClickFile(index) {
+  // Check if the index is valid
+  if(index < 0 || index >= props.file_list.length) {
+    return;
+  }
+
+  // Create a new window to display the image
+  const newWindow = new WebviewWindow('imageview', {
+    url: '/image',
+    title: 'Image Viewer',
+    width: 800,
+    height: 600,
+    resizable: true,
+  });
+
+  newWindow.once('tauri://created', async () => {
+    try {
+      // Get the file path
+      const file_path = `${props.file_path}\\${props.file_list[index].name}`;
+      console.log('dlbClickFile...', file_path);
+
+      const imageBase64 = await invoke('get_file_image', { path: file_path });
+      newWindow.emit('image-data', { data: imageBase64 });
+    } catch (error) {
+      console.error('Error fetching image data:', error);
+    }
+  });
+
+  newWindow.once('tauri://error', (e) => {
+    console.error('Error creating window:', e);
+  });
+};
+
 
 </script>
 
