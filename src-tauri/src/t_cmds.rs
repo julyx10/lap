@@ -103,22 +103,14 @@ pub async fn get_file_thumb(file_id: i64, path: &str) -> Result<Option<String>, 
     }
 
     return Ok(None);
-
-    // match AThumb::add_to_db(file_id, path) {
-    //     Ok(thumb) => {
-    //         match thumb {
-    //             Some(t) => {
-    //                     let base64_thumbnail = general_purpose::STANDARD.encode(t.thumb_data);
-    //                     Ok(base64_thumbnail)
-    //             },
-    //             None => {
-    //                 Err("No thumbnail data found".to_string())
-    //             }
-    //         }
-    //     },
-    //     Err(e) => {
-    //         Err(format!("Error while adding thumb to DB: {}", e))
-    //     }
-    // }
 }
 
+
+/// get a file's image
+#[tauri::command]
+pub fn get_file_image(path: &str) -> Result<String, String> {
+  match std::fs::read(path) {
+    Ok(image_data) => Ok(general_purpose::STANDARD.encode(image_data)),
+    Err(e) => Err(format!("Failed to read the image: {}", e)),
+  }
+}

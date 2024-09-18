@@ -78,11 +78,13 @@ provide('g_folder_id', ref(null));  // current folder id
 /// Toolbar
 // Import SVG files as a Vue component
 import IconHome from '@/assets/home.svg';
-import IconAlbum from '@/assets/photo.svg';
+import IconAlbum from '@/assets/folder.svg';
 import IconCalendar from '@/assets/calendar.svg';
-import IconPeople from '@/assets/user.svg';
 import IconMap from '@/assets/map-pin.svg';
+import IconPeople from '@/assets/user.svg';
 import IconCamera from '@/assets/camera.svg';
+import IconStar from '@/assets/star.svg';
+import IconTag from '@/assets/tag.svg';
 import IconSettings from '@/assets/cog-6-tooth.svg';
 import IconBug from '@/assets/bug-ant.svg';
 
@@ -91,9 +93,11 @@ const toolbars = computed(() =>  [
   { icon: IconHome,     text: localeMessages.value.home },
   { icon: IconAlbum,    text: localeMessages.value.album },
   { icon: IconCalendar, text: localeMessages.value.calendar },
-  { icon: IconPeople,   text: localeMessages.value.people }, 
   { icon: IconMap,      text: localeMessages.value.map },
+  { icon: IconPeople,   text: localeMessages.value.people }, 
   { icon: IconCamera,   text: localeMessages.value.camera },
+  { icon: IconStar,     text: localeMessages.value.star },
+  { icon: IconTag,      text: localeMessages.value.tag },
 ]);
 
 const toolbar_index = ref(1); // index of the clicked icon

@@ -11,6 +11,9 @@
   "tauri": {
     "allowlist": {
       "all": false,
+      "window": {
+        "create": true
+      },
       "shell": {
         "all": false,
         "open": true
@@ -18,11 +21,10 @@
     },
     "windows": [
       {
+        "label": "main",
         "title": "jc-photo",
         "width": 800,
-        "height": 600,
-        "center": true,
-        "visible": false
+        "height": 600
       }
     ],
     "security": {

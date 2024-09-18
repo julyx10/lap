@@ -9,6 +9,7 @@
  * author:  julyxx
  * email:   tiangle@gmail.com
  * GitHub:  /julyx10
+ * date:    2024-08-15
  */
 
 mod t_cmds;
@@ -45,6 +46,7 @@ fn main() {
             t_cmds::expand_folder,
             t_cmds::get_files,
             t_cmds::get_file_thumb,
+            t_cmds::get_file_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

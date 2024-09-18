@@ -1,8 +1,9 @@
 import { createApp } from 'vue'
-import { createI18n } from 'vue-i18n';
 import App from './App.vue'
-import './style.css'
+import router from './router'
+import { createI18n } from 'vue-i18n';
 import { invoke } from '@tauri-apps/api';
+import './style.css'
 
 // import locales files
 import en from '@/locales/en.json';
@@ -23,9 +24,13 @@ const i18n = createI18n({
 /// create app
 const app = createApp(App);
 
+// use the router
+app.use(router);
+
 // use the i18n instance
 app.use(i18n);
 
 app.config.globalProperties.$invoke = invoke;
 
 app.mount('#app');
+console.log('App mounted', app);
