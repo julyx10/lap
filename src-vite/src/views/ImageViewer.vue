@@ -1,23 +1,25 @@
 <template>
-  <div 
-    class="flex relative justify-center items-center h-screen w-screen bg-gray-800 text-gray-500 overflow-hidden"
-    @wheel="zoomImage"
-    @mousedown="startDragging"
-    @mouseup="stopDragging"
-    @mousemove="dragImage"
-    @mouseleave="stopDragging"
-  >
-    <img
-    :src="imageSrc"
-    alt="Image Viewer"
-    v-if="imageSrc"
-    :style="imgStyle"
-    class="max-w-full max-h-full object-contain transition-transform duration-150"
-    />
-    <p v-else>Loading...</p>
-    
-    <p class="absolute bottom-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg"> {{ filePath }}</p>
-  </div>
+
+<div 
+  class="flex relative justify-center items-center h-screen w-screen bg-gray-800 text-gray-500 overflow-hidden"
+  @wheel="zoomImage"
+  @mousedown="startDragging"
+  @mouseup="stopDragging"
+  @mousemove="dragImage"
+  @mouseleave="stopDragging"
+>
+  <img
+  :src="imageSrc"
+  alt="Image Viewer"
+  v-if="imageSrc"
+  :style="imgStyle"
+  class="max-w-full max-h-full object-contain transition-transform duration-150"
+  />
+  <p v-else>Loading...</p>
+  
+  <p class="absolute bottom-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg"> {{ filePath }}</p>
+</div>
+
 </template>
 
 

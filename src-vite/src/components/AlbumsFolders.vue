@@ -1,30 +1,26 @@
 <template>
 
-  <ul v-if="children && children.length > 0">
-    <li v-for="child in children" :key="child.id" class="pl-4">
-      <div 
+<ul v-if="children && children.length > 0">
+  <li v-for="child in children" :key="child.id" class="pl-4">
+    <div 
+      :class="[
+        'm-1 flex items-center whitespace-nowrap hover:bg-gray-700', 
+        child.id && gFolderId === child.id ? 'text-gray-300' : ''
+      ]" 
+      @click="clickFolderName(child)"
+    >
+      <IconRight
         :class="[
-          'm-1 flex items-center whitespace-nowrap hover:bg-gray-700', 
-          child.id && gFolderId === child.id ? 'text-gray-300' : ''
-        ]" 
-        @click="clickFolderName(child)"
-      >
-        <IconRight
-          :class="[
-            'p-1 flex-shrink-0 transition-transform', 
-            child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
-          ]"
-          @click="clickExpandFolder($event, child)"
-        />
-
-        {{ child.name }} - {{ child.id }}
-
-      </div>
-
-      <Folders v-if="child.is_expanded" :album_id="album_id" :children="child.children" />
-
-    </li>
-  </ul>
+          'p-1 flex-shrink-0 transition-transform', 
+          child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
+        ]"
+        @click="clickExpandFolder($event, child)"
+      />
+      {{ child.name }} - {{ child.id }}
+    </div>
+    <Folders v-if="child.is_expanded" :album_id="album_id" :children="child.children" />
+  </li>
+</ul>
 
 </template>
 

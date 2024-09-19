@@ -1,38 +1,39 @@
 <template>
-  <div ref="scrollableDiv" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
-    <table class="min-w-full divide-y divide-gray-600 cursor-pointer">
-      <thead>
-        <tr>
-          <th 
-            v-for="(column, index) in msg.file_info_columns" :key="index"
-            :class="['text-left',
-              index === 0  || index === 5 ? 'text-center' : '',
-            ]"
-          > {{ column }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr 
-          v-for="(file, index) in fileList" :key="index" 
-          :class="['hover:bg-gray-700', 
-            index === selectedFileIndex ? 'text-gray-300 bg-gray-600' : '',
-          ]" 
-          @click="clickFile(index)"
-          @dblclick="dlbClickFile(index)"
-        >
-          <td class="p-1">
-            <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
-          </td>
-          <td>{{ file.name }}</td>
-          <td>{{ formatTimestamp(file.created_at) }}</td>
-          <td>{{ formatTimestamp(file.modified_at) }}</td>
-          <td>{{ file.e_model }}</td>
-          <td class="text-right">{{ formatFileSize(file.size) }}</td>
-        </tr>
-      </tbody>
-    </table>
+  
+<div ref="scrollableDiv" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+  <table class="min-w-full divide-y divide-gray-600 cursor-pointer">
+    <thead>
+      <tr>
+        <th 
+          v-for="(column, index) in msg.file_info_columns" :key="index"
+          :class="['text-left',
+            index === 0  || index === 5 ? 'text-center' : '',
+          ]"
+        > {{ column }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr 
+        v-for="(file, index) in fileList" :key="index" 
+        :class="['hover:bg-gray-700', 
+          index === selectedFileIndex ? 'text-gray-300 bg-gray-600' : '',
+        ]" 
+        @click="clickFile(index)"
+        @dblclick="dlbClickFile(index)"
+      >
+        <td class="p-1">
+          <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
+        </td>
+        <td>{{ file.name }}</td>
+        <td>{{ formatTimestamp(file.created_at) }}</td>
+        <td>{{ formatTimestamp(file.modified_at) }}</td>
+        <td>{{ file.e_model }}</td>
+        <td class="text-right">{{ formatFileSize(file.size) }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-  </div>
 </template>
 
 

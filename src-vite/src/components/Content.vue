@@ -1,16 +1,16 @@
 <template>
 
-  <!-- title bar -->
-  <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
-    {{ title }}
-    <div class="flex">
-      <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
-      <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
-      <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
-    </div>
+<!-- title bar -->
+<div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
+  {{ title }}
+  <div class="flex">
+    <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
+    <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
+    <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
   </div>
+</div>
 
-  <TableView :filePath="currentFolder.path" :fileList="fileList"/>
+<TableView :filePath="currentFolder.path" :fileList="fileList"/>
 
 </template>
 
