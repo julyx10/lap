@@ -10,7 +10,7 @@
       <IconDelete  
         :class="[
           'p-1 ', 
-          g_album_id ? 'hover:text-gray-200 transition-colors duration-300' : 'text-gray-700'
+          gAlbumId ? 'hover:text-gray-200 transition-colors duration-300' : 'text-gray-700'
         ]" 
         @click="showDeleteAlbumMsgbox = true" />
       <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
@@ -18,13 +18,13 @@
   </div>
 
   <!-- albums -->
-  <div v-if="g_albums.length > 0" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+  <div v-if="gAlbums.length > 0" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
     <ul>
-      <li v-for="album in g_albums" :key="album.id" style="user-select: none;" >
+      <li v-for="album in gAlbums" :key="album.id" style="user-select: none;" >
         <div 
           :class="[
             'p-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
-            g_album_id === album.id ? 'text-gray-300 bg-gray-800' : ''
+            gAlbumId === album.id ? 'text-gray-300 bg-gray-800' : ''
           ]"
           @click="clickAlbum(album)"
           @dblclick="dblclickAlbum(album)"
@@ -73,15 +73,15 @@ const localeMessages = computed(() => messages.value[locale.value]);
 // toolbar icons
 import IconAdd from '@/assets/folder-plus.svg';
 import IconDelete from '@/assets/folder-minus.svg';
-import IconRefresh from '@/assets/arrow-path.svg';
+// import IconRefresh from '@/assets/arrow-path.svg';
 
 // folder icon
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 
-const g_albums = inject('g_albums');         // global albums
-const g_album_id = inject('g_album_id');     // global album id
-const g_folder_id = inject('g_folder_id');   // global folder id
+const gAlbums = inject('gAlbums');         // global albums
+const gAlbumId = inject('gAlbumId');     // global album id
+const gFolderId = inject('gFolderId');   // global folder id
 
 const props = defineProps({
   titlebar: {
@@ -94,18 +94,18 @@ const showDeleteAlbumMsgbox = ref(false);
 
 // Fetch albums on mount
 onMounted(() => {
-  if (g_albums.value.length === 0) {
+  if (gAlbums.value.length === 0) {
     getAlbums();
   }
 });
 
-const getAlbumById = (id) => g_albums.value.find(album => album.id === id);
+const getAlbumById = (id) => gAlbums.value.find(album => album.id === id);
 
 /// Add albums
 const clickAdd = async () => {
   try {
     const new_album = await invoke('add_album', { window: appWindow, title: localeMessages.value.add_album_title });
-    g_albums.value.push(new_album);
+    gAlbums.value.push(new_album);
 
     console.log('Add album...', new_album);
   } catch (error) {
@@ -117,16 +117,16 @@ const clickAdd = async () => {
 /// Delete an album
 const clickDeleteConfirm = async () => {
   try {
-    if (g_album_id.value) {
-      const result = await invoke('delete_album', { id: getAlbumById(g_album_id.value).id });
+    if (gAlbumId.value) {
+      const result = await invoke('delete_album', { id: getAlbumById(gAlbumId.value).id });
 
       // delete the album from the list
-      g_albums.value = g_albums.value.filter(album => album.id !== g_album_id.value);
-      g_album_id.value = null;
+      gAlbums.value = gAlbums.value.filter(album => album.id !== gAlbumId.value);
+      gAlbumId.value = null;
 
       console.log('Delete album...', result);
     } else {
-      console.error('No album selected', g_album_id.value);
+      console.error('No album selected', gAlbumId.value);
     }
   } catch (error) {
     console.error('Failed to delete album:', error);
@@ -138,8 +138,8 @@ const clickDeleteConfirm = async () => {
 // const clickRefresh = async () => {
 //   await getAlbums(); // Refresh albums
 
-//   g_album_id.value = null;
-//   g_folder_id.value = null;
+//   gAlbumId.value = null;
+//   gFolderId.value = null;
 
 //   console.log('Refresh albums');
 // };
@@ -165,9 +165,9 @@ const clickExpandAlbum = async (album) => {
 const clickAlbum = async (album) => {
   console.log('clickAlbum...', album);
 
-  if (g_album_id.value != album.id) {
-    g_album_id.value = album.id;
-    g_folder_id.value = null;
+  if (gAlbumId.value != album.id) {
+    gAlbumId.value = album.id;
+    gFolderId.value = null;
   }
 };
 
@@ -185,13 +185,13 @@ async function getAlbums() {
     const fetchedAlbums = await invoke('get_albums');
     // console.log('fetchedAlbums...', fetchedAlbums);
     if (fetchedAlbums) {
-      g_albums.value = fetchedAlbums.map(album => ({
+      gAlbums.value = fetchedAlbums.map(album => ({
         ...album, 
         is_expanded: false,
         children: null,
       }));
     } 
-    console.log('getAlbums...', g_albums.value);
+    console.log('getAlbums...', gAlbums.value);
 
   } catch (error) {
     console.error('Failed to fetch albums:', error);

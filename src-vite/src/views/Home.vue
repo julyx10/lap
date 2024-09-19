@@ -43,11 +43,12 @@
     </div>
 
     <!-- debug area -->
-    <div class="m-2 text-sm" v-if="isDebugMenuOpen">
+    <div v-if="isDebugMenuOpen" class="flex flex-col m-2 text-sm">
       <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</button>
+      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="openImage()">Open Image</button>
+      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="clickAbout()">About</button>
     </div>
     
-    <!-- <ContextMenu :items="menuItems" @select="handleSelectedItem" /> -->
   </div>
 
 </template>
@@ -56,8 +57,9 @@
 <script setup lang="ts">
 
 import { ref, computed, provide, onMounted, onBeforeUnmount } from 'vue';
+import { open } from '@tauri-apps/api/dialog'; // Tauri dialog API to open the file picker
 import { WebviewWindow } from '@tauri-apps/api/window';
-// import ContextMenu from '@/components/ContextMenu.vue';
+
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -70,10 +72,9 @@ import Content from '@/components/Content.vue';
 
 
 /// global variables
-// albums
-provide('g_albums', ref([]));       // all albums
-provide('g_album_id', ref(null));   // current album id
-provide('g_folder_id', ref(null));  // current folder id
+provide('gAlbums', ref([]));       // all albums
+provide('gAlbumId', ref(null));   // current album id
+provide('gFolderId', ref(null));  // current folder id
 
 
 /// Toolbar
@@ -102,8 +103,9 @@ const toolbars = computed(() =>  [
 ]);
 
 const toolbar_index = ref(1); // index of the clicked icon
-provide('g_toolbar_index', toolbar_index);   
+provide('gToolbarIndex', toolbar_index);   
 
+const isDebugMenuOpen = ref(false); // debug menu
 
 /// click toolbar icons
 function clickToolbar(index) {
@@ -113,40 +115,69 @@ function clickToolbar(index) {
 
 /// click settings icon
 function clickSettings() {
-  console.log('clickSettings...')
+  console.log('clickSettings...');
 
-  // Open the "About" window
-  const aboutWindow = new WebviewWindow('about', {
-    url: '/about', // This will route to the "About" page
+  const settingsWindow = new WebviewWindow('settings', {
+    url: '/settings',
+    title: 'Settings',
     width: 600,
     height: 400,
   });
-  aboutWindow.once('tauri://created', () => {
+  
+  settingsWindow.once('tauri://created', () => {
     console.log('New window created');
   });
 }
 
+/// open image
+const openImage = async () => {
+  try {
+    const selectedFile = await open({
+      multiple: false,
+      filters: [
+        {
+          name: 'Image Files',
+          extensions: ['png', 'jpg', 'jpeg', 'gif'],
+        },
+      ],
+    });
 
-const menuItems = ref([
-  { label: 'Toggle Locale', action: 'toggle-locale' },
-  { label: 'Option 2', action: 'option2' },
-  { label: 'Option 3', action: 'option3' },
-]);
+    if (selectedFile) {
+      console.log('Selected file:', selectedFile);
+      const imageWindow = new WebviewWindow('image', {
+        url: `/image-viewer?file=${encodeURIComponent(Array.isArray(selectedFile) ? selectedFile[0] : selectedFile)}`,
+        title: 'Image Viewer',
+        width: 800,
+        height: 600,
+        resizable: true,
+      });
 
-const handleSelectedItem = (item) => {
-  console.log('handleSelect:', item);
-  switch (item.action) {
-    case 'toggle-locale':
-      if (locale.value === 'en') {
-        locale.value = 'zh';
-      } else {
-        locale.value = 'en';
-      }
+      imageWindow.once('tauri://created', () => {
+        console.log('Image window created');
+      });
+    }
+  } catch (error) {
+    console.error('Failed to open file:', error);
   }
 };
 
-/// debug menu
-const isDebugMenuOpen = ref(false);
+/// click about icon
+function clickAbout() {
+  console.log('clickAbout...');
+
+  const aboutWindow = new WebviewWindow('about', {
+    url: '/about',
+    title: 'About',
+    width: 600,
+    height: 400,
+    center: true,
+  });
+
+  aboutWindow.once('tauri://created', () => {
+    console.log('About window created');
+  });
+}
+
 
 function clickDebug() {
   console.log('clickDebug...');
@@ -169,6 +200,7 @@ function menuAction(action) {
 }
 
 
+/////////////////////////////////////////////////////////////////////////
 /// Splitter for resizing the left pane
 const toolbar = ref(null);
 const leftPaneWidth = ref(300); // Default width of the left pane

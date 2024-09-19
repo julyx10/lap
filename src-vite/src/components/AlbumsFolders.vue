@@ -5,7 +5,7 @@
       <div 
         :class="[
           'm-1 flex items-center whitespace-nowrap hover:bg-gray-700', 
-          child.id && g_folder_id === child.id ? 'text-gray-300' : ''
+          child.id && gFolderId === child.id ? 'text-gray-300' : ''
         ]" 
         @click="clickFolderName(child)"
       >
@@ -49,14 +49,14 @@ const props = defineProps({
   },
 });
 
-const g_album_id = inject('g_album_id');   // global album id
-const g_folder_id = inject('g_folder_id'); // global folder id
+const gAlbumId = inject('gAlbumId');   // global album id
+const gFolderId = inject('gFolderId'); // global folder id
 
 
 /// click folder to select
 const clickFolderName = async (folder) => {
-  // g_album_id.value = props.album_id;
-  // g_folder_id.value = folder.id;
+  // gAlbumId.value = props.album_id;
+  // gFolderId.value = folder.id;
   // console.log('clickFolderName:', folder);
 
   try {
@@ -68,8 +68,8 @@ const clickFolderName = async (folder) => {
     });
 
     folder.id = result.id;
-    g_folder_id.value = folder.id;
-    g_album_id.value = props.album_id;
+    gFolderId.value = folder.id;
+    gAlbumId.value = props.album_id;
 
     console.log('add_folder result:', result);
   } catch (error) {

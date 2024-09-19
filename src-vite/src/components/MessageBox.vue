@@ -16,7 +16,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineEmits } from 'vue';
 
 const props = defineProps({
   title: { type: String, default: 'Message' },

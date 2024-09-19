@@ -1,6 +1,5 @@
 // src/router.js
 import { createRouter, createWebHistory } from 'vue-router';
-// import ImageView from '@/views/ImageView.vue';
 
 const routes = [
   {
@@ -14,6 +13,16 @@ const routes = [
     component: () => import('@/views/ImageView.vue'),
   },
   {
+    path: '/image-viewer',
+    name: 'ImageViewer',
+    component: () => import('@/views/ImageViewer.vue'),
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('@/views/Settings.vue'),
+  },
+  {
     path: '/about',
     name: 'About',
     component: () => import('@/views/About.vue'),
@@ -22,7 +31,6 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  // history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
 

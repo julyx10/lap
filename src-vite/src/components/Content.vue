@@ -10,14 +10,13 @@
     </div>
   </div>
 
-  <TableView :file_path="current_folder.path" :file_list="file_list"/>
+  <TableView :filePath="currentFolder.path" :fileList="fileList"/>
 
 </template>
 
 
 <script setup>
 import { ref, watch, computed, inject  } from 'vue';
-// import { invoke } from '@tauri-apps/api/tauri';
 import { invoke } from '@tauri-apps/api';
 import TableView from '@/components/TableView.vue';
 
@@ -27,8 +26,6 @@ const { locale, messages } = useI18n();
 const msg = computed(() => messages.value[locale.value]);
 
 // Import the SVG file as a Vue component
-// import IconStar from '@/assets/star.svg';
-// import IconTag from '@/assets/tag.svg';  
 import IconPhoto from '@/assets/photo.svg';  
 import IconVideo from '@/assets/film.svg';  
 import IconMusic from '@/assets/musical-note.svg';  
@@ -38,33 +35,33 @@ const props = defineProps({
   titlebar: String
 });
 
-const g_toolbar_index = inject('g_toolbar_index'); // global toolbar index
+const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
 
-const g_albums = inject('g_albums');         // global albums
-const g_album_id = inject('g_album_id');     // global album id
-const g_folder_id = inject('g_folder_id');   // global folder id
+const gAlbums = inject('gAlbums');         // global albums
+const gAlbumId = inject('gAlbumId');     // global album id
+const gFolderId = inject('gFolderId');   // global folder id
 
-const current_folder = ref('');
-const file_list = ref([]);
+const currentFolder = ref('');
+const fileList = ref([]);
 
-// use a token that signals when the current_folder changes, 
+// use a token that signals when the currentFolder changes, 
 // and check this token inside the thumbnail generation loop
 let cancelToken = { cancelled: false };
 
 /// Display the titlebar
 const title = computed(() => {
   // album view
-  if (g_toolbar_index.value === 1) {
-    if (g_album_id.value) {
+  if (gToolbarIndex.value === 1) {
+    if (gAlbumId.value) {
       // get the selected album
-      const album = g_albums.value.find(album => album.id === g_album_id.value);
+      const album = gAlbums.value.find(album => album.id === gAlbumId.value);
 
-      if(g_folder_id.value) {
+      if(gFolderId.value) {
         // get the select folder
-        current_folder.value = getFolder(album, g_folder_id.value);
-        console.log('current_folder...', current_folder.value);
+        currentFolder.value = getFolder(album, gFolderId.value);
+        console.log('currentFolder...', currentFolder.value);
 
-        return album.name + ' > ' + current_folder.value.name;
+        return album.name + ' > ' + currentFolder.value.name;
       } else {
         return album.name + ' > ' + msg.value.allphotos;
       }
@@ -75,16 +72,16 @@ const title = computed(() => {
 });
 
 /// Watch for changes in album_id and update filelist accordingly
-watch(g_album_id, async (new_album_id) => {
+watch(gAlbumId, async (newAlbumId) => {
   // no album is selected
-  if (!new_album_id) {
-    file_list.value = [];
+  if (!newAlbumId) {
+    fileList.value = [];
   }
 });
 
-/// Watch for changes in file_path and update filelist accordingly
-watch(current_folder, async (new_folder) => {
-  if (new_folder) {
+/// Watch for changes in filePath and update filelist accordingly
+watch(currentFolder, async (newFolder) => {
+  if (newFolder) {
     // Invalidate ongoing thumbnail fetching when folder changes
     cancelToken.cancelled = true;
 
@@ -92,14 +89,14 @@ watch(current_folder, async (new_folder) => {
     cancelToken = { cancelled: false };
 
     // Fetch the files in the new folder
-    await getFiles(new_folder.path);
+    await getFiles(newFolder.path);
   }
 });
 
 
 /// click file to open a new windows to display the image
 async function clickPhoto() {
-
+  console.log('clickPhoto...');
 }
 
 
@@ -129,12 +126,12 @@ function getFolder(album, child_id) {
 async function getFiles(path) {
   try {
     // Fetch the list of files
-    file_list.value = await invoke('get_files', { folderId: g_folder_id.value, path: path });
+    fileList.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
 
     // Once file list are retrieved, get thumbnail for each file
     getFileThumb(cancelToken)
     
-    console.log('getFiles:', file_list.value);
+    console.log('getFiles:', fileList.value);
   } catch (error) {
     console.error('getFiles error:', error);
   }
@@ -145,17 +142,17 @@ async function getFiles(path) {
 async function getFileThumb(token) {
   try {
     // Create an array of promises for each file's thumbnail generation
-    const thumbnailPromises = file_list.value.map(async (file) => {
+    const thumbnailPromises = fileList.value.map(async (file) => {
       // Check if the operation has been cancelled
       if (token.cancelled) {
         console.log('getFileThumb -- Thumbnail generation cancelled');
         return;
       }
 
-      const file_path = `${current_folder.value.path}\\${file.name}`;
-      console.log('getFileThumb:', file_path);
+      const filePath = `${currentFolder.value.path}\\${file.name}`;
+      console.log('getFileThumb:', filePath);
 
-      const thumbnail = await invoke('get_file_thumb', { fileId: file.id, path: file_path });
+      const thumbnail = await invoke('get_file_thumb', { fileId: file.id, path: filePath });
       if (!token.cancelled) {
         // Convert each Base64 string into a data URL for display
         file.thumbnail = `data:image/png;base64,${thumbnail}`;

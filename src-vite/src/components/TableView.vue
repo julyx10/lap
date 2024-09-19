@@ -13,9 +13,9 @@
       </thead>
       <tbody>
         <tr 
-          v-for="(file, index) in file_list" :key="index" 
+          v-for="(file, index) in fileList" :key="index" 
           :class="['hover:bg-gray-700', 
-            index === selected_file_index ? 'text-gray-300 bg-gray-600' : '',
+            index === selectedFileIndex ? 'text-gray-300 bg-gray-600' : '',
           ]" 
           @click="clickFile(index)"
           @dblclick="dlbClickFile(index)"
@@ -31,15 +31,15 @@
         </tr>
       </tbody>
     </table>
+
   </div>
 </template>
 
 
 <script setup lang="ts">
 
-import { ref, watch, computed, inject  } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/window';
-import { invoke } from '@tauri-apps/api';
 import {formatTimestamp, formatFileSize } from '@/common/utils';
 
 /// i18n
@@ -48,75 +48,106 @@ const { locale, messages } = useI18n();
 const msg = computed(() => messages.value[locale.value]);
 
 const props = defineProps({
-  file_path: {
+  filePath: {
     type: String,
     required: false,
   },
-  file_list: {
+  fileList: {
     type: Array,
     required: true,
   },
 });
 
-const selected_file_index = ref(null);
+const selectedFileIndex = ref(null);
+const fileListLength = computed(() => props.fileList.length);
 const scrollableDiv = ref(null);
 
-/// Watch for changes in file_path
-watch(() => props.file_path, (new_path) => {
-  console.log('watch file_path:', new_path);
+
+onMounted(() => {
+  // Add global keydown listener
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  // Remove keydown listener when component is unmounted
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+
+/// Watch for changes in filePath
+watch(() => props.filePath, (new_path) => {
+  console.log('watch filePath:', new_path);
   if(new_path) {
-    selected_file_index.value = null;
+    selectedFileIndex.value = null;
     scrollableDiv.value.scrollTop = 0;
   }
 }, { deep: true });
 
 
-/// Watch for changes in selected_file_index
-watch (selected_file_index, (new_index) => {
+/// Watch for changes in selectedFileIndex
+watch (selectedFileIndex, (new_index) => {
   if (new_index !== null) {
-    console.log('selected_file_index...', props.file_list[new_index]);
+    console.log('selectedFileIndex...', props.fileList[new_index]);
   }
 });
 
 
+// Function to handle keydown event and change the index
+function handleKeyDown(event) {
+  if (event.key === 'ArrowDown') {
+    // Increase the index, but ensure it doesn't exceed the file list length
+    selectedFileIndex.value = Math.min(selectedFileIndex.value + 1, fileListLength.value - 1);
+  } else if (event.key === 'ArrowUp') {
+    // Decrease the index, but ensure it doesn't go below 0
+    selectedFileIndex.value = Math.max(selectedFileIndex.value - 1, 0);
+  } else if (event.key === 'Enter') {
+    // Open the selected file
+    dlbClickFile(selectedFileIndex.value);
+  }
+}
+
+
 /// Click a file to select it
-function clickFile(index) {
-  selected_file_index.value = index;
+function clickFile(index: number) {
+  selectedFileIndex.value = index;
 }
 
 
 /// Double-click a file to open it
-function dlbClickFile(index) {
+function dlbClickFile(index: number) {
   // Check if the index is valid
-  if(index < 0 || index >= props.file_list.length) {
+  if(index < 0 || index >= props.fileList.length) {
     return;
   }
 
-  // Create a new window to display the image
-  const newWindow = new WebviewWindow('imageview', {
-    url: '/image',
-    title: 'Image Viewer',
-    width: 800,
-    height: 600,
-    resizable: true,
-  });
+  // Get the file path and encode it
+  const filePath = `${props.filePath}\\${props.fileList[index].name}`;
+  const encodedFilePath = encodeURIComponent(filePath);
 
-  newWindow.once('tauri://created', async () => {
-    try {
-      // Get the file path
-      const file_path = `${props.file_path}\\${props.file_list[index].name}`;
-      console.log('dlbClickFile...', file_path);
+  // Check if the window is already open
+  let imageWindow = WebviewWindow.getByLabel('imageviewer');
 
-      const imageBase64 = await invoke('get_file_image', { path: file_path });
-      newWindow.emit('image-data', { data: imageBase64 });
-    } catch (error) {
-      console.error('Error fetching image data:', error);
-    }
-  });
+  if (imageWindow) {
+    // If window exists, emit an event to update the image
+    imageWindow.emit('update-image', { file: encodedFilePath });
+  } else {
+    // Create a new window to display the image
+    imageWindow = new WebviewWindow('imageviewer', {
+      url: `/image-viewer?file=${encodedFilePath}`, // Pass file path as a query parameter
+      title: 'Image Viewer',
+      width: 800,
+      height: 600,
+      resizable: true,
+    });
 
-  newWindow.once('tauri://error', (e) => {
-    console.error('Error creating window:', e);
-  });
+    imageWindow.once('tauri://created', async () => {
+      console.log('ImageViewer window created');
+    });
+
+    imageWindow.once('tauri://error', (e) => {
+      console.error('Error creating ImageViewer window:', e);
+    });
+  }
 };
 
 
