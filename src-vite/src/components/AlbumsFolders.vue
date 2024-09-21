@@ -7,7 +7,7 @@
         'm-1 flex items-center whitespace-nowrap hover:bg-gray-700', 
         child.id && gFolderId === child.id ? 'text-gray-300' : ''
       ]" 
-      @click="clickFolderName(child)"
+      @click="clickFolder(child)"
     >
       <IconRight
         :class="[
@@ -18,7 +18,7 @@
       />
       {{ child.name }} - {{ child.id }}
     </div>
-    <Folders v-if="child.is_expanded" :album_id="album_id" :children="child.children" />
+    <Folders v-if="child.is_expanded" :albumId="albumId" :children="child.children" />
   </li>
 </ul>
 
@@ -35,7 +35,7 @@ import Folders from '@/components/AlbumsFolders.vue';
 import IconRight from '@/assets/chevron-right.svg';
 
 const props = defineProps({
-  album_id: {
+  albumId: {
     type: Number,
     required: true,
   },
@@ -50,14 +50,12 @@ const gFolderId = inject('gFolderId'); // global folder id
 
 
 /// click folder to select
-const clickFolderName = async (folder) => {
-  // gAlbumId.value = props.album_id;
-  // gFolderId.value = folder.id;
-  // console.log('clickFolderName:', folder);
+const clickFolder = async (folder) => {
+  console.log('clickFolder...', folder);
 
   try {
     const result = await invoke('select_folder', {
-      albumId: props.album_id, 
+      albumId: props.albumId, 
       parentId: 0,
       name: folder.name,
       path: folder.path
@@ -65,16 +63,14 @@ const clickFolderName = async (folder) => {
 
     folder.id = result.id;
     gFolderId.value = folder.id;
-    gAlbumId.value = props.album_id;
+    gAlbumId.value = props.albumId;
 
     console.log('add_folder result:', result);
   } catch (error) {
     console.error("Error adding folder:", error);
   }
-
-  
-  console.log('clickFolderName...', folder);
 };
+
 
 /// click expand icon to toggle folder expansion
 const clickExpandFolder = async (event: Event, folder) => {

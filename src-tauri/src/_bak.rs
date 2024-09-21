@@ -1,7 +1,45 @@
 /// It is kept here for reference and to show the evolution of the code.
 /// 
 
+/// 2024-09-21 from t_sqlite.rs
 
+// /// Get all files from the db by folder_id
+// pub fn get_all_files(folder_id: i64) -> Result<Vec<Self>> {
+//     let conn = get_conn();
+    
+//     // Prepare the SQL query to fetch all files by folder_id
+//     let mut stmt = conn.prepare(
+//         "SELECT id, folder_id, name, size, created_at, modified_at, 
+//         e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length 
+//         FROM afiles WHERE folder_id = ?1"
+//     )?;
+    
+//     // Execute the query and map the result to AFile structs
+//     let files_iter = stmt.query_map(params![folder_id], |row| {
+//         Ok(Self {
+//             id: row.get(0)?,
+//             folder_id: row.get(1)?,
+//             name: row.get(2)?,
+//             size: row.get(3)?,
+//             created_at: row.get(4)?,
+//             modified_at: row.get(5)?,
+//             e_make: row.get(6)?,
+//             e_model: row.get(7)?,
+//             e_date_time: row.get(8)?,
+//             e_exposure_time: row.get(9)?,
+//             e_f_number: row.get(10)?,
+//             e_iso_speed: row.get(11)?,
+//             e_focal_length: row.get(12)?,
+//         })
+//     })?;
+    
+//     // Collect the results into a Vec<AFile>
+//     let mut files = Vec::new();
+//     for file in files_iter {
+//         files.push(file?);
+//     }
+//     Ok(files)
+// }
 
 /// 2024-09-08 moved from t_sqlite.rs
 

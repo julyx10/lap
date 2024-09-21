@@ -35,11 +35,11 @@ const props = defineProps({
   titlebar: String
 });
 
-const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
 
-const gAlbums = inject('gAlbums');         // global albums
+const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
+const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
 
 const currentFolder = ref('');
 const fileList = ref([]);
@@ -56,20 +56,19 @@ const title = computed(() => {
       // get the selected album
       const album = gAlbums.value.find(album => album.id === gAlbumId.value);
 
-      if(gFolderId.value) {
-        // get the select folder
+      if(gFolderId.value === album.folderId) { // current folder is album path
+        currentFolder.value = album;
+        return album.name;
+      } else {  // get the select folder
         currentFolder.value = getFolder(album, gFolderId.value);
-        console.log('currentFolder...', currentFolder.value);
-
         return album.name + ' > ' + currentFolder.value.name;
-      } else {
-        return album.name + ' > ' + msg.value.allphotos;
       }
     } else {
       return props.titlebar;
     }
   }
 });
+
 
 /// Watch for changes in album_id and update filelist accordingly
 watch(gAlbumId, async (newAlbumId) => {
@@ -79,9 +78,12 @@ watch(gAlbumId, async (newAlbumId) => {
   }
 });
 
+
 /// Watch for changes in filePath and update filelist accordingly
 watch(currentFolder, async (newFolder) => {
   if (newFolder) {
+    console.log('currentFolder:', newFolder);
+
     // Invalidate ongoing thumbnail fetching when folder changes
     cancelToken.cancelled = true;
 
@@ -106,13 +108,13 @@ const clickVideo = () => {
 };
 
 
-/// get the selected sub-folder of the album
-function getFolder(album, child_id) {
-  if (album.id === child_id) {
-    return album;
-  } else if (album.children) {
-    for (let child of album.children) {
-        const result = getFolder(child, child_id);
+/// get the selected sub-folder by folder id
+function getFolder(folder, folderId) {
+  if (folder.id === folderId) {
+    return folder;
+  } else if (folder.children) {
+    for (let child of folder.children) {
+        const result = getFolder(child, folderId);
         if (result) {
           return result;
         }

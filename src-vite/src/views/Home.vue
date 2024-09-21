@@ -11,7 +11,7 @@
         :is="item.icon"
         :class="[
           'my-5 hover:text-gray-100 transition-colors duration-300', 
-          toolbar_index === index ? 'text-gray-300' : ''
+          gToolbarIndex === index ? 'text-gray-300' : ''
         ]" 
         @click="clickToolbar(index)"
       />
@@ -29,17 +29,17 @@
   </div>
     
   <!-- navigation pane -->
-  <div v-if="toolbar_index > 0" class="flex relative h-screen w-96 min-w-32" :style="{ width: leftPaneWidth + 'px' }">
-    <Album v-if="toolbar_index === 1" :titlebar="$t('album')"/>
-    <Calendar v-else-if="toolbar_index === 2" :titlebar="$t('calendar')"/>
+  <div v-if="gToolbarIndex > 0" class="flex relative h-screen w-96 min-w-32" :style="{ width: leftPaneWidth + 'px' }">
+    <Album v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
+    <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
   </div>
 
   <!-- splitter -->
-  <div v-if="toolbar_index > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
+  <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
   
   <!-- content area -->
   <div class="flex flex-1 relative h-screen bg-gray-800">
-    <Content :titlebar="toolbars[toolbar_index].text"/>
+    <Content :titlebar="toolbars[gToolbarIndex].text"/>
   </div>
 
   <!-- debug area -->
@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, provide, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { open } from '@tauri-apps/api/dialog'; // Tauri dialog API to open the file picker
 import { WebviewWindow } from '@tauri-apps/api/window';
 
@@ -69,12 +69,6 @@ const localeMessages = computed(() => messages.value[locale.value]);
 import Album from '@/components/Albums.vue';
 import Calendar from '@/components/Calendar.vue';
 import Content from '@/components/Content.vue';
-
-
-/// global variables
-provide('gAlbums', ref([]));       // all albums
-provide('gAlbumId', ref(null));   // current album id
-provide('gFolderId', ref(null));  // current folder id
 
 
 /// Toolbar
@@ -102,15 +96,14 @@ const toolbars = computed(() =>  [
   { icon: IconTag,      text: localeMessages.value.tag },
 ]);
 
-const toolbar_index = ref(1); // index of the clicked icon
-provide('gToolbarIndex', toolbar_index);   
-
+const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
 const isDebugMenuOpen = ref(false); // debug menu
 
 /// click toolbar icons
 function clickToolbar(index) {
   console.log("clickToolbar...", toolbars.value[index].text);  
-  toolbar_index.value = index;
+
+  gToolbarIndex.value = index;
 }
 
 /// click settings icon

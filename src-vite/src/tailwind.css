@@ -4,7 +4,7 @@
 
 
 /* Ensure full height for html, body, and #app */
-html, body, #app {
+/* html, body, #app {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -12,9 +12,9 @@ html, body, #app {
 
 body {
   display: flex;
-  flex-direction: column; /* Optional: Align children vertically if needed */
+  flex-direction: column;
 }
 
 #app {
-  flex: 1; /* Allows #app to grow and fill the available space */
-}
+  flex: 1; 
+} */

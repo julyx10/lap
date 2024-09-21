@@ -8,11 +8,6 @@ const routes = [
     component: () => import('@/views/Home.vue'),
   },
   {
-    path: '/image',
-    name: 'ImageView',
-    component: () => import('@/views/ImageView.vue'),
-  },
-  {
     path: '/image-viewer',
     name: 'ImageViewer',
     component: () => import('@/views/ImageViewer.vue'),

@@ -24,15 +24,17 @@
       <div 
         :class="[
           'p-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
-          gAlbumId === album.id ? 'text-gray-300 bg-gray-800' : ''
+          { 
+            'bg-gray-800': gAlbumId === album.id, 
+            'text-gray-300': gAlbumId === album.id && gFolderId === album.folderId 
+          }
         ]"
         @click="clickAlbum(album)"
-        @dblclick="dblclickAlbum(album)"
       >
-        <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0"  @click="clickExpandAlbum(album)"/>
-        {{ album.name }} - {{ album.id }}
+        <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandAlbum(album)"/>
+        {{ album.name }}({{ album.id }})
       </div>
-      <Folders v-if="album.is_expanded" :album_id="album.id" :children="album.children" />
+      <Folders v-if="album.is_expanded" :albumId="album.id" :children="album.children" />
     </li>
   </ul>
 </div>
@@ -79,7 +81,7 @@ import IconDelete from '@/assets/folder-minus.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 
-const gAlbums = inject('gAlbums');         // global albums
+const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
 
@@ -144,6 +146,30 @@ const clickDeleteConfirm = async () => {
 //   console.log('Refresh albums');
 // };
 
+
+/// click a album to select it
+const clickAlbum = async (album) => {
+  console.log('clickAlbum...', album);
+  
+  try {
+    const result = await invoke('select_folder', {
+      albumId: album.id, 
+      parentId: 0,
+      name: album.name,
+      path: album.path
+    });
+    
+    album.folderId = result.id;   // insert a new property(folderId) in album object
+    gFolderId.value = album.folderId;
+    gAlbumId.value = album.id;
+    
+    console.log('add_folder result:', result);
+  } catch (error) {
+    console.error("Error adding folder:", error);
+  }
+};
+
+
 /// click album icon to expand or collapse next level folders
 const clickExpandAlbum = async (album) => {
   console.log('clickExpandAlbum...', album);
@@ -159,23 +185,6 @@ const clickExpandAlbum = async (album) => {
       console.error('Error fetching folder tree:', error);
     }
   }
-};
-
-/// click a album to expand or collapse next level folders
-const clickAlbum = async (album) => {
-  console.log('clickAlbum...', album);
-
-  if (gAlbumId.value != album.id) {
-    gAlbumId.value = album.id;
-    gFolderId.value = null;
-  }
-};
-
-
-/// double click a album to expand all levels sub-folders
-const dblclickAlbum = async (album) => {
-  console.log('dblclickAlbum...', album);
-  clickExpandAlbum(album);
 };
 
 

@@ -20,20 +20,5 @@ export default defineConfig({
   build: {
     outDir: './dist',
     emptyOutDir: true,
-    // rollupOptions: {
-    //   input: {
-    //     main: './index.html',
-    //     worker: './src/workers/thumbnailWorker.js'
-    //   }
-    // rollupOptions: {
-    //   output: {
-    //     // Enable code splitting for workers
-    //     manualChunks(id) {
-    //       if (id.includes('worker')) {
-    //         return 'worker';
-    //       }
-    //     }
-    //   }
-    // }
   }
 });

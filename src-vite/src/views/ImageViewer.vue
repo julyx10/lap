@@ -15,7 +15,7 @@
   :style="imgStyle"
   class="max-w-full max-h-full object-contain transition-transform duration-150"
   />
-  <p v-else>Loading...</p>
+  <p v-else>{{ loadError ? loadError : 'Loading...'}}</p>
   
   <p class="absolute bottom-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg"> {{ filePath }}</p>
 </div>
@@ -31,6 +31,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 // Reactive variable to hold the image source
 const filePath = ref('');
 const imageSrc = ref(null);
+const loadError = ref(null);
 
 // zoom scaling, dragging state, and position
 const scale = ref(1); // Default zoom scale
@@ -73,6 +74,8 @@ async function loadImage() {
     const imageBase64 = await invoke('get_file_image', { path: filePath.value });
     imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
   } catch (error) {
+    loadError.value = error;
+    imageSrc.value = null;
     console.error('Error fetching image data:', error);
   }
 }
