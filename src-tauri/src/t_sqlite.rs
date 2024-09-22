@@ -6,7 +6,6 @@ use std::io::Cursor;
 use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{Serialize, Deserialize};
 use exif::Tag;
-use tauri::api::file;
 
 use crate::t_utils;
 
@@ -267,6 +266,7 @@ pub struct AFile {
     pub e_f_number:       Option<String>,
     pub e_iso_speed:      Option<String>,
     pub e_focal_length:   Option<String>,
+    pub e_orientation:    Option<u32>,   // orientation
 }
 
 
@@ -300,6 +300,8 @@ impl AFile {
             e_f_number: Self::get_exif_field(&exif, Tag::FNumber),
             e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
             e_focal_length: Self::get_exif_field(&exif, Tag::FocalLength),
+
+            e_orientation: Self::get_exif_orientation_field(&exif, Tag::Orientation)
         })
     }
 
@@ -310,12 +312,20 @@ impl AFile {
         })
     }
     
+    fn get_exif_orientation_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<u32> {
+        exif.as_ref().and_then(|exif_data| {
+            exif_data.get_field(tag, exif::In::PRIMARY)
+                .and_then(|field| field.value.get_uint(0))  // Return u64 directly
+                .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
+        })
+    }
+
     /// fetch a file info from db by folder_id and file name
-    fn fetch(folder_id: i64, path: &str) -> Result<Option<Self>, String> {
+    pub fn fetch(folder_id: i64, path: &str) -> Result<Option<Self>, String> {
         let conn = get_conn();
         let result = conn.query_row(
             "SELECT id, folder_id, name, size, created_at, modified_at, 
-            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length 
+            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
             params![folder_id, t_utils::get_path_name(path)],
             |row| {
@@ -333,6 +343,7 @@ impl AFile {
                     e_f_number: row.get(10)?,
                     e_iso_speed: row.get(11)?,
                     e_focal_length: row.get(12)?,
+                    e_orientation: row.get(13)?,
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -344,8 +355,8 @@ impl AFile {
         let conn = get_conn();
         let result = conn.execute(
             "INSERT INTO afiles (folder_id, name, size, created_at, modified_at, 
-            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 self.folder_id,
                 self.name,
@@ -359,6 +370,7 @@ impl AFile {
                 self.e_f_number,
                 self.e_iso_speed,
                 self.e_focal_length,
+                self.e_orientation,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -397,6 +409,36 @@ impl AFile {
         Ok(new_file.unwrap())
     }
 
+    /// get a file info from db by file_id
+    pub fn get_file_info(file_id: i64) -> Result<Option<Self>, String> {
+        let conn = get_conn();
+        let result = conn.query_row(
+            "SELECT id, folder_id, name, size, created_at, modified_at, 
+            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
+            FROM afiles WHERE id = ?1",
+            params![file_id],
+            |row| {
+                Ok(Self {
+                    id: Some(row.get(0)?),
+                    folder_id: row.get(1)?,
+                    name: row.get(2)?,
+                    size: row.get(3)?,
+                    created_at: row.get(4)?,
+                    modified_at: row.get(5)?,
+                    e_make: row.get(6)?,
+                    e_model: row.get(7)?,
+                    e_date_time: row.get(8)?,
+                    e_exposure_time: row.get(9)?,
+                    e_f_number: row.get(10)?,
+                    e_iso_speed: row.get(11)?,
+                    e_focal_length: row.get(12)?,
+                    e_orientation: row.get(13)?,
+                })
+            }
+        ).optional().map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
 }
 
 
@@ -411,12 +453,12 @@ pub struct AThumb {
 impl AThumb {
 
     /// create a new thumbnail struct
-    fn new(file_id: i64, path: &str) -> Result<Option<Self>, String> {
-        if let Ok(Some(data)) = Self::get_thumbnail(path, 320) {
+    fn new(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Self>, String> {
+        if let Ok(Some(data)) = Self::get_thumbnail(file_path, orientation, thumbnail_size) {
             return Ok(Some(Self {
                 id: None,
                 file_id,
-                thumb_data: data,                
+                thumb_data: data,
             }));
         }
         Ok(None)
@@ -454,7 +496,7 @@ impl AThumb {
     }
 
     /// insert a thumbnail into db if not exists
-    pub fn add_to_db(file_id: i64, path: &str) -> Result<Option<Self>, String> {
+    pub fn add_to_db(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Self>, String> {
         // Check if the thumbnail exists
         let existing_thumbnail = Self::fetch(file_id);
         if let Ok(Some(thumbnail)) = existing_thumbnail {
@@ -462,35 +504,33 @@ impl AThumb {
         }
 
         // Insert the new thumbnail into the database
-        let new_thumbnail = Self::new(file_id, path);
+        let new_thumbnail = Self::new(file_id, file_path, orientation, thumbnail_size);
         if let Ok(Some(athumb)) = new_thumbnail {
             athumb.insert()?;
             return Ok(Self::fetch(file_id)?);
         }
 
         Ok(None)
-        // match Self::new(file_id, path) {
-        //     Ok(Some(data)) => {
-        //         data.insert()?;
-
-        //         // return the newly inserted thumbnail
-        //         let new_thumbnail = Self::fetch(file_id)?;
-        //         Ok(new_thumbnail)
-        //     },
-        //     Err(_) => Ok(None)
-        // }
     }
 
     /// Resize an image to create a thumbnail and return it as a vector of bytes
-    fn get_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
+    fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
         // Attempt to open the image file
         let img = match image::open(file_path) {
             Ok(image) => image,
             Err(_) => return Ok(None), // Return Ok(None) if the image fails to open
         };
+        
+        // Adjust the image orientation based on the EXIF orientation value
+        let adjusted_img = match orientation {
+            3 => img.rotate180(),
+            6 => img.rotate90(),
+            8 => img.rotate270(),
+            _ => img,
+        };
 
         // Resize the image to a thumbnail
-        let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
+        let thumbnail = adjusted_img.thumbnail(thumbnail_size, thumbnail_size);
 
         // Save the thumbnail to an in-memory buffer as a JPEG
         let mut buf = Vec::new();
@@ -560,6 +600,7 @@ pub fn create_db() -> Result<String> {
             e_f_number TEXT,
             e_iso_speed TEXT,
             e_focal_length TEXT,
+            e_orientation INTEGER,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],

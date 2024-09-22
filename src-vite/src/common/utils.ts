@@ -1,5 +1,9 @@
+import { os } from '@tauri-apps/api';
 import { format } from 'date-fns';
 
+/// thumbnail size
+export const THUMBNAIL_SIZE = 320;
+export const separator = (await os.platform()) === 'win32' ? '\\' : '/';
 
 /// format timestamp to string
 export function formatTimestamp(timestamp: number): string {

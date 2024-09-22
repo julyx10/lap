@@ -1,56 +1,56 @@
 <template>
 
-<div class="flex h-screen bg-gray-900 text-gray-500">
+  <div class="flex h-screen bg-gray-900 text-gray-500">
 
-  <!-- left toolbar -->
-  <div ref="toolbar" class="px-2 flex flex-col justify-between">
-    <div>
-      <component
-        v-for="(item, index) in toolbars"
-        :key="index"
-        :is="item.icon"
-        :class="[
-          'my-5 hover:text-gray-100 transition-colors duration-300', 
-          gToolbarIndex === index ? 'text-gray-300' : ''
-        ]" 
-        @click="clickToolbar(index)"
-      />
+    <!-- left toolbar -->
+    <div ref="toolbar" class="px-2 flex flex-col justify-between">
+      <div>
+        <component
+          v-for="(item, index) in toolbars"
+          :key="index"
+          :is="item.icon"
+          :class="[
+            'my-5 hover:text-gray-100 transition-colors duration-300', 
+            gToolbarIndex === index ? 'text-gray-300' : ''
+          ]" 
+          @click="clickToolbar(index)"
+        />
+      </div>
+      <div>
+        <IconSettings class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickSettings" />
+        <IconBug 
+          :class="[
+            'my-5 hover:text-gray-100 transition-colors duration-300',
+            isDebugMenuOpen ? 'text-gray-300' : ''
+          ]" 
+          @click="clickDebug" 
+        />
+      </div>
     </div>
-    <div>
-      <IconSettings class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickSettings" />
-      <IconBug 
-        :class="[
-          'my-5 hover:text-gray-100 transition-colors duration-300',
-          isDebugMenuOpen ? 'text-gray-300' : ''
-        ]" 
-        @click="clickDebug" 
-      />
+      
+    <!-- navigation pane -->
+    <div v-if="gToolbarIndex > 0" class="flex relative h-screen w-96 min-w-32" :style="{ width: leftPaneWidth + 'px' }">
+      <Album v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
+      <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
     </div>
-  </div>
+
+    <!-- splitter -->
+    <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
     
-  <!-- navigation pane -->
-  <div v-if="gToolbarIndex > 0" class="flex relative h-screen w-96 min-w-32" :style="{ width: leftPaneWidth + 'px' }">
-    <Album v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
-    <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
-  </div>
+    <!-- content area -->
+    <div class="flex flex-1 relative h-screen bg-gray-800">
+      <Content :titlebar="toolbars[gToolbarIndex].text"/>
+    </div>
 
-  <!-- splitter -->
-  <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
-  
-  <!-- content area -->
-  <div class="flex flex-1 relative h-screen bg-gray-800">
-    <Content :titlebar="toolbars[gToolbarIndex].text"/>
-  </div>
-
-  <!-- debug area -->
-  <div v-if="isDebugMenuOpen" class="flex flex-col m-2 text-sm">
-    <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</button>
-    <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="openImage()">Open Image</button>
-    <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="clickAbout()">About</button>
+    <!-- debug area -->
+    <div v-if="isDebugMenuOpen" class="flex flex-col m-2 text-sm">
+      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</button>
+      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="openImage()">Open Image</button>
+      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="clickAbout()">About</button>
+    </div>
+    
   </div>
   
-</div>
-
 </template>
    
 

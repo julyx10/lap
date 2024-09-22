@@ -96,8 +96,8 @@ pub fn get_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
 
 /// get a file's thumb image 
 #[tauri::command]
-pub async fn get_file_thumb(file_id: i64, path: &str) -> Result<Option<String>, String> {
-    if let Ok(Some(thumb)) = AThumb::add_to_db(file_id, path) {
+pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<String>, String> {
+    if let Ok(Some(thumb)) = AThumb::add_to_db(file_id, file_path, orientation, thumbnail_size) {
         let base64_thumbnail = general_purpose::STANDARD.encode(thumb.thumb_data);
         return Ok(Some(base64_thumbnail));
     }
@@ -105,11 +105,17 @@ pub async fn get_file_thumb(file_id: i64, path: &str) -> Result<Option<String>, 
     return Ok(None);
 }
 
+/// get a file's info
+#[tauri::command]
+pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
+    AFile::get_file_info(file_id).map_err(|e| format!("Error while fetching file info: {}", e))
+}
+
 
 /// get a file's image
 #[tauri::command]
-pub fn get_file_image(path: &str) -> Result<String, String> {
-  match std::fs::read(path) {
+pub fn get_file_image(file_path: &str) -> Result<String, String> {
+  match std::fs::read(file_path) {
     Ok(image_data) => Ok(general_purpose::STANDARD.encode(image_data)),
     Err(e) => Err(format!("Failed to read the image: {}", e)),
   }

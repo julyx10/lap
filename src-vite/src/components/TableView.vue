@@ -1,38 +1,38 @@
 <template>
-  
-<div ref="scrollableDiv" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
-  <table class="min-w-full divide-y divide-gray-600 cursor-pointer">
-    <thead>
-      <tr>
-        <th 
-          v-for="(column, index) in msg.file_info_columns" :key="index"
-          :class="['text-left',
-            index === 0  || index === 5 ? 'text-center' : '',
-          ]"
-        > {{ column }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr 
-        v-for="(file, index) in fileList" :key="index" 
-        :class="['hover:bg-gray-700', 
-          index === selectedFileIndex ? 'text-gray-300 bg-gray-600' : '',
-        ]" 
-        @click="clickFile(index)"
-        @dblclick="dlbClickFile(index)"
-      >
-        <td class="p-1">
-          <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
-        </td>
-        <td>{{ file.name }}</td>
-        <td>{{ formatTimestamp(file.created_at) }}</td>
-        <td>{{ formatTimestamp(file.modified_at) }}</td>
-        <td>{{ file.e_model }}</td>
-        <td class="text-right">{{ formatFileSize(file.size) }}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+
+  <div ref="scrollableDiv" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+    <table class="min-w-full divide-y divide-gray-600 cursor-pointer">
+      <thead>
+        <tr>
+          <th 
+            v-for="(column, index) in msg.file_info_columns" :key="index"
+            :class="['text-left',
+              index === 0  || index === 5 ? 'text-center' : '',
+            ]"
+          > {{ column }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr 
+          v-for="(file, index) in fileList" :key="index" 
+          :class="['hover:bg-gray-700', 
+            index === selectedFileIndex ? 'text-gray-300 bg-gray-600' : '',
+          ]" 
+          @click="clickFile(index)"
+          @dblclick="dlbClickFile(index)"
+        >
+          <td class="p-1">
+            <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
+          </td>
+          <td>{{ file.name }}</td>
+          <td>{{ formatTimestamp(file.created_at) }}</td>
+          <td>{{ formatTimestamp(file.modified_at) }}</td>
+          <td>{{ file.e_model }}</td>
+          <td class="text-right">{{ formatFileSize(file.size) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
 </template>
 
@@ -41,7 +41,8 @@
 
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/window';
-import {formatTimestamp, formatFileSize } from '@/common/utils';
+import { formatTimestamp, formatFileSize } from '@/common/utils';
+import { separator } from '@/common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -121,8 +122,13 @@ function dlbClickFile(index: number) {
     return;
   }
 
-  // Get the file path and encode it
-  const filePath = `${props.filePath}\\${props.fileList[index].name}`;
+  // Get the file info struct and encode it
+  // const fileInfo = props.fileList[index];
+  // const encodedFileInfo = encodeURIComponent(JSON.stringify(fileInfo));
+  const file = props.fileList[index];
+
+  // get the file path and encode it
+  const filePath = `${props.filePath}${separator}${file.name}`;
   const encodedFilePath = encodeURIComponent(filePath);
 
   // Check if the window is already open
@@ -130,11 +136,11 @@ function dlbClickFile(index: number) {
 
   if (imageWindow) {
     // If window exists, emit an event to update the image
-    imageWindow.emit('update-image', { file: encodedFilePath });
+    imageWindow.emit('update-image', { fileId: file.id, filePath: encodedFilePath });
   } else {
     // Create a new window to display the image
     imageWindow = new WebviewWindow('imageviewer', {
-      url: `/image-viewer?file=${encodedFilePath}`, // Pass file path as a query parameter
+      url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}`,
       title: 'Image Viewer',
       width: 800,
       height: 600,
@@ -154,4 +160,9 @@ function dlbClickFile(index: number) {
 
 </script>
 
-  
+<style scoped>
+/* Disable text selection while dragging */
+* {
+  user-select: none;
+}
+</style>

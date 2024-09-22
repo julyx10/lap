@@ -1,16 +1,16 @@
 <template>
 
-<!-- title bar -->
-<div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
-  {{ title }}
-  <div class="flex">
-    <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
-    <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
-    <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
+  <!-- title bar -->
+  <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
+    {{ title }}
+    <div class="flex">
+      <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
+      <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
+      <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
+    </div>
   </div>
-</div>
-
-<TableView :filePath="currentFolder.path" :fileList="fileList"/>
+  <!-- table -->
+  <TableView :filePath="currentFolder.path" :fileList="fileList"/>
 
 </template>
 
@@ -19,6 +19,7 @@
 import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import TableView from '@/components/TableView.vue';
+import { THUMBNAIL_SIZE } from '../common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -154,7 +155,12 @@ async function getFileThumb(token) {
       const filePath = `${currentFolder.value.path}\\${file.name}`;
       console.log('getFileThumb:', filePath);
 
-      const thumbnail = await invoke('get_file_thumb', { fileId: file.id, path: filePath });
+      const thumbnail = await invoke('get_file_thumb', { 
+        fileId: file.id, 
+        filePath: filePath, 
+        orientation: file.e_orientation ? file.e_orientation : 0, 
+        thumbnailSize: THUMBNAIL_SIZE
+      });
       if (!token.cancelled) {
         // Convert each Base64 string into a data URL for display
         file.thumbnail = `data:image/png;base64,${thumbnail}`;
