@@ -10,7 +10,7 @@
     </div>
   </div>
   <!-- table -->
-  <TableView :filePath="currentFolder.path" :fileList="fileList"/>
+  <TableView :filePath="currentFolder.path"/>
 
 </template>
 
@@ -19,7 +19,7 @@
 import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import TableView from '@/components/TableView.vue';
-import { THUMBNAIL_SIZE } from '../common/utils';
+import { getFullPath, THUMBNAIL_SIZE } from '@/common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -37,17 +37,20 @@ const props = defineProps({
 });
 
 
+const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
 const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
-const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
+const gFiles = inject('gFiles');         // global files
+const gFileId = inject('gFileId');       // global file id
 
 const currentFolder = ref('');
-const fileList = ref([]);
+// const fileList = ref([]);
 
 // use a token that signals when the currentFolder changes, 
 // and check this token inside the thumbnail generation loop
 let cancelToken = { cancelled: false };
+
 
 /// Display the titlebar
 const title = computed(() => {
@@ -75,7 +78,7 @@ const title = computed(() => {
 watch(gAlbumId, async (newAlbumId) => {
   // no album is selected
   if (!newAlbumId) {
-    fileList.value = [];
+    gFiles.value = [];
   }
 });
 
@@ -129,12 +132,12 @@ function getFolder(folder, folderId) {
 async function getFiles(path) {
   try {
     // Fetch the list of files
-    fileList.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
+    gFiles.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
 
     // Once file list are retrieved, get thumbnail for each file
     getFileThumb(cancelToken)
     
-    console.log('getFiles:', fileList.value);
+    console.log('getFiles:', gFiles.value);
   } catch (error) {
     console.error('getFiles error:', error);
   }
@@ -145,25 +148,28 @@ async function getFiles(path) {
 async function getFileThumb(token) {
   try {
     // Create an array of promises for each file's thumbnail generation
-    const thumbnailPromises = fileList.value.map(async (file) => {
+    const thumbnailPromises = gFiles.value.map(async (file) => {
       // Check if the operation has been cancelled
       if (token.cancelled) {
         console.log('getFileThumb -- Thumbnail generation cancelled');
         return;
       }
 
-      const filePath = `${currentFolder.value.path}\\${file.name}`;
+      const filePath = getFullPath(currentFolder.value.path, file.name);
       console.log('getFileThumb:', filePath);
 
-      const thumbnail = await invoke('get_file_thumb', { 
-        fileId: file.id, 
-        filePath: filePath, 
-        orientation: file.e_orientation ? file.e_orientation : 0, 
+      const thumb = await invoke('get_file_thumb', { 
+        fileId: file.id,
+        filePath: filePath,
+        orientation: file.e_orientation ? file.e_orientation : 0,
         thumbnailSize: THUMBNAIL_SIZE
       });
+      console.log('getFileThumb:', thumb);
+
       if (!token.cancelled) {
-        // Convert each Base64 string into a data URL for display
-        file.thumbnail = `data:image/png;base64,${thumbnail}`;
+        file.resolution = thumb.width + 'x' + thumb.height;
+        file.thumbnail = `data:image/png;base64,${thumb.thumb_data_base64}`;
+        console.log('getFileThumb:', file);
       }
     });
 

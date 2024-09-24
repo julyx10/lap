@@ -18,3 +18,8 @@ export function formatFileSize(bytes: number): string {
   const fileSize = bytes / Math.pow(1024, i + 1);
   return `${fileSize.toFixed(2)} ${sizes[i]}`;
 }
+
+/// get full path
+export function getFullPath(path: string, name: string): string {
+  return path + separator + name;
+}

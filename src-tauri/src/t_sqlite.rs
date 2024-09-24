@@ -3,8 +3,9 @@
  * 
  */
 use std::io::Cursor;
+use base64::{ Engine, engine::general_purpose };
 use rusqlite::{ params, Connection, Result, OptionalExtension };
-use serde::{Serialize, Deserialize};
+use serde::{ Serialize, Deserialize };
 use exif::Tag;
 
 use crate::t_utils;
@@ -234,6 +235,28 @@ impl AFolder {
         Ok(new_folder.unwrap())
     }
 
+    // /// get folder name by folder_id
+    // pub fn get_folder_name(folder_id: i64) -> Result<String, String> {
+    //     let conn = get_conn();
+    //     let result = conn.query_row(
+    //         "SELECT name FROM afolders WHERE id = ?1",
+    //         params![folder_id],
+    //         |row| Ok(row.get(0)?)
+    //     ).map_err(|e| e.to_string())?;
+    //     Ok(result)
+    // }
+
+    // /// get folder path by folder_id
+    // pub fn get_folder_path(folder_id: i64) -> Result<String, String> {
+    //     let conn = get_conn();
+    //     let result = conn.query_row(
+    //         "SELECT path FROM afolders WHERE id = ?1",
+    //         params![folder_id],
+    //         |row| Ok(row.get(0)?)
+    //     ).map_err(|e| e.to_string())?;
+    //     Ok(result)
+    // }
+
     // /// delete a folder from db
     // pub fn delete_from_db(id: i64) -> Result<()> {
     //     let conn = get_conn()?;
@@ -258,6 +281,13 @@ pub struct AFile {
     pub created_at:     Option<u64>,    // file create time
     pub modified_at:    Option<u64>,    // file modified time
 
+    // image info
+    pub i_width:         Option<u32>,    // image width
+    pub i_height:        Option<u32>,    // image height
+    pub i_color_type:    Option<String>,     // image color type
+    pub i_bit_depth:     Option<u16>,     // image bit depth
+    pub i_has_alpha:     Option<bool>,   // image has alpha channel
+
     // exif info
     pub e_make:           Option<String>,   // camera make
     pub e_model:          Option<String>,   // camera model
@@ -275,6 +305,7 @@ impl AFile {
     /// create a new file struct
     fn new(folder_id: i64, path: &str) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(path)?;
+        let img_info = t_utils::ImageInfo::new(path)?;
 
         // Attempt to open the file
         let file = std::fs::File::open(path).map_err(|e| format!("Error opening file: {}", e))?;
@@ -292,6 +323,12 @@ impl AFile {
             size: file_info.file_size,
             created_at:  file_info.created,
             modified_at: file_info.modified,
+            
+            i_width: Some(img_info.width),
+            i_height: Some(img_info.height),
+            i_color_type: Some(img_info.color_type),
+            i_bit_depth: Some(img_info.bit_depth),
+            i_has_alpha: Some(img_info.has_alpha),
 
             e_make: Self::get_exif_field(&exif, Tag::Make),
             e_model: Self::get_exif_field(&exif, Tag::Model),
@@ -300,8 +337,7 @@ impl AFile {
             e_f_number: Self::get_exif_field(&exif, Tag::FNumber),
             e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
             e_focal_length: Self::get_exif_field(&exif, Tag::FocalLength),
-
-            e_orientation: Self::get_exif_orientation_field(&exif, Tag::Orientation)
+            e_orientation: Self::get_exif_orientation_field(&exif, Tag::Orientation),
         })
     }
 
@@ -325,6 +361,7 @@ impl AFile {
         let conn = get_conn();
         let result = conn.query_row(
             "SELECT id, folder_id, name, size, created_at, modified_at, 
+            i_width, i_height, i_color_type, i_bit_depth, i_has_alpha,
             e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
             params![folder_id, t_utils::get_path_name(path)],
@@ -336,14 +373,21 @@ impl AFile {
                     size: row.get(3)?,
                     created_at: row.get(4)?,
                     modified_at: row.get(5)?,
-                    e_make: row.get(6)?,
-                    e_model: row.get(7)?,
-                    e_date_time: row.get(8)?,
-                    e_exposure_time: row.get(9)?,
-                    e_f_number: row.get(10)?,
-                    e_iso_speed: row.get(11)?,
-                    e_focal_length: row.get(12)?,
-                    e_orientation: row.get(13)?,
+
+                    i_width: row.get(6)?,
+                    i_height: row.get(7)?,
+                    i_color_type: row.get(8)?,
+                    i_bit_depth: row.get(9)?,
+                    i_has_alpha: row.get(10)?,
+
+                    e_make: row.get(11)?,
+                    e_model: row.get(12)?,
+                    e_date_time: row.get(13)?,
+                    e_exposure_time: row.get(14)?,
+                    e_f_number: row.get(15)?,
+                    e_iso_speed: row.get(16)?,
+                    e_focal_length: row.get(17)?,
+                    e_orientation: row.get(18)?,
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -355,6 +399,7 @@ impl AFile {
         let conn = get_conn();
         let result = conn.execute(
             "INSERT INTO afiles (folder_id, name, size, created_at, modified_at, 
+            i_width, i_height, i_color_type, i_bit_depth, i_has_alpha,
             e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
@@ -363,6 +408,13 @@ impl AFile {
                 self.size,
                 self.created_at,
                 self.modified_at,
+
+                self.i_width,
+                self.i_height,
+                self.i_color_type,
+                self.i_bit_depth,
+                self.i_has_alpha,
+
                 self.e_make,
                 self.e_model,
                 self.e_date_time,
@@ -414,7 +466,8 @@ impl AFile {
         let conn = get_conn();
         let result = conn.query_row(
             "SELECT id, folder_id, name, size, created_at, modified_at, 
-            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
+                i_width, i_height, i_color_type, i_bit_depth, i_has_alpha,
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation, 
             FROM afiles WHERE id = ?1",
             params![file_id],
             |row| {
@@ -425,14 +478,21 @@ impl AFile {
                     size: row.get(3)?,
                     created_at: row.get(4)?,
                     modified_at: row.get(5)?,
-                    e_make: row.get(6)?,
-                    e_model: row.get(7)?,
-                    e_date_time: row.get(8)?,
-                    e_exposure_time: row.get(9)?,
-                    e_f_number: row.get(10)?,
-                    e_iso_speed: row.get(11)?,
-                    e_focal_length: row.get(12)?,
-                    e_orientation: row.get(13)?,
+
+                    i_width: row.get(6)?,
+                    i_height: row.get(7)?,
+                    i_color_type: row.get(8)?,
+                    i_bit_depth: row.get(9)?,
+                    i_has_alpha: row.get(10)?,
+
+                    e_make: row.get(11)?,
+                    e_model: row.get(12)?,
+                    e_date_time: row.get(13)?,
+                    e_exposure_time: row.get(14)?,
+                    e_f_number: row.get(15)?,
+                    e_iso_speed: row.get(16)?,
+                    e_focal_length: row.get(17)?,
+                    e_orientation: row.get(18)?,
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -443,10 +503,16 @@ impl AFile {
 
 
 /// Define the album thumbnail struct
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AThumb {
-    pub id:             Option<i64>,     // unique id (autoincrement by db)
-    pub file_id:        i64,             // file id (from files table)
-    pub thumb_data:     Vec<u8>,         // thumbnail data
+    pub id:             Option<i64>,        // unique id (autoincrement by db)
+    pub file_id:        i64,                // file id (from files table)
+
+    #[serde(skip)]
+    pub thumb_data:     Option<Vec<u8>>,    // thumbnail data (store into db as BLOB)
+
+    // output only
+    pub thumb_data_base64: Option<String>,  // fetch thumbnail data as base64 string (for webview)
 }
 
 
@@ -454,14 +520,33 @@ impl AThumb {
 
     /// create a new thumbnail struct
     fn new(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Self>, String> {
-        if let Ok(Some(data)) = Self::get_thumbnail(file_path, orientation, thumbnail_size) {
-            return Ok(Some(Self {
-                id: None,
-                file_id,
-                thumb_data: data,
-            }));
+        let img = image::open(file_path).expect("Failed to open image");
+
+        // Adjust the image orientation based on the EXIF orientation value
+        let adjusted_img = match orientation {
+            3 => img.rotate180(),
+            6 => img.rotate90(),
+            8 => img.rotate270(),
+            _ => img,
+        };
+
+        // Resize the image to a thumbnail
+        let thumbnail = adjusted_img.thumbnail(thumbnail_size, thumbnail_size);
+
+        // Save the thumbnail to an in-memory buffer as a JPEG
+        let mut buf = Vec::new();
+        match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
+            Ok(()) => {
+                Ok(Some(Self {
+                    id: None,
+                    file_id,
+                    thumb_data: Some(buf),
+                    thumb_data_base64: None,
+                }))  // Return Ok(Some(Self)) if writing is successful
+            }
+            Err(_) => Ok(None)  // Return Ok(None) if writing fails
         }
-        Ok(None)
+
     }
 
     /// fetch a thumbnail from db by file_id
@@ -474,7 +559,8 @@ impl AThumb {
                 Ok(Self {
                     id: Some(row.get(0)?),
                     file_id: row.get(1)?,
-                    thumb_data: row.get(2)?,
+                    thumb_data: None,
+                    thumb_data_base64: Some(general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(4)?)),
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -486,7 +572,7 @@ impl AThumb {
         let conn = get_conn();
         let result = conn.execute(
             "INSERT INTO athumbs (file_id, thumb_data) 
-            VALUES (?1, ?2)",
+            VALUES (?1, ?2, ?3, ?4)",
             params![
                 self.file_id,
                 self.thumb_data,
@@ -513,32 +599,6 @@ impl AThumb {
         Ok(None)
     }
 
-    /// Resize an image to create a thumbnail and return it as a vector of bytes
-    fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
-        // Attempt to open the image file
-        let img = match image::open(file_path) {
-            Ok(image) => image,
-            Err(_) => return Ok(None), // Return Ok(None) if the image fails to open
-        };
-        
-        // Adjust the image orientation based on the EXIF orientation value
-        let adjusted_img = match orientation {
-            3 => img.rotate180(),
-            6 => img.rotate90(),
-            8 => img.rotate270(),
-            _ => img,
-        };
-
-        // Resize the image to a thumbnail
-        let thumbnail = adjusted_img.thumbnail(thumbnail_size, thumbnail_size);
-
-        // Save the thumbnail to an in-memory buffer as a JPEG
-        let mut buf = Vec::new();
-        match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
-            Ok(()) => Ok(Some(buf)),  // Return Ok(Some(buf)) if writing is successful
-            Err(_) => Ok(None)        // Return Ok(None) if writing fails
-        }
-    }
     
 }
 
@@ -593,6 +653,11 @@ pub fn create_db() -> Result<String> {
             size INTEGER NOT NULL,
             created_at INTEGER,
             modified_at INTEGER,
+            i_width INTEGER,
+            i_height INTEGER,
+            i_color_type TEXT,
+            i_bit_depth INTEGER,
+            i_has_alpha INTEGER,
             e_make TEXT,
             e_model TEXT,
             e_date_time TEXT,

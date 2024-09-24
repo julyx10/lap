@@ -61,3 +61,35 @@
 //   };
 
 // }
+
+
+    // /// Resize an image to create a thumbnail and return it as a vector of bytes
+    // fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Self>, String> {
+    //     // Attempt to open the image file
+    //     let img = match image::open(file_path) {
+    //         Ok(image) => image,
+    //         Err(_) => return Ok(None), // Return Ok(None) if the image fails to open
+    //     };
+
+    //     let img = image::open(img_path).expect("Failed to open image");
+    //     // Get the dimensions of the image
+    //     let (width, height) = img.dimensions();
+
+    //     // Adjust the image orientation based on the EXIF orientation value
+    //     let adjusted_img = match orientation {
+    //         3 => img.rotate180(),
+    //         6 => img.rotate90(),
+    //         8 => img.rotate270(),
+    //         _ => img,
+    //     };
+
+    //     // Resize the image to a thumbnail
+    //     let thumbnail = adjusted_img.thumbnail(thumbnail_size, thumbnail_size);
+
+    //     // Save the thumbnail to an in-memory buffer as a JPEG
+    //     let mut buf = Vec::new();
+    //     match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
+    //         Ok(()) => Ok(Some(buf)),  // Return Ok(Some(buf)) if writing is successful
+    //         Err(_) => Ok(None)        // Return Ok(None) if writing fails
+    //     }
+    // }

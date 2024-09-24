@@ -21,7 +21,9 @@
 
     <div v-if="fileInfo" class="absolute top-0 left-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg hover:text-sky-700">
       <p>{{ fileInfo.name }}</p>
+      <p>{{ fileInfo.file_path }}</p>
       <p>File Size: {{ formatFileSize(fileInfo.size) }}</p>
+      <p>Resolution: {{ fileInfo.resolution }}</p>
       <p>Created: {{ formatTimestamp(fileInfo.created_at) }}</p>
       <p>Modified: {{ formatTimestamp(fileInfo.modified_at) }}</p>
       <p></p>
@@ -43,9 +45,8 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { formatTimestamp, formatFileSize } from '@/common/utils';
 
-// Reactive variables to hold the image source
-const fileInfo = ref(null);   // File info
-const filePath = ref('');     // File path
+const fileInfo = ref(null);       // File info
+const filePath = ref('');         // File path
 const imageSrc = ref(null);
 const loadError = ref(null);
 
@@ -67,19 +68,25 @@ const imgStyle = computed(() => ({
 onMounted(() => {
   try {
     const urlParams = new URLSearchParams(window.location.search);
+
     // Load the image from the file path
     const encodedFilePath = urlParams.get('filePath');
     filePath.value = decodeURIComponent(encodedFilePath);
+
     loadImage(filePath.value);
+
     // Load the file info
     loadFileInfo(urlParams.get('fileId'));
+    console.log('fileInfo:', fileInfo.value);
 
     // Listen for the 'update-image' event to update the image
     listen('update-image', (event) => {
       // Update the image source
       const newEncodedFilePath = event.payload.filePath;
       filePath.value = decodeURIComponent(newEncodedFilePath);
+
       loadImage(filePath.value);
+
       // load the file info
       loadFileInfo(event.payload.fileId);
     });

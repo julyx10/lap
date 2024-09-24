@@ -1,8 +1,9 @@
 use std::fs;
+use image::{ self, GenericImageView };
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
-use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
-use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
+use std::path::{ Path, PathBuf };
+use std::time::{ SystemTime, UNIX_EPOCH };
+use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 
 
 /// FileNode struct to represent a file system node
@@ -105,7 +106,6 @@ pub struct FileInfo {
 }
 
 impl FileInfo {
-
     /// Get file info from a folder/file path (on Windows)
     pub fn new(file_path: &str) -> Result<Self, String> {
         // Convert the string path into a Path object
@@ -127,7 +127,36 @@ impl FileInfo {
             file_size: metadata.len(),
         })
     }
-    
+}
+
+
+/// ImageInfo struct to represent image metadata
+#[derive(serde::Serialize)]
+pub struct ImageInfo {
+    pub width: u32,
+    pub height: u32,
+    pub color_type: String,
+    pub bit_depth: u16,
+    pub has_alpha: bool,
+}
+
+impl ImageInfo {
+    /// Get image info from a file path
+    pub fn new(file_path: &str) -> Result<Self, String> {
+        let image = image::open(file_path).map_err(|e| e.to_string())?;
+        let (width, height) = image.dimensions();
+        let color_type = image.color();
+        let bit_depth = color_type.bits_per_pixel();
+        let has_alpha = color_type.has_alpha();
+
+        Ok(ImageInfo {
+            width,
+            height,
+            color_type: format!("{:?}", color_type),
+            bit_depth,
+            has_alpha,
+        })
+    }
 }
 
 
@@ -149,6 +178,13 @@ pub fn get_path_name(path: &str) -> String {
         Some(name) => name.to_string_lossy().into_owned(),
         None => String::new(), // Return an empty string if there is no valid file name
     }
+}
+
+
+/// Get the full path by joining a folder path and a file name
+pub fn get_file_path(path: &str, name: &str) -> String {
+    let file_path: PathBuf = Path::new(path).join(name);
+    file_path.to_string_lossy().to_string()  // Convert PathBuf to String
 }
 
 

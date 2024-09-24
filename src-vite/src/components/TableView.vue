@@ -14,7 +14,7 @@
       </thead>
       <tbody>
         <tr 
-          v-for="(file, index) in fileList" :key="index" 
+          v-for="(file, index) in gFiles" :key="index" 
           :class="['hover:bg-gray-700', 
             index === selectedFileIndex ? 'text-gray-300 bg-gray-600' : '',
           ]" 
@@ -25,6 +25,7 @@
             <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
           </td>
           <td>{{ file.name }}</td>
+          <td>{{ file.resolution }}</td>
           <td>{{ formatTimestamp(file.created_at) }}</td>
           <td>{{ formatTimestamp(file.modified_at) }}</td>
           <td>{{ file.e_model }}</td>
@@ -39,10 +40,10 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { formatTimestamp, formatFileSize } from '@/common/utils';
-import { separator } from '@/common/utils';
+import { getFullPath } from '../common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -54,14 +55,16 @@ const props = defineProps({
     type: String,
     required: false,
   },
-  fileList: {
-    type: Array,
-    required: true,
-  },
+  // fileList: {
+  //   type: Array,
+  //   required: true,
+  // },
 });
 
+const gFiles = inject('gFiles');         // global files
+
 const selectedFileIndex = ref(null);
-const fileListLength = computed(() => props.fileList.length);
+const fileListLength = computed(() => gFiles.value.length);
 const scrollableDiv = ref(null);
 
 
@@ -89,7 +92,7 @@ watch(() => props.filePath, (new_path) => {
 /// Watch for changes in selectedFileIndex
 watch (selectedFileIndex, (new_index) => {
   if (new_index !== null) {
-    console.log('selectedFileIndex...', props.fileList[new_index]);
+    console.log('selectedFileIndex...', gFiles.value[new_index]);
   }
 });
 
@@ -118,17 +121,14 @@ function clickFile(index: number) {
 /// Double-click a file to open it
 function dlbClickFile(index: number) {
   // Check if the index is valid
-  if(index < 0 || index >= props.fileList.length) {
+  if(index < 0 || index >= gFiles.value.length) {
     return;
   }
 
-  // Get the file info struct and encode it
-  // const fileInfo = props.fileList[index];
-  // const encodedFileInfo = encodeURIComponent(JSON.stringify(fileInfo));
-  const file = props.fileList[index];
+  const file = gFiles.value[index];
 
   // get the file path and encode it
-  const filePath = `${props.filePath}${separator}${file.name}`;
+  const filePath = getFullPath(props.filePath, file.name);
   const encodedFilePath = encodeURIComponent(filePath);
 
   // Check if the window is already open

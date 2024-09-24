@@ -4,9 +4,9 @@
  */
 
 use native_dialog::FileDialog;
-use walkdir::{WalkDir, DirEntry}; // https://docs.rs/walkdir/2.5.0/walkdir/
-use base64::{Engine, engine::general_purpose};
-use crate::t_sqlite::{ AFile, AFolder, AThumb, Album };
+use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
+use base64::{ Engine, engine::general_purpose };
+use crate::t_sqlite::{ Album, AFolder, AFile, AThumb };
 use crate::t_utils;
 
 
@@ -96,14 +96,11 @@ pub fn get_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
 
 /// get a file's thumb image 
 #[tauri::command]
-pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<String>, String> {
-    if let Ok(Some(thumb)) = AThumb::add_to_db(file_id, file_path, orientation, thumbnail_size) {
-        let base64_thumbnail = general_purpose::STANDARD.encode(thumb.thumb_data);
-        return Ok(Some(base64_thumbnail));
-    }
-
-    return Ok(None);
+pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<AThumb>, String> {
+    AThumb::add_to_db(file_id, file_path, orientation, thumbnail_size)
+        .map_err(|e| format!("Error while adding thumbnail to DB: {}", e))
 }
+
 
 /// get a file's info
 #[tauri::command]
