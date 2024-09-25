@@ -12,7 +12,7 @@
           'p-1 ', 
           gAlbumId ? 'hover:text-gray-200 transition-colors duration-300' : 'text-gray-700'
         ]" 
-        @click="showDeleteAlbumMsgbox = true" />
+        @click="gAlbumId ? showDeleteAlbumMsgbox = true : ''" />
       <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
     </div>
   </div>
@@ -111,7 +111,7 @@ const clickAdd = async () => {
 
     console.log('Add album...', new_album);
   } catch (error) {
-    console.error('Failed to add album:', error);
+    console.log('Failed to add album:', error);
   }
 };
 
@@ -128,7 +128,7 @@ const clickDeleteConfirm = async () => {
 
       console.log('Delete album...', result);
     } else {
-      console.error('No album selected', gAlbumId.value);
+      console.log('No album selected', gAlbumId.value);
     }
   } catch (error) {
     console.error('Failed to delete album:', error);

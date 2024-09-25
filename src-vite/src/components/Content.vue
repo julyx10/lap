@@ -10,7 +10,7 @@
     </div>
   </div>
   <!-- table -->
-  <TableView :filePath="currentFolder.path"/>
+  <TableView :filePath="currentFolder.path" :fileList="fileList"/>
 
 </template>
 
@@ -41,11 +41,9 @@ const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
 const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
-const gFiles = inject('gFiles');         // global files
-const gFileId = inject('gFileId');       // global file id
 
 const currentFolder = ref('');
-// const fileList = ref([]);
+const fileList = ref([]);
 
 // use a token that signals when the currentFolder changes, 
 // and check this token inside the thumbnail generation loop
@@ -78,7 +76,7 @@ const title = computed(() => {
 watch(gAlbumId, async (newAlbumId) => {
   // no album is selected
   if (!newAlbumId) {
-    gFiles.value = [];
+    fileList.value = [];
   }
 });
 
@@ -132,12 +130,12 @@ function getFolder(folder, folderId) {
 async function getFiles(path) {
   try {
     // Fetch the list of files
-    gFiles.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
+    fileList.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
 
     // Once file list are retrieved, get thumbnail for each file
     getFileThumb(cancelToken)
     
-    console.log('getFiles:', gFiles.value);
+    console.log('getFiles:', fileList.value);
   } catch (error) {
     console.error('getFiles error:', error);
   }
@@ -148,7 +146,7 @@ async function getFiles(path) {
 async function getFileThumb(token) {
   try {
     // Create an array of promises for each file's thumbnail generation
-    const thumbnailPromises = gFiles.value.map(async (file) => {
+    const thumbnailPromises = fileList.value.map(async (file) => {
       // Check if the operation has been cancelled
       if (token.cancelled) {
         console.log('getFileThumb -- Thumbnail generation cancelled');
@@ -167,7 +165,6 @@ async function getFileThumb(token) {
       console.log('getFileThumb:', thumb);
 
       if (!token.cancelled) {
-        file.resolution = thumb.width + 'x' + thumb.height;
         file.thumbnail = `data:image/png;base64,${thumb.thumb_data_base64}`;
         console.log('getFileThumb:', file);
       }

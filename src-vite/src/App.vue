@@ -12,8 +12,9 @@ provide('gToolbarIndex',  ref(1));   // toolbar index
 provide('gAlbums', ref([]));      // all albums
 provide('gAlbumId', ref(null));   // current album id (selected)
 provide('gFolderId', ref(null));  // current folder id (selected)
-provide('gFiles', ref([]));       // all files
-provide('gFileId', ref(null));    // current file id (selected)
+
+// provide('gFiles', ref([]));       // all files
+// provide('gFileId', ref(null));    // current file id (selected)
 
 
 </script>

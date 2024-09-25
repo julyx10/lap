@@ -14,7 +14,7 @@
       </thead>
       <tbody>
         <tr 
-          v-for="(file, index) in gFiles" :key="index" 
+          v-for="(file, index) in fileList" :key="index" 
           :class="['hover:bg-gray-700', 
             index === selectedFileIndex ? 'text-gray-300 bg-gray-600' : '',
           ]" 
@@ -25,7 +25,7 @@
             <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
           </td>
           <td>{{ file.name }}</td>
-          <td>{{ file.resolution }}</td>
+          <td>{{ file.width }}x{{ file.height }}</td>
           <td>{{ formatTimestamp(file.created_at) }}</td>
           <td>{{ formatTimestamp(file.modified_at) }}</td>
           <td>{{ file.e_model }}</td>
@@ -55,16 +55,14 @@ const props = defineProps({
     type: String,
     required: false,
   },
-  // fileList: {
-  //   type: Array,
-  //   required: true,
-  // },
+  fileList: {
+    type: Array,
+    required: true,
+  },
 });
 
-const gFiles = inject('gFiles');         // global files
-
 const selectedFileIndex = ref(null);
-const fileListLength = computed(() => gFiles.value.length);
+const fileListLength = computed(() => props.fileList.length);
 const scrollableDiv = ref(null);
 
 
@@ -92,7 +90,7 @@ watch(() => props.filePath, (new_path) => {
 /// Watch for changes in selectedFileIndex
 watch (selectedFileIndex, (new_index) => {
   if (new_index !== null) {
-    console.log('selectedFileIndex...', gFiles.value[new_index]);
+    console.log('selectedFileIndex...', props.fileList[new_index]);
   }
 });
 
@@ -121,11 +119,11 @@ function clickFile(index: number) {
 /// Double-click a file to open it
 function dlbClickFile(index: number) {
   // Check if the index is valid
-  if(index < 0 || index >= gFiles.value.length) {
+  if(index < 0 || index >= props.fileList.length) {
     return;
   }
 
-  const file = gFiles.value[index];
+  const file = props.fileList[index];
 
   // get the file path and encode it
   const filePath = getFullPath(props.filePath, file.name);

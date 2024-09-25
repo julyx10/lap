@@ -1,9 +1,10 @@
 use std::fs;
-use image::{ self, GenericImageView };
+use std::io::Cursor;
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use std::path::{ Path, PathBuf };
 use std::time::{ SystemTime, UNIX_EPOCH };
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
+use image::{ self, GenericImageView };
 
 
 /// FileNode struct to represent a file system node
@@ -133,19 +134,19 @@ impl FileInfo {
 /// ImageInfo struct to represent image metadata
 #[derive(serde::Serialize)]
 pub struct ImageInfo {
-    pub width: u32,
-    pub height: u32,
+    pub width:      u32,
+    pub height:     u32,
     pub color_type: String,
-    pub bit_depth: u16,
-    pub has_alpha: bool,
+    pub bit_depth:  u16,
+    pub has_alpha:  bool,
 }
 
 impl ImageInfo {
     /// Get image info from a file path
     pub fn new(file_path: &str) -> Result<Self, String> {
-        let image = image::open(file_path).map_err(|e| e.to_string())?;
-        let (width, height) = image.dimensions();
-        let color_type = image.color();
+        let img = image::open(file_path).map_err(|e| e.to_string())?;
+        let (width, height) = img.dimensions();
+        let color_type = img.color();
         let bit_depth = color_type.bits_per_pixel();
         let has_alpha = color_type.has_alpha();
 
@@ -203,4 +204,37 @@ pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
 }
 
 
+/// Quick probing of image dimensions without loading the entire file
+pub fn get_image_size(file_path: &str) -> Result<(u32, u32), String> {
+    // Use imagesize to get width and height
+    let dimensions = imagesize::size(file_path)
+        .map_err(|e| e.to_string())?; // Map error to String if any
+
+    // Return the dimensions as (width, height)
+    Ok((dimensions.width as u32, dimensions.height as u32))
+}
+
+
+/// Get a thumbnail image from a file path
+pub fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
+    let img = image::open(file_path).expect("Failed to open image");
+    
+    // Adjust the image orientation based on the EXIF orientation value
+    let adjusted_img = match orientation {
+        3 => img.rotate180(),
+        6 => img.rotate90(),
+        8 => img.rotate270(),
+        _ => img,
+    };
+
+    // Resize the image to a thumbnail
+    let thumbnail = adjusted_img.thumbnail(thumbnail_size, thumbnail_size);
+
+    // Save the thumbnail to an in-memory buffer as a JPEG
+    let mut buf = Vec::new();
+    match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
+        Ok(()) => Ok(Some(buf)),
+        Err(_) => Ok(None)
+    }
+}
 

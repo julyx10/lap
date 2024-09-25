@@ -19,22 +19,69 @@
 
     <!-- <p class="absolute bottom-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg">{{ filePath }}</p> -->
 
-    <div v-if="fileInfo" class="absolute top-0 left-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg hover:text-sky-700">
-      <p>{{ fileInfo.name }}</p>
-      <p>{{ fileInfo.file_path }}</p>
-      <p>File Size: {{ formatFileSize(fileInfo.size) }}</p>
-      <p>Resolution: {{ fileInfo.resolution }}</p>
-      <p>Created: {{ formatTimestamp(fileInfo.created_at) }}</p>
-      <p>Modified: {{ formatTimestamp(fileInfo.modified_at) }}</p>
-      <p></p>
-      <p>Carema Make: {{ fileInfo.e_make }} </p>
-      <p>Carema Model: {{ fileInfo.e_model }}</p>
-      <p>Date Time: {{ fileInfo.e_date_time }}</p>
-      <p>Exposure Time: {{ fileInfo.e_exposure_time }}</p>
-      <p>Focus: {{ fileInfo.e_f_number }}</p>
-      <p>ISO: {{ fileInfo.e_iso_speed }}</p>
-      <p>Focal Length: {{ fileInfo.e_focal_length }}</p>
-    </div>
+    <table v-if="fileInfo" class="absolute top-0 left-0 border-separate border-spacing-1 text-gray-500 bg-gray-900 bg-opacity-10 rounded-lg hover:text-gray-500">
+      <tr>
+        <td>File Name</td>
+        <td>{{ fileInfo.name }}</td>
+      </tr>
+      <tr>
+        <td>Resolution</td>
+        <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
+      </tr>
+      <tr>
+        <td>File Size</td>
+        <td>{{ formatFileSize(fileInfo.size) }}</td>
+      </tr>
+      <tr>
+        <td>Created</td>
+        <td>{{ formatTimestamp(fileInfo.created_at) }}</td>
+      </tr>
+      <tr>
+        <td>Modified</td>
+        <td>{{ formatTimestamp(fileInfo.modified_at) }}</td>
+      </tr>
+      <tr>
+        <td>Camera Make</td>
+        <td>{{ fileInfo.e_make }}</td>
+      </tr>
+      <tr>
+        <td>Camera Model</td>
+        <td>{{ fileInfo.e_model }}</td>
+      </tr>
+      <tr>
+        <td>Date Taken</td>
+        <td>{{ fileInfo.e_date_time }}</td>
+      </tr>
+      <tr>
+        <td>Exposure Time</td>
+        <td>{{ fileInfo.e_exposure_time }}</td>
+      </tr>
+      <tr>
+        <td>Aperture</td>
+        <td>{{ fileInfo.e_f_number }}</td>
+      </tr>
+      <tr>
+        <td>ISO Speed</td>
+        <td>{{ fileInfo.e_iso_speed }}</td>
+      </tr>
+      <tr>
+        <td>Focal Length</td>
+        <td>{{ fileInfo.e_focal_length }}</td>
+      </tr>
+      <!-- <tr>
+        <td>Color Type</td>
+        <td>{{ fileInfo.i_color_type }}</td>
+      </tr>
+      <tr>
+        <td>Bit Depth</td>
+        <td>{{ fileInfo.i_bit_depth }}</td>
+      </tr>
+      <tr>
+        <td>Alpha Channel</td>
+        <td>{{ fileInfo.i_has_alpha }}</td>
+      </tr> -->
+    </table>
+
   </div>
 
 </template>
@@ -115,6 +162,7 @@ async function loadImage(filePath) {
 async function loadFileInfo(fileId) {
   try {
     fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
+    console.log('fileInfo: ---', fileInfo.value);
   } catch (error) {
     console.error('Error fetching file info:', error);
   }

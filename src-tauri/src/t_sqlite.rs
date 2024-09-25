@@ -2,7 +2,8 @@
  * The db.rs file is used to create a database and a table in it.
  * 
  */
-use std::io::Cursor;
+
+
 use base64::{ Engine, engine::general_purpose };
 use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{ Serialize, Deserialize };
@@ -281,12 +282,9 @@ pub struct AFile {
     pub created_at:     Option<u64>,    // file create time
     pub modified_at:    Option<u64>,    // file modified time
 
-    // image info
-    pub i_width:         Option<u32>,    // image width
-    pub i_height:        Option<u32>,    // image height
-    pub i_color_type:    Option<String>,     // image color type
-    pub i_bit_depth:     Option<u16>,     // image bit depth
-    pub i_has_alpha:     Option<bool>,   // image has alpha channel
+    // image dimensions
+    pub width:          Option<u32>,    // image width
+    pub height:         Option<u32>,    // image height
 
     // exif info
     pub e_make:           Option<String>,   // camera make
@@ -296,19 +294,19 @@ pub struct AFile {
     pub e_f_number:       Option<String>,
     pub e_iso_speed:      Option<String>,
     pub e_focal_length:   Option<String>,
-    pub e_orientation:    Option<u32>,   // orientation
+    pub e_orientation:    Option<u32>,      // orientation
 }
 
 
 impl AFile {
 
     /// create a new file struct
-    fn new(folder_id: i64, path: &str) -> Result<Self, String> {
-        let file_info = t_utils::FileInfo::new(path)?;
-        let img_info = t_utils::ImageInfo::new(path)?;
+    fn new(folder_id: i64, file_path: &str) -> Result<Self, String> {
+        let file_info = t_utils::FileInfo::new(file_path)?;
+        let (width, height) = t_utils::get_image_size(file_path)?;
 
         // Attempt to open the file
-        let file = std::fs::File::open(path).map_err(|e| format!("Error opening file: {}", e))?;
+        let file = std::fs::File::open(file_path).map_err(|e| format!("Error opening file: {}", e))?;
         // Create a buffered reader
         let mut bufreader = std::io::BufReader::new(&file);
         // Create an EXIF reader and attempt to read EXIF data
@@ -324,11 +322,8 @@ impl AFile {
             created_at:  file_info.created,
             modified_at: file_info.modified,
             
-            i_width: Some(img_info.width),
-            i_height: Some(img_info.height),
-            i_color_type: Some(img_info.color_type),
-            i_bit_depth: Some(img_info.bit_depth),
-            i_has_alpha: Some(img_info.has_alpha),
+            width: Some(width),
+            height: Some(height),
 
             e_make: Self::get_exif_field(&exif, Tag::Make),
             e_model: Self::get_exif_field(&exif, Tag::Model),
@@ -357,37 +352,36 @@ impl AFile {
     }
 
     /// fetch a file info from db by folder_id and file name
-    pub fn fetch(folder_id: i64, path: &str) -> Result<Option<Self>, String> {
+    pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
         let conn = get_conn();
         let result = conn.query_row(
-            "SELECT id, folder_id, name, size, created_at, modified_at, 
-            i_width, i_height, i_color_type, i_bit_depth, i_has_alpha,
-            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
+            "SELECT id, folder_id, 
+                name, size, created_at, modified_at, 
+                width, height,
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
-            params![folder_id, t_utils::get_path_name(path)],
+            params![folder_id, t_utils::get_path_name(file_path)],
             |row| {
                 Ok(Self {
                     id: Some(row.get(0)?),
                     folder_id: row.get(1)?,
+
                     name: row.get(2)?,
                     size: row.get(3)?,
                     created_at: row.get(4)?,
                     modified_at: row.get(5)?,
 
-                    i_width: row.get(6)?,
-                    i_height: row.get(7)?,
-                    i_color_type: row.get(8)?,
-                    i_bit_depth: row.get(9)?,
-                    i_has_alpha: row.get(10)?,
+                    width: row.get(6)?,
+                    height: row.get(7)?,
 
-                    e_make: row.get(11)?,
-                    e_model: row.get(12)?,
-                    e_date_time: row.get(13)?,
-                    e_exposure_time: row.get(14)?,
-                    e_f_number: row.get(15)?,
-                    e_iso_speed: row.get(16)?,
-                    e_focal_length: row.get(17)?,
-                    e_orientation: row.get(18)?,
+                    e_make: row.get(8)?,
+                    e_model: row.get(9)?,
+                    e_date_time: row.get(10)?,
+                    e_exposure_time: row.get(11)?,
+                    e_f_number: row.get(12)?,
+                    e_iso_speed: row.get(13)?,
+                    e_focal_length: row.get(14)?,
+                    e_orientation: row.get(15)?,
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -398,22 +392,23 @@ impl AFile {
     fn insert(&self) -> Result<usize, String> {
         let conn = get_conn();
         let result = conn.execute(
-            "INSERT INTO afiles (folder_id, name, size, created_at, modified_at, 
-            i_width, i_height, i_color_type, i_bit_depth, i_has_alpha,
-            e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            "INSERT INTO afiles (
+                folder_id, 
+                name, size, created_at, modified_at, 
+                width, height,
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
+            ) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
             params![
                 self.folder_id,
+
                 self.name,
                 self.size,
                 self.created_at,
                 self.modified_at,
 
-                self.i_width,
-                self.i_height,
-                self.i_color_type,
-                self.i_bit_depth,
-                self.i_has_alpha,
+                self.width,
+                self.height,
 
                 self.e_make,
                 self.e_model,
@@ -439,12 +434,12 @@ impl AFile {
     }
 
     /// insert a file into db if not exists
-    pub fn add_to_db(folder_id: i64, path: &str) -> Result<Self, String> {
+    pub fn add_to_db(folder_id: i64, file_path: &str) -> Result<Self, String> {
         // Check if the file exists
-        let existing_file = Self::fetch(folder_id, path)?;
+        let existing_file = Self::fetch(folder_id, file_path)?;
         if let Some(file) = existing_file {
             // check file modified time
-            let file_info = t_utils::FileInfo::new(path)?;
+            let file_info = t_utils::FileInfo::new(file_path)?;
             if file.modified_at != file_info.modified {
                 // delete the old file
                 Self::delete(folder_id)?;
@@ -454,10 +449,10 @@ impl AFile {
         }
 
         // insert the new file into the database
-        Self::new(folder_id, path)?.insert()?;
+        Self::new(folder_id, file_path)?.insert()?;
 
         // return the newly inserted file
-        let new_file = Self::fetch(folder_id, path)?;
+        let new_file = Self::fetch(folder_id, file_path)?;
         Ok(new_file.unwrap())
     }
 
@@ -465,34 +460,33 @@ impl AFile {
     pub fn get_file_info(file_id: i64) -> Result<Option<Self>, String> {
         let conn = get_conn();
         let result = conn.query_row(
-            "SELECT id, folder_id, name, size, created_at, modified_at, 
-                i_width, i_height, i_color_type, i_bit_depth, i_has_alpha,
-                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation, 
+            "SELECT id, folder_id, 
+                name, size, created_at, modified_at, 
+                width, height,
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
             FROM afiles WHERE id = ?1",
             params![file_id],
             |row| {
                 Ok(Self {
                     id: Some(row.get(0)?),
                     folder_id: row.get(1)?,
+
                     name: row.get(2)?,
                     size: row.get(3)?,
                     created_at: row.get(4)?,
                     modified_at: row.get(5)?,
 
-                    i_width: row.get(6)?,
-                    i_height: row.get(7)?,
-                    i_color_type: row.get(8)?,
-                    i_bit_depth: row.get(9)?,
-                    i_has_alpha: row.get(10)?,
+                    width: row.get(6)?,
+                    height: row.get(7)?,
 
-                    e_make: row.get(11)?,
-                    e_model: row.get(12)?,
-                    e_date_time: row.get(13)?,
-                    e_exposure_time: row.get(14)?,
-                    e_f_number: row.get(15)?,
-                    e_iso_speed: row.get(16)?,
-                    e_focal_length: row.get(17)?,
-                    e_orientation: row.get(18)?,
+                    e_make: row.get(8)?,
+                    e_model: row.get(9)?,
+                    e_date_time: row.get(10)?,
+                    e_exposure_time: row.get(11)?,
+                    e_f_number: row.get(12)?,
+                    e_iso_speed: row.get(13)?,
+                    e_focal_length: row.get(14)?,
+                    e_orientation: row.get(15)?,
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -505,11 +499,11 @@ impl AFile {
 /// Define the album thumbnail struct
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AThumb {
-    pub id:             Option<i64>,        // unique id (autoincrement by db)
-    pub file_id:        i64,                // file id (from files table)
+    pub id:         Option<i64>,        // unique id (autoincrement by db)
+    pub file_id:    i64,                // file id (from files table)
 
     #[serde(skip)]
-    pub thumb_data:     Option<Vec<u8>>,    // thumbnail data (store into db as BLOB)
+    pub thumb_data: Option<Vec<u8>>,    // thumbnail data (store into db as BLOB)
 
     // output only
     pub thumb_data_base64: Option<String>,  // fetch thumbnail data as base64 string (for webview)
@@ -518,35 +512,14 @@ pub struct AThumb {
 
 impl AThumb {
 
-    /// create a new thumbnail struct
-    fn new(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Self>, String> {
-        let img = image::open(file_path).expect("Failed to open image");
-
-        // Adjust the image orientation based on the EXIF orientation value
-        let adjusted_img = match orientation {
-            3 => img.rotate180(),
-            6 => img.rotate90(),
-            8 => img.rotate270(),
-            _ => img,
-        };
-
-        // Resize the image to a thumbnail
-        let thumbnail = adjusted_img.thumbnail(thumbnail_size, thumbnail_size);
-
-        // Save the thumbnail to an in-memory buffer as a JPEG
-        let mut buf = Vec::new();
-        match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
-            Ok(()) => {
-                Ok(Some(Self {
-                    id: None,
-                    file_id,
-                    thumb_data: Some(buf),
-                    thumb_data_base64: None,
-                }))  // Return Ok(Some(Self)) if writing is successful
-            }
-            Err(_) => Ok(None)  // Return Ok(None) if writing fails
-        }
-
+    /// Create a new thumbnail struct
+    pub fn new(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Self>, String> {
+        Ok(Some(Self {
+            id: None,
+            file_id,
+            thumb_data: t_utils::get_thumbnail(file_path, orientation, thumbnail_size)?,
+            thumb_data_base64: None,
+        }))
     }
 
     /// fetch a thumbnail from db by file_id
@@ -560,7 +533,7 @@ impl AThumb {
                     id: Some(row.get(0)?),
                     file_id: row.get(1)?,
                     thumb_data: None,
-                    thumb_data_base64: Some(general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(4)?)),
+                    thumb_data_base64: Some(general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(2)?)),
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -572,7 +545,7 @@ impl AThumb {
         let conn = get_conn();
         let result = conn.execute(
             "INSERT INTO athumbs (file_id, thumb_data) 
-            VALUES (?1, ?2, ?3, ?4)",
+            VALUES (?1, ?2)",
             params![
                 self.file_id,
                 self.thumb_data,
@@ -653,11 +626,8 @@ pub fn create_db() -> Result<String> {
             size INTEGER NOT NULL,
             created_at INTEGER,
             modified_at INTEGER,
-            i_width INTEGER,
-            i_height INTEGER,
-            i_color_type TEXT,
-            i_bit_depth INTEGER,
-            i_has_alpha INTEGER,
+            width INTEGER,
+            height INTEGER,
             e_make TEXT,
             e_model TEXT,
             e_date_time TEXT,
