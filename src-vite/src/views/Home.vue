@@ -44,9 +44,9 @@
 
     <!-- debug area -->
     <div v-if="isDebugMenuOpen" class="flex flex-col m-2 text-sm">
-      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</button>
-      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="openImage()">Open Image</button>
-      <button class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="clickAbout()">About</button>
+      <v-btn class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</v-btn>
+      <v-btn class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="openImage()">Open Image</v-btn>
+      <v-btn class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="clickAbout()">About</v-btn>
     </div>
     
   </div>

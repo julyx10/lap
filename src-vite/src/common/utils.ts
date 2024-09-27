@@ -23,3 +23,21 @@ export function formatFileSize(bytes: number): string {
 export function getFullPath(path: string, name: string): string {
   return path + separator + name;
 }
+
+
+/// shorten a filename while preserving its extension
+export function shortenFilename(filename: string): string {
+  const dotIndex = filename.lastIndexOf('.');
+
+  if (dotIndex !== -1) {
+      const name = filename.slice(0, dotIndex);
+      const extension = filename.slice(dotIndex);
+      
+      const shortenedName = name.length > 16 ? `${name.slice(0, 16)}...` : name;
+
+      return `${shortenedName}${extension}`;
+  } else {
+      // No extension found, just truncate the name
+      return filename.length > 16 ? `${filename.slice(0, 16)}...` : filename;
+  }
+}

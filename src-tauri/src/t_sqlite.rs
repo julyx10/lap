@@ -3,12 +3,10 @@
  * 
  */
 
-
 use base64::{ Engine, engine::general_purpose };
 use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{ Serialize, Deserialize };
 use exif::Tag;
-
 use crate::t_utils;
 
 
@@ -47,7 +45,8 @@ impl Album {
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = get_conn();
         let result = conn.query_row(
-            "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at FROM albums WHERE path = ?1",
+            "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at 
+            FROM albums WHERE path = ?1",
             params![path],
             |row| {
                 Ok(Self {
@@ -185,7 +184,8 @@ impl AFolder {
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = get_conn();
         let result = conn.query_row(
-            "SELECT id, album_id, parent_id, name, path, created_at, modified_at FROM afolders WHERE path = ?1",
+            "SELECT id, album_id, parent_id, name, path, created_at, modified_at 
+            FROM afolders WHERE path = ?1",
             params![path],
             |row| {
                 Ok(Self {
@@ -360,7 +360,7 @@ impl AFile {
                 width, height,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
-            params![folder_id, t_utils::get_path_name(file_path)],
+            params![folder_id, t_utils::get_file_name(file_path)],
             |row| {
                 Ok(Self {
                     id: Some(row.get(0)?),
@@ -526,7 +526,8 @@ impl AThumb {
     fn fetch(file_id: i64) -> Result<Option<Self>, String> {
         let conn = get_conn();
         let result = conn.query_row(
-            "SELECT id, file_id, thumb_data FROM athumbs WHERE file_id = ?1",
+            "SELECT id, file_id, thumb_data 
+            FROM athumbs WHERE file_id = ?1",
             params![file_id],
             |row| {
                 Ok(Self {

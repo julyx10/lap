@@ -1,10 +1,14 @@
+/**
+ * File: t_utils.rs
+*/
+
 use std::fs;
 use std::io::Cursor;
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use std::path::{ Path, PathBuf };
 use std::time::{ SystemTime, UNIX_EPOCH };
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
-use image::{ self, GenericImageView };
+use image::GenericImageView;
 
 
 /// FileNode struct to represent a file system node
@@ -24,7 +28,7 @@ impl FileNode {
     fn new(path: &str, is_dir: bool, is_expanded: bool) -> Self {
         FileNode {
             id: None,
-            name: get_path_name(path),
+            name: get_file_name(path),
             path: path.to_string(),
             is_dir,
             is_expanded,
@@ -115,7 +119,7 @@ impl FileInfo {
 
         Ok(FileInfo {
             file_path: file_path.to_string(),
-            file_name: get_path_name(file_path),
+            file_name: get_file_name(file_path),
             file_type: metadata.file_type().is_dir().then(|| "dir".to_string()),
             created:  systemtime_to_u64(metadata.created().ok()),
             modified: systemtime_to_u64(metadata.modified().ok()),
@@ -164,14 +168,30 @@ impl ImageInfo {
 /// Check if a file extension is an image extension
 pub fn is_image_extension(extension: &str) -> bool {
     match extension.to_lowercase().as_str() {
-        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" => true,
+        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" => true,
+        _ => false,
+    }
+}
+
+/// Check if a file extension is a video extension
+pub fn is_video_extension(extension: &str) -> bool {
+    match extension.to_lowercase().as_str() {
+        "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => true,
+        _ => false,
+    }
+}
+
+/// Check if a file extension is a music extension
+pub fn is_music_extension(extension: &str) -> bool {
+    match extension.to_lowercase().as_str() {
+        "mp3" | "wav" | "flac" | "m4a" | "ogg" | "wma" | "aac" | "ac3" => true,
         _ => false,
     }
 }
 
 
 /// Get the name from a folder or file path
-pub fn get_path_name(path: &str) -> String {
+pub fn get_file_name(path: &str) -> String {
     let path = Path::new(path);
     
     // Extract the file name or last component of the path
@@ -237,4 +257,3 @@ pub fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> 
         Err(_) => Ok(None)
     }
 }
-

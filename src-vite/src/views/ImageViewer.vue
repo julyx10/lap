@@ -3,10 +3,6 @@
   <div
     class="flex relative justify-center items-center h-screen w-screen bg-gray-800 text-gray-500 overflow-hidden"
     @wheel="zoomImage"
-    @mousedown="startDragging"
-    @mouseup="stopDragging"
-    @mousemove="dragImage"
-    @mouseleave="stopDragging"
   >
     <img
       :src="imageSrc"
@@ -14,7 +10,13 @@
       v-if="imageSrc"
       :style="imgStyle"
       class="max-w-full max-h-full object-contain transition-transform duration-150"
+      @mousedown="startDragging"
+      @mouseup="stopDragging"
+      @mousemove="dragImage"
+      @mouseleave="stopDragging"
     />
+    <!-- <v-img v-if="imageSrc" lazy-src="a" :src="imageSrc"></v-img> -->
+
     <p v-else>{{ loadError ? loadError : 'Loading...'}}</p>
 
     <!-- <p class="absolute bottom-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg">{{ filePath }}</p> -->
@@ -91,6 +93,7 @@ import { ref, computed, onMounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { formatTimestamp, formatFileSize } from '@/common/utils';
+import { c } from 'naive-ui';
 
 const fileInfo = ref(null);       // File info
 const filePath = ref('');         // File path
@@ -183,13 +186,15 @@ function zoomImage(event) {
 
 // Start dragging when the mouse button is pressed
 function startDragging(event) {
+  console.log('startDragging:', event);
   isDragging.value = true;
   startX.value = event.clientX - lastTranslateX.value;
   startY.value = event.clientY - lastTranslateY.value;
 }
 
 // Stop dragging when the mouse button is released
-function stopDragging() {
+function stopDragging(event) {
+  console.log('stopDragging', event);
   if (isDragging.value) {
     lastTranslateX.value = translateX.value;
     lastTranslateY.value = translateY.value;
@@ -200,6 +205,7 @@ function stopDragging() {
 // Drag the image while the mouse is moved
 function dragImage(event) {
   if (isDragging.value) {
+    console.log('dragImage:', event);
     // Account for zoom level when dragging
     translateX.value = (event.clientX - startX.value) / scale.value;
     translateY.value = (event.clientY - startY.value) / scale.value;

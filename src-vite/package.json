@@ -11,8 +11,10 @@
   "dependencies": {
     "@tauri-apps/api": "^1.6.0",
     "tailwind-scrollbar": "^3.1.0",
+    "vite-plugin-vuetify": "^2.0.4",
     "vue": "^3.4.35",
-    "vue-router": "^4.4.5"
+    "vue-router": "^4.4.5",
+    "vuetify": "^3.7.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.2",

@@ -4,13 +4,18 @@
   <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
     {{ title }}
     <div class="flex">
+      <!-- <v-slider
+        class="w-32" color="primary" thumb-size="18"  thumb-color="secondary"
+        @change="changeThumbnailSize"
+      /> -->
       <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
       <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
       <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
     </div>
   </div>
   <!-- table -->
-  <TableView :filePath="currentFolder.path" :fileList="fileList"/>
+  <!-- <TableView :filePath="currentFolder.path" :fileList="fileList"/> -->
+  <GridView :filePath="currentFolder.path" :fileList="fileList"/>
 
 </template>
 
@@ -19,6 +24,7 @@
 import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import TableView from '@/components/TableView.vue';
+import GridView  from '@/components/GridView.vue';
 import { getFullPath, THUMBNAIL_SIZE } from '@/common/utils';
 
 /// i18n
@@ -131,11 +137,15 @@ async function getFiles(path) {
   try {
     // Fetch the list of files
     fileList.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
-
-    // Once file list are retrieved, get thumbnail for each file
-    getFileThumb(cancelToken)
-    
     console.log('getFiles:', fileList.value);
+
+    // Get thumbnails in batches of 5
+    const chunkSize = 5;
+    for (let i = 0; i < fileList.value.length; i += chunkSize) {
+      // Get the next batch of files
+      const fileChunk = fileList.value.slice(i, i + chunkSize);
+      await getFileThumb(fileChunk, cancelToken); // Pass the current chunk to get thumbnails
+    }
   } catch (error) {
     console.error('getFiles error:', error);
   }
@@ -143,10 +153,10 @@ async function getFiles(path) {
 
 
 /// Get the thumbnail for each file in mutil-thread
-async function getFileThumb(token) {
+async function getFileThumb(files, token) {
   try {
     // Create an array of promises for each file's thumbnail generation
-    const thumbnailPromises = fileList.value.map(async (file) => {
+    const thumbnailPromises = files.map(async (file) => {
       // Check if the operation has been cancelled
       if (token.cancelled) {
         console.log('getFileThumb -- Thumbnail generation cancelled');
