@@ -48,6 +48,8 @@ fn main() {
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,
             t_cmds::get_file_image,
+            t_cmds::get_camera_info,
+            t_cmds::get_camera_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

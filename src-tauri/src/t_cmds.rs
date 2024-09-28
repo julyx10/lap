@@ -6,7 +6,7 @@
 use native_dialog::FileDialog;
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use base64::{ Engine, engine::general_purpose };
-use crate::t_sqlite::{ Album, AFolder, AFile, AThumb };
+use crate::t_sqlite::{ ACamera, AFile, AFolder, AThumb, Album };
 use crate::t_utils;
 
 
@@ -117,3 +117,18 @@ pub fn get_file_image(file_path: &str) -> Result<String, String> {
     Err(e) => Err(format!("Failed to read the image: {}", e)),
   }
 }
+
+
+/// get a file's camera make and model info
+#[tauri::command]
+pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
+    ACamera::get_from_db().map_err(|e| format!("Error while fetching camera info: {}", e))
+}
+
+
+/// get files from db by camera make and model
+#[tauri::command]
+pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
+    AFile::get_files_by_camera(make, model).map_err(|e| format!("Error while fetching camera files: {}", e))
+}
+

@@ -5,7 +5,7 @@
       <div 
         :class="[
           'm-1 flex items-center whitespace-nowrap hover:bg-gray-700', 
-          child.id && gFolderId === child.id ? 'text-gray-300' : ''
+          child.id && gFolderId === child.id ? 'text-gray-300 bg-gray-800' : ''
         ]" 
         @click="clickFolder(child)"
       >
@@ -16,7 +16,7 @@
           ]"
           @click="clickExpandFolder($event, child)"
         />
-        {{ child.name }} - {{ child.id }}
+        {{ child.name }}
       </div>
       <Folders v-if="child.is_expanded" :albumId="albumId" :children="child.children" />
     </li>

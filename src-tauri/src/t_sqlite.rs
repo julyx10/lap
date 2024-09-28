@@ -3,10 +3,12 @@
  * 
  */
 
+use std::collections::HashMap;
 use base64::{ Engine, engine::general_purpose };
 use rusqlite::{ params, Connection, Result, OptionalExtension };
 use serde::{ Serialize, Deserialize };
 use exif::Tag;
+
 use crate::t_utils;
 
 
@@ -43,7 +45,7 @@ impl Album {
 
     /// fetch an album from db by path
     fn fetch(path: &str) -> Result<Option<Self>, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.query_row(
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at 
             FROM albums WHERE path = ?1",
@@ -66,7 +68,7 @@ impl Album {
 
     /// insert an album into db
     fn insert(&mut self) -> Result<usize, String> {
-        let conn = get_conn();
+        let conn = open_conn();
 
         // Determine the next display order id
         self.display_order_id = conn.query_row(
@@ -110,7 +112,7 @@ impl Album {
 
     /// delete an album from the db
     pub fn delete_from_db(id: i64) -> Result<usize, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.execute(
             "DELETE FROM albums WHERE id = ?1",
             params![id],
@@ -120,7 +122,7 @@ impl Album {
 
     /// Get all albums from the db
     pub fn get_all_albums() -> Result<Vec<Self>> {
-        let conn = get_conn();
+        let conn = open_conn();
         let mut stmt = conn.prepare(
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at
             FROM albums ORDER BY display_order_id ASC"
@@ -182,7 +184,7 @@ impl AFolder {
 
     /// fetch a folder row from db by path
     fn fetch(path: &str) -> Result<Option<Self>, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.query_row(
             "SELECT id, album_id, parent_id, name, path, created_at, modified_at 
             FROM afolders WHERE path = ?1",
@@ -204,7 +206,7 @@ impl AFolder {
 
     /// insert a folder into db
     fn insert(&self) -> Result<usize, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.execute(
             "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
@@ -295,6 +297,14 @@ pub struct AFile {
     pub e_iso_speed:      Option<String>,
     pub e_focal_length:   Option<String>,
     pub e_orientation:    Option<u32>,      // orientation
+
+    // gps
+    pub gps_latitude:   Option<String>,
+    pub gps_longitude:  Option<String>,
+    pub gps_altitude:   Option<String>,
+
+    // output only
+    pub file_path:        Option<String>,  // file path (for webview)
 }
 
 
@@ -305,7 +315,7 @@ impl AFile {
         let file_info = t_utils::FileInfo::new(file_path)?;
         let (width, height) = t_utils::get_image_size(file_path)?;
 
-        // Attempt to open the file
+        // open the file
         let file = std::fs::File::open(file_path).map_err(|e| format!("Error opening file: {}", e))?;
         // Create a buffered reader
         let mut bufreader = std::io::BufReader::new(&file);
@@ -333,6 +343,12 @@ impl AFile {
             e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
             e_focal_length: Self::get_exif_field(&exif, Tag::FocalLength),
             e_orientation: Self::get_exif_orientation_field(&exif, Tag::Orientation),
+
+            gps_latitude: Self::get_exif_field(&exif, Tag::GPSLatitude),
+            gps_longitude: Self::get_exif_field(&exif, Tag::GPSLongitude),
+            gps_altitude: Self::get_exif_field(&exif, Tag::GPSAltitude),
+
+            file_path: Some(file_path.to_string()),
         })
     }
 
@@ -340,7 +356,7 @@ impl AFile {
         exif.as_ref().and_then(|exif_data| {
             exif_data.get_field(tag, exif::In::PRIMARY)
                 .map(|field| format!("{}", field.display_value().with_unit(exif_data)).replace("\"", ""))
-        })
+        }).map(|s| s.trim_end_matches(',').to_string()) // remove the trailing comma
     }
     
     fn get_exif_orientation_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<u32> {
@@ -353,12 +369,13 @@ impl AFile {
 
     /// fetch a file info from db by folder_id and file name
     pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.query_row(
             "SELECT id, folder_id, 
                 name, size, created_at, modified_at, 
                 width, height,
-                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation,
+                gps_latitude, gps_longitude, gps_altitude
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
             params![folder_id, t_utils::get_file_name(file_path)],
             |row| {
@@ -382,6 +399,12 @@ impl AFile {
                     e_iso_speed: row.get(13)?,
                     e_focal_length: row.get(14)?,
                     e_orientation: row.get(15)?,
+
+                    gps_latitude: row.get(16)?,
+                    gps_longitude: row.get(17)?,
+                    gps_altitude: row.get(18)?,
+
+                    file_path: Some(file_path.to_string()),
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
@@ -390,15 +413,16 @@ impl AFile {
 
     /// insert a file into db
     fn insert(&self) -> Result<usize, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.execute(
             "INSERT INTO afiles (
                 folder_id, 
                 name, size, created_at, modified_at, 
                 width, height,
-                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation,
+                gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
             params![
                 self.folder_id,
 
@@ -418,6 +442,10 @@ impl AFile {
                 self.e_iso_speed,
                 self.e_focal_length,
                 self.e_orientation,
+
+                self.gps_latitude,
+                self.gps_longitude,
+                self.gps_altitude,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -425,7 +453,7 @@ impl AFile {
 
     /// delete a file from db
     fn delete(folder_id: i64) -> Result<usize, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.execute(
             "DELETE FROM afiles WHERE folder_id = ?1",
             params![folder_id],
@@ -458,13 +486,16 @@ impl AFile {
 
     /// get a file info from db by file_id
     pub fn get_file_info(file_id: i64) -> Result<Option<Self>, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.query_row(
-            "SELECT id, folder_id, 
-                name, size, created_at, modified_at, 
-                width, height,
-                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation
-            FROM afiles WHERE id = ?1",
+            "SELECT a.id, a.folder_id, 
+                a.name, a.size, a.created_at, a.modified_at, 
+                a.width, a.height,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_iso_speed, a.e_focal_length, a.e_orientation,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                b.path
+            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+            WHERE a.id = ?1",
             params![file_id],
             |row| {
                 Ok(Self {
@@ -487,10 +518,75 @@ impl AFile {
                     e_iso_speed: row.get(13)?,
                     e_focal_length: row.get(14)?,
                     e_orientation: row.get(15)?,
+
+                    gps_latitude: row.get(16)?,
+                    gps_longitude: row.get(17)?,
+                    gps_altitude: row.get(18)?,
+
+                    file_path: Some(t_utils::get_file_path(
+                        row.get::<_, String>(19).unwrap().as_str(), 
+                        row.get::<_, String>(2).unwrap().as_str()
+                    ))
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
         Ok(result)
+    }
+
+
+    /// get files by camera make and model
+    pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
+        let conn = open_conn();
+        let mut stmt = conn.prepare(
+            "SELECT a.id, a.folder_id, 
+                a.name, a.size, a.created_at, a.modified_at, 
+                a.width, a.height,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_iso_speed, a.e_focal_length, a.e_orientation,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                b.path
+            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+            WHERE a.e_make = ?1 AND a.e_model = ?2"
+        ).map_err(|e| e.to_string())?;
+    
+        let rows = stmt.query_map(params![make, model], |row| {
+            Ok(Self {
+                id: Some(row.get(0)?),
+                folder_id: row.get(1)?,
+
+                name: row.get(2)?,
+                size: row.get(3)?,
+                created_at: row.get(4)?,
+                modified_at: row.get(5)?,
+
+                width: row.get(6)?,
+                height: row.get(7)?,
+
+                e_make: row.get(8)?,
+                e_model: row.get(9)?,
+                e_date_time: row.get(10)?,
+                e_exposure_time: row.get(11)?,
+                e_f_number: row.get(12)?,
+                e_iso_speed: row.get(13)?,
+                e_focal_length: row.get(14)?,
+                e_orientation: row.get(15)?,
+
+                gps_latitude: row.get(16)?,
+                gps_longitude: row.get(17)?,
+                gps_altitude: row.get(18)?,
+
+                file_path: Some(t_utils::get_file_path(
+                    row.get::<_, String>(19).unwrap().as_str(), 
+                    row.get::<_, String>(2).unwrap().as_str()
+                )),
+            })
+        }).map_err(|e| e.to_string())?;
+    
+        let mut files = Vec::new();
+        for file in rows {
+            files.push(file.unwrap());
+        }
+    
+        Ok(files)
     }
 
 }
@@ -524,7 +620,7 @@ impl AThumb {
 
     /// fetch a thumbnail from db by file_id
     fn fetch(file_id: i64) -> Result<Option<Self>, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.query_row(
             "SELECT id, file_id, thumb_data 
             FROM athumbs WHERE file_id = ?1",
@@ -543,7 +639,7 @@ impl AThumb {
 
     /// insert a thumbnail into db
     fn insert(&self) -> Result<usize, String> {
-        let conn = get_conn();
+        let conn = open_conn();
         let result = conn.execute(
             "INSERT INTO athumbs (file_id, thumb_data) 
             VALUES (?1, ?2)",
@@ -577,16 +673,71 @@ impl AThumb {
 }
 
 
-/// get connection to the db
-fn get_conn() -> Connection {
-    let conn = Connection::open("./main.db").map_err(|e| e.to_string()).unwrap();
-    conn
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ACamera {
+    pub make: String,
+    pub models: Vec<String>,
 }
+
+impl ACamera {
+
+    // get all camera makes and models from db
+    pub fn get_from_db() -> Result<Vec<Self>, String> {
+        let conn = open_conn();
+        let mut stmt = conn.prepare("
+            SELECT e_make, e_model 
+            FROM afiles 
+            WHERE e_make IS NOT NULL AND e_model IS NOT NULL
+            GROUP BY e_make, e_model
+            ORDER BY e_make, e_model
+        ").map_err(|e| e.to_string())?;
+    
+        let rows = stmt.query_map(params![], |row| {
+            let make: String = row.get(0)?;
+            let model: String = row.get(1)?;
+            Ok((make, model))
+        }).map_err(|e| e.to_string())?;
+    
+        let mut hash_map: HashMap<String, Vec<String>> = HashMap::new();
+    
+        for row in rows {
+            let (make, model) = row.unwrap();
+            hash_map.entry(make).or_insert_with(Vec::new).push(model);
+        }
+    
+        let mut cameras: Vec<Self> = hash_map.into_iter()
+            .map(|(make, models)| Self { make, models })
+            .collect();
+
+        // Sort the cameras by make
+        cameras.sort_by(|a, b| a.make.cmp(&b.make));
+
+        // // Sort the models within each ACamera instance
+        // for camera in &mut cameras {
+        //     camera.models.sort();
+        // }
+
+        Ok(cameras)
+    }
+}
+        
+
+/// get connection to the db
+fn open_conn() -> Connection {
+    Connection::open("./main.db").map_err(|e| e.to_string()).unwrap()
+}
+
+/// close connection to the db
+// fn close_conn(conn: Connection) {
+//     if let Err((_, err)) = conn.close() {
+//         eprintln!("Failed to close the connection: {}", err);
+//     }
+// }
 
 
 /// create all tables if not exists
 pub fn create_db() -> Result<String> {
-    let conn = get_conn();
+    let conn = open_conn();
 
     // albums table
     conn.execute(
@@ -637,6 +788,9 @@ pub fn create_db() -> Result<String> {
             e_iso_speed TEXT,
             e_focal_length TEXT,
             e_orientation INTEGER,
+            gps_latitude TEXT,
+            gps_longitude TEXT,
+            gps_altitude TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],

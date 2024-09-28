@@ -21,5 +21,8 @@
   "files": "Files",
   "allphotos": "All Photos",
 
-  "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"]
+  "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
+
+  "no_cameras": "No camera found"
+
 }

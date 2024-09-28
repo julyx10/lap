@@ -30,8 +30,9 @@
       
     <!-- navigation pane -->
     <div v-if="gToolbarIndex > 0" class="flex relative h-screen w-96 min-w-32" :style="{ width: leftPaneWidth + 'px' }">
-      <Album v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
+      <Album         v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
       <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
+      <Camera   v-else-if="gToolbarIndex === 5" :titlebar="$t('camera')"/>
     </div>
 
     <!-- splitter -->
@@ -68,6 +69,7 @@ const localeMessages = computed(() => messages.value[locale.value]);
 
 import Album from '@/components/Albums.vue';
 import Calendar from '@/components/Calendar.vue';
+import Camera from '@/components/Camera.vue';
 import Content from '@/components/Content.vue';
 
 

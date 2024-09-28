@@ -15,7 +15,8 @@
   </div>
   <!-- table -->
   <!-- <TableView :filePath="currentFolder.path" :fileList="fileList"/> -->
-  <GridView :filePath="currentFolder.path" :fileList="fileList"/>
+  <GridView :fileList="fileList"/>
+  <!-- <GridView :filePath="currentFolder.path" :fileList="fileList"/> -->
 
 </template>
 
@@ -25,7 +26,7 @@ import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import TableView from '@/components/TableView.vue';
 import GridView  from '@/components/GridView.vue';
-import { getFullPath, THUMBNAIL_SIZE } from '@/common/utils';
+import { THUMBNAIL_SIZE } from '@/common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -48,33 +49,46 @@ const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
 
+const gCameraMake = inject('gCameraMake');     // global camera make
+const gCameraModel = inject('gCameraModel');   // global camera model
+
 const currentFolder = ref('');
+const currentCamera = ref({make: null, model: null});
 const fileList = ref([]);
 
-// use a token that signals when the currentFolder changes, 
+// use a token that signals when the current folder changes, 
 // and check this token inside the thumbnail generation loop
 let cancelToken = { cancelled: false };
 
 
-/// Display the titlebar
+/// auto update the titlebar when reference data changes
 const title = computed(() => {
-  // album view
-  if (gToolbarIndex.value === 1) {
+  let subTitle = ' > ';
+  
+  if (gToolbarIndex.value === 1) {    // album view
     if (gAlbumId.value) {
       // get the selected album
       const album = gAlbums.value.find(album => album.id === gAlbumId.value);
 
       if(gFolderId.value === album.folderId) { // current folder is album path
         currentFolder.value = album;
-        return album.name;
+        subTitle += album.name;
       } else {  // get the select folder
         currentFolder.value = getFolder(album, gFolderId.value);
-        return album.name + ' > ' + currentFolder.value.name;
+        subTitle += `${album.name} > ${currentFolder.value.name}`;
       }
-    } else {
-      return props.titlebar;
+    }
+  } else if (gToolbarIndex.value === 5) {   // camera view
+    if (gCameraMake.value) {
+      if (gCameraModel.value) {
+        currentCamera.value = { make: gCameraMake.value , model: gCameraModel.value };
+        subTitle += `${gCameraMake.value} > ${gCameraModel.value}`;
+      } else {
+        subTitle += gCameraMake.value;
+      }
     }
   }
+  return props.titlebar + subTitle;
 });
 
 
@@ -83,6 +97,21 @@ watch(gAlbumId, async (newAlbumId) => {
   // no album is selected
   if (!newAlbumId) {
     fileList.value = [];
+  }
+});
+
+
+/// Watch for changes in toolbar index and update filelist accordingly
+watch(gToolbarIndex, async (newIndex) => {
+  console.log('gToolbarIndex:', newIndex);
+  if (newIndex === 1) {
+    if (gAlbumId.value) {
+      await getFiles(currentFolder.value.path);
+    }
+  } else if (newIndex === 5) {
+    if (gCameraMake.value) {
+      await getCameraFiles(gCameraMake.value, gCameraModel.value);
+    }
   }
 });
 
@@ -100,6 +129,16 @@ watch(currentFolder, async (newFolder) => {
 
     // Fetch the files in the new folder
     await getFiles(newFolder.path);
+  }
+});
+
+
+watch(currentCamera, async (newCamera) => {
+  console.log('currentCamera:', newCamera);
+  if(newCamera.make) {
+    await getCameraFiles(newCamera.make, newCamera.model);
+  } else {
+    fileList.value = [];
   }
 });
 
@@ -132,7 +171,7 @@ function getFolder(folder, folderId) {
 }
 
 
-/// try to get all files under the path
+/// get all files under the path
 async function getFiles(path) {
   try {
     // Fetch the list of files
@@ -152,7 +191,19 @@ async function getFiles(path) {
 };
 
 
-/// Get the thumbnail for each file in mutil-thread
+/// get all files under the camera make and model
+async function getCameraFiles(make, model) {
+  try {
+    fileList.value = await invoke('get_camera_files', { make: make, model: model });
+    console.log('getCameraFiles:', fileList.value);
+
+    await getFileThumb(fileList.value, cancelToken); 
+  } catch (error) {
+    console.error('getCameraFiles error:', error);
+  }
+}
+
+/// get the thumbnail for each file in mutil-thread
 async function getFileThumb(files, token) {
   try {
     // Create an array of promises for each file's thumbnail generation
@@ -163,19 +214,18 @@ async function getFileThumb(files, token) {
         return;
       }
 
-      const filePath = getFullPath(currentFolder.value.path, file.name);
-      console.log('getFileThumb:', filePath);
+      console.log('getFileThumb:', file.file_path);
 
       const thumb = await invoke('get_file_thumb', { 
         fileId: file.id,
-        filePath: filePath,
+        filePath: file.file_path,
         orientation: file.e_orientation ? file.e_orientation : 0,
         thumbnailSize: THUMBNAIL_SIZE
       });
       console.log('getFileThumb:', thumb);
 
       if (!token.cancelled) {
-        file.thumbnail = `data:image/png;base64,${thumb.thumb_data_base64}`;
+        file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
         console.log('getFileThumb:', file);
       }
     });

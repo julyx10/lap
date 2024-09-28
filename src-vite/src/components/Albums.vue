@@ -25,14 +25,15 @@
           :class="[
             'p-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
             { 
-              'bg-gray-800': gAlbumId === album.id, 
-              'text-gray-300': gAlbumId === album.id && gFolderId === album.folderId 
+              'text-gray-300': gAlbumId === album.id, 
+              'bg-gray-800': gAlbumId === album.id && gFolderId === album.folderId
             }
           ]"
           @click="clickAlbum(album)"
         >
           <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandAlbum(album)"/>
-          {{ album.name }}({{ album.id }}) - {{ album.folderId }}
+          {{ album.name }}
+          <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
         </div>
         <Folders v-if="album.is_expanded" :albumId="album.id" :children="album.children" />
       </li>

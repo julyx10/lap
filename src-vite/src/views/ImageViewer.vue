@@ -70,7 +70,7 @@
         <td>Focal Length</td>
         <td>{{ fileInfo.e_focal_length }}</td>
       </tr>
-      <!-- <tr>
+      <tr>
         <td>Color Type</td>
         <td>{{ fileInfo.i_color_type }}</td>
       </tr>
@@ -81,7 +81,19 @@
       <tr>
         <td>Alpha Channel</td>
         <td>{{ fileInfo.i_has_alpha }}</td>
-      </tr> -->
+      </tr>
+      <tr>
+        <td>GPS Latitude</td>
+        <td>{{ fileInfo.gps_latitude }}</td>
+      </tr>
+      <tr>
+        <td>GPS Longitude</td>
+        <td>{{ fileInfo.gps_longitude }}</td>
+      </tr>
+      <tr>
+        <td>GPS Altitude</td>
+        <td>{{ fileInfo.gps_altitude }}</td>
+      </tr>
     </table>
 
   </div>
@@ -93,7 +105,6 @@ import { ref, computed, onMounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { formatTimestamp, formatFileSize } from '@/common/utils';
-import { c } from 'naive-ui';
 
 const fileInfo = ref(null);       // File info
 const filePath = ref('');         // File path

@@ -29,17 +29,13 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { formatFileSize } from '@/common/utils';
-import { getFullPath, shortenFilename } from '../common/utils';
+import { shortenFilename } from '../common/utils';
 import { useI18n } from 'vue-i18n';
 
 const { locale, messages } = useI18n();
 const msg = computed(() => messages.value[locale.value]);
 
 const props = defineProps({
-  filePath: {
-    type: String,
-    required: false,
-  },
   fileList: {
     type: Array,
     required: true,
@@ -57,14 +53,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
-
-watch(() => props.filePath, (new_path) => {
-  console.log('watch filePath:', new_path);
-  if (new_path) {
-    selectedFileIndex.value = null;
-    scrollableDiv.value.scrollTop = 0;
-  }
-}, { deep: true });
 
 watch(selectedFileIndex, (new_index) => {
   if (new_index !== null) {
@@ -92,8 +80,7 @@ function dlbClickFile(index: number) {
   }
 
   const file = props.fileList[index];
-  const filePath = getFullPath(props.filePath, file.name);
-  const encodedFilePath = encodeURIComponent(filePath);
+  const encodedFilePath = encodeURIComponent(file.file_path);
   let imageWindow = WebviewWindow.getByLabel('imageviewer');
 
   if (imageWindow) {
