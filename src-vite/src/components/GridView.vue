@@ -4,15 +4,16 @@
       <div 
         v-for="(file, index) in fileList" 
         :key="index" 
-        class="bg-gray-800 rounded p-2 cursor-pointer hover:bg-gray-700 transition duration-200"
-        :class="index === selectedFileIndex ? 'text-gray-400 bg-gray-700' : ''"
+        :class="[
+          'p-2 rounded cursor-pointer hover:bg-gray-700 transition duration-200', 
+          index === gSelectItemIndex ? 'text-gray-300 bg-gray-700' : ''
+        ]"
         @click="clickFile(index)"
         @dblclick="dlbClickFile(index)"
       >
         <div class="flex flex-col items-center">
           <img 
             :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" 
-            alt="Thumbnail" 
             class="w-full h-36 object-cover rounded "
           />
           <p class="text-center">{{ shortenFilename(file.name) }}</p>
@@ -26,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { formatFileSize } from '@/common/utils';
 import { shortenFilename } from '../common/utils';
@@ -42,7 +43,8 @@ const props = defineProps({
   },
 });
 
-const selectedFileIndex = ref(null);
+const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
+
 const fileListLength = computed(() => props.fileList.length);
 const scrollableDiv = ref(null);
 
@@ -54,24 +56,19 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
-watch(selectedFileIndex, (new_index) => {
-  if (new_index !== null) {
-    console.log('selectedFileIndex...', props.fileList[new_index]);
-  }
-});
 
 function handleKeyDown(event) {
   if (event.key === 'ArrowDown') {
-    selectedFileIndex.value = Math.min(selectedFileIndex.value + 1, fileListLength.value - 1);
+    gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
   } else if (event.key === 'ArrowUp') {
-    selectedFileIndex.value = Math.max(selectedFileIndex.value - 1, 0);
+    gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
   } else if (event.key === 'Enter') {
-    dlbClickFile(selectedFileIndex.value);
+    dlbClickFile(gSelectItemIndex.value);
   }
 }
 
 function clickFile(index: number) {
-  selectedFileIndex.value = index;
+  gSelectItemIndex.value = index;
 }
 
 function dlbClickFile(index: number) {

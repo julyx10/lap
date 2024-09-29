@@ -1,7 +1,7 @@
 <template>
   
   <div
-    class="flex relative justify-center items-center h-screen w-screen bg-gray-800 text-gray-500 overflow-hidden"
+    class="flex relative justify-center items-center h-screen w-screen bg-gray-800 text-gray-500 overflow"
     @wheel="zoomImage"
   >
     <img
@@ -21,7 +21,7 @@
 
     <!-- <p class="absolute bottom-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg">{{ filePath }}</p> -->
 
-    <table v-if="fileInfo" class="absolute top-0 left-0 border-separate border-spacing-1 text-gray-500 bg-gray-900 bg-opacity-10 rounded-lg hover:text-gray-500">
+    <table v-if="fileInfo" class="absolute top-1 left-1 border-separate border-spacing-1 text-gray-500 bg-gray-900 bg-opacity-10 rounded hover:text-gray-600">
       <tr>
         <td>File Name</td>
         <td>{{ fileInfo.name }}</td>

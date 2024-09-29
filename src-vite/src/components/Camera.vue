@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 
-import { ref, inject, computed, onMounted } from 'vue';
+import { ref, watch, inject, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import { appWindow } from '@tauri-apps/api/window';
 
@@ -72,6 +72,8 @@ import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 
 import IconMinus from '@/assets/minus.svg';
+
+const gSelectItemIndex = inject('gSelectItemIndex');
 
 const gCameras = inject('gCameras');
 const gCameraMake = inject('gCameraMake');
@@ -92,6 +94,19 @@ onMounted(() => {
   }
 });
 
+watch(gCameraMake, async (newMake) => {
+  if (newMake) {
+    console.log('watch gCameraMake...', newMake);
+    gSelectItemIndex.value = -1;
+  }
+});
+
+watch(gCameraModel, async (newModel) => {
+  if (newModel) {
+    console.log('watch gCameraModel...', newModel);
+    gSelectItemIndex.value = -1;
+  }
+});
 
 /// refresh cameras
 const clickRefresh = async () => {
@@ -109,6 +124,8 @@ async function getCameras() {
         ...camera, 
         is_expanded: false,
       }));
+
+      gSelectItemIndex.value = -1;
 
       gCameraMake.value = null;
       gCameraModel.value = null;

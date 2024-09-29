@@ -13,10 +13,9 @@
       <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
     </div>
   </div>
-  <!-- table -->
-  <!-- <TableView :filePath="currentFolder.path" :fileList="fileList"/> -->
+  <!-- file list view -->
   <GridView :fileList="fileList"/>
-  <!-- <GridView :filePath="currentFolder.path" :fileList="fileList"/> -->
+  <!-- <TableView :fileList="fileList"/> -->
 
 </template>
 
@@ -49,6 +48,8 @@ const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
 
+const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
+
 const gCameraMake = inject('gCameraMake');     // global camera make
 const gCameraModel = inject('gCameraModel');   // global camera model
 
@@ -56,14 +57,10 @@ const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
 const fileList = ref([]);
 
-// use a token that signals when the current folder changes, 
-// and check this token inside the thumbnail generation loop
-let cancelToken = { cancelled: false };
-
-
 /// auto update the titlebar when reference data changes
 const title = computed(() => {
-  let subTitle = ' > ';
+  let subTitle = '';
+  let selectedFileName = fileList.value.length > 0 && gSelectItemIndex.value > -1 ? ` > ${fileList.value[gSelectItemIndex.value].name}` : '';
   
   if (gToolbarIndex.value === 1) {    // album view
     if (gAlbumId.value) {
@@ -72,28 +69,29 @@ const title = computed(() => {
 
       if(gFolderId.value === album.folderId) { // current folder is album path
         currentFolder.value = album;
-        subTitle += album.name;
+        subTitle += ` > ${album.name}`;
       } else {  // get the select folder
         currentFolder.value = getFolder(album, gFolderId.value);
-        subTitle += `${album.name} > ${currentFolder.value.name}`;
+        subTitle += ` > ${album.name} > ${currentFolder.value.name}`;
       }
     }
   } else if (gToolbarIndex.value === 5) {   // camera view
     if (gCameraMake.value) {
       if (gCameraModel.value) {
         currentCamera.value = { make: gCameraMake.value , model: gCameraModel.value };
-        subTitle += `${gCameraMake.value} > ${gCameraModel.value}`;
+        subTitle += ` > ${gCameraMake.value} > ${gCameraModel.value}`;
       } else {
-        subTitle += gCameraMake.value;
+        subTitle += ` > ${gCameraMake.value}`;
       }
     }
   }
-  return props.titlebar + subTitle;
+  return props.titlebar + subTitle + selectedFileName;
 });
 
 
 /// Watch for changes in album_id and update filelist accordingly
 watch(gAlbumId, async (newAlbumId) => {
+  console.log('watch - gAlbumId:', newAlbumId);
   // no album is selected
   if (!newAlbumId) {
     fileList.value = [];
@@ -103,7 +101,7 @@ watch(gAlbumId, async (newAlbumId) => {
 
 /// Watch for changes in toolbar index and update filelist accordingly
 watch(gToolbarIndex, async (newIndex) => {
-  console.log('gToolbarIndex:', newIndex);
+  console.log('watch - gToolbarIndex:', newIndex);
   if (newIndex === 1) {
     if (gAlbumId.value) {
       await getFiles(currentFolder.value.path);
@@ -118,25 +116,20 @@ watch(gToolbarIndex, async (newIndex) => {
 
 /// Watch for changes in filePath and update filelist accordingly
 watch(currentFolder, async (newFolder) => {
+  console.log('watch - currentFolder:', newFolder);
   if (newFolder) {
-    console.log('currentFolder:', newFolder);
-
-    // Invalidate ongoing thumbnail fetching when folder changes
-    cancelToken.cancelled = true;
-
-    // Create a new cancel token for the new folder
-    cancelToken = { cancelled: false };
-
+    // reset the selected item index
+    gSelectItemIndex.value = -1;  // before get files
     // Fetch the files in the new folder
     await getFiles(newFolder.path);
   }
 });
 
 
-watch(currentCamera, async (newCamera) => {
-  console.log('currentCamera:', newCamera);
-  if(newCamera.make) {
-    await getCameraFiles(newCamera.make, newCamera.model);
+watch(gCameraModel, async (newModel) => {
+  console.log('watch - gCameraModel:', newModel);
+  if(newModel) {
+    await getCameraFiles(gCameraMake.value, newModel);
   } else {
     fileList.value = [];
   }
@@ -176,17 +169,11 @@ async function getFiles(path) {
   try {
     // Fetch the list of files
     fileList.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
-    console.log('getFiles:', fileList.value);
+    console.log('invoke - getFiles:', fileList.value);
 
-    // Get thumbnails in batches of 5
-    const chunkSize = 5;
-    for (let i = 0; i < fileList.value.length; i += chunkSize) {
-      // Get the next batch of files
-      const fileChunk = fileList.value.slice(i, i + chunkSize);
-      await getFileThumb(fileChunk, cancelToken); // Pass the current chunk to get thumbnails
-    }
+    await getFileThumb(fileList.value);
   } catch (error) {
-    console.error('getFiles error:', error);
+    console.error('invoke - getFiles error:', error);
   }
 };
 
@@ -195,25 +182,18 @@ async function getFiles(path) {
 async function getCameraFiles(make, model) {
   try {
     fileList.value = await invoke('get_camera_files', { make: make, model: model });
-    console.log('getCameraFiles:', fileList.value);
+    console.log('invoke - getCameraFiles:', fileList.value);
 
-    await getFileThumb(fileList.value, cancelToken); 
+    await getFileThumb(fileList.value); 
   } catch (error) {
-    console.error('getCameraFiles error:', error);
+    console.error('invoke - getCameraFiles error:', error);
   }
 }
 
 /// get the thumbnail for each file in mutil-thread
-async function getFileThumb(files, token) {
+async function getFileThumb(files) {
   try {
-    // Create an array of promises for each file's thumbnail generation
     const thumbnailPromises = files.map(async (file) => {
-      // Check if the operation has been cancelled
-      if (token.cancelled) {
-        console.log('getFileThumb -- Thumbnail generation cancelled');
-        return;
-      }
-
       console.log('getFileThumb:', file.file_path);
 
       const thumb = await invoke('get_file_thumb', { 
@@ -222,19 +202,16 @@ async function getFileThumb(files, token) {
         orientation: file.e_orientation ? file.e_orientation : 0,
         thumbnailSize: THUMBNAIL_SIZE
       });
-      console.log('getFileThumb:', thumb);
 
-      if (!token.cancelled) {
-        file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-        console.log('getFileThumb:', file);
-      }
+      file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+      console.log('invoke - getFileThumb:', file);
     });
 
     // Wait for all thumbnail promises to resolve in parallel
     await Promise.all(thumbnailPromises);
 
   } catch (error) {
-    console.error('getFileThumb error:', error);
+    console.error('invoke - getFileThumb error:', error);
   }
 }
 

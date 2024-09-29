@@ -33,10 +33,10 @@ fn main() {
 
             Ok(())
         })
-        .on_page_load(|window, _payload| {
+        .on_page_load(|_window, _payload| {
             // avoid the blank window on startup
             // set window visible to false in tauri.conf.json at first
-            window.show().unwrap();
+            // window.show().unwrap();
         })
         .invoke_handler(tauri::generate_handler![
             t_cmds::get_albums,
