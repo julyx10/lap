@@ -1,20 +1,25 @@
 <template>
 
   <!-- title bar -->
-  <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full">
-    {{ title }}
-    <div class="flex">
-      <!-- <v-slider
+  <div class="px-3 py-2 w-full absolute">
+    <div class=" flex flex-row items-center justify-between">
+      {{ title }}
+      <div class="flex">
+        <!-- <v-slider
         class="w-32" color="primary" thumb-size="18"  thumb-color="secondary"
         @change="changeThumbnailSize"
-      /> -->
-      <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
-      <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
-      <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
+        /> -->
+        <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
+        <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
+        <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
+      </div>
+    </div>
+    <div>
+      {{ fileList.length }} files
     </div>
   </div>
   <!-- file list view -->
-  <GridView :fileList="fileList"/>
+  <GridView class="mt-16" :fileList="fileList"/>
   <!-- <TableView :fileList="fileList"/> -->
 
 </template>
@@ -33,8 +38,8 @@ const { locale, messages } = useI18n();
 const msg = computed(() => messages.value[locale.value]);
 
 // Import the SVG file as a Vue component
-import IconPhoto from '@/assets/photo.svg';  
-import IconVideo from '@/assets/film.svg';  
+import IconPhoto from '@/assets/photo.svg';
+import IconVideo from '@/assets/film.svg';
 import IconMusic from '@/assets/musical-note.svg';  
 
 

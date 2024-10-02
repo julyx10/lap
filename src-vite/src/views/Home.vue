@@ -3,15 +3,15 @@
   <div class="flex h-screen bg-gray-900 text-gray-500">
 
     <!-- left toolbar -->
-    <div ref="toolbar" class="px-2 flex flex-col justify-between">
+    <div ref="toolbar" class="flex flex-col justify-between">
       <div>
         <component
           v-for="(item, index) in toolbars"
           :key="index"
           :is="item.icon"
           :class="[
-            'my-5 hover:text-gray-100 transition-colors duration-300', 
-            gToolbarIndex === index ? 'text-gray-300' : ''
+            'mx-1 my-2 p-1 w-8 h-8 border-l-2 border-gray-900 hover:text-gray-100 transition-colors duration-300', 
+            gToolbarIndex === index ? 'text-gray-300 border-l-2 border-sky-500 transition-colors duration-300' : ''
           ]" 
           @click="clickToolbar(index)"
         />

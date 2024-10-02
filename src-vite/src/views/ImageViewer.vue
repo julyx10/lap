@@ -1,115 +1,62 @@
 <template>
-  
-  <div
-    class="flex relative justify-center items-center h-screen w-screen bg-gray-800 text-gray-500 overflow"
-    @wheel="zoomImage"
-  >
-    <img
-      :src="imageSrc"
-      alt="Image Viewer"
-      v-if="imageSrc"
-      :style="imgStyle"
-      class="max-w-full max-h-full object-contain transition-transform duration-150"
-      @mousedown="startDragging"
-      @mouseup="stopDragging"
-      @mousemove="dragImage"
-      @mouseleave="stopDragging"
-    />
-    <!-- <v-img v-if="imageSrc" lazy-src="a" :src="imageSrc"></v-img> -->
+  <div class="flex flex-row bg-gray-800 text-gray-500  overflow-hidden">
 
-    <p v-else>{{ loadError ? loadError : 'Loading...'}}</p>
-
-    <!-- <p class="absolute bottom-0 text-gray-500 bg-gray-900 bg-opacity-10 p-2 rounded-lg">{{ filePath }}</p> -->
-
-    <table v-if="fileInfo" class="absolute top-1 left-1 border-separate border-spacing-1 text-gray-500 bg-gray-900 bg-opacity-10 rounded hover:text-gray-600">
-      <tr>
-        <td>File Name</td>
-        <td>{{ fileInfo.name }}</td>
-      </tr>
-      <tr>
-        <td>Resolution</td>
-        <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
-      </tr>
-      <tr>
-        <td>File Size</td>
-        <td>{{ formatFileSize(fileInfo.size) }}</td>
-      </tr>
-      <tr>
-        <td>Created</td>
-        <td>{{ formatTimestamp(fileInfo.created_at) }}</td>
-      </tr>
-      <tr>
-        <td>Modified</td>
-        <td>{{ formatTimestamp(fileInfo.modified_at) }}</td>
-      </tr>
-      <tr>
-        <td>Camera Make</td>
-        <td>{{ fileInfo.e_make }}</td>
-      </tr>
-      <tr>
-        <td>Camera Model</td>
-        <td>{{ fileInfo.e_model }}</td>
-      </tr>
-      <tr>
-        <td>Date Taken</td>
-        <td>{{ fileInfo.e_date_time }}</td>
-      </tr>
-      <tr>
-        <td>Exposure Time</td>
-        <td>{{ fileInfo.e_exposure_time }}</td>
-      </tr>
-      <tr>
-        <td>Aperture</td>
-        <td>{{ fileInfo.e_f_number }}</td>
-      </tr>
-      <tr>
-        <td>ISO Speed</td>
-        <td>{{ fileInfo.e_iso_speed }}</td>
-      </tr>
-      <tr>
-        <td>Focal Length</td>
-        <td>{{ fileInfo.e_focal_length }}</td>
-      </tr>
-      <tr>
-        <td>Color Type</td>
-        <td>{{ fileInfo.i_color_type }}</td>
-      </tr>
-      <tr>
-        <td>Bit Depth</td>
-        <td>{{ fileInfo.i_bit_depth }}</td>
-      </tr>
-      <tr>
-        <td>Alpha Channel</td>
-        <td>{{ fileInfo.i_has_alpha }}</td>
-      </tr>
-      <tr>
-        <td>GPS Latitude</td>
-        <td>{{ fileInfo.gps_latitude }}</td>
-      </tr>
-      <tr>
-        <td>GPS Longitude</td>
-        <td>{{ fileInfo.gps_longitude }}</td>
-      </tr>
-      <tr>
-        <td>GPS Altitude</td>
-        <td>{{ fileInfo.gps_altitude }}</td>
-      </tr>
-    </table>
-
+    <!-- image -->
+    <div 
+      class="relative flex-1 flex justify-center items-center h-screen overflow-hidden"
+    >
+      <div class="absolute z-10 flex items-center justify-start left-0 w-20 h-full group hover:text-gray-200 transition-colors duration-300" 
+        @click="clickPrev"
+      >
+        <IconLeft class="hidden group-hover:block" />
+      </div>
+      <img v-if="imageSrc"
+        class="max-h-full max-w-full transition-transform duration-150"
+        :src="imageSrc"
+        alt="Image Viewer"
+        :style="imgStyle"
+        @wheel="zoomImage"
+        @mousedown="startDragging"
+        @mouseup="stopDragging"
+        @mousemove="dragImage"
+        @mouseleave="stopDragging"
+      />
+      <p v-else>{{ loadError ? loadError : 'Loading...'}}</p>
+      <div class="absolute z-10 flex items-center justify-end right-0 w-20 h-full group hover:text-gray-200 transition-colors duration-300" 
+        @click="clickNext"
+      >
+        <IconRight class="hidden group-hover:block" />
+      </div>
+    </div>
+    <FileInfo v-if="showFileInfo" class="" :fileId="Number(fileId)" @close="clickCloseFileInfo"/>
   </div>
-
+    
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { listen } from '@tauri-apps/api/event';
+import { emit, listen } from '@tauri-apps/api/event';
+import { useRouter } from 'vue-router';
 import { invoke } from '@tauri-apps/api/tauri';
-import { formatTimestamp, formatFileSize } from '@/common/utils';
+import FileInfo from '@/components/FileInfo.vue';
 
-const fileInfo = ref(null);       // File info
+import IconZoomIn from '@/assets/arrows-pointing-in.svg'; 
+import IconZoomOut from '@/assets/arrows-pointing-out.svg'; 
+import IconGlassPlus from '@/assets/magnifying-glass-plus.svg'; 
+import IconGlassMinus from '@/assets/magnifying-glass-minus.svg'; 
+import IconLeft from '@/assets/chevron-left.svg';
+import IconRight from '@/assets/chevron-right.svg';
+
+const router = useRouter();
+
+const fileId = ref(null);
 const filePath = ref('');         // File path
 const imageSrc = ref(null);
 const loadError = ref(null);
+
+const showToolbar = ref(true);
+const showFileInfo = ref(true);
+
 
 // Zoom scaling, dragging state, and position
 const scale = ref(1); // Default zoom scale
@@ -131,25 +78,17 @@ onMounted(() => {
     const urlParams = new URLSearchParams(window.location.search);
 
     // Load the image from the file path
-    const encodedFilePath = urlParams.get('filePath');
-    filePath.value = decodeURIComponent(encodedFilePath);
-
+    filePath.value = decodeURIComponent(urlParams.get('filePath'));
     loadImage(filePath.value);
 
-    // Load the file info
-    loadFileInfo(urlParams.get('fileId'));
-    console.log('fileInfo:', fileInfo.value);
+    fileId.value = urlParams.get('fileId');
 
-    // Listen for the 'update-image' event to update the image
-    listen('update-image', (event) => {
-      // Update the image source
-      const newEncodedFilePath = event.payload.filePath;
-      filePath.value = decodeURIComponent(newEncodedFilePath);
-
+    // Listen for the 'update-url' event to update the image
+    listen('update-img', (event) => {
+      filePath.value = decodeURIComponent(event.payload.filePath);
       loadImage(filePath.value);
 
-      // load the file info
-      loadFileInfo(event.payload.fileId);
+      fileId.value = event.payload.fileId;
     });
   } catch (error) {
     loadError.value = error;
@@ -158,9 +97,26 @@ onMounted(() => {
   }
 });
 
+// Emit a message to the main window to go to the previous image
+function clickPrev() {
+  console.log('clickPrev');
+  emit('message-from-image-viewer', { message: 'prev' });
+}
+
+function clickNext() {
+  console.log('clickNext');
+  emit('message-from-image-viewer', { message: 'next' });
+}
+
+// Close the file info panel
+function clickCloseFileInfo() {
+  showFileInfo.value = false;
+}
+
 
 // Load the image from the file path
 async function loadImage(filePath) {
+  console.log('loadImage:', filePath);
   try {
     const imageBase64 = await invoke('get_file_image', { filePath });
     imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
@@ -168,17 +124,6 @@ async function loadImage(filePath) {
     loadError.value = error;
     imageSrc.value = null;
     console.error('Error fetching image data:', error);
-  }
-}
-
-
-// Load the file info from the file ID
-async function loadFileInfo(fileId) {
-  try {
-    fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
-    console.log('fileInfo: ---', fileInfo.value);
-  } catch (error) {
-    console.error('Error fetching file info:', error);
   }
 }
 

@@ -27,17 +27,23 @@ export function getFullPath(path: string, name: string): string {
 
 /// shorten a filename while preserving its extension
 export function shortenFilename(filename: string): string {
-  const dotIndex = filename.lastIndexOf('.');
-
-  if (dotIndex !== -1) {
-      const name = filename.slice(0, dotIndex);
-      const extension = filename.slice(dotIndex);
-      
-      const shortenedName = name.length > 16 ? `${name.slice(0, 16)}...` : name;
-
-      return `${shortenedName}${extension}`;
-  } else {
-      // No extension found, just truncate the name
-      return filename.length > 16 ? `${filename.slice(0, 16)}...` : filename;
+  const maxLength = 16;
+  const extIndex = filename.lastIndexOf('.');
+    
+  // If no extension is found, return the shortened filename
+  if (extIndex === -1) {
+      return filename.length > maxLength ? filename.substring(0, maxLength - 3) + '...' : filename;
   }
+
+  const name = filename.substring(0, extIndex);
+  const ext = filename.substring(extIndex);
+
+  // If the filename is within the limit, return it as is
+  if (filename.length <= maxLength) {
+      return filename;
+  }
+
+  // Shorten the name part and keep the extension
+  const shortName = name.substring(0, maxLength - ext.length - 3) + '...';
+  return shortName + ext;
 }

@@ -31,12 +31,12 @@
           <li v-for="model in camera.models" class="pl-4">
             <div 
               :class="[
-                'm-1 flex items-center whitespace-nowrap hover:bg-gray-700', 
-                gCameraModel === model ? 'text-gray-300 bg-gray-800' : ''
+                'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
+                gCameraModel === model ? 'text-gray-300 bg-gray-800 border-sky-500 transition-colors duration-300' : 'border-gray-900'
               ]" 
               @click="clickCameraModel(camera.make, model)"
             >
-              <IconMinus class="p-1 flex-shrink-0" />
+              <IconRight class="p-1 flex-shrink-0" />
               {{ model }}
             </div>
           </li>
@@ -71,7 +71,7 @@ import IconRefresh from '@/assets/arrow-path.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 
-import IconMinus from '@/assets/minus.svg';
+import IconRight from '@/assets/chevron-right.svg';
 
 const gSelectItemIndex = inject('gSelectItemIndex');
 

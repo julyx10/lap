@@ -9,21 +9,21 @@ import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 
 // Vuetify - Import all components and directives
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
-const vuetify = createVuetify({
-  components,
-  directives,
-})
+// import * as components from 'vuetify/components'
+// import * as directives from 'vuetify/directives'
+// const vuetify = createVuetify({
+//   components,
+//   directives,
+// })
 
 // Vuetify - Only import the required components
-// import { VApp, VBtn } from 'vuetify/components'
-// const vuetify = createVuetify({
-//   components: {
-//     VApp,
-//     VBtn
-//   }
-// })
+import { VApp, VBtn } from 'vuetify/components'
+const vuetify = createVuetify({
+  components: {
+    VApp,
+    VBtn
+  }
+})
 
 
 // I18n

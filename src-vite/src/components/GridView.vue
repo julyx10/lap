@@ -1,12 +1,12 @@
 <template>
-  <div ref="scrollableDiv" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-2 p-2">
+  <div ref="scrollableDiv" class="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+    <div class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
       <div 
         v-for="(file, index) in fileList" 
         :key="index" 
         :class="[
-          'p-2 rounded cursor-pointer hover:bg-gray-700 transition duration-200', 
-          index === gSelectItemIndex ? 'text-gray-300 bg-gray-700' : ''
+          'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200', 
+          index === gSelectItemIndex ? 'border-sky-500' : 'border-gray-800'
         ]"
         @click="clickFile(index)"
         @dblclick="dlbClickFile(index)"
@@ -18,7 +18,7 @@
           />
           <p class="text-center">{{ shortenFilename(file.name) }}</p>
           <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
-          <p class="text-sm">{{ file.e_model }}</p>
+          <!-- <p class="text-sm">{{ file.e_model }}</p> -->
           <!-- <p class="text-sm text-right text-gray-400">{{ formatFileSize(file.size) }}</p> -->
         </div>
       </div>
@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
+import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { formatFileSize } from '@/common/utils';
 import { shortenFilename } from '../common/utils';
@@ -48,8 +49,25 @@ const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item ind
 const fileListLength = computed(() => props.fileList.length);
 const scrollableDiv = ref(null);
 
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+
+  listen('message-from-image-viewer', (event) => {
+    const { message } = event.payload;
+    switch (message) {
+      case 'prev':
+        gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
+        dlbClickFile(gSelectItemIndex.value);
+        break;
+      case 'next':
+        gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
+        dlbClickFile(gSelectItemIndex.value);
+        break;
+      default:
+        // Do something with the message
+    }
+  });
 });
 
 onUnmounted(() => {
@@ -58,6 +76,12 @@ onUnmounted(() => {
 
 
 function handleKeyDown(event) {
+
+  // disable default event
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter') {
+    event.preventDefault();
+  }
+
   if (event.key === 'ArrowDown') {
     gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
   } else if (event.key === 'ArrowUp') {
@@ -81,7 +105,7 @@ function dlbClickFile(index: number) {
   let imageWindow = WebviewWindow.getByLabel('imageviewer');
 
   if (imageWindow) {
-    imageWindow.emit('update-image', { fileId: file.id, filePath: encodedFilePath });
+    imageWindow.emit('update-img', { fileId: file.id, filePath: encodedFilePath });
   } else {
     imageWindow = new WebviewWindow('imageviewer', {
       url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}`,
