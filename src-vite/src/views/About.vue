@@ -1,6 +1,6 @@
 <template>
   
-  <div class="flex h-screen bg-gray-900 text-gray-500">
+  <div class="flex h-screen t-color-bg t-color-text">
     About
   </div>
 

@@ -1,36 +1,43 @@
 <template>
-  <div class="flex flex-row bg-gray-800 text-gray-500  overflow-hidden">
+<div class="t-color-text overflow-hidden">
 
-    <!-- image -->
-    <div 
-      class="relative flex-1 flex justify-center items-center h-screen overflow-hidden"
-    >
-      <div class="absolute z-10 flex items-center justify-start left-0 w-20 h-full group hover:text-gray-200 transition-colors duration-300" 
-        @click="clickPrev"
-      >
+  <!-- Toolbar -->
+  <div class="absolute p-1 left-0 right-0 h-10 flex flex-row items-center justify-center space-x-10 t-color-bg">
+    <IconZoomIn class="t-icon-hover" @click="scale += 0.2" />
+    <IconZoomOut class="t-icon-hover" @click="scale -= 0.2" />
+    <IconGlassPlus class="t-icon-hover" @click="scale += 0.5" />
+    <IconGlassMinus class="t-icon-hover" @click="scale -= 0.5" />
+    <IconFileInfo class="t-icon-hover" @click="showFileInfo = !showFileInfo" />
+  </div>
+
+  <div class="absolute top-10 left-0 right-0 bottom-0 flex flex-row t-color-bg overflow-hidden">
+    <!-- image area -->
+    <div class="relative flex-1 flex justify-center items-center h-screen overflow-hidden">
+
+      <!-- left  -->
+      <div class="absolute left-0 w-20 h-full z-10 flex items-center justify-start group t-icon-hover"
+        @click="clickPrev">
         <IconLeft class="hidden group-hover:block" />
       </div>
-      <img v-if="imageSrc"
-        class="max-h-full max-w-full transition-transform duration-150"
-        :src="imageSrc"
-        alt="Image Viewer"
-        :style="imgStyle"
-        @wheel="zoomImage"
-        @mousedown="startDragging"
-        @mouseup="stopDragging"
-        @mousemove="dragImage"
-        @mouseleave="stopDragging"
-      />
-      <p v-else>{{ loadError ? loadError : 'Loading...'}}</p>
-      <div class="absolute z-10 flex items-center justify-end right-0 w-20 h-full group hover:text-gray-200 transition-colors duration-300" 
-        @click="clickNext"
-      >
+
+      <img v-if="imageSrc" class="max-h-full max-w-full transition-transform duration-150" :src="imageSrc"
+        alt="Image Viewer" :style="imgStyle" @wheel="zoomImage" @mousedown="startDragging" @mouseup="stopDragging"
+        @mousemove="dragImage" @mouseleave="stopDragging" />
+      <p v-else>{{ loadError ? loadError : 'Loading...' }}</p>
+
+      <!-- right -->
+      <div class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group t-icon-hover"
+        @click="clickNext">
         <IconRight class="hidden group-hover:block" />
       </div>
+
     </div>
-    <FileInfo v-if="showFileInfo" class="" :fileId="Number(fileId)" @close="clickCloseFileInfo"/>
+
+    <!-- File Info -->
+    <FileInfo v-if="showFileInfo" class="" :fileId="Number(fileId)" @close="clickCloseFileInfo" />
   </div>
-    
+
+</div>
 </template>
 
 <script setup lang="ts">
@@ -40,10 +47,11 @@ import { useRouter } from 'vue-router';
 import { invoke } from '@tauri-apps/api/tauri';
 import FileInfo from '@/components/FileInfo.vue';
 
-import IconZoomIn from '@/assets/arrows-pointing-in.svg'; 
-import IconZoomOut from '@/assets/arrows-pointing-out.svg'; 
-import IconGlassPlus from '@/assets/magnifying-glass-plus.svg'; 
-import IconGlassMinus from '@/assets/magnifying-glass-minus.svg'; 
+import IconZoomIn from '@/assets/arrows-pointing-in.svg';
+import IconZoomOut from '@/assets/arrows-pointing-out.svg';
+import IconGlassPlus from '@/assets/magnifying-glass-plus.svg';
+import IconGlassMinus from '@/assets/magnifying-glass-minus.svg';
+import IconFileInfo from '@/assets/information-circle.svg';
 import IconLeft from '@/assets/chevron-left.svg';
 import IconRight from '@/assets/chevron-right.svg';
 

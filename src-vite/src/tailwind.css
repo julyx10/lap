@@ -18,3 +18,37 @@ body {
 #app {
   flex: 1; 
 } */
+
+.t-icon-hover {
+  @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
+}
+
+.t-icon-selected {
+  @apply text-gray-300 transition-colors duration-300 ;
+}
+
+.t-icon-disabled {
+  @apply text-gray-400;
+}
+
+.t-color-bg {
+  @apply bg-gray-900;
+}
+.t-color-bg-light {
+  @apply bg-gray-800;
+}
+.t-color-bg-hover {
+  @apply hover:bg-gray-800;
+}
+
+.t-color-text {
+  @apply text-gray-500;
+}
+
+.t-color-text-light {
+  @apply text-gray-200;
+}
+
+.t-color-focus {
+  @apply bg-sky-700;
+}

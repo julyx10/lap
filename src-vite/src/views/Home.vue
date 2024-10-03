@@ -1,35 +1,29 @@
 <template>
 
-  <div class="flex h-screen bg-gray-900 text-gray-500">
+  <div class="flex t-color-bg t-color-text">
 
     <!-- left toolbar -->
-    <div ref="toolbar" class="flex flex-col justify-between">
-      <div>
+    <div ref="toolbar" class="w-12 my-3 flex flex-col justify-between">
+      <div class="flex flex-col items-center space-y-5">
         <component
           v-for="(item, index) in toolbars"
           :key="index"
           :is="item.icon"
-          :class="[
-            'mx-1 my-2 p-1 w-8 h-8 border-l-2 border-gray-900 hover:text-gray-100 transition-colors duration-300', 
-            gToolbarIndex === index ? 'text-gray-300 border-l-2 border-sky-500 transition-colors duration-300' : ''
-          ]" 
+          :class="['t-icon-hover', gToolbarIndex === index ? 't-icon-selected' : '']" 
           @click="clickToolbar(index)"
         />
       </div>
-      <div>
-        <IconSettings class="my-5 hover:text-gray-100 transition-colors duration-300" @click="clickSettings" />
+      <div class="flex flex-col items-center space-y-5">
+        <IconSettings class="t-icon-hover" @click="clickSettings" />
         <IconBug 
-          :class="[
-            'my-5 hover:text-gray-100 transition-colors duration-300',
-            isDebugMenuOpen ? 'text-gray-300' : ''
-          ]" 
+          :class="['t-icon-hover', isDebugMenuOpen ? 't-icon-selected' : '']" 
           @click="clickDebug" 
         />
       </div>
     </div>
       
     <!-- navigation pane -->
-    <div v-if="gToolbarIndex > 0" class="flex relative h-screen w-96 min-w-32" :style="{ width: leftPaneWidth + 'px' }">
+    <div v-if="gToolbarIndex > 0" class="w-96 min-w-32 flex relative h-screen" :style="{ width: leftPaneWidth + 'px' }">
       <Album         v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
       <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
       <Camera   v-else-if="gToolbarIndex === 5" :titlebar="$t('camera')"/>
@@ -39,15 +33,15 @@
     <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
     
     <!-- content area -->
-    <div class="flex flex-1 relative h-screen bg-gray-800">
+    <div class="flex flex-1 relative h-screen t-color-bg-light">
       <Content :titlebar="toolbars[gToolbarIndex].text"/>
     </div>
 
     <!-- debug area -->
-    <div v-if="isDebugMenuOpen" class="flex flex-col m-2 text-sm">
-      <v-btn class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="menuAction('locale')">Toggle Locale</v-btn>
-      <v-btn class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="openImage()">Open Image</v-btn>
-      <v-btn class="p-2 my-2 text-gray-200 bg-sky-800 rounded hover:bg-sky-600" @click="clickAbout()">About</v-btn>
+    <div v-if="isDebugMenuOpen" class="flex flex-col m-2 space-y-2">
+      <v-btn @click="menuAction('locale')">Toggle Locale</v-btn>
+      <v-btn @click="openImage()">Open Image</v-btn>
+      <v-btn @click="clickAbout()">About</v-btn>
     </div>
     
   </div>

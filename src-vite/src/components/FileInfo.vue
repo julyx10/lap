@@ -1,5 +1,5 @@
 <template>
-  <div class="p-2 w-72 text-gray-500 bg-gray-900">
+  <div class="p-2 w-72 t-color-bg-light">
     <!-- Title bar -->
     <div class="flex justify-between text-gray-400 border-b-2 border-gray-800">
       <p class="p-1 font-bold">Information</p>
