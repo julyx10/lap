@@ -1,25 +1,25 @@
 <template>
   
   <!-- title bar -->
-  <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full" style="user-select: none;">
+  <div class="absolute px-2 py-3 w-full flex flex-row items-center justify-between" style="user-select: none;">
     <div>
       {{ titlebar }}
     </div>
-    <div class="flex flex-row h-6">
-      <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/>
+    <div class="h-6 flex flex-row ">
+      <IconRefresh class="p-1 t-icon-hover" @click="clickRefresh"/>
     </div>
   </div>
 
   <!-- camera -->
-  <div v-if="gCameras.length > 0" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+  <div v-if="gCameras.length > 0" class="flex-1 mt-12 overflow-auto t-scrollbar">
     <ul>
       <li v-for="camera in gCameras" style="user-select: none;" >
         <div 
           :class="[
-            'p-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
+            'p-2 flex items-center whitespace-nowrap t-color-bg-hover', 
             { 
-              'text-gray-300': gCameraMake === camera.make, 
-              'bg-gray-800': gCameraMake === camera.make && !gCameraModel 
+              't-color-text-selected': gCameraMake === camera.make, 
+              't-color-bg-selected'  : gCameraMake === camera.make && !gCameraModel 
             }
           ]"
           @click="clickCameraMake(camera)"
@@ -31,8 +31,8 @@
           <li v-for="model in camera.models" class="pl-4">
             <div 
               :class="[
-                'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
-                gCameraModel === model ? 'text-gray-300 bg-gray-800 border-sky-500 transition-colors duration-300' : 'border-gray-900'
+                'm-1 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover', 
+                gCameraModel === model ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
               ]" 
               @click="clickCameraModel(camera.make, model)"
             >
@@ -46,7 +46,7 @@
   </div>
 
   <!-- Display message if no albums are found -->
-  <div v-else class="flex items-center justify-center w-full">
+  <div v-else class="w-full flex items-center justify-center ">
     {{ $t('no_cameras') }}
   </div>
 

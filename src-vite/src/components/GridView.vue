@@ -1,5 +1,5 @@
 <template>
-  <div ref="scrollableDiv" class="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+  <div ref="scrollableDiv" class="flex-1 overflow-auto t-scrollbar">
     <div class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
       <div 
         v-for="(file, index) in fileList" 
@@ -9,7 +9,7 @@
           index === gSelectItemIndex ? 'border-sky-500' : 'border-gray-800'
         ]"
         @click="clickFile(index)"
-        @dblclick="dlbClickFile(index)"
+        @dblclick="openImageViewer(index)"
       >
         <div class="flex flex-col items-center">
           <img 
@@ -58,11 +58,11 @@ onMounted(() => {
     switch (message) {
       case 'prev':
         gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
-        dlbClickFile(gSelectItemIndex.value);
+        openImageViewer(gSelectItemIndex.value);
         break;
       case 'next':
         gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
-        dlbClickFile(gSelectItemIndex.value);
+        openImageViewer(gSelectItemIndex.value);
         break;
       default:
         // Do something with the message
@@ -87,7 +87,7 @@ function handleKeyDown(event) {
   } else if (event.key === 'ArrowUp') {
     gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
   } else if (event.key === 'Enter') {
-    dlbClickFile(gSelectItemIndex.value);
+    openImageViewer(gSelectItemIndex.value);
   }
 }
 
@@ -95,7 +95,9 @@ function clickFile(index: number) {
   gSelectItemIndex.value = index;
 }
 
-function dlbClickFile(index: number) {
+
+// Open the image viewer window
+function openImageViewer(index: number) {
   if (index < 0 || index >= props.fileList.length) {
     return;
   }

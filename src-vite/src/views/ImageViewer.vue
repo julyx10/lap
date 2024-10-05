@@ -1,69 +1,103 @@
 <template>
-<div class="t-color-text overflow-hidden">
 
-  <!-- Toolbar -->
-  <div class="absolute p-1 left-0 right-0 h-10 flex flex-row items-center justify-center space-x-10 t-color-bg">
-    <IconZoomIn class="t-icon-hover" @click="scale += 0.2" />
-    <IconZoomOut class="t-icon-hover" @click="scale -= 0.2" />
-    <IconGlassPlus class="t-icon-hover" @click="scale += 0.5" />
-    <IconGlassMinus class="t-icon-hover" @click="scale -= 0.5" />
-    <IconFileInfo class="t-icon-hover" @click="showFileInfo = !showFileInfo" />
-  </div>
+  <div class="flex flex-col h-screen t-color-text">
 
-  <div class="absolute top-10 left-0 right-0 bottom-0 flex flex-row t-color-bg overflow-hidden">
-    <!-- image area -->
-    <div class="relative flex-1 flex justify-center items-center h-screen overflow-hidden">
-
-      <!-- left  -->
-      <div class="absolute left-0 w-20 h-full z-10 flex items-center justify-start group t-icon-hover"
-        @click="clickPrev">
-        <IconLeft class="hidden group-hover:block" />
-      </div>
-
-      <img v-if="imageSrc" class="max-h-full max-w-full transition-transform duration-150" :src="imageSrc"
-        alt="Image Viewer" :style="imgStyle" @wheel="zoomImage" @mousedown="startDragging" @mouseup="stopDragging"
-        @mousemove="dragImage" @mouseleave="stopDragging" />
-      <p v-else>{{ loadError ? loadError : 'Loading...' }}</p>
-
-      <!-- right -->
-      <div class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group t-icon-hover"
-        @click="clickNext">
-        <IconRight class="hidden group-hover:block" />
-      </div>
-
+    <!-- Toolbar -->
+    <div class="p-2 h-10 flex flex-row items-center justify-center space-x-10 t-color-bg-light">
+      <IconFitScreen class="t-icon-hover" @click="scale = 1" />
+      <IconZoomIn class="t-icon-hover" @click="scale += 0.2" />
+      <IconZoomOut class="t-icon-hover" @click="scale -= 0.2" />
+      <IconGlassPlus class="t-icon-hover" @click="scale += 0.5" />
+      <IconGlassMinus class="t-icon-hover" @click="scale -= 0.5" />
+      <IconFavorite class="t-icon-hover" />
+      <IconFileInfo 
+        :class="[
+          't-icon-hover',
+          showFileInfo ? 't-icon-selected' : ''
+        ]"
+        @click="clickShowFileInfo" 
+      />
     </div>
 
-    <!-- File Info -->
-    <FileInfo v-if="showFileInfo" class="" :fileId="Number(fileId)" @close="clickCloseFileInfo" />
+    <div class="flex t-color-bg h-screen overflow-hidden">
+      <!-- image area -->
+      <div class="relative flex-1 flex justify-center items-center overflow-hidden" 
+        @wheel="zoomImage" 
+      >
+        <!-- left  -->
+        <div v-if="gSelectItemIndex > 0"
+          class="absolute left-0 w-20 h-full z-10 flex items-center justify-start group t-icon-hover" 
+          @click="clickPrev">
+          <IconLeft class="hidden group-hover:block" />
+        </div>
+
+        <img 
+          v-if="imageSrc" 
+          class="transition-transform duration-150" 
+          :src="imageSrc"
+          alt="Image Viewer" 
+          :style="imgStyle" 
+          @mousedown="startDragging" 
+          @mouseup="stopDragging"
+          @mousemove="dragImage" 
+          @mouseleave="stopDragging" 
+        />
+        <p v-else>{{ loadError ? loadError : 'Loading...' }}</p>
+
+        <!-- right -->
+        <div class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group t-icon-hover" @click="clickNext">
+          <IconRight class="hidden group-hover:block" />
+        </div>
+
+      </div>
+
+      <!-- File Info -->
+      <transition
+        enter-active-class="transition-transform duration-200"
+        leave-active-class="transition-transform duration-200"
+        enter-from-class="translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-from-class="translate-x-0"
+        leave-to-class="translate-x-full"
+      >
+        <FileInfo v-if="showFileInfo" :fileId="Number(fileId)" @close="closeFileInfo" />
+      </transition>
+    </div>
+
   </div>
 
-</div>
 </template>
 
+
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+
+import { ref, inject, computed, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
-import { useRouter } from 'vue-router';
 import { invoke } from '@tauri-apps/api/tauri';
 import FileInfo from '@/components/FileInfo.vue';
 
+import IconFitScreen from '@/assets/fit-screen.svg';
 import IconZoomIn from '@/assets/arrows-pointing-in.svg';
 import IconZoomOut from '@/assets/arrows-pointing-out.svg';
 import IconGlassPlus from '@/assets/magnifying-glass-plus.svg';
 import IconGlassMinus from '@/assets/magnifying-glass-minus.svg';
+import IconFavorite from '@/assets/heart.svg';
 import IconFileInfo from '@/assets/information-circle.svg';
+
 import IconLeft from '@/assets/chevron-left.svg';
 import IconRight from '@/assets/chevron-right.svg';
 
-const router = useRouter();
+const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
 
+const showToolbar = ref(true);
+
+const showFileInfo = ref(false); // Show the file info panel
 const fileId = ref(null);
+
 const filePath = ref('');         // File path
 const imageSrc = ref(null);
 const loadError = ref(null);
 
-const showToolbar = ref(true);
-const showFileInfo = ref(true);
 
 
 // Zoom scaling, dragging state, and position
@@ -82,6 +116,8 @@ const imgStyle = computed(() => ({
 }));
 
 onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+
   try {
     const urlParams = new URLSearchParams(window.location.search);
 
@@ -105,19 +141,49 @@ onMounted(() => {
   }
 });
 
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+
+function handleKeyDown(event) {
+  // disable default event
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || 
+      event.key === 'ArrowLeft' || event.key === 'ArrowRight' || 
+      event.key === 'Enter') 
+  {
+    event.preventDefault();
+  }
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+    clickNext();
+  } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+    clickPrev();
+  } else if (event.key === 'Enter') {
+    clickShowFileInfo();
+  }
+}
+
+
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
-  console.log('clickPrev');
+  console.log('clickPrev', gSelectItemIndex.value);
   emit('message-from-image-viewer', { message: 'prev' });
 }
 
 function clickNext() {
-  console.log('clickNext');
+  console.log('clickNext', gSelectItemIndex.value);
   emit('message-from-image-viewer', { message: 'next' });
 }
 
-// Close the file info panel
-function clickCloseFileInfo() {
+
+function clickShowFileInfo() {
+  showFileInfo.value = !showFileInfo.value;
+}
+
+
+// Close the file info panel from the child component
+function closeFileInfo() {
   showFileInfo.value = false;
 }
 
@@ -145,7 +211,7 @@ function zoomImage(event) {
   const delta = event.deltaY < 0 ? zoomSpeed : -zoomSpeed;
 
   // Update the scale factor, with a minimum and maximum zoom level
-  scale.value = Math.min(Math.max(0.5, scale.value + delta), 5); // Limit zoom between 0.5x and 5x
+  scale.value = Math.min(Math.max(0.1, scale.value + delta), 10); // Limit zoom between 0.5x and 5x
 }
 
 // Start dragging when the mouse button is pressed

@@ -257,3 +257,16 @@ pub fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> 
         Err(_) => Ok(None)
     }
 }
+
+
+/// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),
+/// which requires conversion to decimal format for easier use
+pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Option<&str>) -> f64 {
+    let decimal = degrees + (minutes / 60.0) + (seconds / 3600.0);
+    if let Some(dir) = direction {
+        if dir == "S" || dir == "W" {
+            return -decimal; // Convert to negative if South or West
+        }
+    }
+    decimal
+}

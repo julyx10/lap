@@ -1,16 +1,16 @@
 <template>
   
   <!-- title bar -->
-  <div class="absolute flex flex-row px-2 py-3 items-center justify-between w-full" style="user-select: none;">
+  <div class="absolute px-2 py-3 w-full flex flex-row items-center justify-between" style="user-select: none;">
     <div>
       {{ titlebar }}
     </div>
-    <div class="flex flex-row h-6">
-      <IconAdd class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickAdd" />
+    <div class="h-6 flex flex-row">
+      <IconAdd class="p-1 t-icon-hover" @click="clickAdd" />
       <IconDelete  
         :class="[
-          'p-1 ', 
-          gAlbumId ? 'hover:text-gray-200 transition-colors duration-300' : 'text-gray-700'
+          'p-1', 
+          gAlbumId ? 't-icon-hover' : 't-icon-disabled'
         ]" 
         @click="gAlbumId ? showDeleteAlbumMsgbox = true : ''" />
       <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
@@ -18,15 +18,15 @@
   </div>
 
   <!-- albums -->
-  <div v-if="gAlbums.length > 0" class="flex-1 mt-12 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
+  <div v-if="gAlbums.length > 0" class="flex-1 mt-12 overflow-auto t-scrollbar">
     <ul>
       <li v-for="album in gAlbums" :key="album.id" style="user-select: none;" >
         <div 
           :class="[
-            'p-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
+            'p-2 flex items-center whitespace-nowrap t-color-bg-hover', 
             { 
-              'text-gray-300': gAlbumId === album.id, 
-              'bg-gray-800': gAlbumId === album.id && gFolderId === album.folderId
+              't-color-text-selected': gAlbumId === album.id, 
+              't-color-bg-selected': gAlbumId === album.id && gFolderId === album.folderId
             }
           ]"
           @click="clickAlbum(album)"

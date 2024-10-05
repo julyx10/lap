@@ -5,7 +5,7 @@
       <div 
         :class="[
           'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
-          child.id && gFolderId === child.id ? 'text-gray-300 bg-gray-800 border-sky-500 transition-colors duration-300' : 'border-gray-900'
+          child.id && gFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @click="clickFolder(child)"
       >

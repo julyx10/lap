@@ -1,7 +1,7 @@
 <template>
 
   <!-- title bar -->
-  <div class="px-3 py-2 w-full absolute">
+  <div class="absolute px-3 py-2 w-full">
     <div class=" flex flex-row items-center justify-between">
       {{ title }}
       <div class="flex">
@@ -9,9 +9,9 @@
         class="w-32" color="primary" thumb-size="18"  thumb-color="secondary"
         @change="changeThumbnailSize"
         /> -->
-        <IconPhoto class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickPhoto()" />
-        <IconVideo class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickVideo()" />
-        <IconMusic class="p-1 hover:text-gray-200 transition-colors duration-300" @click="" />
+        <IconPhoto class="p-1 t-icon-hover" @click="clickPhoto()" />
+        <IconVideo class="p-1 t-icon-hover" @click="clickVideo()" />
+        <IconMusic class="p-1 t-icon-hover" @click="" />
       </div>
     </div>
     <div>

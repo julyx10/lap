@@ -28,7 +28,7 @@ body {
 }
 
 .t-icon-disabled {
-  @apply text-gray-400;
+  @apply text-gray-700;
 }
 
 .t-color-bg {
@@ -38,11 +38,17 @@ body {
   @apply bg-gray-800;
 }
 .t-color-bg-hover {
-  @apply hover:bg-gray-800;
+  @apply hover:bg-gray-700;
+}
+.t-color-bg-selected {
+  @apply bg-gray-800;
 }
 
 .t-color-text {
   @apply text-gray-500;
+}
+.t-color-text-selected {
+  @apply text-gray-300;
 }
 
 .t-color-text-light {
@@ -51,4 +57,8 @@ body {
 
 .t-color-focus {
   @apply bg-sky-700;
+}
+
+.t-scrollbar {
+  @apply scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800;
 }
