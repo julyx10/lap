@@ -98,7 +98,8 @@ function clickFile(index: number) {
 
 // Open the image viewer window
 function openImageViewer(index: number) {
-  if (index < 0 || index >= props.fileList.length) {
+  const fileCount = props.fileList.length;
+  if (index < 0 || index >= fileCount) {
     return;
   }
 
@@ -107,10 +108,15 @@ function openImageViewer(index: number) {
   let imageWindow = WebviewWindow.getByLabel('imageviewer');
 
   if (imageWindow) {
-    imageWindow.emit('update-img', { fileId: file.id, filePath: encodedFilePath });
+    imageWindow.emit('update-img', { 
+      fileId: file.id, 
+      filePath: encodedFilePath, 
+      fileIndex: index,   // selected file index
+      fileCount: fileCount, // total files length
+    });
   } else {
     imageWindow = new WebviewWindow('imageviewer', {
-      url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}`,
+      url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}`,
       title: 'Image Viewer',
       width: 800,
       height: 600,

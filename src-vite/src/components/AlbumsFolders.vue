@@ -32,7 +32,7 @@ import { invoke, path } from '@tauri-apps/api';
 import Folders from '@/components/AlbumsFolders.vue';
 
 // folder icon
-import IconRight from '@/assets/chevron-right.svg';
+import IconRight from '@/assets/arrow-right.svg';
 
 const props = defineProps({
   albumId: {

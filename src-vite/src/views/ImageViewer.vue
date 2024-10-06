@@ -4,9 +4,8 @@
 
     <!-- Toolbar -->
     <div class="p-2 h-10 flex flex-row items-center justify-center space-x-10 t-color-bg-light">
-      <IconFitScreen class="t-icon-hover" @click="scale = 1" />
-      <IconZoomIn class="t-icon-hover" @click="scale += 0.2" />
-      <IconZoomOut class="t-icon-hover" @click="scale -= 0.2" />
+      <IconFitScreen1 class="t-icon-hover" @click="fitToScreen" />
+      <IconFitScreen2 class="t-icon-hover" @click="resetScale" />
       <IconGlassPlus class="t-icon-hover" @click="scale += 0.5" />
       <IconGlassMinus class="t-icon-hover" @click="scale -= 0.5" />
       <IconFavorite class="t-icon-hover" />
@@ -17,6 +16,8 @@
         ]"
         @click="clickShowFileInfo" 
       />
+      <IconMaximize1 v-if="!isMaximized" class="t-icon-hover" @click="maximizeWindow" />
+      <IconMaximize2 v-if=" isMaximized" class="t-icon-hover" @click="restoreWindow" />
     </div>
 
     <div class="flex t-color-bg h-screen overflow-hidden">
@@ -25,18 +26,21 @@
         @wheel="zoomImage" 
       >
         <!-- left  -->
-        <div v-if="gSelectItemIndex > 0"
+        <div v-if="fileIndex > 0"
           class="absolute left-0 w-20 h-full z-10 flex items-center justify-start group t-icon-hover" 
-          @click="clickPrev">
+          @click="clickPrev"
+        >
           <IconLeft class="hidden group-hover:block" />
         </div>
 
         <img 
+          ref="image"
           v-if="imageSrc" 
-          class="transition-transform duration-150" 
+          class="transition-transform duration-300" 
           :src="imageSrc"
           alt="Image Viewer" 
-          :style="imgStyle" 
+          :style="imgStyle"
+          @load="onImageLoad"
           @mousedown="startDragging" 
           @mouseup="stopDragging"
           @mousemove="dragImage" 
@@ -45,7 +49,10 @@
         <p v-else>{{ loadError ? loadError : 'Loading...' }}</p>
 
         <!-- right -->
-        <div class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group t-icon-hover" @click="clickNext">
+        <div v-if="fileIndex < fileCount - 1"
+          class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group t-icon-hover" 
+          @click="clickNext"
+        >
           <IconRight class="hidden group-hover:block" />
         </div>
 
@@ -72,36 +79,40 @@
 <script setup lang="ts">
 
 import { ref, inject, computed, onMounted, onUnmounted } from 'vue';
+import { appWindow } from '@tauri-apps/api/window';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import FileInfo from '@/components/FileInfo.vue';
 
-import IconFitScreen from '@/assets/fit-screen.svg';
-import IconZoomIn from '@/assets/arrows-pointing-in.svg';
-import IconZoomOut from '@/assets/arrows-pointing-out.svg';
-import IconGlassPlus from '@/assets/magnifying-glass-plus.svg';
-import IconGlassMinus from '@/assets/magnifying-glass-minus.svg';
+import IconFitScreen1 from '@/assets/fit-screen-1.svg';
+import IconFitScreen2 from '@/assets/fit-screen-2.svg';
+
+import IconGlassPlus from '@/assets/glass-plus.svg';
+import IconGlassMinus from '@/assets/glass-minus.svg';
 import IconFavorite from '@/assets/heart.svg';
-import IconFileInfo from '@/assets/information-circle.svg';
+import IconFileInfo from '@/assets/information.svg';
+import IconMaximize1 from '@/assets/maximize-1.svg';
+import IconMaximize2 from '@/assets/maximize-2.svg';
+import IconLeft from '@/assets/arrow-left.svg';
+import IconRight from '@/assets/arrow-right.svg';
 
-import IconLeft from '@/assets/chevron-left.svg';
-import IconRight from '@/assets/chevron-right.svg';
-
-const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
-
-const showToolbar = ref(true);
+const fileId = ref(null);
+const filePath = ref('');      // File path
+const fileIndex = ref(0);      // Index of the current file
+const fileCount = ref(0);      // Total number of files
 
 const showFileInfo = ref(false); // Show the file info panel
-const fileId = ref(null);
-
-const filePath = ref('');         // File path
+const image = ref(null); // Image reference
 const imageSrc = ref(null);
 const loadError = ref(null);
 
-
+const isMaximized = ref(false); // Track if the window is maximized
 
 // Zoom scaling, dragging state, and position
 const scale = ref(1); // Default zoom scale
+const scaledWidth = ref(0); // Scaled width of the image
+const scaledHeight = ref(0); // Scaled height of the image
+
 const isDragging = ref(false); // Track if the image is being dragged
 const startX = ref(0); // Store initial X position when dragging starts
 const startY = ref(0); // Store initial Y position when dragging starts
@@ -115,8 +126,9 @@ const imgStyle = computed(() => ({
   transform: `scale(${scale.value}) translate(${translateX.value}px, ${translateY.value}px)`,
 }));
 
-onMounted(() => {
+onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
+  isMaximized.value = await appWindow.isMaximized();
 
   try {
     const urlParams = new URLSearchParams(window.location.search);
@@ -126,6 +138,8 @@ onMounted(() => {
     loadImage(filePath.value);
 
     fileId.value = urlParams.get('fileId');
+    fileIndex.value = Number(urlParams.get('fileIndex'));
+    fileCount.value = Number(urlParams.get('fileCount'));
 
     // Listen for the 'update-url' event to update the image
     listen('update-img', (event) => {
@@ -133,7 +147,14 @@ onMounted(() => {
       loadImage(filePath.value);
 
       fileId.value = event.payload.fileId;
+      fileIndex.value = Number(event.payload.fileIndex);
+      fileCount.value = Number(event.payload.fileCount);
     });
+
+    if (image.value.complete) {
+      onImageLoad();  // If the image is already loaded, initialize it
+    }
+
   } catch (error) {
     loadError.value = error;
     imageSrc.value = null;
@@ -161,18 +182,79 @@ function handleKeyDown(event) {
     clickPrev();
   } else if (event.key === 'Enter') {
     clickShowFileInfo();
+  } else if (event.key === 'Escape') {
+    if (showFileInfo.value) {
+      closeFileInfo();
+    } else {
+      appWindow.close(); // Close the window
+    }
   }
 }
+
+// Function to be called when the image loads
+const onImageLoad = () => {
+  const img = image.value;
+  scaledWidth.value = img.naturalWidth;
+  scaledHeight.value = img.naturalHeight;
+};
+
+// Function to fit the image to the screen
+const fitToScreen = () => {
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
+  const img = image.value;
+  
+  // Only proceed if the image has been loaded
+  if (img) {
+    const originalWidth = img.naturalWidth;
+    const originalHeight = img.naturalHeight;
+
+    // Calculate the scale to fit the image within the screen
+    const widthScale = windowWidth / originalWidth;
+    const heightScale = windowHeight / originalHeight;
+
+    // Use the smaller scale to fit the image
+    scale.value = Math.min(widthScale, heightScale);
+    scaledWidth.value = originalWidth * scale.value;
+    scaledHeight.value = originalHeight * scale.value;
+  }
+};
+
+// Function to reset the image to 1:1 scale
+const resetScale = () => {
+  scale.value = 1;
+  const img = image.value;
+
+  // Only proceed if the image has been loaded
+  if (img) {
+    scaledWidth.value = img.naturalWidth;
+    scaledHeight.value = img.naturalHeight;
+  }
+};
+
+
+// Function to maximize the window
+const maximizeWindow = async () => {
+  await appWindow.maximize();
+  await appWindow.setFullscreen(true);
+  isMaximized.value = true;
+};
+
+// Function to restore the window
+const restoreWindow = async () => {
+  await appWindow.setFullscreen(false);
+  await appWindow.unmaximize();
+  isMaximized.value = false;
+};
 
 
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
-  console.log('clickPrev', gSelectItemIndex.value);
   emit('message-from-image-viewer', { message: 'prev' });
 }
 
 function clickNext() {
-  console.log('clickNext', gSelectItemIndex.value);
   emit('message-from-image-viewer', { message: 'next' });
 }
 

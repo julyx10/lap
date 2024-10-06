@@ -1,5 +1,5 @@
 <template>
-  <div class="w-screen h-screen flex flex-col">
+  <div class="w-full h-full flex flex-col rounded-lg shadow-lg overflow-hidden">
     <!-- Title Bar -->
     <TitleBar titlebar="jc-photo"/>
 
@@ -81,10 +81,10 @@ import IconCalendar from '@/assets/calendar.svg';
 import IconMap from '@/assets/map-pin.svg';
 import IconPeople from '@/assets/user.svg';
 import IconCamera from '@/assets/camera.svg';
-import IconStar from '@/assets/star.svg';
+import IconFavorite from '@/assets/heart.svg';
 import IconTag from '@/assets/tag.svg';
-import IconSettings from '@/assets/cog-6-tooth.svg';
-import IconBug from '@/assets/bug-ant.svg';
+import IconSettings from '@/assets/settings.svg';
+import IconBug from '@/assets/bug.svg';
 
 // toolbar 
 const toolbars = computed(() =>  [
@@ -94,7 +94,7 @@ const toolbars = computed(() =>  [
   { icon: IconMap,      text: localeMessages.value.map },
   { icon: IconPeople,   text: localeMessages.value.people }, 
   { icon: IconCamera,   text: localeMessages.value.camera },
-  { icon: IconStar,     text: localeMessages.value.star },
+  { icon: IconFavorite, text: localeMessages.value.favorite },
   { icon: IconTag,      text: localeMessages.value.tag },
 ]);
 

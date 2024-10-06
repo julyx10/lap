@@ -40,7 +40,7 @@ const msg = computed(() => messages.value[locale.value]);
 // Import the SVG file as a Vue component
 import IconPhoto from '@/assets/photo.svg';
 import IconVideo from '@/assets/film.svg';
-import IconMusic from '@/assets/musical-note.svg';  
+import IconMusic from '@/assets/musical.svg';  
 
 
 const props = defineProps({

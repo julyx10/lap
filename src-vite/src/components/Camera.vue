@@ -65,13 +65,13 @@ const { locale, messages } = useI18n();
 const localeMessages = computed(() => messages.value[locale.value]);
 
 // toolbar icons
-import IconRefresh from '@/assets/arrow-path.svg';
+import IconRefresh from '@/assets/refresh.svg';
 
 // folder icon
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 
-import IconRight from '@/assets/chevron-right.svg';
+import IconRight from '@/assets/arrow-right.svg';
 
 const gSelectItemIndex = inject('gSelectItemIndex');
 

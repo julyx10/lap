@@ -94,7 +94,7 @@ import { ref, watch, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import { formatTimestamp, formatFileSize } from '@/common/utils';
 
-import IconClose from '@/assets/x-mark.svg';
+import IconClose from '@/assets/close.svg';
 
 const props = defineProps({
   fileId: {
