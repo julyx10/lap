@@ -1,51 +1,57 @@
 <template>
+  <div class="w-screen h-screen flex flex-col">
+    <!-- Title Bar -->
+    <TitleBar titlebar="jc-photo"/>
 
-  <div class="flex t-color-bg t-color-text">
+    <!-- Main Content -->
+    <div class="flex-1 flex t-color-bg t-color-text">
 
-    <!-- left toolbar -->
-    <div ref="toolbar" class="w-12 my-3 flex flex-col justify-between">
-      <div class="flex flex-col items-center space-y-5">
-        <component
-          v-for="(item, index) in toolbars"
-          :key="index"
-          :is="item.icon"
-          :class="['t-icon-hover', gToolbarIndex === index ? 't-icon-selected' : '']" 
-          @click="clickToolbar(index)"
-        />
+      <!-- left toolbar -->
+      <div ref="toolbar" class="w-12 my-3 flex flex-col justify-between">
+        <div class="flex flex-col items-center space-y-5">
+          <component
+            v-for="(item, index) in toolbars"
+            :key="index"
+            :is="item.icon"
+            :class="['t-icon-hover', gToolbarIndex === index ? 't-icon-selected' : '']" 
+            @click="clickToolbar(index)"
+          />
+        </div>
+        <div class="flex flex-col items-center space-y-5">
+          <IconSettings class="t-icon-hover" @click="clickSettings" />
+          <IconBug 
+            :class="['t-icon-hover', isDebugMenuOpen ? 't-icon-selected' : '']" 
+            @click="clickDebug" 
+          />
+        </div>
       </div>
-      <div class="flex flex-col items-center space-y-5">
-        <IconSettings class="t-icon-hover" @click="clickSettings" />
-        <IconBug 
-          :class="['t-icon-hover', isDebugMenuOpen ? 't-icon-selected' : '']" 
-          @click="clickDebug" 
-        />
+        
+      <!-- navigation pane -->
+      <div v-if="gToolbarIndex > 0" class="w-96 min-w-32 h-screen overflow-hidden" :style="{ width: leftPaneWidth + 'px' }">
+        <Album         v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
+        <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
+        <Camera   v-else-if="gToolbarIndex === 5" :titlebar="$t('camera')"/>
       </div>
-    </div>
+
+      <!-- splitter -->
+      <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
       
-    <!-- navigation pane -->
-    <div v-if="gToolbarIndex > 0" class="w-96 min-w-32 flex relative h-screen" :style="{ width: leftPaneWidth + 'px' }">
-      <Album         v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
-      <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
-      <Camera   v-else-if="gToolbarIndex === 5" :titlebar="$t('camera')"/>
-    </div>
+      <!-- content area -->
+      <div class="flex flex-1 relative h-screen t-color-bg-light rounded-ss-lg">
+        <Content :titlebar="toolbars[gToolbarIndex].text"/>
+      </div>
 
-    <!-- splitter -->
-    <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
-    
-    <!-- content area -->
-    <div class="flex flex-1 relative h-screen t-color-bg-light">
-      <Content :titlebar="toolbars[gToolbarIndex].text"/>
+      <!-- debug area -->
+      <div v-if="isDebugMenuOpen" class="flex flex-col m-2 space-y-2">
+        <v-btn @click="menuAction('locale')">Toggle Locale</v-btn>
+        <v-btn @click="openImage()">Open Image</v-btn>
+        <v-btn @click="clickAbout()">About</v-btn>
+      </div>
+      
     </div>
-
-    <!-- debug area -->
-    <div v-if="isDebugMenuOpen" class="flex flex-col m-2 space-y-2">
-      <v-btn @click="menuAction('locale')">Toggle Locale</v-btn>
-      <v-btn @click="openImage()">Open Image</v-btn>
-      <v-btn @click="clickAbout()">About</v-btn>
-    </div>
-    
-  </div>
   
+  </div>
+
 </template>
    
 
@@ -55,12 +61,12 @@ import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { open } from '@tauri-apps/api/dialog'; // Tauri dialog API to open the file picker
 import { WebviewWindow } from '@tauri-apps/api/window';
 
-
 /// i18n
 import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
 const localeMessages = computed(() => messages.value[locale.value]);
 
+import TitleBar from '@/components/TitleBar.vue';
 import Album from '@/components/Albums.vue';
 import Calendar from '@/components/Calendar.vue';
 import Camera from '@/components/Camera.vue';
