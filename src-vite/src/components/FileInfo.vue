@@ -81,6 +81,10 @@
           <td>GPS Altitude</td>
           <td>{{ fileInfo.gps_altitude }}</td>
         </tr>
+        <tr>
+          <td>Comments</td>
+          <td>{{ fileInfo.comments }}</td>
+        </tr>        
       </table>
     </div>
 
@@ -90,17 +94,21 @@
 
 <script setup lang="ts">
 
-import { ref, watch, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api';
+// import { ref, watch, onMounted } from 'vue';
+// import { invoke } from '@tauri-apps/api';
 import { formatTimestamp, formatFileSize } from '@/common/utils';
 
 import IconClose from '@/assets/close.svg';
 
 const props = defineProps({
-  fileId: {
-    type: Number,
-    required: true,
-  },
+  // fileId: {
+  //   type: Number,
+  //   required: true,
+  // },
+  fileInfo: {
+    type: Object,
+    required: true
+  }
 });
 
 const emit = defineEmits([
@@ -108,29 +116,29 @@ const emit = defineEmits([
 ]);
 
 // File info
-const fileInfo = ref(null);       
+// const fileInfo = ref(null);
 
 // Load the file info when the component is mounted
-onMounted(async () => {
-  await loadFileInfo(props.fileId);
-});
+// onMounted(async () => {
+//   await loadFileInfo(props.fileId);
+// });
 
 
 // Watch for changes in the file ID
-watch(() => props.fileId, async (newId) => {
-  await loadFileInfo(newId);
-});
+// watch(() => props.fileId, async (newId) => {
+//   await loadFileInfo(newId);
+// });
 
 
 // Load the file info from the file ID
-async function loadFileInfo(fileId) {
-  try {
-    fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
-    console.log('fileInfo: ---', fileInfo.value);
-  } catch (error) {
-    console.error('Error fetching file info:', error);
-  }
-}
+// async function loadFileInfo(fileId) {
+//   try {
+//     fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
+//     console.log('fileInfo: ---', fileInfo.value);
+//   } catch (error) {
+//     console.error('Error fetching file info:', error);
+//   }
+// }
 
 
 // emit close event

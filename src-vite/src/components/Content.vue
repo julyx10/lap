@@ -1,14 +1,10 @@
 <template>
 
   <!-- title bar -->
-  <div class="absolute px-3 py-2 w-full">
+  <div class="absolute px-3 py-2 w-full" style="user-select: none;">
     <div class=" flex flex-row items-center justify-between">
       {{ title }}
       <div class="flex">
-        <!-- <v-slider
-        class="w-32" color="primary" thumb-size="18"  thumb-color="secondary"
-        @change="changeThumbnailSize"
-        /> -->
         <IconPhoto class="p-1 t-icon-hover" @click="clickPhoto()" />
         <IconVideo class="p-1 t-icon-hover" @click="clickVideo()" />
         <IconMusic class="p-1 t-icon-hover" @click="" />

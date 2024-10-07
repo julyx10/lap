@@ -288,6 +288,10 @@ pub struct AFile {
     pub width:          Option<u32>,    // image width
     pub height:         Option<u32>,    // image height
 
+    // extra info
+    pub is_favorite:    Option<bool>,   // is favorite
+    pub comments:       Option<String>, // comments
+
     // exif info
     pub e_make:           Option<String>,   // camera make
     pub e_model:          Option<String>,   // camera model
@@ -335,6 +339,9 @@ impl AFile {
             width: Some(width),
             height: Some(height),
 
+            is_favorite: None,
+            comments: None,
+
             e_make: Self::get_exif_field(&exif, Tag::Make),
             e_model: Self::get_exif_field(&exif, Tag::Model),
             e_date_time: Self::get_exif_field(&exif, Tag::DateTime),
@@ -374,6 +381,7 @@ impl AFile {
             "SELECT id, folder_id, 
                 name, size, created_at, modified_at, 
                 width, height,
+                is_favorite, comments,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
@@ -391,18 +399,21 @@ impl AFile {
                     width: row.get(6)?,
                     height: row.get(7)?,
 
-                    e_make: row.get(8)?,
-                    e_model: row.get(9)?,
-                    e_date_time: row.get(10)?,
-                    e_exposure_time: row.get(11)?,
-                    e_f_number: row.get(12)?,
-                    e_iso_speed: row.get(13)?,
-                    e_focal_length: row.get(14)?,
-                    e_orientation: row.get(15)?,
+                    is_favorite: row.get(8)?,
+                    comments: row.get(9)?,
 
-                    gps_latitude: row.get(16)?,
-                    gps_longitude: row.get(17)?,
-                    gps_altitude: row.get(18)?,
+                    e_make: row.get(10)?,
+                    e_model: row.get(11)?,
+                    e_date_time: row.get(12)?,
+                    e_exposure_time: row.get(13)?,
+                    e_f_number: row.get(14)?,
+                    e_iso_speed: row.get(15)?,
+                    e_focal_length: row.get(16)?,
+                    e_orientation: row.get(17)?,
+
+                    gps_latitude: row.get(18)?,
+                    gps_longitude: row.get(19)?,
+                    gps_altitude: row.get(20)?,
 
                     file_path: Some(file_path.to_string()),
                 })
@@ -419,10 +430,11 @@ impl AFile {
                 folder_id, 
                 name, size, created_at, modified_at, 
                 width, height,
+                is_favorite, comments,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)",
             params![
                 self.folder_id,
 
@@ -433,6 +445,9 @@ impl AFile {
 
                 self.width,
                 self.height,
+
+                self.is_favorite,
+                self.comments,
 
                 self.e_make,
                 self.e_model,
@@ -491,6 +506,7 @@ impl AFile {
             "SELECT a.id, a.folder_id, 
                 a.name, a.size, a.created_at, a.modified_at, 
                 a.width, a.height,
+                a.is_favorite, a.comments,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_iso_speed, a.e_focal_length, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path
@@ -510,21 +526,24 @@ impl AFile {
                     width: row.get(6)?,
                     height: row.get(7)?,
 
-                    e_make: row.get(8)?,
-                    e_model: row.get(9)?,
-                    e_date_time: row.get(10)?,
-                    e_exposure_time: row.get(11)?,
-                    e_f_number: row.get(12)?,
-                    e_iso_speed: row.get(13)?,
-                    e_focal_length: row.get(14)?,
-                    e_orientation: row.get(15)?,
+                    is_favorite: row.get(8)?,
+                    comments: row.get(9)?,
 
-                    gps_latitude: row.get(16)?,
-                    gps_longitude: row.get(17)?,
-                    gps_altitude: row.get(18)?,
+                    e_make: row.get(10)?,
+                    e_model: row.get(11)?,
+                    e_date_time: row.get(12)?,
+                    e_exposure_time: row.get(13)?,
+                    e_f_number: row.get(14)?,
+                    e_iso_speed: row.get(15)?,
+                    e_focal_length: row.get(16)?,
+                    e_orientation: row.get(17)?,
+
+                    gps_latitude: row.get(18)?,
+                    gps_longitude: row.get(19)?,
+                    gps_altitude: row.get(20)?,
 
                     file_path: Some(t_utils::get_file_path(
-                        row.get::<_, String>(19).unwrap().as_str(), 
+                        row.get::<_, String>(21).unwrap().as_str(), 
                         row.get::<_, String>(2).unwrap().as_str()
                     ))
                 })
@@ -532,7 +551,16 @@ impl AFile {
         ).optional().map_err(|e| e.to_string())?;
         Ok(result)
     }
-
+    
+    /// set a file's favorite status
+    pub fn set_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
+        let conn = open_conn();
+        let result = conn.execute(
+            "UPDATE afiles SET is_favorite = ?1 WHERE id = ?2",
+            params![is_favorite, file_id],
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
 
     /// get files by camera make and model
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
@@ -541,6 +569,7 @@ impl AFile {
             "SELECT a.id, a.folder_id, 
                 a.name, a.size, a.created_at, a.modified_at, 
                 a.width, a.height,
+                a.is_favorite, a.comments,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_iso_speed, a.e_focal_length, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path
@@ -561,21 +590,24 @@ impl AFile {
                 width: row.get(6)?,
                 height: row.get(7)?,
 
-                e_make: row.get(8)?,
-                e_model: row.get(9)?,
-                e_date_time: row.get(10)?,
-                e_exposure_time: row.get(11)?,
-                e_f_number: row.get(12)?,
-                e_iso_speed: row.get(13)?,
-                e_focal_length: row.get(14)?,
-                e_orientation: row.get(15)?,
+                is_favorite: row.get(8)?,
+                comments: row.get(9)?,
 
-                gps_latitude: row.get(16)?,
-                gps_longitude: row.get(17)?,
-                gps_altitude: row.get(18)?,
+                e_make: row.get(10)?,
+                e_model: row.get(11)?,
+                e_date_time: row.get(12)?,
+                e_exposure_time: row.get(13)?,
+                e_f_number: row.get(14)?,
+                e_iso_speed: row.get(15)?,
+                e_focal_length: row.get(16)?,
+                e_orientation: row.get(17)?,
+
+                gps_latitude: row.get(18)?,
+                gps_longitude: row.get(19)?,
+                gps_altitude: row.get(20)?,
 
                 file_path: Some(t_utils::get_file_path(
-                    row.get::<_, String>(19).unwrap().as_str(), 
+                    row.get::<_, String>(21).unwrap().as_str(), 
                     row.get::<_, String>(2).unwrap().as_str()
                 )),
             })
@@ -780,6 +812,8 @@ pub fn create_db() -> Result<String> {
             modified_at INTEGER,
             width INTEGER,
             height INTEGER,
+            is_favorite INTEGER,
+            comments TEXT,
             e_make TEXT,
             e_model TEXT,
             e_date_time TEXT,

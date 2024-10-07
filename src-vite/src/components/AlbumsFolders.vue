@@ -4,7 +4,7 @@
     <li v-for="child in children" :key="child.id" class="pl-4">
       <div 
         :class="[
-          'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700', 
+          'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer', 
           child.id && gFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @click="clickFolder(child)"

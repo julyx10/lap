@@ -3,22 +3,12 @@
 @tailwind utilities;
 
 
-/* Ensure full height for html, body, and #app */
-/* html, body, #app {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+/* window titlebar btn */
+.t-window-btn {
+  @apply p-3 w-12 h-10 t-color-text t-icon-hover t-color-bg-hover;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-}
-
-#app {
-  flex: 1; 
-} */
-
+/* icon */
 .t-icon-hover {
   @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
 }
@@ -31,15 +21,19 @@ body {
   @apply text-gray-700;
 }
 
+/* color */
 .t-color-bg {
   @apply bg-gray-900;
 }
+
 .t-color-bg-light {
   @apply bg-gray-800;
 }
+
 .t-color-bg-hover {
   @apply hover:bg-gray-700;
 }
+
 .t-color-bg-selected {
   @apply bg-gray-800;
 }
@@ -47,6 +41,7 @@ body {
 .t-color-text {
   @apply text-gray-500;
 }
+
 .t-color-text-selected {
   @apply text-gray-300;
 }
@@ -59,6 +54,7 @@ body {
   @apply bg-sky-700;
 }
 
+/* scrollbar */
 .t-scrollbar {
   @apply scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800;
 }

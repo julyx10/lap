@@ -4,11 +4,15 @@
 
     <!-- Toolbar -->
     <div class="p-2 h-10 flex flex-row items-center justify-center space-x-10 t-color-bg-light">
-      <IconFitScreen1 class="t-icon-hover" @click="fitToScreen" />
-      <IconFitScreen2 class="t-icon-hover" @click="resetScale" />
+      <!-- <IconFitScreen1 class="t-icon-hover" @click="fitToScreen" />
+      <IconFitScreen2 class="t-icon-hover" @click="resetScale" /> -->
       <IconGlassPlus class="t-icon-hover" @click="scale += 0.5" />
       <IconGlassMinus class="t-icon-hover" @click="scale -= 0.5" />
-      <IconFavorite class="t-icon-hover" />
+
+      <IconUnFavorite v-if="!fileInfo" class="t-icon-disabled"/>
+      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-hover" @click="toggleFavorite" />
+      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-hover" @click="toggleFavorite" />
+
       <IconFileInfo 
         :class="[
           't-icon-hover',
@@ -16,8 +20,8 @@
         ]"
         @click="clickShowFileInfo" 
       />
-      <IconMaximize1 v-if="!isMaximized" class="t-icon-hover" @click="maximizeWindow" />
-      <IconMaximize2 v-if=" isMaximized" class="t-icon-hover" @click="restoreWindow" />
+      <IconFullScreen v-if="!isFullScreen" class="t-icon-hover" @click="setFullScreen" />
+      <IconRestoreScreen v-if=" isFullScreen" class="t-icon-hover" @click="restoreScreen" />
     </div>
 
     <div class="flex t-color-bg h-screen overflow-hidden">
@@ -67,7 +71,7 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <FileInfo v-if="showFileInfo" :fileId="Number(fileId)" @close="closeFileInfo" />
+        <FileInfo v-if="showFileInfo" :fileInfo="fileInfo" @close="closeFileInfo" />
       </transition>
     </div>
 
@@ -78,35 +82,39 @@
 
 <script setup lang="ts">
 
-import { ref, inject, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
 import { appWindow } from '@tauri-apps/api/window';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import FileInfo from '@/components/FileInfo.vue';
-
-import IconFitScreen1 from '@/assets/fit-screen-1.svg';
-import IconFitScreen2 from '@/assets/fit-screen-2.svg';
+// import IconFitScreen1 from '@/assets/fit-screen-1.svg';
+// import IconFitScreen2 from '@/assets/fit-screen-2.svg';
 
 import IconGlassPlus from '@/assets/glass-plus.svg';
 import IconGlassMinus from '@/assets/glass-minus.svg';
-import IconFavorite from '@/assets/heart.svg';
+import IconUnFavorite from '@/assets/heart.svg';
+import IconFavorite from '@/assets/heart-solid.svg';
 import IconFileInfo from '@/assets/information.svg';
-import IconMaximize1 from '@/assets/maximize-1.svg';
-import IconMaximize2 from '@/assets/maximize-2.svg';
+import IconFullScreen from '@/assets/full-screen-1.svg';
+import IconRestoreScreen from '@/assets/full-screen-2.svg';
 import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
+
+const { proxy } = getCurrentInstance();
+const config = proxy.$config;
 
 const fileId = ref(null);
 const filePath = ref('');      // File path
 const fileIndex = ref(0);      // Index of the current file
 const fileCount = ref(0);      // Total number of files
-
+const fileInfo = ref(null);
 const showFileInfo = ref(false); // Show the file info panel
+
 const image = ref(null); // Image reference
 const imageSrc = ref(null);
 const loadError = ref(null);
 
-const isMaximized = ref(false); // Track if the window is maximized
+const isFullScreen = ref(false); // Track if the window is full screen
 
 // Zoom scaling, dragging state, and position
 const scale = ref(1); // Default zoom scale
@@ -127,20 +135,24 @@ const imgStyle = computed(() => ({
 }));
 
 onMounted(async() => {
+  // Set the initial state of the file info panel
+  showFileInfo.value = config.imageViewer.showFileInfo;
+
   window.addEventListener('keydown', handleKeyDown);
-  isMaximized.value = await appWindow.isMaximized();
+  isFullScreen.value = await appWindow.isMaximized();
 
   try {
     const urlParams = new URLSearchParams(window.location.search);
 
     // Load the image from the file path
     filePath.value = decodeURIComponent(urlParams.get('filePath'));
-    loadImage(filePath.value);
-
+    await loadImage(filePath.value);
+    
     fileId.value = urlParams.get('fileId');
     fileIndex.value = Number(urlParams.get('fileIndex'));
     fileCount.value = Number(urlParams.get('fileCount'));
-
+    await loadFileInfo(fileId.value);
+    
     // Listen for the 'update-url' event to update the image
     listen('update-img', (event) => {
       filePath.value = decodeURIComponent(event.payload.filePath);
@@ -149,6 +161,7 @@ onMounted(async() => {
       fileId.value = event.payload.fileId;
       fileIndex.value = Number(event.payload.fileIndex);
       fileCount.value = Number(event.payload.fileCount);
+      loadFileInfo(fileId.value);
     });
 
     if (image.value.complete) {
@@ -164,6 +177,11 @@ onMounted(async() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+
+  // Update the showFileInfo property
+  config.imageViewer.showFileInfo = showFileInfo.value;  
+  // Save the updated config to localStorage
+  localStorage.setItem('appConfig', JSON.stringify(config));  
 });
 
 
@@ -233,19 +251,33 @@ const resetScale = () => {
   }
 };
 
+// toggle favorite status
+const toggleFavorite = async() => {
+  if (fileInfo.value.is_favorite === null) {
+    fileInfo.value.is_favorite = true;
+  } else {
+    fileInfo.value.is_favorite = !fileInfo.value.is_favorite;
+  }
 
-// Function to maximize the window
-const maximizeWindow = async () => {
+  // set db status
+  await invoke('set_file_favorite', { 
+    fileId: fileId.value, 
+    isFavorite: fileInfo.value.is_favorite 
+  })
+}
+
+// Function to maximize the window and setup full screen
+const setFullScreen = async () => {
   await appWindow.maximize();
   await appWindow.setFullscreen(true);
-  isMaximized.value = true;
+  isFullScreen.value = true;
 };
 
-// Function to restore the window
-const restoreWindow = async () => {
+// Function to restore the window and exit full screen
+const restoreScreen = async () => {
   await appWindow.setFullscreen(false);
   await appWindow.unmaximize();
-  isMaximized.value = false;
+  isFullScreen.value = false;
 };
 
 
@@ -272,14 +304,24 @@ function closeFileInfo() {
 
 // Load the image from the file path
 async function loadImage(filePath) {
-  console.log('loadImage:', filePath);
   try {
     const imageBase64 = await invoke('get_file_image', { filePath });
     imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+    console.log('loadImage:', filePath);
   } catch (error) {
     loadError.value = error;
     imageSrc.value = null;
     console.error('Error fetching image data:', error);
+  }
+}
+
+// Load the file info from the file ID
+async function loadFileInfo(fileId) {
+  try {
+    fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
+    console.log('loadFileInfo: ---', fileInfo.value);
+  } catch (error) {
+    console.error('Error fetching file info:', error);
   }
 }
 

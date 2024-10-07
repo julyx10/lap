@@ -1,53 +1,56 @@
 <template>
-  
-  <!-- title bar -->
-  <div class="absolute px-2 py-3 w-full flex flex-row items-center justify-between" style="user-select: none;">
-    <div>
-      {{ titlebar }}
+  <div class="flex-1 flex flex-col">
+    
+    <!-- title bar -->
+    <div class="px-2 py-3 h-12 flex items-center justify-between" style="user-select: none;">
+      <div>
+        {{ titlebar }}
+      </div>
+      <div class="flex">
+        <IconRefresh class="p-1 t-icon-hover" @click="clickRefresh"/>
+      </div>
     </div>
-    <div class="h-6 flex flex-row ">
-      <IconRefresh class="p-1 t-icon-hover" @click="clickRefresh"/>
+
+    <!-- camera -->
+    <div v-if="gCameras.length > 0" class="flex-grow overflow-auto t-scrollbar">
+      <ul>
+        <li v-for="camera in gCameras" style="user-select: none;" >
+          <div 
+            :class="[
+              'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
+              { 
+                't-color-text-selected': gCameraMake === camera.make, 
+                't-color-bg-selected'  : gCameraMake === camera.make && !gCameraModel 
+              }
+            ]"
+            @click="clickCameraMake(camera)"
+          >
+            <component :is="camera.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandCamera(camera)"/>
+            {{ camera.make }}
+          </div>
+          <ul v-if="camera.is_expanded && camera.models.length > 0">
+            <li v-for="model in camera.models" class="pl-4">
+              <div 
+                :class="[
+                  'm-1 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
+                  gCameraModel === model ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
+                ]" 
+                @click="clickCameraModel(camera.make, model)"
+              >
+                <IconRight class="p-1 flex-shrink-0" />
+                {{ model }}
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
     </div>
-  </div>
 
-  <!-- camera -->
-  <div v-if="gCameras.length > 0" class="flex-1 mt-12 overflow-auto t-scrollbar">
-    <ul>
-      <li v-for="camera in gCameras" style="user-select: none;" >
-        <div 
-          :class="[
-            'p-2 flex items-center whitespace-nowrap t-color-bg-hover', 
-            { 
-              't-color-text-selected': gCameraMake === camera.make, 
-              't-color-bg-selected'  : gCameraMake === camera.make && !gCameraModel 
-            }
-          ]"
-          @click="clickCameraMake(camera)"
-        >
-          <component :is="camera.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandCamera(camera)"/>
-          {{ camera.make }}
-        </div>
-        <ul v-if="camera.is_expanded && camera.models.length > 0">
-          <li v-for="model in camera.models" class="pl-4">
-            <div 
-              :class="[
-                'm-1 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover', 
-                gCameraModel === model ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
-              ]" 
-              @click="clickCameraModel(camera.make, model)"
-            >
-              <IconRight class="p-1 flex-shrink-0" />
-              {{ model }}
-            </div>
-          </li>
-        </ul>
-      </li>
-    </ul>
-  </div>
+    <!-- Display message if no albums are found -->
+    <div v-else class="mt-10 flex items-center justify-center">
+      {{ $t('no_cameras') }}
+    </div>
 
-  <!-- Display message if no albums are found -->
-  <div v-else class="w-full flex items-center justify-center ">
-    {{ $t('no_cameras') }}
   </div>
 
 </template>

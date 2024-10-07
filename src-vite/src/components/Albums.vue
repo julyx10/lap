@@ -1,61 +1,64 @@
 <template>
-  
-  <!-- title bar -->
-  <div class="absolute px-2 py-3 w-full flex flex-row items-center justify-between" style="user-select: none;">
-    <div>
-      {{ titlebar }}
-    </div>
-    <div class="h-6 flex flex-row">
-      <IconAdd class="p-1 t-icon-hover" @click="clickAdd" />
-      <IconDelete  
-        :class="[
-          'p-1', 
-          gAlbumId ? 't-icon-hover' : 't-icon-disabled'
-        ]" 
-        @click="gAlbumId ? showDeleteAlbumMsgbox = true : ''" />
-      <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
-    </div>
-  </div>
+    
+  <div class="flex-1 flex flex-col overflow-auto">
 
-  <!-- albums -->
-  <div v-if="gAlbums.length > 0" class="flex-1 mt-12 overflow-auto t-scrollbar">
-    <ul>
-      <li v-for="album in gAlbums" :key="album.id" style="user-select: none;" >
-        <div 
+    <!-- title bar -->
+    <div class="px-2 py-3 h-12 flex items-center justify-between" style="user-select: none;">
+      <div>
+        {{ titlebar }}
+      </div>
+      <div class="flex">
+        <IconAdd class="p-1 t-icon-hover" @click="clickAdd" />
+        <IconDelete  
           :class="[
-            'p-2 flex items-center whitespace-nowrap t-color-bg-hover', 
-            { 
-              't-color-text-selected': gAlbumId === album.id, 
-              't-color-bg-selected': gAlbumId === album.id && gFolderId === album.folderId
-            }
-          ]"
-          @click="clickAlbum(album)"
-        >
-          <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandAlbum(album)"/>
-          {{ album.name }}
-          <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
-        </div>
-        <Folders v-if="album.is_expanded" :albumId="album.id" :children="album.children" />
-      </li>
-    </ul>
-  </div>
+            'p-1', 
+            gAlbumId ? 't-icon-hover' : 't-icon-disabled'
+          ]" 
+          @click="gAlbumId ? showDeleteAlbumMsgbox = true : ''" />
+        <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
+      </div>
+    </div>
 
-  <!-- Display message if no albums are found -->
-  <div v-else class="flex items-center justify-center w-full">
-    {{ $t('no_albums') }}
-  </div>
+    <!-- albums -->
+    <div v-if="gAlbums.length > 0" class="flex-grow overflow-auto t-scrollbar">
+      <ul>
+        <li v-for="album in gAlbums" :key="album.id" style="user-select: none;" >
+          <div 
+            :class="[
+              'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
+              { 
+                't-color-text-selected': gAlbumId === album.id, 
+                't-color-bg-selected': gAlbumId === album.id && gFolderId === album.folderId
+              }
+            ]"
+            @click="clickAlbum(album)"
+          >
+            <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandAlbum(album)"/>
+            {{ album.name }}
+            <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
+          </div>
+          <Folders v-if="album.is_expanded" :albumId="album.id" :children="album.children" />
+        </li>
+      </ul>
+    </div>
 
-  <MessageBox
-    v-if="showDeleteAlbumMsgbox"
-    :visible="showDeleteAlbumMsgbox"
-    :title="$t('delete_album_msgbox_title')"
-    :message="$t('delete_album_msgbox_content')"
-    :confirmText="$t('delete_album_msgbox_ok')"
-    :cancelText="$t('delete_album_msgbox_cancel')"
-    @confirm="clickDeleteConfirm"
-    @cancel="showDeleteAlbumMsgbox = false"
-    @close="showDeleteAlbumMsgbox = false"
-  />
+    <!-- Display message if no albums are found -->
+    <div v-else class="mt-10 flex items-center justify-center">
+      {{ $t('no_albums') }}
+    </div>
+
+    <MessageBox
+      v-if="showDeleteAlbumMsgbox"
+      :visible="showDeleteAlbumMsgbox"
+      :title="$t('delete_album_msgbox_title')"
+      :message="$t('delete_album_msgbox_content')"
+      :confirmText="$t('delete_album_msgbox_ok')"
+      :cancelText="$t('delete_album_msgbox_cancel')"
+      @confirm="clickDeleteConfirm"
+      @cancel="showDeleteAlbumMsgbox = false"
+      @close="showDeleteAlbumMsgbox = false"
+    />
+  </div>
 
 </template>
 
