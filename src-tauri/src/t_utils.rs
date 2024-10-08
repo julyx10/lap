@@ -11,6 +11,24 @@ use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use image::GenericImageView;
 
 
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct AppConfig {
+    pub app_name: String,
+    pub theme: String,
+    pub language: String,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            app_name: "jc-photo".into(),
+            theme: "dark".into(),
+            language: "en".into(),
+        }
+    }
+}
+
+
 /// FileNode struct to represent a file system node
 #[derive(serde::Serialize)]
 pub struct FileNode {

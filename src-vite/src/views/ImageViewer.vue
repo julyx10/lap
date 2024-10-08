@@ -100,9 +100,6 @@ import IconRestoreScreen from '@/assets/full-screen-2.svg';
 import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
 
-const { proxy } = getCurrentInstance();
-const config = proxy.$config;
-
 const fileId = ref(null);
 const filePath = ref('');      // File path
 const fileIndex = ref(0);      // Index of the current file
@@ -135,9 +132,6 @@ const imgStyle = computed(() => ({
 }));
 
 onMounted(async() => {
-  // Set the initial state of the file info panel
-  showFileInfo.value = config.imageViewer.showFileInfo;
-
   window.addEventListener('keydown', handleKeyDown);
   isFullScreen.value = await appWindow.isMaximized();
 
@@ -177,11 +171,6 @@ onMounted(async() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-
-  // Update the showFileInfo property
-  config.imageViewer.showFileInfo = showFileInfo.value;  
-  // Save the updated config to localStorage
-  localStorage.setItem('appConfig', JSON.stringify(config));  
 });
 
 

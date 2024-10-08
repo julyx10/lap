@@ -1,7 +1,7 @@
 <template>
   
   <div class="flex h-screen t-color-bg t-color-text">
-    About {{ $config.appName }}
+    About
   </div>
 
 </template>

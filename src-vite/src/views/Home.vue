@@ -46,7 +46,7 @@
         <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="menuAction('locale')">Toggle Locale</button>
         <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="openImage()">Open Image</button>
         <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="clickAbout()">About</button>
-        <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="toggleTheme()">Theme: {{ $config.theme }}</button>
+        <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="toggleTheme()">Toggle Theme</button>
       </div>
       
     </div>
@@ -176,11 +176,7 @@ function clickAbout() {
 
 /// toggle theme
 function toggleTheme() {
-  const newTheme = $config.theme === 'dark' ? 'light' : 'dark';
-  const newConfig = { ...$config, theme: newTheme };
-  
-  // Save the new configuration globally
-  $saveConfig(newConfig);
+  console.log('toggleTheme...');
 }
 
 function clickDebug() {

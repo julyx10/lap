@@ -10,6 +10,42 @@ use crate::t_sqlite::{ ACamera, AFile, AFolder, AThumb, Album };
 use crate::t_utils;
 
 
+/// save the app's configuration
+#[tauri::command]
+pub fn save_config(config: t_utils::AppConfig) -> Result<(), String> {
+    // Get the app's data directory
+    let app_dir = std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
+    let config_path = app_dir.join("config.json");
+
+    // Serialize the config to JSON and write it to the file
+    let config_json = serde_json::to_string(&config).map_err(|e| e.to_string())?;
+
+    std::fs::write(config_path, config_json).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+
+/// load the app's configuration
+#[tauri::command]
+pub fn load_config() -> Result<t_utils::AppConfig, String> {
+    // Get the app's data directory
+    let app_dir = std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
+    let config_path = app_dir.join("config.json");
+
+    // If the config file doesn't exist, return the default config
+    if !config_path.exists() {
+        return Ok(t_utils::AppConfig::default());
+    }
+
+    // Read the config file and deserialize the JSON
+    let config_json = std::fs::read_to_string(config_path).map_err(|e| e.to_string())?;
+    let config: t_utils::AppConfig = serde_json::from_str(&config_json).map_err(|e| e.to_string())?;
+
+    Ok(config)
+}
+
+
 /// get all albums
 #[tauri::command]
 pub fn get_albums() -> Result<Vec<Album>, String> {

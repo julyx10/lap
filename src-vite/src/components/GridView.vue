@@ -9,7 +9,7 @@
           index === gSelectItemIndex ? 'border-sky-500' : 'border-gray-800'
         ]"
         @click="clickFile(index)"
-        @dblclick="openImageViewer(index)"
+        @dblclick="openImageViewer(index, true)"
       >
         <div class="flex flex-col items-center">
           <img 
@@ -58,28 +58,32 @@ onMounted(() => {
     switch (message) {
       case 'prev':
         gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
-        openImageViewer(gSelectItemIndex.value);
         break;
       case 'next':
         gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
-        openImageViewer(gSelectItemIndex.value);
         break;
       default:
-        // Do something with the message
+        break;
     }
   });
 });
+
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
 
-function handleKeyDown(event) {
+// watch for changes in the selected item index
+watch (() => gSelectItemIndex.value, (newIndex) => {
+  openImageViewer(newIndex);
+});
 
-  // disable default event
+
+// Handle keydown event
+function handleKeyDown(event) {
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter') {
-    event.preventDefault();
+    event.preventDefault();   // disable default event
   }
 
   if (event.key === 'ArrowDown') {
@@ -87,17 +91,18 @@ function handleKeyDown(event) {
   } else if (event.key === 'ArrowUp') {
     gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
   } else if (event.key === 'Enter') {
-    openImageViewer(gSelectItemIndex.value);
+    openImageViewer(gSelectItemIndex.value, true);
   }
 }
 
+// Select the file
 function clickFile(index: number) {
   gSelectItemIndex.value = index;
 }
 
 
 // Open the image viewer window
-function openImageViewer(index: number) {
+function openImageViewer(index: number, createNew = false) {
   const fileCount = props.fileList.length;
   if (index < 0 || index >= fileCount) {
     return;
@@ -114,7 +119,7 @@ function openImageViewer(index: number) {
       fileIndex: index,   // selected file index
       fileCount: fileCount, // total files length
     });
-  } else {
+  } else if (createNew) {
     imageWindow = new WebviewWindow('imageviewer', {
       url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}`,
       title: 'Image Viewer',
@@ -132,7 +137,9 @@ function openImageViewer(index: number) {
     });
   }
 };
+
 </script>
+
 
 <style scoped>
 * {

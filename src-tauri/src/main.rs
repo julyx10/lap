@@ -39,6 +39,8 @@ fn main() {
             // window.show().unwrap();
         })
         .invoke_handler(tauri::generate_handler![
+            t_cmds::save_config,
+            t_cmds::load_config,
             t_cmds::get_albums,
             t_cmds::add_album, 
             t_cmds::delete_album,

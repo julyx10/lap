@@ -33,7 +33,6 @@ import './tailwind.css'
 import { createI18n } from 'vue-i18n'
 import en from '@/locales/en.json'
 import zh from '@/locales/zh.json'
-import { is, th } from 'date-fns/locale'
 
 // I18n - create an i18n instance with the languages
 // https://vue-i18n.intlify.dev/
@@ -51,24 +50,32 @@ const i18n = createI18n({
 const app = createApp(App)
 
 // Load config from localStorage
-const savedConfig = JSON.parse(localStorage.getItem('appConfig')) || {
-  appName: "jc-photo",
-  theme: "dark",
+// const appConfig = await loadConfig() || {
+//   appName: "jc-photo",
+//   theme: "dark",
   
-  // Define the default language
-  defaultLanguage: "en",
+//   // Define the default language
+//   defaultLanguage: "en",
   
-  // imageviewer
-  imageViewer: {
-    width: 800,
-    height: 600,
-    isFullscreen: false,
-    showFileInfo: true,
-  }
-};
+//   // imageviewer
+//   imageViewer: {
+//     width: 800,
+//     height: 600,
+//     isFullscreen: false,
+//     showFileInfo: true,
+//   }
+// };
 
-// Define global config and load saved data
-app.config.globalProperties.$config = savedConfig;
+// app.config.globalProperties.$config = async () => {
+//   try {
+//     const config = await invoke('load_config');
+//     console.log('Loaded config:', config);
+//     return config;
+//   } catch (error) {
+//     console.error('Failed to load config:', error);
+//     return null;
+//   }
+// };;
 
 app.config.globalProperties.$invoke = invoke
 
