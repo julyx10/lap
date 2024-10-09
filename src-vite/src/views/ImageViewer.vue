@@ -4,10 +4,11 @@
 
     <!-- Toolbar -->
     <div class="p-2 h-10 flex flex-row items-center justify-center space-x-10 t-color-bg-light">
-      <!-- <IconFitScreen1 class="t-icon-hover" @click="fitToScreen" />
-      <IconFitScreen2 class="t-icon-hover" @click="resetScale" /> -->
-      <IconGlassPlus class="t-icon-hover" @click="scale += 0.5" />
-      <IconGlassMinus class="t-icon-hover" @click="scale -= 0.5" />
+      
+      <IconZoomIn class="t-icon-hover" @click="scale += 0.5" />
+      <IconZoomOut class="t-icon-hover" @click="scale -= 0.5" />
+      <IconFitScreen class="t-icon-size t-icon-hover" @click="fitToScreen" />
+      <IconRotateRight class="t-icon-size t-icon-hover" />
 
       <IconUnFavorite v-if="!fileInfo" class="t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-hover" @click="toggleFavorite" />
@@ -20,6 +21,9 @@
         ]"
         @click="clickShowFileInfo" 
       />
+      
+      <IconDownload class="t-icon-hover" />
+
       <IconFullScreen v-if="!isFullScreen" class="t-icon-hover" @click="setFullScreen" />
       <IconRestoreScreen v-if=" isFullScreen" class="t-icon-hover" @click="restoreScreen" />
     </div>
@@ -54,10 +58,12 @@
 
         <!-- right -->
         <div v-if="fileIndex < fileCount - 1"
-          class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group t-icon-hover" 
+          class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group" 
           @click="clickNext"
         >
-          <IconRight class="hidden group-hover:block" />
+          <div class="m-2 p-2 t-color-bg-light bg-opacity-80 hover:bg-opacity-95 rounded-full hidden group-hover:block ">
+            <IconRight class=" t-icon-hover"/>
+          </div>
         </div>
 
       </div>
@@ -87,14 +93,15 @@ import { appWindow } from '@tauri-apps/api/window';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import FileInfo from '@/components/FileInfo.vue';
-// import IconFitScreen1 from '@/assets/fit-screen-1.svg';
-// import IconFitScreen2 from '@/assets/fit-screen-2.svg';
 
-import IconGlassPlus from '@/assets/glass-plus.svg';
-import IconGlassMinus from '@/assets/glass-minus.svg';
+import IconZoomIn from '@/assets/zoom-in.svg';
+import IconZoomOut from '@/assets/zoom-out.svg';
+import IconFitScreen from '@/assets/fit-screen.svg';
+import IconRotateRight from '@/assets/rotate-right.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconFileInfo from '@/assets/information.svg';
+import IconDownload from '@/assets/download.svg';
 import IconFullScreen from '@/assets/full-screen-1.svg';
 import IconRestoreScreen from '@/assets/full-screen-2.svg';
 import IconLeft from '@/assets/arrow-left.svg';
@@ -250,7 +257,7 @@ const toggleFavorite = async() => {
 
   // set db status
   await invoke('set_file_favorite', { 
-    fileId: fileId.value, 
+    fileId: Number(fileId.value), 
     isFavorite: fileInfo.value.is_favorite 
   })
 }

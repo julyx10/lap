@@ -9,6 +9,9 @@
 }
 
 /* icon */
+.t-icon-size {
+  @apply w-6 h-6;
+}
 .t-icon-hover {
   @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
 }
@@ -53,7 +56,9 @@
 .t-color-focus {
   @apply bg-sky-700;
 }
-
+.t-color-border {
+  @apply border-gray-700;
+}
 /* scrollbar */
 .t-scrollbar {
   @apply scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800;

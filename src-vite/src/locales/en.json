@@ -24,6 +24,13 @@
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
 
-  "no_cameras": "No camera found"
+  "no_cameras": "No camera found",
+
+  "calendar_day": "Day",
+  "calendar_week": "Week",
+  "calendar_month": "Month",
+  "calendar_year": "Year",
+  "calendar_weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  "calendar_months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 }

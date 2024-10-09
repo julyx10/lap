@@ -1,9 +1,11 @@
 <template>
-  <div ref="scrollableDiv" class="flex-1 overflow-auto t-scrollbar">
+  <div class="flex-1 overflow-auto t-scrollbar">
     <div class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+      
       <div 
         v-for="(file, index) in fileList" 
-        :key="index" 
+        :key="index"
+        :id="'item-' + index"
         :class="[
           'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200', 
           index === gSelectItemIndex ? 'border-sky-500' : 'border-gray-800'
@@ -22,6 +24,7 @@
           <!-- <p class="text-sm text-right text-gray-400">{{ formatFileSize(file.size) }}</p> -->
         </div>
       </div>
+
     </div>
   </div>
 </template>
@@ -30,12 +33,8 @@
 import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/window';
-import { formatFileSize } from '@/common/utils';
-import { shortenFilename } from '../common/utils';
+import { shortenFilename, formatFileSize } from '@/common/utils';
 import { useI18n } from 'vue-i18n';
-
-const { locale, messages } = useI18n();
-const msg = computed(() => messages.value[locale.value]);
 
 const props = defineProps({
   fileList: {
@@ -44,10 +43,11 @@ const props = defineProps({
   },
 });
 
-const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
+const { locale, messages } = useI18n();
+const msg = computed(() => messages.value[locale.value]);
 
+const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
 const fileListLength = computed(() => props.fileList.length);
-const scrollableDiv = ref(null);
 
 
 onMounted(() => {
@@ -74,31 +74,35 @@ onUnmounted(() => {
 });
 
 
-// watch for changes in the selected item index
-watch (() => gSelectItemIndex.value, (newIndex) => {
-  openImageViewer(newIndex);
-});
-
-
-// Handle keydown event
-function handleKeyDown(event) {
-  if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter') {
-    event.preventDefault();   // disable default event
-  }
-
-  if (event.key === 'ArrowDown') {
-    gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
-  } else if (event.key === 'ArrowUp') {
-    gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
-  } else if (event.key === 'Enter') {
-    openImageViewer(gSelectItemIndex.value, true);
-  }
-}
-
 // Select the file
 function clickFile(index: number) {
   gSelectItemIndex.value = index;
 }
+
+
+// Handle keydown event
+function handleKeyDown(event) {
+  if (event.key === 'ArrowDown' || event.key === 'ArrowRight' ||
+      event.key === 'ArrowUp' || event.key === 'ArrowLeft' ||
+      event.key === 'Enter' || event.key === 'Space') {
+    event.preventDefault();   // disable default event
+  }
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+    gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
+  } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+    gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
+  } else if (event.key === 'Enter' || event.key === 'Space') {
+    openImageViewer(gSelectItemIndex.value, true);
+  }
+}
+
+
+// watch for changes in the selected item index
+watch (() => gSelectItemIndex.value, (newIndex) => {
+  openImageViewer(newIndex);
+  scrollToItem(newIndex);
+});
 
 
 // Open the image viewer window
@@ -137,6 +141,16 @@ function openImageViewer(index: number, createNew = false) {
     });
   }
 };
+
+
+// make the selected item always visible in a scrollable container
+function scrollToItem(index) {
+  const item = document.getElementById(`item-${index}`);
+  if (item) {
+    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+};
+
 
 </script>
 
