@@ -27,7 +27,7 @@
       </div>
         
       <!-- left pane -->
-      <div v-if="gToolbarIndex > 0" class="w-96 min-w-32 flex" :style="{ width: leftPaneWidth + 'px' }">
+      <div v-if="gToolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: leftPaneWidth + 'px' }">
         <Album         v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
         <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
         <Camera   v-else-if="gToolbarIndex === 5" :titlebar="$t('camera')"/>
@@ -37,7 +37,7 @@
       <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
       
       <!-- content area -->
-      <div class="flex-1 flex relative t-color-bg-light rounded-ss-lg">
+      <div class="flex-1 p-2 flex relative t-color-bg-light rounded-ss-lg">
         <Content :titlebar="toolbars[gToolbarIndex].text"/>
       </div>
 
@@ -82,8 +82,8 @@ import IconCalendar from '@/assets/calendar.svg';
 import IconMap from '@/assets/map-pin.svg';
 import IconPeople from '@/assets/user.svg';
 import IconCamera from '@/assets/camera.svg';
-import IconFavorite from '@/assets/heart.svg';
-import IconTag from '@/assets/tag.svg';
+// import IconFavorite from '@/assets/heart.svg';
+// import IconTag from '@/assets/tag.svg';
 import IconSettings from '@/assets/settings.svg';
 import IconBug from '@/assets/bug.svg';
 
@@ -95,8 +95,8 @@ const toolbars = computed(() =>  [
   { icon: IconMap,      text: localeMessages.value.map },
   { icon: IconPeople,   text: localeMessages.value.people }, 
   { icon: IconCamera,   text: localeMessages.value.camera },
-  { icon: IconFavorite, text: localeMessages.value.favorite },
-  { icon: IconTag,      text: localeMessages.value.tag },
+  // { icon: IconFavorite, text: localeMessages.value.favorite },
+  // { icon: IconTag,      text: localeMessages.value.tag },
 ]);
 
 const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index

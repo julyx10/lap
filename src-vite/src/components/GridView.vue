@@ -21,7 +21,7 @@
           <p class="text-center">{{ shortenFilename(file.name) }}</p>
           <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
           <!-- <p class="text-sm">{{ file.e_model }}</p> -->
-          <!-- <p class="text-sm text-right text-gray-400">{{ formatFileSize(file.size) }}</p> -->
+          <p class="text-sm">{{ formatFileSize(file.size) }}</p>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ function openImageViewer(index: number, createNew = false) {
 function scrollToItem(index) {
   const item = document.getElementById(`item-${index}`);
   if (item) {
-    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 };
 

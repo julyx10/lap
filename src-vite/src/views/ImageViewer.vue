@@ -8,22 +8,14 @@
       <IconZoomIn class="t-icon-hover" @click="scale += 0.5" />
       <IconZoomOut class="t-icon-hover" @click="scale -= 0.5" />
       <IconFitScreen class="t-icon-size t-icon-hover" @click="fitToScreen" />
-      <IconRotateRight class="t-icon-size t-icon-hover" />
+      <IconRotateRight class="t-icon-size t-icon-hover" @click="rotateImage"/>
 
       <IconUnFavorite v-if="!fileInfo" class="t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-hover" @click="toggleFavorite" />
-      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-hover" @click="toggleFavorite" />
+      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-hover text-red-600" @click="toggleFavorite" />
 
-      <IconFileInfo 
-        :class="[
-          't-icon-hover',
-          showFileInfo ? 't-icon-selected' : ''
-        ]"
-        @click="clickShowFileInfo" 
-      />
-      
+      <IconFileInfo :class="['t-icon-hover', showFileInfo ? 't-icon-selected' : '']" @click="clickShowFileInfo" />
       <IconDownload class="t-icon-hover" />
-
       <IconFullScreen v-if="!isFullScreen" class="t-icon-hover" @click="setFullScreen" />
       <IconRestoreScreen v-if=" isFullScreen" class="t-icon-hover" @click="restoreScreen" />
     </div>
@@ -35,19 +27,21 @@
       >
         <!-- left  -->
         <div v-if="fileIndex > 0"
-          class="absolute left-0 w-20 h-full z-10 flex items-center justify-start group t-icon-hover" 
+          class="absolute left-0 w-20 h-full z-10 flex items-center justify-start group" 
           @click="clickPrev"
         >
-          <IconLeft class="hidden group-hover:block" />
+        <div class="m-3 p-3 t-color-bg-light rounded-full hidden group-hover:block ">
+            <IconLeft class=" t-icon-hover"/>
+          </div>
         </div>
 
         <img 
           ref="image"
           v-if="imageSrc" 
-          class="transition-transform duration-300" 
           :src="imageSrc"
           alt="Image Viewer" 
-          :style="imgStyle"
+          class="transition-transform duration-300" 
+          :style="imgThansformStyle"
           @load="onImageLoad"
           @mousedown="startDragging" 
           @mouseup="stopDragging"
@@ -61,7 +55,7 @@
           class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group" 
           @click="clickNext"
         >
-          <div class="m-2 p-2 t-color-bg-light bg-opacity-80 hover:bg-opacity-95 rounded-full hidden group-hover:block ">
+          <div class="m-3 p-3 t-color-bg-light rounded-full hidden group-hover:block ">
             <IconRight class=" t-icon-hover"/>
           </div>
         </div>
@@ -88,7 +82,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { appWindow } from '@tauri-apps/api/window';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
@@ -120,11 +114,13 @@ const loadError = ref(null);
 
 const isFullScreen = ref(false); // Track if the window is full screen
 
-// Zoom scaling, dragging state, and position
+// Image rotation angle
+const rotation  = ref(0); 
+// Zoom scaling 
 const scale = ref(1); // Default zoom scale
 const scaledWidth = ref(0); // Scaled width of the image
 const scaledHeight = ref(0); // Scaled height of the image
-
+// Dragging state, and position
 const isDragging = ref(false); // Track if the image is being dragged
 const startX = ref(0); // Store initial X position when dragging starts
 const startY = ref(0); // Store initial Y position when dragging starts
@@ -134,8 +130,8 @@ const lastTranslateX = ref(0); // Last stored X position after drag ends
 const lastTranslateY = ref(0); // Last stored Y position after drag ends
 
 // Computed style for the image, combining zoom and translation
-const imgStyle = computed(() => ({
-  transform: `scale(${scale.value}) translate(${translateX.value}px, ${translateY.value}px)`,
+const imgThansformStyle = computed(() => ({
+  transform: `rotate(${rotation.value}deg) scale(${scale.value}) translate(${translateX.value}px, ${translateY.value}px)`,
 }));
 
 onMounted(async() => {
@@ -163,6 +159,10 @@ onMounted(async() => {
       fileIndex.value = Number(event.payload.fileIndex);
       fileCount.value = Number(event.payload.fileCount);
       loadFileInfo(fileId.value);
+
+      // Reset the image zoom and rotation
+      resetScale();
+      rotation.value = 0;
     });
 
     if (image.value.complete) {
@@ -277,6 +277,12 @@ const restoreScreen = async () => {
 };
 
 
+// Method to rotate the image by 90 degrees
+const rotateImage = () => {
+  rotation.value += 90;
+};
+
+
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
   emit('message-from-image-viewer', { message: 'prev' });
@@ -310,6 +316,7 @@ async function loadImage(filePath) {
     console.error('Error fetching image data:', error);
   }
 }
+
 
 // Load the file info from the file ID
 async function loadFileInfo(fileId) {

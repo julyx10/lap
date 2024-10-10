@@ -1,22 +1,28 @@
 <template>
 
-  <!-- title bar -->
-  <div class="absolute px-3 py-2 w-full" style="user-select: none;">
-    <div class=" flex flex-row items-center justify-between">
-      {{ title }}
-      <div class="flex">
-        <IconPhoto class="p-1 t-icon-hover" @click="clickPhoto()" />
-        <IconVideo class="p-1 t-icon-hover" @click="clickVideo()" />
-        <IconMusic class="p-1 t-icon-hover" @click="" />
+  <div class="flex flex-col w-full">
+
+    <!-- title bar -->
+    <div class="p-2" style="user-select: none;">
+      <div class=" flex flex-row items-center justify-between">
+        {{ title }}
+        <div class="flex space-x-4">
+          <IconUnFavorite v-if="!isFavorite" class="t-icon-hover hover:text-red-600" @click="toggleFavorite" />
+          <IconFavorite v-if="isFavorite" class="t-icon-hover text-red-600 hover:text-red-600" @click="toggleFavorite" />
+          <component :is="IconTag" class="t-icon-hover" />
+          <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
+        </div>
+      </div>
+      <div>
+        {{ fileList.length }} files
       </div>
     </div>
-    <div>
-      {{ fileList.length }} files
-    </div>
+
+    <!-- grid view -->
+    <GridView :fileList="fileList"/>
+    <!-- <TableView :fileList="fileList"/> -->
+
   </div>
-  <!-- file list view -->
-  <GridView class="mt-16" :fileList="fileList"/>
-  <!-- <TableView :fileList="fileList"/> -->
 
 </template>
 
@@ -24,7 +30,7 @@
 <script setup>
 import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
-import TableView from '@/components/TableView.vue';
+// import TableView from '@/components/TableView.vue';
 import GridView  from '@/components/GridView.vue';
 import { THUMBNAIL_SIZE } from '@/common/utils';
 
@@ -34,9 +40,11 @@ const { locale, messages } = useI18n();
 const msg = computed(() => messages.value[locale.value]);
 
 // Import the SVG file as a Vue component
-import IconPhoto from '@/assets/photo.svg';
-import IconVideo from '@/assets/film.svg';
-import IconMusic from '@/assets/musical.svg';  
+import IconUnFavorite from '@/assets/heart.svg';
+import IconFavorite from '@/assets/heart-solid.svg';
+import IconTag from '@/assets/tag.svg';
+import IconSortingAsc from '@/assets/sorting-asc.svg';
+import IconSortingDesc from '@/assets/sorting-desc.svg';
 
 
 const props = defineProps({
@@ -57,6 +65,11 @@ const gCameraModel = inject('gCameraModel');   // global camera model
 const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
 const fileList = ref([]);
+
+const isFavorite = ref(false); // favorite status
+
+const sortingAsc = ref(true); // sorting order
+const sortingType = ref('size'); // sorting type
 
 /// auto update the titlebar when reference data changes
 const title = computed(() => {
@@ -136,17 +149,20 @@ watch(gCameraModel, async (newModel) => {
   }
 });
 
-
-/// click file to open a new windows to display the image
-async function clickPhoto() {
-  console.log('clickPhoto...');
+/// toggle the favorite status
+function toggleFavorite() {
+  isFavorite.value = !isFavorite.value;
 }
 
-
-/// click video to open a new windows to display the video
-const clickVideo = () => {
-  console.log('clickVideo...');
-};
+/// toggle the sorting order
+function toggleSortingOrder() {
+  sortingAsc.value = !sortingAsc.value;
+  fileList.value = [...fileList.value].reverse();
+  if (gSelectItemIndex.value >= 0) {
+    gSelectItemIndex.value = fileList.value.length - 1 - gSelectItemIndex.value;
+  }
+  console.log('toggleSortingOrder:', sortingAsc.value, fileList.value);
+}
 
 
 /// get the selected sub-folder by folder id
@@ -170,6 +186,9 @@ async function getFiles(path) {
   try {
     // Fetch the list of files
     fileList.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
+
+    // reverse the fileList if sorting order is descending
+    sortFileList(sortingType.value, sortingAsc.value);
     console.log('invoke - getFiles:', fileList.value);
 
     await getFileThumb(fileList.value);
@@ -177,6 +196,30 @@ async function getFiles(path) {
     console.error('invoke - getFiles error:', error);
   }
 };
+
+
+// Sort the file list based on the sorting type and order
+function sortFileList(sortingType, isAccending) {
+  fileList.value = [...fileList.value].sort((a, b) => {
+    let result = 0;
+
+    switch (sortingType) {
+      case "name":
+        result = a.name.localeCompare(b.name);
+        break;
+      case "size":
+        result = a.size - b.size;
+        break;
+      case "date":
+        result = a.modified_at - b.modified_at;
+        break;
+      default:
+        return 0; // No sorting if the sorting type is unrecognized
+    }
+
+    return isAccending ? result : -result;
+  });
+}
 
 
 /// get all files under the camera make and model
@@ -190,6 +233,7 @@ async function getCameraFiles(make, model) {
     console.error('invoke - getCameraFiles error:', error);
   }
 }
+
 
 /// get the thumbnail for each file in mutil-thread
 async function getFileThumb(files) {
@@ -215,7 +259,6 @@ async function getFileThumb(files) {
     console.error('invoke - getFileThumb error:', error);
   }
 }
-
 
 </script>
   
