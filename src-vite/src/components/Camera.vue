@@ -1,21 +1,20 @@
 <template>
 
-  <div class="flex-1 flex flex-col overflow-auto">
+  <div class="flex-1 flex flex-col overflow-auto" style="user-select: none;">
     
     <!-- title bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between" style="user-select: none;">
-      <div>
-        {{ titlebar }}
-      </div>
+    <div class="px-2 py-3 h-12 flex items-center justify-between">
+      <span>{{ titlebar }}</span>
+
       <div class="flex">
-        <IconRefresh class="p-1 t-icon-hover" @click="clickRefresh"/>
+        <IconRefresh class="p-0.5 t-icon-hover" @click="clickRefresh"/>
       </div>
     </div>
 
     <!-- camera -->
     <div v-if="gCameras.length > 0" class="flex-grow overflow-auto t-scrollbar">
       <ul>
-        <li v-for="camera in gCameras" style="user-select: none;" >
+        <li v-for="camera in gCameras">
           <div 
             :class="[
               'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 

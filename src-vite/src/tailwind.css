@@ -63,3 +63,6 @@
 .t-scrollbar {
   @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-800;
 }
+.t-scrollbar-dark {
+  @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-900;
+}

@@ -1,21 +1,39 @@
 <template>
 
-  <div class="flex-1 flex flex-col overflow-auto">
+  <div class="flex-1 flex flex-col overflow-hidden" style="user-select: none;">
 
     <!-- title bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between" style="user-select: none;">
-      <div>
-        {{ titlebar }}
-      </div>
-      <div class="flex">
-        <div>Year</div>
-        <div>Month</div>
-        <div>Day</div>
+    <div class="px-2 py-3 h-12 flex items-center justify-between" >
+      <span>{{ titlebar }}</span>
+      <div class="flex flex-row space-x-2 p-2">
+        <IconLeft class="t-icon-hover" @click="clickPrevYear"/>
+        <span>{{ selectedYear }}</span>
+        <IconRight class="t-icon-hover" @click="clickNextYear" />
       </div>
     </div>
+    
+    <!-- days of the week -->
+    <div class="flex flex-col items-center mr-4">
 
+      <div class="grid grid-cols-7 gap-2 text-center">
+        <div 
+          v-for="(day, index) in localeMsg.calendar_weekdays" 
+          :key="index" 
+          class="p-2 w-10"
+        >
+          {{ day }}
+        </div>
+      </div>
+    </div>  
     <!-- calendar -->
-    <div  class="flex-grow overflow-auto t-scrollbar">
+    <div class="flex flex-col items-center overflow-auto t-scrollbar-dark">
+      <CalendarMonth 
+        v-for="month in 12" 
+        :key="month" 
+        :year="selectedYear" 
+        :month="month"
+        :monthName="localeMsg.calendar_months[month - 1]"
+      />
     </div>
   
   </div>
@@ -24,6 +42,11 @@
 
 <script setup>
 
+import { ref, computed } from 'vue';
+import CalendarMonth from './CalendarMonth.vue';
+
+import IconLeft from '@/assets/arrow-left.svg';
+import IconRight from '@/assets/arrow-right.svg';
 // import IconUp from '@/assets/arrow-up.svg';
 // import IconDown from '@/assets/arrow-down.svg';
 
@@ -31,25 +54,18 @@ const props = defineProps({
   titlebar: String
 });
 
+/// i18n
+import { useI18n } from 'vue-i18n';
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
 
-import { ref, computed } from 'vue';
+const selectedYear = ref(2024);
 
-const currentView = ref('year');
-const currentYear = ref(new Date().getFullYear());
-const selectedDate = ref(new Date().toISOString().substr(0, 10));
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const currentMonthIndex = ref(new Date().getMonth());
-const currentMonth = computed(() => months[currentMonthIndex.value]);
+function clickPrevYear() {
+  selectedYear.value -= 1;
+}
 
-const toggleView = (view) => {
-  currentView.value = view;
-};
-
-const getDaysInMonth = (year, month) => {
-  return new Array(new Date(year, month, 0).getDate()).fill(0).map((_, i) => i + 1);
-};
-
-const updateDate = () => {
-  // This will be where you handle date updates, if necessary
-};
+function clickNextYear() {
+  selectedYear.value += 1;
+}
 </script>

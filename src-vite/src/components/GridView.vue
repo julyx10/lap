@@ -21,7 +21,7 @@
           <p class="text-center">{{ shortenFilename(file.name) }}</p>
           <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
           <!-- <p class="text-sm">{{ file.e_model }}</p> -->
-          <p class="text-sm">{{ formatFileSize(file.size) }}</p>
+          <!-- <p class="text-sm">{{ formatFileSize(file.size) }}</p> -->
         </div>
       </div>
 
@@ -29,7 +29,9 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
+
 import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/window';

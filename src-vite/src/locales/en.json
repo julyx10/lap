@@ -52,6 +52,6 @@
   "calendar_month": "Month",
   "calendar_year": "Year",
   "calendar_weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-  "calendar_months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  "calendar_months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 }

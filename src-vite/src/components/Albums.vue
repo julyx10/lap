@@ -1,17 +1,16 @@
 <template>
     
-  <div class="flex-1 flex flex-col overflow-auto">
+  <div class="flex-1 flex flex-col overflow-auto" style="user-select: none;">
 
     <!-- title bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between" style="user-select: none;">
-      <div>
-        {{ titlebar }}
-      </div>
+    <div class="px-2 py-3 h-12 flex items-center justify-between">
+      <span>{{ titlebar }}</span>
+
       <div class="flex">
-        <IconAdd class="p-1 t-icon-hover" @click="clickAdd" />
+        <IconAdd class="p-0.5 t-icon-hover" @click="clickAdd" />
         <IconDelete  
           :class="[
-            'p-1', 
+            'p-0.5', 
             gAlbumId ? 't-icon-hover' : 't-icon-disabled'
           ]" 
           @click="gAlbumId ? showDeleteAlbumMsgbox = true : ''" />
@@ -20,9 +19,9 @@
     </div>
 
     <!-- albums -->
-    <div v-if="gAlbums.length > 0" class="flex-grow overflow-auto t-scrollbar">
+    <div v-if="gAlbums.length > 0" class="flex-grow overflow-auto t-scrollbar-dark">
       <ul>
-        <li v-for="album in gAlbums" :key="album.id" style="user-select: none;" >
+        <li v-for="album in gAlbums" :key="album.id">
           <div 
             :class="[
               'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
