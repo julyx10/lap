@@ -37,7 +37,7 @@
       <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
       
       <!-- content area -->
-      <div class="flex-1 p-2 flex relative t-color-bg-light rounded-ss-lg">
+      <div class="flex-1 px-1 py-2 flex relative t-color-bg-light rounded-ss-lg">
         <Content :titlebar="toolbars[gToolbarIndex].text"/>
       </div>
 

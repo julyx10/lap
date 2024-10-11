@@ -74,7 +74,7 @@ import MessageBox from '@/components/MessageBox.vue';
 /// i18n
 import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
-const localeMessages = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value]);
 
 // toolbar icons
 import IconAdd from '@/assets/folder-plus.svg';
@@ -110,7 +110,7 @@ const getAlbumById = (id) => gAlbums.value.find(album => album.id === id);
 /// Add albums
 const clickAdd = async () => {
   try {
-    const new_album = await invoke('add_album', { window: appWindow, title: localeMessages.value.add_album_title });
+    const new_album = await invoke('add_album', { window: appWindow, title: localeMsg.value.add_album_title });
     gAlbums.value.push(new_album);
 
     console.log('Add album...', new_album);

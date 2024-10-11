@@ -1,5 +1,6 @@
 <template>
-  <div class="flex-1 flex flex-col">
+
+  <div class="flex-1 flex flex-col overflow-auto">
     
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" style="user-select: none;">
@@ -63,9 +64,9 @@ import { invoke } from '@tauri-apps/api';
 import { appWindow } from '@tauri-apps/api/window';
 
 /// i18n
-import { useI18n } from 'vue-i18n';
-const { locale, messages } = useI18n();
-const localeMessages = computed(() => messages.value[locale.value]);
+// import { useI18n } from 'vue-i18n';
+// const { locale, messages } = useI18n();
+// const localeMessages = computed(() => messages.value[locale.value]);
 
 // toolbar icons
 import IconRefresh from '@/assets/refresh.svg';

@@ -12,7 +12,7 @@
 
       <IconUnFavorite v-if="!fileInfo" class="t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-hover" @click="toggleFavorite" />
-      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-hover text-red-600" @click="toggleFavorite" />
+      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-hover" @click="toggleFavorite" />
 
       <IconFileInfo :class="['t-icon-hover', showFileInfo ? 't-icon-selected' : '']" @click="clickShowFileInfo" />
       <IconDownload class="t-icon-hover" />
@@ -27,10 +27,10 @@
       >
         <!-- left  -->
         <div v-if="fileIndex > 0"
-          class="absolute left-0 w-20 h-full z-10 flex items-center justify-start group" 
+          class="absolute left-0 w-20 h-full z-10 flex items-center justify-start cursor-pointer group" 
           @click="clickPrev"
         >
-        <div class="m-3 p-3 t-color-bg-light rounded-full hidden group-hover:block ">
+        <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
             <IconLeft class=" t-icon-hover"/>
           </div>
         </div>
@@ -52,10 +52,10 @@
 
         <!-- right -->
         <div v-if="fileIndex < fileCount - 1"
-          class="absolute right-0 w-20 h-full z-10 flex items-center justify-end group" 
+          class="absolute right-0 w-20 h-full z-10 flex items-center justify-end cursor-pointer group" 
           @click="clickNext"
         >
-          <div class="m-3 p-3 t-color-bg-light rounded-full hidden group-hover:block ">
+          <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
             <IconRight class=" t-icon-hover"/>
           </div>
         </div>

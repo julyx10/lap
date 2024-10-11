@@ -35,9 +35,9 @@ import GridView  from '@/components/GridView.vue';
 import { THUMBNAIL_SIZE } from '@/common/utils';
 
 /// i18n
-import { useI18n } from 'vue-i18n';
-const { locale, messages } = useI18n();
-const msg = computed(() => messages.value[locale.value]);
+// import { useI18n } from 'vue-i18n';
+// const { locale, messages } = useI18n();
+// const msg = computed(() => messages.value[locale.value]);
 
 // Import the SVG file as a Vue component
 import IconUnFavorite from '@/assets/heart.svg';
@@ -69,7 +69,7 @@ const fileList = ref([]);
 const isFavorite = ref(false); // favorite status
 
 const sortingAsc = ref(true); // sorting order
-const sortingType = ref('size'); // sorting type
+const sortingType = ref('taken_date'); // sorting type
 
 /// auto update the titlebar when reference data changes
 const title = computed(() => {
@@ -210,8 +210,18 @@ function sortFileList(sortingType, isAccending) {
       case "size":
         result = a.size - b.size;
         break;
-      case "date":
+      case "created_date":
+        result = a.created_at - b.created_at;
+        break;
+      case "modified_date":
         result = a.modified_at - b.modified_at;
+        break;
+      case "taken_date":
+        if(a.e_date_time && b.e_date_time) {
+          result = a.e_date_time - b.e_date_time;
+        } else {
+          result = a.modified_at - b.modified_at;
+        }
         break;
       default:
         return 0; // No sorting if the sorting type is unrecognized

@@ -34,7 +34,6 @@ import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { shortenFilename, formatFileSize } from '@/common/utils';
-import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
   fileList: {
@@ -43,8 +42,9 @@ const props = defineProps({
   },
 });
 
-const { locale, messages } = useI18n();
-const msg = computed(() => messages.value[locale.value]);
+// import { useI18n } from 'vue-i18n';
+// const { locale, messages } = useI18n();
+// const msg = computed(() => messages.value[locale.value]);
 
 const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
 const fileListLength = computed(() => props.fileList.length);

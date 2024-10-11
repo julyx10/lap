@@ -61,5 +61,5 @@
 }
 /* scrollbar */
 .t-scrollbar {
-  @apply scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800;
+  @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-800;
 }

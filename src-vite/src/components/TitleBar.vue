@@ -4,21 +4,22 @@
   <div class="w-full h-10 flex items-center justify-between t-color-bg select-none">
     
     <!-- Left Section (Title) -->
-    <span class="ml-4 t-color-text" @mousedown="appWindow.startDragging()">{{ titlebar }}</span>
+    <span class="ml-4 t-color-text text-nowrap" @mousedown="appWindow.startDragging()">{{ titlebar }}</span>
 
     <!-- Draggable Area with Search Box -->
     <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text " @mousedown="appWindow.startDragging()">
-      <div class="relative w-1/3">
+      <div class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv">
         <!-- Search Box -->
         <input
           type="text"
           placeholder="Search..."
-          class="px-2 py-1 w-full bg-transparent border t-color-border rounded-lg focus:outline-0 focus:bg-gray-800"
+          class="px-2 py-1 w-full text-sm placeholder-gray-500 bg-transparent border t-color-border rounded-md focus:border-2 focus:outline-none focus:border-sky-700"
           @mousedown.stop
         />
         <!-- Search Icon -->
         <IconSearch class="absolute right-2 top-1/2 transform -translate-y-1/2 h-5 w-5" />
       </div>
+
     </div>
 
     <!-- Window Control Buttons -->
@@ -32,8 +33,6 @@
   </div>
 
 </template>
-
-
 
 
 <script setup>
@@ -73,3 +72,17 @@ const closeWindow = () => {
 };
 
 </script>
+
+
+<style>
+  @media (max-width: 400px) {
+    #responsiveDiv {
+      visibility: hidden;
+    }
+  }
+  @media (min-width: 400px) {
+    #responsiveDiv {
+      visibility: visible;
+    }
+  }
+</style>

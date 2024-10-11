@@ -3,7 +3,13 @@ import { format } from 'date-fns';
 
 /// thumbnail size
 export const THUMBNAIL_SIZE = 320;
-export const separator = (await os.platform()) === 'win32' ? '\\' : '/';
+
+// export const separator = (await os.platform()) === 'win32' ? '\\' : '/';
+export let separator;
+(async () => {
+  const osPlatform = await os.platform();
+  separator = osPlatform === 'win32' ? '\\' : '/';
+})();
 
 /// format timestamp to string
 export function formatTimestamp(timestamp: number): string {

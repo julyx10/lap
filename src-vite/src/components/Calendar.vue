@@ -24,8 +24,8 @@
 
 <script setup>
 
-import IconUp from '@/assets/arrow-up.svg';
-import IconDown from '@/assets/arrow-down.svg';
+// import IconUp from '@/assets/arrow-up.svg';
+// import IconDown from '@/assets/arrow-down.svg';
 
 const props = defineProps({
   titlebar: String
