@@ -39,12 +39,12 @@ import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
 // import TableView from '@/components/TableView.vue';
 import GridView  from '@/components/GridView.vue';
-import { THUMBNAIL_SIZE } from '@/common/utils';
+import { THUMBNAIL_SIZE, formatDate } from '@/common/utils';
 
 /// i18n
-// import { useI18n } from 'vue-i18n';
-// const { locale, messages } = useI18n();
-// const msg = computed(() => messages.value[locale.value]);
+import { useI18n } from 'vue-i18n';
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
 
 // Import the SVG file as a Vue component
 import IconFitWidth from '@/assets/fit-width.svg';
@@ -53,6 +53,7 @@ import IconFavorite from '@/assets/heart-solid.svg';
 import IconTag from '@/assets/tag.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
+import { sub } from 'date-fns';
 
 
 const props = defineProps({
@@ -65,10 +66,14 @@ const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
 
-const gContentIndex = inject('gContentIndex'); // global selected item index
+const gCalendarYear = inject('gCalendarYear');    // global calendar year
+const gCalendarMonth = inject('gCalendarMonth');  // global calendar month
+const gCalendarDate = inject('gCalendarDate');    // global calendar date
 
 const gCameraMake = inject('gCameraMake');     // global camera make
 const gCameraModel = inject('gCameraModel');   // global camera model
+
+const gContentIndex = inject('gContentIndex'); // global selected item index
 
 const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
@@ -101,7 +106,14 @@ const title = computed(() => {
       } 
       break;
     case 2:  // calendar
-      subTitle += `${props.titlebar}`;
+      if (gCalendarYear.value && gCalendarMonth.value && gCalendarDate.value) {
+        subTitle = formatDate(
+          gCalendarYear.value, 
+          gCalendarMonth.value, 
+          gCalendarDate.value, 
+          localeMsg.value.date_format_with_weekday    // 'yyyy-MM-dd'
+        );
+      }
       break;
     case 3:  // map
       subTitle += `${props.titlebar}`;

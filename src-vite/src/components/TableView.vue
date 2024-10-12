@@ -26,8 +26,8 @@
           </td>
           <td>{{ shortenFilename(file.name) }}</td>
           <td>{{ file.width }}x{{ file.height }}</td>
-          <td>{{ formatTimestamp(file.created_at) }}</td>
-          <td>{{ formatTimestamp(file.modified_at) }}</td>
+          <td>{{ formatTimestamp(file.created_at, $t('date_time_format')) }}</td>
+          <td>{{ formatTimestamp(file.modified_at, $t('date_time_format')) }}</td>
           <td>{{ file.e_model }}</td>
           <td class="text-right">{{ formatFileSize(file.size) }}</td>
         </tr>

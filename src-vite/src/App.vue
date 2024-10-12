@@ -20,7 +20,7 @@ provide('gFolderId', ref(null));  // current folder id (selected)
 // calendar
 provide('gCalendarYear', ref(2024));  // calendar year (...2024)
 provide('gCalendarMonth', ref(1));    // calendar month (1-12)
-provide('gCalendarDay', ref(1));      // calendar day (1-31)
+provide('gCalendarDate', ref(1));     // calendar date (1-31)
 
 // cameras
 provide('gCameras', ref([]));        // all cameras

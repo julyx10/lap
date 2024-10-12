@@ -23,11 +23,11 @@
         </tr>
         <tr>
           <td>{{ $t('file_info_created') }}</td>
-          <td>{{ formatTimestamp(fileInfo.created_at) }}</td>
+          <td>{{ formatTimestamp(fileInfo.created_at, $t('date_time_format')) }}</td>
         </tr>
         <tr>
           <td>{{ $t('file_info_modified') }}</td>
-          <td>{{ formatTimestamp(fileInfo.modified_at) }}</td>
+          <td>{{ formatTimestamp(fileInfo.modified_at, $t('date_time_format')) }}</td>
         </tr>
         <tr>
           <td>{{ $t('file_info_camera_make') }}</td>

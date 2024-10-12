@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 /// thumbnail size
 export const THUMBNAIL_SIZE = 320;
 
-// export const separator = (await os.platform()) === 'win32' ? '\\' : '/';
 export let separator;
 (async () => {
   const osPlatform = await os.platform();
@@ -12,8 +11,13 @@ export let separator;
 })();
 
 /// format timestamp to string
-export function formatTimestamp(timestamp: number): string {
-  return format(new Date(timestamp * 1000), 'yyyy-MM-dd HH:mm');
+export function formatTimestamp(timestamp: number, formatStr: string): string {
+  return format(new Date(timestamp * 1000), formatStr);
+}
+
+/// format date to string
+export function formatDate(year: number, month: number, date: number, formatStr: string): string {
+  return format(new Date(year, month - 1, date), formatStr);
 }
 
 /// format file size to string
@@ -29,7 +33,6 @@ export function formatFileSize(bytes: number): string {
 export function getFullPath(path: string, name: string): string {
   return path + separator + name;
 }
-
 
 /// shorten a filename while preserving its extension
 export function shortenFilename(filename: string): string {

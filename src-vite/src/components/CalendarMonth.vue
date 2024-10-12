@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, inject, computed, watch } from 'vue';
 import { format, getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
 
 const props = defineProps({
@@ -40,8 +40,8 @@ const props = defineProps({
   },
 });
 
-
-const selectedDate = ref(null);
+const gCalendarMonth = inject('gCalendarMonth');
+const gCalendarDate = inject('gCalendarDate');
 
 // Computed property to get the number of days in the month
 const daysInMonth = computed(() => getDaysInMonth(new Date(props.year, props.month - 1)));
@@ -53,14 +53,18 @@ const blankDays = computed(() => {
 });
 
 // Check if the given date is today
-const isTodayFn = (day) => isToday(new Date(props.year, props.month - 1, day));
+const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date));
 
 // Check if the date is selected
-const isSelectedDate = (day) => selectedDate.value === day;
+const isSelectedDate = (date) => gCalendarMonth.value === props.month && gCalendarDate.value === date;
+
 
 // Method to select a date
-const selectDate = (day) => {
-  selectedDate.value = day;
+const selectDate = (date) => {
+  gCalendarMonth.value = props.month;
+  gCalendarDate.value = date;
+
+  console.log('Selected date:', format(new Date(props.year, props.month - 1, date), 'yyyy-MM-dd'));
 };
 </script>
 

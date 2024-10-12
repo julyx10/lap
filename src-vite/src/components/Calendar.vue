@@ -7,7 +7,7 @@
       <span>{{ titlebar }}</span>
       <div class="flex flex-row space-x-2 p-2">
         <IconLeft class="t-icon-hover" @click="clickPrevYear"/>
-        <span>{{ selectedYear }}</span>
+        <span>{{ gCalendarYear }}</span>
         <IconRight class="t-icon-hover" @click="clickNextYear" />
       </div>
     </div>
@@ -30,9 +30,9 @@
       <CalendarMonth 
         v-for="month in 12" 
         :key="month" 
-        :year="selectedYear" 
+        :year="gCalendarYear" 
         :month="month"
-        :monthName="localeMsg.calendar_months[month - 1]"
+        :monthName="localeMsg.calendar_months_long[month - 1]"
       />
     </div>
   
@@ -42,30 +42,32 @@
 
 <script setup>
 
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import CalendarMonth from './CalendarMonth.vue';
 
 import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
-// import IconUp from '@/assets/arrow-up.svg';
-// import IconDown from '@/assets/arrow-down.svg';
-
-const props = defineProps({
-  titlebar: String
-});
 
 /// i18n
 import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const selectedYear = ref(2024);
+// props
+const props = defineProps({
+  titlebar: String
+});
+
+
+// select date
+const gCalendarYear = inject('gCalendarYear');
+
 
 function clickPrevYear() {
-  selectedYear.value -= 1;
+  gCalendarYear.value -= 1;
 }
 
 function clickNextYear() {
-  selectedYear.value += 1;
+  gCalendarYear.value += 1;
 }
 </script>

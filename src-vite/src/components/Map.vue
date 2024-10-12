@@ -31,4 +31,9 @@ const props = defineProps({
   }
 });
 
+
+function clickRefresh() {
+  console.log('clickRefresh');
+}
+
 </script>
