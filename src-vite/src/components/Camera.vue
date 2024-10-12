@@ -76,7 +76,7 @@ import IconFolderOpen from '@/assets/folder-open.svg';
 
 import IconRight from '@/assets/arrow-right.svg';
 
-const gSelectItemIndex = inject('gSelectItemIndex');
+const gContentIndex = inject('gContentIndex');
 
 const gCameras = inject('gCameras');
 const gCameraMake = inject('gCameraMake');
@@ -89,7 +89,6 @@ const props = defineProps({
   }
 });
 
-// const cameras = ref([]);
 
 onMounted(() => {
   if (gCameras.value.length === 0) {
@@ -100,14 +99,14 @@ onMounted(() => {
 watch(gCameraMake, async (newMake) => {
   if (newMake) {
     console.log('watch gCameraMake...', newMake);
-    gSelectItemIndex.value = -1;
+    gContentIndex.value = -1;
   }
 });
 
 watch(gCameraModel, async (newModel) => {
   if (newModel) {
     console.log('watch gCameraModel...', newModel);
-    gSelectItemIndex.value = -1;
+    gContentIndex.value = -1;
   }
 });
 
@@ -128,7 +127,7 @@ async function getCameras() {
         is_expanded: false,
       }));
 
-      gSelectItemIndex.value = -1;
+      gContentIndex.value = -1;
 
       gCameraMake.value = null;
       gCameraModel.value = null;

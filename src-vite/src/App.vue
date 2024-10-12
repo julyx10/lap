@@ -12,16 +12,23 @@ import { ref, provide, onMounted, onUnmounted } from 'vue';
 
 provide('gToolbarIndex',  ref(1));   // toolbar index
 
+// albums
 provide('gAlbums', ref([]));      // all albums
 provide('gAlbumId', ref(null));   // current album id (selected)
 provide('gFolderId', ref(null));  // current folder id (selected)
 
-provide('gSelectItemIndex', ref(-1));  // selected item index
+// calendar
+provide('gCalendarYear', ref(2024));  // calendar year (...2024)
+provide('gCalendarMonth', ref(1));    // calendar month (1-12)
+provide('gCalendarDay', ref(1));      // calendar day (1-31)
 
+// cameras
 provide('gCameras', ref([]));        // all cameras
 provide('gCameraMake', ref(null));   // camera make
 provide('gCameraModel', ref(null));  // camera model
 
+// content list view
+provide('gContentIndex', ref(-1));  // selected list item index
 
 // onMounted(() => {
 //   console.log('App.vue mounted');

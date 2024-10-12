@@ -19,7 +19,7 @@
         <div 
           v-for="(day, index) in localeMsg.calendar_weekdays" 
           :key="index" 
-          class="p-2 w-10"
+          class="p-2 w-8 flex items-center justify-center"
         >
           {{ day }}
         </div>

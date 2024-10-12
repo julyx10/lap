@@ -7,9 +7,9 @@
     <div
       v-for="date in daysInMonth"
       :key="date"
-      class="p-2 w-10 h-10 border rounded-full t-color-bg-hover cursor-pointer"
+      class="size-8 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
       :class="{
-        'bg-sky-900': isToday(date),
+        'bg-sky-900': isTodayFn(date),
         'border-sky-500': isSelectedDate(date),
         'border-transparent': !isSelectedDate(date),
       }"
@@ -23,7 +23,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { format, getDaysInMonth, startOfMonth, getDay, isToday as isTodayFn } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
 
 const props = defineProps({
   year: {
@@ -53,10 +53,7 @@ const blankDays = computed(() => {
 });
 
 // Check if the given date is today
-const isToday = (day) => {
-  const today = new Date();
-  return isTodayFn(new Date(props.year, props.month - 1, day));
-};
+const isTodayFn = (day) => isToday(new Date(props.year, props.month - 1, day));
 
 // Check if the date is selected
 const isSelectedDate = (day) => selectedDate.value === day;

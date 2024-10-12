@@ -8,7 +8,7 @@
         :id="'item-' + index"
         :class="[
           'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200', 
-          index === gSelectItemIndex ? 'border-sky-500' : 'border-gray-800'
+          index === gContentIndex ? 'border-sky-500' : 'border-gray-800'
         ]"
         @click="clickFile(index)"
         @dblclick="openImageViewer(index, true)"
@@ -16,7 +16,8 @@
         <div class="flex flex-col items-center">
           <img 
             :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" 
-            class="w-full h-36 object-cover rounded "
+            class="h-36 object-cover rounded"
+            :class="{ 'w-full': isFitWidth }"
           />
           <p class="text-center">{{ shortenFilename(file.name) }}</p>
           <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
@@ -42,13 +43,14 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  isFitWidth: Boolean,
 });
 
 // import { useI18n } from 'vue-i18n';
 // const { locale, messages } = useI18n();
 // const msg = computed(() => messages.value[locale.value]);
 
-const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
+const gContentIndex = inject('gContentIndex'); // global selected item index
 const fileListLength = computed(() => props.fileList.length);
 
 
@@ -59,10 +61,10 @@ onMounted(() => {
     const { message } = event.payload;
     switch (message) {
       case 'prev':
-        gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
+        gContentIndex.value = Math.max(gContentIndex.value - 1, 0);
         break;
       case 'next':
-        gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
+        gContentIndex.value = Math.min(gContentIndex.value + 1, fileListLength.value - 1);
         break;
       default:
         break;
@@ -78,7 +80,7 @@ onUnmounted(() => {
 
 // Select the file
 function clickFile(index: number) {
-  gSelectItemIndex.value = index;
+  gContentIndex.value = index;
 }
 
 
@@ -91,17 +93,17 @@ function handleKeyDown(event) {
   }
 
   if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-    gSelectItemIndex.value = Math.min(gSelectItemIndex.value + 1, fileListLength.value - 1);
+    gContentIndex.value = Math.min(gContentIndex.value + 1, fileListLength.value - 1);
   } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-    gSelectItemIndex.value = Math.max(gSelectItemIndex.value - 1, 0);
+    gContentIndex.value = Math.max(gContentIndex.value - 1, 0);
   } else if (event.key === 'Enter' || event.key === 'Space') {
-    openImageViewer(gSelectItemIndex.value, true);
+    openImageViewer(gContentIndex.value, true);
   }
 }
 
 
 // watch for changes in the selected item index
-watch (() => gSelectItemIndex.value, (newIndex) => {
+watch (() => gContentIndex.value, (newIndex) => {
   openImageViewer(newIndex);
   scrollToItem(newIndex);
 });

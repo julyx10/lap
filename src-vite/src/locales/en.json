@@ -2,10 +2,11 @@
   "home": "Home",
   "album": "Albums",
   "calendar": "Calendar",
-  "people": "People",
   "map": "Map",
+  "people": "People",
   "camera": "Camera",
   "favorite": "Favorite",
+  "tag": "Tag",
 
   "settings": "Settings",
   "debug": "Debug",
@@ -21,6 +22,9 @@
   
   "files": "Files",
   "allphotos": "All Photos",
+
+  "content_title_files": "files",
+  "content_title_folders": "folders",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Information",

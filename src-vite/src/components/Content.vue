@@ -3,23 +3,30 @@
   <div class="flex flex-col w-full">
 
     <!-- title bar -->
-    <div class="p-2" style="user-select: none;">
+    <div class="px-4 py-1" style="user-select: none;">
       <div class=" flex flex-row items-center justify-between">
-        {{ title }}
+
+        <div class="flex-1 flex flex-col">
+          <span>{{ title }}</span>
+          <span class="text-sm">{{ fileList.length }} files</span>
+        </div>
+
         <div class="flex space-x-4">
+          <IconFitWidth 
+            class="t-icon-size t-icon-hover"
+            :class="{ 't-icon-selected': isFitWidth }"
+            @click="toggleFitWidth" />
           <IconUnFavorite v-if="!isFavorite" class="t-icon-hover hover:text-red-600" @click="toggleFavorite" />
           <IconFavorite v-if="isFavorite" class="t-icon-hover text-red-600 hover:text-red-600" @click="toggleFavorite" />
           <component :is="IconTag" class="t-icon-hover" />
           <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
         </div>
       </div>
-      <div>
-        {{ fileList.length }} files
-      </div>
+
     </div>
 
     <!-- grid view -->
-    <GridView :fileList="fileList"/>
+    <GridView :fileList="fileList" :isFitWidth="isFitWidth"/>
     <!-- <TableView :fileList="fileList"/> -->
 
   </div>
@@ -40,6 +47,7 @@ import { THUMBNAIL_SIZE } from '@/common/utils';
 // const msg = computed(() => messages.value[locale.value]);
 
 // Import the SVG file as a Vue component
+import IconFitWidth from '@/assets/fit-width.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconTag from '@/assets/tag.svg';
@@ -57,7 +65,7 @@ const gAlbums = inject('gAlbums');       // global albums
 const gAlbumId = inject('gAlbumId');     // global album id
 const gFolderId = inject('gFolderId');   // global folder id
 
-const gSelectItemIndex = inject('gSelectItemIndex'); // global selected item index
+const gContentIndex = inject('gContentIndex'); // global selected item index
 
 const gCameraMake = inject('gCameraMake');     // global camera make
 const gCameraModel = inject('gCameraModel');   // global camera model
@@ -66,6 +74,7 @@ const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
 const fileList = ref([]);
 
+const isFitWidth = ref(false); // fit width status
 const isFavorite = ref(false); // favorite status
 
 const sortingAsc = ref(true); // sorting order
@@ -74,32 +83,47 @@ const sortingType = ref('taken_date'); // sorting type
 /// auto update the titlebar when reference data changes
 const title = computed(() => {
   let subTitle = '';
-  let selectedFileName = fileList.value.length > 0 && gSelectItemIndex.value > -1 ? ` > ${fileList.value[gSelectItemIndex.value].name}` : '';
+  let selectedFileName = fileList.value.length > 0 && gContentIndex.value > -1 ? ` > ${fileList.value[gContentIndex.value].name}` : '';
   
-  if (gToolbarIndex.value === 1) {    // album view
-    if (gAlbumId.value) {
-      // get the selected album
-      const album = gAlbums.value.find(album => album.id === gAlbumId.value);
+  switch (gToolbarIndex.value) {
+    case 1:   // album
+      if (gAlbumId.value) {
+        // get the selected album
+        const album = gAlbums.value.find(album => album.id === gAlbumId.value);
 
-      if(gFolderId.value === album.folderId) { // current folder is album path
-        currentFolder.value = album;
-        subTitle += ` > ${album.name}`;
-      } else {  // get the select folder
-        currentFolder.value = getFolder(album, gFolderId.value);
-        subTitle += ` > ${album.name} > ${currentFolder.value.name}`;
-      }
-    }
-  } else if (gToolbarIndex.value === 5) {   // camera view
-    if (gCameraMake.value) {
-      if (gCameraModel.value) {
-        currentCamera.value = { make: gCameraMake.value , model: gCameraModel.value };
-        subTitle += ` > ${gCameraMake.value} > ${gCameraModel.value}`;
-      } else {
-        subTitle += ` > ${gCameraMake.value}`;
-      }
-    }
+        if(gFolderId.value === album.folderId) { // current folder is album path
+          currentFolder.value = album;
+          subTitle += `${album.name}`;
+        } else {  // get the select folder
+          currentFolder.value = getFolder(album, gFolderId.value);
+          subTitle += `${album.name} > ${currentFolder.value.name}`;
+        }
+      } 
+      break;
+    case 2:  // calendar
+      subTitle += `${props.titlebar}`;
+      break;
+    case 3:  // map
+      subTitle += `${props.titlebar}`;
+      break;
+    case 4:  // people
+      subTitle += `${props.titlebar}`;
+      break;
+    case 5:  // camera
+      if (gCameraMake.value) {
+        if (gCameraModel.value) {
+          currentCamera.value = { make: gCameraMake.value , model: gCameraModel.value };
+          subTitle += `${gCameraMake.value} > ${gCameraModel.value}`;
+        } else {
+          subTitle += `${gCameraMake.value}`;
+        }
+      } 
+      break;
+    default:
+      subTitle = props.titlebar;
   }
-  return props.titlebar + subTitle + selectedFileName;
+
+  return subTitle.length > 0 ? subTitle + selectedFileName : props.titlebar;
 });
 
 
@@ -133,7 +157,7 @@ watch(currentFolder, async (newFolder) => {
   console.log('watch - currentFolder:', newFolder);
   if (newFolder) {
     // reset the selected item index
-    gSelectItemIndex.value = -1;  // before get files
+    gContentIndex.value = -1;  // before get files
     // Fetch the files in the new folder
     await getFiles(newFolder.path);
   }
@@ -149,6 +173,13 @@ watch(gCameraModel, async (newModel) => {
   }
 });
 
+
+/// toggle the fit width status
+function toggleFitWidth() {
+  isFitWidth.value = !isFitWidth.value;
+}
+
+
 /// toggle the favorite status
 function toggleFavorite() {
   isFavorite.value = !isFavorite.value;
@@ -158,8 +189,8 @@ function toggleFavorite() {
 function toggleSortingOrder() {
   sortingAsc.value = !sortingAsc.value;
   fileList.value = [...fileList.value].reverse();
-  if (gSelectItemIndex.value >= 0) {
-    gSelectItemIndex.value = fileList.value.length - 1 - gSelectItemIndex.value;
+  if (gContentIndex.value >= 0) {
+    gContentIndex.value = fileList.value.length - 1 - gContentIndex.value;
   }
   console.log('toggleSortingOrder:', sortingAsc.value, fileList.value);
 }

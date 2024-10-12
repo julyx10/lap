@@ -2,10 +2,11 @@
   "home": "主页",
   "album": "相册",
   "calendar": "日历",
-  "people": "人物",
   "map": "地图",
+  "people": "人物",
   "camera": "相机",
   "favorite": "收藏",
+  "tag": "标签",
 
   "settings": "设置",
   "debug": "调试",
@@ -21,6 +22,9 @@
 
   "files": "文件",
   "allphotos": "所有照片",
+
+  "content_title_files": "文件",
+  "content_title_folders": "文件夹",
 
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "信息",

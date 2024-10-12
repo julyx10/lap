@@ -30,6 +30,8 @@
       <div v-if="gToolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: leftPaneWidth + 'px' }">
         <Album         v-if="gToolbarIndex === 1" :titlebar="$t('album')"/>
         <Calendar v-else-if="gToolbarIndex === 2" :titlebar="$t('calendar')"/>
+        <Map      v-else-if="gToolbarIndex === 3" :titlebar="$t('map')"/>
+        <People   v-else-if="gToolbarIndex === 4" :titlebar="$t('people')"/>
         <Camera   v-else-if="gToolbarIndex === 5" :titlebar="$t('camera')"/>
       </div>
 
@@ -37,7 +39,7 @@
       <div v-if="gToolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
       
       <!-- content area -->
-      <div class="flex-1 px-1 py-2 flex relative t-color-bg-light rounded-ss-lg">
+      <div class="flex-1 px-1 py-1 flex relative t-color-bg-light rounded-ss-lg">
         <Content :titlebar="toolbars[gToolbarIndex].text"/>
       </div>
 
@@ -65,12 +67,14 @@ import { WebviewWindow } from '@tauri-apps/api/window';
 /// i18n
 import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
-const localeMessages = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value]);
 
 import TitleBar from '@/components/TitleBar.vue';
 import Album from '@/components/Albums.vue';
 import Calendar from '@/components/Calendar.vue';
 import Camera from '@/components/Camera.vue';
+import Map from '@/components/Map.vue';
+import People from '@/components/People.vue';
 import Content from '@/components/Content.vue';
 
 
@@ -89,14 +93,14 @@ import IconBug from '@/assets/bug.svg';
 
 // toolbar 
 const toolbars = computed(() =>  [
-  { icon: IconHome,     text: localeMessages.value.home },
-  { icon: IconAlbum,    text: localeMessages.value.album },
-  { icon: IconCalendar, text: localeMessages.value.calendar },
-  { icon: IconMap,      text: localeMessages.value.map },
-  { icon: IconPeople,   text: localeMessages.value.people }, 
-  { icon: IconCamera,   text: localeMessages.value.camera },
-  // { icon: IconFavorite, text: localeMessages.value.favorite },
-  // { icon: IconTag,      text: localeMessages.value.tag },
+  { icon: IconHome,     text: localeMsg.value.home },
+  { icon: IconAlbum,    text: localeMsg.value.album },
+  { icon: IconCalendar, text: localeMsg.value.calendar },
+  { icon: IconMap,      text: localeMsg.value.map },
+  { icon: IconPeople,   text: localeMsg.value.people }, 
+  { icon: IconCamera,   text: localeMsg.value.camera },
+  // { icon: IconFavorite, text: localeMsg.value.favorite },
+  // { icon: IconTag,      text: localeMsg.value.tag },
 ]);
 
 const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
