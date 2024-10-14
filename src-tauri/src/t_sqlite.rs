@@ -283,30 +283,32 @@ pub struct AFile {
     pub size:           u64,            // file size
     pub created_at:     Option<u64>,    // file create time
     pub modified_at:    Option<u64>,    // file modified time
+    pub taken_date:     Option<String>, // taken date(yyyy-mm-dd) for calendar view
 
     // image dimensions
     pub width:          Option<u32>,    // image width
     pub height:         Option<u32>,    // image height
-
+    
     // extra info
     pub is_favorite:    Option<bool>,   // is favorite
     pub comments:       Option<String>, // comments
-
+    
     // exif info
     pub e_make:           Option<String>,   // camera make
     pub e_model:          Option<String>,   // camera model
     pub e_date_time:      Option<String>,   
     pub e_exposure_time:  Option<String>,    
     pub e_f_number:       Option<String>,
-    pub e_iso_speed:      Option<String>,
     pub e_focal_length:   Option<String>,
+    pub e_iso_speed:      Option<String>,
+    pub e_flash:          Option<String>,   // flash
     pub e_orientation:    Option<u32>,      // orientation
-
+    
     // gps
     pub gps_latitude:   Option<String>,
     pub gps_longitude:  Option<String>,
     pub gps_altitude:   Option<String>,
-
+    
     // output only
     pub file_path:        Option<String>,  // file path (for webview)
 }
@@ -335,7 +337,12 @@ impl AFile {
             size: file_info.file_size,
             created_at:  file_info.created,
             modified_at: file_info.modified,
-            
+            taken_date: if let Some(exif_date) = Self::get_exif_field(&exif, Tag::DateTimeOriginal) {
+                            Some(exif_date.split_at(10).0.to_string())
+                        } else {
+                            file_info.modified_str
+                        },
+
             width: Some(width),
             height: Some(height),
 
@@ -344,11 +351,12 @@ impl AFile {
 
             e_make: Self::get_exif_field(&exif, Tag::Make),
             e_model: Self::get_exif_field(&exif, Tag::Model),
-            e_date_time: Self::get_exif_field(&exif, Tag::DateTime),
+            e_date_time: Self::get_exif_field(&exif, Tag::DateTimeOriginal),
             e_exposure_time: Self::get_exif_field(&exif, Tag::ExposureTime),
             e_f_number: Self::get_exif_field(&exif, Tag::FNumber),
-            e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
             e_focal_length: Self::get_exif_field(&exif, Tag::FocalLength),
+            e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
+            e_flash: Self::get_exif_field(&exif, Tag::Flash),
             e_orientation: Self::get_exif_orientation_field(&exif, Tag::Orientation),
 
             gps_latitude: Self::get_exif_field(&exif, Tag::GPSLatitude),
@@ -379,10 +387,10 @@ impl AFile {
         let conn = open_conn();
         let result = conn.query_row(
             "SELECT id, folder_id, 
-                name, size, created_at, modified_at, 
+                name, size, created_at, modified_at, taken_date,
                 width, height,
                 is_favorite, comments,
-                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation,
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             FROM afiles WHERE folder_id = ?1 AND name = ?2",
             params![folder_id, t_utils::get_file_name(file_path)],
@@ -395,25 +403,27 @@ impl AFile {
                     size: row.get(3)?,
                     created_at: row.get(4)?,
                     modified_at: row.get(5)?,
+                    taken_date: row.get(6)?,
 
-                    width: row.get(6)?,
-                    height: row.get(7)?,
+                    width: row.get(7)?,
+                    height: row.get(8)?,
 
-                    is_favorite: row.get(8)?,
-                    comments: row.get(9)?,
+                    is_favorite: row.get(9)?,
+                    comments: row.get(10)?,
 
-                    e_make: row.get(10)?,
-                    e_model: row.get(11)?,
-                    e_date_time: row.get(12)?,
-                    e_exposure_time: row.get(13)?,
-                    e_f_number: row.get(14)?,
-                    e_iso_speed: row.get(15)?,
+                    e_make: row.get(11)?,
+                    e_model: row.get(12)?,
+                    e_date_time: row.get(13)?,
+                    e_exposure_time: row.get(14)?,
+                    e_f_number: row.get(15)?,
                     e_focal_length: row.get(16)?,
-                    e_orientation: row.get(17)?,
+                    e_iso_speed: row.get(17)?,
+                    e_flash: row.get(18)?,
+                    e_orientation: row.get(19)?,
 
-                    gps_latitude: row.get(18)?,
-                    gps_longitude: row.get(19)?,
-                    gps_altitude: row.get(20)?,
+                    gps_latitude: row.get(20)?,
+                    gps_longitude: row.get(21)?,
+                    gps_altitude: row.get(22)?,
 
                     file_path: Some(file_path.to_string()),
                 })
@@ -428,13 +438,13 @@ impl AFile {
         let result = conn.execute(
             "INSERT INTO afiles (
                 folder_id, 
-                name, size, created_at, modified_at, 
+                name, size, created_at, modified_at, taken_date,
                 width, height,
                 is_favorite, comments,
-                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_iso_speed, e_focal_length, e_orientation,
+                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22)",
             params![
                 self.folder_id,
 
@@ -442,6 +452,7 @@ impl AFile {
                 self.size,
                 self.created_at,
                 self.modified_at,
+                self.taken_date,
 
                 self.width,
                 self.height,
@@ -454,8 +465,9 @@ impl AFile {
                 self.e_date_time,
                 self.e_exposure_time,
                 self.e_f_number,
-                self.e_iso_speed,
                 self.e_focal_length,
+                self.e_iso_speed,
+                self.e_flash,
                 self.e_orientation,
 
                 self.gps_latitude,
@@ -504,10 +516,10 @@ impl AFile {
         let conn = open_conn();
         let result = conn.query_row(
             "SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, 
+                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
                 a.is_favorite, a.comments,
-                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_iso_speed, a.e_focal_length, a.e_orientation,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path
             FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
@@ -522,28 +534,30 @@ impl AFile {
                     size: row.get(3)?,
                     created_at: row.get(4)?,
                     modified_at: row.get(5)?,
+                    taken_date: row.get(6)?,
 
-                    width: row.get(6)?,
-                    height: row.get(7)?,
+                    width: row.get(7)?,
+                    height: row.get(8)?,
 
-                    is_favorite: row.get(8)?,
-                    comments: row.get(9)?,
+                    is_favorite: row.get(9)?,
+                    comments: row.get(10)?,
 
-                    e_make: row.get(10)?,
-                    e_model: row.get(11)?,
-                    e_date_time: row.get(12)?,
-                    e_exposure_time: row.get(13)?,
-                    e_f_number: row.get(14)?,
-                    e_iso_speed: row.get(15)?,
+                    e_make: row.get(11)?,
+                    e_model: row.get(12)?,
+                    e_date_time: row.get(13)?,
+                    e_exposure_time: row.get(14)?,
+                    e_f_number: row.get(15)?,
                     e_focal_length: row.get(16)?,
-                    e_orientation: row.get(17)?,
+                    e_iso_speed: row.get(17)?,
+                    e_flash: row.get(18)?,
+                    e_orientation: row.get(19)?,
 
-                    gps_latitude: row.get(18)?,
-                    gps_longitude: row.get(19)?,
-                    gps_altitude: row.get(20)?,
+                    gps_latitude: row.get(20)?,
+                    gps_longitude: row.get(21)?,
+                    gps_altitude: row.get(22)?,
 
                     file_path: Some(t_utils::get_file_path(
-                        row.get::<_, String>(21).unwrap().as_str(), 
+                        row.get::<_, String>(23).unwrap().as_str(), 
                         row.get::<_, String>(2).unwrap().as_str()
                     ))
                 })
@@ -562,15 +576,46 @@ impl AFile {
         Ok(result)
     }
 
+    /// get all taken dates from db
+    pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
+        let conn = open_conn();
+        let mut stmt = conn.prepare(
+            "SELECT taken_date, count(1) 
+            FROM afiles 
+            WHERE taken_date IS NOT NULL
+            GROUP BY taken_date
+            ORDER BY taken_date DESC"
+        ).map_err(|e| e.to_string())?;
+    
+        // Execute the query and collect results
+        let taken_dates_iter = stmt.query_map(params![], |row| {
+            let date: String = row.get(0)?;
+            let count: i64 = row.get(1)?;
+            Ok((date, count))
+        }).map_err(|e| e.to_string())?;
+
+        // Collect the results into a vector
+        let mut results = Vec::new();
+        for row in taken_dates_iter {
+            match row {
+                Ok((date, value)) => results.push((date, value)),
+                Err(e) => return Err(format!("Failed to retrieve row: {}", e)),
+            }
+        }
+
+        Ok(results)
+    }
+
+
     /// get files by camera make and model
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
         let conn = open_conn();
         let mut stmt = conn.prepare(
             "SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, 
+                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
                 a.is_favorite, a.comments,
-                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_iso_speed, a.e_focal_length, a.e_orientation,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path
             FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
@@ -586,28 +631,30 @@ impl AFile {
                 size: row.get(3)?,
                 created_at: row.get(4)?,
                 modified_at: row.get(5)?,
+                taken_date: row.get(6)?,
 
-                width: row.get(6)?,
-                height: row.get(7)?,
+                width: row.get(7)?,
+                height: row.get(8)?,
 
-                is_favorite: row.get(8)?,
-                comments: row.get(9)?,
+                is_favorite: row.get(9)?,
+                comments: row.get(10)?,
 
-                e_make: row.get(10)?,
-                e_model: row.get(11)?,
-                e_date_time: row.get(12)?,
-                e_exposure_time: row.get(13)?,
-                e_f_number: row.get(14)?,
-                e_iso_speed: row.get(15)?,
+                e_make: row.get(11)?,
+                e_model: row.get(12)?,
+                e_date_time: row.get(13)?,
+                e_exposure_time: row.get(14)?,
+                e_f_number: row.get(15)?,
                 e_focal_length: row.get(16)?,
-                e_orientation: row.get(17)?,
+                e_iso_speed: row.get(17)?,
+                e_flash: row.get(18)?,
+                e_orientation: row.get(19)?,
 
-                gps_latitude: row.get(18)?,
-                gps_longitude: row.get(19)?,
-                gps_altitude: row.get(20)?,
+                gps_latitude: row.get(20)?,
+                gps_longitude: row.get(21)?,
+                gps_altitude: row.get(22)?,
 
                 file_path: Some(t_utils::get_file_path(
-                    row.get::<_, String>(21).unwrap().as_str(), 
+                    row.get::<_, String>(23).unwrap().as_str(), 
                     row.get::<_, String>(2).unwrap().as_str()
                 )),
             })
@@ -810,6 +857,7 @@ pub fn create_db() -> Result<String> {
             size INTEGER NOT NULL,
             created_at INTEGER,
             modified_at INTEGER,
+            taken_date TEXT,
             width INTEGER,
             height INTEGER,
             is_favorite INTEGER,
@@ -819,8 +867,9 @@ pub fn create_db() -> Result<String> {
             e_date_time TEXT,
             e_exposure_time TEXT,
             e_f_number TEXT,
-            e_iso_speed TEXT,
             e_focal_length TEXT,
+            e_iso_speed TEXT,
+            e_flash TEXT,
             e_orientation INTEGER,
             gps_latitude TEXT,
             gps_longitude TEXT,

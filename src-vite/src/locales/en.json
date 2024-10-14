@@ -20,11 +20,12 @@
   "delete_album_msgbox_ok": "Yes",
   "delete_album_msgbox_cancel": "No",
   
+  "search_placeholder": "Search...",
+
   "files": "Files",
   "allphotos": "All Photos",
 
-  "content_title_files": "files",
-  "content_title_folders": "folders",
+  "content_summary": "{folders} folders, {files} files",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Information",

@@ -12,7 +12,7 @@
         <!-- Search Box -->
         <input
           type="text"
-          placeholder="Search..."
+          :placeholder="$t('search_placeholder')"
           class="px-2 py-1 w-full text-sm placeholder-gray-500 bg-transparent border t-color-border rounded-md focus:border-2 focus:outline-none focus:border-sky-700"
           @mousedown.stop
         />

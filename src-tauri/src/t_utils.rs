@@ -7,6 +7,7 @@ use std::io::Cursor;
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use std::path::{ Path, PathBuf };
 use std::time::{ SystemTime, UNIX_EPOCH };
+use chrono::{ DateTime, Utc };
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use image::GenericImageView;
 
@@ -117,7 +118,8 @@ pub struct FileInfo {
     pub file_name: String,
     pub file_type: Option<String>,
     pub created:   Option<u64>,
-    pub modified:  Option<u64>,
+    pub modified:  Option<u64>,         // modified date as a timestamp
+    pub modified_str: Option<String>,  // modified date as a string (YYYY-MM-DD)
     // pub accessed:  Option<u64>,
 
     // Windows-specific attributes
@@ -141,7 +143,8 @@ impl FileInfo {
             file_type: metadata.file_type().is_dir().then(|| "dir".to_string()),
             created:  systemtime_to_u64(metadata.created().ok()),
             modified: systemtime_to_u64(metadata.modified().ok()),
-            // accessed: systemtime_to_u64(metadata.accessed().ok()),
+            modified_str: systemtime_to_string(metadata.modified().ok()),
+            // accessed: systemtime_to_string(metadata.accessed().ok()),
 
             file_attributes: metadata.file_attributes(),
             // volume_serial_number: metadata.volume_serial_number(),
@@ -236,6 +239,22 @@ pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
                 Ok(duration) => Some(duration.as_secs()),
                 Err(_) => None, // Handle the case where `SystemTime` is before UNIX_EPOCH
             }
+        }
+        None => None, // Return None if the input is None
+    }
+}
+
+
+/// Convert a SystemTime to a string
+pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
+    match time {
+        Some(t) => {
+            // Calculate the duration since UNIX_EPOCH
+            let duration = t.duration_since(UNIX_EPOCH).ok()?;
+            // Convert to DateTime<Utc> using the duration
+            let datetime = DateTime::<Utc>::from(UNIX_EPOCH + duration);
+            // Format the DateTime to a readable string
+            Some(datetime.format("%Y-%m-%d").to_string())
         }
         None => None, // Return None if the input is None
     }

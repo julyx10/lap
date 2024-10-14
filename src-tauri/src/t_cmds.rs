@@ -161,6 +161,14 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
     AFile::set_favorite(file_id, is_favorite).map_err(|e| format!("Error while setting file favorite: {}", e))
 }
 
+
+/// get taken dates
+#[tauri::command]
+pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates().map_err(|e| format!("Error while fetching taken dates: {}", e))
+}
+
+
 /// get a file's camera make and model info
 #[tauri::command]
 pub fn get_camera_info() -> Result<Vec<ACamera>, String> {

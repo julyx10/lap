@@ -20,11 +20,12 @@
   "delete_album_msgbox_ok": "是",
   "delete_album_msgbox_cancel": "否",
 
+  "search_placeholder": "搜索...",
+
   "files": "文件",
   "allphotos": "所有照片",
 
-  "content_title_files": "文件",
-  "content_title_folders": "文件夹",
+  "content_summary": "{folders} 文件夹, {files} 文件",
 
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "信息",

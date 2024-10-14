@@ -59,7 +59,7 @@
         </tr>
         <tr>
           <td>{{ $t('file_info_flash') }}</td>
-          <td> NYI </td>
+          <td>{{ fileInfo.e_flash }}</td>
         </tr>
         <tr>
           <td>{{ $t('file_info_color_type') }}</td>

@@ -8,7 +8,9 @@
 
         <div class="flex-1 flex flex-col">
           <span>{{ title }}</span>
-          <span class="text-sm">{{ fileList.length }} files</span>
+          <span class="text-sm">
+            {{ $t('content_summary', { folders: subFolderList.length, files: fileList.length }) }}
+          </span>
         </div>
 
         <div class="flex space-x-4">
@@ -78,6 +80,7 @@ const gContentIndex = inject('gContentIndex'); // global selected item index
 const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
 const fileList = ref([]);
+const subFolderList = ref([]);
 
 const isFitWidth = ref(false); // fit width status
 const isFavorite = ref(false); // favorite status
@@ -87,8 +90,8 @@ const sortingType = ref('taken_date'); // sorting type
 
 /// auto update the titlebar when reference data changes
 const title = computed(() => {
-  let subTitle = '';
-  let selectedFileName = fileList.value.length > 0 && gContentIndex.value > -1 ? ` > ${fileList.value[gContentIndex.value].name}` : '';
+  let title = '';
+  // let selectedFileName = fileList.value.length > 0 && gContentIndex.value > -1 ? ` > ${fileList.value[gContentIndex.value].name}` : '';
   
   switch (gToolbarIndex.value) {
     case 1:   // album
@@ -98,16 +101,16 @@ const title = computed(() => {
 
         if(gFolderId.value === album.folderId) { // current folder is album path
           currentFolder.value = album;
-          subTitle += `${album.name}`;
+          title += `${album.name}`;
         } else {  // get the select folder
           currentFolder.value = getFolder(album, gFolderId.value);
-          subTitle += `${album.name} > ${currentFolder.value.name}`;
+          title += `${album.name} > ${currentFolder.value.name}`;
         }
       } 
       break;
     case 2:  // calendar
       if (gCalendarYear.value && gCalendarMonth.value && gCalendarDate.value) {
-        subTitle = formatDate(
+        title = formatDate(
           gCalendarYear.value, 
           gCalendarMonth.value, 
           gCalendarDate.value, 
@@ -116,26 +119,27 @@ const title = computed(() => {
       }
       break;
     case 3:  // map
-      subTitle += `${props.titlebar}`;
+      title += `${props.titlebar}`;
       break;
     case 4:  // people
-      subTitle += `${props.titlebar}`;
+      title += `${props.titlebar}`;
       break;
     case 5:  // camera
       if (gCameraMake.value) {
         if (gCameraModel.value) {
           currentCamera.value = { make: gCameraMake.value , model: gCameraModel.value };
-          subTitle += `${gCameraMake.value} > ${gCameraModel.value}`;
+          title += `${gCameraMake.value} > ${gCameraModel.value}`;
         } else {
-          subTitle += `${gCameraMake.value}`;
+          title += `${gCameraMake.value}`;
         }
       } 
       break;
     default:
-      subTitle = props.titlebar;
+      title = props.titlebar;
   }
 
-  return subTitle.length > 0 ? subTitle + selectedFileName : props.titlebar;
+  return title.length > 0 ? title : props.titlebar;
+  // return title.length > 0 ? title + selectedFileName : props.titlebar;
 });
 
 

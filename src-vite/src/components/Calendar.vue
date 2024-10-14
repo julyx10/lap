@@ -42,7 +42,8 @@
 
 <script setup>
 
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, onMounted } from 'vue';
+import { invoke } from '@tauri-apps/api';
 import CalendarMonth from './CalendarMonth.vue';
 
 import IconLeft from '@/assets/arrow-left.svg';
@@ -58,10 +59,17 @@ const props = defineProps({
   titlebar: String
 });
 
+const taken_dates = ref([]);
 
 // select date
 const gCalendarYear = inject('gCalendarYear');
 
+onMounted(() => {
+  console.log('Calendar.vue mounted');
+  if(taken_dates.value.length === 0) {
+    getTakenDates();
+  }
+});
 
 function clickPrevYear() {
   gCalendarYear.value -= 1;
@@ -70,4 +78,20 @@ function clickPrevYear() {
 function clickNextYear() {
   gCalendarYear.value += 1;
 }
+
+/// refresh taken dates
+const clickRefresh = async () => {
+  console.log('clickRefresh...');
+  await getTakenDates();
+};
+
+async function getTakenDates() {
+  try {
+    taken_dates.value = await invoke('get_taken_dates');
+    console.log('getTakenDates...', taken_dates.value);
+  } catch (error) {
+    console.error('Failed to fetch taken dates:', error);
+  }
+}
+
 </script>
