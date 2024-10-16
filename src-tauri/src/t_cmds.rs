@@ -162,7 +162,7 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 }
 
 
-/// get taken dates
+/// get camera's taken dates
 #[tauri::command]
 pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
     AFile::get_taken_dates().map_err(|e| format!("Error while fetching taken dates: {}", e))

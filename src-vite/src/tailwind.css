@@ -66,3 +66,11 @@
 .t-scrollbar-dark {
   @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-900;
 }
+
+/* input */
+.t-input-color-bg {
+  @apply placeholder-gray-500 bg-transparent;
+}
+.t-input-focus {
+  @apply focus:border focus:outline-none focus:border-sky-700;
+}

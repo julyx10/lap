@@ -1,7 +1,8 @@
 <template>
-  <div class="w-screen h-screen flex flex-col rounded-lg shadow-lg overflow-hidden">
+  
+  <div class="w-screen h-screen flex flex-col border border-gray-800 rounded-lg shadow-lg overflow-hidden">
     <!-- Title Bar -->
-    <TitleBar titlebar="jc-photo"/>
+    <TitleBar titlebar="jc-photo" :hasSearch="true"/>
 
     <!-- Main Content -->
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
@@ -47,7 +48,6 @@
       <div v-if="isDebugMenuOpen" class="flex flex-col m-2 space-y-2">
         <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="menuAction('locale')">Toggle Locale</button>
         <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="openImage()">Open Image</button>
-        <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="clickAbout()">About</button>
         <button class="p-2 t-color-bg-light rounded-lg t-icon-hover" @click="toggleTheme()">Toggle Theme</button>
       </div>
       
@@ -120,8 +120,10 @@ function clickSettings() {
   const settingsWindow = new WebviewWindow('settings', {
     url: '/settings',
     title: 'Settings',
-    width: 600,
-    height: 400,
+    width: 640,
+    height: 480,
+    transparent: true,
+    decorations: false,
   });
   
   settingsWindow.once('tauri://created', () => {
@@ -161,22 +163,6 @@ const openImage = async () => {
   }
 };
 
-/// click about icon
-function clickAbout() {
-  console.log('clickAbout...');
-
-  const aboutWindow = new WebviewWindow('about', {
-    url: '/about',
-    title: 'About',
-    width: 600,
-    height: 400,
-    center: true,
-  });
-
-  aboutWindow.once('tauri://created', () => {
-    console.log('About window created');
-  });
-}
 
 /// toggle theme
 function toggleTheme() {

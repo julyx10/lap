@@ -133,7 +133,8 @@ function openImageViewer(index: number, createNew = false) {
       title: 'Image Viewer',
       width: 800,
       height: 600,
-      resizable: true,
+      // transparent: true,
+      // decorations: false,
     });
 
     imageWindow.once('tauri://created', () => {

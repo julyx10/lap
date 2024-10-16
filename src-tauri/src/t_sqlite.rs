@@ -584,7 +584,7 @@ impl AFile {
             FROM afiles 
             WHERE taken_date IS NOT NULL
             GROUP BY taken_date
-            ORDER BY taken_date DESC"
+            ORDER BY taken_date ASC"
         ).map_err(|e| e.to_string())?;
     
         // Execute the query and collect results

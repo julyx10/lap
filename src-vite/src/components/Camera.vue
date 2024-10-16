@@ -111,10 +111,30 @@ watch(gCameraModel, async (newModel) => {
 });
 
 /// refresh cameras
-const clickRefresh = async () => {
-  await getCameras();
+function clickRefresh() {
+  getCameras();
   console.log('get cameras...');
 };
+
+/// click camera icon to expand or collapse models
+function clickExpandCamera(camera) {
+  console.log('clickExpandCamera...', camera);
+  camera.is_expanded = !camera.is_expanded; 
+};
+
+/// click a camera to select it
+function clickCameraMake(camera) {
+  console.log('clickCameraMake...', camera);
+  gCameraMake.value = camera.make;
+  gCameraModel.value = null;
+}
+
+/// click a camera to select it
+function clickCameraModel(make, model) {
+  console.log('clickCameraModel...', make, model);
+  gCameraMake.value = make;
+  gCameraModel.value = model;
+}
 
 
 /// get cameras from db
@@ -139,25 +159,5 @@ async function getCameras() {
   }
 };
 
-
-/// click camera icon to expand or collapse models
-function clickExpandCamera(camera) {
-  console.log('clickExpandCamera...', camera);
-  camera.is_expanded = !camera.is_expanded; 
-};
-
-/// click a camera to select it
-function clickCameraMake(camera) {
-  console.log('clickCameraMake...', camera);
-  gCameraMake.value = camera.make;
-  gCameraModel.value = null;
-}
-
-/// click a camera to select it
-function clickCameraModel(make, model) {
-  console.log('clickCameraModel...', make, model);
-  gCameraMake.value = make;
-  gCameraModel.value = model;
-}
 
 </script>

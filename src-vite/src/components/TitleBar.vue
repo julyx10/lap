@@ -8,12 +8,12 @@
 
     <!-- Draggable Area with Search Box -->
     <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text " @mousedown="appWindow.startDragging()">
-      <div class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv">
+      <div v-if="hasSearch" class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv">
         <!-- Search Box -->
         <input
           type="text"
           :placeholder="$t('search_placeholder')"
-          class="px-2 py-1 w-full text-sm placeholder-gray-500 bg-transparent border t-color-border rounded-md focus:border-2 focus:outline-none focus:border-sky-700"
+          class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
           @mousedown.stop
         />
         <!-- Search Icon -->
@@ -25,8 +25,7 @@
     <!-- Window Control Buttons -->
     <div class="h-full flex items-center">
       <IconMinus class="t-window-btn" @click="minimizeWindow" />
-      <IconMaximize v-if="!isMaximized" class="t-window-btn" @click="toggleMaximizeWindow" />
-      <IconRestore v-if="isMaximized" class="t-window-btn" @click="toggleMaximizeWindow" />
+      <component :is="isMaximized ? IconRestore : IconMaximize" class="t-window-btn" @click="toggleMaximizeWindow" />
       <IconClose class="t-window-btn hover:bg-red-600" @click="closeWindow" />
     </div>
 
@@ -46,7 +45,14 @@ import IconRestore from '@/assets/window-restore.svg';
 import IconClose from '@/assets/close.svg';
 
 const props = defineProps({
-  titlebar: String
+  titlebar: {
+    type: String,
+    required: true,
+  },
+  hasSearch: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isMaximized = ref(false);
@@ -75,14 +81,16 @@ const closeWindow = () => {
 
 
 <style>
-  @media (max-width: 400px) {
-    #responsiveDiv {
-      visibility: hidden;
-    }
+
+@media (max-width: 400px) {
+  #responsiveDiv {
+    visibility: hidden;
   }
-  @media (min-width: 400px) {
-    #responsiveDiv {
-      visibility: visible;
-    }
+}
+@media (min-width: 400px) {
+  #responsiveDiv {
+    visibility: visible;
   }
+}
+
 </style>

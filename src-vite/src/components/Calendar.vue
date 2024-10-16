@@ -5,10 +5,9 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" >
       <span>{{ titlebar }}</span>
-      <div class="flex flex-row space-x-2 p-2">
-        <IconLeft class="t-icon-hover" @click="clickPrevYear"/>
-        <span>{{ gCalendarYear }}</span>
-        <IconRight class="t-icon-hover" @click="clickNextYear" />
+
+      <div class="flex">
+        <IconRefresh class="p-0.5 t-icon-hover" @click="clickRefresh"/>
       </div>
     </div>
     
@@ -26,14 +25,14 @@
       </div>
     </div>  
     <!-- calendar -->
-    <div class="flex flex-col items-center overflow-auto t-scrollbar-dark">
-      <CalendarMonth 
-        v-for="month in 12" 
-        :key="month" 
-        :year="gCalendarYear" 
-        :month="month"
-        :monthName="localeMsg.calendar_months_long[month - 1]"
-      />
+    <div class="overflow-auto t-scrollbar-dark">
+      <div v-for="(months, year) in calendar_dates" class="flex flex-col items-center">
+        <CalendarMonth v-for="(dates, month) in months" 
+          :year="Number(year)" 
+          :month="Number(month)"
+          :dates="dates"
+        />
+      </div>
     </div>
   
   </div>
@@ -46,8 +45,7 @@ import { ref, computed, inject, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import CalendarMonth from './CalendarMonth.vue';
 
-import IconLeft from '@/assets/arrow-left.svg';
-import IconRight from '@/assets/arrow-right.svg';
+import IconRefresh from '@/assets/refresh.svg';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -59,39 +57,60 @@ const props = defineProps({
   titlebar: String
 });
 
-const taken_dates = ref([]);
+const calendar_dates = ref([]);
 
-// select date
-const gCalendarYear = inject('gCalendarYear');
 
-onMounted(() => {
+onMounted( () => {
   console.log('Calendar.vue mounted');
-  if(taken_dates.value.length === 0) {
-    getTakenDates();
-  }
+  // if(gCalendarDays.value.length === 0) {
+    getCalendarDates();
+  // }
 });
 
-function clickPrevYear() {
-  gCalendarYear.value -= 1;
-}
-
-function clickNextYear() {
-  gCalendarYear.value += 1;
-}
 
 /// refresh taken dates
-const clickRefresh = async () => {
+function clickRefresh() {
   console.log('clickRefresh...');
-  await getTakenDates();
+  getCalendarDates();
 };
 
-async function getTakenDates() {
+
+/// fetch calendar dates
+async function getCalendarDates() {
   try {
-    taken_dates.value = await invoke('get_taken_dates');
-    console.log('getTakenDates...', taken_dates.value);
+    let taken_dates = await invoke('get_taken_dates');
+    calendar_dates.value = transformArray(taken_dates);
+    console.log('getCalendarDates...', calendar_dates.value);
   } catch (error) {
-    console.error('Failed to fetch taken dates:', error);
+    console.error('Failed to fetch calendar dates:', error);
   }
+}
+
+
+/// input: [['2024-10-15', 5], ['2023-01-01', 10]];
+/// output: [{2024: {10: {15: 5}}, {2023: {01: {01: 10}}}]
+function transformArray(dates) {
+  const result = {};
+
+  dates.forEach(item => {
+    const [dateStr, count] = item;
+    const [year, month, date] = dateStr.split('-');
+
+    // Initialize the year object if it doesn't exist
+    if (!result[year]) {
+      result[year] = {};
+    }
+
+    // Initialize the month object if it doesn't exist
+    if (!result[year][month]) {
+      result[year][month] = [];
+    }
+
+    // Push the date and count as an object into the month array
+    result[year][month].push({ date, count });
+  });
+
+  return result;
 }
 
 </script>

@@ -23,6 +23,7 @@
           <component :is="IconTag" class="t-icon-hover" />
           <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
         </div>
+        
       </div>
 
     </div>
@@ -158,11 +159,11 @@ watch(gToolbarIndex, async (newIndex) => {
   console.log('watch - gToolbarIndex:', newIndex);
   if (newIndex === 1) {
     if (gAlbumId.value) {
-      await getFiles(currentFolder.value.path);
+      getFiles(currentFolder.value.path);
     }
   } else if (newIndex === 5) {
     if (gCameraMake.value) {
-      await getCameraFiles(gCameraMake.value, gCameraModel.value);
+      getCameraFiles(gCameraMake.value, gCameraModel.value);
     }
   }
 });
@@ -175,7 +176,7 @@ watch(currentFolder, async (newFolder) => {
     // reset the selected item index
     gContentIndex.value = -1;  // before get files
     // Fetch the files in the new folder
-    await getFiles(newFolder.path);
+    getFiles(newFolder.path);
   }
 });
 
@@ -183,7 +184,7 @@ watch(currentFolder, async (newFolder) => {
 watch(gCameraModel, async (newModel) => {
   console.log('watch - gCameraModel:', newModel);
   if(newModel) {
-    await getCameraFiles(gCameraMake.value, newModel);
+    getCameraFiles(gCameraMake.value, newModel);
   } else {
     fileList.value = [];
   }
@@ -238,7 +239,7 @@ async function getFiles(path) {
     sortFileList(sortingType.value, sortingAsc.value);
     console.log('invoke - getFiles:', fileList.value);
 
-    await getFileThumb(fileList.value);
+    getFileThumb(fileList.value);
   } catch (error) {
     console.error('invoke - getFiles error:', error);
   }
@@ -285,32 +286,86 @@ async function getCameraFiles(make, model) {
     fileList.value = await invoke('get_camera_files', { make: make, model: model });
     console.log('invoke - getCameraFiles:', fileList.value);
 
-    await getFileThumb(fileList.value); 
+    getFileThumb(fileList.value); 
   } catch (error) {
-    console.error('invoke - getCameraFiles error:', error);
+    console.error('getCameraFiles error:', error);
   }
 }
 
 
 /// get the thumbnail for each file in mutil-thread
-async function getFileThumb(files) {
-  try {
-    const thumbnailPromises = files.map(async (file) => {
-      console.log('getFileThumb:', file.file_path);
+// async function getFileThumb(files) {
+//   try {
+//     const thumbnailPromises = files.map(async (file) => {
+//       console.log('getFileThumb:', file.file_path);
 
-      const thumb = await invoke('get_file_thumb', { 
+//       const thumb = await invoke('get_file_thumb', { 
+//         fileId: file.id,
+//         filePath: file.file_path,
+//         orientation: file.e_orientation || 0,
+//         thumbnailSize: THUMBNAIL_SIZE
+//       });
+
+//       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+//       console.log('getFileThumb:', file);
+//     });
+
+//     // Wait for all thumbnail promises to resolve in parallel
+//     await Promise.all(thumbnailPromises);
+
+//   } catch (error) {
+//     console.error('getFileThumb error:', error);
+//   }
+// }
+
+
+async function getFileThumb(files, concurrencyLimit = 8) {
+  try {
+    const result = [];
+    let activeRequests = 0;
+
+    const getThumbForFile = async (file) => {
+      console.log('getFileThumb:', file.file_path);
+      const thumb = await invoke('get_file_thumb', {
         fileId: file.id,
         filePath: file.file_path,
-        orientation: file.e_orientation ? file.e_orientation : 0,
+        orientation: file.e_orientation || 0, // Simplified orientation
         thumbnailSize: THUMBNAIL_SIZE
       });
 
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
       console.log('invoke - getFileThumb:', file);
-    });
+      return file;
+    };
 
-    // Wait for all thumbnail promises to resolve in parallel
-    await Promise.all(thumbnailPromises);
+    const runWithConcurrencyLimit = async (files) => {
+      const queue = [];
+
+      for (let i = 0; i < files.length; i++) {
+        if (activeRequests >= concurrencyLimit) {
+          await Promise.race(queue); // Wait for the first promise to complete
+        }
+
+        const filePromise = getThumbForFile(files[i])
+          .then((file) => {
+            // Remove the finished promise from the queue
+            queue.splice(queue.indexOf(filePromise), 1);
+            activeRequests--;
+            return file;
+          })
+          .catch((error) => {
+            console.error('Error fetching thumbnail:', error);
+          });
+
+        queue.push(filePromise);
+        activeRequests++;
+      }
+
+      return Promise.all(queue);
+    };
+
+    result.push(...await runWithConcurrencyLimit(files));
+    console.log('All thumbnails fetched successfully.');
 
   } catch (error) {
     console.error('invoke - getFileThumb error:', error);
