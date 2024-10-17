@@ -26,6 +26,7 @@ walkdir = "2.5.0"
 base64 = "0.22.1"
 image = "0.25.2"
 imagesize = "0.13.0"
+# opencv = "0.93.3"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

@@ -46,9 +46,9 @@
       </ul>
     </div>
 
-    <!-- Display message if no albums are found -->
+    <!-- Display message if no data are found -->
     <div v-else class="mt-10 flex items-center justify-center">
-      {{ $t('no_cameras') }}
+      {{ $t('no_cameras_data') }}
     </div>
 
   </div>

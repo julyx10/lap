@@ -5,47 +5,79 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" >
       <span>{{ titlebar }}</span>
-
-      <div class="flex">
-        <IconRefresh class="p-0.5 t-icon-hover" @click="clickRefresh"/>
+      <div class="flex text-sm">
+        <div 
+          :class="[
+            'px-2 border rounded-l-lg t-color-border t-color-bg-hover',
+            isMonthly ? 't-color-text-selected t-color-bg-selected' : ''
+          ]"
+         @click="isMonthly=true"
+        >
+          {{ $t('calendar_month') }}
+        </div>
+        <div 
+          :class="[
+            'px-2 border rounded-r-lg t-color-border t-color-bg-hover',
+            isMonthly ? '' : 't-color-text-selected t-color-bg-selected'
+          ]"
+         @click="isMonthly=false"
+        >
+          {{ $t('calendar_day') }}
+        </div>
+        <span class="px-2" />
+        <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
       </div>
     </div>
     
-    <!-- days of the week -->
-    <div class="flex flex-col items-center mr-4">
 
-      <div class="grid grid-cols-7 gap-2 text-center">
-        <div 
-          v-for="(day, index) in localeMsg.calendar_weekdays" 
-          :key="index" 
-          class="p-2 w-8 flex items-center justify-center"
+      <!-- days of the week -->
+      <div v-if="true" class="flex flex-col items-center mr-4">
+        <div class="grid grid-cols-7 gap-2 text-center">
+          <div 
+            v-for="(day, index) in localeMsg.calendar_weekdays" 
+            :key="index" 
+            class="p-2 w-8 flex items-center justify-center"
+          >
+            {{ day }}
+          </div>
+        </div>
+      </div>  
+      <!-- Display message if no data are found -->
+      <div v-else class="mt-10 flex items-center justify-center">
+        {{ $t('no_calendar_data') }}
+      </div>
+
+      <!-- calendar -->
+      <div ref="scrollable"
+        :class="['flex overflow-auto t-scrollbar-dark',
+          sortingAsc ? 'flex-col' : 'flex-col-reverse'
+        ]"
+      >
+        <div v-for="(months, year) in calendar_dates" 
+          :class="['flex',
+            sortingAsc ? 'flex-col' : 'flex-col-reverse'
+          ]"
         >
-          {{ day }}
+          <CalendarMonth v-for="(dates, month) in months" 
+            :year="Number(year)" 
+            :month="Number(month)"
+            :dates="dates"
+          />
         </div>
       </div>
-    </div>  
-    <!-- calendar -->
-    <div class="overflow-auto t-scrollbar-dark">
-      <div v-for="(months, year) in calendar_dates" class="flex flex-col items-center">
-        <CalendarMonth v-for="(dates, month) in months" 
-          :year="Number(year)" 
-          :month="Number(month)"
-          :dates="dates"
-        />
-      </div>
-    </div>
-  
+
   </div>
   
 </template>
 
 <script setup>
 
-import { ref, computed, inject, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api';
 import CalendarMonth from './CalendarMonth.vue';
 
-import IconRefresh from '@/assets/refresh.svg';
+import IconSortingAsc from '@/assets/sorting-asc.svg';
+import IconSortingDesc from '@/assets/sorting-desc.svg';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -57,22 +89,25 @@ const props = defineProps({
   titlebar: String
 });
 
+const isMonthly = ref(false); // Display monthly or daily
+const sortingAsc = ref(true); // sorting order
+const scrollable = ref(null); // Ref for the scrollable element
 const calendar_dates = ref([]);
 
 
 onMounted( () => {
   console.log('Calendar.vue mounted');
-  // if(gCalendarDays.value.length === 0) {
-    getCalendarDates();
-  // }
+  getCalendarDates();
 });
 
 
-/// refresh taken dates
-function clickRefresh() {
-  console.log('clickRefresh...');
-  getCalendarDates();
-};
+const toggleSortingOrder = () => {
+  sortingAsc.value = !sortingAsc.value;
+
+  // const element = scrollable.value; // Get the scrollable element
+  // element.scrollTop = sortingAsc.value === true ? 0 : element.scrollHeight;
+  // console.log('toggleSortingOrder:', sortingAsc.value, element);
+}
 
 
 /// fetch calendar dates
@@ -80,12 +115,11 @@ async function getCalendarDates() {
   try {
     let taken_dates = await invoke('get_taken_dates');
     calendar_dates.value = transformArray(taken_dates);
-    console.log('getCalendarDates...', calendar_dates.value);
+    console.log('getCalendarDates...', taken_dates, calendar_dates.value);
   } catch (error) {
     console.error('Failed to fetch calendar dates:', error);
   }
 }
-
 
 /// input: [['2024-10-15', 5], ['2023-01-01', 10]];
 /// output: [{2024: {10: {15: 5}}, {2023: {01: {01: 10}}}]
@@ -93,21 +127,24 @@ function transformArray(dates) {
   const result = {};
 
   dates.forEach(item => {
-    const [dateStr, count] = item;
-    const [year, month, date] = dateStr.split('-');
+    const [dateFormat, count] = item;  // dateForamat: 'yyyy-mm-dd'
+    const [yearStr, monthStr, dateStr] = dateFormat.split('-');
+    const year  = Number(yearStr);
+    const month = Number(monthStr);
+    const date  = Number(dateStr);
 
-    // Initialize the year object if it doesn't exist
-    if (!result[year]) {
-      result[year] = {};
+    if(year > 0 && month > 0 && date > 0) {
+      // Initialize the year object if it doesn't exist
+      if (!result[year]) {
+        result[year] = {};
+      }
+      // Initialize the month object if it doesn't exist
+      if (!result[year][month]) {
+        result[year][month] = [];
+      }
+      // Push the date and count as an object into the month array
+      result[year][month].push({ date, count });
     }
-
-    // Initialize the month object if it doesn't exist
-    if (!result[year][month]) {
-      result[year][month] = [];
-    }
-
-    // Push the date and count as an object into the month array
-    result[year][month].push({ date, count });
   });
 
   return result;

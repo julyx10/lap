@@ -18,10 +18,9 @@ provide('gAlbumId', ref(null));   // current album id (selected)
 provide('gFolderId', ref(null));  // current folder id (selected)
 
 // calendar
-// provide('gCalendarDays', ref([]));    // calendar days
-provide('gCalendarYear', ref(2024));  // calendar year (...2024)
-provide('gCalendarMonth', ref(1));    // calendar month (1-12)
-provide('gCalendarDate', ref(1));     // calendar date (1-31)
+provide('gCalendarYear', ref(null));  // calendar year (...2024)
+provide('gCalendarMonth', ref(null));    // calendar month (1-12)
+provide('gCalendarDate', ref(null));     // calendar date (1-31)
 
 // cameras
 provide('gCameras', ref([]));        // all cameras

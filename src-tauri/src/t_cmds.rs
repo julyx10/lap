@@ -1,6 +1,9 @@
 /**
- * This file is used to define the commands that can be called from the JS side of the application.
- * Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+ * project: jc-photo
+ * author:  julyxx
+ * email:   tiangle@gmail.com
+ * GitHub:  /julyx10
+ * date:    2024-08-08
  */
 
 use native_dialog::FileDialog;
@@ -168,6 +171,11 @@ pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
     AFile::get_taken_dates().map_err(|e| format!("Error while fetching taken dates: {}", e))
 }
 
+/// get files by date
+#[tauri::command]
+pub fn get_files_by_date(year: i64, month: i64, date: i64) -> Result<Vec<AFile>, String> {
+    AFile::get_files_by_date(year, month, date).map_err(|e| format!("Error while fetching files by date: {}", e))
+}
 
 /// get a file's camera make and model info
 #[tauri::command]

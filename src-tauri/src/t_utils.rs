@@ -1,6 +1,10 @@
 /**
- * File: t_utils.rs
-*/
+ * project: jc-photo
+ * author:  julyxx
+ * email:   tiangle@gmail.com
+ * GitHub:  /julyx10
+ * date:    2024-08-08
+ */
 
 use std::fs;
 use std::io::Cursor;

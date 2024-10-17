@@ -1,6 +1,9 @@
 /**
- * The db.rs file is used to create a database and a table in it.
- * 
+ * project: jc-photo
+ * author:  julyxx
+ * email:   tiangle@gmail.com
+ * GitHub:  /julyx10
+ * date:    2024-08-08
  */
 
 use std::collections::HashMap;
@@ -43,6 +46,20 @@ impl Album {
         })
     }
 
+    /// Function to construct `Self` from a database row
+    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
+        Ok(Self {
+            id: Some(row.get(0)?),
+            name: row.get(1)?,
+            path: row.get(2)?,
+            description: row.get(3)?,
+            avatar_id: row.get(4)?,
+            display_order_id: row.get(5)?,
+            created_at: row.get(6)?,
+            modified_at: row.get(7)?,
+        })
+    }
+
     /// fetch an album from db by path
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn();
@@ -51,16 +68,7 @@ impl Album {
             FROM albums WHERE path = ?1",
             params![path],
             |row| {
-                Ok(Self {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    path: row.get(2)?,
-                    description: row.get(3)?,
-                    avatar_id: row.get(4)?,
-                    display_order_id: row.get(5)?,
-                    created_at: row.get(6)?,
-                    modified_at: row.get(7)?
-                })
+                Self::from_row(row)
             }
         ).optional().map_err(|e| e.to_string())?;
         Ok(result)
@@ -130,16 +138,7 @@ impl Album {
         
         // Execute the query and map the result to Album structs
         let albums_iter = stmt.query_map([], |row| {
-            Ok(Self {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                path: row.get(2)?,
-                description: row.get(3)?,
-                avatar_id: row.get(4)?,
-                display_order_id: row.get(5)?,
-                created_at: row.get(6)?,
-                modified_at: row.get(7)?
-            })
+            Self::from_row(row)
         })?;
         
         // Collect the results into a Vec<Album>
@@ -382,51 +381,61 @@ impl AFile {
         })
     }
 
+    // Function to construct `Self` from a database row
+    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
+        Ok(Self {
+            id: Some(row.get(0)?),
+            folder_id: row.get(1)?,
+
+            name: row.get(2)?,
+            size: row.get(3)?,
+            created_at: row.get(4)?,
+            modified_at: row.get(5)?,
+            taken_date: row.get(6)?,
+
+            width: row.get(7)?,
+            height: row.get(8)?,
+
+            is_favorite: row.get(9)?,
+            comments: row.get(10)?,
+
+            e_make: row.get(11)?,
+            e_model: row.get(12)?,
+            e_date_time: row.get(13)?,
+            e_exposure_time: row.get(14)?,
+            e_f_number: row.get(15)?,
+            e_focal_length: row.get(16)?,
+            e_iso_speed: row.get(17)?,
+            e_flash: row.get(18)?,
+            e_orientation: row.get(19)?,
+
+            gps_latitude: row.get(20)?,
+            gps_longitude: row.get(21)?,
+            gps_altitude: row.get(22)?,
+
+            file_path: Some(t_utils::get_file_path(
+                row.get::<_, String>(23)?.as_str(),
+                row.get::<_, String>(2)?.as_str(),
+            )),
+        })
+    }
+
     /// fetch a file info from db by folder_id and file name
     pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn();
         let result = conn.query_row(
-            "SELECT id, folder_id, 
-                name, size, created_at, modified_at, taken_date,
-                width, height,
-                is_favorite, comments,
-                e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                gps_latitude, gps_longitude, gps_altitude
-            FROM afiles WHERE folder_id = ?1 AND name = ?2",
+            "SELECT a.id, a.folder_id, 
+                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                a.width, a.height,
+                a.is_favorite, a.comments,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                b.path
+            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+            WHERE a.folder_id = ?1 AND a.name = ?2",
             params![folder_id, t_utils::get_file_name(file_path)],
             |row| {
-                Ok(Self {
-                    id: Some(row.get(0)?),
-                    folder_id: row.get(1)?,
-
-                    name: row.get(2)?,
-                    size: row.get(3)?,
-                    created_at: row.get(4)?,
-                    modified_at: row.get(5)?,
-                    taken_date: row.get(6)?,
-
-                    width: row.get(7)?,
-                    height: row.get(8)?,
-
-                    is_favorite: row.get(9)?,
-                    comments: row.get(10)?,
-
-                    e_make: row.get(11)?,
-                    e_model: row.get(12)?,
-                    e_date_time: row.get(13)?,
-                    e_exposure_time: row.get(14)?,
-                    e_f_number: row.get(15)?,
-                    e_focal_length: row.get(16)?,
-                    e_iso_speed: row.get(17)?,
-                    e_flash: row.get(18)?,
-                    e_orientation: row.get(19)?,
-
-                    gps_latitude: row.get(20)?,
-                    gps_longitude: row.get(21)?,
-                    gps_altitude: row.get(22)?,
-
-                    file_path: Some(file_path.to_string()),
-                })
+                Self::from_row(row)
             }
         ).optional().map_err(|e| e.to_string())?;
         Ok(result)
@@ -511,6 +520,7 @@ impl AFile {
         Ok(new_file.unwrap())
     }
 
+
     /// get a file info from db by file_id
     pub fn get_file_info(file_id: i64) -> Result<Option<Self>, String> {
         let conn = open_conn();
@@ -526,41 +536,7 @@ impl AFile {
             WHERE a.id = ?1",
             params![file_id],
             |row| {
-                Ok(Self {
-                    id: Some(row.get(0)?),
-                    folder_id: row.get(1)?,
-
-                    name: row.get(2)?,
-                    size: row.get(3)?,
-                    created_at: row.get(4)?,
-                    modified_at: row.get(5)?,
-                    taken_date: row.get(6)?,
-
-                    width: row.get(7)?,
-                    height: row.get(8)?,
-
-                    is_favorite: row.get(9)?,
-                    comments: row.get(10)?,
-
-                    e_make: row.get(11)?,
-                    e_model: row.get(12)?,
-                    e_date_time: row.get(13)?,
-                    e_exposure_time: row.get(14)?,
-                    e_f_number: row.get(15)?,
-                    e_focal_length: row.get(16)?,
-                    e_iso_speed: row.get(17)?,
-                    e_flash: row.get(18)?,
-                    e_orientation: row.get(19)?,
-
-                    gps_latitude: row.get(20)?,
-                    gps_longitude: row.get(21)?,
-                    gps_altitude: row.get(22)?,
-
-                    file_path: Some(t_utils::get_file_path(
-                        row.get::<_, String>(23).unwrap().as_str(), 
-                        row.get::<_, String>(2).unwrap().as_str()
-                    ))
-                })
+                Self::from_row(row)
             }
         ).optional().map_err(|e| e.to_string())?;
         Ok(result)
@@ -606,6 +582,33 @@ impl AFile {
         Ok(results)
     }
 
+    pub fn get_files_by_date(year: i64, month: i64, date: i64) -> Result<Vec<Self>, String> {
+        let conn = open_conn();
+        let date_str = format!("{:04}-{:02}-{:02}", year, month, date); // yyyy-mm-dd
+
+        let mut stmt = conn.prepare(
+            "SELECT a.id, a.folder_id, 
+                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                a.width, a.height,
+                a.is_favorite, a.comments,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                b.path
+            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+            WHERE a.taken_date = ?1"
+        ).map_err(|e| e.to_string())?;
+    
+        let rows = stmt.query_map(params![date_str], |row| {
+            Self::from_row(row)
+        }).map_err(|e| e.to_string())?;
+    
+        let mut files = Vec::new();
+        for file in rows {
+            files.push(file.unwrap());
+        }
+    
+        Ok(files)
+    }
 
     /// get files by camera make and model
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
@@ -623,41 +626,7 @@ impl AFile {
         ).map_err(|e| e.to_string())?;
     
         let rows = stmt.query_map(params![make, model], |row| {
-            Ok(Self {
-                id: Some(row.get(0)?),
-                folder_id: row.get(1)?,
-
-                name: row.get(2)?,
-                size: row.get(3)?,
-                created_at: row.get(4)?,
-                modified_at: row.get(5)?,
-                taken_date: row.get(6)?,
-
-                width: row.get(7)?,
-                height: row.get(8)?,
-
-                is_favorite: row.get(9)?,
-                comments: row.get(10)?,
-
-                e_make: row.get(11)?,
-                e_model: row.get(12)?,
-                e_date_time: row.get(13)?,
-                e_exposure_time: row.get(14)?,
-                e_f_number: row.get(15)?,
-                e_focal_length: row.get(16)?,
-                e_iso_speed: row.get(17)?,
-                e_flash: row.get(18)?,
-                e_orientation: row.get(19)?,
-
-                gps_latitude: row.get(20)?,
-                gps_longitude: row.get(21)?,
-                gps_altitude: row.get(22)?,
-
-                file_path: Some(t_utils::get_file_path(
-                    row.get::<_, String>(23).unwrap().as_str(), 
-                    row.get::<_, String>(2).unwrap().as_str()
-                )),
-            })
+            Self::from_row(row)
         }).map_err(|e| e.to_string())?;
     
         let mut files = Vec::new();

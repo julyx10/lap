@@ -11,7 +11,7 @@
   "settings": "Settings",
   "debug": "Debug",
 
-  "no_albums": "No albums available",
+  "no_albums": "No albums, click the add button to add an album",
 
   "add_album_title": "Add album",
 
@@ -50,7 +50,7 @@
   "file_info_gps_altitude": "GPS Altitude",
   "file_info_comment": "Comment",
 
-  "no_cameras": "No camera found",
+  "no_cameras_data": "No camera data available, please add an album first",
 
   "calendar_day": "Day",
   "calendar_week": "Week",
@@ -61,12 +61,15 @@
   "calendar_weekdays_long": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
   "calendar_months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   "calendar_months_long": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-
+  "no_calendar_data": "No calendar data available, please add an album first",
+  
+  "month_format": "MMMM yyyy",
   "date_format": "MM/dd/yyyy",
   "date_format_long": "MMMM do, yyyy",
   "date_format_with_weekday": "eeee, MMMM do, yyyy",
   "date_time_format": "MM/dd/yyyy HH:mm:ss",
-  "date_time_format_long": "MMMM do, yyyy HH:mm:ss"
+  "date_time_format_long": "MMMM do, yyyy HH:mm:ss",
   
+  "image_view_loading": "Loading..."
 }
   

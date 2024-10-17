@@ -180,6 +180,12 @@ watch(currentFolder, async (newFolder) => {
   }
 });
 
+watch([gCalendarYear, gCalendarMonth, gCalendarDate], async ([year, month, date]) => {
+  console.log('watch - gCalendarYear:', year, month, date);
+  if (year && month && date) {
+    getFilesByDate(year, month, date);
+  }
+});
 
 watch(gCameraModel, async (newModel) => {
   console.log('watch - gCameraModel:', newModel);
@@ -292,6 +298,17 @@ async function getCameraFiles(make, model) {
   }
 }
 
+/// get all files under the selected date
+async function getFilesByDate(year, month, date) {
+  try {
+    fileList.value = await invoke('get_files_by_date', { year: year, month: month, date: date });
+    console.log('invoke - getFilesByDate:', fileList.value);
+
+    getFileThumb(fileList.value);
+  } catch (error) {
+    console.error('invoke - getFilesByDate error:', error);
+  }
+}
 
 /// get the thumbnail for each file in mutil-thread
 // async function getFileThumb(files) {

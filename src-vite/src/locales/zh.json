@@ -11,7 +11,7 @@
   "settings": "设置",
   "debug": "调试",
 
-  "no_albums": "相册为空",
+  "no_albums": "相册为空，点击添加按钮添加相册",
 
   "add_album_title": "添加相册",
 
@@ -50,7 +50,7 @@
   "file_info_gps_altitude": "GPS海拔",
   "file_info_comment": "备注",
 
-  "no_cameras": "没有发现照相机",
+  "no_cameras_data": "没有相机的数据，请首先添加相册",
 
   "calendar_day": "日",
   "calendar_week": "周",
@@ -61,11 +61,14 @@
   "calendar_weekdays_long": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
   "calendar_months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
   "calendar_months_long": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+  "no_calendar_data": "没有日历的数据，请首先添加相册",
 
+  "month_format": "yyyy年M月",
   "date_format": "yyyy/MM/dd",
   "date_format_long": "yyyy年M月d日",
   "date_format_with_weekday": "yyyy年M月d日",
   "date_time_format": "yyyy/MM/dd HH:mm:ss",
-  "date_time_format_long": "yyyy年M月d日 HH:mm:ss"
+  "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
 
+  "image_view_loading": "载入中..."
 }

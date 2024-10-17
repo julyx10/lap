@@ -48,7 +48,7 @@
           @mousemove="dragImage" 
           @mouseleave="stopDragging" 
         />
-        <p v-else>{{ loadError ? loadError : 'Loading...' }}</p>
+        <p v-else>{{ loadError ? loadError : $t('image_view_loading') }}</p>
 
         <!-- right -->
         <div v-if="fileIndex < fileCount - 1"

@@ -1,25 +1,36 @@
 <template>
 
-  <span class="p-4 font-lg">{{ year }} - {{ month }}</span>
+  <div class="flex flex-col items-center">
 
-  <div class="grid grid-cols-7 gap-2 text-center">
-    <div v-for="n in blankDays" :key="'blank' + n"></div>
-    <div
-      v-for="date in dates"
-      :key="date"
-      class="size-8 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
-      :class="{
-        'bg-sky-900': isTodayFn(date[0]),
-        'border-sky-500': isSelectedDate(date[0]),
-        'border-transparent': !isSelectedDate(date[0]),
-      }"
-      @click="clickDate(date)"
-    >
-      <div class="flex flex-col">
-        {{ Number(date.date) }} 
-        <!-- <span v-if="date.count > 0" class="text-xs">{{ date.count }}</span> -->
+    <!-- title -->
+    <span class="p-4">
+      {{ monthTitle }}
+    </span>
+
+    <!-- date list -->
+    <div class="grid grid-cols-7 gap-2 text-center">
+      <div v-for="n in blankDates" :key="'blank' + n"></div>
+      <div
+        v-for="d in monthDates"
+        :key="d.date"
+        class="size-8 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
+        :class="{
+          'bg-sky-900': isTodayFn(d.date),
+          'border-sky-500': isSelectedDate(d.date),
+          'border-transparent': !isSelectedDate(d.date),
+        }"
+        @click="clickDate(d.date)"
+      >
+        <span 
+          :class="{
+            't-color-text-selected ': d.count > 0,
+          }"
+        >
+          {{ Number(d.date) }}
+        </span>
       </div>
     </div>
+
   </div>
 
 </template>
@@ -27,8 +38,9 @@
 
 <script setup>
 
-import { ref, inject, computed, watch, onMounted } from 'vue';
+import { inject, computed } from 'vue';
 import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
+import { formatDate } from '@/common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -44,7 +56,7 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-  dates: {      // [[date, count]], for example [ [1, 0], [2, 12], [3, 13] ];
+  dates: {
     type: Array,
     required: true,
   },
@@ -54,18 +66,17 @@ const gCalendarYear = inject('gCalendarYear');
 const gCalendarMonth = inject('gCalendarMonth');
 const gCalendarDate = inject('gCalendarDate');
 
-onMounted(() => {
-  console.log('CalendarMonth:', props.year, props.month, props.dates);
-});
-
-// Computed property to get the number of days in the month
-// const daysInMonth = computed(() => getDaysInMonth(new Date(props.year, props.month - 1)));
+// Title of the month
+const monthTitle = computed(() => formatDate(props.year, props.month, 1, localeMsg.value.month_format));
 
 // Blank days at the start of the calendar (for proper alignment)
-const blankDays = computed(() => {
+const blankDates = computed(() => {
   const firstDayOfMonth = getDay(startOfMonth(new Date(props.year, props.month - 1)));
   return [...Array(firstDayOfMonth).keys()];
 });
+
+// Array of { date, count } objects for the month
+const monthDates = getMonthDates(props.year, props.month, props.dates);
 
 // Check if the given date is today
 const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date));
@@ -74,6 +85,28 @@ const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date))
 const isSelectedDate = (date) => gCalendarYear.value === props.year &&
                                  gCalendarMonth.value === props.month && 
                                  gCalendarDate.value === date;
+
+// Generate an array of { date, count } objects for the month
+function getMonthDates(year, month, dates = []) {
+  // Get the number of days in the month
+  const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+
+  // Create a map from the input dates for quick lookup
+  const dateMap = new Map(dates.map(item => [Number(item.date), item.count]));
+
+  // Create an array with { date, count } objects
+  const dateCountArray = Array.from({ length: daysInMonth }, (v, i) => {
+    const date = i + 1;
+    return {
+      date: date,
+      count: dateMap.get(date) || 0 // Use the count from the input if available, else default to 0
+    };
+  });
+
+  // console.log('getMonthDates:', year, month, dateCountArray);
+  return dateCountArray;
+}
+
 
 // click a date to select it
 const clickDate = (date) => {

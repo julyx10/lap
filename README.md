@@ -1,6 +1,7 @@
 ## TODO 2024-09-17
 - save album/folders' expanded status and current selected folder
-
+- creating thumbnail is slow
+- 
 ## Skill Set
 - Rust, Tauri, Cargo
 - HTML, CSS, XML, JSON
