@@ -24,8 +24,8 @@
 
     <!-- Window Control Buttons -->
     <div class="h-full flex items-center">
-      <IconMinus class="t-window-btn" @click="minimizeWindow" />
-      <component :is="isMaximized ? IconRestore : IconMaximize" class="t-window-btn" @click="toggleMaximizeWindow" />
+      <IconMinus v-if="resizable" class="t-window-btn" @click="minimizeWindow" />
+      <component v-if="resizable" :is="isMaximized ? IconRestore : IconMaximize" class="t-window-btn" @click="toggleMaximizeWindow" />
       <IconClose class="t-window-btn hover:bg-red-600" @click="closeWindow" />
     </div>
 
@@ -48,6 +48,10 @@ const props = defineProps({
   titlebar: {
     type: String,
     required: true,
+  },
+  resizable: {
+    type: Boolean,
+    default: true,
   },
   hasSearch: {
     type: Boolean,

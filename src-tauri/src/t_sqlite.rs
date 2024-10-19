@@ -610,6 +610,34 @@ impl AFile {
         Ok(files)
     }
 
+    /// data string format: yyyy-mm-dd
+    pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<Self>, String> {
+        let conn = open_conn();
+
+        let mut stmt = conn.prepare(
+            "SELECT a.id, a.folder_id, 
+                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                a.width, a.height,
+                a.is_favorite, a.comments,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                b.path
+            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+            WHERE a.taken_date >= ?1 AND a.taken_date <= ?2"
+        ).map_err(|e| e.to_string())?;
+    
+        let rows = stmt.query_map(params![start_date, end_date], |row| {
+            Self::from_row(row)
+        }).map_err(|e| e.to_string())?;
+    
+        let mut files = Vec::new();
+        for file in rows {
+            files.push(file.unwrap());
+        }
+    
+        Ok(files)
+    }
+
     /// get files by camera make and model
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
         let conn = open_conn();

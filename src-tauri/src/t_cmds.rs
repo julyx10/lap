@@ -177,6 +177,13 @@ pub fn get_files_by_date(year: i64, month: i64, date: i64) -> Result<Vec<AFile>,
     AFile::get_files_by_date(year, month, date).map_err(|e| format!("Error while fetching files by date: {}", e))
 }
 
+/// get files by date range
+/// start_date and end_date format: yyyy-mm-dd
+#[tauri::command]
+pub fn get_files_by_date_range(start_date: &str, end_date: &str ) -> Result<Vec<AFile>, String> {
+    AFile::get_files_by_date_range(start_date, end_date).map_err(|e| format!("Error while fetching files by date range: {}", e))
+}
+
 /// get a file's camera make and model info
 #[tauri::command]
 pub fn get_camera_info() -> Result<Vec<ACamera>, String> {

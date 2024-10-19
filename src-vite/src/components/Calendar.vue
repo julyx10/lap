@@ -13,7 +13,7 @@
           ]"
          @click="isMonthly=true"
         >
-          {{ $t('calendar_month') }}
+          {{ $t('calendar_monthly') }}
         </div>
         <div 
           :class="[
@@ -22,49 +22,91 @@
           ]"
          @click="isMonthly=false"
         >
-          {{ $t('calendar_day') }}
+          {{ $t('calendar_daily') }}
         </div>
         <span class="px-2" />
         <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
       </div>
     </div>
     
-
-      <!-- days of the week -->
-      <div v-if="true" class="flex flex-col items-center mr-4">
-        <div class="grid grid-cols-7 gap-2 text-center">
-          <div 
-            v-for="(day, index) in localeMsg.calendar_weekdays" 
-            :key="index" 
-            class="p-2 w-8 flex items-center justify-center"
-          >
-            {{ day }}
+    <template v-if="Object.keys(calendar_dates).length > 0" >
+      
+        <!-- days of the week -->
+        <div v-if="!isMonthly" class="flex flex-col items-center mr-4">
+          <div class="grid grid-cols-7 gap-2 text-center">
+            <div 
+              v-for="(day, index) in localeMsg.calendar_weekdays" 
+              :key="index" 
+              class="p-2 w-8 flex items-center justify-center"
+            >
+              {{ day }}
+            </div>
           </div>
-        </div>
-      </div>  
-      <!-- Display message if no data are found -->
-      <div v-else class="mt-10 flex items-center justify-center">
-        {{ $t('no_calendar_data') }}
-      </div>
+        </div>  
 
-      <!-- calendar -->
-      <div ref="scrollable"
-        :class="['flex overflow-auto t-scrollbar-dark',
-          sortingAsc ? 'flex-col' : 'flex-col-reverse'
-        ]"
-      >
-        <div v-for="(months, year) in calendar_dates" 
-          :class="['flex',
+        <!-- calendar by monthly -->
+        <!-- <div v-if="isMonthly" ref="scrollable"
+          :class="['flex overflow-auto t-scrollbar-dark',
             sortingAsc ? 'flex-col' : 'flex-col-reverse'
           ]"
         >
-          <CalendarMonth v-for="(dates, month) in months" 
-            :year="Number(year)" 
-            :month="Number(month)"
-            :dates="dates"
-          />
+          <div v-for="(months, year) in calendar_dates" 
+            :class="['flex items-center',
+              sortingAsc ? 'flex-col' : 'flex-col-reverse'
+            ]"
+          >
+            <div class="p-4">
+              {{ year }}
+            </div>
+            <div class="gap-4 grid grid-cols-4">
+              <div v-for="m in 12" 
+                :key="m" 
+                class="px-2 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
+                :class="{
+                  'bg-sky-900': isThisMonth(year, m),
+                  'border-sky-500': isSelectedMonth(year, m),
+                  'border-transparent': !isSelectedMonth(year, m),
+                }"
+                @click="clickMonth(year, m)" 
+              >
+                {{ localeMsg.calendar_months[m - 1] }}
+              </div>
+            </div>
+          </div>
+        </div> -->
+
+        <!-- calendar -->
+        <div ref="scrollable"
+          :class="['flex overflow-auto t-scrollbar-dark',
+            sortingAsc ? 'flex-col' : 'flex-col-reverse'
+          ]"
+        >
+          <div v-for="(months, year) in calendar_dates" 
+            :class="['flex',
+              sortingAsc ? 'flex-col' : 'flex-col-reverse'
+            ]"
+          >
+            <CalendarMonthly v-if="isMonthly"
+              :year="Number(year)" 
+              :months="months"
+            />
+
+            <CalendarDaily v-else v-for="(dates, month) in months" 
+              :year="Number(year)" 
+              :month="Number(month)"
+              :dates="dates"
+            />
+          </div>
         </div>
+
+    </template>
+
+    <!-- Display message if no data are found -->
+    <template v-else>
+      <div class="mt-10 flex items-center justify-center">
+        {{ $t('no_calendar_data') }}
       </div>
+    </template>
 
   </div>
   
@@ -74,7 +116,8 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api';
-import CalendarMonth from './CalendarMonth.vue';
+import CalendarMonthly from './CalendarMonthly.vue';
+import CalendarDaily from './CalendarDaily.vue';
 
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
@@ -89,7 +132,7 @@ const props = defineProps({
   titlebar: String
 });
 
-const isMonthly = ref(false); // Display monthly or daily
+const isMonthly = ref(true); // Display monthly or daily
 const sortingAsc = ref(true); // sorting order
 const scrollable = ref(null); // Ref for the scrollable element
 const calendar_dates = ref([]);
@@ -115,7 +158,7 @@ async function getCalendarDates() {
   try {
     let taken_dates = await invoke('get_taken_dates');
     calendar_dates.value = transformArray(taken_dates);
-    console.log('getCalendarDates...', taken_dates, calendar_dates.value);
+    console.log('getCalendarDates...', taken_dates, calendar_dates.value, calendar_dates.value.length);
   } catch (error) {
     console.error('Failed to fetch calendar dates:', error);
   }

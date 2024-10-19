@@ -21,11 +21,7 @@
         }"
         @click="clickDate(d.date)"
       >
-        <span 
-          :class="{
-            't-color-text-selected ': d.count > 0,
-          }"
-        >
+        <span :class="[d.count > 0 ? 't-color-text' : 't-color-text-dark']" >
           {{ Number(d.date) }}
         </span>
       </div>

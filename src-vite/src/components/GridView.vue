@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 overflow-auto t-scrollbar">
+  <div ref="scrollable" class="flex-1 overflow-auto t-scrollbar">
     <div class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
       
       <div 
@@ -51,8 +51,7 @@ const props = defineProps({
 // const msg = computed(() => messages.value[locale.value]);
 
 const gContentIndex = inject('gContentIndex'); // global selected item index
-const fileListLength = computed(() => props.fileList.length);
-
+const scrollable = ref(null); // Ref for the scrollable element
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
@@ -64,7 +63,7 @@ onMounted(() => {
         gContentIndex.value = Math.max(gContentIndex.value - 1, 0);
         break;
       case 'next':
-        gContentIndex.value = Math.min(gContentIndex.value + 1, fileListLength.value - 1);
+        gContentIndex.value = Math.min(gContentIndex.value + 1, props.fileList.length - 1);
         break;
       default:
         break;
@@ -93,7 +92,7 @@ function handleKeyDown(event) {
   }
 
   if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-    gContentIndex.value = Math.min(gContentIndex.value + 1, fileListLength.value - 1);
+    gContentIndex.value = Math.min(gContentIndex.value + 1, props.fileList.length - 1);
   } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
     gContentIndex.value = Math.max(gContentIndex.value - 1, 0);
   } else if (event.key === 'Enter' || event.key === 'Space') {
@@ -101,6 +100,13 @@ function handleKeyDown(event) {
   }
 }
 
+// watch for changes in the file list
+watch(() => props.fileList, (newList) => {
+  gContentIndex.value = - 1;
+
+  const element = scrollable.value; // Get the scrollable element
+  element.scrollTop = 0;
+});
 
 // watch for changes in the selected item index
 watch (() => gContentIndex.value, (newIndex) => {

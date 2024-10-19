@@ -122,6 +122,7 @@ function clickSettings() {
     title: 'Settings',
     width: 640,
     height: 480,
+    resizable: false,
     transparent: true,
     decorations: false,
   });

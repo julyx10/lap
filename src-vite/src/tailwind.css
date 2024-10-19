@@ -42,13 +42,15 @@
 }
 
 .t-color-text {
-  @apply text-gray-500;
+  @apply text-gray-400;
 }
 
 .t-color-text-selected {
-  @apply text-gray-300;
+  @apply text-gray-200;
 }
-
+.t-color-text-dark {
+  @apply text-gray-600;
+}
 .t-color-text-light {
   @apply text-gray-200;
 }

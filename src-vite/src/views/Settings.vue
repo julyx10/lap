@@ -2,7 +2,7 @@
 
   <div class="w-screen h-screen flex flex-col border border-gray-800 rounded-lg overflow-hidden">
     <!-- Title Bar -->
-    <TitleBar :titlebar="$t('settings')" :hasSearch="false"/>
+    <TitleBar :titlebar="$t('settings')" :resizable="false" :hasSearch="false"/>
 
     <!-- Main Content -->
     <div class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark">

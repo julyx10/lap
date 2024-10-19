@@ -173,8 +173,6 @@ watch(gToolbarIndex, async (newIndex) => {
 watch(currentFolder, async (newFolder) => {
   console.log('watch - currentFolder:', newFolder);
   if (newFolder) {
-    // reset the selected item index
-    gContentIndex.value = -1;  // before get files
     // Fetch the files in the new folder
     getFiles(newFolder.path);
   }
