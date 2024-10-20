@@ -3,7 +3,7 @@
   <div class="flex flex-col items-center">
 
     <!-- title -->
-    <span class="p-4">
+    <span class="p-4 t-color-text-dark">
       {{ monthTitle }}
     </span>
 
@@ -14,16 +14,17 @@
         v-for="d in monthDates"
         :key="d.date"
         class="size-8 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
-        :class="{
-          'bg-sky-900': isTodayFn(d.date),
-          'border-sky-500': isSelectedDate(d.date),
-          'border-transparent': !isSelectedDate(d.date),
-        }"
+        :class="[
+          {
+            'bg-sky-900': isTodayFn(d.date),
+            'border-sky-500': isSelectedDate(d.date),
+            'border-transparent': !isSelectedDate(d.date),
+          },
+          d.count > 0 ? 't-color-text' : 't-color-text-dark'
+        ]"
         @click="clickDate(d.date)"
       >
-        <span :class="[d.count > 0 ? 't-color-text' : 't-color-text-dark']" >
-          {{ Number(d.date) }}
-        </span>
+        {{ Number(d.date) }}
       </div>
     </div>
 

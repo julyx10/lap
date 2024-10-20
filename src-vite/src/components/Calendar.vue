@@ -31,7 +31,7 @@
     
     <template v-if="Object.keys(calendar_dates).length > 0" >
       
-        <!-- days of the week -->
+        <!-- days of the week in daily calendar -->
         <div v-if="!isMonthly" class="flex flex-col items-center mr-4">
           <div class="grid grid-cols-7 gap-2 text-center">
             <div 
@@ -43,37 +43,6 @@
             </div>
           </div>
         </div>  
-
-        <!-- calendar by monthly -->
-        <!-- <div v-if="isMonthly" ref="scrollable"
-          :class="['flex overflow-auto t-scrollbar-dark',
-            sortingAsc ? 'flex-col' : 'flex-col-reverse'
-          ]"
-        >
-          <div v-for="(months, year) in calendar_dates" 
-            :class="['flex items-center',
-              sortingAsc ? 'flex-col' : 'flex-col-reverse'
-            ]"
-          >
-            <div class="p-4">
-              {{ year }}
-            </div>
-            <div class="gap-4 grid grid-cols-4">
-              <div v-for="m in 12" 
-                :key="m" 
-                class="px-2 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
-                :class="{
-                  'bg-sky-900': isThisMonth(year, m),
-                  'border-sky-500': isSelectedMonth(year, m),
-                  'border-transparent': !isSelectedMonth(year, m),
-                }"
-                @click="clickMonth(year, m)" 
-              >
-                {{ localeMsg.calendar_months[m - 1] }}
-              </div>
-            </div>
-          </div>
-        </div> -->
 
         <!-- calendar -->
         <div ref="scrollable"
@@ -90,7 +59,6 @@
               :year="Number(year)" 
               :months="months"
             />
-
             <CalendarDaily v-else v-for="(dates, month) in months" 
               :year="Number(year)" 
               :month="Number(month)"
@@ -152,13 +120,12 @@ const toggleSortingOrder = () => {
   // console.log('toggleSortingOrder:', sortingAsc.value, element);
 }
 
-
 /// fetch calendar dates
 async function getCalendarDates() {
   try {
     let taken_dates = await invoke('get_taken_dates');
     calendar_dates.value = transformArray(taken_dates);
-    console.log('getCalendarDates...', taken_dates, calendar_dates.value, calendar_dates.value.length);
+    console.log('getCalendarDates...', taken_dates, calendar_dates.value);
   } catch (error) {
     console.error('Failed to fetch calendar dates:', error);
   }

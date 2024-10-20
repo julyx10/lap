@@ -3,11 +3,11 @@
   <div class="flex flex-col items-center">
 
     <!-- title -->
-    <span class="p-4">
-      {{ year }}
+    <span class="p-4 t-color-text-dark">
+      {{ yearTitle }}
     </span>
 
-    <!-- date list -->
+    <!-- month list -->
     <div class="gap-4 grid grid-cols-4">
       <div v-for="m in 12" 
         :key="m" 
@@ -16,6 +16,7 @@
           'bg-sky-900': isThisMonth(year, m),
           'border-sky-500': isSelectedMonth(year, m),
           'border-transparent': !isSelectedMonth(year, m),
+          't-color-text-dark': sumMonthCount(m) === 0
         }"
         @click="clickMonth(year, m)" 
       >
@@ -30,8 +31,7 @@
 
 <script setup>
 
-import { inject, computed } from 'vue';
-import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
+import { inject, computed, onMounted } from 'vue';
 import { formatDate } from '@/common/utils';
 
 /// i18n
@@ -54,6 +54,19 @@ const gCalendarYear = inject('gCalendarYear');
 const gCalendarMonth = inject('gCalendarMonth');
 const gCalendarDate = inject('gCalendarDate');
 
+// Title for the year
+const yearTitle = computed(() => formatDate(props.year, 1, 1, localeMsg.value.year_format));
+
+// Sum the count values for the given month
+function sumMonthCount(month) {
+  let sum = 0;
+  if (props.months[month]) {
+    props.months[month].forEach(entry => {
+      sum += Number(entry.count) || 0; // Sum the count values, defaulting to 0 if missing
+    });
+  }
+  return sum;
+}
 
 // Check if the given month is this month
 function isThisMonth(year, month) {
@@ -62,15 +75,14 @@ function isThisMonth(year, month) {
   return year === now.getFullYear() && (month - 1) === now.getMonth();
 }
 
-// Check if the date is selected
+// Check if the month is selected
 const isSelectedMonth = (year, month) => gCalendarYear.value === year && gCalendarMonth.value === month;
 
-
-// click a date to select it
+// click a month to select it
 const clickMonth = (year, month) => {
   gCalendarYear.value = year;
   gCalendarMonth.value = month;
-  gCalendarDate.value = -1;
+  gCalendarDate.value = -1;   // -1 means selecting a month
 
   console.log('clickDate:', gCalendarYear.value, gCalendarMonth.value, gCalendarDate.value);
 };

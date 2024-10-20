@@ -10,22 +10,22 @@ import { ref, provide, onMounted, onUnmounted } from 'vue';
 /// global variables
 // provide('gAppConfig', ref({}));     // app configuration
 
-provide('gToolbarIndex',  ref(1));   // toolbar index
+provide('gToolbarIndex', ref(1));   // toolbar index
 
 // albums
-provide('gAlbums', ref([]));      // all albums
-provide('gAlbumId', ref(null));   // current album id (selected)
+provide('gAlbums',   ref([]));    // all albums
+provide('gAlbumId',  ref(null));  // current album id (selected)
 provide('gFolderId', ref(null));  // current folder id (selected)
 
 // calendar
-provide('gCalendarYear', ref(null));  // calendar year (...2024)
-provide('gCalendarMonth', ref(null));    // calendar month (1-12)
-provide('gCalendarDate', ref(null));     // calendar date (1-31)
+provide('gCalendarYear',  ref(null));  // current year (...2024)
+provide('gCalendarMonth', ref(null));  // current month (1-12)
+provide('gCalendarDate',  ref(null));  // current date (1-31), -1 means selecting a month
 
 // cameras
 provide('gCameras', ref([]));        // all cameras
-provide('gCameraMake', ref(null));   // camera make
-provide('gCameraModel', ref(null));  // camera model
+provide('gCameraMake', ref(null));   // current camera make
+provide('gCameraModel', ref(null));  // current camera model
 
 // content list view
 provide('gContentIndex', ref(-1));  // selected list item index

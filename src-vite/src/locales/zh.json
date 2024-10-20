@@ -25,7 +25,8 @@
   "files": "文件",
   "allphotos": "所有照片",
 
-  "content_summary": "{folders} 文件夹, {files} 文件",
+  "folder_summary": "{folders} 文件夹, {files} 文件",
+  "files_summary": "{files} 文件",
 
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "信息",
@@ -65,10 +66,11 @@
   "calendar_months_long": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
   "no_calendar_data": "没有日历的数据，请首先添加相册",
 
+  "year_format": "yyyy年",
   "month_format": "yyyy年M月",
   "date_format": "yyyy/MM/dd",
   "date_format_long": "yyyy年M月d日",
-  "date_format_with_weekday": "yyyy年M月d日",
+  "date_format_long_with_weekday": "yyyy年M月d日",
   "date_time_format": "yyyy/MM/dd HH:mm:ss",
   "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
 

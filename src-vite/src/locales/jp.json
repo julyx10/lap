@@ -1,0 +1,79 @@
+{
+  "home": "ホーム",
+  "album": "アルバム",
+  "calendar": "カレンダー",
+  "map": "地図",
+  "people": "人物",
+  "camera": "カメラ",
+  "favorite": "お気に入り",
+  "tag": "タグ",
+
+  "settings": "設定",
+  "debug": "デバッグ",
+
+  "no_albums": "アルバムが空です。追加ボタンを押してアルバムを追加してください。",
+
+  "add_album_title": "アルバムを追加",
+
+  "delete_album_msgbox_title": "アルバムの削除",
+  "delete_album_msgbox_content": "アルバムを削除してもよろしいですか？",
+  "delete_album_msgbox_ok": "はい",
+  "delete_album_msgbox_cancel": "いいえ",
+
+  "search_placeholder": "検索...",
+
+  "files": "ファイル",
+  "allphotos": "すべての写真",
+
+  "folder_summary": "{folders} フォルダ, {files} ファイル",
+  "files_summary": "{files} ファイル",
+
+  "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],
+  "file_info_title": "情報",
+  "file_info_name": "名前",
+  "file_info_resolution": "解像度",
+  "file_info_size": "サイズ",
+  "file_info_created": "作成日",
+  "file_info_modified": "変更日",
+  "file_info_camera_make": "カメラメーカー",
+  "file_info_camera_model": "カメラモデル",
+  "file_info_date_taken": "撮影日",
+  "file_info_exposure_time": "露出時間",
+  "file_info_aperture": "絞り",
+  "file_info_focal_length": "焦点距離",
+  "file_info_iso": "ISO",
+  "file_info_flash": "フラッシュ",
+  "file_info_color_type": "色の種類",
+  "file_info_bit_depth": "ビット深度",
+  "file_info_alpha_channel": "アルファチャンネル",
+  "file_info_gps_latitude": "GPS緯度",
+  "file_info_gps_longitude": "GPS経度",
+  "file_info_gps_altitude": "GPS高度",
+  "file_info_comment": "コメント",
+
+  "no_cameras_data": "カメラのデータがありません。まずアルバムを追加してください。",
+
+  "calendar_day": "日",
+  "calendar_week": "週",
+  "calendar_month": "月",
+  "calendar_year": "年",
+  "calendar_today": "今日",
+  "calendar_monthly": "月ごと",
+  "calendar_daily": "日ごと",
+  "calendar_weekdays": ["日", "月", "火", "水", "木", "金", "土"],
+  "calendar_weekdays_long": ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"],
+  "calendar_months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+  "calendar_months_long": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+  "no_calendar_data": "カレンダーのデータがありません。まずアルバムを追加してください。",
+
+  "year_format": "yyyy年",
+  "month_format": "yyyy年M月",
+  "date_format": "yyyy/MM/dd",
+  "date_format_long": "yyyy年M月d日",
+  "date_format_long_with_weekday": "yyyy年M月d日",
+  "date_time_format": "yyyy/MM/dd HH:mm:ss",
+  "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
+
+  "image_view_loading": "読み込み中..."
+}
+  

@@ -8,8 +8,11 @@
 
         <div class="flex-1 flex flex-col">
           <span>{{ title }}</span>
-          <span class="text-sm">
-            {{ $t('content_summary', { folders: subFolderList.length, files: fileList.length }) }}
+          <span v-if="gToolbarIndex === 1" class="text-sm">
+            {{ $t('folder_summary', { folders: subFolderList.length, files: fileList.length }) }}
+          </span>
+          <span v-else class="text-sm">
+            {{ $t('files_summary', { files: fileList.length }) }}
           </span>
         </div>
 
@@ -43,6 +46,7 @@ import { invoke } from '@tauri-apps/api';
 // import TableView from '@/components/TableView.vue';
 import GridView  from '@/components/GridView.vue';
 import { THUMBNAIL_SIZE, formatDate } from '@/common/utils';
+import { format } from 'date-fns';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -56,8 +60,6 @@ import IconFavorite from '@/assets/heart-solid.svg';
 import IconTag from '@/assets/tag.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
-import { sub } from 'date-fns';
-
 
 const props = defineProps({
   titlebar: String
@@ -111,12 +113,11 @@ const title = computed(() => {
       break;
     case 2:  // calendar
       if (gCalendarYear.value && gCalendarMonth.value && gCalendarDate.value) {
-        title = formatDate(
-          gCalendarYear.value, 
-          gCalendarMonth.value, 
-          gCalendarDate.value, 
-          localeMsg.value.date_format_with_weekday    // 'yyyy-MM-dd'
-        );
+        if (gCalendarDate.value === -1) {     // monthly
+          title = formatDate(gCalendarYear.value, gCalendarMonth.value, 1, localeMsg.value.month_format);
+        } else if (gCalendarDate.value > 0) { // daily
+          title = formatDate(gCalendarYear.value, gCalendarMonth.value, gCalendarDate.value, localeMsg.value.date_format_long);
+        }
       }
       break;
     case 3:  // map
@@ -181,7 +182,7 @@ watch(currentFolder, async (newFolder) => {
 watch([gCalendarYear, gCalendarMonth, gCalendarDate], async ([year, month, date]) => {
   console.log('watch - gCalendarYear:', year, month, date);
   if (year && month && date) {
-    getFilesByDate(year, month, date);
+    getCalendarFiles(year, month, date);
   }
 });
 
@@ -296,10 +297,17 @@ async function getCameraFiles(make, model) {
   }
 }
 
-/// get all files under the selected date
-async function getFilesByDate(year, month, date) {
+/// get all files of calendar
+async function getCalendarFiles(year, month, date) {
   try {
-    fileList.value = await invoke('get_files_by_date', { year: year, month: month, date: date });
+    if (date === -1) { // -1 means selecting a month
+      // get the first and last days of the month.
+      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
+      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
+      fileList.value = await invoke('get_files_by_date_range', { startDate: startDate, endDate: endDate });
+    } else {  // otherwise, get files by date
+      fileList.value = await invoke('get_files_by_date', { year: year, month: month, date: date });
+    }
     console.log('invoke - getFilesByDate:', fileList.value);
 
     getFileThumb(fileList.value);

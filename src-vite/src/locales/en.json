@@ -25,7 +25,8 @@
   "files": "Files",
   "allphotos": "All Photos",
 
-  "content_summary": "{folders} folders, {files} files",
+  "folder_summary": "{folders} folders, {files} files",
+  "files_summary": "{files} files",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Information",
@@ -65,10 +66,11 @@
   "calendar_months_long": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   "no_calendar_data": "No calendar data available, please add an album first",
   
+  "year_format": "yyyy",
   "month_format": "MMMM yyyy",
   "date_format": "MM/dd/yyyy",
   "date_format_long": "MMMM do, yyyy",
-  "date_format_with_weekday": "eeee, MMMM do, yyyy",
+  "date_format_long_with_weekday": "eeee, MMMM do, yyyy",
   "date_time_format": "MM/dd/yyyy HH:mm:ss",
   "date_time_format_long": "MMMM do, yyyy HH:mm:ss",
   

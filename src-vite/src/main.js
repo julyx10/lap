@@ -33,6 +33,7 @@ import './tailwind.css'
 import { createI18n } from 'vue-i18n'
 import en from '@/locales/en.json'
 import zh from '@/locales/zh.json'
+import jp from '@/locales/jp.json'
 
 // I18n - create an i18n instance with the languages
 // https://vue-i18n.intlify.dev/
@@ -42,7 +43,8 @@ const i18n = createI18n({
   fallbackLocale: "en",
   messages: {
     en,
-    zh
+    zh,
+    jp
   },
 })
 
