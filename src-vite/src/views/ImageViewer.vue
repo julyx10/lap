@@ -35,20 +35,25 @@
           </div>
         </div>
 
-        <img 
-          ref="image"
-          v-if="imageSrc" 
-          :src="imageSrc"
-          alt="Image Viewer" 
-          class="transition-transform duration-300" 
-          :style="imgThansformStyle"
+        <div v-if="imageSrc" 
           @load="onImageLoad"
           @mousedown="startDragging" 
           @mouseup="stopDragging"
           @mousemove="dragImage" 
-          @mouseleave="stopDragging" 
-        />
-        <p v-else>{{ loadError ? loadError : $t('image_view_loading') }}</p>
+          @mouseleave="stopDragging"
+        >
+          <img 
+            ref="image"
+            :src="imageSrc"
+            :style="imageStyle"
+            class="select-none" 
+            alt="Image Viewer" 
+            draggable="false"
+          />
+        </div>
+        <div v-else>
+          {{ loadError ? loadError : $t('image_view_loading') }}
+        </div>
 
         <!-- right -->
         <div v-if="fileIndex < fileCount - 1"
@@ -130,8 +135,9 @@ const lastTranslateX = ref(0); // Last stored X position after drag ends
 const lastTranslateY = ref(0); // Last stored Y position after drag ends
 
 // Computed style for the image, combining zoom and translation
-const imgThansformStyle = computed(() => ({
+const imageStyle = computed(() => ({
   transform: `rotate(${rotation.value}deg) scale(${scale.value}) translate(${translateX.value}px, ${translateY.value}px)`,
+  transition: isDragging.value ? 'none' : 'transform 0.2s ease-in-out',
 }));
 
 onMounted(async() => {
@@ -181,29 +187,102 @@ onUnmounted(() => {
 });
 
 
+// Load the image from the file path
+async function loadImage(filePath) {
+  try {
+    const imageBase64 = await invoke('get_file_image', { filePath });
+    imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+    console.log('loadImage:', filePath);
+  } catch (error) {
+    loadError.value = error;
+    imageSrc.value = null;
+    console.error('Error fetching image data:', error);
+  }
+}
+
+
+// Load the file info from the file ID
+async function loadFileInfo(fileId) {
+  try {
+    fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
+    console.log('loadFileInfo: ---', fileInfo.value);
+  } catch (error) {
+    console.error('Error fetching file info:', error);
+  }
+}
+
+
+// Function to handle zooming with the mouse wheel
+function zoomImage(event) {
+  event.preventDefault();
+
+  // Adjust the scale factor based on the wheel scroll (positive = zoom in, negative = zoom out)
+  const zoomSpeed = 0.2; // Change this value to adjust zoom speed
+  const delta = event.deltaY < 0 ? zoomSpeed : -zoomSpeed;
+
+  // Update the scale factor, with a minimum and maximum zoom level
+  scale.value = Math.min(Math.max(0.1, scale.value + delta), 10); // Limit zoom between 0.5x and 5x
+}
+
+// Start dragging when the mouse button is pressed
+function startDragging(event) {
+  console.log('startDragging:', event);
+  isDragging.value = true;
+  startX.value = event.clientX - lastTranslateX.value;
+  startY.value = event.clientY - lastTranslateY.value;
+}
+
+// Stop dragging when the mouse button is released
+function stopDragging(event) {
+  console.log('stopDragging', event);
+  // if (isDragging.value) {
+  //   lastTranslateX.value = translateX.value;
+  //   lastTranslateY.value = translateY.value;
+  // }
+  isDragging.value = false;
+}
+
+// Drag the image while the mouse is moved
+function dragImage(event) {
+  if (isDragging.value) {
+    console.log('dragImage:', event);
+    // Account for zoom level when dragging
+    translateX.value = (event.clientX - startX.value) / scale.value;
+    translateY.value = (event.clientY - startY.value) / scale.value;
+  }
+}
+
+
 function handleKeyDown(event) {
-  // disable default event
-  if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || 
-      event.key === 'ArrowLeft' || event.key === 'ArrowRight' || 
-      event.key === 'Enter') 
-  {
+  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter'];
+  
+  // Disable default behavior for certain keys
+  if (navigationKeys.includes(event.key)) {
     event.preventDefault();
   }
 
-  if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-    clickNext();
-  } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-    clickPrev();
-  } else if (event.key === 'Enter') {
-    clickShowFileInfo();
-  } else if (event.key === 'Escape') {
-    if (showFileInfo.value) {
-      closeFileInfo();
-    } else {
-      appWindow.close(); // Close the window
-    }
+  switch (event.key) {
+    case 'ArrowDown':
+    case 'ArrowRight':
+      clickNext();
+      break;
+    case 'ArrowUp':
+    case 'ArrowLeft':
+      clickPrev();
+      break;
+    case 'Enter':
+      clickShowFileInfo();
+      break;
+    case 'Escape':
+      if (showFileInfo.value) {
+        closeFileInfo();
+      } else {
+        appWindow.close(); // Close the window
+      }
+      break;
   }
 }
+
 
 // Function to be called when the image loads
 const onImageLoad = () => {
@@ -304,70 +383,6 @@ function closeFileInfo() {
 }
 
 
-// Load the image from the file path
-async function loadImage(filePath) {
-  try {
-    const imageBase64 = await invoke('get_file_image', { filePath });
-    imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
-    console.log('loadImage:', filePath);
-  } catch (error) {
-    loadError.value = error;
-    imageSrc.value = null;
-    console.error('Error fetching image data:', error);
-  }
-}
-
-
-// Load the file info from the file ID
-async function loadFileInfo(fileId) {
-  try {
-    fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
-    console.log('loadFileInfo: ---', fileInfo.value);
-  } catch (error) {
-    console.error('Error fetching file info:', error);
-  }
-}
-
-
-// Function to handle zooming with the mouse wheel
-function zoomImage(event) {
-  event.preventDefault();
-
-  // Adjust the scale factor based on the wheel scroll (positive = zoom in, negative = zoom out)
-  const zoomSpeed = 0.2; // Change this value to adjust zoom speed
-  const delta = event.deltaY < 0 ? zoomSpeed : -zoomSpeed;
-
-  // Update the scale factor, with a minimum and maximum zoom level
-  scale.value = Math.min(Math.max(0.1, scale.value + delta), 10); // Limit zoom between 0.5x and 5x
-}
-
-// Start dragging when the mouse button is pressed
-function startDragging(event) {
-  console.log('startDragging:', event);
-  isDragging.value = true;
-  startX.value = event.clientX - lastTranslateX.value;
-  startY.value = event.clientY - lastTranslateY.value;
-}
-
-// Stop dragging when the mouse button is released
-function stopDragging(event) {
-  console.log('stopDragging', event);
-  if (isDragging.value) {
-    lastTranslateX.value = translateX.value;
-    lastTranslateY.value = translateY.value;
-  }
-  isDragging.value = false;
-}
-
-// Drag the image while the mouse is moved
-function dragImage(event) {
-  if (isDragging.value) {
-    console.log('dragImage:', event);
-    // Account for zoom level when dragging
-    translateX.value = (event.clientX - startX.value) / scale.value;
-    translateY.value = (event.clientY - startY.value) / scale.value;
-  }
-}
 </script>
 
 <style scoped>

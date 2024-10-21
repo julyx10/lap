@@ -82,21 +82,22 @@ function clickFile(index: number) {
   gContentIndex.value = index;
 }
 
+const keyActions = {
+  ArrowDown: ()  => gContentIndex.value = Math.min(gContentIndex.value + getColumnCount(), props.fileList.length - 1),
+  ArrowRight: () => gContentIndex.value = Math.min(gContentIndex.value + 1, props.fileList.length - 1),
+  ArrowUp: ()    => gContentIndex.value = Math.max(gContentIndex.value - getColumnCount(), 0),
+  ArrowLeft: ()  => gContentIndex.value = Math.max(gContentIndex.value - 1, 0),
+  // Home: ()       => gContentIndex.value = 0,
+  // End: ()        => gContentIndex.value = props.fileList.length - 1,
+  Enter: () => openImageViewer(gContentIndex.value, true),
+  Space: () => openImageViewer(gContentIndex.value, true),
+};
 
 // Handle keydown event
 function handleKeyDown(event) {
-  if (event.key === 'ArrowDown' || event.key === 'ArrowRight' ||
-      event.key === 'ArrowUp' || event.key === 'ArrowLeft' ||
-      event.key === 'Enter' || event.key === 'Space') {
-    event.preventDefault();   // disable default event
-  }
-
-  if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-    gContentIndex.value = Math.min(gContentIndex.value + 1, props.fileList.length - 1);
-  } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-    gContentIndex.value = Math.max(gContentIndex.value - 1, 0);
-  } else if (event.key === 'Enter' || event.key === 'Space') {
-    openImageViewer(gContentIndex.value, true);
+  if (keyActions[event.key]) {
+    event.preventDefault(); // Prevent the default action
+    keyActions[event.key](); 
   }
 }
 
@@ -153,7 +154,6 @@ function openImageViewer(index: number, createNew = false) {
   }
 };
 
-
 // make the selected item always visible in a scrollable container
 function scrollToItem(index) {
   const item = document.getElementById(`item-${index}`);
@@ -162,6 +162,17 @@ function scrollToItem(index) {
   }
 };
 
+// function to get the number of columns in the grid
+function getColumnCount() {
+  const gridContainer = document.querySelector('.grid');
+  const computedStyle = getComputedStyle(gridContainer);
+  const gridTemplateColumns = computedStyle.gridTemplateColumns;
+
+  // Split by space to account for grid definitions
+  const columnCount = gridTemplateColumns.split(' ').length;
+
+  return columnCount;
+}
 
 </script>
 

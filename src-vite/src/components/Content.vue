@@ -31,6 +31,8 @@
 
     </div>
 
+    <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+
     <!-- grid view -->
     <GridView :fileList="fileList" :isFitWidth="isFitWidth"/>
     <!-- <TableView :fileList="fileList"/> -->
@@ -44,6 +46,7 @@
 import { ref, watch, computed, inject  } from 'vue';
 import { invoke } from '@tauri-apps/api';
 // import TableView from '@/components/TableView.vue';
+import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import { THUMBNAIL_SIZE, formatDate } from '@/common/utils';
 import { format } from 'date-fns';
@@ -80,10 +83,12 @@ const gCameraModel = inject('gCameraModel');   // global camera model
 
 const gContentIndex = inject('gContentIndex'); // global selected item index
 
+const fileList = ref([]);
+const thumbCount = ref(0); // thumbnail count (from 0 to fileList.length)
+const subFolderList = ref([]);  // sub-folder list in the current folder
+
 const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
-const fileList = ref([]);
-const subFolderList = ref([]);
 
 const isFitWidth = ref(false); // fit width status
 const isFavorite = ref(false); // favorite status
@@ -242,11 +247,11 @@ async function getFiles(path) {
 
     // reverse the fileList if sorting order is descending
     sortFileList(sortingType.value, sortingAsc.value);
-    console.log('invoke - getFiles:', fileList.value);
+    console.log('getFiles:', fileList.value);
 
     getFileThumb(fileList.value);
   } catch (error) {
-    console.error('invoke - getFiles error:', error);
+    console.error('getFiles error:', error);
   }
 };
 
@@ -285,18 +290,6 @@ function sortFileList(sortingType, isAccending) {
 }
 
 
-/// get all files under the camera make and model
-async function getCameraFiles(make, model) {
-  try {
-    fileList.value = await invoke('get_camera_files', { make: make, model: model });
-    console.log('invoke - getCameraFiles:', fileList.value);
-
-    getFileThumb(fileList.value); 
-  } catch (error) {
-    console.error('getCameraFiles error:', error);
-  }
-}
-
 /// get all files of calendar
 async function getCalendarFiles(year, month, date) {
   try {
@@ -308,13 +301,27 @@ async function getCalendarFiles(year, month, date) {
     } else {  // otherwise, get files by date
       fileList.value = await invoke('get_files_by_date', { year: year, month: month, date: date });
     }
-    console.log('invoke - getFilesByDate:', fileList.value);
+    console.log('getCalendarFiles:', fileList.value);
 
     getFileThumb(fileList.value);
   } catch (error) {
-    console.error('invoke - getFilesByDate error:', error);
+    console.error('getCalendarFiles error:', error);
   }
 }
+
+
+/// get all files under the camera make and model
+async function getCameraFiles(make, model) {
+  try {
+    fileList.value = await invoke('get_camera_files', { make: make, model: model });
+    console.log('getCameraFiles:', fileList.value);
+
+    getFileThumb(fileList.value); 
+  } catch (error) {
+    console.error('getCameraFiles error:', error);
+  }
+}
+
 
 /// get the thumbnail for each file in mutil-thread
 // async function getFileThumb(files) {
@@ -346,9 +353,10 @@ async function getFileThumb(files, concurrencyLimit = 8) {
   try {
     const result = [];
     let activeRequests = 0;
+    thumbCount.value = 0;
 
     const getThumbForFile = async (file) => {
-      console.log('getFileThumb:', file.file_path);
+      // console.log('getFileThumb:', file.file_path);
       const thumb = await invoke('get_file_thumb', {
         fileId: file.id,
         filePath: file.file_path,
@@ -357,7 +365,8 @@ async function getFileThumb(files, concurrencyLimit = 8) {
       });
 
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-      console.log('invoke - getFileThumb:', file);
+      thumbCount.value++;
+      // console.log('getFileThumb:', file);
       return file;
     };
 
@@ -391,7 +400,7 @@ async function getFileThumb(files, concurrencyLimit = 8) {
     console.log('All thumbnails fetched successfully.');
 
   } catch (error) {
-    console.error('invoke - getFileThumb error:', error);
+    console.error('getFileThumb error:', error);
   }
 }
 
