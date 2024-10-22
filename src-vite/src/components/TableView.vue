@@ -42,8 +42,7 @@
 
 import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/window';
-import { formatTimestamp, formatFileSize } from '@/common/utils';
-import { shortenFilename } from '../common/utils';
+import { formatTimestamp, formatFileSize, shortenFilename } from '@/common/utils';
 
 /// i18n
 import { useI18n } from 'vue-i18n';

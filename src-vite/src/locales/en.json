@@ -15,10 +15,10 @@
 
   "add_album_title": "Add album",
 
-  "delete_album_msgbox_title": "Remove album",
-  "delete_album_msgbox_content": "Are you sure you want to remove this album?",
-  "delete_album_msgbox_ok": "Yes",
-  "delete_album_msgbox_cancel": "No",
+  "delete_album_msgbox_title": "Remove album?",
+  "delete_album_msgbox_content": "The album '{album}' will be removed. This action will not delete the actual files.",
+  "delete_album_msgbox_ok": "Delete",
+  "delete_album_msgbox_cancel": "Cancel",
   
   "search_placeholder": "Search...",
 

@@ -14,7 +14,7 @@
 
 <script setup>
 
-import { ref, watch, computed, h } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
   percent: {

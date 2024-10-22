@@ -1,14 +1,18 @@
 <template>
 
-  <div v-if="visible" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-    <div class="bg-gray-200 rounded-lg shadow-lg w-96 p-6">
-      <h2 class="text-xl font-semibold mb-4">{{ title }}</h2>
-      <p class="text-gray-700 mb-6">{{ message }}</p>
-      <div class="flex justify-end space-x-2">
-        <button v-if="showCancel" @click="handleCancel" class="px-4 py-2 bg-gray-300 text-gray-700 rounded">
+  <div v-if="visible" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
+    <div class="w-96 p-4 t-color-bg-light rounded-lg shadow-lg">
+      <div class="mb-2 text-lg">
+        {{ title }}
+      </div>
+      <div class="mb-6">
+        {{ message }}
+      </div>
+      <div class="flex justify-end space-x-4">
+        <button v-if="showCancel" class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover" @click="clickCancel">
           {{ cancelText }}
         </button>
-        <button @click="handleConfirm" class="px-4 py-2 bg-blue-600 text-white rounded">
+        <button class="px-4 rounded-full text-red-500 hover:bg-red-800 t-icon-hover" @click="clickConfirm">
           {{ confirmText }}
         </button>
       </div>
@@ -20,22 +24,40 @@
 <script setup lang="ts">
 
 const props = defineProps({
-  title: { type: String, default: 'Message' },
-  message: { type: String, required: true },
-  confirmText: { type: String, default: 'OK' },
-  cancelText: { type: String, default: 'Cancel' },
-  showCancel: { type: Boolean, default: true },
-  visible: { type: Boolean, default: false }
+  title: { 
+    type: String, 
+    default: 'Message' 
+  },
+  message: { 
+    type: String, 
+    required: true 
+  },
+  confirmText: { 
+    type: String, 
+    default: 'OK' 
+  },
+  cancelText: { 
+    type: String, 
+    default: 'Cancel' 
+  },
+  showCancel: { 
+    type: Boolean, 
+    default: true 
+  },
+  visible: { 
+    type: Boolean, 
+    default: false 
+  }
 });
 
 const emit = defineEmits(['confirm', 'cancel', 'close']);
 
-const handleConfirm = () => {
+const clickConfirm = () => {
   emit('confirm');
   emit('close');
 };
 
-const handleCancel = () => {
+const clickCancel = () => {
   emit('cancel');
   emit('close');
 };

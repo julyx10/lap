@@ -16,9 +16,9 @@
   "add_album_title": "アルバムを追加",
 
   "delete_album_msgbox_title": "アルバムの削除",
-  "delete_album_msgbox_content": "アルバムを削除してもよろしいですか？",
-  "delete_album_msgbox_ok": "はい",
-  "delete_album_msgbox_cancel": "いいえ",
+  "delete_album_msgbox_content": "アルバム '{album}' が削除されます。この操作は実際のファイルを削除しません。",
+  "delete_album_msgbox_ok": "削除",
+  "delete_album_msgbox_cancel": "キャンセル",
 
   "search_placeholder": "検索...",
 

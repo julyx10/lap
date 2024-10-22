@@ -15,10 +15,10 @@
 
   "add_album_title": "添加相册",
 
-  "delete_album_msgbox_title": "删除相册",
-  "delete_album_msgbox_content": "确认要删除相册吗?",
-  "delete_album_msgbox_ok": "是",
-  "delete_album_msgbox_cancel": "否",
+  "delete_album_msgbox_title": "删除相册吗？",
+  "delete_album_msgbox_content": "相册 '{album}' 将被删除。此操作不会删除实际文件。",
+  "delete_album_msgbox_ok": "删除",
+  "delete_album_msgbox_cancel": "取消",
 
   "search_placeholder": "搜索...",
 

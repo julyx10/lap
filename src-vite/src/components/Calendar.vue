@@ -24,7 +24,7 @@
         >
           {{ $t('calendar_daily') }}
         </div>
-        <span class="px-2" />
+        <span class="px-2"></span>
         <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
       </div>
     </div>
@@ -84,8 +84,8 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api';
-import CalendarMonthly from './CalendarMonthly.vue';
-import CalendarDaily from './CalendarDaily.vue';
+import CalendarMonthly from '@/components/CalendarMonthly.vue';
+import CalendarDaily from '@/components/CalendarDaily.vue';
 
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
