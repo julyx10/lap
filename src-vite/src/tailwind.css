@@ -15,11 +15,12 @@
 .t-icon-hover {
   @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
 }
-
 .t-icon-selected {
   @apply text-gray-300 transition-colors duration-300 ;
 }
-
+.t-icon-focus {
+  @apply text-sky-600 transition-colors duration-300 ;
+}
 .t-icon-disabled {
   @apply text-gray-700;
 }

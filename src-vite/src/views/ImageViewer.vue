@@ -254,7 +254,7 @@ function dragImage(event) {
 
 
 function handleKeyDown(event) {
-  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter'];
+  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'];
   
   // Disable default behavior for certain keys
   if (navigationKeys.includes(event.key)) {
@@ -263,10 +263,12 @@ function handleKeyDown(event) {
 
   switch (event.key) {
     case 'ArrowDown':
+      break;
     case 'ArrowRight':
       clickNext();
       break;
     case 'ArrowUp':
+      break;
     case 'ArrowLeft':
       clickPrev();
       break;
@@ -364,10 +366,12 @@ const rotateImage = () => {
 
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
+  console.log('clickPrev');
   emit('message-from-image-viewer', { message: 'prev' });
 }
 
 function clickNext() {
+  console.log('clickNext');
   emit('message-from-image-viewer', { message: 'next' });
 }
 

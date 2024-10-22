@@ -14,7 +14,7 @@
             v-for="(item, index) in toolbars"
             :key="index"
             :is="item.icon"
-            :class="['t-icon-hover', gToolbarIndex === index ? 't-icon-selected' : '']" 
+            :class="['t-icon-hover', gToolbarIndex === index ? 't-icon-focus' : '']" 
             @click="clickToolbar(index)"
           />
         </div>

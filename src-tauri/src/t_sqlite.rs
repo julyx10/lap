@@ -582,87 +582,89 @@ impl AFile {
         Ok(results)
     }
 
-    pub fn get_files_by_date(year: i64, month: i64, date: i64) -> Result<Vec<Self>, String> {
+    
+    /// Helper function to execute SQL query and map rows to `File`
+    fn query_files(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
         let conn = open_conn();
-        let date_str = format!("{:04}-{:02}-{:02}", year, month, date); // yyyy-mm-dd
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
 
-        let mut stmt = conn.prepare(
-            "SELECT a.id, a.folder_id, 
+        let rows = stmt.query_map(params, |row| {
+            Self::from_row(row)
+        }).map_err(|e| e.to_string())?;
+
+        let mut files = Vec::new();
+        for file in rows {
+            files.push(file.unwrap());
+        }
+
+        Ok(files)
+    }
+
+    /// get all files
+    pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<Self>, String> {
+    // Base SQL query
+    let mut sql = String::from("SELECT a.id, a.folder_id, 
                 a.name, a.size, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
                 a.is_favorite, a.comments,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path
-            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-            WHERE a.taken_date = ?1"
-        ).map_err(|e| e.to_string())?;
-    
-        let rows = stmt.query_map(params![date_str], |row| {
-            Self::from_row(row)
-        }).map_err(|e| e.to_string())?;
-    
-        let mut files = Vec::new();
-        for file in rows {
-            files.push(file.unwrap());
+            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id");
+
+        // Conditionally add WHERE clause if filtering by is_favorite
+        if is_favorite {
+            sql.push_str(" WHERE a.is_favorite = 1");
         }
-    
-        Ok(files)
+
+        // Add pagination
+        sql.push_str(" LIMIT ?1 OFFSET ?2");
+
+        // Execute the query with pagination
+        Self::query_files(&sql, &[&page_size, &offset])
+    }
+
+    // get files by date(yyyy-mm-dd)
+    pub fn get_files_by_date(date: &str) -> Result<Vec<Self>, String> {
+        // let date_str = format!("{:04}-{:02}-{:02}", year, month, date); // yyyy-mm-dd
+        let sql = "SELECT a.id, a.folder_id, 
+                    a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                    a.width, a.height,
+                    a.is_favorite, a.comments,
+                    a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                    a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                    b.path
+                FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+                WHERE a.taken_date = ?1";
+        Self::query_files(sql, &[&date])
     }
 
     /// data string format: yyyy-mm-dd
     pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<Self>, String> {
-        let conn = open_conn();
-
-        let mut stmt = conn.prepare(
-            "SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                a.width, a.height,
-                a.is_favorite, a.comments,
-                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                b.path
-            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-            WHERE a.taken_date >= ?1 AND a.taken_date <= ?2"
-        ).map_err(|e| e.to_string())?;
-    
-        let rows = stmt.query_map(params![start_date, end_date], |row| {
-            Self::from_row(row)
-        }).map_err(|e| e.to_string())?;
-    
-        let mut files = Vec::new();
-        for file in rows {
-            files.push(file.unwrap());
-        }
-    
-        Ok(files)
+        let sql = "SELECT a.id, a.folder_id, 
+                    a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                    a.width, a.height,
+                    a.is_favorite, a.comments,
+                    a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                    a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                    b.path
+                FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+                WHERE a.taken_date >= ?1 AND a.taken_date <= ?2";
+        Self::query_files(sql, &[&start_date, &end_date])
     }
 
     /// get files by camera make and model
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
-        let conn = open_conn();
-        let mut stmt = conn.prepare(
-            "SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                a.width, a.height,
-                a.is_favorite, a.comments,
-                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                b.path
-            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-            WHERE a.e_make = ?1 AND a.e_model = ?2"
-        ).map_err(|e| e.to_string())?;
-    
-        let rows = stmt.query_map(params![make, model], |row| {
-            Self::from_row(row)
-        }).map_err(|e| e.to_string())?;
-    
-        let mut files = Vec::new();
-        for file in rows {
-            files.push(file.unwrap());
-        }
-    
-        Ok(files)
+        let sql = "SELECT a.id, a.folder_id, 
+                    a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                    a.width, a.height,
+                    a.is_favorite, a.comments,
+                    a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                    a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                    b.path
+                FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
+                WHERE a.e_make = ?1 AND a.e_model = ?2";
+        Self::query_files(sql, &[&make, &model])
     }
 
 }

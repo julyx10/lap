@@ -48,7 +48,7 @@ import { invoke } from '@tauri-apps/api';
 // import TableView from '@/components/TableView.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
-import { THUMBNAIL_SIZE, formatDate } from '@/common/utils';
+import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate } from '@/common/utils';
 import { format } from 'date-fns';
 
 /// i18n
@@ -161,16 +161,35 @@ watch(gAlbumId, async (newAlbumId) => {
 
 
 /// Watch for changes in toolbar index and update filelist accordingly
-watch(gToolbarIndex, async (newIndex) => {
+watch([gToolbarIndex, isFavorite], async ([newIndex, newFavorite]) => {
   console.log('watch - gToolbarIndex:', newIndex);
-  if (newIndex === 1) {
-    if (gAlbumId.value) {
-      getFiles(currentFolder.value.path);
-    }
-  } else if (newIndex === 5) {
-    if (gCameraMake.value) {
-      getCameraFiles(gCameraMake.value, gCameraModel.value);
-    }
+  if(newIndex) {
+    fileList.value = [];
+  }
+
+  switch(newIndex) {
+    case 0:
+      getAllFiles();
+      break;
+    case 1:   // album
+      if (gAlbumId.value) {
+        readFolder(currentFolder.value.path);
+      };
+      break;
+    case 2:   // calendar
+      if (gCalendarYear.value && gCalendarMonth.value && gCalendarDate.value) {
+        getCalendarFiles(gCalendarYear.value, gCalendarMonth.value, gCalendarDate.value);
+      }
+      break;
+    case 3:   // map
+      break;
+    case 4:   // people
+      break;
+    case 5:   // camera
+      if (gCameraMake.value) {
+        getCameraFiles(gCameraMake.value, gCameraModel.value);
+      };
+      break;
   }
 });
 
@@ -179,8 +198,8 @@ watch(gToolbarIndex, async (newIndex) => {
 watch(currentFolder, async (newFolder) => {
   console.log('watch - currentFolder:', newFolder);
   if (newFolder) {
-    // Fetch the files in the new folder
-    getFiles(newFolder.path);
+    // read the files in the new folder
+    readFolder(newFolder.path);
   }
 });
 
@@ -239,19 +258,19 @@ function getFolder(folder, folderId) {
 }
 
 
-/// get all files under the path
-async function getFiles(path) {
+/// read all files under the path
+async function readFolder(path) {
   try {
-    // Fetch the list of files
-    fileList.value = await invoke('get_files', { folderId: gFolderId.value, path: path });
+    // read the list of files
+    fileList.value = await invoke('read_folder', { folderId: gFolderId.value, path: path });
 
     // reverse the fileList if sorting order is descending
     sortFileList(sortingType.value, sortingAsc.value);
-    console.log('getFiles:', fileList.value);
+    console.log('readFolder:', fileList.value);
 
     getFileThumb(fileList.value);
   } catch (error) {
-    console.error('getFiles error:', error);
+    console.error('readFolder error:', error);
   }
 };
 
@@ -289,6 +308,18 @@ function sortFileList(sortingType, isAccending) {
   });
 }
 
+/// get all files
+async function getAllFiles() {
+  try {
+    fileList.value = await invoke('get_all_files', { isFavorite: isFavorite.value, offset: 0, pageSize: FILES_PAGE_SIZE });
+    console.log('getAllFiles:', fileList.value);
+
+    getFileThumb(fileList.value); 
+  } catch (error) {
+    console.error('getAllFiles error:', error);
+  }
+}
+
 
 /// get all files of calendar
 async function getCalendarFiles(year, month, date) {
@@ -299,7 +330,8 @@ async function getCalendarFiles(year, month, date) {
       let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
       fileList.value = await invoke('get_files_by_date_range', { startDate: startDate, endDate: endDate });
     } else {  // otherwise, get files by date
-      fileList.value = await invoke('get_files_by_date', { year: year, month: month, date: date });
+      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
+      fileList.value = await invoke('get_files_by_date', { date: dateStr });
     }
     console.log('getCalendarFiles:', fileList.value);
 

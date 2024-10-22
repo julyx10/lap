@@ -1,5 +1,5 @@
 <template>
-  <div ref="scrollable" class="flex-1 overflow-auto t-scrollbar">
+  <div ref="scrollable" class="mt-1 flex-1 overflow-auto t-scrollbar">
     <div class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
       
       <div 
@@ -33,10 +33,12 @@
 
 <script setup lang="ts">
 
-import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, inject, watch, defineComponent, onMounted, onUnmounted } from 'vue';
+// import VueLazyload from 'vue-lazyload';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { shortenFilename, formatFileSize } from '@/common/utils';
+import { c } from 'naive-ui';
 
 const props = defineProps({
   fileList: {

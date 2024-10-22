@@ -103,9 +103,9 @@ pub fn expand_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode
 }
 
 
-/// list image files
+/// read all files from the folder
 #[tauri::command]
-pub fn get_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
+pub fn read_folder(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
     let mut files: Vec<AFile> = Vec::new(); 
 
     // Use WalkDir to iterate over directory entries
@@ -171,10 +171,16 @@ pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
     AFile::get_taken_dates().map_err(|e| format!("Error while fetching taken dates: {}", e))
 }
 
+/// get all files
+#[tauri::command]
+pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
+    AFile::get_all_files(is_favorite, offset, page_size).map_err(|e| format!("Error while fetching all files: {}", e))
+}
+
 /// get files by date
 #[tauri::command]
-pub fn get_files_by_date(year: i64, month: i64, date: i64) -> Result<Vec<AFile>, String> {
-    AFile::get_files_by_date(year, month, date).map_err(|e| format!("Error while fetching files by date: {}", e))
+pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
+    AFile::get_files_by_date(date).map_err(|e| format!("Error while fetching files by date: {}", e))
 }
 
 /// get files by date range

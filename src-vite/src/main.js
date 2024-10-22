@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+// import VueLazyload from 'vue-lazyload';
 import router from '@/common/router'
 import { invoke } from '@tauri-apps/api'
 import './tailwind.css'
@@ -80,6 +81,11 @@ const app = createApp(App)
 // };;
 
 app.config.globalProperties.$invoke = invoke
+
+// app.use(VueLazyload, {
+//   loading: 'https://via.placeholder.com/300',
+//   error: 'https://via.placeholder.com/300',
+// })
 
 app.use(router)
 app.use(i18n)

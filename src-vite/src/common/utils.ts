@@ -1,8 +1,9 @@
 import { os } from '@tauri-apps/api';
 import { format } from 'date-fns';
 
-/// thumbnail size
-export const THUMBNAIL_SIZE = 320;
+
+export const THUMBNAIL_SIZE = 320;    // thumbnail size
+export const FILES_PAGE_SIZE = 1000;  // number of files per page
 
 export let separator;
 (async () => {

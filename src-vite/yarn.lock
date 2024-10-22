@@ -1356,6 +1356,11 @@ vite@^5.4.0:
   optionalDependencies:
     fsevents "~2.3.3"
 
+vue-lazyload@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npmmirror.com/vue-lazyload/-/vue-lazyload-3.0.0.tgz#37529064da6ba774e969cc9d86b5418e230b16d4"
+  integrity sha512-h2keL/Rj550dLgesgOtXJS9qOiSMmuJNeVlfNAYV1/IYwOQYaWk5mFJlwRxmZDK9YC5gECcFLYYj7z1lKSf9ug==
+
 vue-router@^4.4.5:
   version "4.4.5"
   resolved "https://registry.npmmirror.com/vue-router/-/vue-router-4.4.5.tgz#bdf535e4cf32414ebdea6b4b403593efdb541388"
