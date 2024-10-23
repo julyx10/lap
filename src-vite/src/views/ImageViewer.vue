@@ -7,7 +7,8 @@
       
       <IconZoomIn class="t-icon-hover" @click="scale += 0.5" />
       <IconZoomOut class="t-icon-hover" @click="scale -= 0.5" />
-      <IconFitScreen class="t-icon-size t-icon-hover" @click="fitToScreen" />
+      <component :is="imageFit ? IconFitScreen1 : IconFitScreen2" class="t-icon-size t-icon-hover" @click="toggleFitScreen" />
+
       <IconRotateRight class="t-icon-size t-icon-hover" @click="rotateImage"/>
 
       <IconUnFavorite v-if="!fileInfo" class="t-icon-disabled"/>
@@ -46,7 +47,7 @@
             ref="image"
             :src="imageSrc"
             :style="imageStyle"
-            class="select-none" 
+            :class="imageFit ? 'object-contain' : 'object-none'" 
             alt="Image Viewer" 
             draggable="false"
           />
@@ -95,7 +96,8 @@ import FileInfo from '@/components/FileInfo.vue';
 
 import IconZoomIn from '@/assets/zoom-in.svg';
 import IconZoomOut from '@/assets/zoom-out.svg';
-import IconFitScreen from '@/assets/fit-screen.svg';
+import IconFitScreen1 from '@/assets/fit-screen1.svg';
+import IconFitScreen2 from '@/assets/fit-screen2.svg';
 import IconRotateRight from '@/assets/rotate-right.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
@@ -116,6 +118,7 @@ const showFileInfo = ref(false); // Show the file info panel
 const image = ref(null); // Image reference
 const imageSrc = ref(null);
 const loadError = ref(null);
+const imageFit = ref(true); // true: fit screen; false: original size
 
 const isFullScreen = ref(false); // Track if the window is full screen
 
@@ -294,26 +297,27 @@ const onImageLoad = () => {
 };
 
 // Function to fit the image to the screen
-const fitToScreen = () => {
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
+const toggleFitScreen = () => {
+  imageFit.value = !imageFit.value;
+  // const windowWidth = window.innerWidth;
+  // const windowHeight = window.innerHeight;
   
-  const img = image.value;
+  // const img = image.value;
   
-  // Only proceed if the image has been loaded
-  if (img) {
-    const originalWidth = img.naturalWidth;
-    const originalHeight = img.naturalHeight;
+  // // Only proceed if the image has been loaded
+  // if (img) {
+  //   const originalWidth = img.naturalWidth;
+  //   const originalHeight = img.naturalHeight;
 
-    // Calculate the scale to fit the image within the screen
-    const widthScale = windowWidth / originalWidth;
-    const heightScale = windowHeight / originalHeight;
+  //   // Calculate the scale to fit the image within the screen
+  //   const widthScale = windowWidth / originalWidth;
+  //   const heightScale = windowHeight / originalHeight;
 
-    // Use the smaller scale to fit the image
-    scale.value = Math.min(widthScale, heightScale);
-    scaledWidth.value = originalWidth * scale.value;
-    scaledHeight.value = originalHeight * scale.value;
-  }
+  //   // Use the smaller scale to fit the image
+  //   scale.value = Math.min(widthScale, heightScale);
+  //   scaledWidth.value = originalWidth * scale.value;
+  //   scaledHeight.value = originalHeight * scale.value;
+  // }
 };
 
 // Function to reset the image to 1:1 scale

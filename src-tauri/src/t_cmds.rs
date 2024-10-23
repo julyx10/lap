@@ -171,11 +171,13 @@ pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
     AFile::get_taken_dates().map_err(|e| format!("Error while fetching taken dates: {}", e))
 }
 
+
 /// get all files
 #[tauri::command]
 pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
     AFile::get_all_files(is_favorite, offset, page_size).map_err(|e| format!("Error while fetching all files: {}", e))
 }
+
 
 /// get files by date
 #[tauri::command]
@@ -183,12 +185,14 @@ pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
     AFile::get_files_by_date(date).map_err(|e| format!("Error while fetching files by date: {}", e))
 }
 
+
 /// get files by date range
 /// start_date and end_date format: yyyy-mm-dd
 #[tauri::command]
 pub fn get_files_by_date_range(start_date: &str, end_date: &str ) -> Result<Vec<AFile>, String> {
     AFile::get_files_by_date_range(start_date, end_date).map_err(|e| format!("Error while fetching files by date range: {}", e))
 }
+
 
 /// get a file's camera make and model info
 #[tauri::command]

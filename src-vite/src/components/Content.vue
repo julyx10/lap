@@ -19,7 +19,7 @@
         <div class="flex space-x-4">
           <IconFitWidth 
             class="t-icon-size t-icon-hover"
-            :class="{ 't-icon-selected': isFitWidth }"
+            :class="{ 't-icon-focus': isFitWidth }"
             @click="toggleFitWidth" />
           <IconUnFavorite v-if="!isFavorite" class="t-icon-hover hover:text-red-600" @click="toggleFavorite" />
           <IconFavorite v-if="isFavorite" class="t-icon-hover text-red-600 hover:text-red-600" @click="toggleFavorite" />

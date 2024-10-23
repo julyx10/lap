@@ -13,6 +13,7 @@ use serde::{ Serialize, Deserialize };
 use exif::Tag;
 
 use crate::t_utils;
+// use crate::t_opencv;
 
 
 /// Define the Album struct
@@ -380,67 +381,7 @@ impl AFile {
                 .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
         })
     }
-
-    // Function to construct `Self` from a database row
-    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
-        Ok(Self {
-            id: Some(row.get(0)?),
-            folder_id: row.get(1)?,
-
-            name: row.get(2)?,
-            size: row.get(3)?,
-            created_at: row.get(4)?,
-            modified_at: row.get(5)?,
-            taken_date: row.get(6)?,
-
-            width: row.get(7)?,
-            height: row.get(8)?,
-
-            is_favorite: row.get(9)?,
-            comments: row.get(10)?,
-
-            e_make: row.get(11)?,
-            e_model: row.get(12)?,
-            e_date_time: row.get(13)?,
-            e_exposure_time: row.get(14)?,
-            e_f_number: row.get(15)?,
-            e_focal_length: row.get(16)?,
-            e_iso_speed: row.get(17)?,
-            e_flash: row.get(18)?,
-            e_orientation: row.get(19)?,
-
-            gps_latitude: row.get(20)?,
-            gps_longitude: row.get(21)?,
-            gps_altitude: row.get(22)?,
-
-            file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(23)?.as_str(),
-                row.get::<_, String>(2)?.as_str(),
-            )),
-        })
-    }
-
-    /// fetch a file info from db by folder_id and file name
-    pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
-        let conn = open_conn();
-        let result = conn.query_row(
-            "SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                a.width, a.height,
-                a.is_favorite, a.comments,
-                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                b.path
-            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-            WHERE a.folder_id = ?1 AND a.name = ?2",
-            params![folder_id, t_utils::get_file_name(file_path)],
-            |row| {
-                Self::from_row(row)
-            }
-        ).optional().map_err(|e| e.to_string())?;
-        Ok(result)
-    }
-
+  
     /// insert a file into db
     fn insert(&self) -> Result<usize, String> {
         let conn = open_conn();
@@ -497,6 +438,102 @@ impl AFile {
         Ok(result)
     }
 
+    // Helper function to build the base SQL query
+    fn build_base_query() -> String {
+        String::from(
+            "SELECT a.id, a.folder_id, 
+                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                a.width, a.height,
+                a.is_favorite, a.comments,
+                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                b.path
+            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id")
+    }
+
+    // Function to construct `Self` from a database row
+    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
+        Ok(Self {
+            id: Some(row.get(0)?),
+            folder_id: row.get(1)?,
+
+            name: row.get(2)?,
+            size: row.get(3)?,
+            created_at: row.get(4)?,
+            modified_at: row.get(5)?,
+            taken_date: row.get(6)?,
+
+            width: row.get(7)?,
+            height: row.get(8)?,
+
+            is_favorite: row.get(9)?,
+            comments: row.get(10)?,
+
+            e_make: row.get(11)?,
+            e_model: row.get(12)?,
+            e_date_time: row.get(13)?,
+            e_exposure_time: row.get(14)?,
+            e_f_number: row.get(15)?,
+            e_focal_length: row.get(16)?,
+            e_iso_speed: row.get(17)?,
+            e_flash: row.get(18)?,
+            e_orientation: row.get(19)?,
+
+            gps_latitude: row.get(20)?,
+            gps_longitude: row.get(21)?,
+            gps_altitude: row.get(22)?,
+
+            file_path: Some(t_utils::get_file_path(
+                row.get::<_, String>(23)?.as_str(),
+                row.get::<_, String>(2)?.as_str(),
+            )),
+        })
+    }
+
+    /// Helper function to execute SQL query and map rows to `File`
+    fn query_files(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
+        let conn = open_conn();
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+
+        let rows = stmt.query_map(params, |row| {
+            Self::from_row(row)
+        }).map_err(|e| e.to_string())?;
+
+        let mut files = Vec::new();
+        for file in rows {
+            files.push(file.unwrap());
+        }
+
+        Ok(files)
+    }
+  
+    // Generalized function to query with conditions
+    fn query_with_conditions(conditions: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
+        let mut sql = Self::build_base_query();
+        sql.push_str(conditions);
+        Self::query_files(&sql, params)
+    }
+
+    /// fetch a file info from db by folder_id and file name
+    pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
+        let conn = open_conn();
+    
+        // Prepare the SQL query by using the base query and adding conditions
+        let sql = format!(
+            "{} WHERE a.folder_id = ?1 AND a.name = ?2",
+            Self::build_base_query()
+        );
+    
+        // Execute the query with folder_id and file name as parameters
+        let result = conn.query_row(
+            &sql,
+            params![folder_id, t_utils::get_file_name(file_path)],
+            |row| Self::from_row(row)
+        ).optional().map_err(|e| e.to_string())?;
+    
+        Ok(result)
+    }
+
     /// insert a file into db if not exists
     pub fn add_to_db(folder_id: i64, file_path: &str) -> Result<Self, String> {
         // Check if the file exists
@@ -520,25 +557,23 @@ impl AFile {
         Ok(new_file.unwrap())
     }
 
-
     /// get a file info from db by file_id
     pub fn get_file_info(file_id: i64) -> Result<Option<Self>, String> {
         let conn = open_conn();
+        
+        // Prepare the SQL query using the base query and adding the condition for file ID
+        let sql = format!(
+            "{} WHERE a.id = ?1",
+            Self::build_base_query()
+        );
+    
+        // Execute the query with file_id as the parameter
         let result = conn.query_row(
-            "SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                a.width, a.height,
-                a.is_favorite, a.comments,
-                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                b.path
-            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-            WHERE a.id = ?1",
+            &sql,
             params![file_id],
-            |row| {
-                Self::from_row(row)
-            }
+            |row| Self::from_row(row)
         ).optional().map_err(|e| e.to_string())?;
+    
         Ok(result)
     }
     
@@ -582,89 +617,33 @@ impl AFile {
         Ok(results)
     }
 
-    
-    /// Helper function to execute SQL query and map rows to `File`
-    fn query_files(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
-        let conn = open_conn();
-        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
-
-        let rows = stmt.query_map(params, |row| {
-            Self::from_row(row)
-        }).map_err(|e| e.to_string())?;
-
-        let mut files = Vec::new();
-        for file in rows {
-            files.push(file.unwrap());
-        }
-
-        Ok(files)
-    }
-
     /// get all files
     pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<Self>, String> {
-    // Base SQL query
-    let mut sql = String::from("SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                a.width, a.height,
-                a.is_favorite, a.comments,
-                a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                b.path
-            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id");
-
-        // Conditionally add WHERE clause if filtering by is_favorite
+        let mut conditions = String::new();
         if is_favorite {
-            sql.push_str(" WHERE a.is_favorite = 1");
+            conditions.push_str(" WHERE a.is_favorite = 1");
         }
+        conditions.push_str(" LIMIT ?1 OFFSET ?2");
 
-        // Add pagination
-        sql.push_str(" LIMIT ?1 OFFSET ?2");
-
-        // Execute the query with pagination
-        Self::query_files(&sql, &[&page_size, &offset])
+        Self::query_with_conditions(&conditions, &[&page_size, &offset])
     }
 
     // get files by date(yyyy-mm-dd)
     pub fn get_files_by_date(date: &str) -> Result<Vec<Self>, String> {
-        // let date_str = format!("{:04}-{:02}-{:02}", year, month, date); // yyyy-mm-dd
-        let sql = "SELECT a.id, a.folder_id, 
-                    a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                    a.width, a.height,
-                    a.is_favorite, a.comments,
-                    a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                    a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                    b.path
-                FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-                WHERE a.taken_date = ?1";
-        Self::query_files(sql, &[&date])
+        let conditions = " WHERE a.taken_date = ?1";
+        Self::query_with_conditions(conditions, &[&date])
     }
 
     /// data string format: yyyy-mm-dd
     pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<Self>, String> {
-        let sql = "SELECT a.id, a.folder_id, 
-                    a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                    a.width, a.height,
-                    a.is_favorite, a.comments,
-                    a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                    a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                    b.path
-                FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-                WHERE a.taken_date >= ?1 AND a.taken_date <= ?2";
-        Self::query_files(sql, &[&start_date, &end_date])
+        let conditions = " WHERE a.taken_date >= ?1 AND a.taken_date <= ?2";
+        Self::query_with_conditions(conditions, &[&start_date, &end_date])
     }
 
     /// get files by camera make and model
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
-        let sql = "SELECT a.id, a.folder_id, 
-                    a.name, a.size, a.created_at, a.modified_at, a.taken_date,
-                    a.width, a.height,
-                    a.is_favorite, a.comments,
-                    a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                    a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                    b.path
-                FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id
-                WHERE a.e_make = ?1 AND a.e_model = ?2";
-        Self::query_files(sql, &[&make, &model])
+        let conditions = " WHERE a.e_make = ?1 AND a.e_model = ?2";
+        Self::query_with_conditions(conditions, &[&make, &model])
     }
 
 }
@@ -691,9 +670,24 @@ impl AThumb {
         Ok(Some(Self {
             id: None,
             file_id,
+            // thumb_data: t_opencv::get_thumbnail(file_path, orientation, thumbnail_size)?,
             thumb_data: t_utils::get_thumbnail(file_path, orientation, thumbnail_size)?,
             thumb_data_base64: None,
         }))
+    }
+
+    /// insert a thumbnail into db
+    fn insert(&self) -> Result<usize, String> {
+        let conn = open_conn();
+        let result = conn.execute(
+            "INSERT INTO athumbs (file_id, thumb_data) 
+            VALUES (?1, ?2)",
+            params![
+                self.file_id,
+                self.thumb_data,
+            ],
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
     }
 
     /// fetch a thumbnail from db by file_id
@@ -712,20 +706,6 @@ impl AThumb {
                 })
             }
         ).optional().map_err(|e| e.to_string())?;
-        Ok(result)
-    }
-
-    /// insert a thumbnail into db
-    fn insert(&self) -> Result<usize, String> {
-        let conn = open_conn();
-        let result = conn.execute(
-            "INSERT INTO athumbs (file_id, thumb_data) 
-            VALUES (?1, ?2)",
-            params![
-                self.file_id,
-                self.thumb_data,
-            ],
-        ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 

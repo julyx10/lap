@@ -1,6 +1,6 @@
 <template>
   <div ref="scrollable" class="mt-1 flex-1 overflow-auto t-scrollbar">
-    <div class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+    <div id="gridView" class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
       
       <div 
         v-for="(file, index) in fileList" 
@@ -16,8 +16,10 @@
         <div class="flex flex-col items-center">
           <img 
             :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" 
-            class="h-36 object-cover rounded"
-            :class="{ 'w-full': isFitWidth }"
+            :class="[
+              'h-40 w-40 rounded', 
+              isFitWidth ? 'object-cover' : 'object-contain'
+            ]"
           />
           <p class="text-center">{{ shortenFilename(file.name) }}</p>
           <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
@@ -33,12 +35,11 @@
 
 <script setup lang="ts">
 
-import { ref, inject, watch, defineComponent, onMounted, onUnmounted } from 'vue';
+import { ref, inject, watch, onMounted, onUnmounted } from 'vue';
 // import VueLazyload from 'vue-lazyload';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { shortenFilename, formatFileSize } from '@/common/utils';
-import { c } from 'naive-ui';
 
 const props = defineProps({
   fileList: {
@@ -166,12 +167,16 @@ function scrollToItem(index) {
 
 // function to get the number of columns in the grid
 function getColumnCount() {
-  const gridContainer = document.querySelector('.grid');
+  // get the first element with the id 'gridView'
+  const gridContainer = document.querySelector('#gridView');
+
   const computedStyle = getComputedStyle(gridContainer);
   const gridTemplateColumns = computedStyle.gridTemplateColumns;
 
   // Split by space to account for grid definitions
   const columnCount = gridTemplateColumns.split(' ').length;
+
+  console.log('getColumnCount:', columnCount);
 
   return columnCount;
 }

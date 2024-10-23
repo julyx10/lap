@@ -24,7 +24,7 @@ native-dialog = "0.7.0"
 dirs = "5.0.1"
 walkdir = "2.5.0"
 base64 = "0.22.1"
-image = "0.25.2"
+image = "0.25.4"
 imagesize = "0.13.0"
 # opencv = "0.93.3"
 
