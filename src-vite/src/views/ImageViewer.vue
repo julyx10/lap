@@ -1,27 +1,35 @@
 <template>
 
-  <div class="flex flex-col h-screen t-color-text">
+  <div class="relative w-screen h-screen flex flex-col border border-gray-800 rounded-lg shadow-lg overflow-hidden">
+    <TitleBar v-if="!isFullScreen" titlebar="jc-photo" viewName="ImageViewer"/>
 
     <!-- Toolbar -->
-    <div class="p-2 h-10 flex flex-row items-center justify-center space-x-10 t-color-bg-light">
-      
-      <IconZoomIn class="t-icon-hover" @click="scale += 0.5" />
-      <IconZoomOut class="t-icon-hover" @click="scale -= 0.5" />
-      <component :is="imageFit ? IconFitScreen1 : IconFitScreen2" class="t-icon-size t-icon-hover" @click="toggleFitScreen" />
+    <div 
+      :class="[
+        'absolute left-1/2 z-50 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
+        isFullScreen ? '-translate-y-8 hover:translate-y-0 transition-transform duration-300 ease-in-out' : ''
+      ]"
+    >
+      <IconPrev class="t-icon-size-sm t-icon-hover" @click="clickPrev" />
+      <IconNext class="t-icon-size-sm t-icon-hover" @click="clickNext" />
+      <IconZoomIn class="t-icon-size-sm t-icon-hover" @click="scale += 0.5" />
+      <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="scale -= 0.5" />
+      <component :is="imageFit ? IconFitScreen1 : IconFitScreen2" class="t-icon-size-sm t-icon-hover" @click="toggleFitScreen" />
 
-      <IconRotateRight class="t-icon-size t-icon-hover" @click="rotateImage"/>
+      <IconRotateRight class="t-icon-size-sm t-icon-hover" @click="rotateImage"/>
 
-      <IconUnFavorite v-if="!fileInfo" class="t-icon-disabled"/>
-      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-hover" @click="toggleFavorite" />
-      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-hover" @click="toggleFavorite" />
+      <IconUnFavorite v-if="!fileInfo" class="t-icon-size-sm t-icon-disabled"/>
+      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
+      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
 
-      <IconFileInfo :class="['t-icon-hover', showFileInfo ? 't-icon-selected' : '']" @click="clickShowFileInfo" />
-      <IconDownload class="t-icon-hover" />
-      <IconFullScreen v-if="!isFullScreen" class="t-icon-hover" @click="setFullScreen" />
-      <IconRestoreScreen v-if=" isFullScreen" class="t-icon-hover" @click="restoreScreen" />
+      <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
+      <IconSave class="t-icon-size-sm t-icon-hover" />
+      <!-- <IconFullScreen v-if="!isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
+      <!-- <IconRestoreScreen v-if="isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
+      <component :is="isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
     </div>
 
-    <div class="flex t-color-bg h-screen overflow-hidden">
+    <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
       <!-- image area -->
       <div class="relative flex-1 flex justify-center items-center overflow-hidden" 
         @wheel="zoomImage" 
@@ -47,7 +55,10 @@
             ref="image"
             :src="imageSrc"
             :style="imageStyle"
-            :class="imageFit ? 'object-contain' : 'object-none'" 
+            :class="[
+              '',
+              imageFit ? 'object-contain' : 'object-none'
+            ]" 
             alt="Image Viewer" 
             draggable="false"
           />
@@ -92,8 +103,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { appWindow } from '@tauri-apps/api/window';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
+import TitleBar from '@/components/TitleBar.vue';
 import FileInfo from '@/components/FileInfo.vue';
 
+import IconPrev from '@/assets/nav-prev.svg';
+import IconNext from '@/assets/nav-next.svg';
 import IconZoomIn from '@/assets/zoom-in.svg';
 import IconZoomOut from '@/assets/zoom-out.svg';
 import IconFitScreen1 from '@/assets/fit-screen1.svg';
@@ -102,11 +116,12 @@ import IconRotateRight from '@/assets/rotate-right.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconFileInfo from '@/assets/information.svg';
-import IconDownload from '@/assets/download.svg';
-import IconFullScreen from '@/assets/full-screen-1.svg';
-import IconRestoreScreen from '@/assets/full-screen-2.svg';
+import IconSave from '@/assets/save.svg';
+import IconFullScreen from '@/assets/full-screen-max.svg';
+import IconRestoreScreen from '@/assets/full-screen-min.svg';
 import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
+import { c } from 'naive-ui';
 
 const fileId = ref(null);
 const filePath = ref('');      // File path
@@ -121,6 +136,7 @@ const loadError = ref(null);
 const imageFit = ref(true); // true: fit screen; false: original size
 
 const isFullScreen = ref(false); // Track if the window is full screen
+const isMaximized  = ref(false); // Track if the window is maximized
 
 // Image rotation angle
 const rotation  = ref(0); 
@@ -281,6 +297,8 @@ function handleKeyDown(event) {
     case 'Escape':
       if (showFileInfo.value) {
         closeFileInfo();
+      } else if (isFullScreen.value) {
+        exitFullScreen(); // Exit full screen
       } else {
         appWindow.close(); // Close the window
       }
@@ -348,24 +366,31 @@ const toggleFavorite = async() => {
 }
 
 // Function to maximize the window and setup full screen
-const setFullScreen = async () => {
-  await appWindow.maximize();
-  await appWindow.setFullscreen(true);
-  isFullScreen.value = true;
-};
+const toggleFullScreen = async () => {
+  if (!isFullScreen.value) {  // enter full screen
+    isMaximized.value = await appWindow.isMaximized(); // Check if the window is maximized
 
-// Function to restore the window and exit full screen
-const restoreScreen = async () => {
-  await appWindow.setFullscreen(false);
-  await appWindow.unmaximize();
-  isFullScreen.value = false;
-};
+    await appWindow.setFullscreen(true);
+    isFullScreen.value = true;
 
+    if (!isMaximized.value) {
+      await appWindow.maximize();
+    }
+  } else {  // exit full screen
+    await appWindow.setFullscreen(false);
+    isFullScreen.value = false;
+
+    if (isMaximized.value) {
+      await appWindow.unmaximize();
+    }
+  }
+}
 
 // Method to rotate the image by 90 degrees
 const rotateImage = () => {
+  console.log('rotateImage');
   rotation.value += 90;
-};
+}
 
 
 // Emit a message to the main window to go to the previous image

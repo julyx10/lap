@@ -2,7 +2,7 @@
   
   <div class="w-screen h-screen flex flex-col border border-gray-800 rounded-lg shadow-lg overflow-hidden">
     <!-- Title Bar -->
-    <TitleBar titlebar="jc-photo" :hasSearch="true"/>
+    <TitleBar titlebar="jc-photo" viewName="Home"/>
 
     <!-- Main Content -->
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">

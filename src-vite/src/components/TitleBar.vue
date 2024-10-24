@@ -6,20 +6,9 @@
     <!-- Left Section (Title) -->
     <span class="ml-4 t-color-text text-nowrap" @mousedown="appWindow.startDragging()">{{ titlebar }}</span>
 
-    <!-- Draggable Area with Search Box -->
+    <!-- Draggable Area -->
     <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text " @mousedown="appWindow.startDragging()">
-      <div v-if="hasSearch" class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv">
-        <!-- Search Box -->
-        <input
-          type="text"
-          :placeholder="$t('search_placeholder')"
-          class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-          @mousedown.stop
-        />
-        <!-- Search Icon -->
-        <IconSearch class="absolute right-2 top-1/2 transform -translate-y-1/2 h-5 w-5" />
-      </div>
-
+      <SearchBox v-if="viewName==='Home'" class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv"/>
     </div>
 
     <!-- Window Control Buttons -->
@@ -35,10 +24,11 @@
 
 
 <script setup>
+
 import { ref } from 'vue';
 import { appWindow } from '@tauri-apps/api/window';
+import SearchBox from '@/components/SearchBox.vue';
 
-import IconSearch from '@/assets/search.svg';
 import IconMinus from '@/assets/window-minus.svg';
 import IconMaximize from '@/assets/window-maximize.svg';
 import IconRestore from '@/assets/window-restore.svg';
@@ -49,14 +39,14 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  viewName: {
+    type: String,
+    required: true,
+  },
   resizable: {
     type: Boolean,
     default: true,
-  },
-  hasSearch: {
-    type: Boolean,
-    default: false,
-  },
+  }
 });
 
 const isMaximized = ref(false);
