@@ -109,10 +109,6 @@ import IconClose from '@/assets/close.svg';
 // const localeMsg = computed(() => messages.value[locale.value]);
 
 const props = defineProps({
-  // fileId: {
-  //   type: Number,
-  //   required: true,
-  // },
   fileInfo: {
     type: Object,
     required: true

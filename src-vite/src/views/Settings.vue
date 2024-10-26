@@ -1,39 +1,50 @@
 <template>
 
-  <div class="w-screen h-screen flex flex-col border border-gray-800 rounded-lg overflow-hidden">
+  <div class="w-screen h-screen flex flex-col border t-color-border rounded-lg overflow-hidden">
     <!-- Title Bar -->
     <TitleBar :titlebar="$t('settings')" :resizable="false" :hasSearch="false"/>
 
     <!-- Main Content -->
     <div class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark">
 
-      <div class="w-32">
-        pane
+      <div class="w-32 text-lg font-bold mb-2">
+        General
       </div>
       
       <div class="flex-grow">
 
         <!-- General Settings Section -->
         <section>
-          <span class="text-lg font-bold mb-2">General</span>
+          <!-- select language -->
+          <div class="mb-4">
+            <label for="language-select" class="block text-lg">Select language</label>
+            <select id="language-select" v-model="selectedLanguage" @change="changeLanguage"
+              class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
+            >
+              <option v-for="(lang, index) in languages" :key="index" :value="lang.value">
+                {{ lang.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- thumbnail size -->
+          <div class="mb-4">
+            <label for="thumbnail-size" class="block text-lg">Thumbnail size</label>
+            <input id="thumbnail-size" type="range" min="50" max="200" step="50" v-model="thumbnailSize"
+              class="w-full t-input-color-bg t-color-border t-input-focus"
+            />
+          </div>
 
           <!-- Toggle for Dark Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="dark-mode" >Dark Mode</label>
-            <input
-              type="checkbox" 
-              id="dark-mode" 
-              v-model="darkMode" 
-            />
+            <input id="dark-mode" type="checkbox" v-model="darkMode" />
           </div>
 
           <!-- Input for Username -->
           <div class="mb-4">
             <label for="username" class="block text-lg">Username</label>
-            <input 
-              type="text" 
-              id="username" 
-              v-model="username" 
+            <input id="username" type="text" v-model="username" 
               class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
               placeholder="Enter your username" 
             />
@@ -66,9 +77,9 @@
         </section>
 
         <!-- Save Button -->
-        <div class="text-right">
+        <!-- <div class="text-right">
           <button @click="saveSettings" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
-        </div>
+        </div> -->
       </div>
 
     </div>  
@@ -79,7 +90,20 @@
 
 <script setup>
 
+import { ref } from 'vue';
 import TitleBar from '@/components/TitleBar.vue';
+
+const languages = [
+      { label: 'English', value: 'en' },
+      { label: '中文', value: 'zh' },
+      { label: '日本語', value: 'jp' },
+    ];
+
+const selectedLanguage = ref('en');
+
+const changeLanguage = () => {
+  console.log('Language changed to:', selectedLanguage.value);
+};
 
 
 </script>

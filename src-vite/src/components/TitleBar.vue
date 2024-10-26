@@ -3,11 +3,14 @@
   <!-- Custom Title Bar -->
   <div class="w-full h-10 flex items-center justify-between t-color-bg select-none">
     
-    <!-- Left Section (Title) -->
+    <!-- Title Name -->
     <span class="ml-4 t-color-text text-nowrap" @mousedown="appWindow.startDragging()">{{ titlebar }}</span>
 
     <!-- Draggable Area -->
-    <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text " @mousedown="appWindow.startDragging()">
+    <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text" 
+      @mousedown="appWindow.startDragging()"
+      @dblclick="toggleMaximizeWindow"
+    >
       <SearchBox v-if="viewName==='Home'" class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv"/>
     </div>
 

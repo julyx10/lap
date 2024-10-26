@@ -1,10 +1,10 @@
 <template>
 
-  <div class="flex flex-col w-full">
+  <div class="flex-1 flex flex-col">
 
     <!-- title bar -->
     <div class="px-4 py-1" style="user-select: none;">
-      <div class=" flex flex-row items-center justify-between">
+      <div class="flex flex-row items-center justify-between">
 
         <div class="flex-1 flex flex-col">
           <span>{{ title }}</span>
@@ -25,17 +25,34 @@
           <IconFavorite v-if="isFavorite" class="t-icon-hover text-red-600 hover:text-red-600" @click="toggleFavorite" />
           <component :is="IconTag" class="t-icon-hover" />
           <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
+          <component :is="showPreview ? IconPreview : IconPreviewOff" class="t-icon-hover" @click="togglePreview" />
         </div>
         
       </div>
 
     </div>
 
-    <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+    <div>
+      <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+    </div>
 
-    <!-- grid view -->
-    <GridView :fileList="fileList" :isFitWidth="isFitWidth"/>
-    <!-- <TableView :fileList="fileList"/> -->
+    <div class="my-1 flex-1 flex flex-row overflow-hidden">
+      <!-- grid view -->
+      <GridView :fileList="fileList" :isFitWidth="isFitWidth"/>
+      <!-- <TableView :fileList="fileList"/> -->
+
+      <!-- splitter -->
+      <div v-if="showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
+
+      <div v-if="showPreview" class="w-96 t-color-bg rounded-ss-lg" :style="{ width: previewPaneWidth + 'px' }">
+        <div class="flex flex-col items-center justify-center h-full">
+          <img v-if="gContentIndex >= 0 && gContentIndex < fileList.length" 
+            :src="fileList[gContentIndex].thumbnail ? fileList[gContentIndex].thumbnail : '/src/assets/photo.svg'" 
+            class="h-full w-full p-1 rounded-lg object-contain" 
+          />
+        </div>
+      </div>
+    </div>
 
   </div>
 
@@ -43,7 +60,7 @@
 
 
 <script setup>
-import { ref, watch, computed, inject  } from 'vue';
+import { ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { invoke } from '@tauri-apps/api';
 // import TableView from '@/components/TableView.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -63,6 +80,9 @@ import IconFavorite from '@/assets/heart-solid.svg';
 import IconTag from '@/assets/tag.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
+import IconPreview from '@/assets/preview-on.svg';
+import IconPreviewOff from '@/assets/preview-off.svg';
+
 
 const props = defineProps({
   titlebar: String
@@ -95,6 +115,45 @@ const isFavorite = ref(false); // favorite status
 
 const sortingAsc = ref(true); // sorting order
 const sortingType = ref('taken_date'); // sorting type
+
+const showPreview = ref(false); // show image preview
+
+// using for resizing the preview pane
+const previewPaneWidth = ref(300); // Default width of the preview pane
+const isDragging = ref(false);
+
+
+onMounted(() => {
+  document.addEventListener('mouseup', stopDragging);
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mouseup', stopDragging);
+})
+
+
+/// Dragging the splitter
+function startDragging(event) {
+  isDragging.value = true;
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', stopDragging);
+}
+
+/// stop dragging the splitter
+function stopDragging() {
+  isDragging.value = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', stopDragging);
+}
+
+/// handle mouse move event
+function handleMouseMove(event) {
+  if (isDragging.value) {
+    const windowWidth = document.documentElement.clientWidth -2 ; // -2 for border width(1px) * 2
+    previewPaneWidth.value = Math.max(windowWidth - event.clientX, 100); 
+  }
+}
+
 
 /// auto update the titlebar when reference data changes
 const title = computed(() => {
@@ -239,6 +298,11 @@ function toggleSortingOrder() {
     gContentIndex.value = fileList.value.length - 1 - gContentIndex.value;
   }
   console.log('toggleSortingOrder:', sortingAsc.value, fileList.value);
+}
+
+/// toggle the preview status
+function togglePreview() {
+  showPreview.value = !showPreview.value;
 }
 
 
@@ -418,7 +482,7 @@ async function getFileThumb(files, concurrencyLimit = 8) {
             return file;
           })
           .catch((error) => {
-            console.error('Error fetching thumbnail:', error);
+            console.log('Error fetching thumbnail:', error);
           });
 
         queue.push(filePromise);
@@ -432,7 +496,7 @@ async function getFileThumb(files, concurrencyLimit = 8) {
     console.log('All thumbnails fetched successfully.');
 
   } catch (error) {
-    console.error('getFileThumb error:', error);
+    console.log('getFileThumb error:', error);
   }
 }
 

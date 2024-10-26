@@ -1,6 +1,6 @@
 <template>
-  <div ref="scrollable" class="mt-1 flex-1 overflow-auto t-scrollbar">
-    <div id="gridView" class="px-2 gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+  <div ref="scrollable" class="flex-1 overflow-auto t-scrollbar">
+    <div id="gridView" class="px-2 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2">
       
       <div 
         v-for="(file, index) in fileList" 
@@ -17,7 +17,7 @@
           <img 
             :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" 
             :class="[
-              'h-40 w-40 rounded', 
+              'w-48 h-48 rounded', 
               isFitWidth ? 'object-cover' : 'object-contain'
             ]"
           />
@@ -145,6 +145,7 @@ function openImageViewer(index: number, createNew = false) {
       height: 600,
       transparent: true,
       decorations: false,
+      // skipTaskbar: true,
     });
 
     imageWindow.once('tauri://created', () => {
