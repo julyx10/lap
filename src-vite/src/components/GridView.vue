@@ -38,7 +38,7 @@
 import { ref, inject, watch, onMounted, onUnmounted } from 'vue';
 // import VueLazyload from 'vue-lazyload';
 import { listen } from '@tauri-apps/api/event';
-import { WebviewWindow } from '@tauri-apps/api/window';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { shortenFilename, formatFileSize } from '@/common/utils';
 
 const props = defineProps({
@@ -54,6 +54,8 @@ const props = defineProps({
 // const msg = computed(() => messages.value[locale.value]);
 
 const gContentIndex = inject('gContentIndex'); // global selected item index
+const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
+
 const scrollable = ref(null); // Ref for the scrollable element
 
 onMounted(() => {
@@ -61,12 +63,16 @@ onMounted(() => {
 
   listen('message-from-image-viewer', (event) => {
     const { message } = event.payload;
+    console.log('message-from-image-viewer:', message);
     switch (message) {
       case 'prev':
         gContentIndex.value = Math.max(gContentIndex.value - 1, 0);
         break;
       case 'next':
         gContentIndex.value = Math.min(gContentIndex.value + 1, props.fileList.length - 1);
+        break;
+      case 'close':
+        gShowImageViewer.value = false;
         break;
       default:
         break;
@@ -120,7 +126,9 @@ watch (() => gContentIndex.value, (newIndex) => {
 
 
 // Open the image viewer window
-function openImageViewer(index: number, createNew = false) {
+async function openImageViewer(index: number, createNew = false) {
+  const webViewLabel = 'imageviewer';
+
   const fileCount = props.fileList.length;
   if (index < 0 || index >= fileCount) {
     return;
@@ -128,32 +136,46 @@ function openImageViewer(index: number, createNew = false) {
 
   const file = props.fileList[index];
   const encodedFilePath = encodeURIComponent(file.file_path);
-  let imageWindow = WebviewWindow.getByLabel('imageviewer');
+  let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
 
-  if (imageWindow) {
-    imageWindow.emit('update-img', { 
+  // create a new window if it doesn't exist
+  if (!imageWindow) {
+    if (createNew) {
+      imageWindow = new WebviewWindow(webViewLabel, {
+        url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}`,
+        title: 'Image Viewer',
+        width: 800,
+        height: 600,
+        transparent: true,
+        decorations: false,
+      });
+
+      // Listen for the message from the new window before it closes
+      // listen('message-from-image-viewer', (event) => {
+      //   console.log('Received message:', event.payload); // Handle the received message
+      // });
+
+      imageWindow.once('tauri://created', () => {
+        gShowImageViewer.value = true;
+        console.log('ImageViewer window created');
+      });
+
+      // Listen for the window close-request event
+      // imageWindow.once('tauri://close-requested', () => {
+      //   gShowImageViewer.value = false;
+      //   console.log('ImageViewer window is closing');
+      // });
+
+      imageWindow.once('tauri://error', (e) => {
+        console.error('Error creating ImageViewer window:', e);
+      });
+    }
+  } else {    // update the existing window
+    await imageWindow.emit('update-img', { 
       fileId: file.id, 
       filePath: encodedFilePath, 
       fileIndex: index,   // selected file index
       fileCount: fileCount, // total files length
-    });
-  } else if (createNew) {
-    imageWindow = new WebviewWindow('imageviewer', {
-      url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}`,
-      title: 'Image Viewer',
-      width: 800,
-      height: 600,
-      transparent: true,
-      decorations: false,
-      // skipTaskbar: true,
-    });
-
-    imageWindow.once('tauri://created', () => {
-      console.log('ImageViewer window created');
-    });
-
-    imageWindow.once('tauri://error', (e) => {
-      console.error('Error creating ImageViewer window:', e);
     });
   }
 };

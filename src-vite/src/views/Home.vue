@@ -61,8 +61,8 @@
 <script setup lang="ts">
 
 import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue';
-import { open } from '@tauri-apps/api/dialog'; // Tauri dialog API to open the file picker
-import { WebviewWindow } from '@tauri-apps/api/window';
+import { open } from '@tauri-apps/plugin-dialog'; // Tauri dialog API to open the file picker
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -197,36 +197,36 @@ function menuAction(action) {
 
 
 /// debug - open image
-const openImage = async () => {
-  try {
-    const selectedFile = await open({
-      multiple: false,
-      filters: [
-        {
-          name: 'Image Files',
-          extensions: ['png', 'jpg', 'jpeg', 'gif'],
-        },
-      ],
-    });
+// const openImage = async () => {
+//   try {
+//     const selectedFile = await open({
+//       multiple: false,
+//       filters: [
+//         {
+//           name: 'Image Files',
+//           extensions: ['png', 'jpg', 'jpeg', 'gif'],
+//         },
+//       ],
+//     });
 
-    if (selectedFile) {
-      console.log('Selected file:', selectedFile);
-      const imageWindow = new WebviewWindow('image', {
-        url: `/image-viewer?file=${encodeURIComponent(Array.isArray(selectedFile) ? selectedFile[0] : selectedFile)}`,
-        title: 'Image Viewer',
-        width: 800,
-        height: 600,
-        resizable: true,
-      });
+//     if (selectedFile) {
+//       console.log('Selected file:', selectedFile);
+//       const imageWindow = new WebviewWindow('image', {
+//         url: `/image-viewer?file=${encodeURIComponent(Array.isArray(selectedFile) ? selectedFile[0] : selectedFile)}`,
+//         title: 'Image Viewer',
+//         width: 800,
+//         height: 600,
+//         resizable: true,
+//       });
 
-      imageWindow.once('tauri://created', () => {
-        console.log('Image window created');
-      });
-    }
-  } catch (error) {
-    console.error('Failed to open file:', error);
-  }
-};
+//       imageWindow.once('tauri://created', () => {
+//         console.log('Image window created');
+//       });
+//     }
+//   } catch (error) {
+//     console.error('Failed to open file:', error);
+//   }
+// };
 
 
 /// debug - toggle theme

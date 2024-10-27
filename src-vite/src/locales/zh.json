@@ -25,6 +25,8 @@
   "files": "文件",
   "allphotos": "所有照片",
 
+  "file_list_no_files": "未找到文件",
+
   "folder_summary": "{folders} 文件夹, {files} 文件",
   "files_summary": "{files} 文件",
 

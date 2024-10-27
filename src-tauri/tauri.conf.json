@@ -1,35 +1,22 @@
 {
   "build": {
-    "devPath": "http://localhost:3580",
-    "distDir": "../src-vite/dist",
-    "withGlobalTauri": true
+    "frontendDist": "../src-vite/dist",
+    "devUrl": "http://localhost:3580"
   },
-  "package": {
-    "productName": "jc-photo",
-    "version": "0.1.0"
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.ico"
+    ]
   },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "window": {
-        "all": true
-      },
-      "dialog": {
-        "all": false,
-        "ask": false,
-        "confirm": false,
-        "message": false,
-        "open": true,
-        "save": false
-      },
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "os": {
-        "all": true
-      }
-    },
+  "productName": "jc-photo",
+  "mainBinaryName": "jc-photo",
+  "version": "0.1.0",
+  "identifier": "com.julyxx.jc-photo",
+  "plugins": {},
+  "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
@@ -43,15 +30,7 @@
       }
     ],
     "security": {
-      "csp": null
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.julyxx.jc-photo",
-      "icon": [
-        "icons/icon.ico"
-      ]
+      "capabilities": ["migrated"]
     }
   }
 }

@@ -28,6 +28,8 @@
   "folder_summary": "{folders} folders, {files} files",
   "files_summary": "{files} files",
 
+  "file_list_no_files": "No files found",
+
   "preview_no_file": "No file selected",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],

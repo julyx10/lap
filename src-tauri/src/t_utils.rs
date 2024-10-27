@@ -37,16 +37,16 @@ impl Default for AppConfig {
 /// FileNode struct to represent a file system node
 #[derive(serde::Serialize)]
 pub struct FileNode {
-    id:   Option<i64>,      // unique id(in database)
-    name: String,           // folder name
-    path: String,           // folder path
-    is_dir: bool,           // is directory
+    id: Option<i64>, // unique id(in database)
+    name: String,    // folder name
+    path: String,    // folder path
+    is_dir: bool,    // is directory
     is_expanded: bool,
     children: Option<Vec<Self>>,
 }
 
 impl FileNode {
-    
+
     /// Create a new FileNode
     fn new(path: &str, is_dir: bool, is_expanded: bool) -> Self {
         FileNode {
@@ -81,25 +81,18 @@ impl FileNode {
         Ok(root_node)
     }
 
-    /// Recurse sub-folders 
+    /// Recurse sub-folders
     fn recurse_nodes(path: &Path, is_recursive: bool) -> Result<Vec<Self>, String> {
         let mut nodes: Vec<FileNode> = Vec::new();
 
         // Use WalkDir to iterate over directory entries
-        for entry in WalkDir::new(path)
-            .min_depth(1)
-            .max_depth(1)
-            .into_iter()
-            // .filter_entry(|e| !is_hidden(e))
+        for entry in WalkDir::new(path).min_depth(1).max_depth(1).into_iter()
+        // .filter_entry(|e| !is_hidden(e))
         {
             let entry = entry.map_err(|e| e.to_string())?;
             if entry.file_type().is_dir() {
-                let mut node = FileNode::new(
-                    entry.path().to_str().unwrap(),
-                    true,
-                    false,
-                );
-                
+                let mut node = FileNode::new(entry.path().to_str().unwrap(), true, false);
+
                 // Recursively process subdirectories
                 if is_recursive {
                     node.children = Some(Self::recurse_nodes(entry.path(), is_recursive)?);
@@ -121,9 +114,9 @@ pub struct FileInfo {
     pub file_path: String,
     pub file_name: String,
     pub file_type: Option<String>,
-    pub created:   Option<u64>,
-    pub modified:  Option<u64>,         // modified date as a timestamp
-    pub modified_str: Option<String>,  // modified date as a string (YYYY-MM-DD)
+    pub created: Option<u64>,
+    pub modified: Option<u64>,        // modified date as a timestamp
+    pub modified_str: Option<String>, // modified date as a string (YYYY-MM-DD)
     // pub accessed:  Option<u64>,
 
     // Windows-specific attributes
@@ -145,7 +138,7 @@ impl FileInfo {
             file_path: file_path.to_string(),
             file_name: get_file_name(file_path),
             file_type: metadata.file_type().is_dir().then(|| "dir".to_string()),
-            created:  systemtime_to_u64(metadata.created().ok()),
+            created: systemtime_to_u64(metadata.created().ok()),
             modified: systemtime_to_u64(metadata.modified().ok()),
             modified_str: systemtime_to_string(metadata.modified().ok()),
             // accessed: systemtime_to_string(metadata.accessed().ok()),
@@ -163,11 +156,11 @@ impl FileInfo {
 /// ImageInfo struct to represent image metadata
 #[derive(serde::Serialize)]
 pub struct ImageInfo {
-    pub width:      u32,
-    pub height:     u32,
+    pub width: u32,
+    pub height: u32,
     pub color_type: String,
-    pub bit_depth:  u16,
-    pub has_alpha:  bool,
+    pub bit_depth: u16,
+    pub has_alpha: bool,
 }
 
 impl ImageInfo {
@@ -218,7 +211,7 @@ pub fn is_music_extension(extension: &str) -> bool {
 /// Get the name from a folder or file path
 pub fn get_file_name(path: &str) -> String {
     let path = Path::new(path);
-    
+
     // Extract the file name or last component of the path
     match path.file_name() {
         Some(name) => name.to_string_lossy().into_owned(),
@@ -230,7 +223,7 @@ pub fn get_file_name(path: &str) -> String {
 /// Get the full path by joining a folder path and a file name
 pub fn get_file_path(path: &str, name: &str) -> String {
     let file_path: PathBuf = Path::new(path).join(name);
-    file_path.to_string_lossy().to_string()  // Convert PathBuf to String
+    file_path.to_string_lossy().to_string() // Convert PathBuf to String
 }
 
 
@@ -268,8 +261,7 @@ pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_size(file_path: &str) -> Result<(u32, u32), String> {
     // Use imagesize to get width and height
-    let dimensions = imagesize::size(file_path)
-        .map_err(|e| e.to_string())?; // Map error to String if any
+    let dimensions = imagesize::size(file_path).map_err(|e| e.to_string())?; // Map error to String if any
 
     // Return the dimensions as (width, height)
     Ok((dimensions.width as u32, dimensions.height as u32))
@@ -277,9 +269,13 @@ pub fn get_image_size(file_path: &str) -> Result<(u32, u32), String> {
 
 
 /// Get a thumbnail image from a file path
-pub fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
+pub fn get_thumbnail(
+    file_path: &str,
+    orientation: i32,
+    thumbnail_size: u32,
+) -> Result<Option<Vec<u8>>, String> {
     let img = image::open(file_path).expect("Failed to open image");
-    
+
     // Adjust the image orientation based on the EXIF orientation value
     let adjusted_img = match orientation {
         3 => img.rotate180(),
@@ -295,7 +291,7 @@ pub fn get_thumbnail(file_path: &str, orientation: i32, thumbnail_size: u32) -> 
     let mut buf = Vec::new();
     match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
         Ok(()) => Ok(Some(buf)),
-        Err(_) => Ok(None)
+        Err(_) => Ok(None),
     }
 }
 

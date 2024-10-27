@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 // import VueLazyload from 'vue-lazyload';
 import router from '@/common/router'
-import { invoke } from '@tauri-apps/api'
+import { invoke } from '@tauri-apps/api/core'
 import './tailwind.css'
 
 

@@ -38,8 +38,11 @@
 
     <div class="my-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
-      <GridView :fileList="fileList" :isFitWidth="isFitWidth"/>
+      <GridView v-if="fileList.length > 0" :fileList="fileList" :isFitWidth="isFitWidth"/>
       <!-- <TableView :fileList="fileList"/> -->
+       <div v-else class="flex-1 flex flex-row items-center justify-center">
+        <p>{{ $t('file_list_no_files') }}</p>
+       </div>
 
       <!-- splitter -->
       <div v-if="showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
@@ -73,7 +76,7 @@
 
 <script setup>
 import { ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
-import { invoke } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/core';
 // import TableView from '@/components/TableView.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
@@ -114,6 +117,7 @@ const gCameraMake = inject('gCameraMake');     // global camera make
 const gCameraModel = inject('gCameraModel');   // global camera model
 
 const gContentIndex = inject('gContentIndex'); // global selected item index
+const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
 
 // file list
 const fileList = ref([]);
@@ -303,7 +307,19 @@ watch(gContentIndex, (newIndex) => {
   }
 });
 
+watch(gShowImageViewer, (show) => {
+  console.log('watch - gShowImageViewer:', show);
+  if (show) {
+    onImageLoad();
+  } 
+});
+
 const onImageLoad = async () => {
+  // prevent loading image when the image viewer is open
+  if(gShowImageViewer.value) {
+    return;
+  }
+
   let filePath = fileList.value[gContentIndex.value].file_path;
   console.log('onImageLoad:', filePath);
   try {

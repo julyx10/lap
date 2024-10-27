@@ -20,6 +20,9 @@ mod t_utils;
 /// The main function is the entry point for the Tauri application.
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
             // Create the database on startup
             t_sqlite::create_db().expect("error while creating the database");
@@ -42,7 +45,7 @@ fn main() {
             t_cmds::save_config,
             t_cmds::load_config,
             t_cmds::get_albums,
-            t_cmds::add_album, 
+            t_cmds::add_album,
             t_cmds::delete_album,
             t_cmds::select_folder,
             t_cmds::expand_folder,

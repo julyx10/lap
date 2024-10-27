@@ -65,8 +65,8 @@
 <script setup lang="ts">
 
 import { ref, inject, computed, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api';
-import { appWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import Folders from '@/components/AlbumsFolders.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
@@ -94,6 +94,8 @@ const props = defineProps({
     required: true
   }
 });
+
+const appWindow = getCurrentWebviewWindow();
 
 const showDeleteAlbumMsgbox = ref(false);
 

@@ -1,5 +1,6 @@
-import { os } from '@tauri-apps/api';
+import {  } from '@tauri-apps/api';
 import { format } from 'date-fns';
+import * as os from "@tauri-apps/plugin-os"
 
 
 export const THUMBNAIL_SIZE = 320;    // thumbnail size

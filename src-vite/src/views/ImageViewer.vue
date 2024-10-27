@@ -14,8 +14,20 @@
         isFullScreen ? '-translate-y-8 hover:translate-y-0 transition-transform duration-300 ease-in-out' : ''
       ]"
     >
-      <IconPrev class="t-icon-size-sm t-icon-hover" @click="clickPrev" />
-      <IconNext class="t-icon-size-sm t-icon-hover" @click="clickNext" />
+      <IconPrev 
+        :class="[
+          't-icon-size-sm',
+          fileIndex > 0 ? 't-icon-hover' : 't-icon-disabled'
+        ]" 
+        @click="clickPrev" 
+      />
+      <IconNext 
+        :class="[
+          't-icon-size-sm',
+          fileIndex < fileCount -1 ? 't-icon-hover' : 't-icon-disabled'
+        ]" 
+        @click="clickNext" 
+      />
       <IconZoomIn class="t-icon-size-sm t-icon-hover" @click="scale += 0.5" />
       <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="scale -= 0.5" />
       <component :is="imageFit ? IconFitScreen1 : IconFitScreen2" class="t-icon-size-sm t-icon-hover" @click="toggleFitScreen" />
@@ -104,9 +116,9 @@
 <script setup lang="ts">
 
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import TitleBar from '@/components/TitleBar.vue';
 import FileInfo from '@/components/FileInfo.vue';
 
@@ -125,6 +137,8 @@ import IconFullScreen from '@/assets/full-screen-max.svg';
 import IconRestoreScreen from '@/assets/full-screen-min.svg';
 import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
+
+const appWindow = getCurrentWebviewWindow()
 
 const fileId = ref(null);
 const filePath = ref('');      // File path
@@ -162,9 +176,23 @@ const imageStyle = computed(() => ({
   transition: isDragging.value ? 'none' : 'transform 0.2s ease-in-out',
 }));
 
+// // Emit a custom event before the window closes
+// const handleClose = async () => {
+//   await emit('message-from-image-viewer', { message: 'close' });
+// };
+
+// // Listen for the `tauri://close-request` event and trigger the close handler
+// appWindow.listen('tauri://close-request', async (event) => {
+//   await handleClose();
+// });
+
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
   isFullScreen.value = await appWindow.isMaximized();
+  
+  // appWindow.listen('tauri://close-requested', async () => {
+  //   await emit('message-from-image-viewer', { message: 'close' });
+  // });
 
   try {
     const urlParams = new URLSearchParams(window.location.search);
@@ -208,6 +236,38 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
+
+function handleKeyDown(event) {
+  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'];
+  
+  // Disable default behavior for certain keys
+  if (navigationKeys.includes(event.key)) {
+    event.preventDefault();
+  }
+
+  switch (event.key) {
+    case 'ArrowDown':
+      break;
+    case 'ArrowRight':
+      clickNext();
+      break;
+    case 'ArrowUp':
+      break;
+    case 'ArrowLeft':
+      clickPrev();
+      break;
+    case 'Enter':
+      clickShowFileInfo();
+      break;
+    case 'Escape':
+      if (showFileInfo.value) {
+        closeFileInfo();
+      } else {
+        appWindow.close(); // Close the window
+      }
+      break;
+  }
+}
 
 // Load the image from the file path
 async function loadImage(filePath) {
@@ -275,38 +335,6 @@ function dragImage(event) {
 }
 
 
-function handleKeyDown(event) {
-  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'];
-  
-  // Disable default behavior for certain keys
-  if (navigationKeys.includes(event.key)) {
-    event.preventDefault();
-  }
-
-  switch (event.key) {
-    case 'ArrowDown':
-      break;
-    case 'ArrowRight':
-      clickNext();
-      break;
-    case 'ArrowUp':
-      break;
-    case 'ArrowLeft':
-      clickPrev();
-      break;
-    case 'Enter':
-      clickShowFileInfo();
-      break;
-    case 'Escape':
-      if (showFileInfo.value) {
-        closeFileInfo();
-      } else {
-        appWindow.close(); // Close the window
-      }
-      break;
-  }
-}
-
 
 // Function to be called when the image loads
 const onImageLoad = () => {
@@ -369,7 +397,7 @@ const toggleFavorite = async() => {
 // Function to maximize the window and setup full screen
 const toggleFullScreen = async () => {
   if (!isFullScreen.value) {  // enter full screen
-    isMaximized.value = await appWindow.isMaximized(); // Check if the window is maximized
+    isMaximized.value = appWindow.isMaximized(); // Check if the window is maximized
 
     await appWindow.setFullscreen(true);
     await appWindow.setResizable(false); // Disable window resizing

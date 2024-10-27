@@ -17,7 +17,8 @@ use crate::t_utils;
 #[tauri::command]
 pub fn save_config(config: t_utils::AppConfig) -> Result<(), String> {
     // Get the app's data directory
-    let app_dir = std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
+    let app_dir =
+        std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
     let config_path = app_dir.join("config.json");
 
     // Serialize the config to JSON and write it to the file
@@ -33,7 +34,8 @@ pub fn save_config(config: t_utils::AppConfig) -> Result<(), String> {
 #[tauri::command]
 pub fn load_config() -> Result<t_utils::AppConfig, String> {
     // Get the app's data directory
-    let app_dir = std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
+    let app_dir =
+        std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
     let config_path = app_dir.join("config.json");
 
     // If the config file doesn't exist, return the default config
@@ -43,7 +45,8 @@ pub fn load_config() -> Result<t_utils::AppConfig, String> {
 
     // Read the config file and deserialize the JSON
     let config_json = std::fs::read_to_string(config_path).map_err(|e| e.to_string())?;
-    let config: t_utils::AppConfig = serde_json::from_str(&config_json).map_err(|e| e.to_string())?;
+    let config: t_utils::AppConfig =
+        serde_json::from_str(&config_json).map_err(|e| e.to_string())?;
 
     Ok(config)
 }
@@ -58,11 +61,10 @@ pub fn get_albums() -> Result<Vec<Album>, String> {
 
 /// add an album
 #[tauri::command]
-pub fn add_album(window: tauri::Window, title: &str) -> Result<Album, String> {
+pub fn add_album(_window: tauri::Window, title: &str) -> Result<Album, String> {
     // Show open folder dialog
     let result = FileDialog::new()
         .set_title(title)
-        .set_owner(&window)
         .show_open_single_dir();
 
     match result {
@@ -70,7 +72,7 @@ pub fn add_album(window: tauri::Window, title: &str) -> Result<Album, String> {
             // Add the album to the database and return the result
             Album::add_to_db(path.to_string_lossy().into_owned().as_str())
                 .map_err(|e| format!("Error while adding album to DB: {}", e))
-        },
+        }
         Ok(None) => Err("No folder selected".to_string()),
         Err(_) => Err("Failed to open folder dialog".to_string()),
     }
@@ -81,7 +83,11 @@ pub fn add_album(window: tauri::Window, title: &str) -> Result<Album, String> {
 #[tauri::command]
 pub fn delete_album(id: i64) -> Result<usize, String> {
     let result = Album::delete_from_db(id).map_err(|e| {
-        format!("Error while deleting album with id {}: {}", id, e.to_string())
+        format!(
+            "Error while deleting album with id {}: {}",
+            id,
+            e.to_string()
+        )
     })?;
 
     Ok(result)

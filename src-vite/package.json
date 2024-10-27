@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.js",
+    "dev:clean": "vite --config vite.config.js --force",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.6.0",
+    "@tauri-apps/api": "^2.0.3",
+    "@tauri-apps/plugin-dialog": "^2.0.1",
+    "@tauri-apps/plugin-os": "^2.0.0",
     "tailwind-scrollbar": "^3.1.0",
     "vue": "^3.4.35",
     "vue-lazyload": "^3.0.0",

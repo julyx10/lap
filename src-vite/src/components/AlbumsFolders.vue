@@ -28,7 +28,7 @@
 <script setup lang="ts">
 
 import { inject } from 'vue';
-import { invoke, path } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/core';
 import Folders from '@/components/AlbumsFolders.vue';
 
 // folder icon

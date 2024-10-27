@@ -29,7 +29,7 @@
 <script setup>
 
 import { ref } from 'vue';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWindow  } from '@tauri-apps/api/window';
 import SearchBox from '@/components/SearchBox.vue';
 
 import IconMinus from '@/assets/window-minus.svg';
@@ -52,6 +52,7 @@ const props = defineProps({
   }
 });
 
+const appWindow = getCurrentWindow();
 const isMaximized = ref(false);
 
 const minimizeWindow = () => {

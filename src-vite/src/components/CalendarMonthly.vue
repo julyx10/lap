@@ -31,7 +31,7 @@
 
 <script setup>
 
-import { inject, computed, onMounted } from 'vue';
+import { inject, computed } from 'vue';
 import { formatDate } from '@/common/utils';
 
 /// i18n

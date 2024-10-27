@@ -41,7 +41,7 @@
 <script setup lang="ts">
 
 import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
-import { WebviewWindow } from '@tauri-apps/api/window';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { formatTimestamp, formatFileSize, shortenFilename } from '@/common/utils';
 
 /// i18n

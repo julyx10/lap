@@ -29,6 +29,7 @@ provide('gCameraModel', ref(null));  // current camera model
 
 // content list view
 provide('gContentIndex', ref(-1));  // selected list item index
+provide('gShowImageViewer', ref(false)); // show image viewer
 
 // onMounted(() => {
 //   console.log('App.vue mounted');

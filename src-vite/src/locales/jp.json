@@ -25,6 +25,8 @@
   "files": "ファイル",
   "allphotos": "すべての写真",
 
+  "file_list_no_files": "ファイルが見つかりません",
+
   "folder_summary": "{folders} フォルダ, {files} ファイル",
   "files_summary": "{files} ファイル",
 
