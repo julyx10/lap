@@ -28,6 +28,8 @@
   "folder_summary": "{folders} 文件夹, {files} 文件",
   "files_summary": "{files} 文件",
 
+  "preview_no_file": "未选择文件",
+
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "信息",
   "file_info_name": "名称",

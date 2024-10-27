@@ -7,7 +7,81 @@
     ]">
     <TitleBar v-if="!isFullScreen" titlebar="jc-photo" viewName="ImageViewer"/>
 
-      <ImagePreview 
+    <!-- Toolbar -->
+    <div 
+      :class="[
+        'absolute left-1/2 z-50 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
+        isFullScreen ? '-translate-y-8 hover:translate-y-0 transition-transform duration-300 ease-in-out' : ''
+      ]"
+    >
+      <IconPrev class="t-icon-size-sm t-icon-hover" @click="clickPrev" />
+      <IconNext class="t-icon-size-sm t-icon-hover" @click="clickNext" />
+      <IconZoomIn class="t-icon-size-sm t-icon-hover" @click="scale += 0.5" />
+      <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="scale -= 0.5" />
+      <component :is="imageFit ? IconFitScreen1 : IconFitScreen2" class="t-icon-size-sm t-icon-hover" @click="toggleFitScreen" />
+
+      <IconRotateRight class="t-icon-size-sm t-icon-hover" @click="rotateImage"/>
+
+      <IconUnFavorite v-if="!fileInfo" class="t-icon-size-sm t-icon-disabled"/>
+      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
+      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
+
+      <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
+      <IconSave class="t-icon-size-sm t-icon-hover" />
+      <!-- <IconFullScreen v-if="!isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
+      <!-- <IconRestoreScreen v-if="isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
+      <component :is="isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
+    </div>
+
+    <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
+      <!-- image area -->
+      <div class="relative flex-1 flex justify-center items-center overflow-hidden" 
+        @wheel="zoomImage" 
+      >
+        <!-- left  -->
+        <div v-if="fileIndex > 0"
+          class="absolute left-0 w-20 h-full z-10 flex items-center justify-start cursor-pointer group" 
+          @click="clickPrev"
+        >
+        <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
+            <IconLeft class=" t-icon-hover"/>
+          </div>
+        </div>
+
+        <div v-if="imageSrc" 
+          @load="onImageLoad"
+          @mousedown="startDragging" 
+          @mouseup="stopDragging"
+          @mousemove="dragImage" 
+          @mouseleave="stopDragging"
+        >
+          <img 
+            ref="image"
+            :src="imageSrc"
+            :style="imageStyle"
+            :class="[
+              '',
+              imageFit ? 'object-contain' : 'object-none'
+            ]" 
+            alt="Image Viewer" 
+            draggable="false"
+          />
+        </div>
+        <div v-else>
+          {{ loadError ? loadError : $t('image_view_loading') }}
+        </div>
+
+        <!-- right -->
+        <div v-if="fileIndex < fileCount - 1"
+          class="absolute right-0 w-20 h-full z-10 flex items-center justify-end cursor-pointer group" 
+          @click="clickNext"
+        >
+          <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
+            <IconRight class=" t-icon-hover"/>
+          </div>
+        </div>
+
+      </div>
 
       <!-- File Info -->
       <transition
@@ -18,7 +92,7 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <ImageInfo v-if="showInfo" :fileInfo="fileInfo" @close="showInfo.value = false" />
+        <FileInfo v-if="showFileInfo" :fileInfo="fileInfo" @close="closeFileInfo" />
       </transition>
     </div>
 
@@ -34,31 +108,30 @@ import { appWindow } from '@tauri-apps/api/window';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import TitleBar from '@/components/TitleBar.vue';
-import ImagePreview from '../components/ImagePreview.vue';
-import ImageInfo from '@/components/ImageInfo.vue';
+import FileInfo from '@/components/FileInfo.vue';
 
-// import IconPrev from '@/assets/nav-prev.svg';
-// import IconNext from '@/assets/nav-next.svg';
-// import IconZoomIn from '@/assets/zoom-in.svg';
-// import IconZoomOut from '@/assets/zoom-out.svg';
-// import IconFitScreen1 from '@/assets/fit-screen1.svg';
-// import IconFitScreen2 from '@/assets/fit-screen2.svg';
-// import IconRotateRight from '@/assets/rotate-right.svg';
-// import IconUnFavorite from '@/assets/heart.svg';
-// import IconFavorite from '@/assets/heart-solid.svg';
-// import IconInfo from '@/assets/information.svg';
-// import IconSave from '@/assets/save.svg';
-// import IconFullScreen from '@/assets/full-screen-max.svg';
-// import IconRestoreScreen from '@/assets/full-screen-min.svg';
-// import IconLeft from '@/assets/arrow-left.svg';
-// import IconRight from '@/assets/arrow-right.svg';
+import IconPrev from '@/assets/nav-prev.svg';
+import IconNext from '@/assets/nav-next.svg';
+import IconZoomIn from '@/assets/zoom-in.svg';
+import IconZoomOut from '@/assets/zoom-out.svg';
+import IconFitScreen1 from '@/assets/fit-screen1.svg';
+import IconFitScreen2 from '@/assets/fit-screen2.svg';
+import IconRotateRight from '@/assets/rotate-right.svg';
+import IconUnFavorite from '@/assets/heart.svg';
+import IconFavorite from '@/assets/heart-solid.svg';
+import IconFileInfo from '@/assets/information.svg';
+import IconSave from '@/assets/save.svg';
+import IconFullScreen from '@/assets/full-screen-max.svg';
+import IconRestoreScreen from '@/assets/full-screen-min.svg';
+import IconLeft from '@/assets/arrow-left.svg';
+import IconRight from '@/assets/arrow-right.svg';
 
 const fileId = ref(null);
 const filePath = ref('');      // File path
 const fileIndex = ref(0);      // Index of the current file
 const fileCount = ref(0);      // Total number of files
 const fileInfo = ref(null);
-const showProfile = ref(false); // Show the image profile panel
+const showFileInfo = ref(false); // Show the file info panel
 
 const image = ref(null); // Image reference
 const imageSrc = ref(null);
@@ -225,8 +298,8 @@ function handleKeyDown(event) {
       clickShowFileInfo();
       break;
     case 'Escape':
-      if (showProfile.value) {
-        closeImageProfile();
+      if (showFileInfo.value) {
+        closeFileInfo();
       } else {
         appWindow.close(); // Close the window
       }
@@ -243,106 +316,111 @@ const onImageLoad = () => {
 };
 
 // Function to fit the image to the screen
-// const toggleFitScreen = () => {
-//   imageFit.value = !imageFit.value;
-//   // const windowWidth = window.innerWidth;
-//   // const windowHeight = window.innerHeight;
+const toggleFitScreen = () => {
+  imageFit.value = !imageFit.value;
+  // const windowWidth = window.innerWidth;
+  // const windowHeight = window.innerHeight;
   
-//   // const img = image.value;
+  // const img = image.value;
   
-//   // // Only proceed if the image has been loaded
-//   // if (img) {
-//   //   const originalWidth = img.naturalWidth;
-//   //   const originalHeight = img.naturalHeight;
+  // // Only proceed if the image has been loaded
+  // if (img) {
+  //   const originalWidth = img.naturalWidth;
+  //   const originalHeight = img.naturalHeight;
 
-//   //   // Calculate the scale to fit the image within the screen
-//   //   const widthScale = windowWidth / originalWidth;
-//   //   const heightScale = windowHeight / originalHeight;
+  //   // Calculate the scale to fit the image within the screen
+  //   const widthScale = windowWidth / originalWidth;
+  //   const heightScale = windowHeight / originalHeight;
 
-//   //   // Use the smaller scale to fit the image
-//   //   scale.value = Math.min(widthScale, heightScale);
-//   //   scaledWidth.value = originalWidth * scale.value;
-//   //   scaledHeight.value = originalHeight * scale.value;
-//   // }
-// };
+  //   // Use the smaller scale to fit the image
+  //   scale.value = Math.min(widthScale, heightScale);
+  //   scaledWidth.value = originalWidth * scale.value;
+  //   scaledHeight.value = originalHeight * scale.value;
+  // }
+};
 
 // Function to reset the image to 1:1 scale
-// const resetScale = () => {
-//   scale.value = 1;
-//   const img = image.value;
+const resetScale = () => {
+  scale.value = 1;
+  const img = image.value;
 
-//   // Only proceed if the image has been loaded
-//   if (img) {
-//     scaledWidth.value = img.naturalWidth;
-//     scaledHeight.value = img.naturalHeight;
-//   }
-// };
+  // Only proceed if the image has been loaded
+  if (img) {
+    scaledWidth.value = img.naturalWidth;
+    scaledHeight.value = img.naturalHeight;
+  }
+};
 
-// // toggle favorite status
-// const toggleFavorite = async() => {
-//   if (fileInfo.value.is_favorite === null) {
-//     fileInfo.value.is_favorite = true;
-//   } else {
-//     fileInfo.value.is_favorite = !fileInfo.value.is_favorite;
-//   }
+// toggle favorite status
+const toggleFavorite = async() => {
+  if (fileInfo.value.is_favorite === null) {
+    fileInfo.value.is_favorite = true;
+  } else {
+    fileInfo.value.is_favorite = !fileInfo.value.is_favorite;
+  }
 
-//   // set db status
-//   await invoke('set_file_favorite', { 
-//     fileId: Number(fileId.value), 
-//     isFavorite: fileInfo.value.is_favorite 
-//   })
-// }
+  // set db status
+  await invoke('set_file_favorite', { 
+    fileId: Number(fileId.value), 
+    isFavorite: fileInfo.value.is_favorite 
+  })
+}
 
-// // Function to maximize the window and setup full screen
-// const toggleFullScreen = async () => {
-//   if (!isFullScreen.value) {  // enter full screen
-//     isMaximized.value = await appWindow.isMaximized(); // Check if the window is maximized
+// Function to maximize the window and setup full screen
+const toggleFullScreen = async () => {
+  if (!isFullScreen.value) {  // enter full screen
+    isMaximized.value = await appWindow.isMaximized(); // Check if the window is maximized
 
-//     await appWindow.setFullscreen(true);
-//     await appWindow.setResizable(false); // Disable window resizing
-//     // await appWindow.setSkipTaskbar(true); // Hide the window from the taskbar
-//     // await appWindow.setAlwaysOnTop(true); // Keep the window on top of other windows
-//     isFullScreen.value = true;
+    await appWindow.setFullscreen(true);
+    await appWindow.setResizable(false); // Disable window resizing
+    // await appWindow.setSkipTaskbar(true); // Hide the window from the taskbar
+    // await appWindow.setAlwaysOnTop(true); // Keep the window on top of other windows
+    isFullScreen.value = true;
 
-//     // if (!isMaximized.value) {
-//     //   await appWindow.maximize();
-//     //   await appWindow.setSkipTaskbar(true); // Hide the window from the taskbar
-//     // }
-//   } else {  // exit full screen
-//     await appWindow.setFullscreen(false);
-//     await appWindow.setResizable(true); // Disable window resizing
+    // if (!isMaximized.value) {
+    //   await appWindow.maximize();
+    //   await appWindow.setSkipTaskbar(true); // Hide the window from the taskbar
+    // }
+  } else {  // exit full screen
+    await appWindow.setFullscreen(false);
+    await appWindow.setResizable(true); // Disable window resizing
 
-//     isFullScreen.value = false;
+    isFullScreen.value = false;
 
-//     if (isMaximized.value) {
-//       await appWindow.unmaximize();
-//     }
-//   }
-// }
+    if (isMaximized.value) {
+      await appWindow.unmaximize();
+    }
+  }
+}
 
 // Method to rotate the image by 90 degrees
-// const rotateImage = () => {
-//   console.log('rotateImage');
-//   rotation.value += 90;
-// }
+const rotateImage = () => {
+  console.log('rotateImage');
+  rotation.value += 90;
+}
 
 
 // Emit a message to the main window to go to the previous image
-// function clickPrev() {
-//   console.log('clickPrev');
-//   emit('message-from-image-viewer', { message: 'prev' });
-// }
+function clickPrev() {
+  console.log('clickPrev');
+  emit('message-from-image-viewer', { message: 'prev' });
+}
 
-// function clickNext() {
-//   console.log('clickNext');
-//   emit('message-from-image-viewer', { message: 'next' });
-// }
+function clickNext() {
+  console.log('clickNext');
+  emit('message-from-image-viewer', { message: 'next' });
+}
 
 
-// function clickShowFileInfo() {
-//   showProfile.value = !showProfile.value;
-// }
+function clickShowFileInfo() {
+  showFileInfo.value = !showFileInfo.value;
+}
 
+
+// Close the file info panel from the child component
+function closeFileInfo() {
+  showFileInfo.value = false;
+}
 
 
 </script>
