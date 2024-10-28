@@ -14,7 +14,7 @@
             v-for="(item, index) in toolbars"
             :key="index"
             :is="item.icon"
-            :class="['t-icon-hover', gToolbarIndex === index ? 't-icon-focus' : '']" 
+            :class="['t-icon-size t-icon-hover', gToolbarIndex === index ? 't-icon-focus' : '']" 
             @click="clickToolbar(index)"
           />
         </div>
@@ -81,7 +81,7 @@ import Content from '@/components/Content.vue';
 /// Toolbar
 // Import SVG files as a Vue component
 import IconHome from '@/assets/home.svg';
-import IconAlbum from '@/assets/folder.svg';
+import IconAlbum from '@/assets/photo.svg';
 import IconCalendar from '@/assets/calendar.svg';
 import IconMap from '@/assets/map-pin.svg';
 import IconPeople from '@/assets/user.svg';

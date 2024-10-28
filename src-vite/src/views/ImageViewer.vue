@@ -176,24 +176,11 @@ const imageStyle = computed(() => ({
   transition: isDragging.value ? 'none' : 'transform 0.2s ease-in-out',
 }));
 
-// // Emit a custom event before the window closes
-// const handleClose = async () => {
-//   await emit('message-from-image-viewer', { message: 'close' });
-// };
-
-// // Listen for the `tauri://close-request` event and trigger the close handler
-// appWindow.listen('tauri://close-request', async (event) => {
-//   await handleClose();
-// });
 
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
   isFullScreen.value = await appWindow.isMaximized();
   
-  // appWindow.listen('tauri://close-requested', async () => {
-  //   await emit('message-from-image-viewer', { message: 'close' });
-  // });
-
   try {
     const urlParams = new URLSearchParams(window.location.search);
 
@@ -282,7 +269,6 @@ async function loadImage(filePath) {
   }
 }
 
-
 // Load the file info from the file ID
 async function loadFileInfo(fileId) {
   try {
@@ -292,7 +278,6 @@ async function loadFileInfo(fileId) {
     console.error('Error fetching file info:', error);
   }
 }
-
 
 // Function to handle zooming with the mouse wheel
 function zoomImage(event) {
@@ -333,8 +318,6 @@ function dragImage(event) {
     translateY.value = (event.clientY - startY.value) / scale.value;
   }
 }
-
-
 
 // Function to be called when the image loads
 const onImageLoad = () => {

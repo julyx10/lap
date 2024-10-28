@@ -14,13 +14,17 @@
         @dblclick="openImageViewer(index, true)"
       >
         <div class="flex flex-col items-center">
-          <img 
-            :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" 
+          <img v-if="file.thumbnail"
+            :src="file.thumbnail" 
             :class="[
               'w-48 h-48 rounded', 
               isFitWidth ? 'object-cover' : 'object-contain'
             ]"
           />
+          <div v-else class="w-48 h-48 rounded flex items-center justify-center">
+            <!-- <IconFolder class="size-1/2"/> -->
+            <IconPhoto class="size-1/2"/>
+          </div>
           <p class="text-center">{{ shortenFilename(file.name) }}</p>
           <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
           <!-- <p class="text-sm">{{ file.e_model }}</p> -->
@@ -40,6 +44,9 @@ import { ref, inject, watch, onMounted, onUnmounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { shortenFilename, formatFileSize } from '@/common/utils';
+
+// import IconFolder from '@/assets/240-folder.svg';
+import IconPhoto from '@/assets/photo.svg';
 
 const props = defineProps({
   fileList: {
@@ -150,21 +157,16 @@ async function openImageViewer(index: number, createNew = false) {
         decorations: false,
       });
 
-      // Listen for the message from the new window before it closes
-      // listen('message-from-image-viewer', (event) => {
-      //   console.log('Received message:', event.payload); // Handle the received message
-      // });
-
       imageWindow.once('tauri://created', () => {
         gShowImageViewer.value = true;
         console.log('ImageViewer window created');
       });
 
-      // Listen for the window close-request event
-      // imageWindow.once('tauri://close-requested', () => {
-      //   gShowImageViewer.value = false;
-      //   console.log('ImageViewer window is closing');
-      // });
+      imageWindow.once('tauri://close-requested', () => {
+        gShowImageViewer.value = false;
+        imageWindow.close();
+        console.log('ImageViewer window is closing');
+      });
 
       imageWindow.once('tauri://error', (e) => {
         console.error('Error creating ImageViewer window:', e);

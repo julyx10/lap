@@ -309,9 +309,7 @@ watch(gContentIndex, (newIndex) => {
 
 watch(gShowImageViewer, (show) => {
   console.log('watch - gShowImageViewer:', show);
-  if (show) {
-    onImageLoad();
-  } 
+  onImageLoad();
 });
 
 const onImageLoad = async () => {
