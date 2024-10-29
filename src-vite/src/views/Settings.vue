@@ -8,7 +8,7 @@
     <div class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark">
 
       <div class="w-32 text-lg font-bold mb-2">
-        General
+        {{ $t('settings_general') }}
       </div>
       
       <div class="flex-grow">
@@ -17,8 +17,8 @@
         <section>
           <!-- select language -->
           <div class="mb-4">
-            <label for="language-select" class="block text-lg">Select language</label>
-            <select id="language-select" v-model="selectedLanguage" @change="changeLanguage"
+            <label for="language-select" class="block text-lg">{{ $t('settings_select_language') }}</label>
+            <select id="language-select" v-model="config.language" @change="changeLanguage"
               class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
               <option v-for="(lang, index) in languages" :key="index" :value="lang.value">
@@ -27,17 +27,9 @@
             </select>
           </div>
 
-          <!-- thumbnail size -->
-          <div class="mb-4">
-            <label for="thumbnail-size" class="block text-lg">Thumbnail size</label>
-            <input id="thumbnail-size" type="range" min="50" max="200" step="50" v-model="thumbnailSize"
-              class="w-full t-input-color-bg t-color-border t-input-focus"
-            />
-          </div>
-
           <!-- Toggle for Dark Mode -->
           <div class="flex items-center justify-between mb-4">
-            <label for="dark-mode" >Dark Mode</label>
+            <label for="dark-mode" >{{ $t('settings_select_theme') }}</label>
             <input id="dark-mode" type="checkbox" v-model="darkMode" />
           </div>
 
@@ -90,8 +82,16 @@
 
 <script setup>
 
-import { ref } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useConfigStore } from '@/stores/configStore';
 import TitleBar from '@/components/TitleBar.vue';
+
+/// i18n
+import { useI18n } from 'vue-i18n';
+const { locale, messages } = useI18n();
+// const localeMsg = computed(() => messages.value[config.language]);
+
+const config = useConfigStore();
 
 const languages = [
       { label: 'English', value: 'en' },
@@ -99,11 +99,19 @@ const languages = [
       { label: '日本語', value: 'jp' },
     ];
 
-const selectedLanguage = ref('en');
+onMounted(() => {
+  console.log('Settings Page Mounted');
+  locale.value = config.language;
+});
 
-const changeLanguage = () => {
-  console.log('Language changed to:', selectedLanguage.value);
-};
+watch(() => config.language, (newValue) => {
+  console.log('Language changed to:', newValue);
+  locale.value = newValue;
+});
 
+// const changeLanguage = () => {
+//   console.log('Language changed to:', config.language);
+//   config.setLanguage(config.language);
+// };
 
 </script>

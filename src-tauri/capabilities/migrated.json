@@ -4,7 +4,8 @@
   "local": true,
   "windows": [
     "main",
-    "imageviewer"
+    "imageviewer",
+    "settings"
   ],
   "permissions": [
     "core:default",

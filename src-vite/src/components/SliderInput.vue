@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-start justify-center w-full max-w-xs">
+  <div class="w-24 flex flex-col items-start justify-center">
     <label v-if="label.length > 0" :for="id" class="mb-2">
       {{ label }}: <span>{{ sliderValue }}</span>
     </label>
@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="js">
-import { ref, watch, defineProps, defineEmits } from 'vue';
+import { ref, watch, defineEmits } from 'vue';
 
 // Define props and emits
 const props = defineProps({

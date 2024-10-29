@@ -7,7 +7,7 @@
       <div class="flex flex-row items-center justify-between">
 
         <div class="flex-1 flex flex-col">
-          <span>{{ title }}</span>
+          <span>{{ title }}</span> <p>{{ config.language }}</p>
           <!-- <span v-if="gToolbarIndex === 1" class="text-sm">
             {{ $t('folder_summary', { folders: subFolderList.length, files: fileList.length }) }}
           </span> -->
@@ -17,7 +17,7 @@
         </div>
 
         <div class="flex space-x-4">
-          <SliderInput class="w-28" v-model="sliderValue" :min="120" :max="320" :step="10" label="" />
+          <SliderInput v-model="sliderValue" :min="120" :max="320" :step="10" label="" />
           <IconFitWidth 
             class="t-icon-size t-icon-hover"
             :class="{ 't-icon-focus': isFitWidth }"
@@ -40,7 +40,7 @@
 
     <div class="my-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
-      <GridView v-if="fileList.length > 0" :fileList="fileList" :gridSize="sliderValue" :isFitWidth="isFitWidth"/>
+      <GridView v-if="fileList.length > 0" :fileList="fileList" :gridSize="Number(sliderValue)" :isFitWidth="isFitWidth"/>
       <!-- <TableView :fileList="fileList"/> -->
        <div v-else class="flex-1 flex flex-row items-center justify-center">
         <p>{{ $t('file_list_no_files') }}</p>
@@ -81,7 +81,9 @@
 
 
 <script setup>
+
 import { ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
+import { useConfigStore } from '@/stores/configStore';
 import { invoke } from '@tauri-apps/api/core';
 // import TableView from '@/components/TableView.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -94,6 +96,9 @@ import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+
+// config store
+const config = useConfigStore();
 
 // Import the SVG file as a Vue component
 import IconFitWidth from '@/assets/fit-width.svg';
@@ -153,6 +158,7 @@ const isDragging = ref(false);      // dragging splitter to resize preview pane
 const imageSrc = ref(null);         // preview image source
 
 onMounted(() => {
+  locale.value = config.language;
   document.addEventListener('mouseup', stopDragging);
 })
 
@@ -237,6 +243,12 @@ const title = computed(() => {
   // return title.length > 0 ? title + selectedFileName : props.titlebar;
 });
 
+/// watch for changes in the language
+watch(() => config.language, (newLanguage) => {
+    locale.value = newLanguage; // update locale based on config.language
+  },
+  { immediate: true } // trigger immediately for initial setting
+);
 
 /// Watch for changes in album_id and update filelist accordingly
 watch(gAlbumId, async (newAlbumId) => {

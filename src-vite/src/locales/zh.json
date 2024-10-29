@@ -9,6 +9,12 @@
   "tag": "标签",
 
   "settings": "设置",
+  "settings_general": "通用",
+  "settings_select_language": "选择语言",
+  "settings_select_theme": "选择主题",
+  "settings_theme_light": "明亮",
+  "settings_theme_dark": "暗黑",
+  
   "debug": "调试",
 
   "no_albums": "相册为空，点击添加按钮添加相册",

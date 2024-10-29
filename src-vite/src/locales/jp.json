@@ -9,6 +9,12 @@
   "tag": "タグ",
 
   "settings": "設定",
+  "settings_general": "一般",
+  "settings_select_language": "言語を選択",
+  "settings_select_theme": "テーマを選択",
+  "settings_theme_light": "ライト",
+  "settings_theme_dark": "ダーク",
+  
   "debug": "デバッグ",
 
   "no_albums": "アルバムが空です。追加ボタンを押してアルバムを追加してください。",

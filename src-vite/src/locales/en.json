@@ -9,6 +9,12 @@
   "tag": "Tag",
 
   "settings": "Settings",
+  "settings_general": "General",
+  "settings_select_language": "Select Language",
+  "settings_select_theme": "Select Theme",
+  "settings_theme_light": "Light",
+  "settings_theme_dark": "Dark",
+
   "debug": "Debug",
 
   "no_albums": "No albums, click the add button to add an album",
