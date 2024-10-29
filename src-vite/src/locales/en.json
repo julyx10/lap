@@ -33,7 +33,7 @@
   "preview_no_file": "No file selected",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
-  "file_info_title": "Information",
+  "file_info_title": "Properties",
   "file_info_name": "Name",
   "file_info_resolution": "Resolution",
   "file_info_size": "Size",

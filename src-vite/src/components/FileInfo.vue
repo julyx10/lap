@@ -8,7 +8,7 @@
 
     <!-- File Info table -->
     <div class="overflow-auto t-scrollbar" :style="{ maxHeight: 'calc(100vh - 100px)' }">
-      <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-1">
+      <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
         <tr>
           <td>{{ $t('file_info_name') }}</td>
           <td class="text-wrap break-all">{{ fileInfo.name }}</td>

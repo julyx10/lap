@@ -40,7 +40,7 @@ import jp from '@/locales/jp.json'
 // https://vue-i18n.intlify.dev/
 const i18n = createI18n({
   legacy: false, // Disable legacy mode
-  locale: "en",  // Set the default language
+  locale: "zh",  // Set the default language
   fallbackLocale: "en",
   messages: {
     en,

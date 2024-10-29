@@ -1,7 +1,9 @@
 <template>
   <div ref="scrollable" class="flex-1 overflow-auto t-scrollbar">
-    <div id="gridView" class="px-2 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2">
-      
+    <div id="gridView" 
+      class="px-2 grid gap-2"
+      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${gridSize}px, 1fr))` }"
+    >
       <div 
         v-for="(file, index) in fileList" 
         :key="index"
@@ -17,15 +19,19 @@
           <img v-if="file.thumbnail"
             :src="file.thumbnail" 
             :class="[
-              'w-48 h-48 rounded', 
+              'rounded  transition duration-200', 
               isFitWidth ? 'object-cover' : 'object-contain'
             ]"
+            :style="{ width: `${gridSize}px`, height: `${gridSize}px` }"
           />
-          <div v-else class="w-48 h-48 rounded flex items-center justify-center">
+          <div v-else 
+            class="rounded flex items-center justify-center"
+            :style="{ width: `${gridSize}px`, height: `${gridSize}px` }"
+          >
             <!-- <IconFolder class="size-1/2"/> -->
             <IconPhoto class="size-1/2"/>
           </div>
-          <p class="text-center">{{ shortenFilename(file.name) }}</p>
+          <p class="pt-1 text-sm text-center">{{ shortenFilename(file.name) }}</p>
           <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
           <!-- <p class="text-sm">{{ file.e_model }}</p> -->
           <!-- <p class="text-sm">{{ formatFileSize(file.size) }}</p> -->
@@ -52,6 +58,10 @@ const props = defineProps({
   fileList: {
     type: Array,
     required: true,
+  },
+  gridSize: {
+    type: Number,
+    default: 200,     // from 100 to 400
   },
   isFitWidth: Boolean,
 });

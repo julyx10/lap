@@ -8,19 +8,21 @@
 
         <div class="flex-1 flex flex-col">
           <span>{{ title }}</span>
-          <span v-if="gToolbarIndex === 1" class="text-sm">
+          <!-- <span v-if="gToolbarIndex === 1" class="text-sm">
             {{ $t('folder_summary', { folders: subFolderList.length, files: fileList.length }) }}
-          </span>
-          <span v-else class="text-sm">
+          </span> -->
+          <span class="text-sm">
             {{ $t('files_summary', { files: fileList.length }) }}
           </span>
         </div>
 
         <div class="flex space-x-4">
+          <SliderInput class="w-28" v-model="sliderValue" :min="120" :max="320" :step="10" label="" />
           <IconFitWidth 
             class="t-icon-size t-icon-hover"
             :class="{ 't-icon-focus': isFitWidth }"
-            @click="toggleFitWidth" />
+            @click="toggleFitWidth" 
+          />
           <IconUnFavorite v-if="!isFavorite" class="t-icon-hover hover:text-red-600" @click="toggleFavorite" />
           <IconFavorite v-if="isFavorite" class="t-icon-hover text-red-600 hover:text-red-600" @click="toggleFavorite" />
           <component :is="IconTag" class="t-icon-hover" />
@@ -38,7 +40,7 @@
 
     <div class="my-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
-      <GridView v-if="fileList.length > 0" :fileList="fileList" :isFitWidth="isFitWidth"/>
+      <GridView v-if="fileList.length > 0" :fileList="fileList" :gridSize="sliderValue" :isFitWidth="isFitWidth"/>
       <!-- <TableView :fileList="fileList"/> -->
        <div v-else class="flex-1 flex flex-row items-center justify-center">
         <p>{{ $t('file_list_no_files') }}</p>
@@ -48,15 +50,19 @@
       <div v-if="showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
 
       <!-- preview pane -->
-      <div v-if="showPreview" class="w-96 t-color-bg rounded-ss-lg" :style="{ width: previewPaneWidth + 'px' }">
+      <div v-if="showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: previewPaneWidth + 'px' }">
         <div v-if="gContentIndex >= 0 && gContentIndex < fileList.length" 
           class="h-full flex flex-col items-center justify-center break-all"
         >
           <img class="h-full w-full p-1 rounded-lg object-contain" :src="imageSrc" @load="onImageLoad" />
-          <div class="fixed p-2 bottom-0 flex flex-col items-center"> 
+          <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm"> 
             <p>{{ fileList[gContentIndex].name }}</p>
-            <p>{{ formatFileSize(fileList[gContentIndex].size) }}</p>
-            <!-- <p>{{ fileList[gContentIndex].width }}x{{ fileList[gContentIndex].height }}</p> -->
+            <div class="flex space-x-4">
+              <!-- <p>{{ formatFileSize(fileList[gContentIndex].size) }}</p> -->
+              <p>{{ formatTimestamp(fileList[gContentIndex].modified_at, $t('date_time_format')) }}</p>
+              <!-- <p>{{ fileList[gContentIndex].width }}x{{ fileList[gContentIndex].height }}</p> -->
+            </div>
+
             <p></p>
           </div>
         </div>
@@ -78,9 +84,10 @@
 import { ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 // import TableView from '@/components/TableView.vue';
+import SliderInput from '@/components/SliderInput.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
-import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatDate } from '@/common/utils';
+import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatTimestamp, formatDate } from '@/common/utils';
 import { format } from 'date-fns';
 
 /// i18n
@@ -127,6 +134,8 @@ const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
 
 // toolbar status
+const sliderValue = ref(200); // slider value
+
 const isFitWidth = ref(false); // fit width status
 const isFavorite = ref(false); // favorite status
 
@@ -141,7 +150,7 @@ const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const showPreview = ref(false);     // show image preview
 const previewPaneWidth = ref(300);  // using for resizing the preview pane
 const isDragging = ref(false);      // dragging splitter to resize preview pane
-const imageSrc = ref('/src/assets/photo.svg'); // preview image source
+const imageSrc = ref(null);         // preview image source
 
 onMounted(() => {
   document.addEventListener('mouseup', stopDragging);
@@ -300,8 +309,8 @@ watch(gCameraModel, async (newModel) => {
 
 // watch for changes in the file list
 watch(gContentIndex, (newIndex) => {
-  if (newIndex >= 0 && newIndex < fileList.value.length) {
-    imageSrc.value = fileList.value[newIndex].thumbnail ? fileList.value[newIndex].thumbnail : '/src/assets/photo.svg';
+  if (newIndex >= 0 && newIndex < fileList.value.length && fileList.value[newIndex].thumbnail ) {
+    imageSrc.value = fileList.value[newIndex].thumbnail;
   } else {
     imageSrc.value = '/src/assets/photo.svg';
   }
@@ -324,7 +333,8 @@ const onImageLoad = async () => {
     const imageBase64 = await invoke('get_file_image', { filePath });
     imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
   } catch (error) {
-    imageSrc.value = '/src/assets/photo.svg';
+    // imageSrc.value = '/src/assets/photo.svg';
+    console.error('onImageLoad error:', error);
   }
 }
 
