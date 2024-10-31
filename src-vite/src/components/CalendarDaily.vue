@@ -36,13 +36,9 @@
 <script setup>
 
 import { inject, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
 import { formatDate } from '@/common/utils';
-
-/// i18n
-import { useI18n } from 'vue-i18n';
-const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
 
 const props = defineProps({
   year: {
@@ -58,6 +54,10 @@ const props = defineProps({
     required: true,
   },
 });
+
+/// i18n
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
 
 const gCalendarYear = inject('gCalendarYear');
 const gCalendarMonth = inject('gCalendarMonth');

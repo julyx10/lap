@@ -11,9 +11,9 @@
         <IconDelete  
           :class="[
             'p-0.5', 
-            gAlbumId ? 't-icon-hover' : 't-icon-disabled'
+            config.albumId ? 't-icon-hover' : 't-icon-disabled'
           ]" 
-          @click="gAlbumId ? showDeleteAlbumMsgbox = true : ''" />
+          @click="config.albumId ? showDeleteAlbumMsgbox = true : ''" />
         <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
       </div>
     </div>
@@ -26,8 +26,8 @@
             :class="[
               'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
               { 
-                't-color-text-selected': gAlbumId === album.id, 
-                't-color-bg-selected': gAlbumId === album.id && gFolderId === album.folderId
+                't-color-text-selected': config.albumId === album.id, 
+                't-color-bg-selected': config.albumId === album.id && config.folderId === album.folderId
               }
             ]"
             @click="clickAlbum(album)"
@@ -50,7 +50,7 @@
       v-if="showDeleteAlbumMsgbox"
       :visible="showDeleteAlbumMsgbox"
       :title="$t('delete_album_msgbox_title')"
-      :message="`${$t('delete_album_msgbox_content', { album: getAlbumById(gAlbumId).name })}`"
+      :message="`${$t('delete_album_msgbox_content', { album: getAlbumById(config.albumId).name })}`"
       :confirmText="$t('delete_album_msgbox_ok')"
       :cancelText="$t('delete_album_msgbox_cancel')"
       @confirm="clickDeleteConfirm"
@@ -66,27 +66,18 @@
 
 import { ref, inject, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { useI18n } from 'vue-i18n';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { useConfigStore } from '@/stores/configStore';
+
 import Folders from '@/components/AlbumsFolders.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
-/// i18n
-import { useI18n } from 'vue-i18n';
-const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
-
-// toolbar icons
+// svg icons
 import IconAdd from '@/assets/folder-plus.svg';
 import IconDelete from '@/assets/folder-minus.svg';
-// import IconRefresh from '@/assets/arrow-path.svg';
-
-// folder icon
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
-
-const gAlbums = inject('gAlbums');       // global albums
-const gAlbumId = inject('gAlbumId');     // global album id
-const gFolderId = inject('gFolderId');   // global folder id
 
 const props = defineProps({
   titlebar: {
@@ -95,14 +86,26 @@ const props = defineProps({
   }
 });
 
+/// i18n
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
+
+// config store
+const config = useConfigStore();
+
+const gAlbums = inject('gAlbums');       // global albums
+
 const appWindow = getCurrentWebviewWindow();
 
 const showDeleteAlbumMsgbox = ref(false);
 
 // Fetch albums on mount
-onMounted(() => {
+onMounted( async () => {
   if (gAlbums.value.length === 0) {
-    getAlbums();
+    await getAlbums();
+
+    if (config.albumId)
+      clickAlbum(getAlbumById(config.albumId));
   }
 });
 
@@ -124,33 +127,21 @@ const clickAdd = async () => {
 /// Delete an album
 const clickDeleteConfirm = async () => {
   try {
-    if (gAlbumId.value) {
-      const result = await invoke('delete_album', { id: getAlbumById(gAlbumId.value).id });
+    if (config.albumId) {
+      const result = await invoke('delete_album', { id: getAlbumById(config.albumId).id });
 
       // delete the album from the list
-      gAlbums.value = gAlbums.value.filter(album => album.id !== gAlbumId.value);
-      gAlbumId.value = null;
+      gAlbums.value = gAlbums.value.filter(album => album.id !== config.albumId);
+      config.albumId = null;
 
       console.log('Delete album...', result);
     } else {
-      console.log('No album selected', gAlbumId.value);
+      console.log('No album selected', config.albumId);
     }
   } catch (error) {
     console.error('Failed to delete album:', error);
   }
 };
-
-
-/// Refresh albums
-// const clickRefresh = async () => {
-//   await getAlbums(); // Refresh albums
-
-//   gAlbumId.value = null;
-//   gFolderId.value = null;
-
-//   console.log('Refresh albums');
-// };
-
 
 /// click a album to select it
 const clickAlbum = async (album) => {
@@ -167,8 +158,8 @@ const clickAlbum = async (album) => {
     // insert a new property(album.folderId) 
     album.folderId = result.id;
 
-    gFolderId.value = album.folderId;
-    gAlbumId.value = album.id;
+    config.folderId = album.folderId;
+    config.albumId = album.id;
     
     console.log('add_folder result:', result);
   } catch (error) {

@@ -18,7 +18,7 @@
           <!-- select language -->
           <div class="mb-4">
             <label for="language-select" class="block text-lg">{{ $t('settings_select_language') }}</label>
-            <select id="language-select" v-model="config.language" @change="changeLanguage"
+            <select id="language-select" v-model="config.language"
               class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
               <option v-for="(lang, index) in languages" :key="index" :value="lang.value">
@@ -27,51 +27,20 @@
             </select>
           </div>
 
-          <!-- Toggle for Dark Mode -->
+          <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
-            <label for="dark-mode" >{{ $t('settings_select_theme') }}</label>
-            <input id="dark-mode" type="checkbox" v-model="darkMode" />
+            <label for="show-button-text" >{{ $t('settings_show_button_text') }}</label>
+            <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/>
           </div>
 
-          <!-- Input for Username -->
-          <div class="mb-4">
-            <label for="username" class="block text-lg">Username</label>
-            <input id="username" type="text" v-model="username" 
-              class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-              placeholder="Enter your username" 
-            />
+          <!-- Dark Mode -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="dark-mode" >{{ $t('settings_dark_mode') }}</label>
+            <input id="dark-mode" type="checkbox" v-model="config.darkMode" />
           </div>
+
         </section>
 
-        <!-- Notifications Settings Section -->
-        <section>
-          <h2 class="text-xl font-semibold mb-2">Notifications</h2>
-
-          <!-- Toggle for Email Notifications -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="email-notifications" class="text-lg">Email Notifications</label>
-            <input type="checkbox" id="email-notifications" v-model="emailNotifications" />
-          </div>
-
-          <!-- Select Notification Frequency -->
-          <div class="mb-4">
-            <label for="notification-frequency" class="block text-lg">Notification Frequency</label>
-            <select 
-              id="notification-frequency" 
-              v-model="notificationFrequency" 
-              class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-            >
-              <option value="none">None</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
-        </section>
-
-        <!-- Save Button -->
-        <!-- <div class="text-right">
-          <button @click="saveSettings" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
-        </div> -->
       </div>
 
     </div>  
@@ -82,15 +51,18 @@
 
 <script setup>
 
-import { ref, computed, watch, onMounted } from 'vue';
+import { watch } from 'vue';
+import { emit } from '@tauri-apps/api/event';
+import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
+
 import TitleBar from '@/components/TitleBar.vue';
 
 /// i18n
-import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
 // const localeMsg = computed(() => messages.value[config.language]);
 
+// config store
 const config = useConfigStore();
 
 const languages = [
@@ -99,19 +71,17 @@ const languages = [
       { label: '日本語', value: 'jp' },
     ];
 
-onMounted(() => {
-  console.log('Settings Page Mounted');
-  locale.value = config.language;
-});
-
+// watch selected language
 watch(() => config.language, (newValue) => {
   console.log('Language changed to:', newValue);
   locale.value = newValue;
+  emit('settings-language-changed', newValue);
 });
 
-// const changeLanguage = () => {
-//   console.log('Language changed to:', config.language);
-//   config.setLanguage(config.language);
-// };
+// watch show button text
+watch(() => config.showButtonText, (newValue) => {
+  console.log('Show Button Text:', newValue);
+  emit('settings-showButtonText-changed', newValue);
+});
 
 </script>

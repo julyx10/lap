@@ -1,26 +1,51 @@
 // stores/configStore.js
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
-    theme: 'dark',              // e.g., light or dark theme
+    // app
+    toolbarIndex: 1,            // toolbar index
+    leftPaneWidth: 300,         // left pane width
+
+    // albums
+    albumId: null,              // selected album id
+    folderId: null,             // selected folder id
+
+    // calendar
+    calendarIsMonthly: true,    // display monthly or daily calendar
+    calendarSortingAsc: true,   // sorting order
+    calendarYear: null,         // selected year (...2024)
+    calendarMonth: null,        // selected month (1-12)
+    calendarDay: null,          // selected date (1-31), -1 means selecting a month
+
+    // cameras
+    cameraMake: null,           // selected camera make
+    cameraModel: null,          // selected camera model
+
+    // settings
     language: 'en',             // default language
-    // notificationsEnabled: true, // notifications setting
+    showButtonText: false,      // show button text
+    darkMode: true,             // light or dark theme
+
+    // Content.vue
     gridSize: 200,              // grid size in grid view, range 120-360
+    isFitWidth: false,          // fit width mode
+    isFavorite: false,          // show favorite only
+    sortingAsc: true,           // sorting order
+    sortingType: 'name',        // sorting type
+    showPreview: false,         // show preview
+    previewPaneWidth: 300,      // preview pane width
+
+    // ImageViewer.vue
+    isFullscreen: false,   // full screen mode
   }),
+
   actions: {
-    setTheme(theme) {
-      this.theme = theme;
-    },
     setLanguage(language) {
       this.language = language;
     },
-    // toggleNotifications() {
-    //   this.notificationsEnabled = !this.notificationsEnabled;
-    // },
-    setGridSize(gridSize) {
-      this.gridSize = gridSize;
+    setShowButtonText(showButtonText) {
+      this.showButtonText = showButtonText;
     },
   },
   persist: {

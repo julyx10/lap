@@ -19,7 +19,6 @@
 <script setup lang="js">
 import { ref, watch, defineEmits } from 'vue';
 
-// Define props and emits
 const props = defineProps({
   modelValue: {
     type: Number,
@@ -46,6 +45,7 @@ const props = defineProps({
     default: 'slider-input',
   },
 });
+
 const emit = defineEmits(['update:modelValue']);
 
 // Define slider value
@@ -58,7 +58,7 @@ watch(() => props.modelValue, (newValue) => {
 
 // Update slider value
 const updateValue = () => {
-  emit('update:modelValue', sliderValue.value);
+  emit('update:modelValue', Number(sliderValue.value));
 };
 </script>
 

@@ -45,13 +45,15 @@
 }
 
 .t-color-bg-selected {
-  @apply bg-gray-800;
+  @apply bg-gray-700;
 }
 
 .t-color-text {
   @apply text-gray-400;
 }
-
+.t-color-text-focus {
+  @apply text-sky-600;
+}
 .t-color-text-selected {
   @apply text-gray-200;
 }

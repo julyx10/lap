@@ -2,7 +2,7 @@
   "home": "ホーム",
   "album": "アルバム",
   "calendar": "カレンダー",
-  "map": "地図",
+  "location": "位置情報",
   "people": "人物",
   "camera": "カメラ",
   "favorite": "お気に入り",
@@ -11,9 +11,8 @@
   "settings": "設定",
   "settings_general": "一般",
   "settings_select_language": "言語を選択",
-  "settings_select_theme": "テーマを選択",
-  "settings_theme_light": "ライト",
-  "settings_theme_dark": "ダーク",
+  "settings_show_button_text": "ボタンテキストを表示",
+  "settings_dark_mode": "ダークモード",
   
   "debug": "デバッグ",
 

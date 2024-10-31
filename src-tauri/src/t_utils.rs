@@ -192,6 +192,7 @@ pub fn is_image_extension(extension: &str) -> bool {
 }
 
 /// Check if a file extension is a video extension
+#[allow(dead_code)]
 pub fn is_video_extension(extension: &str) -> bool {
     match extension.to_lowercase().as_str() {
         "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => true,
@@ -200,6 +201,7 @@ pub fn is_video_extension(extension: &str) -> bool {
 }
 
 /// Check if a file extension is a music extension
+#[allow(dead_code)]
 pub fn is_music_extension(extension: &str) -> bool {
     match extension.to_lowercase().as_str() {
         "mp3" | "wav" | "flac" | "m4a" | "ogg" | "wma" | "aac" | "ac3" => true,
@@ -298,6 +300,7 @@ pub fn get_thumbnail(
 
 /// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),
 /// which requires conversion to decimal format for easier use
+#[allow(dead_code)]
 pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Option<&str>) -> f64 {
     let decimal = degrees + (minutes / 60.0) + (seconds / 3600.0);
     if let Some(dir) = direction {

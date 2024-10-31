@@ -2,7 +2,7 @@
   "home": "Home",
   "album": "Albums",
   "calendar": "Calendar",
-  "map": "Map",
+  "location": "Location",
   "people": "People",
   "camera": "Camera",
   "favorite": "Favorite",
@@ -11,9 +11,8 @@
   "settings": "Settings",
   "settings_general": "General",
   "settings_select_language": "Select Language",
-  "settings_select_theme": "Select Theme",
-  "settings_theme_light": "Light",
-  "settings_theme_dark": "Dark",
+  "settings_show_button_text": "Show Button Text",
+  "settings_dark_mode": "Dark Mode",
 
   "debug": "Debug",
 

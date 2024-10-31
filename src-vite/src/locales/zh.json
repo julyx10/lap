@@ -2,7 +2,7 @@
   "home": "主页",
   "album": "相册",
   "calendar": "日历",
-  "map": "地图",
+  "location": "地点",
   "people": "人物",
   "camera": "相机",
   "favorite": "收藏",
@@ -11,9 +11,8 @@
   "settings": "设置",
   "settings_general": "通用",
   "settings_select_language": "选择语言",
-  "settings_select_theme": "选择主题",
-  "settings_theme_light": "明亮",
-  "settings_theme_dark": "暗黑",
+  "settings_show_button_text": "显示按钮文本",
+  "settings_dark_mode": "暗黑模式",
   
   "debug": "调试",
 

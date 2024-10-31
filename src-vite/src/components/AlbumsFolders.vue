@@ -5,7 +5,7 @@
       <div 
         :class="[
           'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer', 
-          child.id && gFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
+          child.id && config.folderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @click="clickFolder(child)"
       >
@@ -27,7 +27,6 @@
 
 <script setup lang="ts">
 
-import { inject } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import Folders from '@/components/AlbumsFolders.vue';
 
@@ -45,10 +44,6 @@ const props = defineProps({
   },
 });
 
-const gAlbumId = inject('gAlbumId');   // global album id
-const gFolderId = inject('gFolderId'); // global folder id
-
-
 /// click folder to select
 const clickFolder = async (folder) => {
   console.log('clickFolder...', folder);
@@ -62,8 +57,8 @@ const clickFolder = async (folder) => {
     });
 
     folder.id = result.id;
-    gFolderId.value = folder.id;
-    gAlbumId.value = props.albumId;
+    config.folderId = folder.id;
+    config.albumId = props.albumId;
 
     console.log('add_folder result:', result);
   } catch (error) {

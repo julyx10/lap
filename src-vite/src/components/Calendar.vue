@@ -8,8 +8,8 @@
       <div class="flex text-sm">
         <div 
           :class="[
-            'px-2 border rounded-l-lg t-color-border t-color-bg-hover',
-            isMonthly ? 't-color-text-selected t-color-bg-selected' : ''
+            'px-2 border rounded-l-lg t-color-bg t-color-border t-color-bg-hover',
+            isMonthly ? 't-color-text-focus t-color-bg-selected' : ''
           ]"
          @click="isMonthly=true"
         >
@@ -17,8 +17,8 @@
         </div>
         <div 
           :class="[
-            'px-2 border rounded-r-lg t-color-border t-color-bg-hover',
-            isMonthly ? '' : 't-color-text-selected t-color-bg-selected'
+            'px-2 border rounded-r-lg t-color-bg t-color-border t-color-bg-hover',
+            !isMonthly ? 't-color-text-focus t-color-bg-selected' : ''
           ]"
          @click="isMonthly=false"
         >
@@ -83,34 +83,33 @@
 <script setup>
 
 import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { invoke } from '@tauri-apps/api/core';
+
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
 
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
 
-/// i18n
-import { useI18n } from 'vue-i18n';
-const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
-
 // props
 const props = defineProps({
   titlebar: String
 });
+
+/// i18n
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
 
 const isMonthly = ref(true); // Display monthly or daily
 const sortingAsc = ref(true); // sorting order
 const scrollable = ref(null); // Ref for the scrollable element
 const calendar_dates = ref([]);
 
-
 onMounted( () => {
   console.log('Calendar.vue mounted');
   getCalendarDates();
 });
-
 
 const toggleSortingOrder = () => {
   sortingAsc.value = !sortingAsc.value;

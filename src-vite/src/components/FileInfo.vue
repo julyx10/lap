@@ -98,15 +98,9 @@
 
 <script setup lang="ts">
 
-// import { computed } from 'vue';
 import { formatTimestamp, formatFileSize } from '@/common/utils';
 
 import IconClose from '@/assets/close.svg';
-
-/// i18n
-// import { useI18n } from 'vue-i18n';
-// const { locale, messages } = useI18n();
-// const localeMsg = computed(() => messages.value[locale.value]);
 
 const props = defineProps({
   fileInfo: {
@@ -118,32 +112,6 @@ const props = defineProps({
 const emit = defineEmits([
   'close'
 ]);
-
-// File info
-// const fileInfo = ref(null);
-
-// Load the file info when the component is mounted
-// onMounted(async () => {
-//   await loadFileInfo(props.fileId);
-// });
-
-
-// Watch for changes in the file ID
-// watch(() => props.fileId, async (newId) => {
-//   await loadFileInfo(newId);
-// });
-
-
-// Load the file info from the file ID
-// async function loadFileInfo(fileId) {
-//   try {
-//     fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
-//     console.log('fileInfo: ---', fileInfo.value);
-//   } catch (error) {
-//     console.error('Error fetching file info:', error);
-//   }
-// }
-
 
 // emit close event
 function clickClose() {

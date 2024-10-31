@@ -7,31 +7,37 @@
       <div class="flex flex-row items-center justify-between">
 
         <div class="flex-1 flex flex-col">
-          <span>{{ title }}</span> <p>{{ config.language }}</p>
-          <!-- <span v-if="gToolbarIndex === 1" class="text-sm">
-            {{ $t('folder_summary', { folders: subFolderList.length, files: fileList.length }) }}
-          </span> -->
+          <span>{{ title }}</span>
           <span class="text-sm">
             {{ $t('files_summary', { files: fileList.length }) }}
           </span>
         </div>
 
         <div class="flex space-x-4">
-          <SliderInput v-model="sliderValue" :min="120" :max="320" :step="10" label="" />
+          <SliderInput v-model="config.gridSize" :min="120" :max="320" :step="10" label="" />
           <IconFitWidth 
             class="t-icon-size t-icon-hover"
-            :class="{ 't-icon-focus': isFitWidth }"
-            @click="toggleFitWidth" 
+            :class="{ 't-icon-focus': config.isFitWidth }"
+            @click="config.isFitWidth = !config.isFitWidth" 
           />
-          <IconUnFavorite v-if="!isFavorite" class="t-icon-hover hover:text-red-600" @click="toggleFavorite" />
-          <IconFavorite v-if="isFavorite" class="t-icon-hover text-red-600 hover:text-red-600" @click="toggleFavorite" />
+          <component 
+            :is="config.isFavorite ? IconFavorite : IconUnFavorite" 
+            class="t-icon-hover hover:text-red-600"
+            :class="{ 'text-red-600': config.isFavorite }"
+            @click="config.isFavorite = !config.isFavorite"
+          />
           <component :is="IconTag" class="t-icon-hover" />
-          <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
-          <component :is="showPreview ? IconPreview : IconPreviewOff" class="t-icon-hover" @click="togglePreview" />
+          <component 
+            :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
+            class="t-icon-hover" 
+            @click="toggleSortingOrder" />
+          <component 
+            :is="config.showPreview ? IconPreview : IconPreviewOff" 
+            class="t-icon-hover" 
+            @click="config.showPreview = !config.showPreview"
+          />
         </div>
-        
       </div>
-
     </div>
 
     <div>
@@ -40,17 +46,16 @@
 
     <div class="my-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
-      <GridView v-if="fileList.length > 0" :fileList="fileList" :gridSize="Number(sliderValue)" :isFitWidth="isFitWidth"/>
-      <!-- <TableView :fileList="fileList"/> -->
-       <div v-else class="flex-1 flex flex-row items-center justify-center">
+      <GridView v-if="fileList.length > 0" :fileList="fileList" :gridSize="Number(config.gridSize)" :isFitWidth="config.isFitWidth"/>
+      <div v-else class="min-w-32 flex-1 flex flex-row items-center justify-center">
         <p>{{ $t('file_list_no_files') }}</p>
-       </div>
+      </div>
 
       <!-- splitter -->
-      <div v-if="showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
+      <div v-if="config.showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
 
       <!-- preview pane -->
-      <div v-if="showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: previewPaneWidth + 'px' }">
+      <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + 'px' }">
         <div v-if="gContentIndex >= 0 && gContentIndex < fileList.length" 
           class="h-full flex flex-col items-center justify-center break-all"
         >
@@ -62,19 +67,14 @@
               <p>{{ formatTimestamp(fileList[gContentIndex].modified_at, $t('date_time_format')) }}</p>
               <!-- <p>{{ fileList[gContentIndex].width }}x{{ fileList[gContentIndex].height }}</p> -->
             </div>
-
-            <p></p>
           </div>
         </div>
 
         <div v-else class="h-full flex items-center justify-center">
           <p>{{ $t('preview_no_file') }}</p>
         </div>
-
       </div>
-
     </div>
-
   </div>
 
 </template>
@@ -83,24 +83,16 @@
 <script setup>
 
 import { ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
-import { useConfigStore } from '@/stores/configStore';
 import { invoke } from '@tauri-apps/api/core';
-// import TableView from '@/components/TableView.vue';
+import { format } from 'date-fns';
+import { useI18n } from 'vue-i18n';
+import { useConfigStore } from '@/stores/configStore';
+import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatTimestamp, formatDate } from '@/common/utils';
+
 import SliderInput from '@/components/SliderInput.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
-import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatTimestamp, formatDate } from '@/common/utils';
-import { format } from 'date-fns';
 
-/// i18n
-import { useI18n } from 'vue-i18n';
-const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
-
-// Import the SVG file as a Vue component
 import IconFitWidth from '@/assets/fit-width.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
@@ -110,16 +102,19 @@ import IconSortingDesc from '@/assets/sorting-desc.svg';
 import IconPreview from '@/assets/preview-on.svg';
 import IconPreviewOff from '@/assets/preview-off.svg';
 
-
 const props = defineProps({
   titlebar: String
 });
 
+/// i18n
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
+
+// config store
+const config = useConfigStore();
+
 // global states
-const gToolbarIndex = inject('gToolbarIndex'); // global toolbar index
 const gAlbums = inject('gAlbums');       // global albums
-const gAlbumId = inject('gAlbumId');     // global album id
-const gFolderId = inject('gFolderId');   // global folder id
 
 const gCalendarYear = inject('gCalendarYear');    // global calendar year
 const gCalendarMonth = inject('gCalendarMonth');  // global calendar month
@@ -133,39 +128,24 @@ const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
 
 // file list
 const fileList = ref([]);
-const subFolderList = ref([]);  // sub-folder list in the current folder
 
 const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
-
-// toolbar status
-const sliderValue = ref(200); // slider value
-
-const isFitWidth = ref(false); // fit width status
-const isFavorite = ref(false); // favorite status
-
-// sorting
-const sortingAsc = ref(true); // sorting order
-const sortingType = ref('taken_date'); // sorting type
 
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 
 // preview 
-const showPreview = ref(false);     // show image preview
-const previewPaneWidth = ref(300);  // using for resizing the preview pane
 const isDragging = ref(false);      // dragging splitter to resize preview pane
 const imageSrc = ref(null);         // preview image source
 
 onMounted(() => {
-  locale.value = config.language;
   document.addEventListener('mouseup', stopDragging);
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('mouseup', stopDragging);
 })
-
 
 /// Dragging the splitter
 function startDragging(event) {
@@ -185,7 +165,7 @@ function stopDragging() {
 function handleMouseMove(event) {
   if (isDragging.value) {
     const windowWidth = document.documentElement.clientWidth -2 ; // -2 for border width(1px) * 2
-    previewPaneWidth.value = Math.max(windowWidth - event.clientX, 200); 
+    config.previewPaneWidth = Math.max(windowWidth - event.clientX, 200); 
   }
 }
 
@@ -193,21 +173,19 @@ function handleMouseMove(event) {
 /// auto update the titlebar when reference data changes
 const title = computed(() => {
   let title = '';
-  // let selectedFileName = fileList.value.length > 0 && gContentIndex.value > -1 ? ` > ${fileList.value[gContentIndex.value].name}` : '';
-  
-  switch (gToolbarIndex.value) {
+  switch (config.toolbarIndex) {
     case 1:   // album
-      if (gAlbumId.value) {
+      if (config.albumId) {
         // get the selected album
-        const album = gAlbums.value.find(album => album.id === gAlbumId.value);
+        const album = gAlbums.value.find(album => album.id === config.albumId);
 
-        if(gFolderId.value === album.folderId) { // current folder is album path
-          currentFolder.value = album;
-          title += `${album.name}`;
-        } else {  // get the select folder
-          currentFolder.value = getFolder(album, gFolderId.value);
-          title += `${album.name} > ${currentFolder.value.name}`;
-        }
+        // if(config.folderId === album.folderId) { // current folder is album path
+        //   currentFolder.value = album;
+        //   title += `${album.name}`;
+        // } else {  // get the select folder
+        //   currentFolder.value = getFolder(album, config.folderId);
+        //   title += `${album.name} > ${currentFolder.value.name}`;
+        // }
       } 
       break;
     case 2:  // calendar
@@ -240,19 +218,17 @@ const title = computed(() => {
   }
 
   return title.length > 0 ? title : props.titlebar;
-  // return title.length > 0 ? title + selectedFileName : props.titlebar;
 });
 
 /// watch for changes in the language
 watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
-  },
-  { immediate: true } // trigger immediately for initial setting
+  }
 );
 
 /// Watch for changes in album_id and update filelist accordingly
-watch(gAlbumId, async (newAlbumId) => {
-  console.log('watch - gAlbumId:', newAlbumId);
+watch(config.albumId, async (newAlbumId) => {
+  console.log('watch - config.albumId:', newAlbumId);
   // no album is selected
   if (!newAlbumId) {
     fileList.value = [];
@@ -261,8 +237,8 @@ watch(gAlbumId, async (newAlbumId) => {
 
 
 /// Watch for changes in toolbar index and update filelist accordingly
-watch([gToolbarIndex, isFavorite], async ([newIndex, newFavorite]) => {
-  console.log('watch - gToolbarIndex:', newIndex);
+watch(() => [config.toolbarIndex, config.isFavorite], // use getter function to watch multiple values
+  async ([newIndex, newFavorite]) =>  {
   if(newIndex) {
     fileList.value = [];
   }
@@ -272,7 +248,7 @@ watch([gToolbarIndex, isFavorite], async ([newIndex, newFavorite]) => {
       getAllFiles();
       break;
     case 1:   // album
-      if (gAlbumId.value) {
+      if (config.albumId) {
         readFolder(currentFolder.value.path);
       };
       break;
@@ -292,7 +268,6 @@ watch([gToolbarIndex, isFavorite], async ([newIndex, newFavorite]) => {
       break;
   }
 });
-
 
 /// Watch for changes in filePath and update filelist accordingly
 watch(currentFolder, async (newFolder) => {
@@ -350,31 +325,14 @@ const onImageLoad = async () => {
   }
 }
 
-/// toggle the fit width status
-function toggleFitWidth() {
-  isFitWidth.value = !isFitWidth.value;
-}
-
-/// toggle the favorite status
-function toggleFavorite() {
-  isFavorite.value = !isFavorite.value;
-}
-
 /// toggle the sorting order
 function toggleSortingOrder() {
-  sortingAsc.value = !sortingAsc.value;
+  config.sortingAsc = !config.sortingAsc;
   fileList.value = [...fileList.value].reverse();
   if (gContentIndex.value >= 0) {
     gContentIndex.value = fileList.value.length - 1 - gContentIndex.value;
   }
-  console.log('toggleSortingOrder:', sortingAsc.value, fileList.value);
 }
-
-/// toggle the preview status
-function togglePreview() {
-  showPreview.value = !showPreview.value;
-}
-
 
 /// get the selected sub-folder by folder id
 function getFolder(folder, folderId) {
@@ -391,15 +349,14 @@ function getFolder(folder, folderId) {
   return null;
 }
 
-
 /// read all files under the path
 async function readFolder(path) {
   try {
     // read the list of files
-    fileList.value = await invoke('read_folder', { folderId: gFolderId.value, path: path });
+    fileList.value = await invoke('read_folder', { folderId: config.folderId, path: path });
 
     // reverse the fileList if sorting order is descending
-    sortFileList(sortingType.value, sortingAsc.value);
+    sortFileList(config.sortingType, config.sortingAsc);
     console.log('readFolder:', fileList.value);
 
     getFileThumb(fileList.value);
@@ -407,7 +364,6 @@ async function readFolder(path) {
     console.error('readFolder error:', error);
   }
 };
-
 
 // Sort the file list based on the sorting type and order
 function sortFileList(sortingType, isAccending) {
@@ -445,7 +401,7 @@ function sortFileList(sortingType, isAccending) {
 /// get all files
 async function getAllFiles() {
   try {
-    fileList.value = await invoke('get_all_files', { isFavorite: isFavorite.value, offset: 0, pageSize: FILES_PAGE_SIZE });
+    fileList.value = await invoke('get_all_files', { isFavorite: config.isFavorite, offset: 0, pageSize: FILES_PAGE_SIZE });
     console.log('getAllFiles:', fileList.value);
 
     getFileThumb(fileList.value); 
@@ -453,7 +409,6 @@ async function getAllFiles() {
     console.error('getAllFiles error:', error);
   }
 }
-
 
 /// get all files of calendar
 async function getCalendarFiles(year, month, date) {
@@ -475,7 +430,6 @@ async function getCalendarFiles(year, month, date) {
   }
 }
 
-
 /// get all files under the camera make and model
 async function getCameraFiles(make, model) {
   try {
@@ -487,7 +441,6 @@ async function getCameraFiles(make, model) {
     console.error('getCameraFiles error:', error);
   }
 }
-
 
 /// get the thumbnail for each file in mutil-thread
 // async function getFileThumb(files) {
@@ -513,7 +466,6 @@ async function getCameraFiles(make, model) {
 //     console.error('getFileThumb error:', error);
 //   }
 // }
-
 
 async function getFileThumb(files, concurrencyLimit = 8) {
   try {

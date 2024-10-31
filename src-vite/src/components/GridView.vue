@@ -46,12 +46,10 @@
 <script setup lang="ts">
 
 import { ref, inject, watch, onMounted, onUnmounted } from 'vue';
-// import VueLazyload from 'vue-lazyload';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { shortenFilename, formatFileSize } from '@/common/utils';
 
-// import IconFolder from '@/assets/240-folder.svg';
 import IconPhoto from '@/assets/photo.svg';
 
 const props = defineProps({
@@ -65,10 +63,6 @@ const props = defineProps({
   },
   isFitWidth: Boolean,
 });
-
-// import { useI18n } from 'vue-i18n';
-// const { locale, messages } = useI18n();
-// const msg = computed(() => messages.value[locale.value]);
 
 const gContentIndex = inject('gContentIndex'); // global selected item index
 const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
@@ -97,11 +91,9 @@ onMounted(() => {
   });
 });
 
-
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
-
 
 // Select the file
 function clickFile(index: number) {
@@ -140,7 +132,6 @@ watch (() => gContentIndex.value, (newIndex) => {
   openImageViewer(newIndex);
   scrollToItem(newIndex);
 });
-
 
 // Open the image viewer window
 async function openImageViewer(index: number, createNew = false) {

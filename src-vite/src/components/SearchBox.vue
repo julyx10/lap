@@ -19,7 +19,6 @@
 
 import IconSearch from '@/assets/search.svg';
 
-
 const clickSearch = () => {
   console.log('clickSearch');
 };

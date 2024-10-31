@@ -60,27 +60,12 @@
 
 import { watch, inject, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
-// import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-
-/// i18n
-// import { useI18n } from 'vue-i18n';
-// const { locale, messages } = useI18n();
-// const localeMessages = computed(() => messages.value[locale.value]);
 
 // toolbar icons
 import IconRefresh from '@/assets/refresh.svg';
-
-// folder icon
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
-
 import IconRight from '@/assets/arrow-right.svg';
-
-const gContentIndex = inject('gContentIndex');
-
-const gCameras = inject('gCameras');
-const gCameraMake = inject('gCameraMake');
-const gCameraModel = inject('gCameraModel');
 
 const props = defineProps({
   titlebar: {
@@ -89,7 +74,11 @@ const props = defineProps({
   }
 });
 
-// const appWindow = getCurrentWebviewWindow();
+const gContentIndex = inject('gContentIndex');
+
+const gCameras = inject('gCameras');
+const gCameraMake = inject('gCameraMake');
+const gCameraModel = inject('gCameraModel');
 
 onMounted(() => {
   if (gCameras.value.length === 0) {

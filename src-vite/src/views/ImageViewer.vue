@@ -31,13 +31,10 @@
       <IconZoomIn class="t-icon-size-sm t-icon-hover" @click="scale += 0.5" />
       <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="scale -= 0.5" />
       <component :is="imageFit ? IconFitScreen1 : IconFitScreen2" class="t-icon-size-sm t-icon-hover" @click="toggleFitScreen" />
-
       <IconRotateRight class="t-icon-size-sm t-icon-hover" @click="rotateImage"/>
-
       <IconUnFavorite v-if="!fileInfo" class="t-icon-size-sm t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
-
       <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
       <IconSave class="t-icon-size-sm t-icon-hover" />
       <!-- <IconFullScreen v-if="!isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
