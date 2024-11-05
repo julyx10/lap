@@ -36,7 +36,7 @@
             {{ album.name }}
             <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
           </div>
-          <Folders v-if="album.is_expanded" :albumId="album.id" :children="album.children" />
+          <Folders v-if="album.is_expanded" :albumId="album.id" :parent="album.folderId" :children="album.children" />
         </li>
       </ul>
     </div>
@@ -150,7 +150,7 @@ const clickAlbum = async (album) => {
   try {
     const result = await invoke('select_folder', {
       albumId: album.id, 
-      parentId: 0,
+      parentId: 0,      // 0 is root folder(album)
       name: album.name,
       path: album.path
     });

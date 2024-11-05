@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="js">
-import { ref, watch, defineEmits } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   modelValue: {

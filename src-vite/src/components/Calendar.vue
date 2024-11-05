@@ -9,30 +9,30 @@
         <div 
           :class="[
             'px-2 border rounded-l-lg t-color-bg t-color-border t-color-bg-hover',
-            isMonthly ? 't-color-text-focus t-color-bg-selected' : ''
+            config.calendarIsMonthly ? 't-color-text-focus t-color-bg-selected' : ''
           ]"
-         @click="isMonthly=true"
+         @click="config.calendarIsMonthly=true"
         >
           {{ $t('calendar_monthly') }}
         </div>
         <div 
           :class="[
             'px-2 border rounded-r-lg t-color-bg t-color-border t-color-bg-hover',
-            !isMonthly ? 't-color-text-focus t-color-bg-selected' : ''
+            !config.calendarIsMonthly ? 't-color-text-focus t-color-bg-selected' : ''
           ]"
-         @click="isMonthly=false"
+         @click="config.calendarIsMonthly=false"
         >
           {{ $t('calendar_daily') }}
         </div>
         <span class="px-2"></span>
-        <component :is="sortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
+        <component :is="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
       </div>
     </div>
     
     <template v-if="Object.keys(calendar_dates).length > 0" >
       
         <!-- days of the week in daily calendar -->
-        <div v-if="!isMonthly" class="flex flex-col items-center mr-4">
+        <div v-if="!config.calendarIsMonthly" class="flex flex-col items-center mr-4">
           <div class="grid grid-cols-7 gap-2 text-center">
             <div 
               v-for="(day, index) in localeMsg.calendar_weekdays" 
@@ -47,15 +47,15 @@
         <!-- calendar -->
         <div ref="scrollable"
           :class="['flex overflow-auto t-scrollbar-dark',
-            sortingAsc ? 'flex-col' : 'flex-col-reverse'
+            config.calendarSortingAsc ? 'flex-col' : 'flex-col-reverse'
           ]"
         >
           <div v-for="(months, year) in calendar_dates" 
             :class="['flex',
-              sortingAsc ? 'flex-col' : 'flex-col-reverse'
+              config.calendarSortingAsc ? 'flex-col' : 'flex-col-reverse'
             ]"
           >
-            <CalendarMonthly v-if="isMonthly"
+            <CalendarMonthly v-if="config.calendarIsMonthly"
               :year="Number(year)" 
               :months="months"
             />
@@ -83,8 +83,9 @@
 <script setup>
 
 import { ref, computed, onMounted } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { invoke } from '@tauri-apps/api/core';
+import { useI18n } from 'vue-i18n';
+import { useConfigStore } from '@/stores/configStore';
 
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
@@ -101,8 +102,9 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const isMonthly = ref(true); // Display monthly or daily
-const sortingAsc = ref(true); // sorting order
+// config store
+const config = useConfigStore();
+
 const scrollable = ref(null); // Ref for the scrollable element
 const calendar_dates = ref([]);
 
@@ -112,7 +114,7 @@ onMounted( () => {
 });
 
 const toggleSortingOrder = () => {
-  sortingAsc.value = !sortingAsc.value;
+  config.calendarSortingAsc = !config.calendarSortingAsc;
 
   // const element = scrollable.value; // Get the scrollable element
   // element.scrollTop = sortingAsc.value === true ? 0 : element.scrollHeight;

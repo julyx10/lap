@@ -33,6 +33,7 @@
 
 import { inject, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useConfigStore } from '@/stores/configStore';
 import { formatDate } from '@/common/utils';
 
 const props = defineProps({
@@ -50,9 +51,8 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const gCalendarYear = inject('gCalendarYear');
-const gCalendarMonth = inject('gCalendarMonth');
-const gCalendarDate = inject('gCalendarDate');
+// config store
+const config = useConfigStore();
 
 // Title for the year
 const yearTitle = computed(() => formatDate(props.year, 1, 1, localeMsg.value.year_format));
@@ -76,15 +76,15 @@ function isThisMonth(year, month) {
 }
 
 // Check if the month is selected
-const isSelectedMonth = (year, month) => gCalendarYear.value === year && gCalendarMonth.value === month;
+const isSelectedMonth = (year, month) => config.calendarYear === year && config.calendarMonth === month;
 
 // click a month to select it
 const clickMonth = (year, month) => {
-  gCalendarYear.value = year;
-  gCalendarMonth.value = month;
-  gCalendarDate.value = -1;   // -1 means selecting a month
+  config.calendarYear = year;
+  config.calendarMonth = month;
+  config.calendarDate = -1;   // -1 means selecting a month
 
-  console.log('clickDate:', gCalendarYear.value, gCalendarMonth.value, gCalendarDate.value);
+  console.log('clickDate:', config.calendarYear, config.calendarMonth, config.calendarDate);
 };
 
 </script>

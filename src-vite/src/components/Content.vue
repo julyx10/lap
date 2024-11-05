@@ -7,7 +7,7 @@
       <div class="flex flex-row items-center justify-between">
 
         <div class="flex-1 flex flex-col">
-          <span>{{ title }}</span>
+          <span>{{ contentTitle }}</span>
           <span class="text-sm">
             {{ $t('files_summary', { files: fileList.length }) }}
           </span>
@@ -46,7 +46,12 @@
 
     <div class="my-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
-      <GridView v-if="fileList.length > 0" :fileList="fileList" :gridSize="Number(config.gridSize)" :isFitWidth="config.isFitWidth"/>
+      <GridView v-if="fileList.length > 0" 
+        :fileList="fileList"
+        :gridSize="Number(config.gridSize)" 
+        :isFitWidth="config.isFitWidth"
+        v-model="selectedItemIndex"
+      />
       <div v-else class="min-w-32 flex-1 flex flex-row items-center justify-center">
         <p>{{ $t('file_list_no_files') }}</p>
       </div>
@@ -56,16 +61,16 @@
 
       <!-- preview pane -->
       <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + 'px' }">
-        <div v-if="gContentIndex >= 0 && gContentIndex < fileList.length" 
+        <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length" 
           class="h-full flex flex-col items-center justify-center break-all"
         >
           <img class="h-full w-full p-1 rounded-lg object-contain" :src="imageSrc" @load="onImageLoad" />
           <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm"> 
-            <p>{{ fileList[gContentIndex].name }}</p>
+            <p>{{ fileList[selectedItemIndex].name }}</p>
             <div class="flex space-x-4">
-              <!-- <p>{{ formatFileSize(fileList[gContentIndex].size) }}</p> -->
-              <p>{{ formatTimestamp(fileList[gContentIndex].modified_at, $t('date_time_format')) }}</p>
-              <!-- <p>{{ fileList[gContentIndex].width }}x{{ fileList[gContentIndex].height }}</p> -->
+              <!-- <p>{{ formatFileSize(fileList[selectedItemIndex].size) }}</p> -->
+              <p>{{ formatTimestamp(fileList[selectedItemIndex].modified_at, $t('date_time_format')) }}</p>
+              <!-- <p>{{ fileList[selectedItemIndex].width }}x{{ fileList[selectedItemIndex].height }}</p> -->
             </div>
           </div>
         </div>
@@ -116,18 +121,13 @@ const config = useConfigStore();
 // global states
 const gAlbums = inject('gAlbums');       // global albums
 
-const gCalendarYear = inject('gCalendarYear');    // global calendar year
-const gCalendarMonth = inject('gCalendarMonth');  // global calendar month
-const gCalendarDate = inject('gCalendarDate');    // global calendar date
-
-const gCameraMake = inject('gCameraMake');     // global camera make
-const gCameraModel = inject('gCameraModel');   // global camera model
-
-const gContentIndex = inject('gContentIndex'); // global selected item index
 const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
+
+const contentTitle = ref("");   // title of the content 
 
 // file list
 const fileList = ref([]);
+const selectedItemIndex = ref(-1);
 
 const currentFolder = ref('');
 const currentCamera = ref({make: null, model: null});
@@ -169,133 +169,81 @@ function handleMouseMove(event) {
   }
 }
 
-
-/// auto update the titlebar when reference data changes
-const title = computed(() => {
-  let title = '';
-  switch (config.toolbarIndex) {
-    case 1:   // album
-      if (config.albumId) {
-        // get the selected album
-        const album = gAlbums.value.find(album => album.id === config.albumId);
-
-        // if(config.folderId === album.folderId) { // current folder is album path
-        //   currentFolder.value = album;
-        //   title += `${album.name}`;
-        // } else {  // get the select folder
-        //   currentFolder.value = getFolder(album, config.folderId);
-        //   title += `${album.name} > ${currentFolder.value.name}`;
-        // }
-      } 
-      break;
-    case 2:  // calendar
-      if (gCalendarYear.value && gCalendarMonth.value && gCalendarDate.value) {
-        if (gCalendarDate.value === -1) {     // monthly
-          title = formatDate(gCalendarYear.value, gCalendarMonth.value, 1, localeMsg.value.month_format);
-        } else if (gCalendarDate.value > 0) { // daily
-          title = formatDate(gCalendarYear.value, gCalendarMonth.value, gCalendarDate.value, localeMsg.value.date_format_long);
-        }
-      }
-      break;
-    case 3:  // map
-      title += `${props.titlebar}`;
-      break;
-    case 4:  // people
-      title += `${props.titlebar}`;
-      break;
-    case 5:  // camera
-      if (gCameraMake.value) {
-        if (gCameraModel.value) {
-          currentCamera.value = { make: gCameraMake.value , model: gCameraModel.value };
-          title += `${gCameraMake.value} > ${gCameraModel.value}`;
-        } else {
-          title += `${gCameraMake.value}`;
-        }
-      } 
-      break;
-    default:
-      title = props.titlebar;
-  }
-
-  return title.length > 0 ? title : props.titlebar;
-});
-
-/// watch for changes in the language
+/// watch language
 watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
-  }
-);
+});
 
-/// Watch for changes in album_id and update filelist accordingly
-watch(config.albumId, async (newAlbumId) => {
-  console.log('watch - config.albumId:', newAlbumId);
-  // no album is selected
-  if (!newAlbumId) {
-    fileList.value = [];
+/// watch home (all files)
+watch(() => config.toolbarIndex, newIndex => {
+  if(newIndex === 0) {
+    contentTitle.value = localeMsg.value.home;
+    getAllFiles();
+  }
+});
+/// watch album
+watch(() => [config.toolbarIndex, config.albumId, config.folderId], async ([newIndex, newAlbumId, newFolderId]) => {
+  if(newIndex === 1) {
+    if (newAlbumId) {
+      // get the selected album
+      const album = gAlbums.value.find(album => album.id === newAlbumId);
+
+      if(newFolderId === album.folderId) { // current folder is root
+        currentFolder.value = album.path;
+        contentTitle.value = `${album.name}`;
+      } else {  // recurse the album to get the selected folder
+        currentFolder.value = getFolder(album, newFolderId);
+        contentTitle.value = `${album.name} > ${currentFolder.value.name}`;
+      };
+
+      readFolder(currentFolder.value);
+      selectedItemIndex.value = -1;
+    };
   }
 });
 
-
-/// Watch for changes in toolbar index and update filelist accordingly
-watch(() => [config.toolbarIndex, config.isFavorite], // use getter function to watch multiple values
-  async ([newIndex, newFavorite]) =>  {
-  if(newIndex) {
-    fileList.value = [];
-  }
-
-  switch(newIndex) {
-    case 0:
-      getAllFiles();
-      break;
-    case 1:   // album
-      if (config.albumId) {
-        readFolder(currentFolder.value.path);
-      };
-      break;
-    case 2:   // calendar
-      if (gCalendarYear.value && gCalendarMonth.value && gCalendarDate.value) {
-        getCalendarFiles(gCalendarYear.value, gCalendarMonth.value, gCalendarDate.value);
+// watch calandar
+watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate], 
+  async ([newIndex, year, month, date]) => {
+  if(newIndex === 2) {
+    if (year && month && date) {
+      if (config.calendarDate === -1) {     // monthly
+        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.month_format);
+      } else if (config.calendarDate > 0) { // daily
+        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
       }
-      break;
-    case 3:   // map
-      break;
-    case 4:   // people
-      break;
-    case 5:   // camera
-      if (gCameraMake.value) {
-        getCameraFiles(gCameraMake.value, gCameraModel.value);
-      };
-      break;
+      getCalendarFiles(year, month, date);
+    }
   }
-});
+}, { immediate: true });
 
-/// Watch for changes in filePath and update filelist accordingly
-watch(currentFolder, async (newFolder) => {
-  console.log('watch - currentFolder:', newFolder);
-  if (newFolder) {
-    // read the files in the new folder
-    readFolder(newFolder.path);
-  }
-});
+// watch location
 
-watch([gCalendarYear, gCalendarMonth, gCalendarDate], async ([year, month, date]) => {
-  console.log('watch - gCalendarYear:', year, month, date);
-  if (year && month && date) {
-    getCalendarFiles(year, month, date);
-  }
-});
+// watch people
 
-watch(gCameraModel, async (newModel) => {
-  console.log('watch - gCameraModel:', newModel);
-  if(newModel) {
-    getCameraFiles(gCameraMake.value, newModel);
-  } else {
-    fileList.value = [];
+// watch camera
+watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async ([newIndex, newMake, newModel]) => {
+  if(newIndex === 5) {
+    if(newMake) {
+      if(newModel) {
+        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
+        getCameraFiles(config.cameraMake, newModel);
+      } else {
+        contentTitle.value = `${config.cameraMake}`;
+        fileList.value = [];
+      }
+    } else {
+      contentTitle.value = localeMsg.value.camera;
+      fileList.value = [];
+    }
+
   }
-});
+}, { immediate: true });
 
 // watch for changes in the file list
-watch(gContentIndex, (newIndex) => {
+watch(() => selectedItemIndex.value, (newIndex) => {
+  console.log('watch - selectedItemIndex:', newIndex);
+
   if (newIndex >= 0 && newIndex < fileList.value.length && fileList.value[newIndex].thumbnail ) {
     imageSrc.value = fileList.value[newIndex].thumbnail;
   } else {
@@ -314,7 +262,7 @@ const onImageLoad = async () => {
     return;
   }
 
-  let filePath = fileList.value[gContentIndex.value].file_path;
+  let filePath = fileList.value[selectedItemIndex.value].file_path;
   console.log('onImageLoad:', filePath);
   try {
     const imageBase64 = await invoke('get_file_image', { filePath });
@@ -329,41 +277,97 @@ const onImageLoad = async () => {
 function toggleSortingOrder() {
   config.sortingAsc = !config.sortingAsc;
   fileList.value = [...fileList.value].reverse();
-  if (gContentIndex.value >= 0) {
-    gContentIndex.value = fileList.value.length - 1 - gContentIndex.value;
+  if (selectedItemIndex.value >= 0) {
+    selectedItemIndex.value = fileList.value.length - 1 - selectedItemIndex.value;
   }
 }
 
 /// get the selected sub-folder by folder id
-function getFolder(folder, folderId) {
-  if (folder.id === folderId) {
-    return folder;
-  } else if (folder.children) {
-    for (let child of folder.children) {
-        const result = getFolder(child, folderId);
-        if (result) {
-          return result;
-        }
-    }
-  }
-  return null;
+async function getFolder(folder, folderId) {
+  // if (folder.id === folderId) {
+  //   return folder;
+  // } else {
+  //   if (!folder.children) {
+  //     folder.children = await expandFolder(folder);
+  //   }
+  //   for (let child of folder.children) {
+  //       const result = getFolder(child, folderId);
+  //       if (result) {
+  //         return result;
+  //       }
+  //   }
+  // }
+  // return null;
 }
+
+const expandFolder = async (folder) => {
+  try {
+    // Fetch subfolder tree
+    const subfolders = await invoke('expand_folder', { path: folder.path, isRecursive: false });
+    folder.children = subfolders.children;
+    folder.is_expanded = true;
+  } catch (error) {
+    console.error('Error fetching subfolders:', error);
+  }
+  return folder;
+};
 
 /// read all files under the path
 async function readFolder(path) {
   try {
     // read the list of files
     fileList.value = await invoke('read_folder', { folderId: config.folderId, path: path });
-
-    // reverse the fileList if sorting order is descending
     sortFileList(config.sortingType, config.sortingAsc);
-    console.log('readFolder:', fileList.value);
-
     getFileThumb(fileList.value);
+    console.log('readFolder:', fileList.value);
   } catch (error) {
     console.error('readFolder error:', error);
   }
 };
+
+/// get all files
+async function getAllFiles() {
+  try {
+    fileList.value = await invoke('get_all_files', { isFavorite: config.isFavorite, offset: 0, pageSize: FILES_PAGE_SIZE });
+    sortFileList(config.sortingType, config.sortingAsc);
+    getFileThumb(fileList.value); 
+    console.log('getAllFiles:', fileList.value);
+  } catch (error) {
+    console.error('getAllFiles error:', error);
+  }
+}
+
+/// get all files of calendar
+async function getCalendarFiles(year, month, date) {
+  try {
+    if (date === -1) { // -1 means selecting a month
+      // get the first and last days of the month.
+      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
+      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
+      fileList.value = await invoke('get_files_by_date_range', { startDate: startDate, endDate: endDate });
+    } else {  // otherwise, get files by date
+      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
+      fileList.value = await invoke('get_files_by_date', { date: dateStr });
+    }
+    sortFileList(config.sortingType, config.sortingAsc);
+    getFileThumb(fileList.value);
+    console.log('getCalendarFiles:', fileList.value);
+  } catch (error) {
+    console.error('getCalendarFiles error:', error);
+  }
+}
+
+/// get all files under the camera make and model
+async function getCameraFiles(make, model) {
+  try {
+    fileList.value = await invoke('get_camera_files', { make: make, model: model });
+    sortFileList(config.sortingType, config.sortingAsc);
+    getFileThumb(fileList.value); 
+    console.log('getCameraFiles:', fileList.value);
+  } catch (error) {
+    console.error('getCameraFiles error:', error);
+  }
+}
 
 // Sort the file list based on the sorting type and order
 function sortFileList(sortingType, isAccending) {
@@ -396,50 +400,6 @@ function sortFileList(sortingType, isAccending) {
 
     return isAccending ? result : -result;
   });
-}
-
-/// get all files
-async function getAllFiles() {
-  try {
-    fileList.value = await invoke('get_all_files', { isFavorite: config.isFavorite, offset: 0, pageSize: FILES_PAGE_SIZE });
-    console.log('getAllFiles:', fileList.value);
-
-    getFileThumb(fileList.value); 
-  } catch (error) {
-    console.error('getAllFiles error:', error);
-  }
-}
-
-/// get all files of calendar
-async function getCalendarFiles(year, month, date) {
-  try {
-    if (date === -1) { // -1 means selecting a month
-      // get the first and last days of the month.
-      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
-      fileList.value = await invoke('get_files_by_date_range', { startDate: startDate, endDate: endDate });
-    } else {  // otherwise, get files by date
-      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
-      fileList.value = await invoke('get_files_by_date', { date: dateStr });
-    }
-    console.log('getCalendarFiles:', fileList.value);
-
-    getFileThumb(fileList.value);
-  } catch (error) {
-    console.error('getCalendarFiles error:', error);
-  }
-}
-
-/// get all files under the camera make and model
-async function getCameraFiles(make, model) {
-  try {
-    fileList.value = await invoke('get_camera_files', { make: make, model: model });
-    console.log('getCameraFiles:', fileList.value);
-
-    getFileThumb(fileList.value); 
-  } catch (error) {
-    console.error('getCameraFiles error:', error);
-  }
 }
 
 /// get the thumbnail for each file in mutil-thread

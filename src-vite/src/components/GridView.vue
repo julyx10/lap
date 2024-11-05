@@ -10,9 +10,9 @@
         :id="'item-' + index"
         :class="[
           'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200', 
-          index === gContentIndex ? 'border-sky-500' : 'border-gray-800'
+          index === selectedIndex ? 'border-sky-500' : 'border-gray-800'
         ]"
-        @click="clickFile(index)"
+        @click="clickItem(index)"
         @dblclick="openImageViewer(index, true)"
       >
         <div class="flex flex-col items-center">
@@ -53,6 +53,10 @@ import { shortenFilename, formatFileSize } from '@/common/utils';
 import IconPhoto from '@/assets/photo.svg';
 
 const props = defineProps({
+  modelValue: {     // selecte item index(v-model value) 
+    type: Number,
+    required: true,
+  },
   fileList: {
     type: Array,
     required: true,
@@ -64,9 +68,10 @@ const props = defineProps({
   isFitWidth: Boolean,
 });
 
-const gContentIndex = inject('gContentIndex'); // global selected item index
-const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
+const emit = defineEmits(['update:modelValue'])
+const selectedIndex = ref(props.modelValue);
 
+const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
 const scrollable = ref(null); // Ref for the scrollable element
 
 onMounted(() => {
@@ -77,10 +82,10 @@ onMounted(() => {
     console.log('message-from-image-viewer:', message);
     switch (message) {
       case 'prev':
-        gContentIndex.value = Math.max(gContentIndex.value - 1, 0);
+        selectedIndex.value = Math.max(selectedIndex.value - 1, 0);
         break;
       case 'next':
-        gContentIndex.value = Math.min(gContentIndex.value + 1, props.fileList.length - 1);
+        selectedIndex.value = Math.min(selectedIndex.value + 1, props.fileList.length - 1);
         break;
       case 'close':
         gShowImageViewer.value = false;
@@ -95,20 +100,32 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
-// Select the file
-function clickFile(index: number) {
-  gContentIndex.value = index;
+// watch(() => props.modelValue, (newValue) => { 
+//   selectedIndex.value = newValue; 
+// });
+
+// watch for changes in the file list
+watch(() => props.fileList, (newList) => {
+  selectedIndex.value = - 1;
+
+  const element = scrollable.value; // Get the scrollable element
+  element.scrollTop = 0;
+});
+
+// click the item to select it
+function clickItem(index: number) {
+  selectedIndex.value = index;
 }
 
 const keyActions = {
-  ArrowDown: ()  => gContentIndex.value = Math.min(gContentIndex.value + getColumnCount(), props.fileList.length - 1),
-  ArrowRight: () => gContentIndex.value = Math.min(gContentIndex.value + 1, props.fileList.length - 1),
-  ArrowUp: ()    => gContentIndex.value = Math.max(gContentIndex.value - getColumnCount(), 0),
-  ArrowLeft: ()  => gContentIndex.value = Math.max(gContentIndex.value - 1, 0),
-  // Home: ()       => gContentIndex.value = 0,
-  // End: ()        => gContentIndex.value = props.fileList.length - 1,
-  Enter: () => openImageViewer(gContentIndex.value, true),
-  Space: () => openImageViewer(gContentIndex.value, true),
+  ArrowDown: ()  => selectedIndex.value = Math.min(selectedIndex.value + getColumnCount(), props.fileList.length - 1),
+  ArrowRight: () => selectedIndex.value = Math.min(selectedIndex.value + 1, props.fileList.length - 1),
+  ArrowUp: ()    => selectedIndex.value = Math.max(selectedIndex.value - getColumnCount(), 0),
+  ArrowLeft: ()  => selectedIndex.value = Math.max(selectedIndex.value - 1, 0),
+  Home: ()       => selectedIndex.value = 0,
+  End: ()        => selectedIndex.value = props.fileList.length - 1,
+  Enter: () => openImageViewer(selectedIndex.value, true),
+  Space: () => openImageViewer(selectedIndex.value, true),
 };
 
 // Handle keydown event
@@ -119,18 +136,12 @@ function handleKeyDown(event) {
   }
 }
 
-// watch for changes in the file list
-watch(() => props.fileList, (newList) => {
-  gContentIndex.value = - 1;
-
-  const element = scrollable.value; // Get the scrollable element
-  element.scrollTop = 0;
-});
-
 // watch for changes in the selected item index
-watch (() => gContentIndex.value, (newIndex) => {
-  openImageViewer(newIndex);
-  scrollToItem(newIndex);
+watch(() => selectedIndex.value, (newValue) => {
+  openImageViewer(newValue);
+  scrollToItem(newValue);
+
+  emit('update:modelValue', newValue);
 });
 
 // Open the image viewer window
@@ -201,8 +212,6 @@ function getColumnCount() {
 
   // Split by space to account for grid definitions
   const columnCount = gridTemplateColumns.split(' ').length;
-
-  console.log('getColumnCount:', columnCount);
 
   return columnCount;
 }

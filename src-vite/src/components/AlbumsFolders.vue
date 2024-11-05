@@ -18,7 +18,7 @@
         />
         {{ child.name }}
       </div>
-      <Folders v-if="child.is_expanded" :albumId="albumId" :children="child.children" />
+      <AlbumsFolders v-if="child.is_expanded" :albumId="albumId" :parent="child.id" :children="child.children" />
     </li>
   </ul>
 
@@ -28,21 +28,30 @@
 <script setup lang="ts">
 
 import { invoke } from '@tauri-apps/api/core';
-import Folders from '@/components/AlbumsFolders.vue';
+import { useConfigStore } from '@/stores/configStore';
+
+import AlbumsFolders from '@/components/AlbumsFolders.vue';
 
 // folder icon
 import IconRight from '@/assets/arrow-right.svg';
 
 const props = defineProps({
-  albumId: {
-    type: Number,
+  albumId: {    // album id
+    type: Number, 
     required: true,
   },
-  children: {
+  parent: {     // parent folder id
+    type: Number,
+    required: false,
+  },
+  children: {   // subfolders
     type: Array,
     required: false,
   },
 });
+
+// config store
+const config = useConfigStore();
 
 /// click folder to select
 const clickFolder = async (folder) => {
@@ -51,7 +60,7 @@ const clickFolder = async (folder) => {
   try {
     const result = await invoke('select_folder', {
       albumId: props.albumId, 
-      parentId: 0,
+      parentId: props.parent,
       name: folder.name,
       path: folder.path
     });

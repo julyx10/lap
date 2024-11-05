@@ -8,7 +8,7 @@
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
 
       <!-- left toolbar -->
-      <div ref="toolbar" class="w-12 my-3 flex flex-col justify-between">
+      <div ref="divToolbar" class="w-12 my-3 flex flex-col justify-between">
         <div class="flex flex-col items-center space-y-6">
           <div v-for="(item, index) in toolbars" 
             class="flex flex-col items-center t-icon-hover" 
@@ -60,7 +60,7 @@
 
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { listen } from '@tauri-apps/api/event'
+import { useConfigStore } from '@/stores/configStore';
 
 // vue components
 import TitleBar from '@/components/TitleBar.vue';
@@ -88,7 +88,6 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
 // config store
-import { useConfigStore } from '@/stores/configStore';
 const config = useConfigStore();
 
 // toolbar 
@@ -104,7 +103,7 @@ const toolbars = computed(() =>  [
 ]);
 
 /// Splitter for resizing the left pane
-const toolbar = ref(null);
+const divToolbar = ref(null);
 const isDragging = ref(false);
 
 onMounted(() => {
@@ -131,8 +130,8 @@ function stopDragging() {
 
 // Handle mouse move event
 function handleMouseMove(event) {
-  if (isDragging.value && toolbar.value) {
-    const toolbarWidth = toolbar.value.offsetWidth + 1;   // 1: border width
+  if (isDragging.value && divToolbar.value) {
+    const toolbarWidth = divToolbar.value.offsetWidth + 1;   // 1: border width
     config.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
   }
 }

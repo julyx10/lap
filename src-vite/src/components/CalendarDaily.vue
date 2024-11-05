@@ -35,9 +35,10 @@
 
 <script setup>
 
-import { inject, computed } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
+import { useConfigStore } from '@/stores/configStore';
 import { formatDate } from '@/common/utils';
 
 const props = defineProps({
@@ -59,9 +60,8 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const gCalendarYear = inject('gCalendarYear');
-const gCalendarMonth = inject('gCalendarMonth');
-const gCalendarDate = inject('gCalendarDate');
+// config store
+const config = useConfigStore();
 
 // Title of the month
 const monthTitle = computed(() => formatDate(props.year, props.month, 1, localeMsg.value.month_format));
@@ -79,9 +79,9 @@ const monthDates = getMonthDates(props.year, props.month, props.dates);
 const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date));
 
 // Check if the date is selected
-const isSelectedDate = (date) => gCalendarYear.value === props.year &&
-                                 gCalendarMonth.value === props.month && 
-                                 gCalendarDate.value === date;
+const isSelectedDate = (date) => config.calendarYear === props.year &&
+                                 config.calendarMonth === props.month && 
+                                 config.calendarDate === date;
 
 // Generate an array of { date, count } objects for the month
 function getMonthDates(year, month, dates = []) {
@@ -104,14 +104,13 @@ function getMonthDates(year, month, dates = []) {
   return dateCountArray;
 }
 
-
 // click a date to select it
 const clickDate = (date) => {
-  gCalendarYear.value = props.year;
-  gCalendarMonth.value = props.month;
-  gCalendarDate.value = date;
+  config.calendarYear = props.year;
+  config.calendarMonth = props.month;
+  config.calendarDate = date;
 
-  console.log('clickDate:', gCalendarYear.value, gCalendarMonth.value, gCalendarDate.value);
+  console.log('clickDate:', config.calendarYear, config.calendarMonth, config.calendarDate);
 };
 
 </script>

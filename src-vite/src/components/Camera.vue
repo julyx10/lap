@@ -12,15 +12,15 @@
     </div>
 
     <!-- camera -->
-    <div v-if="gCameras.length > 0" class="flex-grow overflow-auto t-scrollbar">
+    <div v-if="cameras.length > 0" class="flex-grow overflow-auto t-scrollbar">
       <ul>
-        <li v-for="camera in gCameras">
+        <li v-for="camera in cameras">
           <div 
             :class="[
               'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
               { 
-                't-color-text-selected': gCameraMake === camera.make, 
-                't-color-bg-selected'  : gCameraMake === camera.make && !gCameraModel 
+                't-color-text-selected': config.cameraMake === camera.make, 
+                't-color-bg-selected'  : config.cameraMake === camera.make && !config.cameraModel 
               }
             ]"
             @click="clickCameraMake(camera)"
@@ -33,7 +33,7 @@
               <div 
                 :class="[
                   'm-1 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
-                  gCameraModel === model ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
+                  config.cameraModel === model ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
@@ -58,8 +58,9 @@
 
 <script setup lang="ts">
 
-import { watch, inject, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { useConfigStore } from '@/stores/configStore';
 
 // toolbar icons
 import IconRefresh from '@/assets/refresh.svg';
@@ -74,80 +75,61 @@ const props = defineProps({
   }
 });
 
-const gContentIndex = inject('gContentIndex');
+// config store
+const config = useConfigStore();
 
-const gCameras = inject('gCameras');
-const gCameraMake = inject('gCameraMake');
-const gCameraModel = inject('gCameraModel');
+const cameras = ref([]);
 
-onMounted(() => {
-  if (gCameras.value.length === 0) {
-    clickRefresh();
-  }
-});
+onMounted(async () => {
+  if (cameras.value.length === 0) {
+    await getCameras();
 
-watch(gCameraMake, async (newMake) => {
-  if (newMake) {
-    console.log('watch gCameraMake...', newMake);
-    gContentIndex.value = -1;
-  }
-});
-
-watch(gCameraModel, async (newModel) => {
-  if (newModel) {
-    console.log('watch gCameraModel...', newModel);
-    gContentIndex.value = -1;
+    // expand selected camera
+    if(config.cameraMake && config.cameraModel) {
+      let camera = cameras.value.find(camera => camera.make === config.cameraMake)
+      camera.is_expanded = true;
+    }
   }
 });
 
 /// refresh cameras
 function clickRefresh() {
   getCameras();
-  console.log('get cameras...');
+  config.cameraMake = null;
+  config.cameraModel = null;
 };
 
 /// click camera icon to expand or collapse models
 function clickExpandCamera(camera) {
-  console.log('clickExpandCamera...', camera);
   camera.is_expanded = !camera.is_expanded; 
 };
 
 /// click a camera to select it
 function clickCameraMake(camera) {
-  console.log('clickCameraMake...', camera);
-  gCameraMake.value = camera.make;
-  gCameraModel.value = null;
+  config.cameraMake = camera.make;
+  config.cameraModel = null;
 }
 
 /// click a camera to select it
 function clickCameraModel(make, model) {
-  console.log('clickCameraModel...', make, model);
-  gCameraMake.value = make;
-  gCameraModel.value = model;
+  config.cameraMake = make;
+  config.cameraModel = model;
 }
-
 
 /// get cameras from db
 async function getCameras() {
   try {
     const fetchedCameras = await invoke('get_camera_info');
     if (fetchedCameras) {
-      gCameras.value = fetchedCameras.map(camera => ({
+      cameras.value = fetchedCameras.map(camera => ({
         ...camera, 
         is_expanded: false,
       }));
-
-      gContentIndex.value = -1;
-
-      gCameraMake.value = null;
-      gCameraModel.value = null;
     }
-    console.log('getCameras...', gCameras.value);
-
+    console.log('getCameras...', cameras.value);
   } catch (error) {
     console.error('Failed to fetch camera info:', error);
   }
 };
-
 
 </script>
