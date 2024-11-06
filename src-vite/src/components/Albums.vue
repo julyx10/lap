@@ -19,15 +19,15 @@
     </div>
 
     <!-- albums -->
-    <div v-if="gAlbums.length > 0" class="flex-grow overflow-auto t-scrollbar-dark">
+    <div v-if="albums.length > 0" class="flex-grow overflow-auto t-scrollbar-dark">
       <ul>
-        <li v-for="album in gAlbums" :key="album.id">
+        <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
               'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
               { 
                 't-color-text-selected': config.albumId === album.id, 
-                't-color-bg-selected': config.albumId === album.id && config.folderId === album.folderId
+                't-color-bg-selected': config.albumId === album.id && config.albumFolderId === album.folderId
               }
             ]"
             @click="clickAlbum(album)"
@@ -93,7 +93,7 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // config store
 const config = useConfigStore();
 
-const gAlbums = inject('gAlbums');       // global albums
+const albums = ref([]);
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -101,7 +101,7 @@ const showDeleteAlbumMsgbox = ref(false);
 
 // Fetch albums on mount
 onMounted( async () => {
-  if (gAlbums.value.length === 0) {
+  if (albums.value.length === 0) {
     await getAlbums();
 
     if (config.albumId)
@@ -109,13 +109,13 @@ onMounted( async () => {
   }
 });
 
-const getAlbumById = (id) => gAlbums.value.find(album => album.id === id);
+const getAlbumById = (id) => albums.value.find(album => album.id === id);
 
 /// Add albums
 const clickAdd = async () => {
   try {
     const new_album = await invoke('add_album', { window: appWindow, title: localeMsg.value.add_album_title });
-    gAlbums.value.push(new_album);
+    albums.value.push(new_album);
 
     console.log('Add album...', new_album);
   } catch (error) {
@@ -131,8 +131,14 @@ const clickDeleteConfirm = async () => {
       const result = await invoke('delete_album', { id: getAlbumById(config.albumId).id });
 
       // delete the album from the list
-      gAlbums.value = gAlbums.value.filter(album => album.id !== config.albumId);
+      albums.value = albums.value.filter(album => album.id !== config.albumId);
+      
       config.albumId = null;
+      config.albumName = null;
+      config.albumPath = null;
+      config.albumFolderId = null;
+      config.albumFolderName = null;
+      config.albumFolderPath = null;
 
       console.log('Delete album...', result);
     } else {
@@ -158,8 +164,12 @@ const clickAlbum = async (album) => {
     // insert a new property(album.folderId) 
     album.folderId = result.id;
 
-    config.folderId = album.folderId;
     config.albumId = album.id;
+    config.albumName = album.name;
+    config.albumPath = album.path;
+    config.albumFolderId = album.folderId;
+    config.albumFolderName = album.name;
+    config.albumFolderPath = album.path;
     
     console.log('add_folder result:', result);
   } catch (error) {
@@ -171,6 +181,8 @@ const clickAlbum = async (album) => {
 /// click album icon to expand or collapse next level folders
 const clickExpandAlbum = async (album) => {
   console.log('clickExpandAlbum...', album);
+
+  clickAlbum(album);
 
   // Toggle album expansion
   album.is_expanded = !album.is_expanded; 
@@ -192,13 +204,13 @@ async function getAlbums() {
     const fetchedAlbums = await invoke('get_albums');
     // console.log('fetchedAlbums...', fetchedAlbums);
     if (fetchedAlbums) {
-      gAlbums.value = fetchedAlbums.map(album => ({
+      albums.value = fetchedAlbums.map(album => ({
         ...album, 
         is_expanded: false,
         children: null,
       }));
     } 
-    console.log('getAlbums...', gAlbums.value);
+    console.log('getAlbums...', albums.value);
 
   } catch (error) {
     console.error('Failed to fetch albums:', error);

@@ -25,7 +25,11 @@ export const useConfigStore = defineStore('configStore', {
 
     // albums
     albumId: null,              // selected album id
-    folderId: null,             // selected folder id
+    albumName: null,            // selected album name
+    albumPath: null,            // selected album path
+    albumFolderId: null,        // selected folder id
+    albumFolderName: null,      // selected folder name
+    albumFolderPath: null,      // selected folder path
 
     // calendar
     calendarIsMonthly: true,    // display monthly or daily calendar

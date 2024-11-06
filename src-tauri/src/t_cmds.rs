@@ -94,6 +94,14 @@ pub fn delete_album(id: i64) -> Result<usize, String> {
 }
 
 
+// get all parent folders of a folder
+#[tauri::command]
+pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {
+    AFolder::recurse_all_parents_id(folder_id)
+        .map_err(|e| format!("Error while recursing all parent folders from DB: {}", e))
+}
+
+
 // click a sub-folder under an album
 #[tauri::command]
 pub fn select_folder(album_id: i64, parent_id: i64, path: &str) -> Result<AFolder, String> {
@@ -109,9 +117,9 @@ pub fn expand_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode
 }
 
 
-/// read all files from the folder
+/// get all files from the folder
 #[tauri::command]
-pub fn read_folder(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
+pub fn get_folder_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
     let mut files: Vec<AFile> = Vec::new(); 
 
     // Use WalkDir to iterate over directory entries

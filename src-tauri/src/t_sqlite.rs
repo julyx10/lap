@@ -245,6 +245,35 @@ impl AFolder {
         Ok(new_folder.unwrap())
     }
 
+    /// recurse all parent folder id
+    pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
+        let conn = open_conn();
+        
+        let mut stmt = conn
+            .prepare(
+                "WITH RECURSIVE parent_hierarchy AS (
+                    SELECT parent_id
+                    FROM afolders
+                    WHERE id = ?1
+                    UNION ALL
+                    SELECT f.parent_id
+                    FROM afolders f
+                    INNER JOIN parent_hierarchy ph ON f.id = ph.parent_id
+                    WHERE f.parent_id != 0
+                )
+                SELECT parent_id FROM parent_hierarchy;"
+            )
+            .map_err(|e| e.to_string())?;
+    
+        let parent_ids = stmt
+            .query_map(params![folder_id], |row| row.get(0))
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<i64>, _>>()
+            .map_err(|e| e.to_string())?;
+    
+        Ok(parent_ids)
+    }
+
     // /// get folder name by folder_id
     // pub fn get_folder_name(folder_id: i64) -> Result<String, String> {
     //     let conn = get_conn();

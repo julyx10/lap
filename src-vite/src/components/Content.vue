@@ -118,9 +118,6 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // config store
 const config = useConfigStore();
 
-// global states
-const gAlbums = inject('gAlbums');       // global albums
-
 const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
 
 const contentTitle = ref("");   // title of the content 
@@ -128,9 +125,6 @@ const contentTitle = ref("");   // title of the content
 // file list
 const fileList = ref([]);
 const selectedItemIndex = ref(-1);
-
-const currentFolder = ref('');
-const currentCamera = ref({make: null, model: null});
 
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
@@ -181,26 +175,24 @@ watch(() => config.toolbarIndex, newIndex => {
     getAllFiles();
   }
 });
+
 /// watch album
-watch(() => [config.toolbarIndex, config.albumId, config.folderId], async ([newIndex, newAlbumId, newFolderId]) => {
+watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
   if(newIndex === 1) {
     if (newAlbumId) {
-      // get the selected album
-      const album = gAlbums.value.find(album => album.id === newAlbumId);
-
-      if(newFolderId === album.folderId) { // current folder is root
-        currentFolder.value = album.path;
-        contentTitle.value = `${album.name}`;
-      } else {  // recurse the album to get the selected folder
-        currentFolder.value = getFolder(album, newFolderId);
-        contentTitle.value = `${album.name} > ${currentFolder.value.name}`;
+      if(config.albumPath === config.albumFolderPath) { // current folder is root
+        contentTitle.value = `${config.albumName}`;
+      } else {
+        contentTitle.value = `${config.albumName} > ${config.albumFolderName}`;
       };
-
-      readFolder(currentFolder.value);
+      getFolderFiles(config.albumFolderPath);
       selectedItemIndex.value = -1;
-    };
+    } else {
+      contentTitle.value = localeMsg.value.album;
+      fileList.value = [];
+    }
   }
-});
+}, { immediate: true });
 
 // watch calandar
 watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate], 
@@ -213,6 +205,10 @@ watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, con
         contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
       }
       getCalendarFiles(year, month, date);
+      selectedItemIndex.value = -1;
+    } else {
+      contentTitle.value = localeMsg.value.calendar;
+      fileList.value = [];
     }
   }
 }, { immediate: true });
@@ -283,22 +279,34 @@ function toggleSortingOrder() {
 }
 
 /// get the selected sub-folder by folder id
-async function getFolder(folder, folderId) {
-  // if (folder.id === folderId) {
-  //   return folder;
-  // } else {
-  //   if (!folder.children) {
-  //     folder.children = await expandFolder(folder);
-  //   }
-  //   for (let child of folder.children) {
-  //       const result = getFolder(child, folderId);
-  //       if (result) {
-  //         return result;
-  //       }
-  //   }
-  // }
-  // return null;
+async function getFolder(folder, folderId, parentIds) {
+  if (folder.id === folderId) {
+    return folder;
+  } else {
+    if (!folder.children) {
+      folder.children = await expandFolder(folder);
+    }
+    for (let child of folder.children) {
+      const result = await getFolder(child, folderId, parentIds.slice(1));  // Use await here
+      if (result) {
+        return result;
+      }
+    }
+  }
+  return null;
 }
+
+
+async function getParentIds(folderId) {
+  let ids;
+  try {
+    ids = await invoke('get_folder_parents', { folderId: folderId });
+  } catch (error) {
+    console.error('get_folder_parents error:', error);
+  }
+  return ids;
+};
+
 
 const expandFolder = async (folder) => {
   try {
@@ -312,16 +320,17 @@ const expandFolder = async (folder) => {
   return folder;
 };
 
-/// read all files under the path
-async function readFolder(path) {
+/// get all files under the path
+async function getFolderFiles(path) {
+  console.log('getFolderFiles:', path);
   try {
     // read the list of files
-    fileList.value = await invoke('read_folder', { folderId: config.folderId, path: path });
+    fileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: path });
     sortFileList(config.sortingType, config.sortingAsc);
     getFileThumb(fileList.value);
-    console.log('readFolder:', fileList.value);
+    console.log('getFolderFiles:', fileList.value);
   } catch (error) {
-    console.error('readFolder error:', error);
+    console.error('getFolderFiles error:', error);
   }
 };
 

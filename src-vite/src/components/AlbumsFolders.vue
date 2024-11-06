@@ -5,7 +5,7 @@
       <div 
         :class="[
           'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer', 
-          child.id && config.folderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
+          child.id && config.albumFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @click="clickFolder(child)"
       >
@@ -66,8 +66,10 @@ const clickFolder = async (folder) => {
     });
 
     folder.id = result.id;
-    config.folderId = folder.id;
     config.albumId = props.albumId;
+    config.albumFolderId = folder.id;
+    config.albumFolderName = folder.name;
+    config.albumFolderPath = folder.path;
 
     console.log('add_folder result:', result);
   } catch (error) {
@@ -80,6 +82,8 @@ const clickFolder = async (folder) => {
 const clickExpandFolder = async (event: Event, folder) => {
   // Prevents clickFolder() from being triggered
   event.stopPropagation(); 
+
+  clickFolder(folder);
 
   // toggle folder expansion
   folder.is_expanded = !folder.is_expanded;

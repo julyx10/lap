@@ -44,12 +44,16 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             t_cmds::save_config,
             t_cmds::load_config,
+
             t_cmds::get_albums,
             t_cmds::add_album,
             t_cmds::delete_album,
+
+            t_cmds::get_folder_parents,
             t_cmds::select_folder,
             t_cmds::expand_folder,
-            t_cmds::read_folder,
+            t_cmds::get_folder_files,
+
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,
             t_cmds::get_file_image,
@@ -58,6 +62,7 @@ fn main() {
             t_cmds::get_all_files,
             t_cmds::get_files_by_date,
             t_cmds::get_files_by_date_range,
+
             t_cmds::get_camera_info,
             t_cmds::get_camera_files,
         ])
