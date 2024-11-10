@@ -13,7 +13,7 @@ use std::path::{ Path, PathBuf };
 use std::time::{ SystemTime, UNIX_EPOCH };
 use chrono::{ DateTime, Utc };
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
-use image::GenericImageView;
+use image::{ ImageReader, GenericImageView };
 
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
@@ -260,6 +260,20 @@ pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
 }
 
 
+/// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),
+/// which requires conversion to decimal format for easier use
+#[allow(dead_code)]
+pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Option<&str>) -> f64 {
+    let decimal = degrees + (minutes / 60.0) + (seconds / 3600.0);
+    if let Some(dir) = direction {
+        if dir == "S" || dir == "W" {
+            return -decimal; // Convert to negative if South or West
+        }
+    }
+    decimal
+}
+
+
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_size(file_path: &str) -> Result<(u32, u32), String> {
     // Use imagesize to get width and height
@@ -276,37 +290,27 @@ pub fn get_thumbnail(
     orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
-    let img = image::open(file_path).expect("Failed to open image");
+    // Open and decode the image
+    let img_reader = ImageReader::open(file_path)
+        .map_err(|e| format!("Failed to open image: {}", e))?;
+    let img_format = img_reader.format()
+        .ok_or("Could not detect image format")?;
+    let img = img_reader.decode()
+        .map_err(|e| format!("Failed to decode image: {}", e))?;
+    let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
 
     // Adjust the image orientation based on the EXIF orientation value
-    let adjusted_img = match orientation {
-        3 => img.rotate180(),
-        6 => img.rotate90(),
-        8 => img.rotate270(),
-        _ => img,
+    let adjusted_thumbnail = match orientation {
+        3 => thumbnail.rotate180(),
+        6 => thumbnail.rotate90(),
+        8 => thumbnail.rotate270(),
+        _ => thumbnail,
     };
-
-    // Resize the image to a thumbnail
-    let thumbnail = adjusted_img.thumbnail(thumbnail_size, thumbnail_size);
 
     // Save the thumbnail to an in-memory buffer as a JPEG
     let mut buf = Vec::new();
-    match thumbnail.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Jpeg) {
+    match adjusted_thumbnail.write_to(&mut Cursor::new(&mut buf), img_format) {
         Ok(()) => Ok(Some(buf)),
         Err(_) => Ok(None),
     }
-}
-
-
-/// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),
-/// which requires conversion to decimal format for easier use
-#[allow(dead_code)]
-pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Option<&str>) -> f64 {
-    let decimal = degrees + (minutes / 60.0) + (seconds / 3600.0);
-    if let Some(dir) = direction {
-        if dir == "S" || dir == "W" {
-            return -decimal; // Convert to negative if South or West
-        }
-    }
-    decimal
 }

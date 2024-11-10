@@ -62,7 +62,8 @@
       <!-- preview pane -->
       <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + 'px' }">
         <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length" 
-          class="h-full flex flex-col items-center justify-center break-all"
+          class="h-full flex flex-col items-center justify-center cursor-pointer break-all"
+          @dblclick="openImageViewer(selectedItemIndex, true)"
         >
           <img class="h-full w-full p-1 rounded-lg object-contain" :src="imageSrc" @load="onImageLoad" />
           <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm"> 
@@ -85,10 +86,13 @@
 </template>
 
 
-<script setup>
+<script setup lang="ts">
 
 import { ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
@@ -118,13 +122,15 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // config store
 const config = useConfigStore();
 
-const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
-
-const contentTitle = ref("");   // title of the content 
+// title of the content 
+const contentTitle = ref("");   
 
 // file list
 const fileList = ref([]);
 const selectedItemIndex = ref(-1);
+
+// show image viewer
+const isImageViewerOpen  = ref(false); 
 
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
@@ -135,6 +141,35 @@ const imageSrc = ref(null);         // preview image source
 
 onMounted(() => {
   document.addEventListener('mouseup', stopDragging);
+
+  listen('message-from-grid-view', (event) => {
+    const { message } = event.payload;
+    console.log('content - message-from-grid-view:', message);
+    switch (message) {
+      case 'open-image-viewer':
+        openImageViewer(selectedItemIndex.value, true);
+        break;
+      case 'update-image-viewer':
+        openImageViewer(selectedItemIndex.value, false);
+        break;
+      default:
+        break;
+    }
+  });
+  listen('message-from-image-viewer', (event) => {
+    const { message } = event.payload;
+    console.log('content - message-from-image-viewer:', message);
+    switch (message) {
+      case 'prev':
+        selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
+        break;
+      case 'next':
+        selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
+        break;
+      default:
+        break;
+    }
+  });
 })
 
 onBeforeUnmount(() => {
@@ -247,14 +282,14 @@ watch(() => selectedItemIndex.value, (newIndex) => {
   }
 });
 
-watch(gShowImageViewer, (show) => {
-  console.log('watch - gShowImageViewer:', show);
+watch(isImageViewerOpen, (show) => {
+  console.log('watch - isImageViewerOpen:', show);
   onImageLoad();
 });
 
 const onImageLoad = async () => {
   // prevent loading image when the image viewer is open
-  if(gShowImageViewer.value) {
+  if(isImageViewerOpen.value) {
     return;
   }
 
@@ -488,6 +523,56 @@ async function getFileThumb(files, concurrencyLimit = 8) {
 
   } catch (error) {
     console.log('getFileThumb error:', error);
+  }
+}
+
+// Open the image viewer window
+async function openImageViewer(index: number, createNew = false) {
+  const webViewLabel = 'imageviewer';
+
+  const fileCount = fileList.value.length;
+  if (index < 0 || index >= fileCount) {
+    return;
+  }
+
+  const file = fileList.value[index];
+  const encodedFilePath = encodeURIComponent(file.file_path);
+  let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
+
+  // create a new window if it doesn't exist
+  if (!imageWindow) {
+    if (createNew) {
+      imageWindow = new WebviewWindow(webViewLabel, {
+        url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}`,
+        title: 'Image Viewer',
+        width: 800,
+        height: 600,
+        transparent: true,
+        decorations: false,
+      });
+
+      imageWindow.once('tauri://created', () => {
+        isImageViewerOpen.value = true;
+        console.log('ImageViewer window created');
+      });
+
+      imageWindow.once('tauri://close-requested', () => {
+        isImageViewerOpen.value = false;
+        imageWindow.close();
+        console.log('ImageViewer window is closing');
+      });
+
+      imageWindow.once('tauri://error', (e) => {
+        console.error('Error creating ImageViewer window:', e);
+      });
+    }
+  } else {    // update the existing window
+    await imageWindow.emit('update-img', { 
+      fileId: file.id, 
+      filePath: encodedFilePath, 
+      fileIndex: index,   // selected file index
+      fileCount: fileCount, // total files length
+    });
   }
 }
 

@@ -84,10 +84,14 @@ onMounted(async () => {
   if (cameras.value.length === 0) {
     await getCameras();
 
-    // expand selected camera
     if(config.cameraMake && config.cameraModel) {
       let camera = cameras.value.find(camera => camera.make === config.cameraMake)
-      camera.is_expanded = true;
+      if(camera) {
+        camera.is_expanded = true;     // expand selected camera
+      } else {
+        config.cameraMake = null;
+        config.cameraModel = null;
+      }
     }
   }
 });

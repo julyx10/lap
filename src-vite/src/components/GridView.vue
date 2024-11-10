@@ -13,7 +13,7 @@
           index === selectedIndex ? 'border-sky-500' : 'border-gray-800'
         ]"
         @click="clickItem(index)"
-        @dblclick="openImageViewer(index, true)"
+        @dblclick="openItem(true)"
       >
         <div class="flex flex-col items-center">
           <img v-if="file.thumbnail"
@@ -45,9 +45,8 @@
 
 <script setup lang="ts">
 
-import { ref, inject, watch, onMounted, onUnmounted } from 'vue';
-import { listen } from '@tauri-apps/api/event';
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { emit } from '@tauri-apps/api/event';
 import { shortenFilename, formatFileSize } from '@/common/utils';
 
 import IconPhoto from '@/assets/photo.svg';
@@ -68,43 +67,23 @@ const props = defineProps({
   isFitWidth: Boolean,
 });
 
-const emit = defineEmits(['update:modelValue'])
 const selectedIndex = ref(props.modelValue);
+const emitUpdate = defineEmits(['update:modelValue']);
 
-const gShowImageViewer = inject('gShowImageViewer'); // global show image viewer
 const scrollable = ref(null); // Ref for the scrollable element
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
-
-  listen('message-from-image-viewer', (event) => {
-    const { message } = event.payload;
-    console.log('message-from-image-viewer:', message);
-    switch (message) {
-      case 'prev':
-        selectedIndex.value = Math.max(selectedIndex.value - 1, 0);
-        break;
-      case 'next':
-        selectedIndex.value = Math.min(selectedIndex.value + 1, props.fileList.length - 1);
-        break;
-      case 'close':
-        gShowImageViewer.value = false;
-        break;
-      default:
-        break;
-    }
-  });
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
-// watch(() => props.modelValue, (newValue) => { 
-//   selectedIndex.value = newValue; 
-// });
+watch(() => props.modelValue, (newValue) => { 
+  selectedIndex.value = newValue; 
+});
 
-// watch for changes in the file list
 watch(() => props.fileList, (newList) => {
   selectedIndex.value = - 1;
 
@@ -112,9 +91,22 @@ watch(() => props.fileList, (newList) => {
   element.scrollTop = 0;
 });
 
-// click the item to select it
+watch(() => selectedIndex.value, (newValue) => {
+  openItem(false);
+  scrollToItem(newValue);
+
+  emitUpdate('update:modelValue', newValue);
+});
+
 function clickItem(index: number) {
   selectedIndex.value = index;
+}
+
+function handleKeyDown(event) {
+  if (keyActions[event.key]) {
+    event.preventDefault(); // Prevent the default action
+    keyActions[event.key](); 
+  }
 }
 
 const keyActions = {
@@ -124,73 +116,14 @@ const keyActions = {
   ArrowLeft: ()  => selectedIndex.value = Math.max(selectedIndex.value - 1, 0),
   Home: ()       => selectedIndex.value = 0,
   End: ()        => selectedIndex.value = props.fileList.length - 1,
-  Enter: () => openImageViewer(selectedIndex.value, true),
-  Space: () => openImageViewer(selectedIndex.value, true),
+  Enter: ()      => openItem(true),
 };
 
-// Handle keydown event
-function handleKeyDown(event) {
-  if (keyActions[event.key]) {
-    event.preventDefault(); // Prevent the default action
-    keyActions[event.key](); 
-  }
-}
-
-// watch for changes in the selected item index
-watch(() => selectedIndex.value, (newValue) => {
-  openImageViewer(newValue);
-  scrollToItem(newValue);
-
-  emit('update:modelValue', newValue);
-});
-
-// Open the image viewer window
-async function openImageViewer(index: number, createNew = false) {
-  const webViewLabel = 'imageviewer';
-
-  const fileCount = props.fileList.length;
-  if (index < 0 || index >= fileCount) {
-    return;
-  }
-
-  const file = props.fileList[index];
-  const encodedFilePath = encodeURIComponent(file.file_path);
-  let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
-
-  // create a new window if it doesn't exist
-  if (!imageWindow) {
-    if (createNew) {
-      imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}`,
-        title: 'Image Viewer',
-        width: 800,
-        height: 600,
-        transparent: true,
-        decorations: false,
-      });
-
-      imageWindow.once('tauri://created', () => {
-        gShowImageViewer.value = true;
-        console.log('ImageViewer window created');
-      });
-
-      imageWindow.once('tauri://close-requested', () => {
-        gShowImageViewer.value = false;
-        imageWindow.close();
-        console.log('ImageViewer window is closing');
-      });
-
-      imageWindow.once('tauri://error', (e) => {
-        console.error('Error creating ImageViewer window:', e);
-      });
-    }
-  } else {    // update the existing window
-    await imageWindow.emit('update-img', { 
-      fileId: file.id, 
-      filePath: encodedFilePath, 
-      fileIndex: index,   // selected file index
-      fileCount: fileCount, // total files length
-    });
+function openItem(openNewViewer = false) {
+  if (openNewViewer) {
+    emit('message-from-grid-view', { message: 'open-image-viewer' });
+  } else {
+    emit('message-from-grid-view', { message: 'update-image-viewer' });
   }
 };
 
