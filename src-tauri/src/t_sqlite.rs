@@ -171,27 +171,28 @@ pub struct AFolder {
 impl AFolder {
 
     /// create a new folder struct
-    fn new(album_id: i64, parent_id: i64, path: &str) -> Result<Self, String> {
-        let file_info = t_utils::FileInfo::new(path)?;
+    fn new(album_id: i64, album_path: &str, parent_id: i64, folder_path: &str) -> Result<Self, String> {
+        let full_path = format!("{}{}", album_path, folder_path);
+        let file_info = t_utils::FileInfo::new(&full_path)?;
         Ok(Self {
             id: None,
             album_id,
             parent_id,
             name: file_info.file_name,
-            path: file_info.file_path,
+            path: folder_path.to_string(),
             created_at: file_info.created,
             modified_at: file_info.modified,
         })
     }
 
-    /// fetch a folder row from db by path
-    fn fetch(path: &str) -> Result<Option<Self>, String> {
+    /// fetch a folder row from db
+    fn fetch(album_id: i64, folder_path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn();
         let result = conn
             .query_row(
                 "SELECT id, album_id, parent_id, name, path, created_at, modified_at 
-            FROM afolders WHERE path = ?1",
-                params![path],
+            FROM afolders WHERE album_id = ?1 AND path = ?2",
+                params![album_id, folder_path],
                 |row| {
                     Ok(Self {
                         id: Some(row.get(0)?),
@@ -230,18 +231,18 @@ impl AFolder {
     }
 
     /// insert the folder to db if not exists
-    pub fn add_to_db(album_id: i64, parent_id: i64, path: &str) -> Result<Self, String> {
+    pub fn add_to_db(album_id: i64, album_path: &str, parent_id: i64, folder_path: &str) -> Result<Self, String> {
         // Check if the path already exists
-        let existing_folder = Self::fetch(path);
+        let existing_folder = Self::fetch(album_id, folder_path);
         if let Ok(Some(folder)) = existing_folder {
             return Ok(folder);
         }
 
         // insert the new folder into the database
-        Self::new(album_id, parent_id, path)?.insert()?;
+        Self::new(album_id, album_path, parent_id, folder_path)?.insert()?;
 
         // return the newly inserted folder
-        let new_folder = Self::fetch(path)?;
+        let new_folder = Self::fetch(album_id, folder_path)?;
         Ok(new_folder.unwrap())
     }
 

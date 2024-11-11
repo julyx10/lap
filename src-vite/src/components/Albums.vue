@@ -36,7 +36,7 @@
             {{ album.name }}
             <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
           </div>
-          <Folders v-if="album.is_expanded" :albumId="album.id" :parent="album.folderId" :children="album.children" />
+          <Folders v-if="album.is_expanded" :albumId="album.id" :albumPath="album.path" :parent="album.folderId" :children="album.children" />
         </li>
       </ul>
     </div>
@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 
-import { ref, inject, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -151,25 +151,25 @@ const clickDeleteConfirm = async () => {
 
 /// click a album to select it
 const clickAlbum = async (album) => {
-  console.log('clickAlbum...', album);
-  
   try {
     const result = await invoke('select_folder', {
       albumId: album.id, 
+      albumPath: album.path,
       parentId: 0,      // 0 is root folder(album)
-      name: album.name,
-      path: album.path
+      folderPath: '\\',
     });
     
+    console.log('clickAlbum...', album, result);
+
     // insert a new property(album.folderId) 
     album.folderId = result.id;
 
     config.albumId = album.id;
     config.albumName = album.name;
     config.albumPath = album.path;
-    config.albumFolderId = album.folderId;
-    config.albumFolderName = album.name;
-    config.albumFolderPath = album.path;
+    config.albumFolderId = result.id;
+    config.albumFolderName = result.name;
+    config.albumFolderPath = result.path;
     
     console.log('add_folder result:', result);
   } catch (error) {
@@ -184,7 +184,6 @@ const clickExpandAlbum = async (album) => {
 
   clickAlbum(album);
 
-  // Toggle album expansion
   album.is_expanded = !album.is_expanded; 
 
   if (album.is_expanded && !album.children) {
@@ -202,7 +201,6 @@ const clickExpandAlbum = async (album) => {
 async function getAlbums() {
   try {
     const fetchedAlbums = await invoke('get_albums');
-    // console.log('fetchedAlbums...', fetchedAlbums);
     if (fetchedAlbums) {
       albums.value = fetchedAlbums.map(album => ({
         ...album, 

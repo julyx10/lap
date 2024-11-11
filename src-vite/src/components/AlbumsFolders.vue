@@ -18,7 +18,7 @@
         />
         {{ child.name }}
       </div>
-      <AlbumsFolders v-if="child.is_expanded" :albumId="albumId" :parent="child.id" :children="child.children" />
+      <AlbumsFolders v-if="child.is_expanded" :albumId="albumId" :albumPath="albumPath" :parent="child.id" :children="child.children" />
     </li>
   </ul>
 
@@ -40,9 +40,13 @@ const props = defineProps({
     type: Number, 
     required: true,
   },
+  albumPath: {  // album path
+    type: String,
+    required: true,
+  },
   parent: {     // parent folder id
     type: Number,
-    required: false,
+    required: true,
   },
   children: {   // subfolders
     type: Array,
@@ -55,21 +59,19 @@ const config = useConfigStore();
 
 /// click folder to select
 const clickFolder = async (folder) => {
-  console.log('clickFolder...', folder);
-
   try {
     const result = await invoke('select_folder', {
-      albumId: props.albumId, 
+      albumId: props.albumId,
+      albumPath: props.albumPath,
       parentId: props.parent,
-      name: folder.name,
-      path: folder.path
+      folderPath: folder.path.replace(props.albumPath, ''),
     });
 
     folder.id = result.id;
-    config.albumId = props.albumId;
-    config.albumFolderId = folder.id;
-    config.albumFolderName = folder.name;
-    config.albumFolderPath = folder.path;
+
+    config.albumFolderId = result.id;
+    config.albumFolderName = result.name;
+    config.albumFolderPath = result.path;
 
     console.log('add_folder result:', result);
   } catch (error) {
@@ -85,7 +87,6 @@ const clickExpandFolder = async (event: Event, folder) => {
 
   clickFolder(folder);
 
-  // toggle folder expansion
   folder.is_expanded = !folder.is_expanded;
 
   if (folder.is_expanded && !folder.children) {

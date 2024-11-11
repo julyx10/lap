@@ -178,6 +178,10 @@ onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
   isFullScreen.value = await appWindow.isMaximized();
   
+  listen('close-home', () => {
+    appWindow.close(); // Close the window
+  });
+
   try {
     const urlParams = new URLSearchParams(window.location.search);
 
@@ -204,6 +208,7 @@ onMounted(async() => {
       resetScale();
       rotation.value = 0;
     });
+
 
     if (image.value.complete) {
       onImageLoad();  // If the image is already loaded, initialize it

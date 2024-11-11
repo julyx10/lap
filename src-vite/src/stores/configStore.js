@@ -21,7 +21,7 @@ export const useConfigStore = defineStore('configStore', {
     sortingAsc: true,           // sorting order
     sortingType: 'name',        // sorting type
     showPreview: false,         // show preview
-    previewPaneWidth: 300,      // preview pane width
+    previewPaneWidth: 30,       // preview pane width(20-80%)
 
     // albums
     albumId: null,              // selected album id

@@ -37,7 +37,7 @@
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
-                <IconRight class="p-1 flex-shrink-0" />
+                <IconCamera class="p-1 flex-shrink-0" />
                 {{ model }}
               </div>
             </li>
@@ -67,6 +67,7 @@ import IconRefresh from '@/assets/refresh.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 import IconRight from '@/assets/arrow-right.svg';
+import IconCamera from '@/assets/camera.svg';
 
 const props = defineProps({
   titlebar: {

@@ -44,7 +44,7 @@
       <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     </div>
 
-    <div class="my-1 flex-1 flex flex-row overflow-hidden">
+    <div ref="divGridView" class="my-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
       <GridView v-if="fileList.length > 0" 
         :fileList="fileList"
@@ -60,7 +60,7 @@
       <div v-if="config.showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
 
       <!-- preview pane -->
-      <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + 'px' }">
+      <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + '%' }">
         <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length" 
           class="h-full flex flex-col items-center justify-center cursor-pointer break-all"
           @dblclick="openImageViewer(selectedItemIndex, true)"
@@ -124,6 +124,8 @@ const config = useConfigStore();
 
 // title of the content 
 const contentTitle = ref("");   
+
+const divGridView = ref(null);
 
 // file list
 const fileList = ref([]);
@@ -192,9 +194,13 @@ function stopDragging() {
 
 /// handle mouse move event
 function handleMouseMove(event) {
+  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
   if (isDragging.value) {
-    const windowWidth = document.documentElement.clientWidth -2 ; // -2 for border width(1px) * 2
-    config.previewPaneWidth = Math.max(windowWidth - event.clientX, 200); 
+    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
+    const leftPosition = divGridView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+
+    // Limit width between 10% and 90%
+    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 90); 
   }
 }
 
@@ -215,12 +221,12 @@ watch(() => config.toolbarIndex, newIndex => {
 watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
   if(newIndex === 1) {
     if (newAlbumId) {
-      if(config.albumPath === config.albumFolderPath) { // current folder is root
+      if(config.albumFolderPath === '\\') { // current folder is root
         contentTitle.value = `${config.albumName}`;
       } else {
         contentTitle.value = `${config.albumName} > ${config.albumFolderName}`;
       };
-      getFolderFiles(config.albumFolderPath);
+      getFolderFiles();
       selectedItemIndex.value = -1;
     } else {
       contentTitle.value = localeMsg.value.album;
@@ -293,7 +299,7 @@ const onImageLoad = async () => {
     return;
   }
 
-  let filePath = fileList.value[selectedItemIndex.value].file_path;
+  let filePath = config.albumPath + fileList.value[selectedItemIndex.value].file_path;
   console.log('onImageLoad:', filePath);
   try {
     const imageBase64 = await invoke('get_file_image', { filePath });
@@ -356,7 +362,8 @@ const expandFolder = async (folder) => {
 };
 
 /// get all files under the path
-async function getFolderFiles(path) {
+async function getFolderFiles() {
+  let path = config.albumPath + config.albumFolderPath;
   console.log('getFolderFiles:', path);
   try {
     // read the list of files
@@ -478,10 +485,11 @@ async function getFileThumb(files, concurrencyLimit = 8) {
     thumbCount.value = 0;
 
     const getThumbForFile = async (file) => {
-      // console.log('getFileThumb:', file.file_path);
+      let full_path = config.albumPath + file.file_path;
+      console.log('getFileThumb:', full_path);
       const thumb = await invoke('get_file_thumb', {
         fileId: file.id,
-        filePath: file.file_path,
+        filePath: full_path,
         orientation: file.e_orientation || 0, // Simplified orientation
         thumbnailSize: THUMBNAIL_SIZE
       });
@@ -536,7 +544,7 @@ async function openImageViewer(index: number, createNew = false) {
   }
 
   const file = fileList.value[index];
-  const encodedFilePath = encodeURIComponent(file.file_path);
+  const encodedFilePath = encodeURIComponent(config.albumPath + file.file_path);
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
 
   // create a new window if it doesn't exist

@@ -104,8 +104,8 @@ pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {
 
 // click a sub-folder under an album
 #[tauri::command]
-pub fn select_folder(album_id: i64, parent_id: i64, path: &str) -> Result<AFolder, String> {
-    AFolder::add_to_db(album_id, parent_id, path)
+pub fn select_folder(album_id: i64, album_path: &str, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
+    AFolder::add_to_db(album_id, album_path, parent_id, folder_path)
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
 

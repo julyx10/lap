@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
 
@@ -106,12 +106,15 @@ const toolbars = computed(() =>  [
 const divToolbar = ref(null);
 const isDragging = ref(false);
 
+const emit = defineEmits(['close-home']);
+
 onMounted(() => {
   document.addEventListener('mouseup', stopDragging);
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('mouseup', stopDragging);
+  emit('close-home');
 })
 
 // Dragging the splitter
