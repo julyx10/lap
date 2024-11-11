@@ -96,7 +96,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatTimestamp, formatDate } from '@/common/utils';
+import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatTimestamp, formatDate } from '@/common/utils';
 
 import SliderInput from '@/components/SliderInput.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -221,7 +221,7 @@ watch(() => config.toolbarIndex, newIndex => {
 watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
   if(newIndex === 1) {
     if (newAlbumId) {
-      if(config.albumFolderPath === '\\') { // current folder is root
+      if(config.albumFolderPath === separator) { // current folder is root
         contentTitle.value = `${config.albumName}`;
       } else {
         contentTitle.value = `${config.albumName} > ${config.albumFolderName}`;

@@ -18,7 +18,13 @@
         />
         {{ child.name }}
       </div>
-      <AlbumsFolders v-if="child.is_expanded" :albumId="albumId" :albumPath="albumPath" :parent="child.id" :children="child.children" />
+      <AlbumsFolders v-if="child.is_expanded" 
+        :albumId="albumId"
+        :albumName="albumName"
+        :albumPath="albumPath" 
+        :parent="child.id" 
+        :children="child.children" 
+      />
     </li>
   </ul>
 
@@ -38,6 +44,10 @@ import IconRight from '@/assets/arrow-right.svg';
 const props = defineProps({
   albumId: {    // album id
     type: Number, 
+    required: true,
+  },
+  albumName: {  // album name
+    type: String,
     required: true,
   },
   albumPath: {  // album path
@@ -69,7 +79,10 @@ const clickFolder = async (folder) => {
 
     folder.id = result.id;
 
-    config.albumFolderId = result.id;
+    config.albumId   = props.albumId;
+    config.albumName = props.albumName;
+    config.albumPath = props.albumPath;
+    config.albumFolderId   = result.id;
     config.albumFolderName = result.name;
     config.albumFolderPath = result.path;
 

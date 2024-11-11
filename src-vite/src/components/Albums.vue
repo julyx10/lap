@@ -32,11 +32,20 @@
             ]"
             @click="clickAlbum(album)"
           >
-            <component :is="album.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandAlbum(album)"/>
+            <component :is="album.is_expanded ? IconFolderOpen : IconFolder" 
+              class="size-6 pr-1 flex-shrink-0" 
+              @click.stop="clickExpandAlbum(album)"
+            />
             {{ album.name }}
             <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
           </div>
-          <Folders v-if="album.is_expanded" :albumId="album.id" :albumPath="album.path" :parent="album.folderId" :children="album.children" />
+          <Folders v-if="album.is_expanded" 
+            :albumId="album.id"
+            :albumName="album.name"
+            :albumPath="album.path" 
+            :parent="album.folderId" 
+            :children="album.children" 
+          />
         </li>
       </ul>
     </div>
@@ -69,6 +78,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
+import { separator } from '@/common/utils';
 
 import Folders from '@/components/AlbumsFolders.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -156,7 +166,7 @@ const clickAlbum = async (album) => {
       albumId: album.id, 
       albumPath: album.path,
       parentId: 0,      // 0 is root folder(album)
-      folderPath: '\\',
+      folderPath: separator,
     });
     
     console.log('clickAlbum...', album, result);
