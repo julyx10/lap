@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 

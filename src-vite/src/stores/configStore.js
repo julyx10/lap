@@ -1,5 +1,4 @@
 // stores/configStore.js
-import { ca } from 'date-fns/locale';
 import { defineStore } from 'pinia';
 
 export const useConfigStore = defineStore('configStore', {
@@ -21,6 +20,7 @@ export const useConfigStore = defineStore('configStore', {
     sortingAsc: true,           // sorting order
     sortingType: 'name',        // sorting type
     showPreview: false,         // show preview
+    previewPosition: 'right',   // preview position: right, bottom
     previewPaneWidth: 30,       // preview pane width(20-80%)
 
     // albums

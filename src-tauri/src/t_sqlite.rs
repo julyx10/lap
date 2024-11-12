@@ -375,12 +375,15 @@ impl AFile {
             size: file_info.file_size,
             created_at: file_info.created,
             modified_at: file_info.modified,
-            taken_date: if let Some(exif_date) = Self::get_exif_field(&exif, Tag::DateTimeOriginal)
-            {
-                Some(exif_date.split_at(10).0.to_string())
-            } else {
-                file_info.modified_str
-            },
+            taken_date: Self::get_exif_field(&exif, Tag::DateTimeOriginal)
+                .map(|exif_date| {
+                    if exif_date.len() >= 10 {
+                        Some(exif_date[..10].to_string())
+                    } else {
+                        Some(exif_date) // Fallback to the whole string if it’s shorter than expected
+                    }
+                })
+                .unwrap_or_else(|| file_info.modified_str),
 
             width: Some(width),
             height: Some(height),
@@ -407,13 +410,12 @@ impl AFile {
     }
 
     fn get_exif_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<String> {
-        exif.as_ref()
-            .and_then(|exif_data| {
-                exif_data.get_field(tag, exif::In::PRIMARY).map(|field| {
-                    format!("{}", field.display_value().with_unit(exif_data)).replace("\"", "")
-                })
+        exif.as_ref().and_then(|exif_data| {
+            exif_data.get_field(tag, exif::In::PRIMARY).map(|field| {
+                format!("{}", field.display_value().with_unit(exif_data)).replace("\"", "")
             })
-            .map(|s| s.trim_end_matches(',').to_string()) // remove the trailing comma
+        })
+        .map(|s| s.trim_end_matches(|c| char::is_ascii_punctuation(&c) || char::is_ascii_whitespace(&c)).to_string()) // trim all trailing commas and spaces,
     }
 
     fn get_exif_orientation_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<u32> {

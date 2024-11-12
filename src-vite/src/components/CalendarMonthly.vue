@@ -11,7 +11,7 @@
     <div class="gap-4 grid grid-cols-4">
       <div v-for="m in 12" 
         :key="m" 
-        class="px-2 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
+        class="px-2 flex items-center justify-center border rounded-full t-color-bg-hover text-nowrap cursor-pointer"
         :class="{
           'bg-sky-900': isThisMonth(year, m),
           'border-sky-500': isSelectedMonth(year, m),
@@ -31,7 +31,7 @@
 
 <script setup>
 
-import { inject, computed } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { formatDate } from '@/common/utils';
