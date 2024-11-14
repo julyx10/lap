@@ -1,16 +1,11 @@
 import {  } from '@tauri-apps/api';
 import { format } from 'date-fns';
-import * as os from "@tauri-apps/plugin-os"
-
+import { platform } from '@tauri-apps/plugin-os';
 
 export const THUMBNAIL_SIZE = 320;    // thumbnail size
 export const FILES_PAGE_SIZE = 1000;  // number of files per page
 
-export let separator;
-(async () => {
-  const osPlatform = await os.platform();
-  separator = osPlatform === 'win32' ? '\\' : '/';
-})();
+export const separator = platform() === 'windows' ? '\\' : '/';
 
 /// format timestamp to string
 export function formatTimestamp(timestamp: number, formatStr: string): string {

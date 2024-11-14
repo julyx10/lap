@@ -68,9 +68,7 @@ impl Album {
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at 
             FROM albums WHERE path = ?1",
             params![path],
-            |row| {
-                Self::from_row(row)
-            }
+            |row| Self::from_row(row)
         ).optional().map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -80,13 +78,11 @@ impl Album {
         let conn = open_conn();
 
         // Determine the next display order id
-        self.display_order_id = conn
-            .query_row(
+        self.display_order_id = conn.query_row(
                 "SELECT COALESCE(MAX(display_order_id), 0) + 1 FROM albums",
                 params![],
                 |row| row.get(0),
-            )
-            .map_err(|e| e.to_string())?;
+            ).map_err(|e| e.to_string())?;
 
         // Insert the new album into the db
         let result = conn.execute(
@@ -120,8 +116,8 @@ impl Album {
         Self::new(path)?.insert()?;
 
         // return the newly inserted album
-        let new_album = Self::fetch(path);
-        Ok(new_album.unwrap().unwrap())
+        let new_album = Self::fetch(path)?;
+        Ok(new_album.unwrap())
     }
 
     /// delete an album from the db
@@ -152,6 +148,18 @@ impl Album {
         Ok(albums)
     }
 
+    /// get album info by id
+    pub fn get_album_by_id(id: i64) -> Result<Self, String> {
+        let conn = open_conn();
+        let result = conn.query_row(
+            "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at
+            FROM albums WHERE id = ?1",
+            params![id],
+            |row| Self::from_row(row)
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
 }
 
 
@@ -171,9 +179,8 @@ pub struct AFolder {
 impl AFolder {
 
     /// create a new folder struct
-    fn new(album_id: i64, album_path: &str, parent_id: i64, folder_path: &str) -> Result<Self, String> {
-        let full_path = format!("{}{}", album_path, folder_path);
-        let file_info = t_utils::FileInfo::new(&full_path)?;
+    fn new(album_id: i64, parent_id: i64, folder_path: &str) -> Result<Self, String> {
+        let file_info = t_utils::FileInfo::new(folder_path)?;
         Ok(Self {
             id: None,
             album_id,
@@ -190,8 +197,9 @@ impl AFolder {
         let conn = open_conn();
         let result = conn
             .query_row(
-                "SELECT id, album_id, parent_id, name, path, created_at, modified_at 
-            FROM afolders WHERE album_id = ?1 AND path = ?2",
+                "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.created_at, a.modified_at
+                FROM afolders a
+                WHERE a.album_id = ?1 AND a.path = ?2",
                 params![album_id, folder_path],
                 |row| {
                     Ok(Self {
@@ -203,35 +211,31 @@ impl AFolder {
                         created_at: row.get(5)?,
                         modified_at: row.get(6)?,
                     })
-                },
-            )
-            .optional()
-            .map_err(|e| e.to_string())?;
+                }
+            ).optional().map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// insert a folder into db
     fn insert(&self) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn
-            .execute(
-                "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
+        let result = conn.execute(
+            "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                params![
-                    self.album_id,
-                    self.parent_id,
-                    self.name,
-                    self.path,
-                    self.created_at,
-                    self.modified_at
-                ],
-            )
-            .map_err(|e| e.to_string())?;
+            params![
+                self.album_id,
+                self.parent_id,
+                self.name,
+                self.path,
+                self.created_at,
+                self.modified_at
+            ]
+        ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// insert the folder to db if not exists
-    pub fn add_to_db(album_id: i64, album_path: &str, parent_id: i64, folder_path: &str) -> Result<Self, String> {
+    pub fn add_to_db(album_id: i64, parent_id: i64, folder_path: &str) -> Result<Self, String> {
         // Check if the path already exists
         let existing_folder = Self::fetch(album_id, folder_path);
         if let Ok(Some(folder)) = existing_folder {
@@ -239,32 +243,30 @@ impl AFolder {
         }
 
         // insert the new folder into the database
-        Self::new(album_id, album_path, parent_id, folder_path)?.insert()?;
+        Self::new(album_id, parent_id, folder_path)?.insert()?;
 
         // return the newly inserted folder
         let new_folder = Self::fetch(album_id, folder_path)?;
         Ok(new_folder.unwrap())
     }
 
-    /// recurse all parent folder id
+    /// recurse all parent folder id (deprecated)
     pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
         let conn = open_conn();
         
-        let mut stmt = conn
-            .prepare(
-                "WITH RECURSIVE parent_hierarchy AS (
-                    SELECT parent_id
-                    FROM afolders
-                    WHERE id = ?1
-                    UNION ALL
-                    SELECT f.parent_id
-                    FROM afolders f
-                    INNER JOIN parent_hierarchy ph ON f.id = ph.parent_id
-                    WHERE f.parent_id != 0
-                )
-                SELECT parent_id FROM parent_hierarchy;"
+        let mut stmt = conn.prepare(
+            "WITH RECURSIVE parent_hierarchy AS (
+                SELECT parent_id
+                FROM afolders
+                WHERE id = ?1
+                UNION ALL
+                SELECT f.parent_id
+                FROM afolders f
+                INNER JOIN parent_hierarchy ph ON f.id = ph.parent_id
+                WHERE f.parent_id != 0
             )
-            .map_err(|e| e.to_string())?;
+            SELECT parent_id FROM parent_hierarchy;"
+        ).map_err(|e| e.to_string())?;
     
         let parent_ids = stmt
             .query_map(params![folder_id], |row| row.get(0))
@@ -391,7 +393,7 @@ impl AFile {
             is_favorite: None,
             comments: None,
 
-            e_make: Self::get_exif_field(&exif, Tag::Make),
+            e_make: Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase()),
             e_model: Self::get_exif_field(&exif, Tag::Model),
             e_date_time: Self::get_exif_field(&exif, Tag::DateTimeOriginal),
             e_exposure_time: Self::get_exif_field(&exif, Tag::ExposureTime),
@@ -468,7 +470,7 @@ impl AFile {
                 self.gps_latitude,
                 self.gps_longitude,
                 self.gps_altitude,
-            ],
+            ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -476,12 +478,10 @@ impl AFile {
     /// delete a file from db
     fn delete(folder_id: i64) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn
-            .execute(
-                "DELETE FROM afiles WHERE folder_id = ?1",
-                params![folder_id],
-            )
-            .map_err(|e| e.to_string())?;
+        let result = conn.execute(
+            "DELETE FROM afiles WHERE folder_id = ?1",
+            params![folder_id]
+        ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -629,27 +629,23 @@ impl AFile {
     /// set a file's favorite status
     pub fn set_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn
-            .execute(
-                "UPDATE afiles SET is_favorite = ?1 WHERE id = ?2",
-                params![is_favorite, file_id],
-            )
-            .map_err(|e| e.to_string())?;
+        let result = conn.execute(
+            "UPDATE afiles SET is_favorite = ?1 WHERE id = ?2",
+            params![is_favorite, file_id]
+        ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// get all taken dates from db
     pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn();
-        let mut stmt = conn
-            .prepare(
-                "SELECT taken_date, count(1) 
+        let mut stmt = conn.prepare(
+            "SELECT taken_date, count(1) 
             FROM afiles 
             WHERE taken_date IS NOT NULL
             GROUP BY taken_date
             ORDER BY taken_date ASC",
-            )
-            .map_err(|e| e.to_string())?;
+        ).map_err(|e| e.to_string())?;
 
         // Execute the query and collect results
         let taken_dates_iter = stmt
@@ -657,8 +653,7 @@ impl AFile {
                 let date: String = row.get(0)?;
                 let count: i64 = row.get(1)?;
                 Ok((date, count))
-            })
-            .map_err(|e| e.to_string())?;
+            }).map_err(|e| e.to_string())?;
 
         // Collect the results into a vector
         let mut results = Vec::new();
@@ -743,37 +738,32 @@ impl AThumb {
     /// insert a thumbnail into db
     fn insert(&self) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn
-            .execute(
-                "INSERT INTO athumbs (file_id, thumb_data) 
+        let result = conn.execute(
+            "INSERT INTO athumbs (file_id, thumb_data) 
             VALUES (?1, ?2)",
-                params![self.file_id, self.thumb_data,],
-            )
-            .map_err(|e| e.to_string())?;
+            params![self.file_id, self.thumb_data,],
+        ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// fetch a thumbnail from db by file_id
     fn fetch(file_id: i64) -> Result<Option<Self>, String> {
         let conn = open_conn();
-        let result = conn
-            .query_row(
-                "SELECT id, file_id, thumb_data 
+        let result = conn.query_row(
+            "SELECT id, file_id, thumb_data 
             FROM athumbs WHERE file_id = ?1",
-                params![file_id],
-                |row| {
-                    Ok(Self {
-                        id: Some(row.get(0)?),
-                        file_id: row.get(1)?,
-                        thumb_data: None,
-                        thumb_data_base64: Some(
-                            general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(2)?),
-                        ),
-                    })
-                },
-            )
-            .optional()
-            .map_err(|e| e.to_string())?;
+            params![file_id],
+            |row| {
+                Ok(Self {
+                    id: Some(row.get(0)?),
+                    file_id: row.get(1)?,
+                    thumb_data: None,
+                    thumb_data_base64: Some(
+                        general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(2)?),
+                    ),
+                })
+            }
+        ).optional().map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -815,25 +805,20 @@ impl ACamera {
     // get all camera makes and models from db
     pub fn get_from_db() -> Result<Vec<Self>, String> {
         let conn = open_conn();
-        let mut stmt = conn
-            .prepare(
-                "
-            SELECT e_make, e_model 
+        let mut stmt = conn.prepare(
+                "SELECT e_make, e_model 
             FROM afiles 
             WHERE e_make IS NOT NULL AND e_model IS NOT NULL
             GROUP BY e_make, e_model
-            ORDER BY e_make, e_model
-        ",
-            )
-            .map_err(|e| e.to_string())?;
+            ORDER BY e_make, e_model"
+        ).map_err(|e| e.to_string())?;
 
         let rows = stmt
             .query_map(params![], |row| {
                 let make: String = row.get(0)?;
                 let model: String = row.get(1)?;
                 Ok((make, model))
-            })
-            .map_err(|e| e.to_string())?;
+            }).map_err(|e| e.to_string())?;
 
         let mut hash_map: HashMap<String, Vec<String>> = HashMap::new();
 

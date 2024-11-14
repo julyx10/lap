@@ -25,8 +25,8 @@ export const useConfigStore = defineStore('configStore', {
 
     // albums
     albumId: null,              // selected album id
-    albumName: null,            // selected album name
-    albumPath: null,            // selected album path
+    // albumName: null,            // selected album name
+    // albumPath: null,            // selected album path
     albumFolderId: null,        // selected folder id
     albumFolderName: null,      // selected folder name
     albumFolderPath: null,      // selected folder path

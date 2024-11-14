@@ -45,7 +45,8 @@ fn main() {
             t_cmds::save_config,
             t_cmds::load_config,
 
-            t_cmds::get_albums,
+            t_cmds::get_all_albums,
+            t_cmds::get_album,
             t_cmds::add_album,
             t_cmds::delete_album,
 

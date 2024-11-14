@@ -54,8 +54,14 @@ pub fn load_config() -> Result<t_utils::AppConfig, String> {
 
 /// get all albums
 #[tauri::command]
-pub fn get_albums() -> Result<Vec<Album>, String> {
+pub fn get_all_albums() -> Result<Vec<Album>, String> {
     Album::get_all_albums().map_err(|e| format!("Error while fetching albums: {}", e))
+}
+
+/// get one album
+#[tauri::command]
+pub fn get_album(album_id: i64) -> Result<Album, String> {
+    Album::get_album_by_id(album_id).map_err(|e| format!("Error while fetching album info: {}", e))
 }
 
 
@@ -104,8 +110,8 @@ pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {
 
 // click a sub-folder under an album
 #[tauri::command]
-pub fn select_folder(album_id: i64, album_path: &str, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
-    AFolder::add_to_db(album_id, album_path, parent_id, folder_path)
+pub fn select_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
+    AFolder::add_to_db(album_id, parent_id, folder_path)
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
 

@@ -125,21 +125,23 @@ const config = useConfigStore();
 // title of the content 
 const contentTitle = ref("");   
 
+// progress bar
+const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
+
+// grid view div
 const divGridView = ref(null);
 
 // file list
 const fileList = ref([]);
 const selectedItemIndex = ref(-1);
 
-// show image viewer
-const isImageViewerOpen  = ref(false); 
-
-// progress bar
-const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
-
 // preview 
 const isDragging = ref(false);      // dragging splitter to resize preview pane
 const imageSrc = ref(null);         // preview image source
+
+// show image viewer
+const isImageViewerOpen  = ref(false); 
+
 
 onMounted(() => {
   document.addEventListener('mouseup', stopDragging);
@@ -221,13 +223,21 @@ watch(() => config.toolbarIndex, newIndex => {
 watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
   if(newIndex === 1) {
     if (newAlbumId) {
-      if(config.albumFolderPath === separator) { // current folder is root
-        contentTitle.value = `${config.albumName}`;
-      } else {
-        contentTitle.value = `${config.albumName} > ${config.albumFolderName}`;
-      };
-      getFolderFiles();
-      selectedItemIndex.value = -1;
+      try {
+        const album = await invoke('get_album', { albumId: newAlbumId });
+
+        if(config.albumFolderPath === album.path) { // current folder is root
+          contentTitle.value = album.name;
+        } else {
+          const relative_path = config.albumFolderPath.replace(album.path, '').split(separator).join(' > ');
+          contentTitle.value = album.name + relative_path;
+        };
+
+        getFolderFiles();
+        selectedItemIndex.value = -1;
+      } catch (error) {
+        console.error('get_album error:', error);
+      }
     } else {
       contentTitle.value = localeMsg.value.album;
       fileList.value = [];
@@ -299,7 +309,7 @@ const onImageLoad = async () => {
     return;
   }
 
-  let filePath = config.albumPath + fileList.value[selectedItemIndex.value].file_path;
+  let filePath = fileList.value[selectedItemIndex.value].file_path;
   console.log('onImageLoad:', filePath);
   try {
     const imageBase64 = await invoke('get_file_image', { filePath });
@@ -319,63 +329,6 @@ function toggleSortingOrder() {
   }
 }
 
-/// get the selected sub-folder by folder id
-async function getFolder(folder, folderId, parentIds) {
-  if (folder.id === folderId) {
-    return folder;
-  } else {
-    if (!folder.children) {
-      folder.children = await expandFolder(folder);
-    }
-    for (let child of folder.children) {
-      const result = await getFolder(child, folderId, parentIds.slice(1));  // Use await here
-      if (result) {
-        return result;
-      }
-    }
-  }
-  return null;
-}
-
-
-async function getParentIds(folderId) {
-  let ids;
-  try {
-    ids = await invoke('get_folder_parents', { folderId: folderId });
-  } catch (error) {
-    console.error('get_folder_parents error:', error);
-  }
-  return ids;
-};
-
-
-const expandFolder = async (folder) => {
-  try {
-    // Fetch subfolder tree
-    const subfolders = await invoke('expand_folder', { path: folder.path, isRecursive: false });
-    folder.children = subfolders.children;
-    folder.is_expanded = true;
-  } catch (error) {
-    console.error('Error fetching subfolders:', error);
-  }
-  return folder;
-};
-
-/// get all files under the path
-async function getFolderFiles() {
-  let path = config.albumPath + config.albumFolderPath;
-  console.log('getFolderFiles:', path);
-  try {
-    // read the list of files
-    fileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: path });
-    sortFileList(config.sortingType, config.sortingAsc);
-    getFileThumb(fileList.value);
-    console.log('getFolderFiles:', fileList.value);
-  } catch (error) {
-    console.error('getFolderFiles error:', error);
-  }
-};
-
 /// get all files
 async function getAllFiles() {
   try {
@@ -387,6 +340,19 @@ async function getAllFiles() {
     console.error('getAllFiles error:', error);
   }
 }
+
+/// get all files under the path
+async function getFolderFiles() {
+  try {
+    // read the list of files
+    fileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: config.albumFolderPath });
+    sortFileList(config.sortingType, config.sortingAsc);
+    getFileThumb(fileList.value);
+    console.log('getFolderFiles:', fileList.value);
+  } catch (error) {
+    console.error('getFolderFiles error:', error);
+  }
+};
 
 /// get all files of calendar
 async function getCalendarFiles(year, month, date) {
@@ -485,11 +451,9 @@ async function getFileThumb(files, concurrencyLimit = 8) {
     thumbCount.value = 0;
 
     const getThumbForFile = async (file) => {
-      let full_path = config.albumPath + file.file_path;
-      console.log('getFileThumb:', full_path);
       const thumb = await invoke('get_file_thumb', {
         fileId: file.id,
-        filePath: full_path,
+        filePath: file.file_path,
         orientation: file.e_orientation || 0, // Simplified orientation
         thumbnailSize: THUMBNAIL_SIZE
       });
@@ -544,7 +508,7 @@ async function openImageViewer(index: number, createNew = false) {
   }
 
   const file = fileList.value[index];
-  const encodedFilePath = encodeURIComponent(config.albumPath + file.file_path);
+  const encodedFilePath = encodeURIComponent(file.file_path);
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
 
   // create a new window if it doesn't exist

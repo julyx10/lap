@@ -183,6 +183,13 @@ impl ImageInfo {
 }
 
 
+/// Get the path separator based on the operating system
+#[allow(dead_code)]
+pub fn get_separator() -> String {
+    std::path::MAIN_SEPARATOR.to_string()
+}
+
+
 /// Check if a file extension is an image extension
 pub fn is_image_extension(extension: &str) -> bool {
     match extension.to_lowercase().as_str() {

@@ -36,11 +36,11 @@
 
       <!-- left pane -->
       <div v-if="config.toolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
-        <Album         v-if="config.toolbarIndex === 1" :titlebar="$t('album')"/>
-        <Calendar v-else-if="config.toolbarIndex === 2" :titlebar="$t('calendar')"/>
-        <Location v-else-if="config.toolbarIndex === 3" :titlebar="$t('location')"/>
-        <People   v-else-if="config.toolbarIndex === 4" :titlebar="$t('people')"/>
-        <Camera   v-else-if="config.toolbarIndex === 5" :titlebar="$t('camera')"/>
+        <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
+        <Calendar v-show="config.toolbarIndex === 2" :titlebar="$t('calendar')"/>
+        <Location v-show="config.toolbarIndex === 3" :titlebar="$t('location')"/>
+        <People   v-show="config.toolbarIndex === 4" :titlebar="$t('people')"/>
+        <Camera   v-show="config.toolbarIndex === 5" :titlebar="$t('camera')"/>
       </div>
 
       <!-- splitter -->

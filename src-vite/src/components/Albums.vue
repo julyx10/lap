@@ -39,11 +39,8 @@
             {{ album.name }}
             <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
           </div>
-          <Folders v-if="album.is_expanded" 
+          <AlbumsFolders v-if="album.is_expanded" 
             :albumId="album.id"
-            :albumName="album.name"
-            :albumPath="album.path" 
-            :parent="album.folderId" 
             :children="album.children" 
           />
         </li>
@@ -80,7 +77,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
 import { separator } from '@/common/utils';
 
-import Folders from '@/components/AlbumsFolders.vue';
+import AlbumsFolders from '@/components/AlbumsFolders.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
 // svg icons
@@ -103,23 +100,48 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // config store
 const config = useConfigStore();
 
-const albums = ref([]);
-
 const appWindow = getCurrentWebviewWindow();
-
 const showDeleteAlbumMsgbox = ref(false);
 
-// Fetch albums on mount
+const albums = ref([]);
+const getAlbumById = (id) => albums.value.find(album => album.id === id);
+
+
 onMounted( async () => {
   if (albums.value.length === 0) {
     await getAlbums();
 
-    if (config.albumId)
-      clickAlbum(getAlbumById(config.albumId));
+    if (config.albumId) {
+      let album = getAlbumById(config.albumId);
+      if (album.path === config.albumFolderPath) {  // album is selected
+        clickAlbum(album);
+      } else {    // album's sub-folder is selected
+        clickExpandAlbum(album);
+
+        let relative_folder_path = config.albumFolderPath.replace(album.path, '');
+        expandFolderPath(album.id, album, relative_folder_path);
+      }
+    }
   }
 });
 
-const getAlbumById = (id) => albums.value.find(album => album.id === id);
+/// get children folders
+async function getAlbums() {
+  try {
+    const fetchedAlbums = await invoke('get_all_albums');
+    if (fetchedAlbums) {
+      albums.value = fetchedAlbums.map(album => ({
+        ...album, 
+        is_expanded: false,
+        children: null,
+      }));
+    } 
+    console.log('getAlbums...', albums.value);
+
+  } catch (error) {
+    console.error('getAlbums...', error);
+  }
+};
 
 /// Add albums
 const clickAdd = async () => {
@@ -133,7 +155,6 @@ const clickAdd = async () => {
   }
 };
 
-
 /// Delete an album
 const clickDeleteConfirm = async () => {
   try {
@@ -144,12 +165,9 @@ const clickDeleteConfirm = async () => {
       albums.value = albums.value.filter(album => album.id !== config.albumId);
       
       config.albumId = null;
-      config.albumName = null;
-      config.albumPath = null;
       config.albumFolderId = null;
       config.albumFolderName = null;
       config.albumFolderPath = null;
-
       console.log('Delete album...', result);
     } else {
       console.log('No album selected', config.albumId);
@@ -164,66 +182,94 @@ const clickAlbum = async (album) => {
   try {
     const result = await invoke('select_folder', {
       albumId: album.id, 
-      albumPath: album.path,
       parentId: 0,      // 0 is root folder(album)
-      folderPath: separator,
+      folderPath: album.path,
     });
-    
-    console.log('clickAlbum...', album, result);
 
-    // insert a new property(album.folderId) 
-    album.folderId = result.id;
-
+    // update config
     config.albumId = album.id;
-    config.albumName = album.name;
-    config.albumPath = album.path;
     config.albumFolderId = result.id;
     config.albumFolderName = result.name;
     config.albumFolderPath = result.path;
-    
-    console.log('add_folder result:', result);
+
+    // insert a new property(album.folderId) 
+    album.folderId = config.albumFolderId;
+    console.log('clickAlbum...', album, result);
+  } catch (error) {
+    console.error("clickAlbum...", error);
+  }
+};
+
+/// click folder to select
+const clickFolder = async (albumId, folder) => {
+  try {
+    const result = await invoke('select_folder', {
+      albumId: albumId,
+      parentId: 0,
+      folderPath: folder.path,
+    });
+
+    // update config
+    config.albumId = albumId;
+    config.albumFolderId   = result.id;
+    config.albumFolderName = result.name;
+    config.albumFolderPath = result.path;
+
+    // insert new property 'id' to folder object
+    folder.id = config.albumFolderId;
+
+    console.log('clickFolder:', result);
   } catch (error) {
     console.error("Error adding folder:", error);
   }
 };
 
-
 /// click album icon to expand or collapse next level folders
 const clickExpandAlbum = async (album) => {
-  console.log('clickExpandAlbum...', album);
-
-  clickAlbum(album);
-
+  // clickAlbum(album);
+  
   album.is_expanded = !album.is_expanded; 
-
+  
   if (album.is_expanded && !album.children) {
     try {
-      const folders = await invoke('expand_folder', { path: album.path, isRecursive: false });
-      album.children = folders.children;
+      const subfolders = await invoke('expand_folder', { path: album.path, isRecursive: false });
+      album.children = subfolders.children;
     } catch (error) {
-      console.error('Error fetching folder tree:', error);
+      console.error('clickExpandAlbum...', error);
     }
   }
 };
 
+/// expand folders along a given path
+const expandFolderPath = async (albumId, folder, path) => {
+  const pathArray = path.split(separator).filter(Boolean); // Split and remove empty strings
+  let currentFolder = folder;
 
-/// get children folders
-async function getAlbums() {
-  try {
-    const fetchedAlbums = await invoke('get_albums');
-    if (fetchedAlbums) {
-      albums.value = fetchedAlbums.map(album => ({
-        ...album, 
-        is_expanded: false,
-        children: null,
-      }));
-    } 
-    console.log('getAlbums...', albums.value);
-
-  } catch (error) {
-    console.error('Failed to fetch albums:', error);
+  for (let i = 0; i < pathArray.length; i++) {
+    // get sub-folders
+    if (!currentFolder.children) {
+      try {
+        const subFolders = await invoke('expand_folder', { path: currentFolder.path, isRecursive: false });
+        currentFolder.children = subFolders.children;
+        console.log('expandFolderPath...', currentFolder);
+        if(currentFolder.children && currentFolder.children.length > 0) {
+          for (let child of currentFolder.children) {
+            if(child.name === pathArray[i]) {
+              if( i < pathArray.length - 1) {
+                child.is_expanded = true;
+                currentFolder = child;
+                break;
+              } else {  // last folder
+                clickFolder(albumId, child);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('clickExpandAlbum...', error);
+      }
+    }
   }
-};
-
+}
 
 </script>
