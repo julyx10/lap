@@ -35,7 +35,7 @@
       </div>
 
       <!-- left pane -->
-      <div v-if="config.toolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
+      <div v-show="config.toolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
         <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
         <Calendar v-show="config.toolbarIndex === 2" :titlebar="$t('calendar')"/>
         <Location v-show="config.toolbarIndex === 3" :titlebar="$t('location')"/>

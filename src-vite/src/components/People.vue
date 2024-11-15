@@ -7,7 +7,7 @@
       <span>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconRefresh class="p-0.5 t-icon-hover" @click="clickRefresh"/>
+        <IconReload class="p-0.5 t-icon-size t-icon-hover" @click="clickReload"/>
       </div>
     </div>
     
@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 
-import IconRefresh from '@/assets/refresh.svg';
+import IconReload from '@/assets/reload.svg';
 
 const props = defineProps({
   titlebar: {

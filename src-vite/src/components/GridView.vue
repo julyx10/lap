@@ -19,7 +19,7 @@
           <img v-if="file.thumbnail"
             :src="file.thumbnail" 
             :class="[
-              'rounded  transition duration-200', 
+              'rounded transition duration-200', 
               isFitWidth ? 'object-cover' : 'object-contain'
             ]"
             :style="{ width: `${gridSize}px`, height: `${gridSize}px` }"

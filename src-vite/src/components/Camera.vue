@@ -7,7 +7,7 @@
       <span>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconRefresh class="p-0.5 t-icon-hover" @click="clickRefresh"/>
+        <IconReload class="p-0.5 t-icon-hover t-icon-size" @click="clickReload"/>
       </div>
     </div>
 
@@ -63,7 +63,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useConfigStore } from '@/stores/configStore';
 
 // toolbar icons
-import IconRefresh from '@/assets/refresh.svg';
+import IconReload from '@/assets/reload.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 import IconRight from '@/assets/arrow-right.svg';
@@ -97,8 +97,8 @@ onMounted(async () => {
   }
 });
 
-/// refresh cameras
-function clickRefresh() {
+/// reload cameras
+function clickReload() {
   getCameras();
   config.cameraMake = null;
   config.cameraModel = null;

@@ -9,7 +9,8 @@
         ]" 
         @click="clickFolder(albumId, child)"
       >
-        <IconRight
+        <span v-if="child.children && child.children.length == 0" class="w-6"></span>
+        <IconRight v-else
           :class="[
             'p-1 flex-shrink-0 transition-transform', 
             child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
