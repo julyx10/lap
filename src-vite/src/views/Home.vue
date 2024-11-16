@@ -25,8 +25,9 @@
             </p>
           </div>
         </div>
-        <div class="flex flex-col items-center t-icon-hover">
-          <IconSettings @click="clickSettings" />
+
+        <div class="flex flex-col items-center t-icon-hover" @click="clickSettings">
+          <IconSettings :class="['t-icon-size']"  />
           <p v-if="config.showButtonText" 
               class="text-xs">
               {{ $t('settings') }}
@@ -35,14 +36,23 @@
       </div>
 
       <!-- left pane -->
-      <div v-show="config.toolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
-        <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
-        <Calendar v-show="config.toolbarIndex === 2" :titlebar="$t('calendar')"/>
-        <Location v-show="config.toolbarIndex === 3" :titlebar="$t('location')"/>
-        <People   v-show="config.toolbarIndex === 4" :titlebar="$t('people')"/>
-        <Camera   v-show="config.toolbarIndex === 5" :titlebar="$t('camera')"/>
-      </div>
-
+      <transition
+        enter-active-class="transition-transform duration-200"
+        leave-active-class="transition-transform duration-200"
+        enter-from-class="-translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-from-class="translate-x-0"
+        leave-to-class="-translate-x-full"
+      >
+        <div v-show="config.toolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
+          <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
+          <Calendar v-show="config.toolbarIndex === 2" :titlebar="$t('calendar')"/>
+          <Location v-show="config.toolbarIndex === 3" :titlebar="$t('location')"/>
+          <People   v-show="config.toolbarIndex === 4" :titlebar="$t('people')"/>
+          <Camera   v-show="config.toolbarIndex === 5" :titlebar="$t('camera')"/>
+        </div>
+      </transition>
+      
       <!-- splitter -->
       <div v-if="config.toolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
       
@@ -58,7 +68,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
 
@@ -106,15 +116,12 @@ const toolbars = computed(() =>  [
 const divToolbar = ref(null);
 const isDragging = ref(false);
 
-const emit = defineEmits(['close-home']);
-
 onMounted(() => {
   document.addEventListener('mouseup', stopDragging);
 })
 
-onBeforeUnmount(() => {
+onUnmounted(async () => {
   document.removeEventListener('mouseup', stopDragging);
-  emit('close-home');
 })
 
 // Dragging the splitter
@@ -140,8 +147,16 @@ function handleMouseMove(event) {
 }
 
 /// click settings icon
-function clickSettings() {
-  const settingsWindow = new WebviewWindow('settings', {
+async function clickSettings() {
+  // check if the settings window is already open
+  const settingsWindow = await WebviewWindow.getByLabel('settings');
+  if (settingsWindow) {
+    settingsWindow.setFocus();
+    return;
+  }
+
+  // create a new settings window
+  const newSettingsWindow = new WebviewWindow('settings', {
     url: '/settings',
     title: 'Settings',
     width: 640,
@@ -151,8 +166,13 @@ function clickSettings() {
     decorations: false,
   });
   
-  settingsWindow.once('tauri://created', () => {
+  newSettingsWindow.once('tauri://created', () => {
     console.log('settings window created');
+  });
+
+  newSettingsWindow.once('tauri://close-requested', () => {
+    newSettingsWindow.close();
+    console.log('settings window closed');
   });
 }
 

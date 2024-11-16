@@ -17,15 +17,15 @@
         <li v-for="camera in cameras">
           <div 
             :class="[
-              'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
+              'm-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
               { 
                 't-color-text-selected': config.cameraMake === camera.make, 
-                't-color-bg-selected'  : config.cameraMake === camera.make && !config.cameraModel 
+                't-color-bg-selected t-color-border-selected transition-colors duration-300'  : config.cameraMake === camera.make && !config.cameraModel 
               }
             ]"
             @click="clickCameraMake(camera)"
           >
-            <component :is="camera.is_expanded ? IconFolderOpen : IconFolder" class="size-6 pr-1 flex-shrink-0" @click.stop="clickExpandCamera(camera)"/>
+            <component :is="camera.is_expanded ? IconFolderOpen : IconFolder" class="mx-1 h-5  flex-shrink-0" @click.stop="clickExpandCamera(camera)"/>
             {{ camera.make }}
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
@@ -33,11 +33,11 @@
               <div 
                 :class="[
                   'm-1 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
-                  config.cameraModel === model ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
+                  config.cameraModel === model ? 't-color-text-selected t-color-bg-selected t-color-border-selected transition-colors duration-300' : 'border-gray-900'
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
-                <IconCamera class="p-1 flex-shrink-0" />
+                <IconCamera class="mx-1 h-5 flex-shrink-0" />
                 {{ model }}
               </div>
             </li>

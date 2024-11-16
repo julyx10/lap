@@ -3,7 +3,7 @@
     <!-- Title bar -->
     <div class="h-6 flex items-center justify-between">
       <p class="p-1 font-bold">{{ $t('file_info_title') }}</p>
-      <IconClose class="p-1 t-icon-hover" @click="clickClose" />
+      <IconClose class="p-1 t-icon-size t-icon-hover" @click="clickClose" />
     </div>
 
     <!-- File Info table -->

@@ -31,8 +31,8 @@ const props = defineProps({
   }
 });
 
-function clickRefresh() {
-  console.log('clickRefresh');
+function clickReload() {
+  console.log('clickReload');
 }
 
 </script>

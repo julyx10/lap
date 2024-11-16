@@ -12,7 +12,7 @@
         <span v-if="child.children && child.children.length == 0" class="w-6"></span>
         <IconRight v-else
           :class="[
-            'p-1 flex-shrink-0 transition-transform', 
+            'p-1 t-icon-size flex-shrink-0 transition-transform', 
             child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
           ]"
           @click="clickExpandFolder($event, child)"

@@ -53,7 +53,7 @@
           @click="clickPrev"
         >
         <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
-            <IconLeft class=" t-icon-hover"/>
+            <IconLeft class="t-icon-size t-icon-hover"/>
           </div>
         </div>
 
@@ -86,7 +86,7 @@
           @click="clickNext"
         >
           <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
-            <IconRight class=" t-icon-hover"/>
+            <IconRight class="t-icon-size t-icon-hover"/>
           </div>
         </div>
 
@@ -178,7 +178,8 @@ onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
   isFullScreen.value = await appWindow.isMaximized();
   
-  listen('close-home', () => {
+  listen('close-home', (event) => {
+    console.log('close-home');
     appWindow.close(); // Close the window
   });
 

@@ -8,7 +8,7 @@
 
     <!-- Draggable Area -->
     <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text" 
-      @mousedown="appWindow.startDragging()"
+      @mousedown="onMousedown"
       @dblclick="toggleMaximizeWindow"
     >
       <SearchBox v-if="viewName==='Home'" class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv"/>
@@ -54,6 +54,13 @@ const props = defineProps({
 
 const appWindow = getCurrentWindow();
 const isMaximized = ref(false);
+
+// drag window
+const onMousedown = (e) => {
+  if (e.detail === 1) {
+    appWindow.startDragging();
+  }
+};
 
 const minimizeWindow = () => {
   appWindow.minimize();

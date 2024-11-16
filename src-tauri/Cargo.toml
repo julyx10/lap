@@ -30,6 +30,7 @@ base64 = "0.22.1"
 image = "0.25.5"
 imagesize = "0.13.0"
 # opencv = "0.93.3"
+# id3 = "1.14.0"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

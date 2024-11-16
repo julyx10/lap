@@ -24,16 +24,16 @@
         <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'p-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
+              'm-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
               { 
                 't-color-text-selected': config.albumId === album.id, 
-                't-color-bg-selected': config.albumId === album.id && config.albumFolderId === album.folderId
+                't-color-bg-selected t-color-border-selected transition-colors duration-300': config.albumId === album.id && config.albumFolderId === album.folderId
               }
             ]"
             @click="clickAlbum(album)"
           >
             <component :is="album.is_expanded ? IconFolderOpen : IconFolder" 
-              class="size-6 pr-1 flex-shrink-0" 
+              class="mx-1 h-5 flex-shrink-0" 
               @click.stop="clickExpandAlbum(album)"
             />
             {{ album.name }}

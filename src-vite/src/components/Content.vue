@@ -13,7 +13,7 @@
           </span>
         </div>
 
-        <div class="flex space-x-4">
+        <div class="h-6 flex space-x-4">
           <SliderInput v-model="config.gridSize" :min="120" :max="320" :step="10" label="" />
           <IconFitWidth 
             class="t-icon-size t-icon-hover"
@@ -60,26 +60,35 @@
       <div v-if="config.showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
 
       <!-- preview pane -->
-      <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + '%' }">
-        <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length" 
-          class="h-full flex flex-col items-center justify-center cursor-pointer break-all"
-          @dblclick="openImageViewer(selectedItemIndex, true)"
-        >
-          <img class="h-full w-full p-1 rounded-lg object-contain" :src="imageSrc" @load="onImageLoad" />
-          <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm"> 
-            <p>{{ fileList[selectedItemIndex].name }}</p>
-            <div class="flex space-x-4">
-              <!-- <p>{{ formatFileSize(fileList[selectedItemIndex].size) }}</p> -->
-              <p>{{ formatTimestamp(fileList[selectedItemIndex].modified_at, $t('date_time_format')) }}</p>
-              <!-- <p>{{ fileList[selectedItemIndex].width }}x{{ fileList[selectedItemIndex].height }}</p> -->
+      <transition
+        enter-active-class="transition-transform duration-200"
+        leave-active-class="transition-transform duration-200"
+        enter-from-class="translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-from-class="translate-x-0"
+        leave-to-class="translate-x-full"
+      >
+        <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + '%' }">
+          <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
+            class="h-full flex flex-col items-center justify-center cursor-pointer break-all"
+            @dblclick="openImageViewer(selectedItemIndex, true)">
+            <img class="h-full w-full p-1 rounded-lg object-contain" :src="imageSrc" @load="onImageLoad" />
+            <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm">
+              <p>{{ fileList[selectedItemIndex].name }}</p>
+              <div class="flex space-x-4">
+                <!-- <p>{{ formatFileSize(fileList[selectedItemIndex].size) }}</p> -->
+                <p>{{ formatTimestamp(fileList[selectedItemIndex].modified_at, $t('date_time_format')) }}</p>
+                <!-- <p>{{ fileList[selectedItemIndex].width }}x{{ fileList[selectedItemIndex].height }}</p> -->
+              </div>
             </div>
           </div>
+      
+          <div v-else class="h-full flex items-center justify-center">
+            <p>{{ $t('preview_no_file') }}</p>
+          </div>
         </div>
+      </transition>
 
-        <div v-else class="h-full flex items-center justify-center">
-          <p>{{ $t('preview_no_file') }}</p>
-        </div>
-      </div>
     </div>
   </div>
 
