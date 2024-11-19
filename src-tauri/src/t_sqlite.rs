@@ -696,7 +696,7 @@ impl AFile {
 
     /// get files by camera make and model
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
-        let conditions = " WHERE a.e_make = ?1 AND a.e_model = ?2";
+        let conditions = " WHERE a.e_make = ?1 AND (?2 = '' OR a.e_model = ?2)";
         Self::query_with_conditions(conditions, &[&make, &model])
     }
 

@@ -7,7 +7,7 @@
       <span>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconReload class="p-0.5 t-icon-size t-icon-hover" @click="clickReload"/>
+        <IconReload class="t-icon-size t-icon-hover" @click="clickReload"/>
       </div>
     </div>
     

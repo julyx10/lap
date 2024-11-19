@@ -7,10 +7,10 @@
       <span>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconAdd class="p-0.5 t-icon-hover" @click="clickAdd" />
+        <IconAdd class="m-1 t-icon-size t-icon-hover" @click="clickAdd" />
         <IconDelete  
           :class="[
-            'p-0.5', 
+            'm-1 t-icon-size', 
             config.albumId ? 't-icon-hover' : 't-icon-disabled'
           ]" 
           @click="config.albumId ? showDeleteAlbumMsgbox = true : ''" />

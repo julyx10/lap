@@ -83,6 +83,7 @@
   "date_time_format": "yyyy/MM/dd HH:mm:ss",
   "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
 
-  "image_view_loading": "読み込み中..."
+  "image_view_loading": "読み込み中...",
+  "image_view_failed": "読み込みに失敗しました。"
 }
   

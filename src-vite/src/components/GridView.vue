@@ -1,5 +1,5 @@
 <template>
-  <div ref="scrollable" class="flex-1 overflow-auto t-scrollbar">
+  <div ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar">
     <div id="gridView" 
       class="px-2 grid gap-2"
       :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${gridSize}px, 1fr))` }"

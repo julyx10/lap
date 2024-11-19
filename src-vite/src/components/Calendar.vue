@@ -8,7 +8,7 @@
       <div class="flex text-sm">
         <div 
           :class="[
-            'px-2 border rounded-l-lg t-color-bg t-color-border t-color-bg-hover',
+            'px-2 border rounded-l-lg t-color-bg t-color-border t-color-bg-hover text-nowrap',
             config.calendarIsMonthly ? 't-color-text-focus t-color-bg-selected' : ''
           ]"
          @click="config.calendarIsMonthly=true"
@@ -17,7 +17,7 @@
         </div>
         <div 
           :class="[
-            'px-2 border rounded-r-lg t-color-bg t-color-border t-color-bg-hover',
+            'px-2 border rounded-r-lg t-color-bg t-color-border t-color-bg-hover text-nowrap',
             !config.calendarIsMonthly ? 't-color-text-focus t-color-bg-selected' : ''
           ]"
          @click="config.calendarIsMonthly=false"
@@ -25,7 +25,7 @@
           {{ $t('calendar_daily') }}
         </div>
         <span class="px-2"></span>
-        <component :is="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-hover" @click="toggleSortingOrder" />
+        <component :is="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-size t-icon-hover" @click="toggleSortingOrder" />
       </div>
     </div>
     

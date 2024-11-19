@@ -7,7 +7,7 @@
       <span>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconReload class="p-0.5 t-icon-hover t-icon-size" @click="clickReload"/>
+        <IconReload class="t-icon-size t-icon-hover" @click="clickReload"/>
       </div>
     </div>
 
@@ -113,6 +113,8 @@ function clickExpandCamera(camera) {
 function clickCameraMake(camera) {
   config.cameraMake = camera.make;
   config.cameraModel = null;
+
+  camera.is_expanded = true;
 }
 
 /// click a camera to select it

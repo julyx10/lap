@@ -8,7 +8,7 @@
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
 
       <!-- left toolbar -->
-      <div ref="divToolbar" class="w-12 my-3 flex flex-col justify-between">
+      <div ref="divToolbar" class="w-12 my-4 flex flex-col justify-between">
         <div class="flex flex-col items-center space-y-6">
           <div v-for="(item, index) in toolbars" 
             class="flex flex-col items-center t-icon-hover" 
@@ -36,22 +36,22 @@
       </div>
 
       <!-- left pane -->
-      <transition
+      <!-- <transition
         enter-active-class="transition-transform duration-200"
         leave-active-class="transition-transform duration-200"
         enter-from-class="-translate-x-full"
         enter-to-class="translate-x-0"
         leave-from-class="translate-x-0"
         leave-to-class="-translate-x-full"
-      >
-        <div v-show="config.toolbarIndex > 0" class="w-96 min-w-32 pb-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
+      > -->
+        <div v-show="config.toolbarIndex > 0" class="w-96 min-w-32 py-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
           <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
           <Calendar v-show="config.toolbarIndex === 2" :titlebar="$t('calendar')"/>
           <Location v-show="config.toolbarIndex === 3" :titlebar="$t('location')"/>
           <People   v-show="config.toolbarIndex === 4" :titlebar="$t('people')"/>
           <Camera   v-show="config.toolbarIndex === 5" :titlebar="$t('camera')"/>
         </div>
-      </transition>
+      <!-- </transition> -->
       
       <!-- splitter -->
       <div v-if="config.toolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
 
@@ -116,13 +116,13 @@ const toolbars = computed(() =>  [
 const divToolbar = ref(null);
 const isDragging = ref(false);
 
-onMounted(() => {
-  document.addEventListener('mouseup', stopDragging);
-})
+// onMounted(() => {
+//   document.addEventListener('mouseup', stopDragging);
+// })
 
-onUnmounted(async () => {
-  document.removeEventListener('mouseup', stopDragging);
-})
+// onBeforeUnmount(async() => {
+//   document.removeEventListener('mouseup', stopDragging);
+// })
 
 // Dragging the splitter
 function startDragging(event) {

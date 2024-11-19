@@ -3,8 +3,8 @@
   <div class="flex-1 flex flex-col">
 
     <!-- title bar -->
-    <div class="px-4 py-1" style="user-select: none;">
-      <div class="flex flex-row items-center justify-between">
+    <!-- <div class="px-4" style="user-select: none;"> -->
+      <div class="px-4 pt-1 flex flex-row items-center justify-between" style="user-select: none;">
 
         <div class="flex-1 flex flex-col">
           <span>{{ contentTitle }}</span>
@@ -34,17 +34,18 @@
           <component 
             :is="config.showPreview ? IconPreview : IconPreviewOff" 
             class="t-icon-hover" 
+            :class="{ 't-icon-focus': config.showPreview }"
             @click="config.showPreview = !config.showPreview"
           />
         </div>
       </div>
-    </div>
+    <!-- </div> -->
 
     <div>
       <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     </div>
 
-    <div ref="divGridView" class="my-1 flex-1 flex flex-row overflow-hidden">
+    <div ref="divGridView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
       <GridView v-if="fileList.length > 0" 
         :fileList="fileList"
@@ -152,42 +153,43 @@ const imageSrc = ref(null);         // preview image source
 const isImageViewerOpen  = ref(false); 
 
 
-onMounted(() => {
-  document.addEventListener('mouseup', stopDragging);
+// onMounted(() => {
+//   document.addEventListener('mouseup', stopDragging);
+// })
 
-  listen('message-from-grid-view', (event) => {
-    const { message } = event.payload;
-    console.log('content - message-from-grid-view:', message);
-    switch (message) {
-      case 'open-image-viewer':
-        openImageViewer(selectedItemIndex.value, true);
-        break;
-      case 'update-image-viewer':
-        openImageViewer(selectedItemIndex.value, false);
-        break;
-      default:
-        break;
-    }
-  });
-  listen('message-from-image-viewer', (event) => {
-    const { message } = event.payload;
-    console.log('content - message-from-image-viewer:', message);
-    switch (message) {
-      case 'prev':
-        selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
-        break;
-      case 'next':
-        selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
-        break;
-      default:
-        break;
-    }
-  });
-})
+// onBeforeUnmount(() => {
+//   document.removeEventListener('mouseup', stopDragging);
+// })
 
-onBeforeUnmount(() => {
-  document.removeEventListener('mouseup', stopDragging);
-})
+listen('message-from-grid-view', (event) => {
+  const { message } = event.payload;
+  console.log('content - message-from-grid-view:', message);
+  switch (message) {
+    case 'open-image-viewer':
+      openImageViewer(selectedItemIndex.value, true);
+      break;
+    case 'update-image-viewer':
+      openImageViewer(selectedItemIndex.value, false);
+      break;
+    default:
+      break;
+  }
+});
+
+listen('message-from-image-viewer', (event) => {
+  const { message } = event.payload;
+  console.log('content - message-from-image-viewer:', message);
+  switch (message) {
+    case 'prev':
+      selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
+      break;
+    case 'next':
+      selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
+      break;
+    default:
+      break;
+  }
+});
 
 /// Dragging the splitter
 function startDragging(event) {
@@ -286,7 +288,8 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
         getCameraFiles(config.cameraMake, newModel);
       } else {
         contentTitle.value = `${config.cameraMake}`;
-        fileList.value = [];
+        getCameraFiles(config.cameraMake, "");
+        // fileList.value = [];
       }
     } else {
       contentTitle.value = localeMsg.value.camera;
