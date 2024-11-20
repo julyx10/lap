@@ -28,15 +28,15 @@
         ]" 
         @click="clickNext" 
       />
-      <IconZoomIn  class="t-icon-size-sm t-icon-hover" @click="scale += 0.5" />
-      <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="scale -= 0.5" />
+      <IconZoomIn  class="t-icon-size-sm t-icon-hover" @click="clickZoomIn" />
+      <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="clickZoomOut" />
       <component :is="isZoomFit ? IconZoomFit : IconZoomOriginal" class="t-icon-size-sm t-icon-hover" @click="toggleZoomFit" />
-      <IconRotateRight class="t-icon-size-sm t-icon-hover" @click="rotateImage"/>
+      <IconRotateRight class="t-icon-size-sm t-icon-hover" @click="clickRotate"/>
       <IconUnFavorite v-if="!fileInfo" class="t-icon-size-sm t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
-      <IconSave class="t-icon-size-sm t-icon-hover" />
+      <IconSave class="t-icon-size-sm t-icon-hover" @click="clickSave"/>
       <!-- <IconFullScreen v-if="!isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
       <!-- <IconRestoreScreen v-if="isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
       <component :is="isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
@@ -44,17 +44,7 @@
 
     <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
       <!-- zoom area -->
-      <div ref="zoomRef" class="relative flex-1 flex justify-center items-center overflow-hidden" 
-        @wheel="zoomImage" 
-      >
-        <!-- debug -->
-        <div v-if="true" class="absolute top-0 left-0 m-2 p-2 text-sm text-sky-300 bg-gray-800 opacity-50 rounded-lg z-50">
-          <p>scale: {{ scale ? scale.toFixed(2) : '' }}</p>
-          <p>startX, startY: ({{ startX.toFixed(2) }}, {{ startY.toFixed(2) }})</p>
-          <p>translateX, translateY: ({{ translateX.toFixed(2) }}, {{ translateY.toFixed(2) }})</p>
-          <p>lastTranslateX, lastTranslateY: ({{ lastTranslateX.toFixed(2) }}, {{ lastTranslateY.toFixed(2) }})</p>
-        </div>
-
+      <div ref="zoomRef" class="relative flex-1 flex justify-center items-center overflow-hidden">
         <!-- prev   -->
         <div v-if="fileIndex > 0"
           class="absolute left-0 w-20 h-full z-10 flex items-center justify-start cursor-pointer group" 
@@ -66,18 +56,7 @@
         </div>
 
         <!-- image -->
-        <!-- <img v-if="imageSrc" 
-          ref="imageRef"
-          :src="imageSrc"
-          :style="imageStyle"
-          alt="Image Viewer" 
-          draggable="false"
-          @mousedown="startDragging" 
-          @mouseup="stopDragging"
-          @mousemove="dragImage" 
-          @mouseleave="stopDragging"
-        /> -->
-        <Image v-if="imageSrc" :src="imageSrc" />
+        <Image v-if="imageSrc" ref="imageRef" :src="imageSrc" />
         <p v-else>
           {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
         </p>
@@ -168,29 +147,34 @@ const isFullScreen = ref(false); // Track if the window is full screen
 const isMaximized  = ref(false); // Track if the window is maximized
 
 // Image rotation angle
-const rotation  = ref(0); 
+// const rotation  = ref(0); 
 // Zoom scaling 
-const scale = ref(null);         // Default zoom scale
+// const scale = ref(null);         // Default zoom scale
 // const scaledWidth = ref(0);   // Scaled width of the image
 // const scaledHeight = ref(0);  // Scaled height of the image
 // const imageWidth = ref(0);    // Image width
 // const imageHeight = ref(0);   // Image height
 
 // Dragging state, and position
-const isDragging = ref(false); // Track if the image is being dragged
-const startX = ref(0); // Store initial X position when dragging starts
-const startY = ref(0); // Store initial Y position when dragging starts
-const translateX = ref(0); // X axis translation (dragging)
-const translateY = ref(0); // Y axis translation (dragging)
-const lastTranslateX = ref(0); // Last stored X position after drag ends
-const lastTranslateY = ref(0); // Last stored Y position after drag ends
+// const isDragging = ref(false); // Track if the image is being dragged
+// const startX = ref(0); // Store initial X position when dragging starts
+// const startY = ref(0); // Store initial Y position when dragging starts
+// const translateX = ref(0); // X axis translation (dragging)
+// const translateY = ref(0); // Y axis translation (dragging)
+// const lastTranslateX = ref(0); // Last stored X position after drag ends
+// const lastTranslateY = ref(0); // Last stored Y position after drag ends
 
 // Computed style for the image, combining zoom and translation
-const imageStyle = computed(() => ({
-  transform: `rotate(${rotation.value}deg) scale(${scale.value}) translate(${translateX.value}px, ${translateY.value}px)`,
-  transition: isDragging.value ? 'none' : 'transform 0.2s ease-in-out',
-}));
+// const imageStyle = computed(() => ({
+//   transform: `rotate(${rotation.value}deg) scale(${scale.value}) translate(${translateX.value}px, ${translateY.value}px)`,
+//   transition: isDragging.value ? 'none' : 'transform 0.2s ease-in-out',
+// }));
 
+
+/// watch language
+watch(() => config.language, (newLanguage) => {
+    locale.value = newLanguage; // update locale based on config.language
+});
 
 // Listen for the 'update-url' event to update the image
 listen('update-img', async (event) => {
@@ -219,20 +203,16 @@ listen('message-from-home', (event) => {
   }
 });
 
-/// watch language
-watch(() => config.language, (newLanguage) => {
-    locale.value = newLanguage; // update locale based on config.language
-});
 
 /// watch zoom fit
-watch (() => isZoomFit.value, (newVal) => {
-  console.log('isZoomFit:', newVal);
-  if (newVal) {
-    zoomFit();
-  } else {
-    resetScale();
-  }
-});
+// watch (() => isZoomFit.value, (newVal) => {
+//   console.log('isZoomFit:', newVal);
+//   if (newVal) {
+//     zoomFit();
+//   } else {
+//     resetScale();
+//   }
+// });
 
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
@@ -284,78 +264,107 @@ async function loadFileInfo(fileId) {
   }
 }
 
-// Function to handle zooming with the mouse wheel
-function zoomImage(event) {
-  event.preventDefault();
-  const zoomSpeed = 1.2; // Change this value to adjust zoom speed
-  const delta = event.deltaY < 0 ? zoomSpeed : (1 / zoomSpeed);
-  scale.value = Math.min(Math.max(0.1, scale.value * delta), 10); // Limit zoom between 0.5x and 5x
+// // Function to handle zooming with the mouse wheel
+// function zoomImage(event) {
+//   event.preventDefault();
+//   const zoomSpeed = 1.2; // Change this value to adjust zoom speed
+//   const delta = event.deltaY < 0 ? zoomSpeed : (1 / zoomSpeed);
+//   scale.value = Math.min(Math.max(0.1, scale.value * delta), 10); // Limit zoom between 0.5x and 5x
 
-  lastTranslateX.value = lastTranslateX.value * scale.value;
-  lastTranslateY.value = lastTranslateY.value * scale.value;
-}
+//   lastTranslateX.value = lastTranslateX.value * scale.value;
+//   lastTranslateY.value = lastTranslateY.value * scale.value;
+// }
 
-// Start dragging when the mouse button is pressed
-function startDragging(event) {
-  console.log('startDragging:', event);
-  isDragging.value = true;
-  startX.value = (event.clientX - lastTranslateX.value) / scale.value;
-  startY.value = (event.clientY - lastTranslateY.value) / scale.value;
-}
+// // Start dragging when the mouse button is pressed
+// function startDragging(event) {
+//   console.log('startDragging:', event);
+//   isDragging.value = true;
+//   startX.value = (event.clientX - lastTranslateX.value) / scale.value;
+//   startY.value = (event.clientY - lastTranslateY.value) / scale.value;
+// }
 
-// Drag the image while the mouse is moved
-function dragImage(event) {
-  if (isDragging.value) {
-    console.log('dragImage:', event);
-    // Account for zoom level when dragging
-    translateX.value = (event.clientX - startX.value) / scale.value;
-    translateY.value = (event.clientY - startY.value) / scale.value;
-  }
-}
+// // Drag the image while the mouse is moved
+// function dragImage(event) {
+//   if (isDragging.value) {
+//     console.log('dragImage:', event);
+//     // Account for zoom level when dragging
+//     translateX.value = (event.clientX - startX.value) / scale.value;
+//     translateY.value = (event.clientY - startY.value) / scale.value;
+//   }
+// }
 
-// Stop dragging when the mouse button is released
-function stopDragging(event) {
-  console.log('stopDragging', event);
+// // Stop dragging when the mouse button is released
+// function stopDragging(event) {
+//   console.log('stopDragging', event);
 
-  lastTranslateX.value = translateX.value;
-  lastTranslateY.value = translateY.value;
-  isDragging.value = false;
-}
+//   lastTranslateX.value = translateX.value;
+//   lastTranslateY.value = translateY.value;
+//   isDragging.value = false;
+// }
 
-const zoomFit = () => {
-  // Only proceed if the image has been loaded
-  if (imageRef.value) {
-    // const imgPosition = imageRef.value.getBoundingClientRect();
-    const zommPosition = zoomRef.value.getBoundingClientRect();
+// const zoomFit = () => {
+//   // Only proceed if the image has been loaded
+//   if (imageRef.value) {
+//     // const imgPosition = imageRef.value.getBoundingClientRect();
+//     const zommPosition = zoomRef.value.getBoundingClientRect();
 
-    // console.log('zoomFit:', imgPosition, zommPosition);
+//     // console.log('zoomFit:', imgPosition, zommPosition);
 
-    // Calculate the scale factor to fit the image to the container
-    const scaleWidth = zommPosition.width / fileInfo.value.width;
-    const scaleHeight = zommPosition.height / fileInfo.value.height;
-    scale.value = Math.min(scaleWidth, scaleHeight);
+//     // Calculate the scale factor to fit the image to the container
+//     const scaleWidth = zommPosition.width / fileInfo.value.width;
+//     const scaleHeight = zommPosition.height / fileInfo.value.height;
+//     scale.value = Math.min(scaleWidth, scaleHeight);
 
-    // Center the image in the container
-    // translateX.value = (zommPosition.width - imgPosition.width * scale.value) / 2;
-    // translateY.value = (zommPosition.height - imgPosition.height * scale.value) / 2;
+//     // Center the image in the container
+//     // translateX.value = (zommPosition.width - imgPosition.width * scale.value) / 2;
+//     // translateY.value = (zommPosition.height - imgPosition.height * scale.value) / 2;
 
-  }
-};
+//   }
+// };
 
 // Function to reset the image to 1:1 scale
-const resetScale = () => {
-  scale.value = 1;
+// const resetScale = () => {
+//   scale.value = 1;
 
-  // reset the image position
-  // translateX.value = 0; // Reset the start X position
-  // translateY.value = 0; // Reset the start Y position
-  // lastTranslateX.value = 0; // Reset the last X position
-  // lastTranslateY.value = 0; // Reset the last Y position
+//   // reset the image position
+//   // translateX.value = 0; // Reset the start X position
+//   // translateY.value = 0; // Reset the start Y position
+//   // lastTranslateX.value = 0; // Reset the last X position
+//   // lastTranslateY.value = 0; // Reset the last Y position
+// };
+
+// Emit a message to the main window to go to the previous image
+function clickPrev() {
+  emit('message-from-image-viewer', { message: 'prev' });
+}
+
+function clickNext() {
+  emit('message-from-image-viewer', { message: 'next' });
+}
+
+const clickZoomIn = () => {
+  if(imageRef.value) {
+    imageRef.value.zoomIn();
+  }
 };
 
-// zoom to fit the image to the screen
+const clickZoomOut = () => {
+  if(imageRef.value) {
+    imageRef.value.zoomOut();
+  }
+};
+
 const toggleZoomFit = () => {
-  isZoomFit.value = !isZoomFit.value;
+  if(imageRef.value) {
+    isZoomFit.value = !isZoomFit.value;
+    isZoomFit.value ? imageRef.value.zoomFit() : imageRef.value.zoomReset();
+  }
+};
+
+const clickRotate = () => {
+  if(imageRef.value) {
+    imageRef.value.rotateRight();
+  }
 };
 
 // toggle favorite status
@@ -400,6 +409,19 @@ const toggleFullScreen = async () => {
   }
 }
 
+function clickShowFileInfo() {
+  showFileInfo.value = !showFileInfo.value;
+}
+
+// Close the file info panel from the child component
+function closeFileInfo() {
+  showFileInfo.value = false;
+}
+
+function clickSave() {
+  emit('message-from-image-viewer', { message: 'save' });
+}
+
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
   const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'];
@@ -432,30 +454,6 @@ function handleKeyDown(event) {
       break;
   }
 }
-
-// Method to rotate the image by 90 degrees
-const rotateImage = () => {
-  rotation.value += 90;
-}
-
-// Emit a message to the main window to go to the previous image
-function clickPrev() {
-  emit('message-from-image-viewer', { message: 'prev' });
-}
-
-function clickNext() {
-  emit('message-from-image-viewer', { message: 'next' });
-}
-
-function clickShowFileInfo() {
-  showFileInfo.value = !showFileInfo.value;
-}
-
-// Close the file info panel from the child component
-function closeFileInfo() {
-  showFileInfo.value = false;
-}
-
 
 </script>
 
