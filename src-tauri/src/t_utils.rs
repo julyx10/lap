@@ -1,5 +1,4 @@
-use chrono::{DateTime, Utc};
-use image::{GenericImageView, ImageReader};
+
 /**
  * project: jc-photo
  * author:  julyxx
@@ -13,6 +12,8 @@ use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
+use chrono::{DateTime, Utc};
+use image::ImageReader;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct AppConfig {
@@ -146,33 +147,33 @@ impl FileInfo {
 }
 
 /// ImageInfo struct to represent image metadata
-#[derive(serde::Serialize)]
-pub struct ImageInfo {
-    pub width: u32,
-    pub height: u32,
-    pub color_type: String,
-    pub bit_depth: u16,
-    pub has_alpha: bool,
-}
+// #[derive(serde::Serialize)]
+// pub struct ImageInfo {
+//     pub width: u32,
+//     pub height: u32,
+//     pub color_type: String,
+//     pub bit_depth: u16,
+//     pub has_alpha: bool,
+// }
 
-impl ImageInfo {
-    /// Get image info from a file path
-    pub fn new(file_path: &str) -> Result<Self, String> {
-        let img = image::open(file_path).map_err(|e| e.to_string())?;
-        let (width, height) = img.dimensions();
-        let color_type = img.color();
-        let bit_depth = color_type.bits_per_pixel();
-        let has_alpha = color_type.has_alpha();
+// impl ImageInfo {
+//     /// Get image info from a file path
+//     pub fn new(file_path: &str) -> Result<Self, String> {
+//         let img = image::open(file_path).map_err(|e| e.to_string())?;
+//         let (width, height) = img.dimensions();
+//         let color_type = img.color();
+//         let bit_depth = color_type.bits_per_pixel();
+//         let has_alpha = color_type.has_alpha();
 
-        Ok(ImageInfo {
-            width,
-            height,
-            color_type: format!("{:?}", color_type),
-            bit_depth,
-            has_alpha,
-        })
-    }
-}
+//         Ok(ImageInfo {
+//             width,
+//             height,
+//             color_type: format!("{:?}", color_type),
+//             bit_depth,
+//             has_alpha,
+//         })
+//     }
+// }
 
 /// Get the path separator based on the operating system
 #[allow(dead_code)]

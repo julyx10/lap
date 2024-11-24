@@ -15,6 +15,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
+tauri-plugin-window-state = "2.0.0"
 tauri-plugin-dialog = "2"
 tauri-plugin-os = "2"
 tauri-plugin-shell = "2"
@@ -35,6 +36,3 @@ imagesize = "0.13.0"
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
-
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-window-state = "2"

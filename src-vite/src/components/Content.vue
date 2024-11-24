@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
@@ -152,14 +152,6 @@ const imageSrc = ref(null);         // preview image source
 // show image viewer
 const isImageViewerOpen  = ref(false); 
 
-
-// onMounted(() => {
-//   document.addEventListener('mouseup', stopDragging);
-// })
-
-// onBeforeUnmount(() => {
-//   document.removeEventListener('mouseup', stopDragging);
-// })
 
 listen('message-from-grid-view', (event) => {
   const { message } = event.payload;

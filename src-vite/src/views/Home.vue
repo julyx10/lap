@@ -116,13 +116,6 @@ const toolbars = computed(() =>  [
 const divToolbar = ref(null);
 const isDragging = ref(false);
 
-// onMounted(() => {
-//   document.addEventListener('mouseup', stopDragging);
-// })
-
-// onBeforeUnmount(async() => {
-//   document.removeEventListener('mouseup', stopDragging);
-// })
 
 // Dragging the splitter
 function startDragging(event) {

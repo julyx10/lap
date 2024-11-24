@@ -3,15 +3,15 @@
   <div 
     :class="[
       'relative w-screen h-screen flex flex-col border t-color-border overflow-hidden',
-      isFullScreen ? 'fixed top-0 left-0 z-50' : 'rounded-lg shadow-lg'
+      config.isFullScreen ? 'fixed top-0 left-0 z-50' : 'rounded-lg shadow-lg'
     ]">
-    <TitleBar v-if="!isFullScreen" titlebar="jc-photo" viewName="ImageViewer"/>
+    <TitleBar v-if="!config.isFullScreen" titlebar="jc-photo" viewName="ImageViewer"/>
 
     <!-- Toolbar -->
     <div id="responsiveDiv"
       :class="[
         'absolute left-1/2 z-50 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
-        isFullScreen ? '-translate-y-8 hover:translate-y-0 transition-transform duration-300 ease-in-out' : ''
+        config.isFullScreen ? '-translate-y-8 hover:translate-y-0 transition-transform duration-300 ease-in-out' : ''
       ]"
     >
       <IconPrev 
@@ -37,9 +37,9 @@
       <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
       <IconSave class="t-icon-size-sm t-icon-hover" @click="clickSave"/>
-      <!-- <IconFullScreen v-if="!isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
-      <!-- <IconRestoreScreen v-if="isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
-      <component :is="isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
+      <!-- <IconFullScreen v-if="!config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
+      <!-- <IconRestoreScreen v-if="config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
+      <component :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
     </div>
 
     <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
@@ -147,13 +147,17 @@ const imageRef = ref(null); // Image reference
 const imageSrc = ref(null);
 const loadError = ref(false); // Track if there was an error loading the image
 
-const isFullScreen = ref(false); // Track if the window is full screen
-// const isMaximized  = ref(false); // Track if the window is maximized
 
 /// watch language
 watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
 });
+
+/// watch full screen
+watch(() => config.isFullScreen, async (newFullScreen) => {
+  await appWindow.setFullscreen(newFullScreen);
+  await appWindow.setResizable(!newFullScreen);
+}, { immediate: true }); 
 
 // Listen for the 'update-url' event to update the image
 listen('update-img', async (event) => {
@@ -259,11 +263,7 @@ const clickRotate = () => {
 
 // toggle favorite status
 const toggleFavorite = async() => {
-  if (fileInfo.value.is_favorite === null) {
-    fileInfo.value.is_favorite = true;
-  } else {
-    fileInfo.value.is_favorite = !fileInfo.value.is_favorite;
-  }
+  fileInfo.value.is_favorite = fileInfo.value.is_favorite === null ? true : !fileInfo.value.is_favorite;
 
   // set db status
   await invoke('set_file_favorite', { 
@@ -273,30 +273,8 @@ const toggleFavorite = async() => {
 }
 
 // Function to maximize the window and setup full screen
-const toggleFullScreen = async () => {
-  if (!isFullScreen.value) {  // enter full screen
-    // isMaximized.value = appWindow.isMaximized(); // Check if the window is maximized
-
-    await appWindow.setFullscreen(true);
-    await appWindow.setResizable(false); // Disable window resizing
-    // await appWindow.setSkipTaskbar(true); // Hide the window from the taskbar
-    // await appWindow.setAlwaysOnTop(true); // Keep the window on top of other windows
-    isFullScreen.value = true;
-
-    // if (!isMaximized.value) {
-    //   await appWindow.maximize();
-    //   await appWindow.setSkipTaskbar(true); // Hide the window from the taskbar
-    // }
-  } else {  // exit full screen
-    await appWindow.setFullscreen(false);
-    await appWindow.setResizable(true); // Disable window resizing
-
-    isFullScreen.value = false;
-
-    // if (isMaximized.value) {
-    //   await appWindow.unmaximize();
-    // }
-  }
+const toggleFullScreen = () => {
+  config.isFullScreen = !config.isFullScreen;
 }
 
 function clickShowFileInfo() {

@@ -1,16 +1,21 @@
 <template>
-  <div class="absolute left-0 top-0 p-2 text-red-700">
-    scale: {{ scale }}<br />
-  </div>
+
   <div
     ref="container"
-    class="overflow-hidden cursor-pointer"
+    class="w-full h-full overflow-hidden cursor-pointer"
     @mousedown="startDragging"
     @mousemove="onDragging"
     @mouseup="stopDragging"
     @mouseleave="stopDragging"
     @wheel="onZoom"
   >
+    <div class="absolute left-0 top-0 p-2 z-10 text-red-700 flex items-center justify-center">
+      scale: {{ scale.toFixed(2) }}<br />
+      containerSize: {{ containerSize }}<br />
+      imageSize: {{ imageSize }}<br />
+      position: {{ position }}<br />
+      imageStyle: {{ imageStyle }}<br />
+    </div>
     <img
       ref="image"
       :class="[
@@ -60,11 +65,14 @@ let resizeObserver;
 
 // Computed style for the image
 const imageStyle = computed(() => ({
-  transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value})`,
-  width: `${imageSize.value.width}px`,
-  height: `${imageSize.value.height}px`,
-  minWidth: `${imageSize.value.width}px`,
-  minHeight: `${imageSize.value.height}px`,
+  transform: ` scale(${scale.value})`,
+  // transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value})`,
+  // left: `${position.value.x}px`,
+  // top: `${position.value.y}px`,
+  // width: `${imageSize.value.width}px`,
+  // height: `${imageSize.value.height}px`,
+  // minWidth: `${imageSize.value.width}px`,
+  // minHeight: `${imageSize.value.height}px`,
 }));
 
 
@@ -183,13 +191,17 @@ const zoomFit = () => {
     scale.value = containerSize.value.width / imageSize.value.width;
   }
 
-  // position.value = { x: 0, y: 0 };
+  const offsetX = (containerSize.value.width - imageSize.value.width * scale.value) / 2;
+  const offsetY = (containerSize.value.height - imageSize.value.height * scale.value) / 2;
+
+  position.value = { x: offsetX, y: offsetY };
 };
+
 
 const zoomReset = () => {
   console.log('zoomReset');
   scale.value = 1;
-  position.value = { x: 0, y: 0 };
+  // position.value = { x: 0, y: 0 };
 };
 
 const rotateRight = () => {

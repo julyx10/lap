@@ -47,7 +47,7 @@ export const useConfigStore = defineStore('configStore', {
     cameraModel: null,          // selected camera model
 
     // ImageViewer.vue
-    isFullscreen: false,        // full screen mode
+    isFullScreen: false,        // full screen mode
   }),
 
   actions: {
