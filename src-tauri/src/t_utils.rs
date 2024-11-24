@@ -1,3 +1,5 @@
+use chrono::{DateTime, Utc};
+use image::{GenericImageView, ImageReader};
 /**
  * project: jc-photo
  * author:  julyxx
@@ -5,16 +7,12 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-
 use std::fs;
 use std::io::Cursor;
 use std::os::windows::fs::MetadataExt; // Windows-specific extensions
-use std::path::{ Path, PathBuf };
-use std::time::{ SystemTime, UNIX_EPOCH };
-use chrono::{ DateTime, Utc };
+use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
-use image::{ ImageReader, GenericImageView };
-
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct AppConfig {
@@ -33,7 +31,6 @@ impl Default for AppConfig {
     }
 }
 
-
 /// FileNode struct to represent a file system node
 #[derive(serde::Serialize)]
 pub struct FileNode {
@@ -46,7 +43,6 @@ pub struct FileNode {
 }
 
 impl FileNode {
-
     /// Create a new FileNode
     fn new(path: &str, is_dir: bool, is_expanded: bool) -> Self {
         FileNode {
@@ -104,9 +100,7 @@ impl FileNode {
 
         Ok(nodes)
     }
-
 }
-
 
 // file metadata struct
 #[derive(serde::Serialize)]
@@ -142,7 +136,6 @@ impl FileInfo {
             modified: systemtime_to_u64(metadata.modified().ok()),
             modified_str: systemtime_to_string(metadata.modified().ok()),
             // accessed: systemtime_to_string(metadata.accessed().ok()),
-
             file_attributes: metadata.file_attributes(),
             // volume_serial_number: metadata.volume_serial_number(),
             // number_of_links: metadata.number_of_links(),
@@ -151,7 +144,6 @@ impl FileInfo {
         })
     }
 }
-
 
 /// ImageInfo struct to represent image metadata
 #[derive(serde::Serialize)]
@@ -182,13 +174,11 @@ impl ImageInfo {
     }
 }
 
-
 /// Get the path separator based on the operating system
 #[allow(dead_code)]
 pub fn get_separator() -> String {
     std::path::MAIN_SEPARATOR.to_string()
 }
-
 
 /// Check if a file extension is an image extension
 pub fn is_image_extension(extension: &str) -> bool {
@@ -216,7 +206,6 @@ pub fn is_music_extension(extension: &str) -> bool {
     }
 }
 
-
 /// Get the name from a folder or file path
 pub fn get_file_name(path: &str) -> String {
     let path = Path::new(path);
@@ -228,13 +217,11 @@ pub fn get_file_name(path: &str) -> String {
     }
 }
 
-
 /// Get the full path by joining a folder path and a file name
 pub fn get_file_path(path: &str, name: &str) -> String {
     let file_path: PathBuf = Path::new(path).join(name);
     file_path.to_string_lossy().to_string() // Convert PathBuf to String
 }
-
 
 /// Convert a SystemTime to a u64 timestamp (in seconds since UNIX_EPOCH)
 pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
@@ -249,7 +236,6 @@ pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
         None => None, // Return None if the input is None
     }
 }
-
 
 /// Convert a SystemTime to a string
 pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
@@ -266,7 +252,6 @@ pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
     }
 }
 
-
 /// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),
 /// which requires conversion to decimal format for easier use
 #[allow(dead_code)]
@@ -280,7 +265,6 @@ pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Optio
     decimal
 }
 
-
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_size(file_path: &str) -> Result<(u32, u32), String> {
     // Use imagesize to get width and height
@@ -290,7 +274,6 @@ pub fn get_image_size(file_path: &str) -> Result<(u32, u32), String> {
     Ok((dimensions.width as u32, dimensions.height as u32))
 }
 
-
 /// Get a thumbnail image from a file path
 pub fn get_thumbnail(
     file_path: &str,
@@ -298,11 +281,11 @@ pub fn get_thumbnail(
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
     // Open and decode the image
-    let img_reader = ImageReader::open(file_path)
-        .map_err(|e| format!("Failed to open image: {}", e))?;
-    let img_format = img_reader.format()
-        .ok_or("Could not detect image format")?;
-    let img = img_reader.decode()
+    let img_reader =
+        ImageReader::open(file_path).map_err(|e| format!("Failed to open image: {}", e))?;
+    let img_format = img_reader.format().ok_or("Could not detect image format")?;
+    let img = img_reader
+        .decode()
         .map_err(|e| format!("Failed to decode image: {}", e))?;
     let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
 

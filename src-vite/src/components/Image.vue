@@ -1,7 +1,10 @@
 <template>
+  <div class="absolute left-0 top-0 p-2 text-red-700">
+    scale: {{ scale }}<br />
+  </div>
   <div
     ref="container"
-    class="relative overflow-hidden w-full h-full cursor-pointer"
+    class="overflow-hidden cursor-pointer"
     @mousedown="startDragging"
     @mousemove="onDragging"
     @mouseup="stopDragging"
@@ -10,7 +13,10 @@
   >
     <img
       ref="image"
-      class="absolute top-0 left-0 select-none transition-transform ease-out"
+      :class="[
+        'transition-transform ease-out',
+        isDragging ? 'cursor-grabbing' : 'cursor-grab',
+      ]"
       :src="src"
       :style="imageStyle"
       draggable="false"
@@ -19,13 +25,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 
 // Props
 const props = defineProps({
   src: {
     type: String,
     required: true,
+  },
+  width: {
+    type: Number,
+    default: 0,
+  },
+  height: {
+    type: Number,
+    default: 0,
   },
 });
 
@@ -42,11 +56,67 @@ const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag c
 const containerSize = ref({ width: 0, height: 0 });
 const imageSize = ref({ width: 0, height: 0 });
 
+let resizeObserver;
+
 // Computed style for the image
 const imageStyle = computed(() => ({
   transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value})`,
-  cursor: isDragging.value ? 'grabbing' : 'grab',
+  width: `${imageSize.value.width}px`,
+  height: `${imageSize.value.height}px`,
+  minWidth: `${imageSize.value.width}px`,
+  minHeight: `${imageSize.value.height}px`,
 }));
+
+
+onMounted(() => {
+  resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+      containerSize.value = {
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      };
+    }
+  });
+
+  if (container.value) {
+    resizeObserver.observe(container.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (resizeObserver && container.value) {
+    resizeObserver.unobserve(container.value);
+  }
+});
+
+// const updateImageSize = () => {
+//   imageSize.value = {
+//     width: image.value.naturalWidth,
+//     height: image.value.naturalHeight,
+//   };
+//   console.log('updateImageSize: ', imageSize.value);
+//   // zoomFit();
+// };
+
+watch(() => [props.width, props.height], ([width, height]) => {
+  if (width && height) {
+    imageSize.value = { width, height };
+    console.log('updateImageSize: ', imageSize.value);
+    zoomFit();
+  } 
+});
+
+watch(() => containerSize.value, (size) => {
+  console.log('updateContainerSize: ', size);
+  zoomFit();
+});
+// const updateContainerSize = () => {
+//   containerSize.value = {
+//     width: container.value.offsetWidth,
+//     height: container.value.offsetHeight,
+//   };
+//   console.log('updateContainerSize: ', containerSize.value);
+// };
 
 // Ensure image stays within container
 const clampPosition = () => {
@@ -81,7 +151,7 @@ const onDragging = (event) => {
   position.value.x += deltaX;
   position.value.y += deltaY;
 
-  clampPosition(); // Adjust position to stay within bounds
+  // clampPosition(); // Adjust position to stay within bounds
 
   lastMousePosition.value = { x: event.clientX, y: event.clientY };
 };
@@ -93,15 +163,17 @@ const stopDragging = () => {
 const zoomIn = () => {
   console.log('zoomIn');
   scale.value = Math.min(scale.value * 2, 10);
-  clampPosition(); // Adjust position to ensure the image stays within bounds
+  // clampPosition(); // Adjust position to ensure the image stays within bounds
 };
 
 const zoomOut = () => {
+  console.log('zoomOut');
   scale.value = Math.max(scale.value / 2, 0.1);
-  clampPosition(); // Adjust position to ensure the image stays within bounds
+  // clampPosition(); // Adjust position to ensure the image stays within bounds
 };
 
 const zoomFit = () => {
+  console.log('zoomFit');
   const containerAspectRatio = containerSize.value.width / containerSize.value.height;
   const imageAspectRatio = imageSize.value.width / imageSize.value.height;
 
@@ -111,19 +183,22 @@ const zoomFit = () => {
     scale.value = containerSize.value.width / imageSize.value.width;
   }
 
-  position.value = { x: 0, y: 0 };
+  // position.value = { x: 0, y: 0 };
 };
 
 const zoomReset = () => {
+  console.log('zoomReset');
   scale.value = 1;
   position.value = { x: 0, y: 0 };
 };
 
 const rotateRight = () => {
+  console.log('rotateRight');
   // Rotate the image
 };
 
 const onZoom = (event) => {
+  console.log('onZoom');
   event.preventDefault();
 
   const zoomFactor = 0.1; // Adjust sensitivity
@@ -145,25 +220,9 @@ const onZoom = (event) => {
 
   scale.value = newScale;
 
-  clampPosition(); // Adjust position to ensure the image stays within bounds
+  // clampPosition(); // Adjust position to ensure the image stays within bounds
 };
 
-// Initialize container and image sizes
-const updateSizes = () => {
-  containerSize.value = {
-    width: container.value.offsetWidth,
-    height: container.value.offsetHeight,
-  };
-  imageSize.value = {
-    width: image.value.naturalWidth,
-    height: image.value.naturalHeight,
-  };
-};
-
-onMounted(() => {
-  updateSizes();
-  window.addEventListener('resize', updateSizes);
-});
 
 // Expose methods
 defineExpose({ 
@@ -177,5 +236,4 @@ defineExpose({
 </script>
 
 <style scoped>
-/* Optional: Add styles for smoother interactions */
 </style>

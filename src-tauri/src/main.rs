@@ -11,15 +11,14 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-
 mod t_cmds;
 mod t_sqlite;
 mod t_utils;
 
-
 /// The main function is the entry point for the Tauri application.
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_dialog::init())
@@ -37,24 +36,16 @@ fn main() {
             Ok(())
         })
         .on_page_load(|_window, _payload| {
-            // avoid the blank window on startup
-            // set window visible to false in tauri.conf.json at first
-            // window.show().unwrap();
         })
         .invoke_handler(tauri::generate_handler![
-            t_cmds::save_config,
-            t_cmds::load_config,
-
             t_cmds::get_all_albums,
             t_cmds::get_album,
             t_cmds::add_album,
             t_cmds::delete_album,
-
             t_cmds::get_folder_parents,
             t_cmds::select_folder,
             t_cmds::expand_folder,
             t_cmds::get_folder_files,
-
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,
             t_cmds::get_file_image,
@@ -63,7 +54,6 @@ fn main() {
             t_cmds::get_all_files,
             t_cmds::get_files_by_date,
             t_cmds::get_files_by_date_range,
-
             t_cmds::get_camera_info,
             t_cmds::get_camera_files,
         ])

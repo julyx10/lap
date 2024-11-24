@@ -8,7 +8,7 @@
     <TitleBar v-if="!isFullScreen" titlebar="jc-photo" viewName="ImageViewer"/>
 
     <!-- Toolbar -->
-    <div 
+    <div id="responsiveDiv"
       :class="[
         'absolute left-1/2 z-50 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
         isFullScreen ? '-translate-y-8 hover:translate-y-0 transition-transform duration-300 ease-in-out' : ''
@@ -43,8 +43,10 @@
     </div>
 
     <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
-      <!-- zoom area -->
-      <div ref="zoomRef" class="relative flex-1 flex justify-center items-center overflow-hidden">
+
+      <!-- image container -->
+      <div class="relative flex-1 flex justify-center items-center overflow-hidden">
+        
         <!-- prev   -->
         <div v-if="fileIndex > 0"
           class="absolute left-0 w-20 h-full z-10 flex items-center justify-start cursor-pointer group" 
@@ -56,7 +58,9 @@
         </div>
 
         <!-- image -->
-        <Image v-if="imageSrc" ref="imageRef" :src="imageSrc" />
+        <Image v-if="imageSrc" ref="imageRef" 
+          :src="imageSrc" :width="fileInfo?.width" :height="fileInfo?.height"
+        />
         <p v-else>
           {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
         </p>
@@ -71,7 +75,7 @@
           </div>
         </div>
 
-      </div>
+      </div> <!-- image container -->
 
       <!-- File Info -->
       <transition
@@ -83,7 +87,8 @@
         leave-to-class="translate-x-full"
       >
         <FileInfo v-if="showFileInfo" :fileInfo="fileInfo" @close="closeFileInfo" />
-      </transition>
+      </transition> <!-- File Info -->
+
     </div>
 
   </div>
@@ -136,40 +141,14 @@ const fileCount = ref(0);      // Total number of files
 const fileInfo = ref(null);
 const showFileInfo = ref(false); // Show the file info panel
 
-const zoomRef = ref(null);    // Zoom div reference
-const isZoomFit = ref(null);  // true: zoom to fit window; false: original size
+const isZoomFit = ref(null);  // true: zoom to fit container; false: original size(scale = 1)
 
 const imageRef = ref(null); // Image reference
 const imageSrc = ref(null);
 const loadError = ref(false); // Track if there was an error loading the image
 
 const isFullScreen = ref(false); // Track if the window is full screen
-const isMaximized  = ref(false); // Track if the window is maximized
-
-// Image rotation angle
-// const rotation  = ref(0); 
-// Zoom scaling 
-// const scale = ref(null);         // Default zoom scale
-// const scaledWidth = ref(0);   // Scaled width of the image
-// const scaledHeight = ref(0);  // Scaled height of the image
-// const imageWidth = ref(0);    // Image width
-// const imageHeight = ref(0);   // Image height
-
-// Dragging state, and position
-// const isDragging = ref(false); // Track if the image is being dragged
-// const startX = ref(0); // Store initial X position when dragging starts
-// const startY = ref(0); // Store initial Y position when dragging starts
-// const translateX = ref(0); // X axis translation (dragging)
-// const translateY = ref(0); // Y axis translation (dragging)
-// const lastTranslateX = ref(0); // Last stored X position after drag ends
-// const lastTranslateY = ref(0); // Last stored Y position after drag ends
-
-// Computed style for the image, combining zoom and translation
-// const imageStyle = computed(() => ({
-//   transform: `rotate(${rotation.value}deg) scale(${scale.value}) translate(${translateX.value}px, ${translateY.value}px)`,
-//   transition: isDragging.value ? 'none' : 'transform 0.2s ease-in-out',
-// }));
-
+// const isMaximized  = ref(false); // Track if the window is maximized
 
 /// watch language
 watch(() => config.language, (newLanguage) => {
@@ -185,10 +164,6 @@ listen('update-img', async (event) => {
   fileIndex.value = Number(event.payload.fileIndex);
   fileCount.value = Number(event.payload.fileCount);
   await loadFileInfo(fileId.value);
-
-  // Reset the image zoom and rotation
-  // resetScale();
-  // rotation.value = 0;
 });
 
 listen('message-from-home', (event) => {
@@ -203,36 +178,20 @@ listen('message-from-home', (event) => {
   }
 });
 
-
-/// watch zoom fit
-// watch (() => isZoomFit.value, (newVal) => {
-//   console.log('isZoomFit:', newVal);
-//   if (newVal) {
-//     zoomFit();
-//   } else {
-//     resetScale();
-//   }
-// });
-
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
+  // isFullScreen.value = await appWindow.isMaximized();
 
   const urlParams = new URLSearchParams(window.location.search);
   // Load the image from the file path
   filePath.value = decodeURIComponent(urlParams.get('filePath'));
   await loadImage(filePath.value);
   
-  // set default zoom: fit scrren
-  // isZoomFit.value = true;
-  // scale.value = 0.5;
-  
   fileId.value = urlParams.get('fileId');
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
   await loadFileInfo(fileId.value);
   
-  zoomFit()
-  isFullScreen.value = await appWindow.isMaximized();
 });
 
 onUnmounted(() => {
@@ -263,75 +222,6 @@ async function loadFileInfo(fileId) {
     console.error('loadFileInfo:', error);
   }
 }
-
-// // Function to handle zooming with the mouse wheel
-// function zoomImage(event) {
-//   event.preventDefault();
-//   const zoomSpeed = 1.2; // Change this value to adjust zoom speed
-//   const delta = event.deltaY < 0 ? zoomSpeed : (1 / zoomSpeed);
-//   scale.value = Math.min(Math.max(0.1, scale.value * delta), 10); // Limit zoom between 0.5x and 5x
-
-//   lastTranslateX.value = lastTranslateX.value * scale.value;
-//   lastTranslateY.value = lastTranslateY.value * scale.value;
-// }
-
-// // Start dragging when the mouse button is pressed
-// function startDragging(event) {
-//   console.log('startDragging:', event);
-//   isDragging.value = true;
-//   startX.value = (event.clientX - lastTranslateX.value) / scale.value;
-//   startY.value = (event.clientY - lastTranslateY.value) / scale.value;
-// }
-
-// // Drag the image while the mouse is moved
-// function dragImage(event) {
-//   if (isDragging.value) {
-//     console.log('dragImage:', event);
-//     // Account for zoom level when dragging
-//     translateX.value = (event.clientX - startX.value) / scale.value;
-//     translateY.value = (event.clientY - startY.value) / scale.value;
-//   }
-// }
-
-// // Stop dragging when the mouse button is released
-// function stopDragging(event) {
-//   console.log('stopDragging', event);
-
-//   lastTranslateX.value = translateX.value;
-//   lastTranslateY.value = translateY.value;
-//   isDragging.value = false;
-// }
-
-// const zoomFit = () => {
-//   // Only proceed if the image has been loaded
-//   if (imageRef.value) {
-//     // const imgPosition = imageRef.value.getBoundingClientRect();
-//     const zommPosition = zoomRef.value.getBoundingClientRect();
-
-//     // console.log('zoomFit:', imgPosition, zommPosition);
-
-//     // Calculate the scale factor to fit the image to the container
-//     const scaleWidth = zommPosition.width / fileInfo.value.width;
-//     const scaleHeight = zommPosition.height / fileInfo.value.height;
-//     scale.value = Math.min(scaleWidth, scaleHeight);
-
-//     // Center the image in the container
-//     // translateX.value = (zommPosition.width - imgPosition.width * scale.value) / 2;
-//     // translateY.value = (zommPosition.height - imgPosition.height * scale.value) / 2;
-
-//   }
-// };
-
-// Function to reset the image to 1:1 scale
-// const resetScale = () => {
-//   scale.value = 1;
-
-//   // reset the image position
-//   // translateX.value = 0; // Reset the start X position
-//   // translateY.value = 0; // Reset the start Y position
-//   // lastTranslateX.value = 0; // Reset the last X position
-//   // lastTranslateY.value = 0; // Reset the last Y position
-// };
 
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
@@ -385,7 +275,7 @@ const toggleFavorite = async() => {
 // Function to maximize the window and setup full screen
 const toggleFullScreen = async () => {
   if (!isFullScreen.value) {  // enter full screen
-    isMaximized.value = appWindow.isMaximized(); // Check if the window is maximized
+    // isMaximized.value = appWindow.isMaximized(); // Check if the window is maximized
 
     await appWindow.setFullscreen(true);
     await appWindow.setResizable(false); // Disable window resizing
@@ -403,9 +293,9 @@ const toggleFullScreen = async () => {
 
     isFullScreen.value = false;
 
-    if (isMaximized.value) {
-      await appWindow.unmaximize();
-    }
+    // if (isMaximized.value) {
+    //   await appWindow.unmaximize();
+    // }
   }
 }
 
@@ -462,4 +352,16 @@ function handleKeyDown(event) {
 * {
   user-select: none;
 }
+
+@media (max-width: 700px) {
+  #responsiveDiv {
+    visibility: hidden;
+  }
+}
+@media (min-width: 700px) {
+  #responsiveDiv {
+    visibility: visible;
+  }
+}
+
 </style>

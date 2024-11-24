@@ -1,3 +1,7 @@
+use base64::{engine::general_purpose, Engine};
+use exif::Tag;
+use rusqlite::{params, Connection, OptionalExtension, Result};
+use serde::{Deserialize, Serialize};
 /**
  * project: jc-photo
  * author:  julyxx
@@ -5,16 +9,10 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-
 use std::collections::HashMap;
-use base64::{engine::general_purpose, Engine};
-use rusqlite::{params, Connection, OptionalExtension, Result};
-use serde::{Deserialize, Serialize};
-use exif::Tag;
 
 use crate::t_utils;
 // use crate::t_opencv;
-
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,9 +27,7 @@ pub struct Album {
     pub modified_at: Option<u64>,      // folder modified time
 }
 
-
 impl Album {
-
     /// create a new album
     fn new(path: &str) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(path)?;
@@ -78,11 +74,13 @@ impl Album {
         let conn = open_conn();
 
         // Determine the next display order id
-        self.display_order_id = conn.query_row(
+        self.display_order_id = conn
+            .query_row(
                 "SELECT COALESCE(MAX(display_order_id), 0) + 1 FROM albums",
                 params![],
                 |row| row.get(0),
-            ).map_err(|e| e.to_string())?;
+            )
+            .map_err(|e| e.to_string())?;
 
         // Insert the new album into the db
         let result = conn.execute(
@@ -159,9 +157,7 @@ impl Album {
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
-
 }
-
 
 /// Define the album's folder struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -175,9 +171,7 @@ pub struct AFolder {
     pub modified_at: Option<u64>, // folder modified time
 }
 
-
 impl AFolder {
-
     /// create a new folder struct
     fn new(album_id: i64, parent_id: i64, folder_path: &str) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(folder_path)?;
@@ -211,26 +205,30 @@ impl AFolder {
                         created_at: row.get(5)?,
                         modified_at: row.get(6)?,
                     })
-                }
-            ).optional().map_err(|e| e.to_string())?;
+                },
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// insert a folder into db
     fn insert(&self) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn.execute(
-            "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
+        let result = conn
+            .execute(
+                "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            params![
-                self.album_id,
-                self.parent_id,
-                self.name,
-                self.path,
-                self.created_at,
-                self.modified_at
-            ]
-        ).map_err(|e| e.to_string())?;
+                params![
+                    self.album_id,
+                    self.parent_id,
+                    self.name,
+                    self.path,
+                    self.created_at,
+                    self.modified_at
+                ],
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -253,9 +251,10 @@ impl AFolder {
     /// recurse all parent folder id (deprecated)
     pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
         let conn = open_conn();
-        
-        let mut stmt = conn.prepare(
-            "WITH RECURSIVE parent_hierarchy AS (
+
+        let mut stmt = conn
+            .prepare(
+                "WITH RECURSIVE parent_hierarchy AS (
                 SELECT parent_id
                 FROM afolders
                 WHERE id = ?1
@@ -265,15 +264,16 @@ impl AFolder {
                 INNER JOIN parent_hierarchy ph ON f.id = ph.parent_id
                 WHERE f.parent_id != 0
             )
-            SELECT parent_id FROM parent_hierarchy;"
-        ).map_err(|e| e.to_string())?;
-    
+            SELECT parent_id FROM parent_hierarchy;",
+            )
+            .map_err(|e| e.to_string())?;
+
         let parent_ids = stmt
             .query_map(params![folder_id], |row| row.get(0))
             .map_err(|e| e.to_string())?
             .collect::<Result<Vec<i64>, _>>()
             .map_err(|e| e.to_string())?;
-    
+
         Ok(parent_ids)
     }
 
@@ -309,7 +309,6 @@ impl AFolder {
     //     Ok(())
     // }
 }
-
 
 /// Define the album file struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -352,9 +351,7 @@ pub struct AFile {
     pub file_path: Option<String>, // file path (for webview)
 }
 
-
 impl AFile {
-
     /// create a new file struct
     fn new(folder_id: i64, file_path: &str) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
@@ -412,12 +409,18 @@ impl AFile {
     }
 
     fn get_exif_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<String> {
-        exif.as_ref().and_then(|exif_data| {
-            exif_data.get_field(tag, exif::In::PRIMARY).map(|field| {
-                format!("{}", field.display_value().with_unit(exif_data)).replace("\"", "")
+        exif.as_ref()
+            .and_then(|exif_data| {
+                exif_data.get_field(tag, exif::In::PRIMARY).map(|field| {
+                    format!("{}", field.display_value().with_unit(exif_data)).replace("\"", "")
+                })
             })
-        })
-        .map(|s| s.trim_end_matches(|c| char::is_ascii_punctuation(&c) || char::is_ascii_whitespace(&c)).to_string()) // trim all trailing commas and spaces,
+            .map(|s| {
+                s.trim_end_matches(|c| {
+                    char::is_ascii_punctuation(&c) || char::is_ascii_whitespace(&c)
+                })
+                .to_string()
+            }) // trim all trailing commas and spaces,
     }
 
     fn get_exif_orientation_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<u32> {
@@ -478,10 +481,12 @@ impl AFile {
     /// delete a file from db
     fn delete(folder_id: i64) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn.execute(
-            "DELETE FROM afiles WHERE folder_id = ?1",
-            params![folder_id]
-        ).map_err(|e| e.to_string())?;
+        let result = conn
+            .execute(
+                "DELETE FROM afiles WHERE folder_id = ?1",
+                params![folder_id],
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -629,23 +634,27 @@ impl AFile {
     /// set a file's favorite status
     pub fn set_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn.execute(
-            "UPDATE afiles SET is_favorite = ?1 WHERE id = ?2",
-            params![is_favorite, file_id]
-        ).map_err(|e| e.to_string())?;
+        let result = conn
+            .execute(
+                "UPDATE afiles SET is_favorite = ?1 WHERE id = ?2",
+                params![is_favorite, file_id],
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// get all taken dates from db
     pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn();
-        let mut stmt = conn.prepare(
-            "SELECT taken_date, count(1) 
+        let mut stmt = conn
+            .prepare(
+                "SELECT taken_date, count(1) 
             FROM afiles 
             WHERE taken_date IS NOT NULL
             GROUP BY taken_date
             ORDER BY taken_date ASC",
-        ).map_err(|e| e.to_string())?;
+            )
+            .map_err(|e| e.to_string())?;
 
         // Execute the query and collect results
         let taken_dates_iter = stmt
@@ -653,7 +662,8 @@ impl AFile {
                 let date: String = row.get(0)?;
                 let count: i64 = row.get(1)?;
                 Ok((date, count))
-            }).map_err(|e| e.to_string())?;
+            })
+            .map_err(|e| e.to_string())?;
 
         // Collect the results into a vector
         let mut results = Vec::new();
@@ -699,9 +709,7 @@ impl AFile {
         let conditions = " WHERE a.e_make = ?1 AND (?2 = '' OR a.e_model = ?2)";
         Self::query_with_conditions(conditions, &[&make, &model])
     }
-
 }
-
 
 /// Define the album thumbnail struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -716,9 +724,7 @@ pub struct AThumb {
     pub thumb_data_base64: Option<String>, // fetch thumbnail data as base64 string (for webview)
 }
 
-
 impl AThumb {
-
     /// Create a new thumbnail struct
     pub fn new(
         file_id: i64,
@@ -738,32 +744,37 @@ impl AThumb {
     /// insert a thumbnail into db
     fn insert(&self) -> Result<usize, String> {
         let conn = open_conn();
-        let result = conn.execute(
-            "INSERT INTO athumbs (file_id, thumb_data) 
+        let result = conn
+            .execute(
+                "INSERT INTO athumbs (file_id, thumb_data) 
             VALUES (?1, ?2)",
-            params![self.file_id, self.thumb_data,],
-        ).map_err(|e| e.to_string())?;
+                params![self.file_id, self.thumb_data,],
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// fetch a thumbnail from db by file_id
     fn fetch(file_id: i64) -> Result<Option<Self>, String> {
         let conn = open_conn();
-        let result = conn.query_row(
-            "SELECT id, file_id, thumb_data 
+        let result = conn
+            .query_row(
+                "SELECT id, file_id, thumb_data 
             FROM athumbs WHERE file_id = ?1",
-            params![file_id],
-            |row| {
-                Ok(Self {
-                    id: Some(row.get(0)?),
-                    file_id: row.get(1)?,
-                    thumb_data: None,
-                    thumb_data_base64: Some(
-                        general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(2)?),
-                    ),
-                })
-            }
-        ).optional().map_err(|e| e.to_string())?;
+                params![file_id],
+                |row| {
+                    Ok(Self {
+                        id: Some(row.get(0)?),
+                        file_id: row.get(1)?,
+                        thumb_data: None,
+                        thumb_data_base64: Some(
+                            general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(2)?),
+                        ),
+                    })
+                },
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -789,10 +800,7 @@ impl AThumb {
 
         Ok(None)
     }
-
-
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ACamera {
@@ -801,24 +809,26 @@ pub struct ACamera {
 }
 
 impl ACamera {
-
     // get all camera makes and models from db
     pub fn get_from_db() -> Result<Vec<Self>, String> {
         let conn = open_conn();
-        let mut stmt = conn.prepare(
+        let mut stmt = conn
+            .prepare(
                 "SELECT e_make, e_model 
             FROM afiles 
             WHERE e_make IS NOT NULL AND e_model IS NOT NULL
             GROUP BY e_make, e_model
-            ORDER BY e_make, e_model"
-        ).map_err(|e| e.to_string())?;
+            ORDER BY e_make, e_model",
+            )
+            .map_err(|e| e.to_string())?;
 
         let rows = stmt
             .query_map(params![], |row| {
                 let make: String = row.get(0)?;
                 let model: String = row.get(1)?;
                 Ok((make, model))
-            }).map_err(|e| e.to_string())?;
+            })
+            .map_err(|e| e.to_string())?;
 
         let mut hash_map: HashMap<String, Vec<String>> = HashMap::new();
 
@@ -844,7 +854,6 @@ impl ACamera {
     }
 }
 
-
 /// get connection to the db
 fn open_conn() -> Connection {
     Connection::open("./main.db")
@@ -858,7 +867,6 @@ fn open_conn() -> Connection {
 //         eprintln!("Failed to close the connection: {}", err);
 //     }
 // }
-
 
 /// create all tables if not exists
 pub fn create_db() -> Result<String> {
@@ -937,6 +945,4 @@ pub fn create_db() -> Result<String> {
     )?;
 
     Ok("Database created successfully.".to_string())
-
 }
-
