@@ -316,8 +316,12 @@ const onImageLoad = async () => {
   let filePath = fileList.value[selectedItemIndex.value].file_path;
   console.log('onImageLoad:', filePath);
   try {
+    let currentIndex = selectedItemIndex.value;
     const imageBase64 = await invoke('get_file_image', { filePath });
-    imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+    // Check if the selected item has changed since the invocation
+    if (currentIndex === selectedItemIndex.value) {
+      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+    }
   } catch (error) {
     // imageSrc.value = '/src/assets/photo.svg';
     console.error('onImageLoad error:', error);
@@ -549,6 +553,9 @@ async function openImageViewer(index: number, createNew = false) {
       fileIndex: index,   // selected file index
       fileCount: fileCount, // total files length
     });
+    if(createNew) {
+      imageWindow.setFocus();
+    }
   }
 }
 

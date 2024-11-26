@@ -47,6 +47,7 @@ export const useConfigStore = defineStore('configStore', {
     cameraModel: null,          // selected camera model
 
     // ImageViewer.vue
+    isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
     isFullScreen: false,        // full screen mode
   }),
 

@@ -31,6 +31,7 @@
               }
             ]"
             @click="clickAlbum(album)"
+            @dblclick="dlbClickAlbum(album)"
           >
             <component :is="album.is_expanded ? IconFolderOpen : IconFolder" 
               class="mx-1 h-5 flex-shrink-0" 
@@ -198,6 +199,11 @@ const clickAlbum = async (album) => {
   } catch (error) {
     console.error("clickAlbum...", error);
   }
+};
+
+const dlbClickAlbum = async (album) => {
+  clickAlbum(album);
+  clickExpandAlbum(album);
 };
 
 /// click folder to select

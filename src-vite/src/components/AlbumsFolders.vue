@@ -8,6 +8,7 @@
           child.id && config.albumFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @click="clickFolder(albumId, child)"
+        @dblclick="clickExpandFolder($event, child)"
       >
         <span v-if="child.children && child.children.length == 0" class="w-6"></span>
         <IconRight v-else

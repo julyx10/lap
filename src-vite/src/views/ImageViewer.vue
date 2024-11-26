@@ -30,7 +30,7 @@
       />
       <IconZoomIn  class="t-icon-size-sm t-icon-hover" @click="clickZoomIn" />
       <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="clickZoomOut" />
-      <component :is="isZoomFit ? IconZoomFit : IconZoomOriginal" class="t-icon-size-sm t-icon-hover" @click="toggleZoomFit" />
+      <component :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" class="t-icon-size-sm t-icon-hover" @click="toggleZoomFit" />
       <IconRotateRight class="t-icon-size-sm t-icon-hover" @click="clickRotate"/>
       <IconUnFavorite v-if="!fileInfo" class="t-icon-size-sm t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
@@ -59,7 +59,7 @@
 
         <!-- image -->
         <Image v-if="imageSrc" ref="imageRef" 
-          :src="imageSrc" :width="fileInfo?.width" :height="fileInfo?.height"
+          :src="imageSrc" :width="fileInfo?.width" :height="fileInfo?.height" :isZoomFit="config.isZoomFit"
         />
         <p v-else>
           {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
@@ -140,8 +140,6 @@ const fileIndex = ref(0);      // Index of the current file
 const fileCount = ref(0);      // Total number of files
 const fileInfo = ref(null);
 const showFileInfo = ref(false); // Show the file info panel
-
-const isZoomFit = ref(null);  // true: zoom to fit container; false: original size(scale = 1)
 
 const imageRef = ref(null); // Image reference
 const imageSrc = ref(null);
@@ -249,10 +247,7 @@ const clickZoomOut = () => {
 };
 
 const toggleZoomFit = () => {
-  if(imageRef.value) {
-    isZoomFit.value = !isZoomFit.value;
-    isZoomFit.value ? imageRef.value.zoomFit() : imageRef.value.zoomReset();
-  }
+  config.isZoomFit =!config.isZoomFit;
 };
 
 const clickRotate = () => {
