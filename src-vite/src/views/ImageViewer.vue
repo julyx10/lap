@@ -58,7 +58,6 @@
         </div>
 
         <!-- image -->
-        <!-- <img v-if="imageSrc" :src="imageSrc" alt="Image" /> -->
         <Image v-if="imageSrc" ref="imageRef" 
           :src="imageSrc" :width="fileInfo?.width" :height="fileInfo?.height" :isZoomFit="config.isZoomFit"
         />
@@ -107,12 +106,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 
-// import Viewer from "viewerjs";
-// import "viewerjs/dist/viewer.css";
-
 import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
-import ZoomImage from '../components/zoomImage.vue';
 import FileInfo from '@/components/FileInfo.vue';
 
 import IconPrev from '@/assets/nav-prev.svg';
@@ -146,10 +141,6 @@ const fileIndex = ref(0);      // Index of the current file
 const fileCount = ref(0);      // Total number of files
 const fileInfo = ref(null);
 const showFileInfo = ref(false); // Show the file info panel
-
-// viewerjs
-const viewerContainer = ref(null);
-let viewer = null;
 
 const imageRef = ref(null); // Image reference
 const imageSrc = ref(null);
@@ -203,27 +194,10 @@ onMounted(async() => {
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
   await loadFileInfo(fileId.value);
-
-  // viewerjs
-  // if (!viewer) {
-  //   viewer = new Viewer(viewerContainer.value, {
-  //     toolbar: true,
-  //     title: true,
-  //     tooltip: true,
-  //   });
-  // }
-  // viewer.show();
-  
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-
-  // viewerjs
-  if (viewer) {
-    viewer.destroy();
-    viewer = null;
-  }
 });
 
 // Load the image from the file path
