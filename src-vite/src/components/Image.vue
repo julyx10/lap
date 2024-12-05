@@ -18,7 +18,7 @@
       </tr>
       <tr>
         <td>isZoomFit</td>
-        <td>{{ isZoomFit }}</td>
+        <td>{{ isZoomFit }} {{ isImageSrcChanged }}</td>
       </tr>
       <tr>
         <td>containerSize</td>
@@ -77,6 +77,7 @@ const containerPos = ref({ x: 0, y: 0 }); // Container position
 
 // Image
 const image = ref(null);
+const isImageSrcChanged = ref(false);
 const imageSize = ref({ width: 0, height: 0 });
 const position = ref({ x: 0, y: 0 }); // Image position
 const scale = ref(1);                 // Image scale (zoom level)
@@ -93,9 +94,10 @@ const imageStyle = computed(() => {
     // position: 'absolute',
     minWidth: `${imageSize.value.width}px`,
     minHeight: `${imageSize.value.height}px`,
-    transformOrigin: '0 0',
+    // transformOrigin: '0 0',
     transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value}) rotate(${rotate.value}deg)`,
-    // transition: isDragging.value ? '' : 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+    transition: isDragging.value || isImageSrcChanged.value ? '' : 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out', // enable animation
+    // opacity: isImageSrcChanged.value ? 0.8 : 1,
   };
 });
 
@@ -128,10 +130,23 @@ onBeforeUnmount(() => {
 });
 
 // watch image src changes
-watch(() => props.src, (newValue) => {
+watch(() => props.src, (newValue, oldSrc) => {
   rotate.value = 0;
   console.log('updateImageSrc: ', newValue);
+  isImageSrcChanged.value = true; // disable animation
+
+  // imageSize.value = { width: props.width, height: props.height };
+  // // set position to center
+  // position.value = { 
+  //   x: (containerSize.value.width - imageSize.value.width) / 2,
+  //   y: (containerSize.value.height - imageSize.value.height) / 2,
+  // };
   updateZoom();
+
+  // enable animation
+  setTimeout(() => {
+    isImageSrcChanged.value = false;
+  }, 300);
 });
 
 // watch image size changes
@@ -177,9 +192,10 @@ const zoomFit = () => {
     scale.value = containerSize.value.width / imageSize.value.width;
   }
 
+  // set position to center
   position.value = { 
-    x: (containerSize.value.width - imageSize.value.width * scale.value) / 2,
-    y: (containerSize.value.height - imageSize.value.height * scale.value) / 2,
+    x: (containerSize.value.width - imageSize.value.width) / 2,
+    y: (containerSize.value.height - imageSize.value.height) / 2,
   };
 };
 
@@ -187,6 +203,8 @@ const zoomFit = () => {
 const zoomReset = () => {
   console.log('zoomReset');
   scale.value = 1;
+
+  // set position to center
   position.value = { 
     x: (containerSize.value.width - imageSize.value.width) / 2,
     y: (containerSize.value.height - imageSize.value.height) / 2,
@@ -195,13 +213,12 @@ const zoomReset = () => {
 
 // mouse wheel zoom
 const onZoom = (event) => {
-  console.log('onZoom', event.deltaY);
   event.preventDefault();
-
+  
+  console.log('onZoom', event.deltaY);
   const zoomFactor = 0.1; // Adjust sensitivity
   const newScale = Math.min(Math.max(scale.value / (1 + event.deltaY * zoomFactor / 100), 0.1), 10); // Clamp zoom level
-
-  zoomImage(event.clientX, event.clientY, newScale);
+  zoomImage(event.clientX - containerPos.value.x, event.clientY - containerPos.value.y, newScale);
 };
 
 const zoomIn = () => {
@@ -218,12 +235,13 @@ const zoomOut = () => {
 
 const rotateRight = () => {
   console.log('rotateRight');
-  rotate.value = (rotate.value + 90) % 360;
+  rotate.value = rotate.value + 90;
 
-  // position.value.x += (imageSize.value.width * scale.value + imageSize.value.height * scale.value) / 2;
-  // position.value.y += (imageSize.value.height * scale.value + imageSize.value.width * scale.value) / 2;
-
-  clampPosition(); 
+  // swap image width and height
+  // if (rotate.value % 180 === 90) {
+  //   const temp = imageSize.value;
+  //   imageSize.value = { width: temp.height, height: temp.width };
+  // }
 };
 
 // drag image if image size is larger than container size
@@ -251,9 +269,9 @@ const stopDragging = () => {
 
 // Zoom image at cursor position
 function zoomImage(cursorX, cursorY, newScale) {
-  const imageOffsetX = (cursorX - containerPos.value.x - position.value.x) * (scale.value - newScale) / scale.value;
-  const imageOffsetY = (cursorY - containerPos.value.y - position.value.y) * (scale.value - newScale) / scale.value;
-
+  // 2024-12-05: finally to impl the function below :(
+  const imageOffsetX = ( (scale.value - newScale) * ( (cursorX - position.value.x) - imageSize.value.width / 2) ) / scale.value;
+  const imageOffsetY = ( (scale.value - newScale) * ( (cursorY - position.value.y) - imageSize.value.height / 2) ) / scale.value;
   position.value.x += imageOffsetX;
   position.value.y += imageOffsetY;
 
@@ -265,18 +283,20 @@ function zoomImage(cursorX, cursorY, newScale) {
 
 // Ensure image stays within container
 function clampPosition() {
-  const maxX = (containerSize.value.width - imageSize.value.width * scale.value) - 10;
-  const maxY = (containerSize.value.height - imageSize.value.height * scale.value) - 10;
+  const paddingX = imageSize.value.width * (scale.value - 1) / 2 + 10;
+  const paddingY = imageSize.value.height * (scale.value - 1) / 2 + 10;
+  const maxX = containerSize.value.width - imageSize.value.width - paddingX;
+  const maxY = containerSize.value.height - imageSize.value.height - paddingY;
 
   if(imageSize.value.width * scale.value > containerSize.value.width) {
-    position.value.x = Math.min(Math.max(position.value.x, maxX), 10);
+    position.value.x = Math.min(Math.max(position.value.x, maxX), paddingX);
   } else {
-    position.value.x = (containerSize.value.width - imageSize.value.width * scale.value) / 2;
+    position.value.x = (containerSize.value.width - imageSize.value.width) / 2;
   }
   if(imageSize.value.height * scale.value > containerSize.value.height) {
-    position.value.y = Math.min(Math.max(position.value.y, maxY), 10);
+    position.value.y = Math.min(Math.max(position.value.y, maxY), paddingY);
   } else {
-    position.value.y = (containerSize.value.height - imageSize.value.height * scale.value) / 2;
+    position.value.y = (containerSize.value.height - imageSize.value.height) / 2;
   }
 };
 
