@@ -23,6 +23,7 @@
               isFitWidth ? 'object-cover' : 'object-contain'
             ]"
             :style="{ width: `${gridSize}px`, height: `${gridSize}px` }"
+            loading="lazy"
           />
           <div v-else 
             class="rounded flex items-center justify-center"

@@ -11,14 +11,14 @@
     @wheel="onZoom"
   >
     <!-- DEBUG -->
-    <table class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
+    <table v-if="false" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
       <tr>
         <td>scale</td>
         <td>{{ scale }}</td>
       </tr>
       <tr>
         <td>isZoomFit</td>
-        <td>{{ isZoomFit }} {{ isImageSrcChanged }}</td>
+        <td>{{ isZoomFit }}</td>
       </tr>
       <tr>
         <td>containerSize</td>
@@ -44,6 +44,14 @@
       :style="imageStyle"
       draggable="false"
     />
+
+    <!-- zoom scale -->
+    <transition name="fade">
+      <div v-if="isScaleChanged" class="absolute left-1/2 top-5 px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg ">
+        <slot>{{(scale * 100).toFixed(0)}} %</slot>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -71,16 +79,18 @@ const props = defineProps({
 });
 
 // container
-const container = ref(null);                // Container element
-const containerSize = ref({ width: 0, height: 0 }); // Container size
-const containerPos = ref({ x: 0, y: 0 }); // Container position
+const container = ref(null);
+const containerSize = ref({ width: 0, height: 0 });
+const containerPos = ref({ x: 0, y: 0 });
 
 // Image
 const image = ref(null);
-const isImageSrcChanged = ref(false);
-const imageSize = ref({ width: 0, height: 0 });
-const position = ref({ x: 0, y: 0 }); // Image position
+const isImageSrcChanged = ref(true);
+const imageSize = ref({ width: 0, height: 0 });         // actually image size
+const imageSizeRotated = ref({ width: 0, height: 0 });  // image size after rotation
+const position = ref({ x: 0, y: 0 }); // Image position (top-left corner)
 const scale = ref(1);                 // Image scale (zoom level)
+const isScaleChanged = ref(false);    // Scale changed state
 const rotate = ref(0);                // Image rotation
 const isZoomFit = ref(false);         // Zoom to fit image in container
 const isDragging = ref(false);        // Dragging state
@@ -130,17 +140,11 @@ onBeforeUnmount(() => {
 });
 
 // watch image src changes
-watch(() => props.src, (newValue, oldSrc) => {
+watch(() => props.src, () => {
+  isZoomFit.value = props.isZoomFit;
   rotate.value = 0;
-  console.log('updateImageSrc: ', newValue);
   isImageSrcChanged.value = true; // disable animation
 
-  // imageSize.value = { width: props.width, height: props.height };
-  // // set position to center
-  // position.value = { 
-  //   x: (containerSize.value.width - imageSize.value.width) / 2,
-  //   y: (containerSize.value.height - imageSize.value.height) / 2,
-  // };
   updateZoom();
 
   // enable animation
@@ -153,7 +157,7 @@ watch(() => props.src, (newValue, oldSrc) => {
 watch(() => [props.width, props.height], ([width, height]) => {
   if (width && height) {
     imageSize.value = { width, height };
-    console.log('updateImageSize: ', imageSize.value);
+    imageSizeRotated.value = imageSize.value;
     updateZoom();
   } 
 });
@@ -161,19 +165,23 @@ watch(() => [props.width, props.height], ([width, height]) => {
 // watch zoom fit changes
 watch(() => props.isZoomFit, (newValue) => {
   isZoomFit.value = newValue;
-  console.log('isZoomFit: ', isZoomFit);
   updateZoom();
 });
 
 // watch container size changes
-watch(() => containerSize.value, (size) => {
-  console.log('updateContainerSize: ', size);
-
+watch(() => containerSize.value, () => {
   if(isZoomFit.value) {
     zoomFit();
   } else {
     clampPosition();
   }
+});
+
+watch(() => scale.value, () => {
+  isScaleChanged.value = true;
+  setTimeout(() => {
+    isScaleChanged.value = false;
+  }, 1000);
 });
 
 const updateZoom = () => {
@@ -182,14 +190,13 @@ const updateZoom = () => {
 
 // Zoom to fit image in container
 const zoomFit = () => {
-  console.log('zoomFit');
   const containerAspectRatio = containerSize.value.width / containerSize.value.height;
-  const imageAspectRatio = imageSize.value.width / imageSize.value.height;
+  const imageAspectRatio = imageSizeRotated.value.width / imageSizeRotated.value.height;
 
   if (containerAspectRatio > imageAspectRatio) {
-    scale.value = containerSize.value.height / imageSize.value.height;
+    scale.value = containerSize.value.height / imageSizeRotated.value.height;
   } else {
-    scale.value = containerSize.value.width / imageSize.value.width;
+    scale.value = containerSize.value.width / imageSizeRotated.value.width;
   }
 
   // set position to center
@@ -201,7 +208,6 @@ const zoomFit = () => {
 
 // Reset zoom level and position
 const zoomReset = () => {
-  console.log('zoomReset');
   scale.value = 1;
 
   // set position to center
@@ -215,33 +221,36 @@ const zoomReset = () => {
 const onZoom = (event) => {
   event.preventDefault();
   
-  console.log('onZoom', event.deltaY);
   const zoomFactor = 0.1; // Adjust sensitivity
   const newScale = Math.min(Math.max(scale.value / (1 + event.deltaY * zoomFactor / 100), 0.1), 10); // Clamp zoom level
   zoomImage(event.clientX - containerPos.value.x, event.clientY - containerPos.value.y, newScale);
 };
 
 const zoomIn = () => {
-  console.log('zoomIn');
   const newScale = Math.min(scale.value * 2, 10);
   zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
 };
 
 const zoomOut = () => {
-  console.log('zoomOut');
   const newScale = Math.max(scale.value / 2, 0.1);
   zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
 };
 
 const rotateRight = () => {
-  console.log('rotateRight');
   rotate.value = rotate.value + 90;
 
   // swap image width and height
-  // if (rotate.value % 180 === 90) {
-  //   const temp = imageSize.value;
-  //   imageSize.value = { width: temp.height, height: temp.width };
-  // }
+  if (rotate.value % 180 === 90) {
+    imageSizeRotated.value = { width: props.height, height: props.width };
+  } else {
+    imageSizeRotated.value = { width: props.width, height: props.height };
+  }
+
+  if(isZoomFit.value) {
+    zoomFit();
+  } else {
+    clampPosition();
+  }
 };
 
 // drag image if image size is larger than container size
@@ -251,10 +260,11 @@ const startDragging = (event) => {
 };
 
 const onDragging = (event) => {
-  if (!isDragging.value) return;
+  if (!isDragging.value) 
+    return;
 
-  const deltaX = imageSize.value.width * scale.value <= containerSize.value.width ? 0 : event.clientX - lastMousePosition.value.x;
-  const deltaY = imageSize.value.height * scale.value <= containerSize.value.height ? 0 : event.clientY - lastMousePosition.value.y;
+  const deltaX = imageSizeRotated.value.width * scale.value <= containerSize.value.width ? 0 : event.clientX - lastMousePosition.value.x;
+  const deltaY = imageSizeRotated.value.height * scale.value <= containerSize.value.height ? 0 : event.clientY - lastMousePosition.value.y;
 
   position.value.x += deltaX;
   position.value.y += deltaY;
@@ -270,8 +280,8 @@ const stopDragging = () => {
 // Zoom image at cursor position
 function zoomImage(cursorX, cursorY, newScale) {
   // 2024-12-05: finally to impl the function below :(
-  const imageOffsetX = ( (scale.value - newScale) * ( (cursorX - position.value.x) - imageSize.value.width / 2) ) / scale.value;
-  const imageOffsetY = ( (scale.value - newScale) * ( (cursorY - position.value.y) - imageSize.value.height / 2) ) / scale.value;
+  const imageOffsetX = ((scale.value - newScale) * ((cursorX - position.value.x) - imageSize.value.width / 2)) / scale.value;
+  const imageOffsetY = ((scale.value - newScale) * ((cursorY - position.value.y) - imageSize.value.height / 2)) / scale.value;
   position.value.x += imageOffsetX;
   position.value.y += imageOffsetY;
 
@@ -283,17 +293,17 @@ function zoomImage(cursorX, cursorY, newScale) {
 
 // Ensure image stays within container
 function clampPosition() {
-  const paddingX = imageSize.value.width * (scale.value - 1) / 2 + 10;
-  const paddingY = imageSize.value.height * (scale.value - 1) / 2 + 10;
-  const maxX = containerSize.value.width - imageSize.value.width - paddingX;
-  const maxY = containerSize.value.height - imageSize.value.height - paddingY;
+  const paddingX = (imageSizeRotated.value.width * scale.value - imageSize.value.width) / 2;
+  const paddingY = (imageSizeRotated.value.height * scale.value - imageSize.value.height) / 2;
+  const maxX = containerSize.value.width  - imageSizeRotated.value.width * scale.value + paddingX;
+  const maxY = containerSize.value.height - imageSizeRotated.value.height * scale.value + paddingY;
 
-  if(imageSize.value.width * scale.value > containerSize.value.width) {
+  if(imageSizeRotated.value.width * scale.value > containerSize.value.width) {
     position.value.x = Math.min(Math.max(position.value.x, maxX), paddingX);
   } else {
     position.value.x = (containerSize.value.width - imageSize.value.width) / 2;
   }
-  if(imageSize.value.height * scale.value > containerSize.value.height) {
+  if(imageSizeRotated.value.height * scale.value > containerSize.value.height) {
     position.value.y = Math.min(Math.max(position.value.y, maxY), paddingY);
   } else {
     position.value.y = (containerSize.value.height - imageSize.value.height) / 2;
@@ -312,4 +322,18 @@ defineExpose({
 </script>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 0.5;
+}
 </style>
