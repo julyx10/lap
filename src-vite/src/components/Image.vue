@@ -38,11 +38,13 @@
       </tr>
     </table>
 
-    <img ref="image"
+    <img v-show="isImageLoaded"
+      ref="image"
       :class="isDragging && !isZoomFit ? 'cursor-grabbing' : 'cursor-grab'"
       :src="src"
       :style="imageStyle"
       draggable="false"
+      @load="isImageLoaded = true"
     />
 
     <!-- zoom scale -->
@@ -84,8 +86,9 @@ const containerSize = ref({ width: 0, height: 0 });
 const containerPos = ref({ x: 0, y: 0 });
 
 // Image
-const image = ref(null);
-const isImageSrcChanged = ref(true);
+const image = ref(null);                  // image element
+const isImageSrcChanged = ref(true);      // display animation when image src changes
+const isImageLoaded = ref(false);         // show image after loaded
 const imageSize = ref({ width: 0, height: 0 });         // actually image size
 const imageSizeRotated = ref({ width: 0, height: 0 });  // image size after rotation
 const position = ref({ x: 0, y: 0 }); // Image position (top-left corner)
@@ -106,7 +109,7 @@ const imageStyle = computed(() => {
     minHeight: `${imageSize.value.height}px`,
     // transformOrigin: '0 0',
     transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value}) rotate(${rotate.value}deg)`,
-    transition: isDragging.value || isImageSrcChanged.value ? '' : 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out', // enable animation
+    transition: isDragging.value && isImageSrcChanged.value ? '' : 'transform 0.3s ease-in-out', // enable animation
     // opacity: isImageSrcChanged.value ? 0.8 : 1,
   };
 });
@@ -144,6 +147,7 @@ watch(() => props.src, () => {
   isZoomFit.value = props.isZoomFit;
   rotate.value = 0;
   isImageSrcChanged.value = true; // disable animation
+  isImageLoaded.value = false;
 
   updateZoom();
 
@@ -322,18 +326,4 @@ defineExpose({
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 0.5;
-}
 </style>

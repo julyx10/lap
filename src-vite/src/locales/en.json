@@ -1,11 +1,11 @@
 {
   "home": "Home",
+  "favorite": "Favorites",
   "album": "Albums",
   "calendar": "Calendar",
   "location": "Location",
   "people": "People",
   "camera": "Camera",
-  "favorite": "Favorite",
   "tag": "Tag",
 
   "settings": "Settings",

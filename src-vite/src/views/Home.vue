@@ -8,7 +8,7 @@
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
 
       <!-- left toolbar -->
-      <div ref="divToolbar" class="w-12 my-4 flex flex-col justify-between">
+      <div ref="divToolbar" class="w-12 my-4 flex flex-col justify-between" style="user-select: none;">
         <div class="flex flex-col items-center space-y-6">
           <div v-for="(item, index) in toolbars" 
             class="flex flex-col items-center t-icon-hover" 
@@ -44,17 +44,17 @@
         leave-from-class="translate-x-0"
         leave-to-class="-translate-x-full"
       > -->
-        <div v-show="config.toolbarIndex > 0" class="w-96 min-w-32 py-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
-          <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
-          <Calendar v-show="config.toolbarIndex === 2" :titlebar="$t('calendar')"/>
-          <Location v-show="config.toolbarIndex === 3" :titlebar="$t('location')"/>
-          <People   v-show="config.toolbarIndex === 4" :titlebar="$t('people')"/>
-          <Camera   v-show="config.toolbarIndex === 5" :titlebar="$t('camera')"/>
+        <div v-show="config.toolbarIndex > 1" class="w-96 min-w-32 py-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
+          <Album    v-show="config.toolbarIndex === 2" :titlebar="$t('album')"/>
+          <Calendar v-show="config.toolbarIndex === 3" :titlebar="$t('calendar')"/>
+          <Location v-show="config.toolbarIndex === 4" :titlebar="$t('location')"/>
+          <People   v-show="config.toolbarIndex === 5" :titlebar="$t('people')"/>
+          <Camera   v-show="config.toolbarIndex === 6" :titlebar="$t('camera')"/>
         </div>
       <!-- </transition> -->
       
       <!-- splitter -->
-      <div v-if="config.toolbarIndex > 0" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
+      <div v-if="config.toolbarIndex > 1" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
       
       <!-- content area -->
       <div class="flex-1 flex relative t-color-bg-light rounded-ss-lg">
@@ -83,12 +83,12 @@ import Content from '@/components/Content.vue';
 
 /// Toolbar svg icons
 import IconHome from '@/assets/home.svg';
+import IconFavorite from '@/assets/heart.svg';
 import IconAlbum from '@/assets/photo.svg';
 import IconCalendar from '@/assets/calendar.svg';
 import IconLocation from '@/assets/map-pin.svg';
 import IconPeople from '@/assets/user.svg';
 import IconCamera from '@/assets/camera.svg';
-// import IconFavorite from '@/assets/heart.svg';
 // import IconTag from '@/assets/tag.svg';
 import IconSettings from '@/assets/settings.svg';
 
@@ -103,12 +103,12 @@ const config = useConfigStore();
 // toolbar 
 const toolbars = computed(() =>  [
   { icon: IconHome,     text: localeMsg.value.home },
+  { icon: IconFavorite, text: localeMsg.value.favorite },
   { icon: IconAlbum,    text: localeMsg.value.album },
   { icon: IconCalendar, text: localeMsg.value.calendar },
   { icon: IconLocation, text: localeMsg.value.location },
   { icon: IconPeople,   text: localeMsg.value.people }, 
   { icon: IconCamera,   text: localeMsg.value.camera },
-  // { icon: IconFavorite, text: localeMsg.value.favorite },
   // { icon: IconTag,      text: localeMsg.value.tag },
 ]);
 

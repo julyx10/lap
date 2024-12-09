@@ -1,11 +1,11 @@
 {
   "home": "主页",
+  "favorite": "收藏",
   "album": "相册",
   "calendar": "日历",
   "location": "地点",
   "people": "人物",
   "camera": "相机",
-  "favorite": "收藏",
   "tag": "标签",
 
   "settings": "设置",

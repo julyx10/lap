@@ -3,43 +3,41 @@
   <div class="flex-1 flex flex-col">
 
     <!-- title bar -->
-    <!-- <div class="px-4" style="user-select: none;"> -->
-      <div class="px-4 pt-1 flex flex-row items-center justify-between" style="user-select: none;">
+    <div class="px-4 pt-1 flex flex-row items-center justify-between" style="user-select: none;">
 
-        <div class="flex-1 flex flex-col">
-          <span>{{ contentTitle }}</span>
-          <span class="text-sm">
-            {{ $t('files_summary', { files: fileList.length }) }}
-          </span>
-        </div>
-
-        <div class="h-6 flex space-x-4">
-          <SliderInput v-model="config.gridSize" :min="120" :max="320" :step="10" label="" />
-          <IconFitWidth 
-            class="t-icon-size t-icon-hover"
-            :class="{ 't-icon-focus': config.isFitWidth }"
-            @click="config.isFitWidth = !config.isFitWidth" 
-          />
-          <component 
-            :is="config.isFavorite ? IconFavorite : IconUnFavorite" 
-            class="t-icon-hover hover:text-red-600"
-            :class="{ 'text-red-600': config.isFavorite }"
-            @click="config.isFavorite = !config.isFavorite"
-          />
-          <component :is="IconTag" class="t-icon-hover" />
-          <component 
-            :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
-            class="t-icon-hover" 
-            @click="toggleSortingOrder" />
-          <component 
-            :is="config.showPreview ? IconPreview : IconPreviewOff" 
-            class="t-icon-hover" 
-            :class="{ 't-icon-focus': config.showPreview }"
-            @click="config.showPreview = !config.showPreview"
-          />
-        </div>
+      <div class="flex-1 flex flex-col">
+        <span>{{ contentTitle }}</span>
+        <span class="text-sm">
+          {{ $t('files_summary', { files: fileList.length }) }}
+        </span>
       </div>
-    <!-- </div> -->
+
+      <div class="h-6 flex space-x-4">
+        <SliderInput v-model="config.gridSize" :min="120" :max="320" :step="10" label="" />
+        <IconFitWidth 
+          class="t-icon-size t-icon-hover"
+          :class="{ 't-icon-focus': config.isFitWidth }"
+          @click="config.isFitWidth = !config.isFitWidth" 
+        />
+        <component 
+          :is="config.isFavorite ? IconFavorite : IconUnFavorite" 
+          class="t-icon-hover hover:text-red-600"
+          :class="{ 'text-red-600': config.isFavorite }"
+          @click="config.isFavorite = !config.isFavorite"
+        />
+        <component :is="IconTag" class="t-icon-hover" />
+        <component 
+          :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
+          class="t-icon-hover" 
+          @click="toggleSortingOrder" />
+        <component 
+          :is="config.showPreview ? IconPreview : IconPreviewOff" 
+          class="t-icon-hover" 
+          :class="{ 't-icon-focus': config.showPreview }"
+          @click="config.showPreview = !config.showPreview"
+        />
+      </div>
+    </div>
 
     <div>
       <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
@@ -218,13 +216,21 @@ watch(() => config.language, (newLanguage) => {
 watch(() => config.toolbarIndex, newIndex => {
   if(newIndex === 0) {
     contentTitle.value = localeMsg.value.home;
-    getAllFiles();
+    getAllFiles();  // get all files
+  }
+});
+
+/// watch favorites
+watch(() => config.toolbarIndex, newIndex => {
+  if(newIndex === 1) {
+    contentTitle.value = localeMsg.value.favorite;
+    getAllFiles(true); // get favorite files
   }
 });
 
 /// watch album
 watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
-  if(newIndex === 1) {
+  if(newIndex === 2) {
     if (newAlbumId) {
       try {
         const album = await invoke('get_album', { albumId: newAlbumId });
@@ -251,7 +257,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async (
 // watch calandar
 watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate], 
   async ([newIndex, year, month, date]) => {
-  if(newIndex === 2) {
+  if(newIndex === 3) {
     if (year && month && date) {
       if (config.calendarDate === -1) {     // monthly
         contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.month_format);
@@ -273,7 +279,7 @@ watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, con
 
 // watch camera
 watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async ([newIndex, newMake, newModel]) => {
-  if(newIndex === 5) {
+  if(newIndex === 6) {
     if(newMake) {
       if(newModel) {
         contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
@@ -338,9 +344,9 @@ function toggleSortingOrder() {
 }
 
 /// get all files
-async function getAllFiles() {
+async function getAllFiles(isFavorite = false) {
   try {
-    fileList.value = await invoke('get_all_files', { isFavorite: config.isFavorite, offset: 0, pageSize: FILES_PAGE_SIZE });
+    fileList.value = await invoke('get_all_files', { isFavorite: isFavorite, offset: 0, pageSize: FILES_PAGE_SIZE });
     sortFileList(config.sortingType, config.sortingAsc);
     getFileThumb(fileList.value); 
     console.log('getAllFiles:', fileList.value);
