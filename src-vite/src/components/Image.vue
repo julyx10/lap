@@ -11,7 +11,7 @@
     @wheel="onZoom"
   >
     <!-- DEBUG -->
-    <table v-if="false" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
+    <!-- <table class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
       <tr>
         <td>scale</td>
         <td>{{ scale }}</td>
@@ -36,18 +36,18 @@
         <td>position</td>
         <td>{{ position }}</td>
       </tr>
-    </table>
+    </table> -->
 
-    <img v-show="isImageLoaded"
+    <img 
       ref="image"
-      :class="isDragging && !isZoomFit ? 'cursor-grabbing' : 'cursor-grab'"
+      :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
       :src="src"
       :style="imageStyle"
       draggable="false"
-      @load="isImageLoaded = true"
+      @load="onImageLoad($event.target)"
     />
 
-    <!-- zoom scale -->
+    <!-- show zoom scale -->
     <transition name="fade">
       <div v-if="isScaleChanged" class="absolute left-1/2 top-5 px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg ">
         <slot>{{(scale * 100).toFixed(0)}} %</slot>
@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 
 // Props
 const props = defineProps({
@@ -66,14 +66,14 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  width: {
-    type: Number,
-    default: 0,
-  },
-  height: {
-    type: Number,
-    default: 0,
-  },
+  // width: {
+  //   type: Number,
+  //   default: 0,
+  // },
+  // height: {
+  //   type: Number,
+  //   default: 0,
+  // },
   isZoomFit: {
     type: Boolean,
     default: false,
@@ -87,8 +87,6 @@ const containerPos = ref({ x: 0, y: 0 });
 
 // Image
 const image = ref(null);                  // image element
-const isImageSrcChanged = ref(true);      // display animation when image src changes
-const isImageLoaded = ref(false);         // show image after loaded
 const imageSize = ref({ width: 0, height: 0 });         // actually image size
 const imageSizeRotated = ref({ width: 0, height: 0 });  // image size after rotation
 const position = ref({ x: 0, y: 0 }); // Image position (top-left corner)
@@ -98,21 +96,9 @@ const rotate = ref(0);                // Image rotation
 const isZoomFit = ref(false);         // Zoom to fit image in container
 const isDragging = ref(false);        // Dragging state
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
+const isGrabbing = ref(false);        // Grabbing state
 
 let resizeObserver;
-
-// Computed style for the image
-const imageStyle = computed(() => {
-  return {
-    // position: 'absolute',
-    minWidth: `${imageSize.value.width}px`,
-    minHeight: `${imageSize.value.height}px`,
-    // transformOrigin: '0 0',
-    transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value}) rotate(${rotate.value}deg)`,
-    transition: isDragging.value && isImageSrcChanged.value ? '' : 'transform 0.3s ease-in-out', // enable animation
-    // opacity: isImageSrcChanged.value ? 0.8 : 1,
-  };
-});
 
 onMounted(() => {
   isZoomFit.value = props.isZoomFit;
@@ -142,29 +128,50 @@ onBeforeUnmount(() => {
   }
 });
 
-// watch image src changes
-watch(() => props.src, () => {
+// Computed style for the image
+const imageStyle = computed(() => {
+  return {
+    minWidth:  `${imageSize.value.width}px`,
+    minHeight: `${imageSize.value.height}px`,
+    transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value}) rotate(${rotate.value}deg)`,
+    transition: isDragging.value ? 'none' : 'transform 0.3s ease-in-out',
+  };
+});
+
+const onImageLoad = (img) => {
+  imageSize.value = { width: img.naturalWidth, height: img.naturalHeight };
+  imageSizeRotated.value = imageSize.value;
+
   isZoomFit.value = props.isZoomFit;
   rotate.value = 0;
-  isImageSrcChanged.value = true; // disable animation
-  isImageLoaded.value = false;
 
   updateZoom();
+}
 
-  // enable animation
-  setTimeout(() => {
-    isImageSrcChanged.value = false;
-  }, 300);
-});
+// watch image src changes
+// watch(() => props.src, () => {
+  // isZoomFit.value = props.isZoomFit;
+  // rotate.value = 0;
+
+  // const img = new Image();
+  // img.src = props.src;
+  // img.onload = () => {
+  //   imageSize.value = { width: img.width, height: img.height };
+  //   imageSizeRotated.value = imageSize.value;
+  //   updateZoom();
+  // };
+
+  // updateZoom();
+// });
 
 // watch image size changes
-watch(() => [props.width, props.height], ([width, height]) => {
-  if (width && height) {
-    imageSize.value = { width, height };
-    imageSizeRotated.value = imageSize.value;
-    updateZoom();
-  } 
-});
+// watch(() => [props.width, props.height], ([width, height]) => {
+//   if (width && height) {
+//     imageSize.value = { width, height };
+//     imageSizeRotated.value = imageSize.value;
+//     updateZoom();
+//   } 
+// });
 
 // watch zoom fit changes
 watch(() => props.isZoomFit, (newValue) => {
@@ -181,6 +188,7 @@ watch(() => containerSize.value, () => {
   }
 });
 
+// display zoom scale for a while
 watch(() => scale.value, () => {
   isScaleChanged.value = true;
   setTimeout(() => {
@@ -302,13 +310,16 @@ function clampPosition() {
   const maxX = containerSize.value.width  - imageSizeRotated.value.width * scale.value + paddingX;
   const maxY = containerSize.value.height - imageSizeRotated.value.height * scale.value + paddingY;
 
+  isGrabbing.value = false;
   if(imageSizeRotated.value.width * scale.value > containerSize.value.width) {
     position.value.x = Math.min(Math.max(position.value.x, maxX), paddingX);
+    isGrabbing.value = true;
   } else {
     position.value.x = (containerSize.value.width - imageSize.value.width) / 2;
   }
   if(imageSizeRotated.value.height * scale.value > containerSize.value.height) {
     position.value.y = Math.min(Math.max(position.value.y, maxY), paddingY);
+    isGrabbing.value = true;
   } else {
     position.value.y = (containerSize.value.height - imageSize.value.height) / 2;
   }

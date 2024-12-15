@@ -16,7 +16,7 @@ export const useConfigStore = defineStore('configStore', {
     // Content.vue
     gridSize: 200,              // grid size in grid view, range 120-360
     isFitWidth: false,          // fit width mode
-    isFavorite: false,          // show favorite only
+    // isFavorite: false,          // show favorite only
     sortingAsc: true,           // sorting order
     sortingType: 'name',        // sorting type
     showPreview: false,         // show preview

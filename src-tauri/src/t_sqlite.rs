@@ -277,37 +277,6 @@ impl AFolder {
         Ok(parent_ids)
     }
 
-    // /// get folder name by folder_id
-    // pub fn get_folder_name(folder_id: i64) -> Result<String, String> {
-    //     let conn = get_conn();
-    //     let result = conn.query_row(
-    //         "SELECT name FROM afolders WHERE id = ?1",
-    //         params![folder_id],
-    //         |row| Ok(row.get(0)?)
-    //     ).map_err(|e| e.to_string())?;
-    //     Ok(result)
-    // }
-
-    // /// get folder path by folder_id
-    // pub fn get_folder_path(folder_id: i64) -> Result<String, String> {
-    //     let conn = get_conn();
-    //     let result = conn.query_row(
-    //         "SELECT path FROM afolders WHERE id = ?1",
-    //         params![folder_id],
-    //         |row| Ok(row.get(0)?)
-    //     ).map_err(|e| e.to_string())?;
-    //     Ok(result)
-    // }
-
-    // /// delete a folder from db
-    // pub fn delete_from_db(id: i64) -> Result<()> {
-    //     let conn = get_conn()?;
-    //     conn.execute(
-    //         "DELETE FROM afolders WHERE id = ?1",
-    //         params![id],
-    //     )?;
-    //     Ok(())
-    // }
 }
 
 /// Define the album file struct
@@ -329,6 +298,7 @@ pub struct AFile {
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
+    pub rotate: Option<i32>,       // rotate angle (0, 90, 180, 270)
     pub comments: Option<String>,  // comments
 
     // exif info
@@ -388,6 +358,7 @@ impl AFile {
             height: Some(height),
 
             is_favorite: None,
+            rotate: None,
             comments: None,
 
             e_make: Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase()),
@@ -440,11 +411,11 @@ impl AFile {
                 folder_id, 
                 name, size, created_at, modified_at, taken_date,
                 width, height,
-                is_favorite, comments,
+                is_favorite, rotate, comments,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23)",
             params![
                 self.folder_id,
 
@@ -458,6 +429,7 @@ impl AFile {
                 self.height,
 
                 self.is_favorite,
+                self.rotate,
                 self.comments,
 
                 self.e_make,
@@ -496,7 +468,7 @@ impl AFile {
             "SELECT a.id, a.folder_id, 
                 a.name, a.size, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
-                a.is_favorite, a.comments,
+                a.is_favorite, a.rotate, a.comments,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path
@@ -519,24 +491,25 @@ impl AFile {
             height: row.get(8)?,
 
             is_favorite: row.get(9)?,
-            comments: row.get(10)?,
+            rotate: row.get(10)?,
+            comments: row.get(11)?,
 
-            e_make: row.get(11)?,
-            e_model: row.get(12)?,
-            e_date_time: row.get(13)?,
-            e_exposure_time: row.get(14)?,
-            e_f_number: row.get(15)?,
-            e_focal_length: row.get(16)?,
-            e_iso_speed: row.get(17)?,
-            e_flash: row.get(18)?,
-            e_orientation: row.get(19)?,
+            e_make: row.get(12)?,
+            e_model: row.get(13)?,
+            e_date_time: row.get(14)?,
+            e_exposure_time: row.get(15)?,
+            e_f_number: row.get(16)?,
+            e_focal_length: row.get(17)?,
+            e_iso_speed: row.get(18)?,
+            e_flash: row.get(19)?,
+            e_orientation: row.get(20)?,
 
-            gps_latitude: row.get(20)?,
-            gps_longitude: row.get(21)?,
-            gps_altitude: row.get(22)?,
+            gps_latitude: row.get(21)?,
+            gps_longitude: row.get(22)?,
+            gps_altitude: row.get(23)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(23)?.as_str(),
+                row.get::<_, String>(24)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
         })
@@ -747,7 +720,7 @@ impl AThumb {
         let result = conn
             .execute(
                 "INSERT INTO athumbs (file_id, thumb_data) 
-            VALUES (?1, ?2)",
+                VALUES (?1, ?2)",
                 params![self.file_id, self.thumb_data,],
             )
             .map_err(|e| e.to_string())?;
@@ -760,7 +733,7 @@ impl AThumb {
         let result = conn
             .query_row(
                 "SELECT id, file_id, thumb_data 
-            FROM athumbs WHERE file_id = ?1",
+                FROM athumbs WHERE file_id = ?1",
                 params![file_id],
                 |row| {
                     Ok(Self {
@@ -815,10 +788,10 @@ impl ACamera {
         let mut stmt = conn
             .prepare(
                 "SELECT e_make, e_model 
-            FROM afiles 
-            WHERE e_make IS NOT NULL AND e_model IS NOT NULL
-            GROUP BY e_make, e_model
-            ORDER BY e_make, e_model",
+                FROM afiles 
+                WHERE e_make IS NOT NULL AND e_model IS NOT NULL
+                GROUP BY e_make, e_model
+                ORDER BY e_make, e_model",
             )
             .map_err(|e| e.to_string())?;
 
@@ -915,6 +888,7 @@ pub fn create_db() -> Result<String> {
             width INTEGER,
             height INTEGER,
             is_favorite INTEGER,
+            rotate INTEGER,
             comments TEXT,
             e_make TEXT,
             e_model TEXT,

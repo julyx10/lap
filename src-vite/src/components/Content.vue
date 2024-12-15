@@ -20,13 +20,6 @@
           @click="config.isFitWidth = !config.isFitWidth" 
         />
         <component 
-          :is="config.isFavorite ? IconFavorite : IconUnFavorite" 
-          class="t-icon-hover hover:text-red-600"
-          :class="{ 'text-red-600': config.isFavorite }"
-          @click="config.isFavorite = !config.isFavorite"
-        />
-        <component :is="IconTag" class="t-icon-hover" />
-        <component 
           :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           class="t-icon-hover" 
           @click="toggleSortingOrder" />
@@ -111,9 +104,6 @@ import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 
 import IconFitWidth from '@/assets/fit-width.svg';
-import IconUnFavorite from '@/assets/heart.svg';
-import IconFavorite from '@/assets/heart-solid.svg';
-import IconTag from '@/assets/tag.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
 import IconPreview from '@/assets/preview-on.svg';
@@ -218,7 +208,7 @@ watch(() => config.toolbarIndex, newIndex => {
     contentTitle.value = localeMsg.value.home;
     getAllFiles();  // get all files
   }
-});
+}, { immediate: true });
 
 /// watch favorites
 watch(() => config.toolbarIndex, newIndex => {
@@ -226,7 +216,7 @@ watch(() => config.toolbarIndex, newIndex => {
     contentTitle.value = localeMsg.value.favorite;
     getAllFiles(true); // get favorite files
   }
-});
+}, { immediate: true });
 
 /// watch album
 watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
@@ -523,13 +513,18 @@ async function openImageViewer(index: number, createNew = false) {
 
   const file = fileList.value[index];
   const encodedFilePath = encodeURIComponent(file.file_path);
-  let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
 
+  // preload the next image for smooth transition
+  const nextFile = index + 1 < fileCount ? fileList.value[index + 1] : null;
+  const nextEncodedFilePath = nextFile ? encodeURIComponent(nextFile.file_path) : '';
+  
   // create a new window if it doesn't exist
+  let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!imageWindow) {
     if (createNew) {
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}`,
+        url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}` + 
+             `&nextFilePath=${nextEncodedFilePath}`,
         title: 'Image Viewer',
         width: 800,
         height: 600,
@@ -558,6 +553,7 @@ async function openImageViewer(index: number, createNew = false) {
       filePath: encodedFilePath, 
       fileIndex: index,   // selected file index
       fileCount: fileCount, // total files length
+      nextFilePath: nextEncodedFilePath,
     });
     if(createNew) {
       imageWindow.setFocus();

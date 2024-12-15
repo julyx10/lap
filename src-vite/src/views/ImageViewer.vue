@@ -58,9 +58,7 @@
         </div>
 
         <!-- image -->
-        <Image v-if="imageSrc" ref="imageRef" 
-          :src="imageSrc" :width="fileInfo?.width" :height="fileInfo?.height" :isZoomFit="config.isZoomFit"
-        />
+        <Image v-if="imageSrc" ref="imageRef" :src="imageSrc" :isZoomFit="config.isZoomFit" />
 
         <p v-else>
           {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
@@ -99,7 +97,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
@@ -139,13 +137,14 @@ const fileId = ref(null);
 const filePath = ref('');      // File path
 const fileIndex = ref(0);      // Index of the current file
 const fileCount = ref(0);      // Total number of files
+const nextFilePath = ref('');  // Next file path to preload
 const fileInfo = ref(null);
 const showFileInfo = ref(false); // Show the file info panel
 
 const imageRef = ref(null); // Image reference
 const imageSrc = ref(null);
+const imageCache = new Map(); // Cache images to prevent reloading
 const loadError = ref(false); // Track if there was an error loading the image
-
 
 /// watch language
 watch(() => config.language, (newLanguage) => {
@@ -167,6 +166,10 @@ listen('update-img', async (event) => {
   fileIndex.value = Number(event.payload.fileIndex);
   fileCount.value = Number(event.payload.fileCount);
   await loadFileInfo(fileId.value);
+
+  // Preload the next image in the background
+  nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
+  preLoadImage(nextFilePath.value);
 });
 
 listen('message-from-home', (event) => {
@@ -194,6 +197,10 @@ onMounted(async() => {
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
   await loadFileInfo(fileId.value);
+
+  // Preload the next image in the background
+  nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
+  preLoadImage(nextFilePath.value);
 });
 
 onUnmounted(() => {
@@ -205,13 +212,33 @@ async function loadImage(filePath) {
   try {
     loadError.value = false;
 
-    const imageBase64 = await invoke('get_file_image', { filePath });
-    imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
-    console.log('loadImage:', filePath);
+    // Check if the image is already cached
+    if (imageCache.has(filePath)) {
+      imageSrc.value = imageCache.get(filePath);
+      console.log('loadImage - cache get:', filePath);
+    } else {
+      const imageBase64 = await invoke('get_file_image', { filePath });
+      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+      imageCache.set(filePath, imageSrc.value);
+      console.log('loadImage - cache set:', filePath);
+    }
   } catch (error) {
     imageSrc.value = null;
     loadError.value = true;
     console.error('loadImage:', error);
+  }
+}
+
+async function preLoadImage(filePath) {
+  try {
+    if (filePath.length > 0 && !imageCache.has(filePath)) {
+      const imageBase64 = await invoke('get_file_image', { filePath });
+      const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
+      imageCache.set(filePath, imageSrc);
+      console.log('preLoadImage - cache set:', filePath);
+    }
+  } catch (error) {
+    console.error('preLoadImage:', error);
   }
 }
 
