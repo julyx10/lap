@@ -63,8 +63,14 @@
         <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + '%' }">
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="h-full flex flex-col items-center justify-center cursor-pointer break-all"
-            @dblclick="openImageViewer(selectedItemIndex, true)">
-            <img class="h-full w-full p-1 rounded-lg object-contain" :src="imageSrc" @load="onImageLoad" />
+            @dblclick="openImageViewer(selectedItemIndex, true)"
+          >
+            <img
+              class="h-full w-full p-1 rounded-lg object-contain" 
+              :src="imageSrc"
+              :style="{ transform: `rotate(${fileList[selectedItemIndex].rotate ?? 0}deg)`, transition: 'none' }"
+              @load="onImageLoad" 
+            />
             <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm">
               <p>{{ fileList[selectedItemIndex].name }}</p>
               <div class="flex space-x-4">
@@ -85,7 +91,6 @@
   </div>
 
 </template>
-
 
 <script setup lang="ts">
 
@@ -523,8 +528,8 @@ async function openImageViewer(index: number, createNew = false) {
   if (!imageWindow) {
     if (createNew) {
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${file.id}&filePath=${encodedFilePath}&fileIndex=${index}&fileCount=${fileCount}` + 
-             `&nextFilePath=${nextEncodedFilePath}`,
+        url: `/image-viewer?fileId=${file.id}&fileIndex=${index}&fileCount=${fileCount}` + 
+                           `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
         title: 'Image Viewer',
         width: 800,
         height: 600,
@@ -550,9 +555,9 @@ async function openImageViewer(index: number, createNew = false) {
   } else {    // update the existing window
     await imageWindow.emit('update-img', { 
       fileId: file.id, 
-      filePath: encodedFilePath, 
       fileIndex: index,   // selected file index
       fileCount: fileCount, // total files length
+      filePath: encodedFilePath, 
       nextFilePath: nextEncodedFilePath,
     });
     if(createNew) {

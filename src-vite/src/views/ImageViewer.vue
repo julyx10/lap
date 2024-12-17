@@ -28,10 +28,29 @@
         ]" 
         @click="clickNext" 
       />
-      <IconZoomIn  class="t-icon-size-sm t-icon-hover" @click="clickZoomIn" />
-      <IconZoomOut class="t-icon-size-sm t-icon-hover" @click="clickZoomOut" />
+      <IconZoomIn
+        :class="[
+          't-icon-size-sm',
+          imageScale < 10 ? 't-icon-hover' : 't-icon-disabled'
+        ]"
+        @click="clickZoomIn" 
+      />
+      <IconZoomOut
+        :class="[
+          't-icon-size-sm',
+          imageScale > 0.1 ? 't-icon-hover' : 't-icon-disabled'
+        ]"
+        @click="clickZoomOut" 
+      />
       <component :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" class="t-icon-size-sm t-icon-hover" @click="toggleZoomFit" />
-      <IconRotateRight class="t-icon-size-sm t-icon-hover" @click="clickRotate"/>
+      <IconRotateRight 
+        :class="[
+          't-icon-size-sm t-icon-hover',
+          (fileInfo?.rotate ?? 0) % 360 !== 0 ? 't-icon-focus' : ''
+        ]" 
+        :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+        @click="clickRotate"
+      />
       <IconUnFavorite v-if="!fileInfo" class="t-icon-size-sm t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
@@ -47,6 +66,13 @@
       <!-- image container -->
       <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden">
         
+        <!-- show zoom scale -->
+        <transition name="fade">
+          <div v-if="isScaleChanged" class="absolute left-1/2 top-5 px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg">
+            <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
+          </div>
+        </transition>
+
         <!-- prev   -->
         <div v-if="fileIndex > 0"
           class="absolute left-0 w-20 h-full z-10 flex items-center justify-start cursor-pointer group" 
@@ -58,7 +84,12 @@
         </div>
 
         <!-- image -->
-        <Image v-if="imageSrc" ref="imageRef" :src="imageSrc" :isZoomFit="config.isZoomFit" />
+        <Image v-if="imageSrc" 
+          ref="imageRef" 
+          :src="imageSrc" 
+          :rotate="fileInfo?.rotate ?? 0" 
+          :isZoomFit="config.isZoomFit"
+        />
 
         <p v-else>
           {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
@@ -133,43 +164,56 @@ const config = useConfigStore();
 
 const appWindow = getCurrentWebviewWindow()
 
-const fileId = ref(null);
-const filePath = ref('');      // File path
-const fileIndex = ref(0);      // Index of the current file
-const fileCount = ref(0);      // Total number of files
-const nextFilePath = ref('');  // Next file path to preload
+// input parameters
+const fileId = ref(0);       // File ID
+const fileIndex = ref(0);       // Index of the current file
+const fileCount = ref(0);       // Total number of files
+const filePath = ref('');       // File path
+const nextFilePath = ref('');   // Next file path to preload
+
 const fileInfo = ref(null);
 const showFileInfo = ref(false); // Show the file info panel
 
-const imageRef = ref(null); // Image reference
+const imageRef = ref(null);     // Image reference
 const imageSrc = ref(null);
-const imageCache = new Map(); // Cache images to prevent reloading
-const loadError = ref(false); // Track if there was an error loading the image
+const imageCache = new Map();   // Cache images to prevent reloading
+const loadError = ref(false);   // Track if there was an error loading the image
 
-/// watch language
-watch(() => config.language, (newLanguage) => {
-    locale.value = newLanguage; // update locale based on config.language
+const imageScale = ref(1);      // Image scale (from 0.1 ~ 10)
+const isScaleChanged = ref(false);  // Scale changed state
+
+onMounted(async() => {
+  window.addEventListener('keydown', handleKeyDown);
+  // isFullScreen.value = await appWindow.isMaximized();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  fileId.value    = Number(urlParams.get('fileId'));
+  fileIndex.value = Number(urlParams.get('fileIndex'));
+  fileCount.value = Number(urlParams.get('fileCount'));
+  filePath.value     = decodeURIComponent(urlParams.get('filePath'));
+  nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
+  
+  await loadImage(filePath.value);    // set imageSrc
+  await loadFileInfo(fileId.value);   // set fileInfo
+  preLoadImage(nextFilePath.value);   // Preload the next image in the background
 });
 
-/// watch full screen
-watch(() => config.isFullScreen, async (newFullScreen) => {
-  await appWindow.setFullscreen(newFullScreen);
-  await appWindow.setResizable(!newFullScreen);
-}, { immediate: true }); 
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 
 // Listen for the 'update-url' event to update the image
 listen('update-img', async (event) => {
-  filePath.value = decodeURIComponent(event.payload.filePath);
-  await loadImage(filePath.value);
-
-  fileId.value = event.payload.fileId;
+  fileId.value    = Number(event.payload.fileId);
   fileIndex.value = Number(event.payload.fileIndex);
   fileCount.value = Number(event.payload.fileCount);
-  await loadFileInfo(fileId.value);
-
-  // Preload the next image in the background
+  filePath.value     = decodeURIComponent(event.payload.filePath);
   nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
-  preLoadImage(nextFilePath.value);
+  
+  await loadImage(filePath.value);    // set imageSrc
+  await loadFileInfo(fileId.value);   // set fileInfo
+  preLoadImage(nextFilePath.value);   // Preload the next image in the background
 });
 
 listen('message-from-home', (event) => {
@@ -184,27 +228,40 @@ listen('message-from-home', (event) => {
   }
 });
 
-onMounted(async() => {
-  window.addEventListener('keydown', handleKeyDown);
-  // isFullScreen.value = await appWindow.isMaximized();
-
-  const urlParams = new URLSearchParams(window.location.search);
-  // Load the image from the file path
-  filePath.value = decodeURIComponent(urlParams.get('filePath'));
-  await loadImage(filePath.value);
-  
-  fileId.value = urlParams.get('fileId');
-  fileIndex.value = Number(urlParams.get('fileIndex'));
-  fileCount.value = Number(urlParams.get('fileCount'));
-  await loadFileInfo(fileId.value);
-
-  // Preload the next image in the background
-  nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
-  preLoadImage(nextFilePath.value);
+listen('message-from-image', (event) => {
+  const { message } = event.payload;
+  console.log('ImageViewer.vue: message-from-image:', message);
+  switch (message) {
+    case 'scale':
+      imageScale.value = event.payload.scale;
+      break;
+    case 'rotate':
+      fileInfo.value.rotate = event.payload.rotate;
+      saveRotate(fileId.value, fileInfo.value.rotate);
+      break;
+    default:
+      break;
+  }
 });
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
+/// watch language
+watch(() => config.language, (newLanguage) => {
+    locale.value = newLanguage; // update locale based on config.language
+});
+
+/// watch full screen
+watch(() => config.isFullScreen, async (newFullScreen) => {
+  await appWindow.setFullscreen(newFullScreen);
+  await appWindow.setResizable(!newFullScreen);
+}, { immediate: true }); 
+
+/// watch scale
+watch(() => imageScale.value, () => {
+  isScaleChanged.value = true;
+  
+  setTimeout(() => {
+    isScaleChanged.value = false;
+  }, 1000);
 });
 
 // Load the image from the file path
@@ -229,6 +286,7 @@ async function loadImage(filePath) {
   }
 }
 
+// Preload the image from the file path
 async function preLoadImage(filePath) {
   try {
     if (filePath.length > 0 && !imageCache.has(filePath)) {
@@ -283,15 +341,24 @@ const clickRotate = () => {
   }
 };
 
+const saveRotate = async(fileId, fileRotate) => {
+  try {
+    await invoke('set_file_rotate', { fileId: fileId, rotate: fileRotate % 360 });
+  } catch (error) {
+    console.error('saveRotate:', error);
+  }
+}
+
 // toggle favorite status
 const toggleFavorite = async() => {
   fileInfo.value.is_favorite = fileInfo.value.is_favorite === null ? true : !fileInfo.value.is_favorite;
 
   // set db status
-  await invoke('set_file_favorite', { 
-    fileId: Number(fileId.value), 
-    isFavorite: fileInfo.value.is_favorite 
-  })
+  try {
+    await invoke('set_file_favorite', { fileId: fileId.value, isFavorite: fileInfo.value.is_favorite });
+  } catch (error) {
+    console.error('toggleFavorite:', error);
+  }
 }
 
 // Function to maximize the window and setup full screen
@@ -364,4 +431,14 @@ function handleKeyDown(event) {
   }
 }
 
+/* fade transition */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease; /* Adjust duration and easing as needed */
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0; /* Initial and final opacity for fading in and out */
+}
+.fade-enter-to, .fade-leave-from {
+  opacity: 0.5; /* Final opacity when fully visible */
+}
 </style>

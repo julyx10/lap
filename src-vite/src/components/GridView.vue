@@ -22,7 +22,11 @@
               'rounded transition duration-200', 
               isFitWidth ? 'object-cover' : 'object-contain'
             ]"
-            :style="{ width: `${gridSize}px`, height: `${gridSize}px` }"
+            :style="{ 
+              width: `${gridSize}px`, height: `${gridSize}px`, 
+              transform: `rotate(${file.rotate}deg)`, 
+              transition: 'transform 0.3s ease-in-out' 
+            }"
             loading="lazy"
           />
           <div v-else 
@@ -47,7 +51,7 @@
 <script setup lang="ts">
 
 import { ref, watch, onMounted, onUnmounted } from 'vue';
-import { emit } from '@tauri-apps/api/event';
+import { emit, listen } from '@tauri-apps/api/event';
 import { shortenFilename, formatFileSize } from '@/common/utils';
 
 import IconPhoto from '@/assets/photo.svg';
@@ -73,6 +77,18 @@ const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
 
+listen('message-from-image', (event) => {
+  const { message } = event.payload;
+  console.log('GriView.vue: message-from-image:', message);
+  switch (message) {
+    case 'rotate':
+      props.fileList[selectedIndex.value].rotate = event.payload.rotate;
+      break;
+    default:
+      break;
+  }
+});
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -85,7 +101,7 @@ watch(() => props.modelValue, (newValue) => {
   selectedIndex.value = newValue; 
 });
 
-watch(() => props.fileList, (newList) => {
+watch(() => props.fileList, () => {
   selectedIndex.value = - 1;
 
   const element = scrollable.value; // Get the scrollable element

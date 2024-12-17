@@ -604,14 +604,12 @@ impl AFile {
         Ok(result)
     }
 
-    /// set a file's favorite status
-    pub fn set_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
+    /// update a file column value
+    pub fn update_column(file_id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
         let conn = open_conn();
+        let query = format!("UPDATE afiles SET {} = ?1 WHERE id = ?2", column);
         let result = conn
-            .execute(
-                "UPDATE afiles SET is_favorite = ?1 WHERE id = ?2",
-                params![is_favorite, file_id],
-            )
+            .execute(&query, params![value, file_id])
             .map_err(|e| e.to_string())?;
         Ok(result)
     }

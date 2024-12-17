@@ -21,6 +21,10 @@
         <td>{{ isZoomFit }}</td>
       </tr>
       <tr>
+        <td>imageRotate</td>
+        <td>{{ imageRotate }}</td>
+      </tr>
+      <tr>
         <td>containerSize</td>
         <td>{{ containerSize }}</td>
       </tr>
@@ -33,12 +37,16 @@
         <td>{{ imageSize }}</td>
       </tr>
       <tr>
+        <td>imageSizeRotated</td>
+        <td>{{ imageSizeRotated }}</td>
+      </tr>
+      <tr>
         <td>position</td>
         <td>{{ position }}</td>
       </tr>
     </table> -->
 
-    <img 
+    <img v-if="src"
       ref="image"
       :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
       :src="src"
@@ -47,18 +55,12 @@
       @load="onImageLoad($event.target)"
     />
 
-    <!-- show zoom scale -->
-    <transition name="fade">
-      <div v-if="isScaleChanged" class="absolute left-1/2 top-5 px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg ">
-        <slot>{{(scale * 100).toFixed(0)}} %</slot>
-      </div>
-    </transition>
-
   </div>
 </template>
 
 <script setup>
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
+import { emit } from '@tauri-apps/api/event';
 
 // Props
 const props = defineProps({
@@ -66,14 +68,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  // width: {
-  //   type: Number,
-  //   default: 0,
-  // },
-  // height: {
-  //   type: Number,
-  //   default: 0,
-  // },
+  rotate: {
+    type: Number,
+    default: 0,
+  },  
   isZoomFit: {
     type: Boolean,
     default: false,
@@ -86,14 +84,13 @@ const containerSize = ref({ width: 0, height: 0 });
 const containerPos = ref({ x: 0, y: 0 });
 
 // Image
-const image = ref(null);                  // image element
-const imageSize = ref({ width: 0, height: 0 });         // actually image size
+const image = ref(null);              // image element
+const imageRotate = ref(0);           // Image rotation
+const imageSize = ref({ width: 0, height: 0 }); // actually image size
 const imageSizeRotated = ref({ width: 0, height: 0 });  // image size after rotation
-const position = ref({ x: 0, y: 0 }); // Image position (top-left corner)
-const scale = ref(1);                 // Image scale (zoom level)
-const isScaleChanged = ref(false);    // Scale changed state
-const rotate = ref(0);                // Image rotation
 const isZoomFit = ref(false);         // Zoom to fit image in container
+const scale = ref(1);                 // Image scale (zoom level)
+const position = ref({ x: 0, y: 0 }); // Image position (top-left corner)
 const isDragging = ref(false);        // Dragging state
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const isGrabbing = ref(false);        // Grabbing state
@@ -101,8 +98,6 @@ const isGrabbing = ref(false);        // Grabbing state
 let resizeObserver;
 
 onMounted(() => {
-  isZoomFit.value = props.isZoomFit;
-
   resizeObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
       containerSize.value = {
@@ -128,50 +123,33 @@ onBeforeUnmount(() => {
   }
 });
 
-// Computed style for the image
-const imageStyle = computed(() => {
-  return {
-    minWidth:  `${imageSize.value.width}px`,
-    minHeight: `${imageSize.value.height}px`,
-    transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value}) rotate(${rotate.value}deg)`,
-    transition: isDragging.value ? 'none' : 'transform 0.3s ease-in-out',
-  };
+// watch src changes
+watch(() => props.src, () => {
+  isZoomFit.value = props.isZoomFit;
+}, { immediate: true });
+
+// watch rotate changes
+watch(() => props.rotate, (newRotate) => {
+  imageRotate.value = newRotate;
 });
 
-const onImageLoad = (img) => {
-  imageSize.value = { width: img.naturalWidth, height: img.naturalHeight };
-  imageSizeRotated.value = imageSize.value;
+watch(() => imageRotate.value, (newValue) => {
+  console.log('imageRotate:', newValue, imageRotate.value);
+  // swap image width and height
+  if (newValue % 180 === 90) {
+    imageSizeRotated.value = { width: imageSize.value.height, height: imageSize.value.width };
+  } else {
+    imageSizeRotated.value = { width: imageSize.value.width,  height: imageSize.value.height };
+  }
 
-  isZoomFit.value = props.isZoomFit;
-  rotate.value = 0;
+  if(isZoomFit.value) {
+    zoomFit();
+  } else {
+    clampPosition();
+  }
 
-  updateZoom();
-}
-
-// watch image src changes
-// watch(() => props.src, () => {
-  // isZoomFit.value = props.isZoomFit;
-  // rotate.value = 0;
-
-  // const img = new Image();
-  // img.src = props.src;
-  // img.onload = () => {
-  //   imageSize.value = { width: img.width, height: img.height };
-  //   imageSizeRotated.value = imageSize.value;
-  //   updateZoom();
-  // };
-
-  // updateZoom();
-// });
-
-// watch image size changes
-// watch(() => [props.width, props.height], ([width, height]) => {
-//   if (width && height) {
-//     imageSize.value = { width, height };
-//     imageSizeRotated.value = imageSize.value;
-//     updateZoom();
-//   } 
-// });
+  emit('message-from-image', { message: 'rotate', rotate: imageRotate.value });
+});
 
 // watch zoom fit changes
 watch(() => props.isZoomFit, (newValue) => {
@@ -179,8 +157,8 @@ watch(() => props.isZoomFit, (newValue) => {
   updateZoom();
 });
 
-// watch container size changes
-watch(() => containerSize.value, () => {
+// watch container or image size changes
+watch(() => [containerSize.value, imageSize.value], () => {
   if(isZoomFit.value) {
     zoomFit();
   } else {
@@ -189,19 +167,45 @@ watch(() => containerSize.value, () => {
 });
 
 // display zoom scale for a while
-watch(() => scale.value, () => {
-  isScaleChanged.value = true;
-  setTimeout(() => {
-    isScaleChanged.value = false;
-  }, 1000);
+watch(() => scale.value, (newScale) => {
+  emit('message-from-image', { message: 'scale', scale: newScale });
 });
 
+// Computed style for the image
+const imageStyle = computed(() => {
+  return {
+    minWidth:  `${imageSize.value.width}px`,
+    minHeight: `${imageSize.value.height}px`,
+    transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value}) rotate(${imageRotate.value}deg)`,
+    transition: isDragging.value ? 'none' : 'transform 0.3s ease-in-out',
+  };
+});
+
+// watch image load
+const onImageLoad = (img) => {
+  imageSize.value = { width: img.naturalWidth, height: img.naturalHeight };
+
+  // swap image width and height
+  if (imageRotate.value % 180 === 90) {
+    imageSizeRotated.value = { width: imageSize.value.height, height: imageSize.value.width };
+  } else {
+    imageSizeRotated.value = { width: imageSize.value.width,  height: imageSize.value.height };
+  }
+
+  updateZoom();
+}
+
+const rotateRight = () => {
+  imageRotate.value += 90;
+};
+
 const updateZoom = () => {
-  isZoomFit.value ? zoomFit(): zoomReset();
+  isZoomFit.value ? zoomFit() : zoomReset();
 };
 
 // Zoom to fit image in container
 const zoomFit = () => {
+  console.log('zoomFit');
   const containerAspectRatio = containerSize.value.width / containerSize.value.height;
   const imageAspectRatio = imageSizeRotated.value.width / imageSizeRotated.value.height;
 
@@ -220,6 +224,7 @@ const zoomFit = () => {
 
 // Reset zoom level and position
 const zoomReset = () => {
+  console.log('zoomReset');
   scale.value = 1;
 
   // set position to center
@@ -248,23 +253,6 @@ const zoomOut = () => {
   zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
 };
 
-const rotateRight = () => {
-  rotate.value = rotate.value + 90;
-
-  // swap image width and height
-  if (rotate.value % 180 === 90) {
-    imageSizeRotated.value = { width: props.height, height: props.width };
-  } else {
-    imageSizeRotated.value = { width: props.width, height: props.height };
-  }
-
-  if(isZoomFit.value) {
-    zoomFit();
-  } else {
-    clampPosition();
-  }
-};
-
 // drag image if image size is larger than container size
 const startDragging = (event) => {
   isDragging.value = true;
@@ -291,6 +279,9 @@ const stopDragging = () => {
 
 // Zoom image at cursor position
 function zoomImage(cursorX, cursorY, newScale) {
+  if(newScale === scale.value) 
+    return;
+
   // 2024-12-05: finally to impl the function below :(
   const imageOffsetX = ((scale.value - newScale) * ((cursorX - position.value.x) - imageSize.value.width / 2)) / scale.value;
   const imageOffsetY = ((scale.value - newScale) * ((cursorY - position.value.y) - imageSize.value.height / 2)) / scale.value;

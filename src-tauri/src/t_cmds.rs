@@ -136,8 +136,15 @@ pub fn get_file_image(file_path: &str) -> Result<String, String> {
 /// set a file's favorite status
 #[tauri::command]
 pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
-    AFile::set_favorite(file_id, is_favorite)
+    AFile::update_column(file_id, "is_favorite", &is_favorite)
         .map_err(|e| format!("Error while setting file favorite: {}", e))
+}
+
+/// set a file's rotate status
+#[tauri::command]
+pub fn set_file_rotate(file_id: i64, rotate: i32) -> Result<usize, String> {
+    AFile::update_column(file_id, "rotate", &rotate)
+        .map_err(|e| format!("Error while setting file rotate: {}", e))
 }
 
 /// get camera's taken dates
