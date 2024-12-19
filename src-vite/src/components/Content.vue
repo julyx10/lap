@@ -13,7 +13,23 @@
       </div>
 
       <div class="h-6 flex space-x-4">
-        <SliderInput v-model="config.gridSize" :min="120" :max="320" :step="10" label="" />
+        <IconEdit 
+          class="t-icon-size t-icon-hover"
+          :class="{ 't-icon-focus': isEditing }"
+          @click="isEditing = !isEditing" 
+        />
+        <component 
+          :is="isEditing ? IconLeft : IconRight" 
+          class="t-icon-hover" 
+          @click="isEditing = !isEditing" 
+        />
+        <SliderInput 
+          v-model="config.gridSize" 
+          :min="120" 
+          :max="320" 
+          :step="10" 
+          :lable=""
+        />
         <IconFitWidth 
           class="t-icon-size t-icon-hover"
           :class="{ 't-icon-focus': config.isFitWidth }"
@@ -22,7 +38,8 @@
         <component 
           :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           class="t-icon-hover" 
-          @click="toggleSortingOrder" />
+          @click="toggleSortingOrder" 
+        />
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           class="t-icon-hover" 
@@ -108,6 +125,9 @@ import SliderInput from '@/components/SliderInput.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 
+import IconEdit from '@/assets/edit.svg';
+import IconLeft from '@/assets/arrow-left.svg';
+import IconRight from '@/assets/arrow-right.svg';
 import IconFitWidth from '@/assets/fit-width.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
@@ -145,6 +165,7 @@ const imageSrc = ref(null);         // preview image source
 // show image viewer
 const isImageViewerOpen  = ref(false); 
 
+const isEditing = ref(false);
 
 listen('message-from-grid-view', (event) => {
   const { message } = event.payload;

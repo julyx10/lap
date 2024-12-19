@@ -381,7 +381,7 @@ function clickSave() {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
-  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'];
+  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Space'];
   
   // Disable default behavior for certain keys
   if (navigationKeys.includes(event.key)) {
@@ -389,18 +389,33 @@ function handleKeyDown(event) {
   }
 
   switch (event.key) {
-    case 'ArrowDown':
-      break;
-    case 'ArrowRight':
-      clickNext();
-      break;
     case 'ArrowUp':
+      clickZoomIn();
       break;
     case 'ArrowLeft':
       clickPrev();
       break;
+    case 'ArrowDown':
+      clickZoomOut();
+      break;
+    case 'ArrowRight':
+      clickNext();
+      break;
+    case 'f':
+      toggleFullScreen();
+      break;
+    case 's':
+      clickSave();
+      break;
+    case 'r':
+      clickRotate();
+      break;
+    case 'i':
     case 'Enter':
       clickShowFileInfo();
+      break;
+    case ' ':
+      toggleZoomFit();
       break;
     case 'Escape':
       if (showFileInfo.value) {
