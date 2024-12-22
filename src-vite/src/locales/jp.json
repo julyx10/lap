@@ -40,6 +40,7 @@
   "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],
   "file_info_title": "プロパティ",
   "file_info_name": "名前",
+  "file_info_path": "パス",
   "file_info_resolution": "解像度",
   "file_info_size": "サイズ",
   "file_info_created": "作成日",

@@ -50,7 +50,7 @@
       </tr>
     </table> -->
 
-    <img v-show="activeImage === 0"
+    <!-- <img v-show="activeImage === 0"
       ref="image1"
       :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
       :src="imageSrc[activeImage]"
@@ -62,6 +62,18 @@
       ref="image2"
       :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
       :src="imageSrc[activeImage]"
+      :style="imageStyle"
+      draggable="false"
+      @load="onImageLoad($event.target)"
+    /> -->
+
+    <img 
+      v-for="(src, index) in imageSrc"
+      v-show="activeImage === index"
+      :ref="'image' + (index + 1)"
+      :key="index"
+      :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
+      :src="src"
       :style="imageStyle"
       draggable="false"
       @load="onImageLoad($event.target)"
@@ -97,10 +109,10 @@ const containerPos = ref({ x: 0, y: 0 });
 const isZoomFit = ref(false);               // Zoom to fit image in container
 
 // image
-const activeImage = ref(1);                  // which image is active (0 or 1)
-const imageSrc  = ref(['', '']);            // image source 1
+const activeImage = ref(1);                 // which image is active (0 or 1)
+const imageSrc = ref(['', '']);             // image source 1
 const position = ref([{ x: 0, y: 0 }, { x: 0, y: 0 }]); // Image position (top-left corner)
-const scale    = ref([1, 1]);               // Image scale (zoom level)
+const scale = ref([1, 1]);                  // Image scale (zoom level)
 const imageRotate = ref([0, 0]);            // Image rotation
 const imageSize = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }] );       // actually image size
 const imageSizeRotated = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }]); // image size after rotation
@@ -108,7 +120,7 @@ const imageSizeRotated = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }])
 const isDragging = ref(false);              // Dragging state
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const isGrabbing = ref(false);              // Grabbing state
-const enableAnimation = ref(true);          // Enable animation
+const enableAnimation = ref(false);         // Enable transition animation when zooming or rotating
 
 let resizeObserver;
 
@@ -140,11 +152,16 @@ onBeforeUnmount(() => {
 
 // watch src changes
 watch(() => props.src, (newSrc) => {
+  enableAnimation.value = false;
   isZoomFit.value = props.isZoomFit;
 
   activeImage.value = activeImage.value ^ 1;    // toggle active image 0 -> 1, 1 -> 0
   imageSrc.value[activeImage.value] = newSrc;
   imageRotate.value[activeImage.value] = props.rotate;
+
+  setTimeout(() => {
+    enableAnimation.value = true;
+  }, 300);
 }, { immediate: true });
 
 // watch rotate changes
@@ -173,6 +190,11 @@ watch(() => imageRotate.value[activeImage.value], (newValue) => {
   }
 });
 
+// display zoom scale for a while
+watch(() => scale.value[activeImage.value], (newValue) => {
+  emit('message-from-image', { message: 'scale', scale: newValue });
+});
+
 // watch zoom fit changes
 watch(() => props.isZoomFit, (newValue) => {
   isZoomFit.value = newValue;
@@ -188,12 +210,6 @@ watch(() => [containerSize.value, imageSize.value], () => {
   }
 });
 
-// display zoom scale for a while
-watch(() => scale.value[activeImage.value], (newScale) => {
-  enableAnimation.value = true;
-  emit('message-from-image', { message: 'scale', scale: newScale });
-});
-
 // Computed style for the image
 const imageStyle = computed(() => {
   return {
@@ -202,13 +218,12 @@ const imageStyle = computed(() => {
     transform: `translate(${position.value[activeImage.value].x}px, ${position.value[activeImage.value].y}px) 
                 scale(${scale.value[activeImage.value]}) 
                 rotate(${imageRotate.value[activeImage.value]}deg)`,
-    transition: isDragging.value || !enableAnimation.value ? 'none' : 'transform 0.3s ease-in-out',
+    transition: enableAnimation.value && !isDragging.value ? 'transform 0.3s ease-in-out' : 'none',
   };
 });
 
 // watch image load
 const onImageLoad = (img) => {
-  enableAnimation.value = false;
   imageSize.value[activeImage.value] = { width: img.naturalWidth, height: img.naturalHeight };
 
   // swap image width and height
@@ -223,19 +238,21 @@ const onImageLoad = (img) => {
       height: imageSize.value[activeImage.value].height 
     };
   }
-
   updateZoom();
 }
 
 const rotateRight = () => {
-  enableAnimation.value = true;
   imageRotate.value[activeImage.value] += 90;
-
   emit('message-from-image', { message: 'rotate', rotate: imageRotate.value[activeImage.value] });
 };
 
 const updateZoom = () => {
+  console.log('updateZoom');
   isZoomFit.value ? zoomFit() : zoomReset();
+
+  // set the hide image to the same position
+  imageSrc.value[activeImage.value ^ 1] = '';
+  position.value[activeImage.value ^ 1] = position.value[activeImage.value];
 };
 
 // Zoom to fit image in container
@@ -317,7 +334,6 @@ function zoomImage(cursorX, cursorY, newScale) {
   if(newScale === scale.value[activeImage.value]) 
     return;
 
-  // 2024-12-05: finally to impl the function below :(
   const imageOffsetX = ((scale.value[activeImage.value] - newScale) * ((cursorX - position.value[activeImage.value].x) - imageSize.value[activeImage.value].width / 2)) / scale.value[activeImage.value];
   const imageOffsetY = ((scale.value[activeImage.value] - newScale) * ((cursorY - position.value[activeImage.value].y) - imageSize.value[activeImage.value].height / 2)) / scale.value[activeImage.value];
   position.value[activeImage.value].x += imageOffsetX;

@@ -2,7 +2,10 @@
   <div class="my-1 p-2 w-72 t-color-bg-light rounded-l-lg">
     <!-- Title bar -->
     <div class="h-6 flex items-center justify-between">
-      <p class="p-1 font-bold">{{ $t('file_info_title') }}</p>
+      <div>
+        <span class="p-1 font-bold">{{ $t('file_info_title') }}</span>
+        <span> [ {{fileIndex + 1}} / {{ fileCount }} ]</span>
+      </div>
       <IconClose class="p-1 t-icon-size t-icon-hover" @click="clickClose" />
     </div>
 
@@ -12,6 +15,10 @@
         <tr>
           <td>{{ $t('file_info_name') }}</td>
           <td class="text-wrap break-all">{{ fileInfo.name }}</td>
+        </tr>
+        <tr>
+          <td>{{ $t('file_info_path') }}</td>
+          <td class="text-wrap break-all">{{ fileInfo.file_path }}</td>
         </tr>
         <tr>
           <td>{{ $t('file_info_resolution') }}</td>
@@ -105,6 +112,14 @@ import IconClose from '@/assets/close.svg';
 const props = defineProps({
   fileInfo: {
     type: Object,
+    required: true
+  },
+  fileIndex: {
+    type: Number,
+    required: true
+  },
+  fileCount: {
+    type: Number,
     required: true
   }
 });

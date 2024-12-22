@@ -300,6 +300,7 @@ pub struct AFile {
     pub is_favorite: Option<bool>, // is favorite
     pub rotate: Option<i32>,       // rotate angle (0, 90, 180, 270)
     pub comments: Option<String>,  // comments
+    pub deleted_at: Option<u64>,   // deleted date
 
     // exif info
     pub e_make: Option<String>,  // camera make
@@ -360,6 +361,7 @@ impl AFile {
             is_favorite: None,
             rotate: None,
             comments: None,
+            deleted_at: None,
 
             e_make: Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase()),
             e_model: Self::get_exif_field(&exif, Tag::Model),
@@ -411,11 +413,11 @@ impl AFile {
                 folder_id, 
                 name, size, created_at, modified_at, taken_date,
                 width, height,
-                is_favorite, rotate, comments,
+                is_favorite, rotate, comments, deleted_at,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24)",
             params![
                 self.folder_id,
 
@@ -431,6 +433,7 @@ impl AFile {
                 self.is_favorite,
                 self.rotate,
                 self.comments,
+                self.deleted_at,
 
                 self.e_make,
                 self.e_model,
@@ -468,7 +471,7 @@ impl AFile {
             "SELECT a.id, a.folder_id, 
                 a.name, a.size, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
-                a.is_favorite, a.rotate, a.comments,
+                a.is_favorite, a.rotate, a.comments, a.deleted_at,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path
@@ -493,23 +496,24 @@ impl AFile {
             is_favorite: row.get(9)?,
             rotate: row.get(10)?,
             comments: row.get(11)?,
+            deleted_at: row.get(12)?,
 
-            e_make: row.get(12)?,
-            e_model: row.get(13)?,
-            e_date_time: row.get(14)?,
-            e_exposure_time: row.get(15)?,
-            e_f_number: row.get(16)?,
-            e_focal_length: row.get(17)?,
-            e_iso_speed: row.get(18)?,
-            e_flash: row.get(19)?,
-            e_orientation: row.get(20)?,
+            e_make: row.get(13)?,
+            e_model: row.get(14)?,
+            e_date_time: row.get(15)?,
+            e_exposure_time: row.get(16)?,
+            e_f_number: row.get(17)?,
+            e_focal_length: row.get(18)?,
+            e_iso_speed: row.get(19)?,
+            e_flash: row.get(20)?,
+            e_orientation: row.get(21)?,
 
-            gps_latitude: row.get(21)?,
-            gps_longitude: row.get(22)?,
-            gps_altitude: row.get(23)?,
+            gps_latitude: row.get(22)?,
+            gps_longitude: row.get(23)?,
+            gps_altitude: row.get(24)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(24)?.as_str(),
+                row.get::<_, String>(25)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
         })
@@ -888,6 +892,7 @@ pub fn create_db() -> Result<String> {
             is_favorite INTEGER,
             rotate INTEGER,
             comments TEXT,
+            deleted_at INTEGER,
             e_make TEXT,
             e_model TEXT,
             e_date_time TEXT,

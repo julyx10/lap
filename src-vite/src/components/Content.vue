@@ -28,7 +28,7 @@
           :min="120" 
           :max="320" 
           :step="10" 
-          :lable=""
+          label=""
         />
         <IconFitWidth 
           class="t-icon-size t-icon-hover"

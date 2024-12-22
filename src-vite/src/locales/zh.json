@@ -40,6 +40,7 @@
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "属性",
   "file_info_name": "名称",
+  "file_info_path": "路径",
   "file_info_resolution": "分辨率",
   "file_info_size": "大小",
   "file_info_created": "创建时间",

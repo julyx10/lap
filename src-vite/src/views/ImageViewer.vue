@@ -56,6 +56,7 @@
       <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
       <IconSave class="t-icon-size-sm t-icon-hover" @click="clickSave"/>
+      <IconDelete class="t-icon-size-sm t-icon-hover" @click="clickDelete"/>
       <!-- <IconFullScreen v-if="!config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
       <!-- <IconRestoreScreen v-if="config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
       <component :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
@@ -116,7 +117,12 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <FileInfo v-if="showFileInfo" :fileInfo="fileInfo" @close="closeFileInfo" />
+        <FileInfo v-if="showFileInfo" 
+          :fileInfo="fileInfo" 
+          :fileIndex="fileIndex" 
+          :fileCount="fileCount" 
+          @close="closeFileInfo" 
+        />
       </transition> <!-- File Info -->
 
     </div>
@@ -149,6 +155,7 @@ import IconRotateRight from '@/assets/rotate-right.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconFileInfo from '@/assets/information.svg';
+import IconDelete from '@/assets/trash.svg';
 import IconSave from '@/assets/save.svg';
 import IconFullScreen from '@/assets/full-screen-max.svg';
 import IconRestoreScreen from '@/assets/full-screen-min.svg';
@@ -193,10 +200,6 @@ onMounted(async() => {
   fileCount.value = Number(urlParams.get('fileCount'));
   filePath.value     = decodeURIComponent(urlParams.get('filePath'));
   nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
-  
-  await loadImage(filePath.value);    // set imageSrc
-  await loadFileInfo(fileId.value);   // set fileInfo
-  preLoadImage(nextFilePath.value);   // Preload the next image in the background
 });
 
 onUnmounted(() => {
@@ -210,10 +213,6 @@ listen('update-img', async (event) => {
   fileCount.value = Number(event.payload.fileCount);
   filePath.value     = decodeURIComponent(event.payload.filePath);
   nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
-  
-  await loadImage(filePath.value);    // set imageSrc
-  await loadFileInfo(fileId.value);   // set fileInfo
-  preLoadImage(nextFilePath.value);   // Preload the next image in the background
 });
 
 listen('message-from-home', (event) => {
@@ -244,18 +243,25 @@ listen('message-from-image', (event) => {
   }
 });
 
-/// watch language
+// watch language
 watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
 });
 
-/// watch full screen
+// watch full screen
 watch(() => config.isFullScreen, async (newFullScreen) => {
   await appWindow.setFullscreen(newFullScreen);
   await appWindow.setResizable(!newFullScreen);
 }, { immediate: true }); 
 
-/// watch scale
+// watch file changed
+watch(() => fileId.value, async () => {
+  await loadImage(filePath.value);    // set imageSrc
+  await loadFileInfo(fileId.value);   // set fileInfo
+  preLoadImage(nextFilePath.value);   // Preload the next image in the background
+});
+
+// watch scale
 watch(() => imageScale.value, () => {
   isScaleChanged.value = true;
   
@@ -377,6 +383,10 @@ function closeFileInfo() {
 
 function clickSave() {
   emit('message-from-image-viewer', { message: 'save' });
+}
+
+function clickDelete() {
+  emit('message-from-image-viewer', { message:'delete' });
 }
 
 // Handle keyboard shortcuts
