@@ -31,21 +31,29 @@
       <IconZoomIn
         :class="[
           't-icon-size-sm',
-          imageScale < 10 ? 't-icon-hover' : 't-icon-disabled'
+          fileIndex >= 0 && imageScale < 10 ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickZoomIn" 
       />
       <IconZoomOut
         :class="[
           't-icon-size-sm',
-          imageScale > 0.1 ? 't-icon-hover' : 't-icon-disabled'
+          fileIndex >= 0 && imageScale > 0.1 ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickZoomOut" 
       />
-      <component :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" class="t-icon-size-sm t-icon-hover" @click="toggleZoomFit" />
+      <component 
+        :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" 
+        :class="[
+          't-icon-size-sm',
+          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+        ]" 
+        @click="toggleZoomFit" 
+      />
       <IconRotateRight 
         :class="[
-          't-icon-size-sm t-icon-hover',
+          't-icon-size-sm',
+          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled',
           (fileInfo?.rotate ?? 0) % 360 !== 0 ? 't-icon-focus' : ''
         ]" 
         :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
@@ -55,8 +63,20 @@
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
       <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
-      <IconSave class="t-icon-size-sm t-icon-hover" @click="clickSave"/>
-      <IconDelete class="t-icon-size-sm t-icon-hover" @click="clickDelete"/>
+      <IconSave 
+        :class="[
+          't-icon-size-sm',
+          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+        ]"
+        @click="clickSave"
+      />
+      <IconDelete
+        :class="[
+          't-icon-size-sm',
+          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+        ]"
+        @click="clickDelete"
+      />
       <!-- <IconFullScreen v-if="!config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
       <!-- <IconRestoreScreen v-if="config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
       <component :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
@@ -85,15 +105,21 @@
         </div>
 
         <!-- image -->
-        <Image v-if="imageSrc" 
-          ref="imageRef" 
-          :src="imageSrc" 
-          :rotate="fileInfo?.rotate ?? 0" 
-          :isZoomFit="config.isZoomFit"
-        />
+        <template v-if="fileIndex >= 0">
+          <Image v-if="imageSrc" 
+            ref="imageRef" 
+            :src="imageSrc" 
+            :rotate="fileInfo?.rotate ?? 0" 
+            :isZoomFit="config.isZoomFit"
+          />
+          <p v-else>
+            {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
+          </p>
+        </template>
 
+        <!-- no image selected -->
         <p v-else>
-          {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
+          {{ $t('image_view_no_image') }}
         </p>
 
         <!-- next -->
@@ -326,22 +352,30 @@ function clickNext() {
 }
 
 const clickZoomIn = () => {
+  if(fileIndex.value < 0) return;
+
   if(imageRef.value) {
     imageRef.value.zoomIn();
   }
 };
 
 const clickZoomOut = () => {
+  if(fileIndex.value < 0) return;
+
   if(imageRef.value) {
     imageRef.value.zoomOut();
   }
 };
 
 const toggleZoomFit = () => {
+  if(fileIndex.value < 0) return;
+
   config.isZoomFit =!config.isZoomFit;
 };
 
 const clickRotate = () => {
+  if(fileIndex.value < 0) return;
+
   if(imageRef.value) {
     imageRef.value.rotateRight();
   }
@@ -357,6 +391,8 @@ const saveRotate = async(fileId, fileRotate) => {
 
 // toggle favorite status
 const toggleFavorite = async() => {
+  if(fileIndex.value < 0) return;
+
   fileInfo.value.is_favorite = fileInfo.value.is_favorite === null ? true : !fileInfo.value.is_favorite;
 
   // set db status
@@ -385,7 +421,15 @@ function clickSave() {
   emit('message-from-image-viewer', { message: 'save' });
 }
 
-function clickDelete() {
+const clickDelete = async() => {
+  // get current timestamp
+  fileInfo.value.deleted_at = fileInfo.value.deleted_at || fileInfo.value.deleted_at !== 0 ? 0 : Math.floor(Date.now() / 1000);
+
+  try {
+    await invoke('set_file_delete', { fileId: fileId.value, deletedAt: fileInfo.value.deleted_at });
+  } catch (error) {
+    console.error('clickDelete:', error);
+  }
   emit('message-from-image-viewer', { message:'delete' });
 }
 

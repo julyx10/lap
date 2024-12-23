@@ -11,7 +11,7 @@
     @wheel="onZoom"
   >
     <!-- DEBUG -->
-    <!-- <table class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
+    <table class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
       <tr>
         <td>activeImage</td>
         <td>{{ activeImage }}</td>
@@ -48,7 +48,7 @@
         <td>containerPos</td>
         <td>{{ containerPos }}</td>
       </tr>
-    </table> -->
+    </table>
 
     <!-- <img v-show="activeImage === 0"
       ref="image1"

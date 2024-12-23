@@ -319,7 +319,8 @@ pub struct AFile {
     pub gps_altitude: Option<String>,
 
     // output only
-    pub file_path: Option<String>, // file path (for webview)
+    pub file_path: Option<String>,  // file path (for webview)
+    pub album_name: Option<String>, // album name (for webview)
 }
 
 impl AFile {
@@ -377,7 +378,8 @@ impl AFile {
             gps_longitude: Self::get_exif_field(&exif, Tag::GPSLongitude),
             gps_altitude: Self::get_exif_field(&exif, Tag::GPSAltitude),
 
-            file_path: Some(file_path.to_string()),
+            file_path: None,
+            album_name: None,
         })
     }
 
@@ -467,15 +469,19 @@ impl AFile {
 
     // Helper function to build the base SQL query
     fn build_base_query() -> String {
-        String::from(
-            "SELECT a.id, a.folder_id, 
+        String::from("
+            SELECT a.id, a.folder_id, 
                 a.name, a.size, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
                 a.is_favorite, a.rotate, a.comments, a.deleted_at,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
-                b.path
-            FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id")
+                b.path,
+                c.name AS album_name
+            FROM afiles a 
+            LEFT JOIN afolders b ON a.folder_id = b.id
+            LEFT JOIN albums c ON b.album_id = c.id
+        ")
     }
 
     // Function to construct `Self` from a database row
@@ -516,6 +522,7 @@ impl AFile {
                 row.get::<_, String>(25)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
+            album_name: row.get(26)?,
         })
     }
 

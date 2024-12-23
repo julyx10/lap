@@ -39,6 +39,7 @@
 
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "属性",
+  "file_info_album_name": "相册",
   "file_info_name": "名称",
   "file_info_path": "路径",
   "file_info_resolution": "分辨率",
@@ -85,5 +86,6 @@
   "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
 
   "image_view_loading": "载入中...",
-  "image_view_failed": "载入失败"
+  "image_view_failed": "载入失败",
+  "image_view_no_image": "未选择图片"
 }

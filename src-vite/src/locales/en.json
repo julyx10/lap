@@ -39,6 +39,7 @@
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",
+  "file_info_album_name": "Album",
   "file_info_name": "Name",
   "file_info_path": "Path",
   "file_info_resolution": "Resolution",
@@ -85,6 +86,7 @@
   "date_time_format_long": "MMMM do, yyyy HH:mm:ss",
   
   "image_view_loading": "Loading...",
-  "image_view_failed": "Failed to load image"
+  "image_view_failed": "Failed to load image",
+  "image_view_no_image": "No image selected"
 }
   

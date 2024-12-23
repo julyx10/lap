@@ -4,7 +4,6 @@
     <div class="h-6 flex items-center justify-between">
       <div>
         <span class="p-1 font-bold">{{ $t('file_info_title') }}</span>
-        <span> [ {{fileIndex + 1}} / {{ fileCount }} ]</span>
       </div>
       <IconClose class="p-1 t-icon-size t-icon-hover" @click="clickClose" />
     </div>
@@ -12,6 +11,10 @@
     <!-- File Info table -->
     <div class="overflow-auto t-scrollbar" :style="{ maxHeight: 'calc(100vh - 100px)' }">
       <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
+        <tr>
+          <td>{{ $t('file_info_album_name') }}</td>
+          <td class="text-wrap break-all">{{ fileInfo.album_name }} [{{fileIndex + 1}}/{{ fileCount }}]</td>
+        </tr>
         <tr>
           <td>{{ $t('file_info_name') }}</td>
           <td class="text-wrap break-all">{{ fileInfo.name }}</td>
@@ -95,7 +98,11 @@
         <tr>
           <td>{{ $t('file_info_comment') }}</td>
           <td>{{ fileInfo.comments }}</td>
-        </tr>        
+        </tr>
+        <tr>
+          <td>Deleted_at</td>
+          <td>{{ formatTimestamp(fileInfo.deleted_at, $t('date_time_format')) }}</td>
+        </tr>  
       </table>
     </div>
 

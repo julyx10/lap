@@ -10,7 +10,7 @@ use base64::{engine::general_purpose, Engine};
  */
 use native_dialog::FileDialog;
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
-
+use std::time::SystemTime;
 
 /// get all albums
 #[tauri::command]
@@ -145,6 +145,13 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 pub fn set_file_rotate(file_id: i64, rotate: i32) -> Result<usize, String> {
     AFile::update_column(file_id, "rotate", &rotate)
         .map_err(|e| format!("Error while setting file rotate: {}", e))
+}
+
+/// set a file's delete status: write the deleted_at timestamp
+#[tauri::command]
+pub fn set_file_delete(file_id: i64, deleted_at: u64) -> Result<usize, String> {
+    AFile::update_column(file_id, "deleted_at", &deleted_at)
+        .map_err(|e| format!("Error while setting file delete: {}", e))
 }
 
 /// get camera's taken dates

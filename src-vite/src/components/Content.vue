@@ -77,17 +77,25 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg" :style="{ width: config.previewPaneWidth + '%' }">
+        <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg overflow-hidden" :style="{ width: config.previewPaneWidth + '%' }">
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="h-full flex flex-col items-center justify-center cursor-pointer break-all"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
-            <img
+            <!-- <img
               class="h-full w-full p-1 rounded-lg object-contain" 
               :src="imageSrc"
               :style="{ transform: `rotate(${fileList[selectedItemIndex].rotate ?? 0}deg)`, transition: 'none' }"
               @load="onImageLoad" 
+            /> -->
+            <Image v-if="imageSrc" 
+              ref="imageRef" 
+              :src="imageSrc" 
+              :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
+              :isZoomFit="config.isZoomFit"
             />
+
+            <!-- file name -->
             <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm">
               <p>{{ fileList[selectedItemIndex].name }}</p>
               <div class="flex space-x-4">
@@ -96,6 +104,7 @@
                 <!-- <p>{{ fileList[selectedItemIndex].width }}x{{ fileList[selectedItemIndex].height }}</p> -->
               </div>
             </div>
+
           </div>
       
           <div v-else class="h-full flex items-center justify-center">
@@ -124,6 +133,7 @@ import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatTimes
 import SliderInput from '@/components/SliderInput.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
+import Image from '@/components/Image.vue';
 
 import IconEdit from '@/assets/edit.svg';
 import IconLeft from '@/assets/arrow-left.svg';
@@ -191,6 +201,12 @@ listen('message-from-image-viewer', (event) => {
       break;
     case 'next':
       selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
+      break;
+    case 'save':
+      saveFile(selectedItemIndex.value);  // save the selected file from list
+      break;
+    case 'delete':
+      deleteFile(selectedItemIndex.value);  // delete the selected file from list
       break;
     default:
       break;
@@ -313,17 +329,19 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
   }
 }, { immediate: true });
 
-// watch for changes in the file list
-watch(() => selectedItemIndex.value, (newIndex) => {
+// watch for changes in the file list (selected item index or file list length)
+watch(() => [selectedItemIndex.value, fileList.value.length], ([newIndex, len]) => {
   console.log('watch - selectedItemIndex:', newIndex);
 
   if (newIndex >= 0 && newIndex < fileList.value.length && fileList.value[newIndex].thumbnail ) {
-    imageSrc.value = fileList.value[newIndex].thumbnail;
+    // imageSrc.value = fileList.value[newIndex].thumbnail;
+    onImageLoad();
   } else {
     imageSrc.value = '/src/assets/photo.svg';
   }
 });
 
+// wether the image viewer is open
 watch(isImageViewerOpen, (show) => {
   console.log('watch - isImageViewerOpen:', show);
   onImageLoad();
@@ -331,7 +349,7 @@ watch(isImageViewerOpen, (show) => {
 
 const onImageLoad = async () => {
   // prevent loading image when the image viewer is open
-  if(isImageViewerOpen.value) {
+  if(isImageViewerOpen.value || selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
     return;
   }
 
@@ -449,6 +467,19 @@ function sortFileList(sortingType, isAccending) {
   });
 }
 
+// Save the file
+function saveFile(index) {
+  const file = fileList.value[index];
+  // invoke('save_file', { fileId: file.id, filePath: file.file_path });
+}
+
+// Delete the file from the list and update the selected item index
+function deleteFile(index) {
+  fileList.value.splice(index, 1);
+  selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
+  openImageViewer(selectedItemIndex.value, false);  // update the image viewer
+}
+
 /// get the thumbnail for each file in mutil-thread
 // async function getFileThumb(files) {
 //   try {
@@ -533,15 +564,13 @@ async function openImageViewer(index: number, createNew = false) {
   const webViewLabel = 'imageviewer';
 
   const fileCount = fileList.value.length;
-  if (index < 0 || index >= fileCount) {
-    return;
-  }
 
-  const file = fileList.value[index];
-  const encodedFilePath = encodeURIComponent(file.file_path);
+  const file = index >= 0 && index < fileCount ? fileList.value[index] : null;
+  const fileId = file ? file.id : 0;
+  const encodedFilePath = file ? encodeURIComponent(file.file_path) : '';
 
   // preload the next image for smooth transition
-  const nextFile = index + 1 < fileCount ? fileList.value[index + 1] : null;
+  const nextFile = index + 1 >= 0 && index + 1 < fileCount ? fileList.value[index + 1] : null;
   const nextEncodedFilePath = nextFile ? encodeURIComponent(nextFile.file_path) : '';
   
   // create a new window if it doesn't exist
@@ -549,7 +578,7 @@ async function openImageViewer(index: number, createNew = false) {
   if (!imageWindow) {
     if (createNew) {
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${file.id}&fileIndex=${index}&fileCount=${fileCount}` + 
+        url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
                            `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
         title: 'Image Viewer',
         width: 800,
@@ -575,7 +604,7 @@ async function openImageViewer(index: number, createNew = false) {
     }
   } else {    // update the existing window
     await imageWindow.emit('update-img', { 
-      fileId: file.id, 
+      fileId: fileId, 
       fileIndex: index,   // selected file index
       fileCount: fileCount, // total files length
       filePath: encodedFilePath, 
