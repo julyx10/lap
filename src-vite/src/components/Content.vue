@@ -77,9 +77,12 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="config.showPreview" class="t-color-bg rounded-ss-lg overflow-hidden" :style="{ width: config.previewPaneWidth + '%' }">
+        <div v-if="config.showPreview" ref="previewDiv" 
+          class="t-color-bg rounded-ss-lg overflow-hidden"
+          :style="{ width: config.previewPaneWidth + '%' }"
+        >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
-            class="h-full flex flex-col items-center justify-center cursor-pointer break-all"
+            :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
             <!-- <img
@@ -96,20 +99,21 @@
             />
 
             <!-- file name -->
-            <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm">
-              <p>{{ fileList[selectedItemIndex].name }}</p>
-              <div class="flex space-x-4">
+            <!-- <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm"> -->
+              <!-- <p>{{ fileList[selectedItemIndex].name }}</p> -->
+              <!-- <div class="flex space-x-4"> -->
                 <!-- <p>{{ formatFileSize(fileList[selectedItemIndex].size) }}</p> -->
-                <p>{{ formatTimestamp(fileList[selectedItemIndex].modified_at, $t('date_time_format')) }}</p>
+                <!-- <p>{{ formatTimestamp(fileList[selectedItemIndex].modified_at, $t('date_time_format')) }}</p> -->
                 <!-- <p>{{ fileList[selectedItemIndex].width }}x{{ fileList[selectedItemIndex].height }}</p> -->
-              </div>
-            </div>
+              <!-- </div> -->
+            <!-- </div> -->
 
           </div>
       
           <div v-else class="h-full flex items-center justify-center">
             <p>{{ $t('preview_no_file') }}</p>
           </div>
+
         </div>
       </transition>
 
@@ -120,7 +124,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
@@ -169,13 +173,45 @@ const fileList = ref([]);
 const selectedItemIndex = ref(-1);
 
 // preview 
-const isDragging = ref(false);      // dragging splitter to resize preview pane
+const previewDiv = ref(null);
+const previewPaneSize = ref({ width: 100, height: 100 });
+let resizeObserver;
 const imageSrc = ref(null);         // preview image source
 
-// show image viewer
+// dragging preview pane splitter
+const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
+
+// show image viewer(new window)
 const isImageViewerOpen  = ref(false); 
 
+// edit mode (allow mutilple selection)
 const isEditing = ref(false);
+
+onMounted(() => {
+  console.log('content mounted');
+  resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+      previewPaneSize.value = {
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      };
+    }
+  });
+
+  if (previewDiv.value) {
+    // Observe preview pane size changes
+    resizeObserver.observe(previewDiv.value);
+  }
+  
+  console.log('previewDiv:', previewDiv.value);
+});
+
+onUnmounted(() => {
+  if (resizeObserver && previewDiv.value) {
+    resizeObserver.unobserve(previewDiv.value);
+    resizeObserver.disconnect();
+  }
+});
 
 listen('message-from-grid-view', (event) => {
   const { message } = event.payload;
@@ -215,14 +251,14 @@ listen('message-from-image-viewer', (event) => {
 
 /// Dragging the splitter
 function startDragging(event) {
-  isDragging.value = true;
+  isDraggingSplitter.value = true;
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', stopDragging);
 }
 
 /// stop dragging the splitter
 function stopDragging() {
-  isDragging.value = false;
+  isDraggingSplitter.value = false;
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', stopDragging);
 }
@@ -230,7 +266,7 @@ function stopDragging() {
 /// handle mouse move event
 function handleMouseMove(event) {
   // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
-  if (isDragging.value) {
+  if (isDraggingSplitter.value) {
     const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
     const leftPosition = divGridView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
 

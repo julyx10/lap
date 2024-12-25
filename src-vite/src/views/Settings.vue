@@ -39,6 +39,12 @@
             <input id="dark-mode" type="checkbox" v-model="config.darkMode" />
           </div>
 
+          <!-- Debug Mode -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="debug-mode" >{{ $t('settings_debug_mode') }}</label>
+            <input id="debug-mode" type="checkbox" v-model="config.debugMode" />
+          </div>
+
         </section>
 
       </div>

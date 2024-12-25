@@ -8,6 +8,7 @@ export const useConfigStore = defineStore('configStore', {
     language: 'en',             // default language
     showButtonText: false,      // show button text
     darkMode: true,             // light or dark theme
+    debugMode: false,           // debug mode
 
     // app
     toolbarIndex: 1,            // toolbar index

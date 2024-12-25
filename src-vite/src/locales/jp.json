@@ -13,6 +13,7 @@
   "settings_select_language": "言語を選択",
   "settings_show_button_text": "ボタンテキストを表示",
   "settings_dark_mode": "ダークモード",
+  "settings_debug_mode": "デバッグモード",
   
   "debug": "デバッグ",
 

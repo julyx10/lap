@@ -13,6 +13,7 @@
   "settings_select_language": "选择语言",
   "settings_show_button_text": "显示按钮文本",
   "settings_dark_mode": "暗黑模式",
+  "settings_debug_mode": "调试模式",
   
   "debug": "调试",
 

@@ -11,7 +11,7 @@
     @wheel="onZoom"
   >
     <!-- DEBUG -->
-    <table class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
+    <table v-if="config.debugMode" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
       <tr>
         <td>activeImage</td>
         <td>{{ activeImage }}</td>
@@ -85,6 +85,7 @@
 <script setup>
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { emit } from '@tauri-apps/api/event';
+import { useConfigStore } from '@/stores/configStore';
 
 // Props
 const props = defineProps({
@@ -101,6 +102,9 @@ const props = defineProps({
     default: false,
   },
 });
+
+// config store
+const config = useConfigStore();
 
 // container
 const container = ref(null);
