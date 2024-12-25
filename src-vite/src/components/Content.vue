@@ -78,7 +78,7 @@
         leave-to-class="translate-x-full"
       >
         <div v-if="config.showPreview" ref="previewDiv" 
-          class="t-color-bg rounded-ss-lg overflow-hidden"
+          class="p-1 t-color-bg rounded-ss-lg overflow-hidden"
           :style="{ width: config.previewPaneWidth + '%' }"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
@@ -373,7 +373,7 @@ watch(() => [selectedItemIndex.value, fileList.value.length], ([newIndex, len]) 
     // imageSrc.value = fileList.value[newIndex].thumbnail;
     onImageLoad();
   } else {
-    imageSrc.value = '/src/assets/photo.svg';
+    // imageSrc.value = '/src/assets/photo.svg';
   }
 });
 

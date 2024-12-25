@@ -127,8 +127,10 @@ const isGrabbing = ref(false);              // Grabbing state
 const enableAnimation = ref(false);         // Enable transition animation when zooming or rotating
 
 let resizeObserver;
+let positionObserver;
 
 onMounted(() => {
+  // observe container size changes
   resizeObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
       containerSize.value = {
@@ -142,9 +144,11 @@ onMounted(() => {
     // Observe container size changes
     resizeObserver.observe(container.value);
 
-    // Get container position
-    const rect = container.value.getBoundingClientRect();
-    containerPos.value = { x: rect.left, y: rect.top };
+    // Initial position calculation
+    updatePosition();
+
+    // Observe position changes using requestAnimationFrame
+    startPositionObserver();
   }
 });
 
@@ -153,6 +157,29 @@ onBeforeUnmount(() => {
     resizeObserver.unobserve(container.value);
   }
 });
+
+const updatePosition = () => {
+  if (container.value) {
+    const rect = container.value.getBoundingClientRect();
+    containerPos.value = { x: rect.left, y: rect.top };
+  }
+};
+
+const startPositionObserver = () => {
+  const observePosition = () => {
+    updatePosition();
+    positionObserver = requestAnimationFrame(observePosition);
+  };
+  positionObserver = requestAnimationFrame(observePosition);
+};
+
+const stopPositionObserver = () => {
+  if (resizeObserver && container.value) {
+    resizeObserver.unobserve(container.value);
+    resizeObserver.disconnect();
+  }
+  stopPositionObserver();
+};
 
 // watch src changes
 watch(() => props.src, (newSrc) => {
