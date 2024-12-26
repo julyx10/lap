@@ -36,8 +36,6 @@
   "folder_summary": "{folders} フォルダ, {files} ファイル",
   "files_summary": "{files} ファイル",
 
-  "preview_no_file": "ファイルが選択されていません",
-
   "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],
   "file_info_title": "プロパティ",
   "file_info_album_name": "アルバム",

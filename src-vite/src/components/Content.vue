@@ -77,7 +77,7 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="config.showPreview" ref="previewDiv" 
+        <div v-show="config.showPreview" ref="previewDiv" 
           class="p-1 t-color-bg rounded-ss-lg overflow-hidden"
           :style="{ width: config.previewPaneWidth + '%' }"
         >
@@ -85,35 +85,17 @@
             :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
-            <!-- <img
-              class="h-full w-full p-1 rounded-lg object-contain" 
-              :src="imageSrc"
-              :style="{ transform: `rotate(${fileList[selectedItemIndex].rotate ?? 0}deg)`, transition: 'none' }"
-              @load="onImageLoad" 
-            /> -->
-            <Image v-if="imageSrc" 
-              ref="imageRef" 
+            <Image ref="imageRef" 
               :src="imageSrc" 
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
-              :isZoomFit="config.isZoomFit"
+              :isZoomFit="true"
             />
+          </div>
 
-            <!-- file name -->
-            <!-- <div class="fixed p-2 bottom-0 flex flex-col items-center text-sm"> -->
-              <!-- <p>{{ fileList[selectedItemIndex].name }}</p> -->
-              <!-- <div class="flex space-x-4"> -->
-                <!-- <p>{{ formatFileSize(fileList[selectedItemIndex].size) }}</p> -->
-                <!-- <p>{{ formatTimestamp(fileList[selectedItemIndex].modified_at, $t('date_time_format')) }}</p> -->
-                <!-- <p>{{ fileList[selectedItemIndex].width }}x{{ fileList[selectedItemIndex].height }}</p> -->
-              <!-- </div> -->
-            <!-- </div> -->
-
+          <div v-else class="h-full flex items-center justify-center">
+            <p >{{ $t('image_view_no_image') }}</p>
           </div>
       
-          <div v-else class="h-full flex items-center justify-center">
-            <p>{{ $t('preview_no_file') }}</p>
-          </div>
-
         </div>
       </transition>
 
@@ -132,7 +114,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatFileSize, formatTimestamp, formatDate } from '@/common/utils';
+import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate } from '@/common/utils';
 
 import SliderInput from '@/components/SliderInput.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -369,11 +351,11 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
 watch(() => [selectedItemIndex.value, fileList.value.length], ([newIndex, len]) => {
   console.log('watch - selectedItemIndex:', newIndex);
 
-  if (newIndex >= 0 && newIndex < fileList.value.length && fileList.value[newIndex].thumbnail ) {
-    // imageSrc.value = fileList.value[newIndex].thumbnail;
+  if (newIndex >= 0 && newIndex < fileList.value.length) {
+    imageSrc.value = fileList.value[newIndex].thumbnail || '';
     onImageLoad();
   } else {
-    // imageSrc.value = '/src/assets/photo.svg';
+    imageSrc.value = '';
   }
 });
 
@@ -399,7 +381,7 @@ const onImageLoad = async () => {
       imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
     }
   } catch (error) {
-    // imageSrc.value = '/src/assets/photo.svg';
+    imageSrc.value = '';
     console.error('onImageLoad error:', error);
   }
 }

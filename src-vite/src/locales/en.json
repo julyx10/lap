@@ -36,8 +36,6 @@
 
   "file_list_no_files": "No files found",
 
-  "preview_no_file": "No file selected",
-
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",
   "file_info_album_name": "Album",

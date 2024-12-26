@@ -50,23 +50,6 @@
       </tr>
     </table>
 
-    <!-- <img v-show="activeImage === 0"
-      ref="image1"
-      :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
-      :src="imageSrc[activeImage]"
-      :style="imageStyle"
-      draggable="false"
-      @load="onImageLoad($event.target)"
-    />
-    <img v-show="activeImage === 1"
-      ref="image2"
-      :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
-      :src="imageSrc[activeImage]"
-      :style="imageStyle"
-      draggable="false"
-      @load="onImageLoad($event.target)"
-    /> -->
-
     <img 
       v-for="(src, index) in imageSrc"
       v-show="activeImage === index"
@@ -124,7 +107,6 @@ const imageSizeRotated = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }])
 const isDragging = ref(false);              // Dragging state
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const isGrabbing = ref(false);              // Grabbing state
-const enableAnimation = ref(false);         // Enable transition animation when zooming or rotating
 
 let resizeObserver;
 let positionObserver;
@@ -183,16 +165,11 @@ const stopPositionObserver = () => {
 
 // watch src changes
 watch(() => props.src, (newSrc) => {
-  enableAnimation.value = false;
   isZoomFit.value = props.isZoomFit;
 
-  activeImage.value = activeImage.value ^ 1;    // toggle active image 0 -> 1, 1 -> 0
-  imageSrc.value[activeImage.value] = newSrc;
-  imageRotate.value[activeImage.value] = props.rotate;
-
-  setTimeout(() => {
-    enableAnimation.value = true;
-  }, 300);
+  // preload to the hide image, then swap the image when loaded
+  imageSrc.value[activeImage.value ^ 1] = newSrc;
+  imageRotate.value[activeImage.value ^ 1] = props.rotate;
 }, { immediate: true });
 
 // watch rotate changes
@@ -249,12 +226,15 @@ const imageStyle = computed(() => {
     transform: `translate(${position.value[activeImage.value].x}px, ${position.value[activeImage.value].y}px) 
                 scale(${scale.value[activeImage.value]}) 
                 rotate(${imageRotate.value[activeImage.value]}deg)`,
-    transition: enableAnimation.value && !isDragging.value ? 'transform 0.3s ease-in-out' : 'none',
+    transition: !isDragging.value ? 'transform 0.3s ease-in-out' : 'none',
   };
 });
 
 // watch image load
 const onImageLoad = (img) => {
+  // toggle to active image when loaded (0 -> 1, 1 -> 0)
+  activeImage.value = activeImage.value ^ 1;
+
   imageSize.value[activeImage.value] = { width: img.naturalWidth, height: img.naturalHeight };
 
   // swap image width and height
