@@ -31,6 +31,14 @@
         ]" 
         @click="clickNext" 
       />
+      <component 
+        :is="autoPlay ? IconPause : IconPlay" 
+        :class="[
+          't-icon-size-sm',
+          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+        ]" 
+        @click="autoPlay = !autoPlay" 
+      />  
       <IconZoomIn
         :class="[
           't-icon-size-sm',
@@ -174,6 +182,8 @@ import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
 import FileInfo from '@/components/FileInfo.vue';
 
+import IconPlay from '@/assets/play.svg';
+import IconPause from '@/assets/pause.svg';
 import IconPrev from '@/assets/nav-prev.svg';
 import IconNext from '@/assets/nav-next.svg';
 import IconZoomIn from '@/assets/zoom-in.svg';
@@ -214,6 +224,9 @@ const imageRef = ref(null);     // Image reference
 const imageSrc = ref(null);
 const imageCache = new Map();   // Cache images to prevent reloading
 const loadError = ref(false);   // Track if there was an error loading the image
+
+const autoPlay = ref(false);        // Auto play state
+let timer = null;                   // Timer for auto play
 
 const imageScale = ref(1);          // Image scale
 const imageMinScale = ref(0);       // Minimum image scale
@@ -303,6 +316,22 @@ watch(() => imageScale.value, () => {
   }, 1000);
 });
 
+watch(() => fileIndex.value, async (newIndex) => {
+  if(newIndex === -1) {
+    autoPlay.value = false;
+  } 
+});
+
+watch(() => autoPlay.value, (newAutoPlay) => {
+  if(newAutoPlay) {
+    timer = setInterval(() => {
+      clickNext();
+    }, config.autoPlayInterval * 1000);
+  } else {
+    clearInterval(timer);
+  }
+});
+
 // Load the image from the file path
 async function loadImage(filePath) {
   try {
@@ -355,7 +384,11 @@ function clickPrev() {
 }
 
 function clickNext() {
-  emit('message-from-image-viewer', { message: 'next' });
+  if(autoPlay.value && fileIndex.value === fileCount.value - 1) {
+    emit('message-from-image-viewer', { message: 'home' });
+  } else {
+    emit('message-from-image-viewer', { message: 'next' });
+  }
 }
 
 const clickZoomIn = () => {
@@ -450,17 +483,21 @@ function handleKeyDown(event) {
   }
 
   switch (event.key) {
-    case 'ArrowUp':
-      clickZoomIn();
-      break;
+
     case 'ArrowLeft':
       clickPrev();
+      break;
+    case 'ArrowRight':
+      clickNext();
+      break;
+    case 'ArrowUp':
+      clickZoomIn();
       break;
     case 'ArrowDown':
       clickZoomOut();
       break;
-    case 'ArrowRight':
-      clickNext();
+    case 'p':
+      autoPlay.value = !autoPlay.value;
       break;
     case 'f':
       toggleFullScreen();

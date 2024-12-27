@@ -214,6 +214,9 @@ listen('message-from-image-viewer', (event) => {
   const { message } = event.payload;
   console.log('content - message-from-image-viewer:', message);
   switch (message) {
+    case 'home':
+      selectedItemIndex.value = 0;
+      break;
     case 'prev':
       selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
       break;

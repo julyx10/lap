@@ -17,6 +17,7 @@
   "settings_image_viewer": "Image Viewer",
   "settings_image_viewer_mouse_wheel": "Mouse Wheel",
   "settings_image_viewer_mouse_wheel_options": ["Previous / Next Image", "Zoom In / Out"],
+  "settings_image_viewer_autoplay_interval": "Autoplay Interval (s)",
 
   "debug": "Debug",
 

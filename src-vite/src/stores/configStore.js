@@ -4,11 +4,15 @@ import { defineStore } from 'pinia';
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
 
-    // settings
+    // settings - general
     language: 'en',             // default language
     showButtonText: false,      // show button text
     darkMode: true,             // light or dark theme
     debugMode: false,           // debug mode
+
+    // settings - image viewer
+    mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
+    autoPlayInterval: 1,        // auto play interval in seconds
 
     // app
     toolbarIndex: 1,            // toolbar index
