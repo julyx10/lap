@@ -13,7 +13,7 @@
       <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
         <tr>
           <td>{{ $t('file_info_album_name') }}</td>
-          <td class="text-wrap break-all">{{ fileInfo.album_name }} [{{fileIndex + 1}}/{{ fileCount }}]</td>
+          <td class="text-wrap break-all">{{ fileInfo.album_name }}</td>
         </tr>
         <tr>
           <td>{{ $t('file_info_name') }}</td>

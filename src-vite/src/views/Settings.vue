@@ -7,17 +7,22 @@
     <!-- Main Content -->
     <div class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark">
 
+      <!-- General Settings Section -->
       <div class="w-32 text-lg font-bold mb-2">
-        {{ $t('settings_general') }}
+        <div >
+          {{ $t('settings_general') }}
+        </div>
+        <div >
+          {{ $t('settings_image_viewer') }}
+        </div>
       </div>
-      
+    
       <div class="flex-grow">
 
-        <!-- General Settings Section -->
         <section>
           <!-- select language -->
           <div class="mb-4">
-            <label for="language-select" class="block text-lg">{{ $t('settings_select_language') }}</label>
+            <label for="language-select" class="block text-lg">{{ $t('settings_general_select_language') }}</label>
             <select id="language-select" v-model="config.language"
               class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
@@ -29,19 +34,19 @@
 
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-button-text" >{{ $t('settings_show_button_text') }}</label>
+            <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
             <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/>
           </div>
 
           <!-- Dark Mode -->
           <div class="flex items-center justify-between mb-4">
-            <label for="dark-mode" >{{ $t('settings_dark_mode') }}</label>
+            <label for="dark-mode" >{{ $t('settings_general_dark_mode') }}</label>
             <input id="dark-mode" type="checkbox" v-model="config.darkMode" />
           </div>
 
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
-            <label for="debug-mode" >{{ $t('settings_debug_mode') }}</label>
+            <label for="debug-mode" >{{ $t('settings_general_debug_mode') }}</label>
             <input id="debug-mode" type="checkbox" v-model="config.debugMode" />
           </div>
 

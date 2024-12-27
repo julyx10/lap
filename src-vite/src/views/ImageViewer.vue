@@ -5,7 +5,10 @@
       'relative w-screen h-screen flex flex-col border t-color-border overflow-hidden',
       config.isFullScreen ? 'fixed top-0 left-0 z-50' : 'rounded-lg shadow-lg'
     ]">
-    <TitleBar v-if="!config.isFullScreen" titlebar="jc-photo" viewName="ImageViewer"/>
+    <TitleBar v-if="!config.isFullScreen"
+      :titlebar="`jc-photo - ${fileIndex + 1}/${fileCount}`"
+      viewName="ImageViewer"
+    />
 
     <!-- Toolbar -->
     <div id="responsiveDiv"
@@ -31,14 +34,14 @@
       <IconZoomIn
         :class="[
           't-icon-size-sm',
-          fileIndex >= 0 && imageScale < 10 ? 't-icon-hover' : 't-icon-disabled'
+          fileIndex >= 0 && imageScale < imageMaxScale ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickZoomIn" 
       />
       <IconZoomOut
         :class="[
           't-icon-size-sm',
-          fileIndex >= 0 && imageScale > 0.1 ? 't-icon-hover' : 't-icon-disabled'
+          fileIndex >= 0 && imageScale > imageMinScale ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickZoomOut" 
       />
@@ -212,7 +215,9 @@ const imageSrc = ref(null);
 const imageCache = new Map();   // Cache images to prevent reloading
 const loadError = ref(false);   // Track if there was an error loading the image
 
-const imageScale = ref(1);      // Image scale (from 0.1 ~ 10)
+const imageScale = ref(1);          // Image scale
+const imageMinScale = ref(0);       // Minimum image scale
+const imageMaxScale = ref(10);      // Maximum image scale
 const isScaleChanged = ref(false);  // Scale changed state
 
 onMounted(async() => {
@@ -259,6 +264,8 @@ listen('message-from-image', (event) => {
   switch (message) {
     case 'scale':
       imageScale.value = event.payload.scale;
+      imageMinScale.value = event.payload.minScale;
+      imageMaxScale.value = event.payload.maxScale;
       break;
     case 'rotate':
       fileInfo.value.rotate = event.payload.rotate;

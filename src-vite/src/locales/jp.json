@@ -10,10 +10,13 @@
 
   "settings": "設定",
   "settings_general": "一般",
-  "settings_select_language": "言語を選択",
-  "settings_show_button_text": "ボタンテキストを表示",
-  "settings_dark_mode": "ダークモード",
-  "settings_debug_mode": "デバッグモード",
+  "settings_general_select_language": "言語を選択",
+  "settings_general_show_button_text": "ボタンテキストを表示",
+  "settings_general_dark_mode": "ダークモード",
+  "settings_general_debug_mode": "デバッグモード",
+  "settings_image_viewer": "画像ビューア",
+  "settings_image_viewer_mouse_wheel": "マウスホイール",
+  "settings_image_viewer_mouse_wheel_options": ["前/次の画像", "ズームイン/アウト"],
   
   "debug": "デバッグ",
 
@@ -84,6 +87,7 @@
   "date_time_format": "yyyy/MM/dd HH:mm:ss",
   "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
 
+  "image_view_title": "画像ビューア",
   "image_view_loading": "読み込み中...",
   "image_view_failed": "読み込みに失敗しました。",
   "image_view_no_image": "画像が選択されていません"

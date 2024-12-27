@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
  * date:    2024-08-08
  */
 use std::collections::HashMap;
+use std::fs;
+use dirs;
 
 use crate::t_utils;
 // use crate::t_opencv;
@@ -838,7 +840,17 @@ impl ACamera {
 
 /// get connection to the db
 fn open_conn() -> Connection {
-    Connection::open("./main.db")
+    // Get the local AppData directory
+    let app_data_dir = dirs::data_local_dir()
+        .expect("Failed to get the local AppData directory")
+        .join("jc-photo");
+
+    // Ensure the directory exists
+    fs::create_dir_all(&app_data_dir).expect("Failed to create AppData directory");
+
+    // Construct the path for main.db
+    let db_path = app_data_dir.join("main.db");
+    Connection::open(db_path)
         .map_err(|e| e.to_string())
         .unwrap()
 }

@@ -10,10 +10,13 @@
 
   "settings": "设置",
   "settings_general": "通用",
-  "settings_select_language": "选择语言",
-  "settings_show_button_text": "显示按钮文本",
-  "settings_dark_mode": "暗黑模式",
-  "settings_debug_mode": "调试模式",
+  "settings_general_select_language": "选择语言",
+  "settings_general_show_button_text": "显示按钮文本",
+  "settings_general_dark_mode": "暗黑模式",
+  "settings_general_debug_mode": "调试模式",
+  "settings_image_viewer": "图片查看器",
+  "settings_image_viewer_mouse_wheel": "鼠标滚轮",
+  "settings_image_viewer_mouse_wheel_options": ["上/下一张图片", "放大/缩小"],
   
   "debug": "调试",
 
@@ -84,6 +87,7 @@
   "date_time_format": "yyyy/MM/dd HH:mm:ss",
   "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
 
+  "image_view_title": "图片查看器",
   "image_view_loading": "载入中...",
   "image_view_failed": "载入失败",
   "image_view_no_image": "未选择图片"

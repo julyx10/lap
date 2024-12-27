@@ -100,6 +100,8 @@ const activeImage = ref(1);                 // which image is active (0 or 1)
 const imageSrc = ref(['', '']);             // image source 1
 const position = ref([{ x: 0, y: 0 }, { x: 0, y: 0 }]); // Image position (top-left corner)
 const scale = ref([1, 1]);                  // Image scale (zoom level)
+const minScale = ref(0);                    // Minimum zoom level
+const maxScale = ref(10);                   // Maximum zoom level
 const imageRotate = ref([0, 0]);            // Image rotation
 const imageSize = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }] );       // actually image size
 const imageSizeRotated = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }]); // image size after rotation
@@ -200,7 +202,12 @@ watch(() => imageRotate.value[activeImage.value], (newValue) => {
 
 // display zoom scale for a while
 watch(() => scale.value[activeImage.value], (newValue) => {
-  emit('message-from-image', { message: 'scale', scale: newValue });
+  emit('message-from-image', { 
+    message: 'scale', 
+    scale: newValue, 
+    minScale: minScale.value, 
+    maxScale: maxScale.value 
+  });
 });
 
 // watch zoom fit changes
@@ -300,19 +307,45 @@ const zoomReset = () => {
 // mouse wheel zoom
 const onZoom = (event) => {
   event.preventDefault();
-  
-  const zoomFactor = 0.1; // Adjust sensitivity
-  const newScale = Math.min(Math.max(scale.value[activeImage.value] / (1 + event.deltaY * zoomFactor / 100), 0.1), 10); // Clamp zoom level
-  zoomImage(event.clientX - containerPos.value.x, event.clientY - containerPos.value.y, newScale);
+  if(event.ctrlKey) { 
+    
+    const zoomFactor = 0.1; // Adjust sensitivity
+    minScale.value = Math.min(
+      0.1, 
+      Math.min(
+        containerSize.value.width / imageSizeRotated.value[activeImage.value].width, 
+        containerSize.value.height / imageSizeRotated.value[activeImage.value].height
+      ) * 0.5
+    );
+
+    // Clamp zoom level
+    const newScale = Math.min(Math.max(scale.value[activeImage.value] / (1 + event.deltaY * zoomFactor / 100), minScale.value), maxScale.value);
+    zoomImage(event.clientX - containerPos.value.x, event.clientY - containerPos.value.y, newScale);
+  } else {
+    console.log('deltaY', event.deltaY);
+    if (event.deltaY < 0) {
+      emit('message-from-image-viewer', { message: 'prev' });
+    } else {
+      emit('message-from-image-viewer', { message: 'next' });
+    }
+  }
 };
 
 const zoomIn = () => {
-  const newScale = Math.min(scale.value[activeImage.value] * 2, 10);
+  const newScale = Math.min(scale.value[activeImage.value] * 2, maxScale.value);
   zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
 };
 
 const zoomOut = () => {
-  const newScale = Math.max(scale.value[activeImage.value] / 2, 0.1);
+  minScale.value = Math.min(
+    0.1, 
+    Math.min(
+      containerSize.value.width / imageSizeRotated.value[activeImage.value].width, 
+      containerSize.value.height / imageSizeRotated.value[activeImage.value].height
+    ) * 0.5
+  );
+
+  const newScale = Math.max(scale.value[activeImage.value] / 2, minScale.value);
   zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
 };
 
