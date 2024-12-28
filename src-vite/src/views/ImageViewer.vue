@@ -291,6 +291,7 @@ listen('message-from-image', (event) => {
 
 // watch language
 watch(() => config.language, (newLanguage) => {
+    console.log('Language changed to:', newLanguage);
     locale.value = newLanguage; // update locale based on config.language
 });
 
@@ -322,11 +323,13 @@ watch(() => fileIndex.value, async (newIndex) => {
   } 
 });
 
-watch(() => autoPlay.value, (newAutoPlay) => {
+watch(() => [autoPlay.value, config.autoPlayInterval], ([newAutoPlay, newInterVal]) => {
+  console.log('autoPlay:', newAutoPlay, newInterVal);
   if(newAutoPlay) {
+    clearInterval(timer);
     timer = setInterval(() => {
       clickNext();
-    }, config.autoPlayInterval * 1000);
+    }, newInterVal * 1000);
   } else {
     clearInterval(timer);
   }
@@ -483,7 +486,6 @@ function handleKeyDown(event) {
   }
 
   switch (event.key) {
-
     case 'ArrowLeft':
       clickPrev();
       break;
@@ -500,7 +502,7 @@ function handleKeyDown(event) {
       autoPlay.value = !autoPlay.value;
       break;
     case 'f':
-      toggleFullScreen();
+      toggleFavorite();
       break;
     case 's':
       clickSave();

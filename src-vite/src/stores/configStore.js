@@ -63,6 +63,12 @@ export const useConfigStore = defineStore('configStore', {
     setShowButtonText(showButtonText) {
       this.showButtonText = showButtonText;
     },
+    setMouseWheelMode(mouseWheelMode) {
+      this.mouseWheelMode = mouseWheelMode;
+    },
+    setAutoPlayInterval(autoPlayInterval) {
+      this.autoPlayInterval = autoPlayInterval;
+    },
   },
   persist: {
     enabled: true,

@@ -267,15 +267,10 @@ watch(() => config.language, (newLanguage) => {
 
 /// watch home (all files)
 watch(() => config.toolbarIndex, newIndex => {
-  if(newIndex === 0) {
+  if(newIndex === 0) { // home
     contentTitle.value = localeMsg.value.home;
     getAllFiles();  // get all files
-  }
-}, { immediate: true });
-
-/// watch favorites
-watch(() => config.toolbarIndex, newIndex => {
-  if(newIndex === 1) {
+  } else if(newIndex === 1) { // favorite
     contentTitle.value = localeMsg.value.favorite;
     getAllFiles(true); // get favorite files
   }

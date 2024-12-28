@@ -16,8 +16,8 @@
   "settings_general_debug_mode": "调试模式",
   "settings_image_viewer": "图片查看器",
   "settings_image_viewer_mouse_wheel": "鼠标滚轮",
-  "settings_image_viewer_mouse_wheel_options": ["上/下一张图片", "放大/缩小"],
-  "settings_image_viewer_autoplay_interval": "自动播放间隔（秒）",
+  "settings_image_viewer_mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
+  "settings_image_viewer_autoplay_interval": "自动播放间隔: {second}秒",
   
   "debug": "调试",
 

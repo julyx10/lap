@@ -44,7 +44,7 @@ const props = defineProps({
   },
   viewName: {
     type: String,
-    required: true,
+    required: false,
   },
   resizable: {
     type: Boolean,

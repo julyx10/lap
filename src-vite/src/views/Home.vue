@@ -8,7 +8,7 @@
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
 
       <!-- left toolbar -->
-      <div ref="divToolbar" class="w-12 my-4 flex flex-col justify-between" style="user-select: none;">
+      <div ref="divToolbar" class="min-w-12 my-4 flex flex-col justify-between" style="user-select: none;">
         <div class="flex flex-col items-center space-y-6">
           <div v-for="(item, index) in toolbars" 
             class="flex flex-col items-center t-icon-hover" 
@@ -152,8 +152,8 @@ async function clickSettings() {
   const newSettingsWindow = new WebviewWindow('settings', {
     url: '/settings',
     title: 'Settings',
-    width: 640,
-    height: 480,
+    width: 600,
+    height: 400,
     resizable: false,
     transparent: true,
     decorations: false,

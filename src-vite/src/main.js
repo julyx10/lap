@@ -11,8 +11,8 @@ import '@/tailwind.css'
 
 // I18n
 import en from '@/locales/en.json'
+import ja from '@/locales/ja.json'
 import zh from '@/locales/zh.json'
-import jp from '@/locales/jp.json'
 
 // Create the app instance
 const app = createApp(App)
@@ -30,8 +30,8 @@ const i18n = createI18n({
   fallbackLocale: "en",
   messages: {
     en,
-    zh,
-    jp
+    ja,
+    zh
   },
 })
 
@@ -48,10 +48,14 @@ console.log('App mounted', app)
 
 // Listen for events
 listen('settings-language-changed', (event) => {
-  console.log('Received event', event)
   config.setLanguage(event.payload)
 })
 listen('settings-showButtonText-changed', (event) => {
-  console.log('Received event', event)
   config.setShowButtonText(event.payload)
+})
+listen('settings-mouseWheelMode-changed', (event) => {
+  config.setMouseWheelMode(event.payload)
+})
+listen('settings-autoPlayInterval-changed', (event) => {
+  config.setAutoPlayInterval(event.payload)
 })

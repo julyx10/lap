@@ -88,3 +88,8 @@
 .t-input-focus {
   @apply focus:border focus:outline-none focus:border-sky-700;
 }
+
+/* option */
+.t-option {
+  @apply t-color-text t-color-bg-light t-color-bg-hover;
+}

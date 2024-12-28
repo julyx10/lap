@@ -8,7 +8,7 @@
     @mouseup="stopDragging"
     @mouseleave="stopDragging"
     @dblclick="zoomFit"
-    @wheel="onZoom"
+    @wheel="onMouseWheel"
   >
     <!-- DEBUG -->
     <table v-if="config.debugMode" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
@@ -305,30 +305,32 @@ const zoomReset = () => {
 };
 
 // mouse wheel zoom
-const onZoom = (event) => {
+const onMouseWheel = (event) => {
   event.preventDefault();
-  if(event.ctrlKey) { 
-    
-    const zoomFactor = 0.1; // Adjust sensitivity
-    minScale.value = Math.min(
-      0.1, 
-      Math.min(
-        containerSize.value.width / imageSizeRotated.value[activeImage.value].width, 
-        containerSize.value.height / imageSizeRotated.value[activeImage.value].height
-      ) * 0.5
-    );
-
-    // Clamp zoom level
-    const newScale = Math.min(Math.max(scale.value[activeImage.value] / (1 + event.deltaY * zoomFactor / 100), minScale.value), maxScale.value);
-    zoomImage(event.clientX - containerPos.value.x, event.clientY - containerPos.value.y, newScale);
-  } else {
-    console.log('deltaY', event.deltaY);
-    if (event.deltaY < 0) {
-      emit('message-from-image-viewer', { message: 'prev' });
-    } else {
-      emit('message-from-image-viewer', { message: 'next' });
+  if(config.mouseWheelMode === 0) {  // 0: previous/next image
+    if(event.ctrlKey) {     // ctrl + mouse wheel: zoom in / out
+      mouseZoom(event);
+    } else{
+      emit('message-from-image-viewer', { message: event.deltaY < 0 ? 'prev' : 'next' });
     }
+  } else if(config.mouseWheelMode === 1) {  // 1: zoom in / out
+    mouseZoom(event);
   }
+};
+
+const mouseZoom = (event) => {
+  const zoomFactor = 0.1; // Adjust sensitivity
+  minScale.value = Math.min(
+    0.1, 
+    Math.min(
+      containerSize.value.width / imageSizeRotated.value[activeImage.value].width, 
+      containerSize.value.height / imageSizeRotated.value[activeImage.value].height
+    ) * 0.5
+  );
+
+  // Clamp zoom level
+  const newScale = Math.min(Math.max(scale.value[activeImage.value] / (1 + event.deltaY * zoomFactor / 100), minScale.value), maxScale.value);
+  zoomImage(event.clientX - containerPos.value.x, event.clientY - containerPos.value.y, newScale);
 };
 
 const zoomIn = () => {
