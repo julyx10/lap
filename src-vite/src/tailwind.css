@@ -13,7 +13,7 @@
   @apply w-6 h-6;
 }
 .t-icon-size-sm {
-  @apply w-6 h-6;
+  @apply w-5 h-5;
 }
 .t-icon-hover {
   @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;

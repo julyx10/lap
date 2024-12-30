@@ -261,7 +261,6 @@ const onImageLoad = (img) => {
 
 const rotateRight = () => {
   imageRotate.value[activeImage.value] += 90;
-  emit('message-from-image', { message: 'rotate', rotate: imageRotate.value[activeImage.value] });
 };
 
 const updateZoom = () => {

@@ -5,7 +5,7 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" >
       <span>{{ titlebar }}</span>
-      <div class="flex text-sm">
+      <div class="flex text-sm items-center">
         <div 
           :class="[
             'px-2 border rounded-l-lg t-color-bg t-color-border t-color-bg-hover text-nowrap',
@@ -25,7 +25,7 @@
           {{ $t('calendar_daily') }}
         </div>
         <span class="px-2"></span>
-        <component :is="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-size t-icon-hover" @click="toggleSortingOrder" />
+        <component :is="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-size-sm t-icon-hover" @click="toggleSortingOrder" />
       </div>
     </div>
     

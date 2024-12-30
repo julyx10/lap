@@ -1,6 +1,6 @@
 <template>
 
-  <div class="w-screen h-screen flex flex-col border t-color-border rounded-lg overflow-hidden">
+  <div class="w-screen h-screen flex flex-col border t-color-border rounded-lg overflow-hidden select-none">
     <!-- Title Bar -->
     <TitleBar :titlebar="$t('settings')" :resizable="false" viewName="Settings"/>
 
@@ -15,11 +15,16 @@
         <div :class="['cursor-pointer mb-4', tabIndex === 1 ? 't-color-text-selected' : '']" @click="tabIndex = 1">
           {{ $t('settings_image_viewer') }}
         </div>
+        <div :class="['cursor-pointer mb-4', tabIndex === 2 ? 't-color-text-selected' : '']" @click="tabIndex = 2">
+          {{ $t('settings_about') }}
+        </div>
       </div>
     
       <div class="flex-grow">
 
+        <!-- General Settings -->
         <section v-if="tabIndex === 0">
+
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
             <label for="language-select">{{ $t('settings_general_select_language') }}</label>
@@ -56,12 +61,13 @@
 
         </section>
 
+        <!-- Image Viewer Settings -->
         <section v-else-if="tabIndex === 1">
 
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings_image_viewer_mouse_wheel') }}</label>
-            <select id="language-select" v-model="config.mouseWheelMode"
+            <select id="mouse-wheel" v-model="config.mouseWheelMode"
               class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
               <option 
@@ -89,6 +95,17 @@
 
         </section>
 
+        <!-- About Section -->
+        <section v-else-if="tabIndex === 2">
+
+          <div class="flex flex-col items-center justify-between mb-4">
+            <label class="font-bold">jc-photo</label>
+            <label>{{ $t('settings_about_version', { version: '0.1.0' }) }}</label>
+            <label>{{ $t('settings_about_author', { author: '@liulichuan' }) }}</label>
+          </div>
+
+        </section>
+
       </div>
 
     </div>  
@@ -99,7 +116,8 @@
 
 <script setup>
 
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
@@ -113,6 +131,8 @@ const localeMsg = computed(() => messages.value[config.language]);
 
 // config store
 const config = useConfigStore();
+
+const appWindow = getCurrentWebviewWindow()
 
 const tabIndex = ref(0);
 
@@ -129,6 +149,14 @@ const wheelOptions = computed(() => {
     { label: options[0], value: 0 },  // 0: previous / next
     { label: options[1], value: 1 },  // 1: zoom in / out
   ];
+});
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 // watch selected language
@@ -154,4 +182,23 @@ watch(() => config.autoPlayInterval, (newValue) => {
   emit('settings-autoPlayInterval-changed', newValue);
 });
 
+// Handle keyboard shortcuts
+function handleKeyDown(event) {
+  const navigationKeys = ['Tab', 'Escape'];
+  
+  // Disable default behavior for certain keys
+  if (navigationKeys.includes(event.key)) {
+    event.preventDefault();
+  }
+
+  switch (event.key) {
+    case 'Tab':
+      tabIndex.value += 1;
+      tabIndex.value = tabIndex.value % 3; // 3 tabs
+      break;
+    case 'Escape':
+      appWindow.close(); // Close the window
+      break;
+  }
+}
 </script>

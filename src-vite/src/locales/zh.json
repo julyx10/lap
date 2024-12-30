@@ -18,6 +18,10 @@
   "settings_image_viewer_mouse_wheel": "鼠标滚轮",
   "settings_image_viewer_mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
   "settings_image_viewer_autoplay_interval": "自动播放间隔: {second}秒",
+  "settings_about": "关于",
+  "settings_about_version": "版本: {version}",
+  "settings_about_author": "作者: {author}",
+  "settings_about_project_page": "项目主页",
   
   "debug": "调试",
 

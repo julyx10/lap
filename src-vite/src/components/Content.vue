@@ -18,11 +18,11 @@
           :class="{ 't-icon-focus': isEditing }"
           @click="isEditing = !isEditing" 
         />
-        <component 
+        <!-- <component 
           :is="isEditing ? IconLeft : IconRight" 
           class="t-icon-hover" 
           @click="isEditing = !isEditing" 
-        />
+        /> -->
         <SliderInput 
           v-model="config.gridSize" 
           :min="120" 
@@ -43,7 +43,6 @@
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           class="t-icon-hover" 
-          :class="{ 't-icon-focus': config.showPreview }"
           @click="config.showPreview = !config.showPreview"
         />
       </div>

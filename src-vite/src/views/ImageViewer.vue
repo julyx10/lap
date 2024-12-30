@@ -19,14 +19,14 @@
     >
       <IconPrev 
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex > 0 ? 't-icon-hover' : 't-icon-disabled'
         ]" 
         @click="clickPrev" 
       />
       <IconNext 
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex < fileCount -1 ? 't-icon-hover' : 't-icon-disabled'
         ]" 
         @click="clickNext" 
@@ -34,21 +34,21 @@
       <component 
         :is="autoPlay ? IconPause : IconPlay" 
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
         ]" 
         @click="autoPlay = !autoPlay" 
       />  
       <IconZoomIn
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex >= 0 && imageScale < imageMaxScale ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickZoomIn" 
       />
       <IconZoomOut
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex >= 0 && imageScale > imageMinScale ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickZoomOut" 
@@ -56,41 +56,40 @@
       <component 
         :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" 
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
         ]" 
         @click="toggleZoomFit" 
       />
       <IconRotateRight 
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled',
-          (fileInfo?.rotate ?? 0) % 360 !== 0 ? 't-icon-focus' : ''
         ]" 
         :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
         @click="clickRotate"
       />
-      <IconUnFavorite v-if="!fileInfo" class="t-icon-size-sm t-icon-disabled"/>
-      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
-      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size-sm t-icon-hover" @click="toggleFavorite" />
-      <IconFileInfo :class="['t-icon-size-sm t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
+      <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
+      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
+      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
+      <IconFileInfo :class="['t-icon-size t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
       <IconSave 
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickSave"
       />
       <IconDelete
         :class="[
-          't-icon-size-sm',
+          't-icon-size',
           fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickDelete"
       />
-      <!-- <IconFullScreen v-if="!config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="setFullScreen" /> -->
-      <!-- <IconRestoreScreen v-if="config.isFullScreen" class="t-icon-size-sm t-icon-hover" @click="exitFullScreen" /> -->
-      <component :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size-sm t-icon-hover" @click="toggleFullScreen" />
+      <!-- <IconFullScreen v-if="!config.isFullScreen" class="t-icon-size t-icon-hover" @click="setFullScreen" /> -->
+      <!-- <IconRestoreScreen v-if="config.isFullScreen" class="t-icon-size t-icon-hover" @click="exitFullScreen" /> -->
+      <component :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size t-icon-hover" @click="toggleFullScreen" />
     </div>
 
     <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
@@ -280,10 +279,6 @@ listen('message-from-image', (event) => {
       imageMinScale.value = event.payload.minScale;
       imageMaxScale.value = event.payload.maxScale;
       break;
-    case 'rotate':
-      fileInfo.value.rotate = event.payload.rotate;
-      saveRotate(fileId.value, fileInfo.value.rotate);
-      break;
     default:
       break;
   }
@@ -421,6 +416,11 @@ const clickRotate = () => {
 
   if(imageRef.value) {
     imageRef.value.rotateRight();
+
+    fileInfo.value.rotate += 90;
+    saveRotate(fileId.value, fileInfo.value.rotate);
+    // update grid view
+    emit('message-from-image-viewer', { message: 'rotate', rotate: fileInfo.value.rotate });
   }
 };
 
@@ -437,6 +437,7 @@ const toggleFavorite = async() => {
   if(fileIndex.value < 0) return;
 
   fileInfo.value.is_favorite = fileInfo.value.is_favorite === null ? true : !fileInfo.value.is_favorite;
+  emit('message-from-image-viewer', { message: 'favorite', favorite: fileInfo.value.is_favorite });
 
   // set db status
   try {

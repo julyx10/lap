@@ -18,6 +18,10 @@
   "settings_image_viewer_mouse_wheel": "Mouse Wheel",
   "settings_image_viewer_mouse_wheel_options": ["Previous / Next Image (Ctrl to Zoom)", "Zoom In / Out"],
   "settings_image_viewer_autoplay_interval": "Autoplay Interval: {second} second(s)",
+  "settings_about": "About",
+  "settings_about_version": "Version: {version}",
+  "settings_about_author": "Author: {author}",
+  "settings_about_project_page": "Project Page",
 
   "debug": "Debug",
 

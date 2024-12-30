@@ -15,9 +15,28 @@
         @click="clickItem(index)"
         @dblclick="openItem(true)"
       >
-        <div class="flex flex-col items-center">
+        <div class="relative flex flex-col items-center">
+
+          <!-- action buttons -->
+          <div v-if="index === selectedIndex" 
+            class="absolute z-10 left-0 w-full flex flex-row items-center justify-between"
+          >
+            <div class="flex">
+              <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm"></IconFavorite>
+              <IconRotate v-if="file.rotate % 360 > 0"
+                class="t-icon-size-sm"
+                :style="{ 
+                  transform: `rotate(${file.rotate}deg)`, 
+                  transition: 'transform 0.3s ease-in-out' 
+                }"
+              />
+              <!-- <IconDelete class="t-icon-size-sm"></IconDelete> -->
+            </div>
+            <!-- <IconChecked class="t-icon-size t-icon-focus"></IconChecked> -->
+          </div>
+
           <img v-if="file.thumbnail"
-            :src="file.thumbnail" 
+            :src="file.thumbnail"
             :class="[
               'rounded transition duration-200', 
               isFitWidth ? 'object-cover' : 'object-contain'
@@ -33,7 +52,6 @@
             class="rounded flex items-center justify-center"
             :style="{ width: `${gridSize}px`, height: `${gridSize}px` }"
           >
-            <!-- <IconFolder class="size-1/2"/> -->
             <IconPhoto class="size-1/2"/>
           </div>
           <p class="pt-1 text-sm text-center">{{ shortenFilename(file.name) }}</p>
@@ -55,6 +73,11 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { shortenFilename, formatFileSize } from '@/common/utils';
 
 import IconPhoto from '@/assets/photo.svg';
+import IconFavorite from '@/assets/heart-solid.svg';
+import IconRotate from '@/assets/rotate-right.svg';
+import IconDelete from '@/assets/trash.svg';
+import IconUnChecked from '@/assets/checkbox-unchecked.svg';
+import IconChecked from '@/assets/checkbox-checked.svg';
 
 const props = defineProps({
   modelValue: {     // selecte item index(v-model value) 
@@ -77,12 +100,15 @@ const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
 
-listen('message-from-image', (event) => {
+listen('message-from-image-viewer', (event) => {
   const { message } = event.payload;
-  console.log('GriView.vue: message-from-image:', message);
+  console.log('GriView.vue: message-from-image-viewer:', message);
   switch (message) {
     case 'rotate':
       props.fileList[selectedIndex.value].rotate = event.payload.rotate;
+      break;
+    case 'favorite':
+      props.fileList[selectedIndex.value].is_favorite = event.payload.favorite;
       break;
     default:
       break;

@@ -18,6 +18,10 @@
   "settings_image_viewer_mouse_wheel": "マウスホイール",
   "settings_image_viewer_mouse_wheel_options": ["前の画像 / 次の画像 (Ctrlでズーム)", "ズームイン / アウト"],
   "settings_image_viewer_autoplay_interval": "自動再生間隔: {second}秒",
+  "settings_about": "情報",
+  "settings_about_version": "バージョン: {version}",
+  "settings_about_author": "作者: {author}",
+  "settings_about_project_page": "プロジェクトページ",
   
   "debug": "デバッグ",
 
