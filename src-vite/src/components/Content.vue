@@ -18,11 +18,6 @@
           :class="{ 't-icon-focus': isEditing }"
           @click="isEditing = !isEditing" 
         />
-        <!-- <component 
-          :is="isEditing ? IconLeft : IconRight" 
-          class="t-icon-hover" 
-          @click="isEditing = !isEditing" 
-        /> -->
         <SliderInput 
           v-model="config.gridSize" 
           :min="120" 
@@ -121,8 +116,6 @@ import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
 
 import IconEdit from '@/assets/edit.svg';
-import IconLeft from '@/assets/arrow-left.svg';
-import IconRight from '@/assets/arrow-right.svg';
 import IconFitWidth from '@/assets/fit-width.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';

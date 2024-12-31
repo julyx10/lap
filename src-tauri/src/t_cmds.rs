@@ -54,6 +54,13 @@ pub fn delete_album(id: i64) -> Result<usize, String> {
     Ok(result)
 }
 
+/// set album display order
+#[tauri::command]
+pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, String> {
+    Album::update_column(id, "display_order_id", &display_order)
+        .map_err(|e| format!("Error while setting album display order: {}", e))
+}
+
 // get all parent folders of a folder
 #[tauri::command]
 pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {

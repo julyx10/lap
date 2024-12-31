@@ -17,6 +17,7 @@
     "pinia-plugin-persistedstate": "^4.1.2",
     "tailwind-scrollbar": "^3.1.0",
     "vue": "^3.4.35",
+    "vue-draggable-plus": "^0.6.0",
     "vue-lazyload": "^3.0.0",
     "vue-router": "^4.4.5"
   },

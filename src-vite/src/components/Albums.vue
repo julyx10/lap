@@ -20,8 +20,10 @@
 
     <!-- albums -->
     <div v-if="albums.length > 0" class="flex-grow overflow-auto t-scrollbar-dark">
-      <ul>
-        <li v-for="album in albums" :key="album.id">
+
+      <!-- drag to change albums' display order -->
+      <VueDraggable v-model="albums" @end="onDragEnd">
+        <div v-for="album in albums" :key="album.id">
           <div 
             :class="[
               'm-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
@@ -38,14 +40,14 @@
               @click.stop="clickExpandAlbum(album)"
             />
             {{ album.name }}
-            <!-- {{ album.name }}({{ album.id }}) - {{ album.folderId }} -->
           </div>
           <AlbumsFolders v-if="album.is_expanded" 
             :albumId="album.id"
             :children="album.children" 
           />
-        </li>
-      </ul>
+        </div>
+      </VueDraggable>
+
     </div>
 
     <!-- Display message if no albums are found -->
@@ -74,6 +76,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
+import { VueDraggable } from 'vue-draggable-plus'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
 import { separator } from '@/common/utils';
@@ -143,6 +146,13 @@ async function getAlbums() {
     console.error('getAlbums...', error);
   }
 };
+
+/// change albums' display order
+const onDragEnd = async () => {
+  for (let i = 0; i < albums.value.length; i++) {
+    await invoke('set_album_display_order', { id: albums.value[i].id, displayOrder: i });
+  }
+}
 
 /// Add albums
 const clickAdd = async () => {

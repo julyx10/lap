@@ -159,6 +159,16 @@ impl Album {
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
+
+    /// update a column value
+    pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
+        let conn = open_conn();
+        let query = format!("UPDATE albums SET {} = ?1 WHERE id = ?2", column);
+        let result = conn
+            .execute(&query, params![value, id])
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
 }
 
 /// Define the album's folder struct
