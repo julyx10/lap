@@ -258,18 +258,6 @@ listen('update-img', async (event) => {
   nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
 });
 
-listen('message-from-home', (event) => {
-  const { message } = event.payload;
-  console.log('message-from-home:', message);
-  switch (message) {
-    case 'closed':
-      appWindow.close(); // Close the window
-      break;
-    default:
-      break;
-  }
-});
-
 listen('message-from-image', (event) => {
   const { message } = event.payload;
   console.log('ImageViewer.vue: message-from-image:', message);

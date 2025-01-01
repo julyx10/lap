@@ -11,6 +11,9 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
+
+use tauri::Manager;
+
 mod t_cmds;
 mod t_sqlite;
 mod t_utils;
@@ -35,7 +38,33 @@ fn main() {
 
             Ok(())
         })
-        .on_page_load(|_window, _payload| {
+        // .on_page_load(|_window, _payload| {
+        // })
+        .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
+
+            if let tauri::WindowEvent::CloseRequested { api, .. }  = event {
+                // Prevent the window from closing immediately
+                api.prevent_close();
+
+                let app_handle = window.app_handle();
+
+                // Get all open windows
+                let windows = app_handle.webview_windows();
+                for (_, other_window) in windows {
+                    // Skip the main window (we'll close it last)
+                    if other_window.label() != "main" {
+                        // Close each window
+                        if let Err(err) = other_window.close() {
+                            eprintln!("Failed to close window: {}", err);
+                        }
+                    }
+                }
+
+                app_handle.exit(0);
+            }
         })
         .invoke_handler(tauri::generate_handler![
             t_cmds::get_all_albums,
