@@ -38,8 +38,10 @@
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[
-              'rounded transition duration-200', 
-              isFitWidth ? 'object-cover' : 'object-contain'
+              'rounded transition duration-200',
+              config.thumbnailImageOption === 0 ? 'object-contain' : '',
+              config.thumbnailImageOption === 1 ? 'object-cover' : '',
+              config.thumbnailImageOption === 2 ? 'object-fill' : ''
             ]"
             :style="{ 
               width: `${gridSize}px`, height: `${gridSize}px`, 
@@ -54,10 +56,8 @@
           >
             <IconPhoto class="size-1/2"/>
           </div>
-          <p class="pt-1 text-sm text-center">{{ shortenFilename(file.name) }}</p>
-          <p class="text-sm">{{ file.width }}x{{ file.height }}</p>
-          <!-- <p class="text-sm">{{ file.e_model }}</p> -->
-          <!-- <p class="text-sm">{{ formatFileSize(file.size) }}</p> -->
+          <span class="pt-1 text-sm">{{ getThumbnailText(file, config.thumbnailPrimaryOption) }}</span>
+          <span class="text-sm">{{ getThumbnailText(file, config.thumbnailSecondaryOption) }}</span>
         </div>
       </div>
 
@@ -68,9 +68,11 @@
 
 <script setup lang="ts">
 
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
-import { shortenFilename, formatFileSize } from '@/common/utils';
+import { useI18n } from 'vue-i18n';
+import { useConfigStore } from '@/stores/configStore';
+import { shortenFilename, formatFileSize, formatTimestamp } from '@/common/utils';
 
 import IconPhoto from '@/assets/photo.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
@@ -92,13 +94,30 @@ const props = defineProps({
     type: Number,
     default: 200,     // from 100 to 400
   },
-  isFitWidth: Boolean,
 });
+
+/// i18n
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
+
+// config store
+const config = useConfigStore();
 
 const selectedIndex = ref(props.modelValue);
 const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
+
+const thumbnailPrimaryText = ref('');
+const thumbnailSecondaryText = ref('');
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 
 listen('message-from-image-viewer', (event) => {
   const { message } = event.payload;
@@ -113,14 +132,6 @@ listen('message-from-image-viewer', (event) => {
     default:
       break;
   }
-});
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
 });
 
 watch(() => props.modelValue, (newValue) => { 
@@ -152,6 +163,29 @@ function handleKeyDown(event) {
   }
 }
 
+// function to get the text for the thumbnail
+const getThumbnailText = (file, option) => {
+  switch (option) {
+    case 0:   // empty
+      return '';
+    case 1:   // name
+      return shortenFilename(file.name);
+    case 2:   // resolution
+      return `${file.width}x${file.height}`;
+    case 3:   // size
+      return formatFileSize(file.size);
+    case 4:   // created time
+      return formatTimestamp(file.created_at, localeMsg.value.date_time_format);
+    case 5:   // modified time
+      return formatTimestamp(file.modified_at, localeMsg.value.date_time_format);
+    case 6:   // date taken
+      return file.e_date_time || '-';
+    default:
+      return '';
+  }
+};
+
+// key actions
 const keyActions = {
   ArrowDown: ()  => selectedIndex.value = Math.min(selectedIndex.value + getColumnCount(), props.fileList.length - 1),
   ArrowRight: () => selectedIndex.value = Math.min(selectedIndex.value + 1, props.fileList.length - 1),
@@ -162,6 +196,7 @@ const keyActions = {
   Enter: ()      => openItem(true),
 };
 
+// open the selected item in the image viewer
 function openItem(openNewViewer = false) {
   if (openNewViewer) {
     emit('message-from-grid-view', { message: 'open-image-viewer' });
@@ -193,7 +228,6 @@ function getColumnCount() {
 }
 
 </script>
-
 
 <style scoped>
 * {

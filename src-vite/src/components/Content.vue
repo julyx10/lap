@@ -25,11 +25,6 @@
           :step="10" 
           label=""
         />
-        <IconFitWidth 
-          class="t-icon-size t-icon-hover"
-          :class="{ 't-icon-focus': config.isFitWidth }"
-          @click="config.isFitWidth = !config.isFitWidth" 
-        />
         <component 
           :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           class="t-icon-hover" 
@@ -52,7 +47,6 @@
       <GridView v-if="fileList.length > 0" 
         :fileList="fileList"
         :gridSize="Number(config.gridSize)" 
-        :isFitWidth="config.isFitWidth"
         v-model="selectedItemIndex"
       />
       <div v-else class="min-w-32 flex-1 flex flex-row items-center justify-center">
@@ -116,7 +110,6 @@ import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
 
 import IconEdit from '@/assets/edit.svg';
-import IconFitWidth from '@/assets/fit-width.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
 import IconPreview from '@/assets/preview-on.svg';

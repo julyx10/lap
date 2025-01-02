@@ -53,6 +53,15 @@ listen('settings-language-changed', (event) => {
 listen('settings-showButtonText-changed', (event) => {
   config.setShowButtonText(event.payload)
 })
+listen('settings-thumbnailImageOption-changed', (event) => {
+  config.setThumbnailImageOption(event.payload)
+})
+listen('settings-thumbnailPrimaryOption-changed', (event) => {
+  config.setThumbnailPrimaryOption(event.payload)
+})
+listen('settings-thumbnailSecondaryOption-changed', (event) => {
+  config.setThumbnailSecondaryOption(event.payload)
+})
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)
 })

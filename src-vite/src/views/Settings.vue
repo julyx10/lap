@@ -7,22 +7,24 @@
     <!-- Main Content -->
     <div class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark">
 
-      <!-- General Settings Section -->
+      <!-- Tabs -->
       <div class="w-32 font-bold">
-        <div :class="['cursor-pointer mb-4', tabIndex === 0 ? 't-color-text-selected' : '']" @click="tabIndex = 0">
-          {{ $t('settings_general') }}
-        </div>
-        <div :class="['cursor-pointer mb-4', tabIndex === 1 ? 't-color-text-selected' : '']" @click="tabIndex = 1">
-          {{ $t('settings_image_viewer') }}
-        </div>
-        <div :class="['cursor-pointer mb-4', tabIndex === 2 ? 't-color-text-selected' : '']" @click="tabIndex = 2">
-          {{ $t('settings_about') }}
+        <div
+          v-for="(tab, index) in ['settings_general', 'settings_thumbnail', 'settings_image_viewer', 'settings_about']"
+          :key="index"
+          :class="[
+            'mb-4 px-1 border-l-2 border-transparent cursor-pointer', 
+            tabIndex === index ? 't-color-text-selected t-color-border-selected transition-colors duration-300' : '',
+          ]"
+          @click="tabIndex = index"
+        >
+          {{ $t(tab) }}
         </div>
       </div>
     
-      <div class="flex-grow">
+      <div class="flex-grow px-2">
 
-        <!-- General Settings -->
+        <!-- General tab -->
         <section v-if="tabIndex === 0">
 
           <!-- select language -->
@@ -61,8 +63,61 @@
 
         </section>
 
-        <!-- Image Viewer Settings -->
-        <section v-else-if="tabIndex === 1">
+        <!-- Thumbnail tab -->
+        <section v-if="tabIndex === 1">
+          
+          <!-- Thumbnail image Option -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="thumbnail_image-select">{{ $t('settings_thumbnail_image') }}</label>
+            <select id="thumbnail_image-select" v-model="config.thumbnailImageOption"
+              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
+            >
+              <option v-for="(option, index) in thumbnailImageOptions" 
+                :key="index" 
+                :value="option.value"
+                class="t-option"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Primary Option -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="thumbnail_primary-select">{{ $t('settings_thumbnail_label_primary') }}</label>
+            <select id="thumbnail_primary-select" v-model="config.thumbnailPrimaryOption"
+              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
+            >
+              <option v-for="(option, index) in thumbnailLabelOptions" 
+                :key="index" 
+                :value="option.value"
+                class="t-option"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Secondary Option -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="thumbnail_secondary-select">{{ $t('settings_thumbnail_label_secondary') }}</label>
+            <select id="thumbnail_secondary-select" v-model="config.thumbnailSecondaryOption"
+              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
+            >
+              <option v-for="(option, index) in thumbnailLabelOptions" 
+                :key="index" 
+                :value="option.value"
+                class="t-option"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+        </section>
+
+        <!-- Image Viewer tab -->
+        <section v-else-if="tabIndex === 2">
 
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
@@ -96,7 +151,7 @@
         </section>
 
         <!-- About Section -->
-        <section v-else-if="tabIndex === 2">
+        <section v-else-if="tabIndex === 3">
 
           <div class="flex flex-col items-center justify-between mb-4">
             <label class="font-bold">jc-photo</label>
@@ -151,6 +206,29 @@ const wheelOptions = computed(() => {
   ];
 });
 
+// Define the thumbnail options
+const thumbnailImageOptions = computed(() => {
+  const options = localeMsg.value.settings_thumbnail_image_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
+const thumbnailLabelOptions = computed(() => {
+  const options = localeMsg.value.settings_thumbnail_label_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -159,26 +237,26 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
-// watch selected language
 watch(() => config.language, (newValue) => {
-  console.log('Language changed to:', newValue);
   locale.value = newValue;
   emit('settings-language-changed', newValue);
 });
-
-// watch show button text
 watch(() => config.showButtonText, (newValue) => {
-  console.log('Show Button Text:', newValue);
   emit('settings-showButtonText-changed', newValue);
 });
-// watch mouse whell mode
+watch(() => config.thumbnailImageOption, (newValue) => {
+  emit('settings-thumbnailImageOption-changed', newValue);
+});
+watch(() => config.thumbnailPrimaryOption, (newValue) => {
+  emit('settings-thumbnailPrimaryOption-changed', newValue);
+});
+watch(() => config.thumbnailSecondaryOption, (newValue) => {
+  emit('settings-thumbnailSecondaryOption-changed', newValue);
+});
 watch(() => config.mouseWheelMode, (newValue) => {
-  console.log('Mouse Wheel Mode:', newValue);
   emit('settings-mouseWheelMode-changed', newValue);
 });
-// watch autoplay interval
 watch(() => config.autoPlayInterval, (newValue) => {
-  console.log('Auto Play Interval:', newValue);
   emit('settings-autoPlayInterval-changed', newValue);
 });
 
@@ -194,7 +272,7 @@ function handleKeyDown(event) {
   switch (event.key) {
     case 'Tab':
       tabIndex.value += 1;
-      tabIndex.value = tabIndex.value % 3; // 3 tabs
+      tabIndex.value = tabIndex.value % 4; // 4 tabs
       break;
     case 'Escape':
       appWindow.close(); // Close the window

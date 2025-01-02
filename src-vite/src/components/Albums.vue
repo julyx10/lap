@@ -26,7 +26,7 @@
         <div v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'm-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
+              'm-1 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer', 
               { 
                 't-color-text-selected': config.albumId === album.id, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300': config.albumId === album.id && config.albumFolderId === album.folderId
