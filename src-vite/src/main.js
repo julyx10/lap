@@ -53,6 +53,9 @@ listen('settings-language-changed', (event) => {
 listen('settings-showButtonText-changed', (event) => {
   config.setShowButtonText(event.payload)
 })
+listen('settings-thumbnailSize-changed', (event) => {
+  config.setThumbnailSize(event.payload)
+})
 listen('settings-thumbnailImageOption-changed', (event) => {
   config.setThumbnailImageOption(event.payload)
 })

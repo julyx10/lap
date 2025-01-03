@@ -15,6 +15,7 @@
   "settings_general_dark_mode": "暗黑模式",
   "settings_general_debug_mode": "调试模式",
   "settings_thumbnail": "缩略图",
+  "settings_thumbnail_size": "缩略图大小",
   "settings_thumbnail_image": "缩略图缩放",
   "settings_thumbnail_image_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
   "settings_thumbnail_label_primary": "显示主要信息",

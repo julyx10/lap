@@ -18,13 +18,6 @@
           :class="{ 't-icon-focus': isEditing }"
           @click="isEditing = !isEditing" 
         />
-        <SliderInput 
-          v-model="config.gridSize" 
-          :min="120" 
-          :max="320" 
-          :step="10" 
-          label=""
-        />
         <component 
           :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           class="t-icon-hover" 
@@ -45,9 +38,8 @@
     <div ref="divGridView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
       <GridView v-if="fileList.length > 0" 
-        :fileList="fileList"
-        :gridSize="Number(config.gridSize)" 
         v-model="selectedItemIndex"
+        :fileList="fileList"
       />
       <div v-else class="min-w-32 flex-1 flex flex-row items-center justify-center">
         <p>{{ $t('file_list_no_files') }}</p>
@@ -104,7 +96,6 @@ import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate } from '@/common/utils';
 
-import SliderInput from '@/components/SliderInput.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
@@ -136,8 +127,10 @@ const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const divGridView = ref(null);
 
 // file list
-const fileList = ref([]);
+const originalFileList = ref([]);
+const fileList = ref([]);   // file list by filtering and sorting
 const selectedItemIndex = ref(-1);
+const searchText = ref('');      // search text
 
 // preview 
 const previewDiv = ref(null);
@@ -180,6 +173,19 @@ onUnmounted(() => {
   }
 });
 
+listen('message-from-titlebar', (event) => {
+  const { message, search } = event.payload;
+  console.log('content: message-from-titlebar:', message, search);
+  switch (message) {
+    case 'search':
+      searchText.value = search;
+      refreshFileList();
+      break;
+    default:
+      break;
+  }
+});
+
 listen('message-from-grid-view', (event) => {
   const { message } = event.payload;
   console.log('content - message-from-grid-view:', message);
@@ -208,9 +214,6 @@ listen('message-from-image-viewer', (event) => {
     case 'next':
       selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
       break;
-    case 'save':
-      saveFile(selectedItemIndex.value);  // save the selected file from list
-      break;
     case 'delete':
       deleteFile(selectedItemIndex.value);  // delete the selected file from list
       break;
@@ -218,32 +221,6 @@ listen('message-from-image-viewer', (event) => {
       break;
   }
 });
-
-/// Dragging the splitter
-function startDragging(event) {
-  isDraggingSplitter.value = true;
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', stopDragging);
-}
-
-/// stop dragging the splitter
-function stopDragging() {
-  isDraggingSplitter.value = false;
-  document.removeEventListener('mousemove', handleMouseMove);
-  document.removeEventListener('mouseup', stopDragging);
-}
-
-/// handle mouse move event
-function handleMouseMove(event) {
-  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
-  if (isDraggingSplitter.value) {
-    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
-    const leftPosition = divGridView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
-
-    // Limit width between 10% and 90%
-    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 90); 
-  }
-}
 
 /// watch language
 watch(() => config.language, (newLanguage) => {
@@ -379,12 +356,10 @@ function toggleSortingOrder() {
 }
 
 /// get all files
-async function getAllFiles(isFavorite = false) {
+async function getAllFiles(isFavorite = false, offset = 0, pageSize = FILES_PAGE_SIZE) {
   try {
-    fileList.value = await invoke('get_all_files', { isFavorite: isFavorite, offset: 0, pageSize: FILES_PAGE_SIZE });
-    sortFileList(config.sortingType, config.sortingAsc);
-    getFileThumb(fileList.value); 
-    console.log('getAllFiles:', fileList.value);
+    originalFileList.value = await invoke('get_all_files', { isFavorite, offset, pageSize });
+    refreshFileList(); // get fileList(apply filter and sorting)
   } catch (error) {
     console.error('getAllFiles error:', error);
   }
@@ -394,10 +369,8 @@ async function getAllFiles(isFavorite = false) {
 async function getFolderFiles() {
   try {
     // read the list of files
-    fileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: config.albumFolderPath });
-    sortFileList(config.sortingType, config.sortingAsc);
-    getFileThumb(fileList.value);
-    console.log('getFolderFiles:', fileList.value);
+    originalFileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: config.albumFolderPath });
+    refreshFileList();
   } catch (error) {
     console.error('getFolderFiles error:', error);
   }
@@ -410,14 +383,12 @@ async function getCalendarFiles(year, month, date) {
       // get the first and last days of the month.
       let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
       let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
-      fileList.value = await invoke('get_files_by_date_range', { startDate: startDate, endDate: endDate });
+      originalFileList.value = await invoke('get_files_by_date_range', { startDate, endDate });
     } else {  // otherwise, get files by date
       let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
-      fileList.value = await invoke('get_files_by_date', { date: dateStr });
+      originalFileList.value = await invoke('get_files_by_date', { date: dateStr });
     }
-    sortFileList(config.sortingType, config.sortingAsc);
-    getFileThumb(fileList.value);
-    console.log('getCalendarFiles:', fileList.value);
+    refreshFileList();
   } catch (error) {
     console.error('getCalendarFiles error:', error);
   }
@@ -426,18 +397,32 @@ async function getCalendarFiles(year, month, date) {
 /// get all files under the camera make and model
 async function getCameraFiles(make, model) {
   try {
-    fileList.value = await invoke('get_camera_files', { make: make, model: model });
-    sortFileList(config.sortingType, config.sortingAsc);
-    getFileThumb(fileList.value); 
-    console.log('getCameraFiles:', fileList.value);
+    originalFileList.value = await invoke('get_camera_files', { make, model });
+    refreshFileList();
   } catch (error) {
     console.error('getCameraFiles error:', error);
   }
 }
 
+function refreshFileList() {
+  filterFileList(originalFileList.value, searchText.value);
+  sortFileList(fileList.value, config.sortingType, config.sortingAsc);
+  getFileThumb(fileList.value); 
+  console.log('fileList:', fileList.value);
+}
+
+// Filter the file list based on the search text
+function filterFileList(files, filter) {
+  if (filter.trim() === '') {
+    fileList.value = files;
+  } else {
+    fileList.value = files.filter(file => file.name.toLowerCase().includes(filter.toLowerCase()));
+  }
+}
+
 // Sort the file list based on the sorting type and order
-function sortFileList(sortingType, isAccending) {
-  fileList.value = [...fileList.value].sort((a, b) => {
+function sortFileList(files, sortingType, isAccending) {
+  fileList.value = [...files].sort((a, b) => {
     let result = 0;
 
     switch (sortingType) {
@@ -468,12 +453,6 @@ function sortFileList(sortingType, isAccending) {
   });
 }
 
-// Save the file
-function saveFile(index) {
-  const file = fileList.value[index];
-  // invoke('save_file', { fileId: file.id, filePath: file.file_path });
-}
-
 // Delete the file from the list and update the selected item index
 function deleteFile(index) {
   fileList.value.splice(index, 1);
@@ -481,31 +460,7 @@ function deleteFile(index) {
   openImageViewer(selectedItemIndex.value, false);  // update the image viewer
 }
 
-/// get the thumbnail for each file in mutil-thread
-// async function getFileThumb(files) {
-//   try {
-//     const thumbnailPromises = files.map(async (file) => {
-//       console.log('getFileThumb:', file.file_path);
-
-//       const thumb = await invoke('get_file_thumb', { 
-//         fileId: file.id,
-//         filePath: file.file_path,
-//         orientation: file.e_orientation || 0,
-//         thumbnailSize: THUMBNAIL_SIZE
-//       });
-
-//       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-//       console.log('getFileThumb:', file);
-//     });
-
-//     // Wait for all thumbnail promises to resolve in parallel
-//     await Promise.all(thumbnailPromises);
-
-//   } catch (error) {
-//     console.error('getFileThumb error:', error);
-//   }
-// }
-
+// Get the thumbnail for the files
 async function getFileThumb(files, concurrencyLimit = 8) {
   try {
     const result = [];
@@ -614,6 +569,32 @@ async function openImageViewer(index: number, createNew = false) {
     if(createNew) {
       imageWindow.setFocus();
     }
+  }
+}
+
+/// Dragging the splitter
+function startDragging(event) {
+  isDraggingSplitter.value = true;
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', stopDragging);
+}
+
+/// stop dragging the splitter
+function stopDragging() {
+  isDraggingSplitter.value = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', stopDragging);
+}
+
+/// handle mouse move event
+function handleMouseMove(event) {
+  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
+  if (isDraggingSplitter.value) {
+    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
+    const leftPosition = divGridView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+
+    // Limit width between 10% and 90%
+    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 90); 
   }
 }
 

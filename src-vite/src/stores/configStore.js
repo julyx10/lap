@@ -11,6 +11,7 @@ export const useConfigStore = defineStore('configStore', {
     debugMode: false,           // debug mode
 
     // settings - thumbnail
+    thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
     thumbnailImageOption: 0,     // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
     thumbnailPrimaryOption: 1,   // Name
     thumbnailSecondaryOption: 2, // Resolution
@@ -24,8 +25,6 @@ export const useConfigStore = defineStore('configStore', {
     leftPaneWidth: 300,         // left pane width
 
     // Content.vue
-    gridSize: 200,              // grid size in grid view, range 120-360
-    // isFavorite: false,          // show favorite only
     sortingAsc: true,           // sorting order
     sortingType: 'name',        // sorting type
     showPreview: false,         // show preview
@@ -61,7 +60,7 @@ export const useConfigStore = defineStore('configStore', {
   }),
 
   actions: {
-    // settings - general
+    // general settings
     setLanguage(language) {
       this.language = language;
     },
@@ -69,7 +68,10 @@ export const useConfigStore = defineStore('configStore', {
       this.showButtonText = showButtonText;
     },
     
-    // settings - thumbnail
+    // thumbnail settings
+    setThumbnailSize(thumbnailSize) {
+      this.thumbnailSize = thumbnailSize;
+    },
     setThumbnailImageOption(thumbnailImageOption) {
       this.thumbnailImageOption = thumbnailImageOption;
     },
@@ -80,7 +82,7 @@ export const useConfigStore = defineStore('configStore', {
       this.thumbnailSecondaryOption = thumbnailSecondaryOption;
     },
 
-    // settings - image viewer
+    // image viewer settings
     setMouseWheelMode(mouseWheelMode) {
       this.mouseWheelMode = mouseWheelMode;
     },

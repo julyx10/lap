@@ -65,8 +65,20 @@
 
         <!-- Thumbnail tab -->
         <section v-if="tabIndex === 1">
-          
-          <!-- Thumbnail image Option -->
+
+          <!-- Thumbnail Size -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="thumbnail_size" >{{ $t('settings_thumbnail_size') }}</label>
+            <SliderInput 
+              v-model="config.thumbnailSize" 
+              :min="120" 
+              :max="320" 
+              :step="1" 
+              label=""
+            />
+          </div>
+
+          <!-- Thumbnail Image Scaling -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_image-select">{{ $t('settings_thumbnail_image') }}</label>
             <select id="thumbnail_image-select" v-model="config.thumbnailImageOption"
@@ -82,7 +94,7 @@
             </select>
           </div>
 
-          <!-- Primary Option -->
+          <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_primary-select">{{ $t('settings_thumbnail_label_primary') }}</label>
             <select id="thumbnail_primary-select" v-model="config.thumbnailPrimaryOption"
@@ -98,7 +110,7 @@
             </select>
           </div>
 
-          <!-- Secondary Option -->
+          <!-- Secondary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_secondary-select">{{ $t('settings_thumbnail_label_secondary') }}</label>
             <select id="thumbnail_secondary-select" v-model="config.thumbnailSecondaryOption"
@@ -237,12 +249,18 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
+// general settings
 watch(() => config.language, (newValue) => {
   locale.value = newValue;
   emit('settings-language-changed', newValue);
 });
 watch(() => config.showButtonText, (newValue) => {
   emit('settings-showButtonText-changed', newValue);
+});
+
+// thumbnail settings
+watch(() => config.thumbnailSize, (newValue) => {
+  emit('settings-thumbnailSize-changed', newValue);
 });
 watch(() => config.thumbnailImageOption, (newValue) => {
   emit('settings-thumbnailImageOption-changed', newValue);
@@ -253,6 +271,8 @@ watch(() => config.thumbnailPrimaryOption, (newValue) => {
 watch(() => config.thumbnailSecondaryOption, (newValue) => {
   emit('settings-thumbnailSecondaryOption-changed', newValue);
 });
+
+// image viewer settings
 watch(() => config.mouseWheelMode, (newValue) => {
   emit('settings-mouseWheelMode-changed', newValue);
 });

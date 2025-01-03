@@ -2,7 +2,7 @@
   <div ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar">
     <div id="gridView" 
       class="px-2 grid gap-2"
-      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${gridSize}px, 1fr))` }"
+      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.thumbnailSize}px, 1fr))` }"
     >
       <div 
         v-for="(file, index) in fileList" 
@@ -44,7 +44,7 @@
               config.thumbnailImageOption === 2 ? 'object-fill' : ''
             ]"
             :style="{ 
-              width: `${gridSize}px`, height: `${gridSize}px`, 
+              width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px`, 
               transform: `rotate(${file.rotate}deg)`, 
               transition: 'transform 0.3s ease-in-out' 
             }"
@@ -52,12 +52,12 @@
           />
           <div v-else 
             class="rounded flex items-center justify-center"
-            :style="{ width: `${gridSize}px`, height: `${gridSize}px` }"
+            :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
           >
             <IconPhoto class="size-1/2"/>
           </div>
-          <span class="pt-1 text-sm">{{ getThumbnailText(file, config.thumbnailPrimaryOption) }}</span>
-          <span class="text-sm">{{ getThumbnailText(file, config.thumbnailSecondaryOption) }}</span>
+          <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailPrimaryOption) }}</span>
+          <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailSecondaryOption) }}</span>
         </div>
       </div>
 
@@ -89,11 +89,7 @@ const props = defineProps({
   fileList: {
     type: Array,
     required: true,
-  },
-  gridSize: {
-    type: Number,
-    default: 200,     // from 100 to 400
-  },
+  }
 });
 
 /// i18n
@@ -107,9 +103,6 @@ const selectedIndex = ref(props.modelValue);
 const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
-
-const thumbnailPrimaryText = ref('');
-const thumbnailSecondaryText = ref('');
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);

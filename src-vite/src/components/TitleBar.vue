@@ -11,7 +11,12 @@
       @mousedown="onMousedown"
       @dblclick="toggleMaximizeWindow"
     >
-      <SearchBox v-if="viewName==='Home'" class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" id="responsiveDiv"/>
+      <SearchBox 
+        v-if="viewName==='Home'" 
+        class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" 
+        id="responsiveDiv"
+        v-model="searchValue"
+      />
     </div>
 
     <!-- Window Control Buttons -->
@@ -25,11 +30,12 @@
 
 </template>
 
-
 <script setup>
 
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { emit } from '@tauri-apps/api/event';
 import { getCurrentWindow  } from '@tauri-apps/api/window';
+
 import SearchBox from '@/components/SearchBox.vue';
 
 import IconMinus from '@/assets/window-minus.svg';
@@ -52,8 +58,15 @@ const props = defineProps({
   }
 });
 
+const searchValue = ref('');
+
 const appWindow = getCurrentWindow();
 const isMaximized = ref(false);
+
+watch(() => searchValue.value, (newValue) => { 
+  console.log('searchValue:', newValue);
+  emit('message-from-titlebar', { message: 'search', search: searchValue.value });
+});
 
 // drag window
 const onMousedown = (e) => {

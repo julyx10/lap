@@ -1,17 +1,17 @@
 <template>
-  <div class="w-24 flex flex-col items-start justify-center">
+  <div class="flex flex-col items-start justify-center" :style="{width: slider_width + 'px'}">
     <label v-if="label.length > 0" :for="id" class="mb-2">
       {{ label }}: <span>{{ sliderValue }}</span>
     </label>
     <input
-      :id="id"
       type="range"
+      class="w-full h-1 rounded-full t-color-border appearance-none cursor-pointer accent-gray-400"
+      v-model="sliderValue"
+      :id="id"
       :min="min"
       :max="max"
       :step="step"
-      v-model="sliderValue"
       @input="updateValue"
-      class="w-full h-1 rounded-full t-color-border appearance-none cursor-pointer accent-gray-400"
     />
   </div>
 </template>
@@ -43,6 +43,10 @@ const props = defineProps({
   id: {
     type: String,
     default: 'slider-input',
+  },
+  slider_width: {
+    type: Number,
+    default: 160,
   },
 });
 

@@ -13,7 +13,7 @@
           <div v-for="(item, index) in toolbars" 
             class="flex flex-col items-center t-icon-hover" 
             :key="index" 
-            @click="config.toolbarIndex = index"
+            @click="clickToolbar(index)"
           >
             <component 
               :is="item.icon" 
@@ -40,8 +40,14 @@
         enter-active-class="transition-transform duration-200"
         enter-from-class="-translate-x-full"
         enter-to-class="translate-x-0"
+        leave-active-class="transition-transform duration-200"
+        leave-from-class="translate-x-0"
+        leave-to-class="-translate-x-full"
       >
-        <div v-show="config.toolbarIndex > 1" class="w-96 min-w-32 py-1 flex" :style="{ width: config.leftPaneWidth + 'px' }">
+        <div v-show="config.toolbarIndex > 1 && showLeftPane" 
+          class="w-96 min-w-32 py-1 flex" 
+          :style="{ width: config.leftPaneWidth + 'px' }"
+        >
           <Album    v-show="config.toolbarIndex === 2" :titlebar="$t('album')"/>
           <Calendar v-show="config.toolbarIndex === 3" :titlebar="$t('calendar')"/>
           <Location v-show="config.toolbarIndex === 4" :titlebar="$t('location')"/>
@@ -109,10 +115,20 @@ const toolbars = computed(() =>  [
   // { icon: IconTag,      text: localeMsg.value.tag },
 ]);
 
+const showLeftPane = ref(true);
+
 /// Splitter for resizing the left pane
 const divToolbar = ref(null);
 const isDragging = ref(false);
 
+const clickToolbar = (index) => {
+  if(config.toolbarIndex === index) {
+    showLeftPane.value = !showLeftPane.value;
+  } else {
+    showLeftPane.value = true;
+  }
+  config.toolbarIndex = index;
+};
 
 // Dragging the splitter
 function startDragging(event) {

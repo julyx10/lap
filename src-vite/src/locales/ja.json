@@ -15,6 +15,7 @@
   "settings_general_dark_mode": "ダークモード",
   "settings_general_debug_mode": "デバッグモード",
   "settings_thumbnail": "サムネイル",
+  "settings_thumbnail_size": "サムネイルのサイズ",
   "settings_thumbnail_image": "サムネイルのスケーリング",
   "settings_thumbnail_image_options": ["画像全体に合わせる", "切り取って", "伸ばして"],
   "settings_thumbnail_label_primary": "主要情報を表示",
