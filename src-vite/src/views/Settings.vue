@@ -5,8 +5,10 @@
     <TitleBar :titlebar="$t('settings')" :resizable="false" viewName="Settings"/>
 
     <!-- Main Content -->
-    <div class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark">
-
+    <div 
+      class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark" 
+      @contextmenu.prevent
+    >
       <!-- Tabs -->
       <div class="w-32 font-bold">
         <div
@@ -73,7 +75,7 @@
               v-model="config.thumbnailSize" 
               :min="120" 
               :max="320" 
-              :step="1" 
+              :step="10" 
               label=""
             />
           </div>
@@ -186,6 +188,7 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
+import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 
@@ -259,9 +262,10 @@ watch(() => config.showButtonText, (newValue) => {
 });
 
 // thumbnail settings
-watch(() => config.thumbnailSize, (newValue) => {
-  emit('settings-thumbnailSize-changed', newValue);
-});
+watch(() => config.thumbnailSize, debounce((newValue) => {
+    emit('settings-thumbnailSize-changed', newValue);
+  }, 100) // Adjust the delay as needed
+);
 watch(() => config.thumbnailImageOption, (newValue) => {
   emit('settings-thumbnailImageOption-changed', newValue);
 });

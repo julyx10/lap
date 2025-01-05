@@ -1,9 +1,11 @@
 <template>
-  <div ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar">
+  <div ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar select-none">
     <div id="gridView" 
       class="px-2 grid gap-2"
       :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.thumbnailSize}px, 1fr))` }"
+      @contextmenu.prevent="showContextMenu"
     >
+      <ContextMenu ref="contextMenu" :menu-items="menuItems" />
       <div 
         v-for="(file, index) in fileList" 
         :key="index"
@@ -32,7 +34,7 @@
               />
               <!-- <IconDelete class="t-icon-size-sm"></IconDelete> -->
             </div>
-            <!-- <IconChecked class="t-icon-size t-icon-focus"></IconChecked> -->
+            <IconUnChecked class="t-icon-size"></IconUnChecked>
           </div>
 
           <img v-if="file.thumbnail"
@@ -73,6 +75,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { shortenFilename, formatFileSize, formatTimestamp } from '@/common/utils';
+import ContextMenu from '@/components/ContextMenu.vue';
 
 import IconPhoto from '@/assets/photo.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
@@ -103,6 +106,29 @@ const selectedIndex = ref(props.modelValue);
 const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
+
+// context menu
+const contextMenu = ref(null);
+
+// Define menu items with labels and actions
+const menuItems = [
+  {
+    label: localeMsg.value.file_list_contextmenu_favorite,
+    action: () => alert('You clicked Option 1'),
+  },
+  {
+    label: localeMsg.value.file_list_contextmenu_rotate,
+    action: () => alert('You clicked Option 2'),
+  },
+  {
+    label: localeMsg.value.file_list_contextmenu_delete,
+    action: () => alert('You clicked Option 3'),
+  },
+];
+
+const showContextMenu = (event) => {
+  contextMenu.value.showMenu(event);
+};
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
@@ -163,10 +189,10 @@ const getThumbnailText = (file, option) => {
       return '';
     case 1:   // name
       return shortenFilename(file.name);
-    case 2:   // resolution
-      return `${file.width}x${file.height}`;
-    case 3:   // size
+    case 2:   // size
       return formatFileSize(file.size);
+    case 3:   // resolution
+      return `${file.width}x${file.height}`;
     case 4:   // created time
       return formatTimestamp(file.created_at, localeMsg.value.date_time_format);
     case 5:   // modified time
@@ -223,7 +249,4 @@ function getColumnCount() {
 </script>
 
 <style scoped>
-* {
-  user-select: none;
-}
 </style>

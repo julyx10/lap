@@ -20,7 +20,7 @@
   "settings_thumbnail_image_options": ["Fit Entire Image", "Crop to Fill", "Stretch to Fill"],
   "settings_thumbnail_label_primary": "Show Primary Information",
   "settings_thumbnail_label_secondary": "Show Secondary Information",
-  "settings_thumbnail_label_options": ["Empty", "Name", "Resolution", "Size", "Created Time", "Modified Time", "Taken Time"],
+  "settings_thumbnail_label_options": ["Empty", "Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
   "settings_image_viewer": "Image Viewer",
   "settings_image_viewer_mouse_wheel": "Mouse Wheel",
   "settings_image_viewer_mouse_wheel_options": ["Previous / Next Image (Ctrl to Zoom)", "Zoom In / Out"],
@@ -50,6 +50,11 @@
   "files_summary": "{files} files",
 
   "file_list_no_files": "No files found",
+  
+  "file_list_contextmenu_favorite": "Favorite",
+  "file_list_contextmenu_unfavorite": "Unfavorite",
+  "file_list_contextmenu_rotate": "Rotate",
+  "file_list_contextmenu_delete": "Delete",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",

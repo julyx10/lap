@@ -1,7 +1,9 @@
 <template>
 
   <!-- Custom Title Bar -->
-  <div class="w-full h-10 flex items-center justify-between t-color-bg select-none">
+  <div class="w-full h-10 flex items-center justify-between t-color-bg select-none"
+    @contextmenu.prevent
+  >
     
     <!-- Title Name -->
     <span class="ml-4 t-color-text text-nowrap" @mousedown="appWindow.startDragging()">{{ titlebar }}</span>
@@ -9,13 +11,13 @@
     <!-- Draggable Area -->
     <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text" 
       @mousedown="onMousedown"
-      @dblclick="toggleMaximizeWindow"
     >
       <SearchBox 
         v-if="viewName==='Home'" 
         class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" 
         id="responsiveDiv"
         v-model="searchValue"
+        @mousedown.stop
       />
     </div>
 
@@ -70,7 +72,7 @@ watch(() => searchValue.value, (newValue) => {
 
 // drag window
 const onMousedown = (e) => {
-  if (e.detail === 1) {
+  if (e.detail === 1) {   // 1: single click
     appWindow.startDragging();
   }
 };

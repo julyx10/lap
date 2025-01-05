@@ -13,11 +13,11 @@
       </div>
 
       <div class="h-6 flex space-x-4">
-        <IconEdit 
+        <!-- <IconEdit 
           class="t-icon-size t-icon-hover"
           :class="{ 't-icon-focus': isEditing }"
           @click="isEditing = !isEditing" 
-        />
+        /> -->
         <component 
           :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           class="t-icon-hover" 

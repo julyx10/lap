@@ -20,7 +20,7 @@
   "settings_thumbnail_image_options": ["画像全体に合わせる", "切り取って", "伸ばして"],
   "settings_thumbnail_label_primary": "主要情報を表示",
   "settings_thumbnail_label_secondary": "補足情報を表示",
-  "settings_thumbnail_label_options": ["空", "名前", "解像度", "サイズ", "作成日", "変更日", "撮影日"],
+  "settings_thumbnail_label_options": ["空", "名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
   "settings_image_viewer": "画像ビューア",
   "settings_image_viewer_mouse_wheel": "マウスホイール",
   "settings_image_viewer_mouse_wheel_options": ["前の画像 / 次の画像 (Ctrlでズーム)", "ズームイン / アウト"],
@@ -47,6 +47,11 @@
   "allphotos": "すべての写真",
 
   "file_list_no_files": "ファイルが見つかりません",
+
+  "file_list_contextmenu_favorite": "お気に入り",
+  "file_list_contextmenu_unfavorite": "お気に入り解除",
+  "file_list_contextmenu_rotate": "回転",
+  "file_list_contextmenu_delete": "削除",
 
   "folder_summary": "{folders} フォルダ, {files} ファイル",
   "files_summary": "{files} ファイル",

@@ -8,12 +8,17 @@
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
 
       <!-- left toolbar -->
-      <div ref="divToolbar" class="min-w-12 my-4 flex flex-col justify-between z-10 t-color-bg" style="user-select: none;">
+      <div 
+        ref="divToolbar" 
+        class="min-w-12 my-4 flex flex-col justify-between z-10 t-color-bg" style="user-select: none;"
+        @contextmenu.prevent
+      >
+        <!-- toolbar items -->
         <div class="flex flex-col items-center space-y-6">
           <div v-for="(item, index) in toolbars" 
             class="flex flex-col items-center t-icon-hover" 
             :key="index" 
-            @click="clickToolbar(index)"
+            @click="clickToolbarItem(index)"
           >
             <component 
               :is="item.icon" 
@@ -26,6 +31,14 @@
           </div>
         </div>
 
+        <!-- draggable area -->
+        <div class="flex-grow"
+          @mousedown="getCurrentWindow().startDragging()"
+          @mouseup="getCurrentWindow().stopDragging()"
+        >
+        </div>
+
+        <!-- settings icon -->
         <div class="flex flex-col items-center t-icon-hover" @click="clickSettings">
           <IconSettings :class="['t-icon-size']"  />
           <p v-if="config.showButtonText" 
@@ -73,6 +86,7 @@
 
 import { ref, computed } from 'vue';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { getCurrentWindow  } from '@tauri-apps/api/window';
 import { useConfigStore } from '@/stores/configStore';
 
 // vue components
@@ -121,7 +135,7 @@ const showLeftPane = ref(true);
 const divToolbar = ref(null);
 const isDragging = ref(false);
 
-const clickToolbar = (index) => {
+const clickToolbarItem = (index) => {
   if(config.toolbarIndex === index) {
     showLeftPane.value = !showLeftPane.value;
   } else {

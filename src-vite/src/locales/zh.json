@@ -20,7 +20,7 @@
   "settings_thumbnail_image_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
   "settings_thumbnail_label_primary": "显示主要信息",
   "settings_thumbnail_label_secondary": "显示次要信息",
-  "settings_thumbnail_label_options": ["空", "名称", "分辨率", "大小", "创建时间", "修改时间", "拍摄时间"],
+  "settings_thumbnail_label_options": ["空", "名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
   "settings_image_viewer": "图片查看器",
   "settings_image_viewer_mouse_wheel": "鼠标滚轮",
   "settings_image_viewer_mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
@@ -47,6 +47,11 @@
   "allphotos": "所有照片",
 
   "file_list_no_files": "未找到文件",
+
+  "file_list_contextmenu_favorite": "收藏",
+  "file_list_contextmenu_unfavorite": "取消收藏",
+  "file_list_contextmenu_rotate": "旋转",
+  "file_list_contextmenu_delete": "删除",
 
   "folder_summary": "{folders} 个文件夹, {files} 个文件",
   "files_summary": "{files} 个文件",
