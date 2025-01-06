@@ -82,11 +82,11 @@
 
           <!-- Thumbnail Image Scaling -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_image-select">{{ $t('settings_thumbnail_image') }}</label>
+            <label for="thumbnail_image-select">{{ $t('settings_thumbnail_scaling') }}</label>
             <select id="thumbnail_image-select" v-model="config.thumbnailImageOption"
               class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
-              <option v-for="(option, index) in thumbnailImageOptions" 
+              <option v-for="(option, index) in thumbnailIScalingOptions" 
                 :key="index" 
                 :value="option.value"
                 class="t-option"
@@ -222,8 +222,8 @@ const wheelOptions = computed(() => {
 });
 
 // Define the thumbnail options
-const thumbnailImageOptions = computed(() => {
-  const options = localeMsg.value.settings_thumbnail_image_options;
+const thumbnailIScalingOptions = computed(() => {
+  const options = localeMsg.value.settings_thumbnail_scaling_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {

@@ -23,6 +23,9 @@
           class="t-icon-hover" 
           @click="toggleSortingOrder" 
         />
+        <IconFilter 
+          class="t-icon-hover" 
+        />
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           class="t-icon-hover" 
@@ -100,9 +103,10 @@ import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
 
-import IconEdit from '@/assets/edit.svg';
+// import IconEdit from '@/assets/edit.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
+import IconFilter from '@/assets/filter.svg';
 import IconPreview from '@/assets/preview-on.svg';
 import IconPreviewOff from '@/assets/preview-off.svg';
 

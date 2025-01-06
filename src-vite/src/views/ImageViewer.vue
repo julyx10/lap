@@ -2,24 +2,27 @@
 
   <div 
     :class="[
-      'relative w-screen h-screen flex flex-col border t-color-border overflow-hidden',
-      config.isFullScreen ? 'fixed top-0 left-0 z-50' : 'rounded-lg shadow-lg'
-    ]">
+      'relative w-screen h-screen flex flex-col overflow-hidden',
+      config.isFullScreen ? 'fixed top-0 left-0 z-50' : 'border t-color-border rounded-lg shadow-lg'
+    ]"
+  >
+    <!-- title bar -->
     <TitleBar v-if="!config.isFullScreen"
-      :titlebar="`jc-photo - ${fileIndex + 1}/${fileCount}`"
+      :titlebar="`jc-photo ${localeMsg.image_view_title} - ${fileIndex + 1}/${fileCount}`"
       viewName="ImageViewer"
     />
 
     <!-- Toolbar -->
     <div id="responsiveDiv"
       :class="[
-        'absolute left-1/2 z-50 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
-        config.isFullScreen ? '-translate-y-8 hover:translate-y-0 transition-transform duration-300 ease-in-out' : ''
+        'absolute px-2 left-1/2 rounded-lg t-color-bg z-50 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
+        config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 hover:translate-y-0 hover:opacity-50 transition-transform duration-300 ease-in-out' : '',
+        config.isFullScreen && config.isPinned ? 'opacity-80 transition-transform duration-300 ease-in-out' : ''
       ]"
     >
       <IconPrev 
         :class="[
-          't-icon-size',
+          't-icon-size',  
           fileIndex > 0 ? 't-icon-hover' : 't-icon-disabled'
         ]" 
         @click="clickPrev" 
@@ -72,7 +75,7 @@
       <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
       <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
       <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
-      <IconFileInfo :class="['t-icon-size t-icon-hover', showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
+      <IconFileInfo :class="['t-icon-size t-icon-hover', config.showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
       <IconSave 
         :class="[
           't-icon-size',
@@ -89,9 +92,22 @@
       />
       <!-- <IconFullScreen v-if="!config.isFullScreen" class="t-icon-size t-icon-hover" @click="setFullScreen" /> -->
       <!-- <IconRestoreScreen v-if="config.isFullScreen" class="t-icon-size t-icon-hover" @click="exitFullScreen" /> -->
-      <component :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" class="t-icon-size t-icon-hover" @click="toggleFullScreen" />
+      <component 
+        :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" 
+        class="t-icon-size t-icon-hover" 
+        @click="toggleFullScreen" 
+      />
+      <component v-show="config.isFullScreen"
+        :is="config.isPinned ? IconPin : IconUnPin" 
+        :class="[
+          't-icon-size',
+          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+        ]" 
+        @click="config.isPinned = !config.isPinned" 
+      />
     </div>
 
+    <!-- content -->
     <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
 
       <!-- image container -->
@@ -99,7 +115,7 @@
         
         <!-- show zoom scale -->
         <transition name="fade">
-          <div v-if="isScaleChanged" class="absolute left-1/2 top-5 px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg">
+          <div v-if="isScaleChanged" class="absolute left-1/2 top-12 px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg">
             <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
           </div>
         </transition>
@@ -153,7 +169,7 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <FileInfo v-if="showFileInfo" 
+        <FileInfo v-if="config.showFileInfo" 
           :fileInfo="fileInfo" 
           :fileIndex="fileIndex" 
           :fileCount="fileCount" 
@@ -170,7 +186,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
@@ -197,12 +213,14 @@ import IconDelete from '@/assets/trash.svg';
 import IconSave from '@/assets/save.svg';
 import IconFullScreen from '@/assets/full-screen-max.svg';
 import IconRestoreScreen from '@/assets/full-screen-min.svg';
+import IconPin from '@/assets/pin-filled.svg';
+import IconUnPin from '@/assets/pin.svg';
 import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
 
 /// i18n
 const { locale, messages } = useI18n();
-// const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value]);
 
 // config store
 const config = useConfigStore();
@@ -217,7 +235,7 @@ const filePath = ref('');       // File path
 const nextFilePath = ref('');   // Next file path to preload
 
 const fileInfo = ref(null);
-const showFileInfo = ref(false); // Show the file info panel
+// const showFileInfo = ref(false); // Show the file info panel
 
 const imageRef = ref(null);     // Image reference
 const imageSrc = ref(null);
@@ -441,12 +459,12 @@ const toggleFullScreen = () => {
 }
 
 function clickShowFileInfo() {
-  showFileInfo.value = !showFileInfo.value;
+  config.showFileInfo = !config.showFileInfo;
 }
 
 // Close the file info panel from the child component
 function closeFileInfo() {
-  showFileInfo.value = false;
+  config.showFileInfo = false;
 }
 
 function clickSave() {
@@ -507,11 +525,7 @@ function handleKeyDown(event) {
       toggleZoomFit();
       break;
     case 'Escape':
-      if (showFileInfo.value) {
-        closeFileInfo();
-      } else {
-        appWindow.close(); // Close the window
-      }
+      appWindow.close(); // Close the window
       break;
   }
 }
@@ -524,12 +538,12 @@ function handleKeyDown(event) {
   user-select: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
   #responsiveDiv {
     visibility: hidden;
   }
 }
-@media (min-width: 700px) {
+@media (min-width: 800px) {
   #responsiveDiv {
     visibility: visible;
   }

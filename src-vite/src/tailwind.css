@@ -91,5 +91,5 @@
 
 /* option */
 .t-option {
-  @apply t-color-text t-color-bg-light t-color-bg-hover;
+  @apply t-color-bg-light t-color-bg-hover;
 }

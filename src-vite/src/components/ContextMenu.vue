@@ -9,7 +9,7 @@
         v-for="item in menuItems"
         :key="item.label"
         @click="handleClick(item)"
-        class="px-4 py-2 t-color-bg-hover cursor-pointer"
+        class="px-4 py-2 t-color-bg-hover text-sm cursor-pointer"
       >
         {{ item.label }}
       </li>
