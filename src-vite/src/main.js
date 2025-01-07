@@ -56,14 +56,14 @@ listen('settings-showButtonText-changed', (event) => {
 listen('settings-thumbnailSize-changed', (event) => {
   config.setThumbnailSize(event.payload)
 })
-listen('settings-thumbnailImageOption-changed', (event) => {
-  config.setThumbnailImageOption(event.payload)
+listen('settings-thumbnailScalingOption-changed', (event) => {
+  config.setThumbnailScalingOption(event.payload)
 })
-listen('settings-thumbnailPrimaryOption-changed', (event) => {
-  config.setThumbnailPrimaryOption(event.payload)
+listen('settings-thumbnailLabelPrimaryOption-changed', (event) => {
+  config.setThumbnailLabelPrimaryOption(event.payload)
 })
-listen('settings-thumbnailSecondaryOption-changed', (event) => {
-  config.setThumbnailSecondaryOption(event.payload)
+listen('settings-thumbnailLabelSecondaryOption-changed', (event) => {
+  config.setThumbnailLabelSecondaryOption(event.payload)
 })
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)

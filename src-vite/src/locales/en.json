@@ -50,7 +50,9 @@
   "files_summary": "{files} files",
 
   "file_list_no_files": "No files found",
-  
+  "file_list_sorting_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
+  "file_list_filter_options": ["All", "Image", "Video"],
+
   "file_list_contextmenu_favorite": "Favorite",
   "file_list_contextmenu_unfavorite": "Unfavorite",
   "file_list_contextmenu_rotate": "Rotate",
@@ -107,6 +109,19 @@
   "image_view_title": "Image Viewer",
   "image_view_loading": "Loading...",
   "image_view_failed": "Failed to load image",
-  "image_view_no_image": "No image selected"
+  "image_view_no_image": "No image selected",
+  "image_view_toolbar_prev": "Previous",
+  "image_view_toolbar_next": "Next",
+  "image_view_toolbar_play": "Play",
+  "image_view_toolbar_zoom_in": "Zoom In",
+  "image_view_toolbar_zoom_out": "Zoom Out",
+  "image_view_toolbar_fit": ["Fit", "1:1"],
+  "image_view_toolbar_rotate": "Rotate",
+  "image_view_toolbar_favorite": ["Favorite", "Unfavorite"],
+  "image_view_toolbar_info": "Info",
+  "image_view_toolbar_save": "Save",
+  "image_view_toolbar_delete": "Delete",
+  "image_view_toolbar_fullscreen": ["Fullscreen", "Exit Fullscreen"],
+  "image_view_toolbar_pin": ["Pin", "Unpin"]
 }
   

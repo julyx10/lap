@@ -11,8 +11,9 @@
         :key="index"
         :id="'item-' + index"
         :class="[
-          'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200', 
-          index === selectedIndex ? 'border-sky-500' : 'border-gray-800'
+          'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
+          index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
+          index != selectedIndex && file?.isSelected ? 'border-gray-500' : 'border-gray-800'
         ]"
         @click="clickItem(index)"
         @dblclick="openItem(true)"
@@ -20,8 +21,10 @@
         <div class="relative flex flex-col items-center">
 
           <!-- action buttons -->
-          <div v-if="index === selectedIndex" 
-            class="absolute z-10 left-0 w-full flex flex-row items-center justify-between"
+          <div 
+            :class="['absolute z-10 left-0 w-full flex flex-row items-center justify-between',
+            index === selectedIndex || file?.isSelected ? 'opacity-100' : 'transform opacity-0 transition-opacity duration-300 group-hover:opacity-100'
+          ]"
           >
             <div class="flex">
               <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm"></IconFavorite>
@@ -34,16 +37,20 @@
               />
               <!-- <IconDelete class="t-icon-size-sm"></IconDelete> -->
             </div>
-            <IconUnChecked class="t-icon-size"></IconUnChecked>
+            <component 
+              :is="file?.isSelected ? IconChecked : IconUnChecked" 
+              class="t-icon-size t-icon-hover" 
+              @click.stop="selectItem(index)"
+            />
           </div>
 
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[
               'rounded transition duration-200',
-              config.thumbnailImageOption === 0 ? 'object-contain' : '',
-              config.thumbnailImageOption === 1 ? 'object-cover' : '',
-              config.thumbnailImageOption === 2 ? 'object-fill' : ''
+              config.thumbnailScalingOption === 0 ? 'object-contain' : '',
+              config.thumbnailScalingOption === 1 ? 'object-cover' : '',
+              config.thumbnailScalingOption === 2 ? 'object-fill' : ''
             ]"
             :style="{ 
               width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px`, 
@@ -58,8 +65,8 @@
           >
             <IconPhoto class="size-1/2"/>
           </div>
-          <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailPrimaryOption) }}</span>
-          <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailSecondaryOption) }}</span>
+          <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
+          <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
         </div>
       </div>
 
@@ -157,12 +164,12 @@ watch(() => props.modelValue, (newValue) => {
   selectedIndex.value = newValue; 
 });
 
-watch(() => props.fileList, () => {
-  selectedIndex.value = - 1;
+// watch(() => props.fileList, () => {
+//   // selectedIndex.value = - 1;
 
-  const element = scrollable.value; // Get the scrollable element
-  element.scrollTop = 0;
-});
+//   const element = scrollable.value; // Get the scrollable element
+//   element.scrollTop = 0;
+// });
 
 watch(() => selectedIndex.value, (newValue) => {
   openItem(false);
@@ -173,6 +180,14 @@ watch(() => selectedIndex.value, (newValue) => {
 
 function clickItem(index: number) {
   selectedIndex.value = index;
+}
+
+function selectItem(index: number) {
+  if (props.fileList[index].isSelected) {
+    props.fileList[index].isSelected = false;
+  } else {
+    props.fileList[index].isSelected = true;
+  }
 }
 
 function handleKeyDown(event) {

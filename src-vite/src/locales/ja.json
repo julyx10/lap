@@ -47,6 +47,8 @@
   "allphotos": "すべての写真",
 
   "file_list_no_files": "ファイルが見つかりません",
+  "file_list_sorting_options": ["名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
+  "file_list_filter_options": ["すべて", "画像", "ビデオ"],
 
   "file_list_contextmenu_favorite": "お気に入り",
   "file_list_contextmenu_unfavorite": "お気に入り解除",
@@ -107,6 +109,19 @@
   "image_view_title": "画像ビューア",
   "image_view_loading": "読み込み中...",
   "image_view_failed": "読み込みに失敗しました。",
-  "image_view_no_image": "画像が選択されていません"
+  "image_view_no_image": "画像が選択されていません",
+  "image_view_toolbar_prev": "前へ",
+  "image_view_toolbar_next": "次へ",
+  "image_view_toolbar_play": "再生",
+  "image_view_toolbar_zoom_in": "拡大",
+  "image_view_toolbar_zoom_out": "縮小",
+  "image_view_toolbar_fit": ["フィット", "1:1"],
+  "image_view_toolbar_rotate": "回転",
+  "image_view_toolbar_favorite": ["お気に入り", "お気に入り解除"],
+  "image_view_toolbar_info": "プロパティ",
+  "image_view_toolbar_save": "保存",
+  "image_view_toolbar_delete": "削除",
+  "image_view_toolbar_fullscreen": ["フルスクリーン", "フルスクリーンを終了"],
+  "image_view_toolbar_pin": ["ピン留め", "ピン留め解除"]
 }
   

@@ -18,14 +18,37 @@
           :class="{ 't-icon-focus': isEditing }"
           @click="isEditing = !isEditing" 
         /> -->
+        <select id="sorting-type-select" v-model="config.sortingType"
+          class="px-2 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
+          @change="sortFileList(fileList, config.sortingType, config.sortingAsc)"
+        >
+          <option v-for="(option, index) in sortingOptions" 
+            :key="index" 
+            :value="option.value"
+            class="t-option"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+
         <component 
           :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           class="t-icon-hover" 
           @click="toggleSortingOrder" 
         />
-        <IconFilter 
-          class="t-icon-hover" 
-        />
+
+        <select id="filter-type-select" v-model="config.filterType"
+          class="px-2 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
+        >
+          <option v-for="(option, index) in filterOptions" 
+            :key="index" 
+            :value="option.value"
+            class="t-option"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           class="t-icon-hover" 
@@ -106,7 +129,6 @@ import Image from '@/components/Image.vue';
 // import IconEdit from '@/assets/edit.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
-import IconFilter from '@/assets/filter.svg';
 import IconPreview from '@/assets/preview-on.svg';
 import IconPreviewOff from '@/assets/preview-off.svg';
 
@@ -149,7 +171,29 @@ const isDraggingSplitter = ref(false);      // dragging splitter to resize previ
 const isImageViewerOpen  = ref(false); 
 
 // edit mode (allow mutilple selection)
-const isEditing = ref(false);
+// const isEditing = ref(false);
+
+const sortingOptions = computed(() => {
+  const options = localeMsg.value.file_list_sorting_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
+const filterOptions = computed(() => {
+  const options = localeMsg.value.file_list_filter_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
 
 onMounted(() => {
   console.log('content mounted');
@@ -352,6 +396,7 @@ const onImageLoad = async () => {
 
 /// toggle the sorting order
 function toggleSortingOrder() {
+  console.log('toggleSortingOrder:', selectedItemIndex.value, config.sortingAsc);
   config.sortingAsc = !config.sortingAsc;
   fileList.value = [...fileList.value].reverse();
   if (selectedItemIndex.value >= 0) {
@@ -430,19 +475,26 @@ function sortFileList(files, sortingType, isAccending) {
     let result = 0;
 
     switch (sortingType) {
-      case "name":
+      case 0:   // name
         result = a.name.localeCompare(b.name);
         break;
-      case "size":
+      case 1:   // size
         result = a.size - b.size;
         break;
-      case "created_date":
+      case 2:   // resulution
+        if(a.width === b.width) {
+          result = a.height - b.height;
+        } else {
+          result = a.width - b.width;
+        }
+        break;
+      case 3:   // created time
         result = a.created_at - b.created_at;
         break;
-      case "modified_date":
+      case 4:   // modified time
         result = a.modified_at - b.modified_at;
         break;
-      case "taken_date":
+      case 5:   // taken time
         if(a.e_date_time && b.e_date_time) {
           result = a.e_date_time - b.e_date_time;
         } else {

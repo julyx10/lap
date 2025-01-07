@@ -12,9 +12,9 @@ export const useConfigStore = defineStore('configStore', {
 
     // settings - thumbnail
     thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
-    thumbnailImageOption: 0,     // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
-    thumbnailPrimaryOption: 1,   // Name
-    thumbnailSecondaryOption: 2, // Resolution
+    thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
+    thumbnailLabelPrimaryOption: 1,   // Name
+    thumbnailLabelSecondaryOption: 2, // Resolution
 
     // settings - image viewer
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
@@ -26,7 +26,8 @@ export const useConfigStore = defineStore('configStore', {
 
     // Content.vue
     sortingAsc: true,           // sorting order
-    sortingType: 'name',        // sorting type
+    sortingType: 0,             // sorting type
+    filterType: 0,              // filter type
     showPreview: false,         // show preview
     previewPosition: 'right',   // preview position: right, bottom
     previewPaneWidth: 30,       // preview pane width(20-80%)
@@ -74,14 +75,14 @@ export const useConfigStore = defineStore('configStore', {
     setThumbnailSize(thumbnailSize) {
       this.thumbnailSize = thumbnailSize;
     },
-    setThumbnailImageOption(thumbnailImageOption) {
-      this.thumbnailImageOption = thumbnailImageOption;
+    setThumbnailScalingOption(thumbnailScalingOption) {
+      this.thumbnailScalingOption = thumbnailScalingOption;
     },
-    setThumbnailPrimaryOption(thumbnailPrimaryOption) {
-      this.thumbnailPrimaryOption = thumbnailPrimaryOption;
+    setThumbnailLabelPrimaryOption(thumbnailLabelPrimaryOption) {
+      this.thumbnailLabelPrimaryOption = thumbnailLabelPrimaryOption;
     },
-    setThumbnailSecondaryOption(thumbnailSecondaryOption) {
-      this.thumbnailSecondaryOption = thumbnailSecondaryOption;
+    setThumbnailLabelSecondaryOption(thumbnailLabelSecondaryOption) {
+      this.thumbnailLabelSecondaryOption = thumbnailLabelSecondaryOption;
     },
 
     // image viewer settings

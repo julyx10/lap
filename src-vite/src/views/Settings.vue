@@ -83,7 +83,7 @@
           <!-- Thumbnail Image Scaling -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_image-select">{{ $t('settings_thumbnail_scaling') }}</label>
-            <select id="thumbnail_image-select" v-model="config.thumbnailImageOption"
+            <select id="thumbnail_image-select" v-model="config.thumbnailScalingOption"
               class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
               <option v-for="(option, index) in thumbnailIScalingOptions" 
@@ -99,7 +99,7 @@
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_primary-select">{{ $t('settings_thumbnail_label_primary') }}</label>
-            <select id="thumbnail_primary-select" v-model="config.thumbnailPrimaryOption"
+            <select id="thumbnail_primary-select" v-model="config.thumbnailLabelPrimaryOption"
               class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
               <option v-for="(option, index) in thumbnailLabelOptions" 
@@ -115,7 +115,7 @@
           <!-- Secondary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_secondary-select">{{ $t('settings_thumbnail_label_secondary') }}</label>
-            <select id="thumbnail_secondary-select" v-model="config.thumbnailSecondaryOption"
+            <select id="thumbnail_secondary-select" v-model="config.thumbnailLabelSecondaryOption"
               class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
             >
               <option v-for="(option, index) in thumbnailLabelOptions" 
@@ -266,14 +266,14 @@ watch(() => config.thumbnailSize, debounce((newValue) => {
     emit('settings-thumbnailSize-changed', newValue);
   }, 100) // Adjust the delay as needed
 );
-watch(() => config.thumbnailImageOption, (newValue) => {
-  emit('settings-thumbnailImageOption-changed', newValue);
+watch(() => config.thumbnailScalingOption, (newValue) => {
+  emit('settings-thumbnailScalingOption-changed', newValue);
 });
-watch(() => config.thumbnailPrimaryOption, (newValue) => {
-  emit('settings-thumbnailPrimaryOption-changed', newValue);
+watch(() => config.thumbnailLabelPrimaryOption, (newValue) => {
+  emit('settings-thumbnailLabelPrimaryOption-changed', newValue);
 });
-watch(() => config.thumbnailSecondaryOption, (newValue) => {
-  emit('settings-thumbnailSecondaryOption-changed', newValue);
+watch(() => config.thumbnailLabelSecondaryOption, (newValue) => {
+  emit('settings-thumbnailLabelSecondaryOption-changed', newValue);
 });
 
 // image viewer settings

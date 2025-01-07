@@ -47,6 +47,8 @@
   "allphotos": "所有照片",
 
   "file_list_no_files": "未找到文件",
+  "file_list_sorting_options": ["名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
+  "file_list_filter_options": ["全部", "图片", "视频"],
 
   "file_list_contextmenu_favorite": "收藏",
   "file_list_contextmenu_unfavorite": "取消收藏",
@@ -107,5 +109,18 @@
   "image_view_title": "图片查看器",
   "image_view_loading": "载入中...",
   "image_view_failed": "载入失败",
-  "image_view_no_image": "未选择图片"
+  "image_view_no_image": "未选择图片",
+  "image_view_toolbar_prev": "上一张",
+  "image_view_toolbar_next": "下一张",
+  "image_view_toolbar_play": "播放",
+  "image_view_toolbar_zoom_in": "放大",
+  "image_view_toolbar_zoom_out": "缩小",
+  "image_view_toolbar_fit": ["适应", "1:1"],
+  "image_view_toolbar_rotate": "旋转",
+  "image_view_toolbar_favorite": ["收藏", "取消收藏"],
+  "image_view_toolbar_info": "属性",
+  "image_view_toolbar_save": "保存",
+  "image_view_toolbar_delete": "删除",
+  "image_view_toolbar_fullscreen": ["全屏", "退出全屏"],
+  "image_view_toolbar_pin": ["固定", "取消固定"]
 }
