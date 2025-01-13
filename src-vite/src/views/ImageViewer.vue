@@ -300,6 +300,7 @@ watch(() => config.language, (newLanguage) => {
 watch(() => config.isFullScreen, async (newFullScreen) => {
   await appWindow.setFullscreen(newFullScreen);
   await appWindow.setResizable(!newFullScreen);
+  // await appWindow.setDecorations(false);
 }, { immediate: true }); 
 
 // watch file changed

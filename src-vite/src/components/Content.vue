@@ -8,16 +8,25 @@
       <div class="flex-1 flex flex-col">
         <span>{{ contentTitle }}</span>
         <span class="text-sm">
-          {{ $t('files_summary', { files: fileList.length }) }}
+          {{ $t('files_summary_images', { count: fileList.length }) }}, {{ $t('files_summary_videos', { count: fileList.length }) }}
         </span>
       </div>
 
       <div class="h-6 flex space-x-4">
-        <!-- <IconEdit 
-          class="t-icon-size t-icon-hover"
-          :class="{ 't-icon-focus': isEditing }"
-          @click="isEditing = !isEditing" 
-        /> -->
+    
+        <template v-if="selectedItemIndex >= 0">
+          <IconDelete 
+            class="t-icon-size t-icon-hover"
+            @click="deleteFile(selectedItemIndex)"
+          />
+          <IconUnFavorite 
+            class="t-icon-size t-icon-hover"
+          />
+          <IconRotateRight 
+            class="t-icon-size t-icon-hover"
+          />
+
+        </template>
         <select id="sorting-type-select" v-model="config.sortingType"
           class="px-2 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
           @change="sortFileList(fileList, config.sortingType, config.sortingAsc)"
@@ -53,6 +62,10 @@
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           class="t-icon-hover" 
           @click="config.showPreview = !config.showPreview"
+        />
+
+        <IconMore
+            class="t-icon-size t-icon-hover"
         />
       </div>
     </div>
@@ -126,11 +139,20 @@ import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
 
+// import IconSelectAll from '@/assets/checkbox-checkall.svg';
 // import IconEdit from '@/assets/edit.svg';
+
+import IconDelete from '@/assets/trash.svg';
+import IconUnFavorite from '@/assets/heart.svg';
+import IconFavorite from '@/assets/heart-solid.svg';
+import IconRotateRight from '@/assets/rotate-right.svg';
+// import IconMove from '@/assets/move.svg';
+// import IconCopy from '@/assets/copy.svg';
 import IconSortingAsc from '@/assets/sorting-asc.svg';
 import IconSortingDesc from '@/assets/sorting-desc.svg';
 import IconPreview from '@/assets/preview-on.svg';
 import IconPreviewOff from '@/assets/preview-off.svg';
+import IconMore from '@/assets/more.svg';
 
 const props = defineProps({
   titlebar: String
@@ -194,6 +216,16 @@ const filterOptions = computed(() => {
 
   return result;
 });
+
+const menuOptions = [
+  { label: "Profile", action: () => handleMenuClick("Profile") },
+  { label: "Settings", action: () => handleMenuClick("Settings") },
+  { label: "Logout", action: () => handleMenuClick("Logout") },
+];
+
+function handleMenuClick(option) {
+  console.log(`Clicked: ${option}`);
+}
 
 onMounted(() => {
   console.log('content mounted');

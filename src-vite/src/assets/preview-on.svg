@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-    <rect stroke-linejoin="round" x="3" y="3" width="4" height="4" rx="1"></rect>
-    <rect stroke-linejoin="round" x="3" y="10" width="4" height="4" rx="1"></rect>
-    <rect stroke-linejoin="round" x="3" y="17" width="4" height="4" rx="1"></rect>
-    <rect stroke-linejoin="round" x="11" y="3" width="10" height="18" rx="1"></rect>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24">
+    <g fill="none">
+        <path
+            d="M19.25 4A2.75 2.75 0 0 1 22 6.75v10.5A2.75 2.75 0 0 1 19.25 20H4.75A2.75 2.75 0 0 1 2 17.25V6.75A2.75 2.75 0 0 1 4.75 4h14.5zM15 18.5v-13H4.75c-.69 0-1.25.56-1.25 1.25v10.5c0 .69.56 1.25 1.25 1.25H15z"
+            fill="currentColor"></path>
+    </g>
 </svg>

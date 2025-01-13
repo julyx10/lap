@@ -47,16 +47,25 @@
   "allphotos": "All Photos",
 
   "folder_summary": "{folders} folders, {files} files",
-  "files_summary": "{files} files",
+  "files_summary_images": "{count} images",
+  "files_summary_videos": "{count} videos",
 
   "file_list_no_files": "No files found",
+  "file_list_select_count": "{count} selected",
+  "file_list_select_all": "Select All",
+  "file_list_select_none": "Select None",
+  "file_list_select_invert": "Invert Selection",
+  "file_list_edit": "Edit",
+  "file_list_favorite": "Favorite",
+  "file_list_unfavorite": "Unfavorite",
+  "file_list_rotate": "Rotate",
+  "file_list_delete": "Delete",
+  "file_list_move": "Move",
+  "file_list_copy": "Copy",
+  "file_list_sorting": "Sort",
   "file_list_sorting_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
+  "file_list_sorting_direction": ["Ascending", "Descending"],
   "file_list_filter_options": ["All", "Image", "Video"],
-
-  "file_list_contextmenu_favorite": "Favorite",
-  "file_list_contextmenu_unfavorite": "Unfavorite",
-  "file_list_contextmenu_rotate": "Rotate",
-  "file_list_contextmenu_delete": "Delete",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",
@@ -123,5 +132,4 @@
   "image_view_toolbar_delete": "Delete",
   "image_view_toolbar_fullscreen": ["Fullscreen", "Exit Fullscreen"],
   "image_view_toolbar_pin": ["Pin", "Unpin"]
-}
-  
+} 

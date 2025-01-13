@@ -120,15 +120,15 @@ const contextMenu = ref(null);
 // Define menu items with labels and actions
 const menuItems = [
   {
-    label: localeMsg.value.file_list_contextmenu_favorite,
+    label: localeMsg.value.file_list_favorite,
     action: () => alert('You clicked Option 1'),
   },
   {
-    label: localeMsg.value.file_list_contextmenu_rotate,
+    label: localeMsg.value.file_list_rotate,
     action: () => alert('You clicked Option 2'),
   },
   {
-    label: localeMsg.value.file_list_contextmenu_delete,
+    label: localeMsg.value.file_list_delete,
     action: () => alert('You clicked Option 3'),
   },
 ];
