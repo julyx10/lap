@@ -30,10 +30,13 @@
 
 /* color */
 .t-color-border {
-  @apply bg-gray-700;
+  @apply border-gray-700;
 }
 .t-color-border-selected {
   @apply border-sky-500;
+}
+.t-color-border-hover {
+  @apply hover:border-gray-500;
 }
 .t-color-bg {
   @apply bg-gray-900;

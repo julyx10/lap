@@ -12,8 +12,20 @@
         </span>
       </div>
 
-      <div class="h-6 flex space-x-4">
+      <div class="h-6 flex flex-row items-center space-x-4">
     
+        <Dropdown
+          :options="sortingOptions"
+          :defaultLabel="sortingOptions[config.sortingType].label"
+          @select="handleSelect"
+        >
+          <template #option="{ option }">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium text-indigo-600">{{ option.label }}</span>
+            </div>
+          </template>
+        </Dropdown>
+
         <template v-if="selectedItemIndex >= 0">
           <IconDelete 
             class="t-icon-size t-icon-hover"
@@ -42,7 +54,7 @@
 
         <component 
           :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
-          class="t-icon-hover" 
+          class="t-icon-size t-icon-hover" 
           @click="toggleSortingOrder" 
         />
 
@@ -60,7 +72,7 @@
 
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
-          class="t-icon-hover" 
+          class="t-icon-size t-icon-hover" 
           @click="config.showPreview = !config.showPreview"
         />
 
@@ -135,6 +147,7 @@ import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate } from '@/common/utils';
 
+import Dropdown from '@/components/Dropdown.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
@@ -222,6 +235,16 @@ const menuOptions = [
   { label: "Settings", action: () => handleMenuClick("Settings") },
   { label: "Logout", action: () => handleMenuClick("Logout") },
 ];
+
+const dropdownOptions = [
+  { value: 'apple', label: 'Apple' },
+  { value: 'banana', label: 'Banana' },
+  { value: 'cherry', label: 'Cherry' },
+];
+
+const handleSelect = (option) => {
+  console.log('Selected option:', option);
+};
 
 function handleMenuClick(option) {
   console.log(`Clicked: ${option}`);
