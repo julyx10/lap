@@ -64,7 +64,7 @@
   "file_list_copy": "コピー",
   "file_list_sorting": "並び替え",
   "file_list_sorting_options": ["名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
-  "file_list_sorting_direction": ["昇順", "降順"],
+  "file_list_sorting_directions": ["昇順", "降順"],
   "file_list_filter_options": ["すべて", "画像", "動画"],
 
   "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],

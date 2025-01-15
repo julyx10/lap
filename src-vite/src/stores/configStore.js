@@ -27,6 +27,7 @@ export const useConfigStore = defineStore('configStore', {
     // Content.vue
     sortingAsc: true,           // sorting order
     sortingType: 0,             // sorting type
+    sortingDirection: 0,        // sorting direction(0: ascending, 1: descending)
     filterType: 0,              // filter type
     showPreview: false,         // show preview
     previewPosition: 'right',   // preview position: right, bottom

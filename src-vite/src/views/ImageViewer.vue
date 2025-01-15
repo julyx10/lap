@@ -97,6 +97,8 @@
         class="t-icon-size t-icon-hover" 
         @click="toggleFullScreen" 
       />
+      
+      <IconSeparator v-show="config.isFullScreen" class="t-icon-size t-icon-disabled" />
       <component v-show="config.isFullScreen"
         :is="config.isPinned ? IconPin : IconUnPin" 
         :class="[
@@ -105,6 +107,7 @@
         ]" 
         @click="config.isPinned = !config.isPinned" 
       />
+      <IconClose v-show="config.isFullScreen" class="t-icon-size t-icon-hover" @click="appWindow.close()" />
     </div>
 
     <!-- content -->
@@ -217,6 +220,9 @@ import IconPin from '@/assets/pin-filled.svg';
 import IconUnPin from '@/assets/pin.svg';
 import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
+import IconSeparator from '@/assets/separator.svg';
+import IconClose from '@/assets/close.svg';
+
 
 /// i18n
 const { locale, messages } = useI18n();

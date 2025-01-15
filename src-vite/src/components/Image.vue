@@ -12,42 +12,44 @@
   >
     <!-- DEBUG -->
     <table v-if="config.debugMode" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
-      <tr>
-        <td>activeImage</td>
-        <td>{{ activeImage }}</td>
-      </tr>
-      <tr>
-        <td>position</td>
-        <td>{{ position[0] }}, {{ position[1] }}</td>
-      </tr>   
-      <tr>
-        <td>scale</td>
-        <td>{{ scale[0] }}, {{ scale[1] }}</td>
-      </tr>
-      <tr>
-        <td>imageRotate</td>
-        <td>{{ imageRotate[0] }}, {{ imageRotate[1] }}</td>
-      </tr>
-      <tr>
-        <td>imageSize</td>
-        <td>{{ imageSize[0] }}, {{ imageSize[1] }}</td>
-      </tr>
-      <tr>
-        <td>imageSizeRotated</td>
-        <td>{{ imageSizeRotated[0] }}, {{ imageSizeRotated[1] }}</td>
-      </tr>
-      <tr>
-        <td>isZoomFit</td>
-        <td>{{ isZoomFit }}</td>
-      </tr>
-      <tr>
-        <td>containerSize</td>
-        <td>{{ containerSize }}</td>
-      </tr>
-      <tr>
-        <td>containerPos</td>
-        <td>{{ containerPos }}</td>
-      </tr>
+      <tbody>
+        <tr>
+          <td>activeImage</td>
+          <td>{{ activeImage }}</td>
+        </tr>
+        <tr>
+          <td>position</td>
+          <td>{{ position[0] }}, {{ position[1] }}</td>
+        </tr>   
+        <tr>
+          <td>scale</td>
+          <td>{{ scale[0] }}, {{ scale[1] }}</td>
+        </tr>
+        <tr>
+          <td>imageRotate</td>
+          <td>{{ imageRotate[0] }}, {{ imageRotate[1] }}</td>
+        </tr>
+        <tr>
+          <td>imageSize</td>
+          <td>{{ imageSize[0] }}, {{ imageSize[1] }}</td>
+        </tr>
+        <tr>
+          <td>imageSizeRotated</td>
+          <td>{{ imageSizeRotated[0] }}, {{ imageSizeRotated[1] }}</td>
+        </tr>
+        <tr>
+          <td>isZoomFit</td>
+          <td>{{ isZoomFit }}</td>
+        </tr>
+        <tr>
+          <td>containerSize</td>
+          <td>{{ containerSize }}</td>
+        </tr>
+        <tr>
+          <td>containerPos</td>
+          <td>{{ containerPos }}</td>
+        </tr>
+      </tbody>
     </table>
 
     <img 

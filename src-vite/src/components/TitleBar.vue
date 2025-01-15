@@ -6,7 +6,7 @@
   >
     
     <!-- Title Name -->
-    <span class="ml-4 t-color-text text-nowrap" @mousedown="appWindow.startDragging()">{{ titlebar }}</span>
+    <span class="ml-4 t-color-text text-nowrap" @mousedown="onMousedown">{{ titlebar }}</span>
 
     <!-- Draggable Area -->
     <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text" 
@@ -72,7 +72,7 @@ watch(() => searchValue.value, (newValue) => {
 
 // drag window
 const onMousedown = (e) => {
-  if (e.detail === 1) {   // 1: single click
+  if (e.detail === 1 && !isMaximized.value) {   // 1: single click
     appWindow.startDragging();
   }
 };

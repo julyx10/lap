@@ -11,7 +11,6 @@
     <!-- File Info table -->
     <div class="overflow-auto t-scrollbar" :style="{ maxHeight: 'calc(100vh - 100px)' }">
       <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
-        <caption class="sr-only">{{ $t('file_info_title') }}</caption>
         <tbody>
           <tr>
             <td>{{ $t('file_info_album_name') }}</td>

@@ -16,7 +16,9 @@
     
         <Dropdown
           :options="sortingOptions"
-          :defaultLabel="sortingOptions[config.sortingType].label"
+          :defaultIndex="config.sortingType"
+          :extendOptions="sortingDirectionOptions"
+          :defaultExtendIndex="config.sortingDirection"
           @select="handleSelect"
         >
           <template #option="{ option }">
@@ -210,6 +212,17 @@ const isImageViewerOpen  = ref(false);
 
 const sortingOptions = computed(() => {
   const options = localeMsg.value.file_list_sorting_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
+const sortingDirectionOptions = computed(() => {
+  const options = localeMsg.value.file_list_sorting_directions;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {

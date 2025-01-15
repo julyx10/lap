@@ -1,6 +1,6 @@
 <template>
   
-  <div class="w-screen h-screen flex flex-col border t-color-border rounded-lg shadow-lg overflow-hidden">
+  <div class="w-screen h-screen flex flex-col overflow-hidden">
     <!-- Title Bar -->
     <TitleBar titlebar="jc-photo" viewName="Home"/>
 
@@ -32,11 +32,7 @@
         </div>
 
         <!-- draggable area -->
-        <div class="flex-grow"
-          @mousedown="getCurrentWindow().startDragging()"
-          @mouseup="getCurrentWindow().stopDragging()"
-        >
-        </div>
+        <div class="flex-grow" @mousedown="dragWindow"></div>
 
         <!-- settings icon -->
         <div class="flex flex-col items-center t-icon-hover" @click="clickSettings">
@@ -70,7 +66,10 @@
       </transition>
       
       <!-- splitter -->
-      <div v-if="config.toolbarIndex > 1" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
+      <div v-if="config.toolbarIndex > 1" class="w-1 hover:bg-sky-700 cursor-ew-resize" 
+        @mousedown="startDraggingSplitter"
+        @mouseup="stopDraggingSplitter"
+      ></div>
       
       <!-- content area -->
       <div class="flex-1 flex relative t-color-bg-light rounded-ss-lg">
@@ -133,7 +132,7 @@ const showLeftPane = ref(true);
 
 /// Splitter for resizing the left pane
 const divToolbar = ref(null);
-const isDragging = ref(false);
+const isDraggingSplitter = ref(false);
 
 const clickToolbarItem = (index) => {
   if(config.toolbarIndex === index) {
@@ -145,25 +144,33 @@ const clickToolbarItem = (index) => {
 };
 
 // Dragging the splitter
-function startDragging(event) {
-  isDragging.value = true;
+function startDraggingSplitter(event) {
+  isDraggingSplitter.value = true;
   document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', stopDragging);
+  document.addEventListener('mouseup', stopDraggingSplitter);
 }
 
 // Stop dragging the splitter
-function stopDragging() {
-  isDragging.value = false;
+function stopDraggingSplitter() {
+  isDraggingSplitter.value = false;
   document.removeEventListener('mousemove', handleMouseMove);
-  document.removeEventListener('mouseup', stopDragging);
+  document.removeEventListener('mouseup', stopDraggingSplitter);
 }
 
 // Handle mouse move event
 function handleMouseMove(event) {
-  if (isDragging.value && divToolbar.value) {
+  if (isDraggingSplitter.value && divToolbar.value) {
     const toolbarWidth = divToolbar.value.offsetWidth + 1;   // 1: border width
     config.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
   }
+}
+
+// drag toolbar to move window
+async function dragWindow() {
+  if (await getCurrentWindow().isMaximized()) {
+    return;
+  }
+  getCurrentWindow().startDragging();
 }
 
 /// click settings icon

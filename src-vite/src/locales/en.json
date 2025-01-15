@@ -64,7 +64,7 @@
   "file_list_copy": "Copy",
   "file_list_sorting": "Sort",
   "file_list_sorting_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
-  "file_list_sorting_direction": ["Ascending", "Descending"],
+  "file_list_sorting_directions": ["Ascending", "Descending"],
   "file_list_filter_options": ["All", "Image", "Video"],
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
