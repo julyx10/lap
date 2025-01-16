@@ -25,7 +25,6 @@ export const useConfigStore = defineStore('configStore', {
     leftPaneWidth: 300,         // left pane width
 
     // Content.vue
-    sortingAsc: true,           // sorting order
     sortingType: 0,             // sorting type
     sortingDirection: 0,        // sorting direction(0: ascending, 1: descending)
     filterType: 0,              // filter type

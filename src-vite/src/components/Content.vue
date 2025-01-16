@@ -14,20 +14,6 @@
 
       <div class="h-6 flex flex-row items-center space-x-4">
     
-        <Dropdown
-          :options="sortingOptions"
-          :defaultIndex="config.sortingType"
-          :extendOptions="sortingDirectionOptions"
-          :defaultExtendIndex="config.sortingDirection"
-          @select="handleSelect"
-        >
-          <template #option="{ option }">
-            <div class="flex items-center space-x-2">
-              <span class="font-medium text-indigo-600">{{ option.label }}</span>
-            </div>
-          </template>
-        </Dropdown>
-
         <template v-if="selectedItemIndex >= 0">
           <IconDelete 
             class="t-icon-size t-icon-hover"
@@ -39,47 +25,27 @@
           <IconRotateRight 
             class="t-icon-size t-icon-hover"
           />
-
         </template>
-        <select id="sorting-type-select" v-model="config.sortingType"
-          class="px-2 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-          @change="sortFileList(fileList, config.sortingType, config.sortingAsc)"
-        >
-          <option v-for="(option, index) in sortingOptions" 
-            :key="index" 
-            :value="option.value"
-            class="t-option"
-          >
-            {{ option.label }}
-          </option>
-        </select>
 
-        <component 
-          :is="config.sortingAsc ? IconSortingAsc : IconSortingDesc" 
-          class="t-icon-size t-icon-hover" 
-          @click="toggleSortingOrder" 
+        <DropDown
+          :options="sortingOptions"
+          :defaultIndex="config.sortingType"
+          :extendOptions="sortingDirectionOptions"
+          :defaultExtendIndex="config.sortingDirection"
+          @select="handleSortingSelect"
         />
-
-        <select id="filter-type-select" v-model="config.filterType"
-          class="px-2 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-        >
-          <option v-for="(option, index) in filterOptions" 
-            :key="index" 
-            :value="option.value"
-            class="t-option"
-          >
-            {{ option.label }}
-          </option>
-        </select>
-
+        <DropDown
+          :options="filterOptions"
+          :defaultIndex="config.filterType"
+          @select="handleFilterSelect"
+        />
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           class="t-icon-size t-icon-hover" 
           @click="config.showPreview = !config.showPreview"
         />
-
         <IconMore
-            class="t-icon-size t-icon-hover"
+          class="t-icon-size t-icon-hover"
         />
       </div>
     </div>
@@ -149,7 +115,7 @@ import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate } from '@/common/utils';
 
-import Dropdown from '@/components/Dropdown.vue';
+import DropDown from '@/components/DropDown.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
@@ -163,8 +129,8 @@ import IconFavorite from '@/assets/heart-solid.svg';
 import IconRotateRight from '@/assets/rotate-right.svg';
 // import IconMove from '@/assets/move.svg';
 // import IconCopy from '@/assets/copy.svg';
-import IconSortingAsc from '@/assets/sorting-asc.svg';
-import IconSortingDesc from '@/assets/sorting-desc.svg';
+// import IconSortingAsc from '@/assets/sorting-asc.svg';
+// import IconSortingDesc from '@/assets/sorting-desc.svg';
 import IconPreview from '@/assets/preview-on.svg';
 import IconPreviewOff from '@/assets/preview-off.svg';
 import IconMore from '@/assets/more.svg';
@@ -186,7 +152,7 @@ const contentTitle = ref("");
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 
-// grid view div
+// grid view
 const divGridView = ref(null);
 
 // file list
@@ -196,72 +162,14 @@ const selectedItemIndex = ref(-1);
 const searchText = ref('');      // search text
 
 // preview 
+const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
 const previewDiv = ref(null);
 const previewPaneSize = ref({ width: 100, height: 100 });
-let resizeObserver;
 const imageSrc = ref(null);         // preview image source
+let resizeObserver;
 
-// dragging preview pane splitter
-const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
-
-// show image viewer(new window)
-const isImageViewerOpen  = ref(false); 
-
-// edit mode (allow mutilple selection)
-// const isEditing = ref(false);
-
-const sortingOptions = computed(() => {
-  const options = localeMsg.value.file_list_sorting_options;
-  const result = [];
-
-  for (let i = 0; i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-
-  return result;
-});
-
-const sortingDirectionOptions = computed(() => {
-  const options = localeMsg.value.file_list_sorting_directions;
-  const result = [];
-
-  for (let i = 0; i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-
-  return result;
-});
-
-const filterOptions = computed(() => {
-  const options = localeMsg.value.file_list_filter_options;
-  const result = [];
-
-  for (let i = 0; i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-
-  return result;
-});
-
-const menuOptions = [
-  { label: "Profile", action: () => handleMenuClick("Profile") },
-  { label: "Settings", action: () => handleMenuClick("Settings") },
-  { label: "Logout", action: () => handleMenuClick("Logout") },
-];
-
-const dropdownOptions = [
-  { value: 'apple', label: 'Apple' },
-  { value: 'banana', label: 'Banana' },
-  { value: 'cherry', label: 'Cherry' },
-];
-
-const handleSelect = (option) => {
-  console.log('Selected option:', option);
-};
-
-function handleMenuClick(option) {
-  console.log(`Clicked: ${option}`);
-}
+// image viewer
+const isImageViewerOpen  = ref(false);  // show image viewer(new window)
 
 onMounted(() => {
   console.log('content mounted');
@@ -424,31 +332,32 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
 }, { immediate: true });
 
 // watch for changes in the file list (selected item index or file list length)
-watch(() => [selectedItemIndex.value, fileList.value.length], ([newIndex, len]) => {
-  console.log('watch - selectedItemIndex:', newIndex);
-
-  if (newIndex >= 0 && newIndex < fileList.value.length) {
-    imageSrc.value = fileList.value[newIndex].thumbnail || '';
-    onImageLoad();
-  } else {
-    imageSrc.value = '';
-  }
+watch(() => [selectedItemIndex.value, fileList.value.length, isImageViewerOpen.value], () => {
+  console.log('watch - selected item changed:', selectedItemIndex.value);
+  getImageSrc();
 });
 
 // wether the image viewer is open
-watch(isImageViewerOpen, (show) => {
-  console.log('watch - isImageViewerOpen:', show);
-  onImageLoad();
-});
+// watch(isImageViewerOpen, (show) => {
+//   console.log('watch - isImageViewerOpen:', show);
+//   getImageSrc();
+// });
 
-const onImageLoad = async () => {
+// get selected image source
+const getImageSrc = async () => {
+  if(selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
+    imageSrc.value = '';
+    return;
+  }
+  
   // prevent loading image when the image viewer is open
-  if(isImageViewerOpen.value || selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
+  if(isImageViewerOpen.value) {
+    imageSrc.value = fileList.value[selectedItemIndex.value].thumbnail || '';
     return;
   }
 
   let filePath = fileList.value[selectedItemIndex.value].file_path;
-  console.log('onImageLoad:', filePath);
+  console.log('getImageSrc:', filePath);
   try {
     let currentIndex = selectedItemIndex.value;
     const imageBase64 = await invoke('get_file_image', { filePath });
@@ -458,17 +367,7 @@ const onImageLoad = async () => {
     }
   } catch (error) {
     imageSrc.value = '';
-    console.error('onImageLoad error:', error);
-  }
-}
-
-/// toggle the sorting order
-function toggleSortingOrder() {
-  console.log('toggleSortingOrder:', selectedItemIndex.value, config.sortingAsc);
-  config.sortingAsc = !config.sortingAsc;
-  fileList.value = [...fileList.value].reverse();
-  if (selectedItemIndex.value >= 0) {
-    selectedItemIndex.value = fileList.value.length - 1 - selectedItemIndex.value;
+    console.error('getImageSrc error:', error);
   }
 }
 
@@ -521,9 +420,44 @@ async function getCameraFiles(make, model) {
   }
 }
 
+// sorting type options
+const sortingOptions = computed(() => {
+  return getMenuOptions(localeMsg.value.file_list_sorting_options);
+});
+
+// sorting direction options
+const sortingDirectionOptions = computed(() => {
+  return getMenuOptions(localeMsg.value.file_list_sorting_directions);
+});
+
+// filter options
+const filterOptions = computed(() => {
+  return getMenuOptions(localeMsg.value.file_list_filter_options);
+});
+
+function getMenuOptions(options) {
+  const result = [];
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+  return result;
+}
+
+const handleSortingSelect = (option, extendOption) => {
+  console.log('Order option:', option, extendOption);
+  config.sortingType = option;
+  config.sortingDirection = extendOption;
+  sortFileList(fileList.value, config.sortingType, config.sortingDirection)
+};
+
+const handleFilterSelect = (option, extendOption) => {
+  console.log('Filter option:', option);
+  config.filterType = option;
+};
+
 function refreshFileList() {
   filterFileList(originalFileList.value, searchText.value);
-  sortFileList(fileList.value, config.sortingType, config.sortingAsc);
+  sortFileList(fileList.value, config.sortingType, config.sortingDirection);
   getFileThumb(fileList.value); 
   console.log('fileList:', fileList.value);
 }
@@ -537,8 +471,8 @@ function filterFileList(files, filter) {
   }
 }
 
-// Sort the file list based on the sorting type and order
-function sortFileList(files, sortingType, isAccending) {
+// Sort the file list based on the sorting type and direction
+function sortFileList(files, sortingType, sortingDirection) {
   fileList.value = [...files].sort((a, b) => {
     let result = 0;
 
@@ -573,7 +507,7 @@ function sortFileList(files, sortingType, isAccending) {
         return 0; // No sorting if the sorting type is unrecognized
     }
 
-    return isAccending ? result : -result;
+    return sortingDirection === 0 ? result : -result;  // reverse the result if descending
   });
 }
 
