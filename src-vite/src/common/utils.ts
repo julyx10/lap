@@ -31,6 +31,15 @@ export function getFullPath(path: string, name: string): string {
   return path + separator + name;
 }
 
+/// get file folder path
+export function getFolderPath(filepath: string): string {
+  const lastSlashIndex = filepath.lastIndexOf(separator);
+  if (lastSlashIndex === -1) {
+    return '';  // No folder part, return an empty string
+  }
+  return filepath.substring(0, lastSlashIndex);
+}
+
 /// shorten a filename while preserving its extension
 export function shortenFilename(filename: string): string {
   const maxLength = 16;

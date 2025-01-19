@@ -1,5 +1,5 @@
 <template>
-  <div class="relative inline-block text-left">
+  <div ref="dropdown" class="relative inline-block text-left">
 
     <!-- Dropdown Trigger -->
     <button
@@ -13,7 +13,7 @@
     <!-- Dropdown Menu -->
     <transition name="fade">
       <div v-if="isDropDown"
-        class="absolute right-0 my-1 min-w-32 rounded-md shadow-lg t-color-bg-light border t-color-border z-50"
+        class="absolute right-0 my-1 rounded-md shadow-lg t-color-bg-light border t-color-border z-50"
       >
         <!-- menu group 1 -->
         <button v-for="(option, index) in options"
@@ -48,11 +48,10 @@
 </template>
   
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 
 import IconArrowDown from '@/assets/arrow-down.svg';
 import IconDot from '@/assets/dot.svg';
-// import IconCheck from '@/assets/check.svg';
 
   // Props
 const props = defineProps({
@@ -78,13 +77,32 @@ const props = defineProps({
 const emit = defineEmits(['select']);
 
 // State
+const dropdown = ref(null);
 const isDropDown = ref(false);
 const optionIndex = ref(props.defaultIndex);
 const extendIndex = ref(props.defaultExtendIndex);
 
+// Add event listener when the component is mounted
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+// Remove event listener when the component is destroyed
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
 // Methods
 const toggleDropdown = () => {
   isDropDown.value = !isDropDown.value;
+};
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+  console.log('click outside');
+  if (dropdown.value && !dropdown.value.contains(event.target)) {
+    isDropDown.value = false;
+  }
 };
 
 const selectOption = (index) => {

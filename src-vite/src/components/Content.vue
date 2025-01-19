@@ -14,7 +14,7 @@
 
       <div class="h-6 flex flex-row items-center space-x-4">
     
-        <template v-if="selectedItemIndex >= 0">
+        <!-- <template v-if="selectedItemIndex >= 0">
           <IconDelete 
             class="t-icon-size t-icon-hover"
             @click="deleteFile(selectedItemIndex)"
@@ -25,16 +25,16 @@
           <IconRotateRight 
             class="t-icon-size t-icon-hover"
           />
-        </template>
+        </template> -->
 
-        <DropDown
+        <DropDownSelect
           :options="sortingOptions"
           :defaultIndex="config.sortingType"
-          :extendOptions="sortingDirectionOptions"
+          :extendOptions="sortingExtendOptions"
           :defaultExtendIndex="config.sortingDirection"
           @select="handleSortingSelect"
         />
-        <DropDown
+        <DropDownSelect
           :options="filterOptions"
           :defaultIndex="config.filterType"
           @select="handleFilterSelect"
@@ -44,8 +44,10 @@
           class="t-icon-size t-icon-hover" 
           @click="config.showPreview = !config.showPreview"
         />
-        <IconMore
-          class="t-icon-size t-icon-hover"
+        <DropDownMenu
+          :iconMenu="IconMore"
+          :menuItems="moreMenuItems"
+          @select="handleMoreMenu"
         />
       </div>
     </div>
@@ -54,7 +56,7 @@
       <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     </div>
 
-    <div ref="divGridView" class="mt-1 flex-1 flex flex-row overflow-hidden">
+    <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
       <GridView v-if="fileList.length > 0" 
         v-model="selectedItemIndex"
@@ -108,14 +110,24 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { open } from '@tauri-apps/plugin-shell';
 
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate } from '@/common/utils';
+import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate, getFolderPath } from '@/common/utils';
 
-import DropDown from '@/components/DropDown.vue';
+import DropDownSelect from '@/components/DropDownSelect.vue';
+import DropDownMenu from '@/components/DropDownMenu.vue';
+import IconDelete from '@/assets/trash.svg';
+import IconUnFavorite from '@/assets/heart.svg';
+import IconFavorite from '@/assets/heart-solid.svg';
+import IconRotateRight from '@/assets/rotate-right.svg';
+import IconPreview from '@/assets/preview-on.svg';
+import IconPreviewOff from '@/assets/preview-off.svg';
+import IconMore from '@/assets/more.svg';
+
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
@@ -123,17 +135,11 @@ import Image from '@/components/Image.vue';
 // import IconSelectAll from '@/assets/checkbox-checkall.svg';
 // import IconEdit from '@/assets/edit.svg';
 
-import IconDelete from '@/assets/trash.svg';
-import IconUnFavorite from '@/assets/heart.svg';
-import IconFavorite from '@/assets/heart-solid.svg';
-import IconRotateRight from '@/assets/rotate-right.svg';
 // import IconMove from '@/assets/move.svg';
 // import IconCopy from '@/assets/copy.svg';
 // import IconSortingAsc from '@/assets/sorting-asc.svg';
 // import IconSortingDesc from '@/assets/sorting-desc.svg';
-import IconPreview from '@/assets/preview-on.svg';
-import IconPreviewOff from '@/assets/preview-off.svg';
-import IconMore from '@/assets/more.svg';
+
 
 const props = defineProps({
   titlebar: String
@@ -152,8 +158,8 @@ const contentTitle = ref("");
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 
-// grid view
-const divGridView = ref(null);
+// file list view
+const divListView = ref(null);
 
 // file list
 const originalFileList = ref([]);
@@ -337,12 +343,6 @@ watch(() => [selectedItemIndex.value, fileList.value.length, isImageViewerOpen.v
   getImageSrc();
 });
 
-// wether the image viewer is open
-// watch(isImageViewerOpen, (show) => {
-//   console.log('watch - isImageViewerOpen:', show);
-//   getImageSrc();
-// });
-
 // get selected image source
 const getImageSrc = async () => {
   if(selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
@@ -425,14 +425,21 @@ const sortingOptions = computed(() => {
   return getMenuOptions(localeMsg.value.file_list_sorting_options);
 });
 
-// sorting direction options
-const sortingDirectionOptions = computed(() => {
-  return getMenuOptions(localeMsg.value.file_list_sorting_directions);
+// sorting extend options
+const sortingExtendOptions = computed(() => {
+  console.log('sortingExtendOptions:', localeMsg.value.file_list_sorting_extend_options);
+  return getMenuOptions(localeMsg.value.file_list_sorting_extend_options);
 });
 
 // filter options
 const filterOptions = computed(() => {
   return getMenuOptions(localeMsg.value.file_list_filter_options);
+});
+
+// more menuitems
+const moreMenuItems = computed(() => {
+  console.log('moreMenuItems:', localeMsg.value.file_list_more_menuitems);
+  return getMenuOptions(localeMsg.value.file_list_more_menuitems);
 });
 
 function getMenuOptions(options) {
@@ -453,6 +460,51 @@ const handleSortingSelect = (option, extendOption) => {
 const handleFilterSelect = (option, extendOption) => {
   console.log('Filter option:', option);
   config.filterType = option;
+};
+
+const handleMoreMenu = (menuItem) => {
+  console.log('More menu item:', menuItem);
+  switch (menuItem.value) {
+    case 0: // select all
+      for (let i = 0; i < fileList.value.length; i++) {
+        fileList.value[i].isSelected = true;
+      }
+      break;
+    case 1: // select none
+      for (let i = 0; i < fileList.value.length; i++) {
+        fileList.value[i].isSelected = false;
+      }
+      break;
+    case 2: // invert selection
+      for (let i = 0; i < fileList.value.length; i++) {
+        fileList.value[i].isSelected = !fileList.value[i].isSelected;
+      }
+      break;
+    case 3: // splitter '-'
+      break;
+    case 4: // open folder
+      if(config.toolbarIndex === 2) {
+        openFileExplorer(config.albumFolderPath);
+      } else {
+        if(selectedItemIndex.value >= 0) {
+          const selectedFilePath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
+          openFileExplorer(selectedFilePath);
+        }
+      }
+      break;
+    default:
+      break;
+  }
+};
+
+// Function to open the file explorer
+const openFileExplorer = async (path) => {
+  try {
+    await open(path); // Open the folder in the system file explorer
+    console.log('File explorer opened successfully.');
+  } catch (error) {
+    console.error('Failed to open file explorer:', error);
+  }
 };
 
 function refreshFileList() {
@@ -649,7 +701,7 @@ function handleMouseMove(event) {
   // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
   if (isDraggingSplitter.value) {
     const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
-    const leftPosition = divGridView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+    const leftPosition = divListView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
 
     // Limit width between 10% and 90%
     config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 90); 

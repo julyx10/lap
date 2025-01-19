@@ -13,6 +13,7 @@
     "@tauri-apps/api": "^2.0.3",
     "@tauri-apps/plugin-dialog": "^2.0.1",
     "@tauri-apps/plugin-os": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.2.0",
     "pinia": "^2.2.4",
     "pinia-plugin-persistedstate": "^4.1.2",
     "tailwind-scrollbar": "^3.1.0",
