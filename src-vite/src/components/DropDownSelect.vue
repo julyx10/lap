@@ -17,7 +17,7 @@
       >
         <!-- menu group 1 -->
         <button v-for="(option, index) in options"
-          class="pl-1 pr-4 py-1 w-full flex flex-row space-x-1 t-color-bg-hover text-sm whitespace-nowrap"
+          class="pl-1 pr-4 py-1 w-full flex flex-row space-x-1 t-color-bg-hover t-color-text-hover text-sm whitespace-nowrap"
           :key="index"
           @click="selectOption(index)"
         >
@@ -29,7 +29,7 @@
         <!-- menu group 2 -->
         <button v-for="(option, index) in extendOptions"
           :class="[
-            'pl-1 pr-4 py-1 w-full flex flex-row space-x-1 t-color-bg-hover text-sm whitespace-nowrap', 
+            'pl-1 pr-4 py-1 w-full flex flex-row space-x-1 t-color-bg-hover t-color-text-hover text-sm whitespace-nowrap', 
             index === 0 ? 'border-t t-color-border' : ''
           ]"
           :key="index"

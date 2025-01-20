@@ -4,7 +4,7 @@
     <!-- Dropdown Trigger -->
     <component 
       :is="iconMenu" 
-      class="t-icon-size t-icon-hover" 
+      :class="['t-icon-size t-icon-hover', isDropDown ? 't-icon-selected' : '']" 
       @click="toggleDropdown"
     />
 
@@ -16,13 +16,20 @@
         <!-- menu items -->
         <button v-for="(item, index) in menuItems"
           :class="[
-            'px-4 w-full flex text-sm whitespace-nowrap', 
-            item.label === '-' ? 'border-t t-color-border' : 'py-1 t-color-bg-hover'
+            'pl-2 pr-4 w-full flex flex-row justify-between text-sm whitespace-nowrap', 
+            item.label === '-' ? 'border-t t-color-border' : 'py-1 t-color-bg-hover t-color-text-hover'
           ]"
           :key="index"
-          @click="selectItem(item)"
+          @click="handleClick(item)"
         >
-          <span v-if="item.label !== '-'">{{ item.label }}</span>
+        <template v-if="item.label !== '-'">
+          <div class="t-icon-size-sm mr-2">
+            <component :is="item.icon" ></component>
+          </div>
+          <span>{{ item.label }}</span>
+          <span class="pl-4 ml-auto">{{ item.shortcut }}</span>
+        </template>
+
         </button>
 
       </div>
@@ -76,8 +83,10 @@ const handleClickOutside = (event) => {
   }
 };
 
-const selectItem = (item) => {
-  emit('select', item);
+const handleClick = (item) => {
+  if (item.action && typeof item.action === 'function') {
+    item.action();
+  }
   isDropDown.value = false;
 };
 

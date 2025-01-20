@@ -12,8 +12,7 @@
         :id="'item-' + index"
         :class="[
           'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
-          index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
-          index != selectedIndex && file?.isSelected ? 'border-gray-500' : 'border-gray-800'
+          index === selectedIndex ? 'border-sky-500' : file?.isSelected ? 'border-gray-500' : 'border-gray-800',
         ]"
         @click="clickItem(index)"
         @dblclick="openItem(true)"
@@ -120,15 +119,15 @@ const contextMenu = ref(null);
 // Define menu items with labels and actions
 const menuItems = [
   {
-    label: localeMsg.value.file_list_favorite,
+    label: localeMsg.value.menu_item_favorite,
     action: () => alert('You clicked Option 1'),
   },
   {
-    label: localeMsg.value.file_list_rotate,
+    label: localeMsg.value.menu_item_rotate,
     action: () => alert('You clicked Option 2'),
   },
   {
-    label: localeMsg.value.file_list_delete,
+    label: localeMsg.value.menu_item_delete,
     action: () => alert('You clicked Option 3'),
   },
 ];
