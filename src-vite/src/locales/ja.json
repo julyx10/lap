@@ -47,12 +47,13 @@
   "allphotos": "すべての写真",
 
   "folder_summary": "{folders} フォルダ, {files} ファイル",
-  "files_summary_images": "{count} 画像",
-  "files_summary_videos": "{count} 動画",
+  "files_summary": "{count} ファイル",
+  "files_summary_selected": "{count} 選択",
 
   "file_list_no_files": "ファイルが見つかりません",
   "file_list_select_count": "{count} 選択",
 
+  "file_list_select_mode": "選択",
   "file_list_sorting_options": ["名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
   "file_list_sorting_extend_options": ["昇順", "降順"],
   "file_list_filter_options": ["すべて", "画像", "動画"],

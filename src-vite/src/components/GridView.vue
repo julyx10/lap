@@ -36,7 +36,7 @@
               />
               <!-- <IconDelete class="t-icon-size-sm"></IconDelete> -->
             </div>
-            <component 
+            <component v-if="selectMode"
               :is="file?.isSelected ? IconChecked : IconUnChecked" 
               class="t-icon-size t-icon-hover" 
               @click.stop="selectItem(index)"
@@ -98,7 +98,11 @@ const props = defineProps({
   fileList: {
     type: Array,
     required: true,
-  }
+  },
+  selectMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 /// i18n
@@ -179,6 +183,9 @@ watch(() => selectedIndex.value, (newValue) => {
 
 function clickItem(index: number) {
   selectedIndex.value = index;
+  if(props.selectMode) {
+    selectItem(index);
+  }
 }
 
 function selectItem(index: number) {

@@ -47,12 +47,13 @@
   "allphotos": "All Photos",
 
   "folder_summary": "{folders} folders, {files} files",
-  "files_summary_images": "{count} images",
-  "files_summary_videos": "{count} videos",
+  "files_summary": "{count} files",
+  "files_summary_selected": "{count} selected",
 
   "file_list_no_files": "No files found",
   "file_list_select_count": "{count} selected",
 
+  "file_list_select_mode": "Select",
   "file_list_sorting_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
   "file_list_sorting_extend_options": ["Ascending", "Descending"],
   "file_list_filter_options": ["All", "Image", "Video"],

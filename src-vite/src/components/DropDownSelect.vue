@@ -3,7 +3,7 @@
 
     <!-- Dropdown Trigger -->
     <button
-      class="px-2 py-1 w-full inline-flex justify-center rounded-md border t-color-border t-icon-hover t-color-border-hover text-sm "
+      class="px-2 py-1 w-full inline-flex justify-center rounded-md border t-color-border t-icon-hover t-color-border-hover text-sm whitespace-nowrap "
       @click="toggleDropdown"
     >
       <span class="pl-1 pr-2">{{ options[optionIndex].label }} {{ extendOptions.length > 0 ? ' | ' + extendOptions[extendIndex].label : '' }}</span>

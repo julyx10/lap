@@ -8,12 +8,21 @@
       <div class="flex-1 flex flex-col">
         <span>{{ contentTitle }}</span>
         <span class="text-sm">
-          {{ $t('files_summary_images', { count: fileList.length }) }}, {{ $t('files_summary_videos', { count: fileList.length }) }}
+          {{ $t('files_summary', { count: fileList.length }) }}
         </span>
       </div>
 
       <div class="h-6 flex flex-row items-center space-x-4">
-    
+        <button
+          :class="[
+            'px-2 py-1 rounded-md border t-color-border t-icon-hover t-color-border-hover text-sm',
+            selectMode ? 't-color-bg-selected t-color-text-selected' : '',
+          ]"
+          @click="handleSelectMode"
+        >
+          <span class="px-1">{{ $t('file_list_select_mode') }}{{ selectMode ? ': ' + $t('files_summary', { count: selectedCount }) : '' }}</span>
+        </button>
+
         <DropDownSelect
           :options="sortingOptions"
           :defaultIndex="config.sortingType"
@@ -47,6 +56,7 @@
       <GridView v-if="fileList.length > 0" 
         v-model="selectedItemIndex"
         :fileList="fileList"
+        :selectMode="selectMode"
       />
       <div v-else class="min-w-32 flex-1 flex flex-row items-center justify-center">
         <p>{{ $t('file_list_no_files') }}</p>
@@ -149,7 +159,13 @@ const divListView = ref(null);
 const originalFileList = ref([]);
 const fileList = ref([]);   // file list by filtering and sorting
 const selectedItemIndex = ref(-1);
-const searchText = ref('');      // search text
+
+// select mode
+const selectMode = ref(false);
+const selectedCount = ref(0);
+
+// search text
+const searchText = ref('');
 
 // preview 
 const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
@@ -327,6 +343,11 @@ watch(() => [selectedItemIndex.value, fileList.value.length, isImageViewerOpen.v
   getImageSrc();
 });
 
+// watch for changes of fileList
+watch(() => fileList.value, (newFiles) => {
+  selectedCount.value = newFiles.filter(file => file.isSelected).length;
+}, { deep: true });   // deep watch: because isSelected is a property of each file object
+
 // get selected image source
 const getImageSrc = async () => {
   if(selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
@@ -414,6 +435,16 @@ const sortingExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.file_list_sorting_extend_options);
 });
 
+const handleSelectMode = () => {
+  console.log('Select mode:', selectMode.value);
+  selectMode.value = !selectMode.value;
+  if(!selectMode.value) {
+    for (let i = 0; i < fileList.value.length; i++) {
+      fileList.value[i].isSelected = false;
+    }
+  }
+};
+
 const handleSortingSelect = (option, extendOption) => {
   console.log('Order option:', option, extendOption);
   config.sortingType = option;
@@ -449,6 +480,7 @@ const moreMenuItems = computed(() => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = true;
         }
+        selectMode.value = true;
       }
     },
     {
@@ -456,7 +488,8 @@ const moreMenuItems = computed(() => {
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = false;
-        }        
+        }
+        selectMode.value = false;
       }
     },
     {
@@ -464,7 +497,8 @@ const moreMenuItems = computed(() => {
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = !fileList.value[i].isSelected;
-        }      
+        }
+        selectMode.value = true;
       }
     },
     {
