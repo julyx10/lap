@@ -58,6 +58,7 @@
   "file_list_sorting_extend_options": ["Ascending", "Descending"],
   "file_list_filter_options": ["All", "Image", "Video"],
 
+  "menu_item_quit_multi_select": "Quit multi-select",
   "menu_item_select_all": "Select all",
   "menu_item_select_none": "Select none",
   "menu_item_select_invert": "Invert selection",
@@ -70,12 +71,13 @@
   "menu_item_edit": "Edit",
   "menu_item_copy": "Copy",
   "menu_item_rename": "Rename...",
-  "menu_item_show_info": "Show info",
   "menu_item_refresh": "Refresh",
   "menu_item_copy_to": "Copy to...",
   "menu_item_move_to": "Move to...",
   "menu_item_delete": "Delete",
+  "menu_item_add_folder": "Add folder",
   "menu_item_open_folder": "Open folder...",
+  "menu_item_properties": "Properties",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",

@@ -15,13 +15,21 @@
       <div class="h-6 flex flex-row items-center space-x-4">
         <button
           :class="[
-            'px-2 py-1 rounded-md border t-color-border t-icon-hover t-color-border-hover text-sm',
+            'px-2 py-1 flex flex-row items-center rounded-md border t-color-border t-icon-hover t-color-border-hover text-sm',
             selectMode ? 't-color-bg-selected t-color-text-selected' : '',
           ]"
           @click="handleSelectMode"
         >
           <span class="px-1">{{ $t('file_list_select_mode') }}{{ selectMode ? ': ' + $t('files_summary', { count: selectedCount }) : '' }}</span>
+          <DropDownMenu v-if="selectMode"
+            :iconMenu="IconMore"
+            :menuItems="moreMenuItems"
+            :alignRight="true"
+            @click.stop
+          />
         </button>
+
+        <!-- <IconClose v-if="selectMode" class="t-icon-size t-icon-hover" @click="handleSelectMode" /> -->
 
         <DropDownSelect
           :options="sortingOptions"
@@ -39,10 +47,6 @@
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           class="t-icon-size t-icon-hover" 
           @click="config.showPreview = !config.showPreview"
-        />
-        <DropDownMenu
-          :iconMenu="IconMore"
-          :menuItems="moreMenuItems"
         />
       </div>
     </div>
@@ -106,7 +110,6 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { open } from '@tauri-apps/plugin-shell';
 
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
@@ -123,13 +126,16 @@ import Image from '@/components/Image.vue';
 import IconPreview from '@/assets/preview-on.svg';
 import IconPreviewOff from '@/assets/preview-off.svg';
 import IconMore from '@/assets/more.svg';
+import IconArrowDown from '@/assets/arrow-down.svg';
+
+import IconClose from '@/assets/close.svg';
 import IconSelectAll from '@/assets/checkbox-checkall.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconRotate from '@/assets/rotate-right.svg';
-import IconCopy from '@/assets/clipboard.svg';
+import IconCopy from '@/assets/copy.svg';
 import IconRename from '@/assets/rename.svg';
-import IconRefresh from '@/assets/reload.svg';
+import IconRefresh from '@/assets/refresh.svg';
 import IconCopyTo from '@/assets/copy-to.svg';
 import IconMoveTo from '@/assets/move-to.svg';
 import IconDelete from '@/assets/trash.svg';
@@ -424,6 +430,93 @@ async function getCameraFiles(make, model) {
     console.error('getCameraFiles error:', error);
   }
 }
+const handleSelectMode = () => {
+  console.log('Select mode:', selectMode.value);
+  selectMode.value = !selectMode.value;
+  if(!selectMode.value) {
+    for (let i = 0; i < fileList.value.length; i++) {
+      fileList.value[i].isSelected = false;
+    }
+  }
+};
+
+// more menuitems
+const moreMenuItems = computed(() => {
+  return [
+    {
+      label: localeMsg.value.menu_item_select_all,
+      icon: IconSelectAll,
+      action: () => {
+        for (let i = 0; i < fileList.value.length; i++) {
+          fileList.value[i].isSelected = true;
+        }
+        selectMode.value = true;
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_select_none,
+      action: () => {
+        for (let i = 0; i < fileList.value.length; i++) {
+          fileList.value[i].isSelected = false;
+        }
+        selectMode.value = true;
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_select_invert,
+      action: () => {
+        for (let i = 0; i < fileList.value.length; i++) {
+          fileList.value[i].isSelected = !fileList.value[i].isSelected;
+        }
+        selectMode.value = true;
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_favorite,
+      icon: IconFavorite,
+      action: () => {
+        if(selectedItemIndex.value >= 0) {
+          fileList.value[selectedItemIndex.value].is_favorite = true;
+        }
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_unfavorite,
+      icon: IconUnFavorite,
+      action: () => {
+        if(selectedItemIndex.value >= 0) {
+          fileList.value[selectedItemIndex.value].is_favorite = false;
+        }
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
+      label: localeMsg.value.menu_item_move_to,
+      icon: IconMoveTo,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_copy_to,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      action: () => {
+        if(selectedItemIndex.value >= 0) {
+          deleteFile(selectedItemIndex.value);
+        }
+      }
+    }
+  ];
+});
 
 // sorting type options
 const sortingOptions = computed(() => {
@@ -434,16 +527,6 @@ const sortingOptions = computed(() => {
 const sortingExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.file_list_sorting_extend_options);
 });
-
-const handleSelectMode = () => {
-  console.log('Select mode:', selectMode.value);
-  selectMode.value = !selectMode.value;
-  if(!selectMode.value) {
-    for (let i = 0; i < fileList.value.length; i++) {
-      fileList.value[i].isSelected = false;
-    }
-  }
-};
 
 const handleSortingSelect = (option, extendOption) => {
   console.log('Order option:', option, extendOption);
@@ -469,168 +552,6 @@ function getSelectOptions(options) {
   }
   return result;
 }
-
-// more menuitems
-const moreMenuItems = computed(() => {
-  return [
-    {
-      label: localeMsg.value.menu_item_select_all,
-      icon: IconSelectAll,
-      action: () => {
-        for (let i = 0; i < fileList.value.length; i++) {
-          fileList.value[i].isSelected = true;
-        }
-        selectMode.value = true;
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_select_none,
-      action: () => {
-        for (let i = 0; i < fileList.value.length; i++) {
-          fileList.value[i].isSelected = false;
-        }
-        selectMode.value = false;
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_select_invert,
-      action: () => {
-        for (let i = 0; i < fileList.value.length; i++) {
-          fileList.value[i].isSelected = !fileList.value[i].isSelected;
-        }
-        selectMode.value = true;
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_favorite,
-      icon: IconUnFavorite,
-      shortcut: 'Ctrl+F',
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          fileList.value[selectedItemIndex.value].is_favorite = true;
-        }
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_unfavorite,
-      // icon: IconUnFavorite,
-      shortcut: 'Ctrl+U',
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          fileList.value[selectedItemIndex.value].is_favorite = false;
-        }
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_rotate,
-      icon: IconRotate,
-      shortcut: 'Ctrl+R',
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          fileList.value[selectedItemIndex.value].rotate = (fileList.value[selectedItemIndex.value].rotate + 90) % 360;
-        }
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    {
-      label: localeMsg.value.menu_item_open,
-      shortcut: 'Enter',
-      action: () => {
-        openImageViewer(selectedItemIndex.value, true);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_edit,
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          console.log('Edit file:', fileList.value[selectedItemIndex.value]);
-        }
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_copy,
-      icon: IconCopy,
-      shortcut: 'Ctrl+C',
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          console.log('Copy file:', fileList.value[selectedItemIndex.value]);
-        }
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_rename,
-      icon: IconRename,
-      shortcut: 'F2',
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          console.log('Rename file:', fileList.value[selectedItemIndex.value]);
-        }
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_refresh,
-      icon: IconRefresh,
-      action: () => {
-        refreshFileList();
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_copy_to,
-      icon: IconCopyTo,
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_move_to,
-      // icon: IconMoveTo,
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      shortcut: 'Del',
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          deleteFile(selectedItemIndex.value);
-        }
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_open_folder,
-      // icon: IconOpenFolder,
-      action: () => {
-        if(config.toolbarIndex === 2) {
-          openFileExplorer(config.albumFolderPath);
-        } else {
-          if(selectedItemIndex.value >= 0) {
-            const selectedFilePath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
-            openFileExplorer(selectedFilePath);
-          }
-        }        
-      }
-    }
-  ];
-});
-
-// Function to open the file explorer
-const openFileExplorer = async (path) => {
-  try {
-    await open(path); // Open the folder in the system file explorer
-    console.log('File explorer opened successfully.');
-  } catch (error) {
-    console.error('Failed to open file explorer:', error);
-  }
-};
 
 function refreshFileList() {
   filterFileList(originalFileList.value, searchText.value);

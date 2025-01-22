@@ -1,6 +1,7 @@
 import {  } from '@tauri-apps/api';
 import { format } from 'date-fns';
 import { platform } from '@tauri-apps/plugin-os';
+import { open } from '@tauri-apps/plugin-shell';
 
 export const THUMBNAIL_SIZE = 320;    // thumbnail size
 export const FILES_PAGE_SIZE = 1000;  // number of files per page
@@ -62,3 +63,13 @@ export function shortenFilename(filename: string): string {
   const shortName = name.substring(0, maxLength - ext.length - 3) + '...';
   return shortName + ext;
 }
+
+// Function to open the file explorer
+export async function openFileExplorer(path) {
+  try {
+    await open(path); // Open the folder in the system file explorer
+    console.log('File explorer opened successfully.');
+  } catch (error) {
+    console.error('Failed to open file explorer:', error);
+  }
+};

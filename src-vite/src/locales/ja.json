@@ -73,6 +73,8 @@
   "menu_item_move_to": "移動先...",
   "menu_item_delete": "削除",
   "menu_item_open_folder": "フォルダを開く...",
+  "menu_item_add_folder": "フォルダを追加",
+  "menu_item_properties": "プロパティ",
 
   "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],
   "file_info_title": "プロパティ",

@@ -4,7 +4,7 @@
     <li v-for="child in children" :key="child.id" class="pl-4">
       <div 
         :class="[
-          'm-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer', 
+          'pr-1 m-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer', 
           child.id && config.albumFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @click="clickFolder(albumId, child)"
@@ -18,7 +18,12 @@
           ]"
           @click="clickExpandFolder($event, child)"
         />
-        {{ child.name }}
+        <span class="flex-grow">{{ child.name }}</span>
+        <DropDownMenu v-if="config.albumFolderId === child.id"
+          :iconMenu="IconMore"
+          :menuItems="moreMenuItems"
+          :alignRight="true"
+        />
       </div>
       <AlbumsFolders v-if="child.is_expanded" 
         :albumId="albumId"
@@ -32,13 +37,23 @@
 
 <script setup lang="ts">
 
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 
 import AlbumsFolders from '@/components/AlbumsFolders.vue';
+import DropDownMenu from '@/components/DropDownMenu.vue';
 
 // folder icon
 import IconRight from '@/assets/arrow-right.svg';
+import IconMore from '@/assets/more.svg';
+import IconRefresh from '@/assets/refresh.svg';
+import IconCopyTo from '@/assets/copy-to.svg';
+import IconMoveTo from '@/assets/move-to.svg';
+import IconRename from '@/assets/rename.svg';
+import IconDelete from '@/assets/trash.svg';
+import IconOpenFolder from '@/assets/folder-open.svg';
 
 const props = defineProps({
   albumId: {    // album id
@@ -50,6 +65,9 @@ const props = defineProps({
     required: false,
   },
 });
+/// i18n
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value]);
 
 // config store
 const config = useConfigStore();
@@ -97,6 +115,47 @@ const clickExpandFolder = async (event: Event, folder) => {
     }
   }
 };
+
+// more menuitems
+const moreMenuItems = computed(() => {
+  return [
+
+    {
+      label: localeMsg.value.menu_item_refresh,
+      icon: IconRefresh,
+      action: () => {
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_move_to,
+      icon: IconMoveTo,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_copy_to,
+      // icon: IconCopyTo,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_rename,
+      icon: IconRename,
+      action: () => {
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      action: () => {
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_open_folder,
+      // icon: IconOpenFolder,
+      action: () => {
+      }
+    }
+  ];
+});
 
 </script>
 

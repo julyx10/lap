@@ -11,13 +11,16 @@
     <!-- Dropdown Menu -->
     <transition name="fade">
       <div v-if="isDropDown"
-        class="absolute right-0 my-1 rounded-md shadow-lg t-color-bg-light border t-color-border z-50"
+        :class="[
+          'absolute my-1 rounded-md shadow-lg t-color-bg-light border t-color-border z-50', 
+          alignRight ? 'right-0' : 'left-0'
+        ]"
       >
         <!-- menu items -->
         <button v-for="(item, index) in menuItems"
           :class="[
             'pl-2 pr-4 w-full flex flex-row justify-between text-sm whitespace-nowrap', 
-            item.label === '-' ? 'border-t t-color-border' : 'py-1 t-color-bg-hover t-color-text-hover'
+            item.label === '-' ? 'border-t t-color-border' : 'py-1 t-color-text t-color-bg-hover t-color-text-hover'
           ]"
           :key="index"
           @click="handleClick(item)"
@@ -51,7 +54,11 @@ const props = defineProps({
   menuItems: {
     type: Array,
     required: true,
-  }
+  },
+  alignRight: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits

@@ -3,16 +3,15 @@
     <div id="gridView" 
       class="px-2 grid gap-2"
       :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.thumbnailSize}px, 1fr))` }"
-      @contextmenu.prevent="showContextMenu"
     >
-      <ContextMenu ref="contextMenu" :menu-items="menuItems" />
       <div 
         v-for="(file, index) in fileList" 
         :key="index"
         :id="'item-' + index"
         :class="[
           'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
-          index === selectedIndex ? 'border-sky-500' : file?.isSelected ? 'border-gray-500' : 'border-gray-800',
+          !selectMode && index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
+          selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
         ]"
         @click="clickItem(index)"
         @dblclick="openItem(true)"
@@ -22,7 +21,6 @@
           <!-- action buttons -->
           <div 
             :class="['absolute z-10 left-0 w-full flex flex-row items-center justify-between',
-            index === selectedIndex || file?.isSelected ? 'opacity-100' : 'transform opacity-0 transition-opacity duration-300 group-hover:opacity-100'
           ]"
           >
             <div class="flex">
@@ -34,13 +32,20 @@
                   transition: 'transform 0.3s ease-in-out' 
                 }"
               />
-              <!-- <IconDelete class="t-icon-size-sm"></IconDelete> -->
             </div>
+
             <component v-if="selectMode"
               :is="file?.isSelected ? IconChecked : IconUnChecked" 
-              class="t-icon-size t-icon-hover" 
+              :class="['t-icon-size t-icon-hover', file?.isSelected ? 'text-sky-500' : 'text-gray-500']" 
               @click.stop="selectItem(index)"
             />
+            <DropDownMenu v-else-if="index === selectedIndex && !selectMode"
+              :iconMenu="IconMore"
+              :menuItems="moreMenuItems"
+              :alignRight="false"
+              @click="clickItem(index)"
+            />
+
           </div>
 
           <img v-if="file.thumbnail"
@@ -62,7 +67,7 @@
             class="rounded flex items-center justify-center"
             :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
           >
-            <IconPhoto class="size-1/2"/>
+            <IconImagePlaceHolder class="size-1/2"/>
           </div>
           <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
           <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
@@ -80,15 +85,24 @@ import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { shortenFilename, formatFileSize, formatTimestamp } from '@/common/utils';
-import ContextMenu from '@/components/ContextMenu.vue';
+import { shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openFileExplorer } from '@/common/utils';
+import DropDownMenu from '@/components/DropDownMenu.vue';
 
-import IconPhoto from '@/assets/photo.svg';
-import IconFavorite from '@/assets/heart-solid.svg';
-import IconRotate from '@/assets/rotate-right.svg';
-import IconDelete from '@/assets/trash.svg';
-import IconUnChecked from '@/assets/checkbox-unchecked.svg';
+import IconImagePlaceHolder from '@/assets/photo.svg';
 import IconChecked from '@/assets/checkbox-checked.svg';
+import IconUnChecked from '@/assets/checkbox-unchecked.svg';
+
+import IconMore from '@/assets/more.svg';
+import IconFavorite from '@/assets/heart-solid.svg';
+import IconUnFavorite from '@/assets/heart.svg';
+import IconRotate from '@/assets/rotate-right.svg';
+import IconCopy from '@/assets/copy.svg';
+import IconRename from '@/assets/rename.svg';
+import IconCopyTo from '@/assets/copy-to.svg';
+import IconMoveTo from '@/assets/move-to.svg';
+import IconDelete from '@/assets/trash.svg';
+import IconOpenFolder from '@/assets/folder-open.svg';
+import { ro } from 'date-fns/locale';
 
 const props = defineProps({
   modelValue: {     // selecte item index(v-model value) 
@@ -117,29 +131,6 @@ const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
 
-// context menu
-const contextMenu = ref(null);
-
-// Define menu items with labels and actions
-const menuItems = [
-  {
-    label: localeMsg.value.menu_item_favorite,
-    action: () => alert('You clicked Option 1'),
-  },
-  {
-    label: localeMsg.value.menu_item_rotate,
-    action: () => alert('You clicked Option 2'),
-  },
-  {
-    label: localeMsg.value.menu_item_delete,
-    action: () => alert('You clicked Option 3'),
-  },
-];
-
-const showContextMenu = (event) => {
-  contextMenu.value.showMenu(event);
-};
-
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -167,18 +158,118 @@ watch(() => props.modelValue, (newValue) => {
   selectedIndex.value = newValue; 
 });
 
-// watch(() => props.fileList, () => {
-//   // selectedIndex.value = - 1;
-
-//   const element = scrollable.value; // Get the scrollable element
-//   element.scrollTop = 0;
-// });
-
 watch(() => selectedIndex.value, (newValue) => {
   openItem(false);
   scrollToItem(newValue);
 
   emitUpdate('update:modelValue', newValue);
+});
+
+// Define menu items with labels and actions
+// more menuitems
+const moreMenuItems = computed(() => {
+  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
+    return [];
+  }
+
+  const file = props.fileList[selectedIndex.value];
+  return [
+    {
+      label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
+      icon: file.is_favorite ? IconUnFavorite : IconFavorite,
+      shortcut: 'F',
+      action: () => {
+        toggleFavorite();
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_rotate,
+      icon: IconRotate,
+      shortcut: 'R',
+      action: () => {
+        rotateImage();
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
+      label: localeMsg.value.menu_item_open,
+      shortcut: 'Enter',
+      action: () => {
+        openItem(true);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_edit,
+      action: () => {
+        console.log('Edit:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_copy,
+      icon: IconCopy,
+      shortcut: 'Ctrl+C',
+      action: () => {
+        console.log('Copy:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_rename,
+      icon: IconRename,
+      shortcut: 'F2',
+      action: () => {
+        console.log('Rename:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      shortcut: 'Del',
+      action: () => {
+        deleteItem(selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_properties,
+      action: () => {
+        console.log('Show properties:', selectedIndex.value);
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_move_to,
+      icon: IconMoveTo,
+      action: () => {
+        console.log('Move to:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_copy_to,
+      // icon: IconCopyTo,
+      action: () => {
+        console.log('Copy to:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_add_folder,
+      // icon: IconCopyTo,
+      action: () => {
+        console.log('Add folder:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_open_folder,
+      // icon: IconOpenFolder,
+      action: () => {
+        openFileExplorer(getFolderPath(file.file_path));
+      }
+    },
+  ];
 });
 
 function clickItem(index: number) {
@@ -197,9 +288,10 @@ function selectItem(index: number) {
 }
 
 function handleKeyDown(event) {
-  if (keyActions[event.key]) {
+  const key = event.key.toLowerCase(); // Convert key to lowercase
+  if (keyActions[key]) {
     event.preventDefault(); // Prevent the default action
-    keyActions[event.key](); 
+    keyActions[key](); 
   }
 }
 
@@ -234,6 +326,24 @@ const keyActions = {
   Home: ()       => selectedIndex.value = 0,
   End: ()        => selectedIndex.value = props.fileList.length - 1,
   Enter: ()      => openItem(true),
+  f: ()          => toggleFavorite(),
+  r: ()          => rotateImage(),
+  F2: ()         => console.log('Rename:', selectedIndex.value),
+  Delete: ()     => deleteItem(),
+};
+
+function toggleFavorite() {
+  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
+    return;
+  }
+  props.fileList[selectedIndex.value].is_favorite = !props.fileList[selectedIndex.value].is_favorite;
+};
+
+function rotateImage() {
+  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
+    return;
+  }
+  props.fileList[selectedIndex.value].rotate += 90;
 };
 
 // open the selected item in the image viewer
@@ -243,6 +353,15 @@ function openItem(openNewViewer = false) {
   } else {
     emit('message-from-grid-view', { message: 'update-image-viewer' });
   }
+};
+
+// delete the selected item
+function deleteItem() {
+  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
+    return;
+  }
+  props.fileList.splice(selectedIndex.value, 1);
+  selectedIndex.value = Math.min(selectedIndex.value, props.fileList.length - 1);
 };
 
 // make the selected item always visible in a scrollable container

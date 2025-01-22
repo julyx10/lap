@@ -6,16 +6,17 @@
     <div class="px-2 py-3 h-12 flex items-center justify-between">
       <span>{{ titlebar }}</span>
 
-      <div class="flex">
+      <!-- <div class="flex"> -->
         <IconAdd class="m-1 t-icon-size-sm t-icon-hover" @click="clickAdd" />
-        <IconDelete  
+        <!-- <IconDelete  
           :class="[
             'm-1 t-icon-size-sm', 
             config.albumId ? 't-icon-hover' : 't-icon-disabled'
           ]" 
-          @click="config.albumId ? showDeleteAlbumMsgbox = true : ''" />
+          @click="config.albumId ? showDeleteAlbumMsgbox = true : ''" 
+        /> -->
         <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
-      </div>
+      <!-- </div> -->
     </div>
 
     <!-- albums -->
@@ -85,8 +86,9 @@ import AlbumsFolders from '@/components/AlbumsFolders.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
 // svg icons
-import IconAdd from '@/assets/folder-plus.svg';
-import IconDelete from '@/assets/folder-minus.svg';
+import IconAdd from '@/assets/plus.svg';
+// import IconAdd from '@/assets/folder-plus.svg';
+// import IconDelete from '@/assets/folder-minus.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 

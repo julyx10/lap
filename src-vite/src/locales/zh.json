@@ -73,6 +73,8 @@
   "menu_item_move_to": "移动到...",
   "menu_item_delete": "删除",
   "menu_item_open_folder": "打开文件夹...",
+  "menu_item_add_folder": "添加文件夹",
+  "menu_item_properties": "属性",
 
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "属性",
