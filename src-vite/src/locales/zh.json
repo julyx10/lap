@@ -36,10 +36,18 @@
 
   "add_album_title": "添加相册",
 
-  "delete_album_msgbox_title": "删除相册吗？",
-  "delete_album_msgbox_content": "相册 '{album}' 将被删除。此操作不会删除实际文件。",
-  "delete_album_msgbox_ok": "删除",
-  "delete_album_msgbox_cancel": "取消",
+  "msgbox_ok": "确定",
+  "msgbox_cancel": "取消",
+  "msgbox_remove_album_title": "从相册中移除?",
+  "msgbox_remove_album_content": "'{album}' 将从相册中移除。此操作不会删除实际文件。",
+  "msgbox_remove_album_ok": "移除",
+  "msgbox_rename_album_title": "重命名相册",
+  "msgbox_rename_album_content": "输入相册的新名称:",
+  "msgbox_rename_album_ok": "重命名",
+  "msgbox_rename_folder_title": "重命名文件夹",
+  "msgbox_rename_folder_content": "输入文件夹的新名称:",
+  "msgbox_rename_folder_ok": "重命名",
+  "msgbox_rename_input_error": "文件名不能包含 \\ / : * ? \" < > | 等字符。",
 
   "search_placeholder": "搜索...",
 
@@ -65,6 +73,7 @@
   "menu_item_unfavorite": "取消收藏",
   "menu_item_rotate": "旋转",
   "menu_item_open": "打开",
+  "menu_item_view": "查看",
   "menu_item_edit": "编辑",
   "menu_item_copy": "复制",
   "menu_item_rename": "重命名...",
@@ -72,9 +81,11 @@
   "menu_item_copy_to": "复制到...",
   "menu_item_move_to": "移动到...",
   "menu_item_delete": "删除",
+  "menu_item_new_folder": "新建文件夹",
   "menu_item_open_folder": "打开文件夹...",
-  "menu_item_add_folder": "添加文件夹",
   "menu_item_properties": "属性",
+  "menu_item_show_info": "显示信息",
+  "menu_item_remove_from_album": "从相册中移除",
 
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "属性",

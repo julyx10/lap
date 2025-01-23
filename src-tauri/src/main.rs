@@ -70,7 +70,7 @@ fn main() {
             t_cmds::get_all_albums,
             t_cmds::get_album,
             t_cmds::add_album,
-            t_cmds::delete_album,
+            t_cmds::remove_album,
             t_cmds::set_album_display_order,
             t_cmds::get_folder_parents,
             t_cmds::select_folder,

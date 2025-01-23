@@ -42,7 +42,7 @@
             <DropDownMenu v-else-if="index === selectedIndex && !selectMode"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
-              :alignRight="false"
+              :alignRight="true"
               @click="clickItem(index)"
             />
 
@@ -93,6 +93,8 @@ import IconChecked from '@/assets/checkbox-checked.svg';
 import IconUnChecked from '@/assets/checkbox-unchecked.svg';
 
 import IconMore from '@/assets/more.svg';
+import IconOpen from '@/assets/open.svg';
+import IconEdit from '@/assets/edit.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconRotate from '@/assets/rotate-right.svg';
@@ -102,7 +104,6 @@ import IconCopyTo from '@/assets/copy-to.svg';
 import IconMoveTo from '@/assets/move-to.svg';
 import IconDelete from '@/assets/trash.svg';
 import IconOpenFolder from '@/assets/folder-open.svg';
-import { ro } from 'date-fns/locale';
 
 const props = defineProps({
   modelValue: {     // selecte item index(v-model value) 
@@ -175,26 +176,6 @@ const moreMenuItems = computed(() => {
   const file = props.fileList[selectedIndex.value];
   return [
     {
-      label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
-      icon: file.is_favorite ? IconUnFavorite : IconFavorite,
-      shortcut: 'F',
-      action: () => {
-        toggleFavorite();
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_rotate,
-      icon: IconRotate,
-      shortcut: 'R',
-      action: () => {
-        rotateImage();
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    {
       label: localeMsg.value.menu_item_open,
       shortcut: 'Enter',
       action: () => {
@@ -203,6 +184,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu_item_edit,
+      icon: IconEdit,
       action: () => {
         console.log('Edit:', selectedIndex.value);
       }
@@ -242,6 +224,26 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
+      label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
+      icon: file.is_favorite ? IconUnFavorite : IconFavorite,
+      shortcut: 'F',
+      action: () => {
+        toggleFavorite();
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_rotate,
+      icon: IconRotate,
+      shortcut: 'R',
+      action: () => {
+        rotateImage();
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
       action: () => {
@@ -256,15 +258,8 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_add_folder,
-      // icon: IconCopyTo,
-      action: () => {
-        console.log('Add folder:', selectedIndex.value);
-      }
-    },
-    {
       label: localeMsg.value.menu_item_open_folder,
-      // icon: IconOpenFolder,
+      icon: IconOpenFolder,
       action: () => {
         openFileExplorer(getFolderPath(file.file_path));
       }

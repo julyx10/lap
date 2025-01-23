@@ -4,7 +4,7 @@
     <!-- Dropdown Trigger -->
     <component 
       :is="iconMenu" 
-      :class="['t-icon-size t-icon-hover', isDropDown ? 't-icon-selected' : '']" 
+      :class="['t-icon-size-sm t-icon-hover', isDropDown ? 't-icon-selected' : '']" 
       @click="toggleDropdown"
     />
 
@@ -12,7 +12,7 @@
     <transition name="fade">
       <div v-if="isDropDown"
         :class="[
-          'absolute my-1 rounded-md shadow-lg t-color-bg-light border t-color-border z-50', 
+          'absolute my-2 rounded-md shadow-lg t-color-bg-light border t-color-border z-50', 
           alignRight ? 'right-0' : 'left-0'
         ]"
       >

@@ -40,12 +40,12 @@ pub fn add_album(_window: tauri::Window, title: &str) -> Result<Album, String> {
     }
 }
 
-/// delete an album
+/// remove an album
 #[tauri::command]
-pub fn delete_album(id: i64) -> Result<usize, String> {
+pub fn remove_album(id: i64) -> Result<usize, String> {
     let result = Album::delete_from_db(id).map_err(|e| {
         format!(
-            "Error while deleting album with id {}: {}",
+            "Error while removing album with id {}: {}",
             id,
             e.to_string()
         )

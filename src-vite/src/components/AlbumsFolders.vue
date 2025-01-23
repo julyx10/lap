@@ -119,10 +119,21 @@ const clickExpandFolder = async (event: Event, folder) => {
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-
     {
       label: localeMsg.value.menu_item_refresh,
       icon: IconRefresh,
+      action: () => {
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_rename,
+      icon: IconRename,
+      action: () => {
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
       action: () => {
       }
     },
@@ -137,14 +148,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu_item_rename,
-      icon: IconRename,
-      action: () => {
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
+      label: localeMsg.value.menu_item_new_folder,
       action: () => {
       }
     },

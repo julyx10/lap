@@ -64,6 +64,9 @@
         ]" 
         @click="toggleZoomFit" 
       />
+      <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
+      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
+      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
       <IconRotateRight 
         :class="[
           't-icon-size',
@@ -72,9 +75,6 @@
         :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
         @click="clickRotate"
       />
-      <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
-      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
-      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
       <IconFileInfo :class="['t-icon-size t-icon-hover', config.showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
       <IconSave 
         :class="[

@@ -13,7 +13,7 @@
             'm-1 t-icon-size-sm', 
             config.albumId ? 't-icon-hover' : 't-icon-disabled'
           ]" 
-          @click="config.albumId ? showDeleteAlbumMsgbox = true : ''" 
+          @click="config.albumId ? showRemoveAlbumMsgbox = true : ''" 
         /> -->
         <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
       <!-- </div> -->
@@ -27,7 +27,7 @@
         <div v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'm-1 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer', 
+              'pr-1 m-1 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer', 
               { 
                 't-color-text-selected': config.albumId === album.id, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300': config.albumId === album.id && config.albumFolderId === album.folderId
@@ -40,7 +40,12 @@
               class="mx-1 h-5 flex-shrink-0" 
               @click.stop="clickExpandAlbum(album)"
             />
-            {{ album.name }}
+            <span class="flex-grow">{{ album.name }}</span>
+            <DropDownMenu v-if="config.albumId === album.id && config.albumFolderId === album.folderId"
+              :iconMenu="IconMore"
+              :menuItems="moreMenuItems"
+              :alignRight="true"
+            />
           </div>
           <AlbumsFolders v-if="album.is_expanded" 
             :albumId="album.id"
@@ -57,16 +62,27 @@
     </div>
 
     <MessageBox
-      v-if="showDeleteAlbumMsgbox"
-      :visible="showDeleteAlbumMsgbox"
-      :title="$t('delete_album_msgbox_title')"
-      :message="`${$t('delete_album_msgbox_content', { album: getAlbumById(config.albumId).name })}`"
-      :confirmText="$t('delete_album_msgbox_ok')"
-      :cancelText="$t('delete_album_msgbox_cancel')"
-      @confirm="clickDeleteConfirm"
-      @cancel="showDeleteAlbumMsgbox = false"
-      @close="showDeleteAlbumMsgbox = false"
+      v-if="showRemoveAlbumMsgbox"
+      :title="$t('msgbox_remove_album_title')"
+      :message="`${$t('msgbox_remove_album_content', { album: getAlbumById(config.albumId).name })}`"
+      :OkText="$t('msgbox_remove_album_ok')"
+      :cancelText="$t('msgbox_cancel')"
+      @ok="clickRemoveConfirm"
+      @cancel="showRemoveAlbumMsgbox = false"
     />
+
+    <MessageBox
+      v-if="showRenameAlbumMsgbox"
+      :title="$t('msgbox_rename_album_title')"
+      :message="`${$t('msgbox_rename_album_content', { album: getAlbumById(config.albumId).name })}`"
+      :showInput="true"
+      :inputText="getAlbumById(config.albumId).name"
+      :OkText="$t('msgbox_rename_album_ok')"
+      :cancelText="$t('msgbox_cancel')"
+      @ok="clickRenameConfirm"
+      @cancel="showRenameAlbumMsgbox = false"
+    />
+
   </div>
 
 </template>
@@ -83,14 +99,20 @@ import { useConfigStore } from '@/stores/configStore';
 import { separator } from '@/common/utils';
 
 import AlbumsFolders from '@/components/AlbumsFolders.vue';
+import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
 // svg icons
-import IconAdd from '@/assets/plus.svg';
-// import IconAdd from '@/assets/folder-plus.svg';
-// import IconDelete from '@/assets/folder-minus.svg';
+import IconAdd from '@/assets/folder-plus.svg';
+import IconRemove from '@/assets/folder-minus.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
+import IconMore from '@/assets/more.svg';
+import IconRefresh from '@/assets/refresh.svg';
+import IconCopyTo from '@/assets/copy-to.svg';
+import IconMoveTo from '@/assets/move-to.svg';
+import IconRename from '@/assets/rename.svg';
+import IconDelete from '@/assets/trash.svg';
 
 const props = defineProps({
   titlebar: {
@@ -107,7 +129,8 @@ const localeMsg = computed(() => messages.value[locale.value]);
 const config = useConfigStore();
 
 const appWindow = getCurrentWebviewWindow();
-const showDeleteAlbumMsgbox = ref(false);
+const showRemoveAlbumMsgbox = ref(false);
+const showRenameAlbumMsgbox = ref(false);
 
 const albums = ref([]);
 const getAlbumById = (id) => albums.value.find(album => album.id === id);
@@ -129,6 +152,49 @@ onMounted( async () => {
       }
     }
   }
+});
+
+// more menuitems
+const moreMenuItems = computed(() => {
+  return [
+
+    {
+      label: localeMsg.value.menu_item_refresh,
+      icon: IconRefresh,
+      action: () => {
+        dlbClickAlbum(getAlbumById(config.albumId));
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_rename,
+      icon: IconRename,
+      action: () => {
+        showRenameAlbumMsgbox.value = true;
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_new_folder,
+      action: () => {
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_open_folder,
+      // icon: IconOpenFolder,
+      action: () => {
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_remove_from_album,
+      icon: IconRemove,
+      action: () => {
+        showRemoveAlbumMsgbox.value = true;
+      }
+    }
+  ];
 });
 
 /// get children folders
@@ -168,25 +234,38 @@ const clickAdd = async () => {
   }
 };
 
-/// Delete an album
-const clickDeleteConfirm = async () => {
+/// Remove an album from the list
+const clickRemoveConfirm = async () => {
   try {
     if (config.albumId) {
-      const result = await invoke('delete_album', { id: getAlbumById(config.albumId).id });
+      const result = await invoke('remove_album', { id: getAlbumById(config.albumId).id });
 
-      // delete the album from the list
+      // remove the album from the list
       albums.value = albums.value.filter(album => album.id !== config.albumId);
       
       config.albumId = null;
       config.albumFolderId = null;
       config.albumFolderName = null;
       config.albumFolderPath = null;
-      console.log('Delete album...', result);
+      console.log('Remove album...', result);
+
+      showRemoveAlbumMsgbox.value = false;
     } else {
       console.log('No album selected', config.albumId);
     }
   } catch (error) {
-    console.error('Failed to delete album:', error);
+    console.error('Failed to remove album:', error);
+  }
+};
+
+/// Rename an album
+const clickRenameConfirm = async (value) => {
+  try {
+    console.log('clickRenameConfirm', value);
+      
+    showRenameAlbumMsgbox.value = false;
+  } catch (error) {
+    console.error('Failed to rename album:', error);
   }
 };
 

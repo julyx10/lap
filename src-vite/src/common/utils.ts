@@ -73,3 +73,9 @@ export async function openFileExplorer(path) {
     console.error('Failed to open file explorer:', error);
   }
 };
+
+// validate the file or folder name
+export const isValidFileName = (name) => {
+  const invalidChars = /[\\/:*?"<>|]/;
+  return !invalidChars.test(name);
+};
