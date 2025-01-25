@@ -41,6 +41,7 @@ import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
+import { openFileExplorer } from '@/common/utils';
 
 import AlbumsFolders from '@/components/AlbumsFolders.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -156,6 +157,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_open_folder,
       // icon: IconOpenFolder,
       action: () => {
+        openFileExplorer(config.albumFolderPath);
       }
     }
   ];

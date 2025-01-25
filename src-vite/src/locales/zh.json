@@ -38,6 +38,7 @@
 
   "msgbox_ok": "确定",
   "msgbox_cancel": "取消",
+  "msgbox_input_filename_error": "文件名不能包含 \\ / : * ? \" < > | 等字符。",
   "msgbox_remove_album_title": "从相册中移除?",
   "msgbox_remove_album_content": "'{album}' 将从相册中移除。此操作不会删除实际文件。",
   "msgbox_remove_album_ok": "移除",
@@ -47,7 +48,9 @@
   "msgbox_rename_folder_title": "重命名文件夹",
   "msgbox_rename_folder_content": "输入文件夹的新名称:",
   "msgbox_rename_folder_ok": "重命名",
-  "msgbox_rename_input_error": "文件名不能包含 \\ / : * ? \" < > | 等字符。",
+  "msgbox_new_folder_title": "新建文件夹",
+  "msgbox_new_folder_content": "输入新文件夹的名称:",
+  "msgbox_new_folder_ok": "创建",
 
   "search_placeholder": "搜索...",
 

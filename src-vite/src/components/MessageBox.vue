@@ -8,11 +8,13 @@
       </div>
       <div class="my-4">
         {{ message }}
-        <input v-if="inputText.length > 0"
+        <input v-if="showInput"
+          ref="inputRef"
           v-model="inputValue"
           type="text"
           class="px-2 py-1 my-2 w-full border rounded-md t-input-color-bg t-color-border t-input-focus"
           @input="validateInput"
+          @keydown.enter="clickOk"
         />
         <p v-if="errorMessage.length > 0" class="text-red-600 text-xs">{{ errorMessage }}</p>
       </div>
@@ -26,7 +28,7 @@
         </button>
         <button 
           :class="['px-4 py-1 rounded-full t-color-bg-light', 
-            showInput && inputValue.trim().length > 0 ? 't-color-bg-hover t-icon-hover' : 't-icon-disabled'
+            !showInput || inputValue.trim().length > 0 ? 't-color-bg-hover t-icon-hover' : 't-icon-disabled'
           ]" 
           @click="clickOk"
         >
@@ -79,12 +81,16 @@ const localeMsg = computed(() => messages.value[locale.value]);
 
 const emit = defineEmits(['ok', 'cancel']);
 
-// input value
+// input 
+const inputRef = ref(null);
 const inputValue = ref(props.inputText);
 const errorMessage = ref('');
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  if(inputRef.value) {
+    inputRef.value.focus();
+  }
 });
 
 onUnmounted(() => {
@@ -93,7 +99,7 @@ onUnmounted(() => {
 
 const validateInput = () => {
   if (!isValidFileName(inputValue.value)) {
-    errorMessage.value = localeMsg.value.msgbox_rename_input_error;
+    errorMessage.value = localeMsg.value.msgbox_input_filename_error;
   } else {
     errorMessage.value = '';
   }

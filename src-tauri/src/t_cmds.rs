@@ -40,18 +40,28 @@ pub fn add_album(_window: tauri::Window, title: &str) -> Result<Album, String> {
     }
 }
 
+/// rename an album
+#[tauri::command]
+pub fn rename_album(id: i64, name: &str) -> Result<usize, String> {
+    Album::update_column(id, "name", &name).map_err(|e| {
+        format!(
+            "Error while renaming album with id {}: {}",
+            id,
+            e.to_string()
+        )
+    })
+}
+
 /// remove an album
 #[tauri::command]
 pub fn remove_album(id: i64) -> Result<usize, String> {
-    let result = Album::delete_from_db(id).map_err(|e| {
+    Album::delete_from_db(id).map_err(|e| {
         format!(
             "Error while removing album with id {}: {}",
             id,
             e.to_string()
         )
-    })?;
-
-    Ok(result)
+    })
 }
 
 /// set album display order

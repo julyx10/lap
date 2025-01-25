@@ -63,7 +63,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useConfigStore } from '@/stores/configStore';
 
 // toolbar icons
-import IconReload from '@/assets/reload.svg';
+import IconReload from '@/assets/refresh.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
 import IconRight from '@/assets/arrow-right.svg';

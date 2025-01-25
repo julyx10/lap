@@ -5,7 +5,7 @@
     <!-- title bar -->
     <div class="px-4 pt-1 flex flex-row items-center justify-between" style="user-select: none;">
 
-      <div class="flex-1 flex flex-col">
+      <div class="mr-2 flex-1 flex flex-col">
         <span>{{ contentTitle }}</span>
         <span class="text-sm">
           {{ $t('files_summary', { count: fileList.length }) }}

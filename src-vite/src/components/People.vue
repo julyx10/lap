@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 
-import IconReload from '@/assets/reload.svg';
+import IconReload from '@/assets/refresh.svg';
 
 const props = defineProps({
   titlebar: {

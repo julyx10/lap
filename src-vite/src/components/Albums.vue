@@ -61,16 +61,7 @@
       {{ $t('no_albums') }}
     </div>
 
-    <MessageBox
-      v-if="showRemoveAlbumMsgbox"
-      :title="$t('msgbox_remove_album_title')"
-      :message="`${$t('msgbox_remove_album_content', { album: getAlbumById(config.albumId).name })}`"
-      :OkText="$t('msgbox_remove_album_ok')"
-      :cancelText="$t('msgbox_cancel')"
-      @ok="clickRemoveConfirm"
-      @cancel="showRemoveAlbumMsgbox = false"
-    />
-
+    <!-- rename album -->
     <MessageBox
       v-if="showRenameAlbumMsgbox"
       :title="$t('msgbox_rename_album_title')"
@@ -83,10 +74,33 @@
       @cancel="showRenameAlbumMsgbox = false"
     />
 
+    <!-- new folder -->
+    <MessageBox
+      v-if="showNewFolderMsgbox"
+      :title="$t('msgbox_new_folder_title')"
+      :message="`${$t('msgbox_new_folder_content', { album: getAlbumById(config.albumId).name })}`"
+      :showInput="true"
+      :inputText="''"
+      :OkText="$t('msgbox_new_folder_ok')"
+      :cancelText="$t('msgbox_cancel')"
+      @ok="clickNewFolderConfirm"
+      @cancel="showNewFolderMsgbox = false"
+    />
+
+    <!-- remove from albums -->
+    <MessageBox
+      v-if="showRemoveAlbumMsgbox"
+      :title="$t('msgbox_remove_album_title')"
+      :message="`${$t('msgbox_remove_album_content', { album: getAlbumById(config.albumId).name })}`"
+      :OkText="$t('msgbox_remove_album_ok')"
+      :cancelText="$t('msgbox_cancel')"
+      @ok="clickRemoveConfirm"
+      @cancel="showRemoveAlbumMsgbox = false"
+    />
+
   </div>
 
 </template>
-
 
 <script setup lang="ts">
 
@@ -96,17 +110,18 @@ import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
-import { separator } from '@/common/utils';
+import { separator, openFileExplorer } from '@/common/utils';
 
 import AlbumsFolders from '@/components/AlbumsFolders.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
 // svg icons
-import IconAdd from '@/assets/folder-plus.svg';
-import IconRemove from '@/assets/folder-minus.svg';
+import IconAdd from '@/assets/plus.svg';
+import IconRemove from '@/assets/minus.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
+import IconNewFolder from '@/assets/folder-plus.svg';
 import IconMore from '@/assets/more.svg';
 import IconRefresh from '@/assets/refresh.svg';
 import IconCopyTo from '@/assets/copy-to.svg';
@@ -129,8 +144,11 @@ const localeMsg = computed(() => messages.value[locale.value]);
 const config = useConfigStore();
 
 const appWindow = getCurrentWebviewWindow();
-const showRemoveAlbumMsgbox = ref(false);
+
+// message boxes
 const showRenameAlbumMsgbox = ref(false);
+const showNewFolderMsgbox = ref(false);
+const showRemoveAlbumMsgbox = ref(false);
 
 const albums = ref([]);
 const getAlbumById = (id) => albums.value.find(album => album.id === id);
@@ -174,13 +192,16 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu_item_new_folder,
+      icon: IconNewFolder,
       action: () => {
+        showNewFolderMsgbox.value = true;
       }
     },
     {
       label: localeMsg.value.menu_item_open_folder,
       // icon: IconOpenFolder,
       action: () => {
+        openFileExplorer(config.albumFolderPath);
       }
     },
     {
@@ -234,6 +255,30 @@ const clickAdd = async () => {
   }
 };
 
+/// Rename an album
+const clickRenameConfirm = async (value) => {
+  try {
+    const result = await invoke('rename_album', { id: config.albumId, name: value });
+    if(result) {
+      console.log('Rename album...', result);
+      let album = getAlbumById(config.albumId);
+      album.name = value;
+      showRenameAlbumMsgbox.value = false;
+    }
+  } catch (error) {
+    console.error('Failed to rename album:', error);
+  }
+};
+
+/// Create new folder
+const clickNewFolderConfirm = async (value) => {
+  try {
+    showNewFolderMsgbox.value = false;
+  } catch (error) {
+    console.error('Failed to create new folder:', error);
+  }
+};
+
 /// Remove an album from the list
 const clickRemoveConfirm = async () => {
   try {
@@ -255,17 +300,6 @@ const clickRemoveConfirm = async () => {
     }
   } catch (error) {
     console.error('Failed to remove album:', error);
-  }
-};
-
-/// Rename an album
-const clickRenameConfirm = async (value) => {
-  try {
-    console.log('clickRenameConfirm', value);
-      
-    showRenameAlbumMsgbox.value = false;
-  } catch (error) {
-    console.error('Failed to rename album:', error);
   }
 };
 

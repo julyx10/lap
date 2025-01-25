@@ -38,6 +38,7 @@
 
   "msgbox_ok": "OK",
   "msgbox_cancel": "Cancel",
+  "msgbox_input_filename_error": "File names cannot contain the following characters: \\ / : * ? \" < > |.",
   "msgbox_remove_album_title": "Remove from albums?",
   "msgbox_remove_album_content": "'{album}' will be removed from the albums. This action will not delete the actual files.",
   "msgbox_remove_album_ok": "Remove",
@@ -47,7 +48,10 @@
   "msgbox_rename_folder_title": "Rename folder",
   "msgbox_rename_folder_content": "Enter the new name for the folder:",
   "msgbox_rename_folder_ok": "Rename",
-  "msgbox_rename_input_error": "文件名不能包含 \\ / : * ? \" < > | 等字符。",
+  "msgbox_new_folder_title": "New folder",
+  "msgbox_new_folder_content": "Enter the name for the new folder:",
+  "msgbox_new_folder_ok": "Create",
+
   
   "search_placeholder": "Search...",
 

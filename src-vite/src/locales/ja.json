@@ -38,6 +38,7 @@
 
   "msgbox_ok": "OK",
   "msgbox_cancel": "キャンセル",
+  "msgbox_input_filename_error": "ファイル名には、次の文字を含めることはできません: \\ / : * ? \" < > |。",
   "msgbox_remove_album_title": "アルバムから削除しますか?",
   "msgbox_remove_album_content": "'{album}' はアルバムから削除されます。この操作は実際のファイルを削除しません。",
   "msgbox_remove_album_ok": "削除",
@@ -47,7 +48,9 @@
   "msgbox_rename_folder_title": "フォルダの名前を変更",
   "msgbox_rename_folder_content": "フォルダの新しい名前を入力してください:",
   "msgbox_rename_folder_ok": "変更",
-  "msgbox_rename_input_error": "文件名不能包含 \\ / : * ? \" < > | 等字符。",
+  "msgbox_new_folder_title": "新しいフォルダ",
+  "msgbox_new_folder_content": "新しいフォルダの名前を入力してください:",
+  "msgbox_new_folder_ok": "作成",
 
   "search_placeholder": "検索...",
 

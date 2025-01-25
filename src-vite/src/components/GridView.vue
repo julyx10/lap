@@ -13,16 +13,38 @@
           !selectMode && index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
           selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
         ]"
-        @click="clickItem(index)"
-        @dblclick="openItem(true)"
       >
         <div class="relative flex flex-col items-center">
 
-          <!-- action buttons -->
-          <div 
-            :class="['absolute z-10 left-0 w-full flex flex-row items-center justify-between',
-          ]"
+          <img v-if="file.thumbnail"
+            :src="file.thumbnail"
+            :class="[
+              'rounded transition duration-200',
+              config.thumbnailScalingOption === 0 ? 'object-contain' : '',
+              config.thumbnailScalingOption === 1 ? 'object-cover' : '',
+              config.thumbnailScalingOption === 2 ? 'object-fill' : ''
+            ]"
+            :style="{ 
+              width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px`, 
+              transform: `rotate(${file.rotate}deg)`, 
+              transition: 'transform 0.3s ease-in-out' 
+            }"
+            loading="lazy"
+            @click="clickItem(index)"
+            @dblclick="openItem(true)"
+          />
+          <div v-else 
+            class="rounded flex items-center justify-center"
+            :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
           >
+            <IconImagePlaceHolder class="size-1/2"/>
+          </div>
+          <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
+          <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
+          
+          <!-- action buttons -->
+          <div class="absolute left-0 w-full flex flex-row items-center justify-between">
+
             <div class="flex">
               <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm"></IconFavorite>
               <IconRotate v-if="file.rotate % 360 > 0"
@@ -39,6 +61,7 @@
               :class="['t-icon-size t-icon-hover', file?.isSelected ? 'text-sky-500' : 'text-gray-500']" 
               @click.stop="selectItem(index)"
             />
+
             <DropDownMenu v-else-if="index === selectedIndex && !selectMode"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
@@ -48,29 +71,6 @@
 
           </div>
 
-          <img v-if="file.thumbnail"
-            :src="file.thumbnail"
-            :class="[
-              'rounded transition duration-200',
-              config.thumbnailScalingOption === 0 ? 'object-contain' : '',
-              config.thumbnailScalingOption === 1 ? 'object-cover' : '',
-              config.thumbnailScalingOption === 2 ? 'object-fill' : ''
-            ]"
-            :style="{ 
-              width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px`, 
-              transform: `rotate(${file.rotate}deg)`, 
-              transition: 'transform 0.3s ease-in-out' 
-            }"
-            loading="lazy"
-          />
-          <div v-else 
-            class="rounded flex items-center justify-center"
-            :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
-          >
-            <IconImagePlaceHolder class="size-1/2"/>
-          </div>
-          <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
-          <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
         </div>
       </div>
 
@@ -283,7 +283,8 @@ function selectItem(index: number) {
 }
 
 function handleKeyDown(event) {
-  const key = event.key.toLowerCase(); // Convert key to lowercase
+  const key = event.key; // Convert key to lowercase
+  // const key = event.key.toLowerCase(); // Convert key to lowercase
   if (keyActions[key]) {
     event.preventDefault(); // Prevent the default action
     keyActions[key](); 
@@ -321,7 +322,9 @@ const keyActions = {
   Home: ()       => selectedIndex.value = 0,
   End: ()        => selectedIndex.value = props.fileList.length - 1,
   Enter: ()      => openItem(true),
+  F: ()          => toggleFavorite(),
   f: ()          => toggleFavorite(),
+  R: ()          => rotateImage(),
   r: ()          => rotateImage(),
   F2: ()         => console.log('Rename:', selectedIndex.value),
   Delete: ()     => deleteItem(),
