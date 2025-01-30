@@ -15,12 +15,12 @@
       <div class="h-6 flex flex-row items-center space-x-4">
         <button
           :class="[
-            'px-2 py-1 flex flex-row items-center rounded-md border t-color-border t-icon-hover t-color-border-hover text-sm',
-            selectMode ? 't-color-bg-selected t-color-text-selected' : '',
+            'px-2 py-1 flex flex-row items-center rounded-md border t-color-border  text-sm',
           ]"
-          @click="handleSelectMode"
+          @click="handleSelectMode(true)"
         >
-          <span class="px-1">{{ $t('file_list_select_mode') }}{{ selectMode ? ': ' + $t('files_summary', { count: selectedCount }) : '' }}</span>
+          <IconClose v-if="selectMode" class="t-icon-size-sm t-icon-hover" @click.stop="handleSelectMode(false)" />
+          <span class="px-1">{{ selectMode ? $t('file_list_select_count', { count: selectedCount }) : $t('file_list_select_mode') }}</span>
           <DropDownMenu v-if="selectMode"
             :iconMenu="IconMore"
             :menuItems="moreMenuItems"
@@ -29,7 +29,6 @@
           />
         </button>
 
-        <!-- <IconClose v-if="selectMode" class="t-icon-size t-icon-hover" @click="handleSelectMode" /> -->
 
         <DropDownSelect
           :options="sortingOptions"
@@ -57,14 +56,11 @@
 
     <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <!-- grid view -->
-      <GridView v-if="fileList.length > 0" 
+      <GridView  
         v-model="selectedItemIndex"
         :fileList="fileList"
         :selectMode="selectMode"
       />
-      <div v-else class="min-w-32 flex-1 flex flex-row items-center justify-center">
-        <p>{{ $t('file_list_no_files') }}</p>
-      </div>
 
       <!-- splitter -->
       <div v-if="config.showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
@@ -130,6 +126,7 @@ import IconArrowDown from '@/assets/arrow-down.svg';
 
 import IconClose from '@/assets/close.svg';
 import IconSelectAll from '@/assets/checkbox-checkall.svg';
+import IconSelectNone from '@/assets/checkbox-uncheckall.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconRotate from '@/assets/rotate-right.svg';
@@ -140,6 +137,7 @@ import IconCopyTo from '@/assets/copy-to.svg';
 import IconMoveTo from '@/assets/move-to.svg';
 import IconDelete from '@/assets/trash.svg';
 import IconOpenFolder from '@/assets/folder-open.svg';
+import { tr } from 'date-fns/locale';
 
 const props = defineProps({
   titlebar: String
@@ -162,7 +160,7 @@ const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const divListView = ref(null);
 
 // file list
-const originalFileList = ref([]);
+// const originalFileList = ref([]);
 const fileList = ref([]);   // file list by filtering and sorting
 const selectedItemIndex = ref(-1);
 
@@ -263,14 +261,16 @@ watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
 });
 
-/// watch home (all files)
+/// watch home (all files) and favorite
 watch(() => config.toolbarIndex, newIndex => {
   if(newIndex === 0) { // home
     contentTitle.value = localeMsg.value.home;
     getAllFiles();  // get all files
+    selectedItemIndex.value = -1;
   } else if(newIndex === 1) { // favorite
     contentTitle.value = localeMsg.value.favorite;
     getAllFiles(true); // get favorite files
+    selectedItemIndex.value = -1;
   }
 }, { immediate: true });
 
@@ -330,10 +330,11 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
       if(newModel) {
         contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
         getCameraFiles(config.cameraMake, newModel);
+        selectedItemIndex.value = -1;
       } else {
         contentTitle.value = `${config.cameraMake}`;
         getCameraFiles(config.cameraMake, "");
-        // fileList.value = [];
+        selectedItemIndex.value = -1;
       }
     } else {
       contentTitle.value = localeMsg.value.camera;
@@ -344,14 +345,10 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
 }, { immediate: true });
 
 // watch for changes in the file list (selected item index or file list length)
-watch(() => [selectedItemIndex.value, fileList.value.length, isImageViewerOpen.value], () => {
-  console.log('watch - selected item changed:', selectedItemIndex.value);
+watch(() => [selectedItemIndex.value, fileList.value, isImageViewerOpen.value], () => {
+  // update the selected count
+  selectedCount.value = fileList.value.filter(file => file.isSelected).length;
   getImageSrc();
-});
-
-// watch for changes of fileList
-watch(() => fileList.value, (newFiles) => {
-  selectedCount.value = newFiles.filter(file => file.isSelected).length;
 }, { deep: true });   // deep watch: because isSelected is a property of each file object
 
 // get selected image source
@@ -385,7 +382,7 @@ const getImageSrc = async () => {
 /// get all files
 async function getAllFiles(isFavorite = false, offset = 0, pageSize = FILES_PAGE_SIZE) {
   try {
-    originalFileList.value = await invoke('get_all_files', { isFavorite, offset, pageSize });
+    fileList.value = await invoke('get_all_files', { isFavorite, offset, pageSize });
     refreshFileList(); // get fileList(apply filter and sorting)
   } catch (error) {
     console.error('getAllFiles error:', error);
@@ -396,7 +393,7 @@ async function getAllFiles(isFavorite = false, offset = 0, pageSize = FILES_PAGE
 async function getFolderFiles() {
   try {
     // read the list of files
-    originalFileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: config.albumFolderPath });
+    fileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: config.albumFolderPath });
     refreshFileList();
   } catch (error) {
     console.error('getFolderFiles error:', error);
@@ -410,10 +407,10 @@ async function getCalendarFiles(year, month, date) {
       // get the first and last days of the month.
       let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
       let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
-      originalFileList.value = await invoke('get_files_by_date_range', { startDate, endDate });
+      fileList.value = await invoke('get_files_by_date_range', { startDate, endDate });
     } else {  // otherwise, get files by date
       let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
-      originalFileList.value = await invoke('get_files_by_date', { date: dateStr });
+      fileList.value = await invoke('get_files_by_date', { date: dateStr });
     }
     refreshFileList();
   } catch (error) {
@@ -424,15 +421,14 @@ async function getCalendarFiles(year, month, date) {
 /// get all files under the camera make and model
 async function getCameraFiles(make, model) {
   try {
-    originalFileList.value = await invoke('get_camera_files', { make, model });
+    fileList.value = await invoke('get_camera_files', { make, model });
     refreshFileList();
   } catch (error) {
     console.error('getCameraFiles error:', error);
   }
 }
-const handleSelectMode = () => {
-  console.log('Select mode:', selectMode.value);
-  selectMode.value = !selectMode.value;
+const handleSelectMode = (value) => {
+  selectMode.value = value;
   if(!selectMode.value) {
     for (let i = 0; i < fileList.value.length; i++) {
       fileList.value[i].isSelected = false;
@@ -455,6 +451,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu_item_select_none,
+      icon: IconSelectNone,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = false;
@@ -494,6 +491,15 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      action: () => {
+        if(selectedItemIndex.value >= 0) {
+          deleteFile(selectedItemIndex.value);
+        }
+      }
+    },
+    {
       label: "-",   // separator
       action: null
     },
@@ -505,15 +511,6 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_copy_to,
       action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          deleteFile(selectedItemIndex.value);
-        }
-      }
     }
   ];
 });
@@ -554,20 +551,22 @@ function getSelectOptions(options) {
 }
 
 function refreshFileList() {
-  filterFileList(originalFileList.value, searchText.value);
+  selectMode.value = false;
+
+  // filterFileList(originalFileList.value, searchText.value);
   sortFileList(fileList.value, config.sortingType, config.sortingDirection);
   getFileThumb(fileList.value); 
   console.log('fileList:', fileList.value);
 }
 
 // Filter the file list based on the search text
-function filterFileList(files, filter) {
-  if (filter.trim() === '') {
-    fileList.value = files;
-  } else {
-    fileList.value = files.filter(file => file.name.toLowerCase().includes(filter.toLowerCase()));
-  }
-}
+// function filterFileList(files, filter) {
+//   if (filter.trim() === '') {
+//     fileList.value = files;
+//   } else {
+//     fileList.value = files.filter(file => file.name.toLowerCase().includes(filter.toLowerCase()));
+//   }
+// }
 
 // Sort the file list based on the sorting type and direction
 function sortFileList(files, sortingType, sortingDirection) {

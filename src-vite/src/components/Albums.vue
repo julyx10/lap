@@ -5,18 +5,7 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between">
       <span>{{ titlebar }}</span>
-
-      <!-- <div class="flex"> -->
-        <IconAdd class="m-1 t-icon-size-sm t-icon-hover" @click="clickAdd" />
-        <!-- <IconDelete  
-          :class="[
-            'm-1 t-icon-size-sm', 
-            config.albumId ? 't-icon-hover' : 't-icon-disabled'
-          ]" 
-          @click="config.albumId ? showRemoveAlbumMsgbox = true : ''" 
-        /> -->
-        <!-- <IconRefresh class="p-1 hover:text-gray-200 transition-colors duration-300" @click="clickRefresh"/> -->
-      <!-- </div> -->
+      <IconAdd class="m-1 t-icon-size-sm t-icon-hover" @click="clickAdd" />
     </div>
 
     <!-- albums -->
@@ -175,7 +164,6 @@ onMounted( async () => {
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-
     {
       label: localeMsg.value.menu_item_refresh,
       icon: IconRefresh,
@@ -189,6 +177,10 @@ const moreMenuItems = computed(() => {
       action: () => {
         showRenameAlbumMsgbox.value = true;
       }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
     },
     {
       label: localeMsg.value.menu_item_new_folder,

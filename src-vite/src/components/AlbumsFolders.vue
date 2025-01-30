@@ -133,11 +133,9 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      action: () => {
-      }
-    },
+      label: "-",   // separator
+      action: null
+    },    
     {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
@@ -158,6 +156,16 @@ const moreMenuItems = computed(() => {
       // icon: IconOpenFolder,
       action: () => {
         openFileExplorer(config.albumFolderPath);
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },    
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      action: () => {
       }
     }
   ];

@@ -14,8 +14,10 @@
           selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
         ]"
       >
-        <div class="relative flex flex-col items-center">
-
+        <div class="relative flex flex-col items-center"
+          @click="clickItem(index)"
+          @dblclick="openItem(true)"
+        >
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[
@@ -30,8 +32,6 @@
               transition: 'transform 0.3s ease-in-out' 
             }"
             loading="lazy"
-            @click="clickItem(index)"
-            @dblclick="openItem(true)"
           />
           <div v-else 
             class="rounded flex items-center justify-center"
@@ -41,41 +41,44 @@
           </div>
           <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
           <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
-          
+        
           <!-- action buttons -->
-          <div class="absolute left-0 w-full flex flex-row items-center justify-between">
+          <div class="absolute left-0 top-0 flex items-center">
+            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm"></IconFavorite>
+            <IconRotate v-if="file.rotate % 360 > 0"
+              class="t-icon-size-sm"
+              :style="{ 
+                transform: `rotate(${file.rotate}deg)`, 
+                transition: 'transform 0.3s ease-in-out' 
+              }"
+            />
+          </div>
 
-            <div class="flex">
-              <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm"></IconFavorite>
-              <IconRotate v-if="file.rotate % 360 > 0"
-                class="t-icon-size-sm"
-                :style="{ 
-                  transform: `rotate(${file.rotate}deg)`, 
-                  transition: 'transform 0.3s ease-in-out' 
-                }"
-              />
-            </div>
-
+          <!-- select checkbox or more menu -->
+          <div class="absolute right-0 top-0 flex items-center">
             <component v-if="selectMode"
               :is="file?.isSelected ? IconChecked : IconUnChecked" 
-              :class="['t-icon-size t-icon-hover', file?.isSelected ? 'text-sky-500' : 'text-gray-500']" 
+              :class="['t-icon-size-sm t-icon-hover', file?.isSelected ? 'text-sky-500' : 'text-gray-500']" 
               @click.stop="selectItem(index)"
             />
-
             <DropDownMenu v-else-if="index === selectedIndex && !selectMode"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
               :alignRight="true"
               @click="clickItem(index)"
             />
-
           </div>
 
         </div>
       </div>
-
     </div>
+
+    <div v-if="fileList.length === 0" class="flex items-center justify-center w-full h-full">
+      {{ $t('file_list_no_files') }}
+    </div>
+
   </div>
+
 </template>
 
 
@@ -155,6 +158,14 @@ listen('message-from-image-viewer', (event) => {
   }
 });
 
+// watch for changes in the fileList
+watch(() => props.fileList, () => {
+  selectedIndex.value = props.fileList.length > 0 ? 0 : -1;
+  console.log('GridView.vue: fileList changed:', props.fileList.length, selectedIndex.value);
+  const element = scrollable.value; // Get the scrollable element
+  element.scrollTop = 0;
+});
+
 watch(() => props.modelValue, (newValue) => { 
   selectedIndex.value = newValue; 
 });
@@ -190,33 +201,11 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_copy,
-      icon: IconCopy,
-      shortcut: 'Ctrl+C',
-      action: () => {
-        console.log('Copy:', selectedIndex.value);
-      }
-    },
-    {
       label: localeMsg.value.menu_item_rename,
       icon: IconRename,
       shortcut: 'F2',
       action: () => {
         console.log('Rename:', selectedIndex.value);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      shortcut: 'Del',
-      action: () => {
-        deleteItem(selectedIndex.value);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_properties,
-      action: () => {
-        console.log('Show properties:', selectedIndex.value);
       }
     },
     {
@@ -240,8 +229,24 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      shortcut: 'Del',
+      action: () => {
+        deleteItem(selectedIndex.value);
+      }
+    },
+    {
       label: "-",   // separator
       action: null
+    },
+    {
+      label: localeMsg.value.menu_item_copy,
+      icon: IconCopy,
+      shortcut: 'Ctrl+C',
+      action: () => {
+        console.log('Copy:', selectedIndex.value);
+      }
     },
     {
       label: localeMsg.value.menu_item_move_to,
@@ -259,7 +264,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu_item_open_folder,
-      icon: IconOpenFolder,
+      // icon: IconOpenFolder,
       action: () => {
         openFileExplorer(getFolderPath(file.file_path));
       }
@@ -335,6 +340,8 @@ function toggleFavorite() {
     return;
   }
   props.fileList[selectedIndex.value].is_favorite = !props.fileList[selectedIndex.value].is_favorite;
+  emit('message-from-grid-view', { message: 'favorite', favorite: props.fileList[selectedIndex.value].is_favorite });
+
 };
 
 function rotateImage() {
@@ -342,6 +349,8 @@ function rotateImage() {
     return;
   }
   props.fileList[selectedIndex.value].rotate += 90;
+  emit('message-from-grid-view', { message: 'rotate', rotate: props.fileList[selectedIndex.value].rotate });
+
 };
 
 // open the selected item in the image viewer

@@ -8,7 +8,7 @@
   >
     <!-- title bar -->
     <TitleBar v-if="!config.isFullScreen"
-      :titlebar="`jc-photo ${localeMsg.image_view_title} - ${fileIndex + 1}/${fileCount}`"
+      :titlebar="`jc-photo ${localeMsg.image_view_title}${fileIndex >= 0 ? ` - ${fileIndex + 1}/${fileCount}` : ''}`"
       viewName="ImageViewer"
     />
 
@@ -30,7 +30,7 @@
       <IconNext 
         :class="[
           't-icon-size',
-          fileIndex < fileCount -1 ? 't-icon-hover' : 't-icon-disabled'
+          fileIndex >=0 && fileIndex < fileCount -1 ? 't-icon-hover' : 't-icon-disabled'
         ]" 
         @click="clickNext" 
       />
@@ -40,7 +40,7 @@
           't-icon-size',
           fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
         ]" 
-        @click="autoPlay = !autoPlay" 
+        @click="clickPlay" 
       />  
       <IconZoomIn
         :class="[
@@ -75,14 +75,6 @@
         :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
         @click="clickRotate"
       />
-      <IconFileInfo :class="['t-icon-size t-icon-hover', config.showFileInfo ? 't-icon-focus' : '']" @click="clickShowFileInfo" />
-      <IconSave 
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-        ]"
-        @click="clickSave"
-      />
       <IconDelete
         :class="[
           't-icon-size',
@@ -90,8 +82,14 @@
         ]"
         @click="clickDelete"
       />
-      <!-- <IconFullScreen v-if="!config.isFullScreen" class="t-icon-size t-icon-hover" @click="setFullScreen" /> -->
-      <!-- <IconRestoreScreen v-if="config.isFullScreen" class="t-icon-size t-icon-hover" @click="exitFullScreen" /> -->
+      <DropDownMenu
+        :iconMenu="IconMore"
+        :menuItems="moreMenuItems"
+        :alignRight="true"
+        :disabled="fileIndex === -1"
+        @click.stop
+      />
+
       <component 
         :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" 
         class="t-icon-size t-icon-hover" 
@@ -199,21 +197,25 @@ import { useConfigStore } from '@/stores/configStore';
 import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
 import FileInfo from '@/components/FileInfo.vue';
+import DropDownMenu from '@/components/DropDownMenu.vue';
 
-import IconPlay from '@/assets/play.svg';
-import IconPause from '@/assets/pause.svg';
 import IconPrev from '@/assets/nav-prev.svg';
 import IconNext from '@/assets/nav-next.svg';
+import IconPlay from '@/assets/play.svg';
+import IconPause from '@/assets/pause.svg';
 import IconZoomIn from '@/assets/zoom-in.svg';
 import IconZoomOut from '@/assets/zoom-out.svg';
 import IconZoomFit from '@/assets/fit-screen1.svg';
 import IconZoomOriginal from '@/assets/fit-screen2.svg';
-import IconRotateRight from '@/assets/rotate-right.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
-import IconFileInfo from '@/assets/information.svg';
+import IconRotateRight from '@/assets/rotate-right.svg';
 import IconDelete from '@/assets/trash.svg';
-import IconSave from '@/assets/save.svg';
+import IconMore from '@/assets/more.svg';
+import IconCopy from '@/assets/copy.svg';
+import IconMoveTo from '@/assets/move-to.svg';
+import IconFileInfo from '@/assets/information.svg';
+
 import IconFullScreen from '@/assets/full-screen-max.svg';
 import IconRestoreScreen from '@/assets/full-screen-min.svg';
 import IconPin from '@/assets/pin-filled.svg';
@@ -222,7 +224,6 @@ import IconLeft from '@/assets/arrow-left.svg';
 import IconRight from '@/assets/arrow-right.svg';
 import IconSeparator from '@/assets/separator.svg';
 import IconClose from '@/assets/close.svg';
-
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -256,6 +257,40 @@ const imageMinScale = ref(0);       // Minimum image scale
 const imageMaxScale = ref(10);      // Maximum image scale
 const isScaleChanged = ref(false);  // Scale changed state
 
+// more menuitems
+const moreMenuItems = computed(() => {
+  return [
+    {
+      label: localeMsg.value.menu_item_copy,
+      icon: IconCopy,
+      shortcut: 'Ctrl+C',
+      action: () => {
+        console.log('Copy:', filePath.value);
+      }
+    },    
+    {
+      label: localeMsg.value.menu_item_move_to,
+      icon: IconMoveTo,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_copy_to,
+      action: () => {}
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
+      label: localeMsg.value.menu_item_properties,
+      icon: IconFileInfo,
+      action: () => {
+        clickShowFileInfo();
+      }
+    }
+  ];
+});
+
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
   // isFullScreen.value = await appWindow.isMaximized();
@@ -280,6 +315,7 @@ listen('update-img', async (event) => {
   fileCount.value = Number(event.payload.fileCount);
   filePath.value     = decodeURIComponent(event.payload.filePath);
   nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
+  console.log('update-img', fileId.value, fileIndex.value, fileCount.value, filePath.value )
 });
 
 listen('message-from-image', (event) => {
@@ -296,6 +332,22 @@ listen('message-from-image', (event) => {
   }
 });
 
+listen('message-from-grid-view', (event) => {
+  const { message } = event.payload;
+  console.log('ImageViewer.vue: message-from-grid-view:', message);
+  switch (message) {
+    case 'favorite':
+      toggleFavorite();
+      break;
+    case 'rotate':
+      clickRotate();
+      break;
+    default:
+      break;
+  }
+});
+
+      
 // watch language
 watch(() => config.language, (newLanguage) => {
     console.log('Language changed to:', newLanguage);
@@ -345,6 +397,10 @@ watch(() => [autoPlay.value, config.autoPlayInterval], ([newAutoPlay, newInterVa
 
 // Load the image from the file path
 async function loadImage(filePath) {
+  if(filePath.length === 0) {
+    console.log('loadImage - filePath is empty');
+    return;
+  }
   try {
     loadError.value = false;
 
@@ -391,15 +447,25 @@ async function loadFileInfo(fileId) {
 
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
+  if(fileIndex.value < 0) return;
+
   emit('message-from-image-viewer', { message: 'prev' });
 }
 
 function clickNext() {
+  if(fileIndex.value < 0) return;
+
   if(autoPlay.value && fileIndex.value === fileCount.value - 1) {
     emit('message-from-image-viewer', { message: 'home' });
   } else {
     emit('message-from-image-viewer', { message: 'next' });
   }
+}
+
+function clickPlay() {
+  if(fileIndex.value < 0) return;
+
+  autoPlay.value = !autoPlay.value;
 }
 
 const clickZoomIn = () => {
@@ -479,6 +545,8 @@ function clickSave() {
 }
 
 const clickDelete = async() => {
+  if(fileIndex.value < 0) return;
+
   // get current timestamp
   fileInfo.value.deleted_at = fileInfo.value.deleted_at || fileInfo.value.deleted_at !== 0 ? 0 : Math.floor(Date.now() / 1000);
 

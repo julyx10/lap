@@ -59,12 +59,11 @@
 
   "folder_summary": "{folders} 文件夹, {files} 文件",
   "files_summary": "{count} 文件",
-  "files_summary_selected": "{count} 已选择",
 
   "file_list_no_files": "未找到文件",
-  "file_list_select_count": "已选择 {count}",
   
   "file_list_select_mode": "选择",
+  "file_list_select_count": "已选择 {count}",
   "file_list_sorting_options": ["名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
   "file_list_sorting_extend_options": ["升序", "降序"],
   "file_list_filter_options": ["全部", "图片", "视频"],

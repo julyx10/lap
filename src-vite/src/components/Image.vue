@@ -11,7 +11,7 @@
     @wheel="onMouseWheel"
   >
     <!-- DEBUG -->
-    <table v-if="config.debugMode" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
+    <!-- <table v-if="config.debugMode" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
       <tbody>
         <tr>
           <td>activeImage</td>
@@ -50,7 +50,7 @@
           <td>{{ containerPos }}</td>
         </tr>
       </tbody>
-    </table>
+    </table> -->
 
     <img 
       v-for="(src, index) in imageSrc"
