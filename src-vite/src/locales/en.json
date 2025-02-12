@@ -51,7 +51,18 @@
   "msgbox_new_folder_title": "New folder",
   "msgbox_new_folder_content": "Enter the name for the new folder:",
   "msgbox_new_folder_ok": "Create",
-
+  "msgbox_delete_folder_title": "Delete folder",
+  "msgbox_delete_folder_content": "The folder '{folder}' and all its contents will be deleted. This action cannot be undone.",
+  "msgbox_delete_folder_ok": "Delete",
+  "msgbox_move_to_title": "Move to",
+  "msgbox_move_to_content": "Select the destination folder:",
+  "msgbox_move_to_ok": "Move",
+  "msgbox_copy_to_title": "Copy to",
+  "msgbox_copy_to_content": "Select the destination folder:",
+  "msgbox_copy_to_ok": "Copy",
+  "msgbox_delete_file_title": "Delete file",
+  "msgbox_delete_file_content": "The file '{file}' will be deleted. This action cannot be undone.",
+  "msgbox_delete_file_ok": "Delete",
   
   "search_placeholder": "Search...",
 
@@ -84,6 +95,7 @@
   "menu_item_copy_to": "Copy to...",
   "menu_item_move_to": "Move to...",
   "menu_item_delete": "Delete",
+  "menu_item_remove": "Remove",
   "menu_item_new_folder": "New folder",
   "menu_item_open_folder": "Open folder...",
   "menu_item_properties": "Properties",

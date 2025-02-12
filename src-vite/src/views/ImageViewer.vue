@@ -85,7 +85,6 @@
       <DropDownMenu
         :iconMenu="IconMore"
         :menuItems="moreMenuItems"
-        :alignRight="true"
         :disabled="fileIndex === -1"
         @click.stop
       />
@@ -132,8 +131,9 @@
         </div>
 
         <!-- image -->
-        <template v-if="fileIndex >= 0">
-          <Image v-if="imageSrc" 
+        <!-- <template v-if="fileIndex >= 0"> -->
+          <Image v-if="fileIndex >= 0" 
+            class="z-20"
             ref="imageRef" 
             :src="imageSrc" 
             :rotate="fileInfo?.rotate ?? 0" 
@@ -142,7 +142,7 @@
           <p v-else>
             {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
           </p>
-        </template>
+        <!-- </template> -->
 
         <!-- no image selected -->
         <p v-else>
@@ -284,6 +284,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_properties,
       icon: IconFileInfo,
+      shortcut: 'I',
       action: () => {
         clickShowFileInfo();
       }
@@ -448,13 +449,11 @@ async function loadFileInfo(fileId) {
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
   if(fileIndex.value < 0) return;
-
   emit('message-from-image-viewer', { message: 'prev' });
 }
 
 function clickNext() {
   if(fileIndex.value < 0) return;
-
   if(autoPlay.value && fileIndex.value === fileCount.value - 1) {
     emit('message-from-image-viewer', { message: 'home' });
   } else {
@@ -462,15 +461,23 @@ function clickNext() {
   }
 }
 
+function clickHome() {
+  if(fileIndex.value < 0) return;
+  emit('message-from-image-viewer', { message: 'home' });
+}
+
+function clickEnd() {
+  if(fileIndex.value < 0) return;
+  emit('message-from-image-viewer', { message: 'end' });
+}
+
 function clickPlay() {
   if(fileIndex.value < 0) return;
-
   autoPlay.value = !autoPlay.value;
 }
 
 const clickZoomIn = () => {
   if(fileIndex.value < 0) return;
-
   if(imageRef.value) {
     imageRef.value.zoomIn();
   }
@@ -478,7 +485,6 @@ const clickZoomIn = () => {
 
 const clickZoomOut = () => {
   if(fileIndex.value < 0) return;
-
   if(imageRef.value) {
     imageRef.value.zoomOut();
   }
@@ -486,13 +492,11 @@ const clickZoomOut = () => {
 
 const toggleZoomFit = () => {
   if(fileIndex.value < 0) return;
-
   config.isZoomFit =!config.isZoomFit;
 };
 
 const clickRotate = () => {
   if(fileIndex.value < 0) return;
-
   if(imageRef.value) {
     imageRef.value.rotateRight();
 
@@ -514,7 +518,6 @@ const saveRotate = async(fileId, fileRotate) => {
 // toggle favorite status
 const toggleFavorite = async() => {
   if(fileIndex.value < 0) return;
-
   fileInfo.value.is_favorite = fileInfo.value.is_favorite === null ? true : !fileInfo.value.is_favorite;
   emit('message-from-image-viewer', { message: 'favorite', favorite: fileInfo.value.is_favorite });
 
@@ -560,7 +563,7 @@ const clickDelete = async() => {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
-  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Space'];
+  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Escape', 'Space'];
   
   // Disable default behavior for certain keys
   if (navigationKeys.includes(event.key)) {
@@ -573,6 +576,12 @@ function handleKeyDown(event) {
       break;
     case 'ArrowRight':
       clickNext();
+      break;
+    case 'Home':
+      clickHome();
+      break;
+    case 'End':
+      clickEnd();
       break;
     case 'ArrowUp':
       clickZoomIn();

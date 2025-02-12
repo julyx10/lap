@@ -59,8 +59,8 @@
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api/core';
 import { useConfigStore } from '@/stores/configStore';
+import { getCameraInfo } from '@/common/api';
 
 // toolbar icons
 import IconReload from '@/assets/refresh.svg';
@@ -125,17 +125,12 @@ function clickCameraModel(make, model) {
 
 /// get cameras from db
 async function getCameras() {
-  try {
-    const fetchedCameras = await invoke('get_camera_info');
-    if (fetchedCameras) {
-      cameras.value = fetchedCameras.map(camera => ({
-        ...camera, 
-        is_expanded: false,
-      }));
-    }
-    console.log('getCameras...', cameras.value);
-  } catch (error) {
-    console.error('Failed to fetch camera info:', error);
+  const fetchedCameras = await getCameraInfo();
+  if (fetchedCameras) {
+    cameras.value = fetchedCameras.map(camera => ({
+      ...camera, 
+      is_expanded: false,
+    }));
   }
 };
 

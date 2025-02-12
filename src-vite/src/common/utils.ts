@@ -1,7 +1,8 @@
-import {  } from '@tauri-apps/api';
 import { format } from 'date-fns';
 import { platform } from '@tauri-apps/plugin-os';
+import { mkdir } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-shell';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
 
 export const THUMBNAIL_SIZE = 320;    // thumbnail size
 export const FILES_PAGE_SIZE = 1000;  // number of files per page
@@ -64,18 +65,50 @@ export function shortenFilename(filename: string): string {
   return shortName + ext;
 }
 
-// Function to open the file explorer
-export async function openFileExplorer(path) {
-  try {
-    await open(path); // Open the folder in the system file explorer
-    console.log('File explorer opened successfully.');
-  } catch (error) {
-    console.error('Failed to open file explorer:', error);
-  }
-};
-
 // validate the file or folder name
 export const isValidFileName = (name) => {
   const invalidChars = /[\\/:*?"<>|]/;
   return !invalidChars.test(name);
 };
+
+// Function to select a folder
+export async function openFolderDialog() {
+  const selected = await openDialog({
+    directory: true,  // Enables folder selection
+    multiple: false,  // Allows selecting only one folder
+  });
+
+  if (selected ) {
+    console.log('Selected folder:', selected );
+    return selected;
+  } else {
+    console.log('No folder selected.');
+  }
+  return null;
+}
+
+// Function to create a folder
+export async function createFolder(path, name) {
+  try {
+    const fullPath = getFullPath(path, name);
+    await mkdir(fullPath, { recursive: true });
+    console.log('Create folder:', fullPath);
+    return fullPath;
+  } catch (error) {
+    console.error('Failed to create folder:', error);
+  }
+  return null;
+}
+
+// Function to open the shell folder
+export async function openShellFolder(path) {
+  try {
+    await open(path); // Open the shell folder
+    console.log('Open shell folder:', path);
+    return path;
+  } catch (error) {
+    console.error('Failed to open shell folder:', error);
+  }
+  return null;
+};
+

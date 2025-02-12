@@ -24,6 +24,7 @@ fn main() {
         // .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
             // Create the database on startup
@@ -74,7 +75,7 @@ fn main() {
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
             t_cmds::get_folder_parents,
-            t_cmds::select_folder,
+            t_cmds::add_folder,
             t_cmds::expand_folder,
             t_cmds::get_folder_files,
             t_cmds::get_file_thumb,

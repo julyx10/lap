@@ -51,6 +51,18 @@
   "msgbox_new_folder_title": "新しいフォルダ",
   "msgbox_new_folder_content": "新しいフォルダの名前を入力してください:",
   "msgbox_new_folder_ok": "作成",
+  "msgbox_delete_folder_title": "フォルダを削除",
+  "msgbox_delete_folder_content": "フォルダ '{folder}' とそのすべての内容が削除されます。この操作は元に戻すことができません。",
+  "msgbox_delete_folder_ok": "削除",
+  "msgbox_move_to_title": "移動先",
+  "msgbox_move_to_content": "移動先のフォルダを選択してください:",
+  "msgbox_move_to_ok": "移動",
+  "msgbox_copy_to_title": "コピー先",
+  "msgbox_copy_to_content": "コピー先のフォルダを選択してください:",
+  "msgbox_copy_to_ok": "コピー",
+  "msgbox_delete_file_title": "ファイルを削除",
+  "msgbox_delete_file_content": "ファイル '{file}' が削除されます。この操作は元に戻すことができません。",
+  "msgbox_delete_file_ok": "削除",
 
   "search_placeholder": "検索...",
 

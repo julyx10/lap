@@ -24,7 +24,7 @@
           <DropDownMenu v-if="selectMode"
             :iconMenu="IconMore"
             :menuItems="moreMenuItems"
-            :alignRight="true"
+            :smallIcon="true"
             @click.stop
           />
         </button>
@@ -106,6 +106,7 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { getAlbum } from '@/common/api';
 
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
@@ -136,8 +137,7 @@ import IconRefresh from '@/assets/refresh.svg';
 import IconCopyTo from '@/assets/copy-to.svg';
 import IconMoveTo from '@/assets/move-to.svg';
 import IconDelete from '@/assets/trash.svg';
-import IconOpenFolder from '@/assets/folder-open.svg';
-import { tr } from 'date-fns/locale';
+import IconOpenFolder from '@/assets/external.svg';
 
 const props = defineProps({
   titlebar: String
@@ -242,6 +242,9 @@ listen('message-from-image-viewer', (event) => {
     case 'home':
       selectedItemIndex.value = 0;
       break;
+    case 'end':
+      selectedItemIndex.value = fileList.value.length - 1;
+      break;
     case 'prev':
       selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
       break;
@@ -278,9 +281,8 @@ watch(() => config.toolbarIndex, newIndex => {
 watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
   if(newIndex === 2) {
     if (newAlbumId) {
-      try {
-        const album = await invoke('get_album', { albumId: newAlbumId });
-
+      const album = await getAlbum(newAlbumId);
+      if(album) {
         if(config.albumFolderPath === album.path) { // current folder is root
           contentTitle.value = album.name;
         } else {
@@ -290,9 +292,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async (
 
         getFolderFiles();
         selectedItemIndex.value = -1;
-      } catch (error) {
-        console.error('get_album error:', error);
-      }
+      } 
     } else {
       contentTitle.value = localeMsg.value.album;
       fileList.value = [];

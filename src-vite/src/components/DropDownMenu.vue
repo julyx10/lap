@@ -5,7 +5,7 @@
     <component 
       :is="iconMenu" 
       :class="[
-        't-icon-size-sm', 
+        smallIcon ? 't-icon-size-sm' : 't-icon-size', 
         isDropDown ? 't-icon-selected' : '',
         disabled ? 't-icon-disabled' : 't-icon-hover'
       ]" 
@@ -58,7 +58,7 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  alignRight: {
+  smallIcon: {
     type: Boolean,
     default: false,
   },

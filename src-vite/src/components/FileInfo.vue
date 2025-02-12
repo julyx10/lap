@@ -122,15 +122,7 @@ const props = defineProps({
   fileInfo: {
     type: Object,
     required: true
-  },
-  // fileIndex: {
-  //   type: Number,
-  //   required: true
-  // },
-  // fileCount: {
-  //   type: Number,
-  //   required: true
-  // }
+  }
 });
 
 const emit = defineEmits([

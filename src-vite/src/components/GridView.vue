@@ -9,19 +9,18 @@
         :key="index"
         :id="'item-' + index"
         :class="[
-          'p-2 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
+          'p-1 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
           !selectMode && index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
           selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
         ]"
+        @click="clickItem(index)"
+        @dblclick="openItem(true)"
       >
-        <div class="relative flex flex-col items-center"
-          @click="clickItem(index)"
-          @dblclick="openItem(true)"
-        >
+        <div class="relative flex flex-col items-center group">
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[
-              'rounded transition duration-200',
+              'pt-1 rounded transition duration-200',
               config.thumbnailScalingOption === 0 ? 'object-contain' : '',
               config.thumbnailScalingOption === 1 ? 'object-cover' : '',
               config.thumbnailScalingOption === 2 ? 'object-fill' : ''
@@ -42,7 +41,7 @@
           <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
           <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
         
-          <!-- action buttons -->
+          <!-- favorite and rotate status -->
           <div class="absolute left-0 top-0 flex items-center">
             <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm"></IconFavorite>
             <IconRotate v-if="file.rotate % 360 > 0"
@@ -61,14 +60,13 @@
               :class="['t-icon-size-sm t-icon-hover', file?.isSelected ? 'text-sky-500' : 'text-gray-500']" 
               @click.stop="selectItem(index)"
             />
-            <DropDownMenu v-else-if="index === selectedIndex && !selectMode"
+            <DropDownMenu v-else
+              class="hidden group-hover:block"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
-              :alignRight="true"
-              @click="clickItem(index)"
+              :smallIcon="true"
             />
           </div>
-
         </div>
       </div>
     </div>
@@ -88,7 +86,7 @@ import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openFileExplorer } from '@/common/utils';
+import { shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import IconImagePlaceHolder from '@/assets/photo.svg';
@@ -96,7 +94,7 @@ import IconChecked from '@/assets/checkbox-checked.svg';
 import IconUnChecked from '@/assets/checkbox-unchecked.svg';
 
 import IconMore from '@/assets/more.svg';
-import IconOpen from '@/assets/open.svg';
+import IconOpen from '@/assets/eye.svg';
 import IconEdit from '@/assets/edit.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconUnFavorite from '@/assets/heart.svg';
@@ -106,7 +104,8 @@ import IconRename from '@/assets/rename.svg';
 import IconCopyTo from '@/assets/copy-to.svg';
 import IconMoveTo from '@/assets/move-to.svg';
 import IconDelete from '@/assets/trash.svg';
-import IconOpenFolder from '@/assets/folder-open.svg';
+import IconOpenFolder from '@/assets/external.svg';
+import { smallerSize } from 'naive-ui/es/_utils';
 
 const props = defineProps({
   modelValue: {     // selecte item index(v-model value) 
@@ -188,6 +187,7 @@ const moreMenuItems = computed(() => {
   return [
     {
       label: localeMsg.value.menu_item_open,
+      icon: IconOpen,
       shortcut: 'Enter',
       action: () => {
         openItem(true);
@@ -203,7 +203,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_rename,
       icon: IconRename,
-      shortcut: 'F2',
+      // shortcut: 'F2',
       action: () => {
         console.log('Rename:', selectedIndex.value);
       }
@@ -264,9 +264,9 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu_item_open_folder,
-      // icon: IconOpenFolder,
+      icon: IconOpenFolder,
       action: () => {
-        openFileExplorer(getFolderPath(file.file_path));
+        openShellFolder(getFolderPath(file.file_path));
       }
     },
   ];
@@ -331,7 +331,7 @@ const keyActions = {
   f: ()          => toggleFavorite(),
   R: ()          => rotateImage(),
   r: ()          => rotateImage(),
-  F2: ()         => console.log('Rename:', selectedIndex.value),
+  // F2: ()         => console.log('Rename:', selectedIndex.value),
   Delete: ()     => deleteItem(),
 };
 

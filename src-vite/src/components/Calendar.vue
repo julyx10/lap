@@ -83,9 +83,9 @@
 <script setup>
 
 import { ref, computed, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
+import { getTakenDates } from '@/common/api';
 
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
@@ -123,12 +123,9 @@ const toggleSortingOrder = () => {
 
 /// fetch calendar dates
 async function getCalendarDates() {
-  try {
-    let taken_dates = await invoke('get_taken_dates');
+  const taken_dates = await getTakenDates();
+  if(taken_dates) {
     calendar_dates.value = transformArray(taken_dates);
-    console.log('getCalendarDates...', taken_dates, calendar_dates.value);
-  } catch (error) {
-    console.error('Failed to fetch calendar dates:', error);
   }
 }
 

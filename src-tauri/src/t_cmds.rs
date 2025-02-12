@@ -1,6 +1,3 @@
-use crate::t_sqlite::{ACamera, AFile, AFolder, AThumb, Album};
-use crate::t_utils;
-use base64::{engine::general_purpose, Engine};
 /**
  * project: jc-photo
  * author:  julyxx
@@ -8,8 +5,12 @@ use base64::{engine::general_purpose, Engine};
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-use native_dialog::FileDialog;
+use base64::{engine::general_purpose, Engine};
+// use native_dialog::FileDialog;
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
+use crate::t_sqlite::{ACamera, AFile, AFolder, AThumb, Album};
+use crate::t_utils;
+
 
 /// get all albums
 #[tauri::command]
@@ -25,20 +26,24 @@ pub fn get_album(album_id: i64) -> Result<Album, String> {
 
 /// add an album
 #[tauri::command]
-pub fn add_album(_window: tauri::Window, title: &str) -> Result<Album, String> {
-    // Show open folder dialog
-    let result = FileDialog::new().set_title(title).show_open_single_dir();
-
-    match result {
-        Ok(Some(path)) => {
-            // Add the album to the database and return the result
-            Album::add_to_db(path.to_string_lossy().into_owned().as_str())
-                .map_err(|e| format!("Error while adding album to DB: {}", e))
-        }
-        Ok(None) => Err("No folder selected".to_string()),
-        Err(_) => Err("Failed to open folder dialog".to_string()),
-    }
+pub fn add_album(folder_path: &str) -> Result<Album, String> {
+    Album::add_to_db(folder_path)
+        .map_err(|e| format!("Error while adding album to DB: {}", e))
 }
+// pub fn add_album(_window: tauri::Window, title: &str) -> Result<Album, String> {
+//     // Show open folder dialog
+//     let result = FileDialog::new().set_title(title).show_open_single_dir();
+
+//     match result {
+//         Ok(Some(path)) => {
+//             // Add the album to the database and return the result
+//             Album::add_to_db(path.to_string_lossy().into_owned().as_str())
+//                 .map_err(|e| format!("Error while adding album to DB: {}", e))
+//         }
+//         Ok(None) => Err("No folder selected".to_string()),
+//         Err(_) => Err("Failed to open folder dialog".to_string()),
+//     }
+// }
 
 /// rename an album
 #[tauri::command]
@@ -80,7 +85,7 @@ pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {
 
 // click a sub-folder under an album
 #[tauri::command]
-pub fn select_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
+pub fn add_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
     AFolder::add_to_db(album_id, parent_id, folder_path)
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }

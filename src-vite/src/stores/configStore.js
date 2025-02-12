@@ -32,12 +32,14 @@ export const useConfigStore = defineStore('configStore', {
     previewPosition: 'right',   // preview position: right, bottom
     previewPaneWidth: 30,       // preview pane width(20-80%)
 
+    // move/copy to... destination folder
+    destAlbumId: null,          // destination album id
+    destFolderId: null,         // destination folder id
+    destFolderPath: null,       // destination folder path
+
     // albums
     albumId: null,              // selected album id
-    // albumName: null,            // selected album name
-    // albumPath: null,            // selected album path
     albumFolderId: null,        // selected folder id
-    albumFolderName: null,      // selected folder name
     albumFolderPath: null,      // selected folder path
 
     // calendar

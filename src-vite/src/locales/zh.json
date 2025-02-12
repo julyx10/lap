@@ -51,7 +51,19 @@
   "msgbox_new_folder_title": "新建文件夹",
   "msgbox_new_folder_content": "输入新文件夹的名称:",
   "msgbox_new_folder_ok": "创建",
-
+  "msgbox_delete_folder_title": "删除文件夹",
+  "msgbox_delete_folder_content": "文件夹 '{folder}' 及其所有内容将被删除。此操作无法撤销。",
+  "msgbox_delete_folder_ok": "删除",
+  "msgbox_move_to_title": "移动到",
+  "msgbox_move_to_content": "选择目标文件夹:",
+  "msgbox_move_to_ok": "移动",
+  "msgbox_copy_to_title": "复制到",
+  "msgbox_copy_to_content": "选择目标文件夹:",
+  "msgbox_copy_to_ok": "复制",
+  "msgbox_delete_file_title": "删除文件",
+  "msgbox_delete_file_content": "文件 '{file}' 将被删除。此操作无法撤销。",
+  "msgbox_delete_file_ok": "删除",
+  
   "search_placeholder": "搜索...",
 
   "files": "文件",
@@ -83,6 +95,7 @@
   "menu_item_copy_to": "复制到...",
   "menu_item_move_to": "移动到...",
   "menu_item_delete": "删除",
+  "menu_item_remove": "移除",
   "menu_item_new_folder": "新建文件夹",
   "menu_item_open_folder": "打开文件夹...",
   "menu_item_properties": "属性",

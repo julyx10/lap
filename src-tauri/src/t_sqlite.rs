@@ -890,6 +890,8 @@ pub fn create_db() -> Result<String> {
         )",
         [],
     )?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_albums_name ON albums(name)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_albums_path ON albums(path)", [])?;
 
     // album folders table
     conn.execute(
@@ -905,6 +907,9 @@ pub fn create_db() -> Result<String> {
         )",
         [],
     )?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_album_id ON afolders(album_id)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_name ON afolders(name)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_path ON afolders(path)", [])?;
 
     // album files table
     conn.execute(
@@ -938,6 +943,14 @@ pub fn create_db() -> Result<String> {
         )",
         [],
     )?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_name ON afiles(name)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_created_at ON afiles(created_at)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_modified_at ON afiles(modified_at)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_taken_date ON afiles(taken_date)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_is_favorite ON afiles(is_favorite)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_deleted_at ON afiles(deleted_at)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_make_model ON afiles(e_make, e_model)", [])?;
 
     // album thumbnail table
     conn.execute(
@@ -949,6 +962,7 @@ pub fn create_db() -> Result<String> {
         )",
         [],
     )?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_athumbs_file_id ON athumbs(file_id)", [])?;
 
     Ok("Database created successfully.".to_string())
 }

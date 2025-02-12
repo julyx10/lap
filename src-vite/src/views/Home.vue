@@ -82,15 +82,15 @@
    
 
 <script setup lang="ts">
-
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getCurrentWindow  } from '@tauri-apps/api/window';
 import { useConfigStore } from '@/stores/configStore';
 
 // vue components
 import TitleBar from '@/components/TitleBar.vue';
-import Album from '@/components/Albums.vue';
+import Album from '@/components/Album.vue';
 import Calendar from '@/components/Calendar.vue';
 import Camera from '@/components/Camera.vue';
 import Location from '@/components/Location.vue';
@@ -116,6 +116,8 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // config store
 const config = useConfigStore();
 
+const appWindow = getCurrentWebviewWindow()
+
 // toolbar 
 const toolbars = computed(() =>  [
   { icon: IconHome,     text: localeMsg.value.home },
@@ -133,6 +135,22 @@ const showLeftPane = ref(true);
 /// Splitter for resizing the left pane
 const divToolbar = ref(null);
 const isDraggingSplitter = ref(false);
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+  // isFullScreen.value = await appWindow.isMaximized();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+// Handle keydown event
+function handleKeyDown(event) {
+  if (event.key === 'Escape') {
+    appWindow.minimize();
+  }
+};
 
 const clickToolbarItem = (index) => {
   if(config.toolbarIndex === index) {
