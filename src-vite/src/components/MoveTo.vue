@@ -15,12 +15,14 @@
       </div>
 
       <!-- select album and folder -->
-      <SelectAlbum ref="selectAlbumRef" 
-        v-model:albumId="config.destAlbumId"
-        v-model:folderId="config.destFolderId"
-        v-model:folderPath="config.destFolderPath"
-        :componentId="1"
-      />
+      <div class="w-full max-h-96 overflow-auto" >
+        <SelectAlbum ref="selectAlbumRef" 
+          v-model:albumId="config.destAlbumId"
+          v-model:folderId="config.destFolderId"
+          v-model:folderPath="config.destFolderPath"
+          :componentId="1"
+        />
+      </div>
 
       <!-- action buttons -->
       <div class="flex justify-between mt-4">
@@ -54,10 +56,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useConfigStore } from '@/stores/configStore';
-
-import { ref, computed } from 'vue';
-// import { useI18n } from 'vue-i18n';
 
 import SelectAlbum from '@/components/SelectAlbum.vue';
 
@@ -83,18 +83,33 @@ const props = defineProps({
   },  
 });
 
-/// i18n
-// const { locale, messages } = useI18n();
-// const localeMsg = computed(() => messages.value[locale.value]);
-
 // config store
 const config = useConfigStore();
 
 const emit = defineEmits(['ok', 'cancel']);
 
-// const selectedAlbumId = ref(0);
-// const selectedFolderId = ref(0);
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
 
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+function handleKeyDown(event) {
+  switch (event.key) {
+    // case 'Enter':
+    //   event.preventDefault();
+    //   clickConfirm();
+    //   break;
+    case 'Escape':
+      event.preventDefault();
+      clickCancel();
+      break;
+    default:
+      break;
+  }
+}
 
 const clickNewFolder = () => {
   selectAlbumRef.value.clickNewFolder();

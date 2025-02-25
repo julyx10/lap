@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useConfigStore } from '@/stores/configStore';
 
 import SelectAlbum from '@/components/SelectAlbum.vue';
@@ -35,6 +36,8 @@ const props = defineProps({
 
 // config store
 const config = useConfigStore();
+
+const selectAlbumRef = ref<SelectAlbum | null>(null);
 
 /// Add albums
 const clickAdd = () => {

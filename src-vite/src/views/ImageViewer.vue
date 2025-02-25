@@ -15,7 +15,7 @@
     <!-- Toolbar -->
     <div id="responsiveDiv"
       :class="[
-        'absolute px-2 left-1/2 rounded-lg t-color-bg z-50 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
+        'absolute px-2 left-1/2 rounded-lg t-color-bg z-40 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
         config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 hover:translate-y-0 hover:opacity-50 transition-transform duration-300 ease-in-out' : '',
         config.isFullScreen && config.isPinned ? 'opacity-80 transition-transform duration-300 ease-in-out' : ''
       ]"
@@ -115,7 +115,12 @@
         
         <!-- show zoom scale -->
         <transition name="fade">
-          <div v-if="isScaleChanged" class="absolute left-1/2 top-12 px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg">
+          <div v-if="isScaleChanged" 
+            :class="[
+              'absolute left-1/2  px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg',
+              config.isFullScreen && config.isPinned ? 'top-12' : 'top-2'
+            ]"
+          >
             <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
           </div>
         </transition>
@@ -133,7 +138,6 @@
         <!-- image -->
         <!-- <template v-if="fileIndex >= 0"> -->
           <Image v-if="fileIndex >= 0" 
-            class="z-20"
             ref="imageRef" 
             :src="imageSrc" 
             :rotate="fileInfo?.rotate ?? 0" 
@@ -245,7 +249,7 @@ const fileInfo = ref(null);
 // const showFileInfo = ref(false); // Show the file info panel
 
 const imageRef = ref(null);     // Image reference
-const imageSrc = ref(null);
+const imageSrc = ref('');
 const imageCache = new Map();   // Cache images to prevent reloading
 const loadError = ref(false);   // Track if there was an error loading the image
 

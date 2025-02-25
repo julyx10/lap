@@ -112,7 +112,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { separator, THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate, getFolderPath } from '@/common/utils';
+import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate, getRelativePath, getFolderPath } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -286,8 +286,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async (
         if(config.albumFolderPath === album.path) { // current folder is root
           contentTitle.value = album.name;
         } else {
-          const relative_path = config.albumFolderPath.replace(album.path, '').split(separator).join(' > ');
-          contentTitle.value = album.name + relative_path;
+          contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
         };
 
         getFolderFiles();

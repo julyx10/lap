@@ -1,6 +1,6 @@
 <template>
     <!-- albums -->
-    <div v-if="albums.length > 0" class="flex-grow rounded-lg t-color-bg overflow-auto t-scrollbar-dark">
+    <div v-if="albums.length > 0" class="flex-grow t-color-bg overflow-auto t-scrollbar-dark">
 
       <!-- drag to change albums' display order -->
       <VueDraggable v-model="albums" :disabled="componentId === 1" @end="onDragEnd">
@@ -25,7 +25,7 @@
               'flex-1 min-w-0', 
               selectedAlbumId === album.id ? 'mask-fade-right' : ''
             ]">{{ album.name }}</span>
-            <DropDownMenu v-if="componentId === 1 === 0 && selectedAlbumId === album.id && selectedFolderId === album.folderId"
+            <DropDownMenu v-if="componentId === 0 && selectedAlbumId === album.id && selectedFolderId === album.folderId"
               class="t-color-bg-selected"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
@@ -53,7 +53,7 @@
     <MessageBox
       v-if="showRenameMsgbox"
       :title="$t('msgbox_rename_album_title')"
-      :message="`${$t('msgbox_rename_album_content', { album: getAlbumById(albumId).name })}`"
+      :message="$t('msgbox_rename_album_content')"
       :showInput="true"
       :inputText="getAlbumById(albumId).name"
       :OkText="$t('msgbox_rename_album_ok')"
@@ -66,7 +66,7 @@
     <MessageBox
       v-if="showNewFolderMsgbox"
       :title="$t('msgbox_new_folder_title')"
-      :message="`${$t('msgbox_new_folder_content', { album: getAlbumById(albumId).name })}`"
+      :message="$t('msgbox_new_folder_content')"
       :showInput="true"
       :inputText="''"
       :OkText="$t('msgbox_new_folder_ok')"
@@ -125,7 +125,7 @@ const props = defineProps({
     type: String,
     required: true
   },
-  componentId: {     // 0: album pane, 1: move to or copy to mode(select destination folder)
+  componentId: {     // 0: album pane, 1: move/copy to mode(select destination folder)
     type: Number,
     required: true
   }
@@ -334,6 +334,13 @@ const clickFolder = async (albumId, folder) => {
   }
 };
 
+// function scrollToItem(id) {
+//   const item = document.getElementById(`folder-${id}`);
+//   if (item) {
+//     item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+//   }
+// };
+
 /// expand folders along a given path
 const expandFolderPath = async (albumId, folder, path) => {
   const pathArray = path.split(separator).filter(Boolean); // Split and remove empty strings
@@ -355,6 +362,7 @@ const expandFolderPath = async (albumId, folder, path) => {
                 break;
               } else {  // last folder
                 clickFolder(albumId, child);
+                // scrollToItem(child.id);
               }
             }
           }

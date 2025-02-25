@@ -42,22 +42,25 @@ export function getFolderPath(filepath: string): string {
   return filepath.substring(0, lastSlashIndex);
 }
 
+export function getRelativePath(path: string, basePath: string): string {
+  return path.replace(basePath, '').split(separator).join(' > ');;
+}
+
 /// shorten a filename while preserving its extension
-export function shortenFilename(filename: string): string {
-  const maxLength = 16;
-  const extIndex = filename.lastIndexOf('.');
+export function shortenFilename(fileName: string, maxLength = 16): string {
+  const extIndex = fileName.lastIndexOf('.');
     
   // If no extension is found, return the shortened filename
   if (extIndex === -1) {
-      return filename.length > maxLength ? filename.substring(0, maxLength - 3) + '...' : filename;
+      return fileName.length > maxLength ? fileName.substring(0, maxLength - 3) + '...' : fileName;
   }
 
-  const name = filename.substring(0, extIndex);
-  const ext = filename.substring(extIndex);
+  const name = fileName.substring(0, extIndex);
+  const ext = fileName.substring(extIndex);
 
   // If the filename is within the limit, return it as is
-  if (filename.length <= maxLength) {
-      return filename;
+  if (fileName.length <= maxLength) {
+      return fileName;
   }
 
   // Shorten the name part and keep the extension

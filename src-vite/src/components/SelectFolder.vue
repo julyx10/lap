@@ -1,12 +1,13 @@
 <template>
   
   <ul v-if="children && children.length > 0">
-    <li v-for="child in children" :key="child.id" class="pl-4">
+    <li v-for="(child, index) in children" :key="index" :id="'folder-' + index" class="pl-4">
       <div 
         :class="[
           'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
+        @update="scrollToItem(index)"
         @click="clickFolder(rootAlbumId, child)"
         @dblclick="clickExpandFolder($event, child)"
       >
@@ -21,7 +22,7 @@
         <span 
           :class="[
             'flex-1 min-w-0', 
-            selectedFolderId === child.id ? 'mask-fade-right' : ''
+            componentId === 0 && selectedFolderId === child.id ? 'mask-fade-right' : ''
           ]"
         >{{ child.name }}</span>
         <DropDownMenu v-if="componentId === 0 && selectedFolderId === child.id"
@@ -46,9 +47,9 @@
   <MessageBox
     v-if="showRenameMsgbox"
     :title="$t('msgbox_rename_folder_title')"
-    :message="`${$t('msgbox_rename_folder_content', { album: 'est' })}`"
+    :message="$t('msgbox_rename_folder_content')"
     :showInput="true"
-    :inputText="''"
+    :inputText="getFolderById(selectedFolderId).name"
     :OkText="$t('msgbox_rename_folder_ok')"
     :cancelText="$t('msgbox_cancel')"
     @ok="clickRenameConfirm"
@@ -58,7 +59,7 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="$t('msgbox_move_to_title')"
+    :title="`${$t('msgbox_move_to_title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
     :message="$t('msgbox_move_to_content')"
     :OkText="$t('msgbox_move_to_ok')"
     :cancelText="$t('msgbox_cancel')"
@@ -69,7 +70,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="$t('msgbox_copy_to_title')"
+    :title="`${$t('msgbox_copy_to_title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
     :message="$t('msgbox_copy_to_content')"
     :OkText="$t('msgbox_copy_to_ok')"
     :cancelText="$t('msgbox_cancel')"
@@ -105,10 +106,10 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { openShellFolder } from '@/common/utils';
+import { openShellFolder, shortenFilename } from '@/common/utils';
 import { addFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
@@ -148,7 +149,7 @@ const props = defineProps({
     type: String, 
     required: true,
   },
-  componentId: {  // 0: album pane, 1: move to or copy to mode(select destination folder)
+  componentId: {  // 0: album pane, 1: move/copy to mode(select destination folder)
     type: Number,
     default: false,
   }
@@ -169,6 +170,8 @@ const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showNewFolderMsgbox = ref(false);
 const showDeleteMsgbox = ref(false);
+
+const getFolderById = (id) => props.children.find(child => child.id === id);
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -231,6 +234,11 @@ const moreMenuItems = computed(() => {
     }
   ];
 });
+
+onMounted(() => {
+  // scrollToItem(selectedFolderId.value);
+});
+
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
   selectedAlbumId.value = newAlbumId;
@@ -305,6 +313,14 @@ const clickDeleteConfirm = async () => {
     showDeleteMsgbox.value = false;
   } catch (error) {
     console.error('Failed to delete folder:', error);
+  }
+};
+
+// make the selected item always visible in a scrollable container
+function scrollToItem(index) {
+  const item = document.getElementById(`folder-${index}`);
+  if (item) {
+    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 };
 

@@ -147,9 +147,9 @@ onUnmounted(() => {
 
 // Handle keydown event
 function handleKeyDown(event) {
-  if (event.key === 'Escape') {
-    appWindow.minimize();
-  }
+  // if (event.key === 'Escape') {
+  //   appWindow.minimize();
+  // }
 };
 
 const clickToolbarItem = (index) => {
