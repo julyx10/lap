@@ -1,12 +1,12 @@
 <template>
     
   <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
-    <div class="w-96 p-4 t-color-bg-light rounded shadow-lg">
+    <div class="w-1/2 min-h-96 max-h-full p-4 flex flex-col t-color-bg-light rounded-lg shadow-lg overflow-auto t-scrollbar">
 
       <!-- titlebar -->
       <div class="mb-2 flex items-center justify-between">
-        {{ title }}
-        <IconCancel class="t-icon-size-sm t-icon-hover" @click="clickCancel" />
+        {{ title }} {{ config.destFolderPath? '\'' + config.destFolderPath + '\'' : '' }}
+        <IconCancel class="ml-2 t-icon-size-sm t-icon-hover" @click="clickCancel" />
       </div>
 
       <!-- message -->
@@ -15,21 +15,19 @@
       </div>
 
       <!-- select album and folder -->
-      <div class="w-full max-h-96 overflow-auto" >
-        <SelectAlbum ref="selectAlbumRef" 
-          v-model:albumId="config.destAlbumId"
-          v-model:folderId="config.destFolderId"
-          v-model:folderPath="config.destFolderPath"
-          :componentId="1"
-        />
-      </div>
+      <SelectAlbum ref="selectAlbumRef" 
+        v-model:albumId="config.destAlbumId"
+        v-model:folderId="config.destFolderId"
+        v-model:folderPath="config.destFolderPath"
+        :componentId="1"
+      />
 
       <!-- action buttons -->
-      <div class="flex justify-between mt-4">
+      <div class="mt-4 flex justify-between space-x-4">
         <button v-if="cancelText.length > 0" 
           :class="[
             'mr-auto px-4 py-1 rounded-full t-color-bg-light text-nowrap',
-            config.destAlbumId > 0 ? 't-color-bg-hover t-icon-hover' : 't-icon-disabled'
+            config.destAlbumId > 0 ? 't-color-bg-highlight-hover t-icon-hover' : 't-icon-disabled'
           ]"
           @click="clickNewFolder"
         >{{$t('msgbox_new_folder_title')}}</button>
@@ -42,7 +40,7 @@
         <button 
           :class="[
             'px-4 py-1 rounded-full t-color-bg-light text-nowrap', 
-            config.destAlbumId > 0 ? 't-color-bg-hover t-icon-hover' : 't-icon-disabled'
+            config.destAlbumId > 0 ? 't-color-bg-highlight-hover t-icon-hover' : 't-icon-disabled'
           ]" 
           @click="clickOk"
         >{{ OkText }}</button>
@@ -56,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { useConfigStore } from '@/stores/configStore';
 
 import SelectAlbum from '@/components/SelectAlbum.vue';

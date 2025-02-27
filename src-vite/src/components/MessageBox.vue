@@ -28,7 +28,7 @@
         </button>
         <button 
           :class="['px-4 py-1 rounded-full t-color-bg-light', 
-            !showInput || inputValue.trim().length > 0 ? 't-color-bg-hover t-icon-hover' : 't-icon-disabled'
+            okButtonClasses
           ]" 
           @click="clickOk"
         >
@@ -58,7 +58,7 @@ const props = defineProps({
     type: String, 
     required: true 
   },
-  showInput: { 
+  showInput: {      // show input text box or not
     type: Boolean, 
     default: false 
   },
@@ -74,6 +74,10 @@ const props = defineProps({
     type: String, 
     default: 'Cancel' 
   },
+  warningOk: {        // show warning color for OK button
+    type: Boolean, 
+    default: false 
+  },
 });
 
 const { locale, messages } = useI18n();
@@ -85,6 +89,12 @@ const emit = defineEmits(['ok', 'cancel']);
 const inputRef = ref(null);
 const inputValue = ref(props.inputText);
 const errorMessage = ref('');
+
+const okButtonClasses = computed(() => {
+  return !props.showInput || inputValue.value.trim().length > 0
+    ? (props.warningOk ? 't-color-bg-warning-hover t-icon-hover' : 't-color-bg-highlight-hover t-icon-hover')
+    : 't-icon-disabled';
+});
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);

@@ -82,6 +82,7 @@
       :message="`${$t('msgbox_remove_album_content', { album: getAlbumById(albumId).name })}`"
       :OkText="$t('msgbox_remove_album_ok')"
       :cancelText="$t('msgbox_cancel')"
+      :warningOk="true"
       @ok="clickRemoveAlbum"
       @cancel="showRemoveMsgbox = false"
     />

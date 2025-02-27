@@ -49,7 +49,12 @@
 .t-color-bg-hover {
   @apply hover:bg-gray-700;
 }
-
+.t-color-bg-warning-hover {
+  @apply hover:bg-red-700;
+}
+.t-color-bg-highlight-hover {
+  @apply hover:bg-sky-700;
+}
 .t-color-bg-selected {
   @apply bg-gray-700;
 }

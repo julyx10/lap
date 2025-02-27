@@ -95,9 +95,10 @@
   <MessageBox
     v-if="showDeleteMsgbox"
     :title="$t('msgbox_delete_folder_title')"
-    :message="`${$t('msgbox_delete_folder_content', { folder: 'est' })}`"
+    :message="`${$t('msgbox_delete_folder_content', { folder: getFolderById(selectedFolderId).name })}`"
     :OkText="$t('msgbox_delete_folder_ok')"
     :cancelText="$t('msgbox_cancel')"
+    :warningOk="true"
     @ok="clickDeleteConfirm"
     @cancel="showDeleteMsgbox = false"
   />
