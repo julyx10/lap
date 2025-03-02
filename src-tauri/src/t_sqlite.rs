@@ -261,32 +261,42 @@ impl AFolder {
     }
 
     /// recurse all parent folder id (deprecated)
-    pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
+    // pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
+    //     let conn = open_conn();
+
+    //     let mut stmt = conn
+    //         .prepare(
+    //             "WITH RECURSIVE parent_hierarchy AS (
+    //             SELECT parent_id
+    //             FROM afolders
+    //             WHERE id = ?1
+    //             UNION ALL
+    //             SELECT f.parent_id
+    //             FROM afolders f
+    //             INNER JOIN parent_hierarchy ph ON f.id = ph.parent_id
+    //             WHERE f.parent_id != 0
+    //         )
+    //         SELECT parent_id FROM parent_hierarchy;",
+    //         )
+    //         .map_err(|e| e.to_string())?;
+
+    //     let parent_ids = stmt
+    //         .query_map(params![folder_id], |row| row.get(0))
+    //         .map_err(|e| e.to_string())?
+    //         .collect::<Result<Vec<i64>, _>>()
+    //         .map_err(|e| e.to_string())?;
+
+    //     Ok(parent_ids)
+    // }
+
+    /// update a column value
+    pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
         let conn = open_conn();
-
-        let mut stmt = conn
-            .prepare(
-                "WITH RECURSIVE parent_hierarchy AS (
-                SELECT parent_id
-                FROM afolders
-                WHERE id = ?1
-                UNION ALL
-                SELECT f.parent_id
-                FROM afolders f
-                INNER JOIN parent_hierarchy ph ON f.id = ph.parent_id
-                WHERE f.parent_id != 0
-            )
-            SELECT parent_id FROM parent_hierarchy;",
-            )
+        let query = format!("UPDATE afolders SET {} = ?1 WHERE id = ?2", column);
+        let result = conn
+            .execute(&query, params![value, id])
             .map_err(|e| e.to_string())?;
-
-        let parent_ids = stmt
-            .query_map(params![folder_id], |row| row.get(0))
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<i64>, _>>()
-            .map_err(|e| e.to_string())?;
-
-        Ok(parent_ids)
+        Ok(result)
     }
 
 }

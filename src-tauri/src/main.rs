@@ -74,10 +74,16 @@ fn main() {
             t_cmds::rename_album,
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
-            t_cmds::get_folder_parents,
-            t_cmds::add_folder,
+
+            t_cmds::create_folder,
+            t_cmds::rename_folder,
+            // t_cmds::delete_folder,
+
+            // t_cmds::get_folder_parents,
+            t_cmds::select_folder,
             t_cmds::expand_folder,
             t_cmds::get_folder_files,
+
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,
             t_cmds::get_file_image,

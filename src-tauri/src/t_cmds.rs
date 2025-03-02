@@ -76,16 +76,47 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
         .map_err(|e| format!("Error while setting album display order: {}", e))
 }
 
-// get all parent folders of a folder
+/// create a new folder
 #[tauri::command]
-pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {
-    AFolder::recurse_all_parents_id(folder_id)
-        .map_err(|e| format!("Error while recursing all parent folders from DB: {}", e))
+pub fn create_folder(path: &str, folder_name: &str) -> Option<String> {
+    let folder_path = t_utils::get_file_path(path, folder_name);
+    return t_utils::create_new_folder(&folder_path);
 }
 
-// click a sub-folder under an album
+/// rename a folder
 #[tauri::command]
-pub fn add_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
+pub fn rename_folder(id: i64, name: &str) -> Result<usize, String> {
+    AFolder::update_column(id, "name", &name).map_err(|e| {
+        format!(
+            "Error while renaming folder with id {}: {}",
+            id,
+            e.to_string()
+        )
+    })
+}
+
+/// delete a folder
+// #[tauri::command]
+// pub fn delete_folder(id: i64) -> Result<usize, String> {
+//     AFolder::delete_from_db(id).map_err(|e| {
+//         format!(
+//             "Error while deleting folder with id {}: {}",
+//             id,
+//             e.to_string()
+//         )
+//     })
+// }
+
+// get all parent folders of a folder
+// #[tauri::command]
+// pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {
+//     AFolder::recurse_all_parents_id(folder_id)
+//         .map_err(|e| format!("Error while recursing all parent folders from DB: {}", e))
+// }
+
+// click to select a sub-folder under an album
+#[tauri::command]
+pub fn select_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
     AFolder::add_to_db(album_id, parent_id, folder_path)
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }

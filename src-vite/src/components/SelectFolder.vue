@@ -4,7 +4,7 @@
     <li v-for="(child, index) in children" :key="index" :id="'folder-' + index" class="pl-4">
       <div 
         :class="[
-          'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer', 
+          'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @update="scrollToItem(index)"
@@ -25,8 +25,9 @@
             componentId === 0 && selectedFolderId === child.id ? 'mask-fade-right' : ''
           ]"
         >{{ child.name }}</span>
-        <DropDownMenu v-if="componentId === 0 && selectedFolderId === child.id"
-          class="t-color-bg-selected"
+        <!-- <DropDownMenu v-if="componentId === 0 && selectedFolderId === child.id" -->
+        <DropDownMenu v-if="componentId === 0"
+          class="hidden group-hover:block t-color-bg-selected"
           :iconMenu="IconMore"
           :menuItems="moreMenuItems"
         />
@@ -111,7 +112,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { openShellFolder, shortenFilename } from '@/common/utils';
-import { addFolder, expandFolder } from '@/common/api';
+import { selectFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -250,14 +251,14 @@ watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
   console.log('SelectFolder.vue-clickFolder:', albumId, folder);
-  const newFolder = await addFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
-  if (newFolder) {
+  const selectedFolder = await selectFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
+  if (selectedFolder) {
     selectedAlbumId.value = albumId;
-    selectedFolderId.value = newFolder.id;
-    selectedFolderPath.value = newFolder.path;
+    selectedFolderId.value = selectedFolder.id;
+    selectedFolderPath.value = selectedFolder.path;
 
     // insert new property 'id' to folder object
-    folder.id = newFolder.id;
+    folder.id = selectedFolder.id;
     
     emit('message-from-select-folder', { 
       albumId: selectedAlbumId.value, 

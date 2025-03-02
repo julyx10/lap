@@ -207,6 +207,27 @@ pub fn is_music_extension(extension: &str) -> bool {
     }
 }
 
+/// create a new folder at a given path
+pub fn create_new_folder(folder_path: &str) -> Option<String> {
+    let path = Path::new(folder_path);
+
+    if path.exists() {
+        return None;
+    }
+
+    match fs::create_dir_all(path) {
+        Ok(_) => {
+            println!("Folder created successfully: {}", folder_path);
+            let folder_name = path.to_string_lossy().into_owned();
+            Some(folder_name)
+        },
+        Err(e) => {
+            println!("Failed to create folder '{}': {}", folder_path, e);
+            return None;
+        }
+    }
+}
+
 /// Get the name from a folder or file path
 pub fn get_file_name(path: &str) -> String {
     let path = Path::new(path);

@@ -3,11 +3,11 @@
     <div v-if="albums.length > 0" class="flex-grow t-color-bg overflow-auto t-scrollbar-dark">
 
       <!-- drag to change albums' display order -->
-      <VueDraggable v-model="albums" :disabled="componentId === 1" @end="onDragEnd">
+      <VueDraggable v-model="albums" :disabled="componentId === 1" :handle="'.drag-handle'" @end="onDragEnd">
         <div v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'my-1 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer', 
+              'my-1 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer group drag-handle', 
               { 
                 't-color-text-selected': selectedAlbumId === album.id, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300': selectedAlbumId === album.id && selectedFolderId === album.folderId
@@ -25,8 +25,9 @@
               'flex-1 min-w-0', 
               selectedAlbumId === album.id ? 'mask-fade-right' : ''
             ]">{{ album.name }}</span>
-            <DropDownMenu v-if="componentId === 0 && selectedAlbumId === album.id && selectedFolderId === album.folderId"
-              class="t-color-bg-selected"
+            <!-- <DropDownMenu v-if="componentId === 0 && selectedAlbumId === album.id && selectedFolderId === album.folderId" -->
+            <DropDownMenu v-if="componentId === 0"
+              class="hidden group-hover:block t-color-bg-selected"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
             />
@@ -95,8 +96,8 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
-import { separator, createFolder, openShellFolder } from '@/common/utils';
-import { getAllAlbums, setDisplayOrder, addAlbum, renameAlbum, removeAlbum, addFolder, expandFolder } from '@/common/api';
+import { separator, openShellFolder } from '@/common/utils';
+import { getAllAlbums, setDisplayOrder, addAlbum, renameAlbum, removeAlbum, createFolder, renameFolder, selectFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -284,12 +285,12 @@ const clickRemoveAlbum = async () => {
 
 /// click a album to select it
 const clickAlbum = async (album) => {
-  const newFolder = await addFolder(album.id, 0, album.path); // parentId: 0 is root folder(album)
-  if(newFolder) {
+  const selectedFolder = await selectFolder(album.id, 0, album.path); // parentId: 0 is root folder(album)
+  if(selectedFolder) {
     // insert a new property(album.folderId) 
-    album.folderId = newFolder.id;
+    album.folderId = selectedFolder.id;
 
-    emitSelectedFolder(album.id, newFolder.id, newFolder.path);
+    emitSelectedFolder(album.id, selectedFolder.id, selectedFolder.path);
   }
 };
 
@@ -312,24 +313,26 @@ const clickExpandAlbum = async (album) => {
 
 /// Create new folder
 const clickNewFolder = async (value) => {
-  const fullpath = await createFolder(selectedFolderPath.value, value)
-  if(fullpath) {
+  console.log('SelectAlbum.vue-clickNewFolder:', selectedFolderPath.value, value);
+  const newFolderPath = await createFolder(selectedFolderPath.value, value);
+  console.log('SelectAlbum.vue-newFolderPath:', newFolderPath);
+  if(newFolderPath) {
     let album = getAlbumById(selectedAlbumId.value);
-    album.children.push({ name: value, path: fullpath });
+    album.children.push({ name: value, path: newFolderPath });
     showNewFolderMsgbox.value = false;
   }
 };
 
-/// click folder to add to db
+/// click folder to select
 const clickFolder = async (albumId, folder) => {
   console.log('SelectAlbum.vue-clickFolder:', albumId, folder);
-  const newFolder = await addFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
-  if(newFolder) {
+  const selectedFolder = await selectFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
+  if(selectedFolder) {
     selectedAlbumId.value = albumId;
-    selectedFolderId.value = newFolder.id;
-    selectedFolderPath.value = newFolder.path;
+    selectedFolderId.value = selectedFolder.id;
+    selectedFolderPath.value = selectedFolder.path;
     // insert new property 'id' to folder object
-    folder.id = newFolder.id;
+    folder.id = selectedFolder.id;
 
     emitSelectedFolder(selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.value);
   }

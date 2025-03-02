@@ -98,16 +98,30 @@ export async function setDisplayOrder(albumId, order) {
   return null;
 }
 
-// add folder
-export async function addFolder(albumId, parentId, folderPath) {
+// create a folder
+export async function createFolder(path, folderName) {
   try {
-    const newFolder = await invoke('add_folder', { albumId, parentId, folderPath });
-    console.log('add_folder', newFolder);
+    const newFolder = await invoke('create_folder', { path, folderName });
+    console.log('create_folder', newFolder);
     if(newFolder) {
       return newFolder;
     };
   } catch (error) {
-    console.log('Failed to add folder:', error);
+    console.log('Failed to create folder:', error);
+  }
+  return null;
+}
+
+// select a folder
+export async function selectFolder(albumId, parentId, folderPath) {
+  try {
+    const selectedFolder = await invoke('select_folder', { albumId, parentId, folderPath });
+    console.log('select_folder', selectedFolder);
+    if(selectedFolder) {
+      return selectedFolder;
+    };
+  } catch (error) {
+    console.log('Failed to select folder:', error);
   }
   return null;
 }

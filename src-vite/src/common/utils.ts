@@ -91,17 +91,17 @@ export async function openFolderDialog() {
 }
 
 // Function to create a folder
-export async function createFolder(path, name) {
-  try {
-    const fullPath = getFullPath(path, name);
-    await mkdir(fullPath, { recursive: true });
-    console.log('Create folder:', fullPath);
-    return fullPath;
-  } catch (error) {
-    console.error('Failed to create folder:', error);
-  }
-  return null;
-}
+// export async function createFolder(path, name) {
+//   try {
+//     const fullPath = getFullPath(path, name);
+//     await mkdir(fullPath, { recursive: true });
+//     console.log('Create folder:', fullPath);
+//     return fullPath;
+//   } catch (error) {
+//     console.error('Failed to create folder:', error);
+//   }
+//   return null;
+// }
 
 // Function to open the shell folder
 export async function openShellFolder(path) {
