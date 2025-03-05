@@ -88,7 +88,7 @@
     :inputText="''"
     :OkText="$t('msgbox_new_folder_ok')"
     :cancelText="$t('msgbox_cancel')"
-    @ok="clickNewFolderConfirm"
+    @ok="clickNewFolder"
     @cancel="showNewFolderMsgbox = false"
   />
 
@@ -112,7 +112,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { openShellFolder, shortenFilename } from '@/common/utils';
-import { selectFolder, expandFolder } from '@/common/api';
+import { createFolder, renameFolder, selectFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -270,10 +270,10 @@ const clickFolder = async (albumId, folder) => {
 };
 
 /// click expand icon to toggle folder expansion
-const clickExpandFolder = async (event: Event, folder) => {
+const clickExpandFolder = async (event: Event, folder, alwaysExpand = false) => {
   event.stopPropagation();    // Prevents clickFolder() from being triggered
 
-  folder.is_expanded = !folder.is_expanded;
+  folder.is_expanded = alwaysExpand ? alwaysExpand : !folder.is_expanded;
 
   if (folder.is_expanded && !folder.children) {
     const subFolders = await expandFolder(folder.path, false);
@@ -285,10 +285,12 @@ const clickExpandFolder = async (event: Event, folder) => {
 
 /// Rename an album
 const clickRenameConfirm = async (value) => {
-  try {
+  const renamedFolder = await renameFolder(selectedFolderPath.value, value);
+  console.log('SelectFolder.vue-clickRenameConfirm:', selectedFolderPath.value, renamedFolder);
+  if(renamedFolder) {
+    let folder = getFolderById(selectedFolderId.value);
+    folder.name = value;
     showRenameMsgbox.value = false;
-  } catch (error) {
-    console.error('Failed to rename folder:', error);
   }
 };
 
@@ -301,11 +303,16 @@ const clickCopyToConfirm = async (value) => {
 };
 
 /// Create new folder
-const clickNewFolderConfirm = async (value) => {
-  try {
+const clickNewFolder = async (value) => {
+  const newFolderPath = await createFolder(selectedFolderPath.value, value);
+  if(newFolderPath) {
+    let folder = getFolderById(selectedFolderId.value);
+    if (!folder.children) folder.children = [];
+    folder.children.push({ name: value, path: newFolderPath });
     showNewFolderMsgbox.value = false;
-  } catch (error) {
-    console.error('Failed to create new folder:', error);
+
+    await clickExpandFolder(new Event('click'), folder, true);
+    clickFolder(selectedAlbumId.value, folder.children[folder.children.length - 1]);
   }
 };
 

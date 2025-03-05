@@ -112,6 +112,20 @@ export async function createFolder(path, folderName) {
   return null;
 }
 
+// remove a folder
+export async function renameFolder(folderPath, newFolderName) {
+  try {
+    const renamedFolder = await invoke('rename_folder', { folderPath, newFolderName });
+    console.log('rename_folder', renamedFolder);
+    if(renamedFolder) {
+      return renamedFolder;
+    };
+  } catch (error) {
+    console.log('Failed to rename folder:', error);
+  }
+  return null;
+}
+
 // select a folder
 export async function selectFolder(albumId, parentId, folderPath) {
   try {

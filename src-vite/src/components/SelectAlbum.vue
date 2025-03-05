@@ -158,7 +158,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_refresh,
       icon: IconRefresh,
       action: () => {
-        dlbClickAlbum(getAlbumById(selectedAlbumId.value));
+        dlbClickAlbum(getAlbumById(selectedAlbumId.value), true);
       }
     },
     {
@@ -294,14 +294,14 @@ const clickAlbum = async (album) => {
   }
 };
 
-const dlbClickAlbum = async (album) => {
+const dlbClickAlbum = async (album, alwaysExpand = false) => {
   clickAlbum(album);
-  clickExpandAlbum(album);
+  clickExpandAlbum(album, alwaysExpand);
 };
 
 /// click album icon to expand or collapse next level folders
-const clickExpandAlbum = async (album) => {
-  album.is_expanded = !album.is_expanded; 
+const clickExpandAlbum = async (album, alwaysExpand = false) => {
+  album.is_expanded = alwaysExpand ? alwaysExpand : !album.is_expanded; 
   
   if (album.is_expanded && !album.children) {
     const subFolders = await expandFolder(album.path, false);
@@ -313,13 +313,15 @@ const clickExpandAlbum = async (album) => {
 
 /// Create new folder
 const clickNewFolder = async (value) => {
-  console.log('SelectAlbum.vue-clickNewFolder:', selectedFolderPath.value, value);
   const newFolderPath = await createFolder(selectedFolderPath.value, value);
-  console.log('SelectAlbum.vue-newFolderPath:', newFolderPath);
   if(newFolderPath) {
     let album = getAlbumById(selectedAlbumId.value);
+    if(!album.children) album.children = [];
     album.children.push({ name: value, path: newFolderPath });
     showNewFolderMsgbox.value = false;
+
+    await clickExpandAlbum(album, true);
+    clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
   }
 };
 

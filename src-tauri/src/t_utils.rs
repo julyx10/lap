@@ -228,6 +228,44 @@ pub fn create_new_folder(folder_path: &str) -> Option<String> {
     }
 }
 
+/// Renames a folder 
+pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String> {
+    let path = Path::new(folder_path);
+
+    // Check if the folder exists
+    if !path.exists() {
+        eprintln!("Folder does not exist: {}", folder_path);
+        return None;
+    }
+
+    // Construct the new folder path
+    let mut new_folder_path = PathBuf::from(path);
+    new_folder_path.set_file_name(new_folder_name);
+
+    // Check if the new folder name already exists
+    if new_folder_path.exists() {
+        eprintln!(
+            "A file or folder with the name '{}' already exists at: {}",
+            new_folder_name,
+            new_folder_path.display()
+        );
+        return None;
+    }
+
+    // Attempt to rename the folder
+    match fs::rename(path, &new_folder_path) {
+        Ok(_) => {
+            let new_path_str = new_folder_path.to_string_lossy().into_owned();
+            println!("Folder renamed successfully: {}", new_path_str);
+            Some(new_path_str)
+        }
+        Err(e) => {
+            eprintln!("Failed to rename folder '{}': {}", folder_path, e);
+            None
+        }
+    }
+}
+
 /// Get the name from a folder or file path
 pub fn get_file_name(path: &str) -> String {
     let path = Path::new(path);

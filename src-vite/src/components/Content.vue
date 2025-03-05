@@ -15,7 +15,7 @@
       <div class="h-6 flex flex-row items-center space-x-4">
         <button
           :class="[
-            'px-2 py-1 flex flex-row items-center rounded-md border t-color-border  text-sm',
+            'px-2 py-1 flex flex-row items-center rounded-md border t-color-border t-color-text-hover text-sm',
           ]"
           @click="handleSelectMode(true)"
         >

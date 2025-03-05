@@ -98,6 +98,7 @@ const okButtonClasses = computed(() => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  // window.addEventListener('keyup', handleKeyDown);
   if(inputRef.value) {
     inputRef.value.focus();
   }
@@ -105,7 +106,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  // window.removeEventListener('keyup', handleKeyDown);
 });
+
 
 const validateInput = () => {
   if (!isValidFileName(inputValue.value)) {
@@ -116,13 +119,14 @@ const validateInput = () => {
 };
 
 function handleKeyDown(event) {
+  event.stopPropagation();
+  // event.preventDefault();
+
   switch (event.key) {
-    // case 'Enter':
-    //   event.preventDefault();
-    //   clickConfirm();
-    //   break;
+    case 'Enter':
+      clickOk();
+      break;
     case 'Escape':
-      event.preventDefault();
       clickCancel();
       break;
     default:

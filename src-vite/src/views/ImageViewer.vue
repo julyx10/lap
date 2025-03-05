@@ -606,7 +606,7 @@ function handleKeyDown(event) {
       clickRotate();
       break;
     case 'i':
-    case 'Enter':
+    // case 'Enter':
       clickShowFileInfo();
       break;
     case ' ':

@@ -230,7 +230,7 @@ impl AFolder {
         let result = conn
             .execute(
                 "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
                 params![
                     self.album_id,
                     self.parent_id,
@@ -260,7 +260,20 @@ impl AFolder {
         Ok(new_folder.unwrap())
     }
 
-    /// recurse all parent folder id (deprecated)
+    /// rename a folder
+    pub fn rename_folder(old_path: &str, new_path: &str) -> Result<usize, String> {
+        let conn = open_conn();
+        let result = conn
+            .execute(
+                "UPDATE afolders
+                SET path = CONCAT(?2, SUBSTRING(path, LENGTH(?1) + 1))
+                WHERE path LIKE ?1 || '%'", 
+                params![old_path, new_path],
+            ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    // recurse all parent folder id (deprecated)
     // pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
     //     let conn = open_conn();
 
@@ -289,15 +302,15 @@ impl AFolder {
     //     Ok(parent_ids)
     // }
 
-    /// update a column value
-    pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
-        let conn = open_conn();
-        let query = format!("UPDATE afolders SET {} = ?1 WHERE id = ?2", column);
-        let result = conn
-            .execute(&query, params![value, id])
-            .map_err(|e| e.to_string())?;
-        Ok(result)
-    }
+    // update a column value
+    // pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
+    //     let conn = open_conn();
+    //     let query = format!("UPDATE afolders SET {} = ?1 WHERE id = ?2", column);
+    //     let result = conn
+    //         .execute(&query, params![value, id])
+    //         .map_err(|e| e.to_string())?;
+    //     Ok(result)
+    // }
 
 }
 

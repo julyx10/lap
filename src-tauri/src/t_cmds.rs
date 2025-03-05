@@ -85,14 +85,19 @@ pub fn create_folder(path: &str, folder_name: &str) -> Option<String> {
 
 /// rename a folder
 #[tauri::command]
-pub fn rename_folder(id: i64, name: &str) -> Result<usize, String> {
-    AFolder::update_column(id, "name", &name).map_err(|e| {
-        format!(
-            "Error while renaming folder with id {}: {}",
-            id,
-            e.to_string()
-        )
-    })
+pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String> {
+    let new_folder_path = t_utils::rename_folder(folder_path, new_folder_name);
+
+    match new_folder_path {
+        Some(new_path) => {
+            if let Err(e) = AFolder::rename_folder(folder_path, &new_path) {
+                eprintln!("Error while renaming folder: {}", e);
+                return None;
+            }
+            Some(new_path)
+        }
+        None => None,
+    }
 }
 
 /// delete a folder
