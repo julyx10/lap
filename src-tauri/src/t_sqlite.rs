@@ -1,7 +1,3 @@
-use base64::{engine::general_purpose, Engine};
-use exif::Tag;
-use rusqlite::{params, Connection, OptionalExtension, Result};
-use serde::{Deserialize, Serialize};
 /**
  * project: jc-photo
  * author:  julyxx
@@ -12,6 +8,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use dirs;
+use base64::{engine::general_purpose, Engine};
+use exif::Tag;
+use rusqlite::{params, Connection, OptionalExtension, Result};
+use serde::{Deserialize, Serialize};
 
 use crate::t_utils;
 // use crate::t_opencv;
@@ -883,9 +883,31 @@ fn open_conn() -> Connection {
 
     // Construct the path for main.db
     let db_path = app_data_dir.join("main.db");
-    Connection::open(db_path)
+    let conn = Connection::open(db_path)
         .map_err(|e| e.to_string())
-        .unwrap()
+        .unwrap();
+
+    // Enable WAL mode for better concurrency
+    // conn.pragma_update(None, "journal_mode", "WAL")
+    //     .expect("Failed to enable WAL mode");
+
+    // Set cache size to 20MB (adjust as needed)
+    // conn.pragma_update(None, "cache_size", -20000)
+    //     .expect("Failed to set cache size");
+
+    // Set synchronous mode to NORMAL for better performance
+    // conn.pragma_update(None, "synchronous", "NORMAL")
+    //     .expect("Failed to set synchronous mode");
+
+    // Set page size to 4096 bytes (adjust as needed)
+    // conn.pragma_update(None, "page_size", 4096)
+    //     .expect("Failed to set page size");
+
+    // Enable foreign key support (optional)
+    // conn.pragma_update(None, "foreign_keys", "ON")
+    //     .expect("Failed to enable foreign keys");
+
+    conn
 }
 
 /// close connection to the db

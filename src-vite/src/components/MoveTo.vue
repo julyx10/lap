@@ -5,7 +5,8 @@
 
       <!-- titlebar -->
       <div class="mb-2 flex items-center justify-between">
-        {{ title }} {{ config.destFolderPath? '\'' + config.destFolderPath + '\'' : '' }}
+        {{ title }}
+        <!-- {{ title }} {{ config.destFolderPath? '\'' + config.destFolderPath + '\'' : '' }} -->
         <IconCancel class="ml-2 t-icon-size-sm t-icon-hover" @click="clickCancel" />
       </div>
 

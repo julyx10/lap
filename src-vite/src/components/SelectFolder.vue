@@ -44,7 +44,7 @@
     </li>
   </ul>
 
-  <!-- rename album -->
+  <!-- rename folder -->
   <MessageBox
     v-if="showRenameMsgbox"
     :title="$t('msgbox_rename_folder_title')"
@@ -53,7 +53,7 @@
     :inputText="getFolderById(selectedFolderId).name"
     :OkText="$t('msgbox_rename_folder_ok')"
     :cancelText="$t('msgbox_cancel')"
-    @ok="clickRenameConfirm"
+    @ok="clickRenameFolder"
     @cancel="showRenameMsgbox = false"
   />
 
@@ -178,10 +178,17 @@ const getFolderById = (id) => props.children.find(child => child.id === id);
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
+    // {
+    //   label: localeMsg.value.menu_item_refresh,
+    //   icon: IconRefresh,
+    //   action: () => {
+    //   }
+    // },
     {
-      label: localeMsg.value.menu_item_refresh,
-      icon: IconRefresh,
+      label: localeMsg.value.menu_item_new_folder,
+      icon: IconNewFolder,
       action: () => {
+        showNewFolderMsgbox.value = true;
       }
     },
     {
@@ -189,6 +196,13 @@ const moreMenuItems = computed(() => {
       icon: IconRename,
       action: () => {
         showRenameMsgbox.value = true;
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      action: () => {
+        showDeleteMsgbox.value = true;
       }
     },
     {
@@ -210,28 +224,14 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_new_folder,
-      icon: IconNewFolder,
-      action: () => {
-        showNewFolderMsgbox.value = true;
-      }
+      label: "-",   // separator
+      action: null
     },
     {
       label: localeMsg.value.menu_item_open_folder,
       icon: IconOpenFolder,
       action: () => {
         openShellFolder(selectedFolderPath.value);
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },    
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      action: () => {
-        showDeleteMsgbox.value = true;
       }
     }
   ];
@@ -283,16 +283,28 @@ const clickExpandFolder = async (event: Event, folder, alwaysExpand = false) => 
   }
 };
 
-/// Rename an album
-const clickRenameConfirm = async (value) => {
-  const renamedFolder = await renameFolder(selectedFolderPath.value, value);
-  console.log('SelectFolder.vue-clickRenameConfirm:', selectedFolderPath.value, renamedFolder);
-  if(renamedFolder) {
+/// Rename folder
+const clickRenameFolder = async (newFolderName) => {
+  const newFolderPath = await renameFolder(selectedFolderPath.value, newFolderName);
+  if(newFolderPath) {
     let folder = getFolderById(selectedFolderId.value);
-    folder.name = value;
+    folder.name = newFolderName;
+    updateFolderPath(folder, selectedFolderPath.value, newFolderPath);
+
     showRenameMsgbox.value = false;
   }
 };
+
+/// rename folder path and children paths
+function updateFolderPath(folder, oldpath, newPath) {
+    folder.path = newPath + folder.path.slice(oldpath.length);
+
+    if (folder.children) {
+        folder.children.forEach(child => {
+            updateFolderPath(child, oldpath, newPath); // recursive
+        });
+    }
+}
 
 const clickCopyToConfirm = async (value) => {
   try {

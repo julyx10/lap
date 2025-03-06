@@ -201,17 +201,17 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_rename,
-      icon: IconRename,
-      // shortcut: 'F2',
+      label: localeMsg.value.menu_item_copy,
+      icon: IconCopy,
+      shortcut: 'Ctrl+C',
       action: () => {
-        console.log('Rename:', selectedIndex.value);
+        console.log('Copy:', selectedIndex.value);
       }
     },
     {
       label: "-",   // separator
       action: () => {}
-    },
+    },    
     {
       label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
       icon: file.is_favorite ? IconUnFavorite : IconFavorite,
@@ -229,6 +229,18 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_rename,
+      icon: IconRename,
+      // shortcut: 'F2',
+      action: () => {
+        console.log('Rename:', selectedIndex.value);
+      }
+    },
+    {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
       shortcut: 'Del',
@@ -240,14 +252,7 @@ const moreMenuItems = computed(() => {
       label: "-",   // separator
       action: null
     },
-    {
-      label: localeMsg.value.menu_item_copy,
-      icon: IconCopy,
-      shortcut: 'Ctrl+C',
-      action: () => {
-        console.log('Copy:', selectedIndex.value);
-      }
-    },
+
     {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
@@ -261,6 +266,10 @@ const moreMenuItems = computed(() => {
       action: () => {
         console.log('Copy to:', selectedIndex.value);
       }
+    },
+    {
+      label: "-",   // separator
+      action: null
     },
     {
       label: localeMsg.value.menu_item_open_folder,

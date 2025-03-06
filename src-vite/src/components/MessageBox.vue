@@ -12,6 +12,7 @@
           ref="inputRef"
           v-model="inputValue"
           type="text"
+          maxlength="255"
           class="px-2 py-1 my-2 w-full border rounded-md t-input-color-bg t-color-border t-input-focus"
           @input="validateInput"
           @keydown.enter="clickOk"

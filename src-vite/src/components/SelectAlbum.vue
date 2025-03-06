@@ -105,6 +105,7 @@ import MessageBox from '@/components/MessageBox.vue';
 
 // svg icons
 // import IconAdd from '@/assets/plus.svg';
+import IconEdit from '@/assets/edit.svg';
 import IconRemove from '@/assets/minus.svg';
 import IconFolder from '@/assets/folder.svg';
 import IconFolderOpen from '@/assets/folder-open.svg';
@@ -154,16 +155,16 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
+    // {
+    //   label: localeMsg.value.menu_item_refresh,
+    //   icon: IconRefresh,
+    //   action: () => {
+    //     dlbClickAlbum(getAlbumById(selectedAlbumId.value), true);
+    //   }
+    // },
     {
-      label: localeMsg.value.menu_item_refresh,
-      icon: IconRefresh,
-      action: () => {
-        dlbClickAlbum(getAlbumById(selectedAlbumId.value), true);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_rename,
-      icon: IconRename,
+      label: localeMsg.value.menu_item_edit,
+      icon: IconEdit,
       action: () => {
         showRenameMsgbox.value = true;
       }
@@ -179,6 +180,24 @@ const moreMenuItems = computed(() => {
         showNewFolderMsgbox.value = true;
       }
     },
+    // {
+    //   label: localeMsg.value.menu_item_rename,
+    //   icon: IconRename,
+    //   action: () => {
+    //     showRenameMsgbox.value = true;
+    //   }
+    // },    
+    {
+      label: localeMsg.value.menu_item_remove_from_album,
+      icon: IconRemove,
+      action: () => {
+        showRemoveMsgbox.value = true;
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },    
     {
       label: localeMsg.value.menu_item_open_folder,
       icon: IconOpenFolder,
@@ -186,17 +205,8 @@ const moreMenuItems = computed(() => {
         openShellFolder(getAlbumById(selectedAlbumId.value).path);
       }
     },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_remove_from_album,
-      icon: IconRemove,
-      action: () => {
-        showRemoveMsgbox.value = true;
-      }
-    }
+
+
   ];
 });
 
@@ -262,8 +272,8 @@ const clickNewAlbum = async () => {
 };
 
 /// Rename an album
-const clickRenameAlbum = async (value) => {
-  const renamedAlbum = await renameAlbum(selectedAlbumId.value, value);
+const clickRenameAlbum = async (newName) => {
+  const renamedAlbum = await renameAlbum(selectedAlbumId.value, newName);
   if(renamedAlbum) {
     let album = getAlbumById(selectedAlbumId.value);
     album.name = value;
