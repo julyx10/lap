@@ -97,9 +97,8 @@
   @apply placeholder-gray-500 bg-transparent;
 }
 .t-input-focus {
-  @apply focus:border focus:outline-none focus:border-sky-700;
+  @apply focus:border focus:border-sky-700 focus:outline-none;
 }
-
 /* option */
 .t-option {
   @apply t-color-bg-light t-color-bg-hover;

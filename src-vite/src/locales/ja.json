@@ -98,6 +98,7 @@
   "menu_item_remove": "削除",
   "menu_item_new_folder": "新しいフォルダ",
   "menu_item_open_folder": "フォルダを開く...",
+  "menu_item_reveal_in_file_explorer": "ファイルエクスプローラーで表示",
   "menu_item_properties": "プロパティ",
   "menu_item_show_info": "情報を表示",
   "menu_item_remove_from_album": "アルバムから削除",

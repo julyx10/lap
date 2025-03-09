@@ -4,7 +4,7 @@
     <li v-for="(child, index) in children" :key="index" :id="'folder-' + index" class="pl-4">
       <div 
         :class="[
-          'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
+          'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group rounded-r', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @update="scrollToItem(index)"
@@ -19,15 +19,25 @@
           ]"
           @click="clickExpandFolder($event, child)"
         />
-        <span 
+        <input v-if="isRenamingFolder && selectedFolderId === child.id"
+          ref="folderInputRef"
+          type="text"
+          maxlength="255"
+          class="px-1 w-full border t-color-border t-input-color-bg t-input-focus rounded"
+          v-model="child.name"
+          @keydown.enter = "clickRenameFolder(child.name)"
+          @keydown.esc = "isRenamingFolder = false"
+          @blur = "clickRenameFolder(child.name)"
+        > 
+        <span v-else
           :class="[
-            'flex-1 min-w-0', 
-            componentId === 0 && selectedFolderId === child.id ? 'mask-fade-right' : ''
+            'flex-1 min-w-0 mask-fade-right', 
+            // componentId === 0 && selectedFolderId === child.id ? '' : ''
           ]"
         >{{ child.name }}</span>
-        <!-- <DropDownMenu v-if="componentId === 0 && selectedFolderId === child.id" -->
-        <DropDownMenu v-if="componentId === 0"
-          class="hidden group-hover:block t-color-bg-selected"
+
+        <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
+          class="hidden group-hover:block t-color-bg-selected rounded-r"
           :iconMenu="IconMore"
           :menuItems="moreMenuItems"
         />
@@ -45,7 +55,7 @@
   </ul>
 
   <!-- rename folder -->
-  <MessageBox
+  <!-- <MessageBox
     v-if="showRenameMsgbox"
     :title="$t('msgbox_rename_folder_title')"
     :message="$t('msgbox_rename_folder_content')"
@@ -55,7 +65,7 @@
     :cancelText="$t('msgbox_cancel')"
     @ok="clickRenameFolder"
     @cancel="showRenameMsgbox = false"
-  />
+  /> -->
 
   <!-- move to -->
   <MoveTo
@@ -108,10 +118,10 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { openShellFolder, shortenFilename } from '@/common/utils';
+import { openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
 import { createFolder, renameFolder, selectFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
@@ -166,8 +176,11 @@ const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
+const isRenamingFolder = ref(false);
+const folderInputRef = ref([]);  // input text box ref
+
 // message boxes
-const showRenameMsgbox = ref(false);
+// const showRenameMsgbox = ref(false);
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showNewFolderMsgbox = ref(false);
@@ -195,7 +208,12 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_rename,
       icon: IconRename,
       action: () => {
-        showRenameMsgbox.value = true;
+        isRenamingFolder.value = true;
+        nextTick(() => {
+          if (folderInputRef.value) {
+            folderInputRef.value[0].focus();    // array of input elements
+          }
+        });
       }
     },
     {
@@ -228,8 +246,8 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu_item_open_folder,
-      icon: IconOpenFolder,
+      label: localeMsg.value.menu_item_reveal_in_file_explorer,
+      // icon: IconOpenFolder,
       action: () => {
         openShellFolder(selectedFolderPath.value);
       }
@@ -247,6 +265,16 @@ watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, 
   selectedFolderId.value = newFolderId;
   selectedFolderPath.value = newFolderPath;
 }, { immediate: true });
+
+// watch(isRenamingFolder, (newValue) => {
+//   if (newValue) {
+//     nextTick(() => {
+//       if (folderInputRef.value) {
+//         folderInputRef.value.focus();
+//       }
+//     });
+//   }
+// });
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
@@ -285,15 +313,33 @@ const clickExpandFolder = async (event: Event, folder, alwaysExpand = false) => 
 
 /// Rename folder
 const clickRenameFolder = async (newFolderName) => {
+  console.log('SelectFolder.vue-clickRenameFolder:', newFolderName);
+
+  // verfify new folder name is valid
+  if (!newFolderName || newFolderName.trim().length === 0 || !isValidFileName(newFolderName)) {
+    console.log('SelectFolder.vue-clickRenameFolder: invalid folder name');
+    return;
+  }
   const newFolderPath = await renameFolder(selectedFolderPath.value, newFolderName);
   if(newFolderPath) {
     let folder = getFolderById(selectedFolderId.value);
     folder.name = newFolderName;
     updateFolderPath(folder, selectedFolderPath.value, newFolderPath);
-
-    showRenameMsgbox.value = false;
   }
+  
+  isRenamingFolder.value = false;
 };
+
+// const handleEsc = (event) => {
+//   event.preventDefault();
+//   isRenamingFolder.value = false; 
+// };
+
+// const handleBlur = (newFolderName) => {
+//   if (isRenamingFolder.value) {
+//     clickRenameFolder(newFolderName);
+//   }
+// };
 
 /// rename folder path and children paths
 function updateFolderPath(folder, oldpath, newPath) {

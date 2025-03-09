@@ -199,8 +199,8 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },    
     {
-      label: localeMsg.value.menu_item_open_folder,
-      icon: IconOpenFolder,
+      label: localeMsg.value.menu_item_reveal_in_file_explorer,
+      // icon: IconOpenFolder,
       action: () => {
         openShellFolder(getAlbumById(selectedAlbumId.value).path);
       }

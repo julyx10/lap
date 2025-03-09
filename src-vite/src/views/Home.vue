@@ -8,7 +8,7 @@
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
 
       <!-- left toolbar -->
-      <div 
+      <div tabindex="-1"
         ref="divToolbar" 
         class="min-w-12 my-4 flex flex-col justify-between z-10 t-color-bg" style="user-select: none;"
         @contextmenu.prevent

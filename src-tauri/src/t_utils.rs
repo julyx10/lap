@@ -8,12 +8,14 @@
  */
 use std::fs;
 use std::io::Cursor;
-use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use chrono::{DateTime, Utc};
 use image::ImageReader;
+
+#[cfg(target_os = "windows")]
+use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct AppConfig {

@@ -2,7 +2,7 @@
   <div ref="dropdown" class="relative inline-block text-left">
 
     <!-- Dropdown Trigger -->
-    <button
+    <button tabindex="-1"
       class="px-2 py-1 w-full inline-flex justify-center rounded-md border t-color-border t-icon-hover t-color-border-hover text-sm whitespace-nowrap "
       @click="toggleDropdown"
     >

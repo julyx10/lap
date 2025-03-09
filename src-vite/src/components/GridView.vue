@@ -1,5 +1,5 @@
 <template>
-  <div ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar select-none">
+  <div tabindex="-1" ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar">
     <div id="gridView" 
       class="px-2 grid gap-2"
       :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.thumbnailSize}px, 1fr))` }"
@@ -272,8 +272,8 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu_item_open_folder,
-      icon: IconOpenFolder,
+      label: localeMsg.value.menu_item_reveal_in_file_explorer,
+      // icon: IconOpenFolder,
       action: () => {
         openShellFolder(getFolderPath(file.file_path));
       }
