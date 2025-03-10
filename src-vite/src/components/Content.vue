@@ -276,15 +276,15 @@ watch(() => config.toolbarIndex, newIndex => {
 }, { immediate: true });
 
 /// watch album
-watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId], async ([newIndex, newAlbumId, newFolderId]) => {
+watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath], async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 2) {
     if (newAlbumId) {
       const album = await getAlbum(newAlbumId);
       if(album) {
-        if(config.albumFolderPath === album.path) { // current folder is root
+        if(newFolderPath === album.path) { // current folder is root
           contentTitle.value = album.name;
         } else {
-          contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
+          contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
         };
 
         getFolderFiles();

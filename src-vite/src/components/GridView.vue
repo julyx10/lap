@@ -1,5 +1,7 @@
 <template>
-  <div tabindex="-1" ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar">
+  <div ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar focus:outline-none" 
+    tabindex="0" @focus="isFocus = true"  @blur="isFocus = false"
+  >
     <div id="gridView" 
       class="px-2 grid gap-2"
       :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.thumbnailSize}px, 1fr))` }"
@@ -10,7 +12,7 @@
         :id="'item-' + index"
         :class="[
           'p-1 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
-          !selectMode && index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
+          !selectMode && index === selectedIndex ? isFocus ? 'border-sky-500' : 'border-gray-500' : 'border-gray-800',
           selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
         ]"
         @click="clickItem(index)"
@@ -129,18 +131,21 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // config store
 const config = useConfigStore();
 
+// when the grid view is focused, the keydown event is listened
+const isFocus = ref(false);
+
 const selectedIndex = ref(props.modelValue);
 const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
-});
+// onMounted(() => {
+//   window.addEventListener('keydown', handleKeyDown);
+// });
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-});
+// onUnmounted(() => {
+//   window.removeEventListener('keydown', handleKeyDown);
+// });
 
 listen('message-from-image-viewer', (event) => {
   const { message } = event.payload;
@@ -154,6 +159,15 @@ listen('message-from-image-viewer', (event) => {
       break;
     default:
       break;
+  }
+});
+
+// when the grid view is focused, the keydown event is listened
+watch(() => isFocus.value, (newValue) => {
+  if (newValue) {
+    window.addEventListener('keydown', handleKeyDown);
+  } else {
+    window.removeEventListener('keydown', handleKeyDown);
   }
 });
 

@@ -26,7 +26,7 @@
           class="px-1 w-full border t-color-border t-input-color-bg t-input-focus rounded"
           v-model="child.name"
           @keydown.enter = "clickRenameFolder(child.name)"
-          @keydown.esc = "isRenamingFolder = false"
+          @keydown.esc = "handleEscKey"
           @blur = "clickRenameFolder(child.name)"
         > 
         <span v-else
@@ -177,7 +177,8 @@ const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
 const isRenamingFolder = ref(false);
-const folderInputRef = ref([]);  // input text box ref
+const folderInputRef = ref([]);     // input text box ref
+const originalFolderName = ref(''); // restore original folder name when cancel renaming(press ESC)
 
 // message boxes
 // const showRenameMsgbox = ref(false);
@@ -209,6 +210,7 @@ const moreMenuItems = computed(() => {
       icon: IconRename,
       action: () => {
         isRenamingFolder.value = true;
+        originalFolderName.value = getFolderById(selectedFolderId.value).name;
         nextTick(() => {
           if (folderInputRef.value) {
             folderInputRef.value[0].focus();    // array of input elements
@@ -266,15 +268,6 @@ watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, 
   selectedFolderPath.value = newFolderPath;
 }, { immediate: true });
 
-// watch(isRenamingFolder, (newValue) => {
-//   if (newValue) {
-//     nextTick(() => {
-//       if (folderInputRef.value) {
-//         folderInputRef.value.focus();
-//       }
-//     });
-//   }
-// });
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
@@ -320,26 +313,35 @@ const clickRenameFolder = async (newFolderName) => {
     console.log('SelectFolder.vue-clickRenameFolder: invalid folder name');
     return;
   }
-  const newFolderPath = await renameFolder(selectedFolderPath.value, newFolderName);
-  if(newFolderPath) {
-    let folder = getFolderById(selectedFolderId.value);
-    folder.name = newFolderName;
-    updateFolderPath(folder, selectedFolderPath.value, newFolderPath);
+  if (newFolderName != originalFolderName.value) {
+    const newFolderPath = await renameFolder(selectedFolderPath.value, newFolderName);
+    if(newFolderPath) {
+      let folder = getFolderById(selectedFolderId.value);
+      folder.name = newFolderName;
+      updateFolderPath(folder, selectedFolderPath.value, newFolderPath);
+
+      // update selected folder path
+      selectedFolderPath.value = newFolderPath;
+      emit('message-from-select-folder', { 
+        albumId: selectedAlbumId.value, 
+        folderId: selectedFolderId.value, 
+        folderPath: selectedFolderPath.value,
+        componentId: props.componentId
+      });
+    }
   }
-  
   isRenamingFolder.value = false;
 };
 
-// const handleEsc = (event) => {
-//   event.preventDefault();
-//   isRenamingFolder.value = false; 
-// };
+/// handle ESC key to cancel renaming folder
+const handleEscKey = (event) => {
+  event.preventDefault();
 
-// const handleBlur = (newFolderName) => {
-//   if (isRenamingFolder.value) {
-//     clickRenameFolder(newFolderName);
-//   }
-// };
+  let folder = getFolderById(selectedFolderId.value);
+  folder.name = originalFolderName.value;
+
+  isRenamingFolder.value = false; 
+};
 
 /// rename folder path and children paths
 function updateFolderPath(folder, oldpath, newPath) {
