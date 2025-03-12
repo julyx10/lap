@@ -12,7 +12,7 @@
         :id="'item-' + index"
         :class="[
           'p-1 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
-          !selectMode && index === selectedIndex ? isFocus ? 'border-sky-500' : 'border-gray-500' : 'border-gray-800',
+          !selectMode && index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
           selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
         ]"
         @click="clickItem(index)"
@@ -378,6 +378,9 @@ function rotateImage() {
 
 // open the selected item in the image viewer
 function openItem(openNewViewer = false) {
+  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
+    return;
+  }
   if (openNewViewer) {
     emit('message-from-grid-view', { message: 'open-image-viewer' });
   } else {

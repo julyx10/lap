@@ -22,7 +22,7 @@
   @apply text-gray-300 transition-colors duration-300 ;
 }
 .t-icon-focus {
-  @apply text-sky-600 transition-colors duration-300 ;
+  @apply text-sky-500 transition-colors duration-300 ;
 }
 .t-icon-disabled {
   @apply text-gray-700;
@@ -53,7 +53,7 @@
   @apply hover:bg-red-700;
 }
 .t-color-bg-highlight-hover {
-  @apply hover:bg-sky-700;
+  @apply hover:bg-sky-500;
 }
 .t-color-bg-selected {
   @apply bg-gray-700;
@@ -63,7 +63,7 @@
   @apply text-gray-400;
 }
 .t-color-text-focus {
-  @apply text-sky-600;
+  @apply text-sky-500;
 }
 .t-color-text-selected {
   @apply text-gray-200;
@@ -79,7 +79,7 @@
 }
 
 .t-color-focus {
-  @apply bg-sky-700;
+  @apply bg-gray-500;
 }
 .t-color-border {
   @apply border-gray-700;
@@ -92,12 +92,12 @@
   @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-900;
 }
 
-/* input */
+/* input */ 
 .t-input-color-bg {
   @apply placeholder-gray-500 bg-transparent;
 }
 .t-input-focus {
-  @apply focus:border focus:border-sky-700 focus:outline-none;
+  @apply focus:border focus:border-sky-500 focus:outline-none;
 }
 /* option */
 .t-option {

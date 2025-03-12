@@ -102,7 +102,6 @@ export async function setDisplayOrder(albumId, order) {
 export async function createFolder(path, folderName) {
   try {
     const newFolder = await invoke('create_folder', { path, folderName });
-    console.log('create_folder', newFolder);
     if(newFolder) {
       return newFolder;
     };
@@ -112,11 +111,10 @@ export async function createFolder(path, folderName) {
   return null;
 }
 
-// remove a folder
+// rename a folder
 export async function renameFolder(folderPath, newFolderName) {
   try {
     const renamedFolder = await invoke('rename_folder', { folderPath, newFolderName });
-    console.log('rename_folder', renamedFolder);
     if(renamedFolder) {
       return renamedFolder;
     };
@@ -126,11 +124,23 @@ export async function renameFolder(folderPath, newFolderName) {
   return null;
 }
 
+// delete a folder
+export async function deleteFolder(folderPath) {
+  try {
+    const result = await invoke('delete_folder', { folderPath });
+    if (result) {
+      return true;
+    };
+  } catch (error) {
+    console.log('Failed to delete folder:', error);
+  }
+  return false;
+}
+
 // select a folder
 export async function selectFolder(albumId, parentId, folderPath) {
   try {
     const selectedFolder = await invoke('select_folder', { albumId, parentId, folderPath });
-    console.log('select_folder', selectedFolder);
     if(selectedFolder) {
       return selectedFolder;
     };
@@ -144,7 +154,6 @@ export async function selectFolder(albumId, parentId, folderPath) {
 export async function expandFolder(path, isRecursive) {
   try {
     const subFolders = await invoke('expand_folder', { path, isRecursive });
-    console.log('expand_folder', subFolders);
     if(subFolders) {
       return subFolders;
     };
@@ -158,7 +167,6 @@ export async function expandFolder(path, isRecursive) {
 export async function getTakenDates() {
   try {
     const taken_dates = await invoke('get_taken_dates');
-    console.log('get_taken_dates, taken_dates');
     if (taken_dates) {
       return taken_dates;
     }
@@ -172,7 +180,6 @@ export async function getTakenDates() {
 export async function getCameraInfo() {
   try {
     const cameraInfo = await invoke('get_camera_info');
-    console.log('get_camera_info', cameraInfo);
     if (cameraInfo) {
       return cameraInfo;
     }

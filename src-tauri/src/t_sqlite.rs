@@ -273,6 +273,18 @@ impl AFolder {
         Ok(result)
     }
 
+    /// delete a folder and all subfolders from db
+    pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
+        let conn = open_conn();
+        let result = conn
+            .execute(
+                "DELETE FROM afolders WHERE path LIKE ?1 || '%'",
+                params![folder_path],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
     // recurse all parent folder id (deprecated)
     // pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
     //     let conn = open_conn();

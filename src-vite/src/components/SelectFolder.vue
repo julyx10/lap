@@ -1,8 +1,12 @@
 <template>
   
   <ul v-if="children && children.length > 0">
-    <li v-for="(child, index) in children" :key="index" :id="'folder-' + index" class="pl-4">
-      <div 
+    <li v-for="(child, index) in children"
+      :key="index" 
+      :id="'folder-' + index" 
+      class="pl-4"
+    >
+      <div v-if="!child.is_deleted" 
         :class="[
           'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group rounded-r', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
@@ -23,15 +27,15 @@
           ref="folderInputRef"
           type="text"
           maxlength="255"
-          class="px-1 w-full border t-color-border t-input-color-bg t-input-focus rounded"
+          class="px-1 w-full border t-color-border-selected t-input-color-bg t-input-focus rounded"
           v-model="child.name"
           @keydown.enter = "clickRenameFolder(child.name)"
-          @keydown.esc = "handleEscKey"
+          @keydown.esc = "handleEscKey($event, child.id)"   
           @blur = "clickRenameFolder(child.name)"
         > 
         <span v-else
           :class="[
-            'flex-1 min-w-0 mask-fade-right', 
+            'flex-1 min-w-0 mask-fade-right whitespace-pre', 
             // componentId === 0 && selectedFolderId === child.id ? '' : ''
           ]"
         >{{ child.name }}</span>
@@ -42,7 +46,7 @@
           :menuItems="moreMenuItems"
         />
       </div>
-      <SelectFolder v-if="child.is_expanded" 
+      <SelectFolder v-if="child.is_expanded && !child.is_deleted" 
         :key="child.id"
         :children="child.children" 
         :rootAlbumId="rootAlbumId"
@@ -54,18 +58,30 @@
     </li>
   </ul>
 
-  <!-- rename folder -->
-  <!-- <MessageBox
-    v-if="showRenameMsgbox"
-    :title="$t('msgbox_rename_folder_title')"
-    :message="$t('msgbox_rename_folder_content')"
+  <!-- new folder -->
+  <MessageBox
+    v-if="showNewFolderMsgbox"
+    :title="$t('msgbox_new_folder_title')"
+    :message="$t('msgbox_new_folder_content')"
     :showInput="true"
-    :inputText="getFolderById(selectedFolderId).name"
-    :OkText="$t('msgbox_rename_folder_ok')"
+    :inputText="''"
+    :OkText="$t('msgbox_new_folder_ok')"
     :cancelText="$t('msgbox_cancel')"
-    @ok="clickRenameFolder"
-    @cancel="showRenameMsgbox = false"
-  /> -->
+    @ok="clickNewFolder"
+    @cancel="showNewFolderMsgbox = false"
+  />
+
+  <!-- delete folder -->
+  <MessageBox
+    v-if="showDeleteMsgbox"
+    :title="$t('msgbox_delete_folder_title')"
+    :message="`${$t('msgbox_delete_folder_content', { folder: getFolderById(selectedFolderId).name })}`"
+    :OkText="$t('msgbox_delete_folder_ok')"
+    :cancelText="$t('msgbox_cancel')"
+    :warningOk="true"
+    @ok="clickDeleteFolder"
+    @cancel="showDeleteMsgbox = false"
+  />
 
   <!-- move to -->
   <MoveTo
@@ -89,30 +105,7 @@
     @cancel="showCopyTo = false"
   />
 
-  <!-- new folder -->
-  <MessageBox
-    v-if="showNewFolderMsgbox"
-    :title="$t('msgbox_new_folder_title')"
-    :message="$t('msgbox_new_folder_content')"
-    :showInput="true"
-    :inputText="''"
-    :OkText="$t('msgbox_new_folder_ok')"
-    :cancelText="$t('msgbox_cancel')"
-    @ok="clickNewFolder"
-    @cancel="showNewFolderMsgbox = false"
-  />
-
-  <!-- delete folder -->
-  <MessageBox
-    v-if="showDeleteMsgbox"
-    :title="$t('msgbox_delete_folder_title')"
-    :message="`${$t('msgbox_delete_folder_content', { folder: getFolderById(selectedFolderId).name })}`"
-    :OkText="$t('msgbox_delete_folder_ok')"
-    :cancelText="$t('msgbox_cancel')"
-    :warningOk="true"
-    @ok="clickDeleteConfirm"
-    @cancel="showDeleteMsgbox = false"
-  />
+  <ToolTip ref="toolTipRef" />
 
 </template>
 
@@ -122,12 +115,13 @@ import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
-import { createFolder, renameFolder, selectFolder, expandFolder } from '@/common/api';
+import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import MessageBox from '@/components/MessageBox.vue';
+import ToolTip from '@/components/ToolTip.vue';
 
 // folder icon
 import IconRight from '@/assets/arrow-right.svg';
@@ -139,6 +133,7 @@ import IconRename from '@/assets/rename.svg';
 import IconDelete from '@/assets/trash.svg';
 import IconNewFolder from '@/assets/folder-plus.svg';
 import IconOpenFolder from '@/assets/external.svg';
+import { is } from 'date-fns/locale';
 
 const props = defineProps({
   children: {       // subfolders
@@ -176,28 +171,24 @@ const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
+// rename folder
 const isRenamingFolder = ref(false);
 const folderInputRef = ref([]);     // input text box ref
 const originalFolderName = ref(''); // restore original folder name when cancel renaming(press ESC)
 
 // message boxes
-// const showRenameMsgbox = ref(false);
-const showMoveTo = ref(false);
-const showCopyTo = ref(false);
 const showNewFolderMsgbox = ref(false);
 const showDeleteMsgbox = ref(false);
+const showMoveTo = ref(false);
+const showCopyTo = ref(false);
+
+const toolTipRef = ref(null);
 
 const getFolderById = (id) => props.children.find(child => child.id === id);
 
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-    // {
-    //   label: localeMsg.value.menu_item_refresh,
-    //   icon: IconRefresh,
-    //   action: () => {
-    //   }
-    // },
     {
       label: localeMsg.value.menu_item_new_folder,
       icon: IconNewFolder,
@@ -258,9 +249,8 @@ const moreMenuItems = computed(() => {
 });
 
 onMounted(() => {
-  // scrollToItem(selectedFolderId.value);
+  scrollToItem(selectedFolderId.value);
 });
-
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
   selectedAlbumId.value = newAlbumId;
@@ -268,6 +258,19 @@ watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, 
   selectedFolderPath.value = newFolderPath;
 }, { immediate: true });
 
+watch(() => selectedFolderId.value, (newFolderId, oldFolderId) => {
+  if (newFolderId && isRenamingFolder.value) {
+    handleEscKey(new Event('keydown'), oldFolderId);
+  }
+});
+
+// make the selected item always visible in a scrollable container
+function scrollToItem(index) {
+  const item = document.getElementById(`folder-${index}`);
+  if (item) {
+    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+};
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
@@ -302,20 +305,38 @@ const clickExpandFolder = async (event: Event, folder, alwaysExpand = false) => 
       folder.children = subFolders.children;
     }
   }
+  console.log('SelectFolder.vue-clickExpandFolder:', folder);
+};
+
+/// Create new folder
+const clickNewFolder = async (newFolderName) => {
+  const newFolderPath = await createFolder(selectedFolderPath.value, newFolderName);
+  if(newFolderPath) {
+    let folder = getFolderById(selectedFolderId.value);
+    if (!folder.children) folder.children = [];
+    folder.children.push({ name: newFolderName, path: newFolderPath });
+    showNewFolderMsgbox.value = false;
+
+    await clickExpandFolder(new Event('click'), folder, true);
+    clickFolder(selectedAlbumId.value, folder.children[folder.children.length - 1]);
+  } else {
+    console.log('SelectFolder.vue-clickNewFolder', localeMsg.value.msgbox_new_folder_error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox_new_folder_error);
+  }
 };
 
 /// Rename folder
 const clickRenameFolder = async (newFolderName) => {
-  console.log('SelectFolder.vue-clickRenameFolder:', newFolderName);
-
   // verfify new folder name is valid
   if (!newFolderName || newFolderName.trim().length === 0 || !isValidFileName(newFolderName)) {
     console.log('SelectFolder.vue-clickRenameFolder: invalid folder name');
     return;
   }
-  if (newFolderName != originalFolderName.value) {
+  if (newFolderName === originalFolderName.value) {
+    isRenamingFolder.value = false;   // no change
+  } else {
     const newFolderPath = await renameFolder(selectedFolderPath.value, newFolderName);
-    if(newFolderPath) {
+    if(newFolderPath) {    // rename success
       let folder = getFolderById(selectedFolderId.value);
       folder.name = newFolderName;
       updateFolderPath(folder, selectedFolderPath.value, newFolderPath);
@@ -328,19 +349,9 @@ const clickRenameFolder = async (newFolderName) => {
         folderPath: selectedFolderPath.value,
         componentId: props.componentId
       });
+      isRenamingFolder.value = false;
     }
   }
-  isRenamingFolder.value = false;
-};
-
-/// handle ESC key to cancel renaming folder
-const handleEscKey = (event) => {
-  event.preventDefault();
-
-  let folder = getFolderById(selectedFolderId.value);
-  folder.name = originalFolderName.value;
-
-  isRenamingFolder.value = false; 
 };
 
 /// rename folder path and children paths
@@ -354,6 +365,37 @@ function updateFolderPath(folder, oldpath, newPath) {
     }
 }
 
+/// handle ESC key to cancel renaming folder
+const handleEscKey = (event, folderID) => {
+  event.preventDefault();
+
+  let folder = getFolderById(folderID);
+  folder.name = originalFolderName.value;
+
+  isRenamingFolder.value = false; 
+};
+
+
+/// delete folder
+const clickDeleteFolder = async () => {
+  const isDeleted = await deleteFolder(selectedFolderPath.value);
+  if (isDeleted) {
+    let folder = getFolderById(selectedFolderId.value);
+    folder.is_deleted = true;
+
+    emit('message-from-select-folder', { 
+      albumId: selectedAlbumId.value, 
+      folderId: 0, 
+      folderPath: "",
+      componentId: props.componentId
+    });
+    showDeleteMsgbox.value = false;
+  } else {
+    console.log('SelectFolder.vue-clickDeleteFolder', localeMsg.value.msgbox_delete_folder_error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox_delete_folder_error);
+  }
+};
+
 const clickCopyToConfirm = async (value) => {
   try {
     showMoveTo.value = false;
@@ -362,36 +404,10 @@ const clickCopyToConfirm = async (value) => {
   }
 };
 
-/// Create new folder
-const clickNewFolder = async (value) => {
-  const newFolderPath = await createFolder(selectedFolderPath.value, value);
-  if(newFolderPath) {
-    let folder = getFolderById(selectedFolderId.value);
-    if (!folder.children) folder.children = [];
-    folder.children.push({ name: value, path: newFolderPath });
-    showNewFolderMsgbox.value = false;
-
-    await clickExpandFolder(new Event('click'), folder, true);
-    clickFolder(selectedAlbumId.value, folder.children[folder.children.length - 1]);
-  }
-};
-
-/// delete folder
-const clickDeleteConfirm = async () => {
-  try {
-    showDeleteMsgbox.value = false;
-  } catch (error) {
-    console.error('Failed to delete folder:', error);
-  }
-};
-
-// make the selected item always visible in a scrollable container
-function scrollToItem(index) {
-  const item = document.getElementById(`folder-${index}`);
-  if (item) {
-    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-};
+defineExpose({ 
+  clickNewFolder,
+  clickRenameFolder
+});
 
 </script>
 

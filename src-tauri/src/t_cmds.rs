@@ -101,16 +101,18 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
 }
 
 /// delete a folder
-// #[tauri::command]
-// pub fn delete_folder(id: i64) -> Result<usize, String> {
-//     AFolder::delete_from_db(id).map_err(|e| {
-//         format!(
-//             "Error while deleting folder with id {}: {}",
-//             id,
-//             e.to_string()
-//         )
-//     })
-// }
+/// return the number of files and folders deleted
+#[tauri::command]
+pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
+    // Delete the folder from the file system
+    if t_utils::delete_folder(folder_path) {
+        // delete the folder from db
+        AFolder::delete_folder(folder_path)
+            .map_err(|e| format!("Failed to delete folder from database: {}", e))
+    } else {
+        Err("Failed to delete folder from file system".to_string())
+    }
+}
 
 // get all parent folders of a folder
 // #[tauri::command]

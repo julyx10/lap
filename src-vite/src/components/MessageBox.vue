@@ -6,7 +6,7 @@
         {{ title }}
         <IconCancel class="t-icon-size-sm t-icon-hover" @click="clickCancel" />
       </div>
-      <div class="my-4">
+      <div class="mt-4">
         {{ message }}
         <input v-if="showInput"
           ref="inputRef"
@@ -17,7 +17,7 @@
           @input="validateInput"
           @keydown.enter="clickOk"
         />
-        <p v-if="errorMessage.length > 0" class="text-red-600 text-xs">{{ errorMessage }}</p>
+        <p class="h-4 text-red-600 text-xs">{{ inputErrorMessage }}</p>
       </div>
 
       <div class="flex justify-end space-x-4">
@@ -89,7 +89,7 @@ const emit = defineEmits(['ok', 'cancel']);
 // input 
 const inputRef = ref(null);
 const inputValue = ref(props.inputText);
-const errorMessage = ref('');
+const inputErrorMessage = ref('');
 
 const okButtonClasses = computed(() => {
   return !props.showInput || inputValue.value.trim().length > 0
@@ -99,29 +99,24 @@ const okButtonClasses = computed(() => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
-  // window.addEventListener('keyup', handleKeyDown);
-  if(inputRef.value) {
-    inputRef.value.focus();
-  }
+  inputRef.value?.focus();
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-  // window.removeEventListener('keyup', handleKeyDown);
 });
 
 
 const validateInput = () => {
   if (!isValidFileName(inputValue.value)) {
-    errorMessage.value = localeMsg.value.msgbox_input_filename_error;
+    inputErrorMessage.value = localeMsg.value.msgbox_input_filename_error;
   } else {
-    errorMessage.value = '';
+    inputErrorMessage.value = '';
   }
 };
 
 function handleKeyDown(event) {
   event.stopPropagation();
-  // event.preventDefault();
 
   switch (event.key) {
     case 'Enter':
@@ -137,8 +132,8 @@ function handleKeyDown(event) {
 
 const clickOk = () => {
   if(props.showInput) {
-    if (inputValue.value.trim().length > 0 && !errorMessage.value) {
-      emit('ok', inputValue.value.trim());
+    if (inputValue.value.trim().length > 0 && !inputErrorMessage.value) {
+      emit('ok', inputValue.value);
     } else {
       return;
     }

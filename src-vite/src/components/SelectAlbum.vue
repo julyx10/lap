@@ -25,7 +25,6 @@
               'flex-1 min-w-0', 
               selectedAlbumId === album.id ? 'mask-fade-right' : ''
             ]">{{ album.name }}</span>
-            <!-- <DropDownMenu v-if="componentId === 0 && selectedAlbumId === album.id && selectedFolderId === album.folderId" -->
             <DropDownMenu v-if="componentId === 0"
               class="hidden group-hover:block t-color-bg-selected"
               :iconMenu="IconMore"
@@ -33,6 +32,7 @@
             />
           </div>
           <SelectFolder v-if="album.is_expanded"
+            ref="selectFolderRef"
             :children="album.children" 
             :rootAlbumId="album.id"
             :albumId="selectedAlbumId"
@@ -64,7 +64,7 @@
     />
 
     <!-- new folder -->
-    <MessageBox
+    <!-- <MessageBox
       v-if="showNewFolderMsgbox"
       :title="$t('msgbox_new_folder_title')"
       :message="$t('msgbox_new_folder_content')"
@@ -74,7 +74,7 @@
       :cancelText="$t('msgbox_cancel')"
       @ok="clickNewFolder"
       @cancel="showNewFolderMsgbox = false"
-    />
+    /> -->
 
     <!-- remove from albums -->
     <MessageBox
@@ -142,9 +142,11 @@ const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
+const selectFolderRef = ref<SelectFolder | null>(null);
+
 // message boxes
 const showRenameMsgbox = ref(false);
-const showNewFolderMsgbox = ref(false);
+// const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
 
 const albums = ref([]);
@@ -155,13 +157,6 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-    // {
-    //   label: localeMsg.value.menu_item_refresh,
-    //   icon: IconRefresh,
-    //   action: () => {
-    //     dlbClickAlbum(getAlbumById(selectedAlbumId.value), true);
-    //   }
-    // },
     {
       label: localeMsg.value.menu_item_edit,
       icon: IconEdit,
@@ -177,16 +172,10 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_new_folder,
       icon: IconNewFolder,
       action: () => {
-        showNewFolderMsgbox.value = true;
+        // showNewFolderMsgbox.value = true;
+        clickNewFolder(localeMsg.value.menu_item_new_folder);
       }
     },
-    // {
-    //   label: localeMsg.value.menu_item_rename,
-    //   icon: IconRename,
-    //   action: () => {
-    //     showRenameMsgbox.value = true;
-    //   }
-    // },    
     {
       label: localeMsg.value.menu_item_remove_from_album,
       icon: IconRemove,
@@ -322,17 +311,28 @@ const clickExpandAlbum = async (album, alwaysExpand = false) => {
 };
 
 /// Create new folder
-const clickNewFolder = async (value) => {
-  const newFolderPath = await createFolder(selectedFolderPath.value, value);
-  if(newFolderPath) {
-    let album = getAlbumById(selectedAlbumId.value);
-    if(!album.children) album.children = [];
-    album.children.push({ name: value, path: newFolderPath });
-    showNewFolderMsgbox.value = false;
+// const clickNewFolder = async (folderName) => {
+//   const newFolderPath = await createFolder(selectedFolderPath.value, folderName);
+//   if(newFolderPath) {
+//     let album = getAlbumById(selectedAlbumId.value);
+//     if(!album.children) album.children = [];
+//     album.children.push({ name: folderName, path: newFolderPath });
+//     // showNewFolderMsgbox.value = false;
 
-    await clickExpandAlbum(album, true);
-    clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
-  }
+//     await clickExpandAlbum(album, true);
+//     clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
+//   }
+// };
+const clickNewFolder = async (folderName) => {
+  // add new child to the album
+  let album = getAlbumById(selectedAlbumId.value);
+  await clickExpandAlbum(album, true);
+  
+  if(!album.children) album.children = [];
+  album.children.push({ name: folderName, path: '' });
+
+  await clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
+  await selectFolderRef.value?.clickRenameFolder(folderName);
 };
 
 /// click folder to select

@@ -210,6 +210,7 @@ pub fn is_music_extension(extension: &str) -> bool {
 }
 
 /// create a new folder at a given path
+/// Returns the folder path if successful
 pub fn create_new_folder(folder_path: &str) -> Option<String> {
     let path = Path::new(folder_path);
 
@@ -231,6 +232,7 @@ pub fn create_new_folder(folder_path: &str) -> Option<String> {
 }
 
 /// Renames a folder 
+/// Returns the new folder path if successful
 pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String> {
     let path = Path::new(folder_path);
 
@@ -264,6 +266,29 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
         Err(e) => {
             eprintln!("Failed to rename folder '{}': {}", folder_path, e);
             None
+        }
+    }
+}
+
+/// Deletes a folder and all its contents.
+/// Returns `true` if deletion was successful, otherwise `false`.
+pub fn delete_folder(folder_path: &str) -> bool {
+    let path = Path::new(folder_path);
+
+    if !path.exists() {
+        eprintln!("Folder does not exist: {}", folder_path);
+        return false;
+    }
+
+    // Use remove_dir_all to recursively delete the entire folder
+    match fs::remove_dir_all(path) {
+        Ok(_) => {
+            println!("Folder deleted successfully: {}", folder_path);
+            true
+        }
+        Err(e) => {
+            eprintln!("Failed to delete folder '{}': {}", folder_path, e);
+            false
         }
     }
 }
