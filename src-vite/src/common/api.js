@@ -1,5 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
-import { openFolderDialog, openShellFolder } from '@/common/utils';
+import { useConfigStore } from '@/stores/configStore';
+import { openFolderDialog, localeComp } from '@/common/utils';
+
+const config = useConfigStore();
 
 /// get all albums
 export async function getAllAlbums() {
@@ -155,6 +158,8 @@ export async function expandFolder(path, isRecursive) {
   try {
     const subFolders = await invoke('expand_folder', { path, isRecursive });
     if(subFolders) {
+      // sort subfolders by name in locale order
+      subFolders.children.sort((a, b) => localeComp(config.language, a.name, b.name));
       return subFolders;
     };
   } catch (error) {

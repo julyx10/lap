@@ -117,7 +117,7 @@ pub struct FileInfo {
     // pub accessed:  Option<u64>,
 
     // Windows-specific attributes
-    pub file_attributes: u32,
+    // pub file_attributes: u32,
     // volume_serial_number: u32,  // identifies the disk or partition where the file is stored
     // number_of_links: u32,
     // file_index: u64,   // uid of the file
@@ -139,7 +139,7 @@ impl FileInfo {
             modified: systemtime_to_u64(metadata.modified().ok()),
             modified_str: systemtime_to_string(metadata.modified().ok()),
             // accessed: systemtime_to_string(metadata.accessed().ok()),
-            file_attributes: metadata.file_attributes(),
+            // file_attributes: metadata.file_attributes(),
             // volume_serial_number: metadata.volume_serial_number(),
             // number_of_links: metadata.number_of_links(),
             // file_index: metadata.file_index(),

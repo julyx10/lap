@@ -88,7 +88,7 @@ import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
+import { isMac, shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import IconImagePlaceHolder from '@/assets/photo.svg';
@@ -202,7 +202,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_open,
       icon: IconOpen,
-      shortcut: 'Enter',
+      shortcut: isMac ? '⏎' : 'Enter',
       action: () => {
         openItem(true);
       }
@@ -217,7 +217,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_copy,
       icon: IconCopy,
-      shortcut: 'Ctrl+C',
+      shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
         console.log('Copy:', selectedIndex.value);
       }
@@ -257,7 +257,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
-      shortcut: 'Del',
+      shortcut: isMac ? '⌫' : 'Del',
       action: () => {
         deleteItem(selectedIndex.value);
       }
@@ -286,7 +286,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu_item_reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
         openShellFolder(getFolderPath(file.file_path));

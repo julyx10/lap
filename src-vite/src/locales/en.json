@@ -102,6 +102,7 @@
   "menu_item_new_folder": "New folder",
   "menu_item_open_folder": "Open folder...",
   "menu_item_reveal_in_file_explorer": "Reveal in File Explorer",
+  "menu_item_reveal_in_finder": "Reveal in Finder",
   "menu_item_properties": "Properties",
   "menu_item_show_info": "Show Info",
   "menu_item_remove_from_album": "Remove from albums",

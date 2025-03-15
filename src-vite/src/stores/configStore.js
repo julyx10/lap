@@ -9,8 +9,10 @@ export const useConfigStore = defineStore('configStore', {
     showButtonText: false,      // show button text
     darkMode: true,             // light or dark theme
     debugMode: false,           // debug mode
+    fileListPageSize: 1000,     // number of file list per page
 
     // settings - thumbnail
+    thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512)
     thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
     thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
     thumbnailLabelPrimaryOption: 1,   // Name

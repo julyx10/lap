@@ -197,6 +197,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
+import { isMac } from '@/common/utils';
 
 import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
@@ -267,7 +268,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_copy,
       icon: IconCopy,
-      shortcut: 'Ctrl+C',
+      shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
         console.log('Copy:', filePath.value);
       }

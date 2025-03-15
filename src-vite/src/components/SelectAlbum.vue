@@ -96,7 +96,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
-import { separator, openShellFolder } from '@/common/utils';
+import { isMac, separator, openShellFolder } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, renameAlbum, removeAlbum, createFolder, renameFolder, selectFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
@@ -188,7 +188,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },    
     {
-      label: localeMsg.value.menu_item_reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
         openShellFolder(getAlbumById(selectedAlbumId.value).path);

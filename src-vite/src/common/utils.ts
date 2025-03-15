@@ -1,13 +1,30 @@
 import { format } from 'date-fns';
-import { platform } from '@tauri-apps/plugin-os';
-import { mkdir } from '@tauri-apps/plugin-fs';
+// import { platform } from '@tauri-apps/plugin-os';
+// import { mkdir } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-shell';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 
-export const THUMBNAIL_SIZE = 320;    // thumbnail size
-export const FILES_PAGE_SIZE = 1000;  // number of files per page
+// export const THUMBNAIL_SIZE = 320;    // thumbnail size
+// export const FILES_PAGE_SIZE = 1000;  // number of files per page
 
-export const separator = platform() === 'windows' ? '\\' : '/';
+// export const separator = platform() === 'windows' ? '\\' : '/';
+
+/// get the current operating system (mac, win, or '')
+export function getOS() {
+  const userAgent = navigator.userAgent;
+
+  if (userAgent.includes('Mac')) {
+    return 'mac';
+  } else if (userAgent.includes('Win')) {
+    return 'win';
+  } else {
+    return '';
+  }
+}
+
+export const isMac = getOS() === 'mac';
+export const isWin = getOS() === 'win';
+export const separator = isWin ? '\\' : '/';
 
 /// format timestamp to string
 export function formatTimestamp(timestamp: number, formatStr: string): string {
@@ -115,3 +132,19 @@ export async function openShellFolder(path) {
   return null;
 };
 
+// compare two strings in different languages
+export function localeComp(lang, str1, str2) {
+  const localeMap = {
+    'zh': 'zh-Hans-CN', // chinese
+    'ja': 'ja-JP',      // japanese
+    'en': 'en-US',      // english
+  };
+
+  const locale = localeMap[lang] || 'en-US';
+  console.log('locale:', locale);
+  if (locale === 'en-US') {
+    return str1.localeCompare(str2);
+  } else {
+    return str1.localeCompare(str2, locale);
+  }
+}

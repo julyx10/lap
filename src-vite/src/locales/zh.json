@@ -102,6 +102,7 @@
   "menu_item_new_folder": "新建文件夹",
   "menu_item_open_folder": "打开文件夹...",
   "menu_item_reveal_in_file_explorer": "在文件管理器中显示",
+  "menu_item_reveal_in_finder": "在访达中显示",
   "menu_item_properties": "属性",
   "menu_item_show_info": "显示信息",
   "menu_item_remove_from_album": "从相册中移除",

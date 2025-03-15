@@ -114,7 +114,7 @@
 import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
+import { isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
 import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
@@ -239,7 +239,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu_item_reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
         openShellFolder(selectedFolderPath.value);

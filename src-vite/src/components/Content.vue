@@ -110,7 +110,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { THUMBNAIL_SIZE, FILES_PAGE_SIZE, formatDate, getRelativePath, getFolderPath } from '@/common/utils';
+import { formatDate, getRelativePath, getFolderPath, localeComp } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -377,7 +377,7 @@ const getImageSrc = async () => {
 }
 
 /// get all files
-async function getAllFiles(isFavorite = false, offset = 0, pageSize = FILES_PAGE_SIZE) {
+async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
   try {
     fileList.value = await invoke('get_all_files', { isFavorite, offset, pageSize });
     refreshFileList(); // get fileList(apply filter and sorting)
@@ -572,17 +572,18 @@ function sortFileList(files, sortingType, sortingDirection) {
 
     switch (sortingType) {
       case 0:   // name
-        switch (config.language) {
-          case 'zh':
-            result = a.name.localeCompare(b.name, 'zh-Hans-CN');
-            break;
-          case 'ja':
-            result = a.name.localeCompare(b.name, 'ja-JP');
-            break;
-          default:
-            result = a.name.localeCompare(b.name);
-            break;
-        }
+        // switch (config.language) {
+        //   case 'zh':
+        //     result = a.name.localeCompare(b.name, 'zh-Hans-CN');
+        //     break;
+        //   case 'ja':
+        //     result = a.name.localeCompare(b.name, 'ja-JP');
+        //     break;
+        //   default:
+        //     result = a.name.localeCompare(b.name);
+        //     break;
+        // }
+        result = localeComp(config.language, a.name, b.name);
         break;
       case 1:   // size
         result = a.size - b.size;
@@ -634,7 +635,7 @@ async function getFileThumb(files, concurrencyLimit = 8) {
         fileId: file.id,
         filePath: file.file_path,
         orientation: file.e_orientation || 0, // Simplified orientation
-        thumbnailSize: THUMBNAIL_SIZE
+        thumbnailSize: config.thumbnailImageSize,
       });
 
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
