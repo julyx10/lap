@@ -7,8 +7,9 @@
     "active": true,
     "targets": "all",
     "icon": [
+      "icons/icon.png",
       "icons/icon.ico",
-      "icons/icon-96.png"
+      "icons/icon.icns"
     ]
   },
   "productName": "jc-photo",
@@ -19,15 +20,6 @@
   "app": {
     "withGlobalTauri": true,
     "windows": [
-      {
-        "label": "main",
-        "title": "",
-        "resizable": true,
-        "decorations": false,
-        "transparent": true,
-        "fullscreen": false,
-        "dragDropEnabled": false
-      }
     ],
     "security": {
       "capabilities": ["migrated"]

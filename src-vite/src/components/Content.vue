@@ -13,9 +13,13 @@
       </div>
 
       <div class="h-6 flex flex-row items-center space-x-4">
+        <SearchBox v-model="searchText" /> 
+        
+        <!-- select mode -->
         <button tabindex="-1"
           :class="[
-            'px-2 py-1 flex flex-row items-center rounded-md border t-color-border t-color-text-hover text-sm',
+            'px-2 py-1 flex flex-row items-center rounded-md border t-color-text-hover text-sm flex-shrink-0 transition-all duration-300',
+            selectMode ? 't-color-border-selected' : 't-color-border'
           ]"
           @click="handleSelectMode(true)"
         >
@@ -28,6 +32,8 @@
             @click.stop
           />
         </button>
+
+        <!-- sorting options -->
         <DropDownSelect
           :options="sortingOptions"
           :defaultIndex="config.sortingType"
@@ -35,14 +41,20 @@
           :defaultExtendIndex="config.sortingDirection"
           @select="handleSortingSelect"
         />
+
+        <!-- filter options -->
         <DropDownSelect
           :options="filterOptions"
           :defaultIndex="config.filterType"
           @select="handleFilterSelect"
         />
+        <!-- preview -->
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
-          class="t-icon-size t-icon-hover" 
+          :class="[
+            't-icon-size flex-shrink-0',
+            config.showPreview ? 't-icon-focus t-icon-focus-hover': 't-icon-hover'
+          ]" 
           @click="config.showPreview = !config.showPreview"
         />
       </div>
@@ -112,6 +124,7 @@ import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { formatDate, getRelativePath, getFolderPath, localeComp } from '@/common/utils';
 
+import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -704,16 +717,18 @@ async function openImageViewer(index: number, createNew = false) {
         height: 600,
         transparent: true,
         decorations: false,
+        focus: true,
       });
 
       imageWindow.once('tauri://created', () => {
         isImageViewerOpen.value = true;
+        imageWindow?.setFocus();
         console.log('ImageViewer window created');
       });
 
       imageWindow.once('tauri://close-requested', () => {
         isImageViewerOpen.value = false;
-        imageWindow.close();
+        imageWindow?.close();
         console.log('ImageViewer window is closing');
       });
 

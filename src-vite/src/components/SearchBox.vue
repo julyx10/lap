@@ -1,25 +1,34 @@
 <template>
-
-  <div >
-    <!-- Search Box -->
-    <input
+  <div 
+    :class="[
+      'relative transition-all duration-300 overflow-hidden',
+      isFocused ? 'w-48' : 'w-10'
+    ]"
+  >
+    <input tabindex="-1"
+      ref="searchInput"
       type="text"
-      class="px-2 py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
       v-model="inputValue"
-      :placeholder="$t('search_placeholder')"
+      :placeholder="isFocused ? $t('search_placeholder') : ''"
+      :class="[
+        'py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus',
+        isFocused ? 'px-8' : 'px-2 cursor-pointer'
+        ]"
+      @focus="isFocused = true"
+      @blur="handleBlur"
       @input="handleInput"
     />
-    <!-- Search Icon -->
-    <IconCancel v-if="inputValue.length > 0" 
-      class="absolute right-8 top-1/2 t-icon-size-sm t-icon-hover transform -translate-y-1/2 " 
-      @click="clickCancel" 
+
+    <!-- Search Icon (Inside input when focused) -->
+    <IconSearch
+      class="absolute left-2 top-1/2 transform -translate-y-1/2 t-icon-size-sm cursor-pointer"
+      @click="focusInput"
     />
-    <IconSearch 
-      :class="[
-        'absolute right-2 top-1/2 t-icon-size-sm transform -translate-y-1/2',
-        inputValue.length > 0 ? 't-icon-hover' : 't-icon-disabled'
-      ]" 
-      @click="clickSearch" 
+
+    <!-- Cancel Icon (Only show when there's input) -->
+    <IconCancel v-if="inputValue.length > 0" 
+      class="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer t-icon-size-sm t-icon-hover"
+      @click="clickCancel"
     />
   </div>
 
@@ -43,11 +52,12 @@ const emit = defineEmits(['update:modelValue']);
 
 // input value
 const inputValue = ref(props.modelValue);
+const isFocused = ref(false);
+const searchInput = ref(null);
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
-
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
@@ -69,22 +79,34 @@ function handleKeyDown(event) {
   }
 }
 
+const focusInput = () => {
+  if(!isFocused.value) {
+    isFocused.value = true;
+    searchInput.value?.focus();
+  }
+};
+
+const handleBlur = () => {
+  if (inputValue.value.length === 0) {
+    isFocused.value = false;
+  }
+};
+
 function handleInput(event) {
   if (inputValue.value.length === 0)
     emit('update:modelValue', inputValue.value);
 };
 
 const clickCancel = () => {
-  console.log('clickCancel');
-  
   inputValue.value = '';
+  isFocused.value = false;
   emit('update:modelValue', '');
 };
 
 const clickSearch = () => {
-  console.log('clickSearch');
-
   if (inputValue.value.length === 0) return;
+
+  searchInput.value?.blur();
   emit('update:modelValue', inputValue.value.trim());
 };
 

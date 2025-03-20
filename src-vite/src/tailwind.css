@@ -18,6 +18,9 @@
 .t-icon-hover {
   @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
 }
+.t-icon-focus-hover {
+  @apply hover:text-sky-300 transition-colors duration-300 cursor-pointer;
+}
 .t-icon-selected {
   @apply text-gray-300 transition-colors duration-300 ;
 }

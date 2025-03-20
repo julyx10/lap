@@ -2,7 +2,7 @@
   
   <div class="w-screen h-screen flex flex-col overflow-hidden">
     <!-- Title Bar -->
-    <TitleBar titlebar="jc-photo" viewName="Home"/>
+    <TitleBar v-if="isWin" titlebar="jc-photo" viewName="Home"/>
 
     <!-- Main Content -->
     <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
@@ -87,6 +87,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getCurrentWindow  } from '@tauri-apps/api/window';
 import { useConfigStore } from '@/stores/configStore';
+import { isWin } from '@/common/utils';
 
 // vue components
 import TitleBar from '@/components/TitleBar.vue';
