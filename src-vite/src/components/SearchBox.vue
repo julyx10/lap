@@ -74,6 +74,9 @@ function handleKeyDown(event) {
       event.preventDefault();
       clickSearch();
       break;
+    // case 'Escape':
+    //   clickCancel();
+    //   break;
     default:
       break;
   }

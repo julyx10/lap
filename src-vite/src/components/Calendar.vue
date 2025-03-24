@@ -3,9 +3,9 @@
   <div class="flex-1 flex flex-col overflow-hidden" style="user-select: none;">
 
     <!-- title bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between" >
-      <span>{{ titlebar }}</span>
-      <div class="flex text-sm items-center">
+    <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
+      <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
+      <div class="flex text-sm items-center cursor-pointer">
         <div 
           :class="[
             'px-2 border rounded-l-lg t-color-bg t-color-border t-color-bg-hover text-nowrap',

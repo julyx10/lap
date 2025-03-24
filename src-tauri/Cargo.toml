@@ -20,6 +20,7 @@ tauri-plugin-shell = "2"
 tauri-plugin-os = "2"
 tauri-plugin-fs = "2.2.0"
 tauri-plugin-dialog = "2"
+# tauri-plugin-devtools = "2.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.32.0", features = ["bundled"] }
@@ -31,11 +32,12 @@ walkdir = "2.5.0"
 base64 = "0.22.1"
 image = "0.25.5"
 imagesize = "0.13.0"
+tokio = { version = "1.44.1", features = ["full"] }
 # opencv = "0.93.3"
 # id3 = "1.14.0"
 
-[target."cfg(target_os = \"macos\")".dependencies]
-cocoa = "0.26"
+# [target."cfg(target_os = \"macos\")".dependencies]
+# cocoa = "0.26"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

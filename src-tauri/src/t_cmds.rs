@@ -185,8 +185,14 @@ pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
 
 /// get a file's image
 #[tauri::command]
-pub fn get_file_image(file_path: &str) -> Result<String, String> {
-    match std::fs::read(file_path) {
+// pub fn get_file_image(file_path: &str) -> Result<String, String> {
+//     match std::fs::read(file_path) {
+//         Ok(image_data) => Ok(general_purpose::STANDARD.encode(image_data)),
+//         Err(e) => Err(format!("Failed to read the image: {}", e)),
+//     }
+// }
+pub async fn get_file_image(file_path: String) -> Result<String, String> {
+    match tokio::fs::read(file_path).await {
         Ok(image_data) => Ok(general_purpose::STANDARD.encode(image_data)),
         Err(e) => Err(format!("Failed to read the image: {}", e)),
     }

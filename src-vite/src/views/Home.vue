@@ -10,11 +10,12 @@
       <!-- left toolbar -->
       <div tabindex="-1"
         ref="divToolbar" 
-        class="min-w-12 my-4 flex flex-col justify-between z-10 t-color-bg" style="user-select: none;"
+        class="pt-10 pb-4 flex flex-col justify-between t-color-bg" style="user-select: none; min-width: 68px;"
         @contextmenu.prevent
+        data-tauri-drag-region
       >
         <!-- toolbar items -->
-        <div class="flex flex-col items-center space-y-6">
+        <div class="flex flex-col items-center space-y-6" data-tauri-drag-region>
           <div v-for="(item, index) in toolbars" 
             class="flex flex-col items-center t-icon-hover" 
             :key="index" 
@@ -32,10 +33,11 @@
         </div>
 
         <!-- draggable area -->
-        <div class="flex-grow" @mousedown="dragWindow"></div>
+        <!-- <div class="flex-grow"></div> -->
+        <!-- <div class="flex-grow" @mousedown="dragWindow"></div> -->
 
         <!-- settings icon -->
-        <div class="flex flex-col items-center t-icon-hover" @click="clickSettings">
+        <div class="flex flex-col items-center t-icon-hover" @click="clickSettings" data-tauri-drag-region>
           <IconSettings :class="['t-icon-size']"  />
           <p v-if="config.showButtonText" 
               class="text-xs">
@@ -72,7 +74,7 @@
       ></div>
       
       <!-- content area -->
-      <div class="flex-1 flex relative t-color-bg-light rounded-ss-lg">
+      <div class="flex-1 flex relative t-color-bg-light">
         <Content :titlebar="toolbars[config.toolbarIndex].text"/>
       </div>
     </div>
@@ -153,13 +155,15 @@ function handleKeyDown(event) {
   // }
 };
 
-const clickToolbarItem = (index) => {
+const clickToolbarItem = async (index) => {
   if(config.toolbarIndex === index) {
     showLeftPane.value = !showLeftPane.value;
   } else {
     showLeftPane.value = true;
   }
   config.toolbarIndex = index;
+
+  // await appWindow.setTitle(toolbars.value[index].text);
 };
 
 // Dragging the splitter
@@ -185,12 +189,12 @@ function handleMouseMove(event) {
 }
 
 // drag toolbar to move window
-async function dragWindow() {
-  if (await getCurrentWindow().isMaximized()) {
-    return;
-  }
-  getCurrentWindow().startDragging();
-}
+// async function dragWindow() {
+//   if (await getCurrentWindow().isMaximized()) {
+//     return;
+//   }
+//   getCurrentWindow().startDragging();
+// }
 
 /// click settings icon
 async function clickSettings() {
@@ -204,12 +208,13 @@ async function clickSettings() {
   // create a new settings window
   const newSettingsWindow = new WebviewWindow('settings', {
     url: '/settings',
-    title: 'Settings',
-    width: 600,
-    height: 400,
-    resizable: false,
-    transparent: true,
     decorations: false,
+    // title: 'Settings',
+    // width: 600,
+    // height: 400,
+    // resizable: false,
+    // transparent: true,
+    // decorations: false,
   });
   
   newSettingsWindow.once('tauri://created', () => {

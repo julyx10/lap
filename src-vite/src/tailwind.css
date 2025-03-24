@@ -106,3 +106,8 @@
 .t-option {
   @apply t-color-bg-light t-color-bg-hover;
 }
+
+/* select */
+.t-select {
+  @apply text-sm bg-transparent rounded-lg border t-color-border t-input-focus cursor-pointer;
+}

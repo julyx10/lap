@@ -75,13 +75,13 @@
         :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
         @click="clickRotate"
       />
-      <IconDelete
+      <!-- <IconDelete
         :class="[
           't-icon-size',
           fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
         ]"
         @click="clickDelete"
-      />
+      /> -->
       <DropDownMenu
         :iconMenu="IconMore"
         :menuItems="moreMenuItems"
@@ -215,8 +215,11 @@ import IconZoomOriginal from '@/assets/fit-screen2.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconRotateRight from '@/assets/rotate-right.svg';
-import IconDelete from '@/assets/trash.svg';
 import IconMore from '@/assets/more.svg';
+import IconEdit from '@/assets/edit.svg';
+import IconPrint from '@/assets/print.svg';
+import IconRename from '@/assets/rename.svg';
+import IconDelete from '@/assets/trash.svg';
 import IconCopy from '@/assets/copy.svg';
 import IconMoveTo from '@/assets/move-to.svg';
 import IconFileInfo from '@/assets/information.svg';
@@ -266,13 +269,50 @@ const isScaleChanged = ref(false);  // Scale changed state
 const moreMenuItems = computed(() => {
   return [
     {
+      label: localeMsg.value.menu_item_edit,
+      icon: IconEdit,
+      action: () => {
+        console.log('Edit:', filePath.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_print,
+      icon: IconPrint,
+      action: () => {
+        console.log('Print:', filePath.value);
+      }
+    },
+    {
       label: localeMsg.value.menu_item_copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
         console.log('Copy:', filePath.value);
       }
-    },    
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
+      label: localeMsg.value.menu_item_rename,
+      icon: IconRename,
+      action: () => {
+        console.log('Rename:', filePath.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      shortcut: isMac ? '⌫' : 'Del',
+      action: () => {
+        clickDelete();
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
     {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
@@ -606,6 +646,10 @@ function handleKeyDown(event) {
     case 'r':
       clickRotate();
       break;
+    // case '⌫':
+    // case 'Del':
+    //   clickDelete();
+    //   break;
     case 'i':
     // case 'Enter':
       clickShowFileInfo();

@@ -8,7 +8,7 @@
     >
       <div v-if="!child.is_deleted" 
         :class="[
-          'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group rounded-r', 
+          'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @update="scrollToItem(index)"

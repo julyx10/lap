@@ -1,6 +1,6 @@
 <template>
 
-  <div class="w-screen h-screen flex flex-col border t-color-border rounded-lg overflow-hidden select-none">
+  <div class="w-screen h-screen flex flex-col border t-color-border overflow-hidden select-none">
     <!-- Title Bar -->
     <TitleBar :titlebar="$t('settings')" :resizable="false" viewName="Settings"/>
 
@@ -32,9 +32,7 @@
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
             <label for="language-select">{{ $t('settings_general_select_language') }}</label>
-            <select id="language-select" v-model="config.language"
-              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-            >
+            <select id="language-select" v-model="config.language" class="t-select">
               <option v-for="(lang, index) in languages" 
                 :key="index" 
                 :value="lang.value"
@@ -43,24 +41,51 @@
                 {{ lang.label }}
               </option>
             </select>
+            <!-- <n-config-provider :theme-overrides="themeOverrides">
+              <n-select
+                id="language-select"
+                v-model:value="config.language" 
+                class="border-none focus:ring-0 focus:outline-none"
+                :options="languages" 
+                label-field="label"
+                value-field="value"
+                size="small"
+                :style="{
+                  border: 'none',
+                  outline: 'none'
+                }"
+              />
+            </n-config-provider> -->
+
           </div>
 
           <!-- Show button text -->
-          <div class="flex items-center justify-between mb-4">
+          <!-- <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
             <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/>
+          </div> -->
+
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
+            <n-config-provider :theme-overrides="themeOverrides">
+              <n-switch id="show-button-text" v-model:value="config.showButtonText" size="small" />
+            </n-config-provider>
           </div>
 
           <!-- Dark Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="dark-mode" >{{ $t('settings_general_dark_mode') }}</label>
-            <input id="dark-mode" type="checkbox" v-model="config.darkMode" />
+            <n-config-provider :theme-overrides="themeOverrides">
+              <n-switch id="dark-mode" v-model:value="config.darkMode" size="small" />
+            </n-config-provider>
           </div>
 
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings_general_debug_mode') }}</label>
-            <input id="debug-mode" type="checkbox" v-model="config.debugMode" />
+            <n-config-provider :theme-overrides="themeOverrides">
+              <n-switch id="debug-mode" v-model:value="config.debugMode" size="small" />
+            </n-config-provider>
           </div>
 
         </section>
@@ -83,9 +108,7 @@
           <!-- Thumbnail Image Scaling -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_image-select">{{ $t('settings_thumbnail_scaling') }}</label>
-            <select id="thumbnail_image-select" v-model="config.thumbnailScalingOption"
-              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-            >
+            <select id="thumbnail_image-select" v-model="config.thumbnailScalingOption" class="t-select">
               <option v-for="(option, index) in thumbnailIScalingOptions" 
                 :key="index" 
                 :value="option.value"
@@ -99,9 +122,7 @@
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_primary-select">{{ $t('settings_thumbnail_label_primary') }}</label>
-            <select id="thumbnail_primary-select" v-model="config.thumbnailLabelPrimaryOption"
-              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-            >
+            <select id="thumbnail_primary-select" v-model="config.thumbnailLabelPrimaryOption" class="t-select">
               <option v-for="(option, index) in thumbnailLabelOptions" 
                 :key="index" 
                 :value="option.value"
@@ -115,9 +136,7 @@
           <!-- Secondary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_secondary-select">{{ $t('settings_thumbnail_label_secondary') }}</label>
-            <select id="thumbnail_secondary-select" v-model="config.thumbnailLabelSecondaryOption"
-              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-            >
+            <select id="thumbnail_secondary-select" v-model="config.thumbnailLabelSecondaryOption" class="t-select">
               <option v-for="(option, index) in thumbnailLabelOptions" 
                 :key="index" 
                 :value="option.value"
@@ -136,9 +155,7 @@
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings_image_viewer_mouse_wheel') }}</label>
-            <select id="mouse-wheel" v-model="config.mouseWheelMode"
-              class="px-2 py-1 text-sm border rounded-md t-input-color-bg t-color-border t-input-focus"
-            >
+            <select id="mouse-wheel" v-model="config.mouseWheelMode" class="t-select">
               <option 
                 v-for="(item, index) in wheelOptions" 
                 :key="index" 
@@ -191,6 +208,7 @@ import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
+import { NConfigProvider, NSwitch, NSelect } from 'naive-ui';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -201,6 +219,13 @@ const localeMsg = computed(() => messages.value[config.language]);
 
 // config store
 const config = useConfigStore();
+
+// custom naive ui theme
+const themeOverrides = {
+  common: {
+    primaryColor: '#4BA2E3',    // focus color
+  },
+}
 
 const appWindow = getCurrentWebviewWindow()
 
