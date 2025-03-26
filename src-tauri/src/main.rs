@@ -27,7 +27,7 @@ fn main() {
     // let builder = builder.plugin(tauri_plugin_devtools::init());
 
     builder
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        // .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())

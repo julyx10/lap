@@ -718,9 +718,11 @@ async function openImageViewer(index: number, createNew = false) {
         title: 'Image Viewer',
         width: 800,
         height: 600,
-        transparent: false,
+        resizable: false,
+        // transparent: true,        // Windows only
         decorations: true,
-        focus: true,
+        titleBarStyle: 'Overlay',    // macOS only
+        hiddenTitle: true,           // macOS only
       });
 
       imageWindow.once('tauri://created', () => {
@@ -748,6 +750,7 @@ async function openImageViewer(index: number, createNew = false) {
       nextFilePath: nextEncodedFilePath,
     });
     if(createNew) {
+      imageWindow.show();
       imageWindow.setFocus();
     }
   }

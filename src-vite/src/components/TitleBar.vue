@@ -1,17 +1,29 @@
 <template>
 
   <!-- Custom Title Bar -->
-  <div class="w-full h-10 flex items-center justify-between t-color-bg select-none"
+  <div 
+    :class="[
+      'w-full flex items-center justify-between font-bold t-color-bg select-none cursor-default',
+      isWin ? 'h-10' : '',
+      isMac ? 'h-8' : ''
+    ]"
     @contextmenu.prevent
+    data-tauri-drag-region
   >
     
     <!-- Title Name -->
-    <span class="ml-4 t-color-text text-nowrap" @mousedown="onMousedown">{{ titlebar }}</span>
-
-    <!-- Draggable Area -->
-    <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text" 
-      @mousedown="onMousedown"
+    <span 
+      :class="[
+        't-color-text text-nowrap',
+        isWin ? 'ml-4' : '',
+        isMac ? 'm-auto' : ''
+      ]" 
+      data-tauri-drag-region
     >
+      {{ titlebar }}
+    </span>
+
+    <!-- <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text" data-tauri-drag-region> -->
       <SearchBox 
         v-if="viewName==='Home'" 
         class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" 
@@ -19,10 +31,10 @@
         v-model="searchValue"
         @mousedown.stop
       />
-    </div>
+    <!-- </div> -->
 
     <!-- Window Control Buttons -->
-    <div class="h-full flex items-center">
+    <div v-if="isWin" class="h-full flex items-center">
       <IconMinus v-if="resizable" class="t-window-btn" @click="minimizeWindow" />
       <component v-if="resizable" :is="isMaximized ? IconRestore : IconMaximize" class="t-window-btn" @click="toggleMaximizeWindow" />
       <IconClose class="t-window-btn hover:bg-red-600" @click="closeWindow" />
@@ -37,6 +49,7 @@
 import { ref, watch } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWindow  } from '@tauri-apps/api/window';
+import { isWin, isMac } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 
@@ -71,11 +84,11 @@ watch(() => searchValue.value, (newValue) => {
 });
 
 // drag window
-const onMousedown = (e) => {
-  if (e.detail === 1 && !isMaximized.value) {   // 1: single click
-    appWindow.startDragging();
-  }
-};
+// const onMousedown = (e) => {
+//   if (e.detail === 1 && !isMaximized.value) {   // 1: single click
+//     appWindow.startDragging();
+//   }
+// };
 
 const minimizeWindow = () => {
   appWindow.minimize();

@@ -201,6 +201,7 @@ async function clickSettings() {
   // check if the settings window is already open
   const settingsWindow = await WebviewWindow.getByLabel('settings');
   if (settingsWindow) {
+    settingsWindow.show();
     settingsWindow.setFocus();
     return;
   }
@@ -208,13 +209,14 @@ async function clickSettings() {
   // create a new settings window
   const newSettingsWindow = new WebviewWindow('settings', {
     url: '/settings',
-    decorations: false,
-    // title: 'Settings',
-    // width: 600,
-    // height: 400,
-    // resizable: false,
-    // transparent: true,
-    // decorations: false,
+    title: 'Settings',
+    width: 600,
+    height: 400,
+    resizable: false,
+    // transparent: true,        // Windows only
+    decorations: true,
+    titleBarStyle: 'Overlay',    // macOS only
+    hiddenTitle: true,           // macOS only
   });
   
   newSettingsWindow.once('tauri://created', () => {
