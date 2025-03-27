@@ -2,11 +2,7 @@
 
   <!-- Custom Title Bar -->
   <div 
-    :class="[
-      'w-full flex items-center justify-between font-bold t-color-bg select-none cursor-default',
-      isWin ? 'h-10' : '',
-      isMac ? 'h-8' : ''
-    ]"
+    class="w-full h-10 flex items-center justify-between font-bold t-color-bg select-none cursor-default"
     @contextmenu.prevent
     data-tauri-drag-region
   >

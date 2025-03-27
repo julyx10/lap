@@ -22,10 +22,10 @@
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[
-              'pt-1 rounded transition duration-200',
+              'transition duration-200',
               config.thumbnailScalingOption === 0 ? 'object-contain' : '',
-              config.thumbnailScalingOption === 1 ? 'object-cover' : '',
-              config.thumbnailScalingOption === 2 ? 'object-fill' : ''
+              config.thumbnailScalingOption === 1 ? 'object-cover rounded' : '',
+              config.thumbnailScalingOption === 2 ? 'object-fill rounded' : ''
             ]"
             :style="{ 
               width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px`, 

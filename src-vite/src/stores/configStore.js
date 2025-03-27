@@ -4,6 +4,9 @@ import { defineStore } from 'pinia';
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
 
+    // settings window
+    settingsTabIndex: 0,        // settings tab index
+
     // settings - general
     language: 'en',             // default language
     showButtonText: false,      // show button text
@@ -62,7 +65,7 @@ export const useConfigStore = defineStore('configStore', {
     // ImageViewer.vue
     isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
     isFullScreen: false,        // full screen mode
-    isPinned: false,            // pinned mode
+    isPinned: true,            // pinned mode
     showFileInfo: false,        // show file info
   }),
 

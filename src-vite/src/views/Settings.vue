@@ -16,9 +16,9 @@
           :key="index"
           :class="[
             'mb-4 px-1 border-l-2 border-transparent cursor-pointer', 
-            tabIndex === index ? 't-color-text-selected t-color-border-selected transition-colors duration-300' : '',
+            config.settingsTabIndex === index ? 't-color-text-selected t-color-border-selected transition-colors duration-300' : '',
           ]"
-          @click="tabIndex = index"
+          @click="config.settingsTabIndex = index"
         >
           {{ $t(tab) }}
         </div>
@@ -27,7 +27,7 @@
       <div class="flex-grow px-2">
 
         <!-- General tab -->
-        <section v-if="tabIndex === 0">
+        <section v-if="config.settingsTabIndex === 0">
 
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
@@ -91,7 +91,7 @@
         </section>
 
         <!-- Thumbnail tab -->
-        <section v-if="tabIndex === 1">
+        <section v-if="config.settingsTabIndex === 1">
 
           <!-- Thumbnail Size -->
           <div class="flex items-center justify-between mb-4">
@@ -150,7 +150,7 @@
         </section>
 
         <!-- Image Viewer tab -->
-        <section v-else-if="tabIndex === 2">
+        <section v-else-if="config.settingsTabIndex === 2">
 
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
@@ -182,7 +182,7 @@
         </section>
 
         <!-- About Section -->
-        <section v-else-if="tabIndex === 3">
+        <section v-else-if="config.settingsTabIndex === 3">
 
           <div class="flex flex-col items-center justify-between mb-4">
             <label class="font-bold">jc-photo</label>
@@ -229,7 +229,7 @@ const themeOverrides = {
 
 const appWindow = getCurrentWebviewWindow()
 
-const tabIndex = ref(0);
+// const tabIndex = config.settingTab;
 
 const languages = [
   { label: 'English', value: 'en' },

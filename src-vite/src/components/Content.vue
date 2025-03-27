@@ -3,14 +3,14 @@
   <div class="flex-1 flex flex-col">
 
     <!-- title bar -->
-    <div class="px-4 pt-1 flex flex-row items-center justify-between select-none" data-tauri-drag-region>
+    <div class="px-4 pt-1 min-h-12 flex flex-row items-center justify-between select-none" data-tauri-drag-region>
 
-      <div class="mr-2 flex-1 flex flex-col" data-tauri-drag-region>
-        <span class="cursor-default" data-tauri-drag-region>{{ contentTitle }}</span>
-        <span class="text-sm cursor-default" data-tauri-drag-region>
+      <!-- <div class="mr-2 flex-1 flex flex-col" data-tauri-drag-region> -->
+        <span class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</span>
+        <!-- <span class="text-sm cursor-default" data-tauri-drag-region>
           {{ $t('files_summary', { count: fileList.length }) }}
-        </span>
-      </div>
+        </span> -->
+      <!-- </div> -->
 
       <div class="h-6 flex flex-row items-center space-x-4">
         <SearchBox v-model="searchText" /> 
@@ -364,6 +364,13 @@ watch(() => [selectedItemIndex.value, fileList.value], () => {
   }
 }, { deep: true });   // deep watch: because isSelected is a property of each file object
 
+// watch preview
+watch(() => config.showPreview, (showPreview) => {
+  if (showPreview) {
+    getImageSrc();
+  }
+});
+
 // get selected image source
 const getImageSrc = async () => {
   if(selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
@@ -371,12 +378,6 @@ const getImageSrc = async () => {
     return;
   }
   
-  // prevent loading image when the image viewer is open
-  // if(isImageViewerOpen.value) {
-  //   imageSrc.value = fileList.value[selectedItemIndex.value].thumbnail || '';
-  //   return;
-  // }
-
   let filePath = fileList.value[selectedItemIndex.value].file_path;
   console.log('getImageSrc:', filePath);
   try {
@@ -719,10 +720,11 @@ async function openImageViewer(index: number, createNew = false) {
         width: 800,
         height: 600,
         resizable: false,
-        // transparent: true,        // Windows only
+        // transparent: true,
         decorations: true,
         titleBarStyle: 'Overlay',    // macOS only
         hiddenTitle: true,           // macOS only
+        // fullscreen: config.isFullScreen,
       });
 
       imageWindow.once('tauri://created', () => {

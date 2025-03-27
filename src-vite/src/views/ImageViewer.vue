@@ -3,7 +3,8 @@
   <div 
     :class="[
       'relative w-screen h-screen flex flex-col overflow-hidden',
-      config.isFullScreen ? 'fixed top-0 left-0 z-50' : 'border t-color-border rounded-lg shadow-lg'
+      config.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
+      isWin ? 'border t-color-border rounded-lg shadow-lg' : ''
     ]"
   >
     <!-- title bar -->
@@ -13,98 +14,99 @@
     />
 
     <!-- Toolbar -->
-    <div id="responsiveDiv"
+    <div 
       :class="[
-        'absolute px-2 left-1/2 rounded-lg t-color-bg z-40 transform -translate-x-1/2 h-10 flex flex-row items-center justify-center space-x-5 t-color-text',
-        config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 hover:translate-y-0 hover:opacity-50 transition-transform duration-300 ease-in-out' : '',
-        config.isFullScreen && config.isPinned ? 'opacity-80 transition-transform duration-300 ease-in-out' : ''
+        'absolute -top-0.5 left-1/2 bg-transparent z-40 transform -translate-x-1/2 group',
+        config.isFullScreen ? 'h-14' : 'h-10',
       ]"
+      data-tauri-drag-region
     >
-      <IconPrev 
+      <div id="responsiveDiv"
         :class="[
-          't-icon-size',  
-          fileIndex > 0 ? 't-icon-hover' : 't-icon-disabled'
-        ]" 
-        @click="clickPrev" 
-      />
-      <IconNext 
-        :class="[
-          't-icon-size',
-          fileIndex >=0 && fileIndex < fileCount -1 ? 't-icon-hover' : 't-icon-disabled'
-        ]" 
-        @click="clickNext" 
-      />
-      <component 
-        :is="autoPlay ? IconPause : IconPlay" 
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-        ]" 
-        @click="clickPlay" 
-      />  
-      <IconZoomIn
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 && imageScale < imageMaxScale ? 't-icon-hover' : 't-icon-disabled'
+          'px-4 h-10 space-x-5 rounded-lg flex flex-row items-center justify-center t-color-bg t-color-text',
+          config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-2 group-hover:opacity-50 transition-transform duration-300 ease-in-out' : '',
+          config.isFullScreen && config.isPinned ? 'opacity-80 translate-y-2 transition-transform duration-300 ease-in-out' : ''
         ]"
-        @click="clickZoomIn" 
-      />
-      <IconZoomOut
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 && imageScale > imageMinScale ? 't-icon-hover' : 't-icon-disabled'
-        ]"
-        @click="clickZoomOut" 
-      />
-      <component 
-        :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" 
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-        ]" 
-        @click="toggleZoomFit" 
-      />
-      <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
-      <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
-      <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
-      <IconRotateRight 
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled',
-        ]" 
-        :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
-        @click="clickRotate"
-      />
-      <!-- <IconDelete
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-        ]"
-        @click="clickDelete"
-      /> -->
-      <DropDownMenu
-        :iconMenu="IconMore"
-        :menuItems="moreMenuItems"
-        :disabled="fileIndex === -1"
-        @click.stop
-      />
+      >
+        <IconPrev 
+          :class="[
+            't-icon-size',  
+            fileIndex > 0 ? 't-icon-hover' : 't-icon-disabled'
+          ]" 
+          @click="clickPrev" 
+        />
+        <IconNext 
+          :class="[
+            't-icon-size',
+            fileIndex >=0 && fileIndex < fileCount -1 ? 't-icon-hover' : 't-icon-disabled'
+          ]" 
+          @click="clickNext" 
+        />
+        <component 
+          :is="autoPlay ? IconPause : IconPlay" 
+          :class="[
+            't-icon-size',
+            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+          ]" 
+          @click="clickPlay" 
+        />  
+        <IconZoomIn
+          :class="[
+            't-icon-size',
+            fileIndex >= 0 && imageScale < imageMaxScale ? 't-icon-hover' : 't-icon-disabled'
+          ]"
+          @click="clickZoomIn" 
+        />
+        <IconZoomOut
+          :class="[
+            't-icon-size',
+            fileIndex >= 0 && imageScale > imageMinScale ? 't-icon-hover' : 't-icon-disabled'
+          ]"
+          @click="clickZoomOut" 
+        />
+        <component 
+          :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" 
+          :class="[
+            't-icon-size',
+            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+          ]" 
+          @click="toggleZoomFit" 
+        />
+        <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
+        <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
+        <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
+        <IconRotateRight 
+          :class="[
+            't-icon-size',
+            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled',
+          ]" 
+          :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+          @click="clickRotate"
+        />
+        <DropDownMenu
+          :iconMenu="IconMore"
+          :menuItems="moreMenuItems"
+          :disabled="fileIndex === -1"
+          @click.stop
+        />
 
-      <component 
-        :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" 
-        class="t-icon-size t-icon-hover" 
-        @click="toggleFullScreen" 
-      />
-      
-      <IconSeparator v-show="config.isFullScreen" class="t-icon-size t-icon-disabled" />
-      <component v-show="config.isFullScreen"
-        :is="config.isPinned ? IconPin : IconUnPin" 
-        :class="[
-          't-icon-size',
-          fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-        ]" 
-        @click="config.isPinned = !config.isPinned" 
-      />
-      <IconClose v-show="config.isFullScreen" class="t-icon-size t-icon-hover" @click="appWindow.close()" />
+        <component v-if="isWin"
+          :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" 
+          class="t-icon-size t-icon-hover" 
+          @click="toggleFullScreen" 
+        />
+        
+        <IconSeparator v-show="config.isFullScreen" class="t-icon-size t-icon-disabled" />
+        <component v-show="config.isFullScreen"
+          :is="config.isPinned ? IconPin : IconUnPin" 
+          :class="[
+            't-icon-size',
+            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
+          ]" 
+          @click="config.isPinned = !config.isPinned" 
+        />
+        <IconClose v-show="config.isFullScreen" class="t-icon-size t-icon-hover" @click="appWindow.close()" />
+      </div>
     </div>
 
     <!-- content -->
@@ -136,17 +138,16 @@
         </div>
 
         <!-- image -->
-        <!-- <template v-if="fileIndex >= 0"> -->
-          <Image v-if="fileIndex >= 0" 
-            ref="imageRef" 
-            :src="imageSrc" 
-            :rotate="fileInfo?.rotate ?? 0" 
-            :isZoomFit="config.isZoomFit"
-          />
-          <p v-else>
-            {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
-          </p>
-        <!-- </template> -->
+        <Image v-if="fileIndex >= 0" 
+          ref="imageRef" 
+          :src="imageSrc" 
+          :rotate="fileInfo?.rotate ?? 0" 
+          :isZoomFit="config.isZoomFit"
+          @dblclick="toggleZoomFit"
+        />
+        <p v-else>
+          {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
+        </p>
 
         <!-- no image selected -->
         <p v-else>
@@ -197,7 +198,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { isMac } from '@/common/utils';
+import { isWin, isMac } from '@/common/utils';
 
 import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
@@ -339,7 +340,10 @@ const moreMenuItems = computed(() => {
 
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
-  // isFullScreen.value = await appWindow.isMaximized();
+  window.addEventListener('wheel', handleWheel, { passive: false});          // macOS: touchpad scroll (two-finger scroll)
+  window.addEventListener("gesturechange", handleGesture, { passive: false}); // macOS: pinch-to-zoom gesture
+
+  appWindow.listen('tauri://resize', handleResize);     // macOS: Listen for full screen change
 
   const urlParams = new URLSearchParams(window.location.search);
   
@@ -352,7 +356,91 @@ onMounted(async() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('wheel', handleWheel);
+  window.removeEventListener("gesturechange", handleGesture);
+
+  appWindow.unlisten('tauri://resize', handleResize);   // macOS: Unlisten for full screen change
 });
+
+// Handle keyboard shortcuts
+function handleKeyDown(event) {
+  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Escape', 'Space'];
+  
+  // Disable default behavior for certain keys
+  if (navigationKeys.includes(event.key)) {
+    event.preventDefault();
+  }
+
+  switch (event.key) {
+    case 'ArrowLeft':
+      clickPrev();
+      break;
+    case 'ArrowRight':
+      clickNext();
+      break;
+    case 'Home':
+      clickHome();
+      break;
+    case 'End':
+      clickEnd();
+      break;
+    case 'ArrowUp':
+      clickZoomIn();
+      break;
+    case 'ArrowDown':
+      clickZoomOut();
+      break;
+    case 'p':
+      autoPlay.value = !autoPlay.value;
+      break;
+    case 'f':
+      toggleFavorite();
+      break;
+    case 's':
+      clickSave();
+      break;
+    case 'r':
+      clickRotate();
+      break;
+    // case '⌫':
+    // case 'Del':
+    //   clickDelete();
+    //   break;
+    case 'i':
+    // case 'Enter':
+      clickShowFileInfo();
+      break;
+    case ' ':
+      toggleZoomFit();
+      break;
+    case 'Escape':
+      appWindow.close(); // Close the window
+      break;
+  }
+}
+
+// Handle touchpad event
+const handleWheel = (event) => {
+  event.preventDefault();
+
+  const deltaX = event.deltaX;
+  const deltaY = event.deltaY;
+  const isPinching = event.ctrlKey; // Pinch gesture triggers a ctrl+wheel event
+  console.log('handleWheel:', deltaX, deltaY, isPinching);
+};
+
+const handleGesture = (event) => {
+  event.preventDefault();
+  console.log('handleGesture:', event.scale);
+};
+
+// Handle resize event
+const handleResize = async () => {
+  if(isMac) {
+    config.isFullScreen = await appWindow.isFullscreen();
+    console.log('handleFullScreenChange:', config.isFullScreen);
+  }
+};
 
 // Listen for the 'update-url' event to update the image
 listen('update-img', async (event) => {
@@ -393,7 +481,6 @@ listen('message-from-grid-view', (event) => {
   }
 });
 
-      
 // watch language
 watch(() => config.language, (newLanguage) => {
     console.log('Language changed to:', newLanguage);
@@ -606,62 +693,6 @@ const clickDelete = async() => {
   emit('message-from-image-viewer', { message:'delete' });
 }
 
-// Handle keyboard shortcuts
-function handleKeyDown(event) {
-  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Escape', 'Space'];
-  
-  // Disable default behavior for certain keys
-  if (navigationKeys.includes(event.key)) {
-    event.preventDefault();
-  }
-
-  switch (event.key) {
-    case 'ArrowLeft':
-      clickPrev();
-      break;
-    case 'ArrowRight':
-      clickNext();
-      break;
-    case 'Home':
-      clickHome();
-      break;
-    case 'End':
-      clickEnd();
-      break;
-    case 'ArrowUp':
-      clickZoomIn();
-      break;
-    case 'ArrowDown':
-      clickZoomOut();
-      break;
-    case 'p':
-      autoPlay.value = !autoPlay.value;
-      break;
-    case 'f':
-      toggleFavorite();
-      break;
-    case 's':
-      clickSave();
-      break;
-    case 'r':
-      clickRotate();
-      break;
-    // case '⌫':
-    // case 'Del':
-    //   clickDelete();
-    //   break;
-    case 'i':
-    // case 'Enter':
-      clickShowFileInfo();
-      break;
-    case ' ':
-      toggleZoomFit();
-      break;
-    case 'Escape':
-      appWindow.close(); // Close the window
-      break;
-  }
-}
 
 </script>
 
@@ -671,12 +702,12 @@ function handleKeyDown(event) {
   user-select: none;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 600px) {
   #responsiveDiv {
     visibility: hidden;
   }
 }
-@media (min-width: 800px) {
+@media (min-width: 600px) {
   #responsiveDiv {
     visibility: visible;
   }

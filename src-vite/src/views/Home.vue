@@ -10,7 +10,7 @@
       <!-- left toolbar -->
       <div tabindex="-1"
         ref="divToolbar" 
-        class="pt-10 pb-4 flex flex-col justify-between t-color-bg" style="user-select: none; min-width: 68px;"
+        class="pt-10 pb-4 z-10 flex flex-col justify-between t-color-bg" style="user-select: none; min-width: 68px;"
         @contextmenu.prevent
         data-tauri-drag-region
       >
@@ -215,8 +215,9 @@ async function clickSettings() {
     resizable: false,
     // transparent: true,        // Windows only
     decorations: true,
-    titleBarStyle: 'Overlay',    // macOS only
-    hiddenTitle: true,           // macOS only
+    titleBarStyle: 'Overlay',   // macOS only
+    hiddenTitle: true,          // macOS only
+    minimizable: false,         // macOS only
   });
   
   newSettingsWindow.once('tauri://created', () => {
