@@ -110,8 +110,11 @@
     </div>
 
     <!-- content -->
-    <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
-
+    <div 
+      tabindex="0" 
+      @keydown="handleKeyDown" 
+      class="flex t-color-text t-color-bg h-screen overflow-hidden"
+    >
       <!-- image container -->
       <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden">
         
@@ -338,12 +341,11 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-onMounted(async() => {
-  window.addEventListener('keydown', handleKeyDown);
-  window.addEventListener('wheel', handleWheel, { passive: false});          // macOS: touchpad scroll (two-finger scroll)
-  window.addEventListener("gesturechange", handleGesture, { passive: false}); // macOS: pinch-to-zoom gesture
 
-  appWindow.listen('tauri://resize', handleResize);     // macOS: Listen for full screen change
+let unlistenResize = null
+
+onMounted(async() => {
+  unlistenResize = await appWindow.listen('tauri://resize', handleResize);     // macOS: Listen for full screen change
 
   const urlParams = new URLSearchParams(window.location.search);
   
@@ -355,11 +357,7 @@ onMounted(async() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-  window.removeEventListener('wheel', handleWheel);
-  window.removeEventListener("gesturechange", handleGesture);
-
-  appWindow.unlisten('tauri://resize', handleResize);   // macOS: Unlisten for full screen change
+  unlistenResize?.();
 });
 
 // Handle keyboard shortcuts
@@ -418,21 +416,6 @@ function handleKeyDown(event) {
       break;
   }
 }
-
-// Handle touchpad event
-const handleWheel = (event) => {
-  event.preventDefault();
-
-  const deltaX = event.deltaX;
-  const deltaY = event.deltaY;
-  const isPinching = event.ctrlKey; // Pinch gesture triggers a ctrl+wheel event
-  console.log('handleWheel:', deltaX, deltaY, isPinching);
-};
-
-const handleGesture = (event) => {
-  event.preventDefault();
-  console.log('handleGesture:', event.scale);
-};
 
 // Handle resize event
 const handleResize = async () => {
