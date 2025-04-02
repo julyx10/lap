@@ -3,19 +3,23 @@
   <div class="flex-1 flex flex-col">
 
     <!-- title bar -->
-    <div class="px-4 pt-1 flex flex-row items-center justify-between" style="user-select: none;">
+    <div class="px-4 pt-1 min-h-12 flex flex-row items-center justify-between select-none" data-tauri-drag-region>
 
-      <div class="mr-2 flex-1 flex flex-col">
-        <span>{{ contentTitle }}</span>
-        <span class="text-sm">
+      <!-- <div class="mr-2 flex-1 flex flex-col" data-tauri-drag-region> -->
+        <span class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</span>
+        <!-- <span class="text-sm cursor-default" data-tauri-drag-region>
           {{ $t('files_summary', { count: fileList.length }) }}
-        </span>
-      </div>
+        </span> -->
+      <!-- </div> -->
 
       <div class="h-6 flex flex-row items-center space-x-4">
+        <SearchBox v-model="searchText" /> 
+        
+        <!-- select mode -->
         <button tabindex="-1"
           :class="[
-            'px-2 py-1 flex flex-row items-center rounded-md border t-color-border t-color-text-hover text-sm',
+            'px-2 py-1 flex flex-row items-center rounded-md border t-color-text-hover text-sm flex-shrink-0 transition-all duration-300',
+            selectMode ? 't-color-border-selected' : 't-color-border'
           ]"
           @click="handleSelectMode(true)"
         >
@@ -28,6 +32,8 @@
             @click.stop
           />
         </button>
+
+        <!-- sorting options -->
         <DropDownSelect
           :options="sortingOptions"
           :defaultIndex="config.sortingType"
@@ -35,14 +41,20 @@
           :defaultExtendIndex="config.sortingDirection"
           @select="handleSortingSelect"
         />
+
+        <!-- filter options -->
         <DropDownSelect
           :options="filterOptions"
           :defaultIndex="config.filterType"
           @select="handleFilterSelect"
         />
+        <!-- preview -->
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
-          class="t-icon-size t-icon-hover" 
+          :class="[
+            't-icon-size flex-shrink-0',
+            config.showPreview ? 't-icon-focus t-icon-focus-hover': 't-icon-hover'
+          ]" 
           @click="config.showPreview = !config.showPreview"
         />
       </div>
@@ -110,8 +122,9 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { formatDate, getRelativePath, getFolderPath, localeComp } from '@/common/utils';
+import { isWin, isMac, formatDate, getRelativePath, getFolderPath, localeComp } from '@/common/utils';
 
+import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -177,7 +190,7 @@ const imageSrc = ref(null);         // preview image source
 let resizeObserver;
 
 // image viewer
-const isImageViewerOpen  = ref(false);  // show image viewer(new window)
+// const isImageViewerOpen  = ref(false);  // show image viewer(new window)
 
 onMounted(() => {
   console.log('content mounted');
@@ -342,11 +355,21 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
 }, { immediate: true });
 
 // watch for changes in the file list (selected item index or file list length)
-watch(() => [selectedItemIndex.value, fileList.value, isImageViewerOpen.value], () => {
+// watch(() => [selectedItemIndex.value, fileList.value, isImageViewerOpen.value], () => {
+watch(() => [selectedItemIndex.value, fileList.value], () => {
   // update the selected count
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;
-  getImageSrc();
+  if(config.showPreview) {
+    getImageSrc();
+  }
 }, { deep: true });   // deep watch: because isSelected is a property of each file object
+
+// watch preview
+watch(() => config.showPreview, (showPreview) => {
+  if (showPreview) {
+    getImageSrc();
+  }
+});
 
 // get selected image source
 const getImageSrc = async () => {
@@ -355,12 +378,6 @@ const getImageSrc = async () => {
     return;
   }
   
-  // prevent loading image when the image viewer is open
-  if(isImageViewerOpen.value) {
-    imageSrc.value = fileList.value[selectedItemIndex.value].thumbnail || '';
-    return;
-  }
-
   let filePath = fileList.value[selectedItemIndex.value].file_path;
   console.log('getImageSrc:', filePath);
   try {
@@ -700,20 +717,26 @@ async function openImageViewer(index: number, createNew = false) {
         url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
                            `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
         title: 'Image Viewer',
-        width: 800,
-        height: 600,
-        transparent: true,
-        decorations: false,
+        width: 1200,
+        height: 800,
+        decorations: isMac,
+        transparent: isWin,
+        ...(isMac && {
+          titleBarStyle: 'Overlay',
+          hiddenTitle: true,
+          minimizable: false,
+        }),
       });
 
       imageWindow.once('tauri://created', () => {
-        isImageViewerOpen.value = true;
+        // isImageViewerOpen.value = true;
+        imageWindow?.setFocus();
         console.log('ImageViewer window created');
       });
 
       imageWindow.once('tauri://close-requested', () => {
-        isImageViewerOpen.value = false;
-        imageWindow.close();
+        // isImageViewerOpen.value = false;
+        imageWindow?.close();
         console.log('ImageViewer window is closing');
       });
 
@@ -730,6 +753,7 @@ async function openImageViewer(index: number, createNew = false) {
       nextFilePath: nextEncodedFilePath,
     });
     if(createNew) {
+      imageWindow.show();
       imageWindow.setFocus();
     }
   }

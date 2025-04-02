@@ -13,6 +13,7 @@
  */
 
 use tauri::Manager;
+// use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
 mod t_cmds;
 mod t_sqlite;
@@ -20,8 +21,13 @@ mod t_utils;
 
 /// The main function is the entry point for the Tauri application.
 fn main() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+    let builder = tauri::Builder::default();
+
+    // #[cfg(debug_assertions)]
+    // let builder = builder.plugin(tauri_plugin_devtools::init());
+
+    builder
+        .plugin(tauri_plugin_window_state::Builder::default().build()) // macOS: ~/Library/Application Support/{APP_NAME}/window-state.json
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
@@ -35,6 +41,36 @@ fn main() {
             // #[cfg(debug_assertions)] // only include this block in debug builds
             // {
             //     main_window.open_devtools();
+            // }
+
+            // let win_builder =
+            //     WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
+            //     .title("")
+            //     .inner_size(800.0, 600.0);
+    
+            // // set transparent title bar only when building for macOS
+            // #[cfg(target_os = "macos")]
+            // let win_builder = win_builder.title_bar_style(TitleBarStyle::Transparent);
+        
+            // let window = win_builder.build().unwrap();
+        
+            // // set background color only when building for macOS
+            // #[cfg(target_os = "macos")]
+            // {
+            //     use cocoa::appkit::{NSColor, NSWindow};
+            //     use cocoa::base::{id, nil};
+        
+            //     let ns_window = window.ns_window().unwrap() as id;
+            //     unsafe {
+            //         let bg_color = NSColor::colorWithRed_green_blue_alpha_(
+            //             nil,
+            //             18.0 / 255.0,
+            //             24.0 / 255.0,
+            //             38.0 / 255.0,
+            //             1.0,
+            //         );
+            //         ns_window.setBackgroundColor_(bg_color);
+            //     }
             // }
 
             Ok(())

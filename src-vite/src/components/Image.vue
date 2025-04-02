@@ -3,12 +3,12 @@
   <div
     ref="container"
     class="relative w-full h-full overflow-hidden cursor-pointer"
-    @mousedown="startDragging"
-    @mousemove="onDragging"
-    @mouseup="stopDragging"
-    @mouseleave="stopDragging"
+    @mousedown="handleMouseDown"
+    @mousemove="handleMouseMove"
+    @mouseup="handleMouseUp"
+    @mouseleave="handleMouseUp"
+    @wheel="handleWheel"
     @dblclick="zoomFit"
-    @wheel="onMouseWheel"
   >
     <!-- DEBUG -->
     <!-- <table v-if="config.debugMode" class="absolute left-0 bottom-0 p-2 z-10 text-sky-700 bg-gray-100 opacity-50 text-sm">
@@ -112,6 +112,10 @@ const isDragging = ref(false);              // Dragging state
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const isGrabbing = ref(false);              // Grabbing state
 
+// macOS touchpad wheel - accumulate delta values until they reach a threshold
+let wheelDeltaAccumulator = 0;
+let wheelThreshold = 10;
+
 let resizeObserver;
 let positionObserver;
 
@@ -127,14 +131,9 @@ onMounted(() => {
   });
 
   if (container.value) {
-    // Observe container size changes
-    resizeObserver.observe(container.value);
-
-    // Initial position calculation
-    updatePosition();
-
-    // Observe position changes using requestAnimationFrame
-    startPositionObserver();
+    resizeObserver.observe(container.value);  // Observe container size changes
+    updatePosition();   // Initial position calculation
+    startPositionObserver();  // Observe position changes using requestAnimationFrame
   }
 });
 
@@ -305,22 +304,67 @@ const zoomReset = () => {
   };
 };
 
+// start dragging
+const handleMouseDown = (event) => {
+  // console.log('handleMouseDown', event);
+  isDragging.value = true;
+  lastMousePosition.value = { x: event.clientX, y: event.clientY };
+};
+
+// on dragging
+const handleMouseMove = (event) => {
+  // console.log('handleMouseMove', event);
+  if (!isDragging.value) 
+    return;
+
+  const deltaX = imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] <= containerSize.value.width ? 0 : event.clientX - lastMousePosition.value.x;
+  const deltaY = imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] <= containerSize.value.height ? 0 : event.clientY - lastMousePosition.value.y;
+
+  position.value[activeImage.value].x += deltaX;
+  position.value[activeImage.value].y += deltaY;
+  lastMousePosition.value = { x: event.clientX, y: event.clientY };
+
+  clampPosition(); // Adjust position to stay within bounds
+};
+
+// stop dragging
+const handleMouseUp = () => {
+  isDragging.value = false;
+};
+
 // mouse wheel zoom
-const onMouseWheel = (event) => {
+const handleWheel = (event) => {
   event.preventDefault();
+
+  // macbook touchpad
+  const isTouchPad = Math.abs(event.deltaY) < 4 && event.deltaMode === 0;
+  // console.log('handleWheel', event.deltaX, event.deltaY, isTouchPad);
+
+  if(isTouchPad) {
+    // accumulate delta values until they reach a threshold
+    wheelDeltaAccumulator += event.deltaY;
+    if(Math.abs(wheelDeltaAccumulator) < wheelThreshold) {
+      return;
+    }
+    wheelDeltaAccumulator = 0;
+  }
+
+  const zoomFactor = isTouchPad ? 1 : 0.1; // Adjust sensitivity
+
   if(config.mouseWheelMode === 0) {  // 0: previous/next image
     if(event.ctrlKey) {     // ctrl + mouse wheel: zoom in / out
-      mouseZoom(event);
+      wheelZoom(event, zoomFactor);
     } else{
       emit('message-from-image-viewer', { message: event.deltaY < 0 ? 'prev' : 'next' });
     }
   } else if(config.mouseWheelMode === 1) {  // 1: zoom in / out
-    mouseZoom(event);
+    wheelZoom(event, zoomFactor);
   }
 };
 
-const mouseZoom = (event) => {
-  const zoomFactor = 0.1; // Adjust sensitivity
+// wheel zoom
+// zoomFactor: Adjust sensitivity
+const wheelZoom = (event, zoomFactor) => {
   minScale.value = Math.min(
     0.1, 
     Math.min(
@@ -350,30 +394,6 @@ const zoomOut = () => {
 
   const newScale = Math.max(scale.value[activeImage.value] / 2, minScale.value);
   zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
-};
-
-// drag image if image size is larger than container size
-const startDragging = (event) => {
-  isDragging.value = true;
-  lastMousePosition.value = { x: event.clientX, y: event.clientY };
-};
-
-const onDragging = (event) => {
-  if (!isDragging.value) 
-    return;
-
-  const deltaX = imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] <= containerSize.value.width ? 0 : event.clientX - lastMousePosition.value.x;
-  const deltaY = imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] <= containerSize.value.height ? 0 : event.clientY - lastMousePosition.value.y;
-
-  position.value[activeImage.value].x += deltaX;
-  position.value[activeImage.value].y += deltaY;
-  lastMousePosition.value = { x: event.clientX, y: event.clientY };
-
-  clampPosition(); // Adjust position to stay within bounds
-};
-
-const stopDragging = () => {
-  isDragging.value = false;
 };
 
 // Zoom image at cursor position

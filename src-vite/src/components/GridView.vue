@@ -22,10 +22,10 @@
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[
-              'pt-1 rounded transition duration-200',
+              'transition duration-200',
               config.thumbnailScalingOption === 0 ? 'object-contain' : '',
-              config.thumbnailScalingOption === 1 ? 'object-cover' : '',
-              config.thumbnailScalingOption === 2 ? 'object-fill' : ''
+              config.thumbnailScalingOption === 1 ? 'object-cover rounded' : '',
+              config.thumbnailScalingOption === 2 ? 'object-fill rounded' : ''
             ]"
             :style="{ 
               width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px`, 
@@ -98,6 +98,7 @@ import IconUnChecked from '@/assets/checkbox-unchecked.svg';
 import IconMore from '@/assets/more.svg';
 import IconOpen from '@/assets/eye.svg';
 import IconEdit from '@/assets/edit.svg';
+import IconPrint from '@/assets/print.svg';
 import IconFavorite from '@/assets/heart-solid.svg';
 import IconUnFavorite from '@/assets/heart.svg';
 import IconRotate from '@/assets/rotate-right.svg';
@@ -107,7 +108,6 @@ import IconCopyTo from '@/assets/copy-to.svg';
 import IconMoveTo from '@/assets/move-to.svg';
 import IconDelete from '@/assets/trash.svg';
 import IconOpenFolder from '@/assets/external.svg';
-import { smallerSize } from 'naive-ui/es/_utils';
 
 const props = defineProps({
   modelValue: {     // selecte item index(v-model value) 
@@ -212,6 +212,13 @@ const moreMenuItems = computed(() => {
       icon: IconEdit,
       action: () => {
         console.log('Edit:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_print,
+      icon: IconPrint,
+      action: () => {
+        console.log('Print:', selectedIndex.value);
       }
     },
     {

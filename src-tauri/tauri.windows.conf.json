@@ -1,0 +1,11 @@
+{
+  "app": {
+    "windows": [
+      {
+        "decorations": false,
+        "transparent": true,
+        "dragDropEnabled": false
+      }
+    ]
+  }
+}
