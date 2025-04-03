@@ -725,7 +725,7 @@ async function openImageViewer(index: number, createNew = false) {
 
       imageWindow.once('tauri://created', () => {
         // isImageViewerOpen.value = true;
-        imageWindow?.setFocus();
+        // imageWindow?.setFocus();
         console.log('ImageViewer window created');
       });
 
@@ -749,7 +749,7 @@ async function openImageViewer(index: number, createNew = false) {
     });
     if(createNew) {
       imageWindow.show();
-      imageWindow.setFocus();
+      // imageWindow.setFocus();
     }
   }
 }

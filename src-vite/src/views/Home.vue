@@ -194,7 +194,6 @@ async function clickSettings() {
   const settingsWindow = await WebviewWindow.getByLabel('settings');
   if (settingsWindow) {
     settingsWindow.show();
-    settingsWindow.setFocus();
     return;
   }
 

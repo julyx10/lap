@@ -24,8 +24,8 @@
       <div id="responsiveDiv"
         :class="[
           'px-4 h-10 space-x-5 rounded-lg flex flex-row items-center justify-center t-color-bg t-color-text',
-          config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-2 group-hover:opacity-50 transition-transform duration-300 ease-in-out' : '',
-          config.isFullScreen && config.isPinned ? 'opacity-80 translate-y-2 transition-transform duration-300 ease-in-out' : ''
+          config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-1 group-hover:opacity-50 transition-transform duration-300 ease-in-out' : '',
+          config.isFullScreen && config.isPinned ? 'opacity-80 translate-y-1 transition-transform duration-300 ease-in-out' : ''
         ]"
       >
         <IconPrev 
