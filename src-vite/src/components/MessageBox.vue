@@ -4,7 +4,7 @@
     <div class="w-96 p-4 t-color-bg-light rounded-lg shadow-lg">
       <div class="mb-2 flex items-center justify-between">
         {{ title }}
-        <IconCancel class="t-icon-size-sm t-icon-hover" @click="clickCancel" />
+        <IconClose class="t-icon-size-sm t-icon-hover" @click="clickCancel" />
       </div>
       <div class="mt-4">
         {{ message }}
@@ -47,8 +47,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { isValidFileName } from '@/common/utils';
 import { useI18n } from 'vue-i18n';
-
-import IconCancel from '@/assets/close.svg';
+import { IconClose } from '@/common/icons';
 
 const props = defineProps({
   title: { 

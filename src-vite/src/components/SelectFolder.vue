@@ -123,17 +123,14 @@ import MoveTo from '@/components/MoveTo.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
 
-// folder icon
-import IconRight from '@/assets/arrow-right.svg';
-import IconMore from '@/assets/more.svg';
-import IconRefresh from '@/assets/refresh.svg';
-import IconCopyTo from '@/assets/copy-to.svg';
-import IconMoveTo from '@/assets/move-to.svg';
-import IconRename from '@/assets/rename.svg';
-import IconDelete from '@/assets/trash.svg';
-import IconNewFolder from '@/assets/folder-plus.svg';
-import IconOpenFolder from '@/assets/external.svg';
-import { is } from 'date-fns/locale';
+import {
+  IconRight,
+  IconMore,
+  IconMoveTo,
+  IconRename,
+  IconDelete,
+  IconNewFolder,
+} from '@/common/icons';
 
 const props = defineProps({
   children: {       // subfolders

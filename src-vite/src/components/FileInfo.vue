@@ -115,8 +115,7 @@
 <script setup lang="ts">
 
 import { formatTimestamp, formatFileSize } from '@/common/utils';
-
-import IconClose from '@/assets/close.svg';
+import { IconClose } from '@/common/icons';
 
 const props = defineProps({
   fileInfo: {

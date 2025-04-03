@@ -32,10 +32,6 @@
           </div>
         </div>
 
-        <!-- draggable area -->
-        <!-- <div class="flex-grow"></div> -->
-        <!-- <div class="flex-grow" @mousedown="dragWindow"></div> -->
-
         <!-- settings icon -->
         <div class="flex flex-col items-center t-icon-hover" @click="clickSettings" data-tauri-drag-region>
           <IconSettings :class="['t-icon-size']"  />
@@ -92,7 +88,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { getCurrentWindow  } from '@tauri-apps/api/window';
 import { useConfigStore } from '@/stores/configStore';
 import { isWin, isMac } from '@/common/utils';
 
@@ -105,16 +100,16 @@ import Location from '@/components/Location.vue';
 import People from '@/components/People.vue';
 import Content from '@/components/Content.vue';
 
-/// Toolbar svg icons
-import IconHome from '@/assets/home.svg';
-import IconFavorite from '@/assets/heart.svg';
-import IconAlbum from '@/assets/photo.svg';
-import IconCalendar from '@/assets/calendar.svg';
-import IconLocation from '@/assets/map-pin.svg';
-import IconPeople from '@/assets/user.svg';
-import IconCamera from '@/assets/camera.svg';
-// import IconTag from '@/assets/tag.svg';
-import IconSettings from '@/assets/settings.svg';
+import {
+  IconHome,
+  IconUnFavorite,
+  IconFolder,
+  IconCalendar,
+  IconLocation,
+  IconPeople,
+  IconCamera,
+  IconSettings,
+} from '@/common/icons';
 
 /// i18n
 import { useI18n } from 'vue-i18n';
@@ -124,13 +119,13 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // config store
 const config = useConfigStore();
 
-const appWindow = getCurrentWebviewWindow()
+// const appWindow = getCurrentWebviewWindow()
 
 // toolbar 
 const toolbars = computed(() =>  [
   { icon: IconHome,     text: localeMsg.value.home },
-  { icon: IconFavorite, text: localeMsg.value.favorite },
-  { icon: IconAlbum,    text: localeMsg.value.album },
+  { icon: IconUnFavorite, text: localeMsg.value.favorite },
+  { icon: IconFolder,    text: localeMsg.value.album },
   { icon: IconCalendar, text: localeMsg.value.calendar },
   { icon: IconLocation, text: localeMsg.value.location },
   { icon: IconPeople,   text: localeMsg.value.people }, 
@@ -192,14 +187,6 @@ function handleMouseMove(event) {
     config.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
   }
 }
-
-// drag toolbar to move window
-// async function dragWindow() {
-//   if (await getCurrentWindow().isMaximized()) {
-//     return;
-//   }
-//   getCurrentWindow().startDragging();
-// }
 
 /// click settings icon
 async function clickSettings() {

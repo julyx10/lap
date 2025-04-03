@@ -49,9 +49,7 @@
   
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-
-import IconArrowDown from '@/assets/arrow-down.svg';
-import IconDot from '@/assets/dot.svg';
+import { IconArrowDown, IconDot } from '@/common/icons';
 
   // Props
 const props = defineProps({

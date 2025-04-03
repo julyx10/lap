@@ -7,7 +7,7 @@
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconReload class="t-icon-size-sm t-icon-hover" @click="clickReload"/>
+        <IconRefresh class="t-icon-size-sm t-icon-hover" @click="clickReload"/>
       </div>
     </div>
 
@@ -17,7 +17,7 @@
         <li v-for="camera in cameras">
           <div 
             :class="[
-              'm-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
+              'my-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
               { 
                 't-color-text-selected': config.cameraMake === camera.make, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300'  : config.cameraMake === camera.make && !config.cameraModel 
@@ -25,19 +25,26 @@
             ]"
             @click="clickCameraMake(camera)"
           >
-            <component :is="camera.is_expanded ? IconFolderOpen : IconFolder" class="mx-1 h-5  flex-shrink-0" @click.stop="clickExpandCamera(camera)"/>
+            <!-- <component :is="camera.is_expanded ? IconFolderExpanded : IconFolder" class="mx-1 h-5  flex-shrink-0" @click.stop="clickExpandCamera(camera)"/> -->
+            <IconRight
+              :class="[
+                'mx-1 h-5 flex-shrink-0 transition-transform', 
+                camera.is_expanded ? 'rotate-90' : ''
+              ]"
+              @click.stop="clickExpandCamera(camera)"
+            />
             {{ camera.make }}
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
             <li v-for="model in camera.models" class="pl-4">
               <div 
                 :class="[
-                  'm-1 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
+                  'm-1 pl-2 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
                   config.cameraModel === model ? 't-color-text-selected t-color-bg-selected t-color-border-selected transition-colors duration-300' : 'border-gray-900'
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
-                <IconCamera class="mx-1 h-5 flex-shrink-0" />
+                <!-- <IconCircle class="mx-1 h-5 flex-shrink-0" /> -->
                 {{ model }}
               </div>
             </li>
@@ -62,12 +69,7 @@ import { ref, onMounted } from 'vue';
 import { useConfigStore } from '@/stores/configStore';
 import { getCameraInfo } from '@/common/api';
 
-// toolbar icons
-import IconReload from '@/assets/refresh.svg';
-import IconFolder from '@/assets/folder.svg';
-import IconFolderOpen from '@/assets/folder-open.svg';
-import IconRight from '@/assets/arrow-right.svg';
-import IconCamera from '@/assets/camera.svg';
+import { IconRefresh, IconRight } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {

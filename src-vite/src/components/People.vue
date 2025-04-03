@@ -7,7 +7,7 @@
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconReload class="t-icon-size-sm t-icon-hover" @click="clickReload"/>
+        <IconRefresh class="t-icon-size-sm t-icon-hover" @click="clickReload"/>
       </div>
     </div>
     
@@ -21,8 +21,7 @@
 
 
 <script setup lang="ts">
-
-import IconReload from '@/assets/refresh.svg';
+import { IconRefresh } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {

@@ -26,7 +26,7 @@
     />
 
     <!-- Cancel Icon (Only show when there's input) -->
-    <IconCancel v-if="inputValue.length > 0" 
+    <IconClose v-if="inputValue.length > 0" 
       class="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer t-icon-size-sm t-icon-hover"
       @click="clickCancel"
     />
@@ -37,9 +37,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
-
-import IconCancel from '@/assets/close.svg';
-import IconSearch from '@/assets/search.svg';
+import { IconClose, IconSearch } from '@/common/icons';
 
 const props = defineProps({
   modelValue: {

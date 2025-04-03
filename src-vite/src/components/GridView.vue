@@ -38,7 +38,7 @@
             class="rounded flex items-center justify-center"
             :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
           >
-            <IconImagePlaceHolder class="size-1/2"/>
+            <IconPhoto class="size-1/2"/>
           </div>
           <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
           <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
@@ -84,30 +84,29 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { isMac, shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
-import IconImagePlaceHolder from '@/assets/photo.svg';
-import IconChecked from '@/assets/checkbox-checked.svg';
-import IconUnChecked from '@/assets/checkbox-unchecked.svg';
-
-import IconMore from '@/assets/more.svg';
-import IconOpen from '@/assets/eye.svg';
-import IconEdit from '@/assets/edit.svg';
-import IconPrint from '@/assets/print.svg';
-import IconFavorite from '@/assets/heart-solid.svg';
-import IconUnFavorite from '@/assets/heart.svg';
-import IconRotate from '@/assets/rotate-right.svg';
-import IconCopy from '@/assets/copy.svg';
-import IconRename from '@/assets/rename.svg';
-import IconCopyTo from '@/assets/copy-to.svg';
-import IconMoveTo from '@/assets/move-to.svg';
-import IconDelete from '@/assets/trash.svg';
-import IconOpenFolder from '@/assets/external.svg';
+import { 
+  IconMore,
+  IconOpen,
+  IconEdit,
+  IconPrint,
+  IconFavorite,
+  IconUnFavorite,
+  IconRotate,
+  IconCopy,
+  IconRename,
+  IconMoveTo,
+  IconDelete,
+  IconPhoto,
+  IconChecked,
+  IconUnChecked,
+} from '@/common/icons';
 
 const props = defineProps({
   modelValue: {     // selecte item index(v-model value) 

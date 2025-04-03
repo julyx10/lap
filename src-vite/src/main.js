@@ -7,7 +7,7 @@ import { invoke } from '@tauri-apps/api/core'
 import router from '@/common/router'
 import App from '@/App.vue'
 import { useConfigStore } from '@/stores/configStore'
-import '@/tailwind.css'
+import '@/assets/tailwind.css'
 
 // I18n
 import en from '@/locales/en.json'

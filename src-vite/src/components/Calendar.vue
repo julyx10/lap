@@ -87,11 +87,9 @@ import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { getTakenDates } from '@/common/api';
 
+import { IconSortingAsc, IconSortingDesc } from '@/common/icons';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
-
-import IconSortingAsc from '@/assets/sorting-asc.svg';
-import IconSortingDesc from '@/assets/sorting-desc.svg';
 
 // props
 const props = defineProps({

@@ -7,7 +7,7 @@
       <div class="mb-2 flex items-center justify-between">
         {{ title }}
         <!-- {{ title }} {{ config.destFolderPath? '\'' + config.destFolderPath + '\'' : '' }} -->
-        <IconCancel class="ml-2 t-icon-size-sm t-icon-hover" @click="clickCancel" />
+        <IconClose class="ml-2 t-icon-size-sm t-icon-hover" @click="clickCancel" />
       </div>
 
       <!-- message -->
@@ -58,10 +58,8 @@
 import { onMounted, onUnmounted } from 'vue';
 import { useConfigStore } from '@/stores/configStore';
 
+import { IconClose } from '@/common/icons';
 import SelectAlbum from '@/components/SelectAlbum.vue';
-
-// svg icons
-import IconCancel from '@/assets/close.svg';
 
 const props = defineProps({
   title: {

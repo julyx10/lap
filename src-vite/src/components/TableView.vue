@@ -22,7 +22,7 @@
           @dblclick="dlbClickFile(index)"
         >
           <td class="p-1">
-            <img :src="file.thumbnail ? file.thumbnail : '/src/assets/photo.svg'" alt="Thumbnail"/>
+            <img :src="file.thumbnail ? file.thumbnail : '/src/assets/icons/photo.svg'" alt="Thumbnail"/>
           </td>
           <td>{{ shortenFilename(file.name) }}</td>
           <td>{{ file.width }}x{{ file.height }}</td>

@@ -75,7 +75,7 @@
         <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
         <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
         <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite" />
-        <IconRotateRight 
+        <IconRotate
           :class="[
             't-icon-size',
             fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled',
@@ -110,11 +110,7 @@
     </div>
 
     <!-- content -->
-    <div 
-      tabindex="0" 
-      @keydown="handleKeyDown" 
-      class="flex t-color-text t-color-bg h-screen overflow-hidden"
-    >
+    <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
       <!-- image container -->
       <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden">
         
@@ -208,34 +204,35 @@ import Image from '@/components/Image.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
-import IconPrev from '@/assets/nav-prev.svg';
-import IconNext from '@/assets/nav-next.svg';
-import IconPlay from '@/assets/play.svg';
-import IconPause from '@/assets/pause.svg';
-import IconZoomIn from '@/assets/zoom-in.svg';
-import IconZoomOut from '@/assets/zoom-out.svg';
-import IconZoomFit from '@/assets/fit-screen1.svg';
-import IconZoomOriginal from '@/assets/fit-screen2.svg';
-import IconUnFavorite from '@/assets/heart.svg';
-import IconFavorite from '@/assets/heart-solid.svg';
-import IconRotateRight from '@/assets/rotate-right.svg';
-import IconMore from '@/assets/more.svg';
-import IconEdit from '@/assets/edit.svg';
-import IconPrint from '@/assets/print.svg';
-import IconRename from '@/assets/rename.svg';
-import IconDelete from '@/assets/trash.svg';
-import IconCopy from '@/assets/copy.svg';
-import IconMoveTo from '@/assets/move-to.svg';
-import IconFileInfo from '@/assets/information.svg';
-
-import IconFullScreen from '@/assets/full-screen-max.svg';
-import IconRestoreScreen from '@/assets/full-screen-min.svg';
-import IconPin from '@/assets/pin-filled.svg';
-import IconUnPin from '@/assets/pin.svg';
-import IconLeft from '@/assets/arrow-left.svg';
-import IconRight from '@/assets/arrow-right.svg';
-import IconSeparator from '@/assets/separator.svg';
-import IconClose from '@/assets/close.svg';
+import { 
+  IconPrev,
+  IconNext,
+  IconPlay,
+  IconPause,
+  IconZoomIn,
+  IconZoomOut,
+  IconZoomFit,
+  IconZoomOriginal,
+  IconUnFavorite,
+  IconFavorite,
+  IconRotate,
+  IconMore,
+  IconEdit,
+  IconPrint,
+  IconRename,
+  IconDelete,
+  IconCopy,
+  IconMoveTo,
+  IconFileInfo,
+  IconFullScreen,
+  IconRestoreScreen,
+  IconPin,
+  IconUnPin,
+  IconLeft,
+  IconRight,
+  IconSeparator,
+  IconClose
+ } from '@/common/icons';
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -342,9 +339,10 @@ const moreMenuItems = computed(() => {
 });
 
 
-let unlistenResize = null
+let unlistenResize;
 
 onMounted(async() => {
+  window.addEventListener('keydown', handleKeyDown);
   unlistenResize = await appWindow.listen('tauri://resize', handleResize);     // macOS: Listen for full screen change
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -357,7 +355,8 @@ onMounted(async() => {
 });
 
 onUnmounted(() => {
-  unlistenResize?.();
+  window.removeEventListener('keydown', handleKeyDown);
+  unlistenResize();
 });
 
 // Handle keyboard shortcuts
@@ -471,11 +470,11 @@ watch(() => config.language, (newLanguage) => {
 });
 
 // watch full screen
-watch(() => config.isFullScreen, async (newFullScreen) => {
-  await appWindow.setFullscreen(newFullScreen);
-  await appWindow.setResizable(!newFullScreen);
-  // await appWindow.setDecorations(false);
-}, { immediate: true }); 
+// watch(() => config.isFullScreen, async (newFullScreen) => {
+//   await appWindow.setFullscreen(newFullScreen);
+//   await appWindow.setResizable(!newFullScreen);
+//   // await appWindow.setDecorations(false);
+// }, { immediate: true }); 
 
 // watch file changed
 watch(() => fileId.value, async () => {

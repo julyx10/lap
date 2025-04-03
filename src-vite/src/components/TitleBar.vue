@@ -47,12 +47,14 @@ import { emit } from '@tauri-apps/api/event';
 import { getCurrentWindow  } from '@tauri-apps/api/window';
 import { isWin, isMac } from '@/common/utils';
 
-import SearchBox from '@/components/SearchBox.vue';
+// import SearchBox from '@/components/SearchBox.vue';
 
-import IconMinus from '@/assets/window-minus.svg';
-import IconMaximize from '@/assets/window-maximize.svg';
-import IconRestore from '@/assets/window-restore.svg';
-import IconClose from '@/assets/close.svg';
+import { 
+  IconMinus,
+  IconMaximize,
+  IconRestore,
+  IconClose 
+} from '@/common/icons';
 
 const props = defineProps({
   titlebar: {

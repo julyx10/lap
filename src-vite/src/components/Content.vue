@@ -122,7 +122,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { isWin, isMac, formatDate, getRelativePath, getFolderPath, localeComp } from '@/common/utils';
+import { isWin, isMac, formatDate, getRelativePath, localeComp } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -131,24 +131,18 @@ import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
 
-import IconPreview from '@/assets/preview-on.svg';
-import IconPreviewOff from '@/assets/preview-off.svg';
-import IconMore from '@/assets/more.svg';
-import IconArrowDown from '@/assets/arrow-down.svg';
-
-import IconClose from '@/assets/close.svg';
-import IconSelectAll from '@/assets/checkbox-checkall.svg';
-import IconSelectNone from '@/assets/checkbox-uncheckall.svg';
-import IconFavorite from '@/assets/heart-solid.svg';
-import IconUnFavorite from '@/assets/heart.svg';
-import IconRotate from '@/assets/rotate-right.svg';
-import IconCopy from '@/assets/copy.svg';
-import IconRename from '@/assets/rename.svg';
-import IconRefresh from '@/assets/refresh.svg';
-import IconCopyTo from '@/assets/copy-to.svg';
-import IconMoveTo from '@/assets/move-to.svg';
-import IconDelete from '@/assets/trash.svg';
-import IconOpenFolder from '@/assets/external.svg';
+import {
+  IconPreview,
+  IconPreviewOff,
+  IconMore,
+  IconClose,
+  IconSelectAll,
+  IconSelectNone,
+  IconFavorite,
+  IconUnFavorite,
+  IconMoveTo,
+  IconDelete,
+} from '@/common/icons';
 
 const props = defineProps({
   titlebar: String
@@ -719,6 +713,7 @@ async function openImageViewer(index: number, createNew = false) {
         title: 'Image Viewer',
         width: 1200,
         height: 800,
+        resizable: true,
         decorations: isMac,
         transparent: isWin,
         ...(isMac && {

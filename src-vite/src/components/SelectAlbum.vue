@@ -16,10 +16,17 @@
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
-            <component :is="album.is_expanded ? IconFolderOpen : IconFolder" 
+            <component :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
               class="mx-1 h-5 flex-shrink-0" 
               @click.stop="clickExpandAlbum(album)"
             />
+            <!-- <IconRight
+              :class="[
+                'mx-1 h-5 flex-shrink-0 transition-transform', 
+                album.is_expanded ? 'rotate-90' : ''
+              ]"
+              @click.stop="clickExpandAlbum(album)"
+            /> -->
             <span
               :class="[
               'flex-1 min-w-0', 
@@ -50,7 +57,7 @@
       {{ $t('no_albums') }}
     </div>
 
-    <!-- rename album -->
+    <!-- edit album -->
     <MessageBox
       v-if="showRenameMsgbox"
       :title="$t('msgbox_rename_album_title')"
@@ -64,7 +71,7 @@
     />
 
     <!-- new folder -->
-    <!-- <MessageBox
+    <MessageBox
       v-if="showNewFolderMsgbox"
       :title="$t('msgbox_new_folder_title')"
       :message="$t('msgbox_new_folder_content')"
@@ -74,7 +81,7 @@
       :cancelText="$t('msgbox_cancel')"
       @ok="clickNewFolder"
       @cancel="showNewFolderMsgbox = false"
-    /> -->
+    />
 
     <!-- remove from albums -->
     <MessageBox
@@ -103,17 +110,14 @@ import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
-// svg icons
-// import IconAdd from '@/assets/plus.svg';
-import IconEdit from '@/assets/edit.svg';
-import IconRemove from '@/assets/minus.svg';
-import IconFolder from '@/assets/folder.svg';
-import IconFolderOpen from '@/assets/folder-open.svg';
-import IconNewFolder from '@/assets/folder-plus.svg';
-import IconMore from '@/assets/more.svg';
-import IconRefresh from '@/assets/refresh.svg';
-import IconRename from '@/assets/rename.svg';
-import IconOpenFolder from '@/assets/external.svg';
+import {
+  IconEdit,
+  IconRemove,
+  IconFolder,
+  IconFolderExpanded,
+  IconNewFolder,
+  IconMore,
+} from '@/common/icons';
 
 const props = defineProps({
   albumId: {    // album id
@@ -146,7 +150,7 @@ const selectFolderRef = ref<SelectFolder | null>(null);
 
 // message boxes
 const showRenameMsgbox = ref(false);
-// const showNewFolderMsgbox = ref(false);
+const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
 
 const albums = ref([]);
@@ -172,8 +176,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_new_folder,
       icon: IconNewFolder,
       action: () => {
-        // showNewFolderMsgbox.value = true;
-        clickNewFolder(localeMsg.value.menu_item_new_folder);
+        showNewFolderMsgbox.value = true;
       }
     },
     {
@@ -265,7 +268,7 @@ const clickRenameAlbum = async (newName) => {
   const renamedAlbum = await renameAlbum(selectedAlbumId.value, newName);
   if(renamedAlbum) {
     let album = getAlbumById(selectedAlbumId.value);
-    album.name = value;
+    album.name = newName;
     showRenameMsgbox.value = false;
   }
 };
@@ -311,29 +314,29 @@ const clickExpandAlbum = async (album, alwaysExpand = false) => {
 };
 
 /// Create new folder
-// const clickNewFolder = async (folderName) => {
-//   const newFolderPath = await createFolder(selectedFolderPath.value, folderName);
-//   if(newFolderPath) {
-//     let album = getAlbumById(selectedAlbumId.value);
-//     if(!album.children) album.children = [];
-//     album.children.push({ name: folderName, path: newFolderPath });
-//     // showNewFolderMsgbox.value = false;
-
-//     await clickExpandAlbum(album, true);
-//     clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
-//   }
-// };
 const clickNewFolder = async (folderName) => {
-  // add new child to the album
-  let album = getAlbumById(selectedAlbumId.value);
-  await clickExpandAlbum(album, true);
-  
-  if(!album.children) album.children = [];
-  album.children.push({ name: folderName, path: '' });
+  const newFolderPath = await createFolder(selectedFolderPath.value, folderName);
+  if(newFolderPath) {
+    let album = getAlbumById(selectedAlbumId.value);
+    if(!album.children) album.children = [];
+    album.children.push({ name: folderName, path: newFolderPath });
+    // showNewFolderMsgbox.value = false;
 
-  await clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
-  await selectFolderRef.value?.clickRenameFolder(folderName);
+    await clickExpandAlbum(album, true);
+    clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
+  }
 };
+// const clickNewFolder = async (folderName) => {
+//   // add new child to the album
+//   let album = getAlbumById(selectedAlbumId.value);
+//   await clickExpandAlbum(album, true);
+  
+//   if(!album.children) album.children = [];
+//   album.children.push({ name: folderName, path: '' });
+
+//   await clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
+//   await selectFolderRef.value?.clickRenameFolder(folderName);
+// };
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {

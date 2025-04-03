@@ -22,10 +22,8 @@
 import { ref } from 'vue';
 import { useConfigStore } from '@/stores/configStore';
 
+import { IconAdd } from '@/common/icons';
 import SelectAlbum from '@/components/SelectAlbum.vue';
-
-// svg icons
-import IconAdd from '@/assets/plus.svg';
 
 const props = defineProps({
   titlebar: {
