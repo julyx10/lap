@@ -5,14 +5,13 @@
     <!-- title bar -->
     <div class="px-4 pt-1 min-h-12 flex flex-row items-center justify-between select-none" data-tauri-drag-region>
 
-      <!-- <div class="mr-2 flex-1 flex flex-col" data-tauri-drag-region> -->
-        <span class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</span>
-        <!-- <span class="text-sm cursor-default" data-tauri-drag-region>
-          {{ $t('files_summary', { count: fileList.length }) }}
-        </span> -->
-      <!-- </div> -->
+      <!-- title -->
+      <span class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</span>
 
+      <!-- toolbar -->
       <div class="h-6 flex flex-row items-center space-x-4">
+
+        <!-- search box -->
         <SearchBox v-model="searchText" /> 
         
         <!-- select mode -->
@@ -74,8 +73,19 @@
         />
         
         <!-- status bar -->
-        <div v-if="config.showStatusBar" class="px-4 pt-1 min-h-8 flex flex-row items-center justify-between select-none text-sm cursor-default">
-          {{ $t('files_summary', { count: fileList.length }) }}
+        <div v-if="config.showStatusBar" class="mx-2 p-2 border-t border-gray-700 min-h-8 flex flex-row items-center justify-start text-sm text-nowrap select-none cursor-default">
+          <IconSearch class="t-icon-size-xs" />
+          <span class="pl-1 pr-4">
+            {{ $t('files_summary', { count: fileList.length }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
+          </span>
+
+          <component 
+            :is="selectMode ? IconSelectAll : IconPhoto" 
+            class="t-icon-size-xs" 
+          />
+          <span class="px-1">
+            {{ selectMode ? $t('file_list_select_count', { count: selectedCount }) +  ' (' + formatFileSize(selectedSize) + ')': fileList[selectedItemIndex]?.name + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')' }}
+          </span>
         </div>
 
       </div>
@@ -131,7 +141,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { isWin, isMac, formatDate, getRelativePath, localeComp } from '@/common/utils';
+import { isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -151,6 +161,12 @@ import {
   IconUnFavorite,
   IconMoveTo,
   IconDelete,
+  IconFile,
+  IconPhoto,
+  IconFolder,
+  IconChecked,
+  IconUnchecked,
+  IconSearch,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -176,11 +192,13 @@ const divListView = ref(null);
 // file list
 // const originalFileList = ref([]);
 const fileList = ref([]);   // file list by filtering and sorting
+const totalFilesSize = ref(0);   // total files size
 const selectedItemIndex = ref(-1);
 
-// select mode
+// mutil select mode
 const selectMode = ref(false);
 const selectedCount = ref(0);
+const selectedSize = ref(0);  // selected files size
 
 // search text
 const searchText = ref('');
@@ -362,6 +380,17 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
 watch(() => [selectedItemIndex.value, fileList.value], () => {
   // update the selected count
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;
+
+  // update total file size
+  totalFilesSize.value = fileList.value.reduce((total, file) => {
+    return total + file.size;
+  }, 0);
+
+  // update selected file size
+  selectedSize.value = fileList.value.reduce((total, file) => {
+    return total + (file.isSelected ? file.size : 0);
+  }, 0);
+
   if(config.showPreview) {
     getImageSrc();
   }

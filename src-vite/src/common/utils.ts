@@ -42,7 +42,7 @@ export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 KB';
   const i = Math.max(Math.floor(Math.log(bytes) / Math.log(1024)) - 1, 0);
   const fileSize = bytes / Math.pow(1024, i + 1);
-  return `${fileSize.toFixed(2)} ${sizes[i]}`;
+  return i === 0 ? `${fileSize.toFixed(0)} ${sizes[i]}` : `${fileSize.toFixed(2)} ${sizes[i]}`;
 }
 
 /// get full path

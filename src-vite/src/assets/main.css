@@ -5,3 +5,9 @@
 .t-icon-size-sm {
   @apply w-5 h-5;
 }
+.t-icon-size-xs {
+  @apply w-4 h-4;
+}
+.t-icon-size-lg {
+  @apply w-8 h-8;
+}
