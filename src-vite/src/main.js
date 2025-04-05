@@ -8,6 +8,9 @@ import router from '@/common/router'
 import App from '@/App.vue'
 import { useConfigStore } from '@/stores/configStore'
 import '@/assets/tailwind.css'
+import '@/assets/main.css'
+import '@/assets/dark.css'
+// import '@/assets/light.css'
 
 // I18n
 import en from '@/locales/en.json'
@@ -53,6 +56,19 @@ listen('settings-language-changed', (event) => {
 listen('settings-showButtonText-changed', (event) => {
   config.setShowButtonText(event.payload)
 })
+listen('settings-showSubFolder-changed', (event) => {
+  config.setShowSubFolder(event.payload)
+})
+listen('settings-showStatusBar-changed', (event) => {
+  config.setShowStatusBar(event.payload)
+})
+listen('settings-darkMode-changed', (event) => {
+  config.setDarkMode(event.payload)
+})
+listen('settings-debugMode-changed', (event) => {
+  config.setDebugMode(event.payload)
+})
+
 listen('settings-thumbnailSize-changed', (event) => {
   config.setThumbnailSize(event.payload)
 })

@@ -65,12 +65,21 @@
     </div>
 
     <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
-      <!-- grid view -->
-      <GridView  
-        v-model="selectedItemIndex"
-        :fileList="fileList"
-        :selectMode="selectMode"
-      />
+      <div class="flex-1 flex flex-col">
+        <!-- grid view -->
+        <GridView  
+          v-model="selectedItemIndex"
+          :fileList="fileList"
+          :selectMode="selectMode"
+        />
+        
+        <!-- status bar -->
+        <div v-if="config.showStatusBar" class="px-4 pt-1 min-h-8 flex flex-row items-center justify-between select-none text-sm cursor-default">
+          {{ $t('files_summary', { count: fileList.length }) }}
+        </div>
+
+      </div>
+
 
       <!-- splitter -->
       <div v-if="config.showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>

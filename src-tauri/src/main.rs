@@ -132,6 +132,8 @@ fn main() {
             t_cmds::get_files_by_date_range,
             t_cmds::get_camera_info,
             t_cmds::get_camera_files,
+
+            t_cmds::print_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

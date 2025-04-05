@@ -6,11 +6,10 @@
  * date:    2024-08-08
  */
 use base64::{engine::general_purpose, Engine};
-// use native_dialog::FileDialog;
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use crate::t_sqlite::{ACamera, AFile, AFolder, AThumb, Album};
 use crate::t_utils;
-
+use std::process::Command;
 
 /// get all albums
 #[tauri::command]
@@ -258,4 +257,30 @@ pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
 pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
     AFile::get_files_by_camera(make, model)
         .map_err(|e| format!("Error while fetching camera files: {}", e))
+}
+
+/// print an image: uses platform-specific commands to print an image.
+#[tauri::command]
+pub fn print_image(image_path: String) -> Result<(), String> {
+    // Platform-specific printing logic
+    let output = if cfg!(target_os = "windows") {
+        Command::new("mspaint")
+            .arg("/p")
+            .arg(image_path)
+            .output()
+            .map_err(|e| e.to_string())?
+    } else if cfg!(target_os = "macos") {
+        Command::new("lp")
+            .arg(image_path)
+            .output()
+            .map_err(|e| e.to_string())?
+    } else {
+        return Err("Unsupported OS".to_string());
+    };
+
+    if !output.status.success() {
+        return Err(format!("Failed to print image: {}", String::from_utf8_lossy(&output.stderr)));
+    }
+
+    Ok(())
 }

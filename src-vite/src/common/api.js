@@ -193,3 +193,15 @@ export async function getCameraInfo() {
   }
   return null;
 }
+
+export async function printImage(imagePath) {
+  try {
+    const result = await invoke('print_image', { imagePath });
+    if (result) {
+      return result;
+    }
+  } catch (error) {
+    console.error('Failed to print image:', error);
+  }
+  return null;
+}

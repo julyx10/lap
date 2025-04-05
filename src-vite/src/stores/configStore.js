@@ -1,4 +1,5 @@
 // stores/configStore.js
+import { set } from 'date-fns';
 import { defineStore } from 'pinia';
 
 export const useConfigStore = defineStore('configStore', {
@@ -10,6 +11,8 @@ export const useConfigStore = defineStore('configStore', {
     // settings - general
     language: 'en',             // default language
     showButtonText: false,      // show button text
+    showSubFolder: true,        // show sub folders
+    showStatusBar: true,        // show status bar
     darkMode: true,             // light or dark theme
     debugMode: false,           // debug mode
     fileListPageSize: 1000,     // number of file list per page
@@ -76,6 +79,18 @@ export const useConfigStore = defineStore('configStore', {
     },
     setShowButtonText(showButtonText) {
       this.showButtonText = showButtonText;
+    },
+    setShowSubFolder(showSubFolder) {
+      this.showSubFolder = showSubFolder;
+    },
+    setShowStatusBar(showStatusBar) {
+      this.showStatusBar = showStatusBar;
+    },
+    setDarkMode(darkMode) {
+      this.darkMode = darkMode;
+    },
+    setDebugMode(debugMode) {
+      this.debugMode = debugMode;
     },
     
     // thumbnail settings

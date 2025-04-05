@@ -89,6 +89,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { isMac, shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
+import { printImage } from '@/common/api';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
@@ -216,8 +217,9 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_print,
       icon: IconPrint,
-      action: () => {
-        console.log('Print:', selectedIndex.value);
+      action: async () => {
+        let result = await printImage(file.file_path);
+        console.log('Print:', file.file_path, result);
       }
     },
     {

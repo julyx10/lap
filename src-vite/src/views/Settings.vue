@@ -60,15 +60,27 @@
           </div>
 
           <!-- Show button text -->
-          <!-- <div class="flex items-center justify-between mb-4">
-            <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
-            <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/>
-          </div> -->
-
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
             <n-config-provider :theme-overrides="themeOverrides">
               <n-switch id="show-button-text" v-model:value="config.showButtonText" size="small" />
+            </n-config-provider>
+            <!-- <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/> -->
+          </div>
+          
+          <!-- Show sub-folders in album -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-sub-folder" >{{ $t('settings_general_show_sub_folder') }}</label>
+            <n-config-provider :theme-overrides="themeOverrides">
+              <n-switch id="show-sub-folder" v-model:value="config.showSubFolder" size="small" />
+            </n-config-provider>
+          </div>
+
+          <!-- Show status bar -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-status-bar" >{{ $t('settings_general_show_status_bar') }}</label>
+            <n-config-provider :theme-overrides="themeOverrides">
+              <n-switch id="show-status-bar" v-model:value="config.showStatusBar" size="small" />
             </n-config-provider>
           </div>
 
@@ -284,6 +296,18 @@ watch(() => config.language, (newValue) => {
 });
 watch(() => config.showButtonText, (newValue) => {
   emit('settings-showButtonText-changed', newValue);
+});
+watch(() => config.showSubFolder, (newValue) => {
+  emit('settings-showSubFolder-changed', newValue);
+});
+watch(() => config.showStatusBar, (newValue) => {
+  emit('settings-showStatusBar-changed', newValue);
+});
+watch(() => config.darkMode, (newValue) => {
+  emit('settings-darkMode-changed', newValue);
+});
+watch(() => config.debugMode, (newValue) => {
+  emit('settings-debugMode-changed', newValue);
 });
 
 // thumbnail settings
