@@ -25,7 +25,7 @@
           <IconClose v-if="selectMode" class="t-icon-size-sm t-icon-hover" @click.stop="handleSelectMode(false)" />
           <span class="px-1">{{ selectMode ? $t('file_list_select_count', { count: selectedCount }) : $t('file_list_select_mode') }}</span>
           <DropDownMenu v-if="selectMode"
-            :iconMenu="IconMore"
+            :iconMenu="IconArrowDown"
             :menuItems="moreMenuItems"
             :smallIcon="true"
             @click.stop
@@ -153,7 +153,7 @@ import Image from '@/components/Image.vue';
 import {
   IconPreview,
   IconPreviewOff,
-  IconMore,
+  IconArrowDown,
   IconClose,
   IconSelectAll,
   IconSelectNone,

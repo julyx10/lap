@@ -109,6 +109,8 @@
   "menu_item_properties": "属性",
   "menu_item_show_info": "显示信息",
   "menu_item_remove_from_album": "从相册中移除",
+  "menu_item_add_folder": "添加文件夹",
+  "menu_item_add_url": "添加URL",
 
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "属性",

@@ -8,14 +8,14 @@
     >
       <div v-if="!child.is_deleted" 
         :class="[
-          'my-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
+          'my-1 mr-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @update="scrollToItem(index)"
         @click="clickFolder(rootAlbumId, child)"
         @dblclick="clickExpandFolder($event, child)"
       >
-        <span v-if="child.children && child.children.length == 0" class="w-6"></span>
+        <span v-if="child.children && child.children.length == 0" class="flex-shrink-0 t-icon-size"></span>
         <IconRight v-else
           :class="[
             'p-1 t-icon-size flex-shrink-0 transition-transform', 
@@ -33,15 +33,11 @@
           @keydown.esc = "handleEscKey($event, child.id)"   
           @blur = "clickRenameFolder(child.name)"
         > 
-        <span v-else
-          :class="[
-            'flex-1 min-w-0 mask-fade-right whitespace-pre', 
-            // componentId === 0 && selectedFolderId === child.id ? '' : ''
-          ]"
-        >{{ child.name }}</span>
-
+        <div v-else class="overflow-hidden whitespace-pre text-ellipsis">
+          {{ child.name }}
+        </div>
         <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
-          class="hidden group-hover:block t-color-bg-selected rounded-r"
+          class="ml-auto px-1 hidden group-hover:block t-color-bg-selected"
           :iconMenu="IconMore"
           :menuItems="moreMenuItems"
         />

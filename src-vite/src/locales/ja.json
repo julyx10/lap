@@ -109,6 +109,8 @@
   "menu_item_properties": "プロパティ",
   "menu_item_show_info": "情報を表示",
   "menu_item_remove_from_album": "アルバムから削除",
+  "menu_item_add_folder": "フォルダを追加",
+  "menu_item_add_url": "URLを追加",
 
   "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],
   "file_info_title": "プロパティ",

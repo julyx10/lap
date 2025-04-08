@@ -109,6 +109,8 @@
   "menu_item_properties": "Properties",
   "menu_item_show_info": "Show Info",
   "menu_item_remove_from_album": "Remove from albums",
+  "menu_item_add_folder": "Add folder",
+  "menu_item_add_url": "Add URL",
 
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",

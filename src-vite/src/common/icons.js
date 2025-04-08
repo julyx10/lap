@@ -20,6 +20,7 @@ export { default as IconRename } from '@/assets/icons/rename.svg';
 export { default as IconDelete } from '@/assets/icons/trash.svg';
 export { default as IconOpenFolder } from '@/assets/icons/external.svg';
 export { default as IconFile } from '@/assets/icons/file.svg';
+export { default as IconLink } from '@/assets/icons/link.svg';
 
 // ======================
 // VIEW CONTROL ICONS

@@ -1,13 +1,13 @@
 <template>
     <!-- albums -->
-    <div v-if="albums.length > 0" class="flex-grow t-color-bg overflow-auto t-scrollbar-dark">
+    <div v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto t-color-bg t-scrollbar-dark">
 
       <!-- drag to change albums' display order -->
       <VueDraggable v-model="albums" :disabled="componentId === 1" :handle="'.drag-handle'" @end="onDragEnd">
         <div v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'my-1 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer group drag-handle', 
+              'my-1 mr-1 pr-2 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer group drag-handle', 
               { 
                 't-color-text-selected': selectedAlbumId === album.id, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300': selectedAlbumId === album.id && selectedFolderId === album.folderId
@@ -20,23 +20,14 @@
               class="mx-1 h-5 flex-shrink-0" 
               @click.stop="clickExpandAlbum(album)"
             />
-            <!-- <IconRight
-              :class="[
-                'mx-1 h-5 flex-shrink-0 transition-transform', 
-                album.is_expanded ? 'rotate-90' : ''
-              ]"
-              @click.stop="clickExpandAlbum(album)"
-            /> -->
-            <span
-              :class="[
-              'flex-1 min-w-0', 
-              selectedAlbumId === album.id ? 'mask-fade-right' : ''
-            ]">{{ album.name }}</span>
+            <div class="overflow-hidden whitespace-pre text-ellipsis">
+              {{ album.name }}
+            </div>
             <DropDownMenu v-if="componentId === 0"
-              class="hidden group-hover:block t-color-bg-selected"
+              class="ml-auto pl-1 hidden group-hover:block t-color-bg-selected"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
-            />
+              />
           </div>
           <SelectFolder v-if="album.is_expanded"
             ref="selectFolderRef"
@@ -400,7 +391,7 @@ defineExpose({
 </script>
 
 <style scoped>
-.mask-fade-right {
+/* .mask-fade-right {
   mask-image: linear-gradient(to left, transparent 0%, black 24px);
-}
+} */
 </style>
