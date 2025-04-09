@@ -1,6 +1,6 @@
 <template>
 
-  <div class="w-screen h-screen flex flex-col border t-color-border overflow-hidden select-none">
+  <div class="w-screen h-screen flex flex-col overflow-hidden select-none">
     <!-- Title Bar -->
     <TitleBar :titlebar="$t('settings')" :resizable="false" viewName="Settings"/>
 

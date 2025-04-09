@@ -74,16 +74,16 @@
         
         <!-- status bar -->
         <div v-if="config.showStatusBar" class="mx-2 p-2 border-t border-gray-700 min-h-8 flex flex-row items-center justify-start text-sm text-nowrap select-none cursor-default">
-          <IconSearch class="t-icon-size-xs" />
+          <IconFile class="t-icon-size-xs" />
           <span class="pl-1 pr-4">
             {{ $t('files_summary', { count: fileList.length }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
           </span>
 
-          <component 
-            :is="selectMode ? IconSelectAll : IconPhoto" 
+          <component v-if="selectedItemIndex >= 0"
+            :is="selectMode ? IconCheckAll : IconChecked" 
             class="t-icon-size-xs" 
           />
-          <span class="px-1">
+          <span v-if="selectedItemIndex >=0" class="px-1">
             {{ selectMode ? $t('file_list_select_count', { count: selectedCount }) +  ' (' + formatFileSize(selectedSize) + ')': fileList[selectedItemIndex]?.name + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')' }}
           </span>
         </div>
@@ -155,8 +155,8 @@ import {
   IconPreviewOff,
   IconArrowDown,
   IconClose,
-  IconSelectAll,
-  IconSelectNone,
+  IconCheckAll,
+  IconCheckNone,
   IconFavorite,
   IconUnFavorite,
   IconMoveTo,
@@ -207,7 +207,7 @@ const searchText = ref('');
 const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
 const previewDiv = ref(null);
 const previewPaneSize = ref({ width: 100, height: 100 });
-const imageSrc = ref(null);         // preview image source
+const imageSrc = ref('');         // preview image source
 let resizeObserver;
 
 // image viewer
@@ -487,7 +487,7 @@ const moreMenuItems = computed(() => {
   return [
     {
       label: localeMsg.value.menu_item_select_all,
-      icon: IconSelectAll,
+      icon: IconCheckAll,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = true;
@@ -497,7 +497,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu_item_select_none,
-      icon: IconSelectNone,
+      icon: IconCheckNone,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = false;

@@ -1,5 +1,6 @@
 {
   "build": {
+    "beforeDevCommand": "yarn dev",
     "frontendDist": "../src-vite/dist",
     "devUrl": "http://localhost:3580"
   },

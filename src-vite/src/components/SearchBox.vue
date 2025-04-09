@@ -1,7 +1,7 @@
 <template>
   <div 
     :class="[
-      'relative transition-all duration-300 overflow-hidden',
+      'relative shrink-0 transition-all duration-300 overflow-hidden',
       isFocused ? 'w-48' : 'w-10'
     ]"
   >
@@ -13,7 +13,7 @@
       :class="[
         'py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus',
         isFocused ? 'px-8' : 'px-2 cursor-pointer'
-        ]"
+      ]"
       @focus="isFocused = true"
       @blur="handleBlur"
       @input="handleInput"

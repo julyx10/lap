@@ -1,6 +1,6 @@
 <template>
     <!-- albums -->
-    <div v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto t-color-bg t-scrollbar-dark">
+    <div v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto t-scrollbar-dark">
 
       <!-- drag to change albums' display order -->
       <VueDraggable v-model="albums" :disabled="componentId === 1" :handle="'.drag-handle'" @end="onDragEnd">

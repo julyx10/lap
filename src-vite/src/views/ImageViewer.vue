@@ -4,7 +4,6 @@
     :class="[
       'relative w-screen h-screen flex flex-col overflow-hidden',
       config.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
-      isWin ? 'border t-color-border rounded-lg shadow-lg' : ''
     ]"
   >
     <!-- title bar -->
@@ -469,12 +468,13 @@ watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
 });
 
-// watch full screen
-// watch(() => config.isFullScreen, async (newFullScreen) => {
-//   await appWindow.setFullscreen(newFullScreen);
-//   await appWindow.setResizable(!newFullScreen);
-//   // await appWindow.setDecorations(false);
-// }, { immediate: true }); 
+// watch full screen (win only)
+watch(() => config.isFullScreen, async (newFullScreen) => {
+  if(!isWin) return;
+  await appWindow.setFullscreen(newFullScreen);
+  await appWindow.setResizable(!newFullScreen);
+  // await appWindow.setDecorations(false);
+}); 
 
 // watch file changed
 watch(() => fileId.value, async () => {

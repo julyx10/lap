@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex-1 flex flex-col overflow-auto" style="user-select: none;">
+  <div class="w-full flex flex-col" style="user-select: none;">
     
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
@@ -9,12 +9,12 @@
     </div>
 
     <!-- camera -->
-    <div v-if="cameras.length > 0" class="flex-grow overflow-auto t-scrollbar">
+    <div v-if="cameras.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto t-scrollbar-dark">
       <ul>
         <li v-for="camera in cameras">
           <div 
             :class="[
-              'my-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
+              'my-1 mr-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
               { 
                 't-color-text-selected': config.cameraMake === camera.make, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300'  : config.cameraMake === camera.make && !config.cameraModel 
@@ -30,7 +30,9 @@
               ]"
               @click.stop="clickExpandCamera(camera)"
             />
-            {{ camera.make }}
+            <div class="overflow-hidden whitespace-pre text-ellipsis">
+             {{ camera.make }}
+            </div>
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
             <li v-for="model in camera.models" class="pl-4">
@@ -42,7 +44,9 @@
                 @click="clickCameraModel(camera.make, model)"
               >
                 <!-- <IconCircle class="mx-1 h-5 flex-shrink-0" /> -->
-                {{ model }}
+                <div class="overflow-hidden whitespace-pre text-ellipsis">
+                  {{ model }}
+                </div>
               </div>
             </li>
           </ul>

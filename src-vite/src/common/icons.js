@@ -62,8 +62,8 @@ export { default as IconSeparator } from '@/assets/icons/separator.svg';
 // ======================
 export { default as IconChecked } from '@/assets/icons/checkbox-checked.svg';
 export { default as IconUnChecked } from '@/assets/icons/checkbox-unchecked.svg';
-export { default as IconSelectAll } from '@/assets/icons/checkbox-checkall.svg';
-export { default as IconSelectNone } from '@/assets/icons/checkbox-uncheckall.svg';
+export { default as IconCheckAll } from '@/assets/icons/checkbox-checkall.svg';
+export { default as IconCheckNone } from '@/assets/icons/checkbox-uncheckall.svg';
 export { default as IconUnFavorite } from '@/assets/icons/heart.svg';
 export { default as IconFavorite } from '@/assets/icons/heart-solid.svg';
 export { default as IconPin } from '@/assets/icons/pin-filled.svg';
