@@ -62,42 +62,42 @@
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
-            <n-config-provider :theme-overrides="themeOverrides">
+            <!-- <n-config-provider :theme-overrides="themeOverrides">
               <n-switch id="show-button-text" v-model:value="config.showButtonText" size="small" />
-            </n-config-provider>
-            <!-- <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/> -->
+            </n-config-provider> -->
+            <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/>
           </div>
           
           <!-- Show sub-folders in album -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-sub-folder" >{{ $t('settings_general_show_sub_folder') }}</label>
-            <n-config-provider :theme-overrides="themeOverrides">
+            <!-- <n-config-provider :theme-overrides="themeOverrides">
               <n-switch id="show-sub-folder" v-model:value="config.showSubFolder" size="small" />
-            </n-config-provider>
+            </n-config-provider> -->
           </div>
 
           <!-- Show status bar -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-status-bar" >{{ $t('settings_general_show_status_bar') }}</label>
-            <n-config-provider :theme-overrides="themeOverrides">
+            <!-- <n-config-provider :theme-overrides="themeOverrides">
               <n-switch id="show-status-bar" v-model:value="config.showStatusBar" size="small" />
-            </n-config-provider>
+            </n-config-provider> -->
           </div>
 
           <!-- Dark Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="dark-mode" >{{ $t('settings_general_dark_mode') }}</label>
-            <n-config-provider :theme-overrides="themeOverrides">
+            <!-- <n-config-provider :theme-overrides="themeOverrides">
               <n-switch id="dark-mode" v-model:value="config.darkMode" size="small" />
-            </n-config-provider>
+            </n-config-provider> -->
           </div>
 
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings_general_debug_mode') }}</label>
-            <n-config-provider :theme-overrides="themeOverrides">
+            <!-- <n-config-provider :theme-overrides="themeOverrides">
               <n-switch id="debug-mode" v-model:value="config.debugMode" size="small" />
-            </n-config-provider>
+            </n-config-provider> -->
           </div>
 
         </section>

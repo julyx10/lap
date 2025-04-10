@@ -13,7 +13,6 @@
  */
 
 use tauri::Manager;
-// use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
 mod t_cmds;
 mod t_sqlite;
@@ -36,47 +35,14 @@ fn main() {
             // Create the database on startup
             t_sqlite::create_db().expect("error while creating the database");
 
-            // let main_window = app.get_window("main").unwrap();
             // // Open devtools in development mode
             // #[cfg(debug_assertions)] // only include this block in debug builds
             // {
             //     main_window.open_devtools();
             // }
-
-            // let win_builder =
-            //     WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
-            //     .title("")
-            //     .inner_size(800.0, 600.0);
     
-            // // set transparent title bar only when building for macOS
-            // #[cfg(target_os = "macos")]
-            // let win_builder = win_builder.title_bar_style(TitleBarStyle::Transparent);
-        
-            // let window = win_builder.build().unwrap();
-        
-            // // set background color only when building for macOS
-            // #[cfg(target_os = "macos")]
-            // {
-            //     use cocoa::appkit::{NSColor, NSWindow};
-            //     use cocoa::base::{id, nil};
-        
-            //     let ns_window = window.ns_window().unwrap() as id;
-            //     unsafe {
-            //         let bg_color = NSColor::colorWithRed_green_blue_alpha_(
-            //             nil,
-            //             18.0 / 255.0,
-            //             24.0 / 255.0,
-            //             38.0 / 255.0,
-            //             1.0,
-            //         );
-            //         ns_window.setBackgroundColor_(bg_color);
-            //     }
-            // }
-
             Ok(())
         })
-        // .on_page_load(|_window, _payload| {
-        // })
         .on_window_event(|window, event| {
             if window.label() != "main" {
                 return;

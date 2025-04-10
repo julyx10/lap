@@ -3,12 +3,12 @@
   <div class="flex flex-col items-center">
 
     <!-- title -->
-    <span class="p-4 t-color-text-dark">
+    <span class="pt-2 pb-4 t-color-text-dark">
       {{ monthTitle }}
     </span>
 
     <!-- date list -->
-    <div class="grid grid-cols-7 gap-2 text-center">
+    <div class="pb-2 px-1 grid grid-cols-7 gap-2 text-center">
       <div v-for="n in blankDates" :key="'blank' + n"></div>
       <div
         v-for="d in monthDates"

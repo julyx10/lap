@@ -3,12 +3,12 @@
   <div class="flex flex-col items-center">
 
     <!-- title -->
-    <span class="p-4 t-color-text-dark">
+    <span class="pt-2 pb-4 t-color-text-dark">
       {{ yearTitle }}
     </span>
 
     <!-- month list -->
-    <div class="gap-4 grid grid-cols-4">
+    <div class="pb-2 px-1 gap-4 grid grid-cols-4">
       <div v-for="m in 12" 
         :key="m" 
         class="px-2 flex items-center justify-center border rounded-full t-color-bg-hover text-nowrap cursor-pointer"

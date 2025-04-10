@@ -64,7 +64,8 @@
       </transition>
       
       <!-- splitter -->
-      <div v-if="config.toolbarIndex > 1" class="w-1 hover:bg-sky-700 cursor-ew-resize" 
+      <div v-if="config.toolbarIndex > 1" 
+        class="w-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
       ></div>
@@ -202,7 +203,9 @@ async function clickSettings() {
     title: 'Settings',
     width: 600,
     height: 400,
-    resizable: false,
+    minWidth: 600,
+    minHeight: 400,
+    resizable: true,
     decorations: isMac, // true for macOS, false for Windows
     transparent: isWin, // true for Windows, false for macOS
     ...(isMac && {

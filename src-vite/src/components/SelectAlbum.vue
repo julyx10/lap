@@ -1,13 +1,13 @@
 <template>
     <!-- albums -->
-    <div v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto t-scrollbar-dark">
+    <div v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-lg t-color-bg t-scrollbar-dark">
 
       <!-- drag to change albums' display order -->
       <VueDraggable v-model="albums" :disabled="componentId === 1" :handle="'.drag-handle'" @end="onDragEnd">
         <div v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'my-1 mr-1 pr-2 h-8 flex items-center border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer group drag-handle', 
+              'my-1 mx-1 pr-2 h-8 flex items-center rounded border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer group drag-handle', 
               { 
                 't-color-text-selected': selectedAlbumId === album.id, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300': selectedAlbumId === album.id && selectedFolderId === album.folderId
@@ -70,8 +70,10 @@
       :inputText="''"
       :OkText="$t('msgbox_new_folder_ok')"
       :cancelText="$t('msgbox_cancel')"
+      :errorMessage="errorMessage"
       @ok="clickNewFolder"
       @cancel="showNewFolderMsgbox = false"
+      @reset="errorMessage = ''"
     />
 
     <!-- remove from albums -->
@@ -143,6 +145,7 @@ const selectFolderRef = ref<SelectFolder | null>(null);
 const showRenameMsgbox = ref(false);
 const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
+const errorMessage = ref('');
 
 const albums = ref([]);
 const getAlbumById = (id) => albums.value.find(album => album.id === id);
@@ -309,25 +312,28 @@ const clickNewFolder = async (folderName) => {
   const newFolderPath = await createFolder(selectedFolderPath.value, folderName);
   if(newFolderPath) {
     let album = getAlbumById(selectedAlbumId.value);
-    if(!album.children) album.children = [];
-    album.children.push({ name: folderName, path: newFolderPath });
-    // showNewFolderMsgbox.value = false;
+    let newFolder = -1;
 
-    await clickExpandAlbum(album, true);
-    clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
+    if(!album.children) {
+      await clickExpandAlbum(album, true);
+      newFolder = album.children.find(folder => folder.name === folderName);
+    } else {
+      album.is_expanded = true;
+      album.children.push({ name: folderName, path: newFolderPath });
+      newFolder = album.children[album.children.length - 1];
+    }
+
+    // select the new folder
+    clickFolder(selectedAlbumId.value, newFolder);
+
+    // close the message box
+    showNewFolderMsgbox.value = false;
+
+    errorMessage.value = '';
+  } else {
+    errorMessage.value = localeMsg.value.msgbox_new_folder_error;
   }
 };
-// const clickNewFolder = async (folderName) => {
-//   // add new child to the album
-//   let album = getAlbumById(selectedAlbumId.value);
-//   await clickExpandAlbum(album, true);
-  
-//   if(!album.children) album.children = [];
-//   album.children.push({ name: folderName, path: '' });
-
-//   await clickFolder(selectedAlbumId.value, album.children[album.children.length - 1]);
-//   await selectFolderRef.value?.clickRenameFolder(folderName);
-// };
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {

@@ -73,26 +73,37 @@
         />
         
         <!-- status bar -->
-        <div v-if="config.showStatusBar" class="mx-2 p-2 border-t border-gray-700 min-h-8 flex flex-row items-center justify-start text-sm text-nowrap select-none cursor-default">
-          <IconFile class="t-icon-size-xs" />
-          <span class="pl-1 pr-4">
+        <div v-if="config.showStatusBar" 
+          class="mx-2 p-2 min-h-8 border-t border-gray-700 flex flex-row items-center justify-start text-sm select-none cursor-default"
+        >
+          <IconFile class="t-icon-size-xs flex-shrink-0" />
+          <div class="pl-1 pr-4 whitespace-nowrap">
             {{ $t('files_summary', { count: fileList.length }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
-          </span>
+          </div>
 
           <component v-if="selectedItemIndex >= 0"
             :is="selectMode ? IconCheckAll : IconChecked" 
-            class="t-icon-size-xs" 
+            class="t-icon-size-xs flex-shrink-0" 
           />
-          <span v-if="selectedItemIndex >=0" class="px-1">
-            {{ selectMode ? $t('file_list_select_count', { count: selectedCount }) +  ' (' + formatFileSize(selectedSize) + ')': fileList[selectedItemIndex]?.name + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')' }}
-          </span>
+          <div v-if="selectedItemIndex >=0" 
+            class="px-1 w-0 flex-1 overflow-hidden whitespace-nowrap text-ellipsis"
+          >
+            {{
+              selectMode 
+                ? $t('file_list_select_count', { count: selectedCount }) + ' (' + formatFileSize(selectedSize) + ')'
+                : fileList[selectedItemIndex]?.name + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')' 
+            }}
+          </div>
         </div>
 
       </div>
 
 
       <!-- splitter -->
-      <div v-if="config.showPreview" class="w-1 hover:bg-sky-700 cursor-ew-resize" @mousedown="startDragging"></div>
+      <div v-if="config.showPreview" 
+        class="w-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
+        @mousedown="startDragging"
+      ></div>
 
       <!-- preview pane -->
       <transition
@@ -215,6 +226,7 @@ let resizeObserver;
 
 onMounted(() => {
   console.log('content mounted');
+  // FIXME: ResizeObserver loop completed with undelivered notifications.
   resizeObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
       previewPaneSize.value = {
@@ -751,6 +763,8 @@ async function openImageViewer(index: number, createNew = false) {
         title: 'Image Viewer',
         width: 1200,
         height: 800,
+        minWidth: 800,
+        minHeight: 600,
         resizable: true,
         decorations: isMac,
         transparent: isWin,
@@ -813,8 +827,8 @@ function handleMouseMove(event) {
     const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
     const leftPosition = divListView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
 
-    // Limit width between 10% and 90%
-    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 90); 
+    // Limit width between 20% and 80%
+    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
   }
 }
 

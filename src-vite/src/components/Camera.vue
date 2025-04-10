@@ -14,7 +14,7 @@
         <li v-for="camera in cameras">
           <div 
             :class="[
-              'my-1 mr-1 h-8 border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
+              'my-1 mr-1 h-8 rounded border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
               { 
                 't-color-text-selected': config.cameraMake === camera.make, 
                 't-color-bg-selected t-color-border-selected transition-colors duration-300'  : config.cameraMake === camera.make && !config.cameraModel 
@@ -38,7 +38,7 @@
             <li v-for="model in camera.models" class="pl-4">
               <div 
                 :class="[
-                  'm-1 pl-2 border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
+                  'm-1 pl-2 rounded border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
                   config.cameraModel === model ? 't-color-text-selected t-color-bg-selected t-color-border-selected transition-colors duration-300' : 'border-gray-900'
                 ]" 
                 @click="clickCameraModel(camera.make, model)"

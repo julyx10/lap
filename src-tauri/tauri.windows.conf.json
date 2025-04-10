@@ -2,6 +2,8 @@
   "app": {
     "windows": [
       {
+        "minWidth": 1200,
+        "minHeight": 800,
         "decorations": false,
         "transparent": true,
         "dragDropEnabled": false

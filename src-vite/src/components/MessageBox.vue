@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { isValidFileName } from '@/common/utils';
 import { useI18n } from 'vue-i18n';
 import { IconClose } from '@/common/icons';
@@ -78,12 +78,16 @@ const props = defineProps({
     type: Boolean, 
     default: false 
   },
+  errorMessage: { 
+    type: String, 
+    default: '' 
+  }
 });
 
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const emit = defineEmits(['ok', 'cancel']);
+const emit = defineEmits(['ok', 'cancel', 'reset']);
 
 // input 
 const inputRef = ref(null);
@@ -105,6 +109,12 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
+watch(() => props.errorMessage, (newValue) => {
+  if (newValue.length > 0) {
+    inputErrorMessage.value = newValue;
+    emit('reset'); // reset error message
+  }
+});
 
 const validateInput = () => {
   if (!isValidFileName(inputValue.value)) {
@@ -133,8 +143,6 @@ const clickOk = () => {
   if(props.showInput) {
     if (inputValue.value.trim().length > 0 && !inputErrorMessage.value) {
       emit('ok', inputValue.value);
-    } else {
-      return;
     }
   } else {
     emit('ok');

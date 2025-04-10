@@ -46,7 +46,7 @@
 
         <!-- calendar -->
         <div ref="scrollable"
-          :class="['flex overflow-auto t-scrollbar-dark',
+          :class="['flex overflow-x-hidden overflow-y-auto t-scrollbar-dark',
             config.calendarSortingAsc ? 'flex-col' : 'flex-col-reverse'
           ]"
         >

@@ -8,7 +8,7 @@
     >
       <div v-if="!child.is_deleted" 
         :class="[
-          'my-1 mr-1 border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
+          'my-1 mr-1 rounded border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
         @update="scrollToItem(index)"
@@ -37,7 +37,7 @@
           {{ child.name }}
         </div>
         <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
-          class="ml-auto px-1 hidden group-hover:block t-color-bg-selected"
+          class="ml-auto px-1 rounded hidden group-hover:block t-color-bg-selected"
           :iconMenu="IconMore"
           :menuItems="moreMenuItems"
         />
