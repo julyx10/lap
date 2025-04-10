@@ -179,6 +179,7 @@ pub struct AFolder {
     pub parent_id: i64,           // parent folder id
     pub name: String,             // folder name
     pub path: String,             // folder path
+    pub is_marked: Option<bool>,  // is marked
     pub created_at: Option<u64>,  // folder create time
     pub modified_at: Option<u64>, // folder modified time
 }
@@ -193,6 +194,7 @@ impl AFolder {
             parent_id,
             name: file_info.file_name,
             path: folder_path.to_string(),
+            is_marked: None,
             created_at: file_info.created,
             modified_at: file_info.modified,
         })
@@ -203,7 +205,7 @@ impl AFolder {
         let conn = open_conn();
         let result = conn
             .query_row(
-                "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.created_at, a.modified_at
+                "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.is_marked, a.created_at, a.modified_at
                 FROM afolders a
                 WHERE a.album_id = ?1 AND a.path = ?2",
                 params![album_id, folder_path],
@@ -214,7 +216,8 @@ impl AFolder {
                         parent_id: row.get(2)?,
                         name: row.get(3)?,
                         path: row.get(4)?,
-                        created_at: row.get(5)?,
+                        is_marked: row.get(5)?,
+                        created_at: row.get(6)?,
                         modified_at: row.get(6)?,
                     })
                 },
@@ -229,13 +232,14 @@ impl AFolder {
         let conn = open_conn();
         let result = conn
             .execute(
-                "INSERT INTO afolders (album_id, parent_id, name, path, created_at, modified_at) 
-                VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                "INSERT INTO afolders (album_id, parent_id, name, path, is_marked, created_at, modified_at) 
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
                 params![
                     self.album_id,
                     self.parent_id,
                     self.name,
                     self.path,
+                    self.is_marked,
                     self.created_at,
                     self.modified_at
                 ],
@@ -958,6 +962,7 @@ pub fn create_db() -> Result<String> {
             parent_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             path TEXT NOT NULL,
+            is_marked INTEGER,
             created_at INTEGER,
             modified_at INTEGER,
             FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE

@@ -58,7 +58,7 @@
   "msgbox_delete_folder_content": "フォルダ '{folder}' とそのすべての内容が削除されます。",
   "msgbox_delete_folder_ok": "削除",
   "msgbox_delete_folder_success": "フォルダ '{folder}' が削除されました。",
-  "msgbox_delete_folder_error": "フォルダ '{folder}' を削除できません。",
+  "msgbox_delete_folder_error": "削除できません。フォルダはすでに存在している可能性があります。",
   "msgbox_move_to_title": "'{source}' を移動",
   "msgbox_move_to_content": "移動先のフォルダを選択してください:",
   "msgbox_move_to_ok": "移動",

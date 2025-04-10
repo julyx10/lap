@@ -58,7 +58,7 @@
   "msgbox_delete_folder_content": "文件夹 '{folder}' 及其所有内容将被删除。",
   "msgbox_delete_folder_ok": "删除",
   "msgbox_delete_folder_success": "文件夹 '{folder}' 已被删除。",
-  "msgbox_delete_folder_error": "无法删除文件夹 '{folder}'。",
+  "msgbox_delete_folder_error" : "无法删除文件夹。文件夹可能不存在。",
   "msgbox_move_to_title": "移动 '{source}' 到",
   "msgbox_move_to_content": "选择目标文件夹:",
   "msgbox_move_to_ok": "移动",

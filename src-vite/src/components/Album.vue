@@ -9,6 +9,7 @@
     </div>
 
     <SelectAlbum ref="selectAlbumRef" 
+      :key="componentKey"
       v-model:albumId="config.albumId"
       v-model:folderId="config.albumFolderId"
       v-model:folderPath="config.albumFolderPath"
@@ -23,7 +24,7 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 
-import { IconMore, IconAdd, IconLink} from '@/common/icons';
+import { IconMore, IconAdd, IconLink, IconRefresh } from '@/common/icons';
 import SelectAlbum from '@/components/SelectAlbum.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
@@ -43,6 +44,9 @@ const config = useConfigStore();
 
 const selectAlbumRef = ref<SelectAlbum | null>(null);
 
+// refresh component
+const componentKey = ref(0);
+
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
@@ -60,7 +64,19 @@ const moreMenuItems = computed(() => {
         // TODO: add url to album
         console.log('add url to album');
       }
-    }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_refresh,
+      icon: IconRefresh,
+      action: () => {
+        // refresh component
+        componentKey.value += 1;
+      }
+    },
   ];
 });
 
