@@ -38,20 +38,6 @@ export async function getAlbum(albumId) {
   return null;
 }
 
-// rename an album
-export async function renameAlbum(albumId, newName) {
-  try {
-    const renamedAlbum = await invoke('rename_album', { id: albumId, name: newName });
-    console.log('rename_album', renamedAlbum);
-    if (renamedAlbum) {
-      return renamedAlbum;
-    }
-  } catch (error) {
-    console.log('Failed to rename album:', error);
-  }
-  return null;
-}
-
 /// add an album
 export async function addAlbum() {
   try {
@@ -69,6 +55,20 @@ export async function addAlbum() {
     };
   } catch (error) {
     console.log('Failed to add album:', error);
+  }
+  return null;
+}
+
+// rename an album
+export async function renameAlbum(albumId, newName) {
+  try {
+    const renamedAlbum = await invoke('rename_album', { id: albumId, name: newName });
+    console.log('rename_album', renamedAlbum);
+    if (renamedAlbum) {
+      return renamedAlbum;
+    }
+  } catch (error) {
+    console.log('Failed to rename album:', error);
   }
   return null;
 }
@@ -156,14 +156,46 @@ export async function selectFolder(albumId, parentId, folderPath) {
 // expand folder
 export async function expandFolder(path, isRecursive) {
   try {
-    const subFolders = await invoke('expand_folder', { path, isRecursive });
-    if(subFolders) {
+    const folder = await invoke('expand_folder', { path, isRecursive });
+    if(folder) {
+      // get folder children's favorite status
+      for (let i = 0; i < folder.children.length; i++) {
+        const child = folder.children[i];
+        child.is_favorite = await getFolderFavorite(child.path);
+      }
       // sort subfolders by name in locale order
-      subFolders.children.sort((a, b) => localeComp(config.language, a.name, b.name));
-      return subFolders;
+      folder.children.sort((a, b) => localeComp(config.language, a.name, b.name));
+      console.log('expandFolder:', folder);
+      return folder;
     };
   } catch (error) {
     console.log('Failed to expand folder:', error);
+  }
+  return null;
+}
+
+// get folder favorite
+export async function getFolderFavorite(folderPath) {
+  try {
+    const is_favorite = await invoke('get_folder_favorite', { folderPath });
+    if(is_favorite) {
+      return is_favorite;
+    };
+  } catch (error) {
+    console.log('Failed to get folder favorite:', error);
+  }
+  return false;
+}
+
+// set folder favorite
+export async function setFolderFavorite(folderId, isFavorite) {
+  try {
+    const result = await invoke('set_folder_favorite', { folderId, isFavorite });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set folder favorite:', error);
   }
   return null;
 }

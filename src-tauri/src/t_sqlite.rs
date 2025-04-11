@@ -179,7 +179,7 @@ pub struct AFolder {
     pub parent_id: i64,           // parent folder id
     pub name: String,             // folder name
     pub path: String,             // folder path
-    pub is_marked: Option<bool>,  // is marked
+    pub is_favorite: Option<bool>,  // is favorite
     pub created_at: Option<u64>,  // folder create time
     pub modified_at: Option<u64>, // folder modified time
 }
@@ -194,7 +194,7 @@ impl AFolder {
             parent_id,
             name: file_info.file_name,
             path: folder_path.to_string(),
-            is_marked: None,
+            is_favorite: None,
             created_at: file_info.created,
             modified_at: file_info.modified,
         })
@@ -205,7 +205,7 @@ impl AFolder {
         let conn = open_conn();
         let result = conn
             .query_row(
-                "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.is_marked, a.created_at, a.modified_at
+                "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at
                 FROM afolders a
                 WHERE a.album_id = ?1 AND a.path = ?2",
                 params![album_id, folder_path],
@@ -216,7 +216,7 @@ impl AFolder {
                         parent_id: row.get(2)?,
                         name: row.get(3)?,
                         path: row.get(4)?,
-                        is_marked: row.get(5)?,
+                        is_favorite: row.get(5)?,
                         created_at: row.get(6)?,
                         modified_at: row.get(6)?,
                     })
@@ -232,14 +232,14 @@ impl AFolder {
         let conn = open_conn();
         let result = conn
             .execute(
-                "INSERT INTO afolders (album_id, parent_id, name, path, is_marked, created_at, modified_at) 
+                "INSERT INTO afolders (album_id, parent_id, name, path, is_favorite, created_at, modified_at) 
                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
                 params![
                     self.album_id,
                     self.parent_id,
                     self.name,
                     self.path,
-                    self.is_marked,
+                    self.is_favorite,
                     self.created_at,
                     self.modified_at
                 ],
@@ -289,6 +289,29 @@ impl AFolder {
         Ok(result)
     }
 
+    // update a column value
+    pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
+        let conn = open_conn();
+        let query = format!("UPDATE afolders SET {} = ?1 WHERE id = ?2", column);
+        let result = conn
+            .execute(&query, params![value, id])
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    // get is_favorite status
+    pub fn get_is_favorite(folder_path: &str) -> Result<Option<bool>, String> {
+        let conn = open_conn();
+        let result = conn
+            .query_row(
+                "SELECT is_favorite FROM afolders WHERE path = ?1",
+                params![folder_path],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
     // recurse all parent folder id (deprecated)
     // pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
     //     let conn = open_conn();
@@ -316,16 +339,6 @@ impl AFolder {
     //         .map_err(|e| e.to_string())?;
 
     //     Ok(parent_ids)
-    // }
-
-    // update a column value
-    // pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
-    //     let conn = open_conn();
-    //     let query = format!("UPDATE afolders SET {} = ?1 WHERE id = ?2", column);
-    //     let result = conn
-    //         .execute(&query, params![value, id])
-    //         .map_err(|e| e.to_string())?;
-    //     Ok(result)
     // }
 
 }
@@ -962,7 +975,7 @@ pub fn create_db() -> Result<String> {
             parent_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             path TEXT NOT NULL,
-            is_marked INTEGER,
+            is_favorite INTEGER,
             created_at INTEGER,
             modified_at INTEGER,
             FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE

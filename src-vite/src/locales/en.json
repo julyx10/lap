@@ -102,8 +102,6 @@
   "menu_item_move_to": "Move to",
   "menu_item_delete": "Delete",
   "menu_item_remove": "Remove",
-  "menu_item_folder_mark": "Mark folder",
-  "menu_item_folder_unmark": "Unmark folder",
   "menu_item_new_folder": "New folder",
   "menu_item_open_folder": "Open folder...",
   "menu_item_reveal_in_file_explorer": "Reveal in File Explorer",

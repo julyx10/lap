@@ -208,46 +208,11 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_edit,
-      icon: IconEdit,
-      action: () => {
-        console.log('Edit:', selectedIndex.value);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_print,
-      icon: IconPrint,
-      action: async () => {
-        let result = await printImage(file.file_path);
-        console.log('Print:', file.file_path, result);
-      }
-    },
-    {
       label: localeMsg.value.menu_item_copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
         console.log('Copy:', selectedIndex.value);
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },    
-    {
-      label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
-      icon: file.is_favorite ? IconUnFavorite : IconFavorite,
-      shortcut: 'F',
-      action: () => {
-        toggleFavorite();
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_rotate,
-      icon: IconRotate,
-      shortcut: 'R',
-      action: () => {
-        rotateImage();
       }
     },
     {
@@ -262,19 +227,21 @@ const moreMenuItems = computed(() => {
         console.log('Rename:', selectedIndex.value);
       }
     },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      shortcut: isMac ? '⌫' : 'Del',
-      action: () => {
-        deleteItem(selectedIndex.value);
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-
+    // {
+    //   label: localeMsg.value.menu_item_edit,
+    //   icon: IconEdit,
+    //   action: () => {
+    //     console.log('Edit:', selectedIndex.value);
+    //   }
+    // },
+    // {
+    //   label: localeMsg.value.menu_item_print,
+    //   icon: IconPrint,
+    //   action: async () => {
+    //     let result = await printImage(file.file_path);
+    //     console.log('Print:', file.file_path, result);
+    //   }
+    // },
     {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
@@ -287,6 +254,34 @@ const moreMenuItems = computed(() => {
       // icon: IconCopyTo,
       action: () => {
         console.log('Copy to:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      shortcut: isMac ? '⌫' : 'Del',
+      action: () => {
+        deleteItem(selectedIndex.value);
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
+      label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
+      icon: file.is_favorite ? IconUnFavorite : IconFavorite,
+      shortcut: 'F',
+      action: () => {
+        toggleFavorite();
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_rotate,
+      icon: IconRotate,
+      shortcut: 'R',
+      action: () => {
+        rotateImage();
       }
     },
     {
@@ -372,7 +367,6 @@ function toggleFavorite() {
   }
   props.fileList[selectedIndex.value].is_favorite = !props.fileList[selectedIndex.value].is_favorite;
   emit('message-from-grid-view', { message: 'favorite', favorite: props.fileList[selectedIndex.value].is_favorite });
-
 };
 
 function rotateImage() {
@@ -381,7 +375,6 @@ function rotateImage() {
   }
   props.fileList[selectedIndex.value].rotate += 90;
   emit('message-from-grid-view', { message: 'rotate', rotate: props.fileList[selectedIndex.value].rotate });
-
 };
 
 // open the selected item in the image viewer

@@ -36,11 +36,17 @@
         <div v-else class="overflow-hidden whitespace-pre text-ellipsis">
           {{ child.name }}
         </div>
-        <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
-          class="ml-auto px-1 rounded hidden group-hover:block t-color-bg-selected"
-          :iconMenu="IconMore"
-          :menuItems="moreMenuItems"
-        />
+
+        <div class="px-1 ml-auto flex rounded">
+          <IconFavorite v-if="child.is_favorite" class="t-icon-size-sm group-hover:hidden"></IconFavorite>
+
+          <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
+            class="hidden group-hover:block t-color-bg-selected"
+            :iconMenu="IconMore"
+            :menuItems="moreMenuItems"
+          />
+        </div>
+
       </div>
       <SelectFolder v-if="child.is_expanded && !child.is_deleted" 
         :key="child.id"
@@ -111,7 +117,7 @@ import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
-import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder } from '@/common/api';
+import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, setFolderFavorite } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -122,10 +128,12 @@ import ToolTip from '@/components/ToolTip.vue';
 import {
   IconRight,
   IconMore,
-  IconMoveTo,
-  IconRename,
-  IconDelete,
   IconNewFolder,
+  IconRename,
+  IconMoveTo,
+  IconDelete,
+  IconFavorite,
+  IconUnFavorite,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -181,6 +189,8 @@ const getFolderById = (id) => props.children.find(child => child.id === id);
 
 // more menuitems
 const moreMenuItems = computed(() => {
+  const folder = getFolderById(selectedFolderId.value);
+
   return [
     {
       label: localeMsg.value.menu_item_new_folder,
@@ -194,7 +204,7 @@ const moreMenuItems = computed(() => {
       icon: IconRename,
       action: () => {
         isRenamingFolder.value = true;
-        originalFolderName.value = getFolderById(selectedFolderId.value).name;
+        originalFolderName.value = folder.name;
         nextTick(() => {
           if (folderInputRef.value) {
             folderInputRef.value[0].focus();    // array of input elements
@@ -202,17 +212,6 @@ const moreMenuItems = computed(() => {
         });
       }
     },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      action: () => {
-        showDeleteMsgbox.value = true;
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },    
     {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
@@ -225,6 +224,24 @@ const moreMenuItems = computed(() => {
       // icon: IconCopyTo,
       action: () => {
         showCopyTo.value = true;
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      action: () => {
+        showDeleteMsgbox.value = true;
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
+      label: !folder?.is_favorite ? localeMsg.value.menu_item_favorite: localeMsg.value.menu_item_unfavorite,
+      icon: !folder?.is_favorite ? IconFavorite : IconUnFavorite,
+      action: () => {
+        toggleFavorite();
       }
     },
     {
@@ -397,6 +414,13 @@ const clickCopyToConfirm = async (value) => {
   }
 };
 
+const toggleFavorite = async () => {
+  const folder = getFolderById(selectedFolderId.value);
+  folder.is_favorite = !folder.is_favorite;
+
+  await setFolderFavorite(folder.id, folder.is_favorite);
+};
+
 defineExpose({ 
   clickNewFolder,
   clickRenameFolder
@@ -405,7 +429,7 @@ defineExpose({
 </script>
 
 <style scoped>
-.mask-fade-right {
+/* .mask-fade-right {
   mask-image: linear-gradient(to left, transparent 0%, black 24px);
-}
+} */
 </style>

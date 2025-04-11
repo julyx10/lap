@@ -133,6 +133,25 @@ pub fn expand_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode
     t_utils::FileNode::build_nodes(path, is_recursive)
 }
 
+/// get a folder's favorite
+#[tauri::command]
+pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
+    let is_favorite_opt = AFolder::get_is_favorite(folder_path)
+        .map_err(|e| format!("Error while fetching folder favorite: {}", e))?;
+
+    match is_favorite_opt {
+        Some(val) => Ok(val),
+        None => Ok(false), // Default to false if not found
+    }
+}
+
+/// set a folder's favorite
+#[tauri::command]
+pub fn set_folder_favorite(folder_id: i64, is_favorite: i32) -> Result<usize, String> {
+    AFolder::update_column(folder_id, "is_favorite", &is_favorite)
+        .map_err(|e| format!("Error while setting folder favorite: {}", e))
+}
+
 /// get all files from the folder
 #[tauri::command]
 pub fn get_folder_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {

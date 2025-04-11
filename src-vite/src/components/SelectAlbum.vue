@@ -163,6 +163,13 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: localeMsg.value.menu_item_remove_from_album,
+      icon: IconRemove,
+      action: () => {
+        showRemoveMsgbox.value = true;
+      }
+    },
+    {
       label: "-",   // separator
       action: () => {}
     },
@@ -174,16 +181,9 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_remove_from_album,
-      icon: IconRemove,
-      action: () => {
-        showRemoveMsgbox.value = true;
-      }
-    },
-    {
       label: "-",   // separator
       action: () => {}
-    },    
+    },
     {
       label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,

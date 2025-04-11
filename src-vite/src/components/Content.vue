@@ -528,6 +528,28 @@ const moreMenuItems = computed(() => {
     },
     {
       label: "-",   // separator
+      action: null
+    },
+    {
+      label: localeMsg.value.menu_item_move_to,
+      icon: IconMoveTo,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_copy_to,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      action: () => {
+        if(selectedItemIndex.value >= 0) {
+          deleteFile(selectedItemIndex.value);
+        }
+      }
+    },
+    {
+      label: "-",   // separator
       action: () => {}
     },
     {
@@ -548,28 +570,6 @@ const moreMenuItems = computed(() => {
         }
       }
     },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      action: () => {
-        if(selectedItemIndex.value >= 0) {
-          deleteFile(selectedItemIndex.value);
-        }
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    {
-      label: localeMsg.value.menu_item_move_to,
-      icon: IconMoveTo,
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_copy_to,
-      action: () => {}
-    }
   ];
 });
 

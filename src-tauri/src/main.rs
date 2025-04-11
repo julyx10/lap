@@ -80,10 +80,11 @@ fn main() {
             t_cmds::create_folder,
             t_cmds::rename_folder,
             t_cmds::delete_folder,
-
             // t_cmds::get_folder_parents,
             t_cmds::select_folder,
             t_cmds::expand_folder,
+            t_cmds::get_folder_favorite,
+            t_cmds::set_folder_favorite,
             t_cmds::get_folder_files,
 
             t_cmds::get_file_thumb,
