@@ -75,6 +75,13 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
         .map_err(|e| format!("Error while setting album display order: {}", e))
 }
 
+/// get all favorite folders
+#[tauri::command]
+pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
+    AFolder::get_favorite_folders()
+        .map_err(|e| format!("Error while fetching favorite folders: {}", e))
+}
+
 /// create a new folder
 #[tauri::command]
 pub fn create_folder(path: &str, folder_name: &str) -> Option<String> {
@@ -147,7 +154,7 @@ pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
 
 /// set a folder's favorite
 #[tauri::command]
-pub fn set_folder_favorite(folder_id: i64, is_favorite: i32) -> Result<usize, String> {
+pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, String> {
     AFolder::update_column(folder_id, "is_favorite", &is_favorite)
         .map_err(|e| format!("Error while setting folder favorite: {}", e))
 }

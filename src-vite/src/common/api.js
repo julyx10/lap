@@ -101,6 +101,21 @@ export async function setDisplayOrder(albumId, order) {
   return null;
 }
 
+// get favorite folders
+export async function getFavoriteFolders() {
+  try {
+    const favoriteFolders = await invoke('get_favorite_folders');
+    if (favoriteFolders) {
+      // sort favorite folders by name in locale order 
+      favoriteFolders.sort((a, b) => localeComp(config.language, a.name, b.name));
+      return favoriteFolders;
+    }
+  } catch (error) {
+    console.error('Failed to get favorite folders:', error);
+  }
+  return null;
+}
+
 // create a folder
 export async function createFolder(path, folderName) {
   try {

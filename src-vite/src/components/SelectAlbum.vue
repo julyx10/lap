@@ -27,7 +27,7 @@
               class="ml-auto pl-1 hidden group-hover:block t-color-bg-selected"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
-              />
+            />
           </div>
           <SelectFolder v-if="album.is_expanded"
             ref="selectFolderRef"

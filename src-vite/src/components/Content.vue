@@ -18,7 +18,7 @@
         <button tabindex="-1"
           :class="[
             'px-2 py-1 flex flex-row items-center rounded-md border t-color-text-hover text-sm flex-shrink-0 transition-all duration-300',
-            selectMode ? 't-color-border-selected' : 't-color-border'
+            selectMode ? 't-color-border-selected' : 't-color-border t-color-border-hover'
           ]"
           @click="handleSelectMode(true)"
         >
@@ -308,21 +308,36 @@ watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
 });
 
-/// watch home (all files) and favorite
+/// watch home
 watch(() => config.toolbarIndex, newIndex => {
   if(newIndex === 0) { // home
     contentTitle.value = localeMsg.value.home;
     getAllFiles();  // get all files
     selectedItemIndex.value = -1;
-  } else if(newIndex === 1) { // favorite
-    contentTitle.value = localeMsg.value.favorite;
-    getAllFiles(true); // get favorite files
+  } 
+}, { immediate: true });
+
+/// watch favorites
+watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath], 
+            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
+  if(newIndex === 1) {
+    if(newFolderId === 0) { // 0 means favorite files
+      contentTitle.value = localeMsg.value.favorite_files;
+      getAllFiles(true); // true: get all favorite files
+    } else {
+      const album = await getAlbum(newAlbumId);
+      if(album) {
+        contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
+      };
+      getFolderFiles(newFolderId, newFolderPath);
+    }
     selectedItemIndex.value = -1;
   }
 }, { immediate: true });
 
 /// watch album
-watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath], async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
+watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath], 
+            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 2) {
     if (newAlbumId) {
       const album = await getAlbum(newAlbumId);
@@ -333,7 +348,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.a
           contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
         };
 
-        getFolderFiles();
+        getFolderFiles(newFolderId, newFolderPath);
         selectedItemIndex.value = -1;
       } 
     } else {
@@ -345,7 +360,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.a
 
 // watch calandar
 watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate], 
-  async ([newIndex, year, month, date]) => {
+            async ([newIndex, year, month, date]) => {
   if(newIndex === 3) {
     if (year && month && date) {
       if (config.calendarDate === -1) {     // monthly
@@ -363,11 +378,14 @@ watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, con
 }, { immediate: true });
 
 // watch location
+// TODO: impl location
 
 // watch people
+// TODO: impl people 
 
 // watch camera
-watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async ([newIndex, newMake, newModel]) => {
+watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], 
+            async ([newIndex, newMake, newModel]) => {
   if(newIndex === 6) {
     if(newMake) {
       if(newModel) {
@@ -388,7 +406,6 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], async 
 }, { immediate: true });
 
 // watch for changes in the file list (selected item index or file list length)
-// watch(() => [selectedItemIndex.value, fileList.value, isImageViewerOpen.value], () => {
 watch(() => [selectedItemIndex.value, fileList.value], () => {
   // update the selected count
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;
@@ -448,10 +465,10 @@ async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fil
 }
 
 /// get all files under the path
-async function getFolderFiles() {
+async function getFolderFiles(folderId, folderPath) {
   try {
     // read the list of files
-    fileList.value = await invoke('get_folder_files', { folderId: config.albumFolderId, path: config.albumFolderPath });
+    fileList.value = await invoke('get_folder_files', { folderId: folderId, path: folderPath });
     refreshFileList();
   } catch (error) {
     console.error('getFolderFiles error:', error);

@@ -1,18 +1,17 @@
 <template>
   <div 
-    :class="[
-      'relative shrink-0 transition-all duration-300 overflow-hidden',
-      isFocused ? 'w-48' : 'w-10'
-    ]"
+    class="group relative shrink-0 transition-all duration-300 overflow-hidden"
+    :class="[isFocused ? 'w-48' : 'w-10']"
   >
-    <input tabindex="-1"
+    <input 
+      tabindex="-1"
       ref="searchInput"
       type="text"
       v-model="inputValue"
       :placeholder="isFocused ? $t('search_placeholder') : ''"
       :class="[
-        'py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus',
-        isFocused ? 'px-8' : 'px-2 cursor-pointer'
+        'py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus transition-colors duration-300',
+        isFocused ? 'px-8' : 'px-2 cursor-pointer t-color-border-group-hover '
       ]"
       @focus="isFocused = true"
       @blur="handleBlur"
@@ -21,13 +20,13 @@
 
     <!-- Search Icon (Inside input when focused) -->
     <IconSearch
-      class="absolute left-2 top-1/2 transform -translate-y-1/2 t-icon-size-sm cursor-pointer"
+      class="absolute left-2 top-1/2 transform -translate-y-1/2 t-icon-size-sm t-icon-group-hover"
       @click="focusInput"
     />
 
     <!-- Cancel Icon (Only show when there's input) -->
     <IconClose v-if="inputValue.length > 0" 
-      class="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer t-icon-size-sm t-icon-hover"
+      class="absolute right-2 top-1/2 transform -translate-y-1/2 t-icon-size-sm t-icon-group-hover"
       @click="clickCancel"
     />
   </div>

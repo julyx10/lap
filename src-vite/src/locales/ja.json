@@ -112,6 +112,13 @@
   "menu_item_add_folder": "フォルダを追加",
   "menu_item_add_url": "URLを追加",
 
+  "favorite_files": "お気に入りのファイル",
+  "favorite_files_empty": "お気に入りのファイルは見つかりません",
+  "favorite_files_summary": "{count} お気に入りのファイル",
+  "favorite_folders": "お気に入りのフォルダ",
+  "favorite_folders_empty": "お気に入りのフォルダは見つかりません",
+  "favorite_folders_summary": "{count} お気に入りのフォルダ",
+
   "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],
   "file_info_title": "プロパティ",
   "file_info_album_name": "アルバム",

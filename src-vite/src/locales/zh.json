@@ -112,6 +112,13 @@
   "menu_item_add_folder": "添加文件夹",
   "menu_item_add_url": "添加URL",
 
+  "favorite_files": "收藏的文件",
+  "favorite_files_empty": "未找到收藏的文件",
+  "favorite_files_summary": "{count} 个收藏的文件",
+  "favorite_folders": "收藏的文件夹",
+  "favorite_folders_empty": "未找到收藏的文件夹",
+  "favorite_folders_summary": "{count} 个收藏的文件夹",
+
   "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "属性",
   "file_info_album_name": "相册",

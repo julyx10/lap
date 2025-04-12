@@ -7,6 +7,9 @@
 .t-icon-hover {
   @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
 }
+.t-icon-group-hover {
+  @apply group-hover:text-gray-100 transition-colors duration-300 cursor-pointer;
+}
 .t-icon-focus-hover {
   @apply hover:text-sky-300 transition-colors duration-300 cursor-pointer;
 }
@@ -29,6 +32,9 @@
 }
 .t-color-border-hover {
   @apply hover:border-gray-500;
+}
+.t-color-border-group-hover {
+  @apply group-hover:border-gray-500;
 }
 .t-color-bg {
   @apply bg-gray-900;

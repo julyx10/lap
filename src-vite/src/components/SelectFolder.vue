@@ -37,8 +37,10 @@
           {{ child.name }}
         </div>
 
-        <div class="px-1 ml-auto flex rounded">
-          <IconFavorite v-if="child.is_favorite" class="t-icon-size-sm group-hover:hidden"></IconFavorite>
+        <div class="px-1 ml-auto flex flex-row items-center rounded">
+          <IconFavorite v-if="child.is_favorite" 
+            class="t-icon-size-sm group-hover:hidden"
+          />
 
           <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
             class="hidden group-hover:block t-color-bg-selected"

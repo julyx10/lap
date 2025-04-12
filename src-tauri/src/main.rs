@@ -77,6 +77,8 @@ fn main() {
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
 
+            t_cmds::get_favorite_folders,
+            
             t_cmds::create_folder,
             t_cmds::rename_folder,
             t_cmds::delete_folder,

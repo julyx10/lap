@@ -112,6 +112,13 @@
   "menu_item_add_folder": "Add folder",
   "menu_item_add_url": "Add URL",
 
+  "favorite_files": "Favorite files",
+  "favorite_files_empty": "No favorite files found",
+  "favorite_files_summary": "{count} favorite files",
+  "favorite_folders": "Favorite folders",
+  "favorite_folders_empty": "No favorite folders found",
+  "favorite_folders_summary": "{count} favorite folders",
+
   "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",
   "file_info_album_name": "Album",

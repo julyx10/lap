@@ -200,6 +200,20 @@ impl AFolder {
         })
     }
 
+    /// Function to construct `Self` from a database row
+    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
+        Ok(Self {
+            id: Some(row.get(0)?),
+            album_id: row.get(1)?,
+            parent_id: row.get(2)?,
+            name: row.get(3)?,
+            path: row.get(4)?,
+            is_favorite: row.get(5)?,
+            created_at: row.get(6)?,
+            modified_at: row.get(7)?,
+        })
+    }
+    
     /// fetch a folder row from db
     fn fetch(album_id: i64, folder_path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn();
@@ -209,20 +223,8 @@ impl AFolder {
                 FROM afolders a
                 WHERE a.album_id = ?1 AND a.path = ?2",
                 params![album_id, folder_path],
-                |row| {
-                    Ok(Self {
-                        id: Some(row.get(0)?),
-                        album_id: row.get(1)?,
-                        parent_id: row.get(2)?,
-                        name: row.get(3)?,
-                        path: row.get(4)?,
-                        is_favorite: row.get(5)?,
-                        created_at: row.get(6)?,
-                        modified_at: row.get(6)?,
-                    })
-                },
-            )
-            .optional()
+                |row| Self::from_row(row)
+            ).optional()
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -299,7 +301,7 @@ impl AFolder {
         Ok(result)
     }
 
-    // get is_favorite status
+    // get a folder's is_favorite status
     pub fn get_is_favorite(folder_path: &str) -> Result<Option<bool>, String> {
         let conn = open_conn();
         let result = conn
@@ -310,6 +312,28 @@ impl AFolder {
             )
             .map_err(|e| e.to_string())?;
         Ok(result)
+    }
+
+    // get all favorite folders
+    pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
+        let conn = open_conn();
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, album_id, parent_id, name, path, is_favorite, created_at, modified_at 
+                FROM afolders WHERE is_favorite = 1",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map(params![], |row| Self::from_row(row))
+            .map_err(|e| e.to_string())?;
+
+        let mut folders = Vec::new();
+        for folder in rows {
+            folders.push(folder.unwrap());
+        }
+
+        Ok(folders)
     }
 
     // recurse all parent folder id (deprecated)

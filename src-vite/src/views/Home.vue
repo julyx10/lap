@@ -51,10 +51,11 @@
         leave-from-class="translate-x-0"
         leave-to-class="-translate-x-full"
       >
-        <div v-show="config.toolbarIndex > 1 && showLeftPane" 
+        <div v-show="config.toolbarIndex > 0 && showLeftPane" 
           class="w-96 min-w-32 py-1 flex" 
           :style="{ width: config.leftPaneWidth + 'px' }"
         >
+          <Favorite v-show="config.toolbarIndex === 1" :titlebar="$t('favorite')"/>
           <Album    v-show="config.toolbarIndex === 2" :titlebar="$t('album')"/>
           <Calendar v-show="config.toolbarIndex === 3" :titlebar="$t('calendar')"/>
           <Location v-show="config.toolbarIndex === 4" :titlebar="$t('location')"/>
@@ -64,7 +65,7 @@
       </transition>
       
       <!-- splitter -->
-      <div v-if="config.toolbarIndex > 1" 
+      <div v-if="config.toolbarIndex > 0" 
         class="w-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
@@ -95,6 +96,7 @@ import { isWin, isMac } from '@/common/utils';
 // vue components
 import TitleBar from '@/components/TitleBar.vue';
 import Album from '@/components/Album.vue';
+import Favorite from '@/components/Favorite.vue';
 import Calendar from '@/components/Calendar.vue';
 import Camera from '@/components/Camera.vue';
 import Location from '@/components/Location.vue';

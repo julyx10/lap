@@ -45,11 +45,17 @@ export const useConfigStore = defineStore('configStore', {
     destFolderId: null,         // destination folder id
     destFolderPath: null,       // destination folder path
 
+    // favorites
+    favoriteAlbumId: null,      // favorite album id
+    favoriteFolderId: null,     // favorite folder id
+    favoriteFolderPath: null,   // favorite folder path
+
     // albums
     albumId: null,              // selected album id
     albumFolderId: null,        // selected folder id
     albumFolderPath: null,      // selected folder path
 
+    
     // calendar
     calendarIsMonthly: true,    // display monthly or daily calendar
     calendarSortingAsc: true,   // sorting order
