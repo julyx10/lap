@@ -39,7 +39,10 @@
 
         <div class="px-1 ml-auto flex flex-row items-center rounded">
           <IconFavorite v-if="child.is_favorite" 
-            class="t-icon-size-sm group-hover:hidden"
+            :class="[
+              't-icon-size-sm group-hover:hidden', 
+              rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text' : 't-color-text-disabled'
+            ]"
           />
 
           <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"

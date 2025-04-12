@@ -45,9 +45,9 @@
         
           <!-- favorite and rotate status -->
           <div class="absolute left-0 top-0 flex items-center">
-            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm"></IconFavorite>
+            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm t-color-text-disabled group-hover:text-gray-500"></IconFavorite>
             <IconRotate v-if="file.rotate % 360 > 0"
-              class="t-icon-size-sm"
+              class="t-icon-size-sm t-color-text-disabled group-hover:text-gray-500"
               :style="{ 
                 transform: `rotate(${file.rotate}deg)`, 
                 transition: 'transform 0.3s ease-in-out' 
@@ -89,7 +89,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { isMac, shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
-import { printImage } from '@/common/api';
+import { printImage, setFileFavorite } from '@/common/api';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
@@ -361,12 +361,15 @@ const keyActions = {
   Delete: ()     => deleteItem(),
 };
 
-function toggleFavorite() {
+const toggleFavorite = async() => {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
     return;
   }
   props.fileList[selectedIndex.value].is_favorite = !props.fileList[selectedIndex.value].is_favorite;
   emit('message-from-grid-view', { message: 'favorite', favorite: props.fileList[selectedIndex.value].is_favorite });
+
+  // set db status
+  await setFileFavorite(props.fileList[selectedIndex.value].id, props.fileList[selectedIndex.value].is_favorite);
 };
 
 function rotateImage() {

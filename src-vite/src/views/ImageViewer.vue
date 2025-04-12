@@ -197,6 +197,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { isWin, isMac } from '@/common/utils';
+import { setFileFavorite } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
@@ -637,11 +638,7 @@ const toggleFavorite = async() => {
   emit('message-from-image-viewer', { message: 'favorite', favorite: fileInfo.value.is_favorite });
 
   // set db status
-  try {
-    await invoke('set_file_favorite', { fileId: fileId.value, isFavorite: fileInfo.value.is_favorite });
-  } catch (error) {
-    console.error('toggleFavorite:', error);
-  }
+  await setFileFavorite(fileId.value, fileInfo.value.is_favorite);
 }
 
 // Function to maximize the window and setup full screen

@@ -215,6 +215,20 @@ export async function setFolderFavorite(folderId, isFavorite) {
   return null;
 }
 
+// set file favorite
+export async function setFileFavorite(fileId, isFavorite) {
+  try {
+    const result = await invoke('set_file_favorite', { fileId, isFavorite });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set file favorite:', error);
+  }
+
+  return null;
+}
+
 // get taken dates
 export async function getTakenDates() {
   try {

@@ -50,7 +50,7 @@
               </div>
 
               <DropDownMenu
-                class="ml-auto pl-1 hidden group-hover:block t-color-bg-selected"
+                class="ml-auto px-1 rounded hidden group-hover:block t-color-bg-selected"
                 :iconMenu="IconMore"
                 :menuItems="moreMenuItems"
               />
@@ -74,7 +74,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { getFavoriteFolders } from '@/common/api';
+import { getFavoriteFolders, setFolderFavorite } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
@@ -110,7 +110,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_unfavorite,
       icon: IconUnFavorite,
       action: () => {
-        // toggleFavorite();
+        UnFavorite();
       }
     },
   ];
@@ -143,6 +143,13 @@ function clickFavoriteFolder(folder: any) {
   config.favoriteAlbumId = folder.album_id;
   config.favoriteFolderId = folder.id;
   config.favoriteFolderPath = folder.path;
+}
+
+// unfavorite
+async function UnFavorite() {
+  console.log('UnFavorite');
+  await setFolderFavorite(config.favoriteFolderId, false);
+  favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favoriteFolderId);
 }
 
 </script>

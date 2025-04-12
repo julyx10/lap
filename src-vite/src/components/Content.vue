@@ -6,10 +6,10 @@
     <div class="px-4 pt-1 min-h-12 flex flex-row items-center justify-between select-none" data-tauri-drag-region>
 
       <!-- title -->
-      <span class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</span>
+      <div class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</div>
 
       <!-- toolbar -->
-      <div class="h-6 flex flex-row items-center space-x-4">
+      <div class="h-6 flex flex-row items-center space-x-4 flex-shrink-0">
 
         <!-- search box -->
         <SearchBox v-model="searchText" /> 
