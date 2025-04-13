@@ -24,17 +24,17 @@
       />
 
       <!-- action buttons -->
-      <div class="mt-4 flex justify-between space-x-4">
-        <button v-if="cancelText.length > 0" 
+      <div class="mt-4 flex justify-end space-x-4">
+        <!-- <button v-if="cancelText.length > 0" 
           :class="[
             'mr-auto px-4 py-1 rounded-full t-color-bg-light text-nowrap',
             config.destAlbumId > 0 ? 't-color-bg-highlight-hover t-icon-hover' : 't-icon-disabled'
           ]"
           @click="clickNewFolder"
-        >{{$t('msgbox_new_folder_title')}}</button>
+        >{{$t('msgbox_new_folder_title')}}</button> -->
 
         <button v-if="cancelText.length > 0" 
-          class="items-end px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover text-nowrap" 
+          class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover text-nowrap" 
           @click="clickCancel"
         >{{ cancelText }}</button>
 
@@ -94,13 +94,12 @@ onUnmounted(() => {
 });
 
 function handleKeyDown(event) {
+  event.stopPropagation();
   switch (event.key) {
-    // case 'Enter':
-    //   event.preventDefault();
-    //   clickConfirm();
-    //   break;
+    case 'Enter':
+      clickOk();
+      break;
     case 'Escape':
-      event.preventDefault();
       clickCancel();
       break;
     default:
@@ -108,30 +107,12 @@ function handleKeyDown(event) {
   }
 }
 
-const clickNewFolder = () => {
-  selectAlbumRef.value.clickNewFolder();
+const clickOk = () => {
+  emit('ok');
 };
 
 const clickCancel = () => {
   emit('cancel');
-};
-
-const clickOk = () => {
-  if (selectedAlbumId.value === 0) return;
-  emit('ok', { albumId: selectedAlbumId.value, folderId: selectedFolderId.value });
-};
-
-
-/// click a album to select it
-const clickAlbum = async (album) => {
-  // selectedAlbumId.value = album.id;
-  // selectedFolderId.value = album.folderId;
-};
-
-/// click folder to select
-const clickFolder = async (albumId, folder) => {
-  // selectedAlbumId.value = albumId;
-  // selectedFolderId.value = folder.id;
 };
 
 </script>

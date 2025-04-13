@@ -92,7 +92,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
@@ -134,6 +134,8 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+
+let unlisten: () => void;
 
 const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
@@ -213,6 +215,20 @@ onMounted( async () => {
       }
     }
   }
+
+  // listen for messages from SelectFolder component
+  unlisten = await listen('message-from-select-folder', (event) => {
+    console.log('listen - message-from-select-folder:', event);
+    if(event.payload.componentId === props.componentId) {
+      selectedAlbumId.value = event.payload.albumId;
+      selectedFolderId.value = event.payload.folderId;
+      selectedFolderPath.value = event.payload.folderPath;
+    };
+  });
+});
+
+onBeforeUnmount(() => {
+  unlisten(); // Removes the listener
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
@@ -231,16 +247,6 @@ const emitSelectedFolder = (albumId, folderId, folderPath) => {
   emit('update:folderId', folderId);
   emit('update:folderPath', folderPath);
 };
-
-// listen for messages from SelectFolder component
-listen('message-from-select-folder', (event) => {
-  console.log('message-from-select-folder:', event);
-  if(event.payload.componentId === props.componentId) {
-    selectedAlbumId.value = event.payload.albumId;
-    selectedFolderId.value = event.payload.folderId;
-    selectedFolderPath.value = event.payload.folderPath;
-  };
-});
 
 /// change albums' display order
 const onDragEnd = async () => {

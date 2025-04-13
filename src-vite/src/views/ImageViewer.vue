@@ -340,7 +340,10 @@ const moreMenuItems = computed(() => {
 });
 
 
-let unlistenResize;
+let unlistenResize: () => void;
+let unlistenImg: () => void;
+let unlistenImage: () => void;
+let unlistenGridView: () => void;
 
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
@@ -353,11 +356,56 @@ onMounted(async() => {
   fileCount.value = Number(urlParams.get('fileCount'));
   filePath.value     = decodeURIComponent(urlParams.get('filePath'));
   nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
+
+  // Listen 
+  unlistenImg = await listen('update-img', async (event) => {
+    fileId.value    = Number(event.payload.fileId);
+    fileIndex.value = Number(event.payload.fileIndex);
+    fileCount.value = Number(event.payload.fileCount);
+    filePath.value     = decodeURIComponent(event.payload.filePath);
+    nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
+    console.log('update-img', fileId.value, fileIndex.value, fileCount.value, filePath.value )
+  });
+
+  unlistenImage = await listen('message-from-image', (event) => {
+    const { message } = event.payload;
+    console.log('ImageViewer.vue: message-from-image:', message);
+    switch (message) {
+      case 'scale':
+        imageScale.value = event.payload.scale;
+        imageMinScale.value = event.payload.minScale;
+        imageMaxScale.value = event.payload.maxScale;
+        break;
+      default:
+        break;
+    }
+  });
+
+  unlistenGridView = await listen('message-from-grid-view', (event) => {
+    const { message } = event.payload;
+    console.log('ImageViewer.vue: message-from-grid-view:', message);
+    switch (message) {
+      case 'favorite':
+        toggleFavorite();
+        break;
+      case 'rotate':
+        clickRotate();
+        break;
+      default:
+        break;
+    }
+  });
+
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  
+  // unlisten
   unlistenResize();
+  unlistenImg();
+  unlistenImage();
+  unlistenGridView();
 });
 
 // Handle keyboard shortcuts
@@ -424,45 +472,6 @@ const handleResize = async () => {
     console.log('handleFullScreenChange:', config.isFullScreen);
   }
 };
-
-// Listen for the 'update-url' event to update the image
-listen('update-img', async (event) => {
-  fileId.value    = Number(event.payload.fileId);
-  fileIndex.value = Number(event.payload.fileIndex);
-  fileCount.value = Number(event.payload.fileCount);
-  filePath.value     = decodeURIComponent(event.payload.filePath);
-  nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
-  console.log('update-img', fileId.value, fileIndex.value, fileCount.value, filePath.value )
-});
-
-listen('message-from-image', (event) => {
-  const { message } = event.payload;
-  console.log('ImageViewer.vue: message-from-image:', message);
-  switch (message) {
-    case 'scale':
-      imageScale.value = event.payload.scale;
-      imageMinScale.value = event.payload.minScale;
-      imageMaxScale.value = event.payload.maxScale;
-      break;
-    default:
-      break;
-  }
-});
-
-listen('message-from-grid-view', (event) => {
-  const { message } = event.payload;
-  console.log('ImageViewer.vue: message-from-grid-view:', message);
-  switch (message) {
-    case 'favorite':
-      toggleFavorite();
-      break;
-    case 'rotate':
-      clickRotate();
-      break;
-    default:
-      break;
-  }
-});
 
 // watch language
 watch(() => config.language, (newLanguage) => {

@@ -9,7 +9,7 @@
     </div>
 
     <!-- File Info table -->
-    <div class="overflow-auto t-scrollbar" :style="{ maxHeight: 'calc(100vh - 100px)' }">
+    <div class="overflow-x-hidden overflow-y-auto t-scrollbar" :style="{ maxHeight: 'calc(100vh - 100px)' }">
       <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
         <tbody>
           <tr>

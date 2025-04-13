@@ -13,6 +13,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use chrono::{DateTime, Utc};
 use image::ImageReader;
+use crate::t_sqlite::AFile;
+use std::process::Command;
 
 // #[cfg(target_os = "windows")]
 // use std::os::windows::fs::MetadataExt; // Windows-specific extensions
@@ -293,6 +295,201 @@ pub fn delete_folder(folder_path: &str) -> bool {
     }
 }
 
+/// move a folder to a new location
+/// Returns the new folder path if successful
+pub fn move_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
+    let path = Path::new(folder_path);
+    let new_path = Path::new(new_folder_path);
+
+    // Check if the folder exists
+    if !path.exists() {
+        eprintln!("Folder does not exist: {}", folder_path);
+        return None;
+    }
+
+    // Attempt to move the folder
+    match fs::rename(path, new_path) {
+        Ok(_) => {
+            let new_path_str = new_path.to_string_lossy().into_owned();
+            println!("Folder moved successfully: {}", new_path_str);
+            Some(new_path_str)
+        }
+        Err(e) => {
+            eprintln!("Failed to move folder '{}': {}", folder_path, e);
+            None
+        }
+    }
+}
+
+/// Recursively copies a folder and all its contents to a new location.
+/// Returns Some(new_folder_path) if successful, or None on failure.
+pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
+    let src = Path::new(folder_path);
+    let dst = Path::new(new_folder_path);
+
+    if !src.exists() || !src.is_dir() {
+        eprintln!("Source folder does not exist or is not a directory: {}", folder_path);
+        return None;
+    }
+
+    for entry in WalkDir::new(src) {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!("Error reading entry: {}", e);
+                return None;
+            }
+        };
+
+        let relative_path = match entry.path().strip_prefix(src) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Error computing relative path: {}", e);
+                return None;
+            }
+        };
+
+        let dest_path = dst.join(relative_path);
+
+        if entry.file_type().is_dir() {
+            if let Err(e) = fs::create_dir_all(&dest_path) {
+                eprintln!("Failed to create directory '{}': {}", dest_path.display(), e);
+                return None;
+            }
+        } else {
+            if let Err(e) = fs::copy(entry.path(), &dest_path) {
+                eprintln!("Failed to copy file to '{}': {}", dest_path.display(), e);
+                return None;
+            }
+        }
+    }
+
+    println!("Folder copied successfully to: {}", new_folder_path);
+    Some(new_folder_path.to_string())
+}
+
+/// move file list to a new location
+/// Returns a vector of successfully moved file paths
+pub fn move_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
+    let mut moved_files = Vec::new();
+
+    let destination_dir = Path::new(new_folder_path);
+    if !destination_dir.exists() {
+        if let Err(e) = fs::create_dir_all(destination_dir) {
+            eprintln!("Failed to create destination folder: {}", e);
+            return moved_files;
+        }
+    }
+
+    for file in files {
+        let path = Path::new(&file);
+
+        if !path.exists() {
+            eprintln!("File does not exist: {}", file);
+            continue;
+        }
+
+        let file_name = match path.file_name() {
+            Some(name) => name,
+            None => {
+                eprintln!("Invalid file name: {}", file);
+                continue;
+            }
+        };
+
+        let new_path = destination_dir.join(file_name);
+
+        match fs::rename(&path, &new_path) {
+            Ok(_) => {
+                let new_path_str = new_path.to_string_lossy().into_owned();
+                println!("File moved successfully: {}", new_path_str);
+                moved_files.push(new_path_str);
+            }
+            Err(e) => {
+                eprintln!("Failed to move file '{}': {}", file, e);
+            }
+        }
+    }
+
+    moved_files
+}
+
+/// Copy a list of files to a new folder.
+/// Returns a vector of successfully copied file paths.
+pub fn copy_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
+    let mut copied_files = Vec::new();
+
+    let destination_dir = Path::new(new_folder_path);
+    if !destination_dir.exists() {
+        if let Err(e) = fs::create_dir_all(destination_dir) {
+            eprintln!("Failed to create destination folder: {}", e);
+            return copied_files;
+        }
+    }
+
+    for file in files {
+        let path = Path::new(&file);
+
+        if !path.exists() {
+            eprintln!("File does not exist: {}", file);
+            continue;
+        }
+
+        let file_name = match path.file_name() {
+            Some(name) => name,
+            None => {
+                eprintln!("Invalid file name: {}", file);
+                continue;
+            }
+        };
+
+        let new_path = destination_dir.join(file_name);
+
+        match fs::copy(&path, &new_path) {
+            Ok(_) => {
+                let new_path_str = new_path.to_string_lossy().into_owned();
+                println!("File copied successfully: {}", new_path_str);
+                copied_files.push(new_path_str);
+            }
+            Err(e) => {
+                eprintln!("Failed to copy file '{}': {}", file, e);
+            }
+        }
+    }
+
+    copied_files
+}
+
+/// Get all files in a folder
+/// Returns a vector of AFile instances
+pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
+    let mut files: Vec<AFile> = Vec::new();
+
+    // Use WalkDir to iterate over directory entries
+    for entry in WalkDir::new(path)
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        let entry_path = entry.path();
+        if entry_path.is_file() {
+            if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
+                if is_image_extension(extension) {
+                    let file_path = entry_path.to_str().unwrap();
+
+                    // Create a new AFile instance and add it to the database
+                    let file = AFile::add_to_db(folder_id, file_path).unwrap();
+
+                    files.push(file);
+                }
+            }
+        }
+    }
+
+    files
+}
+
 /// Get the name from a folder or file path
 pub fn get_file_name(path: &str) -> String {
     let path = Path::new(path);
@@ -390,4 +587,30 @@ pub fn get_thumbnail(
         Ok(()) => Ok(Some(buf)),
         Err(_) => Ok(None),
     }
+}
+
+/// Print an image using the default system printer
+/// This function is platform-specific and may need to be adjusted for different operating systems
+pub fn print_image(image_path: String) -> Result<(), String> {
+    // Platform-specific printing logic
+    let output = if cfg!(target_os = "windows") {
+        Command::new("mspaint")
+            .arg("/p")
+            .arg(image_path)
+            .output()
+            .map_err(|e| e.to_string())?
+    } else if cfg!(target_os = "macos") {
+        Command::new("lp")
+            .arg(image_path)
+            .output()
+            .map_err(|e| e.to_string())?
+    } else {
+        return Err("Unsupported OS".to_string());
+    };
+
+    if !output.status.success() {
+        return Err(format!("Failed to print image: {}", String::from_utf8_lossy(&output.stderr)));
+    }
+
+    Ok(())
 }

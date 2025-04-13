@@ -68,7 +68,6 @@
     
   </template>
   
-  
 <script setup lang="ts">
 
 import { ref, computed, onMounted } from 'vue';
@@ -83,6 +82,7 @@ import {
   IconFile, 
   IconFolder,
   IconMore,
+  IconFavorite,
   IconUnFavorite, 
 } from '@/common/icons';
 

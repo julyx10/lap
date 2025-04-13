@@ -87,6 +87,11 @@ fn main() {
             t_cmds::expand_folder,
             t_cmds::get_folder_favorite,
             t_cmds::set_folder_favorite,
+
+            t_cmds::move_folder,
+            t_cmds::copy_folder,
+            t_cmds::move_files,
+            t_cmds::copy_files,
             t_cmds::get_folder_files,
 
             t_cmds::get_file_thumb,

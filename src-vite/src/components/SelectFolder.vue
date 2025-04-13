@@ -97,7 +97,7 @@
     :message="$t('msgbox_move_to_content')"
     :OkText="$t('msgbox_move_to_ok')"
     :cancelText="$t('msgbox_cancel')"
-    @ok="clickCopyToConfirm"
+    @ok="clickMoveTo"
     @cancel="showMoveTo = false"
   />
 
@@ -108,7 +108,7 @@
     :message="$t('msgbox_copy_to_content')"
     :OkText="$t('msgbox_copy_to_ok')"
     :cancelText="$t('msgbox_cancel')"
-    @ok="clickCopyToConfirm"
+    @ok="clickCopyTo"
     @cancel="showCopyTo = false"
   />
 
@@ -122,7 +122,7 @@ import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
-import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, setFolderFavorite } from '@/common/api';
+import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, move_folder, copy_folder, setFolderFavorite } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -391,8 +391,9 @@ const handleEscKey = (event, folderID) => {
 };
 
 
-/// delete folder
+/// delete selected folder
 const clickDeleteFolder = async () => {
+  console.log('SelectFolder.vue-clickDeleteFolder:', selectedFolderId.value);
   const isDeleted = await deleteFolder(selectedFolderPath.value);
   if (isDeleted) {
     let folder = getFolderById(selectedFolderId.value);
@@ -411,14 +412,27 @@ const clickDeleteFolder = async () => {
   }
 };
 
-const clickCopyToConfirm = async (value) => {
+// move folder to dest folder
+const clickMoveTo = async () => {
   try {
+    // console.log('SelectFolder.vue-clickMoveTo:');
     showMoveTo.value = false;
   } catch (error) {
     console.error('Failed to move folder:', error);
   }
 };
 
+// copy folder to dest folder
+const clickCopyTo = async (value) => {
+  try {
+    console.log('SelectFolder.vue-clickCopyTo:', value);
+    showCopyTo.value = false;
+  } catch (error) {
+    console.error('Failed to copy folder:', error);
+  }
+};
+
+// toggle favorite folder
 const toggleFavorite = async () => {
   const folder = getFolderById(selectedFolderId.value);
   folder.is_favorite = !folder.is_favorite;

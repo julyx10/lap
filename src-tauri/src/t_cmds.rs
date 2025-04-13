@@ -6,10 +6,8 @@
  * date:    2024-08-08
  */
 use base64::{engine::general_purpose, Engine};
-use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use crate::t_sqlite::{ACamera, AFile, AFolder, AThumb, Album};
 use crate::t_utils;
-use std::process::Command;
 
 /// get all albums
 #[tauri::command]
@@ -29,20 +27,6 @@ pub fn add_album(folder_path: &str) -> Result<Album, String> {
     Album::add_to_db(folder_path)
         .map_err(|e| format!("Error while adding album to DB: {}", e))
 }
-// pub fn add_album(_window: tauri::Window, title: &str) -> Result<Album, String> {
-//     // Show open folder dialog
-//     let result = FileDialog::new().set_title(title).show_open_single_dir();
-
-//     match result {
-//         Ok(Some(path)) => {
-//             // Add the album to the database and return the result
-//             Album::add_to_db(path.to_string_lossy().into_owned().as_str())
-//                 .map_err(|e| format!("Error while adding album to DB: {}", e))
-//         }
-//         Ok(None) => Err("No folder selected".to_string()),
-//         Err(_) => Err("Failed to open folder dialog".to_string()),
-//     }
-// }
 
 /// rename an album
 #[tauri::command]
@@ -60,11 +44,7 @@ pub fn rename_album(id: i64, name: &str) -> Result<usize, String> {
 #[tauri::command]
 pub fn remove_album(id: i64) -> Result<usize, String> {
     Album::delete_from_db(id).map_err(|e| {
-        format!(
-            "Error while removing album with id {}: {}",
-            id,
-            e.to_string()
-        )
+        format!("Error while removing album with id {}: {}", id, e.to_string())
     })
 }
 
@@ -159,45 +139,39 @@ pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, S
         .map_err(|e| format!("Error while setting folder favorite: {}", e))
 }
 
+/// move a folder
+#[tauri::command]
+pub fn move_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
+    t_utils::move_folder(folder_path, new_folder_path)
+}
+
+/// copy a folder
+#[tauri::command]
+pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
+    t_utils::copy_folder(folder_path, new_folder_path)
+}
+
+/// move files to a folder
+#[tauri::command]
+pub fn move_files(file_paths: Vec<String>, new_folder_path: &str) -> Vec<String> {
+    t_utils::move_files(file_paths, new_folder_path)
+}
+
+/// copy files to a folder
+#[tauri::command]
+pub fn copy_files(file_paths: Vec<String>, new_folder_path: &str) -> Vec<String> {
+    t_utils::copy_files(file_paths, new_folder_path)
+}
+
 /// get all files from the folder
 #[tauri::command]
-pub fn get_folder_files(folder_id: i64, path: &str) -> Result<Vec<AFile>, String> {
-    let mut files: Vec<AFile> = Vec::new();
-
-    // Use WalkDir to iterate over directory entries
-    for entry in WalkDir::new(path)
-        .min_depth(1)
-        .max_depth(1)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        let entry_path = entry.path();
-        if entry_path.is_file() {
-            if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
-                if t_utils::is_image_extension(extension) {
-                    let file_path = entry_path.to_str().unwrap();
-
-                    // Create a new AFile instance and add it to the database
-                    let file = AFile::add_to_db(folder_id, file_path)
-                        .map_err(|e| format!("Error while adding file to DB: {}", e))?;
-
-                    files.push(file);
-                }
-            }
-        }
-    }
-
-    Ok(files)
+pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
+    t_utils::get_folder_files(folder_id, path)
 }
 
 /// get a file's thumb image
 #[tauri::command]
-pub async fn get_file_thumb(
-    file_id: i64,
-    file_path: &str,
-    orientation: i32,
-    thumbnail_size: u32,
-) -> Result<Option<AThumb>, String> {
+pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<AThumb>, String> {
     AThumb::add_to_db(file_id, file_path, orientation, thumbnail_size)
         .map_err(|e| format!("Error while adding thumbnail to DB: {}", e))
 }
@@ -210,12 +184,6 @@ pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
 
 /// get a file's image
 #[tauri::command]
-// pub fn get_file_image(file_path: &str) -> Result<String, String> {
-//     match std::fs::read(file_path) {
-//         Ok(image_data) => Ok(general_purpose::STANDARD.encode(image_data)),
-//         Err(e) => Err(format!("Failed to read the image: {}", e)),
-//     }
-// }
 pub async fn get_file_image(file_path: String) -> Result<String, String> {
     match tokio::fs::read(file_path).await {
         Ok(image_data) => Ok(general_purpose::STANDARD.encode(image_data)),
@@ -288,25 +256,6 @@ pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
 /// print an image: uses platform-specific commands to print an image.
 #[tauri::command]
 pub fn print_image(image_path: String) -> Result<(), String> {
-    // Platform-specific printing logic
-    let output = if cfg!(target_os = "windows") {
-        Command::new("mspaint")
-            .arg("/p")
-            .arg(image_path)
-            .output()
-            .map_err(|e| e.to_string())?
-    } else if cfg!(target_os = "macos") {
-        Command::new("lp")
-            .arg(image_path)
-            .output()
-            .map_err(|e| e.to_string())?
-    } else {
-        return Err("Unsupported OS".to_string());
-    };
-
-    if !output.status.success() {
-        return Err(format!("Failed to print image: {}", String::from_utf8_lossy(&output.stderr)));
-    }
-
-    Ok(())
+    t_utils::print_image(image_path)
+        .map_err(|e| format!("Error while printing image: {}", e))
 }

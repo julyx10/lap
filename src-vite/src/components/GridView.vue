@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
@@ -139,27 +139,27 @@ const emitUpdate = defineEmits(['update:modelValue']);
 
 const scrollable = ref(null); // Ref for the scrollable element
 
-// onMounted(() => {
-//   window.addEventListener('keydown', handleKeyDown);
-// });
+let unlisten: () => void;
 
-// onUnmounted(() => {
-//   window.removeEventListener('keydown', handleKeyDown);
-// });
+onMounted( async() => {
+  unlisten = await listen('message-from-image-viewer', (event) => {
+    const { message } = event.payload;
+    console.log('GriView.vue: message-from-image-viewer:', message);
+    switch (message) {
+      case 'rotate':
+        props.fileList[selectedIndex.value].rotate = event.payload.rotate;
+        break;
+      case 'favorite':
+        props.fileList[selectedIndex.value].is_favorite = event.payload.favorite;
+        break;
+      default:
+        break;
+    }
+  });
+});
 
-listen('message-from-image-viewer', (event) => {
-  const { message } = event.payload;
-  console.log('GriView.vue: message-from-image-viewer:', message);
-  switch (message) {
-    case 'rotate':
-      props.fileList[selectedIndex.value].rotate = event.payload.rotate;
-      break;
-    case 'favorite':
-      props.fileList[selectedIndex.value].is_favorite = event.payload.favorite;
-      break;
-    default:
-      break;
-  }
+onBeforeUnmount(() => {
+  unlisten(); // Removes the listener
 });
 
 // when the grid view is focused, the keydown event is listened

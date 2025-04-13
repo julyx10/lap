@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useConfigStore } from '@/stores/configStore';
 import { openFolderDialog, localeComp } from '@/common/utils';
+import { format } from 'date-fns';
 
 const config = useConfigStore();
 
@@ -24,7 +25,7 @@ export async function getAllAlbums() {
   return null;
 };
 
-// get album
+// get one album
 export async function getAlbum(albumId) {
   try {
     const album = await invoke('get_album', { albumId });
@@ -215,6 +216,121 @@ export async function setFolderFavorite(folderId, isFavorite) {
   return null;
 }
 
+// move a folder, return new folder path
+export async function moveFolder(folderPath, newFolderPath) {
+  try {
+    const result = await invoke('move_folder', { folderPath, newFolderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to move folder:', error);
+  }
+  return null;
+}
+
+// copy a folder, return new folder path
+export async function copyFolder(folderPath, newFolderPath) {
+  try {
+    const result = await invoke('copy_folder', { folderPath, newFolderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to copy folder:', error);
+  }
+  return null;
+}
+
+// move files, return moved files
+export async function moveFiles(files, newFolderPath) {
+  try {
+    const result = await invoke('move_files', { files, newFolderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to move files:', error);
+  }
+  return null;
+}
+
+// copy files, return copied files
+export async function copyFiles(files, newFolderPath) {
+  try {
+    const result = await invoke('copy_files', { files, newFolderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to copy files:', error);
+  }
+  return null;
+}
+
+/// get all files under the path
+export async function getFolderFiles(folderId, folderPath) {
+  try {
+    const result = await invoke('get_folder_files', { folderId: folderId, path: folderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getFolderFiles error:', error);
+  }
+  return null;
+};
+
+/// get all files (only get favorite files if isFavorite is true)
+export async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
+  try {
+    const result = await invoke('get_all_files', { isFavorite, offset, pageSize });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getAllFiles error:', error);
+  }
+  return null
+}
+
+/// get all files of calendar
+export async function getCalendarFiles(year, month, date) {
+  try {
+    if (date === -1) { // -1 means selecting a month
+      // get the first and last days of the month.
+      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
+      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
+      const result = await invoke('get_files_by_date_range', { startDate, endDate });
+      if(result) {
+        return result;
+      };
+    } else {  // otherwise, get files by date
+      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
+      const result = await invoke('get_files_by_date', { date: dateStr });
+      if(result) {
+        return result;
+      };
+    }
+  } catch (error) {
+    console.error('getCalendarFiles error:', error);
+  }
+  return null;
+}
+
+/// get all files under the camera make and model
+export async function getCameraFiles(make, model) {
+  try {
+    const result = await invoke('get_camera_files', { make, model });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getCameraFiles error:', error);
+  }
+  return null
+}
+
 // set file favorite
 export async function setFileFavorite(fileId, isFavorite) {
   try {
@@ -225,7 +341,6 @@ export async function setFileFavorite(fileId, isFavorite) {
   } catch (error) {
     console.log('Failed to set file favorite:', error);
   }
-
   return null;
 }
 

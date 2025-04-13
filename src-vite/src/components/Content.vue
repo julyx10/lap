@@ -98,7 +98,6 @@
 
       </div>
 
-
       <!-- splitter -->
       <div v-if="config.showPreview" 
         class="w-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
@@ -143,15 +142,13 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { getAlbum } from '@/common/api';
-
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { format } from 'date-fns';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
+import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles } from '@/common/api';
 import { isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
@@ -220,296 +217,6 @@ const previewDiv = ref(null);
 const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
 let resizeObserver;
-
-// image viewer
-// const isImageViewerOpen  = ref(false);  // show image viewer(new window)
-
-onMounted(() => {
-  console.log('content mounted');
-  // FIXME: ResizeObserver loop completed with undelivered notifications.
-  resizeObserver = new ResizeObserver(entries => {
-    for (let entry of entries) {
-      previewPaneSize.value = {
-        width: entry.contentRect.width,
-        height: entry.contentRect.height,
-      };
-    }
-  });
-
-  if (previewDiv.value) {
-    // Observe preview pane size changes
-    resizeObserver.observe(previewDiv.value);
-  }
-  
-  console.log('previewDiv:', previewDiv.value);
-});
-
-onUnmounted(() => {
-  if (resizeObserver && previewDiv.value) {
-    resizeObserver.unobserve(previewDiv.value);
-    resizeObserver.disconnect();
-  }
-});
-
-listen('message-from-titlebar', (event) => {
-  const { message, search } = event.payload;
-  console.log('content: message-from-titlebar:', message, search);
-  switch (message) {
-    case 'search':
-      searchText.value = search;
-      refreshFileList();
-      break;
-    default:
-      break;
-  }
-});
-
-listen('message-from-grid-view', (event) => {
-  const { message } = event.payload;
-  console.log('content - message-from-grid-view:', message);
-  switch (message) {
-    case 'open-image-viewer':
-      openImageViewer(selectedItemIndex.value, true);
-      break;
-    case 'update-image-viewer':
-      openImageViewer(selectedItemIndex.value, false);
-      break;
-    default:
-      break;
-  }
-});
-
-listen('message-from-image-viewer', (event) => {
-  const { message } = event.payload;
-  console.log('content - message-from-image-viewer:', message);
-  switch (message) {
-    case 'home':
-      selectedItemIndex.value = 0;
-      break;
-    case 'end':
-      selectedItemIndex.value = fileList.value.length - 1;
-      break;
-    case 'prev':
-      selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
-      break;
-    case 'next':
-      selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
-      break;
-    case 'delete':
-      deleteFile(selectedItemIndex.value);  // delete the selected file from list
-      break;
-    default:
-      break;
-  }
-});
-
-/// watch language
-watch(() => config.language, (newLanguage) => {
-    locale.value = newLanguage; // update locale based on config.language
-});
-
-/// watch home
-watch(() => config.toolbarIndex, newIndex => {
-  if(newIndex === 0) { // home
-    contentTitle.value = localeMsg.value.home;
-    getAllFiles();  // get all files
-    selectedItemIndex.value = -1;
-  } 
-}, { immediate: true });
-
-/// watch favorites
-watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath], 
-            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
-  if(newIndex === 1) {
-    if(newFolderId === 0) { // 0 means favorite files
-      contentTitle.value = localeMsg.value.favorite_files;
-      getAllFiles(true); // true: get all favorite files
-    } else {
-      const album = await getAlbum(newAlbumId);
-      if(album) {
-        contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
-      };
-      getFolderFiles(newFolderId, newFolderPath);
-    }
-    selectedItemIndex.value = -1;
-  }
-}, { immediate: true });
-
-/// watch album
-watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath], 
-            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
-  if(newIndex === 2) {
-    if (newAlbumId) {
-      const album = await getAlbum(newAlbumId);
-      if(album) {
-        if(newFolderPath === album.path) { // current folder is root
-          contentTitle.value = album.name;
-        } else {
-          contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
-        };
-
-        getFolderFiles(newFolderId, newFolderPath);
-        selectedItemIndex.value = -1;
-      } 
-    } else {
-      contentTitle.value = localeMsg.value.album;
-      fileList.value = [];
-    }
-  }
-}, { immediate: true });
-
-// watch calandar
-watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate], 
-            async ([newIndex, year, month, date]) => {
-  if(newIndex === 3) {
-    if (year && month && date) {
-      if (config.calendarDate === -1) {     // monthly
-        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.month_format);
-      } else if (config.calendarDate > 0) { // daily
-        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
-      }
-      getCalendarFiles(year, month, date);
-      selectedItemIndex.value = -1;
-    } else {
-      contentTitle.value = localeMsg.value.calendar;
-      fileList.value = [];
-    }
-  }
-}, { immediate: true });
-
-// watch location
-// TODO: impl location
-
-// watch people
-// TODO: impl people 
-
-// watch camera
-watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], 
-            async ([newIndex, newMake, newModel]) => {
-  if(newIndex === 6) {
-    if(newMake) {
-      if(newModel) {
-        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-        getCameraFiles(config.cameraMake, newModel);
-        selectedItemIndex.value = -1;
-      } else {
-        contentTitle.value = `${config.cameraMake}`;
-        getCameraFiles(config.cameraMake, "");
-        selectedItemIndex.value = -1;
-      }
-    } else {
-      contentTitle.value = localeMsg.value.camera;
-      fileList.value = [];
-    }
-
-  }
-}, { immediate: true });
-
-// watch for changes in the file list (selected item index or file list length)
-watch(() => [selectedItemIndex.value, fileList.value], () => {
-  // update the selected count
-  selectedCount.value = fileList.value.filter(file => file.isSelected).length;
-
-  // update total file size
-  totalFilesSize.value = fileList.value.reduce((total, file) => {
-    return total + file.size;
-  }, 0);
-
-  // update selected file size
-  selectedSize.value = fileList.value.reduce((total, file) => {
-    return total + (file.isSelected ? file.size : 0);
-  }, 0);
-
-  if(config.showPreview) {
-    getImageSrc();
-  }
-}, { deep: true });   // deep watch: because isSelected is a property of each file object
-
-// watch preview
-watch(() => config.showPreview, (showPreview) => {
-  if (showPreview) {
-    getImageSrc();
-  }
-});
-
-// get selected image source
-const getImageSrc = async () => {
-  if(selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
-    imageSrc.value = '';
-    return;
-  }
-  
-  let filePath = fileList.value[selectedItemIndex.value].file_path;
-  console.log('getImageSrc:', filePath);
-  try {
-    let currentIndex = selectedItemIndex.value;
-    const imageBase64 = await invoke('get_file_image', { filePath });
-    // Check if the selected item has changed since the invocation
-    if (currentIndex === selectedItemIndex.value) {
-      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
-    }
-  } catch (error) {
-    imageSrc.value = '';
-    console.error('getImageSrc error:', error);
-  }
-}
-
-/// get all files
-async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
-  try {
-    fileList.value = await invoke('get_all_files', { isFavorite, offset, pageSize });
-    refreshFileList(); // get fileList(apply filter and sorting)
-  } catch (error) {
-    console.error('getAllFiles error:', error);
-  }
-}
-
-/// get all files under the path
-async function getFolderFiles(folderId, folderPath) {
-  try {
-    // read the list of files
-    fileList.value = await invoke('get_folder_files', { folderId: folderId, path: folderPath });
-    refreshFileList();
-  } catch (error) {
-    console.error('getFolderFiles error:', error);
-  }
-};
-
-/// get all files of calendar
-async function getCalendarFiles(year, month, date) {
-  try {
-    if (date === -1) { // -1 means selecting a month
-      // get the first and last days of the month.
-      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
-      fileList.value = await invoke('get_files_by_date_range', { startDate, endDate });
-    } else {  // otherwise, get files by date
-      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
-      fileList.value = await invoke('get_files_by_date', { date: dateStr });
-    }
-    refreshFileList();
-  } catch (error) {
-    console.error('getCalendarFiles error:', error);
-  }
-}
-
-/// get all files under the camera make and model
-async function getCameraFiles(make, model) {
-  try {
-    fileList.value = await invoke('get_camera_files', { make, model });
-    refreshFileList();
-  } catch (error) {
-    console.error('getCameraFiles error:', error);
-  }
-}
-const handleSelectMode = (value) => {
-  selectMode.value = value;
-  if(!selectMode.value) {
-    for (let i = 0; i < fileList.value.length; i++) {
-      fileList.value[i].isSelected = false;
-    }
-  }
-};
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -590,6 +297,252 @@ const moreMenuItems = computed(() => {
   ];
 });
 
+let unlistenTitleBar: () => void;
+let unlistenGridView: () => void;
+let unlistenImageViewer: () => void;
+
+onMounted( async() => {
+  // FIXME: ResizeObserver loop completed with undelivered notifications.
+  resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+      previewPaneSize.value = {
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      };
+    }
+  });
+
+  if (previewDiv.value) {
+    // Observe preview pane size changes
+    resizeObserver.observe(previewDiv.value);
+  }
+
+  unlistenTitleBar = await listen('message-from-titlebar', (event) => {
+    const { message, search } = event.payload;
+    console.log('content: message-from-titlebar:', message, search);
+    switch (message) {
+      case 'search':
+        searchText.value = search;
+        refreshFileList();
+        break;
+      default:
+        break;
+    }
+  });
+
+  unlistenGridView = await listen('message-from-grid-view', (event) => {
+    const { message } = event.payload;
+    console.log('content - message-from-grid-view:', message);
+    switch (message) {
+      case 'open-image-viewer':
+        openImageViewer(selectedItemIndex.value, true);
+        break;
+      case 'update-image-viewer':
+        openImageViewer(selectedItemIndex.value, false);
+        break;
+      default:
+        break;
+    }
+  });
+
+  unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
+    const { message } = event.payload;
+    console.log('content - message-from-image-viewer:', message);
+    switch (message) {
+      case 'home':
+        selectedItemIndex.value = 0;
+        break;
+      case 'end':
+        selectedItemIndex.value = fileList.value.length - 1;
+        break;
+      case 'prev':
+        selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
+        break;
+      case 'next':
+        selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
+        break;
+      case 'delete':
+        deleteFile(selectedItemIndex.value);  // delete the selected file from list
+        break;
+      default:
+        break;
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  // unlisten
+  unlistenTitleBar();
+  unlistenGridView();
+  unlistenImageViewer();
+});
+
+onUnmounted(() => {
+  if (resizeObserver && previewDiv.value) {
+    resizeObserver.unobserve(previewDiv.value);
+    resizeObserver.disconnect();
+  }
+});
+
+/// watch language
+watch(() => config.language, (newLanguage) => {
+    locale.value = newLanguage; // update locale based on config.language
+});
+
+/// watch home
+watch(() => config.toolbarIndex, async(newIndex) => {
+  if(newIndex === 0) { // home
+    contentTitle.value = localeMsg.value.home;
+    fileList.value = await getAllFiles();  // get all files
+    refreshFileList();
+  } 
+}, { immediate: true });
+
+/// watch favorites
+watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath], 
+            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
+  if(newIndex === 1) {
+    if(newFolderId === 0) { // 0 means favorite files
+      contentTitle.value = localeMsg.value.favorite_files;
+      fileList.value = await getAllFiles(true); // true: only get favorite files
+    } else {
+      const album = await getAlbum(newAlbumId);
+      if(album) {
+        contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
+      };
+      fileList.value = await getFolderFiles(newFolderId, newFolderPath);
+    }
+    refreshFileList();
+  }
+}, { immediate: true });
+
+/// watch album
+watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath], 
+            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
+  if(newIndex === 2) {
+    if (newAlbumId) {
+      const album = await getAlbum(newAlbumId);
+      if(album) {
+        if(newFolderPath === album.path) { // current folder is root
+          contentTitle.value = album.name;
+        } else {
+          contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
+        };
+
+        fileList.value = await getFolderFiles(newFolderId, newFolderPath);
+        refreshFileList();
+      } 
+    } else {
+      contentTitle.value = localeMsg.value.album;
+      fileList.value = [];
+    }
+  }
+}, { immediate: true });
+
+// watch calandar
+watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate], 
+            async ([newIndex, year, month, date]) => {
+  if(newIndex === 3) {
+    if (year && month && date) {
+      if (config.calendarDate === -1) {     // monthly
+        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.month_format);
+      } else if (config.calendarDate > 0) { // daily
+        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
+      }
+      fileList.value = await getCalendarFiles(year, month, date);
+      refreshFileList()
+    } else {
+      contentTitle.value = localeMsg.value.calendar;
+      fileList.value = [];
+    }
+  }
+}, { immediate: true });
+
+// watch location
+// TODO: impl location
+
+// watch people
+// TODO: impl people 
+
+// watch camera
+watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], 
+            async ([newIndex, newMake, newModel]) => {
+  if(newIndex === 6) {
+    if(newMake) {
+      if(newModel) {
+        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
+        fileList.value = await getCameraFiles(config.cameraMake, newModel);
+      } else {
+        contentTitle.value = `${config.cameraMake}`;
+        fileList.value = await getCameraFiles(config.cameraMake, "");
+      }
+      refreshFileList()
+    } else {
+      contentTitle.value = localeMsg.value.camera;
+      fileList.value = [];
+    }
+
+  }
+}, { immediate: true });
+
+// watch for changes in the file list (selected item index or file list length)
+watch(() => [selectedItemIndex.value, fileList.value], () => {
+  // update the selected count
+  selectedCount.value = fileList.value.filter(file => file.isSelected).length;
+
+  // update total file size
+  totalFilesSize.value = fileList.value.reduce((total, file) => {
+    return total + file.size;
+  }, 0);
+
+  // update selected file size
+  selectedSize.value = fileList.value.reduce((total, file) => {
+    return total + (file.isSelected ? file.size : 0);
+  }, 0);
+
+  if(config.showPreview) {
+    getImageSrc();
+  }
+}, { deep: true });   // deep watch: because isSelected is a property of each file object
+
+// watch preview
+watch(() => config.showPreview, (showPreview) => {
+  if (showPreview) {
+    getImageSrc();
+  }
+});
+
+// get selected image source
+const getImageSrc = async () => {
+  if(selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
+    imageSrc.value = '';
+    return;
+  }
+  
+  let filePath = fileList.value[selectedItemIndex.value].file_path;
+  console.log('getImageSrc:', filePath);
+  try {
+    let currentIndex = selectedItemIndex.value;
+    const imageBase64 = await invoke('get_file_image', { filePath });
+    // Check if the selected item has changed since the invocation
+    if (currentIndex === selectedItemIndex.value) {
+      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+    }
+  } catch (error) {
+    imageSrc.value = '';
+    console.error('getImageSrc error:', error);
+  }
+}
+
+const handleSelectMode = (value) => {
+  selectMode.value = value;
+  if(!selectMode.value) {
+    for (let i = 0; i < fileList.value.length; i++) {
+      fileList.value[i].isSelected = false;
+    }
+  }
+};
+
 // sorting type options
 const sortingOptions = computed(() => {
   return getSelectOptions(localeMsg.value.file_list_sorting_options);
@@ -626,7 +579,8 @@ function getSelectOptions(options) {
 }
 
 function refreshFileList() {
-  selectMode.value = false;
+  selectedItemIndex.value = -1;
+  selectMode.value = false;   // exit multi-select mode
 
   // filterFileList(originalFileList.value, searchText.value);
   sortFileList(fileList.value, config.sortingType, config.sortingDirection);
@@ -793,13 +747,10 @@ async function openImageViewer(index: number, createNew = false) {
       });
 
       imageWindow.once('tauri://created', () => {
-        // isImageViewerOpen.value = true;
-        // imageWindow?.setFocus();
         console.log('ImageViewer window created');
       });
 
       imageWindow.once('tauri://close-requested', () => {
-        // isImageViewerOpen.value = false;
         imageWindow?.close();
         console.log('ImageViewer window is closing');
       });
@@ -818,7 +769,6 @@ async function openImageViewer(index: number, createNew = false) {
     });
     if(createNew) {
       imageWindow.show();
-      // imageWindow.setFocus();
     }
   }
 }
