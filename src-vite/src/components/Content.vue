@@ -67,7 +67,7 @@
       <div class="flex-1 flex flex-col">
         <!-- grid view -->
         <GridView  
-          v-model="selectedItemIndex"
+          v-model:selectItemIndex="selectedItemIndex"
           :fileList="fileList"
           :selectMode="selectMode"
         />

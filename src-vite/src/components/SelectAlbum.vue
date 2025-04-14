@@ -88,6 +88,8 @@
       @cancel="showRemoveMsgbox = false"
     />
 
+    <ToolTip ref="toolTipRef" />
+
 </template>
 
 <script setup lang="ts">
@@ -102,6 +104,7 @@ import { getAllAlbums, setDisplayOrder, addAlbum, renameAlbum, removeAlbum, crea
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
+import ToolTip from '@/components/ToolTip.vue';
 
 import {
   IconEdit,
@@ -149,6 +152,8 @@ const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
 const errorMessage = ref('');
 
+const toolTipRef = ref(null);
+
 const albums = ref([]);
 const getAlbumById = (id) => albums.value.find(album => album.id === id);
 
@@ -193,8 +198,6 @@ const moreMenuItems = computed(() => {
         openShellFolder(getAlbumById(selectedAlbumId.value).path);
       }
     },
-
-
   ];
 });
 
@@ -353,6 +356,8 @@ const clickFolder = async (albumId, folder) => {
     folder.id = selectedFolder.id;
 
     emitSelectedFolder(selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.value);
+  } else {
+    toolTipRef.value.showTip(localeMsg.value.msgbox_select_folder_error);
   }
 };
 

@@ -299,39 +299,63 @@ pub fn delete_folder(folder_path: &str) -> bool {
 /// Returns the new folder path if successful
 pub fn move_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     let path = Path::new(folder_path);
-    let new_path = Path::new(new_folder_path);
+    let mut new_path = Path::new(new_folder_path).to_path_buf();
 
-    // Check if the folder exists
+    // Ensure the source folder exists
     if !path.exists() {
         eprintln!("Folder does not exist: {}", folder_path);
         return None;
     }
 
-    // Attempt to move the folder
-    match fs::rename(path, new_path) {
-        Ok(_) => {
-            let new_path_str = new_path.to_string_lossy().into_owned();
-            println!("Folder moved successfully: {}", new_path_str);
-            Some(new_path_str)
-        }
-        Err(e) => {
-            eprintln!("Failed to move folder '{}': {}", folder_path, e);
-            None
-        }
+    // Append the folder name to the new folder path
+    if let Some(folder_name) = path.file_name() {
+        new_path.push(folder_name);
+    } else {
+        eprintln!("Invalid folder name: {}", folder_path);
+        return None;
     }
+
+    // Attempt to move the folder and return result
+    fs::rename(path, &new_path).map_or_else(
+        |e| {
+            eprintln!("Failed to move folder: {}", e);
+            None
+        },
+        |_| {
+            println!("Folder moved to: {}", new_path.display());
+            Some(new_path.to_string_lossy().into_owned())
+        },
+    )
 }
 
 /// Recursively copies a folder and all its contents to a new location.
 /// Returns Some(new_folder_path) if successful, or None on failure.
 pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     let src = Path::new(folder_path);
-    let dst = Path::new(new_folder_path);
+    let mut dst = Path::new(new_folder_path).to_path_buf();
 
+    // Check if the source folder exists and is a directory
     if !src.exists() || !src.is_dir() {
         eprintln!("Source folder does not exist or is not a directory: {}", folder_path);
         return None;
     }
 
+    // Get the name of the folder from folder_path
+    if let Some(folder_name) = src.file_name() {
+        // Append the folder name to the new folder path
+        dst.push(folder_name);
+    } else {
+        eprintln!("Failed to get the folder name from path: {}", folder_path);
+        return None;
+    }
+
+    // Create the destination folder if it does not exist
+    if let Err(e) = fs::create_dir_all(&dst) {
+        eprintln!("Failed to create destination folder '{}': {}", dst.display(), e);
+        return None;
+    }
+
+    // Walk through the source folder and copy its contents
     for entry in WalkDir::new(src) {
         let entry = match entry {
             Ok(e) => e,
@@ -364,8 +388,8 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
         }
     }
 
-    println!("Folder copied successfully to: {}", new_folder_path);
-    Some(new_folder_path.to_string())
+    println!("Folder copied successfully to: {}", dst.display());
+    Some(dst.to_string_lossy().into_owned())
 }
 
 /// move file list to a new location

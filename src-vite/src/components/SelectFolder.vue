@@ -122,7 +122,7 @@ import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
-import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, move_folder, copy_folder, setFolderFavorite } from '@/common/api';
+import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, moveFolder, copyFolder, setFolderFavorite } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -305,6 +305,8 @@ const clickFolder = async (albumId, folder) => {
       folderPath: selectedFolderPath.value,
       componentId: props.componentId
     });
+  } else {
+    toolTipRef.value.showTip(localeMsg.value.msgbox_select_folder_error);
   }
 };
 
@@ -415,18 +417,32 @@ const clickDeleteFolder = async () => {
 // move folder to dest folder
 const clickMoveTo = async () => {
   try {
-    console.log('SelectFolder.vue-clickMoveTo:', config.albumFolderPath, config.destFolderPath);
-    showMoveTo.value = false;
+    console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destFolderPath);
+    const newPath = await moveFolder(selectedFolderPath.value, config.destFolderPath);
+    if (newPath) {
+      showMoveTo.value = false;
+
+      // TODO: update folder after move-to
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.message_move_to_error);
+    }
   } catch (error) {
     console.error('Failed to move folder:', error);
   }
 };
 
 // copy folder to dest folder
-const clickCopyTo = async (value) => {
+const clickCopyTo = async () => {
   try {
-    console.log('SelectFolder.vue-clickCopyTo:', value);
-    showCopyTo.value = false;
+    console.log('SelectFolder.vue-clickCopyTo:', selectedFolderPath.value, config.destFolderPath);
+    const newPath = await copyFolder(selectedFolderPath.value, config.destFolderPath);
+    if (newPath) {
+      showCopyTo.value = false;
+
+      // TODO: update folder after copy-to
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.message_copy_to_error);
+    }
   } catch (error) {
     console.error('Failed to copy folder:', error);
   }

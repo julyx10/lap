@@ -5,69 +5,60 @@
   "calendar": "Calendar",
   "location": "Location",
   "people": "People",
-  "camera": "Camera",
-  "tag": "Tag",
-
+  "camera": "Cameras",
   "settings": "Settings",
-  "settings_general": "General",
-  "settings_general_select_language": "Select language",
-  "settings_general_show_button_text": "Show button text",
-  "settings_general_show_sub_folder": "Show sub-folders in albums",
-  "settings_general_show_status_bar": "Show status bar",
-  "settings_general_dark_mode": "Dark mode",
-  "settings_general_debug_mode": "Debug mode",
-  "settings_thumbnail": "Thumbnail",
-  "settings_thumbnail_size": "Thumbnail size",
-  "settings_thumbnail_scaling": "Thumbnail scaling",
-  "settings_thumbnail_scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
-  "settings_thumbnail_label_primary": "Show primary label",
-  "settings_thumbnail_label_secondary": "Show secondary label",
-  "settings_thumbnail_label_options": ["Empty", "Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
-  "settings_image_viewer": "Image Viewer",
-  "settings_image_viewer_mouse_wheel": "Mouse wheel",
-  "settings_image_viewer_mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
-  "settings_image_viewer_autoplay_interval": "Autoplay interval: {second} second(s)",
-  "settings_about": "About",
-  "settings_about_version": "Version: {version}",
-  "settings_about_author": "Author: {author}",
-  "settings_about_project_page": "Project Page",
-
   "debug": "Debug",
 
   "no_albums": "No albums, click the add button to add an album",
 
-  "add_album_title": "Add album",
-
   "msgbox_ok": "OK",
   "msgbox_cancel": "Cancel",
+
   "msgbox_input_filename_error": "File names cannot contain the following characters: \\ / : * ? \" < > |.",
+
   "msgbox_remove_album_title": "Remove from albums?",
   "msgbox_remove_album_content": "'{album}' will be removed from the albums. This action will not delete the actual files.",
   "msgbox_remove_album_ok": "Remove",
+
   "msgbox_rename_album_title": "Rename album",
   "msgbox_rename_album_content": "Enter the new name for the album:",
   "msgbox_rename_album_ok": "Rename",
+  "msgbox_rename_album_error": "Cannot rename the album.",
+
   "msgbox_rename_folder_title": "Rename folder",
   "msgbox_rename_folder_content": "Enter the new name for the folder:",
   "msgbox_rename_folder_ok": "Rename",
+  "msgbox_rename_folder_error": "Cannot rename the folder.",
+
   "msgbox_new_folder_title": "New folder",
   "msgbox_new_folder_content": "Enter the name for the new folder:",
   "msgbox_new_folder_ok": "Create",
-  "msgbox_new_folder_error": "Cannot create, the folder may already exists.",
+  "msgbox_new_folder_error": "Cannot create new folder.",
+
   "msgbox_delete_folder_title": "Delete folder",
   "msgbox_delete_folder_content": "The folder '{folder}' and all its contents will be deleted.",
   "msgbox_delete_folder_ok": "Delete",
   "msgbox_delete_folder_success": "The folder '{folder}' has been deleted.",
   "msgbox_delete_folder_error": "Cannot delete the folder. The folder may not exist.",
+
   "msgbox_move_to_title": "Move '{source}' to",
   "msgbox_move_to_content": "Select the destination folder:",
   "msgbox_move_to_ok": "Move",
+  "message_move_to_error": "Cannot move the folder.",
+
   "msgbox_copy_to_title": "Copy '{source}' to",
   "msgbox_copy_to_content": "Select the destination folder:",
   "msgbox_copy_to_ok": "Copy",
+  "message_copy_to_error": "Cannot copy the folder.",
+
   "msgbox_delete_file_title": "Delete file",
   "msgbox_delete_file_content": "The file '{file}' will be deleted. This action cannot be undone.",
   "msgbox_delete_file_ok": "Delete",
+  "msgbox_delete_file_success": "The file '{file}' has been deleted.",
+  "msgbox_delete_file_error": "Cannot delete the file. The file may not exist.",
+
+  "msgbox_select_folder_error": "Failed to select folder.",
+  "msgbox_select_file_error": "Failed to select file.",
   
   "search_placeholder": "Search...",
 
@@ -183,5 +174,31 @@
   "image_view_toolbar_save": "Save",
   "image_view_toolbar_delete": "Delete",
   "image_view_toolbar_fullscreen": ["Fullscreen", "Exit Fullscreen"],
-  "image_view_toolbar_pin": ["Pin", "Unpin"]
+  "image_view_toolbar_pin": ["Pin", "Unpin"],
+
+  "settings_general": "General",
+  "settings_general_select_language": "Select language",
+  "settings_general_show_button_text": "Show button text",
+  "settings_general_show_sub_folder": "Show sub-folders in albums",
+  "settings_general_show_status_bar": "Show status bar",
+  "settings_general_dark_mode": "Dark mode",
+  "settings_general_debug_mode": "Debug mode",
+
+  "settings_thumbnail": "Thumbnail",
+  "settings_thumbnail_size": "Thumbnail size",
+  "settings_thumbnail_scaling": "Thumbnail scaling",
+  "settings_thumbnail_scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
+  "settings_thumbnail_label_primary": "Show primary label",
+  "settings_thumbnail_label_secondary": "Show secondary label",
+  "settings_thumbnail_label_options": ["Empty", "Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
+  
+  "settings_image_viewer": "Image Viewer",
+  "settings_image_viewer_mouse_wheel": "Mouse wheel",
+  "settings_image_viewer_mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
+  "settings_image_viewer_autoplay_interval": "Autoplay interval: {second} second(s)",
+  
+  "settings_about": "About",
+  "settings_about_version": "Version: {version}",
+  "settings_about_author": "Author: {author}",
+  "settings_about_project_page": "Project Page"
 } 

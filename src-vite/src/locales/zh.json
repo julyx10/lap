@@ -6,68 +6,59 @@
   "location": "地点",
   "people": "人物",
   "camera": "相机",
-  "tag": "标签",
-
   "settings": "设置",
-  "settings_general": "通用",
-  "settings_general_select_language": "选择语言",
-  "settings_general_show_button_text": "显示按钮文本",
-  "settings_general_show_sub_folder": "在相册中显示子文件夹",
-  "settings_general_show_status_bar": "显示状态栏",
-  "settings_general_dark_mode": "暗黑模式",
-  "settings_general_debug_mode": "调试模式",
-  "settings_thumbnail": "缩略图",
-  "settings_thumbnail_size": "缩略图大小",
-  "settings_thumbnail_scaling": "缩略图缩放",
-  "settings_thumbnail_scaling_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
-  "settings_thumbnail_label_primary": "显示主标签",
-  "settings_thumbnail_label_secondary": "显示次标签",
-  "settings_thumbnail_label_options": ["空", "名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
-  "settings_image_viewer": "图片查看器",
-  "settings_image_viewer_mouse_wheel": "鼠标滚轮",
-  "settings_image_viewer_mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
-  "settings_image_viewer_autoplay_interval": "自动播放间隔: {second}秒",
-  "settings_about": "关于",
-  "settings_about_version": "版本: {version}",
-  "settings_about_author": "作者: {author}",
-  "settings_about_project_page": "项目主页",
-  
   "debug": "调试",
 
   "no_albums": "相册为空，点击添加按钮添加相册",
 
-  "add_album_title": "添加相册",
-
   "msgbox_ok": "确定",
   "msgbox_cancel": "取消",
+
   "msgbox_input_filename_error": "文件名不能包含 \\ / : * ? \" < > | 等字符。",
+
   "msgbox_remove_album_title": "从相册中移除?",
   "msgbox_remove_album_content": "'{album}' 将从相册中移除。此操作不会删除实际文件。",
   "msgbox_remove_album_ok": "移除",
+
   "msgbox_rename_album_title": "重命名相册",
   "msgbox_rename_album_content": "输入相册的新名称:",
   "msgbox_rename_album_ok": "重命名",
+  "msgbox_rename_album_error": "无法重命名相册。",
+
   "msgbox_rename_folder_title": "重命名文件夹",
   "msgbox_rename_folder_content": "输入文件夹的新名称:",
   "msgbox_rename_folder_ok": "重命名",
+  "msgbox_rename_folder_error": "无法重命名文件夹。",
+
   "msgbox_new_folder_title": "新建文件夹",
   "msgbox_new_folder_content": "输入新文件夹的名称:",
   "msgbox_new_folder_ok": "创建",
-  "msgbox_new_folder_error": "无法创建，文件夹可能已存在。",
+  "msgbox_new_folder_error": "无法创建新文件夹。",
+
   "msgbox_delete_folder_title": "删除文件夹",
   "msgbox_delete_folder_content": "文件夹 '{folder}' 及其所有内容将被删除。",
   "msgbox_delete_folder_ok": "删除",
   "msgbox_delete_folder_success": "文件夹 '{folder}' 已被删除。",
-  "msgbox_delete_folder_error" : "无法删除文件夹。文件夹可能不存在。",
+  "msgbox_delete_folder_error": "无法删除文件夹。文件夹可能不存在。",
+
   "msgbox_move_to_title": "移动 '{source}' 到",
   "msgbox_move_to_content": "选择目标文件夹:",
   "msgbox_move_to_ok": "移动",
+  "msgbox_move_to_error": "无法移动文件夹。",
+
   "msgbox_copy_to_title": "复制 '{source}' 到",
   "msgbox_copy_to_content": "选择目标文件夹:",
   "msgbox_copy_to_ok": "复制",
+  "msgbox_copy_to_error": "无法复制文件夹。",
+
   "msgbox_delete_file_title": "删除文件",
   "msgbox_delete_file_content": "文件 '{file}' 将被删除。此操作无法撤销。",
   "msgbox_delete_file_ok": "删除",
+  "msgbox_delete_file_success": "文件 '{file}' 已被删除。",
+  "msgbox_delete_file_error": "无法删除文件。文件可能不存在。",
+
+  "msgbox_select_folder_error": "选择文件夹失败。",
+  "msgbox_select_file_error": "选择文件失败。",
   
   "search_placeholder": "搜索...",
 
@@ -183,5 +174,31 @@
   "image_view_toolbar_save": "保存",
   "image_view_toolbar_delete": "删除",
   "image_view_toolbar_fullscreen": ["全屏", "退出全屏"],
-  "image_view_toolbar_pin": ["固定", "取消固定"]
+  "image_view_toolbar_pin": ["固定", "取消固定"],
+
+  "settings_general": "通用",
+  "settings_general_select_language": "选择语言",
+  "settings_general_show_button_text": "显示按钮文本",
+  "settings_general_show_sub_folder": "在相册中显示子文件夹",
+  "settings_general_show_status_bar": "显示状态栏",
+  "settings_general_dark_mode": "暗黑模式",
+  "settings_general_debug_mode": "调试模式",
+
+  "settings_thumbnail": "缩略图",
+  "settings_thumbnail_size": "缩略图大小",
+  "settings_thumbnail_scaling": "缩略图缩放",
+  "settings_thumbnail_scaling_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
+  "settings_thumbnail_label_primary": "显示主标签",
+  "settings_thumbnail_label_secondary": "显示次标签",
+  "settings_thumbnail_label_options": ["空", "名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
+
+  "settings_image_viewer": "图片查看器",
+  "settings_image_viewer_mouse_wheel": "鼠标滚轮",
+  "settings_image_viewer_mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
+  "settings_image_viewer_autoplay_interval": "自动播放间隔: {second}秒",
+  
+  "settings_about": "关于",
+  "settings_about_version": "版本: {version}",
+  "settings_about_author": "作者: {author}",
+  "settings_about_project_page": "项目主页"
 }

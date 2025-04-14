@@ -68,6 +68,8 @@
   "msgbox_delete_file_title": "ファイルを削除",
   "msgbox_delete_file_content": "ファイル '{file}' が削除されます。この操作は元に戻すことができません。",
   "msgbox_delete_file_ok": "削除",
+  "msgbox_select_folder_error": "フォルダの選択に失敗しました。",
+  "msgbox_select_file_error": "ファイルの選択に失敗しました。",
 
   "search_placeholder": "検索...",
 

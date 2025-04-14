@@ -109,7 +109,7 @@ import {
 } from '@/common/icons';
 
 const props = defineProps({
-  modelValue: {     // selecte item index(v-model value) 
+  selectItemIndex: {     // v-model value
     type: Number,
     required: true,
   },
@@ -130,8 +130,8 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // when the grid view is focused, the keydown event is listened
 const isFocus = ref(false);
 
-const selectedIndex = ref(props.modelValue);
-const emitUpdate = defineEmits(['update:modelValue']);
+const selectedIndex = ref(props.selectItemIndex);
+const emitUpdate = defineEmits(['update:selectItemIndex']);
 
 const scrollable = ref(null); // Ref for the scrollable element
 
@@ -170,12 +170,14 @@ watch(() => isFocus.value, (newValue) => {
 // watch for changes in the fileList
 watch(() => props.fileList, () => {
   selectedIndex.value = props.fileList.length > 0 ? 0 : -1;
-  console.log('GridView.vue: fileList changed:', props.fileList.length, selectedIndex.value);
-  const element = scrollable.value; // Get the scrollable element
+  openItem(false);
+
+  // reset scroll position
+  const element = scrollable.value; 
   element.scrollTop = 0;
 });
 
-watch(() => props.modelValue, (newValue) => { 
+watch(() => props.selectItemIndex, (newValue) => { 
   selectedIndex.value = newValue; 
 });
 
@@ -183,7 +185,7 @@ watch(() => selectedIndex.value, (newValue) => {
   openItem(false);
   scrollToItem(newValue);
 
-  emitUpdate('update:modelValue', newValue);
+  emitUpdate('update:selectItemIndex', newValue);
 });
 
 // Define menu items with labels and actions
@@ -381,11 +383,7 @@ function openItem(openNewViewer = false) {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
     return;
   }
-  if (openNewViewer) {
-    emit('message-from-grid-view', { message: 'open-image-viewer' });
-  } else {
-    emit('message-from-grid-view', { message: 'update-image-viewer' });
-  }
+  emit('message-from-grid-view', { message: openNewViewer ? 'open-image-viewer' : 'update-image-viewer' });
 };
 
 // delete the selected item

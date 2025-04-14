@@ -133,7 +133,6 @@ const toolbars = computed(() =>  [
   { icon: IconLocation, text: localeMsg.value.location },
   { icon: IconPeople,   text: localeMsg.value.people }, 
   { icon: IconCamera,   text: localeMsg.value.camera },
-  // { icon: IconTag,      text: localeMsg.value.tag },
 ]);
 
 const showLeftPane = ref(true);
