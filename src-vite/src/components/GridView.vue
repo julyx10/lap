@@ -87,8 +87,7 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
-import { isMac, shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
+import { config, isMac, shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
 import { printImage, setFileFavorite } from '@/common/api';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
@@ -127,9 +126,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 // when the grid view is focused, the keydown event is listened
 const isFocus = ref(false);

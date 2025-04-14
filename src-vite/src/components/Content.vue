@@ -149,7 +149,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles } from '@/common/api';
-import { isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp } from '@/common/utils';
+import { config, isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -184,9 +184,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 // title of the content 
 const contentTitle = ref("");   
@@ -579,13 +576,18 @@ function getSelectOptions(options) {
 }
 
 function refreshFileList() {
-  selectedItemIndex.value = -1;
   selectMode.value = false;   // exit multi-select mode
 
-  // filterFileList(originalFileList.value, searchText.value);
-  sortFileList(fileList.value, config.sortingType, config.sortingDirection);
-  getFileThumb(fileList.value); 
-  console.log('fileList:', fileList.value);
+  if(fileList.value.length > 0) {
+    selectedItemIndex.value = 0;
+
+    // filterFileList(originalFileList.value, searchText.value);
+    sortFileList(fileList.value, config.sortingType, config.sortingDirection);
+    getFileThumb(fileList.value); 
+  } else {
+    selectedItemIndex.value = -1;
+  }
+  console.log('refreshFileList:', fileList.value);
 }
 
 // Filter the file list based on the search text

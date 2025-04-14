@@ -27,7 +27,7 @@
       </div>
 
       <!-- favorite folders -->
-      <div class="px-2 pt-4 pb-2 text-sm text-gray-500 cursor-default">
+      <div class="p-2 text-sm text-gray-500 cursor-default">
         {{ $t('favorite_folders') }}
       </div>
       <div v-if="favorite_folders.length > 0" class="overflow-x-hidden overflow-y-auto t-scrollbar-dark">
@@ -35,7 +35,7 @@
           <li v-for="folder in favorite_folders" :key="folder.id">
             <div 
               :class="[ 
-                'my-1 mr-1 h-6 rounded border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer group', 
+                'my-1 mr-1 h-8 rounded border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer group', 
                 { 
                   't-color-text-selected t-color-bg-selected t-color-border-selected transition-colors duration-300': config.favoriteFolderId === folder.id, 
                 }
@@ -72,7 +72,7 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/utils';
 import { getFavoriteFolders, setFolderFavorite } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -96,9 +96,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 // favorite folders
 const favorite_folders = ref([]);

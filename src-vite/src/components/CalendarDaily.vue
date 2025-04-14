@@ -38,8 +38,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
-import { useConfigStore } from '@/stores/configStore';
-import { formatDate } from '@/common/utils';
+import { config, formatDate } from '@/common/utils';
 
 const props = defineProps({
   year: {
@@ -59,9 +58,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 // Title of the month
 const monthTitle = computed(() => formatDate(props.year, props.month, 1, localeMsg.value.month_format));

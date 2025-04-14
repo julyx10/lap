@@ -40,12 +40,12 @@
 
 <script setup lang="ts">
 
-import { ref, inject, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { formatTimestamp, formatFileSize, shortenFilename } from '@/common/utils';
 
 /// i18n
-import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
 const msg = computed(() => messages.value[locale.value]);
 
@@ -64,7 +64,6 @@ const selectedFileIndex = ref(null);
 const fileListLength = computed(() => props.fileList.length);
 const scrollableDiv = ref(null);
 
-
 onMounted(() => {
   // Add global keydown listener
   window.addEventListener('keydown', handleKeyDown);
@@ -75,7 +74,6 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
-
 /// Watch for changes in filePath
 watch(() => props.filePath, (new_path) => {
   console.log('watch filePath:', new_path);
@@ -85,14 +83,12 @@ watch(() => props.filePath, (new_path) => {
   }
 }, { deep: true });
 
-
 /// Watch for changes in selectedFileIndex
 watch (selectedFileIndex, (new_index) => {
   if (new_index !== null) {
     console.log('selectedFileIndex...', props.fileList[new_index]);
   }
 });
-
 
 // Function to handle keydown event and change the index
 function handleKeyDown(event) {
@@ -108,12 +104,10 @@ function handleKeyDown(event) {
   }
 }
 
-
 /// Click a file to select it
 function clickFile(index: number) {
   selectedFileIndex.value = index;
 }
-
 
 /// Double-click a file to open it
 function dlbClickFile(index: number) {
@@ -152,8 +146,6 @@ function dlbClickFile(index: number) {
     });
   }
 };
-
-
 </script>
 
 <style scoped>

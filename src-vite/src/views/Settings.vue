@@ -219,7 +219,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/utils';
 import { NConfigProvider, NSwitch, NSelect } from 'naive-ui';
 
 import TitleBar from '@/components/TitleBar.vue';
@@ -228,9 +228,6 @@ import SliderInput from '@/components/SliderInput.vue';
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.language]);
-
-// config store
-const config = useConfigStore();
 
 // custom naive ui theme
 const themeOverrides = {

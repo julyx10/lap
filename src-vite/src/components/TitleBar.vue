@@ -110,9 +110,7 @@ const closeWindow = () => {
 
 </script>
 
-
 <style>
-
 @media (max-width: 400px) {
   #responsiveDiv {
     visibility: hidden;
@@ -123,5 +121,4 @@ const closeWindow = () => {
     visibility: visible;
   }
 }
-
 </style>

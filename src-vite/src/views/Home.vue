@@ -10,7 +10,11 @@
       <!-- left toolbar -->
       <div tabindex="-1"
         ref="divToolbar" 
-        class="pt-10 pb-4 z-10 flex flex-col justify-between t-color-bg" style="user-select: none; min-width: 68px;"
+        :class="[
+          'pt-10 pb-4 z-10 flex flex-col justify-between t-color-bg',
+          isWin ? 'pt-4' : 'pt-10'
+        ]" 
+        style="user-select: none; min-width: 68px;"
         @contextmenu.prevent
         data-tauri-drag-region
       >
@@ -88,10 +92,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { useConfigStore } from '@/stores/configStore';
-import { isWin, isMac } from '@/common/utils';
+import { config, isWin, isMac } from '@/common/utils';
 
 // vue components
 import TitleBar from '@/components/TitleBar.vue';
@@ -115,12 +119,8 @@ import {
 } from '@/common/icons';
 
 /// i18n
-import { useI18n } from 'vue-i18n';
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 // const appWindow = getCurrentWebviewWindow()
 

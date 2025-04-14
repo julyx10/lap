@@ -84,9 +84,8 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/utils';
 import { getTakenDates } from '@/common/api';
-
 import { IconSortingAsc, IconSortingDesc } from '@/common/icons';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
@@ -99,9 +98,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 const scrollable = ref(null); // Ref for the scrollable element
 const calendar_dates = ref([]);

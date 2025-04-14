@@ -196,7 +196,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useConfigStore } from '@/stores/configStore';
-import { isWin, isMac } from '@/common/utils';
+import { config, isWin, isMac } from '@/common/utils';
 import { setFileFavorite } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
@@ -237,9 +237,6 @@ import {
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 const appWindow = getCurrentWebviewWindow()
 
@@ -338,7 +335,6 @@ const moreMenuItems = computed(() => {
     }
   ];
 });
-
 
 let unlistenResize: () => void;
 let unlistenImg: () => void;

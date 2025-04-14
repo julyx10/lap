@@ -33,8 +33,7 @@
 
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
-import { formatDate } from '@/common/utils';
+import { config, formatDate } from '@/common/utils';
 
 const props = defineProps({
   year: {
@@ -50,9 +49,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 // Title for the year
 const yearTitle = computed(() => formatDate(props.year, 1, 1, localeMsg.value.year_format));

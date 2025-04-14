@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/utils';
 
 import { IconMore, IconAdd, IconLink, IconRefresh } from '@/common/icons';
 import SelectAlbum from '@/components/SelectAlbum.vue';
@@ -38,9 +38,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// config store
-const config = useConfigStore();
 
 const selectAlbumRef = ref<SelectAlbum | null>(null);
 

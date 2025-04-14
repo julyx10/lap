@@ -28,7 +28,7 @@
 <script setup>
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { emit } from '@tauri-apps/api/event';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/utils';
 
 // Props
 const props = defineProps({
@@ -45,9 +45,6 @@ const props = defineProps({
     default: false,
   },
 });
-
-// config store
-const config = useConfigStore();
 
 // container
 const container = ref(null);

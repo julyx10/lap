@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/utils';
 
 import { IconClose } from '@/common/icons';
 import SelectAlbum from '@/components/SelectAlbum.vue';
@@ -79,9 +79,6 @@ const props = defineProps({
     default: 'Cancel' 
   },  
 });
-
-// config store
-const config = useConfigStore();
 
 const emit = defineEmits(['ok', 'cancel']);
 

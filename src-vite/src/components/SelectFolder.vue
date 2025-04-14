@@ -121,7 +121,7 @@
 import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
+import { config, isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
 import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, move_folder, copy_folder, setFolderFavorite } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
@@ -415,7 +415,7 @@ const clickDeleteFolder = async () => {
 // move folder to dest folder
 const clickMoveTo = async () => {
   try {
-    // console.log('SelectFolder.vue-clickMoveTo:');
+    console.log('SelectFolder.vue-clickMoveTo:', config.albumFolderPath, config.destFolderPath);
     showMoveTo.value = false;
   } catch (error) {
     console.error('Failed to move folder:', error);

@@ -67,7 +67,7 @@
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/utils';
 import { getCameraInfo } from '@/common/api';
 
 import { IconRefresh, IconRight } from '@/common/icons';
@@ -78,9 +78,6 @@ const props = defineProps({
     required: true
   }
 });
-
-// config store
-const config = useConfigStore();
 
 const cameras = ref([]);
 

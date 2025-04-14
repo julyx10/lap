@@ -1,13 +1,11 @@
 import { format } from 'date-fns';
-// import { platform } from '@tauri-apps/plugin-os';
-// import { mkdir } from '@tauri-apps/plugin-fs';
+
 import { open } from '@tauri-apps/plugin-shell';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { useConfigStore } from '@/stores/configStore';
 
-// export const THUMBNAIL_SIZE = 320;    // thumbnail size
-// export const FILES_PAGE_SIZE = 1000;  // number of files per page
-
-// export const separator = platform() === 'windows' ? '\\' : '/';
+/// config store
+export const config = useConfigStore();
 
 /// get the current operating system (mac, win, or '')
 export function getOS() {
