@@ -147,7 +147,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles } from '@/common/api';
 import { config, isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp } from '@/common/utils';
 
@@ -399,10 +398,10 @@ watch(() => config.toolbarIndex, async(newIndex) => {
 watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath], 
             async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 1) {
-    if(newFolderId === 0) { // 0 means favorite files
+    if(newFolderId === 0) { // 0: favorite files
       contentTitle.value = localeMsg.value.favorite_files;
       fileList.value = await getAllFiles(true); // true: only get favorite files
-    } else {
+    } else {                // else: favorite folders
       const album = await getAlbum(newAlbumId);
       if(album) {
         contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);

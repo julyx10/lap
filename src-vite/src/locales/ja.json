@@ -6,68 +6,57 @@
   "location": "位置情報",
   "people": "人物",
   "camera": "カメラ",
-  "tag": "タグ",
-
   "settings": "設定",
-  "settings_general": "一般",
-  "settings_general_select_language": "言語を選択",
-  "settings_general_show_button_text": "ボタンテキストを表示",
-  "settings_general_show_sub_folder": "アルバム内のサブフォルダを表示",
-  "settings_general_show_status_bar": "ステータスバーを表示",
-  "settings_general_dark_mode": "ダークモード",
-  "settings_general_debug_mode": "デバッグモード",
-  "settings_thumbnail": "サムネイル",
-  "settings_thumbnail_size": "サムネイルのサイズ",
-  "settings_thumbnail_scaling": "サムネイルのスケーリング",
-  "settings_thumbnail_scaling_options": ["画像全体に合わせる", "切り取って", "伸ばして"],
-  "settings_thumbnail_label_primary": "主要ラベルを表示",
-  "settings_thumbnail_label_secondary": "サブラベルを表示",
-  "settings_thumbnail_label_options": ["空", "名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
-  "settings_image_viewer": "画像ビューア",
-  "settings_image_viewer_mouse_wheel": "マウスホイール",
-  "settings_image_viewer_mouse_wheel_options": ["前の画像 / 次の画像 (Ctrlでズーム)", "ズームイン / アウト"],
-  "settings_image_viewer_autoplay_interval": "自動再生間隔: {second}秒",
-  "settings_about": "情報",
-  "settings_about_version": "バージョン: {version}",
-  "settings_about_author": "作者: {author}",
-  "settings_about_project_page": "プロジェクトページ",
-  
   "debug": "デバッグ",
 
   "no_albums": "アルバムが空です。追加ボタンを押してアルバムを追加してください。",
 
-  "add_album_title": "アルバムを追加",
-
   "msgbox_ok": "OK",
   "msgbox_cancel": "キャンセル",
+
   "msgbox_input_filename_error": "ファイル名には、次の文字を含めることはできません: \\ / : * ? \" < > |。",
+
   "msgbox_remove_album_title": "アルバムから削除しますか?",
   "msgbox_remove_album_content": "'{album}' はアルバムから削除されます。この操作は実際のファイルを削除しません。",
   "msgbox_remove_album_ok": "削除",
+
   "msgbox_rename_album_title": "アルバムの名前を変更",
   "msgbox_rename_album_content": "アルバムの新しい名前を入力してください:",
   "msgbox_rename_album_ok": "変更",
+  "msgbox_rename_album_error": "アルバムの名前を変更できません。",
+
   "msgbox_rename_folder_title": "フォルダの名前を変更",
   "msgbox_rename_folder_content": "フォルダの新しい名前を入力してください:",
   "msgbox_rename_folder_ok": "変更",
+  "msgbox_rename_folder_error": "フォルダの名前を変更できません。",
+
   "msgbox_new_folder_title": "新しいフォルダ",
   "msgbox_new_folder_content": "新しいフォルダの名前を入力してください:",
   "msgbox_new_folder_ok": "作成",
   "msgbox_new_folder_error": "作成できません。フォルダはすでに存在している可能性があります。",
+
   "msgbox_delete_folder_title": "フォルダを削除",
   "msgbox_delete_folder_content": "フォルダ '{folder}' とそのすべての内容が削除されます。",
   "msgbox_delete_folder_ok": "削除",
   "msgbox_delete_folder_success": "フォルダ '{folder}' が削除されました。",
   "msgbox_delete_folder_error": "削除できません。フォルダはすでに存在している可能性があります。",
+
   "msgbox_move_to_title": "'{source}' を移動",
   "msgbox_move_to_content": "移動先のフォルダを選択してください:",
   "msgbox_move_to_ok": "移動",
+  "msgbox_move_to_error": "フォルダを移動できません。",
+
   "msgbox_copy_to_title": "'{source}' をコピー",
   "msgbox_copy_to_content": "コピー先のフォルダを選択してください:",
   "msgbox_copy_to_ok": "コピー",
+  "msgbox_copy_to_error": "フォルダをコピーできません。",
+
   "msgbox_delete_file_title": "ファイルを削除",
   "msgbox_delete_file_content": "ファイル '{file}' が削除されます。この操作は元に戻すことができません。",
   "msgbox_delete_file_ok": "削除",
+  "msgbox_delete_file_success": "ファイル '{file}' が削除されました。",
+  "msgbox_delete_file_error": "削除できません。ファイルはすでに存在している可能性があります。",
+
   "msgbox_select_folder_error": "フォルダの選択に失敗しました。",
   "msgbox_select_file_error": "ファイルの選択に失敗しました。",
 
@@ -185,6 +174,32 @@
   "image_view_toolbar_save": "保存",
   "image_view_toolbar_delete": "削除",
   "image_view_toolbar_fullscreen": ["フルスクリーン", "フルスクリーンを終了"],
-  "image_view_toolbar_pin": ["ピン留め", "ピン留め解除"]
+  "image_view_toolbar_pin": ["ピン留め", "ピン留め解除"],
+
+  "settings_general": "一般",
+  "settings_general_select_language": "言語を選択",
+  "settings_general_show_button_text": "ボタンテキストを表示",
+  "settings_general_show_sub_folder": "アルバム内のサブフォルダを表示",
+  "settings_general_show_status_bar": "ステータスバーを表示",
+  "settings_general_dark_mode": "ダークモード",
+  "settings_general_debug_mode": "デバッグモード",
+
+  "settings_thumbnail": "サムネイル",
+  "settings_thumbnail_size": "サムネイルのサイズ",
+  "settings_thumbnail_scaling": "サムネイルのスケーリング",
+  "settings_thumbnail_scaling_options": ["画像全体に合わせる", "切り取って", "伸ばして"],
+  "settings_thumbnail_label_primary": "主要ラベルを表示",
+  "settings_thumbnail_label_secondary": "サブラベルを表示",
+  "settings_thumbnail_label_options": ["空", "名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
+
+  "settings_image_viewer": "画像ビューア",
+  "settings_image_viewer_mouse_wheel": "マウスホイール",
+  "settings_image_viewer_mouse_wheel_options": ["前の画像 / 次の画像 (Ctrlでズーム)", "ズームイン / アウト"],
+  "settings_image_viewer_autoplay_interval": "自動再生間隔: {second}秒",
+
+  "settings_about": "情報",
+  "settings_about_version": "バージョン: {version}",
+  "settings_about_author": "作者: {author}",
+  "settings_about_project_page": "プロジェクトページ"
 }
   

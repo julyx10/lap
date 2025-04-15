@@ -424,7 +424,7 @@ const clickMoveTo = async () => {
 
       // TODO: update folder after move-to
     } else {
-      toolTipRef.value.showTip(localeMsg.value.message_move_to_error);
+      toolTipRef.value.showTip(localeMsg.value.msgbox_move_to_error);
     }
   } catch (error) {
     console.error('Failed to move folder:', error);
@@ -441,7 +441,7 @@ const clickCopyTo = async () => {
 
       // TODO: update folder after copy-to
     } else {
-      toolTipRef.value.showTip(localeMsg.value.message_copy_to_error);
+      toolTipRef.value.showTip(localeMsg.value.msgbox_copy_to_error);
     }
   } catch (error) {
     console.error('Failed to copy folder:', error);

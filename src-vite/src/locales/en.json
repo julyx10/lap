@@ -44,12 +44,12 @@
   "msgbox_move_to_title": "Move '{source}' to",
   "msgbox_move_to_content": "Select the destination folder:",
   "msgbox_move_to_ok": "Move",
-  "message_move_to_error": "Cannot move the folder.",
+  "msgbox_move_to_error": "Cannot move the folder.",
 
   "msgbox_copy_to_title": "Copy '{source}' to",
   "msgbox_copy_to_content": "Select the destination folder:",
   "msgbox_copy_to_ok": "Copy",
-  "message_copy_to_error": "Cannot copy the folder.",
+  "msgbox_copy_to_error": "Cannot copy the folder.",
 
   "msgbox_delete_file_title": "Delete file",
   "msgbox_delete_file_content": "The file '{file}' will be deleted. This action cannot be undone.",
