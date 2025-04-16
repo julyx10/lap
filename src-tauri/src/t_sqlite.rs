@@ -214,15 +214,15 @@ impl AFolder {
         })
     }
     
-    /// fetch a folder row from db
-    fn fetch(album_id: i64, folder_path: &str) -> Result<Option<Self>, String> {
+    /// fetch a folder row from db (by path)
+    fn fetch(folder_path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn();
         let result = conn
             .query_row(
                 "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at
                 FROM afolders a
-                WHERE a.album_id = ?1 AND a.path = ?2",
-                params![album_id, folder_path],
+                WHERE a.path = ?1",
+                params![folder_path],
                 |row| Self::from_row(row)
             ).optional()
             .map_err(|e| e.to_string())?;
@@ -253,16 +253,17 @@ impl AFolder {
     /// insert the folder to db if not exists
     pub fn add_to_db(album_id: i64, parent_id: i64, folder_path: &str) -> Result<Self, String> {
         // Check if the path already exists
-        let existing_folder = Self::fetch(album_id, folder_path);
+        let existing_folder = Self::fetch(folder_path);
         if let Ok(Some(folder)) = existing_folder {
             return Ok(folder);
         }
 
         // insert the new folder into the database
+        // when insert a new folder, save album_id value
         Self::new(album_id, parent_id, folder_path)?.insert()?;
 
         // return the newly inserted folder
-        let new_folder = Self::fetch(album_id, folder_path)?;
+        let new_folder = Self::fetch(folder_path)?;
         Ok(new_folder.unwrap())
     }
 
@@ -1009,6 +1010,7 @@ pub fn create_db() -> Result<String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_album_id ON afolders(album_id)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_name ON afolders(name)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_path ON afolders(path)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_is_favorite ON afolders(is_favorite)", [])?;
 
     // album files table
     conn.execute(

@@ -30,7 +30,7 @@
           class="px-1 w-full border t-color-border-selected t-input-color-bg t-input-focus rounded"
           v-model="child.name"
           @keydown.enter = "clickRenameFolder(child.name)"
-          @keydown.esc = "handleEscKey($event, child.id)"   
+          @keydown.esc = "handleEscKey($event, child.id)"
           @blur = "clickRenameFolder(child.name)"
         > 
         <div v-else class="overflow-hidden whitespace-pre text-ellipsis">
@@ -422,7 +422,9 @@ const clickMoveTo = async () => {
     if (newPath) {
       showMoveTo.value = false;
 
-      // TODO: update folder after move-to
+      // remove the folder from the current folder
+      let folder = getFolderById(selectedFolderId.value);
+      folder.is_deleted = true;
     } else {
       toolTipRef.value.showTip(localeMsg.value.msgbox_move_to_error);
     }

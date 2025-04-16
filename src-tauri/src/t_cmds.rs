@@ -142,7 +142,18 @@ pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, S
 /// move a folder
 #[tauri::command]
 pub fn move_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
-    t_utils::move_folder(folder_path, new_folder_path)
+    // Move the folder in the file system
+    let result = t_utils::move_folder(folder_path, new_folder_path);
+
+    match result {
+        Some(new_path) => {
+            // Update the folder path in the database
+            let _ = AFolder::rename_folder(folder_path, &new_path)
+                .map_err(|e| format!("Error while renaming folder in DB: {}", e));
+            Some(new_path)
+        }
+        None => None
+    } 
 }
 
 /// copy a folder
