@@ -113,6 +113,7 @@ import {
   IconFolderExpanded,
   IconNewFolder,
   IconMore,
+  IconRefresh,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -192,6 +193,14 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
+      label: localeMsg.value.menu_item_refresh,
+      icon: IconRefresh,
+      action: async() => {
+        const album = getAlbumById(selectedAlbumId.value);
+        await refreshAlbum(album);
+      }
+    },
+    {
       label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
@@ -211,8 +220,10 @@ onMounted( async () => {
       if (album.path === props.folderPath) {  // album is selected
         clickAlbum(album);
       } else {    // album's sub-folder is selected
+        // expand the album's folder
         clickExpandAlbum(album);
 
+        // recursively expand the folder path
         let relative_folder_path = props.folderPath.replace(album.path, '');
         expandFolderPath(props.albumId, album, relative_folder_path);
       }
@@ -220,13 +231,29 @@ onMounted( async () => {
   }
 
   // listen for messages from SelectFolder component
-  unlisten = await listen('message-from-select-folder', (event) => {
+  unlisten = await listen('message-from-select-folder', async(event) => {
     console.log('listen - message-from-select-folder:', event);
-    if(event.payload.componentId === props.componentId) {
-      selectedAlbumId.value = event.payload.albumId;
-      selectedFolderId.value = event.payload.folderId;
-      selectedFolderPath.value = event.payload.folderPath;
-    };
+    const { message } = event.payload;
+    switch (message) {
+      case 'click-folder':
+      case 'rename-folder':
+      case 'delete-folder':
+        if(event.payload.componentId === props.componentId) {
+          selectedAlbumId.value = event.payload.albumId;
+          selectedFolderId.value = event.payload.folderId;
+          selectedFolderPath.value = event.payload.folderPath;
+        };
+        break;
+      case 'refresh-folder':
+        for (let album of albums.value) {
+          if(album.path === event.payload.refresh_folder) {
+            await refreshAlbum(album);
+          }
+        }
+        break;
+      default:
+        break;
+    }
   });
 });
 
@@ -299,16 +326,24 @@ const clickAlbum = async (album) => {
   }
 };
 
-const dlbClickAlbum = async (album, alwaysExpand = false) => {
+/// dlb click album to select it and expand/collapse its folders
+const dlbClickAlbum = async (album) => {
   clickAlbum(album);
-  clickExpandAlbum(album, alwaysExpand);
+  clickExpandAlbum(album);
 };
 
 /// click album icon to expand or collapse next level folders
-const clickExpandAlbum = async (album, alwaysExpand = false) => {
-  album.is_expanded = alwaysExpand ? alwaysExpand : !album.is_expanded; 
+const clickExpandAlbum = async (album) => {
+  album.is_expanded = !album.is_expanded; 
   
   if (album.is_expanded && !album.children) {
+    await refreshAlbum(album);
+  }
+};
+
+// refresh album to retrieve its sub-folders
+const refreshAlbum = async (album) => {
+  if(album) {
     const subFolders = await expandFolder(album.path, false);
     if(subFolders) {
       album.children = subFolders.children;
@@ -361,13 +396,6 @@ const clickFolder = async (albumId, folder) => {
   }
 };
 
-// function scrollToItem(id) {
-//   const item = document.getElementById(`folder-${id}`);
-//   if (item) {
-//     item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-//   }
-// };
-
 /// expand folders along a given path
 const expandFolderPath = async (albumId, folder, path) => {
   const pathArray = path.split(separator).filter(Boolean); // Split and remove empty strings
@@ -388,8 +416,8 @@ const expandFolderPath = async (albumId, folder, path) => {
                 currentFolder = child;
                 break;
               } else {  // last folder
-                clickFolder(albumId, child);
-                // scrollToItem(child.id);
+                await clickFolder(albumId, child);
+                scrollToItem(child.id);
               }
             }
           }
@@ -399,10 +427,18 @@ const expandFolderPath = async (albumId, folder, path) => {
   }
 };
 
+// scroll to the selected folder
+function scrollToItem(id) {
+  console.log('scrollToItem:', id);
+  const item = document.getElementById(`folder-${id}`);
+  if (item) {
+    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+};
+
 // Expose methods
 defineExpose({ 
   clickNewAlbum,
-  clickNewFolder
 });
 
 </script>

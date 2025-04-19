@@ -2,8 +2,8 @@
   
   <ul v-if="children && children.length > 0">
     <li v-for="(child, index) in children"
-      :key="index" 
-      :id="'folder-' + index" 
+      :key="child.id" 
+      :id="'folder-' + child.id" 
       class="pl-4"
     >
       <div v-if="!child.is_deleted" 
@@ -11,7 +11,6 @@
           'my-1 mr-1 rounded border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
           rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
         ]" 
-        @update="scrollToItem(index)"
         @click="clickFolder(rootAlbumId, child)"
         @dblclick="clickExpandFolder($event, child)"
       >
@@ -118,7 +117,8 @@
 
 <script setup lang="ts">
 
-import { ref, watch, nextTick, computed, onMounted } from 'vue';
+import { ref, watch, nextTick, computed, onMounted, onBeforeUnmount } from 'vue';
+import { listen } from '@tauri-apps/api/event';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
@@ -139,6 +139,7 @@ import {
   IconDelete,
   IconFavorite,
   IconUnFavorite,
+  IconRefresh,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -171,6 +172,8 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+
+let unlisten: () => void;
 
 // current selected folder
 const selectedAlbumId = ref(0);
@@ -254,6 +257,14 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
+      label: localeMsg.value.menu_item_refresh,
+      icon: IconRefresh,
+      action: async() => {
+        const folder = getFolderById(selectedFolderId.value);
+        await refreshFolder(folder);
+      }
+    },
+    {
       label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
@@ -263,8 +274,25 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-onMounted(() => {
-  scrollToItem(selectedFolderId.value);
+onMounted( async() => {
+  // listen for messages from SelectFolder component
+  unlisten = await listen('message-from-select-folder', async(event) => {
+    const { message } = event.payload;
+    switch (message) {
+      case 'refresh-folder':
+        const folder = getFolderById(selectedFolderId.value);
+        if(folder && folder.id === event.payload.folder_id) {
+          await refreshFolder(folder);
+        }
+        break;
+      default:
+        break;
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  unlisten(); // Removes the listener
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
@@ -279,14 +307,6 @@ watch(() => selectedFolderId.value, (newFolderId, oldFolderId) => {
   }
 });
 
-// make the selected item always visible in a scrollable container
-function scrollToItem(index) {
-  const item = document.getElementById(`folder-${index}`);
-  if (item) {
-    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-};
-
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
   console.log('SelectFolder.vue-clickFolder:', albumId, folder);
@@ -300,6 +320,7 @@ const clickFolder = async (albumId, folder) => {
     folder.id = selectedFolder.id;
     
     emit('message-from-select-folder', { 
+      message: 'click-folder',
       albumId: selectedAlbumId.value, 
       folderId: selectedFolderId.value, 
       folderPath: selectedFolderPath.value,
@@ -317,10 +338,7 @@ const clickExpandFolder = async (event: Event, folder, alwaysExpand = false) => 
   folder.is_expanded = alwaysExpand ? alwaysExpand : !folder.is_expanded;
 
   if (folder.is_expanded && !folder.children) {
-    const subFolders = await expandFolder(folder.path, false);
-    if(subFolders) {
-      folder.children = subFolders.children;
-    }
+    await refreshFolder(folder);
   }
   console.log('SelectFolder.vue-clickExpandFolder:', folder);
 };
@@ -361,6 +379,7 @@ const clickRenameFolder = async (newFolderName) => {
       // update selected folder path
       selectedFolderPath.value = newFolderPath;
       emit('message-from-select-folder', { 
+        message: 'rename-folder', 
         albumId: selectedAlbumId.value, 
         folderId: selectedFolderId.value, 
         folderPath: selectedFolderPath.value,
@@ -401,7 +420,8 @@ const clickDeleteFolder = async () => {
     let folder = getFolderById(selectedFolderId.value);
     folder.is_deleted = true;
 
-    emit('message-from-select-folder', { 
+    emit('message-from-select-folder', {
+      message: 'delete-folder',
       albumId: selectedAlbumId.value, 
       folderId: 0, 
       folderPath: "",
@@ -420,11 +440,19 @@ const clickMoveTo = async () => {
     console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destFolderPath);
     const newPath = await moveFolder(selectedFolderPath.value, config.destFolderPath);
     if (newPath) {
-      showMoveTo.value = false;
-
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
       folder.is_deleted = true;
+      
+      // refresh the dest folder
+      emit('message-from-select-folder', { 
+        message: 'refresh-folder',
+        refresh_folder: config.destFolderPath,  // refresh dest folder
+        folder_id: folder.id,            // select new folder
+        folder: newPath,                 // select new folder
+      });
+
+      showMoveTo.value = false;
     } else {
       toolTipRef.value.showTip(localeMsg.value.msgbox_move_to_error);
     }
@@ -450,6 +478,17 @@ const clickCopyTo = async () => {
   }
 };
 
+// refresh folder
+const refreshFolder = async (folder) => {
+  console.log('SelectFolder.vue-refreshFolder:', folder);
+  if (folder) {
+    const subFolders = await expandFolder(folder.path, false);
+    if (subFolders) {
+      folder.children = subFolders.children;
+    }
+  }
+};
+
 // toggle favorite folder
 const toggleFavorite = async () => {
   const folder = getFolderById(selectedFolderId.value);
@@ -459,8 +498,8 @@ const toggleFavorite = async () => {
 };
 
 defineExpose({ 
-  clickNewFolder,
-  clickRenameFolder
+  // clickNewFolder,
+  // clickRenameFolder
 });
 
 </script>
