@@ -240,26 +240,33 @@ const moreMenuItems = computed(() => {
     //     console.log('Print:', file.file_path, result);
     //   }
     // },
-    {
-      label: localeMsg.value.menu_item_move_to,
-      icon: IconMoveTo,
-      action: () => {
-        console.log('Move to:', selectedIndex.value);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_copy_to,
-      // icon: IconCopyTo,
-      action: () => {
-        console.log('Copy to:', selectedIndex.value);
-      }
-    },
+    // {
+    //   label: localeMsg.value.menu_item_move_to,
+    //   icon: IconMoveTo,
+    //   action: () => {
+    //     console.log('Move to:', selectedIndex.value);
+    //   }
+    // },
+    // {
+    //   label: localeMsg.value.menu_item_copy_to,
+    //   // icon: IconCopyTo,
+    //   action: () => {
+    //     console.log('Copy to:', selectedIndex.value);
+    //   }
+    // },
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
       shortcut: isMac ? '⌫' : 'Del',
       action: () => {
         deleteItem(selectedIndex.value);
+      }
+    },
+    {
+      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
+      // icon: IconOpenFolder,
+      action: () => {
+        openShellFolder(getFolderPath(file.file_path));
       }
     },
     {
@@ -281,18 +288,7 @@ const moreMenuItems = computed(() => {
       action: () => {
         rotateImage();
       }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    {
-      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
-      // icon: IconOpenFolder,
-      action: () => {
-        openShellFolder(getFolderPath(file.file_path));
-      }
-    },
+    }
   ];
 });
 

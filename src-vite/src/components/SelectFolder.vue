@@ -1,68 +1,77 @@
 <template>
-  
-  <ul v-if="children && children.length > 0">
-    <li v-for="(child, index) in children"
-      :key="child.id" 
-      :id="'folder-' + child.id" 
-      class="pl-4"
-    >
-      <div v-if="!child.is_deleted" 
-        :class="[
-          'my-1 mr-1 rounded border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group', 
-          rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' : 'border-gray-900'
-        ]" 
-        @click="clickFolder(rootAlbumId, child)"
-        @dblclick="clickExpandFolder($event, child)"
+  <ul v-if="childrenModel && childrenModel.length > 0">
+    <VueDraggable  
+      v-model="childrenModel" 
+      group="children"
+      :handle="'.drag-handle'" 
+      :animation="200"
+      @end="onDragEnd" 
+    >    
+      <li v-for="child in childrenModel"
+        :key="child.id" 
+        :id="'folder-' + child.id" 
+        class="pl-4"
       >
-        <span v-if="child.children && child.children.length == 0" class="flex-shrink-0 t-icon-size"></span>
-        <IconRight v-else
+        <div v-if="!child.is_deleted" 
           :class="[
-            'p-1 t-icon-size flex-shrink-0 transition-transform', 
-            child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
-          ]"
-          @click="clickExpandFolder($event, child)"
-        />
-        <input v-if="isRenamingFolder && selectedFolderId === child.id"
-          ref="folderInputRef"
-          type="text"
-          maxlength="255"
-          class="px-1 w-full border t-color-border-selected t-input-color-bg t-input-focus rounded"
-          v-model="child.name"
-          @keydown.enter = "clickRenameFolder(child.name)"
-          @keydown.esc = "handleEscKey($event, child.id)"
-          @blur = "clickRenameFolder(child.name)"
-        > 
-        <div v-else class="overflow-hidden whitespace-pre text-ellipsis">
-          {{ child.name }}
-        </div>
-
-        <div class="px-1 ml-auto flex flex-row items-center rounded">
-          <IconFavorite v-if="child.is_favorite" 
+            'my-1 mr-1 rounded border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group drag-handle', 
+            rootAlbumId === selectedAlbumId && selectedFolderId === child.id 
+              ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' 
+              : 'border-gray-900'
+          ]" 
+          @click="clickFolder(rootAlbumId, child)"
+          @dblclick="clickExpandFolder($event, child)"
+        >
+          <span v-if="child.children && child.children.length == 0" class="flex-shrink-0 t-icon-size"></span>
+          <IconRight v-else
             :class="[
-              't-icon-size-sm group-hover:hidden', 
-              rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text' : 't-color-text-disabled'
+              'p-1 t-icon-size flex-shrink-0 transition-transform', 
+              child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
             ]"
+            @click="clickExpandFolder($event, child)"
           />
-
-          <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
-            class="hidden group-hover:block t-color-bg-selected"
-            :iconMenu="IconMore"
-            :menuItems="moreMenuItems"
-          />
+          <input v-if="isRenamingFolder && selectedFolderId === child.id"
+            ref="folderInputRef"
+            type="text"
+            maxlength="255"
+            class="px-1 w-full border t-color-border-selected t-input-color-bg t-input-focus rounded"
+            v-model="child.name"
+            @keydown.enter = "clickRenameFolder(child.name)"
+            @keydown.esc = "handleEscKey($event, child.id)"
+            @blur = "clickRenameFolder(child.name)"
+          > 
+          <template v-else>
+            <div class="overflow-hidden whitespace-pre text-ellipsis">
+              {{ child.name }}
+            </div>
+            <div v class="px-1 ml-auto flex flex-row items-center rounded">
+              <IconFavorite v-if="child.is_favorite" 
+                :class="[
+                  't-icon-size-sm group-hover:hidden', 
+                  rootAlbumId === selectedAlbumId && selectedFolderId === child.id ? 't-color-text' : 't-color-text-disabled'
+                ]"
+              />
+              <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
+                class="hidden group-hover:block t-color-bg-selected"
+                :iconMenu="IconMore"
+                :menuItems="moreMenuItems"
+              />
+            </div>
+          </template>
         </div>
-
-      </div>
-      <SelectFolder v-if="child.is_expanded && !child.is_deleted" 
-        :key="child.id"
-        :children="child.children" 
-        :rootAlbumId="rootAlbumId"
-        :albumId="selectedAlbumId"
-        :folderId="selectedFolderId"
-        :folderPath="selectedFolderPath"
-        :componentId="componentId"
-      />
-    </li>
+        <SelectFolder v-if="child.is_expanded && !child.is_deleted" 
+          :key="child.id"
+          :children="child.children" 
+          :rootAlbumId="rootAlbumId"
+          :albumId="selectedAlbumId"
+          :folderId="selectedFolderId"
+          :folderPath="selectedFolderPath"
+          :componentId="componentId"
+        />
+      </li>
+    </VueDraggable>   
   </ul>
+
 
   <!-- new folder -->
   <MessageBox
@@ -118,9 +127,10 @@
 <script setup lang="ts">
 
 import { ref, watch, nextTick, computed, onMounted, onBeforeUnmount } from 'vue';
-import { listen } from '@tauri-apps/api/event';
+// import { listen } from '@tauri-apps/api/event';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
+import { VueDraggable } from 'vue-draggable-plus'
 import { config, isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
 import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, moveFolder, copyFolder, setFolderFavorite } from '@/common/api';
 
@@ -173,7 +183,12 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-let unlisten: () => void;
+// let unlisten: () => void;
+
+// v-model: draggable children 
+const childrenModel = computed(() => props.children);
+
+const getFolderById = (id) => childrenModel.value.find(child => child.id === id);
 
 // current selected folder
 const selectedAlbumId = ref(0);
@@ -192,8 +207,6 @@ const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 
 const toolTipRef = ref(null);
-
-const getFolderById = (id) => props.children.find(child => child.id === id);
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -220,25 +233,32 @@ const moreMenuItems = computed(() => {
         });
       }
     },
-    {
-      label: localeMsg.value.menu_item_move_to,
-      icon: IconMoveTo,
-      action: () => {
-        showMoveTo.value = true;
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_copy_to,
-      // icon: IconCopyTo,
-      action: () => {
-        showCopyTo.value = true;
-      }
-    },
+    // {
+    //   label: localeMsg.value.menu_item_move_to,
+    //   icon: IconMoveTo,
+    //   action: () => {
+    //     showMoveTo.value = true;
+    //   }
+    // },
+    // {
+    //   label: localeMsg.value.menu_item_copy_to,
+    //   // icon: IconCopyTo,
+    //   action: () => {
+    //     showCopyTo.value = true;
+    //   }
+    // },
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
       action: () => {
         showDeleteMsgbox.value = true;
+      }
+    },
+    {
+      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
+      // icon: IconOpenFolder,
+      action: () => {
+        openShellFolder(selectedFolderPath.value);
       }
     },
     {
@@ -263,37 +283,30 @@ const moreMenuItems = computed(() => {
         const folder = getFolderById(selectedFolderId.value);
         await refreshFolder(folder);
       }
-    },
-    {
-      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
-      // icon: IconOpenFolder,
-      action: () => {
-        openShellFolder(selectedFolderPath.value);
-      }
     }
   ];
 });
 
-onMounted( async() => {
+// onMounted( async() => {
   // listen for messages from SelectFolder component
-  unlisten = await listen('message-from-select-folder', async(event) => {
-    const { message } = event.payload;
-    switch (message) {
-      case 'refresh-folder':
-        const folder = getFolderById(selectedFolderId.value);
-        if(folder && folder.id === event.payload.folder_id) {
-          await refreshFolder(folder);
-        }
-        break;
-      default:
-        break;
-    }
-  });
-});
+  // unlisten = await listen('message-from-select-folder', async(event) => {
+  //   const { message } = event.payload;
+  //   switch (message) {
+  //     case 'refresh-folder':
+  //       const folder = getFolderById(selectedFolderId.value);
+  //       if(folder && folder.id === event.payload.folder_id) {
+  //         await refreshFolder(folder);
+  //       }
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // });
+// });
 
-onBeforeUnmount(() => {
-  unlisten(); // Removes the listener
-});
+// onBeforeUnmount(() => {
+  // unlisten(); // Removes the listener
+// });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
   selectedAlbumId.value = newAlbumId;
@@ -435,48 +448,49 @@ const clickDeleteFolder = async () => {
 };
 
 // move folder to dest folder
-const clickMoveTo = async () => {
-  try {
-    console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destFolderPath);
-    const newPath = await moveFolder(selectedFolderPath.value, config.destFolderPath);
-    if (newPath) {
-      // remove the folder from the current folder
-      let folder = getFolderById(selectedFolderId.value);
-      folder.is_deleted = true;
+// const clickMoveTo = async () => {
+//   try {
+//     console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destFolderPath);
+//     const newPath = await moveFolder(selectedFolderPath.value, config.destFolderPath);
+//     if (newPath) {
+//       // remove the folder from the current folder
+//       let folder = getFolderById(selectedFolderId.value);
+//       folder.is_deleted = true;
       
-      // refresh the dest folder
-      emit('message-from-select-folder', { 
-        message: 'refresh-folder',
-        refresh_folder: config.destFolderPath,  // refresh dest folder
-        folder_id: folder.id,            // select new folder
-        folder: newPath,                 // select new folder
-      });
+//       // refresh the dest folder
+//       emit('message-from-select-folder', { 
+//         message: 'refresh-folder',
+//         // refresh_folder: config.destFolderPath,  // refresh dest folder
+//         // folder_id: folder.id,                   // select new folder
+//         albumId: config.destAlbumId,           // dest album id
+//         folderPath: newPath,                   // select new folder
+//       });
 
-      showMoveTo.value = false;
-    } else {
-      toolTipRef.value.showTip(localeMsg.value.msgbox_move_to_error);
-    }
-  } catch (error) {
-    console.error('Failed to move folder:', error);
-  }
-};
+//       showMoveTo.value = false;
+//     } else {
+//       toolTipRef.value.showTip(localeMsg.value.msgbox_move_to_error);
+//     }
+//   } catch (error) {
+//     console.error('Failed to move folder:', error);
+//   }
+// };
 
 // copy folder to dest folder
-const clickCopyTo = async () => {
-  try {
-    console.log('SelectFolder.vue-clickCopyTo:', selectedFolderPath.value, config.destFolderPath);
-    const newPath = await copyFolder(selectedFolderPath.value, config.destFolderPath);
-    if (newPath) {
-      showCopyTo.value = false;
+// const clickCopyTo = async () => {
+//   try {
+//     console.log('SelectFolder.vue-clickCopyTo:', selectedFolderPath.value, config.destFolderPath);
+//     const newPath = await copyFolder(selectedFolderPath.value, config.destFolderPath);
+//     if (newPath) {
+//       showCopyTo.value = false;
 
-      // TODO: update folder after copy-to
-    } else {
-      toolTipRef.value.showTip(localeMsg.value.msgbox_copy_to_error);
-    }
-  } catch (error) {
-    console.error('Failed to copy folder:', error);
-  }
-};
+//       // update folder after copy-to
+//     } else {
+//       toolTipRef.value.showTip(localeMsg.value.msgbox_copy_to_error);
+//     }
+//   } catch (error) {
+//     console.error('Failed to copy folder:', error);
+//   }
+// };
 
 // refresh folder
 const refreshFolder = async (folder) => {
@@ -489,6 +503,11 @@ const refreshFolder = async (folder) => {
   }
 };
 
+// vuedraggable drag event
+const onDragEnd = async (event) => {
+  console.log('SelectFolder.vue-onDragEnd:', event);
+}
+
 // toggle favorite folder
 const toggleFavorite = async () => {
   const folder = getFolderById(selectedFolderId.value);
@@ -497,10 +516,10 @@ const toggleFavorite = async () => {
   await setFolderFavorite(folder.id, folder.is_favorite);
 };
 
-defineExpose({ 
+// defineExpose({ 
   // clickNewFolder,
   // clickRenameFolder
-});
+// });
 
 </script>
 
