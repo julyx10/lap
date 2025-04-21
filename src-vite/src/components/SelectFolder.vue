@@ -2,10 +2,11 @@
   <ul v-if="childrenModel && childrenModel.length > 0">
     <VueDraggable  
       v-model="childrenModel" 
-      group="children"
+      group="album-folder"
       :handle="'.drag-handle'" 
       :animation="200"
-      @end="onDragEnd" 
+      ghostClass="ghost-hidden"
+      @change="onDragChange"
     >    
       <li v-for="child in childrenModel"
         :key="child.id" 
@@ -14,13 +15,16 @@
       >
         <div v-if="!child.is_deleted" 
           :class="[
-            'my-1 mr-1 rounded border-l-2 flex items-center whitespace-nowrap hover:bg-gray-700 cursor-pointer group drag-handle', 
+            'my-1 mr-1 flex items-center rounded border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer group drag-handle', 
+            hoveredFolderId === child.id ? 'border t-color-border-selected' : 'border-l-2',
             rootAlbumId === selectedAlbumId && selectedFolderId === child.id 
-              ? 't-color-text-selected t-color-bg-selected border-sky-500 transition-colors duration-300' 
-              : 'border-gray-900'
+              ? 't-color-bg-selected t-color-border-selected transition-colors duration-300' : ''
           ]" 
           @click="clickFolder(rootAlbumId, child)"
           @dblclick="clickExpandFolder($event, child)"
+          @dragover.prevent="hoveredFolderId = child.id"
+          @dragleave="hoveredFolderId = null"
+          @drop="onDragDrop(child)"
         >
           <span v-if="child.children && child.children.length == 0" class="flex-shrink-0 t-icon-size"></span>
           <IconRight v-else
@@ -187,6 +191,7 @@ const localeMsg = computed(() => messages.value[locale.value]);
 
 // v-model: draggable children 
 const childrenModel = computed(() => props.children);
+const hoveredFolderId = ref(null); // for drag-and-drop
 
 const getFolderById = (id) => childrenModel.value.find(child => child.id === id);
 
@@ -503,11 +508,6 @@ const refreshFolder = async (folder) => {
   }
 };
 
-// vuedraggable drag event
-const onDragEnd = async (event) => {
-  console.log('SelectFolder.vue-onDragEnd:', event);
-}
-
 // toggle favorite folder
 const toggleFavorite = async () => {
   const folder = getFolderById(selectedFolderId.value);
@@ -516,10 +516,16 @@ const toggleFavorite = async () => {
   await setFolderFavorite(folder.id, folder.is_favorite);
 };
 
-// defineExpose({ 
-  // clickNewFolder,
-  // clickRenameFolder
-// });
+// vuedraggable drag event
+const onDragChange = async (event) => {
+  console.log('SelectFolder.vue-onDragChange:', event);
+}
+
+const onDragDrop = async (event) => {
+  hoveredFolderId.value = null;
+
+  console.log('SelectFolder.vue-onDragDrop:', event);
+}
 
 </script>
 
@@ -527,4 +533,7 @@ const toggleFavorite = async () => {
 /* .mask-fade-right {
   mask-image: linear-gradient(to left, transparent 0%, black 24px);
 } */
+.ghost-hidden {
+  display: none !important;
+}
 </style>

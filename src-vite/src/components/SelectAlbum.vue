@@ -1,22 +1,25 @@
 <template>
     <!-- albums -->
-    <div v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-lg t-color-bg t-scrollbar-dark">
+    <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-lg t-color-bg t-scrollbar-dark">
 
       <!-- drag to change albums' display order -->
       <VueDraggable 
         v-model="albums" 
-        :disabled="componentId === 1" 
+        :disabled="componentId === 1"
+        group="album-folder"
         :handle="'.drag-handle'" 
         :animation="200"
+        @start="onDragStart"
         @end="onDragEnd" 
       >
-        <div v-for="album in albums" :key="album.id">
+        <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'my-1 mx-1 pr-2 h-8 flex items-center rounded border-l-2 border-transparent t-color-bg-hover whitespace-nowrap cursor-pointer group drag-handle', 
+              'my-1 mx-1 pr-2 h-8 flex items-center rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group drag-handle', 
               { 
+                't-color-bg-hover': !isDragging,
                 't-color-text-selected': selectedAlbumId === album.id, 
-                't-color-bg-selected t-color-border-selected transition-colors duration-300': selectedAlbumId === album.id && selectedFolderId === album.folderId
+                't-color-bg-selected t-color-border-selected ': selectedAlbumId === album.id && selectedFolderId === album.folderId
               }
             ]"
             @click="clickAlbum(album)"
@@ -29,7 +32,7 @@
             <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ album.name }}
             </div>
-            <DropDownMenu v-if="componentId === 0"
+            <DropDownMenu v-if="componentId === 0 && !isDragging"
               class="ml-auto pl-1 hidden group-hover:block t-color-bg-selected"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
@@ -44,13 +47,13 @@
             :folderPath="selectedFolderPath"
             :componentId="componentId"
           />
-        </div>
+        </li>
       </VueDraggable>
 
-    </div>
+    </ul>
 
     <!-- Display message if no albums are found -->
-    <div v-else-if="!loadingAlbums" class="mt-10 flex items-center justify-center">
+    <div v-else-if="!isLoading" class="mt-10 flex items-center justify-center">
       {{ $t('no_albums') }}
     </div>
 
@@ -161,8 +164,10 @@ const errorMessage = ref('');
 
 const toolTipRef = ref(null);
 
-const loadingAlbums = ref(true);  // loading albums, set to false when albums are loaded
 const albums = ref([]);
+const isLoading = ref(true);  // loading albums, set to true when albums are loading
+const isDragging = ref(false);  // dragging albums, set to true when dragging albums
+
 const getAlbumById = (id) => albums.value.find(album => album.id === id);
 
 const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPath']);
@@ -220,7 +225,7 @@ const moreMenuItems = computed(() => {
 onMounted( async () => {
   if (albums.value.length === 0) {
     albums.value = await getAllAlbums();
-    loadingAlbums.value = false;
+    isLoading.value = false;
 
     // expand and select the current album and folder
     if (props.albumId > 0) {
@@ -282,13 +287,6 @@ const emitSelectedFolder = (albumId, folderId, folderPath) => {
   emit('update:folderId', folderId);
   emit('update:folderPath', folderPath);
 };
-
-/// change albums' display order
-const onDragEnd = async () => {
-  for (let i = 0; i < albums.value.length; i++) {
-    await setDisplayOrder(albums.value[i].id, i);
-  }
-}
 
 /// Add a new album
 const clickNewAlbum = async () => {
@@ -451,6 +449,20 @@ function scrollToItem(id) {
     item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 };
+
+/// drag albums to change their display order
+const onDragStart = () => {
+  isDragging.value = true;
+};
+
+const onDragEnd = async () => {
+  isDragging.value = false;
+  
+  // update the display order of albums
+  for (let i = 0; i < albums.value.length; i++) {
+    await setDisplayOrder(albums.value[i].id, i);
+  }
+}
 
 // Expose methods
 defineExpose({ 
