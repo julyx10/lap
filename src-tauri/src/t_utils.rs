@@ -500,12 +500,14 @@ pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
         if entry_path.is_file() {
             if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
                 if is_image_extension(extension) {
-                    let file_path = entry_path.to_str().unwrap();
+                    let file_path = entry_path.to_str().unwrap_or_default();
 
-                    // Create a new AFile instance and add it to the database
-                    let file = AFile::add_to_db(folder_id, file_path).unwrap();
-
-                    files.push(file);
+                    match AFile::add_to_db(folder_id, file_path) {
+                        Ok(file) => files.push(file),
+                        Err(e) => {
+                            eprintln!("Failed to add file to DB: {} ({})", file_path, e);
+                        }
+                    }
                 }
             }
         }
