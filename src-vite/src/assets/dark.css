@@ -78,6 +78,9 @@
 .t-color-text-hover {
   @apply hover:text-gray-200;
 }
+.t-color-text-group-hover {
+  @apply group-hover:text-gray-500;
+}
 
 .t-color-focus {
   @apply bg-gray-500;
