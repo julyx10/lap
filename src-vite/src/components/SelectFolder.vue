@@ -122,7 +122,7 @@ import { listen } from '@tauri-apps/api/event';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
-import { createFolder, renameFolder, deleteFolder, selectFolder, expandFolder, moveFolder, copyFolder, setFolderFavorite } from '@/common/api';
+import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -204,7 +204,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_new_folder,
       icon: IconNewFolder,
       action: () => {
-        showNewFolderMsgbox.value = true;
+        showNewFolderMsgbox.value = true; // show new folder message box
       }
     },
     {
@@ -224,21 +224,21 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
       action: () => {
-        showMoveTo.value = true;
+        showMoveTo.value = true;  // show move-to message box
       }
     },
     {
       label: localeMsg.value.menu_item_copy_to,
       // icon: IconCopyTo,
       action: () => {
-        showCopyTo.value = true;
+        showCopyTo.value = true;  // show copy-to message box
       }
     },
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
       action: () => {
-        showDeleteMsgbox.value = true;
+        showDeleteMsgbox.value = true;  // show delete message box
       }
     },
     {
@@ -440,6 +440,7 @@ const clickMoveTo = async () => {
     console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destFolderPath);
     const newPath = await moveFolder(selectedFolderPath.value, config.destFolderPath);
     if (newPath) {
+      console.log('SelectFolder.vue-clickMoveTo: move folder success:', newPath);
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
       folder.is_deleted = true;
@@ -447,12 +448,13 @@ const clickMoveTo = async () => {
       // refresh the dest folder
       emit('message-from-select-folder', { 
         message: 'refresh-folder',
-        // refresh_folder: config.destFolderPath,  // refresh dest folder
-        // folder_id: folder.id,                   // select new folder
-        albumId: config.destAlbumId,           // dest album id
+        // destFolderPath: config.destFolderPath,  // refresh dest folder
+        // folder_id: folder.id,                  // select new folder
+        // albumId: config.destAlbumId,           // dest album id
         folderPath: newPath,                   // select new folder
       });
 
+      // close move-to dialog
       showMoveTo.value = false;
     } else {
       toolTipRef.value.showTip(localeMsg.value.msgbox_move_to_error);
@@ -483,7 +485,7 @@ const clickCopyTo = async () => {
 const refreshFolder = async (folder) => {
   console.log('SelectFolder.vue-refreshFolder:', folder);
   if (folder) {
-    const subFolders = await expandFolder(folder.path, false);
+    const subFolders = await fetchFolder(folder.path, false);
     if (subFolders) {
       folder.children = subFolders.children;
     }

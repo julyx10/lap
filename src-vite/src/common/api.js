@@ -169,10 +169,10 @@ export async function selectFolder(albumId, parentId, folderPath) {
   return null;
 }
 
-// expand folder
-export async function expandFolder(path, isRecursive) {
+// fetch folder
+export async function fetchFolder(path, isRecursive) {
   try {
-    const folder = await invoke('expand_folder', { path, isRecursive });
+    const folder = await invoke('fetch_folder', { path, isRecursive });
     if(folder) {
       // get folder children's favorite status
       for (let i = 0; i < folder.children.length; i++) {
@@ -181,11 +181,11 @@ export async function expandFolder(path, isRecursive) {
       }
       // sort subfolders by name in locale order
       folder.children.sort((a, b) => localeComp(config.language, a.name, b.name));
-      console.log('expandFolder:', folder);
+      console.log('fetchFolder:', folder);
       return folder;
     };
   } catch (error) {
-    console.log('Failed to expand folder:', error);
+    console.log('Failed to fetch folder:', error);
   }
   return null;
 }

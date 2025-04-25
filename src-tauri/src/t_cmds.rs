@@ -114,9 +114,9 @@ pub fn select_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result
         .map_err(|e| format!("Error while adding folder to DB: {}", e))
 }
 
-/// expand folder to recurse sub-folders and build a FileNode
+/// fetch folder and build a FileNode
 #[tauri::command]
-pub fn expand_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode, String> {
+pub fn fetch_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode, String> {
     t_utils::FileNode::build_nodes(path, is_recursive)
 }
 

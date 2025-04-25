@@ -84,7 +84,7 @@ fn main() {
             t_cmds::delete_folder,
             // t_cmds::get_folder_parents,
             t_cmds::select_folder,
-            t_cmds::expand_folder,
+            t_cmds::fetch_folder,
             t_cmds::get_folder_favorite,
             t_cmds::set_folder_favorite,
 

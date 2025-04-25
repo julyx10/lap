@@ -9,7 +9,7 @@
     </div>
 
     <SelectAlbum ref="selectAlbumRef" 
-      :key="componentKey"
+      :key="selectAlbumKey"
       v-model:albumId="config.albumId"
       v-model:folderId="config.albumFolderId"
       v-model:folderPath="config.albumFolderPath"
@@ -42,7 +42,7 @@ const localeMsg = computed(() => messages.value[locale.value]);
 const selectAlbumRef = ref<SelectAlbum | null>(null);
 
 // refresh component
-const componentKey = ref(0);
+const selectAlbumKey = ref(0);
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -70,8 +70,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_refresh,
       icon: IconRefresh,
       action: () => {
-        // refresh component
-        componentKey.value += 1;
+        selectAlbumKey.value += 1;  // refresh component
       }
     },
   ];

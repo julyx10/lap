@@ -240,20 +240,20 @@ const moreMenuItems = computed(() => {
     //     console.log('Print:', file.file_path, result);
     //   }
     // },
-    // {
-    //   label: localeMsg.value.menu_item_move_to,
-    //   icon: IconMoveTo,
-    //   action: () => {
-    //     console.log('Move to:', selectedIndex.value);
-    //   }
-    // },
-    // {
-    //   label: localeMsg.value.menu_item_copy_to,
-    //   // icon: IconCopyTo,
-    //   action: () => {
-    //     console.log('Copy to:', selectedIndex.value);
-    //   }
-    // },
+    {
+      label: localeMsg.value.menu_item_move_to,
+      icon: IconMoveTo,
+      action: () => {
+        console.log('Move to:', selectedIndex.value);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_copy_to,
+      // icon: IconCopyTo,
+      action: () => {
+        console.log('Copy to:', selectedIndex.value);
+      }
+    },
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
