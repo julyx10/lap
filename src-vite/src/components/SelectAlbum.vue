@@ -15,7 +15,7 @@
         <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'my-1 mx-1 pr-2 h-8 flex items-center rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group drag-handle', 
+              'my-1 mx-1 pr-2 h-8 flex items-center rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group', 
               { 
                 't-color-bg-hover': !isDragging,
                 't-color-text-selected': selectedAlbumId === album.id, 
@@ -26,14 +26,14 @@
             @dblclick="dlbClickAlbum(album)"
           >
             <component :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
-              class="mx-1 h-5 flex-shrink-0" 
+              class="mx-1 h-5 flex-shrink-0 drag-handle" 
               @click.stop="expandAlbum(album)"
             />
             <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ album.name }}
             </div>
             <DropDownMenu v-if="componentId === 0 && !isDragging"
-              class="ml-auto pl-1 hidden group-hover:block t-color-bg-selected"
+              class="ml-auto pl-1 invisible group-hover:visible t-color-bg-selected"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
             />

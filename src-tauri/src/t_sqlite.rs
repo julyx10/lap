@@ -267,15 +267,19 @@ impl AFolder {
         Ok(new_folder.unwrap())
     }
 
-    /// rename a folder (update path)
+    /// rename a folder (update path and name)
     pub fn rename_folder(old_path: &str, new_path: &str) -> Result<usize, String> {
+
+        // get folder name
+        let folder_name = t_utils::get_file_name(new_path);
+
         let conn = open_conn();
         let result = conn
             .execute(
                 "UPDATE afolders
-                SET path = CONCAT(?2, SUBSTRING(path, LENGTH(?1) + 1))
+                SET path = CONCAT(?2, SUBSTRING(path, LENGTH(?1) + 1)), name = ?3
                 WHERE path LIKE ?1 || '%'", 
-                params![old_path, new_path],
+                params![old_path, new_path, folder_name],
             ).map_err(|e| e.to_string())?;
         Ok(result)
     }
