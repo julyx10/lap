@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-
 import { open } from '@tauri-apps/plugin-shell';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { useConfigStore } from '@/stores/configStore';
@@ -105,19 +104,6 @@ export async function openFolderDialog() {
   return null;
 }
 
-// Function to create a folder
-// export async function createFolder(path, name) {
-//   try {
-//     const fullPath = getFullPath(path, name);
-//     await mkdir(fullPath, { recursive: true });
-//     console.log('Create folder:', fullPath);
-//     return fullPath;
-//   } catch (error) {
-//     console.error('Failed to create folder:', error);
-//   }
-//   return null;
-// }
-
 // Function to open the shell folder
 export async function openShellFolder(path) {
   try {
@@ -144,5 +130,13 @@ export function localeComp(lang, str1, str2) {
     return str1.localeCompare(str2);
   } else {
     return str1.localeCompare(str2, locale);
+  }
+};
+
+// scroll to the folder
+export function scrollToFolder(folderId) {
+  const folderElement = document.getElementById(`folder-${folderId}`);
+  if (folderElement) {
+    folderElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 }

@@ -13,7 +13,7 @@
           }
         ]" 
         @click="clickFolder(rootAlbumId, child)"
-        @dblclick="clickExpandFolder($event, child)"
+        @dblclick="expandFolder(child)"
       >
         <span v-if="child.children && child.children.length == 0" class="flex-shrink-0 t-icon-size"></span>
         <IconRight v-else
@@ -21,7 +21,7 @@
             'p-1 t-icon-size flex-shrink-0 transition-transform', 
             child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
           ]"
-          @click="clickExpandFolder($event, child)"
+          @click.stop="expandFolder(child)"
         />
         <input v-if="isRenamingFolder && selectedFolderId === child.id"
           ref="folderInputRef"
@@ -117,11 +117,10 @@
 
 <script setup lang="ts">
 
-import { ref, watch, nextTick, computed, onMounted, onBeforeUnmount } from 'vue';
-import { listen } from '@tauri-apps/api/event';
+import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, openShellFolder, shortenFilename, isValidFileName } from '@/common/utils';
+import { config, isMac, openShellFolder, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
 import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
@@ -172,8 +171,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-let unlisten: () => void;
 
 const getFolderById = (id) => props.children.find(child => child.id === id);
 
@@ -268,31 +265,10 @@ const moreMenuItems = computed(() => {
       icon: IconRefresh,
       action: async() => {
         const folder = getFolderById(selectedFolderId.value);
-        await refreshFolder(folder);
+        await expandFolder(folder, true); // force refresh
       }
     }
   ];
-});
-
-onMounted( async() => {
-  // listen for messages from SelectFolder component
-  unlisten = await listen('message-from-select-folder', async(event) => {
-    const { message } = event.payload;
-    switch (message) {
-      case 'refresh-folder':
-        const folder = getFolderById(selectedFolderId.value);
-        if(folder && folder.id === event.payload.folder_id) {
-          await refreshFolder(folder);
-        }
-        break;
-      default:
-        break;
-    }
-  });
-});
-
-onBeforeUnmount(() => {
-  unlisten(); // Removes the listener
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
@@ -332,15 +308,15 @@ const clickFolder = async (albumId, folder) => {
 };
 
 /// click expand icon to toggle folder expansion
-const clickExpandFolder = async (event: Event, folder, alwaysExpand = false) => {
-  event.stopPropagation();    // Prevents clickFolder() from being triggered
+const expandFolder = async (folder, forceRefresh = false) => {
+  folder.is_expanded = forceRefresh ? true : !folder.is_expanded;
 
-  folder.is_expanded = alwaysExpand ? alwaysExpand : !folder.is_expanded;
-
-  if (folder.is_expanded && !folder.children) {
-    await refreshFolder(folder);
+  if (folder.is_expanded && (!folder.children || forceRefresh)) {
+    const subFolders = await fetchFolder(folder.path, false);
+    if (subFolders) {
+      folder.children = subFolders.children;
+    }
   }
-  console.log('SelectFolder.vue-clickExpandFolder:', folder);
 };
 
 /// Create new folder
@@ -352,8 +328,13 @@ const clickNewFolder = async (newFolderName) => {
     folder.children.push({ name: newFolderName, path: newFolderPath });
     showNewFolderMsgbox.value = false;
 
-    await clickExpandFolder(new Event('click'), folder, true);
-    clickFolder(selectedAlbumId.value, folder.children[folder.children.length - 1]);
+    expandFolder(folder, true).then(() => {
+      let folderId = folder.children[folder.children.length - 1].id;
+      console
+      clickFolder(selectedAlbumId.value, folderId).then(() => {
+        scrollToFolder(folderId);
+      });
+    });
   } else {
     console.log('SelectFolder.vue-clickNewFolder', localeMsg.value.msgbox_new_folder_error);
     toolTipRef.value.showTip(localeMsg.value.msgbox_new_folder_error);
@@ -411,7 +392,6 @@ const handleEscKey = (event, folderID) => {
   isRenamingFolder.value = false; 
 };
 
-
 /// delete selected folder
 const clickDeleteFolder = async () => {
   console.log('SelectFolder.vue-clickDeleteFolder:', selectedFolderId.value);
@@ -419,6 +399,7 @@ const clickDeleteFolder = async () => {
   if (isDeleted) {
     let folder = getFolderById(selectedFolderId.value);
     folder.is_deleted = true;
+    folder.id = 0; // remove id to avoid click folder again
 
     emit('message-from-select-folder', {
       message: 'delete-folder',
@@ -437,20 +418,18 @@ const clickDeleteFolder = async () => {
 // move folder to dest folder
 const clickMoveTo = async () => {
   try {
-    console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destFolderPath);
-    const newPath = await moveFolder(selectedFolderPath.value, config.destFolderPath);
+    console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destAlbumId, config.destFolderPath);
+    const newPath = await moveFolder(selectedFolderPath.value, config.destAlbumId, config.destFolderPath);
     if (newPath) {
       console.log('SelectFolder.vue-clickMoveTo: move folder success:', newPath);
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
       folder.is_deleted = true;
+      folder.id = 0; // remove id to avoid click folder again
       
       // refresh the dest folder
       emit('message-from-select-folder', { 
         message: 'refresh-folder',
-        // destFolderPath: config.destFolderPath,  // refresh dest folder
-        // folder_id: folder.id,                  // select new folder
-        // albumId: config.destAlbumId,           // dest album id
         folderPath: newPath,                   // select new folder
       });
 
@@ -472,7 +451,7 @@ const clickCopyTo = async () => {
     if (newPath) {
       showCopyTo.value = false;
 
-      // update folder after copy-to
+      // TODO:update folder after copy-to
     } else {
       toolTipRef.value.showTip(localeMsg.value.msgbox_copy_to_error);
     }
@@ -481,16 +460,6 @@ const clickCopyTo = async () => {
   }
 };
 
-// refresh folder
-const refreshFolder = async (folder) => {
-  console.log('SelectFolder.vue-refreshFolder:', folder);
-  if (folder) {
-    const subFolders = await fetchFolder(folder.path, false);
-    if (subFolders) {
-      folder.children = subFolders.children;
-    }
-  }
-};
 
 // toggle favorite folder
 const toggleFavorite = async () => {
@@ -503,7 +472,4 @@ const toggleFavorite = async () => {
 </script>
 
 <style scoped>
-/* .mask-fade-right {
-  mask-image: linear-gradient(to left, transparent 0%, black 24px);
-} */
 </style>

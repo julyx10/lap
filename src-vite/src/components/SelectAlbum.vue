@@ -39,7 +39,6 @@
             />
           </div>
           <SelectFolder v-if="album.is_expanded"
-            ref="selectFolderRef"
             :children="album.children" 
             :rootAlbumId="album.id"
             :albumId="selectedAlbumId"
@@ -107,8 +106,8 @@ import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
-import { config, isMac, separator, openShellFolder } from '@/common/utils';
-import { getAllAlbums, setDisplayOrder, addAlbum, renameAlbum, removeAlbum, createFolder, renameFolder, selectFolder, fetchFolder } from '@/common/api';
+import { config, isMac, openShellFolder, scrollToFolder } from '@/common/utils';
+import { getAllAlbums, setDisplayOrder, addAlbum, renameAlbum, removeAlbum, createFolder, selectFolder, fetchFolder, expandFinalFolder } from '@/common/api';
 
 import SelectFolder from '@/components/SelectFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -153,8 +152,6 @@ let unlisten: () => void;
 const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
-
-const selectFolderRef = ref<SelectFolder | null>(null);
 
 // message boxes
 const showRenameMsgbox = ref(false);
@@ -256,14 +253,7 @@ onMounted( async () => {
       case 'refresh-folder':
         for (let album of albums.value) {
           if(album.id === config.destAlbumId) {
-            await expandAlbum(album, true);
-
-            // click to select the folder
-            selectedAlbumId.value = config.destAlbumId;
-            let folder = album.children.find(child => child.path === event.payload.folderPath);
-            if(folder) {
-              clickFolder(folder);
-            }
+            clickFinalSubFolder(album, event.payload.folderPath);  // select the sub-folder
             break;
           }
         }
@@ -371,7 +361,10 @@ const clickNewFolder = async (folderName) => {
     }
 
     // select the new folder
-    clickFolder(newFolder);
+    clickFolder(album.id, newFolder).then(() => {
+      // scroll to the new folder
+      scrollToFolder(newFolder.id);
+    });
 
     // close the message box
     showNewFolderMsgbox.value = false;
@@ -383,11 +376,11 @@ const clickNewFolder = async (folderName) => {
 };
 
 /// click folder to select
-const clickFolder = async (folder) => {
+const clickFolder = async (albumId, folder) => {
   console.log('SelectAlbum.vue-clickFolder:', folder);
-  const selectedFolder = await selectFolder(selectedAlbumId.value, 0, folder.path); // parentId: 0 is root folder(album)
+  const selectedFolder = await selectFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
   if(selectedFolder) {
-    // selectedAlbumId.value = selectedAlbumId.value;
+    selectedAlbumId.value = albumId;
     selectedFolderId.value = selectedFolder.id;
     selectedFolderPath.value = selectedFolder.path;
     // insert new property 'id' to folder object
@@ -401,51 +394,17 @@ const clickFolder = async (folder) => {
 
 /// click the final sub-folder to select it
 const clickFinalSubFolder = async (album, folderPath) => {
-  console.log('clickFinalSubFolder:', album, folderPath);
   // expand the album's folder
-  expandAlbum(album, true);
+  await expandAlbum(album, true);
 
   // recursively expand the final sub-folder path
-  let relative_folder_path = folderPath.replace(album.path, '');
-  expandSubFolder(album, relative_folder_path);
-};
-
-/// expand sub-folders along a given path
-const expandSubFolder = async (folder, path) => {
-  const pathArray = path.split(separator).filter(Boolean); // Split and remove empty strings
-  let currentFolder = folder;
-
-  for (let i = 0; i < pathArray.length; i++) {
-    // fetch sub-folders
-    const subFolders = await fetchFolder(currentFolder.path, false);
-    if(subFolders) {
-      currentFolder.children = subFolders.children;
-
-      if(currentFolder.children && currentFolder.children.length > 0) {
-        for (let child of currentFolder.children) {
-          if(child.name === pathArray[i]) {
-            if( i < pathArray.length - 1) {
-              child.is_expanded = true;
-              currentFolder = child;
-              break;
-            } else {  // last folder
-              await clickFolder(child);
-              scrollToItem(child.id);
-            }
-          }
-        }
-      }
+  expandFinalFolder(album, folderPath).then((folder) => {
+    if(folder) {
+      clickFolder(album.id, folder).then(() => {
+        scrollToFolder(folder.id);
+      });
     }
-  }
-};
-
-// scroll to the selected folder
-function scrollToItem(id) {
-  console.log('scrollToItem:', id);
-  const item = document.getElementById(`folder-${id}`);
-  if (item) {
-    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+  });
 };
 
 /// drag albums to change their display order
@@ -470,7 +429,4 @@ defineExpose({
 </script>
 
 <style scoped>
-/* .mask-fade-right {
-  mask-image: linear-gradient(to left, transparent 0%, black 24px);
-} */
 </style>

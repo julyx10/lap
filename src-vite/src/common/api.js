@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useConfigStore } from '@/stores/configStore';
-import { openFolderDialog, localeComp } from '@/common/utils';
+import { separator, openFolderDialog, localeComp } from '@/common/utils';
 import { format } from 'date-fns';
 
 const config = useConfigStore();
@@ -190,6 +190,36 @@ export async function fetchFolder(path, isRecursive) {
   return null;
 }
 
+// expand the final folder path, return the final folder
+export async function expandFinalFolder(rootFolder, finalPath) {
+  let relativePath = finalPath.replace(rootFolder.path, '');
+
+  const pathArray = relativePath.split(separator).filter(Boolean); // Split and remove empty strings
+  let currentFolder = rootFolder;
+
+  for (let i = 0; i < pathArray.length; i++) {
+    // fetch sub-folders
+    const subFolders = await fetchFolder(currentFolder.path, false);
+    if(subFolders) {
+      currentFolder.children = subFolders.children;
+
+      if(currentFolder.children && currentFolder.children.length > 0) {
+        for (let child of currentFolder.children) {
+          if(child.name === pathArray[i]) {
+            if( i < pathArray.length - 1) {
+              child.is_expanded = true;
+              currentFolder = child;
+              break;
+            } else {  // last folder
+              return child;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 // get folder favorite
 export async function getFolderFavorite(folderPath) {
   try {
@@ -217,9 +247,9 @@ export async function setFolderFavorite(folderId, isFavorite) {
 }
 
 // move a folder, return new folder path
-export async function moveFolder(folderPath, newFolderPath) {
+export async function moveFolder(folderPath, newAlbumId, newFolderPath) {
   try {
-    const result = await invoke('move_folder', { folderPath, newFolderPath });
+    const result = await invoke('move_folder', { folderPath, newAlbumId, newFolderPath });
     if(result) {
       return result;
     };

@@ -82,7 +82,6 @@ import {
   IconFile, 
   IconFolder,
   IconMore,
-  IconFavorite,
   IconUnFavorite, 
 } from '@/common/icons';
 
@@ -116,16 +115,24 @@ const moreMenuItems = computed(() => {
 onMounted(() => {
   if (favorite_folders.value.length === 0) {
     // fetch favorite folders
-    clickRefresh();
+    getFavorites();
   }
 });
 
-// refresh favorite folders
-async function clickRefresh() {
+// get favorites
+async function getFavorites() {
   const folders = await getFavoriteFolders();
   favorite_folders.value = folders;
 
   console.log('favorite_folders', folders);
+}
+
+// refresh component
+function clickRefresh() {
+  console.log('clickRefresh');
+  getFavorites().then(() => {
+    clickFavoriteFiles();
+  });
 }
 
 // click favorite files
@@ -136,17 +143,18 @@ function clickFavoriteFiles() {
 
 // click favorite folder
 function clickFavoriteFolder(folder: any) {
-  console.log('clickFolder', folder);
+  console.log('clickFavoriteFolder', folder);
   config.favoriteAlbumId = folder.album_id;
   config.favoriteFolderId = folder.id;
   config.favoriteFolderPath = folder.path;
 }
 
 // unfavorite
-async function UnFavorite() {
+function UnFavorite() {
   console.log('UnFavorite');
-  await setFolderFavorite(config.favoriteFolderId, false);
-  favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favoriteFolderId);
+  setFolderFavorite(config.favoriteFolderId, false).then(() => {
+    favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favoriteFolderId);
+  });
 }
 
 </script>

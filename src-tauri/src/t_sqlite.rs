@@ -267,7 +267,7 @@ impl AFolder {
         Ok(new_folder.unwrap())
     }
 
-    /// rename a folder
+    /// rename a folder (update path)
     pub fn rename_folder(old_path: &str, new_path: &str) -> Result<usize, String> {
         let conn = open_conn();
         let result = conn
@@ -276,6 +276,19 @@ impl AFolder {
                 SET path = CONCAT(?2, SUBSTRING(path, LENGTH(?1) + 1))
                 WHERE path LIKE ?1 || '%'", 
                 params![old_path, new_path],
+            ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// move a folder (update path and album_id)
+    pub fn move_folder(old_path: &str, new_album_id: i64, new_path: &str) -> Result<usize, String> {
+        let conn = open_conn();
+        let result = conn
+            .execute(
+                "UPDATE afolders
+                SET path = CONCAT(?3, SUBSTRING(path, LENGTH(?1) + 1)), album_id = ?2
+                WHERE path LIKE ?1 || '%'", 
+                params![old_path, new_album_id, new_path],
             ).map_err(|e| e.to_string())?;
         Ok(result)
     }
