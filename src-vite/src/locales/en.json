@@ -11,6 +11,16 @@
 
   "no_albums": "No albums, click the add button to add an album",
 
+  "album_profile_title": "Album profile",
+  "album_profile_name": "Name",
+  "album_profile_description": "Description",
+  "album_profile_description_placeholder": "Enter album's description",
+  "album_profile_folder": "Folder",
+  "album_profile_file": "Files",
+  "album_profile_file_info": "{count} files ({size})",
+  "album_profile_created_time": "Created time",
+  "album_profile_modified_time": "Modified time",
+
   "msgbox_ok": "OK",
   "msgbox_cancel": "Cancel",
 

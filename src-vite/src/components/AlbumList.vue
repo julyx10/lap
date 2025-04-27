@@ -17,7 +17,7 @@
             :class="[
               'my-1 mx-1 pr-2 h-8 flex items-center rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group', 
               { 
-                't-color-bg-hover': !isDragging,
+                't-color-bg-hover': !isDragging && !isEditList,
                 't-color-text-selected': selectedAlbumId === album.id, 
                 't-color-bg-selected t-color-border-selected ': selectedFolderId === album.folderId
               }
@@ -25,7 +25,7 @@
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
-            <IconClose v-if="isEditList" 
+            <IconRemove v-if="isEditList" 
               class="mx-1 t-icon-size-sm t-icon-hover flex-shrink-0" 
               @click.stop="showRemoveMsgbox = true" 
             />
@@ -48,7 +48,7 @@
               :menuItems="moreMenuItems"
             />
           </div>
-          <SelectFolder v-if="album.is_expanded && !isEditList"
+          <AlbumFolder v-if="album.is_expanded && !isEditList"
             :children="album.children" 
             :rootAlbumId="album.id"
             :albumId="selectedAlbumId"
@@ -66,19 +66,18 @@
       {{ $t('no_albums') }}
     </div>
 
-    <!-- edit album -->
-    <MessageBox
-      v-if="showRenameMsgbox"
-      :title="$t('msgbox_rename_album_title')"
-      :message="$t('msgbox_rename_album_content')"
-      :showInput="true"
-      :inputText="getAlbumById(albumId).name"
-      :OkText="$t('msgbox_rename_album_ok')"
-      :cancelText="$t('msgbox_cancel')"
-      @ok="clickRenameAlbum"
-      @cancel="showRenameMsgbox = false"
+    <!-- edit album profile -->
+    <AlbumProfile
+      v-if="showAlbumProfile"
+      :inputName="getAlbumById(albumId).name"
+      :inputDescription="getAlbumById(albumId).description"
+      :albumPath="getAlbumById(albumId).path"
+      :createdAt="formatTimestamp(getAlbumById(albumId).created_at, $t('date_time_format'))"
+      :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('date_time_format'))"
+      @ok="clickAlbumProfile"
+      @cancel="showAlbumProfile = false"
     />
-
+    
     <!-- new folder -->
     <MessageBox
       v-if="showNewFolderMsgbox"
@@ -116,10 +115,11 @@ import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
-import { config, isMac, openShellFolder, scrollToFolder } from '@/common/utils';
-import { getAllAlbums, setDisplayOrder, addAlbum, renameAlbum, removeAlbum, createFolder, selectFolder, fetchFolder, expandFinalFolder } from '@/common/api';
+import { config, isMac, openShellFolder, scrollToFolder, formatTimestamp } from '@/common/utils';
+import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, createFolder, selectFolder, fetchFolder, expandFinalFolder } from '@/common/api';
 
-import SelectFolder from '@/components/SelectFolder.vue';
+import AlbumFolder from '@/components/AlbumFolder.vue';
+import AlbumProfile from '@/components/AlbumProfile.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
@@ -132,9 +132,8 @@ import {
   IconMore,
   IconRefresh,
   IconDragHandle,
-  IconClose,
+  IconRemove,
 } from '@/common/icons';
-import { is } from 'date-fns/locale';
 
 const props = defineProps({
   albumId: {    // album id
@@ -166,7 +165,8 @@ const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
 // message boxes
-const showRenameMsgbox = ref(false);
+const showAlbumProfile = ref(false);
+// const showRenameMsgbox = ref(false);
 const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
 const errorMessage = ref('');
@@ -189,7 +189,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_edit,
       icon: IconEdit,
       action: () => {
-        showRenameMsgbox.value = true;
+        showAlbumProfile.value = true;
       }
     },
     {
@@ -242,7 +242,7 @@ onMounted( async () => {
     }
   }
 
-  // listen for messages from SelectFolder component
+  // listen for messages from AlbumFolder component
   unlisten = await listen('message-from-select-folder', async(event) => {
     console.log('listen - message-from-select-folder:', event);
     const { message } = event.payload;
@@ -299,13 +299,14 @@ const clickNewAlbum = async () => {
   }
 };
 
-/// Rename an album
-const clickRenameAlbum = async (newName) => {
-  const renamedAlbum = await renameAlbum(selectedAlbumId.value, newName);
-  if(renamedAlbum) {
+/// edit album profile
+const clickAlbumProfile = async (newName, newDescription) => {
+  const result = await editAlbum(selectedAlbumId.value, newName, newDescription);
+  if(result) {
     let album = getAlbumById(selectedAlbumId.value);
     album.name = newName;
-    showRenameMsgbox.value = false;
+    album.description = newDescription;
+    showAlbumProfile.value = false;
   }
 };
 
@@ -387,7 +388,7 @@ const clickNewFolder = async (folderName) => {
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
-  console.log('SelectAlbum.vue-clickFolder:', folder);
+  console.log('AlbumList.vue-clickFolder:', folder);
   const selectedFolder = await selectFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
   if(selectedFolder) {
     selectedAlbumId.value = albumId;

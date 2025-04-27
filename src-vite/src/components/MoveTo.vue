@@ -16,7 +16,7 @@
       </div>
 
       <!-- select album and folder -->
-      <SelectAlbum ref="selectAlbumRef" 
+      <AlbumList ref="albumListRef" 
         v-model:albumId="config.destAlbumId"
         v-model:folderId="config.destFolderId"
         v-model:folderPath="config.destFolderPath"
@@ -59,7 +59,7 @@ import { onMounted, onUnmounted } from 'vue';
 import { config } from '@/common/utils';
 
 import { IconClose } from '@/common/icons';
-import SelectAlbum from '@/components/SelectAlbum.vue';
+import AlbumList from '@/components/AlbumList.vue';
 
 const props = defineProps({
   title: {

@@ -60,6 +60,20 @@ export async function addAlbum() {
   return null;
 }
 
+// edit an album's profile
+export async function editAlbum(albumId, newName, newDespription) {
+  try {
+    const album = await invoke('edit_album', { id: albumId, name: newName, description: newDespription });
+    console.log('edit_album', album);
+    if (album) {
+      return album;
+    }
+  } catch (error) {
+    console.log('Failed to edit album:', error);
+  }
+  return null;
+}
+
 // rename an album
 export async function renameAlbum(albumId, newName) {
   try {

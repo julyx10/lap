@@ -75,6 +75,12 @@
 .t-color-text-light {
   @apply text-gray-200;
 }
+.t-color-text-warning {
+  @apply text-red-600;
+}
+.t-color-text-warning-hover {
+  @apply hover:text-red-500;
+}
 .t-color-text-hover {
   @apply hover:text-gray-200;
 }

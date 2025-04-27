@@ -52,7 +52,7 @@
           </div>
         </template>
       </div>
-      <SelectFolder v-if="child.is_expanded && !child.is_deleted" 
+      <AlbumFolder v-if="child.is_expanded && !child.is_deleted" 
         :key="child.id"
         :children="child.children" 
         :rootAlbumId="rootAlbumId"
@@ -123,7 +123,7 @@ import { useI18n } from 'vue-i18n';
 import { config, isMac, openShellFolder, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
 import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite } from '@/common/api';
 
-import SelectFolder from '@/components/SelectFolder.vue';
+import AlbumFolder from '@/components/AlbumFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -285,7 +285,7 @@ watch(() => selectedFolderId.value, (newFolderId, oldFolderId) => {
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
-  console.log('SelectFolder.vue-clickFolder:', albumId, folder);
+  console.log('AlbumFolder.vue-clickFolder:', albumId, folder);
   const selectedFolder = await selectFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
   if (selectedFolder) {
     selectedAlbumId.value = albumId;
@@ -336,7 +336,7 @@ const clickNewFolder = async (newFolderName) => {
       });
     });
   } else {
-    console.log('SelectFolder.vue-clickNewFolder', localeMsg.value.msgbox_new_folder_error);
+    console.log('AlbumFolder.vue-clickNewFolder', localeMsg.value.msgbox_new_folder_error);
     toolTipRef.value.showTip(localeMsg.value.msgbox_new_folder_error);
   }
 };
@@ -345,7 +345,7 @@ const clickNewFolder = async (newFolderName) => {
 const clickRenameFolder = async (newFolderName) => {
   // verfify new folder name is valid
   if (!newFolderName || newFolderName.trim().length === 0 || !isValidFileName(newFolderName)) {
-    console.log('SelectFolder.vue-clickRenameFolder: invalid folder name');
+    console.log('AlbumFolder.vue-clickRenameFolder: invalid folder name');
     return;
   }
   if (newFolderName === originalFolderName.value) {
@@ -394,7 +394,7 @@ const handleEscKey = (event, folderID) => {
 
 /// delete selected folder
 const clickDeleteFolder = async () => {
-  console.log('SelectFolder.vue-clickDeleteFolder:', selectedFolderId.value);
+  console.log('AlbumFolder.vue-clickDeleteFolder:', selectedFolderId.value);
   const isDeleted = await deleteFolder(selectedFolderPath.value);
   if (isDeleted) {
     let folder = getFolderById(selectedFolderId.value);
@@ -410,7 +410,7 @@ const clickDeleteFolder = async () => {
     });
     showDeleteMsgbox.value = false;
   } else {
-    console.log('SelectFolder.vue-clickDeleteFolder', localeMsg.value.msgbox_delete_folder_error);
+    console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox_delete_folder_error);
     toolTipRef.value.showTip(localeMsg.value.msgbox_delete_folder_error);
   }
 };
@@ -418,10 +418,10 @@ const clickDeleteFolder = async () => {
 // move folder to dest folder
 const clickMoveTo = async () => {
   try {
-    console.log('SelectFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destAlbumId, config.destFolderPath);
+    console.log('AlbumFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destAlbumId, config.destFolderPath);
     const newPath = await moveFolder(selectedFolderPath.value, config.destAlbumId, config.destFolderPath);
     if (newPath) {
-      console.log('SelectFolder.vue-clickMoveTo: move folder success:', newPath);
+      console.log('AlbumFolder.vue-clickMoveTo: move folder success:', newPath);
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
       folder.is_deleted = true;
@@ -446,7 +446,7 @@ const clickMoveTo = async () => {
 // copy folder to dest folder
 const clickCopyTo = async () => {
   try {
-    console.log('SelectFolder.vue-clickCopyTo:', selectedFolderPath.value, config.destFolderPath);
+    console.log('AlbumFolder.vue-clickCopyTo:', selectedFolderPath.value, config.destFolderPath);
     const newPath = await copyFolder(selectedFolderPath.value, config.destFolderPath);
     if (newPath) {
       showCopyTo.value = false;

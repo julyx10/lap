@@ -6,12 +6,12 @@
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
 
-      <IconOk v-if="isEditList" class="t-icon-size-sm t-icon-hover" @click="clickOk" />
+      <IconOk v-if="isEditList" class="mx-1 t-icon-size-sm t-icon-hover" @click="clickOk" />
       <DropDownMenu v-else :iconMenu="IconMore" :menuItems="moreMenuItems" />
     </div>
 
-    <SelectAlbum ref="selectAlbumRef" 
-      :key="selectAlbumKey"
+    <AlbumList ref="albumListRef" 
+      :key="albumListKey"
       v-model:albumId="config.albumId"
       v-model:folderId="config.albumFolderId"
       v-model:folderPath="config.albumFolderPath"
@@ -27,7 +27,7 @@ import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 
 import { IconMore, IconAdd, IconLink, IconEdit, IconRefresh, IconOk } from '@/common/icons';
-import SelectAlbum from '@/components/SelectAlbum.vue';
+import AlbumList from '@/components/AlbumList.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 const props = defineProps({
@@ -41,12 +41,12 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const selectAlbumRef = ref<SelectAlbum | null>(null);
+const albumListRef = ref<AlbumList | null>(null);
 
 const isEditList = ref(false);
 
 // refresh component
-const selectAlbumKey = ref(0);
+const albumListKey = ref(0);
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -55,7 +55,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_add_folder,
       icon: IconAdd,
       action: () => {
-        selectAlbumRef.value.clickNewAlbum();
+        albumListRef.value.clickNewAlbum();
       }
     },
     {
@@ -75,14 +75,14 @@ const moreMenuItems = computed(() => {
       icon: IconEdit,
       action: () => {
         isEditList.value = true;
-        selectAlbumRef.value.isEditList = true;
+        albumListRef.value.isEditList = true;
       }
     },
     {
       label: localeMsg.value.menu_item_refresh,
       icon: IconRefresh,
       action: () => {
-        selectAlbumKey.value += 1;  // refresh component
+        albumListKey.value += 1;  // refresh component
       }
     }
   ];
@@ -90,7 +90,7 @@ const moreMenuItems = computed(() => {
 
 const clickOk = () => {
   isEditList.value = false;
-  selectAlbumRef.value.isEditList = false;
+  albumListRef.value.isEditList = false;
 };
 
 </script>

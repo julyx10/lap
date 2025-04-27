@@ -63,7 +63,9 @@
               @click.stop="selectItem(index)"
             />
             <DropDownMenu v-else
-              class="hidden group-hover:block"
+              :class="[
+                index != selectedIndex ? 'invisible group-hover:visible' : ''
+              ]"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
               :smallIcon="true"

@@ -28,6 +28,26 @@ pub fn add_album(folder_path: &str) -> Result<Album, String> {
         .map_err(|e| format!("Error while adding album to DB: {}", e))
 }
 
+/// edit an album
+#[tauri::command]
+pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, String> {
+    let _ = Album::update_column(id, "name", &name).map_err(|e| {
+        format!(
+            "Error while edit album with id {}: {}",
+            id,
+            e.to_string()
+        )
+    });
+
+    Album::update_column(id, "description", &description).map_err(|e| {
+        format!(
+            "Error while edit album with id {}: {}",
+            id,
+            e.to_string()
+        )
+    })
+}
+
 /// rename an album
 #[tauri::command]
 pub fn rename_album(id: i64, name: &str) -> Result<usize, String> {
