@@ -109,7 +109,7 @@ import Content from '@/components/Content.vue';
 
 import {
   IconHome,
-  IconUnFavorite,
+  IconFavorite,
   IconFolder,
   IconCalendar,
   IconLocation,
@@ -127,7 +127,7 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // toolbar 
 const toolbars = computed(() =>  [
   { icon: IconHome,     text: localeMsg.value.home },
-  { icon: IconUnFavorite, text: localeMsg.value.favorite },
+  { icon: IconFavorite, text: localeMsg.value.favorite },
   { icon: IconFolder,    text: localeMsg.value.album },
   { icon: IconCalendar, text: localeMsg.value.calendar },
   { icon: IconLocation, text: localeMsg.value.location },

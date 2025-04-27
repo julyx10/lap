@@ -7,8 +7,9 @@
     >
       <div v-if="!child.is_deleted" 
         :class="[
-          'my-1 mr-1 h-6 flex items-center t-color-bg-hover rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group drag-handle', 
+          'my-1 mr-1 h-6 flex items-center t-color-bg-hover rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group', 
           {
+            't-color-text-selected': config.albumFolderPath.includes(child.path),
             't-color-bg-selected t-color-border-selected': selectedFolderId === child.id
           }
         ]" 
@@ -39,13 +40,12 @@
           </div>
           <div class="px-1 ml-auto flex flex-row items-center rounded">
             <IconFavorite v-if="child.is_favorite" 
-              :class="[
-                't-icon-size-sm group-hover:hidden', 
-                selectedFolderId === child.id ? 't-color-text' : 't-color-text-disabled'
-              ]"
+              class="t-icon-size-sm t-color-text" 
             />
-            <DropDownMenu v-if="componentId === 0 && !isRenamingFolder"
-              class="hidden group-hover:block t-color-bg-selected"
+            <DropDownMenu v-show="componentId === 0 && !isRenamingFolder"
+              :class="[
+                selectedFolderId != child.id ? 'hidden group-hover:block' : ''
+              ]"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
             />

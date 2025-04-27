@@ -99,9 +99,10 @@
   "menu_item_reveal_in_finder": "Reveal in Finder",
   "menu_item_properties": "Properties",
   "menu_item_show_info": "Show Info",
-  "menu_item_remove_from_album": "Remove from albums",
   "menu_item_add_folder": "Add folder",
   "menu_item_add_url": "Add URL",
+  "menu_item_edit_list": "Edit list",
+  "menu_item_finish": "Finish",
 
   "favorite_files": "Favorite files",
   "favorite_files_empty": "No favorite files found",

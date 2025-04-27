@@ -5,7 +5,7 @@
       <!-- drag to change albums' display order -->
       <VueDraggable 
         v-model="albums" 
-        :disabled="componentId === 1"
+        :disabled="componentId === 1 && !isEditList"
         group="album-folder"
         :handle="'.drag-handle'" 
         :animation="200"
@@ -19,26 +19,36 @@
               { 
                 't-color-bg-hover': !isDragging,
                 't-color-text-selected': selectedAlbumId === album.id, 
-                't-color-bg-selected t-color-border-selected ': selectedAlbumId === album.id && selectedFolderId === album.folderId
+                't-color-bg-selected t-color-border-selected ': selectedFolderId === album.folderId
               }
             ]"
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
-            <component :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
-              class="mx-1 h-5 flex-shrink-0 drag-handle" 
+            <IconClose v-if="isEditList" 
+              class="mx-1 t-icon-size-sm t-icon-hover flex-shrink-0" 
+              @click.stop="showRemoveMsgbox = true" 
+            />
+            <component v-else :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
+              class="mx-1 t-icon-size-sm t-icon-hover flex-shrink-0" 
               @click.stop="expandAlbum(album)"
             />
+
             <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ album.name }}
             </div>
-            <DropDownMenu v-if="componentId === 0 && !isDragging"
-              class="ml-auto pl-1 invisible group-hover:visible t-color-bg-selected"
+
+            <IconDragHandle v-if="isEditList" class="ml-auto t-icon-size-sm t-icon-hover flex-shrink-0 drag-handle" />
+            <DropDownMenu v-else-if="componentId === 0 && !isDragging"
+              :class="[
+                'ml-auto pl-1',
+                selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
+              ]"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
             />
           </div>
-          <SelectFolder v-if="album.is_expanded"
+          <SelectFolder v-if="album.is_expanded && !isEditList"
             :children="album.children" 
             :rootAlbumId="album.id"
             :albumId="selectedAlbumId"
@@ -116,13 +126,15 @@ import ToolTip from '@/components/ToolTip.vue';
 
 import {
   IconEdit,
-  IconRemove,
   IconFolder,
   IconFolderExpanded,
   IconNewFolder,
   IconMore,
   IconRefresh,
+  IconDragHandle,
+  IconClose,
 } from '@/common/icons';
+import { is } from 'date-fns/locale';
 
 const props = defineProps({
   albumId: {    // album id
@@ -162,8 +174,9 @@ const errorMessage = ref('');
 const toolTipRef = ref(null);
 
 const albums = ref([]);
-const isLoading = ref(true);  // loading albums, set to true when albums are loading
-const isDragging = ref(false);  // dragging albums, set to true when dragging albums
+const isEditList = ref(false);  // edit album list
+const isLoading = ref(true);    // loading albums
+const isDragging = ref(false);  // dragging albums
 
 const getAlbumById = (id) => albums.value.find(album => album.id === id);
 
@@ -177,13 +190,6 @@ const moreMenuItems = computed(() => {
       icon: IconEdit,
       action: () => {
         showRenameMsgbox.value = true;
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_remove_from_album,
-      icon: IconRemove,
-      action: () => {
-        showRemoveMsgbox.value = true;
       }
     },
     {
@@ -317,6 +323,10 @@ const clickRemoveAlbum = async () => {
 
 /// click a album to select it
 const clickAlbum = async (album) => {
+  if(isEditList.value) {
+    return;
+  }
+
   const selectedFolder = await selectFolder(album.id, 0, album.path); // parentId: 0 is root folder(album)
   if(selectedFolder) {
     // insert a new property(album.folderId) 
@@ -423,6 +433,7 @@ const onDragEnd = async () => {
 
 // Expose methods
 defineExpose({ 
+  isEditList,
   clickNewAlbum,
 });
 

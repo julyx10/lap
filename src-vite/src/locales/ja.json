@@ -99,9 +99,10 @@
   "menu_item_reveal_in_finder": "Finderで表示",
   "menu_item_properties": "プロパティ",
   "menu_item_show_info": "情報を表示",
-  "menu_item_remove_from_album": "アルバムから削除",
   "menu_item_add_folder": "フォルダを追加",
   "menu_item_add_url": "URLを追加",
+  "menu_item_edit_list": "リストを編集",
+  "menu_item_finish": "終了",
 
   "favorite_files": "お気に入りのファイル",
   "favorite_files_empty": "お気に入りのファイルは見つかりません",

@@ -50,7 +50,10 @@
               </div>
 
               <DropDownMenu
-                class="ml-auto px-1 rounded hidden group-hover:block t-color-bg-selected"
+                :class="[
+                  'ml-auto px-1 rounded t-color-bg-selected',
+                  config.favoriteFolderId != folder.id ? 'hidden group-hover:block' : ''
+                ]"
                 :iconMenu="IconMore"
                 :menuItems="moreMenuItems"
               />
