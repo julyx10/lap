@@ -59,9 +59,7 @@
       </div>
     </div>
 
-    <div>
-      <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
-    </div>
+    <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
 
     <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <div class="flex-1 flex flex-col">
@@ -138,6 +136,54 @@
     </div>
   </div>
 
+  <!-- rename -->
+  <MessageBox
+    v-if="showRenameMsgbox"
+    :title="$t('msgbox_rename_file_title')"
+    :message="$t('msgbox_rename_file_content')"
+    :showInput="true"
+    :inputText="fileList[selectedItemIndex]?.name"
+    :OkText="$t('msgbox_rename_file_ok')"
+    :cancelText="$t('msgbox_cancel')"
+    @ok="clickRenameFile"
+    @cancel="showRenameMsgbox = false"
+  />
+
+  <!-- move to -->
+  <MoveTo
+    v-if="showMoveTo"
+    :title="`${$t('msgbox_move_to_title', { source: '' })}`"
+    :message="$t('msgbox_move_to_content')"
+    :OkText="$t('msgbox_move_to_ok')"
+    :cancelText="$t('msgbox_cancel')"
+    @ok="clickMoveTo"
+    @cancel="showMoveTo = false"
+  />
+
+  <!-- copy to -->
+  <MoveTo
+    v-if="showCopyTo"
+    :title="`${$t('msgbox_copy_to_title', { source: '' })}`"
+    :message="$t('msgbox_copy_to_content')"
+    :OkText="$t('msgbox_copy_to_ok')"
+    :cancelText="$t('msgbox_cancel')"
+    @ok="clickCopyTo"
+    @cancel="showCopyTo = false"
+  />
+
+  <MessageBox
+    v-if="showDeleteMsgbox"
+    :title="$t('msgbox_delete_folder_title')"
+    :message="`${$t('msgbox_delete_folder_content', { folder: '' })}`"
+    :OkText="$t('msgbox_delete_folder_ok')"
+    :cancelText="$t('msgbox_cancel')"
+    :warningOk="true"
+    @ok="clickDeleteFile"
+    @cancel="showDeleteMsgbox = false"
+  />
+
+  <ToolTip ref="toolTipRef" />
+
 </template>
 
 <script setup lang="ts">
@@ -156,6 +202,9 @@ import DropDownMenu from '@/components/DropDownMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
+import MessageBox from '@/components/MessageBox.vue';
+import MoveTo from '@/components/MoveTo.vue';
+import ToolTip from '@/components/ToolTip.vue';
 
 import {
   IconPreview,
@@ -194,7 +243,6 @@ const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const divListView = ref(null);
 
 // file list
-// const originalFileList = ref([]);
 const fileList = ref([]);   // file list by filtering and sorting
 const totalFilesSize = ref(0);   // total files size
 const selectedItemIndex = ref(-1);
@@ -212,6 +260,13 @@ const isDraggingSplitter = ref(false);      // dragging splitter to resize previ
 const previewDiv = ref(null);
 const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
+
+// message box
+const showRenameMsgbox = ref(false);  // show rename message box
+const showMoveTo = ref(false);
+const showCopyTo = ref(false);
+const showDeleteMsgbox = ref(false);
+
 let resizeObserver;
 
 // more menuitems
@@ -250,15 +305,15 @@ const moreMenuItems = computed(() => {
       label: "-",   // separator
       action: null
     },
-    // {
-    //   label: localeMsg.value.menu_item_move_to,
-    //   icon: IconMoveTo,
-    //   action: () => {}
-    // },
-    // {
-    //   label: localeMsg.value.menu_item_copy_to,
-    //   action: () => {}
-    // },
+    {
+      label: localeMsg.value.menu_item_move_to,
+      icon: IconMoveTo,
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu_item_copy_to,
+      action: () => {}
+    },
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
@@ -335,6 +390,18 @@ onMounted( async() => {
         break;
       case 'update-image-viewer':
         openImageViewer(selectedItemIndex.value, false);
+        break;
+      case 'rename':
+        showRenameMsgbox.value = true;
+        break;
+      case 'move-to':
+        showMoveTo.value = true;
+        break;
+      case 'copy-to':
+        showCopyTo.value = true;
+        break;
+      case 'delete':
+        showDeleteMsgbox.value = true;
         break;
       default:
         break;
@@ -580,7 +647,6 @@ function refreshFileList() {
   if(fileList.value.length > 0) {
     selectedItemIndex.value = 0;
 
-    // filterFileList(originalFileList.value, searchText.value);
     sortFileList(fileList.value, config.sortingType, config.sortingDirection);
     getFileThumb(fileList.value); 
   } else {
@@ -798,6 +864,48 @@ function handleMouseMove(event) {
     // Limit width between 20% and 80%
     config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
   }
+}
+
+// click rename menu item
+const clickRenameFile = async (newName) => {
+  if(selectedItemIndex.value >= 0) {
+    const file = fileList.value[selectedItemIndex.value];
+    console.log('clickRenameFile:', file.id, file.file_path, newName);
+    const result = await invoke('rename_file', { fileId: file.id, filePath: file.file_path, newName });
+    if(result) {
+      file.name = newName;
+      showRenameMsgbox.value = false;
+    }
+  }
+}
+
+// click move to menu item
+const clickMoveTo = async () => {
+  console.log('clickMoveTo:', selectedItemIndex.value);
+  if(selectedItemIndex.value >= 0) {
+    showMoveTo.value = false;
+  }
+}
+
+// click copy to menu item
+const clickCopyTo = async () => {
+  console.log('clickCopyTo:', selectedItemIndex.value);
+  if(selectedItemIndex.value >= 0) {
+    showCopyTo.value = false;
+  }
+}
+
+// click delete menu item
+const clickDeleteFile = async () => {
+  console.log('clickDeleteFile:', selectedItemIndex.value);
+//   if(selectedItemIndex.value >= 0) {
+//     const file = fileList.value[selectedItemIndex.value];
+//     const result = await invoke('delete_file', { fileId: file.id });
+//     if(result) {
+//       deleteFile(selectedItemIndex.value);
+//       showDeleteMsgbox.value = false;
+//     }
+//   }
 }
 
 </script>

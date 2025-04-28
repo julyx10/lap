@@ -224,7 +224,7 @@ const moreMenuItems = computed(() => {
       icon: IconRename,
       // shortcut: 'F2',
       action: () => {
-        console.log('Rename:', selectedIndex.value);
+        emit('message-from-grid-view', { message: 'rename' });
       }
     },
     // {

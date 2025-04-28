@@ -15,7 +15,7 @@
         <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'my-1 mx-1 pr-2 h-8 flex items-center rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group', 
+              'my-1 mr-1 pr-1 h-8 flex items-center rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group', 
               { 
                 't-color-bg-hover': !isDragging && !isEditList,
                 't-color-text-selected': selectedAlbumId === album.id, 

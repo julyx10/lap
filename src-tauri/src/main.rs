@@ -70,6 +70,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            // album
             t_cmds::get_all_albums,
             t_cmds::get_album,
             t_cmds::add_album,
@@ -78,24 +79,28 @@ fn main() {
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
 
+            // favorite
             t_cmds::get_favorite_folders,
             
-            t_cmds::create_folder,
-            t_cmds::rename_folder,
-            t_cmds::delete_folder,
-            // t_cmds::get_folder_parents,
+            // folder
             t_cmds::select_folder,
             t_cmds::fetch_folder,
-            t_cmds::get_folder_favorite,
-            t_cmds::set_folder_favorite,
-
+            t_cmds::count_folder,
+            t_cmds::create_folder,
+            t_cmds::rename_folder,
             t_cmds::move_folder,
             t_cmds::copy_folder,
+            t_cmds::delete_folder,
+            t_cmds::get_folder_favorite,
+            t_cmds::set_folder_favorite,
+            // t_cmds::get_folder_parents,
+            t_cmds::get_folder_files,
+
+            // file
+            t_cmds::rename_file,
             t_cmds::move_files,
             t_cmds::copy_files,
-            t_cmds::get_folder_files,
-            t_cmds::count_folder,
-
+            t_cmds::delete_files,
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,
             t_cmds::get_file_image,
@@ -106,9 +111,12 @@ fn main() {
             t_cmds::get_all_files,
             t_cmds::get_files_by_date,
             t_cmds::get_files_by_date_range,
+
+            // camera
             t_cmds::get_camera_info,
             t_cmds::get_camera_files,
 
+            // print
             t_cmds::print_image,
         ])
         .run(tauri::generate_context!())

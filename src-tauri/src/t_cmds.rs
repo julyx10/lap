@@ -82,6 +82,25 @@ pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
         .map_err(|e| format!("Error while fetching favorite folders: {}", e))
 }
 
+// click to select a sub-folder under an album
+#[tauri::command]
+pub fn select_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
+    AFolder::add_to_db(album_id, parent_id, folder_path)
+        .map_err(|e| format!("Error while adding folder to DB: {}", e))
+}
+
+/// fetch folder and build a FileNode
+#[tauri::command]
+pub fn fetch_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode, String> {
+    t_utils::FileNode::build_nodes(path, is_recursive)
+}
+
+/// count all files in a folder
+#[tauri::command]
+pub fn count_folder(path: &str) -> (u64, u64, u64, u64, u64) {
+    t_utils::count_folder_files(path) 
+}
+
 /// create a new folder
 #[tauri::command]
 pub fn create_folder(path: &str, folder_name: &str) -> Option<String> {
@@ -104,59 +123,6 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
         }
         None => None,
     }
-}
-
-/// delete a folder
-/// return the number of files and folders deleted
-#[tauri::command]
-pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
-    // Delete the folder from the file system
-    if t_utils::delete_folder(folder_path) {
-        // delete the folder from db
-        AFolder::delete_folder(folder_path)
-            .map_err(|e| format!("Failed to delete folder from database: {}", e))
-    } else {
-        Err("Failed to delete folder from file system".to_string())
-    }
-}
-
-// get all parent folders of a folder
-// #[tauri::command]
-// pub fn get_folder_parents(folder_id: i64) -> Result<Vec<i64>, String> {
-//     AFolder::recurse_all_parents_id(folder_id)
-//         .map_err(|e| format!("Error while recursing all parent folders from DB: {}", e))
-// }
-
-// click to select a sub-folder under an album
-#[tauri::command]
-pub fn select_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {
-    AFolder::add_to_db(album_id, parent_id, folder_path)
-        .map_err(|e| format!("Error while adding folder to DB: {}", e))
-}
-
-/// fetch folder and build a FileNode
-#[tauri::command]
-pub fn fetch_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode, String> {
-    t_utils::FileNode::build_nodes(path, is_recursive)
-}
-
-/// get a folder's favorite
-#[tauri::command]
-pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
-    let is_favorite_opt = AFolder::get_is_favorite(folder_path)
-        .map_err(|e| format!("Error while fetching folder favorite: {}", e))?;
-
-    match is_favorite_opt {
-        Some(val) => Ok(val),
-        None => Ok(false), // Default to false if not found
-    }
-}
-
-/// set a folder's favorite
-#[tauri::command]
-pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, String> {
-    AFolder::update_column(folder_id, "is_favorite", &is_favorite)
-        .map_err(|e| format!("Error while setting folder favorite: {}", e))
 }
 
 /// move a folder
@@ -182,6 +148,59 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     t_utils::copy_folder(folder_path, new_folder_path)
 }
 
+
+/// delete a folder
+/// return the number of files and folders deleted
+#[tauri::command]
+pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
+    // Delete the folder from the file system
+    if t_utils::delete_folder(folder_path) {
+        // delete the folder from db
+        AFolder::delete_folder(folder_path)
+            .map_err(|e| format!("Failed to delete folder from database: {}", e))
+    } else {
+        Err("Failed to delete folder from file system".to_string())
+    }
+}
+
+/// get a folder's favorite
+#[tauri::command]
+pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
+    let is_favorite_opt = AFolder::get_is_favorite(folder_path)
+        .map_err(|e| format!("Error while fetching folder favorite: {}", e))?;
+
+    match is_favorite_opt {
+        Some(val) => Ok(val),
+        None => Ok(false), // Default to false if not found
+    }
+}
+
+/// set a folder's favorite
+#[tauri::command]
+pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, String> {
+    AFolder::update_column(folder_id, "is_favorite", &is_favorite)
+        .map_err(|e| format!("Error while setting folder favorite: {}", e))
+}
+
+/// get all files from the folder
+#[tauri::command]
+pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
+    t_utils::get_folder_files(folder_id, path)
+}
+
+/// rename a file
+#[tauri::command]
+pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Result<bool, String> {
+    if t_utils::rename_file(file_path, new_name) {
+        match AFile::update_column(file_id, "name", &new_name) {
+            Ok(_) => return Ok(true),
+            Err(e) => return Err(format!("Error while renaming file in DB: {}", e)),
+        }
+    } else {
+        Err("Failed to rename file in the file system".to_string())
+    }
+}
+
 /// move files to a folder
 #[tauri::command]
 pub fn move_files(file_paths: Vec<String>, new_folder_path: &str) -> Vec<String> {
@@ -194,16 +213,10 @@ pub fn copy_files(file_paths: Vec<String>, new_folder_path: &str) -> Vec<String>
     t_utils::copy_files(file_paths, new_folder_path)
 }
 
-/// get all files from the folder
+/// delete files
 #[tauri::command]
-pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
-    t_utils::get_folder_files(folder_id, path)
-}
-
-/// count all files in a folder
-#[tauri::command]
-pub fn count_folder(path: &str) -> (u64, u64, u64, u64, u64) {
-    t_utils::count_folder_files(path) 
+pub fn delete_files(file_paths: Vec<String>) -> Vec<String> {
+    t_utils::delete_files(file_paths)
 }
 
 /// get a file's thumb image

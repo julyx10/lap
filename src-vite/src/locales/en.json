@@ -25,7 +25,7 @@
   "msgbox_ok": "OK",
   "msgbox_cancel": "Cancel",
 
-  "msgbox_input_filename_error": "File names cannot contain the following characters: \\ / : * ? \" < > |.",
+  "msgbox_input_filename_error": "File name cannot contain the following characters: \\ / : * ? \" < > |.",
 
   "msgbox_remove_album_title": "Remove from albums?",
   "msgbox_remove_album_content": "'{album}' will be removed from the albums. This action will not delete the actual files.",
@@ -56,6 +56,11 @@
   "msgbox_copy_to_content": "Select the destination folder:",
   "msgbox_copy_to_ok": "Copy",
   "msgbox_copy_to_error": "Cannot copy the folder.",
+
+  "msgbox_rename_file_title": "Rename file",
+  "msgbox_rename_file_content": "Enter the new file name:",
+  "msgbox_rename_file_ok": "Rename",
+  "msgbox_rename_file_error": "Cannot rename the file.",
 
   "msgbox_delete_file_title": "Delete file",
   "msgbox_delete_file_content": "The file '{file}' will be deleted. This action cannot be undone.",

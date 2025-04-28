@@ -6,7 +6,7 @@
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
 
-      <IconOk v-if="isEditList" class="mx-1 t-icon-size-sm t-icon-hover" @click="clickOk" />
+      <IconOk v-if="isEditList" class="t-icon-size-sm t-icon-hover" @click="clickOk" />
       <DropDownMenu v-else :iconMenu="IconMore" :menuItems="moreMenuItems" />
     </div>
 

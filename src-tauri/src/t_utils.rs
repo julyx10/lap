@@ -484,6 +484,66 @@ pub fn copy_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
     copied_files
 }
 
+/// rename a file
+pub fn rename_file(file_path: &str, new_file_name: &str) -> bool {
+    let path = Path::new(file_path);
+
+    // Check if the file exists
+    if !path.exists() {
+        eprintln!("File does not exist: {}", file_path);
+        return false;
+    }
+
+    // Construct the new file path
+    let mut new_file_path = path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf();
+    new_file_path.push(new_file_name);
+    
+    // Check if the new file name already exists
+    if new_file_path.exists() {
+        eprintln!("Target file already exists: {}", new_file_path.to_string_lossy());
+        return false;
+    }
+
+    // Attempt to rename the file
+    match fs::rename(path, &new_file_path) {
+        Ok(_) => {
+            let new_path_str = new_file_path.to_string_lossy().into_owned();
+            println!("File renamed successfully: {}", new_path_str);
+            true
+        }
+        Err(e) => {
+            eprintln!("Failed to rename file '{}': {}", file_path, e);
+            false
+        }
+    }
+}
+
+/// delete a list of files
+pub fn delete_files(files: Vec<String>) -> Vec<String> {
+    let mut deleted_files = Vec::new();
+
+    for file in files {
+        let path = Path::new(&file);
+
+        if !path.exists() {
+            eprintln!("File does not exist: {}", file);
+            continue;
+        }
+
+        match fs::remove_file(&path) {
+            Ok(_) => {
+                println!("File deleted successfully: {}", file);
+                deleted_files.push(file);
+            }
+            Err(e) => {
+                eprintln!("Failed to delete file '{}': {}", file, e);
+            }
+        }
+    }
+
+    deleted_files
+}
+
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances
 pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
