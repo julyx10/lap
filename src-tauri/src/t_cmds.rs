@@ -200,6 +200,12 @@ pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
     t_utils::get_folder_files(folder_id, path)
 }
 
+/// count all files in a folder
+#[tauri::command]
+pub fn count_folder(path: &str) -> (u64, u64, u64, u64, u64) {
+    t_utils::count_folder_files(path) 
+}
+
 /// get a file's thumb image
 #[tauri::command]
 pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<AThumb>, String> {

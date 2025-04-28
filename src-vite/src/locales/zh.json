@@ -11,6 +11,17 @@
 
   "no_albums": "相册为空，点击添加按钮添加相册",
 
+  "album_info_title": "相册属性",
+  "album_info_name": "名称",
+  "album_info_description": "描述", 
+  "album_info_description_placeholder": "输入相册描述",
+  "album_info_folder": "文件夹",
+  "album_info_images": "图片",
+  "album_info_videos": "视频",
+  "album_info_files_count": "{count} 个文件 ({size})",
+  "album_info_created_time": "创建时间",
+  "album_info_modified_time": "修改时间",
+
   "msgbox_ok": "确定",
   "msgbox_cancel": "取消",
 
@@ -19,11 +30,6 @@
   "msgbox_remove_album_title": "从相册中移除?",
   "msgbox_remove_album_content": "'{album}' 将从相册中移除。此操作不会删除实际文件。",
   "msgbox_remove_album_ok": "移除",
-
-  "msgbox_rename_album_title": "重命名相册",
-  "msgbox_rename_album_content": "输入相册的新名称:",
-  "msgbox_rename_album_ok": "重命名",
-  "msgbox_rename_album_error": "无法重命名相册。",
 
   "msgbox_rename_folder_title": "重命名文件夹",
   "msgbox_rename_folder_content": "输入文件夹的新名称:",
@@ -98,7 +104,6 @@
   "menu_item_reveal_in_file_explorer": "在文件管理器中显示",
   "menu_item_reveal_in_finder": "在访达中显示",
   "menu_item_properties": "属性",
-  "menu_item_show_info": "显示信息",
   "menu_item_add_folder": "添加文件夹",
   "menu_item_add_url": "添加URL",
   "menu_item_edit_list": "编辑列表",

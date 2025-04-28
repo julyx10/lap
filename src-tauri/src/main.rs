@@ -94,6 +94,7 @@ fn main() {
             t_cmds::move_files,
             t_cmds::copy_files,
             t_cmds::get_folder_files,
+            t_cmds::count_folder,
 
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,

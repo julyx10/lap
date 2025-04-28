@@ -11,6 +11,17 @@
 
   "no_albums": "アルバムが空です。追加ボタンを押してアルバムを追加してください。",
 
+  "album_info_title": "アルバムのプロパティ",
+  "album_info_name": "名前",
+  "album_info_description": "説明",
+  "album_info_description_placeholder": "アルバムの説明を入力してください",
+  "album_info_folder": "フォルダ",
+  "album_info_images": "画像",
+  "album_info_videos": "動画",
+  "album_info_files_count": "{count} ファイル ({size})",
+  "album_info_created_time": "作成日",
+  "album_info_modified_time": "変更日",
+
   "msgbox_ok": "OK",
   "msgbox_cancel": "キャンセル",
 
@@ -19,11 +30,6 @@
   "msgbox_remove_album_title": "アルバムから削除しますか?",
   "msgbox_remove_album_content": "'{album}' はアルバムから削除されます。この操作は実際のファイルを削除しません。",
   "msgbox_remove_album_ok": "削除",
-
-  "msgbox_rename_album_title": "アルバムの名前を変更",
-  "msgbox_rename_album_content": "アルバムの新しい名前を入力してください:",
-  "msgbox_rename_album_ok": "変更",
-  "msgbox_rename_album_error": "アルバムの名前を変更できません。",
 
   "msgbox_rename_folder_title": "フォルダの名前を変更",
   "msgbox_rename_folder_content": "フォルダの新しい名前を入力してください:",
@@ -98,7 +104,6 @@
   "menu_item_reveal_in_file_explorer": "ファイルエクスプローラーで表示",
   "menu_item_reveal_in_finder": "Finderで表示",
   "menu_item_properties": "プロパティ",
-  "menu_item_show_info": "情報を表示",
   "menu_item_add_folder": "フォルダを追加",
   "menu_item_add_url": "URLを追加",
   "menu_item_edit_list": "リストを編集",

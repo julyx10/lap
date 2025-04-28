@@ -90,7 +90,7 @@
           >
             {{
               selectMode 
-                ? $t('file_list_select_count', { count: selectedCount }) + ' (' + formatFileSize(selectedSize) + ')'
+                ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
                 : fileList[selectedItemIndex]?.name + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')' 
             }}
           </div>

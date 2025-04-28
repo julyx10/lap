@@ -66,16 +66,16 @@
       {{ $t('no_albums') }}
     </div>
 
-    <!-- edit album profile -->
-    <AlbumProfile
-      v-if="showAlbumProfile"
+    <!-- edit album information -->
+    <AlbumInfo
+      v-if="showAlbumInfo"
       :inputName="getAlbumById(albumId).name"
       :inputDescription="getAlbumById(albumId).description"
       :albumPath="getAlbumById(albumId).path"
       :createdAt="formatTimestamp(getAlbumById(albumId).created_at, $t('date_time_format'))"
       :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('date_time_format'))"
-      @ok="clickAlbumProfile"
-      @cancel="showAlbumProfile = false"
+      @ok="clickAlbumInfo"
+      @cancel="showAlbumInfo = false"
     />
     
     <!-- new folder -->
@@ -119,13 +119,12 @@ import { config, isMac, openShellFolder, scrollToFolder, formatTimestamp } from 
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, createFolder, selectFolder, fetchFolder, expandFinalFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
-import AlbumProfile from '@/components/AlbumProfile.vue';
+import AlbumInfo from '@/components/AlbumInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
 
 import {
-  IconEdit,
   IconFolder,
   IconFolderExpanded,
   IconNewFolder,
@@ -133,6 +132,8 @@ import {
   IconRefresh,
   IconDragHandle,
   IconRemove,
+  IconProperties,
+  IconExternal
 } from '@/common/icons';
 
 const props = defineProps({
@@ -165,7 +166,7 @@ const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
 // message boxes
-const showAlbumProfile = ref(false);
+const showAlbumInfo = ref(false);
 // const showRenameMsgbox = ref(false);
 const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
@@ -186,17 +187,6 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu_item_edit,
-      icon: IconEdit,
-      action: () => {
-        showAlbumProfile.value = true;
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
       label: localeMsg.value.menu_item_new_folder,
       icon: IconNewFolder,
       action: () => {
@@ -205,9 +195,16 @@ const moreMenuItems = computed(() => {
     },
     {
       label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
-      // icon: IconOpenFolder,
+      // icon: IconExternal,
       action: () => {
         openShellFolder(getAlbumById(selectedAlbumId.value).path);
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_properties,
+      icon: IconProperties,
+      action: () => {
+        showAlbumInfo.value = true;
       }
     },
     {
@@ -221,7 +218,7 @@ const moreMenuItems = computed(() => {
         const album = getAlbumById(selectedAlbumId.value);
         await expandAlbum(album, true);
       }
-    }
+    },
   ];
 });
 
@@ -299,14 +296,14 @@ const clickNewAlbum = async () => {
   }
 };
 
-/// edit album profile
-const clickAlbumProfile = async (newName, newDescription) => {
+/// edit album information
+const clickAlbumInfo = async (newName, newDescription) => {
   const result = await editAlbum(selectedAlbumId.value, newName, newDescription);
   if(result) {
     let album = getAlbumById(selectedAlbumId.value);
     album.name = newName;
     album.description = newDescription;
-    showAlbumProfile.value = false;
+    showAlbumInfo.value = false;
   }
 };
 

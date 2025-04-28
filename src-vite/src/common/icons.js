@@ -57,6 +57,7 @@ export { default as IconRefresh } from '@/assets/icons/refresh.svg';
 export { default as IconRotate } from '@/assets/icons/rotate-right.svg';
 export { default as IconSeparator } from '@/assets/icons/separator.svg';
 export { default as IconDragHandle } from '@/assets/icons/drag-handle.svg';
+export { default as IconExternal } from '@/assets/icons/external.svg';
 export { default as IconOk } from '@/assets/icons/ok.svg';
 
 // ======================
@@ -85,7 +86,7 @@ export { default as IconPeople } from '@/assets/icons/user.svg';
 export { default as IconCamera } from '@/assets/icons/camera.svg';
 export { default as IconSettings } from '@/assets/icons/settings.svg';
 export { default as IconPhoto } from '@/assets/icons/photo.svg';
-export { default as IconFileInfo } from '@/assets/icons/information.svg';
+export { default as IconProperties } from '@/assets/icons/information.svg';
 
 // ======================
 // MEDIA CONTROL ICONS

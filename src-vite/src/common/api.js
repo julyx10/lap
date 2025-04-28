@@ -338,6 +338,19 @@ export async function getAllFiles(isFavorite = false, offset = 0, pageSize = con
   return null
 }
 
+/// recurse all files under the path, and count the number of files
+export async function countFolder(path) {
+  try {
+    const result = await invoke('count_folder', { path });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('countFolder error:', error);
+  }
+  return null;
+}
+
 /// get all files of calendar
 export async function getCalendarFiles(year, month, date) {
   try {

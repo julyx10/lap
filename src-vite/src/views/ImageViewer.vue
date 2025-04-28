@@ -223,7 +223,7 @@ import {
   IconDelete,
   IconCopy,
   IconMoveTo,
-  IconFileInfo,
+  IconProperties,
   IconFullScreen,
   IconRestoreScreen,
   IconPin,
@@ -327,7 +327,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu_item_properties,
-      icon: IconFileInfo,
+      icon: IconProperties,
       shortcut: 'I',
       action: () => {
         clickShowFileInfo();

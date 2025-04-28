@@ -484,7 +484,7 @@ pub fn copy_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
     copied_files
 }
 
-/// Get all files in a folder
+/// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances
 pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
     let mut files: Vec<AFile> = Vec::new();
@@ -514,6 +514,34 @@ pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
     }
 
     files
+}
+
+/// get folder and file count and total file size (include all sub-folders)
+pub fn count_folder_files(path: &str) -> (u64, u64, u64, u64, u64) {
+    let mut folder_count = 0;
+    let mut image_file_count = 0;
+    let mut total_image_size = 0;
+    let mut video_file_count = 0;
+    let mut total_video_size = 0;
+
+    // Use WalkDir to iterate over directory entries
+    for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
+        if entry.file_type().is_dir() {
+            folder_count += 1;
+        } else if entry.file_type().is_file() {
+            if let Some(extension) = entry.path().extension().and_then(|ext| ext.to_str()) {
+                if is_image_extension(extension) {
+                    image_file_count += 1;
+                    total_image_size += entry.metadata().map(|m| m.len()).unwrap_or(0);
+                } else if is_video_extension(extension) {
+                    video_file_count += 1;
+                    total_video_size += entry.metadata().map(|m| m.len()).unwrap_or(0);
+                }
+            }
+        }
+    }
+
+    (folder_count, image_file_count, total_image_size, video_file_count, total_video_size)
 }
 
 /// Get the name from a folder or file path

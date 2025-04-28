@@ -1,7 +1,7 @@
 <template>
     
   <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
-    <div class="min-w-96 min-h-96 max-w-[50%] max-h-[80%] p-4 flex flex-col t-color-bg-light rounded-lg shadow-lg overflow-auto t-scrollbar">
+    <div class="min-w-96 min-h-96 max-w-[50%] max-h-[80%] p-4 flex flex-col t-color-bg-light border t-color-border rounded-lg shadow-lg overflow-auto t-scrollbar">
 
       <!-- titlebar -->
       <div class="mb-2 flex items-center justify-between">
