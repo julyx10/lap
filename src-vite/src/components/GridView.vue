@@ -212,7 +212,7 @@ const moreMenuItems = computed(() => {
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
-        console.log('Copy:', selectedIndex.value);
+        emit('message-from-grid-view', { message: 'copy' });
       }
     },
     {
@@ -222,7 +222,6 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_rename,
       icon: IconRename,
-      // shortcut: 'F2',
       action: () => {
         emit('message-from-grid-view', { message: 'rename' });
       }
@@ -246,14 +245,14 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
       action: () => {
-        console.log('Move to:', selectedIndex.value);
+        emit('message-from-grid-view', { message: 'move-to' });
       }
     },
     {
       label: localeMsg.value.menu_item_copy_to,
       // icon: IconCopyTo,
       action: () => {
-        console.log('Copy to:', selectedIndex.value);
+        emit('message-from-grid-view', { message: 'copy-to' });
       }
     },
     {
@@ -261,7 +260,8 @@ const moreMenuItems = computed(() => {
       icon: IconDelete,
       shortcut: isMac ? '⌫' : 'Del',
       action: () => {
-        deleteItem(selectedIndex.value);
+        emit('message-from-grid-view', { message: 'delete' });
+        // deleteItem(selectedIndex.value);
       }
     },
     {

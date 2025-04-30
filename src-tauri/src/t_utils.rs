@@ -197,7 +197,7 @@ pub fn is_image_extension(extension: &str) -> bool {
 #[allow(dead_code)]
 pub fn is_video_extension(extension: &str) -> bool {
     match extension.to_lowercase().as_str() {
-        "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => true,
+        "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => true,
         _ => false,
     }
 }
@@ -206,7 +206,7 @@ pub fn is_video_extension(extension: &str) -> bool {
 #[allow(dead_code)]
 pub fn is_music_extension(extension: &str) -> bool {
     match extension.to_lowercase().as_str() {
-        "mp3" | "wav" | "flac" | "m4a" | "ogg" | "wma" | "aac" | "ac3" => true,
+        "mp3" | "wav" | "flac" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => true,
         _ => false,
     }
 }
@@ -217,6 +217,7 @@ pub fn create_new_folder(folder_path: &str) -> Option<String> {
     let path = Path::new(folder_path);
 
     if path.exists() {
+        eprintln!("Folder already exists: {}", folder_path);
         return None;
     }
 
@@ -227,7 +228,7 @@ pub fn create_new_folder(folder_path: &str) -> Option<String> {
             Some(folder_name)
         },
         Err(e) => {
-            println!("Failed to create folder '{}': {}", folder_path, e);
+            eprintln!("Failed to create folder '{}': {}", folder_path, e);
             return None;
         }
     }

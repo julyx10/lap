@@ -145,14 +145,16 @@
     :inputText="renamingFileName.name"
     :OkText="$t('msgbox_rename_file_ok')"
     :cancelText="$t('msgbox_cancel')"
+    :errorMessage="errorMessage"
     @ok="clickRenameFile"
     @cancel="showRenameMsgbox = false"
+    @reset="errorMessage = ''"
   />
 
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox_move_to_title', { source: '' })}`"
+    :title="`${$t('msgbox_move_to_title', { source: selectMode ? '' : fileList[selectedItemIndex].name })}`"
     :message="$t('msgbox_move_to_content')"
     :OkText="$t('msgbox_move_to_ok')"
     :cancelText="$t('msgbox_cancel')"
@@ -163,7 +165,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox_copy_to_title', { source: '' })}`"
+    :title="`${$t('msgbox_copy_to_title', { source: selectMode ? '' : fileList[selectedItemIndex].name })}`"
     :message="$t('msgbox_copy_to_content')"
     :OkText="$t('msgbox_copy_to_ok')"
     :cancelText="$t('msgbox_cancel')"
@@ -171,11 +173,12 @@
     @cancel="showCopyTo = false"
   />
 
+  <!-- delete -->
   <MessageBox
     v-if="showDeleteMsgbox"
-    :title="$t('msgbox_delete_folder_title')"
-    :message="`${$t('msgbox_delete_folder_content', { folder: '' })}`"
-    :OkText="$t('msgbox_delete_folder_ok')"
+    :title="$t('msgbox_delete_file_title')"
+    :message="`${$t('msgbox_delete_file_content', { file: selectMode ? '' : fileList[selectedItemIndex].name })}`"
+    :OkText="$t('msgbox_delete_file_ok')"
     :cancelText="$t('msgbox_cancel')"
     :warningOk="true"
     @ok="clickDeleteFile"
@@ -268,6 +271,10 @@ const renamingFileName = ref({}); // extract the file name to {name, ext}
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showDeleteMsgbox = ref(false);
+const errorMessage = ref('');
+
+const toolTipRef = ref(null);
+
 
 let resizeObserver;
 
@@ -393,6 +400,8 @@ onMounted( async() => {
       case 'update-image-viewer':
         openImageViewer(selectedItemIndex.value, false);
         break;
+      case 'copy':
+        console.log('copy:', selectedItemIndex.value);
       case 'rename':
         renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
         showRenameMsgbox.value = true;
@@ -880,6 +889,9 @@ const clickRenameFile = async (newName) => {
       file.name = fileName;
       file.file_path = newFilePath;
       showRenameMsgbox.value = false;
+      errorMessage.value = '';
+    } else {
+      errorMessage.value = localeMsg.value.msgbox_rename_file_error;
     }
   }
 }
