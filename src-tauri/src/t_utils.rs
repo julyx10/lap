@@ -485,13 +485,13 @@ pub fn copy_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
 }
 
 /// rename a file
-pub fn rename_file(file_path: &str, new_file_name: &str) -> bool {
+pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
     let path = Path::new(file_path);
 
     // Check if the file exists
     if !path.exists() {
         eprintln!("File does not exist: {}", file_path);
-        return false;
+        return None;
     }
 
     // Construct the new file path
@@ -501,7 +501,7 @@ pub fn rename_file(file_path: &str, new_file_name: &str) -> bool {
     // Check if the new file name already exists
     if new_file_path.exists() {
         eprintln!("Target file already exists: {}", new_file_path.to_string_lossy());
-        return false;
+        return None;
     }
 
     // Attempt to rename the file
@@ -509,11 +509,11 @@ pub fn rename_file(file_path: &str, new_file_name: &str) -> bool {
         Ok(_) => {
             let new_path_str = new_file_path.to_string_lossy().into_owned();
             println!("File renamed successfully: {}", new_path_str);
-            true
+            Some(new_path_str)
         }
         Err(e) => {
             eprintln!("Failed to rename file '{}': {}", file_path, e);
-            false
+            None
         }
     }
 }

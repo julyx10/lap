@@ -105,15 +105,15 @@ export async function removeAlbum(albumId) {
 // rename a file
 export async function renameFile(fileId, filePath, newName) {
   try {
-    const result = await invoke('rename_file', { fileId, filePath, newName });
-    console.log('rename_file', filePath);
-    if (result) {
-      return true;
+    const newFileName = await invoke('rename_file', { fileId, filePath, newName });
+    console.log('rename_file', newFileName);
+    if (newFileName) {
+      return newFileName;
     }
   } catch (error) {
     console.log('Failed to rename file:', error);
   }
-  return false;
+  return null;
 }
 
 // set display order 

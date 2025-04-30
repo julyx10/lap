@@ -57,6 +57,11 @@
   "msgbox_copy_to_ok": "コピー",
   "msgbox_copy_to_error": "フォルダをコピーできません。",
 
+  "msgbox_rename_file_title": "ファイルの名前を変更",
+  "msgbox_rename_file_content": "ファイルの新しい名前を入力してください:",
+  "msgbox_rename_file_ok": "変更",
+  "msgbox_rename_file_error": "ファイルの名前を変更できません。",
+  
   "msgbox_delete_file_title": "ファイルを削除",
   "msgbox_delete_file_content": "ファイル '{file}' が削除されます。この操作は元に戻すことができません。",
   "msgbox_delete_file_ok": "削除",

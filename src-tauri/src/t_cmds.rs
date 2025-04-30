@@ -190,14 +190,20 @@ pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
 
 /// rename a file
 #[tauri::command]
-pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Result<bool, String> {
-    if t_utils::rename_file(file_path, new_name) {
-        match AFile::update_column(file_id, "name", &new_name) {
-            Ok(_) => return Ok(true),
-            Err(e) => return Err(format!("Error while renaming file in DB: {}", e)),
-        }
-    } else {
-        Err("Failed to rename file in the file system".to_string())
+pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Option<String> {
+    match t_utils::rename_file(file_path, new_name) {
+        Some(new_file_path) => {
+            match AFile::update_column(file_id, "name", &new_name) {
+                Ok(_) => {
+                    Some(new_file_path)
+                },
+                Err(e) => {
+                    eprintln!("Error while renaming file in DB: {}", e);
+                    None
+                }
+            }
+        },
+        None => None
     }
 }
 

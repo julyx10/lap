@@ -142,7 +142,7 @@
     :title="$t('msgbox_rename_file_title')"
     :message="$t('msgbox_rename_file_content')"
     :showInput="true"
-    :inputText="fileList[selectedItemIndex]?.name"
+    :inputText="renamingFileName.name"
     :OkText="$t('msgbox_rename_file_ok')"
     :cancelText="$t('msgbox_cancel')"
     @ok="clickRenameFile"
@@ -194,7 +194,7 @@ import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles } from '@/common/api';
-import { config, isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp } from '@/common/utils';
+import { config, isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp, extractFileName, combineFileName } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -263,6 +263,8 @@ const imageSrc = ref('');         // preview image source
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
+const renamingFileName = ref({}); // extract the file name to {name, ext}
+
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showDeleteMsgbox = ref(false);
@@ -392,6 +394,7 @@ onMounted( async() => {
         openImageViewer(selectedItemIndex.value, false);
         break;
       case 'rename':
+        renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
         showRenameMsgbox.value = true;
         break;
       case 'move-to':
@@ -870,10 +873,12 @@ function handleMouseMove(event) {
 const clickRenameFile = async (newName) => {
   if(selectedItemIndex.value >= 0) {
     const file = fileList.value[selectedItemIndex.value];
-    console.log('clickRenameFile:', file.id, file.file_path, newName);
-    const result = await invoke('rename_file', { fileId: file.id, filePath: file.file_path, newName });
-    if(result) {
-      file.name = newName;
+    const fileName = combineFileName(newName, renamingFileName.value.ext);
+    const newFilePath = await invoke('rename_file', { fileId: file.id, filePath: file.file_path, newName: fileName });
+    console.log('clickRenameFile:', newFilePath);
+    if(newFilePath) {
+      file.name = fileName;
+      file.file_path = newFilePath;
       showRenameMsgbox.value = false;
     }
   }

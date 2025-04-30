@@ -60,6 +60,22 @@ export function getRelativePath(path: string, basePath: string): string {
   return path.replace(basePath, '').split(separator).join(' > ');;
 }
 
+/// extract the name and the extension from a file name
+export function extractFileName(fileName: string): { name: string; ext: string } {
+  const lastDotIndex = fileName.lastIndexOf('.');
+  if (lastDotIndex === -1) {
+    return { name: fileName, ext: '' };
+  }
+  const name = fileName.substring(0, lastDotIndex);
+  const ext = fileName.substring(lastDotIndex + 1);
+  return { name, ext };
+}
+
+/// combine the name and the extension to a file name
+export function combineFileName(name: string, ext: string): string {
+  return ext ? `${name}.${ext}` : name;
+}
+
 /// shorten a filename while preserving its extension
 export function shortenFilename(fileName: string, maxLength = 16): string {
   const extIndex = fileName.lastIndexOf('.');

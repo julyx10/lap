@@ -57,6 +57,11 @@
   "msgbox_copy_to_ok": "复制",
   "msgbox_copy_to_error": "无法复制文件夹。",
 
+  "msgbox_rename_file_title": "重命名文件",
+  "msgbox_rename_file_content": "输入文件的新名称:",
+  "msgbox_rename_file_ok": "重命名",
+  "msgbox_rename_file_error": "无法重命名文件。",
+
   "msgbox_delete_file_title": "删除文件",
   "msgbox_delete_file_content": "文件 '{file}' 将被删除。此操作无法撤销。",
   "msgbox_delete_file_ok": "删除",
