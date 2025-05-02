@@ -1,7 +1,7 @@
 <template>
 
   <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
-    <div class="w-96 p-4 t-color-bg-light border t-color-border rounded-lg shadow-lg">
+    <div class="p-4 t-color-bg-light border t-color-border rounded-lg shadow-lg">
       <div class="mb-2 flex items-center justify-between">
         {{ title }}
         <IconClose class="t-icon-size-sm t-icon-hover" @click="clickCancel" />
@@ -20,7 +20,7 @@
         <p class="h-4 text-red-600 text-xs">{{ inputErrorMessage }}</p>
       </div>
 
-      <div class="flex justify-end space-x-4">
+      <div class="pt-2 flex justify-end space-x-4">
         <button v-if="cancelText.length > 0" 
           class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover" 
           @click="clickCancel"

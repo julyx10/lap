@@ -18,7 +18,7 @@
         @click="clickItem(index)"
         @dblclick="openItem(true)"
       >
-        <div class="relative flex flex-col items-center group">
+        <div v-if="!file.is_deleted" class="relative flex flex-col items-center group">
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[

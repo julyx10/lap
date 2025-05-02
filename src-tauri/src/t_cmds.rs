@@ -12,60 +12,46 @@ use crate::t_utils;
 /// get all albums
 #[tauri::command]
 pub fn get_all_albums() -> Result<Vec<Album>, String> {
-    Album::get_all_albums().map_err(|e| format!("Error while fetching albums: {}", e))
+    Album::get_all_albums()
+        .map_err(|e| format!("Error while getting all albums: {}", e))
 }
 
 /// get one album
 #[tauri::command]
 pub fn get_album(album_id: i64) -> Result<Album, String> {
-    Album::get_album_by_id(album_id).map_err(|e| format!("Error while fetching album info: {}", e))
+    Album::get_album_by_id(album_id)
+        .map_err(|e| format!("Error while getting one album: {}", e))
 }
 
 /// add an album
 #[tauri::command]
 pub fn add_album(folder_path: &str) -> Result<Album, String> {
     Album::add_to_db(folder_path)
-        .map_err(|e| format!("Error while adding album to DB: {}", e))
+        .map_err(|e| format!("Error while adding an album to DB: {}", e))
 }
 
 /// edit an album
 #[tauri::command]
 pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, String> {
-    let _ = Album::update_column(id, "name", &name).map_err(|e| {
-        format!(
-            "Error while edit album with id {}: {}",
-            id,
-            e.to_string()
-        )
-    });
+    let _ = Album::update_column(id, "name", &name)
+        .map_err(|e| format!("Error while editing album with id {}: {}", id, e));
 
-    Album::update_column(id, "description", &description).map_err(|e| {
-        format!(
-            "Error while edit album with id {}: {}",
-            id,
-            e.to_string()
-        )
-    })
+    Album::update_column(id, "description", &description)
+        .map_err(|e| format!("Error while editing album with id {}: {}", id, e))
 }
 
 /// rename an album
-#[tauri::command]
-pub fn rename_album(id: i64, name: &str) -> Result<usize, String> {
-    Album::update_column(id, "name", &name).map_err(|e| {
-        format!(
-            "Error while renaming album with id {}: {}",
-            id,
-            e.to_string()
-        )
-    })
-}
+// #[tauri::command]
+// pub fn rename_album(id: i64, name: &str) -> Result<usize, String> {
+//     Album::update_column(id, "name", &name)
+//         .map_err(|e| format!("Error while edit album with id {}: {}", id, e))
+// }
 
 /// remove an album
 #[tauri::command]
 pub fn remove_album(id: i64) -> Result<usize, String> {
-    Album::delete_from_db(id).map_err(|e| {
-        format!("Error while removing album with id {}: {}", id, e.to_string())
-    })
+    Album::delete_from_db(id)
+        .map_err(|e| format!("Error while removing album with id {}: {}", id, e))
 }
 
 /// set album display order
@@ -79,7 +65,7 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
 #[tauri::command]
 pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
     AFolder::get_favorite_folders()
-        .map_err(|e| format!("Error while fetching favorite folders: {}", e))
+        .map_err(|e| format!("Error while getting favorite folders: {}", e))
 }
 
 // click to select a sub-folder under an album
@@ -105,7 +91,7 @@ pub fn count_folder(path: &str) -> (u64, u64, u64, u64, u64) {
 #[tauri::command]
 pub fn create_folder(path: &str, folder_name: &str) -> Option<String> {
     let folder_path = t_utils::get_file_path(path, folder_name);
-    return t_utils::create_new_folder(&folder_path);
+    t_utils::create_new_folder(&folder_path)
 }
 
 /// rename a folder
@@ -167,7 +153,7 @@ pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
 #[tauri::command]
 pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
     let is_favorite_opt = AFolder::get_is_favorite(folder_path)
-        .map_err(|e| format!("Error while fetching folder favorite: {}", e))?;
+        .map_err(|e| format!("Error while getting folder favorite: {}", e))?;
 
     match is_favorite_opt {
         Some(val) => Ok(val),
@@ -207,22 +193,40 @@ pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Option<Stri
     }
 }
 
-/// move files to a folder
+/// move a file to dest folder
 #[tauri::command]
-pub fn move_files(file_paths: Vec<String>, new_folder_path: &str) -> Vec<String> {
-    t_utils::move_files(file_paths, new_folder_path)
+pub fn move_file(file_id: i64, file_path: &str, new_folder_id: i64, new_folder_path: &str) -> Option<String> {
+    let moved_file = t_utils::move_file(file_path, new_folder_path);
+    match moved_file {
+        Some(new_path) => {
+            // update the file's folder_id in the database
+            let _ = AFile::update_column(file_id, "folder_id", &new_folder_id)
+                .map_err(|e| format!("Error while moving file in DB: {}", e));
+            Some(new_path)
+        }
+        None => None,
+    }
 }
 
-/// copy files to a folder
+/// copy a file to dest folder
 #[tauri::command]
-pub fn copy_files(file_paths: Vec<String>, new_folder_path: &str) -> Vec<String> {
-    t_utils::copy_files(file_paths, new_folder_path)
+pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
+    t_utils::copy_file(file_path, new_folder_path)
 }
 
 /// delete files
 #[tauri::command]
-pub fn delete_files(file_paths: Vec<String>) -> Vec<String> {
-    t_utils::delete_files(file_paths)
+pub fn delete_file(file_id: i64, file_path: &str) -> Option<String> {
+    let deleted_file = t_utils::delete_file(file_path);
+    match deleted_file {
+        Some(new_path) => {
+            // delete the file from the database
+            let _ = AFile::delete(file_id)
+                .map_err(|e| format!("Error while deleting file in DB: {}", e));
+            Some(new_path)
+        },
+        None => None
+    }
 }
 
 /// get a file's thumb image
@@ -235,7 +239,8 @@ pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thu
 /// get a file's info
 #[tauri::command]
 pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
-    AFile::get_file_info(file_id).map_err(|e| format!("Error while fetching file info: {}", e))
+    AFile::get_file_info(file_id)
+        .map_err(|e| format!("Error while getting file info: {}", e))
 }
 
 /// get a file's image
@@ -272,20 +277,22 @@ pub fn set_file_delete(file_id: i64, deleted_at: u64) -> Result<usize, String> {
 /// get camera's taken dates
 #[tauri::command]
 pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates().map_err(|e| format!("Error while fetching taken dates: {}", e))
+    AFile::get_taken_dates()
+        .map_err(|e| format!("Error while getting taken dates: {}", e))
 }
 
 /// get all files
 #[tauri::command]
 pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
     AFile::get_all_files(is_favorite, offset, page_size)
-        .map_err(|e| format!("Error while fetching all files: {}", e))
+        .map_err(|e| format!("Error while getting all files: {}", e))
 }
 
 /// get files by date
 #[tauri::command]
 pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
-    AFile::get_files_by_date(date).map_err(|e| format!("Error while fetching files by date: {}", e))
+    AFile::get_files_by_date(date)
+        .map_err(|e| format!("Error while getting files by date: {}", e))
 }
 
 /// get files by date range
@@ -293,20 +300,21 @@ pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
 #[tauri::command]
 pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<AFile>, String> {
     AFile::get_files_by_date_range(start_date, end_date)
-        .map_err(|e| format!("Error while fetching files by date range: {}", e))
+        .map_err(|e| format!("Error while getting files by date range: {}", e))
 }
 
 /// get a file's camera make and model info
 #[tauri::command]
 pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
-    ACamera::get_from_db().map_err(|e| format!("Error while fetching camera info: {}", e))
+    ACamera::get_from_db()
+        .map_err(|e| format!("Error while getting camera info: {}", e))
 }
 
 /// get files from db by camera make and model
 #[tauri::command]
 pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
     AFile::get_files_by_camera(make, model)
-        .map_err(|e| format!("Error while fetching camera files: {}", e))
+        .map_err(|e| format!("Error while getting camera files: {}", e))
 }
 
 /// print an image: uses platform-specific commands to print an image.

@@ -393,97 +393,103 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     Some(dst.to_string_lossy().into_owned())
 }
 
-/// move file list to a new location
-/// Returns a vector of successfully moved file paths
-pub fn move_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
-    let mut moved_files = Vec::new();
+/// move file to a new location
+pub fn move_file(file_path: &str, new_folder_path: &str) -> Option<String> {
+    let source = Path::new(file_path);
+    let file_name = source.file_name()?;
+    let mut destination = PathBuf::from(new_folder_path);
+    destination.push(file_name);
 
-    let destination_dir = Path::new(new_folder_path);
-    if !destination_dir.exists() {
-        if let Err(e) = fs::create_dir_all(destination_dir) {
-            eprintln!("Failed to create destination folder: {}", e);
-            return moved_files;
-        }
+    // Do not overwrite if destination already exists
+    if destination.exists() {
+        eprintln!("Destination file already exists: {}", destination.display());
+        return None;
     }
 
-    for file in files {
-        let path = Path::new(&file);
-
-        if !path.exists() {
-            eprintln!("File does not exist: {}", file);
-            continue;
+    // Try to move the file
+    match fs::rename(&source, &destination) {
+        Ok(_) => {
+            println!("File moved successfully: {}", destination.display());
+            destination.to_str().map(|s| s.to_string())
         }
-
-        let file_name = match path.file_name() {
-            Some(name) => name,
-            None => {
-                eprintln!("Invalid file name: {}", file);
-                continue;
-            }
-        };
-
-        let new_path = destination_dir.join(file_name);
-
-        match fs::rename(&path, &new_path) {
-            Ok(_) => {
-                let new_path_str = new_path.to_string_lossy().into_owned();
-                println!("File moved successfully: {}", new_path_str);
-                moved_files.push(new_path_str);
-            }
-            Err(e) => {
-                eprintln!("Failed to move file '{}': {}", file, e);
-            }
+        Err(e) => {
+            eprintln!("Failed to move file: {}", e);
+            None
         }
     }
+}
 
-    moved_files
+/// copy file to a new location
+pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
+    let source = Path::new(file_path);
+    let file_name = source.file_name()?;
+    let mut destination = PathBuf::from(new_folder_path);
+    destination.push(file_name);
+
+    // Do not overwrite if destination already exists
+    if destination.exists() {
+        eprintln!("Destination file already exists: {}", destination.display());
+        return None;
+    }
+
+    // Try to copy the file
+    match fs::copy(&source, &destination) {
+        Ok(_) => {
+            println!("File copied successfully: {}", destination.display());
+            destination.to_str().map(|s| s.to_string())
+        }
+        Err(e) => {
+            eprintln!("Failed to copy file: {}", e);
+            None
+        }
+    }
 }
 
 /// Copy a list of files to a new folder.
 /// Returns a vector of successfully copied file paths.
-pub fn copy_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
-    let mut copied_files = Vec::new();
+// pub fn copy_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
+//     let mut copied_files = Vec::new();
 
-    let destination_dir = Path::new(new_folder_path);
-    if !destination_dir.exists() {
-        if let Err(e) = fs::create_dir_all(destination_dir) {
-            eprintln!("Failed to create destination folder: {}", e);
-            return copied_files;
-        }
-    }
+//     let destination_dir = Path::new(new_folder_path);
+//     if !destination_dir.exists() {
+//         if let Err(e) = fs::create_dir_all(destination_dir) {
+//             eprintln!("Failed to create destination folder: {}", e);
+//             return copied_files;
+//         }
+//     }
 
-    for file in files {
-        let path = Path::new(&file);
+//     for file in files {
+//         let path = Path::new(&file);
 
-        if !path.exists() {
-            eprintln!("File does not exist: {}", file);
-            continue;
-        }
+//         if !path.exists() {
+//             eprintln!("File does not exist: {}", file);
+//             continue;
+//         }
 
-        let file_name = match path.file_name() {
-            Some(name) => name,
-            None => {
-                eprintln!("Invalid file name: {}", file);
-                continue;
-            }
-        };
+//         let file_name = match path.file_name() {
+//             Some(name) => name,
+//             None => {
+//                 eprintln!("Invalid file name: {}", file);
+//                 continue;
+//             }
+//         };
 
-        let new_path = destination_dir.join(file_name);
+//         let new_path = destination_dir.join(file_name);
 
-        match fs::copy(&path, &new_path) {
-            Ok(_) => {
-                let new_path_str = new_path.to_string_lossy().into_owned();
-                println!("File copied successfully: {}", new_path_str);
-                copied_files.push(new_path_str);
-            }
-            Err(e) => {
-                eprintln!("Failed to copy file '{}': {}", file, e);
-            }
-        }
-    }
+//         match fs::copy(&path, &new_path) {
+//             Ok(_) => {
+//                 let new_path_str = new_path.to_string_lossy().into_owned();
+//                 println!("File copied successfully: {}", new_path_str);
+//                 copied_files.push(new_path_str);
+//             }
+//             Err(e) => {
+//                 eprintln!("Failed to copy file '{}': {}", file, e);
+//             }
+//         }
+//     }
 
-    copied_files
-}
+//     copied_files
+// }
 
 /// rename a file
 pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
@@ -519,31 +525,54 @@ pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
     }
 }
 
-/// delete a list of files
-pub fn delete_files(files: Vec<String>) -> Vec<String> {
-    let mut deleted_files = Vec::new();
+/// delete a file
+pub fn delete_file(file_path: &str) -> Option<String> {
+    let path = Path::new(file_path);
 
-    for file in files {
-        let path = Path::new(&file);
-
-        if !path.exists() {
-            eprintln!("File does not exist: {}", file);
-            continue;
-        }
-
-        match fs::remove_file(&path) {
-            Ok(_) => {
-                println!("File deleted successfully: {}", file);
-                deleted_files.push(file);
-            }
-            Err(e) => {
-                eprintln!("Failed to delete file '{}': {}", file, e);
-            }
-        }
+    // Check if the file exists
+    if !path.exists() {
+        eprintln!("File does not exist: {}", file_path);
+        return None;
     }
 
-    deleted_files
+    // Attempt to delete the file
+    match fs::remove_file(path) {
+        Ok(_) => {
+            println!("File deleted successfully: {}", file_path);
+            Some(file_path.to_string())
+        }
+        Err(e) => {
+            eprintln!("Failed to delete file '{}': {}", file_path, e);
+            None
+        }
+    }
 }
+
+/// delete a list of files
+// pub fn delete_files(files: Vec<String>) -> Vec<String> {
+//     let mut deleted_files = Vec::new();
+
+//     for file in files {
+//         let path = Path::new(&file);
+
+//         if !path.exists() {
+//             eprintln!("File does not exist: {}", file);
+//             continue;
+//         }
+
+//         match fs::remove_file(&path) {
+//             Ok(_) => {
+//                 println!("File deleted successfully: {}", file);
+//                 deleted_files.push(file);
+//             }
+//             Err(e) => {
+//                 eprintln!("Failed to delete file '{}': {}", file, e);
+//             }
+//         }
+//     }
+
+//     deleted_files
+// }
 
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances

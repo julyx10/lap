@@ -75,7 +75,6 @@ fn main() {
             t_cmds::get_album,
             t_cmds::add_album,
             t_cmds::edit_album,
-            t_cmds::rename_album,
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
 
@@ -94,13 +93,18 @@ fn main() {
             t_cmds::get_folder_favorite,
             t_cmds::set_folder_favorite,
             // t_cmds::get_folder_parents,
+
+            // get files
+            t_cmds::get_all_files,
+            t_cmds::get_files_by_date,
+            t_cmds::get_files_by_date_range,
             t_cmds::get_folder_files,
 
-            // file
+            // file actions
             t_cmds::rename_file,
-            t_cmds::move_files,
-            t_cmds::copy_files,
-            t_cmds::delete_files,
+            t_cmds::move_file,
+            t_cmds::copy_file,
+            t_cmds::delete_file,
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,
             t_cmds::get_file_image,
@@ -108,9 +112,6 @@ fn main() {
             t_cmds::set_file_rotate,
             t_cmds::set_file_delete,
             t_cmds::get_taken_dates,
-            t_cmds::get_all_files,
-            t_cmds::get_files_by_date,
-            t_cmds::get_files_by_date_range,
 
             // camera
             t_cmds::get_camera_info,

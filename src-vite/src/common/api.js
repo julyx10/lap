@@ -44,7 +44,7 @@ export async function addAlbum() {
   try {
     const folderPath = await openFolderDialog();
     if (folderPath) {
-      const newAlbum = await invoke('add_album', { folderPath: folderPath });
+      const newAlbum = await invoke('add_album', { folderPath });
       console.log('add_album', newAlbum);
       if(newAlbum) {
         return {
@@ -75,18 +75,18 @@ export async function editAlbum(albumId, newName, newDespription) {
 }
 
 // rename an album
-export async function renameAlbum(albumId, newName) {
-  try {
-    const renamedAlbum = await invoke('rename_album', { id: albumId, name: newName });
-    console.log('rename_album', renamedAlbum);
-    if (renamedAlbum) {
-      return renamedAlbum;
-    }
-  } catch (error) {
-    console.log('Failed to rename album:', error);
-  }
-  return null;
-}
+// export async function renameAlbum(albumId, newName) {
+//   try {
+//     const renamedAlbum = await invoke('rename_album', { id: albumId, name: newName });
+//     console.log('rename_album', renamedAlbum);
+//     if (renamedAlbum) {
+//       return renamedAlbum;
+//     }
+//   } catch (error) {
+//     console.log('Failed to rename album:', error);
+//   }
+//   return null;
+// }
 
 // remove an album
 export async function removeAlbum(albumId) {
@@ -98,20 +98,6 @@ export async function removeAlbum(albumId) {
     }
   } catch (error) {
     console.log('Failed to remove album:', error);
-  }
-  return null;
-}
-
-// rename a file
-export async function renameFile(fileId, filePath, newName) {
-  try {
-    const newFileName = await invoke('rename_file', { fileId, filePath, newName });
-    console.log('rename_file', newFileName);
-    if (newFileName) {
-      return newFileName;
-    }
-  } catch (error) {
-    console.log('Failed to rename file:', error);
   }
   return null;
 }
@@ -300,36 +286,63 @@ export async function copyFolder(folderPath, newFolderPath) {
   return null;
 }
 
-// move files, return moved files
-export async function moveFiles(files, newFolderPath) {
+
+// rename a file
+export async function renameFile(fileId, filePath, newName) {
   try {
-    const result = await invoke('move_files', { files, newFolderPath });
-    if(result) {
+    const result = await invoke('rename_file', { fileId, filePath, newName });
+    if (result) {
       return result;
-    };
+    }
   } catch (error) {
-    console.log('Failed to move files:', error);
+    console.log('Failed to rename file:', error);
   }
   return null;
 }
 
-// copy files, return copied files
-export async function copyFiles(files, newFolderPath) {
+// move a file
+export async function moveFile(fileId, filePath, newFolderId, newFolderPath) {
   try {
-    const result = await invoke('copy_files', { files, newFolderPath });
+    const result = await invoke('move_file', { fileId, filePath, newFolderId, newFolderPath });
     if(result) {
       return result;
     };
   } catch (error) {
-    console.log('Failed to copy files:', error);
+    console.log('Failed to move file:', error);
   }
   return null;
 }
+
+// copy a file
+export async function copyFile(filePath, newFolderPath) {
+  try {
+    const result = await invoke('copy_file', { filePath, newFolderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to copy file:', error);
+  }
+  return null;
+}
+
+/// delete a file
+export async function deleteFile(fileId, filePath) {
+  try {
+    const result = await invoke('delete_file', { fileId, filePath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to delete file:', error);
+  }
+  return null;
+};
 
 /// get all files under the path
-export async function getFolderFiles(folderId, folderPath) {
+export async function getFolderFiles(folderId, path) {
   try {
-    const result = await invoke('get_folder_files', { folderId: folderId, path: folderPath });
+    const result = await invoke('get_folder_files', { folderId, path });
     if(result) {
       return result;
     };

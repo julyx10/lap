@@ -196,8 +196,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles } from '@/common/api';
-import { config, isWin, isMac, formatFileSize, formatDate, getRelativePath, localeComp, extractFileName, combineFileName } from '@/common/utils';
+import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
+         renameFile, moveFile, copyFile, deleteFile } from '@/common/api';
+import { config, isWin, isMac, 
+         formatFileSize, formatDate, getRelativePath, localeComp, 
+         extractFileName, combineFileName } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -328,7 +331,7 @@ const moreMenuItems = computed(() => {
       icon: IconDelete,
       action: () => {
         if(selectedItemIndex.value >= 0) {
-          deleteFile(selectedItemIndex.value);
+          // deleteFile(selectedItemIndex.value);
         }
       }
     },
@@ -437,7 +440,7 @@ onMounted( async() => {
         selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
         break;
       case 'delete':
-        deleteFile(selectedItemIndex.value);  // delete the selected file from list
+        // deleteFile(selectedItemIndex.value);  // delete the selected file from list
         break;
       default:
         break;
@@ -727,13 +730,6 @@ function sortFileList(files, sortingType, sortingDirection) {
   });
 }
 
-// Delete the file from the list and update the selected item index
-function deleteFile(index) {
-  fileList.value.splice(index, 1);
-  selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
-  openImageViewer(selectedItemIndex.value, false);  // update the image viewer
-}
-
 // Get the thumbnail for the files
 async function getFileThumb(files, concurrencyLimit = 8) {
   try {
@@ -883,9 +879,9 @@ const clickRenameFile = async (newName) => {
   if(selectedItemIndex.value >= 0) {
     const file = fileList.value[selectedItemIndex.value];
     const fileName = combineFileName(newName, renamingFileName.value.ext);
-    const newFilePath = await invoke('rename_file', { fileId: file.id, filePath: file.file_path, newName: fileName });
-    console.log('clickRenameFile:', newFilePath);
+    const newFilePath = await renameFile(file.id, file.file_path, fileName );
     if(newFilePath) {
+      console.log('clickRenameFile:', newFilePath);
       file.name = fileName;
       file.file_path = newFilePath;
       showRenameMsgbox.value = false;
@@ -898,31 +894,53 @@ const clickRenameFile = async (newName) => {
 
 // click move to menu item
 const clickMoveTo = async () => {
-  console.log('clickMoveTo:', selectedItemIndex.value);
   if(selectedItemIndex.value >= 0) {
-    showMoveTo.value = false;
+    const file = fileList.value[selectedItemIndex.value];
+    const movedFile = await moveFile(file.id, file.file_path, config.destFolderId, config.destFolderPath);
+    if(movedFile) {
+      console.log('clickMoveTo:', movedFile);
+      removeFileListItem(selectedItemIndex.value);  // remove the moved file from the list
+      showMoveTo.value = false;
+    }
   }
 }
 
 // click copy to menu item
 const clickCopyTo = async () => {
-  console.log('clickCopyTo:', selectedItemIndex.value);
   if(selectedItemIndex.value >= 0) {
-    showCopyTo.value = false;
+    const file = fileList.value[selectedItemIndex.value];
+    const copiedFile = await copyFile(file.file_path, config.destFolderPath);
+    if(copiedFile) {
+      console.log('clickCopyTo:', copiedFile);
+      showCopyTo.value = false;
+    }
   }
 }
 
 // click delete menu item
 const clickDeleteFile = async () => {
-  console.log('clickDeleteFile:', selectedItemIndex.value);
-//   if(selectedItemIndex.value >= 0) {
-//     const file = fileList.value[selectedItemIndex.value];
-//     const result = await invoke('delete_file', { fileId: file.id });
-//     if(result) {
-//       deleteFile(selectedItemIndex.value);
-//       showDeleteMsgbox.value = false;
-//     }
-//   }
+  
+  if(selectedItemIndex.value >= 0) {
+    const file = fileList.value[selectedItemIndex.value];
+    const deletedFile = await deleteFile(file.id, file.file_path);
+    if(deletedFile) {
+      console.log('clickDeleteFile:', deletedFile);
+      removeFileListItem(selectedItemIndex.value);  // remove the deleted file from the list
+      showDeleteMsgbox.value = false;
+    }
+  }
+}
+
+// remove an file item from the list and update the selected item index
+function removeFileListItem(index) {
+  if (index < 0 || index >= fileList.value.length) {
+    return;
+  }
+
+  // remove the file from the list
+  fileList.value.splice(index, 1);
+  selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
+  openImageViewer(selectedItemIndex.value, false);  // update the image viewer
 }
 
 </script>

@@ -561,13 +561,13 @@ impl AFile {
         Ok(result)
     }
 
-    /// delete a file from db
-    fn delete(folder_id: i64) -> Result<usize, String> {
+    // delete a file from db
+    pub fn delete(id: i64) -> Result<usize, String> {
         let conn = open_conn();
         let result = conn
             .execute(
-                "DELETE FROM afiles WHERE folder_id = ?1",
-                params![folder_id],
+                "DELETE FROM afiles WHERE id = ?1",
+                params![id],
             )
             .map_err(|e| e.to_string())?;
         Ok(result)
