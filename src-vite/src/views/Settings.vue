@@ -41,63 +41,36 @@
                 {{ lang.label }}
               </option>
             </select>
-            <!-- <n-config-provider :theme-overrides="themeOverrides">
-              <n-select
-                id="language-select"
-                v-model:value="config.language" 
-                class="border-none focus:ring-0 focus:outline-none"
-                :options="languages" 
-                label-field="label"
-                value-field="value"
-                size="small"
-                :style="{
-                  border: 'none',
-                  outline: 'none'
-                }"
-              />
-            </n-config-provider> -->
-
           </div>
 
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
-            <!-- <n-config-provider :theme-overrides="themeOverrides">
-              <n-switch id="show-button-text" v-model:value="config.showButtonText" size="small" />
-            </n-config-provider> -->
-            <input id="show-button-text" type="checkbox" v-model="config.showButtonText"/>
+            <Switch v-model="config.showButtonText" />
           </div>
           
           <!-- Show sub-folders in album -->
-          <div class="flex items-center justify-between mb-4">
+          <!-- <div class="flex items-center justify-between mb-4">
             <label for="show-sub-folder" >{{ $t('settings_general_show_sub_folder') }}</label>
-            <!-- <n-config-provider :theme-overrides="themeOverrides">
-              <n-switch id="show-sub-folder" v-model:value="config.showSubFolder" size="small" />
-            </n-config-provider> -->
-          </div>
+            <Switch v-model="config.showSubFolder" />
+          </div> -->
 
           <!-- Show status bar -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-status-bar" >{{ $t('settings_general_show_status_bar') }}</label>
-            <!-- <n-config-provider :theme-overrides="themeOverrides">
-              <n-switch id="show-status-bar" v-model:value="config.showStatusBar" size="small" />
-            </n-config-provider> -->
+            <Switch v-model="config.showStatusBar" />
           </div>
 
           <!-- Dark Mode -->
-          <div class="flex items-center justify-between mb-4">
+          <!-- <div class="flex items-center justify-between mb-4">
             <label for="dark-mode" >{{ $t('settings_general_dark_mode') }}</label>
-            <!-- <n-config-provider :theme-overrides="themeOverrides">
-              <n-switch id="dark-mode" v-model:value="config.darkMode" size="small" />
-            </n-config-provider> -->
-          </div>
+            <Switch v-model="config.darkMode" />
+          </div> -->
 
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings_general_debug_mode') }}</label>
-            <!-- <n-config-provider :theme-overrides="themeOverrides">
-              <n-switch id="debug-mode" v-model:value="config.debugMode" size="small" />
-            </n-config-provider> -->
+            <Switch v-model="config.debugMode" />
           </div>
 
         </section>
@@ -220,8 +193,8 @@ import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
-import { NConfigProvider, NSwitch, NSelect } from 'naive-ui';
 
+import Switch from '@/components/Switch.vue'
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
 

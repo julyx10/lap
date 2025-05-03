@@ -92,7 +92,7 @@ fn main() {
             t_cmds::delete_folder,
             t_cmds::get_folder_favorite,
             t_cmds::set_folder_favorite,
-            // t_cmds::get_folder_parents,
+            t_cmds::reveal_folder,
 
             // get files
             t_cmds::get_all_files,

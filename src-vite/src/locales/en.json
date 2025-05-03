@@ -50,12 +50,12 @@
   "msgbox_move_to_title": "Move '{source}' to",
   "msgbox_move_to_content": "Select the destination folder:",
   "msgbox_move_to_ok": "Move",
-  "msgbox_move_to_error": "Cannot move the folder.",
+  "msgbox_move_to_error": "Cannot move '{source}' to '{dest}'.",
 
   "msgbox_copy_to_title": "Copy '{source}' to",
   "msgbox_copy_to_content": "Select the destination folder:",
   "msgbox_copy_to_ok": "Copy",
-  "msgbox_copy_to_error": "Cannot copy the folder.",
+  "msgbox_copy_to_error": "Cannot copy '{source}' to '{dest}'.",
 
   "msgbox_rename_file_title": "Rename file",
   "msgbox_rename_file_content": "Enter the new file name:",

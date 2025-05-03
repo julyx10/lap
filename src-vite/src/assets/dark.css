@@ -43,7 +43,9 @@
 .t-color-bg-light {
   @apply bg-gray-800;
 }
-
+.t-color-bg-highlight {
+  @apply bg-sky-600;
+}
 .t-color-bg-hover {
   @apply hover:bg-gray-700;
 }

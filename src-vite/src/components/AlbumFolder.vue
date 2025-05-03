@@ -120,8 +120,8 @@
 import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, openShellFolder, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
-import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite } from '@/common/api';
+import { config, isMac, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
+import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -242,7 +242,7 @@ const moreMenuItems = computed(() => {
       label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
-        openShellFolder(selectedFolderPath.value);
+        revealFolder(selectedFolderPath.value);
       }
     },
     {

@@ -23,8 +23,9 @@
           <!-- menu items -->
             <button v-for="(item, index) in menuItems"
               :class="[
-                'pl-2 pr-4 w-full flex  flex-row justify-between text-sm whitespace-nowrap', 
-                item.label === '-' ? 'border-t t-color-border' : 'py-1 t-color-text t-color-bg-hover t-color-text-hover'
+                'pl-2 pr-4 w-full flex flex-row justify-between text-sm whitespace-nowrap', 
+                item.disabled ? 't-color-text-disabled' : 't-color-bg-hover t-color-text-hover cursor-pointer',
+                item.label === '-' ? 'border-t t-color-border' : 'py-1 t-color-text'
               ]"
               :key="index"
               @click="handleClick(item)"
@@ -126,7 +127,7 @@ const handleClickOutside = (event) => {
 };
 
 const handleClick = (item) => {
-  if (item.action && typeof item.action === 'function') {
+  if (!item.disabled && item.action && typeof item.action === 'function') {
     item.action();
   }
   isDropDown.value = false;

@@ -50,12 +50,12 @@
   "msgbox_move_to_title": "移动 '{source}' 到",
   "msgbox_move_to_content": "选择目标文件夹:",
   "msgbox_move_to_ok": "移动",
-  "msgbox_move_to_error": "无法移动文件夹。",
+  "msgbox_move_to_error": "无法移动 '{source}' 到 '{dest}'。",
 
   "msgbox_copy_to_title": "复制 '{source}' 到",
   "msgbox_copy_to_content": "选择目标文件夹:",
   "msgbox_copy_to_ok": "复制",
-  "msgbox_copy_to_error": "无法复制文件夹。",
+  "msgbox_copy_to_error": "无法复制 '{source}' 到 '{dest}'。",
 
   "msgbox_rename_file_title": "重命名文件",
   "msgbox_rename_file_content": "输入文件的新名称:",

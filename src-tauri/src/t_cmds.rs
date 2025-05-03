@@ -134,7 +134,6 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     t_utils::copy_folder(folder_path, new_folder_path)
 }
 
-
 /// delete a folder
 /// return the number of files and folders deleted
 #[tauri::command]
@@ -166,6 +165,12 @@ pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
 pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, String> {
     AFolder::update_column(folder_id, "is_favorite", &is_favorite)
         .map_err(|e| format!("Error while setting folder favorite: {}", e))
+}
+
+/// reveal a folder in the file explorer( or finder)
+#[tauri::command]
+pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
+    opener::open(folder_path).map_err(|e| e.to_string())
 }
 
 /// get all files from the folder

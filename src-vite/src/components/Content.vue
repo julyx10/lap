@@ -154,7 +154,7 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox_move_to_title', { source: selectMode ? '' : fileList[selectedItemIndex].name })}`"
+    :title="`${$t('msgbox_move_to_title', { source: selectMode ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
     :message="$t('msgbox_move_to_content')"
     :OkText="$t('msgbox_move_to_ok')"
     :cancelText="$t('msgbox_cancel')"
@@ -165,7 +165,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox_copy_to_title', { source: selectMode ? '' : fileList[selectedItemIndex].name })}`"
+    :title="`${$t('msgbox_copy_to_title', { source: selectMode ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
     :message="$t('msgbox_copy_to_content')"
     :OkText="$t('msgbox_copy_to_ok')"
     :cancelText="$t('msgbox_cancel')"
@@ -177,7 +177,7 @@
   <MessageBox
     v-if="showDeleteMsgbox"
     :title="$t('msgbox_delete_file_title')"
-    :message="`${$t('msgbox_delete_file_content', { file: selectMode ? '' : fileList[selectedItemIndex].name })}`"
+    :message="`${$t('msgbox_delete_file_content', { file: selectMode ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
     :OkText="$t('msgbox_delete_file_ok')"
     :cancelText="$t('msgbox_cancel')"
     :warningOk="true"
@@ -197,10 +197,10 @@ import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
-         renameFile, moveFile, copyFile, deleteFile } from '@/common/api';
+         renameFile, moveFile, copyFile, deleteFile, setFileFavorite, revealFolder } from '@/common/api';
 import { config, isWin, isMac, 
          formatFileSize, formatDate, getRelativePath, localeComp, 
-         extractFileName, combineFileName } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -224,11 +224,7 @@ import {
   IconMoveTo,
   IconDelete,
   IconFile,
-  IconPhoto,
-  IconFolder,
   IconChecked,
-  IconUnchecked,
-  IconSearch,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -278,7 +274,6 @@ const errorMessage = ref('');
 
 const toolTipRef = ref(null);
 
-
 let resizeObserver;
 
 // more menuitems
@@ -320,19 +315,24 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
-      action: () => {}
+      disabled: selectedCount.value === 0,
+      action: () => {
+        showMoveTo.value = true;
+      }
     },
     {
       label: localeMsg.value.menu_item_copy_to,
-      action: () => {}
+      disabled: selectedCount.value === 0,
+      action: () => {
+        showCopyTo.value = true;
+      }
     },
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
+      disabled: selectedCount.value === 0,
       action: () => {
-        if(selectedItemIndex.value >= 0) {
-          // deleteFile(selectedItemIndex.value);
-        }
+        showDeleteMsgbox.value = true;
       }
     },
     {
@@ -342,19 +342,17 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_favorite,
       icon: IconFavorite,
+      disabled: selectedCount.value === 0,
       action: () => {
-        if(selectedItemIndex.value >= 0) {
-          fileList.value[selectedItemIndex.value].is_favorite = true;
-        }
+        toggleFavorite(true);
       }
     },
     {
       label: localeMsg.value.menu_item_unfavorite,
       icon: IconUnFavorite,
+      disabled: selectedCount.value === 0,
       action: () => {
-        if(selectedItemIndex.value >= 0) {
-          fileList.value[selectedItemIndex.value].is_favorite = false;
-        }
+        toggleFavorite(false);
       }
     },
   ];
@@ -417,6 +415,17 @@ onMounted( async() => {
         break;
       case 'delete':
         showDeleteMsgbox.value = true;
+        break;
+      case 'reveal':
+        revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
+        break;
+      case 'favorite':
+        toggleFavorite(true);    // selectMode: false
+        break;
+      case 'rotate':
+        if (selectedItemIndex.value >= 0) {
+          fileList.value[selectedItemIndex.value].rotate += 90;
+        }
         break;
       default:
         break;
@@ -942,6 +951,24 @@ function removeFileListItem(index) {
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
   openImageViewer(selectedItemIndex.value, false);  // update the image viewer
 }
+
+// set file favorite status
+// isFavorite: true: favorite, false: unfavorite (use for selectMode)
+const toggleFavorite = async (isFavorite: boolean) => {
+  if (selectMode.value) {
+    const updates = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        item.is_favorite = isFavorite;
+        return setFileFavorite(item.id, isFavorite);
+      });
+    await Promise.all(updates); // parallelize DB updates
+  } else if (selectedItemIndex.value >= 0) {
+    const item = fileList.value[selectedItemIndex.value];
+    item.is_favorite = !item.is_favorite;
+    await setFileFavorite(item.id, item.is_favorite);
+  }
+};
 
 </script>
 

@@ -50,12 +50,12 @@
   "msgbox_move_to_title": "'{source}' を移動",
   "msgbox_move_to_content": "移動先のフォルダを選択してください:",
   "msgbox_move_to_ok": "移動",
-  "msgbox_move_to_error": "フォルダを移動できません。",
+  "msgbox_move_to_error": "'{source}'を'{dest}'に移動できません。",
 
   "msgbox_copy_to_title": "'{source}' をコピー",
   "msgbox_copy_to_content": "コピー先のフォルダを選択してください:",
   "msgbox_copy_to_ok": "コピー",
-  "msgbox_copy_to_error": "フォルダをコピーできません。",
+  "msgbox_copy_to_error": "'{source}'を'{dest}'にコピーできません。",
 
   "msgbox_rename_file_title": "ファイルの名前を変更",
   "msgbox_rename_file_content": "ファイルの新しい名前を入力してください:",

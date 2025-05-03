@@ -45,7 +45,7 @@
         
           <!-- favorite and rotate status -->
           <div class="absolute left-0 top-0 flex items-center">
-            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm t-color-text-disabled group-hover:text-gray-500"></IconFavorite>
+            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm group-hover:text-gray-500"></IconFavorite>
             <IconRotate v-if="file.rotate % 360 > 0"
               class="t-icon-size-sm t-color-text-disabled group-hover:text-gray-500"
               :style="{ 
@@ -89,8 +89,7 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, shortenFilename, formatFileSize, formatTimestamp, getFolderPath, openShellFolder } from '@/common/utils';
-import { printImage, setFileFavorite } from '@/common/api';
+import { config, isMac, shortenFilename, formatFileSize, formatTimestamp } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
@@ -230,15 +229,14 @@ const moreMenuItems = computed(() => {
     //   label: localeMsg.value.menu_item_edit,
     //   icon: IconEdit,
     //   action: () => {
-    //     console.log('Edit:', selectedIndex.value);
+    //     emit('message-from-grid-view', { message: 'edit' });
     //   }
     // },
     // {
     //   label: localeMsg.value.menu_item_print,
     //   icon: IconPrint,
     //   action: async () => {
-    //     let result = await printImage(file.file_path);
-    //     console.log('Print:', file.file_path, result);
+    //     emit('message-from-grid-view', { message: 'print' });
     //   }
     // },
     {
@@ -260,15 +258,14 @@ const moreMenuItems = computed(() => {
       icon: IconDelete,
       shortcut: isMac ? '⌫' : 'Del',
       action: () => {
-        emit('message-from-grid-view', { message: 'delete' });
-        // deleteItem(selectedIndex.value);
+        deleteItem();
       }
     },
     {
       label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
-        openShellFolder(getFolderPath(file.file_path));
+        emit('message-from-grid-view', { message: 'reveal' });
       }
     },
     {
@@ -353,44 +350,26 @@ const keyActions = {
   f: ()          => toggleFavorite(),
   R: ()          => rotateImage(),
   r: ()          => rotateImage(),
-  // F2: ()         => console.log('Rename:', selectedIndex.value),
   Delete: ()     => deleteItem(),
 };
 
 const toggleFavorite = async() => {
-  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
-    return;
-  }
-  props.fileList[selectedIndex.value].is_favorite = !props.fileList[selectedIndex.value].is_favorite;
-  emit('message-from-grid-view', { message: 'favorite', favorite: props.fileList[selectedIndex.value].is_favorite });
-
-  // set db status
-  await setFileFavorite(props.fileList[selectedIndex.value].id, props.fileList[selectedIndex.value].is_favorite);
+  emit('message-from-grid-view', { message: 'favorite' });
 };
 
 function rotateImage() {
-  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
-    return;
-  }
-  props.fileList[selectedIndex.value].rotate += 90;
-  emit('message-from-grid-view', { message: 'rotate', rotate: props.fileList[selectedIndex.value].rotate });
+  emit('message-from-grid-view', { message: 'rotate' });
 };
 
 // open the selected item in the image viewer
 function openItem(openNewViewer = false) {
-  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
-    return;
-  }
   emit('message-from-grid-view', { message: openNewViewer ? 'open-image-viewer' : 'update-image-viewer' });
 };
 
 // delete the selected item
 function deleteItem() {
-  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
-    return;
-  }
-  props.fileList.splice(selectedIndex.value, 1);
-  selectedIndex.value = Math.min(selectedIndex.value, props.fileList.length - 1);
+  emit('message-from-grid-view', { message: 'delete' });
+
 };
 
 // make the selected item always visible in a scrollable container

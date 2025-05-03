@@ -339,6 +339,19 @@ export async function deleteFile(fileId, filePath) {
   return null;
 };
 
+/// reveal a folder in file explorer( or finder)
+export async function revealFolder(folderPath) {
+  try {
+    const result = await invoke('reveal_folder', { folderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('revealFolder error:', error);
+  }
+  return null;
+};
+
 /// get all files under the path
 export async function getFolderFiles(folderId, path) {
   try {

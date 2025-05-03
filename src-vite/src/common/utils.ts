@@ -120,18 +120,6 @@ export async function openFolderDialog() {
   return null;
 }
 
-// Function to open the shell folder
-export async function openShellFolder(path) {
-  try {
-    await open(path); // Open the shell folder
-    console.log('Open shell folder:', path);
-    return path;
-  } catch (error) {
-    console.error('Failed to open shell folder:', error);
-  }
-  return null;
-};
-
 // compare two strings in different languages
 export function localeComp(lang, str1, str2) {
   const localeMap = {
