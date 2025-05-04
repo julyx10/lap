@@ -197,7 +197,7 @@ import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
-         renameFile, moveFile, copyFile, deleteFile, setFileFavorite, revealFolder } from '@/common/api';
+         renameFile, moveFile, copyFile, deleteFile, revealFolder, setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
          formatFileSize, formatDate, getRelativePath, localeComp, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
@@ -395,11 +395,11 @@ onMounted( async() => {
     const { message } = event.payload;
     console.log('content - message-from-grid-view:', message);
     switch (message) {
-      case 'open-image-viewer':
-        openImageViewer(selectedItemIndex.value, true);
+      case 'select':
+        fileList.value[event.payload.index].isSelected = !fileList.value[event.payload.index].isSelected;
         break;
-      case 'update-image-viewer':
-        openImageViewer(selectedItemIndex.value, false);
+      case 'open':
+        openImageViewer(selectedItemIndex.value, true);
         break;
       case 'copy':
         console.log('copy:', selectedItemIndex.value);
@@ -425,6 +425,7 @@ onMounted( async() => {
       case 'rotate':
         if (selectedItemIndex.value >= 0) {
           fileList.value[selectedItemIndex.value].rotate += 90;
+          setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);
         }
         break;
       default:
@@ -450,6 +451,14 @@ onMounted( async() => {
         break;
       case 'delete':
         // deleteFile(selectedItemIndex.value);  // delete the selected file from list
+        break;
+      case 'rotate':
+        if (selectedItemIndex.value >= 0) {
+          fileList.value[selectedItemIndex.value].rotate += 90;
+        }
+        break;
+      case 'favorite':
+        toggleFavorite(true);    // selectMode: false
         break;
       default:
         break;
@@ -574,6 +583,13 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel],
 
 // watch for changes in the file list (selected item index or file list length)
 watch(() => [selectedItemIndex.value, fileList.value], () => {
+  // update the preview
+  if(config.showPreview) {
+    getImageSrc();
+  }
+  // update image viewer if the viewer is open
+  openImageViewer(selectedItemIndex.value, false);
+
   // update the selected count
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;
 
@@ -586,11 +602,7 @@ watch(() => [selectedItemIndex.value, fileList.value], () => {
   selectedSize.value = fileList.value.reduce((total, file) => {
     return total + (file.isSelected ? file.size : 0);
   }, 0);
-
-  if(config.showPreview) {
-    getImageSrc();
-  }
-}, { deep: true });   // deep watch: because isSelected is a property of each file object
+}, { deep: true });
 
 // watch preview
 watch(() => config.showPreview, (showPreview) => {
@@ -795,7 +807,7 @@ async function getFileThumb(files, concurrencyLimit = 8) {
 }
 
 // Open the image viewer window
-async function openImageViewer(index: number, createNew = false) {
+async function openImageViewer(index: number, newViewer = false) {
   const webViewLabel = 'imageviewer';
 
   const fileCount = fileList.value.length;
@@ -811,7 +823,7 @@ async function openImageViewer(index: number, createNew = false) {
   // create a new window if it doesn't exist
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!imageWindow) {
-    if (createNew) {
+    if (newViewer) {
       imageWindow = new WebviewWindow(webViewLabel, {
         url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
                            `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
@@ -851,7 +863,7 @@ async function openImageViewer(index: number, createNew = false) {
       filePath: encodedFilePath, 
       nextFilePath: nextEncodedFilePath,
     });
-    if(createNew) {
+    if(newViewer) {
       imageWindow.show();
     }
   }
@@ -949,7 +961,6 @@ function removeFileListItem(index) {
   // remove the file from the list
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
-  openImageViewer(selectedItemIndex.value, false);  // update the image viewer
 }
 
 // set file favorite status

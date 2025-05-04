@@ -16,7 +16,7 @@
           selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
         ]"
         @click="clickItem(index)"
-        @dblclick="openItem(true)"
+        @dblclick="openItem()"
       >
         <div v-if="!file.is_deleted" class="relative flex flex-col items-center group">
           <img v-if="file.thumbnail"
@@ -47,7 +47,7 @@
           <div class="absolute left-0 top-0 flex items-center">
             <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm group-hover:text-gray-500"></IconFavorite>
             <IconRotate v-if="file.rotate % 360 > 0"
-              class="t-icon-size-sm t-color-text-disabled group-hover:text-gray-500"
+              class="t-icon-size-sm group-hover:text-gray-500"
               :style="{ 
                 transform: `rotate(${file.rotate}deg)`, 
                 transition: 'transform 0.3s ease-in-out' 
@@ -86,7 +86,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, shortenFilename, formatFileSize, formatTimestamp } from '@/common/utils';
@@ -138,59 +138,6 @@ const scrollable = ref(null); // Ref for the scrollable element
 
 let unlisten: () => void;
 
-onMounted( async() => {
-  unlisten = await listen('message-from-image-viewer', (event) => {
-    const { message } = event.payload;
-    console.log('GriView.vue: message-from-image-viewer:', message);
-    switch (message) {
-      case 'rotate':
-        props.fileList[selectedIndex.value].rotate = event.payload.rotate;
-        break;
-      case 'favorite':
-        props.fileList[selectedIndex.value].is_favorite = event.payload.favorite;
-        break;
-      default:
-        break;
-    }
-  });
-});
-
-onBeforeUnmount(() => {
-  unlisten(); // Removes the listener
-});
-
-// when the grid view is focused, the keydown event is listened
-watch(() => isFocus.value, (newValue) => {
-  if (newValue) {
-    window.addEventListener('keydown', handleKeyDown);
-  } else {
-    window.removeEventListener('keydown', handleKeyDown);
-  }
-});
-
-// watch for changes in the fileList
-watch(() => props.fileList, () => {
-  selectedIndex.value = props.fileList.length > 0 ? 0 : -1;
-  openItem(false);
-
-  // reset scroll position
-  const element = scrollable.value; 
-  element.scrollTop = 0;
-});
-
-watch(() => props.selectItemIndex, (newValue) => { 
-  selectedIndex.value = newValue; 
-});
-
-watch(() => selectedIndex.value, (newValue) => {
-  openItem(false);
-  scrollToItem(newValue);
-
-  emitUpdate('update:selectItemIndex', newValue);
-});
-
-// Define menu items with labels and actions
-// more menuitems
 const moreMenuItems = computed(() => {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
     return [];
@@ -203,7 +150,7 @@ const moreMenuItems = computed(() => {
       icon: IconOpen,
       shortcut: isMac ? '⏎' : 'Enter',
       action: () => {
-        openItem(true);
+        openItem();
       }
     },
     {
@@ -211,7 +158,7 @@ const moreMenuItems = computed(() => {
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
-        emit('message-from-grid-view', { message: 'copy' });
+        copyItem();
       }
     },
     {
@@ -222,7 +169,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_rename,
       icon: IconRename,
       action: () => {
-        emit('message-from-grid-view', { message: 'rename' });
+        renameItem();
       }
     },
     // {
@@ -243,14 +190,14 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu_item_move_to,
       icon: IconMoveTo,
       action: () => {
-        emit('message-from-grid-view', { message: 'move-to' });
+        moveTo();
       }
     },
     {
       label: localeMsg.value.menu_item_copy_to,
       // icon: IconCopyTo,
       action: () => {
-        emit('message-from-grid-view', { message: 'copy-to' });
+        copyTo();
       }
     },
     {
@@ -265,7 +212,7 @@ const moreMenuItems = computed(() => {
       label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
-        emit('message-from-grid-view', { message: 'reveal' });
+        revealItem();
       }
     },
     {
@@ -285,24 +232,35 @@ const moreMenuItems = computed(() => {
       icon: IconRotate,
       shortcut: 'R',
       action: () => {
-        rotateImage();
+        rotateItem();
       }
     }
   ];
 });
 
+// when the grid view is focused, the keydown event is listened
+watch(() => isFocus.value, (newValue) => {
+  if (newValue) {
+    window.addEventListener('keydown', handleKeyDown);
+  } else {
+    window.removeEventListener('keydown', handleKeyDown);
+  }
+});
+
+watch(() => props.selectItemIndex, (newValue) => { 
+  selectedIndex.value = newValue; 
+});
+
+watch(() => selectedIndex.value, (newValue) => {
+  emitUpdate('update:selectItemIndex', newValue);
+  scrollToItem(newValue);
+});
+
 function clickItem(index: number) {
   selectedIndex.value = index;
+
   if(props.selectMode) {
     selectItem(index);
-  }
-}
-
-function selectItem(index: number) {
-  if (props.fileList[index].isSelected) {
-    props.fileList[index].isSelected = false;
-  } else {
-    props.fileList[index].isSelected = true;
   }
 }
 
@@ -314,6 +272,62 @@ function handleKeyDown(event) {
     keyActions[key](); 
   }
 }
+
+// key actions
+const keyActions = {
+  ArrowDown: ()  => selectedIndex.value = Math.min(selectedIndex.value + getColumnCount(), props.fileList.length - 1),
+  ArrowRight: () => selectedIndex.value = Math.min(selectedIndex.value + 1, props.fileList.length - 1),
+  ArrowUp: ()    => selectedIndex.value = Math.max(selectedIndex.value - getColumnCount(), 0),
+  ArrowLeft: ()  => selectedIndex.value = Math.max(selectedIndex.value - 1, 0),
+  Home: ()       => selectedIndex.value = 0,
+  End: ()        => selectedIndex.value = props.fileList.length - 1,
+  Enter: ()      => openItem(),
+  F: ()          => toggleFavorite(),
+  f: ()          => toggleFavorite(),
+  R: ()          => rotateItem(),
+  r: ()          => rotateItem(),
+  Delete: ()     => deleteItem(),
+};
+
+function selectItem(index: number) {
+  emit('message-from-grid-view', { message: 'select', index });
+};
+
+function openItem() {
+  emit('message-from-grid-view', { message: 'open' });
+};
+
+function copyItem() {
+  emit('message-from-grid-view', { message: 'copy' });
+};
+
+function renameItem() {
+  emit('message-from-grid-view', { message: 'rename' });
+};
+
+function moveTo() {
+  emit('message-from-grid-view', { message: 'move-to' });
+};
+
+function copyTo() {
+  emit('message-from-grid-view', { message: 'copy-to' });
+};
+
+function deleteItem() {
+  emit('message-from-grid-view', { message: 'delete' });
+};
+
+function revealItem() {
+  emit('message-from-grid-view', { message: 'reveal' });
+};
+
+function toggleFavorite() {
+  emit('message-from-grid-view', { message: 'favorite' });
+};
+
+function rotateItem() {
+  emit('message-from-grid-view', { message: 'rotate' });
+};
 
 // function to get the text for the thumbnail
 const getThumbnailText = (file, option) => {
@@ -335,41 +349,6 @@ const getThumbnailText = (file, option) => {
     default:
       return '';
   }
-};
-
-// key actions
-const keyActions = {
-  ArrowDown: ()  => selectedIndex.value = Math.min(selectedIndex.value + getColumnCount(), props.fileList.length - 1),
-  ArrowRight: () => selectedIndex.value = Math.min(selectedIndex.value + 1, props.fileList.length - 1),
-  ArrowUp: ()    => selectedIndex.value = Math.max(selectedIndex.value - getColumnCount(), 0),
-  ArrowLeft: ()  => selectedIndex.value = Math.max(selectedIndex.value - 1, 0),
-  Home: ()       => selectedIndex.value = 0,
-  End: ()        => selectedIndex.value = props.fileList.length - 1,
-  Enter: ()      => openItem(true),
-  F: ()          => toggleFavorite(),
-  f: ()          => toggleFavorite(),
-  R: ()          => rotateImage(),
-  r: ()          => rotateImage(),
-  Delete: ()     => deleteItem(),
-};
-
-const toggleFavorite = async() => {
-  emit('message-from-grid-view', { message: 'favorite' });
-};
-
-function rotateImage() {
-  emit('message-from-grid-view', { message: 'rotate' });
-};
-
-// open the selected item in the image viewer
-function openItem(openNewViewer = false) {
-  emit('message-from-grid-view', { message: openNewViewer ? 'open-image-viewer' : 'update-image-viewer' });
-};
-
-// delete the selected item
-function deleteItem() {
-  emit('message-from-grid-view', { message: 'delete' });
-
 };
 
 // make the selected item always visible in a scrollable container

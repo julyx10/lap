@@ -441,6 +441,32 @@ export async function setFileFavorite(fileId, isFavorite) {
   return null;
 }
 
+// set file rotate
+export async function setFileRotate(fileId, fileRotate) {
+  try {
+    const result = await invoke('set_file_rotate', { fileId, rotate: fileRotate % 360 });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set file rotate:', error);
+  }
+  return null;
+}
+
+// set file delete
+export async function setFileDelete(fileId, deletedAt) {
+  try {
+    const result = await invoke('set_file_delete', { fileId, deletedAt });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set file delete:', error);
+  }
+  return null;
+}
+
 // get taken dates
 export async function getTakenDates() {
   try {
