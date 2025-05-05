@@ -9,6 +9,8 @@ use base64::{engine::general_purpose, Engine};
 use crate::t_sqlite::{ACamera, AFile, AFolder, AThumb, Album};
 use crate::t_utils;
 
+// album
+
 /// get all albums
 #[tauri::command]
 pub fn get_all_albums() -> Result<Vec<Album>, String> {
@@ -40,13 +42,6 @@ pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, Strin
         .map_err(|e| format!("Error while editing album with id {}: {}", id, e))
 }
 
-/// rename an album
-// #[tauri::command]
-// pub fn rename_album(id: i64, name: &str) -> Result<usize, String> {
-//     Album::update_column(id, "name", &name)
-//         .map_err(|e| format!("Error while edit album with id {}: {}", id, e))
-// }
-
 /// remove an album
 #[tauri::command]
 pub fn remove_album(id: i64) -> Result<usize, String> {
@@ -61,12 +56,7 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
         .map_err(|e| format!("Error while setting album display order: {}", e))
 }
 
-/// get all favorite folders
-#[tauri::command]
-pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
-    AFolder::get_favorite_folders()
-        .map_err(|e| format!("Error while getting favorite folders: {}", e))
-}
+// folder
 
 // click to select a sub-folder under an album
 #[tauri::command]
@@ -148,29 +138,19 @@ pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
     }
 }
 
-/// get a folder's favorite
-#[tauri::command]
-pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
-    let is_favorite_opt = AFolder::get_is_favorite(folder_path)
-        .map_err(|e| format!("Error while getting folder favorite: {}", e))?;
-
-    match is_favorite_opt {
-        Some(val) => Ok(val),
-        None => Ok(false), // Default to false if not found
-    }
-}
-
-/// set a folder's favorite
-#[tauri::command]
-pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, String> {
-    AFolder::update_column(folder_id, "is_favorite", &is_favorite)
-        .map_err(|e| format!("Error while setting folder favorite: {}", e))
-}
-
 /// reveal a folder in the file explorer( or finder)
 #[tauri::command]
 pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
     opener::open(folder_path).map_err(|e| e.to_string())
+}
+
+// file
+
+/// get all files
+#[tauri::command]
+pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
+    AFile::get_all_files(is_favorite, offset, page_size)
+        .map_err(|e| format!("Error while getting all files: {}", e))
 }
 
 /// get all files from the folder
@@ -257,13 +237,6 @@ pub async fn get_file_image(file_path: String) -> Result<String, String> {
     }
 }
 
-/// set a file's favorite status
-#[tauri::command]
-pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
-    AFile::update_column(file_id, "is_favorite", &is_favorite)
-        .map_err(|e| format!("Error while setting file favorite: {}", e))
-}
-
 /// set a file's rotate status
 #[tauri::command]
 pub fn set_file_rotate(file_id: i64, rotate: i32) -> Result<usize, String> {
@@ -279,19 +252,42 @@ pub fn set_file_delete(file_id: i64, deleted_at: u64) -> Result<usize, String> {
         .map_err(|e| format!("Error while setting file delete: {}", e))
 }
 
-/// get camera's taken dates
+// favorite
+
+/// get all favorite folders
 #[tauri::command]
-pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates()
-        .map_err(|e| format!("Error while getting taken dates: {}", e))
+pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
+    AFolder::get_favorite_folders()
+        .map_err(|e| format!("Error while getting favorite folders: {}", e))
 }
 
-/// get all files
+/// get a folder's favorite
 #[tauri::command]
-pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
-    AFile::get_all_files(is_favorite, offset, page_size)
-        .map_err(|e| format!("Error while getting all files: {}", e))
+pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
+    let is_favorite_opt = AFolder::get_is_favorite(folder_path)
+        .map_err(|e| format!("Error while getting folder favorite: {}", e))?;
+
+    match is_favorite_opt {
+        Some(val) => Ok(val),
+        None => Ok(false), // Default to false if not found
+    }
 }
+
+/// set a folder's favorite
+#[tauri::command]
+pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, String> {
+    AFolder::update_column(folder_id, "is_favorite", &is_favorite)
+        .map_err(|e| format!("Error while setting folder favorite: {}", e))
+}
+
+/// set a file's favorite status
+#[tauri::command]
+pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
+    AFile::update_column(file_id, "is_favorite", &is_favorite)
+        .map_err(|e| format!("Error while setting file favorite: {}", e))
+}
+
+// calendar
 
 /// get files by date
 #[tauri::command]
@@ -300,12 +296,20 @@ pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
         .map_err(|e| format!("Error while getting files by date: {}", e))
 }
 
-/// get files by date range
-/// start_date and end_date format: yyyy-mm-dd
+/// get files by date range, date format: yyyy-mm-dd
 #[tauri::command]
 pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<AFile>, String> {
     AFile::get_files_by_date_range(start_date, end_date)
         .map_err(|e| format!("Error while getting files by date range: {}", e))
+}
+
+// camera
+
+/// get files from db by camera make and model
+#[tauri::command]
+pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
+    AFile::get_files_by_camera(make, model)
+        .map_err(|e| format!("Error while getting camera files: {}", e))
 }
 
 /// get a file's camera make and model info
@@ -315,12 +319,14 @@ pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
         .map_err(|e| format!("Error while getting camera info: {}", e))
 }
 
-/// get files from db by camera make and model
+/// get camera's taken dates
 #[tauri::command]
-pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
-    AFile::get_files_by_camera(make, model)
-        .map_err(|e| format!("Error while getting camera files: {}", e))
+pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates()
+        .map_err(|e| format!("Error while getting taken dates: {}", e))
 }
+
+// print
 
 /// print an image: uses platform-specific commands to print an image.
 #[tauri::command]

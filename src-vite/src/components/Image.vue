@@ -17,7 +17,7 @@
       :key="index"
       :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
       :src="src"
-      :style="imageStyle"
+      :style="getImageStyle(index)"
       draggable="false"
       @load="onImageLoad($event.target)"
     />
@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { config } from '@/common/utils';
 
@@ -122,11 +122,11 @@ const stopPositionObserver = () => {
 };
 
 // watch src changes
-watch(() => props.src, (newSrc) => {
+watch(() => props.src, () => {
   isZoomFit.value = props.isZoomFit;
 
   // preload to the hide image, then swap the image when loaded
-  imageSrc.value[activeImage.value ^ 1] = newSrc;
+  imageSrc.value[activeImage.value ^ 1] = props.src;
   imageRotate.value[activeImage.value ^ 1] = props.rotate;
 }, { immediate: true });
 
@@ -182,16 +182,16 @@ watch(() => [containerSize.value, imageSize.value], () => {
 });
 
 // Computed style for the image
-const imageStyle = computed(() => {
+const getImageStyle = (index) => {
   return {
-    minWidth:  `${imageSize.value[activeImage.value].width}px`,
-    minHeight: `${imageSize.value[activeImage.value].height}px`,
-    transform: `translate(${position.value[activeImage.value].x}px, ${position.value[activeImage.value].y}px) 
-                scale(${scale.value[activeImage.value]}) 
-                rotate(${imageRotate.value[activeImage.value]}deg)`,
+    minWidth:  `${imageSize.value[index].width}px`,
+    minHeight: `${imageSize.value[index].height}px`,
+    transform: `translate(${position.value[index].x}px, ${position.value[index].y}px) 
+                scale(${scale.value[index]}) 
+                rotate(${imageRotate.value[index]}deg)`,
     transition: !isDragging.value ? 'transform 0.3s ease-in-out' : 'none',
   };
-});
+};
 
 // watch image load
 const onImageLoad = (img) => {

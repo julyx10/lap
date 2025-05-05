@@ -5,7 +5,9 @@ import { format } from 'date-fns';
 
 const config = useConfigStore();
 
-/// get all albums
+// album
+
+// get all albums
 export async function getAllAlbums() {
   try {
     let albums = [];
@@ -39,7 +41,7 @@ export async function getAlbum(albumId) {
   return null;
 }
 
-/// add an album
+// add an album
 export async function addAlbum() {
   try {
     const folderPath = await openFolderDialog();
@@ -74,20 +76,6 @@ export async function editAlbum(albumId, newName, newDespription) {
   return null;
 }
 
-// rename an album
-// export async function renameAlbum(albumId, newName) {
-//   try {
-//     const renamedAlbum = await invoke('rename_album', { id: albumId, name: newName });
-//     console.log('rename_album', renamedAlbum);
-//     if (renamedAlbum) {
-//       return renamedAlbum;
-//     }
-//   } catch (error) {
-//     console.log('Failed to rename album:', error);
-//   }
-//   return null;
-// }
-
 // remove an album
 export async function removeAlbum(albumId) {
   try {
@@ -116,59 +104,7 @@ export async function setDisplayOrder(albumId, order) {
   return null;
 }
 
-// get favorite folders
-export async function getFavoriteFolders() {
-  try {
-    const favoriteFolders = await invoke('get_favorite_folders');
-    if (favoriteFolders) {
-      // sort favorite folders by name in locale order 
-      favoriteFolders.sort((a, b) => localeComp(config.language, a.name, b.name));
-      return favoriteFolders;
-    }
-  } catch (error) {
-    console.error('Failed to get favorite folders:', error);
-  }
-  return null;
-}
-
-// create a folder
-export async function createFolder(path, folderName) {
-  try {
-    const newFolder = await invoke('create_folder', { path, folderName });
-    if(newFolder) {
-      return newFolder;
-    };
-  } catch (error) {
-    console.log('Failed to create folder:', error);
-  }
-  return null;
-}
-
-// rename a folder
-export async function renameFolder(folderPath, newFolderName) {
-  try {
-    const renamedFolder = await invoke('rename_folder', { folderPath, newFolderName });
-    if(renamedFolder) {
-      return renamedFolder;
-    };
-  } catch (error) {
-    console.log('Failed to rename folder:', error);
-  }
-  return null;
-}
-
-// delete a folder
-export async function deleteFolder(folderPath) {
-  try {
-    const result = await invoke('delete_folder', { folderPath });
-    if (result) {
-      return true;
-    };
-  } catch (error) {
-    console.log('Failed to delete folder:', error);
-  }
-  return false;
-}
+// folder
 
 // select a folder
 export async function selectFolder(albumId, parentId, folderPath) {
@@ -234,28 +170,41 @@ export async function expandFinalFolder(rootFolder, finalPath) {
   }
 }
 
-// get folder favorite
-export async function getFolderFavorite(folderPath) {
+// recurse all files under the path, and count the number of files
+export async function countFolder(path) {
   try {
-    const is_favorite = await invoke('get_folder_favorite', { folderPath });
-    if(is_favorite) {
-      return is_favorite;
-    };
-  } catch (error) {
-    console.log('Failed to get folder favorite:', error);
-  }
-  return false;
-}
-
-// set folder favorite
-export async function setFolderFavorite(folderId, isFavorite) {
-  try {
-    const result = await invoke('set_folder_favorite', { folderId, isFavorite });
+    const result = await invoke('count_folder', { path });
     if(result) {
       return result;
     };
   } catch (error) {
-    console.log('Failed to set folder favorite:', error);
+    console.error('countFolder error:', error);
+  }
+  return null;
+}
+
+// create a folder
+export async function createFolder(path, folderName) {
+  try {
+    const newFolder = await invoke('create_folder', { path, folderName });
+    if(newFolder) {
+      return newFolder;
+    };
+  } catch (error) {
+    console.log('Failed to create folder:', error);
+  }
+  return null;
+}
+
+// rename a folder
+export async function renameFolder(folderPath, newFolderName) {
+  try {
+    const renamedFolder = await invoke('rename_folder', { folderPath, newFolderName });
+    if(renamedFolder) {
+      return renamedFolder;
+    };
+  } catch (error) {
+    console.log('Failed to rename folder:', error);
   }
   return null;
 }
@@ -286,6 +235,59 @@ export async function copyFolder(folderPath, newFolderPath) {
   return null;
 }
 
+// delete a folder
+export async function deleteFolder(folderPath) {
+  try {
+    const result = await invoke('delete_folder', { folderPath });
+    if (result) {
+      return true;
+    };
+  } catch (error) {
+    console.log('Failed to delete folder:', error);
+  }
+  return false;
+}
+
+/// reveal a folder in file explorer( or finder)
+export async function revealFolder(folderPath) {
+  try {
+    const result = await invoke('reveal_folder', { folderPath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('revealFolder error:', error);
+  }
+  return null;
+};
+
+// file
+
+/// get all files (only get favorite files if isFavorite is true)
+export async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
+  try {
+    const result = await invoke('get_all_files', { isFavorite, offset, pageSize });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getAllFiles error:', error);
+  }
+  return null
+}
+
+// get all files under the path
+export async function getFolderFiles(folderId, path) {
+  try {
+    const result = await invoke('get_folder_files', { folderId, path });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getFolderFiles error:', error);
+  }
+  return null;
+};
 
 // rename a file
 export async function renameFile(fileId, filePath, newName) {
@@ -326,7 +328,7 @@ export async function copyFile(filePath, newFolderPath) {
   return null;
 }
 
-/// delete a file
+// delete a file
 export async function deleteFile(fileId, filePath) {
   try {
     const result = await invoke('delete_file', { fileId, filePath });
@@ -339,104 +341,41 @@ export async function deleteFile(fileId, filePath) {
   return null;
 };
 
-/// reveal a folder in file explorer( or finder)
-export async function revealFolder(folderPath) {
+// get file thumb
+export async function getFileThumb(fileId, filePath, orientation, thumbnailSize) {
   try {
-    const result = await invoke('reveal_folder', { folderPath });
+    const result = await invoke('get_file_thumb', { fileId, filePath, orientation, thumbnailSize });
     if(result) {
       return result;
     };
   } catch (error) {
-    console.error('revealFolder error:', error);
-  }
-  return null;
-};
-
-/// get all files under the path
-export async function getFolderFiles(folderId, path) {
-  try {
-    const result = await invoke('get_folder_files', { folderId, path });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.error('getFolderFiles error:', error);
-  }
-  return null;
-};
-
-/// get all files (only get favorite files if isFavorite is true)
-export async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
-  try {
-    const result = await invoke('get_all_files', { isFavorite, offset, pageSize });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.error('getAllFiles error:', error);
-  }
-  return null
-}
-
-/// recurse all files under the path, and count the number of files
-export async function countFolder(path) {
-  try {
-    const result = await invoke('count_folder', { path });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.error('countFolder error:', error);
+    console.log('Failed to get file thumb:', error);
   }
   return null;
 }
 
-/// get all files of calendar
-export async function getCalendarFiles(year, month, date) {
+// get file info
+export async function getFileInfo(fileId) {
   try {
-    if (date === -1) { // -1 means selecting a month
-      // get the first and last days of the month.
-      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
-      const result = await invoke('get_files_by_date_range', { startDate, endDate });
-      if(result) {
-        return result;
-      };
-    } else {  // otherwise, get files by date
-      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
-      const result = await invoke('get_files_by_date', { date: dateStr });
-      if(result) {
-        return result;
-      };
-    }
+    const result = await invoke('get_file_info', { fileId });
+    if(result) {
+      return result;
+    };
   } catch (error) {
-    console.error('getCalendarFiles error:', error);
+    console.log('Failed to get file info:', error);
   }
   return null;
 }
 
-/// get all files under the camera make and model
-export async function getCameraFiles(make, model) {
+// get file image
+export async function getFileImage(filePath) {
   try {
-    const result = await invoke('get_camera_files', { make, model });
+    const result = await invoke('get_file_image', { filePath });
     if(result) {
       return result;
     };
   } catch (error) {
-    console.error('getCameraFiles error:', error);
-  }
-  return null
-}
-
-// set file favorite
-export async function setFileFavorite(fileId, isFavorite) {
-  try {
-    const result = await invoke('set_file_favorite', { fileId, isFavorite });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.log('Failed to set file favorite:', error);
+    console.log('Failed to get file image:', error);
   }
   return null;
 }
@@ -467,17 +406,101 @@ export async function setFileDelete(fileId, deletedAt) {
   return null;
 }
 
-// get taken dates
-export async function getTakenDates() {
+// favorite
+
+// get favorite folders
+export async function getFavoriteFolders() {
   try {
-    const taken_dates = await invoke('get_taken_dates');
-    if (taken_dates) {
-      return taken_dates;
+    const favoriteFolders = await invoke('get_favorite_folders');
+    if (favoriteFolders) {
+      // sort favorite folders by name in locale order 
+      favoriteFolders.sort((a, b) => localeComp(config.language, a.name, b.name));
+      return favoriteFolders;
     }
   } catch (error) {
-    console.error('Failed to get taken dates:', error);
+    console.error('Failed to get favorite folders:', error);
   }
   return null;
+}
+
+// get folder favorite
+export async function getFolderFavorite(folderPath) {
+  try {
+    const is_favorite = await invoke('get_folder_favorite', { folderPath });
+    if(is_favorite) {
+      return is_favorite;
+    };
+  } catch (error) {
+    console.log('Failed to get folder favorite:', error);
+  }
+  return false;
+}
+
+// set folder favorite
+export async function setFolderFavorite(folderId, isFavorite) {
+  try {
+    const result = await invoke('set_folder_favorite', { folderId, isFavorite });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set folder favorite:', error);
+  }
+  return null;
+}
+
+// set file favorite
+export async function setFileFavorite(fileId, isFavorite) {
+  try {
+    const result = await invoke('set_file_favorite', { fileId, isFavorite });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set file favorite:', error);
+  }
+  return null;
+}
+
+// calenar
+
+// get all files of calendar
+export async function getCalendarFiles(year, month, date) {
+  try {
+    if (date === -1) { // -1 means selecting a month
+      // get the first and last days of the month.
+      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
+      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
+      const result = await invoke('get_files_by_date_range', { startDate, endDate });
+      if(result) {
+        return result;
+      };
+    } else {  // otherwise, get files by date
+      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
+      const result = await invoke('get_files_by_date', { date: dateStr });
+      if(result) {
+        return result;
+      };
+    }
+  } catch (error) {
+    console.error('getCalendarFiles error:', error);
+  }
+  return null;
+}
+
+// camera
+
+// get all files under the camera make and model
+export async function getCameraFiles(make, model) {
+  try {
+    const result = await invoke('get_camera_files', { make, model });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getCameraFiles error:', error);
+  }
+  return null
 }
 
 // get camera info
@@ -493,6 +516,22 @@ export async function getCameraInfo() {
   return null;
 }
 
+// get taken dates
+export async function getTakenDates() {
+  try {
+    const taken_dates = await invoke('get_taken_dates');
+    if (taken_dates) {
+      return taken_dates;
+    }
+  } catch (error) {
+    console.error('Failed to get taken dates:', error);
+  }
+  return null;
+}
+
+// print
+
+// print image
 export async function printImage(imagePath) {
   try {
     const result = await invoke('print_image', { imagePath });

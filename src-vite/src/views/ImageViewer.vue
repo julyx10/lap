@@ -71,15 +71,24 @@
           ]" 
           @click="toggleZoomFit()" 
         />
-        <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
+        <!-- <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
         <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite()" />
-        <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite()" />
+        <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite()" /> -->
+        <IconFavorite 
+          :class="[
+            't-icon-size', 
+            !fileInfo ? 't-icon-disabled' : 't-icon-hover',
+            fileInfo?.is_favorite ? 't-color-text-focus' : '',
+          ]" 
+          @click="toggleFavorite()" 
+        />
         <IconRotate
           :class="[
             't-icon-size',
             fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled',
+            iconRotate % 360 > 0 ? 't-color-text-focus' : '',
           ]" 
-          :style="{ transform: `rotate(${(fileInfo?.rotate ?? 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+          :style="{ transform: `rotate(${(iconRotate)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
           @click="clickRotate()"
         />
         <DropDownMenu
@@ -193,11 +202,9 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
-import { useConfigStore } from '@/stores/configStore';
 import { config, isWin, isMac } from '@/common/utils';
-import { setFileFavorite } from '@/common/api';
+import { getFileInfo, getFileImage, setFileFavorite } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
@@ -248,6 +255,7 @@ const filePath = ref('');       // File path
 const nextFilePath = ref('');   // Next file path to preload
 
 const fileInfo = ref(null);
+const iconRotate = ref(0);      // icon rotation angle
 // const showFileInfo = ref(false); // Show the file info panel
 
 const imageRef = ref(null);     // Image reference
@@ -377,20 +385,23 @@ onMounted(async() => {
     }
   });
 
-  // unlistenGridView = await listen('message-from-grid-view', (event) => {
-  //   const { message } = event.payload;
-  //   console.log('ImageViewer.vue: message-from-grid-view:', message);
-  //   switch (message) {
-  //     case 'favorite':
-  //       toggleFavorite();
-  //       break;
-  //     case 'rotate':
-  //       clickRotate();
-  //       break;
-  //     default:
-  //       break;
-  //   }
-  // });
+  unlistenGridView = await listen('message-from-grid-view', (event) => {
+    const { message } = event.payload;
+    console.log('ImageViewer.vue: message-from-grid-view:', message);
+    switch (message) {
+      case 'favorite':
+        toggleFavorite();
+        break;
+      case 'rotate':
+        if(imageRef.value) {
+          imageRef.value.rotateRight();
+          iconRotate.value += 90;
+        }
+        break;
+      default:
+        break;
+    }
+  });
 
 });
 
@@ -485,9 +496,9 @@ watch(() => config.isFullScreen, async (newFullScreen) => {
 
 // watch file changed
 watch(() => fileId.value, async () => {
-  await loadImage(filePath.value);    // set imageSrc
-  await loadFileInfo(fileId.value);   // set fileInfo
-  preLoadImage(nextFilePath.value);   // Preload the next image in the background
+  fileInfo.value = await getFileInfo(fileId.value);
+  iconRotate.value = fileInfo.value.rotate || 0;
+  loadImage(filePath.value);
 });
 
 // watch scale
@@ -499,9 +510,11 @@ watch(() => imageScale.value, () => {
   }, 1000);
 });
 
+// watch file index
 watch(() => fileIndex.value, async (newIndex) => {
   if(newIndex === -1) {
     autoPlay.value = false;
+    iconRotate.value = 0; // reset rotation
   } 
 });
 
@@ -529,13 +542,16 @@ async function loadImage(filePath) {
     // Check if the image is already cached
     if (imageCache.has(filePath)) {
       imageSrc.value = imageCache.get(filePath);
-      console.log('loadImage - cache get:', filePath);
     } else {
-      const imageBase64 = await invoke('get_file_image', { filePath });
-      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
-      imageCache.set(filePath, imageSrc.value);
-      console.log('loadImage - cache set:', filePath);
+      const imageBase64 = await getFileImage(filePath);
+      if (imageBase64) {
+        imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+        imageCache.set(filePath, imageSrc.value);
+      }
     }
+
+    // Preload the next image
+    preLoadImage(nextFilePath.value);
   } catch (error) {
     imageSrc.value = null;
     loadError.value = true;
@@ -547,34 +563,23 @@ async function loadImage(filePath) {
 async function preLoadImage(filePath) {
   try {
     if (filePath.length > 0 && !imageCache.has(filePath)) {
-      const imageBase64 = await invoke('get_file_image', { filePath });
-      const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
-      imageCache.set(filePath, imageSrc);
-      console.log('preLoadImage - cache set:', filePath);
+      const imageBase64 = await getFileImage(filePath);
+      if (imageBase64) {
+        const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
+        imageCache.set(filePath, imageSrc);
+      }
     }
   } catch (error) {
     console.error('preLoadImage:', error);
   }
 }
 
-// Load the file info from the file ID
-async function loadFileInfo(fileId) {
-  try {
-    fileInfo.value = await invoke('get_file_info', { fileId: parseInt(fileId, 10) });
-    console.log('loadFileInfo:', fileInfo.value);
-  } catch (error) {
-    console.error('loadFileInfo:', error);
-  }
-}
-
 // Emit a message to the main window to go to the previous image
 function clickPrev() {
-  if(fileIndex.value < 0) return;
   emit('message-from-image-viewer', { message: 'prev' });
 }
 
 function clickNext() {
-  if(fileIndex.value < 0) return;
   if(autoPlay.value && fileIndex.value === fileCount.value - 1) {
     emit('message-from-image-viewer', { message: 'home' });
   } else {
@@ -583,63 +588,45 @@ function clickNext() {
 }
 
 function clickHome() {
-  if(fileIndex.value < 0) return;
   emit('message-from-image-viewer', { message: 'home' });
 }
 
 function clickEnd() {
-  if(fileIndex.value < 0) return;
   emit('message-from-image-viewer', { message: 'end' });
 }
 
 function clickPlay() {
-  if(fileIndex.value < 0) return;
   autoPlay.value = !autoPlay.value;
 }
 
 const clickZoomIn = () => {
-  if(fileIndex.value < 0) return;
   if(imageRef.value) {
     imageRef.value.zoomIn();
   }
 };
 
 const clickZoomOut = () => {
-  if(fileIndex.value < 0) return;
   if(imageRef.value) {
     imageRef.value.zoomOut();
   }
 };
 
 const toggleZoomFit = () => {
-  if(fileIndex.value < 0) return;
   config.isZoomFit =!config.isZoomFit;
 };
 
-// TODO: rotate image
+// rotate image
 const clickRotate = () => {
-  // if(fileIndex.value < 0) return;
-  // if(imageRef.value) {
-  //   imageRef.value.rotateRight();
+  if(imageRef.value) {
+    imageRef.value.rotateRight();
+    iconRotate.value += 90;
 
-  //   fileInfo.value.rotate += 90;
-  //   saveRotate(fileId.value, fileInfo.value.rotate);
-  //   // update grid view
-  //   emit('message-from-image-viewer', { message: 'rotate', rotate: fileInfo.value.rotate });
-  // }
+    emit('message-from-image-viewer', { message: 'rotate' });
+  }
 };
-
-// const saveRotate = async(fileId, fileRotate) => {
-//   try {
-//     await invoke('set_file_rotate', { fileId: fileId, rotate: fileRotate % 360 });
-//   } catch (error) {
-//     console.error('saveRotate:', error);
-//   }
-// }
 
 // toggle favorite status
 const toggleFavorite = async() => {
-  if(fileIndex.value < 0) return;
   fileInfo.value.is_favorite = fileInfo.value.is_favorite === null ? true : !fileInfo.value.is_favorite;
   emit('message-from-image-viewer', { message: 'favorite', favorite: fileInfo.value.is_favorite });
 

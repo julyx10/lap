@@ -197,7 +197,7 @@ import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
-         renameFile, moveFile, copyFile, deleteFile, revealFolder, setFileFavorite, setFileRotate } from '@/common/api';
+         renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
          formatFileSize, formatDate, getRelativePath, localeComp, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
@@ -423,10 +423,7 @@ onMounted( async() => {
         toggleFavorite(true);    // selectMode: false
         break;
       case 'rotate':
-        if (selectedItemIndex.value >= 0) {
-          fileList.value[selectedItemIndex.value].rotate += 90;
-          setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);
-        }
+        clickRotate();
         break;
       default:
         break;
@@ -452,13 +449,11 @@ onMounted( async() => {
       case 'delete':
         // deleteFile(selectedItemIndex.value);  // delete the selected file from list
         break;
-      case 'rotate':
-        if (selectedItemIndex.value >= 0) {
-          fileList.value[selectedItemIndex.value].rotate += 90;
-        }
-        break;
       case 'favorite':
         toggleFavorite(true);    // selectMode: false
+        break;
+      case 'rotate':
+        clickRotate();
         break;
       default:
         break;
@@ -684,7 +679,7 @@ function refreshFileList() {
     selectedItemIndex.value = 0;
 
     sortFileList(fileList.value, config.sortingType, config.sortingDirection);
-    getFileThumb(fileList.value); 
+    getFileListThumb(fileList.value); 
   } else {
     selectedItemIndex.value = -1;
   }
@@ -752,58 +747,48 @@ function sortFileList(files, sortingType, sortingDirection) {
 }
 
 // Get the thumbnail for the files
-async function getFileThumb(files, concurrencyLimit = 8) {
-  try {
-    const result = [];
-    let activeRequests = 0;
-    thumbCount.value = 0;
+async function getFileListThumb(files, concurrencyLimit = 8) {
+  const result = [];
+  let activeRequests = 0;
+  thumbCount.value = 0;
 
-    const getThumbForFile = async (file) => {
-      const thumb = await invoke('get_file_thumb', {
-        fileId: file.id,
-        filePath: file.file_path,
-        orientation: file.e_orientation || 0, // Simplified orientation
-        thumbnailSize: config.thumbnailImageSize,
-      });
-
+  const getThumbForFile = async (file) => {
+    const thumb = await getFileThumb(file.id, file.file_path, file.e_orientation || 0, config.thumbnailImageSize);
+    if(thumb) {
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
       thumbCount.value++;
-      // console.log('getFileThumb:', file);
-      return file;
-    };
+    }
+    return file;
+  };
 
-    const runWithConcurrencyLimit = async (files) => {
-      const queue = [];
+  const runWithConcurrencyLimit = async (files) => {
+    const queue = [];
 
-      for (let i = 0; i < files.length; i++) {
-        if (activeRequests >= concurrencyLimit) {
-          await Promise.race(queue); // Wait for the first promise to complete
-        }
-
-        const filePromise = getThumbForFile(files[i])
-          .then((file) => {
-            // Remove the finished promise from the queue
-            queue.splice(queue.indexOf(filePromise), 1);
-            activeRequests--;
-            return file;
-          })
-          .catch((error) => {
-            console.log('Error fetching thumbnail:', error);
-          });
-
-        queue.push(filePromise);
-        activeRequests++;
+    for (let i = 0; i < files.length; i++) {
+      if (activeRequests >= concurrencyLimit) {
+        await Promise.race(queue); // Wait for the first promise to complete
       }
 
-      return Promise.all(queue);
-    };
+      const filePromise = getThumbForFile(files[i])
+        .then((file) => {
+          // Remove the finished promise from the queue
+          queue.splice(queue.indexOf(filePromise), 1);
+          activeRequests--;
+          return file;
+        })
+        .catch((error) => {
+          console.log('Error fetching thumbnail:', error);
+        });
 
-    result.push(...await runWithConcurrencyLimit(files));
-    console.log('All thumbnails fetched successfully.');
+      queue.push(filePromise);
+      activeRequests++;
+    }
 
-  } catch (error) {
-    console.log('getFileThumb error:', error);
-  }
+    return Promise.all(queue);
+  };
+
+  result.push(...await runWithConcurrencyLimit(files));
+  console.log('All thumbnails fetched successfully.');
 }
 
 // Open the image viewer window
@@ -978,6 +963,14 @@ const toggleFavorite = async (isFavorite: boolean) => {
     const item = fileList.value[selectedItemIndex.value];
     item.is_favorite = !item.is_favorite;
     await setFileFavorite(item.id, item.is_favorite);
+  }
+};
+
+// set file rotate
+const clickRotate = async () => {
+  if (selectedItemIndex.value >= 0) {
+    fileList.value[selectedItemIndex.value].rotate += 90;
+    setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);
   }
 };
 
