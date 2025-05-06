@@ -77,8 +77,8 @@
         <IconFavorite 
           :class="[
             't-icon-size', 
-            !fileInfo ? 't-icon-disabled' : 't-icon-hover',
-            fileInfo?.is_favorite ? 't-color-text-focus' : '',
+            fileInfo ? 't-icon-hover' : 't-icon-disabled',
+            fileInfo?.is_favorite ? 't-color-text-focus t-icon-focus-hover' : '',
           ]" 
           @click="toggleFavorite()" 
         />
@@ -319,7 +319,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
-      shortcut: isMac ? '⌫' : 'Del',
+      shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
         clickDelete();
       }
@@ -336,7 +336,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_properties,
       icon: IconProperties,
-      shortcut: 'I',
+      shortcut: isMac ? '⌘I' : 'Ctrl+I',
       action: () => {
         clickShowFileInfo();
       }
@@ -417,60 +417,43 @@ onUnmounted(() => {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
-  const navigationKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Escape', 'Space'];
-  
-  // Disable default behavior for certain keys
-  if (navigationKeys.includes(event.key)) {
-    event.preventDefault();
-  }
+  const key = event.key;
+  const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
-  switch (event.key) {
-    case 'ArrowLeft':
-      clickPrev();
-      break;
-    case 'ArrowRight':
-      clickNext();
-      break;
-    case 'Home':
-      clickHome();
-      break;
-    case 'End':
-      clickEnd();
-      break;
-    case 'ArrowUp':
-      clickZoomIn();
-      break;
-    case 'ArrowDown':
-      clickZoomOut();
-      break;
-    case 'p':
-      autoPlay.value = !autoPlay.value;
-      break;
-    case 'f':
-      toggleFavorite();
-      break;
-    case 's':
-      clickSave();
-      break;
-    case 'r':
-      clickRotate();
-      break;
-    // case '⌫':
-    // case 'Del':
-    //   clickDelete();
-    //   break;
-    case 'i':
-    // case 'Enter':
-      clickShowFileInfo();
-      break;
-    case ' ':
-      toggleZoomFit();
-      break;
-    case 'Escape':
-      appWindow.close(); // Close the window
-      break;
+  if (isCmdKey && key.toLowerCase() === 'c') {
+    event.preventDefault();
+    // copyItem();
+  } else if (isCmdKey && key.toLowerCase() === 'p') {
+    event.preventDefault();
+    autoPlay.value = !autoPlay.value;
+  } else if (isCmdKey && key.toLowerCase() === 'f') {
+    event.preventDefault();
+    toggleFavorite();
+  } else if (isCmdKey && key.toLowerCase() === 'r') {
+    event.preventDefault();
+    clickRotate();
+  } else if (isCmdKey && key.toLowerCase() === 'i') {
+    event.preventDefault();
+    clickShowFileInfo();
+  } else if (key === 'Delete' || key === 'Backspace') {
+    event.preventDefault();
+    // deleteItem();
+  } else if (keyActions[key]) {
+    event.preventDefault();
+    keyActions[key]();
   }
 }
+
+const keyActions = {
+  ArrowLeft:  () => clickPrev(),
+  ArrowRight: () => clickNext(),
+  Home:       () => clickHome(),
+  End:        () => clickEnd(),
+  ArrowUp:    () => clickZoomIn(),
+  ArrowDown:  () => clickZoomOut(),
+  ' ':        () => toggleZoomFit(),
+  Escape:     () => appWindow.close(),
+};
 
 // Handle resize event
 const handleResize = async () => {

@@ -114,6 +114,9 @@
   "menu_item_edit_list": "编辑列表",
   "menu_item_finish": "完成",
 
+  "tooltip_copy_image_success": "图片已复制到剪贴板",
+  "tooltip_copy_image_error": "复制图片失败",
+
   "favorite_files": "收藏的文件",
   "favorite_files_empty": "未找到收藏的文件",
   "favorite_files_summary": "{count} 个收藏的文件",

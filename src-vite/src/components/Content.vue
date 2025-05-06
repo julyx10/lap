@@ -197,7 +197,8 @@ import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
-         renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, setFileFavorite, setFileRotate } from '@/common/api';
+         copyImage, renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, 
+         setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
          formatFileSize, formatDate, getRelativePath, localeComp, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
@@ -401,8 +402,11 @@ onMounted( async() => {
       case 'open':
         openImageViewer(selectedItemIndex.value, true);
         break;
-      case 'copy':
-        console.log('copy:', selectedItemIndex.value);
+      case 'copy': // copy image to clipboard
+        copyImage(fileList.value[selectedItemIndex.value].file_path).then(() => {
+          toolTipRef.value.showTip(localeMsg.value.tooltip_copy_image_success);
+        });
+        break;
       case 'rename':
         renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
         showRenameMsgbox.value = true;

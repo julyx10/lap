@@ -114,6 +114,9 @@
   "menu_item_edit_list": "リストを編集",
   "menu_item_finish": "終了",
 
+  "tooltip_copy_image_success": "画像がクリップボードにコピーされました",
+  "tooltip_copy_image_failed": "画像をクリップボードにコピーできませんでした",
+
   "favorite_files": "お気に入りのファイル",
   "favorite_files_empty": "お気に入りのファイルは見つかりません",
   "favorite_files_summary": "{count} お気に入りのファイル",

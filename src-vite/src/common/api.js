@@ -289,6 +289,15 @@ export async function getFolderFiles(folderId, path) {
   return null;
 };
 
+// copy an image to clipboard
+export async function copyImage(filePath) {
+  try {
+    await invoke('copy_image_to_clipboard', { filePath });
+  } catch (error) {
+    console.error('copyImageToClipboard error:', error);
+  }
+}
+
 // rename a file
 export async function renameFile(fileId, filePath, newName) {
   try {

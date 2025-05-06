@@ -92,6 +92,7 @@ fn main() {
             // file
             t_cmds::get_all_files,
             t_cmds::get_folder_files,
+            t_cmds::copy_image_to_clipboard,
             t_cmds::rename_file,
             t_cmds::move_file,
             t_cmds::copy_file,

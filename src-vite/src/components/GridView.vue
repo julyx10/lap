@@ -136,8 +136,6 @@ const emitUpdate = defineEmits(['update:selectItemIndex']);
 
 const scrollable = ref(null); // Ref for the scrollable element
 
-let unlisten: () => void;
-
 const moreMenuItems = computed(() => {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
     return [];
@@ -203,7 +201,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_delete,
       icon: IconDelete,
-      shortcut: isMac ? '⌫' : 'Del',
+      shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
         deleteItem();
       }
@@ -222,7 +220,7 @@ const moreMenuItems = computed(() => {
     {
       label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
       icon: file.is_favorite ? IconUnFavorite : IconFavorite,
-      shortcut: 'F',
+      shortcut: isMac ? '⌘F' : 'Ctrl+F',
       action: () => {
         toggleFavorite();
       }
@@ -230,7 +228,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu_item_rotate,
       icon: IconRotate,
-      shortcut: 'R',
+      shortcut: isMac ? '⌘R' : 'Ctrl+R',
       action: () => {
         rotateItem();
       }
@@ -265,10 +263,23 @@ function clickItem(index: number) {
 }
 
 function handleKeyDown(event) {
-  const key = event.key; // Convert key to lowercase
-  // const key = event.key.toLowerCase(); // Convert key to lowercase
-  if (keyActions[key]) {
+  const key = event.key.toLowerCase();
+  const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
+
+  if (isCmdKey && key === 'c') {   // Copy shortcut
     event.preventDefault(); // Prevent the default action
+    copyItem();
+  } else if(isCmdKey && key === 'f') {
+    event.preventDefault();
+    toggleFavorite();
+  } else if(isCmdKey && key === 'r') {
+    event.preventDefault();
+    rotateItem();
+  } else if((isMac && event.metaKey && key === 'backspace') || (!isMac && key === 'delete')) {
+    event.preventDefault();
+    deleteItem()
+  } else if (keyActions[key]) {
+    event.preventDefault(); 
     keyActions[key](); 
   }
 }
@@ -282,11 +293,6 @@ const keyActions = {
   Home: ()       => selectedIndex.value = 0,
   End: ()        => selectedIndex.value = props.fileList.length - 1,
   Enter: ()      => openItem(),
-  F: ()          => toggleFavorite(),
-  f: ()          => toggleFavorite(),
-  R: ()          => rotateItem(),
-  r: ()          => rotateItem(),
-  Delete: ()     => deleteItem(),
 };
 
 function selectItem(index: number) {

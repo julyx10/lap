@@ -5,9 +5,12 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-use base64::{engine::general_purpose, Engine};
-use crate::t_sqlite::{ACamera, AFile, AFolder, AThumb, Album};
+use base64::{ engine::general_purpose, Engine };
+use crate::t_sqlite::{ ACamera, AFile, AFolder, AThumb, Album };
 use crate::t_utils;
+use arboard::Clipboard;
+use std::path::Path;
+use image::GenericImageView;
 
 // album
 
@@ -157,6 +160,26 @@ pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<V
 #[tauri::command]
 pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
     t_utils::get_folder_files(folder_id, path)
+}
+
+/// copy image to clipboard
+#[tauri::command]
+pub async fn copy_image_to_clipboard(file_path: &str) -> Result<(), String> {
+    let img = image::open(&Path::new(&file_path))
+        .map_err(|e| format!("Failed to open image: {}", e))?;
+
+    let (width, height) = img.dimensions();
+    let rgba = img.to_rgba8();
+    let bytes = rgba.into_raw();
+
+    let mut clipboard = Clipboard::new().map_err(|e| format!("Clipboard error: {}", e))?;
+    clipboard.set_image(arboard::ImageData {
+        width: width as usize,
+        height: height as usize,
+        bytes: std::borrow::Cow::Owned(bytes),
+    }).map_err(|e| format!("Failed to set image to clipboard: {}", e))?;
+
+    Ok(())
 }
 
 /// rename a file

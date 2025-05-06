@@ -114,6 +114,9 @@
   "menu_item_edit_list": "Edit list",
   "menu_item_finish": "Finish",
 
+  "tooltip_copy_image_success": "Image copied to clipboard",
+  "tooltip_copy_image_failed": "Failed to copy image to clipboard",
+
   "favorite_files": "Favorite files",
   "favorite_files_empty": "No favorite files found",
   "favorite_files_summary": "{count} favorite files",
