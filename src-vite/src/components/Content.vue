@@ -193,7 +193,7 @@
 
 import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
+import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
@@ -345,7 +345,7 @@ const moreMenuItems = computed(() => {
       icon: IconFavorite,
       disabled: selectedCount.value === 0,
       action: () => {
-        toggleFavorite(true);
+        selectModeSetFavorites(true);
       }
     },
     {
@@ -353,7 +353,7 @@ const moreMenuItems = computed(() => {
       icon: IconUnFavorite,
       disabled: selectedCount.value === 0,
       action: () => {
-        toggleFavorite(false);
+        selectModeSetFavorites(false);
       }
     },
   ];
@@ -424,7 +424,7 @@ onMounted( async() => {
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
         break;
       case 'favorite':
-        toggleFavorite(true);    // selectMode: false
+        toggleFavorite();
         break;
       case 'rotate':
         clickRotate();
@@ -451,10 +451,10 @@ onMounted( async() => {
         selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
         break;
       case 'delete':
-        // deleteFile(selectedItemIndex.value);  // delete the selected file from list
+        clickDeleteFile();
         break;
       case 'favorite':
-        toggleFavorite(true);    // selectMode: false
+        toggleFavorite();
         break;
       case 'rotate':
         clickRotate();
@@ -904,76 +904,129 @@ const clickRenameFile = async (newName) => {
 
 // click move to menu item
 const clickMoveTo = async () => {
-  if(selectedItemIndex.value >= 0) {
+  if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
+    const moves = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        const movedFile = await moveFile(item.id, item.file_path, config.destFolderId, config.destFolderPath);
+        if(movedFile) {
+          console.log('clickMoveTo:', movedFile);
+          removeFromFileList(fileList.value.indexOf(item));
+        }
+      });
+    await Promise.all(moves); // parallelize DB updates
+    selectMode.value = false; // exit multi-select mode
+  } 
+  else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
     const movedFile = await moveFile(file.id, file.file_path, config.destFolderId, config.destFolderPath);
     if(movedFile) {
       console.log('clickMoveTo:', movedFile);
-      removeFileListItem(selectedItemIndex.value);  // remove the moved file from the list
-      showMoveTo.value = false;
+      removeFromFileList(selectedItemIndex.value);
     }
   }
+  showMoveTo.value = false;
 }
 
 // click copy to menu item
 const clickCopyTo = async () => {
-  if(selectedItemIndex.value >= 0) {
+  if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
+    const copies = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        const copiedFile = await copyFile(item.file_path, config.destFolderPath);
+        if(copiedFile) {
+          console.log('clickCopyTo:', copiedFile);
+        }
+      });
+    await Promise.all(copies); // parallelize DB updates
+    selectMode.value = false; // exit multi-select mode
+  } 
+  else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
     const copiedFile = await copyFile(file.file_path, config.destFolderPath);
     if(copiedFile) {
       console.log('clickCopyTo:', copiedFile);
-      showCopyTo.value = false;
     }
   }
+  showCopyTo.value = false;
 }
 
 // click delete menu item
 const clickDeleteFile = async () => {
-  
-  if(selectedItemIndex.value >= 0) {
+  if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
+    const deletes = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        const deletedFile = await deleteFile(item.id, item.file_path);
+        if(deletedFile) {
+          console.log('clickDeleteFile:', deletedFile);
+          removeFromFileList(fileList.value.indexOf(item));
+        }
+      });
+    await Promise.all(deletes); // parallelize DB updates
+    selectMode.value = false; // exit multi-select mode
+  } 
+  else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
     const deletedFile = await deleteFile(file.id, file.file_path);
     if(deletedFile) {
       console.log('clickDeleteFile:', deletedFile);
-      removeFileListItem(selectedItemIndex.value);  // remove the deleted file from the list
-      showDeleteMsgbox.value = false;
+      removeFromFileList(selectedItemIndex.value);
     }
   }
+  showDeleteMsgbox.value = false;
 }
 
 // remove an file item from the list and update the selected item index
-function removeFileListItem(index) {
-  if (index < 0 || index >= fileList.value.length) {
-    return;
-  }
-
-  // remove the file from the list
+function removeFromFileList(index) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
 }
 
-// set file favorite status
-// isFavorite: true: favorite, false: unfavorite (use for selectMode)
-const toggleFavorite = async (isFavorite: boolean) => {
-  if (selectMode.value) {
+// toggle the selected file's favorite status (selectMode = false)
+const toggleFavorite = async () => {
+  if (selectedItemIndex.value >= 0) {
+    const item = fileList.value[selectedItemIndex.value];
+    item.is_favorite = !item.is_favorite;
+    
+    // notify the image viewer
+    emit('message-from-content', { message: 'favorite', favorite: item.is_favorite });
+
+    // update the favorite status in the database
+    await setFileFavorite(item.id, item.is_favorite);
+  }
+};
+
+// set selected files' favorite status (selectMode = true)
+const selectModeSetFavorites = async (isFavorite: boolean) => {
+  if (selectMode.value && selectedCount.value > 0) {
     const updates = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
         item.is_favorite = isFavorite;
+
+        // notify the image viewer
+        if(selectedItemIndex.value === fileList.value.indexOf(item)) {
+          emit('message-from-content', { message: 'favorite', favorite: item.is_favorite });
+        }
+
+        // update the favorite status in the database
         return setFileFavorite(item.id, isFavorite);
-      });
+      }); 
     await Promise.all(updates); // parallelize DB updates
-  } else if (selectedItemIndex.value >= 0) {
-    const item = fileList.value[selectedItemIndex.value];
-    item.is_favorite = !item.is_favorite;
-    await setFileFavorite(item.id, item.is_favorite);
   }
-};
+}
 
 // set file rotate
 const clickRotate = async () => {
   if (selectedItemIndex.value >= 0) {
     fileList.value[selectedItemIndex.value].rotate += 90;
+
+    // notify the image viewer
+    emit('message-from-content', { message: 'rotate' });
+
+    // update the rotate status in the database
     setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);
   }
 };

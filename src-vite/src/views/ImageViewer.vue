@@ -71,9 +71,6 @@
           ]" 
           @click="toggleZoomFit()" 
         />
-        <!-- <IconUnFavorite v-if="!fileInfo" class="t-icon-size t-icon-disabled"/>
-        <IconUnFavorite v-else-if="fileInfo.is_favorite === null || fileInfo.is_favorite === false" class="t-icon-size t-icon-hover" @click="toggleFavorite()" />
-        <IconFavorite   v-else-if="fileInfo.is_favorite === true" class="t-icon-size t-icon-hover" @click="toggleFavorite()" /> -->
         <IconFavorite 
           :class="[
             't-icon-size', 
@@ -193,6 +190,20 @@
     </div>
 
   </div>
+  
+  <!-- delete -->
+  <MessageBox
+    v-if="showDeleteMsgbox"
+    :title="$t('msgbox_delete_file_title')"
+    :message="`${$t('msgbox_delete_file_content', { file: fileInfo?.name })}`"
+    :OkText="$t('msgbox_delete_file_ok')"
+    :cancelText="$t('msgbox_cancel')"
+    :warningOk="true"
+    @ok="clickDeleteFile"
+    @cancel="showDeleteMsgbox = false"
+  />
+
+  <ToolTip ref="toolTipRef" />
 
 </template>
 
@@ -204,12 +215,14 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isWin, isMac } from '@/common/utils';
-import { getFileInfo, getFileImage, setFileFavorite } from '@/common/api';
+import { copyImage, getFileInfo, getFileImage } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import Image from '@/components/Image.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
+import MessageBox from '@/components/MessageBox.vue';
+import ToolTip from '@/components/ToolTip.vue';
 
 import { 
   IconPrev,
@@ -271,67 +284,34 @@ const imageMinScale = ref(0);       // Minimum image scale
 const imageMaxScale = ref(10);      // Maximum image scale
 const isScaleChanged = ref(false);  // Scale changed state
 
+const showDeleteMsgbox = ref(false);
+
+const toolTipRef = ref(null);
+
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-    {
-      label: localeMsg.value.menu_item_edit,
-      icon: IconEdit,
-      action: () => {
-        console.log('Edit:', filePath.value);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_print,
-      icon: IconPrint,
-      action: () => {
-        console.log('Print:', filePath.value);
-      }
-    },
+    // {
+    //   label: localeMsg.value.menu_item_edit,
+    //   icon: IconEdit,
+    //   action: () => {
+    //     console.log('Edit:', filePath.value);
+    //   }
+    // },
+    // {
+    //   label: localeMsg.value.menu_item_print,
+    //   icon: IconPrint,
+    //   action: () => {
+    //     console.log('Print:', filePath.value);
+    //   }
+    // },
     {
       label: localeMsg.value.menu_item_copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
-        console.log('Copy:', filePath.value);
+        clickCopy();
       }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    {
-      label: localeMsg.value.menu_item_rename,
-      icon: IconRename,
-      action: () => {
-        console.log('Rename:', filePath.value);
-      }
-    },
-    {
-      label: localeMsg.value.menu_item_move_to,
-      icon: IconMoveTo,
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_copy_to,
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
-      shortcut: isMac ? '⌘⌫' : 'Del',
-      action: () => {
-        clickDelete();
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-
-    {
-      label: "-",   // separator
-      action: null
     },
     {
       label: localeMsg.value.menu_item_properties,
@@ -339,6 +319,36 @@ const moreMenuItems = computed(() => {
       shortcut: isMac ? '⌘I' : 'Ctrl+I',
       action: () => {
         clickShowFileInfo();
+      }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    // {
+    //   label: localeMsg.value.menu_item_rename,
+    //   icon: IconRename,
+    //   action: () => {
+    //     console.log('Rename:', filePath.value);
+    //   }
+    // },
+    // {
+    //   label: localeMsg.value.menu_item_move_to,
+    //   icon: IconMoveTo,
+    //   action: () => {
+    //   }
+    // },
+    // {
+    //   label: localeMsg.value.menu_item_copy_to,
+    //   action: () => {
+    //   }
+    // },
+    {
+      label: localeMsg.value.menu_item_delete,
+      icon: IconDelete,
+      shortcut: isMac ? '⌘⌫' : 'Del',
+      action: () => {
+        showDeleteMsgbox.value = true;
       }
     }
   ];
@@ -385,12 +395,12 @@ onMounted(async() => {
     }
   });
 
-  unlistenGridView = await listen('message-from-grid-view', (event) => {
+  unlistenGridView = await listen('message-from-content', (event) => {
     const { message } = event.payload;
-    console.log('ImageViewer.vue: message-from-grid-view:', message);
+    console.log('message-from-content:', message);
     switch (message) {
       case 'favorite':
-        toggleFavorite();
+        fileInfo.value.is_favorite = event.payload.favorite;
         break;
       case 'rotate':
         if(imageRef.value) {
@@ -402,7 +412,6 @@ onMounted(async() => {
         break;
     }
   });
-
 });
 
 onUnmounted(() => {
@@ -422,7 +431,7 @@ function handleKeyDown(event) {
 
   if (isCmdKey && key.toLowerCase() === 'c') {
     event.preventDefault();
-    // copyItem();
+    clickCopy();
   } else if (isCmdKey && key.toLowerCase() === 'p') {
     event.preventDefault();
     autoPlay.value = !autoPlay.value;
@@ -435,9 +444,9 @@ function handleKeyDown(event) {
   } else if (isCmdKey && key.toLowerCase() === 'i') {
     event.preventDefault();
     clickShowFileInfo();
-  } else if (key === 'Delete' || key === 'Backspace') {
+  } else if((isMac && event.metaKey && key === 'backspace') || (!isMac && key === 'delete')) {
     event.preventDefault();
-    // deleteItem();
+    showDeleteMsgbox.value = true;
   } else if (keyActions[key]) {
     event.preventDefault();
     keyActions[key]();
@@ -598,23 +607,35 @@ const toggleZoomFit = () => {
   config.isZoomFit =!config.isZoomFit;
 };
 
+// toggle favorite status
+const toggleFavorite = () => {
+  fileInfo.value.is_favorite = !fileInfo.value.is_favorite;
+
+  // notify content to update favorite status
+  emit('message-from-image-viewer', { message: 'favorite' });
+}
+
 // rotate image
 const clickRotate = () => {
   if(imageRef.value) {
     imageRef.value.rotateRight();
     iconRotate.value += 90;
 
+    // notify content to rotate
     emit('message-from-image-viewer', { message: 'rotate' });
   }
 };
 
-// toggle favorite status
-const toggleFavorite = async() => {
-  fileInfo.value.is_favorite = fileInfo.value.is_favorite === null ? true : !fileInfo.value.is_favorite;
-  emit('message-from-image-viewer', { message: 'favorite', favorite: fileInfo.value.is_favorite });
+// click copy image
+const clickCopy = async() => {
+  copyImage(filePath.value).then(() => {
+    toolTipRef.value.showTip(localeMsg.value.tooltip_copy_image_success);
+  });
+}
 
-  // set db status
-  await setFileFavorite(fileId.value, fileInfo.value.is_favorite);
+const clickDeleteFile = async() => {
+  emit('message-from-image-viewer', { message: 'delete' });
+  showDeleteMsgbox.value = false;
 }
 
 // Function to maximize the window and setup full screen
@@ -630,26 +651,6 @@ function clickShowFileInfo() {
 function closeFileInfo() {
   config.showFileInfo = false;
 }
-
-function clickSave() {
-  emit('message-from-image-viewer', { message: 'save' });
-}
-
-// TODO: implement delete
-const clickDelete = async() => {
-  // if(fileIndex.value < 0) return;
-
-  // // get current timestamp
-  // fileInfo.value.deleted_at = fileInfo.value.deleted_at || fileInfo.value.deleted_at !== 0 ? 0 : Math.floor(Date.now() / 1000);
-
-  // try {
-  //   await invoke('set_file_delete', { fileId: fileId.value, deletedAt: fileInfo.value.deleted_at });
-  // } catch (error) {
-  //   console.error('clickDelete:', error);
-  // }
-  // emit('message-from-image-viewer', { message:'delete' });
-}
-
 
 </script>
 

@@ -1,6 +1,6 @@
 <template>
 
-  <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
+  <div class="fixed inset-0 flex items-center justify-center t-color-text bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
     <div class="p-4 t-color-bg-light border t-color-border rounded-lg shadow-lg">
       <div class="mb-2 flex items-center justify-between">
         {{ title }}
