@@ -71,9 +71,10 @@ function handleKeyDown(event) {
       event.preventDefault();
       clickSearch();
       break;
-    // case 'Escape':
-    //   clickCancel();
-    //   break;
+    case 'Escape':
+      event.preventDefault();
+      clickCancel();
+      break;
     default:
       break;
   }
@@ -93,19 +94,19 @@ const handleBlur = () => {
 };
 
 function handleInput(event) {
-  if (inputValue.value.length === 0)
-    emit('update:modelValue', inputValue.value);
+  // if (inputValue.value.length === 0)
+  //   emit('update:modelValue', inputValue.value);
 };
 
 const clickCancel = () => {
   inputValue.value = '';
   isFocused.value = false;
+  searchInput.value?.blur();
   emit('update:modelValue', '');
 };
 
 const clickSearch = () => {
-  if (inputValue.value.length === 0) return;
-
+  console.log('clickSearch', inputValue.value)
   searchInput.value?.blur();
   emit('update:modelValue', inputValue.value.trim());
 };

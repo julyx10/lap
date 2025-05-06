@@ -66,7 +66,7 @@
         <!-- grid view -->
         <GridView  
           v-model:selectItemIndex="selectedItemIndex"
-          :fileList="fileList"
+          :fileList="searchText.length > 0 ? searchedFileList : fileList"
           :selectMode="selectMode"
         />
         
@@ -77,6 +77,11 @@
           <IconFile class="t-icon-size-xs flex-shrink-0" />
           <div class="pl-1 pr-4 whitespace-nowrap">
             {{ $t('files_summary', { count: fileList.length }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
+          </div>
+
+          <IconSearch v-if="searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
+          <div v-if="searchText.length > 0" class="pl-1 pr-4 whitespace-nowrap">
+            {{ $t('files_summary', { count: searchedFileList.length }) + ' (' + formatFileSize(searchedFileSize) + ')' }} 
           </div>
 
           <component v-if="selectedItemIndex >= 0"
@@ -225,6 +230,7 @@ import {
   IconMoveTo,
   IconDelete,
   IconFile,
+  IconSearch,
   IconChecked,
 } from '@/common/icons';
 
@@ -257,6 +263,8 @@ const selectedSize = ref(0);  // selected files size
 
 // search text
 const searchText = ref('');
+const searchedFileList = ref([]);    // filter fileList by searchText
+const searchedFileSize = ref(0);
 
 // preview 
 const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
@@ -359,7 +367,7 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-let unlistenTitleBar: () => void;
+// let unlistenTitleBar: () => void;
 let unlistenGridView: () => void;
 let unlistenImageViewer: () => void;
 
@@ -379,18 +387,18 @@ onMounted( async() => {
     resizeObserver.observe(previewDiv.value);
   }
 
-  unlistenTitleBar = await listen('message-from-titlebar', (event) => {
-    const { message, search } = event.payload;
-    console.log('content: message-from-titlebar:', message, search);
-    switch (message) {
-      case 'search':
-        searchText.value = search;
-        refreshFileList();
-        break;
-      default:
-        break;
-    }
-  });
+  // unlistenTitleBar = await listen('message-from-titlebar', (event) => {
+  //   const { message, search } = event.payload;
+  //   console.log('content: message-from-titlebar:', message, search);
+  //   switch (message) {
+  //     case 'search':
+  //       searchText.value = search;
+  //       refreshFileList();
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // });
 
   unlistenGridView = await listen('message-from-grid-view', (event) => {
     const { message } = event.payload;
@@ -467,7 +475,7 @@ onMounted( async() => {
 
 onBeforeUnmount(() => {
   // unlisten
-  unlistenTitleBar();
+  // unlistenTitleBar();
   unlistenGridView();
   unlistenImageViewer();
 });
@@ -589,19 +597,29 @@ watch(() => [selectedItemIndex.value, fileList.value], () => {
   // update image viewer if the viewer is open
   openImageViewer(selectedItemIndex.value, false);
 
-  // update the selected count
+  // update all files' size
+  totalFilesSize.value = fileList.value.reduce((total, file) => { return total + file.size; }, 0);
+  
+  // update selected files' count and size
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;
-
-  // update total file size
-  totalFilesSize.value = fileList.value.reduce((total, file) => {
-    return total + file.size;
-  }, 0);
-
-  // update selected file size
-  selectedSize.value = fileList.value.reduce((total, file) => {
-    return total + (file.isSelected ? file.size : 0);
-  }, 0);
+  selectedSize.value = fileList.value.reduce((total, file) => { return total + (file.isSelected ? file.size : 0); }, 0);
 }, { deep: true });
+
+// watch searchtext
+watch(() => searchText.value, (newSearchText) => {
+  console.log('searchText.value: ', newSearchText);
+  if(newSearchText.length > 0) {
+    searchedFileList.value = fileList.value.filter(file => file.name.toLowerCase().includes(newSearchText.trim().toLowerCase()));
+
+    // update searched files' size
+    searchedFileSize.value = searchedFileList.value.reduce((total, file) => { return total + file.size; }, 0);
+
+    // reset select item index
+    selectedItemIndex.value = Math.min(0, searchedFileList.value.length - 1);
+  } else {
+    selectedItemIndex.value = Math.min(0, fileList.value.length - 1);
+  }
+});
 
 // watch preview
 watch(() => config.showPreview, (showPreview) => {
@@ -689,15 +707,6 @@ function refreshFileList() {
   }
   console.log('refreshFileList:', fileList.value);
 }
-
-// Filter the file list based on the search text
-// function filterFileList(files, filter) {
-//   if (filter.trim() === '') {
-//     fileList.value = files;
-//   } else {
-//     fileList.value = files.filter(file => file.name.toLowerCase().includes(filter.toLowerCase()));
-//   }
-// }
 
 // Sort the file list based on the sorting type and direction
 function sortFileList(files, sortingType, sortingDirection) {
