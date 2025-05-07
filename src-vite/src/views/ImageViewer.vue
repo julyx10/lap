@@ -291,20 +291,13 @@ const toolTipRef = ref(null);
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-    // {
-    //   label: localeMsg.value.menu_item_edit,
-    //   icon: IconEdit,
-    //   action: () => {
-    //     console.log('Edit:', filePath.value);
-    //   }
-    // },
-    // {
-    //   label: localeMsg.value.menu_item_print,
-    //   icon: IconPrint,
-    //   action: () => {
-    //     console.log('Print:', filePath.value);
-    //   }
-    // },
+    {
+      label: localeMsg.value.menu_item_edit,
+      icon: IconEdit,
+      action: () => {
+        console.log('Edit:', filePath.value);
+      }
+    },
     {
       label: localeMsg.value.menu_item_copy,
       icon: IconCopy,
@@ -314,13 +307,13 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_properties,
-      icon: IconProperties,
-      shortcut: isMac ? '⌘I' : 'Ctrl+I',
+      label: localeMsg.value.menu_item_print,
+      icon: IconPrint,
       action: () => {
-        clickShowFileInfo();
+        console.log('Print:', filePath.value);
       }
     },
+
     {
       label: "-",   // separator
       action: null
@@ -350,7 +343,19 @@ const moreMenuItems = computed(() => {
       action: () => {
         showDeleteMsgbox.value = true;
       }
-    }
+    },
+    {
+      label: "-",   // separator
+      action: null
+    },
+    {
+      label: localeMsg.value.menu_item_properties,
+      icon: IconProperties,
+      shortcut: isMac ? '⌘I' : 'Ctrl+I',
+      action: () => {
+        clickShowFileInfo();
+      }
+    },
   ];
 });
 
