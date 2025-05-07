@@ -93,7 +93,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { config, isWin, isMac } from '@/common/utils';
 
@@ -121,8 +120,6 @@ import {
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// const appWindow = getCurrentWebviewWindow()
 
 // toolbar 
 const toolbars = computed(() =>  [

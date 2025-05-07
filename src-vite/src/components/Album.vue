@@ -59,14 +59,6 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_add_url,
-      icon: IconLink,
-      action: () => {
-        // TODO: add url to album
-        console.log('add url to album');
-      }
-    },
-    {
       label: "-",   // separator
       action: () => {}
     },

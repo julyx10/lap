@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { open } from '@tauri-apps/plugin-shell';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { useConfigStore } from '@/stores/configStore';
 

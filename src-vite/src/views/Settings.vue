@@ -187,7 +187,7 @@
 
 <script setup>
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
@@ -202,16 +202,7 @@ import SliderInput from '@/components/SliderInput.vue';
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.language]);
 
-// custom naive ui theme
-const themeOverrides = {
-  common: {
-    primaryColor: '#4BA2E3',    // focus color
-  },
-}
-
 const appWindow = getCurrentWebviewWindow()
-
-// const tabIndex = config.settingTab;
 
 const languages = [
   { label: 'English', value: 'en' },
