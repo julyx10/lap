@@ -56,7 +56,6 @@ export const useConfigStore = defineStore('configStore', {
     albumFolderId: null,        // selected folder id
     albumFolderPath: null,      // selected folder path
 
-    
     // calendar
     calendarIsMonthly: true,    // display monthly or daily calendar
     calendarSortingAsc: true,   // sorting order

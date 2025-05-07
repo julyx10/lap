@@ -394,6 +394,7 @@ pub struct AFile {
     // file basic info
     pub name: String,               // file name
     pub size: u64,                  // file size
+    pub file_type: Option<i64>,     // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
     pub created_at: Option<u64>,    // file create time
     pub modified_at: Option<u64>,   // file modified time
     pub taken_date: Option<String>, // taken date(yyyy-mm-dd) for calendar view
@@ -431,7 +432,7 @@ pub struct AFile {
 
 impl AFile {
     /// create a new file struct
-    fn new(folder_id: i64, file_path: &str) -> Result<Self, String> {
+    fn new(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
         let (width, height) = t_utils::get_image_size(file_path)?;
 
@@ -447,7 +448,7 @@ impl AFile {
         Ok(Self {
             id: None,
             folder_id,
-
+            file_type: Some(file_type),
             name: file_info.file_name,
             size: file_info.file_size,
             created_at: file_info.created,
@@ -519,18 +520,19 @@ impl AFile {
         let result = conn.execute(
             "INSERT INTO afiles (
                 folder_id, 
-                name, size, created_at, modified_at, taken_date,
+                name, size, file_type, created_at, modified_at, taken_date,
                 width, height,
                 is_favorite, rotate, comments, deleted_at,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25)",
             params![
                 self.folder_id,
 
                 self.name,
                 self.size,
+                self.file_type,
                 self.created_at,
                 self.modified_at,
                 self.taken_date,
@@ -577,7 +579,7 @@ impl AFile {
     fn build_base_query() -> String {
         String::from("
             SELECT a.id, a.folder_id, 
-                a.name, a.size, a.created_at, a.modified_at, a.taken_date,
+                a.name, a.size, a.file_type, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
                 a.is_favorite, a.rotate, a.comments, a.deleted_at,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
@@ -598,34 +600,35 @@ impl AFile {
 
             name: row.get(2)?,
             size: row.get(3)?,
-            created_at: row.get(4)?,
-            modified_at: row.get(5)?,
-            taken_date: row.get(6)?,
+            file_type: row.get(4)?,
+            created_at: row.get(5)?,
+            modified_at: row.get(6)?,
+            taken_date: row.get(7)?,
 
-            width: row.get(7)?,
-            height: row.get(8)?,
+            width: row.get(8)?,
+            height: row.get(9)?,
 
-            is_favorite: row.get(9)?,
-            rotate: row.get(10)?,
-            comments: row.get(11)?,
-            deleted_at: row.get(12)?,
+            is_favorite: row.get(10)?,
+            rotate: row.get(11)?,
+            comments: row.get(12)?,
+            deleted_at: row.get(13)?,
 
-            e_make: row.get(13)?,
-            e_model: row.get(14)?,
-            e_date_time: row.get(15)?,
-            e_exposure_time: row.get(16)?,
-            e_f_number: row.get(17)?,
-            e_focal_length: row.get(18)?,
-            e_iso_speed: row.get(19)?,
-            e_flash: row.get(20)?,
-            e_orientation: row.get(21)?,
+            e_make: row.get(14)?,
+            e_model: row.get(15)?,
+            e_date_time: row.get(16)?,
+            e_exposure_time: row.get(17)?,
+            e_f_number: row.get(18)?,
+            e_focal_length: row.get(19)?,
+            e_iso_speed: row.get(20)?,
+            e_flash: row.get(21)?,
+            e_orientation: row.get(22)?,
 
-            gps_latitude: row.get(22)?,
-            gps_longitude: row.get(23)?,
-            gps_altitude: row.get(24)?,
+            gps_latitude: row.get(23)?,
+            gps_longitude: row.get(24)?,
+            gps_altitude: row.get(25)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(25)?.as_str(),
+                row.get::<_, String>(26)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
             album_name: row.get(26)?,
@@ -683,7 +686,7 @@ impl AFile {
     }
 
     /// insert a file into db if not exists
-    pub fn add_to_db(folder_id: i64, file_path: &str) -> Result<Self, String> {
+    pub fn add_to_db(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         // Check if the file exists
         let existing_file = Self::fetch(folder_id, file_path)?;
         if let Some(file) = existing_file {
@@ -698,7 +701,7 @@ impl AFile {
         }
 
         // insert the new file into the database
-        Self::new(folder_id, file_path)?.insert()?;
+        Self::new(folder_id, file_path, file_type)?.insert()?;
 
         // return the newly inserted file
         let new_file = Self::fetch(folder_id, file_path)?;
@@ -796,6 +799,43 @@ impl AFile {
     pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
         let conditions = " WHERE a.e_make = ?1 AND (?2 = '' OR a.e_model = ?2)";
         Self::query_with_conditions(conditions, &[&make, &model])
+    }
+
+    /// get files
+    pub fn get_files(
+        is_favorite: bool,
+        search_text: &str,
+        file_type: i64,
+        start_date: &str,
+        end_date: &str,
+        make: &str,
+        model: &str,
+        page_size: i64,
+        offset: i64,
+    ) -> Result<Vec<Self>, String> {
+        let mut conditions = String::new();
+        if is_favorite {
+            conditions.push_str(" WHERE a.is_favorite = 1");
+        } else if search_text.len() > 0 {
+            conditions.push_str(" WHERE a.name LIKE '%?1%'");
+        } else if file_type > 0 {
+            conditions.push_str(" WHERE a.file_type = ?2");
+        } else if start_date.len() > 0 {
+            if end_date.len() > 0 {
+                conditions.push_str(" WHERE a.taken_date >= ?3 AND a.taken_date <= ?4");
+            } else {
+                conditions.push_str(" WHERE a.taken_date = ?3");
+            }
+        } else if make.len() > 0 {
+            if model.len() > 0 {
+                conditions.push_str(" WHERE a.e_make = ?5 AND a.e_model = ?6");
+            } else {
+                conditions.push_str(" WHERE a.e_make = ?5");
+            }
+        }
+        conditions.push_str(" LIMIT ?7 OFFSET ?8");
+
+        Self::query_with_conditions(&conditions, &[&search_text, &file_type, &start_date, &end_date, &make, &model, &page_size, &offset])        
     }
 }
 
@@ -1009,7 +1049,7 @@ pub fn create_db() -> Result<String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_albums_name ON albums(name)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_albums_path ON albums(path)", [])?;
 
-    // album folders table
+    // folders table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS afolders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1029,13 +1069,14 @@ pub fn create_db() -> Result<String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_path ON afolders(path)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_is_favorite ON afolders(is_favorite)", [])?;
 
-    // album files table
+    // files table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS afiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             folder_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             size INTEGER NOT NULL,
+            file_type INTEGER,
             created_at INTEGER,
             modified_at INTEGER,
             taken_date TEXT,
@@ -1063,6 +1104,7 @@ pub fn create_db() -> Result<String> {
     )?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_name ON afiles(name)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_file_type ON afiles(file_type)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_created_at ON afiles(created_at)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_modified_at ON afiles(modified_at)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_taken_date ON afiles(taken_date)", [])?;
@@ -1070,7 +1112,7 @@ pub fn create_db() -> Result<String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_deleted_at ON afiles(deleted_at)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_make_model ON afiles(e_make, e_model)", [])?;
 
-    // album thumbnail table
+    // file thumbnail table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS athumbs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

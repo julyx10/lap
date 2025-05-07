@@ -76,12 +76,12 @@
         >
           <IconFile class="t-icon-size-xs flex-shrink-0" />
           <div class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('files_summary', { count: fileList.length }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
+            {{ $t('files_summary', { count: fileList.length.toLocaleString() }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
           </div>
 
           <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
           <div v-if="config.searchText.length > 0" class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('files_summary', { count: searchedFileList.length }) + ' (' + formatFileSize(searchedFileSize) + ')' }} 
+            {{ $t('files_summary', { count: searchedFileList.length.toLocaleString() }) + ' (' + formatFileSize(searchedFileSize) + ')' }} 
           </div>
 
           <component v-if="selectedItemIndex >= 0"

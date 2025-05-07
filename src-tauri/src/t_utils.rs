@@ -445,52 +445,6 @@ pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
     }
 }
 
-/// Copy a list of files to a new folder.
-/// Returns a vector of successfully copied file paths.
-// pub fn copy_files(files: Vec<String>, new_folder_path: &str) -> Vec<String> {
-//     let mut copied_files = Vec::new();
-
-//     let destination_dir = Path::new(new_folder_path);
-//     if !destination_dir.exists() {
-//         if let Err(e) = fs::create_dir_all(destination_dir) {
-//             eprintln!("Failed to create destination folder: {}", e);
-//             return copied_files;
-//         }
-//     }
-
-//     for file in files {
-//         let path = Path::new(&file);
-
-//         if !path.exists() {
-//             eprintln!("File does not exist: {}", file);
-//             continue;
-//         }
-
-//         let file_name = match path.file_name() {
-//             Some(name) => name,
-//             None => {
-//                 eprintln!("Invalid file name: {}", file);
-//                 continue;
-//             }
-//         };
-
-//         let new_path = destination_dir.join(file_name);
-
-//         match fs::copy(&path, &new_path) {
-//             Ok(_) => {
-//                 let new_path_str = new_path.to_string_lossy().into_owned();
-//                 println!("File copied successfully: {}", new_path_str);
-//                 copied_files.push(new_path_str);
-//             }
-//             Err(e) => {
-//                 eprintln!("Failed to copy file '{}': {}", file, e);
-//             }
-//         }
-//     }
-
-//     copied_files
-// }
-
 /// rename a file
 pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
     let path = Path::new(file_path);
@@ -548,32 +502,6 @@ pub fn delete_file(file_path: &str) -> Option<String> {
     }
 }
 
-/// delete a list of files
-// pub fn delete_files(files: Vec<String>) -> Vec<String> {
-//     let mut deleted_files = Vec::new();
-
-//     for file in files {
-//         let path = Path::new(&file);
-
-//         if !path.exists() {
-//             eprintln!("File does not exist: {}", file);
-//             continue;
-//         }
-
-//         match fs::remove_file(&path) {
-//             Ok(_) => {
-//                 println!("File deleted successfully: {}", file);
-//                 deleted_files.push(file);
-//             }
-//             Err(e) => {
-//                 eprintln!("Failed to delete file '{}': {}", file, e);
-//             }
-//         }
-//     }
-
-//     deleted_files
-// }
-
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances
 pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
@@ -589,13 +517,24 @@ pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
         let entry_path = entry.path();
         if entry_path.is_file() {
             if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
-                if is_image_extension(extension) {
-                    let file_path = entry_path.to_str().unwrap_or_default();
+                let file_type = 
+                    if is_image_extension(extension) {
+                        Some(1)
+                    } else if is_video_extension(extension) {
+                        Some(2)
+                    } else if is_music_extension(extension) {
+                        Some(3)
+                    } else {
+                        None
+                    };
 
-                    match AFile::add_to_db(folder_id, file_path) {
-                        Ok(file) => files.push(file),
-                        Err(e) => {
-                            eprintln!("Failed to add file to DB: {} ({})", file_path, e);
+                if let Some(file_type) = file_type {
+                    if let Some(file_path) = entry_path.to_str() {
+                        match AFile::add_to_db(folder_id, file_path, file_type) {
+                            Ok(file) => files.push(file),
+                            Err(e) => {
+                                eprintln!("Failed to add file to DB: {} ({})", file_path, e);
+                            }
                         }
                     }
                 }
