@@ -12,7 +12,7 @@
       <div class="h-6 flex flex-row items-center space-x-4 flex-shrink-0">
 
         <!-- search box -->
-        <SearchBox v-model="searchText" /> 
+        <SearchBox ref="searchBoxRef" v-model="config.searchText" /> 
         
         <!-- select mode -->
         <button tabindex="-1"
@@ -41,11 +41,11 @@
           @select="handleSortingSelect"
         />
 
-        <!-- filter options -->
+        <!-- file type options -->
         <DropDownSelect
-          :options="filterOptions"
-          :defaultIndex="config.filterType"
-          @select="handleFilterSelect"
+          :options="fileTypeOptions"
+          :defaultIndex="config.fileType"
+          @select="handleFileTypeSelect"
         />
         <!-- preview -->
         <component 
@@ -66,7 +66,7 @@
         <!-- grid view -->
         <GridView  
           v-model:selectItemIndex="selectedItemIndex"
-          :fileList="searchText.length > 0 ? searchedFileList : fileList"
+          :fileList="config.searchText.length > 0 ? searchedFileList : fileList"
           :selectMode="selectMode"
         />
         
@@ -79,8 +79,8 @@
             {{ $t('files_summary', { count: fileList.length }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
           </div>
 
-          <IconSearch v-if="searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
-          <div v-if="searchText.length > 0" class="pl-1 pr-4 whitespace-nowrap">
+          <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
+          <div v-if="config.searchText.length > 0" class="pl-1 pr-4 whitespace-nowrap">
             {{ $t('files_summary', { count: searchedFileList.length }) + ' (' + formatFileSize(searchedFileSize) + ')' }} 
           </div>
 
@@ -197,12 +197,11 @@
 <script setup lang="ts">
 
 import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
-import { invoke } from '@tauri-apps/api/core';
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
-         copyImage, renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, 
+         copyImage, renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
          formatFileSize, formatDate, getRelativePath, localeComp, 
@@ -252,9 +251,10 @@ const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const divListView = ref(null);
 
 // file list
-const fileList = ref([]);   // file list by filtering and sorting
+const fileList = ref([]);
 const totalFilesSize = ref(0);   // total files size
 const selectedItemIndex = ref(-1);
+// const selectedFile = ref({}); // current selected file item
 
 // mutil select mode
 const selectMode = ref(false);
@@ -262,7 +262,6 @@ const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
 
 // search text
-const searchText = ref('');
 const searchedFileList = ref([]);    // filter fileList by searchText
 const searchedFileSize = ref(0);
 
@@ -282,8 +281,12 @@ const showDeleteMsgbox = ref(false);
 const errorMessage = ref('');
 
 const toolTipRef = ref(null);
+const searchBoxRef = ref(null);
 
 let resizeObserver;
+
+let unlistenGridView: () => void;
+let unlistenImageViewer: () => void;
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -367,9 +370,6 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-// let unlistenTitleBar: () => void;
-let unlistenGridView: () => void;
-let unlistenImageViewer: () => void;
 
 onMounted( async() => {
   // FIXME: ResizeObserver loop completed with undelivered notifications.
@@ -387,23 +387,13 @@ onMounted( async() => {
     resizeObserver.observe(previewDiv.value);
   }
 
-  // unlistenTitleBar = await listen('message-from-titlebar', (event) => {
-  //   const { message, search } = event.payload;
-  //   console.log('content: message-from-titlebar:', message, search);
-  //   switch (message) {
-  //     case 'search':
-  //       searchText.value = search;
-  //       refreshFileList();
-  //       break;
-  //     default:
-  //       break;
-  //   }
-  // });
-
   unlistenGridView = await listen('message-from-grid-view', (event) => {
     const { message } = event.payload;
     console.log('content - message-from-grid-view:', message);
     switch (message) {
+      case 'search':
+        searchBoxRef.value.focusInput();
+        break;
       case 'select':
         fileList.value[event.payload.index].isSelected = !fileList.value[event.payload.index].isSelected;
         break;
@@ -475,7 +465,6 @@ onMounted( async() => {
 
 onBeforeUnmount(() => {
   // unlisten
-  // unlistenTitleBar();
   unlistenGridView();
   unlistenImageViewer();
 });
@@ -606,10 +595,9 @@ watch(() => [selectedItemIndex.value, fileList.value], () => {
 }, { deep: true });
 
 // watch searchtext
-watch(() => searchText.value, (newSearchText) => {
-  console.log('searchText.value: ', newSearchText);
+watch(() => [config.searchText, fileList.value], ([newSearchText, newFileList]) => {
   if(newSearchText.length > 0) {
-    searchedFileList.value = fileList.value.filter(file => file.name.toLowerCase().includes(newSearchText.trim().toLowerCase()));
+    searchedFileList.value = newFileList.filter(file => file.name.toLowerCase().includes(newSearchText.trim().toLowerCase()));
 
     // update searched files' size
     searchedFileSize.value = searchedFileList.value.reduce((total, file) => { return total + file.size; }, 0);
@@ -617,7 +605,7 @@ watch(() => searchText.value, (newSearchText) => {
     // reset select item index
     selectedItemIndex.value = Math.min(0, searchedFileList.value.length - 1);
   } else {
-    selectedItemIndex.value = Math.min(0, fileList.value.length - 1);
+    selectedItemIndex.value = Math.min(0, newFileList.length - 1);
   }
 });
 
@@ -639,7 +627,7 @@ const getImageSrc = async () => {
   console.log('getImageSrc:', filePath);
   try {
     let currentIndex = selectedItemIndex.value;
-    const imageBase64 = await invoke('get_file_image', { filePath });
+    const imageBase64 = await getFileImage(filePath);
     // Check if the selected item has changed since the invocation
     if (currentIndex === selectedItemIndex.value) {
       imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
@@ -676,14 +664,13 @@ const handleSortingSelect = (option, extendOption) => {
   sortFileList(fileList.value, config.sortingType, config.sortingDirection)
 };
 
-// filter options
-const filterOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_filter_options);
+// file type options
+const fileTypeOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.file_list_file_type_options);
 });
 
-const handleFilterSelect = (option, extendOption) => {
-  console.log('Filter option:', option);
-  config.filterType = option;
+const handleFileTypeSelect = (option, extendOption) => {
+  config.fileType = option;
 };
 
 function getSelectOptions(options) {

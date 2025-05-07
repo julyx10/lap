@@ -71,7 +71,7 @@
   "msgbox_select_folder_error": "Failed to select folder.",
   "msgbox_select_file_error": "Failed to select file.",
   
-  "search_placeholder": "Search...",
+  "search_placeholder": "Search file name",
 
   "files": "Files",
   "allphotos": "All Photos",
@@ -85,7 +85,7 @@
   "file_list_select_count": "{count} selected",
   "file_list_sorting_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
   "file_list_sorting_extend_options": ["Ascending", "Descending"],
-  "file_list_filter_options": ["All", "Images", "Videos"],
+  "file_list_file_type_options": ["All", "Images", "Videos"],
 
   "menu_item_select_all": "Select all",
   "menu_item_select_none": "Select none",

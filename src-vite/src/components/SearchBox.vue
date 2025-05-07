@@ -1,7 +1,7 @@
 <template>
   <div 
     class="group relative shrink-0 transition-all duration-300 overflow-hidden"
-    :class="[isFocused ? 'w-48' : 'w-10']"
+    :class="[isFocused || inputValue.length > 0 ? 'w-48' : 'w-10']"
   >
     <input 
       tabindex="-1"
@@ -11,7 +11,7 @@
       :placeholder="isFocused ? $t('search_placeholder') : ''"
       :class="[
         'py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus transition-colors duration-300',
-        isFocused ? 'px-8' : 'px-2 cursor-pointer t-color-border-group-hover '
+        isFocused || inputValue.length > 0 ? 'px-8' : 'px-2 cursor-pointer t-color-border-group-hover '
       ]"
       @focus="isFocused = true"
       @blur="handleBlur"
@@ -48,7 +48,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 // input value
-const inputValue = ref(props.modelValue);
+const inputValue = ref('');
 const isFocused = ref(false);
 const searchInput = ref(null);
 
@@ -60,10 +60,9 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
-// Watch for changes in the modelValue from the parent component
 watch(() => props.modelValue, (newValue) => { 
   inputValue.value = newValue; 
-});
+}, { immediate: true });
 
 function handleKeyDown(event) {
   switch (event.key) {
@@ -73,7 +72,9 @@ function handleKeyDown(event) {
       break;
     case 'Escape':
       event.preventDefault();
-      clickCancel();
+      if (isFocused.value) {
+        clickCancel();
+      }
       break;
     default:
       break;
@@ -106,9 +107,13 @@ const clickCancel = () => {
 };
 
 const clickSearch = () => {
-  console.log('clickSearch', inputValue.value)
+  isFocused.value = false;
   searchInput.value?.blur();
   emit('update:modelValue', inputValue.value.trim());
 };
+
+defineExpose({ 
+  focusInput
+});
 
 </script>

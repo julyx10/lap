@@ -293,6 +293,11 @@ const keyActions = {
   Home: ()       => selectedIndex.value = 0,
   End: ()        => selectedIndex.value = props.fileList.length - 1,
   Enter: ()      => openItem(),
+  '/': ()        => searchFile(),
+};
+
+function searchFile() {
+  emit('message-from-grid-view', { message: 'search' });
 };
 
 function selectItem(index: number) {

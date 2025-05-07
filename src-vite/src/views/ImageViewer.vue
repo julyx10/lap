@@ -571,7 +571,6 @@ async function preLoadImage(filePath) {
   }
 }
 
-// Emit a message to the main window to go to the previous image
 function clickPrev() {
   emit('message-from-image-viewer', { message: 'prev' });
 }
@@ -614,21 +613,12 @@ const toggleZoomFit = () => {
 
 // toggle favorite status
 const toggleFavorite = () => {
-  fileInfo.value.is_favorite = !fileInfo.value.is_favorite;
-
-  // notify content to update favorite status
   emit('message-from-image-viewer', { message: 'favorite' });
 }
 
 // rotate image
 const clickRotate = () => {
-  if(imageRef.value) {
-    imageRef.value.rotateRight();
-    iconRotate.value += 90;
-
-    // notify content to rotate
-    emit('message-from-image-viewer', { message: 'rotate' });
-  }
+  emit('message-from-image-viewer', { message: 'rotate' });
 };
 
 // click copy image

@@ -71,7 +71,7 @@
   "msgbox_select_folder_error": "フォルダの選択に失敗しました。",
   "msgbox_select_file_error": "ファイルの選択に失敗しました。",
 
-  "search_placeholder": "検索...",
+  "search_placeholder": "ファイル名を検索",
 
   "files": "ファイル",
   "allphotos": "すべての写真",
@@ -85,7 +85,7 @@
   "file_list_select_count": "{count} 選択",
   "file_list_sorting_options": ["名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
   "file_list_sorting_extend_options": ["昇順", "降順"],
-  "file_list_filter_options": ["すべて", "画像", "動画"],
+  "file_list_file_type_options": ["すべて", "画像", "動画"],
 
   "menu_item_select_all": "すべて選択",
   "menu_item_select_none": "選択解除",
