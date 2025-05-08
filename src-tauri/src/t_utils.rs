@@ -19,22 +19,22 @@ use std::process::Command;
 // #[cfg(target_os = "windows")]
 // use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct AppConfig {
-    pub app_name: String,
-    pub theme: String,
-    pub language: String,
-}
+// #[derive(serde::Serialize, serde::Deserialize, Debug)]
+// pub struct AppConfig {
+//     pub app_name: String,
+//     pub theme: String,
+//     pub language: String,
+// }
 
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            app_name: "jc-photo".into(),
-            theme: "dark".into(),
-            language: "en".into(),
-        }
-    }
-}
+// impl Default for AppConfig {
+//     fn default() -> Self {
+//         Self {
+//             app_name: "jc-photo".into(),
+//             theme: "dark".into(),
+//             language: "en".into(),
+//         }
+//     }
+// }
 
 /// FileNode struct to represent a file system node
 #[derive(serde::Serialize)]
@@ -180,36 +180,36 @@ impl FileInfo {
 // }
 
 /// Get the path separator based on the operating system
-#[allow(dead_code)]
-pub fn get_separator() -> String {
-    std::path::MAIN_SEPARATOR.to_string()
-}
+// #[allow(dead_code)]
+// pub fn get_separator() -> String {
+//     std::path::MAIN_SEPARATOR.to_string()
+// }
 
-/// Check if a file extension is an image extension
-pub fn is_image_extension(extension: &str) -> bool {
-    match extension.to_lowercase().as_str() {
-        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" => true,
-        _ => false,
-    }
-}
+// /// Check if a file extension is an image extension
+// pub fn is_image_extension(extension: &str) -> bool {
+//     match extension.to_lowercase().as_str() {
+//         "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" => true,
+//         _ => false,
+//     }
+// }
 
-/// Check if a file extension is a video extension
-#[allow(dead_code)]
-pub fn is_video_extension(extension: &str) -> bool {
-    match extension.to_lowercase().as_str() {
-        "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => true,
-        _ => false,
-    }
-}
+// /// Check if a file extension is a video extension
+// #[allow(dead_code)]
+// pub fn is_video_extension(extension: &str) -> bool {
+//     match extension.to_lowercase().as_str() {
+//         "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => true,
+//         _ => false,
+//     }
+// }
 
-/// Check if a file extension is a music extension
-#[allow(dead_code)]
-pub fn is_music_extension(extension: &str) -> bool {
-    match extension.to_lowercase().as_str() {
-        "mp3" | "wav" | "flac" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => true,
-        _ => false,
-    }
-}
+// /// Check if a file extension is a music extension
+// #[allow(dead_code)]
+// pub fn is_music_extension(extension: &str) -> bool {
+//     match extension.to_lowercase().as_str() {
+//         "mp3" | "wav" | "flac" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => true,
+//         _ => false,
+//     }
+// }
 
 /// create a new folder at a given path
 /// Returns the folder path if successful
@@ -504,45 +504,47 @@ pub fn delete_file(file_path: &str) -> Option<String> {
 
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances
-pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
-    let mut files: Vec<AFile> = Vec::new();
-
-    // Use WalkDir to iterate over directory entries
-    for entry in WalkDir::new(path)
+pub fn get_folder_files(
+    folder_id: i64,
+    folder_path: &str,
+    filter_file_name: &str,
+    filter_file_type: i64,     // 0: all, 1: image, 2: video, 3: music
+) -> Vec<AFile> {
+    WalkDir::new(folder_path)
         .min_depth(1)
         .max_depth(1)
         .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        let entry_path = entry.path();
-        if entry_path.is_file() {
-            if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
-                let file_type = 
-                    if is_image_extension(extension) {
-                        Some(1)
-                    } else if is_video_extension(extension) {
-                        Some(2)
-                    } else if is_music_extension(extension) {
-                        Some(3)
-                    } else {
-                        None
-                    };
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_type().is_file())
+        .filter_map(|entry| {
+            let path = entry.path();
 
-                if let Some(file_type) = file_type {
-                    if let Some(file_path) = entry_path.to_str() {
-                        match AFile::add_to_db(folder_id, file_path, file_type) {
-                            Ok(file) => files.push(file),
-                            Err(e) => {
-                                eprintln!("Failed to add file to DB: {} ({})", file_path, e);
-                            }
+            let file_path = path.to_str()?;
+            let file_name = path.file_name()?.to_str()?;
+            let file_ext = path.extension()?.to_str()?;
+
+            // filter by file name
+            if !filter_file_name.is_empty() && !file_name.contains(filter_file_name) {
+                return None;
+            }
+
+            if let Some(file_type) = get_file_type(file_ext) {
+                if filter_file_type == 0 || filter_file_type == file_type {
+                    match AFile::add_to_db(folder_id, file_path, file_type) {
+                        Ok(file) => Some(file),
+                        Err(e) => {
+                            eprintln!("Failed to add file to DB: {} ({})", file_path, e);
+                            None
                         }
                     }
+                } else {
+                    None
                 }
+            } else {
+                None
             }
-        }
-    }
-
-    files
+        })
+        .collect()
 }
 
 /// get folder and file count and total file size (include all sub-folders)
@@ -554,23 +556,43 @@ pub fn count_folder_files(path: &str) -> (u64, u64, u64, u64, u64) {
     let mut total_video_size = 0;
 
     // Use WalkDir to iterate over directory entries
-    for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
-        if entry.file_type().is_dir() {
+    for entry in WalkDir::new(path).into_iter().filter_map(Result::ok) {
+        let entry_type = entry.file_type();
+        let entry_path = entry.path();
+    
+        if entry_type.is_dir() {
             folder_count += 1;
-        } else if entry.file_type().is_file() {
-            if let Some(extension) = entry.path().extension().and_then(|ext| ext.to_str()) {
-                if is_image_extension(extension) {
-                    image_file_count += 1;
-                    total_image_size += entry.metadata().map(|m| m.len()).unwrap_or(0);
-                } else if is_video_extension(extension) {
-                    video_file_count += 1;
-                    total_video_size += entry.metadata().map(|m| m.len()).unwrap_or(0);
+        } else if entry_type.is_file() {
+            if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
+                if let Some(file_type) = get_file_type(extension) {
+                    let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
+                    match file_type {
+                        1 => {
+                            image_file_count += 1;
+                            total_image_size += size;
+                        }
+                        2 => {
+                            video_file_count += 1;
+                            total_video_size += size;
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
     }
 
     (folder_count, image_file_count, total_image_size, video_file_count, total_video_size)
+}
+
+/// get file type by extension (1: image, 2: video, 3: music)
+pub fn get_file_type(extension: &str) -> Option<i64> {
+    match extension.to_lowercase().as_str() {
+        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" | "heif" => Some(1),   // image
+        "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => Some(2), // video
+        "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3), // music
+        _ => None,
+    }
 }
 
 /// Get the name from a folder or file path

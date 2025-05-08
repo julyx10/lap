@@ -263,16 +263,16 @@ function clickItem(index: number) {
 }
 
 function handleKeyDown(event) {
-  const key = event.key.toLowerCase();
+  const key = event.key;
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
-  if (isCmdKey && key === 'c') {   // Copy shortcut
+  if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
     event.preventDefault(); // Prevent the default action
     copyItem();
-  } else if(isCmdKey && key === 'f') {
+  } else if(isCmdKey && key.toLowerCase() === 'f') {
     event.preventDefault();
     toggleFavorite();
-  } else if(isCmdKey && key === 'r') {
+  } else if(isCmdKey && key.toLowerCase() === 'r') {
     event.preventDefault();
     rotateItem();
   } else if((isMac && event.metaKey && key === 'backspace') || (!isMac && key === 'delete')) {

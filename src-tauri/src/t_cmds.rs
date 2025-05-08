@@ -150,16 +150,34 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 // file
 
 /// get all files
+// #[tauri::command]
+// pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
+//     AFile::get_all_files(is_favorite, offset, page_size)
+//         .map_err(|e| format!("Error while getting all files: {}", e))
+// }
+
+/// get db files
 #[tauri::command]
-pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
-    AFile::get_all_files(is_favorite, offset, page_size)
-        .map_err(|e| format!("Error while getting all files: {}", e))
+pub fn get_db_files(
+    file_name: &str, file_type: i64,
+    start_date: &str, end_date: &str,
+    make: &str, model: &str,
+    is_favorite: bool, is_deleted: bool,
+    page_size: i64, offset: i64
+) -> Result<Vec<AFile>, String> {
+    AFile::get_files(
+        file_name, file_type,
+        start_date, end_date,
+        make, model,
+        is_favorite, is_deleted,
+        page_size, offset
+    ).map_err(|e| format!("Error while getting all files: {}", e))
 }
 
 /// get all files from the folder
 #[tauri::command]
-pub fn get_folder_files(folder_id: i64, path: &str) -> Vec<AFile> {
-    t_utils::get_folder_files(folder_id, path)
+pub fn get_folder_files(folder_id: i64, folder_path: &str, filter_file_name: &str, filter_file_type: i64) -> Vec<AFile> {
+    t_utils::get_folder_files(folder_id, folder_path, filter_file_name, filter_file_type)
 }
 
 /// copy image to clipboard
@@ -313,27 +331,27 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 // calendar
 
 /// get files by date
-#[tauri::command]
-pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
-    AFile::get_files_by_date(date)
-        .map_err(|e| format!("Error while getting files by date: {}", e))
-}
+// #[tauri::command]
+// pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
+//     AFile::get_files_by_date(date)
+//         .map_err(|e| format!("Error while getting files by date: {}", e))
+// }
 
 /// get files by date range, date format: yyyy-mm-dd
-#[tauri::command]
-pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<AFile>, String> {
-    AFile::get_files_by_date_range(start_date, end_date)
-        .map_err(|e| format!("Error while getting files by date range: {}", e))
-}
+// #[tauri::command]
+// pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<AFile>, String> {
+//     AFile::get_files_by_date_range(start_date, end_date)
+//         .map_err(|e| format!("Error while getting files by date range: {}", e))
+// }
 
 // camera
 
 /// get files from db by camera make and model
-#[tauri::command]
-pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
-    AFile::get_files_by_camera(make, model)
-        .map_err(|e| format!("Error while getting camera files: {}", e))
-}
+// #[tauri::command]
+// pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
+//     AFile::get_files_by_camera(make, model)
+//         .map_err(|e| format!("Error while getting camera files: {}", e))
+// }
 
 /// get a file's camera make and model info
 #[tauri::command]

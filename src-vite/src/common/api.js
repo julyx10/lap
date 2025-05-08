@@ -264,9 +264,41 @@ export async function revealFolder(folderPath) {
 // file
 
 /// get all files (only get favorite files if isFavorite is true)
-export async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
+// export async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
+//   try {
+//     const result = await invoke('get_all_files', { isFavorite, offset, pageSize });
+//     if(result) {
+//       return result;
+//     };
+//   } catch (error) {
+//     console.error('getAllFiles error:', error);
+//   }
+//   return null
+// }
+
+/// get all db files
+export async function getDbFiles(
+  startDate = "", 
+  endDate = "",
+  make = "", 
+  model = "",
+  isFavorite = false, 
+  isDeleted = false,
+  offset = 0 
+) {
   try {
-    const result = await invoke('get_all_files', { isFavorite, offset, pageSize });
+    const result = await invoke('get_db_files', {
+      fileName: config.searchText, 
+      fileType: config.fileType,
+      startDate, 
+      endDate,
+      make, 
+      model,
+      isFavorite, 
+      isDeleted,
+      offset, 
+      pageSize: config.fileListPageSize
+    });
     if(result) {
       return result;
     };
@@ -276,10 +308,11 @@ export async function getAllFiles(isFavorite = false, offset = 0, pageSize = con
   return null
 }
 
+
 // get all files under the path
-export async function getFolderFiles(folderId, path) {
+export async function getFolderFiles(folderId, folderPath, filterFileName, filterFileType) {
   try {
-    const result = await invoke('get_folder_files', { folderId, path });
+    const result = await invoke('get_folder_files', { folderId, folderPath, filterFileName, filterFileType });
     if(result) {
       return result;
     };
@@ -476,21 +509,16 @@ export async function setFileFavorite(fileId, isFavorite) {
 // get all files of calendar
 export async function getCalendarFiles(year, month, date) {
   try {
+    let startDate = ""
+    let endDate = ""
     if (date === -1) { // -1 means selecting a month
       // get the first and last days of the month.
-      let startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-      let endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
-      const result = await invoke('get_files_by_date_range', { startDate, endDate });
-      if(result) {
-        return result;
-      };
+      startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
+      endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
     } else {  // otherwise, get files by date
-      let dateStr = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
-      const result = await invoke('get_files_by_date', { date: dateStr });
-      if(result) {
-        return result;
-      };
+      startDate = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
     }
+    return await getDbFiles(startDate, endDate)
   } catch (error) {
     console.error('getCalendarFiles error:', error);
   }
@@ -502,7 +530,8 @@ export async function getCalendarFiles(year, month, date) {
 // get all files under the camera make and model
 export async function getCameraFiles(make, model) {
   try {
-    const result = await invoke('get_camera_files', { make, model });
+    // const result = await invoke('get_camera_files', { make, model });
+    const result = await getDbFiles("", "", make, model);
     if(result) {
       return result;
     };

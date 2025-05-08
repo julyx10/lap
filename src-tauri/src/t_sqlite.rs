@@ -653,14 +653,14 @@ impl AFile {
     }
 
     // Generalized function to query with conditions
-    fn query_with_conditions(
-        conditions: &str,
-        params: &[&dyn rusqlite::ToSql],
-    ) -> Result<Vec<Self>, String> {
-        let mut sql = Self::build_base_query();
-        sql.push_str(conditions);
-        Self::query_files(&sql, params)
-    }
+    // fn query_with_conditions(
+    //     conditions: &str,
+    //     params: &[&dyn rusqlite::ToSql],
+    // ) -> Result<Vec<Self>, String> {
+    //     let mut sql = Self::build_base_query();
+    //     sql.push_str(conditions);
+    //     Self::query_files(&sql, params)
+    // }
 
     /// fetch a file info from db by folder_id and file name
     pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
@@ -768,74 +768,103 @@ impl AFile {
         Ok(results)
     }
 
-    /// get all files
-    pub fn get_all_files(
-        is_favorite: bool,
-        offset: i64,
-        page_size: i64,
-    ) -> Result<Vec<Self>, String> {
-        let mut conditions = String::new();
-        if is_favorite {
-            conditions.push_str(" WHERE a.is_favorite = 1");
-        }
-        conditions.push_str(" LIMIT ?1 OFFSET ?2");
+    // get all files
+    // pub fn get_all_files(
+    //     is_favorite: bool,
+    //     offset: i64,
+    //     page_size: i64,
+    // ) -> Result<Vec<Self>, String> {
+    //     let mut conditions = String::new();
+    //     if is_favorite {
+    //         conditions.push_str(" WHERE a.is_favorite = 1");
+    //     }
+    //     conditions.push_str(" LIMIT ?1 OFFSET ?2");
 
-        Self::query_with_conditions(&conditions, &[&page_size, &offset])
-    }
+    //     Self::query_with_conditions(&conditions, &[&page_size, &offset])
+    // }
 
     // get files by date(yyyy-mm-dd)
-    pub fn get_files_by_date(date: &str) -> Result<Vec<Self>, String> {
-        let conditions = " WHERE a.taken_date = ?1";
-        Self::query_with_conditions(conditions, &[&date])
-    }
+    // pub fn get_files_by_date(date: &str) -> Result<Vec<Self>, String> {
+    //     let conditions = " WHERE a.taken_date = ?1";
+    //     Self::query_with_conditions(conditions, &[&date])
+    // }
 
     /// data string format: yyyy-mm-dd
-    pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<Self>, String> {
-        let conditions = " WHERE a.taken_date >= ?1 AND a.taken_date <= ?2";
-        Self::query_with_conditions(conditions, &[&start_date, &end_date])
-    }
+    // pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<Self>, String> {
+    //     let conditions = " WHERE a.taken_date >= ?1 AND a.taken_date <= ?2";
+    //     Self::query_with_conditions(conditions, &[&start_date, &end_date])
+    // }
 
     /// get files by camera make and model
-    pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
-        let conditions = " WHERE a.e_make = ?1 AND (?2 = '' OR a.e_model = ?2)";
-        Self::query_with_conditions(conditions, &[&make, &model])
-    }
+    // pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
+    //     let conditions = " WHERE a.e_make = ?1 AND (?2 = '' OR a.e_model = ?2)";
+    //     Self::query_with_conditions(conditions, &[&make, &model])
+    // }
 
     /// get files
     pub fn get_files(
-        is_favorite: bool,
-        search_text: &str,
-        file_type: i64,
-        start_date: &str,
-        end_date: &str,
-        make: &str,
-        model: &str,
-        page_size: i64,
-        offset: i64,
+        file_name: &str, file_type: i64,
+        start_date: &str, end_date: &str,
+        make: &str, model: &str,
+        is_favorite: bool, is_deleted: bool,
+        page_size: i64, offset: i64,
     ) -> Result<Vec<Self>, String> {
-        let mut conditions = String::new();
-        if is_favorite {
-            conditions.push_str(" WHERE a.is_favorite = 1");
-        } else if search_text.len() > 0 {
-            conditions.push_str(" WHERE a.name LIKE '%?1%'");
-        } else if file_type > 0 {
-            conditions.push_str(" WHERE a.file_type = ?2");
-        } else if start_date.len() > 0 {
-            if end_date.len() > 0 {
-                conditions.push_str(" WHERE a.taken_date >= ?3 AND a.taken_date <= ?4");
+        let mut conditions = Vec::new();
+        let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
+    
+        let like_pattern = format!("%{}%", file_name);
+        if !file_name.is_empty() {
+            conditions.push("a.name LIKE ? COLLATE NOCASE");
+            params.push(&like_pattern);
+        }
+    
+        if file_type > 0 {
+            conditions.push("a.file_type = ?");
+            params.push(&file_type);
+        }
+    
+        if !start_date.is_empty() {
+            if end_date.is_empty() {
+                conditions.push("a.taken_date = ?");
+                params.push(&start_date);
             } else {
-                conditions.push_str(" WHERE a.taken_date = ?3");
-            }
-        } else if make.len() > 0 {
-            if model.len() > 0 {
-                conditions.push_str(" WHERE a.e_make = ?5 AND a.e_model = ?6");
-            } else {
-                conditions.push_str(" WHERE a.e_make = ?5");
+                conditions.push("a.taken_date >= ? AND a.taken_date <= ?");
+                params.push(&start_date);
+                params.push(&end_date);
             }
         }
-        conditions.push_str(" LIMIT ?7 OFFSET ?8");
+    
+        if !make.is_empty() {
+            conditions.push("a.e_make = ?");
+            params.push(&make);
+            if !model.is_empty() {
+                conditions.push("a.e_model = ?");
+                params.push(&model);
+            }
+        }
+    
+        if is_favorite {
+            conditions.push("a.is_favorite = 1");
+        }
+    
+        if is_deleted {
+            conditions.push("a.deleted_at IS NOT NULL");
+        } else {
+            conditions.push("a.deleted_at IS NULL");
+        }
+    
+        let mut query = Self::build_base_query();
+        if !conditions.is_empty() {
+            query.push_str(" WHERE ");
+            query.push_str(&conditions.join(" AND "));
+        }
+    
+        // paging
+        query.push_str(" LIMIT ? OFFSET ?");
+        params.push(&page_size);
+        params.push(&offset);
 
-        Self::query_with_conditions(&conditions, &[&search_text, &file_type, &start_date, &end_date, &make, &model, &page_size, &offset])        
+        Self::query_files(&query, &params)
     }
 }
 

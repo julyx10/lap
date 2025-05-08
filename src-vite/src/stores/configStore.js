@@ -33,10 +33,10 @@ export const useConfigStore = defineStore('configStore', {
     leftPaneWidth: 300,         // left pane width
 
     // Content.vue
-    searchText: '',             // search text
+    searchText: '',             // filter file name
+    fileType: 0,                // filter file type (0: all, 1: image, 2: video, 3: audio)
     sortingType: 0,             // sorting type
     sortingDirection: 0,        // sorting direction(0: ascending, 1: descending)
-    fileType: 0,                // file type (0: all, 1: image, 2: video, 3: audio)
     showPreview: false,         // show preview
     previewPosition: 'right',   // preview position: right, bottom
     previewPaneWidth: 30,       // preview pane width(20-80%)

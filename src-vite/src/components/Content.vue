@@ -11,9 +11,16 @@
       <!-- toolbar -->
       <div class="h-6 flex flex-row items-center space-x-4 flex-shrink-0">
 
-        <!-- search box -->
+        <!-- search box - filter file name -->
         <SearchBox ref="searchBoxRef" v-model="config.searchText" /> 
         
+        <!-- file type options - filter file type -->
+        <DropDownSelect
+          :options="fileTypeOptions"
+          :defaultIndex="config.fileType"
+          @select="handleFileTypeSelect"
+        />
+
         <!-- select mode -->
         <button tabindex="-1"
           :class="[
@@ -41,12 +48,6 @@
           @select="handleSortingSelect"
         />
 
-        <!-- file type options -->
-        <DropDownSelect
-          :options="fileTypeOptions"
-          :defaultIndex="config.fileType"
-          @select="handleFileTypeSelect"
-        />
         <!-- preview -->
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
@@ -66,7 +67,7 @@
         <!-- grid view -->
         <GridView  
           v-model:selectItemIndex="selectedItemIndex"
-          :fileList="config.searchText.length > 0 ? searchedFileList : fileList"
+          :fileList="fileList"
           :selectMode="selectMode"
         />
         
@@ -79,10 +80,10 @@
             {{ $t('files_summary', { count: fileList.length.toLocaleString() }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
           </div>
 
-          <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
+          <!-- <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
           <div v-if="config.searchText.length > 0" class="pl-1 pr-4 whitespace-nowrap">
             {{ $t('files_summary', { count: searchedFileList.length.toLocaleString() }) + ' (' + formatFileSize(searchedFileSize) + ')' }} 
-          </div>
+          </div> -->
 
           <component v-if="selectedItemIndex >= 0"
             :is="selectMode ? IconCheckAll : IconChecked" 
@@ -200,7 +201,7 @@ import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'v
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { getAlbum, getAllFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
+import { getAlbum, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
          copyImage, renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
@@ -254,16 +255,11 @@ const divListView = ref(null);
 const fileList = ref([]);
 const totalFilesSize = ref(0);   // total files size
 const selectedItemIndex = ref(-1);
-// const selectedFile = ref({}); // current selected file item
 
 // mutil select mode
 const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
-
-// search text
-const searchedFileList = ref([]);    // filter fileList by searchText
-const searchedFileSize = ref(0);
 
 // preview 
 const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
@@ -369,7 +365,6 @@ const moreMenuItems = computed(() => {
     },
   ];
 });
-
 
 onMounted( async() => {
   // FIXME: ResizeObserver loop completed with undelivered notifications.
@@ -482,35 +477,36 @@ watch(() => config.language, (newLanguage) => {
 });
 
 /// watch home
-watch(() => config.toolbarIndex, async(newIndex) => {
+watch(() => [config.toolbarIndex, config.searchText, config.fileType], async([newIndex, newSearchText, newFileType]) => {
   if(newIndex === 0) { // home
     contentTitle.value = localeMsg.value.home;
-    fileList.value = await getAllFiles();  // get all files
+    fileList.value = await getDbFiles();  // get all files
     refreshFileList();
   } 
 }, { immediate: true });
 
 /// watch favorites
-watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath], 
-            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
+watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath, config.searchText, config.fileType], 
+            async ([newIndex, newAlbumId, newFolderId, newFolderPath, newSearchText, newFileType]) => {
   if(newIndex === 1) {
     if(newFolderId === 0) { // 0: favorite files
       contentTitle.value = localeMsg.value.favorite_files;
-      fileList.value = await getAllFiles(true); // true: only get favorite files
+      fileList.value = await getDbFiles("", "", "", "", true); // true: only get favorite files
+
     } else {                // else: favorite folders
       const album = await getAlbum(newAlbumId);
       if(album) {
         contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
       };
-      fileList.value = await getFolderFiles(newFolderId, newFolderPath);
+      fileList.value = await getFolderFiles(newFolderId, newFolderPath, newSearchText, newFileType);
     }
     refreshFileList();
   }
 }, { immediate: true });
 
 /// watch album
-watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath], 
-            async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
+watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath, config.searchText, config.fileType], 
+            async ([newIndex, newAlbumId, newFolderId, newFolderPath, newSearchText, newFileType]) => {
   if(newIndex === 2) {
     if (newAlbumId) {
       const album = await getAlbum(newAlbumId);
@@ -521,7 +517,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.a
           contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
         };
 
-        fileList.value = await getFolderFiles(newFolderId, newFolderPath);
+        fileList.value = await getFolderFiles(newFolderId, newFolderPath, newSearchText, newFileType);
         refreshFileList();
       } 
     } else {
@@ -532,7 +528,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.a
 }, { immediate: true });
 
 // watch calandar
-watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate], 
+watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate, config.searchText, config.fileType], 
             async ([newIndex, year, month, date]) => {
   if(newIndex === 3) {
     if (year && month && date) {
@@ -557,7 +553,7 @@ watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, con
 // TODO: impl people 
 
 // watch camera
-watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel], 
+watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel, config.searchText, config.fileType], 
             async ([newIndex, newMake, newModel]) => {
   if(newIndex === 6) {
     if(newMake) {
@@ -593,21 +589,6 @@ watch(() => [selectedItemIndex.value, fileList.value], () => {
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;
   selectedSize.value = fileList.value.reduce((total, file) => { return total + (file.isSelected ? file.size : 0); }, 0);
 }, { deep: true });
-
-// watch searchtext
-watch(() => [config.searchText, fileList.value], ([newSearchText, newFileList]) => {
-  if(newSearchText.length > 0) {
-    searchedFileList.value = newFileList.filter(file => file.name.toLowerCase().includes(newSearchText.trim().toLowerCase()));
-
-    // update searched files' size
-    searchedFileSize.value = searchedFileList.value.reduce((total, file) => { return total + file.size; }, 0);
-
-    // reset select item index
-    selectedItemIndex.value = Math.min(0, searchedFileList.value.length - 1);
-  } else {
-    selectedItemIndex.value = Math.min(0, newFileList.length - 1);
-  }
-});
 
 // watch preview
 watch(() => config.showPreview, (showPreview) => {

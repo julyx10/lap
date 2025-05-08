@@ -90,7 +90,8 @@ fn main() {
             t_cmds::reveal_folder,
 
             // file
-            t_cmds::get_all_files,
+            // t_cmds::get_all_files,
+            t_cmds::get_db_files,
             t_cmds::get_folder_files,
             t_cmds::copy_image_to_clipboard,
             t_cmds::rename_file,
@@ -110,11 +111,11 @@ fn main() {
             t_cmds::set_file_favorite,
 
             // calendar
-            t_cmds::get_files_by_date,
-            t_cmds::get_files_by_date_range,
+            // t_cmds::get_files_by_date,
+            // t_cmds::get_files_by_date_range,
             
             // camera
-            t_cmds::get_camera_files,
+            // t_cmds::get_camera_files,
             t_cmds::get_camera_info,
             t_cmds::get_taken_dates,
 
