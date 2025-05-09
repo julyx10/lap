@@ -173,6 +173,7 @@
             <label class="font-bold">jc-photo</label>
             <label>{{ $t('settings_about_version', { version: '0.1.0' }) }}</label>
             <label>{{ $t('settings_about_author', { author: '@liulichuan' }) }}</label>
+            <label>{{ $t('settings_about_storage_size', { count: dbFileCount.toLocaleString(), size: dbFileSize }) }}</label>
           </div>
 
         </section>
@@ -187,12 +188,13 @@
 
 <script setup>
 
-import { watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/utils';
+import { config, formatFileSize } from '@/common/utils';
+import { getDbFileCount, getDbFileSize } from '@/common/api';
 
 import Switch from '@/components/Switch.vue'
 import TitleBar from '@/components/TitleBar.vue';
@@ -203,6 +205,9 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.language]);
 
 const appWindow = getCurrentWebviewWindow()
+
+const dbFileCount = ref(0);
+const dbFileSize = ref('');
 
 const languages = [
   { label: 'English', value: 'en' },
@@ -249,6 +254,18 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
+
+// Handle the settings tab index change
+watch(() => config.settingsTabIndex, (newValue) => {
+  if (newValue === 3) {   // about tab
+    getDbFileCount().then((count) => {
+      dbFileCount.value = count;
+    });
+    getDbFileSize().then((size) => {
+      dbFileSize.value = formatFileSize(size);
+    });
+  }
+}, { immediate: true });
 
 // general settings
 watch(() => config.language, (newValue) => {

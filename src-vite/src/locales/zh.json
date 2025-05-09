@@ -112,6 +112,7 @@
   "menu_item_add_folder": "添加文件夹",
   "menu_item_edit_list": "编辑列表",
   "menu_item_finish": "完成",
+  "menu_item_comment": "备注",
 
   "tooltip_copy_image_success": "图片已复制到剪贴板",
   "tooltip_copy_image_error": "复制图片失败",
@@ -213,5 +214,6 @@
   "settings_about": "关于",
   "settings_about_version": "版本: {version}",
   "settings_about_author": "作者: {author}",
-  "settings_about_project_page": "项目主页"
+  "settings_about_project_page": "项目主页",
+  "settings_about_storage_size": "存储大小: {count} 个缩略图 ({size})"
 }

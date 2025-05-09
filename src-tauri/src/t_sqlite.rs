@@ -6,8 +6,8 @@
  * date:    2024-08-08
  */
 use std::collections::HashMap;
-use std::fs;
-use dirs;
+// use std::fs;
+// use dirs;
 use base64::{engine::general_purpose, Engine};
 use exif::Tag;
 use rusqlite::{params, Connection, OptionalExtension, Result};
@@ -61,7 +61,7 @@ impl Album {
 
     /// fetch an album from db by path
     fn fetch(path: &str) -> Result<Option<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn.query_row(
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at 
             FROM albums WHERE path = ?1",
@@ -73,7 +73,7 @@ impl Album {
 
     /// insert an album into db
     fn insert(&mut self) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
 
         // Determine the next display order id
         self.display_order_id = conn
@@ -122,7 +122,7 @@ impl Album {
 
     /// delete an album from the db
     pub fn delete_from_db(id: i64) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .execute("DELETE FROM albums WHERE id = ?1", params![id])
             .map_err(|e| e.to_string())?;
@@ -130,27 +130,31 @@ impl Album {
     }
 
     /// Get all albums from the db
-    pub fn get_all_albums() -> Result<Vec<Self>> {
-        let conn = open_conn();
+    pub fn get_all_albums() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at
             FROM albums ORDER BY display_order_id ASC"
-        )?;
+        ).map_err(|e| e.to_string())?;
 
         // Execute the query and map the result to Album structs
-        let albums_iter = stmt.query_map([], |row| Self::from_row(row))?;
+        let albums_iter = stmt.query_map([], |row| Self::from_row(row))
+            .map_err(|e| e.to_string())?;
 
         // Collect the results into a Vec<Album>
         let mut albums = Vec::new();
         for album in albums_iter {
-            albums.push(album?);
+            match album {
+                Ok(album) => albums.push(album),
+                Err(e) => return Err(format!("Failed to retrieve row: {}", e)),
+            }
         }
         Ok(albums)
     }
 
     /// get album info by id
     pub fn get_album_by_id(id: i64) -> Result<Self, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn.query_row(
             "SELECT id, name, path, description, avatar_id, display_order_id, created_at, modified_at
             FROM albums WHERE id = ?1",
@@ -162,7 +166,7 @@ impl Album {
 
     /// update a column value
     pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let query = format!("UPDATE albums SET {} = ?1 WHERE id = ?2", column);
         let result = conn
             .execute(&query, params![value, id])
@@ -216,7 +220,7 @@ impl AFolder {
     
     /// fetch a folder row from db (by path)
     fn fetch(folder_path: &str) -> Result<Option<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .query_row(
                 "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at
@@ -231,7 +235,7 @@ impl AFolder {
 
     /// insert a folder into db
     fn insert(&self) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .execute(
                 "INSERT INTO afolders (album_id, parent_id, name, path, is_favorite, created_at, modified_at) 
@@ -273,7 +277,7 @@ impl AFolder {
         // get folder name
         let folder_name = t_utils::get_file_name(new_path);
 
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .execute(
                 "UPDATE afolders
@@ -286,7 +290,7 @@ impl AFolder {
 
     /// move a folder (update path and album_id)
     pub fn move_folder(old_path: &str, new_album_id: i64, new_path: &str) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .execute(
                 "UPDATE afolders
@@ -299,7 +303,7 @@ impl AFolder {
 
     /// delete a folder and all subfolders from db
     pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .execute(
                 "DELETE FROM afolders WHERE path LIKE ?1 || '%'",
@@ -311,7 +315,7 @@ impl AFolder {
 
     // update a column value
     pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let query = format!("UPDATE afolders SET {} = ?1 WHERE id = ?2", column);
         let result = conn
             .execute(&query, params![value, id])
@@ -321,7 +325,7 @@ impl AFolder {
 
     // get a folder's is_favorite status
     pub fn get_is_favorite(folder_path: &str) -> Result<Option<bool>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .query_row(
                 "SELECT is_favorite FROM afolders WHERE path = ?1",
@@ -334,7 +338,7 @@ impl AFolder {
 
     // get all favorite folders
     pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
                 "SELECT id, album_id, parent_id, name, path, is_favorite, created_at, modified_at 
@@ -356,7 +360,7 @@ impl AFolder {
 
     // recurse all parent folder id (deprecated)
     // pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
-    //     let conn = open_conn();
+    //     let conn = open_conn()?;
 
     //     let mut stmt = conn
     //         .prepare(
@@ -516,7 +520,7 @@ impl AFile {
 
     /// insert a file into db
     fn insert(&self) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn.execute(
             "INSERT INTO afiles (
                 folder_id, 
@@ -565,7 +569,7 @@ impl AFile {
 
     // delete a file from db
     pub fn delete(id: i64) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .execute(
                 "DELETE FROM afiles WHERE id = ?1",
@@ -575,7 +579,17 @@ impl AFile {
         Ok(result)
     }
 
-    // Helper function to build the base SQL query
+    // Helper function to build the count SQL query
+    fn build_count_query() -> String {
+        String::from("
+            SELECT COUNT(*), SUM(a.size)
+            FROM afiles a 
+            LEFT JOIN afolders b ON a.folder_id = b.id
+            LEFT JOIN albums c ON b.album_id = c.id
+        ")
+    }
+
+    // build the base SQL query
     fn build_base_query() -> String {
         String::from("
             SELECT a.id, a.folder_id, 
@@ -637,7 +651,7 @@ impl AFile {
 
     /// Helper function to execute SQL query and map rows to `File`
     fn query_files(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
 
         let rows = stmt
@@ -652,6 +666,19 @@ impl AFile {
         Ok(files)
     }
 
+    // Helper function to execute SQL query and get the count
+    fn query_count(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<i64, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+
+        let count: i64 = stmt
+            .query_row(params, |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+
+        Ok(count)
+    }
+
+
     // Generalized function to query with conditions
     // fn query_with_conditions(
     //     conditions: &str,
@@ -664,7 +691,7 @@ impl AFile {
 
     /// fetch a file info from db by folder_id and file name
     pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
 
         // Prepare the SQL query by using the base query and adding conditions
         let sql = format!(
@@ -710,7 +737,7 @@ impl AFile {
 
     /// get a file info from db by file_id
     pub fn get_file_info(file_id: i64) -> Result<Option<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
 
         // Prepare the SQL query using the base query and adding the condition for file ID
         let sql = format!("{} WHERE a.id = ?1", Self::build_base_query());
@@ -726,7 +753,7 @@ impl AFile {
 
     /// update a file column value
     pub fn update_column(file_id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let query = format!("UPDATE afiles SET {} = ?1 WHERE id = ?2", column);
         let result = conn
             .execute(&query, params![value, file_id])
@@ -736,7 +763,7 @@ impl AFile {
 
     /// get all taken dates from db
     pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
                 "SELECT taken_date, count(1) 
@@ -800,6 +827,66 @@ impl AFile {
     //     let conditions = " WHERE a.e_make = ?1 AND (?2 = '' OR a.e_model = ?2)";
     //     Self::query_with_conditions(conditions, &[&make, &model])
     // }
+
+    // get total count of files
+    pub fn get_total_count(
+        file_name: &str, file_type: i64,
+        start_date: &str, end_date: &str,
+        make: &str, model: &str,
+        is_favorite: bool, is_deleted: bool
+    ) -> Result<i64, String> {
+        let mut conditions = Vec::new();
+        let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
+    
+        let like_pattern = format!("%{}%", file_name);
+        if !file_name.is_empty() {
+            conditions.push("a.name LIKE ? COLLATE NOCASE");
+            params.push(&like_pattern);
+        }
+    
+        if file_type > 0 {
+            conditions.push("a.file_type = ?");
+            params.push(&file_type);
+        }
+    
+        if !start_date.is_empty() {
+            if end_date.is_empty() {
+                conditions.push("a.taken_date = ?");
+                params.push(&start_date);
+            } else {
+                conditions.push("a.taken_date >= ? AND a.taken_date <= ?");
+                params.push(&start_date);
+                params.push(&end_date);
+            }
+        }
+    
+        if !make.is_empty() {
+            conditions.push("a.e_make = ?");
+            params.push(&make);
+            if !model.is_empty() {
+                conditions.push("a.e_model = ?");
+                params.push(&model);
+            }
+        }
+    
+        if is_favorite {
+            conditions.push("a.is_favorite = 1");
+        }
+    
+        if is_deleted {
+            conditions.push("a.deleted_at IS NOT NULL");
+        } else {
+            conditions.push("a.deleted_at IS NULL");
+        }
+    
+        let mut query = Self::build_count_query();
+        if !conditions.is_empty() {
+            query.push_str(" WHERE ");
+            query.push_str(&conditions.join(" AND "));
+        }
+    
+        Self::query_count(&query, &params)
+    }
 
     /// get files
     pub fn get_files(
@@ -900,7 +987,7 @@ impl AThumb {
 
     /// insert a thumbnail into db
     fn insert(&self) -> Result<usize, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .execute(
                 "INSERT INTO athumbs (file_id, thumb_data) 
@@ -913,7 +1000,7 @@ impl AThumb {
 
     /// fetch a thumbnail from db by file_id
     fn fetch(file_id: i64) -> Result<Option<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let result = conn
             .query_row(
                 "SELECT id, file_id, thumb_data 
@@ -968,7 +1055,7 @@ pub struct ACamera {
 impl ACamera {
     // get all camera makes and models from db
     pub fn get_from_db() -> Result<Vec<Self>, String> {
-        let conn = open_conn();
+        let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
                 "SELECT e_make, e_model 
@@ -1012,54 +1099,17 @@ impl ACamera {
 }
 
 /// get connection to the db
-fn open_conn() -> Connection {
-    // Get the local AppData directory
-    let app_data_dir = dirs::data_local_dir()
-        .expect("Failed to get the local AppData directory")
-        .join("jc-photo");
+fn open_conn() -> Result<Connection, String> {
+    let path = t_utils::get_db_file_path()
+        .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
-    // Ensure the directory exists
-    fs::create_dir_all(&app_data_dir).expect("Failed to create AppData directory");
-
-    // Construct the path for main.db
-    let db_path = app_data_dir.join("main.db");
-    let conn = Connection::open(db_path)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    // Enable WAL mode for better concurrency
-    // conn.pragma_update(None, "journal_mode", "WAL")
-    //     .expect("Failed to enable WAL mode");
-
-    // Set cache size to 20MB (adjust as needed)
-    // conn.pragma_update(None, "cache_size", -20000)
-    //     .expect("Failed to set cache size");
-
-    // Set synchronous mode to NORMAL for better performance
-    // conn.pragma_update(None, "synchronous", "NORMAL")
-    //     .expect("Failed to set synchronous mode");
-
-    // Set page size to 4096 bytes (adjust as needed)
-    // conn.pragma_update(None, "page_size", 4096)
-    //     .expect("Failed to set page size");
-
-    // Enable foreign key support (optional)
-    // conn.pragma_update(None, "foreign_keys", "ON")
-    //     .expect("Failed to enable foreign keys");
-
-    conn
+    Connection::open(&path)
+        .map_err(|e| format!("Failed to open database connection: {}", e))
 }
-
-/// close connection to the db
-// fn close_conn(conn: Connection) {
-//     if let Err((_, err)) = conn.close() {
-//         eprintln!("Failed to close the connection: {}", err);
-//     }
-// }
 
 /// create all tables if not exists
 pub fn create_db() -> Result<String> {
-    let conn = open_conn();
+    let conn = open_conn().unwrap();
 
     // albums table
     conn.execute(

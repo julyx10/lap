@@ -276,7 +276,36 @@ export async function revealFolder(folderPath) {
 //   return null
 // }
 
-/// get all db files
+/// get all db files' count(without pagination)
+export async function getDbFileCount(
+  startDate = "", 
+  endDate = "",
+  make = "", 
+  model = "",
+  isFavorite = false, 
+  isDeleted = false,
+) {
+  try {
+    const result = await invoke('get_db_count', {
+      fileName: config.searchText, 
+      fileType: config.fileType,
+      startDate, 
+      endDate,
+      make, 
+      model,
+      isFavorite, 
+      isDeleted,
+    });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getAllFiles error:', error);
+  }
+  return null
+}
+  
+/// get all db files(with pagination)
 export async function getDbFiles(
   startDate = "", 
   endDate = "",
@@ -287,7 +316,7 @@ export async function getDbFiles(
   offset = 0 
 ) {
   try {
-    const result = await invoke('get_db_files', {
+    const files = await invoke('get_db_files', {
       fileName: config.searchText, 
       fileType: config.fileType,
       startDate, 
@@ -299,20 +328,21 @@ export async function getDbFiles(
       offset, 
       pageSize: config.fileListPageSize
     });
-    if(result) {
-      return result;
+    const count = await getDbFileCount(startDate, endDate, make, model, isFavorite, isDeleted);
+    if(files) {
+      return [files, count];
     };
   } catch (error) {
     console.error('getAllFiles error:', error);
   }
-  return null
+  return [null, null];
 }
 
 
 // get all files under the path
-export async function getFolderFiles(folderId, folderPath, filterFileName, filterFileType) {
+export async function getFolderFiles(folderId, folderPath) {
   try {
-    const result = await invoke('get_folder_files', { folderId, folderPath, filterFileName, filterFileType });
+    const result = await invoke('get_folder_files', { folderId, folderPath, filterFileName: config.searchText, filterFileType: config.fileType });
     if(result) {
       return result;
     };
@@ -578,6 +608,21 @@ export async function printImage(imagePath) {
     }
   } catch (error) {
     console.error('Failed to print image:', error);
+  }
+  return null;
+}
+
+// setting
+
+// get db file size
+export async function getDbFileSize() {
+  try {
+    const dbFileSize = await invoke('get_db_file_size');
+    if (dbFileSize) {
+      return dbFileSize;
+    }
+  } catch (error) {
+    console.error('Failed to get db file size:', error);
   }
   return null;
 }

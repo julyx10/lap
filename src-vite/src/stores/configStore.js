@@ -15,7 +15,7 @@ export const useConfigStore = defineStore('configStore', {
     showStatusBar: true,        // show status bar
     darkMode: true,             // light or dark theme
     debugMode: false,           // debug mode
-    fileListPageSize: 1000,     // number of file list per page
+    fileListPageSize: 200,     // number of file list per page
 
     // settings - thumbnail
     thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512)

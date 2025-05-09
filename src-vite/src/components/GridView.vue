@@ -107,6 +107,7 @@ import {
   IconPhoto,
   IconChecked,
   IconUnChecked,
+  IconComment,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -232,6 +233,13 @@ const moreMenuItems = computed(() => {
       action: () => {
         rotateItem();
       }
+    },
+    {
+      label: localeMsg.value.menu_item_comment,
+      icon: IconComment,
+      action: () => {
+        commentItem();
+      }
     }
   ];
 });
@@ -340,6 +348,10 @@ function rotateItem() {
   emit('message-from-grid-view', { message: 'rotate' });
 };
 
+function commentItem() {
+  emit('message-from-grid-view', { message: 'comment' });
+};
+
 // function to get the text for the thumbnail
 const getThumbnailText = (file, option) => {
   switch (option) {
@@ -383,6 +395,10 @@ function getColumnCount() {
 
   return columnCount;
 }
+
+defineExpose({ 
+  scrollToItem,
+});
 
 </script>
 

@@ -65,7 +65,7 @@
     <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <div class="flex-1 flex flex-col">
         <!-- grid view -->
-        <GridView  
+        <GridView ref="gridViewRef"
           v-model:selectItemIndex="selectedItemIndex"
           :fileList="fileList"
           :selectMode="selectMode"
@@ -77,7 +77,7 @@
         >
           <IconFile class="t-icon-size-xs flex-shrink-0" />
           <div class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('files_summary', { count: fileList.length.toLocaleString() }) + ' (' + formatFileSize(totalFilesSize) + ')' }} 
+            {{ $t('files_summary', { count: totalCount.toLocaleString() }) + ' (' + formatFileSize(totalCount) + ')' }} 
           </div>
 
           <!-- <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
@@ -201,7 +201,7 @@ import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'v
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { getAlbum, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
+import { getAlbum, getDbFileCount, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
          copyImage, renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
@@ -253,7 +253,7 @@ const divListView = ref(null);
 
 // file list
 const fileList = ref([]);
-const totalFilesSize = ref(0);   // total files size
+const totalCount = ref(0);   // total files' count
 const selectedItemIndex = ref(-1);
 
 // mutil select mode
@@ -275,6 +275,9 @@ const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showDeleteMsgbox = ref(false);
 const errorMessage = ref('');
+
+// grid view
+const gridViewRef = ref(null);
 
 const toolTipRef = ref(null);
 const searchBoxRef = ref(null);
@@ -480,7 +483,7 @@ watch(() => config.language, (newLanguage) => {
 watch(() => [config.toolbarIndex, config.searchText, config.fileType], async([newIndex, newSearchText, newFileType]) => {
   if(newIndex === 0) { // home
     contentTitle.value = localeMsg.value.home;
-    fileList.value = await getDbFiles();  // get all files
+    [fileList.value, totalCount.value] = await getDbFiles();  // get all files and total count
     refreshFileList();
   } 
 }, { immediate: true });
@@ -491,14 +494,13 @@ watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderI
   if(newIndex === 1) {
     if(newFolderId === 0) { // 0: favorite files
       contentTitle.value = localeMsg.value.favorite_files;
-      fileList.value = await getDbFiles("", "", "", "", true); // true: only get favorite files
-
+      [fileList.value, totalCount.value] = await getDbFiles("", "", "", "", true); // true: only get favorite files
     } else {                // else: favorite folders
       const album = await getAlbum(newAlbumId);
       if(album) {
         contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
       };
-      fileList.value = await getFolderFiles(newFolderId, newFolderPath, newSearchText, newFileType);
+      fileList.value = await getFolderFiles(newFolderId, newFolderPath);
     }
     refreshFileList();
   }
@@ -517,7 +519,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.a
           contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
         };
 
-        fileList.value = await getFolderFiles(newFolderId, newFolderPath, newSearchText, newFileType);
+        fileList.value = await getFolderFiles(newFolderId, newFolderPath);
         refreshFileList();
       } 
     } else {
@@ -583,7 +585,8 @@ watch(() => [selectedItemIndex.value, fileList.value], () => {
   openImageViewer(selectedItemIndex.value, false);
 
   // update all files' size
-  totalFilesSize.value = fileList.value.reduce((total, file) => { return total + file.size; }, 0);
+  // TODO: get all files' size from DB
+  // totalCount.value = fileList.value.reduce((total, file) => { return total + file.size; }, 0);
   
   // update selected files' count and size
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;
@@ -666,10 +669,11 @@ function refreshFileList() {
   selectMode.value = false;   // exit multi-select mode
 
   if(fileList.value.length > 0) {
-    selectedItemIndex.value = 0;
-
     sortFileList(fileList.value, config.sortingType, config.sortingDirection);
     getFileListThumb(fileList.value); 
+
+    selectedItemIndex.value = 0;
+    gridViewRef.value.scrollToItem(selectedItemIndex.value); // scroll to the selected item
   } else {
     selectedItemIndex.value = -1;
   }

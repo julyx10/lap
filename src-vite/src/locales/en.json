@@ -112,6 +112,7 @@
   "menu_item_add_folder": "Add folder",
   "menu_item_edit_list": "Edit list",
   "menu_item_finish": "Finish",
+  "menu_item_comment": "Comment",
 
   "tooltip_copy_image_success": "Image copied to clipboard",
   "tooltip_copy_image_failed": "Failed to copy image to clipboard",
@@ -204,7 +205,7 @@
   "settings_thumbnail_label_primary": "Show primary label",
   "settings_thumbnail_label_secondary": "Show secondary label",
   "settings_thumbnail_label_options": ["Empty", "Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
-  
+
   "settings_image_viewer": "Image Viewer",
   "settings_image_viewer_mouse_wheel": "Mouse wheel",
   "settings_image_viewer_mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
@@ -213,5 +214,6 @@
   "settings_about": "About",
   "settings_about_version": "Version: {version}",
   "settings_about_author": "Author: {author}",
-  "settings_about_project_page": "Project Page"
+  "settings_about_project_page": "Project Page",
+  "settings_about_storage_size": "Storage size: {count} thumbnails({size})"
 } 

@@ -179,38 +179,6 @@ impl FileInfo {
 //     }
 // }
 
-/// Get the path separator based on the operating system
-// #[allow(dead_code)]
-// pub fn get_separator() -> String {
-//     std::path::MAIN_SEPARATOR.to_string()
-// }
-
-// /// Check if a file extension is an image extension
-// pub fn is_image_extension(extension: &str) -> bool {
-//     match extension.to_lowercase().as_str() {
-//         "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" => true,
-//         _ => false,
-//     }
-// }
-
-// /// Check if a file extension is a video extension
-// #[allow(dead_code)]
-// pub fn is_video_extension(extension: &str) -> bool {
-//     match extension.to_lowercase().as_str() {
-//         "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => true,
-//         _ => false,
-//     }
-// }
-
-// /// Check if a file extension is a music extension
-// #[allow(dead_code)]
-// pub fn is_music_extension(extension: &str) -> bool {
-//     match extension.to_lowercase().as_str() {
-//         "mp3" | "wav" | "flac" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => true,
-//         _ => false,
-//     }
-// }
-
 /// create a new folder at a given path
 /// Returns the folder path if successful
 pub fn create_new_folder(folder_path: &str) -> Option<String> {
@@ -718,4 +686,21 @@ pub fn print_image(image_path: String) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+/// get main.db file path
+pub fn get_db_file_path() -> Result<String, String> {
+    // Get the local AppData directory
+    let app_data_dir = dirs::data_local_dir()
+        .ok_or_else(|| "Failed to get the local AppData directory".to_string())?
+        .join("jc-photo");
+
+    // Ensure the directory exists
+    fs::create_dir_all(&app_data_dir)
+        .map_err(|e| format!("Failed to create AppData directory: {}", e))?;
+
+    // Construct the path for main.db
+    let db_path = app_data_dir.join("main.db");
+
+    Ok(db_path.to_string_lossy().into_owned())
 }

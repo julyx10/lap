@@ -112,6 +112,7 @@
   "menu_item_add_folder": "フォルダを追加",
   "menu_item_edit_list": "リストを編集",
   "menu_item_finish": "終了",
+  "menu_item_comment": "コメント",
 
   "tooltip_copy_image_success": "画像がクリップボードにコピーされました",
   "tooltip_copy_image_failed": "画像をクリップボードにコピーできませんでした",
@@ -213,6 +214,7 @@
   "settings_about": "情報",
   "settings_about_version": "バージョン: {version}",
   "settings_about_author": "作者: {author}",
-  "settings_about_project_page": "プロジェクトページ"
+  "settings_about_project_page": "プロジェクトページ",
+  "settings_about_storage_size": "ストレージサイズ: {count} サムネイル ({size})"
 }
   

@@ -156,6 +156,22 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 //         .map_err(|e| format!("Error while getting all files: {}", e))
 // }
 
+/// get db file count
+#[tauri::command]
+pub fn get_db_count(
+    file_name: &str, file_type: i64,
+    start_date: &str, end_date: &str,
+    make: &str, model: &str,
+    is_favorite: bool, is_deleted: bool
+) -> Result<i64, String> {
+    AFile::get_total_count(
+        file_name, file_type,
+        start_date, end_date,
+        make, model,
+        is_favorite, is_deleted
+    ).map_err(|e| format!("Error while getting all files count: {}", e))
+}
+
 /// get db files
 #[tauri::command]
 pub fn get_db_files(
@@ -374,4 +390,19 @@ pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
 pub fn print_image(image_path: String) -> Result<(), String> {
     t_utils::print_image(image_path)
         .map_err(|e| format!("Error while printing image: {}", e))
+}
+
+// settings
+
+/// get db file size
+#[tauri::command]
+pub fn get_db_file_size() -> Result<u64, String> {
+    // Get the database file path
+    let db_file_path = t_utils::get_db_file_path()
+        .map_err(|e| format!("Failed to get the database file path: {}", e))?;
+
+    match t_utils::FileInfo::new(&db_file_path) {
+        Ok(info) => Ok(info.file_size),
+        Err(e) => Err(format!("Failed to get the database file size: {}", e)),
+    }
 }

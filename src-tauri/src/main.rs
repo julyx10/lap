@@ -91,6 +91,7 @@ fn main() {
 
             // file
             // t_cmds::get_all_files,
+            t_cmds::get_db_count,
             t_cmds::get_db_files,
             t_cmds::get_folder_files,
             t_cmds::copy_image_to_clipboard,
@@ -121,6 +122,9 @@ fn main() {
 
             // print
             t_cmds::print_image,
+
+            // settings
+            t_cmds::get_db_file_size,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");
