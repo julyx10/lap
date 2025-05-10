@@ -212,8 +212,13 @@
   "settings_image_viewer_autoplay_interval": "Autoplay interval: {second} second(s)",
   
   "settings_about": "About",
-  "settings_about_version": "Version: {version}",
-  "settings_about_author": "Author: {author}",
-  "settings_about_project_page": "Project Page",
-  "settings_about_storage_size": "Storage size: {count} thumbnails({size})"
+  "settings_about_package_name": "Package name",
+  "settings_about_package_description": "Description",
+  "settings_about_package_version": "Version",
+  "settings_about_package_build_time": "Build time",
+  "settings_about_package_author": "Author",
+  "settings_about_package_license": "License",
+  "settings_about_package_website": "Website",
+  "settings_about_storage_file_path": "Storage file path",
+  "settings_about_storage_file_size": "Storage file size"
 } 

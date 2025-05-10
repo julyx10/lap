@@ -1,5 +1,5 @@
 <template>
-  <div class="my-1 p-2 w-72 t-color-bg-light rounded-l-lg">
+  <div class="my-1 p-2 h-full w-full t-color-bg-light rounded-l-lg">
     <!-- Title bar -->
     <div class="h-6 flex items-center justify-between">
       <div>
@@ -23,6 +23,14 @@
           <tr>
             <td>{{ $t('file_info_path') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.file_path }}</td>
+            <!-- <td>
+               <input
+               type="text"
+               readonly
+               :value="fileInfo.file_path"
+               class="py-1 w-full t-input-color-bg border-none focus:border-none focus:ring-0 focus:outline-none"
+               />
+            </td> -->
           </tr>
           <tr>
             <td>{{ $t('file_info_resolution') }}</td>
@@ -100,10 +108,10 @@
             <td>{{ $t('file_info_comment') }}</td>
             <td>{{ fileInfo.comments }}</td>
           </tr>
-          <tr>
+          <!-- <tr>
             <td>Deleted_at</td>
             <td>{{ formatTimestamp(fileInfo.deleted_at, $t('date_time_format')) }}</td>
-          </tr>
+          </tr> -->
         </tbody>
       </table>
     </div>

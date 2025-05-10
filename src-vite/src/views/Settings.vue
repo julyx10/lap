@@ -170,10 +170,52 @@
         <section v-else-if="config.settingsTabIndex === 3">
 
           <div class="flex flex-col items-center justify-between mb-4">
-            <label class="font-bold">jc-photo</label>
-            <label>{{ $t('settings_about_version', { version: '0.1.0' }) }}</label>
-            <label>{{ $t('settings_about_author', { author: '@liulichuan' }) }}</label>
-            <label>{{ $t('settings_about_storage_size', { count: dbFileCount.toLocaleString(), size: dbFileSize }) }}</label>
+            <!-- <label class="font-bold mb-4">jc-photo</label> -->
+
+            <table class="w-full">
+              <tbody>
+                <tr>
+                  <td>{{ $t('settings_about_package_name') }}</td>
+                  <td>{{ packageInfo.name }}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings_about_package_version') }}</td>
+                  <td>{{ packageInfo.version }}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings_about_package_build_time') }}</td>
+                  <td>{{ buildTime }}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings_about_package_website') }}</td>
+                  <td>{{ packageInfo.homepage }}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings_about_package_license') }}</td>
+                  <td>{{ packageInfo.license}}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings_about_package_author') }}</td>
+                  <td>{{ packageInfo.authors[0]}}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings_about_storage_file_path') }}</td>
+                   <td>
+                    <input
+                      type="text"
+                      :value="storageFileInfo.file_path"
+                      readonly
+                      class="py-1 w-full t-input-color-bg border-none focus:border-none focus:ring-0 focus:outline-none"
+                    />
+                   </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings_about_storage_file_size') }}</td>
+                  <td>{{ formatFileSize(storageFileInfo.file_size) }}</td>
+                </tr>
+              </tbody>
+            </table>
+
           </div>
 
         </section>
@@ -194,7 +236,7 @@ import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { config, formatFileSize } from '@/common/utils';
-import { getDbFileCount, getDbFileSize } from '@/common/api';
+import { getPackageInfo, getBuildTime, getStorageFileInfo } from '@/common/api';
 
 import Switch from '@/components/Switch.vue'
 import TitleBar from '@/components/TitleBar.vue';
@@ -206,8 +248,10 @@ const localeMsg = computed(() => messages.value[config.language]);
 
 const appWindow = getCurrentWebviewWindow()
 
-const dbFileCount = ref(0);
-const dbFileSize = ref('');
+// storage file info
+const packageInfo = ref(null);
+const buildTime = ref('');
+const storageFileInfo = ref('');
 
 const languages = [
   { label: 'English', value: 'en' },
@@ -258,11 +302,17 @@ onUnmounted(() => {
 // Handle the settings tab index change
 watch(() => config.settingsTabIndex, (newValue) => {
   if (newValue === 3) {   // about tab
-    getDbFileCount().then((count) => {
-      dbFileCount.value = count;
+    // Get package info
+    getPackageInfo().then((info) => {
+      packageInfo.value = info;
     });
-    getDbFileSize().then((size) => {
-      dbFileSize.value = formatFileSize(size);
+    // Get build time
+    getBuildTime().then((time) => {
+      buildTime.value = time;
+    });
+    // Get storage file info
+    getStorageFileInfo().then((file) => {
+      storageFileInfo.value = file;
     });
   }
 }, { immediate: true });

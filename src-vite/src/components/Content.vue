@@ -77,7 +77,7 @@
         >
           <IconFile class="t-icon-size-xs flex-shrink-0" />
           <div class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('files_summary', { count: totalCount.toLocaleString() }) + ' (' + formatFileSize(totalCount) + ')' }} 
+            {{ $t('files_summary', { count: totalCount.toLocaleString() }) + ' (' + formatFileSize(totalSize) + ')' }} 
           </div>
 
           <!-- <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
@@ -201,7 +201,7 @@ import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'v
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { getAlbum, getDbFileCount, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
+import { getAlbum, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
          copyImage, renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
@@ -254,6 +254,7 @@ const divListView = ref(null);
 // file list
 const fileList = ref([]);
 const totalCount = ref(0);   // total files' count
+const totalSize = ref(0);     // total files' size
 const selectedItemIndex = ref(-1);
 
 // mutil select mode
@@ -483,7 +484,7 @@ watch(() => config.language, (newLanguage) => {
 watch(() => [config.toolbarIndex, config.searchText, config.fileType], async([newIndex, newSearchText, newFileType]) => {
   if(newIndex === 0) { // home
     contentTitle.value = localeMsg.value.home;
-    [fileList.value, totalCount.value] = await getDbFiles();  // get all files and total count
+    [fileList.value, totalCount.value, totalSize.value] = await getDbFiles();  // get all files and total count
     refreshFileList();
   } 
 }, { immediate: true });
@@ -494,13 +495,15 @@ watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderI
   if(newIndex === 1) {
     if(newFolderId === 0) { // 0: favorite files
       contentTitle.value = localeMsg.value.favorite_files;
-      [fileList.value, totalCount.value] = await getDbFiles("", "", "", "", true); // true: only get favorite files
+      [fileList.value, totalCount.value, totalSize.value] = await getDbFiles("", "", "", "", true); // true: only get favorite files
     } else {                // else: favorite folders
       const album = await getAlbum(newAlbumId);
       if(album) {
         contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
       };
-      fileList.value = await getFolderFiles(newFolderId, newFolderPath);
+      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(newFolderId, newFolderPath);
+      totalCount.value = fileList.value.length;
+      totalSize.value = fileList.value.reduce((total, file) => { return total + file.size; }, 0);
     }
     refreshFileList();
   }
@@ -519,7 +522,7 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.a
           contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
         };
 
-        fileList.value = await getFolderFiles(newFolderId, newFolderPath);
+        [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(newFolderId, newFolderPath);
         refreshFileList();
       } 
     } else {
@@ -539,7 +542,7 @@ watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, con
       } else if (config.calendarDate > 0) { // daily
         contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
       }
-      fileList.value = await getCalendarFiles(year, month, date);
+      [fileList.value, totalCount.value, totalSize.value] = await getCalendarFiles(year, month, date);
       refreshFileList()
     } else {
       contentTitle.value = localeMsg.value.calendar;
@@ -561,10 +564,10 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel, config.
     if(newMake) {
       if(newModel) {
         contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-        fileList.value = await getCameraFiles(config.cameraMake, newModel);
+        [fileList.value, totalCount.value, totalSize.value] = await getCameraFiles(config.cameraMake, newModel);
       } else {
         contentTitle.value = `${config.cameraMake}`;
-        fileList.value = await getCameraFiles(config.cameraMake, "");
+        [fileList.value, totalCount.value, totalSize.value] = await getCameraFiles(config.cameraMake, "");
       }
       refreshFileList()
     } else {
@@ -583,10 +586,6 @@ watch(() => [selectedItemIndex.value, fileList.value], () => {
   }
   // update image viewer if the viewer is open
   openImageViewer(selectedItemIndex.value, false);
-
-  // update all files' size
-  // TODO: get all files' size from DB
-  // totalCount.value = fileList.value.reduce((total, file) => { return total + file.size; }, 0);
   
   // update selected files' count and size
   selectedCount.value = fileList.value.filter(file => file.isSelected).length;

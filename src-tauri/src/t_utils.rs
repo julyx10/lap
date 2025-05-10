@@ -35,6 +35,33 @@ use std::process::Command;
 //         }
 //     }
 // }
+#[derive(serde::Serialize)]
+pub struct PackageInfo {
+    name: String,
+    version: String,
+    description: String,
+    authors: Vec<String>,
+    repository: Option<String>,
+    license: Option<String>,
+    homepage: Option<String>,
+}
+
+impl PackageInfo {
+    pub fn new() -> Self {
+        Self {
+            name: env!("CARGO_PKG_NAME").to_string(),
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            description: env!("CARGO_PKG_DESCRIPTION").to_string(),
+            authors: env!("CARGO_PKG_AUTHORS")
+                .split(':')
+                .map(|s| s.to_string())
+                .collect(),
+            repository: option_env!("CARGO_PKG_REPOSITORY").map(|s| s.to_string()),
+            license: option_env!("CARGO_PKG_LICENSE").map(|s| s.to_string()),
+            homepage: option_env!("CARGO_PKG_HOMEPAGE").map(|s| s.to_string()),
+        }
+    }
+}
 
 /// FileNode struct to represent a file system node
 #[derive(serde::Serialize)]
@@ -149,35 +176,6 @@ impl FileInfo {
         })
     }
 }
-
-/// ImageInfo struct to represent image metadata
-// #[derive(serde::Serialize)]
-// pub struct ImageInfo {
-//     pub width: u32,
-//     pub height: u32,
-//     pub color_type: String,
-//     pub bit_depth: u16,
-//     pub has_alpha: bool,
-// }
-
-// impl ImageInfo {
-//     /// Get image info from a file path
-//     pub fn new(file_path: &str) -> Result<Self, String> {
-//         let img = image::open(file_path).map_err(|e| e.to_string())?;
-//         let (width, height) = img.dimensions();
-//         let color_type = img.color();
-//         let bit_depth = color_type.bits_per_pixel();
-//         let has_alpha = color_type.has_alpha();
-
-//         Ok(ImageInfo {
-//             width,
-//             height,
-//             color_type: format!("{:?}", color_type),
-//             bit_depth,
-//             has_alpha,
-//         })
-//     }
-// }
 
 /// create a new folder at a given path
 /// Returns the folder path if successful

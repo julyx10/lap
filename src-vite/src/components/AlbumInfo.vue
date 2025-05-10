@@ -42,8 +42,8 @@
             <td>
               <input
                 type="text"
-                :value="albumPath"
                 readonly
+                :value="albumPath"
                 class="py-1 w-full t-input-color-bg border-none focus:border-none focus:ring-0 focus:outline-none"
               />
             </td>

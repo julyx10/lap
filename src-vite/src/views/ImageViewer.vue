@@ -1,6 +1,6 @@
 <template>
 
-  <div 
+  <div
     :class="[
       'relative w-screen h-screen flex flex-col overflow-hidden',
       config.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
@@ -115,7 +115,7 @@
     </div>
 
     <!-- content -->
-    <div class="flex t-color-text t-color-bg h-screen overflow-hidden">
+    <div ref="divContentView" class="flex t-color-text t-color-bg h-screen overflow-hidden">
       <!-- image container -->
       <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden">
         
@@ -170,6 +170,12 @@
 
       </div> <!-- image container -->
 
+      <!-- splitter -->
+      <div v-if="config.showFileInfo" 
+        class="w-1 mt-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
+        @mousedown="startDragging"
+      ></div>
+
       <!-- File Info -->
       <transition
         enter-active-class="transition-transform duration-200"
@@ -179,12 +185,16 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <FileInfo v-if="config.showFileInfo" 
-          :fileInfo="fileInfo" 
-          :fileIndex="fileIndex" 
-          :fileCount="fileCount" 
-          @close="closeFileInfo" 
-        />
+        <div v-if="config.showFileInfo" ref="previewDiv" 
+          :style="{ width: config.fileInfoPanelWidth + '%' }"
+        >
+          <FileInfo 
+            :fileInfo="fileInfo" 
+            :fileIndex="fileIndex" 
+            :fileCount="fileCount" 
+            @close="closeFileInfo" 
+          />
+        </div>
       </transition> <!-- File Info -->
 
     </div>
@@ -285,6 +295,9 @@ const imageMaxScale = ref(10);      // Maximum image scale
 const isScaleChanged = ref(false);  // Scale changed state
 
 const showDeleteMsgbox = ref(false);
+
+const isDraggingSplitter = ref(false); // Dragging state for the splitter
+const divContentView = ref(null); // Reference to the content view
 
 const toolTipRef = ref(null);
 
@@ -647,6 +660,32 @@ function closeFileInfo() {
   config.showFileInfo = false;
 }
 
+/// Dragging the splitter
+function startDragging(event) {
+  isDraggingSplitter.value = true;
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', stopDragging);
+}
+
+/// stop dragging the splitter
+function stopDragging() {
+  isDraggingSplitter.value = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', stopDragging);
+}
+
+/// handle mouse move event
+function handleMouseMove(event) {
+  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
+  if (isDraggingSplitter.value) {
+    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
+    const leftPosition = divContentView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+
+    // Limit width between 20% and 80%
+    config.fileInfoPanelWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
+  }
+}
+
 </script>
 
 <style scoped>
@@ -654,7 +693,7 @@ function closeFileInfo() {
 * {
   user-select: none;
 }
-
+ 
 @media (max-width: 600px) {
   #responsiveDiv {
     visibility: hidden;

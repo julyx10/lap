@@ -74,8 +74,9 @@ export const useConfigStore = defineStore('configStore', {
     // ImageViewer.vue
     isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
     isFullScreen: false,        // full screen mode
-    isPinned: true,            // pinned mode
+    isPinned: true,             // pinned mode
     showFileInfo: false,        // show file info
+    fileInfoPanelWidth: 20,     // file info panel width(
   }),
 
   actions: {

@@ -12,6 +12,8 @@ use arboard::Clipboard;
 use std::path::Path;
 use image::GenericImageView;
 
+include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
+
 // album
 
 /// get all albums
@@ -156,15 +158,15 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 //         .map_err(|e| format!("Error while getting all files: {}", e))
 // }
 
-/// get db file count
+/// get db file count and sum
 #[tauri::command]
-pub fn get_db_count(
+pub fn get_db_count_and_sum(
     file_name: &str, file_type: i64,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
     is_favorite: bool, is_deleted: bool
-) -> Result<i64, String> {
-    AFile::get_total_count(
+) -> Result<(i64, i64), String> {
+    AFile::get_count_and_sum(
         file_name, file_type,
         start_date, end_date,
         make, model,
@@ -394,15 +396,27 @@ pub fn print_image(image_path: String) -> Result<(), String> {
 
 // settings
 
-/// get db file size
+/// get package info
 #[tauri::command]
-pub fn get_db_file_size() -> Result<u64, String> {
+pub fn get_package_info() -> t_utils::PackageInfo {
+    t_utils::PackageInfo::new()
+}
+
+/// get the build time
+#[tauri::command]
+pub fn get_build_time() -> u64 {
+    BUILD_UNIX_TIME
+}
+
+/// get db file info
+#[tauri::command]
+pub fn get_storage_file_info() -> Result<t_utils::FileInfo, String> {
     // Get the database file path
     let db_file_path = t_utils::get_db_file_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
     match t_utils::FileInfo::new(&db_file_path) {
-        Ok(info) => Ok(info.file_size),
+        Ok(info) => Ok(info),
         Err(e) => Err(format!("Failed to get the database file size: {}", e)),
     }
 }

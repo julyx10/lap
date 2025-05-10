@@ -645,11 +645,27 @@ impl AFile {
                 row.get::<_, String>(26)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_name: row.get(26)?,
+            album_name: row.get(27)?,
         })
     }
 
-    /// Helper function to execute SQL query and map rows to `File`
+    // query the count and sum by sql
+    fn query_count_and_sum(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<(i64, i64), String> {
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+    
+        let result = stmt
+            .query_row(params, |row| {
+                let count: i64 = row.get(0)?;
+                let sum: i64 = row.get(1).unwrap_or(0); // Handles NULL from SUM
+                Ok((count, sum))
+            })
+            .map_err(|e| e.to_string())?;
+    
+        Ok(result)
+    }
+
+    /// query files by sql
     fn query_files(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
@@ -667,16 +683,16 @@ impl AFile {
     }
 
     // Helper function to execute SQL query and get the count
-    fn query_count(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<i64, String> {
-        let conn = open_conn()?;
-        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+    // fn query_count(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<i64, String> {
+    //     let conn = open_conn()?;
+    //     let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
 
-        let count: i64 = stmt
-            .query_row(params, |row| row.get(0))
-            .map_err(|e| e.to_string())?;
+    //     let count: i64 = stmt
+    //         .query_row(params, |row| row.get(0))
+    //         .map_err(|e| e.to_string())?;
 
-        Ok(count)
-    }
+    //     Ok(count)
+    // }
 
 
     // Generalized function to query with conditions
@@ -795,46 +811,13 @@ impl AFile {
         Ok(results)
     }
 
-    // get all files
-    // pub fn get_all_files(
-    //     is_favorite: bool,
-    //     offset: i64,
-    //     page_size: i64,
-    // ) -> Result<Vec<Self>, String> {
-    //     let mut conditions = String::new();
-    //     if is_favorite {
-    //         conditions.push_str(" WHERE a.is_favorite = 1");
-    //     }
-    //     conditions.push_str(" LIMIT ?1 OFFSET ?2");
-
-    //     Self::query_with_conditions(&conditions, &[&page_size, &offset])
-    // }
-
-    // get files by date(yyyy-mm-dd)
-    // pub fn get_files_by_date(date: &str) -> Result<Vec<Self>, String> {
-    //     let conditions = " WHERE a.taken_date = ?1";
-    //     Self::query_with_conditions(conditions, &[&date])
-    // }
-
-    /// data string format: yyyy-mm-dd
-    // pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<Self>, String> {
-    //     let conditions = " WHERE a.taken_date >= ?1 AND a.taken_date <= ?2";
-    //     Self::query_with_conditions(conditions, &[&start_date, &end_date])
-    // }
-
-    /// get files by camera make and model
-    // pub fn get_files_by_camera(make: &str, model: &str) -> Result<Vec<Self>, String> {
-    //     let conditions = " WHERE a.e_make = ?1 AND (?2 = '' OR a.e_model = ?2)";
-    //     Self::query_with_conditions(conditions, &[&make, &model])
-    // }
-
-    // get total count of files
-    pub fn get_total_count(
+    // get total count and size of files
+    pub fn get_count_and_sum(
         file_name: &str, file_type: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
         is_favorite: bool, is_deleted: bool
-    ) -> Result<i64, String> {
+    ) -> Result<(i64, i64), String> {
         let mut conditions = Vec::new();
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
     
@@ -885,7 +868,7 @@ impl AFile {
             query.push_str(&conditions.join(" AND "));
         }
     
-        Self::query_count(&query, &params)
+        Self::query_count_and_sum(&query, &params)
     }
 
     /// get files

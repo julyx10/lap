@@ -212,9 +212,13 @@
   "settings_image_viewer_autoplay_interval": "自動再生間隔: {second}秒",
 
   "settings_about": "情報",
-  "settings_about_version": "バージョン: {version}",
-  "settings_about_author": "作者: {author}",
-  "settings_about_project_page": "プロジェクトページ",
-  "settings_about_storage_size": "ストレージサイズ: {count} サムネイル ({size})"
+  "settings_about_package_name": "パッケージ名",
+  "settings_about_package_description": "説明",
+  "settings_about_package_version": "バージョン",
+  "settings_about_package_build_time": "ビルド時間",
+  "settings_about_package_author": "著者",
+  "settings_about_package_license": "ライセンス",
+  "settings_about_package_website": "ウェブサイト",
+  "settings_about_storage_file_path": "ストレージファイルパス",
+  "settings_about_storage_file_size": "ストレージファイルサイズ"
 }
-  

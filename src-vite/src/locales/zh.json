@@ -212,8 +212,13 @@
   "settings_image_viewer_autoplay_interval": "自动播放间隔: {second}秒",
   
   "settings_about": "关于",
-  "settings_about_version": "版本: {version}",
-  "settings_about_author": "作者: {author}",
-  "settings_about_project_page": "项目主页",
-  "settings_about_storage_size": "存储大小: {count} 个缩略图 ({size})"
+  "settings_about_package_name": "包名",
+  "settings_about_package_description": "描述",
+  "settings_about_package_version": "版本",
+  "settings_about_package_build_time": "构建时间",
+  "settings_about_package_author": "作者",
+  "settings_about_package_license": "许可证",
+  "settings_about_package_website": "网站",
+  "settings_about_storage_file_path": "存储文件路径",
+  "settings_about_storage_file_size": "存储文件大小"
 }

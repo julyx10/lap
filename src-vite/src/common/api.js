@@ -276,8 +276,8 @@ export async function revealFolder(folderPath) {
 //   return null
 // }
 
-/// get all db files' count(without pagination)
-export async function getDbFileCount(
+/// get all db files' count and sum(without pagination)
+export async function getDbCountAndSum(
   startDate = "", 
   endDate = "",
   make = "", 
@@ -286,7 +286,7 @@ export async function getDbFileCount(
   isDeleted = false,
 ) {
   try {
-    const result = await invoke('get_db_count', {
+    const result = await invoke('get_db_count_and_sum', {
       fileName: config.searchText, 
       fileType: config.fileType,
       startDate, 
@@ -300,12 +300,13 @@ export async function getDbFileCount(
       return result;
     };
   } catch (error) {
-    console.error('getAllFiles error:', error);
+    console.error('getDbCountAndSum error:', error);
   }
   return null
 }
   
-/// get all db files(with pagination)
+/// get all files from db (with pagination)
+/// return [files, totalCount, totalSum]
 export async function getDbFiles(
   startDate = "", 
   endDate = "",
@@ -328,28 +329,30 @@ export async function getDbFiles(
       offset, 
       pageSize: config.fileListPageSize
     });
-    const count = await getDbFileCount(startDate, endDate, make, model, isFavorite, isDeleted);
     if(files) {
-      return [files, count];
+      const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted);
+      return [files, totalCount, totalSum];
     };
   } catch (error) {
     console.error('getAllFiles error:', error);
   }
-  return [null, null];
+  return [null, null, null];
 }
 
-
-// get all files under the path
+// get all files from the folder (no pagination)
+// return [files, totalCount, totalSum]
 export async function getFolderFiles(folderId, folderPath) {
   try {
-    const result = await invoke('get_folder_files', { folderId, folderPath, filterFileName: config.searchText, filterFileType: config.fileType });
-    if(result) {
-      return result;
+    const files = await invoke('get_folder_files', { folderId, folderPath, filterFileName: config.searchText, filterFileType: config.fileType });
+    if(files) {
+      const totalCount = files.length;
+      const totalSum = files.reduce((acc, file) => acc + file.size, 0);
+      return [files, totalCount, totalSum];
     };
   } catch (error) {
     console.error('getFolderFiles error:', error);
   }
-  return null;
+  return [null, null, null];
 };
 
 // copy an image to clipboard
@@ -614,15 +617,42 @@ export async function printImage(imagePath) {
 
 // setting
 
-// get db file size
-export async function getDbFileSize() {
+// get package info
+export async function getPackageInfo() {
   try {
-    const dbFileSize = await invoke('get_db_file_size');
-    if (dbFileSize) {
-      return dbFileSize;
+    const packageInfo = await invoke('get_package_info');
+    if (packageInfo) {
+      return packageInfo;
+    }
+  } catch (error) {
+    console.error('Failed to get package info:', error);
+  }
+  return null;
+}
+
+// get db file info
+export async function getStorageFileInfo() {
+  try {
+    const dbFileInfo = await invoke('get_storage_file_info');
+    if (dbFileInfo) {
+      return dbFileInfo;
     }
   } catch (error) {
     console.error('Failed to get db file size:', error);
+  }
+  return null;
+}
+
+// get build time
+export async function getBuildTime() {
+  try {
+    const unixTime = await invoke('get_build_time');
+    console.log('get_build_time', unixTime);
+    if (unixTime) {
+      return new Date(unixTime * 1000).toLocaleString();;
+    }
+  } catch (error) {
+    console.error('Failed to get build time:', error);
   }
   return null;
 }

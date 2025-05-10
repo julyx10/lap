@@ -1,14 +1,14 @@
 [package]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 name = "jc-photo"
 version = "0.1.0"
-description = "JC Photo App"
-authors = ["julyxx"]
-edition = "2021"
-
-# Exclude main.db from Cargo packaging
-exclude = ["main.db"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "July Cat Photo"
+homepage = "https://www.jc-photo.com"
+authors = ["@liulichuan"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+exclude = ["main.db"]       # Exclude main.db from Cargo packaging
+build = "build.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -20,7 +20,6 @@ tauri-plugin-shell = "2"
 tauri-plugin-os = "2"
 tauri-plugin-fs = "2.2.0"
 tauri-plugin-dialog = "2"
-# tauri-plugin-devtools = "2.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.32.0", features = ["bundled"] }
@@ -37,9 +36,6 @@ opener = "0.7.2"
 arboard = "3.5.0"
 # opencv = "0.93.3"
 # id3 = "1.14.0"
-
-# [target."cfg(target_os = \"macos\")".dependencies]
-# cocoa = "0.26"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
