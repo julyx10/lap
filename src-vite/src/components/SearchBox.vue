@@ -1,17 +1,17 @@
 <template>
   <div 
     class="group relative shrink-0 transition-all duration-300 overflow-hidden"
-    :class="[isFocused || inputValue.length > 0 ? 'w-48' : 'w-10']"
+    :class="[isFocused || searchValue.length > 0 ? 'w-48' : 'w-10']"
   >
     <input 
       tabindex="-1"
-      ref="searchInput"
+      ref="searchInputRef"
       type="text"
       v-model="inputValue"
-      :placeholder="isFocused ? $t('search_placeholder') : ''"
+      :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('search_placeholder') : '')"
       :class="[
         'py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus transition-colors duration-300',
-        isFocused || inputValue.length > 0 ? 'px-8' : 'px-2 cursor-pointer t-color-border-group-hover '
+        isFocused || searchValue.length > 0 ? 'px-8' : 'px-2 cursor-pointer t-color-border-group-hover '
       ]"
       @focus="isFocused = true"
       @blur="handleBlur"
@@ -25,7 +25,7 @@
     />
 
     <!-- Cancel Icon (Only show when there's input) -->
-    <IconClose v-if="inputValue.length > 0" 
+    <IconClose v-if="searchValue.length > 0" 
       class="absolute right-2 top-1/2 transform -translate-y-1/2 t-icon-size-sm t-icon-group-hover"
       @click="clickCancel"
     />
@@ -50,7 +50,8 @@ const emit = defineEmits(['update:modelValue']);
 // input value
 const inputValue = ref('');
 const isFocused = ref(false);
-const searchInput = ref(null);
+const searchValue = ref(props.modelValue);
+const searchInputRef = ref(null);
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
@@ -84,7 +85,7 @@ function handleKeyDown(event) {
 const focusInput = () => {
   if(!isFocused.value) {
     isFocused.value = true;
-    searchInput.value?.focus();
+    searchInputRef.value?.focus();
   }
 };
 
@@ -101,15 +102,19 @@ function handleInput(event) {
 
 const clickCancel = () => {
   inputValue.value = '';
-  isFocused.value = false;
-  searchInput.value?.blur();
-  emit('update:modelValue', '');
+  updateSearch(inputValue.value);
 };
 
 const clickSearch = () => {
+  updateSearch(inputValue.value.trim());
+};
+
+const updateSearch = (value) => {
+  emit('update:modelValue', value);
+  searchValue.value = value;
+
+  searchInputRef.value?.blur();
   isFocused.value = false;
-  searchInput.value?.blur();
-  emit('update:modelValue', inputValue.value.trim());
 };
 
 defineExpose({ 

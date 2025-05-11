@@ -273,6 +273,13 @@ pub fn delete_file(file_id: i64, file_path: &str) -> Option<String> {
     }
 }
 
+/// edit a file's comment
+#[tauri::command]
+pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
+    AFile::update_column(file_id, "comments", &comment)
+        .map_err(|e| format!("Error while editing file comment: {}", e))
+}
+
 /// get a file's thumb image
 #[tauri::command]
 pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<AThumb>, String> {

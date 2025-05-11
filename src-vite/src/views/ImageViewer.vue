@@ -462,7 +462,7 @@ function handleKeyDown(event) {
   } else if (isCmdKey && key.toLowerCase() === 'i') {
     event.preventDefault();
     clickShowFileInfo();
-  } else if((isMac && event.metaKey && key === 'backspace') || (!isMac && key === 'delete')) {
+  } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
     event.preventDefault();
     showDeleteMsgbox.value = true;
   } else if (keyActions[key]) {
@@ -681,8 +681,8 @@ function handleMouseMove(event) {
     const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
     const leftPosition = divContentView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
 
-    // Limit width between 20% and 80%
-    config.fileInfoPanelWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
+    // Limit width between 10% and 50%
+    config.fileInfoPanelWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 50); 
   }
 }
 

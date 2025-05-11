@@ -149,6 +149,7 @@
     :message="$t('msgbox_rename_file_content')"
     :showInput="true"
     :inputText="renamingFileName.name"
+    :needValidateInput="true"
     :OkText="$t('msgbox_rename_file_ok')"
     :cancelText="$t('msgbox_cancel')"
     :errorMessage="errorMessage"
@@ -191,6 +192,20 @@
     @cancel="showDeleteMsgbox = false"
   />
 
+  <!-- comment -->
+  <MessageBox
+    v-if="showCommentMsgbox"
+    :title="$t('msgbox_edit_comment_title')"
+    :message="`${$t('msgbox_edit_comment_content', { file: fileList[selectedItemIndex].name })}`"
+    :showInput="true"
+    :inputText="fileList[selectedItemIndex]?.comments ?? ''"
+    :multiLine="true"
+    :OkText="$t('msgbox_ok')"
+    :cancelText="$t('msgbox_cancel')"
+    @ok="clickEditComment"
+    @cancel="showCommentMsgbox = false"
+  />
+
   <ToolTip ref="toolTipRef" />
 
 </template>
@@ -202,7 +217,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
-         copyImage, renameFile, moveFile, copyFile, deleteFile, getFileThumb, revealFolder, getFileImage,
+         copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
          formatFileSize, formatDate, getRelativePath, localeComp, 
@@ -275,6 +290,7 @@ const renamingFileName = ref({}); // extract the file name to {name, ext}
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showDeleteMsgbox = ref(false);
+const showCommentMsgbox = ref(false);
 const errorMessage = ref('');
 
 // grid view
@@ -425,6 +441,9 @@ onMounted( async() => {
         break;
       case 'rotate':
         clickRotate();
+        break;
+      case 'comment':
+        showCommentMsgbox.value = true;
         break;
       default:
         break;
@@ -1010,6 +1029,19 @@ const clickRotate = async () => {
     setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);
   }
 };
+
+// edit comment
+const clickEditComment = async (newComment) => {
+  if (selectedItemIndex.value >= 0) {
+    const file = fileList.value[selectedItemIndex.value];
+    const result = await editFileComment(file.id, newComment);
+    if(result) {
+      console.log('clickEditComment:', newComment);
+      file.comments = newComment;
+      showCommentMsgbox.value = false;
+    }
+  }
+}
 
 </script>
 

@@ -68,6 +68,9 @@
   "msgbox_delete_file_success": "ファイル '{file}' が削除されました。",
   "msgbox_delete_file_error": "削除できません。ファイルはすでに存在している可能性があります。",
 
+  "msgbox_edit_comment_title": "コメントを編集",
+  "msgbox_edit_comment_content": "ファイル '{file}' のコメントを入力してください:",
+
   "msgbox_select_folder_error": "フォルダの選択に失敗しました。",
   "msgbox_select_file_error": "ファイルの選択に失敗しました。",
 

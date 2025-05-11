@@ -8,7 +8,7 @@
       </div>
       <div class="mt-4">
         {{ message }}
-        <input v-if="showInput"
+        <input v-if="showInput && !multiLine"
           ref="inputRef"
           v-model="inputValue"
           type="text"
@@ -17,6 +17,15 @@
           @input="validateInput"
           @keydown.enter="clickOk"
         />
+        <textarea v-if="showInput && multiLine"
+          ref="inputRef"
+          v-model="inputValue"
+          rows="4"
+          minrows="1"
+          class="px-2 py-1 my-2 w-full border rounded-md t-input-color-bg t-color-border t-input-focus t-scrollbar-dark resize-y min-h-[30px] max-h-[200px]"
+          @input="validateInput"
+          @keydown.enter="clickOk"
+        ></textarea>
         <p class="h-4 text-red-600 text-xs">{{ inputErrorMessage }}</p>
       </div>
 
@@ -66,6 +75,14 @@ const props = defineProps({
     type: String, 
     default: '' 
   },
+  needValidateInput: { // validate input text
+    type: Boolean, 
+    default: false 
+  },
+  multiLine: { 
+    type: Boolean, 
+    default: false 
+  },
   OkText: { 
     type: String, 
     default: 'OK'
@@ -93,6 +110,7 @@ const emit = defineEmits(['ok', 'cancel', 'reset']);
 // input 
 const inputRef = ref(null);
 const inputValue = ref(props.inputText);
+const needValidateInput = ref(props.needValidateInput);
 const inputErrorMessage = ref('');
 
 const okButtonClasses = computed(() => {
@@ -118,7 +136,7 @@ watch(() => props.errorMessage, (newValue) => {
 });
 
 const validateInput = () => {
-  if (!isValidFileName(inputValue.value)) {
+  if ( needValidateInput.value && !isValidFileName(inputValue.value)) {
     inputErrorMessage.value = localeMsg.value.msgbox_input_filename_error;
   } else {
     inputErrorMessage.value = '';

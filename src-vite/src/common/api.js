@@ -416,6 +416,19 @@ export async function deleteFile(fileId, filePath) {
   return null;
 };
 
+// edit file comment
+export async function editFileComment(fileId, comment) {
+  try {
+    const result = await invoke('edit_file_comment', { fileId, comment });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to edit file comment:', error);
+  }
+  return null;
+}
+
 // get file thumb
 export async function getFileThumb(fileId, filePath, orientation, thumbnailSize) {
   try {
@@ -563,7 +576,6 @@ export async function getCalendarFiles(year, month, date) {
 // get all files under the camera make and model
 export async function getCameraFiles(make, model) {
   try {
-    // const result = await invoke('get_camera_files', { make, model });
     const result = await getDbFiles("", "", make, model);
     if(result) {
       return result;

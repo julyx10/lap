@@ -283,7 +283,7 @@ function handleKeyDown(event) {
   } else if(isCmdKey && key.toLowerCase() === 'r') {
     event.preventDefault();
     rotateItem();
-  } else if((isMac && event.metaKey && key === 'backspace') || (!isMac && key === 'delete')) {
+  } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
     event.preventDefault();
     deleteItem()
   } else if (keyActions[key]) {

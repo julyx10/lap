@@ -71,6 +71,7 @@
     :message="$t('msgbox_new_folder_content')"
     :showInput="true"
     :inputText="''"
+    :needValidateInput="true"
     :OkText="$t('msgbox_new_folder_ok')"
     :cancelText="$t('msgbox_cancel')"
     @ok="clickNewFolder"

@@ -186,14 +186,14 @@
                   <td>{{ $t('settings_about_package_build_time') }}</td>
                   <td>{{ buildTime }}</td>
                 </tr>
-                <tr>
+                <!-- <tr>
                   <td>{{ $t('settings_about_package_website') }}</td>
                   <td>{{ packageInfo.homepage }}</td>
                 </tr>
                 <tr>
                   <td>{{ $t('settings_about_package_license') }}</td>
                   <td>{{ packageInfo.license}}</td>
-                </tr>
+                </tr> -->
                 <tr>
                   <td>{{ $t('settings_about_package_author') }}</td>
                   <td>{{ packageInfo.authors[0]}}</td>

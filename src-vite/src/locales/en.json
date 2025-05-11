@@ -68,6 +68,9 @@
   "msgbox_delete_file_success": "The file '{file}' has been deleted.",
   "msgbox_delete_file_error": "Cannot delete the file. The file may not exist.",
 
+  "msgbox_edit_comment_title": "Edit comment",
+  "msgbox_edit_comment_content": "Enter your comment for the file '{file}':",
+
   "msgbox_select_folder_error": "Failed to select folder.",
   "msgbox_select_file_error": "Failed to select file.",
   

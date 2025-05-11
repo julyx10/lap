@@ -85,6 +85,7 @@
       :message="$t('msgbox_new_folder_content')"
       :showInput="true"
       :inputText="''"
+      :needValidateInput="true"
       :OkText="$t('msgbox_new_folder_ok')"
       :cancelText="$t('msgbox_cancel')"
       :errorMessage="errorMessage"
@@ -168,7 +169,6 @@ const selectedFolderPath = ref('');
 
 // message boxes
 const showAlbumInfo = ref(false);
-// const showRenameMsgbox = ref(false);
 const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
 const errorMessage = ref('');

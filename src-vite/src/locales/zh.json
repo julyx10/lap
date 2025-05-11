@@ -68,6 +68,9 @@
   "msgbox_delete_file_success": "文件 '{file}' 已被删除。",
   "msgbox_delete_file_error": "无法删除文件。文件可能不存在。",
 
+  "msgbox_edit_comment_title": "编辑备注",
+  "msgbox_edit_comment_content": "输入文件 '{file}' 的备注:",
+
   "msgbox_select_folder_error": "选择文件夹失败。",
   "msgbox_select_file_error": "选择文件失败。",
   
