@@ -114,7 +114,7 @@ const needValidateInput = ref(props.needValidateInput);
 const inputErrorMessage = ref('');
 
 const okButtonClasses = computed(() => {
-  return !props.showInput || inputValue.value.trim().length > 0
+  return !props.showInput || !props.needValidateInput || inputValue.value.trim().length > 0
     ? (props.warningOk ? 't-color-bg-warning-hover t-icon-hover' : 't-color-bg-highlight-hover t-icon-hover')
     : 't-icon-disabled';
 });
@@ -160,7 +160,7 @@ function handleKeyDown(event) {
 
 const clickOk = () => {
   if(props.showInput) {
-    if (inputValue.value.trim().length > 0 && !inputErrorMessage.value) {
+    if ( !props.needValidateInput || inputValue.value.trim().length > 0 && !inputErrorMessage.value) {
       emit('ok', inputValue.value);
     }
   } else {

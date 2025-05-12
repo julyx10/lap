@@ -1,24 +1,13 @@
 {
-  "build": {
-    "beforeDevCommand": "yarn dev",
-    "beforeBuildCommand": "yarn build",
-    "frontendDist": "../src-vite/dist",
-    "devUrl": "http://localhost:3580"
-  },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": [
-      "icons/icon.png",
-      "icons/icon.ico",
-      "icons/icon.icns"
-    ]
-  },
   "productName": "jc-photo",
-  "mainBinaryName": "jc-photo",
   "version": "0.1.0",
   "identifier": "com.julyxx.jc-photo",
-  "plugins": {},
+  "build": {
+    "beforeBuildCommand": "yarn build",
+    "beforeDevCommand": "yarn dev",
+    "devUrl": "http://localhost:3580",
+    "frontendDist": "../src-vite/dist"
+  },
   "app": {
     "withGlobalTauri": true,
     "windows": [
@@ -32,7 +21,17 @@
       }
     ],
     "security": {
-      "capabilities": ["migrated"]
+      "capabilities": ["default"]
     }
-  }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico",
+      "icons/icon.icns"
+    ]
+  },
+  "plugins": {}
 }

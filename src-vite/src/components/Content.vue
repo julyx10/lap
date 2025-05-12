@@ -122,6 +122,7 @@
           :style="{ width: config.previewPaneWidth + '%' }"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
+            class="relative"
             :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
@@ -130,6 +131,14 @@
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
               :isZoomFit="true"
             />
+
+            <!-- comments -->
+            <div v-if="fileList[selectedItemIndex]?.comments?.length > 0" 
+              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-gray-900 bg-opacity-50 rounded-lg" 
+            >
+              <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+              {{ fileList[selectedItemIndex]?.comments }}
+            </div>
           </div>
 
           <div v-else class="h-full flex items-center justify-center">
@@ -247,6 +256,7 @@ import {
   IconFile,
   IconSearch,
   IconChecked,
+  IconComment,
 } from '@/common/icons';
 
 const props = defineProps({

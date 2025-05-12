@@ -17,4 +17,7 @@ fn main() {
     write!(&mut formatted, "pub const BUILD_UNIX_TIME: u64 = {};", timestamp).unwrap();
 
     fs::write(dest_path, formatted).unwrap();
+
+    // build tauri
+    tauri_build::build()
 }

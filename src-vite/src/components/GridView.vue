@@ -45,14 +45,15 @@
         
           <!-- favorite and rotate status -->
           <div class="absolute left-0 top-0 flex items-center">
-            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm t-color-text-disabled group-hover:text-gray-500"></IconFavorite>
+            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm group-hover:text-gray-500"></IconFavorite>
             <IconRotate v-if="file.rotate % 360 > 0"
-              class="t-icon-size-sm t-color-text-disabled group-hover:text-gray-500"
+              class="t-icon-size-sm group-hover:text-gray-500"
               :style="{ 
                 transform: `rotate(${file.rotate}deg)`, 
                 transition: 'transform 0.3s ease-in-out' 
               }"
             />
+            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-sm group-hover:text-gray-500"></IconComment>
           </div>
 
           <!-- select checkbox or more menu -->
