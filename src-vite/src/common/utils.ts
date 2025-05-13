@@ -128,7 +128,6 @@ export function localeComp(lang, str1, str2) {
   };
 
   const locale = localeMap[lang] || 'en-US';
-  console.log('locale:', locale);
   if (locale === 'en-US') {
     return str1.localeCompare(str2);
   } else {

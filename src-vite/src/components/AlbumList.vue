@@ -230,10 +230,8 @@ onMounted( async () => {
     isLoading.value = false;
 
     if (props.albumId > 0) {
-      let album = getAlbumById(props.albumId);
-
       // expand and select the current album and folder
-      clickFinalSubFolder(album, props.folderPath);
+      clickFinalSubFolder(props.albumId, props.folderPath);
     }
   }
 
@@ -254,11 +252,12 @@ onMounted( async () => {
       case 'refresh-folder':
         for (let album of albums.value) {
           if(album.id === config.destAlbumId) {
-            clickFinalSubFolder(album, event.payload.folderPath);  // select the sub-folder
+            clickFinalSubFolder(album.id, event.payload.folderPath);  // select the sub-folder
             break;
           }
         }
         break;
+
       default:
         break;
     }
@@ -269,7 +268,10 @@ onMounted( async () => {
     const { message } = event.payload;
     switch (message) {
       case 'goto-folder':
-        clickFinalSubFolder(getAlbumById(event.payload.albumId), event.payload.folderPath);
+        // await clickFinalSubFolder(event.payload.albumId, event.payload.folderPath);
+        clickFinalSubFolder(config.albumId, config.albumFolderPath).then(() => {
+          config.toolbarIndex = 2;
+        });
         break;
       default:
         break;
@@ -412,8 +414,15 @@ const clickFolder = async (albumId, folder) => {
 };
 
 /// click the final sub-folder to select it
-const clickFinalSubFolder = async (album, folderPath) => {
-  if (album.path === props.folderPath) {  // album is selected
+const clickFinalSubFolder = async (albumId, folderPath) => {
+
+  console.log('AlbumList.vue-clickFinalSubFolder:', albumId, folderPath);
+  let album = getAlbumById(albumId);
+  if(!album) {
+    return;
+  }
+
+  if (album.path === folderPath) {  // album is selected
     clickAlbum(album);
   } else {    // album's sub-folder is selected
     // expand the album's folder

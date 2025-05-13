@@ -55,7 +55,7 @@
             't-icon-size flex-shrink-0',
             config.showPreview ? 't-icon-focus t-icon-focus-hover': 't-icon-hover'
           ]" 
-          @click="config.showPreview = !config.showPreview"
+          @click="showPreview"
         />
       </div>
     </div>
@@ -454,10 +454,13 @@ onMounted( async() => {
         showDeleteMsgbox.value = true;
         break;
       case 'goto-folder':
-        config.toolbarIndex = 2; // goto album
-        const albumId = fileList.value[selectedItemIndex.value].album_id;
-        const folderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
-        emit('message-from-content', { message: 'goto-folder', albumId, folderPath });
+        config.albumId = fileList.value[selectedItemIndex.value].id;
+        config.albumFolderId = fileList.value[selectedItemIndex.value].folder_id;
+        config.albumFolderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
+        // config.toolbarIndex = 2; // goto album
+        // const albumId = fileList.value[selectedItemIndex.value].id;
+        // const folderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
+        emit('message-from-content', { message: 'goto-folder' });
         break;
       case 'reveal':
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
@@ -623,26 +626,31 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel, config.
   }
 }, { immediate: true });
 
-// watch for changes in the file list (selected item index or file list length)
-watch(() => [selectedItemIndex.value, fileList.value], () => {
-  // update the preview
-  if(config.showPreview) {
-    getImageSrc();
+// watch for change of select item
+watch(
+  () => {
+    const index = selectedItemIndex.value;
+    const list = fileList.value;
+    return index >= 0 && index < list.length ? list[index].file_path : null;
+  },
+  () => {
+    // update the preview
+    if(config.showPreview) {
+      getImageSrc();
+    }
+    // update image viewer if the viewer is open
+    openImageViewer(selectedItemIndex.value, false);
   }
-  // update image viewer if the viewer is open
-  openImageViewer(selectedItemIndex.value, false);
-  
-  // update selected files' count and size
-  selectedCount.value = fileList.value.filter(file => file.isSelected).length;
-  selectedSize.value = fileList.value.reduce((total, file) => { return total + (file.isSelected ? file.size : 0); }, 0);
-}, { deep: true });
+);
 
-// watch preview
-watch(() => config.showPreview, (showPreview) => {
-  if (showPreview) {
-    getImageSrc();
+// watch for selected items in the file list (select mode)
+watch(
+  () => fileList.value.map(file => ({ isSelected: file.isSelected, size: file.size })),
+  () => {
+    selectedCount.value = fileList.value.filter(f => f.isSelected).length;
+    selectedSize.value = fileList.value.reduce((total, f) => total + (f.isSelected ? f.size : 0), 0);
   }
-});
+);
 
 // get selected image source
 const getImageSrc = async () => {
@@ -880,6 +888,16 @@ async function openImageViewer(index: number, newViewer = false) {
     if(newViewer) {
       imageWindow.show();
     }
+  }
+}
+
+// show/hide preview pane
+const showPreview = () => {
+  config.showPreview = !config.showPreview;
+  if(config.showPreview) {
+    getImageSrc();
+  } else {
+    imageSrc.value = '';
   }
 }
 
