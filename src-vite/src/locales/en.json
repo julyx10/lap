@@ -19,6 +19,7 @@
   "album_info_images": "Images",
   "album_info_videos": "Videos",
   "album_info_files_count": "{count} files ({size})",
+  "album_info_files_counting": "Counting files...",
   "album_info_created_time": "Created time",
   "album_info_modified_time": "Modified time",
 
@@ -79,8 +80,8 @@
   "files": "Files",
   "allphotos": "All Photos",
 
-  "folder_summary": "{folders} folders, {files} files",
-  "files_summary": "{count} files",
+  "files_summary": "{count} files ({size})",
+  "thumbnails_summary": "{count} thumbnails ({size})",
 
   "file_list_no_files": "No files found",
   
@@ -109,6 +110,7 @@
   "menu_item_remove": "Remove",
   "menu_item_new_folder": "New folder",
   "menu_item_open_folder": "Open folder...",
+  "menu_item_goto_folder": "Go to folder",
   "menu_item_reveal_in_file_explorer": "Reveal in File Explorer",
   "menu_item_reveal_in_finder": "Reveal in Finder",
   "menu_item_properties": "Properties",

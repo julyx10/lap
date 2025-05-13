@@ -19,6 +19,7 @@
   "album_info_images": "图片",
   "album_info_videos": "视频",
   "album_info_files_count": "{count} 个文件 ({size})",
+  "album_info_files_counting": "正在统计文件...",
   "album_info_created_time": "创建时间",
   "album_info_modified_time": "修改时间",
 
@@ -79,8 +80,8 @@
   "files": "文件",
   "allphotos": "所有照片",
 
-  "folder_summary": "{folders} 文件夹, {files} 文件",
-  "files_summary": "{count} 文件",
+  "files_summary": "{count} 个文件 ({size})",
+  "thumbnails_summary": "{count} 个缩略图 ({size})",
 
   "file_list_no_files": "未找到文件",
   
@@ -109,6 +110,7 @@
   "menu_item_remove": "移除",
   "menu_item_new_folder": "新建文件夹",
   "menu_item_open_folder": "打开文件夹...",
+  "menu_item_goto_folder": "前往文件夹",
   "menu_item_reveal_in_file_explorer": "在文件管理器中显示",
   "menu_item_reveal_in_finder": "在访达中显示",
   "menu_item_properties": "属性",

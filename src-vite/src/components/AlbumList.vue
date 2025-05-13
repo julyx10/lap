@@ -161,7 +161,8 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-let unlisten: () => void;
+let unlistenSelectFolder: () => void;
+let unlistenContent: () => void;
 
 const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
@@ -228,20 +229,16 @@ onMounted( async () => {
     albums.value = await getAllAlbums();
     isLoading.value = false;
 
-    // expand and select the current album and folder
     if (props.albumId > 0) {
       let album = getAlbumById(props.albumId);
 
-      if (album.path === props.folderPath) {  // album is selected
-        clickAlbum(album);
-      } else {    // album's sub-folder is selected
-        clickFinalSubFolder(album, props.folderPath);
-      }
+      // expand and select the current album and folder
+      clickFinalSubFolder(album, props.folderPath);
     }
   }
 
   // listen for messages from AlbumFolder component
-  unlisten = await listen('message-from-select-folder', async(event) => {
+  unlistenSelectFolder = await listen('message-from-select-folder', async(event) => {
     console.log('listen - message-from-select-folder:', event);
     const { message } = event.payload;
     switch (message) {
@@ -266,10 +263,23 @@ onMounted( async () => {
         break;
     }
   });
+
+  unlistenContent = await listen('message-from-content', async(event) => {
+    console.log('listen - message-from-album-content:', event);
+    const { message } = event.payload;
+    switch (message) {
+      case 'goto-folder':
+        clickFinalSubFolder(getAlbumById(event.payload.albumId), event.payload.folderPath);
+        break;
+      default:
+        break;
+    }
+  });
 });
 
 onBeforeUnmount(() => {
-  unlisten(); // Removes the listener
+  unlistenSelectFolder();
+  unlistenContent();
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
@@ -403,17 +413,21 @@ const clickFolder = async (albumId, folder) => {
 
 /// click the final sub-folder to select it
 const clickFinalSubFolder = async (album, folderPath) => {
-  // expand the album's folder
-  await expandAlbum(album, true);
+  if (album.path === props.folderPath) {  // album is selected
+    clickAlbum(album);
+  } else {    // album's sub-folder is selected
+    // expand the album's folder
+    await expandAlbum(album, true);
 
-  // recursively expand the final sub-folder path
-  expandFinalFolder(album, folderPath).then((folder) => {
-    if(folder) {
-      clickFolder(album.id, folder).then(() => {
-        scrollToFolder(folder.id);
-      });
-    }
-  });
+    // recursively expand the final sub-folder path
+    expandFinalFolder(album, folderPath).then((folder) => {
+      if(folder) {
+        clickFolder(album.id, folder).then(() => {
+          scrollToFolder(folder.id);
+        });
+      }
+    });
+  }
 };
 
 /// drag albums to change their display order

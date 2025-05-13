@@ -48,13 +48,13 @@
               />
             </td>
           </tr>
-          <tr v-if="totalImageCount > 0" class="h-8">
+          <tr class="h-8">
             <td>{{ $t('album_info_images') }}</td>
-            <td>{{ $t('album_info_files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) }}</td>
+            <td>{{ totalImageCount >= 0 ? $t('album_info_files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album_info_files_counting') }}</td>
           </tr>
-          <tr v-if="totalVideoCount > 0" class="h-8">
+          <tr class="h-8">
             <td>{{ $t('album_info_videos') }}</td>
-            <td>{{ $t('album_info_files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) }}</td>
+            <td>{{ totalVideoCount >= 0 ? $t('album_info_files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album_info_files_counting') }}</td>
           </tr>
           <tr class="h-8">
             <td>{{ $t('album_info_created_time') }}</td>
@@ -135,8 +135,8 @@ const inputDescriptionValue = ref(props.inputDescription);
 
 // total file count of the album
 const totalFolderCount = ref(0);
-const totalImageCount = ref(0);
-const totalImageSize = ref(0);
+const totalImageCount = ref(-1);
+const totalImageSize = ref(-1);
 const totalVideoCount = ref(0);
 const totalVideoSize = ref(0);
 

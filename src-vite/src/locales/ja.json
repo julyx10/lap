@@ -19,6 +19,7 @@
   "album_info_images": "画像",
   "album_info_videos": "動画",
   "album_info_files_count": "{count} ファイル ({size})",
+  "album_info_files_counting": "ファイルをカウント中...",
   "album_info_created_time": "作成日",
   "album_info_modified_time": "変更日",
 
@@ -79,9 +80,9 @@
   "files": "ファイル",
   "allphotos": "すべての写真",
 
-  "folder_summary": "{folders} フォルダ, {files} ファイル",
-  "files_summary": "{count} ファイル",
-
+  "files_summary": "{count} ファイル ({size})",
+  "thumbnails_summary": "{count} サムネイル ({size})",
+  
   "file_list_no_files": "ファイルが見つかりません",
   
   "file_list_select_mode": "選択",
@@ -109,6 +110,7 @@
   "menu_item_remove": "削除",
   "menu_item_new_folder": "新しいフォルダ",
   "menu_item_open_folder": "フォルダを開く...",
+  "menu_item_goto_folder": "フォルダに移動",
   "menu_item_reveal_in_file_explorer": "ファイルエクスプローラーで表示",
   "menu_item_reveal_in_finder": "Finderで表示",
   "menu_item_properties": "プロパティ",

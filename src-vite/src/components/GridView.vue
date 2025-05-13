@@ -105,6 +105,7 @@ import {
   IconRename,
   IconMoveTo,
   IconDelete,
+  IconGoto,
   IconPhoto,
   IconChecked,
   IconUnChecked,
@@ -119,6 +120,10 @@ const props = defineProps({
   fileList: {
     type: Array,
     required: true,
+  },
+  showFolderFiles: {             
+    type: Boolean,
+    default: false,
   },
   selectMode: {
     type: Boolean,
@@ -206,6 +211,14 @@ const moreMenuItems = computed(() => {
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
         deleteItem();
+      }
+    },
+    {
+      label: localeMsg.value.menu_item_goto_folder,
+      disabled: props.showFolderFiles,
+      icon: IconGoto,
+      action: () => {
+        gotoFolder();
       }
     },
     {
@@ -335,6 +348,10 @@ function copyTo() {
 
 function deleteItem() {
   emit('message-from-grid-view', { message: 'delete' });
+};
+
+function gotoFolder() {
+  emit('message-from-grid-view', { message: 'goto-folder' });
 };
 
 function revealItem() {

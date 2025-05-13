@@ -68,6 +68,7 @@
         <GridView ref="gridViewRef"
           v-model:selectItemIndex="selectedItemIndex"
           :fileList="fileList"
+          :showFolderFiles="showFolderFiles"
           :selectMode="selectMode"
         />
         
@@ -75,9 +76,12 @@
         <div v-if="config.showStatusBar" 
           class="mx-2 p-2 min-h-8 border-t border-gray-700 flex flex-row items-center justify-start text-sm select-none cursor-default"
         >
-          <IconFile class="t-icon-size-xs flex-shrink-0" />
+          <component 
+            :is="showFolderFiles ? IconFolder : IconFile"
+            class="t-icon-size-xs flex-shrink-0" 
+          />
           <div class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('files_summary', { count: totalCount.toLocaleString() }) + ' (' + formatFileSize(totalSize) + ')' }} 
+            {{ $t('files_summary', { count: totalCount.toLocaleString(), size: formatFileSize(totalSize) }) }} 
           </div>
 
           <!-- <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
@@ -254,6 +258,7 @@ import {
   IconMoveTo,
   IconDelete,
   IconFile,
+  IconFolder,
   IconSearch,
   IconChecked,
   IconComment,
@@ -281,6 +286,11 @@ const fileList = ref([]);
 const totalCount = ref(0);   // total files' count
 const totalSize = ref(0);     // total files' size
 const selectedItemIndex = ref(-1);
+
+// config.favoriteFolderId = 0: means favorite files
+const showFolderFiles = computed(() =>
+ config.toolbarIndex === 2 || (config.toolbarIndex === 1 && config.favoriteFolderId !== 0)
+);
 
 // mutil select mode
 const selectMode = ref(false);
@@ -442,6 +452,12 @@ onMounted( async() => {
         break;
       case 'delete':
         showDeleteMsgbox.value = true;
+        break;
+      case 'goto-folder':
+        config.toolbarIndex = 2; // goto album
+        const albumId = fileList.value[selectedItemIndex.value].album_id;
+        const folderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
+        emit('message-from-content', { message: 'goto-folder', albumId, folderPath });
         break;
       case 'reveal':
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
