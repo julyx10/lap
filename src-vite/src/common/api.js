@@ -276,6 +276,42 @@ export async function revealFolder(folderPath) {
 //   return null
 // }
 
+/// get all files from db (with pagination)
+/// return [files, totalCount, totalSum]
+export async function getDbFiles(
+  startDate = "", 
+  endDate = "",
+  make = "", 
+  model = "",
+  isFavorite = false, 
+  isDeleted = false,
+  offset = 0 
+) {
+  try {
+    const files = await invoke('get_db_files', {
+      fileName: config.searchText, 
+      fileType: config.fileType,
+      sortType: config.sortType,
+      sortOrder: config.sortOrder,
+      startDate, 
+      endDate,
+      make, 
+      model,
+      isFavorite, 
+      isDeleted,
+      offset, 
+      pageSize: config.fileListPageSize
+    });
+    if(files) {
+      const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted);
+      return [files, totalCount, totalSum];
+    };
+  } catch (error) {
+    console.error('getAllFiles error:', error);
+  }
+  return [null, null, null];
+}
+
 /// get all db files' count and sum(without pagination)
 export async function getDbCountAndSum(
   startDate = "", 
@@ -303,40 +339,6 @@ export async function getDbCountAndSum(
     console.error('getDbCountAndSum error:', error);
   }
   return null
-}
-  
-/// get all files from db (with pagination)
-/// return [files, totalCount, totalSum]
-export async function getDbFiles(
-  startDate = "", 
-  endDate = "",
-  make = "", 
-  model = "",
-  isFavorite = false, 
-  isDeleted = false,
-  offset = 0 
-) {
-  try {
-    const files = await invoke('get_db_files', {
-      fileName: config.searchText, 
-      fileType: config.fileType,
-      startDate, 
-      endDate,
-      make, 
-      model,
-      isFavorite, 
-      isDeleted,
-      offset, 
-      pageSize: config.fileListPageSize
-    });
-    if(files) {
-      const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted);
-      return [files, totalCount, totalSum];
-    };
-  } catch (error) {
-    console.error('getAllFiles error:', error);
-  }
-  return [null, null, null];
 }
 
 // get all files from the folder (no pagination)

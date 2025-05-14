@@ -27,7 +27,7 @@
           >
             <IconRemove v-if="isEditList" 
               class="mx-1 t-icon-size-sm t-icon-hover flex-shrink-0" 
-              @click.stop="showRemoveMsgbox = true" 
+              @click.stop="removingAlbumId = album.id; showRemoveMsgbox = true" 
             />
             <component v-else :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
               class="mx-1 t-icon-size-sm t-icon-hover flex-shrink-0" 
@@ -98,11 +98,11 @@
     <MessageBox
       v-if="showRemoveMsgbox"
       :title="$t('msgbox_remove_album_title')"
-      :message="`${$t('msgbox_remove_album_content', { album: getAlbumById(albumId).name })}`"
+      :message="`${$t('msgbox_remove_album_content', { album: getAlbumById(removingAlbumId).name })}`"
       :OkText="$t('msgbox_remove_album_ok')"
       :cancelText="$t('msgbox_cancel')"
       :warningOk="true"
-      @ok="clickRemoveAlbum"
+      @ok="clickRemoveAlbum(removingAlbumId)"
       @cancel="showRemoveMsgbox = false"
     />
 
@@ -168,6 +168,7 @@ const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
+const removingAlbumId = ref(null);  // album id to be removed
 // message boxes
 const showAlbumInfo = ref(false);
 const showNewFolderMsgbox = ref(false);
@@ -315,11 +316,11 @@ const clickAlbumInfo = async (newName, newDescription) => {
 };
 
 /// Remove an album from the list
-const clickRemoveAlbum = async () => {
-  const removedAlbum = await removeAlbum(selectedAlbumId.value);
+const clickRemoveAlbum = async (albumId) => {
+  const removedAlbum = await removeAlbum(albumId);
   if(removedAlbum) {
     // remove the album from the list
-    albums.value = albums.value.filter(album => album.id !== selectedAlbumId.value);
+    albums.value = albums.value.filter(album => album.id !== albumId);
     showRemoveMsgbox.value = false;
 
     selectedAlbumId.value = 0;

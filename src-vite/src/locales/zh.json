@@ -87,8 +87,8 @@
   
   "file_list_select_mode": "选择",
   "file_list_select_count": "已选择 {count}",
-  "file_list_sorting_options": ["名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
-  "file_list_sorting_extend_options": ["升序", "降序"],
+  "file_list_sort_type_options": ["名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
+  "file_list_sort_order_options": ["升序", "降序"],
   "file_list_file_type_options": ["全部", "图片", "视频"],
 
   "menu_item_select_all": "全选",

@@ -9,17 +9,7 @@
       <div class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</div>
 
       <!-- toolbar -->
-      <div class="h-6 flex flex-row items-center space-x-4 flex-shrink-0">
-
-        <!-- search box - filter file name -->
-        <SearchBox ref="searchBoxRef" v-model="config.searchText" /> 
-        
-        <!-- file type options - filter file type -->
-        <DropDownSelect
-          :options="fileTypeOptions"
-          :defaultIndex="config.fileType"
-          @select="handleFileTypeSelect"
-        />
+      <div class="h-6 flex flex-row items-center space-x-2 flex-shrink-0">
 
         <!-- select mode -->
         <button tabindex="-1"
@@ -39,13 +29,23 @@
           />
         </button>
 
-        <!-- sorting options -->
+        <!-- search box - filter file name -->
+        <SearchBox ref="searchBoxRef" v-model="config.searchText" @click.stop="selectMode = false" /> 
+        
+        <!-- file type options -->
         <DropDownSelect
-          :options="sortingOptions"
-          :defaultIndex="config.sortingType"
-          :extendOptions="sortingExtendOptions"
-          :defaultExtendIndex="config.sortingDirection"
-          @select="handleSortingSelect"
+          :options="fileTypeOptions"
+          :defaultIndex="config.fileType"
+          @select="handleFileTypeSelect"
+        />
+
+        <!-- sort type options -->
+        <DropDownSelect
+          :options="sortOptions"
+          :defaultIndex="config.sortType"
+          :extendOptions="sortExtendOptions"
+          :defaultExtendIndex="config.sortOrder"
+          @select="handleSortTypeSelect"
         />
 
         <!-- preview -->
@@ -630,11 +630,6 @@ watch(
     return index >= 0 && index < list.length ? list[index].file_path : null;
   },
   () => {
-    // update select file id 
-    // if (!showFolderFiles.value) {
-    //   config.selectedFileId = selectedItemIndex.value >= 0 ? fileList.value[selectedItemIndex.value].id : 0;
-    // }
-
     // update the preview
     if(config.showPreview) {
       getImageSrc();
@@ -684,30 +679,32 @@ const handleSelectMode = (value) => {
   }
 };
 
-// sorting type options
-const sortingOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_sorting_options);
-});
-
-// sorting extend options
-const sortingExtendOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_sorting_extend_options);
-});
-
-const handleSortingSelect = (option, extendOption) => {
-  console.log('Order option:', option, extendOption);
-  config.sortingType = option;
-  config.sortingDirection = extendOption;
-  sortFileList(fileList.value, config.sortingType, config.sortingDirection)
-};
-
 // file type options
 const fileTypeOptions = computed(() => {
   return getSelectOptions(localeMsg.value.file_list_file_type_options);
 });
 
 const handleFileTypeSelect = (option, extendOption) => {
+  selectMode.value = false;   // exit multi-select mode
   config.fileType = option;
+};
+
+// sort type options
+const sortOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.file_list_sort_type_options);
+});
+
+// sort extend options
+const sortExtendOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.file_list_sort_order_options);
+});
+
+const handleSortTypeSelect = (option, extendOption) => {
+  selectMode.value = false;   // exit multi-select mode
+
+  config.sortType = option;
+  config.sortOrder = extendOption;
+  // sortFileList(fileList.value, config.sortType, config.sortOrder)
 };
 
 function getSelectOptions(options) {
@@ -722,17 +719,12 @@ function refreshFileList() {
   selectMode.value = false;   // exit multi-select mode
 
   if(fileList.value.length > 0) {
-    sortFileList(fileList.value, config.sortingType, config.sortingDirection);
+    // sortFileList(fileList.value, config.sortType, config.sortOrder);
     getFileListThumb(fileList.value); 
 
     // set the selected item index
     selectedItemIndex.value = 0;
-    // for (let i = 0; i < fileList.value.length; i++) {
-    //   if(fileList.value[i].id === config.selectedFileId) {
-    //     selectedItemIndex.value = i;
-    //     break;
-    //   }
-    // }
+
     gridViewRef.value.scrollToItem(selectedItemIndex.value); // scroll to the selected item
   } else {
     selectedItemIndex.value = -1;
@@ -742,55 +734,55 @@ function refreshFileList() {
 
 // Sort the file list based on the sorting type and direction
 // TODO: move sort to rust backend
-function sortFileList(files, sortingType, sortingDirection) {
-  fileList.value = [...files].sort((a, b) => {
-    let result = 0;
+// function sortFileList(files, sortType, sortOrder) {
+//   fileList.value = [...files].sort((a, b) => {
+//     let result = 0;
 
-    switch (sortingType) {
-      case 0:   // name
-        // switch (config.language) {
-        //   case 'zh':
-        //     result = a.name.localeCompare(b.name, 'zh-Hans-CN');
-        //     break;
-        //   case 'ja':
-        //     result = a.name.localeCompare(b.name, 'ja-JP');
-        //     break;
-        //   default:
-        //     result = a.name.localeCompare(b.name);
-        //     break;
-        // }
-        result = localeComp(config.language, a.name, b.name);
-        break;
-      case 1:   // size
-        result = a.size - b.size;
-        break;
-      case 2:   // resulution
-        if(a.width === b.width) {
-          result = a.height - b.height;
-        } else {
-          result = a.width - b.width;
-        }
-        break;
-      case 3:   // created time
-        result = a.created_at - b.created_at;
-        break;
-      case 4:   // modified time
-        result = a.modified_at - b.modified_at;
-        break;
-      case 5:   // taken time
-        if(a.e_date_time && b.e_date_time) {
-          result = a.e_date_time - b.e_date_time;
-        } else {
-          result = a.modified_at - b.modified_at;
-        }
-        break;
-      default:
-        return 0; // No sorting if the sorting type is unrecognized
-    }
+//     switch (sortType) {
+//       case 0:   // name
+//         // switch (config.language) {
+//         //   case 'zh':
+//         //     result = a.name.localeCompare(b.name, 'zh-Hans-CN');
+//         //     break;
+//         //   case 'ja':
+//         //     result = a.name.localeCompare(b.name, 'ja-JP');
+//         //     break;
+//         //   default:
+//         //     result = a.name.localeCompare(b.name);
+//         //     break;
+//         // }
+//         result = localeComp(config.language, a.name, b.name);
+//         break;
+//       case 1:   // size
+//         result = a.size - b.size;
+//         break;
+//       case 2:   // resulution
+//         if(a.width === b.width) {
+//           result = a.height - b.height;
+//         } else {
+//           result = a.width - b.width;
+//         }
+//         break;
+//       case 3:   // created time
+//         result = a.created_at - b.created_at;
+//         break;
+//       case 4:   // modified time
+//         result = a.modified_at - b.modified_at;
+//         break;
+//       case 5:   // taken time
+//         if(a.e_date_time && b.e_date_time) {
+//           result = a.e_date_time - b.e_date_time;
+//         } else {
+//           result = a.modified_at - b.modified_at;
+//         }
+//         break;
+//       default:
+//         return 0; // No sorting if the sorting type is unrecognized
+//     }
 
-    return sortingDirection === 0 ? result : -result;  // reverse the result if descending
-  });
-}
+//     return sortOrder === 0 ? result : -result;  // reverse the result if descending
+//   });
+// }
 
 // Get the thumbnail for the files
 async function getFileListThumb(files, concurrencyLimit = 8) {

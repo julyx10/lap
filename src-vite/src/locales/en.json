@@ -87,8 +87,8 @@
   
   "file_list_select_mode": "Select",
   "file_list_select_count": "{count} selected",
-  "file_list_sorting_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
-  "file_list_sorting_extend_options": ["Ascending", "Descending"],
+  "file_list_sort_type_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
+  "file_list_sort_order_options": ["Ascending", "Descending"],
   "file_list_file_type_options": ["All", "Images", "Videos"],
 
   "menu_item_select_all": "Select all",

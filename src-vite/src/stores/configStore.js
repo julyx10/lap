@@ -13,7 +13,7 @@ export const useConfigStore = defineStore('configStore', {
     favoriteFolderId: null,     // favorite folder id
     favoriteFolderPath: null,   // favorite folder path
 
-    // albums
+    // album - selected album and folder
     albumId: null,              // selected album id
     albumFolderId: null,        // selected folder id
     albumFolderPath: null,      // selected folder path
@@ -34,11 +34,14 @@ export const useConfigStore = defineStore('configStore', {
     cameraModel: null,          // selected camera model
 
     // Content.vue
-    // selectedFileId: null,       // selected file id
+
+    // filter fileList
     searchText: '',             // filter file name
     fileType: 0,                // filter file type (0: all, 1: image, 2: video, 3: audio)
-    sortingType: 0,             // sorting type
-    sortingDirection: 0,        // sorting direction(0: ascending, 1: descending)
+    sortType: 0,                // sort type
+    sortOrder: 0,               // sort order(0: ascending, 1: descending)
+
+    // preview
     showPreview: false,         // show preview
     previewPosition: 'right',   // preview position: right, bottom
     previewPaneWidth: 30,       // preview pane width(20-80%)
@@ -65,7 +68,7 @@ export const useConfigStore = defineStore('configStore', {
     showStatusBar: true,        // show status bar
     darkMode: true,             // light or dark theme
     debugMode: false,           // debug mode
-    fileListPageSize: 200,     // number of file list per page
+    fileListPageSize: 200,      // number of file list per page
 
     // settings - thumbnail
     thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512)

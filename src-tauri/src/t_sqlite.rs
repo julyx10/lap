@@ -890,6 +890,7 @@ impl AFile {
     /// get files
     pub fn get_files(
         file_name: &str, file_type: i64,
+        sort_type: i64, sort_order: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
         is_favorite: bool, is_deleted: bool,

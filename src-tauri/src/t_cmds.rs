@@ -185,6 +185,7 @@ pub fn get_db_count_and_sum(
 #[tauri::command]
 pub fn get_db_files(
     file_name: &str, file_type: i64,
+    sort_type: i64, sort_order: i64,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
     is_favorite: bool, is_deleted: bool,
@@ -192,6 +193,7 @@ pub fn get_db_files(
 ) -> Result<Vec<AFile>, String> {
     AFile::get_files(
         file_name, file_type,
+        sort_type, sort_order,
         start_date, end_date,
         make, model,
         is_favorite, is_deleted,
