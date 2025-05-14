@@ -4,47 +4,9 @@ import { defineStore } from 'pinia';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
-
-    // settings window
-    settingsTabIndex: 0,        // settings tab index
-
-    // settings - general
-    language: 'en',             // default language
-    showButtonText: false,      // show button text
-    showSubFolder: true,        // show sub folders
-    showStatusBar: true,        // show status bar
-    darkMode: true,             // light or dark theme
-    debugMode: false,           // debug mode
-    fileListPageSize: 200,     // number of file list per page
-
-    // settings - thumbnail
-    thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512)
-    thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
-    thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
-    thumbnailLabelPrimaryOption: 1,   // Name
-    thumbnailLabelSecondaryOption: 2, // Resolution
-
-    // settings - image viewer
-    mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
-    autoPlayInterval: 1,        // auto play interval in seconds
-
-    // app
+    // Home.vue
     toolbarIndex: 1,            // toolbar index
     leftPaneWidth: 300,         // left pane width
-
-    // Content.vue
-    searchText: '',             // filter file name
-    fileType: 0,                // filter file type (0: all, 1: image, 2: video, 3: audio)
-    sortingType: 0,             // sorting type
-    sortingDirection: 0,        // sorting direction(0: ascending, 1: descending)
-    showPreview: false,         // show preview
-    previewPosition: 'right',   // preview position: right, bottom
-    previewPaneWidth: 30,       // preview pane width(20-80%)
-
-    // move/copy to... destination folder
-    destAlbumId: null,          // destination album id
-    destFolderId: null,         // destination folder id
-    destFolderPath: null,       // destination folder path
 
     // favorites
     favoriteAlbumId: null,      // favorite album id
@@ -71,12 +33,50 @@ export const useConfigStore = defineStore('configStore', {
     cameraMake: null,           // selected camera make
     cameraModel: null,          // selected camera model
 
+    // Content.vue
+    // selectedFileId: null,       // selected file id
+    searchText: '',             // filter file name
+    fileType: 0,                // filter file type (0: all, 1: image, 2: video, 3: audio)
+    sortingType: 0,             // sorting type
+    sortingDirection: 0,        // sorting direction(0: ascending, 1: descending)
+    showPreview: false,         // show preview
+    previewPosition: 'right',   // preview position: right, bottom
+    previewPaneWidth: 30,       // preview pane width(20-80%)
+
+    // move/copy to... destination folder
+    destAlbumId: null,          // destination album id
+    destFolderId: null,         // destination folder id
+    destFolderPath: null,       // destination folder path
+
     // ImageViewer.vue
     isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
     isFullScreen: false,        // full screen mode
     isPinned: true,             // pinned mode
     showFileInfo: false,        // show file info
-    fileInfoPanelWidth: 20,     // file info panel width(
+    fileInfoPanelWidth: 20,     // file info panel width
+
+    // Settings.vue
+    settingsTabIndex: 0,        // settings tab index
+
+    // settings - general
+    language: 'en',             // default language
+    showButtonText: false,      // show button text
+    showSubFolder: true,        // show sub folders
+    showStatusBar: true,        // show status bar
+    darkMode: true,             // light or dark theme
+    debugMode: false,           // debug mode
+    fileListPageSize: 200,     // number of file list per page
+
+    // settings - thumbnail
+    thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512)
+    thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
+    thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
+    thumbnailLabelPrimaryOption: 1,   // Name
+    thumbnailLabelSecondaryOption: 2, // Resolution
+
+    // settings - image viewer
+    mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
+    autoPlayInterval: 1,        // auto play interval in seconds
   }),
 
   actions: {

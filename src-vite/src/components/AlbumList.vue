@@ -268,9 +268,8 @@ onMounted( async () => {
     const { message } = event.payload;
     switch (message) {
       case 'goto-folder':
-        // await clickFinalSubFolder(event.payload.albumId, event.payload.folderPath);
-        clickFinalSubFolder(config.albumId, config.albumFolderPath).then(() => {
-          config.toolbarIndex = 2;
+        clickFinalSubFolder(event.payload.albumId, event.payload.folderPath).then (() => {
+          config.toolbarIndex = 2; // show album content
         });
         break;
       default:
@@ -291,15 +290,10 @@ watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, 
 }, { immediate: true });
 
 watch(() => [ selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.value ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
-  emitSelectedFolder(newAlbumId, newFolderId, newFolderPath);
+  emit('update:albumId', newAlbumId);
+  emit('update:folderId', newFolderId);
+  emit('update:folderPath', newFolderPath);
 });
-
-// update selected album and folder
-const emitSelectedFolder = (albumId, folderId, folderPath) => {
-  emit('update:albumId', albumId);
-  emit('update:folderId', folderId);
-  emit('update:folderPath', folderPath);
-};
 
 /// Add a new album
 const clickNewAlbum = async () => {
@@ -328,7 +322,9 @@ const clickRemoveAlbum = async () => {
     albums.value = albums.value.filter(album => album.id !== selectedAlbumId.value);
     showRemoveMsgbox.value = false;
 
-    emitSelectedFolder(0, 0, '');
+    selectedAlbumId.value = 0;
+    selectedFolderId.value = 0;
+    selectedFolderPath.value = "";
   }
 };
 
@@ -343,7 +339,9 @@ const clickAlbum = async (album) => {
     // insert a new property(album.folderId) 
     album.folderId = selectedFolder.id;
 
-    emitSelectedFolder(album.id, selectedFolder.id, selectedFolder.path);
+    selectedAlbumId.value = album.id;
+    selectedFolderId.value = selectedFolder.id;
+    selectedFolderPath.value = selectedFolder.path;
   }
 };
 
@@ -404,10 +402,9 @@ const clickFolder = async (albumId, folder) => {
     selectedAlbumId.value = albumId;
     selectedFolderId.value = selectedFolder.id;
     selectedFolderPath.value = selectedFolder.path;
+
     // insert new property 'id' to folder object
     folder.id = selectedFolder.id;
-
-    emitSelectedFolder(selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.value);
   } else {
     toolTipRef.value.showTip(localeMsg.value.msgbox_select_folder_error);
   }

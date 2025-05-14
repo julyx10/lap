@@ -79,6 +79,7 @@ fn main() {
             t_cmds::set_album_display_order,
 
             // folder
+            // t_cmds::get_folder,
             t_cmds::select_folder,
             t_cmds::fetch_folder,
             t_cmds::count_folder,

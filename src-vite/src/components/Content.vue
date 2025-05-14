@@ -454,13 +454,9 @@ onMounted( async() => {
         showDeleteMsgbox.value = true;
         break;
       case 'goto-folder':
-        config.albumId = fileList.value[selectedItemIndex.value].id;
-        config.albumFolderId = fileList.value[selectedItemIndex.value].folder_id;
-        config.albumFolderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
-        // config.toolbarIndex = 2; // goto album
-        // const albumId = fileList.value[selectedItemIndex.value].id;
-        // const folderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
-        emit('message-from-content', { message: 'goto-folder' });
+        const albumId = fileList.value[selectedItemIndex.value].album_id;
+        const folderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
+        emit('message-from-content', { message: 'goto-folder', albumId, folderPath });
         break;
       case 'reveal':
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
@@ -634,6 +630,11 @@ watch(
     return index >= 0 && index < list.length ? list[index].file_path : null;
   },
   () => {
+    // update select file id 
+    // if (!showFolderFiles.value) {
+    //   config.selectedFileId = selectedItemIndex.value >= 0 ? fileList.value[selectedItemIndex.value].id : 0;
+    // }
+
     // update the preview
     if(config.showPreview) {
       getImageSrc();
@@ -724,7 +725,14 @@ function refreshFileList() {
     sortFileList(fileList.value, config.sortingType, config.sortingDirection);
     getFileListThumb(fileList.value); 
 
+    // set the selected item index
     selectedItemIndex.value = 0;
+    // for (let i = 0; i < fileList.value.length; i++) {
+    //   if(fileList.value[i].id === config.selectedFileId) {
+    //     selectedItemIndex.value = i;
+    //     break;
+    //   }
+    // }
     gridViewRef.value.scrollToItem(selectedItemIndex.value); // scroll to the selected item
   } else {
     selectedItemIndex.value = -1;
@@ -733,6 +741,7 @@ function refreshFileList() {
 }
 
 // Sort the file list based on the sorting type and direction
+// TODO: move sort to rust backend
 function sortFileList(files, sortingType, sortingDirection) {
   fileList.value = [...files].sort((a, b) => {
     let result = 0;

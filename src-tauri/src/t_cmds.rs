@@ -63,6 +63,13 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
 
 // folder
 
+// get folder
+// #[tauri::command]
+// pub fn get_folder(id: i64) -> Result<AFolder, String> {
+//     AFolder::get_folder_by_id(id)
+//         .map_err(|e| format!("Error while getting folders: {}", e))
+// }
+
 // click to select a sub-folder under an album
 #[tauri::command]
 pub fn select_folder(album_id: i64, parent_id: i64, folder_path: &str) -> Result<AFolder, String> {

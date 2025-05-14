@@ -323,6 +323,19 @@ impl AFolder {
         Ok(result)
     }
 
+    // get folder info by id
+    // pub fn get_folder_by_id(id: i64) -> Result<Self, String> {
+    //     let conn = open_conn()?;
+    //     let result = conn
+    //         .query_row(
+    //             "SELECT id, album_id, parent_id, name, path, is_favorite, created_at, modified_at 
+    //             FROM afolders WHERE id = ?1",
+    //             params![id],
+    //             |row| Self::from_row(row)
+    //         ).map_err(|e| e.to_string())?;
+    //     Ok(result)
+    // }
+
     // get a folder's is_favorite status
     pub fn get_is_favorite(folder_path: &str) -> Result<Option<bool>, String> {
         let conn = open_conn()?;
@@ -431,6 +444,7 @@ pub struct AFile {
 
     // output only
     pub file_path: Option<String>,  // file path (for webview)
+    pub album_id: Option<i64>,      // album id (for webview)
     pub album_name: Option<String>, // album name (for webview)
 }
 
@@ -490,6 +504,7 @@ impl AFile {
             gps_altitude: Self::get_exif_field(&exif, Tag::GPSAltitude),
 
             file_path: None,
+            album_id: None,
             album_name: None,
         })
     }
@@ -599,7 +614,7 @@ impl AFile {
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path,
-                c.name AS album_name
+                c.id AS album_id, c.name AS album_name
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -645,7 +660,8 @@ impl AFile {
                 row.get::<_, String>(26)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_name: row.get(27)?,
+            album_id: row.get(27)?,
+            album_name: row.get(28)?,
         })
     }
 
