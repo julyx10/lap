@@ -233,7 +233,7 @@ import { getAlbum, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
          copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
-         formatFileSize, formatDate, getRelativePath, localeComp, 
+         formatFileSize, formatDate, getRelativePath, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
@@ -525,8 +525,11 @@ watch(() => config.language, (newLanguage) => {
 });
 
 /// watch home
-watch(() => [config.toolbarIndex, config.searchText, config.fileType], async([newIndex, newSearchText, newFileType]) => {
+watch(() => [config.toolbarIndex, 
+             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+      async([newIndex]) => {
   if(newIndex === 0) { // home
+    console.log('home', config.searchText, config.fileType, config.sortType, config.sortOrder);
     contentTitle.value = localeMsg.value.home;
     [fileList.value, totalCount.value, totalSize.value] = await getDbFiles();  // get all files and total count
     refreshFileList();
@@ -534,8 +537,10 @@ watch(() => [config.toolbarIndex, config.searchText, config.fileType], async([ne
 }, { immediate: true });
 
 /// watch favorites
-watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath, config.searchText, config.fileType], 
-            async ([newIndex, newAlbumId, newFolderId, newFolderPath, newSearchText, newFileType]) => {
+watch(() => [config.toolbarIndex, 
+             config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath, 
+             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+      async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 1) {
     if(newFolderId === 0) { // 0: favorite files
       contentTitle.value = localeMsg.value.favorite_files;
@@ -554,8 +559,10 @@ watch(() => [config.toolbarIndex, config.favoriteAlbumId, config.favoriteFolderI
 }, { immediate: true });
 
 /// watch album
-watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.albumFolderPath, config.searchText, config.fileType], 
-            async ([newIndex, newAlbumId, newFolderId, newFolderPath, newSearchText, newFileType]) => {
+watch(() => [config.toolbarIndex, 
+             config.albumId, config.albumFolderId, config.albumFolderPath, 
+             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+      async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 2) {
     if (newAlbumId) {
       const album = await getAlbum(newAlbumId);
@@ -577,8 +584,10 @@ watch(() => [config.toolbarIndex, config.albumId, config.albumFolderId, config.a
 }, { immediate: true });
 
 // watch calandar
-watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, config.calendarDate, config.searchText, config.fileType], 
-            async ([newIndex, year, month, date]) => {
+watch(() => [config.toolbarIndex, 
+             config.calendarYear, config.calendarMonth, config.calendarDate, 
+             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+      async ([newIndex, year, month, date]) => {
   if(newIndex === 3) {
     if (year && month && date) {
       if (config.calendarDate === -1) {     // monthly
@@ -602,8 +611,9 @@ watch(() => [config.toolbarIndex, config.calendarYear, config.calendarMonth, con
 // TODO: impl people 
 
 // watch camera
-watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel, config.searchText, config.fileType], 
-            async ([newIndex, newMake, newModel]) => {
+watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel, 
+             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+      async ([newIndex, newMake, newModel]) => {
   if(newIndex === 6) {
     if(newMake) {
       if(newModel) {
@@ -679,15 +689,21 @@ const handleSelectMode = (value) => {
   }
 };
 
-// file type options
-const fileTypeOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_file_type_options);
-});
-
 const handleFileTypeSelect = (option, extendOption) => {
   selectMode.value = false;   // exit multi-select mode
   config.fileType = option;
 };
+
+const handleSortTypeSelect = (option, extendOption) => {
+  selectMode.value = false;   // exit multi-select mode
+  config.sortType = option;
+  config.sortOrder = extendOption;
+};
+
+// file type options
+const fileTypeOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.file_list_file_type_options);
+});
 
 // sort type options
 const sortOptions = computed(() => {
@@ -698,14 +714,6 @@ const sortOptions = computed(() => {
 const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.file_list_sort_order_options);
 });
-
-const handleSortTypeSelect = (option, extendOption) => {
-  selectMode.value = false;   // exit multi-select mode
-
-  config.sortType = option;
-  config.sortOrder = extendOption;
-  // sortFileList(fileList.value, config.sortType, config.sortOrder)
-};
 
 function getSelectOptions(options) {
   const result = [];
@@ -719,7 +727,6 @@ function refreshFileList() {
   selectMode.value = false;   // exit multi-select mode
 
   if(fileList.value.length > 0) {
-    // sortFileList(fileList.value, config.sortType, config.sortOrder);
     getFileListThumb(fileList.value); 
 
     // set the selected item index
@@ -731,58 +738,6 @@ function refreshFileList() {
   }
   console.log('refreshFileList:', fileList.value);
 }
-
-// Sort the file list based on the sorting type and direction
-// TODO: move sort to rust backend
-// function sortFileList(files, sortType, sortOrder) {
-//   fileList.value = [...files].sort((a, b) => {
-//     let result = 0;
-
-//     switch (sortType) {
-//       case 0:   // name
-//         // switch (config.language) {
-//         //   case 'zh':
-//         //     result = a.name.localeCompare(b.name, 'zh-Hans-CN');
-//         //     break;
-//         //   case 'ja':
-//         //     result = a.name.localeCompare(b.name, 'ja-JP');
-//         //     break;
-//         //   default:
-//         //     result = a.name.localeCompare(b.name);
-//         //     break;
-//         // }
-//         result = localeComp(config.language, a.name, b.name);
-//         break;
-//       case 1:   // size
-//         result = a.size - b.size;
-//         break;
-//       case 2:   // resulution
-//         if(a.width === b.width) {
-//           result = a.height - b.height;
-//         } else {
-//           result = a.width - b.width;
-//         }
-//         break;
-//       case 3:   // created time
-//         result = a.created_at - b.created_at;
-//         break;
-//       case 4:   // modified time
-//         result = a.modified_at - b.modified_at;
-//         break;
-//       case 5:   // taken time
-//         if(a.e_date_time && b.e_date_time) {
-//           result = a.e_date_time - b.e_date_time;
-//         } else {
-//           result = a.modified_at - b.modified_at;
-//         }
-//         break;
-//       default:
-//         return 0; // No sorting if the sorting type is unrecognized
-//     }
-
-//     return sortOrder === 0 ? result : -result;  // reverse the result if descending
-//   });
-// }
 
 // Get the thumbnail for the files
 async function getFileListThumb(files, concurrencyLimit = 8) {

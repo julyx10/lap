@@ -12,6 +12,7 @@ use base64::{engine::general_purpose, Engine};
 use exif::Tag;
 use rusqlite::{params, Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
+use pinyin::ToPinyin;
 
 use crate::t_utils;
 // use crate::t_opencv;
@@ -684,6 +685,10 @@ impl AFile {
     /// query files by sql
     fn query_files(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
+
+        // support pinyin sort
+        register_pinyin_collation(&conn).map_err(|e| e.to_string())?;
+
         let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
 
         let rows = stmt
@@ -896,6 +901,8 @@ impl AFile {
         is_favorite: bool, is_deleted: bool,
         page_size: i64, offset: i64,
     ) -> Result<Vec<Self>, String> {
+
+        // conditions
         let mut conditions = Vec::new();
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
     
@@ -946,6 +953,22 @@ impl AFile {
             query.push_str(&conditions.join(" AND "));
         }
     
+        // sort
+        match sort_type {
+            0 => query.push_str(" ORDER BY a.name COLLATE PINYIN"),
+            1 => query.push_str(" ORDER BY a.size"),
+            2 => query.push_str(" ORDER BY a.width, a.height"),     // resolution
+            3 => query.push_str(" ORDER BY a.created_at"),
+            4 => query.push_str(" ORDER BY a.modified_at"),
+            5 => query.push_str(" ORDER BY a.taken_date"),
+            _ => query.push_str(" ORDER BY a.name COLLATE PINYIN"),
+        }
+        match sort_order {
+            0 => query.push_str(" ASC"),
+            1 => query.push_str(" DESC"),
+            _ => query.push_str(" ASC"),
+        }
+
         // paging
         query.push_str(" LIMIT ? OFFSET ?");
         params.push(&page_size);
@@ -1105,6 +1128,16 @@ fn open_conn() -> Result<Connection, String> {
 
     Connection::open(&path)
         .map_err(|e| format!("Failed to open database connection: {}", e))
+}
+
+/// register pinyin collation
+/// this function is used to sort the file name by pinyin
+fn register_pinyin_collation(conn: &Connection) -> Result<()> {
+    conn.create_collation("PINYIN", |a, b| {
+        let a_py = a.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
+        let b_py = b.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
+        a_py.cmp(&b_py)
+    })
 }
 
 /// create all tables if not exists
