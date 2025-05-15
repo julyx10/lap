@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "identifier": "com.julyxx.jc-photo",
   "build": {
-    "beforeBuildCommand": "yarn build",
-    "beforeDevCommand": "yarn dev",
+    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:3580",
     "frontendDist": "../src-vite/dist"
   },

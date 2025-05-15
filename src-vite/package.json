@@ -18,7 +18,7 @@
     "@tauri-apps/plugin-window-state": "^2.2.1",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
-    "pinia": "^2.2.4",
+    "pinia": "^3.0.2",
     "pinia-plugin-persistedstate": "^4.1.2",
     "tailwind-scrollbar": "^3.1.0",
     "vue": "^3.4.35",
