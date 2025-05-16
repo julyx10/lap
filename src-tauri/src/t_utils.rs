@@ -15,6 +15,7 @@ use chrono::{DateTime, Utc};
 use image::ImageReader;
 use crate::t_sqlite::AFile;
 use std::process::Command;
+use pinyin::ToPinyin;
 
 // #[cfg(target_os = "windows")]
 // use std::os::windows::fs::MetadataExt; // Windows-specific extensions
@@ -471,12 +472,14 @@ pub fn delete_file(file_path: &str) -> Option<String> {
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances
 pub fn get_folder_files(
-    folder_id: i64,
-    folder_path: &str,
-    filter_file_name: &str,
-    filter_file_type: i64,     // 0: all, 1: image, 2: video, 3: music
+    search_text: &str, 
+    file_type: i64,
+    sort_type: i64, 
+    sort_order: i64,
+    folder_id: i64, 
+    folder_path: &str
 ) -> Vec<AFile> {
-    WalkDir::new(folder_path)
+    let mut files: Vec<AFile> = WalkDir::new(folder_path)
         .min_depth(1)
         .max_depth(1)
         .into_iter()
@@ -489,13 +492,12 @@ pub fn get_folder_files(
             let file_name = path.file_name()?.to_str()?;
             let file_ext = path.extension()?.to_str()?;
 
-            // filter by file name
-            if !filter_file_name.is_empty() && !file_name.contains(filter_file_name) {
+            if !search_text.is_empty() && !file_name.contains(search_text) {
                 return None;
             }
 
-            if let Some(file_type) = get_file_type(file_ext) {
-                if filter_file_type == 0 || filter_file_type == file_type {
+            if let Some(ft) = get_file_type(file_ext) {
+                if file_type == 0 || file_type == ft {
                     match AFile::add_to_db(folder_id, file_path, file_type) {
                         Ok(file) => Some(file),
                         Err(e) => {
@@ -510,7 +512,31 @@ pub fn get_folder_files(
                 None
             }
         })
-        .collect()
+        .collect();
+
+    // sort 
+    files.sort_by(|a, b| {
+        let ordering = match sort_type {
+            0 => {
+                let a_py = a.name.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
+                let b_py = b.name.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
+                a_py.cmp(&b_py)
+            }, 
+            1 => a.size.cmp(&b.size),
+            2 => {if a.width == b.width { a.height.cmp(&b.height) } else { a.width.cmp(&b.width) }}, // resultion
+            3 => a.created_at.cmp(&b.created_at),
+            4 => a.modified_at.cmp(&b.modified_at),
+            5 => a.taken_date.cmp(&b.taken_date),
+            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()), // Default to sorting by name
+        };
+        if sort_order == 1 {
+            ordering.reverse()
+        } else {
+            ordering
+        }
+    });
+
+    files
 }
 
 /// get folder and file count and total file size (include all sub-folders)

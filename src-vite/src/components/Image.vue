@@ -13,11 +13,19 @@
     <img 
       v-for="(src, index) in imageSrc"
       v-show="activeImage === index"
-      :ref="'image' + (index + 1)"
-      :key="index"
-      :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
+      ref="activeImageEl"
+      :key="`img-${index}`"
       :src="src"
-      :style="getImageStyle(index)"
+      :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
+      :style="{
+        minWidth:  `${imageSize[index].width}px`,
+        minHeight: `${imageSize[index].height}px`,
+        transform: `translate(${position[index].x}px, ${position[index].y}px) 
+        scale(${scale[index]}) 
+        rotate(${imageRotate[index]}deg)`,
+        transition: !isDragging ? 'transform 0.3s ease-in-out' : 'none',
+        willChange: 'transform',
+      }"
       draggable="false"
       @load="onImageLoad($event.target)"
     />
@@ -25,8 +33,8 @@
   </div>
 </template>
 
-<script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+<script setup lang="ts">
+import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { config } from '@/common/utils';
 
@@ -55,7 +63,7 @@ const isZoomFit = ref(false);               // Zoom to fit image in container
 // image
 const activeImage = ref(1);                 // which image is active (0 or 1)
 const imageSrc = ref(['', '']);             // image source 1
-const position = ref([{ x: 0, y: 0 }, { x: 0, y: 0 }]); // Image position (top-left corner)
+const position = shallowRef([{ x: 0, y: 0 }, { x: 0, y: 0 }]); // Image position (top-left corner)
 const scale = ref([1, 1]);                  // Image scale (zoom level)
 const minScale = ref(0);                    // Minimum zoom level
 const maxScale = ref(10);                   // Maximum zoom level
@@ -70,6 +78,8 @@ const isGrabbing = ref(false);              // Grabbing state
 // macOS touchpad wheel - accumulate delta values until they reach a threshold
 let wheelDeltaAccumulator = 0;
 let wheelThreshold = 10;
+
+const activeImageEl = ref<HTMLImageElement | null>(null)
 
 let resizeObserver;
 let positionObserver;
@@ -181,19 +191,7 @@ watch(() => [containerSize.value, imageSize.value], () => {
   }
 });
 
-// Computed style for the image
-const getImageStyle = (index) => {
-  return {
-    minWidth:  `${imageSize.value[index].width}px`,
-    minHeight: `${imageSize.value[index].height}px`,
-    transform: `translate(${position.value[index].x}px, ${position.value[index].y}px) 
-                scale(${scale.value[index]}) 
-                rotate(${imageRotate.value[index]}deg)`,
-    transition: !isDragging.value ? 'transform 0.3s ease-in-out' : 'none',
-  };
-};
-
-// watch image load
+// load image
 const onImageLoad = (img) => {
   // toggle to active image when loaded (0 -> 1, 1 -> 0)
   activeImage.value = activeImage.value ^ 1;
@@ -266,21 +264,67 @@ const handleMouseDown = (event) => {
   lastMousePosition.value = { x: event.clientX, y: event.clientY };
 };
 
-// on dragging
-const handleMouseMove = (event) => {
-  // console.log('handleMouseMove', event);
-  if (!isDragging.value) 
-    return;
+// TODO: use requestAnimationFrame to improve performance
+let animationFrameId: number | null = null;
+const latestMouseEvent = ref<MouseEvent | null>(null);
 
-  const deltaX = imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] <= containerSize.value.width ? 0 : event.clientX - lastMousePosition.value.x;
-  const deltaY = imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] <= containerSize.value.height ? 0 : event.clientY - lastMousePosition.value.y;
+const handleMouseMove = (event: MouseEvent) => {
+  if (!isDragging.value) return;
 
-  position.value[activeImage.value].x += deltaX;
-  position.value[activeImage.value].y += deltaY;
+  latestMouseEvent.value = event;
+
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
+
+  animationFrameId = requestAnimationFrame(updateDragPosition);
+};
+
+const updateDragPosition = () => {
+  const event = latestMouseEvent.value;
+  if (!event) return;
+
+  const imgIndex = activeImage.value;
+  const scaleVal = scale.value[imgIndex];
+
+  const imageRotatedSize = imageSizeRotated.value[imgIndex];
+  const container = containerSize.value;
+
+  const deltaX =
+    imageRotatedSize.width * scaleVal <= container.width
+      ? 0
+      : event.clientX - lastMousePosition.value.x;
+  const deltaY =
+    imageRotatedSize.height * scaleVal <= container.height
+      ? 0
+      : event.clientY - lastMousePosition.value.y;
+
+  position.value[imgIndex].x += deltaX;
+  position.value[imgIndex].y += deltaY;
+
   lastMousePosition.value = { x: event.clientX, y: event.clientY };
 
-  clampPosition(); // Adjust position to stay within bounds
+  clampPosition();
+
+  animationFrameId = null; // reset animation frame ID
 };
+
+
+// on dragging
+// const handleMouseMove = (event) => {
+//   // console.log('handleMouseMove', event);
+//   if (!isDragging.value) 
+//     return;
+
+//   const deltaX = imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] <= containerSize.value.width ? 0 : event.clientX - lastMousePosition.value.x;
+//   const deltaY = imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] <= containerSize.value.height ? 0 : event.clientY - lastMousePosition.value.y;
+
+//   position.value[activeImage.value].x += deltaX;
+//   position.value[activeImage.value].y += deltaY;
+//   lastMousePosition.value = { x: event.clientX, y: event.clientY };
+
+//   clampPosition(); // Adjust position to stay within bounds
+// };
 
 // stop dragging
 const handleMouseUp = () => {
@@ -387,6 +431,7 @@ function clampPosition() {
   } else {
     position.value[activeImage.value].y = (containerSize.value.height - imageSize.value[activeImage.value].height) / 2;
   }
+  // triggerRef(position);
 };
 
 // Expose methods

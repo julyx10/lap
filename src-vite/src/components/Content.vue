@@ -9,12 +9,12 @@
       <div class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</div>
 
       <!-- toolbar -->
-      <div class="h-6 flex flex-row items-center space-x-2 flex-shrink-0">
+      <div class="h-6 flex flex-row items-center space-x-2 shrink-0">
 
         <!-- select mode -->
         <button tabindex="-1"
           :class="[
-            'px-2 py-1 flex flex-row items-center rounded-md border t-color-text-hover text-sm flex-shrink-0 transition-all duration-300',
+            'px-2 py-1 flex flex-row items-center rounded-md border t-color-text-hover text-sm shrink-0 transition-all duration-300',
             selectMode ? 't-color-border-selected' : 't-color-border t-color-border-hover'
           ]"
           @click="handleSelectMode(true)"
@@ -52,7 +52,7 @@
         <component 
           :is="config.showPreview ? IconPreview : IconPreviewOff" 
           :class="[
-            't-icon-size flex-shrink-0',
+            't-icon-size shrink-0',
             config.showPreview ? 't-icon-focus t-icon-focus-hover': 't-icon-hover'
           ]" 
           @click="showPreview"
@@ -78,20 +78,20 @@
         >
           <component 
             :is="showFolderFiles ? IconFolder : IconFile"
-            class="t-icon-size-xs flex-shrink-0" 
+            class="t-icon-size-xs shrink-0" 
           />
           <div class="pl-1 pr-4 whitespace-nowrap">
             {{ $t('files_summary', { count: totalCount.toLocaleString(), size: formatFileSize(totalSize) }) }} 
           </div>
 
-          <!-- <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs flex-shrink-0" />
+          <!-- <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs shrink-0" />
           <div v-if="config.searchText.length > 0" class="pl-1 pr-4 whitespace-nowrap">
             {{ $t('files_summary', { count: searchedFileList.length.toLocaleString() }) + ' (' + formatFileSize(searchedFileSize) + ')' }} 
           </div> -->
 
           <component v-if="selectedItemIndex >= 0"
             :is="selectMode ? IconCheckAll : IconChecked" 
-            class="t-icon-size-xs flex-shrink-0" 
+            class="t-icon-size-xs shrink-0" 
           />
           <div v-if="selectedItemIndex >=0" 
             class="px-1 w-0 flex-1 overflow-hidden whitespace-nowrap text-ellipsis"
@@ -286,6 +286,7 @@ const fileList = ref([]);
 const totalCount = ref(0);   // total files' count
 const totalSize = ref(0);     // total files' size
 const selectedItemIndex = ref(-1);
+const fileListOffset = ref(0); // offset of the file list
 
 // config.favoriteFolderId = 0: means favorite files
 const showFolderFiles = computed(() =>
@@ -470,6 +471,12 @@ onMounted( async() => {
       case 'comment':
         showCommentMsgbox.value = true;
         break;
+      case 'next-page':
+        console.log('next-page:', fileListOffset.value, totalCount.value);
+        if(fileListOffset.value + config.fileListPageSize < totalCount.value) {
+          fileListOffset.value += config.fileListPageSize;
+        }
+        break;
       default:
         break;
     }
@@ -525,21 +532,34 @@ watch(() => config.language, (newLanguage) => {
 });
 
 /// watch home
-watch(() => [config.toolbarIndex, 
-             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+watch(() => [
+              config.toolbarIndex, 
+              config.searchText, config.fileType, config.sortType, config.sortOrder, 
+              fileListOffset.value
+            ], 
       async([newIndex]) => {
   if(newIndex === 0) { // home
-    console.log('home', config.searchText, config.fileType, config.sortType, config.sortOrder);
-    contentTitle.value = localeMsg.value.home;
-    [fileList.value, totalCount.value, totalSize.value] = await getDbFiles();  // get all files and total count
+    if(fileListOffset.value === 0) {
+      contentTitle.value = localeMsg.value.home;
+      // get all files and total count
+      [fileList.value, totalCount.value, totalSize.value] = await getDbFiles("", "", "", "", false, false, 0);
+    } else {
+      console.log('fileListOffset:', fileListOffset.value);
+      await getDbFiles("", "", "", "", false, false, fileListOffset.value).then((newfiles) => {
+        fileList.value.push(...newfiles);
+      });
+    }
+
     refreshFileList();
   } 
 }, { immediate: true });
 
 /// watch favorites
-watch(() => [config.toolbarIndex, 
-             config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath, 
-             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+watch(() => [
+              config.toolbarIndex, 
+              config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath, 
+              config.searchText, config.fileType, config.sortType, config.sortOrder
+            ], 
       async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 1) {
     if(newFolderId === 0) { // 0: favorite files
@@ -729,8 +749,8 @@ function refreshFileList() {
   if(fileList.value.length > 0) {
     getFileListThumb(fileList.value); 
 
-    // set the selected item index
-    selectedItemIndex.value = 0;
+    // reset the selected item index
+    selectedItemIndex.value = fileListOffset.value === 0 ? 0 : selectedItemIndex.value;
 
     gridViewRef.value.scrollToItem(selectedItemIndex.value); // scroll to the selected item
   } else {

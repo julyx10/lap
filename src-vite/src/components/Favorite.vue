@@ -19,7 +19,7 @@
         @click="clickFavoriteFiles()"
       >
         <IconFile
-          class="mx-1 h-5 flex-shrink-0"
+          class="mx-1 h-5 shrink-0"
         />
         <div class="overflow-hidden whitespace-pre text-ellipsis">
           {{ $t('favorite_files') }}
@@ -43,7 +43,7 @@
               @click="clickFavoriteFolder(folder)"
             >
               <IconFolder
-                class="mx-1 h-5 flex-shrink-0"
+                class="mx-1 h-5 shrink-0"
               />
               <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ folder.name }}

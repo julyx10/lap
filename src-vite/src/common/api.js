@@ -277,7 +277,8 @@ export async function revealFolder(folderPath) {
 // }
 
 /// get all files from db (with pagination)
-/// return [files, totalCount, totalSum]
+/// return [files, totalCount, totalSum] when offset is 0
+/// return files when offset is not 0
 export async function getDbFiles(
   startDate = "", 
   endDate = "",
@@ -289,7 +290,7 @@ export async function getDbFiles(
 ) {
   try {
     const files = await invoke('get_db_files', {
-      fileName: config.searchText, 
+      searchText: config.searchText, 
       fileType: config.fileType,
       sortType: config.sortType,
       sortOrder: config.sortOrder,
@@ -303,13 +304,17 @@ export async function getDbFiles(
       pageSize: config.fileListPageSize
     });
     if(files) {
-      const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted);
-      return [files, totalCount, totalSum];
+      if(offset === 0) {
+        const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted);
+        return [files, totalCount, totalSum];
+      } else {
+        return files;
+      }
     };
   } catch (error) {
     console.error('getAllFiles error:', error);
   }
-  return [null, null, null];
+  return null;
 }
 
 /// get all db files' count and sum(without pagination)
@@ -323,7 +328,7 @@ export async function getDbCountAndSum(
 ) {
   try {
     const result = await invoke('get_db_count_and_sum', {
-      fileName: config.searchText, 
+      searchText: config.searchText, 
       fileType: config.fileType,
       startDate, 
       endDate,
@@ -345,7 +350,14 @@ export async function getDbCountAndSum(
 // return [files, totalCount, totalSum]
 export async function getFolderFiles(folderId, folderPath) {
   try {
-    const files = await invoke('get_folder_files', { folderId, folderPath, filterFileName: config.searchText, filterFileType: config.fileType });
+    const files = await invoke('get_folder_files', { 
+      searchText: config.searchText, 
+      fileType: config.fileType,
+      sortType: config.sortType,
+      sortOrder: config.sortOrder,
+      folderId, 
+      folderPath, 
+    });
     if(files) {
       const totalCount = files.length;
       const totalSum = files.reduce((acc, file) => acc + file.size, 0);

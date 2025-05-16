@@ -1,6 +1,10 @@
 <template>
-  <div ref="scrollable" class="mb-1 flex-1 overflow-auto t-scrollbar focus:outline-none" 
-    tabindex="0" @focus="isFocus = true"  @blur="isFocus = false"
+  <div ref="scrollContainer" 
+    class="mb-1 flex-1 overflow-auto t-scrollbar focus:outline-none" 
+    tabindex="0" 
+    @focus="isFocus = true"
+    @blur="isFocus = false"
+    @scroll="handleScroll"
   >
     <div id="gridView" 
       class="px-2 grid gap-2"
@@ -141,7 +145,7 @@ const isFocus = ref(false);
 const selectedIndex = ref(props.selectItemIndex);
 const emitUpdate = defineEmits(['update:selectItemIndex']);
 
-const scrollable = ref(null); // Ref for the scrollable element
+const scrollContainer = ref(null); // Ref for the scrollable element
 
 const moreMenuItems = computed(() => {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
@@ -370,6 +374,10 @@ function commentItem() {
   emit('message-from-grid-view', { message: 'comment' });
 };
 
+function nextPage() {
+  emit('message-from-grid-view', { message: 'next-page' });
+};
+
 // function to get the text for the thumbnail
 const getThumbnailText = (file, option) => {
   switch (option) {
@@ -391,6 +399,16 @@ const getThumbnailText = (file, option) => {
       return '';
   }
 };
+
+// function to handle the scroll event
+function handleScroll() {
+  const el = scrollContainer.value;
+
+  // scroll to the bottom of the container
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {  // -1: Small offset to handle floating point errors
+    nextPage();
+  }
+}
 
 // make the selected item always visible in a scrollable container
 function scrollToItem(index) {

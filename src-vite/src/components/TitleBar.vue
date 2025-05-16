@@ -19,7 +19,7 @@
       {{ titlebar }}
     </span>
 
-    <!-- <div id="titlebar" class="flex-grow h-full flex justify-center items-center t-color-text" data-tauri-drag-region> -->
+    <!-- <div id="titlebar" class="grow h-full flex justify-center items-center t-color-text" data-tauri-drag-region> -->
       <!-- <SearchBox 
         v-if="viewName==='Home'" 
         class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" 

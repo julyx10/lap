@@ -12,7 +12,7 @@
     </div>
     
     <!-- people -->
-    <div class="flex-grow overflow-auto t-scrollbar">
+    <div class="grow overflow-auto t-scrollbar">
     </div>  
 
   </div>

@@ -16,10 +16,10 @@
         @click="clickFolder(rootAlbumId, child)"
         @dblclick="expandFolder(child)"
       >
-        <span v-if="child.children && child.children.length == 0" class="flex-shrink-0 t-icon-size"></span>
+        <span v-if="child.children && child.children.length == 0" class="shrink-0 t-icon-size"></span>
         <IconRight v-else
           :class="[
-            'p-1 t-icon-size flex-shrink-0 transition-transform', 
+            'p-1 t-icon-size shrink-0 transition-transform', 
             child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
           ]"
           @click.stop="expandFolder(child)"

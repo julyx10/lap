@@ -834,7 +834,7 @@ impl AFile {
 
     // get total count and size of files
     pub fn get_count_and_sum(
-        file_name: &str, file_type: i64,
+        search_text: &str, file_type: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
         is_favorite: bool, is_deleted: bool
@@ -842,8 +842,8 @@ impl AFile {
         let mut conditions = Vec::new();
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
     
-        let like_pattern = format!("%{}%", file_name);
-        if !file_name.is_empty() {
+        let like_pattern = format!("%{}%", search_text);
+        if !search_text.is_empty() {
             conditions.push("a.name LIKE ? COLLATE NOCASE");
             params.push(&like_pattern);
         }
@@ -894,7 +894,7 @@ impl AFile {
 
     /// get files
     pub fn get_files(
-        file_name: &str, file_type: i64,
+        search_text: &str, file_type: i64,
         sort_type: i64, sort_order: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
@@ -906,8 +906,8 @@ impl AFile {
         let mut conditions = Vec::new();
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
     
-        let like_pattern = format!("%{}%", file_name);
-        if !file_name.is_empty() {
+        let like_pattern = format!("%{}%", search_text);
+        if !search_text.is_empty() {
             conditions.push("a.name LIKE ? COLLATE NOCASE");
             params.push(&like_pattern);
         }

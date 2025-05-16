@@ -2,13 +2,14 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
+    "./src/**/*.{vue,js,ts}",
   ],
   theme: {
     extend: {},
   },
   plugins: [
-    require('tailwind-scrollbar'),
+    // require('tailwind-scrollbar'),
+    // require('tailwind-scrollbar')({ nocompatible: true }),
   ],
 }
 

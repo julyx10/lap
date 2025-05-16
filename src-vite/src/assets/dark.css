@@ -1,122 +1,88 @@
-/* window titlebar btn */
-.t-window-btn {
-  @apply p-3 w-12 h-10 t-color-text t-icon-hover t-color-bg-hover;
-}
+@import 'tailwindcss';
+@plugin 'tailwind-scrollbar';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* icon */
-.t-icon-hover {
-  @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
-}
-.t-icon-group-hover {
-  @apply group-hover:text-gray-100 transition-colors duration-300 cursor-pointer;
-}
-.t-icon-focus-hover {
-  @apply hover:text-sky-300 transition-colors duration-300 cursor-pointer;
-}
-.t-icon-selected {
-  @apply text-gray-300 transition-colors duration-300 ;
-}
-.t-icon-focus {
-  @apply text-sky-500 transition-colors duration-300 ;
-}
-.t-icon-disabled {
-  @apply text-gray-700;
-}
+/* Plugin registration is done in tailwind.config.js, not in CSS */
 
-/* color */
-.t-color-border {
-  @apply border-gray-700;
-}
-.t-color-border-selected {
-  @apply border-sky-500;
-}
-.t-color-border-hover {
-  @apply hover:border-gray-500;
-}
-.t-color-border-group-hover {
-  @apply group-hover:border-gray-500;
-}
-.t-color-bg {
-  @apply bg-gray-900;
-}
+/* Component layer */
+@layer components {
+  /* icon */
+  .t-icon {
+    @apply text-gray-400 transition-colors duration-300;
+  }
+  .t-icon-selected {
+    @apply text-gray-300 transition-colors duration-300;
+  }
+  .t-icon-focus {
+    @apply text-sky-500 transition-colors duration-300;
+  }
+  .t-icon-disabled {
+    @apply text-gray-700;
+  }
+  .t-icon-focus-hover {
+    @apply text-sky-300 transition-colors duration-300 cursor-pointer;
+  }
 
-.t-color-bg-light {
-  @apply bg-gray-800;
-}
-.t-color-bg-highlight {
-  @apply bg-sky-600;
-}
-.t-color-bg-hover {
-  @apply hover:bg-gray-700;
-}
-.t-color-bg-warning-hover {
-  @apply hover:bg-red-700;
-}
-.t-color-bg-highlight-hover {
-  @apply hover:bg-sky-500;
-}
-.t-color-bg-selected {
-  @apply bg-gray-700;
-}
+  /* color */
+  .t-color-border {
+    @apply border-gray-700;
+  }
+  .t-color-border-selected {
+    @apply border-sky-500;
+  }
+  .t-color-bg {
+    @apply bg-gray-900;
+  }
+  .t-color-bg-light {
+    @apply bg-gray-800;
+  }
+  .t-color-bg-highlight {
+    @apply bg-sky-600;
+  }
+  .t-color-bg-selected {
+    @apply bg-gray-700;
+  }
 
-.t-color-text {
-  @apply text-gray-400;
-}
-.t-color-text-focus {
-  @apply text-sky-500;
-}
-.t-color-text-selected {
-  @apply text-gray-200;
-}
-.t-color-text-dark {
-  @apply text-gray-600;
-}
-.t-color-text-disabled {
-  @apply text-gray-700;
-}
-.t-color-text-light {
-  @apply text-gray-200;
-}
-.t-color-text-warning {
-  @apply text-red-600;
-}
-.t-color-text-warning-hover {
-  @apply hover:text-red-500;
-}
-.t-color-text-hover {
-  @apply hover:text-gray-200;
-}
-.t-color-text-group-hover {
-  @apply group-hover:text-gray-500;
-}
+  .t-color-text {
+    @apply text-gray-400;
+  }
+  .t-color-text-focus {
+    @apply text-sky-500;
+  }
+  .t-color-text-selected {
+    @apply text-gray-200;
+  }
+  .t-color-text-dark {
+    @apply text-gray-600;
+  }
+  .t-color-text-disabled {
+    @apply text-gray-700;
+  }
+  .t-color-text-light {
+    @apply text-gray-200;
+  }
+  .t-color-text-warning {
+    @apply text-red-600;
+  }
+  .t-color-focus {
+    @apply bg-gray-500;
+  }
 
-.t-color-focus {
-  @apply bg-gray-500;
-}
-.t-color-border {
-  @apply border-gray-700;
-}
-/* scrollbar */
-.t-scrollbar {
-  @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-800;
-}
-.t-scrollbar-dark {
-  @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-900;
-}
+  /* input */
+  .t-input-color-bg {
+    @apply placeholder-gray-500 bg-transparent;
+  }
+  .t-input-focus {
+    @apply focus:border focus:border-sky-500 focus:outline-none;
+  }
 
-/* input */ 
-.t-input-color-bg {
-  @apply placeholder-gray-500 bg-transparent;
-}
-.t-input-focus {
-  @apply focus:border focus:border-sky-500 focus:outline-none;
-}
-/* option */
-.t-option {
-  @apply t-color-bg-light t-color-bg-hover;
-}
-
-/* select */
-.t-select {
-  @apply text-sm bg-transparent rounded-lg border t-color-border t-input-focus cursor-pointer;
+  /* scrollbar */
+  .t-scrollbar {
+    @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-800;
+  }
+  .t-scrollbar-dark {
+    @apply scrollbar scrollbar-thumb-gray-700 scrollbar-track-gray-900;
+  }
 }

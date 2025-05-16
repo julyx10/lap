@@ -22,10 +22,10 @@
             ]"
             @click="clickCameraMake(camera)"
           >
-            <!-- <component :is="camera.is_expanded ? IconFolderExpanded : IconFolder" class="mx-1 h-5  flex-shrink-0" @click.stop="clickExpandCamera(camera)"/> -->
+            <!-- <component :is="camera.is_expanded ? IconFolderExpanded : IconFolder" class="mx-1 h-5  shrink-0" @click.stop="clickExpandCamera(camera)"/> -->
             <IconRight
               :class="[
-                'mx-1 h-5 flex-shrink-0 transition-transform', 
+                'mx-1 h-5 shrink-0 transition-transform', 
                 camera.is_expanded ? 'rotate-90' : ''
               ]"
               @click.stop="clickExpandCamera(camera)"
@@ -43,7 +43,7 @@
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
-                <!-- <IconCircle class="mx-1 h-5 flex-shrink-0" /> -->
+                <!-- <IconCircle class="mx-1 h-5 shrink-0" /> -->
                 <div class="overflow-hidden whitespace-pre text-ellipsis">
                   {{ model }}
                 </div>

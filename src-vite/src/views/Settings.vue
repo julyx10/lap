@@ -24,7 +24,7 @@
         </div>
       </div>
     
-      <div class="flex-grow px-2">
+      <div class="grow px-2">
 
         <!-- General tab -->
         <section v-if="config.settingsTabIndex === 0">
@@ -62,10 +62,10 @@
           </div>
 
           <!-- Dark Mode -->
-          <!-- <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between mb-4">
             <label for="dark-mode" >{{ $t('settings_general_dark_mode') }}</label>
             <Switch v-model="config.darkMode" />
-          </div> -->
+          </div>
 
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
