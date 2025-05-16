@@ -168,13 +168,13 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 /// get db file count and sum
 #[tauri::command]
 pub fn get_db_count_and_sum(
-    search_text: &str, file_type: i64,
+    search_text: &str, search_file_type: i64,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
     is_favorite: bool, is_deleted: bool
 ) -> Result<(i64, i64), String> {
     AFile::get_count_and_sum(
-        search_text, file_type,
+        search_text, search_file_type,
         start_date, end_date,
         make, model,
         is_favorite, is_deleted
@@ -184,7 +184,7 @@ pub fn get_db_count_and_sum(
 /// get db files
 #[tauri::command]
 pub fn get_db_files(
-    search_text: &str, file_type: i64,
+    search_text: &str, search_file_type: i64,
     sort_type: i64, sort_order: i64,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
@@ -192,7 +192,7 @@ pub fn get_db_files(
     page_size: i64, offset: i64
 ) -> Result<Vec<AFile>, String> {
     AFile::get_files(
-        search_text, file_type,
+        search_text, search_file_type,
         sort_type, sort_order,
         start_date, end_date,
         make, model,
@@ -204,11 +204,11 @@ pub fn get_db_files(
 /// get all files from the folder
 #[tauri::command]
 pub fn get_folder_files(
-    search_text: &str, file_type: i64,
+    search_text: &str, search_file_type: i64,
     sort_type: i64, sort_order: i64,
     folder_id: i64, folder_path: &str
 ) -> Vec<AFile> {
-    t_utils::get_folder_files(search_text, file_type, sort_type, sort_order, folder_id, folder_path)
+    t_utils::get_folder_files(search_text, search_file_type, sort_type, sort_order, folder_id, folder_path)
 }
 
 /// copy image to clipboard

@@ -140,7 +140,7 @@ impl FileNode {
 pub struct FileInfo {
     pub file_path: String,
     pub file_name: String,
-    pub file_type: Option<String>,
+    pub file_type: Option<String>,    // file type (dir, file)
     pub created: Option<u64>,
     pub modified: Option<u64>,        // modified date as a timestamp
     pub modified_str: Option<String>, // modified date as a string (YYYY-MM-DD)
@@ -473,7 +473,7 @@ pub fn delete_file(file_path: &str) -> Option<String> {
 /// Returns a vector of AFile instances
 pub fn get_folder_files(
     search_text: &str, 
-    file_type: i64,
+    search_file_type: i64,
     sort_type: i64, 
     sort_order: i64,
     folder_id: i64, 
@@ -496,8 +496,8 @@ pub fn get_folder_files(
                 return None;
             }
 
-            if let Some(ft) = get_file_type(file_ext) {
-                if file_type == 0 || file_type == ft {
+            if let Some(file_type) = get_file_type(file_ext) {
+                if search_file_type == 0 || search_file_type == file_type {
                     match AFile::add_to_db(folder_id, file_path, file_type) {
                         Ok(file) => Some(file),
                         Err(e) => {
@@ -517,11 +517,7 @@ pub fn get_folder_files(
     // sort 
     files.sort_by(|a, b| {
         let ordering = match sort_type {
-            0 => {
-                let a_py = a.name.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
-                let b_py = b.name.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
-                a_py.cmp(&b_py)
-            }, 
+            0 => convert_to_pinyin(&a.name.to_lowercase()).cmp(&convert_to_pinyin(&b.name.to_lowercase())), // support pinyin
             1 => a.size.cmp(&b.size),
             2 => {if a.width == b.width { a.height.cmp(&b.height) } else { a.width.cmp(&b.width) }}, // resultion
             3 => a.created_at.cmp(&b.created_at),
@@ -556,9 +552,9 @@ pub fn count_folder_files(path: &str) -> (u64, u64, u64, u64, u64) {
             folder_count += 1;
         } else if entry_type.is_file() {
             if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
-                if let Some(file_type) = get_file_type(extension) {
+                if let Some(file_ext_type) = get_file_type(extension) {
                     let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-                    match file_type {
+                    match file_ext_type {
                         1 => {
                             image_file_count += 1;
                             total_image_size += size;
@@ -602,6 +598,18 @@ pub fn get_file_name(path: &str) -> String {
 pub fn get_file_path(path: &str, name: &str) -> String {
     let file_path: PathBuf = Path::new(path).join(name);
     file_path.to_string_lossy().to_string() // Convert PathBuf to String
+}
+
+pub fn convert_to_pinyin(s: &str) -> String {
+    s
+        .chars()
+        .flat_map(|c| {
+            match c.to_pinyin() {
+                Some(p) => p.plain().chars().collect::<Vec<_>>(),
+                None => vec![c],
+            }
+        })
+        .collect()
 }
 
 /// Convert a SystemTime to a u64 timestamp (in seconds since UNIX_EPOCH)

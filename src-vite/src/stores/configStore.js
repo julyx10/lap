@@ -37,7 +37,7 @@ export const useConfigStore = defineStore('configStore', {
 
     // filter fileList
     searchText: '',             // filter file name
-    fileType: 0,                // filter file type (0: all, 1: image, 2: video, 3: audio)
+    searchFileType: 0,                // filter file type (0: all, 1: image, 2: video, 3: audio)
     sortType: 0,                // sort type
     sortOrder: 0,               // sort order(0: ascending, 1: descending)
 

@@ -291,7 +291,7 @@ export async function getDbFiles(
   try {
     const files = await invoke('get_db_files', {
       searchText: config.searchText, 
-      fileType: config.fileType,
+      searchFileType: config.searchFileType,
       sortType: config.sortType,
       sortOrder: config.sortOrder,
       startDate, 
@@ -329,7 +329,7 @@ export async function getDbCountAndSum(
   try {
     const result = await invoke('get_db_count_and_sum', {
       searchText: config.searchText, 
-      fileType: config.fileType,
+      searchFileType: config.searchFileType,
       startDate, 
       endDate,
       make, 
@@ -352,7 +352,7 @@ export async function getFolderFiles(folderId, folderPath) {
   try {
     const files = await invoke('get_folder_files', { 
       searchText: config.searchText, 
-      fileType: config.fileType,
+      searchFileType: config.searchFileType,
       sortType: config.sortType,
       sortOrder: config.sortOrder,
       folderId, 

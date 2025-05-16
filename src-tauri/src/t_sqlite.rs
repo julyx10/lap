@@ -12,7 +12,6 @@ use base64::{engine::general_purpose, Engine};
 use exif::Tag;
 use rusqlite::{params, Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
-use pinyin::ToPinyin;
 
 use crate::t_utils;
 // use crate::t_opencv;
@@ -411,6 +410,7 @@ pub struct AFile {
 
     // file basic info
     pub name: String,               // file name
+    pub name_pinyin: Option<String>,// file name pinyin(for sort)
     pub size: u64,                  // file size
     pub file_type: Option<i64>,     // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
     pub created_at: Option<u64>,    // file create time
@@ -468,7 +468,8 @@ impl AFile {
             id: None,
             folder_id,
             file_type: Some(file_type),
-            name: file_info.file_name,
+            name: file_info.file_name.clone(),
+            name_pinyin: Some(t_utils::convert_to_pinyin(file_info.file_name.as_str())), // convert to pinyin
             size: file_info.file_size,
             created_at: file_info.created,
             modified_at: file_info.modified,
@@ -540,17 +541,18 @@ impl AFile {
         let result = conn.execute(
             "INSERT INTO afiles (
                 folder_id, 
-                name, size, file_type, created_at, modified_at, taken_date,
+                name, name_pinyin, size, file_type, created_at, modified_at, taken_date,
                 width, height,
                 is_favorite, rotate, comments, deleted_at,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26)",
             params![
                 self.folder_id,
 
                 self.name,
+                self.name_pinyin,
                 self.size,
                 self.file_type,
                 self.created_at,
@@ -609,7 +611,7 @@ impl AFile {
     fn build_base_query() -> String {
         String::from("
             SELECT a.id, a.folder_id, 
-                a.name, a.size, a.file_type, a.created_at, a.modified_at, a.taken_date,
+                a.name, a.name_pinyin, a.size, a.file_type, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
                 a.is_favorite, a.rotate, a.comments, a.deleted_at,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
@@ -629,40 +631,41 @@ impl AFile {
             folder_id: row.get(1)?,
 
             name: row.get(2)?,
-            size: row.get(3)?,
-            file_type: row.get(4)?,
-            created_at: row.get(5)?,
-            modified_at: row.get(6)?,
-            taken_date: row.get(7)?,
+            name_pinyin: row.get(3)?,
+            size: row.get(4)?,
+            file_type: row.get(5)?,
+            created_at: row.get(6)?,
+            modified_at: row.get(7)?,
+            taken_date: row.get(8)?,
 
-            width: row.get(8)?,
-            height: row.get(9)?,
+            width: row.get(9)?,
+            height: row.get(10)?,
 
-            is_favorite: row.get(10)?,
-            rotate: row.get(11)?,
-            comments: row.get(12)?,
-            deleted_at: row.get(13)?,
+            is_favorite: row.get(11)?,
+            rotate: row.get(12)?,
+            comments: row.get(13)?,
+            deleted_at: row.get(14)?,
 
-            e_make: row.get(14)?,
-            e_model: row.get(15)?,
-            e_date_time: row.get(16)?,
-            e_exposure_time: row.get(17)?,
-            e_f_number: row.get(18)?,
-            e_focal_length: row.get(19)?,
-            e_iso_speed: row.get(20)?,
-            e_flash: row.get(21)?,
-            e_orientation: row.get(22)?,
+            e_make: row.get(15)?,
+            e_model: row.get(16)?,
+            e_date_time: row.get(17)?,
+            e_exposure_time: row.get(18)?,
+            e_f_number: row.get(19)?,
+            e_focal_length: row.get(20)?,
+            e_iso_speed: row.get(21)?,
+            e_flash: row.get(22)?,
+            e_orientation: row.get(23)?,
 
-            gps_latitude: row.get(23)?,
-            gps_longitude: row.get(24)?,
-            gps_altitude: row.get(25)?,
+            gps_latitude: row.get(24)?,
+            gps_longitude: row.get(25)?,
+            gps_altitude: row.get(26)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(26)?.as_str(),
+                row.get::<_, String>(27)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(27)?,
-            album_name: row.get(28)?,
+            album_id: row.get(28)?,
+            album_name: row.get(29)?,
         })
     }
 
@@ -686,9 +689,6 @@ impl AFile {
     fn query_files(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
-        // support pinyin sort
-        register_pinyin_collation(&conn).map_err(|e| e.to_string())?;
-
         let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
 
         let rows = stmt
@@ -702,29 +702,6 @@ impl AFile {
 
         Ok(files)
     }
-
-    // Helper function to execute SQL query and get the count
-    // fn query_count(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<i64, String> {
-    //     let conn = open_conn()?;
-    //     let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
-
-    //     let count: i64 = stmt
-    //         .query_row(params, |row| row.get(0))
-    //         .map_err(|e| e.to_string())?;
-
-    //     Ok(count)
-    // }
-
-
-    // Generalized function to query with conditions
-    // fn query_with_conditions(
-    //     conditions: &str,
-    //     params: &[&dyn rusqlite::ToSql],
-    // ) -> Result<Vec<Self>, String> {
-    //     let mut sql = Self::build_base_query();
-    //     sql.push_str(conditions);
-    //     Self::query_files(&sql, params)
-    // }
 
     /// fetch a file info from db by folder_id and file name
     pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
@@ -834,7 +811,7 @@ impl AFile {
 
     // get total count and size of files
     pub fn get_count_and_sum(
-        search_text: &str, file_type: i64,
+        search_text: &str, search_file_type: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
         is_favorite: bool, is_deleted: bool
@@ -848,9 +825,9 @@ impl AFile {
             params.push(&like_pattern);
         }
     
-        if file_type > 0 {
+        if search_file_type > 0 {
             conditions.push("a.file_type = ?");
-            params.push(&file_type);
+            params.push(&search_file_type);
         }
     
         if !start_date.is_empty() {
@@ -894,7 +871,7 @@ impl AFile {
 
     /// get files
     pub fn get_files(
-        search_text: &str, file_type: i64,
+        search_text: &str, search_file_type: i64,
         sort_type: i64, sort_order: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
@@ -912,9 +889,9 @@ impl AFile {
             params.push(&like_pattern);
         }
     
-        if file_type > 0 {
+        if search_file_type > 0 {
             conditions.push("a.file_type = ?");
-            params.push(&file_type);
+            params.push(&search_file_type);
         }
     
         if !start_date.is_empty() {
@@ -955,13 +932,13 @@ impl AFile {
     
         // sort
         match sort_type {
-            0 => query.push_str(" ORDER BY a.name COLLATE PINYIN"),
+            0 => query.push_str(" ORDER BY a.name_pinyin"),
             1 => query.push_str(" ORDER BY a.size"),
             2 => query.push_str(" ORDER BY a.width, a.height"),     // resolution
             3 => query.push_str(" ORDER BY a.created_at"),
             4 => query.push_str(" ORDER BY a.modified_at"),
             5 => query.push_str(" ORDER BY a.taken_date"),
-            _ => query.push_str(" ORDER BY a.name COLLATE PINYIN"),
+            _ => query.push_str(" ORDER BY a.name_pinyin"),
         }
         match sort_order {
             0 => query.push_str(" ASC"),
@@ -1130,16 +1107,6 @@ fn open_conn() -> Result<Connection, String> {
         .map_err(|e| format!("Failed to open database connection: {}", e))
 }
 
-/// register pinyin collation
-/// this function is used to sort the file name by pinyin
-fn register_pinyin_collation(conn: &Connection) -> Result<()> {
-    conn.create_collation("PINYIN", |a, b| {
-        let a_py = a.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
-        let b_py = b.chars().flat_map(|c| c.to_pinyin().map(|p| p.plain())).collect::<String>();
-        a_py.cmp(&b_py)
-    })
-}
-
 /// create all tables if not exists
 pub fn create_db() -> Result<String> {
     let conn = open_conn().unwrap();
@@ -1187,6 +1154,7 @@ pub fn create_db() -> Result<String> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             folder_id INTEGER NOT NULL,
             name TEXT NOT NULL,
+            name_pinyin TEXT,
             size INTEGER NOT NULL,
             file_type INTEGER,
             created_at INTEGER,
@@ -1216,6 +1184,7 @@ pub fn create_db() -> Result<String> {
     )?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_name ON afiles(name)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_name_pinyin ON afiles(name_pinyin)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_file_type ON afiles(file_type)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_created_at ON afiles(created_at)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_modified_at ON afiles(modified_at)", [])?;

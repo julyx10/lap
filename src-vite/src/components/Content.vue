@@ -35,7 +35,7 @@
         <!-- file type options -->
         <DropDownSelect
           :options="fileTypeOptions"
-          :defaultIndex="config.fileType"
+          :defaultIndex="config.searchFileType"
           @select="handleFileTypeSelect"
         />
 
@@ -534,7 +534,7 @@ watch(() => config.language, (newLanguage) => {
 /// watch home
 watch(() => [
               config.toolbarIndex, 
-              config.searchText, config.fileType, config.sortType, config.sortOrder, 
+              config.searchText, config.searchFileType, config.sortType, config.sortOrder, 
               fileListOffset.value
             ], 
       async([newIndex]) => {
@@ -558,7 +558,7 @@ watch(() => [
 watch(() => [
               config.toolbarIndex, 
               config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath, 
-              config.searchText, config.fileType, config.sortType, config.sortOrder
+              config.searchText, config.searchFileType, config.sortType, config.sortOrder
             ], 
       async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 1) {
@@ -581,7 +581,7 @@ watch(() => [
 /// watch album
 watch(() => [config.toolbarIndex, 
              config.albumId, config.albumFolderId, config.albumFolderPath, 
-             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+             config.searchText, config.searchFileType, config.sortType, config.sortOrder], 
       async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
   if(newIndex === 2) {
     if (newAlbumId) {
@@ -604,9 +604,10 @@ watch(() => [config.toolbarIndex,
 }, { immediate: true });
 
 // watch calandar
+// FIXME: after removing all albums, title still displays selected date
 watch(() => [config.toolbarIndex, 
              config.calendarYear, config.calendarMonth, config.calendarDate, 
-             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+             config.searchText, config.searchFileType, config.sortType, config.sortOrder], 
       async ([newIndex, year, month, date]) => {
   if(newIndex === 3) {
     if (year && month && date) {
@@ -631,8 +632,9 @@ watch(() => [config.toolbarIndex,
 // TODO: impl people 
 
 // watch camera
+// FIXME: after removing all albums, title still displays selected camera or model
 watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel, 
-             config.searchText, config.fileType, config.sortType, config.sortOrder], 
+             config.searchText, config.searchFileType, config.sortType, config.sortOrder], 
       async ([newIndex, newMake, newModel]) => {
   if(newIndex === 6) {
     if(newMake) {
@@ -652,22 +654,10 @@ watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel,
   }
 }, { immediate: true });
 
-// watch for change of select item
-watch(
-  () => {
-    const index = selectedItemIndex.value;
-    const list = fileList.value;
-    return index >= 0 && index < list.length ? list[index].file_path : null;
-  },
-  () => {
-    // update the preview
-    if(config.showPreview) {
-      getImageSrc();
-    }
-    // update image viewer if the viewer is open
-    openImageViewer(selectedItemIndex.value, false);
-  }
-);
+// watch for selected item (not in select mode)
+watch(() => selectedItemIndex.value, (newIndex) => {
+  updateSelectedImage(newIndex);
+});
 
 // watch for selected items in the file list (select mode)
 watch(
@@ -677,231 +667,6 @@ watch(
     selectedSize.value = fileList.value.reduce((total, f) => total + (f.isSelected ? f.size : 0), 0);
   }
 );
-
-// get selected image source
-const getImageSrc = async () => {
-  if(selectedItemIndex.value < 0 || selectedItemIndex.value >= fileList.value.length) {
-    imageSrc.value = '';
-    return;
-  }
-  
-  let filePath = fileList.value[selectedItemIndex.value].file_path;
-  console.log('getImageSrc:', filePath);
-  try {
-    let currentIndex = selectedItemIndex.value;
-    const imageBase64 = await getFileImage(filePath);
-    // Check if the selected item has changed since the invocation
-    if (currentIndex === selectedItemIndex.value) {
-      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
-    }
-  } catch (error) {
-    imageSrc.value = '';
-    console.error('getImageSrc error:', error);
-  }
-}
-
-const handleSelectMode = (value) => {
-  selectMode.value = value;
-  if(!selectMode.value) {
-    for (let i = 0; i < fileList.value.length; i++) {
-      fileList.value[i].isSelected = false;
-    }
-  }
-};
-
-const handleFileTypeSelect = (option, extendOption) => {
-  selectMode.value = false;   // exit multi-select mode
-  config.fileType = option;
-};
-
-const handleSortTypeSelect = (option, extendOption) => {
-  selectMode.value = false;   // exit multi-select mode
-  config.sortType = option;
-  config.sortOrder = extendOption;
-};
-
-// file type options
-const fileTypeOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_file_type_options);
-});
-
-// sort type options
-const sortOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_sort_type_options);
-});
-
-// sort extend options
-const sortExtendOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_sort_order_options);
-});
-
-function getSelectOptions(options) {
-  const result = [];
-  for (let i = 0; i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-  return result;
-}
-
-function refreshFileList() {
-  selectMode.value = false;   // exit multi-select mode
-
-  if(fileList.value.length > 0) {
-    getFileListThumb(fileList.value); 
-
-    // reset the selected item index
-    selectedItemIndex.value = fileListOffset.value === 0 ? 0 : selectedItemIndex.value;
-
-    gridViewRef.value.scrollToItem(selectedItemIndex.value); // scroll to the selected item
-  } else {
-    selectedItemIndex.value = -1;
-  }
-  console.log('refreshFileList:', fileList.value);
-}
-
-// Get the thumbnail for the files
-async function getFileListThumb(files, concurrencyLimit = 8) {
-  const result = [];
-  let activeRequests = 0;
-  thumbCount.value = 0;
-
-  const getThumbForFile = async (file) => {
-    const thumb = await getFileThumb(file.id, file.file_path, file.e_orientation || 0, config.thumbnailImageSize);
-    if(thumb) {
-      file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-      thumbCount.value++;
-    }
-    return file;
-  };
-
-  const runWithConcurrencyLimit = async (files) => {
-    const queue = [];
-
-    for (let i = 0; i < files.length; i++) {
-      if (activeRequests >= concurrencyLimit) {
-        await Promise.race(queue); // Wait for the first promise to complete
-      }
-
-      const filePromise = getThumbForFile(files[i])
-        .then((file) => {
-          // Remove the finished promise from the queue
-          queue.splice(queue.indexOf(filePromise), 1);
-          activeRequests--;
-          return file;
-        })
-        .catch((error) => {
-          console.log('Error fetching thumbnail:', error);
-        });
-
-      queue.push(filePromise);
-      activeRequests++;
-    }
-
-    return Promise.all(queue);
-  };
-
-  result.push(...await runWithConcurrencyLimit(files));
-  console.log('All thumbnails fetched successfully.');
-}
-
-// Open the image viewer window
-async function openImageViewer(index: number, newViewer = false) {
-  const webViewLabel = 'imageviewer';
-
-  const fileCount = fileList.value.length;
-
-  const file = index >= 0 && index < fileCount ? fileList.value[index] : null;
-  const fileId = file ? file.id : 0;
-  const encodedFilePath = file ? encodeURIComponent(file.file_path) : '';
-
-  // preload the next image for smooth transition
-  const nextFile = index + 1 >= 0 && index + 1 < fileCount ? fileList.value[index + 1] : null;
-  const nextEncodedFilePath = nextFile ? encodeURIComponent(nextFile.file_path) : '';
-  
-  // create a new window if it doesn't exist
-  let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
-  if (!imageWindow) {
-    if (newViewer) {
-      imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
-                           `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
-        title: 'Image Viewer',
-        width: 1200,
-        height: 800,
-        minWidth: 800,
-        minHeight: 600,
-        resizable: true,
-        decorations: isMac,
-        transparent: isWin,
-        ...(isMac && {
-          titleBarStyle: 'Overlay',
-          hiddenTitle: true,
-          minimizable: false,
-        }),
-      });
-
-      imageWindow.once('tauri://created', () => {
-        console.log('ImageViewer window created');
-      });
-
-      imageWindow.once('tauri://close-requested', () => {
-        imageWindow?.close();
-        console.log('ImageViewer window is closing');
-      });
-
-      imageWindow.once('tauri://error', (e) => {
-        console.error('Error creating ImageViewer window:', e);
-      });
-    }
-  } else {    // update the existing window
-    await imageWindow.emit('update-img', { 
-      fileId: fileId, 
-      fileIndex: index,   // selected file index
-      fileCount: fileCount, // total files length
-      filePath: encodedFilePath, 
-      nextFilePath: nextEncodedFilePath,
-    });
-    if(newViewer) {
-      imageWindow.show();
-    }
-  }
-}
-
-// show/hide preview pane
-const showPreview = () => {
-  config.showPreview = !config.showPreview;
-  if(config.showPreview) {
-    getImageSrc();
-  } else {
-    imageSrc.value = '';
-  }
-}
-
-/// Dragging the splitter
-function startDragging(event) {
-  isDraggingSplitter.value = true;
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', stopDragging);
-}
-
-/// stop dragging the splitter
-function stopDragging() {
-  isDraggingSplitter.value = false;
-  document.removeEventListener('mousemove', handleMouseMove);
-  document.removeEventListener('mouseup', stopDragging);
-}
-
-/// handle mouse move event
-function handleMouseMove(event) {
-  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
-  if (isDraggingSplitter.value) {
-    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
-    const leftPosition = divListView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
-
-    // Limit width between 20% and 80%
-    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
-  }
-}
 
 // click rename menu item
 const clickRenameFile = async (newName) => {
@@ -1060,6 +825,245 @@ const clickEditComment = async (newComment) => {
       file.comments = newComment;
       showCommentMsgbox.value = false;
     }
+  }
+}
+
+const handleSelectMode = (value) => {
+  selectMode.value = value;
+  if(!selectMode.value) {
+    for (let i = 0; i < fileList.value.length; i++) {
+      fileList.value[i].isSelected = false;
+    }
+  }
+};
+
+const handleFileTypeSelect = (option, extendOption) => {
+  selectMode.value = false;   // exit multi-select mode
+  config.searchFileType = option;
+};
+
+const handleSortTypeSelect = (option, extendOption) => {
+  selectMode.value = false;   // exit multi-select mode
+  config.sortType = option;
+  config.sortOrder = extendOption;
+};
+
+// file type options
+const fileTypeOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.file_list_file_type_options);
+});
+
+// sort type options
+const sortOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.file_list_sort_type_options);
+});
+
+// sort extend options
+const sortExtendOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.file_list_sort_order_options);
+});
+
+function getSelectOptions(options) {
+  const result = [];
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+  return result;
+}
+
+// show/hide preview pane
+const showPreview = () => {
+  config.showPreview = !config.showPreview;
+  if(config.showPreview) {
+    getImageSrc();
+  } else {
+    imageSrc.value = '';
+  }
+}
+
+// get selected image source
+const getImageSrc = async (index) => {
+  if(index < 0 || index >= fileList.value.length) {
+    imageSrc.value = '';
+    return;
+  }
+  
+  let filePath = fileList.value[index].file_path;
+  console.log('getImageSrc:', filePath);
+  try {
+    let currentIndex = index;
+    const imageBase64 = await getFileImage(filePath);
+    // Check if the selected item has changed since the invocation
+    if (currentIndex === index) {
+      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+    }
+  } catch (error) {
+    imageSrc.value = '';
+    console.error('getImageSrc error:', error);
+  }
+}
+
+function refreshFileList() {
+  selectMode.value = false;   // exit multi-select mode
+
+  if(fileList.value.length > 0) {
+    if(fileListOffset.value === 0) {  // file list is changed
+      selectedItemIndex.value = 0;
+      updateSelectedImage(selectedItemIndex.value);
+    }
+    
+    getFileListThumb(fileList.value, fileListOffset.value); 
+  } else {
+    selectedItemIndex.value = -1;
+  }
+  console.log('refreshFileList:', fileList.value);
+}
+
+// update image when the select file is changed
+function updateSelectedImage(index) {
+  // scroll to the selected item
+  gridViewRef.value.scrollToItem(index); 
+
+  // update the preview
+  if(config.showPreview) {
+    getImageSrc(index);
+  }
+
+  // update image viewer if the viewer is open
+  openImageViewer(index, false);
+}
+
+// Get the thumbnail for the files
+async function getFileListThumb(files, offset, concurrencyLimit = 8) {
+  const result = [];
+  let activeRequests = 0;
+  thumbCount.value = 0;
+
+  const getThumbForFile = async (file) => {
+    const thumb = await getFileThumb(file.id, file.file_path, file.e_orientation || 0, config.thumbnailImageSize);
+    if(thumb) {
+      file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+      thumbCount.value++;
+    }
+    return file;
+  };
+
+  const runWithConcurrencyLimit = async (files) => {
+    const queue = [];
+
+    for (let i = offset; i < files.length; i++) {
+      if (activeRequests >= concurrencyLimit) {
+        await Promise.race(queue); // Wait for the first promise to complete
+      }
+
+      const filePromise = getThumbForFile(files[i])
+        .then((file) => {
+          // Remove the finished promise from the queue
+          queue.splice(queue.indexOf(filePromise), 1);
+          activeRequests--;
+          return file;
+        })
+        .catch((error) => {
+          console.log('Error fetching thumbnail:', error);
+        });
+
+      queue.push(filePromise);
+      activeRequests++;
+    }
+
+    return Promise.all(queue);
+  };
+
+  result.push(...await runWithConcurrencyLimit(files));
+  console.log('All thumbnails fetched successfully.');
+}
+
+// Open the image viewer window
+async function openImageViewer(index: number, newViewer = false) {
+  const webViewLabel = 'imageviewer';
+
+  const fileCount = fileList.value.length;
+
+  const file = index >= 0 && index < fileCount ? fileList.value[index] : null;
+  const fileId = file ? file.id : 0;
+  const encodedFilePath = file ? encodeURIComponent(file.file_path) : '';
+
+  // preload the next image for smooth transition
+  const nextFile = index + 1 >= 0 && index + 1 < fileCount ? fileList.value[index + 1] : null;
+  const nextEncodedFilePath = nextFile ? encodeURIComponent(nextFile.file_path) : '';
+  
+  // create a new window if it doesn't exist
+  let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
+  if (!imageWindow) {
+    if (newViewer) {
+      imageWindow = new WebviewWindow(webViewLabel, {
+        url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
+                           `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
+        title: 'Image Viewer',
+        width: 1200,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        resizable: true,
+        decorations: isMac,
+        transparent: isWin,
+        ...(isMac && {
+          titleBarStyle: 'Overlay',
+          hiddenTitle: true,
+          minimizable: false,
+        }),
+      });
+
+      imageWindow.once('tauri://created', () => {
+        console.log('ImageViewer window created');
+      });
+
+      imageWindow.once('tauri://close-requested', () => {
+        imageWindow?.close();
+        console.log('ImageViewer window is closing');
+      });
+
+      imageWindow.once('tauri://error', (e) => {
+        console.error('Error creating ImageViewer window:', e);
+      });
+    }
+  } else {    // update the existing window
+    await imageWindow.emit('update-img', { 
+      fileId: fileId, 
+      fileIndex: index,   // selected file index
+      fileCount: fileCount, // total files length
+      filePath: encodedFilePath, 
+      nextFilePath: nextEncodedFilePath,
+    });
+    if(newViewer) {
+      imageWindow.show();
+    }
+  }
+}
+
+/// Dragging the splitter
+function startDragging(event) {
+  isDraggingSplitter.value = true;
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', stopDragging);
+}
+
+/// stop dragging the splitter
+function stopDragging() {
+  isDraggingSplitter.value = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', stopDragging);
+}
+
+/// handle mouse move event
+function handleMouseMove(event) {
+  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
+  if (isDraggingSplitter.value) {
+    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
+    const leftPosition = divListView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+
+    // Limit width between 20% and 80%
+    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
   }
 }
 
