@@ -405,7 +405,7 @@ function handleScroll() {
   const el = scrollContainer.value;
 
   // scroll to the bottom of the container
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {  // -1: Small offset to handle floating point errors
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {  // -1: Small offset to handle floating point errors
     nextPage();
   }
 }

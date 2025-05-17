@@ -100,8 +100,8 @@ onMounted(async () => {
 /// reload cameras
 function clickReload() {
   getCameras();
-  config.cameraMake = null;
-  config.cameraModel = null;
+  config.cameraMake = "";
+  config.cameraModel = "";
 };
 
 /// click camera icon to expand or collapse models
@@ -112,7 +112,7 @@ function clickExpandCamera(camera) {
 /// click a camera to select it
 function clickCameraMake(camera) {
   config.cameraMake = camera.make;
-  config.cameraModel = null;
+  config.cameraModel = "";
 
   camera.is_expanded = true;
 }

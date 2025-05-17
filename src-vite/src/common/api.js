@@ -263,31 +263,10 @@ export async function revealFolder(folderPath) {
 
 // file
 
-/// get all files (only get favorite files if isFavorite is true)
-// export async function getAllFiles(isFavorite = false, offset = 0, pageSize = config.fileListPageSize) {
-//   try {
-//     const result = await invoke('get_all_files', { isFavorite, offset, pageSize });
-//     if(result) {
-//       return result;
-//     };
-//   } catch (error) {
-//     console.error('getAllFiles error:', error);
-//   }
-//   return null
-// }
-
 /// get all files from db (with pagination)
 /// return [files, totalCount, totalSum] when offset is 0
 /// return files when offset is not 0
-export async function getDbFiles(
-  startDate = "", 
-  endDate = "",
-  make = "", 
-  model = "",
-  isFavorite = false, 
-  isDeleted = false,
-  offset = 0 
-) {
+export async function getDbFiles(startDate, endDate, make, model, isFavorite, isDeleted, offset) {
   try {
     const files = await invoke('get_db_files', {
       searchText: config.searchText, 
@@ -318,14 +297,7 @@ export async function getDbFiles(
 }
 
 /// get all db files' count and sum(without pagination)
-export async function getDbCountAndSum(
-  startDate = "", 
-  endDate = "",
-  make = "", 
-  model = "",
-  isFavorite = false, 
-  isDeleted = false,
-) {
+export async function getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted) {
   try {
     const result = await invoke('get_db_count_and_sum', {
       searchText: config.searchText, 
@@ -564,41 +536,7 @@ export async function setFileFavorite(fileId, isFavorite) {
   return null;
 }
 
-// calenar
-
-// get all files of calendar
-export async function getCalendarFiles(year, month, date) {
-  try {
-    let startDate = ""
-    let endDate = ""
-    if (date === -1) { // -1 means selecting a month
-      // get the first and last days of the month.
-      startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-      endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
-    } else {  // otherwise, get files by date
-      startDate = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
-    }
-    return await getDbFiles(startDate, endDate)
-  } catch (error) {
-    console.error('getCalendarFiles error:', error);
-  }
-  return null;
-}
-
 // camera
-
-// get all files under the camera make and model
-export async function getCameraFiles(make, model) {
-  try {
-    const result = await getDbFiles("", "", make, model);
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.error('getCameraFiles error:', error);
-  }
-  return null
-}
 
 // get camera info
 export async function getCameraInfo() {

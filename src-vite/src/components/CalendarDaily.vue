@@ -3,9 +3,15 @@
   <div class="flex flex-col items-center">
 
     <!-- title -->
-    <span class="pt-2 pb-4 t-color-text-dark">
+    <div 
+      :class="[
+        'mt-2 px-2 border rounded-full t-color-bg-hover text-nowrap cursor-pointer',
+        isSelected(year, month, -1) ? 'border-sky-500' : 'border-transparent'
+      ]"
+      @click="clickDate(year, month, -1)"
+    >
       {{ monthTitle }}
-    </span>
+    </div>
 
     <!-- date list -->
     <div class="pb-2 px-1 grid grid-cols-7 gap-2 text-center">
@@ -17,12 +23,12 @@
         :class="[
           {
             'bg-sky-900': isTodayFn(d.date),
-            'border-sky-500': isSelectedDate(d.date),
-            'border-transparent': !isSelectedDate(d.date),
+            'border-sky-500': isSelected(year, month, d.date),
+            'border-transparent': !isSelected(year, month, d.date),
           },
           d.count > 0 ? 't-color-text' : 't-color-text-dark'
         ]"
-        @click="clickDate(d.date)"
+        @click="clickDate(year, month, d.date)"
       >
         {{ Number(d.date) }}
       </div>
@@ -75,9 +81,9 @@ const monthDates = getMonthDates(props.year, props.month, props.dates);
 const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date));
 
 // Check if the date is selected
-const isSelectedDate = (date) => config.calendarYear === props.year &&
-                                 config.calendarMonth === props.month && 
-                                 config.calendarDate === date;
+const isSelected = (year, month, date) => config.calendarYear === year &&
+                                          config.calendarMonth === month && 
+                                          config.calendarDate === date;
 
 // Generate an array of { date, count } objects for the month
 function getMonthDates(year, month, dates = []) {
@@ -101,10 +107,10 @@ function getMonthDates(year, month, dates = []) {
 }
 
 // click a date to select it
-const clickDate = (date) => {
-  config.calendarYear = props.year;
-  config.calendarMonth = props.month;
-  config.calendarDate = date;
+const clickDate = (year, month, date) => {
+  config.calendarYear = year;
+  config.calendarMonth = month; // -1 means selecting a year
+  config.calendarDate = date;   // -1 means selecting a month
 
   console.log('clickDate:', config.calendarYear, config.calendarMonth, config.calendarDate);
 };

@@ -55,7 +55,7 @@
             't-icon-size shrink-0',
             config.showPreview ? 't-icon-focus t-icon-focus-hover': 't-icon-hover'
           ]" 
-          @click="showPreview"
+          @click="showPreview(selectedItemIndex)"
         />
       </div>
     </div>
@@ -229,11 +229,11 @@ import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'v
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { getAlbum, getDbFiles, getFolderFiles, getCalendarFiles, getCameraFiles,
+import { getAlbum, getDbFiles, getFolderFiles,
          copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, 
-         formatFileSize, formatDate, getRelativePath, 
+         formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
@@ -472,9 +472,10 @@ onMounted( async() => {
         showCommentMsgbox.value = true;
         break;
       case 'next-page':
-        console.log('next-page:', fileListOffset.value, totalCount.value);
-        if(fileListOffset.value + config.fileListPageSize < totalCount.value) {
-          fileListOffset.value += config.fileListPageSize;
+        if(!showFolderFiles.value) {  // offset is only available for db files
+          if(fileListOffset.value + config.fileListPageSize < totalCount.value) {
+            fileListOffset.value += config.fileListPageSize;
+          }
         }
         break;
       default:
@@ -531,128 +532,29 @@ watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
 });
 
-/// watch home
-watch(() => [
-              config.toolbarIndex, 
-              config.searchText, config.searchFileType, config.sortType, config.sortOrder, 
-              fileListOffset.value
-            ], 
-      async([newIndex]) => {
-  if(newIndex === 0) { // home
-    if(fileListOffset.value === 0) {
-      contentTitle.value = localeMsg.value.home;
-      // get all files and total count
-      [fileList.value, totalCount.value, totalSize.value] = await getDbFiles("", "", "", "", false, false, 0);
-    } else {
-      console.log('fileListOffset:', fileListOffset.value);
-      await getDbFiles("", "", "", "", false, false, fileListOffset.value).then((newfiles) => {
-        fileList.value.push(...newfiles);
-      });
-    }
+/// watch for file list changes
+watch(
+  () => [
+          config.toolbarIndex,      // toolbar index
+          config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath,   // favorite files and folder
+          config.albumId, config.albumFolderId, config.albumFolderPath,                 // album
+          config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
+          config.cameraMake, config.cameraModel,                                        // camera 
+          config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
+        ], 
+  () => {
+    fileListOffset.value = 0;   // reset file list offset
+    updateContent();
+  }, 
+  { immediate: true }
+);
 
-    refreshFileList();
-  } 
-}, { immediate: true });
-
-/// watch favorites
-watch(() => [
-              config.toolbarIndex, 
-              config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath, 
-              config.searchText, config.searchFileType, config.sortType, config.sortOrder
-            ], 
-      async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
-  if(newIndex === 1) {
-    if(newFolderId === 0) { // 0: favorite files
-      contentTitle.value = localeMsg.value.favorite_files;
-      [fileList.value, totalCount.value, totalSize.value] = await getDbFiles("", "", "", "", true); // true: only get favorite files
-    } else {                // else: favorite folders
-      const album = await getAlbum(newAlbumId);
-      if(album) {
-        contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
-      };
-      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(newFolderId, newFolderPath);
-      totalCount.value = fileList.value.length;
-      totalSize.value = fileList.value.reduce((total, file) => { return total + file.size; }, 0);
-    }
-    refreshFileList();
+// watch for file list offset
+watch(() => fileListOffset.value, (newValue) => {
+  if(newValue > 0) {
+    updateContent();
   }
-}, { immediate: true });
-
-/// watch album
-watch(() => [config.toolbarIndex, 
-             config.albumId, config.albumFolderId, config.albumFolderPath, 
-             config.searchText, config.searchFileType, config.sortType, config.sortOrder], 
-      async ([newIndex, newAlbumId, newFolderId, newFolderPath]) => {
-  if(newIndex === 2) {
-    if (newAlbumId) {
-      const album = await getAlbum(newAlbumId);
-      if(album) {
-        if(newFolderPath === album.path) { // current folder is root
-          contentTitle.value = album.name;
-        } else {
-          contentTitle.value = album.name + getRelativePath(newFolderPath, album.path);
-        };
-
-        [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(newFolderId, newFolderPath);
-        refreshFileList();
-      } 
-    } else {
-      contentTitle.value = localeMsg.value.album;
-      fileList.value = [];
-    }
-  }
-}, { immediate: true });
-
-// watch calandar
-// FIXME: after removing all albums, title still displays selected date
-watch(() => [config.toolbarIndex, 
-             config.calendarYear, config.calendarMonth, config.calendarDate, 
-             config.searchText, config.searchFileType, config.sortType, config.sortOrder], 
-      async ([newIndex, year, month, date]) => {
-  if(newIndex === 3) {
-    if (year && month && date) {
-      if (config.calendarDate === -1) {     // monthly
-        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.month_format);
-      } else if (config.calendarDate > 0) { // daily
-        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
-      }
-      [fileList.value, totalCount.value, totalSize.value] = await getCalendarFiles(year, month, date);
-      refreshFileList()
-    } else {
-      contentTitle.value = localeMsg.value.calendar;
-      fileList.value = [];
-    }
-  }
-}, { immediate: true });
-
-// watch location
-// TODO: impl location
-
-// watch people
-// TODO: impl people 
-
-// watch camera
-// FIXME: after removing all albums, title still displays selected camera or model
-watch(() => [config.toolbarIndex, config.cameraMake, config.cameraModel, 
-             config.searchText, config.searchFileType, config.sortType, config.sortOrder], 
-      async ([newIndex, newMake, newModel]) => {
-  if(newIndex === 6) {
-    if(newMake) {
-      if(newModel) {
-        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-        [fileList.value, totalCount.value, totalSize.value] = await getCameraFiles(config.cameraMake, newModel);
-      } else {
-        contentTitle.value = `${config.cameraMake}`;
-        [fileList.value, totalCount.value, totalSize.value] = await getCameraFiles(config.cameraMake, "");
-      }
-      refreshFileList()
-    } else {
-      contentTitle.value = localeMsg.value.camera;
-      fileList.value = [];
-    }
-
-  }
-}, { immediate: true });
+});
 
 // watch for selected item (not in select mode)
 watch(() => selectedItemIndex.value, (newIndex) => {
@@ -667,6 +569,76 @@ watch(
     selectedSize.value = fileList.value.reduce((total, f) => total + (f.isSelected ? f.size : 0), 0);
   }
 );
+
+async function getFileList(startDate, endDate, make, model, isFavorite, isDeleted, offset) { 
+  if (offset === 0) {
+    [fileList.value, totalCount.value, totalSize.value] = await getDbFiles(startDate, endDate, make, model, isFavorite, isDeleted, offset);
+  } else {
+    const newFiles = await getDbFiles(startDate, endDate, make, model, isFavorite, isDeleted, offset);
+    fileList.value.push(...newFiles);
+  }
+}
+
+async function updateContent() {
+  const newIndex = config.toolbarIndex;
+
+  if(newIndex === 0) {        // home
+    contentTitle.value = localeMsg.value.home;
+    await getFileList("", "", "", "", false, false, fileListOffset.value);
+  } 
+  else if(newIndex === 1) {   // favorite
+    if(config.favoriteFolderId === 0) { // 0: favorite files
+      contentTitle.value = localeMsg.value.favorite_files;
+      await getFileList("", "", "", "", true, false, fileListOffset.value);
+    } else {                // else: favorite folders
+      const album = await getAlbum(config.favoriteAlbumId);
+      if(album) {
+        contentTitle.value = album.name + getRelativePath(config.favoriteFolderPath, album.path);
+      };
+      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
+    }
+  }
+  else if(newIndex === 2) {   // album
+    const album = await getAlbum(config.albumId);
+    if(album) {
+      if(config.albumFolderPath === album.path) { // current folder is root
+        contentTitle.value = album.name;
+      } else {
+        contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
+      };
+      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
+    } 
+  }
+  else if(newIndex === 3) {   // calendar
+    if (config.calendarMonth === -1) {          // yearly
+      contentTitle.value = formatDate(config.calendarYear, 1, 1, localeMsg.value.year_format);
+    } else if (config.calendarDate === -1) {    // monthly
+      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.month_format);
+    } else {                                    // daily
+      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
+    }
+    const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
+    await getFileList(startDate, endDate, "", "", false, false, fileListOffset.value);
+  }
+  else if(newIndex === 4) {   // location
+    contentTitle.value = localeMsg.value.location;
+    fileList.value = [];
+  }
+  else if(newIndex === 5) {   // people
+    contentTitle.value = localeMsg.value.people;
+    fileList.value = [];
+  }
+  else if(newIndex === 6) {   // camera
+    if(config.cameraModel) {
+      contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
+    } else {
+      contentTitle.value = `${config.cameraMake}`;
+    }
+    await getFileList("", "", config.cameraMake, config.cameraModel, false, false, fileListOffset.value);
+  }
+
+  refreshFileList();
+}
 
 // click rename menu item
 const clickRenameFile = async (newName) => {
@@ -872,10 +844,10 @@ function getSelectOptions(options) {
 }
 
 // show/hide preview pane
-const showPreview = () => {
+const showPreview = (index) => {
   config.showPreview = !config.showPreview;
   if(config.showPreview) {
-    getImageSrc();
+    getImageSrc(index);
   } else {
     imageSrc.value = '';
   }

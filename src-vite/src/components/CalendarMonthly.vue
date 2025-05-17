@@ -3,22 +3,28 @@
   <div class="flex flex-col items-center">
 
     <!-- title -->
-    <span class="pt-2 pb-4 t-color-text-dark">
+    <div 
+      :class="[
+        'mt-2 px-2 border rounded-full t-color-bg-hover text-nowrap cursor-pointer',
+        isSelected(year, -1) ? 'border-sky-500' : 'border-transparent'
+      ]"
+      @click="clickDate(year, -1)"
+    >
       {{ yearTitle }}
-    </span>
+    </div>
 
     <!-- month list -->
-    <div class="pb-2 px-1 gap-4 grid grid-cols-4">
+    <div class="py-2 px-1 gap-4 grid grid-cols-4">
       <div v-for="m in 12" 
         :key="m" 
         class="px-2 flex items-center justify-center border rounded-full t-color-bg-hover text-nowrap cursor-pointer"
         :class="{
           'bg-sky-900': isThisMonth(year, m),
-          'border-sky-500': isSelectedMonth(year, m),
-          'border-transparent': !isSelectedMonth(year, m),
+          'border-sky-500': isSelected(year, m),
+          'border-transparent': !isSelected(year, m),
           't-color-text-dark': sumMonthCount(m) === 0
         }"
-        @click="clickMonth(year, m)" 
+        @click="clickDate(year, m)" 
       >
         {{ localeMsg.calendar_months[m - 1] }}
       </div>
@@ -27,7 +33,6 @@
   </div>
 
 </template>
-
 
 <script setup>
 
@@ -71,13 +76,13 @@ function isThisMonth(year, month) {
   return year === now.getFullYear() && (month - 1) === now.getMonth();
 }
 
-// Check if the month is selected
-const isSelectedMonth = (year, month) => config.calendarYear === year && config.calendarMonth === month;
+// Check if the year or month is selected
+const isSelected = (year, month) => config.calendarYear === year && config.calendarMonth === month;
 
-// click a month to select it
-const clickMonth = (year, month) => {
+// click a year or a month to select it
+const clickDate = (year, month) => {
   config.calendarYear = year;
-  config.calendarMonth = month;
+  config.calendarMonth = month; // -1 means selecting a year
   config.calendarDate = -1;   // -1 means selecting a month
 
   console.log('clickDate:', config.calendarYear, config.calendarMonth, config.calendarDate);
