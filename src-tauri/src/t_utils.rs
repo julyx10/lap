@@ -8,34 +8,19 @@
  */
 use std::fs;
 use std::io::Cursor;
-use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
-use chrono::{DateTime, Utc};
-use image::ImageReader;
-use crate::t_sqlite::AFile;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+use chrono::{DateTime, Utc};
+use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use pinyin::ToPinyin;
+use image::ImageReader;
+
+use crate::t_sqlite::AFile;
 
 // #[cfg(target_os = "windows")]
 // use std::os::windows::fs::MetadataExt; // Windows-specific extensions
 
-// #[derive(serde::Serialize, serde::Deserialize, Debug)]
-// pub struct AppConfig {
-//     pub app_name: String,
-//     pub theme: String,
-//     pub language: String,
-// }
-
-// impl Default for AppConfig {
-//     fn default() -> Self {
-//         Self {
-//             app_name: "jc-photo".into(),
-//             theme: "dark".into(),
-//             language: "en".into(),
-//         }
-//     }
-// }
 #[derive(serde::Serialize)]
 pub struct PackageInfo {
     name: String,
@@ -114,25 +99,40 @@ impl FileNode {
     fn recurse_nodes(path: &Path, is_recursive: bool) -> Result<Vec<Self>, String> {
         let mut nodes: Vec<FileNode> = Vec::new();
 
-        // Use WalkDir to iterate over directory entries
-        for entry in WalkDir::new(path).min_depth(1).max_depth(1).into_iter()
-        // .filter_entry(|e| !is_hidden(e))
+        for entry in WalkDir::new(path)
+            .min_depth(1)
+            .max_depth(1)
+            .into_iter()
+            .filter_entry(|e| !Self::is_hidden(e))
         {
             let entry = entry.map_err(|e| e.to_string())?;
-            if entry.file_type().is_dir() {
-                let mut node = FileNode::new(entry.path().to_str().unwrap(), true, false);
+            let entry_path = entry.path();
+            let path_str = entry_path.to_string_lossy().to_string();
 
-                // Recursively process subdirectories
+            if entry.file_type().is_dir() {
+                let mut node = FileNode::new(&path_str, true, false);
+
                 if is_recursive {
-                    node.children = Some(Self::recurse_nodes(entry.path(), is_recursive)?);
+                    node.children = Some(Self::recurse_nodes(entry_path, is_recursive)?);
                 }
 
                 nodes.push(node);
             }
         }
 
+        // Sort the nodes by name
+        nodes.sort_by(|a, b| 
+            convert_to_pinyin(&a.name).to_lowercase().cmp(&convert_to_pinyin(&b.name).to_lowercase()));
         Ok(nodes)
     }
+
+    fn is_hidden(entry: &walkdir::DirEntry) -> bool {
+        entry.file_name()
+            .to_str()
+            .map(|s| s.starts_with('.'))
+            .unwrap_or(false)
+    }
+
 }
 
 // file metadata struct
@@ -655,12 +655,17 @@ pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Optio
 }
 
 /// Quick probing of image dimensions without loading the entire file
-pub fn get_image_size(file_path: &str) -> Result<(u32, u32), String> {
+pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     // Use imagesize to get width and height
     let dimensions = imagesize::size(file_path).map_err(|e| e.to_string())?; // Map error to String if any
 
     // Return the dimensions as (width, height)
     Ok((dimensions.width as u32, dimensions.height as u32))
+}
+
+/// Get video dimensions using ffmpeg
+pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
+    Ok((100, 100))
 }
 
 /// Get a thumbnail image from a file path

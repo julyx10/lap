@@ -453,7 +453,12 @@ impl AFile {
     /// create a new file struct
     fn new(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
-        let (width, height) = t_utils::get_image_size(file_path)?;
+        let (width, height) = 
+            match file_type {
+                1 => t_utils::get_image_dimensions(file_path)?,   // image
+                2 => t_utils::get_video_dimensions(file_path)?,   // video
+                _ => (0, 0),
+            };
 
         // open the file
         let file =

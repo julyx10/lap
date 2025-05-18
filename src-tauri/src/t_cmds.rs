@@ -373,30 +373,7 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
         .map_err(|e| format!("Error while setting file favorite: {}", e))
 }
 
-// calendar
-
-/// get files by date
-// #[tauri::command]
-// pub fn get_files_by_date(date: &str) -> Result<Vec<AFile>, String> {
-//     AFile::get_files_by_date(date)
-//         .map_err(|e| format!("Error while getting files by date: {}", e))
-// }
-
-/// get files by date range, date format: yyyy-mm-dd
-// #[tauri::command]
-// pub fn get_files_by_date_range(start_date: &str, end_date: &str) -> Result<Vec<AFile>, String> {
-//     AFile::get_files_by_date_range(start_date, end_date)
-//         .map_err(|e| format!("Error while getting files by date range: {}", e))
-// }
-
 // camera
-
-/// get files from db by camera make and model
-// #[tauri::command]
-// pub fn get_camera_files(make: &str, model: &str) -> Result<Vec<AFile>, String> {
-//     AFile::get_files_by_camera(make, model)
-//         .map_err(|e| format!("Error while getting camera files: {}", e))
-// }
 
 /// get a file's camera make and model info
 #[tauri::command]

@@ -129,8 +129,6 @@ export async function fetchFolder(path, isRecursive) {
         const child = folder.children[i];
         child.is_favorite = await getFolderFavorite(child.path);
       }
-      // sort subfolders by name in locale order
-      folder.children.sort((a, b) => localeComp(config.language, a.name, b.name));
       console.log('fetchFolder:', folder);
       return folder;
     };
