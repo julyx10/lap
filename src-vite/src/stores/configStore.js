@@ -75,7 +75,7 @@ export const useConfigStore = defineStore('configStore', {
     thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
     thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
     thumbnailLabelPrimaryOption: 1,   // Name
-    thumbnailLabelSecondaryOption: 2, // Resolution
+    thumbnailLabelSecondaryOption: 2, // Dimension
 
     // settings - image viewer
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out

@@ -6,7 +6,7 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-use std::fs;
+use std::{fs, path};
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::path::{Path, PathBuf};
@@ -15,6 +15,7 @@ use chrono::{DateTime, Utc};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use pinyin::ToPinyin;
 use image::ImageReader;
+use ffmpeg_next as ffmpeg;
 
 use crate::t_sqlite::AFile;
 
@@ -665,7 +666,30 @@ pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
 
 /// Get video dimensions using ffmpeg
 pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
-    Ok((100, 100))
+    // Initialize ffmpeg (should only be called once in your app)
+    ffmpeg::init().map_err(|e| format!("ffmpeg init error: {:?}", e))?;
+
+    // Open the input context (the media file)
+    let ictx = ffmpeg::format::input(&file_path)
+        .map_err(|e| format!("Failed to open file: {:?}", e))?;
+
+    // Find the best video stream
+    let input = ictx
+        .streams()
+        .best(ffmpeg::media::Type::Video)
+        .ok_or("No video stream found")?;
+
+    // Get stream parameters
+    let params = input.parameters();
+
+    // Get decoder for video
+    let decoder = ffmpeg::codec::context::Context::from_parameters(params)
+        .map_err(|e| format!("Failed to get decoder context: {:?}", e))?;
+
+    let decoder = decoder.decoder().video()
+        .map_err(|e| format!("Failed to get video decoder: {:?}", e))?;
+
+    Ok((decoder.width(), decoder.height()))
 }
 
 /// Get a thumbnail image from a file path

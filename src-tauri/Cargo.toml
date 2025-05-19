@@ -35,9 +35,10 @@ tokio = { version = "1.44.1", features = ["full"] }
 opener = "0.7.2"
 arboard = "3.5.0"
 pinyin = "0.10.0"
+ffmpeg-next = "7.1.0"
+file-format = "0.27.0"
 # opencv = "0.93.3"
 # id3 = "1.14.0"
-
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]

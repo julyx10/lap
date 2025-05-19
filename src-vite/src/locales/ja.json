@@ -87,7 +87,7 @@
   
   "file_list_select_mode": "選択",
   "file_list_select_count": "{count} 選択",
-  "file_list_sort_type_options": ["名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
+  "file_list_sort_type_options": ["名前", "サイズ", "寸法", "作成日", "変更日", "撮影日"],
   "file_list_sort_order_options": ["昇順", "降順"],
   "file_list_file_type_options": ["すべて", "画像", "動画"],
 
@@ -129,12 +129,12 @@
   "favorite_folders_empty": "お気に入りのフォルダは見つかりません",
   "favorite_folders_summary": "{count} お気に入りのフォルダ",
 
-  "file_info_columns": ["サムネイル", "名前", "解像度", "作成日", "変更日", "カメラ", "サイズ"],
+  "file_info_columns": ["サムネイル", "名前", "寸法", "作成日", "変更日", "カメラ", "サイズ"],
   "file_info_title": "プロパティ",
   "file_info_album_name": "アルバム",
   "file_info_name": "名前",
   "file_info_path": "パス",
-  "file_info_resolution": "解像度",
+  "file_info_dimension": "寸法",
   "file_info_size": "サイズ",
   "file_info_created": "作成日",
   "file_info_modified": "変更日",
@@ -209,7 +209,7 @@
   "settings_thumbnail_scaling_options": ["画像全体に合わせる", "切り取って", "伸ばして"],
   "settings_thumbnail_label_primary": "主要ラベルを表示",
   "settings_thumbnail_label_secondary": "サブラベルを表示",
-  "settings_thumbnail_label_options": ["空", "名前", "サイズ", "解像度", "作成日", "変更日", "撮影日"],
+  "settings_thumbnail_label_options": ["空", "名前", "サイズ", "寸法", "作成日", "変更日", "撮影日"],
 
   "settings_image_viewer": "画像ビューア",
   "settings_image_viewer_mouse_wheel": "マウスホイール",

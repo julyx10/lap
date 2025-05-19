@@ -387,7 +387,7 @@ const getThumbnailText = (file, option) => {
       return shortenFilename(file.name);
     case 2:   // size
       return formatFileSize(file.size);
-    case 3:   // resolution
+    case 3:   // dimension
       return `${file.width}x${file.height}`;
     case 4:   // created time
       return formatTimestamp(file.created_at, localeMsg.value.date_time_format);

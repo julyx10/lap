@@ -33,7 +33,7 @@
             </td> -->
           </tr>
           <tr>
-            <td>{{ $t('file_info_resolution') }}</td>
+            <td>{{ $t('file_info_dimension') }}</td>
             <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
           </tr>
           <tr>

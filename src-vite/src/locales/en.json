@@ -87,7 +87,7 @@
   
   "file_list_select_mode": "Select",
   "file_list_select_count": "{count} selected",
-  "file_list_sort_type_options": ["Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
+  "file_list_sort_type_options": ["Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"],
   "file_list_sort_order_options": ["Ascending", "Descending"],
   "file_list_file_type_options": ["All", "Images", "Videos"],
 
@@ -129,12 +129,12 @@
   "favorite_folders_empty": "No favorite folders found",
   "favorite_folders_summary": "{count} favorite folders",
 
-  "file_info_columns": ["Thumbnail", "Name", "Resolution", "Created Time", "Modified Time", "Camera", "Size"],
+  "file_info_columns": ["Thumbnail", "Name", "Dimension", "Created Time", "Modified Time", "Camera", "Size"],
   "file_info_title": "Properties",
   "file_info_album_name": "Album",
   "file_info_name": "Name",
   "file_info_path": "Path",
-  "file_info_resolution": "Resolution",
+  "file_info_dimension": "Dimension",
   "file_info_size": "Size",
   "file_info_created": "Created",
   "file_info_modified": "Modified",
@@ -209,7 +209,7 @@
   "settings_thumbnail_scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
   "settings_thumbnail_label_primary": "Show primary label",
   "settings_thumbnail_label_secondary": "Show secondary label",
-  "settings_thumbnail_label_options": ["Empty", "Name", "Size", "Resolution", "Created Time", "Modified Time", "Taken Time"],
+  "settings_thumbnail_label_options": ["Empty", "Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"],
 
   "settings_image_viewer": "Image Viewer",
   "settings_image_viewer_mouse_wheel": "Mouse wheel",

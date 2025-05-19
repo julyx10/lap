@@ -87,7 +87,7 @@
   
   "file_list_select_mode": "选择",
   "file_list_select_count": "已选择 {count}",
-  "file_list_sort_type_options": ["名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
+  "file_list_sort_type_options": ["名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"],
   "file_list_sort_order_options": ["升序", "降序"],
   "file_list_file_type_options": ["全部", "图片", "视频"],
 
@@ -129,12 +129,12 @@
   "favorite_folders_empty": "未找到收藏的文件夹",
   "favorite_folders_summary": "{count} 个收藏的文件夹",
 
-  "file_info_columns": ["缩略图", "名称", "分辨率", "创建时间", "修改时间", "照相机", "大小"],
+  "file_info_columns": ["缩略图", "名称", "尺寸", "创建时间", "修改时间", "照相机", "大小"],
   "file_info_title": "属性",
   "file_info_album_name": "相册",
   "file_info_name": "名称",
   "file_info_path": "路径",
-  "file_info_resolution": "分辨率",
+  "file_info_dimension": "尺寸",
   "file_info_size": "大小",
   "file_info_created": "创建时间",
   "file_info_modified": "修改时间",
@@ -209,7 +209,7 @@
   "settings_thumbnail_scaling_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
   "settings_thumbnail_label_primary": "显示主标签",
   "settings_thumbnail_label_secondary": "显示次标签",
-  "settings_thumbnail_label_options": ["空", "名称", "大小", "分辨率", "创建时间", "修改时间", "拍摄时间"],
+  "settings_thumbnail_label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"],
 
   "settings_image_viewer": "图片查看器",
   "settings_image_viewer_mouse_wheel": "鼠标滚轮",

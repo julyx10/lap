@@ -939,7 +939,7 @@ impl AFile {
         match sort_type {
             0 => query.push_str(" ORDER BY a.name_pinyin"),
             1 => query.push_str(" ORDER BY a.size"),
-            2 => query.push_str(" ORDER BY a.width, a.height"),     // resolution
+            2 => query.push_str(" ORDER BY a.width, a.height"),     // dimension
             3 => query.push_str(" ORDER BY a.created_at"),
             4 => query.push_str(" ORDER BY a.modified_at"),
             5 => query.push_str(" ORDER BY a.taken_date"),

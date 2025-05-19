@@ -1,0 +1,5 @@
+# .cargo/config.toml
+[env]
+FFMPEG_INCLUDE_DIR = { value = "ffmpeg/ffmpeg_build/include", relative = true }
+FFMPEG_LIBS_DIR =    { value = "ffmpeg/ffmpeg_build/lib", relative = true }
+FFMPEG_LINK_TYPE =   "static"
