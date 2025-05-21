@@ -29,6 +29,21 @@
         <!-- General tab -->
         <section v-if="config.settingsTabIndex === 0">
 
+          <!-- Appearance -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="mouse-wheel">{{ $t('settings_general_appearance') }}</label>
+            <select id="mouse-wheel" v-model="config.appearance" class="t-select">
+              <option 
+                v-for="(item, index) in appearanceOptions" 
+                :key="index" 
+                :value="item.value" 
+                class="t-option"
+              >
+                {{ item.label }}
+              </option>
+            </select>
+          </div>
+
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
             <label for="language-select">{{ $t('settings_general_select_language') }}</label>
@@ -59,12 +74,6 @@
           <div class="flex items-center justify-between mb-4">
             <label for="show-status-bar" >{{ $t('settings_general_show_status_bar') }}</label>
             <Switch v-model="config.showStatusBar" />
-          </div>
-
-          <!-- Dark Mode -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="dark-mode" >{{ $t('settings_general_dark_mode') }}</label>
-            <Switch v-model="config.darkMode" />
           </div>
 
           <!-- Debug Mode -->
@@ -259,6 +268,14 @@ const languages = [
   { label: '中文',    value: 'zh' },
 ];
 
+const appearanceOptions = computed(() => {
+  const options = localeMsg.value.settings_general_appearance_options;
+  return [
+    { label: options[0], value: 0 },    // light
+    { label: options[1], value: 1 },   // dark
+  ];
+});
+
 // Define the wheel options using computed to react to language changes
 const wheelOptions = computed(() => {
   const options = localeMsg.value.settings_image_viewer_mouse_wheel_options; // returns an array
@@ -318,6 +335,9 @@ watch(() => config.settingsTabIndex, (newValue) => {
 }, { immediate: true });
 
 // general settings
+watch(() => config.appearance, (newValue) => {
+  emit('settings-appearance-changed', newValue);
+});
 watch(() => config.language, (newValue) => {
   locale.value = newValue;
   emit('settings-language-changed', newValue);
@@ -330,9 +350,6 @@ watch(() => config.showSubFolder, (newValue) => {
 });
 watch(() => config.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
-});
-watch(() => config.darkMode, (newValue) => {
-  emit('settings-darkMode-changed', newValue);
 });
 watch(() => config.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);

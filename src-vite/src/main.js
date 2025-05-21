@@ -50,6 +50,9 @@ app.mount('#app')
 console.log('App mounted', app)
 
 // Listen for events
+listen('settings-appearance-changed', (event) => {
+  config.setAppearance(event.payload)
+})
 listen('settings-language-changed', (event) => {
   config.setLanguage(event.payload)
 })
@@ -61,9 +64,6 @@ listen('settings-showSubFolder-changed', (event) => {
 })
 listen('settings-showStatusBar-changed', (event) => {
   config.setShowStatusBar(event.payload)
-})
-listen('settings-darkMode-changed', (event) => {
-  config.setDarkMode(event.payload)
 })
 listen('settings-debugMode-changed', (event) => {
   config.setDebugMode(event.payload)

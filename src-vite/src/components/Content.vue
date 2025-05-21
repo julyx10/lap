@@ -55,7 +55,7 @@
             't-icon-size shrink-0',
             config.showPreview ? 't-icon-focus t-icon-focus-hover': 't-icon-hover'
           ]" 
-          @click="showPreview(selectedItemIndex)"
+          @click="config.showPreview = !config.showPreview"
         />
       </div>
     </div>
@@ -570,6 +570,16 @@ watch(
   }
 );
 
+// watch for show preview on/off
+watch(() => config.showPreview, (newValue) => {
+  if(newValue) {
+    getImageSrc(selectedItemIndex.value);
+  } else {
+    imageSrc.value = '';
+  }
+  gridViewRef.value.scrollToItem(selectedItemIndex.value); 
+});
+
 async function getFileList(startDate, endDate, make, model, isFavorite, isDeleted, offset) { 
   if (offset === 0) {
     [fileList.value, totalCount.value, totalSize.value] = await getDbFiles(startDate, endDate, make, model, isFavorite, isDeleted, offset);
@@ -843,16 +853,6 @@ function getSelectOptions(options) {
   return result;
 }
 
-// show/hide preview pane
-const showPreview = (index) => {
-  config.showPreview = !config.showPreview;
-  if(config.showPreview) {
-    getImageSrc(index);
-  } else {
-    imageSrc.value = '';
-  }
-}
-
 // get selected image source
 const getImageSrc = async (index) => {
   if(index < 0 || index >= fileList.value.length) {
@@ -912,7 +912,8 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
   thumbCount.value = 0;
 
   const getThumbForFile = async (file) => {
-    const thumb = await getFileThumb(file.id, file.file_path, file.e_orientation || 0, config.thumbnailImageSize);
+    console.log('getFileListThumb:', file);
+    const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize);
     if(thumb) {
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
       thumbCount.value++;

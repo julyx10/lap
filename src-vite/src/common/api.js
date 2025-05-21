@@ -414,9 +414,9 @@ export async function editFileComment(fileId, comment) {
 }
 
 // get file thumb
-export async function getFileThumb(fileId, filePath, orientation, thumbnailSize) {
+export async function getFileThumb(fileId, filePath, fileType, orientation, thumbnailSize) {
   try {
-    const result = await invoke('get_file_thumb', { fileId, filePath, orientation, thumbnailSize });
+    const result = await invoke('get_file_thumb', { fileId, filePath, fileType, orientation, thumbnailSize });
     if(result) {
       return result;
     };

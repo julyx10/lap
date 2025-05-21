@@ -978,14 +978,19 @@ impl AThumb {
     pub fn new(
         file_id: i64,
         file_path: &str,
+        file_type: i64,
         orientation: i32,
         thumbnail_size: u32,
     ) -> Result<Option<Self>, String> {
         Ok(Some(Self {
             id: None,
             file_id,
-            // thumb_data: t_opencv::get_thumbnail(file_path, orientation, thumbnail_size)?,
-            thumb_data: t_utils::get_thumbnail(file_path, orientation, thumbnail_size)?,
+            thumb_data: 
+                match file_type {
+                    1 => t_utils::get_image_thumbnail(file_path, orientation, thumbnail_size)?,
+                    2 => t_utils::get_video_thumbnail(file_path, thumbnail_size)?,
+                    _ => None,
+                },
             thumb_data_base64: None,
         }))
     }
@@ -1031,6 +1036,7 @@ impl AThumb {
     pub fn add_to_db(
         file_id: i64,
         file_path: &str,
+        file_type: i64,
         orientation: i32,
         thumbnail_size: u32,
     ) -> Result<Option<Self>, String> {
@@ -1041,7 +1047,7 @@ impl AThumb {
         }
 
         // Insert the new thumbnail into the database
-        let new_thumbnail = Self::new(file_id, file_path, orientation, thumbnail_size);
+        let new_thumbnail = Self::new(file_id, file_path, file_type, orientation, thumbnail_size);
         if let Ok(Some(athumb)) = new_thumbnail {
             athumb.insert()?;
             return Ok(Self::fetch(file_id)?);

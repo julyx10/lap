@@ -62,11 +62,11 @@ export const useConfigStore = defineStore('configStore', {
     settingsTabIndex: 0,        // settings tab index
 
     // settings - general
+    appearance: 1,              // 0: light; 1: dark
     language: 'en',             // default language
     showButtonText: false,      // show button text
     showSubFolder: true,        // show sub folders
     showStatusBar: true,        // show status bar
-    darkMode: true,             // light or dark theme
     debugMode: false,           // debug mode
     fileListPageSize: 200,      // number of file list per page
 
@@ -84,6 +84,9 @@ export const useConfigStore = defineStore('configStore', {
 
   actions: {
     // general settings
+    setAppearance(appearance) {
+      this.appearance = appearance;
+    },
     setLanguage(language) {
       this.language = language;
     },
@@ -95,9 +98,6 @@ export const useConfigStore = defineStore('configStore', {
     },
     setShowStatusBar(showStatusBar) {
       this.showStatusBar = showStatusBar;
-    },
-    setDarkMode(darkMode) {
-      this.darkMode = darkMode;
     },
     setDebugMode(debugMode) {
       this.debugMode = debugMode;

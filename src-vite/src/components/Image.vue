@@ -431,7 +431,7 @@ function clampPosition() {
   } else {
     position.value[activeImage.value].y = (containerSize.value.height - imageSize.value[activeImage.value].height) / 2;
   }
-  // triggerRef(position);
+  triggerRef(position);
 };
 
 // Expose methods

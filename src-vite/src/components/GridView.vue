@@ -88,10 +88,9 @@
 
 </template>
 
-
 <script setup lang="ts">
 
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, shortenFilename, formatFileSize, formatTimestamp } from '@/common/utils';
@@ -412,10 +411,12 @@ function handleScroll() {
 
 // make the selected item always visible in a scrollable container
 function scrollToItem(index) {
-  const item = document.getElementById(`item-${index}`);
-  if (item) {
-    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+  nextTick(() => {
+    const item = document.getElementById(`item-${index}`);
+    if (item) {
+      item.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+    }
+  });
 };
 
 // function to get the number of columns in the grid

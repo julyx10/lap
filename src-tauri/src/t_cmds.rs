@@ -302,8 +302,14 @@ pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
 
 /// get a file's thumb image
 #[tauri::command]
-pub async fn get_file_thumb(file_id: i64, file_path: &str, orientation: i32, thumbnail_size: u32) -> Result<Option<AThumb>, String> {
-    AThumb::add_to_db(file_id, file_path, orientation, thumbnail_size)
+pub async fn get_file_thumb(
+    file_id: i64, 
+    file_path: &str, 
+    file_type: i64, 
+    orientation: i32, 
+    thumbnail_size: u32
+) -> Result<Option<AThumb>, String> {
+    AThumb::add_to_db(file_id, file_path, file_type, orientation, thumbnail_size)
         .map_err(|e| format!("Error while adding thumbnail to DB: {}", e))
 }
 

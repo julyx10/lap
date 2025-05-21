@@ -196,11 +196,12 @@
   "image_view_toolbar_pin": ["Pin", "Unpin"],
 
   "settings_general": "General",
+  "settings_general_appearance": "Appearance",
+  "settings_general_appearance_options": ["Light", "Dark"],
   "settings_general_select_language": "Select language",
   "settings_general_show_button_text": "Show button text",
   "settings_general_show_sub_folder": "Show sub-folders in albums",
   "settings_general_show_status_bar": "Show status bar",
-  "settings_general_dark_mode": "Dark mode",
   "settings_general_debug_mode": "Debug mode",
 
   "settings_thumbnail": "Thumbnail",

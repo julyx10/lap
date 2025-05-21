@@ -196,11 +196,12 @@
   "image_view_toolbar_pin": ["ピン留め", "ピン留め解除"],
 
   "settings_general": "一般",
+  "settings_general_appearance": "外観",
+  "settings_general_appearance_options": ["ライト", "ダーク"],
   "settings_general_select_language": "言語を選択",
   "settings_general_show_button_text": "ボタンテキストを表示",
   "settings_general_show_sub_folder": "アルバム内のサブフォルダを表示",
   "settings_general_show_status_bar": "ステータスバーを表示",
-  "settings_general_dark_mode": "ダークモード",
   "settings_general_debug_mode": "デバッグモード",
 
   "settings_thumbnail": "サムネイル",

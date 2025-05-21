@@ -6,7 +6,7 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-use std::{fs, path};
+use std::fs;
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::path::{Path, PathBuf};
@@ -14,7 +14,7 @@ use std::process::Command;
 use chrono::{DateTime, Utc};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use pinyin::ToPinyin;
-use image::ImageReader;
+use image::{ImageFormat, ImageReader, DynamicImage, RgbImage};
 use ffmpeg_next as ffmpeg;
 
 use crate::t_sqlite::AFile;
@@ -692,8 +692,8 @@ pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     Ok((decoder.width(), decoder.height()))
 }
 
-/// Get a thumbnail image from a file path
-pub fn get_thumbnail(
+/// Get a thumbnail from an image file path
+pub fn get_image_thumbnail(
     file_path: &str,
     orientation: i32,
     thumbnail_size: u32,
@@ -701,7 +701,7 @@ pub fn get_thumbnail(
     // Open and decode the image
     let img_reader =
         ImageReader::open(file_path).map_err(|e| format!("Failed to open image: {}", e))?;
-    let img_format = img_reader.format().ok_or("Could not detect image format")?;
+    // let img_format = img_reader.format().ok_or("Could not detect image format")?;
     let img = img_reader
         .decode()
         .map_err(|e| format!("Failed to decode image: {}", e))?;
@@ -717,11 +717,90 @@ pub fn get_thumbnail(
 
     // Save the thumbnail to an in-memory buffer as a JPEG
     let mut buf = Vec::new();
-    match adjusted_thumbnail.write_to(&mut Cursor::new(&mut buf), img_format) {
+    match adjusted_thumbnail.write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg) {
         Ok(()) => Ok(Some(buf)),
         Err(_) => Ok(None),
     }
 }
+
+/// Get a thumbnail from a video file path
+pub fn get_video_thumbnail(
+    file_path: &str,
+    thumbnail_size: u32,
+) -> Result<Option<Vec<u8>>, String> {
+    ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
+
+    let mut ictx = ffmpeg::format::input(file_path)
+        .map_err(|e| format!("Failed to open video file: {e}"))?;
+
+    let input_stream = ictx
+        .streams()
+        .best(ffmpeg::media::Type::Video)
+        .ok_or("No video stream found")?;
+
+    let stream_index = input_stream.index();
+    let params = input_stream.parameters();
+    let mut decoder = ffmpeg::codec::context::Context::from_parameters(params)
+        .map_err(|e| format!("Failed to get decoder context: {e}"))?
+        .decoder()
+        .video()
+        .map_err(|e| format!("Decoder error: {e}"))?;
+
+    // Seek to 50% of the video duration
+    ictx.seek(ictx.duration() / 2, ..)
+        .map_err(|e| format!("Seek error: {e}"))?;
+
+    for (stream, packet) in ictx.packets() {
+        if stream.index() == stream_index {
+            decoder
+                .send_packet(&packet)
+                .map_err(|e| format!("Send packet error: {e}"))?;
+
+            let mut frame = ffmpeg::util::frame::Video::empty();
+            if decoder.receive_frame(&mut frame).is_ok() {
+                let width = frame.width();
+                let height = frame.height();
+
+                // Convert to RGB
+                let mut rgb_frame = ffmpeg::util::frame::Video::empty();
+                let mut scaler = ffmpeg::software::scaling::context::Context::get(
+                    decoder.format(),
+                    width,
+                    height,
+                    ffmpeg::format::Pixel::RGB24,
+                    width,
+                    height,
+                    ffmpeg::software::scaling::flag::Flags::BILINEAR,
+                )
+                .map_err(|e| format!("Scaler creation error: {e}"))?;
+
+                scaler
+                    .run(&frame, &mut rgb_frame)
+                    .map_err(|e| format!("Scaling error: {e}"))?;
+
+                // Create DynamicImage
+                let data = rgb_frame.data(0);
+                let rgb_image = RgbImage::from_raw(width, height, data.to_vec())
+                    .ok_or("Failed to create image buffer")?;
+                let dyn_image = DynamicImage::ImageRgb8(rgb_image);
+
+                // Resize while keeping aspect ratio
+                let thumb = dyn_image.thumbnail(thumbnail_size, thumbnail_size);
+
+                // Encode JPEG to memory
+                let mut buffer = Cursor::new(Vec::new());
+                thumb
+                    .write_to(&mut buffer, ImageFormat::Jpeg)
+                    .map_err(|e| format!("Image encode error: {e}"))?;
+
+                return Ok(Some(buffer.into_inner()));
+            }
+        }
+    }
+
+    Ok(None)
+}
+
 
 /// Print an image using the default system printer
 /// This function is platform-specific and may need to be adjusted for different operating systems
