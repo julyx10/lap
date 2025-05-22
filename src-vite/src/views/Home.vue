@@ -59,12 +59,13 @@
           class="w-96 min-w-32 py-1 flex" 
           :style="{ width: config.leftPaneWidth + 'px' }"
         >
-          <Favorite v-show="config.toolbarIndex === 1" :titlebar="$t('favorite')"/>
-          <Album    v-show="config.toolbarIndex === 2" :titlebar="$t('album')"/>
-          <Calendar v-show="config.toolbarIndex === 3" :titlebar="$t('calendar')"/>
-          <Location v-show="config.toolbarIndex === 4" :titlebar="$t('location')"/>
-          <People   v-show="config.toolbarIndex === 5" :titlebar="$t('people')"/>
-          <Camera   v-show="config.toolbarIndex === 6" :titlebar="$t('camera')"/>
+          <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
+          <Favorite v-show="config.toolbarIndex === 2" :titlebar="$t('favorite')"/>
+          <Tag      v-show="config.toolbarIndex === 3" :titlebar="$t('tag')"/>
+          <Calendar v-show="config.toolbarIndex === 4" :titlebar="$t('calendar')"/>
+          <Location v-show="config.toolbarIndex === 5" :titlebar="$t('location')"/>
+          <People   v-show="config.toolbarIndex === 6" :titlebar="$t('people')"/>
+          <Camera   v-show="config.toolbarIndex === 7" :titlebar="$t('camera')"/>
         </div>
       </transition>
       
@@ -100,6 +101,7 @@ import { config, isWin, isMac } from '@/common/utils';
 import TitleBar from '@/components/TitleBar.vue';
 import Album from '@/components/Album.vue';
 import Favorite from '@/components/Favorite.vue';
+import Tag from '@/components/Tag.vue';
 import Calendar from '@/components/Calendar.vue';
 import Camera from '@/components/Camera.vue';
 import Location from '@/components/Location.vue';
@@ -108,8 +110,9 @@ import Content from '@/components/Content.vue';
 
 import {
   IconHome,
-  IconFavorite,
   IconFolder,
+  IconFavorite,
+  IconTag,
   IconCalendar,
   IconLocation,
   IconPeople,
@@ -124,8 +127,9 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // toolbar 
 const toolbars = computed(() =>  [
   { icon: IconHome,     text: localeMsg.value.home },
+  { icon: IconFolder,   text: localeMsg.value.album },
   { icon: IconFavorite, text: localeMsg.value.favorite },
-  { icon: IconFolder,    text: localeMsg.value.album },
+  { icon: IconTag,      text: localeMsg.value.tag },
   { icon: IconCalendar, text: localeMsg.value.calendar },
   { icon: IconLocation, text: localeMsg.value.location },
   { icon: IconPeople,   text: localeMsg.value.people }, 

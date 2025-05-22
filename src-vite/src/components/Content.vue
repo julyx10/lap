@@ -84,11 +84,6 @@
             {{ $t('files_summary', { count: totalCount.toLocaleString(), size: formatFileSize(totalSize) }) }} 
           </div>
 
-          <!-- <IconSearch v-if="config.searchText.length > 0" class="t-icon-size-xs shrink-0" />
-          <div v-if="config.searchText.length > 0" class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('files_summary', { count: searchedFileList.length.toLocaleString() }) + ' (' + formatFileSize(searchedFileSize) + ')' }} 
-          </div> -->
-
           <component v-if="selectedItemIndex >= 0"
             :is="selectMode ? IconCheckAll : IconChecked" 
             class="t-icon-size-xs shrink-0" 
@@ -130,11 +125,15 @@
             :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
-            <Image ref="imageRef" 
+            <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
+              ref="imageRef" 
               :src="imageSrc" 
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
               :isZoomFit="true"
             />
+            <Video v-else-if="fileList[selectedItemIndex]?.file_type === 2"
+              :src="fileList[selectedItemIndex]?.file_path"
+            ></Video>
 
             <!-- comments -->
             <div v-if="fileList[selectedItemIndex]?.comments?.length > 0" 
@@ -242,6 +241,7 @@ import DropDownMenu from '@/components/DropDownMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
+import Video from '@/components/Video.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
@@ -596,7 +596,18 @@ async function updateContent() {
     contentTitle.value = localeMsg.value.home;
     await getFileList("", "", "", "", false, false, fileListOffset.value);
   } 
-  else if(newIndex === 1) {   // favorite
+  else if(newIndex === 1) {   // album
+    const album = await getAlbum(config.albumId);
+    if(album) {
+      if(config.albumFolderPath === album.path) { // current folder is root
+        contentTitle.value = album.name;
+      } else {
+        contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
+      };
+      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
+    } 
+  }
+  else if(newIndex === 2) {   // favorite
     if(config.favoriteFolderId === 0) { // 0: favorite files
       contentTitle.value = localeMsg.value.favorite_files;
       await getFileList("", "", "", "", true, false, fileListOffset.value);
@@ -608,18 +619,11 @@ async function updateContent() {
       [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
     }
   }
-  else if(newIndex === 2) {   // album
-    const album = await getAlbum(config.albumId);
-    if(album) {
-      if(config.albumFolderPath === album.path) { // current folder is root
-        contentTitle.value = album.name;
-      } else {
-        contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
-      };
-      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
-    } 
+  else if(newIndex === 3) {   // tag
+    contentTitle.value = localeMsg.value.trash;
+    // await getFileList("", "", "", "", false, true, fileListOffset.value);
   }
-  else if(newIndex === 3) {   // calendar
+  else if(newIndex === 4) {   // calendar
     if (config.calendarMonth === -1) {          // yearly
       contentTitle.value = formatDate(config.calendarYear, 1, 1, localeMsg.value.year_format);
     } else if (config.calendarDate === -1) {    // monthly
@@ -630,15 +634,15 @@ async function updateContent() {
     const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
     await getFileList(startDate, endDate, "", "", false, false, fileListOffset.value);
   }
-  else if(newIndex === 4) {   // location
+  else if(newIndex === 5) {   // location
     contentTitle.value = localeMsg.value.location;
     fileList.value = [];
   }
-  else if(newIndex === 5) {   // people
+  else if(newIndex === 6) {   // people
     contentTitle.value = localeMsg.value.people;
     fileList.value = [];
   }
-  else if(newIndex === 6) {   // camera
+  else if(newIndex === 7) {   // camera
     if(config.cameraModel) {
       contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
     } else {

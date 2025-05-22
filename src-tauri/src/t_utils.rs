@@ -14,9 +14,8 @@ use std::process::Command;
 use chrono::{DateTime, Utc};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use pinyin::ToPinyin;
-use image::{ImageFormat, ImageReader, DynamicImage, RgbImage};
+use image::{DynamicImage, ImageFormat, ImageReader, RgbImage};
 use ffmpeg_next as ffmpeg;
-
 use crate::t_sqlite::AFile;
 
 // #[cfg(target_os = "windows")]
@@ -491,13 +490,12 @@ pub fn get_folder_files(
 
             let file_path = path.to_str()?;
             let file_name = path.file_name()?.to_str()?;
-            let file_ext = path.extension()?.to_str()?;
 
             if !search_text.is_empty() && !file_name.contains(search_text) {
                 return None;
             }
 
-            if let Some(file_type) = get_file_type(file_ext) {
+            if let Some(file_type) = get_file_type(file_path) {
                 if search_file_type == 0 || search_file_type == file_type {
                     match AFile::add_to_db(folder_id, file_path, file_type) {
                         Ok(file) => Some(file),
@@ -547,25 +545,22 @@ pub fn count_folder_files(path: &str) -> (u64, u64, u64, u64, u64) {
     // Use WalkDir to iterate over directory entries
     for entry in WalkDir::new(path).into_iter().filter_map(Result::ok) {
         let entry_type = entry.file_type();
-        let entry_path = entry.path();
     
         if entry_type.is_dir() {
             folder_count += 1;
         } else if entry_type.is_file() {
-            if let Some(extension) = entry_path.extension().and_then(|ext| ext.to_str()) {
-                if let Some(file_ext_type) = get_file_type(extension) {
-                    let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-                    match file_ext_type {
-                        1 => {
-                            image_file_count += 1;
-                            total_image_size += size;
-                        }
-                        2 => {
-                            video_file_count += 1;
-                            total_video_size += size;
-                        }
-                        _ => {}
+            if let Some(file_ext_type) = get_file_type(entry.path().to_str().unwrap_or("")) {
+                let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
+                match file_ext_type {
+                    1 => {
+                        image_file_count += 1;
+                        total_image_size += size;
                     }
+                    2 => {
+                        video_file_count += 1;
+                        total_video_size += size;
+                    }
+                    _ => {}
                 }
             }
         }
@@ -574,14 +569,27 @@ pub fn count_folder_files(path: &str) -> (u64, u64, u64, u64, u64) {
     (folder_count, image_file_count, total_image_size, video_file_count, total_video_size)
 }
 
+/// Get the file extension from a file path
+pub fn get_file_extension(file_path: &str) -> Option<String> {
+    let path = Path::new(file_path);
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(|s| s.to_string())
+}
+
 /// get file type by extension (1: image, 2: video, 3: music)
-pub fn get_file_type(extension: &str) -> Option<i64> {
-    match extension.to_lowercase().as_str() {
-        "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" | "heif" => Some(1),   // image
-        "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => Some(2), // video
-        "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3), // music
-        _ => None,
+pub fn get_file_type(file_path: &str) -> Option<i64> {
+    if let Some(extension) = get_file_extension(file_path){
+        match extension.to_lowercase().as_str() {
+            "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" | "heif" => Some(1),   // image
+            "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => Some(2), // video
+            "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3), // music
+            _ => None,
+        }
+    } else {
+        return None; // Return None if the file extension is not found}
     }
+
 }
 
 /// Get the name from a folder or file path
@@ -723,15 +731,115 @@ pub fn get_image_thumbnail(
     }
 }
 
-/// Get a thumbnail from a video file path
+// Get a thumbnail from a HEIC file path
+// pub fn get_heic_thumbnail(
+//     file_path: &str,
+//     orientation: i32,
+//     thumbnail_size: u32,
+// ) -> Result<Option<Vec<u8>>, String> {
+//     ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
+
+//     let mut ictx = ffmpeg::format::input(&file_path)
+//         .map_err(|e| format!("Failed to open HEIC file: {e}"))?;
+
+//     let input = ictx
+//         .streams()
+//         .best(ffmpeg::media::Type::Video)
+//         .ok_or("No video stream found in HEIC")?;
+
+//     let stream_index = input.index();
+//     let params = input.parameters();
+//     let mut decoder = ffmpeg::codec::context::Context::from_parameters(params)
+//         .map_err(|e| format!("Failed to get decoder context: {e}"))?
+//         .decoder()
+//         .video()
+//         .map_err(|e| format!("Decoder error: {e}"))?;
+
+//     let mut scaler: Option<Scaler> = None;
+
+//     for (stream, packet) in ictx.packets() {
+//         if stream.index() != stream_index {
+//             continue;
+//         }
+
+//         decoder.send_packet(&packet).map_err(|e| format!("Failed to send packet: {e}"))?;
+
+//         let mut decoded = ffmpeg::util::frame::Video::empty();
+//         while decoder.receive_frame(&mut decoded).is_ok() {
+//             let (width, height) = (decoded.width(), decoded.height());
+
+//             if scaler.is_none() {
+//                 scaler = Some(
+//                     Scaler::get(
+//                         decoded.format(),
+//                         width,
+//                         height,
+//                         ffmpeg::format::pixel::Pixel::RGB24,
+//                         width,
+//                         height,
+//                         Flags::BILINEAR,
+//                     )
+//                     .map_err(|e| format!("Failed to create scaler: {e}"))?,
+//                 );
+//             }
+
+//             let mut rgb_frame = frame::Video::empty();
+//             scaler.as_mut().unwrap()
+//                 .run(&decoded, &mut rgb_frame)
+//                 .map_err(|e| format!("Scaling failed: {e}"))?;
+
+//             let stride = rgb_frame.stride(0);
+//             let buf = rgb_frame.data(0);
+//             let mut image_buf = RgbImage::new(width, height);
+
+//             for y in 0..height {
+//                 for x in 0..width {
+//                     let idx = (y * stride as u32 + x * 3) as usize;
+//                     image_buf.put_pixel(
+//                         x,
+//                         y,
+//                         Rgb([buf[idx], buf[idx + 1], buf[idx + 2]]),
+//                     );
+//                 }
+//             }
+
+//             let dynamic_image = DynamicImage::ImageRgb8(image_buf);
+//             let (orig_w, orig_h) = dynamic_image.dimensions();
+//             let scale = (thumbnail_size as f64 / orig_w as f64).min(thumbnail_size as f64 / orig_h as f64);
+//             let new_w = (orig_w as f64 * scale).round() as u32;
+//             let new_h = (orig_h as f64 * scale).round() as u32;
+//             let thumbnail = dynamic_image.resize(new_w, new_h, image::imageops::FilterType::Lanczos3);
+
+
+//             // 🌀 Orientation (optional)
+//             let oriented = match orientation {
+//                 3 => thumbnail.rotate180(),
+//                 6 => thumbnail.rotate90(),
+//                 8 => thumbnail.rotate270(),
+//                 _ => thumbnail,
+//             };
+
+//             let mut buf = Vec::new();
+//             oriented.write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
+//                 .map_err(|e| format!("Failed to encode image: {e}"))?;
+
+//             return Ok(Some(buf));
+//         }
+//     }
+
+//     Ok(None)
+// }
+
+/// Get a thumbnail from a video or heic file path
 pub fn get_video_thumbnail(
     file_path: &str,
+    orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
     ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
 
     let mut ictx = ffmpeg::format::input(file_path)
-        .map_err(|e| format!("Failed to open video file: {e}"))?;
+        .map_err(|e| format!("Failed to open file: {e}"))?;
 
     let input_stream = ictx
         .streams()
@@ -746,55 +854,66 @@ pub fn get_video_thumbnail(
         .video()
         .map_err(|e| format!("Decoder error: {e}"))?;
 
-    // Seek to 50% of the video duration
-    ictx.seek(ictx.duration() / 2, ..)
-        .map_err(|e| format!("Seek error: {e}"))?;
+    // For video files, seek to 10% of the duration
+    // For HEIC files, we may not have a duration, so we skip seeking
+    if ictx.duration() > 0 {
+        ictx.seek(ictx.duration() / 10 , ..)
+            .map_err(|e| format!("Seek error: {e}"))?;
+    }
 
     for (stream, packet) in ictx.packets() {
-        if stream.index() == stream_index {
-            decoder
-                .send_packet(&packet)
-                .map_err(|e| format!("Send packet error: {e}"))?;
+        if stream.index() != stream_index {
+            continue;
+        }
 
-            let mut frame = ffmpeg::util::frame::Video::empty();
-            if decoder.receive_frame(&mut frame).is_ok() {
-                let width = frame.width();
-                let height = frame.height();
+        decoder
+            .send_packet(&packet)
+            .map_err(|e| format!("Send packet error: {e}"))?;
 
-                // Convert to RGB
-                let mut rgb_frame = ffmpeg::util::frame::Video::empty();
-                let mut scaler = ffmpeg::software::scaling::context::Context::get(
-                    decoder.format(),
-                    width,
-                    height,
-                    ffmpeg::format::Pixel::RGB24,
-                    width,
-                    height,
-                    ffmpeg::software::scaling::flag::Flags::BILINEAR,
-                )
-                .map_err(|e| format!("Scaler creation error: {e}"))?;
+        let mut frame = ffmpeg::util::frame::Video::empty();
+        if decoder.receive_frame(&mut frame).is_ok() {
+            let width = frame.width();
+            let height = frame.height();
 
-                scaler
-                    .run(&frame, &mut rgb_frame)
-                    .map_err(|e| format!("Scaling error: {e}"))?;
+            // Convert to RGB
+            let mut rgb_frame = ffmpeg::util::frame::Video::empty();
+            let mut scaler = ffmpeg::software::scaling::context::Context::get(
+                decoder.format(),
+                width,
+                height,
+                ffmpeg::format::Pixel::RGB24,
+                width,
+                height,
+                ffmpeg::software::scaling::flag::Flags::BILINEAR,
+            )
+            .map_err(|e| format!("Scaler creation error: {e}"))?;
 
-                // Create DynamicImage
-                let data = rgb_frame.data(0);
-                let rgb_image = RgbImage::from_raw(width, height, data.to_vec())
-                    .ok_or("Failed to create image buffer")?;
-                let dyn_image = DynamicImage::ImageRgb8(rgb_image);
+            scaler
+                .run(&frame, &mut rgb_frame)
+                .map_err(|e| format!("Scaling error: {e}"))?;
 
-                // Resize while keeping aspect ratio
-                let thumb = dyn_image.thumbnail(thumbnail_size, thumbnail_size);
+            // Create DynamicImage
+            let data = rgb_frame.data(0);
+            let rgb_image = RgbImage::from_raw(width, height, data.to_vec())
+                .ok_or("Failed to create image buffer")?;
+            let dyn_image = DynamicImage::ImageRgb8(rgb_image);
 
-                // Encode JPEG to memory
-                let mut buffer = Cursor::new(Vec::new());
-                thumb
-                    .write_to(&mut buffer, ImageFormat::Jpeg)
-                    .map_err(|e| format!("Image encode error: {e}"))?;
+            // Resize while keeping aspect ratio
+            let thumbnail = dyn_image.thumbnail(thumbnail_size, thumbnail_size);
 
-                return Ok(Some(buffer.into_inner()));
-            }
+            let adjusted_thumbnail = match orientation {
+                3 => thumbnail.rotate180(),
+                6 => thumbnail.rotate90(),
+                8 => thumbnail.rotate270(),
+                _ => thumbnail,
+            };
+            // Encode JPEG to memory
+            let mut buffer = Cursor::new(Vec::new());
+            adjusted_thumbnail
+                .write_to(&mut buffer, ImageFormat::Jpeg)
+                .map_err(|e| format!("Image encode error: {e}"))?;
+
+            return Ok(Some(buffer.into_inner()));
         }
     }
 

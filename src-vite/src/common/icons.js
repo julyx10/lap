@@ -82,12 +82,15 @@ export { default as IconSortingDesc } from '@/assets/icons/sorting-desc.svg';
 // SYSTEM & APP ICONS
 // ======================
 export { default as IconHome } from '@/assets/icons/home.svg';
+export { default as IconPhoto } from '@/assets/icons/photo.svg';
+export { default as IconVideo } from '@/assets/icons/video.svg';
+export { default as IconMusic } from '@/assets/icons/musical.svg';
+export { default as IconTag } from '@/assets/icons/tag.svg';
 export { default as IconCalendar } from '@/assets/icons/calendar.svg';
 export { default as IconLocation } from '@/assets/icons/map-pin.svg';
 export { default as IconPeople } from '@/assets/icons/user.svg';
 export { default as IconCamera } from '@/assets/icons/camera.svg';
 export { default as IconSettings } from '@/assets/icons/settings.svg';
-export { default as IconPhoto } from '@/assets/icons/photo.svg';
 export { default as IconProperties } from '@/assets/icons/information.svg';
 
 // ======================

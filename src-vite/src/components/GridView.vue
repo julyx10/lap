@@ -49,6 +49,7 @@
         
           <!-- favorite and rotate status -->
           <div class="absolute left-0 top-0 flex items-center">
+            <IconVideo v-if="file.file_type===2" class="t-icon-size-sm group-hover:text-gray-500"></IconVideo>
             <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm group-hover:text-gray-500"></IconFavorite>
             <IconRotate v-if="file.rotate % 360 > 0"
               class="t-icon-size-sm group-hover:text-gray-500"
@@ -110,6 +111,8 @@ import {
   IconDelete,
   IconGoto,
   IconPhoto,
+  IconVideo,
+  IconAudio,
   IconChecked,
   IconUnChecked,
   IconComment,

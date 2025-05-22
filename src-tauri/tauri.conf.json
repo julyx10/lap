@@ -21,7 +21,14 @@
       }
     ],
     "security": {
-      "capabilities": ["default"]
+      "capabilities": ["default"],
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost; media-src 'self' asset: http://asset.localhost",
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "/Users/lichuanliu/Pictures/betterhalf"
+        ]
+      }
     }
   },
   "bundle": {

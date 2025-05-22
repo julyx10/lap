@@ -6,7 +6,7 @@
     @mousedown="handleMouseDown"
     @mousemove="handleMouseMove"
     @mouseup="handleMouseUp"
-    @mouseleave="handleMouseUp"
+    @mouseleave="handleMouseLeave"
     @wheel="handleWheel"
     @dblclick="zoomFit"
   >
@@ -72,8 +72,13 @@ const imageSize = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }] );     
 const imageSizeRotated = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }]); // image size after rotation
 
 const isDragging = ref(false);              // Dragging state
-const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const isGrabbing = ref(false);              // Grabbing state
+const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
+const mousePosition = ref({ x: 0, y: 0 });  // Current mouse position
+
+// TODO: use requestAnimationFrame to improve performance
+let animationFrameId: number | null = null;
+const latestMouseEvent = ref<MouseEvent | null>(null);
 
 // macOS touchpad wheel - accumulate delta values until they reach a threshold
 let wheelDeltaAccumulator = 0;
@@ -179,7 +184,7 @@ watch(() => scale.value[activeImage.value], (newValue) => {
 // watch zoom fit changes
 watch(() => props.isZoomFit, (newValue) => {
   isZoomFit.value = newValue;
-  updateZoom();
+  updateZoomFit();
 });
 
 // watch container or image size changes
@@ -210,15 +215,15 @@ const onImageLoad = (img) => {
       height: imageSize.value[activeImage.value].height 
     };
   }
-  updateZoom();
+  updateZoomFit();
 }
 
 const rotateRight = () => {
   imageRotate.value[activeImage.value] += 90;
 };
 
-const updateZoom = () => {
-  console.log('updateZoom');
+const updateZoomFit = () => {
+  console.log('updateZoomFit');
   isZoomFit.value ? zoomFit() : zoomReset();
 
   // set the hide image to the same position
@@ -248,27 +253,19 @@ const zoomFit = () => {
 // Reset zoom level and position
 const zoomReset = () => {
   console.log('zoomReset');
-  scale.value[activeImage.value] = 1;
-
-  // set position to center
-  position.value[activeImage.value] = { 
-    x: (containerSize.value.width - imageSize.value[activeImage.value].width) / 2,
-    y: (containerSize.value.height - imageSize.value[activeImage.value].height) / 2,
-  };
+  zoomImage(mousePosition.value.x - containerPos.value.x, mousePosition.value.y - containerPos.value.y, 1);
 };
 
 // start dragging
 const handleMouseDown = (event) => {
-  // console.log('handleMouseDown', event);
   isDragging.value = true;
   lastMousePosition.value = { x: event.clientX, y: event.clientY };
 };
 
-// TODO: use requestAnimationFrame to improve performance
-let animationFrameId: number | null = null;
-const latestMouseEvent = ref<MouseEvent | null>(null);
-
 const handleMouseMove = (event: MouseEvent) => {
+  // update mouse position
+  mousePosition.value = { x: event.clientX, y: event.clientY };
+
   if (!isDragging.value) return;
 
   latestMouseEvent.value = event;
@@ -278,6 +275,19 @@ const handleMouseMove = (event: MouseEvent) => {
   }
 
   animationFrameId = requestAnimationFrame(updateDragPosition);
+};
+
+// stop dragging
+const handleMouseUp = () => {
+  isDragging.value = false;
+};
+
+// mouse leave
+// reset mouse position to the center when leaving the container
+const handleMouseLeave = () => {
+  // purpose: when clicking zoom fit/reset, the image will be centered
+  // and the mouse position will be set to the center of the container
+  mousePosition.value = { x: containerSize.value.width / 2, y: containerSize.value.height / 2 };
 };
 
 const updateDragPosition = () => {
@@ -307,28 +317,6 @@ const updateDragPosition = () => {
   clampPosition();
 
   animationFrameId = null; // reset animation frame ID
-};
-
-
-// on dragging
-// const handleMouseMove = (event) => {
-//   // console.log('handleMouseMove', event);
-//   if (!isDragging.value) 
-//     return;
-
-//   const deltaX = imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] <= containerSize.value.width ? 0 : event.clientX - lastMousePosition.value.x;
-//   const deltaY = imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] <= containerSize.value.height ? 0 : event.clientY - lastMousePosition.value.y;
-
-//   position.value[activeImage.value].x += deltaX;
-//   position.value[activeImage.value].y += deltaY;
-//   lastMousePosition.value = { x: event.clientX, y: event.clientY };
-
-//   clampPosition(); // Adjust position to stay within bounds
-// };
-
-// stop dragging
-const handleMouseUp = () => {
-  isDragging.value = false;
 };
 
 // mouse wheel zoom
