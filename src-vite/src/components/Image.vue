@@ -237,17 +237,12 @@ const zoomFit = () => {
   const containerAspectRatio = containerSize.value.width / containerSize.value.height;
   const imageAspectRatio = imageSizeRotated.value[activeImage.value].width / imageSizeRotated.value[activeImage.value].height;
 
-  if (containerAspectRatio > imageAspectRatio) {
-    scale.value[activeImage.value] = containerSize.value.height / imageSizeRotated.value[activeImage.value].height;
-  } else {
-    scale.value[activeImage.value] = containerSize.value.width / imageSizeRotated.value[activeImage.value].width;
-  }
+  const scale = containerAspectRatio > imageAspectRatio 
+    ? containerSize.value.height / imageSizeRotated.value[activeImage.value].height
+    : containerSize.value.width / imageSizeRotated.value[activeImage.value].width;
 
   // set position to center
-  position.value[activeImage.value] = { 
-    x: (containerSize.value.width - imageSize.value[activeImage.value].width) / 2,
-    y: (containerSize.value.height - imageSize.value[activeImage.value].height) / 2,
-  };
+  zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, scale);
 };
 
 // Reset zoom level and position
@@ -385,17 +380,12 @@ const zoomOut = () => {
 
 // Zoom image at cursor position
 function zoomImage(cursorX, cursorY, newScale) {
-  if(newScale === scale.value[activeImage.value]) 
-    return;
-
   const imageOffsetX = ((scale.value[activeImage.value] - newScale) * ((cursorX - position.value[activeImage.value].x) - imageSize.value[activeImage.value].width / 2)) / scale.value[activeImage.value];
   const imageOffsetY = ((scale.value[activeImage.value] - newScale) * ((cursorY - position.value[activeImage.value].y) - imageSize.value[activeImage.value].height / 2)) / scale.value[activeImage.value];
   position.value[activeImage.value].x += imageOffsetX;
   position.value[activeImage.value].y += imageOffsetY;
 
   scale.value[activeImage.value] = newScale;
-  isZoomFit.value = false;
-
   clampPosition();
 }
 
@@ -426,8 +416,6 @@ function clampPosition() {
 defineExpose({ 
   zoomIn, 
   zoomOut,
-  zoomFit,
-  zoomReset,
   rotateRight
 });
 
