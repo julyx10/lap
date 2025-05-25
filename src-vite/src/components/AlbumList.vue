@@ -270,7 +270,7 @@ onMounted( async () => {
     switch (message) {
       case 'goto-folder':
         clickFinalSubFolder(event.payload.albumId, event.payload.folderPath).then (() => {
-          config.toolbarIndex = 2; // show album content
+          config.toolbarIndex = 1; // show album content
         });
         break;
       default:
