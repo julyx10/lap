@@ -26,11 +26,11 @@
             @dblclick="dlbClickAlbum(album)"
           >
             <IconRemove v-if="isEditList" 
-              class="mx-1 t-icon-size-sm t-icon-hover shrink-0" 
+              class="mx-1 t-icon-size-sm t-icon-hover t-icon-animate cursor-pointer shrink-0" 
               @click.stop="removingAlbumId = album.id; showRemoveMsgbox = true" 
             />
             <component v-else :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
-              class="mx-1 t-icon-size-sm t-icon-hover shrink-0" 
+              class="mx-1 t-icon-size-sm t-icon-hover t-icon-animate cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
 
@@ -38,7 +38,7 @@
               {{ album.name }}
             </div>
 
-            <IconDragHandle v-if="isEditList" class="ml-auto t-icon-size-sm t-icon-hover shrink-0 drag-handle" />
+            <IconDragHandle v-if="isEditList" class="ml-auto t-icon-size-sm t-icon-hover t-icon-animate cursor-pointer shrink-0 drag-handle" />
             <DropDownMenu v-else-if="componentId === 0 && !isDragging"
               :class="[
                 'ml-auto pl-1',

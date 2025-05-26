@@ -13,3 +13,8 @@
 .t-icon-size-lg {
   @apply w-8 h-8;
 }
+
+/* animation */
+.t-icon-animate {
+  @apply transition-colors duration-300;
+}

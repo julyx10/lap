@@ -527,6 +527,15 @@ onUnmounted(() => {
   }
 });
 
+/// watch appearance
+watch(() => config.appearance, (newAppearance) => {
+  if (newAppearance === 0) {    // light mode
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else if (newAppearance === 1) { // dark mode
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+});
+
 /// watch language
 watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language

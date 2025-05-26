@@ -34,7 +34,7 @@
         >{{$t('msgbox_new_folder_title')}}</button> -->
 
         <button v-if="cancelText.length > 0" 
-          class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover text-nowrap" 
+          class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover t-icon-animate cursor-pointer text-nowrap" 
           @click="clickCancel"
         >{{ cancelText }}</button>
 

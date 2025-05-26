@@ -490,6 +490,15 @@ const handleResize = async () => {
   }
 };
 
+/// watch appearance
+watch(() => config.appearance, (newAppearance) => {
+  if (newAppearance === 0) {    // light mode
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else if (newAppearance === 1) { // dark mode
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+});
+
 // watch language
 watch(() => config.language, (newLanguage) => {
     console.log('Language changed to:', newLanguage);

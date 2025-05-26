@@ -336,6 +336,11 @@ watch(() => config.settingsTabIndex, (newValue) => {
 
 // general settings
 watch(() => config.appearance, (newValue) => {
+  if (newValue === 0) {    // light mode
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else if (newValue === 1) { // dark mode
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
   emit('settings-appearance-changed', newValue);
 });
 watch(() => config.language, (newValue) => {

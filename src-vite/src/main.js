@@ -7,8 +7,9 @@ import { invoke } from '@tauri-apps/api/core'
 import router from '@/common/router'
 import App from '@/App.vue'
 import { useConfigStore } from '@/stores/configStore'
+import '@/assets/app.css' // Main CSS file
 import '@/assets/main.css'
-import '@/assets/dark.css'
+// import '@/assets/dark.css'
 // import '@/assets/light.css'
 
 // I18n
@@ -24,6 +25,14 @@ const pinia = createPinia()
 pinia.use(piniaPersistedState)
 app.use(pinia) // Use Pinia
 const config = useConfigStore() // Use the config store
+
+// apply the current appearance setting
+if (config.appearance === 0) {
+  document.documentElement.setAttribute('data-theme', 'light');
+}
+else if (config.appearance === 1) {
+  document.documentElement.setAttribute('data-theme', 'dark');
+}
 
 // Create the I18n instance
 const i18n = createI18n({

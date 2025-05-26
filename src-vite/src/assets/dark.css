@@ -6,7 +6,7 @@
 
   /* icon */
   .t-icon-hover {
-    @apply hover:text-gray-100 transition-colors duration-300 cursor-pointer;
+    @apply hover:text-gray-100 cursor-pointer;
   }
   .t-icon-group-hover {
     @apply group-hover:text-gray-100 transition-colors duration-300 cursor-pointer;

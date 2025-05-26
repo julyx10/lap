@@ -1,7 +1,7 @@
 <template>
 
-  <div class="fixed inset-0 flex items-center justify-center t-color-text bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
-    <div class="p-4 t-color-bg-light border t-color-border rounded-lg shadow-lg">
+  <dialog id="msg_box_dlg" class="modal">
+    <div class="modal-box">
       <div class="mb-2 flex items-center justify-between">
         {{ title }}
         <IconClose class="t-icon-size-sm t-icon-hover" @click="clickCancel" />
@@ -29,25 +29,27 @@
         <p class="h-4 text-red-600 text-xs">{{ inputErrorMessage }}</p>
       </div>
 
-      <div class="pt-2 flex justify-end space-x-4">
-        <button v-if="cancelText.length > 0" 
-          class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover" 
-          @click="clickCancel"
-        >
-          {{ cancelText }}
-        </button>
-        <button 
-          :class="['px-4 py-1 rounded-full t-color-bg-light', 
-            okButtonClasses
-          ]" 
-          @click="clickOk"
-        >
-          {{ OkText }}
-        </button>
+      <div class="modal-action">
+        <form method="dialog">
+          <button v-if="cancelText.length > 0" 
+            class="btn" 
+            @click="clickCancel"
+          >
+            {{ cancelText }}
+          </button>
+          <button 
+            :class="['btn', 
+              okButtonClasses
+            ]" 
+            @click="clickOk"
+          >
+            {{ OkText }}
+          </button>
+        </form>
       </div>
 
     </div>
-  </div>
+  </dialog>
 
 </template>
 
@@ -115,8 +117,8 @@ const inputErrorMessage = ref('');
 
 const okButtonClasses = computed(() => {
   return !props.showInput || !props.needValidateInput || inputValue.value.trim().length > 0
-    ? (props.warningOk ? 't-color-bg-warning-hover t-icon-hover' : 't-color-bg-highlight-hover t-icon-hover')
-    : 't-icon-disabled';
+    ? (props.warningOk ? 'btn-error' : 'btn-primary')
+    : 'btn-disabled';
 });
 
 onMounted(() => {
