@@ -7,10 +7,7 @@ import { invoke } from '@tauri-apps/api/core'
 import router from '@/common/router'
 import App from '@/App.vue'
 import { useConfigStore } from '@/stores/configStore'
-import '@/assets/app.css' // Main CSS file
-import '@/assets/main.css'
-// import '@/assets/dark.css'
-// import '@/assets/light.css'
+import '@/assets/app.css'
 
 // I18n
 import en from '@/locales/en.json'
@@ -27,12 +24,14 @@ app.use(pinia) // Use Pinia
 const config = useConfigStore() // Use the config store
 
 // apply the current appearance setting
-if (config.appearance === 0) {
-  document.documentElement.setAttribute('data-theme', 'light');
-}
-else if (config.appearance === 1) {
-  document.documentElement.setAttribute('data-theme', 'dark');
-}
+const theme = [
+  'light', 'dark', 'cupcake', 'bumblebee', 'emerald', 'corporate',
+  'synthwave', 'retro', 'cyberpunk', 'valentine', 'halloween', 'garden',
+  'forest', 'aqua', 'lofi', 'pastel', 'fantasy', 'wireframe', 'black',
+  'luxury', 'dracula', 'cmyk', 'autumn', 'business', 'acid', 'lemonade',
+  'night', 'coffee', 'winter', 'dim', 'nord', 'sunset'
+][config.appearance] || 'light'; // Default to light if not set
+document.documentElement.setAttribute('data-theme', theme);
 
 // Create the I18n instance
 const i18n = createI18n({
@@ -67,8 +66,8 @@ listen('settings-language-changed', (event) => {
 listen('settings-showButtonText-changed', (event) => {
   config.setShowButtonText(event.payload)
 })
-listen('settings-showSubFolder-changed', (event) => {
-  config.setShowSubFolder(event.payload)
+listen('settings-showToolTip-changed', (event) => {
+  config.setShowToolTip(event.payload)
 })
 listen('settings-showStatusBar-changed', (event) => {
   config.setShowStatusBar(event.payload)

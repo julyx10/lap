@@ -7,19 +7,20 @@
     >
       <div v-if="!child.is_deleted" 
         :class="[
-          'my-1 mr-1 h-6 flex items-center t-color-bg-hover rounded border-l-2 border-transparent whitespace-nowrap cursor-pointer group', 
+          'my-1 mr-1 h-6 flex items-center rounded border-l-2 whitespace-nowrap cursor-pointer group', 
+          selectedFolderId === child.id && !isRenamingFolder ? 'bg-base-content/10 border-primary' : 'hover:bg-base-content/10 border-transparent',
           {
-            't-color-text-selected': config.albumFolderPath.includes(child.path),
-            't-color-bg-selected t-color-border-selected': selectedFolderId === child.id
+            'text-base-content': selectedFolderId === child.id || getFolderPath(config.albumFolderPath).includes(child.path),
+            'bg-base-content/10 border-primary': selectedFolderId === child.id && !isRenamingFolder,
           }
         ]" 
         @click="clickFolder(rootAlbumId, child)"
         @dblclick="expandFolder(child)"
       >
-        <span v-if="child.children && child.children.length == 0" class="shrink-0 t-icon-size"></span>
+        <span v-if="child.children && child.children.length == 0" class="w-6 shrink-0"></span>
         <IconRight v-else
           :class="[
-            'p-1 t-icon-size shrink-0 transition-transform', 
+            'p-1 w-6 h-6 shrink-0 transition-transform', 
             child.is_expanded && child.children && child.children.length > 0 ? 'rotate-90' : ''
           ]"
           @click.stop="expandFolder(child)"
@@ -28,7 +29,7 @@
           ref="folderInputRef"
           type="text"
           maxlength="255"
-          class="px-1 w-full border t-color-border-selected t-input-color-bg t-input-focus rounded"
+          class="input px-1 w-full"
           v-model="child.name"
           @keydown.enter = "clickRenameFolder(child.name)"
           @keydown.esc = "handleEscKey($event, child.id)"
@@ -38,16 +39,17 @@
           <div class="overflow-hidden whitespace-pre text-ellipsis">
             {{ child.name }}
           </div>
-          <div class="px-1 ml-auto flex flex-row items-center rounded">
+          <div class="ml-auto flex flex-row items-center rounded">
             <IconFavorite v-if="child.is_favorite" 
-              class="t-icon-size-sm t-color-text" 
+              class="h-4 w-4" 
             />
             <DropDownMenu v-show="componentId === 0 && !isRenamingFolder"
               :class="[
-                selectedFolderId != child.id ? 'hidden group-hover:block' : ''
+                selectedFolderId != child.id ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
+              :smallIcon="true"
             />
           </div>
         </template>
@@ -121,7 +123,7 @@
 import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
+import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
 import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
@@ -136,7 +138,7 @@ import {
   IconNewFolder,
   IconRename,
   IconMoveTo,
-  IconDelete,
+  IconTrash,
   IconFavorite,
   IconUnFavorite,
   IconRefresh,
@@ -233,8 +235,8 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
+      label: localeMsg.value.menu_item_trash,
+      icon: IconTrash,
       action: () => {
         showDeleteMsgbox.value = true;  // show delete message box
       }

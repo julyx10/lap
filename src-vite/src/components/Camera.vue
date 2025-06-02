@@ -5,19 +5,19 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
-      <IconRefresh class="t-icon-size-sm t-icon-hover" @click="clickReload"/>
+      <TButton :icon="IconRefresh" @click="clickReload"/>
     </div>
 
     <!-- camera -->
-    <div v-if="cameras.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto t-scrollbar-dark">
+    <div v-if="cameras.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
         <li v-for="camera in cameras">
           <div 
             :class="[
-              'my-1 mr-1 h-8 rounded border-l-2 flex items-center whitespace-nowrap border-transparent t-color-bg-hover cursor-pointer', 
+              'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
               { 
-                't-color-text-selected': config.cameraMake === camera.make, 
-                't-color-bg-selected t-color-border-selected transition-colors duration-300'  : config.cameraMake === camera.make && !config.cameraModel 
+                'text-base-content': config.cameraMake === camera.make, 
+                'bg-base-content/10 border-primary'  : config.cameraMake === camera.make && !config.cameraModel 
               }
             ]"
             @click="clickCameraMake(camera)"
@@ -38,8 +38,8 @@
             <li v-for="model in camera.models" class="pl-4">
               <div 
                 :class="[
-                  'm-1 pl-2 rounded border-l-2 flex items-center whitespace-nowrap t-color-bg-hover cursor-pointer', 
-                  config.cameraModel === model ? 't-color-text-selected t-color-bg-selected t-color-border-selected transition-colors duration-300' : 'border-gray-900'
+                  'm-1 pl-2 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
+                  config.cameraModel === model ? 'bg-base-content/10 border-primary' : ''
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
@@ -69,8 +69,9 @@
 import { ref, onMounted } from 'vue';
 import { config } from '@/common/utils';
 import { getCameraInfo } from '@/common/api';
-
 import { IconRefresh, IconRight } from '@/common/icons';
+
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   titlebar: {

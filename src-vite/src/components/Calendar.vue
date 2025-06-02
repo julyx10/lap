@@ -6,26 +6,29 @@
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
       <div class="flex text-sm items-center cursor-pointer">
-        <div 
-          :class="[
-            'px-2 border rounded-l-lg t-color-bg t-color-border t-color-bg-hover text-nowrap',
-            config.calendarIsMonthly ? 't-color-text-focus t-color-bg-selected' : ''
-          ]"
-         @click="config.calendarIsMonthly=true"
-        >
-          {{ $t('calendar_monthly') }}
+        <div role="tablist" class="tabs-sm tabs-box" >
+          <a 
+            role="tab"
+            class="tab"
+            :class="config.calendarIsMonthly ? 'tab-active' : ''" 
+            @click="config.calendarIsMonthly=true"
+          >
+            {{ $t('calendar_month') }}
+          </a>
+          <a 
+            role="tab"
+            class="tab"
+            :class="!config.calendarIsMonthly ? 'tab-active' : ''" 
+            @click="config.calendarIsMonthly=false"
+          >
+            {{ $t('calendar_day') }}
+          </a>
         </div>
-        <div 
-          :class="[
-            'px-2 border rounded-r-lg t-color-bg t-color-border t-color-bg-hover text-nowrap',
-            !config.calendarIsMonthly ? 't-color-text-focus t-color-bg-selected' : ''
-          ]"
-         @click="config.calendarIsMonthly=false"
-        >
-          {{ $t('calendar_daily') }}
-        </div>
-        <span class="px-2"></span>
-        <component :is="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" class="t-icon-size-sm t-icon-hover" @click="toggleSortingOrder" />
+
+        <TButton 
+          :icon="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" 
+          @click="toggleSortingOrder"
+        />
       </div>
     </div>
     
@@ -46,12 +49,14 @@
 
         <!-- calendar -->
         <div ref="scrollable"
-          :class="['flex overflow-x-hidden overflow-y-auto t-scrollbar-dark',
+          :class="[
+            'flex overflow-x-hidden overflow-y-auto',
             config.calendarSortingAsc ? 'flex-col' : 'flex-col-reverse'
           ]"
         >
           <div v-for="(months, year) in calendar_dates" 
-            :class="['flex',
+            :class="[
+              'flex',
               config.calendarSortingAsc ? 'flex-col' : 'flex-col-reverse'
             ]"
           >
@@ -87,6 +92,8 @@ import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 import { getTakenDates } from '@/common/api';
 import { IconSortingAsc, IconSortingDesc } from '@/common/icons';
+
+import TButton from '@/components/TButton.vue';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
 

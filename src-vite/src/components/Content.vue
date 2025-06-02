@@ -3,23 +3,31 @@
   <div class="flex-1 flex flex-col">
 
     <!-- title bar -->
-    <div class="px-4 pt-1 min-h-12 flex flex-row items-center justify-between select-none" data-tauri-drag-region>
+    <div class="px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
 
       <!-- title -->
-      <div class="mr-2 cursor-default" data-tauri-drag-region>{{ contentTitle }}</div>
+      <div class="breadcrumbs mr-2" data-tauri-drag-region>
+        <ul>
+          <li v-for="(item, index) in contentTitle.split(' > ')"><a>{{ item }}</a></li>
+        </ul>
+      </div>
 
       <!-- toolbar -->
-      <div class="h-6 flex flex-row items-center space-x-2 shrink-0">
+      <div class="ml-auto h-6 flex flex-row items-center space-x-2 shrink-0">
 
         <!-- select mode -->
-        <button tabindex="-1"
+        <div tabindex="-1"
           :class="[
-            'px-2 py-1 flex flex-row items-center rounded-md border t-color-text-hover text-sm shrink-0 transition-all duration-300',
-            selectMode ? 't-color-border-selected' : 't-color-border t-color-border-hover'
+            'px-2 py-1 h-8 flex flex-row items-center rounded-md border border-content text-sm shrink-0 cursor-pointer',
+            selectMode ? 'border-base-content/70' : 'border-base-content/30 hover:border-base-content/70'
           ]"
           @click="handleSelectMode(true)"
         >
-          <IconClose v-if="selectMode" class="t-icon-size-sm t-icon-hover" @click.stop="handleSelectMode(false)" />
+          <TButton v-if="selectMode"
+            :icon="IconClose"
+            :buttonSize="'small'"
+            @click.stop="handleSelectMode(false)" 
+          />
           <span class="px-1">{{ selectMode ? $t('file_list_select_count', { count: selectedCount }) : $t('file_list_select_mode') }}</span>
           <DropDownMenu v-if="selectMode"
             :iconMenu="IconArrowDown"
@@ -27,7 +35,7 @@
             :smallIcon="true"
             @click.stop
           />
-        </button>
+        </div>
 
         <!-- search box - filter file name -->
         <SearchBox ref="searchBoxRef" v-model="config.searchText" @click.stop="selectMode = false" /> 
@@ -49,14 +57,11 @@
         />
 
         <!-- preview -->
-        <component 
-          :is="config.showPreview ? IconPreview : IconPreviewOff" 
-          :class="[
-            't-icon-size shrink-0',
-            config.showPreview ? 't-icon-focus t-icon-focus-hover': 't-icon-hover'
-          ]" 
+        <TButton
+          :icon="config.showPreview ? IconPreview : IconPreviewOff"
           @click="config.showPreview = !config.showPreview"
         />
+
       </div>
     </div>
 
@@ -74,7 +79,7 @@
         
         <!-- status bar -->
         <div v-if="config.showStatusBar" 
-          class="mx-2 p-2 min-h-8 border-t border-gray-700 flex flex-row items-center justify-start text-sm select-none cursor-default"
+          class="p-2 min-h-8 flex flex-row items-center justify-start text-sm select-none cursor-default"
         >
           <component 
             :is="showFolderFiles ? IconFolder : IconFile"
@@ -103,7 +108,7 @@
 
       <!-- splitter -->
       <div v-if="config.showPreview" 
-        class="w-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
+        class="w-1 hover:bg-primary cursor-ew-resize transition-colors" 
         @mousedown="startDragging"
       ></div>
 
@@ -117,7 +122,7 @@
         leave-to-class="translate-x-full"
       >
         <div v-show="config.showPreview" ref="previewDiv" 
-          class="p-1 t-color-bg rounded-ss-lg overflow-hidden"
+          class="p-1 rounded-ss-lg overflow-hidden bg-base-200"
           :style="{ width: config.previewPaneWidth + '%' }"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
@@ -137,7 +142,7 @@
 
             <!-- comments -->
             <div v-if="fileList[selectedItemIndex]?.comments?.length > 0" 
-              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-gray-900 bg-opacity-50 rounded-lg" 
+              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg" 
             >
               <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
               {{ fileList[selectedItemIndex]?.comments }}
@@ -231,7 +236,7 @@ import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles,
          copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
-import { config, isWin, isMac, 
+import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
 
@@ -245,6 +250,7 @@ import Video from '@/components/Video.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
+import TButton from '@/components/TButton.vue';
 
 import {
   IconPreview,
@@ -256,7 +262,7 @@ import {
   IconFavorite,
   IconUnFavorite,
   IconMoveTo,
-  IconDelete,
+  IconTrash,
   IconFile,
   IconFolder,
   IconSearch,
@@ -377,8 +383,8 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
+      label: localeMsg.value.menu_item_trash,
+      icon: IconTrash,
       disabled: selectedCount.value === 0,
       action: () => {
         showDeleteMsgbox.value = true;
@@ -529,11 +535,7 @@ onUnmounted(() => {
 
 /// watch appearance
 watch(() => config.appearance, (newAppearance) => {
-  if (newAppearance === 0) {    // light mode
-    document.documentElement.setAttribute('data-theme', 'light');
-  } else if (newAppearance === 1) { // dark mode
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
+  setTheme(newAppearance);
 });
 
 /// watch language
@@ -629,7 +631,7 @@ async function updateContent() {
     }
   }
   else if(newIndex === 3) {   // tag
-    contentTitle.value = localeMsg.value.trash;
+    contentTitle.value = localeMsg.value.tag;
     // await getFileList("", "", "", "", false, true, fileListOffset.value);
   }
   else if(newIndex === 4) {   // calendar
@@ -647,17 +649,20 @@ async function updateContent() {
     contentTitle.value = localeMsg.value.location;
     fileList.value = [];
   }
-  else if(newIndex === 6) {   // people
-    contentTitle.value = localeMsg.value.people;
-    fileList.value = [];
-  }
-  else if(newIndex === 7) {   // camera
+  // else if(newIndex === 6) {   // people
+  //   contentTitle.value = localeMsg.value.people;
+  //   fileList.value = [];
+  // }
+  else if(newIndex === 6) {   // camera
     if(config.cameraModel) {
       contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
     } else {
       contentTitle.value = `${config.cameraMake}`;
     }
     await getFileList("", "", config.cameraMake, config.cameraModel, false, false, fileListOffset.value);
+  } else if(newIndex === 7) { // trash
+    contentTitle.value = localeMsg.value.trash;
+    await getFileList("", "", "", "", false, true, fileListOffset.value);
   }
 
   refreshFileList();

@@ -1,12 +1,12 @@
 <template>
 
-  <div class="flex flex-col items-center">
+  <div class="flex flex-col items-center select-none">
 
     <!-- title -->
     <div 
       :class="[
-        'mt-2 px-2 border rounded-full t-color-bg-hover text-nowrap cursor-pointer',
-        isSelected(year, -1) ? 'border-sky-500' : 'border-transparent'
+        'mt-2 px-2 border-2 rounded-full hover:bg-base-content/10 text-nowrap cursor-pointer',
+        isSelected(year, -1) ? 'border-primary' : 'border-transparent'
       ]"
       @click="clickDate(year, -1)"
     >
@@ -17,14 +17,13 @@
     <div class="py-2 px-1 gap-4 grid grid-cols-4">
       <div v-for="m in 12" 
         :key="m" 
-        class="px-2 flex items-center justify-center border rounded-full t-color-bg-hover text-nowrap cursor-pointer"
-        :class="{
-          'bg-sky-900': isThisMonth(year, m),
-          'border-sky-500': isSelected(year, m),
-          'border-transparent': !isSelected(year, m),
-          't-color-text-dark': sumMonthCount(m) === 0
-        }"
-        @click="clickDate(year, m)" 
+        class="px-2 flex items-center justify-center border-2 rounded-full text-nowrap"
+        :class="[
+          isSelected(year, m) ? 'border-primary' : 'border-transparent',
+          sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/10 cursor-pointer',
+          isThisMonth(year, m) ? 'bg-base-100' : '',
+        ]"
+        @click="sumMonthCount(m) > 0 ? clickDate(year, m) : null" 
       >
         {{ localeMsg.calendar_months[m - 1] }}
       </div>

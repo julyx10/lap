@@ -2,92 +2,88 @@
 
   <div
     :class="[
-      'relative w-screen h-screen flex flex-col overflow-hidden',
+      'relative w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70',
       config.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
     ]"
   >
     <!-- title bar -->
     <TitleBar v-if="!config.isFullScreen"
-      :titlebar="`jc-photo ${localeMsg.image_view_title}${fileIndex >= 0 ? ` - ${fileIndex + 1}/${fileCount}` : ''}`"
+      :titlebar="isWin ? `jc-photo ${localeMsg.image_view_title}${fileIndex >= 0 ? ` - ${fileIndex + 1}/${fileCount}` : ''}` : ''"
       viewName="ImageViewer"
     />
 
     <!-- Toolbar -->
     <div 
       :class="[
-        'absolute -top-0.5 left-1/2 bg-transparent z-40 transform -translate-x-1/2 group',
-        config.isFullScreen ? 'h-14' : 'h-10',
+        'absolute left-1/2 z-40 bg-transparent transform -translate-x-1/2 group',
       ]"
       data-tauri-drag-region
     >
       <div id="responsiveDiv"
         :class="[
-          'px-4 h-10 space-x-5 rounded-lg flex flex-row items-center justify-center t-color-bg t-color-text',
-          config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-1 group-hover:opacity-50 transition-transform duration-300 ease-in-out' : '',
-          config.isFullScreen && config.isPinned ? 'opacity-80 translate-y-1 transition-transform duration-300 ease-in-out' : ''
+          'px-4 h-12 space-x-2 rounded-lg flex flex-row items-center justify-center bg-base-300',
+          config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-2 group-hover:opacity-80 transition-transform duration-300 ease-in-out' : '',
+          config.isFullScreen && config.isPinned ? 'opacity-80 translate-y-2 transition-transform duration-300 ease-in-out' : ''
         ]"
       >
-        <IconPrev 
-          :class="[
-            't-icon-size',  
-            fileIndex > 0 ? 't-icon-hover' : 't-icon-disabled'
-          ]" 
+        <TButton
+          :icon="IconPrev"
+          :disabled="fileIndex <= 0"
+          :tooltip="$t('image_view_toolbar_prev')"
           @click="clickPrev()" 
         />
-        <IconNext 
-          :class="[
-            't-icon-size',
-            fileIndex >=0 && fileIndex < fileCount -1 ? 't-icon-hover' : 't-icon-disabled'
-          ]" 
+        <TButton
+          :icon="IconNext"
+          :disabled="fileIndex < 0 || fileIndex >= fileCount - 1"
+          :tooltip="$t('image_view_toolbar_next')"
           @click="clickNext()" 
         />
-        <component 
-          :is="autoPlay ? IconPause : IconPlay" 
-          :class="[
-            't-icon-size',
-            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-          ]" 
+        <TButton
+          :icon="autoPlay ? IconPause : IconPlay"
+          :disabled="fileIndex < 0"
+          :tooltip="autoPlay ? $t('image_view_toolbar_pause') : $t('image_view_toolbar_play') + ` (${getPlayInterval(config.autoPlayInterval)}s)`"
           @click="clickPlay()" 
-        />  
-        <IconZoomIn
-          :class="[
-            't-icon-size',
-            fileIndex >= 0 && imageScale < imageMaxScale ? 't-icon-hover' : 't-icon-disabled'
-          ]"
+        />
+        <TButton
+          :icon="IconZoomIn"
+          :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
+          :tooltip="$t('image_view_toolbar_zoom_in')"
           @click="clickZoomIn()" 
         />
-        <IconZoomOut
-          :class="[
-            't-icon-size',
-            fileIndex >= 0 && imageScale > imageMinScale ? 't-icon-hover' : 't-icon-disabled'
-          ]"
-          @click="clickZoomOut()" 
+        <TButton
+          :icon="IconZoomOut"
+          :disabled="fileIndex < 0 || imageScale <= imageMinScale"
+          :tooltip="$t('image_view_toolbar_zoom_out')"
+          @click="clickZoomOut()"
         />
-        <component 
-          :is="config.isZoomFit ? IconZoomFit : IconZoomOriginal" 
-          :class="[
-            't-icon-size',
-            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-          ]" 
-          @click="toggleZoomFit()" 
+        <TButton
+          :icon="config.isZoomFit ? IconZoomFit : IconZoomOriginal"
+          :disabled="fileIndex < 0"
+          :tooltip="config.isZoomFit ? $t('image_view_toolbar_zoom_fit') : $t('image_view_toolbar_zoom_actual')"
+          @click="toggleZoomFit()"
         />
-        <IconFavorite 
-          :class="[
-            't-icon-size', 
-            fileInfo ? 't-icon-hover' : 't-icon-disabled',
-            fileInfo?.is_favorite ? 't-color-text-focus t-icon-focus-hover' : '',
-          ]" 
-          @click="toggleFavorite()" 
+        <TButton
+          :icon="IconFavorite"
+          :disabled="fileIndex < 0"
+          :selected="fileInfo?.is_favorite"
+          :tooltip="$t('image_view_toolbar_favorite')"
+          @click="toggleFavorite()"
         />
-        <IconRotate
-          :class="[
-            't-icon-size',
-            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled',
-            iconRotate % 360 > 0 ? 't-color-text-focus' : '',
-          ]" 
-          :style="{ transform: `rotate(${(iconRotate)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+        <TButton
+          :icon="IconRotate"
+          :disabled="fileIndex < 0"
+          :selected="iconRotate % 360 > 0"
+          :iconStyle="{ transform: `rotate(${(iconRotate)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+          :tooltip="$t('image_view_toolbar_rotate')"
           @click="clickRotate()"
         />
+
+        <TButton v-if="isWin"
+          :icon="config.isFullScreen ? IconFullScreen : IconRestoreScreen"
+          :tooltip="config.isFullScreen ? $t('image_view_toolbar_fullscreen') : $t('image_view_toolbar_exit_fullscreen')"
+          @click="toggleFullScreen()"
+        />
+
         <DropDownMenu
           :iconMenu="IconMore"
           :menuItems="moreMenuItems"
@@ -95,27 +91,27 @@
           @click.stop
         />
 
-        <component v-if="isWin"
-          :is="config.isFullScreen ? IconRestoreScreen : IconFullScreen" 
-          class="t-icon-size t-icon-hover" 
-          @click="toggleFullScreen()" 
+        <TButton v-show="config.isFullScreen"
+          :icon="IconSeparator"
+          :disabled="true"
         />
-        
-        <IconSeparator v-show="config.isFullScreen" class="t-icon-size t-icon-disabled" />
-        <component v-show="config.isFullScreen"
-          :is="config.isPinned ? IconPin : IconUnPin" 
-          :class="[
-            't-icon-size',
-            fileIndex >= 0 ? 't-icon-hover' : 't-icon-disabled'
-          ]" 
-          @click="config.isPinned = !config.isPinned" 
+
+        <TButton v-show="config.isFullScreen"
+          :icon="config.isPinned ? IconPin : IconUnPin"
+          :disabled="fileIndex < 0"
+          :tooltip="config.isPinned ? $t('image_view_toolbar_pin') : $t('image_view_toolbar_unpin')"
+          @click="config.isPinned = !config.isPinned"
         />
-        <IconClose v-show="config.isFullScreen" class="t-icon-size t-icon-hover" @click="appWindow.close()" />
+        <TButton v-show="config.isFullScreen"
+          :icon="IconClose"
+          :tooltip="$t('image_view_toolbar_close')"
+          @click="appWindow.close()"
+        />
       </div>
     </div>
 
     <!-- content -->
-    <div ref="divContentView" class="flex t-color-text t-color-bg h-screen overflow-hidden">
+    <div ref="divContentView" class="flex h-screen overflow-hidden">
       <!-- image container -->
       <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden">
         
@@ -123,7 +119,7 @@
         <transition name="fade">
           <div v-if="isScaleChanged" 
             :class="[
-              'absolute left-1/2  px-2 py-1 z-10 t-color-bg opacity-50 rounded-lg',
+              'absolute left-1/2  px-2 py-1 z-10 opacity-50 rounded-lg',
               config.isFullScreen && config.isPinned ? 'top-12' : 'top-2'
             ]"
           >
@@ -136,8 +132,11 @@
           class="absolute left-0 w-40 h-full z-10 flex items-center justify-start cursor-pointer group" 
           @click="clickPrev()"
         >
-          <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
-            <IconLeft class="t-icon-size t-icon-hover"/>
+          <div class="m-3 p-2 rounded-full hidden group-hover:block ">
+            <TButton 
+              :icon="IconLeft" 
+              :buttonClasses="'rounded-full'"
+            />
           </div>
         </div>
 
@@ -163,8 +162,11 @@
           class="absolute right-0 w-40 h-full z-10 flex items-center justify-end cursor-pointer group" 
           @click="clickNext()"
         >
-          <div class="m-3 p-2 t-color-bg-light rounded-full hidden group-hover:block ">
-            <IconRight class="t-icon-size t-icon-hover"/>
+          <div class="m-3 p-2 rounded-full hidden group-hover:block ">
+            <TButton 
+              :icon="IconRight" 
+              :buttonClasses="'rounded-full'"
+            />
           </div>
         </div>
 
@@ -172,7 +174,7 @@
 
       <!-- splitter -->
       <div v-if="config.showFileInfo" 
-        class="w-1 mt-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
+        class="w-1 mt-1 hover:bg-primary cursor-ew-resize transition-colors" 
         @mousedown="startDragging"
       ></div>
 
@@ -224,10 +226,11 @@ import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isWin, isMac } from '@/common/utils';
+import { config, isWin, isMac, setTheme, getPlayInterval } from '@/common/utils';
 import { copyImage, getFileInfo, getFileImage } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
+import TButton from '@/components/TButton.vue';
 import Image from '@/components/Image.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -250,7 +253,7 @@ import {
   IconEdit,
   IconPrint,
   IconRename,
-  IconDelete,
+  IconTrash,
   IconCopy,
   IconMoveTo,
   IconProperties,
@@ -350,8 +353,8 @@ const moreMenuItems = computed(() => {
     //   }
     // },
     {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
+      label: localeMsg.value.menu_item_trash,
+      icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
         showDeleteMsgbox.value = true;
@@ -492,11 +495,7 @@ const handleResize = async () => {
 
 /// watch appearance
 watch(() => config.appearance, (newAppearance) => {
-  if (newAppearance === 0) {    // light mode
-    document.documentElement.setAttribute('data-theme', 'light');
-  } else if (newAppearance === 1) { // dark mode
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
+  setTheme(newAppearance);
 });
 
 // watch language
@@ -537,13 +536,12 @@ watch(() => fileIndex.value, async (newIndex) => {
   } 
 });
 
-watch(() => [autoPlay.value, config.autoPlayInterval], ([newAutoPlay, newInterVal]) => {
-  console.log('autoPlay:', newAutoPlay, newInterVal);
+watch(() => [autoPlay.value, config.autoPlayInterval], ([newAutoPlay, newInterval]) => {
   if(newAutoPlay) {
     clearInterval(timer);
     timer = setInterval(() => {
       clickNext();
-    }, newInterVal * 1000);
+    }, getPlayInterval(newInterval) * 1000);
   } else {
     clearInterval(timer);
   }

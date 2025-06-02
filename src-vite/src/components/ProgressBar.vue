@@ -2,7 +2,7 @@
   <div class="px-4 w-full rounded-lg h-0.5">
     <div
       :class="[
-        'h-full rounded-lg t-color-focus ', 
+        'h-full rounded-lg bg-primary', 
         hasReached ? 'transition-all duration-300 ease-out' : '',
         fadeClass
       ]"

@@ -1,13 +1,19 @@
 <template>
     
-  <div class="w-full flex flex-col" style="user-select: none;">
+  <div class="w-full flex flex-col select-none">
 
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
 
-      <IconOk v-if="isEditList" class="t-icon-size-sm t-icon-hover" @click="clickOk" />
-      <DropDownMenu v-else :iconMenu="IconMore" :menuItems="moreMenuItems" />
+      <TButton v-if="isEditList" 
+        :icon="IconOk" 
+        @click="clickOk"
+      />
+      <DropDownMenu v-else 
+        :iconMenu="IconMore" 
+        :menuItems="moreMenuItems"
+      />
     </div>
 
     <AlbumList ref="albumListRef" 
@@ -29,6 +35,7 @@ import { config } from '@/common/utils';
 import { IconMore, IconAdd, IconLink, IconEdit, IconRefresh, IconOk } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   titlebar: {

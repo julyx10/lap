@@ -1,12 +1,12 @@
 <template>
 
-  <div class="w-screen h-screen flex flex-col overflow-hidden select-none">
+  <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70">
     <!-- Title Bar -->
     <TitleBar :titlebar="$t('settings')" :resizable="false" viewName="Settings"/>
 
     <!-- Main Content -->
     <div 
-      class="flex-1 flex p-4 t-color-bg t-color-text overflow-auto t-scrollbar-dark" 
+      class="flex-1 flex p-4 overflow-auto" 
       @contextmenu.prevent
     >
       <!-- Tabs -->
@@ -15,8 +15,8 @@
           v-for="(tab, index) in ['settings_general', 'settings_thumbnail', 'settings_image_viewer', 'settings_about']"
           :key="index"
           :class="[
-            'mb-4 px-1 border-l-2 border-transparent cursor-pointer', 
-            config.settingsTabIndex === index ? 't-color-text-selected t-color-border-selected transition-colors duration-300' : '',
+            'mb-4 px-1 border-l-2 cursor-pointer', 
+            config.settingsTabIndex === index ? 'text-base-content border-primary transition-colors duration-300' : 'border-transparent ',
           ]"
           @click="config.settingsTabIndex = index"
         >
@@ -32,12 +32,11 @@
           <!-- Appearance -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings_general_appearance') }}</label>
-            <select id="mouse-wheel" v-model="config.appearance" class="t-select">
+            <select id="mouse-wheel" class="select" v-model="config.appearance">
               <option 
                 v-for="(item, index) in appearanceOptions" 
                 :key="index" 
                 :value="item.value" 
-                class="t-option"
               >
                 {{ item.label }}
               </option>
@@ -47,11 +46,10 @@
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
             <label for="language-select">{{ $t('settings_general_select_language') }}</label>
-            <select id="language-select" v-model="config.language" class="t-select">
+            <select id="language-select" class="select" v-model="config.language">
               <option v-for="(lang, index) in languages" 
                 :key="index" 
                 :value="lang.value"
-                class="t-option"
               >
                 {{ lang.label }}
               </option>
@@ -61,25 +59,23 @@
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
-            <Switch v-model="config.showButtonText" />
+            <input type="checkbox" class="toggle" v-model="config.showButtonText" />
           </div>
-          
-          <!-- Show sub-folders in album -->
-          <!-- <div class="flex items-center justify-between mb-4">
-            <label for="show-sub-folder" >{{ $t('settings_general_show_sub_folder') }}</label>
-            <Switch v-model="config.showSubFolder" />
-          </div> -->
-
+          <!-- Show button tooltip -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-tool-tip" >{{ $t('settings_general_show_tool_tip') }}</label>
+            <input type="checkbox" class="toggle" v-model="config.showToolTip" />
+          </div>
           <!-- Show status bar -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-status-bar" >{{ $t('settings_general_show_status_bar') }}</label>
-            <Switch v-model="config.showStatusBar" />
+            <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
           </div>
-
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings_general_debug_mode') }}</label>
-            <Switch v-model="config.debugMode" />
+            <input type="checkbox" class="toggle" v-model="config.debugMode" />
+
           </div>
 
         </section>
@@ -102,11 +98,10 @@
           <!-- Thumbnail Image Scaling -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_image-select">{{ $t('settings_thumbnail_scaling') }}</label>
-            <select id="thumbnail_image-select" v-model="config.thumbnailScalingOption" class="t-select">
+            <select id="thumbnail_image-select" class="select" v-model="config.thumbnailScalingOption">
               <option v-for="(option, index) in thumbnailIScalingOptions" 
                 :key="index" 
                 :value="option.value"
-                class="t-option"
               >
                 {{ option.label }}
               </option>
@@ -116,11 +111,10 @@
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_primary-select">{{ $t('settings_thumbnail_label_primary') }}</label>
-            <select id="thumbnail_primary-select" v-model="config.thumbnailLabelPrimaryOption" class="t-select">
+            <select id="thumbnail_primary-select" class="select" v-model="config.thumbnailLabelPrimaryOption">
               <option v-for="(option, index) in thumbnailLabelOptions" 
                 :key="index" 
                 :value="option.value"
-                class="t-option"
               >
                 {{ option.label }}
               </option>
@@ -130,11 +124,10 @@
           <!-- Secondary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="thumbnail_secondary-select">{{ $t('settings_thumbnail_label_secondary') }}</label>
-            <select id="thumbnail_secondary-select" v-model="config.thumbnailLabelSecondaryOption" class="t-select">
+            <select id="thumbnail_secondary-select" class="select" v-model="config.thumbnailLabelSecondaryOption">
               <option v-for="(option, index) in thumbnailLabelOptions" 
                 :key="index" 
                 :value="option.value"
-                class="t-option"
               >
                 {{ option.label }}
               </option>
@@ -149,12 +142,11 @@
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings_image_viewer_mouse_wheel') }}</label>
-            <select id="mouse-wheel" v-model="config.mouseWheelMode" class="t-select">
+            <select id="mouse-wheel" class="select" v-model="config.mouseWheelMode">
               <option 
                 v-for="(item, index) in wheelOptions" 
                 :key="index" 
                 :value="item.value" 
-                class="t-option"
               >
                 {{ item.label }}
               </option>
@@ -163,11 +155,11 @@
 
           <!-- auto play interval -->
           <div class="flex items-center justify-between mb-4">
-            <label for="autoplay-interval" >{{ $t('settings_image_viewer_autoplay_interval', {second: config.autoPlayInterval}) }}</label>
+            <label for="autoplay-interval" >{{ $t('settings_image_viewer_autoplay_interval', { second: getPlayInterval(config.autoPlayInterval) }) }}</label>
             <SliderInput 
               v-model="config.autoPlayInterval" 
-              :min="1" 
-              :max="30" 
+              :min="0" 
+              :max="5" 
               :step="1" 
               label=""
             />
@@ -214,7 +206,7 @@
                       type="text"
                       :value="storageFileInfo.file_path"
                       readonly
-                      class="py-1 w-full t-input-color-bg border-none focus:border-none focus:ring-0 focus:outline-none"
+                      class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
                     />
                    </td>
                 </tr>
@@ -244,10 +236,9 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
-import { config, formatFileSize } from '@/common/utils';
+import { config, setTheme, getPlayInterval, formatFileSize } from '@/common/utils';
 import { getPackageInfo, getBuildTime, getStorageFileInfo } from '@/common/api';
 
-import Switch from '@/components/Switch.vue'
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
 
@@ -270,10 +261,10 @@ const languages = [
 
 const appearanceOptions = computed(() => {
   const options = localeMsg.value.settings_general_appearance_options;
-  return [
-    { label: options[0], value: 0 },    // light
-    { label: options[1], value: 1 },   // dark
-  ];
+  return Array.from({ length: options.length }, (_, i) => ({
+    label: options[i],
+    value: i,
+  }));
 });
 
 // Define the wheel options using computed to react to language changes
@@ -336,11 +327,7 @@ watch(() => config.settingsTabIndex, (newValue) => {
 
 // general settings
 watch(() => config.appearance, (newValue) => {
-  if (newValue === 0) {    // light mode
-    document.documentElement.setAttribute('data-theme', 'light');
-  } else if (newValue === 1) { // dark mode
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
+  setTheme(newValue);
   emit('settings-appearance-changed', newValue);
 });
 watch(() => config.language, (newValue) => {
@@ -350,8 +337,8 @@ watch(() => config.language, (newValue) => {
 watch(() => config.showButtonText, (newValue) => {
   emit('settings-showButtonText-changed', newValue);
 });
-watch(() => config.showSubFolder, (newValue) => {
-  emit('settings-showSubFolder-changed', newValue);
+watch(() => config.showToolTip, (newValue) => {
+  emit('settings-showToolTip-changed', newValue);
 });
 watch(() => config.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);

@@ -10,8 +10,8 @@
       v-model="inputValue"
       :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('search_placeholder') : '')"
       :class="[
-        'py-1 w-full text-sm border rounded-md t-input-color-bg t-color-border t-input-focus transition-colors duration-300',
-        isFocused || searchValue.length > 0 ? 'px-8' : 'px-2 cursor-pointer t-color-border-group-hover '
+        'py-1 h-8 w-full text-sm input',
+        isFocused || searchValue.length > 0 ? 'px-8 border-base-content/70' : 'px-2 border-base-content/30 hover:border-base-content/70'
       ]"
       @focus="isFocused = true"
       @blur="handleBlur"
@@ -20,23 +20,23 @@
 
     <!-- Search Icon (Inside input when focused) -->
     <IconSearch
-      class="absolute left-2 top-1/2 transform -translate-y-1/2 t-icon-size-sm t-icon-group-hover"
+      class="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 hover:text-base-content/70"
       @click="focusInput"
     />
-
     <!-- Cancel Icon (Only show when there's input) -->
     <IconClose v-if="searchValue.length > 0" 
-      class="absolute right-2 top-1/2 transform -translate-y-1/2 t-icon-size-sm t-icon-group-hover"
+      class="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 hover:text-base-content/70"
       @click="clickCancel"
     />
   </div>
 
 </template>
 
-
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { IconClose, IconSearch } from '@/common/icons';
+
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   modelValue: {

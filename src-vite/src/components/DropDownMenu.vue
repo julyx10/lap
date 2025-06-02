@@ -2,42 +2,37 @@
   <div ref="dropdown" class="relative inline-block text-left">
 
     <!-- Dropdown Trigger -->
-    <component 
-      :is="iconMenu" 
-      :class="[
-        smallIcon ? 't-icon-size-sm' : 't-icon-size', 
-        isDropDown ? 't-icon-selected' : '',
-        disabled ? 't-icon-disabled' : 't-icon-hover'
-      ]" 
-      @click="toggleDropdown"
+    <TButton
+      :icon="iconMenu"
+      :buttonSize="smallIcon ? 'small' : 'medium'"
+      :disabled="disabled"
+      @click="toggleDropdown" 
     />
-
     <!-- Dropdown Menu -->
     <teleport to="body">
       <transition name="fade">
         <div v-if="isDropDown" 
           ref="menu"
-          class="absolute rounded-md shadow-lg t-color-bg-light border t-color-border z-50"
+          class="menu text-base-content/70 bg-base-100 border border-base-content/30 absolute rounded-box shadow-lg z-50"
           :style="menuStyle"
         >
           <!-- menu items -->
-            <button v-for="(item, index) in menuItems"
-              :class="[
-                'pl-2 pr-4 w-full flex flex-row justify-between text-sm whitespace-nowrap', 
-                item.disabled ? 't-color-text-disabled' : 't-color-bg-hover t-color-text-hover cursor-pointer',
-                item.label === '-' ? 'border-t t-color-border' : 'py-1 t-color-text'
-              ]"
-              :key="index"
-              @click="handleClick(item)"
-            >
-              <template v-if="item.label !== '-'">
-                <div class="t-icon-size-sm mr-2">
-                  <component :is="item.icon" ></component>
-                </div>
-                <span>{{ item.label }}</span>
-                <span class="pl-4 ml-auto">{{ item.shortcut }}</span>
-              </template>
-            </button>
+          <button v-for="(item, index) in menuItems"
+            :class="[
+              item.label === '-' ? 'mx-2 my-1 border-t border-base-content/30' : 'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
+              item.disabled ? 'text-base-content/30' : 'hover:bg-base-content/10 hover:rounded cursor-pointer',
+            ]"
+            :key="index"
+            @click="handleClick(item)"
+          >      
+            <div v-if="item.label !== '-'" class="w-full flex items-center">
+              <div class="w-5">
+                <component class="w-5 h-5" :is="item.icon" ></component>
+              </div>
+              <span class="ml-2 mr-4">{{ item.label }}</span>
+              <span class="ml-auto text-base-content/30">{{ item.shortcut }}</span>
+            </div>
+          </button>
         </div>
       </transition> 
     </teleport>
@@ -49,7 +44,9 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 
-  // Props
+import TButton from '@/components/TButton.vue';
+
+// Props
 const props = defineProps({
   iconMenu : {
     type: Object, // SVG is typically imported as an object

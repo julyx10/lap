@@ -1,6 +1,6 @@
 <template>
   <div ref="scrollContainer" 
-    class="mb-1 flex-1 overflow-auto t-scrollbar focus:outline-none" 
+    class="mb-1 flex-1 overflow-auto focus:outline-none" 
     tabindex="0" 
     @focus="isFocus = true"
     @blur="isFocus = false"
@@ -15,9 +15,8 @@
         :key="index"
         :id="'item-' + index"
         :class="[
-          'p-1 border-2 rounded-lg hover:text-gray-300 hover:bg-gray-600 cursor-pointer transition duration-200 group', 
-          !selectMode && index === selectedIndex ? 'border-sky-500' : 'border-gray-800',
-          selectMode && file.isSelected ? 'border-sky-500' : 'border-gray-800',
+          'p-1 border-2 rounded-lg hover:bg-base-100 cursor-pointer transition duration-200 group',
+          (selectMode ? file.isSelected : index === selectedIndex) ? 'border-primary' : 'border-base-300',
         ]"
         @click="clickItem(index)"
         @dblclick="openItem()"
@@ -39,10 +38,10 @@
             loading="lazy"
           />
           <div v-else 
-            class="rounded flex items-center justify-center"
+            class="skeleton rounded flex items-center justify-center"
             :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
           >
-            <IconPhoto class="size-1/2"/>
+            <!-- <IconPhoto class="size-1/2"/> -->
           </div>
           <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
           <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
@@ -65,7 +64,7 @@
           <div class="absolute right-0 top-0 flex items-center">
             <component v-if="selectMode"
               :is="file?.isSelected ? IconChecked : IconUnChecked" 
-              :class="['t-icon-size-sm t-icon-hover', file?.isSelected ? 'text-sky-500' : 'text-gray-500']" 
+              :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-gray-500']" 
               @click.stop="selectItem(index)"
             />
             <DropDownMenu v-else
@@ -108,7 +107,7 @@ import {
   IconCopy,
   IconRename,
   IconMoveTo,
-  IconDelete,
+  IconTrash,
   IconGoto,
   IconPhoto,
   IconVideo,
@@ -212,8 +211,8 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_delete,
-      icon: IconDelete,
+      label: localeMsg.value.menu_item_trash,
+      icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
         deleteItem();

@@ -1,7 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useConfigStore } from '@/stores/configStore';
 import { separator, openFolderDialog, localeComp } from '@/common/utils';
-import { format } from 'date-fns';
 
 const config = useConfigStore();
 
@@ -550,9 +549,9 @@ export async function getCameraInfo() {
 }
 
 // get taken dates
-export async function getTakenDates() {
+export async function getTakenDates(ascending = true) {
   try {
-    const taken_dates = await invoke('get_taken_dates');
+    const taken_dates = await invoke('get_taken_dates', { ascending });
     if (taken_dates) {
       return taken_dates;
     }

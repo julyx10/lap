@@ -5,8 +5,8 @@
     <!-- title -->
     <div 
       :class="[
-        'mt-2 px-2 border rounded-full t-color-bg-hover text-nowrap cursor-pointer',
-        isSelected(year, month, -1) ? 'border-sky-500' : 'border-transparent'
+        'mt-2 px-2 border-2 rounded-full hover:bg-base-content/10 text-nowrap cursor-pointer',
+        isSelected(year, month, -1) ? 'border-primary' : 'border-transparent'
       ]"
       @click="clickDate(year, month, -1)"
     >
@@ -19,16 +19,13 @@
       <div
         v-for="d in monthDates"
         :key="d.date"
-        class="size-8 flex items-center justify-center border rounded-full t-color-bg-hover cursor-pointer"
+        class="size-8 flex items-center justify-center border-2 rounded-full "
         :class="[
-          {
-            'bg-sky-900': isTodayFn(d.date),
-            'border-sky-500': isSelected(year, month, d.date),
-            'border-transparent': !isSelected(year, month, d.date),
-          },
-          d.count > 0 ? 't-color-text' : 't-color-text-dark'
+          isSelected(year, month, d.date) ? 'border-primary' : 'border-transparent',
+          d.count === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/10 cursor-pointer',
+          isTodayFn(d.date) ? 'bg-base-100' : '',
         ]"
-        @click="clickDate(year, month, d.date)"
+        @click="d.count > 0 ? clickDate(year, month, d.date): null"
       >
         {{ Number(d.date) }}
       </div>

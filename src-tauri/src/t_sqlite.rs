@@ -186,6 +186,8 @@ pub struct AFolder {
     pub is_favorite: Option<bool>,  // is favorite
     pub created_at: Option<u64>,  // folder create time
     pub modified_at: Option<u64>, // folder modified time
+    pub deleted_at: Option<u64>,   // deleted time (soft delete)
+
 }
 
 impl AFolder {
@@ -201,6 +203,7 @@ impl AFolder {
             is_favorite: None,
             created_at: file_info.created,
             modified_at: file_info.modified,
+            deleted_at: None,
         })
     }
 
@@ -215,6 +218,7 @@ impl AFolder {
             is_favorite: row.get(5)?,
             created_at: row.get(6)?,
             modified_at: row.get(7)?,
+            deleted_at: row.get(8)?,
         })
     }
     
@@ -223,7 +227,7 @@ impl AFolder {
         let conn = open_conn()?;
         let result = conn
             .query_row(
-                "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at
+                "SELECT a.id, a.album_id, a.parent_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at, a.deleted_at
                 FROM afolders a
                 WHERE a.path = ?1",
                 params![folder_path],
@@ -238,8 +242,8 @@ impl AFolder {
         let conn = open_conn()?;
         let result = conn
             .execute(
-                "INSERT INTO afolders (album_id, parent_id, name, path, is_favorite, created_at, modified_at) 
-                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                "INSERT INTO afolders (album_id, parent_id, name, path, is_favorite, created_at, modified_at, deleted_at) 
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
                     self.album_id,
                     self.parent_id,
@@ -247,7 +251,8 @@ impl AFolder {
                     self.path,
                     self.is_favorite,
                     self.created_at,
-                    self.modified_at
+                    self.modified_at,
+                    self.deleted_at
                 ],
             )
             .map_err(|e| e.to_string())?;
@@ -354,7 +359,7 @@ impl AFolder {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT id, album_id, parent_id, name, path, is_favorite, created_at, modified_at 
+                "SELECT id, album_id, parent_id, name, path, is_favorite, created_at, modified_at, deleted_at
                 FROM afolders WHERE is_favorite = 1",
             )
             .map_err(|e| e.to_string())?;
@@ -781,35 +786,31 @@ impl AFile {
     }
 
     /// get all taken dates from db
-    pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
+    pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn()?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT taken_date, count(1) 
+        
+        let order_clause = if ascending { "ASC" } else { "DESC" };
+        let query = format!(
+            "SELECT taken_date, COUNT(1) 
             FROM afiles 
             WHERE taken_date IS NOT NULL
             GROUP BY taken_date
-            ORDER BY taken_date ASC",
-            )
-            .map_err(|e| e.to_string())?;
+            ORDER BY taken_date {}",
+            order_clause
+        );
 
-        // Execute the query and collect results
-        let taken_dates_iter = stmt
+        let mut stmt = conn
+            .prepare(&query)
+            .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+        // Use collect() to simplify result collection
+        let results: Vec<(String, i64)> = stmt
             .query_map(params![], |row| {
-                let date: String = row.get(0)?;
-                let count: i64 = row.get(1)?;
-                Ok((date, count))
+                Ok((row.get(0)?, row.get(1)?))
             })
-            .map_err(|e| e.to_string())?;
-
-        // Collect the results into a vector
-        let mut results = Vec::new();
-        for row in taken_dates_iter {
-            match row {
-                Ok((date, value)) => results.push((date, value)),
-                Err(e) => return Err(format!("Failed to retrieve row: {}", e)),
-            }
-        }
+            .map_err(|e| format!("Query execution failed: {}", e))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Failed to process rows: {}", e))?;
 
         Ok(results)
     }
@@ -1159,6 +1160,7 @@ pub fn create_db() -> Result<String> {
             is_favorite INTEGER,
             created_at INTEGER,
             modified_at INTEGER,
+            deleted_at INTEGER,
             FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
         )",
         [],

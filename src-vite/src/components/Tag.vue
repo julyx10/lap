@@ -7,12 +7,12 @@
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
 
       <div class="flex">
-        <IconRefresh class="t-icon-size-sm t-icon-hover" @click="clickReload"/>
+        <TButton :icon="IconRefresh" @click="clickReload"/>
       </div>
     </div>
     
     <!-- people -->
-    <div class="grow overflow-auto t-scrollbar">
+    <div class="grow overflow-auto">
     </div>  
 
   </div>
@@ -22,6 +22,8 @@
 
 <script setup lang="ts">
 import { IconRefresh } from '@/common/icons';
+
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   titlebar: {

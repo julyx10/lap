@@ -5,7 +5,7 @@
     </label>
     <input
       type="range"
-      class="w-full h-1 rounded-full t-color-bg-selected appearance-none cursor-pointer accent-gray-400"
+      class="range range-xs [--range-fill:0]"
       v-model="sliderValue"
       :id="id"
       :min="min"

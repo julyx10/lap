@@ -1,13 +1,18 @@
 <template>
     
-  <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
-    <div class="min-w-96 min-h-96 max-w-[50%] max-h-[80%] p-4 flex flex-col t-color-bg-light border t-color-border rounded-lg shadow-lg overflow-auto t-scrollbar">
+  <dialog id="moveToDialog" class="modal">
+
+    <div class="min-w-96 min-h-96 max-w-[50%] max-h-[80%] p-4 flex flex-col text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
 
       <!-- titlebar -->
       <div class="mb-2 flex items-center justify-between">
         {{ title }}
         <!-- {{ title }} {{ config.destFolderPath? '\'' + config.destFolderPath + '\'' : '' }} -->
-        <IconClose class="ml-2 t-icon-size-sm t-icon-hover" @click="clickCancel" />
+        <TButton
+          :icon="IconClose"
+          :buttonSize="'small'"
+          @click="clickCancel"
+        />
       </div>
 
       <!-- message -->
@@ -16,41 +21,34 @@
       </div>
 
       <!-- select album and folder -->
-      <AlbumList ref="albumListRef" 
-        v-model:albumId="config.destAlbumId"
-        v-model:folderId="config.destFolderId"
-        v-model:folderPath="config.destFolderPath"
-        :componentId="1"
-      />
+      <div class="border border-base-content/10 pl-1 rounded overflow-auto">
+        <AlbumList ref="albumListRef" 
+          v-model:albumId="config.destAlbumId"
+          v-model:folderId="config.destFolderId"
+          v-model:folderPath="config.destFolderPath"
+          :componentId="1"
+        />
+      </div>
 
       <!-- action buttons -->
       <div class="mt-4 flex justify-end space-x-4">
-        <!-- <button v-if="cancelText.length > 0" 
-          :class="[
-            'mr-auto px-4 py-1 rounded-full t-color-bg-light text-nowrap',
-            config.destAlbumId > 0 ? 't-color-bg-highlight-hover t-icon-hover' : 't-icon-disabled'
-          ]"
-          @click="clickNewFolder"
-        >{{$t('msgbox_new_folder_title')}}</button> -->
-
         <button v-if="cancelText.length > 0" 
-          class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover t-icon-animate cursor-pointer text-nowrap" 
+          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
           @click="clickCancel"
         >{{ cancelText }}</button>
 
         <button 
           :class="[
-            'px-4 py-1 rounded-full t-color-bg-light text-nowrap', 
-            config.destAlbumId > 0 ? 't-color-bg-highlight-hover t-icon-hover' : 't-icon-disabled'
+            'px-4 py-1 rounded-lg', 
+            config.destAlbumId > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default'
           ]" 
           @click="clickOk"
         >{{ OkText }}</button>
-
       </div>
 
     </div>
 
-  </div>
+  </dialog> 
 
 </template>
 
@@ -60,6 +58,7 @@ import { config } from '@/common/utils';
 
 import { IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   title: {
@@ -83,6 +82,8 @@ const props = defineProps({
 const emit = defineEmits(['ok', 'cancel']);
 
 onMounted(() => {
+  moveToDialog.showModal();
+
   window.addEventListener('keydown', handleKeyDown);
 });
 

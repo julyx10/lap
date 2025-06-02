@@ -8,7 +8,7 @@
         <TButton :icon="IconRefresh" @click="clickReload"/>
       </div>
       
-      <!-- favorite files -->
+      <!-- trash files -->
       <div 
         :class="[ 
           'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
@@ -18,17 +18,17 @@
         ]"
         @click="clickFavoriteFiles()"
       >
-        <IconFavorite
+        <IconTrash
           class="mx-1 h-5 shrink-0"
         />
         <div class="overflow-hidden whitespace-pre text-ellipsis">
-          {{ $t('favorite_files') }}
+          {{ $t('trash_files') }}
         </div>
       </div>
 
-      <!-- favorite folders -->
+      <!-- trash folders -->
       <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default">
-        {{ $t('favorite_folders') }}
+        {{ $t('trash_folders') }}
       </div>
       <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
         <ul>
@@ -42,7 +42,7 @@
               ]"
               @click="clickFavoriteFolder(folder)"
             >
-              <IconFolderFavorite
+              <IconFolderTrash
                 class="mx-1 h-5 shrink-0"
               />
               <div class="overflow-hidden whitespace-pre text-ellipsis">
@@ -84,8 +84,8 @@ import TButton from '@/components/TButton.vue';
 
 import { 
   IconRefresh, 
-  IconFavorite, 
-  IconFolderFavorite,
+  IconTrash, 
+  IconFolderTrash,
   IconMore,
   IconUnFavorite, 
 } from '@/common/icons';

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
+  /* themes: light --default, dark --prefersdark; */
+  themes: all;
   root: ":root";
   include: ;
   exclude: ;
@@ -8,6 +9,38 @@
   logs: true;
 }
 
-@utility btn {
-  @apply btn-ghost rounded-full;
+@utility input {
+  @apply h-8 border-1 focus:border-2 focus:outline-none focus:border-primary focus:rounded;
+}
+
+@utility textarea {
+  @apply border-1 focus:border-2 focus:outline-none focus:border-primary focus:rounded;
+}
+
+@utility select {
+  @apply h-8 w-fit focus:outline-none;
+}
+
+/* icon */
+.t-icon-size-xs {
+  @apply w-4 h-4;
+}
+.t-icon-size-sm {
+  @apply w-5 h-5;
+}
+.t-icon-size {
+  @apply w-6 h-6;
+}
+.t-icon-size-lg {
+  @apply w-8 h-8;
+}
+
+/* animation */
+.t-icon-animate {
+  @apply transition-colors duration-300;
+}
+
+/* window titlebar btn */
+.t-window-btn {
+  @apply p-3 w-12 h-10 text-gray-400 hover:text-gray-100 hover:bg-gray-700 transition-colors duration-300 cursor-pointer;
 }

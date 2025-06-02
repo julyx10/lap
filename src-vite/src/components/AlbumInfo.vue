@@ -1,92 +1,98 @@
 <template>
 
-  <div class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-50 backdrop-blur-0">
-    <div class="w-96 p-4 t-color-bg-light border t-color-border rounded-lg shadow-lg">
+  <dialog id="albumInfoDialog" class="modal">
+    <div class="w-96 p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
 
-      <!-- title -->
-      <div class="mb-2 flex items-center justify-between">
-        {{ $t('album_info_title') }}
-        <IconClose class="t-icon-size-sm t-icon-hover" @click="clickCancel" />
-      </div>
+        <!-- title bar -->
+        <div class="mb-2 flex items-center justify-between">
+          {{ $t('album_info_title') }}
+          <TButton
+            :icon="IconClose"
+            :buttonSize="'small'"
+            @click="clickCancel"
+          />
+        </div>
 
-      <!-- two colums table -->
-      <table class="mt-4 w-full text-sm text-nowrap">
-        <tbody>
-          <tr>
-            <td>{{ $t('album_info_name') }}</td>
-            <td>
-              <input
-                ref="inputNameRef"
-                v-model="inputNameValue"
-                type="text"
-                maxlength="255"
-                class="px-2 py-1 w-full border rounded-md t-input-color-bg t-color-border t-input-focus"
-                @input="validateInput"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>{{ $t('album_info_description') }}</td>
-            <td>
-              <textarea
-                v-model="inputDescriptionValue"
-                rows="2"
-                maxlength="1024"
-                :placeholder="$t('album_info_description_placeholder')"
-                class="px-2 py-1 mt-2 w-full border rounded-md t-input-color-bg t-color-border t-input-focus t-scrollbar-dark resize-y min-h-[30px] max-h-[200px]"
-              ></textarea>
-            </td>
-          </tr>
-          <tr class="h-8">
-            <td>{{ $t('album_info_folder') }}</td>
-            <td>
-              <input
-                type="text"
-                readonly
-                :value="albumPath"
-                class="py-1 w-full t-input-color-bg border-none focus:border-none focus:ring-0 focus:outline-none"
-              />
-            </td>
-          </tr>
-          <tr class="h-8">
-            <td>{{ $t('album_info_images') }}</td>
-            <td>{{ totalImageCount >= 0 ? $t('album_info_files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album_info_files_counting') }}</td>
-          </tr>
-          <tr class="h-8">
-            <td>{{ $t('album_info_videos') }}</td>
-            <td>{{ totalVideoCount >= 0 ? $t('album_info_files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album_info_files_counting') }}</td>
-          </tr>
-          <tr class="h-8">
-            <td>{{ $t('album_info_created_time') }}</td>
-            <td>{{ createdAt }}</td>
-          </tr>
-          <!-- <tr class="h-8">
-            <td>{{ $t('album_info_modified_time') }}</td>
-            <td>{{ modifiedAt }}</td>
-          </tr> -->
-        </tbody>
-      </table>
+        <!-- two colums table -->
+        <table class="mt-4 w-full text-sm text-nowrap">
+          <tbody>
+            <tr>
+              <td>{{ $t('album_info_name') }}</td>
+              <td>
+                <input
+                  ref="inputNameRef"
+                  v-model="inputNameValue"
+                  type="text"
+                  maxlength="255"
+                  class="px-2 py-1 w-full input"
+                  @input="validateInput"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>{{ $t('album_info_description') }}</td>
+              <td>
+                <textarea
+                  v-model="inputDescriptionValue"
+                  rows="2"
+                  maxlength="1024"
+                  :placeholder="$t('album_info_description_placeholder')"
+                  class="px-2 py-1 mt-2 w-full textarea min-h-[30px] max-h-[200px]"
+                ></textarea>
+              </td>
+            </tr>
+            <tr class="h-8">
+              <td>{{ $t('album_info_folder') }}</td>
+              <td>
+                <input
+                  type="text"
+                  readonly
+                  :value="albumPath"
+                  class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
+                />
+              </td>
+            </tr>
+            <tr class="h-8">
+              <td>{{ $t('album_info_images') }}</td>
+              <td>{{ totalImageCount >= 0 ? $t('album_info_files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album_info_files_counting') }}</td>
+            </tr>
+            <tr class="h-8">
+              <td>{{ $t('album_info_videos') }}</td>
+              <td>{{ totalVideoCount >= 0 ? $t('album_info_files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album_info_files_counting') }}</td>
+            </tr>
+            <tr class="h-8">
+              <td>{{ $t('album_info_created_time') }}</td>
+              <td>{{ createdAt }}</td>
+            </tr>
+            <!-- <tr class="h-8">
+              <td>{{ $t('album_info_modified_time') }}</td>
+              <td>{{ modifiedAt }}</td>
+            </tr> -->
+          </tbody>
+        </table>
 
-      <!-- buttons -->
-      <div class="mt-2 flex justify-end space-x-4">
-        <button 
-          class="px-4 py-1 rounded-full t-color-bg-light t-color-bg-hover t-icon-hover" 
-          @click="clickCancel"
-        >
-          {{ $t('msgbox_cancel')  }}
-        </button>
-        <button 
-          :class="['px-4 py-1 rounded-full t-color-bg-light', 
-            okButtonClasses
-          ]" 
-          @click="clickOk"
-        >
-          {{ $t('msgbox_ok')  }}
-        </button>
-      </div>
+        <!-- cancel and OK buttons -->
+        <div class="mt-2 flex justify-end space-x-4">
+          <button 
+            class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+            @click="clickCancel"
+          >
+            {{ $t('msgbox_cancel') }}
+          </button>
+          <button 
+            :class="[
+              'px-4 py-1 rounded-lg', 
+              inputNameValue.trim().length > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default',
+            ]" 
+            @click="clickOk"
+          >
+            {{ $t('msgbox_ok') }}
+          </button>
+        </div>
 
     </div>
-  </div>
+
+  </dialog>
 
 </template>
 
@@ -98,6 +104,8 @@ import { countFolder } from '@/common/api';
 import { formatFileSize } from '@/common/utils';
 
 import { IconClose } from '@/common/icons';
+
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   inputName: { 
@@ -122,10 +130,6 @@ const props = defineProps({
   },
 });
 
-/// i18n
-// const { locale, messages } = useI18n();
-// const localeMsg = computed(() => messages.value[locale.value]);
-
 const emit = defineEmits(['ok', 'cancel']);
 
 // input 
@@ -140,12 +144,9 @@ const totalImageSize = ref(-1);
 const totalVideoCount = ref(0);
 const totalVideoSize = ref(0);
 
-const okButtonClasses = computed(() => {
-  return inputNameValue.value.trim().length > 0
-    ? 't-color-bg-highlight-hover t-icon-hover' : 't-icon-disabled';
-});
-
 onMounted(() => {
+  albumInfoDialog.showModal();
+
   window.addEventListener('keydown', handleKeyDown);
   inputNameRef.value?.focus();
 
@@ -179,7 +180,7 @@ function handleKeyDown(event) {
 
 const clickOk = () => {
   if (inputNameValue.value.trim().length > 0) {
-    emit('ok', inputNameValue.value, inputDescriptionValue.value);
+    emit('ok', inputNameValue.value, inputDescriptionValue.value ? inputDescriptionValue.value : '');
   }
 };
 

@@ -22,6 +22,24 @@ export const isMac = getOS() === 'mac';
 export const isWin = getOS() === 'win';
 export const separator = isWin ? '\\' : '/';
 
+/// set the theme
+export function setTheme(themeId: number) {
+  const htmlElement = document.documentElement;
+  const theme = [
+    'light', 'dark', 'cupcake', 'bumblebee', 'emerald', 'corporate',
+    'synthwave', 'retro', 'cyberpunk', 'valentine', 'halloween', 'garden',
+    'forest', 'aqua', 'lofi', 'pastel', 'fantasy', 'wireframe', 'black',
+    'luxury', 'dracula', 'cmyk', 'autumn', 'business', 'acid', 'lemonade',
+    'night', 'coffee', 'winter', 'dim', 'nord', 'sunset'
+  ][themeId];
+  htmlElement.setAttribute('data-theme', theme);
+}
+
+/// get the seconds of auto play interval
+export function getPlayInterval(): number {
+  return [1, 3, 5, 10, 30, 60][config.autoPlayInterval] || 1;
+}
+
 /// format timestamp to string
 export function formatTimestamp(timestamp: number, formatStr: string): string {
   return format(new Date(timestamp * 1000), formatStr);

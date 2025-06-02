@@ -1,17 +1,17 @@
 <template>
   
-  <div class="w-screen h-screen flex flex-col overflow-hidden">
+  <div class="w-screen h-screen flex flex-col overflow-hidden select-none text-base-content/70">
     <!-- Title Bar -->
     <TitleBar v-if="isWin" titlebar="jc-photo" viewName="Home"/>
 
     <!-- Main Content -->
-    <div class="flex-1 flex t-color-bg t-color-text overflow-hidden">
+    <div class="flex-1 flex overflow-hidden">
 
       <!-- left toolbar -->
       <div tabindex="-1"
         ref="divToolbar" 
         :class="[
-          'pt-10 pb-4 z-10 flex flex-col justify-between t-color-bg',
+          'pt-10 pb-4 z-10 flex flex-col justify-between bg-base-200',
           isWin ? 'pt-4' : 'pt-10'
         ]" 
         style="user-select: none; min-width: 68px;"
@@ -19,31 +19,31 @@
         data-tauri-drag-region
       >
         <!-- toolbar items -->
-        <div class="flex flex-col items-center space-y-6" data-tauri-drag-region>
-          <div v-for="(item, index) in toolbars" 
-            class="flex flex-col items-center t-icon-hover" 
-            :key="index" 
-            @click="clickToolbarItem(index)"
-          >
-            <component 
-              :is="item.icon" 
-              :class="['t-icon-size', config.toolbarIndex === index ? 't-icon-focus' : '']" 
-            />
-            <p v-if="config.showButtonText" 
-              :class="['text-xs', config.toolbarIndex === index ? 't-color-text-focus' : '']">
-              {{ item.text }}
-            </p>
+        <div class="h-full flex flex-col items-center" data-tauri-drag-region>
+
+          <div class="space-y-2" >
+            <div v-for="(item, index) in toolbars" 
+              :key="index" 
+              @click="clickToolbarItem(index)"
+            >
+              <TButton 
+                :buttonSize="'large'" 
+                :icon="item.icon" 
+                :text="item.text" 
+                :selected="config.toolbarIndex === index"
+                @click="$emit('clickToolbarItem', index)"
+              />
+            </div>
           </div>
+
+          <TButton class="mt-auto"
+            :buttonSize="'large'" 
+            :icon="IconSettings" 
+            :text="$t('settings')" 
+            @click="clickSettings"
+          />
         </div>
 
-        <!-- settings icon -->
-        <div class="flex flex-col items-center t-icon-hover" @click="clickSettings" data-tauri-drag-region>
-          <IconSettings :class="['t-icon-size']"  />
-          <p v-if="config.showButtonText" 
-              class="text-xs">
-              {{ $t('settings') }}
-            </p>
-        </div>
       </div>
 
       <!-- left pane -->
@@ -56,7 +56,7 @@
         leave-to-class="-translate-x-full"
       >
         <div v-show="config.toolbarIndex > 0 && showLeftPane" 
-          class="w-96 min-w-32 py-1 flex" 
+          class="w-96 min-w-32 py-1 flex bg-base-200" 
           :style="{ width: config.leftPaneWidth + 'px' }"
         >
           <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
@@ -64,14 +64,15 @@
           <Tag      v-show="config.toolbarIndex === 3" :titlebar="$t('tag')"/>
           <Calendar v-show="config.toolbarIndex === 4" :titlebar="$t('calendar')"/>
           <Location v-show="config.toolbarIndex === 5" :titlebar="$t('location')"/>
-          <People   v-show="config.toolbarIndex === 6" :titlebar="$t('people')"/>
-          <Camera   v-show="config.toolbarIndex === 7" :titlebar="$t('camera')"/>
+          <!-- <People   v-show="config.toolbarIndex === 6" :titlebar="$t('people')"/> -->
+          <Camera   v-show="config.toolbarIndex === 6" :titlebar="$t('camera')"/>
+          <Trash    v-show="config.toolbarIndex === 7" :titlebar="$t('trash')"/>
         </div>
       </transition>
       
       <!-- splitter -->
       <div v-if="config.toolbarIndex > 0" 
-        class="w-1 hover:bg-sky-700 cursor-ew-resize transition-colors" 
+        class="w-1 hover:bg-primary cursor-ew-resize transition-colors bg-base-300" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
       ></div>
@@ -79,7 +80,7 @@
       <!-- content area -->
       <div 
         :class="[
-          'flex-1 flex relative t-color-bg-light',
+          'flex-1 flex relative bg-base-300',
           isWin ? 'rounded-tl-lg' : '',
         ]"
       >
@@ -98,14 +99,16 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { config, isWin, isMac } from '@/common/utils';
 
 // vue components
-import TitleBar from '@/components/TitleBar.vue';
 import Album from '@/components/Album.vue';
 import Favorite from '@/components/Favorite.vue';
 import Tag from '@/components/Tag.vue';
 import Calendar from '@/components/Calendar.vue';
-import Camera from '@/components/Camera.vue';
 import Location from '@/components/Location.vue';
-import People from '@/components/People.vue';
+// import People from '@/components/People.vue';
+import Camera from '@/components/Camera.vue';
+import Trash from '@/components/Trash.vue';
+import TitleBar from '@/components/TitleBar.vue';
+import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
 
 import {
@@ -117,6 +120,7 @@ import {
   IconLocation,
   IconPeople,
   IconCamera,
+  IconTrash,
   IconSettings,
 } from '@/common/icons';
 
@@ -132,8 +136,9 @@ const toolbars = computed(() =>  [
   { icon: IconTag,      text: localeMsg.value.tag },
   { icon: IconCalendar, text: localeMsg.value.calendar },
   { icon: IconLocation, text: localeMsg.value.location },
-  { icon: IconPeople,   text: localeMsg.value.people }, 
+  // { icon: IconPeople,   text: localeMsg.value.people }, 
   { icon: IconCamera,   text: localeMsg.value.camera },
+  { icon: IconTrash,   text: localeMsg.value.trash },
 ]);
 
 const showLeftPane = ref(true);

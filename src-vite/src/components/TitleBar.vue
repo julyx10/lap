@@ -2,15 +2,14 @@
 
   <!-- Custom Title Bar -->
   <div 
-    class="w-full h-10 flex items-center justify-between font-bold t-color-bg select-none cursor-default"
+    class="w-full h-13 flex items-center justify-between font-bold select-none cursor-default"
     @contextmenu.prevent
     data-tauri-drag-region
   >
-    
     <!-- Title Name -->
     <span 
       :class="[
-        't-color-text text-nowrap',
+        'text-nowrap',
         isWin ? 'ml-4' : '',
         isMac ? 'm-auto' : ''
       ]" 
@@ -19,7 +18,7 @@
       {{ titlebar }}
     </span>
 
-    <!-- <div id="titlebar" class="grow h-full flex justify-center items-center t-color-text" data-tauri-drag-region> -->
+    <!-- <div id="titlebar" class="grow h-full flex justify-center items-center" data-tauri-drag-region> -->
       <!-- <SearchBox 
         v-if="viewName==='Home'" 
         class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" 

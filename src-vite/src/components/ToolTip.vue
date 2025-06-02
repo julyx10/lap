@@ -2,7 +2,7 @@
 
   <transition name="fade">
     <div v-if="isVisible" class="m-10 fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-      <div class="px-4 py-2 t-color-text-light t-color-focus rounded-lg shadow-lg">
+      <div class="px-4 py-2 rounded-lg shadow-lg">
         {{ message }}
       </div>
     </div>

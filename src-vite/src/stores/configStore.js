@@ -65,13 +65,13 @@ export const useConfigStore = defineStore('configStore', {
     appearance: 1,              // 0: light; 1: dark
     language: 'en',             // default language
     showButtonText: false,      // show button text
-    showSubFolder: true,        // show sub folders
+    showToolTip: true,          // show button tooltip
     showStatusBar: true,        // show status bar
     debugMode: false,           // debug mode
     fileListPageSize: 200,      // number of file list per page
 
     // settings - thumbnail
-    thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512)
+    thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
     thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
     thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
     thumbnailLabelPrimaryOption: 1,   // Name
@@ -79,7 +79,7 @@ export const useConfigStore = defineStore('configStore', {
 
     // settings - image viewer
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
-    autoPlayInterval: 1,        // auto play interval in seconds
+    autoPlayInterval: 1,        // auto play interval in seconds [1, 3, 5, 10, 30, 60]
   }),
 
   actions: {
@@ -93,8 +93,8 @@ export const useConfigStore = defineStore('configStore', {
     setShowButtonText(showButtonText) {
       this.showButtonText = showButtonText;
     },
-    setShowSubFolder(showSubFolder) {
-      this.showSubFolder = showSubFolder;
+    setShowToolTip(showToolTip) {
+      this.showToolTip = showToolTip;
     },
     setShowStatusBar(showStatusBar) {
       this.showStatusBar = showStatusBar;

@@ -1,15 +1,17 @@
 <template>
-  <div class="my-1 p-2 h-full w-full t-color-bg-light rounded-l-lg">
+  <div class="my-1 p-2 h-full w-full bg-base-200 rounded-l-lg">
     <!-- Title bar -->
     <div class="h-6 flex items-center justify-between">
-      <div>
-        <span class="p-1 font-bold">{{ $t('file_info_title') }}</span>
-      </div>
-      <IconClose class="p-1 t-icon-size t-icon-hover" @click="clickClose" />
+      <span class="p-1 font-bold">{{ $t('file_info_title') }}</span>
+      <TButton
+        :icon="IconClose"
+        :buttonSize="'small'"
+        @click="clickClose"
+      />
     </div>
 
     <!-- File Info table -->
-    <div class="overflow-x-hidden overflow-y-auto t-scrollbar" :style="{ maxHeight: 'calc(100vh - 100px)' }">
+    <div class="overflow-x-hidden overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 100px)' }">
       <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
         <tbody>
           <tr>
@@ -28,7 +30,7 @@
                type="text"
                readonly
                :value="fileInfo.file_path"
-               class="py-1 w-full t-input-color-bg border-none focus:border-none focus:ring-0 focus:outline-none"
+               class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
                />
             </td> -->
           </tr>
@@ -124,6 +126,8 @@
 
 import { formatTimestamp, formatFileSize } from '@/common/utils';
 import { IconClose } from '@/common/icons';
+
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   fileInfo: {

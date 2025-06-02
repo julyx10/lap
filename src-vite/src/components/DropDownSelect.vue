@@ -3,45 +3,49 @@
 
     <!-- Dropdown Trigger -->
     <button tabindex="-1"
-      class="px-2 py-1 w-full inline-flex justify-center rounded-md border t-color-border t-icon-hover t-icon-animate cursor-pointer t-color-border-hover text-sm whitespace-nowrap "
+      class="px-2 py-1 w-full flex items-center rounded-md border border-base-content/30 hover:border-base-content/70 cursor-pointer text-sm whitespace-nowrap "
+      text=""
       @click="toggleDropdown"
     >
-      <span class="pl-1 pr-2">{{ options[optionIndex].label }} {{ extendOptions.length > 0 ? ' | ' + extendOptions[extendIndex].label : '' }}</span>
-      <IconArrowDown class="t-icon-size-sm t-icon-hover" />
+      <!-- {{ options[optionIndex].label }} {{ extendOptions.length > 0 ? ' | ' + extendOptions[extendIndex].label : '' }} -->
+      {{ extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}{{ options[optionIndex].label }}
+      <TButton
+        :icon="IconArrowDown"
+        :buttonSize="'small'"
+      />
     </button>
 
     <!-- Dropdown Menu -->
-    <transition name="fade">
-      <div v-if="isDropDown"
-        class="absolute right-0 my-1 rounded-md shadow-lg t-color-bg-light border t-color-border z-50"
+    <div v-if="isDropDown"
+      class="menu mt-1 text-base-content/70 bg-base-100 border border-base-content/30 absolute rounded-box shadow-lg z-50"
+    >
+      <!-- menu group 1 -->
+      <button v-for="(option, index) in options"
+        class="p-1 flex flex-row hover:bg-base-content/10 hover:rounded cursor-pointer text-sm whitespace-nowrap "
+        :key="index"
+        @click="selectOption(index)"
       >
-        <!-- menu group 1 -->
-        <button v-for="(option, index) in options"
-          class="pl-1 pr-4 py-1 w-full flex flex-row space-x-1 t-color-bg-hover t-color-text-hover text-sm whitespace-nowrap"
-          :key="index"
-          @click="selectOption(index)"
-        >
-          <IconDot v-if="optionIndex === index" class="t-icon-size-sm t-icon-hover" /> 
-          <span v-else class="t-icon-size-sm"></span>
-          <span>{{ option.label }}</span>
-        </button>
+        <div class="w-5">
+          <IconDot v-if="optionIndex === index" class="w-5" /> 
+        </div>
+        <span class="mr-4">{{ option.label }}</span>
+      </button>
 
-        <!-- menu group 2 -->
-        <button v-for="(option, index) in extendOptions"
-          :class="[
-            'pl-1 pr-4 py-1 w-full flex flex-row space-x-1 t-color-bg-hover t-color-text-hover text-sm whitespace-nowrap', 
-            index === 0 ? 'border-t t-color-border' : ''
-          ]"
-          :key="index"
-          @click="selectExtendOption(index)"
-        >
-          <IconDot v-if="extendIndex === index" class="t-icon-size-sm t-icon-hover" /> 
-          <span v-else class="t-icon-size-sm"></span>
-          <span>{{ option.label }}</span>
-        </button>
+      <!-- seperator -->
+      <div v-if="extendOptions.length > 0 " class="mx-2 my-1 border-t border-base-content/10"></div>
 
-      </div>
-    </transition> 
+      <!-- menu group 2 -->
+      <button v-for="(option, index) in extendOptions"
+        class="p-1 flex flex-row hover:bg-base-content/10 hover:rounded cursor-pointer text-sm whitespace-nowrap "
+        :key="index"
+        @click="selectExtendOption(index)"
+      >
+        <IconDot v-if="extendIndex === index" class="w-5" /> 
+        <span v-else class="w-5"></span>
+        <span>{{ option.label }}</span>
+      </button>
+
+    </div>
 
   </div>
   
@@ -50,6 +54,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { IconArrowDown, IconDot } from '@/common/icons';
+
+import TButton from '@/components/TButton.vue';
 
   // Props
 const props = defineProps({

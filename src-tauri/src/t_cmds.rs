@@ -390,8 +390,8 @@ pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
 
 /// get camera's taken dates
 #[tauri::command]
-pub fn get_taken_dates() -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates()
+pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates(ascending)
         .map_err(|e| format!("Error while getting taken dates: {}", e))
 }
 
