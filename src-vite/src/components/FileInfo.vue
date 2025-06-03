@@ -13,7 +13,7 @@
     <!-- File Info table -->
     <div class="overflow-x-hidden overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 100px)' }">
       <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
-        <tbody>
+        <tbody class="align-top">
           <tr>
             <td>{{ $t('file_info_album_name') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.album_name }}</td>
@@ -108,7 +108,7 @@
           </tr>
           <tr>
             <td>{{ $t('file_info_comment') }}</td>
-            <td>{{ fileInfo.comments }}</td>
+            <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
           <!-- <tr>
             <td>Deleted_at</td>

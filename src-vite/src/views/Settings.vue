@@ -7,7 +7,6 @@
     <!-- Main Content -->
     <div 
       class="flex-1 flex p-4 overflow-auto" 
-      @contextmenu.prevent
     >
       <!-- Tabs -->
       <div class="w-32 font-bold">
@@ -70,6 +69,11 @@
           <div class="flex items-center justify-between mb-4">
             <label for="show-status-bar" >{{ $t('settings_general_show_status_bar') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
+          </div>
+          <!-- Show comment -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-comment" >{{ $t('settings_general_show_comment') }}</label>
+            <input type="checkbox" class="toggle" v-model="config.showComment" />
           </div>
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
@@ -342,6 +346,9 @@ watch(() => config.showToolTip, (newValue) => {
 });
 watch(() => config.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
+});
+watch(() => config.showComment, (newValue) => {
+  emit('settings-showComment-changed', newValue);
 });
 watch(() => config.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);

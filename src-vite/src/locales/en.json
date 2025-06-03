@@ -240,6 +240,7 @@
   "settings_general_show_button_text": "Show button text",
   "settings_general_show_tool_tip": "Show tooltips",
   "settings_general_show_status_bar": "Show status bar",
+  "settings_general_show_comment": "Show comment",
   "settings_general_debug_mode": "Debug mode",
 
   "settings_thumbnail": "Thumbnail",

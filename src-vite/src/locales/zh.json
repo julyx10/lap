@@ -240,6 +240,7 @@
   "settings_general_show_button_text": "显示按钮文本",
   "settings_general_show_tool_tip": "显示工具提示",
   "settings_general_show_status_bar": "显示状态栏",
+  "settings_general_show_comment": "显示备注",
   "settings_general_debug_mode": "调试模式",
 
   "settings_thumbnail": "缩略图",

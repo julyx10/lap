@@ -18,7 +18,7 @@
         <!-- select mode -->
         <div tabindex="-1"
           :class="[
-            'px-2 py-1 h-8 flex flex-row items-center rounded-md border border-content text-sm shrink-0 cursor-pointer',
+            'px-2 py-1 h-8 flex flex-row items-center rounded-md border border-content text-sm shrink-0 cursor-pointer transition-colors duration-300',
             selectMode ? 'border-base-content/70' : 'border-base-content/30 hover:border-base-content/70'
           ]"
           @click="handleSelectMode(true)"
@@ -141,7 +141,7 @@
             ></Video>
 
             <!-- comments -->
-            <div v-if="fileList[selectedItemIndex]?.comments?.length > 0" 
+            <div v-if="config.showComment && fileList[selectedItemIndex]?.comments?.length > 0" 
               class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg" 
             >
               <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>

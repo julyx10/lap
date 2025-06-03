@@ -15,7 +15,6 @@
           isWin ? 'pt-4' : 'pt-10'
         ]" 
         style="user-select: none; min-width: 68px;"
-        @contextmenu.prevent
         data-tauri-drag-region
       >
         <!-- toolbar items -->

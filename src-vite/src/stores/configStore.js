@@ -67,6 +67,7 @@ export const useConfigStore = defineStore('configStore', {
     showButtonText: false,      // show button text
     showToolTip: true,          // show button tooltip
     showStatusBar: true,        // show status bar
+    showComment: true,          // show comment
     debugMode: false,           // debug mode
     fileListPageSize: 200,      // number of file list per page
 
@@ -98,6 +99,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setShowStatusBar(showStatusBar) {
       this.showStatusBar = showStatusBar;
+    },
+    setShowComment(showComment) {
+      this.showComment = showComment;
     },
     setDebugMode(debugMode) {
       this.debugMode = debugMode;

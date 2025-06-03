@@ -253,8 +253,23 @@ const zoomReset = () => {
 
 // start dragging
 const handleMouseDown = (event) => {
-  isDragging.value = true;
-  lastMousePosition.value = { x: event.clientX, y: event.clientY };
+  console.log('handleMouseDown', event.button);
+  event.preventDefault();
+
+  if (event.button === 0) {     // left click: drag image
+    isDragging.value = true;
+    lastMousePosition.value = { x: event.clientX, y: event.clientY };
+  } else if (event.button === 2) { // right click: toggle zoom fit
+    // TODO: use context menu
+    // isZoomFit.value = !isZoomFit.value;
+    // updateZoomFit();
+  } else if (event.button === 1) { // middle button
+    emit('message-from-image', { message: 'showfileinfo' });
+  } else if (event.button === 3) {  // back button
+    emit('message-from-image-viewer', { message: 'prev' });
+  } else if (event.button === 4) {  // forward button
+    emit('message-from-image-viewer', { message: 'next' });
+  } 
 };
 
 const handleMouseMove = (event: MouseEvent) => {

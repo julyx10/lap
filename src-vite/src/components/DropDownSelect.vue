@@ -3,12 +3,12 @@
 
     <!-- Dropdown Trigger -->
     <button tabindex="-1"
-      class="px-2 py-1 w-full flex items-center rounded-md border border-base-content/30 hover:border-base-content/70 cursor-pointer text-sm whitespace-nowrap "
+      class="px-2 py-1 w-full h-8 flex items-center rounded-md border border-base-content/30 hover:border-base-content/70 transition-colors duration-300 cursor-pointer text-sm whitespace-nowrap "
       text=""
       @click="toggleDropdown"
     >
       <!-- {{ options[optionIndex].label }} {{ extendOptions.length > 0 ? ' | ' + extendOptions[extendIndex].label : '' }} -->
-      {{ extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}{{ options[optionIndex].label }}
+      {{ options[optionIndex].label }}{{ extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}
       <TButton
         :icon="IconArrowDown"
         :buttonSize="'small'"

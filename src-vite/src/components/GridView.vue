@@ -15,8 +15,8 @@
         :key="index"
         :id="'item-' + index"
         :class="[
-          'p-1 border-2 rounded-lg hover:bg-base-100 cursor-pointer transition duration-200 group',
-          (selectMode ? file.isSelected : index === selectedIndex) ? 'border-primary' : 'border-base-300',
+          'p-1 border-2 rounded-lg hover:bg-base-100 cursor-pointer group',
+          (selectMode ? file.isSelected : index === selectedIndex) ? 'border-primary' : 'border-transparent',
         ]"
         @click="clickItem(index)"
         @dblclick="openItem()"

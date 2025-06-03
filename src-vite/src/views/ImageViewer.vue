@@ -2,7 +2,7 @@
 
   <div
     :class="[
-      'relative w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70',
+      'relative w-screen h-screen flex flex-col overflow-hidden bg-base-300 text-base-content/70',
       config.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
     ]"
   >
@@ -15,7 +15,7 @@
     <!-- Toolbar -->
     <div 
       :class="[
-        'absolute left-1/2 z-40 bg-transparent transform -translate-x-1/2 group',
+        'absolute left-1/2 z-40 bg-transparent transform -translate-x-1/2 select-none group',
       ]"
       data-tauri-drag-region
     >
@@ -113,7 +113,7 @@
     <!-- content -->
     <div ref="divContentView" class="flex h-screen overflow-hidden">
       <!-- image container -->
-      <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden">
+      <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden select-none ">
         
         <!-- show zoom scale -->
         <transition name="fade">
@@ -168,6 +168,14 @@
               :buttonClasses="'rounded-full'"
             />
           </div>
+        </div>
+
+        <!-- comments -->
+        <div v-if="config.showComment && fileInfo?.comments?.length > 0" 
+          class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg select-text" 
+        >
+          <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+          {{ fileInfo?.comments }}
         </div>
 
       </div> <!-- image container -->
@@ -264,7 +272,8 @@ import {
   IconLeft,
   IconRight,
   IconSeparator,
-  IconClose
+  IconClose,
+  IconComment
  } from '@/common/icons';
 
 /// i18n
@@ -410,6 +419,9 @@ onMounted(async() => {
         imageScale.value = event.payload.scale;
         imageMinScale.value = event.payload.minScale;
         imageMaxScale.value = event.payload.maxScale;
+        break;
+      case 'showfileinfo':
+        clickShowFileInfo();
         break;
       default:
         break;

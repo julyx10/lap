@@ -240,6 +240,7 @@
   "settings_general_show_button_text": "ボタンテキストを表示",
   "settings_general_show_tool_tip": "ツールチップを表示",
   "settings_general_show_status_bar": "ステータスバーを表示",
+  "settings_general_show_comment": "コメントを表示",
   "settings_general_debug_mode": "デバッグモード",
 
   "settings_thumbnail": "サムネイル",
