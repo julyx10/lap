@@ -10,8 +10,8 @@
           buttonClasses,
           {
             'btn-xs hover:bg-transparent': buttonSize === 'small',
-            'btn-md hover:bg-base-100 ': buttonSize === 'medium',
-            'btn-lg hover:bg-base-100 ': buttonSize === 'large',
+            'btn-md hover:bg-base-100': buttonSize === 'medium',
+            'btn-lg hover:bg-base-100': buttonSize === 'large',
             'btn-disabled': disabled,
           }
         ]"
@@ -24,7 +24,8 @@
             iconClasses,
             {
               'w-4 h-4': buttonSize === 'small',
-              'w-6 h-6': buttonSize === 'medium' || buttonSize === 'large',
+              'w-5 h-5': buttonSize === 'medium',
+              'w-6 h-6': buttonSize === 'large',
               'text-primary': selected,
             }
           ]"
@@ -53,7 +54,7 @@ import type { Component } from 'vue';
 const props = defineProps({
   buttonSize: {
     type: String,
-    default: 'medium'         // 'small', 'medium'(default), 'large'
+    default: 'large'         // 'small', 'medium'(default), 'large'
   },
   buttonClasses: {
     type: String,

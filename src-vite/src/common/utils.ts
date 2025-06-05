@@ -37,7 +37,7 @@ export function setTheme(themeId: number) {
 
 /// get the seconds of auto play interval
 export function getPlayInterval(): number {
-  return [1, 3, 5, 10, 30, 60][config.autoPlayInterval] || 1;
+  return [1, 3, 5, 10, 15, 30][config.autoPlayInterval] || 1;
 }
 
 /// format timestamp to string
