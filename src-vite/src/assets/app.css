@@ -39,8 +39,3 @@
 .t-icon-animate {
   @apply transition-colors duration-300;
 }
-
-/* window titlebar btn */
-.t-window-btn {
-  @apply p-3 w-12 h-10 text-gray-400 hover:text-gray-100 hover:bg-gray-700 transition-colors duration-300 cursor-pointer;
-}

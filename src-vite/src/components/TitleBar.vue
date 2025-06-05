@@ -30,9 +30,18 @@
 
     <!-- Window Control Buttons -->
     <div v-if="isWin" class="h-full flex items-center">
-      <IconMinus v-if="resizable" class="t-window-btn" @click="minimizeWindow" />
-      <component v-if="resizable" :is="isMaximized ? IconRestore : IconMaximize" class="t-window-btn" @click="toggleMaximizeWindow" />
-      <IconClose class="t-window-btn hover:bg-red-600" @click="closeWindow" />
+      <IconMinus v-if="resizable" 
+        class="p-4 w-12 h-12 text-base-content/70 hover:text-base-content hover:bg-base-200 t-icon-animate" 
+        @click="minimizeWindow" 
+      />
+      <component v-if="resizable" :is="isMaximized ? IconRestore : IconMaximize" 
+        class="p-4 w-12 h-12 text-base-content/70 hover:text-base-content hover:bg-base-200 t-icon-animate" 
+        @click="toggleMaximizeWindow" 
+      />
+      <IconClose 
+        class="p-4 w-12 h-12 text-base-content/70 hover:text-base-content hover:bg-red-500 t-icon-animate" 
+        @click="closeWindow" 
+      />
     </div>
 
   </div>

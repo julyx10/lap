@@ -57,16 +57,16 @@
           @click="clickZoomOut()"
         />
         <TButton
-          :icon="config.isZoomFit ? IconZoomFit : IconZoomOriginal"
+          :icon="!config.isZoomFit ? IconZoomFit : IconZoomOriginal"
           :disabled="fileIndex < 0"
-          :tooltip="config.isZoomFit ? $t('image_view_toolbar_zoom_fit') : $t('image_view_toolbar_zoom_actual')"
+          :tooltip="!config.isZoomFit ? $t('image_view_toolbar_zoom_fit') : $t('image_view_toolbar_zoom_actual')"
           @click="toggleZoomFit()"
         />
         <TButton
           :icon="IconFavorite"
           :disabled="fileIndex < 0"
           :selected="fileInfo?.is_favorite"
-          :tooltip="$t('image_view_toolbar_favorite')"
+          :tooltip="!fileInfo?.is_favorite ? $t('image_view_toolbar_favorite') : $t('image_view_toolbar_unfavorite')"
           @click="toggleFavorite()"
         />
         <TButton
@@ -79,8 +79,8 @@
         />
 
         <TButton v-if="isWin"
-          :icon="config.isFullScreen ? IconFullScreen : IconRestoreScreen"
-          :tooltip="config.isFullScreen ? $t('image_view_toolbar_fullscreen') : $t('image_view_toolbar_exit_fullscreen')"
+          :icon="!config.isFullScreen ? IconFullScreen : IconRestoreScreen"
+          :tooltip="!config.isFullScreen ? $t('image_view_toolbar_fullscreen') : $t('image_view_toolbar_exit_fullscreen')"
           @click="toggleFullScreen()"
         />
 
@@ -99,7 +99,7 @@
         <TButton v-show="config.isFullScreen"
           :icon="config.isPinned ? IconPin : IconUnPin"
           :disabled="fileIndex < 0"
-          :tooltip="config.isPinned ? $t('image_view_toolbar_pin') : $t('image_view_toolbar_unpin')"
+          :tooltip="!config.isPinned ? $t('image_view_toolbar_pin') : $t('image_view_toolbar_unpin')"
           @click="config.isPinned = !config.isPinned"
         />
         <TButton v-show="config.isFullScreen"

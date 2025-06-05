@@ -5,14 +5,14 @@
     <TitleBar v-if="isWin" titlebar="jc-photo" viewName="Home"/>
 
     <!-- Main Content -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="bg-base-200 flex-1 flex overflow-hidden">
 
       <!-- left toolbar -->
       <div tabindex="-1"
         ref="divToolbar" 
         :class="[
-          'pt-10 pb-4 z-10 flex flex-col justify-between bg-base-200',
-          isWin ? 'pt-4' : 'pt-10'
+          'pb-4 z-10 flex flex-col justify-between bg-base-200',
+          isWin ? 'pt-2' : 'pt-10'
         ]" 
         style="user-select: none; min-width: 68px;"
         data-tauri-drag-region
@@ -71,7 +71,7 @@
       
       <!-- splitter -->
       <div v-if="config.toolbarIndex > 0" 
-        class="w-1 hover:bg-primary cursor-ew-resize transition-colors bg-base-300" 
+        class="w-1 hover:bg-primary cursor-ew-resize transition-colors bg-base-200" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
       ></div>
