@@ -11,7 +11,7 @@
       <!-- Tabs -->
       <div class="w-32 font-bold">
         <div
-          v-for="(tab, index) in ['settings_general', 'settings_thumbnail', 'settings_image_viewer', 'settings_about']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.thumbnail.title', 'settings.image_viewer.title', 'settings.about.title']"
           :key="index"
           :class="[
             'mb-4 px-1 border-l-2 cursor-pointer', 
@@ -30,7 +30,7 @@
 
           <!-- Appearance -->
           <div class="flex items-center justify-between mb-4">
-            <label for="mouse-wheel">{{ $t('settings_general_appearance') }}</label>
+            <label for="mouse-wheel">{{ $t('settings.general.appearance') }}</label>
             <select id="mouse-wheel" class="select" v-model="config.appearance">
               <option 
                 v-for="(item, index) in appearanceOptions" 
@@ -44,7 +44,7 @@
 
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
-            <label for="language-select">{{ $t('settings_general_select_language') }}</label>
+            <label for="language-select">{{ $t('settings.general.select_language') }}</label>
             <select id="language-select" class="select" v-model="config.language">
               <option v-for="(lang, index) in languages" 
                 :key="index" 
@@ -57,27 +57,27 @@
 
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-button-text" >{{ $t('settings_general_show_button_text') }}</label>
+            <label for="show-button-text" >{{ $t('settings.general.show_button_text') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showButtonText" />
           </div>
           <!-- Show button tooltip -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-tool-tip" >{{ $t('settings_general_show_tool_tip') }}</label>
+            <label for="show-tool-tip" >{{ $t('settings.general.show_tool_tip') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showToolTip" />
           </div>
           <!-- Show status bar -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-status-bar" >{{ $t('settings_general_show_status_bar') }}</label>
+            <label for="show-status-bar" >{{ $t('settings.general.show_status_bar') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
           </div>
           <!-- Show comment -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-comment" >{{ $t('settings_general_show_comment') }}</label>
+            <label for="show-comment" >{{ $t('settings.general.show_comment') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showComment" />
           </div>
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
-            <label for="debug-mode" >{{ $t('settings_general_debug_mode') }}</label>
+            <label for="debug-mode" >{{ $t('settings.general.debug_mode') }}</label>
             <input type="checkbox" class="toggle" v-model="config.debugMode" />
 
           </div>
@@ -89,7 +89,7 @@
 
           <!-- Thumbnail Size -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_size" >{{ $t('settings_thumbnail_size') }}</label>
+            <label for="thumbnail_size" >{{ $t('settings.thumbnail.size') }}</label>
             <SliderInput 
               v-model="config.thumbnailSize" 
               :min="120" 
@@ -101,7 +101,7 @@
 
           <!-- Thumbnail Image Scaling -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_image-select">{{ $t('settings_thumbnail_scaling') }}</label>
+            <label for="thumbnail_image-select">{{ $t('settings.thumbnail.scaling') }}</label>
             <select id="thumbnail_image-select" class="select" v-model="config.thumbnailScalingOption">
               <option v-for="(option, index) in thumbnailIScalingOptions" 
                 :key="index" 
@@ -114,7 +114,7 @@
 
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_primary-select">{{ $t('settings_thumbnail_label_primary') }}</label>
+            <label for="thumbnail_primary-select">{{ $t('settings.thumbnail.label_primary') }}</label>
             <select id="thumbnail_primary-select" class="select" v-model="config.thumbnailLabelPrimaryOption">
               <option v-for="(option, index) in thumbnailLabelOptions" 
                 :key="index" 
@@ -127,7 +127,7 @@
 
           <!-- Secondary Label -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_secondary-select">{{ $t('settings_thumbnail_label_secondary') }}</label>
+            <label for="thumbnail_secondary-select">{{ $t('settings.thumbnail.label_secondary') }}</label>
             <select id="thumbnail_secondary-select" class="select" v-model="config.thumbnailLabelSecondaryOption">
               <option v-for="(option, index) in thumbnailLabelOptions" 
                 :key="index" 
@@ -145,7 +145,7 @@
 
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
-            <label for="mouse-wheel">{{ $t('settings_image_viewer_mouse_wheel') }}</label>
+            <label for="mouse-wheel">{{ $t('settings.image_viewer.mouse_wheel') }}</label>
             <select id="mouse-wheel" class="select" v-model="config.mouseWheelMode">
               <option 
                 v-for="(item, index) in wheelOptions" 
@@ -159,7 +159,7 @@
 
           <!-- auto play interval -->
           <div class="flex items-center justify-between mb-4">
-            <label for="autoplay-interval" >{{ $t('settings_image_viewer_autoplay_interval', { second: getPlayInterval(config.autoPlayInterval) }) }}</label>
+            <label for="autoplay-interval" >{{ $t('settings.image_viewer.autoplay_interval', { second: getPlayInterval(config.autoPlayInterval) }) }}</label>
             <SliderInput 
               v-model="config.autoPlayInterval" 
               :min="0" 
@@ -180,31 +180,31 @@
             <table class="w-full">
               <tbody>
                 <tr>
-                  <td>{{ $t('settings_about_package_name') }}</td>
+                  <td>{{ $t('settings.about.package.name') }}</td>
                   <td>{{ packageInfo.name }}</td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings_about_package_version') }}</td>
+                  <td>{{ $t('settings.about.package.version') }}</td>
                   <td>{{ packageInfo.version }}</td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings_about_package_build_time') }}</td>
+                  <td>{{ $t('settings.about.package.build_time') }}</td>
                   <td>{{ buildTime }}</td>
                 </tr>
                 <!-- <tr>
-                  <td>{{ $t('settings_about_package_website') }}</td>
+                  <td>{{ $t('settings.about.package_website') }}</td>
                   <td>{{ packageInfo.homepage }}</td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings_about_package_license') }}</td>
+                  <td>{{ $t('settings.about.package_license') }}</td>
                   <td>{{ packageInfo.license}}</td>
                 </tr> -->
                 <tr>
-                  <td>{{ $t('settings_about_package_author') }}</td>
+                  <td>{{ $t('settings.about.package.author') }}</td>
                   <td>{{ packageInfo.authors[0]}}</td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings_about_storage_file_path') }}</td>
+                  <td>{{ $t('settings.about.storage.file_path') }}</td>
                    <td>
                     <input
                       type="text"
@@ -215,7 +215,7 @@
                    </td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings_about_storage_file_size') }}</td>
+                  <td>{{ $t('settings.about.storage.file_size') }}</td>
                   <td>{{ formatFileSize(storageFileInfo.file_size) }}</td>
                 </tr>
               </tbody>
@@ -264,7 +264,7 @@ const languages = [
 ];
 
 const appearanceOptions = computed(() => {
-  const options = localeMsg.value.settings_general_appearance_options;
+  const options = localeMsg.value.settings.general.appearance_options;
   return Array.from({ length: options.length }, (_, i) => ({
     label: options[i],
     value: i,
@@ -273,7 +273,7 @@ const appearanceOptions = computed(() => {
 
 // Define the wheel options using computed to react to language changes
 const wheelOptions = computed(() => {
-  const options = localeMsg.value.settings_image_viewer_mouse_wheel_options; // returns an array
+  const options = localeMsg.value.settings.image_viewer.mouse_wheel_options; // returns an array
   return [
     { label: options[0], value: 0 },  // 0: previous / next
     { label: options[1], value: 1 },  // 1: zoom in / out
@@ -282,7 +282,7 @@ const wheelOptions = computed(() => {
 
 // Define the thumbnail options
 const thumbnailIScalingOptions = computed(() => {
-  const options = localeMsg.value.settings_thumbnail_scaling_options;
+  const options = localeMsg.value.settings.thumbnail.scaling_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -293,7 +293,7 @@ const thumbnailIScalingOptions = computed(() => {
 });
 
 const thumbnailLabelOptions = computed(() => {
-  const options = localeMsg.value.settings_thumbnail_label_options;
+  const options = localeMsg.value.settings.thumbnail.label_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {

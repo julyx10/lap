@@ -63,7 +63,7 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
 // Title of the month
-const monthTitle = computed(() => formatDate(props.year, props.month, 1, localeMsg.value.month_format));
+const monthTitle = computed(() => formatDate(props.year, props.month, 1, localeMsg.value.format.month));
 
 // Blank days at the start of the calendar (for proper alignment)
 const blankDates = computed(() => {

@@ -81,7 +81,7 @@
     </div>
 
     <div v-if="fileList.length === 0" class="flex items-center justify-center w-full h-full">
-      {{ $t('file_list_no_files') }}
+      {{ $t('tooltip.not_found.files') }}
     </div>
 
   </div>
@@ -156,7 +156,7 @@ const moreMenuItems = computed(() => {
   const file = props.fileList[selectedIndex.value];
   return [
     {
-      label: localeMsg.value.menu_item_open,
+      label: localeMsg.value.menu.open,
       icon: IconOpen,
       shortcut: isMac ? '⏎' : 'Enter',
       action: () => {
@@ -164,7 +164,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_copy,
+      label: localeMsg.value.menu.copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
@@ -176,42 +176,42 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu_item_rename,
+      label: localeMsg.value.menu.rename,
       icon: IconRename,
       action: () => {
         renameItem();
       }
     },
     // {
-    //   label: localeMsg.value.menu_item_edit,
+    //   label: localeMsg.value.menu.edit,
     //   icon: IconEdit,
     //   action: () => {
     //     emit('message-from-grid-view', { message: 'edit' });
     //   }
     // },
     // {
-    //   label: localeMsg.value.menu_item_print,
+    //   label: localeMsg.value.menu.print,
     //   icon: IconPrint,
     //   action: async () => {
     //     emit('message-from-grid-view', { message: 'print' });
     //   }
     // },
     {
-      label: localeMsg.value.menu_item_move_to,
+      label: localeMsg.value.menu.move_to,
       icon: IconMoveTo,
       action: () => {
         moveTo();
       }
     },
     {
-      label: localeMsg.value.menu_item_copy_to,
+      label: localeMsg.value.menu.copy_to,
       // icon: IconCopyTo,
       action: () => {
         copyTo();
       }
     },
     {
-      label: localeMsg.value.menu_item_trash,
+      label: localeMsg.value.menu.trash,
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
@@ -219,7 +219,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_goto_folder,
+      label: localeMsg.value.menu.goto_folder,
       disabled: props.showFolderFiles,
       icon: IconGoto,
       action: () => {
@@ -227,7 +227,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu.reveal_in_finder : localeMsg.value.menu.reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
         revealItem();
@@ -238,7 +238,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: file.is_favorite ? localeMsg.value.menu_item_unfavorite : localeMsg.value.menu_item_favorite,
+      label: file.is_favorite ? localeMsg.value.menu.unfavorite : localeMsg.value.menu.favorite,
       icon: file.is_favorite ? IconUnFavorite : IconFavorite,
       shortcut: isMac ? '⌘F' : 'Ctrl+F',
       action: () => {
@@ -246,7 +246,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_rotate,
+      label: localeMsg.value.menu.rotate,
       icon: IconRotate,
       shortcut: isMac ? '⌘R' : 'Ctrl+R',
       action: () => {
@@ -254,7 +254,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_comment,
+      label: localeMsg.value.menu.comment,
       icon: IconComment,
       action: () => {
         commentItem();

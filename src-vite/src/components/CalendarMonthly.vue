@@ -25,7 +25,7 @@
         ]"
         @click="sumMonthCount(m) > 0 ? clickDate(year, m) : null" 
       >
-        {{ localeMsg.calendar_months[m - 1] }}
+        {{ localeMsg.calendar.months[m - 1] }}
       </div>
     </div>
 
@@ -55,7 +55,7 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
 // Title for the year
-const yearTitle = computed(() => formatDate(props.year, 1, 1, localeMsg.value.year_format));
+const yearTitle = computed(() => formatDate(props.year, 1, 1, localeMsg.value.format.year));
 
 // Sum the count values for the given month
 function sumMonthCount(month) {

@@ -29,44 +29,44 @@
         <TButton
           :icon="IconPrev"
           :disabled="fileIndex <= 0"
-          :tooltip="$t('image_view_toolbar_prev')"
+          :tooltip="$t('image_viewer.toolbar.prev')"
           @click="clickPrev()" 
         />
         <TButton
           :icon="IconNext"
           :disabled="fileIndex < 0 || fileIndex >= fileCount - 1"
-          :tooltip="$t('image_view_toolbar_next')"
+          :tooltip="$t('image_viewer.toolbar.next')"
           @click="clickNext()" 
         />
         <TButton
           :icon="autoPlay ? IconPause : IconPlay"
           :disabled="fileIndex < 0"
-          :tooltip="autoPlay ? $t('image_view_toolbar_pause') : $t('image_view_toolbar_play') + ` (${getPlayInterval(config.autoPlayInterval)}s)`"
+          :tooltip="autoPlay ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.play') + ` (${getPlayInterval(config.autoPlayInterval)}s)`"
           @click="clickPlay()" 
         />
         <TButton
           :icon="IconZoomIn"
           :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
-          :tooltip="$t('image_view_toolbar_zoom_in')"
+          :tooltip="$t('image_viewer.toolbar.zoom_in')"
           @click="clickZoomIn()" 
         />
         <TButton
           :icon="IconZoomOut"
           :disabled="fileIndex < 0 || imageScale <= imageMinScale"
-          :tooltip="$t('image_view_toolbar_zoom_out')"
+          :tooltip="$t('image_viewer.toolbar.zoom_out')"
           @click="clickZoomOut()"
         />
         <TButton
           :icon="!config.isZoomFit ? IconZoomFit : IconZoomOriginal"
           :disabled="fileIndex < 0"
-          :tooltip="!config.isZoomFit ? $t('image_view_toolbar_zoom_fit') : $t('image_view_toolbar_zoom_actual')"
+          :tooltip="!config.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
           @click="toggleZoomFit()"
         />
         <TButton
           :icon="IconFavorite"
           :disabled="fileIndex < 0"
           :selected="fileInfo?.is_favorite"
-          :tooltip="!fileInfo?.is_favorite ? $t('image_view_toolbar_favorite') : $t('image_view_toolbar_unfavorite')"
+          :tooltip="!fileInfo?.is_favorite ? $t('image_viewer.toolbar.favorite') : $t('image_viewer.toolbar.unfavorite')"
           @click="toggleFavorite()"
         />
         <TButton
@@ -74,13 +74,13 @@
           :disabled="fileIndex < 0"
           :selected="iconRotate % 360 > 0"
           :iconStyle="{ transform: `rotate(${(iconRotate)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
-          :tooltip="$t('image_view_toolbar_rotate')"
+          :tooltip="$t('image_viewer.toolbar.rotate')"
           @click="clickRotate()"
         />
 
         <TButton v-if="isWin"
           :icon="!config.isFullScreen ? IconFullScreen : IconRestoreScreen"
-          :tooltip="!config.isFullScreen ? $t('image_view_toolbar_fullscreen') : $t('image_view_toolbar_exit_fullscreen')"
+          :tooltip="!config.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
           @click="toggleFullScreen()"
         />
 
@@ -99,12 +99,12 @@
         <TButton v-show="config.isFullScreen"
           :icon="config.isPinned ? IconPin : IconUnPin"
           :disabled="fileIndex < 0"
-          :tooltip="!config.isPinned ? $t('image_view_toolbar_pin') : $t('image_view_toolbar_unpin')"
+          :tooltip="!config.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
           @click="config.isPinned = !config.isPinned"
         />
         <TButton v-show="config.isFullScreen"
           :icon="IconClose"
-          :tooltip="$t('image_view_toolbar_close')"
+          :tooltip="$t('image_viewer.toolbar.close')"
           @click="appWindow.close()"
         />
       </div>
@@ -119,8 +119,8 @@
         <transition name="fade">
           <div v-if="isScaleChanged" 
             :class="[
-              'absolute left-1/2  px-2 py-1 z-10 opacity-50 rounded-lg',
-              config.isFullScreen && config.isPinned ? 'top-12' : 'top-2'
+              'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-lg',
+              config.isFullScreen && config.isPinned ? 'top-20' : 'top-10'
             ]"
           >
             <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
@@ -149,12 +149,12 @@
           @dblclick="toggleZoomFit()"
         />
         <p v-else>
-          {{ loadError ? $t('image_view_failed') + ': ' + filePath : $t('image_view_loading') }}
+          {{ loadError ? $t('image_viewer.failed') + ': ' + filePath : $t('image_viewer.loading') }}
         </p>
 
         <!-- no image selected -->
         <p v-else>
-          {{ $t('image_view_no_image') }}
+          {{ $t('tooltip.not_found.files') }}
         </p>
 
         <!-- next -->
@@ -214,10 +214,10 @@
   <!-- delete -->
   <MessageBox
     v-if="showDeleteMsgbox"
-    :title="$t('msgbox_delete_file_title')"
-    :message="`${$t('msgbox_delete_file_content', { file: fileInfo?.name })}`"
-    :OkText="$t('msgbox_delete_file_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :title="$t('msgbox.delete_file_title')"
+    :message="`${$t('msgbox.delete_file_content', { file: fileInfo?.name })}`"
+    :OkText="$t('msgbox.delete_file_ok')"
+    :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     @ok="clickDeleteFile"
     @cancel="showDeleteMsgbox = false"
@@ -317,14 +317,14 @@ const toolTipRef = ref(null);
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu_item_edit,
+      label: localeMsg.value.menu.edit,
       icon: IconEdit,
       action: () => {
         console.log('Edit:', filePath.value);
       }
     },
     {
-      label: localeMsg.value.menu_item_copy,
+      label: localeMsg.value.menu.copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
@@ -332,7 +332,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_print,
+      label: localeMsg.value.menu.print,
       icon: IconPrint,
       action: () => {
         console.log('Print:', filePath.value);
@@ -344,25 +344,25 @@ const moreMenuItems = computed(() => {
       action: null
     },
     // {
-    //   label: localeMsg.value.menu_item_rename,
+    //   label: localeMsg.value.menu.rename,
     //   icon: IconRename,
     //   action: () => {
     //     console.log('Rename:', filePath.value);
     //   }
     // },
     // {
-    //   label: localeMsg.value.menu_item_move_to,
+    //   label: localeMsg.value.menu.move_to,
     //   icon: IconMoveTo,
     //   action: () => {
     //   }
     // },
     // {
-    //   label: localeMsg.value.menu_item_copy_to,
+    //   label: localeMsg.value.menu.copy_to,
     //   action: () => {
     //   }
     // },
     {
-      label: localeMsg.value.menu_item_trash,
+      label: localeMsg.value.menu.trash,
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
@@ -374,7 +374,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu_item_properties,
+      label: localeMsg.value.menu.properties,
       icon: IconProperties,
       shortcut: isMac ? '⌘I' : 'Ctrl+I',
       action: () => {
@@ -493,6 +493,9 @@ const keyActions = {
   End:        () => clickEnd(),
   ArrowUp:    () => clickZoomIn(),
   ArrowDown:  () => clickZoomOut(),
+  '=':        () => clickZoomIn(),
+  '-':        () => clickZoomOut(),
+  '0':        () => clickZoomActual(),
   ' ':        () => toggleZoomFit(),
   Escape:     () => appWindow.close(),
 };
@@ -639,6 +642,12 @@ const clickZoomOut = () => {
   }
 };
 
+const clickZoomActual = () => {
+  if(imageRef.value) {
+    imageRef.value.zoomActual();
+  }
+};
+
 const toggleZoomFit = () => {
   config.isZoomFit =!config.isZoomFit;
 };
@@ -656,7 +665,7 @@ const clickRotate = () => {
 // click copy image
 const clickCopy = async() => {
   copyImage(filePath.value).then(() => {
-    toolTipRef.value.showTip(localeMsg.value.tooltip_copy_image_success);
+    toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
   });
 }
 

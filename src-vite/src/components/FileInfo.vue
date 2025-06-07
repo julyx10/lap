@@ -2,7 +2,7 @@
   <div class="my-1 p-2 h-full w-full bg-base-200 rounded-l-lg">
     <!-- Title bar -->
     <div class="h-6 flex items-center justify-between">
-      <span class="p-1 font-bold">{{ $t('file_info_title') }}</span>
+      <span class="p-1 font-bold">{{ $t('file_info.title') }}</span>
       <TButton
         :icon="IconClose"
         :buttonSize="'small'"
@@ -15,15 +15,15 @@
       <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
         <tbody class="align-top">
           <tr>
-            <td>{{ $t('file_info_album_name') }}</td>
+            <td>{{ $t('file_info.album_name') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.album_name }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_name') }}</td>
+            <td>{{ $t('file_info.name') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.name }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_path') }}</td>
+            <td>{{ $t('file_info.path') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.file_path }}</td>
             <!-- <td>
                <input
@@ -35,85 +35,85 @@
             </td> -->
           </tr>
           <tr>
-            <td>{{ $t('file_info_dimension') }}</td>
+            <td>{{ $t('file_info.dimension') }}</td>
             <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_size') }}</td>
+            <td>{{ $t('file_info.size') }}</td>
             <td>{{ formatFileSize(fileInfo.size) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_created') }}</td>
-            <td>{{ formatTimestamp(fileInfo.created_at, $t('date_time_format')) }}</td>
+            <td>{{ $t('file_info.created') }}</td>
+            <td>{{ formatTimestamp(fileInfo.created_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_modified') }}</td>
-            <td>{{ formatTimestamp(fileInfo.modified_at, $t('date_time_format')) }}</td>
+            <td>{{ $t('file_info.modified') }}</td>
+            <td>{{ formatTimestamp(fileInfo.modified_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_camera_make') }}</td>
+            <td>{{ $t('file_info.camera_make') }}</td>
             <td>{{ fileInfo.e_make }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_camera_model') }}</td>
+            <td>{{ $t('file_info.camera_model') }}</td>
             <td>{{ fileInfo.e_model }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_date_taken') }}</td>
+            <td>{{ $t('file_info.date_taken') }}</td>
             <td>{{ fileInfo.e_date_time }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_exposure_time') }}</td>
+            <td>{{ $t('file_info.exposure_time') }}</td>
             <td>{{ fileInfo.e_exposure_time }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_aperture') }}</td>
+            <td>{{ $t('file_info.aperture') }}</td>
             <td>{{ fileInfo.e_f_number }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_focal_length') }}</td>
+            <td>{{ $t('file_info.focal_length') }}</td>
             <td>{{ fileInfo.e_focal_length }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_iso') }}</td>
+            <td>{{ $t('file_info.iso') }}</td>
             <td>{{ fileInfo.e_iso_speed }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_flash') }}</td>
+            <td>{{ $t('file_info.flash') }}</td>
             <td>{{ fileInfo.e_flash }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_color_type') }}</td>
+            <td>{{ $t('file_info.color_type') }}</td>
             <td>{{ fileInfo.i_color_type }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_bit_depth') }}</td>
+            <td>{{ $t('file_info.bit_depth') }}</td>
             <td>{{ fileInfo.i_bit_depth }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_alpha_channel') }}</td>
+            <td>{{ $t('file_info.alpha_channel') }}</td>
             <td>{{ fileInfo.i_has_alpha }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_gps_latitude') }}</td>
+            <td>{{ $t('file_info.gps_latitude') }}</td>
             <td>{{ fileInfo.gps_latitude }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_gps_longitude') }}</td>
+            <td>{{ $t('file_info.gps_longitude') }}</td>
             <td>{{ fileInfo.gps_longitude }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_gps_altitude') }}</td>
+            <td>{{ $t('file_info.gps_altitude') }}</td>
             <td>{{ fileInfo.gps_altitude }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info_comment') }}</td>
+            <td>{{ $t('file_info.comment') }}</td>
             <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
-          <!-- <tr>
+          <tr>
             <td>Deleted_at</td>
-            <td>{{ formatTimestamp(fileInfo.deleted_at, $t('date_time_format')) }}</td>
-          </tr> -->
+            <td>{{ formatTimestamp(fileInfo.deleted_at, $t('format.date_time')) }}</td>
+          </tr>
         </tbody>
       </table>
     </div>

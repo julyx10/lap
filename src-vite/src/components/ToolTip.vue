@@ -10,14 +10,14 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 
 const isVisible = ref(false);
 const message = ref('');
 
 // Function to show the tooltip
-const showTip = (msg) => {
+const showTip = (msg: string) => {
   message.value = msg; // Set the message
   isVisible.value = true; // Show the tooltip
 

@@ -13,7 +13,7 @@
             :class="config.calendarIsMonthly ? 'tab-active' : ''" 
             @click="config.calendarIsMonthly=true"
           >
-            {{ $t('calendar_month') }}
+            {{ $t('calendar.month') }}
           </a>
           <a 
             role="tab"
@@ -21,7 +21,7 @@
             :class="!config.calendarIsMonthly ? 'tab-active' : ''" 
             @click="config.calendarIsMonthly=false"
           >
-            {{ $t('calendar_day') }}
+            {{ $t('calendar.day') }}
           </a>
         </div>
 
@@ -77,7 +77,7 @@
     <!-- Display message if no data are found -->
     <template v-else>
       <div class="mt-10 flex items-center justify-center">
-        {{ $t('no_calendar_data') }}
+        {{ $t('tooltip.not_found.calendar') }}
       </div>
     </template>
 
@@ -85,7 +85,7 @@
   
 </template>
 
-<script setup>
+<script setup lang="ts">
 
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -116,10 +116,6 @@ onMounted( () => {
 
 const toggleSortingOrder = () => {
   config.calendarSortingAsc = !config.calendarSortingAsc;
-
-  // const element = scrollable.value; // Get the scrollable element
-  // element.scrollTop = sortingAsc.value === true ? 0 : element.scrollHeight;
-  // console.log('toggleSortingOrder:', sortingAsc.value, element);
 }
 
 /// fetch calendar dates

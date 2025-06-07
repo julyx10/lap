@@ -7,9 +7,9 @@
     <!-- Main Content -->
     <div class="bg-base-200 flex-1 flex overflow-hidden">
 
-      <!-- left toolbar -->
+      <!-- left side bar -->
       <div tabindex="-1"
-        ref="divToolbar" 
+        ref="divSideBar" 
         :class="[
           'pb-4 z-10 flex flex-col justify-between bg-base-200',
           isWin ? 'pt-2' : 'pt-10'
@@ -17,20 +17,19 @@
         style="user-select: none; min-width: 68px;"
         data-tauri-drag-region
       >
-        <!-- toolbar items -->
+        <!-- button items -->
         <div class="h-full flex flex-col items-center" data-tauri-drag-region>
 
           <div class="space-y-2" >
-            <div v-for="(item, index) in toolbars" 
+            <div v-for="(item, index) in buttons" 
               :key="index" 
-              @click="clickToolbarItem(index)"
             >
               <TButton 
                 :buttonSize="'large'" 
                 :icon="item.icon" 
                 :text="item.text" 
-                :selected="config.toolbarIndex === index"
-                @click="$emit('clickToolbarItem', index)"
+                :selected="config.sidebarIndex === index"
+                @click="clickButton(index)"
               />
             </div>
           </div>
@@ -38,7 +37,7 @@
           <TButton class="mt-auto"
             :buttonSize="'large'" 
             :icon="IconSettings" 
-            :text="$t('settings')" 
+            :text="$t('sidebar.settings')" 
             @click="clickSettings"
           />
         </div>
@@ -54,23 +53,16 @@
         leave-from-class="translate-x-0"
         leave-to-class="-translate-x-full"
       >
-        <div v-show="config.toolbarIndex > 0 && showLeftPane" 
+        <div v-show="config.sidebarIndex > 0 && showLeftPane" 
           class="w-96 min-w-32 py-1 flex bg-base-200" 
           :style="{ width: config.leftPaneWidth + 'px' }"
         >
-          <Album    v-show="config.toolbarIndex === 1" :titlebar="$t('album')"/>
-          <Favorite v-show="config.toolbarIndex === 2" :titlebar="$t('favorite')"/>
-          <Tag      v-show="config.toolbarIndex === 3" :titlebar="$t('tag')"/>
-          <Calendar v-show="config.toolbarIndex === 4" :titlebar="$t('calendar')"/>
-          <Location v-show="config.toolbarIndex === 5" :titlebar="$t('location')"/>
-          <!-- <People   v-show="config.toolbarIndex === 6" :titlebar="$t('people')"/> -->
-          <Camera   v-show="config.toolbarIndex === 6" :titlebar="$t('camera')"/>
-          <Trash    v-show="config.toolbarIndex === 7" :titlebar="$t('trash')"/>
+          <component :is="buttons[config.sidebarIndex].component" :titlebar="buttons[config.sidebarIndex].text"/>
         </div>
       </transition>
       
       <!-- splitter -->
-      <div v-if="config.toolbarIndex > 0" 
+      <div v-if="config.sidebarIndex > 0" 
         class="w-1 hover:bg-primary cursor-ew-resize transition-colors bg-base-200" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
@@ -83,7 +75,7 @@
           isWin ? 'rounded-tl-lg' : '',
         ]"
       >
-        <Content :titlebar="toolbars[config.toolbarIndex].text"/>
+        <Content :titlebar="buttons[config.sidebarIndex].text"/>
       </div>
     </div>
   </div>
@@ -127,23 +119,55 @@ import {
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-// toolbar 
-const toolbars = computed(() =>  [
-  { icon: IconHome,     text: localeMsg.value.home },
-  { icon: IconFolder,   text: localeMsg.value.album },
-  { icon: IconFavorite, text: localeMsg.value.favorite },
-  { icon: IconTag,      text: localeMsg.value.tag },
-  { icon: IconCalendar, text: localeMsg.value.calendar },
-  { icon: IconLocation, text: localeMsg.value.location },
-  // { icon: IconPeople,   text: localeMsg.value.people }, 
-  { icon: IconCamera,   text: localeMsg.value.camera },
-  { icon: IconTrash,   text: localeMsg.value.trash },
+// buttons 
+const buttons = computed(() =>  [
+  { 
+    icon: IconHome,
+    component: Album,
+    text: localeMsg.value.sidebar.home
+  },
+  { 
+    icon: IconFolder,  
+    component: Album,
+    text: localeMsg.value.sidebar.album 
+  },
+  { 
+    icon: IconFavorite, 
+    component: Favorite,
+    text: localeMsg.value.sidebar.favorite 
+  },
+  { 
+    icon: IconTag,
+    component: Tag,
+    text: localeMsg.value.sidebar.tag 
+  },
+  { 
+    icon: IconCalendar, 
+    component: Calendar,
+    text: localeMsg.value.sidebar.calendar 
+  },
+  { 
+    icon: IconLocation, 
+    component: Location,
+    text: localeMsg.value.sidebar.location 
+  },
+  // { icon: IconPeople, component: People, text: localeMsg.value.sidebar.people }, 
+  { 
+    icon: IconCamera,  
+    component: Camera,
+    text: localeMsg.value.sidebar.camera 
+  },
+  { 
+    icon: IconTrash,
+    component: Trash,
+    text: localeMsg.value.sidebar.trash 
+  },
 ]);
 
 const showLeftPane = ref(true);
 
 /// Splitter for resizing the left pane
-const divToolbar = ref(null);
+const divSideBar = ref(null);
 const isDraggingSplitter = ref(false);
 
 onMounted(() => {
@@ -162,15 +186,15 @@ function handleKeyDown(event) {
   // }
 };
 
-const clickToolbarItem = async (index) => {
-  if(config.toolbarIndex === index) {
+const clickButton = async (index) => {
+  if(config.sidebarIndex === index) {
     showLeftPane.value = !showLeftPane.value;
   } else {
     showLeftPane.value = true;
   }
-  config.toolbarIndex = index;
+  config.sidebarIndex = index;
 
-  // await appWindow.setTitle(toolbars.value[index].text);
+  // await appWindow.setTitle(buttons.value[index].text);
 };
 
 // Dragging the splitter
@@ -189,8 +213,8 @@ function stopDraggingSplitter() {
 
 // Handle mouse move event
 function handleMouseMove(event) {
-  if (isDraggingSplitter.value && divToolbar.value) {
-    const toolbarWidth = divToolbar.value.offsetWidth + 1;   // 1: border width
+  if (isDraggingSplitter.value && divSideBar.value) {
+    const toolbarWidth = divSideBar.value.offsetWidth + 1;   // 1: border width
     config.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
   }
 }

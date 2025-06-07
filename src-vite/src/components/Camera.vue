@@ -38,7 +38,7 @@
             <li v-for="model in camera.models" class="pl-4">
               <div 
                 :class="[
-                  'm-1 pl-2 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
+                  'm-1 pl-3 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
                   config.cameraModel === model ? 'bg-base-content/10 border-primary' : ''
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
@@ -56,7 +56,7 @@
 
     <!-- Display message if no data are found -->
     <div v-else class="mt-10 flex items-center justify-center">
-      {{ $t('no_cameras_data') }}
+      {{ $t('tooltip.not_found.camera') }}
     </div>
 
   </div>

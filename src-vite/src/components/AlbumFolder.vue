@@ -69,13 +69,13 @@
   <!-- new folder -->
   <MessageBox
     v-if="showNewFolderMsgbox"
-    :title="$t('msgbox_new_folder_title')"
-    :message="$t('msgbox_new_folder_content')"
+    :title="$t('msgbox.new_folder.title')"
+    :message="$t('msgbox.new_folder.content')"
     :showInput="true"
     :inputText="''"
     :needValidateInput="true"
-    :OkText="$t('msgbox_new_folder_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :OkText="$t('msgbox.new_folder.ok')"
+    :cancelText="$t('msgbox.cancel')"
     @ok="clickNewFolder"
     @cancel="showNewFolderMsgbox = false"
   />
@@ -83,10 +83,10 @@
   <!-- delete folder -->
   <MessageBox
     v-if="showDeleteMsgbox"
-    :title="$t('msgbox_delete_folder_title')"
-    :message="`${$t('msgbox_delete_folder_content', { folder: getFolderById(selectedFolderId).name })}`"
-    :OkText="$t('msgbox_delete_folder_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :title="$t('msgbox.delete_folder.title')"
+    :message="`${$t('msgbox.delete_folder.content', { folder: getFolderById(selectedFolderId).name })}`"
+    :OkText="$t('msgbox.delete_folder.ok')"
+    :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     @ok="clickDeleteFolder"
     @cancel="showDeleteMsgbox = false"
@@ -95,10 +95,10 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox_move_to_title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
-    :message="$t('msgbox_move_to_content')"
-    :OkText="$t('msgbox_move_to_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :title="`${$t('msgbox.move_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
+    :message="$t('msgbox.move_to.content')"
+    :OkText="$t('msgbox.move_to.ok')"
+    :cancelText="$t('msgbox.cancel')"
     @ok="clickMoveTo"
     @cancel="showMoveTo = false"
   />
@@ -106,10 +106,10 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox_copy_to_title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
-    :message="$t('msgbox_copy_to_content')"
-    :OkText="$t('msgbox_copy_to_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :title="`${$t('msgbox.copy_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
+    :message="$t('msgbox.copy_to.content')"
+    :OkText="$t('msgbox.copy_to.ok')"
+    :cancelText="$t('msgbox.cancel')"
     @ok="clickCopyTo"
     @cancel="showCopyTo = false"
   />
@@ -134,6 +134,8 @@ import ToolTip from '@/components/ToolTip.vue';
 
 import {
   IconRight,
+  IconFolderExpanded,
+  IconFolder,
   IconMore,
   IconNewFolder,
   IconRename,
@@ -201,14 +203,14 @@ const moreMenuItems = computed(() => {
 
   return [
     {
-      label: localeMsg.value.menu_item_new_folder,
+      label: localeMsg.value.menu.new_folder,
       icon: IconNewFolder,
       action: () => {
         showNewFolderMsgbox.value = true; // show new folder message box
       }
     },
     {
-      label: localeMsg.value.menu_item_rename,
+      label: localeMsg.value.menu.rename,
       icon: IconRename,
       action: () => {
         isRenamingFolder.value = true;
@@ -221,28 +223,28 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_move_to,
+      label: localeMsg.value.menu.move_to,
       icon: IconMoveTo,
       action: () => {
         showMoveTo.value = true;  // show move-to message box
       }
     },
     {
-      label: localeMsg.value.menu_item_copy_to,
+      label: localeMsg.value.menu.copy_to,
       // icon: IconCopyTo,
       action: () => {
         showCopyTo.value = true;  // show copy-to message box
       }
     },
     {
-      label: localeMsg.value.menu_item_trash,
+      label: localeMsg.value.menu.trash,
       icon: IconTrash,
       action: () => {
         showDeleteMsgbox.value = true;  // show delete message box
       }
     },
     {
-      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu.reveal_in_finder : localeMsg.value.menu.reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
         revealFolder(selectedFolderPath.value);
@@ -253,7 +255,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: !folder?.is_favorite ? localeMsg.value.menu_item_favorite: localeMsg.value.menu_item_unfavorite,
+      label: !folder?.is_favorite ? localeMsg.value.menu.favorite: localeMsg.value.menu.unfavorite,
       icon: !folder?.is_favorite ? IconFavorite : IconUnFavorite,
       action: () => {
         toggleFavorite();
@@ -264,7 +266,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu_item_refresh,
+      label: localeMsg.value.menu.refresh,
       icon: IconRefresh,
       action: async() => {
         const folder = getFolderById(selectedFolderId.value);
@@ -306,7 +308,7 @@ const clickFolder = async (albumId, folder) => {
       componentId: props.componentId
     });
   } else {
-    toolTipRef.value.showTip(localeMsg.value.msgbox_select_folder_error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox.select_folder.error);
   }
 };
 
@@ -339,8 +341,8 @@ const clickNewFolder = async (newFolderName) => {
       });
     });
   } else {
-    console.log('AlbumFolder.vue-clickNewFolder', localeMsg.value.msgbox_new_folder_error);
-    toolTipRef.value.showTip(localeMsg.value.msgbox_new_folder_error);
+    console.log('AlbumFolder.vue-clickNewFolder', localeMsg.value.msgbox.new_folder.error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox.new_folder.error);
   }
 };
 
@@ -413,8 +415,8 @@ const clickDeleteFolder = async () => {
     });
     showDeleteMsgbox.value = false;
   } else {
-    console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox_delete_folder_error);
-    toolTipRef.value.showTip(localeMsg.value.msgbox_delete_folder_error);
+    console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox.delete_folder.error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox.delete_folder.error);
   }
 };
 
@@ -439,7 +441,7 @@ const clickMoveTo = async () => {
       // close move-to dialog
       showMoveTo.value = false;
     } else {
-      toolTipRef.value.showTip(localeMsg.value.msgbox_move_to_error);
+      toolTipRef.value.showTip(localeMsg.value.msgbox.move_to.error);
     }
   } catch (error) {
     console.error('Failed to move folder:', error);
@@ -456,7 +458,7 @@ const clickCopyTo = async () => {
 
       // TODO:update folder after copy-to
     } else {
-      toolTipRef.value.showTip(localeMsg.value.msgbox_copy_to_error);
+      toolTipRef.value.showTip(localeMsg.value.msgbox.copy_to.error);
     }
   } catch (error) {
     console.error('Failed to copy folder:', error);

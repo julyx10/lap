@@ -32,7 +32,7 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 
-import { IconMore, IconAdd, IconLink, IconEdit, IconRefresh, IconOk } from '@/common/icons';
+import { IconMore, IconAdd, IconEdit, IconRefresh, IconOk } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import TButton from '@/components/TButton.vue';
@@ -59,7 +59,7 @@ const albumListKey = ref(0);
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu_item_add_folder,
+      label: localeMsg.value.menu.add_folder,
       icon: IconAdd,
       action: () => {
         albumListRef.value.clickNewAlbum();
@@ -70,7 +70,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu_item_edit_list,
+      label: localeMsg.value.menu.edit_list,
       icon: IconEdit,
       action: () => {
         isEditList.value = true;
@@ -78,7 +78,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_refresh,
+      label: localeMsg.value.menu.refresh,
       icon: IconRefresh,
       action: () => {
         albumListKey.value += 1;  // refresh component

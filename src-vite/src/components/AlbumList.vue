@@ -69,7 +69,7 @@
 
     <!-- Display message if no albums are found -->
     <div v-else-if="!isLoading" class="mt-10 flex items-center justify-center">
-      {{ $t('no_albums') }}
+      {{ $t('tooltip.no_albums') }}
     </div>
 
     <!-- edit album information -->
@@ -78,8 +78,8 @@
       :inputName="getAlbumById(albumId).name"
       :inputDescription="getAlbumById(albumId).description"
       :albumPath="getAlbumById(albumId).path"
-      :createdAt="formatTimestamp(getAlbumById(albumId).created_at, $t('date_time_format'))"
-      :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('date_time_format'))"
+      :createdAt="formatTimestamp(getAlbumById(albumId).created_at, $t('format.date_time'))"
+      :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('format.date_time'))"
       @ok="clickAlbumInfo"
       @cancel="showAlbumInfo = false"
     />
@@ -87,13 +87,13 @@
     <!-- new folder -->
     <MessageBox
       v-if="showNewFolderMsgbox"
-      :title="$t('msgbox_new_folder_title')"
-      :message="$t('msgbox_new_folder_content')"
+      :title="$t('msgbox.new_folder.title')"
+      :message="$t('msgbox.new_folder.content')"
       :showInput="true"
       :inputText="''"
       :needValidateInput="true"
-      :OkText="$t('msgbox_new_folder_ok')"
-      :cancelText="$t('msgbox_cancel')"
+      :OkText="$t('msgbox.new_folder.ok')"
+      :cancelText="$t('msgbox.cancel')"
       :errorMessage="errorMessage"
       @ok="clickNewFolder"
       @cancel="showNewFolderMsgbox = false"
@@ -103,10 +103,10 @@
     <!-- remove from albums -->
     <MessageBox
       v-if="showRemoveMsgbox"
-      :title="$t('msgbox_remove_album_title')"
-      :message="`${$t('msgbox_remove_album_content', { album: getAlbumById(removingAlbumId).name })}`"
-      :OkText="$t('msgbox_remove_album_ok')"
-      :cancelText="$t('msgbox_cancel')"
+      :title="$t('msgbox.remove_album.title')"
+      :message="`${$t('msgbox.remove_album.content', { album: getAlbumById(removingAlbumId).name })}`"
+      :OkText="$t('msgbox.remove_album.ok')"
+      :cancelText="$t('msgbox.cancel')"
       :warningOk="true"
       @ok="clickRemoveAlbum(removingAlbumId)"
       @cancel="showRemoveMsgbox = false"
@@ -142,7 +142,6 @@ import {
   IconDragHandle,
   IconRemove,
   IconProperties,
-  IconExternal
 } from '@/common/icons';
 
 const props = defineProps({
@@ -197,21 +196,21 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu_item_new_folder,
+      label: localeMsg.value.menu.new_folder,
       icon: IconNewFolder,
       action: () => {
         showNewFolderMsgbox.value = true;
       }
     },
     {
-      label: isMac ? localeMsg.value.menu_item_reveal_in_finder : localeMsg.value.menu_item_reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu.reveal_in_finder : localeMsg.value.menu.reveal_in_file_explorer,
       // icon: IconExternal,
       action: () => {
         revealFolder(getAlbumById(selectedAlbumId.value).path);
       }
     },
     {
-      label: localeMsg.value.menu_item_properties,
+      label: localeMsg.value.menu.properties,
       icon: IconProperties,
       action: () => {
         showAlbumInfo.value = true;
@@ -222,7 +221,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu_item_refresh,
+      label: localeMsg.value.menu.refresh,
       icon: IconRefresh,
       action: async() => {
         const album = getAlbumById(selectedAlbumId.value);
@@ -277,7 +276,7 @@ onMounted( async () => {
     switch (message) {
       case 'goto-folder':
         clickFinalSubFolder(event.payload.albumId, event.payload.folderPath).then (() => {
-          config.toolbarIndex = 1; // show album content
+          config.sidebarIndex = 1; // show album content
         });
         break;
       default:
@@ -398,7 +397,7 @@ const clickNewFolder = async (folderName) => {
 
     errorMessage.value = '';
   } else {
-    errorMessage.value = localeMsg.value.msgbox_new_folder_error;
+    errorMessage.value = localeMsg.value.msgbox.new_folder.error;
   }
 };
 
@@ -414,7 +413,7 @@ const clickFolder = async (albumId, folder) => {
     // insert new property 'id' to folder object
     folder.id = selectedFolder.id;
   } else {
-    toolTipRef.value.showTip(localeMsg.value.msgbox_select_folder_error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox.select_folder.error);
   }
 };
 

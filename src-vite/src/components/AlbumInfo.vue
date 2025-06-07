@@ -5,7 +5,7 @@
 
         <!-- title bar -->
         <div class="mb-2 flex items-center justify-between">
-          {{ $t('album_info_title') }}
+          {{ $t('album.info.title') }}
           <TButton
             :icon="IconClose"
             :buttonSize="'small'"
@@ -17,7 +17,7 @@
         <table class="mt-4 w-full text-sm text-nowrap">
           <tbody>
             <tr>
-              <td>{{ $t('album_info_name') }}</td>
+              <td>{{ $t('album.info.name') }}</td>
               <td>
                 <input
                   ref="inputNameRef"
@@ -30,19 +30,19 @@
               </td>
             </tr>
             <tr>
-              <td>{{ $t('album_info_description') }}</td>
+              <td>{{ $t('album.info.description') }}</td>
               <td>
                 <textarea
                   v-model="inputDescriptionValue"
                   rows="2"
                   maxlength="1024"
-                  :placeholder="$t('album_info_description_placeholder')"
+                  :placeholder="$t('album.info.description_placeholder')"
                   class="px-2 py-1 mt-2 w-full textarea min-h-[30px] max-h-[200px]"
                 ></textarea>
               </td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album_info_folder') }}</td>
+              <td>{{ $t('album.info.folder') }}</td>
               <td>
                 <input
                   type="text"
@@ -53,21 +53,21 @@
               </td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album_info_images') }}</td>
-              <td>{{ totalImageCount >= 0 ? $t('album_info_files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album_info_files_counting') }}</td>
+              <td>{{ $t('album.info.images') }}</td>
+              <td>{{ totalImageCount >= 0 ? $t('album.info.files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album.info.files_counting') }}</td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album_info_videos') }}</td>
-              <td>{{ totalVideoCount >= 0 ? $t('album_info_files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album_info_files_counting') }}</td>
+              <td>{{ $t('album.info.videos') }}</td>
+              <td>{{ totalVideoCount >= 0 ? $t('album.info.files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album.info.files_counting') }}</td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album_info_created_time') }}</td>
+              <td>{{ $t('album.info.created_time') }}</td>
               <td>{{ createdAt }}</td>
             </tr>
-            <!-- <tr class="h-8">
-              <td>{{ $t('album_info_modified_time') }}</td>
+            <tr class="h-8">
+              <td>{{ $t('album.info.modified_time') }}</td>
               <td>{{ modifiedAt }}</td>
-            </tr> -->
+            </tr>
           </tbody>
         </table>
 
@@ -77,7 +77,7 @@
             class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
             @click="clickCancel"
           >
-            {{ $t('msgbox_cancel') }}
+            {{ $t('msgbox.cancel') }}
           </button>
           <button 
             :class="[
@@ -86,7 +86,7 @@
             ]" 
             @click="clickOk"
           >
-            {{ $t('msgbox_ok') }}
+            {{ $t('msgbox.ok') }}
           </button>
         </div>
 
@@ -98,8 +98,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-// import { useI18n } from 'vue-i18n';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { countFolder } from '@/common/api';
 import { formatFileSize } from '@/common/utils';
 

@@ -5,7 +5,7 @@
       <!-- title bar -->
       <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
         <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
-        <TButton :icon="IconRefresh" @click="clickReload"/>
+        <TButton :icon="IconRefresh" @click="clickRefresh"/>
       </div>
       
       <!-- trash files -->
@@ -22,13 +22,13 @@
           class="mx-1 h-5 shrink-0"
         />
         <div class="overflow-hidden whitespace-pre text-ellipsis">
-          {{ $t('trash_files') }}
+          {{ $t('trash.files') }}
         </div>
       </div>
 
       <!-- trash folders -->
       <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default">
-        {{ $t('trash_folders') }}
+        {{ $t('trash.folders') }}
       </div>
       <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
         <ul>
@@ -65,7 +65,7 @@
 
       <!-- Display message if no favorite folders are found -->
       <div v-else class="mt-10 flex items-center justify-center">
-        {{ $t('favorite_folders_empty') }}
+        {{ $t('tooltip.not_found.folders') }}
       </div>
 
     </div>
@@ -108,7 +108,7 @@ const favorite_folders = ref([]);
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu_item_unfavorite,
+      label: localeMsg.value.menu.unfavorite,
       icon: IconUnFavorite,
       action: () => {
         UnFavorite();

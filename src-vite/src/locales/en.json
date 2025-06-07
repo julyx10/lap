@@ -1,269 +1,324 @@
 {
-  "home": "Home",
-  "favorite": "Favorites",
-  "tag": "Tags",
-  "album": "Albums",
-  "calendar": "Calendar",
-  "location": "Location",
-  "people": "People",
-  "camera": "Cameras",
-  "trash": "Trash",
-  "settings": "Settings",
-  "debug": "Debug",
+  "sidebar": {
+    "home": "Home",
+    "album": "Albums",
+    "favorite": "Favorites",
+    "tag": "Tags",
+    "calendar": "Calendar",
+    "location": "Location",
+    "people": "People",
+    "camera": "Cameras",
+    "trash": "Trash",
+    "settings": "Settings"
+  },
 
-  "no_albums": "No albums, click the add button to add an album",
+  "album": {
+    "info": {
+      "title": "Album Properties",
+      "name": "Name",
+      "description": "Description",
+      "description_placeholder": "Enter album's description",
+      "folder": "Folder",
+      "images": "Images",
+      "videos": "Videos",
+      "files_count": "{count} files ({size})",
+      "files_counting": "Counting files...",
+      "created_time": "Created time",
+      "modified_time": "Modified time"
+    }
+  },
 
-  "album_info_title": "Album Properties",
-  "album_info_name": "Name",
-  "album_info_description": "Description",
-  "album_info_description_placeholder": "Enter album's description",
-  "album_info_folder": "Folder",
-  "album_info_images": "Images",
-  "album_info_videos": "Videos",
-  "album_info_files_count": "{count} files ({size})",
-  "album_info_files_counting": "Counting files...",
-  "album_info_created_time": "Created time",
-  "album_info_modified_time": "Modified time",
+  "favorite": {
+    "files": "Favorite files",
+    "folders": "Favorite folders"
+  },
 
-  "toolbar_show_preview": "Show preview",
-  "toolbar_hide_preview": "Hide preview",
-  
-  "msgbox_ok": "OK",
-  "msgbox_cancel": "Cancel",
+  "calendar": {
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "today": "Today",
+    "monthly": "Monthly",
+    "daily": "Daily",
+    "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "weekdays_long": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "months_long": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+  },
 
-  "msgbox_input_filename_error": "File name cannot contain the following characters: \\ / : * ? \" < > |.",
+  "trash": {
+    "files": "Trash files",
+    "folders": "Trash folders",
+    "empty": "Empty Trash",
+    "empty_confirm": "Are you sure you want to empty the trash? This action cannot be undone.",
+    "empty_success": "Trash has been emptied.",
+    "empty_error": "Failed to empty the trash. Please try again.",
+    "restore": "Restore",
+    "restore_confirm": "Are you sure you want to restore the selected items? They will be moved back to their original locations.",
+    "restore_success": "Selected items have been restored.",
+    "restore_error": "Failed to restore selected items. Please try again.",
+    "delete": "Delete",
+    "delete_confirm": "Are you sure you want to permanently delete the selected items? This action cannot be undone.",
+    "delete_success": "Selected items have been permanently deleted.",
+    "delete_error": "Failed to permanently delete selected items. Please try again."
+  },
 
-  "msgbox_remove_album_title": "Remove from albums?",
-  "msgbox_remove_album_content": "'{album}' will be removed from the albums. This action will not delete the actual files.",
-  "msgbox_remove_album_ok": "Remove",
+  "toolbar": {
+    "search": {
+      "placeholder": "Search file name"
+    },
+    "filter": {
+      "select_mode": "Select",
+      "select_count": "{count} selected",
+      "sort_type_options": ["Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"],
+      "sort_order_options": ["Ascending", "Descending"],
+      "file_type_options": ["All", "Images", "Videos"]
+    },
+    "preview": {
+      "show": "Show preview",
+      "hide": "Hide preview"
+    }
+  },
 
-  "msgbox_rename_folder_title": "Rename folder",
-  "msgbox_rename_folder_content": "Enter the new name for the folder:",
-  "msgbox_rename_folder_ok": "Rename",
-  "msgbox_rename_folder_error": "Cannot rename the folder.",
+  "tooltip": {
+    "not_found": {
+      "albums": "No albums found, try to add an album",
+      "files": "No files found",
+      "folders": "No folders found",
+      "tag": "No tags found",
+      "calendar": "No calendar data found",
+      "location": "No location data found",
+      "people": "No people data found",
+      "camera": "No camera data found",
+      "trash": "No trash data found"
+    },
+    "copy_image": {
+      "success": "Image copied to clipboard",
+      "failed": "Failed to copy image to clipboard"
+    }
+  },
 
-  "msgbox_new_folder_title": "New folder",
-  "msgbox_new_folder_content": "Enter the name for the new folder:",
-  "msgbox_new_folder_ok": "Create",
-  "msgbox_new_folder_error": "Cannot create new folder.",
+  "statusbar": {
+    "files_summary": "{count} files ({size})"
+  },
 
-  "msgbox_delete_folder_title": "Delete folder",
-  "msgbox_delete_folder_content": "The folder '{folder}' and all its contents will be deleted.",
-  "msgbox_delete_folder_ok": "Delete",
-  "msgbox_delete_folder_success": "The folder '{folder}' has been deleted.",
-  "msgbox_delete_folder_error": "Cannot delete the folder. The folder may not exist.",
+  "menu": {
+    "select_all": "Select all",
+    "select_none": "Select none",
+    "select_invert": "Invert selection",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "rotate": "Rotate",
+    "open": "Open",
+    "view": "View",
+    "edit": "Edit",
+    "print": "Print",
+    "copy": "Copy",
+    "rename": "Rename",
+    "refresh": "Refresh",
+    "copy_to": "Copy to",
+    "move_to": "Move to",
+    "trash": "Trash",
+    "delete": "Delete",
+    "remove": "Remove",
+    "new_folder": "New folder",
+    "open_folder": "Open folder...",
+    "goto_folder": "Go to folder",
+    "reveal_in_file_explorer": "Reveal in File Explorer",
+    "reveal_in_finder": "Reveal in Finder",
+    "properties": "Properties",
+    "add_folder": "Add folder",
+    "edit_list": "Edit list",
+    "finish": "Finish",
+    "comment": "Comment"
+  },
 
-  "msgbox_move_to_title": "Move '{source}' to",
-  "msgbox_move_to_content": "Select the destination folder:",
-  "msgbox_move_to_ok": "Move",
-  "msgbox_move_to_error": "Cannot move '{source}' to '{dest}'.",
+  "msgbox": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "input": {
+      "file_name_invalid": "File name cannot contain the following characters: \\ / : * ? \" < > |."
+    },
+    "remove_album": {
+      "title": "Remove from albums?",
+      "content": "'{album}' will be removed from the albums. This action will not delete the actual files.",
+      "ok": "Remove"
+    },
+    "rename_folder": {
+      "title": "Rename folder",
+      "content": "Enter the new name for the folder:",
+      "ok": "Rename",
+      "error": "Cannot rename the folder."
+    },
+    "new_folder": {
+      "title": "New folder",
+      "content": "Enter the name for the new folder:",
+      "ok": "Create",
+      "error": "Cannot create new folder."
+    },
+    "delete_folder": {
+      "title": "Delete folder",
+      "content": "The folder '{folder}' and all its contents will be deleted.",
+      "ok": "Delete",
+      "success": "The folder '{folder}' has been deleted.",
+      "error": "Cannot delete the folder. The folder may not exist."
+    },
+    "move_to": {
+      "title": "Move '{source}' to",
+      "content": "Select the destination folder:",
+      "ok": "Move",
+      "error": "Cannot move '{source}' to '{dest}'."
+    },
+    "copy_to": {
+      "title": "Copy '{source}' to",
+      "content": "Select the destination folder:",
+      "ok": "Copy",
+      "error": "Cannot copy '{source}' to '{dest}'."
+    },
+    "rename_file": {
+      "title": "Rename file",
+      "content": "Enter the new file name:",
+      "ok": "Rename",
+      "error": "Cannot rename the file."
+    },
+    "delete_file": {
+      "title": "Delete file",
+      "content": "The file '{file}' will be deleted. This action cannot be undone.",
+      "ok": "Delete",
+      "success": "The file '{file}' has been deleted.",
+      "error": "Cannot delete the file. The file may not exist."
+    },
+    "edit_comment": {
+      "title": "Edit comment",
+      "content": "Enter your comment for the file '{file}':",
+      "ok": "Save"
+    },
+    "select_folder": {
+      "error": "Failed to select folder."
+    },
+    "select_file": {
+      "error": "Failed to select file."
+    }
+  },
 
-  "msgbox_copy_to_title": "Copy '{source}' to",
-  "msgbox_copy_to_content": "Select the destination folder:",
-  "msgbox_copy_to_ok": "Copy",
-  "msgbox_copy_to_error": "Cannot copy '{source}' to '{dest}'.",
+  "file_info": {
+    "columns": ["Thumbnail", "Name", "Dimension", "Created Time", "Modified Time", "Camera", "Size"],
+    "title": "Properties",
+    "album_name": "Album",
+    "name": "Name",
+    "path": "Path",
+    "dimension": "Dimension",
+    "size": "Size",
+    "created": "Created",
+    "modified": "Modified",
+    "camera_make": "Camera Make",
+    "camera_model": "Camera Model",
+    "date_taken": "Date Taken",
+    "exposure_time": "Exposure Time",
+    "aperture": "Aperture",
+    "focal_length": "Focal Length",
+    "iso": "ISO",
+    "flash": "Flash",
+    "color_type": "Color Type",
+    "bit_depth": "Bit Depth",
+    "alpha_channel": "Alpha Channel",
+    "gps_latitude": "GPS Latitude",
+    "gps_longitude": "GPS Longitude",
+    "gps_altitude": "GPS Altitude",
+    "comment": "Comment"
+  },
 
-  "msgbox_rename_file_title": "Rename file",
-  "msgbox_rename_file_content": "Enter the new file name:",
-  "msgbox_rename_file_ok": "Rename",
-  "msgbox_rename_file_error": "Cannot rename the file.",
+  "format": {
+    "year": "yyyy",
+    "month": "MMMM yyyy",
+    "date": "MM/dd/yyyy",
+    "date_long": "MMMM do, yyyy",
+    "date_long_with_weekday": "eeee, MMMM do, yyyy",
+    "date_time": "MM/dd/yyyy HH:mm:ss",
+    "date_time_long": "MMMM do, yyyy HH:mm:ss"
+  },
 
-  "msgbox_delete_file_title": "Delete file",
-  "msgbox_delete_file_content": "The file '{file}' will be deleted. This action cannot be undone.",
-  "msgbox_delete_file_ok": "Delete",
-  "msgbox_delete_file_success": "The file '{file}' has been deleted.",
-  "msgbox_delete_file_error": "Cannot delete the file. The file may not exist.",
+  "image_viewer": {
+    "title": "Image Viewer",
+    "loading": "Loading...",
+    "failed": "Failed to load image",
+    "toolbar": {
+      "prev": "Previous",
+      "next": "Next",
+      "play": "Play",
+      "pause": "Pause",
+      "zoom_in": "Zoom In",
+      "zoom_out": "Zoom Out",
+      "zoom_fit": "Fit to Screen",
+      "zoom_actual": "Actual Size",
+      "rotate": "Rotate",
+      "favorite": "Favorite",
+      "unfavorite": "Unfavorite",
+      "info": "Info",
+      "save": "Save",
+      "delete": "Delete",
+      "fullscreen": "Fullscreen",
+      "exit_fullscreen": "Exit Fullscreen",
+      "pin": "Pin Toolbar",
+      "unpin": "Unpin Toolbar",
+      "close": "Close"
+    }
+  },
 
-  "msgbox_edit_comment_title": "Edit comment",
-  "msgbox_edit_comment_content": "Enter your comment for the file '{file}':",
-
-  "msgbox_select_folder_error": "Failed to select folder.",
-  "msgbox_select_file_error": "Failed to select file.",
-  
-  "search_placeholder": "Search file name",
-
-  "files": "Files",
-  "allphotos": "All Photos",
-
-  "files_summary": "{count} files ({size})",
-  "thumbnails_summary": "{count} thumbnails ({size})",
-
-  "file_list_no_files": "No files found",
-  
-  "file_list_select_mode": "Select",
-  "file_list_select_count": "{count} selected",
-  "file_list_sort_type_options": ["Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"],
-  "file_list_sort_order_options": ["Ascending", "Descending"],
-  "file_list_file_type_options": ["All", "Images", "Videos"],
-
-  "menu_item_select_all": "Select all",
-  "menu_item_select_none": "Select none",
-  "menu_item_select_invert": "Invert selection",
-  "menu_item_favorite": "Favorite",
-  "menu_item_unfavorite": "Unfavorite",
-  "menu_item_rotate": "Rotate",
-  "menu_item_open": "Open",
-  "menu_item_view": "View",
-  "menu_item_edit": "Edit",
-  "menu_item_print": "Print",
-  "menu_item_copy": "Copy",
-  "menu_item_rename": "Rename",
-  "menu_item_refresh": "Refresh",
-  "menu_item_copy_to": "Copy to",
-  "menu_item_move_to": "Move to",
-  "menu_item_trash": "Trash",
-  "menu_item_delete": "Delete",
-  "menu_item_remove": "Remove",
-  "menu_item_new_folder": "New folder",
-  "menu_item_open_folder": "Open folder...",
-  "menu_item_goto_folder": "Go to folder",
-  "menu_item_reveal_in_file_explorer": "Reveal in File Explorer",
-  "menu_item_reveal_in_finder": "Reveal in Finder",
-  "menu_item_properties": "Properties",
-  "menu_item_add_folder": "Add folder",
-  "menu_item_edit_list": "Edit list",
-  "menu_item_finish": "Finish",
-  "menu_item_comment": "Comment",
-
-  "tooltip_copy_image_success": "Image copied to clipboard",
-  "tooltip_copy_image_failed": "Failed to copy image to clipboard",
-
-  "favorite_files": "Favorite files",
-  "favorite_files_empty": "No favorite files found",
-  "favorite_files_summary": "{count} favorite files",
-  "favorite_folders": "Favorite folders",
-  "favorite_folders_empty": "No favorite folders found",
-  "favorite_folders_summary": "{count} favorite folders",
-
-  "trash_files": "Trash files",
-  "trash_files_empty": "No files in trash",
-  "trash_files_summary": "{count} files in trash",
-  "trash_folders": "Trash folders",
-  "trash_folders_empty": "No folders in trash",
-  "trash_folders_summary": "{count} folders in trash",
-  "trash_empty": "Empty Trash",
-  "trash_empty_confirm": "Are you sure you want to empty the trash? This action cannot be undone.",
-  "trash_empty_success": "Trash has been emptied.",
-  "trash_empty_error": "Failed to empty the trash. Please try again.",
-  "trash_restore": "Restore",
-  "trash_restore_confirm": "Are you sure you want to restore the selected items? They will be moved back to their original locations.",
-  "trash_restore_success": "Selected items have been restored.",
-  "trash_restore_error": "Failed to restore selected items. Please try again.",
-  "trash_delete": "Delete",
-  "trash_delete_confirm": "Are you sure you want to permanently delete the selected items? This action cannot be undone.",
-  "trash_delete_success": "Selected items have been permanently deleted.",
-  "trash_delete_error": "Failed to permanently delete selected items. Please try again.",
-
-  "file_info_columns": ["Thumbnail", "Name", "Dimension", "Created Time", "Modified Time", "Camera", "Size"],
-  "file_info_title": "Properties",
-  "file_info_album_name": "Album",
-  "file_info_name": "Name",
-  "file_info_path": "Path",
-  "file_info_dimension": "Dimension",
-  "file_info_size": "Size",
-  "file_info_created": "Created",
-  "file_info_modified": "Modified",
-  "file_info_camera_make": "Camera Make",
-  "file_info_camera_model": "Camera Model",
-  "file_info_date_taken": "Date Taken",
-  "file_info_exposure_time": "Exposure Time",
-  "file_info_aperture": "Aperture",
-  "file_info_focal_length": "Focal Length",
-  "file_info_iso": "ISO",
-  "file_info_flash": "Flash",
-  "file_info_color_type": "Color Type",
-  "file_info_bit_depth": "Bit Depth",
-  "file_info_alpha_channel": "Alpha Channel",
-  "file_info_gps_latitude": "GPS Latitude",
-  "file_info_gps_longitude": "GPS Longitude",
-  "file_info_gps_altitude": "GPS Altitude",
-  "file_info_comment": "Comment",
-
-  "no_cameras_data": "No camera data available, please add an album first",
-
-  "calendar_day": "Day",
-  "calendar_week": "Week",
-  "calendar_month": "Month",
-  "calendar_year": "Year",
-  "calendar_today": "Today",
-  "calendar_monthly": "Monthly",
-  "calendar_daily": "Daily",
-  "calendar_weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-  "calendar_weekdays_long": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-  "calendar_months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-  "calendar_months_long": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-  "no_calendar_data": "No calendar data available, please add an album first",
-  
-  "year_format": "yyyy",
-  "month_format": "MMMM yyyy",
-  "date_format": "MM/dd/yyyy",
-  "date_format_long": "MMMM do, yyyy",
-  "date_format_long_with_weekday": "eeee, MMMM do, yyyy",
-  "date_time_format": "MM/dd/yyyy HH:mm:ss",
-  "date_time_format_long": "MMMM do, yyyy HH:mm:ss",
-  
-  "image_view_title": "Image Viewer",
-  "image_view_loading": "Loading...",
-  "image_view_failed": "Failed to load image",
-  "image_view_no_image": "No image selected",
-  "image_view_toolbar_prev": "Previous",
-  "image_view_toolbar_next": "Next",
-  "image_view_toolbar_play": "Play",
-  "image_view_toolbar_pause": "Pause",
-  "image_view_toolbar_zoom_in": "Zoom In",
-  "image_view_toolbar_zoom_out": "Zoom Out",
-  "image_view_toolbar_zoom_fit": "Fit to Screen",
-  "image_view_toolbar_zoom_actual": "Actual Size",
-  "image_view_toolbar_rotate": "Rotate",
-  "image_view_toolbar_favorite": "Favorite",
-  "image_view_toolbar_unfavorite": "Unfavorite",
-  "image_view_toolbar_info": "Info",
-  "image_view_toolbar_save": "Save",
-  "image_view_toolbar_delete": "Delete",
-  "image_view_toolbar_fullscreen": "Fullscreen",
-  "image_view_toolbar_exit_fullscreen": "Exit Fullscreen",
-  "image_view_toolbar_pin": "Pin Toolbar",
-  "image_view_toolbar_unpin": "Unpin Toolbar",
-  "image_view_toolbar_close": "Close",
-
-  "settings_general": "General",
-  "settings_general_appearance": "Appearance",
-  "settings_general_appearance_options": [
-    "light", "dark", "cupcake", "bumblebee", "emerald", "corporate",
-    "synthwave", "retro", "cyberpunk", "valentine", "halloween", "garden",
-    "forest", "aqua", "lofi", "pastel", "fantasy", "wireframe",
-    "black", "luxury", "dracula", "cmyk", "autumn", "business",
-    "acid", "lemonade", "night", "coffee", "winter", "dim",
-    "nord", "sunset"
-  ],
-  "settings_general_select_language": "Select language",
-  "settings_general_show_button_text": "Show button text",
-  "settings_general_show_tool_tip": "Show tooltips",
-  "settings_general_show_status_bar": "Show status bar",
-  "settings_general_show_comment": "Show comment",
-  "settings_general_debug_mode": "Debug mode",
-
-  "settings_thumbnail": "Thumbnail",
-  "settings_thumbnail_size": "Thumbnail size",
-  "settings_thumbnail_scaling": "Thumbnail scaling",
-  "settings_thumbnail_scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
-  "settings_thumbnail_label_primary": "Show primary label",
-  "settings_thumbnail_label_secondary": "Show secondary label",
-  "settings_thumbnail_label_options": ["Empty", "Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"],
-
-  "settings_image_viewer": "Image Viewer",
-  "settings_image_viewer_mouse_wheel": "Mouse wheel",
-  "settings_image_viewer_mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
-  "settings_image_viewer_autoplay_interval": "Autoplay interval: {second} second(s)",
-  
-  "settings_about": "About",
-  "settings_about_package_name": "Package name",
-  "settings_about_package_description": "Description",
-  "settings_about_package_version": "Version",
-  "settings_about_package_build_time": "Build time",
-  "settings_about_package_author": "Author",
-  "settings_about_package_license": "License",
-  "settings_about_package_website": "Website",
-  "settings_about_storage_file_path": "Storage file path",
-  "settings_about_storage_file_size": "Storage file size"
+  "settings": {
+    "general": {
+      "title": "General",
+      "appearance": "Appearance",
+      "appearance_options": [
+        "light",
+        "dark",
+        "cupcake",
+        "bumblebee",
+        "emerald",
+        "corporate",
+        "synthwave",
+        "retro",
+        "cyberpunk",
+        "valentine"
+      ],
+      "select_language": "Select language",
+      "show_button_text": "Show button text",
+      "show_tool_tip": "Show tooltips",
+      "show_status_bar": "Show status bar",
+      "show_comment": "Show comment",
+      "debug_mode": "Debug mode"
+    },
+    "thumbnail": {
+      "title": "Thumbnail",
+      "size": "Thumbnail size",
+      "scaling": "Thumbnail scaling",
+      "scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
+      "label_primary": "Show primary label",
+      "label_secondary": "Show secondary label",
+      "label_options": ["Empty", "Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"]
+    },
+    "image_viewer": {
+      "title": "Image Viewer",
+      "mouse_wheel": "Mouse wheel",
+      "mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
+      "autoplay_interval": "Autoplay interval: {second} second(s)"
+    },
+    "about": {
+      "title": "About",
+      "package": {
+        "name": "Package name",
+        "description": "Description",
+        "version": "Version",
+        "build_time": "Build time",
+        "author": "Author",
+        "license": "License",
+        "website": "Website"
+      },
+      "storage": {
+        "file_path": "Storage file path",
+        "file_size": "Storage file size"
+      }
+    }
+  }
 } 

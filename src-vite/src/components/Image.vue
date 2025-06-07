@@ -393,6 +393,10 @@ const zoomOut = () => {
   zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
 };
 
+const zoomActual = () => {
+  zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, 1);
+};
+
 // Zoom image at cursor position
 function zoomImage(cursorX, cursorY, newScale) {
   const imageOffsetX = ((scale.value[activeImage.value] - newScale) * ((cursorX - position.value[activeImage.value].x) - imageSize.value[activeImage.value].width / 2)) / scale.value[activeImage.value];
@@ -431,6 +435,7 @@ function clampPosition() {
 defineExpose({ 
   zoomIn, 
   zoomOut,
+  zoomActual,
   rotateRight
 });
 

@@ -1,269 +1,324 @@
 {
-  "home": "主页",
-  "favorite": "收藏",
-  "tag": "标签",
-  "album": "相册",
-  "calendar": "日历",
-  "location": "地点",
-  "people": "人物",
-  "camera": "相机",
-  "trash": "垃圾箱",
-  "settings": "设置",
-  "debug": "调试",
+  "sidebar": {
+    "home": "主页",
+    "album": "相册",
+    "favorite": "收藏",
+    "tag": "标签",
+    "calendar": "日历",
+    "location": "地点",
+    "people": "人物",
+    "camera": "相机",
+    "trash": "垃圾箱",
+    "settings": "设置"
+  },
 
-  "no_albums": "相册为空，点击添加按钮添加相册",
+  "album": {
+    "info": {
+      "title": "相册属性",
+      "name": "名称",
+      "description": "描述",
+      "description_placeholder": "输入相册描述",
+      "folder": "文件夹",
+      "images": "图片",
+      "videos": "视频",
+      "files_count": "{count} 个文件 ({size})",
+      "files_counting": "正在统计文件...",
+      "created_time": "创建时间",
+      "modified_time": "修改时间"
+    }
+  },
 
-  "album_info_title": "相册属性",
-  "album_info_name": "名称",
-  "album_info_description": "描述", 
-  "album_info_description_placeholder": "输入相册描述",
-  "album_info_folder": "文件夹",
-  "album_info_images": "图片",
-  "album_info_videos": "视频",
-  "album_info_files_count": "{count} 个文件 ({size})",
-  "album_info_files_counting": "正在统计文件...",
-  "album_info_created_time": "创建时间",
-  "album_info_modified_time": "修改时间",
+  "favorite": {
+    "files": "收藏的文件",
+    "folders": "收藏的文件夹"
+  },
 
-  "toolbar_show_preview": "显示预览",
-  "toolbar_hide_preview": "隐藏预览",
+  "calendar": {
+    "day": "日",
+    "week": "周",
+    "month": "月",
+    "year": "年",
+    "today": "今天",
+    "monthly": "按月",
+    "daily": "按日",
+    "weekdays": ["日", "一", "二", "三", "四", "五", "六"],
+    "weekdays_long": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+    "months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+    "months_long": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+  },
 
-  "msgbox_ok": "确定",
-  "msgbox_cancel": "取消",
+  "trash": {
+    "files": "垃圾箱文件",
+    "folders": "垃圾箱文件夹",
+    "empty": "清空垃圾箱",
+    "empty_confirm": "您确定要清空垃圾箱吗？此操作无法撤销。",
+    "empty_success": "垃圾箱已清空。",
+    "empty_error": "清空垃圾箱失败。请稍后再试。",
+    "restore": "恢复",
+    "restore_confirm": "您确定要恢复选中的项目吗？它们将被移回原始位置。",
+    "restore_success": "选中的项目已恢复。",
+    "restore_error": "恢复选中项目失败。请稍后再试。",
+    "delete": "删除",
+    "delete_confirm": "您确定要永久删除选中的项目吗？此操作无法撤销。",
+    "delete_success": "选中的项目已被永久删除。",
+    "delete_error": "永久删除选中项目失败。请稍后再试。"
+  },
 
-  "msgbox_input_filename_error": "文件名不能包含 \\ / : * ? \" < > | 等字符。",
+  "toolbar": {
+    "search": {
+      "placeholder": "搜索文件名"
+    },
+    "filter": {
+      "select_mode": "选择",
+      "select_count": "已选择 {count}",
+      "sort_type_options": ["名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"],
+      "sort_order_options": ["升序", "降序"],
+      "file_type_options": ["全部", "图片", "视频"]
+    },
+    "preview": {
+      "show": "显示预览",
+      "hide": "隐藏预览"
+    }
+  },
 
-  "msgbox_remove_album_title": "从相册中移除?",
-  "msgbox_remove_album_content": "'{album}' 将从相册中移除。此操作不会删除实际文件。",
-  "msgbox_remove_album_ok": "移除",
+  "tooltip": {
+    "not_found": {
+      "albums": "未找到相册，请尝试添加相册",
+      "files": "未找到文件",
+      "folders": "未找到文件夹",
+      "tag": "未找到标签",
+      "calendar": "未找到日历数据",
+      "location": "未找到位置数据",
+      "people": "未找到人物数据",
+      "camera": "未找到相机数据",
+      "trash": "未找到垃圾箱数据"
+    },
+    "copy_image": {
+      "success": "图片已复制到剪贴板",
+      "failed": "复制图片失败"
+    }
+  },
 
-  "msgbox_rename_folder_title": "重命名文件夹",
-  "msgbox_rename_folder_content": "输入文件夹的新名称:",
-  "msgbox_rename_folder_ok": "重命名",
-  "msgbox_rename_folder_error": "无法重命名文件夹。",
+  "statusbar": {
+    "files_summary": "{count} 个文件 ({size})"
+  },
 
-  "msgbox_new_folder_title": "新建文件夹",
-  "msgbox_new_folder_content": "输入新文件夹的名称:",
-  "msgbox_new_folder_ok": "创建",
-  "msgbox_new_folder_error": "无法创建新文件夹。",
+  "menu": {
+    "select_all": "全选",
+    "select_none": "取消全选",
+    "select_invert": "反选",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏",
+    "rotate": "旋转",
+    "open": "打开",
+    "view": "查看",
+    "edit": "编辑",
+    "print": "打印",
+    "copy": "复制",
+    "rename": "重命名",
+    "refresh": "刷新",
+    "copy_to": "复制到",
+    "move_to": "移动到",
+    "trash": "移至垃圾箱",
+    "delete": "删除",
+    "remove": "移除",
+    "new_folder": "新建文件夹",
+    "open_folder": "打开文件夹...",
+    "goto_folder": "前往文件夹",
+    "reveal_in_file_explorer": "在文件管理器中显示",
+    "reveal_in_finder": "在访达中显示",
+    "properties": "属性",
+    "add_folder": "添加文件夹",
+    "edit_list": "编辑列表",
+    "finish": "完成",
+    "comment": "备注"
+  },
 
-  "msgbox_delete_folder_title": "删除文件夹",
-  "msgbox_delete_folder_content": "文件夹 '{folder}' 及其所有内容将被删除。",
-  "msgbox_delete_folder_ok": "删除",
-  "msgbox_delete_folder_success": "文件夹 '{folder}' 已被删除。",
-  "msgbox_delete_folder_error": "无法删除文件夹。文件夹可能不存在。",
+  "msgbox": {
+    "ok": "确定",
+    "cancel": "取消",
+    "input": {
+      "file_name_invalid": "文件名不能包含以下字符：\\ / : * ? \" < > |"
+    },
+    "remove_album": {
+      "title": "从相册中移除？",
+      "content": "'{album}' 将从相册中移除。此操作不会删除实际文件。",
+      "ok": "移除"
+    },
+    "rename_folder": {
+      "title": "重命名文件夹",
+      "content": "输入文件夹的新名称：",
+      "ok": "重命名",
+      "error": "无法重命名文件夹。"
+    },
+    "new_folder": {
+      "title": "新建文件夹",
+      "content": "输入新文件夹的名称：",
+      "ok": "创建",
+      "error": "无法创建新文件夹。"
+    },
+    "delete_folder": {
+      "title": "删除文件夹",
+      "content": "文件夹 '{folder}' 及其所有内容将被删除。",
+      "ok": "删除",
+      "success": "文件夹 '{folder}' 已被删除。",
+      "error": "无法删除文件夹。文件夹可能不存在。"
+    },
+    "move_to": {
+      "title": "移动 '{source}' 到",
+      "content": "选择目标文件夹：",
+      "ok": "移动",
+      "error": "无法移动 '{source}' 到 '{dest}'。"
+    },
+    "copy_to": {
+      "title": "复制 '{source}' 到",
+      "content": "选择目标文件夹：",
+      "ok": "复制",
+      "error": "无法复制 '{source}' 到 '{dest}'。"
+    },
+    "rename_file": {
+      "title": "重命名文件",
+      "content": "输入文件的新名称：",
+      "ok": "重命名",
+      "error": "无法重命名文件。"
+    },
+    "delete_file": {
+      "title": "删除文件",
+      "content": "文件 '{file}' 将被删除。此操作无法撤销。",
+      "ok": "删除",
+      "success": "文件 '{file}' 已被删除。",
+      "error": "无法删除文件。文件可能不存在。"
+    },
+    "edit_comment": {
+      "title": "编辑备注",
+      "content": "输入文件 '{file}' 的备注：",
+      "ok": "保存"
+    },
+    "select_folder": {
+      "error": "选择文件夹失败。"
+    },
+    "select_file": {
+      "error": "选择文件失败。"
+    }
+  },
 
-  "msgbox_move_to_title": "移动 '{source}' 到",
-  "msgbox_move_to_content": "选择目标文件夹:",
-  "msgbox_move_to_ok": "移动",
-  "msgbox_move_to_error": "无法移动 '{source}' 到 '{dest}'。",
+  "file_info": {
+    "columns": ["缩略图", "名称", "尺寸", "创建时间", "修改时间", "相机", "大小"],
+    "title": "属性",
+    "album_name": "相册",
+    "name": "名称",
+    "path": "路径",
+    "dimension": "尺寸",
+    "size": "大小",
+    "created": "创建时间",
+    "modified": "修改时间",
+    "camera_make": "照相机制造商",
+    "camera_model": "照相机型号",
+    "date_taken": "拍摄时间",
+    "exposure_time": "曝光时间",
+    "aperture": "光圈",
+    "focal_length": "焦距",
+    "iso": "ISO",
+    "flash": "闪光灯",
+    "color_type": "颜色类型",
+    "bit_depth": "位深度",
+    "alpha_channel": "Alpha通道",
+    "gps_latitude": "GPS纬度",
+    "gps_longitude": "GPS经度",
+    "gps_altitude": "GPS海拔",
+    "comment": "备注"
+  },
 
-  "msgbox_copy_to_title": "复制 '{source}' 到",
-  "msgbox_copy_to_content": "选择目标文件夹:",
-  "msgbox_copy_to_ok": "复制",
-  "msgbox_copy_to_error": "无法复制 '{source}' 到 '{dest}'。",
+  "format": {
+    "year": "yyyy年",
+    "month": "yyyy年M月",
+    "date": "yyyy/MM/dd",
+    "date_long": "yyyy年M月d日",
+    "date_long_with_weekday": "yyyy年M月d日",
+    "date_time": "yyyy/MM/dd HH:mm:ss",
+    "date_time_long": "yyyy年M月d日 HH:mm:ss"
+  },
 
-  "msgbox_rename_file_title": "重命名文件",
-  "msgbox_rename_file_content": "输入文件的新名称:",
-  "msgbox_rename_file_ok": "重命名",
-  "msgbox_rename_file_error": "无法重命名文件。",
+  "image_viewer": {
+    "title": "图片查看器",
+    "loading": "加载中...",
+    "failed": "加载失败",
+    "toolbar": {
+      "prev": "上一张",
+      "next": "下一张",
+      "play": "播放",
+      "pause": "暂停",
+      "zoom_in": "放大",
+      "zoom_out": "缩小",
+      "zoom_fit": "适应屏幕",
+      "zoom_actual": "实际大小",
+      "rotate": "旋转",
+      "favorite": "收藏",
+      "unfavorite": "取消收藏",
+      "info": "属性",
+      "save": "保存",
+      "delete": "删除",
+      "fullscreen": "全屏",
+      "exit_fullscreen": "退出全屏",
+      "pin": "固定工具栏",
+      "unpin": "取消固定工具栏",
+      "close": "关闭"
+    }
+  },
 
-  "msgbox_delete_file_title": "删除文件",
-  "msgbox_delete_file_content": "文件 '{file}' 将被删除。此操作无法撤销。",
-  "msgbox_delete_file_ok": "删除",
-  "msgbox_delete_file_success": "文件 '{file}' 已被删除。",
-  "msgbox_delete_file_error": "无法删除文件。文件可能不存在。",
-
-  "msgbox_edit_comment_title": "编辑备注",
-  "msgbox_edit_comment_content": "输入文件 '{file}' 的备注:",
-
-  "msgbox_select_folder_error": "选择文件夹失败。",
-  "msgbox_select_file_error": "选择文件失败。",
-  
-  "search_placeholder": "搜索文件名",
-
-  "files": "文件",
-  "allphotos": "所有照片",
-
-  "files_summary": "{count} 个文件 ({size})",
-  "thumbnails_summary": "{count} 个缩略图 ({size})",
-
-  "file_list_no_files": "未找到文件",
-  
-  "file_list_select_mode": "选择",
-  "file_list_select_count": "已选择 {count}",
-  "file_list_sort_type_options": ["名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"],
-  "file_list_sort_order_options": ["升序", "降序"],
-  "file_list_file_type_options": ["全部", "图片", "视频"],
-
-  "menu_item_select_all": "全选",
-  "menu_item_select_none": "取消全选",
-  "menu_item_select_invert": "反选",
-  "menu_item_favorite": "收藏",
-  "menu_item_unfavorite": "取消收藏",
-  "menu_item_rotate": "旋转",
-  "menu_item_open": "打开",
-  "menu_item_view": "查看",
-  "menu_item_edit": "编辑",
-  "menu_item_print": "打印",
-  "menu_item_copy": "复制",
-  "menu_item_rename": "重命名",
-  "menu_item_refresh": "刷新",
-  "menu_item_copy_to": "复制到",
-  "menu_item_move_to": "移动到",
-  "menu_item_trash": "移至垃圾箱",
-  "menu_item_delete": "删除",
-  "menu_item_remove": "移除",
-  "menu_item_new_folder": "新建文件夹",
-  "menu_item_open_folder": "打开文件夹...",
-  "menu_item_goto_folder": "前往文件夹",
-  "menu_item_reveal_in_file_explorer": "在文件管理器中显示",
-  "menu_item_reveal_in_finder": "在访达中显示",
-  "menu_item_properties": "属性",
-  "menu_item_add_folder": "添加文件夹",
-  "menu_item_edit_list": "编辑列表",
-  "menu_item_finish": "完成",
-  "menu_item_comment": "备注",
-
-  "tooltip_copy_image_success": "图片已复制到剪贴板",
-  "tooltip_copy_image_error": "复制图片失败",
-
-  "favorite_files": "收藏的文件",
-  "favorite_files_empty": "未找到收藏的文件",
-  "favorite_files_summary": "{count} 个收藏的文件",
-  "favorite_folders": "收藏的文件夹",
-  "favorite_folders_empty": "未找到收藏的文件夹",
-  "favorite_folders_summary": "{count} 个收藏的文件夹",
-
-  "trash_files": "垃圾箱文件",
-  "trash_files_empty": "垃圾箱为空",
-  "trash_files_summary": "{count} 个垃圾箱文件",
-  "trash_folders": "垃圾箱文件夹",
-  "trash_folders_empty": "垃圾箱文件夹为空",
-  "trash_folders_summary": "{count} 个垃圾箱文件夹",
-  "trash_empty": "清空垃圾箱",
-  "trash_empty_confirm": "您确定要清空垃圾箱吗？此操作无法撤销。",
-  "trash_empty_success": "垃圾箱已清空。",
-  "trash_empty_error": "清空垃圾箱失败。请稍后再试。",
-  "trash_restore": "恢复",
-  "trash_restore_confirm": "您确定要从垃圾箱恢复 '{file}' 吗？",
-  "trash_restore_success": "文件 '{file}' 已从垃圾箱恢复。",
-  "trash_restore_error": "从垃圾箱恢复 '{file}' 失败。文件可能不存在或已被删除。",
-  "trash_delete": "删除",
-  "trash_delete_confirm": "您确定要彻底删除 '{file}' 吗？此操作无法撤销。",
-  "trash_delete_success": "文件 '{file}' 已被彻底删除。",
-  "trash_delete_error": "彻底删除 '{file}' 失败。请稍后再试。",
-
-  "file_info_columns": ["缩略图", "名称", "尺寸", "创建时间", "修改时间", "照相机", "大小"],
-  "file_info_title": "属性",
-  "file_info_album_name": "相册",
-  "file_info_name": "名称",
-  "file_info_path": "路径",
-  "file_info_dimension": "尺寸",
-  "file_info_size": "大小",
-  "file_info_created": "创建时间",
-  "file_info_modified": "修改时间",
-  "file_info_camera_make": "照相机制造商",
-  "file_info_camera_model": "照相机型号",
-  "file_info_date_taken": "拍摄时间",
-  "file_info_exposure_time": "曝光时间",
-  "file_info_aperture": "光圈",
-  "file_info_focal_length": "焦距",
-  "file_info_iso": "ISO",
-  "file_info_flash": "闪光灯",
-  "file_info_color_type": "颜色类型",
-  "file_info_bit_depth": "位深度",
-  "file_info_alpha_channel": "Alpha通道",
-  "file_info_gps_latitude": "GPS纬度",
-  "file_info_gps_longitude": "GPS经度",
-  "file_info_gps_altitude": "GPS海拔",
-  "file_info_comment": "备注",
-
-  "no_cameras_data": "没有相机的数据，请首先添加相册",
-
-  "calendar_day": "日",
-  "calendar_week": "周",
-  "calendar_month": "月",
-  "calendar_year": "年",
-  "calendar_today": "今天",
-  "calendar_monthly": "按月",
-  "calendar_daily": "按日",
-  "calendar_weekdays": ["日", "一", "二", "三", "四", "五", "六"],
-  "calendar_weekdays_long": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
-  "calendar_months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-  "calendar_months_long": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-  "no_calendar_data": "没有日历的数据，请首先添加相册",
-
-  "year_format": "yyyy年",
-  "month_format": "yyyy年M月",
-  "date_format": "yyyy/MM/dd",
-  "date_format_long": "yyyy年M月d日",
-  "date_format_long_with_weekday": "yyyy年M月d日",
-  "date_time_format": "yyyy/MM/dd HH:mm:ss",
-  "date_time_format_long": "yyyy年M月d日 HH:mm:ss",
-
-  "image_view_title": "图片查看器",
-  "image_view_loading": "载入中...",
-  "image_view_failed": "载入失败",
-  "image_view_no_image": "未选择图片",
-  "image_view_toolbar_prev": "上一张",
-  "image_view_toolbar_next": "下一张",
-  "image_view_toolbar_play": "播放",
-  "image_view_toolbar_pause": "暂停",
-  "image_view_toolbar_zoom_in": "放大",
-  "image_view_toolbar_zoom_out": "缩小",
-  "image_view_toolbar_zoom_fit": "适应屏幕",
-  "image_view_toolbar_zoom_actual": "实际大小",
-  "image_view_toolbar_rotate": "旋转",
-  "image_view_toolbar_favorite": "收藏",
-  "image_view_toolbar_unfavorite": "取消收藏",
-  "image_view_toolbar_info": "属性",
-  "image_view_toolbar_save": "保存",
-  "image_view_toolbar_delete": "删除",
-  "image_view_toolbar_fullscreen": "全屏",
-  "image_view_toolbar_exit_fullscreen": "退出全屏",
-  "image_view_toolbar_pin": "固定工具栏",
-  "image_view_toolbar_unpin": "取消固定工具栏",
-  "image_view_toolbar_close": "关闭",
-
-  "settings_general": "通用",
-  "settings_general_appearance": "外观",
-  "settings_general_appearance_options": [
-    "明亮", "暗黑", "杯子蛋糕", "大黄蜂", "翡翠", "企业风",
-    "合成波", "复古", "赛博朋克", "情人节", "万圣节", "花园",
-    "森林", "水蓝色", "低保真", "粉彩", "幻想风格", "线框",
-    "黑色", "奢华", "德古拉", "CMYK色彩", "秋季", "商务风",
-    "酸性色彩", "柠檬水", "夜晚", "咖啡色", "冬季", "昏暗",
-    "北欧风", "日落"
-  ],
-  "settings_general_select_language": "选择语言",
-  "settings_general_show_button_text": "显示按钮文本",
-  "settings_general_show_tool_tip": "显示工具提示",
-  "settings_general_show_status_bar": "显示状态栏",
-  "settings_general_show_comment": "显示备注",
-  "settings_general_debug_mode": "调试模式",
-
-  "settings_thumbnail": "缩略图",
-  "settings_thumbnail_size": "缩略图大小",
-  "settings_thumbnail_scaling": "缩略图缩放",
-  "settings_thumbnail_scaling_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
-  "settings_thumbnail_label_primary": "显示主标签",
-  "settings_thumbnail_label_secondary": "显示次标签",
-  "settings_thumbnail_label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"],
-
-  "settings_image_viewer": "图片查看器",
-  "settings_image_viewer_mouse_wheel": "鼠标滚轮",
-  "settings_image_viewer_mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
-  "settings_image_viewer_autoplay_interval": "自动播放间隔: {second} 秒",
-  
-  "settings_about": "关于",
-  "settings_about_package_name": "包名",
-  "settings_about_package_description": "描述",
-  "settings_about_package_version": "版本",
-  "settings_about_package_build_time": "构建时间",
-  "settings_about_package_author": "作者",
-  "settings_about_package_license": "许可证",
-  "settings_about_package_website": "网站",
-  "settings_about_storage_file_path": "存储文件路径",
-  "settings_about_storage_file_size": "存储文件大小"
+  "settings": {
+    "general": {
+      "title": "通用",
+      "appearance": "外观",
+      "appearance_options": [
+        "明亮",
+        "暗黑",
+        "杯子蛋糕",
+        "大黄蜂",
+        "翡翠",
+        "企业风",
+        "合成波",
+        "复古",
+        "赛博朋克",
+        "情人节"
+      ],
+      "select_language": "选择语言",
+      "show_button_text": "显示按钮文本",
+      "show_tool_tip": "显示工具提示",
+      "show_status_bar": "显示状态栏",
+      "show_comment": "显示备注",
+      "debug_mode": "调试模式"
+    },
+    "thumbnail": {
+      "title": "缩略图",
+      "size": "缩略图大小",
+      "scaling": "缩略图缩放",
+      "scaling_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
+      "label_primary": "显示主标签",
+      "label_secondary": "显示次标签",
+      "label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"]
+    },
+    "image_viewer": {
+      "title": "图片查看器",
+      "mouse_wheel": "鼠标滚轮",
+      "mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
+      "autoplay_interval": "自动播放间隔: {second} 秒"
+    },
+    "about": {
+      "title": "关于",
+      "package": {
+        "name": "包名",
+        "description": "描述",
+        "version": "版本",
+        "build_time": "构建时间",
+        "author": "作者",
+        "license": "许可证",
+        "website": "网站"
+      },
+      "storage": {
+        "file_path": "存储文件路径",
+        "file_size": "存储文件大小"
+      }
+    }
+  }
 }

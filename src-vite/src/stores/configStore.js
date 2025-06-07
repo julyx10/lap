@@ -1,11 +1,9 @@
-// stores/configStore.js
-import { set } from 'date-fns';
 import { defineStore } from 'pinia';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
     // Home.vue
-    toolbarIndex: 1,            // toolbar index
+    sidebarIndex: 1,            // toolbar index
     leftPaneWidth: 300,         // left pane width
 
     // favorites
@@ -129,13 +127,5 @@ export const useConfigStore = defineStore('configStore', {
       this.autoPlayInterval = autoPlayInterval;
     },
   },
-  persist: {
-    enabled: true,
-    strategies: [
-      {
-        key: 'app-config',
-        storage: localStorage,
-      },
-    ],
-  },
+  persist: true
 });

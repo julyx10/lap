@@ -8,7 +8,7 @@
       ref="searchInputRef"
       type="text"
       v-model="inputValue"
-      :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('search_placeholder') : '')"
+      :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('toolbar.search.placeholder') : '')"
       :class="[
         'py-1 h-8 w-full text-sm input bg-transparent transition-colors duration-300',
         isFocused || searchValue.length > 0 ? 'px-8 border-base-content/70' : 'px-2 border-base-content/30 group-hover:border-base-content/70 cursor-pointer'
@@ -35,8 +35,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { IconClose, IconSearch } from '@/common/icons';
-
-import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   modelValue: {

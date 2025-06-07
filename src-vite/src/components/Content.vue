@@ -18,7 +18,7 @@
         <!-- select mode -->
         <div tabindex="-1"
           :class="[
-            'px-2 py-1 h-8 flex flex-row items-center rounded-md border border-content text-sm shrink-0 cursor-pointer transition-colors duration-300',
+            'px-2 py-1 h-8 flex flex-row items-center rounded-md border border-content focus:outline-none text-sm shrink-0 cursor-pointer transition-colors duration-300',
             selectMode ? 'border-base-content/70' : 'border-base-content/30 hover:border-base-content/70'
           ]"
           @click="handleSelectMode(true)"
@@ -28,7 +28,7 @@
             :buttonSize="'small'"
             @click.stop="handleSelectMode(false)" 
           />
-          <span class="px-1">{{ selectMode ? $t('file_list_select_count', { count: selectedCount }) : $t('file_list_select_mode') }}</span>
+          <span class="px-1">{{ selectMode ? $t('toolbar.filter.select_count', { count: selectedCount }) : $t('toolbar.filter.select_mode') }}</span>
           <DropDownMenu v-if="selectMode"
             :iconMenu="IconArrowDown"
             :menuItems="moreMenuItems"
@@ -86,7 +86,7 @@
             class="t-icon-size-xs shrink-0" 
           />
           <div class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('files_summary', { count: totalCount.toLocaleString(), size: formatFileSize(totalSize) }) }} 
+            {{ $t('statusbar.files_summary', { count: totalCount.toLocaleString(), size: formatFileSize(totalSize) }) }} 
           </div>
 
           <component v-if="selectedItemIndex >= 0"
@@ -98,7 +98,7 @@
           >
             {{
               selectMode 
-                ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
+                ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
                 : fileList[selectedItemIndex]?.name + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')' 
             }}
           </div>
@@ -150,7 +150,7 @@
           </div>
 
           <div v-else class="h-full flex items-center justify-center">
-            <p >{{ $t('image_view_no_image') }}</p>
+            <p >{{ $t('tooltip.not_found.files') }}</p>
           </div>
       
         </div>
@@ -162,13 +162,13 @@
   <!-- rename -->
   <MessageBox
     v-if="showRenameMsgbox"
-    :title="$t('msgbox_rename_file_title')"
-    :message="$t('msgbox_rename_file_content')"
+    :title="$t('msgbox.rename_file.title')"
+    :message="$t('msgbox.rename_file.content')"
     :showInput="true"
     :inputText="renamingFileName.name"
     :needValidateInput="true"
-    :OkText="$t('msgbox_rename_file_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :OkText="$t('msgbox.rename_file.ok')"
+    :cancelText="$t('msgbox.cancel')"
     :errorMessage="errorMessage"
     @ok="clickRenameFile"
     @cancel="showRenameMsgbox = false"
@@ -178,10 +178,10 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox_move_to_title', { source: selectMode ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
-    :message="$t('msgbox_move_to_content')"
-    :OkText="$t('msgbox_move_to_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :title="`${$t('msgbox.move_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
+    :message="$t('msgbox.move_to.content')"
+    :OkText="$t('msgbox.move_to.ok')" 
+    :cancelText="$t('msgbox.cancel')"
     @ok="clickMoveTo"
     @cancel="showMoveTo = false"
   />
@@ -189,10 +189,10 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox_copy_to_title', { source: selectMode ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
-    :message="$t('msgbox_copy_to_content')"
-    :OkText="$t('msgbox_copy_to_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :title="`${$t('msgbox.copy_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
+    :message="$t('msgbox.copy_to.content')"
+    :OkText="$t('msgbox.copy_to.ok')"
+    :cancelText="$t('msgbox.cancel')"
     @ok="clickCopyTo"
     @cancel="showCopyTo = false"
   />
@@ -200,10 +200,10 @@
   <!-- delete -->
   <MessageBox
     v-if="showDeleteMsgbox"
-    :title="$t('msgbox_delete_file_title')"
-    :message="`${$t('msgbox_delete_file_content', { file: selectMode ? $t('file_list_select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
-    :OkText="$t('msgbox_delete_file_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :title="$t('msgbox.delete_file.title')"
+    :message="`${$t('msgbox.delete_file.content', { file: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
+    :OkText="$t('msgbox.delete_file.ok')"
+    :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     @ok="clickDeleteFile"
     @cancel="showDeleteMsgbox = false"
@@ -212,13 +212,13 @@
   <!-- comment -->
   <MessageBox
     v-if="showCommentMsgbox"
-    :title="$t('msgbox_edit_comment_title')"
-    :message="`${$t('msgbox_edit_comment_content', { file: fileList[selectedItemIndex].name })}`"
+    :title="$t('msgbox.edit_comment.title')"
+    :message="`${$t('msgbox.edit_comment.content', { file: fileList[selectedItemIndex].name })}`"
     :showInput="true"
     :inputText="fileList[selectedItemIndex]?.comments ?? ''"
     :multiLine="true"
-    :OkText="$t('msgbox_ok')"
-    :cancelText="$t('msgbox_cancel')"
+    :OkText="$t('msgbox.ok')"
+    :cancelText="$t('msgbox.cancel')"
     @ok="clickEditComment"
     @cancel="showCommentMsgbox = false"
   />
@@ -296,7 +296,7 @@ const fileListOffset = ref(0); // offset of the file list
 
 // config.favoriteFolderId = 0: means favorite files
 const showFolderFiles = computed(() =>
- config.toolbarIndex === 2 || (config.toolbarIndex === 1 && config.favoriteFolderId !== 0)
+ config.sidebarIndex === 2 || (config.sidebarIndex === 1 && config.favoriteFolderId !== 0)
 );
 
 // mutil select mode
@@ -335,7 +335,7 @@ let unlistenImageViewer: () => void;
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu_item_select_all,
+      label: localeMsg.value.menu.select_all,
       icon: IconCheckAll,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
@@ -345,7 +345,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_select_none,
+      label: localeMsg.value.menu.select_none,
       icon: IconCheckNone,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
@@ -355,7 +355,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_select_invert,
+      label: localeMsg.value.menu.select_invert,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = !fileList.value[i].isSelected;
@@ -368,7 +368,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu_item_move_to,
+      label: localeMsg.value.menu.move_to,
       icon: IconMoveTo,
       disabled: selectedCount.value === 0,
       action: () => {
@@ -376,14 +376,14 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_copy_to,
+      label: localeMsg.value.menu.copy_to,
       disabled: selectedCount.value === 0,
       action: () => {
         showCopyTo.value = true;
       }
     },
     {
-      label: localeMsg.value.menu_item_trash,
+      label: localeMsg.value.menu.trash,
       icon: IconTrash,
       disabled: selectedCount.value === 0,
       action: () => {
@@ -395,7 +395,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu_item_favorite,
+      label: localeMsg.value.menu.favorite,
       icon: IconFavorite,
       disabled: selectedCount.value === 0,
       action: () => {
@@ -403,7 +403,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu_item_unfavorite,
+      label: localeMsg.value.menu.unfavorite,
       icon: IconUnFavorite,
       disabled: selectedCount.value === 0,
       action: () => {
@@ -412,6 +412,12 @@ const moreMenuItems = computed(() => {
     },
   ];
 });
+
+const handleEscapeKey = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && selectMode.value) {
+    handleSelectMode(false);
+  }
+};
 
 onMounted( async() => {
   // FIXME: ResizeObserver loop completed with undelivered notifications.
@@ -429,6 +435,9 @@ onMounted( async() => {
     resizeObserver.observe(previewDiv.value);
   }
 
+  // Add escape key listener
+  window.addEventListener('keydown', handleEscapeKey);
+
   unlistenGridView = await listen('message-from-grid-view', (event) => {
     const { message } = event.payload;
     console.log('content - message-from-grid-view:', message);
@@ -444,7 +453,7 @@ onMounted( async() => {
         break;
       case 'copy': // copy image to clipboard
         copyImage(fileList.value[selectedItemIndex.value].file_path).then(() => {
-          toolTipRef.value.showTip(localeMsg.value.tooltip_copy_image_success);
+          toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
         });
         break;
       case 'rename':
@@ -524,6 +533,8 @@ onBeforeUnmount(() => {
   // unlisten
   unlistenGridView();
   unlistenImageViewer();
+  // Remove escape key listener
+  window.removeEventListener('keydown', handleEscapeKey);
 });
 
 onUnmounted(() => {
@@ -546,7 +557,7 @@ watch(() => config.language, (newLanguage) => {
 /// watch for file list changes
 watch(
   () => [
-          config.toolbarIndex,      // toolbar index
+          config.sidebarIndex,      // toolbar index
           config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath,   // favorite files and folder
           config.albumId, config.albumFolderId, config.albumFolderPath,                 // album
           config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
@@ -601,10 +612,10 @@ async function getFileList(startDate, endDate, make, model, isFavorite, isDelete
 }
 
 async function updateContent() {
-  const newIndex = config.toolbarIndex;
+  const newIndex = config.sidebarIndex;
 
   if(newIndex === 0) {        // home
-    contentTitle.value = localeMsg.value.home;
+    contentTitle.value = localeMsg.value.sidebar.home;
     await getFileList("", "", "", "", false, false, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
@@ -620,7 +631,7 @@ async function updateContent() {
   }
   else if(newIndex === 2) {   // favorite
     if(config.favoriteFolderId === 0) { // 0: favorite files
-      contentTitle.value = localeMsg.value.favorite_files;
+      contentTitle.value = localeMsg.value.sidebar.favorite;
       await getFileList("", "", "", "", true, false, fileListOffset.value);
     } else {                // else: favorite folders
       const album = await getAlbum(config.favoriteAlbumId);
@@ -631,26 +642,26 @@ async function updateContent() {
     }
   }
   else if(newIndex === 3) {   // tag
-    contentTitle.value = localeMsg.value.tag;
+    contentTitle.value = localeMsg.value.sidebar.tag;
     // await getFileList("", "", "", "", false, true, fileListOffset.value);
   }
   else if(newIndex === 4) {   // calendar
     if (config.calendarMonth === -1) {          // yearly
-      contentTitle.value = formatDate(config.calendarYear, 1, 1, localeMsg.value.year_format);
+      contentTitle.value = formatDate(config.calendarYear, 1, 1, localeMsg.value.format.year);
     } else if (config.calendarDate === -1) {    // monthly
-      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.month_format);
+      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.format.month);
     } else {                                    // daily
-      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.date_format_long);
+      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long_with_weekdayf);
     }
     const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
     await getFileList(startDate, endDate, "", "", false, false, fileListOffset.value);
   }
   else if(newIndex === 5) {   // location
-    contentTitle.value = localeMsg.value.location;
+    contentTitle.value = localeMsg.value.sidebar.location;
     fileList.value = [];
   }
   // else if(newIndex === 6) {   // people
-  //   contentTitle.value = localeMsg.value.people;
+  //   contentTitle.value = localeMsg.value.sidebar.people;
   //   fileList.value = [];
   // }
   else if(newIndex === 6) {   // camera
@@ -661,7 +672,7 @@ async function updateContent() {
     }
     await getFileList("", "", config.cameraMake, config.cameraModel, false, false, fileListOffset.value);
   } else if(newIndex === 7) { // trash
-    contentTitle.value = localeMsg.value.trash;
+    contentTitle.value = localeMsg.value.sidebar.trash;
     await getFileList("", "", "", "", false, true, fileListOffset.value);
   }
 
@@ -681,7 +692,7 @@ const clickRenameFile = async (newName) => {
       showRenameMsgbox.value = false;
       errorMessage.value = '';
     } else {
-      errorMessage.value = localeMsg.value.msgbox_rename_file_error;
+      errorMessage.value = localeMsg.value.msgbox.rename_file.error;
     }
   }
 }
@@ -850,22 +861,22 @@ const handleSortTypeSelect = (option, extendOption) => {
 
 // file type options
 const fileTypeOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_file_type_options);
+  return getSelectOptions(localeMsg.value.toolbar.filter?.file_type_options);
 });
 
 // sort type options
 const sortOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_sort_type_options);
+  return getSelectOptions(localeMsg.value.toolbar.filter?.sort_type_options);
 });
 
 // sort extend options
 const sortExtendOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.file_list_sort_order_options);
+  return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
 
 function getSelectOptions(options) {
   const result = [];
-  for (let i = 0; i < options.length; i++) {
+  for (let i = 0; options && i < options.length; i++) {
     result.push({ label: options[i], value: i });
   }
   return result;

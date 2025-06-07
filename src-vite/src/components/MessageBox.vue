@@ -148,7 +148,7 @@ watch(() => props.errorMessage, (newValue) => {
 
 const validateInput = () => {
   if ( needValidateInput.value && !isValidFileName(inputValue.value)) {
-    inputErrorMessage.value = localeMsg.value.msgbox_input_filename_error;
+    inputErrorMessage.value = localeMsg.value.msgbox.input.file_name_invalid;
   } else {
     inputErrorMessage.value = '';
   }
