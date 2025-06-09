@@ -1,11 +1,11 @@
 <template>
   
-  <div class="w-screen h-screen flex flex-col overflow-hidden select-none text-base-content/70">
+  <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-200 text-base-content/70">
     <!-- Title Bar -->
     <TitleBar v-if="isWin" titlebar="jc-photo" viewName="Home"/>
 
     <!-- Main Content -->
-    <div class="bg-base-200 flex-1 flex overflow-hidden">
+    <div class="flex-1 flex overflow-hidden">
 
       <!-- left side bar -->
       <div tabindex="-1"

@@ -2,7 +2,10 @@
 
   <!-- Custom Title Bar -->
   <div 
-    class="w-full h-13 flex items-center justify-between font-bold select-none cursor-default"
+    :class="[
+      'w-full flex items-center justify-between font-bold select-none cursor-default',
+      viewName==='ImageViewer' ? 'h-13' : 'h-10',
+    ]"
     @contextmenu.prevent
     data-tauri-drag-region
   >
@@ -29,17 +32,17 @@
     <!-- </div> -->
 
     <!-- Window Control Buttons -->
-    <div v-if="isWin" class="h-full flex items-center">
+    <div v-if="isWin" class="h-10 mb-auto flex items-center">
       <IconMinus v-if="resizable" 
-        class="p-4 w-12 h-12 text-base-content/70 hover:text-base-content hover:bg-base-200 t-icon-animate" 
+        class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-base-100 t-icon-animate" 
         @click="minimizeWindow" 
       />
       <component v-if="resizable" :is="isMaximized ? IconRestore : IconMaximize" 
-        class="p-4 w-12 h-12 text-base-content/70 hover:text-base-content hover:bg-base-200 t-icon-animate" 
+        class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-base-100 t-icon-animate" 
         @click="toggleMaximizeWindow" 
       />
       <IconClose 
-        class="p-4 w-12 h-12 text-base-content/70 hover:text-base-content hover:bg-red-500 t-icon-animate" 
+        class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-red-500 t-icon-animate" 
         @click="closeWindow" 
       />
     </div>

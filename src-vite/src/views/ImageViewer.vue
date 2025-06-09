@@ -8,7 +8,7 @@
   >
     <!-- title bar -->
     <TitleBar v-if="!config.isFullScreen"
-      :titlebar="isWin ? `jc-photo ${localeMsg.image_view_title}${fileIndex >= 0 ? ` - ${fileIndex + 1}/${fileCount}` : ''}` : ''"
+      :titlebar="isWin ? `jc-photo ${localeMsg.image_viewer.title}${fileIndex >= 0 ? ` - ${fileIndex + 1}/${fileCount}` : ''}` : ''"
       viewName="ImageViewer"
     />
 

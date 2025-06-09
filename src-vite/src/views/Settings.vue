@@ -2,7 +2,7 @@
 
   <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70">
     <!-- Title Bar -->
-    <TitleBar :titlebar="$t('settings')" :resizable="false" viewName="Settings"/>
+    <TitleBar :titlebar="$t('sidebar.settings')" :resizable="false" viewName="Settings"/>
 
     <!-- Main Content -->
     <div 
