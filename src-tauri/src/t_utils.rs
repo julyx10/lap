@@ -581,9 +581,9 @@ pub fn get_file_extension(file_path: &str) -> Option<String> {
 pub fn get_file_type(file_path: &str) -> Option<i64> {
     if let Some(extension) = get_file_extension(file_path){
         match extension.to_lowercase().as_str() {
-            "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "heic" | "heif" => Some(1),   // image
-            "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => Some(2), // video
-            "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3), // music
+            "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "avif" | "heic" | "heif" | "svg" | "ico" => Some(1), // image
+            "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" => Some(2),     // video
+            "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3),     // music
             _ => None,
         }
     } else {

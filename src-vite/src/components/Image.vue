@@ -141,8 +141,9 @@ watch(() => props.src, () => {
   isZoomFit.value = props.isZoomFit;
 
   // preload to the hide image, then swap the image when loaded
-  imageSrc.value[activeImage.value ^ 1] = props.src;
-  imageRotate.value[activeImage.value ^ 1] = props.rotate;
+  const nextImageIndex = activeImage.value ^ 1;
+  imageSrc.value[nextImageIndex] = props.src;
+  imageRotate.value[nextImageIndex] = props.rotate;
 }, { immediate: true });
 
 // watch rotate changes
@@ -151,16 +152,19 @@ watch(() => props.rotate, (newRotate) => {
 });
 
 watch(() => imageRotate.value[activeImage.value], (newValue) => {
+  const imgIndex = activeImage.value;
+  const imgSize = imageSize.value[imgIndex];
+  
   // swap image width and height
   if (newValue % 180 === 90) {
-    imageSizeRotated.value[activeImage.value] = { 
-      width: imageSize.value[activeImage.value].height, 
-      height: imageSize.value[activeImage.value].width 
+    imageSizeRotated.value[imgIndex] = { 
+      width: imgSize.height, 
+      height: imgSize.width 
     };
   } else {
-    imageSizeRotated.value[activeImage.value] = { 
-      width: imageSize.value[activeImage.value].width,  
-      height: imageSize.value[activeImage.value].height 
+    imageSizeRotated.value[imgIndex] = { 
+      width: imgSize.width,  
+      height: imgSize.height 
     };
   }
 
@@ -200,19 +204,20 @@ watch(() => [containerSize.value, imageSize.value], () => {
 const onImageLoad = (img) => {
   // toggle to active image when loaded (0 -> 1, 1 -> 0)
   activeImage.value = activeImage.value ^ 1;
+  const imgIndex = activeImage.value;
 
-  imageSize.value[activeImage.value] = { width: img.naturalWidth, height: img.naturalHeight };
+  imageSize.value[imgIndex] = { width: img.naturalWidth, height: img.naturalHeight };
 
   // swap image width and height
-  if (imageRotate.value[activeImage.value] % 180 === 90) {
-    imageSizeRotated.value[activeImage.value] = { 
-      width: imageSize.value[activeImage.value].height, 
-      height: imageSize.value[activeImage.value].width 
+  if (imageRotate.value[imgIndex] % 180 === 90) {
+    imageSizeRotated.value[imgIndex] = { 
+      width: img.naturalHeight, 
+      height: img.naturalWidth 
     };
   } else {
-    imageSizeRotated.value[activeImage.value] = { 
-      width: imageSize.value[activeImage.value].width,  
-      height: imageSize.value[activeImage.value].height 
+    imageSizeRotated.value[imgIndex] = { 
+      width: img.naturalWidth,  
+      height: img.naturalHeight 
     };
   }
   updateZoomFit();
@@ -227,28 +232,34 @@ const updateZoomFit = () => {
   isZoomFit.value ? zoomFit() : zoomReset();
 
   // set the hide image to the same position
-  imageSrc.value[activeImage.value ^ 1] = '';
-  position.value[activeImage.value ^ 1] = position.value[activeImage.value];
+  const nextImageIndex = activeImage.value ^ 1;
+  imageSrc.value[nextImageIndex] = '';
+  position.value[nextImageIndex] = position.value[activeImage.value];
 };
 
 // Zoom to fit image in container
 const zoomFit = () => {
   console.log('zoomFit');
-  const containerAspectRatio = containerSize.value.width / containerSize.value.height;
-  const imageAspectRatio = imageSizeRotated.value[activeImage.value].width / imageSizeRotated.value[activeImage.value].height;
+  const container = containerSize.value;
+  const imgRotatedSize = imageSizeRotated.value[activeImage.value];
+  
+  const containerAspectRatio = container.width / container.height;
+  const imageAspectRatio = imgRotatedSize.width / imgRotatedSize.height;
 
   const scale = containerAspectRatio > imageAspectRatio 
-    ? containerSize.value.height / imageSizeRotated.value[activeImage.value].height
-    : containerSize.value.width / imageSizeRotated.value[activeImage.value].width;
+    ? container.height / imgRotatedSize.height
+    : container.width / imgRotatedSize.width;
 
   // set position to center
-  zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, scale);
+  zoomImage(container.width / 2, container.height / 2, scale);
 };
 
 // Reset zoom level and position
 const zoomReset = () => {
   console.log('zoomReset');
-  zoomImage(mousePosition.value.x - containerPos.value.x, mousePosition.value.y - containerPos.value.y, 1);
+  const mousePos = mousePosition.value;
+  const containerPosVal = containerPos.value;
+  zoomImage(mousePos.x - containerPosVal.x, mousePos.y - containerPosVal.y, 1);
 };
 
 // start dragging
@@ -297,7 +308,8 @@ const handleMouseUp = () => {
 const handleMouseLeave = () => {
   // purpose: when clicking zoom fit/reset, the image will be centered
   // and the mouse position will be set to the center of the container
-  mousePosition.value = { x: containerSize.value.width / 2, y: containerSize.value.height / 2 };
+  const container = containerSize.value;
+  mousePosition.value = { x: container.width / 2, y: container.height / 2 };
 };
 
 const updateDragPosition = () => {
@@ -306,18 +318,15 @@ const updateDragPosition = () => {
 
   const imgIndex = activeImage.value;
   const scaleVal = scale.value[imgIndex];
-
   const imageRotatedSize = imageSizeRotated.value[imgIndex];
   const container = containerSize.value;
+  const lastPos = lastMousePosition.value;
 
-  const deltaX =
-    imageRotatedSize.width * scaleVal <= container.width
-      ? 0
-      : event.clientX - lastMousePosition.value.x;
-  const deltaY =
-    imageRotatedSize.height * scaleVal <= container.height
-      ? 0
-      : event.clientY - lastMousePosition.value.y;
+  const scaledWidth = imageRotatedSize.width * scaleVal;
+  const scaledHeight = imageRotatedSize.height * scaleVal;
+
+  const deltaX = scaledWidth <= container.width ? 0 : event.clientX - lastPos.x;
+  const deltaY = scaledHeight <= container.height ? 0 : event.clientY - lastPos.y;
 
   position.value[imgIndex].x += deltaX;
   position.value[imgIndex].y += deltaY;
@@ -362,71 +371,98 @@ const handleWheel = (event) => {
 // wheel zoom
 // zoomFactor: Adjust sensitivity
 const wheelZoom = (event, zoomFactor) => {
+  const container = containerSize.value;
+  const imgRotatedSize = imageSizeRotated.value[activeImage.value];
+  
   minScale.value = Math.min(
     0.1, 
     Math.min(
-      containerSize.value.width / imageSizeRotated.value[activeImage.value].width, 
-      containerSize.value.height / imageSizeRotated.value[activeImage.value].height
+      container.width / imgRotatedSize.width, 
+      container.height / imgRotatedSize.height
     ) * 0.5
   );
 
   // Clamp zoom level
   const newScale = Math.min(Math.max(scale.value[activeImage.value] / (1 + event.deltaY * zoomFactor / 100), minScale.value), maxScale.value);
-  zoomImage(event.clientX - containerPos.value.x, event.clientY - containerPos.value.y, newScale);
+  const containerPosVal = containerPos.value;
+  zoomImage(event.clientX - containerPosVal.x, event.clientY - containerPosVal.y, newScale);
 };
 
 const zoomIn = () => {
   const newScale = Math.min(scale.value[activeImage.value] * 2, maxScale.value);
-  zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
+  const container = containerSize.value;
+  zoomImage(container.width / 2, container.height / 2, newScale);
 };
 
 const zoomOut = () => {
+  const container = containerSize.value;
+  const imgRotatedSize = imageSizeRotated.value[activeImage.value];
+  
   minScale.value = Math.min(
     0.1, 
     Math.min(
-      containerSize.value.width / imageSizeRotated.value[activeImage.value].width, 
-      containerSize.value.height / imageSizeRotated.value[activeImage.value].height
+      container.width / imgRotatedSize.width, 
+      container.height / imgRotatedSize.height
     ) * 0.5
   );
 
   const newScale = Math.max(scale.value[activeImage.value] / 2, minScale.value);
-  zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, newScale);
+  zoomImage(container.width / 2, container.height / 2, newScale);
 };
 
 const zoomActual = () => {
-  zoomImage(containerSize.value.width / 2, containerSize.value.height / 2, 1);
+  const container = containerSize.value;
+  zoomImage(container.width / 2, container.height / 2, 1);
 };
 
 // Zoom image at cursor position
 function zoomImage(cursorX, cursorY, newScale) {
-  const imageOffsetX = ((scale.value[activeImage.value] - newScale) * ((cursorX - position.value[activeImage.value].x) - imageSize.value[activeImage.value].width / 2)) / scale.value[activeImage.value];
-  const imageOffsetY = ((scale.value[activeImage.value] - newScale) * ((cursorY - position.value[activeImage.value].y) - imageSize.value[activeImage.value].height / 2)) / scale.value[activeImage.value];
-  position.value[activeImage.value].x += imageOffsetX;
-  position.value[activeImage.value].y += imageOffsetY;
+  const imgIndex = activeImage.value;
+  const currentScale = scale.value[imgIndex];
+  const pos = position.value[imgIndex];
+  const imgSize = imageSize.value[imgIndex];
+  
+  const imageOffsetX = ((currentScale - newScale) * ((cursorX - pos.x) - imgSize.width / 2)) / currentScale;
+  const imageOffsetY = ((currentScale - newScale) * ((cursorY - pos.y) - imgSize.height / 2)) / currentScale;
+  
+  pos.x += imageOffsetX;
+  pos.y += imageOffsetY;
 
-  scale.value[activeImage.value] = newScale;
+  scale.value[imgIndex] = newScale;
   clampPosition();
 }
 
 // Ensure image stays within container
 function clampPosition() {
-  const paddingX = (imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] - imageSize.value[activeImage.value].width) / 2;
-  const paddingY = (imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] - imageSize.value[activeImage.value].height) / 2;
-  const maxX = containerSize.value.width  - imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] + paddingX;
-  const maxY = containerSize.value.height - imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] + paddingY;
+  // Skip boundary calculation during dragging for better performance
+  // if (isDragging.value) {
+  //   return;
+  // }
+
+  const imgIndex = activeImage.value;
+  const imgRotatedSize = imageSizeRotated.value[imgIndex];
+  const imgSize = imageSize.value[imgIndex];
+  const scaleVal = scale.value[imgIndex];
+  const container = containerSize.value;
+  const pos = position.value[imgIndex];
+
+  const paddingX = (imgRotatedSize.width * scaleVal - imgSize.width) / 2;
+  const paddingY = (imgRotatedSize.height * scaleVal - imgSize.height) / 2;
+  const maxX = container.width - imgRotatedSize.width * scaleVal + paddingX;
+  const maxY = container.height - imgRotatedSize.height * scaleVal + paddingY;
 
   isGrabbing.value = false;
-  if(imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value] > containerSize.value.width) {
-    position.value[activeImage.value].x = Math.min(Math.max(position.value[activeImage.value].x, maxX), paddingX);
+  if(imgRotatedSize.width * scaleVal > container.width) {
+    pos.x = Math.min(Math.max(pos.x, maxX), paddingX);
     isGrabbing.value = true;
   } else {
-    position.value[activeImage.value].x = (containerSize.value.width - imageSize.value[activeImage.value].width) / 2;
+    pos.x = (container.width - imgSize.width) / 2;
   }
-  if(imageSizeRotated.value[activeImage.value].height * scale.value[activeImage.value] > containerSize.value.height) {
-    position.value[activeImage.value].y = Math.min(Math.max(position.value[activeImage.value].y, maxY), paddingY);
+  if(imgRotatedSize.height * scaleVal > container.height) {
+    pos.y = Math.min(Math.max(pos.y, maxY), paddingY);
     isGrabbing.value = true;
   } else {
-    position.value[activeImage.value].y = (containerSize.value.height - imageSize.value[activeImage.value].height) / 2;
+    pos.y = (container.height - imgSize.height) / 2;
   }
   triggerRef(position);
 };
