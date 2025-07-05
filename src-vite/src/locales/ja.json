@@ -13,8 +13,8 @@
   },
 
   "album": {
-    "info": {
-      "title": "アルバムのプロパティ",
+    "edit": {
+      "title": "アルバムの編集",
       "name": "名前",
       "description": "説明",
       "description_placeholder": "アルバムの説明を入力",
@@ -109,6 +109,7 @@
     "select_invert": "選択を反転",
     "favorite": "お気に入りに追加",
     "unfavorite": "お気に入りから削除",
+    "tag": "タグ",
     "rotate": "回転",
     "open": "開く",
     "view": "表示",
@@ -127,6 +128,7 @@
     "goto_folder": "フォルダに移動",
     "reveal_in_file_explorer": "エクスプローラーで表示",
     "reveal_in_finder": "Finderで表示",
+    "edit_album": "アルバムを編集",
     "properties": "プロパティ",
     "add_folder": "フォルダを追加",
     "edit_list": "リストを編集",
@@ -255,6 +257,7 @@
       "rotate": "回転",
       "favorite": "お気に入りに追加",
       "unfavorite": "お気に入りから削除",
+      "tag": "タグ",
       "info": "プロパティ",
       "save": "保存",
       "delete": "削除",

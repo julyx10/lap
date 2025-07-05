@@ -103,6 +103,7 @@ import {
   IconPrint,
   IconFavorite,
   IconUnFavorite,
+  IconTag,
   IconRotate,
   IconCopy,
   IconRename,
@@ -246,6 +247,14 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: localeMsg.value.menu.tag,
+      icon: IconTag,
+      shortcut: isMac ? '⌘T' : 'Ctrl+T',
+      action: () => {
+        tagItem();
+      }
+    },
+    {
       label: localeMsg.value.menu.rotate,
       icon: IconRotate,
       shortcut: isMac ? '⌘R' : 'Ctrl+R',
@@ -365,6 +374,10 @@ function revealItem() {
 
 function toggleFavorite() {
   emit('message-from-grid-view', { message: 'favorite' });
+};
+
+function tagItem() {
+  emit('message-from-grid-view', { message: 'tag' });
 };
 
 function rotateItem() {

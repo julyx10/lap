@@ -77,6 +77,12 @@
           :tooltip="$t('image_viewer.toolbar.rotate')"
           @click="clickRotate()"
         />
+        <TButton
+          :icon="IconTag"
+          :disabled="fileIndex < 0"
+          :tooltip="$t('image_viewer.toolbar.tag')"
+          @click="clickTag()"
+        />
 
         <TButton v-if="isWin"
           :icon="!config.isFullScreen ? IconFullScreen : IconRestoreScreen"
@@ -273,7 +279,8 @@ import {
   IconRight,
   IconSeparator,
   IconClose,
-  IconComment
+  IconComment,
+  IconTag
  } from '@/common/icons';
 
 /// i18n

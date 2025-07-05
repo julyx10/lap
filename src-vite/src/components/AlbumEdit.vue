@@ -5,7 +5,7 @@
 
         <!-- title bar -->
         <div class="mb-2 flex items-center justify-between">
-          {{ $t('album.info.title') }}
+          {{ $t('album.edit.title') }}
           <TButton
             :icon="IconClose"
             :buttonSize="'small'"
@@ -17,7 +17,7 @@
         <table class="mt-4 w-full text-sm text-nowrap">
           <tbody>
             <tr>
-              <td>{{ $t('album.info.name') }}</td>
+              <td>{{ $t('album.edit.name') }}</td>
               <td>
                 <input
                   ref="inputNameRef"
@@ -30,19 +30,19 @@
               </td>
             </tr>
             <tr>
-              <td>{{ $t('album.info.description') }}</td>
+              <td>{{ $t('album.edit.description') }}</td>
               <td>
                 <textarea
                   v-model="inputDescriptionValue"
                   rows="2"
                   maxlength="1024"
-                  :placeholder="$t('album.info.description_placeholder')"
+                  :placeholder="$t('album.edit.description_placeholder')"
                   class="px-2 py-1 mt-2 w-full textarea min-h-[30px] max-h-[200px]"
                 ></textarea>
               </td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album.info.folder') }}</td>
+              <td>{{ $t('album.edit.folder') }}</td>
               <td>
                 <input
                   type="text"
@@ -53,19 +53,19 @@
               </td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album.info.images') }}</td>
-              <td>{{ totalImageCount >= 0 ? $t('album.info.files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album.info.files_counting') }}</td>
+              <td>{{ $t('album.edit.images') }}</td>
+              <td>{{ totalImageCount >= 0 ? $t('album.edit.files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album.edit.files_counting') }}</td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album.info.videos') }}</td>
-              <td>{{ totalVideoCount >= 0 ? $t('album.info.files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album.info.files_counting') }}</td>
+              <td>{{ $t('album.edit.videos') }}</td>
+              <td>{{ totalVideoCount >= 0 ? $t('album.edit.files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album.info.files_counting') }}</td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album.info.created_time') }}</td>
+              <td>{{ $t('album.edit.created_time') }}</td>
               <td>{{ createdAt }}</td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album.info.modified_time') }}</td>
+              <td>{{ $t('album.edit.modified_time') }}</td>
               <td>{{ modifiedAt }}</td>
             </tr>
           </tbody>

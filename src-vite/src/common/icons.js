@@ -101,3 +101,8 @@ export { default as IconProperties } from '@/assets/icons/information.svg';
 // ======================
 export { default as IconPlay } from '@/assets/icons/play.svg';
 export { default as IconPause } from '@/assets/icons/pause.svg';
+
+// ======================
+// MAGIC ICONS
+// ======================
+export { default as IconMagic } from '@/assets/icons/magic.svg';

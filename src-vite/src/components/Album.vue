@@ -8,6 +8,7 @@
 
       <TButton v-if="isEditList" 
         :icon="IconOk" 
+        :buttonSize="'medium'"
         @click="clickOk"
       />
       <DropDownMenu v-else 

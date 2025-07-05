@@ -13,8 +13,8 @@
   },
 
   "album": {
-    "info": {
-      "title": "相册属性",
+    "edit": {
+      "title": "编辑相册",
       "name": "名称",
       "description": "描述",
       "description_placeholder": "输入相册描述",
@@ -109,6 +109,7 @@
     "select_invert": "反选",
     "favorite": "收藏",
     "unfavorite": "取消收藏",
+    "tag": "标签",
     "rotate": "旋转",
     "open": "打开",
     "view": "查看",
@@ -127,6 +128,7 @@
     "goto_folder": "前往文件夹",
     "reveal_in_file_explorer": "在文件管理器中显示",
     "reveal_in_finder": "在访达中显示",
+    "edit_album": "编辑相册",
     "properties": "属性",
     "add_folder": "添加文件夹",
     "edit_list": "编辑列表",
@@ -255,6 +257,7 @@
       "rotate": "旋转",
       "favorite": "收藏",
       "unfavorite": "取消收藏",
+      "tag": "标签",
       "info": "属性",
       "save": "保存",
       "delete": "删除",

@@ -13,8 +13,8 @@
   },
 
   "album": {
-    "info": {
-      "title": "Album Properties",
+    "edit": {
+      "title": "Edit Album",
       "name": "Name",
       "description": "Description",
       "description_placeholder": "Enter album's description",
@@ -109,6 +109,7 @@
     "select_invert": "Invert selection",
     "favorite": "Favorite",
     "unfavorite": "Unfavorite",
+    "tag": "Tag",
     "rotate": "Rotate",
     "open": "Open",
     "view": "View",
@@ -127,6 +128,7 @@
     "goto_folder": "Go to folder",
     "reveal_in_file_explorer": "Reveal in File Explorer",
     "reveal_in_finder": "Reveal in Finder",
+    "edit_album": "Edit album",
     "properties": "Properties",
     "add_folder": "Add folder",
     "edit_list": "Edit list",
@@ -255,6 +257,7 @@
       "rotate": "Rotate",
       "favorite": "Favorite",
       "unfavorite": "Unfavorite",
+      "tag": "Tag",
       "info": "Info",
       "save": "Save",
       "delete": "Delete",

@@ -15,6 +15,9 @@
       <!-- toolbar -->
       <div class="ml-auto h-6 flex flex-row items-center space-x-2 shrink-0">
 
+        <!-- search box - filter file name -->
+        <SearchBox ref="searchBoxRef" v-model="config.searchText" @click.stop="selectMode = false" /> 
+
         <!-- select mode -->
         <div tabindex="-1"
           :class="[
@@ -37,8 +40,6 @@
           />
         </div>
 
-        <!-- search box - filter file name -->
-        <SearchBox ref="searchBoxRef" v-model="config.searchText" @click.stop="selectMode = false" /> 
         
         <!-- file type options -->
         <DropDownSelect
@@ -56,6 +57,12 @@
           @select="handleSortTypeSelect"
         />
 
+        <!-- magic button -->
+        <TButton
+          :icon="IconMagic"
+          @click="clickMagic"
+        />
+        
         <!-- preview -->
         <TButton
           :icon="config.showPreview ? IconPreview : IconPreviewOff"
@@ -268,6 +275,7 @@ import {
   IconSearch,
   IconChecked,
   IconComment,
+  IconMagic,
 } from '@/common/icons';
 
 const props = defineProps({

@@ -73,15 +73,15 @@
     </div>
 
     <!-- edit album information -->
-    <AlbumInfo
-      v-if="showAlbumInfo"
+    <AlbumEdit
+      v-if="showAlbumEdit"
       :inputName="getAlbumById(albumId).name"
       :inputDescription="getAlbumById(albumId).description"
       :albumPath="getAlbumById(albumId).path"
       :createdAt="formatTimestamp(getAlbumById(albumId).created_at, $t('format.date_time'))"
       :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('format.date_time'))"
-      @ok="clickAlbumInfo"
-      @cancel="showAlbumInfo = false"
+      @ok="clickAlbumEdit"
+      @cancel="showAlbumEdit = false"
     />
     
     <!-- new folder -->
@@ -127,7 +127,7 @@ import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum,
          createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
-import AlbumInfo from '@/components/AlbumInfo.vue';
+import AlbumEdit from '@/components/AlbumEdit.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
@@ -141,7 +141,7 @@ import {
   IconRefresh,
   IconDragHandle,
   IconRemove,
-  IconProperties,
+  IconEdit,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -176,7 +176,7 @@ const selectedFolderPath = ref('');
 
 const removingAlbumId = ref(null);  // album id to be removed
 // message boxes
-const showAlbumInfo = ref(false);
+const showAlbumEdit = ref(false);
 const showNewFolderMsgbox = ref(false);
 const showRemoveMsgbox = ref(false);
 const errorMessage = ref('');
@@ -196,6 +196,13 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 const moreMenuItems = computed(() => {
   return [
     {
+      label: localeMsg.value.menu.edit_album,
+      icon: IconEdit,
+      action: () => {
+        showAlbumEdit.value = true;
+      }
+    },
+    {
       label: localeMsg.value.menu.new_folder,
       icon: IconNewFolder,
       action: () => {
@@ -207,13 +214,6 @@ const moreMenuItems = computed(() => {
       // icon: IconExternal,
       action: () => {
         revealFolder(getAlbumById(selectedAlbumId.value).path);
-      }
-    },
-    {
-      label: localeMsg.value.menu.properties,
-      icon: IconProperties,
-      action: () => {
-        showAlbumInfo.value = true;
       }
     },
     {
@@ -317,7 +317,7 @@ const clickAlbumInfo = async (newName, newDescription) => {
     let album = getAlbumById(selectedAlbumId.value);
     album.name = newName;
     album.description = newDescription;
-    showAlbumInfo.value = false;
+    showAlbumEdit.value = false;
   }
 };
 
