@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="group relative shrink-0 transition-all duration-300 overflow-hidden group"
+    class="group relative shrink-0 overflow-hidden group"
     :class="[isFocused || searchValue.length > 0 ? 'w-48' : 'w-9']"
   >
     <input 
@@ -11,7 +11,7 @@
       :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('toolbar.search.placeholder') : '')"
       :class="[
         'py-1 h-8 w-full text-sm input bg-transparent transition-colors duration-300',
-        isFocused || searchValue.length > 0 ? 'px-8 border-base-content/70' : 'px-2 border-base-content/30 group-hover:border-base-content/70 cursor-pointer'
+        isFocused || searchValue.length > 0 ? 'px-8 focus:border' : 'px-2 group-hover:border-base-content/70 cursor-pointer'
       ]"
       @focus="isFocused = true"
       @blur="handleBlur"
