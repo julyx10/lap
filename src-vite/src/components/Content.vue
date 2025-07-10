@@ -276,6 +276,7 @@ import {
   IconChecked,
   IconComment,
   IconMagic,
+  IconTag,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -416,6 +417,14 @@ const moreMenuItems = computed(() => {
       disabled: selectedCount.value === 0,
       action: () => {
         selectModeSetFavorites(false);
+      }
+    },
+    {
+      label: localeMsg.value.menu.tag,
+      icon: IconTag,
+      disabled: selectedCount.value === 0,
+      action: () => {
+        // clickTag();
       }
     },
   ];
