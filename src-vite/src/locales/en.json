@@ -33,6 +33,11 @@
     "folders": "Favorite folders"
   },
 
+  "tag": {
+    "add_tag": "Add new tag",
+    "delete_tag": "Delete tag"
+  },
+
   "calendar": {
     "day": "Day",
     "week": "Week",
@@ -190,6 +195,19 @@
       "ok": "Delete",
       "success": "The file '{file}' has been deleted.",
       "error": "Cannot delete the file. The file may not exist."
+    },
+    "new_tag": {
+      "title": "New tag",
+      "content": "Enter the name for the new tag:",
+      "ok": "Create",
+      "error": "Cannot create new tag."
+    },
+    "delete_tag": {
+      "title": "Delete tag",
+      "content": "The tag '{tag}' will be deleted. This action cannot be undone.",
+      "ok": "Delete",
+      "success": "The tag '{tag}' has been deleted.",
+      "error": "Cannot delete the tag. The tag may not exist."
     },
     "edit_comment": {
       "title": "Edit comment",

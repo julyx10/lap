@@ -6,7 +6,7 @@
  * date:    2024-08-08
  */
 use base64::{ engine::general_purpose, Engine };
-use crate::t_sqlite::{ ACamera, AFile, AFolder, AThumb, Album };
+use crate::t_sqlite::{ ACamera, AFile, AFolder, AThumb, Album, ATag };
 use crate::t_utils;
 use arboard::Clipboard;
 use std::path::Path;
@@ -62,13 +62,6 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
 }
 
 // folder
-
-// get folder
-// #[tauri::command]
-// pub fn get_folder(id: i64) -> Result<AFolder, String> {
-//     AFolder::get_folder_by_id(id)
-//         .map_err(|e| format!("Error while getting folders: {}", e))
-// }
 
 // click to select a sub-folder under an album
 #[tauri::command]
@@ -158,26 +151,19 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 
 // file
 
-/// get all files
-// #[tauri::command]
-// pub fn get_all_files(is_favorite: bool, offset: i64, page_size: i64) -> Result<Vec<AFile>, String> {
-//     AFile::get_all_files(is_favorite, offset, page_size)
-//         .map_err(|e| format!("Error while getting all files: {}", e))
-// }
-
 /// get db file count and sum
 #[tauri::command]
 pub fn get_db_count_and_sum(
     search_text: &str, search_file_type: i64,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
-    is_favorite: bool, is_deleted: bool
+    is_favorite: bool, tag_id: i64, is_deleted: bool
 ) -> Result<(i64, i64), String> {
     AFile::get_count_and_sum(
         search_text, search_file_type,
         start_date, end_date,
         make, model,
-        is_favorite, is_deleted
+        is_favorite, tag_id, is_deleted
     ).map_err(|e| format!("Error while getting all files count: {}", e))
 }
 
@@ -188,7 +174,7 @@ pub fn get_db_files(
     sort_type: i64, sort_order: i64,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
-    is_favorite: bool, is_deleted: bool,
+    is_favorite: bool, tag_id: i64, is_deleted: bool,
     page_size: i64, offset: i64
 ) -> Result<Vec<AFile>, String> {
     AFile::get_files(
@@ -196,7 +182,7 @@ pub fn get_db_files(
         sort_type, sort_order,
         start_date, end_date,
         make, model,
-        is_favorite, is_deleted,
+        is_favorite, tag_id, is_deleted,
         page_size, offset
     ).map_err(|e| format!("Error while getting all files: {}", e))
 }
@@ -377,6 +363,64 @@ pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, S
 pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
     AFile::update_column(file_id, "is_favorite", &is_favorite)
         .map_err(|e| format!("Error while setting file favorite: {}", e))
+}
+
+// tag
+
+/// get all tags
+#[tauri::command]
+pub fn get_all_tags() -> Result<Vec<ATag>, String> {
+    ATag::get_all()
+        .map_err(|e| format!("Error while getting all tags: {}", e))
+}
+
+/// get tag name by id
+#[tauri::command]
+pub fn get_tag_name(tag_id: i64) -> Result<String, String> {
+    ATag::get_name(tag_id)
+        .map_err(|e| format!("Error while getting tag name: {}", e))
+}
+
+/// create a new tag
+#[tauri::command]
+pub fn create_tag(name: &str) -> Result<ATag, String> {
+    ATag::add(name)
+        .map_err(|e| format!("Error while creating tag: {}", e))
+}
+
+/// rename a tag
+#[tauri::command]
+pub fn rename_tag(tag_id: i64, new_name: &str) -> Result<usize, String> {
+    ATag::rename(tag_id, new_name)
+        .map_err(|e| format!("Error while renaming tag: {}", e))
+}
+
+/// delete a tag
+#[tauri::command]
+pub fn delete_tag(tag_id: i64) -> Result<usize, String> {
+    ATag::delete(tag_id)
+        .map_err(|e| format!("Error while deleting tag: {}", e))
+}
+
+/// get all tags for a specific file
+#[tauri::command]
+pub fn get_tags_for_file(file_id: i64) -> Result<Vec<ATag>, String> {
+    ATag::get_tags_for_file(file_id)
+        .map_err(|e| format!("Error while getting tags for file: {}", e))
+}
+
+/// add a tag to a file
+#[tauri::command]
+pub fn add_tag_to_file(file_id: i64, tag_id: i64) -> Result<(), String> {
+    ATag::add_tag_to_file(file_id, tag_id)
+        .map_err(|e| format!("Error while adding tag to file: {}", e))
+}
+
+/// remove a tag from a file
+#[tauri::command]
+pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> {
+    ATag::remove_tag_from_file(file_id, tag_id)
+        .map_err(|e| format!("Error while removing tag from file: {}", e))
 }
 
 // camera

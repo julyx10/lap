@@ -2,19 +2,24 @@ import { defineStore } from 'pinia';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
-    // Home.vue
+    ////// Home.vue //////
+
+    // toolbar index
     sidebarIndex: 1,            // toolbar index
     leftPaneWidth: 300,         // left pane width
+
+    // album
+    albumId: null,              // selected album id
+    albumFolderId: null,        // selected folder id
+    albumFolderPath: null,      // selected folder path
 
     // favorites
     favoriteAlbumId: null,      // favorite album id
     favoriteFolderId: null,     // favorite folder id
     favoriteFolderPath: null,   // favorite folder path
 
-    // album - selected album and folder
-    albumId: null,              // selected album id
-    albumFolderId: null,        // selected folder id
-    albumFolderPath: null,      // selected folder path
+    // tags
+    tagId: null,                // selected tag id
 
     // calendar
     calendarIsMonthly: true,    // display monthly or daily calendar
@@ -25,13 +30,11 @@ export const useConfigStore = defineStore('configStore', {
 
     // location
 
-    // people
-
     // cameras
     cameraMake: null,           // selected camera make
     cameraModel: null,          // selected camera model
 
-    // Content.vue
+    ////// Content.vue //////
 
     // filter fileList
     searchText: '',             // filter file name
@@ -49,14 +52,16 @@ export const useConfigStore = defineStore('configStore', {
     destFolderId: null,         // destination folder id
     destFolderPath: null,       // destination folder path
 
-    // ImageViewer.vue
+    ////// ImageViewer.vue //////
+
     isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
     isFullScreen: false,        // full screen mode
     isPinned: true,             // pinned mode
     showFileInfo: false,        // show file info
     fileInfoPanelWidth: 20,     // file info panel width
 
-    // Settings.vue
+    ////// Settings.vue //////
+
     settingsTabIndex: 0,        // settings tab index
 
     // settings - general

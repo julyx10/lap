@@ -21,7 +21,7 @@
           v-model="inputValue"
           type="text"
           maxlength="255"
-          class="px-2 py-1 my-2 w-full input"
+          class="px-2 py-1 my-2 w-full input focus:border"
           @input="validateInput"
           @keydown.enter="clickOk"
         />
@@ -30,7 +30,7 @@
           v-model="inputValue"
           rows="4"
           minrows="1"
-          class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px]"
+          class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px] focus:border"
           @input="validateInput"
           @keydown.enter="clickOk"
         ></textarea>

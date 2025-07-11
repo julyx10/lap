@@ -820,7 +820,7 @@ impl AFile {
         search_text: &str, search_file_type: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
-        is_favorite: bool, is_deleted: bool
+        is_favorite: bool, tag_id: i64, is_deleted: bool
     ) -> Result<(i64, i64), String> {
         let mut conditions = Vec::new();
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
@@ -860,6 +860,11 @@ impl AFile {
             conditions.push("a.is_favorite = 1");
         }
     
+        if tag_id > 0 {
+            conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
+            params.push(&tag_id);
+        }
+    
         if is_deleted {
             conditions.push("a.deleted_at IS NOT NULL");
         } else {
@@ -881,7 +886,7 @@ impl AFile {
         sort_type: i64, sort_order: i64,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
-        is_favorite: bool, is_deleted: bool,
+        is_favorite: bool, tag_id: i64, is_deleted: bool,
         page_size: i64, offset: i64,
     ) -> Result<Vec<Self>, String> {
 
@@ -924,6 +929,11 @@ impl AFile {
             conditions.push("a.is_favorite = 1");
         }
     
+        if tag_id > 0 {
+            conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
+            params.push(&tag_id);
+        }
+    
         if is_deleted {
             conditions.push("a.deleted_at IS NOT NULL");
         } else {
@@ -959,6 +969,7 @@ impl AFile {
 
         Self::query_files(&query, &params)
     }
+
 }
 
 /// Define the album thumbnail struct
@@ -1064,6 +1075,132 @@ impl AThumb {
         }
 
         Ok(None)
+    }
+}
+
+
+/// Define the Tag struct
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ATag {
+    pub id: i64,
+    pub name: String,
+}
+
+impl ATag {
+    /// Function to construct `Self` from a database row
+    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
+        Ok(Self {
+            id: row.get(0)?,
+            name: row.get(1)?,
+        })
+    }
+
+    /// Add a new tag. If the tag already exists, return the existing one.
+    pub fn add(name: &str) -> Result<Self, String> {
+        let conn = open_conn()?;
+        // First, try to fetch the tag to see if it already exists.
+        let existing_tag = conn.query_row(
+            "SELECT id, name FROM atags WHERE name = ?1",
+            params![name],
+            Self::from_row
+        ).optional().map_err(|e| e.to_string())?;
+
+        if let Some(tag) = existing_tag {
+            Ok(tag)
+        } else {
+            // The tag doesn't exist, so insert it.
+            conn.execute(
+                "INSERT INTO atags (name) VALUES (?1)",
+                params![name],
+            ).map_err(|e| e.to_string())?;
+            let id = conn.last_insert_rowid();
+            Ok(Self { id, name: name.to_string() })
+        }
+    }
+
+    /// Get all tags from the db
+    pub fn get_all() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare("SELECT id, name FROM atags ORDER BY name ASC")
+            .map_err(|e| e.to_string())?;
+
+        let tags_iter = stmt.query_map([], |row| Self::from_row(row))
+            .map_err(|e| e.to_string())?;
+
+        let mut tags = Vec::new();
+        for tag in tags_iter {
+            tags.push(tag.map_err(|e| e.to_string())?);
+        }
+        Ok(tags)
+    }
+
+    /// Get tag name by id
+    pub fn get_name(tag_id: i64) -> Result<String, String> {
+        let conn = open_conn()?;
+        let result = conn.query_row("SELECT name FROM atags WHERE id = ?1", params![tag_id], |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// Get all tags for a specific file
+    pub fn get_tags_for_file(file_id: i64) -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare(
+            "SELECT t.id, t.name
+             FROM atags t
+             INNER JOIN afile_tags ft ON t.id = ft.tag_id
+             WHERE ft.file_id = ?1
+             ORDER BY t.name ASC"
+        ).map_err(|e| e.to_string())?;
+
+        let tags_iter = stmt.query_map(params![file_id], |row| Self::from_row(row))
+            .map_err(|e| e.to_string())?;
+
+        let mut tags = Vec::new();
+        for tag in tags_iter {
+            tags.push(tag.map_err(|e| e.to_string())?);
+        }
+        Ok(tags)
+    }
+
+    /// Add a tag to a file.
+    pub fn add_tag_to_file(file_id: i64, tag_id: i64) -> Result<(), String> {
+        let conn = open_conn()?;
+        conn.execute(
+            "INSERT OR IGNORE INTO afile_tags (file_id, tag_id) VALUES (?1, ?2)",
+            params![file_id, tag_id],
+        ).map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Remove a tag from a file
+    pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn.execute(
+            "DELETE FROM afile_tags WHERE file_id = ?1 AND tag_id = ?2",
+            params![file_id, tag_id],
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// Delete a tag from the database. This will also remove all its associations with files.
+    pub fn delete(tag_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn.execute(
+            "DELETE FROM atags WHERE id = ?1",
+            params![tag_id],
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// Rename a tag
+    pub fn rename(tag_id: i64, new_name: &str) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn.execute(
+            "UPDATE atags SET name = ?1 WHERE id = ?2",
+            params![new_name, tag_id],
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
     }
 }
 
@@ -1226,6 +1363,30 @@ pub fn create_db() -> Result<String> {
         [],
     )?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_athumbs_file_id ON athumbs(file_id)", [])?;
+
+    // tags table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS atags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE
+        )",
+        [],
+    )?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_atags_name ON atags(name)", [])?;
+
+    // file_tags table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS afile_tags (
+            file_id INTEGER NOT NULL,
+            tag_id INTEGER NOT NULL,
+            PRIMARY KEY (file_id, tag_id),
+            FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES atags(id) ON DELETE CASCADE
+        )",
+        [],
+    )?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_file_id ON afile_tags(file_id)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_tag_id ON afile_tags(tag_id)", [])?;
 
     Ok("Database created successfully.".to_string())
 }

@@ -263,7 +263,7 @@ export async function revealFolder(folderPath) {
 /// get all files from db (with pagination)
 /// return [files, totalCount, totalSum] when offset is 0
 /// return files when offset is not 0
-export async function getDbFiles(startDate, endDate, make, model, isFavorite, isDeleted, offset) {
+export async function getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) {
   try {
     const files = await invoke('get_db_files', {
       searchText: config.searchText, 
@@ -275,13 +275,14 @@ export async function getDbFiles(startDate, endDate, make, model, isFavorite, is
       make, 
       model,
       isFavorite, 
+      tagId,
       isDeleted,
       offset, 
       pageSize: config.fileListPageSize
     });
     if(files) {
       if(offset === 0) {
-        const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted);
+        const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, tagId, isDeleted);
         return [files, totalCount, totalSum];
       } else {
         return files;
@@ -294,7 +295,7 @@ export async function getDbFiles(startDate, endDate, make, model, isFavorite, is
 }
 
 /// get all db files' count and sum(without pagination)
-export async function getDbCountAndSum(startDate, endDate, make, model, isFavorite, isDeleted) {
+export async function getDbCountAndSum(startDate, endDate, make, model, isFavorite, tagId, isDeleted) {
   try {
     const result = await invoke('get_db_count_and_sum', {
       searchText: config.searchText, 
@@ -304,6 +305,7 @@ export async function getDbCountAndSum(startDate, endDate, make, model, isFavori
       make, 
       model,
       isFavorite, 
+      tagId,
       isDeleted,
     });
     if(result) {
@@ -529,6 +531,103 @@ export async function setFileFavorite(fileId, isFavorite) {
     };
   } catch (error) {
     console.log('Failed to set file favorite:', error);
+  }
+  return null;
+}
+
+// tag
+
+// get all tags
+export async function getAllTags() {
+  try {
+    const tags = await invoke('get_all_tags');
+    console.log('getAllTags:', tags);
+    if (tags) {
+      return tags;
+    }
+  } catch (error) {
+    console.error('Failed to get all tags:', error);
+  }
+  return null;
+}
+
+// get tag name by id
+export async function getTagName(tagId) {
+  try {
+    const tagName = await invoke('get_tag_name', { tagId });
+    if (tagName) {
+      return tagName;
+    }
+  } catch (error) {
+    console.error('Failed to get tag name:', error);
+  }
+  return null;
+}
+
+// create a new tag
+export async function createTag(name) {
+  try {
+    const result = await invoke('create_tag', { name });
+    return result;
+  } catch (error) {
+    console.error('Failed to create tag:', error);
+  }
+  return null;
+}
+
+// rename a tag
+export async function renameTag(tagId, newName) {
+  try {
+    const result = await invoke('rename_tag', { tagId, newName });
+    return result;
+  } catch (error) {
+    console.error('Failed to rename tag:', error);
+  }
+  return null;
+}
+
+// delete a tag
+export async function deleteTag(tagId) {
+  try {
+    const result = await invoke('delete_tag', { tagId });
+    return result;
+  } catch (error) {
+    console.error('Failed to delete tag:', error);
+  }
+  return null;
+}
+
+// get tags for a file
+export async function getTagsForFile(fileId) {
+  try {
+    const tags = await invoke('get_tags_for_file', { fileId });
+    if (tags) {
+      return tags;
+    }
+  } catch (error) {
+    console.error('Failed to get tags for file:', error);
+  }
+  return null;
+}
+
+// add tag to file
+export async function addTagToFile(fileId, tagId) {
+  try {
+    const result = await invoke('add_tag_to_file', { fileId, tagId });
+    return result;
+  } catch (error) {
+    console.error('Failed to add tag to file:', error);
+  }
+  return null;
+}
+
+// remove tag from file
+export async function removeTagFromFile(fileId, tagId) {
+  try {
+    const result = await invoke('remove_tag_from_file', { fileId, tagId });
+    return result;
+  } catch (error) {
+    console.error('Failed to remove tag from file:', error);
   }
   return null;
 }

@@ -33,6 +33,11 @@
     "folders": "收藏的文件夹"
   },
 
+  "tag": {
+    "add_tag": "添加新标签",
+    "delete_tag": "删除标签"
+  },
+
   "calendar": {
     "day": "日",
     "week": "周",
@@ -190,6 +195,19 @@
       "ok": "删除",
       "success": "文件 '{file}' 已被删除。",
       "error": "无法删除文件。文件可能不存在。"
+    },
+    "new_tag": {
+      "title": "新标签",
+      "content": "输入新标签的名称：",
+      "ok": "创建",
+      "error": "无法创建新标签。"
+    },
+    "delete_tag": {
+      "title": "删除标签",
+      "content": "标签 '{tag}' 将被删除。此操作无法撤销。",
+      "ok": "删除",
+      "success": "标签 '{tag}' 已删除。",
+      "error": "无法删除标签。标签可能不存在。"
     },
     "edit_comment": {
       "title": "编辑备注",

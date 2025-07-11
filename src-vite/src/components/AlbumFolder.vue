@@ -7,11 +7,11 @@
     >
       <div v-if="!child.is_deleted" 
         :class="[
-          'my-1 mr-1 h-6 flex items-center rounded border-l-2 whitespace-nowrap cursor-pointer group', 
-          selectedFolderId === child.id && !isRenamingFolder ? 'bg-base-content/10 border-primary' : 'hover:bg-base-content/10 border-transparent',
+          'my-1 mr-1 h-6 flex items-center rounded border-l-2 whitespace-nowrap cursor-pointer group',
           {
-            'text-base-content': selectedFolderId === child.id || getFolderPath(config.albumFolderPath).includes(child.path),
-            'bg-base-content/10 border-primary': selectedFolderId === child.id && !isRenamingFolder,
+            'bg-base-content/10 border-primary text-base-content': selectedFolderId === child.id && !isRenamingFolder,
+            'hover:bg-base-content/10 border-transparent': selectedFolderId !== child.id || isRenamingFolder,
+            'text-base-content': getFolderPath(config.albumFolderPath).includes(child.path)
           }
         ]" 
         @click="clickFolder(rootAlbumId, child)"
@@ -29,7 +29,7 @@
           ref="folderInputRef"
           type="text"
           maxlength="255"
-          class="input px-1 w-full"
+          class="input px-1 w-full focus:border text-base"
           v-model="child.name"
           @keydown.enter = "clickRenameFolder(child.name)"
           @keydown.esc = "handleEscKey($event, child.id)"

@@ -79,7 +79,6 @@ fn main() {
             t_cmds::set_album_display_order,
 
             // folder
-            // t_cmds::get_folder,
             t_cmds::select_folder,
             t_cmds::fetch_folder,
             t_cmds::count_folder,
@@ -91,7 +90,6 @@ fn main() {
             t_cmds::reveal_folder,
 
             // file
-            // t_cmds::get_all_files,
             t_cmds::get_db_count_and_sum,
             t_cmds::get_db_files,
             t_cmds::get_folder_files,
@@ -113,12 +111,17 @@ fn main() {
             t_cmds::set_folder_favorite,
             t_cmds::set_file_favorite,
 
-            // calendar
-            // t_cmds::get_files_by_date,
-            // t_cmds::get_files_by_date_range,
-            
+            // tag
+            t_cmds::get_all_tags,
+            t_cmds::get_tag_name,
+            t_cmds::create_tag,
+            t_cmds::rename_tag,
+            t_cmds::delete_tag,
+            t_cmds::get_tags_for_file,
+            t_cmds::add_tag_to_file,
+            t_cmds::remove_tag_from_file,
+
             // camera
-            // t_cmds::get_camera_files,
             t_cmds::get_camera_info,
             t_cmds::get_taken_dates,
 

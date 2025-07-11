@@ -60,12 +60,14 @@
         <!-- magic button -->
         <TButton
           :icon="IconMagic"
-          @click="clickMagic"
+          :buttonSize="'medium'"
+          @click="clickAI"
         />
         
         <!-- preview -->
         <TButton
           :icon="config.showPreview ? IconPreview : IconPreviewOff"
+          :buttonSize="'medium'"
           @click="config.showPreview = !config.showPreview"
         />
 
@@ -240,7 +242,7 @@ import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'v
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { getAlbum, getDbFiles, getFolderFiles,
+import { getAlbum, getDbFiles, getFolderFiles, getTagName,
          copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate } from '@/common/api';
 import { config, isWin, isMac, setTheme,
@@ -577,6 +579,7 @@ watch(
           config.sidebarIndex,      // toolbar index
           config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath,   // favorite files and folder
           config.albumId, config.albumFolderId, config.albumFolderPath,                 // album
+          config.tagId,                                                                 // tag
           config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
           config.cameraMake, config.cameraModel,                                        // camera 
           config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
@@ -619,11 +622,11 @@ watch(() => config.showPreview, (newValue) => {
   gridViewRef.value.scrollToItem(selectedItemIndex.value); 
 });
 
-async function getFileList(startDate, endDate, make, model, isFavorite, isDeleted, offset) { 
+async function getFileList(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) { 
   if (offset === 0) {
-    [fileList.value, totalCount.value, totalSize.value] = await getDbFiles(startDate, endDate, make, model, isFavorite, isDeleted, offset);
+    [fileList.value, totalCount.value, totalSize.value] = await getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset);
   } else {
-    const newFiles = await getDbFiles(startDate, endDate, make, model, isFavorite, isDeleted, offset);
+    const newFiles = await getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset);
     fileList.value.push(...newFiles);
   }
 }
@@ -633,7 +636,7 @@ async function updateContent() {
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.sidebar.home;
-    await getFileList("", "", "", "", false, false, fileListOffset.value);
+    await getFileList("", "", "", "", false, 0, false, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
     const album = await getAlbum(config.albumId);
@@ -648,19 +651,28 @@ async function updateContent() {
   }
   else if(newIndex === 2) {   // favorite
     if(config.favoriteFolderId === 0) { // 0: favorite files
-      contentTitle.value = localeMsg.value.sidebar.favorite;
-      await getFileList("", "", "", "", true, false, fileListOffset.value);
+      contentTitle.value = localeMsg.value.favorite.files;
+      await getFileList("", "", "", "", true, 0, false, fileListOffset.value);
     } else {                // else: favorite folders
       const album = await getAlbum(config.favoriteAlbumId);
       if(album) {
-        contentTitle.value = album.name + getRelativePath(config.favoriteFolderPath, album.path);
+        contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
       };
       [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
     }
   }
   else if(newIndex === 3) {   // tag
-    contentTitle.value = localeMsg.value.sidebar.tag;
-    // await getFileList("", "", "", "", false, true, fileListOffset.value);
+    if (!config.tagId) {
+      contentTitle.value = localeMsg.value.sidebar.tag;
+    } else {
+      const tagName = await getTagName(config.tagId);
+      if (tagName) {
+        contentTitle.value = localeMsg.value.sidebar.tag + ' > ' + tagName;
+      } else {
+        contentTitle.value = localeMsg.value.sidebar.tag;
+      }
+    }
+    await getFileList("", "", "", "", false, config.tagId, false, fileListOffset.value);
   }
   else if(newIndex === 4) {   // calendar
     if (config.calendarMonth === -1) {          // yearly
@@ -671,26 +683,22 @@ async function updateContent() {
       contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long_with_weekdayf);
     }
     const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
-    await getFileList(startDate, endDate, "", "", false, false, fileListOffset.value);
+    await getFileList(startDate, endDate, "", "", false, 0, false, fileListOffset.value);
   }
   else if(newIndex === 5) {   // location
     contentTitle.value = localeMsg.value.sidebar.location;
     fileList.value = [];
   }
-  // else if(newIndex === 6) {   // people
-  //   contentTitle.value = localeMsg.value.sidebar.people;
-  //   fileList.value = [];
-  // }
   else if(newIndex === 6) {   // camera
     if(config.cameraModel) {
       contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
     } else {
       contentTitle.value = `${config.cameraMake}`;
     }
-    await getFileList("", "", config.cameraMake, config.cameraModel, false, false, fileListOffset.value);
+    await getFileList("", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
   } else if(newIndex === 7) { // trash
-    contentTitle.value = localeMsg.value.sidebar.trash;
-    await getFileList("", "", "", "", false, true, fileListOffset.value);
+    contentTitle.value = localeMsg.value.trash.files;
+    await getFileList("", "", "", "", false, 0, true, fileListOffset.value);
   }
 
   refreshFileList();
@@ -854,6 +862,11 @@ const clickEditComment = async (newComment) => {
       showCommentMsgbox.value = false;
     }
   }
+}
+
+// AI
+const clickAI = async () => {
+  console.log('clickAI');
 }
 
 const handleSelectMode = (value) => {
