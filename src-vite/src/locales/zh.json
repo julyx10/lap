@@ -35,7 +35,11 @@
 
   "tag": {
     "add_tag": "添加新标签",
-    "delete_tag": "删除标签"
+    "delete_tag": "删除标签",
+    "edit_tag": "编辑标签",
+    "search_tags": "搜索标签",
+    "enter_new_tag_name": "输入新标签名称",
+    "not_found": "未找到标签"
   },
 
   "calendar": {

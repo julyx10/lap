@@ -470,25 +470,20 @@ function handleKeyDown(event) {
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
   if (isCmdKey && key.toLowerCase() === 'c') {
-    event.preventDefault();
     clickCopy();
   } else if (isCmdKey && key.toLowerCase() === 'p') {
-    event.preventDefault();
     autoPlay.value = !autoPlay.value;
   } else if (isCmdKey && key.toLowerCase() === 'f') {
-    event.preventDefault();
     toggleFavorite();
   } else if (isCmdKey && key.toLowerCase() === 'r') {
-    event.preventDefault();
     clickRotate();
+  } else if (isCmdKey && key.toLowerCase() === 't') {
+    clickTag();
   } else if (isCmdKey && key.toLowerCase() === 'i') {
-    event.preventDefault();
     clickShowFileInfo();
   } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    event.preventDefault();
     showDeleteMsgbox.value = true;
   } else if (keyActions[key]) {
-    event.preventDefault();
     keyActions[key]();
   }
 }
@@ -667,6 +662,11 @@ const toggleFavorite = () => {
 // rotate image
 const clickRotate = () => {
   emit('message-from-image-viewer', { message: 'rotate' });
+};
+
+// tag image
+const clickTag = () => {
+  emit('message-from-image-viewer', { message: 'tag' });
 };
 
 // click copy image

@@ -376,35 +376,6 @@ impl AFolder {
         Ok(folders)
     }
 
-    // recurse all parent folder id (deprecated)
-    // pub fn recurse_all_parents_id(folder_id: i64) -> Result<Vec<i64>, String> {
-    //     let conn = open_conn()?;
-
-    //     let mut stmt = conn
-    //         .prepare(
-    //             "WITH RECURSIVE parent_hierarchy AS (
-    //             SELECT parent_id
-    //             FROM afolders
-    //             WHERE id = ?1
-    //             UNION ALL
-    //             SELECT f.parent_id
-    //             FROM afolders f
-    //             INNER JOIN parent_hierarchy ph ON f.id = ph.parent_id
-    //             WHERE f.parent_id != 0
-    //         )
-    //         SELECT parent_id FROM parent_hierarchy;",
-    //         )
-    //         .map_err(|e| e.to_string())?;
-
-    //     let parent_ids = stmt
-    //         .query_map(params![folder_id], |row| row.get(0))
-    //         .map_err(|e| e.to_string())?
-    //         .collect::<Result<Vec<i64>, _>>()
-    //         .map_err(|e| e.to_string())?;
-
-    //     Ok(parent_ids)
-    // }
-
 }
 
 /// Define the album file struct
@@ -431,6 +402,7 @@ pub struct AFile {
     pub rotate: Option<i32>,       // rotate angle (0, 90, 180, 270)
     pub comments: Option<String>,  // comments
     pub deleted_at: Option<u64>,   // deleted date
+    pub has_tags: Option<bool>,    // has tags
 
     // exif info
     pub e_make: Option<String>,  // camera make
@@ -500,6 +472,7 @@ impl AFile {
             rotate: None,
             comments: None,
             deleted_at: None,
+            has_tags: Some(false),
 
             e_make: Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase()),
             e_model: Self::get_exif_field(&exif, Tag::Model),
@@ -553,11 +526,11 @@ impl AFile {
                 folder_id, 
                 name, name_pinyin, size, file_type, created_at, modified_at, taken_date,
                 width, height,
-                is_favorite, rotate, comments, deleted_at,
+                is_favorite, rotate, comments, deleted_at, has_tags,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27)",
             params![
                 self.folder_id,
 
@@ -576,6 +549,7 @@ impl AFile {
                 self.rotate,
                 self.comments,
                 self.deleted_at,
+                self.has_tags,
 
                 self.e_make,
                 self.e_model,
@@ -623,7 +597,7 @@ impl AFile {
             SELECT a.id, a.folder_id, 
                 a.name, a.name_pinyin, a.size, a.file_type, a.created_at, a.modified_at, a.taken_date,
                 a.width, a.height,
-                a.is_favorite, a.rotate, a.comments, a.deleted_at,
+                a.is_favorite, a.rotate, a.comments, a.deleted_at, a.has_tags,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude,
                 b.path,
@@ -655,27 +629,28 @@ impl AFile {
             rotate: row.get(12)?,
             comments: row.get(13)?,
             deleted_at: row.get(14)?,
+            has_tags: row.get(15)?,
 
-            e_make: row.get(15)?,
-            e_model: row.get(16)?,
-            e_date_time: row.get(17)?,
-            e_exposure_time: row.get(18)?,
-            e_f_number: row.get(19)?,
-            e_focal_length: row.get(20)?,
-            e_iso_speed: row.get(21)?,
-            e_flash: row.get(22)?,
-            e_orientation: row.get(23)?,
+            e_make: row.get(16)?,
+            e_model: row.get(17)?,
+            e_date_time: row.get(18)?,
+            e_exposure_time: row.get(19)?,
+            e_f_number: row.get(20)?,
+            e_focal_length: row.get(21)?,
+            e_iso_speed: row.get(22)?,
+            e_flash: row.get(23)?,
+            e_orientation: row.get(24)?,
 
-            gps_latitude: row.get(24)?,
-            gps_longitude: row.get(25)?,
-            gps_altitude: row.get(26)?,
+            gps_latitude: row.get(25)?,
+            gps_longitude: row.get(26)?,
+            gps_altitude: row.get(27)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(27)?.as_str(),
+                row.get::<_, String>(28)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(28)?,
-            album_name: row.get(29)?,
+            album_id: row.get(29)?,
+            album_name: row.get(30)?,
         })
     }
 
@@ -1170,6 +1145,10 @@ impl ATag {
             "INSERT OR IGNORE INTO afile_tags (file_id, tag_id) VALUES (?1, ?2)",
             params![file_id, tag_id],
         ).map_err(|e| e.to_string())?;
+
+        // Update has_tags in afiles table
+        conn.execute("UPDATE afiles SET has_tags = 1 WHERE id = ?1", params![file_id])
+            .map_err(|e| e.to_string())?;
         Ok(())
     }
 
@@ -1180,6 +1159,19 @@ impl ATag {
             "DELETE FROM afile_tags WHERE file_id = ?1 AND tag_id = ?2",
             params![file_id, tag_id],
         ).map_err(|e| e.to_string())?;
+
+        // Check if the file still has any tags
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM afile_tags WHERE file_id = ?1",
+            params![file_id],
+            |row| row.get(0),
+        ).map_err(|e| e.to_string())?;
+
+        if count == 0 {
+            // If no tags left, set has_tags to false
+            conn.execute("UPDATE afiles SET has_tags = 0 WHERE id = ?1", params![file_id])
+                .map_err(|e| e.to_string())?;
+        }
         Ok(result)
     }
 
@@ -1325,6 +1317,7 @@ pub fn create_db() -> Result<String> {
             rotate INTEGER,
             comments TEXT,
             deleted_at INTEGER,
+            has_tags INTEGER,
             e_make TEXT,
             e_model TEXT,
             e_date_time TEXT,

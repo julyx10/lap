@@ -35,7 +35,11 @@
 
   "tag": {
     "add_tag": "新しいタグを追加",
-    "delete_tag": "タグを削除"
+    "delete_tag": "タグを削除",
+    "edit_tag": "タグを編集",
+    "search_tags": "タグを検索",
+    "enter_new_tag_name": "新しいタグ名を入力",
+    "not_found": "タグが見つかりません"
   },
 
   "calendar": {

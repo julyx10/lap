@@ -103,9 +103,9 @@ const toggleDropdown = () => {
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
-  console.log('click outside');
   if (dropdown.value && !dropdown.value.contains(event.target)) {
     isDropDown.value = false;
+    document.removeEventListener('click', handleClickOutside); // remove event listener when dropdown is closed
   }
 };
 

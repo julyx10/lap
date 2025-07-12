@@ -47,17 +47,18 @@
           <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
         
           <!-- favorite and rotate status -->
-          <div class="absolute left-0 top-0 flex items-center">
-            <IconVideo v-if="file.file_type===2" class="t-icon-size-sm group-hover:text-gray-500"></IconVideo>
-            <IconFavorite v-if="file.is_favorite" class="t-icon-size-sm group-hover:text-gray-500"></IconFavorite>
+          <div class="absolute left-1 top-1 flex items-center gap-1">
+            <IconVideo v-if="file.file_type===2" class="t-icon-size-xs text-base-content/30"></IconVideo>
+            <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs text-base-content/30"></IconFavorite>
             <IconRotate v-if="file.rotate % 360 > 0"
-              class="t-icon-size-sm group-hover:text-gray-500"
+              class="t-icon-size-xs text-base-content/30"
               :style="{ 
                 transform: `rotate(${file.rotate}deg)`, 
                 transition: 'transform 0.3s ease-in-out' 
               }"
             />
-            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-sm group-hover:text-gray-500"></IconComment>
+            <IconTag v-if="file.has_tags" class="t-icon-size-xs text-base-content/30"></IconTag>
+            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs text-base-content/30"></IconComment>
           </div>
 
           <!-- select checkbox or more menu -->
@@ -302,20 +303,18 @@ function handleKeyDown(event) {
   const key = event.key;
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
+  event.preventDefault(); // Prevent the default action
   if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
-    event.preventDefault(); // Prevent the default action
     copyItem();
   } else if(isCmdKey && key.toLowerCase() === 'f') {
-    event.preventDefault();
     toggleFavorite();
+  } else if(isCmdKey && key.toLowerCase() === 't') {
+    tagItem();
   } else if(isCmdKey && key.toLowerCase() === 'r') {
-    event.preventDefault();
     rotateItem();
   } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    event.preventDefault();
     deleteItem()
   } else if (keyActions[key]) {
-    event.preventDefault(); 
     keyActions[key](); 
   }
 }

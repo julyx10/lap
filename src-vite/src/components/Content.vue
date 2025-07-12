@@ -218,6 +218,13 @@
     @cancel="showDeleteMsgbox = false"
   />
 
+  <!-- tagging -->
+  <TaggingDialog 
+    v-model:show="showTaggingDialog"
+    :fileIds="fileIdsToTag"
+    @applied="updateContent"
+  />
+
   <!-- comment -->
   <MessageBox
     v-if="showCommentMsgbox"
@@ -260,6 +267,7 @@ import MessageBox from '@/components/MessageBox.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
+import TaggingDialog from '@/components/TaggingDialog.vue';
 
 import {
   IconPreview,
@@ -330,6 +338,10 @@ const showCopyTo = ref(false);
 const showDeleteMsgbox = ref(false);
 const showCommentMsgbox = ref(false);
 const errorMessage = ref('');
+
+// tagging dialog
+const showTaggingDialog = ref(false);
+const fileIdsToTag = ref<number[]>([]);
 
 // grid view
 const gridViewRef = ref(null);
@@ -426,7 +438,7 @@ const moreMenuItems = computed(() => {
       icon: IconTag,
       disabled: selectedCount.value === 0,
       action: () => {
-        // clickTag();
+        clickTag();
       }
     },
   ];
@@ -502,6 +514,9 @@ onMounted( async() => {
       case 'rotate':
         clickRotate();
         break;
+      case 'tag':
+        clickTag();
+        break;
       case 'comment':
         showCommentMsgbox.value = true;
         break;
@@ -541,6 +556,9 @@ onMounted( async() => {
         break;
       case 'rotate':
         clickRotate();
+        break;
+      case 'tag':
+        clickTag();
         break;
       default:
         break;
@@ -672,7 +690,11 @@ async function updateContent() {
         contentTitle.value = localeMsg.value.sidebar.tag;
       }
     }
-    await getFileList("", "", "", "", false, config.tagId, false, fileListOffset.value);
+    if(config.tagId > 0) {
+      await getFileList("", "", "", "", false, config.tagId, false, fileListOffset.value);
+    } else {
+      fileList.value = [];
+    }
   }
   else if(newIndex === 4) {   // calendar
     if (config.calendarMonth === -1) {          // yearly
@@ -850,6 +872,21 @@ const clickRotate = async () => {
     setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);
   }
 };
+
+// set file tag
+const clickTag = async () => {
+  console.log('clickTag');
+  if (selectMode.value) {
+    fileIdsToTag.value = fileList.value
+      .filter(file => file.isSelected)
+      .map(file => file.id);
+  } else if (selectedItemIndex.value >= 0) {
+    fileIdsToTag.value = [fileList.value[selectedItemIndex.value].id];
+  } else {
+    fileIdsToTag.value = [];
+  }
+  showTaggingDialog.value = true;
+}
 
 // edit comment
 const clickEditComment = async (newComment) => {
