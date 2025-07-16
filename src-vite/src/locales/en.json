@@ -320,14 +320,7 @@
       "appearance_options": [
         "light",
         "dark",
-        "cupcake",
-        "bumblebee",
-        "emerald",
-        "corporate",
-        "synthwave",
-        "retro",
-        "cyberpunk",
-        "valentine"
+        "purple"
       ],
       "select_language": "Select language",
       "show_button_text": "Show button text",
@@ -368,4 +361,4 @@
       }
     }
   }
-} 
+}

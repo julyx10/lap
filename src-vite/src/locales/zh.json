@@ -27,8 +27,8 @@
       "videos": "视频",
       "files_count": "{count} 个文件 ({size})",
       "files_counting": "正在统计文件...",
-      "created_time": "创建时间",
-      "modified_time": "修改时间"
+      "created_at": "创建时间",
+      "modified_at": "修改时间"
     }
   },
 
@@ -97,9 +97,7 @@
     "copy_image": {
       "success": "图片已复制到剪贴板",
       "failed": "复制图片到剪贴板失败"
-    },
-    "clear_tag_filter": "清除标签筛选",
-    "empty_trash": "清空回收站"
+    }
   },
 
   "statusbar": {
@@ -139,8 +137,7 @@
       "move_to": "移入回收站",
       "empty": "清空回收站",
       "restore": "恢复",
-      "delete": "删除",
-      "delete_permanently": "永久删除"
+      "delete": "删除"
     },
     "meta": {
       "favorite": "收藏",
@@ -173,7 +170,7 @@
     },
     "new_folder": {
       "title": "新建文件夹",
-      "content": "输入新文件夹的名称:",
+      "placeholder": "输入新文件夹的名称",
       "ok": "创建",
       "error": "无法创建新文件夹。"
     },
@@ -198,20 +195,20 @@
     },
     "rename_file": {
       "title": "重命名文件",
-      "content": "输入新文件名:",
+      "placeholder": "输入新文件名",
       "ok": "重命名",
       "error": "无法重命名文件。"
     },
     "delete_file": {
       "title": "删除文件",
-      "content": "文件 '{file}' 将被删除。此操作无法撤消。",
+      "content": "文件 '{file}' 将被永久删除。",
       "ok": "删除",
       "success": "文件 '{file}' 已删除。",
       "error": "无法删除文件。文件可能不存在。"
     },
     "restore_file": {
       "title": "恢复文件",
-      "content": "文件 '{file}' 将被恢复。此操作无法撤消。",
+      "content": "文件 '{file}' 将被恢复到原来的位置。",
       "ok": "恢复",
       "success": "文件 '{file}' 已恢复。",
       "error": "无法恢复文件。文件可能不存在。"
@@ -231,14 +228,14 @@
     },
     "delete_tag": {
       "title": "删除标签",
-      "content": "标签 '{tag}' 将被删除。此操作无法撤消。",
+      "content": "标签 '{tag}' 将被删除。",
       "ok": "删除",
       "success": "标签 '{tag}' 已删除。",
       "error": "无法删除标签。标签可能不存在。"
     },
     "edit_comment": {
       "title": "编辑评论",
-      "content": "输入文件 '{file}' 的评论:",
+      "placeholder": "输入评论",
       "ok": "保存"
     },
     "select_folder": {
@@ -246,9 +243,6 @@
     },
     "select_file": {
       "error": "选择文件失败。"
-    },
-    "tag_files": {
-      "title": "文件标记"
     }
   },
 
@@ -260,8 +254,8 @@
     "path": "路径",
     "dimension": "尺寸",
     "size": "大小",
-    "created": "创建时间",
-    "modified": "修改时间",
+    "created_at": "创建时间",
+    "modified_at": "修改时间",
     "camera_make": "相机制造商",
     "camera_model": "相机型号",
     "date_taken": "拍摄日期",
@@ -276,7 +270,9 @@
     "gps_latitude": "GPS 纬度",
     "gps_longitude": "GPS 经度",
     "gps_altitude": "GPS 海拔",
-    "comment": "评论"
+    "tags": "标签",
+    "comment": "评论",
+    "deleted_at": "删除时间"
   },
 
   "format": {
@@ -323,15 +319,7 @@
       "appearance": "外观",
       "appearance_options": [
         "明亮",
-        "暗黑",
-        "杯子蛋糕",
-        "大黄蜂",
-        "翡翠",
-        "企业风",
-        "合成波",
-        "复古",
-        "赛博朋克",
-        "情人节"
+        "暗黑"
       ],
       "select_language": "选择语言",
       "show_button_text": "显示按钮文本",

@@ -457,6 +457,10 @@ const moreMenuItems = computed(() => {
   ];
 
   const metadataItems = [
+    { 
+      label: "-",   // separator
+      action: null
+    },
     {
       label: localeMsg.value.menu.meta.favorite,
       icon: IconFavorite,
@@ -483,28 +487,12 @@ const moreMenuItems = computed(() => {
     }
   ];
 
-  // 根据 sidebarIndex 动态生成菜单项
   let items = [...baseItems];
-
-  // 添加文件操作项（除了回收站）
   if (config.sidebarIndex !== 7) {
     items.push(...fileOperationItems);
-  } else {
-    // 回收站页面显示恢复和删除操作
-    items.push(...trashOperationItems);
-  }
-
-  // 添加分隔符（除了回收站）
-  if (config.sidebarIndex !== 7) {
-    items.push({
-      label: "-",   // separator
-      action: () => {}
-    });
-  }
-
-  // 添加元数据操作项（除了回收站）
-  if (config.sidebarIndex !== 7) {
     items.push(...metadataItems);
+  } else {
+    items.push(...trashOperationItems);
   }
 
   return items;
@@ -780,8 +768,10 @@ async function updateContent() {
   else if(newIndex === 6) {   // camera
     if(config.cameraModel) {
       contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-    } else {
+    } else if(config.cameraMake){
       contentTitle.value = `${config.cameraMake}`;
+    } else {
+      contentTitle.value = localeMsg.value.sidebar.camera;
     }
     await getFileList("", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
   } else if(newIndex === 7) { // trash

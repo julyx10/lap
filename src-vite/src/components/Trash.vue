@@ -1,77 +1,62 @@
 <template>
 
-  <div class="w-full flex flex-col select-none" >
-      
-      <!-- title bar -->
-      <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
-        <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
-        <TButton :icon="IconRefresh" @click="clickRefresh"/>
-      </div>
-      
-      <!-- trash files -->
-      <div 
-        :class="[ 
-          'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
-          { 
-            'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === 0, 
-          }
-        ]"
-        @click="clickFavoriteFiles()"
-      >
-        <IconTrash
-          class="mx-1 h-5 shrink-0"
-        />
-        <div class="overflow-hidden whitespace-pre text-ellipsis">
-          {{ $t('trash.files') }}
-        </div>
-      </div>
+  <div class="w-full flex flex-col select-none">
 
-      <!-- trash folders -->
-      <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default">
-        {{ $t('trash.folders') }}
-      </div>
-      <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
-        <ul>
-          <li v-for="folder in favorite_folders" :key="folder.id">
-            <div 
-              :class="[ 
-                'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group', 
-                { 
-                  'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === folder.id, 
-                }
-              ]"
-              @click="clickFavoriteFolder(folder)"
-            >
-              <IconFolderTrash
-                class="mx-1 h-5 shrink-0"
-              />
-              <div class="overflow-hidden whitespace-pre text-ellipsis">
-              {{ folder.name }}
-              </div>
-
-              <DropDownMenu
-                :class="[
-                  'ml-auto px-1 rounded',
-                  config.favoriteFolderId != folder.id ? 'hidden group-hover:block' : ''
-                ]"
-                :iconMenu="IconMore"
-                :menuItems="moreMenuItems"
-                :smallIcon="true"
-              />
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Display message if no favorite folders are found -->
-      <div v-else class="mt-10 flex items-center justify-center">
-        {{ $t('tooltip.not_found.folders') }}
-      </div>
-
+    <!-- title bar -->
+    <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
+      <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
+      <!-- <TButton :icon="IconRefresh" @click="clickRefresh"/> -->
     </div>
-    
-  </template>
-  
+
+    <!-- trash files -->
+    <div :class="[
+      'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer',
+      {
+        'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === 0,
+      }
+    ]" @click="clickFavoriteFiles()">
+      <IconTrash class="mx-1 h-5 shrink-0" />
+      <div class="overflow-hidden whitespace-pre text-ellipsis">
+        {{ $t('trash.files') }}
+      </div>
+    </div>
+
+    <!-- trash folders -->
+    <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default">
+      {{ $t('trash.folders') }}
+    </div>
+    <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
+      <ul>
+        <li v-for="folder in favorite_folders" :key="folder.id">
+          <div :class="[
+            'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group',
+            {
+              'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === folder.id,
+            }
+          ]" @click="clickFavoriteFolder(folder)">
+            <IconFolderTrash class="mx-1 h-5 shrink-0" />
+            <div class="overflow-hidden whitespace-pre text-ellipsis">
+              {{ folder.name }}
+            </div>
+
+            <DropDownMenu :class="[
+              'ml-auto px-1 rounded',
+              config.favoriteFolderId != folder.id ? 'hidden group-hover:block' : ''
+            ]" :iconMenu="IconMore" :menuItems="moreMenuItems" :smallIcon="true" />
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Display message if no favorite folders are found -->
+    <div v-else class="mt-10 flex items-center justify-center">
+      {{ $t('tooltip.not_found.folders') }}
+    </div>
+
+  </div>
+
+</template>
+
 <script setup lang="ts">
 
 import { ref, computed, onMounted } from 'vue';
@@ -82,12 +67,12 @@ import { getFavoriteFolders, setFolderFavorite } from '@/common/api';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import TButton from '@/components/TButton.vue';
 
-import { 
-  IconRefresh, 
-  IconTrash, 
+import {
+  IconRefresh,
+  IconTrash,
   IconFolderTrash,
   IconMore,
-  IconUnFavorite, 
+  IconUnFavorite,
 } from '@/common/icons';
 
 const props = defineProps({

@@ -1,12 +1,58 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  /* themes: light --default, dark --prefersdark; */
-  themes: all;
+  themes: light --default, dark --prefersdark, purple;
+  /* themes: all; */
   root: ":root";
   include: ;
   exclude: ;
   prefix: ;
   logs: true;
+}
+
+/* Custom Purple Theme - Based on Kiro Dark */
+[data-theme="purple"] {
+  --fallback-p: #8b5cf6;
+  --fallback-pc: #ffffff;
+  --fallback-s: #a855f7;
+  --fallback-sc: #ffffff;
+  --fallback-a: #c084fc;
+  --fallback-ac: #000000;
+  --fallback-n: #1e1b2e;
+  --fallback-nc: #e2e8f0;
+  --fallback-b1: #0f0d1a;
+  --fallback-b2: #1a1625;
+  --fallback-b3: #252030;
+  --fallback-bc: #e2e8f0;
+  --fallback-in: #06b6d4;
+  --fallback-inc: #000000;
+  --fallback-su: #10b981;
+  --fallback-suc: #000000;
+  --fallback-wa: #f59e0b;
+  --fallback-wac: #000000;
+  --fallback-er: #ef4444;
+  --fallback-erc: #ffffff;
+  
+  color-scheme: dark;
+  --p: 58.86 68.29 262.32;
+  --pc: 100 0 0;
+  --s: 62.75 71.43 262.32;
+  --sc: 100 0 0;
+  --a: 76.08 58.06 262.32;
+  --ac: 0 0 0;
+  --n: 14.12 18.87 262.32;
+  --nc: 88.24 5.26 213.04;
+  --b1: 6.67 33.33 262.32;
+  --b2: 10.98 26.67 262.32;
+  --b3: 15.29 20 262.32;
+  --bc: 88.24 5.26 213.04;
+  --in: 70.59 68.29 197.14;
+  --inc: 0 0 0;
+  --su: 69.02 56.86 162.86;
+  --suc: 0 0 0;
+  --wa: 65.69 100 42.86;
+  --wac: 0 0 0;
+  --er: 62.75 87.27 7.69;
+  --erc: 100 0 0;
 }
 
 @utility input {
