@@ -158,7 +158,7 @@ const moreMenuItems = computed(() => {
   const file = props.fileList[selectedIndex.value];
   return [
     {
-      label: localeMsg.value.menu.open,
+      label: localeMsg.value.menu.file.open,
       icon: IconOpen,
       shortcut: isMac ? '⏎' : 'Enter',
       action: () => {
@@ -166,7 +166,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.copy,
+      label: localeMsg.value.menu.file.copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
@@ -178,7 +178,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu.rename,
+      label: localeMsg.value.menu.file.rename,
       icon: IconRename,
       action: () => {
         renameItem();
@@ -199,21 +199,21 @@ const moreMenuItems = computed(() => {
     //   }
     // },
     {
-      label: localeMsg.value.menu.move_to,
+      label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
       action: () => {
         moveTo();
       }
     },
     {
-      label: localeMsg.value.menu.copy_to,
+      label: localeMsg.value.menu.file.copy_to,
       // icon: IconCopyTo,
       action: () => {
         copyTo();
       }
     },
     {
-      label: localeMsg.value.menu.trash,
+      label: localeMsg.value.menu.trash.move_to,
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
@@ -221,7 +221,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.goto_folder,
+      label: localeMsg.value.menu.file.goto_folder,
       disabled: props.showFolderFiles,
       icon: IconGoto,
       action: () => {
@@ -229,7 +229,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: isMac ? localeMsg.value.menu.reveal_in_finder : localeMsg.value.menu.reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
         revealItem();
@@ -240,7 +240,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: file.is_favorite ? localeMsg.value.menu.unfavorite : localeMsg.value.menu.favorite,
+      label: file.is_favorite ? localeMsg.value.menu.meta.unfavorite : localeMsg.value.menu.meta.favorite,
       icon: file.is_favorite ? IconUnFavorite : IconFavorite,
       shortcut: isMac ? '⌘F' : 'Ctrl+F',
       action: () => {
@@ -248,7 +248,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.tag,
+      label: localeMsg.value.menu.meta.tag,
       icon: IconTag,
       shortcut: isMac ? '⌘T' : 'Ctrl+T',
       action: () => {
@@ -256,7 +256,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.rotate,
+      label: localeMsg.value.menu.meta.rotate,
       icon: IconRotate,
       shortcut: isMac ? '⌘R' : 'Ctrl+R',
       action: () => {
@@ -264,7 +264,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.comment,
+      label: localeMsg.value.menu.meta.comment,
       icon: IconComment,
       action: () => {
         commentItem();

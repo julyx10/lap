@@ -61,11 +61,11 @@
               <td>{{ totalVideoCount >= 0 ? $t('album.edit.files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album.info.files_counting') }}</td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album.edit.created_time') }}</td>
+              <td>{{ $t('album.edit.created_at') }}</td>
               <td>{{ createdAt }}</td>
             </tr>
             <tr class="h-8">
-              <td>{{ $t('album.edit.modified_time') }}</td>
+              <td>{{ $t('album.edit.modified_at') }}</td>
               <td>{{ modifiedAt }}</td>
             </tr>
           </tbody>

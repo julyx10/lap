@@ -88,9 +88,9 @@
     <MessageBox
       v-if="showNewFolderMsgbox"
       :title="$t('msgbox.new_folder.title')"
-      :message="$t('msgbox.new_folder.content')"
       :showInput="true"
       :inputText="''"
+      :inputPlaceholder="$t('msgbox.new_folder.placeholder')"
       :needValidateInput="true"
       :OkText="$t('msgbox.new_folder.ok')"
       :cancelText="$t('msgbox.cancel')"
@@ -196,38 +196,38 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu.edit_album,
+      label: localeMsg.value.menu.album.edit_album,
       icon: IconEdit,
       action: () => {
         showAlbumEdit.value = true;
       }
     },
     {
-      label: localeMsg.value.menu.new_folder,
+      label: localeMsg.value.menu.file.new_folder,
       icon: IconNewFolder,
       action: () => {
         showNewFolderMsgbox.value = true;
       }
     },
     {
-      label: isMac ? localeMsg.value.menu.reveal_in_finder : localeMsg.value.menu.reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
       // icon: IconExternal,
       action: () => {
         revealFolder(getAlbumById(selectedAlbumId.value).path);
       }
     },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.refresh,
-      icon: IconRefresh,
-      action: async() => {
-        const album = getAlbumById(selectedAlbumId.value);
-        await expandAlbum(album, true);
-      }
-    },
+    // {
+    //   label: "-",   // separator
+    //   action: () => {}
+    // },
+    // {
+    //   label: localeMsg.value.menu.refresh,
+    //   icon: IconRefresh,
+    //   action: async() => {
+    //     const album = getAlbumById(selectedAlbumId.value);
+    //     await expandAlbum(album, true);
+    //   }
+    // },
   ];
 });
 

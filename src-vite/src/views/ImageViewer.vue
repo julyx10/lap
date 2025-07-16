@@ -220,9 +220,9 @@
   <!-- delete -->
   <MessageBox
     v-if="showDeleteMsgbox"
-    :title="$t('msgbox.delete_file_title')"
-    :message="`${$t('msgbox.delete_file_content', { file: fileInfo?.name })}`"
-    :OkText="$t('msgbox.delete_file_ok')"
+    :title="$t('msgbox.delete_file.title')"
+    :message="`${$t('msgbox.delete_file.content', { file: fileInfo?.name })}`"
+    :OkText="$t('msgbox.delete_file.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     @ok="clickDeleteFile"
@@ -324,14 +324,14 @@ const toolTipRef = ref(null);
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu.edit,
+      label: localeMsg.value.menu.file.edit,
       icon: IconEdit,
       action: () => {
         console.log('Edit:', filePath.value);
       }
     },
     {
-      label: localeMsg.value.menu.copy,
+      label: localeMsg.value.menu.file.copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
@@ -339,7 +339,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.print,
+      label: localeMsg.value.menu.file.print,
       icon: IconPrint,
       action: () => {
         console.log('Print:', filePath.value);
@@ -369,7 +369,7 @@ const moreMenuItems = computed(() => {
     //   }
     // },
     {
-      label: localeMsg.value.menu.trash,
+      label: localeMsg.value.menu.trash.move_to,
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
@@ -381,7 +381,7 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu.properties,
+      label: localeMsg.value.menu.file.properties,
       icon: IconProperties,
       shortcut: isMac ? '⌘I' : 'Ctrl+I',
       action: () => {

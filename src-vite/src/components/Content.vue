@@ -60,14 +60,12 @@
         <!-- magic button -->
         <TButton
           :icon="IconMagic"
-          :buttonSize="'medium'"
           @click="clickAI"
         />
         
         <!-- preview -->
         <TButton
           :icon="config.showPreview ? IconPreview : IconPreviewOff"
-          :buttonSize="'medium'"
           @click="config.showPreview = !config.showPreview"
         />
 
@@ -172,9 +170,9 @@
   <MessageBox
     v-if="showRenameMsgbox"
     :title="$t('msgbox.rename_file.title')"
-    :message="$t('msgbox.rename_file.content')"
     :showInput="true"
     :inputText="renamingFileName.name"
+    :inputPlaceholder="$t('msgbox.rename_file.placeholder')"
     :needValidateInput="true"
     :OkText="$t('msgbox.rename_file.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -218,20 +216,31 @@
     @cancel="showDeleteMsgbox = false"
   />
 
+  <!-- restore -->
+  <MessageBox
+    v-if="showRestoreMsgbox"
+    :title="$t('msgbox.restore_file.title')"
+    :message="`${$t('msgbox.restore_file.content', { file: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
+    :OkText="$t('msgbox.restore_file.ok')"
+    :cancelText="$t('msgbox.cancel')"
+    @ok="clickRestoreFile"
+    @cancel="showRestoreMsgbox = false"
+  />
+
   <!-- tagging -->
   <TaggingDialog 
     v-model:show="showTaggingDialog"
     :fileIds="fileIdsToTag"
-    @applied="updateContent"
+    @applied="updateFileHasTags"
   />
 
   <!-- comment -->
   <MessageBox
     v-if="showCommentMsgbox"
     :title="$t('msgbox.edit_comment.title')"
-    :message="`${$t('msgbox.edit_comment.content', { file: fileList[selectedItemIndex].name })}`"
     :showInput="true"
     :inputText="fileList[selectedItemIndex]?.comments ?? ''"
+    :inputPlaceholder="$t('msgbox.edit_comment.placeholder')"
     :multiLine="true"
     :OkText="$t('msgbox.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -251,7 +260,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getTagName,
          copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
-         setFileFavorite, setFileRotate } from '@/common/api';
+         setFileFavorite, setFileRotate, getFileHasTags} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
@@ -287,6 +296,8 @@ import {
   IconComment,
   IconMagic,
   IconTag,
+  IconTrashEmpty,
+  IconTrashRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -336,6 +347,7 @@ const renamingFileName = ref({}); // extract the file name to {name, ext}
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showDeleteMsgbox = ref(false);
+const showRestoreMsgbox = ref(false);
 const showCommentMsgbox = ref(false);
 const errorMessage = ref('');
 
@@ -356,9 +368,9 @@ let unlistenImageViewer: () => void;
 
 // more menuitems
 const moreMenuItems = computed(() => {
-  return [
+  const baseItems = [
     {
-      label: localeMsg.value.menu.select_all,
+      label: localeMsg.value.menu.select.all,
       icon: IconCheckAll,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
@@ -368,7 +380,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.select_none,
+      label: localeMsg.value.menu.select.none,
       icon: IconCheckNone,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
@@ -378,7 +390,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.select_invert,
+      label: localeMsg.value.menu.select.invert,
       action: () => {
         for (let i = 0; i < fileList.value.length; i++) {
           fileList.value[i].isSelected = !fileList.value[i].isSelected;
@@ -389,9 +401,12 @@ const moreMenuItems = computed(() => {
     {
       label: "-",   // separator
       action: null
-    },
+    }
+  ];
+
+  const fileOperationItems = [
     {
-      label: localeMsg.value.menu.move_to,
+      label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
       disabled: selectedCount.value === 0,
       action: () => {
@@ -399,26 +414,51 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.copy_to,
+      label: localeMsg.value.menu.file.copy_to,
       disabled: selectedCount.value === 0,
       action: () => {
         showCopyTo.value = true;
       }
     },
     {
-      label: localeMsg.value.menu.trash,
+      label: localeMsg.value.menu.trash.move_to,
       icon: IconTrash,
+      disabled: selectedCount.value === 0,
+      action: () => {
+        // showDeleteMsgbox.value = true; // Still show confirmation dialog
+      }
+    },
+  ];
+
+  const trashOperationItems = [
+    {
+      label: localeMsg.value.menu.trash.restore,
+      icon: IconTrashRestore,
+      disabled: selectedCount.value === 0,
+      action: () => {
+        showRestoreMsgbox.value = true;
+      }
+    },
+    {
+      label: localeMsg.value.menu.trash.delete,
+      icon: IconClose,
       disabled: selectedCount.value === 0,
       action: () => {
         showDeleteMsgbox.value = true;
       }
     },
     {
-      label: "-",   // separator
-      action: () => {}
-    },
+      label: localeMsg.value.menu.trash.empty,
+      icon: IconTrashEmpty,
+      action: () => {
+        // TODO: empty trash
+      }
+    }
+  ];
+
+  const metadataItems = [
     {
-      label: localeMsg.value.menu.favorite,
+      label: localeMsg.value.menu.meta.favorite,
       icon: IconFavorite,
       disabled: selectedCount.value === 0,
       action: () => {
@@ -426,7 +466,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.unfavorite,
+      label: localeMsg.value.menu.meta.unfavorite,
       icon: IconUnFavorite,
       disabled: selectedCount.value === 0,
       action: () => {
@@ -434,14 +474,40 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.tag,
+      label: localeMsg.value.menu.meta.tag,
       icon: IconTag,
       disabled: selectedCount.value === 0,
       action: () => {
         clickTag();
       }
-    },
+    }
   ];
+
+  // 根据 sidebarIndex 动态生成菜单项
+  let items = [...baseItems];
+
+  // 添加文件操作项（除了回收站）
+  if (config.sidebarIndex !== 7) {
+    items.push(...fileOperationItems);
+  } else {
+    // 回收站页面显示恢复和删除操作
+    items.push(...trashOperationItems);
+  }
+
+  // 添加分隔符（除了回收站）
+  if (config.sidebarIndex !== 7) {
+    items.push({
+      label: "-",   // separator
+      action: () => {}
+    });
+  }
+
+  // 添加元数据操作项（除了回收站）
+  if (config.sidebarIndex !== 7) {
+    items.push(...metadataItems);
+  }
+
+  return items;
 });
 
 const handleEscapeKey = (e: KeyboardEvent) => {
@@ -653,7 +719,7 @@ async function updateContent() {
   const newIndex = config.sidebarIndex;
 
   if(newIndex === 0) {        // home
-    contentTitle.value = localeMsg.value.sidebar.home;
+    contentTitle.value = localeMsg.value.home.title;
     await getFileList("", "", "", "", false, 0, false, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
@@ -818,6 +884,11 @@ const clickDeleteFile = async () => {
     }
   }
   showDeleteMsgbox.value = false;
+}
+
+// click restore file
+const clickRestoreFile = async () => {
+  console.log('clickRestoreFile');
 }
 
 // remove an file item from the list and update the selected item index
@@ -1001,6 +1072,18 @@ function updateSelectedImage(index) {
   openImageViewer(index, false);
 }
 
+function updateFileHasTags(fileIds: number[]) {
+  for (const fileId of fileIds) {
+    const index = fileList.value.findIndex(f => f.id === fileId);
+    if (index !== -1) {
+      const newFile = fileList.value[index];
+      getFileHasTags(fileId).then(hasTags => {
+        newFile.has_tags = hasTags;
+      });
+    }
+  }
+}
+
 // Get the thumbnail for the files
 async function getFileListThumb(files, offset, concurrencyLimit = 8) {
   const result = [];
@@ -1008,7 +1091,7 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
   thumbCount.value = 0;
 
   const getThumbForFile = async (file) => {
-    console.log('getFileListThumb:', file);
+    // console.log('getFileListThumb:', file);
     const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize);
     if(thumb) {
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;

@@ -5,7 +5,7 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
-      <TButton :icon="IconRefresh" @click="clickReload"/>
+      <!-- <TButton :icon="IconRefresh" @click="clickReload"/> -->
     </div>
 
     <!-- camera -->

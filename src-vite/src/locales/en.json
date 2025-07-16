@@ -12,6 +12,10 @@
     "settings": "Settings"
   },
 
+  "home": {
+    "title": "All files"
+  },
+
   "album": {
     "edit": {
       "title": "Edit Album",
@@ -23,8 +27,8 @@
       "videos": "Videos",
       "files_count": "{count} files ({size})",
       "files_counting": "Counting files...",
-      "created_time": "Created time",
-      "modified_time": "Modified time"
+      "created_at": "Created At",
+      "modified_at": "Modified At"
     }
   },
 
@@ -58,19 +62,7 @@
 
   "trash": {
     "files": "Trash files",
-    "folders": "Trash folders",
-    "empty": "Empty Trash",
-    "empty_confirm": "Are you sure you want to empty the trash? This action cannot be undone.",
-    "empty_success": "Trash has been emptied.",
-    "empty_error": "Failed to empty the trash. Please try again.",
-    "restore": "Restore",
-    "restore_confirm": "Are you sure you want to restore the selected items? They will be moved back to their original locations.",
-    "restore_success": "Selected items have been restored.",
-    "restore_error": "Failed to restore selected items. Please try again.",
-    "delete": "Delete",
-    "delete_confirm": "Are you sure you want to permanently delete the selected items? This action cannot be undone.",
-    "delete_success": "Selected items have been permanently deleted.",
-    "delete_error": "Failed to permanently delete selected items. Please try again."
+    "folders": "Trash folders"
   },
 
   "toolbar": {
@@ -113,36 +105,50 @@
   },
 
   "menu": {
-    "select_all": "Select all",
-    "select_none": "Select none",
-    "select_invert": "Invert selection",
-    "favorite": "Favorite",
-    "unfavorite": "Unfavorite",
-    "tag": "Tag",
-    "rotate": "Rotate",
-    "open": "Open",
-    "view": "View",
-    "edit": "Edit",
-    "print": "Print",
-    "copy": "Copy",
-    "rename": "Rename",
-    "refresh": "Refresh",
-    "copy_to": "Copy to",
-    "move_to": "Move to",
-    "trash": "Trash",
-    "delete": "Delete",
+    "select": {
+      "all": "Select all",
+      "none": "Select none",
+      "invert": "Invert selection"
+    },
+    "album": {
+      "add": "Add folder",
+      "edit_list": "Edit list",
+      "edit_album": "Edit album"
+    },
+    "file": {
+      "new_folder": "New folder",
+      "open": "Open",
+      "copy": "Copy",
+      "edit": "Edit",
+      "print": "Print",
+      "rename": "Rename",
+      "move_to": "Move to",
+      "copy_to": "Copy to",
+      "goto_folder": "Go to folder",
+      "reveal_in_finder": "Reveal in Finder",
+      "reveal_in_file_explorer": "Reveal in File Explorer",
+      "properties": "Properties"
+    },
+    "tag": {
+      "rename": "Rename tag",
+      "delete": "Delete tag"
+    },
+    "trash": {
+      "move_to": "Move to trash",
+      "empty": "Empty trash",
+      "restore": "Restore",
+      "delete": "Delete"
+    },
+    "meta": {
+      "favorite": "Favorite",
+      "unfavorite": "Unfavorite",
+      "tag": "Tag",
+      "rotate": "Rotate",
+      "comment": "Comment"
+    },
     "remove": "Remove",
-    "new_folder": "New folder",
-    "open_folder": "Open folder...",
-    "goto_folder": "Go to folder",
-    "reveal_in_file_explorer": "Reveal in File Explorer",
-    "reveal_in_finder": "Reveal in Finder",
-    "edit_album": "Edit album",
-    "properties": "Properties",
-    "add_folder": "Add folder",
-    "edit_list": "Edit list",
-    "finish": "Finish",
-    "comment": "Comment"
+    "delete": "Delete",
+    "refresh": "Refresh"
   },
 
   "msgbox": {
@@ -164,7 +170,7 @@
     },
     "new_folder": {
       "title": "New folder",
-      "content": "Enter the name for the new folder:",
+      "placeholder": "Enter new folder name",
       "ok": "Create",
       "error": "Cannot create new folder."
     },
@@ -189,16 +195,30 @@
     },
     "rename_file": {
       "title": "Rename file",
-      "content": "Enter the new file name:",
+      "placeholder": "Enter new file name",
       "ok": "Rename",
       "error": "Cannot rename the file."
     },
     "delete_file": {
       "title": "Delete file",
-      "content": "The file '{file}' will be deleted. This action cannot be undone.",
+      "content": "The file '{file}' will be deleted permanently.",
       "ok": "Delete",
       "success": "The file '{file}' has been deleted.",
       "error": "Cannot delete the file. The file may not exist."
+    },
+    "restore_file": {
+      "title": "Restore file",
+      "content": "The file '{file}' will be restored to the original location.",
+      "ok": "Restore",
+      "success": "The file '{file}' has been restored.",
+      "error": "Cannot restore the file. The file may not exist."
+    },
+    "empty_trash": {
+      "title": "Empty trash",
+      "content": "Are you sure you want to empty the trash? This action cannot be undone.",
+      "ok": "Empty",
+      "success": "Trash has been emptied.",
+      "error": "Cannot empty the trash."
     },
     "new_tag": {
       "title": "New tag",
@@ -208,14 +228,14 @@
     },
     "delete_tag": {
       "title": "Delete tag",
-      "content": "The tag '{tag}' will be deleted. This action cannot be undone.",
+      "content": "The tag '{tag}' will be deleted.",
       "ok": "Delete",
       "success": "The tag '{tag}' has been deleted.",
       "error": "Cannot delete the tag. The tag may not exist."
     },
     "edit_comment": {
       "title": "Edit comment",
-      "content": "Enter your comment for the file '{file}':",
+      "placeholder": "Enter comment",
       "ok": "Save"
     },
     "select_folder": {
@@ -234,8 +254,8 @@
     "path": "Path",
     "dimension": "Dimension",
     "size": "Size",
-    "created": "Created",
-    "modified": "Modified",
+    "created_at": "Created At",
+    "modified_at": "Modified At",
     "camera_make": "Camera Make",
     "camera_model": "Camera Model",
     "date_taken": "Date Taken",
@@ -250,7 +270,9 @@
     "gps_latitude": "GPS Latitude",
     "gps_longitude": "GPS Longitude",
     "gps_altitude": "GPS Altitude",
-    "comment": "Comment"
+    "tags": "Tags",
+    "comment": "Comment",
+    "deleted_at": "Deleted At"
   },
 
   "format": {

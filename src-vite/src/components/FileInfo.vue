@@ -43,11 +43,11 @@
             <td>{{ formatFileSize(fileInfo.size) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.created') }}</td>
+            <td>{{ $t('file_info.created_at') }}</td>
             <td>{{ formatTimestamp(fileInfo.created_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.modified') }}</td>
+            <td>{{ $t('file_info.modified_at') }}</td>
             <td>{{ formatTimestamp(fileInfo.modified_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
@@ -107,11 +107,15 @@
             <td>{{ fileInfo.gps_altitude }}</td>
           </tr>
           <tr>
+            <td>{{ $t('file_info.tags') }}</td>
+            <td>{{ fileInfo.tags }}</td>
+          </tr>
+          <tr>
             <td>{{ $t('file_info.comment') }}</td>
             <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
-          <tr>
-            <td>Deleted_at</td>
+          <tr v-if="fileInfo.deleted_at">
+            <td>{{ $t('file_info.deleted_at') }}</td>
             <td>{{ formatTimestamp(fileInfo.deleted_at, $t('format.date_time')) }}</td>
           </tr>
         </tbody>

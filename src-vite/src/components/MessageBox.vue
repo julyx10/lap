@@ -4,7 +4,7 @@
     <div class="w-96 p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
 
       <!-- title bar -->
-      <div class="mb-2 flex items-center justify-between">
+      <div class="text-lg mb-2 flex items-center justify-between">
         {{ title }}
         <TButton
           :icon="IconClose"
@@ -14,26 +14,34 @@
       </div>
 
       <!-- content -->
-      <div class="mt-4">
-        {{ message }}
+      <div class="mt-2">
+
+        <div v-if="message" class="mb-2">
+          {{ message }}
+        </div>
+
         <input v-if="showInput && !multiLine"
           ref="inputRef"
           v-model="inputValue"
           type="text"
           maxlength="255"
+          :placeholder="inputPlaceholder"
           class="px-2 py-1 my-2 w-full input focus:border"
           @input="validateInput"
           @keydown.enter="clickOk"
         />
+
         <textarea v-if="showInput && multiLine"
           ref="inputRef"
           v-model="inputValue"
           rows="4"
           minrows="1"
+          :placeholder="inputPlaceholder"
           class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px] focus:border"
           @input="validateInput"
           @keydown.enter="clickOk"
         ></textarea>
+
         <p class="h-4 text-error text-xs">{{ inputErrorMessage }}</p>
       </div>
 
@@ -74,13 +82,17 @@ const props = defineProps({
   },
   message: { 
     type: String, 
-    required: true 
+    required: false
   },
   showInput: {      // show input text box or not
     type: Boolean, 
     default: false 
   },
   inputText: { 
+    type: String, 
+    default: '' 
+  },
+  inputPlaceholder: {
     type: String, 
     default: '' 
   },

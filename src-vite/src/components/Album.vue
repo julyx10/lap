@@ -8,7 +8,6 @@
 
       <TButton v-if="isEditList" 
         :icon="IconOk" 
-        :buttonSize="'medium'"
         @click="clickOk"
       />
       <DropDownMenu v-else 
@@ -60,7 +59,7 @@ const albumListKey = ref(0);
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu.add_folder,
+      label: localeMsg.value.menu.album.add,
       icon: IconAdd,
       action: () => {
         albumListRef.value.clickNewAlbum();
@@ -71,7 +70,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu.edit_list,
+      label: localeMsg.value.menu.album.edit_list,
       icon: IconEdit,
       action: () => {
         isEditList.value = true;

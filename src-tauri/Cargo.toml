@@ -36,13 +36,6 @@ opener = "0.7.2"
 arboard = "3.5.0"
 pinyin = "0.10.0"
 # opencv = "0.94.4"
-# opencv = { version = "0.94.4", features = [
-#     "clang-runtime",    # 内置 libclang，不依赖系统 libclang.dylib
-#     "imgcodecs",        # 用于图像解码
-#     "videoio",          # 用于读取视频
-#     "imgproc",          # 用于缩略图处理等
-# ] }
-
 # id3 = "1.14.0"
 
 [features]

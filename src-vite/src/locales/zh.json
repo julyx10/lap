@@ -8,8 +8,12 @@
     "location": "地点",
     "people": "人物",
     "camera": "相机",
-    "trash": "垃圾箱",
+    "trash": "回收站",
     "settings": "设置"
+  },
+
+  "home": {
+    "title": "所有文件"
   },
 
   "album": {
@@ -57,20 +61,8 @@
   },
 
   "trash": {
-    "files": "垃圾箱文件",
-    "folders": "垃圾箱文件夹",
-    "empty": "清空垃圾箱",
-    "empty_confirm": "您确定要清空垃圾箱吗？此操作无法撤销。",
-    "empty_success": "垃圾箱已清空。",
-    "empty_error": "清空垃圾箱失败。请稍后再试。",
-    "restore": "恢复",
-    "restore_confirm": "您确定要恢复选中的项目吗？它们将被移回原始位置。",
-    "restore_success": "选中的项目已恢复。",
-    "restore_error": "恢复选中项目失败。请稍后再试。",
-    "delete": "删除",
-    "delete_confirm": "您确定要永久删除选中的项目吗？此操作无法撤销。",
-    "delete_success": "选中的项目已被永久删除。",
-    "delete_error": "永久删除选中项目失败。请稍后再试。"
+    "files": "回收站文件",
+    "folders": "回收站文件夹"
   },
 
   "toolbar": {
@@ -92,7 +84,7 @@
 
   "tooltip": {
     "not_found": {
-      "albums": "未找到相册，请尝试添加相册",
+      "albums": "未找到相册，尝试添加一个相册",
       "files": "未找到文件",
       "folders": "未找到文件夹",
       "tag": "未找到标签",
@@ -100,12 +92,14 @@
       "location": "未找到位置数据",
       "people": "未找到人物数据",
       "camera": "未找到相机数据",
-      "trash": "未找到垃圾箱数据"
+      "trash": "回收站中没有项目"
     },
     "copy_image": {
       "success": "图片已复制到剪贴板",
-      "failed": "复制图片失败"
-    }
+      "failed": "复制图片到剪贴板失败"
+    },
+    "clear_tag_filter": "清除标签筛选",
+    "empty_trash": "清空回收站"
   },
 
   "statusbar": {
@@ -113,43 +107,58 @@
   },
 
   "menu": {
-    "select_all": "全选",
-    "select_none": "取消全选",
-    "select_invert": "反选",
-    "favorite": "收藏",
-    "unfavorite": "取消收藏",
-    "tag": "标签",
-    "rotate": "旋转",
-    "open": "打开",
-    "view": "查看",
-    "edit": "编辑",
-    "print": "打印",
-    "copy": "复制",
-    "rename": "重命名",
-    "refresh": "刷新",
-    "copy_to": "复制到",
-    "move_to": "移动到",
-    "trash": "移至垃圾箱",
-    "delete": "删除",
+    "select": {
+      "all": "全选",
+      "none": "取消全选",
+      "invert": "反选"
+    },
+    "album": {
+      "add": "添加文件夹",
+      "edit_list": "编辑列表",
+      "edit_album": "编辑相册"
+    },
+    "file": {
+      "new_folder": "新建文件夹",
+      "open": "打开",
+      "copy": "复制",
+      "edit": "编辑",
+      "print": "打印",
+      "rename": "重命名",
+      "move_to": "移动到",
+      "copy_to": "复制到",
+      "goto_folder": "前往文件夹",
+      "reveal_in_finder": "在访达中显示",
+      "reveal_in_file_explorer": "在文件资源管理器中显示",
+      "properties": "属性"
+    },
+    "tag": {
+      "rename": "重命名标签",
+      "delete": "删除标签"
+    },
+    "trash": {
+      "move_to": "移入回收站",
+      "empty": "清空回收站",
+      "restore": "恢复",
+      "delete": "删除",
+      "delete_permanently": "永久删除"
+    },
+    "meta": {
+      "favorite": "收藏",
+      "unfavorite": "取消收藏",
+      "tag": "标签",
+      "rotate": "旋转",
+      "comment": "评论"
+    },
     "remove": "移除",
-    "new_folder": "新建文件夹",
-    "open_folder": "打开文件夹...",
-    "goto_folder": "前往文件夹",
-    "reveal_in_file_explorer": "在文件管理器中显示",
-    "reveal_in_finder": "在访达中显示",
-    "edit_album": "编辑相册",
-    "properties": "属性",
-    "add_folder": "添加文件夹",
-    "edit_list": "编辑列表",
-    "finish": "完成",
-    "comment": "备注"
+    "delete": "删除",
+    "refresh": "刷新"
   },
 
   "msgbox": {
     "ok": "确定",
     "cancel": "取消",
     "input": {
-      "file_name_invalid": "文件名不能包含以下字符：\\ / : * ? \" < > |"
+      "file_name_invalid": "文件名不能包含以下字符: \\ / : * ? \" < > |."
     },
     "remove_album": {
       "title": "从相册中移除？",
@@ -158,13 +167,13 @@
     },
     "rename_folder": {
       "title": "重命名文件夹",
-      "content": "输入文件夹的新名称：",
+      "content": "输入文件夹的新名称:",
       "ok": "重命名",
       "error": "无法重命名文件夹。"
     },
     "new_folder": {
       "title": "新建文件夹",
-      "content": "输入新文件夹的名称：",
+      "content": "输入新文件夹的名称:",
       "ok": "创建",
       "error": "无法创建新文件夹。"
     },
@@ -172,50 +181,64 @@
       "title": "删除文件夹",
       "content": "文件夹 '{folder}' 及其所有内容将被删除。",
       "ok": "删除",
-      "success": "文件夹 '{folder}' 已被删除。",
+      "success": "文件夹 '{folder}' 已删除。",
       "error": "无法删除文件夹。文件夹可能不存在。"
     },
     "move_to": {
       "title": "移动 '{source}' 到",
-      "content": "选择目标文件夹：",
+      "content": "选择目标文件夹:",
       "ok": "移动",
-      "error": "无法移动 '{source}' 到 '{dest}'。"
+      "error": "无法将 '{source}' 移动到 '{dest}'."
     },
     "copy_to": {
       "title": "复制 '{source}' 到",
-      "content": "选择目标文件夹：",
+      "content": "选择目标文件夹:",
       "ok": "复制",
-      "error": "无法复制 '{source}' 到 '{dest}'。"
+      "error": "无法将 '{source}' 复制到 '{dest}'."
     },
     "rename_file": {
       "title": "重命名文件",
-      "content": "输入文件的新名称：",
+      "content": "输入新文件名:",
       "ok": "重命名",
       "error": "无法重命名文件。"
     },
     "delete_file": {
       "title": "删除文件",
-      "content": "文件 '{file}' 将被删除。此操作无法撤销。",
+      "content": "文件 '{file}' 将被删除。此操作无法撤消。",
       "ok": "删除",
-      "success": "文件 '{file}' 已被删除。",
+      "success": "文件 '{file}' 已删除。",
       "error": "无法删除文件。文件可能不存在。"
     },
+    "restore_file": {
+      "title": "恢复文件",
+      "content": "文件 '{file}' 将被恢复。此操作无法撤消。",
+      "ok": "恢复",
+      "success": "文件 '{file}' 已恢复。",
+      "error": "无法恢复文件。文件可能不存在。"
+    },
+    "empty_trash": {
+      "title": "清空回收站",
+      "content": "确定要清空回收站吗？此操作无法撤消。",
+      "ok": "清空",
+      "success": "回收站已清空。",
+      "error": "无法清空回收站。"
+    },
     "new_tag": {
-      "title": "新标签",
-      "content": "输入新标签的名称：",
+      "title": "新建标签",
+      "content": "输入新标签的名称:",
       "ok": "创建",
       "error": "无法创建新标签。"
     },
     "delete_tag": {
       "title": "删除标签",
-      "content": "标签 '{tag}' 将被删除。此操作无法撤销。",
+      "content": "标签 '{tag}' 将被删除。此操作无法撤消。",
       "ok": "删除",
       "success": "标签 '{tag}' 已删除。",
       "error": "无法删除标签。标签可能不存在。"
     },
     "edit_comment": {
-      "title": "编辑备注",
-      "content": "输入文件 '{file}' 的备注：",
+      "title": "编辑评论",
+      "content": "输入文件 '{file}' 的评论:",
       "ok": "保存"
     },
     "select_folder": {
@@ -223,6 +246,9 @@
     },
     "select_file": {
       "error": "选择文件失败。"
+    },
+    "tag_files": {
+      "title": "文件标记"
     }
   },
 
@@ -236,9 +262,9 @@
     "size": "大小",
     "created": "创建时间",
     "modified": "修改时间",
-    "camera_make": "照相机制造商",
-    "camera_model": "照相机型号",
-    "date_taken": "拍摄时间",
+    "camera_make": "相机制造商",
+    "camera_model": "相机型号",
+    "date_taken": "拍摄日期",
     "exposure_time": "曝光时间",
     "aperture": "光圈",
     "focal_length": "焦距",
@@ -246,11 +272,11 @@
     "flash": "闪光灯",
     "color_type": "颜色类型",
     "bit_depth": "位深度",
-    "alpha_channel": "Alpha通道",
-    "gps_latitude": "GPS纬度",
-    "gps_longitude": "GPS经度",
-    "gps_altitude": "GPS海拔",
-    "comment": "备注"
+    "alpha_channel": "Alpha 通道",
+    "gps_latitude": "GPS 纬度",
+    "gps_longitude": "GPS 经度",
+    "gps_altitude": "GPS 海拔",
+    "comment": "评论"
   },
 
   "format": {
@@ -266,7 +292,7 @@
   "image_viewer": {
     "title": "图片查看器",
     "loading": "加载中...",
-    "failed": "加载失败",
+    "failed": "加载图片失败",
     "toolbar": {
       "prev": "上一张",
       "next": "下一张",
@@ -280,7 +306,7 @@
       "favorite": "收藏",
       "unfavorite": "取消收藏",
       "tag": "标签",
-      "info": "属性",
+      "info": "信息",
       "save": "保存",
       "delete": "删除",
       "fullscreen": "全屏",
@@ -289,7 +315,7 @@
       "unpin": "取消固定工具栏",
       "close": "关闭"
     }
-  },
+},
 
   "settings": {
     "general": {
@@ -311,22 +337,22 @@
       "show_button_text": "显示按钮文本",
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",
-      "show_comment": "显示备注",
+      "show_comment": "显示评论",
       "debug_mode": "调试模式"
     },
     "thumbnail": {
       "title": "缩略图",
       "size": "缩略图大小",
       "scaling": "缩略图缩放",
-      "scaling_options": ["适应整个图片", "裁剪填充", "拉伸填充"],
+      "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
       "label_primary": "显示主标签",
-      "label_secondary": "显示次标签",
+      "label_secondary": "显示副标签",
       "label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"]
     },
     "image_viewer": {
       "title": "图片查看器",
       "mouse_wheel": "鼠标滚轮",
-      "mouse_wheel_options": ["上一张 / 下一张图片 (Ctrl缩放)", "放大 / 缩小"],
+      "mouse_wheel_options": ["上一张/下一张图片 (Ctrl 缩放)", "放大/缩小"],
       "autoplay_interval": "自动播放间隔: {second} 秒"
     },
     "about": {

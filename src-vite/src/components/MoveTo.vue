@@ -6,7 +6,7 @@
 
       <!-- titlebar -->
       <div class="mb-2 flex items-center justify-between">
-        {{ title }}
+        {{ title }} 
         <!-- {{ title }} {{ config.destFolderPath? '\'' + config.destFolderPath + '\'' : '' }} -->
         <TButton
           :icon="IconClose"
@@ -16,9 +16,9 @@
       </div>
 
       <!-- message -->
-      <div class="mb-2">
+      <!-- <div class="mb-2">
         {{ message }}
-      </div>
+      </div> -->
 
       <!-- select album and folder -->
       <div class="border border-base-content/10 pl-1 rounded overflow-auto">

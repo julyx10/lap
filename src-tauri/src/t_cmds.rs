@@ -330,6 +330,12 @@ pub fn set_file_delete(file_id: i64, deleted_at: u64) -> Result<usize, String> {
         .map_err(|e| format!("Error while setting file delete: {}", e))
 }
 
+/// get a file's has_tags status (true or false)
+#[tauri::command]
+pub fn get_file_has_tags(file_id: i64) -> Result<bool, String> {
+    AFile::get_has_tags(file_id)
+        .map_err(|e| format!("Error while getting file has_tags status: {}", e))
+}
 // favorite
 
 /// get all favorite folders

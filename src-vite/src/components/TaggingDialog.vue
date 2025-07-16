@@ -29,7 +29,6 @@
         />
         <TButton 
           :icon="IconAdd"
-          :buttonSize="'medium'"
           @click="addNewTag"
         />
       </div>
@@ -41,7 +40,7 @@
             v-for="tag in filteredTags"
             :key="tag.id"
             :class="[
-              'badge badge-lg cursor-pointer transition-colors duration-100',
+              'badge badge-lg overflow-hidden whitespace-pre text-ellipsis cursor-pointer transition-colors duration-100',
               {
                 'badge-primary': selectedTags.has(tag.id),
                 'badge-outline border-base-content/30 bg-base-content/20': intermediateTags.has(tag.id) && !selectedTags.has(tag.id),
@@ -228,7 +227,7 @@ async function clickOk() {
       }
     }
   }
-  emit('applied');
+  emit('applied', props.fileIds);
   emit('update:show', false);
 }
 

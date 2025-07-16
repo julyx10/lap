@@ -17,22 +17,24 @@
           :style="menuStyle"
         >
           <!-- menu items -->
-          <button v-for="(item, index) in menuItems"
-            :class="[
-              item.label === '-' ? 'mx-2 my-1 border-t border-base-content/30' : 'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
-              item.disabled ? 'text-base-content/30' : 'hover:bg-base-content/10 hover:rounded cursor-pointer',
-            ]"
-            :key="index"
-            @click="handleClick(item)"
-          >      
-            <div v-if="item.label !== '-'" class="w-full flex items-center">
-              <div class="w-5">
-                <component class="w-5 h-5" :is="item.icon" ></component>
+          <template v-for="(item, index) in menuItems">
+            <button v-if="!item.hidden"
+              :class="[
+                item.label === '-' ? 'mx-2 my-1 border-t border-base-content/30' : 'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
+                item.disabled ? 'text-base-content/30' : 'hover:bg-base-content/10 hover:rounded cursor-pointer',
+              ]"
+              :key="index"
+              @click="handleClick(item)"
+            >      
+              <div v-if="item.label !== '-'" class="w-full flex items-center">
+                <div class="w-5">
+                  <component class="t-icon-size-sm" :is="item.icon" ></component>
+                </div>
+                <span class="ml-2 mr-4">{{ item.label }}</span>
+                <span class="ml-auto text-base-content/30">{{ item.shortcut }}</span>
               </div>
-              <span class="ml-2 mr-4">{{ item.label }}</span>
-              <span class="ml-auto text-base-content/30">{{ item.shortcut }}</span>
-            </div>
-          </button>
+            </button>
+          </template>
         </div>
       </transition> 
     </teleport>

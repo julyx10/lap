@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" >
     <polyline stroke-linecap="round" stroke-linejoin="round" points="15 3 21 3 21 9"></polyline>
     <polyline stroke-linecap="round" stroke-linejoin="round" points="9 21 3 21 3 15"></polyline>
     <line stroke-linecap="round" stroke-linejoin="round" x1="21" y1="3" x2="14" y2="10"></line>

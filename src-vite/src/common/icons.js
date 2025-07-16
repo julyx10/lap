@@ -21,6 +21,8 @@ export { default as IconMoveTo } from '@/assets/icons/move-to.svg';
 export { default as IconCopyTo } from '@/assets/icons/copy-to.svg';
 export { default as IconRename } from '@/assets/icons/rename.svg';
 export { default as IconTrash } from '@/assets/icons/trash.svg';
+export { default as IconTrashEmpty } from '@/assets/icons/trash-empty.svg';
+export { default as IconTrashRestore } from '@/assets/icons/restore.svg';
 export { default as IconOpenFolder } from '@/assets/icons/external.svg';
 export { default as IconFile } from '@/assets/icons/file.svg';
 export { default as IconLink } from '@/assets/icons/link.svg';

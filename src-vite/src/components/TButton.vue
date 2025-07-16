@@ -54,7 +54,7 @@ import type { Component } from 'vue';
 const props = defineProps({
   buttonSize: {
     type: String,
-    default: 'large'         // 'small', 'medium'(default), 'large'
+    default: 'medium'         // 'small', 'medium'(default), 'large'
   },
   buttonClasses: {
     type: String,

@@ -70,9 +70,9 @@
   <MessageBox
     v-if="showNewFolderMsgbox"
     :title="$t('msgbox.new_folder.title')"
-    :message="$t('msgbox.new_folder.content')"
     :showInput="true"
     :inputText="''"
+    :inputPlaceholder="$t('msgbox.new_folder.placeholder')"
     :needValidateInput="true"
     :OkText="$t('msgbox.new_folder.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -203,14 +203,14 @@ const moreMenuItems = computed(() => {
 
   return [
     {
-      label: localeMsg.value.menu.new_folder,
+      label: localeMsg.value.menu.file.new_folder,
       icon: IconNewFolder,
       action: () => {
         showNewFolderMsgbox.value = true; // show new folder message box
       }
     },
     {
-      label: localeMsg.value.menu.rename,
+      label: localeMsg.value.menu.file.rename,
       icon: IconRename,
       action: () => {
         isRenamingFolder.value = true;
@@ -223,28 +223,28 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.move_to,
+      label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
       action: () => {
         showMoveTo.value = true;  // show move-to message box
       }
     },
     {
-      label: localeMsg.value.menu.copy_to,
+      label: localeMsg.value.menu.file.copy_to,
       // icon: IconCopyTo,
       action: () => {
         showCopyTo.value = true;  // show copy-to message box
       }
     },
     {
-      label: localeMsg.value.menu.trash,
+      label: localeMsg.value.menu.trash.move_to,
       icon: IconTrash,
       action: () => {
         showDeleteMsgbox.value = true;  // show delete message box
       }
     },
     {
-      label: isMac ? localeMsg.value.menu.reveal_in_finder : localeMsg.value.menu.reveal_in_file_explorer,
+      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
       // icon: IconOpenFolder,
       action: () => {
         revealFolder(selectedFolderPath.value);
@@ -255,24 +255,24 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: !folder?.is_favorite ? localeMsg.value.menu.favorite: localeMsg.value.menu.unfavorite,
+      label: !folder?.is_favorite ? localeMsg.value.menu.meta.favorite: localeMsg.value.menu.meta.unfavorite,
       icon: !folder?.is_favorite ? IconFavorite : IconUnFavorite,
       action: () => {
         toggleFavorite();
       }
     },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    {
-      label: localeMsg.value.menu.refresh,
-      icon: IconRefresh,
-      action: async() => {
-        const folder = getFolderById(selectedFolderId.value);
-        await expandFolder(folder, true); // force refresh
-      }
-    }
+    // {
+    //   label: "-",   // separator
+    //   action: null
+    // },
+    // {
+    //   label: localeMsg.value.menu.refresh,
+    //   icon: IconRefresh,
+    //   action: async() => {
+    //     const folder = getFolderById(selectedFolderId.value);
+    //     await expandFolder(folder, true); // force refresh
+    //   }
+    // }
   ];
 });
 

@@ -479,6 +479,19 @@ export async function setFileDelete(fileId, deletedAt) {
   return null;
 }
 
+// get file has_tags status
+export async function getFileHasTags(fileId) {
+  try {
+    const result = await invoke('get_file_has_tags', { fileId });
+    if (result) {
+      return result;
+    }
+  } catch (error) {
+    console.error('Failed to get file has_tags status:', error);
+  }
+  return false;
+}
+
 // favorite
 
 // get favorite folders

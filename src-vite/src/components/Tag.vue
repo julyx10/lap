@@ -5,11 +5,10 @@
     <!-- Title Bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default">{{ titlebar }}</span>
-      <TButton 
+      <!-- <TButton 
         :icon="IconAdd"
-        :buttonSize="'medium'"
         @click="showNewTagMsgbox = true"
-      />
+      /> -->
     </div>
 
     <!-- Tag List -->
@@ -66,7 +65,7 @@
   </div>
 
   <!-- new tag -->
-  <MessageBox
+  <!-- <MessageBox
     v-if="showNewTagMsgbox"
     :title="$t('msgbox.new_tag.title')"
     :message="$t('msgbox.new_tag.content')"
@@ -77,7 +76,7 @@
     :cancelText="$t('msgbox.cancel')"
     @ok="clickNewTag"
     @cancel="showNewTagMsgbox = false"
-  />
+  /> -->
 
   <!-- delete tag -->
   <MessageBox
@@ -105,7 +104,7 @@ import {
   IconAdd
 } from '@/common/icons';
 
-import TButton from '@/components/TButton.vue';
+// import TButton from '@/components/TButton.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
@@ -128,13 +127,13 @@ const originalTagName = ref('');
 const tagInputRef = ref([]);
 
 // message boxes
-const showNewTagMsgbox = ref(false);
+// const showNewTagMsgbox = ref(false);
 const showDeleteTagMsgbox = ref(false);
 
 // more menuitems
 const getMoreMenuItems = () => [
   {
-    label: localeMsg.value.menu.rename,
+    label: localeMsg.value.menu.tag.rename,
     icon: IconRename,
     action: () => {
       isRenamingTag.value = true;
@@ -147,7 +146,7 @@ const getMoreMenuItems = () => [
     }
   },
   {
-    label: localeMsg.value.menu.delete,
+    label: localeMsg.value.menu.tag.delete,
     icon: IconTrash,
     action: () => {
       showDeleteTagMsgbox.value = true;
@@ -176,14 +175,14 @@ function selectTag(tag) {
   config.tagId = tag.id;
 }
 
-async function clickNewTag(tagName) {
-  showNewTagMsgbox.value = false;
-  const newTag = await createTag(tagName);
-  if (newTag) {
-    allTags.value.push(newTag);
-    selectTag(newTag);
-  }
-}
+// async function clickNewTag(tagName) {
+//   showNewTagMsgbox.value = false;
+//   const newTag = await createTag(tagName);
+//   if (newTag) {
+//     allTags.value.push(newTag);
+//     selectTag(newTag);
+//   }
+// }
 
 async function handleRenameTag() {
   if (!isRenamingTag.value) return;
@@ -191,6 +190,8 @@ async function handleRenameTag() {
   const newName = selectedTag.value.name.trim();
 
   if (newName.length === 0 || newName === originalTagName.value) {
+    isRenamingTag.value = false;
+    selectedTag.value.name = originalTagName.value;
     return;
   }
 

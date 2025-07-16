@@ -759,6 +759,17 @@ impl AFile {
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
+    
+    /// Get a file's has_tags status
+    pub fn get_has_tags(file_id: i64) -> Result<bool, String> {
+        let conn = open_conn()?;
+        let result = conn.query_row(
+            "SELECT has_tags FROM afiles WHERE id = ?1",
+            params![file_id],
+            |row| row.get(0),
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
 
     /// get all taken dates from db
     pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
@@ -1343,6 +1354,7 @@ pub fn create_db() -> Result<String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_taken_date ON afiles(taken_date)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_is_favorite ON afiles(is_favorite)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_deleted_at ON afiles(deleted_at)", [])?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_has_tags ON afiles(has_tags)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_make_model ON afiles(e_make, e_model)", [])?;
 
     // file thumbnail table
