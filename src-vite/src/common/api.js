@@ -321,7 +321,7 @@ export async function getDbCountAndSum(startDate, endDate, make, model, isFavori
 // return [files, totalCount, totalSum]
 export async function getFolderFiles(folderId, folderPath) {
   try {
-    const files = await invoke('get_folder_files', { 
+    let files = await invoke('get_folder_files', { 
       searchText: config.searchText, 
       searchFileType: config.searchFileType,
       sortType: config.sortType,
@@ -330,6 +330,9 @@ export async function getFolderFiles(folderId, folderPath) {
       folderPath, 
     });
     if(files) {
+      // filter out the files that deleted_at is not null
+      files = files.filter(file => !file.deleted_at);
+      
       const totalCount = files.length;
       const totalSum = files.reduce((acc, file) => acc + file.size, 0);
       return [files, totalCount, totalSum];
@@ -467,6 +470,8 @@ export async function setFileRotate(fileId, fileRotate) {
 }
 
 // set file delete
+// if deletedAt is 0 or null, it means the file is not deleted
+// if deletedAt is the timestamp, it means the file is deleted
 export async function setFileDelete(fileId, deletedAt) {
   try {
     const result = await invoke('set_file_delete', { fileId, deletedAt });

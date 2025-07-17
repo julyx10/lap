@@ -1,10 +1,10 @@
 <template>
   <div v-if="show" class="modal modal-open">
-    <div class="w-1/3 p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="w-[600px] p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
       <!-- title bar -->
       <div class="mb-2 flex items-center justify-between">
-        {{ $t('tag.edit_tag') }}
+        <span class="text-lg font-bold">{{ $t('tag.edit_tag') }}</span>
         <TButton
           :icon="IconClose"
           :buttonSize="'small'"

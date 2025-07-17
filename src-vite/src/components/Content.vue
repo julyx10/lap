@@ -216,18 +216,7 @@
     @cancel="showDeleteMsgbox = false"
   />
 
-  <!-- restore -->
-  <MessageBox
-    v-if="showRestoreMsgbox"
-    :title="$t('msgbox.restore_file.title')"
-    :message="`${$t('msgbox.restore_file.content', { file: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
-    :OkText="$t('msgbox.restore_file.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    @ok="clickRestoreFile"
-    @cancel="showRestoreMsgbox = false"
-  />
-
-  <!-- tagging -->
+  <!-- tag -->
   <TaggingDialog 
     v-model:show="showTaggingDialog"
     :fileIds="fileIdsToTag"
@@ -259,11 +248,11 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getTagName,
-         copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
+         copyImage, renameFile, moveFile, copyFile, setFileDelete, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate, getFileHasTags} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath, getTimestamp } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -347,7 +336,6 @@ const renamingFileName = ref({}); // extract the file name to {name, ext}
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 const showDeleteMsgbox = ref(false);
-const showRestoreMsgbox = ref(false);
 const showCommentMsgbox = ref(false);
 const errorMessage = ref('');
 
@@ -408,14 +396,14 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
-      disabled: selectedCount.value === 0,
+      disabled: selectedCount.value === 0 || config.sidebarIndex !== 1,
       action: () => {
         showMoveTo.value = true;
       }
     },
     {
       label: localeMsg.value.menu.file.copy_to,
-      disabled: selectedCount.value === 0,
+      disabled: selectedCount.value === 0 || config.sidebarIndex !== 1,
       action: () => {
         showCopyTo.value = true;
       }
@@ -425,7 +413,7 @@ const moreMenuItems = computed(() => {
       icon: IconTrash,
       disabled: selectedCount.value === 0,
       action: () => {
-        // showDeleteMsgbox.value = true; // Still show confirmation dialog
+        clickMoveToTrash();
       }
     },
   ];
@@ -436,24 +424,24 @@ const moreMenuItems = computed(() => {
       icon: IconTrashRestore,
       disabled: selectedCount.value === 0,
       action: () => {
-        showRestoreMsgbox.value = true;
+        clickRestoreFromTrash();
       }
     },
     {
       label: localeMsg.value.menu.trash.delete,
-      icon: IconClose,
+      icon: IconTrash,
       disabled: selectedCount.value === 0,
       action: () => {
         showDeleteMsgbox.value = true;
       }
     },
-    {
-      label: localeMsg.value.menu.trash.empty,
-      icon: IconTrashEmpty,
-      action: () => {
-        // TODO: empty trash
-      }
-    }
+    // {
+    //   label: localeMsg.value.menu.trash.empty,
+    //   icon: IconTrashEmpty,
+    //   action: () => {
+    //     // TODO: empty trash
+    //   }
+    // }
   ];
 
   const metadataItems = [
@@ -550,6 +538,12 @@ onMounted( async() => {
         break;
       case 'copy-to':
         showCopyTo.value = true;
+        break;
+      case 'move-to-trash':
+        clickMoveToTrash();
+        break;
+      case 'restore-from-trash':
+        clickRestoreFromTrash();
         break;
       case 'delete':
         showDeleteMsgbox.value = true;
@@ -850,6 +844,54 @@ const clickCopyTo = async () => {
   showCopyTo.value = false;
 }
 
+// move to trash
+const clickMoveToTrash = async () => {
+  if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
+    const selectedFiles = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        const result = await setFileDelete(item.id, getTimestamp());
+        if(result) {
+          console.log('clickMoveToTrash:', result);
+          removeFromFileList(fileList.value.indexOf(item));
+        }
+      });
+    await Promise.all(selectedFiles); // parallelize DB updates
+  } 
+  else if(selectedItemIndex.value >= 0) {               // single select mode
+    const file = fileList.value[selectedItemIndex.value];
+    const result = await setFileDelete(file.id, getTimestamp());
+    if(result) {
+      console.log('clickMoveToTrash:', result);
+      removeFromFileList(selectedItemIndex.value);
+    }
+  }
+}
+
+// restore from trash
+const clickRestoreFromTrash = async() => {
+  if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
+    const selectedFiles = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        const result = await setFileDelete(item.id, 0);
+        if(result) {
+          console.log('clickRestoreFromTrash:', result);
+          removeFromFileList(fileList.value.indexOf(item));
+        }
+      });
+    await Promise.all(selectedFiles); // parallelize DB updates
+  } 
+  else if(selectedItemIndex.value >= 0) {               // single select mode
+    const file = fileList.value[selectedItemIndex.value];
+    const result = await setFileDelete(file.id, 0);
+    if(result) {
+      console.log('clickRestoreFromTrash:', result);
+      removeFromFileList(selectedItemIndex.value);
+    }
+  }
+}
+
 // click delete menu item
 const clickDeleteFile = async () => {
   if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
@@ -874,11 +916,6 @@ const clickDeleteFile = async () => {
     }
   }
   showDeleteMsgbox.value = false;
-}
-
-// click restore file
-const clickRestoreFile = async () => {
-  console.log('clickRestoreFile');
 }
 
 // remove an file item from the list and update the selected item index

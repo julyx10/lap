@@ -62,7 +62,8 @@
 
   "trash": {
     "files": "ゴミ箱のファイル",
-    "folders": "ゴミ箱のフォルダ"
+    "folders": "ゴミ箱のフォルダ",
+    "days": "{count} 日"
   },
 
   "toolbar": {
@@ -97,9 +98,7 @@
     "copy_image": {
       "success": "画像をクリップボードにコピーしました",
       "failed": "画像をクリップボードにコピーできませんでした"
-    },
-    "clear_tag_filter": "タグフィルターをクリア",
-    "empty_trash": "ゴミ箱を空にする"
+    }
   },
 
   "statusbar": {
@@ -120,7 +119,7 @@
     "file": {
       "new_folder": "新しいフォルダ",
       "open": "開く",
-      "copy": "コピー",
+      "copy": "クリップボードにコピー",
       "edit": "編集",
       "print": "印刷",
       "rename": "名前を変更",
@@ -173,7 +172,7 @@
     },
     "new_folder": {
       "title": "新しいフォルダ",
-      "content": "新しいフォルダ名を入力してください:",
+      "placeholder": "新しいフォルダ名を入力",
       "ok": "作成",
       "error": "新しいフォルダを作成できませんでした。"
     },
@@ -198,7 +197,7 @@
     },
     "rename_file": {
       "title": "ファイル名を変更",
-      "content": "新しいファイル名を入力してください:",
+      "placeholder": "新しいファイル名を入力",
       "ok": "名前を変更",
       "error": "ファイル名を変更できませんでした。"
     },
@@ -231,14 +230,14 @@
     },
     "delete_tag": {
       "title": "タグを削除",
-      "content": "タグ '{tag}' は削除されます。この操作は元に戻せません。",
+      "content": "タグ '{tag}' は削除されます。",
       "ok": "削除",
       "success": "タグ '{tag}' が削除されました。",
       "error": "タグを削除できませんでした。タグが存在しない可能性があります。"
     },
     "edit_comment": {
       "title": "コメントを編集",
-      "content": "ファイル '{file}' のコメントを入力してください:",
+      "placeholder": "コメントを入力",
       "ok": "保存"
     },
     "select_folder": {
@@ -260,8 +259,8 @@
     "path": "パス",
     "dimension": "寸法",
     "size": "サイズ",
-    "created": "作成済み",
-    "modified": "更新済み",
+    "created_at": "作成日時",
+    "modified_at": "更新日時",
     "camera_make": "カメラメーカー",
     "camera_model": "カメラモデル",
     "date_taken": "撮影日",
@@ -276,7 +275,9 @@
     "gps_latitude": "GPS緯度",
     "gps_longitude": "GPS経度",
     "gps_altitude": "GPS高度",
-    "comment": "コメント"
+    "tags": "タグ",
+    "comment": "コメント",
+    "recent_deleted": "最近削除"
   },
 
   "format": {

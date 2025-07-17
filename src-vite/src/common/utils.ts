@@ -36,6 +36,18 @@ export function getPlayInterval(): number {
   return [1, 3, 5, 10, 15, 30][config.autoPlayInterval] || 1;
 }
 
+/// get the current timestamp in seconds
+export function getTimestamp(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+/// get days elapsed since the timestamp
+export function getDaysElapsed(timestamp: number): number {
+  const currentTimestamp = getTimestamp();
+  const diff = currentTimestamp - timestamp;
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
 /// format timestamp to string
 export function formatTimestamp(timestamp: number, formatStr: string): string {
   return format(new Date(timestamp * 1000), formatStr);

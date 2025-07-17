@@ -2,7 +2,7 @@
     
   <dialog id="moveToDialog" class="modal">
 
-    <div class="min-w-96 min-h-96 max-w-[50%] max-h-[80%] p-4 flex flex-col text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="w-[600px] min-h-96 max-h-[80%] p-4 flex flex-col text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
 
       <!-- titlebar -->
       <div class="mb-2 flex items-center justify-between">

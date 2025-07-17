@@ -21,7 +21,7 @@
         @click="clickItem(index)"
         @dblclick="openItem()"
       >
-        <div v-if="!file.is_deleted" class="relative flex flex-col items-center group">
+        <div class="relative flex flex-col items-center group">
           <img v-if="file.thumbnail"
             :src="file.thumbnail"
             :class="[
@@ -40,25 +40,28 @@
           <div v-else 
             class="skeleton rounded flex items-center justify-center"
             :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
-          >
-            <!-- <IconPhoto class="size-1/2"/> -->
-          </div>
+          > </div>
           <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
           <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
         
-          <!-- favorite and rotate status -->
-          <div class="absolute left-1 top-1 flex items-center gap-1">
-            <IconVideo v-if="file.file_type===2" class="t-icon-size-xs text-base-content/30"></IconVideo>
-            <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs text-base-content/30"></IconFavorite>
-            <IconRotate v-if="file.rotate % 360 > 0"
-              class="t-icon-size-xs text-base-content/30"
-              :style="{ 
-                transform: `rotate(${file.rotate}deg)`, 
-                transition: 'transform 0.3s ease-in-out' 
-              }"
-            />
-            <IconTag v-if="file.has_tags" class="t-icon-size-xs text-base-content/30"></IconTag>
-            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs text-base-content/30"></IconComment>
+          <!-- status icons -->
+          <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">
+            <template v-if="!file.deleted_at">
+              <IconVideo v-if="file.file_type===2" class="t-icon-size-xs"></IconVideo>
+              <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
+              <IconRotate v-if="file.rotate % 360 > 0"
+                class="t-icon-size-xs"
+                :style="{ 
+                  transform: `rotate(${file.rotate}deg)`, 
+                  transition: 'transform 0.3s ease-in-out' 
+                }"
+              />
+              <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
+              <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>              
+            </template>
+            <template v-else>
+              {{ $t('trash.days', { count: getDaysElapsed(file.deleted_at) }) }}
+            </template>
           </div>
 
           <!-- select checkbox or more menu -->
@@ -73,7 +76,7 @@
                 index != selectedIndex ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
-              :menuItems="moreMenuItems"
+              :menuItems="config.sidebarIndex === 7 ? trashMenuItems : moreMenuItems"
               :smallIcon="true"
             />
           </div>
@@ -94,7 +97,7 @@
 import { ref, watch, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, shortenFilename, formatFileSize, formatTimestamp } from '@/common/utils';
+import { config, isMac, shortenFilename, formatFileSize, formatTimestamp, getDaysElapsed } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
@@ -117,6 +120,7 @@ import {
   IconChecked,
   IconUnChecked,
   IconComment,
+  IconTrashRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -149,6 +153,45 @@ const selectedIndex = ref(props.selectItemIndex);
 const emitUpdate = defineEmits(['update:selectItemIndex']);
 
 const scrollContainer = ref(null); // Ref for the scrollable element
+
+const trashMenuItems = computed(() => {
+  return [
+    {
+      label: localeMsg.value.menu.file.open,
+      icon: IconOpen,
+      shortcut: isMac ? '⏎' : 'Enter',
+      action: () => {
+        openItem();
+      }
+    },
+    {
+      label: localeMsg.value.menu.file.copy,
+      icon: IconCopy,
+      shortcut: isMac ? '⌘C' : 'Ctrl+C',
+      action: () => {
+        copyItem();
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu.trash.restore,
+      icon: IconTrashRestore,
+      action: () => {
+        restoreFromTrash();
+      }
+    },
+    {
+      label: localeMsg.value.menu.trash.delete,
+      icon: IconTrash,
+      action: () => {
+        deleteFromTrash();
+      }
+    }
+  ]
+})
 
 const moreMenuItems = computed(() => {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
@@ -201,6 +244,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
+      disabled: config.sidebarIndex !== 1,
       action: () => {
         moveTo();
       }
@@ -208,6 +252,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.copy_to,
       // icon: IconCopyTo,
+      disabled: config.sidebarIndex !== 1,
       action: () => {
         copyTo();
       }
@@ -217,7 +262,7 @@ const moreMenuItems = computed(() => {
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
-        deleteItem();
+        moveToTrash();
       }
     },
     {
@@ -313,7 +358,7 @@ function handleKeyDown(event) {
   } else if(isCmdKey && key.toLowerCase() === 'r') {
     rotateItem();
   } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    deleteItem()
+    moveToTrash();
   } else if (keyActions[key]) {
     keyActions[key](); 
   }
@@ -359,8 +404,16 @@ function copyTo() {
   emit('message-from-grid-view', { message: 'copy-to' });
 };
 
-function deleteItem() {
-  emit('message-from-grid-view', { message: 'delete' });
+function moveToTrash() {
+  emit('message-from-grid-view', { message: 'move-to-trash' });
+};
+
+function restoreFromTrash() {
+  emit('message-from-grid-view', { message: 'restore-from-trash' });
+};
+
+function deleteFromTrash() {
+  emit('message-from-grid-view', { message: 'delete-from-trash' });
 };
 
 function gotoFolder() {

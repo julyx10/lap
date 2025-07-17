@@ -128,8 +128,8 @@ const handleClickOutside = (event) => {
 const handleClick = (item) => {
   if (!item.disabled && item.action && typeof item.action === 'function') {
     item.action();
+    isDropDown.value = false;
   }
-  isDropDown.value = false;
 };
 
 </script>

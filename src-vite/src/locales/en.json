@@ -62,7 +62,8 @@
 
   "trash": {
     "files": "Trash files",
-    "folders": "Trash folders"
+    "folders": "Trash folders",
+    "days": "{count} days"
   },
 
   "toolbar": {
@@ -118,7 +119,7 @@
     "file": {
       "new_folder": "New folder",
       "open": "Open",
-      "copy": "Copy",
+      "copy": "Copy to clipboard",
       "edit": "Edit",
       "print": "Print",
       "rename": "Rename",
@@ -272,7 +273,7 @@
     "gps_altitude": "GPS Altitude",
     "tags": "Tags",
     "comment": "Comment",
-    "deleted_at": "Deleted At"
+    "recent_deleted": "Recent deleted"
   },
 
   "format": {
@@ -319,8 +320,7 @@
       "appearance": "Appearance",
       "appearance_options": [
         "light",
-        "dark",
-        "purple"
+        "dark"
       ],
       "select_language": "Select language",
       "show_button_text": "Show button text",

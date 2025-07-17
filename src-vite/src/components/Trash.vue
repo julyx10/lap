@@ -5,7 +5,10 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
-      <!-- <TButton :icon="IconRefresh" @click="clickRefresh"/> -->
+      <DropDownMenu 
+        :iconMenu="IconMore" 
+        :menuItems="moreMenuItems"
+      />
     </div>
 
     <!-- trash files -->
@@ -68,7 +71,7 @@ import DropDownMenu from '@/components/DropDownMenu.vue';
 import TButton from '@/components/TButton.vue';
 
 import {
-  IconRefresh,
+  IconTrashEmpty,
   IconTrash,
   IconFolderTrash,
   IconMore,
@@ -93,10 +96,10 @@ const favorite_folders = ref([]);
 const moreMenuItems = computed(() => {
   return [
     {
-      label: localeMsg.value.menu.unfavorite,
-      icon: IconUnFavorite,
+      label: localeMsg.value.menu.trash.empty,
+      icon: IconTrashEmpty,
       action: () => {
-        UnFavorite();
+        // emptyTrash();
       }
     },
   ];

@@ -241,7 +241,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isWin, isMac, setTheme, getPlayInterval } from '@/common/utils';
-import { copyImage, getFileInfo, getFileImage } from '@/common/api';
+import { copyImage, getFileInfo, getFileImage, getTagsForFile } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
@@ -532,6 +532,12 @@ watch(() => config.isFullScreen, async (newFullScreen) => {
 // watch file changed
 watch(() => fileId.value, async () => {
   fileInfo.value = await getFileInfo(fileId.value);
+
+  // get the file's tags
+  if(fileInfo.value.has_tags) {
+    fileInfo.value.tags = await getTagsForFile(fileId.value);
+  }
+
   iconRotate.value = fileInfo.value.rotate || 0;
   loadImage(filePath.value);
 });

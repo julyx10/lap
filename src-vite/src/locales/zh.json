@@ -62,7 +62,8 @@
 
   "trash": {
     "files": "回收站文件",
-    "folders": "回收站文件夹"
+    "folders": "回收站文件夹",
+    "days": "{count} 天"
   },
 
   "toolbar": {
@@ -118,7 +119,7 @@
     "file": {
       "new_folder": "新建文件夹",
       "open": "打开",
-      "copy": "复制",
+      "copy": "复制到剪贴板",
       "edit": "编辑",
       "print": "打印",
       "rename": "重命名",
@@ -272,7 +273,7 @@
     "gps_altitude": "GPS 海拔",
     "tags": "标签",
     "comment": "评论",
-    "deleted_at": "删除时间"
+    "recent_deleted": "最近删除"
   },
 
   "format": {

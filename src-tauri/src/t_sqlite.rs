@@ -852,9 +852,9 @@ impl AFile {
         }
     
         if is_deleted {
-            conditions.push("a.deleted_at IS NOT NULL");
+            conditions.push("(a.deleted_at IS NOT NULL AND a.deleted_at > 0)");
         } else {
-            conditions.push("a.deleted_at IS NULL");
+            conditions.push("(a.deleted_at IS NULL OR a.deleted_at = 0)");
         }
     
         let mut query = Self::build_count_query();
@@ -921,9 +921,9 @@ impl AFile {
         }
     
         if is_deleted {
-            conditions.push("a.deleted_at IS NOT NULL");
+            conditions.push("(a.deleted_at IS NOT NULL AND a.deleted_at > 0)");
         } else {
-            conditions.push("a.deleted_at IS NULL");
+            conditions.push("(a.deleted_at IS NULL OR a.deleted_at = 0)");
         }
     
         let mut query = Self::build_base_query();

@@ -24,7 +24,7 @@
           </tr>
           <tr>
             <td>{{ $t('file_info.path') }}</td>
-            <td class="text-wrap break-all">{{ fileInfo.file_path }}</td>
+            <td class="text-wrap break-all">{{ getFolderPath(fileInfo.file_path) }}</td>
             <!-- <td>
                <input
                type="text"
@@ -108,15 +108,20 @@
           </tr>
           <tr>
             <td>{{ $t('file_info.tags') }}</td>
-            <td>{{ fileInfo.tags }}</td>
+            <td>
+              <span v-if="fileInfo.tags && fileInfo.tags.length">
+                {{ fileInfo.tags.map(tag => tag.name).join(', ') }}
+              </span>
+              <!-- <span v-else>{{ $t('tag.not_found') }}</span> -->
+            </td>
           </tr>
           <tr>
             <td>{{ $t('file_info.comment') }}</td>
             <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
           <tr v-if="fileInfo.deleted_at">
-            <td>{{ $t('file_info.deleted_at') }}</td>
-            <td>{{ formatTimestamp(fileInfo.deleted_at, $t('format.date_time')) }}</td>
+            <td>{{ $t('file_info.recent_deleted') }}</td>
+            <td>{{ $t('trash.days', { count: getDaysElapsed(fileInfo.deleted_at) }) }}</td>
           </tr>
         </tbody>
       </table>
@@ -128,7 +133,7 @@
 
 <script setup lang="ts">
 
-import { formatTimestamp, formatFileSize } from '@/common/utils';
+import { formatTimestamp, formatFileSize, getDaysElapsed, getFolderPath } from '@/common/utils';
 import { IconClose } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
