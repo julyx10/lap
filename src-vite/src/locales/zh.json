@@ -356,6 +356,8 @@
         "website": "网站"
       },
       "storage": {
+        "total_file_count": "总文件数",
+        "total_file_size": "总文件大小",
         "file_path": "存储文件路径",
         "file_size": "存储文件大小"
       }

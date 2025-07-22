@@ -153,18 +153,9 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 
 /// get db file count and sum
 #[tauri::command]
-pub fn get_db_count_and_sum(
-    search_text: &str, search_file_type: i64,
-    start_date: &str, end_date: &str,
-    make: &str, model: &str,
-    is_favorite: bool, tag_id: i64, is_deleted: bool
-) -> Result<(i64, i64), String> {
-    AFile::get_count_and_sum(
-        search_text, search_file_type,
-        start_date, end_date,
-        make, model,
-        is_favorite, tag_id, is_deleted
-    ).map_err(|e| format!("Error while getting all files count: {}", e))
+pub fn get_db_count_and_sum() -> Result<(i64, i64), String> {
+    AFile::get_count_and_sum()
+        .map_err(|e| format!("Error while getting all files count: {}", e))
 }
 
 /// get db files

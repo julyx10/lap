@@ -419,6 +419,7 @@ pub struct AFile {
     pub gps_latitude: Option<String>,
     pub gps_longitude: Option<String>,
     pub gps_altitude: Option<String>,
+    pub gps_address: Option<String>,
 
     // output only
     pub file_path: Option<String>,  // file path (for webview)
@@ -446,7 +447,7 @@ impl AFile {
         let exifreader = exif::Reader::new();
         let exif = exifreader.read_from_container(&mut bufreader).ok();
 
-        Ok(Self {
+        let mut file = Self {
             id: None,
             folder_id,
             file_type: Some(file_type),
@@ -487,12 +488,47 @@ impl AFile {
             gps_latitude: Self::get_exif_field(&exif, Tag::GPSLatitude),
             gps_longitude: Self::get_exif_field(&exif, Tag::GPSLongitude),
             gps_altitude: Self::get_exif_field(&exif, Tag::GPSAltitude),
+            gps_address: None,
 
             file_path: None,
             album_id: None,
             album_name: None,
-        })
+        };
+
+        // file.get_address_from_gps(None)?;
+
+        Ok(file)
     }
+
+    // fn get_address_from_gps(&mut self, lang_code: Option<&str>) -> Result<(), String> {
+    //     if let (Some(lat_str), Some(lon_str)) = (self.gps_latitude.as_ref(), self.gps_longitude.as_ref()) {
+    //         if lat_str.is_empty() || lon_str.is_empty() {
+    //             return Ok(());
+    //         }
+    //         let lat = self.parse_gps_string(lat_str)?;
+    //         let lon = self.parse_gps_string(lon_str)?;
+    //         self.gps_address = Some(t_geonames::get_nearest_city(lat, lon, lang_code).map_err(|e| e.to_string())?);
+    //     }
+    //     Ok(())
+    // }
+
+    // fn parse_gps_string(&self, gps_str: &str) -> Result<f64, String> {
+    //     let parts: Vec<&str> = gps_str.split(|c| c == ' ' || c == ' ' || c == '"').filter(|&s| !s.is_empty()).collect();
+    //     if parts.len() < 7 {
+    //         return Err(format!("Invalid GPS string format: {}", gps_str));
+    //     }
+    //     let deg: f64 = parts[0].parse().map_err(|e| format!("Failed to parse degrees: {}, error: {}", parts[0], e))?;
+    //     let min: f64 = parts[2].parse().map_err(|e| format!("Failed to parse minutes: {}, error: {}", parts[2], e))?;
+    //     let sec: f64 = parts[4].parse().map_err(|e| format!("Failed to parse seconds: {}, error: {}", parts[4], e))?;
+    //     let direction = parts[6];
+
+    //     let mut decimal = deg + min / 60.0 + sec / 3600.0;
+    //     if direction == "S" || direction == "W" {
+    //         decimal = -decimal;
+    //     }
+
+    //     Ok(decimal)
+    // }
 
     fn get_exif_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<String> {
         exif.as_ref()
@@ -528,9 +564,9 @@ impl AFile {
                 width, height,
                 is_favorite, rotate, comments, deleted_at, has_tags,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                gps_latitude, gps_longitude, gps_altitude
+                gps_latitude, gps_longitude, gps_altitude, gps_address
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28)",
             params![
                 self.folder_id,
 
@@ -564,6 +600,7 @@ impl AFile {
                 self.gps_latitude,
                 self.gps_longitude,
                 self.gps_altitude,
+                self.gps_address,
             ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -599,7 +636,7 @@ impl AFile {
                 a.width, a.height,
                 a.is_favorite, a.rotate, a.comments, a.deleted_at, a.has_tags,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude, a.gps_address,
                 b.path,
                 c.id AS album_id, c.name AS album_name
             FROM afiles a 
@@ -644,13 +681,14 @@ impl AFile {
             gps_latitude: row.get(25)?,
             gps_longitude: row.get(26)?,
             gps_altitude: row.get(27)?,
+            gps_address: row.get(28)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(28)?.as_str(),
+                row.get::<_, String>(29)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(29)?,
-            album_name: row.get(30)?,
+            album_id: row.get(30)?,
+            album_name: row.get(31)?,
         })
     }
 
@@ -802,68 +840,9 @@ impl AFile {
     }
 
     // get total count and size of files
-    pub fn get_count_and_sum(
-        search_text: &str, search_file_type: i64,
-        start_date: &str, end_date: &str,
-        make: &str, model: &str,
-        is_favorite: bool, tag_id: i64, is_deleted: bool
-    ) -> Result<(i64, i64), String> {
-        let mut conditions = Vec::new();
-        let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
-    
-        let like_pattern = format!("%{}%", search_text);
-        if !search_text.is_empty() {
-            conditions.push("a.name LIKE ? COLLATE NOCASE");
-            params.push(&like_pattern);
-        }
-    
-        if search_file_type > 0 {
-            conditions.push("a.file_type = ?");
-            params.push(&search_file_type);
-        }
-    
-        if !start_date.is_empty() {
-            if end_date.is_empty() {
-                conditions.push("a.taken_date = ?");
-                params.push(&start_date);
-            } else {
-                conditions.push("a.taken_date >= ? AND a.taken_date <= ?");
-                params.push(&start_date);
-                params.push(&end_date);
-            }
-        }
-    
-        if !make.is_empty() {
-            conditions.push("a.e_make = ?");
-            params.push(&make);
-            if !model.is_empty() {
-                conditions.push("a.e_model = ?");
-                params.push(&model);
-            }
-        }
-    
-        if is_favorite {
-            conditions.push("a.is_favorite = 1");
-        }
-    
-        if tag_id > 0 {
-            conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
-            params.push(&tag_id);
-        }
-    
-        if is_deleted {
-            conditions.push("(a.deleted_at IS NOT NULL AND a.deleted_at > 0)");
-        } else {
-            conditions.push("(a.deleted_at IS NULL OR a.deleted_at = 0)");
-        }
-    
-        let mut query = Self::build_count_query();
-        if !conditions.is_empty() {
-            query.push_str(" WHERE ");
-            query.push_str(&conditions.join(" AND "));
-        }
-    
-        Self::query_count_and_sum(&query, &params)
+    pub fn get_count_and_sum() -> Result<(i64, i64), String> {
+        let sql = format!("{}", Self::build_count_query());
+        Self::query_count_and_sum(&sql, &[])
     }
 
     /// get files
@@ -1341,6 +1320,7 @@ pub fn create_db() -> Result<String> {
             gps_latitude TEXT,
             gps_longitude TEXT,
             gps_altitude TEXT,
+            gps_address TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],

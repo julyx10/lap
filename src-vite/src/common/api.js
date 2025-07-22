@@ -260,9 +260,20 @@ export async function revealFolder(folderPath) {
 
 // file
 
+// get db files count and sum
+export async function getDbCountAndSum() {
+  try {
+    const result = await invoke('get_db_count_and_sum');
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getDbCountAndSum error:', error);
+  }
+  return null;
+}
+
 /// get all files from db (with pagination)
-/// return [files, totalCount, totalSum] when offset is 0
-/// return files when offset is not 0
 export async function getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) {
   try {
     const files = await invoke('get_db_files', {
@@ -281,12 +292,7 @@ export async function getDbFiles(startDate, endDate, make, model, isFavorite, ta
       pageSize: config.fileListPageSize
     });
     if(files) {
-      if(offset === 0) {
-        const [totalCount, totalSum] = await getDbCountAndSum(startDate, endDate, make, model, isFavorite, tagId, isDeleted);
-        return [files, totalCount, totalSum];
-      } else {
-        return files;
-      }
+      return files;
     };
   } catch (error) {
     console.error('getAllFiles error:', error);
@@ -294,31 +300,7 @@ export async function getDbFiles(startDate, endDate, make, model, isFavorite, ta
   return null;
 }
 
-/// get all db files' count and sum(without pagination)
-export async function getDbCountAndSum(startDate, endDate, make, model, isFavorite, tagId, isDeleted) {
-  try {
-    const result = await invoke('get_db_count_and_sum', {
-      searchText: config.searchText, 
-      searchFileType: config.searchFileType,
-      startDate, 
-      endDate,
-      make, 
-      model,
-      isFavorite, 
-      tagId,
-      isDeleted,
-    });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.error('getDbCountAndSum error:', error);
-  }
-  return null
-}
-
 // get all files from the folder (no pagination)
-// return [files, totalCount, totalSum]
 export async function getFolderFiles(folderId, folderPath) {
   try {
     let files = await invoke('get_folder_files', { 
@@ -332,10 +314,7 @@ export async function getFolderFiles(folderId, folderPath) {
     if(files) {
       // filter out the files that deleted_at is not null
       files = files.filter(file => !file.deleted_at);
-      
-      const totalCount = files.length;
-      const totalSum = files.reduce((acc, file) => acc + file.size, 0);
-      return [files, totalCount, totalSum];
+      return files;
     };
   } catch (error) {
     console.error('getFolderFiles error:', error);

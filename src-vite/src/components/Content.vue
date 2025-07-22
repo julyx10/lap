@@ -39,7 +39,6 @@
             @click.stop
           />
         </div>
-
         
         <!-- file type options -->
         <DropDownSelect
@@ -93,7 +92,8 @@
             class="t-icon-size-xs shrink-0" 
           />
           <div class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('statusbar.files_summary', { count: totalCount.toLocaleString(), size: formatFileSize(totalSize) }) }} 
+            {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }} 
+            {{ hasMoreFiles ? '...' : '' }}
           </div>
 
           <component v-if="selectedItemIndex >= 0"
@@ -280,12 +280,10 @@ import {
   IconTrash,
   IconFile,
   IconFolder,
-  IconSearch,
   IconChecked,
   IconComment,
   IconMagic,
   IconTag,
-  IconTrashEmpty,
   IconTrashRestore,
 } from '@/common/icons';
 
@@ -308,10 +306,12 @@ const divListView = ref(null);
 
 // file list
 const fileList = ref([]);
-const totalCount = ref(0);   // total files' count
-const totalSize = ref(0);     // total files' size
+const fileListOffset = ref(0); // offset of the file list (for pagination)
+const hasMoreFiles = ref(true); // has more files to load (for pagination)
+const totalFileCount = ref(0);    // total files' count
+const totalFileSize = ref(0);     // total files' size
+
 const selectedItemIndex = ref(-1);
-const fileListOffset = ref(0); // offset of the file list
 
 // config.favoriteFolderId = 0: means favorite files
 const showFolderFiles = computed(() =>
@@ -570,7 +570,8 @@ onMounted( async() => {
         break;
       case 'next-page':
         if(!showFolderFiles.value) {  // offset is only available for db files
-          if(fileListOffset.value + config.fileListPageSize < totalCount.value) {
+          // if(fileListOffset.value + config.fileListPageSize < totalCount.value) {
+          if(hasMoreFiles.value) {
             fileListOffset.value += config.fileListPageSize;
           }
         }
@@ -657,6 +658,12 @@ watch(
   { immediate: true }
 );
 
+// watch for file list size changes
+watch(() => fileList.value.length, (newValue) => {
+  totalFileCount.value = newValue;
+  totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+});
+
 // watch for file list offset
 watch(() => fileListOffset.value, (newValue) => {
   if(newValue > 0) {
@@ -689,10 +696,12 @@ watch(() => config.showPreview, (newValue) => {
 });
 
 async function getFileList(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) { 
+  const newFiles = await getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset);
+  hasMoreFiles.value = newFiles.length === config.fileListPageSize;
+
   if (offset === 0) {
-    [fileList.value, totalCount.value, totalSize.value] = await getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset);
+    fileList.value = newFiles;
   } else {
-    const newFiles = await getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset);
     fileList.value.push(...newFiles);
   }
 }
@@ -712,7 +721,8 @@ async function updateContent() {
       } else {
         contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
       };
-      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
+      // [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
+      fileList.value = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
     } 
   }
   else if(newIndex === 2) {   // favorite
@@ -724,7 +734,8 @@ async function updateContent() {
       if(album) {
         contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
       };
-      [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
+      // [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
+      fileList.value = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
     }
   }
   else if(newIndex === 3) {   // tag

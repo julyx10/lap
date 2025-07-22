@@ -204,6 +204,17 @@
                   <td>{{ packageInfo.authors[0]}}</td>
                 </tr>
                 <tr>
+                  <td colspan="2" class="h-4"> </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings.about.storage.total_file_count') }}</td>
+                  <td>{{ totalFileCount.toLocaleString() }}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings.about.storage.total_file_size') }}</td>
+                  <td>{{ formatFileSize(totalFileSize) }}</td>
+                </tr>
+                <tr>
                   <td>{{ $t('settings.about.storage.file_path') }}</td>
                    <td>
                     <input
@@ -220,17 +231,11 @@
                 </tr>
               </tbody>
             </table>
-
           </div>
-
         </section>
-
       </div>
-
     </div>  
-
   </div>
-  
 </template>
 
 <script setup>
@@ -241,7 +246,7 @@ import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { config, setTheme, getPlayInterval, formatFileSize } from '@/common/utils';
-import { getPackageInfo, getBuildTime, getStorageFileInfo } from '@/common/api';
+import { getPackageInfo, getBuildTime, getStorageFileInfo, getDbCountAndSum } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -251,6 +256,10 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.language]);
 
 const appWindow = getCurrentWebviewWindow()
+
+// get all db files' count and sum(without pagination)
+const totalFileCount = ref(0);
+const totalFileSize = ref(0);
 
 // storage file info
 const packageInfo = ref(null);
@@ -325,6 +334,12 @@ watch(() => config.settingsTabIndex, (newValue) => {
     // Get storage file info
     getStorageFileInfo().then((file) => {
       storageFileInfo.value = file;
+    });
+    // Get db file info
+    getDbCountAndSum().then((info) => {
+      if(info) {
+        [totalFileCount.value, totalFileSize.value] = info;
+      }
     });
   }
 }, { immediate: true });

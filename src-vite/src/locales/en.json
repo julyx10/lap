@@ -354,8 +354,10 @@
         "author": "Author",
         "license": "License",
         "website": "Website"
-      },
+      },  
       "storage": {
+        "total_file_count": "Total file count",
+        "total_file_size": "Total file size",
         "file_path": "Storage file path",
         "file_size": "Storage file size"
       }

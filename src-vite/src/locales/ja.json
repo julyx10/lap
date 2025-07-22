@@ -360,6 +360,8 @@
         "website": "ウェブサイト"
       },
       "storage": {
+        "total_file_count": "ファイル数",
+        "total_file_size": "ファイルサイズ",
         "file_path": "ストレージファイルのパス",
         "file_size": "ストレージファイルのサイズ"
       }
