@@ -18,7 +18,7 @@
         'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === 0,
       }
     ]" @click="clickFavoriteFiles()">
-      <IconTrash class="mx-1 h-5 shrink-0" />
+      <IconTrash class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
         {{ $t('trash.files') }}
       </div>
@@ -44,7 +44,7 @@
 
             <DropDownMenu :class="[
               'ml-auto px-1 rounded',
-              config.favoriteFolderId != folder.id ? 'hidden group-hover:block' : ''
+              config.favoriteFolderId != folder.id ? 'invisible group-hover:visible' : ''
             ]" :iconMenu="IconMore" :menuItems="moreMenuItems" :smallIcon="true" />
           </div>
         </li>
@@ -52,8 +52,9 @@
     </div>
 
     <!-- Display message if no favorite folders are found -->
-    <div v-else class="mt-10 flex items-center justify-center">
-      {{ $t('tooltip.not_found.folders') }}
+    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+      <IconFolderTrash class="w-12 h-12" />
+      <span class="mt-2">{{ $t('tooltip.not_found.folders') }}</span>
     </div>
 
   </div>

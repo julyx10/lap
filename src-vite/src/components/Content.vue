@@ -156,10 +156,10 @@
             </div>
           </div>
 
-          <div v-else class="h-full flex items-center justify-center">
-            <p >{{ $t('tooltip.not_found.files') }}</p>
+          <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
+            <IconPhoto class="w-12 h-12" />
+            <span>{{ $t('tooltip.not_found.files') }}</span>
           </div>
-      
         </div>
       </transition>
 
@@ -280,6 +280,7 @@ import {
   IconTrash,
   IconFile,
   IconFolder,
+  IconPhoto,
   IconChecked,
   IconComment,
   IconMagic,
@@ -721,8 +722,8 @@ async function updateContent() {
       } else {
         contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
       };
-      // [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
       fileList.value = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
+      hasMoreFiles.value = false;  // getFolderFiles always get all files
     } 
   }
   else if(newIndex === 2) {   // favorite
@@ -734,8 +735,8 @@ async function updateContent() {
       if(album) {
         contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
       };
-      // [fileList.value, totalCount.value, totalSize.value] = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
       fileList.value = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
+      hasMoreFiles.value = false;
     }
   }
   else if(newIndex === 3) {   // tag

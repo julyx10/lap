@@ -159,9 +159,10 @@
         </p>
 
         <!-- no image selected -->
-        <p v-else>
-          {{ $t('tooltip.not_found.files') }}
-        </p>
+        <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
+          <IconPhoto class="w-12 h-12" />
+          <span>{{ $t('tooltip.not_found.files') }}</span>
+        </div>
 
         <!-- next -->
         <div v-if="fileIndex < fileCount - 1"
@@ -266,7 +267,7 @@ import {
   IconMore,
   IconEdit,
   IconPrint,
-  IconRename,
+  IconPhoto,
   IconTrash,
   IconCopy,
   IconMoveTo,

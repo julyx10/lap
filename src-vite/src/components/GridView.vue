@@ -84,8 +84,9 @@
       </div>
     </div>
 
-    <div v-if="fileList.length === 0" class="flex items-center justify-center w-full h-full">
-      {{ $t('tooltip.not_found.files') }}
+    <div v-if="fileList.length === 0" class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
+      <IconPhoto class="w-12 h-12" />
+      <span>{{ $t('tooltip.not_found.files') }}</span>
     </div>
 
   </div>
