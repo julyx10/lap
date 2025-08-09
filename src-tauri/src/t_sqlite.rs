@@ -447,7 +447,7 @@ impl AFile {
         let exifreader = exif::Reader::new();
         let exif = exifreader.read_from_container(&mut bufreader).ok();
 
-        let mut file = Self {
+        let file = Self {
             id: None,
             folder_id,
             file_type: Some(file_type),
@@ -849,6 +849,7 @@ impl AFile {
     pub fn get_files(
         search_text: &str, search_file_type: i64,
         sort_type: i64, sort_order: i64,
+        search_folder: &str,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
         is_favorite: bool, tag_id: i64, is_deleted: bool,
@@ -870,6 +871,12 @@ impl AFile {
             params.push(&search_file_type);
         }
     
+        let folder_prefix_pattern = format!("{}%", search_folder);  // case-sensitive
+        if !search_folder.is_empty() {
+            conditions.push("b.path LIKE ?");
+            params.push(&folder_prefix_pattern);
+        }
+
         if !start_date.is_empty() {
             if end_date.is_empty() {
                 conditions.push("a.taken_date = ?");

@@ -274,13 +274,14 @@ export async function getDbCountAndSum() {
 }
 
 /// get all files from db (with pagination)
-export async function getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) {
+export async function getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) {
   try {
     const files = await invoke('get_db_files', {
       searchText: config.searchText, 
       searchFileType: config.searchFileType,
       sortType: config.sortType,
       sortOrder: config.sortOrder,
+      searchFolder,
       startDate, 
       endDate,
       make, 

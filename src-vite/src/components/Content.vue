@@ -87,10 +87,7 @@
         <div v-if="config.showStatusBar" 
           class="p-2 min-h-8 flex flex-row items-center justify-start text-sm select-none cursor-default"
         >
-          <component 
-            :is="showFolderFiles ? IconFolder : IconFile"
-            class="t-icon-size-xs shrink-0" 
-          />
+          <IconFile class="t-icon-size-xs shrink-0" />
           <div class="pl-1 pr-4 whitespace-nowrap">
             {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }} 
             {{ hasMoreFiles ? '...' : '' }}
@@ -570,11 +567,8 @@ onMounted( async() => {
         showCommentMsgbox.value = true;
         break;
       case 'next-page':
-        if(!showFolderFiles.value) {  // offset is only available for db files
-          // if(fileListOffset.value + config.fileListPageSize < totalCount.value) {
-          if(hasMoreFiles.value) {
-            fileListOffset.value += config.fileListPageSize;
-          }
+        if(hasMoreFiles.value) {
+          fileListOffset.value += config.fileListPageSize;
         }
         break;
       default:
@@ -696,8 +690,8 @@ watch(() => config.showPreview, (newValue) => {
   gridViewRef.value.scrollToItem(selectedItemIndex.value); 
 });
 
-async function getFileList(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) { 
-  const newFiles = await getDbFiles(startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset);
+async function getFileList(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) { 
+  const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset);
   hasMoreFiles.value = newFiles.length === config.fileListPageSize;
 
   if (offset === 0) {
@@ -712,7 +706,7 @@ async function updateContent() {
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.home.title;
-    await getFileList("", "", "", "", false, 0, false, fileListOffset.value);
+    await getFileList("","", "", "", "", false, 0, false, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
     const album = await getAlbum(config.albumId);
@@ -729,14 +723,13 @@ async function updateContent() {
   else if(newIndex === 2) {   // favorite
     if(config.favoriteFolderId === 0) { // 0: favorite files
       contentTitle.value = localeMsg.value.favorite.files;
-      await getFileList("", "", "", "", true, 0, false, fileListOffset.value);
+      await getFileList("", "", "", "", "", true, 0, false, fileListOffset.value);
     } else {                // else: favorite folders
       const album = await getAlbum(config.favoriteAlbumId);
       if(album) {
         contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
+        await getFileList(config.favoriteFolderPath, "", "", "", "", false, 0, false, fileListOffset.value);
       };
-      fileList.value = await getFolderFiles(config.favoriteFolderId, config.favoriteFolderPath);
-      hasMoreFiles.value = false;
     }
   }
   else if(newIndex === 3) {   // tag
@@ -751,7 +744,7 @@ async function updateContent() {
       }
     }
     if(config.tagId > 0) {
-      await getFileList("", "", "", "", false, config.tagId, false, fileListOffset.value);
+      await getFileList("", "", "", "", "", false, config.tagId, false, fileListOffset.value);
     } else {
       fileList.value = [];
     }
@@ -765,7 +758,7 @@ async function updateContent() {
       contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long_with_weekdayf);
     }
     const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
-    await getFileList(startDate, endDate, "", "", false, 0, false, fileListOffset.value);
+    await getFileList("", startDate, endDate, "", "", false, 0, false, fileListOffset.value);
   }
   else if(newIndex === 5) {   // location
     contentTitle.value = localeMsg.value.sidebar.location;
@@ -779,10 +772,12 @@ async function updateContent() {
     } else {
       contentTitle.value = localeMsg.value.sidebar.camera;
     }
-    await getFileList("", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
+    await getFileList("", "", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
   } else if(newIndex === 7) { // trash
     contentTitle.value = localeMsg.value.trash.files;
-    await getFileList("", "", "", "", false, 0, true, fileListOffset.value);
+    await getFileList("", "", "", "", "", false, 0, true, fileListOffset.value);
+
+    //TODO: refer to the impl of favorite
   }
 
   refreshFileList();

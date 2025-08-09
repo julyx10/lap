@@ -163,6 +163,7 @@ pub fn get_db_count_and_sum() -> Result<(i64, i64), String> {
 pub fn get_db_files(
     search_text: &str, search_file_type: i64,
     sort_type: i64, sort_order: i64,
+    search_folder: &str,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
     is_favorite: bool, tag_id: i64, is_deleted: bool,
@@ -171,6 +172,7 @@ pub fn get_db_files(
     AFile::get_files(
         search_text, search_file_type,
         sort_type, sort_order,
+        search_folder,
         start_date, end_date,
         make, model,
         is_favorite, tag_id, is_deleted,
