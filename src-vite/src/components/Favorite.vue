@@ -131,17 +131,19 @@ async function getFavorites() {
 }
 
 // refresh component
-function clickRefresh() {
-  console.log('clickRefresh');
-  getFavorites().then(() => {
-    clickFavoriteFiles();
-  });
-}
+// function clickRefresh() {
+//   console.log('clickRefresh');
+//   getFavorites().then(() => {
+//     clickFavoriteFiles();
+//   });
+// }
 
 // click favorite files
 function clickFavoriteFiles() {
   console.log('clickFavoriteFiles');
   config.favoriteFolderId = 0;    // 0 means favorite files
+  config.favoriteAlbumId = 0;
+  config.favoriteFolderPath = '';
 }
 
 // click favorite folder
@@ -156,8 +158,29 @@ function clickFavoriteFolder(folder: any) {
 function UnFavorite() {
   console.log('UnFavorite');
   setFolderFavorite(config.favoriteFolderId, false).then(() => {
+    // get the index of the folder
+    const index = favorite_folders.value.findIndex((f: any) => f.id === config.favoriteFolderId);
+
+    // remove the folder from the list
     favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favoriteFolderId);
+
+    if (favorite_folders.value.length === 0) {
+      config.favoriteFolderId = 0;  // 0 means favorite files
+      config.favoriteAlbumId = 0;
+      config.favoriteFolderPath = '';
+    } else if (index === 0) {  // if the folder is the first one, set the first one as the favorite
+      config.favoriteFolderId = favorite_folders.value[index].id;
+      config.favoriteAlbumId = favorite_folders.value[index].album_id;
+      config.favoriteFolderPath = favorite_folders.value[index].path;
+    } else {
+      config.favoriteFolderId = favorite_folders.value[index - 1].id;
+      config.favoriteAlbumId = favorite_folders.value[index - 1].album_id;
+      config.favoriteFolderPath = favorite_folders.value[index - 1].path;
+    }
+
+    console.log('favorite_folders', favorite_folders.value);
   });
+
 }
 
 </script>
