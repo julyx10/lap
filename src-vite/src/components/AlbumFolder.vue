@@ -81,7 +81,7 @@
   />
 
   <!-- delete folder -->
-  <MessageBox
+  <!-- <MessageBox
     v-if="showDeleteMsgbox"
     :title="$t('msgbox.delete_folder.title')"
     :message="`${$t('msgbox.delete_folder.content', { folder: getFolderById(selectedFolderId).name })}`"
@@ -90,7 +90,7 @@
     :warningOk="true"
     @ok="clickDeleteFolder"
     @cancel="showDeleteMsgbox = false"
-  />
+  /> -->
 
   <!-- move to -->
   <MoveTo
@@ -123,8 +123,8 @@
 import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
-import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder } from '@/common/api';
+import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder, getTimestamp } from '@/common/utils';
+import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, setFolderDelete } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -240,7 +240,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu.trash.move_to,
       icon: IconTrash,
       action: () => {
-        showDeleteMsgbox.value = true;  // show delete message box
+        clickMoveToTrash();
       }
     },
     {
@@ -310,6 +310,25 @@ const clickFolder = async (albumId, folder) => {
   } else {
     toolTipRef.value.showTip(localeMsg.value.msgbox.select_folder.error);
   }
+};
+
+// move selected folder to trash (soft delete)
+const clickMoveToTrash = async () => {
+  console.log('AlbumFolder.vue-clickMoveToTrash:', selectedFolderId.value);
+  const result = await setFolderDelete(selectedFolderId.value, getTimestamp());
+  if (result) {
+    let folder = getFolderById(selectedFolderId.value);
+    folder.is_deleted = true;
+    folder.id = 0; // remove id to avoid click folder again
+
+    // emit('message-from-select-folder', {
+    //   message: 'delete-folder',
+    //   albumId: selectedAlbumId.value,
+    //   folderId: 0,
+    //   folderPath: "",
+    //   componentId: props.componentId
+    // });
+  } 
 };
 
 /// click expand icon to toggle folder expansion
@@ -398,27 +417,27 @@ const handleEscKey = (event, folderID) => {
 };
 
 /// delete selected folder
-const clickDeleteFolder = async () => {
-  console.log('AlbumFolder.vue-clickDeleteFolder:', selectedFolderId.value);
-  const isDeleted = await deleteFolder(selectedFolderPath.value);
-  if (isDeleted) {
-    let folder = getFolderById(selectedFolderId.value);
-    folder.is_deleted = true;
-    folder.id = 0; // remove id to avoid click folder again
+// const clickDeleteFolder = async () => {
+//   console.log('AlbumFolder.vue-clickDeleteFolder:', selectedFolderId.value);
+//   const isDeleted = await deleteFolder(selectedFolderPath.value);
+//   if (isDeleted) {
+//     let folder = getFolderById(selectedFolderId.value);
+//     folder.is_deleted = true;
+//     folder.id = 0; // remove id to avoid click folder again
 
-    emit('message-from-select-folder', {
-      message: 'delete-folder',
-      albumId: selectedAlbumId.value, 
-      folderId: 0, 
-      folderPath: "",
-      componentId: props.componentId
-    });
-    showDeleteMsgbox.value = false;
-  } else {
-    console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox.delete_folder.error);
-    toolTipRef.value.showTip(localeMsg.value.msgbox.delete_folder.error);
-  }
-};
+//     emit('message-from-select-folder', {
+//       message: 'delete-folder',
+//       albumId: selectedAlbumId.value, 
+//       folderId: 0, 
+//       folderPath: "",
+//       componentId: props.componentId
+//     });
+//     showDeleteMsgbox.value = false;
+//   } else {
+//     console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox.delete_folder.error);
+//     toolTipRef.value.showTip(localeMsg.value.msgbox.delete_folder.error);
+//   }
+// };
 
 // move folder to dest folder
 const clickMoveTo = async () => {

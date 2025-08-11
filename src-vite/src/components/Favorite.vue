@@ -52,7 +52,7 @@
                   config.favoriteFolderId != folder.id ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
-                :menuItems="moreMenuItems"
+                :menuItems="favoriteFolderMenuItems"
                 :smallIcon="true"
               />
             </div>
@@ -78,13 +78,11 @@ import { config } from '@/common/utils';
 import { getFavoriteFolders, setFolderFavorite } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';
-import TButton from '@/components/TButton.vue';
 
 import { 
-  IconRefresh, 
+  IconMore,
   IconFavorite, 
   IconFolderFavorite,
-  IconMore,
   IconUnFavorite, 
 } from '@/common/icons';
 
@@ -102,8 +100,8 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // favorite folders
 const favorite_folders = ref([]);
 
-// more menuitems
-const moreMenuItems = computed(() => {
+// favorite folder menuitems
+const favoriteFolderMenuItems = computed(() => {
   return [
     {
       label: localeMsg.value.menu.meta.unfavorite,
@@ -118,31 +116,18 @@ const moreMenuItems = computed(() => {
 onMounted(() => {
   if (favorite_folders.value.length === 0) {
     // fetch favorite folders
-    getFavorites();
+    getFavoriteFolders().then((folders) => {
+      favorite_folders.value = folders || [];
+      console.log('favorite_folders', favorite_folders.value);
+    });
   }
 });
-
-// get favorites
-async function getFavorites() {
-  const folders = await getFavoriteFolders();
-  favorite_folders.value = folders;
-
-  console.log('favorite_folders', folders);
-}
-
-// refresh component
-// function clickRefresh() {
-//   console.log('clickRefresh');
-//   getFavorites().then(() => {
-//     clickFavoriteFiles();
-//   });
-// }
 
 // click favorite files
 function clickFavoriteFiles() {
   console.log('clickFavoriteFiles');
+  config.favoriteAlbumId = null;
   config.favoriteFolderId = 0;    // 0 means favorite files
-  config.favoriteAlbumId = 0;
   config.favoriteFolderPath = '';
 }
 

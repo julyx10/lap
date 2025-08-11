@@ -245,6 +245,21 @@ export async function deleteFolder(folderPath) {
   return false;
 }
 
+// set folder delete
+// if deletedAt is 0 or null, it means the folder is not deleted
+// if deletedAt is the timestamp, it means the folder is deleted
+export async function setFolderDelete(folderId, deletedAt) {
+  try {
+    const result = await invoke('set_folder_delete', { folderId, deletedAt });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set folder delete:', error);
+  }
+  return null;
+}
+
 /// reveal a folder in file explorer( or finder)
 export async function revealFolder(folderPath) {
   try {
@@ -654,6 +669,23 @@ export async function getTakenDates(ascending = true) {
     }
   } catch (error) {
     console.error('Failed to get taken dates:', error);
+  }
+  return null;
+}
+
+// trash
+
+// get trash folders
+export async function getTrashFolders() {
+  try {
+    const trashFolders = await invoke('get_trash_folders');
+    if (trashFolders) {
+      // sort trash folders by name in locale order
+      trashFolders.sort((a, b) => localeComp(config.language, a.name, b.name));
+      return trashFolders;
+    }
+  } catch (error) {
+    console.error('Failed to get trash folders:', error);
   }
   return null;
 }

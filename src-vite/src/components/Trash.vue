@@ -15,9 +15,9 @@
     <div :class="[
       'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer',
       {
-        'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === 0,
+        'text-base-content bg-base-content/10 border-primary': config.trashFolderId === 0,
       }
-    ]" @click="clickFavoriteFiles()">
+    ]" @click="clickTrashFiles()">
       <IconTrash class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
         {{ $t('trash.files') }}
@@ -28,30 +28,35 @@
     <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default">
       {{ $t('trash.folders') }}
     </div>
-    <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
+    <div v-if="trash_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
       <ul>
-        <li v-for="folder in favorite_folders" :key="folder.id">
+        <li v-for="folder in trash_folders" :key="folder.id">
           <div :class="[
             'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group',
             {
-              'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === folder.id,
+              'text-base-content bg-base-content/10 border-primary': config.trashFolderId === folder.id,
             }
-          ]" @click="clickFavoriteFolder(folder)">
+          ]" @click="clickTrashFolder(folder)">
             <IconFolderTrash class="mx-1 h-5 shrink-0" />
             <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ folder.name }}
             </div>
 
-            <DropDownMenu :class="[
-              'ml-auto px-1 rounded',
-              config.favoriteFolderId != folder.id ? 'invisible group-hover:visible' : ''
-            ]" :iconMenu="IconMore" :menuItems="moreMenuItems" :smallIcon="true" />
+            <DropDownMenu 
+              :class="[
+                'ml-auto px-1 rounded',
+                config.trashFolderId != folder.id ? 'invisible group-hover:visible' : ''
+              ]" 
+              :iconMenu="IconMore" 
+              :menuItems="trashFolderMenuItems" 
+              :smallIcon="true" 
+            />
           </div>
         </li>
       </ul>
     </div>
 
-    <!-- Display message if no favorite folders are found -->
+    <!-- Display message if no trash folders are found -->
     <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
       <IconFolderTrash class="w-12 h-12" />
       <span class="mt-2">{{ $t('tooltip.not_found.folders') }}</span>
@@ -66,17 +71,16 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
-import { getFavoriteFolders, setFolderFavorite } from '@/common/api';
+import { getTrashFolders } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';
-import TButton from '@/components/TButton.vue';
 
 import {
+  IconMore,
   IconTrashEmpty,
   IconTrash,
+  IconTrashRestore,
   IconFolderTrash,
-  IconMore,
-  IconUnFavorite,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -90,8 +94,8 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-// favorite folders
-const favorite_folders = ref([]);
+// trash folders
+const trash_folders = ref([]);
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -106,49 +110,50 @@ const moreMenuItems = computed(() => {
   ];
 });
 
+// trash folder menuitems
+const trashFolderMenuItems = computed(() => {
+  return [
+    {
+      label: localeMsg.value.menu.trash.restore,
+      icon: IconTrashRestore,
+      action: () => {
+        // restoreFromTrash();
+      }
+    },
+    {
+      label: localeMsg.value.menu.trash.delete,
+      icon: IconTrash,
+      action: () => {
+        // deleteFromTrash();
+      }
+    }
+  ];
+});
+
 onMounted(() => {
-  if (favorite_folders.value.length === 0) {
-    // fetch favorite folders
-    getFavorites();
+  if (trash_folders.value.length === 0) {
+    // fetch trash folders
+    getTrashFolders().then((folders) => {
+      trash_folders.value = folders || [];
+      console.log('trash_folders', trash_folders.value);
+    });
   }
 });
 
-// get favorites
-async function getFavorites() {
-  const folders = await getFavoriteFolders();
-  favorite_folders.value = folders;
-
-  console.log('favorite_folders', folders);
+// click trash files
+function clickTrashFiles() {
+  console.log('clickTrashFiles');
+  config.trashAlbumId = null;
+  config.trashFolderId = 0;    // 0 means trash files
+  config.trashFolderPath = '';
 }
 
-// refresh component
-function clickRefresh() {
-  console.log('clickRefresh');
-  getFavorites().then(() => {
-    clickFavoriteFiles();
-  });
-}
-
-// click favorite files
-function clickFavoriteFiles() {
-  console.log('clickFavoriteFiles');
-  config.favoriteFolderId = 0;    // 0 means favorite files
-}
-
-// click favorite folder
-function clickFavoriteFolder(folder: any) {
-  console.log('clickFavoriteFolder', folder);
-  config.favoriteAlbumId = folder.album_id;
-  config.favoriteFolderId = folder.id;
-  config.favoriteFolderPath = folder.path;
-}
-
-// unfavorite
-function UnFavorite() {
-  console.log('UnFavorite');
-  setFolderFavorite(config.favoriteFolderId, false).then(() => {
-    favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favoriteFolderId);
-  });
+// click trash folder
+function clickTrashFolder(folder: any) {
+  console.log('clickTrashFolder', folder);
+  config.trashAlbumId = folder.album_id;
+  config.trashFolderId = folder.id;
+  config.trashFolderPath = folder.path;
 }
 
 </script>

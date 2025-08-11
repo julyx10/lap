@@ -376,6 +376,28 @@ impl AFolder {
         Ok(folders)
     }
 
+    // get all folders in trash (soft deleted)
+    pub fn get_trash_folders() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, album_id, parent_id, name, path, is_favorite, created_at, modified_at, deleted_at
+                 FROM afolders WHERE deleted_at IS NOT NULL AND deleted_at > 0",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map(params![], |row| Self::from_row(row))
+            .map_err(|e| e.to_string())?;
+
+        let mut folders = Vec::new();
+        for folder in rows {
+            folders.push(folder.unwrap());
+        }
+
+        Ok(folders)
+    }
+
 }
 
 /// Define the album file struct

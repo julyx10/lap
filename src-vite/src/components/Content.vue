@@ -644,6 +644,7 @@ watch(
           config.tagId,                                                                 // tag
           config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
           config.cameraMake, config.cameraModel,                                        // camera 
+          config.trashAlbumId, config.trashFolderId, config.trashFolderPath,            // trash
           config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
         ], 
   () => {
@@ -773,11 +774,18 @@ async function updateContent() {
       contentTitle.value = localeMsg.value.sidebar.camera;
     }
     await getFileList("", "", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
-  } else if(newIndex === 7) { // trash
-    contentTitle.value = localeMsg.value.trash.files;
-    await getFileList("", "", "", "", "", false, 0, true, fileListOffset.value);
-
-    //TODO: refer to the impl of favorite
+  } 
+  else if(newIndex === 7) {   // trash
+    if(config.trashFolderId === 0) { // 0: trash files
+      contentTitle.value = localeMsg.value.trash.files;
+      await getFileList("", "", "", "", "", false, 0, true, fileListOffset.value);
+    } else {                // else: trash folders
+      const album = await getAlbum(config.trashAlbumId);
+      if(album) {
+        contentTitle.value = localeMsg.value.trash.folders + getRelativePath(config.trashFolderPath, album.path);
+        await getFileList(config.trashFolderPath, "", "", "", "", false, 0, false, fileListOffset.value);
+      }
+    }
   }
 
   refreshFileList();
@@ -929,6 +937,10 @@ const clickDeleteFile = async () => {
 function removeFromFileList(index) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
+  // update the preview
+  if(config.showPreview) {
+    getImageSrc(selectedItemIndex.value);
+  }
 }
 
 // toggle the selected file's favorite status (selectMode = false)

@@ -143,6 +143,14 @@ pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
     }
 }
 
+/// set a folder's delete status: write the deleted_at timestamp
+/// if deleted_at is 0 or null, it means the folder is not deleted
+#[tauri::command]
+pub fn set_folder_delete(folder_id: i64, deleted_at: u64) -> Result<usize, String> {
+    AFolder::update_column(folder_id, "deleted_at", &deleted_at)
+        .map_err(|e| format!("Error while setting folder delete: {}", e))
+}
+
 /// reveal a folder in the file explorer( or finder)
 #[tauri::command]
 pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
@@ -437,6 +445,16 @@ pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
     AFile::get_taken_dates(ascending)
         .map_err(|e| format!("Error while getting taken dates: {}", e))
 }
+
+// trash
+
+/// get all trash folders (soft deleted folders)
+#[tauri::command]
+pub fn get_trash_folders() -> Result<Vec<AFolder>, String> {
+    AFolder::get_trash_folders()
+        .map_err(|e| format!("Error while getting trash folders: {}", e))
+}
+
 
 // print
 

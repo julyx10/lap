@@ -87,6 +87,7 @@ fn main() {
             t_cmds::move_folder,
             t_cmds::copy_folder,
             t_cmds::delete_folder,
+            t_cmds::set_folder_delete,
             t_cmds::reveal_folder,
 
             // file
@@ -125,6 +126,9 @@ fn main() {
             // camera
             t_cmds::get_camera_info,
             t_cmds::get_taken_dates,
+
+            // trash
+            t_cmds::get_trash_folders,
 
             // print
             t_cmds::print_image,

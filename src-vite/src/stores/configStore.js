@@ -34,6 +34,11 @@ export const useConfigStore = defineStore('configStore', {
     cameraMake: null,           // selected camera make
     cameraModel: null,          // selected camera model
 
+    // trash
+    trashAlbumId: null,         // trash album id
+    trashFolderId: null,        // trash folder id
+    trashFolderPath: null,      // trash folder path
+
     ////// Content.vue //////
 
     // filter fileList
