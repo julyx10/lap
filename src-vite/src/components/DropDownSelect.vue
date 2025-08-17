@@ -88,12 +88,12 @@ const extendIndex = ref(props.defaultExtendIndex);
 
 // Add event listener when the component is mounted
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('mousedown', handleClickOutside, { capture: true });
 });
 
 // Remove event listener when the component is destroyed
 onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('mousedown', handleClickOutside, { capture: true });
 });
 
 // Methods
@@ -105,7 +105,6 @@ const toggleDropdown = () => {
 const handleClickOutside = (event) => {
   if (dropdown.value && !dropdown.value.contains(event.target)) {
     isDropDown.value = false;
-    document.removeEventListener('click', handleClickOutside); // remove event listener when dropdown is closed
   }
 };
 

@@ -79,12 +79,12 @@ const menuStyle = ref({});
 
 // Add event listener when the component is mounted
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('mousedown', handleClickOutside, { capture: true });
 });
 
 // Remove event listener when the component is destroyed
 onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('mousedown', handleClickOutside, { capture: true });
 });
 
 // Toggle dropdown menu

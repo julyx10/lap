@@ -6,7 +6,8 @@
     <div class="px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
 
       <!-- title -->
-      <div class="breadcrumbs mr-2" data-tauri-drag-region>
+      <component :is=contentIcon class="mr-2 t-icon-size-sm" />
+      <div class="breadcrumbs mr-2">
         <ul>
           <li v-for="(item, index) in contentTitle.split(' > ')"><a>{{ item }}</a></li>
         </ul>
@@ -265,6 +266,7 @@ import TButton from '@/components/TButton.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
 
 import {
+  IconHome,
   IconPreview,
   IconPreviewOff,
   IconArrowDown,
@@ -273,6 +275,7 @@ import {
   IconCheckNone,
   IconFavorite,
   IconUnFavorite,
+  IconFolderFavorite,
   IconMoveTo,
   IconTrash,
   IconFile,
@@ -283,6 +286,10 @@ import {
   IconMagic,
   IconTag,
   IconTrashRestore,
+  IconCalendar,
+  IconLocation,
+  IconCamera,
+  IconFolderTrash,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -294,7 +301,22 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
 // title of the content 
-const contentTitle = ref("");   
+const contentIcon = computed(() => {
+  const index = config.sidebarIndex;
+  
+  switch (index) {
+    case 0: return IconHome;
+    case 1: return IconFolder;
+    case 2: return config.favoriteFolderId === 0 ? IconFavorite : IconFolderFavorite;
+    case 3: return IconTag;
+    case 4: return IconCalendar;
+    case 5: return IconLocation;
+    case 6: return IconCamera;
+    case 7: return config.trashFolderId === 0 ? IconTrash : IconFolderTrash;
+    default: return IconFile;
+  }
+});
+const contentTitle = ref("");
 
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
@@ -739,7 +761,7 @@ async function updateContent() {
     } else {
       const tagName = await getTagName(config.tagId);
       if (tagName) {
-        contentTitle.value = localeMsg.value.sidebar.tag + ' > ' + tagName;
+        contentTitle.value = tagName;
       } else {
         contentTitle.value = localeMsg.value.sidebar.tag;
       }
@@ -756,7 +778,7 @@ async function updateContent() {
     } else if (config.calendarDate === -1) {    // monthly
       contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.format.month);
     } else {                                    // daily
-      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long_with_weekdayf);
+      contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long_with_weekday);
     }
     const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
     await getFileList("", startDate, endDate, "", "", false, 0, false, fileListOffset.value);

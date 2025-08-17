@@ -6,7 +6,7 @@
     <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
       <div class="flex text-sm items-center cursor-pointer">
-        <div role="tablist" class="tabs-sm tabs-box" >
+        <div role="tablist" class="tabs-sm tabs-border" >
           <a 
             role="tab"
             class="tab"
