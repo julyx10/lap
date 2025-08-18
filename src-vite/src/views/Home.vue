@@ -11,7 +11,7 @@
       <div tabindex="-1"
         ref="divSideBar" 
         :class="[
-          'pb-4 z-10 flex flex-col justify-between bg-base-200',
+          'pb-4 z-10 bg-base-200',
           isWin ? 'pt-2' : 'pt-10'
         ]" 
         style="user-select: none; min-width: 68px;"
@@ -46,16 +46,14 @@
 
       <!-- left pane -->
       <transition
-        enter-active-class="transition-transform duration-200"
-        enter-from-class="-translate-x-full"
-        enter-to-class="translate-x-0"
-        leave-active-class="transition-transform duration-200"
-        leave-from-class="translate-x-0"
-        leave-to-class="-translate-x-full"
+        enter-from-class="left-pane-hide"
+        enter-to-class="left-pane-show"
+        leave-from-class="left-pane-show"
+        leave-to-class="left-pane-hide"
       >
         <div v-show="config.sidebarIndex > 0 && showLeftPane" 
-          class="w-96 min-w-32 py-1 flex bg-base-200" 
-          :style="{ width: config.leftPaneWidth + 'px' }"
+          class="py-1 flex bg-base-200 left-pane overflow-hidden" 
+          :style="{ '--left-pane-width': config.leftPaneWidth + 'px' }"
         >
           <component :is="buttons[config.sidebarIndex].component" :titlebar="buttons[config.sidebarIndex].text"/>
         </div>
@@ -123,7 +121,7 @@ const localeMsg = computed(() => messages.value[locale.value]);
 const buttons = computed(() =>  [
   { 
     icon: IconHome,
-    component: Album,
+    component: null,
     text: localeMsg.value.sidebar.home
   },
   { 
@@ -259,3 +257,16 @@ async function clickSettings() {
 }
 
 </script>
+<style scoped>
+.left-pane {
+  width: var(--left-pane-width);
+  transition: width 200ms ease;
+  will-change: width;
+}
+.left-pane-hide {
+  width: 0 !important;
+}
+.left-pane-show {
+  width: var(--left-pane-width) !important;
+}
+</style>

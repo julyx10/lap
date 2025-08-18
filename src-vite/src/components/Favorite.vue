@@ -3,7 +3,7 @@
   <div class="w-full flex flex-col select-none" >
       
       <!-- title bar -->
-      <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
+      <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
         <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
         <!-- <TButton :icon="IconRefresh" @click="clickRefresh"/> -->
       </div>
@@ -25,7 +25,7 @@
       </div>
 
       <!-- favorite folders -->
-      <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default">
+      <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('favorite.folders') }}
       </div>
       <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">

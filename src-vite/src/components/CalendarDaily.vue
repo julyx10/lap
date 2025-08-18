@@ -14,7 +14,7 @@
     </div>
 
     <!-- date list -->
-    <div class="pb-2 px-1 grid grid-cols-7 gap-2 text-center">
+    <div class="py-2 px-1 grid grid-cols-7 gap-2 text-center">
       <div v-for="n in blankDates" :key="'blank' + n"></div>
       <div
         v-for="d in monthDates"

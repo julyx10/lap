@@ -3,7 +3,7 @@
   <div class="flex-1 flex flex-col overflow-hidden" style="user-select: none;">
 
     <!-- title bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between" data-tauri-drag-region>
+    <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
       <div class="flex text-sm items-center cursor-pointer">
         <div role="tablist" class="tabs-sm tabs-border" >
