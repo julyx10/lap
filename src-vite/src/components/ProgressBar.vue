@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 w-full rounded-lg h-0.5">
+  <div class="px-2 w-full rounded-lg h-0.5">
     <div
       :class="[
         'h-full rounded-lg bg-primary', 

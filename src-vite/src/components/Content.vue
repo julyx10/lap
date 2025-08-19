@@ -6,11 +6,11 @@
     <div class="px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
 
       <!-- title -->
-      <component :is=contentIcon class="mr-2 t-icon-size-sm" />
-      <div class="breadcrumbs mr-2">
-        <ul>
-          <li v-for="(item, index) in contentTitle.split(' > ')"><a>{{ item }}</a></li>
-        </ul>
+      <div class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
+        <component :is=contentIcon class="mr-2 t-icon-size-sm shrink-0"/>
+        <div class="mr-2 cursor-default overflow-hidden whitespace-pre text-ellipsis">
+          {{ contentTitle }}
+        </div>
       </div>
 
       <!-- toolbar -->
@@ -72,7 +72,8 @@
       </div>
     </div>
 
-    <ProgressBar v-if="fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+    <ProgressBar v-if="config.sidebarIndex === 1 && fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+    <span v-else class="h-0.5 w-full"></span>
 
     <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <div class="flex-1 flex flex-col">

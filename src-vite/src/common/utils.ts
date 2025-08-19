@@ -45,7 +45,7 @@ export function getTimestamp(): number {
 export function getDaysElapsed(timestamp: number): number {
   const currentTimestamp = getTimestamp();
   const diff = currentTimestamp - timestamp;
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  return Math.floor(diff / (60 * 60 * 24));
 }
 
 /// format timestamp to string

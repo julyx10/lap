@@ -60,6 +60,7 @@
               <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>              
             </template>
             <template v-else>
+              <IconTrash class="t-icon-size-xs"></IconTrash>
               {{ $t('trash.days', { count: getDaysElapsed(file.deleted_at) }) }}
             </template>
           </div>
