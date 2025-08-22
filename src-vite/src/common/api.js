@@ -106,9 +106,9 @@ export async function setDisplayOrder(albumId, order) {
 // folder
 
 // select a folder
-export async function selectFolder(albumId, parentId, folderPath) {
+export async function selectFolder(albumId, folderPath) {
   try {
-    const selectedFolder = await invoke('select_folder', { albumId, parentId, folderPath });
+    const selectedFolder = await invoke('select_folder', { albumId, folderPath });
     if(selectedFolder) {
       return selectedFolder;
     };
@@ -245,21 +245,6 @@ export async function deleteFolder(folderPath) {
   return false;
 }
 
-// set folder delete
-// if deletedAt is 0 or null, it means the folder is not deleted
-// if deletedAt is the timestamp, it means the folder is deleted
-export async function setFolderDelete(folderId, deletedAt) {
-  try {
-    const result = await invoke('set_folder_delete', { folderId, deletedAt });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.log('Failed to set folder delete:', error);
-  }
-  return null;
-}
-
 /// reveal a folder in file explorer( or finder)
 export async function revealFolder(folderPath) {
   try {
@@ -289,7 +274,7 @@ export async function getDbCountAndSum() {
 }
 
 /// get all files from db (with pagination)
-export async function getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isDeleted, offset) {
+export async function getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isTrashed, offset) {
   try {
     const files = await invoke('get_db_files', {
       searchText: config.searchText, 
@@ -303,7 +288,7 @@ export async function getDbFiles(searchFolder, startDate, endDate, make, model, 
       model,
       isFavorite, 
       tagId,
-      isDeleted,
+      isTrashed,
       offset, 
       pageSize: config.fileListPageSize
     });
@@ -328,8 +313,6 @@ export async function getFolderFiles(folderId, folderPath) {
       folderPath, 
     });
     if(files) {
-      // filter out the files that deleted_at is not null
-      files = files.filter(file => !file.deleted_at);
       return files;
     };
   } catch (error) {
@@ -460,21 +443,6 @@ export async function setFileRotate(fileId, fileRotate) {
     };
   } catch (error) {
     console.log('Failed to set file rotate:', error);
-  }
-  return null;
-}
-
-// set file delete
-// if deletedAt is 0 or null, it means the file is not deleted
-// if deletedAt is the timestamp, it means the file is deleted
-export async function setFileDelete(fileId, deletedAt) {
-  try {
-    const result = await invoke('set_file_delete', { fileId, deletedAt });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.log('Failed to set file delete:', error);
   }
   return null;
 }
@@ -688,6 +656,30 @@ export async function getTrashFolders() {
     console.error('Failed to get trash folders:', error);
   }
   return null;
+}
+
+export async function trashItems(fileIds, folderIds) {
+  try {
+    await invoke('trash_items', { fileIds, folderIds });
+  } catch (error) {
+    console.error('trashItems error:', error);
+  }
+}
+
+export async function restoreItems(fileIds, folderIds) {
+  try {
+    await invoke('restore_items', { fileIds, folderIds });
+  } catch (error) {
+    console.error('restoreItems error:', error);
+  }
+}
+
+export async function permanentlyDeleteItems(fileIds, folderIds) {
+  try {
+    await invoke('permanently_delete_items', { fileIds, folderIds });
+  } catch (error) {
+    console.error('permanentlyDeleteItems error:', error);
+  }
 }
 
 // print

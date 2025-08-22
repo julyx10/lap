@@ -75,12 +75,10 @@
     </template>
 
     <!-- Display message if no data are found -->
-    <template v-else>
-      <div class="mt-10 flex items-center justify-center">
-        {{ $t('tooltip.not_found.calendar') }}
-      </div>
-    </template>
-
+    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+      <IconCalendar class="w-8 h-8" />
+      <span class="mt-2">{{ $t('tooltip.not_found.calendar') }}</span>
+    </div>
   </div>
   
 </template>
@@ -91,7 +89,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 import { getTakenDates } from '@/common/api';
-import { IconSortingAsc, IconSortingDesc } from '@/common/icons';
+import { IconCalendar, IconSortingAsc, IconSortingDesc } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';

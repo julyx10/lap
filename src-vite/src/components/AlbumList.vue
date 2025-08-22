@@ -67,9 +67,10 @@
 
     </ul>
 
-    <!-- Display message if no albums are found -->
-    <div v-else-if="!isLoading" class="mt-10 flex items-center justify-center">
-      {{ $t('tooltip.no_albums') }}
+    <!-- No Albums Found Message -->
+    <div v-else-if="!isLoading" class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+      <IconFolder class="w-8 h-8" />
+      <span class="mt-2">{{ $t('tooltip.not_found.albums') }}</span>
     </div>
 
     <!-- edit album information -->
@@ -341,7 +342,7 @@ const clickAlbum = async (album) => {
     return;
   }
 
-  const selectedFolder = await selectFolder(album.id, 0, album.path); // parentId: 0 is root folder(album)
+  const selectedFolder = await selectFolder(album.id, album.path);
   if(selectedFolder) {
     // insert a new property(album.folderId) 
     album.folderId = selectedFolder.id;
@@ -404,7 +405,7 @@ const clickNewFolder = async (folderName) => {
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
   console.log('AlbumList.vue-clickFolder:', folder);
-  const selectedFolder = await selectFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
+  const selectedFolder = await selectFolder(albumId, folder.path);
   if(selectedFolder) {
     selectedAlbumId.value = albumId;
     selectedFolderId.value = selectedFolder.id;

@@ -123,8 +123,8 @@
 import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder, getTimestamp } from '@/common/utils';
-import { createFolder, renameFolder, deleteFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, setFolderDelete } from '@/common/api';
+import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
+import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -291,7 +291,7 @@ watch(() => selectedFolderId.value, (newFolderId, oldFolderId) => {
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
   console.log('AlbumFolder.vue-clickFolder:', albumId, folder);
-  const selectedFolder = await selectFolder(albumId, 0, folder.path); // parentId: 0 is root folder(album)
+  const selectedFolder = await selectFolder(albumId, folder.path);
   if (selectedFolder) {
     selectedAlbumId.value = albumId;
     selectedFolderId.value = selectedFolder.id;
@@ -314,21 +314,21 @@ const clickFolder = async (albumId, folder) => {
 
 // move selected folder to trash (soft delete)
 const clickMoveToTrash = async () => {
-  console.log('AlbumFolder.vue-clickMoveToTrash:', selectedFolderId.value);
-  const result = await setFolderDelete(selectedFolderId.value, getTimestamp());
-  if (result) {
-    let folder = getFolderById(selectedFolderId.value);
-    folder.is_deleted = true;
-    folder.id = 0; // remove id to avoid click folder again
+  // console.log('AlbumFolder.vue-clickMoveToTrash:', selectedFolderId.value);
+  // const result = await setFolderDelete(selectedFolderId.value, getTimestamp());
+  // if (result) {
+  //   let folder = getFolderById(selectedFolderId.value);
+  //   folder.is_deleted = true;
+  //   folder.id = 0; // remove id to avoid click folder again
 
-    // emit('message-from-select-folder', {
-    //   message: 'delete-folder',
-    //   albumId: selectedAlbumId.value,
-    //   folderId: 0,
-    //   folderPath: "",
-    //   componentId: props.componentId
-    // });
-  } 
+  //   // emit('message-from-select-folder', {
+  //   //   message: 'delete-folder',
+  //   //   albumId: selectedAlbumId.value,
+  //   //   folderId: 0,
+  //   //   folderPath: "",
+  //   //   componentId: props.componentId
+  //   // });
+  // } 
 };
 
 /// click expand icon to toggle folder expansion

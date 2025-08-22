@@ -58,10 +58,10 @@
     </div>
 
     <!-- No Tags Found Message -->
-    <div v-else class="mt-10 flex items-center justify-center">
-      {{ $t('tooltip.not_found.tag') }}
+    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+      <IconTag class="w-8 h-8" />
+      <span class="mt-2">{{ $t('tooltip.not_found.tag') }}</span>
     </div>
-
   </div>
 
   <!-- new tag -->

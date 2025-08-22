@@ -1,4 +1,3 @@
-
 /**
  * project: jc-photo
  * author:  julyxx
@@ -14,7 +13,7 @@ use std::process::Command;
 use chrono::{DateTime, Utc};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use pinyin::ToPinyin;
-use image::{DynamicImage, ImageFormat, ImageReader, RgbImage};
+use image::{ImageFormat, ImageReader};
 // use ffmpeg_next as ffmpeg;
 use crate::t_sqlite::AFile;
 
@@ -980,4 +979,18 @@ pub fn get_db_file_path() -> Result<String, String> {
     let db_path = app_data_dir.join("main.db");
 
     Ok(db_path.to_string_lossy().into_owned())
+}
+
+/// get trash folder path
+pub fn get_trash_path() -> Result<String, String> {
+    let app_data_dir = dirs::data_local_dir()
+        .ok_or_else(|| "Failed to get the local AppData directory".to_string())?
+        .join("jc-photo")
+        .join("trash_files");
+
+    // Ensure the directory exists
+    fs::create_dir_all(&app_data_dir)
+        .map_err(|e| format!("Failed to create Trash directory: {}", e))?;
+
+    Ok(app_data_dir.to_string_lossy().into_owned())
 }

@@ -31,15 +31,16 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .setup(|_app| {
+        .setup(|app| {
             // Create the database on startup
             t_sqlite::create_db().expect("error while creating the database");
 
-            // // Open devtools in development mode
-            // #[cfg(debug_assertions)] // only include this block in debug builds
-            // {
-            //     main_window.open_devtools();
-            // }
+            // Open devtools in development mode
+            #[cfg(debug_assertions)] // only include this block in debug builds
+            {
+                let window = app.get_webview_window("main").unwrap();
+                window.open_devtools();
+            }
     
             Ok(())
         })
@@ -87,7 +88,6 @@ fn main() {
             t_cmds::move_folder,
             t_cmds::copy_folder,
             t_cmds::delete_folder,
-            t_cmds::set_folder_delete,
             t_cmds::reveal_folder,
 
             // file
@@ -104,7 +104,6 @@ fn main() {
             t_cmds::get_file_info,
             t_cmds::get_file_image,
             t_cmds::set_file_rotate,
-            t_cmds::set_file_delete,
             t_cmds::get_file_has_tags,
 
             // favorite
@@ -129,6 +128,9 @@ fn main() {
 
             // trash
             t_cmds::get_trash_folders,
+            t_cmds::trash_items,
+            t_cmds::restore_items,
+            t_cmds::permanently_delete_items,
 
             // print
             t_cmds::print_image,

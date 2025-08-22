@@ -14,7 +14,7 @@ build = "build.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["devtools"] }
 tauri-plugin-window-state = "2.2.1"
 tauri-plugin-shell = "2"
 tauri-plugin-os = "2"

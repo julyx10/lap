@@ -38,6 +38,7 @@
     "tailwindcss": "^4.1.8",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
+    "vite-plugin-vue-devtools": "^8.0.0",
     "vite-svg-loader": "^5.1.0"
   },
   "license": "MIT"

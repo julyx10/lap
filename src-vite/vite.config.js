@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import vueDevTools from 'vite-plugin-vue-devtools'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from "@tailwindcss/vite";
 import svgLoader from 'vite-svg-loader'
@@ -8,6 +9,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     vue(),
+    vueDevTools(),
     tailwindcss(),
     svgLoader()
   ],
