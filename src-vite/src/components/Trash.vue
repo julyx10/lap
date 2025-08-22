@@ -15,51 +15,13 @@
     <div :class="[
       'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer',
       {
-        'text-base-content bg-base-content/10 border-primary': config.trashFolderId === 0,
+        'text-base-content bg-base-content/10 border-primary': config.albumId === trashAlbumId,
       }
-    ]" @click="clickTrashFiles()">
+    ]" @click="clickTrash()">
       <IconTrash class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
-        {{ $t('trash.files') }}
+        {{ $t('sidebar.trash') }}
       </div>
-    </div>
-
-    <!-- trash folders -->
-    <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default whitespace-nowrap">
-      {{ $t('trash.folders') }}
-    </div>
-    <div v-if="trash_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
-      <ul>
-        <li v-for="folder in trash_folders" :key="folder.id">
-          <div :class="[
-            'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group',
-            {
-              'text-base-content bg-base-content/10 border-primary': config.trashFolderId === folder.id,
-            }
-          ]" @click="clickTrashFolder(folder)">
-            <IconFolderTrash class="mx-1 h-5 shrink-0" />
-            <div class="overflow-hidden whitespace-pre text-ellipsis">
-              {{ folder.name }}
-            </div>
-
-            <DropDownMenu 
-              :class="[
-                'ml-auto px-1 rounded',
-                config.trashFolderId != folder.id ? 'invisible group-hover:visible' : ''
-              ]" 
-              :iconMenu="IconMore" 
-              :menuItems="trashFolderMenuItems" 
-              :smallIcon="true" 
-            />
-          </div>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Display message if no trash folders are found -->
-    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
-      <IconFolderTrash class="w-12 h-12" />
-      <span class="mt-2">{{ $t('tooltip.not_found.folders') }}</span>
     </div>
 
   </div>
@@ -71,7 +33,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
-import { getTrashFolders } from '@/common/api';
+import { getAlbum, getDbFiles, permanentlyDeleteItems } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
@@ -79,8 +41,6 @@ import {
   IconMore,
   IconTrashEmpty,
   IconTrash,
-  IconTrashRestore,
-  IconFolderTrash,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -94,8 +54,7 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-// trash folders
-const trash_folders = ref([]);
+const trashAlbumId = ref(null);
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -103,57 +62,28 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.trash.empty,
       icon: IconTrashEmpty,
-      action: () => {
-        // emptyTrash();
+      action: async () => {
+        const files = await getDbFiles(trashAlbumId.value, '', '', '', '', false, 0, true, 0);
+        const fileIds = files.map(f => f.id);
+        const folders = await getTrashFolders();
+        const folderIds = folders.map(f => f.id);
+        permanentlyDeleteItems(fileIds, folderIds);
       }
     },
   ];
 });
 
-// trash folder menuitems
-const trashFolderMenuItems = computed(() => {
-  return [
-    {
-      label: localeMsg.value.menu.trash.restore,
-      icon: IconTrashRestore,
-      action: () => {
-        // restoreFromTrash();
-      }
-    },
-    {
-      label: localeMsg.value.menu.trash.delete,
-      icon: IconTrash,
-      action: () => {
-        // deleteFromTrash();
-      }
-    }
-  ];
-});
-
-onMounted(() => {
-  if (trash_folders.value.length === 0) {
-    // fetch trash folders
-    getTrashFolders().then((folders) => {
-      trash_folders.value = folders || [];
-      console.log('trash_folders', trash_folders.value);
-    });
+onMounted(async () => {
+  const trashAlbum = await getAlbum(0); // TODO: find a better way to get trash album
+  if(trashAlbum) {
+      trashAlbumId.value = trashAlbum.id;
   }
 });
 
 // click trash files
-function clickTrashFiles() {
-  console.log('clickTrashFiles');
-  config.trashAlbumId = null;
-  config.trashFolderId = 0;    // 0 means trash files
-  config.trashFolderPath = '';
-}
-
-// click trash folder
-function clickTrashFolder(folder: any) {
-  console.log('clickTrashFolder', folder);
-  config.trashAlbumId = folder.album_id;
-  config.trashFolderId = folder.id;
-  config.trashFolderPath = folder.path;
+function clickTrash() {
+  config.albumId = trashAlbumId.value;
+  config.albumFolderPath = ''; // TODO: get trash album path
 }
 
 </script>
