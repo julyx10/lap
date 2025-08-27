@@ -748,105 +748,6 @@ pub fn get_image_thumbnail(
     }
 }
 
-// Get a thumbnail from a HEIC file path
-// pub fn get_heic_thumbnail(
-//     file_path: &str,
-//     orientation: i32,
-//     thumbnail_size: u32,
-// ) -> Result<Option<Vec<u8>>, String> {
-//     ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
-
-//     let mut ictx = ffmpeg::format::input(&file_path)
-//         .map_err(|e| format!("Failed to open HEIC file: {e}"))?;
-
-//     let input = ictx
-//         .streams()
-//         .best(ffmpeg::media::Type::Video)
-//         .ok_or("No video stream found in HEIC")?;
-
-//     let stream_index = input.index();
-//     let params = input.parameters();
-//     let mut decoder = ffmpeg::codec::context::Context::from_parameters(params)
-//         .map_err(|e| format!("Failed to get decoder context: {e}"))?
-//         .decoder()
-//         .video()
-//         .map_err(|e| format!("Decoder error: {e}"))?;
-
-//     let mut scaler: Option<Scaler> = None;
-
-//     for (stream, packet) in ictx.packets() {
-//         if stream.index() != stream_index {
-//             continue;
-//         }
-
-//         decoder.send_packet(&packet).map_err(|e| format!("Failed to send packet: {e}"))?;
-
-//         let mut decoded = ffmpeg::util::frame::Video::empty();
-//         while decoder.receive_frame(&mut decoded).is_ok() {
-//             let (width, height) = (decoded.width(), decoded.height());
-
-//             if scaler.is_none() {
-//                 scaler = Some(
-//                     Scaler::get(
-//                         decoded.format(),
-//                         width,
-//                         height,
-//                         ffmpeg::format::pixel::Pixel::RGB24,
-//                         width,
-//                         height,
-//                         Flags::BILINEAR,
-//                     )
-//                     .map_err(|e| format!("Failed to create scaler: {e}"))?,
-//                 );
-//             }
-
-//             let mut rgb_frame = frame::Video::empty();
-//             scaler.as_mut().unwrap()
-//                 .run(&decoded, &mut rgb_frame)
-//                 .map_err(|e| format!("Scaling failed: {e}"))?;
-
-//             let stride = rgb_frame.stride(0);
-//             let buf = rgb_frame.data(0);
-//             let mut image_buf = RgbImage::new(width, height);
-
-//             for y in 0..height {
-//                 for x in 0..width {
-//                     let idx = (y * stride as u32 + x * 3) as usize;
-//                     image_buf.put_pixel(
-//                         x,
-//                         y,
-//                         Rgb([buf[idx], buf[idx + 1], buf[idx + 2]]),
-//                     );
-//                 }
-//             }
-
-//             let dynamic_image = DynamicImage::ImageRgb8(image_buf);
-//             let (orig_w, orig_h) = dynamic_image.dimensions();
-//             let scale = (thumbnail_size as f64 / orig_w as f64).min(thumbnail_size as f64 / orig_h as f64);
-//             let new_w = (orig_w as f64 * scale).round() as u32;
-//             let new_h = (orig_h as f64 * scale).round() as u32;
-//             let thumbnail = dynamic_image.resize(new_w, new_h, image::imageops::FilterType::Lanczos3);
-
-
-//             // 🌀 Orientation (optional)
-//             let oriented = match orientation {
-//                 3 => thumbnail.rotate180(),
-//                 6 => thumbnail.rotate90(),
-//                 8 => thumbnail.rotate270(),
-//                 _ => thumbnail,
-//             };
-
-//             let mut buf = Vec::new();
-//             oriented.write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
-//                 .map_err(|e| format!("Failed to encode image: {e}"))?;
-
-//             return Ok(Some(buf));
-//         }
-//     }
-
-//     Ok(None)
-// }
-
 /// Get a thumbnail from a video or heic file path
 pub fn get_video_thumbnail(
     file_path: &str,
@@ -937,7 +838,6 @@ pub fn get_video_thumbnail(
     Ok(None)
 }
 
-
 /// Print an image using the default system printer
 /// This function is platform-specific and may need to be adjusted for different operating systems
 pub fn print_image(image_path: String) -> Result<(), String> {
@@ -981,12 +881,12 @@ pub fn get_db_file_path() -> Result<String, String> {
     Ok(db_path.to_string_lossy().into_owned())
 }
 
-/// get trash folder path
-pub fn get_trash_path() -> Result<String, String> {
+/// create trash folder if not exists
+pub fn create_trash_folder() -> Result<String, String> {
     let app_data_dir = dirs::data_local_dir()
         .ok_or_else(|| "Failed to get the local AppData directory".to_string())?
         .join("jc-photo")
-        .join("trash_files");
+        .join("trash");
 
     // Ensure the directory exists
     fs::create_dir_all(&app_data_dir)

@@ -106,7 +106,7 @@ impl Album {
     }
 
     /// add the album into db if not exists
-    pub fn add_to_db(path: &str) -> Result<Self, String> {
+    pub fn add_album_to_db(path: &str, album_type: i64) -> Result<Self, String> {
         // Check if the path already exists
         let existing_album = Self::fetch(path);
         if let Ok(Some(album)) = existing_album {
@@ -117,7 +117,7 @@ impl Album {
         }
 
         // Insert the new album into the database
-        Self::new(path, 1)?.insert()?;
+        Self::new(path, album_type)?.insert()?;
 
         // return the newly inserted album
         let new_album = Self::fetch(path)?;
@@ -138,8 +138,7 @@ impl Album {
         let conn = open_conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at
-            FROM albums 
-            WHERE album_type = 1
+            FROM albums WHERE album_type = 1
             ORDER BY display_order_id ASC"
         ).map_err(|e| e.to_string())?;
 
@@ -180,8 +179,8 @@ impl Album {
         Ok(result)
     }
 
-    /// ensure trash album（album_type = 0） exists
-    pub fn ensure_trash_album_exists() -> Result<Self, String> {
+    /// get trash album
+    pub fn get_trash_album() -> Result<Self, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
             "SELECT id, name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at 
@@ -189,34 +188,7 @@ impl Album {
             params![],
             |row| Self::from_row(row)
         ).optional().map_err(|e| e.to_string())?;
-
-        if let Some(album) = result {
-            Ok(album)
-        } else {
-            let trash_path = t_utils::get_trash_path()?;
-            let mut new_album = Self::new(&trash_path, 0)?;
-            new_album.insert()?;
-            let new_trash_album = Self::fetch(&trash_path)?;
-            Ok(new_trash_album.unwrap())
-        }
-    }
-
-    /// get trash album info
-    pub fn get_trash_album() -> Result<Self, String> {
-        let conn = open_conn()?;
-        let result = conn.query_row(
-            "SELECT id, name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at 
-            FROM albums 
-            WHERE album_type = 0",
-            params![],
-            |row| Self::from_row(row)
-        ).optional().map_err(|e| e.to_string())?;
-
-        if let Some(trash_album) = result {
-            Ok(trash_album)
-        } else {
-            Err("Trash album not found".to_string())
-        }
+        Ok(result.unwrap())
     }
 }
 
@@ -1466,8 +1438,15 @@ pub fn create_db() -> Result<(), String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_file_id ON afile_tags(file_id)", []).map_err(|e| e.to_string())?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_tag_id ON afile_tags(tag_id)", []).map_err(|e| e.to_string())?;
 
-    // ensure trash album exists
-    Album::ensure_trash_album_exists()?;
+    // trash init
+
+    // create trash folder
+    let trash_album_path = t_utils::create_trash_folder()?;
+    // create trash album in db if not exists
+    if let Ok(trash_album) = Album::add_album_to_db(&trash_album_path, 0) {
+        // create trash folder in db if not exists
+        AFolder::add_to_db(trash_album.id.unwrap(), &trash_album_path)?;
+    }
 
     Ok(())
 }

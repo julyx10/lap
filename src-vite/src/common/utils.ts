@@ -124,24 +124,31 @@ export function combineFileName(name: string, ext: string): string {
 
 /// shorten a filename while preserving its extension
 export function shortenFilename(fileName: string, maxLength = 16): string {
+  if (fileName.length <= maxLength) {
+    return fileName;
+  }
+
   const extIndex = fileName.lastIndexOf('.');
-    
-  // If no extension is found, return the shortened filename
-  if (extIndex === -1) {
-      return fileName.length > maxLength ? fileName.substring(0, maxLength - 3) + '...' : fileName;
+  const hasExt = extIndex !== -1;
+
+  if (!hasExt) {
+    const keep = maxLength - 3;
+    const front = Math.ceil(keep / 2);
+    const back = Math.floor(keep / 2);
+    return fileName.substring(0, front) + '...' + fileName.substring(fileName.length - back);
   }
 
   const name = fileName.substring(0, extIndex);
   const ext = fileName.substring(extIndex);
 
-  // If the filename is within the limit, return it as is
-  if (fileName.length <= maxLength) {
-      return fileName;
+  const keep = maxLength - ext.length - 3;
+  if (keep <= 0) {
+    return fileName.substring(0, maxLength - 3) + '...';
   }
 
-  // Shorten the name part and keep the extension
-  const shortName = name.substring(0, maxLength - ext.length - 3) + '...';
-  return shortName + ext;
+  const front = Math.ceil(keep / 2);
+  const back = Math.floor(keep / 2);
+  return name.substring(0, front) + '...' + name.substring(name.length - back) + ext;
 }
 
 // validate the file or folder name

@@ -72,7 +72,7 @@ export const useConfigStore = defineStore('configStore', {
     // settings - general
     appearance: 1,              // 0: light; 1: dark
     language: 'en',             // default language
-    showButtonText: false,      // show button text
+    showButtonText: true,      // show button text
     showToolTip: true,          // show button tooltip
     showStatusBar: true,        // show status bar
     showComment: true,          // show comment

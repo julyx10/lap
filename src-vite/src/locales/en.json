@@ -85,7 +85,7 @@
 
   "tooltip": {
     "not_found": {
-      "albums": "No albums found, try to add an album",
+      "albums": "No albums found, try to add a folder",
       "files": "No files found",
       "folders": "No folders found",
       "tag": "No tags found",

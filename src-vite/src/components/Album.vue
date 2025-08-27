@@ -72,6 +72,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.album.edit_list,
       icon: IconEdit,
+      disabled: config.albumId === null,
       action: () => {
         isEditList.value = true;
         albumListRef.value.isEditList = true;
@@ -80,6 +81,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.refresh,
       icon: IconRefresh,
+      disabled: config.albumId === null,
       action: () => {
         albumListKey.value += 1;  // refresh component
       }
