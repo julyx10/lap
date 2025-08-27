@@ -262,11 +262,41 @@ pub fn delete_folder(folder_path: &str) -> bool {
     }
 }
 
+/// Checks if a path exists, and if so, returns a new unique path 
+/// by appending a number like (1), (2), etc.
+fn get_unique_path(path: PathBuf) -> PathBuf {
+    if !path.exists() {
+        return path;
+    }
+
+    let parent_dir = path.parent().unwrap_or_else(|| Path::new(""));
+    let stem_os = path.file_stem().unwrap_or_default();
+    let stem = stem_os.to_string_lossy();
+    let ext_os = path.extension().unwrap_or_default();
+    let ext = ext_os.to_string_lossy();
+
+    let mut i = 1;
+    loop {
+        let new_name = if ext.is_empty() {
+            format!("{}({})", stem, i)
+        } else {
+            format!("{}({}).{}", stem, i, ext)
+        };
+        
+        let new_path = parent_dir.join(&new_name);
+
+        if !new_path.exists() {
+            return new_path;
+        }
+        i += 1;
+    }
+}
+
 /// move a folder to a new location
 /// Returns the new folder path if successful
-pub fn move_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
+pub fn move_folder(folder_path: &str, dest_folder: &str) -> Option<String> {
     let path = Path::new(folder_path);
-    let mut new_path = Path::new(new_folder_path).to_path_buf();
+    let mut destination = Path::new(dest_folder).to_path_buf();
 
     // Ensure the source folder exists
     if !path.exists() {
@@ -276,30 +306,32 @@ pub fn move_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
 
     // Append the folder name to the new folder path
     if let Some(folder_name) = path.file_name() {
-        new_path.push(folder_name);
+        destination.push(folder_name);
     } else {
         eprintln!("Invalid folder name: {}", folder_path);
         return None;
     }
 
+    let destination = get_unique_path(destination);
+
     // Attempt to move the folder and return result
-    fs::rename(path, &new_path).map_or_else(
+    fs::rename(path, &destination).map_or_else(
         |e| {
             eprintln!("Failed to move folder: {}", e);
             None
         },
         |_| {
-            println!("Folder moved to: {}", new_path.display());
-            Some(new_path.to_string_lossy().into_owned())
+            println!("Folder moved to: {}", destination.display());
+            Some(destination.to_string_lossy().into_owned())
         },
     )
 }
 
 /// Recursively copies a folder and all its contents to a new location.
 /// Returns Some(new_folder_path) if successful, or None on failure.
-pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
+pub fn copy_folder(folder_path: &str, dest_folder: &str) -> Option<String> {
     let src = Path::new(folder_path);
-    let mut dst = Path::new(new_folder_path).to_path_buf();
+    let mut dst = Path::new(dest_folder).to_path_buf();
 
     // Check if the source folder exists and is a directory
     if !src.exists() || !src.is_dir() {
@@ -315,6 +347,8 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
         eprintln!("Failed to get the folder name from path: {}", folder_path);
         return None;
     }
+
+    let dst = get_unique_path(dst);
 
     // Create the destination folder if it does not exist
     if let Err(e) = fs::create_dir_all(&dst) {
@@ -359,18 +393,15 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     Some(dst.to_string_lossy().into_owned())
 }
 
-/// move file to a new location
-pub fn move_file(file_path: &str, new_folder_path: &str) -> Option<String> {
+/// move file to dest folder, if dest file already exists, find a new name
+/// Returns the new file path if successful, or None on failure.
+pub fn move_file(file_path: &str, dest_folder: &str) -> Option<String> {
     let source = Path::new(file_path);
     let file_name = source.file_name()?;
-    let mut destination = PathBuf::from(new_folder_path);
+    let mut destination = PathBuf::from(dest_folder);
     destination.push(file_name);
 
-    // Do not overwrite if destination already exists
-    if destination.exists() {
-        eprintln!("Destination file already exists: {}", destination.display());
-        return None;
-    }
+    let destination = get_unique_path(destination);
 
     // Try to move the file
     match fs::rename(&source, &destination) {
@@ -385,18 +416,15 @@ pub fn move_file(file_path: &str, new_folder_path: &str) -> Option<String> {
     }
 }
 
-/// copy file to a new location
-pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
+/// copy file to dest folder, if dest file already exists, find a new name
+/// Returns the new file path if successful, or None on failure.
+pub fn copy_file(file_path: &str, dest_folder: &str) -> Option<String> {
     let source = Path::new(file_path);
     let file_name = source.file_name()?;
-    let mut destination = PathBuf::from(new_folder_path);
+    let mut destination = PathBuf::from(dest_folder);
     destination.push(file_name);
 
-    // Do not overwrite if destination already exists
-    if destination.exists() {
-        eprintln!("Destination file already exists: {}", destination.display());
-        return None;
-    }
+    let destination = get_unique_path(destination);
 
     // Try to copy the file
     match fs::copy(&source, &destination) {

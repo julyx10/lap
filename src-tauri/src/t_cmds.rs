@@ -34,7 +34,7 @@ pub fn get_album(album_id: i64) -> Result<Album, String> {
 /// add an album
 #[tauri::command]
 pub fn add_album(folder_path: &str) -> Result<Album, String> {
-    Album::add_to_db(folder_path)
+    Album::add_album_to_db(folder_path, 1)
         .map_err(|e| format!("Error while adding an album to DB: {}", e))
 }
 
@@ -130,18 +130,48 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     t_utils::copy_folder(folder_path, new_folder_path)
 }
 
-/// delete a folder
-/// return the number of files and folders deleted
+/// Move folders to trash
 #[tauri::command]
-pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
-    // Delete the folder from the file system
-    if t_utils::delete_folder(folder_path) {
-        // delete the folder from db
-        AFolder::delete_folder(folder_path)
-            .map_err(|e| format!("Failed to delete folder from database: {}", e))
-    } else {
-        Err("Failed to delete folder from file system".to_string())
-    }
+pub fn trash_folder(folder_path: &str) -> Option<String> {
+    // if folder_ids.is_empty() {
+    // let trash_album = Album::create_trash_album()?;
+    // let trash_album_id = trash_album.id.ok_or("Trash album ID not found")?;
+    // let trash_path = trash_album.path;
+
+    // let timestamp = SystemTime::now()
+    //     .duration_since(UNIX_EPOCH)
+    //     .map_err(|_| "Failed to get current timestamp")?
+    //     .as_secs();
+
+    // for &folder_id in &folder_ids {
+    //     let folder = AFolder::get_folder_by_id(folder_id)
+    //         .map_err(|e| format!("Failed to get folder {}: {}", folder_id, e))?
+    //         .ok_or_else(|| format!("Folder {} not found", folder_id))?;
+
+    //     let folder_id = folder.id.ok_or("Folder ID not found")?;
+    //     let original_path = folder.path.clone();
+    //     let original_album_id = folder.album_id;
+
+    //     let new_path = t_utils::move_folder(&original_path, &trash_path)
+    //         .ok_or_else(|| format!("Failed to move folder from {} to trash", original_path))?;
+
+    //     let name_in_trash = if new_path != t_utils::get_file_path(&trash_path, &folder.name) {
+    //         Some(t_utils::get_file_name(&new_path))
+    //     } else {
+    //         None
+    //     };
+
+    //     // Batch update folder columns
+    //     AFolder::update_column(folder_id, "album_id", &trash_album_id)?;
+    //     AFolder::update_column(folder_id, "path", &new_path)?;
+    //     AFolder::update_column(folder_id, "original_album_id", &original_album_id)?;
+    //     AFolder::update_column(folder_id, "trashed_at", &timestamp)?;
+        
+    //     if let Some(name) = name_in_trash {
+    //         AFolder::update_column(folder_id, "name_in_trash", &name)?;
+    //     }
+    // }
+    Some(folder_path.to_string())
 }
 
 /// reveal a folder in the file explorer( or finder)
@@ -258,17 +288,49 @@ pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
     t_utils::copy_file(file_path, new_folder_path)
 }
 
-/// delete files
+/// move a file to trash
 #[tauri::command]
-pub fn delete_file(file_id: i64, file_path: &str) -> Option<String> {
-    let deleted_file = t_utils::delete_file(file_path);
-    match deleted_file {
+pub fn trash_file(file_id: i64, file_path: &str) -> Option<String> {
+    // Get trash album info
+    let trash_album = match Album::get_trash_album() {
+        Ok(album) => album,
+        Err(_) => return None,
+    };
+    
+    // Get trash folder info
+    let trash_folder = match AFolder::fetch(&trash_album.path) {
+        Ok(Some(folder)) => folder,
+        _ => return None,
+    };
+
+    // get file info
+    let trash_file = match AFile::get_file_info(file_id) {
+        Ok(Some(file)) => file,
+        _ => return None,
+    };
+
+    // get timestamp
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "Failed to get current timestamp")
+        .ok()?
+        .as_secs();
+
+    let moved_file = move_file(file_id, file_path, trash_folder.id.unwrap(), &trash_album.path);
+    match moved_file {
         Some(new_path) => {
-            // delete the file from the database
-            let _ = AFile::delete(file_id)
-                .map_err(|e| format!("Error while deleting file in DB: {}", e));
+            // update the file's folder_id in the database
+            let _ = AFile::update_column(file_id, "folder_id", &trash_folder.id)
+                .map_err(|e| format!("Error while moving file in DB: {}", e));
+            // update the file's original_folder_id in the database
+            let _ = AFile::update_column(file_id, "original_folder_id", &trash_file.folder_id)
+                .map_err(|e| format!("Error while moving file in DB: {}", e));
+            // update the file's trashed_at in the database
+            let _ = AFile::update_column(file_id, "trashed_at", &timestamp)
+                .map_err(|e| format!("Error while moving file in DB: {}", e));
+            
             Some(new_path)
-        },
+        }
         None => None
     }
 }
@@ -323,6 +385,7 @@ pub fn get_file_has_tags(file_id: i64) -> Result<bool, String> {
     AFile::get_has_tags(file_id)
         .map_err(|e| format!("Error while getting file has_tags status: {}", e))
 }
+
 // favorite
 
 /// get all favorite folders
@@ -434,154 +497,162 @@ pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
 
 // trash
 
-/// get all trash folders (soft deleted folders)
-#[tauri::command]
-pub fn get_trash_folders() -> Result<Vec<AFolder>, String> {
-    AFolder::get_trash_folders()
-        .map_err(|e| format!("Error while getting trash folders: {}", e))
-}
+// /// get all trash folders (soft deleted folders)
+// #[tauri::command]
+// pub fn get_trash_folders() -> Result<Vec<AFolder>, String> {
+//     AFolder::get_trash_folders()
+//         .map_err(|e| format!("Error while getting trash folders: {}", e))
+// }
 
+/// Restore folders from trash to their original location
 #[tauri::command]
-pub fn trash_items(file_ids: Vec<i64>, folder_ids: Vec<i64>) -> Result<(), String> {
-    let trash_album = Album::ensure_trash_album_exists()?;
-    let trash_album_id = trash_album.id.unwrap();
-    let trash_path = trash_album.path;
-
-    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+pub fn restore_folders(folder_ids: Vec<i64>) -> Result<(), String> {
+    if folder_ids.is_empty() {
+        return Ok(());
+    }
 
     for folder_id in folder_ids {
-        if let Ok(Some(folder)) = AFolder::get_folder_by_id(folder_id) {
-            let original_path = folder.path.clone();
-            let original_album_id = folder.album_id;
+        let folder = AFolder::get_folder_by_id(folder_id)
+            .map_err(|e| format!("Failed to get folder {}: {}", folder_id, e))?
+            .ok_or_else(|| format!("Folder {} not found", folder_id))?;
 
-            let new_path = t_utils::move_folder(&original_path, &trash_path);
-            if let Some(new_path) = new_path {
-                let name_in_trash = if new_path != t_utils::get_file_path(&trash_path, &folder.name) {
-                    Some(t_utils::get_file_name(&new_path))
-                } else {
-                    None
-                };
+        let folder_id = folder.id.ok_or("Folder ID not found")?;
+        let original_album_id = folder.original_album_id
+            .ok_or_else(|| format!("Folder {} has no original album ID", folder_id))?;
 
-                AFolder::update_column(folder.id.unwrap(), "album_id", &trash_album_id)?;
-                AFolder::update_column(folder.id.unwrap(), "path", &new_path)?;
-                AFolder::update_column(folder.id.unwrap(), "original_album_id", &original_album_id)?;
-                AFolder::update_column(folder.id.unwrap(), "trashed_at", &timestamp)?;
-                if let Some(name) = name_in_trash {
-                    AFolder::update_column(folder.id.unwrap(), "name_in_trash", &name)?;
-                }
-            }
+        // Get original album path
+        let album = Album::get_album_by_id(original_album_id)
+            .map_err(|e| format!("Failed to get album {}: {}", original_album_id, e))?;
+
+        let current_path = folder.path;
+        let dest_album_path = album.path;
+
+        // Check for conflicts
+        let conflict_path = t_utils::get_file_path(&dest_album_path, &folder.name);
+        if Path::new(&conflict_path).exists() {
+            return Err(format!(
+                "A folder with the name {} already exists in the destination",
+                folder.name
+            ));
         }
-    }
 
-    let trash_folder = AFolder::fetch(&trash_path)?
-        .ok_or_else(|| "Trash folder not found in database".to_string())?;
-    let trash_folder_id = trash_folder.id.unwrap();
-
-    for file_id in file_ids {
-        if let Ok(Some(file)) = AFile::get_file_info(file_id) {
-            if let Some(file_path) = file.file_path.clone() {
-                let original_folder_id = file.folder_id;
-
-                let new_path = t_utils::move_file(&file_path, &trash_path);
-                if let Some(new_path) = new_path {
-                    let name_in_trash = if new_path != t_utils::get_file_path(&trash_path, &file.name) {
-                        Some(t_utils::get_file_name(&new_path))
-                    } else {
-                        None
-                    };
-
-                    AFile::update_column(file.id.unwrap(), "folder_id", &trash_folder_id)?;
-                    AFile::update_column(file.id.unwrap(), "original_folder_id", &original_folder_id)?;
-                    AFile::update_column(file.id.unwrap(), "trashed_at", &timestamp)?;
-                    if let Some(name) = name_in_trash {
-                        AFile::update_column(file.id.unwrap(), "name_in_trash", &name)?;
-                    }
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
-#[tauri::command]
-pub fn restore_items(file_ids: Vec<i64>, folder_ids: Vec<i64>) -> Result<(), String> {
-    for folder_id in folder_ids {
-        if let Ok(Some(folder)) = AFolder::get_folder_by_id(folder_id) {
-            if let Some(original_album_id) = folder.original_album_id {
-                // 取回原相册路径
-                if let Ok(album) = Album::get_album_by_id(original_album_id) {
-                    let current_path = folder.path;
-                    let dest_album_path = album.path;
-                    // 目的地冲突检测：album.path + folder.name
-                    let conflict_path = t_utils::get_file_path(&dest_album_path, &folder.name);
-                    if Path::new(&conflict_path).exists() {
-                        return Err(format!(
-                            "A folder with the name {} already exists in the destination",
-                            folder.name
-                        ));
-                    }
-
-                    // 按 API 约定：move_folder(src_folder, dest_parent_dir)
-                    if let Some(new_path) = t_utils::move_folder(&current_path, &dest_album_path) {
-                        // 更新当前文件夹记录
-                        AFolder::update_column(folder.id.unwrap(), "album_id", &original_album_id)?;
-                        AFolder::update_column(folder.id.unwrap(), "path", &new_path)?;
-                        AFolder::update_column(folder.id.unwrap(), "original_album_id", &None::<i64>)?;
-                        AFolder::update_column(folder.id.unwrap(), "trashed_at", &None::<u64>)?;
-                        AFolder::update_column(folder.id.unwrap(), "name_in_trash", &None::<String>)?;
-                    }
-                }
-            }
-        }
-    }
-
-    for file_id in file_ids {
-        if let Ok(Some(file)) = AFile::get_file_info(file_id) {
-            if let (Some(original_folder_id), Some(file_path)) = (file.original_folder_id, file.file_path) {
-                if let Ok(Some(original_folder)) = AFolder::get_folder_by_id(original_folder_id) {
-                    let original_path = t_utils::get_file_path(&original_folder.path, &file.name);
-
-                    if Path::new(&original_path).exists() {
-                        return Err(format!("A file with the name {} already exists in the destination", file.name));
-                    }
-
-                    if let Some(_new_path) = t_utils::move_file(&file_path, &original_folder.path) {
-                        AFile::update_column(file.id.unwrap(), "folder_id", &original_folder_id)?;
-                        AFile::update_column(file.id.unwrap(), "original_folder_id", &None::<i64>)?;
-                        AFile::update_column(file.id.unwrap(), "trashed_at", &None::<u64>)?;
-                        AFile::update_column(file.id.unwrap(), "name_in_trash", &None::<String>)?;
-                    }
-                }
-            }
+        // Move folder back to original location
+        if let Some(new_path) = t_utils::move_folder(&current_path, &dest_album_path) {
+            // Update folder record
+            AFolder::update_column(folder_id, "album_id", &original_album_id)?;
+            AFolder::update_column(folder_id, "path", &new_path)?;
+            AFolder::update_column(folder_id, "original_album_id", &None::<i64>)?;
+            AFolder::update_column(folder_id, "trashed_at", &None::<u64>)?;
+            AFolder::update_column(folder_id, "name_in_trash", &None::<String>)?;
         }
     }
     Ok(())
 }
 
+/// Restore files from trash to their original location
 #[tauri::command]
-pub fn permanently_delete_items(file_ids: Vec<i64>, folder_ids: Vec<i64>) -> Result<(), String> {
+pub fn restore_files(file_ids: Vec<i64>) -> Result<(), String> {
+    if file_ids.is_empty() {
+        return Ok(());
+    }
+
+    for file_id in file_ids {
+        let file = AFile::get_file_info(file_id)
+            .map_err(|e| format!("Failed to get file {}: {}", file_id, e))?
+            .ok_or_else(|| format!("File {} not found", file_id))?;
+
+        let file_id = file.id.ok_or("File ID not found")?;
+        let original_folder_id = file.original_folder_id
+            .ok_or_else(|| format!("File {} has no original folder ID", file_id))?;
+        let file_path = file.file_path
+            .as_ref()
+            .ok_or_else(|| format!("File {} has no path", file_id))?;
+
+        let original_folder = AFolder::get_folder_by_id(original_folder_id)
+            .map_err(|e| format!("Failed to get original folder {}: {}", original_folder_id, e))?
+            .ok_or_else(|| format!("Original folder {} not found", original_folder_id))?;
+
+        let original_path = t_utils::get_file_path(&original_folder.path, &file.name);
+
+        // Check for conflicts
+        if Path::new(&original_path).exists() {
+            return Err(format!("A file with the name {} already exists in the destination", file.name));
+        }
+
+        // Move file back to original location
+        if let Some(_new_path) = t_utils::move_file(file_path, &original_folder.path) {
+            // Update file record
+            AFile::update_column(file_id, "folder_id", &original_folder_id)?;
+            AFile::update_column(file_id, "original_folder_id", &None::<i64>)?;
+            AFile::update_column(file_id, "trashed_at", &None::<u64>)?;
+            AFile::update_column(file_id, "name_in_trash", &None::<String>)?;
+        }
+    }
+    Ok(())
+}
+
+// /// delete a folder
+// /// return the number of files and folders deleted
+// #[tauri::command]
+// pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
+//     // Delete the folder from the file system
+//     if t_utils::delete_folder(folder_path) {
+//         // delete the folder from db
+//         AFolder::delete_folder(folder_path)
+//             .map_err(|e| format!("Failed to delete folder from database: {}", e))
+//     } else {
+//         Err("Failed to delete folder from file system".to_string())
+//     }
+// }
+
+// /// delete files
+// #[tauri::command]
+// pub fn delete_file(file_id: i64, file_path: &str) -> Option<String> {
+//     let deleted_file = t_utils::delete_file(file_path);
+//     match deleted_file {
+//         Some(new_path) => {
+//             // delete the file from the database
+//             let _ = AFile::delete(file_id)
+//                 .map_err(|e| format!("Error while deleting file in DB: {}", e));
+//             Some(new_path)
+//         },
+//         None => None
+//     }
+// }
+
+/// Permanently delete folders from trash
+#[tauri::command]
+pub fn delete_folders(folder_ids: Vec<i64>) -> Result<(), String> {
     for folder_id in folder_ids {
         if let Ok(Some(folder)) = AFolder::get_folder_by_id(folder_id) {
             if t_utils::delete_folder(&folder.path) {
-                AFolder::delete_folder(&folder.path)?;
+                AFolder::delete_folder(&folder.path)
+                    .map_err(|e| format!("Failed to delete folder from database: {}", e))?;
+            } else {
+                return Err(format!("Failed to delete folder from file system: {}", folder.path));
             }
         }
     }
+    Ok(())
+}
 
+/// Permanently delete files from trash
+#[tauri::command]
+pub fn delete_files(file_ids: Vec<i64>) -> Result<(), String> {
     for file_id in file_ids {
         if let Ok(Some(file)) = AFile::get_file_info(file_id) {
             if let Some(file_path) = file.file_path {
                 if t_utils::delete_file(&file_path).is_some() {
-                    AFile::delete(file.id.unwrap())?;
+                    AFile::delete(file.id.ok_or("File ID not found")?)
+                        .map_err(|e| format!("Failed to delete file from database: {}", e))?;
+                } else {
+                    return Err(format!("Failed to delete file from file system: {}", file_path));
                 }
             }
         }
     }
-
     Ok(())
 }
-
 
 // print
 

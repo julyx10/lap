@@ -33,7 +33,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
-import { getAlbum, getDbFiles, permanentlyDeleteItems } from '@/common/api';
+import { getAlbum, getDbFiles, getTrashFolders, permanentlyDeleteFiles, permanentlyDeleteFolders } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
@@ -67,7 +67,8 @@ const moreMenuItems = computed(() => {
         const fileIds = files.map(f => f.id);
         const folders = await getTrashFolders();
         const folderIds = folders.map(f => f.id);
-        permanentlyDeleteItems(fileIds, folderIds);
+        await permanentlyDeleteFiles(fileIds);
+        await permanentlyDeleteFolders(folderIds);
       }
     },
   ];

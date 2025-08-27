@@ -658,27 +658,62 @@ export async function getTrashFolders() {
   return null;
 }
 
-export async function trashItems(fileIds, folderIds) {
+export async function trashFile(fileId, filePath) {
   try {
-    await invoke('trash_items', { fileIds, folderIds });
+    return await invoke('trash_file', { fileId, filePath });
   } catch (error) {
-    console.error('trashItems error:', error);
+    console.error('trashFile error:', error);
+    return null;
   }
 }
 
-export async function restoreItems(fileIds, folderIds) {
+export async function trashFolders(folderIds) {
   try {
-    await invoke('restore_items', { fileIds, folderIds });
+    if (folderIds && folderIds.length > 0) {
+      await invoke('trash_folders', { folderIds });
+    }
   } catch (error) {
-    console.error('restoreItems error:', error);
+    console.error('trashFolders error:', error);
   }
 }
 
-export async function permanentlyDeleteItems(fileIds, folderIds) {
+export async function restoreFiles(fileIds) {
   try {
-    await invoke('permanently_delete_items', { fileIds, folderIds });
+    if (fileIds && fileIds.length > 0) {
+      await invoke('restore_files', { fileIds });
+    }
   } catch (error) {
-    console.error('permanentlyDeleteItems error:', error);
+    console.error('restoreFiles error:', error);
+  }
+}
+
+export async function restoreFolders(folderIds) {
+  try {
+    if (folderIds && folderIds.length > 0) {
+      await invoke('restore_folders', { folderIds });
+    }
+  } catch (error) {
+    console.error('restoreFolders error:', error);
+  }
+}
+
+export async function permanentlyDeleteFiles(fileIds) {
+  try {
+    if (fileIds && fileIds.length > 0) {
+      await invoke('permanently_delete_files', { fileIds });
+    }
+  } catch (error) {
+    console.error('permanentlyDeleteFiles error:', error);
+  }
+}
+
+export async function permanentlyDeleteFolders(folderIds) {
+  try {
+    if (folderIds && folderIds.length > 0) {
+      await invoke('permanently_delete_folders', { folderIds });
+    }
+  } catch (error) {
+    console.error('permanentlyDeleteFolders error:', error);
   }
 }
 

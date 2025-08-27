@@ -248,7 +248,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getTagName,
          copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
-         setFileFavorite, setFileRotate, getFileHasTags, trashItems} from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, trashFile, trashFolders, restoreFiles, restoreFolders} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getTimestamp } from '@/common/utils';
@@ -892,17 +892,53 @@ const clickCopyTo = async () => {
 
 // move to trash
 const clickMoveToTrash = async () => {
-  let fileIds = [];
+  let filesToTrash = [];
   if (selectMode.value && selectedCount.value > 0) {
-    fileIds = fileList.value.filter(item => item.isSelected).map(item => item.id);
+    filesToTrash = fileList.value.filter(item => item.isSelected);
   } else if (selectedItemIndex.value >= 0) {
-    fileIds = [fileList.value[selectedItemIndex.value].id];
+    filesToTrash = [fileList.value[selectedItemIndex.value]];
   }
 
-  if (fileIds.length > 0) {
-    await trashItems(fileIds, []);
+  if (filesToTrash.length > 0) {
+    // Move each file to trash individually
+    for (const file of filesToTrash) {
+      if (file.file_path) {
+        await trashFile(file.id, file.file_path);
+      }
+    }
     // TODO: refresh file list
   }
+}
+
+// restore from trash
+const clickRestoreFromTrash = async () => {
+  let fileIds = [];
+  let folderIds = [];
+  
+  if (selectMode.value && selectedCount.value > 0) {
+    // Multi-select mode: separate files and folders
+    const selectedItems = fileList.value.filter(item => item.isSelected);
+    fileIds = selectedItems.filter(item => !item.is_folder).map(item => item.id);
+    folderIds = selectedItems.filter(item => item.is_folder).map(item => item.id);
+  } else if (selectedItemIndex.value >= 0) {
+    // Single select mode
+    const item = fileList.value[selectedItemIndex.value];
+    if (item.is_folder) {
+      folderIds = [item.id];
+    } else {
+      fileIds = [item.id];
+    }
+  }
+
+  // Restore files and folders separately
+  if (fileIds.length > 0) {
+    await restoreFiles(fileIds);
+  }
+  if (folderIds.length > 0) {
+    await restoreFolders(folderIds);
+  }
+  
+  // TODO: refresh file list
 }
 
 // click delete menu item
