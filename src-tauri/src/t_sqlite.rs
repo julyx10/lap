@@ -670,13 +670,19 @@ impl AFile {
     }
 
     // Helper function to build the count SQL query
-    fn build_count_query() -> String {
-        String::from(
+    fn build_count_query(is_trashed: bool) -> String {
+        let mut query = String::from(
             "SELECT COUNT(*), SUM(a.size)
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id"
-        )
+        );
+        if is_trashed {
+            query += " WHERE a.trashed_at IS NOT NULL OR b.trashed_at IS NOT NULL";
+        } else {
+            query += " WHERE a.trashed_at IS NULL AND b.trashed_at IS NULL";
+        }
+        query
     }
 
     // build the base SQL query
@@ -895,8 +901,8 @@ impl AFile {
     }
 
     // get total count and size of files
-    pub fn get_count_and_sum() -> Result<(i64, i64), String> {
-        let sql = format!("{}", Self::build_count_query());
+    pub fn get_count_and_sum(is_trashed: bool) -> Result<(i64, i64), String> {
+        let sql = format!("{}", Self::build_count_query(is_trashed));
         Self::query_count_and_sum(&sql, &[])
     }
 
@@ -962,9 +968,9 @@ impl AFile {
         }
     
         if is_trashed {
-            conditions.push("a.trashed_at IS NOT NULL");
+            conditions.push("(a.trashed_at IS NOT NULL OR b.trashed_at IS NOT NULL)");
         } else {
-            conditions.push("a.trashed_at IS NULL");
+            conditions.push("a.trashed_at IS NULL AND b.trashed_at IS NULL");
         }
     
         let mut query = Self::build_base_query();

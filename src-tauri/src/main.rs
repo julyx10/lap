@@ -127,7 +127,8 @@ fn main() {
             t_cmds::get_taken_dates,
 
             // trash
-            // t_cmds::get_trash_folders,
+            t_cmds::get_trash_album,
+            t_cmds::get_trash_count_and_sum,
             t_cmds::restore_folders,
             t_cmds::restore_files,
             t_cmds::delete_folders,

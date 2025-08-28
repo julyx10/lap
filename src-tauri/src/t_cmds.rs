@@ -133,45 +133,51 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
 /// Move folders to trash
 #[tauri::command]
 pub fn trash_folder(folder_path: &str) -> Option<String> {
-    // if folder_ids.is_empty() {
-    // let trash_album = Album::create_trash_album()?;
-    // let trash_album_id = trash_album.id.ok_or("Trash album ID not found")?;
-    // let trash_path = trash_album.path;
+    // Get trash album info
+    let trash_album = match Album::get_trash_album() {
+        Ok(album) => album,
+        Err(_) => return None,
+    };
+    let trash_album_id = trash_album.id.unwrap();
+    let trash_album_path = &trash_album.path;
 
-    // let timestamp = SystemTime::now()
-    //     .duration_since(UNIX_EPOCH)
-    //     .map_err(|_| "Failed to get current timestamp")?
-    //     .as_secs();
+    // Get folder to be trashed info
+    let trash_folder_info = match AFolder::fetch(folder_path) {
+        Ok(Some(folder)) => folder,
+        _ => return None,
+    };
+    let folder_id = trash_folder_info.id.unwrap();
+    let original_album_id = trash_folder_info.album_id;
 
-    // for &folder_id in &folder_ids {
-    //     let folder = AFolder::get_folder_by_id(folder_id)
-    //         .map_err(|e| format!("Failed to get folder {}: {}", folder_id, e))?
-    //         .ok_or_else(|| format!("Folder {} not found", folder_id))?;
+    // get timestamp
+    let timestamp = match SystemTime::now().duration_since(UNIX_EPOCH) {
+        Ok(n) => n.as_secs(),
+        Err(_) => return None,
+    };
 
-    //     let folder_id = folder.id.ok_or("Folder ID not found")?;
-    //     let original_path = folder.path.clone();
-    //     let original_album_id = folder.album_id;
+    // use the existing move_folder command to move folder
+    let moved_folder = move_folder(folder_path, trash_album_id, trash_album_path);
+    match moved_folder {
+        Some(new_path) => {
+            // update the folder's original_album_id in the database
+            let _ = AFolder::update_column(folder_id, "original_album_id", &original_album_id)
+                .map_err(|e| format!("Error while trashing folder in DB: {}", e));
+            
+            // update the folder's trashed_at in the database
+            let _ = AFolder::update_column(folder_id, "trashed_at", &timestamp)
+                .map_err(|e| format!("Error while trashing folder in DB: {}", e));
 
-    //     let new_path = t_utils::move_folder(&original_path, &trash_path)
-    //         .ok_or_else(|| format!("Failed to move folder from {} to trash", original_path))?;
-
-    //     let name_in_trash = if new_path != t_utils::get_file_path(&trash_path, &folder.name) {
-    //         Some(t_utils::get_file_name(&new_path))
-    //     } else {
-    //         None
-    //     };
-
-    //     // Batch update folder columns
-    //     AFolder::update_column(folder_id, "album_id", &trash_album_id)?;
-    //     AFolder::update_column(folder_id, "path", &new_path)?;
-    //     AFolder::update_column(folder_id, "original_album_id", &original_album_id)?;
-    //     AFolder::update_column(folder_id, "trashed_at", &timestamp)?;
-        
-    //     if let Some(name) = name_in_trash {
-    //         AFolder::update_column(folder_id, "name_in_trash", &name)?;
-    //     }
-    // }
-    Some(folder_path.to_string())
+            // update the folder's name_in_trash in the database
+            let new_name = t_utils::get_file_name(&new_path);
+            if new_name != trash_folder_info.name {
+                let _ = AFolder::update_column(folder_id, "name_in_trash", &new_name)
+                    .map_err(|e| format!("Error while trashing folder in DB: {}", e));
+            }
+            
+            Some(new_path)
+        }
+        None => None
+    }
 }
 
 /// reveal a folder in the file explorer( or finder)
@@ -185,7 +191,7 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 /// get db file count and sum
 #[tauri::command]
 pub fn get_db_count_and_sum() -> Result<(i64, i64), String> {
-    AFile::get_count_and_sum()
+    AFile::get_count_and_sum(false)
         .map_err(|e| format!("Error while getting all files count: {}", e))
 }
 
@@ -322,8 +328,12 @@ pub fn trash_file(file_id: i64, file_path: &str) -> Option<String> {
             // update the file's folder_id in the database
             let _ = AFile::update_column(file_id, "folder_id", &trash_folder.id)
                 .map_err(|e| format!("Error while moving file in DB: {}", e));
+            
             // update the file's original_folder_id in the database
             let _ = AFile::update_column(file_id, "original_folder_id", &trash_file.folder_id)
+                .map_err(|e| format!("Error while moving file in DB: {}", e));
+            // update the file's name_in_trash in the database
+            let _ = AFile::update_column(file_id, "name_in_trash", &t_utils::get_file_name(&new_path))
                 .map_err(|e| format!("Error while moving file in DB: {}", e));
             // update the file's trashed_at in the database
             let _ = AFile::update_column(file_id, "trashed_at", &timestamp)
@@ -497,12 +507,19 @@ pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
 
 // trash
 
-// /// get all trash folders (soft deleted folders)
-// #[tauri::command]
-// pub fn get_trash_folders() -> Result<Vec<AFolder>, String> {
-//     AFolder::get_trash_folders()
-//         .map_err(|e| format!("Error while getting trash folders: {}", e))
-// }
+/// get trash album
+#[tauri::command]
+pub fn get_trash_album() -> Result<Album, String> {
+    Album::get_trash_album()
+        .map_err(|e| format!("Error while getting trash album: {}", e))
+}
+
+/// get trash file count and sum
+#[tauri::command]
+pub fn get_trash_count_and_sum() -> Result<(i64, i64), String> {
+    AFile::get_count_and_sum(true)
+        .map_err(|e| format!("Error while getting trash file count and sum: {}", e))
+}
 
 /// Restore folders from trash to their original location
 #[tauri::command]
