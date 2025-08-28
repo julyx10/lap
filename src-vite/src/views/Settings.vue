@@ -215,6 +215,14 @@
                   <td>{{ formatFileSize(totalFileSize) }}</td>
                 </tr>
                 <tr>
+                  <td>{{ $t('settings.about.storage.trash_file_count') }}</td>
+                  <td>{{ trashFileCount.toLocaleString() }}</td>
+                </tr>
+                <tr>
+                  <td>{{ $t('settings.about.storage.trash_file_size') }}</td>
+                  <td>{{ formatFileSize(trashFileSize) }}</td>
+                </tr>
+                <tr>
                   <td>{{ $t('settings.about.storage.file_path') }}</td>
                    <td>
                     <input
@@ -246,7 +254,7 @@ import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { config, setTheme, getPlayInterval, formatFileSize } from '@/common/utils';
-import { getPackageInfo, getBuildTime, getStorageFileInfo, getDbCountAndSum } from '@/common/api';
+import { getPackageInfo, getBuildTime, getStorageFileInfo, getDbCountAndSum, getTrashCountAndSum } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -260,6 +268,8 @@ const appWindow = getCurrentWebviewWindow()
 // get all db files' count and sum(without pagination)
 const totalFileCount = ref(0);
 const totalFileSize = ref(0);
+const trashFileCount = ref(0);
+const trashFileSize = ref(0);
 
 // storage file info
 const packageInfo = ref(null);
@@ -339,6 +349,12 @@ watch(() => config.settingsTabIndex, (newValue) => {
     getDbCountAndSum().then((info) => {
       if(info) {
         [totalFileCount.value, totalFileSize.value] = info;
+      }
+    });
+    // get trash count and size
+    getTrashCountAndSum().then((info) => {
+      if(info) {
+        [trashFileCount.value, trashFileSize.value] = info;
       }
     });
   }

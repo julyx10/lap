@@ -6,7 +6,7 @@
     <div class="px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
 
       <!-- title -->
-      <div class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
+      <div v-if="contentTitle.length > 0" class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
         <component :is=contentIcon class="mr-2 t-icon-size-sm shrink-0"/>
         <div class="mr-2 cursor-default overflow-hidden whitespace-pre text-ellipsis">
           {{ contentTitle }}
@@ -204,7 +204,7 @@
   />
 
   <!-- delete -->
-  <MessageBox
+  <!-- <MessageBox
     v-if="showDeleteMsgbox"
     :title="$t('msgbox.delete_file.title')"
     :message="`${$t('msgbox.delete_file.content', { file: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
@@ -213,7 +213,7 @@
     :warningOk="true"
     @ok="clickDeleteFile"
     @cancel="showDeleteMsgbox = false"
-  />
+  /> -->
 
   <!-- tag -->
   <TaggingDialog 
@@ -247,8 +247,8 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getTagName,
-         copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, revealFolder, getFileImage,
-         setFileFavorite, setFileRotate, getFileHasTags, trashFile, trashFolders, restoreFiles, restoreFolders} from '@/common/api';  
+         copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage,
+         setFileFavorite, setFileRotate, getFileHasTags, trashFile, restoreFiles, restoreFolders, getTrashAlbum} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getTimestamp } from '@/common/utils';
@@ -308,12 +308,12 @@ const contentIcon = computed(() => {
   switch (index) {
     case 0: return IconHome;
     case 1: return IconFolder;
-    case 2: return config.favoriteFolderId === 0 ? IconFavorite : IconFolderFavorite;
+    case 2: return config.favoriteFolderId && config.favoriteFolderId > 0 ? IconFolderFavorite : IconFavorite;
     case 3: return IconTag;
     case 4: return IconCalendar;
     case 5: return IconLocation;
     case 6: return IconCamera;
-    case 7: return config.trashFolderId === 0 ? IconTrash : IconFolderTrash;
+    case 7: return IconTrash;
     default: return IconFile;
   }
 });
@@ -616,7 +616,7 @@ onMounted( async() => {
         selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
         break;
       case 'delete':
-        clickDeleteFile();
+        // clickDeleteFile();
         break;
       case 'favorite':
         toggleFavorite();
@@ -656,6 +656,7 @@ watch(() => config.appearance, (newAppearance) => {
 /// watch language
 watch(() => config.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.language
+    updateContent();
 });
 
 /// watch for file list changes
@@ -733,8 +734,9 @@ async function updateContent() {
     await getFileList("","", "", "", "", false, 0, false, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
-    if(!config.albumId) {
-      contentTitle.value = localeMsg.value.sidebar.album;
+    if(config.albumId === null) {
+      contentTitle.value = "";
+      fileList.value = [];
     } else {
       const album = await getAlbum(config.albumId);
       if(album) {
@@ -749,37 +751,38 @@ async function updateContent() {
     }
   }
   else if(newIndex === 2) {   // favorite
-    if(config.favoriteFolderId === 0) { // 0: favorite files
-      contentTitle.value = localeMsg.value.favorite.files;
-      await getFileList("", "", "", "", "", true, 0, false, fileListOffset.value);
-    } else {                // else: favorite folders
-      const album = await getAlbum(config.favoriteAlbumId);
-      if(album) {
-        contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
-        await getFileList(config.favoriteFolderPath, "", "", "", "", false, 0, false, fileListOffset.value);
-      };
+    if(config.favoriteFolderId === null) {
+      contentTitle.value = "";
+      fileList.value = [];
+    } else {
+      if(config.favoriteFolderId === 0) { // favorite files
+        contentTitle.value = localeMsg.value.favorite.files;
+        await getFileList("", "", "", "", "", true, 0, false, fileListOffset.value);
+      } else {                // favorite folders
+        const album = await getAlbum(config.favoriteAlbumId);
+        if(album) {
+          contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
+          await getFileList(config.favoriteFolderPath, "", "", "", "", false, 0, false, fileListOffset.value);
+        };
+      }
     }
   }
   else if(newIndex === 3) {   // tag
-    if (!config.tagId) {
-      contentTitle.value = localeMsg.value.sidebar.tag;
+    if (config.tagId === null) {
+      contentTitle.value = "";
+      fileList.value = [];
     } else {
       const tagName = await getTagName(config.tagId);
       if (tagName) {
         contentTitle.value = tagName;
-      } else {
-        contentTitle.value = localeMsg.value.sidebar.tag;
-      }
-    }
-    if(config.tagId > 0) {
-      await getFileList("", "", "", "", "", false, config.tagId, false, fileListOffset.value);
-    } else {
-      fileList.value = [];
+        await getFileList("", "", "", "", "", false, config.tagId, false, fileListOffset.value);
+      } 
     }
   }
   else if(newIndex === 4) {   // calendar
-    if(!config.calendarYear) {
-      contentTitle.value = localeMsg.value.sidebar.calendar;
+    if(config.calendarYear === null) {
+      contentTitle.value = "";
+      fileList.value = [];
     } else {
       if (config.calendarMonth === -1) {          // yearly
         contentTitle.value = formatDate(config.calendarYear, 1, 1, localeMsg.value.format.year);
@@ -793,28 +796,45 @@ async function updateContent() {
     }
   }
   else if(newIndex === 5) {   // location
-    contentTitle.value = localeMsg.value.sidebar.location;
-    fileList.value = [];
+    if(config.locationId === null) {
+      contentTitle.value = "";
+      fileList.value = [];
+    } else {
+    //   const location = await getLocation(config.locationId);
+    //   if(location) {
+    //     contentTitle.value = location.name;
+    //     await getFileList("", "", "", "", "", false, 0, false, fileListOffset.value);
+    //   }
+    }
   }
   else if(newIndex === 6) {   // camera
-    if(config.cameraModel) {
-      contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-    } else if(config.cameraMake){
-      contentTitle.value = `${config.cameraMake}`;
+    if(config.cameraMake === null) {
+      contentTitle.value = "";
+      fileList.value = [];
     } else {
-      contentTitle.value = localeMsg.value.sidebar.camera;
+      if(config.cameraModel) {
+        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
+        await getFileList("", "", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
+      } else {
+        contentTitle.value = `${config.cameraMake}`;
+        await getFileList("", "", "", config.cameraMake, "", false, 0, false, fileListOffset.value);
+      } 
     }
-    await getFileList("", "", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
   } 
   else if(newIndex === 7) {   // trash
-    if(config.trashFolderId === 0) { // 0: trash files
-      contentTitle.value = localeMsg.value.trash.files;
-      await getFileList("", "", "", "", "", false, 0, true, fileListOffset.value);
-    } else {                // else: trash folders
-      const album = await getAlbum(config.trashAlbumId);
-      if(album) {
-        contentTitle.value = localeMsg.value.trash.folders + getRelativePath(config.trashFolderPath, album.path);
-        await getFileList(config.trashFolderPath, "", "", "", "", false, 0, true, fileListOffset.value);
+    if(config.trashAlbumId === null) {
+      contentTitle.value = "";
+      fileList.value = [];
+    } else { 
+      const trashAlbum = await getTrashAlbum();
+      if(trashAlbum) {
+        if(config.trashFolderPath === trashAlbum.path) { // current folder is root
+          contentTitle.value = localeMsg.value.sidebar.trash;
+        } else {
+          contentTitle.value = localeMsg.value.sidebar.trash + getRelativePath(config.trashFolderPath, trashAlbum.path);
+        }
+        fileList.value = await getFolderFiles(config.trashFolderId, config.trashFolderPath);
+        hasMoreFiles.value = false;  // getFolderFiles always get all files
       }
     }
   }
@@ -906,7 +926,8 @@ const clickMoveToTrash = async () => {
         await trashFile(file.id, file.file_path);
       }
     }
-    // TODO: refresh file list
+    // refresh file list
+    updateContent();
   }
 }
 
@@ -942,30 +963,30 @@ const clickRestoreFromTrash = async () => {
 }
 
 // click delete menu item
-const clickDeleteFile = async () => {
-  if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
-    const deletes = fileList.value
-      .filter(item => item.isSelected)
-      .map(async item => {
-        const deletedFile = await deleteFile(item.id, item.file_path);
-        if(deletedFile) {
-          console.log('clickDeleteFile:', deletedFile);
-          removeFromFileList(fileList.value.indexOf(item));
-        }
-      });
-    await Promise.all(deletes); // parallelize DB updates
-    selectMode.value = false; // exit multi-select mode
-  } 
-  else if(selectedItemIndex.value >= 0) {               // single select mode
-    const file = fileList.value[selectedItemIndex.value];
-    const deletedFile = await deleteFile(file.id, file.file_path);
-    if(deletedFile) {
-      console.log('clickDeleteFile:', deletedFile);
-      removeFromFileList(selectedItemIndex.value);
-    }
-  }
-  showDeleteMsgbox.value = false;
-}
+// const clickDeleteFile = async () => {
+//   if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
+//     const deletes = fileList.value
+//       .filter(item => item.isSelected)
+//       .map(async item => {
+//         const deletedFile = await deleteFile(item.id, item.file_path);
+//         if(deletedFile) {
+//           console.log('clickDeleteFile:', deletedFile);
+//           removeFromFileList(fileList.value.indexOf(item));
+//         }
+//       });
+//     await Promise.all(deletes); // parallelize DB updates
+//     selectMode.value = false; // exit multi-select mode
+//   } 
+//   else if(selectedItemIndex.value >= 0) {               // single select mode
+//     const file = fileList.value[selectedItemIndex.value];
+//     const deletedFile = await deleteFile(file.id, file.file_path);
+//     if(deletedFile) {
+//       console.log('clickDeleteFile:', deletedFile);
+//       removeFromFileList(selectedItemIndex.value);
+//     }
+//   }
+//   showDeleteMsgbox.value = false;
+// }
 
 // remove an file item from the list and update the selected item index
 function removeFromFileList(index) {

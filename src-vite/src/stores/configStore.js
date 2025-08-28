@@ -29,7 +29,8 @@ export const useConfigStore = defineStore('configStore', {
     calendarDate: null,         // selected date (1-31), -1 means selecting a month
 
     // location
-
+    locationId: null,           // selected location id
+    
     // cameras
     cameraMake: null,           // selected camera make
     cameraModel: null,          // selected camera model

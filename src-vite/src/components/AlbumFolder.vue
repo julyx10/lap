@@ -5,7 +5,7 @@
       :id="'folder-' + child.id" 
       class="pl-4"
     >
-      <div v-if="!child.is_deleted" 
+      <div v-if="!child.trashed_at" 
         :class="[
           'my-1 mr-1 h-6 flex items-center rounded border-l-2 whitespace-nowrap cursor-pointer group',
           {
@@ -54,7 +54,7 @@
           </div>
         </template>
       </div>
-      <AlbumFolder v-if="child.is_expanded && !child.is_deleted" 
+      <AlbumFolder v-if="child.is_expanded && !child.trashed_at" 
         :key="child.id"
         :children="child.children" 
         :rootAlbumId="rootAlbumId"
@@ -124,7 +124,7 @@ import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
-import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder } from '@/common/api';
+import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, trashFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -314,21 +314,12 @@ const clickFolder = async (albumId, folder) => {
 
 // move selected folder to trash (soft delete)
 const clickMoveToTrash = async () => {
-  // console.log('AlbumFolder.vue-clickMoveToTrash:', selectedFolderId.value);
-  // const result = await setFolderDelete(selectedFolderId.value, getTimestamp());
-  // if (result) {
-  //   let folder = getFolderById(selectedFolderId.value);
-  //   folder.is_deleted = true;
-  //   folder.id = 0; // remove id to avoid click folder again
-
-  //   // emit('message-from-select-folder', {
-  //   //   message: 'delete-folder',
-  //   //   albumId: selectedAlbumId.value,
-  //   //   folderId: 0,
-  //   //   folderPath: "",
-  //   //   componentId: props.componentId
-  //   // });
-  // } 
+  const result = await trashFolder(selectedFolderPath.value);
+  if (result) {
+    let folder = getFolderById(selectedFolderId.value);
+    folder.trashed_at = Date.now() / 1000; // Set trashed timestamp
+    folder.id = 0; // remove id to avoid click folder again
+  }
 };
 
 /// click expand icon to toggle folder expansion
@@ -448,7 +439,7 @@ const clickMoveTo = async () => {
       console.log('AlbumFolder.vue-clickMoveTo: move folder success:', newPath);
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
-      folder.is_deleted = true;
+      folder.trashed_at = Date.now() / 1000; // Set trashed timestamp
       folder.id = 0; // remove id to avoid click folder again
       
       // refresh the dest folder

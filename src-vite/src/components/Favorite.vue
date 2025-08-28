@@ -61,9 +61,9 @@
       </div>
 
       <!-- Display message if no favorite folders are found -->
-      <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+      <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30 cursor-default">
         <IconFolderFavorite class="w-8 h-8" />
-        <span class="mt-2">{{ $t('tooltip.not_found.folders') }}</span>
+        <span class="mt-2 whitespace-nowrap">{{ $t('tooltip.not_found.folders') }}</span>
       </div>
 
     </div>

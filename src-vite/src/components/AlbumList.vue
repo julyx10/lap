@@ -5,7 +5,7 @@
       <!-- drag to change albums' display order -->
       <VueDraggable 
         v-model="albums" 
-        :disabled="componentId === 1 && !isEditList"
+        :disabled="componentId !== 0 && !isEditList"
         group="album-folder"
         :handle="'.drag-handle'" 
         :animation="200"
@@ -31,26 +31,26 @@
               :buttonClasses="'text-error'"
               @click.stop="removingAlbumId = album.id; showRemoveMsgbox = true"
             />
-            <component v-else :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
+            <component v-else :is="componentId === 2 ? IconTrash : album.is_expanded ? IconFolderExpanded : IconFolder" 
               class="mx-1 w-5 h-5 t-icon-animate hover:text-base-content cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
 
             <div class="overflow-hidden whitespace-pre text-ellipsis">
-              {{ album.name }}
+              {{ componentId === 2 ? $t('sidebar.trash') : album.name }}
             </div>
             <TButton v-if="isEditList" 
               class="ml-auto drag-handle"
               :icon="IconDragHandle"
               :buttonSize="'small'"
             />
-            <DropDownMenu v-else-if="componentId === 0 && !isDragging"
+            <DropDownMenu v-else-if="(componentId === 0 || componentId === 2) && !isDragging"
               :class="[
                 'ml-auto pl-1',
-                selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
+                !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
-              :menuItems="moreMenuItems"
+              :menuItems="componentId === 2 ? moreMenuItemsTrash : moreMenuItems"
               :smallIcon="true"
             />
           </div>
@@ -129,7 +129,7 @@ import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
 import { config, isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
-         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder } from '@/common/api';
+         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, getTrashAlbum } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
@@ -144,26 +144,27 @@ import {
   IconFolderExpanded,
   IconNewFolder,
   IconMore,
-  IconRefresh,
   IconDragHandle,
   IconRemove,
   IconEdit,
+  IconTrash,
+  IconTrashEmpty,
 } from '@/common/icons';
 
 const props = defineProps({
   albumId: {    // album id
     type: Number,
-    required: true
+    required: false
   },
   folderId: {   // folder id
     type: Number,
-    required: true
+    required: false
   },
   folderPath: { // folder path
     type: String,
-    required: true
+    required: false
   },
-  componentId: {     // 0: album pane, 1: move/copy to mode(select destination folder)
+  componentId: {  // 0: album pane; 1: move/copy to mode(select destination folder); 2: trash pane
     type: Number,
     required: true
   }
@@ -237,9 +238,30 @@ const moreMenuItems = computed(() => {
   ];
 });
 
+const moreMenuItemsTrash = computed(() => {
+  return [
+    {
+      label: localeMsg.value.menu.trash.empty,
+      icon: IconTrashEmpty,
+      action: () => {
+        // TODO: empty trash
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+  ];
+});
+
 onMounted( async () => {
   if (albums.value.length === 0) {
-    albums.value = await getAllAlbums();
+    if (props.componentId === 2) {
+      const trashAlbum = await getTrashAlbum();
+      albums.value = trashAlbum ? [trashAlbum] : [];
+    } else {
+      albums.value = await getAllAlbums();
+    }
     isLoading.value = false;
 
     if (props.albumId > 0) {

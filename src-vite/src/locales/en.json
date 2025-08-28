@@ -85,7 +85,7 @@
 
   "tooltip": {
     "not_found": {
-      "albums": "No albums found, try to add a folder",
+      "albums": "No albums found. Try to add an existing folder which contains images or videos",
       "files": "No files found",
       "folders": "No folders found",
       "tag": "No tags found",
@@ -358,6 +358,8 @@
       "storage": {
         "total_file_count": "Total file count",
         "total_file_size": "Total file size",
+        "trash_file_count": "Trash file count",
+        "trash_file_size": "Trash file size",
         "file_path": "Storage file path",
         "file_size": "Storage file size"
       }

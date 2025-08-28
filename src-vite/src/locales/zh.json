@@ -85,7 +85,7 @@
 
   "tooltip": {
     "not_found": {
-      "albums": "未找到相册，尝试添加一个文件夹",
+      "albums": "未找到相册。尝试添加一个包含图片或视频的文件夹",
       "files": "未找到文件",
       "folders": "未找到文件夹",
       "tag": "未找到标签",
@@ -358,6 +358,8 @@
       "storage": {
         "total_file_count": "总文件数",
         "total_file_size": "总文件大小",
+        "trash_file_count": "回收站文件数",
+        "trash_file_size": "回收站文件大小",
         "file_path": "存储文件路径",
         "file_size": "存储文件大小"
       }

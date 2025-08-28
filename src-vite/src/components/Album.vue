@@ -78,14 +78,14 @@ const moreMenuItems = computed(() => {
         albumListRef.value.isEditList = true;
       }
     },
-    {
-      label: localeMsg.value.menu.refresh,
-      icon: IconRefresh,
-      disabled: config.albumId === null,
-      action: () => {
-        albumListKey.value += 1;  // refresh component
-      }
-    }
+    // {
+    //   label: localeMsg.value.menu.refresh,
+    //   icon: IconRefresh,
+    //   disabled: config.albumId === null,
+    //   action: () => {
+    //     albumListKey.value += 1;  // refresh component
+    //   }
+    // }
   ];
 });
 

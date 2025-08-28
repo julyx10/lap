@@ -28,6 +28,9 @@ export async function getAllAlbums() {
 
 // get one album
 export async function getAlbum(albumId) {
+  if(!albumId) {
+    return null;
+  }
   try {
     const album = await invoke('get_album', { albumId });
     console.log('get_album', album);
@@ -232,18 +235,35 @@ export async function copyFolder(folderPath, newFolderPath) {
   return null;
 }
 
-// delete a folder
-export async function deleteFolder(folderPath) {
+// trash a folder
+export async function trashFolder(folderPath) {
   try {
-    const result = await invoke('delete_folder', { folderPath });
-    if (result) {
-      return true;
-    };
+    const result = await invoke('trash_folder', { folderPath });
   } catch (error) {
-    console.log('Failed to delete folder:', error);
+    console.log('Failed to trash folder:', error);
   }
-  return false;
-}
+  return null;
+};
+
+// restore a folder
+// export async function restoreFolder(folderPath) {
+//   try {
+//     const result = await invoke('restore_folder', { folderPath });
+//   }
+// }
+
+// delete a folder
+// export async function deleteFolder(folderPath) {
+//   try {
+//     const result = await invoke('delete_folder', { folderPath });
+//     if (result) {
+//       return true;
+//     };
+//   } catch (error) {
+//     console.log('Failed to delete folder:', error);
+//   }
+//   return false;
+// }
 
 /// reveal a folder in file explorer( or finder)
 export async function revealFolder(folderPath) {
@@ -369,18 +389,15 @@ export async function copyFile(filePath, newFolderPath) {
   return null;
 }
 
-// delete a file
-export async function deleteFile(fileId, filePath) {
+// trash a file
+export async function trashFile(fileId, filePath) {
   try {
-    const result = await invoke('delete_file', { fileId, filePath });
-    if(result) {
-      return result;
-    };
+    return await invoke('trash_file', { fileId, filePath });
   } catch (error) {
-    console.log('Failed to delete file:', error);
+    console.error('trashFile error:', error);
+    return null;
   }
-  return null;
-};
+}
 
 // edit file comment
 export async function editFileComment(fileId, comment) {
@@ -643,50 +660,33 @@ export async function getTakenDates(ascending = true) {
 
 // trash
 
-// get trash folders
-export async function getTrashFolders() {
+// get trash album
+export async function getTrashAlbum() {
   try {
-    const trashFolders = await invoke('get_trash_folders');
-    if (trashFolders) {
-      // sort trash folders by name in locale order
-      trashFolders.sort((a, b) => localeComp(config.language, a.name, b.name));
-      return trashFolders;
+    const trashAlbum = await invoke('get_trash_album');
+    if (trashAlbum) {
+      return trashAlbum;
     }
   } catch (error) {
-    console.error('Failed to get trash folders:', error);
+    console.error('Failed to get trash album:', error);
   }
   return null;
 }
 
-export async function trashFile(fileId, filePath) {
+// get trash file count and sum
+export async function getTrashCountAndSum() {
   try {
-    return await invoke('trash_file', { fileId, filePath });
-  } catch (error) {
-    console.error('trashFile error:', error);
-    return null;
-  }
-}
-
-export async function trashFolders(folderIds) {
-  try {
-    if (folderIds && folderIds.length > 0) {
-      await invoke('trash_folders', { folderIds });
+    const trashCountAndSum = await invoke('get_trash_count_and_sum');
+    if (trashCountAndSum) {
+      return trashCountAndSum;
     }
   } catch (error) {
-    console.error('trashFolders error:', error);
+    console.error('Failed to get trash count and sum:', error);
   }
+  return null;
 }
 
-export async function restoreFiles(fileIds) {
-  try {
-    if (fileIds && fileIds.length > 0) {
-      await invoke('restore_files', { fileIds });
-    }
-  } catch (error) {
-    console.error('restoreFiles error:', error);
-  }
-}
-
+// restore folders
 export async function restoreFolders(folderIds) {
   try {
     if (folderIds && folderIds.length > 0) {
@@ -697,23 +697,36 @@ export async function restoreFolders(folderIds) {
   }
 }
 
-export async function permanentlyDeleteFiles(fileIds) {
+// restore files
+export async function restoreFiles(fileIds) {
   try {
     if (fileIds && fileIds.length > 0) {
-      await invoke('permanently_delete_files', { fileIds });
+      await invoke('restore_files', { fileIds });
     }
   } catch (error) {
-    console.error('permanentlyDeleteFiles error:', error);
+    console.error('restoreFiles error:', error);
   }
 }
 
-export async function permanentlyDeleteFolders(folderIds) {
+// delete folders
+export async function deleteFolders(folderIds) {
   try {
     if (folderIds && folderIds.length > 0) {
-      await invoke('permanently_delete_folders', { folderIds });
+      await invoke('delete_folders', { folderIds });
     }
   } catch (error) {
-    console.error('permanentlyDeleteFolders error:', error);
+    console.error('deleteFolders error:', error);
+  }
+}
+
+// delete files
+export async function deleteFiles(fileIds) {
+  try {
+    if (fileIds && fileIds.length > 0) {
+      await invoke('delete_files', { fileIds });
+    }
+  } catch (error) {
+    console.error('deleteFiles error:', error);
   }
 }
 

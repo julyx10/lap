@@ -23,10 +23,9 @@
             @click="clickCameraMake(camera)"
           >
             <!-- <component :is="camera.is_expanded ? IconFolderExpanded : IconFolder" class="mx-1 h-5  shrink-0" @click.stop="clickExpandCamera(camera)"/> -->
-            <IconRight
+            <IconCamera
               :class="[
                 'mx-1 h-5 shrink-0 transition-transform', 
-                camera.is_expanded ? 'rotate-90' : ''
               ]"
               @click.stop="clickExpandCamera(camera)"
             />
