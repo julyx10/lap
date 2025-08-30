@@ -44,13 +44,13 @@
               :icon="IconDragHandle"
               :buttonSize="'small'"
             />
-            <DropDownMenu v-else-if="(componentId === 0 || componentId === 2) && !isDragging"
+            <DropDownMenu v-else-if="componentId === 0 && !isDragging"
               :class="[
                 'ml-auto pl-1',
                 !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
-              :menuItems="componentId === 2 ? moreMenuItemsTrash : moreMenuItems"
+              :menuItems="moreMenuItems"
               :smallIcon="true"
             />
           </div>
@@ -235,22 +235,6 @@ const moreMenuItems = computed(() => {
     //     await expandAlbum(album, true);
     //   }
     // },
-  ];
-});
-
-const moreMenuItemsTrash = computed(() => {
-  return [
-    {
-      label: localeMsg.value.menu.trash.empty,
-      icon: IconTrashEmpty,
-      action: () => {
-        // TODO: empty trash
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
   ];
 });
 

@@ -58,10 +58,10 @@
         />
 
         <!-- magic button -->
-        <TButton
+        <!-- <TButton
           :icon="IconMagic"
           @click="clickAI"
-        />
+        /> -->
         
         <!-- preview -->
         <TButton
@@ -789,7 +789,7 @@ async function updateContent() {
       } else if (config.calendarDate === -1) {    // monthly
         contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.format.month);
       } else {                                    // daily
-        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long_with_weekday);
+        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long);
       }
       const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
       await getFileList("", startDate, endDate, "", "", false, 0, false, fileListOffset.value);
@@ -1233,6 +1233,10 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
 
 // Open the image viewer window
 async function openImageViewer(index: number, newViewer = false) {
+  if(config.sidebarIndex === 7) {  // trash
+    return;
+  }
+
   const webViewLabel = 'imageviewer';
 
   const fileCount = fileList.value.length;

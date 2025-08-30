@@ -179,7 +179,7 @@ impl Album {
         Ok(result)
     }
 
-    /// get trash album
+    /// get trash album (album_type = 0)
     pub fn get_trash_album() -> Result<Self, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
@@ -205,7 +205,6 @@ pub struct AFolder {
     pub original_album_id: Option<i64>,
     pub name_in_trash: Option<String>,
     pub trashed_at: Option<u64>,   // trashed time
-
 }
 
 impl AFolder {
@@ -380,8 +379,10 @@ impl AFolder {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT id, album_id, name, path, is_favorite, created_at, modified_at, original_album_id, name_in_trash, trashed_at
-                FROM afolders WHERE is_favorite = 1 and trashed_at IS NULL",
+                "SELECT a.id, a.album_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at, a.original_album_id, a.name_in_trash, a.trashed_at
+                FROM afolders a
+                LEFT JOIN albums b ON a.album_id = b.id
+                WHERE a.is_favorite = 1 and b.album_type = 1",
             )
             .map_err(|e| e.to_string())?;
 
@@ -398,26 +399,28 @@ impl AFolder {
     }
 
     // get all folders in trash (soft deleted)
-    pub fn get_trash_folders() -> Result<Vec<Self>, String> {
-        let conn = open_conn()?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT id, album_id, name, path, is_favorite, created_at, modified_at, original_album_id, name_in_trash, trashed_at
-                 FROM afolders WHERE trashed_at IS NOT NULL",
-            )
-            .map_err(|e| e.to_string())?;
+    // pub fn get_trash_folders() -> Result<Vec<Self>, String> {
+    //     let conn = open_conn()?;
+    //     let mut stmt = conn
+    //         .prepare(
+    //             "SELECT a.id, a.album_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at, a.original_album_id, a.name_in_trash, a.trashed_at
+    //              FROM afolders a
+    //              LEFT JOIN albums b ON a.album_id = b.id
+    //              WHERE a.trashed_at IS NOT NULL and b.album_type = 0",
+    //         )
+    //         .map_err(|e| e.to_string())?;
 
-        let rows = stmt
-            .query_map(params![], |row| Self::from_row(row))
-            .map_err(|e| e.to_string())?;
+    //     let rows = stmt
+    //         .query_map(params![], |row| Self::from_row(row))
+    //         .map_err(|e| e.to_string())?;
 
-        let mut folders = Vec::new();
-        for folder in rows {
-            folders.push(folder.unwrap());
-        }
+    //     let mut folders = Vec::new();
+    //     for folder in rows {
+    //         folders.push(folder.unwrap());
+    //     }
 
-        Ok(folders)
-    }
+    //     Ok(folders)
+    // }
 
 }
 
@@ -671,18 +674,14 @@ impl AFile {
 
     // Helper function to build the count SQL query
     fn build_count_query(is_trashed: bool) -> String {
-        let mut query = String::from(
-            "SELECT COUNT(*), SUM(a.size)
+        let base_query = "SELECT COUNT(*), SUM(a.size)
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
-            LEFT JOIN albums c ON b.album_id = c.id"
-        );
-        if is_trashed {
-            query += " WHERE a.trashed_at IS NOT NULL OR b.trashed_at IS NOT NULL";
-        } else {
-            query += " WHERE a.trashed_at IS NULL AND b.trashed_at IS NULL";
-        }
-        query
+            LEFT JOIN albums c ON b.album_id = c.id";
+        
+        let where_clause = if is_trashed { " WHERE c.album_type = 0" } else { " WHERE c.album_type = 1" };
+        
+        format!("{}{}", base_query, where_clause)
     }
 
     // build the base SQL query
@@ -876,11 +875,13 @@ impl AFile {
         
         let order_clause = if ascending { "ASC" } else { "DESC" };
         let query = format!(
-            "SELECT taken_date, COUNT(1) 
-            FROM afiles 
-            WHERE taken_date IS NOT NULL
-            GROUP BY taken_date
-            ORDER BY taken_date {}",
+            "SELECT a.taken_date, COUNT(1) 
+            FROM afiles a
+            LEFT JOIN afolders b ON a.folder_id = b.id
+            LEFT JOIN albums c ON b.album_id = c.id
+            WHERE a.taken_date IS NOT NULL and c.album_type = 1
+            GROUP BY a.taken_date
+            ORDER BY a.taken_date {}",
             order_clause
         );
 
@@ -968,9 +969,9 @@ impl AFile {
         }
     
         if is_trashed {
-            conditions.push("(a.trashed_at IS NOT NULL OR b.trashed_at IS NOT NULL)");
+            conditions.push("c.album_type = 0");
         } else {
-            conditions.push("a.trashed_at IS NULL AND b.trashed_at IS NULL");
+            conditions.push("c.album_type = 1");
         }
     
         let mut query = Self::build_base_query();
@@ -1266,11 +1267,13 @@ impl ACamera {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT e_make, e_model 
-                FROM afiles 
-                WHERE e_make IS NOT NULL AND e_model IS NOT NULL
-                GROUP BY e_make, e_model
-                ORDER BY e_make, e_model",
+                "SELECT a.e_make, a.e_model 
+                FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id
+                WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL and c.album_type = 1
+                GROUP BY a.e_make, a.e_model
+                ORDER BY a.e_make, a.e_model",
             )
             .map_err(|e| e.to_string())?;
 

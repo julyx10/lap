@@ -5,7 +5,7 @@
       :id="'folder-' + child.id" 
       class="pl-4"
     >
-      <div v-if="!child.trashed_at" 
+      <div v-if="child.id != 0" 
         :class="[
           'my-1 mr-1 h-6 flex items-center rounded border-l-2 whitespace-nowrap cursor-pointer group',
           {
@@ -43,18 +43,18 @@
             <IconFavorite v-if="child.is_favorite" 
               class="h-4 w-4" 
             />
-            <DropDownMenu v-show="componentId === 0 && !isRenamingFolder"
+            <DropDownMenu v-show="(componentId === 0 && !isRenamingFolder) || componentId === 2"
               :class="[
                 selectedFolderId != child.id ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
-              :menuItems="moreMenuItems"
+              :menuItems="componentId === 2 ? moreMenuItemsTrash : moreMenuItems"
               :smallIcon="true"
             />
           </div>
         </template>
       </div>
-      <AlbumFolder v-if="child.is_expanded && !child.trashed_at" 
+      <AlbumFolder v-if="child.is_expanded && child.id != 0" 
         :key="child.id"
         :children="child.children" 
         :rootAlbumId="rootAlbumId"
@@ -134,8 +134,6 @@ import ToolTip from '@/components/ToolTip.vue';
 
 import {
   IconRight,
-  IconFolderExpanded,
-  IconFolder,
   IconMore,
   IconNewFolder,
   IconRename,
@@ -143,7 +141,7 @@ import {
   IconTrash,
   IconFavorite,
   IconUnFavorite,
-  IconRefresh,
+  IconTrashRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -276,6 +274,24 @@ const moreMenuItems = computed(() => {
   ];
 });
 
+const moreMenuItemsTrash = computed(() => {
+  return [
+    {
+      label: localeMsg.value.menu.trash.restore,
+      icon: IconTrashRestore,
+      action: () => {
+        // clickRestoreFolder();
+      }
+    },
+    {
+      label: localeMsg.value.menu.trash.delete,
+      icon: IconTrash,
+      action: () => {
+        // clickDeleteFolder();
+      }
+    }
+  ];
+});
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
   selectedAlbumId.value = newAlbumId;
   selectedFolderId.value = newFolderId;
@@ -309,16 +325,6 @@ const clickFolder = async (albumId, folder) => {
     });
   } else {
     toolTipRef.value.showTip(localeMsg.value.msgbox.select_folder.error);
-  }
-};
-
-// move selected folder to trash (soft delete)
-const clickMoveToTrash = async () => {
-  const result = await trashFolder(selectedFolderPath.value);
-  if (result) {
-    let folder = getFolderById(selectedFolderId.value);
-    folder.trashed_at = Date.now() / 1000; // Set trashed timestamp
-    folder.id = 0; // remove id to avoid click folder again
   }
 };
 
@@ -432,14 +438,10 @@ const handleEscKey = (event, folderID) => {
 
 // move folder to dest folder
 const clickMoveTo = async () => {
-  try {
-    console.log('AlbumFolder.vue-clickMoveTo:', selectedFolderPath.value, config.destAlbumId, config.destFolderPath);
-    const newPath = await moveFolder(selectedFolderPath.value, config.destAlbumId, config.destFolderPath);
+  moveFolder(selectedFolderPath.value, config.destAlbumId, config.destFolderPath).then((newPath) => {
     if (newPath) {
-      console.log('AlbumFolder.vue-clickMoveTo: move folder success:', newPath);
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
-      folder.trashed_at = Date.now() / 1000; // Set trashed timestamp
       folder.id = 0; // remove id to avoid click folder again
       
       // refresh the dest folder
@@ -453,28 +455,37 @@ const clickMoveTo = async () => {
     } else {
       toolTipRef.value.showTip(localeMsg.value.msgbox.move_to.error);
     }
-  } catch (error) {
-    console.error('Failed to move folder:', error);
-  }
+  });
 };
 
 // copy folder to dest folder
 const clickCopyTo = async () => {
-  try {
-    console.log('AlbumFolder.vue-clickCopyTo:', selectedFolderPath.value, config.destFolderPath);
-    const newPath = await copyFolder(selectedFolderPath.value, config.destFolderPath);
+  copyFolder(selectedFolderPath.value, config.destFolderPath).then((newPath) => {
     if (newPath) {
+      // close copy-to dialog
       showCopyTo.value = false;
-
-      // TODO:update folder after copy-to
     } else {
       toolTipRef.value.showTip(localeMsg.value.msgbox.copy_to.error);
     }
-  } catch (error) {
-    console.error('Failed to copy folder:', error);
-  }
+  });
 };
 
+// move selected folder to trash (soft delete)
+const clickMoveToTrash = async () => {
+  trashFolder(selectedFolderPath.value).then((result) => {
+    if (result) {
+      let folder = getFolderById(selectedFolderId.value);
+      folder.id = 0; // remove id to avoid click folder again
+
+      emit('message-from-select-folder', { 
+        message: 'refresh-folder',
+        folderPath: "",                   // select new folder
+      });
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.msgbox.trash.error);
+    }
+  });
+};
 
 // toggle favorite folder
 const toggleFavorite = async () => {

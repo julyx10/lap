@@ -195,6 +195,12 @@
       "ok": "コピー",
       "error": "'{source}' を '{dest}' にコピーできませんでした。"
     },
+    "trash": {
+      "title": "ゴミ箱へ移動",
+      "content": "フォルダ '{folder}' はゴミ箱へ移動されます。",
+      "ok": "ゴミ箱へ移動",
+      "error": "フォルダ '{folder}' をゴミ箱へ移動できませんでした。"
+    },
     "rename_file": {
       "title": "ファイル名を変更",
       "placeholder": "新しいファイル名を入力",

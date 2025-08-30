@@ -38,7 +38,7 @@
         <div v-if="!config.calendarIsMonthly" class="flex flex-col items-center mr-4">
           <div class="grid grid-cols-7 gap-2 text-center">
             <div 
-              v-for="(day, index) in localeMsg.calendar_weekdays" 
+              v-for="(day, index) in localeMsg.calendar.weekdays" 
               :key="index" 
               class="p-2 w-8 flex items-center justify-center"
             >

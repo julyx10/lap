@@ -46,7 +46,7 @@
         
           <!-- status icons -->
           <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">
-            <template v-if="!file.deleted_at">
+            <template v-if="config.sidebarIndex !== 7">
               <IconVideo v-if="file.file_type===2" class="t-icon-size-xs"></IconVideo>
               <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
               <IconRotate v-if="file.rotate % 360 > 0"
@@ -61,7 +61,7 @@
             </template>
             <template v-else>
               <IconTrash class="t-icon-size-xs"></IconTrash>
-              {{ $t('trash.days', { count: getDaysElapsed(file.deleted_at) }) }}
+              {{ $t('trash.days', { count: getDaysElapsed(file.trashed_at) }) }}
             </template>
           </div>
 
@@ -158,26 +158,26 @@ const scrollContainer = ref(null); // Ref for the scrollable element
 
 const trashMenuItems = computed(() => {
   return [
-    {
-      label: localeMsg.value.menu.file.open,
-      icon: IconOpen,
-      shortcut: isMac ? '⏎' : 'Enter',
-      action: () => {
-        openItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.copy,
-      icon: IconCopy,
-      shortcut: isMac ? '⌘C' : 'Ctrl+C',
-      action: () => {
-        copyItem();
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
+    // {
+    //   label: localeMsg.value.menu.file.open,
+    //   icon: IconOpen,
+    //   shortcut: isMac ? '⏎' : 'Enter',
+    //   action: () => {
+    //     openItem();
+    //   }
+    // },
+    // {
+    //   label: localeMsg.value.menu.file.copy,
+    //   icon: IconCopy,
+    //   shortcut: isMac ? '⌘C' : 'Ctrl+C',
+    //   action: () => {
+    //     copyItem();
+    //   }
+    // },
+    // {
+    //   label: "-",   // separator
+    //   action: () => {}
+    // },
     {
       label: localeMsg.value.menu.trash.restore,
       icon: IconTrashRestore,

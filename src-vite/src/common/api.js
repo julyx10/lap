@@ -239,6 +239,9 @@ export async function copyFolder(folderPath, newFolderPath) {
 export async function trashFolder(folderPath) {
   try {
     const result = await invoke('trash_folder', { folderPath });
+    if(result) {
+      return result;
+    };
   } catch (error) {
     console.log('Failed to trash folder:', error);
   }

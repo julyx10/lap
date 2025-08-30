@@ -194,6 +194,12 @@
       "ok": "Copy",
       "error": "Cannot copy '{source}' to '{dest}'."
     },
+    "trash": {
+      "title": "Move to trash",
+      "content": "The folder '{folder}' will be moved to trash.",
+      "ok": "Move To Trash",
+      "error": "Cannot move '{folder}' to trash."
+    },
     "rename_file": {
       "title": "Rename file",
       "placeholder": "Enter new file name",

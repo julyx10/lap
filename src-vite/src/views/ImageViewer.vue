@@ -154,9 +154,6 @@
           :isZoomFit="config.isZoomFit"
           @dblclick="toggleZoomFit()"
         />
-        <p v-else>
-          {{ loadError ? $t('image_viewer.failed') + ': ' + filePath : $t('image_viewer.loading') }}
-        </p>
 
         <!-- no image selected -->
         <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">

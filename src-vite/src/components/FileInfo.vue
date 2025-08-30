@@ -119,10 +119,6 @@
             <td>{{ $t('file_info.comment') }}</td>
             <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
-          <tr v-if="fileInfo.deleted_at">
-            <td>{{ $t('file_info.recent_deleted') }}</td>
-            <td>{{ $t('trash.days', { count: getDaysElapsed(fileInfo.deleted_at) }) }}</td>
-          </tr>
         </tbody>
       </table>
     </div>

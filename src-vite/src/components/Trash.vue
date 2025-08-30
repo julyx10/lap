@@ -5,6 +5,11 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
+
+      <DropDownMenu 
+        :iconMenu="IconMore" 
+        :menuItems="moreMenuItems"
+      />
     </div>
 
     <AlbumList ref="albumListRef" 
@@ -26,6 +31,8 @@ import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 
 import AlbumList from '@/components/AlbumList.vue';
+import DropDownMenu from '@/components/DropDownMenu.vue';
+import { IconMore, IconTrashEmpty } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {
@@ -42,5 +49,18 @@ const albumListRef = ref<AlbumList | null>(null);
 
 // refresh component
 const albumListKey = ref(0);
+
+// more menuitems
+const moreMenuItems = computed(() => {
+  return [
+    {
+      label: localeMsg.value.menu.trash.empty,
+      icon: IconTrashEmpty,
+      action: () => {
+        // albumListRef.value.clickEmptyTrash();
+      }
+    }
+  ];
+});
 
 </script>

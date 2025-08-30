@@ -29,7 +29,7 @@ native-dialog = "0.7.0"
 dirs = "5.0.1"
 walkdir = "2.5.0"
 base64 = "0.22.1"
-image = "0.25.5"
+image = "0.25.6"
 imagesize = "0.13.0"
 tokio = { version = "1.44.1", features = ["full"] }
 opener = "0.7.2"

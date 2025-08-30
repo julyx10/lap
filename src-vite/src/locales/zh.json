@@ -194,6 +194,12 @@
       "ok": "复制",
       "error": "无法将 '{source}' 复制到 '{dest}'."
     },
+    "trash": {
+      "title": "移入回收站",
+      "content": "文件夹 '{folder}' 将被移入回收站。",
+      "ok": "移入回收站",
+      "error": "无法将文件夹 '{folder}' 移入回收站。"
+    },
     "rename_file": {
       "title": "重命名文件",
       "placeholder": "输入新文件名",

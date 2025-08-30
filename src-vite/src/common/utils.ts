@@ -36,14 +36,12 @@ export function getPlayInterval(): number {
   return [1, 3, 5, 10, 15, 30][config.autoPlayInterval] || 1;
 }
 
-/// get the current timestamp in seconds
-export function getTimestamp(): number {
-  return Math.floor(Date.now() / 1000);
-}
-
 /// get days elapsed since the timestamp
 export function getDaysElapsed(timestamp: number): number {
-  const currentTimestamp = getTimestamp();
+  if(!timestamp) {
+    return 0;
+  }
+  const currentTimestamp = Date.now() / 1000;
   const diff = currentTimestamp - timestamp;
   return Math.floor(diff / (60 * 60 * 24));
 }
@@ -94,7 +92,10 @@ export function getFullPath(path: string, name: string): string {
 }
 
 /// get file folder path
-export function getFolderPath(filepath: string): string {
+export function getFolderPath(filepath: string | null | undefined): string {
+  if (!filepath) {
+    return '';  // Return empty string for null/undefined filepath
+  }
   const lastSlashIndex = filepath.lastIndexOf(separator);
   if (lastSlashIndex === -1) {
     return '';  // No folder part, return an empty string
