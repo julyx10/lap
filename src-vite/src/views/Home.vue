@@ -95,7 +95,6 @@ import Calendar from '@/components/Calendar.vue';
 import Location from '@/components/Location.vue';
 // import People from '@/components/People.vue';
 import Camera from '@/components/Camera.vue';
-import Trash from '@/components/Trash.vue';
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
@@ -109,7 +108,6 @@ import {
   IconLocation,
   IconPeople,
   IconCamera,
-  IconTrash,
   IconSettings,
 } from '@/common/icons';
 
@@ -154,11 +152,6 @@ const buttons = computed(() =>  [
     icon: IconCamera,  
     component: Camera,
     text: localeMsg.value.sidebar.camera 
-  },
-  { 
-    icon: IconTrash,
-    component: Trash,
-    text: localeMsg.value.sidebar.trash 
   },
 ]);
 

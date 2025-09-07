@@ -35,6 +35,7 @@ tokio = { version = "1.44.1", features = ["full"] }
 opener = "0.7.2"
 arboard = "3.5.0"
 pinyin = "0.10.0"
+trash = "3.0.0"
 # opencv = "0.94.4"
 # id3 = "1.14.0"
 

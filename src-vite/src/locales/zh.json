@@ -8,7 +8,6 @@
     "location": "地点",
     "people": "人物",
     "camera": "相机",
-    "trash": "回收站",
     "settings": "设置"
   },
 
@@ -60,12 +59,6 @@
     "months_long": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
   },
 
-  "trash": {
-    "files": "回收站文件",
-    "folders": "回收站文件夹",
-    "days": "{count} 天"
-  },
-
   "toolbar": {
     "search": {
       "placeholder": "搜索文件名"
@@ -92,8 +85,7 @@
       "calendar": "未找到日历数据",
       "location": "未找到位置数据",
       "people": "未找到人物数据",
-      "camera": "未找到相机数据",
-      "trash": "回收站中没有项目"
+      "camera": "未找到相机数据"
     },
     "copy_image": {
       "success": "图片已复制到剪贴板",
@@ -125,6 +117,7 @@
       "rename": "重命名",
       "move_to": "移动到",
       "copy_to": "复制到",
+      "delete": "删除",
       "goto_folder": "前往文件夹",
       "reveal_in_finder": "在访达中显示",
       "reveal_in_file_explorer": "在文件资源管理器中显示",
@@ -133,12 +126,6 @@
     "tag": {
       "rename": "重命名标签",
       "delete": "删除标签"
-    },
-    "trash": {
-      "move_to": "移入回收站",
-      "empty": "清空回收站",
-      "restore": "恢复",
-      "delete": "删除"
     },
     "meta": {
       "favorite": "收藏",
@@ -194,12 +181,6 @@
       "ok": "复制",
       "error": "无法将 '{source}' 复制到 '{dest}'."
     },
-    "trash": {
-      "title": "移入回收站",
-      "content": "文件夹 '{folder}' 将被移入回收站。",
-      "ok": "移入回收站",
-      "error": "无法将文件夹 '{folder}' 移入回收站。"
-    },
     "rename_file": {
       "title": "重命名文件",
       "placeholder": "输入新文件名",
@@ -208,24 +189,17 @@
     },
     "delete_file": {
       "title": "删除文件",
-      "content": "文件 '{file}' 将被永久删除。",
+      "content": "文件 '{file}' 将被删除。",
       "ok": "删除",
       "success": "文件 '{file}' 已删除。",
       "error": "无法删除文件。文件可能不存在。"
     },
-    "restore_file": {
-      "title": "恢复文件",
-      "content": "文件 '{file}' 将被恢复到原来的位置。",
-      "ok": "恢复",
-      "success": "文件 '{file}' 已恢复。",
-      "error": "无法恢复文件。文件可能不存在。"
-    },
-    "empty_trash": {
-      "title": "清空回收站",
-      "content": "确定要清空回收站吗？此操作无法撤消。",
-      "ok": "清空",
-      "success": "回收站已清空。",
-      "error": "无法清空回收站。"
+    "delete_files": {
+      "title": "删除文件",
+      "content": "{count} 个文件将被删除。",
+      "ok": "删除",
+      "success": "{count} 个文件已删除。",
+      "error": "无法删除文件。文件可能不存在。"
     },
     "new_tag": {
       "title": "新建标签",
@@ -278,8 +252,7 @@
     "gps_longitude": "GPS 经度",
     "gps_altitude": "GPS 海拔",
     "tags": "标签",
-    "comment": "评论",
-    "recent_deleted": "最近删除"
+    "comment": "评论"
   },
 
   "format": {
@@ -318,7 +291,7 @@
       "unpin": "取消固定工具栏",
       "close": "关闭"
     }
-},
+  },
 
   "settings": {
     "general": {
@@ -329,6 +302,7 @@
         "暗黑"
       ],
       "select_language": "选择语言",
+      "show_hidden_album": "显示隐藏相册",
       "show_button_text": "显示按钮文本",
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",
@@ -342,7 +316,7 @@
       "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
       "label_primary": "显示主标签",
       "label_secondary": "显示副标签",
-      "label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"]
+      "label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄日期"]
     },
     "image_viewer": {
       "title": "图片查看器",
@@ -364,8 +338,6 @@
       "storage": {
         "total_file_count": "总文件数",
         "total_file_size": "总文件大小",
-        "trash_file_count": "回收站文件数",
-        "trash_file_size": "回收站文件大小",
         "file_path": "存储文件路径",
         "file_size": "存储文件大小"
       }

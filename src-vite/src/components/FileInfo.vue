@@ -12,18 +12,18 @@
 
     <!-- File Info table -->
     <div class="overflow-x-hidden overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 100px)' }">
-      <table v-if="fileInfo" class="text-sm text-nowrap border-separate border-spacing-2">
+      <table v-if="fileInfo" class="text-sm border-separate border-spacing-2">
         <tbody class="align-top">
           <tr>
-            <td>{{ $t('file_info.album_name') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.album_name') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.album_name }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.name') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.name') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.name }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.path') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.path') }}</td>
             <td class="text-wrap break-all">{{ getFolderPath(fileInfo.file_path) }}</td>
             <!-- <td>
                <input
@@ -35,79 +35,79 @@
             </td> -->
           </tr>
           <tr>
-            <td>{{ $t('file_info.dimension') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.dimension') }}</td>
             <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.size') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.size') }}</td>
             <td>{{ formatFileSize(fileInfo.size) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.created_at') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.created_at') }}</td>
             <td>{{ formatTimestamp(fileInfo.created_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.modified_at') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.modified_at') }}</td>
             <td>{{ formatTimestamp(fileInfo.modified_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.camera_make') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.camera_make') }}</td>
             <td>{{ fileInfo.e_make }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.camera_model') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.camera_model') }}</td>
             <td>{{ fileInfo.e_model }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.date_taken') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.date_taken') }}</td>
             <td>{{ fileInfo.e_date_time }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.exposure_time') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.exposure_time') }}</td>
             <td>{{ fileInfo.e_exposure_time }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.aperture') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.aperture') }}</td>
             <td>{{ fileInfo.e_f_number }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.focal_length') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.focal_length') }}</td>
             <td>{{ fileInfo.e_focal_length }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.iso') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.iso') }}</td>
             <td>{{ fileInfo.e_iso_speed }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.flash') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.flash') }}</td>
             <td>{{ fileInfo.e_flash }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.color_type') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.color_type') }}</td>
             <td>{{ fileInfo.i_color_type }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.bit_depth') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.bit_depth') }}</td>
             <td>{{ fileInfo.i_bit_depth }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.alpha_channel') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.alpha_channel') }}</td>
             <td>{{ fileInfo.i_has_alpha }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.gps_latitude') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.gps_latitude') }}</td>
             <td>{{ fileInfo.gps_latitude }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.gps_longitude') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.gps_longitude') }}</td>
             <td>{{ fileInfo.gps_longitude }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.gps_altitude') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.gps_altitude') }}</td>
             <td>{{ fileInfo.gps_altitude }}</td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.tags') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.tags') }}</td>
             <td>
               <span v-if="fileInfo.tags && fileInfo.tags.length">
                 {{ fileInfo.tags.map(tag => tag.name).join(', ') }}
@@ -116,7 +116,7 @@
             </td>
           </tr>
           <tr>
-            <td>{{ $t('file_info.comment') }}</td>
+            <td class="text-nowrap">{{ $t('file_info.comment') }}</td>
             <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
         </tbody>

@@ -100,7 +100,7 @@ import {
   IconTag, 
   IconMore, 
   IconRename, 
-  IconTrash,
+
   IconAdd
 } from '@/common/icons';
 

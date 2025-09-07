@@ -8,7 +8,6 @@
     "location": "Location",
     "people": "People",
     "camera": "Cameras",
-    "trash": "Trash",
     "settings": "Settings"
   },
 
@@ -18,7 +17,7 @@
 
   "album": {
     "edit": {
-      "title": "Edit Album",
+      "title": "Edit album",
       "name": "Name",
       "description": "Description",
       "description_placeholder": "Enter album's description",
@@ -27,8 +26,8 @@
       "videos": "Videos",
       "files_count": "{count} files ({size})",
       "files_counting": "Counting files...",
-      "created_at": "Created At",
-      "modified_at": "Modified At"
+      "created_at": "Created at",
+      "modified_at": "Modified at"
     }
   },
 
@@ -60,12 +59,6 @@
     "months_long": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
   },
 
-  "trash": {
-    "files": "Trash files",
-    "folders": "Trash folders",
-    "days": "{count} days"
-  },
-
   "toolbar": {
     "search": {
       "placeholder": "Search file name"
@@ -73,7 +66,7 @@
     "filter": {
       "select_mode": "Select",
       "select_count": "{count} selected",
-      "sort_type_options": ["Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"],
+      "sort_type_options": ["Name", "Size", "Dimension", "Created time", "Modified time", "Taken date"],
       "sort_order_options": ["Ascending", "Descending"],
       "file_type_options": ["All", "Images", "Videos"]
     },
@@ -92,8 +85,7 @@
       "calendar": "No calendar data found",
       "location": "No location data found",
       "people": "No people data found",
-      "camera": "No camera data found",
-      "trash": "No trash data found"
+      "camera": "No camera data found"
     },
     "copy_image": {
       "success": "Image copied to clipboard",
@@ -125,6 +117,7 @@
       "rename": "Rename",
       "move_to": "Move to",
       "copy_to": "Copy to",
+      "delete": "Delete",
       "goto_folder": "Go to folder",
       "reveal_in_finder": "Reveal in Finder",
       "reveal_in_file_explorer": "Reveal in File Explorer",
@@ -133,12 +126,6 @@
     "tag": {
       "rename": "Rename tag",
       "delete": "Delete tag"
-    },
-    "trash": {
-      "move_to": "Move to trash",
-      "empty": "Empty trash",
-      "restore": "Restore",
-      "delete": "Delete"
     },
     "meta": {
       "favorite": "Favorite",
@@ -194,12 +181,6 @@
       "ok": "Copy",
       "error": "Cannot copy '{source}' to '{dest}'."
     },
-    "trash": {
-      "title": "Move to trash",
-      "content": "The folder '{folder}' will be moved to trash.",
-      "ok": "Move To Trash",
-      "error": "Cannot move '{folder}' to trash."
-    },
     "rename_file": {
       "title": "Rename file",
       "placeholder": "Enter new file name",
@@ -208,24 +189,17 @@
     },
     "delete_file": {
       "title": "Delete file",
-      "content": "The file '{file}' will be deleted permanently.",
+      "content": "The file '{file}' will be deleted.",
       "ok": "Delete",
       "success": "The file '{file}' has been deleted.",
       "error": "Cannot delete the file. The file may not exist."
     },
-    "restore_file": {
-      "title": "Restore file",
-      "content": "The file '{file}' will be restored to the original location.",
-      "ok": "Restore",
-      "success": "The file '{file}' has been restored.",
-      "error": "Cannot restore the file. The file may not exist."
-    },
-    "empty_trash": {
-      "title": "Empty trash",
-      "content": "Are you sure you want to empty the trash? This action cannot be undone.",
-      "ok": "Empty",
-      "success": "Trash has been emptied.",
-      "error": "Cannot empty the trash."
+    "delete_files": {
+      "title": "Delete files",
+      "content": "{count} files will be deleted.",
+      "ok": "Delete",
+      "success": "{count} files have been deleted.",
+      "error": "Cannot delete the files. The files may not exist."
     },
     "new_tag": {
       "title": "New tag",
@@ -254,32 +228,31 @@
   },
 
   "file_info": {
-    "columns": ["Thumbnail", "Name", "Dimension", "Created Time", "Modified Time", "Camera", "Size"],
+    "columns": ["Thumbnail", "Name", "Dimension", "Created time", "Modified time", "Camera", "Size"],
     "title": "Properties",
     "album_name": "Album",
     "name": "Name",
     "path": "Path",
     "dimension": "Dimension",
     "size": "Size",
-    "created_at": "Created At",
-    "modified_at": "Modified At",
-    "camera_make": "Camera Make",
-    "camera_model": "Camera Model",
-    "date_taken": "Date Taken",
-    "exposure_time": "Exposure Time",
+    "created_at": "Created at",
+    "modified_at": "Modified at",
+    "camera_make": "Camera make",
+    "camera_model": "Camera model",
+    "date_taken": "Taken date",
+    "exposure_time": "Exposure time",
     "aperture": "Aperture",
-    "focal_length": "Focal Length",
+    "focal_length": "Focal length",
     "iso": "ISO",
     "flash": "Flash",
-    "color_type": "Color Type",
-    "bit_depth": "Bit Depth",
-    "alpha_channel": "Alpha Channel",
-    "gps_latitude": "GPS Latitude",
-    "gps_longitude": "GPS Longitude",
-    "gps_altitude": "GPS Altitude",
+    "color_type": "Color type",
+    "bit_depth": "Bit depth",
+    "alpha_channel": "Alpha channel",
+    "gps_latitude": "GPS latitude",
+    "gps_longitude": "GPS longitude",
+    "gps_altitude": "GPS altitude",
     "tags": "Tags",
-    "comment": "Comment",
-    "recent_deleted": "Recent deleted"
+    "comment": "Comment"
   },
 
   "format": {
@@ -293,7 +266,7 @@
   },
 
   "image_viewer": {
-    "title": "Image Viewer",
+    "title": "Image viewer",
     "loading": "Loading...",
     "failed": "Failed to load image",
     "toolbar": {
@@ -301,10 +274,10 @@
       "next": "Next",
       "play": "Play",
       "pause": "Pause",
-      "zoom_in": "Zoom In",
-      "zoom_out": "Zoom Out",
-      "zoom_fit": "Fit to Screen",
-      "zoom_actual": "Actual Size",
+      "zoom_in": "Zoom in",
+      "zoom_out": "Zoom out",
+      "zoom_fit": "Fit to screen",
+      "zoom_actual": "Actual size",
       "rotate": "Rotate",
       "favorite": "Favorite",
       "unfavorite": "Unfavorite",
@@ -313,9 +286,9 @@
       "save": "Save",
       "delete": "Delete",
       "fullscreen": "Fullscreen",
-      "exit_fullscreen": "Exit Fullscreen",
-      "pin": "Pin Toolbar",
-      "unpin": "Unpin Toolbar",
+      "exit_fullscreen": "Exit fullscreen",
+      "pin": "Pin toolbar",
+      "unpin": "Unpin toolbar",
       "close": "Close"
     }
   },
@@ -329,6 +302,7 @@
         "dark"
       ],
       "select_language": "Select language",
+      "show_hidden_album": "Show hidden album",
       "show_button_text": "Show button text",
       "show_tool_tip": "Show tooltips",
       "show_status_bar": "Show status bar",
@@ -342,10 +316,10 @@
       "scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
       "label_primary": "Show primary label",
       "label_secondary": "Show secondary label",
-      "label_options": ["Empty", "Name", "Size", "Dimension", "Created Time", "Modified Time", "Taken Time"]
+      "label_options": ["Empty", "Name", "Size", "Dimension", "Created time", "Modified time", "Taken date"]
     },
     "image_viewer": {
-      "title": "Image Viewer",
+      "title": "Image viewer",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
       "autoplay_interval": "Autoplay interval: {second} second(s)"
@@ -360,12 +334,10 @@
         "author": "Author",
         "license": "License",
         "website": "Website"
-      },  
+      },
       "storage": {
         "total_file_count": "Total file count",
         "total_file_size": "Total file size",
-        "trash_file_count": "Trash file count",
-        "trash_file_size": "Trash file size",
         "file_path": "Storage file path",
         "file_size": "Storage file size"
       }

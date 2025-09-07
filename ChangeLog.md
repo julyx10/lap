@@ -1,5 +1,49 @@
 # Changelog
 
+## 2025-09-02: Implement Empty Trash Functionality
+
+**Objective:** This update introduces the ability for users to permanently empty the trash, deleting all contained files and folders from both the database and the filesystem.
+
+---
+
+### Step 1: Frontend UI and State Management
+
+*   **Files Updated:** `src-vite/src/components/Trash.vue`, `src-vite/src/components/AlbumList.vue`
+*   **Changes:**
+    *   In `Trash.vue`, the "Empty" dropdown menu item is now connected to a function that triggers a confirmation dialog.
+    *   In `AlbumList.vue`, a new message box component was added to prompt the user for confirmation before emptying the trash.
+    *   A new method, `clickEmptyTrash`, was added to handle the confirmation and call the backend API.
+    *   The `showEmptyTrashMsgbox` ref was exposed to allow `Trash.vue` to control the visibility of the confirmation dialog.
+
+---
+
+### Step 2: API and Backend Command Definition
+
+*   **Files Updated:** `src-vite/src/common/api.js`, `src-tauri/src/t_cmds.rs`
+*   **Changes:**
+    *   In `api.js`, a new `emptyTrash` function was added to invoke the `empty_trash` backend command.
+    *   In `t_cmds.rs`, a new `empty_trash` command was defined to handle the request from the frontend.
+
+---
+
+### Step 3: Backend Database and Filesystem Logic
+
+*   **File Updated:** `src-tauri/src/t_sqlite.rs`
+*   **Changes:**
+    *   Implemented the `empty_trash` function within the `Album` struct. This function orchestrates the deletion of all files and folders from the trash.
+    *   Implemented `AFolder::get_trash_folders` and `AFile::get_trash_files` to retrieve all items currently in the trash.
+    *   The `empty_trash` logic first deletes files and folders from the filesystem and then removes their corresponding entries from the database.
+
+---
+
+### Step 4: Internationalization (i18n)
+
+*   **Files Updated:** `src-vite/src/locales/en.json`, `src-vite/src/locales/zh.json`, `src-vite/src/locales/ja.json`
+*   **Changes:**
+    *   Added translations for the "Empty Trash" confirmation dialog title, content, and confirmation button text in English, Chinese, and Japanese.
+
+---
+
 ## 2025-08-19: Refactor Trash and Deletion Functionality
 
 **Objective:** The primary goal of this update was to refactor the item deletion functionality. The previous system, which used a `deleted_at` flag (a "soft delete"), was replaced with a more robust "virtual trash folder" model. This new approach treats the trash as a special album, and "deleting" an item is now a `move` operation. This resolves inconsistencies, especially with the app's hybrid model of reading from both the filesystem and the database, and provides a more stable foundation for future features like restoring items.

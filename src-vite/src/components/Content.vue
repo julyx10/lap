@@ -57,12 +57,6 @@
           @select="handleSortTypeSelect"
         />
 
-        <!-- magic button -->
-        <!-- <TButton
-          :icon="IconMagic"
-          @click="clickAI"
-        /> -->
-        
         <!-- preview -->
         <TButton
           :icon="config.showPreview ? IconPreview : IconPreviewOff"
@@ -204,7 +198,7 @@
   />
 
   <!-- delete -->
-  <!-- <MessageBox
+  <MessageBox
     v-if="showDeleteMsgbox"
     :title="$t('msgbox.delete_file.title')"
     :message="`${$t('msgbox.delete_file.content', { file: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
@@ -213,7 +207,7 @@
     :warningOk="true"
     @ok="clickDeleteFile"
     @cancel="showDeleteMsgbox = false"
-  /> -->
+  />
 
   <!-- tag -->
   <TaggingDialog 
@@ -248,7 +242,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage,
-         setFileFavorite, setFileRotate, getFileHasTags, trashFile, restoreFiles, restoreFolders, getTrashAlbum} from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, trashFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getTimestamp } from '@/common/utils';
@@ -284,13 +278,11 @@ import {
   IconPhoto,
   IconChecked,
   IconComment,
-  IconMagic,
   IconTag,
   IconTrashRestore,
   IconCalendar,
   IconLocation,
   IconCamera,
-  IconFolderTrash,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -313,7 +305,6 @@ const contentIcon = computed(() => {
     case 4: return IconCalendar;
     case 5: return IconLocation;
     case 6: return IconCamera;
-    case 7: return IconTrash;
     default: return IconFile;
   }
 });
@@ -439,32 +430,6 @@ const moreMenuItems = computed(() => {
     },
   ];
 
-  const trashOperationItems = [
-    {
-      label: localeMsg.value.menu.trash.restore,
-      icon: IconTrashRestore,
-      disabled: selectedCount.value === 0,
-      action: () => {
-        clickRestoreFromTrash();
-      }
-    },
-    {
-      label: localeMsg.value.menu.trash.delete,
-      icon: IconTrash,
-      disabled: selectedCount.value === 0,
-      action: () => {
-        showDeleteMsgbox.value = true;
-      }
-    },
-    // {
-    //   label: localeMsg.value.menu.trash.empty,
-    //   icon: IconTrashEmpty,
-    //   action: () => {
-    //     // TODO: empty trash
-    //   }
-    // }
-  ];
-
   const metadataItems = [
     { 
       label: "-",   // separator
@@ -497,12 +462,8 @@ const moreMenuItems = computed(() => {
   ];
 
   let items = [...baseItems];
-  if (config.sidebarIndex !== 7) {
-    items.push(...fileOperationItems);
-    items.push(...metadataItems);
-  } else {
-    items.push(...trashOperationItems);
-  }
+  items.push(...fileOperationItems);
+  items.push(...metadataItems);
 
   return items;
 });
@@ -562,9 +523,6 @@ onMounted( async() => {
         break;
       case 'move-to-trash':
         clickMoveToTrash();
-        break;
-      case 'restore-from-trash':
-        clickRestoreFromTrash();
         break;
       case 'delete':
         showDeleteMsgbox.value = true;
@@ -668,7 +626,6 @@ watch(
           config.tagId,                                                                 // tag
           config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
           config.cameraMake, config.cameraModel,                                        // camera 
-          config.trashAlbumId, config.trashFolderId, config.trashFolderPath,            // trash
           config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
         ], 
   () => {
@@ -715,8 +672,8 @@ watch(() => config.showPreview, (newValue) => {
   gridViewRef.value.scrollToItem(selectedItemIndex.value); 
 });
 
-async function getFileList(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isTrashed, offset) { 
-  const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isTrashed, offset);
+async function getFileList(searchFolder, startDate, endDate, make, model, isFavorite, tagId, offset) { 
+  const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, offset);
   hasMoreFiles.value = newFiles.length === config.fileListPageSize;
 
   if (offset === 0) {
@@ -747,6 +704,9 @@ async function updateContent() {
         };
         fileList.value = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
         hasMoreFiles.value = false;  // getFolderFiles always get all files
+      } else {
+        contentTitle.value = "";
+        fileList.value = [];
       }
     }
   }
@@ -763,7 +723,10 @@ async function updateContent() {
         if(album) {
           contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
           await getFileList(config.favoriteFolderPath, "", "", "", "", false, 0, false, fileListOffset.value);
-        };
+        } else {
+          contentTitle.value = "";
+          fileList.value = [];
+        }
       }
     }
   }
@@ -776,7 +739,10 @@ async function updateContent() {
       if (tagName) {
         contentTitle.value = tagName;
         await getFileList("", "", "", "", "", false, config.tagId, false, fileListOffset.value);
-      } 
+      } else {
+        contentTitle.value = "";
+        fileList.value = [];
+      }
     }
   }
   else if(newIndex === 4) {   // calendar
@@ -821,23 +787,7 @@ async function updateContent() {
       } 
     }
   } 
-  else if(newIndex === 7) {   // trash
-    if(config.trashAlbumId === null) {
-      contentTitle.value = "";
-      fileList.value = [];
-    } else { 
-      const trashAlbum = await getTrashAlbum();
-      if(trashAlbum) {
-        if(config.trashFolderPath === trashAlbum.path) { // current folder is root
-          contentTitle.value = localeMsg.value.sidebar.trash;
-        } else {
-          contentTitle.value = localeMsg.value.sidebar.trash + getRelativePath(config.trashFolderPath, trashAlbum.path);
-        }
-        fileList.value = await getFolderFiles(config.trashFolderId, config.trashFolderPath);
-        hasMoreFiles.value = false;  // getFolderFiles always get all files
-      }
-    }
-  }
+
 
   refreshFileList();
 }
@@ -930,38 +880,6 @@ const clickMoveToTrash = async () => {
     updateContent();
   }
 }
-
-// restore from trash
-const clickRestoreFromTrash = async () => {
-  let fileIds = [];
-  let folderIds = [];
-  
-  if (selectMode.value && selectedCount.value > 0) {
-    // Multi-select mode: separate files and folders
-    const selectedItems = fileList.value.filter(item => item.isSelected);
-    fileIds = selectedItems.filter(item => !item.is_folder).map(item => item.id);
-    folderIds = selectedItems.filter(item => item.is_folder).map(item => item.id);
-  } else if (selectedItemIndex.value >= 0) {
-    // Single select mode
-    const item = fileList.value[selectedItemIndex.value];
-    if (item.is_folder) {
-      folderIds = [item.id];
-    } else {
-      fileIds = [item.id];
-    }
-  }
-
-  // Restore files and folders separately
-  if (fileIds.length > 0) {
-    await restoreFiles(fileIds);
-  }
-  if (folderIds.length > 0) {
-    await restoreFolders(folderIds);
-  }
-  
-  // TODO: refresh file list
-}
-
 // click delete menu item
 // const clickDeleteFile = async () => {
 //   if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
@@ -1071,11 +989,6 @@ const clickEditComment = async (newComment) => {
       showCommentMsgbox.value = false;
     }
   }
-}
-
-// AI
-const clickAI = async () => {
-  console.log('clickAI');
 }
 
 const handleSelectMode = (value) => {
@@ -1233,9 +1146,6 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
 
 // Open the image viewer window
 async function openImageViewer(index: number, newViewer = false) {
-  if(config.sidebarIndex === 7) {  // trash
-    return;
-  }
 
   const webViewLabel = 'imageviewer';
 

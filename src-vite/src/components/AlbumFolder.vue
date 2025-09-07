@@ -43,12 +43,12 @@
             <IconFavorite v-if="child.is_favorite" 
               class="h-4 w-4" 
             />
-            <DropDownMenu v-show="(componentId === 0 && !isRenamingFolder) || componentId === 2"
+            <DropDownMenu v-show="componentId === 0 && !isRenamingFolder"
               :class="[
                 selectedFolderId != child.id ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
-              :menuItems="componentId === 2 ? moreMenuItemsTrash : moreMenuItems"
+              :menuItems="moreMenuItems"
               :smallIcon="true"
             />
           </div>
@@ -274,24 +274,7 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-const moreMenuItemsTrash = computed(() => {
-  return [
-    {
-      label: localeMsg.value.menu.trash.restore,
-      icon: IconTrashRestore,
-      action: () => {
-        // clickRestoreFolder();
-      }
-    },
-    {
-      label: localeMsg.value.menu.trash.delete,
-      icon: IconTrash,
-      action: () => {
-        // clickDeleteFolder();
-      }
-    }
-  ];
-});
+
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
   selectedAlbumId.value = newAlbumId;
   selectedFolderId.value = newFolderId;

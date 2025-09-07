@@ -35,11 +35,6 @@ export const useConfigStore = defineStore('configStore', {
     cameraMake: null,           // selected camera make
     cameraModel: null,          // selected camera model
 
-    // trash
-    trashAlbumId: null,         // trash album id
-    trashFolderId: null,        // trash folder id
-    trashFolderPath: null,      // trash folder path
-
     ////// Content.vue //////
 
     // filter fileList
@@ -73,7 +68,8 @@ export const useConfigStore = defineStore('configStore', {
     // settings - general
     appearance: 1,              // 0: light; 1: dark
     language: 'en',             // default language
-    showButtonText: true,      // show button text
+    showHiddenAlbum: false,     // show hidden album
+    showButtonText: true,       // show button text
     showToolTip: true,          // show button tooltip
     showStatusBar: true,        // show status bar
     showComment: true,          // show comment
@@ -99,6 +95,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setLanguage(language) {
       this.language = language;
+    },
+    setShowHiddenAlbum(showHiddenAlbum) {
+      this.showHiddenAlbum = showHiddenAlbum;
     },
     setShowButtonText(showButtonText) {
       this.showButtonText = showButtonText;

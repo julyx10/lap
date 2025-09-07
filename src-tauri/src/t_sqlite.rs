@@ -6,8 +6,7 @@
  * date:    2024-08-08
  */
 use std::collections::HashMap;
-// use std::fs;
-// use dirs;
+use trash;
 use base64::{engine::general_purpose, Engine};
 use exif::Tag;
 use rusqlite::{params, Connection, OptionalExtension, Result};
@@ -20,30 +19,34 @@ use crate::t_utils;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Album {
     pub id: Option<i64>,               // unique id (autoincrement by db)
+
+    // album basic info
     pub name: String,                  // album name (default is folder name)
     pub path: String,                  // folder path
-    pub description: Option<String>,   // album description
-    pub avatar_id: Option<i64>,        // album avatar id ( from files table)
-    pub display_order_id: Option<i64>, // display order id
-    pub album_type: Option<i64>,       // album type: 0: trash, 1: folder(default)
     pub created_at: Option<u64>,       // folder create time
     pub modified_at: Option<u64>,      // folder modified time
+    
+    // extra info
+    pub display_order_id: Option<i64>, // display order id
+    pub avatar_id: Option<i64>,        // album avatar id ( from files table)
+    pub description: Option<String>,   // album description
+    pub is_hidden: Option<bool>,       // is hidden
 }
 
 impl Album {
     /// create a new album
-    fn new(path: &str, album_type: i64) -> Result<Self, String> {
+    fn new(path: &str) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(path)?;
         Ok(Self {
             id: None,
             name: file_info.file_name,
             path: file_info.file_path,
-            description: None,
-            avatar_id: None,
-            display_order_id: None,
-            album_type: Some(album_type),
             created_at: file_info.created,
             modified_at: file_info.modified,
+            display_order_id: None,
+            avatar_id: None,
+            description: None,
+            is_hidden: None,
         })
     }
 
@@ -53,12 +56,12 @@ impl Album {
             id: Some(row.get(0)?),
             name: row.get(1)?,
             path: row.get(2)?,
-            description: row.get(3)?,
-            avatar_id: row.get(4)?,
+            created_at: row.get(3)?,
+            modified_at: row.get(4)?,
             display_order_id: row.get(5)?,
-            album_type: row.get(6)?,
-            created_at: row.get(7)?,
-            modified_at: row.get(8)?,
+            avatar_id: row.get(6)?,
+            description: row.get(7)?,
+            is_hidden: row.get(8)?,
         })
     }
 
@@ -66,7 +69,7 @@ impl Album {
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at 
+            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden 
             FROM albums WHERE path = ?1",
             params![path],
             |row| Self::from_row(row)
@@ -89,24 +92,24 @@ impl Album {
 
         // Insert the new album into the db
         let result = conn.execute(
-            "INSERT INTO albums (name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at) 
+            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             params![
                 self.name,
                 self.path,
-                self.description,
-                self.avatar_id,
-                self.display_order_id,
-                self.album_type,
                 self.created_at,
-                self.modified_at
+                self.modified_at,
+                self.display_order_id,
+                self.avatar_id,
+                self.description,
+                self.is_hidden,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// add the album into db if not exists
-    pub fn add_album_to_db(path: &str, album_type: i64) -> Result<Self, String> {
+    pub fn add_album_to_db(path: &str) -> Result<Self, String> {
         // Check if the path already exists
         let existing_album = Self::fetch(path);
         if let Ok(Some(album)) = existing_album {
@@ -117,7 +120,7 @@ impl Album {
         }
 
         // Insert the new album into the database
-        Self::new(path, album_type)?.insert()?;
+        Self::new(path)?.insert()?;
 
         // return the newly inserted album
         let new_album = Self::fetch(path)?;
@@ -137,8 +140,8 @@ impl Album {
     pub fn get_all_albums() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let mut stmt = conn.prepare(
-            "SELECT id, name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at
-            FROM albums WHERE album_type = 1
+            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
+            FROM albums
             ORDER BY display_order_id ASC"
         ).map_err(|e| e.to_string())?;
 
@@ -161,7 +164,7 @@ impl Album {
     pub fn get_album_by_id(id: i64) -> Result<Self, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at
+            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
             FROM albums WHERE id = ?1",
             params![id],
             |row| Self::from_row(row)
@@ -179,17 +182,6 @@ impl Album {
         Ok(result)
     }
 
-    /// get trash album (album_type = 0)
-    pub fn get_trash_album() -> Result<Self, String> {
-        let conn = open_conn()?;
-        let result = conn.query_row(
-            "SELECT id, name, path, description, avatar_id, display_order_id, album_type, created_at, modified_at 
-            FROM albums WHERE album_type = 0",
-            params![],
-            |row| Self::from_row(row)
-        ).optional().map_err(|e| e.to_string())?;
-        Ok(result.unwrap())
-    }
 }
 
 /// Define the album's folder struct
@@ -197,14 +189,15 @@ impl Album {
 pub struct AFolder {
     pub id: Option<i64>,          // unique id (autoincrement by db)
     pub album_id: i64,            // album id (from albums table)
+
+    // folder basic info
     pub name: String,             // folder name
     pub path: String,             // folder path
-    pub is_favorite: Option<bool>,  // is favorite
     pub created_at: Option<u64>,  // folder create time
     pub modified_at: Option<u64>, // folder modified time
-    pub original_album_id: Option<i64>,
-    pub name_in_trash: Option<String>,
-    pub trashed_at: Option<u64>,   // trashed time
+
+    // extra info
+    pub is_favorite: Option<bool>,  // is favorite
 }
 
 impl AFolder {
@@ -216,12 +209,9 @@ impl AFolder {
             album_id,
             name: file_info.file_name,
             path: folder_path.to_string(),
-            is_favorite: None,
             created_at: file_info.created,
             modified_at: file_info.modified,
-            original_album_id: None,        // original album id
-            name_in_trash: None,            // folder name in trash
-            trashed_at: None,               // trashed time
+            is_favorite: None,
         })
     }
 
@@ -232,12 +222,9 @@ impl AFolder {
             album_id: row.get(1)?,
             name: row.get(2)?,
             path: row.get(3)?,
-            is_favorite: row.get(4)?,
-            created_at: row.get(5)?,
-            modified_at: row.get(6)?,
-            original_album_id: row.get(7)?,
-            name_in_trash: row.get(8)?,
-            trashed_at: row.get(9)?,
+            created_at: row.get(4)?,
+            modified_at: row.get(5)?,
+            is_favorite: row.get(6)?,
         })
     }
     
@@ -246,7 +233,7 @@ impl AFolder {
         let conn = open_conn()?;
         let result = conn
             .query_row(
-                "SELECT id, album_id, name, path, is_favorite, created_at, modified_at, original_album_id, name_in_trash, trashed_at
+                "SELECT id, album_id, name, path, created_at, modified_at, is_favorite
                 FROM afolders
                 WHERE path = ?1",
                 params![folder_path],
@@ -261,18 +248,15 @@ impl AFolder {
         let conn = open_conn()?;
         let result = conn
             .execute(
-                "INSERT INTO afolders (album_id, name, path, is_favorite, created_at, modified_at, original_album_id, name_in_trash, trashed_at) 
-                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                "INSERT INTO afolders (album_id, name, path, created_at, modified_at, is_favorite) 
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
                 params![
                     self.album_id,
                     self.name,
                     self.path,
-                    self.is_favorite,
                     self.created_at,
                     self.modified_at,
-                    self.original_album_id,
-                    self.name_in_trash,
-                    self.trashed_at
+                    self.is_favorite
                 ],
             )
             .map_err(|e| e.to_string())?;
@@ -326,18 +310,28 @@ impl AFolder {
         Ok(result)
     }
 
-    /// delete a folder and all subfolders from db
-    pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
+    pub fn trash_folder(folder_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
-        let result = conn
-            .execute(
-                "DELETE FROM afolders WHERE path LIKE ?1 || '%'",
-                params![folder_path],
-            )
+    
+        let sql = "SELECT path FROM afolders WHERE id = ?1";
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+        let path: Option<String> = stmt
+            .query_row([folder_id], |row| row.get(0))
+            .optional()
             .map_err(|e| e.to_string())?;
-        Ok(result)
+    
+        if let Some(folder_path) = path {
+            trash::delete(&folder_path).map_err(|e| e.to_string())?;
+    
+            // delete database record
+            let result = conn.execute("DELETE FROM afolders WHERE id = ?1", [folder_id])
+                .map_err(|e| e.to_string())?;
+            return Ok(result);
+        } else {
+            return Err(format!("Folder with id {} not found", folder_id));
+        }
     }
-
+    
     // update a column value
     pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
         let conn = open_conn()?;
@@ -353,7 +347,7 @@ impl AFolder {
         let conn = open_conn()?;
         let result = conn
             .query_row(
-                "SELECT id, album_id, name, path, is_favorite, created_at, modified_at, original_album_id, name_in_trash, trashed_at
+                "SELECT id, album_id, name, path, created_at, modified_at, is_favorite
                 FROM afolders WHERE id = ?1",
                 params![id],
                 |row| Self::from_row(row)
@@ -379,10 +373,10 @@ impl AFolder {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT a.id, a.album_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at, a.original_album_id, a.name_in_trash, a.trashed_at
+                "SELECT a.id, a.album_id, a.name, a.path, a.created_at, a.modified_at, a.is_favorite
                 FROM afolders a
                 LEFT JOIN albums b ON a.album_id = b.id
-                WHERE a.is_favorite = 1 and b.album_type = 1",
+                WHERE a.is_favorite = 1",
             )
             .map_err(|e| e.to_string())?;
 
@@ -397,31 +391,6 @@ impl AFolder {
 
         Ok(folders)
     }
-
-    // get all folders in trash (soft deleted)
-    // pub fn get_trash_folders() -> Result<Vec<Self>, String> {
-    //     let conn = open_conn()?;
-    //     let mut stmt = conn
-    //         .prepare(
-    //             "SELECT a.id, a.album_id, a.name, a.path, a.is_favorite, a.created_at, a.modified_at, a.original_album_id, a.name_in_trash, a.trashed_at
-    //              FROM afolders a
-    //              LEFT JOIN albums b ON a.album_id = b.id
-    //              WHERE a.trashed_at IS NOT NULL and b.album_type = 0",
-    //         )
-    //         .map_err(|e| e.to_string())?;
-
-    //     let rows = stmt
-    //         .query_map(params![], |row| Self::from_row(row))
-    //         .map_err(|e| e.to_string())?;
-
-    //     let mut folders = Vec::new();
-    //     for folder in rows {
-    //         folders.push(folder.unwrap());
-    //     }
-
-    //     Ok(folders)
-    // }
-
 }
 
 /// Define the album file struct
@@ -437,6 +406,8 @@ pub struct AFile {
     pub file_type: Option<i64>,     // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
     pub created_at: Option<u64>,    // file create time
     pub modified_at: Option<u64>,   // file modified time
+
+    // file taken date
     pub taken_date: Option<String>, // taken date(yyyy-mm-dd) for calendar view
 
     // image dimensions
@@ -448,9 +419,6 @@ pub struct AFile {
     pub rotate: Option<i32>,       // rotate angle (0, 90, 180, 270)
     pub comments: Option<String>,  // comments
     pub has_tags: Option<bool>,    // has tags
-    pub original_folder_id: Option<i64>,
-    pub name_in_trash: Option<String>,
-    pub trashed_at: Option<u64>,   // trashed date
 
     // exif info
     pub e_make: Option<String>,  // camera make
@@ -498,12 +466,14 @@ impl AFile {
         let file = Self {
             id: None,
             folder_id,
-            file_type: Some(file_type),
+
             name: file_info.file_name.clone(),
             name_pinyin: Some(t_utils::convert_to_pinyin(file_info.file_name.as_str())), // convert to pinyin
             size: file_info.file_size,
+            file_type: Some(file_type),
             created_at: file_info.created,
             modified_at: file_info.modified,
+
             taken_date: Self::get_exif_field(&exif, Tag::DateTimeOriginal)
                 .map(|exif_date| {
                     if exif_date.len() >= 10 {
@@ -521,9 +491,6 @@ impl AFile {
             rotate: None,
             comments: None,
             has_tags: Some(false),
-            original_folder_id: None,
-            name_in_trash: None,
-            trashed_at: None,
 
             e_make: Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase()),
             e_model: Self::get_exif_field(&exif, Tag::Model),
@@ -610,14 +577,14 @@ impl AFile {
         let result = conn.execute(
             "INSERT INTO afiles (
                 folder_id, 
-                name, name_pinyin, size, file_type, created_at, modified_at, taken_date,
+                name, name_pinyin, size, file_type, created_at, modified_at, 
+                taken_date,
                 width, height,
                 is_favorite, rotate, comments, has_tags,
-                original_folder_id, name_in_trash, trashed_at,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude, gps_address
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27)",
             params![
                 self.folder_id,
 
@@ -627,6 +594,7 @@ impl AFile {
                 self.file_type,
                 self.created_at,
                 self.modified_at,
+
                 self.taken_date,
 
                 self.width,
@@ -636,9 +604,6 @@ impl AFile {
                 self.rotate,
                 self.comments,
                 self.has_tags,
-                self.original_folder_id,
-                self.name_in_trash,
-                self.trashed_at,
 
                 self.e_make,
                 self.e_model,
@@ -672,26 +637,47 @@ impl AFile {
         Ok(result)
     }
 
+    pub fn trash_file(file_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+    
+        let sql = "SELECT b.path, a.name FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id WHERE a.id = ?1";
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+        let file_info: Option<(String, String)> = stmt
+            .query_row([file_id], |row| Ok((row.get(0)?, row.get(1)?)))
+            .optional()
+            .map_err(|e| e.to_string())?;
+    
+        if let Some((path, name)) = file_info {
+            let file_path = format!("{}/{}", path, name);
+            trash::delete(&file_path).map_err(|e| e.to_string())?;
+    
+            // delete database record
+            let result = conn.execute("DELETE FROM afiles WHERE id = ?1", [file_id])
+                .map_err(|e| e.to_string())?;
+            return Ok(result);
+        } else {
+            return Err(format!("File with id {} not found", file_id));
+        }
+    }
+
     // Helper function to build the count SQL query
-    fn build_count_query(is_trashed: bool) -> String {
+    fn build_count_query() -> String {
         let base_query = "SELECT COUNT(*), SUM(a.size)
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id";
         
-        let where_clause = if is_trashed { " WHERE c.album_type = 0" } else { " WHERE c.album_type = 1" };
-        
-        format!("{}{}", base_query, where_clause)
+        format!("{}", base_query)
     }
 
     // build the base SQL query
     fn build_base_query() -> String {
         String::from(
             "SELECT a.id, a.folder_id, 
-                a.name, a.name_pinyin, a.size, a.file_type, a.created_at, a.modified_at, a.taken_date,
+                a.name, a.name_pinyin, a.size, a.file_type, a.created_at, a.modified_at, 
+                a.taken_date,
                 a.width, a.height,
                 a.is_favorite, a.rotate, a.comments, a.has_tags,
-                a.original_folder_id, a.name_in_trash, a.trashed_at,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude, a.gps_address,
                 b.path,
@@ -714,6 +700,7 @@ impl AFile {
             file_type: row.get(5)?,
             created_at: row.get(6)?,
             modified_at: row.get(7)?,
+
             taken_date: row.get(8)?,
 
             width: row.get(9)?,
@@ -724,31 +711,27 @@ impl AFile {
             comments: row.get(13)?,
             has_tags: row.get(14)?,
 
-            original_folder_id: row.get(15)?,
-            name_in_trash: row.get(16)?,
-            trashed_at: row.get(17)?,
+            e_make: row.get(15)?,
+            e_model: row.get(16)?,
+            e_date_time: row.get(17)?,
+            e_exposure_time: row.get(18)?,
+            e_f_number: row.get(19)?,
+            e_focal_length: row.get(20)?,
+            e_iso_speed: row.get(21)?,
+            e_flash: row.get(22)?,
+            e_orientation: row.get(23)?,
 
-            e_make: row.get(18)?,
-            e_model: row.get(19)?,
-            e_date_time: row.get(20)?,
-            e_exposure_time: row.get(21)?,
-            e_f_number: row.get(22)?,
-            e_focal_length: row.get(23)?,
-            e_iso_speed: row.get(24)?,
-            e_flash: row.get(25)?,
-            e_orientation: row.get(26)?,
-
-            gps_latitude: row.get(27)?,
-            gps_longitude: row.get(28)?,
-            gps_altitude: row.get(29)?,
-            gps_address: row.get(30)?,
+            gps_latitude: row.get(24)?,
+            gps_longitude: row.get(25)?,
+            gps_altitude: row.get(26)?,
+            gps_address: row.get(27)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(31)?.as_str(),
+                row.get::<_, String>(28)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(32)?,
-            album_name: row.get(33)?,
+            album_id: row.get(29)?,
+            album_name: row.get(30)?,
         })
     }
 
@@ -879,7 +862,7 @@ impl AFile {
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.taken_date IS NOT NULL and c.album_type = 1
+            WHERE a.taken_date IS NOT NULL
             GROUP BY a.taken_date
             ORDER BY a.taken_date {}",
             order_clause
@@ -902,8 +885,8 @@ impl AFile {
     }
 
     // get total count and size of files
-    pub fn get_count_and_sum(is_trashed: bool) -> Result<(i64, i64), String> {
-        let sql = format!("{}", Self::build_count_query(is_trashed));
+    pub fn get_count_and_sum() -> Result<(i64, i64), String> {
+        let sql = format!("{}", Self::build_count_query());
         Self::query_count_and_sum(&sql, &[])
     }
 
@@ -914,7 +897,7 @@ impl AFile {
         search_folder: &str,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
-        is_favorite: bool, tag_id: i64, is_trashed: bool,
+        is_favorite: bool, tag_id: i64,
         page_size: i64, offset: i64,
     ) -> Result<Vec<Self>, String> {
 
@@ -933,10 +916,12 @@ impl AFile {
             params.push(&search_file_type);
         }
     
-        let folder_prefix_pattern = format!("{}%", search_folder);  // case-sensitive
+        let folder_exact_pattern = format!("{}/%", search_folder);
         if !search_folder.is_empty() {
-            conditions.push("b.path LIKE ?");
-            params.push(&folder_prefix_pattern);
+            // Match path that starts with search_folder followed by '/' or end of string
+            conditions.push("(b.path = ? OR b.path LIKE ?)");
+            params.push(&search_folder);
+            params.push(&folder_exact_pattern);
         }
 
         if !start_date.is_empty() {
@@ -968,11 +953,7 @@ impl AFile {
             params.push(&tag_id);
         }
     
-        if is_trashed {
-            conditions.push("c.album_type = 0");
-        } else {
-            conditions.push("c.album_type = 1");
-        }
+        
     
         let mut query = Self::build_base_query();
         if !conditions.is_empty() {
@@ -1003,6 +984,8 @@ impl AFile {
 
         Self::query_files(&query, &params)
     }
+
+    
 
 }
 
@@ -1271,7 +1254,7 @@ impl ACamera {
                 FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 LEFT JOIN albums c ON b.album_id = c.id
-                WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL and c.album_type = 1
+                WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL
                 GROUP BY a.e_make, a.e_model
                 ORDER BY a.e_make, a.e_model",
             )
@@ -1328,12 +1311,12 @@ pub fn create_db() -> Result<(), String> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             path TEXT NOT NULL,
-            description TEXT,
-            avatar_id INTEGER,
-            display_order_id INTEGER,
-            album_type INTEGER NOT NULL,
             created_at INTEGER,
-            modified_at INTEGER
+            modified_at INTEGER,
+            display_order_id INTEGER,
+            avatar_id INTEGER,
+            description TEXT,
+            is_hidden INTEGER
         )",
         [],
     ).map_err(|e| e.to_string())?;
@@ -1347,12 +1330,9 @@ pub fn create_db() -> Result<(), String> {
             album_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             path TEXT NOT NULL,
-            is_favorite INTEGER,
             created_at INTEGER,
             modified_at INTEGER,
-            original_album_id INTEGER,
-            name_in_trash TEXT,
-            trashed_at INTEGER,
+            is_favorite INTEGER,
             FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
         )",
         [],
@@ -1380,9 +1360,6 @@ pub fn create_db() -> Result<(), String> {
             rotate INTEGER,
             comments TEXT,
             has_tags INTEGER,
-            original_folder_id INTEGER,
-            name_in_trash TEXT,
-            trashed_at INTEGER,
             e_make TEXT,
             e_model TEXT,
             e_date_time TEXT,
@@ -1446,16 +1423,6 @@ pub fn create_db() -> Result<(), String> {
     ).map_err(|e| e.to_string())?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_file_id ON afile_tags(file_id)", []).map_err(|e| e.to_string())?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_tag_id ON afile_tags(tag_id)", []).map_err(|e| e.to_string())?;
-
-    // trash init
-
-    // create trash folder
-    let trash_album_path = t_utils::create_trash_folder()?;
-    // create trash album in db if not exists
-    if let Ok(trash_album) = Album::add_album_to_db(&trash_album_path, 0) {
-        // create trash folder in db if not exists
-        AFolder::add_to_db(trash_album.id.unwrap(), &trash_album_path)?;
-    }
 
     Ok(())
 }

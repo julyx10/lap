@@ -8,7 +8,6 @@
     "location": "場所",
     "people": "人物",
     "camera": "カメラ",
-    "trash": "ゴミ箱",
     "settings": "設定"
   },
 
@@ -60,12 +59,6 @@
     "months_long": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
   },
 
-  "trash": {
-    "files": "ゴミ箱のファイル",
-    "folders": "ゴミ箱のフォルダ",
-    "days": "{count} 日"
-  },
-
   "toolbar": {
     "search": {
       "placeholder": "ファイル名を検索"
@@ -92,8 +85,7 @@
       "calendar": "カレンダーデータが見つかりません",
       "location": "位置データが見つかりません",
       "people": "人物データが見つかりません",
-      "camera": "カメラデータが見つかりません",
-      "trash": "ゴミ箱データが見つかりません"
+      "camera": "カメラデータが見つかりません"
     },
     "copy_image": {
       "success": "画像をクリップボードにコピーしました",
@@ -125,6 +117,7 @@
       "rename": "名前を変更",
       "move_to": "移動",
       "copy_to": "コピー",
+      "delete": "削除",
       "goto_folder": "フォルダへ移動",
       "reveal_in_finder": "Finderで表示",
       "reveal_in_file_explorer": "ファイルエクスプローラーで表示",
@@ -133,13 +126,6 @@
     "tag": {
       "rename": "タグ名を変更",
       "delete": "タグを削除"
-    },
-    "trash": {
-      "move_to": "ゴミ箱へ移動",
-      "empty": "ゴミ箱を空にする",
-      "restore": "復元",
-      "delete": "削除",
-      "delete_permanently": "完全に削除"
     },
     "meta": {
       "favorite": "お気に入り",
@@ -178,7 +164,7 @@
     },
     "delete_folder": {
       "title": "フォルダを削除",
-      "content": "フォルダ '{folder}' とそのすべての内容は削除されます。",
+      "content": "フォルダ '{folder}' とその内容は削除されます。",
       "ok": "削除",
       "success": "フォルダ '{folder}' が削除されました。",
       "error": "フォルダを削除できませんでした。フォルダが存在しない可能性があります。"
@@ -195,12 +181,6 @@
       "ok": "コピー",
       "error": "'{source}' を '{dest}' にコピーできませんでした。"
     },
-    "trash": {
-      "title": "ゴミ箱へ移動",
-      "content": "フォルダ '{folder}' はゴミ箱へ移動されます。",
-      "ok": "ゴミ箱へ移動",
-      "error": "フォルダ '{folder}' をゴミ箱へ移動できませんでした。"
-    },
     "rename_file": {
       "title": "ファイル名を変更",
       "placeholder": "新しいファイル名を入力",
@@ -214,19 +194,12 @@
       "success": "ファイル '{file}' が削除されました。",
       "error": "ファイルを削除できませんでした。ファイルが存在しない可能性があります。"
     },
-    "restore_file": {
-      "title": "ファイルを復元",
-      "content": "ファイル '{file}' は復元されます。この操作は元に戻せません。",
-      "ok": "復元",
-      "success": "ファイル '{file}' が復元されました。",
-      "error": "ファイルを復元できませんでした。ファイルが存在しない可能性があります。"
-    },
-    "empty_trash": {
-      "title": "ゴミ箱を空にする",
-      "content": "ゴミ箱を空にしますか？この操作は元に戻せません。",
-      "ok": "空にする",
-      "success": "ゴミ箱が空になりました。",
-      "error": "ゴミ箱を空にできませんでした。"
+    "delete_files": {
+      "title": "ファイルを削除",
+      "content": "{count} ファイルは削除されます。",
+      "ok": "削除",
+      "success": "{count} ファイルが削除されました。",
+      "error": "ファイルを削除できませんでした。ファイルが存在しない可能性があります。"
     },
     "new_tag": {
       "title": "新しいタグ",
@@ -251,9 +224,6 @@
     },
     "select_file": {
       "error": "ファイルを選択できませんでした。"
-    },
-    "tag_files": {
-      "title": "ファイルにタグを付ける"
     }
   },
 
@@ -282,8 +252,7 @@
     "gps_longitude": "GPS経度",
     "gps_altitude": "GPS高度",
     "tags": "タグ",
-    "comment": "コメント",
-    "recent_deleted": "最近削除"
+    "comment": "コメント"
   },
 
   "format": {
@@ -333,6 +302,7 @@
         "ダーク"
       ],
       "select_language": "言語を選択",
+      "show_hidden_album": "非表示のアルバムを表示",
       "show_button_text": "ボタンテキストを表示",
       "show_tool_tip": "ツールチップを表示",
       "show_status_bar": "ステータスバーを表示",
@@ -368,8 +338,6 @@
       "storage": {
         "total_file_count": "ファイル数",
         "total_file_size": "ファイルサイズ",
-        "trash_file_count": "ゴミ箱のファイル数",
-        "trash_file_size": "ゴミ箱のファイルサイズ",
         "file_path": "ストレージファイルのパス",
         "file_size": "ストレージファイルのサイズ"
       }

@@ -57,6 +57,9 @@ listen('settings-appearance-changed', (event) => {
 listen('settings-language-changed', (event) => {
   config.setLanguage(event.payload)
 })
+listen('settings-showHiddenAlbum-changed', (event) => {
+  config.setShowHiddenAlbum(event.payload)
+})
 listen('settings-showButtonText-changed', (event) => {
   config.setShowButtonText(event.payload)
 })

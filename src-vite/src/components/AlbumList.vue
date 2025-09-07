@@ -129,7 +129,7 @@ import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
 import { config, isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
-         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, getTrashAlbum } from '@/common/api';
+         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
@@ -164,9 +164,9 @@ const props = defineProps({
     type: String,
     required: false
   },
-  componentId: {  // 0: album pane; 1: move/copy to mode(select destination folder); 2: trash pane
+  componentId: {  // 0: album pane; 1: move/copy to mode(select destination folder)
     type: Number,
-    required: true
+    default: 0
   }
 });
 
@@ -182,10 +182,11 @@ const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
 
 const removingAlbumId = ref(null);  // album id to be removed
+
 // message boxes
-const showAlbumEdit = ref(false);
-const showNewFolderMsgbox = ref(false);
-const showRemoveMsgbox = ref(false);
+const showAlbumEdit = ref(false);           // show edit album
+const showNewFolderMsgbox = ref(false);     // show new folder
+const showRemoveMsgbox = ref(false);        // show remove album
 const errorMessage = ref('');
 
 const toolTipRef = ref(null);
@@ -223,29 +224,12 @@ const moreMenuItems = computed(() => {
         revealFolder(getAlbumById(selectedAlbumId.value).path);
       }
     },
-    // {
-    //   label: "-",   // separator
-    //   action: () => {}
-    // },
-    // {
-    //   label: localeMsg.value.menu.refresh,
-    //   icon: IconRefresh,
-    //   action: async() => {
-    //     const album = getAlbumById(selectedAlbumId.value);
-    //     await expandAlbum(album, true);
-    //   }
-    // },
   ];
 });
 
 onMounted( async () => {
   if (albums.value.length === 0) {
-    if (props.componentId === 2) {
-      const trashAlbum = await getTrashAlbum();
-      albums.value = trashAlbum ? [trashAlbum] : [];
-    } else {
-      albums.value = await getAllAlbums();
-    }
+    albums.value = await getAllAlbums();
     isLoading.value = false;
 
     if (props.albumId > 0) {

@@ -46,23 +46,17 @@
         
           <!-- status icons -->
           <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">
-            <template v-if="config.sidebarIndex !== 7">
-              <IconVideo v-if="file.file_type===2" class="t-icon-size-xs"></IconVideo>
-              <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
-              <IconRotate v-if="file.rotate % 360 > 0"
-                class="t-icon-size-xs"
-                :style="{ 
-                  transform: `rotate(${file.rotate}deg)`, 
-                  transition: 'transform 0.3s ease-in-out' 
-                }"
-              />
-              <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
-              <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>              
-            </template>
-            <template v-else>
-              <IconTrash class="t-icon-size-xs"></IconTrash>
-              {{ $t('trash.days', { count: getDaysElapsed(file.trashed_at) }) }}
-            </template>
+            <IconVideo v-if="file.file_type===2" class="t-icon-size-xs"></IconVideo>
+            <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
+            <IconRotate v-if="file.rotate % 360 > 0"
+              class="t-icon-size-xs"
+              :style="{ 
+                transform: `rotate(${file.rotate}deg)`, 
+                transition: 'transform 0.3s ease-in-out' 
+              }"
+            />
+            <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
+            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>              
           </div>
 
           <!-- select checkbox or more menu -->
@@ -77,7 +71,7 @@
                 index != selectedIndex ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
-              :menuItems="config.sidebarIndex === 7 ? trashMenuItems : moreMenuItems"
+              :menuItems="moreMenuItems"
               :smallIcon="true"
             />
           </div>
@@ -156,44 +150,7 @@ const emitUpdate = defineEmits(['update:selectItemIndex']);
 
 const scrollContainer = ref(null); // Ref for the scrollable element
 
-const trashMenuItems = computed(() => {
-  return [
-    // {
-    //   label: localeMsg.value.menu.file.open,
-    //   icon: IconOpen,
-    //   shortcut: isMac ? '⏎' : 'Enter',
-    //   action: () => {
-    //     openItem();
-    //   }
-    // },
-    // {
-    //   label: localeMsg.value.menu.file.copy,
-    //   icon: IconCopy,
-    //   shortcut: isMac ? '⌘C' : 'Ctrl+C',
-    //   action: () => {
-    //     copyItem();
-    //   }
-    // },
-    // {
-    //   label: "-",   // separator
-    //   action: () => {}
-    // },
-    {
-      label: localeMsg.value.menu.trash.restore,
-      icon: IconTrashRestore,
-      action: () => {
-        restoreFromTrash();
-      }
-    },
-    {
-      label: localeMsg.value.menu.trash.delete,
-      icon: IconTrash,
-      action: () => {
-        deleteFromTrash();
-      }
-    }
-  ]
-})
+
 
 const moreMenuItems = computed(() => {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
@@ -408,14 +365,6 @@ function copyTo() {
 
 function moveToTrash() {
   emit('message-from-grid-view', { message: 'move-to-trash' });
-};
-
-function restoreFromTrash() {
-  emit('message-from-grid-view', { message: 'restore-from-trash' });
-};
-
-function deleteFromTrash() {
-  emit('message-from-grid-view', { message: 'delete-from-trash' });
 };
 
 function gotoFolder() {

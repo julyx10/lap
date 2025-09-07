@@ -26,7 +26,7 @@ export async function getAllAlbums() {
   return null;
 };
 
-// get one album
+// get one album by id
 export async function getAlbum(albumId) {
   if(!albumId) {
     return null;
@@ -43,7 +43,7 @@ export async function getAlbum(albumId) {
   return null;
 }
 
-// add an album
+// add an album to db
 export async function addAlbum() {
   try {
     const folderPath = await openFolderDialog();
@@ -65,9 +65,9 @@ export async function addAlbum() {
 }
 
 // edit an album's profile
-export async function editAlbum(albumId, newName, newDespription) {
+export async function editAlbum(albumId, newName, newDespription, newIsHidden) {
   try {
-    const album = await invoke('edit_album', { id: albumId, name: newName, description: newDespription });
+    const album = await invoke('edit_album', { id: albumId, name: newName, description: newDespription, isHidden: newIsHidden });
     console.log('edit_album', album);
     if (album) {
       return album;
@@ -108,7 +108,8 @@ export async function setDisplayOrder(albumId, order) {
 
 // folder
 
-// select a folder
+// select a folder to an album
+// add a folder to db
 export async function selectFolder(albumId, folderPath) {
   try {
     const selectedFolder = await invoke('select_folder', { albumId, folderPath });
@@ -121,7 +122,7 @@ export async function selectFolder(albumId, folderPath) {
   return null;
 }
 
-// fetch folder
+// fetch folder and build a FileNode
 export async function fetchFolder(path, isRecursive) {
   try {
     const folder = await invoke('fetch_folder', { path, isRecursive });
@@ -170,7 +171,7 @@ export async function expandFinalFolder(rootFolder, finalPath) {
   }
 }
 
-// recurse all files under the path, and count the number of files
+// recurse all files under the path(include all sub-folders), and count the number of files
 export async function countFolder(path) {
   try {
     const result = await invoke('count_folder', { path });
@@ -236,9 +237,9 @@ export async function copyFolder(folderPath, newFolderPath) {
 }
 
 // trash a folder
-export async function trashFolder(folderPath) {
+export async function trashFolder(folderId) {
   try {
-    const result = await invoke('trash_folder', { folderPath });
+    const result = await invoke('trash_folder', { folderId });
     if(result) {
       return result;
     };
@@ -247,26 +248,6 @@ export async function trashFolder(folderPath) {
   }
   return null;
 };
-
-// restore a folder
-// export async function restoreFolder(folderPath) {
-//   try {
-//     const result = await invoke('restore_folder', { folderPath });
-//   }
-// }
-
-// delete a folder
-// export async function deleteFolder(folderPath) {
-//   try {
-//     const result = await invoke('delete_folder', { folderPath });
-//     if (result) {
-//       return true;
-//     };
-//   } catch (error) {
-//     console.log('Failed to delete folder:', error);
-//   }
-//   return false;
-// }
 
 /// reveal a folder in file explorer( or finder)
 export async function revealFolder(folderPath) {
@@ -393,9 +374,9 @@ export async function copyFile(filePath, newFolderPath) {
 }
 
 // trash a file
-export async function trashFile(fileId, filePath) {
+export async function trashFile(fileId) {
   try {
-    return await invoke('trash_file', { fileId, filePath });
+    return await invoke('trash_file', { fileId });
   } catch (error) {
     console.error('trashFile error:', error);
     return null;
@@ -661,77 +642,6 @@ export async function getTakenDates(ascending = true) {
   return null;
 }
 
-// trash
-
-// get trash album
-export async function getTrashAlbum() {
-  try {
-    const trashAlbum = await invoke('get_trash_album');
-    if (trashAlbum) {
-      return trashAlbum;
-    }
-  } catch (error) {
-    console.error('Failed to get trash album:', error);
-  }
-  return null;
-}
-
-// get trash file count and sum
-export async function getTrashCountAndSum() {
-  try {
-    const trashCountAndSum = await invoke('get_trash_count_and_sum');
-    if (trashCountAndSum) {
-      return trashCountAndSum;
-    }
-  } catch (error) {
-    console.error('Failed to get trash count and sum:', error);
-  }
-  return null;
-}
-
-// restore folders
-export async function restoreFolders(folderIds) {
-  try {
-    if (folderIds && folderIds.length > 0) {
-      await invoke('restore_folders', { folderIds });
-    }
-  } catch (error) {
-    console.error('restoreFolders error:', error);
-  }
-}
-
-// restore files
-export async function restoreFiles(fileIds) {
-  try {
-    if (fileIds && fileIds.length > 0) {
-      await invoke('restore_files', { fileIds });
-    }
-  } catch (error) {
-    console.error('restoreFiles error:', error);
-  }
-}
-
-// delete folders
-export async function deleteFolders(folderIds) {
-  try {
-    if (folderIds && folderIds.length > 0) {
-      await invoke('delete_folders', { folderIds });
-    }
-  } catch (error) {
-    console.error('deleteFolders error:', error);
-  }
-}
-
-// delete files
-export async function deleteFiles(fileIds) {
-  try {
-    if (fileIds && fileIds.length > 0) {
-      await invoke('delete_files', { fileIds });
-    }
-  } catch (error) {
-    console.error('deleteFiles error:', error);
-  }
-}
 
 // print
 
@@ -763,19 +673,6 @@ export async function getPackageInfo() {
   return null;
 }
 
-// get db file info
-export async function getStorageFileInfo() {
-  try {
-    const dbFileInfo = await invoke('get_storage_file_info');
-    if (dbFileInfo) {
-      return dbFileInfo;
-    }
-  } catch (error) {
-    console.error('Failed to get db file size:', error);
-  }
-  return null;
-}
-
 // get build time
 export async function getBuildTime() {
   try {
@@ -786,6 +683,19 @@ export async function getBuildTime() {
     }
   } catch (error) {
     console.error('Failed to get build time:', error);
+  }
+  return null;
+}
+
+// get db file info
+export async function getStorageFileInfo() {
+  try {
+    const dbFileInfo = await invoke('get_storage_file_info');
+    if (dbFileInfo) {
+      return dbFileInfo;
+    }
+  } catch (error) {
+    console.error('Failed to get db file size:', error);
   }
   return null;
 }
