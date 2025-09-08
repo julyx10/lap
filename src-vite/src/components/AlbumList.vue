@@ -17,6 +17,7 @@
             :class="[
               'my-1 mr-1 pr-1 h-8 flex flex-row items-center rounded border-l-2 whitespace-nowrap cursor-pointer group', 
               selectedFolderId === album.folderId && !isEditList ? 'bg-base-content/10 border-primary' : 'hover:bg-base-content/10 border-transparent',
+              album.is_hidden ? 'text-base-content/30' : '',
               { 
                 'hover:bg-base-content/10': !isDragging && !isEditList,
                 'text-base-content': selectedAlbumId === album.id && !isEditList, 
@@ -57,6 +58,7 @@
           <AlbumFolder v-if="album.is_expanded && !isEditList"
             :children="album.children" 
             :rootAlbumId="album.id"
+            :isHiddenAlbum="album.is_hidden ? true : false"
             :albumId="selectedAlbumId"
             :folderId="selectedFolderId"
             :folderPath="selectedFolderPath"
@@ -82,10 +84,11 @@
       v-if="showAlbumEdit"
       :inputName="getAlbumById(albumId).name"
       :inputDescription="getAlbumById(albumId).description"
+      :hiddenAlbum="getAlbumById(albumId).is_hidden"
       :albumPath="getAlbumById(albumId).path"
       :createdAt="formatTimestamp(getAlbumById(albumId).created_at, $t('format.date_time'))"
       :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('format.date_time'))"
-      @ok="clickAlbumEdit"
+      @ok="clickAlbumInfo"
       @cancel="showAlbumEdit = false"
     />
     
@@ -227,7 +230,7 @@ const moreMenuItems = computed(() => {
 
 onMounted( async () => {
   if (albums.value.length === 0) {
-    albums.value = await getAllAlbums();
+    albums.value = await getAllAlbums(config.showHiddenAlbum);
     isLoading.value = false;
 
     if (props.albumId > 0) {
@@ -305,13 +308,29 @@ const clickNewAlbum = async () => {
   }
 };
 
+// Refresh albums function
+const refreshAlbums = async () => {
+  isLoading.value = true;
+  try {
+    albums.value = await getAllAlbums(config.showHiddenAlbum);
+  } catch (error) {
+    console.error('Failed to refresh albums:', error);
+  } finally {
+    isLoading.value = false;
+    selectedAlbumId.value = 0;
+    selectedFolderId.value = 0;
+    selectedFolderPath.value = "";
+  }
+};
+
 /// edit album information
-const clickAlbumInfo = async (newName, newDescription) => {
-  const result = await editAlbum(selectedAlbumId.value, newName, newDescription);
+const clickAlbumInfo = async (newName, newDescription, newIsHidden) => {
+  const result = await editAlbum(selectedAlbumId.value, newName, newDescription, newIsHidden);
   if(result) {
     let album = getAlbumById(selectedAlbumId.value);
     album.name = newName;
     album.description = newDescription;
+    album.is_hidden = newIsHidden;
     showAlbumEdit.value = false;
   }
 };
@@ -456,6 +475,7 @@ const onDragEnd = async () => {
 defineExpose({ 
   isEditList,
   clickNewAlbum,
+  refreshAlbums,
 });
 
 </script>

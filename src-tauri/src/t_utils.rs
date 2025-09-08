@@ -241,26 +241,27 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
 
 /// Deletes a folder and all its contents.
 /// Returns `true` if deletion was successful, otherwise `false`.
-pub fn delete_folder(folder_path: &str) -> bool {
-    let path = Path::new(folder_path);
+// #[allow(dead_code)]
+// pub fn delete_folder(folder_path: &str) -> bool {
+//     let path = Path::new(folder_path);
 
-    if !path.exists() {
-        eprintln!("Folder does not exist: {}", folder_path);
-        return false;
-    }
+//     if !path.exists() {
+//         eprintln!("Folder does not exist: {}", folder_path);
+//         return false;
+//     }
 
-    // Use remove_dir_all to recursively delete the entire folder
-    match fs::remove_dir_all(path) {
-        Ok(_) => {
-            println!("Folder deleted successfully: {}", folder_path);
-            true
-        }
-        Err(e) => {
-            eprintln!("Failed to delete folder '{}': {}", folder_path, e);
-            false
-        }
-    }
-}
+//     // Use remove_dir_all to recursively delete the entire folder
+//     match fs::remove_dir_all(path) {
+//         Ok(_) => {
+//             println!("Folder deleted successfully: {}", folder_path);
+//             true
+//         }
+//         Err(e) => {
+//             eprintln!("Failed to delete folder '{}': {}", folder_path, e);
+//             false
+//         }
+//     }
+// }
 
 /// Checks if a path exists, and if so, returns a new unique path 
 /// by appending a number like (1), (2), etc.
@@ -474,27 +475,28 @@ pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
 }
 
 /// delete a file
-pub fn delete_file(file_path: &str) -> Option<String> {
-    let path = Path::new(file_path);
+// #[allow(dead_code)]
+// pub fn delete_file(file_path: &str) -> Option<String> {
+//     let path = Path::new(file_path);
 
-    // Check if the file exists
-    if !path.exists() {
-        eprintln!("File does not exist: {}", file_path);
-        return None;
-    }
+//     // Check if the file exists
+//     if !path.exists() {
+//         eprintln!("File does not exist: {}", file_path);
+//         return None;
+//     }
 
-    // Attempt to delete the file
-    match fs::remove_file(path) {
-        Ok(_) => {
-            println!("File deleted successfully: {}", file_path);
-            Some(file_path.to_string())
-        }
-        Err(e) => {
-            eprintln!("Failed to delete file '{}': {}", file_path, e);
-            None
-        }
-    }
-}
+//     // Attempt to delete the file
+//     match fs::remove_file(path) {
+//         Ok(_) => {
+//             println!("File deleted successfully: {}", file_path);
+//             Some(file_path.to_string())
+//         }
+//         Err(e) => {
+//             eprintln!("Failed to delete file '{}': {}", file_path, e);
+//             None
+//         }
+//     }
+// }
 
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances

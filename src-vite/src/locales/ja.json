@@ -22,12 +22,13 @@
       "description": "説明",
       "description_placeholder": "アルバムの説明を入力",
       "folder": "フォルダ",
+      "hidden": "非表示",
       "images": "画像",
       "videos": "動画",
       "files_count": "{count} ファイル ({size})",
       "files_counting": "ファイルをカウント中...",
-      "created_time": "作成日時",
-      "modified_time": "更新日時"
+      "created_at": "作成日時",
+      "modified_at": "更新日時"
     }
   },
 
@@ -106,7 +107,8 @@
     "album": {
       "add": "フォルダを追加",
       "edit_list": "リストを編集",
-      "edit_album": "アルバムを編集"
+      "edit_album": "アルバムを編集",
+      "refresh_albums": "アルバムを更新"
     },
     "file": {
       "new_folder": "新しいフォルダ",
@@ -303,7 +305,7 @@
         "ダーク"
       ],
       "select_language": "言語を選択",
-      "show_hidden_album": "非表示のアルバムを表示",
+      "show_hidden_album": "非表示のアルバムを表示 (アルバムを更新するとき)",
       "show_button_text": "ボタンテキストを表示",
       "show_tool_tip": "ツールチップを表示",
       "show_status_bar": "ステータスバーを表示",

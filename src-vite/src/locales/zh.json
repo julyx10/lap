@@ -22,6 +22,7 @@
       "description": "描述",
       "description_placeholder": "输入相册描述",
       "folder": "文件夹",
+      "hidden": "隐藏",
       "images": "图片",
       "videos": "视频",
       "files_count": "{count} 个文件 ({size})",
@@ -106,7 +107,8 @@
     "album": {
       "add": "添加文件夹",
       "edit_list": "编辑列表",
-      "edit_album": "编辑相册"
+      "edit_album": "编辑相册", 
+      "refresh_albums": "刷新相册"
     },
     "file": {
       "new_folder": "新建文件夹",
@@ -303,7 +305,7 @@
         "暗黑"
       ],
       "select_language": "选择语言",
-      "show_hidden_album": "显示隐藏相册",
+      "show_hidden_album": "显示隐藏相册 (刷新相册时)",
       "show_button_text": "显示按钮文本",
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",

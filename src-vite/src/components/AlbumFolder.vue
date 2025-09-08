@@ -11,6 +11,7 @@
           {
             'bg-base-content/10 border-primary text-base-content': selectedFolderId === child.id && !isRenamingFolder,
             'hover:bg-base-content/10 border-transparent': selectedFolderId !== child.id || isRenamingFolder,
+            'text-base-content/30': isHiddenAlbum,
             'text-base-content': getFolderPath(config.albumFolderPath).includes(child.path)
           }
         ]" 
@@ -58,6 +59,7 @@
         :key="child.id"
         :children="child.children" 
         :rootAlbumId="rootAlbumId"
+        :isHiddenAlbum="isHiddenAlbum"
         :albumId="selectedAlbumId"
         :folderId="selectedFolderId"
         :folderPath="selectedFolderPath"
@@ -150,6 +152,10 @@ const props = defineProps({
   },
   rootAlbumId: {    // root album id
     type: Number, 
+    required: true,
+  },
+  isHiddenAlbum: {    // is hidden album
+    type: Boolean,
     required: true,
   },
   albumId: {    // selected album id (v-model value)

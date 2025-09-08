@@ -22,6 +22,7 @@
       "description": "Description",
       "description_placeholder": "Enter album's description",
       "folder": "Folder",
+      "hidden": "Hidden",
       "images": "Images",
       "videos": "Videos",
       "files_count": "{count} files ({size})",
@@ -106,7 +107,8 @@
     "album": {
       "add": "Add folder",
       "edit_list": "Edit list",
-      "edit_album": "Edit album"
+      "edit_album": "Edit album",
+      "refresh_albums": "Refresh albums"
     },
     "file": {
       "new_folder": "New folder",
@@ -303,7 +305,7 @@
         "dark"
       ],
       "select_language": "Select language",
-      "show_hidden_album": "Show hidden album",
+      "show_hidden_album": "Show hidden album (when refreshing albums)",
       "show_button_text": "Show button text",
       "show_tool_tip": "Show tooltips",
       "show_status_bar": "Show status bar",

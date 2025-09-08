@@ -358,6 +358,9 @@ watch(() => config.language, (newValue) => {
   locale.value = newValue;
   emit('settings-language-changed', newValue);
 });
+watch(() => config.showHiddenAlbum, (newValue) => {
+  emit('settings-showHiddenAlbum-changed', newValue);
+});
 watch(() => config.showButtonText, (newValue) => {
   emit('settings-showButtonText-changed', newValue);
 });

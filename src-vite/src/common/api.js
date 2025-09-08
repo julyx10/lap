@@ -7,10 +7,10 @@ const config = useConfigStore();
 // album
 
 // get all albums
-export async function getAllAlbums() {
+export async function getAllAlbums(showHiddenAlbum) {
   try {
     let albums = [];
-    const fetchedAlbums = await invoke('get_all_albums');
+    const fetchedAlbums = await invoke('get_all_albums', { showHiddenAlbum });
     console.log('get_all_albums', fetchedAlbums);
     if (fetchedAlbums) {
       albums = fetchedAlbums.map(album => ({
@@ -291,6 +291,7 @@ export async function getDbFiles(searchFolder, startDate, endDate, make, model, 
       make, 
       model,
       isFavorite, 
+      isShowHidden: config.showHiddenAlbum,
       tagId,
       offset, 
       pageSize: config.fileListPageSize
@@ -465,7 +466,7 @@ export async function getFileHasTags(fileId) {
 // get favorite folders
 export async function getFavoriteFolders() {
   try {
-    const favoriteFolders = await invoke('get_favorite_folders');
+    const favoriteFolders = await invoke('get_favorite_folders', { isShowHidden: config.showHiddenAlbum });
     if (favoriteFolders) {
       // sort favorite folders by name in locale order 
       favoriteFolders.sort((a, b) => localeComp(config.language, a.name, b.name));
@@ -618,7 +619,7 @@ export async function removeTagFromFile(fileId, tagId) {
 // get camera info
 export async function getCameraInfo() {
   try {
-    const cameraInfo = await invoke('get_camera_info');
+    const cameraInfo = await invoke('get_camera_info', { isShowHidden: config.showHiddenAlbum });
     if (cameraInfo) {
       return cameraInfo;
     }
@@ -631,7 +632,7 @@ export async function getCameraInfo() {
 // get taken dates
 export async function getTakenDates(ascending = true) {
   try {
-    const taken_dates = await invoke('get_taken_dates', { ascending });
+    const taken_dates = await invoke('get_taken_dates', { ascending, isShowHidden: config.showHiddenAlbum });
     if (taken_dates) {
       return taken_dates;
     }

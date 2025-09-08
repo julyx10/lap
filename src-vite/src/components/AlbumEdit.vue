@@ -41,6 +41,12 @@
                 ></textarea>
               </td>
             </tr>
+            <tr class="h-8 py-2">
+              <td>{{ $t('album.edit.hidden') }}</td>
+              <td>
+                <input type="checkbox" class="toggle toggle-sm" v-model="hiddenAlbumValue" />
+              </td>
+            </tr>
             <tr class="h-8">
               <td>{{ $t('album.edit.folder') }}</td>
               <td>
@@ -115,6 +121,10 @@ const props = defineProps({
     type: String, 
     default: '' 
   },
+  hiddenAlbum: { 
+    type: Boolean, 
+    default: false 
+  },
   albumPath: { 
     type: String, 
     default: '' 
@@ -135,6 +145,7 @@ const emit = defineEmits(['ok', 'cancel']);
 const inputNameRef = ref(null);
 const inputNameValue = ref(props.inputName);
 const inputDescriptionValue = ref(props.inputDescription);
+const hiddenAlbumValue = ref(props.hiddenAlbum);
 
 // total file count of the album
 const totalFolderCount = ref(0);
@@ -179,7 +190,7 @@ function handleKeyDown(event) {
 
 const clickOk = () => {
   if (inputNameValue.value.trim().length > 0) {
-    emit('ok', inputNameValue.value, inputDescriptionValue.value ? inputDescriptionValue.value : '');
+    emit('ok', inputNameValue.value, inputDescriptionValue.value ? inputDescriptionValue.value : '', hiddenAlbumValue.value);
   }
 };
 

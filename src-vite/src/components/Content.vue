@@ -684,7 +684,7 @@ async function updateContent() {
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.home.title;
-    await getFileList("","", "", "", "", false, 0, fileListOffset.value);
+    await getFileList("", "", "", "", "", false, 0, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
     if(config.albumId === null) {

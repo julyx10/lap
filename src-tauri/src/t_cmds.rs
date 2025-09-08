@@ -18,8 +18,8 @@ include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
 
 /// get all albums
 #[tauri::command]
-pub fn get_all_albums() -> Result<Vec<Album>, String> {
-    Album::get_all_albums()
+pub fn get_all_albums(show_hidden_album: bool) -> Result<Vec<Album>, String> {
+    Album::get_all_albums(show_hidden_album)
         .map_err(|e| format!("Error while getting all albums: {}", e))
 }
 
@@ -161,8 +161,9 @@ pub fn get_db_files(
     search_folder: &str,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
-    is_favorite: bool, tag_id: i64,
-    page_size: i64, offset: i64
+    is_favorite: bool, is_show_hidden: bool,
+    tag_id: i64,
+    offset: i64, page_size: i64
 ) -> Result<Vec<AFile>, String> {
     AFile::get_files(
         search_text, search_file_type,
@@ -170,8 +171,9 @@ pub fn get_db_files(
         search_folder,
         start_date, end_date,
         make, model,
-        is_favorite, tag_id,
-        page_size, offset
+        is_favorite, is_show_hidden, 
+        tag_id,
+        offset, page_size
     ).map_err(|e| format!("Error while getting all files: {}", e))
 }
 
@@ -313,8 +315,8 @@ pub fn get_file_has_tags(file_id: i64) -> Result<bool, String> {
 
 /// get all favorite folders
 #[tauri::command]
-pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
-    AFolder::get_favorite_folders()
+pub fn get_favorite_folders(is_show_hidden: bool) -> Result<Vec<AFolder>, String> {
+    AFolder::get_favorite_folders(is_show_hidden)
         .map_err(|e| format!("Error while getting favorite folders: {}", e))
 }
 
@@ -406,15 +408,15 @@ pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> 
 
 /// get a file's camera make and model info
 #[tauri::command]
-pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
-    ACamera::get_from_db()
+pub fn get_camera_info(is_show_hidden: bool) -> Result<Vec<ACamera>, String> {
+    ACamera::get_from_db(is_show_hidden)
         .map_err(|e| format!("Error while getting camera info: {}", e))
 }
 
 /// get camera's taken dates
 #[tauri::command]
-pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates(ascending)
+pub fn get_taken_dates(ascending: bool, is_show_hidden: bool) -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates(ascending, is_show_hidden)
         .map_err(|e| format!("Error while getting taken dates: {}", e))
 }
 

@@ -137,13 +137,21 @@ impl Album {
     }
 
     /// Get all albums(album_type = 1) from the db
-    pub fn get_all_albums() -> Result<Vec<Self>, String> {
+    pub fn get_all_albums(show_hidden_album: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let mut stmt = conn.prepare(
+        
+        let query = if show_hidden_album {
             "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
             FROM albums
             ORDER BY display_order_id ASC"
-        ).map_err(|e| e.to_string())?;
+        } else {
+            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
+            FROM albums
+            WHERE is_hidden IS NULL OR is_hidden = 0
+            ORDER BY display_order_id ASC"
+        };
+        
+        let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
 
         // Execute the query and map the result to Album structs
         let albums_iter = stmt.query_map([], |row| Self::from_row(row))
@@ -343,17 +351,17 @@ impl AFolder {
     }
 
     // get folder info by id
-    pub fn get_folder_by_id(id: i64) -> Result<Option<Self>, String> {
-        let conn = open_conn()?;
-        let result = conn
-            .query_row(
-                "SELECT id, album_id, name, path, created_at, modified_at, is_favorite
-                FROM afolders WHERE id = ?1",
-                params![id],
-                |row| Self::from_row(row)
-            ).optional().map_err(|e| e.to_string())?;
-        Ok(result)
-    }
+    // pub fn get_folder_by_id(id: i64) -> Result<Option<Self>, String> {
+    //     let conn = open_conn()?;
+    //     let result = conn
+    //         .query_row(
+    //             "SELECT id, album_id, name, path, created_at, modified_at, is_favorite
+    //             FROM afolders WHERE id = ?1",
+    //             params![id],
+    //             |row| Self::from_row(row)
+    //         ).optional().map_err(|e| e.to_string())?;
+    //     Ok(result)
+    // }
 
     // get a folder's is_favorite status
     pub fn get_is_favorite(folder_path: &str) -> Result<Option<bool>, String> {
@@ -369,15 +377,21 @@ impl AFolder {
     }
 
     // get all favorite folders
-    pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
+    pub fn get_favorite_folders(is_show_hidden: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
+        let hidden_clause = if is_show_hidden { "" } else { "AND (b.is_hidden IS NULL OR b.is_hidden = 0)" };
+
+        let query = format!(
+            "SELECT a.id, a.album_id, a.name, a.path, a.created_at, a.modified_at, a.is_favorite
+            FROM afolders a
+            LEFT JOIN albums b ON a.album_id = b.id
+            WHERE a.is_favorite = 1 {}
+            ORDER BY a.name",
+            hidden_clause
+        );
+
         let mut stmt = conn
-            .prepare(
-                "SELECT a.id, a.album_id, a.name, a.path, a.created_at, a.modified_at, a.is_favorite
-                FROM afolders a
-                LEFT JOIN albums b ON a.album_id = b.id
-                WHERE a.is_favorite = 1",
-            )
+            .prepare(query.as_str())
             .map_err(|e| e.to_string())?;
 
         let rows = stmt
@@ -857,19 +871,20 @@ impl AFile {
     }
 
     /// get all taken dates from db
-    pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
+    pub fn get_taken_dates(ascending: bool, is_show_hidden: bool) -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn()?;
         
+        let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
         let order_clause = if ascending { "ASC" } else { "DESC" };
         let query = format!(
             "SELECT a.taken_date, COUNT(1) 
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.taken_date IS NOT NULL
+            WHERE a.taken_date IS NOT NULL {}
             GROUP BY a.taken_date
             ORDER BY a.taken_date {}",
-            order_clause
+            hidden_clause, order_clause
         );
 
         let mut stmt = conn
@@ -901,8 +916,10 @@ impl AFile {
         search_folder: &str,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
-        is_favorite: bool, tag_id: i64,
-        page_size: i64, offset: i64,
+        is_favorite: bool, 
+        is_show_hidden: bool,
+        tag_id: i64,
+        offset: i64, page_size: i64,
     ) -> Result<Vec<Self>, String> {
 
         // conditions
@@ -957,7 +974,9 @@ impl AFile {
             params.push(&tag_id);
         }
     
-        
+        if !is_show_hidden {
+            conditions.push("(c.is_hidden IS NULL OR c.is_hidden = 0)");
+        }
     
         let mut query = Self::build_base_query();
         if !conditions.is_empty() {
@@ -1250,18 +1269,23 @@ pub struct ACamera {
 
 impl ACamera {
     // get all camera makes and models from db
-    pub fn get_from_db() -> Result<Vec<Self>, String> {
+    pub fn get_from_db(is_show_hidden: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
+        let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
+
+        let query = format!(
+            "SELECT a.e_make, a.e_model 
+            FROM afiles a
+            LEFT JOIN afolders b ON a.folder_id = b.id
+            LEFT JOIN albums c ON b.album_id = c.id
+            WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL {}
+            GROUP BY a.e_make, a.e_model
+            ORDER BY a.e_make, a.e_model",
+            hidden_clause
+        );
+
         let mut stmt = conn
-            .prepare(
-                "SELECT a.e_make, a.e_model 
-                FROM afiles a
-                LEFT JOIN afolders b ON a.folder_id = b.id
-                LEFT JOIN albums c ON b.album_id = c.id
-                WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL
-                GROUP BY a.e_make, a.e_model
-                ORDER BY a.e_make, a.e_model",
-            )
+            .prepare(query.as_str())
             .map_err(|e| e.to_string())?;
 
         let rows = stmt
@@ -1286,11 +1310,6 @@ impl ACamera {
 
         // Sort the cameras by make
         cameras.sort_by(|a, b| a.make.cmp(&b.make));
-
-        // // Sort the models within each ACamera instance
-        // for camera in &mut cameras {
-        //     camera.models.sort();
-        // }
 
         Ok(cameras)
     }

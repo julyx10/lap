@@ -36,6 +36,7 @@
                 'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group', 
                 { 
                   'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === folder.id, 
+                  'text-base-content/30': folder.is_hidden,
                 }
               ]"
               @click="clickFavoriteFolder(folder)"
@@ -75,7 +76,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
-import { getFavoriteFolders, setFolderFavorite } from '@/common/api';
+import { getFavoriteFolders, setFolderFavorite, getAlbum } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
@@ -118,6 +119,14 @@ onMounted(() => {
     // fetch favorite folders
     getFavoriteFolders().then((folders) => {
       favorite_folders.value = folders || [];
+
+      // get album info
+      favorite_folders.value.forEach((folder) => {
+        getAlbum(folder.album_id).then((album) => {
+          folder.is_hidden = album.is_hidden;
+        });
+      });
+
       console.log('favorite_folders', favorite_folders.value);
     });
   }
