@@ -116,7 +116,6 @@ import {
   IconChecked,
   IconUnChecked,
   IconComment,
-  IconTrashRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -203,7 +202,6 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
-      disabled: config.sidebarIndex !== 1,
       action: () => {
         moveTo();
       }
@@ -211,17 +209,16 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.copy_to,
       // icon: IconCopyTo,
-      disabled: config.sidebarIndex !== 1,
       action: () => {
         copyTo();
       }
     },
     {
-      label: localeMsg.value.menu.trash.move_to,
+      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
-        moveToTrash();
+        deleteItem();
       }
     },
     {
@@ -317,7 +314,7 @@ function handleKeyDown(event) {
   } else if(isCmdKey && key.toLowerCase() === 'r') {
     rotateItem();
   } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    moveToTrash();
+    deleteItem();
   } else if (keyActions[key]) {
     keyActions[key](); 
   }
@@ -363,8 +360,8 @@ function copyTo() {
   emit('message-from-grid-view', { message: 'copy-to' });
 };
 
-function moveToTrash() {
-  emit('message-from-grid-view', { message: 'move-to-trash' });
+function deleteItem() {
+  emit('message-from-grid-view', { message: 'delete' });
 };
 
 function gotoFolder() {
@@ -407,9 +404,9 @@ const getThumbnailText = (file, option) => {
     case 3:   // dimension
       return `${file.width}x${file.height}`;
     case 4:   // created time
-      return formatTimestamp(file.created_at, localeMsg.value.date_time_format);
+      return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
     case 5:   // modified time
-      return formatTimestamp(file.modified_at, localeMsg.value.date_time_format);
+      return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
     case 6:   // date taken
       return file.e_date_time || '-';
     default:

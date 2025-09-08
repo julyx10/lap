@@ -87,7 +87,7 @@ fn main() {
             t_cmds::rename_folder,
             t_cmds::move_folder,
             t_cmds::copy_folder,
-            t_cmds::trash_folder,
+            t_cmds::delete_folder,
             t_cmds::reveal_folder,
 
             // file
@@ -98,7 +98,7 @@ fn main() {
             t_cmds::rename_file,
             t_cmds::move_file,
             t_cmds::copy_file,
-            t_cmds::trash_file,
+            t_cmds::delete_file,
             t_cmds::edit_file_comment,
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,

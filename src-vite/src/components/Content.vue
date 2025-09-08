@@ -200,9 +200,9 @@
   <!-- delete -->
   <MessageBox
     v-if="showDeleteMsgbox"
-    :title="$t('msgbox.delete_file.title')"
-    :message="`${$t('msgbox.delete_file.content', { file: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
-    :OkText="$t('msgbox.delete_file.ok')"
+    :title="selectMode ? $t('msgbox.delete_files.title') : $t('msgbox.delete_file.title')"
+    :message="selectMode ? $t('msgbox.delete_files.content', { count: selectedCount.toLocaleString() }) : $t('msgbox.delete_file.content', { file: fileList[selectedItemIndex].name })"
+    :OkText="selectMode ? $t('msgbox.delete_files.ok') : $t('msgbox.delete_file.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     @ok="clickDeleteFile"
@@ -242,7 +242,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage,
-         setFileFavorite, setFileRotate, getFileHasTags, trashFile} from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, deleteFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getTimestamp } from '@/common/utils';
@@ -272,17 +272,16 @@ import {
   IconUnFavorite,
   IconFolderFavorite,
   IconMoveTo,
-  IconTrash,
   IconFile,
   IconFolder,
   IconPhoto,
   IconChecked,
   IconComment,
   IconTag,
-  IconTrashRestore,
   IconCalendar,
   IconLocation,
   IconCamera,
+  IconTrash,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -408,24 +407,24 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
-      disabled: selectedCount.value === 0 || config.sidebarIndex !== 1,
+      disabled: selectedCount.value === 0,
       action: () => {
         showMoveTo.value = true;
       }
     },
     {
       label: localeMsg.value.menu.file.copy_to,
-      disabled: selectedCount.value === 0 || config.sidebarIndex !== 1,
+      disabled: selectedCount.value === 0,
       action: () => {
         showCopyTo.value = true;
       }
     },
     {
-      label: localeMsg.value.menu.trash.move_to,
+      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
       icon: IconTrash,
       disabled: selectedCount.value === 0,
       action: () => {
-        clickMoveToTrash();
+        showDeleteMsgbox.value = true;
       }
     },
   ];
@@ -521,9 +520,6 @@ onMounted( async() => {
       case 'copy-to':
         showCopyTo.value = true;
         break;
-      case 'move-to-trash':
-        clickMoveToTrash();
-        break;
       case 'delete':
         showDeleteMsgbox.value = true;
         break;
@@ -574,7 +570,7 @@ onMounted( async() => {
         selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
         break;
       case 'delete':
-        // clickDeleteFile();
+        clickDeleteFile();
         break;
       case 'favorite':
         toggleFavorite();
@@ -688,7 +684,7 @@ async function updateContent() {
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.home.title;
-    await getFileList("","", "", "", "", false, 0, false, fileListOffset.value);
+    await getFileList("","", "", "", "", false, 0, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
     if(config.albumId === null) {
@@ -717,12 +713,12 @@ async function updateContent() {
     } else {
       if(config.favoriteFolderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
-        await getFileList("", "", "", "", "", true, 0, false, fileListOffset.value);
+        await getFileList("", "", "", "", "", true, 0, fileListOffset.value);
       } else {                // favorite folders
         const album = await getAlbum(config.favoriteAlbumId);
         if(album) {
           contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
-          await getFileList(config.favoriteFolderPath, "", "", "", "", false, 0, false, fileListOffset.value);
+          await getFileList(config.favoriteFolderPath, "", "", "", "", false, 0, fileListOffset.value);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -738,7 +734,7 @@ async function updateContent() {
       const tagName = await getTagName(config.tagId);
       if (tagName) {
         contentTitle.value = tagName;
-        await getFileList("", "", "", "", "", false, config.tagId, false, fileListOffset.value);
+        await getFileList("", "", "", "", "", false, config.tagId, fileListOffset.value);
       } else {
         contentTitle.value = "";
         fileList.value = [];
@@ -758,7 +754,7 @@ async function updateContent() {
         contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long);
       }
       const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
-      await getFileList("", startDate, endDate, "", "", false, 0, false, fileListOffset.value);
+      await getFileList("", startDate, endDate, "", "", false, 0, fileListOffset.value);
     }
   }
   else if(newIndex === 5) {   // location
@@ -769,7 +765,7 @@ async function updateContent() {
     //   const location = await getLocation(config.locationId);
     //   if(location) {
     //     contentTitle.value = location.name;
-    //     await getFileList("", "", "", "", "", false, 0, false, fileListOffset.value);
+    //     await getFileList("", "", "", "", "", false, 0, fileListOffset.value);
     //   }
     }
   }
@@ -780,10 +776,10 @@ async function updateContent() {
     } else {
       if(config.cameraModel) {
         contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-        await getFileList("", "", "", config.cameraMake, config.cameraModel, false, 0, false, fileListOffset.value);
+        await getFileList("", "", "", config.cameraMake, config.cameraModel, false, 0, fileListOffset.value);
       } else {
         contentTitle.value = `${config.cameraMake}`;
-        await getFileList("", "", "", config.cameraMake, "", false, 0, false, fileListOffset.value);
+        await getFileList("", "", "", config.cameraMake, "", false, 0, fileListOffset.value);
       } 
     }
   } 
@@ -860,51 +856,31 @@ const clickCopyTo = async () => {
   showCopyTo.value = false;
 }
 
-// move to trash
-const clickMoveToTrash = async () => {
-  let filesToTrash = [];
-  if (selectMode.value && selectedCount.value > 0) {
-    filesToTrash = fileList.value.filter(item => item.isSelected);
-  } else if (selectedItemIndex.value >= 0) {
-    filesToTrash = [fileList.value[selectedItemIndex.value]];
-  }
-
-  if (filesToTrash.length > 0) {
-    // Move each file to trash individually
-    for (const file of filesToTrash) {
-      if (file.file_path) {
-        await trashFile(file.id, file.file_path);
-      }
-    }
-    // refresh file list
-    updateContent();
-  }
-}
 // click delete menu item
-// const clickDeleteFile = async () => {
-//   if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
-//     const deletes = fileList.value
-//       .filter(item => item.isSelected)
-//       .map(async item => {
-//         const deletedFile = await deleteFile(item.id, item.file_path);
-//         if(deletedFile) {
-//           console.log('clickDeleteFile:', deletedFile);
-//           removeFromFileList(fileList.value.indexOf(item));
-//         }
-//       });
-//     await Promise.all(deletes); // parallelize DB updates
-//     selectMode.value = false; // exit multi-select mode
-//   } 
-//   else if(selectedItemIndex.value >= 0) {               // single select mode
-//     const file = fileList.value[selectedItemIndex.value];
-//     const deletedFile = await deleteFile(file.id, file.file_path);
-//     if(deletedFile) {
-//       console.log('clickDeleteFile:', deletedFile);
-//       removeFromFileList(selectedItemIndex.value);
-//     }
-//   }
-//   showDeleteMsgbox.value = false;
-// }
+const clickDeleteFile = async () => {
+  if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
+    const deletes = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        const deletedFile = await deleteFile(item.id);
+        if(deletedFile) {
+          console.log('clickDeleteFile:', deletedFile);
+          removeFromFileList(fileList.value.indexOf(item));
+        }
+      });
+    await Promise.all(deletes); // parallelize DB updates
+    selectMode.value = false; // exit multi-select mode
+  } 
+  else if(selectedItemIndex.value >= 0) {               // single select mode
+    const file = fileList.value[selectedItemIndex.value];
+    const deletedFile = await deleteFile(file.id);
+    if(deletedFile) {
+      console.log('clickDeleteFile:', deletedFile);
+      removeFromFileList(selectedItemIndex.value);
+    }
+  }
+  showDeleteMsgbox.value = false;
+}
 
 // remove an file item from the list and update the selected item index
 function removeFromFileList(index) {

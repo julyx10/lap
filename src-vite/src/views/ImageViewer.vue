@@ -367,7 +367,7 @@ const moreMenuItems = computed(() => {
     //   }
     // },
     {
-      label: localeMsg.value.menu.trash.move_to,
+      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {

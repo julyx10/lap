@@ -117,6 +117,7 @@
       "rename": "Rename",
       "move_to": "Move to",
       "copy_to": "Copy to",
+      "move_to_trash": "Move to trash",
       "delete": "Delete",
       "goto_folder": "Go to folder",
       "reveal_in_finder": "Reveal in Finder",
@@ -196,10 +197,10 @@
     },
     "delete_files": {
       "title": "Delete files",
-      "content": "{count} files will be deleted.",
-      "ok": "Delete",
-      "success": "{count} files have been deleted.",
-      "error": "Cannot delete the files. The files may not exist."
+      "content": "{count} selected files will be deleted.",
+      "ok": "Delete all",
+      "success": "{count} selected files have been deleted.",
+      "error": "Cannot delete the selected files. The files may not exist."
     },
     "new_tag": {
       "title": "New tag",

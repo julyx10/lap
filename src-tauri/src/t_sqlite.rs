@@ -310,7 +310,7 @@ impl AFolder {
         Ok(result)
     }
 
-    pub fn trash_folder(folder_id: i64) -> Result<usize, String> {
+    pub fn delete_folder(folder_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
     
         let sql = "SELECT path FROM afolders WHERE id = ?1";
@@ -637,10 +637,14 @@ impl AFile {
         Ok(result)
     }
 
-    pub fn trash_file(file_id: i64) -> Result<usize, String> {
+    pub fn delete_file(file_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
     
-        let sql = "SELECT b.path, a.name FROM afiles a LEFT JOIN afolders b ON a.folder_id = b.id WHERE a.id = ?1";
+        let sql = 
+            "SELECT b.path, a.name 
+            FROM afiles a 
+            LEFT JOIN afolders b ON a.folder_id = b.id 
+            WHERE a.id = ?1";
         let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
         let file_info: Option<(String, String)> = stmt
             .query_row([file_id], |row| Ok((row.get(0)?, row.get(1)?)))

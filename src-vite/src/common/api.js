@@ -236,15 +236,15 @@ export async function copyFolder(folderPath, newFolderPath) {
   return null;
 }
 
-// trash a folder
-export async function trashFolder(folderId) {
+// delete a folder
+export async function deleteFolder(folderId) {
   try {
-    const result = await invoke('trash_folder', { folderId });
+    const result = await invoke('delete_folder', { folderId });
     if(result) {
       return result;
     };
   } catch (error) {
-    console.log('Failed to trash folder:', error);
+    console.log('Failed to delete folder:', error);
   }
   return null;
 };
@@ -278,7 +278,7 @@ export async function getDbCountAndSum() {
 }
 
 /// get all files from db (with pagination)
-export async function getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, isTrashed, offset) {
+export async function getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, offset) {
   try {
     const files = await invoke('get_db_files', {
       searchText: config.searchText, 
@@ -292,7 +292,6 @@ export async function getDbFiles(searchFolder, startDate, endDate, make, model, 
       model,
       isFavorite, 
       tagId,
-      isTrashed,
       offset, 
       pageSize: config.fileListPageSize
     });
@@ -373,12 +372,12 @@ export async function copyFile(filePath, newFolderPath) {
   return null;
 }
 
-// trash a file
-export async function trashFile(fileId) {
+// delete a file
+export async function deleteFile(fileId) {
   try {
-    return await invoke('trash_file', { fileId });
+    return await invoke('delete_file', { fileId });
   } catch (error) {
-    console.error('trashFile error:', error);
+    console.error('deleteFile error:', error);
     return null;
   }
 }

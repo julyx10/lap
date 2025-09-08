@@ -265,8 +265,6 @@ const appWindow = getCurrentWebviewWindow()
 // get all db files' count and sum(without pagination)
 const totalFileCount = ref(0);
 const totalFileSize = ref(0);
-const trashFileCount = ref(0);
-const trashFileSize = ref(0);
 
 // storage file info
 const packageInfo = ref(null);

@@ -132,10 +132,10 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
     t_utils::copy_folder(folder_path, new_folder_path)
 }
 
-/// trash a folder
+/// delete a folder
 #[tauri::command]
-pub fn trash_folder(folder_id: i64) -> Result<usize, String> {
-    AFolder::trash_folder(folder_id)
+pub fn delete_folder(folder_id: i64) -> Result<usize, String> {
+    AFolder::delete_folder(folder_id)
 }
 
 /// reveal a folder in the file explorer( or finder)
@@ -252,10 +252,10 @@ pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
     t_utils::copy_file(file_path, new_folder_path)
 }
 
-/// trash a file
+/// delete a file
 #[tauri::command]
-pub fn trash_file(file_id: i64) -> Result<usize, String> {
-    AFile::trash_file(file_id)
+pub fn delete_file(file_id: i64) -> Result<usize, String> {
+    AFile::delete_file(file_id)
 }
 
 /// edit a file's comment

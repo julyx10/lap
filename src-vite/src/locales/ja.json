@@ -117,6 +117,7 @@
       "rename": "名前を変更",
       "move_to": "移動",
       "copy_to": "コピー",
+      "move_to_trash": "回收站に移動",
       "delete": "削除",
       "goto_folder": "フォルダへ移動",
       "reveal_in_finder": "Finderで表示",
@@ -196,10 +197,10 @@
     },
     "delete_files": {
       "title": "ファイルを削除",
-      "content": "{count} ファイルは削除されます。",
-      "ok": "削除",
-      "success": "{count} ファイルが削除されました。",
-      "error": "ファイルを削除できませんでした。ファイルが存在しない可能性があります。"
+      "content": "{count} 選択済みファイルは削除されます。",
+      "ok": "すべて削除",
+      "success": "{count} 選択済みファイルが削除されました。",
+      "error": "選択済みファイルを削除できませんでした。ファイルが存在しない可能性があります。"
     },
     "new_tag": {
       "title": "新しいタグ",
@@ -239,7 +240,7 @@
     "modified_at": "更新日時",
     "camera_make": "カメラメーカー",
     "camera_model": "カメラモデル",
-    "date_taken": "撮影日",
+    "date_taken": "撮影日時",
     "exposure_time": "露出時間",
     "aperture": "絞り",
     "focal_length": "焦点距離",

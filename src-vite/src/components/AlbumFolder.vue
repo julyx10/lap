@@ -81,16 +81,16 @@
   />
 
   <!-- delete folder -->
-  <!-- <MessageBox
-    v-if="showDeleteMsgbox"
+  <MessageBox
+    v-if="showDeleteFolderMsgbox"
     :title="$t('msgbox.delete_folder.title')"
     :message="`${$t('msgbox.delete_folder.content', { folder: getFolderById(selectedFolderId).name })}`"
     :OkText="$t('msgbox.delete_folder.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     @ok="clickDeleteFolder"
-    @cancel="showDeleteMsgbox = false"
-  /> -->
+    @cancel="showDeleteFolderMsgbox = false"
+  />
 
   <!-- move to -->
   <MoveTo
@@ -124,7 +124,7 @@ import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
-import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, trashFolder } from '@/common/api';
+import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -141,7 +141,6 @@ import {
   IconTrash,
   IconFavorite,
   IconUnFavorite,
-  IconTrashRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -189,7 +188,7 @@ const originalFolderName = ref(''); // restore original folder name when cancel 
 
 // message boxes
 const showNewFolderMsgbox = ref(false);
-const showDeleteMsgbox = ref(false);
+const showDeleteFolderMsgbox = ref(false);
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 
@@ -235,10 +234,10 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.trash.move_to,
+      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
       icon: IconTrash,
       action: () => {
-        clickMoveToTrash();
+        showDeleteFolderMsgbox.value = true;
       }
     },
     {
@@ -396,29 +395,6 @@ const handleEscKey = (event, folderID) => {
   isRenamingFolder.value = false; 
 };
 
-/// delete selected folder
-// const clickDeleteFolder = async () => {
-//   console.log('AlbumFolder.vue-clickDeleteFolder:', selectedFolderId.value);
-//   const isDeleted = await deleteFolder(selectedFolderPath.value);
-//   if (isDeleted) {
-//     let folder = getFolderById(selectedFolderId.value);
-//     folder.is_deleted = true;
-//     folder.id = 0; // remove id to avoid click folder again
-
-//     emit('message-from-select-folder', {
-//       message: 'delete-folder',
-//       albumId: selectedAlbumId.value, 
-//       folderId: 0, 
-//       folderPath: "",
-//       componentId: props.componentId
-//     });
-//     showDeleteMsgbox.value = false;
-//   } else {
-//     console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox.delete_folder.error);
-//     toolTipRef.value.showTip(localeMsg.value.msgbox.delete_folder.error);
-//   }
-// };
-
 // move folder to dest folder
 const clickMoveTo = async () => {
   moveFolder(selectedFolderPath.value, config.destAlbumId, config.destFolderPath).then((newPath) => {
@@ -453,21 +429,27 @@ const clickCopyTo = async () => {
   });
 };
 
-// move selected folder to trash (soft delete)
-const clickMoveToTrash = async () => {
-  trashFolder(selectedFolderPath.value).then((result) => {
-    if (result) {
-      let folder = getFolderById(selectedFolderId.value);
-      folder.id = 0; // remove id to avoid click folder again
+/// delete selected folder
+const clickDeleteFolder = async () => {
+  console.log('AlbumFolder.vue-clickDeleteFolder:', selectedFolderId.value);
+  const isDeleted = await deleteFolder(selectedFolderId.value);
+  if (isDeleted) {
+    let folder = getFolderById(selectedFolderId.value);
+    folder.is_deleted = true;
+    folder.id = 0; // remove id to avoid click folder again
 
-      emit('message-from-select-folder', { 
-        message: 'refresh-folder',
-        folderPath: "",                   // select new folder
-      });
-    } else {
-      toolTipRef.value.showTip(localeMsg.value.msgbox.trash.error);
-    }
-  });
+    emit('message-from-select-folder', {
+      message: 'delete-folder',
+      albumId: selectedAlbumId.value, 
+      folderId: 0, 
+      folderPath: "",
+      componentId: props.componentId
+    });
+    showDeleteFolderMsgbox.value = false;
+  } else {
+    console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox.delete_folder.error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox.delete_folder.error);
+  }
 };
 
 // toggle favorite folder

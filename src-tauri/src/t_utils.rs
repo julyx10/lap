@@ -908,17 +908,3 @@ pub fn get_db_file_path() -> Result<String, String> {
 
     Ok(db_path.to_string_lossy().into_owned())
 }
-
-/// create trash folder if not exists
-pub fn create_trash_folder() -> Result<String, String> {
-    let app_data_dir = dirs::data_local_dir()
-        .ok_or_else(|| "Failed to get the local AppData directory".to_string())?
-        .join("jc-photo")
-        .join("trash");
-
-    // Ensure the directory exists
-    fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create Trash directory: {}", e))?;
-
-    Ok(app_data_dir.to_string_lossy().into_owned())
-}

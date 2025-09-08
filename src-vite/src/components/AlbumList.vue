@@ -31,13 +31,13 @@
               :buttonClasses="'text-error'"
               @click.stop="removingAlbumId = album.id; showRemoveMsgbox = true"
             />
-            <component v-else :is="componentId === 2 ? IconTrash : album.is_expanded ? IconFolderExpanded : IconFolder" 
+            <component v-else :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
               class="mx-1 w-5 h-5 t-icon-animate hover:text-base-content cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
 
             <div class="overflow-hidden whitespace-pre text-ellipsis">
-              {{ componentId === 2 ? $t('sidebar.trash') : album.name }}
+              {{ album.name }}
             </div>
             <TButton v-if="isEditList" 
               class="ml-auto drag-handle"
@@ -147,8 +147,6 @@ import {
   IconDragHandle,
   IconRemove,
   IconEdit,
-  IconTrash,
-  IconTrashEmpty,
 } from '@/common/icons';
 
 const props = defineProps({

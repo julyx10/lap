@@ -117,6 +117,7 @@
       "rename": "重命名",
       "move_to": "移动到",
       "copy_to": "复制到",
+      "move_to_trash": "移到废纸篓",
       "delete": "删除",
       "goto_folder": "前往文件夹",
       "reveal_in_finder": "在访达中显示",
@@ -196,10 +197,10 @@
     },
     "delete_files": {
       "title": "删除文件",
-      "content": "{count} 个文件将被删除。",
-      "ok": "删除",
-      "success": "{count} 个文件已删除。",
-      "error": "无法删除文件。文件可能不存在。"
+      "content": "{count} 个选择的文件将被删除。",
+      "ok": "全部删除",
+      "success": "{count} 个选择的文件已删除。",
+      "error": "无法删除选择的文件。文件可能不存在。"
     },
     "new_tag": {
       "title": "新建标签",
@@ -239,7 +240,7 @@
     "modified_at": "修改时间",
     "camera_make": "相机制造商",
     "camera_model": "相机型号",
-    "date_taken": "拍摄日期",
+    "date_taken": "拍摄时间",
     "exposure_time": "曝光时间",
     "aperture": "光圈",
     "focal_length": "焦距",
@@ -316,7 +317,7 @@
       "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
       "label_primary": "显示主标签",
       "label_secondary": "显示副标签",
-      "label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄日期"]
+      "label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"]
     },
     "image_viewer": {
       "title": "图片查看器",

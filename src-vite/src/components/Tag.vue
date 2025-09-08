@@ -95,13 +95,12 @@
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
-import { getAllTags, createTag, renameTag, deleteTag } from '@/common/api';
+import { getAllTags, renameTag, deleteTag } from '@/common/api';
 import { 
   IconTag, 
   IconMore, 
   IconRename, 
-
-  IconAdd
+  IconTrash,
 } from '@/common/icons';
 
 // import TButton from '@/components/TButton.vue';
