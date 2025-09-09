@@ -13,8 +13,8 @@ use std::process::Command;
 use chrono::{DateTime, Utc};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 use pinyin::ToPinyin;
-use image::{ImageFormat, ImageReader};
-// use ffmpeg_next as ffmpeg;
+use image::{ImageFormat, ImageReader, DynamicImage, RgbImage};
+use ffmpeg_next as ffmpeg;
 use crate::t_sqlite::AFile;
 
 // #[cfg(target_os = "windows")]
@@ -239,30 +239,6 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
     }
 }
 
-/// Deletes a folder and all its contents.
-/// Returns `true` if deletion was successful, otherwise `false`.
-// #[allow(dead_code)]
-// pub fn delete_folder(folder_path: &str) -> bool {
-//     let path = Path::new(folder_path);
-
-//     if !path.exists() {
-//         eprintln!("Folder does not exist: {}", folder_path);
-//         return false;
-//     }
-
-//     // Use remove_dir_all to recursively delete the entire folder
-//     match fs::remove_dir_all(path) {
-//         Ok(_) => {
-//             println!("Folder deleted successfully: {}", folder_path);
-//             true
-//         }
-//         Err(e) => {
-//             eprintln!("Failed to delete folder '{}': {}", folder_path, e);
-//             false
-//         }
-//     }
-// }
-
 /// Checks if a path exists, and if so, returns a new unique path 
 /// by appending a number like (1), (2), etc.
 fn get_unique_path(path: PathBuf) -> PathBuf {
@@ -474,30 +450,6 @@ pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
     }
 }
 
-/// delete a file
-// #[allow(dead_code)]
-// pub fn delete_file(file_path: &str) -> Option<String> {
-//     let path = Path::new(file_path);
-
-//     // Check if the file exists
-//     if !path.exists() {
-//         eprintln!("File does not exist: {}", file_path);
-//         return None;
-//     }
-
-//     // Attempt to delete the file
-//     match fs::remove_file(path) {
-//         Ok(_) => {
-//             println!("File deleted successfully: {}", file_path);
-//             Some(file_path.to_string())
-//         }
-//         Err(e) => {
-//             eprintln!("Failed to delete file '{}': {}", file_path, e);
-//             None
-//         }
-//     }
-// }
-
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances
 pub fn get_folder_files(
@@ -703,31 +655,22 @@ pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
 
 /// Get video dimensions using ffmpeg
 pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
-    // // Initialize ffmpeg (should only be called once in your app)
-    // ffmpeg::init().map_err(|e| format!("ffmpeg init error: {:?}", e))?;
-
-    // // Open the input context (the media file)
-    // let ictx = ffmpeg::format::input(&file_path)
-    //     .map_err(|e| format!("Failed to open file: {:?}", e))?;
-
-    // // Find the best video stream
-    // let input = ictx
-    //     .streams()
-    //     .best(ffmpeg::media::Type::Video)
-    //     .ok_or("No video stream found")?;
-
-    // // Get stream parameters
-    // let params = input.parameters();
-
-    // // Get decoder for video
-    // let decoder = ffmpeg::codec::context::Context::from_parameters(params)
-    //     .map_err(|e| format!("Failed to get decoder context: {:?}", e))?;
-
-    // let decoder = decoder.decoder().video()
-    //     .map_err(|e| format!("Failed to get video decoder: {:?}", e))?;
-
-    // Ok((decoder.width(), decoder.height()))
-    Ok((0, 0))
+    ffmpeg_next::init().map_err(|e| format!("ffmpeg init error: {:?}", e))?;
+    match ffmpeg_next::format::input(&file_path) {
+        Ok(ictx) => {
+            let input = ictx
+                .streams()
+                .best(ffmpeg_next::media::Type::Video)
+                .ok_or("No video stream found")?;
+            let context = ffmpeg_next::codec::context::Context::from_parameters(input.parameters())
+                .map_err(|e| format!("Failed to get codec context: {}", e))?;
+            let decoder = context.decoder();
+            let video = decoder.video()
+                .map_err(|e| format!("Failed to get video decoder: {}", e))?;
+            Ok((video.width(), video.height()))
+        }
+        Err(e) => Err(format!("Failed to open file: {:?}", e)),
+    }
 }
 
 /// Get a thumbnail from an image file path
@@ -792,86 +735,85 @@ pub fn get_video_thumbnail(
     orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
-    // ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
+    ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
 
-    // let mut ictx = ffmpeg::format::input(file_path)
-    //     .map_err(|e| format!("Failed to open file: {e}"))?;
+    let mut ictx = ffmpeg::format::input(file_path)
+        .map_err(|e| format!("Failed to open file: {e}"))?;
 
-    // let input_stream = ictx
-    //     .streams()
-    //     .best(ffmpeg::media::Type::Video)
-    //     .ok_or("No video stream found")?;
+    let input_stream = ictx
+        .streams()
+        .best(ffmpeg::media::Type::Video)
+        .ok_or("No video stream found")?;
 
-    // let stream_index = input_stream.index();
-    // let params = input_stream.parameters();
-    // let mut decoder = ffmpeg::codec::context::Context::from_parameters(params)
-    //     .map_err(|e| format!("Failed to get decoder context: {e}"))?
-    //     .decoder()
-    //     .video()
-    //     .map_err(|e| format!("Decoder error: {e}"))?;
+    let stream_index = input_stream.index();
+    let mut decoder = ffmpeg::codec::context::Context::from_parameters(input_stream.parameters())
+        .map_err(|e| format!("Failed to get decoder context: {e}"))?
+        .decoder()
+        .video()
+        .map_err(|e| format!("Decoder error: {e}"))?;
 
-    // // For video files, seek to 10% of the duration
-    // // For HEIC files, we may not have a duration, so we skip seeking
-    // if ictx.duration() > 0 {
-    //     ictx.seek(ictx.duration() / 10 , ..)
-    //         .map_err(|e| format!("Seek error: {e}"))?;
-    // }
+    // For video files, seek to 10% of the duration
+    // For HEIC files, we may not have a duration, so we skip seeking
+    if ictx.duration() > 0 {
+        ictx.seek(ictx.duration() / 10 , ..)
+            .map_err(|e| format!("Seek error: {e}"))?;
+    }
 
-    // for (stream, packet) in ictx.packets() {
-    //     if stream.index() != stream_index {
-    //         continue;
-    //     }
+    for (stream, packet) in ictx.packets() {
+        if stream.index() != stream_index {
+            continue;
+        }
 
-    //     decoder
-    //         .send_packet(&packet)
-    //         .map_err(|e| format!("Send packet error: {e}"))?;
+        decoder
+            .send_packet(&packet)
+            .map_err(|e| format!("Send packet error: {e}"))?;
 
-    //     let mut frame = ffmpeg::util::frame::Video::empty();
-    //     if decoder.receive_frame(&mut frame).is_ok() {
-    //         let width = frame.width();
-    //         let height = frame.height();
+        let mut frame = ffmpeg::util::frame::Video::empty();
+        if decoder.receive_frame(&mut frame).is_ok() {
+            let width = frame.width();
+            let height = frame.height();
 
-    //         // Convert to RGB
-    //         let mut rgb_frame = ffmpeg::util::frame::Video::empty();
-    //         let mut scaler = ffmpeg::software::scaling::context::Context::get(
-    //             decoder.format(),
-    //             width,
-    //             height,
-    //             ffmpeg::format::Pixel::RGB24,
-    //             width,
-    //             height,
-    //             ffmpeg::software::scaling::flag::Flags::BILINEAR,
-    //         )
-    //         .map_err(|e| format!("Scaler creation error: {e}"))?;
+            // Convert to RGB
+            let mut rgb_frame = ffmpeg::util::frame::Video::empty();
+            let mut scaler = ffmpeg::software::scaling::context::Context::get(
+                decoder.format(),
+                width,
+                height,
+                ffmpeg::format::Pixel::RGB24,
+                width,
+                height,
+                ffmpeg::software::scaling::flag::Flags::BILINEAR,
+            )
+            .map_err(|e| format!("Scaler creation error: {e}"))?;
 
-    //         scaler
-    //             .run(&frame, &mut rgb_frame)
-    //             .map_err(|e| format!("Scaling error: {e}"))?;
+            scaler
+                .run(&frame, &mut rgb_frame)
+                .map_err(|e| format!("Scaling error: {e}"))?;
 
-    //         // Create DynamicImage
-    //         let data = rgb_frame.data(0);
-    //         let rgb_image = RgbImage::from_raw(width, height, data.to_vec())
-    //             .ok_or("Failed to create image buffer")?;
-    //         let dyn_image = DynamicImage::ImageRgb8(rgb_image);
+            // Create DynamicImage
+            let data = rgb_frame.data(0);
+            let rgb_image = RgbImage::from_raw(width, height, data.to_vec())
+                .ok_or("Failed to create image buffer")?;
+            let dyn_image = DynamicImage::ImageRgb8(rgb_image);
 
-    //         // Resize while keeping aspect ratio
-    //         let thumbnail = dyn_image.thumbnail(thumbnail_size, thumbnail_size);
+            // Resize while keeping aspect ratio
+            let thumbnail = dyn_image.thumbnail(thumbnail_size, thumbnail_size);
 
-    //         let adjusted_thumbnail = match orientation {
-    //             3 => thumbnail.rotate180(),
-    //             6 => thumbnail.rotate90(),
-    //             8 => thumbnail.rotate270(),
-    //             _ => thumbnail,
-    //         };
-    //         // Encode JPEG to memory
-    //         let mut buffer = Cursor::new(Vec::new());
-    //         adjusted_thumbnail
-    //             .write_to(&mut buffer, ImageFormat::Jpeg)
-    //             .map_err(|e| format!("Image encode error: {e}"))?;
+            let adjusted_thumbnail = match orientation {
+                3 => thumbnail.rotate180(),
+                6 => thumbnail.rotate90(),
+                8 => thumbnail.rotate270(),
+                _ => thumbnail,
+            };
+            // Encode JPEG to memory
+            let mut buffer = Cursor::new(Vec::new());
+            adjusted_thumbnail
+                .write_to(&mut buffer, ImageFormat::Jpeg)
+                .map_err(|e| format!("Image encode error: {e}"))?;
 
-    //         return Ok(Some(buffer.into_inner()));
-    //     }
-    // }
+            return Ok(Some(buffer.into_inner()));
+        }
+    }
 
     Ok(None)
 }

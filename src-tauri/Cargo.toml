@@ -28,14 +28,15 @@ kamadak-exif = "0.6.1"
 native-dialog = "0.7.0"
 dirs = "5.0.1"
 walkdir = "2.5.0"
+trash = "3.0.0"
 base64 = "0.22.1"
 image = "0.25.6"
 imagesize = "0.13.0"
+ffmpeg-next = { version = "7.0.0", features = ["static", "build"] }
 tokio = { version = "1.44.1", features = ["full"] }
 opener = "0.7.2"
 arboard = "3.5.0"
 pinyin = "0.10.0"
-trash = "3.0.0"
 # opencv = "0.94.4"
 # id3 = "1.14.0"
 

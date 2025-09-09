@@ -2,8 +2,8 @@
   "app": {
     "windows": [
       {
-        "minWidth": 1200,
-        "minHeight": 800,
+        "minWidth": 800,
+        "minHeight": 600,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "acceptFirstMouse": true,
