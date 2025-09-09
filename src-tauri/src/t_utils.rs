@@ -760,21 +760,29 @@ pub fn get_image_thumbnail(
         ImageFormat::Jpeg
     };
 
-    // Convert to appropriate pixel format before writing
-    // let image_to_write = if output_format == ImageFormat::Jpeg {
-    //     adjusted_thumbnail.to_rgb8() // Flatten alpha for JPEG
-    // } else {
-    //     adjusted_thumbnail.to_rgba8() // Keep alpha for PNG
-    // };
-
     // Save the thumbnail to an in-memory buffer
     let mut buf = Vec::new();
-    match adjusted_thumbnail.write_to(&mut Cursor::new(&mut buf), output_format) {
-        Ok(()) => Ok(Some(buf)),
-        Err(e) => {
-            eprintln!("Failed to write thumbnail to buffer as {:?}: {}", output_format, e);
-            Ok(None)
-        },
+    
+    if output_format == ImageFormat::Jpeg {
+        // For JPEG, convert to RGB8 to remove alpha channel
+        let rgb_image = adjusted_thumbnail.to_rgb8();
+        match rgb_image.write_to(&mut Cursor::new(&mut buf), output_format) {
+            Ok(()) => Ok(Some(buf)),
+            Err(e) => {
+                eprintln!("Failed to write thumbnail to buffer as {:?}: {}", output_format, e);
+                Ok(None)
+            },
+        }
+    } else {
+        // For PNG, keep RGBA8 to preserve alpha channel
+        let rgba_image = adjusted_thumbnail.to_rgba8();
+        match rgba_image.write_to(&mut Cursor::new(&mut buf), output_format) {
+            Ok(()) => Ok(Some(buf)),
+            Err(e) => {
+                eprintln!("Failed to write thumbnail to buffer as {:?}: {}", output_format, e);
+                Ok(None)
+            },
+        }
     }
 }
 
