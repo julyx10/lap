@@ -133,55 +133,58 @@
           </div>
         </transition>
 
-        <!-- prev   -->
-        <div v-if="fileIndex > 0"
-          class="absolute left-0 w-40 h-full z-10 flex items-center justify-start cursor-pointer group" 
-          @click="clickPrev()"
-        >
-          <div class="m-3 p-2 rounded-full hidden group-hover:block ">
-            <TButton 
-              :icon="IconLeft" 
-              :buttonClasses="'rounded-full'"
-            />
+        <template v-if="fileIndex >= 0">
+          <!-- prev button -->
+          <div v-if="fileIndex > 0"
+            class="absolute left-0 w-40 h-full z-10 flex items-center justify-start cursor-pointer group" 
+            @click="clickPrev()"
+          >
+            <div class="m-3 p-2 rounded-full hidden group-hover:block ">
+              <TButton :icon="IconLeft" :buttonClasses="'rounded-full'" />
+            </div>
           </div>
-        </div>
+          <!-- next button -->
+          <div v-if="fileIndex < fileCount - 1"
+            class="absolute right-0 w-40 h-full z-10 flex items-center justify-end cursor-pointer group" 
+            @click="clickNext()"
+          >
+            <div class="m-3 p-2 rounded-full hidden group-hover:block ">
+              <TButton :icon="IconRight" :buttonClasses="'rounded-full'" />
+            </div>
+          </div>
 
-        <!-- image -->
-        <Image v-if="fileIndex >= 0" 
-          ref="imageRef" 
-          :src="imageSrc" 
-          :rotate="fileInfo?.rotate ?? 0" 
-          :isZoomFit="config.isZoomFit"
-          @dblclick="toggleZoomFit()"
-        />
+          <!-- image -->
+          <Image v-if="fileInfo?.file_type === 1" 
+            ref="imageRef" 
+            :src="imageSrc" 
+            :rotate="fileInfo?.rotate ?? 0" 
+            :isZoomFit="config.isZoomFit"
+            @dblclick="toggleZoomFit()"
+          />
+
+          <!-- video -->
+          <Video v-if="fileInfo?.file_type === 2"
+            ref="videoRef"
+            :src="videoSrc"
+            :rotate="fileInfo?.rotate ?? 0"
+            :isZoomFit="config.isZoomFit"
+            @dblclick="toggleZoomFit()"
+          />
+
+          <!-- comments -->
+          <div v-if="config.showComment && fileInfo?.comments?.length > 0" 
+            class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg select-text" 
+          >
+            <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+            {{ fileInfo?.comments }}
+          </div>
+        </template>
 
         <!-- no image selected -->
         <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
           <IconPhoto class="w-12 h-12" />
           <span>{{ $t('tooltip.not_found.files') }}</span>
         </div>
-
-        <!-- next -->
-        <div v-if="fileIndex < fileCount - 1"
-          class="absolute right-0 w-40 h-full z-10 flex items-center justify-end cursor-pointer group" 
-          @click="clickNext()"
-        >
-          <div class="m-3 p-2 rounded-full hidden group-hover:block ">
-            <TButton 
-              :icon="IconRight" 
-              :buttonClasses="'rounded-full'"
-            />
-          </div>
-        </div>
-
-        <!-- comments -->
-        <div v-if="config.showComment && fileInfo?.comments?.length > 0" 
-          class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg select-text" 
-        >
-          <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
-          {{ fileInfo?.comments }}
-        </div>
-
       </div> <!-- image container -->
 
       <!-- splitter -->
@@ -237,6 +240,7 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { config, isWin, isMac, setTheme, getPlayInterval } from '@/common/utils';
 import { copyImage, getFileInfo, getFileImage, getTagsForFile } from '@/common/api';
@@ -244,11 +248,12 @@ import { copyImage, getFileInfo, getFileImage, getTagsForFile } from '@/common/a
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import Image from '@/components/Image.vue';
+import Video from '@/components/Video.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
-
+import 'xgplayer/dist/index.min.css';
 import { 
   IconPrev,
   IconNext,
@@ -299,7 +304,9 @@ const iconRotate = ref(0);      // icon rotation angle
 // const showFileInfo = ref(false); // Show the file info panel
 
 const imageRef = ref(null);     // Image reference
-const imageSrc = ref('');
+const videoRef = ref(null);     // Video reference
+const imageSrc = ref('');       // Image source
+const videoSrc = ref('');       // Video source
 const imageCache = new Map();   // Cache images to prevent reloading
 const loadError = ref(false);   // Track if there was an error loading the image
 
@@ -537,7 +544,13 @@ watch(() => fileId.value, async () => {
   }
 
   iconRotate.value = fileInfo.value.rotate || 0;
-  loadImage(filePath.value);
+
+  // load the file based on the file type
+  if(fileInfo.value.file_type === 1) {
+    loadImage(filePath.value);
+  } else if(fileInfo.value.file_type === 2) {
+    loadVideo(filePath.value);
+  }
 });
 
 // watch scale
@@ -609,6 +622,19 @@ async function preLoadImage(filePath) {
     }
   } catch (error) {
     console.error('preLoadImage:', error);
+  }
+}
+
+// Load the video from the file path
+async function loadVideo(filePath) {
+  if(filePath.length === 0) {
+    console.log('loadVideo - filePath is empty');
+    return;
+  }
+  try {
+    videoSrc.value = convertFileSrc(filePath);
+  } catch (error) {
+    console.error('loadVideo:', error);
   }
 }
 

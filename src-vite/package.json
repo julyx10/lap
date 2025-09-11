@@ -25,7 +25,9 @@
     "vue-draggable-plus": "^0.6.0",
     "vue-i18n": "^11.1.11",
     "vue-lazyload": "^3.0.0",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "xgplayer": "^3.0.23",
+    "xgplayer-vue": "^1.1.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.12",
