@@ -136,9 +136,14 @@
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
               :isZoomFit="true"
             />
-            <Video v-else-if="fileList[selectedItemIndex]?.file_type === 2"
-              :src="fileList[selectedItemIndex]?.file_path"
-            ></Video>
+            <div v-else-if="fileList[selectedItemIndex]?.file_type === 2" class="w-full h-full flex items-center justify-center">
+              <Video
+                ref="videoRef"
+                :src="videoSrc"
+                :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
+                :isZoomFit="true"
+              ></Video>
+            </div>
 
             <!-- comments -->
             <div v-if="config.showComment && fileList[selectedItemIndex]?.comments?.length > 0" 
@@ -238,6 +243,7 @@
 
 import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getTagName,
@@ -339,6 +345,7 @@ const isDraggingSplitter = ref(false);      // dragging splitter to resize previ
 const previewDiv = ref(null);
 const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
+const videoSrc = ref('');         // preview video source
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
@@ -661,9 +668,14 @@ watch(
 // watch for show preview on/off
 watch(() => config.showPreview, (newValue) => {
   if(newValue) {
-    getImageSrc(selectedItemIndex.value);
+    if(fileList.value[selectedItemIndex.value].file_type === 1) {
+      getImageSrc(selectedItemIndex.value);
+    } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
+      getVideoSrc(selectedItemIndex.value);
+    }
   } else {
     imageSrc.value = '';
+    videoSrc.value = '';
   }
   gridViewRef.value.scrollToItem(selectedItemIndex.value); 
 });
@@ -888,7 +900,11 @@ function removeFromFileList(index) {
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
   // update the preview
   if(config.showPreview) {
-    getImageSrc(selectedItemIndex.value);
+    if(fileList.value[selectedItemIndex.value].file_type === 1) {
+      getImageSrc(selectedItemIndex.value);
+    } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
+      getVideoSrc(selectedItemIndex.value);
+    }
   }
 }
 
@@ -1032,6 +1048,23 @@ const getImageSrc = async (index) => {
   }
 }
 
+// get selected video source
+const getVideoSrc = async (index) => {
+  if(index < 0 || index >= fileList.value.length) {
+    videoSrc.value = '';
+    return;
+  }
+
+  let filePath = fileList.value[index].file_path;
+  console.log('getVideoSrc:', filePath);
+  try {
+    videoSrc.value = convertFileSrc(filePath);
+  } catch (error) {
+    videoSrc.value = '';
+    console.error('getVideoSrc error:', error);
+  }
+}
+
 function refreshFileList() {
   selectMode.value = false;   // exit multi-select mode
 
@@ -1055,7 +1088,11 @@ function updateSelectedImage(index) {
 
   // update the preview
   if(config.showPreview) {
-    getImageSrc(index);
+    if(fileList.value[index].file_type === 1) {
+      getImageSrc(index);
+    } else if(fileList.value[index].file_type === 2) {
+      getVideoSrc(index);
+    }
   }
 
   // update image viewer if the viewer is open

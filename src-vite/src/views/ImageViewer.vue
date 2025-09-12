@@ -253,7 +253,6 @@ import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
-import 'xgplayer/dist/index.min.css';
 import { 
   IconPrev,
   IconNext,
