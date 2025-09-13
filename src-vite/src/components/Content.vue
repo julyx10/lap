@@ -142,6 +142,7 @@
                 :src="videoSrc"
                 :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
                 :isZoomFit="true"
+                @dblclick="openImageViewer"
               ></Video>
             </div>
 
@@ -366,6 +367,7 @@ const gridViewRef = ref(null);
 
 const toolTipRef = ref(null);
 const searchBoxRef = ref(null);
+const videoRef = ref(null);
 
 let resizeObserver;
 
@@ -1056,12 +1058,14 @@ const getVideoSrc = async (index) => {
   }
 
   let filePath = fileList.value[index].file_path;
-  console.log('getVideoSrc:', filePath);
+  console.log('Content getVideoSrc - original path:', filePath);
   try {
-    videoSrc.value = convertFileSrc(filePath);
+    const convertedSrc = convertFileSrc(filePath);
+    console.log('Content getVideoSrc - converted src:', convertedSrc);
+    videoSrc.value = convertedSrc;
   } catch (error) {
     videoSrc.value = '';
-    console.error('getVideoSrc error:', error);
+    console.error('Content getVideoSrc error:', error);
   }
 }
 

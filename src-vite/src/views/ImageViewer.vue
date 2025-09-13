@@ -451,6 +451,10 @@ onMounted(async() => {
           imageRef.value.rotateRight();
           iconRotate.value += 90;
         }
+        if(videoRef.value) {
+          videoRef.value.rotateRight();
+          iconRotate.value += 90;
+        }
         break;
       default:
         break;
@@ -631,7 +635,10 @@ async function loadVideo(filePath) {
     return;
   }
   try {
-    videoSrc.value = convertFileSrc(filePath);
+    const convertedSrc = convertFileSrc(filePath);
+    console.log('loadVideo - original path:', filePath);
+    console.log('loadVideo - converted src:', convertedSrc);
+    videoSrc.value = convertedSrc;
   } catch (error) {
     console.error('loadVideo:', error);
   }
@@ -665,17 +672,26 @@ const clickZoomIn = () => {
   if(imageRef.value) {
     imageRef.value.zoomIn();
   }
+  if(videoRef.value) {
+    videoRef.value.zoomIn();
+  }
 };
 
 const clickZoomOut = () => {
   if(imageRef.value) {
     imageRef.value.zoomOut();
   }
+  if(videoRef.value) {
+    videoRef.value.zoomOut();
+  }
 };
 
 const clickZoomActual = () => {
   if(imageRef.value) {
     imageRef.value.zoomActual();
+  }
+  if(videoRef.value) {
+    videoRef.value.zoomActual();
   }
 };
 

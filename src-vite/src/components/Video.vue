@@ -1,14 +1,20 @@
 <template>
-  <div ref="playerContainer" class="relative w-full h-full overflow-hidden cursor-pointer"></div>
+  <div ref="playerContainer" class="relative w-full h-full overflow-hidden cursor-pointer">
+    <video
+      ref="videoElement"
+      class="video-js vjs-default-skin w-full h-full"
+      preload="metadata"
+      data-setup="{}"
+    ></video>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
-import Player from 'xgplayer';
-import 'xgplayer/dist/index.min.css';
+import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue';
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
 import { config } from '@/common/utils';
 
-// Props
 const props = defineProps({
   src: {
     type: String,
@@ -25,47 +31,53 @@ const props = defineProps({
 });
 
 const playerContainer = ref<HTMLElement | null>(null);
-const player = ref<Player | null>(null);
+const videoElement = ref<HTMLVideoElement | null>(null);
+const player = ref<any>(null);
+
+// 播放器配置
+const playerOptions = computed(() => ({
+  responsive: true,
+  fluid: true,
+  aspectRatio: '16:9',
+  autoplay: true,
+  controls: true,
+  preload: 'metadata',
+  language: config.language,
+  playbackRates: [0.5, 1, 1.25, 1.5, 2],
+  controlBar: {
+    volumePanel: {
+      inline: false
+    }
+  }
+}));
 
 const setupPlayer = () => {
-  if (!playerContainer.value) return;
+  if (!videoElement.value) return;
 
   if (!props.src) {
     if (player.value) {
-      player.value.destroy();
+      player.value.dispose();
       player.value = null;
     }
     return;
   }
 
   if (player.value) {
-    // If player exists, just update the src
-    if (player.value.src !== props.src) {
-      player.value.src = props.src;
-    }
+    // 更新视频源
+    player.value.src(props.src);
   } else {
-    // If player doesn't exist, create a new one
-    player.value = new Player({
-      el: playerContainer.value,
-      url: props.src,
-      height: '100%',
-      width: '100%',
-      fitVideoSize: props.isZoomFit ? 'fixWidth' : 'fixed',
-      autoplay: false,
-      playsinline: true,
-      // hide default play button
-      ignores: ['replay'],
-      // ensure video fill container
-      videoInit: true,
-      // disable some unnecessary features
-      disableVideoTag: true,
-      // custom style
-      fullscreen: true,
-      cssFullscreen: true,
-      // ensure video fit screen
-      videoFillMode: 'cover',
-      // set language
-      lang: config.language,
+    // 创建新播放器
+    player.value = videojs(videoElement.value, playerOptions.value);
+    
+    // 设置视频源
+    player.value.src(props.src);
+    
+    // 添加自定义样式
+    player.value.ready(() => {
+      const video = player.value.el().querySelector('video');
+      if (video) {
+        video.style.objectFit = props.isZoomFit ? 'contain' : 'cover';
+      }
     });
   }
 };
@@ -74,7 +86,7 @@ onMounted(setupPlayer);
 
 onBeforeUnmount(() => {
   if (player.value) {
-    player.value.destroy();
+    player.value.dispose();
   }
 });
 
@@ -82,44 +94,58 @@ watch(() => props.src, setupPlayer);
 
 watch(() => props.rotate, (newRotate) => {
   if (player.value) {
-    // player.value.rotate && player.value.rotate(newRotate, true);
-    player.value.on('rotate', (newRotate) => {
-      console.log('rotate:', newRotate);
-    });
+    const video = player.value.el().querySelector('video');
+    if (video) {
+      video.style.transform = `rotate(${newRotate}deg)`;
+    }
   }
 });
 
 watch(() => props.isZoomFit, (newFit) => {
   if (player.value) {
-    player.value.setConfig({
-      fitVideoSize: newFit ? 'fixWidth' : 'fixed',
-    });
+    const video = player.value.el().querySelector('video');
+    if (video) {
+      video.style.objectFit = newFit ? 'contain' : 'cover';
+    }
   }
 });
 
 const zoomIn = () => {
-  if (player.value && player.value.zoom) {
-    const currentZoom = player.value.zoom() || 1;
-    player.value.zoom(currentZoom * 1.5);
+  if (player.value) {
+    const video = player.value.el().querySelector('video');
+    if (video) {
+      const currentScale = parseFloat(video.style.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1');
+      video.style.transform = `scale(${currentScale * 1.5})`;
+    }
   }
 }
 
 const zoomOut = () => {
-  if (player.value && player.value.zoom) {
-    const currentZoom = player.value.zoom() || 1;
-    player.value.zoom(currentZoom / 1.5);
+  if (player.value) {
+    const video = player.value.el().querySelector('video');
+    if (video) {
+      const currentScale = parseFloat(video.style.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1');
+      video.style.transform = `scale(${currentScale / 1.5})`;
+    }
   }
 }
 
 const zoomActual = () => {
-  if (player.value && player.value.zoom) {
-    player.value.zoom(1);
+  if (player.value) {
+    const video = player.value.el().querySelector('video');
+    if (video) {
+      video.style.transform = 'scale(1)';
+    }
   }
 }
 
 const rotateRight = () => {
-  if (player.value && player.value.rotate) {
-    player.value.rotate(); // Rotates 90 degrees clockwise
+  if (player.value) {
+    const video = player.value.el().querySelector('video');
+    if (video) {
+      const currentRotate = parseInt(video.style.transform?.match(/rotate\(([^)]+)deg\)/)?.[1] || '0');
+      video.style.transform = `rotate(${currentRotate + 90}deg)`;
+    }
   }
 }
 
@@ -133,4 +159,39 @@ defineExpose({
 </script>
 
 <style scoped>
+.video-js {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.video-js .vjs-tech {
+  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 自定义控件样式 */
+.video-js .vjs-control-bar {
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}
+
+/* 播放按钮居中 */
+.video-js .vjs-big-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  font-size: 30px;
+}
+
+/* 确保视频元素居中显示 */
+.video-js video {
+  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+}
 </style>
