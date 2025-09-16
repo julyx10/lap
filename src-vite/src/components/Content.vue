@@ -143,6 +143,9 @@
                 :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
                 :isZoomFit="true"
                 @dblclick="openImageViewer"
+                :autoplay="isVideoPlaying"
+                @play="isVideoPlaying = true"
+                @pause="isVideoPlaying = false"
               ></Video>
             </div>
 
@@ -298,6 +301,9 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+
+// track video playing state for autoplay
+const isVideoPlaying = ref(false);
 
 // title of the content 
 const contentIcon = computed(() => {
@@ -1058,7 +1064,6 @@ const getVideoSrc = async (index) => {
   }
 
   let filePath = fileList.value[index].file_path;
-  console.log('Content getVideoSrc - original path:', filePath);
   try {
     const convertedSrc = convertFileSrc(filePath);
     console.log('Content getVideoSrc - converted src:', convertedSrc);
@@ -1092,6 +1097,9 @@ function updateSelectedImage(index) {
 
   // update the preview
   if(config.showPreview) {
+    if(index < 0 || index >= fileList.value.length || !fileList.value[index].file_type) {
+      return;
+    }
     if(fileList.value[index].file_type === 1) {
       getImageSrc(index);
     } else if(fileList.value[index].file_type === 2) {
