@@ -93,7 +93,7 @@
 import { ref, watch, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config, isMac, shortenFilename, formatFileSize, formatTimestamp, getDaysElapsed } from '@/common/utils';
+import { config, isMac, shortenFilename, formatFileSize, formatDuration, formatTimestamp } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
@@ -403,11 +403,13 @@ const getThumbnailText = (file, option) => {
       return formatFileSize(file.size);
     case 3:   // dimension
       return `${file.width}x${file.height}`;
-    case 4:   // created time
+    case 4:   // duration
+      return file.duration > 0 ? formatDuration(file.duration): '-';
+    case 5:   // created time
       return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
-    case 5:   // modified time
+    case 6:   // modified time
       return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
-    case 6:   // date taken
+    case 7:   // date taken
       return file.e_date_time || '-';
     default:
       return '';

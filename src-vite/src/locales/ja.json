@@ -67,7 +67,7 @@
     "filter": {
       "select_mode": "選択",
       "select_count": "{count} 選択済み",
-      "sort_type_options": ["名前", "サイズ", "寸法", "作成日時", "更新日時", "撮影日時"],
+      "sort_type_options": ["名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "撮影日時"],
       "sort_order_options": ["昇順", "降順"],
       "file_type_options": ["すべて", "画像", "動画"]
     },
@@ -238,6 +238,7 @@
     "path": "パス",
     "dimension": "寸法",
     "size": "サイズ",
+    "duration": "再生時間",
     "created_at": "作成日時",
     "modified_at": "更新日時",
     "camera_make": "カメラメーカー",
@@ -319,7 +320,7 @@
       "scaling_options": ["全体をフィット", "切り抜きで埋める", "引き伸ばして埋める"],
       "label_primary": "プライマリラベルを表示",
       "label_secondary": "セカンダリラベルを表示",
-      "label_options": ["なし", "名前", "サイズ", "寸法", "作成日時", "更新日時", "撮影日時"]
+      "label_options": ["なし", "名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "撮影日時"]
     },
     "image_viewer": {
       "title": "画像ビューア",

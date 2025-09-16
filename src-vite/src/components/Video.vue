@@ -155,10 +155,6 @@ watch(videoJsLang, (newLang) => {
   }
 });
 
-watch(config.appearance, (newAppearance) => {
-  theme.value = newAppearance === 0 ? 'light' : 'dark';
-});
-
 watch(() => props.rotate, (newRotate) => {
   if (player.value) {
     const video = player.value.el().querySelector('video');

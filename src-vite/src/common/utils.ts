@@ -86,6 +86,19 @@ export function formatFileSize(bytes: number): string {
   return i === 0 ? `${fileSize.toFixed(0)} ${sizes[i]}` : `${fileSize.toFixed(2)} ${sizes[i]}`;
 }
 
+/// format duration to string
+export function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  } else {
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
+  }
+}
+
 /// get full path
 export function getFullPath(path: string, name: string): string {
   return path + separator + name;

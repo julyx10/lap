@@ -673,6 +673,19 @@ pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     }
 }
 
+/// get video duration using ffmpeg
+pub fn get_video_duration(file_path: &str) -> Result<u64, String> {
+    ffmpeg_next::init().map_err(|e| format!("ffmpeg init error: {:?}", e))?;
+    let ictx = ffmpeg_next::format::input(file_path).map_err(|e| format!("Failed to open file: {e}"))?;
+    let duration = ictx.duration();
+    let duration_seconds = if duration > 0 {
+        (duration as f64 / ffmpeg_next::ffi::AV_TIME_BASE as f64) as u64  // Convert from AV_TIME_BASE to seconds
+    } else {
+        0
+    };
+    Ok(duration_seconds)
+}
+
 /// Get a thumbnail from an image file path
 pub fn get_image_thumbnail(
     file_path: &str,

@@ -67,7 +67,7 @@
     "filter": {
       "select_mode": "Select",
       "select_count": "{count} selected",
-      "sort_type_options": ["Name", "Size", "Dimension", "Created time", "Modified time", "Taken date"],
+      "sort_type_options": ["Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Taken date"],
       "sort_order_options": ["Ascending", "Descending"],
       "file_type_options": ["All", "Images", "Videos"]
     },
@@ -238,6 +238,7 @@
     "path": "Path",
     "dimension": "Dimension",
     "size": "Size",
+    "duration": "Duration",
     "created_at": "Created at",
     "modified_at": "Modified at",
     "camera_make": "Camera make",
@@ -319,7 +320,7 @@
       "scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
       "label_primary": "Show primary label",
       "label_secondary": "Show secondary label",
-      "label_options": ["Empty", "Name", "Size", "Dimension", "Created time", "Modified time", "Taken date"]
+      "label_options": ["Empty", "Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Taken date"]
     },
     "image_viewer": {
       "title": "Image viewer",

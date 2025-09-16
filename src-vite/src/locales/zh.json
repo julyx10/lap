@@ -67,7 +67,7 @@
     "filter": {
       "select_mode": "选择",
       "select_count": "已选择 {count}",
-      "sort_type_options": ["名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"],
+      "sort_type_options": ["名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "拍摄时间"],
       "sort_order_options": ["升序", "降序"],
       "file_type_options": ["全部", "图片", "视频"]
     },
@@ -238,6 +238,7 @@
     "path": "路径",
     "dimension": "尺寸",
     "size": "大小",
+    "duration": "时长",
     "created_at": "创建时间",
     "modified_at": "修改时间",
     "camera_make": "相机制造商",
@@ -319,7 +320,7 @@
       "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
       "label_primary": "显示主标签",
       "label_secondary": "显示副标签",
-      "label_options": ["空", "名称", "大小", "尺寸", "创建时间", "修改时间", "拍摄时间"]
+      "label_options": ["空", "名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "拍摄时间"]
     },
     "image_viewer": {
       "title": "图片查看器",

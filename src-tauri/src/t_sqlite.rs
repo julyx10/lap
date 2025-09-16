@@ -424,9 +424,10 @@ pub struct AFile {
     // file taken date
     pub taken_date: Option<String>, // taken date(yyyy-mm-dd) for calendar view
 
-    // image dimensions
-    pub width: Option<u32>,  // image width
-    pub height: Option<u32>, // image height
+    // image/video
+    pub width: Option<u32>,         // image/video width
+    pub height: Option<u32>,        // image/video height
+    pub duration: Option<u64>,      // video duration
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
@@ -461,10 +462,14 @@ impl AFile {
     /// create a new file struct
     fn new(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
+        let mut duration = 0;
         let (width, height) = 
             match file_type {
                 1 => t_utils::get_image_dimensions(file_path)?,
-                2 => t_utils::get_video_dimensions(file_path)?,
+                2 => {
+                    duration = t_utils::get_video_duration(file_path)?;
+                    t_utils::get_video_dimensions(file_path)?
+                },
                 _ => (0, 0),
             };
 
@@ -500,6 +505,7 @@ impl AFile {
 
             width: Some(width),
             height: Some(height),
+            duration: Some(duration),
 
             is_favorite: None,
             rotate: None,
@@ -593,12 +599,12 @@ impl AFile {
                 folder_id, 
                 name, name_pinyin, size, file_type, created_at, modified_at, 
                 taken_date,
-                width, height,
+                width, height, duration,
                 is_favorite, rotate, comments, has_tags,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude, gps_address
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28)",
             params![
                 self.folder_id,
 
@@ -613,6 +619,7 @@ impl AFile {
 
                 self.width,
                 self.height,
+                self.duration,
 
                 self.is_favorite,
                 self.rotate,
@@ -694,7 +701,7 @@ impl AFile {
             "SELECT a.id, a.folder_id, 
                 a.name, a.name_pinyin, a.size, a.file_type, a.created_at, a.modified_at, 
                 a.taken_date,
-                a.width, a.height,
+                a.width, a.height, a.duration,
                 a.is_favorite, a.rotate, a.comments, a.has_tags,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude, a.gps_address,
@@ -723,33 +730,34 @@ impl AFile {
 
             width: row.get(9)?,
             height: row.get(10)?,
+            duration: row.get(11)?,
 
-            is_favorite: row.get(11)?,
-            rotate: row.get(12)?,
-            comments: row.get(13)?,
-            has_tags: row.get(14)?,
+            is_favorite: row.get(12)?,
+            rotate: row.get(13)?,
+            comments: row.get(14)?,
+            has_tags: row.get(15)?,
 
-            e_make: row.get(15)?,
-            e_model: row.get(16)?,
-            e_date_time: row.get(17)?,
-            e_exposure_time: row.get(18)?,
-            e_f_number: row.get(19)?,
-            e_focal_length: row.get(20)?,
-            e_iso_speed: row.get(21)?,
-            e_flash: row.get(22)?,
-            e_orientation: row.get(23)?,
+            e_make: row.get(16)?,
+            e_model: row.get(17)?,
+            e_date_time: row.get(18)?,
+            e_exposure_time: row.get(19)?,
+            e_f_number: row.get(20)?,
+            e_focal_length: row.get(21)?,
+            e_iso_speed: row.get(22)?,
+            e_flash: row.get(23)?,
+            e_orientation: row.get(24)?,
 
-            gps_latitude: row.get(24)?,
-            gps_longitude: row.get(25)?,
-            gps_altitude: row.get(26)?,
-            gps_address: row.get(27)?,
+            gps_latitude: row.get(25)?,
+            gps_longitude: row.get(26)?,
+            gps_altitude: row.get(27)?,
+            gps_address: row.get(28)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(28)?.as_str(),
+                row.get::<_, String>(29)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(29)?,
-            album_name: row.get(30)?,
+            album_id: row.get(30)?,
+            album_name: row.get(31)?,
         })
     }
 
@@ -988,10 +996,11 @@ impl AFile {
         match sort_type {
             0 => query.push_str(" ORDER BY a.name_pinyin"),
             1 => query.push_str(" ORDER BY a.size"),
-            2 => query.push_str(" ORDER BY a.width, a.height"),     // dimension
-            3 => query.push_str(" ORDER BY a.created_at"),
-            4 => query.push_str(" ORDER BY a.modified_at"),
-            5 => query.push_str(" ORDER BY a.taken_date"),
+            2 => query.push_str(" ORDER BY a.width, a.height"),
+            3 => query.push_str(" ORDER BY a.duration"),
+            4 => query.push_str(" ORDER BY a.created_at"),
+            5 => query.push_str(" ORDER BY a.modified_at"),
+            6 => query.push_str(" ORDER BY a.taken_date"),
             _ => query.push_str(" ORDER BY a.name_pinyin"),
         }
         match sort_order {
@@ -1379,6 +1388,7 @@ pub fn create_db() -> Result<(), String> {
             taken_date TEXT,
             width INTEGER,
             height INTEGER,
+            duration INTEGER,
             is_favorite INTEGER,
             rotate INTEGER,
             comments TEXT,
