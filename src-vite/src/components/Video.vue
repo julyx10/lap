@@ -1,24 +1,41 @@
 <template>
-  <div ref="playerContainer" class="relative w-full h-full overflow-hidden cursor-pointer">
-    <video
-      ref="videoElement"
-      class="video-js vjs-default-skin w-full h-full"
-      preload="metadata"
-      data-setup="{}"
-    ></video>
+  <div ref="playerContainer" class="relative w-full h-full overflow-hidden cursor-pointer bg-base-200">
+    <video v-show="!hasError" ref="videoElement" class="video-js"></video>
+    <div v-if="hasError" class="absolute inset-0 flex items-center justify-center text-base-content">
+      <div class="text-center">
+        <div class="text-lg font-medium mb-2">Video could not be played</div>
+        <div class="text-sm">{{ errorMessage }}</div>
+      </div>
+    </div>
   </div>
+
+
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue';
+import { config } from '@/common/utils';
+
+// Import video.js
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import { config } from '@/common/utils';
+
+// Import language JSON data
+import ja from 'video.js/dist/lang/ja.json';
+import zhCN from 'video.js/dist/lang/zh-CN.json';
+
+// Register the languages with video.js
+videojs.addLanguage('ja', ja);
+videojs.addLanguage('zh-CN', zhCN);
 
 const props = defineProps({
   src: {
     type: String,
     required: true,
+  },
+  autoplay: {
+    type: Boolean,
+    default: false,
   },
   rotate: {
     type: Number,
@@ -30,21 +47,39 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['play', 'pause', 'error']);
+
 const playerContainer = ref<HTMLElement | null>(null);
 const videoElement = ref<HTMLVideoElement | null>(null);
 const player = ref<any>(null);
 
-// 播放器配置
+// Error state management
+const hasError = ref(false);
+const errorMessage = ref('');
+
+// Map app language to video.js language codes
+const videoJsLang = computed(() => {
+  if (config.language === 'zh') {
+    return 'zh-CN';
+  }
+  return config.language;
+});
+
 const playerOptions = computed(() => ({
   responsive: true,
   fluid: true,
   aspectRatio: '16:9',
-  autoplay: true,
+  autoplay: props.autoplay,
   controls: true,
-  preload: 'metadata',
-  language: config.language,
+  preload: 'auto',
+  language: videoJsLang.value, // Use mapped language
   playbackRates: [0.5, 1, 1.25, 1.5, 2],
+  disablePictureInPicture: true,
+  errorDisplay: false,
   controlBar: {
+    pictureInPictureToggle: false, // hide picture in picture toggle
+    fullscreenToggle: false,
+    audioTrackButton: false,
     volumePanel: {
       inline: false
     }
@@ -63,16 +98,32 @@ const setupPlayer = () => {
   }
 
   if (player.value) {
-    // 更新视频源
+    // record the previous playing state
+    const wasPlaying = !player.value.paused();
+    
+    // update the video source
     player.value.src(props.src);
+
+    // if the previous state was playing, then play the new video after loading
+    if (wasPlaying) {
+      player.value.one('loadedmetadata', () => {
+        player.value.play();
+      });
+    }
   } else {
-    // 创建新播放器
+    // create new player
     player.value = videojs(videoElement.value, playerOptions.value);
-    
-    // 设置视频源
     player.value.src(props.src);
-    
-    // 添加自定义样式
+
+    player.value.on('play', () => emit('play'));
+    player.value.on('pause', () => emit('pause'));
+
+    player.value.on('error', () => {
+      hasError.value = true;
+      errorMessage.value = player.value.error().message;
+      emit('error', errorMessage.value);
+    });
+
     player.value.ready(() => {
       const video = player.value.el().querySelector('video');
       if (video) {
@@ -90,7 +141,23 @@ onBeforeUnmount(() => {
   }
 });
 
-watch(() => props.src, setupPlayer);
+watch(() => props.src, (newSrc, oldSrc) => {
+  if (newSrc !== oldSrc) {
+    hasError.value = false;
+    errorMessage.value = '';
+    setupPlayer();
+  }
+});
+
+watch(videoJsLang, (newLang) => {
+  if (player.value) {
+    player.value.language(newLang);
+  }
+});
+
+watch(config.appearance, (newAppearance) => {
+  theme.value = newAppearance === 0 ? 'light' : 'dark';
+});
 
 watch(() => props.rotate, (newRotate) => {
   if (player.value) {
@@ -158,40 +225,14 @@ defineExpose({
 
 </script>
 
-<style scoped>
+<style>
 .video-js {
   width: 100% !important;
   height: 100% !important;
+  background-color: hsl(var(--b1)) !important;
+  color: hsl(var(--bc)) !important;
 }
-
-.video-js .vjs-tech {
-  object-fit: cover;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* 自定义控件样式 */
 .video-js .vjs-control-bar {
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
-}
-
-/* 播放按钮居中 */
-.video-js .vjs-big-play-button {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  line-height: 80px;
-  font-size: 30px;
-}
-
-/* 确保视频元素居中显示 */
-.video-js video {
-  object-fit: cover;
-  width: 100% !important;
-  height: 100% !important;
+  background-color: hsl(var(--b2)) !important;
 }
 </style>

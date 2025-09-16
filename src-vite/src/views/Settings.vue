@@ -350,6 +350,9 @@ watch(() => config.settingsTabIndex, (newValue) => {
 }, { immediate: true });
 
 // general settings
+watch(() => config.settingsTabIndex, (newValue) => {
+  emit('settings-settingsTabIndex-changed', newValue);
+});
 watch(() => config.appearance, (newValue) => {
   setTheme(newValue);
   emit('settings-appearance-changed', newValue);
@@ -411,8 +414,8 @@ function handleKeyDown(event) {
 
   switch (event.key) {
     case 'Tab':
-      tabIndex.value += 1;
-      tabIndex.value = tabIndex.value % 4; // 4 tabs
+      config.settingsTabIndex += 1;
+      config.settingsTabIndex = config.settingsTabIndex % 4; // 4 tabs
       break;
     case 'Escape':
       appWindow.close(); // Close the window

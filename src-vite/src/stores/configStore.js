@@ -89,6 +89,11 @@ export const useConfigStore = defineStore('configStore', {
   }),
 
   actions: {
+    // tab index
+    setSettingsTabIndex(settingsTabIndex) {
+      this.settingsTabIndex = settingsTabIndex;
+    },
+
     // general settings
     setAppearance(appearance) {
       this.appearance = appearance;
