@@ -35,12 +35,16 @@
             </td> -->
           </tr>
           <tr>
+            <td class="text-nowrap">{{ $t('file_info.size') }}</td>
+            <td>{{ formatFileSize(fileInfo.size) }}</td>
+          </tr>
+          <tr>
             <td class="text-nowrap">{{ $t('file_info.dimension') }}</td>
             <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
           </tr>
           <tr>
-            <td class="text-nowrap">{{ $t('file_info.size') }}</td>
-            <td>{{ formatFileSize(fileInfo.size) }}</td>
+            <td class="text-nowrap">{{ $t('file_info.duration') }}</td>
+            <td>{{ formatDuration(fileInfo.duration) }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.created_at') }}</td>
@@ -129,7 +133,7 @@
 
 <script setup lang="ts">
 
-import { formatTimestamp, formatFileSize, getDaysElapsed, getFolderPath } from '@/common/utils';
+import { formatTimestamp, formatFileSize, formatDuration, getFolderPath } from '@/common/utils';
 import { IconClose } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';

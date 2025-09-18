@@ -500,9 +500,10 @@ pub fn get_folder_files(
             0 => convert_to_pinyin(&a.name.to_lowercase()).cmp(&convert_to_pinyin(&b.name.to_lowercase())), // support pinyin
             1 => a.size.cmp(&b.size),
             2 => {if a.width == b.width { a.height.cmp(&b.height) } else { a.width.cmp(&b.width) }}, // resultion
-            3 => a.created_at.cmp(&b.created_at),
-            4 => a.modified_at.cmp(&b.modified_at),
-            5 => a.taken_date.cmp(&b.taken_date),
+            3 => a.duration.cmp(&b.duration),
+            4 => a.created_at.cmp(&b.created_at),
+            5 => a.modified_at.cmp(&b.modified_at),
+            6 => a.taken_date.cmp(&b.taken_date),
             _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()), // Default to sorting by name
         };
         if sort_order == 1 {
@@ -564,7 +565,7 @@ pub fn get_file_type(file_path: &str) -> Option<i64> {
         match extension.to_lowercase().as_str() {
             "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "avif" | "heic" | "heif" => Some(1), // image
             "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp" | "m4v" | "hevc" | "asf" => Some(2),     // video
-            "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3),     // music
+            // "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3),     // music
             _ => None,
         }
     } else {

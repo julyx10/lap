@@ -3,13 +3,11 @@
     <video v-show="!hasError" ref="videoElement" class="video-js"></video>
     <div v-if="hasError" class="absolute inset-0 flex items-center justify-center text-base-content">
       <div class="text-center">
-        <div class="text-lg font-medium mb-2">Video could not be played</div>
-        <div class="text-sm">{{ errorMessage }}</div>
+        <div class="text-lg font-medium mb-2">{{ $t('video.failed') }}</div>
+        <div class="text-sm">{{ $t('video.error') }}</div>
       </div>
     </div>
   </div>
-
-
 </template>
 
 <script setup lang="ts">
@@ -78,6 +76,7 @@ const playerOptions = computed(() => ({
   errorDisplay: false,
   controlBar: {
     pictureInPictureToggle: false, // hide picture in picture toggle
+    playbackRateMenuButton: false, // hide playback rate menu button
     fullscreenToggle: false,
     audioTrackButton: false,
     volumePanel: {

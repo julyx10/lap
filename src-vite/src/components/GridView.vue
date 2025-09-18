@@ -402,7 +402,7 @@ const getThumbnailText = (file, option) => {
     case 2:   // size
       return formatFileSize(file.size);
     case 3:   // dimension
-      return `${file.width}x${file.height}`;
+      return file.width > 0 && file.height > 0 ? `${file.width}x${file.height}` : '-';
     case 4:   // duration
       return file.duration > 0 ? formatDuration(file.duration): '-';
     case 5:   // created time

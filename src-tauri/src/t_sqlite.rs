@@ -1017,8 +1017,6 @@ impl AFile {
         Self::query_files(&query, &params)
     }
 
-    
-
 }
 
 /// Define the album thumbnail struct

@@ -297,6 +297,11 @@
     }
   },
 
+  "video": {
+    "failed": "视频无法播放",
+    "error": "视频无法加载，或视频格式不受支持。"
+  },
+
   "settings": {
     "general": {
       "title": "通用",
