@@ -80,7 +80,7 @@
     </div>
 
     <div v-if="fileList.length === 0" class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
-      <IconPhoto class="w-12 h-12" />
+      <IconSearch class="w-8 h-8" />
       <span>{{ $t('tooltip.not_found.files') }}</span>
     </div>
 
@@ -110,7 +110,7 @@ import {
   IconMoveTo,
   IconTrash,
   IconGoto,
-  IconPhoto,
+  IconSearch,
   IconVideo,
   IconAudio,
   IconChecked,

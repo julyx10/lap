@@ -86,6 +86,7 @@ export { default as IconSortingDesc } from '@/assets/icons/sorting-desc.svg';
 export { default as IconHome } from '@/assets/icons/home.svg';
 export { default as IconPhoto } from '@/assets/icons/photo.svg';
 export { default as IconVideo } from '@/assets/icons/video.svg';
+export { default as IconVideoSlash } from '@/assets/icons/video-slash.svg';
 export { default as IconMusic } from '@/assets/icons/musical.svg';
 export { default as IconTag } from '@/assets/icons/tag.svg';
 export { default as IconCalendar } from '@/assets/icons/calendar.svg';

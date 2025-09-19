@@ -143,9 +143,6 @@
                 :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
                 :isZoomFit="true"
                 @dblclick="openImageViewer"
-                :autoplay="isVideoPlaying"
-                @play="isVideoPlaying = true"
-                @pause="isVideoPlaying = false"
               ></Video>
             </div>
 
@@ -159,7 +156,7 @@
           </div>
 
           <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
-            <IconPhoto class="w-12 h-12" />
+            <IconSearch class="w-8 h-8" />
             <span>{{ $t('tooltip.not_found.files') }}</span>
           </div>
         </div>
@@ -284,7 +281,7 @@ import {
   IconMoveTo,
   IconFile,
   IconFolder,
-  IconPhoto,
+  IconSearch,
   IconChecked,
   IconComment,
   IconTag,
@@ -301,9 +298,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-
-// track video playing state for autoplay
-const isVideoPlaying = ref(false);
 
 // title of the content 
 const contentIcon = computed(() => {

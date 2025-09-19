@@ -298,8 +298,16 @@
   },
 
   "video": {
+    "loading": "Loading video...",
     "failed": "Video could not be played",
-    "error": "The video could not be loaded, or the video format is not supported."
+    "errors": {
+      "aborted": "Video loading was aborted",
+      "network": "Network error caused video download to fail",
+      "decode": "Video decoding error",
+      "format": "Video format not supported or file is corrupted",
+      "timeout": "Video loading timeout, video format not supported or file is corrupted",
+      "unknown": "Unknown error"
+    }
   },
 
   "settings": {
