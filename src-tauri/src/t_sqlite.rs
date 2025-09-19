@@ -1049,14 +1049,14 @@ impl AThumb {
                     1 => {
                         if let Some(ext) = t_utils::get_file_extension(file_path) {
                             match ext.to_lowercase().as_str() {
-                                "heic" => t_utils::get_video_thumbnail(file_path, orientation, thumbnail_size)?,
+                                "heic" => t_utils::get_video_thumbnail(file_path, thumbnail_size)?,
                                 _      => t_utils::get_image_thumbnail(file_path, orientation, thumbnail_size)?,
                             }
                         } else {
                             return Err("No file extension found".into());
                         }
                     }
-                    2 => t_utils::get_video_thumbnail(file_path, orientation, thumbnail_size)?,
+                    2 => t_utils::get_video_thumbnail(file_path, thumbnail_size)?,
                     _ => None,
                 },
             thumb_data_base64: None,

@@ -75,11 +75,6 @@
             <label for="show-status-bar" >{{ $t('settings.general.show_status_bar') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
           </div>
-          <!-- Show comment -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="show-comment" >{{ $t('settings.general.show_comment') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showComment" />
-          </div>
           <!-- Debug Mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings.general.debug_mode') }}</label>
@@ -174,6 +169,17 @@
             />
           </div>
 
+          <!-- Show comment -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-comment" >{{ $t('settings.image_viewer.show_comment') }}</label>
+            <input type="checkbox" class="toggle" v-model="config.showComment" />
+          </div>
+
+          <!-- Auto play video -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="auto-play-video" >{{ $t('settings.image_viewer.auto_play_video') }}</label>
+            <input type="checkbox" class="toggle" v-model="config.autoPlayVideo" />
+          </div>
         </section>
 
         <!-- About Section -->
@@ -373,18 +379,14 @@ watch(() => config.showToolTip, (newValue) => {
 watch(() => config.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
 });
-watch(() => config.showComment, (newValue) => {
-  emit('settings-showComment-changed', newValue);
-});
 watch(() => config.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);
 });
 
 // thumbnail settings
 watch(() => config.thumbnailSize, debounce((newValue) => {
-    emit('settings-thumbnailSize-changed', newValue);
-  }, 100) // Adjust the delay as needed
-);
+  emit('settings-thumbnailSize-changed', newValue);
+}, 100));
 watch(() => config.thumbnailScalingOption, (newValue) => {
   emit('settings-thumbnailScalingOption-changed', newValue);
 });
@@ -401,6 +403,12 @@ watch(() => config.mouseWheelMode, (newValue) => {
 });
 watch(() => config.autoPlayInterval, (newValue) => {
   emit('settings-autoPlayInterval-changed', newValue);
+});
+watch(() => config.autoPlayVideo, (newValue) => {
+  emit('settings-autoPlayVideo-changed', newValue);
+});
+watch(() => config.showComment, (newValue) => {
+  emit('settings-showComment-changed', newValue);
 });
 
 // Handle keyboard shortcuts

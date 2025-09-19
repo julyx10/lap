@@ -143,7 +143,10 @@
 
             <!-- comments -->
             <div v-if="config.showComment && fileList[selectedItemIndex]?.comments?.length > 0" 
-              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg" 
+              :class="[
+                'absolute flex m-2 p-2 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg',
+                fileList[selectedItemIndex]?.file_type === 2 ? 'bottom-6' : 'bottom-0'
+              ]" 
             >
               <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
               {{ fileList[selectedItemIndex]?.comments }}

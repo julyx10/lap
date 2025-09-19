@@ -57,7 +57,7 @@ const playerOptions = computed(() => ({
   fluid: false,
   width: '100%',
   height: '100%',
-  autoplay: true,
+  autoplay: false,
   controls: true,
   preload: 'auto',
   language: videoJsLang.value,
@@ -124,7 +124,11 @@ const setupPlayer = () => {
     hasError.value = false;
     errorMessage.value = '';
     player.value.src(props.src);
-    nextTick(() => player.value?.play());
+    nextTick(() => {
+      if(config.autoPlayVideo) {
+        player.value?.play();
+      }
+    });
   } else {
     player.value.pause();
     player.value.currentTime(0);
@@ -218,5 +222,9 @@ defineExpose({
 }
 .video-js .vjs-big-play-button {
   display: none !important;
+}
+.vjs-volume-panel {
+  z-index: 9999 !important;
+  position: relative !important;
 }
 </style>

@@ -323,7 +323,6 @@
       "show_button_text": "Show button text",
       "show_tool_tip": "Show tooltips",
       "show_status_bar": "Show status bar",
-      "show_comment": "Show comment",
       "debug_mode": "Debug mode"
     },
     "thumbnail": {
@@ -339,7 +338,9 @@
       "title": "Image viewer",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
-      "autoplay_interval": "Autoplay interval: {second} second(s)"
+      "autoplay_interval": "Autoplay interval: {second} second(s)",
+      "auto_play_video": "Auto play video",
+      "show_comment": "Show comment"
     },
     "about": {
       "title": "About",

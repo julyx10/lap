@@ -323,7 +323,6 @@
       "show_button_text": "显示按钮文本",
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",
-      "show_comment": "显示评论",
       "debug_mode": "调试模式"
     },
     "thumbnail": {
@@ -339,7 +338,9 @@
       "title": "图片查看器",
       "mouse_wheel": "鼠标滚轮",
       "mouse_wheel_options": ["上一张/下一张图片 (Ctrl 缩放)", "放大/缩小"],
-      "autoplay_interval": "自动播放间隔: {second} 秒"
+      "autoplay_interval": "自动播放间隔: {second} 秒",
+      "auto_play_video": "自动播放视频",
+      "show_comment": "显示评论"
     },
     "about": {
       "title": "关于",

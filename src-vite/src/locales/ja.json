@@ -323,7 +323,6 @@
       "show_button_text": "ボタンテキストを表示",
       "show_tool_tip": "ツールチップを表示",
       "show_status_bar": "ステータスバーを表示",
-      "show_comment": "コメントを表示",
       "debug_mode": "デバッグモード"
     },
     "thumbnail": {
@@ -339,7 +338,9 @@
       "title": "画像ビューア",
       "mouse_wheel": "マウスホイール",
       "mouse_wheel_options": ["前/次の画像 (Ctrlでズーム)", "拡大/縮小"],
-      "autoplay_interval": "自動再生間隔: {second}秒"
+      "autoplay_interval": "自動再生間隔: {second}秒",
+      "auto_play_video": "自動再生ビデオ",
+      "show_comment": "コメントを表示"
     },
     "about": {
       "title": "について",

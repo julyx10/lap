@@ -746,7 +746,6 @@ pub fn get_image_thumbnail(
 /// Get a thumbnail from a video or heic file path
 pub fn get_video_thumbnail(
     file_path: &str,
-    orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
     ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
@@ -760,6 +759,13 @@ pub fn get_video_thumbnail(
         .ok_or("No video stream found")?;
 
     let stream_index = input_stream.index();
+
+    let rotation = input_stream
+        .metadata()
+        .get("rotate")
+        .and_then(|v| v.parse::<i32>().ok())
+        .unwrap_or(0);
+
     let mut decoder = ffmpeg::codec::context::Context::from_parameters(input_stream.parameters())
         .map_err(|e| format!("Failed to get decoder context: {e}"))?
         .decoder()
@@ -804,21 +810,30 @@ pub fn get_video_thumbnail(
                 .run(&frame, &mut rgb_frame)
                 .map_err(|e| format!("Scaling error: {e}"))?;
 
+            // avoid stride error
+            let stride = rgb_frame.stride(0) as usize;
+            let mut buf = Vec::with_capacity((width * height * 3) as usize);
+            for y in 0..height as usize {
+                let start = y * stride;
+                let end = start + (width as usize * 3);
+                buf.extend_from_slice(&rgb_frame.data(0)[start..end]);
+            }
+            
             // Create DynamicImage
-            let data = rgb_frame.data(0);
-            let rgb_image = RgbImage::from_raw(width, height, data.to_vec())
+            let rgb_image = RgbImage::from_raw(width, height, buf)
                 .ok_or("Failed to create image buffer")?;
             let dyn_image = DynamicImage::ImageRgb8(rgb_image);
 
             // Resize while keeping aspect ratio
             let thumbnail = dyn_image.thumbnail(thumbnail_size, thumbnail_size);
 
-            let adjusted_thumbnail = match orientation {
-                3 => thumbnail.rotate180(),
-                6 => thumbnail.rotate90(),
-                8 => thumbnail.rotate270(),
+            let adjusted_thumbnail = match rotation {
+                90 => thumbnail.rotate90(),
+                180 => thumbnail.rotate180(),
+                270 => thumbnail.rotate270(),
                 _ => thumbnail,
             };
+
             // Encode JPEG to memory
             let mut buffer = Cursor::new(Vec::new());
             adjusted_thumbnail
