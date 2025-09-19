@@ -126,25 +126,20 @@
           :style="{ width: config.previewPaneWidth + '%' }"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
-            class="relative"
+            class="relative w-full h-full flex items-center justify-center"
             :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
             <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
-              ref="imageRef" 
               :src="imageSrc" 
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
               :isZoomFit="true"
-            />
-            <div v-else-if="fileList[selectedItemIndex]?.file_type === 2" class="w-full h-full flex items-center justify-center">
-              <Video
-                ref="videoRef"
-                :src="videoSrc"
-                :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
-                :isZoomFit="true"
-                @dblclick="openImageViewer"
-              ></Video>
-            </div>
+            ></Image>
+            <Video v-else-if="fileList[selectedItemIndex]?.file_type === 2"
+              :src="videoSrc"
+              :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
+              :isZoomFit="true"
+            ></Video>
 
             <!-- comments -->
             <div v-if="config.showComment && fileList[selectedItemIndex]?.comments?.length > 0" 
@@ -367,7 +362,6 @@ const gridViewRef = ref(null);
 
 const toolTipRef = ref(null);
 const searchBoxRef = ref(null);
-const videoRef = ref(null);
 
 let resizeObserver;
 
