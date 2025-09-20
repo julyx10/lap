@@ -1024,6 +1024,7 @@ impl AFile {
 pub struct AThumb {
     pub id: Option<i64>, // unique id (autoincrement by db)
     pub file_id: i64,    // file id (from files table)
+    pub error_code: i64,  // error code (0: success, 1: error)
 
     #[serde(skip)]
     pub thumb_data: Option<Vec<u8>>, // thumbnail data (store into db as BLOB)
@@ -1041,24 +1042,44 @@ impl AThumb {
         orientation: i32,
         thumbnail_size: u32,
     ) -> Result<Option<Self>, String> {
+        let (thumb_data, error_code) = match file_type {
+            1 => { // image
+                if let Some(ext) = t_utils::get_file_extension(file_path) {
+                    match ext.to_lowercase().as_str() {
+                        "heic" | "heif" => { // heic/heif
+                            match t_utils::get_video_thumbnail(file_path, thumbnail_size) {
+                                Ok(Some(data)) => (Some(data), 0),
+                                Ok(None) => (None, 1), // empty thumb
+                                Err(_) => (None, 1), // error
+                            }
+                        },
+                        _ => { // other images
+                            match t_utils::get_image_thumbnail(file_path, orientation, thumbnail_size) {
+                                Ok(Some(data)) => (Some(data), 0),
+                                Ok(None) => (None, 1),
+                                Err(_) => (None, 1),
+                            }
+                        }
+                    }
+                } else {
+                    (None, 1)
+                }
+            }
+            2 => { // video
+                match t_utils::get_video_thumbnail(file_path, thumbnail_size) {
+                    Ok(Some(data)) => (Some(data), 0),
+                    Ok(None) => (None, 1),
+                    Err(_) => (None, 1),
+                }
+            }
+            _ => (None, 1),
+        };
+
         Ok(Some(Self {
             id: None,
             file_id,
-            thumb_data: 
-                match file_type {
-                    1 => {
-                        if let Some(ext) = t_utils::get_file_extension(file_path) {
-                            match ext.to_lowercase().as_str() {
-                                "heic" => t_utils::get_video_thumbnail(file_path, thumbnail_size)?,
-                                _      => t_utils::get_image_thumbnail(file_path, orientation, thumbnail_size)?,
-                            }
-                        } else {
-                            return Err("No file extension found".into());
-                        }
-                    }
-                    2 => t_utils::get_video_thumbnail(file_path, thumbnail_size)?,
-                    _ => None,
-                },
+            error_code,
+            thumb_data,
             thumb_data_base64: None,
         }))
     }
@@ -1068,9 +1089,9 @@ impl AThumb {
         let conn = open_conn()?;
         let result = conn
             .execute(
-                "INSERT INTO athumbs (file_id, thumb_data) 
-                VALUES (?1, ?2)",
-                params![self.file_id, self.thumb_data,],
+                "INSERT INTO athumbs (file_id, error_code, thumb_data) 
+                VALUES (?1, ?2, ?3)",
+                params![self.file_id, self.error_code, self.thumb_data,],
             )
             .map_err(|e| e.to_string())?;
         Ok(result)
@@ -1081,17 +1102,20 @@ impl AThumb {
         let conn = open_conn()?;
         let result = conn
             .query_row(
-                "SELECT id, file_id, thumb_data 
+                "SELECT id, file_id, error_code, thumb_data 
                 FROM athumbs WHERE file_id = ?1",
                 params![file_id],
                 |row| {
+                    let thumb_data: Option<Vec<u8>> = row.get(3)?;
+                    let thumb_data_base64 = thumb_data
+                        .as_ref()
+                        .map(|data| general_purpose::STANDARD.encode(data));
                     Ok(Self {
                         id: Some(row.get(0)?),
                         file_id: row.get(1)?,
-                        thumb_data: None,
-                        thumb_data_base64: Some(
-                            general_purpose::STANDARD.encode(row.get::<_, Vec<u8>>(2)?),
-                        ),
+                        error_code: row.get(2)?,
+                        thumb_data,
+                        thumb_data_base64,
                     })
                 },
             )
@@ -1109,19 +1133,27 @@ impl AThumb {
         thumbnail_size: u32,
     ) -> Result<Option<Self>, String> {
         // Check if the thumbnail exists
-        let existing_thumbnail = Self::fetch(file_id);
-        if let Ok(Some(thumbnail)) = existing_thumbnail {
+        if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
             return Ok(Some(thumbnail));
         }
 
-        // Insert the new thumbnail into the database
-        let new_thumbnail = Self::new(file_id, file_path, file_type, orientation, thumbnail_size);
-        if let Ok(Some(athumb)) = new_thumbnail {
-            athumb.insert()?;
-            return Ok(Self::fetch(file_id)?);
-        }
-
-        Ok(None)
+        // Try to create a new thumbnail.
+        let athumb = match Self::new(file_id, file_path, file_type, orientation, thumbnail_size) {
+            Ok(Some(athumb)) => athumb,
+            _ => {
+                // If `new` fails for any reason, create a thumbnail with an error code.
+                Self {
+                    id: None,
+                    file_id,
+                    error_code: 1,
+                    thumb_data: None,
+                    thumb_data_base64: None,
+                }
+            }
+        };
+        athumb.insert()?;
+        
+        Self::fetch(file_id)
     }
 }
 
@@ -1424,7 +1456,8 @@ pub fn create_db() -> Result<(), String> {
         "CREATE TABLE IF NOT EXISTS athumbs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_id INTEGER NOT NULL,
-            thumb_data BLOB NOT NULL,
+            error_code INTEGER NOT NULL,
+            thumb_data BLOB,
             FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
         )",
         [],

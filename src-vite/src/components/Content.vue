@@ -80,7 +80,7 @@
         />
         
         <!-- status bar -->
-        <div v-if="config.showStatusBar" 
+        <div v-if="config.showStatusBar && totalFileCount > 0" 
           class="p-2 min-h-8 flex flex-row items-center justify-start text-sm select-none cursor-default"
         >
           <IconFile class="t-icon-size-xs shrink-0" />
@@ -1124,8 +1124,13 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
     // console.log('getFileListThumb:', file);
     const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize);
     if(thumb) {
-      file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-      thumbCount.value++;
+      console.log('getFileListThumb:', thumb);
+      if(thumb.error_code === 1) {
+        file.thumbnail = new URL('@/assets/icons/photo.svg', import.meta.url).href;
+      } else {
+        file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+      }
+      thumbCount.value++; 
     }
     return file;
   };
