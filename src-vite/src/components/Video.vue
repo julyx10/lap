@@ -2,6 +2,19 @@
   <div class="relative w-full h-full overflow-hidden cursor-pointer bg-base-200">
     <video v-show="!hasError" ref="videoElement" class="video-js"></video>
 
+    <!-- Play button overlay when video is paused -->
+    <div v-if="!hasError && !isPlaying"
+      class="absolute inset-0 flex items-center justify-center cursor-pointer"
+      @click.stop="playVideo"
+    >
+      <div class="w-16 h-16 rounded-full bg-base-100/50 flex items-center justify-center 
+                  hover:bg-base-100/80 hover:scale-110 transition-all duration-300 ease-out group">
+        <component :is="isReplaying ? IconVideoReplay : IconVideoPlay"
+          class="w-8 h-8 text-base-content/50 transition-colors duration-300 group-hover:text-base-content"
+        />
+      </div>
+    </div>
+
     <div v-if="hasError" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
       <IconVideoSlash class="w-8 h-8 mb-2" />
       <div class="text-center">{{ errorMessage }}</div>
@@ -16,6 +29,8 @@ import { config } from '@/common/utils';
 import { IconVideoSlash } from '@/common/icons';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+
+import { IconVideoPlay, IconVideoReplay } from '@/common/icons';
 
 // Import language JSON data for video.js
 import ja from 'video.js/dist/lang/ja.json';
@@ -46,6 +61,8 @@ const player = ref<ReturnType<typeof videojs> | null>(null);
 // status
 const hasError = ref(false);
 const errorMessage = ref('');
+const isPlaying = ref(false);
+const isReplaying = ref(false);
 
 // transform state
 const transformState = reactive({ rotate: 0, scale: 1 });
@@ -81,6 +98,12 @@ const updateTransform = () => {
   }
 };
 
+const playVideo = () => {
+  if (player.value) {
+    player.value.play();
+  }
+};
+
 const setupPlayer = () => {
   if (!videoElement.value) return;
 
@@ -113,6 +136,27 @@ const setupPlayer = () => {
     });
 
     player.value.ready(() => updateTransform());
+
+    // Add event listeners for play/pause state
+    player.value.on('play', () => {
+      isPlaying.value = true;
+      isReplaying.value = false;
+    });
+
+    player.value.on('pause', () => {
+      isPlaying.value = false;
+      isReplaying.value = false;
+    });
+
+    player.value.on('ended', () => {
+      isPlaying.value = false;
+      isReplaying.value = true;
+    });
+
+    player.value.on('loadeddata', () => {
+      isPlaying.value = config.autoPlayVideo;
+      isReplaying.value = false;
+    });
   }
 
   if (props.src) {
@@ -123,6 +167,7 @@ const setupPlayer = () => {
     }
     hasError.value = false;
     errorMessage.value = '';
+    isPlaying.value = true;
     player.value.src(props.src);
     nextTick(() => {
       if(config.autoPlayVideo) {
@@ -161,7 +206,10 @@ onMounted(setupPlayer);
 
 onBeforeUnmount(() => {
   if (player.value) {
-    player.value.off();
+    player.value.off('play');
+    player.value.off('pause');
+    player.value.off('ended');
+    player.value.off('loadeddata');
     player.value.dispose();
     player.value = null;
   }
