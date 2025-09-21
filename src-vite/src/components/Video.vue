@@ -266,9 +266,11 @@ defineExpose({
   object-fit: contain !important;
 }
 .video-js .vjs-control-bar {
+  z-index: 9999 !important;
   background-color: hsl(var(--b2)) !important;
 }
 .video-js .vjs-big-play-button {
+  z-index: 9999 !important;
   display: none !important;
 }
 .vjs-volume-panel {

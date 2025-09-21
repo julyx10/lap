@@ -289,6 +289,8 @@ import {
   IconTrash,
 } from '@/common/icons';
 
+const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
+
 const props = defineProps({
   titlebar: String
 });
@@ -307,8 +309,8 @@ const contentIcon = computed(() => {
     case 2: return config.favoriteFolderId && config.favoriteFolderId > 0 ? IconFolderFavorite : IconFavorite;
     case 3: return IconTag;
     case 4: return IconCalendar;
-    case 5: return IconLocation;
-    case 6: return IconCamera;
+    case 5: return IconCamera;
+    case 6: return IconLocation;
     default: return IconFile;
   }
 });
@@ -768,19 +770,7 @@ async function updateContent() {
       await getFileList("", startDate, endDate, "", "", false, 0, fileListOffset.value);
     }
   }
-  else if(newIndex === 5) {   // location
-    if(config.locationId === null) {
-      contentTitle.value = "";
-      fileList.value = [];
-    } else {
-    //   const location = await getLocation(config.locationId);
-    //   if(location) {
-    //     contentTitle.value = location.name;
-    //     await getFileList("", "", "", "", "", false, 0, fileListOffset.value);
-    //   }
-    }
-  }
-  else if(newIndex === 6) {   // camera
+  else if(newIndex === 5) {   // camera
     if(config.cameraMake === null) {
       contentTitle.value = "";
       fileList.value = [];
@@ -793,6 +783,18 @@ async function updateContent() {
         await getFileList("", "", "", config.cameraMake, "", false, 0, fileListOffset.value);
       } 
     }
+    // else if(newIndex === 6) {   // location
+    //   if(config.locationId === null) {
+    //     contentTitle.value = "";
+    //     fileList.value = [];
+    //   } else {
+    //   //   const location = await getLocation(config.locationId);
+    //   //   if(location) {
+    //   //     contentTitle.value = location.name;
+    //   //     await getFileList("", "", "", "", "", false, 0, fileListOffset.value);
+    //   //   }
+    //   }
+    // }
   } 
 
 
@@ -1124,11 +1126,10 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
     // console.log('getFileListThumb:', file);
     const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize);
     if(thumb) {
-      console.log('getFileListThumb:', thumb);
-      if(thumb.error_code === 1) {
-        file.thumbnail = new URL('@/assets/icons/photo.svg', import.meta.url).href;
-      } else {
+      if(thumb.error_code === 0) {
         file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+      } else if(thumb.error_code === 1) {
+        file.thumbnail = thumbnailPlaceholder;
       }
       thumbCount.value++; 
     }

@@ -32,6 +32,9 @@
           :tooltip="$t('image_viewer.toolbar.prev')"
           @click="clickPrev()" 
         />
+        <div>
+          {{ fileIndex + 1 }}/{{ fileCount }}
+        </div>
         <TButton
           :icon="IconNext"
           :disabled="fileIndex < 0 || fileIndex >= fileCount - 1"
