@@ -101,13 +101,25 @@ const updateTransform = () => {
   if (!video) return;
 
   if (props.isZoomFit) {
-    transformState.scale = 1;
+    const videoWidth = player.value?.videoWidth();
+    const videoHeight = player.value?.videoHeight();
+    const containerWidth = videoElement.value?.parentElement?.clientWidth || 0;
+    const containerHeight = videoElement.value?.parentElement?.clientHeight || 0;
+    const isRotated = transformState.rotate % 180 !== 0;
+
     video.style.objectFit = 'contain';
     video.style.position = '';
     video.style.top = '';
     video.style.left = '';
-    video.style.transform = `rotate(${transformState.rotate}deg) scale(1)`;
     video.style.transformOrigin = 'center center';
+
+    if (isRotated && videoWidth && videoHeight && containerWidth && containerHeight) {
+      const scaleContain = Math.min(containerWidth / videoWidth, containerHeight / videoHeight);
+      const scaleCorrect = (1 / scaleContain) * Math.min(containerWidth / videoHeight, containerHeight / videoWidth);
+      video.style.transform = `rotate(${transformState.rotate}deg) scale(${scaleCorrect})`;
+    } else {
+      video.style.transform = `rotate(${transformState.rotate}deg) scale(1)`;
+    }
   } else {
     video.style.objectFit = 'none';
     video.style.position = 'absolute';
@@ -228,9 +240,22 @@ function canPlay(file: string): boolean {
   }
 }
 
-onMounted(setupPlayer);
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  setupPlayer();
+  if (videoElement.value?.parentElement) {
+    resizeObserver = new ResizeObserver(() => {
+      updateTransform();
+    });
+    resizeObserver.observe(videoElement.value.parentElement);
+  }
+});
 
 onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
   if (player.value) {
     player.value.off('play');
     player.value.off('pause');

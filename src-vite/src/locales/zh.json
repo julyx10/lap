@@ -23,6 +23,7 @@
       "description_placeholder": "输入相册描述",
       "folder": "文件夹",
       "hidden": "隐藏",
+      "hidden_description": "隐藏相册仅在相册列表中显示",
       "images": "图片",
       "videos": "视频",
       "files_count": "{count} 个文件 ({size})",

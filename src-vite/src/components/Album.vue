@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 
@@ -93,5 +93,19 @@ const clickOk = () => {
   isEditList.value = false;
   albumListRef.value.isEditList = false;
 };
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isEditList.value) {
+    clickOk();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown);
+});
 
 </script>

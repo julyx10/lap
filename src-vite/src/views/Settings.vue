@@ -56,10 +56,10 @@
           </div>
 
           <!-- Show hidden album -->
-          <div class="flex items-center justify-between mb-4">
+          <!-- <div class="flex items-center justify-between mb-4">
             <label for="show-hidden-album" >{{ $t('settings.general.show_hidden_album') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showHiddenAlbum" />
-          </div>
+          </div> -->
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings.general.show_button_text') }}</label>

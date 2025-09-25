@@ -23,6 +23,7 @@
       "description_placeholder": "アルバムの説明を入力",
       "folder": "フォルダ",
       "hidden": "非表示",
+      "hidden_description": "非表示のアルバムはアルバムリストにのみ表示されます",
       "images": "画像",
       "videos": "動画",
       "files_count": "{count} ファイル ({size})",

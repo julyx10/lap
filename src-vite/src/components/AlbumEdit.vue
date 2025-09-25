@@ -44,7 +44,9 @@
             <tr class="h-8 py-2">
               <td>{{ $t('album.edit.hidden') }}</td>
               <td>
-                <input type="checkbox" class="toggle toggle-sm" v-model="hiddenAlbumValue" />
+                <div class="tooltip" :data-tip="$t('album.edit.hidden_description')">
+                  <input type="checkbox" class="toggle toggle-sm" v-model="hiddenAlbumValue" />
+                </div>
               </td>
             </tr>
             <tr class="h-8">

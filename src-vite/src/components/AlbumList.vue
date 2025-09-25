@@ -230,7 +230,7 @@ const moreMenuItems = computed(() => {
 
 onMounted( async () => {
   if (albums.value.length === 0) {
-    albums.value = await getAllAlbums(config.showHiddenAlbum);
+    albums.value = await getAllAlbums(true);
     isLoading.value = false;
 
     if (props.albumId > 0) {
@@ -312,7 +312,7 @@ const clickNewAlbum = async () => {
 const refreshAlbums = async () => {
   isLoading.value = true;
   try {
-    albums.value = await getAllAlbums(config.showHiddenAlbum);
+    albums.value = await getAllAlbums(true);
   } catch (error) {
     console.error('Failed to refresh albums:', error);
   } finally {

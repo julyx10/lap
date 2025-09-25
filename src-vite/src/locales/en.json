@@ -23,6 +23,7 @@
       "description_placeholder": "Enter album's description",
       "folder": "Folder",
       "hidden": "Hidden",
+      "hidden_description": "Hidden album will only be shown in the album list",
       "images": "Images",
       "videos": "Videos",
       "files_count": "{count} files ({size})",
