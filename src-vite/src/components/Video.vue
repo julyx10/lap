@@ -19,6 +19,11 @@
       <IconVideoSlash class="w-8 h-8 mb-2" />
       <div class="text-center">{{ errorMessage }}</div>
     </div>
+
+    <!-- show video config info -->
+    <div v-if="config.debugMode" class="absolute top-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg">
+      <div>video isZoomFit: {{ props.isZoomFit }}</div>
+    </div>
   </div>
 </template>
 
@@ -75,6 +80,7 @@ const playerOptions = computed(() => ({
   width: '100%',
   height: '100%',
   autoplay: false,
+  muted: config.videoMuted,
   controls: true,
   preload: 'auto',
   language: videoJsLang.value,
@@ -86,15 +92,29 @@ const playerOptions = computed(() => ({
     playbackRateMenuButton: false,
     fullscreenToggle: false,
     audioTrackButton: false,
-    volumePanel: { inline: false },
+    volumePanel: { inline: true },
   },
 }));
 
 const updateTransform = () => {
   const video = player.value?.el().querySelector('video');
-  if (video) {
-    video.style.transform = `rotate(${transformState.rotate}deg) scale(${transformState.scale})`;
-    video.style.objectFit = props.isZoomFit ? 'contain' : 'cover';
+  if (!video) return;
+
+  if (props.isZoomFit) {
+    transformState.scale = 1;
+    video.style.objectFit = 'contain';
+    video.style.position = '';
+    video.style.top = '';
+    video.style.left = '';
+    video.style.transform = `rotate(${transformState.rotate}deg) scale(1)`;
+    video.style.transformOrigin = 'center center';
+  } else {
+    video.style.objectFit = 'none';
+    video.style.position = 'absolute';
+    video.style.top = '50%';
+    video.style.left = '50%';
+    video.style.transform = `translate(-50%, -50%) rotate(${transformState.rotate}deg) scale(${transformState.scale})`;
+    video.style.transformOrigin = 'center center';
   }
 };
 
@@ -109,6 +129,8 @@ const setupPlayer = () => {
 
   if (!player.value) {
     player.value = videojs(videoElement.value, playerOptions.value);
+    player.value.volume(config.videoVolume);
+    player.value.muted(config.videoMuted);
 
     player.value.on('error', () => {
       hasError.value = true;
@@ -156,6 +178,10 @@ const setupPlayer = () => {
     player.value.on('loadeddata', () => {
       isPlaying.value = config.autoPlayVideo;
       isReplaying.value = false;
+    });
+    player.value.on('volumechange', () => {
+      config.setVideoVolume(player.value?.volume());
+      config.setVideoMuted(player.value?.muted());
     });
   }
 
@@ -210,6 +236,7 @@ onBeforeUnmount(() => {
     player.value.off('pause');
     player.value.off('ended');
     player.value.off('loadeddata');
+    player.value.off('volumechange');
     player.value.dispose();
     player.value = null;
   }
@@ -223,21 +250,25 @@ watch(() => props.rotate, (val) => {
   updateTransform();
 });
 
-watch(() => props.isZoomFit, () => updateTransform());
+watch(() => props.isZoomFit, () => updateTransform(), { immediate: true });
 
 const zoomIn = () => {
+  console.log('zoomIn');
   transformState.scale *= 1.5;
   updateTransform();
 };
 const zoomOut = () => {
+  console.log('zoomOut');
   transformState.scale /= 1.5;
   updateTransform();
 };
 const zoomActual = () => {
+  console.log('zoomActual');
   transformState.scale = 1;
   updateTransform();
 };
 const rotateRight = () => {
+  console.log('rotateRight');
   transformState.rotate += 90;
   updateTransform();
 };

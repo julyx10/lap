@@ -61,6 +61,10 @@ export const useConfigStore = defineStore('configStore', {
     showFileInfo: false,        // show file info
     fileInfoPanelWidth: 20,     // file info panel width
 
+    ////// Video.vue //////
+    videoMuted: false,           // video muted
+    videoVolume: 1.0,            // video volume (0.0-1.0)
+
     ////// Settings.vue //////
 
     settingsTabIndex: 0,        // settings tab index
@@ -117,7 +121,15 @@ export const useConfigStore = defineStore('configStore', {
     setDebugMode(debugMode) {
       this.debugMode = debugMode;
     },
-    
+
+    // video settings
+    setVideoMuted(videoMuted) {
+      this.videoMuted = videoMuted;
+    },
+    setVideoVolume(videoVolume) {
+      this.videoVolume = videoVolume;
+    },
+
     // thumbnail settings
     setThumbnailSize(thumbnailSize) {
       this.thumbnailSize = thumbnailSize;
