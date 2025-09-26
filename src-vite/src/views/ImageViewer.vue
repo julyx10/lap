@@ -32,7 +32,7 @@
           :tooltip="$t('image_viewer.toolbar.prev')"
           @click="clickPrev()" 
         />
-        <div>
+        <div class="min-w-10 text-center text-base-content/30">
           {{ fileIndex + 1 }}/{{ fileCount }}
         </div>
         <TButton
@@ -48,19 +48,19 @@
           @click="clickPlay()" 
         />
         <TButton
-          :icon="IconZoomIn"
-          :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
-          :tooltip="$t('image_viewer.toolbar.zoom_in')"
-          @click="clickZoomIn()" 
-        />
-        <TButton
           :icon="IconZoomOut"
           :disabled="fileIndex < 0 || imageScale <= imageMinScale"
           :tooltip="$t('image_viewer.toolbar.zoom_out')"
           @click="clickZoomOut()"
         />
         <TButton
-          :icon="!config.isZoomFit ? IconZoomFit : IconZoomOriginal"
+          :icon="IconZoomIn"
+          :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
+          :tooltip="$t('image_viewer.toolbar.zoom_in')"
+          @click="clickZoomIn()" 
+        />
+        <TButton
+          :icon="!config.isZoomFit ? IconZoomFit : IconZoomActual"
           :disabled="fileIndex < 0"
           :tooltip="!config.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
           @click="toggleZoomFit()"
@@ -69,7 +69,7 @@
           :icon="IconFavorite"
           :disabled="fileIndex < 0"
           :selected="fileInfo?.is_favorite"
-          :tooltip="!fileInfo?.is_favorite ? $t('image_viewer.toolbar.favorite') : $t('image_viewer.toolbar.unfavorite')"
+          :tooltip="$t('image_viewer.toolbar.favorite')"
           @click="toggleFavorite()"
         />
         <TButton
@@ -240,7 +240,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
@@ -251,7 +251,8 @@ import { copyImage, getFileInfo, getFileImage, getTagsForFile } from '@/common/a
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import Image from '@/components/Image.vue';
-import Video from '@/components/Video.vue';
+const Video = defineAsyncComponent(() => import('@/components/Video.vue')); // dynamic import
+
 import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -264,7 +265,7 @@ import {
   IconZoomIn,
   IconZoomOut,
   IconZoomFit,
-  IconZoomOriginal,
+  IconZoomActual,
   IconUnFavorite,
   IconFavorite,
   IconRotate,
@@ -675,7 +676,7 @@ const clickZoomIn = () => {
   if(imageRef.value) {
     imageRef.value.zoomIn();
   }
-  if(videoRef.value) {
+  else if(videoRef.value) {
     videoRef.value.zoomIn();
   }
 };
@@ -684,7 +685,7 @@ const clickZoomOut = () => {
   if(imageRef.value) {
     imageRef.value.zoomOut();
   }
-  if(videoRef.value) {
+  else if(videoRef.value) {
     videoRef.value.zoomOut();
   }
 };
@@ -693,7 +694,7 @@ const clickZoomActual = () => {
   if(imageRef.value) {
     imageRef.value.zoomActual();
   }
-  if(videoRef.value) {
+  else if(videoRef.value) {
     videoRef.value.zoomActual();
   }
 };

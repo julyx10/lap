@@ -240,7 +240,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted, defineAsyncComponent } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -258,7 +258,7 @@ import DropDownMenu from '@/components/DropDownMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';
-import Video from '@/components/Video.vue';
+const Video = defineAsyncComponent(() => import('@/components/Video.vue')); // dynamic import
 import MessageBox from '@/components/MessageBox.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
@@ -1199,7 +1199,7 @@ async function openImageViewer(index: number, newViewer = false) {
         ...(isMac && {
           titleBarStyle: 'Overlay',
           hiddenTitle: true,
-          minimizable: false,
+          minimizable: true,
         }),
       });
 

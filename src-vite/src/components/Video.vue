@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, computed, reactive, nextTick } from 'vue';
+import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 import { IconVideoSlash } from '@/common/icons';
@@ -71,6 +72,8 @@ const isReplaying = ref(false);
 
 // transform state
 const transformState = reactive({ rotate: 0, scale: 1 });
+const minScale = ref(0.1);
+const maxScale = ref(10);
 
 const videoJsLang = computed(() => (config.language === 'zh' ? 'zh-CN' : config.language));
 
@@ -188,6 +191,7 @@ const setupPlayer = () => {
     });
 
     player.value.on('loadeddata', () => {
+      updateTransform();
       isPlaying.value = config.autoPlayVideo;
       isReplaying.value = false;
     });
@@ -273,18 +277,29 @@ watch(videoJsLang, (newLang) => player.value?.language(newLang), { immediate: tr
 watch(() => props.rotate, (val) => {
   transformState.rotate = val;
   updateTransform();
+}, { immediate: true });
+
+watch(() => transformState.scale, (val) => {
+  emit('message-from-image', { 
+    message: 'scale', 
+    scale: val, 
+    minScale: minScale.value, 
+    maxScale: maxScale.value 
+  });
 });
 
 watch(() => props.isZoomFit, () => updateTransform(), { immediate: true });
 
 const zoomIn = () => {
   console.log('zoomIn');
-  transformState.scale *= 1.5;
+  transformState.scale = Math.min(transformState.scale * 2, maxScale.value);
+
   updateTransform();
 };
 const zoomOut = () => {
   console.log('zoomOut');
-  transformState.scale /= 1.5;
+  transformState.scale = Math.max(transformState.scale / 2, minScale.value);
+  
   updateTransform();
 };
 const zoomActual = () => {
@@ -313,13 +328,12 @@ defineExpose({
   max-height: 100% !important;
   background-color: hsl(var(--b1)) !important;
   color: hsl(var(--bc)) !important;
-  object-fit: contain !important;
 }
 .video-js video {
   width: 100% !important;
   height: 100% !important;
   max-height: 100% !important;
-  object-fit: contain !important;
+  transition: transform 0.3s ease-out !important;
 }
 .video-js .vjs-control-bar {
   z-index: 9999 !important;
