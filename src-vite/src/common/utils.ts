@@ -31,9 +31,9 @@ export function setTheme(themeId: number) {
   htmlElement.setAttribute('data-theme', theme);
 }
 
-/// get the seconds of auto play interval
-export function getPlayInterval(): number {
-  return [1, 3, 5, 10, 15, 30][config.autoPlayInterval] || 1;
+/// get the seconds of slide show interval
+export function getSlideShowInterval(): number {
+  return [1, 3, 5, 10, 15, 30][config.slideShowInterval] || 1;
 }
 
 /// get days elapsed since the timestamp

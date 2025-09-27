@@ -157,11 +157,11 @@
             </select>
           </div>
 
-          <!-- auto play interval -->
+          <!-- slide show interval -->
           <div class="flex items-center justify-between mb-4">
-            <label for="autoplay-interval" >{{ $t('settings.image_viewer.autoplay_interval', { second: getPlayInterval(config.autoPlayInterval) }) }}</label>
+            <label for="autoplay-interval" >{{ $t('settings.image_viewer.slide_show_interval', { second: getSlideShowInterval(config.slideShowInterval) }) }}</label>
             <SliderInput 
-              v-model="config.autoPlayInterval" 
+              v-model="config.slideShowInterval" 
               :min="0" 
               :max="5" 
               :step="1" 
@@ -256,7 +256,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
-import { config, setTheme, getPlayInterval, formatFileSize } from '@/common/utils';
+import { config, setTheme, getSlideShowInterval, formatFileSize } from '@/common/utils';
 import { getPackageInfo, getBuildTime, getStorageFileInfo, getDbCountAndSum } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
@@ -401,8 +401,8 @@ watch(() => config.thumbnailLabelSecondaryOption, (newValue) => {
 watch(() => config.mouseWheelMode, (newValue) => {
   emit('settings-mouseWheelMode-changed', newValue);
 });
-watch(() => config.autoPlayInterval, (newValue) => {
-  emit('settings-autoPlayInterval-changed', newValue);
+watch(() => config.slideShowInterval, (newValue) => {
+  emit('settings-slideShowInterval-changed', newValue);
 });
 watch(() => config.autoPlayVideo, (newValue) => {
   emit('settings-autoPlayVideo-changed', newValue);

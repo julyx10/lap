@@ -33,8 +33,8 @@ export { default as IconPreviewOff } from '@/assets/icons/preview-off.svg';
 export { default as IconOpen } from '@/assets/icons/eye.svg';
 export { default as IconZoomIn } from '@/assets/icons/zoom-in.svg';
 export { default as IconZoomOut } from '@/assets/icons/zoom-out.svg';
-export { default as IconZoomFit } from '@/assets/icons/fit-screen1.svg';
-export { default as IconZoomActual } from '@/assets/icons/fit-screen2.svg';
+export { default as IconZoomFit } from '@/assets/icons/zoom-fit.svg';
+export { default as IconZoomActual } from '@/assets/icons/zoom-actual.svg';
 export { default as IconFullScreen } from '@/assets/icons/full-screen-max.svg';
 export { default as IconRestoreScreen } from '@/assets/icons/full-screen-min.svg';
 

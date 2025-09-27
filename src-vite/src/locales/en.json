@@ -277,7 +277,7 @@
     "toolbar": {
       "prev": "Previous",
       "next": "Next",
-      "play": "Play",
+      "slide_show": "Slide show",
       "pause": "Pause",
       "zoom_in": "Zoom in",
       "zoom_out": "Zoom out",
@@ -339,7 +339,7 @@
       "title": "Image viewer",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
-      "autoplay_interval": "Autoplay interval: {second} second(s)",
+      "slide_show_interval": "Slide show interval: {second} second(s)",
       "auto_play_video": "Auto play video",
       "show_comment": "Show comment"
     },

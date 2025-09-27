@@ -42,10 +42,10 @@
           @click="clickNext()" 
         />
         <TButton
-          :icon="autoPlay ? IconPause : IconPlay"
+          :icon="isSlideShow ? IconPause : IconPlay"
           :disabled="fileIndex < 0"
-          :tooltip="autoPlay ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.play') + ` (${getPlayInterval(config.autoPlayInterval)}s)`"
-          @click="clickPlay()" 
+          :tooltip="isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show') + ` (${getSlideShowInterval(config.slideShowInterval)}s)`"
+          @click="clickSlideShow()" 
         />
         <TButton
           :icon="IconZoomOut"
@@ -245,7 +245,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
-import { config, isWin, isMac, setTheme, getPlayInterval } from '@/common/utils';
+import { config, isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
 import { copyImage, getFileInfo, getFileImage, getTagsForFile } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
@@ -313,8 +313,8 @@ const videoSrc = ref('');       // Video source
 const imageCache = new Map();   // Cache images to prevent reloading
 const loadError = ref(false);   // Track if there was an error loading the image
 
-const autoPlay = ref(false);        // Auto play state
-let timer = null;                   // Timer for auto play
+const isSlideShow = ref(false);     // Slide show state
+let timer = null;                   // Timer for slide show
 
 const imageScale = ref(1);          // Image scale
 const imageMinScale = ref(0);       // Minimum image scale
@@ -484,7 +484,7 @@ function handleKeyDown(event) {
   if (isCmdKey && key.toLowerCase() === 'c') {
     clickCopy();
   } else if (isCmdKey && key.toLowerCase() === 'p') {
-    autoPlay.value = !autoPlay.value;
+    isSlideShow.value = !isSlideShow.value;
   } else if (isCmdKey && key.toLowerCase() === 'f') {
     toggleFavorite();
   } else if (isCmdKey && key.toLowerCase() === 'r') {
@@ -572,17 +572,17 @@ watch(() => imageScale.value, () => {
 // watch file index
 watch(() => fileIndex.value, async (newIndex) => {
   if(newIndex === -1) {
-    autoPlay.value = false;
+    isSlideShow.value = false;
     iconRotate.value = 0; // reset rotation
   } 
 });
 
-watch(() => [autoPlay.value, config.autoPlayInterval], ([newAutoPlay, newInterval]) => {
-  if(newAutoPlay) {
+watch(() => [isSlideShow.value, config.slideShowInterval], ([newIsSlideShow, newInterval]) => {
+  if(newIsSlideShow) {
     clearInterval(timer);
     timer = setInterval(() => {
       clickNext();
-    }, getPlayInterval(newInterval) * 1000);
+    }, getSlideShowInterval(newInterval) * 1000);
   } else {
     clearInterval(timer);
   }
@@ -653,7 +653,7 @@ function clickPrev() {
 }
 
 function clickNext() {
-  if(autoPlay.value && fileIndex.value === fileCount.value - 1) {
+  if(isSlideShow.value && fileIndex.value === fileCount.value - 1) {
     emit('message-from-image-viewer', { message: 'home' });
   } else {
     emit('message-from-image-viewer', { message: 'next' });
@@ -668,8 +668,8 @@ function clickEnd() {
   emit('message-from-image-viewer', { message: 'end' });
 }
 
-function clickPlay() {
-  autoPlay.value = !autoPlay.value;
+function clickSlideShow() {
+  isSlideShow.value = !isSlideShow.value;
 }
 
 const clickZoomIn = () => {

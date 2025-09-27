@@ -277,7 +277,7 @@
     "toolbar": {
       "prev": "前へ",
       "next": "次へ",
-      "play": "再生",
+      "slide_show": "スライドショー",
       "pause": "一時停止",
       "zoom_in": "拡大",
       "zoom_out": "縮小",
@@ -339,7 +339,7 @@
       "title": "画像ビューア",
       "mouse_wheel": "マウスホイール",
       "mouse_wheel_options": ["前/次の画像 (Ctrlでズーム)", "拡大/縮小"],
-      "autoplay_interval": "自動再生間隔: {second}秒",
+      "slide_show_interval": "スライドショー間隔: {second}秒",
       "auto_play_video": "自動再生ビデオ",
       "show_comment": "コメントを表示"
     },

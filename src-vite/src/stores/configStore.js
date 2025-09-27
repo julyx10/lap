@@ -88,7 +88,7 @@ export const useConfigStore = defineStore('configStore', {
     
     // settings - image viewer
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
-    autoPlayInterval: 1,        // auto play interval in seconds [1, 3, 5, 10, 30, 60]
+    slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
     autoPlayVideo: false,       // auto play video
     showComment: true,          // show comment
   }),
@@ -148,8 +148,8 @@ export const useConfigStore = defineStore('configStore', {
     setMouseWheelMode(mouseWheelMode) {
       this.mouseWheelMode = mouseWheelMode;
     },
-    setAutoPlayInterval(autoPlayInterval) {
-      this.autoPlayInterval = autoPlayInterval;
+    setSlideShowInterval(slideShowInterval) {
+      this.slideShowInterval = slideShowInterval;
     },
     setAutoPlayVideo(autoPlayVideo) {
       this.autoPlayVideo = autoPlayVideo;

@@ -91,8 +91,8 @@ listen('settings-thumbnailLabelSecondaryOption-changed', (event) => {
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)
 })
-listen('settings-autoPlayInterval-changed', (event) => {
-  config.setAutoPlayInterval(event.payload)
+listen('settings-slideShowInterval-changed', (event) => {
+  config.setSlideShowInterval(event.payload)
 })
 listen('settings-autoPlayVideo-changed', (event) => {
   config.setAutoPlayVideo(event.payload)

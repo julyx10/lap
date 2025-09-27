@@ -277,7 +277,7 @@
     "toolbar": {
       "prev": "上一张",
       "next": "下一张",
-      "play": "播放",
+      "slide_show": "幻灯片放映",
       "pause": "暂停",
       "zoom_in": "放大",
       "zoom_out": "缩小",
@@ -339,7 +339,7 @@
       "title": "图片查看器",
       "mouse_wheel": "鼠标滚轮",
       "mouse_wheel_options": ["上一张/下一张图片 (Ctrl 缩放)", "放大/缩小"],
-      "autoplay_interval": "自动播放间隔: {second} 秒",
+      "slide_show_interval": "幻灯片放映间隔: {second} 秒",
       "auto_play_video": "自动播放视频",
       "show_comment": "显示评论"
     },
