@@ -1,11 +1,11 @@
 <template>
-  <div class="relative w-full h-full overflow-hidden cursor-pointer bg-base-200">
+  <div ref="videoContainer" class="relative w-full h-full cursor-pointer bg-base-200">
     <video v-show="!hasError" ref="videoElement" class="video-js"></video>
 
     <!-- Play button overlay when video is paused -->
     <div v-if="!hasError && !isPlaying"
       class="absolute inset-0 flex items-center justify-center cursor-pointer"
-      @click.stop="playVideo"
+      @click.stop="clickPlayVideo"
     >
       <div class="w-16 h-16 rounded-full bg-base-100/50 flex items-center justify-center 
                   hover:bg-base-100/80 hover:scale-110 transition-all duration-300 ease-out group">
@@ -21,24 +21,26 @@
     </div>
 
     <!-- show video config info -->
-    <div v-if="config.debugMode" class="absolute top-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg">
-      <div>video isZoomFit: {{ props.isZoomFit }}</div>
+    <div v-if="config.debugMode" class="absolute top-0 left-0 right-1/2 p-2 text-sm bg-base-100 opacity-60 rounded-lg">
+      <div>video size: {{ player?.videoWidth() }}x{{ player?.videoHeight() }}</div>
+      <div>container size: {{ videoContainer?.clientWidth }}x{{ videoContainer?.clientHeight }}</div>
+      <div>scale: {{ scale.toFixed(2) }}</div>
+      <div>rotate: {{ rotate }} deg</div>
+      <div>isFit: {{ isFit }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, computed, reactive, nextTick } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 import { IconVideoSlash } from '@/common/icons';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-
 import { IconVideoPlay, IconVideoReplay } from '@/common/icons';
 
-// Import language JSON data for video.js
 import ja from 'video.js/dist/lang/ja.json';
 import zhCN from 'video.js/dist/lang/zh-CN.json';
 videojs.addLanguage('ja', ja);
@@ -61,21 +63,22 @@ const props = defineProps({
 
 const { t: $t } = useI18n(); // i18n
 
+const videoContainer = ref<HTMLDivElement | null>(null);
 const videoElement = ref<HTMLVideoElement | null>(null);
 const player = ref<ReturnType<typeof videojs> | null>(null);
 
-// status
+const videoJsLang = computed(() => (config.language === 'zh' ? 'zh-CN' : config.language));
+
 const hasError = ref(false);
 const errorMessage = ref('');
 const isPlaying = ref(false);
 const isReplaying = ref(false);
 
-// transform state
-const transformState = reactive({ rotate: 0, scale: 1 });
-const minScale = ref(0.1);
-const maxScale = ref(10);
+const isFit = ref(false);
+const scale = ref(1);
+const rotate = ref(0);
 
-const videoJsLang = computed(() => (config.language === 'zh' ? 'zh-CN' : config.language));
+let isSrcChanging = false;  // disable transform when src changing
 
 const playerOptions = computed(() => ({
   responsive: false,
@@ -99,44 +102,38 @@ const playerOptions = computed(() => ({
   },
 }));
 
-const updateTransform = () => {
+const updateTransform = (resetZoom = false) => {
+  if (isSrcChanging) return;
   const video = player.value?.el().querySelector('video');
   if (!video) return;
 
-  if (props.isZoomFit) {
-    const videoWidth = player.value?.videoWidth();
-    const videoHeight = player.value?.videoHeight();
-    const containerWidth = videoElement.value?.parentElement?.clientWidth || 0;
-    const containerHeight = videoElement.value?.parentElement?.clientHeight || 0;
-    const isRotated = transformState.rotate % 180 !== 0;
+  const videoWidth = player.value?.videoWidth();
+  const videoHeight = player.value?.videoHeight();
+  const containerWidth = videoContainer.value?.clientWidth;
+  const containerHeight = videoContainer.value?.clientHeight;
+  const isRotated = rotate.value % 180 !== 0;
 
-    video.style.objectFit = 'contain';
-    video.style.position = '';
-    video.style.top = '';
-    video.style.left = '';
-    video.style.transformOrigin = 'center center';
+  // center the video
+  video.style.position = 'absolute';
+  video.style.top = '50%';
+  video.style.left = '50%';
+  video.style.objectFit = 'none';
+  video.style.transformOrigin = 'center center';
+  video.style.width = 'auto';
+  video.style.height = 'auto';
 
-    if (isRotated && videoWidth && videoHeight && containerWidth && containerHeight) {
-      const scaleContain = Math.min(containerWidth / videoWidth, containerHeight / videoHeight);
-      const scaleCorrect = (1 / scaleContain) * Math.min(containerWidth / videoHeight, containerHeight / videoWidth);
-      video.style.transform = `rotate(${transformState.rotate}deg) scale(${scaleCorrect})`;
-    } else {
-      video.style.transform = `rotate(${transformState.rotate}deg) scale(1)`;
+  // reset zoom and rotate when loading new video or when zoom fit is changed
+  if(resetZoom) {
+    scale.value = 1;
+    if (isFit.value && videoWidth && videoHeight && containerWidth && containerHeight) {
+      const w = isRotated ? videoHeight : videoWidth;
+      const h = isRotated ? videoWidth : videoHeight;
+      scale.value = Math.min(containerWidth / w, containerHeight / h);
     }
-  } else {
-    video.style.objectFit = 'none';
-    video.style.position = 'absolute';
-    video.style.top = '50%';
-    video.style.left = '50%';
-    video.style.transform = `translate(-50%, -50%) rotate(${transformState.rotate}deg) scale(${transformState.scale})`;
-    video.style.transformOrigin = 'center center';
-  }
-};
 
-const playVideo = () => {
-  if (player.value) {
-    player.value.play();
+    rotate.value = props.rotate;
   }
+  video.style.transform = `translate(-50%, -50%) rotate(${rotate.value}deg) scale(${scale.value})`;
 };
 
 const setupPlayer = () => {
@@ -172,8 +169,6 @@ const setupPlayer = () => {
       }
     });
 
-    player.value.ready(() => updateTransform());
-
     // Add event listeners for play/pause state
     player.value.on('play', () => {
       isPlaying.value = true;
@@ -191,9 +186,10 @@ const setupPlayer = () => {
     });
 
     player.value.on('loadeddata', () => {
-      updateTransform();
+      isSrcChanging = false;
       isPlaying.value = config.autoPlayVideo;
       isReplaying.value = false;
+      updateTransform(true);
     });
     player.value.on('volumechange', () => {
       config.setVideoVolume(player.value?.volume());
@@ -205,6 +201,10 @@ const setupPlayer = () => {
     if(!canPlay(props.src)) {
       hasError.value = true;
       errorMessage.value = $t('video.errors.format');
+
+      // set player src to empty
+      player.value?.src('');
+      player.value?.pause();
       return;
     }
     hasError.value = false;
@@ -244,22 +244,22 @@ function canPlay(file: string): boolean {
   }
 }
 
+const clickPlayVideo = () => player.value?.play();
+
 let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
   setupPlayer();
   if (videoElement.value?.parentElement) {
     resizeObserver = new ResizeObserver(() => {
-      updateTransform();
+      updateTransform(props.isZoomFit)
     });
     resizeObserver.observe(videoElement.value.parentElement);
   }
 });
 
 onBeforeUnmount(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect();
-  }
+  resizeObserver?.disconnect();
   if (player.value) {
     player.value.off('play');
     player.value.off('pause');
@@ -271,45 +271,42 @@ onBeforeUnmount(() => {
   }
 });
 
-watch(() => props.src, () => setupPlayer());
 watch(videoJsLang, (newLang) => player.value?.language(newLang), { immediate: true });
 
-watch(() => props.rotate, (val) => {
-  transformState.rotate = val;
-  updateTransform();
-}, { immediate: true });
-
-watch(() => transformState.scale, (val) => {
-  emit('message-from-image', { 
-    message: 'scale', 
-    scale: val, 
-    minScale: minScale.value, 
-    maxScale: maxScale.value 
-  });
+watch(() => props.src, () => { 
+  isSrcChanging = true;
+  if (!props.isZoomFit) scale.value = 1; 
+  setupPlayer(); 
 });
 
-watch(() => props.isZoomFit, () => updateTransform(), { immediate: true });
+watch(() => props.rotate, (val) => { 
+  rotate.value = val; 
+  updateTransform(); 
+}, { immediate: true });
 
-const zoomIn = () => {
-  console.log('zoomIn');
-  transformState.scale = Math.min(transformState.scale * 2, maxScale.value);
+watch(() => props.isZoomFit, (val) => { 
+  isFit.value = val; 
+  updateTransform(true); 
+}, { immediate: true });
 
+watch(() => scale.value, (val) => {
+  emit('message-from-image', { message: 'scale', scale: val, minScale: 0.1, maxScale: 10 });
+});
+
+const zoomIn = () => { 
+  scale.value = Math.min(scale.value * 2, 10); 
   updateTransform();
 };
-const zoomOut = () => {
-  console.log('zoomOut');
-  transformState.scale = Math.max(transformState.scale / 2, minScale.value);
-  
+const zoomOut = () => { 
+  scale.value = Math.max(scale.value / 2, 0.1); 
   updateTransform();
 };
-const zoomActual = () => {
-  console.log('zoomActual');
-  transformState.scale = 1;
+const zoomActual = () => { 
+  scale.value = 1; 
   updateTransform();
 };
-const rotateRight = () => {
-  console.log('rotateRight');
-  transformState.rotate += 90;
+const rotateRight = () => { 
+  rotate.value = (rotate.value + 90) % 360; 
   updateTransform();
 };
 
@@ -325,14 +322,14 @@ defineExpose({
 .video-js {
   width: 100% !important;
   height: 100% !important;
-  max-height: 100% !important;
   background-color: hsl(var(--b1)) !important;
   color: hsl(var(--bc)) !important;
 }
 .video-js video {
-  width: 100% !important;
-  height: 100% !important;
-  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
   transition: transform 0.3s ease-out !important;
 }
 .video-js .vjs-control-bar {
