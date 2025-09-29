@@ -2,7 +2,7 @@
   <div class="my-1 p-2 h-full w-full bg-base-200 rounded-l-lg">
     <!-- Title bar -->
     <div class="h-6 flex items-center justify-between">
-      <span class="p-1 font-bold">{{ $t('file_info.title') }}</span>
+      <span class="p-1 font-bold text-base-content/30 ">{{ $t('file_info.title') }}</span>
       <TButton
         :icon="IconClose"
         :buttonSize="'small'"
@@ -12,7 +12,7 @@
 
     <!-- File Info table -->
     <div class="overflow-x-hidden overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 100px)' }">
-      <table v-if="fileInfo" class="text-sm border-separate border-spacing-2">
+      <table v-if="fileInfo" class="text-sm text-base-content/30 border-separate border-spacing-2">
         <tbody class="align-top">
           <tr>
             <td class="text-nowrap">{{ $t('file_info.album_name') }}</td>
@@ -42,7 +42,7 @@
             <td class="text-nowrap">{{ $t('file_info.dimension') }}</td>
             <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
           </tr>
-          <tr>
+          <tr v-if="fileInfo.file_type === 2">
             <td class="text-nowrap">{{ $t('file_info.duration') }}</td>
             <td>{{ formatDuration(fileInfo.duration) }}</td>
           </tr>

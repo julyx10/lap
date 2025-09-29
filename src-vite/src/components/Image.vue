@@ -23,7 +23,7 @@
         transform: `translate(${position[index].x}px, ${position[index].y}px) 
         scale(${scale[index]}) 
         rotate(${imageRotate[index]}deg)`,
-        transition: !isDragging ? 'transform 0.3s ease-in-out' : 'none',
+        transition: !isDragging && !noTransition ? 'transform 0.3s ease-in-out' : 'none',
         willChange: 'transform',
       }"
       draggable="false"
@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { config } from '@/common/utils';
 
@@ -73,6 +73,7 @@ const imageSizeRotated = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }])
 
 const isDragging = ref(false);              // Dragging state
 const isGrabbing = ref(false);              // Grabbing state
+const noTransition = ref(false);            // Disable transition temporarily
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const mousePosition = ref({ x: 0, y: 0 });  // Current mouse position
 
@@ -142,6 +143,8 @@ watch(() => props.src, () => {
 
   // preload to the hide image, then swap the image when loaded
   const nextImageIndex = activeImage.value ^ 1;
+  scale.value[nextImageIndex] = 1;
+  position.value[nextImageIndex] = { x: 0, y: 0 };
   imageSrc.value[nextImageIndex] = props.src;
   imageRotate.value[nextImageIndex] = props.rotate;
 }, { immediate: true });
@@ -202,25 +205,35 @@ watch(() => [containerSize.value, imageSize.value], () => {
 
 // load image
 const onImageLoad = (img) => {
-  // toggle to active image when loaded (0 -> 1, 1 -> 0)
-  activeImage.value = activeImage.value ^ 1;
-  const imgIndex = activeImage.value;
+  noTransition.value = true;
 
-  imageSize.value[imgIndex] = { width: img.naturalWidth, height: img.naturalHeight };
+  const nextIndex = activeImage.value ^ 1;
+
+  imageSize.value[nextIndex] = { width: img.naturalWidth, height: img.naturalHeight };
 
   // swap image width and height
-  if (imageRotate.value[imgIndex] % 180 === 90) {
-    imageSizeRotated.value[imgIndex] = { 
+  if (imageRotate.value[nextIndex] % 180 === 90) {
+    imageSizeRotated.value[nextIndex] = { 
       width: img.naturalHeight, 
       height: img.naturalWidth 
     };
   } else {
-    imageSizeRotated.value[imgIndex] = { 
+    imageSizeRotated.value[nextIndex] = { 
       width: img.naturalWidth,  
       height: img.naturalHeight 
     };
   }
-  updateZoomFit();
+
+  position.value[nextIndex].x = (containerSize.value.width - img.naturalWidth) / 2;
+  position.value[nextIndex].y = (containerSize.value.height - img.naturalHeight) / 2;
+  triggerRef(position);
+
+  activeImage.value = nextIndex;
+
+  nextTick(() => {
+    noTransition.value = false;
+    updateZoomFit();
+  });
 }
 
 const rotateRight = () => {
