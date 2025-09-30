@@ -83,6 +83,7 @@
         <TButton
           :icon="IconTag"
           :disabled="fileIndex < 0"
+          :selected="fileInfo?.has_tags"
           :tooltip="$t('image_viewer.toolbar.tag')"
           @click="clickTag()"
         />
@@ -233,6 +234,14 @@
     @cancel="showDeleteMsgbox = false"
   />
 
+  <!-- tag -->
+  <TaggingDialog 
+    v-if="showTaggingDialog"
+    :fileIds="fileIdsToTag"
+    @ok="updateFileHasTags"
+    @cancel="showTaggingDialog = false"
+  />
+
   <ToolTip ref="toolTipRef" />
 
 </template>
@@ -246,7 +255,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { config, isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
-import { copyImage, getFileInfo, getFileImage, getTagsForFile } from '@/common/api';
+import { copyImage, getFileInfo, getFileImage, getTagsForFile, getFileHasTags } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
@@ -257,6 +266,8 @@ import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
+import TaggingDialog from '@/components/TaggingDialog.vue';
+
 import { 
   IconPrev,
   IconNext,
@@ -322,6 +333,8 @@ const imageMaxScale = ref(10);      // Maximum image scale
 const isScaleChanged = ref(false);  // Scale changed state
 
 const showDeleteMsgbox = ref(false);
+const showTaggingDialog = ref(false);
+const fileIdsToTag = ref<number[]>([]);
 
 const isDraggingSplitter = ref(false); // Dragging state for the splitter
 const divContentView = ref(null); // Reference to the content view
@@ -481,6 +494,10 @@ function handleKeyDown(event) {
   const key = event.key;
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
+  if(showDeleteMsgbox.value || showTaggingDialog.value) {
+    return;
+  }
+
   if (isCmdKey && key.toLowerCase() === 'c') {
     clickCopy();
   } else if (isCmdKey && key.toLowerCase() === 'p') {
@@ -511,7 +528,7 @@ const keyActions = {
   '-':        () => clickZoomOut(),
   '0':        () => clickZoomActual(),
   ' ':        () => toggleZoomFit(),
-  Escape:     () => appWindow.close(),
+  Escape:     () => closeWindow(),
 };
 
 // Handle resize event
@@ -703,6 +720,10 @@ const toggleZoomFit = () => {
   config.isZoomFit =!config.isZoomFit;
 };
 
+const closeWindow = () => {
+  appWindow.close();
+}
+
 // toggle favorite status
 const toggleFavorite = () => {
   emit('message-from-image-viewer', { message: 'favorite' });
@@ -715,8 +736,18 @@ const clickRotate = () => {
 
 // tag image
 const clickTag = () => {
-  emit('message-from-image-viewer', { message: 'tag' });
+  fileIdsToTag.value = [fileId.value];
+  showTaggingDialog.value = true;
 };
+
+// click ok in tagging dialog
+function updateFileHasTags(fileIds: number[]) {
+  if(fileIds.length === 0) return;
+  getFileHasTags(fileIds[0]).then(hasTags => {
+    fileInfo.value.has_tags = hasTags;
+  });
+  showTaggingDialog.value = false;
+}
 
 // click copy image
 const clickCopy = async() => {

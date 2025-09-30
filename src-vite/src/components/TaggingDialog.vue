@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="modal modal-open">
+  <dialog id="taggingDialog" class="modal modal-open">
     <div class="w-[600px] p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
       <!-- title bar -->
@@ -71,12 +71,11 @@
 
       </div>
     </div>
-  </div>
+  </dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { 
   getAllTags, 
   getTagsForFile, 
@@ -88,19 +87,13 @@ import { IconAdd, IconClose } from '@/common/icons';
 import TButton from './TButton.vue';
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false,
-  },
   fileIds: {
     type: Array as () => number[],
     default: () => [],
   },
 });
 
-const emit = defineEmits(['update:show', 'applied']);
-
-const { t } = useI18n();
+const emit = defineEmits(['ok', 'cancel']);
 
 const allTags = ref<any[]>([]);
 const tagSearch = ref('');
@@ -120,25 +113,28 @@ const filteredTags = computed(() => {
 });
 
 onMounted(() => {
-  window.addEventListener('keydown', handleEscapeKey);
+  window.addEventListener('keydown', handleKeyDown);
+
+  loadAllTags();
+  loadExistingTagsForFiles();
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleEscapeKey);
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    console.log('TaggingDialog show', props.fileIds.length);
-    loadAllTags();
-    loadExistingTagsForFiles();
-  } else {
-    tagSearch.value = '';
-    newTagName.value = '';
-    selectedTags.value.clear();
-    intermediateTags.value.clear();
-  }
-}, { immediate: true });
+// watch(() => taggingDialog.value.show, (newVal) => {
+//   if (newVal) {
+//     console.log('TaggingDialog show', props.fileIds.length);
+//     loadAllTags();
+//     loadExistingTagsForFiles();
+//   } else {
+//     tagSearch.value = '';
+//     newTagName.value = '';
+//     selectedTags.value.clear();
+//     intermediateTags.value.clear();
+//   }
+// }, { immediate: true });
 
 // load all tags
 async function loadAllTags() {
@@ -227,17 +223,17 @@ async function clickOk() {
       }
     }
   }
-  emit('applied', props.fileIds);
-  emit('update:show', false);
+  emit('ok', props.fileIds);
 }
 
 function clickCancel() {
-  emit('update:show', false);
+  emit('cancel');
 }
 
 // handle escape key
-const handleEscapeKey = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
+const handleKeyDown = (e: KeyboardEvent) => {
+  e.stopPropagation();
+  if(e.key === 'Escape') {
     clickCancel();
   }
 };

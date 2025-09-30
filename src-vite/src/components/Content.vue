@@ -215,9 +215,10 @@
 
   <!-- tag -->
   <TaggingDialog 
-    v-model:show="showTaggingDialog"
+    v-if="showTaggingDialog"
     :fileIds="fileIdsToTag"
-    @applied="updateFileHasTags"
+    @ok="updateFileHasTags"
+    @cancel="showTaggingDialog = false"
   />
 
   <!-- comment -->
@@ -475,7 +476,7 @@ const moreMenuItems = computed(() => {
   return items;
 });
 
-const handleEscapeKey = (e: KeyboardEvent) => {
+const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && selectMode.value) {
     handleSelectMode(false);
   }
@@ -497,8 +498,7 @@ onMounted( async() => {
     resizeObserver.observe(previewDiv.value);
   }
 
-  // Add escape key listener
-  window.addEventListener('keydown', handleEscapeKey);
+  window.addEventListener('keydown', handleKeyDown);
 
   unlistenGridView = await listen('message-from-grid-view', (event) => {
     const { message } = event.payload;
@@ -600,7 +600,7 @@ onBeforeUnmount(() => {
   unlistenGridView();
   unlistenImageViewer();
   // Remove escape key listener
-  window.removeEventListener('keydown', handleEscapeKey);
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
@@ -1104,6 +1104,7 @@ function updateSelectedImage(index) {
   openImageViewer(index, false);
 }
 
+// click ok in tagging dialog
 function updateFileHasTags(fileIds: number[]) {
   for (const fileId of fileIds) {
     const index = fileList.value.findIndex(f => f.id === fileId);
@@ -1114,6 +1115,7 @@ function updateFileHasTags(fileIds: number[]) {
       });
     }
   }
+  showTaggingDialog.value = false;
 }
 
 // Get the thumbnail for the files
