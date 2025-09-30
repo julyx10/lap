@@ -599,7 +599,6 @@ onBeforeUnmount(() => {
   // unlisten
   unlistenGridView();
   unlistenImageViewer();
-  // Remove escape key listener
   window.removeEventListener('keydown', handleKeyDown);
 });
 
@@ -796,7 +795,6 @@ async function updateContent() {
     //   }
     // }
   } 
-
 
   refreshFileList();
 }

@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, shortenFilename, formatFileSize, formatDuration, formatTimestamp } from '@/common/utils';
@@ -274,13 +274,12 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-// when the grid view is focused, the keydown event is listened
-watch(() => isFocus.value, (newValue) => {
-  if (newValue) {
-    window.addEventListener('keydown', handleKeyDown);
-  } else {
-    window.removeEventListener('keydown', handleKeyDown);
-  }
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 watch(() => props.selectItemIndex, (newValue) => { 
@@ -304,18 +303,23 @@ function handleKeyDown(event) {
   const key = event.key;
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
-  event.preventDefault(); // Prevent the default action
   if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
+    event.preventDefault(); // Prevent the default action
     copyItem();
   } else if(isCmdKey && key.toLowerCase() === 'f') {
+    event.preventDefault(); // Prevent the default action
     toggleFavorite();
   } else if(isCmdKey && key.toLowerCase() === 't') {
+    event.preventDefault(); // Prevent the default action
     tagItem();
   } else if(isCmdKey && key.toLowerCase() === 'r') {
+    event.preventDefault(); // Prevent the default action
     rotateItem();
   } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
+    event.preventDefault(); // Prevent the default action
     deleteItem();
   } else if (keyActions[key]) {
+    event.preventDefault(); // Prevent the default action
     keyActions[key](); 
   }
 }

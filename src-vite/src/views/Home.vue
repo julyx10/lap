@@ -8,7 +8,7 @@
     <div class="flex-1 flex overflow-hidden">
 
       <!-- left side bar -->
-      <div tabindex="-1"
+      <div
         ref="divSideBar" 
         :class="[
           'pb-4 z-10 bg-base-200',
