@@ -63,7 +63,8 @@
 
   "toolbar": {
     "search": {
-      "placeholder": "ファイル名を検索"
+      "title": "検索",
+      "placeholder": "ファイル名を '/' で検索"
     },
     "filter": {
       "select_mode": "選択",

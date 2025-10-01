@@ -63,7 +63,8 @@
 
   "toolbar": {
     "search": {
-      "placeholder": "Search file name"
+      "title": "Search",
+      "placeholder": "Type '/' to search"
     },
     "filter": {
       "select_mode": "Select",

@@ -116,7 +116,8 @@ const updateSearch = (value) => {
 };
 
 defineExpose({ 
-  focusInput
+  focusInput,
+  isFocused
 });
 
 </script>

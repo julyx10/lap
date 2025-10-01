@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, shortenFilename, formatFileSize, formatDuration, formatTimestamp } from '@/common/utils';
@@ -128,6 +128,10 @@ const props = defineProps({
     required: true,
   },
   showFolderFiles: {             
+    type: Boolean,
+    default: false,
+  },
+  searchMode: {
     type: Boolean,
     default: false,
   },
@@ -274,13 +278,14 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-});
+// if search mode, do not handle the keydown event
+watch(() => props.searchMode, (newValue) => {
+  if (newValue) {
+    window.removeEventListener('keydown', handleKeyDown);
+  } else {
+    window.addEventListener('keydown', handleKeyDown);
+  }
+}, { immediate: true });
 
 watch(() => props.selectItemIndex, (newValue) => { 
   selectedIndex.value = newValue; 

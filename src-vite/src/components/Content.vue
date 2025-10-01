@@ -76,6 +76,7 @@
           v-model:selectItemIndex="selectedItemIndex"
           :fileList="fileList"
           :showFolderFiles="showFolderFiles"
+          :searchMode="searchBoxRef?.isFocused"
           :selectMode="selectMode"
         />
         
@@ -136,6 +137,7 @@
               :isZoomFit="true"
             ></Image>
             <Video v-else-if="fileList[selectedItemIndex]?.file_type === 2"
+              ref="videoRef"
               :src="videoSrc"
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
               :isZoomFit="true"
@@ -348,6 +350,7 @@ const previewDiv = ref(null);
 const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
 const videoSrc = ref('');         // preview video source
+const videoRef = ref(null);       // preview video reference
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
@@ -477,8 +480,20 @@ const moreMenuItems = computed(() => {
 });
 
 const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && selectMode.value) {
-    handleSelectMode(false);
+  if (searchBoxRef.value && searchBoxRef.value.isFocused) {
+    return;
+  }
+  
+  e.preventDefault();
+  switch (e.key) {
+    case ' ':
+      config.showPreview = !config.showPreview;
+      break;
+    case 'Escape':
+      if (selectMode.value) {
+        handleSelectMode(false);
+      }
+      break;
   }
 };
 
@@ -501,6 +516,12 @@ onMounted( async() => {
   window.addEventListener('keydown', handleKeyDown);
 
   unlistenGridView = await listen('message-from-grid-view', (event) => {
+
+    // if searchBox is focused, do not handle the message
+    if (searchBoxRef.value && searchBoxRef.value.isFocused) {
+      return;
+    }
+
     const { message } = event.payload;
     console.log('content - message-from-grid-view:', message);
     switch (message) {
@@ -562,6 +583,12 @@ onMounted( async() => {
   });
 
   unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
+
+    // if searchBox is focused, do not handle the message
+    if (searchBoxRef.value && searchBoxRef.value.isFocused) {
+      return;
+    }
+
     const { message } = event.payload;
     console.log('content - message-from-image-viewer:', message);
     switch (message) {
@@ -795,6 +822,10 @@ async function updateContent() {
     //   }
     // }
   } 
+
+  if(config.searchText) {
+    contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.searchText;
+  }
 
   refreshFileList();
 }
@@ -1205,11 +1236,11 @@ async function openImageViewer(index: number, newViewer = false) {
 
       imageWindow.once('tauri://created', () => {
         console.log('ImageViewer window created');
+        videoRef.value?.pause();  // pause video playing in preview pane
       });
 
       imageWindow.once('tauri://close-requested', () => {
         imageWindow?.close();
-        console.log('ImageViewer window is closing');
       });
 
       imageWindow.once('tauri://error', (e) => {
@@ -1227,6 +1258,7 @@ async function openImageViewer(index: number, newViewer = false) {
     if(newViewer) {
       imageWindow.show();
     }
+    videoRef.value?.pause();  // pause video playing in preview pane
   }
 }
 

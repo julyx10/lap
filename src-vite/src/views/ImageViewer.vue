@@ -721,7 +721,12 @@ const toggleZoomFit = () => {
 };
 
 const closeWindow = () => {
-  appWindow.close();
+  if(config.isFullScreen) {
+    config.isFullScreen = false;
+    appWindow.setFocus();
+  } else {
+    appWindow.close();
+  }
 }
 
 // toggle favorite status

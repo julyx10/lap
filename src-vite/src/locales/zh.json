@@ -63,7 +63,8 @@
 
   "toolbar": {
     "search": {
-      "placeholder": "搜索文件名"
+      "title": "搜索",
+      "placeholder": "按 '/' 搜索"
     },
     "filter": {
       "select_mode": "选择",

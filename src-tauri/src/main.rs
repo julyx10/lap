@@ -36,11 +36,11 @@ fn main() {
             t_sqlite::create_db().expect("error while creating the database");
 
             // Open devtools in development mode
-            #[cfg(debug_assertions)] // only include this block in debug builds
-            {
-                let window = app.get_webview_window("main").unwrap();
-                window.open_devtools();
-            }
+            // #[cfg(debug_assertions)] // only include this block in debug builds
+            // {
+            //     let window = app.get_webview_window("main").unwrap();
+            //     window.open_devtools();
+            // }
     
             Ok(())
         })

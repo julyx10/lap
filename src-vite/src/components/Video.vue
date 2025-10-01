@@ -314,7 +314,8 @@ defineExpose({
   zoomIn, 
   zoomOut, 
   zoomActual, 
-  rotateRight 
+  rotateRight,
+  pause: () => player.value?.pause(),
 });
 </script>
 
