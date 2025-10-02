@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { IconClose, IconSearch } from '@/common/icons';
+import { listen } from '@tauri-apps/api/event';
 
 const props = defineProps({
   modelValue: {
@@ -51,12 +52,16 @@ const isFocused = ref(false);
 const searchValue = ref(props.modelValue);
 const searchInputRef = ref(null);
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
+let unlistenKeydown: () => void;
+
+onMounted(async () => {
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 watch(() => props.modelValue, (newValue) => { 
@@ -64,13 +69,12 @@ watch(() => props.modelValue, (newValue) => {
 }, { immediate: true });
 
 function handleKeyDown(event) {
-  switch (event.key) {
+  const { key } = event.payload;
+  switch (key) {
     case 'Enter':
-      event.preventDefault();
       clickSearch();
       break;
     case 'Escape':
-      event.preventDefault();
       if (isFocused.value) {
         clickCancel();
       }

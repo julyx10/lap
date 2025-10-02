@@ -106,9 +106,10 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { countFolder } from '@/common/api';
 import { formatFileSize } from '@/common/utils';
+import { listen } from '@tauri-apps/api/event';
 
 import { IconClose } from '@/common/icons';
 
@@ -156,11 +157,16 @@ const totalImageSize = ref(-1);
 const totalVideoCount = ref(0);
 const totalVideoSize = ref(0);
 
-onMounted(() => {
+let unlistenKeydown: () => void;
+
+onMounted(async () => {
   albumInfoDialog.showModal();
 
-  window.addEventListener('keydown', handleKeyDown);
-  inputNameRef.value?.focus();
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+  
+  nextTick(() => {
+    inputNameRef.value?.focus();
+  });
 
   // count folder
   countFolder(props.albumPath).then((res) => {
@@ -172,13 +178,15 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 function handleKeyDown(event) {
-  event.stopPropagation();
+  const { key } = event.payload;
 
-  switch (event.key) {
+  switch (key) {
     // case 'Enter':
     //   clickOk();
     //   break;
@@ -192,7 +200,12 @@ function handleKeyDown(event) {
 
 const clickOk = () => {
   if (inputNameValue.value.trim().length > 0) {
-    emit('ok', inputNameValue.value, inputDescriptionValue.value ? inputDescriptionValue.value : '', hiddenAlbumValue.value);
+    emit(
+      'ok', 
+      inputNameValue.value, 
+      inputDescriptionValue.value ? inputDescriptionValue.value : '', 
+      hiddenAlbumValue.value ? hiddenAlbumValue.value: false
+    );
   }
 };
 

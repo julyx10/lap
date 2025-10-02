@@ -55,6 +55,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import { config } from '@/common/utils';
+import { listen } from '@tauri-apps/api/event';
 
 import { IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
@@ -81,19 +82,23 @@ const props = defineProps({
 
 const emit = defineEmits(['ok', 'cancel']);
 
-onMounted(() => {
+let unlistenKeydown: () => void;
+
+onMounted(async () => {
   moveToDialog.showModal();
 
-  window.addEventListener('keydown', handleKeyDown);
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 function handleKeyDown(event) {
-  event.stopPropagation();
-  switch (event.key) {
+  const { key } = event.payload;
+  switch (key) {
     case 'Enter':
       clickOk();
       break;

@@ -71,6 +71,7 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { isValidFileName } from '@/common/utils';
 import { useI18n } from 'vue-i18n';
+import { listen } from '@tauri-apps/api/event';
 import { IconClose } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
@@ -140,15 +141,19 @@ const okButtonClasses = computed(() => {
     : 'text-base-content/30 cursor-default';
 });
 
-onMounted(() => {
+let unlistenKeydown: () => void;
+
+onMounted(async () => {
   messageBoxDialog.showModal();
 
-  window.addEventListener('keydown', handleKeyDown);
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
   inputRef.value?.focus();
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 watch(() => props.errorMessage, (newValue) => {
@@ -167,9 +172,9 @@ const validateInput = () => {
 };
 
 function handleKeyDown(event) {
-  event.stopPropagation();
+  const { key } = event.payload;
 
-  switch (event.key) {
+  switch (key) {
     case 'Enter':
       clickOk();
       break;

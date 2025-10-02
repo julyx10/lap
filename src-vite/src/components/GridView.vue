@@ -90,8 +90,8 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, nextTick } from 'vue';
-import { emit } from '@tauri-apps/api/event';
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
+import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config, isMac, shortenFilename, formatFileSize, formatDuration, formatTimestamp } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
@@ -278,14 +278,17 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-// if search mode, do not handle the keydown event
-watch(() => props.searchMode, (newValue) => {
-  if (newValue) {
-    window.removeEventListener('keydown', handleKeyDown);
-  } else {
-    window.addEventListener('keydown', handleKeyDown);
+let unlistenKeydown: () => void;
+
+onMounted(async () => {
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  if (unlistenKeydown) {
+    unlistenKeydown();
   }
-}, { immediate: true });
+});
 
 watch(() => props.selectItemIndex, (newValue) => { 
   selectedIndex.value = newValue; 
@@ -305,29 +308,25 @@ function clickItem(index: number) {
 }
 
 function handleKeyDown(event) {
-  const key = event.key;
-  const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
+  if (props.searchMode) {
+    return;
+  }
+  const { key, metaKey } = event.payload;
+  const isCmdKey = isMac ? metaKey : event.payload.ctrlKey;
 
   if (isCmdKey && key === 'Enter') {   // Open shortcut
-    event.preventDefault(); // Prevent the default action
     openItem();
   } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
-    event.preventDefault(); // Prevent the default action
     copyItem();
   } else if(isCmdKey && key.toLowerCase() === 'f') {
-    event.preventDefault(); // Prevent the default action
     toggleFavorite();
   } else if(isCmdKey && key.toLowerCase() === 't') {
-    event.preventDefault(); // Prevent the default action
     tagItem();
   } else if(isCmdKey && key.toLowerCase() === 'r') {
-    event.preventDefault(); // Prevent the default action
     rotateItem();
-  } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    event.preventDefault(); // Prevent the default action
+  } else if((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
     deleteItem();
   } else if (keyActions[key]) {
-    event.preventDefault(); // Prevent the default action
     keyActions[key](); 
   }
 }

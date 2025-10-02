@@ -31,6 +31,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
+import { listen } from '@tauri-apps/api/event';
 
 import { IconMore, IconAdd, IconEdit, IconRefresh, IconOk } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
@@ -94,18 +95,22 @@ const clickOk = () => {
   albumListRef.value.isEditList = false;
 };
 
+let unlistenKeydown: () => void;
+
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isEditList.value) {
+  if (event.payload.key === 'Escape' && isEditList.value) {
     clickOk();
   }
 };
 
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown);
+onMounted(async () => {
+  unlistenKeydown = await listen('global-keydown', handleKeydown);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 </script>

@@ -111,6 +111,10 @@ import {
   IconSettings,
 } from '@/common/icons';
 
+import { listen } from '@tauri-apps/api/event';
+
+let unlistenKeydown: () => void;
+
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
@@ -157,17 +161,20 @@ const showLeftPane = ref(true);
 const divSideBar = ref(null);
 const isDraggingSplitter = ref(false);
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
+onMounted(async () => {
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
   // isFullScreen.value = await appWindow.isMaximized();
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 // Handle keydown event
 function handleKeyDown(event) {
+  const { key, ctrlKey, metaKey } = event.payload;
   // if (event.key === 'Escape') {
   //   appWindow.minimize();
   // }

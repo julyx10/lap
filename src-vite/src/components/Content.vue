@@ -375,6 +375,7 @@ const searchBoxRef = ref(null);
 
 let resizeObserver;
 
+let unlistenKeydown: () => void;
 let unlistenGridView: () => void;
 let unlistenImageViewer: () => void;
 
@@ -481,12 +482,12 @@ const moreMenuItems = computed(() => {
 });
 
 const handleKeyDown = (e: KeyboardEvent) => {
+  const { key } = e.payload;
   if (searchBoxRef.value && searchBoxRef.value.isFocused) {
     return;
   }
   
-  e.preventDefault();
-  switch (e.key) {
+  switch (key) {
     // case ' ':
     //   config.showPreview = !config.showPreview;
     //   break;
@@ -514,7 +515,7 @@ onMounted( async() => {
     resizeObserver.observe(previewDiv.value);
   }
 
-  window.addEventListener('keydown', handleKeyDown);
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   unlistenGridView = await listen('message-from-grid-view', (event) => {
 
@@ -627,7 +628,9 @@ onBeforeUnmount(() => {
   // unlisten
   unlistenGridView();
   unlistenImageViewer();
-  window.removeEventListener('keydown', handleKeyDown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 onUnmounted(() => {

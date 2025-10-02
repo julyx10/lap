@@ -83,6 +83,7 @@ import {
   addTagToFile, 
   removeTagFromFile 
 } from '@/common/api';
+import { listen } from '@tauri-apps/api/event';
 import { IconAdd, IconClose } from '@/common/icons';
 import TButton from './TButton.vue';
 
@@ -112,15 +113,19 @@ const filteredTags = computed(() => {
   );
 });
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
+let unlistenKeydown: () => void;
+
+onMounted(async () => {
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   loadAllTags();
   loadExistingTagsForFiles();
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleKeyDown);
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
 });
 
 // watch(() => taggingDialog.value.show, (newVal) => {
@@ -232,8 +237,8 @@ function clickCancel() {
 
 // handle escape key
 const handleKeyDown = (e: KeyboardEvent) => {
-  e.stopPropagation();
-  if(e.key === 'Escape') {
+  const { key } = e.payload;
+  if(key === 'Escape') {
     clickCancel();
   }
 };
