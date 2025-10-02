@@ -94,6 +94,7 @@ fn main() {
             t_cmds::get_db_count_and_sum,
             t_cmds::get_db_files,
             t_cmds::get_folder_files,
+            t_cmds::get_folder_thumb_count,
             t_cmds::copy_image_to_clipboard,
             t_cmds::rename_file,
             t_cmds::move_file,

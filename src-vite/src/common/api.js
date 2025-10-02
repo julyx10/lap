@@ -325,6 +325,23 @@ export async function getFolderFiles(folderId, folderPath) {
   return [null, null, null];
 };
 
+// get the thumbnail count of the folder
+export async function getFolderThumbCount(folderId) {
+  try {
+    let count = await invoke('get_folder_thumb_count', { 
+      searchText: config.searchText, 
+      searchFileType: config.searchFileType,
+      folderId, 
+    });
+    if(count) {
+      return count;
+    };
+  } catch (error) {
+    console.error('getFolderThumbCount error:', error);
+  }
+  return 0;
+}
+
 // copy an image to clipboard
 export async function copyImage(filePath) {
   try {

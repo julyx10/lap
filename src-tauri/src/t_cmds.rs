@@ -187,6 +187,15 @@ pub fn get_folder_files(
     t_utils::get_folder_files(search_text, search_file_type, sort_type, sort_order, folder_id, folder_path)
 }
 
+/// get the thumbnail count of the folder
+#[tauri::command]
+pub fn get_folder_thumb_count(search_text: &str, search_file_type: i64, folder_id: i64) -> i64 {
+    match AThumb::get_folder_thumb_count(search_text, search_file_type, folder_id) {
+        Ok(count) => count,
+        Err(_) => 0,
+    }
+}
+
 /// copy image to clipboard
 #[tauri::command]
 pub async fn copy_image_to_clipboard(file_path: &str) -> Result<(), String> {

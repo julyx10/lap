@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    <ProgressBar v-if="config.sidebarIndex === 1 && fileList.length > 0" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+    <ProgressBar v-if="config.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     <span v-else class="h-0.5 w-full"></span>
 
     <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
@@ -248,12 +248,12 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
-import { getAlbum, getDbFiles, getFolderFiles, getTagName,
+import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath, getTimestamp } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -321,6 +321,7 @@ const contentTitle = ref("");
 
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
+const showProgressBar = ref(false); // show progress bar
 
 // file list view
 const divListView = ref(null);
@@ -486,9 +487,9 @@ const handleKeyDown = (e: KeyboardEvent) => {
   
   e.preventDefault();
   switch (e.key) {
-    case ' ':
-      config.showPreview = !config.showPreview;
-      break;
+    // case ' ':
+    //   config.showPreview = !config.showPreview;
+    //   break;
     case 'Escape':
       if (selectMode.value) {
         handleSelectMode(false);
@@ -739,6 +740,12 @@ async function updateContent() {
         };
         fileList.value = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
         hasMoreFiles.value = false;  // getFolderFiles always get all files
+
+        // get the thumbnail count
+        await getFolderThumbCount(config.albumFolderId).then(count => {
+          console.log('updateContent - thumbCount:', count);
+          showProgressBar.value = count < fileList.value.length; // show progress bar if the thumbnail count is less than the file list length
+        });
       } else {
         contentTitle.value = "";
         fileList.value = [];

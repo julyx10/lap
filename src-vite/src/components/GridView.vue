@@ -165,7 +165,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.open,
       icon: IconOpen,
-      shortcut: isMac ? '⏎' : 'Enter',
+      shortcut: isMac ? '⌘⏎' : 'Ctrl+Enter',
       action: () => {
         openItem();
       }
@@ -308,7 +308,10 @@ function handleKeyDown(event) {
   const key = event.key;
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
-  if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
+  if (isCmdKey && key === 'Enter') {   // Open shortcut
+    event.preventDefault(); // Prevent the default action
+    openItem();
+  } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
     event.preventDefault(); // Prevent the default action
     copyItem();
   } else if(isCmdKey && key.toLowerCase() === 'f') {
@@ -337,7 +340,7 @@ const keyActions = {
   ArrowLeft: ()  => selectedIndex.value = Math.max(selectedIndex.value - 1, 0),
   Home: ()       => selectedIndex.value = 0,
   End: ()        => selectedIndex.value = props.fileList.length - 1,
-  Enter: ()      => openItem(),
+  // Enter: ()      => openItem(),
   '/': ()        => searchFile(),
 };
 
