@@ -472,7 +472,7 @@ pub fn get_folder_files(
             let file_path = path.to_str()?;
             let file_name = path.file_name()?.to_str()?;
 
-            if !search_text.is_empty() && !file_name.contains(search_text) {
+            if !search_text.is_empty() && !file_name.to_lowercase().contains(search_text.to_lowercase().as_str()) {
                 return None;
             }
 

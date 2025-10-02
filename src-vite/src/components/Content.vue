@@ -337,7 +337,7 @@ const selectedItemIndex = ref(-1);
 
 // config.favoriteFolderId = 0: means favorite files
 const showFolderFiles = computed(() =>
- config.sidebarIndex === 2 || (config.sidebarIndex === 1 && config.favoriteFolderId !== 0)
+ config.sidebarIndex === 1 || (config.sidebarIndex === 2 && config.favoriteFolderId !== 0)
 );
 
 // mutil select mode
@@ -555,9 +555,10 @@ onMounted( async() => {
         showDeleteMsgbox.value = true;
         break;
       case 'goto-folder':
-        const albumId = fileList.value[selectedItemIndex.value].album_id;
-        const folderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
-        emit('message-from-content', { message: 'goto-folder', albumId, folderPath });
+        config.albumId = fileList.value[selectedItemIndex.value].album_id;
+        config.albumFolderId = fileList.value[selectedItemIndex.value].folder_id;
+        config.albumFolderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
+        config.sidebarIndex = 1;
         break;
       case 'reveal':
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));

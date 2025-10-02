@@ -147,7 +147,12 @@ onMounted(async () => {
   messageBoxDialog.showModal();
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
-  inputRef.value?.focus();
+
+  if(props.showInput) { 
+    setTimeout(() => {
+      inputRef.value?.focus();
+    }, 50); // 50ms delay
+  }
 });
 
 onUnmounted(() => {

@@ -1,8 +1,7 @@
 <template>
     <div 
-      class="tooltip" 
-      :class="tooltipClasses"
-      :data-tip="config.showToolTip ? tooltip : ''"
+      :class="[tooltip && config.showToolTip ? 'tooltip' : '', tooltipClasses]"
+      :data-tip="tooltip"
     >
       <button
         class="btn btn-ghost btn-square rounded-lg border-0 focus:outline-none shadow-none flex flex-col"

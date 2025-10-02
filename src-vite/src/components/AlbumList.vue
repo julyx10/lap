@@ -176,7 +176,6 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
 let unlistenSelectFolder: () => void;
-let unlistenContent: () => void;
 
 const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
@@ -261,30 +260,15 @@ onMounted( async () => {
           }
         }
         break;
-
       default:
         break;
     }
   });
 
-  unlistenContent = await listen('message-from-content', async(event) => {
-    console.log('listen - message-from-album-content:', event);
-    const { message } = event.payload;
-    switch (message) {
-      case 'goto-folder':
-        clickFinalSubFolder(event.payload.albumId, event.payload.folderPath).then (() => {
-          config.sidebarIndex = 1; // show album content
-        });
-        break;
-      default:
-        break;
-    }
-  });
 });
 
 onBeforeUnmount(() => {
   unlistenSelectFolder();
-  unlistenContent();
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {

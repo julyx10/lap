@@ -7,8 +7,8 @@
       <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
 
       <TButton v-if="isEditList" 
-        :icon="IconOk" 
-        @click="clickOk"
+        :icon="IconClose" 
+        @click="clickCloseEditList"
       />
       <DropDownMenu v-else 
         :iconMenu="IconMore" 
@@ -28,12 +28,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
-import { listen } from '@tauri-apps/api/event';
 
-import { IconMore, IconAdd, IconEdit, IconRefresh, IconOk } from '@/common/icons';
+import { IconMore, IconAdd, IconEdit, IconRefresh, IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import TButton from '@/components/TButton.vue';
@@ -90,27 +89,9 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-const clickOk = () => {
+const clickCloseEditList = () => {
   isEditList.value = false;
   albumListRef.value.isEditList = false;
 };
-
-let unlistenKeydown: () => void;
-
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.payload.key === 'Escape' && isEditList.value) {
-    clickOk();
-  }
-};
-
-onMounted(async () => {
-  unlistenKeydown = await listen('global-keydown', handleKeydown);
-});
-
-onUnmounted(() => {
-  if (unlistenKeydown) {
-    unlistenKeydown();
-  }
-});
 
 </script>

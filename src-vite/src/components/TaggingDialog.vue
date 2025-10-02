@@ -15,12 +15,14 @@
       <!-- Search and Add New Tag -->
       <div class="py-4 flex items-center space-x-2">
         <input
+          ref="tagSearchInputRef"
           type="text"
           v-model="tagSearch"
           :placeholder="$t('tag.search_tags')"
           class="input focus:border flex-grow"
         />
         <input
+          ref="newTagNameInputRef"
           type="text"
           v-model="newTagName"
           :placeholder="$t('tag.enter_new_tag_name')"
@@ -97,6 +99,8 @@ const props = defineProps({
 const emit = defineEmits(['ok', 'cancel']);
 
 const allTags = ref<any[]>([]);
+const tagSearchInputRef = ref(null);
+const newTagNameInputRef = ref(null);
 const tagSearch = ref('');
 const newTagName = ref('');
 
@@ -117,6 +121,10 @@ let unlistenKeydown: () => void;
 
 onMounted(async () => {
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
+
+  setTimeout(() => {
+    tagSearchInputRef.value?.focus();
+  }, 50); // 50ms delay
 
   loadAllTags();
   loadExistingTagsForFiles();

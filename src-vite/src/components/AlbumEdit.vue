@@ -106,7 +106,7 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { countFolder } from '@/common/api';
 import { formatFileSize } from '@/common/utils';
 import { listen } from '@tauri-apps/api/event';
@@ -164,9 +164,9 @@ onMounted(async () => {
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
   
-  nextTick(() => {
+  setTimeout(() => {
     inputNameRef.value?.focus();
-  });
+  }, 50); // 50ms delay
 
   // count folder
   countFolder(props.albumPath).then((res) => {
