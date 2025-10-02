@@ -8,7 +8,8 @@
 use std::collections::HashMap;
 use trash;
 use base64::{engine::general_purpose, Engine};
-use exif::Tag;
+use exif::{Tag, Value};
+use reverse_geocoder::ReverseGeocoder;
 use rusqlite::{params, Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
 
@@ -450,7 +451,9 @@ pub struct AFile {
     pub gps_latitude: Option<String>,
     pub gps_longitude: Option<String>,
     pub gps_altitude: Option<String>,
-    pub gps_address: Option<String>,
+    pub gps_location: Option<String>,
+    pub gps_country: Option<String>,
+    pub gps_city: Option<String>,
 
     // output only
     pub file_path: Option<String>,  // file path (for webview)
@@ -459,7 +462,6 @@ pub struct AFile {
 }
 
 impl AFile {
-    /// create a new file struct
     fn new(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
         let mut duration = 0;
@@ -481,6 +483,65 @@ impl AFile {
         // Create an EXIF reader and attempt to read EXIF data
         let exifreader = exif::Reader::new();
         let exif = exifreader.read_from_container(&mut bufreader).ok();
+
+        let (gps_latitude, gps_longitude, gps_location, gps_country, gps_city, gps_altitude) = if let Some(exif_data) = &exif {
+            let lat_val = exif_data.get_field(Tag::GPSLatitude, exif::In::PRIMARY).and_then(|f| if let Value::Rational(v) = &f.value { Some(v.to_vec()) } else { None });
+            let lat_ref = exif_data.get_field(Tag::GPSLatitudeRef, exif::In::PRIMARY).map(|f| f.display_value().to_string());
+            let lon_val = exif_data.get_field(Tag::GPSLongitude, exif::In::PRIMARY).and_then(|f| if let Value::Rational(v) = &f.value { Some(v.to_vec()) } else { None });
+            let lon_ref = exif_data.get_field(Tag::GPSLongitudeRef, exif::In::PRIMARY).map(|f| f.display_value().to_string());
+
+            let format_dms = |dms: &[exif::Rational], reference: &str| -> String {
+                let degrees = dms[0].num as f64 / dms[0].denom as f64;
+                let minutes = dms[1].num as f64 / dms[1].denom as f64;
+                let seconds = dms[2].num as f64 / dms[2].denom as f64;
+                format!("{:.0}°{:.0}′{:.0}″{}", degrees, minutes, seconds, reference.trim())
+            };
+
+            let (gps_lat_str, gps_lon_str, location, country, city) = if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) = (lat_val, lat_ref, lon_val, lon_ref) {
+                let dec_lat = Self::dms_to_decimal(&lat_v, &lat_r);
+                let dec_lon = Self::dms_to_decimal(&lon_v, &lon_r);
+
+                let lat_str = format_dms(&lat_v, &lat_r);
+                let lon_str = format_dms(&lon_v, &lon_r);
+
+                let (location, country, city) = if let (Some(lat), Some(lon)) = (dec_lat, dec_lon) {
+                    let geocoder = ReverseGeocoder::new();
+                    let search_result = geocoder.search((lat, lon));
+
+                    let location = format!("{}, {}", search_result.record.admin2, search_result.record.admin1);
+                    let country = Some(search_result.record.cc.clone());
+                    let city = Some(search_result.record.name.clone());
+                
+                    (Some(location), country, city)
+                } else {
+                    (None, None, None)
+                };
+                (Some(lat_str), Some(lon_str), location, country, city)
+            } else {
+                (None, None, None, None, None)
+            };
+
+            let altitude = exif_data.get_field(Tag::GPSAltitude, exif::In::PRIMARY)
+                .and_then(|field| match &field.value {
+                    Value::Rational(v) if !v.is_empty() => {
+                        let alt = v[0].num as f64 / v[0].denom as f64;
+                        Some(format!("{:.2}", alt))
+                    },
+                    _ => None,
+                });
+
+            (gps_lat_str, gps_lon_str, location, country, city, altitude)
+        } else {
+            (None, None, None, None, None, None)
+        };
+
+        let e_flash = if let Some(exif_data) = &exif {
+            exif_data.get_field(Tag::Flash, exif::In::PRIMARY)
+                .and_then(|field| field.value.get_uint(0))
+                .map(|val| if val & 1 == 1 { "Fired".to_string() } else { "Not fired".to_string() })
+        } else {
+            None
+        };
 
         let file = Self {
             id: None,
@@ -519,53 +580,39 @@ impl AFile {
             e_f_number: Self::get_exif_field(&exif, Tag::FNumber),
             e_focal_length: Self::get_exif_field(&exif, Tag::FocalLength),
             e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
-            e_flash: Self::get_exif_field(&exif, Tag::Flash),
+            e_flash,
             e_orientation: Self::get_exif_orientation_field(&exif, Tag::Orientation),
 
-            gps_latitude: Self::get_exif_field(&exif, Tag::GPSLatitude),
-            gps_longitude: Self::get_exif_field(&exif, Tag::GPSLongitude),
-            gps_altitude: Self::get_exif_field(&exif, Tag::GPSAltitude),
-            gps_address: None,
+            gps_latitude,
+            gps_longitude,
+            gps_altitude,
+            gps_location,
+            gps_country,
+            gps_city,
 
             file_path: None,
             album_id: None,
             album_name: None,
         };
 
-        // file.get_address_from_gps(None)?;
-
         Ok(file)
     }
 
-    // fn get_address_from_gps(&mut self, lang_code: Option<&str>) -> Result<(), String> {
-    //     if let (Some(lat_str), Some(lon_str)) = (self.gps_latitude.as_ref(), self.gps_longitude.as_ref()) {
-    //         if lat_str.is_empty() || lon_str.is_empty() {
-    //             return Ok(());
-    //         }
-    //         let lat = self.parse_gps_string(lat_str)?;
-    //         let lon = self.parse_gps_string(lon_str)?;
-    //         self.gps_address = Some(t_geonames::get_nearest_city(lat, lon, lang_code).map_err(|e| e.to_string())?);
-    //     }
-    //     Ok(())
-    // }
+    fn dms_to_decimal(dms: &[exif::Rational], reference: &str) -> Option<f64> {
+        if dms.len() != 3 {
+            return None;
+        }
+        let degrees = dms[0].num as f64 / dms[0].denom as f64;
+        let minutes = dms[1].num as f64 / dms[1].denom as f64;
+        let seconds = dms[2].num as f64 / dms[2].denom as f64;
 
-    // fn parse_gps_string(&self, gps_str: &str) -> Result<f64, String> {
-    //     let parts: Vec<&str> = gps_str.split(|c| c == ' ' || c == ' ' || c == '"').filter(|&s| !s.is_empty()).collect();
-    //     if parts.len() < 7 {
-    //         return Err(format!("Invalid GPS string format: {}", gps_str));
-    //     }
-    //     let deg: f64 = parts[0].parse().map_err(|e| format!("Failed to parse degrees: {}, error: {}", parts[0], e))?;
-    //     let min: f64 = parts[2].parse().map_err(|e| format!("Failed to parse minutes: {}, error: {}", parts[2], e))?;
-    //     let sec: f64 = parts[4].parse().map_err(|e| format!("Failed to parse seconds: {}, error: {}", parts[4], e))?;
-    //     let direction = parts[6];
+        let mut decimal = degrees + minutes / 60.0 + seconds / 3600.0;
 
-    //     let mut decimal = deg + min / 60.0 + sec / 3600.0;
-    //     if direction == "S" || direction == "W" {
-    //         decimal = -decimal;
-    //     }
-
-    //     Ok(decimal)
-    // }
+        if reference.starts_with("S") || reference.starts_with("W") {
+            decimal = -decimal;
+        }
+        Some(decimal)
+    }
 
     fn get_exif_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<String> {
         exif.as_ref()
@@ -602,9 +649,9 @@ impl AFile {
                 width, height, duration,
                 is_favorite, rotate, comments, has_tags,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                gps_latitude, gps_longitude, gps_altitude, gps_address
+                gps_latitude, gps_longitude, gps_altitude, gps_location, gps_country, gps_city
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30)",
             params![
                 self.folder_id,
 
@@ -639,7 +686,9 @@ impl AFile {
                 self.gps_latitude,
                 self.gps_longitude,
                 self.gps_altitude,
-                self.gps_address,
+                self.gps_location,
+                self.gps_country,
+                self.gps_city,
             ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -704,7 +753,7 @@ impl AFile {
                 a.width, a.height, a.duration,
                 a.is_favorite, a.rotate, a.comments, a.has_tags,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude, a.gps_address,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude, a.gps_location, a.gps_country, a.gps_city,
                 b.path,
                 c.id AS album_id, c.name AS album_name
             FROM afiles a 
@@ -750,14 +799,16 @@ impl AFile {
             gps_latitude: row.get(25)?,
             gps_longitude: row.get(26)?,
             gps_altitude: row.get(27)?,
-            gps_address: row.get(28)?,
+            gps_location: row.get(28)?,
+            gps_country: row.get(29)?,
+            gps_city: row.get(30)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(29)?.as_str(),
+                row.get::<_, String>(31)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(30)?,
-            album_name: row.get(31)?,
+            album_id: row.get(32)?,
+            album_name: row.get(33)?,
         })
     }
 
@@ -1471,7 +1522,9 @@ pub fn create_db() -> Result<(), String> {
             gps_latitude TEXT,
             gps_longitude TEXT,
             gps_altitude TEXT,
-            gps_address TEXT,
+            gps_location TEXT,
+            gps_country TEXT,
+            gps_city TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
@@ -1486,6 +1539,9 @@ pub fn create_db() -> Result<(), String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_is_favorite ON afiles(is_favorite)", []).map_err(|e| e.to_string())?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_has_tags ON afiles(has_tags)", []).map_err(|e| e.to_string())?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_make_model ON afiles(e_make, e_model)", []).map_err(|e| e.to_string())?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_gps_location ON afiles(gps_location)", []).map_err(|e| e.to_string())?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_gps_country ON afiles(gps_country)", []).map_err(|e| e.to_string())?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_gps_city ON afiles(gps_city)", []).map_err(|e| e.to_string())?;
 
     // file thumbnail table
     conn.execute(
