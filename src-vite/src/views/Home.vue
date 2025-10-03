@@ -147,14 +147,14 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.calendar 
   },
   { 
-    icon: IconCamera,  
-    component: Camera,
-    text: localeMsg.value.sidebar.camera 
-  },
-  { 
     icon: IconLocation, 
     component: Location, 
     text: localeMsg.value.sidebar.location 
+  },
+  { 
+    icon: IconCamera,  
+    component: Camera,
+    text: localeMsg.value.sidebar.camera 
   },
   // { icon: IconPeople, component: People, text: localeMsg.value.sidebar.people }, 
 ]);

@@ -131,17 +131,21 @@
             :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
-            <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
+            <Image v-if="fileList[selectedItemIndex]?.file_type === 1 && imageSrc.length > 0"
               :src="imageSrc" 
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
               :isZoomFit="true"
             ></Image>
-            <Video v-else-if="fileList[selectedItemIndex]?.file_type === 2"
+            <Video v-else-if="fileList[selectedItemIndex]?.file_type === 2 && videoSrc.length > 0"
               ref="videoRef"
               :src="videoSrc"
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
               :isZoomFit="true"
             ></Video>
+            <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
+              <IconError class="w-8 h-8 mb-2" />
+              <span>{{ $t('image_viewer.failed') }}</span>
+            </div>
 
             <!-- comments -->
             <div v-if="config.showComment && fileList[selectedItemIndex]?.comments?.length > 0" 
@@ -290,6 +294,7 @@ import {
   IconLocation,
   IconCamera,
   IconTrash,
+  IconError,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -312,8 +317,8 @@ const contentIcon = computed(() => {
     case 2: return config.favoriteFolderId && config.favoriteFolderId > 0 ? IconFolderFavorite : IconFavorite;
     case 3: return IconTag;
     case 4: return IconCalendar;
-    case 5: return IconCamera;
-    case 6: return IconLocation;
+    case 5: return IconLocation;
+    case 6: return IconCamera;
     default: return IconFile;
   }
 });
@@ -811,21 +816,7 @@ async function updateContent() {
       await getFileList("", startDate, endDate, "", "", "", "", false, 0, fileListOffset.value);
     }
   }
-  else if(newIndex === 5) {   // camera
-    if(config.cameraMake === null) {
-      contentTitle.value = "";
-      fileList.value = [];
-    } else {
-      if(config.cameraModel) {
-        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-        await getFileList("", "", "", config.cameraMake, config.cameraModel, "", "", false, 0, fileListOffset.value);
-      } else {
-        contentTitle.value = `${config.cameraMake}`;
-        await getFileList("", "", "", config.cameraMake, "", "", "", false, 0, fileListOffset.value);
-      } 
-    }
-  } 
-  else if(newIndex === 6) {   // location
+  else if(newIndex === 5) {   // location
     if(config.locationAdmin1 === null) {
       contentTitle.value = "";
       fileList.value = [];
@@ -839,6 +830,20 @@ async function updateContent() {
       } 
     }
   }
+  else if(newIndex === 6) {   // camera
+    if(config.cameraMake === null) {
+      contentTitle.value = "";
+      fileList.value = [];
+    } else {
+      if(config.cameraModel) {
+        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
+        await getFileList("", "", "", config.cameraMake, config.cameraModel, "", "", false, 0, fileListOffset.value);
+      } else {
+        contentTitle.value = `${config.cameraMake}`;
+        await getFileList("", "", "", config.cameraMake, "", "", "", false, 0, fileListOffset.value);
+      } 
+    }
+  } 
 
   if(config.searchText) {
     contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.searchText;
@@ -1085,6 +1090,10 @@ const getImageSrc = async (index) => {
   try {
     let currentIndex = index;
     const imageBase64 = await getFileImage(filePath);
+    if(!imageBase64) {
+      imageSrc.value = '';
+      return;
+    }
     // Check if the selected item has changed since the invocation
     if (currentIndex === index) {
       imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;

@@ -1,4 +1,6 @@
 .vscode/
 .DS_Store
-dev.sh
 .env
+dev.sh
+build_aarch64.sh
+build_x86_64.sh

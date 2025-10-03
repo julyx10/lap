@@ -158,22 +158,26 @@
           </div>
 
           <!-- image -->
-          <Image v-if="fileInfo?.file_type === 1" 
+          <Image v-if="fileInfo?.file_type === 1 && imageSrc" 
             ref="imageRef" 
             :src="imageSrc" 
             :rotate="fileInfo?.rotate ?? 0" 
             :isZoomFit="config.isZoomFit"
             @dblclick="toggleZoomFit()"
-          />
+          ></Image>
 
           <!-- video -->
-          <Video v-if="fileInfo?.file_type === 2"
+          <Video v-else-if="fileInfo?.file_type === 2 && videoSrc"
             ref="videoRef"
             :src="videoSrc"
             :rotate="fileInfo?.rotate ?? 0"
             :isZoomFit="config.isZoomFit"
             @dblclick="toggleZoomFit()"
-          />
+          ></Video>
+          <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
+            <IconError class="w-8 h-8 mb-2" />
+            <span>{{ $t('image_viewer.failed') }}</span>
+          </div>
 
           <!-- comments -->
           <div v-if="config.showComment && fileInfo?.comments?.length > 0" 
@@ -297,7 +301,8 @@ import {
   IconSeparator,
   IconClose,
   IconComment,
-  IconTag
+  IconTag,
+  IconError,
  } from '@/common/icons';
 
 /// i18n
@@ -623,12 +628,15 @@ async function loadImage(filePath) {
         imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
         imageCache.set(filePath, imageSrc.value);
       }
+      else {
+        imageSrc.value = '';
+      }
     }
 
     // Preload the next image
     preLoadImage(nextFilePath.value);
   } catch (error) {
-    imageSrc.value = null;
+    imageSrc.value = '';
     loadError.value = true;
     console.error('loadImage:', error);
   }

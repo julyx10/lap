@@ -275,7 +275,7 @@
   "image_viewer": {
     "title": "Image viewer",
     "loading": "Loading...",
-    "failed": "Failed to load image",
+    "failed": "Failed to load image. No such file",
     "toolbar": {
       "prev": "Previous",
       "next": "Next",
