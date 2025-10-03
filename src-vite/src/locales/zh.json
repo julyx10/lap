@@ -257,9 +257,7 @@
     "gps_latitude": "纬度",
     "gps_longitude": "经度",
     "gps_altitude": "海拔",
-    "gps_location": "位置",
-    "gps_country": "国家",
-    "gps_city": "城市",
+    "geo_location": "位置",
     "tags": "标签",
     "comment": "评论"
   },

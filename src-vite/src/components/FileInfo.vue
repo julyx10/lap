@@ -111,16 +111,8 @@
             <td>{{ fileInfo.gps_altitude ? fileInfo.gps_altitude + ' m' : '' }}</td>
           </tr>
           <tr>
-            <td class="text-nowrap">{{ $t('file_info.gps_country') }}</td>
-            <td>{{ fileInfo.gps_country }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.gps_city') }}</td>
-            <td>{{ fileInfo.gps_city }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.gps_location') }}</td>
-            <td>{{ fileInfo.gps_location }}</td>
+            <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>
+            <td>{{ formatGeoLocation() }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.tags') }}</td>
@@ -160,6 +152,21 @@ const props = defineProps({
 const emit = defineEmits([
   'close'
 ]);
+
+function formatGeoLocation() {
+  if (props.fileInfo.geo_name) {
+    if (props.fileInfo.geo_admin2) {
+      return `${props.fileInfo.geo_name}, ${props.fileInfo.geo_admin2}, ${props.fileInfo.geo_admin1}, ${props.fileInfo.geo_cc}`;
+    }
+    if (props.fileInfo.geo_admin1) {
+      return `${props.fileInfo.geo_name}, ${props.fileInfo.geo_admin1}, ${props.fileInfo.geo_cc}`;
+    }
+    if (props.fileInfo.geo_cc) {
+      return `${props.fileInfo.geo_name}, ${props.fileInfo.geo_cc}`;
+    }
+  }
+  return '';
+}
 
 // emit close event
 function clickClose() {

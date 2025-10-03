@@ -257,9 +257,7 @@
     "gps_latitude": "緯度",
     "gps_longitude": "経度",
     "gps_altitude": "高度",
-    "gps_location": "位置",
-    "gps_country": "国",
-    "gps_city": "都市",
+    "geo_location": "位置",
     "tags": "タグ",
     "comment": "コメント"
   },

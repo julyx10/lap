@@ -257,9 +257,7 @@
     "gps_latitude": "Latitude",
     "gps_longitude": "Longitude",
     "gps_altitude": "Altitude",
-    "gps_location": "Location",
-    "gps_country": "Country",
-    "gps_city": "City",
+    "geo_location": "Location",
     "tags": "Tags",
     "comment": "Comment"
   },

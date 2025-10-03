@@ -92,7 +92,7 @@ import Album from '@/components/Album.vue';
 import Favorite from '@/components/Favorite.vue';
 import Tag from '@/components/Tag.vue';
 import Calendar from '@/components/Calendar.vue';
-// import Location from '@/components/Location.vue';
+import Location from '@/components/Location.vue';
 // import People from '@/components/People.vue';
 import Camera from '@/components/Camera.vue';
 import TitleBar from '@/components/TitleBar.vue';
@@ -151,7 +151,11 @@ const buttons = computed(() =>  [
     component: Camera,
     text: localeMsg.value.sidebar.camera 
   },
-  // { icon: IconLocation, component: Location, text: localeMsg.value.sidebar.location },
+  { 
+    icon: IconLocation, 
+    component: Location, 
+    text: localeMsg.value.sidebar.location 
+  },
   // { icon: IconPeople, component: People, text: localeMsg.value.sidebar.people }, 
 ]);
 

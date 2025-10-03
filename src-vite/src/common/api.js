@@ -4,6 +4,7 @@ import { separator, openFolderDialog, localeComp } from '@/common/utils';
 
 const config = useConfigStore();
 
+////////////////////////////////////////////////////////////
 // album
 
 // get all albums
@@ -106,6 +107,7 @@ export async function setDisplayOrder(albumId, order) {
   return null;
 }
 
+////////////////////////////////////////////////////////////
 // folder
 
 // select a folder to an album
@@ -262,6 +264,7 @@ export async function revealFolder(folderPath) {
   return null;
 };
 
+////////////////////////////////////////////////////////////
 // file
 
 // get db files count and sum
@@ -278,7 +281,7 @@ export async function getDbCountAndSum() {
 }
 
 /// get all files from db (with pagination)
-export async function getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, offset) {
+export async function getDbFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) {
   try {
     const files = await invoke('get_db_files', {
       searchText: config.searchText, 
@@ -290,6 +293,8 @@ export async function getDbFiles(searchFolder, startDate, endDate, make, model, 
       endDate,
       make, 
       model,
+      locationAdmin1,
+      locationName,
       isFavorite, 
       isShowHidden: config.showHiddenAlbum,
       tagId,
@@ -478,6 +483,7 @@ export async function getFileHasTags(fileId) {
   return false;
 }
 
+////////////////////////////////////////////////////////////
 // favorite
 
 // get favorite folders
@@ -534,6 +540,7 @@ export async function setFileFavorite(fileId, isFavorite) {
   return null;
 }
 
+////////////////////////////////////////////////////////////
 // tag
 
 // get all tags
@@ -631,6 +638,23 @@ export async function removeTagFromFile(fileId, tagId) {
   return null;
 }
 
+////////////////////////////////////////////////////////////
+// calendar
+
+// get taken dates
+export async function getTakenDates(ascending = true) {
+  try {
+    const taken_dates = await invoke('get_taken_dates', { ascending, isShowHidden: config.showHiddenAlbum });
+    if (taken_dates) {
+      return taken_dates;
+    }
+  } catch (error) {
+    console.error('Failed to get taken dates:', error);
+  }
+  return null;
+}
+
+////////////////////////////////////////////////////////////
 // camera
 
 // get camera info
@@ -646,20 +670,23 @@ export async function getCameraInfo() {
   return null;
 }
 
-// get taken dates
-export async function getTakenDates(ascending = true) {
+////////////////////////////////////////////////////////////
+// location
+
+// get location info
+export async function getLocationInfo() {
   try {
-    const taken_dates = await invoke('get_taken_dates', { ascending, isShowHidden: config.showHiddenAlbum });
-    if (taken_dates) {
-      return taken_dates;
+    const locationInfo = await invoke('get_location_info', { isShowHidden: config.showHiddenAlbum });
+    if (locationInfo) {
+      return locationInfo;
     }
   } catch (error) {
-    console.error('Failed to get taken dates:', error);
+    console.error('Failed to get location info:', error);
   }
   return null;
 }
 
-
+////////////////////////////////////////////////////////////
 // print
 
 // print image
@@ -675,6 +702,7 @@ export async function printImage(imagePath) {
   return null;
 }
 
+////////////////////////////////////////////////////////////
 // setting
 
 // get package info

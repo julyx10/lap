@@ -6,7 +6,7 @@
  * date:    2024-08-08
  */
 use base64::{ engine::general_purpose, Engine };
-use crate::t_sqlite::{ ACamera, AFile, AFolder, AThumb, Album, ATag };
+use crate::t_sqlite::{Album, AFile, AFolder, AThumb, ATag, ACamera, ALocation};
 use crate::t_utils;
 use arboard::Clipboard;
 use std::path::Path;
@@ -161,6 +161,7 @@ pub fn get_db_files(
     search_folder: &str,
     start_date: &str, end_date: &str,
     make: &str, model: &str,
+    location_admin1: &str, location_name: &str,
     is_favorite: bool, is_show_hidden: bool,
     tag_id: i64,
     offset: i64, page_size: i64
@@ -170,7 +171,8 @@ pub fn get_db_files(
         sort_type, sort_order,
         search_folder,
         start_date, end_date,
-        make, model,
+        make, model, 
+        location_admin1, location_name,
         is_favorite, is_show_hidden, 
         tag_id,
         offset, page_size
@@ -413,6 +415,15 @@ pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> 
         .map_err(|e| format!("Error while removing tag from file: {}", e))
 }
 
+// calendar
+
+/// get camera's taken dates
+#[tauri::command]
+pub fn get_taken_dates(ascending: bool, is_show_hidden: bool) -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates(ascending, is_show_hidden)
+        .map_err(|e| format!("Error while getting taken dates: {}", e))
+}
+
 // camera
 
 /// get a file's camera make and model info
@@ -422,11 +433,13 @@ pub fn get_camera_info(is_show_hidden: bool) -> Result<Vec<ACamera>, String> {
         .map_err(|e| format!("Error while getting camera info: {}", e))
 }
 
-/// get camera's taken dates
+// location
+
+/// get a file's location info
 #[tauri::command]
-pub fn get_taken_dates(ascending: bool, is_show_hidden: bool) -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates(ascending, is_show_hidden)
-        .map_err(|e| format!("Error while getting taken dates: {}", e))
+pub fn get_location_info(is_show_hidden: bool) -> Result<Vec<ALocation>, String> {
+    ALocation::get_from_db(is_show_hidden)
+        .map_err(|e| format!("Error while getting location info: {}", e))
 }
 
 // print

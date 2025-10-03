@@ -8,10 +8,12 @@
 use std::collections::HashMap;
 use trash;
 use base64::{engine::general_purpose, Engine};
-use exif::{Tag, Value};
+use exif::{Reader, Tag, Value, In};
 use reverse_geocoder::ReverseGeocoder;
 use rusqlite::{params, Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::BufReader;
 
 use crate::t_utils;
 // use crate::t_opencv;
@@ -447,13 +449,16 @@ pub struct AFile {
     pub e_flash: Option<String>,    // flash
     pub e_orientation: Option<u32>, // orientation
 
-    // gps
+    // gps info
     pub gps_latitude: Option<String>,
     pub gps_longitude: Option<String>,
     pub gps_altitude: Option<String>,
-    pub gps_location: Option<String>,
-    pub gps_country: Option<String>,
-    pub gps_city: Option<String>,
+
+    // geo info (from http://www.geonames.org/)
+    pub geo_name: Option<String>,      // Location name
+    pub geo_admin1: Option<String>,    // Administrative district 1
+    pub geo_admin2: Option<String>,    // Administrative district 2
+    pub geo_cc: Option<String>,        // Country code
 
     // output only
     pub file_path: Option<String>,  // file path (for webview)
@@ -464,84 +469,41 @@ pub struct AFile {
 impl AFile {
     fn new(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
-        let mut duration = 0;
-        let (width, height) = 
-            match file_type {
-                1 => t_utils::get_image_dimensions(file_path)?,
-                2 => {
-                    duration = t_utils::get_video_duration(file_path)?;
-                    t_utils::get_video_dimensions(file_path)?
-                },
-                _ => (0, 0),
-            };
-
-        // open the file
-        let file =
-            std::fs::File::open(file_path).map_err(|e| format!("Error opening file: {}", e))?;
-        // Create a buffered reader
-        let mut bufreader = std::io::BufReader::new(&file);
-        // Create an EXIF reader and attempt to read EXIF data
-        let exifreader = exif::Reader::new();
-        let exif = exifreader.read_from_container(&mut bufreader).ok();
-
-        let (gps_latitude, gps_longitude, gps_location, gps_country, gps_city, gps_altitude) = if let Some(exif_data) = &exif {
-            let lat_val = exif_data.get_field(Tag::GPSLatitude, exif::In::PRIMARY).and_then(|f| if let Value::Rational(v) = &f.value { Some(v.to_vec()) } else { None });
-            let lat_ref = exif_data.get_field(Tag::GPSLatitudeRef, exif::In::PRIMARY).map(|f| f.display_value().to_string());
-            let lon_val = exif_data.get_field(Tag::GPSLongitude, exif::In::PRIMARY).and_then(|f| if let Value::Rational(v) = &f.value { Some(v.to_vec()) } else { None });
-            let lon_ref = exif_data.get_field(Tag::GPSLongitudeRef, exif::In::PRIMARY).map(|f| f.display_value().to_string());
-
-            let format_dms = |dms: &[exif::Rational], reference: &str| -> String {
-                let degrees = dms[0].num as f64 / dms[0].denom as f64;
-                let minutes = dms[1].num as f64 / dms[1].denom as f64;
-                let seconds = dms[2].num as f64 / dms[2].denom as f64;
-                format!("{:.0}°{:.0}′{:.0}″{}", degrees, minutes, seconds, reference.trim())
-            };
-
-            let (gps_lat_str, gps_lon_str, location, country, city) = if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) = (lat_val, lat_ref, lon_val, lon_ref) {
-                let dec_lat = Self::dms_to_decimal(&lat_v, &lat_r);
-                let dec_lon = Self::dms_to_decimal(&lon_v, &lon_r);
-
-                let lat_str = format_dms(&lat_v, &lat_r);
-                let lon_str = format_dms(&lon_v, &lon_r);
-
-                let (location, country, city) = if let (Some(lat), Some(lon)) = (dec_lat, dec_lon) {
-                    let geocoder = ReverseGeocoder::new();
-                    let search_result = geocoder.search((lat, lon));
-
-                    let location = format!("{}, {}", search_result.record.admin2, search_result.record.admin1);
-                    let country = Some(search_result.record.cc.clone());
-                    let city = Some(search_result.record.name.clone());
-                
-                    (Some(location), country, city)
-                } else {
-                    (None, None, None)
-                };
-                (Some(lat_str), Some(lon_str), location, country, city)
-            } else {
-                (None, None, None, None, None)
-            };
-
-            let altitude = exif_data.get_field(Tag::GPSAltitude, exif::In::PRIMARY)
-                .and_then(|field| match &field.value {
-                    Value::Rational(v) if !v.is_empty() => {
-                        let alt = v[0].num as f64 / v[0].denom as f64;
-                        Some(format!("{:.2}", alt))
-                    },
-                    _ => None,
-                });
-
-            (gps_lat_str, gps_lon_str, location, country, city, altitude)
-        } else {
-            (None, None, None, None, None, None)
+        
+        // get dimensions based on file type
+        let (width, height) = match file_type {
+            1 => t_utils::get_image_dimensions(file_path)?,
+            2 => t_utils::get_video_dimensions(file_path)?,
+            _ => (0, 0),
+        };
+        
+        // get duration of video file
+        let duration = match file_type {
+            2 => t_utils::get_video_duration(file_path)?,
+            _ => 0,
         };
 
-        let e_flash = if let Some(exif_data) = &exif {
-            exif_data.get_field(Tag::Flash, exif::In::PRIMARY)
-                .and_then(|field| field.value.get_uint(0))
-                .map(|val| if val & 1 == 1 { "Fired".to_string() } else { "Not fired".to_string() })
-        } else {
-            None
-        };
+        // Read EXIF data
+        let exif = File::open(file_path)
+            .map_err(|e| format!("Error opening file: {}", e))
+            .map(|file| {
+                let mut bufreader = BufReader::new(&file);
+                Reader::new().read_from_container(&mut bufreader).ok()
+            })?;
+
+        // Extract GPS data
+        let (gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc) = 
+            Self::extract_gps_data(&exif);
+
+        // Process flash data
+        let e_flash = exif
+            .as_ref()
+            .and_then(|exif_data| {
+                exif_data
+                    .get_field(Tag::Flash, In::PRIMARY)
+                    .and_then(|field| field.value.get_uint(0))
+                    .map(|val| if val & 1 == 1 { "Fired".to_string() } else { "Not fired".to_string() })
+            });
 
         let file = Self {
             id: None,
@@ -562,7 +524,7 @@ impl AFile {
                         Some(exif_date) // Fallback to the whole string if it’s shorter than expected
                     }
                 })
-                .unwrap_or_else(|| file_info.modified_str),
+                .unwrap_or_else(|| file_info.modified_str), // fallback to modified time
 
             width: Some(width),
             height: Some(height),
@@ -586,9 +548,11 @@ impl AFile {
             gps_latitude,
             gps_longitude,
             gps_altitude,
-            gps_location,
-            gps_country,
-            gps_city,
+
+            geo_name,
+            geo_admin1,
+            geo_admin2,
+            geo_cc,
 
             file_path: None,
             album_id: None,
@@ -598,6 +562,70 @@ impl AFile {
         Ok(file)
     }
 
+    fn extract_gps_data(exif: &Option<exif::Exif>) -> (Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>) {
+        let Some(exif_data) = exif else {
+            return (None, None, None, None, None, None, None);
+        };
+
+        let lat_val = exif_data
+            .get_field(Tag::GPSLatitude, In::PRIMARY)
+            .and_then(|f| match &f.value {
+                Value::Rational(v) => Some(v.to_vec()),
+                _ => None,
+            });
+        let lat_ref = exif_data
+            .get_field(Tag::GPSLatitudeRef, In::PRIMARY)
+            .map(|f| f.display_value().to_string());
+        let lon_val = exif_data
+            .get_field(Tag::GPSLongitude, In::PRIMARY)
+            .and_then(|f| match &f.value {
+                Value::Rational(v) => Some(v.to_vec()),
+                _ => None,
+            });
+        let lon_ref = exif_data
+            .get_field(Tag::GPSLongitudeRef, In::PRIMARY)
+            .map(|f| f.display_value().to_string());
+
+        let (gps_lat_str, gps_lon_str, name, admin2, admin1, cc) =
+            if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) =
+                (lat_val, lat_ref, lon_val, lon_ref)
+            {
+                let dec_lat = Self::dms_to_decimal(&lat_v, &lat_r);
+                let dec_lon = Self::dms_to_decimal(&lon_v, &lon_r);
+
+                let lat_str = Self::format_dms(&lat_v, &lat_r);
+                let lon_str = Self::format_dms(&lon_v, &lon_r);
+
+                let (name, admin2, admin1, cc) = if let (Some(lat), Some(lon)) = (dec_lat, dec_lon) {
+                    let geocoder = ReverseGeocoder::new();
+                    let search_result = geocoder.search((lat, lon));
+                    (
+                        Some(search_result.record.name.clone()),
+                        Some(search_result.record.admin2.clone()),
+                        Some(search_result.record.admin1.clone()),
+                        Some(search_result.record.cc.clone()),
+                    )
+                } else {
+                    (None, None, None, None)
+                };
+                (Some(lat_str), Some(lon_str), name, admin2, admin1, cc)
+            } else {
+                (None, None, None, None, None, None)
+            };
+
+        let altitude = exif_data
+            .get_field(Tag::GPSAltitude, In::PRIMARY)
+            .and_then(|field| match &field.value {
+                Value::Rational(v) if !v.is_empty() => {
+                    Some(format!("{:.2}", v[0].num as f64 / v[0].denom as f64))
+                }
+                _ => None,
+            });
+
+        (gps_lat_str, gps_lon_str, altitude, name, admin1, admin2, cc)
+    }
+
+    /// Converts DMS (degrees, minutes, seconds) to decimal degrees.
     fn dms_to_decimal(dms: &[exif::Rational], reference: &str) -> Option<f64> {
         if dms.len() != 3 {
             return None;
@@ -614,6 +642,18 @@ impl AFile {
         Some(decimal)
     }
 
+    /// Formats DMS coordinates as a string (e.g., "40°42'45\"N").
+    fn format_dms(dms: &[exif::Rational], reference: &str) -> String {
+        if dms.len() < 3 {
+            return String::new();
+        }
+        let degrees = dms[0].num as f64 / dms[0].denom as f64;
+        let minutes = dms[1].num as f64 / dms[1].denom as f64;
+        let seconds = dms[2].num as f64 / dms[2].denom as f64;
+        format!("{:.0}°{:.0}′{:.0}″{}", degrees, minutes, seconds, reference.trim())
+    }
+
+    /// Extracts an EXIF field as a string.
     fn get_exif_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<String> {
         exif.as_ref()
             .and_then(|exif_data| {
@@ -629,6 +669,7 @@ impl AFile {
             }) // trim all trailing commas and spaces,
     }
 
+    /// Extracts EXIF orientation field.
     fn get_exif_orientation_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<u32> {
         exif.as_ref().and_then(|exif_data| {
             exif_data
@@ -649,9 +690,9 @@ impl AFile {
                 width, height, duration,
                 is_favorite, rotate, comments, has_tags,
                 e_make, e_model, e_date_time, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                gps_latitude, gps_longitude, gps_altitude, gps_location, gps_country, gps_city
+                gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31)",
             params![
                 self.folder_id,
 
@@ -686,9 +727,10 @@ impl AFile {
                 self.gps_latitude,
                 self.gps_longitude,
                 self.gps_altitude,
-                self.gps_location,
-                self.gps_country,
-                self.gps_city,
+                self.geo_name,
+                self.geo_admin1,
+                self.geo_admin2,
+                self.geo_cc,
             ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -753,7 +795,7 @@ impl AFile {
                 a.width, a.height, a.duration,
                 a.is_favorite, a.rotate, a.comments, a.has_tags,
                 a.e_make, a.e_model, a.e_date_time, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
-                a.gps_latitude, a.gps_longitude, a.gps_altitude, a.gps_location, a.gps_country, a.gps_city,
+                a.gps_latitude, a.gps_longitude, a.gps_altitude, a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
                 b.path,
                 c.id AS album_id, c.name AS album_name
             FROM afiles a 
@@ -799,16 +841,17 @@ impl AFile {
             gps_latitude: row.get(25)?,
             gps_longitude: row.get(26)?,
             gps_altitude: row.get(27)?,
-            gps_location: row.get(28)?,
-            gps_country: row.get(29)?,
-            gps_city: row.get(30)?,
+            geo_name: row.get(28)?,
+            geo_admin1: row.get(29)?,
+            geo_admin2: row.get(30)?,
+            geo_cc: row.get(31)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(31)?.as_str(),
+                row.get::<_, String>(32)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(32)?,
-            album_name: row.get(33)?,
+            album_id: row.get(33)?,
+            album_name: row.get(34)?,
         })
     }
 
@@ -975,6 +1018,7 @@ impl AFile {
         search_folder: &str,
         start_date: &str, end_date: &str,
         make: &str, model: &str,
+        location_admin1: &str, location_name: &str,
         is_favorite: bool, 
         is_show_hidden: bool,
         tag_id: i64,
@@ -1021,6 +1065,15 @@ impl AFile {
             if !model.is_empty() {
                 conditions.push("a.e_model = ?");
                 params.push(&model);
+            }
+        }
+
+        if !location_admin1.is_empty() {
+            conditions.push("a.geo_admin1 = ?");
+            params.push(&location_admin1);
+            if !location_name.is_empty() {
+                conditions.push("a.geo_name = ?");
+                params.push(&location_name);
             }
         }
     
@@ -1441,6 +1494,60 @@ impl ACamera {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ALocation {
+    pub admin1: String,
+    pub names: Vec<String>,
+}
+
+impl ALocation {
+    // get all location admin1 and names from db
+    pub fn get_from_db(is_show_hidden: bool) -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
+
+        let query = format!(
+            "SELECT a.geo_admin1, a.geo_name 
+            FROM afiles a
+            LEFT JOIN afolders b ON a.folder_id = b.id
+            LEFT JOIN albums c ON b.album_id = c.id
+            WHERE a.geo_admin1 IS NOT NULL AND a.geo_name IS NOT NULL {}
+            GROUP BY a.geo_admin1, a.geo_name
+            ORDER BY a.geo_admin1, a.geo_name",
+            hidden_clause
+        );
+
+        let mut stmt = conn
+            .prepare(query.as_str())
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map(params![], |row| {
+                let admin1: String = row.get(0)?;
+                let name: String = row.get(1)?;
+                Ok((admin1, name))
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut hash_map: HashMap<String, Vec<String>> = HashMap::new();
+
+        for row in rows {
+            let (admin1, name) = row.unwrap();
+            hash_map.entry(admin1).or_insert_with(Vec::new).push(name);
+        }
+
+        let mut locations: Vec<Self> = hash_map
+            .into_iter()
+            .map(|(admin1, names)| Self { admin1, names })
+            .collect();
+
+        // Sort the locations by admin1
+        locations.sort_by(|a, b| a.admin1.cmp(&b.admin1));
+
+        Ok(locations)
+    }
+}
+
 /// get connection to the db
 fn open_conn() -> Result<Connection, String> {
     let path = t_utils::get_db_file_path()
@@ -1522,9 +1629,10 @@ pub fn create_db() -> Result<(), String> {
             gps_latitude TEXT,
             gps_longitude TEXT,
             gps_altitude TEXT,
-            gps_location TEXT,
-            gps_country TEXT,
-            gps_city TEXT,
+            geo_name TEXT,
+            geo_admin1 TEXT,
+            geo_admin2 TEXT,
+            geo_cc TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
@@ -1539,9 +1647,10 @@ pub fn create_db() -> Result<(), String> {
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_is_favorite ON afiles(is_favorite)", []).map_err(|e| e.to_string())?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_has_tags ON afiles(has_tags)", []).map_err(|e| e.to_string())?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_make_model ON afiles(e_make, e_model)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_gps_location ON afiles(gps_location)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_gps_country ON afiles(gps_country)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_gps_city ON afiles(gps_city)", []).map_err(|e| e.to_string())?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_name ON afiles(geo_name)", []).map_err(|e| e.to_string())?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_admin1 ON afiles(geo_admin1)", []).map_err(|e| e.to_string())?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_admin2 ON afiles(geo_admin2)", []).map_err(|e| e.to_string())?;
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_cc ON afiles(geo_cc)", []).map_err(|e| e.to_string())?;
 
     // file thumbnail table
     conn.execute(

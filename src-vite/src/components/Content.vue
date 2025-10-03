@@ -555,10 +555,13 @@ onMounted( async() => {
         showDeleteMsgbox.value = true;
         break;
       case 'goto-folder':
-        config.albumId = fileList.value[selectedItemIndex.value].album_id;
-        config.albumFolderId = fileList.value[selectedItemIndex.value].folder_id;
-        config.albumFolderPath = getFolderPath(fileList.value[selectedItemIndex.value].file_path);
-        config.sidebarIndex = 1;
+        const selectedFile = fileList.value[selectedItemIndex.value];
+        if (selectedFile) {
+          config.albumId = selectedFile.album_id;
+          config.albumFolderId = selectedFile.folder_id;
+          config.albumFolderPath = getFolderPath(selectedFile.file_path);
+          config.sidebarIndex = 1;
+        }
         break;
       case 'reveal':
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
@@ -661,6 +664,7 @@ watch(
           config.tagId,                                                                 // tag
           config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
           config.cameraMake, config.cameraModel,                                        // camera 
+          config.locationAdmin1, config.locationName,                                   // location
           config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
         ], 
   () => {
@@ -712,8 +716,8 @@ watch(() => config.showPreview, (newValue) => {
   gridViewRef.value.scrollToItem(selectedItemIndex.value); 
 });
 
-async function getFileList(searchFolder, startDate, endDate, make, model, isFavorite, tagId, offset) { 
-  const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, isFavorite, tagId, offset);
+async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 
+  const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset);
   hasMoreFiles.value = newFiles.length === config.fileListPageSize;
 
   if (offset === 0) {
@@ -728,7 +732,7 @@ async function updateContent() {
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.home.title;
-    await getFileList("", "", "", "", "", false, 0, fileListOffset.value);
+    await getFileList("", "", "", "", "", "", "", false, 0, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
     if(config.albumId === null) {
@@ -763,12 +767,12 @@ async function updateContent() {
     } else {
       if(config.favoriteFolderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
-        await getFileList("", "", "", "", "", true, 0, fileListOffset.value);
+        await getFileList("", "", "", "", "", "", "", true, 0, fileListOffset.value);
       } else {                // favorite folders
         const album = await getAlbum(config.favoriteAlbumId);
         if(album) {
           contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
-          await getFileList(config.favoriteFolderPath, "", "", "", "", false, 0, fileListOffset.value);
+          await getFileList(config.favoriteFolderPath, "", "", "", "", "", "", false, 0, fileListOffset.value);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -784,7 +788,7 @@ async function updateContent() {
       const tagName = await getTagName(config.tagId);
       if (tagName) {
         contentTitle.value = tagName;
-        await getFileList("", "", "", "", "", false, config.tagId, fileListOffset.value);
+        await getFileList("", "", "", "", "", "", "", false, config.tagId, fileListOffset.value);
       } else {
         contentTitle.value = "";
         fileList.value = [];
@@ -804,7 +808,7 @@ async function updateContent() {
         contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long);
       }
       const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
-      await getFileList("", startDate, endDate, "", "", false, 0, fileListOffset.value);
+      await getFileList("", startDate, endDate, "", "", "", "", false, 0, fileListOffset.value);
     }
   }
   else if(newIndex === 5) {   // camera
@@ -814,25 +818,27 @@ async function updateContent() {
     } else {
       if(config.cameraModel) {
         contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-        await getFileList("", "", "", config.cameraMake, config.cameraModel, false, 0, fileListOffset.value);
+        await getFileList("", "", "", config.cameraMake, config.cameraModel, "", "", false, 0, fileListOffset.value);
       } else {
         contentTitle.value = `${config.cameraMake}`;
-        await getFileList("", "", "", config.cameraMake, "", false, 0, fileListOffset.value);
+        await getFileList("", "", "", config.cameraMake, "", "", "", false, 0, fileListOffset.value);
       } 
     }
-    // else if(newIndex === 6) {   // location
-    //   if(config.locationId === null) {
-    //     contentTitle.value = "";
-    //     fileList.value = [];
-    //   } else {
-    //   //   const location = await getLocation(config.locationId);
-    //   //   if(location) {
-    //   //     contentTitle.value = location.name;
-    //   //     await getFileList("", "", "", "", "", false, 0, fileListOffset.value);
-    //   //   }
-    //   }
-    // }
   } 
+  else if(newIndex === 6) {   // location
+    if(config.locationAdmin1 === null) {
+      contentTitle.value = "";
+      fileList.value = [];
+    } else {
+      if(config.locationName) {
+        contentTitle.value = `${config.locationAdmin1} > ${config.locationName}`;
+        await getFileList("", "", "", "", "", config.locationAdmin1, config.locationName, false, 0, fileListOffset.value);
+      } else {
+        contentTitle.value = `${config.locationAdmin1}`;
+        await getFileList("", "", "", "", "", config.locationAdmin1, "", false, 0, fileListOffset.value);
+      } 
+    }
+  }
 
   if(config.searchText) {
     contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.searchText;

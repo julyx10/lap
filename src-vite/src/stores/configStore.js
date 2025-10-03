@@ -28,12 +28,13 @@ export const useConfigStore = defineStore('configStore', {
     calendarMonth: null,        // selected month (1-12)
     calendarDate: null,         // selected date (1-31), -1 means selecting a month
 
-    // location
-    locationId: null,           // selected location id
-    
     // cameras
     cameraMake: null,           // selected camera make
     cameraModel: null,          // selected camera model
+
+    // location
+    locationAdmin1: null,      // selected location admin1 (e.g. California)
+    locationName: null,        // selected location name (e.g. San Francisco)
 
     ////// Content.vue //////
 

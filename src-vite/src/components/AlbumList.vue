@@ -70,7 +70,7 @@
     </ul>
 
     <!-- No Albums Found Message -->
-    <div v-else-if="!isLoading" class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else-if="!isLoading && !isEditList" class="mt-10 flex flex-col items-center justify-center text-base-content/30">
       <button class="btn btn-primary" @click="clickNewAlbum">
         <IconAdd class="w-5 h-5" />
         {{ $t('menu.album.add') }}
@@ -272,9 +272,9 @@ onBeforeUnmount(() => {
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
-  selectedAlbumId.value = newAlbumId;
-  selectedFolderId.value = newFolderId;
-  selectedFolderPath.value = newFolderPath;
+  selectedAlbumId.value = Number(newAlbumId) || 0;
+  selectedFolderId.value = Number(newFolderId) || 0;
+  selectedFolderPath.value = String(newFolderPath || '');
 }, { immediate: true });
 
 watch(() => [ selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.value ], ([ newAlbumId, newFolderId, newFolderPath ]) => {

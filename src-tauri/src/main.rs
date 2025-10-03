@@ -123,9 +123,14 @@ fn main() {
             t_cmds::add_tag_to_file,
             t_cmds::remove_tag_from_file,
 
+            // calendar
+            t_cmds::get_taken_dates,
+
             // camera
             t_cmds::get_camera_info,
-            t_cmds::get_taken_dates,
+
+            // location
+            t_cmds::get_location_info,
 
             // print
             t_cmds::print_image,
