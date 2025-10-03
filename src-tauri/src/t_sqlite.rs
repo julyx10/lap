@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use trash;
 use base64::{engine::general_purpose, Engine};
 use exif::{Reader, Tag, Value, In};
-use reverse_geocoder::ReverseGeocoder;
 use rusqlite::{params, Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -597,8 +596,7 @@ impl AFile {
                 let lon_str = Self::format_dms(&lon_v, &lon_r);
 
                 let (name, admin2, admin1, cc) = if let (Some(lat), Some(lon)) = (dec_lat, dec_lon) {
-                    let geocoder = ReverseGeocoder::new();
-                    let search_result = geocoder.search((lat, lon));
+                    let search_result = t_utils::GEOCODER.search((lat, lon));
                     (
                         Some(search_result.record.name.clone()),
                         Some(search_result.record.admin2.clone()),

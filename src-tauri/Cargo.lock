@@ -2470,6 +2470,7 @@ dependencies = [
  "imagesize",
  "kamadak-exif",
  "native-dialog",
+ "once_cell",
  "opener",
  "pinyin",
  "reverse_geocoder",

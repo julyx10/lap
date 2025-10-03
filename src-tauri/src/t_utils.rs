@@ -16,6 +16,14 @@ use pinyin::ToPinyin;
 use image::{ImageFormat, ImageReader, DynamicImage, RgbImage};
 use ffmpeg_next as ffmpeg;
 use crate::t_sqlite::AFile;
+use once_cell::sync::Lazy;
+use reverse_geocoder::ReverseGeocoder;
+
+// reverse geocoder
+pub static GEOCODER: Lazy<ReverseGeocoder> = Lazy::new(|| {
+    println!("Initializing ReverseGeocoder...");
+    ReverseGeocoder::new()
+});
 
 // #[cfg(target_os = "windows")]
 // use std::os::windows::fs::MetadataExt; // Windows-specific extensions
