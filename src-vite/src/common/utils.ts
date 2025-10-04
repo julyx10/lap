@@ -37,7 +37,6 @@ export function setTheme(themeId: number) {
     'cyberpunk',
     'valentine',
     'halloween',
-    'purple',
     'garden',
     'forest',
     'aqua',
@@ -58,7 +57,10 @@ export function setTheme(themeId: number) {
     'winter',
     'dim',
     'nord',
-    'sunset'
+    'sunset',
+    'caramellatte',
+    'abyss',
+    'silk',
   ][themeId] || 'light';
   htmlElement.setAttribute('data-theme', theme);
 }

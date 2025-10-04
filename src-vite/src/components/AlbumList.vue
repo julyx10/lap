@@ -26,13 +26,7 @@
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
-            <TButton v-if="isEditList" 
-              :icon="IconRemove"
-              :buttonSize="'small'"
-              :buttonClasses="'text-error'"
-              @click.stop="removingAlbumId = album.id; showRemoveMsgbox = true"
-            />
-            <component v-else :is="album.is_expanded ? IconFolderExpanded : IconFolder" 
+            <component :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
               class="mx-1 w-5 h-5 t-icon-animate hover:text-base-content cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
@@ -82,6 +76,7 @@
     <!-- edit album information -->
     <AlbumEdit
       v-if="showAlbumEdit"
+      :albumId="albumId"
       :inputName="getAlbumById(albumId).name"
       :inputDescription="getAlbumById(albumId).description"
       :hiddenAlbum="getAlbumById(albumId).is_hidden"
@@ -90,6 +85,7 @@
       :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('format.date_time'))"
       @ok="clickAlbumInfo"
       @cancel="showAlbumEdit = false"
+      @delete="clickRemoveAlbum"
     />
     
     <!-- new folder -->
@@ -106,18 +102,6 @@
       @ok="clickNewFolder"
       @cancel="showNewFolderMsgbox = false"
       @reset="errorMessage = ''"
-    />
-
-    <!-- remove from albums -->
-    <MessageBox
-      v-if="showRemoveMsgbox"
-      :title="$t('msgbox.remove_album.title')"
-      :message="`${$t('msgbox.remove_album.content', { album: getAlbumById(removingAlbumId).name })}`"
-      :OkText="$t('msgbox.remove_album.ok')"
-      :cancelText="$t('msgbox.cancel')"
-      :warningOk="true"
-      @ok="clickRemoveAlbum(removingAlbumId)"
-      @cancel="showRemoveMsgbox = false"
     />
 
     <ToolTip ref="toolTipRef" />
@@ -148,7 +132,6 @@ import {
   IconNewFolder,
   IconMore,
   IconDragHandle,
-  IconRemove,
   IconEdit,
 } from '@/common/icons';
 
@@ -186,7 +169,6 @@ const removingAlbumId = ref(null);  // album id to be removed
 // message boxes
 const showAlbumEdit = ref(false);           // show edit album
 const showNewFolderMsgbox = ref(false);     // show new folder
-const showRemoveMsgbox = ref(false);        // show remove album
 const errorMessage = ref('');
 
 const toolTipRef = ref(null);
@@ -203,13 +185,7 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-    {
-      label: localeMsg.value.menu.album.edit_album,
-      icon: IconEdit,
-      action: () => {
-        showAlbumEdit.value = true;
-      }
-    },
+
     {
       label: localeMsg.value.menu.file.new_folder,
       icon: IconNewFolder,
@@ -222,6 +198,17 @@ const moreMenuItems = computed(() => {
       // icon: IconExternal,
       action: () => {
         revealFolder(getAlbumById(selectedAlbumId.value).path);
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu.album.edit_album,
+      icon: IconEdit,
+      action: () => {
+        showAlbumEdit.value = true;
       }
     },
   ];
@@ -325,7 +312,7 @@ const clickRemoveAlbum = async (albumId) => {
   if(removedAlbum) {
     // remove the album from the list
     albums.value = albums.value.filter(album => album.id !== albumId);
-    showRemoveMsgbox.value = false;
+    showAlbumEdit.value = false; // Close the edit dialog if it's open
 
     selectedAlbumId.value = 0;
     selectedFolderId.value = 0;

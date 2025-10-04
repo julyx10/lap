@@ -144,6 +144,7 @@ const okButtonClasses = computed(() => {
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
+  const messageBoxDialog = document.getElementById('messageBoxDialog');
   messageBoxDialog.showModal();
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);

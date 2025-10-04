@@ -60,6 +60,7 @@ export { default as IconPrint } from '@/assets/icons/print.svg';
 export { default as IconRefresh } from '@/assets/icons/refresh.svg';
 export { default as IconRotate } from '@/assets/icons/rotate-right.svg';
 export { default as IconComment } from '@/assets/icons/comment.svg';
+export { default as IconArrowUpDown } from '@/assets/icons/arrow-up-down.svg';
 export { default as IconSeparator } from '@/assets/icons/separator.svg';
 export { default as IconDragHandle } from '@/assets/icons/drag-handle.svg';
 export { default as IconExternal } from '@/assets/icons/external.svg';

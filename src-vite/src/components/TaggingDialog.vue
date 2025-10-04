@@ -1,5 +1,5 @@
 <template>
-  <dialog id="taggingDialog" class="modal modal-open">
+  <dialog id="taggingDialog" class="modal">
     <div class="w-[600px] p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
       <!-- title bar -->
@@ -120,6 +120,9 @@ const filteredTags = computed(() => {
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
+  const taggingDialog = document.getElementById('taggingDialog');
+  taggingDialog.showModal();
+
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   setTimeout(() => {

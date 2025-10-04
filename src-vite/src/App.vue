@@ -8,10 +8,13 @@ import { emit } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 const handleKeyDown = (event) => {
-  // Prevent default browser shortcuts if a modifier key is pressed
-  // if (event.ctrlKey || event.metaKey || event.altKey) {
-  //   event.preventDefault();
-  // }
+  // Allow paste operations (Ctrl+V / Cmd+V) to work normally
+  const isPasteOperation = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v';
+  
+  // Prevent default browser shortcuts if a modifier key is pressed, except for paste
+  if ((event.ctrlKey || event.metaKey || event.altKey) && !isPasteOperation) {
+    event.preventDefault();
+  }
 
   emit('global-keydown', {
     key: event.key,

@@ -309,6 +309,23 @@ function handleKeyDown(event) {
   if (props.searchMode) {
     return;
   }
+  
+  // check if any modal dialog is open
+  const messageBoxDialog = document.getElementById('messageBoxDialog');
+  const taggingDialog = document.getElementById('taggingDialog');
+  const albumInfoDialog = document.getElementById('albumInfoDialog');
+  const moveToDialog = document.getElementById('moveToDialog');
+  
+  const isModalOpen = (messageBoxDialog && messageBoxDialog.open) ||
+                     (taggingDialog && taggingDialog.open) ||
+                     (albumInfoDialog && albumInfoDialog.open) ||
+                     (moveToDialog && moveToDialog.open);
+  
+  // if a modal dialog is open, do not handle the keydown event
+  if (isModalOpen) {
+    return;
+  }
+  
   const { key, metaKey } = event.payload;
   const isCmdKey = isMac ? metaKey : event.payload.ctrlKey;
 

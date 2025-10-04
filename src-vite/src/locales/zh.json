@@ -110,7 +110,8 @@
       "add": "添加文件夹",
       "edit_list": "编辑列表",
       "edit_album": "编辑相册", 
-      "refresh_albums": "刷新相册"
+      "refresh_albums": "刷新相册",
+      "display_order": "显示顺序"
     },
     "file": {
       "new_folder": "新建文件夹",
@@ -349,7 +350,10 @@
         "冬季",
         "昏暗",
         "北欧",
-        "日落"
+        "日落",
+        "卡拉梅拉特",
+        "深渊",
+        "丝绸"
       ],
       "select_language": "选择语言",
       "show_hidden_album": "显示隐藏相册 (刷新相册时)",

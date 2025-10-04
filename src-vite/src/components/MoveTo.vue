@@ -5,7 +5,7 @@
     <div class="w-[600px] max-h-[80%] p-4 flex flex-col text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
 
       <!-- titlebar -->
-      <div class="mb-2 flex items-center justify-between">
+      <div class="mb-2 flex items-center justify-between text-wrap break-all">
         {{ title }} 
         <!-- {{ title }} {{ config.destFolderPath? '\'' + config.destFolderPath + '\'' : '' }} -->
         <TButton
@@ -85,6 +85,7 @@ const emit = defineEmits(['ok', 'cancel']);
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
+  const moveToDialog = document.getElementById('moveToDialog');
   moveToDialog.showModal();
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);

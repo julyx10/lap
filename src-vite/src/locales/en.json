@@ -110,7 +110,8 @@
       "add": "Add folder",
       "edit_list": "Edit list",
       "edit_album": "Edit album",
-      "refresh_albums": "Refresh albums"
+      "refresh_albums": "Refresh albums",
+      "display_order": "Display order"
     },
     "file": {
       "new_folder": "New folder",
@@ -349,7 +350,10 @@
         "winter",
         "dim",
         "nord",
-        "sunset"
+        "sunset",
+        "caramellatte",
+        "abyss",
+        "silk"
       ],
       "select_language": "Select language",
       "show_hidden_album": "Show hidden album (when refreshing albums)",

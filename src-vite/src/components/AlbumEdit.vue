@@ -79,28 +79,49 @@
           </tbody>
         </table>
 
-        <!-- cancel and OK buttons -->
-        <div class="mt-2 flex justify-end space-x-4">
+        <!--  buttons -->
+        <div class="mt-4 flex justify-between items-center">
           <button 
             class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
-            @click="clickCancel"
+            @click="clickDelete"
           >
-            {{ $t('msgbox.cancel') }}
+            {{ $t('msgbox.remove_album.ok') }}
           </button>
-          <button 
-            :class="[
-              'px-4 py-1 rounded-lg', 
-              inputNameValue.trim().length > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default',
-            ]" 
-            @click="clickOk"
-          >
-            {{ $t('msgbox.ok') }}
-          </button>
+          
+          <div class="flex space-x-4">
+            <button 
+              class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+              @click="clickCancel"
+            >
+              {{ $t('msgbox.cancel') }}
+            </button>
+            <button 
+              :class="[
+                'px-4 py-1 rounded-lg', 
+                inputNameValue.trim().length > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default',
+              ]" 
+              @click="clickOk"
+            >
+              {{ $t('msgbox.ok') }}
+            </button>
+          </div>
         </div>
 
     </div>
 
   </dialog>
+
+  <!-- Delete confirmation dialog -->
+  <MessageBox
+    v-if="showDeleteMsgbox"
+    :title="$t('msgbox.remove_album.title')"
+    :message="$t('msgbox.remove_album.content', { album: inputNameValue })"
+    :OkText="$t('msgbox.remove_album.ok')"
+    :cancelText="$t('msgbox.cancel')"
+    :warningOk="true"
+    @ok="confirmDelete"
+    @cancel="showDeleteMsgbox = false"
+  />
 
 </template>
 
@@ -114,8 +135,13 @@ import { listen } from '@tauri-apps/api/event';
 import { IconClose } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
+import MessageBox from '@/components/MessageBox.vue';
 
 const props = defineProps({
+  albumId: {
+    type: Number,
+    required: true
+  },
   inputName: { 
     type: String, 
     default: '' 
@@ -142,7 +168,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['ok', 'cancel']);
+const emit = defineEmits(['ok', 'cancel', 'delete']);
 
 // input 
 const inputNameRef = ref(null);
@@ -157,10 +183,14 @@ const totalImageSize = ref(-1);
 const totalVideoCount = ref(0);
 const totalVideoSize = ref(0);
 
+// delete confirmation
+const showDeleteMsgbox = ref(false);
+
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
-  albumInfoDialog.showModal();
+  const albumInfoDialog = document.getElementById('albumInfoDialog');
+  albumInfoDialog?.showModal();
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
   
@@ -211,6 +241,15 @@ const clickOk = () => {
 
 const clickCancel = () => {
   emit('cancel');
+};
+
+const clickDelete = () => {
+  showDeleteMsgbox.value = true;
+};
+
+const confirmDelete = async () => {
+  showDeleteMsgbox.value = false;
+  emit('delete', props.albumId);
 };
 
 </script>

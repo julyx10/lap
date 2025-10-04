@@ -32,7 +32,7 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 
-import { IconMore, IconAdd, IconEdit, IconRefresh, IconClose } from '@/common/icons';
+import { IconMore, IconAdd, IconArrowUpDown, IconRefresh, IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import TButton from '@/components/TButton.vue';
@@ -66,26 +66,26 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.album.edit_list,
-      icon: IconEdit,
-      disabled: config.albumId === null,
-      action: () => {
-        isEditList.value = true;
-        albumListRef.value.isEditList = true;
-      }
-    },
-    {
       label: localeMsg.value.menu.album.refresh_albums,
       icon: IconRefresh,
       disabled: config.albumId === null,
       action: async () => {
         albumListRef.value.refreshAlbums(); 
       }
-    }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu.album.display_order,
+      icon: IconArrowUpDown,
+      disabled: config.albumId === null,
+      action: () => {
+        isEditList.value = true;
+        albumListRef.value.isEditList = true;
+      }
+    },
   ];
 });
 
