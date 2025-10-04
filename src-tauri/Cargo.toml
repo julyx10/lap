@@ -2,12 +2,12 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 name = "jc-photo"
 version = "0.1.0"
-description = "July Cat Photo"
-homepage = "https://www.jc-photo.com"
+description = "jc-photo management app"
+homepage = "https://github.com/julyx10/jc-photo"
 authors = ["@liulichuan"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
-exclude = ["main.db"]       # Exclude main.db from Cargo packaging
+exclude = ["main.db"]
 build = "build.rs"
 
 [build-dependencies]
