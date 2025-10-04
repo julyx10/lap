@@ -61,11 +61,58 @@ Notes
 
 ## Screenshots
 
-Place screenshots in a docs/screenshots folder and reference them here. Example:
-
-![Grid view](docs/screenshots/grid-view.png)
-![Image viewer](docs/screenshots/image-viewer.png)
-
+<table>
+  <tr>
+    <td align="center">
+      <strong>Home Dark</strong><br>
+      <img src="docs/screenshots/01%20screenshot-home-dark.png" alt="Home Dark">
+    </td>
+    <td align="center">
+      <strong>Home</strong><br>
+      <img src="docs/screenshots/02%20screenshot-home.png" alt="Home">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <strong>Home Light</strong><br>
+      <img src="docs/screenshots/03%20screenshot-home-light.png" alt="Home Light">
+    </td>
+    <td align="center">
+      <strong>Album Video</strong><br>
+      <img src="docs/screenshots/04%20screenshot-album-video.png" alt="Album Video">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <strong>Favorites</strong><br>
+      <img src="docs/screenshots/05%20screenshot-favorites.png" alt="Favorites">
+    </td>
+    <td align="center">
+      <strong>Tags</strong><br>
+      <img src="docs/screenshots/06%20screenshot-tags.png" alt="Tags">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <strong>Calendar</strong><br>
+      <img src="docs/screenshots/07%20screenshot-calendar.png" alt="Calendar">
+    </td>
+    <td align="center">
+      <strong>Locations</strong><br>
+      <img src="docs/screenshots/08%20screenshot-locations.png" alt="Locations">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <strong>Camera</strong><br>
+      <img src="docs/screenshots/09%20screenshot-camera.png" alt="Camera">
+    </td>
+    <td align="center">
+      <strong>Imageviewer</strong><br>
+      <img src="docs/screenshots/10%20screenshot-imageviewer.png" alt="Imageviewer">
+    </td>
+  </tr>
+</table>
 
 ## Requirements
 
