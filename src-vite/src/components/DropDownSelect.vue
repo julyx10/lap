@@ -7,7 +7,6 @@
       text=""
       @click="toggleDropdown"
     >
-      <!-- {{ options[optionIndex].label }} {{ extendOptions.length > 0 ? ' | ' + extendOptions[extendIndex].label : '' }} -->
       {{ options[optionIndex].label }}{{ extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}
       <TButton
         :icon="IconArrowDown"
@@ -86,17 +85,14 @@ const isDropDown = ref(false);
 const optionIndex = ref(props.defaultIndex);
 const extendIndex = ref(props.defaultExtendIndex);
 
-// Add event listener when the component is mounted
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside, { capture: true });
 });
 
-// Remove event listener when the component is destroyed
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside, { capture: true });
 });
 
-// Methods
 const toggleDropdown = () => {
   isDropDown.value = !isDropDown.value;
 };

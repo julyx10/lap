@@ -153,8 +153,6 @@ const emitUpdate = defineEmits(['update:selectItemIndex']);
 
 const scrollContainer = ref(null); // Ref for the scrollable element
 
-
-
 const moreMenuItems = computed(() => {
   if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
     return [];

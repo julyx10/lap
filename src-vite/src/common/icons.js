@@ -74,8 +74,6 @@ export { default as IconCheckAll } from '@/assets/icons/checkbox-checkall.svg';
 export { default as IconCheckNone } from '@/assets/icons/checkbox-uncheckall.svg';
 export { default as IconUnFavorite } from '@/assets/icons/star-off.svg';
 export { default as IconFavorite } from '@/assets/icons/star.svg';
-// export { default as IconUnFavorite } from '@/assets/icons/heart.svg';
-// export { default as IconFavorite } from '@/assets/icons/heart-solid.svg';
 export { default as IconPin } from '@/assets/icons/pin-filled.svg';
 export { default as IconUnPin } from '@/assets/icons/pin.svg';
 export { default as IconSortingAsc } from '@/assets/icons/sorting-asc.svg';

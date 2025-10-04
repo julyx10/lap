@@ -77,7 +77,6 @@ const noTransition = ref(false);            // Disable transition temporarily
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const mousePosition = ref({ x: 0, y: 0 });  // Current mouse position
 
-// TODO: use requestAnimationFrame to improve performance
 let animationFrameId: number | null = null;
 const latestMouseEvent = ref<MouseEvent | null>(null);
 

@@ -5,10 +5,6 @@
     <!-- Title Bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
       <span class="cursor-default">{{ titlebar }}</span>
-      <!-- <TButton 
-        :icon="IconAdd"
-        @click="showNewTagMsgbox = true"
-      /> -->
     </div>
 
     <!-- Tag List -->
@@ -64,20 +60,6 @@
     </div>
   </div>
 
-  <!-- new tag -->
-  <!-- <MessageBox
-    v-if="showNewTagMsgbox"
-    :title="$t('msgbox.new_tag.title')"
-    :message="$t('msgbox.new_tag.content')"
-    :showInput="true"
-    :inputText="''"
-    :needValidateInput="true"
-    :OkText="$t('msgbox.new_tag.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    @ok="clickNewTag"
-    @cancel="showNewTagMsgbox = false"
-  /> -->
-
   <!-- delete tag -->
   <MessageBox
     v-if="showDeleteTagMsgbox"
@@ -126,7 +108,6 @@ const originalTagName = ref('');
 const tagInputRef = ref([]);
 
 // message boxes
-// const showNewTagMsgbox = ref(false);
 const showDeleteTagMsgbox = ref(false);
 
 // more menuitems
@@ -173,15 +154,6 @@ function selectTag(tag) {
   selectedTag.value = tag;
   config.tagId = tag.id;
 }
-
-// async function clickNewTag(tagName) {
-//   showNewTagMsgbox.value = false;
-//   const newTag = await createTag(tagName);
-//   if (newTag) {
-//     allTags.value.push(newTag);
-//     selectTag(newTag);
-//   }
-// }
 
 async function handleRenameTag() {
   if (!isRenamingTag.value) return;

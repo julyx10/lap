@@ -579,7 +579,6 @@ pub fn get_file_type(file_path: &str) -> Option<i64> {
     } else {
         return None; // Return None if the file extension is not found}
     }
-
 }
 
 /// Get the name from a folder or file path

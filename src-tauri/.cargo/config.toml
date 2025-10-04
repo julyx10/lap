@@ -1,7 +1,0 @@
-# .cargo/config.toml
-# [env]
-# FFMPEG_INCLUDE_DIR = { value = "ffmpeg/include", relative = true }
-# FFMPEG_LIBS_DIR =    { value = "ffmpeg/lib", relative = true }
-# FFMPEG_LINK_TYPE =   "static"
-
-# OPENCV_DOWNLOAD_MIRROR = "git"

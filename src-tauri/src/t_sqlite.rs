@@ -708,7 +708,6 @@ impl AFile {
         Ok(result)
     }
 
-
     // delete a file from db
     pub fn delete(id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
@@ -720,32 +719,6 @@ impl AFile {
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
-
-    // pub fn delete_file(file_id: i64) -> Result<usize, String> {
-    //     let conn = open_conn()?;
-    
-    //     let sql = 
-    //         "SELECT b.path, a.name 
-    //         FROM afiles a 
-    //         LEFT JOIN afolders b ON a.folder_id = b.id 
-    //         WHERE a.id = ?1";
-    //     let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
-    //     let file_info: Option<(String, String)> = stmt
-    //         .query_row([file_id], |row| Ok((row.get(0)?, row.get(1)?)))
-    //         .optional()
-    //         .map_err(|e| e.to_string())?;
-    
-    //     if let Some((path, name)) = file_info {
-    //         let file_path = format!("{}/{}", path, name);
-    //         trash::delete(&file_path).map_err(|e| e.to_string())?;
-    
-    //         // delete database record
-    //         let result = Self::delete(file_id)?;
-    //         return Ok(result);
-    //     } else {
-    //         return Err(format!("File with id {} not found", file_id));
-    //     }
-    // }
 
     // Helper function to build the count SQL query
     fn build_count_query() -> String {

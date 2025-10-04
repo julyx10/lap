@@ -20,14 +20,6 @@
       <div class="text-center">{{ errorMessage }}</div>
     </div>
 
-    <!-- show video config info -->
-    <div v-if="config.debugMode" class="absolute top-0 left-0 right-1/2 p-2 text-sm bg-base-100 opacity-60 rounded-lg">
-      <div>video size: {{ player?.videoWidth() }}x{{ player?.videoHeight() }}</div>
-      <div>container size: {{ videoContainer?.clientWidth }}x{{ videoContainer?.clientHeight }}</div>
-      <div>scale: {{ scale.toFixed(2) }}</div>
-      <div>rotate: {{ rotate }} deg</div>
-      <div>isFit: {{ isFit }}</div>
-    </div>
   </div>
 </template>
 

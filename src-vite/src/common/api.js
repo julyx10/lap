@@ -4,8 +4,7 @@ import { separator, openFolderDialog, localeComp } from '@/common/utils';
 
 const config = useConfigStore();
 
-////////////////////////////////////////////////////////////
-// album
+// albums
 
 // get all albums
 export async function getAllAlbums(showHiddenAlbum) {
@@ -107,8 +106,7 @@ export async function setDisplayOrder(albumId, order) {
   return null;
 }
 
-////////////////////////////////////////////////////////////
-// folder
+// folders
 
 // select a folder to an album
 // add a folder to db
@@ -264,8 +262,7 @@ export async function revealFolder(folderPath) {
   return null;
 };
 
-////////////////////////////////////////////////////////////
-// file
+// files
 
 // get db files count and sum
 export async function getDbCountAndSum() {
@@ -492,8 +489,7 @@ export async function getFileHasTags(fileId) {
   return false;
 }
 
-////////////////////////////////////////////////////////////
-// favorite
+// favorites
 
 // get favorite folders
 export async function getFavoriteFolders() {
@@ -549,8 +545,7 @@ export async function setFileFavorite(fileId, isFavorite) {
   return null;
 }
 
-////////////////////////////////////////////////////////////
-// tag
+// tags
 
 // get all tags
 export async function getAllTags() {
@@ -647,7 +642,6 @@ export async function removeTagFromFile(fileId, tagId) {
   return null;
 }
 
-////////////////////////////////////////////////////////////
 // calendar
 
 // get taken dates
@@ -663,7 +657,6 @@ export async function getTakenDates(ascending = true) {
   return null;
 }
 
-////////////////////////////////////////////////////////////
 // camera
 
 // get camera info
@@ -679,7 +672,6 @@ export async function getCameraInfo() {
   return null;
 }
 
-////////////////////////////////////////////////////////////
 // location
 
 // get location info
@@ -695,7 +687,6 @@ export async function getLocationInfo() {
   return null;
 }
 
-////////////////////////////////////////////////////////////
 // print
 
 // print image
@@ -711,8 +702,7 @@ export async function printImage(imagePath) {
   return null;
 }
 
-////////////////////////////////////////////////////////////
-// setting
+// settings
 
 // get package info
 export async function getPackageInfo() {

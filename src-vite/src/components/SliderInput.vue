@@ -67,21 +67,4 @@ const updateValue = () => {
 </script>
 
 <style scoped>
-/* input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: #3b82f6;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: #3b82f6;
-  cursor: pointer;
-} */
 </style>
