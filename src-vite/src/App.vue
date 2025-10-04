@@ -9,9 +9,9 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 const handleKeyDown = (event) => {
   // Prevent default browser shortcuts if a modifier key is pressed
-  if (event.ctrlKey || event.metaKey || event.altKey) {
-    event.preventDefault();
-  }
+  // if (event.ctrlKey || event.metaKey || event.altKey) {
+  //   event.preventDefault();
+  // }
 
   emit('global-keydown', {
     key: event.key,

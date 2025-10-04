@@ -26,8 +26,40 @@ export const separator = isWin ? '\\' : '/';
 export function setTheme(themeId: number) {
   const htmlElement = document.documentElement;
   const theme = [
-    'light', 'dark', 'purple'
-  ][themeId];
+    'light', 
+    'dark', 
+    'cupcake',
+    'bumblebee',
+    'emerald',
+    'corporate',
+    'synthwave',
+    'retro',
+    'cyberpunk',
+    'valentine',
+    'halloween',
+    'purple',
+    'garden',
+    'forest',
+    'aqua',
+    'lofi',
+    'pastel',
+    'fantasy',
+    'wireframe',
+    'black',
+    'luxury',
+    'dracula',
+    'cmyk',
+    'autumn',
+    'business',
+    'acid',
+    'lemonade',
+    'night',
+    'coffee',
+    'winter',
+    'dim',
+    'nord',
+    'sunset'
+  ][themeId] || 'light';
   htmlElement.setAttribute('data-theme', theme);
 }
 

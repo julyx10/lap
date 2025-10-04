@@ -1,31 +1,13 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
-  /* themes: all; */
+  /* themes: winter --default, dark --prefersdark; */
+  themes: all;
   root: ":root";
   include: ;
   exclude: ;
   prefix: ;
   logs: true;
 }
-
-/* @plugin "daisyui/theme" {
-  name: "light";
-  default: true;
-  --color-primary: oklch(55% 0.3 270);
-  --color-primary-content: oklch(98% 0.01 270);
-  --color-secondary: oklch(65% 0.25 270);
-  --color-secondary-content: oklch(98% 0.01 270);
-  --color-accent: oklch(60% 0.25 260);
-  --color-accent-content: oklch(98% 0.01 260);
-  --color-neutral: oklch(20% 0.05 270);
-  --color-neutral-content: oklch(98% 0.01 270);
-}
-
-@plugin "daisyui/theme" {
-  name: "dark";
-  default: false;
-} */
 
 @utility input {
   @apply h-8 border-1 focus:border-2 focus:outline-none focus:border-primary focus:rounded;

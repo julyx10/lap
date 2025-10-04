@@ -27,7 +27,18 @@
 
         <!-- General tab -->
         <section v-if="config.settingsTabIndex === 0">
-
+          <!-- select language -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="language-select">{{ $t('settings.general.select_language') }}</label>
+            <select id="language-select" class="select" v-model="config.language">
+              <option v-for="(lang, index) in languages" 
+                :key="index" 
+                :value="lang.value"
+              >
+                {{ lang.label }}
+              </option>
+            </select>
+          </div>
           <!-- Appearance -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings.general.appearance') }}</label>
@@ -41,25 +52,6 @@
               </option>
             </select>
           </div>
-
-          <!-- select language -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="language-select">{{ $t('settings.general.select_language') }}</label>
-            <select id="language-select" class="select" v-model="config.language">
-              <option v-for="(lang, index) in languages" 
-                :key="index" 
-                :value="lang.value"
-              >
-                {{ lang.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Show hidden album -->
-          <!-- <div class="flex items-center justify-between mb-4">
-            <label for="show-hidden-album" >{{ $t('settings.general.show_hidden_album') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showHiddenAlbum" />
-          </div> -->
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings.general.show_button_text') }}</label>
@@ -76,11 +68,10 @@
             <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
           </div>
           <!-- Debug Mode -->
-          <div class="flex items-center justify-between mb-4">
+          <!-- <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings.general.debug_mode') }}</label>
             <input type="checkbox" class="toggle" v-model="config.debugMode" />
-
-          </div>
+          </div> -->
 
         </section>
 
