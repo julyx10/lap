@@ -239,9 +239,9 @@ export async function copyFolder(folderPath, newFolderPath) {
 }
 
 // delete a folder
-export async function deleteFolder(folderId) {
+export async function deleteFolder(folderId, folderPath) {
   try {
-    const result = await invoke('delete_folder', { folderId });
+    const result = await invoke('delete_folder', { folderId, folderPath });
     if(result) {
       return result;
     };
@@ -396,12 +396,21 @@ export async function copyFile(filePath, newFolderPath) {
 }
 
 // delete a file
-export async function deleteFile(fileId) {
+export async function deleteFile(fileId, filePath) {
   try {
-    return await invoke('delete_file', { fileId });
+    return await invoke('delete_file', { fileId, filePath });
   } catch (error) {
     console.error('deleteFile error:', error);
     return null;
+  }
+}
+
+// delete a file from db
+export async function deleteDbFile(fileId) {
+  try {
+    return await invoke('delete_db_file', { fileId });
+  } catch (error) {
+    console.error('deleteDbFile error:', error);
   }
 }
 

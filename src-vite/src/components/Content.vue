@@ -254,7 +254,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage,
-         setFileFavorite, setFileRotate, getFileHasTags, deleteFile} from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath } from '@/common/utils';
@@ -926,24 +926,28 @@ const clickDeleteFile = async () => {
     const deletes = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
-        const deletedFile = await deleteFile(item.id);
-        if(deletedFile) {
-          console.log('clickDeleteFile:', deletedFile);
-          removeFromFileList(fileList.value.indexOf(item));
-        }
+        await deleteFileAlways(item);
+        removeFromFileList(fileList.value.indexOf(item));
       });
     await Promise.all(deletes); // parallelize DB updates
     selectMode.value = false; // exit multi-select mode
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
-    const file = fileList.value[selectedItemIndex.value];
-    const deletedFile = await deleteFile(file.id);
-    if(deletedFile) {
-      console.log('clickDeleteFile:', deletedFile);
-      removeFromFileList(selectedItemIndex.value);
-    }
+    await deleteFileAlways(fileList.value[selectedItemIndex.value]);
+    removeFromFileList(selectedItemIndex.value);
   }
   showDeleteMsgbox.value = false;
+}
+
+// delete a file always (trash or delete from db)
+async function deleteFileAlways(file) {
+  const deletedFile = await deleteFile(file.id, file.file_path);
+  if(deletedFile) {
+    console.log('clickDeleteFile - trashed file:', file.file_path);
+  } else {
+    console.log('clickDeleteFile - delete db file:', file.file_path);
+    await deleteDbFile(file.id);
+  }
 }
 
 // remove an file item from the list and update the selected item index
@@ -951,7 +955,7 @@ function removeFromFileList(index) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
   // update the preview
-  if(config.showPreview) {
+  if(config.showPreview && selectedItemIndex.value >= 0) {
     if(fileList.value[selectedItemIndex.value].file_type === 1) {
       getImageSrc(selectedItemIndex.value);
     } else if(fileList.value[selectedItemIndex.value].file_type === 2) {

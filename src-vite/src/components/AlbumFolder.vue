@@ -437,8 +437,7 @@ const clickCopyTo = async () => {
 
 /// delete selected folder
 const clickDeleteFolder = async () => {
-  console.log('AlbumFolder.vue-clickDeleteFolder:', selectedFolderId.value);
-  const isDeleted = await deleteFolder(selectedFolderId.value);
+  const isDeleted = await deleteFolder(selectedFolderId.value, selectedFolderPath.value);
   if (isDeleted) {
     let folder = getFolderById(selectedFolderId.value);
     folder.is_deleted = true;

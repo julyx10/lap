@@ -100,6 +100,7 @@ fn main() {
             t_cmds::move_file,
             t_cmds::copy_file,
             t_cmds::delete_file,
+            t_cmds::delete_db_file,
             t_cmds::edit_file_comment,
             t_cmds::get_file_thumb,
             t_cmds::get_file_info,

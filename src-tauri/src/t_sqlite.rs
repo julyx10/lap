@@ -6,7 +6,6 @@
  * date:    2024-08-08
  */
 use std::collections::HashMap;
-use trash;
 use base64::{engine::general_purpose, Engine};
 use exif::{Reader, Tag, Value, In};
 use rusqlite::{params, Connection, OptionalExtension, Result};
@@ -15,7 +14,6 @@ use std::fs::File;
 use std::io::BufReader;
 
 use crate::t_utils;
-// use crate::t_opencv;
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -320,26 +318,15 @@ impl AFolder {
         Ok(result)
     }
 
+    /// delete a folder from db
     pub fn delete_folder(folder_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
-    
-        let sql = "SELECT path FROM afolders WHERE id = ?1";
-        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
-        let path: Option<String> = stmt
-            .query_row([folder_id], |row| row.get(0))
-            .optional()
+        let result = conn
+            .execute(
+                "DELETE FROM afolders WHERE id = ?1", 
+                params![folder_id])
             .map_err(|e| e.to_string())?;
-    
-        if let Some(folder_path) = path {
-            trash::delete(&folder_path).map_err(|e| e.to_string())?;
-    
-            // delete database record
-            let result = conn.execute("DELETE FROM afolders WHERE id = ?1", [folder_id])
-                .map_err(|e| e.to_string())?;
-            return Ok(result);
-        } else {
-            return Err(format!("Folder with id {} not found", folder_id));
-        }
+        Ok(result)
     }
     
     // update a column value
@@ -351,19 +338,6 @@ impl AFolder {
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
-
-    // get folder info by id
-    // pub fn get_folder_by_id(id: i64) -> Result<Option<Self>, String> {
-    //     let conn = open_conn()?;
-    //     let result = conn
-    //         .query_row(
-    //             "SELECT id, album_id, name, path, created_at, modified_at, is_favorite
-    //             FROM afolders WHERE id = ?1",
-    //             params![id],
-    //             |row| Self::from_row(row)
-    //         ).optional().map_err(|e| e.to_string())?;
-    //     Ok(result)
-    // }
 
     // get a folder's is_favorite status
     pub fn get_is_favorite(folder_path: &str) -> Result<Option<bool>, String> {
@@ -747,32 +721,31 @@ impl AFile {
         Ok(result)
     }
 
-    pub fn delete_file(file_id: i64) -> Result<usize, String> {
-        let conn = open_conn()?;
+    // pub fn delete_file(file_id: i64) -> Result<usize, String> {
+    //     let conn = open_conn()?;
     
-        let sql = 
-            "SELECT b.path, a.name 
-            FROM afiles a 
-            LEFT JOIN afolders b ON a.folder_id = b.id 
-            WHERE a.id = ?1";
-        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
-        let file_info: Option<(String, String)> = stmt
-            .query_row([file_id], |row| Ok((row.get(0)?, row.get(1)?)))
-            .optional()
-            .map_err(|e| e.to_string())?;
+    //     let sql = 
+    //         "SELECT b.path, a.name 
+    //         FROM afiles a 
+    //         LEFT JOIN afolders b ON a.folder_id = b.id 
+    //         WHERE a.id = ?1";
+    //     let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+    //     let file_info: Option<(String, String)> = stmt
+    //         .query_row([file_id], |row| Ok((row.get(0)?, row.get(1)?)))
+    //         .optional()
+    //         .map_err(|e| e.to_string())?;
     
-        if let Some((path, name)) = file_info {
-            let file_path = format!("{}/{}", path, name);
-            trash::delete(&file_path).map_err(|e| e.to_string())?;
+    //     if let Some((path, name)) = file_info {
+    //         let file_path = format!("{}/{}", path, name);
+    //         trash::delete(&file_path).map_err(|e| e.to_string())?;
     
-            // delete database record
-            let result = conn.execute("DELETE FROM afiles WHERE id = ?1", [file_id])
-                .map_err(|e| e.to_string())?;
-            return Ok(result);
-        } else {
-            return Err(format!("File with id {} not found", file_id));
-        }
-    }
+    //         // delete database record
+    //         let result = Self::delete(file_id)?;
+    //         return Ok(result);
+    //     } else {
+    //         return Err(format!("File with id {} not found", file_id));
+    //     }
+    // }
 
     // Helper function to build the count SQL query
     fn build_count_query() -> String {

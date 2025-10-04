@@ -134,8 +134,13 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
 
 /// delete a folder
 #[tauri::command]
-pub fn delete_folder(folder_id: i64) -> Result<usize, String> {
+pub fn delete_folder(folder_id: i64, folder_path: &str) -> Result<usize, String> {
+    // trash the folder
+    trash::delete(&folder_path).map_err(|e| e.to_string())?;
+
+    // delete the folder from db
     AFolder::delete_folder(folder_id)
+        .map_err(|e| format!("Error while deleting folder from DB: {}", e))
 }
 
 /// reveal a folder in the file explorer( or finder)
@@ -267,8 +272,21 @@ pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
 
 /// delete a file
 #[tauri::command]
-pub fn delete_file(file_id: i64) -> Result<usize, String> {
-    AFile::delete_file(file_id)
+pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {
+    // trash the file
+    trash::delete(&file_path).map_err(|e| e.to_string())?;
+
+    // delete the file from db
+    AFile::delete(file_id)
+        .map_err(|e| format!("Error while deleting file from DB: {}", e))
+}
+
+/// delete a file from db
+#[tauri::command]
+pub fn delete_db_file(file_id: i64) -> Result<usize, String> {
+    // delete the file from db
+    AFile::delete(file_id)
+        .map_err(|e| format!("Error while deleting file from DB: {}", e))
 }
 
 /// edit a file's comment
