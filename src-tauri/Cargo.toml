@@ -2,11 +2,11 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 name = "jc-photo"
 version = "0.1.0"
-description = "jc-photo management app"
+description = "A fast, local-first photo manager built with Tauri + Vue 3."
 homepage = "https://github.com/julyx10/jc-photo"
 authors = ["@liulichuan"]
 edition = "2024"
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0-or-later"
 exclude = ["main.db"]
 build = "build.rs"
 

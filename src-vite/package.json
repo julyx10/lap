@@ -42,5 +42,5 @@
     "vite-plugin-vue-devtools": "^8.0.2",
     "vite-svg-loader": "^5.1.0"
   },
-  "license": "(MIT OR Apache-2.0)"
+  "license": "GPL-3.0-or-later"
 }

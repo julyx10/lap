@@ -2,35 +2,13 @@
 
 Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (Rust) and Vue 3. jc-photo helps you browse large folders, curate albums, tag and favorite items, and view images/videos in a fluid desktop experience.
 
-## Highlights
+## Download
 
-- Albums and folders
-  - Add folders as albums; browse nested folders; optionally hide albums
-  - Favorite folders for quick access; order albums; reveal folders in Finder/Explorer
-- Fast thumbnail grid
-  - Lazy, concurrent thumbnail generation; progress indicator while thumbs build
-  - Configurable thumbnail size and label styles (name/size/dimensions/dates/duration)
-- Search, filter and sort
-  - File name search; filter by file type; multiple sort types with asc/desc
-- Preview pane
-  - Inline image/video preview with rotate and comments
-- Powerful image viewer
-  - Keyboard driven navigation (prev/next/home/end), slideshow with configurable interval
-  - Zoom in/out/fit/actual; rotate; favorite; tag; comment overlay; copy image to clipboard; print
-  - Full screen mode (with pin/unpin UI) and file info panel
-- Metadata views
-  - Favorites (files/folders), Tags, Calendar (year/month/day), Camera (make/model), Location (admin area/place)
-- File operations (local, safe)
-  - Rename, move, copy, delete (uses Trash on supported OS), go to folder, reveal in system file manager
-- Tagging and comments
-  - Add/remove tags; edit per‑file comments; see tag state directly in grid and viewer
-- Local, private, and fast
-  - All processing is on your machine; SQLite indexing, EXIF parsing, and thumbnails via Rust crates (EXIF, image, FFmpeg)
-- Appearance and localization
-  - Theme switching (35 built-in themes per your preference)
-  - Multi-language UI (switch language at runtime)
+| Platform | Download | File Type | Notes |
+|:--|:--|:--|:--|
+| **macOS (Intel / Apple Silicon)** | [jc-photo_0.1.0_aarch64.dmg](https://github.com/julyx10/jc-photo/releases/download/pre-release/jc-photo_0.1.0_aarch64.dmg) | `.dmg` | Apple Silicon |
 
-## Screenshots
+> Notes: Visit the [Releases page](https://github.com/julyx10/jc-photo/releases) for older versions and changelogs.
 
 <table>
   <tr>
@@ -105,8 +83,35 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
   </tr>
 </table>
 
-Notes
-- The sample images in above screenshots are sourced from [Wikimedia Commons](https://commons.wikimedia.org/).  
+> Notes: The sample images in above screenshots are sourced from [Wikimedia Commons](https://commons.wikimedia.org/).  
+
+## Features
+
+- Albums and folders
+  - Add folders as albums; browse nested folders; optionally hide albums
+  - Favorite folders for quick access; order albums; reveal folders in Finder/Explorer
+- Fast thumbnail grid
+  - Lazy, concurrent thumbnail generation; progress indicator while thumbs build
+  - Configurable thumbnail size and label styles (name/size/dimensions/dates/duration)
+- Search, filter and sort
+  - File name search; filter by file type; multiple sort types with asc/desc
+- Preview pane
+  - Inline image/video preview with rotate and comments
+- Powerful image viewer
+  - Keyboard driven navigation (prev/next/home/end), slideshow with configurable interval
+  - Zoom in/out/fit/actual; rotate; favorite; tag; comment overlay; copy image to clipboard; print
+  - Full screen mode (with pin/unpin UI) and file info panel
+- Metadata views
+  - Favorites (files/folders), Tags, Calendar (year/month/day), Camera (make/model), Location (admin area/place)
+- File operations (local, safe)
+  - Rename, move, copy, delete (uses Trash on supported OS), go to folder, reveal in system file manager
+- Tagging and comments
+  - Add/remove tags; edit per‑file comments; see tag state directly in grid and viewer
+- Local, private, and fast
+  - All processing is on your machine; SQLite indexing, EXIF parsing, and thumbnails via Rust crates (EXIF, image, FFmpeg)
+- Appearance and localization
+  - Theme switching (35 built-in themes per your preference)
+  - Multi-language UI (switch language at runtime)
 
 ## Supported file types
 
@@ -126,8 +131,7 @@ Videos
   - MOV (H.264/AAC)
   - WebM/MKV support varies by platform; on macOS, WebM/VP9 may not play in the system WebView.
 
-Notes
-- Camera RAW formats are not currently supported for inline viewing.
+> Notes: Camera RAW formats are not currently supported for inline viewing.
 
 ## Common keyboard shortcuts
 
@@ -238,7 +242,7 @@ Thanks to the open-source libraries and tools that make jc-photo possible:
 
 ## License
 
-This project is dual-licensed under MIT OR Apache-2.0.
+This project is licensed under the GPL-3.0-or-later.
 
-See LICENSE, LICENSE-MIT, and LICENSE-APACHE for details.
+See LICENSE for details.
 
