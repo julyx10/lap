@@ -158,26 +158,30 @@
           </div>
 
           <!-- image -->
-          <Image v-if="fileInfo?.file_type === 1 && imageSrc" 
-            ref="imageRef" 
-            :src="imageSrc" 
-            :rotate="fileInfo?.rotate ?? 0" 
-            :isZoomFit="config.isZoomFit"
-            @dblclick="toggleZoomFit()"
-          ></Image>
+          <template v-if="fileInfo?.file_type === 1">
+            <Image v-if="imageSrc" 
+              ref="imageRef" 
+              :src="imageSrc" 
+              :rotate="fileInfo?.rotate ?? 0" 
+              :isZoomFit="config.isZoomFit"
+              @dblclick="toggleZoomFit()"
+            ></Image>
+            <div v-if="loadImageError" class="h-full flex flex-col items-center justify-center text-base-content/30">
+              <IconError class="w-8 h-8 mb-2" />
+              <span>{{ $t('image_viewer.failed') }}</span>
+            </div>
+          </template>
 
           <!-- video -->
-          <Video v-else-if="fileInfo?.file_type === 2 && videoSrc"
-            ref="videoRef"
-            :src="videoSrc"
-            :rotate="fileInfo?.rotate ?? 0"
-            :isZoomFit="config.isZoomFit"
-            @dblclick="toggleZoomFit()"
-          ></Video>
-          <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
-            <IconError class="w-8 h-8 mb-2" />
-            <span>{{ $t('image_viewer.failed') }}</span>
-          </div>
+          <template v-if="fileInfo?.file_type === 2">
+            <Video v-if="videoSrc"
+              ref="videoRef"
+              :src="videoSrc"
+              :rotate="fileInfo?.rotate ?? 0"
+              :isZoomFit="config.isZoomFit"
+              @dblclick="toggleZoomFit()"
+            ></Video>
+          </template>
 
           <!-- comments -->
           <div v-if="config.showComment && fileInfo?.comments?.length > 0" 
@@ -258,6 +262,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
+import { useUIStore } from '@/stores/uiStore';
 import { config, isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
 import { copyImage, getFileInfo, getFileImage, getTagsForFile, getFileHasTags } from '@/common/api';
 
@@ -306,6 +311,7 @@ import {
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+const uiStore = useUIStore();
 
 const appWindow = getCurrentWebviewWindow()
 
@@ -325,7 +331,7 @@ const videoRef = ref(null);     // Video reference
 const imageSrc = ref('');       // Image source
 const videoSrc = ref('');       // Video source
 const imageCache = new Map();   // Cache images to prevent reloading
-const loadError = ref(false);   // Track if there was an error loading the image
+const loadImageError = ref(false);   // Track if there was an error loading the image
 
 const isSlideShow = ref(false);     // Slide show state
 let timer = null;                   // Timer for slide show
@@ -434,6 +440,11 @@ onMounted(async() => {
 
   // Listen 
   unlistenImg = await listen('update-img', async (event) => {
+    // donot update image if any modal is open
+    if(uiStore.isInputActive) {
+      return;
+    }
+    
     fileId.value    = Number(event.payload.fileId);
     fileIndex.value = Number(event.payload.fileIndex);
     fileCount.value = Number(event.payload.fileCount);
@@ -494,12 +505,12 @@ onUnmounted(() => {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
-  const key = event.key;
-  const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
-
-  if(showDeleteMsgbox.value || showTaggingDialog.value) {
+  if(uiStore.isInputActive) {
     return;
   }
+  
+  const key = event.key;
+  const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
   if (isCmdKey && key.toLowerCase() === 'c') {
     clickCopy();
@@ -608,6 +619,11 @@ watch(() => [isSlideShow.value, config.slideShowInterval], ([newIsSlideShow, new
   }
 });
 
+watch([showDeleteMsgbox, showTaggingDialog], (values) => {
+  const isAnyModalOpen = values.some(v => v === true);
+  uiStore.setInputActive(isAnyModalOpen);
+});
+
 // Load the image from the file path
 async function loadImage(filePath) {
   if(filePath.length === 0) {
@@ -615,7 +631,7 @@ async function loadImage(filePath) {
     return;
   }
   try {
-    loadError.value = false;
+    loadImageError.value = false;
 
     // Check if the image is already cached
     if (imageCache.has(filePath)) {
@@ -628,6 +644,7 @@ async function loadImage(filePath) {
       }
       else {
         imageSrc.value = '';
+        loadImageError.value = true;
       }
     }
 
@@ -635,7 +652,7 @@ async function loadImage(filePath) {
     preLoadImage(nextFilePath.value);
   } catch (error) {
     imageSrc.value = '';
-    loadError.value = true;
+    loadImageError.value = true;
     console.error('loadImage:', error);
   }
 }
@@ -758,6 +775,8 @@ function updateFileHasTags(fileIds: number[]) {
     fileInfo.value.has_tags = hasTags;
   });
   showTaggingDialog.value = false;
+
+  emit('message-from-image-viewer', { message: 'update-tags' });
 }
 
 // click copy image

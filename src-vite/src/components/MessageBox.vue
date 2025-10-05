@@ -141,13 +141,11 @@ const okButtonClasses = computed(() => {
     : 'text-base-content/30 cursor-default';
 });
 
-let unlistenKeydown: () => void;
-
 onMounted(async () => {
   const messageBoxDialog = document.getElementById('messageBoxDialog');
   messageBoxDialog.showModal();
 
-  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+  window.addEventListener('keydown', handleKeyDown);
 
   if(props.showInput) { 
     setTimeout(() => {
@@ -157,9 +155,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (unlistenKeydown) {
-    unlistenKeydown();
-  }
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 watch(() => props.errorMessage, (newValue) => {
@@ -178,7 +174,7 @@ const validateInput = () => {
 };
 
 function handleKeyDown(event) {
-  const { key } = event.payload;
+  const { key } = event;
 
   switch (key) {
     case 'Enter':

@@ -130,21 +130,26 @@
             :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
-            <Image v-if="fileList[selectedItemIndex]?.file_type === 1 && imageSrc.length > 0"
-              :src="imageSrc" 
-              :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
-              :isZoomFit="true"
-            ></Image>
-            <Video v-else-if="fileList[selectedItemIndex]?.file_type === 2 && videoSrc.length > 0"
-              ref="videoRef"
-              :src="videoSrc"
-              :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
-              :isZoomFit="true"
-            ></Video>
-            <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
-              <IconError class="w-8 h-8 mb-2" />
-              <span>{{ $t('image_viewer.failed') }}</span>
-            </div>
+            <template v-if="fileList[selectedItemIndex]?.file_type === 1">
+              <Image v-if="imageSrc"
+                :src="imageSrc" 
+                :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
+                :isZoomFit="true"
+              ></Image>
+              <div v-if="loadImageError" class="h-full flex flex-col items-center justify-center text-base-content/30">
+                <IconError class="w-8 h-8 mb-2" />
+                <span>{{ $t('image_viewer.failed') }}</span>
+              </div>
+            </template>
+
+            <template v-if="fileList[selectedItemIndex]?.file_type === 2">
+              <Video v-if="videoSrc"
+                ref="videoRef"
+                :src="videoSrc"
+                :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
+                :isZoomFit="true"
+              ></Video>
+            </template>
 
             <!-- comments -->
             <div v-if="config.showComment && fileList[selectedItemIndex]?.comments?.length > 0" 
@@ -358,6 +363,7 @@ const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
 const videoSrc = ref('');         // preview video source
 const videoRef = ref(null);       // preview video reference
+const loadImageError = ref(false);   // Track if there was an error loading the image
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
@@ -531,7 +537,6 @@ onMounted( async() => {
     }
 
     const { message } = event.payload;
-    console.log('content - message-from-grid-view:', message);
     switch (message) {
       case 'search':
         searchBoxRef.value.focusInput();
@@ -602,7 +607,6 @@ onMounted( async() => {
     }
 
     const { message } = event.payload;
-    console.log('content - message-from-image-viewer:', message);
     switch (message) {
       case 'home':
         selectedItemIndex.value = 0;
@@ -625,8 +629,8 @@ onMounted( async() => {
       case 'rotate':
         clickRotate();
         break;
-      case 'tag':
-        clickTag();
+      case 'update-tags':
+        updateFileHasTags([fileList.value[selectedItemIndex.value].id]);
         break;
       default:
         break;
@@ -1098,10 +1102,13 @@ const getImageSrc = async (index) => {
   let filePath = fileList.value[index].file_path;
   console.log('getImageSrc:', filePath);
   try {
+    loadImageError.value = false;
+    
     let currentIndex = index;
     const imageBase64 = await getFileImage(filePath);
     if(!imageBase64) {
       imageSrc.value = '';
+      loadImageError.value = true;
       return;
     }
     // Check if the selected item has changed since the invocation
@@ -1110,6 +1117,7 @@ const getImageSrc = async (index) => {
     }
   } catch (error) {
     imageSrc.value = '';
+    loadImageError.value = true;
     console.error('getImageSrc error:', error);
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <dialog id="taggingDialog" class="modal">
+  <dialog id="taggingDialog" class="modal" @cancel="clickCancel">
     <div class="w-[600px] p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
       <!-- title bar -->
@@ -117,13 +117,11 @@ const filteredTags = computed(() => {
   );
 });
 
-let unlistenKeydown: () => void;
-
 onMounted(async () => {
   const taggingDialog = document.getElementById('taggingDialog');
   taggingDialog.showModal();
 
-  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+  window.addEventListener('keydown', handleKeyDown);
 
   setTimeout(() => {
     tagSearchInputRef.value?.focus();
@@ -134,9 +132,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  if (unlistenKeydown) {
-    unlistenKeydown();
-  }
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 // watch(() => taggingDialog.value.show, (newVal) => {
@@ -248,7 +244,7 @@ function clickCancel() {
 
 // handle escape key
 const handleKeyDown = (e: KeyboardEvent) => {
-  const { key } = e.payload;
+  const { key } = e;
   if(key === 'Escape') {
     clickCancel();
   }
