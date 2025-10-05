@@ -36,6 +36,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { IconClose, IconSearch } from '@/common/icons';
 import { listen } from '@tauri-apps/api/event';
+import { useUIStore } from '@/stores/uiStore';
 
 const props = defineProps({
   modelValue: {
@@ -45,6 +46,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
+const uiStore = useUIStore();
 
 // input value
 const inputValue = ref('');
@@ -67,6 +69,10 @@ onUnmounted(() => {
 watch(() => props.modelValue, (newValue) => { 
   inputValue.value = newValue; 
 }, { immediate: true });
+
+watch(() => isFocused.value, (newValue) => {
+  uiStore.setInputActive(newValue);
+});
 
 function handleKeyDown(event) {
   const { key } = event.payload;

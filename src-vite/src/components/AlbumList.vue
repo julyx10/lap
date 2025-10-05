@@ -113,6 +113,7 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
+import { useUIStore } from '@/stores/uiStore';
 import { VueDraggable } from 'vue-draggable-plus'
 import { config, isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
@@ -157,14 +158,13 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+const uiStore = useUIStore();
 
 let unlistenSelectFolder: () => void;
 
 const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
 const selectedFolderPath = ref('');
-
-const removingAlbumId = ref(null);  // album id to be removed
 
 // message boxes
 const showAlbumEdit = ref(false);           // show edit album
@@ -268,6 +268,11 @@ watch(() => [ selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.
   emit('update:albumId', newAlbumId);
   emit('update:folderId', newFolderId);
   emit('update:folderPath', newFolderPath);
+});
+
+watch(() => [isEditList.value, showNewFolderMsgbox.value, showAlbumEdit.value], (values) => {
+  const isAnyModalOpen = values.some(v => v === true);
+  uiStore.setInputActive(isAnyModalOpen);
 });
 
 /// Add a new album

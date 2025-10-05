@@ -76,7 +76,6 @@
           v-model:selectItemIndex="selectedItemIndex"
           :fileList="fileList"
           :showFolderFiles="showFolderFiles"
-          :searchMode="searchBoxRef?.isFocused"
           :selectMode="selectMode"
         />
         
@@ -252,6 +251,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
+import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile} from '@/common/api';  
@@ -306,6 +306,7 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+const uiStore = useUIStore();
 
 // title of the content 
 const contentIcon = computed(() => {
@@ -719,6 +720,11 @@ watch(() => config.showPreview, (newValue) => {
     videoSrc.value = '';
   }
   gridViewRef.value.scrollToItem(selectedItemIndex.value); 
+});
+
+watch([showRenameMsgbox, showMoveTo, showCopyTo, showDeleteMsgbox, showTaggingDialog, showCommentMsgbox], (values) => {
+  const isAnyModalOpen = values.some(v => v === true);
+  uiStore.setInputActive(isAnyModalOpen);
 });
 
 async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 

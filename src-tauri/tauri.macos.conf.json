@@ -2,6 +2,7 @@
   "app": {
     "windows": [
       {
+        "title": "jc-photo",
         "minWidth": 800,
         "minHeight": 600,
         "titleBarStyle": "Overlay",

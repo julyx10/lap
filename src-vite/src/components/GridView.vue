@@ -16,7 +16,7 @@
         :id="'item-' + index"
         :class="[
           'p-2 border-2 rounded-lg hover:bg-base-100 cursor-pointer group',
-          (selectMode ? file.isSelected : index === selectedIndex) ? 'border-primary' : 'border-transparent',
+          (selectMode ? file.isSelected : index === selectedIndex) ? (uiStore.isInputActive ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
         ]"
         @click="clickItem(index)"
         @dblclick="openItem()"
@@ -93,6 +93,7 @@
 import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
+import { useUIStore } from '@/stores/uiStore';
 import { config, isMac, shortenFilename, formatFileSize, formatDuration, formatTimestamp } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
@@ -131,10 +132,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  searchMode: {
-    type: Boolean,
-    default: false,
-  },
   selectMode: {
     type: Boolean,
     default: false,
@@ -144,6 +141,7 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+const uiStore = useUIStore();
 
 // when the grid view is focused, the keydown event is listened
 const isFocus = ref(false);
@@ -306,23 +304,7 @@ function clickItem(index: number) {
 }
 
 function handleKeyDown(event) {
-  if (props.searchMode) {
-    return;
-  }
-  
-  // check if any modal dialog is open
-  const messageBoxDialog = document.getElementById('messageBoxDialog');
-  const taggingDialog = document.getElementById('taggingDialog');
-  const albumInfoDialog = document.getElementById('albumInfoDialog');
-  const moveToDialog = document.getElementById('moveToDialog');
-  
-  const isModalOpen = (messageBoxDialog && messageBoxDialog.open) ||
-                     (taggingDialog && taggingDialog.open) ||
-                     (albumInfoDialog && albumInfoDialog.open) ||
-                     (moveToDialog && moveToDialog.open);
-  
-  // if a modal dialog is open, do not handle the keydown event
-  if (isModalOpen) {
+  if (uiStore.isInputActive) {
     return;
   }
   

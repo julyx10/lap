@@ -125,6 +125,7 @@
 import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
+import { useUIStore } from '@/stores/uiStore';
 import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
 import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
 
@@ -179,6 +180,7 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+const uiStore = useUIStore();
 
 const getFolderById = (id) => props.children.find(child => child.id === id);
 
@@ -290,6 +292,10 @@ watch(() => selectedFolderId.value, (newFolderId, oldFolderId) => {
   if (newFolderId && isRenamingFolder.value) {
     handleEscKey(new Event('keydown'), oldFolderId);
   }
+});
+
+watch(() => isRenamingFolder.value, (newValue) => {
+  uiStore.setInputActive(newValue);
 });
 
 /// click folder to select
