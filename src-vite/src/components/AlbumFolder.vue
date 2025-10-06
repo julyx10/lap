@@ -220,6 +220,7 @@ const moreMenuItems = computed(() => {
       action: () => {
         isRenamingFolder.value = true;
         originalFolderName.value = folder.name;
+        uiStore.pushInputHandler('AlbumFolder-rename');
         nextTick(() => {
           if (folderInputRef.value) {
             folderInputRef.value[0].focus();    // array of input elements
@@ -281,7 +282,6 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
   selectedAlbumId.value = newAlbumId;
   selectedFolderId.value = newFolderId;
@@ -292,10 +292,6 @@ watch(() => selectedFolderId.value, (newFolderId, oldFolderId) => {
   if (newFolderId && isRenamingFolder.value) {
     handleEscKey(new Event('keydown'), oldFolderId);
   }
-});
-
-watch(() => isRenamingFolder.value, (newValue) => {
-  uiStore.setInputActive(newValue);
 });
 
 /// click folder to select
@@ -365,6 +361,7 @@ const clickRenameFolder = async (newFolderName) => {
   }
   if (newFolderName === originalFolderName.value) {
     isRenamingFolder.value = false;   // no change
+    uiStore.popInputHandler();
   } else {
     const newFolderPath = await renameFolder(selectedFolderPath.value, newFolderName);
     if(newFolderPath) {    // rename success
@@ -382,6 +379,7 @@ const clickRenameFolder = async (newFolderName) => {
         componentId: props.componentId
       });
       isRenamingFolder.value = false;
+      uiStore.popInputHandler();
     }
   }
 };
@@ -405,6 +403,7 @@ const handleEscKey = (event, folderID) => {
   folder.name = originalFolderName.value;
 
   isRenamingFolder.value = false; 
+  uiStore.popInputHandler();
 };
 
 // move folder to dest folder

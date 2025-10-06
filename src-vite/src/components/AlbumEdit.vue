@@ -25,7 +25,6 @@
                   type="text"
                   maxlength="255"
                   class="px-2 py-1 w-full input focus:border"
-                  @input="validateInput"
                 />
               </td>
             </tr>
@@ -79,49 +78,28 @@
           </tbody>
         </table>
 
-        <!--  buttons -->
-        <div class="mt-4 flex justify-between items-center">
+        <!-- cancel and OK buttons -->
+        <div class="mt-4 flex justify-end space-x-4">
           <button 
             class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
-            @click="clickDelete"
+            @click="clickCancel"
           >
-            {{ $t('msgbox.remove_album.ok') }}
+            {{ $t('msgbox.cancel') }}
           </button>
-          
-          <div class="flex space-x-4">
-            <button 
-              class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
-              @click="clickCancel"
-            >
-              {{ $t('msgbox.cancel') }}
-            </button>
-            <button 
-              :class="[
-                'px-4 py-1 rounded-lg', 
-                inputNameValue.trim().length > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default',
-              ]" 
-              @click="clickOk"
-            >
-              {{ $t('msgbox.ok') }}
-            </button>
-          </div>
+          <button 
+            :class="[
+              'px-4 py-1 rounded-lg', 
+              inputNameValue.trim().length > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default',
+            ]" 
+            @click="clickOk"
+          >
+            {{ $t('msgbox.ok') }}
+          </button>
         </div>
 
     </div>
 
   </dialog>
-
-  <!-- Delete confirmation dialog -->
-  <MessageBox
-    v-if="showDeleteMsgbox"
-    :title="$t('msgbox.remove_album.title')"
-    :message="$t('msgbox.remove_album.content', { album: inputNameValue })"
-    :OkText="$t('msgbox.remove_album.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    :warningOk="true"
-    @ok="confirmDelete"
-    @cancel="showDeleteMsgbox = false"
-  />
 
 </template>
 
@@ -131,11 +109,11 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { countFolder } from '@/common/api';
 import { formatFileSize } from '@/common/utils';
 import { listen } from '@tauri-apps/api/event';
+import { useUIStore } from '@/stores/uiStore';
 
 import { IconClose } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
-import MessageBox from '@/components/MessageBox.vue';
 
 const props = defineProps({
   albumId: {
@@ -168,10 +146,11 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['ok', 'cancel', 'delete']);
+const emit = defineEmits(['ok', 'cancel']);
+const uiStore = useUIStore();
 
 // input 
-const inputNameRef = ref(null);
+const inputNameRef = ref<HTMLInputElement | null>(null);
 const inputNameValue = ref(props.inputName);
 const inputDescriptionValue = ref(props.inputDescription);
 const hiddenAlbumValue = ref(props.hiddenAlbum);
@@ -183,16 +162,14 @@ const totalImageSize = ref(-1);
 const totalVideoCount = ref(0);
 const totalVideoSize = ref(0);
 
-// delete confirmation
-const showDeleteMsgbox = ref(false);
-
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
-  const albumInfoDialog = document.getElementById('albumInfoDialog');
+  const albumInfoDialog = document.getElementById('albumInfoDialog') as HTMLDialogElement | null;
   albumInfoDialog?.showModal();
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
+  uiStore.pushInputHandler('AlbumEdit');
   
   setTimeout(() => {
     inputNameRef.value?.focus();
@@ -211,15 +188,18 @@ onUnmounted(() => {
   if (unlistenKeydown) {
     unlistenKeydown();
   }
+  uiStore.popInputHandler();
 });
 
 function handleKeyDown(event) {
+  if (!uiStore.isInputActive('AlbumEdit')) return;
+
   const { key } = event.payload;
 
   switch (key) {
-    // case 'Enter':
-    //   clickOk();
-    //   break;
+    case 'Enter':
+      clickOk();
+      break;
     case 'Escape':
       clickCancel();
       break;
@@ -241,15 +221,6 @@ const clickOk = () => {
 
 const clickCancel = () => {
   emit('cancel');
-};
-
-const clickDelete = () => {
-  showDeleteMsgbox.value = true;
-};
-
-const confirmDelete = async () => {
-  showDeleteMsgbox.value = false;
-  emit('delete', props.albumId);
 };
 
 </script>

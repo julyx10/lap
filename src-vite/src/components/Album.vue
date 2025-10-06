@@ -28,9 +28,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
+import { listen } from '@tauri-apps/api/event';
+import { useUIStore } from '@/stores/uiStore';
 
 import { IconMore, IconAdd, IconArrowUpDown, IconRefresh, IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
@@ -47,6 +49,20 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+const uiStore = useUIStore();
+
+let unlistenKeydown: () => void;
+
+onMounted(async () => {
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
+  uiStore.popInputHandler();
+});
 
 const albumListRef = ref<AlbumList | null>(null);
 
@@ -66,6 +82,10 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
       label: localeMsg.value.menu.album.refresh_albums,
       icon: IconRefresh,
       disabled: config.albumId === null,
@@ -74,16 +94,13 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.album.display_order,
+      label: localeMsg.value.menu.album.reorder_albums,
       icon: IconArrowUpDown,
       disabled: config.albumId === null,
       action: () => {
         isEditList.value = true;
         albumListRef.value.isEditList = true;
+        uiStore.pushInputHandler('AlbumList-edit');
       }
     },
   ];
@@ -92,6 +109,13 @@ const moreMenuItems = computed(() => {
 const clickCloseEditList = () => {
   isEditList.value = false;
   albumListRef.value.isEditList = false;
+  uiStore.popInputHandler();
+};
+
+const handleKeyDown = (event) => {
+  if (isEditList.value && event.payload.key === 'Escape') {
+    clickCloseEditList();
+  }
 };
 
 </script>

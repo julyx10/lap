@@ -1,6 +1,8 @@
 <template>
 
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col"
+    :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('AlbumList-edit') }"
+  >
 
     <!-- title bar -->
     <div class="px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
@@ -724,11 +726,6 @@ watch(() => config.showPreview, (newValue) => {
     videoSrc.value = '';
   }
   gridViewRef.value.scrollToItem(selectedItemIndex.value); 
-});
-
-watch([showRenameMsgbox, showMoveTo, showCopyTo, showDeleteMsgbox, showTaggingDialog, showCommentMsgbox], (values) => {
-  const isAnyModalOpen = values.some(v => v === true);
-  uiStore.setInputActive(isAnyModalOpen);
 });
 
 async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 

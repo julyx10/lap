@@ -35,7 +35,7 @@
               {{ album.name }}
             </div>
             <TButton v-if="isEditList" 
-              class="ml-auto drag-handle"
+              class="ml-auto text-base-content/70 drag-handle"
               :icon="IconDragHandle"
               :buttonSize="'small'"
             />
@@ -85,9 +85,20 @@
       :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('format.date_time'))"
       @ok="clickAlbumInfo"
       @cancel="showAlbumEdit = false"
-      @delete="clickRemoveAlbum"
     />
-    
+
+    <!-- Delete album dialog -->
+    <MessageBox
+      v-if="showDeleteAlbumMsgbox"
+      :title="$t('msgbox.remove_album.title')"
+      :message="$t('msgbox.remove_album.content', { album: getAlbumById(albumId).name })"
+      :OkText="$t('msgbox.remove_album.ok')"
+      :cancelText="$t('msgbox.cancel')"
+      :warningOk="true"
+      @ok="clickRemoveAlbum"
+      @cancel="showDeleteAlbumMsgbox = false"
+    />
+
     <!-- new folder -->
     <MessageBox
       v-if="showNewFolderMsgbox"
@@ -113,7 +124,6 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { useUIStore } from '@/stores/uiStore';
 import { VueDraggable } from 'vue-draggable-plus'
 import { config, isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
@@ -134,6 +144,7 @@ import {
   IconMore,
   IconDragHandle,
   IconEdit,
+  IconTrash,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -158,7 +169,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
-const uiStore = useUIStore();
 
 let unlistenSelectFolder: () => void;
 
@@ -168,6 +178,7 @@ const selectedFolderPath = ref('');
 
 // message boxes
 const showAlbumEdit = ref(false);           // show edit album
+const showDeleteAlbumMsgbox = ref(false);   // show delete album
 const showNewFolderMsgbox = ref(false);     // show new folder
 const errorMessage = ref('');
 
@@ -178,7 +189,7 @@ const isEditList = ref(false);  // edit album list
 const isLoading = ref(true);    // loading albums
 const isDragging = ref(false);  // dragging albums
 
-const getAlbumById = (id) => albums.value.find(album => album.id === id);
+const getAlbumById = (id: number) => albums.value.find(album => album.id === id);
 
 const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPath']);
 
@@ -186,6 +197,24 @@ const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPat
 const moreMenuItems = computed(() => {
   return [
 
+    {
+      label: localeMsg.value.menu.album.edit_album,
+      icon: IconEdit,
+      action: () => {
+        showAlbumEdit.value = true;
+      }
+    },
+    {
+      label: localeMsg.value.menu.album.remove,
+      icon: IconTrash,
+      action: () => {
+        showDeleteAlbumMsgbox.value = true;
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
     {
       label: localeMsg.value.menu.file.new_folder,
       icon: IconNewFolder,
@@ -198,17 +227,6 @@ const moreMenuItems = computed(() => {
       // icon: IconExternal,
       action: () => {
         revealFolder(getAlbumById(selectedAlbumId.value).path);
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.album.edit_album,
-      icon: IconEdit,
-      action: () => {
-        showAlbumEdit.value = true;
       }
     },
   ];
@@ -268,11 +286,6 @@ watch(() => [ selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.
   emit('update:albumId', newAlbumId);
   emit('update:folderId', newFolderId);
   emit('update:folderPath', newFolderPath);
-});
-
-watch(() => [isEditList.value, showNewFolderMsgbox.value, showAlbumEdit.value], (values) => {
-  const isAnyModalOpen = values.some(v => v === true);
-  uiStore.setInputActive(isAnyModalOpen);
 });
 
 /// Add a new album

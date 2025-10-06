@@ -110,8 +110,9 @@
       "add": "Add folder",
       "edit_list": "Edit list",
       "edit_album": "Edit album",
+      "remove_album": "Remove album",
       "refresh_albums": "Refresh albums",
-      "display_order": "Display order"
+      "reorder_albums": "Reorder albums"
     },
     "file": {
       "new_folder": "New folder",

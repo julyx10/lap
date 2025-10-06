@@ -13,7 +13,7 @@
         'py-1 h-8 w-full text-sm input bg-transparent transition-colors duration-300',
         isFocused || searchValue.length > 0 ? 'px-8 focus:border border-primary' : 'px-2 group-hover:border-base-content/70 cursor-pointer'
       ]"
-      @focus="isFocused = true"
+      @focus="handleFocus"
       @blur="handleBlur"
       @input="handleInput"
     />
@@ -70,11 +70,9 @@ watch(() => props.modelValue, (newValue) => {
   inputValue.value = newValue; 
 }, { immediate: true });
 
-watch(() => isFocused.value, (newValue) => {
-  uiStore.setInputActive(newValue);
-});
-
 function handleKeyDown(event) {
+  if (!uiStore.isInputActive('SearchBox')) return;
+
   const { key } = event.payload;
   switch (key) {
     case 'Enter':
@@ -97,10 +95,16 @@ const focusInput = () => {
   }
 };
 
+const handleFocus = () => {
+  isFocused.value = true;
+  uiStore.pushInputHandler('SearchBox');
+};
+
 const handleBlur = () => {
   if (inputValue.value.length === 0) {
     isFocused.value = false;
   }
+  uiStore.popInputHandler();
 };
 
 function handleInput(event) {

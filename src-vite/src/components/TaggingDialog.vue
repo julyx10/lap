@@ -85,9 +85,9 @@ import {
   addTagToFile, 
   removeTagFromFile 
 } from '@/common/api';
-import { listen } from '@tauri-apps/api/event';
 import { IconAdd, IconClose } from '@/common/icons';
 import TButton from './TButton.vue';
+import { useUIStore } from '@/stores/uiStore';
 
 const props = defineProps({
   fileIds: {
@@ -97,6 +97,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['ok', 'cancel']);
+const uiStore = useUIStore();
 
 const allTags = ref<any[]>([]);
 const tagSearchInputRef = ref(null);
@@ -122,6 +123,7 @@ onMounted(async () => {
   taggingDialog.showModal();
 
   window.addEventListener('keydown', handleKeyDown);
+  uiStore.pushInputHandler('TaggingDialog');
 
   setTimeout(() => {
     tagSearchInputRef.value?.focus();
@@ -133,20 +135,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  uiStore.popInputHandler();
 });
-
-// watch(() => taggingDialog.value.show, (newVal) => {
-//   if (newVal) {
-//     console.log('TaggingDialog show', props.fileIds.length);
-//     loadAllTags();
-//     loadExistingTagsForFiles();
-//   } else {
-//     tagSearch.value = '';
-//     newTagName.value = '';
-//     selectedTags.value.clear();
-//     intermediateTags.value.clear();
-//   }
-// }, { immediate: true });
 
 // load all tags
 async function loadAllTags() {
@@ -244,6 +234,8 @@ function clickCancel() {
 
 // handle escape key
 const handleKeyDown = (e: KeyboardEvent) => {
+  if (!uiStore.isInputActive('TaggingDialog')) return;
+
   const { key } = e;
   if(key === 'Escape') {
     clickCancel();

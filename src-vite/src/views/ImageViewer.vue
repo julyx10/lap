@@ -440,8 +440,7 @@ onMounted(async() => {
 
   // Listen 
   unlistenImg = await listen('update-img', async (event) => {
-    // donot update image if any modal is open
-    if(uiStore.isInputActive) {
+    if(uiStore.inputStack.length > 0) {
       return;
     }
     
@@ -505,7 +504,7 @@ onUnmounted(() => {
 
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
-  if(uiStore.isInputActive) {
+  if(uiStore.inputStack.length > 0) {
     return;
   }
   
@@ -617,11 +616,6 @@ watch(() => [isSlideShow.value, config.slideShowInterval], ([newIsSlideShow, new
   } else {
     clearInterval(timer);
   }
-});
-
-watch([showDeleteMsgbox, showTaggingDialog], (values) => {
-  const isAnyModalOpen = values.some(v => v === true);
-  uiStore.setInputActive(isAnyModalOpen);
 });
 
 // Load the image from the file path

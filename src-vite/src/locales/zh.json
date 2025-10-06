@@ -110,8 +110,9 @@
       "add": "添加文件夹",
       "edit_list": "编辑列表",
       "edit_album": "编辑相册", 
+      "remove_album": "删除相册",
       "refresh_albums": "刷新相册",
-      "display_order": "显示顺序"
+      "reorder_albums": "重新排列相册"
     },
     "file": {
       "new_folder": "新建文件夹",

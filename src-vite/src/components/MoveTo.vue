@@ -56,6 +56,7 @@
 import { onMounted, onUnmounted } from 'vue';
 import { config } from '@/common/utils';
 import { listen } from '@tauri-apps/api/event';
+import { useUIStore } from '@/stores/uiStore';
 
 import { IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
@@ -81,6 +82,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['ok', 'cancel']);
+const uiStore = useUIStore();
 
 let unlistenKeydown: () => void;
 
@@ -89,15 +91,19 @@ onMounted(async () => {
   moveToDialog.showModal();
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
+  uiStore.pushInputHandler('MoveTo');
 });
 
 onUnmounted(() => {
   if (unlistenKeydown) {
     unlistenKeydown();
   }
+  uiStore.popInputHandler();
 });
 
 function handleKeyDown(event) {
+  if (!uiStore.isInputActive('MoveTo')) return;
+
   const { key } = event.payload;
   switch (key) {
     case 'Enter':

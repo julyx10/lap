@@ -71,8 +71,8 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { isValidFileName } from '@/common/utils';
 import { useI18n } from 'vue-i18n';
-import { listen } from '@tauri-apps/api/event';
 import { IconClose } from '@/common/icons';
+import { useUIStore } from '@/stores/uiStore';
 
 import TButton from '@/components/TButton.vue';
 
@@ -126,6 +126,7 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
+const uiStore = useUIStore();
 
 const emit = defineEmits(['ok', 'cancel', 'reset']);
 
@@ -146,6 +147,7 @@ onMounted(async () => {
   messageBoxDialog.showModal();
 
   window.addEventListener('keydown', handleKeyDown);
+  uiStore.pushInputHandler('MessageBox');
 
   if(props.showInput) { 
     setTimeout(() => {
@@ -156,6 +158,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  uiStore.popInputHandler();
 });
 
 watch(() => props.errorMessage, (newValue) => {
@@ -174,6 +177,8 @@ const validateInput = () => {
 };
 
 function handleKeyDown(event) {
+  if (!uiStore.isInputActive('MessageBox')) return;
+
   const { key } = event;
 
   switch (key) {

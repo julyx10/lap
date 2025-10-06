@@ -110,8 +110,9 @@
       "add": "フォルダを追加",
       "edit_list": "リストを編集",
       "edit_album": "アルバムを編集",
+      "remove_album": "アルバムを削除",
       "refresh_albums": "アルバムを更新",
-      "display_order": "表示順"
+      "reorder_albums": "アルバムを並べ替え"
     },
     "file": {
       "new_folder": "新しいフォルダ",

@@ -1,6 +1,7 @@
 <template>
   <div ref="scrollContainer" 
     class="mb-1 flex-1 overflow-auto focus:outline-none" 
+    :class="{ 'pointer-events-none': uiStore.inputStack.length > 0 }"
     tabindex="0" 
     @focus="isFocus = true"
     @blur="isFocus = false"
@@ -16,7 +17,7 @@
         :id="'item-' + index"
         :class="[
           'p-2 border-2 rounded-lg hover:bg-base-100 cursor-pointer group',
-          (selectMode ? file.isSelected : index === selectedIndex) ? (uiStore.isInputActive ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
+          (selectMode ? file.isSelected : index === selectedIndex) ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
         ]"
         @click="clickItem(index)"
         @dblclick="openItem()"
@@ -304,7 +305,7 @@ function clickItem(index: number) {
 }
 
 function handleKeyDown(event) {
-  if (uiStore.isInputActive) {
+  if (uiStore.inputStack.length > 0) {
     return;
   }
   
