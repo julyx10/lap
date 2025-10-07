@@ -67,6 +67,11 @@
             <label for="show-status-bar" >{{ $t('settings.general.show_status_bar') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
           </div>
+          <!-- Show comment -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-comment" >{{ $t('settings.image_viewer.show_comment') }}</label>
+            <input type="checkbox" class="toggle" v-model="config.showComment" />
+          </div>
           <!-- Debug Mode -->
           <!-- <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings.general.debug_mode') }}</label>
@@ -158,12 +163,6 @@
               :step="1" 
               label=""
             />
-          </div>
-
-          <!-- Show comment -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="show-comment" >{{ $t('settings.image_viewer.show_comment') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showComment" />
           </div>
 
           <!-- Auto play video -->
@@ -370,6 +369,9 @@ watch(() => config.showToolTip, (newValue) => {
 watch(() => config.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
 });
+watch(() => config.showComment, (newValue) => {
+  emit('settings-showComment-changed', newValue);
+});
 watch(() => config.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);
 });
@@ -397,9 +399,6 @@ watch(() => config.slideShowInterval, (newValue) => {
 });
 watch(() => config.autoPlayVideo, (newValue) => {
   emit('settings-autoPlayVideo-changed', newValue);
-});
-watch(() => config.showComment, (newValue) => {
-  emit('settings-showComment-changed', newValue);
 });
 
 // Handle keyboard shortcuts

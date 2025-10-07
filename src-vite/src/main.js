@@ -72,10 +72,12 @@ listen('settings-showToolTip-changed', (event) => {
 listen('settings-showStatusBar-changed', (event) => {
   config.setShowStatusBar(event.payload)
 })
+listen('settings-showComment-changed', (event) => {
+  config.setShowComment(event.payload)
+})
 listen('settings-debugMode-changed', (event) => {
   config.setDebugMode(event.payload)
 })
-
 listen('settings-thumbnailSize-changed', (event) => {
   config.setThumbnailSize(event.payload)
 })
@@ -96,7 +98,4 @@ listen('settings-slideShowInterval-changed', (event) => {
 })
 listen('settings-autoPlayVideo-changed', (event) => {
   config.setAutoPlayVideo(event.payload)
-})
-listen('settings-showComment-changed', (event) => {
-  config.setShowComment(event.payload)
 })

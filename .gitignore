@@ -4,3 +4,4 @@
 dev.sh
 build_aarch64.sh
 build_x86_64.sh
+ChangeLog.md
