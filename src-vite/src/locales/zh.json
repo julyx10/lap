@@ -118,6 +118,7 @@
       "open": "打开",
       "copy": "复制到剪贴板",
       "edit": "编辑",
+      "update_from_file": "从文件更新",
       "print": "打印",
       "rename": "重命名",
       "move_to": "移动到",

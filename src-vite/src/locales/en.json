@@ -118,6 +118,7 @@
       "open": "Open",
       "copy": "Copy to clipboard",
       "edit": "Edit",
+      "update_from_file": "Update from file",
       "print": "Print",
       "rename": "Rename",
       "move_to": "Move to",

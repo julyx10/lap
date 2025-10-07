@@ -708,6 +708,55 @@ impl AFile {
         Ok(result)
     }
 
+    /// update a file into db
+    pub fn update(file_id: i64, file: &Self) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn.execute(
+            "UPDATE afiles SET
+                name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, created_at = ?5, modified_at = ?6,
+                taken_date = ?7,
+                width = ?8, height = ?9, duration = ?10,
+                e_make = ?11, e_model = ?12, e_date_time = ?13, e_exposure_time = ?14, e_f_number = ?15, e_focal_length = ?16, e_iso_speed = ?17, e_flash = ?18, e_orientation = ?19,
+                gps_latitude = ?20, gps_longitude = ?21, gps_altitude = ?22, geo_name = ?23, geo_admin1 = ?24, geo_admin2 = ?25, geo_cc = ?26
+            WHERE id = ?27",
+            params![
+                file.name,
+                file.name_pinyin,
+                file.size,
+                file.file_type,
+                file.created_at,
+                file.modified_at,
+
+                file.taken_date,
+
+                file.width,
+                file.height,
+                file.duration,
+
+                file.e_make,
+                file.e_model,
+                file.e_date_time,
+                file.e_exposure_time,
+                file.e_f_number,
+                file.e_focal_length,
+                file.e_iso_speed,
+                file.e_flash,
+                file.e_orientation,
+
+                file.gps_latitude,
+                file.gps_longitude,
+                file.gps_altitude,
+                file.geo_name,
+                file.geo_admin1,
+                file.geo_admin2,
+                file.geo_cc,
+
+                file_id,
+            ]
+        ).map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
     // delete a file from db
     pub fn delete(id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
@@ -893,6 +942,26 @@ impl AFile {
             .map_err(|e| e.to_string())?;
 
         Ok(result)
+    }
+
+    /// update a file info
+    pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<Self>, String> {
+        // get old file info
+        let old_file_info = Self::get_file_info(file_id)?
+            .ok_or_else(|| "File not found".to_string())?;
+
+        // create a new file info
+        let mut new_file_info = Self::new(old_file_info.folder_id, file_path, old_file_info.file_type.unwrap_or(0))?;
+        new_file_info.id = Some(file_id);
+        new_file_info.is_favorite = old_file_info.is_favorite;
+        new_file_info.rotate = old_file_info.rotate;
+        new_file_info.comments = old_file_info.comments;
+        new_file_info.has_tags = old_file_info.has_tags;
+
+        // update the file info
+        Self::update(file_id, &new_file_info)?;
+
+        Self::get_file_info(file_id)
     }
 
     /// update a file column value

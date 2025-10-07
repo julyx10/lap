@@ -260,7 +260,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
-         copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage,
+         copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage, updateFileInfo,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -547,6 +547,9 @@ onMounted( async() => {
       case 'edit':
         // showCommentMsgbox.value = true;
         break;
+      case 'update-from-file':
+        updateFile(fileList.value[selectedItemIndex.value]);
+        break;
       case 'rename':
         renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
         showRenameMsgbox.value = true;
@@ -571,9 +574,6 @@ onMounted( async() => {
         break;
       case 'reveal':
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
-        break;
-      case 'refresh':
-        updateThumbForFile(fileList.value[selectedItemIndex.value]);
         break;
       case 'favorite':
         toggleFavorite();
@@ -959,6 +959,16 @@ function removeFromFileList(index) {
     } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
       getVideoSrc(selectedItemIndex.value);
     }
+  }
+}
+
+// update the file info from the file
+const updateFile = async (file) => {
+  const updatedFile = await updateFileInfo(file.id, file.file_path);
+  if(updatedFile) {
+    Object.assign(file, updatedFile);
+    updateThumbForFile(file);
+    updateSelectedImage(selectedItemIndex.value);   
   }
 }
 

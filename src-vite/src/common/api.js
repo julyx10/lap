@@ -450,6 +450,19 @@ export async function getFileInfo(fileId) {
   return null;
 }
 
+// update file info
+export async function updateFileInfo(fileId, filePath) {
+  try {
+    const result = await invoke("update_file_info", { fileId, filePath });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to update file info:', error);
+  }
+  return null;
+}
+
 // get file image
 export async function getFileImage(filePath) {
   try {

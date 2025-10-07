@@ -113,7 +113,7 @@ import {
   IconGoto,
   IconSearch,
   IconVideo,
-  IconRefresh,
+  IconUpdate,
   IconChecked,
   IconUnChecked,
   IconComment,
@@ -174,6 +174,13 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: localeMsg.value.menu.file.update_from_file,
+      icon: IconUpdate,
+      action: () => {
+        updateItem();
+      }
+    },
+    {
       label: localeMsg.value.menu.file.copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
@@ -182,10 +189,10 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.file.refresh,
-      icon: IconRefresh,
+      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+      // icon: IconOpenFolder,
       action: () => {
-        refreshItem();
+        revealItem();
       }
     },
     {
@@ -227,13 +234,6 @@ const moreMenuItems = computed(() => {
       icon: IconGoto,
       action: () => {
         gotoFolder();
-      }
-    },
-    {
-      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-      // icon: IconOpenFolder,
-      action: () => {
-        revealItem();
       }
     },
     {
@@ -360,6 +360,14 @@ function editItem() {
   emit('message-from-grid-view', { message: 'edit' });
 };
 
+function updateItem() {
+  emit('message-from-grid-view', { message: 'update-from-file' });
+}
+
+function revealItem() {
+  emit('message-from-grid-view', { message: 'reveal' });
+};
+
 function renameItem() {
   emit('message-from-grid-view', { message: 'rename' });
 };
@@ -379,14 +387,6 @@ function trashItem() {
 function gotoFolder() {
   emit('message-from-grid-view', { message: 'goto-folder' });
 };
-
-function revealItem() {
-  emit('message-from-grid-view', { message: 'reveal' });
-};
-
-function refreshItem() {
-  emit('message-from-grid-view', { message: 'refresh' });
-}
 
 function toggleFavorite() {
   emit('message-from-grid-view', { message: 'favorite' });

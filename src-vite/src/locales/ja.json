@@ -118,6 +118,7 @@
       "open": "開く",
       "copy": "クリップボードにコピー",
       "edit": "編集",
+      "update_from_file": "ファイルから更新",
       "print": "印刷",
       "rename": "名前を変更",
       "move_to": "移動",

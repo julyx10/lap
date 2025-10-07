@@ -317,6 +317,13 @@ pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
         .map_err(|e| format!("Error while getting file info: {}", e))
 }
 
+/// update a file's info
+#[tauri::command]
+pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<AFile>, String> {
+    AFile::update_file_info(file_id, file_path)
+        .map_err(|e| format!("Error while updating file info: {}", e))
+}
+
 /// get a file's image
 #[tauri::command]
 pub async fn get_file_image(file_path: String) -> Result<String, String> {
