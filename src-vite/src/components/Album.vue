@@ -86,7 +86,7 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu.album.refresh_albums,
+      label: localeMsg.value.menu.album.refresh,
       icon: IconRefresh,
       disabled: config.albumId === null,
       action: async () => {
@@ -94,7 +94,7 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.album.reorder_albums,
+      label: localeMsg.value.menu.album.reorder,
       icon: IconArrowUpDown,
       disabled: config.albumId === null,
       action: () => {

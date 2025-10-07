@@ -21,6 +21,7 @@
               { 
                 'hover:bg-base-content/10': !isDragging && !isEditList,
                 'text-base-content': selectedAlbumId === album.id && !isEditList, 
+                'bg-base-content/10': isEditList,
               }
             ]"
             @click="clickAlbum(album)"
@@ -87,16 +88,16 @@
       @cancel="showAlbumEdit = false"
     />
 
-    <!-- Delete album dialog -->
+    <!-- Remove album dialog -->
     <MessageBox
-      v-if="showDeleteAlbumMsgbox"
+      v-if="showRemoveAlbumMsgbox"
       :title="$t('msgbox.remove_album.title')"
       :message="$t('msgbox.remove_album.content', { album: getAlbumById(albumId).name })"
       :OkText="$t('msgbox.remove_album.ok')"
       :cancelText="$t('msgbox.cancel')"
       :warningOk="true"
       @ok="clickRemoveAlbum"
-      @cancel="showDeleteAlbumMsgbox = false"
+      @cancel="showRemoveAlbumMsgbox = false"
     />
 
     <!-- new folder -->
@@ -178,7 +179,7 @@ const selectedFolderPath = ref('');
 
 // message boxes
 const showAlbumEdit = ref(false);           // show edit album
-const showDeleteAlbumMsgbox = ref(false);   // show delete album
+const showRemoveAlbumMsgbox = ref(false);   // show remove album
 const showNewFolderMsgbox = ref(false);     // show new folder
 const errorMessage = ref('');
 
@@ -198,7 +199,7 @@ const moreMenuItems = computed(() => {
   return [
 
     {
-      label: localeMsg.value.menu.album.edit_album,
+      label: localeMsg.value.menu.album.edit,
       icon: IconEdit,
       action: () => {
         showAlbumEdit.value = true;
@@ -208,7 +209,7 @@ const moreMenuItems = computed(() => {
       label: localeMsg.value.menu.album.remove,
       icon: IconTrash,
       action: () => {
-        showDeleteAlbumMsgbox.value = true;
+        showRemoveAlbumMsgbox.value = true;
       }
     },
     {
@@ -250,7 +251,7 @@ onMounted( async () => {
     switch (message) {
       case 'click-folder':
       case 'rename-folder':
-      case 'delete-folder':
+      case 'trash-folder':
         if(event.payload.componentId === props.componentId) {
           selectedAlbumId.value = event.payload.albumId;
           selectedFolderId.value = event.payload.folderId;
@@ -325,11 +326,13 @@ const clickAlbumInfo = async (newName, newDescription, newIsHidden) => {
 };
 
 /// Remove an album from the list
-const clickRemoveAlbum = async (albumId) => {
-  const removedAlbum = await removeAlbum(albumId);
+const clickRemoveAlbum = async () => {
+  const removedAlbum = await removeAlbum(selectedAlbumId.value);
   if(removedAlbum) {
+    showRemoveAlbumMsgbox.value = false;
+
     // remove the album from the list
-    albums.value = albums.value.filter(album => album.id !== albumId);
+    albums.value = albums.value.filter(album => album.id !== selectedAlbumId.value);
     showAlbumEdit.value = false; // Close the edit dialog if it's open
 
     selectedAlbumId.value = 0;

@@ -213,16 +213,16 @@
     @cancel="showCopyTo = false"
   />
 
-  <!-- delete -->
+  <!-- move to trash -->
   <MessageBox
-    v-if="showDeleteMsgbox"
-    :title="selectMode ? $t('msgbox.delete_files.title') : $t('msgbox.delete_file.title')"
-    :message="selectMode ? $t('msgbox.delete_files.content', { count: selectedCount.toLocaleString() }) : $t('msgbox.delete_file.content', { file: fileList[selectedItemIndex].name })"
-    :OkText="selectMode ? $t('msgbox.delete_files.ok') : $t('msgbox.delete_file.ok')"
+    v-if="showTrashMsgbox"
+    :title="selectMode ? $t('msgbox.trash_files.title') : $t('msgbox.trash_file.title')"
+    :message="selectMode ? $t('msgbox.trash_files.content', { count: selectedCount.toLocaleString() }) : $t('msgbox.trash_file.content', { file: fileList[selectedItemIndex].name })"
+    :OkText="selectMode ? $t('msgbox.trash_files.ok') : $t('msgbox.trash_file.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
-    @ok="clickDeleteFile"
-    @cancel="showDeleteMsgbox = false"
+    @ok="clickTrashFile"
+    @cancel="showTrashMsgbox = false"
   />
 
   <!-- tag -->
@@ -373,7 +373,7 @@ const renamingFileName = ref({}); // extract the file name to {name, ext}
 
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
-const showDeleteMsgbox = ref(false);
+const showTrashMsgbox = ref(false);
 const showCommentMsgbox = ref(false);
 const errorMessage = ref('');
 
@@ -452,7 +452,7 @@ const moreMenuItems = computed(() => {
       icon: IconTrash,
       disabled: selectedCount.value === 0,
       action: () => {
-        showDeleteMsgbox.value = true;
+        showTrashMsgbox.value = true;
       }
     },
   ];
@@ -564,8 +564,8 @@ onMounted( async() => {
       case 'copy-to':
         showCopyTo.value = true;
         break;
-      case 'delete':
-        showDeleteMsgbox.value = true;
+      case 'trash':
+        showTrashMsgbox.value = true;
         break;
       case 'goto-folder':
         const selectedFile = fileList.value[selectedItemIndex.value];
@@ -622,8 +622,8 @@ onMounted( async() => {
       case 'next':
         selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
         break;
-      case 'delete':
-        clickDeleteFile();
+      case 'trash':
+        clickTrashFile();
         break;
       case 'favorite':
         toggleFavorite();
@@ -927,8 +927,8 @@ const clickCopyTo = async () => {
   showCopyTo.value = false;
 }
 
-// click delete menu item
-const clickDeleteFile = async () => {
+// click trash menu item
+const clickTrashFile = async () => {
   if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
     const deletes = fileList.value
       .filter(item => item.isSelected)
@@ -943,7 +943,8 @@ const clickDeleteFile = async () => {
     await deleteFileAlways(fileList.value[selectedItemIndex.value]);
     removeFromFileList(selectedItemIndex.value);
   }
-  showDeleteMsgbox.value = false;
+  showTrashMsgbox.value = false;
+  updateSelectedImage(selectedItemIndex.value);
 }
 
 // delete a file always (trash or delete from db)

@@ -82,16 +82,16 @@
     @cancel="showNewFolderMsgbox = false"
   />
 
-  <!-- delete folder -->
+  <!-- trash folder -->
   <MessageBox
-    v-if="showDeleteFolderMsgbox"
-    :title="$t('msgbox.delete_folder.title')"
-    :message="`${$t('msgbox.delete_folder.content', { folder: getFolderById(selectedFolderId).name })}`"
-    :OkText="$t('msgbox.delete_folder.ok')"
+    v-if="showTrashFolderMsgbox"
+    :title="$t('msgbox.trash_folder.title')"
+    :message="`${$t('msgbox.trash_folder.content', { folder: getFolderById(selectedFolderId).name })}`"
+    :OkText="$t('msgbox.trash_folder.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
-    @ok="clickDeleteFolder"
-    @cancel="showDeleteFolderMsgbox = false"
+    @ok="clickTrashFolder"
+    @cancel="showTrashFolderMsgbox = false"
   />
 
   <!-- move to -->
@@ -196,7 +196,7 @@ const originalFolderName = ref(''); // restore original folder name when cancel 
 
 // message boxes
 const showNewFolderMsgbox = ref(false);
-const showDeleteFolderMsgbox = ref(false);
+const showTrashFolderMsgbox = ref(false);
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 
@@ -246,7 +246,7 @@ const moreMenuItems = computed(() => {
       label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
       icon: IconTrash,
       action: () => {
-        showDeleteFolderMsgbox.value = true;
+        showTrashFolderMsgbox.value = true;
       }
     },
     {
@@ -440,8 +440,8 @@ const clickCopyTo = async () => {
   });
 };
 
-/// delete selected folder
-const clickDeleteFolder = async () => {
+/// trash selected folder
+const clickTrashFolder = async () => {
   const isDeleted = await deleteFolder(selectedFolderId.value, selectedFolderPath.value);
   if (isDeleted) {
     let folder = getFolderById(selectedFolderId.value);
@@ -449,16 +449,16 @@ const clickDeleteFolder = async () => {
     folder.id = 0; // remove id to avoid click folder again
 
     emit('message-from-select-folder', {
-      message: 'delete-folder',
+      message: 'trash-folder',
       albumId: selectedAlbumId.value, 
       folderId: 0, 
       folderPath: "",
       componentId: props.componentId
     });
-    showDeleteFolderMsgbox.value = false;
+    showTrashFolderMsgbox.value = false;
   } else {
-    console.log('AlbumFolder.vue-clickDeleteFolder', localeMsg.value.msgbox.delete_folder.error);
-    toolTipRef.value.showTip(localeMsg.value.msgbox.delete_folder.error);
+    console.log('AlbumFolder.vue-clickTrashFolder', localeMsg.value.msgbox.trash_folder.error);
+    toolTipRef.value.showTip(localeMsg.value.msgbox.trash_folder.error);
   }
 };
 

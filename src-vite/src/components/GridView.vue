@@ -219,7 +219,7 @@ const moreMenuItems = computed(() => {
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
-        deleteItem();
+        trashItem();
       }
     },
     {
@@ -250,19 +250,19 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.meta.tag,
-      icon: IconTag,
-      shortcut: isMac ? '⌘T' : 'Ctrl+T',
-      action: () => {
-        tagItem();
-      }
-    },
-    {
       label: localeMsg.value.menu.meta.rotate,
       icon: IconRotate,
       shortcut: isMac ? '⌘R' : 'Ctrl+R',
       action: () => {
         rotateItem();
+      }
+    },
+    {
+      label: localeMsg.value.menu.meta.tag,
+      icon: IconTag,
+      shortcut: isMac ? '⌘T' : 'Ctrl+T',
+      action: () => {
+        tagItem();
       }
     },
     {
@@ -323,7 +323,7 @@ function handleKeyDown(event) {
   } else if(isCmdKey && key.toLowerCase() === 'r') {
     rotateItem();
   } else if((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    deleteItem();
+    trashItem();
   } else if (keyActions[key]) {
     keyActions[key](); 
   }
@@ -369,8 +369,8 @@ function copyTo() {
   emit('message-from-grid-view', { message: 'copy-to' });
 };
 
-function deleteItem() {
-  emit('message-from-grid-view', { message: 'delete' });
+function trashItem() {
+  emit('message-from-grid-view', { message: 'trash' });
 };
 
 function gotoFolder() {

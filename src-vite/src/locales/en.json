@@ -108,11 +108,10 @@
     },
     "album": {
       "add": "Add folder",
-      "edit_list": "Edit list",
-      "edit_album": "Edit album",
-      "remove_album": "Remove album",
-      "refresh_albums": "Refresh albums",
-      "reorder_albums": "Reorder albums"
+      "edit": "Edit",
+      "remove": "Remove",
+      "refresh": "Refresh",
+      "reorder": "Reorder"
     },
     "file": {
       "new_folder": "New folder",
@@ -176,6 +175,13 @@
       "success": "The folder '{folder}' has been deleted.",
       "error": "Cannot delete the folder. The folder may not exist."
     },
+    "trash_folder": {
+      "title": "Move to trash",
+      "content": "The folder '{folder}' will be trashed.",
+      "ok": "Trash",
+      "success": "The folder '{folder}' has been trashed.",
+      "error": "Cannot trash the folder. The folder may not exist."
+    },
     "move_to": {
       "title": "Move '{source}' to",
       "content": "Select the destination folder:",
@@ -207,6 +213,20 @@
       "ok": "Delete all",
       "success": "{count} selected files have been deleted.",
       "error": "Cannot delete the selected files. The files may not exist."
+    },
+    "trash_file": {
+      "title": "Move to trash",
+      "content": "The file '{file}' will be trashed.",
+      "ok": "Trash",
+      "success": "The file '{file}' has been trashed.",
+      "error": "Cannot trash the file. The file may not exist."
+    },
+    "trash_files": {
+      "title": "Move to trash",
+      "content": "{count} selected files will be trashed.",
+      "ok": "Trash all",
+      "success": "{count} selected files have been trashed.",
+      "error": "Cannot trash the selected files. The files may not exist."
     },
     "new_tag": {
       "title": "New tag",

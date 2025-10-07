@@ -108,11 +108,10 @@
     },
     "album": {
       "add": "添加文件夹",
-      "edit_list": "编辑列表",
-      "edit_album": "编辑相册", 
-      "remove_album": "删除相册",
-      "refresh_albums": "刷新相册",
-      "reorder_albums": "重新排列相册"
+      "edit": "编辑",
+      "remove": "删除",
+      "refresh": "刷新",
+      "reorder": "重新排列"
     },
     "file": {
       "new_folder": "新建文件夹",
@@ -176,6 +175,13 @@
       "success": "文件夹 '{folder}' 已删除。",
       "error": "无法删除文件夹。文件夹可能不存在。"
     },
+    "trash_folder": {
+      "title": "移到废纸篓",
+      "content": "文件夹 '{folder}' 将被移到废纸篓。",
+      "ok": "移到废纸篓",
+      "success": "文件夹 '{folder}' 已移到废纸篓。",
+      "error": "无法将文件夹移到废纸篓。文件夹可能不存在。"
+    },
     "move_to": {
       "title": "移动 '{source}' 到",
       "content": "选择目标文件夹:",
@@ -207,6 +213,20 @@
       "ok": "全部删除",
       "success": "{count} 个选择的文件已删除。",
       "error": "无法删除选择的文件。文件可能不存在。"
+    },
+    "trash_file": {
+      "title": "移到废纸篓",
+      "content": "文件 '{file}' 将被移到废纸篓。",
+      "ok": "移到废纸篓",
+      "success": "文件 '{file}' 已移到废纸篓。",
+      "error": "无法将文件移到废纸篓。文件可能不存在。"
+    },
+    "trash_files": {
+      "title": "移到废纸篓",
+      "content": "{count} 个选择的文件将被移到废纸篓。",
+      "ok": "全部移到废纸篓",
+      "success": "{count} 个选择的文件已移到废纸篓。",
+      "error": "无法将选择的文件移到废纸篓。文件可能不存在。"
     },
     "new_tag": {
       "title": "新建标签",

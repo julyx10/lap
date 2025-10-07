@@ -230,16 +230,16 @@
 
   </div>
   
-  <!-- delete -->
+  <!-- trash -->
   <MessageBox
-    v-if="showDeleteMsgbox"
-    :title="$t('msgbox.delete_file.title')"
-    :message="`${$t('msgbox.delete_file.content', { file: fileInfo?.name })}`"
-    :OkText="$t('msgbox.delete_file.ok')"
+    v-if="showTrashMsgbox"
+    :title="$t('msgbox.trash_file.title')"
+    :message="`${$t('msgbox.trash_file.content', { file: fileInfo?.name })}`"
+    :OkText="$t('msgbox.trash_file.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
-    @ok="clickDeleteFile"
-    @cancel="showDeleteMsgbox = false"
+    @ok="clickTrashFile"
+    @cancel="showTrashMsgbox = false"
   />
 
   <!-- tag -->
@@ -264,7 +264,7 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
-import { copyImage, getFileInfo, getFileImage, getTagsForFile, getFileHasTags } from '@/common/api';
+import { copyImage, getFileInfo, getFileImage, getTagsForFile, getFileHasTags, printImage } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
@@ -341,7 +341,7 @@ const imageMinScale = ref(0);       // Minimum image scale
 const imageMaxScale = ref(10);      // Maximum image scale
 const isScaleChanged = ref(false);  // Scale changed state
 
-const showDeleteMsgbox = ref(false);
+const showTrashMsgbox = ref(false);
 const showTaggingDialog = ref(false);
 const fileIdsToTag = ref<number[]>([]);
 
@@ -368,14 +368,15 @@ const moreMenuItems = computed(() => {
         clickCopy();
       }
     },
-    {
-      label: localeMsg.value.menu.file.print,
-      icon: IconPrint,
-      action: () => {
-        console.log('Print:', filePath.value);
-      }
-    },
-
+    // {
+    //   label: localeMsg.value.menu.file.print,
+    //   icon: IconPrint,
+    //   action: () => {
+    //     printImage(filePath.value).then(() => {
+    //       toolTipRef.value.showTip(localeMsg.value.tooltip.print_image.success);
+    //     });
+    //   }
+    // },
     {
       label: "-",   // separator
       action: null
@@ -403,7 +404,7 @@ const moreMenuItems = computed(() => {
       icon: IconTrash,
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
-        showDeleteMsgbox.value = true;
+        showTrashMsgbox.value = true;
       }
     },
     {
@@ -524,7 +525,7 @@ function handleKeyDown(event) {
   } else if (isCmdKey && key.toLowerCase() === 'i') {
     clickShowFileInfo();
   } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    showDeleteMsgbox.value = true;
+    showTrashMsgbox.value = true;
   } else if (keyActions[key]) {
     keyActions[key]();
   }
@@ -574,6 +575,10 @@ watch(() => config.isFullScreen, async (newFullScreen) => {
 // watch file changed
 watch(() => fileId.value, async () => {
   fileInfo.value = await getFileInfo(fileId.value);
+
+  if(!fileInfo.value) {
+    return;
+  }
 
   // get the file's tags
   if(fileInfo.value.has_tags) {
@@ -780,9 +785,9 @@ const clickCopy = async() => {
   });
 }
 
-const clickDeleteFile = async() => {
-  emit('message-from-image-viewer', { message: 'delete' });
-  showDeleteMsgbox.value = false;
+const clickTrashFile = async() => {
+  emit('message-from-image-viewer', { message: 'trash' });
+  showTrashMsgbox.value = false;
 }
 
 // Function to maximize the window and setup full screen
