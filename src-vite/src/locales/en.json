@@ -127,6 +127,7 @@
       "goto_folder": "Go to folder",
       "reveal_in_finder": "Reveal in Finder",
       "reveal_in_file_explorer": "Reveal in File Explorer",
+      "refresh": "Refresh",
       "properties": "Properties"
     },
     "tag": {

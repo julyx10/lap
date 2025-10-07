@@ -497,10 +497,6 @@ const moreMenuItems = computed(() => {
 
 const handleKeyDown = (e: KeyboardEvent) => {
   const { key } = e.payload;
-  if (searchBoxRef.value && searchBoxRef.value.isFocused) {
-    return;
-  }
-  
   switch (key) {
     // case ' ':
     //   config.showPreview = !config.showPreview;
@@ -532,12 +528,6 @@ onMounted( async() => {
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   unlistenGridView = await listen('message-from-grid-view', (event) => {
-
-    // if searchBox is focused, do not handle the message
-    if (searchBoxRef.value && searchBoxRef.value.isFocused) {
-      return;
-    }
-
     const { message } = event.payload;
     switch (message) {
       case 'search':
@@ -553,6 +543,9 @@ onMounted( async() => {
         copyImage(fileList.value[selectedItemIndex.value].file_path).then(() => {
           toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
         });
+        break;
+      case 'edit':
+        // showCommentMsgbox.value = true;
         break;
       case 'rename':
         renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
@@ -579,6 +572,9 @@ onMounted( async() => {
       case 'reveal':
         revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
         break;
+      case 'refresh':
+        updateThumbForFile(fileList.value[selectedItemIndex.value]);
+        break;
       case 'favorite':
         toggleFavorite();
         break;
@@ -602,12 +598,6 @@ onMounted( async() => {
   });
 
   unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
-
-    // if searchBox is focused, do not handle the message
-    if (searchBoxRef.value && searchBoxRef.value.isFocused) {
-      return;
-    }
-
     const { message } = event.payload;
     switch (message) {
       case 'home':
@@ -972,6 +962,18 @@ function removeFromFileList(index) {
   }
 }
 
+// force-update the thumbnail for the file
+const updateThumbForFile = async (file) => {
+  const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize, true);
+  if(thumb) {
+    if(thumb.error_code === 0) {
+      file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+    } else if(thumb.error_code === 1) {
+      file.thumbnail = thumbnailPlaceholder;
+    }
+  }
+}
+
 // toggle the selected file's favorite status (selectMode = false)
 const toggleFavorite = async () => {
   if (selectedItemIndex.value >= 0) {
@@ -1196,8 +1198,7 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
   thumbCount.value = 0;
 
   const getThumbForFile = async (file) => {
-    // console.log('getFileListThumb:', file);
-    const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize);
+    const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize, false);
     if(thumb) {
       if(thumb.error_code === 0) {
         file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;

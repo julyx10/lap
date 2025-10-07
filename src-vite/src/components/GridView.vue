@@ -102,7 +102,6 @@ import {
   IconMore,
   IconOpen,
   IconEdit,
-  IconPrint,
   IconFavorite,
   IconUnFavorite,
   IconTag,
@@ -114,7 +113,7 @@ import {
   IconGoto,
   IconSearch,
   IconVideo,
-  IconAudio,
+  IconRefresh,
   IconChecked,
   IconUnChecked,
   IconComment,
@@ -168,11 +167,25 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: localeMsg.value.menu.file.edit,
+      icon: IconEdit,
+      action: () => {
+        editItem();
+      }
+    },
+    {
       label: localeMsg.value.menu.file.copy,
       icon: IconCopy,
       shortcut: isMac ? '⌘C' : 'Ctrl+C',
       action: () => {
         copyItem();
+      }
+    },
+    {
+      label: localeMsg.value.menu.file.refresh,
+      icon: IconRefresh,
+      action: () => {
+        refreshItem();
       }
     },
     {
@@ -186,20 +199,6 @@ const moreMenuItems = computed(() => {
         renameItem();
       }
     },
-    // {
-    //   label: localeMsg.value.menu.edit,
-    //   icon: IconEdit,
-    //   action: () => {
-    //     emit('message-from-grid-view', { message: 'edit' });
-    //   }
-    // },
-    // {
-    //   label: localeMsg.value.menu.print,
-    //   icon: IconPrint,
-    //   action: async () => {
-    //     emit('message-from-grid-view', { message: 'print' });
-    //   }
-    // },
     {
       label: localeMsg.value.menu.file.move_to,
       icon: IconMoveTo,
@@ -357,6 +356,10 @@ function copyItem() {
   emit('message-from-grid-view', { message: 'copy' });
 };
 
+function editItem() {
+  emit('message-from-grid-view', { message: 'edit' });
+};
+
 function renameItem() {
   emit('message-from-grid-view', { message: 'rename' });
 };
@@ -381,16 +384,20 @@ function revealItem() {
   emit('message-from-grid-view', { message: 'reveal' });
 };
 
+function refreshItem() {
+  emit('message-from-grid-view', { message: 'refresh' });
+}
+
 function toggleFavorite() {
   emit('message-from-grid-view', { message: 'favorite' });
 };
 
-function tagItem() {
-  emit('message-from-grid-view', { message: 'tag' });
-};
-
 function rotateItem() {
   emit('message-from-grid-view', { message: 'rotate' });
+};
+
+function tagItem() {
+  emit('message-from-grid-view', { message: 'tag' });
 };
 
 function commentItem() {

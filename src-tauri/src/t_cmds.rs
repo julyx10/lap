@@ -303,9 +303,10 @@ pub async fn get_file_thumb(
     file_path: &str, 
     file_type: i64, 
     orientation: i32, 
-    thumbnail_size: u32
+    thumbnail_size: u32,
+    force_regenerate: bool
 ) -> Result<Option<AThumb>, String> {
-    AThumb::add_to_db(file_id, file_path, file_type, orientation, thumbnail_size)
+    AThumb::add_to_db(file_id, file_path, file_type, orientation, thumbnail_size, force_regenerate)
         .map_err(|e| format!("Error while adding thumbnail to DB: {}", e))
 }
 

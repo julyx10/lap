@@ -1179,10 +1179,16 @@ impl AThumb {
         file_type: i64,
         orientation: i32,
         thumbnail_size: u32,
+        force_regenerate: bool,
     ) -> Result<Option<Self>, String> {
-        // Check if the thumbnail exists
-        if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
-            return Ok(Some(thumbnail));
+        // If force_regenerate is true, delete the existing thumbnail if any
+        if force_regenerate {
+            let _ = Self::delete(file_id);
+        } else {
+            // Check if the thumbnail exists
+            if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
+                return Ok(Some(thumbnail));
+            }
         }
 
         // Try to create a new thumbnail.
@@ -1202,6 +1208,18 @@ impl AThumb {
         athumb.insert()?;
         
         Self::fetch(file_id)
+    }
+
+    /// delete a thumbnail from db
+    pub fn delete(file_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .execute(
+                "DELETE FROM athumbs WHERE file_id = ?1",
+                params![file_id],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
     }
 
     /// get the thumbnail count of the folder
