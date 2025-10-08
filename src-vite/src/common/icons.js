@@ -50,7 +50,7 @@ export { default as IconRestore } from '@/assets/icons/window-restore.svg';
 // ACTION & TOOLBAR ICONS
 // ======================
 export { default as IconAdd } from '@/assets/icons/plus.svg';
-export { default as IconRemove } from '@/assets/icons/minus-circle.svg';
+export { default as IconRemove } from '@/assets/icons/minus.svg';
 export { default as IconClose } from '@/assets/icons/close.svg';
 export { default as IconSearch } from '@/assets/icons/search.svg';
 export { default as IconMore } from '@/assets/icons/more.svg';

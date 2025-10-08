@@ -145,7 +145,7 @@ import {
   IconMore,
   IconDragHandle,
   IconEdit,
-  IconTrash,
+  IconRemove,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -207,7 +207,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.album.remove,
-      icon: IconTrash,
+      icon: IconRemove,
       action: () => {
         showRemoveAlbumMsgbox.value = true;
       }

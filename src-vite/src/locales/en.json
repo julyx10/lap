@@ -108,8 +108,8 @@
     },
     "album": {
       "add": "Add folder",
-      "edit": "Edit",
-      "remove": "Remove",
+      "edit": "Edit album",
+      "remove": "Remove from albums",
       "refresh": "Refresh",
       "reorder": "Reorder"
     },
@@ -154,8 +154,8 @@
       "file_name_invalid": "File name cannot contain the following characters: \\ / : * ? \" < > |."
     },
     "remove_album": {
-      "title": "Remove from albums?",
-      "content": "'{album}' will be removed from the albums. This action will not delete the actual files.",
+      "title": "Remove from albums",
+      "content": "The album '{album}' will be removed. This action will not delete the actual files.",
       "ok": "Remove"
     },
     "rename_folder": {

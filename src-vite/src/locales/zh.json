@@ -108,8 +108,8 @@
     },
     "album": {
       "add": "添加文件夹",
-      "edit": "编辑",
-      "remove": "删除",
+      "edit": "编辑相册",
+      "remove": "从相册中移除",
       "refresh": "刷新",
       "reorder": "重新排列"
     },
@@ -154,8 +154,8 @@
       "file_name_invalid": "文件名不能包含以下字符: \\ / : * ? \" < > |."
     },
     "remove_album": {
-      "title": "从相册中移除？",
-      "content": "'{album}' 将从相册中移除。此操作不会删除实际文件。",
+      "title": "从相册中移除",
+      "content": "相册 '{album}' 将被移除。此操作不会删除实际文件。",
       "ok": "移除"
     },
     "rename_folder": {
