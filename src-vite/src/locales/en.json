@@ -125,7 +125,7 @@
       "copy_to": "Copy to",
       "move_to_trash": "Move to trash",
       "delete": "Delete",
-      "goto_folder": "Go to folder",
+      "goto_album": "Go to album",
       "reveal_in_finder": "Reveal in Finder",
       "reveal_in_file_explorer": "Reveal in File Explorer",
       "refresh": "Refresh",
@@ -253,6 +253,23 @@
     },
     "select_file": {
       "error": "Failed to select file."
+    },
+    "image_editor": {
+      "title": "Image editor",
+      "transform": "Transform",
+      "rotate_left": "Rotate left 90 degrees",
+      "rotate_right": "Rotate right 90 degrees",
+      "flip_horizontal": "Flip horizontal",
+      "flip_vertical": "Flip vertical",
+      "resize": "Resize",
+      "width": "Width",
+      "height": "Height",
+      "format": "Format",
+      "jpeg": "JPEG",
+      "png": "PNG",
+      "webp": "WEBP",
+      "ok": "Save",
+      "cancel": "Cancel"
     }
   },
 
@@ -309,6 +326,7 @@
       "zoom_out": "Zoom out",
       "zoom_fit": "Fit to screen",
       "zoom_actual": "Actual size",
+      "edit": "Edit",
       "rotate": "Rotate",
       "favorite": "Favorite",
       "unfavorite": "Unfavorite",

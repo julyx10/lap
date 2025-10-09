@@ -66,6 +66,12 @@
           @click="toggleZoomFit()"
         />
         <TButton
+          :icon="IconImageEdit"
+          :disabled="fileIndex < 0 || fileInfo?.file_type !== 1"
+          :tooltip="$t('image_viewer.toolbar.edit')"
+          @click="showImageEditor = true"
+        />
+        <TButton
           :icon="IconFavorite"
           :disabled="fileIndex < 0"
           :selected="fileInfo?.is_favorite"
@@ -252,6 +258,12 @@
 
   <ToolTip ref="toolTipRef" />
 
+  <ImageEditor 
+    v-model:visible="showImageEditor" 
+    :filePath="filePath" 
+    @image-edited="onImageEdited" 
+  />
+
 </template>
 
 
@@ -269,6 +281,7 @@ import { copyImage, getFileInfo, getFileImage, getTagsForFile, getFileHasTags, p
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import Image from '@/components/Image.vue';
+import ImageEditor from '@/components/ImageEditor.vue';
 const Video = defineAsyncComponent(() => import('@/components/Video.vue')); // dynamic import
 
 import FileInfo from '@/components/FileInfo.vue';
@@ -289,7 +302,7 @@ import {
   IconFavorite,
   IconRotate,
   IconMore,
-  IconEdit,
+  IconImageEdit,
   IconPrint,
   IconSearch,
   IconTrash,
@@ -344,6 +357,7 @@ const isScaleChanged = ref(false);  // Scale changed state
 const showTrashMsgbox = ref(false);
 const showTaggingDialog = ref(false);
 const fileIdsToTag = ref<number[]>([]);
+const showImageEditor = ref(false);
 
 const isDraggingSplitter = ref(false); // Dragging state for the splitter
 const divContentView = ref(null); // Reference to the content view
@@ -353,13 +367,6 @@ const toolTipRef = ref(null);
 // more menuitems
 const moreMenuItems = computed(() => {
   return [
-    {
-      label: localeMsg.value.menu.file.edit,
-      icon: IconEdit,
-      action: () => {
-        console.log('Edit:', filePath.value);
-      }
-    },
     {
       label: localeMsg.value.menu.file.copy,
       icon: IconCopy,
@@ -421,6 +428,13 @@ const moreMenuItems = computed(() => {
     },
   ];
 });
+
+const onImageEdited = () => {
+  console.log('Image has been edited, refreshing...');
+  imageCache.delete(filePath.value);
+  loadImage(filePath.value);
+};
+
 
 let unlistenResize: () => void;
 let unlistenImg: () => void;

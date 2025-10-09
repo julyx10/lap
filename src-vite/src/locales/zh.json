@@ -125,7 +125,7 @@
       "copy_to": "复制到",
       "move_to_trash": "移到废纸篓",
       "delete": "删除",
-      "goto_folder": "前往文件夹",
+      "goto_album": "前往相册",
       "reveal_in_finder": "在访达中显示",
       "reveal_in_file_explorer": "在文件资源管理器中显示",
       "refresh": "刷新",
@@ -253,6 +253,23 @@
     },
     "select_file": {
       "error": "选择文件失败。"
+    },
+    "image_editor": {
+      "title": "图片编辑器",
+      "transform": "变换",
+      "rotate_left": "逆时针旋转 90 度",
+      "rotate_right": "顺时针旋转 90 度",
+      "flip_horizontal": "水平翻转",
+      "flip_vertical": "垂直翻转",
+      "resize": "调整大小",
+      "width": "宽度",
+      "height": "高度",
+      "format": "格式",
+      "jpeg": "JPEG",
+      "png": "PNG",
+      "webp": "WEBP",
+      "ok": "保存",
+      "cancel": "取消"
     }
   },
 
@@ -309,6 +326,7 @@
       "zoom_out": "缩小",
       "zoom_fit": "适应屏幕",
       "zoom_actual": "实际大小",
+      "edit": "编辑",
       "rotate": "旋转",
       "favorite": "收藏",
       "unfavorite": "取消收藏",

@@ -36,7 +36,7 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
       <strong>Home — Light Theme</strong><br>
       <img src="docs/screenshots/03%20screenshot-home-light.png" alt="Home — Light Theme" width="520">
       <br>
-      <em>Light mode; supports all 35 built‑in DaisyUI themes.</em>
+      <em>Light mode; supports all 35 built‑in daisyUI themes.</em>
     </td>
   </tr>
   <tr>
@@ -154,7 +154,7 @@ Viewer
 
 - Desktop: Tauri 2 (Rust), custom asset protocol and Tauri plugins (fs, os, shell, dialog, window-state)
 - Backend: Rust, rusqlite (SQLite), exif parsing, reverse geocoding, FFmpeg (via ffmpeg-next), image processing
-- Frontend: Vue 3, Vite 6, TypeScript, Pinia, Tailwind CSS v4 + DaisyUI, Video.js, vue-i18n
+- Frontend: Vue 3, Vite 6, TypeScript, Pinia, Tailwind CSS v4 + daisyUI, Video.js, Cropper.js, vue-i18n
 
 ## Requirements
 
@@ -233,10 +233,11 @@ Thanks to the open-source libraries and tools that make jc-photo possible:
 - Frontend (Vue)
   - Vue 3, vue-router, vue-i18n, @vue/compiler-sfc
   - Vite, @vitejs/plugin-vue, vite-plugin-vue-devtools, vite-svg-loader
-  - Tailwind CSS v4, DaisyUI, @tailwindcss/vite, @tailwindcss/postcss, PostCSS, Autoprefixer
+  - Tailwind CSS v4, daisyUI, @tailwindcss/vite, @tailwindcss/postcss, PostCSS, Autoprefixer
   - TypeScript, @types/node
   - Pinia, pinia-plugin-persistedstate
   - Video.js
+  - Cropper.js
   - date-fns, lodash
   - vue-draggable-plus, vue-lazyload
 

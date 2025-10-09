@@ -101,7 +101,7 @@ import DropDownMenu from '@/components/DropDownMenu.vue';
 import { 
   IconMore,
   IconOpen,
-  IconEdit,
+  IconImageEdit,
   IconFavorite,
   IconUnFavorite,
   IconTag,
@@ -168,9 +168,19 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.file.edit,
-      icon: IconEdit,
+      icon: IconImageEdit,
+      disabled: file.file_type !== 1,
       action: () => {
         editItem();
+      }
+    },
+    {
+      label: localeMsg.value.menu.file.copy,
+      icon: IconCopy,
+      shortcut: isMac ? '⌘C' : 'Ctrl+C',
+      disabled: file.file_type !== 1,
+      action: () => {
+        copyItem();
       }
     },
     {
@@ -181,11 +191,11 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.file.copy,
-      icon: IconCopy,
-      shortcut: isMac ? '⌘C' : 'Ctrl+C',
+      label: localeMsg.value.menu.file.goto_album,
+      disabled: props.showFolderFiles,
+      icon: IconGoto,
       action: () => {
-        copyItem();
+        gotoFolder();
       }
     },
     {
@@ -226,14 +236,6 @@ const moreMenuItems = computed(() => {
       shortcut: isMac ? '⌘⌫' : 'Del',
       action: () => {
         trashItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.goto_folder,
-      disabled: props.showFolderFiles,
-      icon: IconGoto,
-      action: () => {
-        gotoFolder();
       }
     },
     {

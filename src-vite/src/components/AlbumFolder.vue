@@ -249,13 +249,13 @@ const moreMenuItems = computed(() => {
         showTrashFolderMsgbox.value = true;
       }
     },
-    {
-      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-      // icon: IconOpenFolder,
-      action: () => {
-        revealFolder(selectedFolderPath.value);
-      }
-    },
+    // {
+    //   label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+    //   // icon: IconOpenFolder,
+    //   action: () => {
+    //     revealFolder(selectedFolderPath.value);
+    //   }
+    // },
     {
       label: "-",   // separator
       action: null

@@ -11,6 +11,7 @@ use crate::t_utils;
 use arboard::Clipboard;
 use std::path::Path;
 use image::GenericImageView;
+use serde::{Deserialize, Serialize};
 
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
 
@@ -475,6 +476,87 @@ pub fn get_location_info(is_show_hidden: bool) -> Result<Vec<ALocation>, String>
 pub fn print_image(image_path: String) -> Result<(), String> {
     t_utils::print_image(image_path)
         .map_err(|e| format!("Error while printing image: {}", e))
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CropData {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    rotate: f32,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ResizeData {
+    width: Option<u32>,
+    height: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct EditParams {
+    #[serde(rename = "filePath")]
+    file_path: String,
+    crop: CropData,
+    resize: ResizeData,
+    #[serde(rename = "flipHorizontal")]
+    flip_horizontal: bool,
+    #[serde(rename = "flipVertical")]
+    flip_vertical: bool,
+    #[serde(rename = "outputFormat")]
+    output_format: String,
+}
+
+#[tauri::command]
+pub async fn edit_image(params: EditParams) -> Result<(), String> {
+    let path = Path::new(&params.file_path);
+    let mut img = image::open(path).map_err(|e| e.to_string())?;
+
+    // 1. Flip
+    if params.flip_horizontal {
+        img = img.fliph();
+    }
+    if params.flip_vertical {
+        img = img.flipv();
+    }
+
+    // 2. Rotate
+    let rotation = params.crop.rotate.round() as i32;
+    match rotation {
+        90 => img = img.rotate90(),
+        180 => img = img.rotate180(),
+        270 => img = img.rotate270(),
+        -90 => img = img.rotate270(),
+        -180 => img = img.rotate180(),
+        -270 => img = img.rotate90(),
+        _ => {},
+    }
+
+    // 3. Crop
+    img = img.crop_imm(
+        params.crop.x.round() as u32,
+        params.crop.y.round() as u32,
+        params.crop.width.round() as u32,
+        params.crop.height.round() as u32,
+    );
+
+    // 4. Resize
+    if let (Some(w), Some(h)) = (params.resize.width, params.resize.height) {
+        if w > 0 && h > 0 {
+            img = img.resize_exact(w, h, image::imageops::FilterType::Lanczos3);
+        }
+    }
+
+    // 5. Save
+    let format = match params.output_format.as_str() {
+        "png" => image::ImageFormat::Png,
+        "webp" => image::ImageFormat::WebP,
+        _ => image::ImageFormat::Jpeg,
+    };
+
+    img.save_with_format(path, format).map_err(|e| e.to_string())?; 
+
+    Ok(())
 }
 
 // settings

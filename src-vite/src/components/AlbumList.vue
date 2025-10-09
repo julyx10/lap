@@ -223,13 +223,13 @@ const moreMenuItems = computed(() => {
         showNewFolderMsgbox.value = true;
       }
     },
-    {
-      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-      // icon: IconExternal,
-      action: () => {
-        revealFolder(getAlbumById(selectedAlbumId.value).path);
-      }
-    },
+    // {
+    //   label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+    //   // icon: IconExternal,
+    //   action: () => {
+    //     revealFolder(getAlbumById(selectedAlbumId.value).path);
+    //   }
+    // },
   ];
 });
 

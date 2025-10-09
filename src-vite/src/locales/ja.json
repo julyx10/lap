@@ -125,7 +125,7 @@
       "copy_to": "コピー",
       "move_to_trash": "回收站に移動",
       "delete": "削除",
-      "goto_folder": "フォルダへ移動",
+      "goto_album": "アルバムへ移動",
       "reveal_in_finder": "Finderで表示",
       "reveal_in_file_explorer": "ファイルエクスプローラーで表示",
       "refresh": "更新",
@@ -253,6 +253,23 @@
     },
     "select_file": {
       "error": "ファイルを選択できませんでした。"
+    },
+    "image_editor": {
+      "title": "画像エディタ",
+      "transform": "変換",
+      "rotate_left": "左回転 90 度",
+      "rotate_right": "右回転 90 度",
+      "flip_horizontal": "水平反転",
+      "flip_vertical": "垂直反転",
+      "resize": "サイズ変更",
+      "width": "幅",
+      "height": "高さ",
+      "format": "形式",
+      "jpeg": "JPEG",
+      "png": "PNG",
+      "webp": "WEBP",
+      "ok": "保存",
+      "cancel": "キャンセル"
     }
   },
 
@@ -309,6 +326,7 @@
       "zoom_out": "縮小",
       "zoom_fit": "画面に合わせる",
       "zoom_actual": "実寸",
+      "edit": "編集",
       "rotate": "回転",
       "favorite": "お気に入り",
       "unfavorite": "お気に入り解除",
