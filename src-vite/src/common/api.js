@@ -476,6 +476,19 @@ export async function getFileImage(filePath) {
   return null;
 }
 
+// edit an image
+export async function editImage(params) {
+  try {
+    const result = await invoke('edit_image', { params });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to edit image:', error);
+  }
+  return null;
+}
+
 // set file rotate
 export async function setFileRotate(fileId, fileRotate) {
   try {

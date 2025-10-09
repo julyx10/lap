@@ -1,40 +1,50 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-base-200 rounded-lg shadow-xl p-4 w-full max-w-4xl max-h-[90vh] flex flex-col">
-      <h2 class="text-xl font-bold mb-4">{{ $t('msgbox.image_editor.title') }}</h2>
+
+  <dialog id="imageEditorDialog" class="modal">
+    <div class="w-4/5 p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
-      <div class="flex-grow flex gap-4 overflow-hidden">
+      <!-- title bar -->
+      <div class="text-lg mb-4 flex items-center justify-between">
+        {{ $t('msgbox.image_editor.title') }}
+        <TButton
+          :icon="IconClose"
+          :buttonSize="'small'"
+          @click="clickCancel"
+        />
+      </div>
+
+      <div class="mt-2 flex flex-row gap-4">
         <!-- Image Cropper -->
-        <div class="flex-grow h-full">
-          <div class="img-container h-full bg-base-300">
-            <img ref="image" :src="imageSrc" alt="Image to edit" class="max-w-full max-h-full"/>
+        <div class="w-full h-full">
+          <div class="img-container bg-base-300 h-[60vh]">
+            <img ref="image" :src="imageSrc" @load="initializeCropper" alt="Image to edit" class="block max-w-full"/>
           </div>
         </div>
 
         <!-- Controls -->
-        <div class="w-64 flex-shrink-0 flex flex-col gap-4">
+        <div class="w-full md:w-64 flex-shrink-0 flex flex-col gap-4">
           <div>
             <h3 class="font-semibold mb-2">{{ $t('msgbox.image_editor.transform') }}</h3>
             <div class="">
               <TButton
                 :icon="IconRotateLeft"
                 :tooltip="$t('msgbox.image_editor.rotate_left')"
-                @click="rotate(-90)" 
+                @click="clickRotate(-90)" 
               />
               <TButton
                 :icon="IconRotateRight"
                 :tooltip="$t('msgbox.image_editor.rotate_right')"
-                @click="rotate(90)" 
+                @click="clickRotate(90)" 
               />
               <TButton
                 :icon="IconFlipVertical"
                 :tooltip="$t('msgbox.image_editor.flip_vertical')"
-                @click="flipY" 
+                @click="clickFlipY" 
               />
               <TButton
                 :icon="IconFlipHorizontal"
                 :tooltip="$t('msgbox.image_editor.flip_horizontal')"
-                @click="flipX" 
+                @click="clickFlipX" 
               />
             </div>
           </div>
@@ -60,32 +70,45 @@
       <div class="mt-6 flex justify-end gap-4">
         <button
           class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
-          @click="cancel"
+          @click="clickCancel"
         >{{ $t('msgbox.image_editor.cancel') }}</button>
         
         <button 
           class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
-          @click="save"
+          @click="clickSave"
         >{{ $t('msgbox.image_editor.ok') }}</button>
       </div>
     </div>
-  </div>
+  </dialog>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import Cropper from 'cropperjs';
-
-import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { useUIStore } from '@/stores/uiStore';
+import { convertFileSrc } from '@tauri-apps/api/core';
+import { editImage } from '@/common/api';
+import { listen } from '@tauri-apps/api/event';
 import TButton from '@/components/TButton.vue';
-import { IconRotateLeft, IconRotateRight, IconFlipHorizontal, IconFlipVertical } from '@/common/icons';
+
+import { 
+  IconClose, 
+  IconRotateLeft, 
+  IconRotateRight, 
+  IconFlipHorizontal, 
+  IconFlipVertical 
+} from '@/common/icons';
 
 const props = defineProps({
-  visible: Boolean,
-  filePath: String,
+  filePath: {
+    type: String,
+    required: true,
+  },
 });
 
-const emit = defineEmits(['update:visible', 'image-edited']);
+const emit = defineEmits(['ok', 'cancel']);
+
+const uiStore = useUIStore();
 
 const image = ref(null);
 const imageSrc = ref('');
@@ -96,21 +119,13 @@ const resizeWidth = ref(null);
 const resizeHeight = ref(null);
 const outputFormat = ref('jpeg');
 
-let cropperInstance = null;
-
-watch(() => props.visible, (newVal) => {
-  if (newVal) {
-    imageSrc.value = convertFileSrc(props.filePath);
-    setTimeout(initializeCropper, 100); // Wait for image to be in DOM
-  } else {
-    destroyCropper();
-  }
-});
+let cropperInstance: Cropper | null = null;
+let unlistenKeydown: () => void;
 
 const initializeCropper = () => {
-  if (image.value) {
+  if (image.value && !cropperInstance) { // prevent re-initialization
     cropperInstance = new Cropper(image.value, {
-      viewMode: 1,
+      viewMode: 2,
       dragMode: 'move',
       autoCropArea: 0.8,
       restore: false,
@@ -120,27 +135,61 @@ const initializeCropper = () => {
       cropBoxMovable: true,
       cropBoxResizable: true,
       toggleDragModeOnDblclick: false,
-    });
+    } as any);
     cropper.value = cropperInstance;
   }
 };
 
-const destroyCropper = () => {
-  if (cropperInstance) {
-    // For Cropper.js v2, there is no 'destroy' method.
-    // Cleanup is handled by removing the element from the DOM, which Vue does automatically.
-    cropperInstance = null;
-    cropper.value = null;
-  }
-};
+// const destroyCropper = () => {
+//   if (cropperInstance) {
+//     cropperInstance.destroy(); // In v2, this might not exist, but let's keep it for now as the error was on .rotate
+//     cropperInstance = null;
+//     cropper.value = null;
+//   }
+// };
 
-const rotate = (degree) => {
+onMounted(async () => {
+  const dialog = document.getElementById('imageEditorDialog') as HTMLDialogElement | null;
+  dialog?.showModal();
+
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+  uiStore.pushInputHandler('ImageEditor');
+
+  imageSrc.value = convertFileSrc(props.filePath);
+});
+
+onUnmounted(() => {
+  if (unlistenKeydown) {
+    unlistenKeydown();
+  }
+  uiStore.popInputHandler();
+  // destroyCropper();
+});
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (!uiStore.isInputActive('ImageEditor')) return;
+
+  const { key } = event.payload;
+
+  switch (key) {
+    case 'Enter':
+      clickSave();
+      break;
+    case 'Escape':
+      clickCancel();
+      break;
+    default:
+      break;
+  }
+}
+
+const clickRotate = (degree: number) => {
   if (cropper.value) {
     cropper.value.rotate(degree);
   }
 };
 
-const flipX = () => {
+const clickFlipX = () => {
   if (cropper.value) {
     const currentScaleX = cropper.value.getData().scaleX || 1;
     cropper.value.scaleX(-currentScaleX);
@@ -148,7 +197,7 @@ const flipX = () => {
   }
 };
 
-const flipY = () => {
+const clickFlipY = () => {
   if (cropper.value) {
     const currentScaleY = cropper.value.getData().scaleY || 1;
     cropper.value.scaleY(-currentScaleY);
@@ -156,11 +205,7 @@ const flipY = () => {
   }
 };
 
-const cancel = () => {
-  emit('update:visible', false);
-};
-
-const save = async () => {
+const clickSave = async () => {
   if (!cropper.value) return;
 
   const cropData = cropper.value.getData(true); // get rounded data
@@ -183,30 +228,23 @@ const save = async () => {
     outputFormat: outputFormat.value,
   };
 
-  console.log("Saving with params:", editParams);
   try {
-    await invoke('edit_image', { params: editParams });
-    emit('image-edited');
-    emit('update:visible', false);
+    await editImage(editParams);
+    emit('ok');
   } catch (error) {
     console.error('Failed to edit image:', error);
-    // Here you could show an error message to the user
+    // TODO: show an error message to the user
   }
 };
 
-onUnmounted(() => {
-  destroyCropper();
-});
+const clickCancel = () => {
+  emit('cancel');
+};
+
 </script>
 
 <style>
-.img-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.cropper-view-box,
-.cropper-face {
-  border-radius: .5rem;
-}
+/* .img-container > img {
+  visibility: hidden;
+} */
 </style>

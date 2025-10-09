@@ -12,8 +12,8 @@ use rusqlite::{params, Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
-
 use crate::t_utils;
+use crate::t_image;
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -445,14 +445,14 @@ impl AFile {
         
         // get dimensions based on file type
         let (width, height) = match file_type {
-            1 => t_utils::get_image_dimensions(file_path)?,
-            2 => t_utils::get_video_dimensions(file_path)?,
+            1 => t_image::get_image_dimensions(file_path)?,
+            2 => t_image::get_video_dimensions(file_path)?,
             _ => (0, 0),
         };
         
         // get duration of video file
         let duration = match file_type {
-            2 => t_utils::get_video_duration(file_path)?,
+            2 => t_image::get_video_duration(file_path)?,
             _ => 0,
         };
 
@@ -1164,14 +1164,14 @@ impl AThumb {
                 if let Some(ext) = t_utils::get_file_extension(file_path) {
                     match ext.to_lowercase().as_str() {
                         "heic" | "heif" => { // heic/heif
-                            match t_utils::get_video_thumbnail(file_path, thumbnail_size) {
+                            match t_image::get_video_thumbnail(file_path, thumbnail_size) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1), // empty thumb
                                 Err(_) => (None, 1), // error
                             }
                         },
                         _ => { // other images
-                            match t_utils::get_image_thumbnail(file_path, orientation, thumbnail_size) {
+                            match t_image::get_image_thumbnail(file_path, orientation, thumbnail_size) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1),
                                 Err(_) => (None, 1),
@@ -1183,7 +1183,7 @@ impl AThumb {
                 }
             }
             2 => { // video
-                match t_utils::get_video_thumbnail(file_path, thumbnail_size) {
+                match t_image::get_video_thumbnail(file_path, thumbnail_size) {
                     Ok(Some(data)) => (Some(data), 0),
                     Ok(None) => (None, 1),
                     Err(_) => (None, 1),

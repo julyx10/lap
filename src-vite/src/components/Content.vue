@@ -175,6 +175,14 @@
     </div>
   </div>
 
+  <!-- image editor -->
+  <ImageEditor 
+    v-if="showImageEditor"
+    :filePath="fileList[selectedItemIndex]?.file_path" 
+    @ok="onImageEdited" 
+    @cancel="showImageEditor = false"
+  />
+
   <!-- rename -->
   <MessageBox
     v-if="showRenameMsgbox"
@@ -278,6 +286,7 @@ import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
+import ImageEditor from '@/components/ImageEditor.vue';
 
 import {
   IconHome,
@@ -372,6 +381,7 @@ const showRenameMsgbox = ref(false);  // show rename message box
 const renamingFileName = ref({}); // extract the file name to {name, ext}
 
 const showMoveTo = ref(false);
+const showImageEditor = ref(false);
 const showCopyTo = ref(false);
 const showTrashMsgbox = ref(false);
 const showCommentMsgbox = ref(false);
@@ -545,7 +555,7 @@ onMounted( async() => {
         });
         break;
       case 'edit':
-        // showCommentMsgbox.value = true;
+        showImageEditor.value = true;
         break;
       case 'update-from-file':
         updateFile(fileList.value[selectedItemIndex.value]);
@@ -847,6 +857,14 @@ async function updateContent() {
   }
 
   refreshFileList();
+}
+
+// update the file info from the image editor
+const onImageEdited = () => {
+  console.log('onImageEdited:', fileList.value[selectedItemIndex.value]);
+  updateFile(fileList.value[selectedItemIndex.value]);
+
+  showImageEditor.value = false;
 }
 
 // click rename menu item

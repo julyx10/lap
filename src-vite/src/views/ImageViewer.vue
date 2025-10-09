@@ -256,14 +256,15 @@
     @cancel="showTaggingDialog = false"
   />
 
-  <ToolTip ref="toolTipRef" />
-
   <ImageEditor 
-    v-model:visible="showImageEditor" 
+    v-if="showImageEditor"
     :filePath="filePath" 
-    @image-edited="onImageEdited" 
+    @ok="onImageEdited" 
+    @cancel="showImageEditor = false"
   />
-
+  
+  <ToolTip ref="toolTipRef" />
+  
 </template>
 
 
@@ -347,7 +348,7 @@ const imageCache = new Map();   // Cache images to prevent reloading
 const loadImageError = ref(false);   // Track if there was an error loading the image
 
 const isSlideShow = ref(false);     // Slide show state
-let timer = null;                   // Timer for slide show
+let timer: NodeJS.Timeout | null = null;  // Timer for slide show
 
 const imageScale = ref(1);          // Image scale
 const imageMinScale = ref(0);       // Minimum image scale

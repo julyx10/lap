@@ -169,6 +169,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.file.edit,
       icon: IconImageEdit,
+      shortcut: isMac ? '⌘E' : 'Ctrl+E',
       disabled: file.file_type !== 1,
       action: () => {
         editItem();
@@ -317,6 +318,8 @@ function handleKeyDown(event) {
     openItem();
   } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
     copyItem();
+  } else if(isCmdKey && key.toLowerCase() === 'e') {
+    editItem();
   } else if(isCmdKey && key.toLowerCase() === 'f') {
     toggleFavorite();
   } else if(isCmdKey && key.toLowerCase() === 't') {

@@ -131,7 +131,7 @@ const uiStore = useUIStore();
 const emit = defineEmits(['ok', 'cancel', 'reset']);
 
 // input 
-const inputRef = ref(null);
+const inputRef = ref<HTMLInputElement | null>(null);
 const inputValue = ref(props.inputText);
 const needValidateInput = ref(props.needValidateInput);
 const inputErrorMessage = ref('');
@@ -143,8 +143,8 @@ const okButtonClasses = computed(() => {
 });
 
 onMounted(async () => {
-  const messageBoxDialog = document.getElementById('messageBoxDialog');
-  messageBoxDialog.showModal();
+  const messageBoxDialog = document.getElementById('messageBoxDialog') as HTMLDialogElement | null;
+  messageBoxDialog?.showModal();
 
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('MessageBox');
@@ -176,7 +176,7 @@ const validateInput = () => {
   }
 };
 
-function handleKeyDown(event) {
+function handleKeyDown(event: KeyboardEvent) {
   if (!uiStore.isInputActive('MessageBox')) return;
 
   const { key } = event;

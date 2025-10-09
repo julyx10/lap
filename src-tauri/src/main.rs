@@ -17,6 +17,7 @@ use tauri::Manager;
 mod t_cmds;
 mod t_sqlite;
 mod t_utils;
+mod t_image;
 
 /// The main function is the entry point for the Tauri application.
 fn main() {
