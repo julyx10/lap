@@ -80,12 +80,21 @@ const menuStyle = ref({});
 // Add event listener when the component is mounted
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside, { capture: true });
+  document.addEventListener('keydown', handleKeyDown);
 });
 
 // Remove event listener when the component is destroyed
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside, { capture: true });
+  document.removeEventListener('keydown', handleKeyDown);
 });
+
+// Handle Escape key press
+const handleKeyDown = (event) => {
+  if (isDropDown.value && event.key === 'Escape') {
+    isDropDown.value = false;
+  }
+};
 
 // Toggle dropdown menu
 const toggleDropdown = async () => {
@@ -99,19 +108,38 @@ const toggleDropdown = async () => {
     const rect = dropdown.value.getBoundingClientRect();
     const menuRect = menu.value.getBoundingClientRect();
     
-    let top = rect.bottom + window.scrollY;
-    let left = rect.left + window.scrollX;
-
-    const padding = 20; // Space from edges
+    const padding = 8; // A smaller padding for a snug fit.
     const menuWidth = menuRect.width;
     const menuHeight = menuRect.height;
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+    const scrollY = window.scrollY;
 
-    if (left + menuWidth > window.innerWidth - padding) {
-      left = window.innerWidth - menuWidth - padding;
+    let top = rect.bottom + scrollY;
+    let left = rect.left + window.scrollX;
+
+    // Check bottom boundary
+    if (top + menuHeight > winHeight + scrollY - padding) {
+      // Not enough space below, try to place above
+      top = rect.top - menuHeight + scrollY;
     }
 
-    if (top + menuHeight > window.innerHeight + window.scrollY - padding) {
-      top = rect.top - menuHeight + window.scrollY; // Display above
+    // Check top boundary (after potentially flipping)
+    if (top < scrollY + padding) {
+      // Still not enough space (menu is too tall), align to top
+      top = scrollY + padding;
+    }
+
+    // Check right boundary
+    if (left + menuWidth > winWidth - padding) {
+      // Align to the right edge
+      left = winWidth - menuWidth - padding;
+    }
+
+    // Check left boundary
+    if (left < padding) {
+      // Align to the left edge
+      left = padding;
     }
 
     menuStyle.value = { top: `${top}px`, left: `${left}px` };
