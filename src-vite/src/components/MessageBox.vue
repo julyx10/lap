@@ -4,7 +4,7 @@
     <div class="w-96 p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
 
       <!-- title bar -->
-      <div class="text-lg mb-4 flex items-center justify-between">
+      <div class="mb-4 flex items-center justify-between">
         {{ title }}
         <TButton
           :icon="IconClose"

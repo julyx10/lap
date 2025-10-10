@@ -4,7 +4,7 @@
       
       <!-- title bar -->
       <div class="mb-2 flex items-center justify-between">
-        <span class="text-lg font-bold">{{ $t('tag.edit_tag') }}</span>
+        {{ $t('tag.edit_tag') }}
         <TButton
           :icon="IconClose"
           :buttonSize="'small'"

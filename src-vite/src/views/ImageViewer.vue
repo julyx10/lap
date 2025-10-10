@@ -432,8 +432,10 @@ const moreMenuItems = computed(() => {
 
 const onImageEdited = () => {
   console.log('Image has been edited, refreshing...');
-  imageCache.delete(filePath.value);
-  loadImage(filePath.value);
+  // imageCache.delete(filePath.value);
+  // loadImage(filePath.value);
+
+  showImageEditor.value = false;
 };
 
 
