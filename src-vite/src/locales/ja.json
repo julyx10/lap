@@ -129,7 +129,7 @@
       "reveal_in_finder": "Finderで表示",
       "reveal_in_file_explorer": "ファイルエクスプローラーで表示",
       "refresh": "更新",
-      "properties": "プロパティ"
+      "information": "ファイル情報"
     },
     "tag": {
       "rename": "タグ名を変更",
@@ -275,15 +275,16 @@
 
   "file_info": {
     "columns": ["サムネイル", "名前", "寸法", "作成日時", "更新日時", "カメラ", "サイズ"],
-    "title": "プロパティ",
+    "title": "ファイル情報",
     "album_name": "アルバム",
-    "name": "名前",
+    "name": "ファイル名",
     "path": "パス",
     "dimension": "寸法",
     "size": "サイズ",
     "duration": "再生時間",
     "created_at": "作成日時",
     "modified_at": "更新日時",
+    "camera": "カメラ",
     "camera_make": "カメラメーカー",
     "camera_model": "カメラモデル",
     "date_taken": "撮影日時",

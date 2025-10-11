@@ -146,20 +146,18 @@
         <template v-if="fileIndex >= 0">
           <!-- prev button -->
           <div v-if="fileIndex > 0"
-            class="absolute left-0 w-40 h-full z-10 flex items-center justify-start cursor-pointer group" 
-            @click="clickPrev()"
+            class="absolute left-0 w-16 h-full z-10 flex items-center justify-start cursor-pointer group" 
           >
-            <div class="m-3 p-2 rounded-full hidden group-hover:block ">
-              <TButton :icon="IconLeft" :buttonClasses="'rounded-full'" />
+            <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
+              <TButton :icon="IconLeft" :buttonClasses="'rounded-full'" @click="clickPrev()"/>
             </div>
           </div>
           <!-- next button -->
           <div v-if="fileIndex < fileCount - 1"
-            class="absolute right-0 w-40 h-full z-10 flex items-center justify-end cursor-pointer group" 
-            @click="clickNext()"
+            class="absolute right-0 w-16 h-full z-10 flex items-center justify-end cursor-pointer group" 
           >
-            <div class="m-3 p-2 rounded-full hidden group-hover:block ">
-              <TButton :icon="IconRight" :buttonClasses="'rounded-full'" />
+            <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
+              <TButton :icon="IconRight" :buttonClasses="'rounded-full'" @click="clickNext()"/>
             </div>
           </div>
 
@@ -308,7 +306,7 @@ import {
   IconSearch,
   IconTrash,
   IconCopy,
-  IconProperties,
+  IconInformation,
   IconFullScreen,
   IconRestoreScreen,
   IconPin,
@@ -420,8 +418,8 @@ const moreMenuItems = computed(() => {
       action: null
     },
     {
-      label: localeMsg.value.menu.file.properties,
-      icon: IconProperties,
+      label: localeMsg.value.menu.file.information,
+      icon: IconInformation,
       shortcut: isMac ? '⌘I' : 'Ctrl+I',
       action: () => {
         clickShowFileInfo();
@@ -653,9 +651,11 @@ async function loadImage(filePath) {
     if (imageCache.has(filePath)) {
       imageSrc.value = imageCache.get(filePath);
     } else {
-      const imageBase64 = await getFileImage(filePath);
-      if (imageBase64) {
-        imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+      // const convertedSrc = await getFileImage(filePath);
+      const convertedSrc = convertFileSrc(filePath);
+      if (convertedSrc) {
+        // imageSrc.value = `data:image/jpeg;base64,${convertedSrc}`;
+        imageSrc.value = convertedSrc;
         imageCache.set(filePath, imageSrc.value);
       }
       else {
@@ -677,9 +677,11 @@ async function loadImage(filePath) {
 async function preLoadImage(filePath) {
   try {
     if (filePath.length > 0 && !imageCache.has(filePath)) {
-      const imageBase64 = await getFileImage(filePath);
-      if (imageBase64) {
-        const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
+      // const convertedSrc = await getFileImage(filePath);
+      const convertedSrc = convertFileSrc(filePath);
+      if (convertedSrc) {
+        // const imageSrc = `data:image/jpeg;base64,${convertedSrc}`;
+        const imageSrc = convertedSrc;
         imageCache.set(filePath, imageSrc);
       }
     }

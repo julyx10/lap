@@ -86,7 +86,7 @@
       "folders": "未找到文件夹",
       "tag": "未找到标签",
       "calendar": "未找到日历数据",
-      "location": "未找到位置数据",
+      "location": "未找到地点数据",
       "people": "未找到人物数据",
       "camera": "未找到相机数据"
     },
@@ -129,7 +129,7 @@
       "reveal_in_finder": "在访达中显示",
       "reveal_in_file_explorer": "在文件资源管理器中显示",
       "refresh": "刷新",
-      "properties": "属性"
+      "information": "文件信息"
     },
     "tag": {
       "rename": "重命名标签",
@@ -275,15 +275,16 @@
 
   "file_info": {
     "columns": ["缩略图", "名称", "尺寸", "创建时间", "修改时间", "相机", "大小"],
-    "title": "属性",
+    "title": "文件信息",
     "album_name": "相册",
-    "name": "名称",
+    "name": "文件名",
     "path": "路径",
     "dimension": "尺寸",
     "size": "大小",
     "duration": "时长",
     "created_at": "创建时间",
     "modified_at": "修改时间",
+    "camera": "相机",
     "camera_make": "相机制造商",
     "camera_model": "相机型号",
     "date_taken": "拍摄时间",
@@ -298,7 +299,7 @@
     "gps_latitude": "纬度",
     "gps_longitude": "经度",
     "gps_altitude": "海拔",
-    "geo_location": "位置",
+    "geo_location": "地点",
     "tags": "标签",
     "comment": "评论"
   },

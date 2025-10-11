@@ -106,7 +106,7 @@ export { default as IconLocation } from '@/assets/icons/map-pin.svg';
 export { default as IconPeople } from '@/assets/icons/user.svg';
 export { default as IconCamera } from '@/assets/icons/camera.svg';
 export { default as IconSettings } from '@/assets/icons/settings.svg';
-export { default as IconProperties } from '@/assets/icons/information.svg';
+export { default as IconInformation } from '@/assets/icons/information.svg';
 
 // ======================
 // MEDIA CONTROL ICONS

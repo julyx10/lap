@@ -670,15 +670,15 @@ watch(() => config.language, (newLanguage) => {
 /// watch for file list changes
 watch(
   () => [
-          config.sidebarIndex,      // toolbar index
-          config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath,   // favorite files and folder
-          config.albumId, config.albumFolderId, config.albumFolderPath,                 // album
-          config.tagId,                                                                 // tag
-          config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
-          config.cameraMake, config.cameraModel,                                        // camera 
-          config.locationAdmin1, config.locationName,                                   // location
-          config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
-        ], 
+    config.sidebarIndex,      // toolbar index
+    config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath,   // favorite files and folder
+    config.albumId, config.albumFolderId, config.albumFolderPath,                 // album
+    config.tagId,                                                                 // tag
+    config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
+    config.cameraMake, config.cameraModel,                                        // camera 
+    config.locationAdmin1, config.locationName,                                   // location
+    config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
+  ], 
   () => {
     fileListOffset.value = 0;   // reset file list offset
     updateContent();
@@ -1133,15 +1133,17 @@ const getImageSrc = async (index) => {
     loadImageError.value = false;
     
     let currentIndex = index;
-    const imageBase64 = await getFileImage(filePath);
-    if(!imageBase64) {
+    // const convertedSrc = await getFileImage(filePath);
+    const convertedSrc = convertFileSrc(filePath);
+    if(!convertedSrc) {
       imageSrc.value = '';
       loadImageError.value = true;
       return;
     }
     // Check if the selected item has changed since the invocation
     if (currentIndex === index) {
-      imageSrc.value = `data:image/jpeg;base64,${imageBase64}`;
+      // imageSrc.value = `data:image/jpeg;base64,${convertedSrc}`;
+      imageSrc.value = convertedSrc;
     }
   } catch (error) {
     imageSrc.value = '';

@@ -55,21 +55,21 @@
             <td>{{ formatTimestamp(fileInfo.modified_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
+            <td class="text-nowrap">{{ $t('file_info.date_taken') }}</td>
+            <td>{{ fileInfo.e_date_time }}</td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.camera') }}</td>
+            <td>{{ fileInfo.e_make }} {{ fileInfo.e_model }}</td>
+          </tr>
+          <!-- <tr>
             <td class="text-nowrap">{{ $t('file_info.camera_make') }}</td>
             <td>{{ fileInfo.e_make }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.camera_model') }}</td>
             <td>{{ fileInfo.e_model }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.date_taken') }}</td>
-            <td>{{ fileInfo.e_date_time }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.exposure_time') }}</td>
-            <td>{{ fileInfo.e_exposure_time }}</td>
-          </tr>
+          </tr> -->
           <tr>
             <td class="text-nowrap">{{ $t('file_info.aperture') }}</td>
             <td>{{ fileInfo.e_f_number }}</td>
@@ -77,6 +77,10 @@
           <tr>
             <td class="text-nowrap">{{ $t('file_info.focal_length') }}</td>
             <td>{{ fileInfo.e_focal_length }}</td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.exposure_time') }}</td>
+            <td>{{ fileInfo.e_exposure_time }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.iso') }}</td>

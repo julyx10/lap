@@ -129,7 +129,7 @@
       "reveal_in_finder": "Reveal in Finder",
       "reveal_in_file_explorer": "Reveal in File Explorer",
       "refresh": "Refresh",
-      "properties": "Properties"
+      "information": "File information"
     },
     "tag": {
       "rename": "Rename tag",
@@ -275,15 +275,16 @@
 
   "file_info": {
     "columns": ["Thumbnail", "Name", "Dimension", "Created time", "Modified time", "Camera", "Size"],
-    "title": "Properties",
+    "title": "File information",
     "album_name": "Album",
-    "name": "Name",
+    "name": "File name",
     "path": "Path",
     "dimension": "Dimension",
     "size": "Size",
     "duration": "Duration",
     "created_at": "Created at",
     "modified_at": "Modified at",
+    "camera": "Camera",
     "camera_make": "Camera make",
     "camera_model": "Camera model",
     "date_taken": "Taken date",
