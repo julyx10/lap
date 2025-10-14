@@ -256,7 +256,13 @@
     },
     "image_editor": {
       "title": "画像エディタ",
-      "transform": "変換",
+      "crop": "クロップ",
+      "cancel_crop": "クロップ解除",
+      "crop_shape": "クロップ形状",
+      "crop_shape_custom": "カスタム",
+      "crop_shape_landscape": "横長",
+      "crop_shape_portrait": "縦長",
+      "aspect_ratio": "アスペクト比",
       "rotate_left": "左回転 90 度",
       "rotate_right": "右回転 90 度",
       "flip_horizontal": "水平反転",
@@ -264,12 +270,16 @@
       "resize": "サイズ変更",
       "width": "幅",
       "height": "高さ",
+      "percentage": "パーセント",
+      "save_as": "保存先",
+      "save_as_placeholder": "新しいファイル名を入力",
       "format": "形式",
-      "jpeg": "JPEG",
-      "png": "PNG",
-      "webp": "WEBP",
+      "format_options": ["JPEG", "PNG", "WEBP"],
+      "quality": "品質",
+      "quality_options": ["高", "中", "低"],
       "ok": "保存",
-      "cancel": "キャンセル"
+      "cancel": "キャンセル",
+      "reset": "リセット"
     }
   },
 

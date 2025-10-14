@@ -65,6 +65,20 @@ export function setTheme(themeId: number) {
   htmlElement.setAttribute('data-theme', theme);
 }
 
+/// get the select options for a dropdown list
+export function getSelectOptions(options: string[]): { label: string, value: number }[] {
+  const result = [];
+  for (let i = 0; options && i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+  return result;
+}
+
+/// get the file extension
+export function getFileExtension(fileName: string): string {
+  return fileName.split('.').pop() || '';
+}
+
 /// get the seconds of slide show interval
 export function getSlideShowInterval(): number {
   return [1, 3, 5, 10, 15, 30][config.slideShowInterval] || 1;

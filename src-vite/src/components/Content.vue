@@ -178,7 +178,7 @@
   <!-- image editor -->
   <ImageEditor 
     v-if="showImageEditor"
-    :filePath="fileList[selectedItemIndex]?.file_path" 
+    :fileInfo="fileList[selectedItemIndex]" 
     @ok="onImageEdited" 
     @cancel="showImageEditor = false"
   />

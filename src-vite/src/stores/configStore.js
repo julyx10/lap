@@ -62,6 +62,13 @@ export const useConfigStore = defineStore('configStore', {
     showFileInfo: false,        // show file info
     fileInfoPanelWidth: 20,     // file info panel width
 
+    ////// ImageEditor.vue //////
+    imageEditor: {
+      cropShape: 0,             // image editor crop shape (0: Custom, 1: 1:1, 2: 1:2, 3: 2:3, 4: 3:4, 5: 9:16) 
+      format: 0,                // image editor format (0: JPEG, 1: PNG, 2: WEBP)
+      quality: 0,               // image editor quality (0: High, 1: Medium, 2: Low)
+    },
+
     ////// Video.vue //////
     videoMuted: false,           // video muted
     videoVolume: 1.0,            // video volume (0.0-1.0)

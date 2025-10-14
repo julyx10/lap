@@ -256,7 +256,7 @@
 
   <ImageEditor 
     v-if="showImageEditor"
-    :filePath="filePath" 
+    :fileInfo="fileInfo" 
     @ok="onImageEdited" 
     @cancel="showImageEditor = false"
   />

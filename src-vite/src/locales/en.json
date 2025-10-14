@@ -256,7 +256,13 @@
     },
     "image_editor": {
       "title": "Image editor",
-      "transform": "Transform",
+      "crop": "Crop",
+      "cancel_crop": "Cancel crop",
+      "crop_shape": "Crop shape",
+      "crop_shape_custom": "Custom",
+      "crop_shape_landscape": "Landscape",
+      "crop_shape_portrait": "Portrait",
+      "aspect_ratio": "Aspect ratio",
       "rotate_left": "Rotate left 90 degrees",
       "rotate_right": "Rotate right 90 degrees",
       "flip_horizontal": "Flip horizontal",
@@ -264,12 +270,16 @@
       "resize": "Resize",
       "width": "Width",
       "height": "Height",
+      "percentage": "Percentage",
+      "save_as": "Save as",
+      "save_as_placeholder": "Enter new file name",
       "format": "Format",
-      "jpeg": "JPEG",
-      "png": "PNG",
-      "webp": "WEBP",
+      "format_options": ["JPEG", "PNG", "WEBP"],
+      "quality": "Quality",
+      "quality_options": ["High", "Medium", "Low"],
       "ok": "Save",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "reset": "Reset"
     }
   },
 
