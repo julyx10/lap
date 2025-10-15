@@ -1,5 +1,4 @@
 <template>
-
   <div
     ref="container"
     class="relative w-full h-full overflow-hidden cursor-pointer"
@@ -29,7 +28,6 @@
       draggable="false"
       @load="onImageLoad($event.target)"
     />
-
   </div>
 </template>
 
@@ -62,13 +60,13 @@ const isZoomFit = ref(false);               // Zoom to fit image in container
 
 // image
 const activeImage = ref(1);                 // which image is active (0 or 1)
-const imageSrc = ref(['', '']);             // image source 1
+const imageSrc = ref(['', '']);             // image source
 const position = shallowRef([{ x: 0, y: 0 }, { x: 0, y: 0 }]); // Image position (top-left corner)
 const scale = ref([1, 1]);                  // Image scale (zoom level)
 const minScale = ref(0);                    // Minimum zoom level
 const maxScale = ref(10);                   // Maximum zoom level
 const imageRotate = ref([0, 0]);            // Image rotation
-const imageSize = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }] );       // actually image size
+const imageSize = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }]);       // actual image size
 const imageSizeRotated = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }]); // image size after rotation
 
 const isDragging = ref(false);              // Dragging state
@@ -84,7 +82,7 @@ const latestMouseEvent = ref<MouseEvent | null>(null);
 let wheelDeltaAccumulator = 0;
 let wheelThreshold = 10;
 
-const activeImageEl = ref<HTMLImageElement | null>(null)
+const activeImageEl = ref<HTMLImageElement | null>(null);
 
 let resizeObserver;
 let positionObserver;
@@ -110,7 +108,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (resizeObserver && container.value) {
     resizeObserver.unobserve(container.value);
+    resizeObserver.disconnect();
   }
+  if (positionObserver) cancelAnimationFrame(positionObserver);
 });
 
 const updatePosition = () => {
@@ -126,14 +126,6 @@ const startPositionObserver = () => {
     positionObserver = requestAnimationFrame(observePosition);
   };
   positionObserver = requestAnimationFrame(observePosition);
-};
-
-const stopPositionObserver = () => {
-  if (resizeObserver && container.value) {
-    resizeObserver.unobserve(container.value);
-    resizeObserver.disconnect();
-  }
-  stopPositionObserver();
 };
 
 // watch src changes
@@ -170,7 +162,7 @@ watch(() => imageRotate.value[activeImage.value], (newValue) => {
     };
   }
 
-  if(isZoomFit.value) {
+  if (isZoomFit.value) {
     zoomFit();
   } else {
     clampPosition();
@@ -193,21 +185,24 @@ watch(() => props.isZoomFit, (newValue) => {
   updateZoomFit();
 });
 
-// watch container or image size changes
+// watch container or image size changes with debouncing
+let debounceTimeout: number | null = null;
 watch(() => [containerSize.value, imageSize.value], () => {
-  if(isZoomFit.value) {
-    zoomFit();
-  } else {
-    clampPosition();
-  }
+  if (debounceTimeout) clearTimeout(debounceTimeout);
+  debounceTimeout = setTimeout(() => {
+    if (isZoomFit.value) {
+      zoomFit();
+    } else {
+      clampPosition();
+    }
+  }, 100); // Debounce for 100ms
 });
 
 // load image
 const onImageLoad = (img) => {
-  noTransition.value = true;
+  noTransition.value = true; // Set early to prevent transitions during load
 
   const nextIndex = activeImage.value ^ 1;
-
   imageSize.value[nextIndex] = { width: img.naturalWidth, height: img.naturalHeight };
 
   // swap image width and height
@@ -233,7 +228,7 @@ const onImageLoad = (img) => {
     noTransition.value = false;
     updateZoomFit();
   });
-}
+};
 
 const rotateRight = () => {
   imageRotate.value[activeImage.value] += 90;
@@ -356,12 +351,11 @@ const handleWheel = (event) => {
 
   // macbook touchpad
   const isTouchPad = Math.abs(event.deltaY) < 4 && event.deltaMode === 0;
-  // console.log('handleWheel', event.deltaX, event.deltaY, isTouchPad);
 
-  if(isTouchPad) {
+  if (isTouchPad) {
     // accumulate delta values until they reach a threshold
     wheelDeltaAccumulator += event.deltaY;
-    if(Math.abs(wheelDeltaAccumulator) < wheelThreshold) {
+    if (Math.abs(wheelDeltaAccumulator) < wheelThreshold) {
       return;
     }
     wheelDeltaAccumulator = 0;
@@ -369,19 +363,18 @@ const handleWheel = (event) => {
 
   const zoomFactor = isTouchPad ? 1 : 0.1; // Adjust sensitivity
 
-  if(config.mouseWheelMode === 0) {  // 0: previous/next image
-    if(event.ctrlKey) {     // ctrl + mouse wheel: zoom in / out
+  if (config.mouseWheelMode === 0) {  // 0: previous/next image
+    if (event.ctrlKey) {     // ctrl + mouse wheel: zoom in / out
       wheelZoom(event, zoomFactor);
-    } else{
+    } else {
       emit('message-from-image-viewer', { message: event.deltaY < 0 ? 'prev' : 'next' });
     }
-  } else if(config.mouseWheelMode === 1) {  // 1: zoom in / out
+  } else if (config.mouseWheelMode === 1) {  // 1: zoom in / out
     wheelZoom(event, zoomFactor);
   }
 };
 
 // wheel zoom
-// zoomFactor: Adjust sensitivity
 const wheelZoom = (event, zoomFactor) => {
   const container = containerSize.value;
   const imgRotatedSize = imageSizeRotated.value[activeImage.value];
@@ -447,9 +440,9 @@ function zoomImage(cursorX, cursorY, newScale) {
 // Ensure image stays within container
 function clampPosition() {
   // Skip boundary calculation during dragging for better performance
-  // if (isDragging.value) {
-  //   return;
-  // }
+  if (isDragging.value) {
+    return;
+  }
 
   const imgIndex = activeImage.value;
   const imgRotatedSize = imageSizeRotated.value[imgIndex];
@@ -464,13 +457,13 @@ function clampPosition() {
   const maxY = container.height - imgRotatedSize.height * scaleVal + paddingY;
 
   isGrabbing.value = false;
-  if(imgRotatedSize.width * scaleVal > container.width) {
+  if (imgRotatedSize.width * scaleVal > container.width) {
     pos.x = Math.min(Math.max(pos.x, maxX), paddingX);
     isGrabbing.value = true;
   } else {
     pos.x = (container.width - imgSize.width) / 2;
   }
-  if(imgRotatedSize.height * scaleVal > container.height) {
+  if (imgRotatedSize.height * scaleVal > container.height) {
     pos.y = Math.min(Math.max(pos.y, maxY), paddingY);
     isGrabbing.value = true;
   } else {
