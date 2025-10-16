@@ -464,9 +464,23 @@ impl AFile {
                 Reader::new().read_from_container(&mut bufreader).ok()
             })?;
 
-        // Extract GPS data
-        let (gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc) = 
-            Self::extract_gps_data(&exif);
+        // Extracts EXIF orientation field.
+        // 1: Horizontal (normal)
+        // 2: Mirror horizontal
+        // 3: Rotate 180
+        // 4: Mirror vertical
+        // 5: Mirror horizontal and rotate 270 CW
+        // 6: Rotate 90 CW
+        // 7: Mirror horizontal and rotate 90 CW
+        // 8: Rotate 270 CW
+        let e_orientation = exif
+            .as_ref()
+            .and_then(|exif_data| {
+                exif_data
+                    .get_field(Tag::Orientation, In::PRIMARY)
+                    .and_then(|field| field.value.get_uint(0)) // Return u64 directly
+                    .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
+            });
 
         // Process flash data
         let e_flash = exif
@@ -477,6 +491,10 @@ impl AFile {
                     .and_then(|field| field.value.get_uint(0))
                     .map(|val| if val & 1 == 1 { "Fired".to_string() } else { "Not fired".to_string() })
             });
+
+        // Extract GPS data
+        let (gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc) = 
+            Self::extract_gps_data(&exif);
 
         let file = Self {
             id: None,
@@ -499,8 +517,8 @@ impl AFile {
                 })
                 .unwrap_or_else(|| file_info.modified_str), // fallback to modified time
 
-            width: Some(width),
-            height: Some(height),
+            width:  e_orientation.and_then(|orientation| if orientation > 4 { Some(height) } else { Some(width) }),
+            height: e_orientation.and_then(|orientation| if orientation > 4 { Some(width) } else { Some(height) }),
             duration: Some(duration),
 
             is_favorite: None,
@@ -516,7 +534,7 @@ impl AFile {
             e_focal_length: Self::get_exif_field(&exif, Tag::FocalLength),
             e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
             e_flash,
-            e_orientation: Self::get_exif_orientation_field(&exif, Tag::Orientation),
+            e_orientation,
 
             gps_latitude,
             gps_longitude,
@@ -639,16 +657,6 @@ impl AFile {
                 })
                 .to_string()
             }) // trim all trailing commas and spaces,
-    }
-
-    /// Extracts EXIF orientation field.
-    fn get_exif_orientation_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<u32> {
-        exif.as_ref().and_then(|exif_data| {
-            exif_data
-                .get_field(tag, exif::In::PRIMARY)
-                .and_then(|field| field.value.get_uint(0)) // Return u64 directly
-                .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
-        })
     }
 
     /// insert a file into db
