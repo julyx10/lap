@@ -1,7 +1,7 @@
 <template>
 
   <dialog id="imageEditorDialog" class="modal">
-    <div class="w-[800px] p-4 flex flex-col gap-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="p-4 flex flex-col gap-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
       <!-- title bar -->
       <div class="flex items-center justify-between text-wrap break-all">
@@ -17,11 +17,11 @@
       <div class="flex-grow flex gap-4">
         <div class="flex-1 overflow-hidden">
           <!-- image container -->
-          <div ref="imageContainer" class="relative w-full h-[400px] flex justify-center items-center bg-base-200 cursor-pointer rounded-box overflow-hidden">
+          <div ref="imageContainer" class="relative w-[570px] h-[430px] flex justify-center items-center bg-base-200 cursor-pointer rounded-box overflow-hidden">
             <img ref="image" :src="imageSrc" :style="imageStyle" draggable="false" />
 
             <!-- crop box -->
-            <div v-if="isCropping" ref="cropBox" class="crop-box" :style="cropBoxStyle" @mousedown="startDrag('move', $event)">
+            <div v-if="isCropping" ref="cropBox" class="crop-box-active" :style="cropBoxStyle" @mousedown="startDrag('move', $event)">
               <div v-if="isDragging" class="crop-dimensions-display">
                 {{ croppedWidth }} x {{ croppedHeight }}
               </div>
@@ -40,6 +40,7 @@
               <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
               <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
             </div>
+            <div v-if="isCropped" class="crop-box-done" :style="cropBoxStyle"></div>
           </div>
 
           <!-- crop controls -->
@@ -71,6 +72,12 @@
 
             <!-- rotate and flip controls -->
             <div class="flex gap-2">
+              <TButton
+                :icon="IconCopy"
+                :disabled="isCropping"
+                :tooltip="$t('msgbox.image_editor.copy_image')"
+                @click="clickCopyImage" 
+              />
               <TButton
                 :icon="IconRotateLeft"
                 :disabled="isCropping"
@@ -115,7 +122,7 @@
                 <tr>
                   <td class="w-1/2">{{ $t('msgbox.image_editor.width') }}</td>
                   <td>
-                    <input type="number" :placeholder="$t('msgbox.image_editor.width')"  class="input input-bordered w-full"
+                    <input type="number" min="100" max="100000" :placeholder="$t('msgbox.image_editor.width')"  class="input input-bordered w-full"
                       v-model="resizeWidth" :disabled="isCropping"
                     />
                   </td>
@@ -123,7 +130,7 @@
                 <tr>
                   <td>{{ $t('msgbox.image_editor.height') }}</td>
                   <td>
-                    <input type="number" :placeholder="$t('msgbox.image_editor.height')"  class="input input-bordered w-full"
+                    <input type="number" min="100" max="100000" :placeholder="$t('msgbox.image_editor.height')"  class="input input-bordered w-full"
                       v-model="resizeHeight" :disabled="isCropping"
                     />
                   </td>
@@ -131,7 +138,7 @@
                 <tr>
                   <td>{{ $t('msgbox.image_editor.percentage') }}</td>
                   <td class="flex items-center">
-                    <input type="number" :placeholder="$t('msgbox.image_editor.percentage')"  class="input input-bordered w-full"
+                    <input type="number" min="1" max="100" :placeholder="$t('msgbox.image_editor.percentage')"  class="input input-bordered w-full"
                       v-model="resizePercentage" :disabled="isCropping"
                     />
                     <span class="pl-1 text-xs text-base-content/30">%</span>
@@ -211,6 +218,7 @@ import {
   IconClose, 
   IconCrop,
   IconCropLandscape,
+  IconCopy,
   IconRotateLeft, 
   IconRotateRight, 
   IconFlipVertical, 
@@ -238,6 +246,7 @@ const imageSrc = ref('');
 
 // crop shape
 const isCropping = ref(false);
+const isCropped = ref(false);
 const isPortrait = ref(false);
 
 const cropShapeOptions = computed(() => {
@@ -293,8 +302,8 @@ const imageStyle = computed(() => {
     return {};
   }
 
-  const containerWidth = imageContainer.value.clientWidth - 8;
-  const containerHeight = imageContainer.value.clientHeight - 8;
+  const containerWidth = imageContainer.value.clientWidth - 10;
+  const containerHeight = imageContainer.value.clientHeight - 10;
   const imageWidth = props.fileInfo.width;
   const imageHeight = props.fileInfo.height;
 
@@ -372,6 +381,7 @@ function handleKeyDown(event: KeyboardEvent) {
     case 'Escape':
       if(isCropping.value) {
         isCropping.value = false;
+        isCropped.value = false;
         event.preventDefault();
         event.stopPropagation();
         break;
@@ -388,6 +398,7 @@ function handleKeyDown(event: KeyboardEvent) {
 const toggleCrop = () => {
   isCropping.value = !isCropping.value;
   if (isCropping.value) {
+    isCropped.value = false;
     if (image.value && imageContainer.value) {
         imageRect.value = image.value.getBoundingClientRect();
         containerRect.value = imageContainer.value.getBoundingClientRect();
@@ -407,10 +418,15 @@ const onChangeCropShape = () => {
 
 const doCrop = () => {
   isCropping.value = false;
+  isCropped.value = true;
 
   resizeWidth.value = croppedWidth.value;
   resizeHeight.value = croppedHeight.value;
 
+};
+
+const clickCopyImage = () => {
+  // copyImageToClipboard(props.fileInfo.file_path);
 };
 
 const clickRotate = (degree: number) => {
@@ -555,6 +571,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
 const clickReset = () => {
   // crop init
   isCropping.value = false;
+  isCropped.value = false;
   isPortrait.value = props.fileInfo.width < props.fileInfo.height;
   croppedWidth.value = 0;
   croppedHeight.value = 0;
@@ -623,13 +640,17 @@ const clickSave = async () => {
 </script>
 
 <style scoped>
-.crop-box {
+.crop-box-active {
   position: absolute;
   border: 1px solid #fff;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8);
   box-sizing: border-box;
 }
-
+.crop-box-done {
+  position: absolute;
+  box-shadow: 0 0 0 9999px var(--color-base-200);
+  box-sizing: border-box;
+}
 .drag-handle {
   position: absolute;
   width: 10px;

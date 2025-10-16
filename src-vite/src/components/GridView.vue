@@ -252,19 +252,19 @@ const moreMenuItems = computed(() => {
       }
     },
     {
-      label: localeMsg.value.menu.meta.rotate,
-      icon: IconRotate,
-      shortcut: isMac ? '⌘R' : 'Ctrl+R',
-      action: () => {
-        rotateItem();
-      }
-    },
-    {
       label: localeMsg.value.menu.meta.tag,
       icon: IconTag,
       shortcut: isMac ? '⌘T' : 'Ctrl+T',
       action: () => {
         tagItem();
+      }
+    },
+    {
+      label: localeMsg.value.menu.meta.rotate,
+      icon: IconRotate,
+      shortcut: isMac ? '⌘R' : 'Ctrl+R',
+      action: () => {
+        rotateItem();
       }
     },
     {

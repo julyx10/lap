@@ -79,19 +79,19 @@
           @click="toggleFavorite()"
         />
         <TButton
+          :icon="IconTag"
+          :disabled="fileIndex < 0"
+          :selected="fileInfo?.has_tags"
+          :tooltip="$t('image_viewer.toolbar.tag')"
+          @click="clickTag()"
+        />
+        <TButton
           :icon="IconRotate"
           :disabled="fileIndex < 0"
           :selected="iconRotate % 360 > 0"
           :iconStyle="{ transform: `rotate(${(iconRotate)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
           :tooltip="$t('image_viewer.toolbar.rotate')"
           @click="clickRotate()"
-        />
-        <TButton
-          :icon="IconTag"
-          :disabled="fileIndex < 0"
-          :selected="fileInfo?.has_tags"
-          :tooltip="$t('image_viewer.toolbar.tag')"
-          @click="clickTag()"
         />
 
         <TButton v-if="isWin"

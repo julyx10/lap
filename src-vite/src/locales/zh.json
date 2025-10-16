@@ -139,8 +139,8 @@
       "favorite": "收藏",
       "unfavorite": "取消收藏",
       "tag": "标签",
-      "rotate": "旋转",
-      "comment": "评论"
+      "rotate": "旋转视图",
+      "comment": "添加备注"
     },
     "remove": "移除",
     "delete": "删除",
@@ -244,8 +244,8 @@
       "error": "无法删除标签。标签可能不存在。"
     },
     "edit_comment": {
-      "title": "编辑评论",
-      "placeholder": "输入评论",
+      "title": "编辑备注",
+      "placeholder": "输入备注",
       "ok": "保存"
     },
     "select_folder": {
@@ -263,6 +263,7 @@
       "crop_shape_landscape": "横屏",
       "crop_shape_portrait": "竖屏",
       "aspect_ratio": "宽高比",
+      "copy_image": "复制到剪贴板",
       "rotate_left": "逆时针旋转",
       "rotate_right": "顺时针旋转",
       "flip_horizontal": "水平翻转",
@@ -312,7 +313,7 @@
     "gps_altitude": "海拔",
     "geo_location": "地点",
     "tags": "标签",
-    "comment": "评论"
+    "comment": "备注"
   },
 
   "format": {
@@ -430,7 +431,7 @@
       "mouse_wheel_options": ["上一张/下一张图片 (Ctrl 缩放)", "放大/缩小"],
       "slide_show_interval": "幻灯片放映间隔: {second} 秒",
       "auto_play_video": "自动播放视频",
-      "show_comment": "显示评论"
+      "show_comment": "显示备注"
     },
     "about": {
       "title": "关于",

@@ -139,8 +139,8 @@
       "favorite": "Favorite",
       "unfavorite": "Unfavorite",
       "tag": "Tag",
-      "rotate": "Rotate",
-      "comment": "Comment"
+      "rotate": "Rotate view",
+      "comment": "Add comment"
     },
     "remove": "Remove",
     "delete": "Delete",
@@ -263,6 +263,7 @@
       "crop_shape_landscape": "Landscape",
       "crop_shape_portrait": "Portrait",
       "aspect_ratio": "Aspect ratio",
+      "copy_image": "Copy to clipboard",
       "rotate_left": "Rotate left",
       "rotate_right": "Rotate right",
       "flip_horizontal": "Flip horizontal",
