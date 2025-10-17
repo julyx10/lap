@@ -42,9 +42,9 @@ export { default as IconRestoreScreen } from '@/assets/icons/full-screen-min.svg
 // ======================
 // WINDOW ONLY CONTROL ICONS
 // ======================
-export { default as IconMinus } from '@/assets/icons/window-minus.svg';
-export { default as IconMaximize } from '@/assets/icons/window-maximize.svg';
-export { default as IconRestore } from '@/assets/icons/window-restore.svg';
+export { default as IconWinMinus } from '@/assets/icons/window-minus.svg';
+export { default as IconWinMaximize } from '@/assets/icons/window-maximize.svg';
+export { default as IconWinRestore } from '@/assets/icons/window-restore.svg';
 
 // ======================
 // ACTION & TOOLBAR ICONS
@@ -79,6 +79,7 @@ export { default as IconRotateLeft } from '@/assets/icons/rotate-left-90.svg';
 export { default as IconRotateRight } from '@/assets/icons/rotate-right-90.svg';
 export { default as IconFlipVertical } from '@/assets/icons/flip-horizontal.svg';
 export { default as IconFlipHorizontal } from '@/assets/icons/flip-vertical.svg';
+export { default as IconRestore } from '@/assets/icons/restore.svg';
 
 // ======================
 // SELECTION & TOGGLE ICONS

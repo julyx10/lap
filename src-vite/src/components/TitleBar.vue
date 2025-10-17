@@ -33,11 +33,11 @@
 
     <!-- Window Control Buttons -->
     <div v-if="isWin" class="h-10 mb-auto flex items-center">
-      <IconMinus v-if="resizable" 
+      <IconWinMinus v-if="resizable" 
         class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-base-100 t-icon-animate" 
         @click="minimizeWindow" 
       />
-      <component v-if="resizable" :is="isMaximized ? IconRestore : IconMaximize" 
+      <component v-if="resizable" :is="isMaximized ? IconWinRestore : IconWinMaximize" 
         class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-base-100 t-icon-animate" 
         @click="toggleMaximizeWindow" 
       />
@@ -61,9 +61,9 @@ import { isWin, isMac } from '@/common/utils';
 // import SearchBox from '@/components/SearchBox.vue';
 
 import { 
-  IconMinus,
-  IconMaximize,
-  IconRestore,
+  IconWinMinus,
+  IconWinMaximize,
+  IconWinRestore,
   IconClose 
 } from '@/common/icons';
 

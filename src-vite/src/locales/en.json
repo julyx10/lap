@@ -139,7 +139,7 @@
       "favorite": "Favorite",
       "unfavorite": "Unfavorite",
       "tag": "Tag",
-      "rotate": "Rotate view",
+      "rotate": "Rotate display",
       "comment": "Add comment"
     },
     "remove": "Remove",
@@ -263,11 +263,11 @@
       "crop_shape_landscape": "Landscape",
       "crop_shape_portrait": "Portrait",
       "aspect_ratio": "Aspect ratio",
-      "copy_image": "Copy to clipboard",
       "rotate_left": "Rotate left",
       "rotate_right": "Rotate right",
       "flip_horizontal": "Flip horizontal",
       "flip_vertical": "Flip vertical",
+      "restore": "Restore",
       "resize": "Resize",
       "width": "Width",
       "height": "Height",
@@ -279,9 +279,9 @@
       "format_options": ["JPEG", "PNG", "WEBP"],
       "quality": "Quality",
       "quality_options": ["High", "Medium", "Low"],
+      "copy_image": "Copy to clipboard",
       "ok": "Save",
-      "cancel": "Cancel",
-      "reset": "Reset"
+      "cancel": "Cancel"
     }
   },
 

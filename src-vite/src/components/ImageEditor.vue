@@ -1,7 +1,7 @@
 <template>
 
   <dialog id="imageEditorDialog" class="modal">
-    <div class="p-4 flex flex-col gap-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="p-4 flex flex-col gap-2 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
       <!-- title bar -->
       <div class="flex items-center justify-between text-wrap break-all">
@@ -17,13 +17,13 @@
       <div class="flex-grow flex gap-4">
         <div class="flex-1 overflow-hidden">
           <!-- image container -->
-          <div ref="imageContainer" class="relative w-[570px] h-[430px] flex justify-center items-center bg-base-200 cursor-pointer rounded-box overflow-hidden">
-            <img ref="image" :src="imageSrc" :style="imageStyle" draggable="false" />
+          <div ref="containerRef" class="relative w-[570px] h-[430px] bg-base-200 cursor-pointer rounded-lg overflow-hidden">
+            <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
 
             <!-- crop box -->
-            <div v-if="isCropping" ref="cropBox" class="crop-box-active" :style="cropBoxStyle" @mousedown="startDrag('move', $event)">
+            <div v-if="isCropping" class="crop-box-active" :style="cropBoxStyle" @mousedown="startDrag('move', $event)">
               <div v-if="isDragging" class="crop-dimensions-display">
-                {{ croppedWidth }} x {{ croppedHeight }}
+                {{ crop.width }} x {{ crop.height }}
               </div>
               <div v-if="isDragging" class="grid-lines">
                 <div class="grid-line-h grid-line-h-1"></div>
@@ -73,12 +73,6 @@
             <!-- rotate and flip controls -->
             <div class="flex gap-2">
               <TButton
-                :icon="IconCopy"
-                :disabled="isCropping"
-                :tooltip="$t('msgbox.image_editor.copy_image')"
-                @click="clickCopyImage" 
-              />
-              <TButton
                 :icon="IconRotateLeft"
                 :disabled="isCropping"
                 :tooltip="$t('msgbox.image_editor.rotate_left')"
@@ -102,17 +96,18 @@
                 :tooltip="$t('msgbox.image_editor.flip_vertical')"
                 @click="clickFlipY" 
               />
+              <TButton 
+                :icon="IconRestore"
+                :disabled="isCropping"
+                :tooltip="$t('msgbox.image_editor.restore')"
+                @click="clickRestore" 
+              />
             </div>
           </div>
         </div>
 
         <!-- edit controls -->
         <div class="w-48 flex flex-col gap-4">
-          <!-- Original dimension -->
-          <!-- <div>
-            <h3 class="mb-2 ">{{ $t('msgbox.image_editor.original_dimension') }}</h3>
-            <span class="p-2 text-sm">{{ fileInfo.width }}x{{ fileInfo.height }} ({{ formatFileSize(fileInfo.size) }})</span>
-          </div> -->
 
           <!-- Resize -->
           <div>
@@ -173,25 +168,34 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- debug -->
+            <div class="text-xs text-base-content/30 flex flex-col gap-1 mt-2">
+              <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
+              <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
+              <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
+              <span>scale: {{ scale.toFixed(2) }}</span>
+              <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
+              <span>crop: {{ crop.x.toFixed(0) }}, {{ crop.y.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- debug -->
-      <!-- <div class="text-xs text-base-content/30">
-        cropBoxData: {{ cropBoxData }}
-      </div> -->
 
       <!-- dialog buttons -->
       <div class="flex justify-end gap-4">
         <button
           class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
-          @click="clickReset"
-        >{{ $t('msgbox.image_editor.reset') }}</button>
-        <button
-          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
           @click="clickCancel"
         >{{ $t('msgbox.image_editor.cancel') }}</button>
+        <!-- <button
+          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+          @click="clickRestore"
+        >{{ $t('msgbox.image_editor.restore') }}</button> -->
+        <button 
+          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+          @click="clickCopyImage"
+        >{{ $t('msgbox.image_editor.copy_image') }}</button>
         <button 
           :class="[
             'px-4 py-1',
@@ -224,6 +228,7 @@ import {
   IconFlipVertical, 
   IconFlipHorizontal,
   IconOk,
+  IconRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -240,15 +245,70 @@ const localeMsg = computed(() => messages.value[config.language]);
 const uiStore = useUIStore();
 const emit = defineEmits(['ok', 'cancel']);
 
-const imageContainer = ref<HTMLElement | null>(null);
-const enableTransition = ref(false);
+// container
+const containerRef = ref<HTMLElement | null>(null);
+const containerRect = ref<DOMRect | null>(null);
+const containerPadding = 10;
+const containerBounds = ref({ top: 0, left: 0, width: 0, height: 0 });  // container bounds without padding
+
+// image
 const imageSrc = ref('');
+const imageRef = ref<HTMLImageElement | null>(null);
+const imageRect = ref<DOMRect | null>(null);
+const imageWidth = ref(0);
+const imageHeight = ref(0);
+
+// image transform
+const enableTransition = ref(false);    
+const position = ref({ left: 0, top: 0 });
+const scale = ref(1);
+
+const imageStyle = computed(() => {
+  return {
+    display: 'block',
+    minWidth: `${imageWidth.value}px`,
+    minHeight: `${imageHeight.value}px`,
+    position: 'absolute',
+    transform: `
+      translate(${position.value.left}px, ${position.value.top}px) 
+      rotate(${crop.value.rotate}deg) 
+      scaleX(${isFlippedX.value ? -1 : 1}) 
+      scaleY(${isFlippedY.value ? -1 : 1}) 
+      scale(${scale.value})
+    `,
+    transition: enableTransition.value ? 'transform 0.3s ease' : 'none',
+  };
+});
 
 // crop shape
 const isCropping = ref(false);
 const isCropped = ref(false);
 const isPortrait = ref(false);
 
+// cropped image
+const crop = ref({
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+  rotate: 0,
+});
+
+// crop box
+const cropBox = ref({ top: 0, left: 0, width: 0, height: 0 });
+const isDragging = ref(false);
+const dragHandle = ref('');
+const dragStartX = ref(0);
+const dragStartY = ref(0);
+
+const cropBoxStyle = computed(() => ({
+  top: `${cropBox.value.top}px`,
+  left: `${cropBox.value.left}px`,
+  width: `${cropBox.value.width}px`,
+  height: `${cropBox.value.height}px`,
+}));
+
+// crop shape
 const cropShapeOptions = computed(() => {
   if(isPortrait.value) {
     return [
@@ -273,18 +333,13 @@ const cropShapeOptions = computed(() => {
   }
 });
 
-// rotate and flip
-const rotation = ref(0);
+// flip image
 const isFlippedX = ref(false);
 const isFlippedY = ref(false);
 
-// cropped image
-const croppedWidth = ref(0);
-const croppedHeight = ref(0);
-
-// resized image
-const resizeWidth = ref(null);
-const resizeHeight = ref(null);
+// resize
+const resizeWidth = ref(0);
+const resizeHeight = ref(0);
 const resizePercentage = ref(100);
 
 // save as
@@ -297,49 +352,6 @@ const fileQualityOptions = computed(() => {
   return getSelectOptions(localeMsg.value.msgbox.image_editor.quality_options);
 });
 
-const imageStyle = computed(() => {
-  if (!imageContainer.value || !props.fileInfo.width || !props.fileInfo.height) {
-    return {};
-  }
-
-  const containerWidth = imageContainer.value.clientWidth - 10;
-  const containerHeight = imageContainer.value.clientHeight - 10;
-  const imageWidth = props.fileInfo.width;
-  const imageHeight = props.fileInfo.height;
-
-  const isRotated = rotation.value % 180 !== 0;
-  const rotatedWidth = isRotated ? imageHeight : imageWidth;
-  const rotatedHeight = isRotated ? imageWidth : imageHeight;
-
-  const scale = Math.min(containerWidth / rotatedWidth, containerHeight / rotatedHeight);
-
-  return {
-    display: 'block',
-    minWidth: `${imageWidth}px`,
-    minHeight: `${imageHeight}px`,
-    transform: `rotate(${rotation.value}deg) scaleX(${isFlippedX.value ? -1 : 1}) scaleY(${isFlippedY.value ? -1 : 1}) scale(${scale})`,
-    transition: enableTransition.value ? 'transform 0.3s ease' : 'none',
-  };
-});
-
-const image = ref<HTMLImageElement | null>(null);
-const imageRect = ref<DOMRect | null>(null);
-const containerRect = ref<DOMRect | null>(null);
-
-const cropBox = ref<HTMLElement | null>(null);
-const cropBoxData = ref({ top: 0, left: 0, width: 0, height: 0 });
-const isDragging = ref(false);
-const dragHandle = ref('');
-const dragStartX = ref(0);
-const dragStartY = ref(0);
-
-const cropBoxStyle = computed(() => ({
-  top: `${cropBoxData.value.top}px`,
-  left: `${cropBoxData.value.left}px`,
-  width: `${cropBoxData.value.width}px`,
-  height: `${cropBoxData.value.height}px`,
-}));
-
 onMounted(async () => {
   const dialog = document.getElementById('imageEditorDialog') as HTMLDialogElement | null;
   dialog?.showModal();
@@ -347,12 +359,7 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('ImageEditor');
 
-  imageSrc.value = convertFileSrc(props.fileInfo.file_path);
-  clickReset(); // init
-
-  nextTick(() => {
-    enableTransition.value = true;
-  });
+  clickRestore(); // init container, image, crop, etc.ß
 });
 
 onUnmounted(() => {
@@ -360,10 +367,19 @@ onUnmounted(() => {
   uiStore.popInputHandler();
 });
 
-watch(cropBoxData, (newData) => {
-  if (imageRect.value && props.fileInfo.width && props.fileInfo.height) {
-    croppedWidth.value = Math.round(props.fileInfo.width * newData.width / imageRect.value.width);
-    croppedHeight.value = Math.round(props.fileInfo.height * newData.height / imageRect.value.height);
+const onImageLoad = () => {
+  nextTick(() => {
+    imageRect.value = imageRef.value?.getBoundingClientRect() || null;
+    enableTransition.value = true;
+  });
+};
+
+watch(cropBox, (newData) => {
+  if (imageRect.value && imageWidth.value && imageHeight.value) {
+    crop.value.x      = Math.round(imageWidth.value * (newData.left - (imageRect.value.left - containerRect.value.left)) / imageRect.value.width);
+    crop.value.y      = Math.round(imageHeight.value * (newData.top - (imageRect.value.top - containerRect.value.top)) / imageRect.value.height);
+    crop.value.width  = Math.round(imageWidth.value * newData.width / imageRect.value.width);
+    crop.value.height = Math.round(imageHeight.value * newData.height / imageRect.value.height);
   }
 }, { deep: true });
 
@@ -399,30 +415,60 @@ const toggleCrop = () => {
   isCropping.value = !isCropping.value;
   if (isCropping.value) {
     isCropped.value = false;
-    if (image.value && imageContainer.value) {
-        imageRect.value = image.value.getBoundingClientRect();
-        containerRect.value = imageContainer.value.getBoundingClientRect();
-        updateCropBoxData();
-    }
+    zoomFit(imageWidth.value, imageHeight.value); // update scale and position
+    updateCropBox();
+  } else {
+    crop.value = {
+      x: 0,
+      y: 0,
+      width: imageWidth.value,
+      height: imageHeight.value,
+      rotate: 0,
+    };
   }
 };
 
 const togglePortraitAndLandscape = () => {
   isPortrait.value = !isPortrait.value;
-  updateCropBoxData();
+  updateCropBox();
 };
 
 const onChangeCropShape = () => {
-  updateCropBoxData();
+  updateCropBox();
 };
 
 const doCrop = () => {
+  if (!containerBounds.value || !imageRect.value) return;
+
   isCropping.value = false;
   isCropped.value = true;
 
-  resizeWidth.value = croppedWidth.value;
-  resizeHeight.value = croppedHeight.value;
+  // update resize width and height
+  resizeWidth.value = crop.value.width;
+  resizeHeight.value = crop.value.height;
+  resizePercentage.value = 100;
 
+  // 1. calculate the new scale to fit the container
+  scale.value = Math.min(
+    containerBounds.value.width / crop.value.width,
+    containerBounds.value.height / crop.value.height
+  );
+
+  // 2. calculate the new position to center the cropped image
+  let newPositionLeft = position.value.left + crop.value.x + crop.value.width / 2 - imageWidth.value / 2;
+  let newPositionTop = position.value.top + crop.value.y + crop.value.height / 2 - imageHeight.value / 2;
+  position.value = { left: newPositionLeft, top: newPositionTop };
+
+  // 3. resize cropBox to fit the container
+  const scaledCropWidth = crop.value.width * scale.value;
+  const scaledCropHeight = crop.value.height * scale.value;
+
+  cropBox.value = {
+    left: (containerBounds.value.width - scaledCropWidth + containerPadding) / 2,
+    top: (containerBounds.value.height - scaledCropHeight + containerPadding) / 2,
+    width: scaledCropWidth,
+    height: scaledCropHeight,
+  };
 };
 
 const clickCopyImage = () => {
@@ -430,8 +476,17 @@ const clickCopyImage = () => {
 };
 
 const clickRotate = (degree: number) => {
-  rotation.value += degree;
+  crop.value.rotate += degree;
+
+  const isRotated = crop.value.rotate % 180 !== 0;
+  const rotatedWidth = isRotated ? imageHeight.value : imageWidth.value;
+  const rotatedHeight = isRotated ? imageWidth.value : imageHeight.value;
+
+  // update scale to fit the container
+  scale.value = Math.min(containerBounds.value.width / rotatedWidth, containerBounds.value.height / rotatedHeight);
 };
+
+
 
 const clickFlipX = () => {
   isFlippedX.value = !isFlippedX.value;
@@ -441,8 +496,19 @@ const clickFlipY = () => {
   isFlippedY.value = !isFlippedY.value;
 };
 
-// update crop box data by crop shape
-const updateCropBoxData = () => {
+// update scale and position, so the image will be centered in the container
+const zoomFit = (imgWidth: number, imgHeight: number) => {
+  scale.value = Math.min(containerBounds.value.width / imgWidth, containerBounds.value.height / imgHeight);
+  position.value = { 
+    left: (containerBounds.value.width - imgWidth + containerPadding) / 2, 
+    top: (containerBounds.value.height - imgHeight + containerPadding ) / 2
+  };
+};
+
+// update crop box by crop shape
+const updateCropBox = () => {
+  if (!imageRect.value || !containerRect.value) return;
+
   const selectedShape = cropShapeOptions.value.find(option => option.value === config.imageEditor.cropShape && option.value !== '0');
   if (selectedShape && selectedShape.label) {
     const parts = selectedShape.label.split(':');
@@ -460,20 +526,21 @@ const updateCropBoxData = () => {
     const imageLeft = imageRect.value.left - containerRect.value.left;
     const imageTop = imageRect.value.top - containerRect.value.top;
 
-    cropBoxData.value = {
+    cropBox.value = {
       left: imageLeft + (imageRect.value.width - newWidth) / 2,
       top: imageTop + (imageRect.value.height - newHeight) / 2,
       width: newWidth,
       height: newHeight,
     };
   } else {
-    cropBoxData.value = {
+    cropBox.value = {
       left: imageRect.value.left - containerRect.value.left,
       top: imageRect.value.top - containerRect.value.top,
       width: imageRect.value.width,
       height: imageRect.value.height,
     };
   }
+
 }
 
 const startDrag = (handle: string, event: MouseEvent) => {
@@ -482,7 +549,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
   dragStartX.value = event.clientX;
   dragStartY.value = event.clientY;
 
-  const initialCropBoxData = { ...cropBoxData.value };
+  const initialCropBoxData = { ...cropBox.value };
 
   const doDrag = (e: MouseEvent) => {
     if (!isDragging.value) return;
@@ -506,8 +573,8 @@ const startDrag = (handle: string, event: MouseEvent) => {
       if (newLeft + initialCropBoxData.width > imageRight) newLeft = imageRight - initialCropBoxData.width;
       if (newTop + initialCropBoxData.height > imageBottom) newTop = imageBottom - initialCropBoxData.height;
 
-      cropBoxData.value.left = newLeft;
-      cropBoxData.value.top = newTop;
+      cropBox.value.left = newLeft;
+      cropBox.value.top = newTop;
 
     } else { // Resize logic
       let proposedBox = { ...initialCropBoxData };
@@ -553,7 +620,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
         proposedBox.left + proposedBox.width <= imageRight + 0.1 && // Add tolerance for float precision
         proposedBox.top + proposedBox.height <= imageBottom + 0.1 // Add tolerance for float precision
       ) {
-        cropBoxData.value = proposedBox;
+        cropBox.value = proposedBox;
       }
     }
   };
@@ -568,25 +635,48 @@ const startDrag = (handle: string, event: MouseEvent) => {
   window.addEventListener('mouseup', stopDrag);
 };
 
-const clickReset = () => {
+const clickRestore = () => {
+  if (!imageRef.value || !containerRef.value) return;
+
+  // container 
+  containerRect.value = containerRef.value.getBoundingClientRect();
+  containerBounds.value = {
+    left:   containerRect.value.left + containerPadding,
+    top:    containerRect.value.top + containerPadding,
+    width:  containerRect.value.width - containerPadding,
+    height: containerRect.value.height - containerPadding,
+  };
+
+  // image
+  imageSrc.value = convertFileSrc(props.fileInfo.file_path);
+  imageWidth.value = props.fileInfo.width;
+  imageHeight.value = props.fileInfo.height;
+
+  // init scale and position
+  zoomFit(imageWidth.value, imageHeight.value);
+
   // crop init
   isCropping.value = false;
   isCropped.value = false;
-  isPortrait.value = props.fileInfo.width < props.fileInfo.height;
-  croppedWidth.value = 0;
-  croppedHeight.value = 0;
+  isPortrait.value = imageWidth.value < imageHeight.value;
+  crop.value = {
+    x: 0,
+    y: 0,
+    width: imageWidth.value,
+    height: imageHeight.value,
+    rotate: 0,
+  };
 
-  // rotate and flip init
-  rotation.value = 0;
+  // flip init
   isFlippedX.value = false;
   isFlippedY.value = false;
 
   // resize init
-  resizeWidth.value = props.fileInfo.width;
-  resizeHeight.value = props.fileInfo.height;
+  resizeWidth.value = imageWidth.value;
+  resizeHeight.value = imageHeight.value;
   resizePercentage.value = 100;
 
-  // save as init
+  // save as name init
   saveName.value = extractFileName(props.fileInfo.name).name;
   const fileExt = getFileExtension(props.fileInfo.name).toLowerCase();
   switch (fileExt) {

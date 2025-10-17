@@ -517,8 +517,8 @@ impl AFile {
                 })
                 .unwrap_or_else(|| file_info.modified_str), // fallback to modified time
 
-            width:  e_orientation.and_then(|orientation| if orientation > 4 { Some(height) } else { Some(width) }),
-            height: e_orientation.and_then(|orientation| if orientation > 4 { Some(width) } else { Some(height) }),
+            width:  e_orientation.map(|orientation| if orientation > 4 { height } else { width }).or(Some(width)),
+            height: e_orientation.map(|orientation| if orientation > 4 { width } else { height }).or(Some(height)),
             duration: Some(duration),
 
             is_favorite: None,

@@ -139,7 +139,7 @@
       "favorite": "お気に入り",
       "unfavorite": "お気に入り解除",
       "tag": "タグ",
-      "rotate": "表示を回転",
+      "rotate": "表示を回転させる",
       "comment": "コメントを追加"
     },
     "remove": "削除",
@@ -263,11 +263,11 @@
       "crop_shape_landscape": "横長",
       "crop_shape_portrait": "縦長",
       "aspect_ratio": "アスペクト比",
-      "copy_image": "クリップボードにコピー",
       "rotate_left": "左回転",
       "rotate_right": "右回転",
       "flip_horizontal": "水平反転",
       "flip_vertical": "垂直反転",
+      "restore": "戻す",
       "resize": "サイズ変更",
       "width": "幅",
       "height": "高さ",
@@ -279,9 +279,9 @@
       "format_options": ["JPEG", "PNG", "WEBP"],
       "quality": "品質",
       "quality_options": ["高", "中", "低"],
+      "copy_image": "クリップボードにコピー",
       "ok": "保存",
-      "cancel": "キャンセル",
-      "reset": "リセット"
+      "cancel": "キャンセル"
     }
   },
 

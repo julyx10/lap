@@ -139,7 +139,7 @@
       "favorite": "收藏",
       "unfavorite": "取消收藏",
       "tag": "标签",
-      "rotate": "旋转视图",
+      "rotate": "旋转显示",
       "comment": "添加备注"
     },
     "remove": "移除",
@@ -263,11 +263,11 @@
       "crop_shape_landscape": "横屏",
       "crop_shape_portrait": "竖屏",
       "aspect_ratio": "宽高比",
-      "copy_image": "复制到剪贴板",
       "rotate_left": "逆时针旋转",
       "rotate_right": "顺时针旋转",
       "flip_horizontal": "水平翻转",
       "flip_vertical": "垂直翻转",
+      "restore": "还原",
       "resize": "调整尺寸",
       "width": "宽度",
       "height": "高度",
@@ -279,9 +279,9 @@
       "format_options": ["JPEG", "PNG", "WEBP"],
       "quality": "质量",
       "quality_options": ["高", "中", "低"],
+      "copy_image": "复制到剪贴板",
       "ok": "保存",
-      "cancel": "取消",
-      "reset": "重置"
+      "cancel": "取消"
     }
   },
 
