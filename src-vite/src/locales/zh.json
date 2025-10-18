@@ -257,7 +257,8 @@
     "image_editor": {
       "title": "图片编辑器",
       "crop": "裁剪",
-      "cancel_crop": "裁剪解除",
+      "cancel_crop": "取消",
+      "done_crop": "完成",
       "crop_shape": "裁剪形状",
       "crop_shape_custom": "自定义",
       "crop_shape_landscape": "横屏",

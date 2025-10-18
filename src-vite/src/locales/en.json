@@ -257,7 +257,8 @@
     "image_editor": {
       "title": "Image editor",
       "crop": "Crop",
-      "cancel_crop": "Cancel crop",
+      "cancel_crop": "Cancel",
+      "done_crop": "Done",
       "crop_shape": "Crop shape",
       "crop_shape_custom": "Custom",
       "crop_shape_landscape": "Landscape",

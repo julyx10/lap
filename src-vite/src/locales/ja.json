@@ -256,8 +256,9 @@
     },
     "image_editor": {
       "title": "画像エディタ",
-      "crop": "クロップ",
-      "cancel_crop": "クロップ解除",
+      "crop": "クロッピング",
+      "cancel_crop": "キャンセル",
+      "done_crop": "完了",
       "crop_shape": "クロップ形状",
       "crop_shape_custom": "カスタム",
       "crop_shape_landscape": "横長",
