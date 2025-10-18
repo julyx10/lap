@@ -16,7 +16,7 @@
         :key="index"
         :id="'item-' + index"
         :class="[
-          'p-2 border-2 rounded-lg hover:bg-base-100 cursor-pointer group',
+          'p-2 border-2 rounded-lg hover:bg-base-100 cursor-pointer group transition-all ease-in-out duration-300',
           (selectMode ? file.isSelected : index === selectedIndex) ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
         ]"
         @click="clickItem(index)"
@@ -362,6 +362,9 @@ function copyItem() {
 };
 
 function editItem() {
+  if (props.fileList[selectedIndex.value].file_type !== 1) {
+    return;
+  }
   emit('message-from-grid-view', { message: 'edit' });
 };
 

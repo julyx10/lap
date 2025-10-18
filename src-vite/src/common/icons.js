@@ -29,6 +29,8 @@ export { default as IconGoto } from '@/assets/icons/goto.svg';
 // ======================
 // VIEW CONTROL ICONS
 // ======================
+export { default as IconGrid } from '@/assets/icons/layout-grid.svg';
+export { default as IconMasonry } from '@/assets/icons/layout-masonry.svg';
 export { default as IconPreview } from '@/assets/icons/preview-on.svg';
 export { default as IconPreviewOff } from '@/assets/icons/preview-off.svg';
 export { default as IconOpen } from '@/assets/icons/eye.svg';

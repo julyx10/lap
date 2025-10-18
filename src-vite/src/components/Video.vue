@@ -29,8 +29,8 @@ import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/utils';
 import { IconVideoSlash } from '@/common/icons';
-import videojs from 'video.js';
-import 'video.js/dist/video-js.css';
+import videojs from 'video.js/core';
+import 'video.js/dist/video-js.min.css';
 import { IconVideoPlay, IconVideoReplay } from '@/common/icons';
 
 import ja from 'video.js/dist/lang/ja.json';

@@ -46,9 +46,15 @@
           <!-- crop controls -->
           <div class="pt-2 flex justify-between">
             <!-- crop shape controls -->
-            <div :class="['flex border rounded-box', isCropping ? 'border-primary' : 'border-base-content/30']">
+            <div 
+              :class="['flex border rounded-box transition-all ease-out duration-200', 
+                !isCropping && !isCropped ? 'border-transparent' : '',
+                isCropping ? 'border-primary' : '',
+                isCropped ? 'border-base-content/30' : '',
+              ]"
+            >
               <TButton
-                :icon="!isCropping ? IconCrop : IconClose"
+                :icon="!isCropping ? (isCropped ? IconClose : IconCrop) : IconClose"
                 :tooltip="!isCropping ? $t('msgbox.image_editor.crop') : $t('msgbox.image_editor.cancel_crop')"
                 @click="toggleCrop" 
               />
@@ -96,12 +102,12 @@
                 :tooltip="$t('msgbox.image_editor.flip_vertical')"
                 @click="clickFlipY" 
               />
-              <TButton 
+              <!-- <TButton 
                 :icon="IconRestore"
                 :disabled="isCropping"
                 :tooltip="$t('msgbox.image_editor.restore')"
                 @click="clickRestore" 
-              />
+              /> -->
             </div>
           </div>
         </div>
@@ -296,6 +302,7 @@ const crop = ref({
 
 // crop box
 const cropBox = ref({ top: 0, left: 0, width: 0, height: 0 });
+const cropBoxOriginal = ref({ top: 0, left: 0, width: 0, height: 0 });
 const isDragging = ref(false);
 const dragHandle = ref('');
 const dragStartX = ref(0);
@@ -390,25 +397,25 @@ function handleKeyDown(event: KeyboardEvent) {
 
   switch (key) {
     case 'Enter':
-      clickSave();
-      event.preventDefault();
-      event.stopPropagation();
+      if(isCropping.value) {
+        doCrop();
+      } else {
+        clickSave();
+      }
       break;
     case 'Escape':
       if(isCropping.value) {
         isCropping.value = false;
         isCropped.value = false;
-        event.preventDefault();
-        event.stopPropagation();
-        break;
+      } else {
+        clickCancel();
       }
-      clickCancel();
-      event.preventDefault();
-      event.stopPropagation();
       break;
-    default:
-      break;
-  }
+      default:
+        break;
+    }
+    event.preventDefault();
+    event.stopPropagation();
 }
 
 const toggleCrop = () => {
@@ -418,6 +425,9 @@ const toggleCrop = () => {
     zoomFit(imageWidth.value, imageHeight.value); // update scale and position
     updateCropBox();
   } else {
+    // restore the original crop box data
+    cropBox.value = { ...cropBoxOriginal.value };
+
     crop.value = {
       x: 0,
       y: 0,
@@ -455,18 +465,22 @@ const doCrop = () => {
   );
 
   // 2. calculate the new position to center the cropped image
-  let newPositionLeft = position.value.left + crop.value.x + crop.value.width / 2 - imageWidth.value / 2;
-  let newPositionTop = position.value.top + crop.value.y + crop.value.height / 2 - imageHeight.value / 2;
+  let newPositionLeft = position.value.left - (crop.value.x + crop.value.width / 2 - imageWidth.value / 2) * scale.value;
+  let newPositionTop = position.value.top - (crop.value.y + crop.value.height / 2 - imageHeight.value / 2) * scale.value;
   position.value = { left: newPositionLeft, top: newPositionTop };
 
   // 3. resize cropBox to fit the container
   const scaledCropWidth = crop.value.width * scale.value;
   const scaledCropHeight = crop.value.height * scale.value;
 
+  // save the original crop box data
+  cropBoxOriginal.value = { ...cropBox.value };
+
+  // update the crop box data
   cropBox.value = {
     left: (containerBounds.value.width - scaledCropWidth + containerPadding) / 2,
     top: (containerBounds.value.height - scaledCropHeight + containerPadding) / 2,
-    width: scaledCropWidth,
+    width: scaledCropWidth,  
     height: scaledCropHeight,
   };
 };
@@ -485,8 +499,6 @@ const clickRotate = (degree: number) => {
   // update scale to fit the container
   scale.value = Math.min(containerBounds.value.width / rotatedWidth, containerBounds.value.height / rotatedHeight);
 };
-
-
 
 const clickFlipX = () => {
   isFlippedX.value = !isFlippedX.value;
