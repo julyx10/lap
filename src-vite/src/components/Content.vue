@@ -1005,11 +1005,20 @@ function removeFromFileList(index) {
 
 // update the file info from the file
 const updateFile = async (file) => {
+  if (isProcessing.value) return;
+
+  isProcessing.value = true;
+
   const updatedFile = await updateFileInfo(file.id, file.file_path);
   if(updatedFile) {
     Object.assign(file, updatedFile);
-    updateThumbForFile(file);
-    updateSelectedImage(selectedItemIndex.value);   
+    await updateThumbForFile(file);
+    await updateSelectedImage(selectedItemIndex.value);
+    toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.success);
+    isProcessing.value = false;
+  } else {
+    toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.failed, true);
+    isProcessing.value = false;
   }
 }
 

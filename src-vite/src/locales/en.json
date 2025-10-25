@@ -97,6 +97,10 @@
     "save_image": {
       "success": "The image has been saved",
       "failed": "Cannot save the image. Unsupported format or file is corrupted."
+    },
+    "update_image": {
+      "success": "The image has been updated from the file",
+      "failed": "Failed to update the image from the file. The file may not exist."
     }
   },
 

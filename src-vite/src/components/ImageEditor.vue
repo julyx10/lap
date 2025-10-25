@@ -23,11 +23,16 @@
       <div class="flex-grow flex gap-4">
         <div class="flex-1">
           <!-- image container -->
-          <div ref="containerRef" class="relative w-[570px] h-[430px] bg-base-200 cursor-pointer rounded-lg overflow-hidden select-none">
+          <div ref="containerRef" class="relative w-[570px] h-[430px] bg-base-200 cursor-default rounded-lg overflow-hidden select-none">
             <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
 
             <!-- crop box -->
-            <div v-if="cropStatus===1" class="crop-box-active" :style="cropBoxStyle" @mousedown="startDrag('move', $event)">
+            <div v-if="cropStatus===1" 
+              :class="['crop-box-active', isDragging ? 'cursor-grabbing' : 'cursor-grab']" 
+              :style="cropBoxStyle" 
+              @mousedown="startDrag('move', $event)"
+              @dblclick="doCrop"
+            >
               <template v-if="isDragging">
                 <div class="crop-dimensions-display">
                   {{ crop.width }} x {{ crop.height }}
@@ -185,7 +190,7 @@
             </table>
 
             <!-- debug -->
-            <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
+            <!-- <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
               <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
               <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
               <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
@@ -194,7 +199,7 @@
               <span>scale: {{ scale.toFixed(2) }}</span>
               <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
               <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
