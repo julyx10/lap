@@ -6,12 +6,11 @@
  * date:    2024-08-08
  */
 use base64::{ engine::general_purpose, Engine };
-use arboard::Clipboard;
 use std::path::Path;
-use image::GenericImageView;
 use crate::t_sqlite::{Album, AFile, AFolder, AThumb, ATag, ACamera, ALocation};
 use crate::t_image;
 use crate::t_utils;
+use tokio;
 
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
 
@@ -204,24 +203,32 @@ pub fn get_folder_thumb_count(search_text: &str, search_file_type: i64, folder_i
     }
 }
 
+/// edit an image
+#[tauri::command]
+pub async fn edit_image(params: t_image::EditParams) -> Result<bool, String> {
+    tokio::task::spawn_blocking(move || {
+        Ok(t_image::edit_image(params))
+    }).await.map_err(|e| format!("Task error: {}", e))?
+}
+
+/// copy an edited image to clipboard
+#[tauri::command]
+pub async fn copy_edited_image(params: t_image::EditParams) -> Result<bool, String> {
+    tokio::task::spawn_blocking(move || {
+        Ok(t_image::copy_edited_image_to_clipboard(params))
+    }).await.map_err(|e| format!("Task error: {}", e))?
+}
+
 /// copy image to clipboard
 #[tauri::command]
-pub async fn copy_image_to_clipboard(file_path: &str) -> Result<(), String> {
-    let img = image::open(&Path::new(&file_path))
-        .map_err(|e| format!("Failed to open image: {}", e))?;
-
-    let (width, height) = img.dimensions();
-    let rgba = img.to_rgba8();
-    let bytes = rgba.into_raw();
-
-    let mut clipboard = Clipboard::new().map_err(|e| format!("Clipboard error: {}", e))?;
-    clipboard.set_image(arboard::ImageData {
-        width: width as usize,
-        height: height as usize,
-        bytes: std::borrow::Cow::Owned(bytes),
-    }).map_err(|e| format!("Failed to set image to clipboard: {}", e))?;
-
-    Ok(())
+pub async fn copy_image(file_path: String) -> Result<bool, String> {
+    tokio::task::spawn_blocking(move || {
+        if let Ok(img) = image::open(&Path::new(&file_path)) {
+            Ok(t_image::copy_image_to_clipboard(img))
+        } else {
+            Err(format!("Failed to open image: {}", file_path))
+        }
+    }).await.map_err(|e| format!("Task error: {}", e))?
 }
 
 /// rename a file
@@ -332,20 +339,6 @@ pub async fn get_file_image(file_path: String) -> Result<String, String> {
         Ok(image_data) => Ok(general_purpose::STANDARD.encode(image_data)),
         Err(e) => Err(format!("Failed to read the image: {}", e)),
     }
-}
-
-/// edit an image
-#[tauri::command]
-pub fn edit_image(params: t_image::EditParams) -> Result<(), String> {
-    t_image::edit_image(params)
-        .map_err(|e| format!("Error while editing image: {}", e))
-}
-
-/// copy an edited image to clipboard
-#[tauri::command]
-pub fn copy_edited_image_to_clipboard(params: t_image::EditParams) -> Result<(), String> {
-    t_image::copy_edited_image_to_clipboard(params)
-        .map_err(|e| format!("Error while copying edited image to clipboard: {}", e))
 }
 
 /// set a file's rotate status

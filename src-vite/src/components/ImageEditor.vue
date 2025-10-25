@@ -1,7 +1,12 @@
 <template>
 
   <dialog id="imageEditorDialog" class="modal">
-    <div class="p-4 flex flex-col gap-2 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="relative p-4 flex flex-col gap-2 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+      
+      <!-- Loading overlay -->
+      <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+        <span class="loading loading-dots text-primary"></span>
+      </div>
       
       <!-- title bar -->
       <div class="flex items-center justify-between text-wrap break-all">
@@ -246,7 +251,6 @@ import {
   IconFlipVertical, 
   IconFlipHorizontal,
   IconOk,
-  IconRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -264,6 +268,7 @@ const uiStore = useUIStore();
 const emit = defineEmits(['ok', 'cancel']);
 
 const toolTipRef = ref(null);
+const isProcessing = ref(false);  // show processing status
 
 // container
 const containerRef = ref<HTMLElement | null>(null);
@@ -786,63 +791,72 @@ const clickCancel = () => {
   emit('cancel');
 };
 
-const clickCopyImage = () => {
-  if (cropStatus.value === 1) return;
-  const editParams = {
-    filePath: props.fileInfo.file_path,
+const setEditParams = () => {
+  const fileName = combineFileName(newFileName.value, fileFormatOptions.value[config.imageEditor.format].label.toLowerCase());
+  const destFilePath = getFullPath(getFolderPath(props.fileInfo.file_path), fileName);
+  const orientation = props.fileInfo.e_orientation || 1;
+
+  return {
+    sourceFilePath: props.fileInfo.file_path,
+    destFilePath: destFilePath,
+    outputFormat: fileFormatOptions.value[config.imageEditor.format].label.toLowerCase(),
+    orientation: orientation,
+    flipHorizontal: isFlippedX.value,
+    flipVertical: isFlippedY.value,
+    rotate: rotate.value,
     crop: {
       x: crop.value.left,
       y: crop.value.top,
       width: crop.value.width,
       height: crop.value.height,
-      rotate: rotate.value,
     },
     resize: {
       width: resizedWidth.value,
       height: resizedHeight.value,
     },
-    flipHorizontal: isFlippedX.value,
-    flipVertical: isFlippedY.value,
-    outputFormat: fileFormatOptions.value[config.imageEditor.format].label.toLowerCase(),
   };
-  copyEditedImage(editParams).then(() => {
-    toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
-  }).catch((error) => {
-    console.error(error);
-  });
+};
+
+const clickCopyImage = async () => {
+  if (cropStatus.value === 1 || isProcessing.value) return;
+
+  isProcessing.value = true;
+
+  let success = false;
+  try {
+    const editParams = setEditParams();
+    console.log(editParams);
+    success = await copyEditedImage(editParams);
+  } finally {
+    isProcessing.value = false;
+    if (success) {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.failed, true);
+    }
+  }
 };
 
 const clickSave = async () => {
-  if (cropStatus.value === 1) return;
+  if (cropStatus.value === 1 || isProcessing.value) return;
 
-  const fileName = combineFileName(newFileName.value, fileFormatOptions.value[config.imageEditor.format].label.toLowerCase());
-  const filePath = getFullPath(getFolderPath(props.fileInfo.file_path), fileName);
+  isProcessing.value = true;
 
-  const editParams = {
-    filePath: props.fileInfo.file_path,
-    crop: {
-      x: crop.value.left,
-      y: crop.value.top,
-      width: crop.value.width,
-      height: crop.value.height,
-      rotate: rotate.value,
-    },
-    resize: {
-      width: resizedWidth.value,
-      height: resizedHeight.value,
-    },
-    flipHorizontal: isFlippedX.value,
-    flipVertical: isFlippedY.value,
-    outputFormat: fileFormatOptions.value[config.imageEditor.format].label.toLowerCase(),
-  };
-  console.log(editParams);
-  
-  editImage(editParams).then(() => {
-    uiStore.updateFileVersion(props.fileInfo.file_path);
-    emit('ok');
-  }).catch((error) => {
-    console.error(error);
-  });
+  let success = false;
+  try {
+    const editParams = setEditParams();
+    console.log(editParams);
+    success = await editImage(editParams);
+  } finally {
+    isProcessing.value = false;
+    if (success) {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.success);
+      uiStore.updateFileVersion(props.fileInfo.file_path);
+      emit('ok');
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.failed, true);
+    }
+  }
 };
 
 </script>

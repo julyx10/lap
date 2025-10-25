@@ -4,8 +4,14 @@
     :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('AlbumList-edit') }"
   >
 
+    <!-- Loading overlay -->
+    <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+      <span class="loading loading-dots text-primary"></span>
+    </div>
+
     <!-- title bar -->
-    <div class="px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
+    <div class="relative px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
+
 
       <!-- title -->
       <div v-if="contentTitle.length > 0" class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
@@ -394,6 +400,8 @@ const fileIdsToTag = ref<number[]>([]);
 const gridViewRef = ref(null);
 
 const toolTipRef = ref(null);
+const isProcessing = ref(false);  // show processing status
+
 const searchBoxRef = ref(null);
 
 let resizeObserver;
@@ -549,9 +557,7 @@ onMounted( async() => {
         openImageViewer(selectedItemIndex.value, true);
         break;
       case 'copy': // copy image to clipboard
-        copyImage(fileList.value[selectedItemIndex.value].file_path).then(() => {
-          toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
-        });
+        clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
         break;
       case 'edit':
         showImageEditor.value = true;
@@ -866,8 +872,26 @@ const onImageEdited = () => {
   showImageEditor.value = false;
 }
 
+const clickCopyImage = async (filePath: string) => {
+  if (isProcessing.value) return;
+
+  isProcessing.value = true;
+
+  let success = false;
+  try {
+    success = await copyImage(filePath);
+  } finally {
+    isProcessing.value = false;
+    if (success) {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.failed, true);
+    }
+  }
+}
+
 // click rename menu item
-const clickRenameFile = async (newName) => {
+const clickRenameFile = async (newName: string) => {
   if(selectedItemIndex.value >= 0) {
     const file = fileList.value[selectedItemIndex.value];
     const fileName = combineFileName(newName, renamingFileName.value.ext);

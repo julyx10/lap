@@ -6,13 +6,14 @@
  * date:    2024-08-08
  */
 
- use std::process::Command;
+use std::process::Command;
 use std::io::Cursor;
 use ffmpeg_next as ffmpeg;
-use image::{DynamicImage, RgbImage, ImageFormat, ImageReader};
+use image::{DynamicImage, RgbImage, ImageFormat, ImageReader, GenericImageView};
 use rusqlite::Result;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use arboard::Clipboard;
 
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
@@ -242,41 +243,97 @@ pub fn print_image(image_path: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// edit image impl
+
+/// crop data
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CropData {
     x: f32,
     y: f32,
     width: f32,
     height: f32,
-    rotate: f32,
 }
 
+/// resize data
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ResizeData {
     width: Option<u32>,
     height: Option<u32>,
 }
 
+/// edit params
 #[derive(Debug, Deserialize, Serialize)]
 pub struct EditParams {
-    #[serde(rename = "filePath")]
-    file_path: String,
-    crop: CropData,
-    resize: ResizeData,
+    #[serde(rename = "sourceFilePath")]
+    source_file_path: String,
+    #[serde(rename = "destFilePath")]
+    dest_file_path: String,
+    #[serde(rename = "outputFormat")]
+    output_format: String,
+    orientation: i32,   // exif orientation value
     #[serde(rename = "flipHorizontal")]
     flip_horizontal: bool,
     #[serde(rename = "flipVertical")]
     flip_vertical: bool,
-    #[serde(rename = "outputFormat")]
-    output_format: String,
+    rotate: i32,
+    crop: CropData,
+    resize: ResizeData,
 }
 
-/// edit an image
-pub fn edit_image(params: EditParams) -> Result<(), String> {
-    let path = Path::new(&params.file_path);
+/// edit an image and save to dest file
+pub fn edit_image(params: EditParams) -> bool {
+    if let Ok(img) = get_edited_image(&params) {
+        let path = Path::new(&params.dest_file_path);
+        let format = match params.output_format.as_str() {
+            "png" => image::ImageFormat::Png,
+            "webp" => image::ImageFormat::WebP,
+            _ => image::ImageFormat::Jpeg,
+        };
+
+        return img.save_with_format(path, format).is_ok();
+    }
+    false
+}
+
+/// copy an image to clipboard
+pub fn copy_image_to_clipboard(img: DynamicImage) -> bool {
+    let (width, height) = img.dimensions();
+    let rgba = img.to_rgba8();
+    let bytes = rgba.into_raw();
+
+    if let Ok(mut clipboard) = Clipboard::new() {
+        let image_data = arboard::ImageData {
+            width: width as usize,
+            height: height as usize,
+            bytes: std::borrow::Cow::Owned(bytes),
+        };
+        return clipboard.set_image(image_data).is_ok();
+    }
+    false
+}
+
+/// copy an edited image to clipboard
+pub fn copy_edited_image_to_clipboard(params: EditParams) -> bool {
+    if let Ok(img) = get_edited_image(&params) {
+        return copy_image_to_clipboard(img);
+    }
+    false
+}
+
+/// get an edited image
+fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
+    let path = Path::new(&params.source_file_path);
     let mut img = image::open(path).map_err(|e| e.to_string())?;
 
-    // 1. Flip
+    // orientaion adjustment based on exif orientation value
+    img = match params.orientation {
+        3 => img.rotate180(),
+        6 => img.rotate90(),
+        8 => img.rotate270(),
+        _ => img,
+    };
+
+    // Flip
     if params.flip_horizontal {
         img = img.fliph();
     }
@@ -284,9 +341,8 @@ pub fn edit_image(params: EditParams) -> Result<(), String> {
         img = img.flipv();
     }
 
-    // 2. Rotate
-    let rotation = params.crop.rotate.round() as i32;
-    match rotation {
+    // Rotate
+    match params.rotate {
         90 => img = img.rotate90(),
         180 => img = img.rotate180(),
         270 => img = img.rotate270(),
@@ -296,7 +352,7 @@ pub fn edit_image(params: EditParams) -> Result<(), String> {
         _ => {},
     }
 
-    // 3. Crop
+    // Crop
     img = img.crop_imm(
         params.crop.x.round() as u32,
         params.crop.y.round() as u32,
@@ -304,21 +360,12 @@ pub fn edit_image(params: EditParams) -> Result<(), String> {
         params.crop.height.round() as u32,
     );
 
-    // 4. Resize
+    // Resize
     if let (Some(w), Some(h)) = (params.resize.width, params.resize.height) {
         if w > 0 && h > 0 {
             img = img.resize_exact(w, h, image::imageops::FilterType::Lanczos3);
         }
     }
 
-    // 5. Save
-    let format = match params.output_format.as_str() {
-        "png" => image::ImageFormat::Png,
-        "webp" => image::ImageFormat::WebP,
-        _ => image::ImageFormat::Jpeg,
-    };
-
-    img.save_with_format(path, format).map_err(|e| e.to_string())?; 
-
-    Ok(())
+    Ok(img)
 }

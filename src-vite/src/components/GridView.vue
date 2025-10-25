@@ -358,6 +358,9 @@ function openItem() {
 };
 
 function copyItem() {
+  if (props.fileList[selectedIndex.value].file_type !== 1) {
+    return;
+  }
   emit('message-from-grid-view', { message: 'copy' });
 };
 

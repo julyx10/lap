@@ -92,7 +92,11 @@
     },
     "copy_image": {
       "success": "Image copied to clipboard",
-      "failed": "Failed to copy image to clipboard"
+      "failed": "Failed to copy image to clipboard. Unsupported format or file is corrupted."
+    },
+    "save_image": {
+      "success": "The image has been saved",
+      "failed": "Cannot save the image. Unsupported format or file is corrupted."
     }
   },
 

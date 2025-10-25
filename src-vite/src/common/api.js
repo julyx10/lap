@@ -344,12 +344,33 @@ export async function getFolderThumbCount(folderId) {
   return 0;
 }
 
+// edit an image
+export async function editImage(params) {
+  try {
+    return await invoke('edit_image', { params });
+  } catch (error) {
+    console.log('Failed to edit image:', error);
+    return false;
+  }
+}
+
+// copy an edited image to clipboard
+export async function copyEditedImage(params) {
+  try {
+    return await invoke('copy_edited_image', { params });
+  } catch (error) {
+    console.log('Failed to copy edited image to clipboard:', error);
+    return false;
+  }
+}
+
 // copy an image to clipboard
 export async function copyImage(filePath) {
   try {
-    await invoke('copy_image_to_clipboard', { filePath });
+    return await invoke('copy_image', { filePath });
   } catch (error) {
-    console.error('copyImageToClipboard error:', error);
+    console.error('Failed to copy image to clipboard:', error);
+    return false;
   }
 }
 
@@ -472,32 +493,6 @@ export async function getFileImage(filePath) {
     };
   } catch (error) {
     console.log('Failed to get file image:', error);
-  }
-  return null;
-}
-
-// edit an image
-export async function editImage(params) {
-  try {
-    const result = await invoke('edit_image', { params });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.log('Failed to edit image:', error);
-  }
-  return null;
-}
-
-// copy an edited image to clipboard
-export async function copyEditedImage(params) {
-  try {
-    const result = await invoke('copy_edited_image_to_clipboard', { params });
-    if(result) {
-      return result;
-    };
-  } catch (error) {
-    console.log('Failed to copy edited image to clipboard:', error);
   }
   return null;
 }
