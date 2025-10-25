@@ -55,29 +55,24 @@
               <TButton
                 :icon="IconRotateLeft"
                 :disabled="cropStatus > 0"
-                :selected="rotate % 360 !== 0"
                 :tooltip="$t('msgbox.image_editor.rotate_left')"
                 @click="clickRotate(-90)" 
               />
               <TButton
                 :icon="IconRotateRight"
                 :disabled="cropStatus > 0"
-                :selected="rotate % 360 !== 0"
                 :tooltip="$t('msgbox.image_editor.rotate_right')"
                 @click="clickRotate(90)" 
               />
               <TButton
                 :icon="IconFlipHorizontal"
                 :disabled="cropStatus > 0"
-                :selected="isFlippedX"
-
                 :tooltip="$t('msgbox.image_editor.flip_horizontal')"
                 @click="clickFlipX" 
               />
               <TButton
                 :icon="IconFlipVertical"
                 :disabled="cropStatus > 0"
-                :selected="isFlippedY"
                 :tooltip="$t('msgbox.image_editor.flip_vertical')"
                 @click="clickFlipY" 
               />
@@ -298,10 +293,10 @@ const imageStyle = computed(() => ({
   position: 'absolute',
   transform: `
     translate(${position.value.left}px, ${position.value.top}px) 
+    rotate(${rotate.value}deg) 
     scaleX(${isFlippedX.value ? -1 : 1}) 
     scaleY(${isFlippedY.value ? -1 : 1}) 
     scale(${scale.value})
-    rotate(${rotate.value}deg) 
   `,
   transition: enableTransition.value ? 'transform 0.3s ease' : 'none',
 }));
@@ -651,14 +646,14 @@ const clickRotate = (degree: number) => {
 };
 
 const clickFlipX = () => {
-  // rotate.value % 180 !== 0 ?
-  //   isFlippedY.value = !isFlippedY.value :
+  rotate.value % 180 !== 0 ?
+    isFlippedY.value = !isFlippedY.value :
     isFlippedX.value = !isFlippedX.value;
 };
 
 const clickFlipY = () => {
-  // rotate.value % 180 !== 0 ?
-  //   isFlippedX.value = !isFlippedX.value :
+  rotate.value % 180 !== 0 ?
+    isFlippedX.value = !isFlippedX.value :
     isFlippedY.value = !isFlippedY.value;
 };
 
