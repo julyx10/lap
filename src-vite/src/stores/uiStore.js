@@ -4,10 +4,14 @@ import { defineStore } from 'pinia';
 export const useUIStore = defineStore('ui', {
   state: () => ({
     inputStack: [],
+    fileVersions: {},
   }),
   getters: {
     isInputActive: (state) => (name) => {
       return state.inputStack.length > 0 && state.inputStack[state.inputStack.length - 1] === name;
+    },
+    getFileVersion: (state) => (filePath) => {
+      return state.fileVersions[filePath] || 0;
     },
   },
   actions: {
@@ -16,6 +20,10 @@ export const useUIStore = defineStore('ui', {
     },
     popInputHandler() {
       this.inputStack.pop();
+    },
+    updateFileVersion(filePath) {
+      const currentVersion = this.fileVersions[filePath] || 0;
+      this.fileVersions[filePath] = currentVersion + 1;
     },
   },
 });

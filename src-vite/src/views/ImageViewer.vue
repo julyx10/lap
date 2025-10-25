@@ -271,11 +271,10 @@
 import { ref, watch, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { config, isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
-import { copyImage, getFileInfo, getFileImage, getTagsForFile, getFileHasTags, printImage } from '@/common/api';
+import { config, isWin, isMac, setTheme, getSlideShowInterval, getAssetSrc } from '@/common/utils';
+import { copyImage, getFileInfo, getTagsForFile, getFileHasTags, printImage } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
@@ -430,9 +429,8 @@ const moreMenuItems = computed(() => {
 
 const onImageEdited = () => {
   console.log('Image has been edited, refreshing...');
-  // imageCache.delete(filePath.value);
-  // loadImage(filePath.value);
-
+  imageCache.delete(filePath.value);
+  loadImage(filePath.value);
   showImageEditor.value = false;
 };
 
@@ -651,8 +649,7 @@ async function loadImage(filePath) {
     if (imageCache.has(filePath)) {
       imageSrc.value = imageCache.get(filePath);
     } else {
-      // const convertedSrc = await getFileImage(filePath);
-      const convertedSrc = convertFileSrc(filePath);
+      const convertedSrc = getAssetSrc(filePath);
       if (convertedSrc) {
         // imageSrc.value = `data:image/jpeg;base64,${convertedSrc}`;
         imageSrc.value = convertedSrc;
@@ -677,8 +674,7 @@ async function loadImage(filePath) {
 async function preLoadImage(filePath) {
   try {
     if (filePath.length > 0 && !imageCache.has(filePath)) {
-      // const convertedSrc = await getFileImage(filePath);
-      const convertedSrc = convertFileSrc(filePath);
+      const convertedSrc = getAssetSrc(filePath);
       if (convertedSrc) {
         // const imageSrc = `data:image/jpeg;base64,${convertedSrc}`;
         const imageSrc = convertedSrc;
@@ -697,7 +693,7 @@ async function loadVideo(filePath) {
     return;
   }
   try {
-    const convertedSrc = convertFileSrc(filePath);
+    const convertedSrc = getAssetSrc(filePath);
     console.log('loadVideo - original path:', filePath);
     console.log('loadVideo - converted src:', convertedSrc);
     videoSrc.value = convertedSrc;

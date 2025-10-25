@@ -9,6 +9,7 @@
         <TButton
           :icon="IconClose"
           :buttonSize="'small'"
+          :disabled="cropStatus===1"
           @click="clickCancel"
         />
       </div>
@@ -17,48 +18,90 @@
       <div class="flex-grow flex gap-4">
         <div class="flex-1">
           <!-- image container -->
-          <div ref="containerRef" class="relative w-[570px] h-[430px] bg-base-200 cursor-pointer rounded-lg overflow-hidden">
+          <div ref="containerRef" class="relative w-[570px] h-[430px] bg-base-200 cursor-pointer rounded-lg overflow-hidden select-none">
             <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
 
             <!-- crop box -->
-            <div v-if="cropStatus==1" class="crop-box-active" :style="cropBoxStyle" @mousedown="startDrag('move', $event)">
-              <div v-if="isDragging" class="crop-dimensions-display">
-                {{ crop.width }} x {{ crop.height }}
-              </div>
-              <div v-if="isDragging" class="grid-lines">
-                <div class="grid-line-h grid-line-h-1"></div>
-                <div class="grid-line-h grid-line-h-2"></div>
-                <div class="grid-line-v grid-line-v-1"></div>
-                <div class="grid-line-v grid-line-v-2"></div>
-              </div>
-              <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
-              <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
-              <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
-              <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
-              <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
-              <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
-              <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
-              <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
+            <div v-if="cropStatus===1" class="crop-box-active" :style="cropBoxStyle" @mousedown="startDrag('move', $event)">
+              <template v-if="isDragging">
+                <div class="crop-dimensions-display">
+                  {{ crop.width }} x {{ crop.height }}
+                </div>
+                <div class="grid-lines">
+                  <div class="grid-line-h grid-line-h-1"></div>
+                  <div class="grid-line-h grid-line-h-2"></div>
+                  <div class="grid-line-v grid-line-v-1"></div>
+                  <div class="grid-line-v grid-line-v-2"></div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
+                <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
+                <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
+                <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
+                <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
+                <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
+                <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
+                <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
+              </template>
             </div>
-            <div v-if="cropStatus==2" class="crop-box-done" :style="cropBoxStyle"></div>
+            <div v-if="cropStatus===2" class="crop-box-done" :style="cropBoxStyle"></div>
           </div>
 
           <!-- crop controls -->
           <div class="pt-2 flex justify-between">
+            <!-- rotate and flip controls -->
+            <div class="flex gap-2">
+              <TButton
+                :icon="IconRotateLeft"
+                :disabled="cropStatus > 0"
+                :selected="rotate % 360 !== 0"
+                :tooltip="$t('msgbox.image_editor.rotate_left')"
+                @click="clickRotate(-90)" 
+              />
+              <TButton
+                :icon="IconRotateRight"
+                :disabled="cropStatus > 0"
+                :selected="rotate % 360 !== 0"
+                :tooltip="$t('msgbox.image_editor.rotate_right')"
+                @click="clickRotate(90)" 
+              />
+              <TButton
+                :icon="IconFlipHorizontal"
+                :disabled="cropStatus > 0"
+                :selected="isFlippedX"
+
+                :tooltip="$t('msgbox.image_editor.flip_horizontal')"
+                @click="clickFlipX" 
+              />
+              <TButton
+                :icon="IconFlipVertical"
+                :disabled="cropStatus > 0"
+                :selected="isFlippedY"
+                :tooltip="$t('msgbox.image_editor.flip_vertical')"
+                @click="clickFlipY" 
+              />
+            </div>
+
             <!-- crop shape controls -->
             <div 
-              :class="['flex border rounded-box transition-all ease-out duration-200', 
-                cropStatus==0 ? 'border-transparent' : '',
-                cropStatus==1 ? 'border-primary' : '',
-                cropStatus==2 ? 'border-base-content/30' : '',
+              :class="['flex border rounded-box', 
+                cropStatus==1 ? 'border-primary' : 'border-transparent',
               ]"
             >
-              <TButton
-                :icon="cropStatus==0 ? IconCrop : (cropStatus==1 ? IconClose : IconRestore)"
-                :tooltip="cropStatus==0 ? $t('msgbox.image_editor.crop') : (cropStatus==1 ? $t('msgbox.image_editor.cancel_crop') : $t('msgbox.image_editor.restore'))"
-                @click="toggleCrop" 
+              <TButton v-if="cropStatus===0 || cropStatus===2"
+                :icon="IconCrop"
+                :selected="cropStatus===2"
+                :tooltip="$t('msgbox.image_editor.crop')"
+                @click="cropStatus===0 ? clickStartCrop() : clickRestoreCrop()" 
               />
-              <div v-if="cropStatus==1" class="flex items-center gap-2 pr-2">
+
+              <div v-if="cropStatus==1" class="flex items-center gap-2">
+                <TButton
+                  :icon="IconClose"
+                  :tooltip="$t('msgbox.image_editor.cancel_crop')"
+                  @click="clickCancelCrop" 
+                />
                 <TButton
                   :icon="IconCropLandscape"
                   :iconStyle="{ transform: `rotate(${isPortrait ? 90 : 0}deg)`, transition: 'transform 0.3s ease-in-out' }" 
@@ -73,35 +116,7 @@
                   :tooltip="$t('msgbox.image_editor.done_crop')"
                   @click="doCrop"
                 />
-              </div>
-            </div>
-
-            <!-- rotate and flip controls -->
-            <div class="flex gap-2">
-              <TButton
-                :icon="IconRotateLeft"
-                :disabled="cropStatus==1"
-                :tooltip="$t('msgbox.image_editor.rotate_left')"
-                @click="clickRotate(-90)" 
-              />
-              <TButton
-                :icon="IconRotateRight"
-                :disabled="cropStatus==1"
-                :tooltip="$t('msgbox.image_editor.rotate_right')"
-                @click="clickRotate(90)" 
-              />
-              <TButton
-                :icon="IconFlipHorizontal"
-                :disabled="cropStatus==1"
-                :tooltip="$t('msgbox.image_editor.flip_horizontal')"
-                @click="clickFlipX" 
-              />
-              <TButton
-                :icon="IconFlipVertical"
-                :disabled="cropStatus==1"
-                :tooltip="$t('msgbox.image_editor.flip_vertical')"
-                @click="clickFlipY" 
-              />
+              </div>  
             </div>
           </div>
         </div>
@@ -118,7 +133,7 @@
                   <td class="w-1/2">{{ $t('msgbox.image_editor.width') }}</td>
                   <td>
                     <input type="number" min="100" max="100000" :placeholder="$t('msgbox.image_editor.width')"  class="input input-bordered w-full"
-                      v-model="resizeWidth" :disabled="cropStatus==1"
+                      v-model="resizedWidth" :disabled="cropStatus==1"
                     />
                   </td>
                 </tr>
@@ -126,7 +141,7 @@
                   <td>{{ $t('msgbox.image_editor.height') }}</td>
                   <td>
                     <input type="number" min="100" max="100000" :placeholder="$t('msgbox.image_editor.height')"  class="input input-bordered w-full"
-                      v-model="resizeHeight" :disabled="cropStatus==1"
+                      v-model="resizedHeight" :disabled="cropStatus==1"
                     />
                   </td>
                 </tr>
@@ -134,7 +149,7 @@
                   <td>{{ $t('msgbox.image_editor.percentage') }}</td>
                   <td class="flex items-center">
                     <input type="number" min="1" max="100" :placeholder="$t('msgbox.image_editor.percentage')"  class="input input-bordered w-full"
-                      v-model="resizePercentage" :disabled="cropStatus==1"
+                      v-model="resizedPercentage" :disabled="cropStatus==1"
                     />
                     <span class="pl-1 text-xs text-base-content/30">%</span>
                   </td>
@@ -146,7 +161,7 @@
           <!-- Format -->
           <div>
             <h3 class="mb-2">{{ $t('msgbox.image_editor.save_as') }}</h3>
-            <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="saveName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" />
+            <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" />
 
             <table class="w-full text-sm border-separate border-spacing-2">
               <tbody>
@@ -170,14 +185,15 @@
             </table>
 
             <!-- debug -->
-            <div class="text-xs text-base-content/30 flex flex-col gap-1 mt-2">
+            <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
+              <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
               <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
+              <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
               <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
               <span>cropBoxOriginal:{{ cropBoxOriginal.left.toFixed(0) }}, {{ cropBoxOriginal.top.toFixed(0) }}, {{ cropBoxOriginal.width.toFixed(0) }}, {{ cropBoxOriginal.height.toFixed(0) }}</span> 
-              <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
               <span>scale: {{ scale.toFixed(2) }}</span>
               <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
-              <span>crop: {{ crop.x.toFixed(0) }}, {{ crop.y.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
+              <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
             </div>
           </div>
         </div>
@@ -186,34 +202,44 @@
       <!-- dialog buttons -->
       <div class="flex justify-end gap-4">
         <button
-          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+          :class="[
+            'px-4 py-1 rounded-lg',
+            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/30 cursor-pointer',
+          ]" 
           @click="clickCancel"
         >{{ $t('msgbox.image_editor.cancel') }}</button>
         <button 
-          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+          :class="[
+            'px-4 py-1 rounded-lg',
+            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/30 cursor-pointer',
+          ]" 
           @click="clickCopyImage"
         >{{ $t('msgbox.image_editor.copy_image') }}</button>
         <button 
           :class="[
-            'px-4 py-1',
-            cropStatus==1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary cursor-pointer rounded-lg',
+            'px-4 py-1 rounded-lg',
+            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary cursor-pointer',
           ]" 
           @click="clickSave"
         >{{ $t('msgbox.image_editor.ok') }}</button>
       </div>
     </div>
+
+    <ToolTip ref="toolTipRef" />
+
   </dialog>
+
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
-import { config, extractFileName, getSelectOptions, getFileExtension } from '@/common/utils';
-import { editImage } from '@/common/api';
+import { config, getFolderPath, extractFileName, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
+import { editImage, copyEditedImage } from '@/common/api';
 
 import TButton from '@/components/TButton.vue';
+import ToolTip from '@/components/ToolTip.vue';
 
 import { 
   IconClose, 
@@ -242,54 +268,47 @@ const localeMsg = computed(() => messages.value[config.language]);
 const uiStore = useUIStore();
 const emit = defineEmits(['ok', 'cancel']);
 
+const toolTipRef = ref(null);
+
 // container
 const containerRef = ref<HTMLElement | null>(null);
 const containerRect = ref<DOMRect | null>(null);
-const containerPadding = 10;
-const containerBounds = ref({ top: 0, left: 0, width: 0, height: 0 });  // container bounds without padding
+const containerBounds = ref({ top: 0, left: 0, width: 0, height: 0 });
+const containerPadding = 5; // container padding
 
 // image
-const imageSrc = ref('');
 const imageRef = ref<HTMLImageElement | null>(null);
 const imageRect = ref<DOMRect | null>(null);
-const imageWidth = ref(0);
-const imageHeight = ref(0);
+const imageSrc = ref('');
+const imageWidth = ref(0);     // original image width
+const imageHeight = ref(0);    // original image height
 
 // image transform
 const enableTransition = ref(false);    
 const position = ref({ left: 0, top: 0 });
+const isFlippedX = ref(false);
+const isFlippedY = ref(false);
 const scale = ref(1);
+const rotate = ref(0);  // 0, 90, 180, 270, -90, -180, -270
 
-const imageStyle = computed(() => {
-  return {
-    display: 'block',
-    minWidth: `${imageWidth.value}px`,
-    minHeight: `${imageHeight.value}px`,
-    position: 'absolute',
-    transform: `
-      translate(${position.value.left}px, ${position.value.top}px) 
-      rotate(${crop.value.rotate}deg) 
-      scaleX(${isFlippedX.value ? -1 : 1}) 
-      scaleY(${isFlippedY.value ? -1 : 1}) 
-      scale(${scale.value})
-    `,
-    transition: enableTransition.value ? 'transform 0.3s ease' : 'none',
-    // willChange: 'transform, box-shadow, opacity',
-  };
-});
+const imageStyle = computed(() => ({
+  display: 'block',
+  minWidth: `${imageWidth.value}px`,
+  minHeight: `${imageHeight.value}px`,
+  position: 'absolute',
+  transform: `
+    translate(${position.value.left}px, ${position.value.top}px) 
+    scaleX(${isFlippedX.value ? -1 : 1}) 
+    scaleY(${isFlippedY.value ? -1 : 1}) 
+    scale(${scale.value})
+    rotate(${rotate.value}deg) 
+  `,
+  transition: enableTransition.value ? 'transform 0.3s ease' : 'none',
+}));
 
 // crop shape
 const cropStatus = ref(0);    // 0: idle, 1: cropping, 2: cropped
 const isPortrait = ref(false);
-
-// cropped image
-const crop = ref({
-  x: 0,
-  y: 0,
-  width: 0,
-  height: 0,
-  rotate: 0,
-});
 
 // crop box
 const cropBox = ref({ top: 0, left: 0, width: 0, height: 0 });
@@ -331,17 +350,16 @@ const cropShapeOptions = computed(() => {
   }
 });
 
-// flip image
-const isFlippedX = ref(false);
-const isFlippedY = ref(false);
+// cropped image
+const crop = ref({ top: 0, left: 0, width: 0, height: 0 });
 
-// resize
-const resizeWidth = ref(0);
-const resizeHeight = ref(0);
-const resizePercentage = ref(100);
+// resized image after having cropped
+const resizedWidth = ref(0);
+const resizedHeight = ref(0);
+const resizedPercentage = ref(100);
 
 // save as
-const saveName = ref('');
+const newFileName = ref('');
 
 const fileFormatOptions = computed(() => {
   return getSelectOptions(localeMsg.value.msgbox.image_editor.format_options);
@@ -357,7 +375,7 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('ImageEditor');
 
-  clickRestore(); // init container, image, crop, etc.
+  initImageEditor(); // init container, image, crop, etc.
 });
 
 onUnmounted(() => {
@@ -367,152 +385,132 @@ onUnmounted(() => {
 
 const onImageLoad = () => {
   nextTick(() => {
-    imageRect.value = imageRef.value?.getBoundingClientRect() || null;
     enableTransition.value = true;
   });
 };
 
-watch(cropBox, (newData) => {
-  if (imageRect.value && imageWidth.value && imageHeight.value) {
-    crop.value.x      = Math.round(imageWidth.value * (newData.left - (imageRect.value.left - containerRect.value.left)) / imageRect.value.width);
-    crop.value.y      = Math.round(imageHeight.value * (newData.top - (imageRect.value.top - containerRect.value.top)) / imageRect.value.height);
-    crop.value.width  = Math.round(imageWidth.value * newData.width / imageRect.value.width);
-    crop.value.height = Math.round(imageHeight.value * newData.height / imageRect.value.height);
-  }
-}, { deep: true });
+const initImageEditor = () => {
+  if (!imageRef.value || !containerRef.value) return;
 
-function handleKeyDown(event: KeyboardEvent) {
-  if (!uiStore.isInputActive('ImageEditor')) return;
+  // container 
+  containerRect.value = containerRef.value.getBoundingClientRect();
+  containerBounds.value = {
+    left:   containerRect.value.left + containerPadding,
+    top:    containerRect.value.top + containerPadding,
+    width:  containerRect.value.width - containerPadding * 2,
+    height: containerRect.value.height - containerPadding * 2,
+  };
 
-  const { key } = event;
+  // image
+  imageSrc.value = getAssetSrc(props.fileInfo.file_path);
+  imageWidth.value = props.fileInfo.width;
+  imageHeight.value = props.fileInfo.height;
 
-  switch (key) {
-    case 'Enter':
-      if(cropStatus.value==1) {
-        doCrop();
-      } else {
-        clickSave();
-      }
-      break;
-    case 'Escape':
-      if(cropStatus.value==1) {
-        cropStatus.value = 0;
-      } else {
-        clickCancel();
-      }
-      break;
-      default:
-        break;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-}
+  // image transform init
+  enableTransition.value = false;
+  positionFit();
+  
+  // flip init
+  isFlippedX.value = false;
+  isFlippedY.value = false;
+  
+  // scale
+  scaleFit(imageWidth.value, imageHeight.value);
+  // rotate.value = 0;
 
-const toggleCrop = () => {
-  switch (cropStatus.value) {
-    case 0:
-      cropStatus.value = 1;
-      updateCropBox();
+  // crop init
+  cropStatus.value = 0;
+  isPortrait.value = imageWidth.value < imageHeight.value;
+
+  // cropped image (default is the original image)
+  crop.value = { left: 0, top: 0, width: imageWidth.value, height: imageHeight.value };
+
+  // resize init
+  resizedWidth.value = imageWidth.value;
+  resizedHeight.value = imageHeight.value;
+  resizedPercentage.value = 100;
+
+  // save as name init
+  newFileName.value = extractFileName(props.fileInfo.name).name;
+  const fileExt = getFileExtension(props.fileInfo.name).toLowerCase();
+  switch (fileExt) {
+    case 'jpg':
+    case 'jpeg':
+      config.imageEditor.format = 0;
       break;
-    case 1:
-      cropStatus.value = 0;
+    case 'png':
+      config.imageEditor.format = 1;
       break;
-    case 2:
-      cropStatus.value = 1;
-      zoomFit(imageWidth.value, imageHeight.value); // update scale and position
-      cropBox.value = { ...cropBoxOriginal.value }; // restore the original crop box data
+    case 'webp':
+      config.imageEditor.format = 2;
       break;
     default:
+      config.imageEditor.format = 0;
       break;
   }
+};
+
+// update scale to fit the container bounds
+const scaleFit = (imgWidth: number, imgHeight: number) => {
+  scale.value = Math.min(containerBounds.value.width / imgWidth, containerBounds.value.height / imgHeight);
+};
+
+// update position to fit the container bounds
+const positionFit = () => {
+  if (!containerRect.value) return;
+  position.value = { 
+    left: (containerRect.value.width - imageWidth.value) / 2, 
+    top: (containerRect.value.height - imageHeight.value) / 2,
+  };
+};
+
+const clickStartCrop = () => {
+  cropStatus.value = 1;   // cropping
+  updateCropBox();
+  updateCrop();
+};
+
+const clickCancelCrop = () => {
+  cropStatus.value = 0;   // idle
+
+  // restore the original image size
+  crop.value = { left: 0, top: 0, width: imageWidth.value, height: imageHeight.value };
+
+  // update resize width and height
+  const rotatedWidth = rotate.value % 180 !== 0 ? imageHeight.value : imageWidth.value;
+  const rotatedHeight = rotate.value % 180 !== 0 ? imageWidth.value : imageHeight.value;
+  resizedWidth.value = rotatedWidth;
+  resizedHeight.value = rotatedHeight;
+  resizedPercentage.value = 100;
+};
+
+const clickRestoreCrop = () => {
+  cropStatus.value = 1;   // cropping
+  
+  // restore the original crop box data
+  cropBox.value = { ...cropBoxOriginal.value }; 
+  
+  // update scale and position
+  positionFit();
+  rotate.value % 180 !== 0 ? 
+    scaleFit(imageHeight.value, imageWidth.value) :
+    scaleFit(imageWidth.value, imageHeight.value);
 };
 
 const togglePortraitAndLandscape = () => {
   isPortrait.value = !isPortrait.value;
   updateCropBox();
+  updateCrop();
 };
 
 const onChangeCropShape = () => {
   updateCropBox();
-};
-
-const doCrop = () => {
-  if (!containerBounds.value || !imageRect.value) return;
-
-  cropStatus.value = 2;
-
-  // update resize width and height
-  resizeWidth.value = crop.value.width;
-  resizeHeight.value = crop.value.height;
-  resizePercentage.value = 100;
-
-  // 1. calculate the new scale to fit the container
-  scale.value = Math.min(
-    containerBounds.value.width / crop.value.width,
-    containerBounds.value.height / crop.value.height
-  );
-
-  // 2. calculate the new position to center the cropped image
-  let newPositionLeft = position.value.left - (crop.value.x + crop.value.width / 2 - imageWidth.value / 2) * scale.value;
-  let newPositionTop = position.value.top - (crop.value.y + crop.value.height / 2 - imageHeight.value / 2) * scale.value;
-  position.value = { left: newPositionLeft, top: newPositionTop };
-  
-  // 3. save the original crop box data
-  cropBoxOriginal.value = { ...cropBox.value };
-
-  // 4. resize cropBox to fit the container
-  const scaledCropWidth = crop.value.width * scale.value;
-  const scaledCropHeight = crop.value.height * scale.value;
-  cropBox.value = {
-    left: (containerBounds.value.width - scaledCropWidth + containerPadding) / 2,
-    top: (containerBounds.value.height - scaledCropHeight + containerPadding) / 2,
-    width: scaledCropWidth,  
-    height: scaledCropHeight,
-  };
-};
-
-const clickCopyImage = () => {
-  // copyImageToClipboard(props.fileInfo.file_path);
-};
-
-const clickRotate = (degree: number) => {
-  crop.value.rotate += degree;
-  
-  // update scale to fit the container
-  if(crop.value.rotate % 180 !== 0) {
-    scale.value = Math.min(containerBounds.value.width / imageHeight.value, containerBounds.value.height / imageWidth.value);
-  } else {
-    scale.value = Math.min(containerBounds.value.width / imageWidth.value, containerBounds.value.height / imageHeight.value);
-  }
-};
-
-const clickFlipX = () => {
-  if(crop.value.rotate % 180 === 0) {
-    isFlippedX.value = !isFlippedX.value;
-  } else {
-    isFlippedY.value = !isFlippedY.value;
-  }
-};
-
-const clickFlipY = () => {
-  if(crop.value.rotate % 180 === 0) {
-    isFlippedY.value = !isFlippedY.value;
-  } else {
-    isFlippedX.value = !isFlippedX.value;
-  }
-};
-
-// update scale and position, so the image will be centered in the container
-const zoomFit = (imgWidth: number, imgHeight: number) => {
-  scale.value = Math.min(containerBounds.value.width / imgWidth, containerBounds.value.height / imgHeight);
-  position.value = { 
-    left: (containerBounds.value.width - imgWidth + containerPadding) / 2, 
-    top: (containerBounds.value.height - imgHeight + containerPadding ) / 2
-  };
+  updateCrop();
 };
 
 // update crop box by crop shape
 const updateCropBox = () => {
+  imageRect.value = imageRef.value?.getBoundingClientRect() || null;
   if (!imageRect.value || !containerRect.value) return;
 
   const selectedShape = cropShapeOptions.value.find(option => option.value === config.imageEditor.cropShape && option.value !== '0');
@@ -538,7 +536,7 @@ const updateCropBox = () => {
       width: newWidth,
       height: newHeight,
     };
-  } else {
+  } else {    // custom shape
     cropBox.value = {
       left: imageRect.value.left - containerRect.value.left,
       top: imageRect.value.top - containerRect.value.top,
@@ -547,6 +545,122 @@ const updateCropBox = () => {
     };
   }
 }
+
+const updateCrop = () => {
+  if (!imageRect.value || !containerRect.value) return;
+
+  const imgWidth = rotate.value % 180 === 0 ? imageWidth.value : imageHeight.value;
+  const imgHeight = rotate.value % 180 === 0 ? imageHeight.value : imageWidth.value;
+  const scaleX = imgWidth / imageRect.value.width;
+  const scaleY = imgHeight / imageRect.value.height;
+  const rotatedCrop = {
+    left: Math.round(scaleX * (cropBox.value.left + containerRect.value.left - imageRect.value.left)),
+    top:  Math.round(scaleY * (cropBox.value.top + containerRect.value.top - imageRect.value.top)),
+    width: Math.round(scaleX * cropBox.value.width),
+    height: Math.round(scaleY * cropBox.value.height)
+  };
+
+  crop.value = rotatedCrop;
+
+  // consider the image rotation
+  // switch (rotate.value % 360) {
+  //   case 0:
+  //     crop.value = rotatedCrop;
+  //     break;
+  //   case 90:
+  //   case -270:
+  //     crop.value = {
+  //       left: rotatedCrop.top,
+  //       top:  imageHeight.value - rotatedCrop.left - rotatedCrop.width,
+  //       width: rotatedCrop.height,
+  //       height: rotatedCrop.width
+  //     }
+  //     break;
+  //   case 180:
+  //   case -180:
+  //     crop.value = {
+  //       left: imageWidth.value - rotatedCrop.left - rotatedCrop.width,
+  //       top:  imageHeight.value - rotatedCrop.top - rotatedCrop.height,
+  //       width: rotatedCrop.width,
+  //       height: rotatedCrop.height
+  //     }
+  //     break;
+  //   case 270:
+  //   case -90:
+  //     crop.value = {
+  //       left: imageWidth.value - rotatedCrop.top - rotatedCrop.height,
+  //       top:  rotatedCrop.left,
+  //       width: rotatedCrop.height,
+  //       height: rotatedCrop.width
+  //     }
+  //     break;
+  //   default:
+  //     break;
+  // }
+}
+
+const doCrop = () => {
+  if (!containerBounds.value || !imageRect.value || !containerRect.value) return;
+
+  cropStatus.value = 2;
+  cropBoxOriginal.value = { ...cropBox.value };
+  updateCrop();
+  
+  // update resize width and height
+  resizedWidth.value = crop.value.width;
+  resizedHeight.value = crop.value.height;
+  resizedPercentage.value = 100;
+
+  // save the original scale
+  const oldScale = scale.value;
+
+  // calculate the new scale to fit the container
+  scale.value = Math.min(
+    (containerBounds.value.width / cropBox.value.width) * oldScale, 
+    (containerBounds.value.height / cropBox.value.height) * oldScale
+  );
+
+  // calculate the new position to center the cropped image
+  position.value = { 
+    left: position.value.left + ( containerRect.value.width / 2 - (cropBox.value.left + cropBox.value.width / 2) ) * scale.value / oldScale, 
+    top: position.value.top + ( containerRect.value.height / 2 - (cropBox.value.top + cropBox.value.height / 2) ) * scale.value / oldScale,
+  };
+
+  // resize cropBox to fit the container
+  const newCropBoxWidth = cropBox.value.width * scale.value / oldScale;
+  const newCropBoxHeight = cropBox.value.height * scale.value / oldScale;
+  cropBox.value = {
+    left: (containerRect.value.width - newCropBoxWidth) / 2,
+    top:  (containerRect.value.height - newCropBoxHeight) / 2,
+    width:  newCropBoxWidth,  
+    height: newCropBoxHeight,
+  };
+};
+
+const clickRotate = (degree: number) => {
+  rotate.value += degree;  // 90, 180, 270, -90, -180, -270
+  isPortrait.value = !isPortrait.value; // update isPortrait
+  
+  const rotatedWidth = rotate.value % 180 !== 0 ? imageHeight.value : imageWidth.value;
+  const rotatedHeight = rotate.value % 180 !== 0 ? imageWidth.value : imageHeight.value;
+  resizedWidth.value = rotatedWidth;
+  resizedHeight.value = rotatedHeight;
+  resizedPercentage.value = 100;
+  
+  scaleFit(rotatedWidth, rotatedHeight);
+};
+
+const clickFlipX = () => {
+  // rotate.value % 180 !== 0 ?
+  //   isFlippedY.value = !isFlippedY.value :
+    isFlippedX.value = !isFlippedX.value;
+};
+
+const clickFlipY = () => {
+  // rotate.value % 180 !== 0 ?
+  //   isFlippedX.value = !isFlippedX.value :
+    isFlippedY.value = !isFlippedY.value;
+};
 
 const startDrag = (handle: string, event: MouseEvent) => {
   isDragging.value = true;
@@ -557,7 +671,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
   const initialCropBoxData = { ...cropBox.value };
 
   const doDrag = (e: MouseEvent) => {
-    if (!isDragging.value) return;
+    if (!isDragging.value || !imageRect.value || !containerRect.value) return;
 
     const dx = e.clientX - dragStartX.value;
     const dy = e.clientY - dragStartY.value;
@@ -627,6 +741,9 @@ const startDrag = (handle: string, event: MouseEvent) => {
       ) {
         cropBox.value = proposedBox;
       }
+
+      // update cropped image width and height
+      updateCrop();
     }
   };
 
@@ -640,95 +757,97 @@ const startDrag = (handle: string, event: MouseEvent) => {
   window.addEventListener('mouseup', stopDrag);
 };
 
-const clickRestore = () => {
-  if (!imageRef.value || !containerRef.value) return;
+function handleKeyDown(event: KeyboardEvent) {
+  if (!uiStore.isInputActive('ImageEditor')) return;
 
-  // container 
-  containerRect.value = containerRef.value.getBoundingClientRect();
-  containerBounds.value = {
-    left:   containerRect.value.left + containerPadding,
-    top:    containerRect.value.top + containerPadding,
-    width:  containerRect.value.width - containerPadding,
-    height: containerRect.value.height - containerPadding,
-  };
+  const { key } = event;
 
-  // image
-  imageSrc.value = convertFileSrc(props.fileInfo.file_path);
-  imageWidth.value = props.fileInfo.width;
-  imageHeight.value = props.fileInfo.height;
-
-  // init scale and position
-  zoomFit(imageWidth.value, imageHeight.value);
-
-  // crop init
-  cropStatus.value = 0;
-  isPortrait.value = imageWidth.value < imageHeight.value;
-  crop.value = {
-    x: 0,
-    y: 0,
-    width: imageWidth.value,
-    height: imageHeight.value,
-    rotate: 0,
-  };
-
-  // flip init
-  isFlippedX.value = false;
-  isFlippedY.value = false;
-
-  // resize init
-  resizeWidth.value = imageWidth.value;
-  resizeHeight.value = imageHeight.value;
-  resizePercentage.value = 100;
-
-  // save as name init
-  saveName.value = extractFileName(props.fileInfo.name).name;
-  const fileExt = getFileExtension(props.fileInfo.name).toLowerCase();
-  switch (fileExt) {
-    case 'jpg':
-    case 'jpeg':
-      config.imageEditor.format = 0;
+  switch (key) {
+    case 'Enter':
+      if(cropStatus.value==1) {
+        doCrop();
+      } else {
+        clickSave();
+      }
+      event.preventDefault();
+      event.stopPropagation();
       break;
-    case 'png':
-      config.imageEditor.format = 1;
+    case 'Escape':
+      if(cropStatus.value==1) {
+        cropStatus.value = 0;
+      } else {
+        clickCancel();
+      }
+      event.preventDefault();
+      event.stopPropagation();
       break;
-    case 'webp':
-      config.imageEditor.format = 2;
-      break;
-    default:
-      config.imageEditor.format = 0;
-      break;
-  }
-};
+      default:
+        break;
+    }
+}
 
 const clickCancel = () => {
+  if (cropStatus.value === 1) return;
   emit('cancel');
 };
 
+const clickCopyImage = () => {
+  if (cropStatus.value === 1) return;
+  const editParams = {
+    filePath: props.fileInfo.file_path,
+    crop: {
+      x: crop.value.left,
+      y: crop.value.top,
+      width: crop.value.width,
+      height: crop.value.height,
+      rotate: rotate.value,
+    },
+    resize: {
+      width: resizedWidth.value,
+      height: resizedHeight.value,
+    },
+    flipHorizontal: isFlippedX.value,
+    flipVertical: isFlippedY.value,
+    outputFormat: fileFormatOptions.value[config.imageEditor.format].label.toLowerCase(),
+  };
+  copyEditedImage(editParams).then(() => {
+    toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
+  }).catch((error) => {
+    console.error(error);
+  });
+};
+
 const clickSave = async () => {
-  if (cropStatus.value == 1) {
-    return;
-  }
+  if (cropStatus.value === 1) return;
 
-  // const editParams = {
-  //   filePath: props.filePath,
-  //   crop: {
-  //     x: cropData.x,
-  //     y: cropData.y,
-  //     width: cropData.width,
-  //     height: cropData.height,
-  //     rotate: cropData.rotate,
-  //   },
-  //   resize: {
-  //     width: resizeWidth.value,
-  //     height: resizeHeight.value,
-  //   },
-  //   flipHorizontal: isFlippedX.value,
-  //   flipVertical: isFlippedY.value,
-  //   outputFormat: outputFormat.value,
-  // };
+  const fileName = combineFileName(newFileName.value, fileFormatOptions.value[config.imageEditor.format].label.toLowerCase());
+  const filePath = getFullPath(getFolderPath(props.fileInfo.file_path), fileName);
 
-  // await editImage(editParams);
-  emit('ok');
+  const editParams = {
+    filePath: props.fileInfo.file_path,
+    crop: {
+      x: crop.value.left,
+      y: crop.value.top,
+      width: crop.value.width,
+      height: crop.value.height,
+      rotate: rotate.value,
+    },
+    resize: {
+      width: resizedWidth.value,
+      height: resizedHeight.value,
+    },
+    flipHorizontal: isFlippedX.value,
+    flipVertical: isFlippedY.value,
+    outputFormat: fileFormatOptions.value[config.imageEditor.format].label.toLowerCase(),
+  };
+  console.log(editParams);
+  
+  editImage(editParams).then(() => {
+    uiStore.updateFileVersion(props.fileInfo.file_path);
+    emit('ok');
+  }).catch((error) => {
+    console.error(error);
+  });
 };
 
 </script>
@@ -737,13 +856,17 @@ const clickSave = async () => {
 .crop-box-active {
   position: absolute;
   border: 1px solid #fff;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8);
+  /* box-shadow: 0 0 0 9999px rgba(0,0,0,0.8);  */
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--color-base-200) 80%, transparent);
   box-sizing: border-box;
+  will-change: transform;
 }
 .crop-box-done {
   position: absolute;
+  /* border: 1px solid #000; */
   box-shadow: 0 0 0 9999px var(--color-base-200);
   box-sizing: border-box;
+  will-change: transform;
 }
 .drag-handle {
   position: absolute;

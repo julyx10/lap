@@ -89,7 +89,7 @@ export const useConfigStore = defineStore('configStore', {
     fileListPageSize: 200,      // number of file list per page
     
     // settings - thumbnail
-    thumbnailImageSize: 256,    // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
+    thumbnailImageSize: 512,    // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
     thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
     thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
     thumbnailLabelPrimaryOption: 1,   // Name

@@ -341,6 +341,13 @@ pub fn edit_image(params: t_image::EditParams) -> Result<(), String> {
         .map_err(|e| format!("Error while editing image: {}", e))
 }
 
+/// copy an edited image to clipboard
+#[tauri::command]
+pub fn copy_edited_image_to_clipboard(params: t_image::EditParams) -> Result<(), String> {
+    t_image::copy_edited_image_to_clipboard(params)
+        .map_err(|e| format!("Error while copying edited image to clipboard: {}", e))
+}
+
 /// set a file's rotate status
 #[tauri::command]
 pub fn set_file_rotate(file_id: i64, rotate: i32) -> Result<usize, String> {

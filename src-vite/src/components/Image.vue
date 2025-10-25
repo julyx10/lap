@@ -439,11 +439,6 @@ function zoomImage(cursorX, cursorY, newScale) {
 
 // Ensure image stays within container
 function clampPosition() {
-  // Skip boundary calculation during dragging for better performance
-  if (isDragging.value) {
-    return;
-  }
-
   const imgIndex = activeImage.value;
   const imgRotatedSize = imageSizeRotated.value[imgIndex];
   const imgSize = imageSize.value[imgIndex];

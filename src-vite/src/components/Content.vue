@@ -263,16 +263,15 @@
 
 import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted, defineAsyncComponent } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
-         copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, getFileImage, updateFileInfo,
+         copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath, getAssetSrc } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -1133,8 +1132,7 @@ const getImageSrc = async (index) => {
     loadImageError.value = false;
     
     let currentIndex = index;
-    // const convertedSrc = await getFileImage(filePath);
-    const convertedSrc = convertFileSrc(filePath);
+    const convertedSrc = getAssetSrc(filePath);
     if(!convertedSrc) {
       imageSrc.value = '';
       loadImageError.value = true;
@@ -1161,7 +1159,7 @@ const getVideoSrc = async (index) => {
 
   let filePath = fileList.value[index].file_path;
   try {
-    const convertedSrc = convertFileSrc(filePath);
+    const convertedSrc = getAssetSrc(filePath);
     console.log('Content getVideoSrc - converted src:', convertedSrc);
     videoSrc.value = convertedSrc;
   } catch (error) {

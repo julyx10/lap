@@ -489,6 +489,19 @@ export async function editImage(params) {
   return null;
 }
 
+// copy an edited image to clipboard
+export async function copyEditedImage(params) {
+  try {
+    const result = await invoke('copy_edited_image_to_clipboard', { params });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to copy edited image to clipboard:', error);
+  }
+  return null;
+}
+
 // set file rotate
 export async function setFileRotate(fileId, fileRotate) {
   try {

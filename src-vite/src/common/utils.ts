@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { useConfigStore } from '@/stores/configStore';
+import { useUIStore } from '@/stores/uiStore';
 
 /// config store
 export const config = useConfigStore();
@@ -105,7 +107,7 @@ export function formatDate(year: number, month: number, date: number, formatStr:
 }
 
 /// get the date range of a month
-export function getCalendarDateRange(year, month, date) {
+export function getCalendarDateRange(year: number, month: number, date: number) {
   let startDate = "";
   let endDate = "";
 
@@ -135,7 +137,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 /// format duration to string
-export function formatDuration(seconds) {
+export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
@@ -214,7 +216,7 @@ export function shortenFilename(fileName: string, maxLength = 16): string {
 }
 
 // validate the file or folder name
-export const isValidFileName = (name) => {
+export const isValidFileName = (name: string) => {
   const invalidChars = /[\\/:*?"<>|]/;
   return !invalidChars.test(name);
 };
@@ -236,14 +238,14 @@ export async function openFolderDialog() {
 }
 
 // compare two strings in different languages
-export function localeComp(lang, str1, str2) {
+export function localeComp(lang: string, str1: string, str2: string) {
   const localeMap = {
     'zh': 'zh-Hans-CN', // chinese
     'ja': 'ja-JP',      // japanese
     'en': 'en-US',      // english
   };
 
-  const locale = localeMap[lang] || 'en-US';
+  const locale = localeMap[lang as keyof typeof localeMap] || 'en-US';
   if (locale === 'en-US') {
     return str1.localeCompare(str2);
   } else {
@@ -252,9 +254,20 @@ export function localeComp(lang, str1, str2) {
 };
 
 // scroll to the folder
-export function scrollToFolder(folderId) {
+export function scrollToFolder(folderId: number) {
   const folderElement = document.getElementById(`folder-${folderId}`);
   if (folderElement) {
     folderElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+}
+
+// get image file asset source url with version number
+export function getAssetSrc(filePath: string): string {
+  if (!filePath) {
+    return '';
+  }
+  const uiStore = useUIStore();
+  const version = uiStore.getFileVersion(filePath);
+  const assetUrl = convertFileSrc(filePath);
+  return version > 0 ? `${assetUrl}?v=${version}` : assetUrl;
 }

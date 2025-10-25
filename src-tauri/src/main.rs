@@ -108,6 +108,7 @@ fn main() {
             t_cmds::update_file_info,
             t_cmds::get_file_image,
             t_cmds::edit_image,
+            t_cmds::copy_edited_image_to_clipboard,
             t_cmds::set_file_rotate,
             t_cmds::get_file_has_tags,
 
