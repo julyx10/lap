@@ -37,19 +37,3 @@ defineExpose({
 });
 
 </script>
-
-<style scoped>
-/* fade transition */
-.fade-enter-active {
-  transition: opacity 0.2s ease; /* Adjust duration and easing as needed */
-}
-.fade-leave-active {
-  transition: opacity 0.2s ease; /* Adjust duration and easing as needed */
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0; /* Initial and final opacity for fading in and out */
-}
-.fade-enter-to, .fade-leave-from {
-  opacity: 1; /* Final opacity when fully visible */
-}
-</style>

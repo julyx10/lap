@@ -5,9 +5,11 @@
   >
 
     <!-- Loading overlay -->
-    <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
-      <span class="loading loading-dots text-primary"></span>
-    </div>
+    <transition name="fade">
+      <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+        <span class="loading loading-dots text-primary"></span>
+      </div>
+    </transition>
 
     <!-- title bar -->
     <div class="relative px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
@@ -1009,16 +1011,22 @@ const updateFile = async (file) => {
 
   isProcessing.value = true;
 
-  const updatedFile = await updateFileInfo(file.id, file.file_path);
-  if(updatedFile) {
-    Object.assign(file, updatedFile);
-    await updateThumbForFile(file);
-    await updateSelectedImage(selectedItemIndex.value);
-    toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.success);
+  let success = false;
+  try {
+    const updatedFile = await updateFileInfo(file.id, file.file_path);
+    if (updatedFile) {
+      Object.assign(file, updatedFile);
+      await updateThumbForFile(file);
+      await updateSelectedImage(selectedItemIndex.value);
+      success = true;
+    }
+  } finally {
     isProcessing.value = false;
-  } else {
-    toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.failed, true);
-    isProcessing.value = false;
+    if (success) {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.success);
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.failed, true);
+    }
   }
 }
 

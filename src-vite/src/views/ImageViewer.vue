@@ -863,15 +863,4 @@ function handleMouseMove(event) {
     visibility: visible;
   }
 }
-
-/* fade transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s ease; /* Adjust duration and easing as needed */
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0; /* Initial and final opacity for fading in and out */
-}
-.fade-enter-to, .fade-leave-from {
-  opacity: 0.5; /* Final opacity when fully visible */
-}
 </style>

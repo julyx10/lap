@@ -4,9 +4,11 @@
     <div class="relative p-4 flex flex-col gap-2 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
       
       <!-- Loading overlay -->
-      <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
-        <span class="loading loading-dots text-primary"></span>
-      </div>
+      <transition name="fade">
+        <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+          <span class="loading loading-dots text-primary"></span>
+        </div>
+      </transition>
       
       <!-- title bar -->
       <div class="flex items-center justify-between text-wrap break-all">
