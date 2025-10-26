@@ -425,13 +425,14 @@
       "show_status_bar": "ステータスバーを表示",
       "debug_mode": "デバッグモード"
     },
-    "thumbnail": {
-      "title": "サムネイル",
+    "grid_view": {
+      "title": "グリッドビュー",
       "size": "サムネイルサイズ",
       "scaling": "サムネイルの拡大縮小",
       "scaling_options": ["全体をフィット", "切り抜きで埋める", "引き伸ばして埋める"],
-      "label_primary": "プライマリラベルを表示",
-      "label_secondary": "セカンダリラベルを表示",
+      "label_primary": "プライマリラベル",
+      "label_secondary": "セカンダリラベル", 
+      "label_hover": "ホバーテキスト",
       "label_options": ["なし", "名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "撮影日時"]
     },
     "image_viewer": {

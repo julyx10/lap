@@ -425,13 +425,14 @@
       "show_status_bar": "显示状态栏",
       "debug_mode": "调试模式"
     },
-    "thumbnail": {
-      "title": "缩略图",
+    "grid_view": {
+      "title": "网格视图",
       "size": "缩略图大小",
       "scaling": "缩略图缩放",
       "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
-      "label_primary": "显示主标签",
-      "label_secondary": "显示副标签",
+      "label_primary": "主标签",
+      "label_secondary": "副标签",
+      "label_hover": "悬停文字",
       "label_options": ["空", "名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "拍摄时间"]
     },
     "image_viewer": {

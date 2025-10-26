@@ -88,13 +88,14 @@ export const useConfigStore = defineStore('configStore', {
     debugMode: false,           // debug mode
     fileListPageSize: 200,      // number of file list per page
     
-    // settings - thumbnail
-    thumbnailImageSize: 512,    // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
-    thumbnailSize: 200,         // thumbnail size in thumbnail view, range 120-360
-    thumbnailScalingOption: 0,  // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
-    thumbnailLabelPrimaryOption: 1,   // Name
-    thumbnailLabelSecondaryOption: 2, // Dimension
-    
+    // settings - grid view
+    thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
+    gridSize: 200,              // grid size, range 120-360
+    gridScaling: 0,             // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
+    gridLabelPrimary: 1,        // Primary label (1: Name)
+    gridLabelSecondary: 2,      // Secondary label (2: Dimension)
+    gridLabelHover: 0,          // Hover text (0: Empty)
+
     // settings - image viewer
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
     slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
@@ -141,18 +142,21 @@ export const useConfigStore = defineStore('configStore', {
       this.videoVolume = videoVolume;
     },
 
-    // thumbnail settings
-    setThumbnailSize(thumbnailSize) {
-      this.thumbnailSize = thumbnailSize;
+    // grid view settings
+    setGridSize(gridSize) {
+      this.gridSize = gridSize;
     },
-    setThumbnailScalingOption(thumbnailScalingOption) {
-      this.thumbnailScalingOption = thumbnailScalingOption;
+    setGridScaling(gridScaling) {
+      this.gridScaling = gridScaling;
     },
-    setThumbnailLabelPrimaryOption(thumbnailLabelPrimaryOption) {
-      this.thumbnailLabelPrimaryOption = thumbnailLabelPrimaryOption;
+    setGridLabelPrimary(gridLabelPrimary) {
+      this.gridLabelPrimary = gridLabelPrimary;
     },
-    setThumbnailLabelSecondaryOption(thumbnailLabelSecondaryOption) {
-      this.thumbnailLabelSecondaryOption = thumbnailLabelSecondaryOption;
+    setGridLabelSecondary(gridLabelSecondary) {
+      this.gridLabelSecondary = gridLabelSecondary;
+    },
+    setGridLabelHover(gridLabelHover) {
+      this.gridLabelHover = gridLabelHover;
     },
     
     // image viewer settings

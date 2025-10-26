@@ -425,13 +425,14 @@
       "show_status_bar": "Show status bar",
       "debug_mode": "Debug mode"
     },
-    "thumbnail": {
-      "title": "Thumbnail",
+    "grid_view": {
+      "title": "Grid view",
       "size": "Thumbnail size",
       "scaling": "Thumbnail scaling",
       "scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
-      "label_primary": "Show primary label",
-      "label_secondary": "Show secondary label",
+      "label_primary": "Primary label",
+      "label_secondary": "Secondary label",
+      "label_hover": "Hover text",
       "label_options": ["Empty", "Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Taken date"]
     },
     "image_viewer": {

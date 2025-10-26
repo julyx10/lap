@@ -9,7 +9,7 @@
   >
     <div id="gridView" 
       class="px-2 grid gap-2"
-      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.thumbnailSize}px, 1fr))` }"
+      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.gridSize}px, 1fr))` }"
     >
       <div 
         v-for="(file, index) in fileList" 
@@ -27,12 +27,12 @@
             :src="file.thumbnail"
             :class="[
               'transition duration-200',
-              config.thumbnailScalingOption === 0 ? 'object-contain' : '',
-              config.thumbnailScalingOption === 1 ? 'object-cover rounded' : '',
-              config.thumbnailScalingOption === 2 ? 'object-fill rounded' : ''
+              config.gridScaling === 0 ? 'object-contain' : '',
+              config.gridScaling === 1 ? 'object-cover rounded' : '',
+              config.gridScaling === 2 ? 'object-fill rounded' : ''
             ]"
             :style="{ 
-              width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px`, 
+              width: `${config.gridSize}px`, height: `${config.gridSize}px`, 
               transform: `rotate(${file.rotate}deg)`, 
               transition: 'transform 0.3s ease-in-out' 
             }"
@@ -40,10 +40,10 @@
           />
           <div v-else 
             class="skeleton rounded flex items-center justify-center"
-            :style="{ width: `${config.thumbnailSize}px`, height: `${config.thumbnailSize}px` }"
+            :style="{ width: `${config.gridSize}px`, height: `${config.gridSize}px` }"
           > </div>
-          <span class="pt-1 text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelPrimaryOption) }}</span>
-          <span class="text-sm text-center">{{ getThumbnailText(file, config.thumbnailLabelSecondaryOption) }}</span>
+          <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.gridLabelPrimary) }}</span>
+          <span class="text-sm text-center">{{ getGridLabelText(file, config.gridLabelSecondary) }}</span>
         
           <!-- status icons -->
           <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">
@@ -75,6 +75,13 @@
               :menuItems="moreMenuItems"
               :smallIcon="true"
             />
+          </div>
+
+          <!-- hover text -->
+          <div v-if="config.gridLabelHover > 0" 
+            class="absolute top-3/4 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-70"
+          >
+            <span class="text-xs text-center bg-base-100/20 rounded-lg px-2 py-1">{{ getGridLabelText(file, config.gridLabelHover) }}</span>
           </div>
         </div>
       </div>
@@ -419,8 +426,8 @@ function nextPage() {
   emit('message-from-grid-view', { message: 'next-page' });
 };
 
-// function to get the text for the thumbnail
-const getThumbnailText = (file, option) => {
+// function to get the text for the grid label
+const getGridLabelText = (file, option) => {
   switch (option) {
     case 0:   // empty
       return '';

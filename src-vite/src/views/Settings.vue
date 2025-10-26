@@ -11,7 +11,7 @@
       <!-- Tabs -->
       <div class="w-32 font-bold">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.thumbnail.title', 'settings.image_viewer.title', 'settings.about.title']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_viewer.title', 'settings.about.title']"
           :key="index"
           :class="[
             'mb-4 px-1 border-l-2 cursor-pointer', 
@@ -80,14 +80,14 @@
 
         </section>
 
-        <!-- Thumbnail tab -->
+        <!-- Grid view tab -->
         <section v-if="config.settingsTabIndex === 1">
 
-          <!-- Thumbnail Size -->
+          <!-- Grid Size -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_size" >{{ $t('settings.thumbnail.size') }}</label>
+            <label for="grid_size" >{{ $t('settings.grid_view.size') }}</label>
             <SliderInput 
-              v-model="config.thumbnailSize" 
+              v-model="config.gridSize" 
               :min="120" 
               :max="320" 
               :step="10" 
@@ -95,11 +95,11 @@
             />
           </div>
 
-          <!-- Thumbnail Image Scaling -->
+          <!-- Grid Scaling -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_image-select">{{ $t('settings.thumbnail.scaling') }}</label>
-            <select id="thumbnail_image-select" class="select" v-model="config.thumbnailScalingOption">
-              <option v-for="(option, index) in thumbnailIScalingOptions" 
+            <label for="grid_scaling-select">{{ $t('settings.grid_view.scaling') }}</label>
+            <select id="grid_scaling-select" class="select" v-model="config.gridScaling">
+              <option v-for="(option, index) in gridScalingOptions" 
                 :key="index" 
                 :value="option.value"
               >
@@ -110,10 +110,10 @@
 
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_primary-select">{{ $t('settings.thumbnail.label_primary') }}</label>
-            <select id="thumbnail_primary-select" class="select" v-model="config.thumbnailLabelPrimaryOption">
-              <option v-for="(option, index) in thumbnailLabelOptions" 
-                :key="index" 
+            <label for="grid_label_primary-select">{{ $t('settings.grid_view.label_primary') }}</label>
+            <select id="grid_label_primary-select" class="select" v-model="config.gridLabelPrimary">
+              <option v-for="(option, index) in gridLabelOptions" 
+                :key="index"
                 :value="option.value"
               >
                 {{ option.label }}
@@ -121,19 +121,31 @@
             </select>
           </div>
 
-          <!-- Secondary Label -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="thumbnail_secondary-select">{{ $t('settings.thumbnail.label_secondary') }}</label>
-            <select id="thumbnail_secondary-select" class="select" v-model="config.thumbnailLabelSecondaryOption">
-              <option v-for="(option, index) in thumbnailLabelOptions" 
-                :key="index" 
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
+            <!-- Secondary Label -->
+            <div class="flex items-center justify-between mb-4">
+              <label for="grid_label_secondary-select">{{ $t('settings.grid_view.label_secondary') }}</label>
+              <select id="grid_label_secondary-select" class="select" v-model="config.gridLabelSecondary">
+                <option v-for="(option, index) in gridLabelOptions" 
+                  :key="index" 
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
 
+            <!-- Hover Text -->
+            <div class="flex items-center justify-between mb-4">
+              <label for="grid_label_hover-select">{{ $t('settings.grid_view.label_hover') }}</label>
+              <select id="grid_label_hover-select" class="select" v-model="config.gridLabelHover">
+                <option v-for="(option, index) in gridLabelOptions" 
+                  :key="index" 
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
         </section>
 
         <!-- Image Viewer tab -->
@@ -290,9 +302,9 @@ const wheelOptions = computed(() => {
   ];
 });
 
-// Define the thumbnail options
-const thumbnailIScalingOptions = computed(() => {
-  const options = localeMsg.value.settings.thumbnail.scaling_options;
+// Define the grid scaling options
+const gridScalingOptions = computed(() => {
+  const options = localeMsg.value.settings.grid_view.scaling_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -302,8 +314,9 @@ const thumbnailIScalingOptions = computed(() => {
   return result;
 });
 
-const thumbnailLabelOptions = computed(() => {
-  const options = localeMsg.value.settings.thumbnail.label_options;
+// Define the grid label options
+const gridLabelOptions = computed(() => {
+  const options = localeMsg.value.settings.grid_view.label_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -376,18 +389,21 @@ watch(() => config.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);
 });
 
-// thumbnail settings
-watch(() => config.thumbnailSize, debounce((newValue) => {
-  emit('settings-thumbnailSize-changed', newValue);
+// grid view settings
+watch(() => config.gridSize, debounce((newValue) => {
+  emit('settings-gridSize-changed', newValue);
 }, 100));
-watch(() => config.thumbnailScalingOption, (newValue) => {
-  emit('settings-thumbnailScalingOption-changed', newValue);
+watch(() => config.gridScaling, (newValue) => {
+  emit('settings-gridScaling-changed', newValue);
 });
-watch(() => config.thumbnailLabelPrimaryOption, (newValue) => {
-  emit('settings-thumbnailLabelPrimaryOption-changed', newValue);
+watch(() => config.gridLabelPrimary, (newValue) => {
+  emit('settings-gridLabelPrimary-changed', newValue);
 });
-watch(() => config.thumbnailLabelSecondaryOption, (newValue) => {
-  emit('settings-thumbnailLabelSecondaryOption-changed', newValue);
+watch(() => config.gridLabelSecondary, (newValue) => {
+  emit('settings-gridLabelSecondary-changed', newValue);
+});
+watch(() => config.gridLabelHover, (newValue) => {
+  emit('settings-gridLabelHover-changed', newValue);
 });
 
 // image viewer settings

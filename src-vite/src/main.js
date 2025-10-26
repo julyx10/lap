@@ -78,17 +78,20 @@ listen('settings-showComment-changed', (event) => {
 listen('settings-debugMode-changed', (event) => {
   config.setDebugMode(event.payload)
 })
-listen('settings-thumbnailSize-changed', (event) => {
-  config.setThumbnailSize(event.payload)
+listen('settings-gridSize-changed', (event) => {
+  config.setGridSize(event.payload)
 })
-listen('settings-thumbnailScalingOption-changed', (event) => {
-  config.setThumbnailScalingOption(event.payload)
+listen('settings-gridScaling-changed', (event) => {
+  config.setGridScaling(event.payload)
 })
-listen('settings-thumbnailLabelPrimaryOption-changed', (event) => {
-  config.setThumbnailLabelPrimaryOption(event.payload)
+listen('settings-gridLabelPrimary-changed', (event) => {
+  config.setGridLabelPrimary(event.payload)
 })
-listen('settings-thumbnailLabelSecondaryOption-changed', (event) => {
-  config.setThumbnailLabelSecondaryOption(event.payload)
+listen('settings-gridLabelSecondary-changed', (event) => {
+  config.setGridLabelSecondary(event.payload)
+})
+listen('settings-gridLabelHover-changed', (event) => {
+  config.setGridLabelHover(event.payload)
 })
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)

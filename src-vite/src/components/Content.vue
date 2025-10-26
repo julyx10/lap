@@ -1032,7 +1032,7 @@ const updateFile = async (file) => {
 
 // force-update the thumbnail for the file
 const updateThumbForFile = async (file) => {
-  const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize, true);
+  const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailSize, true);
   if(thumb) {
     if(thumb.error_code === 0) {
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
@@ -1267,7 +1267,7 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
   thumbCount.value = 0;
 
   const getThumbForFile = async (file) => {
-    const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailImageSize, false);
+    const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailSize, false);
     if(thumb) {
       if(thumb.error_code === 0) {
         file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
