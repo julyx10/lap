@@ -93,6 +93,9 @@ listen('settings-gridLabelSecondary-changed', (event) => {
 listen('settings-gridLabelHover-changed', (event) => {
   config.setGridLabelHover(event.payload)
 })
+listen('settings-showCameraInfo-changed', (event) => {
+  config.setShowCameraInfo(event.payload)
+})
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)
 })

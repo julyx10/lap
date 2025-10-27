@@ -134,7 +134,7 @@
               </select>
             </div>
 
-            <!-- Hover Text -->
+            <!-- Hover Label -->
             <div class="flex items-center justify-between mb-4">
               <label for="grid_label_hover-select">{{ $t('settings.grid_view.label_hover') }}</label>
               <select id="grid_label_hover-select" class="select" v-model="config.gridLabelHover">
@@ -145,6 +145,12 @@
                   {{ option.label }}
                 </option>
               </select>
+            </div>
+
+            <!-- Show camera info -->
+            <div class="flex items-center justify-between mb-4">
+              <label for="show-camera-info" >{{ $t('settings.grid_view.show_camera_info') }}</label>
+              <input type="checkbox" class="toggle" v-model="config.showCameraInfo" />
             </div>
         </section>
 
@@ -404,6 +410,9 @@ watch(() => config.gridLabelSecondary, (newValue) => {
 });
 watch(() => config.gridLabelHover, (newValue) => {
   emit('settings-gridLabelHover-changed', newValue);
+});
+watch(() => config.showCameraInfo, (newValue) => {
+  emit('settings-showCameraInfo-changed', newValue);
 });
 
 // image viewer settings

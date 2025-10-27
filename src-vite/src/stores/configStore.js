@@ -95,6 +95,7 @@ export const useConfigStore = defineStore('configStore', {
     gridLabelPrimary: 1,        // Primary label (1: Name)
     gridLabelSecondary: 2,      // Secondary label (2: Dimension)
     gridLabelHover: 0,          // Hover text (0: Empty)
+    showCameraInfo: false,      // Show camera info
 
     // settings - image viewer
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
@@ -158,7 +159,9 @@ export const useConfigStore = defineStore('configStore', {
     setGridLabelHover(gridLabelHover) {
       this.gridLabelHover = gridLabelHover;
     },
-    
+    setShowCameraInfo(showCameraInfo) {
+      this.showCameraInfo = showCameraInfo;
+    },
     // image viewer settings
     setMouseWheelMode(mouseWheelMode) {
       this.mouseWheelMode = mouseWheelMode;

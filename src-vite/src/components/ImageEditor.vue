@@ -30,7 +30,7 @@
 
             <!-- crop box -->
             <div v-if="cropStatus===1" 
-              :class="['crop-box-active', isDragging ? 'cursor-grabbing' : 'cursor-grab']" 
+              :class="['crop-box-active', { 'no-transition': isDragging }, isDragging ? 'cursor-grabbing' : 'cursor-grab']" 
               :style="cropBoxStyle" 
               @mousedown="startDrag('move', $event)"
               @dblclick="doCrop"
@@ -103,7 +103,7 @@
                 @click="cropStatus===0 ? clickStartCrop() : clickRestoreCrop()" 
               />
 
-              <div v-if="cropStatus==1" class="flex items-center gap-2">
+              <div v-if="cropStatus==1" class="flex items-center">
                 <TButton
                   :icon="IconClose"
                   :tooltip="$t('msgbox.image_editor.cancel_crop')"
@@ -115,9 +115,14 @@
                   :tooltip="isPortrait ? $t('msgbox.image_editor.crop_shape_portrait') : $t('msgbox.image_editor.crop_shape_landscape')"
                   @click="togglePortraitAndLandscape" 
                 />
-                <select v-model="config.imageEditor.cropShape" class="select select-bordered w-full" @change="onChangeCropShape">
+                <select v-model="config.imageEditor.cropShape" class="select select-bordered" @change="onChangeCropShape">
                   <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
                 </select>
+                <TButton
+                  :icon="isZoomInArea ? IconZoomInArea : IconZoomOutArea"
+                  :tooltip="isZoomInArea ? $t('msgbox.image_editor.zoom_in_area') : $t('msgbox.image_editor.zoom_out_area')"
+                  @click="toggleZoomArea"
+                />
                 <TButton
                   :icon="IconOk"
                   :tooltip="$t('msgbox.image_editor.done_crop')"
@@ -252,7 +257,8 @@ import {
   IconClose, 
   IconCrop,
   IconCropLandscape,
-  IconCopy,
+  IconZoomInArea,
+  IconZoomOutArea,
   IconRotateLeft, 
   IconRotateRight, 
   IconFlipVertical, 
@@ -316,6 +322,7 @@ const imageStyle = computed(() => ({
 // crop shape
 const cropStatus = ref(0);    // 0: idle, 1: cropping, 2: cropped
 const isPortrait = ref(false);
+const isZoomInArea = ref(false);
 
 // crop box
 const cropBox = ref({ top: 0, left: 0, width: 0, height: 0 });
@@ -507,6 +514,37 @@ const clickRestoreCrop = () => {
 const togglePortraitAndLandscape = () => {
   isPortrait.value = !isPortrait.value;
   updateCropBox();
+  updateCrop();
+};
+
+const toggleZoomArea = () => {
+  isZoomInArea.value = !isZoomInArea.value;
+
+  // save the original scale
+  const oldScale = scale.value;
+
+  // calculate the new scale to fit the container
+  scale.value = Math.min(
+    (containerBounds.value.width / cropBox.value.width) * oldScale, 
+    (containerBounds.value.height / cropBox.value.height) * oldScale
+  );
+
+  // calculate the new position to center the cropped image
+  position.value = { 
+    left: position.value.left + ( containerRect.value.width / 2 - (cropBox.value.left + cropBox.value.width / 2) ) * scale.value / oldScale, 
+    top: position.value.top + ( containerRect.value.height / 2 - (cropBox.value.top + cropBox.value.height / 2) ) * scale.value / oldScale,
+  };
+
+  // resize cropBox to fit the container
+  const newCropBoxWidth = cropBox.value.width * scale.value / oldScale;
+  const newCropBoxHeight = cropBox.value.height * scale.value / oldScale;
+  cropBox.value = {
+    left: (containerRect.value.width - newCropBoxWidth) / 2,
+    top:  (containerRect.value.height - newCropBoxHeight) / 2,
+    width:  newCropBoxWidth,  
+    height: newCropBoxHeight,
+  };
+
   updateCrop();
 };
 
@@ -876,6 +914,7 @@ const clickSave = async () => {
   box-shadow: 0 0 0 9999px color-mix(in srgb, var(--color-base-200) 80%, transparent);
   box-sizing: border-box;
   will-change: transform;
+  transition: all 0.3s ease;
 }
 .crop-box-done {
   position: absolute;
@@ -884,6 +923,10 @@ const clickSave = async () => {
   box-sizing: border-box;
   will-change: transform;
 }
+.no-transition {
+  transition: none !important;
+}
+
 .drag-handle {
   position: absolute;
   width: 10px;

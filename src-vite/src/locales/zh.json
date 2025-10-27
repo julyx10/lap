@@ -272,6 +272,8 @@
       "crop_shape_landscape": "横屏",
       "crop_shape_portrait": "竖屏",
       "aspect_ratio": "宽高比",
+      "zoom_in_area": "区域放大",
+      "zoom_out_area": "区域缩小",
       "rotate_left": "逆时针旋转",
       "rotate_right": "顺时针旋转",
       "flip_horizontal": "水平翻转",
@@ -432,7 +434,8 @@
       "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
       "label_primary": "主标签",
       "label_secondary": "副标签",
-      "label_hover": "悬停文字",
+      "label_hover": "悬停标签",
+      "show_camera_info": "悬停显示相机信息",
       "label_options": ["空", "名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "拍摄时间"]
     },
     "image_viewer": {

@@ -23,21 +23,41 @@
         @dblclick="openItem()"
       >
         <div class="relative flex flex-col items-center group">
-          <img v-if="file.thumbnail"
-            :src="file.thumbnail"
-            :class="[
-              'transition duration-200',
-              config.gridScaling === 0 ? 'object-contain' : '',
-              config.gridScaling === 1 ? 'object-cover rounded' : '',
-              config.gridScaling === 2 ? 'object-fill rounded' : ''
-            ]"
-            :style="{ 
-              width: `${config.gridSize}px`, height: `${config.gridSize}px`, 
-              transform: `rotate(${file.rotate}deg)`, 
-              transition: 'transform 0.3s ease-in-out' 
-            }"
-            loading="lazy"
-          />
+          <div v-if="file.thumbnail" class="relative rounded-lg overflow-hidden">
+            <!-- hover text -->
+            <div class="absolute left-0 right-0 bottom-0 p-1 m-1 flex flex-col bg-base-300/30 rounded transition-opacity duration-300 opacity-0 group-hover:opacity-70 z-10">
+              <span v-if="config.gridLabelHover > 0" class="text-xs text-nowrap">{{ getGridLabelText(file, config.gridLabelHover) }}</span>
+
+              <span v-if="config.showCameraInfo && file.e_model" class="text-xs text-nowrap">{{ file.e_model }}</span>
+
+              <table v-if="config.showCameraInfo && file.e_focal_length && file.e_f_number && file.e_exposure_time && file.e_iso_speed" class="text-xs">
+                <tbody>
+                  <tr>
+                    <td class="text-nowrap">{{ file.e_focal_length }}</td>
+                    <td class="text-nowrap">{{ file.e_f_number }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-nowrap">{{ file.e_exposure_time }}</td>
+                    <td class="text-nowrap">ISO {{ file.e_iso_speed }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <img :src="file.thumbnail"
+              :class="[
+                'transition-all duration-300 group-hover:scale-125',
+                config.gridScaling === 0 ? 'object-contain' : '',
+                config.gridScaling === 1 ? 'object-cover' : '',
+                config.gridScaling === 2 ? 'object-fill' : ''
+              ]"
+              :style="{ 
+                width: `${config.gridSize}px`, height: `${config.gridSize}px`, 
+                transform: `rotate(${file.rotate}deg)`,
+              }"
+              loading="lazy"
+            />
+          </div>
+
           <div v-else 
             class="skeleton rounded flex items-center justify-center"
             :style="{ width: `${config.gridSize}px`, height: `${config.gridSize}px` }"
@@ -75,13 +95,6 @@
               :menuItems="moreMenuItems"
               :smallIcon="true"
             />
-          </div>
-
-          <!-- hover text -->
-          <div v-if="config.gridLabelHover > 0" 
-            class="absolute top-3/4 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-70"
-          >
-            <span class="text-xs text-center bg-base-100/20 rounded-lg px-2 py-1">{{ getGridLabelText(file, config.gridLabelHover) }}</span>
           </div>
         </div>
       </div>

@@ -272,6 +272,8 @@
       "crop_shape_landscape": "横長",
       "crop_shape_portrait": "縦長",
       "aspect_ratio": "アスペクト比",
+      "zoom_in_area": "領域を拡大",
+      "zoom_out_area": "領域を縮小",
       "rotate_left": "左回転",
       "rotate_right": "右回転",
       "flip_horizontal": "水平反転",
@@ -432,7 +434,8 @@
       "scaling_options": ["全体をフィット", "切り抜きで埋める", "引き伸ばして埋める"],
       "label_primary": "プライマリラベル",
       "label_secondary": "セカンダリラベル", 
-      "label_hover": "ホバーテキスト",
+      "label_hover": "ホバーラベル",
+      "show_camera_info": "ホバーでカメラ情報を表示",
       "label_options": ["なし", "名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "撮影日時"]
     },
     "image_viewer": {
