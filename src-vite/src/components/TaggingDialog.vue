@@ -243,6 +243,3 @@ const handleKeyDown = (e: KeyboardEvent) => {
 };
 
 </script>
-
-<style scoped>
-</style>

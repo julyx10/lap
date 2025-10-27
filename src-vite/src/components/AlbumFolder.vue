@@ -471,6 +471,3 @@ const toggleFavorite = async () => {
 };
 
 </script>
-
-<style scoped>
-</style>

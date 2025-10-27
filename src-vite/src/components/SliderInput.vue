@@ -65,6 +65,3 @@ const updateValue = () => {
   emit('update:modelValue', Number(sliderValue.value));
 };
 </script>
-
-<style scoped>
-</style>

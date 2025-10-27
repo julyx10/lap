@@ -119,8 +119,8 @@
                   <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
                 </select>
                 <TButton
-                  :icon="isZoomInArea ? IconZoomInArea : IconZoomOutArea"
-                  :tooltip="isZoomInArea ? $t('msgbox.image_editor.zoom_in_area') : $t('msgbox.image_editor.zoom_out_area')"
+                  :icon="fitCropBox ? IconZoomOutArea : IconZoomInArea"
+                  :tooltip="fitCropBox ? $t('msgbox.image_editor.zoom_out_area') : $t('msgbox.image_editor.zoom_in_area')"
                   @click="toggleZoomArea"
                 />
                 <TButton
@@ -197,7 +197,7 @@
             </table>
 
             <!-- debug -->
-            <!-- <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
+            <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
               <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
               <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
               <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
@@ -206,7 +206,7 @@
               <span>scale: {{ scale.toFixed(2) }}</span>
               <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
               <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
-            </div> -->
+            </div>
           </div>
         </div>
       </div>
@@ -322,11 +322,12 @@ const imageStyle = computed(() => ({
 // crop shape
 const cropStatus = ref(0);    // 0: idle, 1: cropping, 2: cropped
 const isPortrait = ref(false);
-const isZoomInArea = ref(false);
+const fitCropBox = ref(false);
 
 // crop box
 const cropBox = ref({ top: 0, left: 0, width: 0, height: 0 });
 const cropBoxOriginal = ref({ top: 0, left: 0, width: 0, height: 0 });
+const zoomCropBoxOriginal = ref({ top: 0, left: 0, width: 0, height: 0 });
 const isDragging = ref(false);
 const dragHandle = ref('');
 const dragStartX = ref(0);
@@ -422,20 +423,20 @@ const initImageEditor = () => {
 
   // image transform init
   enableTransition.value = false;
-  positionFit();
+  fitImageToContainer();
   
   // flip init
   isFlippedX.value = false;
   isFlippedY.value = false;
   
-  // scale
-  scaleFit(imageWidth.value, imageHeight.value);
-  // rotate.value = 0;
+  // rotate
+  rotate.value = 0;
 
   // crop init
   cropStatus.value = 0;
   isPortrait.value = imageWidth.value < imageHeight.value;
-
+  fitCropBox.value = false;
+  
   // cropped image (default is the original image)
   crop.value = { left: 0, top: 0, width: imageWidth.value, height: imageHeight.value };
 
@@ -464,28 +465,17 @@ const initImageEditor = () => {
   }
 };
 
-// update scale to fit the container bounds
-const scaleFit = (imgWidth: number, imgHeight: number) => {
-  scale.value = Math.min(containerBounds.value.width / imgWidth, containerBounds.value.height / imgHeight);
-};
-
-// update position to fit the container bounds
-const positionFit = () => {
-  if (!containerRect.value) return;
-  position.value = { 
-    left: (containerRect.value.width - imageWidth.value) / 2, 
-    top: (containerRect.value.height - imageHeight.value) / 2,
-  };
-};
-
 const clickStartCrop = () => {
   cropStatus.value = 1;   // cropping
-  updateCropBox();
+  updateCropBoxShape();
   updateCrop();
 };
 
 const clickCancelCrop = () => {
   cropStatus.value = 0;   // idle
+
+  fitCropBox.value = false;
+  fitImageToContainer();
 
   // restore the original image size
   crop.value = { left: 0, top: 0, width: imageWidth.value, height: imageHeight.value };
@@ -501,60 +491,42 @@ const clickCancelCrop = () => {
 const clickRestoreCrop = () => {
   cropStatus.value = 1;   // cropping
   
-  // restore the original crop box data
+  // restore the original scale and position
   cropBox.value = { ...cropBoxOriginal.value }; 
-  
-  // update scale and position
-  positionFit();
-  rotate.value % 180 !== 0 ? 
-    scaleFit(imageHeight.value, imageWidth.value) :
-    scaleFit(imageWidth.value, imageHeight.value);
+
+  // restore the original scale and position
+  if(fitCropBox.value) {
+    fitCropBoxToContainer(1);
+  } else {
+    fitImageToContainer();
+  }
 };
 
 const togglePortraitAndLandscape = () => {
   isPortrait.value = !isPortrait.value;
-  updateCropBox();
+  updateCropBoxShape();
   updateCrop();
 };
 
 const toggleZoomArea = () => {
-  isZoomInArea.value = !isZoomInArea.value;
+  fitCropBox.value = !fitCropBox.value;
 
-  // save the original scale
-  const oldScale = scale.value;
-
-  // calculate the new scale to fit the container
-  scale.value = Math.min(
-    (containerBounds.value.width / cropBox.value.width) * oldScale, 
-    (containerBounds.value.height / cropBox.value.height) * oldScale
-  );
-
-  // calculate the new position to center the cropped image
-  position.value = { 
-    left: position.value.left + ( containerRect.value.width / 2 - (cropBox.value.left + cropBox.value.width / 2) ) * scale.value / oldScale, 
-    top: position.value.top + ( containerRect.value.height / 2 - (cropBox.value.top + cropBox.value.height / 2) ) * scale.value / oldScale,
-  };
-
-  // resize cropBox to fit the container
-  const newCropBoxWidth = cropBox.value.width * scale.value / oldScale;
-  const newCropBoxHeight = cropBox.value.height * scale.value / oldScale;
-  cropBox.value = {
-    left: (containerRect.value.width - newCropBoxWidth) / 2,
-    top:  (containerRect.value.height - newCropBoxHeight) / 2,
-    width:  newCropBoxWidth,  
-    height: newCropBoxHeight,
-  };
-
-  updateCrop();
+  if (fitCropBox.value) {
+    zoomCropBoxOriginal.value = { ...cropBox.value };
+    fitCropBoxToContainer(1);
+  } else {
+    cropBox.value = { ...zoomCropBoxOriginal.value }; 
+    fitImageToContainer();
+  }
 };
 
 const onChangeCropShape = () => {
-  updateCropBox();
+  updateCropBoxShape();
   updateCrop();
 };
 
-// update crop box by crop shape
-const updateCropBox = () => {
+// update crop box shape
+const updateCropBoxShape = () => {
   imageRect.value = imageRef.value?.getBoundingClientRect() || null;
   if (!imageRect.value || !containerRect.value) return;
 
@@ -644,25 +616,36 @@ const updateCrop = () => {
   // }
 }
 
-const doCrop = () => {
-  if (!containerBounds.value || !imageRect.value || !containerRect.value) return;
+// update scale to fit the container bounds
+const scaleFit = (imgWidth: number, imgHeight: number) => {
+  scale.value = Math.min(containerBounds.value.width / imgWidth, containerBounds.value.height / imgHeight);
+};
 
-  cropStatus.value = 2;
-  cropBoxOriginal.value = { ...cropBox.value };
-  updateCrop();
+// fit image to container
+const fitImageToContainer = () => {
+  if (!containerRect.value) return;
   
-  // update resize width and height
-  resizedWidth.value = crop.value.width;
-  resizedHeight.value = crop.value.height;
-  resizedPercentage.value = 100;
+  position.value = { 
+    left: (containerRect.value.width - imageWidth.value) / 2, 
+    top: (containerRect.value.height - imageHeight.value) / 2,
+  };
 
-  // save the original scale
+  rotate.value % 180 !== 0 ? 
+    scaleFit(imageHeight.value, imageWidth.value) :
+    scaleFit(imageWidth.value, imageHeight.value);
+}
+
+// fit crop box to container
+const fitCropBoxToContainer = (ratio: number = 1) => {
+  if (!containerBounds.value || !imageRect.value || !containerRect.value) return;
+  
+  // save old scale
   const oldScale = scale.value;
 
   // calculate the new scale to fit the container
   scale.value = Math.min(
-    (containerBounds.value.width / cropBox.value.width) * oldScale, 
-    (containerBounds.value.height / cropBox.value.height) * oldScale
+    (containerBounds.value.width / cropBox.value.width) * oldScale * ratio, 
+    (containerBounds.value.height / cropBox.value.height) * oldScale * ratio
   );
 
   // calculate the new position to center the cropped image
@@ -800,6 +783,25 @@ const startDrag = (handle: string, event: MouseEvent) => {
 
   window.addEventListener('mousemove', doDrag);
   window.addEventListener('mouseup', stopDrag);
+};
+
+// do crop
+const doCrop = () => {
+  cropBoxOriginal.value = { ...cropBox.value };
+
+  // fit crop box to container
+  fitCropBoxToContainer();
+
+  // update crop.value
+  updateCrop(); 
+  
+  // update resized width and height
+  resizedWidth.value = crop.value.width;
+  resizedHeight.value = crop.value.height;
+  resizedPercentage.value = 100;
+
+  // update crop status
+  cropStatus.value = 2;
 };
 
 function handleKeyDown(event: KeyboardEvent) {

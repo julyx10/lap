@@ -224,6 +224,3 @@ const clickCancel = () => {
 };
 
 </script>
-
-<style scoped>
-</style>

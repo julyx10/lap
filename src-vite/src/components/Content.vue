@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex-1 flex flex-col"
+  <div class="flex-1 flex flex-col select-none"
     :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('AlbumList-edit') }"
   >
 
@@ -12,7 +12,7 @@
     </transition>
 
     <!-- title bar -->
-    <div class="relative px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between select-none" data-tauri-drag-region>
+    <div class="relative px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between" data-tauri-drag-region>
 
 
       <!-- title -->
@@ -1401,9 +1401,3 @@ function handleMouseMove(event) {
 }
 
 </script>
-
-<style scoped>
-* {
-  user-select: none;
-}
-</style>
