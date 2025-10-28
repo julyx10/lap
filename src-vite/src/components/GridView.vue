@@ -120,7 +120,7 @@ import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
   IconMore,
-  IconOpen,
+  IconView,
   IconImageEdit,
   IconFavorite,
   IconUnFavorite,
@@ -179,8 +179,8 @@ const moreMenuItems = computed(() => {
   const file = props.fileList[selectedIndex.value];
   return [
     {
-      label: localeMsg.value.menu.file.open,
-      icon: IconOpen,
+      label: localeMsg.value.menu.file.view,
+      icon: IconView,
       shortcut: isMac ? '⌘⏎' : 'Ctrl+Enter',
       action: () => {
         openItem();

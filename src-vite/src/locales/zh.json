@@ -123,7 +123,7 @@
     },
     "file": {
       "new_folder": "新建文件夹",
-      "open": "打开",
+      "view": "查看",
       "copy": "复制到剪贴板",
       "edit": "编辑",
       "update_from_file": "从文件更新",

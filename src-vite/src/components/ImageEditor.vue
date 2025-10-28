@@ -119,7 +119,7 @@
                   <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
                 </select>
                 <TButton
-                  :icon="fitCropBox ? IconZoomOutArea : IconZoomInArea"
+                  :icon="fitCropBox ? IconCropMin : IconCropMax"
                   :tooltip="fitCropBox ? $t('msgbox.image_editor.zoom_out_area') : $t('msgbox.image_editor.zoom_in_area')"
                   @click="toggleZoomArea"
                 />
@@ -257,8 +257,8 @@ import {
   IconClose, 
   IconCrop,
   IconCropLandscape,
-  IconZoomInArea,
-  IconZoomOutArea,
+  IconCropMax,
+  IconCropMin,
   IconRotateLeft, 
   IconRotateRight, 
   IconFlipVertical, 

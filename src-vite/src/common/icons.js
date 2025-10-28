@@ -14,6 +14,7 @@ export { default as IconFolder } from '@/assets/icons/folder.svg';
 export { default as IconFolderExpanded } from '@/assets/icons/folder-open.svg';
 export { default as IconNewFolder } from '@/assets/icons/folder-plus.svg';
 export { default as IconFolderFavorite } from '@/assets/icons/folder-star.svg';
+export { default as IconOrder } from '@/assets/icons/order.svg';
 
 export { default as IconCopy } from '@/assets/icons/copy.svg';
 export { default as IconMoveTo } from '@/assets/icons/move-to.svg';
@@ -33,7 +34,7 @@ export { default as IconGrid } from '@/assets/icons/layout-grid.svg';
 export { default as IconMasonry } from '@/assets/icons/layout-masonry.svg';
 export { default as IconPreview } from '@/assets/icons/preview-on.svg';
 export { default as IconPreviewOff } from '@/assets/icons/preview-off.svg';
-export { default as IconOpen } from '@/assets/icons/eye.svg';
+export { default as IconView } from '@/assets/icons/eye.svg';
 export { default as IconZoomIn } from '@/assets/icons/zoom-in.svg';
 export { default as IconZoomOut } from '@/assets/icons/zoom-out.svg';
 export { default as IconZoomFit } from '@/assets/icons/zoom-fit.svg';
@@ -84,6 +85,8 @@ export { default as IconRotateRight } from '@/assets/icons/rotate-right-90.svg';
 export { default as IconFlipVertical } from '@/assets/icons/flip-horizontal.svg';
 export { default as IconFlipHorizontal } from '@/assets/icons/flip-vertical.svg';
 export { default as IconRestore } from '@/assets/icons/restore.svg';
+export { default as IconCropMax } from '@/assets/icons/crop-max.svg';
+export { default as IconCropMin } from '@/assets/icons/crop-min.svg';
 
 // ======================
 // SELECTION & TOGGLE ICONS

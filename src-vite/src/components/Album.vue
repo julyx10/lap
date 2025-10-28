@@ -34,7 +34,7 @@ import { config } from '@/common/utils';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 
-import { IconMore, IconAdd, IconArrowUpDown, IconRefresh, IconClose } from '@/common/icons';
+import { IconMore, IconAdd, IconOrder, IconRefresh, IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import TButton from '@/components/TButton.vue';
@@ -95,7 +95,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.album.reorder,
-      icon: IconArrowUpDown,
+      icon: IconOrder,
       disabled: config.albumId === null,
       action: () => {
         isEditList.value = true;

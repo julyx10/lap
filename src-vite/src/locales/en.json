@@ -123,7 +123,7 @@
     },
     "file": {
       "new_folder": "New folder",
-      "open": "Open",
+      "view": "View",
       "copy": "Copy to clipboard",
       "edit": "Edit",
       "update_from_file": "Update from file",
