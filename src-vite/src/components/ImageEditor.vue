@@ -27,15 +27,19 @@
           <!-- image container -->
           <div ref="containerRef" class="relative w-[570px] h-[430px] bg-base-200 cursor-default rounded-lg overflow-hidden select-none">
             <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
-
             <!-- crop box -->
-            <div v-if="cropStatus===1" 
-              :class="['crop-box-active', { 'no-transition': isDragging }, isDragging ? 'cursor-grabbing' : 'cursor-grab']" 
+            <div v-if="cropStatus > 0" 
+              :class="{
+                'crop-box-active': cropStatus === 1,
+                'crop-box-done': cropStatus === 2,
+                'cursor-grabbing no-transition': cropStatus === 1 && isDragging,
+                'cursor-grab': cropStatus === 1 && !isDragging
+              }"
               :style="cropBoxStyle" 
-              @mousedown="startDrag('move', $event)"
+              @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
               @dblclick="clickDoCrop"
             >
-              <template v-if="isDragging">
+              <template v-if="cropStatus===1 && isDragging">
                 <div class="crop-dimensions-display">
                   {{ crop.width }} x {{ crop.height }}
                 </div>
@@ -46,7 +50,7 @@
                   <div class="grid-line-v grid-line-v-2"></div>
                 </div>
               </template>
-              <template v-else-if="!cropBoxFixed">
+              <template v-else-if="cropStatus===1 && !cropBoxFixed">
                 <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
                 <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
                 <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
@@ -57,7 +61,6 @@
                 <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
               </template>
             </div>
-            <div v-if="cropStatus===2" class="crop-box-done" :style="cropBoxStyle"></div>
           </div>
 
           <!-- crop controls -->
@@ -119,7 +122,7 @@
                   <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
                 </select>
                 <TButton
-                  :icon="cropBoxFixed ? IconCropFix : IconCropResize"
+                  :icon="cropBoxFixed ? IconCropMin : IconCropMax"
                   :tooltip="cropBoxFixed ? $t('msgbox.image_editor.fix_crop_box') : $t('msgbox.image_editor.resize_crop_box')"
                   @click="toggleCropBoxFixed"
                 />
@@ -202,7 +205,6 @@
               <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
               <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
               <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
-              <!-- <span>cropBoxOriginal:{{ cropBoxOriginal.left.toFixed(0) }}, {{ cropBoxOriginal.top.toFixed(0) }}, {{ cropBoxOriginal.width.toFixed(0) }}, {{ cropBoxOriginal.height.toFixed(0) }}</span>  -->
               <span>scale: {{ scale.toFixed(2) }}</span>
               <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
               <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
@@ -244,7 +246,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config, getFolderPath, extractFileName, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
@@ -256,8 +258,8 @@ import ToolTip from '@/components/ToolTip.vue';
 import { 
   IconCrop,
   IconCropLandscape,
-  IconCropFix,
-  IconCropResize,
+  IconCropMax,
+  IconCropMin,
   IconRotateLeft, 
   IconRotateRight, 
   IconFlipVertical, 
@@ -265,7 +267,6 @@ import {
   IconClose, 
   IconOk,
 } from '@/common/icons';
-import { networkInterfaces } from 'os';
 
 const props = defineProps({
   fileInfo: {
@@ -467,9 +468,7 @@ const initImageEditor = () => {
 const clickStartCrop = () => {
   cropStatus.value = 1;   // cropping
   cropBoxFixed.value = false;
-  if (cropBox.value.width === 0 && cropBox.value.height === 0) { // initialize crop box shape
-    initCropBox();
-  }
+  initCropBox();
 };
 
 const clickCancelCrop = () => {
@@ -489,9 +488,7 @@ const clickCancelCrop = () => {
 const clickRestoreCrop = () => {
   cropStatus.value = 1;   // cropping
   
-  if(cropBoxFixed.value) {
-    fitCropBoxToContainer();
-  } else {
+  if(!cropBoxFixed.value) {
     fitImageToContainer();
   }
 };
@@ -500,8 +497,9 @@ const clickRestoreCrop = () => {
 const clickDoCrop = () => {
   cropStatus.value = 2;   // cropped
 
-  // fit crop box to container
-  fitCropBoxToContainer();
+  if(!cropBoxFixed.value) {
+    fitCropBoxToContainer();
+  }
 
   // update resized width and height
   resizedWidth.value = crop.value.width;
@@ -559,7 +557,6 @@ const initCropBox = () => {
       height: imageRect.value.height,
     };
   }
-
   updateCropFromCropBox(); // cropbox -> crop
 }
 
@@ -734,21 +731,43 @@ const startDrag = (handle: string, event: MouseEvent) => {
   dragStartX.value = event.clientX;
   dragStartY.value = event.clientY;
 
+  if (cropBoxFixed.value && dragHandle.value === 'move') {
+    enableTransition.value = false;
+  }
+
   const initialCropBoxData = { ...cropBox.value };
+  const initialImagePosition = { ...position.value };
+  const initialImageRect = imageRef.value?.getBoundingClientRect() || null;
 
   const doDrag = (e: MouseEvent) => {
-    if (!isDragging.value || !imageRect.value || !containerRect.value) return;
+    if (!isDragging.value || !initialImageRect || !containerRect.value) return;
 
     const dx = e.clientX - dragStartX.value;
     const dy = e.clientY - dragStartY.value;
 
-    const imageLeft = imageRect.value.left - containerRect.value.left;
-    const imageTop = imageRect.value.top - containerRect.value.top;
-    const imageRight = imageLeft + imageRect.value.width;
-    const imageBottom = imageTop + imageRect.value.height;
+    if (cropBoxFixed.value && dragHandle.value === 'move') {
+      // Move image instead of crop box
+      const initialImageLeft = initialImageRect.left - containerRect.value.left;
+      const initialImageRight = initialImageLeft + initialImageRect.width;
+      const max_dx = cropBox.value.left - initialImageLeft;
+      const min_dx = (cropBox.value.left + cropBox.value.width) - initialImageRight;
+      const clamped_dx = Math.max(min_dx, Math.min(dx, max_dx));
 
-    // Use clamping for move, and strict validation for resize
-    if (dragHandle.value === 'move') {
+      const initialImageTop = initialImageRect.top - containerRect.value.top;
+      const initialImageBottom = initialImageTop + initialImageRect.height;
+      const max_dy = cropBox.value.top - initialImageTop;
+      const min_dy = (cropBox.value.top + cropBox.value.height) - initialImageBottom;
+      const clamped_dy = Math.max(min_dy, Math.min(dy, max_dy));
+
+      position.value.left = initialImagePosition.left + clamped_dx;
+      position.value.top = initialImagePosition.top + clamped_dy;
+
+    } else if (dragHandle.value === 'move') {
+      const imageLeft = imageRect.value.left - containerRect.value.left;
+      const imageTop = imageRect.value.top - containerRect.value.top;
+      const imageRight = imageLeft + imageRect.value.width;
+      const imageBottom = imageTop + imageRect.value.height;
+
       let newLeft = initialCropBoxData.left + dx;
       let newTop = initialCropBoxData.top + dy;
 
@@ -762,6 +781,10 @@ const startDrag = (handle: string, event: MouseEvent) => {
       cropBox.value.top = newTop;
 
     } else { // Resize logic
+      const imageLeft = imageRect.value.left - containerRect.value.left;
+      const imageTop = imageRect.value.top - containerRect.value.top;
+      const imageRight = imageLeft + imageRect.value.width;
+      const imageBottom = imageTop + imageRect.value.height;
       let proposedBox = { ...initialCropBoxData };
 
       if (dragHandle.value.includes('right')) proposedBox.width += dx;
@@ -812,6 +835,9 @@ const startDrag = (handle: string, event: MouseEvent) => {
   };
 
   const stopDrag = () => {
+    if (cropBoxFixed.value && dragHandle.value === 'move') {
+      enableTransition.value = true;
+    }
     isDragging.value = false;
     window.removeEventListener('mousemove', doDrag);
     window.removeEventListener('mouseup', stopDrag);
