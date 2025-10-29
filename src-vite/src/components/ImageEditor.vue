@@ -32,8 +32,9 @@
               :class="{
                 'crop-box-active': cropStatus === 1,
                 'crop-box-done': cropStatus === 2,
-                'cursor-grabbing no-transition': cropStatus === 1 && isDragging,
-                'cursor-grab': cropStatus === 1 && !isDragging
+                'cursor-move no-transition': cropStatus === 1 && !cropBoxFixed,
+                'cursor-grabbing': cropStatus === 1 && cropBoxFixed && isDragging,
+                'cursor-grab': cropStatus === 1 && cropBoxFixed && !isDragging,
               }"
               :style="cropBoxStyle" 
               @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
@@ -50,7 +51,7 @@
                   <div class="grid-line-v grid-line-v-2"></div>
                 </div>
               </template>
-              <template v-else-if="cropStatus===1 && !cropBoxFixed">
+              <template v-if="cropStatus===1 && !cropBoxFixed">
                 <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
                 <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
                 <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
@@ -114,11 +115,12 @@
                 />
                 <TButton
                   :icon="IconCropLandscape"
+                  :disabled="cropBoxFixed"
                   :iconStyle="{ transform: `rotate(${isPortrait ? 90 : 0}deg)`, transition: 'transform 0.3s ease-in-out' }" 
                   :tooltip="isPortrait ? $t('msgbox.image_editor.crop_shape_portrait') : $t('msgbox.image_editor.crop_shape_landscape')"
                   @click="togglePortraitAndLandscape" 
                 />
-                <select v-model="config.imageEditor.cropShape" class="select select-bordered" @change="onChangeCropShape">
+                <select v-model="config.imageEditor.cropShape" class="select select-bordered" :disabled="cropBoxFixed" @change="onChangeCropShape">
                   <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
                 </select>
                 <TButton
@@ -147,24 +149,30 @@
                 <tr>
                   <td class="w-1/2">{{ $t('msgbox.image_editor.width') }}</td>
                   <td>
-                    <input type="number" min="100" max="100000" :placeholder="$t('msgbox.image_editor.width')"  class="input input-bordered w-full"
-                      v-model="resizedWidth" :disabled="cropStatus==1"
+                    <input type="number" :placeholder="$t('msgbox.image_editor.width')" class="input input-bordered w-full"
+                      v-model.number="resizedWidth" :disabled="cropStatus==1"
+                      @keypress="onNumberKeyPress"
+                      @blur="handleResizeInput('width')"
                     />
                   </td>
                 </tr>
                 <tr>
                   <td>{{ $t('msgbox.image_editor.height') }}</td>
                   <td>
-                    <input type="number" min="100" max="100000" :placeholder="$t('msgbox.image_editor.height')"  class="input input-bordered w-full"
-                      v-model="resizedHeight" :disabled="cropStatus==1"
+                    <input type="number" :placeholder="$t('msgbox.image_editor.height')" class="input input-bordered w-full"
+                      v-model.number="resizedHeight" :disabled="cropStatus==1"
+                      @keypress="onNumberKeyPress"
+                      @blur="handleResizeInput('height')"
                     />
                   </td>
                 </tr>
                 <tr>
                   <td>{{ $t('msgbox.image_editor.percentage') }}</td>
                   <td class="flex items-center">
-                    <input type="number" min="1" max="100" :placeholder="$t('msgbox.image_editor.percentage')"  class="input input-bordered w-full"
-                      v-model="resizedPercentage" :disabled="cropStatus==1"
+                    <input type="number" :placeholder="$t('msgbox.image_editor.percentage')" class="input input-bordered w-full"
+                      v-model.number="resizedPercentage" :disabled="cropStatus==1"
+                      @keypress="onNumberKeyPress"
+                      @blur="handleResizeInput('percentage')"
                     />
                     <span class="pl-1 text-xs text-base-content/30">%</span>
                   </td>
@@ -208,6 +216,8 @@
               <span>scale: {{ scale.toFixed(2) }}</span>
               <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
               <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
+              <span>resized: {{ resizedWidth.toFixed(0) }} x {{ resizedHeight.toFixed(0) }}</span>
+              <span>resizedPercentage: {{ resizedPercentage.toFixed(0) }}%</span>
             </div>
           </div>
         </div>
@@ -875,6 +885,43 @@ function handleKeyDown(event: KeyboardEvent) {
         break;
     }
 }
+
+// prevent non-number key press
+const onNumberKeyPress = (e: KeyboardEvent) => {
+  if (!/[0-9]/.test(e.key)) {
+    e.preventDefault();
+  }
+}
+
+const handleResizeInput = (sourceType: 'width' | 'height' | 'percentage') => {
+  // 1. Define source dimensions
+  const sourceWidth = cropStatus.value === 2 ? crop.value.width : (rotate.value % 180 !== 0 ? imageHeight.value : imageWidth.value);
+  const sourceHeight = cropStatus.value === 2 ? crop.value.height : (rotate.value % 180 !== 0 ? imageWidth.value : imageHeight.value);
+  if (sourceWidth <= 0 || sourceHeight <= 0) return;
+
+  let percentage = resizedPercentage.value;
+
+  // 2. Based on input source, calculate the percentage
+  if (sourceType === 'width') {
+    const clampedWidth = Math.max(10, Math.min(resizedWidth.value, sourceWidth));
+    percentage = (clampedWidth / sourceWidth) * 100;
+  } else if (sourceType === 'height') {
+    const clampedHeight = Math.max(10, Math.min(resizedHeight.value, sourceHeight));
+    percentage = (clampedHeight / sourceHeight) * 100;
+  }
+  
+  // 3. Define min/max percentage and clamp the calculated percentage
+  const minWidthPercentage = (10 / sourceWidth) * 100;
+  const minHeightPercentage = (10 / sourceHeight) * 100;
+  const minPercentage = Math.max(minWidthPercentage, minHeightPercentage);
+  
+  const finalPercentage = Math.round(Math.max(minPercentage, Math.min(percentage, 100)));
+
+  // 4. Update all three reactive variables from the final, clamped percentage
+  resizedPercentage.value = finalPercentage;
+  resizedWidth.value = Math.round(sourceWidth * (finalPercentage / 100));
+  resizedHeight.value = Math.round(sourceHeight * (finalPercentage / 100));
+};
 
 const clickCancel = () => {
   if (cropStatus.value === 1) return;
