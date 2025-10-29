@@ -248,10 +248,10 @@ pub fn print_image(image_path: &str) -> Result<(), String> {
 /// crop data
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CropData {
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
 }
 
 /// resize data
@@ -353,12 +353,14 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
     }
 
     // Crop
-    img = img.crop_imm(
-        params.crop.x.round() as u32,
-        params.crop.y.round() as u32,
-        params.crop.width.round() as u32,
-        params.crop.height.round() as u32,
-    );
+    if params.crop.width > 0 && params.crop.height > 0 {
+        img = img.crop_imm(
+            params.crop.x,
+            params.crop.y,
+            params.crop.width,
+            params.crop.height,
+        );
+    }
 
     // Resize
     if let (Some(w), Some(h)) = (params.resize.width, params.resize.height) {

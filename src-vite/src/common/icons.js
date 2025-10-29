@@ -80,13 +80,13 @@ export { default as IconImageEdit } from '@/assets/icons/image-edit.svg';
 export { default as IconCrop } from '@/assets/icons/crop.svg';
 export { default as IconCropLandscape } from '@/assets/icons/crop-landscape.svg';
 export { default as IconCropPortrait } from '@/assets/icons/crop-portrait.svg';
+export { default as IconCropFix } from '@/assets/icons/crop-fix.svg';
+export { default as IconCropResize } from '@/assets/icons/crop-resize.svg';
 export { default as IconRotateLeft } from '@/assets/icons/rotate-left-90.svg';
 export { default as IconRotateRight } from '@/assets/icons/rotate-right-90.svg';
 export { default as IconFlipVertical } from '@/assets/icons/flip-horizontal.svg';
 export { default as IconFlipHorizontal } from '@/assets/icons/flip-vertical.svg';
 export { default as IconRestore } from '@/assets/icons/restore.svg';
-export { default as IconCropMax } from '@/assets/icons/crop-max.svg';
-export { default as IconCropMin } from '@/assets/icons/crop-min.svg';
 
 // ======================
 // SELECTION & TOGGLE ICONS

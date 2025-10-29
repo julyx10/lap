@@ -33,7 +33,7 @@
               :class="['crop-box-active', { 'no-transition': isDragging }, isDragging ? 'cursor-grabbing' : 'cursor-grab']" 
               :style="cropBoxStyle" 
               @mousedown="startDrag('move', $event)"
-              @dblclick="doCrop"
+              @dblclick="clickDoCrop"
             >
               <template v-if="isDragging">
                 <div class="crop-dimensions-display">
@@ -46,7 +46,7 @@
                   <div class="grid-line-v grid-line-v-2"></div>
                 </div>
               </template>
-              <template v-else>
+              <template v-else-if="!cropBoxFixed">
                 <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
                 <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
                 <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
@@ -119,14 +119,14 @@
                   <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
                 </select>
                 <TButton
-                  :icon="fitCropBox ? IconCropMin : IconCropMax"
-                  :tooltip="fitCropBox ? $t('msgbox.image_editor.zoom_out_area') : $t('msgbox.image_editor.zoom_in_area')"
-                  @click="toggleZoomArea"
+                  :icon="cropBoxFixed ? IconCropFix : IconCropResize"
+                  :tooltip="cropBoxFixed ? $t('msgbox.image_editor.fix_crop_box') : $t('msgbox.image_editor.resize_crop_box')"
+                  @click="toggleCropBoxFixed"
                 />
                 <TButton
                   :icon="IconOk"
                   :tooltip="$t('msgbox.image_editor.done_crop')"
-                  @click="doCrop"
+                  @click="clickDoCrop"
                 />
               </div>  
             </div>
@@ -202,7 +202,7 @@
               <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
               <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
               <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
-              <span>cropBoxOriginal:{{ cropBoxOriginal.left.toFixed(0) }}, {{ cropBoxOriginal.top.toFixed(0) }}, {{ cropBoxOriginal.width.toFixed(0) }}, {{ cropBoxOriginal.height.toFixed(0) }}</span> 
+              <!-- <span>cropBoxOriginal:{{ cropBoxOriginal.left.toFixed(0) }}, {{ cropBoxOriginal.top.toFixed(0) }}, {{ cropBoxOriginal.width.toFixed(0) }}, {{ cropBoxOriginal.height.toFixed(0) }}</span>  -->
               <span>scale: {{ scale.toFixed(2) }}</span>
               <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
               <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
@@ -254,17 +254,18 @@ import TButton from '@/components/TButton.vue';
 import ToolTip from '@/components/ToolTip.vue';
 
 import { 
-  IconClose, 
   IconCrop,
   IconCropLandscape,
-  IconCropMax,
-  IconCropMin,
+  IconCropFix,
+  IconCropResize,
   IconRotateLeft, 
   IconRotateRight, 
   IconFlipVertical, 
   IconFlipHorizontal,
+  IconClose, 
   IconOk,
 } from '@/common/icons';
+import { networkInterfaces } from 'os';
 
 const props = defineProps({
   fileInfo: {
@@ -292,6 +293,7 @@ const containerPadding = 5; // container padding
 // image
 const imageRef = ref<HTMLImageElement | null>(null);
 const imageRect = ref<DOMRect | null>(null);
+const imageRectOriginal = ref<DOMRect | null>(null);
 const imageSrc = ref('');
 const imageWidth = ref(0);     // original image width
 const imageHeight = ref(0);    // original image height
@@ -322,12 +324,12 @@ const imageStyle = computed(() => ({
 // crop shape
 const cropStatus = ref(0);    // 0: idle, 1: cropping, 2: cropped
 const isPortrait = ref(false);
-const fitCropBox = ref(false);
+const cropBoxFixed = ref(false);  // false: can resize the crop box; true: fix the crop box size, drag to move image
 
 // crop box
-const cropBox = ref({ top: 0, left: 0, width: 0, height: 0 });
-const cropBoxOriginal = ref({ top: 0, left: 0, width: 0, height: 0 });
-const zoomCropBoxOriginal = ref({ top: 0, left: 0, width: 0, height: 0 });
+const cropBox = ref({ left: 0, top: 0, width: 0, height: 0 });  // crop box on the image
+const crop = ref({ left: 0, top: 0, width: 0, height: 0 });  // cropped image area on the image
+
 const isDragging = ref(false);
 const dragHandle = ref('');
 const dragStartX = ref(0);
@@ -364,9 +366,6 @@ const cropShapeOptions = computed(() => {
     ];
   }
 });
-
-// cropped image
-const crop = ref({ top: 0, left: 0, width: 0, height: 0 });
 
 // resized image after having cropped
 const resizedWidth = ref(0);
@@ -405,10 +404,10 @@ const onImageLoad = () => {
 };
 
 const initImageEditor = () => {
-  if (!imageRef.value || !containerRef.value) return;
-
   // container 
-  containerRect.value = containerRef.value.getBoundingClientRect();
+  containerRect.value = containerRef.value?.getBoundingClientRect() || null;
+  if (!containerRect.value) return;
+
   containerBounds.value = {
     left:   containerRect.value.left + containerPadding,
     top:    containerRect.value.top + containerPadding,
@@ -423,7 +422,6 @@ const initImageEditor = () => {
 
   // image transform init
   enableTransition.value = false;
-  fitImageToContainer();
   
   // flip init
   isFlippedX.value = false;
@@ -431,14 +429,15 @@ const initImageEditor = () => {
   
   // rotate
   rotate.value = 0;
-
+  
   // crop init
   cropStatus.value = 0;
   isPortrait.value = imageWidth.value < imageHeight.value;
-  fitCropBox.value = false;
+  cropBoxFixed.value = false;     // false: can resize the crop box; true: fix the crop box size, drag to move image
   
-  // cropped image (default is the original image)
-  crop.value = { left: 0, top: 0, width: imageWidth.value, height: imageHeight.value };
+  // cropped image
+  cropBox.value = { left: 0, top: 0, width: 0, height: 0 };
+  fitImageToContainer();
 
   // resize init
   resizedWidth.value = imageWidth.value;
@@ -467,18 +466,17 @@ const initImageEditor = () => {
 
 const clickStartCrop = () => {
   cropStatus.value = 1;   // cropping
-  updateCropBoxShape();
-  updateCrop();
+  cropBoxFixed.value = false;
+  if (cropBox.value.width === 0 && cropBox.value.height === 0) { // initialize crop box shape
+    initCropBox();
+  }
 };
 
 const clickCancelCrop = () => {
   cropStatus.value = 0;   // idle
+  cropBox.value = { left: 0, top: 0, width: 0, height: 0 };
 
-  fitCropBox.value = false;
-  fitImageToContainer();
-
-  // restore the original image size
-  crop.value = { left: 0, top: 0, width: imageWidth.value, height: imageHeight.value };
+  fitImageToContainer();  // restore the original scale and position
 
   // update resize width and height
   const rotatedWidth = rotate.value % 180 !== 0 ? imageHeight.value : imageWidth.value;
@@ -491,44 +489,44 @@ const clickCancelCrop = () => {
 const clickRestoreCrop = () => {
   cropStatus.value = 1;   // cropping
   
-  // restore the original scale and position
-  cropBox.value = { ...cropBoxOriginal.value }; 
-
-  // restore the original scale and position
-  if(fitCropBox.value) {
-    fitCropBoxToContainer(1);
+  if(cropBoxFixed.value) {
+    fitCropBoxToContainer();
   } else {
     fitImageToContainer();
   }
+};
+
+// do crop
+const clickDoCrop = () => {
+  cropStatus.value = 2;   // cropped
+
+  // fit crop box to container
+  fitCropBoxToContainer();
+
+  // update resized width and height
+  resizedWidth.value = crop.value.width;
+  resizedHeight.value = crop.value.height;
+  resizedPercentage.value = 100;
 };
 
 const togglePortraitAndLandscape = () => {
   isPortrait.value = !isPortrait.value;
-  updateCropBoxShape();
-  updateCrop();
+  initCropBox();
 };
 
-const toggleZoomArea = () => {
-  fitCropBox.value = !fitCropBox.value;
-
-  if (fitCropBox.value) {
-    zoomCropBoxOriginal.value = { ...cropBox.value };
-    fitCropBoxToContainer(1);
-  } else {
-    cropBox.value = { ...zoomCropBoxOriginal.value }; 
-    fitImageToContainer();
-  }
+const toggleCropBoxFixed = () => {
+  cropBoxFixed.value = !cropBoxFixed.value;
+  cropBoxFixed.value ? fitCropBoxToContainer() : fitImageToContainer();
 };
 
 const onChangeCropShape = () => {
-  updateCropBoxShape();
-  updateCrop();
+  initCropBox();
 };
 
-// update crop box shape
-const updateCropBoxShape = () => {
+// initialize crop box shape
+const initCropBox = () => {
   imageRect.value = imageRef.value?.getBoundingClientRect() || null;
-  if (!imageRect.value || !containerRect.value) return;
+  if (!imageRect.value) return;
 
   const selectedShape = cropShapeOptions.value.find(option => option.value === config.imageEditor.cropShape && option.value !== '0');
   if (selectedShape && selectedShape.label) {
@@ -561,23 +559,31 @@ const updateCropBoxShape = () => {
       height: imageRect.value.height,
     };
   }
+
+  updateCropFromCropBox(); // cropbox -> crop
 }
 
-const updateCrop = () => {
-  if (!imageRect.value || !containerRect.value) return;
+// update crop from crop box
+const updateCropFromCropBox = () => {
+  if (cropBox.value.width === 0 || cropBox.value.height === 0) { // no crop box
+    crop.value = { left: 0, top: 0, width: 0, height: 0 };
+    return;
+  };
+  
+  imageRect.value = imageRef.value?.getBoundingClientRect() || null;
+  if (!imageRect.value) return;
 
   const imgWidth = rotate.value % 180 === 0 ? imageWidth.value : imageHeight.value;
   const imgHeight = rotate.value % 180 === 0 ? imageHeight.value : imageWidth.value;
+
   const scaleX = imgWidth / imageRect.value.width;
   const scaleY = imgHeight / imageRect.value.height;
-  const rotatedCrop = {
+  crop.value = {
     left: Math.round(scaleX * (cropBox.value.left + containerRect.value.left - imageRect.value.left)),
     top:  Math.round(scaleY * (cropBox.value.top + containerRect.value.top - imageRect.value.top)),
     width: Math.round(scaleX * cropBox.value.width),
     height: Math.round(scaleY * cropBox.value.height)
   };
-
-  crop.value = rotatedCrop;
 
   // consider the image rotation
   // switch (rotate.value % 360) {
@@ -616,6 +622,31 @@ const updateCrop = () => {
   // }
 }
 
+// update crop box from crop
+const updateCropBoxFromCrop = () => {
+  if (crop.value.width === 0 || crop.value.height === 0) { // no crop
+    cropBox.value = { left: 0, top: 0, width: 0, height: 0 };
+    return;
+  }
+
+  imageRect.value = imageRectOriginal.value;
+
+  const imgWidth = rotate.value % 180 === 0 ? imageWidth.value : imageHeight.value;
+  const imgHeight = rotate.value % 180 === 0 ? imageHeight.value : imageWidth.value;
+
+  const scaleX = imgWidth / imageRect.value.width;
+  const scaleY = imgHeight / imageRect.value.height;
+
+  if (scaleX === 0 || scaleY === 0) return;
+
+  cropBox.value = {
+    left: (crop.value.left / scaleX) - containerRect.value.left + imageRect.value.left,
+    top: (crop.value.top / scaleY) - containerRect.value.top + imageRect.value.top,
+    width: crop.value.width / scaleX,
+    height: crop.value.height / scaleY,
+  };
+}
+
 // update scale to fit the container bounds
 const scaleFit = (imgWidth: number, imgHeight: number) => {
   scale.value = Math.min(containerBounds.value.width / imgWidth, containerBounds.value.height / imgHeight);
@@ -624,7 +655,7 @@ const scaleFit = (imgWidth: number, imgHeight: number) => {
 // fit image to container
 const fitImageToContainer = () => {
   if (!containerRect.value) return;
-  
+
   position.value = { 
     left: (containerRect.value.width - imageWidth.value) / 2, 
     top: (containerRect.value.height - imageHeight.value) / 2,
@@ -633,19 +664,23 @@ const fitImageToContainer = () => {
   rotate.value % 180 !== 0 ? 
     scaleFit(imageHeight.value, imageWidth.value) :
     scaleFit(imageWidth.value, imageHeight.value);
+
+  updateCropBoxFromCrop(); // crop -> cropbox
 }
 
 // fit crop box to container
-const fitCropBoxToContainer = (ratio: number = 1) => {
-  if (!containerBounds.value || !imageRect.value || !containerRect.value) return;
+const fitCropBoxToContainer = () => {
+  if (!containerBounds.value || !containerRect.value) return;
   
+  imageRectOriginal.value = imageRect.value;
+
   // save old scale
   const oldScale = scale.value;
 
   // calculate the new scale to fit the container
   scale.value = Math.min(
-    (containerBounds.value.width / cropBox.value.width) * oldScale * ratio, 
-    (containerBounds.value.height / cropBox.value.height) * oldScale * ratio
+    (containerBounds.value.width / cropBox.value.width) * oldScale, 
+    (containerBounds.value.height / cropBox.value.height) * oldScale
   );
 
   // calculate the new position to center the cropped image
@@ -663,6 +698,9 @@ const fitCropBoxToContainer = (ratio: number = 1) => {
     width:  newCropBoxWidth,  
     height: newCropBoxHeight,
   };
+
+  // update crop from crop box after the transition ends
+  imageRef.value?.addEventListener('transitionend', updateCropFromCropBox, { once: true });
 };
 
 const clickRotate = (degree: number) => {
@@ -769,10 +807,8 @@ const startDrag = (handle: string, event: MouseEvent) => {
       ) {
         cropBox.value = proposedBox;
       }
-
-      // update cropped image width and height
-      updateCrop();
     }
+    updateCropFromCropBox(); // cropbox -> crop
   };
 
   const stopDrag = () => {
@@ -785,25 +821,6 @@ const startDrag = (handle: string, event: MouseEvent) => {
   window.addEventListener('mouseup', stopDrag);
 };
 
-// do crop
-const doCrop = () => {
-  cropBoxOriginal.value = { ...cropBox.value };
-
-  // fit crop box to container
-  fitCropBoxToContainer();
-
-  // update crop.value
-  updateCrop(); 
-  
-  // update resized width and height
-  resizedWidth.value = crop.value.width;
-  resizedHeight.value = crop.value.height;
-  resizedPercentage.value = 100;
-
-  // update crop status
-  cropStatus.value = 2;
-};
-
 function handleKeyDown(event: KeyboardEvent) {
   if (!uiStore.isInputActive('ImageEditor')) return;
 
@@ -812,7 +829,7 @@ function handleKeyDown(event: KeyboardEvent) {
   switch (key) {
     case 'Enter':
       if(cropStatus.value==1) {
-        doCrop();
+        clickDoCrop();
       } else {
         clickSave();
       }
