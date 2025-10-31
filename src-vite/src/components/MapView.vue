@@ -1,7 +1,7 @@
 <template>
   <div class="relative w-full h-[300px] rounded-lg overflow-hidden">
     <div ref="mapEl" style="width:100%; height:100%;"></div>
-    <div class="absolute top-2 left-2 flex bg-base-100/20 hover:bg-base-100/80 rounded-lg z-[1000] cursor-pointer transition-colors ease-in-out duration-300 ">
+    <div class="absolute top-2 left-2 flex bg-base-100/20 hover:bg-base-100/80 rounded-lg z-[1000] cursor-pointer">
       <TButton
         :icon="IconZoomIn"
         @click="zoomIn"
@@ -32,6 +32,11 @@ import TButton from '@/components/TButton.vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
+// default marker icon
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+
 // Props: lat/lon from parent; no geolocation fallback
 const props = defineProps({
   lat: {
@@ -54,12 +59,12 @@ const mapTheme = [
   {
     name: 'standard',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '© OpenStreetMap contributors',
+    attribution: 'OpenStreetMap', // https://osmfoundation.org/wiki/Licence/Attribution_Guidelines
   },
   {
     name: 'satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '© ArcGIS',
+    attribution: 'Powered by Esri',
   },
 ]
 
@@ -78,6 +83,15 @@ onMounted(() => {
     maxZoom: 19,
   })
   map.attributionControl.setPrefix('')
+
+  // delete default marker icon
+  delete L.Icon.Default.prototype._getIconUrl
+  // set default marker icon
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon2x,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow
+  })
 
   updateTheme()
   updateFromProps()

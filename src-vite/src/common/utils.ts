@@ -136,6 +136,22 @@ export function formatFileSize(bytes: number): string {
   return i === 0 ? `${fileSize.toFixed(0)} ${sizes[i]}` : `${fileSize.toFixed(2)} ${sizes[i]}`;
 }
 
+/// format dimension text (width x height - pixel count)
+export function formatDimensionText(width: number, height: number): string {
+  if (width > 0 && height > 0) {
+    const pixel = width * height;
+    if (pixel > 1_000_000) {
+      return `${width} x ${height} (${(pixel / 1_000_000).toFixed(1)} MP)`;
+    } else if (pixel > 1_000) {
+      return `${width} x ${height} (${(pixel / 1_000).toFixed(1)} KP)`;
+    } else {
+      return `${width} x ${height} (${pixel} P)`;
+    }
+  } else {
+    return '-';
+  }
+}
+
 /// format duration to string
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);

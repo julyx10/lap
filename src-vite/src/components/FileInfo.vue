@@ -40,7 +40,7 @@
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.dimension') }}</td>
-            <td>{{ fileInfo.width }}x{{ fileInfo.height }}</td>
+            <td>{{ formatDimensionText(fileInfo.width, fileInfo.height) }}</td>
           </tr>
           <tr v-if="fileInfo.file_type === 2">
             <td class="text-nowrap">{{ $t('file_info.duration') }}</td>
@@ -127,11 +127,11 @@
             <td class="text-nowrap">{{ $t('file_info.comment') }}</td>
             <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
-          <tr v-if="fileInfo.geo_name">
+          <tr>
             <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>
             <td class="flex flex-row justify-between items-center gap-2">
               {{ formatGeoLocation() }}
-              <TButton
+              <TButton v-if="fileInfo.gps_latitude && fileInfo.gps_longitude"
                 :icon="IconArrowDown"
                 :buttonSize="'small'"
                 :iconStyle="{ transform: `rotate(${(config.showMap ? 180 : 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
@@ -159,7 +159,7 @@
 
 <script setup lang="ts">
 
-import { config, formatTimestamp, formatFileSize, formatDuration, getFolderPath } from '@/common/utils';
+import { config, formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath } from '@/common/utils';
 import { IconClose, IconArrowDown } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';

@@ -115,7 +115,7 @@ import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { config, isMac, shortenFilename, formatFileSize, formatDuration, formatTimestamp } from '@/common/utils';
+import { config, isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
@@ -449,19 +449,23 @@ const getGridLabelText = (file, option) => {
     case 2:   // size
       return formatFileSize(file.size);
     case 3:   // dimension
-      return file.width > 0 && file.height > 0 ? `${file.width}x${file.height}` : '-';
-    case 4:   // duration
+      return formatDimensionText(file.width, file.height);
+    case 4:   // video duration
       return file.duration > 0 ? formatDuration(file.duration): '-';
     case 5:   // created time
       return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
     case 6:   // modified time
       return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
-    case 7:   // date taken
+    case 7:   // taken time
       return file.e_date_time || '-';
+    case 8:   // camera
+      return file.e_make && file.e_model ? `${file.e_make} ${file.e_model}` : '-';
+    case 9:   // capture details
+      return file.e_focal_length && file.e_exposure_time && file.e_f_number && file.e_iso_speed ? `${file.e_focal_length}, ${file.e_exposure_time}, ${file.e_f_number}, ISO ${file.e_iso_speed}` : '-';
     default:
       return '';
   }
-};
+};ß
 
 // function to handle the scroll event
 function handleScroll() {
