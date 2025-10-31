@@ -29,13 +29,14 @@
             <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
             <!-- crop box -->
             <div v-if="cropStatus > 0" 
-              :class="{
-                'crop-box-active': cropStatus === 1,
-                'crop-box-done': cropStatus === 2,
-                'cursor-move no-transition': cropStatus === 1 && !cropBoxFixed,
-                'cursor-grabbing': cropStatus === 1 && cropBoxFixed && isDragging,
-                'cursor-grab': cropStatus === 1 && cropBoxFixed && !isDragging,
-              }"
+              :class="[
+                cropStatus === 1 ? 'crop-box-active' : cropStatus === 2 ? 'crop-box-done' : '',
+                cropStatus === 1
+                  ? cropBoxFixed
+                    ? (isDragging ? 'cursor-grabbing no-transition' : 'cursor-grab')
+                    : (isDragging ? 'cursor-move no-transition' : 'cursor-move')
+                  : ''
+              ]"
               :style="cropBoxStyle" 
               @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
               @dblclick="clickDoCrop"
@@ -130,7 +131,7 @@
                 />
                 <TButton
                   :icon="IconOk"
-                  :tooltip="$t('msgbox.image_editor.done_crop')"
+                  :tooltip="$t('msgbox.image_editor.confirm_crop')"
                   @click="clickDoCrop"
                 />
               </div>  
@@ -181,13 +182,21 @@
             </table>
           </div>
 
-          <!-- Format -->
+          <!-- options -->
           <div>
-            <h3 class="mb-2">{{ $t('msgbox.image_editor.save_as') }}</h3>
-            <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" />
+            <h3 class="mb-2">{{ $t('msgbox.image_editor.options') }}</h3>
+            <!-- <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" /> -->
 
             <table class="w-full text-sm border-separate border-spacing-2">
               <tbody>
+                <tr>
+                  <td>{{ $t('msgbox.image_editor.save_as') }}</td>
+                  <td>
+                    <select v-model="config.imageEditor.saveAs" class="select select-bordered w-full" :disabled="cropStatus==1">
+                      <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                    </select>
+                  </td>
+                </tr>
                 <tr>
                   <td>{{ $t('msgbox.image_editor.format') }}</td>
                   <td>
@@ -208,7 +217,7 @@
             </table>
 
             <!-- debug -->
-            <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
+            <!-- <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
               <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
               <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
               <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
@@ -218,7 +227,7 @@
               <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
               <span>resized: {{ resizedWidth.toFixed(0) }} x {{ resizedHeight.toFixed(0) }}</span>
               <span>resizedPercentage: {{ resizedPercentage.toFixed(0) }}%</span>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -386,6 +395,9 @@ const resizedPercentage = ref(100);
 // save as
 const newFileName = ref('');
 
+const fileSaveAsOptions = computed(() => {
+  return getSelectOptions(localeMsg.value.msgbox.image_editor.save_as_options);
+});
 const fileFormatOptions = computed(() => {
   return getSelectOptions(localeMsg.value.msgbox.image_editor.format_options);
 });
@@ -400,6 +412,7 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('ImageEditor');
 
+  isProcessing.value = true;
   initImageEditor(); // init container, image, crop, etc.
 });
 
@@ -408,9 +421,11 @@ onUnmounted(() => {
   uiStore.popInputHandler();
 });
 
-const onImageLoad = () => {
-  nextTick(() => {
+const onImageLoad = async () => {
+  await nextTick() // wait for Vue DOM update
+  requestAnimationFrame(() => {
     enableTransition.value = true;
+    isProcessing.value = false;
   });
 };
 

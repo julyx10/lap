@@ -61,10 +61,17 @@ export const useConfigStore = defineStore('configStore', {
     isPinned: true,             // pinned mode
     showFileInfo: false,        // show file info
     fileInfoPanelWidth: 20,     // file info panel width
+    showMap: false,             // show map
+    
+    map: {
+      zoom: 13,
+      theme: 0,                 // 0: standard, 2: satellite
+    },
 
     ////// ImageEditor.vue //////
     imageEditor: {
       cropShape: 0,             // image editor crop shape (0: Custom, 1: 1:1, 2: 1:2, 3: 2:3, 4: 3:4, 5: 9:16) 
+      saveAs: 0,                // image editor save as (0: Overwrite existing file, 1: Save as new file)
       format: 0,                // image editor format (0: JPEG, 1: PNG, 2: WEBP)
       quality: 0,               // image editor quality (0: High, 1: Medium, 2: Low)
     },

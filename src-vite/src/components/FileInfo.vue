@@ -102,7 +102,7 @@
             <td class="text-nowrap">{{ $t('file_info.alpha_channel') }}</td>
             <td>{{ fileInfo.i_has_alpha }}</td>
           </tr> -->
-          <tr>
+          <!-- <tr>
             <td class="text-nowrap">{{ $t('file_info.gps_latitude') }}</td>
             <td>{{ fileInfo.gps_latitude }}</td>
           </tr>
@@ -113,11 +113,7 @@
           <tr>
             <td class="text-nowrap">{{ $t('file_info.gps_altitude') }}</td>
             <td>{{ fileInfo.gps_altitude ? fileInfo.gps_altitude + ' m' : '' }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>
-            <td>{{ formatGeoLocation() }}</td>
-          </tr>
+          </tr> -->
           <tr>
             <td class="text-nowrap">{{ $t('file_info.tags') }}</td>
             <td>
@@ -131,8 +127,30 @@
             <td class="text-nowrap">{{ $t('file_info.comment') }}</td>
             <td class="text-wrap">{{ fileInfo.comments }}</td>
           </tr>
+          <tr v-if="fileInfo.geo_name">
+            <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>
+            <td class="flex flex-row justify-between items-center gap-2">
+              {{ formatGeoLocation() }}
+              <TButton
+                :icon="IconArrowDown"
+                :buttonSize="'small'"
+                :iconStyle="{ transform: `rotate(${(config.showMap ? 180 : 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+                @click="config.showMap = !config.showMap"
+              />
+            </td>
+          </tr>
         </tbody>
       </table>
+
+      <!-- Map view -->
+      <transition name="fade">
+        <div class="pl-2 pr-4" v-if="config.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
+          <MapView
+            :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
+            :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
+          />
+        </div>
+      </transition>
     </div>
 
   </div>
@@ -141,10 +159,11 @@
 
 <script setup lang="ts">
 
-import { formatTimestamp, formatFileSize, formatDuration, getFolderPath } from '@/common/utils';
-import { IconClose } from '@/common/icons';
+import { config, formatTimestamp, formatFileSize, formatDuration, getFolderPath } from '@/common/utils';
+import { IconClose, IconArrowDown } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
+import MapView from '@/components/MapView.vue';
 
 const props = defineProps({
   fileInfo: {

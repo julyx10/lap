@@ -218,7 +218,7 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="config.showFileInfo" ref="previewDiv" 
+        <div v-if="config.showFileInfo && fileInfo" ref="previewDiv" 
           :style="{ width: config.fileInfoPanelWidth + '%' }"
         >
           <FileInfo 

@@ -279,7 +279,7 @@ import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath, getAssetSrc } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath, getAssetSrc, getSelectOptions } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -707,7 +707,10 @@ watch(() => fileListOffset.value, (newValue) => {
 });
 
 // watch for selected item (not in select mode)
-watch(() => selectedItemIndex.value, (newIndex) => {
+watch(() => selectedItemIndex.value, (newIndex, oldIndex) => {
+  if(oldIndex >= 0 && oldIndex !== newIndex && fileList.value[oldIndex]?.rotate >= 360) {
+    fileList.value[oldIndex].rotate %= 360;
+  }
   updateSelectedImage(newIndex);
 });
 
@@ -1151,14 +1154,6 @@ const sortOptions = computed(() => {
 const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
-
-function getSelectOptions(options) {
-  const result = [];
-  for (let i = 0; options && i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-  return result;
-}
 
 // get selected image source
 const getImageSrc = async (index) => {

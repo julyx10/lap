@@ -199,7 +199,7 @@ watch(() => [containerSize.value, imageSize.value], () => {
 });
 
 // load image
-const onImageLoad = (img) => {
+const onImageLoad = async (img) => {
   noTransition.value = true; // Set early to prevent transitions during load
 
   const nextIndex = activeImage.value ^ 1;
@@ -218,16 +218,30 @@ const onImageLoad = (img) => {
     };
   }
 
-  position.value[nextIndex].x = (containerSize.value.width - img.naturalWidth) / 2;
-  position.value[nextIndex].y = (containerSize.value.height - img.naturalHeight) / 2;
-  triggerRef(position);
-
   activeImage.value = nextIndex;
 
-  nextTick(() => {
-    noTransition.value = false;
+  const applyZoom = () => {
+    if (!isZoomFit.value) {
+      const cSize = containerSize.value;
+      const cPos = containerPos.value;
+      mousePosition.value = { x: cPos.x + cSize.width / 2, y: cPos.y + cSize.height / 2 };
+    }
     updateZoomFit();
-  });
+    setTimeout(() => {
+      noTransition.value = false;
+    }, 500);
+  };
+
+  if (containerSize.value.width > 0) {
+    applyZoom();
+  } else {
+    const unwatch = watch(containerSize, (newSize) => {
+      if (newSize.width > 0) {
+        applyZoom();
+        unwatch();
+      }
+    });
+  }
 };
 
 const rotateRight = () => {

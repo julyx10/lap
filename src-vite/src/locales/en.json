@@ -266,7 +266,7 @@
       "title": "Image editor",
       "crop": "Crop",
       "cancel_crop": "Cancel",
-      "done_crop": "Done",
+      "confirm_crop": "Confirm",
       "crop_shape": "Crop shape",
       "crop_shape_custom": "Custom",
       "crop_shape_landscape": "Landscape",
@@ -284,7 +284,9 @@
       "height": "Height",
       "percentage": "Percentage",
       "pixel": "Pixels",
+      "options": "Options",
       "save_as": "Save as",
+      "save_as_options": ["Overwrite existing file", "Save as new file"],
       "save_as_placeholder": "Enter new file name",
       "format": "Format",
       "format_options": ["JPEG", "PNG", "WEBP"],
@@ -325,6 +327,14 @@
     "geo_location": "Location",
     "tags": "Tags",
     "comment": "Comment"
+  },
+
+  "map": {
+    "show_map": "Show map",
+    "hide_map": "Hide map",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "zoom_center": "Center"
   },
 
   "format": {

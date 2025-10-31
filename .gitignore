@@ -1,4 +1,5 @@
 .vscode/
+target/
 .DS_Store
 .env
 dev.sh

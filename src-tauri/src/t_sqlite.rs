@@ -423,9 +423,9 @@ pub struct AFile {
     pub e_orientation: Option<u32>, // orientation
 
     // gps info
-    pub gps_latitude: Option<String>,
-    pub gps_longitude: Option<String>,
-    pub gps_altitude: Option<String>,
+    pub gps_latitude: Option<f64>,
+    pub gps_longitude: Option<f64>,
+    pub gps_altitude: Option<f64>,
 
     // geo info (from http://www.geonames.org/)
     pub geo_name: Option<String>,      // Location name
@@ -553,7 +553,7 @@ impl AFile {
         Ok(file)
     }
 
-    fn extract_gps_data(exif: &Option<exif::Exif>) -> (Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>) {
+    fn extract_gps_data(exif: &Option<exif::Exif>) -> (Option<f64>, Option<f64>, Option<f64>, Option<String>, Option<String>, Option<String>, Option<String>) {
         let Some(exif_data) = exif else {
             return (None, None, None, None, None, None, None);
         };
@@ -584,8 +584,8 @@ impl AFile {
                 let dec_lat = Self::dms_to_decimal(&lat_v, &lat_r);
                 let dec_lon = Self::dms_to_decimal(&lon_v, &lon_r);
 
-                let lat_str = Self::format_dms(&lat_v, &lat_r);
-                let lon_str = Self::format_dms(&lon_v, &lon_r);
+                // let lat_str = Self::format_dms(&lat_v, &lat_r);
+                // let lon_str = Self::format_dms(&lon_v, &lon_r);
 
                 let (name, admin2, admin1, cc) = if let (Some(lat), Some(lon)) = (dec_lat, dec_lon) {
                     let search_result = t_utils::GEOCODER.search((lat, lon));
@@ -598,7 +598,7 @@ impl AFile {
                 } else {
                     (None, None, None, None)
                 };
-                (Some(lat_str), Some(lon_str), name, admin2, admin1, cc)
+                (dec_lat, dec_lon, name, admin2, admin1, cc)
             } else {
                 (None, None, None, None, None, None)
             };
@@ -607,7 +607,7 @@ impl AFile {
             .get_field(Tag::GPSAltitude, In::PRIMARY)
             .and_then(|field| match &field.value {
                 Value::Rational(v) if !v.is_empty() => {
-                    Some(format!("{:.2}", v[0].num as f64 / v[0].denom as f64))
+                    Some(v[0].num as f64 / v[0].denom as f64)
                 }
                 _ => None,
             });
@@ -633,15 +633,15 @@ impl AFile {
     }
 
     /// Formats DMS coordinates as a string (e.g., "40°42'45\"N").
-    fn format_dms(dms: &[exif::Rational], reference: &str) -> String {
-        if dms.len() < 3 {
-            return String::new();
-        }
-        let degrees = dms[0].num as f64 / dms[0].denom as f64;
-        let minutes = dms[1].num as f64 / dms[1].denom as f64;
-        let seconds = dms[2].num as f64 / dms[2].denom as f64;
-        format!("{:.0}°{:.0}′{:.0}″{}", degrees, minutes, seconds, reference.trim())
-    }
+    // fn format_dms(dms: &[exif::Rational], reference: &str) -> String {
+    //     if dms.len() < 3 {
+    //         return String::new();
+    //     }
+    //     let degrees = dms[0].num as f64 / dms[0].denom as f64;
+    //     let minutes = dms[1].num as f64 / dms[1].denom as f64;
+    //     let seconds = dms[2].num as f64 / dms[2].denom as f64;
+    //     format!("{:.0}°{:.0}′{:.0}″{}", degrees, minutes, seconds, reference.trim())
+    // }
 
     /// Extracts an EXIF field as a string.
     fn get_exif_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<String> {
@@ -1665,9 +1665,9 @@ pub fn create_db() -> Result<(), String> {
             e_iso_speed TEXT,
             e_flash TEXT,
             e_orientation INTEGER,
-            gps_latitude TEXT,
-            gps_longitude TEXT,
-            gps_altitude TEXT,
+            gps_latitude REAL,
+            gps_longitude REAL,
+            gps_altitude REAL,
             geo_name TEXT,
             geo_admin1 TEXT,
             geo_admin2 TEXT,
