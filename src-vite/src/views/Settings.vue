@@ -146,12 +146,6 @@
                 </option>
               </select>
             </div>
-
-            <!-- Show camera info -->
-            <div class="flex items-center justify-between mb-4">
-              <label for="show-camera-info" >{{ $t('settings.grid_view.show_camera_info') }}</label>
-              <input type="checkbox" class="toggle" v-model="config.showCameraInfo" />
-            </div>
         </section>
 
         <!-- Image Viewer tab -->
@@ -410,9 +404,6 @@ watch(() => config.gridLabelSecondary, (newValue) => {
 });
 watch(() => config.gridLabelHover, (newValue) => {
   emit('settings-gridLabelHover-changed', newValue);
-});
-watch(() => config.showCameraInfo, (newValue) => {
-  emit('settings-showCameraInfo-changed', newValue);
 });
 
 // image viewer settings

@@ -27,21 +27,6 @@
             <!-- hover text -->
             <div class="absolute left-0 right-0 bottom-0 p-1 m-1 flex flex-col bg-base-300/30 rounded transition-opacity duration-300 opacity-0 group-hover:opacity-70 z-10">
               <span v-if="config.gridLabelHover > 0" class="text-xs text-nowrap">{{ getGridLabelText(file, config.gridLabelHover) }}</span>
-
-              <span v-if="config.showCameraInfo && file.e_model" class="text-xs text-nowrap">{{ file.e_model }}</span>
-
-              <table v-if="config.showCameraInfo && file.e_focal_length && file.e_f_number && file.e_exposure_time && file.e_iso_speed" class="text-xs">
-                <tbody>
-                  <tr>
-                    <td class="text-nowrap">{{ file.e_focal_length }}</td>
-                    <td class="text-nowrap">{{ file.e_f_number }}</td>
-                  </tr>
-                  <tr>
-                    <td class="text-nowrap">{{ file.e_exposure_time }}</td>
-                    <td class="text-nowrap">ISO {{ file.e_iso_speed }}</td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
             <img :src="file.thumbnail"
               :class="[
@@ -63,7 +48,7 @@
             :style="{ width: `${config.gridSize}px`, height: `${config.gridSize}px` }"
           > </div>
           <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.gridLabelPrimary) }}</span>
-          <span class="text-sm text-center">{{ getGridLabelText(file, config.gridLabelSecondary) }}</span>
+          <span class="text-xs text-center">{{ getGridLabelText(file, config.gridLabelSecondary) }}</span>
         
           <!-- status icons -->
           <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">
@@ -450,22 +435,24 @@ const getGridLabelText = (file, option) => {
       return formatFileSize(file.size);
     case 3:   // dimension
       return formatDimensionText(file.width, file.height);
-    case 4:   // video duration
+    case 4:   // duration
       return file.duration > 0 ? formatDuration(file.duration): '-';
     case 5:   // created time
       return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
     case 6:   // modified time
       return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
-    case 7:   // taken time
-      return file.e_date_time || '-';
-    case 8:   // camera
-      return file.e_make && file.e_model ? `${file.e_make} ${file.e_model}` : '-';
-    case 9:   // capture details
+    case 7:   // camera
+      return file.e_make && file.e_model ? `${file.e_model}` : '-';
+    case 8:   // capture details
       return file.e_focal_length && file.e_exposure_time && file.e_f_number && file.e_iso_speed ? `${file.e_focal_length}, ${file.e_exposure_time}, ${file.e_f_number}, ISO ${file.e_iso_speed}` : '-';
+    case 9:   // taken time
+      return file.e_date_time || '-';
+    case 10:   // location
+      return file.geo_name || '-';
     default:
       return '';
   }
-};ß
+};
 
 // function to handle the scroll event
 function handleScroll() {
