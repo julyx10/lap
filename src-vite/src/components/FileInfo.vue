@@ -19,20 +19,20 @@
             <td class="text-wrap break-all">{{ fileInfo.album_name }}</td>
           </tr>
           <tr>
-            <td class="text-nowrap">{{ $t('file_info.name') }}</td>
-            <td class="text-wrap break-all">{{ fileInfo.name }}</td>
-          </tr>
-          <tr>
             <td class="text-nowrap">{{ $t('file_info.path') }}</td>
             <td class="text-wrap break-all">{{ getFolderPath(fileInfo.file_path) }}</td>
             <!-- <td>
-               <input
-               type="text"
-               readonly
-               :value="fileInfo.file_path"
-               class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
-               />
+              <input
+              type="text"
+              readonly
+              :value="fileInfo.file_path"
+              class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
+              />
             </td> -->
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.name') }}</td>
+            <td class="text-wrap break-all">{{ fileInfo.name }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.size') }}</td>
@@ -55,26 +55,30 @@
             <td>{{ formatTimestamp(fileInfo.modified_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
-            <td class="text-nowrap">{{ $t('file_info.date_taken') }}</td>
-            <td>{{ fileInfo.e_date_time }}</td>
-          </tr>
-          <tr>
             <td class="text-nowrap">{{ $t('file_info.camera') }}</td>
             <td>{{ fileInfo.e_make }} {{ fileInfo.e_model }}</td>
           </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.lens') }}</td>
+            <td>{{ fileInfo.e_lens_make }} {{ fileInfo.e_lens_model }}</td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.capture_settings') }}</td>
+            <td>{{ formatCaptureSettings(fileInfo.e_focal_length, fileInfo.e_exposure_time, fileInfo.e_f_number, fileInfo.e_iso_speed, fileInfo.e_exposure_bias) }}</td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.taken_by') }}</td>
+            <td>{{ fileInfo.e_artist }}</td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.taken_at') }}</td>
+            <td>{{ fileInfo.e_date_time }}</td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.software') }}</td>
+            <td>{{ fileInfo.e_software }}</td>
+          </tr>
           <!-- <tr>
-            <td class="text-nowrap">{{ $t('file_info.camera_make') }}</td>
-            <td>{{ fileInfo.e_make }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.camera_model') }}</td>
-            <td>{{ fileInfo.e_model }}</td>
-          </tr> -->
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.aperture') }}</td>
-            <td>{{ fileInfo.e_f_number }}</td>
-          </tr>
-          <tr>
             <td class="text-nowrap">{{ $t('file_info.focal_length') }}</td>
             <td>{{ fileInfo.e_focal_length }}</td>
           </tr>
@@ -85,11 +89,11 @@
           <tr>
             <td class="text-nowrap">{{ $t('file_info.iso') }}</td>
             <td>{{ fileInfo.e_iso_speed }}</td>
-          </tr>
-          <tr>
+          </tr> -->
+          <!-- <tr>
             <td class="text-nowrap">{{ $t('file_info.flash') }}</td>
             <td>{{ fileInfo.e_flash }}</td>
-          </tr>
+          </tr> -->
           <!-- <tr>
             <td class="text-nowrap">{{ $t('file_info.color_type') }}</td>
             <td>{{ fileInfo.i_color_type }}</td>
@@ -132,9 +136,8 @@
             <td class="flex flex-row justify-between items-center gap-2">
               {{ formatGeoLocation() }}
               <TButton v-if="fileInfo.gps_latitude && fileInfo.gps_longitude"
-                :icon="IconArrowDown"
+                :icon="config.showMap ? IconMapDefault : IconMapOff"
                 :buttonSize="'small'"
-                :iconStyle="{ transform: `rotate(${(config.showMap ? 180 : 0)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
                 @click="config.showMap = !config.showMap"
               />
             </td>
@@ -159,8 +162,8 @@
 
 <script setup lang="ts">
 
-import { config, formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath } from '@/common/utils';
-import { IconClose, IconArrowDown } from '@/common/icons';
+import { config, formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
+import { IconClose, IconMapDefault, IconMapOff } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import MapView from '@/components/MapView.vue';

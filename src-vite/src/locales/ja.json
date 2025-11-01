@@ -299,7 +299,6 @@
   },
 
   "file_info": {
-    "columns": ["サムネイル", "名前", "寸法", "作成日時", "更新日時", "カメラ", "サイズ"],
     "title": "ファイル情報",
     "album_name": "アルバム",
     "name": "ファイル名",
@@ -312,7 +311,15 @@
     "camera": "カメラ",
     "camera_make": "カメラメーカー",
     "camera_model": "カメラモデル",
-    "date_taken": "撮影日時",
+    "taken_at": "撮影日時",
+    "taken_by": "撮影者",
+    "software": "ソフトウェア",
+    "artist": "アーティスト",
+    "copyright": "著作権",
+    "lens": "レンズ",
+    "lens_make": "レンズメーカー",
+    "lens_model": "レンズモデル",
+    "exposure_bias": "露出バイアス",
     "exposure_time": "露出時間",
     "aperture": "絞り",
     "focal_length": "焦点距離",
@@ -326,7 +333,8 @@
     "gps_altitude": "高度",
     "geo_location": "位置",
     "tags": "タグ",
-    "comment": "コメント"
+    "comment": "コメント",
+    "capture_settings": "撮影設定"
   },
 
   "map": {
@@ -446,7 +454,7 @@
       "label_secondary": "セカンダリラベル", 
       "label_hover": "ホバーラベル",
       "show_camera_info": "ホバーでカメラ情報を表示",
-      "label_options": ["(空)", "名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "カメラ", "撮影設定", "撮影日時", "場所"]
+      "label_options": ["(空)", "名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "カメラ", "レンズ", "撮影設定", "撮影日時", "場所"]
     },
     "image_viewer": {
       "title": "画像ビューア",

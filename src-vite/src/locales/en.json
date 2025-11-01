@@ -299,7 +299,6 @@
   },
 
   "file_info": {
-    "columns": ["Thumbnail", "Name", "Dimension", "Created time", "Modified time", "Camera", "Size"],
     "title": "File information",
     "album_name": "Album",
     "name": "File name",
@@ -312,7 +311,15 @@
     "camera": "Camera",
     "camera_make": "Camera make",
     "camera_model": "Camera model",
-    "date_taken": "Taken date",
+    "taken_at": "Taken at",
+    "taken_by": "Taken by",
+    "software": "Software",
+    "artist": "Artist",
+    "copyright": "Copyright",
+    "lens": "Lens",
+    "lens_make": "Lens make",
+    "lens_model": "Lens model",
+    "exposure_bias": "Exposure bias",
     "exposure_time": "Exposure time",
     "aperture": "Aperture",
     "focal_length": "Focal length",
@@ -326,7 +333,8 @@
     "gps_altitude": "Altitude",
     "geo_location": "Location",
     "tags": "Tags",
-    "comment": "Comment"
+    "comment": "Comment",
+    "capture_settings": "Capture settings"
   },
 
   "map": {
@@ -446,7 +454,7 @@
       "label_secondary": "Secondary label",
       "label_hover": "Hover label",
       "show_camera_info": "Show camera info on hover",
-      "label_options": ["(Empty)", "Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Camera", "Capture settings", "Taken time", "Location"]
+      "label_options": ["(Empty)", "Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Camera", "Lens", "Capture settings", "Taken time", "Location"]
     },
     "image_viewer": {
       "title": "Image viewer",

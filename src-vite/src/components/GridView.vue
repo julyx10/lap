@@ -100,7 +100,7 @@ import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { config, isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp } from '@/common/utils';
+import { config, isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings } from '@/common/utils';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 
 import { 
@@ -443,11 +443,13 @@ const getGridLabelText = (file, option) => {
       return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
     case 7:   // camera
       return file.e_make && file.e_model ? `${file.e_model}` : '-';
-    case 8:   // capture details
-      return file.e_focal_length && file.e_exposure_time && file.e_f_number && file.e_iso_speed ? `${file.e_focal_length}, ${file.e_exposure_time}, ${file.e_f_number}, ISO ${file.e_iso_speed}` : '-';
-    case 9:   // taken time
+    case 8:   // lens
+      return file.e_lens_model ? `${file.e_lens_model}` : '-';
+    case 9:   // capture settings
+      return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias);
+    case 10:   // taken time
       return file.e_date_time || '-';
-    case 10:   // location
+    case 11:   // location
       return file.geo_name || '-';
     default:
       return '';

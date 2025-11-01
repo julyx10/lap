@@ -299,7 +299,6 @@
   },
 
   "file_info": {
-    "columns": ["缩略图", "名称", "尺寸", "创建时间", "修改时间", "相机", "大小"],
     "title": "文件信息",
     "album_name": "相册",
     "name": "文件名",
@@ -312,7 +311,15 @@
     "camera": "相机",
     "camera_make": "相机制造商",
     "camera_model": "相机型号",
-    "date_taken": "拍摄时间",
+    "taken_at": "拍摄时间",
+    "taken_by": "拍摄者",
+    "software": "软件",
+    "artist": "艺术家",
+    "copyright": "版权",
+    "lens": "镜头",
+    "lens_make": "镜头制造商",
+    "lens_model": "镜头型号",
+    "exposure_bias": "曝光偏移",
     "exposure_time": "曝光时间",
     "aperture": "光圈",
     "focal_length": "焦距",
@@ -326,7 +333,8 @@
     "gps_altitude": "海拔",
     "geo_location": "地点",
     "tags": "标签",
-    "comment": "备注"
+    "comment": "备注",
+    "capture_settings": "拍摄设置"
   },
 
   "map": {
@@ -446,7 +454,7 @@
       "label_secondary": "副标签",
       "label_hover": "悬停标签",
       "show_camera_info": "悬停显示相机信息",
-      "label_options": ["(空)", "名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "相机", "拍摄设置", "拍摄时间", "地点"]
+      "label_options": ["(空)", "名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "相机", "镜头", "拍摄设置", "拍摄时间", "地点"]
     },
     "image_viewer": {
       "title": "图片查看器",

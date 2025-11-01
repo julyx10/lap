@@ -44,6 +44,7 @@ export { default as IconZoomOutArea } from '@/assets/icons/zoom-out-area.svg';
 export { default as IconFullScreen } from '@/assets/icons/full-screen-max.svg';
 export { default as IconRestoreScreen } from '@/assets/icons/full-screen-min.svg';
 export { default as IconMapDefault } from '@/assets/icons/map-default.svg';
+export { default as IconMapOff } from '@/assets/icons/map-off.svg';
 export { default as IconMapSatellite } from '@/assets/icons/map-satellite.svg';
 export { default as IconMapCenter } from '@/assets/icons/map-center.svg';
 
