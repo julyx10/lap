@@ -89,31 +89,6 @@
           :selectMode="selectMode"
         />
         
-        <!-- status bar -->
-        <div v-if="config.showStatusBar && totalFileCount > 0" 
-          class="p-2 min-h-8 flex flex-row items-center justify-start text-sm select-none cursor-default"
-        >
-          <IconFile class="t-icon-size-xs shrink-0" />
-          <div class="pl-1 pr-4 whitespace-nowrap">
-            {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }} 
-            {{ hasMoreFiles ? '...' : '' }}
-          </div>
-
-          <component v-if="selectedItemIndex >= 0"
-            :is="selectMode ? IconCheckAll : IconChecked" 
-            class="t-icon-size-xs shrink-0" 
-          />
-          <div v-if="selectedItemIndex >=0" 
-            class="px-1 w-0 flex-1 overflow-hidden whitespace-nowrap text-ellipsis"
-          >
-            {{
-              selectMode 
-                ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
-                : fileList[selectedItemIndex]?.name + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')' 
-            }}
-          </div>
-        </div>
-
       </div>
 
       <!-- splitter -->
@@ -180,6 +155,52 @@
         </div>
       </transition>
 
+    </div>
+
+    <!-- status bar -->
+    <div v-if="config.showStatusBar && totalFileCount > 0"
+      class="p-2 min-h-8 w-full flex flex-row flex-wrap gap-x-4 items-center justify-start text-sm  text-base-content/30 select-none cursor-default overflow-hidden"
+    >
+      <div class="flex flex-row items-center gap-x-1">
+        <IconFile class="t-icon-size-xs" />
+        <div>
+          {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}
+          {{ hasMoreFiles ? '...' : '' }}
+        </div>
+      </div>
+
+      <template v-if="selectedItemIndex >= 0">
+        <div class="flex flex-row items-center gap-x-1">
+          <component :is="selectMode ? IconCheckAll : IconChecked" class="t-icon-size-xs" />
+          {{
+            selectMode
+              ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
+              : shortenFilename(fileList[selectedItemIndex]?.name) + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')'
+          }}
+        </div>
+
+        <div class="flex flex-row items-center gap-x-1">
+          <component :is="fileList[selectedItemIndex]?.file_type === 1 ? IconPhoto : IconVideo" class="t-icon-size-xs" />
+          <div>
+            {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }}
+          </div>
+        </div>
+
+        <div v-if="fileList[selectedItemIndex]?.e_model" class="flex flex-row items-center gap-x-1">
+          <IconCamera class="t-icon-size-xs" />
+          <span> {{ fileList[selectedItemIndex]?.e_model }} ({{ fileList[selectedItemIndex]?.e_lens_model }})</span>
+        </div>
+
+        <div v-if="fileList[selectedItemIndex]?.e_focal_length" class="flex flex-row items-center gap-x-1">
+          <IconCameraAperture class="t-icon-size-xs" />
+          <span> {{ formatCaptureSettings(fileList[selectedItemIndex]?.e_focal_length, fileList[selectedItemIndex]?.e_exposure_time, fileList[selectedItemIndex]?.e_f_number, fileList[selectedItemIndex]?.e_iso_speed, fileList[selectedItemIndex]?.e_exposure_bias) }}</span>
+        </div>
+
+        <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex flex-row items-center gap-x-1">
+          <IconLocation class="t-icon-size-xs" />
+          <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
+        </div>
+      </template>
     </div>
   </div>
 
@@ -279,7 +300,7 @@ import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile} from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath, getAssetSrc, getSelectOptions } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath, getAssetSrc, getSelectOptions, shortenFilename, formatDimensionText, formatCaptureSettings } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -318,6 +339,9 @@ import {
   IconCamera,
   IconTrash,
   IconError,
+  IconPhoto,
+  IconVideo,
+  IconCameraAperture,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;

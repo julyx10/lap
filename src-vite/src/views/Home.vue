@@ -52,7 +52,7 @@
         leave-to-class="left-pane-hide"
       >
         <div v-show="config.sidebarIndex > 0 && showLeftPane" 
-          class="py-1 flex bg-base-200 left-pane overflow-hidden" 
+          :class="['py-1 flex bg-base-200 left-pane overflow-hidden', { 'no-transition': isDraggingSplitter }]" 
           :style="{ '--left-pane-width': config.leftPaneWidth + 'px' }"
         >
           <component :is="buttons[config.sidebarIndex].component" :titlebar="buttons[config.sidebarIndex].text"/>
@@ -268,5 +268,8 @@ async function clickSettings() {
 }
 .left-pane-show {
   width: var(--left-pane-width) !important;
+}
+.no-transition {
+  transition: none !important;
 }
 </style>
