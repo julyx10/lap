@@ -16,8 +16,8 @@
             :class="[
               'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
               { 
-                'text-base-content': config.cameraMake === camera.make, 
-                'bg-base-content/10 border-primary'  : config.cameraMake === camera.make && !config.cameraModel 
+                'text-base-content': config.camera.make === camera.make, 
+                'bg-base-content/10 border-primary'  : config.camera.make === camera.make && !config.camera.model 
               }
             ]"
             @click="clickCameraMake(camera)"
@@ -38,7 +38,7 @@
               <div 
                 :class="[
                   'm-1 pl-3 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
-                  config.cameraModel === model ? 'bg-base-content/10 border-primary' : ''
+                  config.camera.model === model ? 'bg-base-content/10 border-primary' : ''
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
@@ -83,13 +83,13 @@ onMounted(async () => {
   if (cameras.value.length === 0) {
     await getCameras();
 
-    if(config.cameraMake && config.cameraModel) {
-      let camera = cameras.value.find(camera => camera.make === config.cameraMake)
+    if(config.camera.make && config.camera.model) {
+      let camera = cameras.value.find(camera => camera.make === config.camera.make)
       if(camera) {
         camera.is_expanded = true;     // expand selected camera
       } else {
-        config.cameraMake = null;
-        config.cameraModel = null;
+        config.camera.make = null;
+        config.camera.model = null;
       }
     }
   }
@@ -98,8 +98,8 @@ onMounted(async () => {
 /// reload cameras
 function clickReload() {
   getCameras();
-  config.cameraMake = "";
-  config.cameraModel = "";
+  config.camera.make = "";
+  config.camera.model = "";
 };
 
 /// click camera icon to expand or collapse models
@@ -109,16 +109,16 @@ function clickExpandCamera(camera) {
 
 /// click a camera to select it
 function clickCameraMake(camera) {
-  config.cameraMake = camera.make;
-  config.cameraModel = "";
+  config.camera.make = camera.make;
+  config.camera.model = "";
 
   camera.is_expanded = true;
 }
 
 /// click a camera to select it
 function clickCameraModel(make, model) {
-  config.cameraMake = make;
-  config.cameraModel = model;
+  config.camera.make = make;
+  config.camera.model = model;
 }
 
 /// get cameras from db

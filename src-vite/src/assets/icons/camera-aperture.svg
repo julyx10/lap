@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-aperture">
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
-    <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
-    <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
-    <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
-    <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
-    <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
+  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+  class="icon icon-tabler icons-tabler-outline icon-tabler-aperture">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+  <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+  <path d="M3.6 15h10.55" />
+  <path d="M6.551 4.938l3.26 10.034" />
+  <path d="M17.032 4.636l-8.535 6.201" />
+  <path d="M20.559 14.51l-8.535 -6.201" />
+  <path d="M12.257 20.916l3.261 -10.034" />
 </svg>

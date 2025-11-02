@@ -76,15 +76,15 @@ function isThisMonth(year, month) {
 }
 
 // Check if the year or month is selected
-const isSelected = (year, month) => config.calendarYear === year && config.calendarMonth === month;
+const isSelected = (year, month) => config.calendar.year === year && config.calendar.month === month;
 
 // click a year or a month to select it
 const clickDate = (year, month) => {
-  config.calendarYear = year;
-  config.calendarMonth = month; // -1 means selecting a year
-  config.calendarDate = -1;   // -1 means selecting a month
+  config.calendar.year = year;
+  config.calendar.month = month; // -1 means selecting a year
+  config.calendar.date = -1;   // -1 means selecting a month
 
-  console.log('clickDate:', config.calendarYear, config.calendarMonth, config.calendarDate);
+  console.log('clickDate:', config.calendar.year, config.calendar.month, config.calendar.date);
 };
 
 </script>

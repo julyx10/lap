@@ -78,9 +78,9 @@ const monthDates = getMonthDates(props.year, props.month, props.dates);
 const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date));
 
 // Check if the date is selected
-const isSelected = (year, month, date) => config.calendarYear === year &&
-                                          config.calendarMonth === month && 
-                                          config.calendarDate === date;
+const isSelected = (year, month, date) => config.calendar.year === year &&
+                                          config.calendar.month === month && 
+                                          config.calendar.date === date;
 
 // Generate an array of { date, count } objects for the month
 function getMonthDates(year, month, dates = []) {
@@ -105,11 +105,11 @@ function getMonthDates(year, month, dates = []) {
 
 // click a date to select it
 const clickDate = (year, month, date) => {
-  config.calendarYear = year;
-  config.calendarMonth = month; // -1 means selecting a year
-  config.calendarDate = date;   // -1 means selecting a month
+  config.calendar.year = year;
+  config.calendar.month = month; // -1 means selecting a year
+  config.calendar.date = date;   // -1 means selecting a month
 
-  console.log('clickDate:', config.calendarYear, config.calendarMonth, config.calendarDate);
+  console.log('clickDate:', config.calendar.year, config.calendar.month, config.calendar.date);
 };
 
 </script>

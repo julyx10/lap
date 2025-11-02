@@ -260,7 +260,7 @@ onMounted( async () => {
         break;
       case 'refresh-folder':
         for (let album of albums.value) {
-          if(album.id === config.destAlbumId) {
+          if(album.id === config.dest.albumId) {
             clickFinalSubFolder(album.id, event.payload.folderPath);  // select the sub-folder
             break;
           }

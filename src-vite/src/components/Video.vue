@@ -78,7 +78,7 @@ const playerOptions = computed(() => ({
   width: '100%',
   height: '100%',
   autoplay: false,
-  muted: config.videoMuted,
+  muted: config.video.muted,
   controls: true,
   preload: 'auto',
   language: videoJsLang.value,
@@ -133,8 +133,8 @@ const setupPlayer = () => {
 
   if (!player.value) {
     player.value = videojs(videoElement.value, playerOptions.value);
-    player.value.volume(config.videoVolume);
-    player.value.muted(config.videoMuted);
+    player.value.volume(config.video.volume);
+    player.value.muted(config.video.muted);
 
     player.value.on('error', () => {
       hasError.value = true;

@@ -16,8 +16,8 @@
             :class="[
               'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
               { 
-                'text-base-content': config.locationAdmin1 === location.admin1, 
-                'bg-base-content/10 border-primary'  : config.locationAdmin1 === location.admin1 && !config.locationName 
+                'text-base-content': config.location.admin1 === location.admin1, 
+                'bg-base-content/10 border-primary'  : config.location.admin1 === location.admin1 && !config.location.name 
               }
             ]"
             @click="clickLocationAdmin1(location)"
@@ -38,7 +38,7 @@
               <div 
                 :class="[
                   'm-1 pl-3 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
-                  config.locationName === name ? 'bg-base-content/10 border-primary' : ''
+                  config.location.name === name ? 'bg-base-content/10 border-primary' : ''
                 ]" 
                 @click="clickLocationName(location.admin1, name)"
               >
@@ -83,13 +83,13 @@ onMounted(async () => {
   if (locations.value.length === 0) {
     await getLocations();
 
-    if(config.locationAdmin1 && config.locationName) {
-      let location = locations.value.find(location => location.admin1 === config.locationAdmin1)
+    if(config.location.admin1 && config.location.name) {
+      let location = locations.value.find(location => location.admin1 === config.location.admin1)
       if(location) {
         location.is_expanded = true;     // expand selected location
       } else {
-        config.locationAdmin1 = null;
-        config.locationName = null;
+        config.location.admin1 = null;
+        config.location.name = null;
       }
     }
   }
@@ -98,8 +98,8 @@ onMounted(async () => {
 /// reload locations
 function clickReload() {
   getLocations();
-  config.locationAdmin1 = "";
-  config.locationName = "";
+  config.location.admin1 = "";
+  config.location.name = "";
 };
 
 /// click location icon to expand or collapse names
@@ -109,16 +109,16 @@ function clickExpandLocation(location) {
 
 /// click a location to select it
 function clickLocationAdmin1(location) {
-  config.locationAdmin1 = location.admin1;
-  config.locationName = "";
+  config.location.admin1 = location.admin1;
+  config.location.name = "";
 
   location.is_expanded = true;
 }
 
 /// click a location to select it
 function clickLocationName(admin1, name) {
-  config.locationAdmin1 = admin1;
-  config.locationName = name;
+  config.location.admin1 = admin1;
+  config.location.name = name;
 }
 
 /// get locations from db

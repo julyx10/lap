@@ -56,11 +56,11 @@
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.camera') }}</td>
-            <td>{{ fileInfo.e_make }} {{ fileInfo.e_model }}</td>
+            <td>{{ fileInfo.e_model }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.lens') }}</td>
-            <td>{{ fileInfo.e_lens_make }} {{ fileInfo.e_lens_model }}</td>
+            <td>{{ fileInfo.e_lens_model }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.capture_settings') }}</td>

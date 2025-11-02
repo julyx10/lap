@@ -13,7 +13,7 @@
         :class="[ 
           'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
           { 
-            'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === 0, 
+            'text-base-content bg-base-content/10 border-primary': config.favorite.folderId === 0, 
           }
         ]"
         @click="clickFavoriteFiles()"
@@ -35,7 +35,7 @@
               :class="[ 
                 'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group', 
                 { 
-                  'text-base-content bg-base-content/10 border-primary': config.favoriteFolderId === folder.id, 
+                  'text-base-content bg-base-content/10 border-primary': config.favorite.folderId === folder.id, 
                   'text-base-content/30': folder.is_hidden,
                 }
               ]"
@@ -50,7 +50,7 @@
               <DropDownMenu
                 :class="[
                   'ml-auto px-1 rounded',
-                  config.favoriteFolderId != folder.id ? 'invisible group-hover:visible' : ''
+                  config.favorite.folderId != folder.id ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
                 :menuItems="favoriteFolderMenuItems"
@@ -135,41 +135,41 @@ onMounted(() => {
 // click favorite files
 function clickFavoriteFiles() {
   console.log('clickFavoriteFiles');
-  config.favoriteAlbumId = null;
-  config.favoriteFolderId = 0;    // 0 means favorite files
-  config.favoriteFolderPath = '';
+  config.favorite.albumId = null;
+  config.favorite.folderId = 0;    // 0 means favorite files
+  config.favorite.folderPath = '';
 }
 
 // click favorite folder
 function clickFavoriteFolder(folder: any) {
   console.log('clickFavoriteFolder', folder);
-  config.favoriteAlbumId = folder.album_id;
-  config.favoriteFolderId = folder.id;
-  config.favoriteFolderPath = folder.path;
+  config.favorite.albumId = folder.album_id;
+  config.favorite.folderId = folder.id;
+  config.favorite.folderPath = folder.path;
 }
 
 // unfavorite
 function UnFavorite() {
   console.log('UnFavorite');
-  setFolderFavorite(config.favoriteFolderId, false).then(() => {
+  setFolderFavorite(config.favorite.folderId, false).then(() => {
     // get the index of the folder
-    const index = favorite_folders.value.findIndex((f: any) => f.id === config.favoriteFolderId);
+    const index = favorite_folders.value.findIndex((f: any) => f.id === config.favorite.folderId);
 
     // remove the folder from the list
-    favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favoriteFolderId);
+    favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favorite.folderId);
 
     if (favorite_folders.value.length === 0) {
-      config.favoriteFolderId = 0;  // 0 means favorite files
-      config.favoriteAlbumId = 0;
-      config.favoriteFolderPath = '';
+      config.favorite.folderId = 0;  // 0 means favorite files
+      config.favorite.albumId = 0;
+      config.favorite.folderPath = '';
     } else if (index === 0) {  // if the folder is the first one, set the first one as the favorite
-      config.favoriteFolderId = favorite_folders.value[index].id;
-      config.favoriteAlbumId = favorite_folders.value[index].album_id;
-      config.favoriteFolderPath = favorite_folders.value[index].path;
+      config.favorite.folderId = favorite_folders.value[index].id;
+      config.favorite.albumId = favorite_folders.value[index].album_id;
+      config.favorite.folderPath = favorite_folders.value[index].path;
     } else {
-      config.favoriteFolderId = favorite_folders.value[index - 1].id;
-      config.favoriteAlbumId = favorite_folders.value[index - 1].album_id;
-      config.favoriteFolderPath = favorite_folders.value[index - 1].path;
+      config.favorite.folderId = favorite_folders.value[index - 1].id;
+      config.favorite.albumId = favorite_folders.value[index - 1].album_id;
+      config.favorite.folderPath = favorite_folders.value[index - 1].path;
     }
 
     console.log('favorite_folders', favorite_folders.value);

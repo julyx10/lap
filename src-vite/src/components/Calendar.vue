@@ -10,23 +10,23 @@
           <a 
             role="tab"
             class="tab"
-            :class="config.calendarIsMonthly ? 'tab-active' : ''" 
-            @click="config.calendarIsMonthly=true"
+            :class="config.calendar.isMonthly ? 'tab-active' : ''" 
+            @click="config.calendar.isMonthly=true"
           >
             {{ $t('calendar.month') }}
           </a>
           <a 
             role="tab"
             class="tab"
-            :class="!config.calendarIsMonthly ? 'tab-active' : ''" 
-            @click="config.calendarIsMonthly=false"
+            :class="!config.calendar.isMonthly ? 'tab-active' : ''" 
+            @click="config.calendar.isMonthly=false"
           >
             {{ $t('calendar.day') }}
           </a>
         </div>
 
         <TButton 
-          :icon="config.calendarSortingAsc ? IconSortingAsc : IconSortingDesc" 
+          :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           @click="toggleSortingOrder"
         />
       </div>
@@ -35,7 +35,7 @@
     <template v-if="Object.keys(calendar_dates).length > 0" >
       
         <!-- days of the week in daily calendar -->
-        <div v-if="!config.calendarIsMonthly" class="flex flex-col items-center mr-4">
+        <div v-if="!config.calendar.isMonthly" class="flex flex-col items-center mr-4">
           <div class="grid grid-cols-7 gap-2 text-center">
             <div 
               v-for="(day, index) in localeMsg.calendar.weekdays" 
@@ -51,16 +51,16 @@
         <div ref="scrollable"
           :class="[
             'flex overflow-x-hidden overflow-y-auto',
-            config.calendarSortingAsc ? 'flex-col' : 'flex-col-reverse'
+            config.calendar.sortingAsc ? 'flex-col' : 'flex-col-reverse'
           ]"
         >
           <div v-for="(months, year) in calendar_dates" 
             :class="[
               'flex',
-              config.calendarSortingAsc ? 'flex-col' : 'flex-col-reverse'
+              config.calendar.sortingAsc ? 'flex-col' : 'flex-col-reverse'
             ]"
           >
-            <CalendarMonthly v-if="config.calendarIsMonthly"
+            <CalendarMonthly v-if="config.calendar.isMonthly"
               :year="Number(year)" 
               :months="months"
             />
@@ -113,7 +113,7 @@ onMounted( () => {
 });
 
 const toggleSortingOrder = () => {
-  config.calendarSortingAsc = !config.calendarSortingAsc;
+  config.calendar.sortingAsc = !config.calendar.sortingAsc;
 }
 
 /// fetch calendar dates

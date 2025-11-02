@@ -9,7 +9,7 @@
   >
     <div id="gridView" 
       class="px-2 grid gap-2"
-      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.gridSize}px, 1fr))` }"
+      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.grid.size}px, 1fr))` }"
     >
       <div 
         v-for="(file, index) in fileList" 
@@ -24,19 +24,16 @@
       >
         <div class="relative flex flex-col items-center group">
           <div v-if="file.thumbnail" class="relative rounded-lg overflow-hidden">
-            <!-- hover text -->
-            <div class="absolute left-0 right-0 bottom-0 p-1 m-1 flex flex-col bg-base-300/30 rounded transition-opacity duration-300 opacity-0 group-hover:opacity-70 z-10">
-              <span v-if="config.gridLabelHover > 0" class="text-xs text-nowrap">{{ getGridLabelText(file, config.gridLabelHover) }}</span>
-            </div>
+            <IconVideoFill v-if="file.file_type===2" class="absolute w-8 h-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-base-content/30 group-hover:text-base-content/70 transition-colors duration-300"/>
             <img :src="file.thumbnail"
               :class="[
-                'transition-all duration-300 group-hover:scale-125',
-                config.gridScaling === 0 ? 'object-contain' : '',
-                config.gridScaling === 1 ? 'object-cover' : '',
-                config.gridScaling === 2 ? 'object-fill' : ''
+                'transition-all duration-300 group-hover:scale-110',
+                config.grid.scaling === 0 ? 'object-contain' : '',
+                config.grid.scaling === 1 ? 'object-cover' : '',
+                config.grid.scaling === 2 ? 'object-fill' : ''
               ]"
               :style="{ 
-                width: `${config.gridSize}px`, height: `${config.gridSize}px`, 
+                width: `${config.grid.size}px`, height: `${config.grid.size}px`, 
                 transform: `rotate(${file.rotate}deg)`,
               }"
               loading="lazy"
@@ -45,24 +42,25 @@
 
           <div v-else 
             class="skeleton rounded flex items-center justify-center"
-            :style="{ width: `${config.gridSize}px`, height: `${config.gridSize}px` }"
+            :style="{ width: `${config.grid.size}px`, height: `${config.grid.size}px` }"
           > </div>
-          <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.gridLabelPrimary) }}</span>
-          <span class="text-xs text-center">{{ getGridLabelText(file, config.gridLabelSecondary) }}</span>
+          <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.grid.labelPrimary) }}</span>
+          <span class="text-xs text-center">{{ getGridLabelText(file, config.grid.labelSecondary) }}</span>
         
           <!-- status icons -->
           <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">
-            <IconVideo v-if="file.file_type===2" class="t-icon-size-xs"></IconVideo>
+            <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
+            <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
             <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
+            <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
+            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
             <IconRotate v-if="file.rotate % 360 > 0"
               class="t-icon-size-xs"
               :style="{ 
-                transform: `rotate(${file.rotate}deg)`, 
+                transform: `rotate(${file.rotate}deg)`,
                 transition: 'transform 0.3s ease-in-out' 
               }"
             />
-            <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
-            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>              
           </div>
 
           <!-- select checkbox or more menu -->
@@ -117,11 +115,13 @@ import {
   IconTrash,
   IconGoto,
   IconSearch,
-  IconVideo,
   IconUpdate,
   IconChecked,
   IconUnChecked,
   IconComment,
+  IconLocation,
+  IconVideoFill,
+  IconCameraAperture,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -265,18 +265,18 @@ const moreMenuItems = computed(() => {
       }
     },
     {
+      label: localeMsg.value.menu.meta.comment,
+      icon: IconComment,
+      action: () => {
+        commentItem();
+      }
+    },
+    {
       label: localeMsg.value.menu.meta.rotate,
       icon: IconRotate,
       shortcut: isMac ? '⌘R' : 'Ctrl+R',
       action: () => {
         rotateItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.meta.comment,
-      icon: IconComment,
-      action: () => {
-        commentItem();
       }
     }
   ];

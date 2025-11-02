@@ -87,7 +87,7 @@
           <div class="flex items-center justify-between mb-4">
             <label for="grid_size" >{{ $t('settings.grid_view.size') }}</label>
             <SliderInput 
-              v-model="config.gridSize" 
+              v-model="config.grid.size" 
               :min="120" 
               :max="320" 
               :step="10" 
@@ -98,7 +98,7 @@
           <!-- Grid Scaling -->
           <div class="flex items-center justify-between mb-4">
             <label for="grid_scaling-select">{{ $t('settings.grid_view.scaling') }}</label>
-            <select id="grid_scaling-select" class="select" v-model="config.gridScaling">
+            <select id="grid_scaling-select" class="select" v-model="config.grid.scaling">
               <option v-for="(option, index) in gridScalingOptions" 
                 :key="index" 
                 :value="option.value"
@@ -111,7 +111,7 @@
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="grid_label_primary-select">{{ $t('settings.grid_view.label_primary') }}</label>
-            <select id="grid_label_primary-select" class="select" v-model="config.gridLabelPrimary">
+            <select id="grid_label_primary-select" class="select" v-model="config.grid.labelPrimary">
               <option v-for="(option, index) in gridLabelOptions" 
                 :key="index"
                 :value="option.value"
@@ -124,20 +124,7 @@
             <!-- Secondary Label -->
             <div class="flex items-center justify-between mb-4">
               <label for="grid_label_secondary-select">{{ $t('settings.grid_view.label_secondary') }}</label>
-              <select id="grid_label_secondary-select" class="select" v-model="config.gridLabelSecondary">
-                <option v-for="(option, index) in gridLabelOptions" 
-                  :key="index" 
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Hover Label -->
-            <div class="flex items-center justify-between mb-4">
-              <label for="grid_label_hover-select">{{ $t('settings.grid_view.label_hover') }}</label>
-              <select id="grid_label_hover-select" class="select" v-model="config.gridLabelHover">
+              <select id="grid_label_secondary-select" class="select" v-model="config.grid.labelSecondary">
                 <option v-for="(option, index) in gridLabelOptions" 
                   :key="index" 
                   :value="option.value"
@@ -390,20 +377,17 @@ watch(() => config.debugMode, (newValue) => {
 });
 
 // grid view settings
-watch(() => config.gridSize, debounce((newValue) => {
+watch(() => config.grid.size, debounce((newValue) => {
   emit('settings-gridSize-changed', newValue);
 }, 100));
-watch(() => config.gridScaling, (newValue) => {
+watch(() => config.grid.scaling, (newValue) => {
   emit('settings-gridScaling-changed', newValue);
 });
-watch(() => config.gridLabelPrimary, (newValue) => {
+watch(() => config.grid.labelPrimary, (newValue) => {
   emit('settings-gridLabelPrimary-changed', newValue);
 });
-watch(() => config.gridLabelSecondary, (newValue) => {
+watch(() => config.grid.labelSecondary, (newValue) => {
   emit('settings-gridLabelSecondary-changed', newValue);
-});
-watch(() => config.gridLabelHover, (newValue) => {
-  emit('settings-gridLabelHover-changed', newValue);
 });
 
 // image viewer settings

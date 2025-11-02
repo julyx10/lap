@@ -31,6 +31,8 @@ export { default as IconGoto } from '@/assets/icons/goto.svg';
 // VIEW CONTROL ICONS
 // ======================
 export { default as IconGrid } from '@/assets/icons/layout-grid.svg';
+export { default as IconGallery } from '@/assets/icons/layout-gallery.svg';
+export { default as IconCarousel } from '@/assets/icons/layout-carousel.svg';
 export { default as IconMasonry } from '@/assets/icons/layout-masonry.svg';
 export { default as IconPreview } from '@/assets/icons/preview-on.svg';
 export { default as IconPreviewOff } from '@/assets/icons/preview-off.svg';
@@ -119,6 +121,8 @@ export { default as IconCalendar } from '@/assets/icons/calendar.svg';
 export { default as IconLocation } from '@/assets/icons/map-pin.svg';
 export { default as IconPeople } from '@/assets/icons/user.svg';
 export { default as IconCamera } from '@/assets/icons/camera.svg';
+export { default as IconCameraAperture } from '@/assets/icons/camera-aperture.svg';
+export { default as IconGps } from '@/assets/icons/gps.svg';
 export { default as IconSettings } from '@/assets/icons/settings.svg';
 export { default as IconInformation } from '@/assets/icons/information.svg';
 
@@ -129,6 +133,7 @@ export { default as IconPlay } from '@/assets/icons/play.svg';
 export { default as IconPause } from '@/assets/icons/pause.svg';
 export { default as IconVideoPlay } from '@/assets/icons/video-play.svg';
 export { default as IconVideoReplay } from '@/assets/icons/video-replay.svg';
+export { default as IconVideoFill } from '@/assets/icons/video-fill.svg';
 
 // ======================
 // MAGIC ICONS

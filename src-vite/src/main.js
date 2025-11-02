@@ -90,9 +90,6 @@ listen('settings-gridLabelPrimary-changed', (event) => {
 listen('settings-gridLabelSecondary-changed', (event) => {
   config.setGridLabelSecondary(event.payload)
 })
-listen('settings-gridLabelHover-changed', (event) => {
-  config.setGridLabelHover(event.payload)
-})
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)
 })

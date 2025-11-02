@@ -18,9 +18,9 @@
 
     <AlbumList ref="albumListRef" 
       :key="albumListKey"
-      v-model:albumId="config.albumId"
-      v-model:folderId="config.albumFolderId"
-      v-model:folderPath="config.albumFolderPath"
+      v-model:albumId="config.album.id"
+      v-model:folderId="config.album.folderId"
+      v-model:folderPath="config.album.folderPath"
       :componentId="0"
     />
   </div> 
@@ -88,7 +88,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.album.refresh,
       icon: IconRefresh,
-      disabled: config.albumId === null,
+      disabled: config.album.id === null,
       action: async () => {
         albumListRef.value.refreshAlbums(); 
       }
@@ -96,7 +96,7 @@ const moreMenuItems = computed(() => {
     {
       label: localeMsg.value.menu.album.reorder,
       icon: IconOrder,
-      disabled: config.albumId === null,
+      disabled: config.album.id === null,
       action: () => {
         isEditList.value = true;
         albumListRef.value.isEditList = true;

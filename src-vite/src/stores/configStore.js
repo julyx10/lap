@@ -9,32 +9,42 @@ export const useConfigStore = defineStore('configStore', {
     leftPaneWidth: 300,         // left pane width
 
     // album
-    albumId: null,              // selected album id
-    albumFolderId: null,        // selected folder id
-    albumFolderPath: null,      // selected folder path
+    album: {
+      id: null,
+      folderId: null,
+      folderPath: null,
+    },
 
     // favorites
-    favoriteAlbumId: null,      // favorite album id
-    favoriteFolderId: null,     // favorite folder id
-    favoriteFolderPath: null,   // favorite folder path
+    favorite: {
+      albumId: null,
+      folderId: null,
+      folderPath: null,
+    },
 
     // tags
     tagId: null,                // selected tag id
 
     // calendar
-    calendarIsMonthly: true,    // display monthly or daily calendar
-    calendarSortingAsc: true,   // sorting order
-    calendarYear: null,         // selected year (...2024)
-    calendarMonth: null,        // selected month (1-12)
-    calendarDate: null,         // selected date (1-31), -1 means selecting a month
+    calendar: {
+      isMonthly: true,    // display monthly or daily calendar
+      sortingAsc: true,   // sorting order
+      year: null,         // selected year (...2024)
+      month: null,        // selected month (1-12)
+      date: null,         // selected date (1-31), -1 means selecting a month
+    },
 
     // cameras
-    cameraMake: null,           // selected camera make
-    cameraModel: null,          // selected camera model
+    camera: {
+      make: null,           // selected camera make
+      model: null,          // selected camera model
+    },
 
     // location
-    locationAdmin1: null,      // selected location admin1 (e.g. California)
-    locationName: null,        // selected location name (e.g. San Francisco)
+    location: {
+      admin1: null,      // selected location admin1 (e.g. California)
+      name: null,        // selected location name (e.g. San Francisco)
+    },
 
     ////// Content.vue //////
 
@@ -50,9 +60,11 @@ export const useConfigStore = defineStore('configStore', {
     previewPaneWidth: 30,       // preview pane width(20-80%)
 
     // move/copy to... destination folder
-    destAlbumId: null,          // destination album id
-    destFolderId: null,         // destination folder id
-    destFolderPath: null,       // destination folder path
+    dest: {
+      albumId: null,          // destination album id
+      folderId: null,         // destination folder id
+      folderPath: null,       // destination folder path
+    },
 
     ////// ImageViewer.vue //////
 
@@ -77,8 +89,10 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     ////// Video.vue //////
-    videoMuted: false,           // video muted
-    videoVolume: 1.0,            // video volume (0.0-1.0)
+    video: {
+      muted: false,           // video muted
+      volume: 1.0,            // video volume (0.0-1.0)
+    },
 
     ////// Settings.vue //////
 
@@ -97,11 +111,12 @@ export const useConfigStore = defineStore('configStore', {
     
     // settings - grid view
     thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
-    gridSize: 200,              // grid size, range 120-360
-    gridScaling: 0,             // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
-    gridLabelPrimary: 1,        // Primary label (1: Name)
-    gridLabelSecondary: 2,      // Secondary label (2: Dimension)
-    gridLabelHover: 0,          // Hover text (0: Empty)
+    grid: {
+      size: 200,              // grid size, range 120-360
+      scaling: 0,             // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
+      labelPrimary: 1,        // Primary label (1: Name)
+      labelSecondary: 2,      // Secondary label (2: Dimension)
+    },
 
     // settings - image viewer
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
@@ -143,27 +158,24 @@ export const useConfigStore = defineStore('configStore', {
 
     // video settings
     setVideoMuted(videoMuted) {
-      this.videoMuted = videoMuted;
+      this.video.muted = videoMuted;
     },
     setVideoVolume(videoVolume) {
-      this.videoVolume = videoVolume;
+      this.video.volume = videoVolume;
     },
 
     // grid view settings
     setGridSize(gridSize) {
-      this.gridSize = gridSize;
+      this.grid.size = gridSize;
     },
     setGridScaling(gridScaling) {
-      this.gridScaling = gridScaling;
+      this.grid.scaling = gridScaling;
     },
     setGridLabelPrimary(gridLabelPrimary) {
-      this.gridLabelPrimary = gridLabelPrimary;
+      this.grid.labelPrimary = gridLabelPrimary;
     },
     setGridLabelSecondary(gridLabelSecondary) {
-      this.gridLabelSecondary = gridLabelSecondary;
-    },
-    setGridLabelHover(gridLabelHover) {
-      this.gridLabelHover = gridLabelHover;
+      this.grid.labelSecondary = gridLabelSecondary;
     },
     // image viewer settings
     setMouseWheelMode(mouseWheelMode) {

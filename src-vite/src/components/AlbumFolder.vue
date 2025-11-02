@@ -12,7 +12,7 @@
             'bg-base-content/10 border-primary text-base-content': selectedFolderId === child.id && !isRenamingFolder,
             'hover:bg-base-content/10 border-transparent': selectedFolderId !== child.id || isRenamingFolder,
             'text-base-content/30': isHiddenAlbum,
-            'text-base-content': getFolderPath(config.albumFolderPath).includes(child.path)
+            'text-base-content': getFolderPath(config.album.folderPath).includes(child.path)
           }
         ]" 
         @click="clickFolder(rootAlbumId, child)"
@@ -408,7 +408,7 @@ const handleEscKey = (event, folderID) => {
 
 // move folder to dest folder
 const clickMoveTo = async () => {
-  moveFolder(selectedFolderPath.value, config.destAlbumId, config.destFolderPath).then((newPath) => {
+  moveFolder(selectedFolderPath.value, config.dest.albumId, config.dest.folderPath).then((newPath) => {
     if (newPath) {
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
@@ -430,7 +430,7 @@ const clickMoveTo = async () => {
 
 // copy folder to dest folder
 const clickCopyTo = async () => {
-  copyFolder(selectedFolderPath.value, config.destFolderPath).then((newPath) => {
+  copyFolder(selectedFolderPath.value, config.dest.folderPath).then((newPath) => {
     if (newPath) {
       // close copy-to dialog
       showCopyTo.value = false;

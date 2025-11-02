@@ -338,7 +338,7 @@ const contentIcon = computed(() => {
   switch (index) {
     case 0: return IconHome;
     case 1: return IconFolder;
-    case 2: return config.favoriteFolderId && config.favoriteFolderId > 0 ? IconFolderFavorite : IconFavorite;
+    case 2: return config.favorite.folderId && config.favorite.folderId > 0 ? IconFolderFavorite : IconFavorite;
     case 3: return IconTag;
     case 4: return IconCalendar;
     case 5: return IconLocation;
@@ -364,9 +364,9 @@ const totalFileSize = ref(0);     // total files' size
 
 const selectedItemIndex = ref(-1);
 
-// config.favoriteFolderId = 0: means favorite files
+// config.favorite.folderId = 0: means favorite files
 const showFolderFiles = computed(() =>
- config.sidebarIndex === 1 || (config.sidebarIndex === 2 && config.favoriteFolderId !== 0)
+ config.sidebarIndex === 1 || (config.sidebarIndex === 2 && config.favorite.folderId !== 0)
 );
 
 // mutil select mode
@@ -583,9 +583,9 @@ onMounted( async() => {
       case 'goto-folder':
         const selectedFile = fileList.value[selectedItemIndex.value];
         if (selectedFile) {
-          config.albumId = selectedFile.album_id;
-          config.albumFolderId = selectedFile.folder_id;
-          config.albumFolderPath = getFolderPath(selectedFile.file_path);
+          config.album.id = selectedFile.album_id;
+          config.album.folderId = selectedFile.folder_id;
+          config.album.folderPath = getFolderPath(selectedFile.file_path);
           config.sidebarIndex = 1;
         }
         break;
@@ -678,12 +678,12 @@ watch(() => config.language, (newLanguage) => {
 watch(
   () => [
     config.sidebarIndex,      // toolbar index
-    config.favoriteAlbumId, config.favoriteFolderId, config.favoriteFolderPath,   // favorite files and folder
-    config.albumId, config.albumFolderId, config.albumFolderPath,                 // album
+    config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
+    config.album.id, config.album.folderId, config.album.folderPath,                 // album
     config.tagId,                                                                 // tag
-    config.calendarYear, config.calendarMonth, config.calendarDate,               // calendar
-    config.cameraMake, config.cameraModel,                                        // camera 
-    config.locationAdmin1, config.locationName,                                   // location
+    config.calendar.year, config.calendar.month, config.calendar.date,               // calendar
+    config.camera.make, config.camera.model,                                        // camera 
+    config.location.admin1, config.location.name,                                   // location
     config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
   ], 
   () => {
@@ -757,22 +757,22 @@ async function updateContent() {
     await getFileList("", "", "", "", "", "", "", false, 0, fileListOffset.value);
   } 
   else if(newIndex === 1) {   // album
-    if(config.albumId === null) {
+    if(config.album.id === null) {
       contentTitle.value = "";
       fileList.value = [];
     } else {
-      const album = await getAlbum(config.albumId);
+      const album = await getAlbum(config.album.id);
       if(album) {
-        if(config.albumFolderPath === album.path) { // current folder is root
+        if(config.album.folderPath === album.path) { // current folder is root
           contentTitle.value = album.name;
         } else {
-          contentTitle.value = album.name + getRelativePath(config.albumFolderPath, album.path);
+          contentTitle.value = album.name + getRelativePath(config.album.folderPath, album.path);
         };
-        fileList.value = await getFolderFiles(config.albumFolderId, config.albumFolderPath);
+        fileList.value = await getFolderFiles(config.album.folderId, config.album.folderPath);
         hasMoreFiles.value = false;  // getFolderFiles always get all files
 
         // get the thumbnail count
-        await getFolderThumbCount(config.albumFolderId).then(count => {
+        await getFolderThumbCount(config.album.folderId).then(count => {
           console.log('updateContent - thumbCount:', count);
           showProgressBar.value = count < fileList.value.length; // show progress bar if the thumbnail count is less than the file list length
         });
@@ -783,18 +783,18 @@ async function updateContent() {
     }
   }
   else if(newIndex === 2) {   // favorite
-    if(config.favoriteFolderId === null) {
+    if(config.favorite.folderId === null) {
       contentTitle.value = "";
       fileList.value = [];
     } else {
-      if(config.favoriteFolderId === 0) { // favorite files
+      if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
         await getFileList("", "", "", "", "", "", "", true, 0, fileListOffset.value);
       } else {                // favorite folders
-        const album = await getAlbum(config.favoriteAlbumId);
+        const album = await getAlbum(config.favorite.albumId);
         if(album) {
-          contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favoriteFolderPath, album.path);
-          await getFileList(config.favoriteFolderPath, "", "", "", "", "", "", false, 0, fileListOffset.value);
+          contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath, album.path);
+          await getFileList(config.favorite.folderPath, "", "", "", "", "", "", false, 0, fileListOffset.value);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -818,46 +818,46 @@ async function updateContent() {
     }
   }
   else if(newIndex === 4) {   // calendar
-    if(config.calendarYear === null) {
+    if(config.calendar.year === null) {
       contentTitle.value = "";
       fileList.value = [];
     } else {
-      if (config.calendarMonth === -1) {          // yearly
-        contentTitle.value = formatDate(config.calendarYear, 1, 1, localeMsg.value.format.year);
-      } else if (config.calendarDate === -1) {    // monthly
-        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, 1, localeMsg.value.format.month);
+      if (config.calendar.month === -1) {          // yearly
+        contentTitle.value = formatDate(config.calendar.year, 1, 1, localeMsg.value.format.year);
+      } else if (config.calendar.date === -1) {    // monthly
+        contentTitle.value = formatDate(config.calendar.year, config.calendar.month, 1, localeMsg.value.format.month);
       } else {                                    // daily
-        contentTitle.value = formatDate(config.calendarYear, config.calendarMonth, config.calendarDate, localeMsg.value.format.date_long);
+        contentTitle.value = formatDate(config.calendar.year, config.calendar.month, config.calendar.date, localeMsg.value.format.date_long);
       }
-      const [startDate, endDate] = getCalendarDateRange(config.calendarYear, config.calendarMonth, config.calendarDate);
+      const [startDate, endDate] = getCalendarDateRange(config.calendar.year, config.calendar.month, config.calendar.date);
       await getFileList("", startDate, endDate, "", "", "", "", false, 0, fileListOffset.value);
     }
   }
   else if(newIndex === 5) {   // location
-    if(config.locationAdmin1 === null) {
+    if(config.location.admin1 === null) {
       contentTitle.value = "";
       fileList.value = [];
     } else {
-      if(config.locationName) {
-        contentTitle.value = `${config.locationAdmin1} > ${config.locationName}`;
-        await getFileList("", "", "", "", "", config.locationAdmin1, config.locationName, false, 0, fileListOffset.value);
+      if(config.location.name) {
+        contentTitle.value = `${config.location.admin1} > ${config.location.name}`;
+        await getFileList("", "", "", "", "", config.location.admin1, config.location.name, false, 0, fileListOffset.value);
       } else {
-        contentTitle.value = `${config.locationAdmin1}`;
-        await getFileList("", "", "", "", "", config.locationAdmin1, "", false, 0, fileListOffset.value);
+        contentTitle.value = `${config.location.admin1}`;
+        await getFileList("", "", "", "", "", config.location.admin1, "", false, 0, fileListOffset.value);
       } 
     }
   }
   else if(newIndex === 6) {   // camera
-    if(config.cameraMake === null) {
+    if(config.camera.make === null) {
       contentTitle.value = "";
       fileList.value = [];
     } else {
-      if(config.cameraModel) {
-        contentTitle.value = `${config.cameraMake} > ${config.cameraModel}`;
-        await getFileList("", "", "", config.cameraMake, config.cameraModel, "", "", false, 0, fileListOffset.value);
+      if(config.camera.model) {
+        contentTitle.value = `${config.camera.make} > ${config.camera.model}`;
+        await getFileList("", "", "", config.camera.make, config.camera.model, "", "", false, 0, fileListOffset.value);
       } else {
-        contentTitle.value = `${config.cameraMake}`;
-        await getFileList("", "", "", config.cameraMake, "", "", "", false, 0, fileListOffset.value);
+        contentTitle.value = `${config.camera.make}`;
+        await getFileList("", "", "", config.camera.make, "", "", "", false, 0, fileListOffset.value);
       } 
     }
   } 
@@ -919,7 +919,7 @@ const clickMoveTo = async () => {
     const moves = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
-        const movedFile = await moveFile(item.id, item.file_path, config.destFolderId, config.destFolderPath);
+        const movedFile = await moveFile(item.id, item.file_path, config.dest.folderId, config.dest.folderPath);
         if(movedFile) {
           console.log('clickMoveTo:', movedFile);
           removeFromFileList(fileList.value.indexOf(item));
@@ -930,7 +930,7 @@ const clickMoveTo = async () => {
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
-    const movedFile = await moveFile(file.id, file.file_path, config.destFolderId, config.destFolderPath);
+    const movedFile = await moveFile(file.id, file.file_path, config.dest.folderId, config.dest.folderPath);
     if(movedFile) {
       console.log('clickMoveTo:', movedFile);
       removeFromFileList(selectedItemIndex.value);
@@ -945,7 +945,7 @@ const clickCopyTo = async () => {
     const copies = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
-        const copiedFile = await copyFile(item.file_path, config.destFolderPath);
+        const copiedFile = await copyFile(item.file_path, config.dest.folderPath);
         if(copiedFile) {
           console.log('clickCopyTo:', copiedFile);
         }
@@ -955,7 +955,7 @@ const clickCopyTo = async () => {
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
-    const copiedFile = await copyFile(file.file_path, config.destFolderPath);
+    const copiedFile = await copyFile(file.file_path, config.dest.folderPath);
     if(copiedFile) {
       console.log('clickCopyTo:', copiedFile);
     }

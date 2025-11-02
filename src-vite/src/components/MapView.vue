@@ -1,13 +1,15 @@
 <template>
   <div class="relative w-full h-[300px] rounded-lg overflow-hidden">
     <div ref="mapEl" style="width:100%; height:100%;"></div>
-    <div class="absolute top-2 left-2 flex bg-base-100/20 hover:bg-base-100/80 rounded-lg z-[1000] cursor-pointer">
+    <div class="absolute top-2 left-2 flex bg-base-100/20 hover:bg-base-100/50 rounded-lg z-[1000] cursor-pointer">
       <TButton
         :icon="IconZoomIn"
+        :disabled="zoom >= 18"
         @click="zoomIn"
       />
       <TButton
         :icon="IconZoomOut"
+        :disabled="zoom <= 0"
         @click="zoomOut"
       />
       <TButton
@@ -84,6 +86,10 @@ onMounted(() => {
   })
   map.attributionControl.setPrefix('')
 
+  map.on('zoomend', () => {
+    zoom.value = map.getZoom()
+  })
+
   // delete default marker icon
   delete L.Icon.Default.prototype._getIconUrl
   // set default marker icon
@@ -131,15 +137,17 @@ function validLatLon(lat, lon) {
 
 function zoomIn() {
   if (map) { 
-    map.zoomIn();
-    zoom.value = map.getZoom()
+    if (zoom.value < 18) {
+      map.setZoom(zoom.value + 1)
+    }
   }
 }
 
 function zoomOut() {
   if (map) {
-    map.zoomOut();
-    zoom.value = map.getZoom()
+    if (zoom.value > 0) {
+      map.setZoom(zoom.value - 1)
+    }
   }
 }
 
