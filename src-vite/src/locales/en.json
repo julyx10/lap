@@ -137,7 +137,7 @@
       "reveal_in_finder": "Reveal in Finder",
       "reveal_in_file_explorer": "Reveal in File Explorer",
       "refresh": "Refresh",
-      "information": "File information"
+      "information": "Info"
     },
     "tag": {
       "rename": "Rename tag",
@@ -299,7 +299,9 @@
   },
 
   "file_info": {
-    "title": "File information",
+    "title": "Info",
+    "basic_info": "Basic info",
+    "exif_info": "EXIF info",
     "album_name": "Album",
     "name": "File name",
     "path": "Path",

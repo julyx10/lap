@@ -6,6 +6,7 @@
     @focus="isFocus = true"
     @blur="isFocus = false"
     @scroll="handleScroll"
+    @keydown="handleNativeKeyDown"
   >
     <div id="gridView" 
       class="px-2 grid gap-2"
@@ -335,6 +336,15 @@ function handleKeyDown(event) {
     trashItem();
   } else if (keyActions[key]) {
     keyActions[key](); 
+  }
+}
+
+function handleNativeKeyDown(event: KeyboardEvent) {
+  // Keys that we are handling manually for navigation, to prevent default browser behavior (scrolling).
+  const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', ' '];
+
+  if (handledKeys.includes(event.key)) {
+    event.preventDefault();
   }
 }
 

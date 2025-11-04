@@ -137,7 +137,7 @@
       "reveal_in_finder": "Finderで表示",
       "reveal_in_file_explorer": "ファイルエクスプローラーで表示",
       "refresh": "更新",
-      "information": "ファイル情報"
+      "information": "情報"
     },
     "tag": {
       "rename": "タグ名を変更",
@@ -299,7 +299,9 @@
   },
 
   "file_info": {
-    "title": "ファイル情報",
+    "title": "情報",
+    "basic_info": "基本情報",
+    "exif_info": "EXIF情報",
     "album_name": "アルバム",
     "name": "ファイル名",
     "path": "パス",

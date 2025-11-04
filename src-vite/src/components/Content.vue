@@ -159,44 +159,43 @@
 
     <!-- status bar -->
     <div v-if="config.showStatusBar && totalFileCount > 0"
-      class="p-2 min-h-8 w-full flex flex-row flex-wrap gap-x-4 items-center justify-start text-sm  text-base-content/30 select-none cursor-default overflow-hidden"
+      class="p-2 flex gap-4 text-sm text-base-content/30 cursor-default"
     >
-      <div class="flex flex-row items-center gap-x-1">
-        <IconFile class="t-icon-size-xs" />
-        <div>
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <IconGrid class="t-icon-size-xs" />
+        <span >
           {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}
           {{ hasMoreFiles ? '...' : '' }}
-        </div>
+        </span>
       </div>
 
       <template v-if="selectedItemIndex >= 0">
-        <div class="flex flex-row items-center gap-x-1">
+        <div class="flex items-center gap-1 flex-shrink-0">
           <component :is="selectMode ? IconCheckAll : IconChecked" class="t-icon-size-xs" />
-          {{
-            selectMode
+          <span>
+            {{ selectMode
               ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
               : shortenFilename(fileList[selectedItemIndex]?.name) + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')'
-          }}
+            }}
+          </span>
         </div>
 
-        <div class="flex flex-row items-center gap-x-1">
+        <div class="flex items-center gap-1 flex-shrink-0">
           <component :is="fileList[selectedItemIndex]?.file_type === 1 ? IconPhoto : IconVideo" class="t-icon-size-xs" />
-          <div>
-            {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }}
-          </div>
+          <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
         </div>
 
-        <div v-if="fileList[selectedItemIndex]?.e_model" class="flex flex-row items-center gap-x-1">
+        <div v-if="fileList[selectedItemIndex]?.e_model" class="flex items-center gap-1 flex-shrink-0">
           <IconCamera class="t-icon-size-xs" />
           <span> {{ fileList[selectedItemIndex]?.e_model }} ({{ fileList[selectedItemIndex]?.e_lens_model }})</span>
         </div>
 
-        <div v-if="fileList[selectedItemIndex]?.e_focal_length" class="flex flex-row items-center gap-x-1">
+        <div v-if="fileList[selectedItemIndex]?.e_focal_length" class="flex items-center gap-1 flex-shrink-0">
           <IconCameraAperture class="t-icon-size-xs" />
           <span> {{ formatCaptureSettings(fileList[selectedItemIndex]?.e_focal_length, fileList[selectedItemIndex]?.e_exposure_time, fileList[selectedItemIndex]?.e_f_number, fileList[selectedItemIndex]?.e_iso_speed, fileList[selectedItemIndex]?.e_exposure_bias) }}</span>
         </div>
 
-        <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex flex-row items-center gap-x-1">
+        <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex items-center gap-1 flex-shrink-0">
           <IconLocation class="t-icon-size-xs" />
           <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
         </div>
@@ -328,7 +327,7 @@ import {
   IconUnFavorite,
   IconFolderFavorite,
   IconMoveTo,
-  IconFile,
+  IconFiles,
   IconFolder,
   IconSearch,
   IconChecked,
@@ -342,6 +341,7 @@ import {
   IconPhoto,
   IconVideo,
   IconCameraAperture,
+  IconGrid,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -367,7 +367,7 @@ const contentIcon = computed(() => {
     case 4: return IconCalendar;
     case 5: return IconLocation;
     case 6: return IconCamera;
-    default: return IconFile;
+    default: return IconFiles;
   }
 });
 const contentTitle = ref("");

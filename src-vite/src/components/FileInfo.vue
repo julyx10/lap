@@ -12,8 +12,17 @@
 
     <!-- File Info table -->
     <div class="overflow-x-hidden overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 100px)' }">
-      <table v-if="fileInfo" class="text-sm text-base-content/30 border-separate border-spacing-2">
-        <tbody class="align-top">
+      <table v-if="fileInfo" class="w-full text-sm text-base-content/30 border-separate border-spacing-2">
+        <!-- basic file info -->
+        <tbody>
+          <tr>
+            <td colspan="2">
+              <div class="flex items-center">
+                <IconFile class="w-4 h-4" /> 
+                <span class="ml-1 font-bold">{{ $t('file_info.basic_info') }}</span>
+              </div>
+            </td>
+          </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.album_name') }}</td>
             <td class="text-wrap break-all">{{ fileInfo.album_name }}</td>
@@ -55,6 +64,30 @@
             <td>{{ formatTimestamp(fileInfo.modified_at, $t('format.date_time')) }}</td>
           </tr>
           <tr>
+            <td class="text-nowrap">{{ $t('file_info.tags') }}</td>
+            <td>
+              <span v-if="fileInfo.tags && fileInfo.tags.length">
+                {{ fileInfo.tags.map(tag => tag.name).join(', ') }}
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.comment') }}</td>
+            <td class="text-wrap">{{ fileInfo.comments }}</td>
+          </tr>
+        </tbody>
+
+        <!-- exif info -->
+        <tbody>
+          <tr>
+            <td colspan="2">
+              <div class="mt-2 flex items-center">
+                <IconCamera class="w-4 h-4" /> 
+                <span class="ml-1 font-bold">{{ $t('file_info.exif_info') }}</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
             <td class="text-nowrap">{{ $t('file_info.camera') }}</td>
             <td>{{ fileInfo.e_model }}</td>
           </tr>
@@ -67,6 +100,10 @@
             <td>{{ formatCaptureSettings(fileInfo.e_focal_length, fileInfo.e_exposure_time, fileInfo.e_f_number, fileInfo.e_iso_speed, fileInfo.e_exposure_bias) }}</td>
           </tr>
           <tr>
+            <td class="text-nowrap">{{ $t('file_info.software') }}</td>
+            <td>{{ fileInfo.e_software }}</td>
+          </tr>
+          <tr>
             <td class="text-nowrap">{{ $t('file_info.taken_by') }}</td>
             <td>{{ fileInfo.e_artist }}</td>
           </tr>
@@ -75,65 +112,8 @@
             <td>{{ fileInfo.e_date_time }}</td>
           </tr>
           <tr>
-            <td class="text-nowrap">{{ $t('file_info.software') }}</td>
-            <td>{{ fileInfo.e_software }}</td>
-          </tr>
-          <!-- <tr>
-            <td class="text-nowrap">{{ $t('file_info.focal_length') }}</td>
-            <td>{{ fileInfo.e_focal_length }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.exposure_time') }}</td>
-            <td>{{ fileInfo.e_exposure_time }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.iso') }}</td>
-            <td>{{ fileInfo.e_iso_speed }}</td>
-          </tr> -->
-          <!-- <tr>
-            <td class="text-nowrap">{{ $t('file_info.flash') }}</td>
-            <td>{{ fileInfo.e_flash }}</td>
-          </tr> -->
-          <!-- <tr>
-            <td class="text-nowrap">{{ $t('file_info.color_type') }}</td>
-            <td>{{ fileInfo.i_color_type }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.bit_depth') }}</td>
-            <td>{{ fileInfo.i_bit_depth }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.alpha_channel') }}</td>
-            <td>{{ fileInfo.i_has_alpha }}</td>
-          </tr> -->
-          <!-- <tr>
-            <td class="text-nowrap">{{ $t('file_info.gps_latitude') }}</td>
-            <td>{{ fileInfo.gps_latitude }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.gps_longitude') }}</td>
-            <td>{{ fileInfo.gps_longitude }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.gps_altitude') }}</td>
-            <td>{{ fileInfo.gps_altitude ? fileInfo.gps_altitude + ' m' : '' }}</td>
-          </tr> -->
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.tags') }}</td>
-            <td>
-              <span v-if="fileInfo.tags && fileInfo.tags.length">
-                {{ fileInfo.tags.map(tag => tag.name).join(', ') }}
-              </span>
-              <!-- <span v-else>{{ $t('tag.not_found') }}</span> -->
-            </td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.comment') }}</td>
-            <td class="text-wrap">{{ fileInfo.comments }}</td>
-          </tr>
-          <tr>
             <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>
-            <td class="flex flex-row justify-between items-center gap-2">
+            <td class="flex flex-row justify-between items-center gap-2 pr-2">
               {{ formatGeoLocation() }}
               <TButton v-if="fileInfo.gps_latitude && fileInfo.gps_longitude"
                 :icon="config.showMap ? IconMapDefault : IconMapOff"
@@ -163,7 +143,7 @@
 <script setup lang="ts">
 
 import { config, formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
-import { IconClose, IconMapDefault, IconMapOff } from '@/common/icons';
+import { IconClose, IconFile, IconCamera, IconMapDefault, IconMapOff } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import MapView from '@/components/MapView.vue';
