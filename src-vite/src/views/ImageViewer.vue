@@ -53,6 +53,9 @@
           :tooltip="$t('image_viewer.toolbar.zoom_out')"
           @click="clickZoomOut()"
         />
+        <!-- <div class="min-w-8 text-center text-base-content/30">
+          {{(imageScale * 100).toFixed(0)}} %
+        </div> -->
         <TButton
           :icon="IconZoomIn"
           :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
@@ -211,7 +214,7 @@
 
       <!-- File Info -->
       <transition
-        enter-active-class="transition-transform duration-200"
+        :enter-active-class="isTransitionDisabled ? '' : 'transition-transform duration-200'"
         leave-active-class="transition-transform duration-200"
         enter-from-class="translate-x-full"
         enter-to-class="translate-x-0"
@@ -335,7 +338,7 @@ const nextFilePath = ref('');   // Next file path to preload
 
 const fileInfo = ref(null);
 const iconRotate = ref(0);      // icon rotation angle
-// const showFileInfo = ref(false); // Show the file info panel
+const isTransitionDisabled = ref(true);
 
 const imageRef = ref(null);     // Image reference
 const videoRef = ref(null);     // Video reference
@@ -491,19 +494,25 @@ onMounted(async() => {
         fileInfo.value.is_favorite = event.payload.favorite;
         break;
       case 'rotate':
-        if(imageRef.value) {
+        if (imageRef.value) {
           imageRef.value.rotateRight();
-          iconRotate.value += 90;
         }
-        if(videoRef.value) {
+        if (videoRef.value) {
           videoRef.value.rotateRight();
-          iconRotate.value += 90;
+        }
+        iconRotate.value += 90;
+        if (fileInfo.value) {
+          fileInfo.value.rotate = (fileInfo.value.rotate || 0) + 90;
         }
         break;
       default:
         break;
     }
   });
+
+  setTimeout(() => {
+    isTransitionDisabled.value = false;
+  }, 500);
 });
 
 onUnmounted(() => {
@@ -588,6 +597,7 @@ watch(() => config.isFullScreen, async (newFullScreen) => {
 // watch file changed
 watch(() => fileId.value, async () => {
   fileInfo.value = await getFileInfo(fileId.value);
+  console.log('fileInfo:', fileInfo.value);
 
   if(!fileInfo.value) {
     return;

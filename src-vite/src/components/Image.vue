@@ -2,12 +2,6 @@
   <div
     ref="container"
     class="relative w-full h-full overflow-hidden cursor-pointer"
-    @mousedown="handleMouseDown"
-    @mousemove="handleMouseMove"
-    @mouseup="handleMouseUp"
-    @mouseleave="handleMouseLeave"
-    @wheel="handleWheel"
-    @dblclick="zoomFit"
   >
     <img 
       v-for="(src, index) in imageSrc"
@@ -15,7 +9,7 @@
       ref="activeImageEl"
       :key="`img-${index}`"
       :src="src"
-      :class="isDragging && isGrabbing ? 'cursor-grabbing' : 'cursor-grab'"
+      :class="isGrabbing ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'"
       :style="{
         minWidth:  `${imageSize[index].width}px`,
         minHeight: `${imageSize[index].height}px`,
@@ -27,12 +21,69 @@
       }"
       draggable="false"
       @load="onImageLoad($event.target)"
+      @mousedown="handleMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+      @mouseleave="handleMouseLeave"
+      @wheel="handleWheel"
+      @dblclick="zoomFit"
     />
+
+    <!-- Navigator view -->
+    <template v-if="config.navigatorViewMode !== 0 && isGrabbing">
+      <transition name="fade">
+        <div class="absolute right-4 bottom-4 outline rounded overflow-hidden shadow-lg" :style="navContainerStyle">
+          <img :src="imageSrc[activeImage]" class="w-full h-full object-contain" draggable="false" />
+          <div class="absolute top-0 left-0 border-2 rounded border-primary" :style="navBoxStyle"></div>
+        </div>
+      </transition>
+    </template>
+
+    <!-- debug -->
+    <div class="absolute top-4 right-4">
+      <table class="text-sm text-base-content/30 border-separate border-spacing-2 bg-base-100 rounded-lg p-2">
+        <tbody>
+          <tr>
+            <td>scale</td>
+            <td>{{ scale[activeImage].toFixed(2) }}</td>
+          </tr>
+          <tr>
+            <td>position</td>
+            <td class="w-40">{{ position[activeImage].x.toFixed(2) }}, {{ position[activeImage].y.toFixed(2) }}</td>
+          </tr>
+          <tr>
+            <td>imageRotatedSize</td>
+            <td>{{ imageSizeRotated[activeImage].width }} x {{ imageSizeRotated[activeImage].height }}</td>
+          </tr>
+          <tr>
+            <td>containerSize</td>
+            <td>{{ containerSize.width }} x {{ containerSize.height }}</td>
+          </tr>
+          <tr>
+            <td>navContainerSize</td>
+            <td>{{ navContainerSize.width }} x {{ navContainerSize.height }}</td>
+          </tr>
+          <tr>
+            <td>imageSize</td>
+            <td>{{ imageSize[activeImage].width }} x {{ imageSize[activeImage].height }}</td>
+          </tr>
+          <tr>
+            <td>imageSizeRotated</td>
+            <td>{{ imageSizeRotated[activeImage].width }} x {{ imageSizeRotated[activeImage].height }}</td>
+          </tr>
+          <tr>
+            <td>imageRotate</td>
+            <td>{{ imageRotate[activeImage] % 360 }}deg</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { config } from '@/common/utils';
 
@@ -84,8 +135,96 @@ let wheelThreshold = 10;
 
 const activeImageEl = ref<HTMLImageElement | null>(null);
 
-let resizeObserver;
-let positionObserver;
+let resizeObserver: ResizeObserver | null = null;
+let positionObserver: number | null = null;
+
+// navigator container size
+const navContainerSize = computed(() => {
+  const MAX_SIZE = config.navigatorViewMode === 1 ? 120 : config.navigatorViewMode === 2 ? 200 : 320;
+  const aspectRatio = imageSize.value[activeImage.value].width / imageSize.value[activeImage.value].height;
+  if (aspectRatio >= 1) {
+    return { width: MAX_SIZE, height: Math.round(MAX_SIZE / aspectRatio) };
+  } else {
+    return { width: Math.round(MAX_SIZE * aspectRatio), height: MAX_SIZE };
+  }
+});
+
+// navigator container style
+const navContainerStyle = computed(() => {
+  const w = navContainerSize.value.width;
+  const h = navContainerSize.value.height;
+  const rotation = imageRotate.value[activeImage.value];
+  const rad = rotation * Math.PI / 180;
+
+  const cosRad = Math.abs(Math.cos(rad));
+  const sinRad = Math.abs(Math.sin(rad));
+
+  const rotW = w * cosRad + h * sinRad;
+  const rotH = w * sinRad + h * cosRad;
+
+  const pos = {
+    x: (w - rotW) / 2,
+    y: (h - rotH) / 2,
+  };
+
+  return {
+    width: `${w}px`,
+    height: `${h}px`,
+    transform: `
+      translate(${pos.x}px, ${pos.y}px) 
+      rotate(${rotation}deg)
+    `,
+  };
+});
+
+// navigator image style
+// const navImageStyle = computed(() => {
+//   const deg = (imageRotate.value[activeImage.value] || 0) % 360;
+//   const isRot90 = deg === 90 || deg === 270;
+//   const w = isRot90 ? navContainerSize.value.height : navContainerSize.value.width;
+//   const h = isRot90 ? navContainerSize.value.width : navContainerSize.value.height;
+
+//   return {
+//     width: `${w}px`,
+//     height: `${h}px`,
+
+//     rotate: `${imageRotate.value[activeImage.value]}deg`,
+//     // transform: `rotate(${imageRotate.value[activeImage.value]}deg)`,
+//     // transformOrigin: 'center center',
+//   };
+// });
+
+// navigator box style
+const navBoxStyle = computed(() => {
+    if (!isGrabbing.value || !navContainerSize.value.width) return {};
+
+    const thumbWidth = navContainerSize.value.width;
+    const scaledImageWidth = imageSizeRotated.value[activeImage.value].width * scale.value[activeImage.value];
+    
+    if (scaledImageWidth === 0) return {};
+
+    const ratio = thumbWidth / scaledImageWidth;
+
+    let rectWidth = containerSize.value.width * ratio;
+    let rectHeight = containerSize.value.height * ratio;
+
+    const imageX = position.value[activeImage.value].x;
+    const imageY = position.value[activeImage.value].y;
+
+    const rectX = -imageX * ratio;
+    const rectY = -imageY * ratio;
+
+    const rotation = imageRotate.value[activeImage.value];
+    if (rotation % 180 === 90) {
+        [rectWidth, rectHeight] = [rectHeight, rectWidth];
+    }
+
+    return {
+        width: `${rectWidth}px`,
+        height: `${rectHeight}px`,
+        transform: `translate(${rectX}px, ${rectY}px)`,
+    };
+});
 
 onMounted(() => {
   // observe container size changes

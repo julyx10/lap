@@ -464,7 +464,9 @@
       "mouse_wheel_options": ["前/次の画像 (Ctrlでズーム)", "拡大/縮小"],
       "slide_show_interval": "スライドショー間隔: {second}秒",
       "auto_play_video": "自動再生ビデオ",
-      "show_comment": "コメントを表示"
+      "show_comment": "コメントを表示",
+      "navigator_view": "ナビゲータービュー",
+      "navigator_view_options": ["非表示", "小さいサムネイル", "標準サムネイル", "大きいサムネイル"]
     },
     "about": {
       "title": "について",

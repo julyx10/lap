@@ -105,7 +105,6 @@ export const useConfigStore = defineStore('configStore', {
     showButtonText: true,       // show button text
     showToolTip: true,          // show button tooltip
     showStatusBar: true,        // show status bar
-    showComment: true,          // show comment
     debugMode: false,           // debug mode
     fileListPageSize: 200,      // number of file list per page
     
@@ -122,6 +121,8 @@ export const useConfigStore = defineStore('configStore', {
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
     slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
     autoPlayVideo: false,       // auto play video
+    navigatorViewMode: 2,       // 0: Invisible, 1: Small thumbnail(120), 2: Standard thumbnail(200), 3: Large thumbnail(320)
+    showComment: true,          // show comment
   }),
 
   actions: {
@@ -148,9 +149,6 @@ export const useConfigStore = defineStore('configStore', {
     },
     setShowStatusBar(showStatusBar) {
       this.showStatusBar = showStatusBar;
-    },
-    setShowComment(showComment) {
-      this.showComment = showComment;
     },
     setDebugMode(debugMode) {
       this.debugMode = debugMode;
@@ -186,6 +184,12 @@ export const useConfigStore = defineStore('configStore', {
     },
     setAutoPlayVideo(autoPlayVideo) {
       this.autoPlayVideo = autoPlayVideo;
+    },
+    setNavigatorViewMode(navigatorViewMode) {
+      this.navigatorViewMode = navigatorViewMode;
+    },
+    setShowComment(showComment) {
+      this.showComment = showComment;
     },
   },
   persist: true

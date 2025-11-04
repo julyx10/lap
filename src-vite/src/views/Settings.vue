@@ -67,11 +67,6 @@
             <label for="show-status-bar" >{{ $t('settings.general.show_status_bar') }}</label>
             <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
           </div>
-          <!-- Show comment -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="show-comment" >{{ $t('settings.image_viewer.show_comment') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showComment" />
-          </div>
           <!-- Debug Mode -->
           <!-- <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings.general.debug_mode') }}</label>
@@ -168,6 +163,25 @@
           <div class="flex items-center justify-between mb-4">
             <label for="auto-play-video" >{{ $t('settings.image_viewer.auto_play_video') }}</label>
             <input type="checkbox" class="toggle" v-model="config.autoPlayVideo" />
+          </div>
+
+          <!-- Show navigator view -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="navigator-view-mode-select" >{{ $t('settings.image_viewer.navigator_view') }}</label>
+            <select id="navigator-view-mode-select" class="select" v-model="config.navigatorViewMode">
+              <option v-for="(option, index) in navigatorViewModeOptions" 
+                :key="index"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Show comment -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="show-comment" >{{ $t('settings.image_viewer.show_comment') }}</label>
+            <input type="checkbox" class="toggle" v-model="config.showComment" />
           </div>
         </section>
 
@@ -313,6 +327,18 @@ const gridLabelOptions = computed(() => {
   return result;
 });
 
+// Define the navigator view mode options
+const navigatorViewModeOptions = computed(() => {
+  const options = localeMsg.value.settings.image_viewer.navigator_view_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -396,6 +422,9 @@ watch(() => config.mouseWheelMode, (newValue) => {
 });
 watch(() => config.slideShowInterval, (newValue) => {
   emit('settings-slideShowInterval-changed', newValue);
+});
+watch(() => config.navigatorViewMode, (newValue) => {
+  emit('settings-navigatorViewMode-changed', newValue);
 });
 watch(() => config.autoPlayVideo, (newValue) => {
   emit('settings-autoPlayVideo-changed', newValue);

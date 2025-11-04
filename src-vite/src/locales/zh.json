@@ -464,7 +464,9 @@
       "mouse_wheel_options": ["上一张/下一张图片 (Ctrl 缩放)", "放大/缩小"],
       "slide_show_interval": "幻灯片放映间隔: {second} 秒",
       "auto_play_video": "自动播放视频",
-      "show_comment": "显示备注"
+      "show_comment": "显示备注",
+      "navigator_view": "导航视图",
+      "navigator_view_options": ["隐藏", "小缩略图", "标准缩略图", "大缩略图"]
     },
     "about": {
       "title": "关于",
