@@ -318,6 +318,7 @@
     "software": "Software",
     "artist": "Artist",
     "copyright": "Copyright",
+    "description": "Description",
     "lens": "Lens",
     "lens_make": "Lens make",
     "lens_model": "Lens model",

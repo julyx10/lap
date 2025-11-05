@@ -89,7 +89,7 @@
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.camera') }}</td>
-            <td>{{ fileInfo.e_model }}</td>
+            <td>{{ fileInfo.e_make }} {{ fileInfo.e_model }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.lens') }}</td>
@@ -110,6 +110,10 @@
           <tr>
             <td class="text-nowrap">{{ $t('file_info.taken_at') }}</td>
             <td>{{ fileInfo.e_date_time }}</td>
+          </tr>
+          <tr>
+            <td class="text-nowrap">{{ $t('file_info.description') }}</td>
+            <td>{{ fileInfo.e_description }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>

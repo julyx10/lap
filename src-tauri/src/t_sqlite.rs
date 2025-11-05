@@ -418,6 +418,7 @@ pub struct AFile {
     pub e_software: Option<String>,
     pub e_artist: Option<String>,
     pub e_copyright: Option<String>,
+    pub e_description: Option<String>,
     pub e_lens_make: Option<String>,
     pub e_lens_model: Option<String>,
     pub e_exposure_bias: Option<String>,
@@ -538,6 +539,7 @@ impl AFile {
             e_software: Self::get_exif_field(&exif, Tag::Software),
             e_artist: Self::get_exif_field(&exif, Tag::Artist),
             e_copyright: Self::get_exif_field(&exif, Tag::Copyright),
+            e_description: Self::get_exif_field(&exif, Tag::ImageDescription),
             e_lens_make: Self::get_exif_field(&exif, Tag::LensMake),
             e_lens_model: Self::get_exif_field(&exif, Tag::LensModel),
             e_exposure_bias: Self::get_exif_field(&exif, Tag::ExposureBiasValue),
@@ -656,19 +658,42 @@ impl AFile {
     // }
 
     /// Extracts an EXIF field as a string.
-    fn get_exif_field(exif: &Option<exif::Exif>, tag: exif::Tag) -> Option<String> {
-        exif.as_ref()
-            .and_then(|exif_data| {
-                exif_data.get_field(tag, exif::In::PRIMARY).map(|field| {
-                    format!("{}", field.display_value().with_unit(exif_data)).replace("\"", "")
-                })
+    pub fn get_exif_field(exif: &Option<exif::Exif>, tag: Tag) -> Option<String> {
+        let field = exif.as_ref()?.get_field(tag, In::PRIMARY)?;
+
+        let raw = match &field.value {
+            Value::Ascii(vec) => {
+                let mut bytes = Vec::new();
+                for line in vec {
+                    let cleaned: Vec<u8> = line.iter().cloned().take_while(|&b| b != 0).collect();
+                    bytes.extend(cleaned);
+                }
+                String::from_utf8_lossy(&bytes).into_owned()
+            }
+            _ => field.display_value().with_unit(exif.as_ref()?).to_string(),
+        };
+
+        let cleaned = raw
+            .replace('"', "")
+            .replace('\'', "")
+            .lines()
+            .map(|line| {
+                let mut s = line.trim().to_string();
+                while let Some(last) = s.chars().last() {
+                    if last.is_ascii_punctuation() && last != ')' && last != '(' {
+                        s.pop();
+                    } else {
+                        break;
+                    }
+                }
+                s
             })
-            .map(|s| {
-                s.trim_end_matches(|c| {
-                    char::is_ascii_punctuation(&c) || char::is_ascii_whitespace(&c)
-                })
-                .to_string()
-            }) // trim all trailing commas and spaces,
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        let final_str = cleaned.trim();
+        if final_str.is_empty() { None } else { Some(final_str.to_string()) }
     }
 
     /// insert a file into db
@@ -681,10 +706,10 @@ impl AFile {
                 taken_date,
                 width, height, duration,
                 is_favorite, rotate, comments, has_tags,
-                e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
+                e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description, e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38)",
             params![
                 self.folder_id,
 
@@ -712,6 +737,7 @@ impl AFile {
                 self.e_software,
                 self.e_artist,
                 self.e_copyright,
+                self.e_description,
                 self.e_lens_make,
                 self.e_lens_model,
                 self.e_exposure_bias,
@@ -742,8 +768,8 @@ impl AFile {
                 name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, created_at = ?5, modified_at = ?6,
                 taken_date = ?7,
                 width = ?8, height = ?9, duration = ?10,
-                e_make = ?11, e_model = ?12, e_date_time = ?13, e_software = ?14, e_artist = ?15, e_copyright = ?16, e_lens_make = ?17, e_lens_model = ?18, e_exposure_bias = ?19, e_exposure_time = ?20, e_f_number = ?21, e_focal_length = ?22, e_iso_speed = ?23, e_flash = ?24, e_orientation = ?25,
-                gps_latitude = ?26, gps_longitude = ?27, gps_altitude = ?28, geo_name = ?29, geo_admin1 = ?30, geo_admin2 = ?31, geo_cc = ?32
+                e_make = ?11, e_model = ?12, e_date_time = ?13, e_software = ?14, e_artist = ?15, e_copyright = ?16, e_description = ?17, e_lens_make = ?18, e_lens_model = ?19, e_exposure_bias = ?20, e_exposure_time = ?21, e_f_number = ?22, e_focal_length = ?23, e_iso_speed = ?24, e_flash = ?25, e_orientation = ?26,
+                gps_latitude = ?27, gps_longitude = ?28, gps_altitude = ?29, geo_name = ?30, geo_admin1 = ?31, geo_admin2 = ?32, geo_cc = ?33
             WHERE id = ?33",
             params![
                 file.name,
@@ -765,6 +791,7 @@ impl AFile {
                 file.e_software,
                 file.e_artist,
                 file.e_copyright,
+                file.e_description,
                 file.e_lens_make,
                 file.e_lens_model,
                 file.e_exposure_bias,
@@ -819,7 +846,7 @@ impl AFile {
                 a.taken_date,
                 a.width, a.height, a.duration,
                 a.is_favorite, a.rotate, a.comments, a.has_tags,
-                a.e_make, a.e_model, a.e_date_time, a.e_software, a.e_artist, a.e_copyright, a.e_lens_make, a.e_lens_model, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
+                a.e_make, a.e_model, a.e_date_time, a.e_software, a.e_artist, a.e_copyright, a.e_description, a.e_lens_make, a.e_lens_model, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude, a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
                 b.path,
                 c.id AS album_id, c.name AS album_name
@@ -859,30 +886,31 @@ impl AFile {
             e_software: row.get(19)?,
             e_artist: row.get(20)?,
             e_copyright: row.get(21)?,
-            e_lens_make: row.get(22)?,
-            e_lens_model: row.get(23)?,
-            e_exposure_bias: row.get(24)?,
-            e_exposure_time: row.get(25)?,
-            e_f_number: row.get(26)?,
-            e_focal_length: row.get(27)?,
-            e_iso_speed: row.get(28)?,
-            e_flash: row.get(29)?,
-            e_orientation: row.get(30)?,
+            e_description: row.get(22)?,
+            e_lens_make: row.get(23)?,
+            e_lens_model: row.get(24)?,
+            e_exposure_bias: row.get(25)?,
+            e_exposure_time: row.get(26)?,
+            e_f_number: row.get(27)?,
+            e_focal_length: row.get(28)?,
+            e_iso_speed: row.get(29)?,
+            e_flash: row.get(30)?,
+            e_orientation: row.get(31)?,
 
-            gps_latitude: row.get(31)?,
-            gps_longitude: row.get(32)?,
-            gps_altitude: row.get(33)?,
-            geo_name: row.get(34)?,
-            geo_admin1: row.get(35)?,
-            geo_admin2: row.get(36)?,
-            geo_cc: row.get(37)?,
+            gps_latitude: row.get(32)?,
+            gps_longitude: row.get(33)?,
+            gps_altitude: row.get(34)?,
+            geo_name: row.get(35)?,
+            geo_admin1: row.get(36)?,
+            geo_admin2: row.get(37)?,
+            geo_cc: row.get(38)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(38)?.as_str(),
+                row.get::<_, String>(39)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(39)?,
-            album_name: row.get(40)?,
+            album_id: row.get(40)?,
+            album_name: row.get(41)?,
         })
     }
 
@@ -1692,6 +1720,7 @@ pub fn create_db() -> Result<(), String> {
             e_software TEXT,
             e_artist TEXT,
             e_copyright TEXT,
+            e_description TEXT,
             e_lens_make TEXT,
             e_lens_model TEXT,
             e_exposure_bias TEXT,
