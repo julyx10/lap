@@ -670,7 +670,61 @@ impl AFile {
                 }
                 String::from_utf8_lossy(&bytes).into_owned()
             }
-            _ => field.display_value().with_unit(exif.as_ref()?).to_string(),
+            _ => {
+                let displayed_value = field.display_value().with_unit(exif.as_ref()?).to_string();
+                if displayed_value.starts_with("1/") {
+                    let parts: Vec<&str> = displayed_value.split(' ').collect();
+                    let fraction_part = &parts[0][2..];
+
+                    let new_fraction_part = if fraction_part.contains('.') {
+                        let decimal_part = fraction_part.split('.').nth(1).unwrap_or("");
+                        if decimal_part.len() > 2 {
+                            if let Ok(num) = fraction_part.parse::<f64>() {
+                                format!("{:.2}", num)
+                            } else {
+                                fraction_part.to_string()
+                            }
+                        } else {
+                            fraction_part.to_string()
+                        }
+                    } else {
+                        fraction_part.to_string()
+                    };
+
+                    let mut result = format!("1/{}", new_fraction_part);
+                    if parts.len() > 1 {
+                        result.push(' ');
+                        result.push_str(parts[1]);
+                    }
+                    result
+                } else {
+                    let parts: Vec<&str> = displayed_value.split(' ').collect();
+                    if parts.is_empty() {
+                        return None;
+                    }
+                    if let Ok(num) = parts[0].parse::<f64>() {
+                        let result = if parts[0].contains('.') {
+                            let decimal_part = parts[0].split('.').nth(1).unwrap_or("");
+                            if decimal_part.len() > 2 {
+                                format!("{:.2}", num)
+                            } else {
+                                parts[0].to_string()
+                            }
+                        } else {
+                            parts[0].to_string()
+                        };
+
+                        let mut final_result = result;
+                        if parts.len() > 1 {
+                            final_result.push(' ');
+                            final_result.push_str(parts[1]);
+                        }
+                        final_result
+                    } else {
+                        displayed_value
+                    }
+                }
+            }
         };
 
         let cleaned = raw
@@ -770,7 +824,7 @@ impl AFile {
                 width = ?8, height = ?9, duration = ?10,
                 e_make = ?11, e_model = ?12, e_date_time = ?13, e_software = ?14, e_artist = ?15, e_copyright = ?16, e_description = ?17, e_lens_make = ?18, e_lens_model = ?19, e_exposure_bias = ?20, e_exposure_time = ?21, e_f_number = ?22, e_focal_length = ?23, e_iso_speed = ?24, e_flash = ?25, e_orientation = ?26,
                 gps_latitude = ?27, gps_longitude = ?28, gps_altitude = ?29, geo_name = ?30, geo_admin1 = ?31, geo_admin2 = ?32, geo_cc = ?33
-            WHERE id = ?33",
+            WHERE id = ?34",
             params![
                 file.name,
                 file.name_pinyin,
