@@ -121,7 +121,8 @@ export const useConfigStore = defineStore('configStore', {
     mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
     slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
     autoPlayVideo: false,       // auto play video
-    navigatorViewMode: 2,       // 0: Invisible, 1: Small thumbnail(120), 2: Standard thumbnail(200), 3: Large thumbnail(320)
+    navigatorViewMode: 0,       // 0: Auto, 1: Always hide, 2: Always show
+    navigatorViewSize: 200,     // navigator view size (120, 200, 320, 480)
     showComment: true,          // show comment
   }),
 
@@ -187,6 +188,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setNavigatorViewMode(navigatorViewMode) {
       this.navigatorViewMode = navigatorViewMode;
+    },
+    setNavigatorViewSize(navigatorViewSize) {
+      this.navigatorViewSize = navigatorViewSize;
     },
     setShowComment(showComment) {
       this.showComment = showComment;

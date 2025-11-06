@@ -53,9 +53,9 @@
           :tooltip="$t('image_viewer.toolbar.zoom_out')"
           @click="clickZoomOut()"
         />
-        <!-- <div class="min-w-8 text-center text-base-content/30">
+        <div class="min-w-8 text-center text-base-content/30">
           {{(imageScale * 100).toFixed(0)}} %
-        </div> -->
+        </div>
         <TButton
           :icon="IconZoomIn"
           :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
@@ -135,7 +135,7 @@
       <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden select-none ">
         
         <!-- show zoom scale -->
-        <transition name="fade">
+        <!-- <transition name="fade">
           <div v-if="isScaleChanged" 
             :class="[
               'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-lg',
@@ -144,7 +144,7 @@
           >
             <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
           </div>
-        </transition>
+        </transition> -->
 
         <template v-if="fileIndex >= 0">
           <!-- prev button -->
@@ -713,12 +713,20 @@ async function loadVideo(filePath) {
 }
 
 function clickPrev() {
-  emit('message-from-image-viewer', { message: 'prev' });
+  if(fileIndex.value === 0) {
+    toolTipRef.value.showTip(localeMsg.value.tooltip.image_viewer.first_image);
+  } else {
+    emit('message-from-image-viewer', { message: 'prev' });
+  }
 }
 
 function clickNext() {
-  if(isSlideShow.value && fileIndex.value === fileCount.value - 1) {
-    emit('message-from-image-viewer', { message: 'home' });
+  if(fileIndex.value === fileCount.value - 1) {
+    if(isSlideShow.value) {
+      emit('message-from-image-viewer', { message: 'home' });
+    } else {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.image_viewer.last_image);
+    }
   } else {
     emit('message-from-image-viewer', { message: 'next' });
   }

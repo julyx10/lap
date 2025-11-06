@@ -101,6 +101,10 @@
     "update_image": {
       "success": "图片已从文件中更新",
       "failed": "无法从文件中更新图片。文件可能不存在。"
+    },
+    "image_viewer": {
+      "first_image": "已经是第一张图片",
+      "last_image": "已经是最后一张图片"
     }
   },
 
@@ -467,7 +471,9 @@
       "auto_play_video": "自动播放视频",
       "show_comment": "显示备注",
       "navigator_view": "导航视图",
-      "navigator_view_options": ["隐藏", "小缩略图", "标准缩略图", "大缩略图"]
+      "navigator_view_options": ["自动", "总是显示", "总是隐藏"],
+      "navigator_view__size": "导航视图大小",
+      "navigator_view_size_options": ["小(160px)", "中(240px)", "大(320px)", "特大(400px)"]
     },
     "about": {
       "title": "关于",

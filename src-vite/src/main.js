@@ -99,6 +99,9 @@ listen('settings-autoPlayVideo-changed', (event) => {
 listen('settings-navigatorViewMode-changed', (event) => {
   config.setNavigatorViewMode(event.payload)
 })
+listen('settings-navigatorViewSize-changed', (event) => {
+  config.setNavigatorViewSize(event.payload)
+})
 listen('settings-showComment-changed', (event) => {
   config.setShowComment(event.payload)
 })

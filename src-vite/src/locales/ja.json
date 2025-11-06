@@ -101,6 +101,10 @@
     "update_image": {
       "success": "画像がファイルから更新されました",
       "failed": "画像をファイルから更新できませんでした。ファイルが存在しない可能性があります。"
+    },
+    "image_viewer": {
+      "first_image": "すでに最初の画像です",
+      "last_image": "すでに最後の画像です"
     }
   },
 
@@ -467,7 +471,9 @@
       "auto_play_video": "自動再生ビデオ",
       "show_comment": "コメントを表示",
       "navigator_view": "ナビゲータービュー",
-      "navigator_view_options": ["非表示", "小さいサムネイル", "標準サムネイル", "大きいサムネイル"]
+      "navigator_view_options": ["自動", "常に表示", "常に非表示"],
+      "navigator_view__size": "ナビゲータービューサイズ",
+      "navigator_view_size_options": ["小(160px)", "中(240px)", "大(320px)", "特大(400px)"]
     },
     "about": {
       "title": "について",

@@ -101,6 +101,10 @@
     "update_image": {
       "success": "The image has been updated from the file",
       "failed": "Failed to update the image from the file. The file may not exist."
+    },
+    "image_viewer": {
+      "first_image": "Already the first image",
+      "last_image": "Already the last image"
     }
   },
 
@@ -467,7 +471,9 @@
       "auto_play_video": "Auto play video",
       "show_comment": "Show comment",
       "navigator_view": "Navigator view",
-      "navigator_view_options": ["Invisible", "Small thumbnail", "Standard thumbnail", "Large thumbnail"]
+      "navigator_view_options": ["Auto", "Always show", "Always hide"],
+      "navigator_view__size": "Navigator view size",
+      "navigator_view_size_options": ["Small(160px)", "Medium(240px)", "Large(320px)", "Extra Large(400px)"]
     },
     "about": {
       "title": "About",

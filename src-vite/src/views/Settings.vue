@@ -133,6 +133,32 @@
         <!-- Image Viewer tab -->
         <section v-else-if="config.settingsTabIndex === 2">
 
+          <!-- Show navigator view -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="navigator-view-mode-select" >{{ $t('settings.image_viewer.navigator_view') }}</label>
+            <select id="navigator-view-mode-select" class="select" v-model="config.navigatorViewMode">
+              <option v-for="(option, index) in navigatorViewModeOptions" 
+                :key="index"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Navigator view size -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="navigator-view-size-select" >{{ $t('settings.image_viewer.navigator_view__size') }}</label>
+            <select id="navigator-view-size-select" class="select" v-model="config.navigatorViewSize">
+              <option v-for="(option, index) in navigatorViewSizeOptions" 
+                :key="index" 
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings.image_viewer.mouse_wheel') }}</label>
@@ -163,19 +189,6 @@
           <div class="flex items-center justify-between mb-4">
             <label for="auto-play-video" >{{ $t('settings.image_viewer.auto_play_video') }}</label>
             <input type="checkbox" class="toggle" v-model="config.autoPlayVideo" />
-          </div>
-
-          <!-- Show navigator view -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="navigator-view-mode-select" >{{ $t('settings.image_viewer.navigator_view') }}</label>
-            <select id="navigator-view-mode-select" class="select" v-model="config.navigatorViewMode">
-              <option v-for="(option, index) in navigatorViewModeOptions" 
-                :key="index"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
           </div>
 
           <!-- Show comment -->
@@ -339,6 +352,18 @@ const navigatorViewModeOptions = computed(() => {
   return result;
 });
 
+// Define the navigator view size options
+const navigatorViewSizeOptions = computed(() => {
+  const options = localeMsg.value.settings.image_viewer.navigator_view_size_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: parseInt(options[i].split('(')[1].split('px')[0]) });
+  }
+
+  return result;
+});
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -426,10 +451,12 @@ watch(() => config.slideShowInterval, (newValue) => {
 watch(() => config.navigatorViewMode, (newValue) => {
   emit('settings-navigatorViewMode-changed', newValue);
 });
+watch(() => config.navigatorViewSize, (newValue) => {
+  emit('settings-navigatorViewSize-changed', newValue);
+});
 watch(() => config.autoPlayVideo, (newValue) => {
   emit('settings-autoPlayVideo-changed', newValue);
 });
-
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
   const navigationKeys = ['Tab', 'Escape'];
