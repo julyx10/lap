@@ -515,14 +515,8 @@ impl AFile {
             modified_at: file_info.modified,
 
             taken_date: Self::get_exif_field(&exif, Tag::DateTimeOriginal)
-                .map(|exif_date| {
-                    if exif_date.len() >= 10 {
-                        Some(exif_date[..10].to_string())
-                    } else {
-                        Some(exif_date) // Fallback to the whole string if it’s shorter than expected
-                    }
-                })
-                .unwrap_or_else(|| file_info.modified_str), // fallback to modified time
+                .and_then(|exif_date| t_utils::exif_date_to_string(&exif_date))
+                .or_else(|| file_info.modified_str.clone()),
 
             width:  e_orientation.map(|orientation| if orientation > 4 { height } else { width }).or(Some(width)),
             height: e_orientation.map(|orientation| if orientation > 4 { width } else { height }).or(Some(height)),

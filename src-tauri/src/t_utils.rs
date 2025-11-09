@@ -621,7 +621,7 @@ pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
     }
 }
 
-/// Convert a SystemTime to a string
+/// Convert a SystemTime to a string(YYYY-MM-DD)
 pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
     match time {
         Some(t) => {
@@ -634,6 +634,25 @@ pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
         }
         None => None, // Return None if the input is None
     }
+}
+
+/// Convert an EXIF date string (`YYYY:MM:DD HH:MM:SS`) to a date string (`YYYY-MM-DD`)
+pub fn exif_date_to_string(date: &str) -> Option<String> {
+    // Split date and time parts (ignore time)
+    let parts: Vec<&str> = date.split(' ').collect();
+    if parts.is_empty() {
+        return None;
+    }
+
+    // Split the date part by ':'
+    let date_part = parts[0];
+    let date_fields: Vec<&str> = date_part.split(':').collect();
+
+    if date_fields.len() != 3 {
+        return None;
+    }
+
+    Some(format!("{}-{}-{}", date_fields[0], date_fields[1], date_fields[2]))
 }
 
 /// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),
