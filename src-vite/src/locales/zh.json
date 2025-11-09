@@ -304,8 +304,8 @@
 
   "file_info": {
     "title": "信息",
-    "basic_info": "基本信息",
-    "exif_info": "EXIF信息",
+    "general_info": "一般信息",
+    "exif_info": "EXIF 信息",
     "album_name": "相册",
     "name": "文件名",
     "path": "路径",

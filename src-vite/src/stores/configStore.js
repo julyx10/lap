@@ -10,7 +10,7 @@ export const useConfigStore = defineStore('configStore', {
     content: {
       pageSize: 200,              // number of files per page
       layout: 0,                  // 0: grid view, 1: gallery view
-      galleryPaneHeight: 200,     // gallery pane height
+      galleryPaneHeight: 200,     // gallery pane height (px)
 
       // right pane settings
       showFileInfo: false,       // show file info pane
@@ -70,7 +70,7 @@ export const useConfigStore = defineStore('configStore', {
       isFullScreen: false,        // full screen mode
       isPinned: true,             // pinned mode
       showFileInfo: false,        // show file info
-      fileInfoPanelWidth: 20,     // file info panel width
+      fileInfoPanelWidth: 20,     // file info panel width (20-80%)
       showMap: false,             // show map
       mapTheme: 0,                // 0: standard, 2: satellite
     },

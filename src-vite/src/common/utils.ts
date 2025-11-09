@@ -167,7 +167,19 @@ export function formatDuration(seconds: number): string {
 
 /// format capture settings to string
 export function formatCaptureSettings(focal_length: string, exposure_time: string, f_number: string, iso_speed: string, exposure_bias: string): string {
-  return focal_length && exposure_time && f_number && iso_speed && exposure_bias ? `${focal_length}, ${exposure_time}, ${f_number}, ISO ${iso_speed}, ${exposure_bias}` : '';
+  let result = '';
+  result += focal_length ? `${focal_length}` : '';
+  result += exposure_time ? `, ${exposure_time}` : '';
+  result += f_number ? `, ${f_number}` : '';
+  result += iso_speed ? `, ISO ${iso_speed}` : '';
+  result += exposure_bias ? `, ${exposure_bias}` : '';
+
+  // remove the first ',' if it exists
+  if (result[0] === ',' && result.length > 1) {
+    result = result.substring(1);
+  }
+
+  return result;
 }
 
 /// get full path

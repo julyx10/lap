@@ -304,8 +304,8 @@
 
   "file_info": {
     "title": "情報",
-    "basic_info": "基本情報",
-    "exif_info": "EXIF情報",
+    "general_info": "一般情報",
+    "exif_info": "EXIF 情報",
     "album_name": "アルバム",
     "name": "ファイル名",
     "path": "パス",

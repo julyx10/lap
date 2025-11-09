@@ -35,7 +35,7 @@
     <template v-if="Object.keys(calendar_dates).length > 0" >
       
         <!-- days of the week in daily calendar -->
-        <div v-if="!config.calendar.isMonthly" class="flex flex-col items-center mr-4">
+        <div v-if="!config.calendar.isMonthly" class="text-sm text-base-content/30 flex flex-col items-center mr-4">
           <div class="grid grid-cols-7 gap-2 text-center">
             <div 
               v-for="(day, index) in localeMsg.calendar.weekdays" 

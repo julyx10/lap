@@ -304,7 +304,7 @@
 
   "file_info": {
     "title": "Info",
-    "basic_info": "Basic info",
+    "general_info": "General info",
     "exif_info": "EXIF info",
     "album_name": "Album",
     "name": "File name",

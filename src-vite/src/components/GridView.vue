@@ -9,7 +9,7 @@
     @keydown="handleNativeKeyDown"
   >
     <div id="gridView" 
-      class="px-2 grid gap-2"
+      class="p-2 grid gap-2"
       :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` }"
     >
       <div 
@@ -49,7 +49,7 @@
           <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
         
           <!-- status icons -->
-          <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">
+          <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
             <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
             <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
             <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>

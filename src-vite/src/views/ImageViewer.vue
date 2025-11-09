@@ -208,7 +208,9 @@
 
       <!-- splitter -->
       <div v-if="config.imageViewer.showFileInfo" 
-        class="w-1 bg-base-200 hover:bg-primary cursor-ew-resize transition-colors" 
+        :class="[ 'w-1 hover:bg-base-content/70 cursor-ew-resize transition-colors',
+          isDraggingSplitter ? 'bg-base-content/70' : 'bg-base-200'
+        ]" 
         @mousedown="startDragging"
       ></div>
 

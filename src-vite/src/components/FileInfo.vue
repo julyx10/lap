@@ -13,13 +13,13 @@
     <!-- File Info table -->
     <div class="flex-1 pl-1 pb-2 overflow-x-hidden overflow-y-auto">
       <table v-if="fileInfo" class="w-full text-sm border-separate border-spacing-2">
-        <!-- basic file info -->
+        <!-- general file info -->
         <tbody>
           <tr>
             <td colspan="2">
               <div class="flex items-center">
                 <IconFile class="w-4 h-4" /> 
-                <span class="ml-1 font-bold">{{ $t('file_info.basic_info') }}</span>
+                <span class="ml-1 font-bold">{{ $t('file_info.general_info') }}</span>
               </div>
             </td>
           </tr>
@@ -57,7 +57,7 @@
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.created_at') }}</td>
-            <td>{{ formatTimestamp(fileInfo.created_at, $t('format.date_time')) }}</td>
+            <td>{{ formatTimestamp(fileInfo.created_at, $t('format.date_time_long')) }}</td>
           </tr>
           <tr>
             <td class="text-nowrap">{{ $t('file_info.modified_at') }}</td>
@@ -119,25 +119,23 @@
             <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>
             <td class="flex flex-row justify-between items-center gap-2 pr-2">
               {{ formatGeoLocation() }}
-              <TButton v-if="fileInfo.gps_latitude && fileInfo.gps_longitude"
+              <!-- <TButton v-if="fileInfo.gps_latitude && fileInfo.gps_longitude"
                 :icon="config.imageViewer.showMap ? IconMapDefault : IconMapOff"
                 :buttonSize="'small'"
                 @click="config.imageViewer.showMap = !config.imageViewer.showMap"
-              />
+              /> -->
             </td>
           </tr>
         </tbody>
       </table>
 
       <!-- Map view -->
-      <transition name="fade">
-        <div class="pl-2 pr-4" v-if="config.imageViewer.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
-          <MapView
-            :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
-            :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
-          />
-        </div>
-      </transition>
+      <div class="pl-2 pr-4" v-if="config.imageViewer.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
+        <MapView
+          :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
+          :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
+        />
+      </div>
     </div>
 
   </div>
@@ -155,7 +153,7 @@ import MapView from '@/components/MapView.vue';
 const props = defineProps({
   fileInfo: {
     type: Object,
-    required: true
+    required: false
   }
 });
 

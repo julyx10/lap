@@ -19,7 +19,7 @@
       <div
         v-for="d in monthDates"
         :key="d.date"
-        class="size-8 flex items-center justify-center border-2 rounded-full "
+        class="size-8 text-sm flex items-center justify-center border-2 rounded-full "
         :class="[
           isSelected(year, month, d.date) ? 'border-primary' : 'border-transparent',
           d.count === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/10 cursor-pointer',

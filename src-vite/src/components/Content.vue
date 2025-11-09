@@ -87,13 +87,13 @@
     <ProgressBar v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     <span v-else class="h-0.5 w-full"></span>
 
-    <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
-      <div class="flex-1 flex flex-col">
+    <div ref="contentViewDiv" class="mt-1 flex-1 flex flex-row overflow-hidden">
 
+      <div ref="gridViewDiv" class="flex-1 flex flex-col">
         <!-- preview -->
         <div v-show="config.content.layout === 1" ref="previewDiv" 
           class="p-1 rounded-ss-lg overflow-hidden bg-base-200"
-          :style="{ height: config.content.galleryPaneHeight + 'px' }"
+          :style="{ height: (gridViewDiv?.clientHeight - config.content.galleryPaneHeight) + 'px' }"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="relative w-full h-full flex items-center justify-center"
@@ -127,7 +127,16 @@
             <span>{{ $t('tooltip.not_found.files') }}</span>
           </div>
         </div>
-        
+
+        <!-- gallery view splitter -->
+        <div v-if="config.content.layout === 1" 
+          :class="[ 
+            'h-1 hover:bg-base-content/70 cursor-ns-resize transition-colors',
+            isDraggingGalleryView ? 'bg-base-content/70' : 'bg-base-200'
+          ]" 
+          @mousedown="startDraggingGalleryView"
+        ></div>
+
         <!-- grid view -->
         <GridView ref="gridViewRef"
           v-model:selectItemIndex="selectedItemIndex"
@@ -135,13 +144,15 @@
           :showFolderFiles="showFolderFiles"
           :selectMode="selectMode"
         />
-        
       </div>
 
-      <!-- splitter -->
+      <!-- file info splitter -->
       <div v-if="config.content.showFileInfo" 
-        class="w-1 bg-base-200 hover:bg-primary cursor-ew-resize transition-colors" 
-        @mousedown="startDragging"
+        :class="[
+          'w-1 hover:bg-base-content/70 cursor-ew-resize transition-colors', 
+          isDraggingFileInfo ? 'bg-base-content/70' : 'bg-base-200'
+        ]" 
+        @mousedown="startDraggingFileInfoSplitter"
       ></div>
 
       <!-- file info pane -->
@@ -193,7 +204,7 @@
           <span> {{ fileList[selectedItemIndex]?.e_model }} ({{ fileList[selectedItemIndex]?.e_lens_model }})</span>
         </div>
 
-        <div v-if="fileList[selectedItemIndex]?.e_focal_length" class="flex items-center gap-1 flex-shrink-0">
+        <div v-if="fileList[selectedItemIndex]?.e_focal_length || fileList[selectedItemIndex]?.e_exposure_time || fileList[selectedItemIndex]?.e_f_number || fileList[selectedItemIndex]?.e_iso_speed || fileList[selectedItemIndex]?.e_exposure_bias" class="flex items-center gap-1 flex-shrink-0">
           <IconCameraAperture class="t-icon-size-xs" />
           <span> {{ formatCaptureSettings(fileList[selectedItemIndex]?.e_focal_length, fileList[selectedItemIndex]?.e_exposure_time, fileList[selectedItemIndex]?.e_f_number, fileList[selectedItemIndex]?.e_iso_speed, fileList[selectedItemIndex]?.e_exposure_bias) }}</span>
         </div>
@@ -383,8 +394,9 @@ const contentTitle = ref("");
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const showProgressBar = ref(false); // show progress bar
 
-// file list view
-const divListView = ref(null);
+// div elements
+const contentViewDiv = ref<HTMLDivElement | null>(null);
+const gridViewDiv = ref<HTMLDivElement | null>(null);
 
 // file list
 const fileList = ref([]);
@@ -405,14 +417,17 @@ const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
 
-// preview 
-const isDraggingSplitter = ref(false);      // dragging splitter to resize preview pane
+// gallery view splitter
+const isDraggingGalleryView = ref(false);      // dragging splitter to resize gallery view
 const previewDiv = ref(null);
 const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
 const videoSrc = ref('');         // preview video source
 const videoRef = ref(null);       // preview video reference
 const loadImageError = ref(false);   // Track if there was an error loading the image
+
+// file info splitter
+const isDraggingFileInfo = ref(false);
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
@@ -755,8 +770,8 @@ watch(
 );
 
 // watch for show preview on/off
-watch(() => config.imageViewer.showFileInfo, (newValue) => {
-  if(newValue) {
+watch(() => config.content.layout, (newValue) => {
+  if(newValue === 1) {
     if(fileList.value[selectedItemIndex.value].file_type === 1) {
       getImageSrc(selectedItemIndex.value);
     } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
@@ -1030,7 +1045,7 @@ function removeFromFileList(index) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
   // update the preview
-  if(config.imageViewer.showFileInfo && selectedItemIndex.value >= 0) {
+  if(config.content.layout === 1 && selectedItemIndex.value >= 0) {
     if(fileList.value[selectedItemIndex.value].file_type === 1) {
       getImageSrc(selectedItemIndex.value);
     } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
@@ -1257,7 +1272,7 @@ function updateSelectedImage(index) {
   gridViewRef.value.scrollToItem(index); 
 
   // update the preview
-  if(config.imageViewer.showFileInfo) {
+  if(config.content.layout === 1) {
     if(index < 0 || index >= fileList.value.length || !fileList.value[index].file_type) {
       return;
     }
@@ -1400,30 +1415,45 @@ async function openImageViewer(index: number, newViewer = false) {
   }
 }
 
-/// Dragging the splitter
-function startDragging(event) {
-  isDraggingSplitter.value = true;
+/// Dragging the gallery view splitter
+function startDraggingGalleryView(event: MouseEvent) {
+  isDraggingGalleryView.value = true;
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', stopDragging);
 }
 
-/// stop dragging the splitter
-function stopDragging() {
-  isDraggingSplitter.value = false;
-  document.removeEventListener('mousemove', handleMouseMove);
-  document.removeEventListener('mouseup', stopDragging);
+/// Dragging the file info splitter
+function startDraggingFileInfoSplitter(event: MouseEvent) {
+  isDraggingFileInfo.value = true;
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', stopDragging);
 }
 
 /// handle mouse move event
-function handleMouseMove(event) {
-  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
-  if (isDraggingSplitter.value) {
+function handleMouseMove(event: MouseEvent) {
+  if (isDraggingFileInfo.value) {
     const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
-    const leftPosition = divListView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+    const leftPosition = contentViewDiv.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
 
     // Limit width between 20% and 80%
     config.content.fileInfoPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
+  } else if(isDraggingGalleryView.value) {
+    const gridViewDivRect = gridViewDiv.value.getBoundingClientRect();
+    const newHeight = gridViewDivRect.bottom - event.clientY;
+    
+    const totalHeight = gridViewDiv.value.clientHeight;
+    const minHeight = totalHeight * 0.2;
+    const maxHeight = totalHeight * 0.8;
+
+    config.content.galleryPaneHeight = Math.min(Math.max(newHeight, minHeight), maxHeight);
   }
 }
 
+/// stop dragging the splitter
+function stopDragging() {
+  isDraggingGalleryView.value = false;
+  isDraggingFileInfo.value = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', stopDragging);
+}
 </script>

@@ -61,7 +61,10 @@
       
       <!-- splitter -->
       <div v-if="config.home.sidebarIndex > 0" 
-        class="w-1 bg-base-300 hover:bg-primary cursor-ew-resize transition-colors" 
+        :class="[
+          'w-1 hover:bg-base-content/70 cursor-ew-resize transition-colors',
+          isDraggingSplitter ? 'bg-base-content/70' : 'bg-base-300'
+        ]" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
       ></div>

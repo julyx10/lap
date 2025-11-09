@@ -17,7 +17,7 @@
     <div class="py-2 px-1 gap-4 grid grid-cols-4">
       <div v-for="m in 12" 
         :key="m" 
-        class="px-2 flex items-center justify-center border-2 rounded-full text-nowrap"
+        class="px-2 text-sm flex items-center justify-center border-2 rounded-full text-nowrap"
         :class="[
           isSelected(year, m) ? 'border-primary' : 'border-transparent',
           sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/10 cursor-pointer',
