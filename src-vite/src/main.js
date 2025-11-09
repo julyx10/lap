@@ -24,13 +24,13 @@ app.use(pinia) // Use Pinia
 const config = useConfigStore() // Use the config store
 
 // apply the current appearance setting
-const theme = en.settings.general.appearance_options[config.appearance] || 'light'; // Default to light if not set
+const theme = en.settings.general.appearance_options[config.settings.appearance] || 'light'; // Default to light if not set
 document.documentElement.setAttribute('data-theme', theme);
 
 // Create the I18n instance
 const i18n = createI18n({
   legacy: false, // Disable legacy mode
-  locale: config.language, // Use language setting from config store
+  locale: config.settings.language, // Use language setting from config store
   fallbackLocale: "en",
   messages: {
     en,
@@ -59,9 +59,6 @@ listen('settings-appearance-changed', (event) => {
 })
 listen('settings-language-changed', (event) => {
   config.setLanguage(event.payload)
-})
-listen('settings-showHiddenAlbum-changed', (event) => {
-  config.setShowHiddenAlbum(event.payload)
 })
 listen('settings-showButtonText-changed', (event) => {
   config.setShowButtonText(event.payload)

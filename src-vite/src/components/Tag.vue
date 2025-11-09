@@ -143,7 +143,7 @@ async function loadTags() {
   if (tags) {
     allTags.value = tags;
     if (allTags.value.length > 0 && !selectedTag.value) {
-      const index = allTags.value.findIndex(tag => tag.id === config.tagId);
+      const index = allTags.value.findIndex(tag => tag.id === config.tag.id);
       selectTag(allTags.value[index >= 0 ? index : 0]);
     }
   }
@@ -152,7 +152,7 @@ async function loadTags() {
 function selectTag(tag) {
   if (isRenamingTag.value) return;
   selectedTag.value = tag;
-  config.tagId = tag.id;
+  config.tag.id = tag.id;
 }
 
 async function handleRenameTag() {
@@ -195,11 +195,11 @@ async function clickDeleteTag() {
           selectTag(allTags.value[0]);
         } else {
           selectedTag.value = null;
-          config.tagId = null;
+          config.tag.id = null;
         }
       } else {
         selectedTag.value = null;
-        config.tagId = null;
+        config.tag.id = null;
       }
     }
   }

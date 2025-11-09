@@ -59,7 +59,7 @@ const videoContainer = ref<HTMLDivElement | null>(null);
 const videoElement = ref<HTMLVideoElement | null>(null);
 const player = ref<ReturnType<typeof videojs> | null>(null);
 
-const videoJsLang = computed(() => (config.language === 'zh' ? 'zh-CN' : config.language));
+const videoJsLang = computed(() => (config.settings.language === 'zh' ? 'zh-CN' : config.settings.language));
 
 const hasError = ref(false);
 const errorMessage = ref('');
@@ -179,7 +179,7 @@ const setupPlayer = () => {
 
     player.value.on('loadeddata', () => {
       isSrcChanging = false;
-      isPlaying.value = config.autoPlayVideo;
+      isPlaying.value = config.settings.autoPlayVideo;
       isReplaying.value = false;
       updateTransform(true);
     });
@@ -204,7 +204,7 @@ const setupPlayer = () => {
     isPlaying.value = true;
     player.value.src(props.src);
     nextTick(() => {
-      if(config.autoPlayVideo) {
+      if(config.settings.autoPlayVideo) {
         player.value?.play();
       }
     });

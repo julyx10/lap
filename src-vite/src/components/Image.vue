@@ -33,7 +33,7 @@
     <!-- Navigator view -->
     <transition name="fade">
       <!-- nav container -->
-      <div v-if="(config.navigatorViewMode === 0 && isGrabbing) || config.navigatorViewMode === 1" 
+      <div v-if="(config.settings.navigatorViewMode === 0 && isGrabbing) || config.settings.navigatorViewMode === 1" 
         class="absolute right-4 bottom-4 outline outline-gray-50 rounded overflow-hidden shadow-lg shadow-gray-500 z-20" 
         :style="navContainerStyle"
         @wheel="handleNavBoxWheel"
@@ -146,7 +146,7 @@ let positionObserver: number | null = null;
 
 // navigator view mode
 const navContainerSize = computed(() => {
-  const max_size = config.navigatorViewSize;
+  const max_size = config.settings.navigatorViewSize;
   const aspectRatio = imageSizeRotated.value[activeImage.value].width / imageSizeRotated.value[activeImage.value].height;
   if(aspectRatio >= 1) {
     return {
@@ -417,8 +417,9 @@ const updateNavBoxDragPosition = () => {
   }
 
   if (navScale > 0) {
-    const d_pos_x = - (d_box_x / navScale);
-    const d_pos_y = - (d_box_y / navScale);
+    const mainScale = scale.value[imgIndex];
+    const d_pos_x = - (d_box_x / navScale) * mainScale;
+    const d_pos_y = - (d_box_y / navScale) * mainScale;
     
     position.value[imgIndex].x += d_pos_x;
     position.value[imgIndex].y += d_pos_y;
@@ -736,6 +737,7 @@ const updateDragPosition = () => {
 // mouse wheel zoom
 const handleImageWheel = (event: WheelEvent) => {
   event.preventDefault();
+  event.stopPropagation();
 
   // macbook touchpad
   const isTouchPad = Math.abs(event.deltaY) < 4 && event.deltaMode === 0;
@@ -751,13 +753,13 @@ const handleImageWheel = (event: WheelEvent) => {
 
   const zoomFactor = isTouchPad ? 1 : 0.1; // Adjust sensitivity
 
-  if (config.mouseWheelMode === 0) {  // 0: previous/next image
+  if (config.settings.mouseWheelMode === 0) {  // 0: previous/next image
     if (event.ctrlKey) {     // ctrl + mouse wheel: zoom in / out
       wheelZoom(event, zoomFactor);
     } else {
       emit('message-from-image-viewer', { message: event.deltaY < 0 ? 'prev' : 'next' });
     }
-  } else if (config.mouseWheelMode === 1) {  // 1: zoom in / out
+  } else if (config.settings.mouseWheelMode === 1) {  // 1: zoom in / out
     wheelZoom(event, zoomFactor);
   }
 };

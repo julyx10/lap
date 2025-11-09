@@ -3,11 +3,11 @@
   <div
     :class="[
       'relative w-screen h-screen flex flex-col overflow-hidden bg-base-300 text-base-content/70',
-      config.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
+      config.imageViewer.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
     ]"
   >
     <!-- title bar -->
-    <TitleBar v-if="!config.isFullScreen"
+    <TitleBar v-if="!config.imageViewer.isFullScreen"
       :titlebar="isWin ? `jc-photo ${localeMsg.image_viewer.title}${fileIndex >= 0 ? ` - ${fileIndex + 1}/${fileCount}` : ''}` : ''"
       viewName="ImageViewer"
     />
@@ -22,8 +22,8 @@
       <div id="responsiveDiv"
         :class="[
           'px-4 h-12 space-x-2 rounded-lg flex flex-row items-center justify-center bg-base-300',
-          config.isFullScreen && !config.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-2 group-hover:opacity-80 transition-transform duration-300 ease-in-out' : '',
-          config.isFullScreen && config.isPinned ? 'opacity-80 translate-y-2 transition-transform duration-300 ease-in-out' : ''
+          config.imageViewer.isFullScreen && !config.imageViewer.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-2 group-hover:opacity-80 transition-transform duration-300 ease-in-out' : '',
+          config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'opacity-80 translate-y-2 transition-transform duration-300 ease-in-out' : ''
         ]"
       >
         <TButton
@@ -44,7 +44,7 @@
         <TButton
           :icon="isSlideShow ? IconPause : IconPlay"
           :disabled="fileIndex < 0"
-          :tooltip="isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show') + ` (${getSlideShowInterval(config.slideShowInterval)}s)`"
+          :tooltip="isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show') + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
           @click="clickSlideShow()" 
         />
         <TButton
@@ -63,9 +63,9 @@
           @click="clickZoomIn()" 
         />
         <TButton
-          :icon="!config.isZoomFit ? IconZoomFit : IconZoomActual"
+          :icon="!config.imageViewer.isZoomFit ? IconZoomFit : IconZoomActual"
           :disabled="fileIndex < 0"
-          :tooltip="!config.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
+          :tooltip="!config.imageViewer.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
           @click="toggleZoomFit()"
         />
         <TButton
@@ -98,8 +98,8 @@
         />
 
         <TButton v-if="isWin"
-          :icon="!config.isFullScreen ? IconFullScreen : IconRestoreScreen"
-          :tooltip="!config.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
+          :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
+          :tooltip="!config.imageViewer.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
           @click="toggleFullScreen()"
         />
 
@@ -110,18 +110,18 @@
           @click.stop
         />
 
-        <TButton v-show="config.isFullScreen"
+        <TButton v-show="config.imageViewer.isFullScreen"
           :icon="IconSeparator"
           :disabled="true"
         />
 
-        <TButton v-show="config.isFullScreen"
-          :icon="config.isPinned ? IconPin : IconUnPin"
+        <TButton v-show="config.imageViewer.isFullScreen"
+          :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
           :disabled="fileIndex < 0"
-          :tooltip="!config.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
-          @click="config.isPinned = !config.isPinned"
+          :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
+          @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
         />
-        <TButton v-show="config.isFullScreen"
+        <TButton v-show="config.imageViewer.isFullScreen"
           :icon="IconClose"
           :tooltip="$t('image_viewer.toolbar.close')"
           @click="appWindow.close()"
@@ -139,7 +139,7 @@
           <div v-if="isScaleChanged" 
             :class="[
               'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-lg',
-              config.isFullScreen && config.isPinned ? 'top-20' : 'top-10'
+              config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'top-20' : 'top-10'
             ]"
           >
             <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
@@ -170,7 +170,7 @@
               ref="imageRef" 
               :src="imageSrc" 
               :rotate="fileInfo?.rotate ?? 0" 
-              :isZoomFit="config.isZoomFit"
+              :isZoomFit="config.imageViewer.isZoomFit"
               @dblclick="toggleZoomFit()"
             ></Image>
             <div v-if="loadImageError" class="h-full flex flex-col items-center justify-center text-base-content/30">
@@ -185,13 +185,13 @@
               ref="videoRef"
               :src="videoSrc"
               :rotate="fileInfo?.rotate ?? 0"
-              :isZoomFit="config.isZoomFit"
+              :isZoomFit="config.imageViewer.isZoomFit"
               @dblclick="toggleZoomFit()"
             ></Video>
           </template>
 
           <!-- comments -->
-          <div v-if="config.showComment && fileInfo?.comments?.length > 0" 
+          <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
             class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg select-text" 
           >
             <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
@@ -207,8 +207,8 @@
       </div> <!-- image container -->
 
       <!-- splitter -->
-      <div v-if="config.showFileInfo" 
-        class="w-1 mt-1 hover:bg-primary cursor-ew-resize transition-colors" 
+      <div v-if="config.imageViewer.showFileInfo" 
+        class="w-1 bg-base-200 hover:bg-primary cursor-ew-resize transition-colors" 
         @mousedown="startDragging"
       ></div>
 
@@ -221,8 +221,8 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="config.showFileInfo && fileInfo" ref="previewDiv" 
-          :style="{ width: config.fileInfoPanelWidth + '%' }"
+        <div v-if="config.imageViewer.showFileInfo && fileInfo" ref="previewDiv" 
+          :style="{ width: config.imageViewer.fileInfoPanelWidth + '%' }"
         >
           <FileInfo 
             :fileInfo="fileInfo" 
@@ -570,24 +570,24 @@ const keyActions = {
 // Handle resize event
 const handleResize = async () => {
   if(isMac) {
-    config.isFullScreen = await appWindow.isFullscreen();
-    console.log('handleFullScreenChange:', config.isFullScreen);
+    config.imageViewer.isFullScreen = await appWindow.isFullscreen();
+    console.log('handleFullScreenChange:', config.imageViewer.isFullScreen);
   }
 };
 
 /// watch appearance
-watch(() => config.appearance, (newAppearance) => {
+watch(() => config.settings.appearance, (newAppearance) => {
   setTheme(newAppearance);
 });
 
 // watch language
-watch(() => config.language, (newLanguage) => {
+watch(() => config.settings.language, (newLanguage) => {
     console.log('Language changed to:', newLanguage);
-    locale.value = newLanguage; // update locale based on config.language
+    locale.value = newLanguage; // update locale based on config.settings.language
 });
 
 // watch full screen (win only)
-watch(() => config.isFullScreen, async (newFullScreen) => {
+watch(() => config.imageViewer.isFullScreen, async (newFullScreen) => {
   if(!isWin) return;
   await appWindow.setFullscreen(newFullScreen);
   await appWindow.setResizable(!newFullScreen);
@@ -635,7 +635,7 @@ watch(() => fileIndex.value, async (newIndex) => {
   } 
 });
 
-watch(() => [isSlideShow.value, config.slideShowInterval], ([newIsSlideShow, newInterval]) => {
+watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlideShow, newInterval]) => {
   if(newIsSlideShow) {
     clearInterval(timer);
     timer = setInterval(() => {
@@ -772,12 +772,12 @@ const clickZoomActual = () => {
 };
 
 const toggleZoomFit = () => {
-  config.isZoomFit =!config.isZoomFit;
+  config.imageViewer.isZoomFit =!config.imageViewer.isZoomFit;
 };
 
 const closeWindow = () => {
-  if(config.isFullScreen) {
-    config.isFullScreen = false;
+  if(config.imageViewer.isFullScreen) {
+    config.imageViewer.isFullScreen = false;
     appWindow.setFocus();
   } else {
     appWindow.close();
@@ -825,16 +825,16 @@ const clickTrashFile = async() => {
 
 // Function to maximize the window and setup full screen
 const toggleFullScreen = () => {
-  config.isFullScreen = !config.isFullScreen;
+  config.imageViewer.isFullScreen = !config.imageViewer.isFullScreen;
 }
 
 function clickShowFileInfo() {
-  config.showFileInfo = !config.showFileInfo;
+  config.imageViewer.showFileInfo = !config.imageViewer.showFileInfo;
 }
 
 // Close the file info panel from the child component
 function closeFileInfo() {
-  config.showFileInfo = false;
+  config.imageViewer.showFileInfo = false;
 }
 
 /// Dragging the splitter
@@ -859,7 +859,7 @@ function handleMouseMove(event) {
     const leftPosition = divContentView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
 
     // Limit width between 10% and 50%
-    config.fileInfoPanelWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 50); 
+    config.imageViewer.fileInfoPanelWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 50); 
   }
 }
 

@@ -408,7 +408,7 @@ const handleEscKey = (event, folderID) => {
 
 // move folder to dest folder
 const clickMoveTo = async () => {
-  moveFolder(selectedFolderPath.value, config.dest.albumId, config.dest.folderPath).then((newPath) => {
+  moveFolder(selectedFolderPath.value, config.destFolder.albumId, config.destFolder.folderPath).then((newPath) => {
     if (newPath) {
       // remove the folder from the current folder
       let folder = getFolderById(selectedFolderId.value);
@@ -430,7 +430,7 @@ const clickMoveTo = async () => {
 
 // copy folder to dest folder
 const clickCopyTo = async () => {
-  copyFolder(selectedFolderPath.value, config.dest.folderPath).then((newPath) => {
+  copyFolder(selectedFolderPath.value, config.destFolder.folderPath).then((newPath) => {
     if (newPath) {
       // close copy-to dialog
       showCopyTo.value = false;

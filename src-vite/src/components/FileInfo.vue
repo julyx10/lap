@@ -1,8 +1,8 @@
 <template>
-  <div class="my-1 p-2 h-full w-full bg-base-200 rounded-l-lg">
+  <div class="h-full w-full bg-base-200 flex flex-col select-none">
     <!-- Title bar -->
-    <div class="h-6 flex items-center justify-between">
-      <span class="p-1 font-bold text-base-content/30 ">{{ $t('file_info.title') }}</span>
+    <div class="p-2 flex items-center justify-between">
+      <span class="p-1 font-bold">{{ $t('file_info.title') }}</span>
       <TButton
         :icon="IconClose"
         :buttonSize="'small'"
@@ -11,8 +11,8 @@
     </div>
 
     <!-- File Info table -->
-    <div class="overflow-x-hidden overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 100px)' }">
-      <table v-if="fileInfo" class="w-full text-sm text-base-content/30 border-separate border-spacing-2">
+    <div class="flex-1 pl-1 pb-2 overflow-x-hidden overflow-y-auto">
+      <table v-if="fileInfo" class="w-full text-sm border-separate border-spacing-2">
         <!-- basic file info -->
         <tbody>
           <tr>
@@ -120,9 +120,9 @@
             <td class="flex flex-row justify-between items-center gap-2 pr-2">
               {{ formatGeoLocation() }}
               <TButton v-if="fileInfo.gps_latitude && fileInfo.gps_longitude"
-                :icon="config.showMap ? IconMapDefault : IconMapOff"
+                :icon="config.imageViewer.showMap ? IconMapDefault : IconMapOff"
                 :buttonSize="'small'"
-                @click="config.showMap = !config.showMap"
+                @click="config.imageViewer.showMap = !config.imageViewer.showMap"
               />
             </td>
           </tr>
@@ -131,7 +131,7 @@
 
       <!-- Map view -->
       <transition name="fade">
-        <div class="pl-2 pr-4" v-if="config.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
+        <div class="pl-2 pr-4" v-if="config.imageViewer.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
           <MapView
             :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
             :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"

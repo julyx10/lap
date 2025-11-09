@@ -296,7 +296,7 @@ const props = defineProps({
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[config.language]);
+const localeMsg = computed(() => messages.value[config.settings.language]);
 
 const uiStore = useUIStore();
 const emit = defineEmits(['ok', 'cancel']);

@@ -15,9 +15,9 @@
           :key="index"
           :class="[
             'mb-4 px-1 border-l-2 cursor-pointer', 
-            config.settingsTabIndex === index ? 'text-base-content border-primary transition-colors duration-300' : 'border-transparent ',
+            config.settings.tabIndex === index ? 'text-base-content border-primary transition-colors duration-300' : 'border-transparent ',
           ]"
-          @click="config.settingsTabIndex = index"
+          @click="config.settings.tabIndex = index"
         >
           {{ $t(tab) }}
         </div>
@@ -26,11 +26,11 @@
       <div class="grow px-2">
 
         <!-- General tab -->
-        <section v-if="config.settingsTabIndex === 0">
+        <section v-if="config.settings.tabIndex === 0">
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
             <label for="language-select">{{ $t('settings.general.select_language') }}</label>
-            <select id="language-select" class="select" v-model="config.language">
+            <select id="language-select" class="select" v-model="config.settings.language">
               <option v-for="(lang, index) in languages" 
                 :key="index" 
                 :value="lang.value"
@@ -42,7 +42,7 @@
           <!-- Appearance -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings.general.appearance') }}</label>
-            <select id="mouse-wheel" class="select" v-model="config.appearance">
+            <select id="mouse-wheel" class="select" v-model="config.settings.appearance">
               <option 
                 v-for="(item, index) in appearanceOptions" 
                 :key="index" 
@@ -55,34 +55,34 @@
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings.general.show_button_text') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showButtonText" />
+            <input type="checkbox" class="toggle" v-model="config.settings.showButtonText" />
           </div>
           <!-- Show button tooltip -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-tool-tip" >{{ $t('settings.general.show_tool_tip') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showToolTip" />
+            <input type="checkbox" class="toggle" v-model="config.settings.showToolTip" />
           </div>
           <!-- Show status bar -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-status-bar" >{{ $t('settings.general.show_status_bar') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showStatusBar" />
+            <input type="checkbox" class="toggle" v-model="config.settings.showStatusBar" />
           </div>
           <!-- Debug Mode -->
           <!-- <div class="flex items-center justify-between mb-4">
             <label for="debug-mode" >{{ $t('settings.general.debug_mode') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.debugMode" />
+            <input type="checkbox" class="toggle" v-model="config.settings.debugMode" />
           </div> -->
 
         </section>
 
         <!-- Grid view tab -->
-        <section v-if="config.settingsTabIndex === 1">
+        <section v-if="config.settings.tabIndex === 1">
 
           <!-- Grid Size -->
           <div class="flex items-center justify-between mb-4">
             <label for="grid_size" >{{ $t('settings.grid_view.size') }}</label>
             <SliderInput 
-              v-model="config.grid.size" 
+              v-model="config.settings.grid.size" 
               :min="120" 
               :max="320" 
               :step="10" 
@@ -93,7 +93,7 @@
           <!-- Grid Scaling -->
           <div class="flex items-center justify-between mb-4">
             <label for="grid_scaling-select">{{ $t('settings.grid_view.scaling') }}</label>
-            <select id="grid_scaling-select" class="select" v-model="config.grid.scaling">
+            <select id="grid_scaling-select" class="select" v-model="config.settings.grid.scaling">
               <option v-for="(option, index) in gridScalingOptions" 
                 :key="index" 
                 :value="option.value"
@@ -106,7 +106,7 @@
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
             <label for="grid_label_primary-select">{{ $t('settings.grid_view.label_primary') }}</label>
-            <select id="grid_label_primary-select" class="select" v-model="config.grid.labelPrimary">
+            <select id="grid_label_primary-select" class="select" v-model="config.settings.grid.labelPrimary">
               <option v-for="(option, index) in gridLabelOptions" 
                 :key="index"
                 :value="option.value"
@@ -119,7 +119,7 @@
             <!-- Secondary Label -->
             <div class="flex items-center justify-between mb-4">
               <label for="grid_label_secondary-select">{{ $t('settings.grid_view.label_secondary') }}</label>
-              <select id="grid_label_secondary-select" class="select" v-model="config.grid.labelSecondary">
+              <select id="grid_label_secondary-select" class="select" v-model="config.settings.grid.labelSecondary">
                 <option v-for="(option, index) in gridLabelOptions" 
                   :key="index" 
                   :value="option.value"
@@ -131,12 +131,12 @@
         </section>
 
         <!-- Image Viewer tab -->
-        <section v-else-if="config.settingsTabIndex === 2">
+        <section v-else-if="config.settings.tabIndex === 2">
 
           <!-- Show navigator view -->
           <div class="flex items-center justify-between mb-4">
             <label for="navigator-view-mode-select" >{{ $t('settings.image_viewer.navigator_view') }}</label>
-            <select id="navigator-view-mode-select" class="select" v-model="config.navigatorViewMode">
+            <select id="navigator-view-mode-select" class="select" v-model="config.settings.navigatorViewMode">
               <option v-for="(option, index) in navigatorViewModeOptions" 
                 :key="index"
                 :value="option.value"
@@ -149,7 +149,7 @@
           <!-- Navigator view size -->
           <div class="flex items-center justify-between mb-4">
             <label for="navigator-view-size-select" >{{ $t('settings.image_viewer.navigator_view__size') }}</label>
-            <select id="navigator-view-size-select" class="select" v-model="config.navigatorViewSize">
+            <select id="navigator-view-size-select" class="select" v-model="config.settings.navigatorViewSize">
               <option v-for="(option, index) in navigatorViewSizeOptions" 
                 :key="index" 
                 :value="option.value"
@@ -162,7 +162,7 @@
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
             <label for="mouse-wheel">{{ $t('settings.image_viewer.mouse_wheel') }}</label>
-            <select id="mouse-wheel" class="select" v-model="config.mouseWheelMode">
+            <select id="mouse-wheel" class="select" v-model="config.settings.mouseWheelMode">
               <option 
                 v-for="(item, index) in wheelOptions" 
                 :key="index" 
@@ -175,9 +175,9 @@
 
           <!-- slide show interval -->
           <div class="flex items-center justify-between mb-4">
-            <label for="autoplay-interval" >{{ $t('settings.image_viewer.slide_show_interval', { second: getSlideShowInterval(config.slideShowInterval) }) }}</label>
+            <label for="autoplay-interval" >{{ $t('settings.image_viewer.slide_show_interval', { second: getSlideShowInterval(config.settings.slideShowInterval) }) }}</label>
             <SliderInput 
-              v-model="config.slideShowInterval" 
+              v-model="config.settings.slideShowInterval" 
               :min="0" 
               :max="5" 
               :step="1" 
@@ -188,18 +188,18 @@
           <!-- Auto play video -->
           <div class="flex items-center justify-between mb-4">
             <label for="auto-play-video" >{{ $t('settings.image_viewer.auto_play_video') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.autoPlayVideo" />
+            <input type="checkbox" class="toggle" v-model="config.settings.autoPlayVideo" />
           </div>
 
           <!-- Show comment -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-comment" >{{ $t('settings.image_viewer.show_comment') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.showComment" />
+            <input type="checkbox" class="toggle" v-model="config.settings.showComment" />
           </div>
         </section>
 
         <!-- About Section -->
-        <section v-else-if="config.settingsTabIndex === 3">
+        <section v-else-if="config.settings.tabIndex === 3">
 
           <div class="flex flex-col items-center justify-between mb-4">
             <!-- <label class="font-bold mb-4">jc-photo</label> -->
@@ -280,7 +280,7 @@ import SliderInput from '@/components/SliderInput.vue';
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[config.language]);
+const localeMsg = computed(() => messages.value[config.settings.language]);
 
 const appWindow = getCurrentWebviewWindow()
 
@@ -373,7 +373,7 @@ onUnmounted(() => {
 });
 
 // Handle the settings tab index change
-watch(() => config.settingsTabIndex, (newValue) => {
+watch(() => config.settings.tabIndex, (newValue) => {
   if (newValue === 3) {   // about tab
     // Get package info
     getPackageInfo().then((info) => {
@@ -397,64 +397,61 @@ watch(() => config.settingsTabIndex, (newValue) => {
 }, { immediate: true });
 
 // general settings
-watch(() => config.settingsTabIndex, (newValue) => {
+watch(() => config.settings.tabIndex, (newValue) => {
   emit('settings-settingsTabIndex-changed', newValue);
 });
-watch(() => config.appearance, (newValue) => {
+watch(() => config.settings.appearance, (newValue) => {
   setTheme(newValue);
   emit('settings-appearance-changed', newValue);
 });
-watch(() => config.language, (newValue) => {
+watch(() => config.settings.language, (newValue) => {
   locale.value = newValue;
   emit('settings-language-changed', newValue);
 });
-watch(() => config.showHiddenAlbum, (newValue) => {
-  emit('settings-showHiddenAlbum-changed', newValue);
-});
-watch(() => config.showButtonText, (newValue) => {
+watch(() => config.settings.showButtonText, (newValue) => {
   emit('settings-showButtonText-changed', newValue);
 });
-watch(() => config.showToolTip, (newValue) => {
+watch(() => config.settings.showToolTip, (newValue) => {
   emit('settings-showToolTip-changed', newValue);
 });
-watch(() => config.showStatusBar, (newValue) => {
+watch(() => config.settings.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
 });
-watch(() => config.showComment, (newValue) => {
+watch(() => config.settings.showComment, (newValue) => {
   emit('settings-showComment-changed', newValue);
 });
-watch(() => config.debugMode, (newValue) => {
+watch(() => config.settings.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);
 });
 
 // grid view settings
-watch(() => config.grid.size, debounce((newValue) => {
+watch(() => config.settings.grid.size, debounce((newValue) => {
   emit('settings-gridSize-changed', newValue);
 }, 100));
-watch(() => config.grid.scaling, (newValue) => {
+watch(() => config.settings.grid.scaling, (newValue) => {
   emit('settings-gridScaling-changed', newValue);
 });
-watch(() => config.grid.labelPrimary, (newValue) => {
+watch(() => config.settings.grid.labelPrimary, (newValue) => {
   emit('settings-gridLabelPrimary-changed', newValue);
 });
-watch(() => config.grid.labelSecondary, (newValue) => {
+watch(() => config.settings.grid.labelSecondary, (newValue) => {
   emit('settings-gridLabelSecondary-changed', newValue);
 });
 
 // image viewer settings
-watch(() => config.mouseWheelMode, (newValue) => {
+watch(() => config.settings.mouseWheelMode, (newValue) => {
   emit('settings-mouseWheelMode-changed', newValue);
 });
-watch(() => config.slideShowInterval, (newValue) => {
+watch(() => config.settings.slideShowInterval, (newValue) => {
   emit('settings-slideShowInterval-changed', newValue);
 });
-watch(() => config.navigatorViewMode, (newValue) => {
+watch(() => config.settings.navigatorViewMode, (newValue) => {
   emit('settings-navigatorViewMode-changed', newValue);
 });
-watch(() => config.navigatorViewSize, (newValue) => {
+watch(() => config.settings.navigatorViewSize, (newValue) => {
   emit('settings-navigatorViewSize-changed', newValue);
 });
-watch(() => config.autoPlayVideo, (newValue) => {
+watch(() => config.settings.autoPlayVideo, (newValue) => {
   emit('settings-autoPlayVideo-changed', newValue);
 });
 // Handle keyboard shortcuts
@@ -468,8 +465,8 @@ function handleKeyDown(event) {
 
   switch (event.key) {
     case 'Tab':
-      config.settingsTabIndex += 1;
-      config.settingsTabIndex = config.settingsTabIndex % 4; // 4 tabs
+      config.settings.tabIndex += 1;
+      config.settings.tabIndex = config.settings.tabIndex % 4; // 4 tabs
       break;
     case 'Escape':
       appWindow.close(); // Close the window

@@ -28,7 +28,7 @@
                 :buttonSize="'large'" 
                 :icon="item.icon" 
                 :text="item.text" 
-                :selected="config.sidebarIndex === index"
+                :selected="config.home.sidebarIndex === index"
                 @click="clickButton(index)"
               />
             </div>
@@ -51,17 +51,17 @@
         leave-from-class="left-pane-show"
         leave-to-class="left-pane-hide"
       >
-        <div v-show="config.sidebarIndex > 0 && showLeftPane" 
+        <div v-show="config.home.sidebarIndex > 0 && showLeftPane" 
           :class="['py-1 flex bg-base-200 left-pane overflow-hidden', { 'no-transition': isDraggingSplitter }]" 
-          :style="{ '--left-pane-width': config.leftPaneWidth + 'px' }"
+          :style="{ '--left-pane-width': config.home.leftPaneWidth + 'px' }"
         >
-          <component :is="buttons[config.sidebarIndex].component" :titlebar="buttons[config.sidebarIndex].text"/>
+          <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
         </div>
       </transition>
       
       <!-- splitter -->
-      <div v-if="config.sidebarIndex > 0" 
-        class="w-1 hover:bg-primary cursor-ew-resize transition-colors bg-base-200" 
+      <div v-if="config.home.sidebarIndex > 0" 
+        class="w-1 bg-base-300 hover:bg-primary cursor-ew-resize transition-colors" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
       ></div>
@@ -73,7 +73,7 @@
           isWin ? 'rounded-tl-lg' : '',
         ]"
       >
-        <Content :titlebar="buttons[config.sidebarIndex].text"/>
+        <Content :titlebar="buttons[config.home.sidebarIndex].text"/>
       </div>
     </div>
   </div>
@@ -185,12 +185,12 @@ function handleKeyDown(event) {
 };
 
 const clickButton = async (index) => {
-  if(config.sidebarIndex === index) {
+  if(config.home.sidebarIndex === index) {
     showLeftPane.value = !showLeftPane.value;
   } else {
     showLeftPane.value = true;
   }
-  config.sidebarIndex = index;
+  config.home.sidebarIndex = index;
 
   // await appWindow.setTitle(buttons.value[index].text);
 };
@@ -213,7 +213,7 @@ function stopDraggingSplitter() {
 function handleMouseMove(event) {
   if (isDraggingSplitter.value && divSideBar.value) {
     const toolbarWidth = divSideBar.value.offsetWidth + 1;   // 1: border width
-    config.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
+    config.home.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
   }
 }
 

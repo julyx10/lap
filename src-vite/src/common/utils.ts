@@ -83,7 +83,7 @@ export function getFileExtension(fileName: string): string {
 
 /// get the seconds of slide show interval
 export function getSlideShowInterval(): number {
-  return [1, 3, 5, 10, 15, 30][config.slideShowInterval] || 1;
+  return [1, 3, 5, 10, 15, 30][config.settings.slideShowInterval] || 1;
 }
 
 /// get days elapsed since the timestamp

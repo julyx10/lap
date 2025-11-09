@@ -12,7 +12,7 @@
     </transition>
 
     <!-- title bar -->
-    <div class="relative px-4 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between" data-tauri-drag-region>
+    <div class="relative px-2 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between" data-tauri-drag-region>
 
 
       <!-- title -->
@@ -27,7 +27,7 @@
       <div class="ml-auto h-6 flex flex-row items-center space-x-2 shrink-0">
 
         <!-- search box - filter file name -->
-        <SearchBox ref="searchBoxRef" v-model="config.searchText" @click.stop="selectMode = false" /> 
+        <SearchBox ref="searchBoxRef" v-model="config.search.text" @click.stop="selectMode = false" /> 
 
         <!-- select mode -->
         <div tabindex="-1"
@@ -54,61 +54,46 @@
         <!-- file type options -->
         <DropDownSelect
           :options="fileTypeOptions"
-          :defaultIndex="config.searchFileType"
+          :defaultIndex="config.search.fileType"
           @select="handleFileTypeSelect"
         />
 
         <!-- sort type options -->
         <DropDownSelect
           :options="sortOptions"
-          :defaultIndex="config.sortType"
+          :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
-          :defaultExtendIndex="config.sortOrder"
+          :defaultExtendIndex="config.search.sortOrder"
           @select="handleSortTypeSelect"
         />
 
-        <!-- preview -->
-        <TButton
-          :icon="config.showPreview ? IconPreview : IconPreviewOff"
-          @click="config.showPreview = !config.showPreview"
-        />
+        <div class="flex flex-row items-center">
+          <!-- grid view layout -->
+          <TButton
+            :icon="config.content.layout === 0 ? IconGrid : IconGallery"
+            @click="config.content.layout = config.content.layout === 0 ? 1 : 0"
+          />
 
+          <!-- show info -->
+          <TButton
+            :icon="IconInformation"
+            :selected="config.content.showFileInfo"
+            @click="config.content.showFileInfo = !config.content.showFileInfo"
+          />
+        </div>
       </div>
     </div>
 
-    <ProgressBar v-if="config.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+    <ProgressBar v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     <span v-else class="h-0.5 w-full"></span>
 
     <div ref="divListView" class="mt-1 flex-1 flex flex-row overflow-hidden">
       <div class="flex-1 flex flex-col">
-        <!-- grid view -->
-        <GridView ref="gridViewRef"
-          v-model:selectItemIndex="selectedItemIndex"
-          :fileList="fileList"
-          :showFolderFiles="showFolderFiles"
-          :selectMode="selectMode"
-        />
-        
-      </div>
 
-      <!-- splitter -->
-      <div v-if="config.showPreview" 
-        class="w-1 hover:bg-primary cursor-ew-resize transition-colors" 
-        @mousedown="startDragging"
-      ></div>
-
-      <!-- preview pane -->
-      <transition
-        enter-active-class="transition-transform duration-200"
-        leave-active-class="transition-transform duration-200"
-        enter-from-class="translate-x-full"
-        enter-to-class="translate-x-0"
-        leave-from-class="translate-x-0"
-        leave-to-class="translate-x-full"
-      >
-        <div v-show="config.showPreview" ref="previewDiv" 
+        <!-- preview -->
+        <div v-show="config.content.layout === 1" ref="previewDiv" 
           class="p-1 rounded-ss-lg overflow-hidden bg-base-200"
-          :style="{ width: config.previewPaneWidth + '%' }"
+          :style="{ height: config.content.galleryPaneHeight + 'px' }"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="relative w-full h-full flex items-center justify-center"
@@ -135,17 +120,6 @@
                 :isZoomFit="true"
               ></Video>
             </template>
-
-            <!-- comments -->
-            <div v-if="config.showComment && fileList[selectedItemIndex]?.comments?.length > 0" 
-              :class="[
-                'absolute flex m-2 p-2 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg',
-                fileList[selectedItemIndex]?.file_type === 2 ? 'bottom-6' : 'bottom-0'
-              ]" 
-            >
-              <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
-              {{ fileList[selectedItemIndex]?.comments }}
-            </div>
           </div>
 
           <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
@@ -153,16 +127,45 @@
             <span>{{ $t('tooltip.not_found.files') }}</span>
           </div>
         </div>
+        
+        <!-- grid view -->
+        <GridView ref="gridViewRef"
+          v-model:selectItemIndex="selectedItemIndex"
+          :fileList="fileList"
+          :showFolderFiles="showFolderFiles"
+          :selectMode="selectMode"
+        />
+        
+      </div>
+
+      <!-- splitter -->
+      <div v-if="config.content.showFileInfo" 
+        class="w-1 bg-base-200 hover:bg-primary cursor-ew-resize transition-colors" 
+        @mousedown="startDragging"
+      ></div>
+
+      <!-- file info pane -->
+      <transition
+        enter-active-class="transition-transform duration-200"
+        leave-active-class="transition-transform duration-200"
+        enter-from-class="translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-from-class="translate-x-0"
+        leave-to-class="translate-x-full"
+      >
+        <div v-if="config.content.showFileInfo" :style="{ width: config.content.fileInfoPaneWidth + '%' }">
+          <FileInfo :fileInfo="fileList[selectedItemIndex]" @close="config.content.showFileInfo = false" />
+        </div>
       </transition>
 
     </div>
 
     <!-- status bar -->
-    <div v-if="config.showStatusBar && totalFileCount > 0"
-      class="p-2 flex gap-4 text-sm text-base-content/30 cursor-default"
+    <div v-if="config.settings.showStatusBar && totalFileCount > 0"
+      class="p-2 border-t border-base-content/30 flex gap-4 text-sm cursor-default"
     >
       <div class="flex items-center gap-1 flex-shrink-0">
-        <IconGrid class="t-icon-size-xs" />
+        <IconFileSearch class="t-icon-size-xs" />
         <span >
           {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}
           {{ hasMoreFiles ? '...' : '' }}
@@ -314,6 +317,7 @@ import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
 import ImageEditor from '@/components/ImageEditor.vue';
+import FileInfo from '@/components/FileInfo.vue';
 
 import {
   IconHome,
@@ -341,7 +345,10 @@ import {
   IconPhoto,
   IconVideo,
   IconCameraAperture,
+  IconFileSearch,
+  IconGallery,
   IconGrid,
+  IconInformation,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -357,7 +364,7 @@ const uiStore = useUIStore();
 
 // title of the content 
 const contentIcon = computed(() => {
-  const index = config.sidebarIndex;
+  const index = config.home.sidebarIndex;
   
   switch (index) {
     case 0: return IconHome;
@@ -390,7 +397,7 @@ const selectedItemIndex = ref(-1);
 
 // config.favorite.folderId = 0: means favorite files
 const showFolderFiles = computed(() =>
- config.sidebarIndex === 1 || (config.sidebarIndex === 2 && config.favorite.folderId !== 0)
+ config.home.sidebarIndex === 1 || (config.home.sidebarIndex === 2 && config.favorite.folderId !== 0)
 );
 
 // mutil select mode
@@ -542,7 +549,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
   const { key } = e.payload;
   switch (key) {
     // case ' ':
-    //   config.showPreview = !config.showPreview;
+    //   config.imageViewer.showFileInfo = !config.imageViewer.showFileInfo;
     //   break;
     case 'Escape':
       if (selectMode.value) {
@@ -610,7 +617,7 @@ onMounted( async() => {
           config.album.id = selectedFile.album_id;
           config.album.folderId = selectedFile.folder_id;
           config.album.folderPath = getFolderPath(selectedFile.file_path);
-          config.sidebarIndex = 1;
+          config.home.sidebarIndex = 1;
         }
         break;
       case 'reveal':
@@ -630,7 +637,7 @@ onMounted( async() => {
         break;
       case 'next-page':
         if(hasMoreFiles.value) {
-          fileListOffset.value += config.fileListPageSize;
+          fileListOffset.value += config.content.pageSize;
         }
         break;
       default:
@@ -688,27 +695,27 @@ onUnmounted(() => {
 });
 
 /// watch appearance
-watch(() => config.appearance, (newAppearance) => {
+watch(() => config.settings.appearance, (newAppearance) => {
   setTheme(newAppearance);
 });
 
 /// watch language
-watch(() => config.language, (newLanguage) => {
-    locale.value = newLanguage; // update locale based on config.language
+watch(() => config.settings.language, (newLanguage) => {
+    locale.value = newLanguage; // update locale based on config.settings.language
     updateContent();
 });
 
 /// watch for file list changes
 watch(
   () => [
-    config.sidebarIndex,      // toolbar index
+    config.home.sidebarIndex,      // toolbar index
     config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
     config.album.id, config.album.folderId, config.album.folderPath,                 // album
-    config.tagId,                                                                 // tag
+    config.tag.id,                                                                 // tag
     config.calendar.year, config.calendar.month, config.calendar.date,               // calendar
     config.camera.make, config.camera.model,                                        // camera 
     config.location.admin1, config.location.name,                                   // location
-    config.searchText, config.searchFileType, config.sortType, config.sortOrder,  // search and sort 
+    config.search.text, config.search.fileType, config.search.sortType, config.search.sortOrder,  // search and sort 
   ], 
   () => {
     fileListOffset.value = 0;   // reset file list offset
@@ -748,7 +755,7 @@ watch(
 );
 
 // watch for show preview on/off
-watch(() => config.showPreview, (newValue) => {
+watch(() => config.imageViewer.showFileInfo, (newValue) => {
   if(newValue) {
     if(fileList.value[selectedItemIndex.value].file_type === 1) {
       getImageSrc(selectedItemIndex.value);
@@ -764,7 +771,7 @@ watch(() => config.showPreview, (newValue) => {
 
 async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 
   const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset);
-  hasMoreFiles.value = newFiles.length === config.fileListPageSize;
+  hasMoreFiles.value = newFiles.length === config.content.pageSize;
 
   if (offset === 0) {
     fileList.value = newFiles;
@@ -774,7 +781,7 @@ async function getFileList(searchFolder, startDate, endDate, make, model, locati
 }
 
 async function updateContent() {
-  const newIndex = config.sidebarIndex;
+  const newIndex = config.home.sidebarIndex;
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.home.title;
@@ -827,14 +834,14 @@ async function updateContent() {
     }
   }
   else if(newIndex === 3) {   // tag
-    if (config.tagId === null) {
+    if (config.tag.id === null) {
       contentTitle.value = "";
       fileList.value = [];
     } else {
-      const tagName = await getTagName(config.tagId);
+      const tagName = await getTagName(config.tag.id);
       if (tagName) {
         contentTitle.value = tagName;
-        await getFileList("", "", "", "", "", "", "", false, config.tagId, fileListOffset.value);
+        await getFileList("", "", "", "", "", "", "", false, config.tag.id, fileListOffset.value);
       } else {
         contentTitle.value = "";
         fileList.value = [];
@@ -886,8 +893,8 @@ async function updateContent() {
     }
   } 
 
-  if(config.searchText) {
-    contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.searchText;
+  if(config.search.text) {
+    contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.search.text;
   }
 
   refreshFileList();
@@ -943,7 +950,7 @@ const clickMoveTo = async () => {
     const moves = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
-        const movedFile = await moveFile(item.id, item.file_path, config.dest.folderId, config.dest.folderPath);
+        const movedFile = await moveFile(item.id, item.file_path, config.destFolder.folderId, config.destFolder.folderPath);
         if(movedFile) {
           console.log('clickMoveTo:', movedFile);
           removeFromFileList(fileList.value.indexOf(item));
@@ -954,7 +961,7 @@ const clickMoveTo = async () => {
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
-    const movedFile = await moveFile(file.id, file.file_path, config.dest.folderId, config.dest.folderPath);
+    const movedFile = await moveFile(file.id, file.file_path, config.destFolder.folderId, config.destFolder.folderPath);
     if(movedFile) {
       console.log('clickMoveTo:', movedFile);
       removeFromFileList(selectedItemIndex.value);
@@ -969,7 +976,7 @@ const clickCopyTo = async () => {
     const copies = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
-        const copiedFile = await copyFile(item.file_path, config.dest.folderPath);
+        const copiedFile = await copyFile(item.file_path, config.destFolder.folderPath);
         if(copiedFile) {
           console.log('clickCopyTo:', copiedFile);
         }
@@ -979,7 +986,7 @@ const clickCopyTo = async () => {
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
-    const copiedFile = await copyFile(file.file_path, config.dest.folderPath);
+    const copiedFile = await copyFile(file.file_path, config.destFolder.folderPath);
     if(copiedFile) {
       console.log('clickCopyTo:', copiedFile);
     }
@@ -1023,7 +1030,7 @@ function removeFromFileList(index) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
   // update the preview
-  if(config.showPreview && selectedItemIndex.value >= 0) {
+  if(config.imageViewer.showFileInfo && selectedItemIndex.value >= 0) {
     if(fileList.value[selectedItemIndex.value].file_type === 1) {
       getImageSrc(selectedItemIndex.value);
     } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
@@ -1059,7 +1066,7 @@ const updateFile = async (file) => {
 
 // force-update the thumbnail for the file
 const updateThumbForFile = async (file) => {
-  const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailSize, true);
+  const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, true);
   if(thumb) {
     if(thumb.error_code === 0) {
       file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
@@ -1155,13 +1162,13 @@ const handleSelectMode = (value) => {
 
 const handleFileTypeSelect = (option, extendOption) => {
   selectMode.value = false;   // exit multi-select mode
-  config.searchFileType = option;
+  config.search.fileType = option;
 };
 
 const handleSortTypeSelect = (option, extendOption) => {
   selectMode.value = false;   // exit multi-select mode
-  config.sortType = option;
-  config.sortOrder = extendOption;
+  config.search.sortType = option;
+  config.search.sortOrder = extendOption;
 };
 
 // file type options
@@ -1250,7 +1257,7 @@ function updateSelectedImage(index) {
   gridViewRef.value.scrollToItem(index); 
 
   // update the preview
-  if(config.showPreview) {
+  if(config.imageViewer.showFileInfo) {
     if(index < 0 || index >= fileList.value.length || !fileList.value[index].file_type) {
       return;
     }
@@ -1286,7 +1293,7 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
   thumbCount.value = 0;
 
   const getThumbForFile = async (file) => {
-    const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.thumbnailSize, false);
+    const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, false);
     if(thumb) {
       if(thumb.error_code === 0) {
         file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
@@ -1415,7 +1422,7 @@ function handleMouseMove(event) {
     const leftPosition = divListView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
 
     // Limit width between 20% and 80%
-    config.previewPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
+    config.content.fileInfoPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
   }
 }
 

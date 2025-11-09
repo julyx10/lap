@@ -281,10 +281,10 @@ export async function getDbCountAndSum() {
 export async function getDbFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) {
   try {
     const files = await invoke('get_db_files', {
-      searchText: config.searchText, 
-      searchFileType: config.searchFileType,
-      sortType: config.sortType,
-      sortOrder: config.sortOrder,
+      searchText: config.search.text, 
+      searchFileType: config.search.fileType,
+      sortType: config.search.sortType,
+      sortOrder: config.search.sortOrder,
       searchFolder,
       startDate, 
       endDate,
@@ -293,10 +293,10 @@ export async function getDbFiles(searchFolder, startDate, endDate, make, model, 
       locationAdmin1,
       locationName,
       isFavorite, 
-      isShowHidden: config.showHiddenAlbum,
+      isShowHidden: false,
       tagId,
       offset, 
-      pageSize: config.fileListPageSize
+      pageSize: config.content.pageSize
     });
     if(files) {
       return files;
@@ -311,10 +311,10 @@ export async function getDbFiles(searchFolder, startDate, endDate, make, model, 
 export async function getFolderFiles(folderId, folderPath) {
   try {
     let files = await invoke('get_folder_files', { 
-      searchText: config.searchText, 
-      searchFileType: config.searchFileType,
-      sortType: config.sortType,
-      sortOrder: config.sortOrder,
+      searchText: config.search.text, 
+      searchFileType: config.search.fileType,
+      sortType: config.search.sortType,
+      sortOrder: config.search.sortOrder,
       folderId, 
       folderPath, 
     });
@@ -331,8 +331,8 @@ export async function getFolderFiles(folderId, folderPath) {
 export async function getFolderThumbCount(folderId) {
   try {
     let count = await invoke('get_folder_thumb_count', { 
-      searchText: config.searchText, 
-      searchFileType: config.searchFileType,
+      searchText: config.search.text, 
+      searchFileType: config.search.fileType,
       folderId, 
     });
     if(count) {
@@ -528,10 +528,10 @@ export async function getFileHasTags(fileId) {
 // get favorite folders
 export async function getFavoriteFolders() {
   try {
-    const favoriteFolders = await invoke('get_favorite_folders', { isShowHidden: config.showHiddenAlbum });
+    const favoriteFolders = await invoke('get_favorite_folders', { isShowHidden: false });
     if (favoriteFolders) {
       // sort favorite folders by name in locale order 
-      favoriteFolders.sort((a, b) => localeComp(config.language, a.name, b.name));
+      favoriteFolders.sort((a, b) => localeComp(config.settings.language, a.name, b.name));
       return favoriteFolders;
     }
   } catch (error) {
@@ -681,7 +681,7 @@ export async function removeTagFromFile(fileId, tagId) {
 // get taken dates
 export async function getTakenDates(ascending = true) {
   try {
-    const taken_dates = await invoke('get_taken_dates', { ascending, isShowHidden: config.showHiddenAlbum });
+    const taken_dates = await invoke('get_taken_dates', { ascending, isShowHidden: false });
     if (taken_dates) {
       return taken_dates;
     }
@@ -696,7 +696,7 @@ export async function getTakenDates(ascending = true) {
 // get camera info
 export async function getCameraInfo() {
   try {
-    const cameraInfo = await invoke('get_camera_info', { isShowHidden: config.showHiddenAlbum });
+    const cameraInfo = await invoke('get_camera_info', { isShowHidden: false });
     if (cameraInfo) {
       return cameraInfo;
     }
@@ -711,7 +711,7 @@ export async function getCameraInfo() {
 // get location info
 export async function getLocationInfo() {
   try {
-    const locationInfo = await invoke('get_location_info', { isShowHidden: config.showHiddenAlbum });
+    const locationInfo = await invoke('get_location_info', { isShowHidden: false });
     if (locationInfo) {
       return locationInfo;
     }

@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full h-[300px] rounded-lg overflow-hidden">
+  <div class="relative w-full h-[300px] border border-base-content/30 rounded-lg overflow-hidden">
     <div ref="mapEl" style="width:100%; height:100%;"></div>
     <div class="absolute top-2 left-2 flex bg-base-100/20 hover:bg-base-100/50 rounded-lg z-[1000] cursor-pointer">
       <TButton
@@ -17,7 +17,7 @@
         @click="zoomCenter"
       />
       <TButton
-        :icon="config.map.theme === 0 ? IconMapDefault : IconMapSatellite"
+        :icon="config.imageViewer.mapTheme === 0 ? IconMapDefault : IconMapSatellite"
         @click="toggleMap"
       />
     </div>
@@ -75,6 +75,7 @@ let marker = null
 let map = null
 let layer = null
 let zoom = ref(props.zoom)
+let resizeObserver = null
 
 onMounted(() => {
   map = L.map(mapEl.value, {
@@ -99,12 +100,20 @@ onMounted(() => {
     shadowUrl: markerShadow
   })
 
+  resizeObserver = new ResizeObserver(() => {
+    if (map) {
+      map.invalidateSize()
+    }
+  })
+  resizeObserver.observe(mapEl.value.parentElement)
+
   updateTheme()
   updateFromProps()
 })
 
 onBeforeUnmount(() => {
   if (map) map.remove()
+  if (resizeObserver) resizeObserver.disconnect()
 })
 
 watch(() => [props.lat, props.lon, props.zoom], () => {
@@ -157,12 +166,12 @@ function zoomCenter() {
 }
 
 function toggleMap() {
-  config.map.theme = config.map.theme === 0 ? 1 : 0;
+  config.imageViewer.mapTheme = config.imageViewer.mapTheme === 0 ? 1 : 0;
   updateTheme();
 }
 
 function updateTheme() {
-  const theme = mapTheme[Number(config.map.theme)] || mapTheme[0]
+  const theme = mapTheme[Number(config.imageViewer.mapTheme)] || mapTheme[0]
   if (map) {
     if (layer) {
       map.removeLayer(layer)

@@ -1,6 +1,6 @@
 <template>
   <div ref="scrollContainer" 
-    class="mb-1 flex-1 overflow-auto focus:outline-none" 
+    class="flex-1 overflow-auto focus:outline-none" 
     :class="{ 'pointer-events-none': uiStore.inputStack.length > 0 }"
     tabindex="0" 
     @focus="isFocus = true"
@@ -10,7 +10,7 @@
   >
     <div id="gridView" 
       class="px-2 grid gap-2"
-      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.grid.size}px, 1fr))` }"
+      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` }"
     >
       <div 
         v-for="(file, index) in fileList" 
@@ -25,16 +25,16 @@
       >
         <div class="relative flex flex-col items-center group">
           <div v-if="file.thumbnail" class="relative rounded-lg overflow-hidden">
-            <IconVideoFill v-if="file.file_type===2" class="absolute w-8 h-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-base-content/30 group-hover:text-base-content/70 transition-colors duration-300"/>
+            <IconVideoFill v-if="file.file_type===2" class="absolute w-8 h-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-gray-500 group-hover:text-gray-200 transition-colors duration-300"/>
             <img :src="file.thumbnail"
               :class="[
                 'transition-all duration-300 group-hover:scale-110',
-                config.grid.scaling === 0 ? 'object-contain' : '',
-                config.grid.scaling === 1 ? 'object-cover' : '',
-                config.grid.scaling === 2 ? 'object-fill' : ''
+                config.settings.grid.scaling === 0 ? 'object-contain' : '',
+                config.settings.grid.scaling === 1 ? 'object-cover' : '',
+                config.settings.grid.scaling === 2 ? 'object-fill' : ''
               ]"
               :style="{ 
-                width: `${config.grid.size}px`, height: `${config.grid.size}px`, 
+                width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px`, 
                 transform: `rotate(${file.rotate}deg)`,
               }"
               loading="lazy"
@@ -43,10 +43,10 @@
 
           <div v-else 
             class="skeleton rounded flex items-center justify-center"
-            :style="{ width: `${config.grid.size}px`, height: `${config.grid.size}px` }"
+            :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
           > </div>
-          <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.grid.labelPrimary) }}</span>
-          <span class="text-xs text-center">{{ getGridLabelText(file, config.grid.labelSecondary) }}</span>
+          <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
+          <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
         
           <!-- status icons -->
           <div class="absolute left-1 top-1 flex items-center gap-1 text-sm text-base-content/30">

@@ -1,6 +1,6 @@
 <template>
     <div 
-      :class="[tooltip && config.showToolTip ? 'tooltip' : '', tooltipClasses]"
+      :class="[tooltip && config.settings.showToolTip ? 'tooltip' : '', tooltipClasses]"
       :data-tip="tooltip"
     >
       <button
@@ -31,7 +31,7 @@
           :style="iconStyle"
         />
         <span 
-          v-if="config.showButtonText && text.length > 0"
+          v-if="config.settings.showButtonText && text.length > 0"
           class='text-xs/2 whitespace-nowrap'
           :class="[
             textClasses,

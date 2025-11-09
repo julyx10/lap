@@ -7,7 +7,7 @@
       <!-- titlebar -->
       <div class="mb-4 flex items-center justify-between text-wrap break-all">
         {{ title }} 
-        <!-- {{ title }} {{ config.dest.folderPath? '\'' + config.dest.folderPath + '\'' : '' }} -->
+        <!-- {{ title }} {{ config.destFolder.folderPath? '\'' + config.destFolder.folderPath + '\'' : '' }} -->
         <TButton
           :icon="IconClose"
           :buttonSize="'small'"
@@ -23,9 +23,9 @@
       <!-- select album and folder -->
       <div class="border border-base-content/10 pl-1 rounded overflow-auto">
         <AlbumList ref="albumListRef" 
-          v-model:albumId="config.dest.albumId"
-          v-model:folderId="config.dest.folderId"
-          v-model:folderPath="config.dest.folderPath"
+          v-model:albumId="config.destFolder.albumId"
+          v-model:folderId="config.destFolder.folderId"
+          v-model:folderPath="config.destFolder.folderPath"
           :componentId="1"
         />
       </div>
@@ -40,7 +40,7 @@
         <button 
           :class="[
             'px-4 py-1 rounded-lg', 
-            config.dest.albumId > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default'
+            config.destFolder.albumId > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default'
           ]" 
           @click="clickOk"
         >{{ OkText }}</button>
