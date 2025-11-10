@@ -1,6 +1,6 @@
 <template>
   
-  <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-200 text-base-content/70">
+  <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70">
     <!-- Title Bar -->
     <TitleBar v-if="isWin" titlebar="jc-photo" viewName="Home"/>
 
@@ -52,7 +52,7 @@
         leave-to-class="left-pane-hide"
       >
         <div v-show="config.home.sidebarIndex > 0 && showLeftPane" 
-          :class="['py-1 flex bg-base-200 left-pane overflow-hidden', { 'no-transition': isDraggingSplitter }]" 
+          :class="['py-1 flex bg-base-200 left-pane overflow-hidden rounded-r-lg', { 'no-transition': isDraggingSplitter }]" 
           :style="{ '--left-pane-width': config.home.leftPaneWidth + 'px' }"
         >
           <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
@@ -62,8 +62,8 @@
       <!-- splitter -->
       <div v-if="config.home.sidebarIndex > 0" 
         :class="[
-          'w-1 hover:bg-base-content/70 cursor-ew-resize transition-colors',
-          isDraggingSplitter ? 'bg-base-content/70' : 'bg-base-300'
+          'w-1 hover:bg-primary cursor-ew-resize transition-colors',
+          isDraggingSplitter ? 'bg-primary' : 'bg-base-300'
         ]" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
@@ -215,7 +215,7 @@ function stopDraggingSplitter() {
 // Handle mouse move event
 function handleMouseMove(event) {
   if (isDraggingSplitter.value && divSideBar.value) {
-    const toolbarWidth = divSideBar.value.offsetWidth + 1;   // 1: border width
+    const toolbarWidth = divSideBar.value.offsetWidth + 2;   // 2: border width(2px) * 2
     config.home.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
   }
 }

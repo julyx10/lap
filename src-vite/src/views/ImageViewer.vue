@@ -132,8 +132,12 @@
     <!-- content -->
     <div ref="divContentView" class="flex h-screen overflow-hidden">
       <!-- image container -->
-      <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden select-none ">
-        
+      <div ref="viewerContainer" 
+        :class="[
+          'relative flex-1 flex justify-center items-center overflow-hidden select-none', 
+          config.imageViewer.showFileInfo ? 'rounded-r-lg' : '' 
+        ]"
+      >
         <!-- show zoom scale -->
         <!-- <transition name="fade">
           <div v-if="isScaleChanged" 
@@ -208,8 +212,8 @@
 
       <!-- splitter -->
       <div v-if="config.imageViewer.showFileInfo" 
-        :class="[ 'w-1 hover:bg-base-content/70 cursor-ew-resize transition-colors',
-          isDraggingSplitter ? 'bg-base-content/70' : 'bg-base-200'
+        :class="[ 'w-1 hover:bg-primary cursor-ew-resize transition-colors',
+          isDraggingSplitter ? 'bg-primary' : 'bg-base-300'
         ]" 
         @mousedown="startDragging"
       ></div>
@@ -857,8 +861,8 @@ function stopDragging() {
 function handleMouseMove(event) {
   // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
   if (isDraggingSplitter.value) {
-    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
-    const leftPosition = divContentView.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+    const windowWidth = document.documentElement.clientWidth - 4; // +4: border width(2px) * 2
+    const leftPosition = divContentView.value.getBoundingClientRect().left;  // -2: border width(2px)
 
     // Limit width between 10% and 50%
     config.imageViewer.fileInfoPanelWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 50); 

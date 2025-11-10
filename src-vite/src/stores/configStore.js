@@ -12,7 +12,6 @@ export const useConfigStore = defineStore('configStore', {
       layout: 0,                  // 0: grid view, 1: gallery view
       galleryPaneHeight: 200,     // gallery pane height (px)
 
-      // right pane settings
       showFileInfo: false,       // show file info pane
       fileInfoPaneWidth: 30,     // file info pane width(20-80%)
     },
@@ -22,6 +21,11 @@ export const useConfigStore = defineStore('configStore', {
       fileType: 0,          // filter file type (0: all, 1: image, 2: video)
       sortType: 0,          // sort type
       sortOrder: 0,         // sort order(0: ascending, 1: descending)
+    },
+
+    fileInfo: {
+      showMap: true,          // show map
+      mapTheme: 0,            // 0: standard, 2: satellite
     },
 
     // move/copy to... destination folder
@@ -71,8 +75,6 @@ export const useConfigStore = defineStore('configStore', {
       isPinned: true,             // pinned mode
       showFileInfo: false,        // show file info
       fileInfoPanelWidth: 20,     // file info panel width (20-80%)
-      showMap: false,             // show map
-      mapTheme: 0,                // 0: standard, 2: satellite
     },
 
     imageEditor: {
@@ -105,6 +107,9 @@ export const useConfigStore = defineStore('configStore', {
         scaling: 0,             // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
         labelPrimary: 1,        // Primary label (1: Name)
         labelSecondary: 2,      // Secondary label (2: Dimension)
+      },
+      galleryView: {
+        previewPosition: 0,      // 0: top display, 1: bottom display
       },
 
       // image viewer settings
@@ -164,7 +169,9 @@ export const useConfigStore = defineStore('configStore', {
     setGridLabelSecondary(gridLabelSecondary) {
       this.settings.grid.labelSecondary = gridLabelSecondary;
     },
-
+    setGalleryViewPreviewPosition(galleryViewPreviewPosition) {
+      this.settings.galleryView.previewPosition = galleryViewPreviewPosition;
+    },
     // image viewer settings
     setMouseWheelMode(mouseWheelMode) {
       this.settings.mouseWheelMode = mouseWheelMode;

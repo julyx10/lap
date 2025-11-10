@@ -128,6 +128,19 @@
                 </option>
               </select>
             </div>
+
+          <!-- Preview Position -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="preview_position-select">{{ $t('settings.gallery_view.preview_position') }}</label>
+            <select id="preview_position-select" class="select" v-model="config.settings.galleryView.previewPosition">
+              <option v-for="(option, index) in galleryViewPreviewPositionOptions" 
+                :key="index"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
         </section>
 
         <!-- Image Viewer tab -->
@@ -364,6 +377,18 @@ const navigatorViewSizeOptions = computed(() => {
   return result;
 });
 
+// Define the preview position options
+const galleryViewPreviewPositionOptions = computed(() => {
+  const options = localeMsg.value.settings.gallery_view.preview_position_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
@@ -436,6 +461,9 @@ watch(() => config.settings.grid.labelPrimary, (newValue) => {
 });
 watch(() => config.settings.grid.labelSecondary, (newValue) => {
   emit('settings-gridLabelSecondary-changed', newValue);
+});
+watch(() => config.settings.galleryView.previewPosition, (newValue) => {
+  emit('settings-galleryViewPreviewPosition-changed', newValue);
 });
 
 // image viewer settings

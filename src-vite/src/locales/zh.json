@@ -459,9 +459,12 @@
       "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
       "label_primary": "主标签",
       "label_secondary": "副标签",
-      "label_hover": "悬停标签",
-      "show_camera_info": "悬停显示相机信息",
       "label_options": ["(空)", "名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "相机", "镜头", "拍摄设置", "拍摄时间", "地点"]
+    },
+    "gallery_view": {
+      "title": "画廊视图",
+      "preview_position": "预览位置",
+      "preview_position_options": ["上方显示", "下方显示"]
     },
     "image_viewer": {
       "title": "图片查看器",

@@ -84,6 +84,9 @@ listen('settings-gridLabelPrimary-changed', (event) => {
 listen('settings-gridLabelSecondary-changed', (event) => {
   config.setGridLabelSecondary(event.payload)
 })
+listen('settings-galleryViewPreviewPosition-changed', (event) => {
+  config.setGalleryViewPreviewPosition(event.payload)
+})
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)
 })

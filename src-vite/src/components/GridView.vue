@@ -1,7 +1,10 @@
 <template>
   <div ref="scrollContainer" 
-    class="flex-1 overflow-auto focus:outline-none" 
-    :class="{ 'pointer-events-none': uiStore.inputStack.length > 0 }"
+    class="flex-1 bg-base-200 rounded-l-lg overflow-auto focus:outline-none" 
+    :class="{ 
+      'pointer-events-none': uiStore.inputStack.length > 0,
+      'rounded-r-lg': config.content.showFileInfo
+    }"
     tabindex="0" 
     @focus="isFocus = true"
     @blur="isFocus = false"
