@@ -17,7 +17,7 @@
         transform: `translate(${position[index].x}px, ${position[index].y}px) 
                     scale(${scale[index]}) 
                     rotate(${imageRotate[index]}deg)`,
-        transition: !isDraggingImage && !isDraggingNavBox && !noTransition ? 'transform 0.3s ease-in-out' : 'none',
+        transition: !isDraggingImage && !noTransition ? (isDraggingNavBox ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out') : 'none',
         willChange: 'transform',
       }"
       draggable="false"

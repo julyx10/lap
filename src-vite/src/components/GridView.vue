@@ -1,6 +1,6 @@
 <template>
   <div ref="scrollContainer" 
-    class="flex-1 bg-base-200 rounded-l-lg overflow-auto focus:outline-none" 
+    class="flex-1 overflow-auto focus:outline-none" 
     :class="{ 
       'pointer-events-none': uiStore.inputStack.length > 0,
       'rounded-r-lg': config.content.showFileInfo
@@ -15,76 +15,20 @@
       class="p-2 grid gap-2"
       :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` }"
     >
-      <div 
+      <!-- thumbnail -->
+      <Thumbnail
         v-for="(file, index) in fileList" 
         :key="index"
         :id="'item-' + index"
-        :class="[
-          'p-2 border-2 rounded-lg hover:bg-base-100 cursor-pointer group transition-all ease-in-out duration-300',
-          (selectMode ? file.isSelected : index === selectedIndex) ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
-        ]"
-        @click="clickItem(index)"
-        @dblclick="openItem()"
-      >
-        <div class="relative flex flex-col items-center group">
-          <div v-if="file.thumbnail" class="relative rounded-lg overflow-hidden">
-            <IconVideoFill v-if="file.file_type===2" class="absolute w-8 h-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-gray-500 group-hover:text-gray-200 transition-colors duration-300"/>
-            <img :src="file.thumbnail"
-              :class="[
-                'transition-all duration-300 group-hover:scale-110',
-                config.settings.grid.scaling === 0 ? 'object-contain' : '',
-                config.settings.grid.scaling === 1 ? 'object-cover' : '',
-                config.settings.grid.scaling === 2 ? 'object-fill' : ''
-              ]"
-              :style="{ 
-                width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px`, 
-                transform: `rotate(${file.rotate}deg)`,
-              }"
-              loading="lazy"
-            />
-          </div>
-
-          <div v-else 
-            class="skeleton rounded flex items-center justify-center"
-            :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
-          > </div>
-          <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
-          <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
-        
-          <!-- status icons -->
-          <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
-            <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
-            <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
-            <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
-            <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
-            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
-            <IconRotate v-if="file.rotate % 360 > 0"
-              class="t-icon-size-xs"
-              :style="{ 
-                transform: `rotate(${file.rotate}deg)`,
-                transition: 'transform 0.3s ease-in-out' 
-              }"
-            />
-          </div>
-
-          <!-- select checkbox or more menu -->
-          <div class="absolute right-0 top-0 flex items-center">
-            <component v-if="selectMode"
-              :is="file?.isSelected ? IconChecked : IconUnChecked" 
-              :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-gray-500']" 
-              @click.stop="selectItem(index)"
-            />
-            <DropDownMenu v-else
-              :class="[
-                index != selectedIndex ? 'invisible group-hover:visible' : ''
-              ]"
-              :iconMenu="IconMore"
-              :menuItems="moreMenuItems"
-              :smallIcon="true"
-            />
-          </div>
-        </div>
-      </div>
+        :file="file"
+        :is-selected="selectMode ? file.isSelected : index === selectedIndex"
+        :select-mode="selectMode"
+        :show-folder-files="showFolderFiles"
+        @clicked="clickItem(index)"
+        @dblclicked="openItem()"
+        @select-toggled="selectItem(index)"
+        @action="handleThumbnailAction"
+      />
     </div>
 
     <div v-if="fileList.length === 0" class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
@@ -102,30 +46,11 @@ import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { config, isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings } from '@/common/utils';
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import { config, isMac } from '@/common/utils';
+import Thumbnail from '@/components/Thumbnail.vue';
 
 import { 
-  IconMore,
-  IconView,
-  IconImageEdit,
-  IconFavorite,
-  IconUnFavorite,
-  IconTag,
-  IconRotate,
-  IconCopy,
-  IconRename,
-  IconMoveTo,
-  IconTrash,
-  IconGoto,
   IconSearch,
-  IconUpdate,
-  IconChecked,
-  IconUnChecked,
-  IconComment,
-  IconLocation,
-  IconVideoFill,
-  IconCameraAperture,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -160,132 +85,6 @@ const emitUpdate = defineEmits(['update:selectItemIndex']);
 
 const scrollContainer = ref(null); // Ref for the scrollable element
 
-const moreMenuItems = computed(() => {
-  if (selectedIndex.value < 0 || selectedIndex.value >= props.fileList.length) {
-    return [];
-  }
-
-  const file = props.fileList[selectedIndex.value];
-  return [
-    {
-      label: localeMsg.value.menu.file.view,
-      icon: IconView,
-      shortcut: isMac ? '⌘⏎' : 'Ctrl+Enter',
-      action: () => {
-        openItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.edit,
-      icon: IconImageEdit,
-      shortcut: isMac ? '⌘E' : 'Ctrl+E',
-      disabled: file.file_type !== 1,
-      action: () => {
-        editItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.copy,
-      icon: IconCopy,
-      shortcut: isMac ? '⌘C' : 'Ctrl+C',
-      disabled: file.file_type !== 1,
-      action: () => {
-        copyItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.update_from_file,
-      icon: IconUpdate,
-      action: () => {
-        updateItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.goto_album,
-      disabled: props.showFolderFiles,
-      icon: IconGoto,
-      action: () => {
-        gotoFolder();
-      }
-    },
-    {
-      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-      // icon: IconOpenFolder,
-      action: () => {
-        revealItem();
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.file.rename,
-      icon: IconRename,
-      action: () => {
-        renameItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.move_to,
-      icon: IconMoveTo,
-      action: () => {
-        moveTo();
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.copy_to,
-      // icon: IconCopyTo,
-      action: () => {
-        copyTo();
-      }
-    },
-    {
-      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
-      icon: IconTrash,
-      shortcut: isMac ? '⌘⌫' : 'Del',
-      action: () => {
-        trashItem();
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    {
-      label: file.is_favorite ? localeMsg.value.menu.meta.unfavorite : localeMsg.value.menu.meta.favorite,
-      icon: file.is_favorite ? IconUnFavorite : IconFavorite,
-      shortcut: isMac ? '⌘F' : 'Ctrl+F',
-      action: () => {
-        toggleFavorite();
-      }
-    },
-    {
-      label: localeMsg.value.menu.meta.tag,
-      icon: IconTag,
-      shortcut: isMac ? '⌘T' : 'Ctrl+T',
-      action: () => {
-        tagItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.meta.comment,
-      icon: IconComment,
-      action: () => {
-        commentItem();
-      }
-    },
-    {
-      label: localeMsg.value.menu.meta.rotate,
-      icon: IconRotate,
-      shortcut: isMac ? '⌘R' : 'Ctrl+R',
-      action: () => {
-        rotateItem();
-      }
-    }
-  ];
-});
-
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
@@ -312,6 +111,29 @@ function clickItem(index: number) {
 
   if(props.selectMode) {
     selectItem(index);
+  }
+}
+
+function handleThumbnailAction(action: string) {
+  const actionMap = {
+    'open': openItem,
+    'edit': editItem,
+    'copy': copyItem,
+    'update-from-file': updateItem,
+    'goto-folder': gotoFolder,
+    'reveal': revealItem,
+    'rename': renameItem,
+    'move-to': moveTo,
+    'copy-to': copyTo,
+    'trash': trashItem,
+    'favorite': toggleFavorite,
+    'tag': tagItem,
+    'comment': commentItem,
+    'rotate': rotateItem,
+  };
+
+  if (actionMap[action]) {
+    actionMap[action]();
   }
 }
 
@@ -435,38 +257,6 @@ function commentItem() {
 
 function nextPage() {
   emit('message-from-grid-view', { message: 'next-page' });
-};
-
-// function to get the text for the grid label
-const getGridLabelText = (file, option) => {
-  switch (option) {
-    case 0:   // empty
-      return '';
-    case 1:   // name
-      return shortenFilename(file.name);
-    case 2:   // size
-      return formatFileSize(file.size);
-    case 3:   // dimension
-      return formatDimensionText(file.width, file.height);
-    case 4:   // duration
-      return file.duration > 0 ? formatDuration(file.duration): '-';
-    case 5:   // created time
-      return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
-    case 6:   // modified time
-      return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
-    case 7:   // camera
-      return file.e_make && file.e_model ? `${file.e_model}` : '-';
-    case 8:   // lens
-      return file.e_lens_model ? `${file.e_lens_model}` : '-';
-    case 9:   // capture settings
-      return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias);
-    case 10:   // taken time
-      return file.e_date_time || '-';
-    case 11:   // location
-      return file.geo_name || '-';
-    default:
-      return '';
-  }
 };
 
 // function to handle the scroll event

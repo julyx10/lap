@@ -461,10 +461,10 @@
       "label_secondary": "セカンダリラベル", 
       "label_options": ["(空)", "名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "カメラ", "レンズ", "撮影設定", "撮影日時", "場所"]
     },
-    "gallery_view": {
-      "title": "ギャラリービュー",
-      "preview_position": "プレビュー位置",
-      "preview_position_options": ["上方表示", "下方表示"]
+    "filmstrip_view": {
+      "title": "フィルムストリップビュー",
+      "preview_position": "フィルムストリップビューのプレビュー位置",
+      "preview_position_options": ["フィルムストリップの上", "フィルムストリップの下"]
     },
     "image_viewer": {
       "title": "画像ビューア",

@@ -1,8 +1,28 @@
 <template>
-  <div class="h-full rounded-l-lg w-full bg-base-200 flex flex-col select-none">
+  <div class="h-full rounded-lg w-full bg-base-200 flex flex-col select-none">
     <!-- Title bar -->
     <div class="p-2 flex items-center justify-between">
-      <span class="p-1 font-bold">{{ $t('file_info.title') }}</span>
+      <!-- Tabs -->
+      <div role="tablist" class="tabs-sm tabs-border" >
+        <a 
+          role="tab"
+          class="tab"
+          :class="config.infoPanel.tabIndex === 0 ? 'tab-active' : ''" 
+          @click="config.infoPanel.tabIndex = 0"
+        >
+          {{ $t('info_panel.tabs[0]') }}
+        </a>
+        <a 
+          role="tab"
+          class="tab"
+          :class="config.infoPanel.tabIndex === 1 ? 'tab-active' : ''" 
+          @click="config.infoPanel.tabIndex = 1"
+        >
+          {{ $t('info_panel.tabs[1]') }}
+        </a>
+      </div>
+
+      <!-- Close button -->
       <TButton
         :icon="IconClose"
         :buttonSize="'small'"
@@ -10,8 +30,8 @@
       />
     </div>
 
-    <!-- File Info table -->
-    <div class="flex-1 pl-1 pb-2 overflow-x-hidden overflow-y-auto">
+    <!-- Info table -->
+    <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 pl-1 pb-2 overflow-x-hidden overflow-y-auto">
       <table v-if="fileInfo" class="w-full text-sm border-separate border-spacing-2">
         <!-- general file info -->
         <tbody>
@@ -78,7 +98,7 @@
         </tbody>
 
         <!-- exif info -->
-        <tbody>
+        <tbody v-if="fileInfo.file_type === 1">
           <tr>
             <td colspan="2">
               <div class="mt-2 flex items-center">
@@ -138,6 +158,27 @@
       </div>
     </div>
 
+    <!-- Preview -->
+    <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
+      class="rounded-lg overflow-hidden bg-base-200"
+    >
+      <template v-if="fileInfo?.file_type === 1">
+        <Image v-if="imageSrc"
+          :src="imageSrc" 
+          :rotate="fileInfo?.rotate ?? 0" 
+          :isZoomFit="true"
+        ></Image>
+      </template>
+
+      <template v-if="fileInfo?.file_type === 2">
+        <Video v-if="videoSrc"
+          :src="videoSrc"
+          :rotate="fileInfo?.rotate ?? 0"
+          :isZoomFit="true"
+        ></Video>
+      </template>
+    </div>
+
   </div>
 
 </template>
@@ -149,12 +190,22 @@ import { IconClose, IconFile, IconCamera, IconMapDefault, IconMapOff } from '@/c
 
 import TButton from '@/components/TButton.vue';
 import MapView from '@/components/MapView.vue';
+import Image from '@/components/Image.vue';
+import Video from '@/components/Video.vue';
 
 const props = defineProps({
   fileInfo: {
     type: Object,
     required: false
-  }
+  },
+  imageSrc: {
+    type: String,
+    required: false
+  },
+  videoSrc: {
+    type: String,
+    required: false
+  },
 });
 
 const emit = defineEmits([
@@ -162,7 +213,7 @@ const emit = defineEmits([
 ]);
 
 function formatGeoLocation() {
-  if (props.fileInfo.geo_name) {
+  if (props.fileInfo?.geo_name) {
     if (props.fileInfo.geo_admin2) {
       return `${props.fileInfo.geo_name}, ${props.fileInfo.geo_admin2}, ${props.fileInfo.geo_admin1}, ${props.fileInfo.geo_cc}`;
     }

@@ -10,7 +10,7 @@
       <div class="w-16 h-16 rounded-full bg-base-100/50 flex items-center justify-center 
                   hover:bg-base-100/80 hover:scale-110 transition-all duration-300 ease-out group">
         <component :is="isReplaying ? IconVideoReplay : IconVideoPlay"
-          class="w-8 h-8 text-base-content/50 transition-colors duration-300 group-hover:text-base-content"
+          class="w-8 h-8 text-base-content/50 transition-colors duration-300 group-hover:text-base-content/80"
         />
       </div>
     </div>
@@ -326,15 +326,12 @@ defineExpose({
   transition: transform 0.3s ease-out !important;
 }
 .video-js .vjs-control-bar {
-  z-index: 9999 !important;
   background-color: hsl(var(--b2)) !important;
 }
 .video-js .vjs-big-play-button {
-  z-index: 9999 !important;
   display: none !important;
 }
 .vjs-volume-panel {
-  z-index: 9999 !important;
   position: relative !important;
 }
 </style>

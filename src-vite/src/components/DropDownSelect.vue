@@ -20,7 +20,7 @@
     >
       <!-- menu group 1 -->
       <button v-for="(option, index) in options"
-        class="p-1 flex flex-row hover:bg-base-content/10 hover:rounded cursor-pointer text-sm whitespace-nowrap "
+        class="p-1 flex flex-row hover:bg-base-content/10 hover:rounded-lg cursor-pointer text-sm whitespace-nowrap "
         :key="index"
         @click="selectOption(index)"
       >

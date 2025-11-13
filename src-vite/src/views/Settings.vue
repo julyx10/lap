@@ -131,9 +131,9 @@
 
           <!-- Preview Position -->
           <div class="flex items-center justify-between mb-4">
-            <label for="preview_position-select">{{ $t('settings.gallery_view.preview_position') }}</label>
-            <select id="preview_position-select" class="select" v-model="config.settings.galleryView.previewPosition">
-              <option v-for="(option, index) in galleryViewPreviewPositionOptions" 
+            <label for="preview_position-select">{{ $t('settings.filmstrip_view.preview_position') }}</label>
+            <select id="preview_position-select" class="select" v-model="config.settings.filmStripView.previewPosition">
+              <option v-for="(option, index) in filmStripViewPreviewPositionOptions" 
                 :key="index"
                 :value="option.value"
               >
@@ -378,8 +378,8 @@ const navigatorViewSizeOptions = computed(() => {
 });
 
 // Define the preview position options
-const galleryViewPreviewPositionOptions = computed(() => {
-  const options = localeMsg.value.settings.gallery_view.preview_position_options;
+const filmStripViewPreviewPositionOptions = computed(() => {
+  const options = localeMsg.value.settings.filmstrip_view.preview_position_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -462,8 +462,8 @@ watch(() => config.settings.grid.labelPrimary, (newValue) => {
 watch(() => config.settings.grid.labelSecondary, (newValue) => {
   emit('settings-gridLabelSecondary-changed', newValue);
 });
-watch(() => config.settings.galleryView.previewPosition, (newValue) => {
-  emit('settings-galleryViewPreviewPosition-changed', newValue);
+watch(() => config.settings.filmStripView.previewPosition, (newValue) => {
+  emit('settings-filmStripViewPreviewPosition-changed', newValue);
 });
 
 // image viewer settings

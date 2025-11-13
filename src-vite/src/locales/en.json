@@ -461,10 +461,10 @@
       "label_secondary": "Secondary label",
       "label_options": ["(Empty)", "Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Camera", "Lens", "Capture settings", "Taken time", "Location"]
     },
-    "gallery_view": {
-      "title": "Gallery view",
-      "preview_position": "Preview position",
-      "preview_position_options": ["Top display", "Bottom display"]
+    "filmstrip_view": {
+      "title": "Filmstrip view",
+      "preview_position": "Preview position of filmstrip view",
+      "preview_position_options": ["Above filmstrip", "Below filmstrip"]
     },
     "image_viewer": {
       "title": "Image viewer",

@@ -11,7 +11,7 @@
       <div
         ref="divSideBar" 
         :class="[
-          'pb-4 z-10 bg-base-200',
+          'pb-4 rounded-r-lg z-10 bg-base-200',
           isWin ? 'pt-2' : 'pt-10'
         ]" 
         style="user-select: none; min-width: 68px;"
@@ -60,10 +60,11 @@
       </transition>
       
       <!-- splitter -->
-      <div v-if="config.home.sidebarIndex > 0" 
+      <div 
         :class="[
-          'w-1 hover:bg-primary cursor-ew-resize transition-colors',
-          isDraggingSplitter ? 'bg-primary' : 'bg-base-300'
+          'w-1 transition-colors',
+          config.home.sidebarIndex > 0 && showLeftPane ? 'hover:bg-primary cursor-ew-resize' : '',
+          config.home.sidebarIndex > 0 && showLeftPane && isDraggingSplitter ? 'bg-primary' : 'bg-base-300'
         ]" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
@@ -200,6 +201,8 @@ const clickButton = async (index) => {
 
 // Dragging the splitter
 function startDraggingSplitter(event) {
+  if(config.home.sidebarIndex <= 0 || !showLeftPane.value) return; // no left pane or left pane is hidden
+
   isDraggingSplitter.value = true;
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', stopDraggingSplitter);

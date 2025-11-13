@@ -461,10 +461,10 @@
       "label_secondary": "副标签",
       "label_options": ["(空)", "名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "相机", "镜头", "拍摄设置", "拍摄时间", "地点"]
     },
-    "gallery_view": {
-      "title": "画廊视图",
-      "preview_position": "预览位置",
-      "preview_position_options": ["上方显示", "下方显示"]
+    "filmstrip_view": {
+      "title": "胶片视图",
+      "preview_position": "胶片视图的预览位置",
+      "preview_position_options": ["胶片上方", "胶片下方"]
     },
     "image_viewer": {
       "title": "图片查看器",

@@ -9,8 +9,8 @@ export const useConfigStore = defineStore('configStore', {
 
     content: {
       pageSize: 200,              // number of files per page
-      layout: 0,                  // 0: grid view, 1: gallery view
-      galleryPaneHeight: 200,     // gallery pane height (px)
+      layout: 0,                  // 0: grid view, 1: film strip view
+      filmStripPaneHeight: 200,   // film strip pane height (px)
 
       showFileInfo: false,       // show file info pane
       fileInfoPaneWidth: 30,     // file info pane width(20-80%)
@@ -73,8 +73,6 @@ export const useConfigStore = defineStore('configStore', {
       isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
       isFullScreen: false,        // full screen mode
       isPinned: true,             // pinned mode
-      showFileInfo: false,        // show file info
-      fileInfoPanelWidth: 20,     // file info panel width (20-80%)
     },
 
     imageEditor: {
@@ -108,7 +106,7 @@ export const useConfigStore = defineStore('configStore', {
         labelPrimary: 1,        // Primary label (1: Name)
         labelSecondary: 2,      // Secondary label (2: Dimension)
       },
-      galleryView: {
+      filmStripView: {
         previewPosition: 0,      // 0: top display, 1: bottom display
       },
 
@@ -169,8 +167,8 @@ export const useConfigStore = defineStore('configStore', {
     setGridLabelSecondary(gridLabelSecondary) {
       this.settings.grid.labelSecondary = gridLabelSecondary;
     },
-    setGalleryViewPreviewPosition(galleryViewPreviewPosition) {
-      this.settings.galleryView.previewPosition = galleryViewPreviewPosition;
+    setfilmStripViewPreviewPosition(filmStripViewPreviewPosition) {
+      this.settings.filmStripView.previewPosition = filmStripViewPreviewPosition;
     },
     // image viewer settings
     setMouseWheelMode(mouseWheelMode) {
