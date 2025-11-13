@@ -1,68 +1,76 @@
 <template>
   <div
     :class="[
-      'p-2 border-2 rounded-lg hover:bg-base-100 cursor-pointer group transition-all ease-in-out duration-300',
+      'border-2 rounded-lg hover:bg-base-100 cursor-pointer group transition-all ease-in-out duration-300',
+      config.content.layout === 0 ? 'p-2' : 'w-48',
       isSelected ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
     ]"
     @click="$emit('clicked')"
     @dblclick="$emit('dblclicked')"
   >
-    <div class="relative flex flex-col items-center group">
+    <div class="flex flex-col items-center group">
       <div v-if="file.thumbnail" class="relative rounded-lg overflow-hidden">
+        <!-- thumbnail -->
         <img :src="file.thumbnail"
-          :class="[
-            'transition-all duration-300 group-hover:scale-110',
-            config.settings.grid.scaling === 0 ? 'object-contain' : '',
-            config.settings.grid.scaling === 1 ? 'object-cover' : '',
-            config.settings.grid.scaling === 2 ? 'object-fill' : ''
-          ]"
+          class="transition-all duration-300"
+          :class="{
+            'group-hover:scale-120': config.content.layout === 1,
+            'object-contain': config.settings.grid.scaling === 0,
+            'object-cover': config.settings.grid.scaling === 1,
+            'object-fill': config.settings.grid.scaling === 2,
+          }"
           :style="{ 
             width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px`, 
             transform: `rotate(${file.rotate}deg)`,
           }"
           loading="lazy"
         />
-      </div>
 
-      <div v-else 
-        class="skeleton rounded flex items-center justify-center"
-        :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
-      > </div>
-      <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
-      <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
-    
-      <!-- status icons -->
-      <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
-        <div v-if="file.file_type===2" class="text-xs border rounded-lg px-1 z-10">
-          {{ formatDuration(file.duration) }}
+        <!-- status icons -->
+        <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
+          <div v-if="file.file_type===2" class="text-xs border rounded-lg px-1 z-10">
+            {{ formatDuration(file.duration) }}
+          </div>
+          <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
+          <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
+          <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
+          <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
+          <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
+          <IconRotate v-if="file.rotate % 360 > 0"
+            class="t-icon-size-xs"
+            :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
+          />
         </div>
-        <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
-        <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
-        <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
-        <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
-        <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
-        <IconRotate v-if="file.rotate % 360 > 0"
-          class="t-icon-size-xs"
-          :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
-        />
-      </div>
 
-      <!-- select checkbox or more menu -->
-      <div class="absolute right-0 top-0 flex items-center">
-        <component v-if="selectMode"
-          :is="file?.isSelected ? IconChecked : IconUnChecked" 
-          :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-gray-500']" 
-          @click.stop="$emit('select-toggled')"
-        />
-        <DropDownMenu v-else
-          :class="[
-            !isSelected ? 'invisible group-hover:visible' : ''
-          ]"
-          :iconMenu="IconMore"
-          :menuItems="moreMenuItems"
-          :smallIcon="true"
-        />
+        <!-- select checkbox or more menu -->
+        <div class="absolute right-0 top-0 flex items-center">
+          <component v-if="selectMode"
+            :is="file?.isSelected ? IconChecked : IconUnChecked" 
+            :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-gray-500']" 
+            @click.stop="$emit('select-toggled')"
+          />
+          <DropDownMenu v-else
+            :class="[
+              !isSelected ? 'invisible group-hover:visible' : ''
+            ]"
+            :iconMenu="IconMore"
+            :menuItems="moreMenuItems"
+            :smallIcon="true"
+          />
+        </div>
       </div>
+      
+      <!-- skeleton for loading thumbnail -->
+      <div v-else 
+        class="skeleton rounded-lg flex items-center justify-center"
+        :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
+      ></div>
+
+      <!-- label -->
+      <template v-if="config.content.layout === 0">
+        <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
+        <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
+      </template>
     </div>
   </div>
 </template>
@@ -85,6 +93,7 @@ import {
   IconCopy,
   IconRename,
   IconMoveTo,
+  IconCopyTo,
   IconTrash,
   IconGoto,
   IconChecked,
@@ -178,6 +187,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.file.copy_to,
+      icon: IconCopyTo,
       action: createAction('copy-to')
     },
     {

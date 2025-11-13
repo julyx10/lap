@@ -1,33 +1,32 @@
 <template>
-  <div ref="scrollContainer" 
-    class="flex-1 overflow-auto focus:outline-none" 
+  <div
+    class="relative w-full h-full focus:outline-none" 
     :class="{ 
       'pointer-events-none': uiStore.inputStack.length > 0,
-      'rounded-r-lg': config.content.showFileInfo
     }"
     tabindex="0" 
-    @focus="isFocus = true"
-    @blur="isFocus = false"
-    @scroll="handleScroll"
-    @keydown="handleNativeKeyDown"
   >
     <div id="gridView" 
-      class="p-2 grid gap-2"
-      :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` }"
+      class="p-2 gap-2"
+      :class="{
+        'grid': config.content.layout === 0,
+        'absolute w-full h-full flex flex-nowrap items-center overflow-x-auto overflow-y-hidden': config.content.layout === 1
+      }"
+      :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` } : { }"
     >
       <!-- thumbnail -->
       <Thumbnail
-        v-for="(file, index) in fileList" 
+        v-for="(file, index) in fileList"
         :key="index"
         :id="'item-' + index"
         :file="file"
-        :is-selected="selectMode ? file.isSelected : index === selectedIndex"
+        :is-selected="selectMode ? file.isSelected : index === selectedItemIndex"
         :select-mode="selectMode"
         :show-folder-files="showFolderFiles"
-        @clicked="clickItem(index)"
-        @dblclicked="openItem()"
-        @select-toggled="selectItem(index)"
-        @action="handleThumbnailAction"
+        @clicked="$emit('item-clicked', index)"
+        @dblclicked="$emit('item-dblclicked', index)"
+        @select-toggled="$emit('item-select-toggled', index)"
+        @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
       />
     </div>
 
@@ -42,11 +41,9 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
-import { emit, listen } from '@tauri-apps/api/event';
-import { useI18n } from 'vue-i18n';
+import { watch, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
-import { config, isMac } from '@/common/utils';
+import { config } from '@/common/utils';
 import Thumbnail from '@/components/Thumbnail.vue';
 
 import { 
@@ -54,7 +51,7 @@ import {
 } from '@/common/icons';
 
 const props = defineProps({
-  selectItemIndex: {     // v-model value
+  selectedItemIndex: {
     type: Number,
     required: true,
   },
@@ -72,205 +69,21 @@ const props = defineProps({
   },
 });
 
-/// i18n
-const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+defineEmits([
+  'item-clicked',
+  'item-dblclicked',
+  'item-select-toggled',
+  'item-action',
+]);
+
 const uiStore = useUIStore();
 
-// when the grid view is focused, the keydown event is listened
-const isFocus = ref(false);
-
-const selectedIndex = ref(props.selectItemIndex);
-const emitUpdate = defineEmits(['update:selectItemIndex']);
-
-const scrollContainer = ref(null); // Ref for the scrollable element
-
-let unlistenKeydown: () => void;
-
-onMounted(async () => {
-  unlistenKeydown = await listen('global-keydown', handleKeyDown);
-});
-
-onUnmounted(() => {
-  if (unlistenKeydown) {
-    unlistenKeydown();
-  }
-});
-
-watch(() => props.selectItemIndex, (newValue) => { 
-  selectedIndex.value = newValue; 
-});
-
-watch(() => selectedIndex.value, (newValue) => {
-  emitUpdate('update:selectItemIndex', newValue);
+watch(() => props.selectedItemIndex, (newValue) => {
   scrollToItem(newValue);
 });
 
-function clickItem(index: number) {
-  selectedIndex.value = index;
-
-  if(props.selectMode) {
-    selectItem(index);
-  }
-}
-
-function handleThumbnailAction(action: string) {
-  const actionMap = {
-    'open': openItem,
-    'edit': editItem,
-    'copy': copyItem,
-    'update-from-file': updateItem,
-    'goto-folder': gotoFolder,
-    'reveal': revealItem,
-    'rename': renameItem,
-    'move-to': moveTo,
-    'copy-to': copyTo,
-    'trash': trashItem,
-    'favorite': toggleFavorite,
-    'tag': tagItem,
-    'comment': commentItem,
-    'rotate': rotateItem,
-  };
-
-  if (actionMap[action]) {
-    actionMap[action]();
-  }
-}
-
-function handleKeyDown(event) {
-  if (uiStore.inputStack.length > 0) {
-    return;
-  }
-  
-  const { key, metaKey } = event.payload;
-  const isCmdKey = isMac ? metaKey : event.payload.ctrlKey;
-
-  if (isCmdKey && key === 'Enter') {   // Open shortcut
-    openItem();
-  } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
-    copyItem();
-  } else if(isCmdKey && key.toLowerCase() === 'e') {
-    editItem();
-  } else if(isCmdKey && key.toLowerCase() === 'f') {
-    toggleFavorite();
-  } else if(isCmdKey && key.toLowerCase() === 't') {
-    tagItem();
-  } else if(isCmdKey && key.toLowerCase() === 'r') {
-    rotateItem();
-  } else if((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    trashItem();
-  } else if (keyActions[key]) {
-    keyActions[key](); 
-  }
-}
-
-function handleNativeKeyDown(event: KeyboardEvent) {
-  // Keys that we are handling manually for navigation, to prevent default browser behavior (scrolling).
-  const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', ' '];
-
-  if (handledKeys.includes(event.key)) {
-    event.preventDefault();
-  }
-}
-
-// key actions
-const keyActions = {
-  ArrowDown: ()  => selectedIndex.value = Math.min(selectedIndex.value + getColumnCount(), props.fileList.length - 1),
-  ArrowRight: () => selectedIndex.value = Math.min(selectedIndex.value + 1, props.fileList.length - 1),
-  ArrowUp: ()    => selectedIndex.value = Math.max(selectedIndex.value - getColumnCount(), 0),
-  ArrowLeft: ()  => selectedIndex.value = Math.max(selectedIndex.value - 1, 0),
-  Home: ()       => selectedIndex.value = 0,
-  End: ()        => selectedIndex.value = props.fileList.length - 1,
-  // Enter: ()      => openItem(),
-  '/': ()        => searchFile(),
-};
-
-function searchFile() {
-  emit('message-from-grid-view', { message: 'search' });
-};
-
-function selectItem(index: number) {
-  emit('message-from-grid-view', { message: 'select', index });
-};
-
-function openItem() {
-  emit('message-from-grid-view', { message: 'open' });
-};
-
-function copyItem() {
-  if (props.fileList[selectedIndex.value].file_type !== 1) {
-    return;
-  }
-  emit('message-from-grid-view', { message: 'copy' });
-};
-
-function editItem() {
-  if (props.fileList[selectedIndex.value].file_type !== 1) {
-    return;
-  }
-  emit('message-from-grid-view', { message: 'edit' });
-};
-
-function updateItem() {
-  emit('message-from-grid-view', { message: 'update-from-file' });
-}
-
-function revealItem() {
-  emit('message-from-grid-view', { message: 'reveal' });
-};
-
-function renameItem() {
-  emit('message-from-grid-view', { message: 'rename' });
-};
-
-function moveTo() {
-  emit('message-from-grid-view', { message: 'move-to' });
-};
-
-function copyTo() {
-  emit('message-from-grid-view', { message: 'copy-to' });
-};
-
-function trashItem() {
-  emit('message-from-grid-view', { message: 'trash' });
-};
-
-function gotoFolder() {
-  emit('message-from-grid-view', { message: 'goto-folder' });
-};
-
-function toggleFavorite() {
-  emit('message-from-grid-view', { message: 'favorite' });
-};
-
-function rotateItem() {
-  emit('message-from-grid-view', { message: 'rotate' });
-};
-
-function tagItem() {
-  emit('message-from-grid-view', { message: 'tag' });
-};
-
-function commentItem() {
-  emit('message-from-grid-view', { message: 'comment' });
-};
-
-function nextPage() {
-  emit('message-from-grid-view', { message: 'next-page' });
-};
-
-// function to handle the scroll event
-function handleScroll() {
-  const el = scrollContainer.value;
-
-  // scroll to the bottom of the container
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {  // -1: Small offset to handle floating point errors
-    nextPage();
-  }
-}
-
 // make the selected item always visible in a scrollable container
-function scrollToItem(index) {
+function scrollToItem(index: number) {
   nextTick(() => {
     const item = document.getElementById(`item-${index}`);
     if (item) {
@@ -283,6 +96,7 @@ function scrollToItem(index) {
 function getColumnCount() {
   // get the first element with the id 'gridView'
   const gridContainer = document.querySelector('#gridView');
+  if (!gridContainer) return 1;
 
   const computedStyle = getComputedStyle(gridContainer);
   const gridTemplateColumns = computedStyle.gridTemplateColumns;
@@ -295,6 +109,7 @@ function getColumnCount() {
 
 defineExpose({ 
   scrollToItem,
+  getColumnCount,
 });
 
 </script>

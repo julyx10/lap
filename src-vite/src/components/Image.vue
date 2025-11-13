@@ -12,6 +12,7 @@
       :src="src"
       :class="isGrabbing ? (isDraggingImage ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'"
       :style="{
+        position: 'absolute',
         minWidth:  `${imageSize[index].width}px`,
         minHeight: `${imageSize[index].height}px`,
         transform: `translate(${position[index].x}px, ${position[index].y}px) 

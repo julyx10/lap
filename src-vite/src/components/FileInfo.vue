@@ -160,7 +160,7 @@
 
     <!-- Preview -->
     <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
-      class="rounded-lg overflow-hidden bg-base-200"
+      class="flex-1 rounded-lg overflow-hidden"
     >
       <template v-if="fileInfo?.file_type === 1">
         <Image v-if="imageSrc"
@@ -184,9 +184,8 @@
 </template>
 
 <script setup lang="ts">
-
 import { config, formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
-import { IconClose, IconFile, IconCamera, IconMapDefault, IconMapOff } from '@/common/icons';
+import { IconClose, IconFile, IconCamera } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import MapView from '@/components/MapView.vue';

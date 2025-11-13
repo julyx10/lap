@@ -2,6 +2,7 @@
 
   <div class="flex-1 flex flex-col select-none"
     :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('AlbumList-edit') }"
+    @keydown="handleLocalKeyDown"
   >
 
     <!-- Loading overlay -->
@@ -12,7 +13,7 @@
     </transition>
 
     <!-- title bar -->
-    <div class="relative px-2 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between" data-tauri-drag-region>
+    <div class="px-2 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between" data-tauri-drag-region>
 
 
       <!-- title -->
@@ -71,14 +72,13 @@
           <!-- grid view layout -->
           <TButton
             :icon="config.content.layout === 0 ? IconGrid : IconGallery"
+            :iconStyle="{ transform: `rotate(${config.settings.filmStripView.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
             @click="config.content.layout = config.content.layout === 0 ? 1 : 0"
           />
-
-          <!-- show info -->
+          <!-- show info panel -->
           <TButton
-            :icon="IconInformation"
-            :selected="config.content.showFileInfo"
-            @click="config.content.showFileInfo = !config.content.showFileInfo"
+            :icon="config.infoPanel.show ? IconPreview : IconPreviewOff"
+            @click="config.infoPanel.show = !config.infoPanel.show"
           />
         </div>
       </div>
@@ -89,15 +89,49 @@
 
     <div ref="contentViewDiv" class="mt-1 flex-1 flex flex-row overflow-hidden">
 
-      <div ref="gridViewDiv" class="flex-1 flex flex-col">
+      <div ref="gridViewDiv" 
+        :class="[
+          'flex-1 flex',
+          config.settings.filmStripView.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col'
+        ]"
+      >
+        <!-- grid view -->
+        <div ref="gridScrollContainerRef" 
+          class="bg-base-200 rounded-lg" 
+          :class="{
+            'overflow-auto': config.content.layout === 0,
+            'overflow-x-auto overflow-y-hidden': config.content.layout === 1
+          }"
+          :style="{ height: config.content.layout === 0 ? '100%' : config.content.filmStripPaneHeight + 'px' }" 
+          @scroll="handleScroll"
+        >
+          <GridView ref="gridViewRef"
+            :selected-item-index="selectedItemIndex"
+            :fileList="fileList"
+            :showFolderFiles="showFolderFiles"
+            :selectMode="selectMode"
+            @item-clicked="handleItemClicked"
+            @item-dblclicked="handleItemDblClicked"
+            @item-select-toggled="handleItemSelectToggled"
+            @item-action="handleItemAction"
+          />
+        </div>
+
+        <!-- splitter -->
+        <div v-if="config.content.layout === 1" 
+          :class="[ 
+            'h-1 hover:bg-primary cursor-ns-resize transition-colors',
+            isDraggingfilmStripView ? 'bg-primary' : 'bg-base-300'
+          ]" 
+          @mousedown="startDraggingfilmStripView"
+        ></div>
+
         <!-- preview -->
         <div v-show="config.content.layout === 1" ref="previewDiv" 
-          class="p-1 rounded-ss-lg overflow-hidden bg-base-200"
-          :style="{ height: (gridViewDiv?.clientHeight - config.content.galleryPaneHeight) + 'px' }"
+          class="flex-1 rounded-lg overflow-hidden bg-base-200"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
-            class="relative w-full h-full flex items-center justify-center"
-            :style="{ width: previewPaneSize.width + 'px', height: previewPaneSize.height + 'px' }"
+            class="w-full h-full flex items-center justify-center"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
             <template v-if="fileList[selectedItemIndex]?.file_type === 1">
@@ -122,40 +156,24 @@
             </template>
           </div>
 
-          <div v-else class="h-full flex flex-col items-center justify-center text-base-content/30">
+          <!-- <div v-else class="flex flex-col items-center justify-center text-base-content/30">
             <IconSearch class="w-8 h-8" />
             <span>{{ $t('tooltip.not_found.files') }}</span>
-          </div>
-        </div>
+          </div> -->
+        </div> <!-- preview -->
 
-        <!-- gallery view splitter -->
-        <div v-if="config.content.layout === 1" 
-          :class="[ 
-            'h-1 hover:bg-base-content/70 cursor-ns-resize transition-colors',
-            isDraggingGalleryView ? 'bg-base-content/70' : 'bg-base-200'
-          ]" 
-          @mousedown="startDraggingGalleryView"
-        ></div>
+      </div> <!-- grid view -->
 
-        <!-- grid view -->
-        <GridView ref="gridViewRef"
-          v-model:selectItemIndex="selectedItemIndex"
-          :fileList="fileList"
-          :showFolderFiles="showFolderFiles"
-          :selectMode="selectMode"
-        />
-      </div>
-
-      <!-- file info splitter -->
-      <div v-if="config.content.showFileInfo" 
+      <!-- info panel splitter -->
+      <div v-if="config.infoPanel.show" 
         :class="[
-          'w-1 hover:bg-base-content/70 cursor-ew-resize transition-colors', 
-          isDraggingFileInfo ? 'bg-base-content/70' : 'bg-base-200'
+          'w-1 hover:bg-primary cursor-ew-resize transition-colors', 
+          isDraggingInfoPanel ? 'bg-primary' : 'bg-base-300'
         ]" 
-        @mousedown="startDraggingFileInfoSplitter"
+        @mousedown="startDraggingInfoPanelSplitter"
       ></div>
 
-      <!-- file info pane -->
+      <!-- info panel -->
       <transition
         enter-active-class="transition-transform duration-200"
         leave-active-class="transition-transform duration-200"
@@ -164,16 +182,20 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="config.content.showFileInfo" :style="{ width: config.content.fileInfoPaneWidth + '%' }">
-          <FileInfo :fileInfo="fileList[selectedItemIndex]" @close="config.content.showFileInfo = false" />
+        <div v-if="config.infoPanel.show" :style="{ width: config.infoPanel.width + '%' }">
+          <FileInfo 
+            :fileInfo="fileList[selectedItemIndex]" 
+            :imageSrc="imageSrc" 
+            :videoSrc="videoSrc" 
+            @close="config.infoPanel.show = false" 
+          />
         </div>
       </transition>
-
     </div>
 
     <!-- status bar -->
-    <div v-if="config.settings.showStatusBar && totalFileCount > 0"
-      class="p-2 border-t border-base-content/30 flex gap-4 text-sm cursor-default"
+    <div v-if="config.settings.showStatusBar"
+      class="p-2 flex gap-4 text-sm cursor-default"
     >
       <div class="flex items-center gap-1 flex-shrink-0">
         <IconFileSearch class="t-icon-size-xs" />
@@ -310,7 +332,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
-         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile} from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile } from '@/common/api';  
 import { config, isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getAssetSrc, getSelectOptions, shortenFilename, formatDimensionText, formatCaptureSettings } from '@/common/utils';
@@ -417,17 +439,17 @@ const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
 
-// gallery view splitter
-const isDraggingGalleryView = ref(false);      // dragging splitter to resize gallery view
-const previewDiv = ref(null);
-const previewPaneSize = ref({ width: 100, height: 100 });
+// film strip view splitter
+const isDraggingfilmStripView = ref(false);      // dragging splitter to resize film strip view
+// const previewDiv = ref(null);
+// const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
 const videoSrc = ref('');         // preview video source
 const videoRef = ref(null);       // preview video reference
 const loadImageError = ref(false);   // Track if there was an error loading the image
 
-// file info splitter
-const isDraggingFileInfo = ref(false);
+// info panel splitter
+const isDraggingInfoPanel = ref(false);
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
@@ -560,105 +582,158 @@ const moreMenuItems = computed(() => {
   return items;
 });
 
-const handleKeyDown = (e: KeyboardEvent) => {
-  const { key } = e.payload;
-  switch (key) {
-    // case ' ':
-    //   config.imageViewer.showFileInfo = !config.imageViewer.showFileInfo;
-    //   break;
-    case 'Escape':
-      if (selectMode.value) {
-        handleSelectMode(false);
+// New event handlers for GridView
+function handleItemClicked(index: number) {
+  selectedItemIndex.value = index;
+  if (selectMode.value) {
+    fileList.value[index].isSelected = !fileList.value[index].isSelected;
+  }
+}
+
+function handleItemDblClicked(index: number) {
+  selectedItemIndex.value = index;
+  openImageViewer(index, true);
+}
+
+function handleItemSelectToggled(index: number) {
+  fileList.value[index].isSelected = !fileList.value[index].isSelected;
+}
+
+function handleItemAction(payload: { action: string, index: number }) {
+  const { action, index } = payload;
+  selectedItemIndex.value = index; // Ensure the item for the action is selected
+
+  const actionMap = {
+    'open': () => openImageViewer(selectedItemIndex.value, true),
+    'edit': () => showImageEditor.value = true,
+    'copy': () => clickCopyImage(fileList.value[selectedItemIndex.value].file_path),
+    'update-from-file': () => updateFile(fileList.value[selectedItemIndex.value]),
+    'rename': () => {
+      renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
+      showRenameMsgbox.value = true;
+    },
+    'move-to': () => showMoveTo.value = true,
+    'copy-to': () => showCopyTo.value = true,
+    'trash': () => showTrashMsgbox.value = true,
+    'goto-folder': () => {
+      const selectedFile = fileList.value[selectedItemIndex.value];
+      if (selectedFile) {
+        config.album.id = selectedFile.album_id;
+        config.album.folderId = selectedFile.folder_id;
+        config.album.folderPath = getFolderPath(selectedFile.file_path);
+        config.home.sidebarIndex = 1;
       }
-      break;
+    },
+    'reveal': () => revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path)),
+    'favorite': toggleFavorite,
+    'rotate': clickRotate,
+    'tag': clickTag,
+    'comment': () => showCommentMsgbox.value = true,
+  };
+
+  if (actionMap[action]) {
+    actionMap[action]();
+  }
+}
+
+const gridScrollContainerRef = ref(null);
+
+function handleScroll() {
+  const el = gridScrollContainerRef.value;
+  if (!el) return;
+
+  // scroll to the bottom of the container
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
+    handleNextPage();
+  }
+}
+
+function handleNextPage() {
+  if (hasMoreFiles.value) {
+    fileListOffset.value += config.content.pageSize;
+  }
+}
+
+// Keyboard navigation actions
+const keyActions = {
+  ArrowDown: () => {
+    if (gridViewRef.value) {
+      selectedItemIndex.value = Math.min(selectedItemIndex.value + gridViewRef.value.getColumnCount(), fileList.value.length - 1);
+    }
+  },
+  ArrowRight: () => selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1),
+  ArrowUp: () => {
+    if (gridViewRef.value) {
+      selectedItemIndex.value = Math.max(selectedItemIndex.value - gridViewRef.value.getColumnCount(), 0);
+    }
+  },
+  ArrowLeft: () => selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0),
+  Home: () => selectedItemIndex.value = 0,
+  End: () => selectedItemIndex.value = fileList.value.length - 1,
+  '/': () => searchBoxRef.value.focusInput(),
+};
+
+// Local keydown handler for navigation (prevents default browser behavior)
+function handleLocalKeyDown(event: KeyboardEvent) {
+  // Keys that we are handling manually for navigation, to prevent default browser behavior (scrolling).
+  const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', ' '];
+
+  if (handledKeys.includes(event.key)) {
+    event.preventDefault();
+  }
+}
+
+// Global keydown handler (from Tauri)
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (uiStore.inputStack.length > 0) {
+    return;
+  }
+
+  const { key, metaKey } = e.payload;
+  const isCmdKey = isMac ? metaKey : e.payload.ctrlKey;
+
+  if (isCmdKey && key === 'Enter') {   // Open shortcut
+    openImageViewer(selectedItemIndex.value, true);
+  } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
+    clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
+  } else if (isCmdKey && key.toLowerCase() === 'e') {
+    showImageEditor.value = true;
+  } else if (isCmdKey && key.toLowerCase() === 'f') {
+    toggleFavorite();
+  } else if (isCmdKey && key.toLowerCase() === 't') {
+    clickTag();
+  } else if (isCmdKey && key.toLowerCase() === 'r') {
+    clickRotate();
+  } else if ((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
+    showTrashMsgbox.value = true;
+  } else if (keyActions[key]) {
+    keyActions[key]();
+  } else if (key === 'Escape') {
+    if (selectMode.value) {
+      handleSelectMode(false);
+    }
   }
 };
 
 onMounted( async() => {
   // FIXME: ResizeObserver loop completed with undelivered notifications.
-  resizeObserver = new ResizeObserver(entries => {
-    for (let entry of entries) {
-      previewPaneSize.value = {
-        width: entry.contentRect.width,
-        height: entry.contentRect.height,
-      };
-    }
-  });
+  // resizeObserver = new ResizeObserver(entries => {
+  //   for (let entry of entries) {
+  //     previewPaneSize.value = {
+  //       width: entry.contentRect.width,
+  //       height: entry.contentRect.height,
+  //     };
+  //   }
+  // });
 
-  if (previewDiv.value) {
-    // Observe preview pane size changes
-    resizeObserver.observe(previewDiv.value);
-  }
+  // if (previewDiv.value) {
+  //   // Observe preview pane size changes
+  //   resizeObserver.observe(previewDiv.value);
+  // }
 
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
-  unlistenGridView = await listen('message-from-grid-view', (event) => {
-    const { message } = event.payload;
-    switch (message) {
-      case 'search':
-        searchBoxRef.value.focusInput();
-        break;
-      case 'select':
-        fileList.value[event.payload.index].isSelected = !fileList.value[event.payload.index].isSelected;
-        break;
-      case 'open':
-        openImageViewer(selectedItemIndex.value, true);
-        break;
-      case 'copy': // copy image to clipboard
-        clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
-        break;
-      case 'edit':
-        showImageEditor.value = true;
-        break;
-      case 'update-from-file':
-        updateFile(fileList.value[selectedItemIndex.value]);
-        break;
-      case 'rename':
-        renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
-        showRenameMsgbox.value = true;
-        break;
-      case 'move-to':
-        showMoveTo.value = true;
-        break;
-      case 'copy-to':
-        showCopyTo.value = true;
-        break;
-      case 'trash':
-        showTrashMsgbox.value = true;
-        break;
-      case 'goto-folder':
-        const selectedFile = fileList.value[selectedItemIndex.value];
-        if (selectedFile) {
-          config.album.id = selectedFile.album_id;
-          config.album.folderId = selectedFile.folder_id;
-          config.album.folderPath = getFolderPath(selectedFile.file_path);
-          config.home.sidebarIndex = 1;
-        }
-        break;
-      case 'reveal':
-        revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path));
-        break;
-      case 'favorite':
-        toggleFavorite();
-        break;
-      case 'rotate':
-        clickRotate();
-        break;
-      case 'tag':
-        clickTag();
-        break;
-      case 'comment':
-        showCommentMsgbox.value = true;
-        break;
-      case 'next-page':
-        if(hasMoreFiles.value) {
-          fileListOffset.value += config.content.pageSize;
-        }
-        break;
-      default:
-        break;
-    }
-  });
+
 
   unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
     const { message } = event.payload;
@@ -695,7 +770,6 @@ onMounted( async() => {
 
 onBeforeUnmount(() => {
   // unlisten
-  unlistenGridView();
   unlistenImageViewer();
   if (unlistenKeydown) {
     unlistenKeydown();
@@ -703,10 +777,10 @@ onBeforeUnmount(() => {
 });
 
 onUnmounted(() => {
-  if (resizeObserver && previewDiv.value) {
-    resizeObserver.unobserve(previewDiv.value);
-    resizeObserver.disconnect();
-  }
+  // if (resizeObserver && previewDiv.value) {
+  //   resizeObserver.unobserve(previewDiv.value);
+  //   resizeObserver.disconnect();
+  // }
 });
 
 /// watch appearance
@@ -770,18 +844,11 @@ watch(
 );
 
 // watch for show preview on/off
-watch(() => config.content.layout, (newValue) => {
-  if(newValue === 1) {
-    if(fileList.value[selectedItemIndex.value].file_type === 1) {
-      getImageSrc(selectedItemIndex.value);
-    } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
-      getVideoSrc(selectedItemIndex.value);
-    }
-  } else {
-    imageSrc.value = '';
-    videoSrc.value = '';
+watch(() => [config.content.layout, config.infoPanel.show, config.infoPanel.tabIndex], () => {
+  if (gridViewRef.value) {
+    gridViewRef.value.scrollToItem(selectedItemIndex.value); 
   }
-  gridViewRef.value.scrollToItem(selectedItemIndex.value); 
+  updatePreview(selectedItemIndex.value);
 });
 
 async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 
@@ -1045,13 +1112,7 @@ function removeFromFileList(index) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
   // update the preview
-  if(config.content.layout === 1 && selectedItemIndex.value >= 0) {
-    if(fileList.value[selectedItemIndex.value].file_type === 1) {
-      getImageSrc(selectedItemIndex.value);
-    } else if(fileList.value[selectedItemIndex.value].file_type === 2) {
-      getVideoSrc(selectedItemIndex.value);
-    }
-  }
+  updatePreview(selectedItemIndex.value);
 }
 
 // update the file info from the file
@@ -1267,24 +1328,38 @@ function refreshFileList() {
 }
 
 // update image when the select file is changed
-function updateSelectedImage(index) {
-  // scroll to the selected item
-  gridViewRef.value.scrollToItem(index); 
+async function updateSelectedImage(index) {
+  if(index < 0 || index >= fileList.value.length) return;
 
-  // update the preview
-  if(config.content.layout === 1) {
-    if(index < 0 || index >= fileList.value.length || !fileList.value[index].file_type) {
-      return;
-    }
+  // scroll to the selected item
+  if (gridViewRef.value) {
+    gridViewRef.value.scrollToItem(index); 
+  }
+
+  // update the tags for the selected file
+  if(config.infoPanel.show && fileList.value[index].has_tags) {
+    fileList.value[index].tags = await getTagsForFile(fileList.value[index].id);
+  }
+
+  // update preview
+  updatePreview(index);
+
+  // update image viewer if the viewer is open
+  openImageViewer(index, false);
+}
+
+function updatePreview(index: number) {
+  if(config.content.layout === 1 || (config.infoPanel.show && config.infoPanel.tabIndex === 1)) {
     if(fileList.value[index].file_type === 1) {
       getImageSrc(index);
     } else if(fileList.value[index].file_type === 2) {
       getVideoSrc(index);
     }
   }
-
-  // update image viewer if the viewer is open
-  openImageViewer(index, false);
+  else {
+    imageSrc.value = '';
+    videoSrc.value = '';
+  }
 }
 
 // click ok in tagging dialog
@@ -1415,44 +1490,51 @@ async function openImageViewer(index: number, newViewer = false) {
   }
 }
 
-/// Dragging the gallery view splitter
-function startDraggingGalleryView(event: MouseEvent) {
-  isDraggingGalleryView.value = true;
+/// Dragging the film strip view splitter
+function startDraggingfilmStripView(event: MouseEvent) {
+  isDraggingfilmStripView.value = true;
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', stopDragging);
 }
 
-/// Dragging the file info splitter
-function startDraggingFileInfoSplitter(event: MouseEvent) {
-  isDraggingFileInfo.value = true;
+/// Dragging the info panel splitter
+function startDraggingInfoPanelSplitter(event: MouseEvent) {
+  isDraggingInfoPanel.value = true;
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', stopDragging);
 }
 
 /// handle mouse move event
 function handleMouseMove(event: MouseEvent) {
-  if (isDraggingFileInfo.value) {
-    const windowWidth = document.documentElement.clientWidth - 4; // -4: border width(2px) * 2
-    const leftPosition = contentViewDiv.value.getBoundingClientRect().left - 2;  // -2: border width(2px)
+  if (!contentViewDiv.value || !gridViewDiv.value) {
+    return;
+  }
+  if (isDraggingInfoPanel.value) {
+    const contentViewWidth = contentViewDiv.value.clientWidth;
+    const newWidth = contentViewDiv.value.getBoundingClientRect().right - event.clientX - 2; // -2: border width(2px)
+    const newWidthPercent = (newWidth * 100) / contentViewWidth;
 
     // Limit width between 20% and 80%
-    config.content.fileInfoPaneWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 20), 80); 
-  } else if(isDraggingGalleryView.value) {
+    config.infoPanel.width = Math.min(Math.max(newWidthPercent, 20), 80);
+  } else if(isDraggingfilmStripView.value) {
     const gridViewDivRect = gridViewDiv.value.getBoundingClientRect();
-    const newHeight = gridViewDivRect.bottom - event.clientY;
+    const newHeight = 
+      config.settings.filmStripView.previewPosition === 0 ? 
+        gridViewDivRect.bottom - event.clientY -2 :
+        event.clientY - gridViewDivRect.top - 2; // -2: border width(2px)
     
     const totalHeight = gridViewDiv.value.clientHeight;
-    const minHeight = totalHeight * 0.2;
-    const maxHeight = totalHeight * 0.8;
+    const minHeight = totalHeight * 0.1;
+    const maxHeight = totalHeight * 0.5;
 
-    config.content.galleryPaneHeight = Math.min(Math.max(newHeight, minHeight), maxHeight);
+    config.content.filmStripPaneHeight = Math.min(Math.max(newHeight, minHeight), maxHeight);
   }
 }
 
 /// stop dragging the splitter
 function stopDragging() {
-  isDraggingGalleryView.value = false;
-  isDraggingFileInfo.value = false;
+  isDraggingfilmStripView.value = false;
+  isDraggingInfoPanel.value = false;
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', stopDragging);
 }
