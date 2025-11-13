@@ -74,6 +74,7 @@ export const useConfigStore = defineStore('configStore', {
 
     imageViewer: {
       isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
+      isLocked: false,            // true: locked mode; false: unlocked mode (image will not be updated)
       isFullScreen: false,        // full screen mode
       isPinned: true,             // pinned mode
     },
@@ -94,8 +95,10 @@ export const useConfigStore = defineStore('configStore', {
       tabIndex: 0,               // settings tab index (0: general, 1: grid view, 2: image viewer, 3: about)
 
       // general settings
-      appearance: 1,              // 0: light; 1: dark
       language: 'en',             // default language
+      appearance: 1,              // appearance (0: light; 1: dark)
+      lightTheme: 0,              // light theme color index
+      darkTheme: 0,               // dark theme color index
       showButtonText: true,       // show button text
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
@@ -132,6 +135,12 @@ export const useConfigStore = defineStore('configStore', {
     // general settings
     setAppearance(appearance) {
       this.settings.appearance = appearance;
+    },
+    setLightTheme(lightTheme) {
+      this.settings.lightTheme = lightTheme;
+    },
+    setDarkTheme(darkTheme) {
+      this.settings.darkTheme = darkTheme;
     },
     setLanguage(language) {
       this.settings.language = language;

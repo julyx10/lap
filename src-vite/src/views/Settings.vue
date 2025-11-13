@@ -52,6 +52,18 @@
               </option>
             </select>
           </div>
+          <!-- Theme -->
+          <div class="flex items-center justify-between mb-4">
+            <label for="theme-select">{{ $t('settings.general.theme') }}</label>
+            <select id="theme-select" class="select" v-model="currentTheme">
+              <option v-for="(option, index) in themeOptions" 
+                :key="index" 
+                :value="option.value" 
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label for="show-button-text" >{{ $t('settings.general.show_button_text') }}</label>
@@ -320,6 +332,28 @@ const appearanceOptions = computed(() => {
   }));
 });
 
+// Define the theme options
+const themeOptions = computed(() => {
+  const options = config.settings.appearance === 0 
+    ? localeMsg.value.settings.general.theme_options_light 
+    : localeMsg.value.settings.general.theme_options_dark;
+
+  const result = [];
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+  return result;
+});
+
+const currentTheme = computed({
+  get() {
+    return config.settings.appearance === 0 ? config.settings.lightTheme : config.settings.darkTheme;
+  },
+  set(value) {
+    config.settings.appearance === 0 ? config.settings.lightTheme = value : config.settings.darkTheme = value;
+  }
+});
+
 // Define the wheel options using computed to react to language changes
 const wheelOptions = computed(() => {
   const options = localeMsg.value.settings.image_viewer.mouse_wheel_options; // returns an array
@@ -426,8 +460,16 @@ watch(() => config.settings.tabIndex, (newValue) => {
   emit('settings-settingsTabIndex-changed', newValue);
 });
 watch(() => config.settings.appearance, (newValue) => {
-  setTheme(newValue);
+  setTheme(newValue, newValue === 0 ? config.settings.lightTheme : config.settings.darkTheme);
   emit('settings-appearance-changed', newValue);
+});
+watch(() => config.settings.lightTheme, (newValue) => {
+  setTheme(config.settings.appearance, newValue);
+  emit('settings-lightTheme-changed', newValue);
+});
+watch(() => config.settings.darkTheme, (newValue) => {
+  setTheme(config.settings.appearance, newValue);
+  emit('settings-darkTheme-changed', newValue);
 });
 watch(() => config.settings.language, (newValue) => {
   locale.value = newValue;

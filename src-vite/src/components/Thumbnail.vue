@@ -20,7 +20,7 @@
             'object-fill': config.settings.grid.scaling === 2,
           }"
           :style="{ 
-            width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px`, 
+            ...layoutStyle,
             transform: `rotate(${file.rotate}deg)`,
           }"
           loading="lazy"
@@ -28,18 +28,22 @@
 
         <!-- status icons -->
         <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
+          <!-- video duration -->
           <div v-if="file.file_type===2" class="text-xs border rounded-lg px-1 z-10">
             {{ formatDuration(file.duration) }}
           </div>
-          <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
-          <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
-          <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
-          <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
-          <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
-          <IconRotate v-if="file.rotate % 360 > 0"
-            class="t-icon-size-xs"
-            :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
-          />
+          <!-- status icons -->
+          <template v-if="config.content.layout === 0">
+            <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
+            <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
+            <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
+            <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
+            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
+            <IconRotate v-if="file.rotate % 360 > 0"
+              class="t-icon-size-xs"
+              :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
+            />
+          </template>
         </div>
 
         <!-- select checkbox or more menu -->
@@ -129,6 +133,23 @@ const emit = defineEmits([
     'select-toggled', 
     'action'
 ]);
+
+const layoutStyle = computed(() => {
+  if (config.content.layout === 0) {
+    return {
+      width: config.settings.grid.size + 'px',
+      height: config.settings.grid.size + 'px'
+    }
+  }
+  else if (config.content.layout === 1) {
+    return {
+      maxWidth: (config.content.filmStripPaneHeight - 20) + 'px',
+      maxHeight: (config.content.filmStripPaneHeight - 20) + 'px',
+      width: config.settings.grid.size + 'px',
+      height: config.settings.grid.size + 'px'
+    }
+  }
+})
 
 const uiStore = useUIStore();
 const { locale, messages } = useI18n();

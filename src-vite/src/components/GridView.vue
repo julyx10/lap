@@ -7,9 +7,9 @@
     tabindex="0" 
   >
     <div id="gridView" 
-      class="p-2 gap-2"
+      class="p-2 "
       :class="{
-        'grid': config.content.layout === 0,
+        'grid gap-2': config.content.layout === 0,
         'absolute w-full h-full flex flex-nowrap items-center overflow-x-auto overflow-y-hidden': config.content.layout === 1
       }"
       :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` } : { }"

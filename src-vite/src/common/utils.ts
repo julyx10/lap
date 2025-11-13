@@ -25,45 +25,46 @@ export const isWin = getOS() === 'win';
 export const separator = isWin ? '\\' : '/';
 
 /// set the theme
-export function setTheme(themeId: number) {
+export function setTheme(appearance: number, themeId: number) {
   const htmlElement = document.documentElement;
-  const theme = [
-    'light', 
-    'dark', 
-    'cupcake',
-    'bumblebee',
-    'emerald',
-    'corporate',
-    'synthwave',
-    'retro',
-    'cyberpunk',
-    'valentine',
-    'halloween',
-    'garden',
-    'forest',
-    'aqua',
-    'lofi',
-    'pastel',
-    'fantasy',
-    'wireframe',
-    'black',
-    'luxury',
-    'dracula',
-    'cmyk',
-    'autumn',
-    'business',
-    'acid',
-    'lemonade',
-    'night',
-    'coffee',
-    'winter',
-    'dim',
-    'nord',
-    'sunset',
-    'caramellatte',
-    'abyss',
-    'silk',
-  ][themeId] || 'light';
+  const theme = appearance === 0 ? [
+    "light",
+    "cupcake",
+    "bumblebee",
+    "emerald",
+    "corporate",
+    "retro",
+    "cyberpunk",
+    "valentine",
+    "garden",
+    "lofi",
+    "pastel",
+    "fantasy",
+    "wireframe",
+    "cmyk",
+    "autumn",
+    "acid",
+    "lemonade",
+    "winter",
+    "nord",
+    "caramellatte",
+    "silk"
+  ][themeId] || 'light' : [
+    "dark",
+    "synthwave",
+    "halloween",
+    "forest",
+    "aqua",
+    "black",
+    "luxury",
+    "dracula",
+    "business",
+    "night",
+    "coffee",
+    "dim",
+    "sunset",
+    "abyss"
+  ][themeId] || 'dark';
   htmlElement.setAttribute('data-theme', theme);
 }
 

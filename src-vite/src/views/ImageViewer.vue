@@ -96,7 +96,13 @@
           :tooltip="$t('image_viewer.toolbar.rotate')"
           @click="clickRotate()"
         />
-
+        <TButton
+          :icon="IconLock"
+          :disabled="fileIndex < 0"
+          :selected="config.imageViewer.isLocked"
+          :tooltip="config.imageViewer.isLocked ? $t('image_viewer.toolbar.unlock') : $t('image_viewer.toolbar.lock')"
+          @click="toggleLock()"
+        />
         <TButton v-if="isWin"
           :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
           :tooltip="!config.imageViewer.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
@@ -286,6 +292,8 @@ import {
   IconComment,
   IconTag,
   IconError,
+  IconLock,
+  IconUnlock,
  } from '@/common/icons';
 
 /// i18n
@@ -526,7 +534,17 @@ const handleResize = async () => {
 
 /// watch appearance
 watch(() => config.settings.appearance, (newAppearance) => {
-  setTheme(newAppearance);
+  setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
+});
+
+/// watch light theme
+watch(() => config.settings.lightTheme, (newLightTheme) => {
+  setTheme(config.settings.appearance, newLightTheme);
+});
+
+/// watch dark theme
+watch(() => config.settings.darkTheme, (newDarkTheme) => {
+  setTheme(config.settings.appearance, newDarkTheme);
 });
 
 // watch language
@@ -737,6 +755,11 @@ const toggleFavorite = () => {
 const clickRotate = () => {
   emit('message-from-image-viewer', { message: 'rotate' });
 };
+
+// toggle lock status(locked mode: image will not be updated)
+const toggleLock = () => {
+  config.imageViewer.isLocked = !config.imageViewer.isLocked;
+}
 
 // tag image
 const clickTag = () => {

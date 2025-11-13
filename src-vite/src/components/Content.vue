@@ -325,7 +325,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted, defineAsyncComponent } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
@@ -441,8 +441,6 @@ const selectedSize = ref(0);  // selected files size
 
 // film strip view splitter
 const isDraggingfilmStripView = ref(false);      // dragging splitter to resize film strip view
-// const previewDiv = ref(null);
-// const previewPaneSize = ref({ width: 100, height: 100 });
 const imageSrc = ref('');         // preview image source
 const videoSrc = ref('');         // preview video source
 const videoRef = ref(null);       // preview video reference
@@ -474,10 +472,7 @@ const isProcessing = ref(false);  // show processing status
 
 const searchBoxRef = ref(null);
 
-let resizeObserver;
-
 let unlistenKeydown: () => void;
-let unlistenGridView: () => void;
 let unlistenImageViewer: () => void;
 
 // more menuitems
@@ -716,24 +711,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 };
 
 onMounted( async() => {
-  // FIXME: ResizeObserver loop completed with undelivered notifications.
-  // resizeObserver = new ResizeObserver(entries => {
-  //   for (let entry of entries) {
-  //     previewPaneSize.value = {
-  //       width: entry.contentRect.width,
-  //       height: entry.contentRect.height,
-  //     };
-  //   }
-  // });
-
-  // if (previewDiv.value) {
-  //   // Observe preview pane size changes
-  //   resizeObserver.observe(previewDiv.value);
-  // }
-
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
-
-
 
   unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
     const { message } = event.payload;
@@ -776,16 +754,19 @@ onBeforeUnmount(() => {
   }
 });
 
-onUnmounted(() => {
-  // if (resizeObserver && previewDiv.value) {
-  //   resizeObserver.unobserve(previewDiv.value);
-  //   resizeObserver.disconnect();
-  // }
-});
-
 /// watch appearance
 watch(() => config.settings.appearance, (newAppearance) => {
-  setTheme(newAppearance);
+  setTheme(newAppearance, newAppearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
+});
+
+/// watch light theme
+watch(() => config.settings.lightTheme, (newLightTheme) => {
+  setTheme(config.settings.appearance, newLightTheme);
+});
+
+/// watch dark theme
+watch(() => config.settings.darkTheme, (newDarkTheme) => {
+  setTheme(config.settings.appearance, newDarkTheme);
 });
 
 /// watch language
@@ -1108,7 +1089,7 @@ async function deleteFileAlways(file) {
 }
 
 // remove an file item from the list and update the selected item index
-function removeFromFileList(index) {
+function removeFromFileList(index: number) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
   // update the preview
@@ -1524,8 +1505,8 @@ function handleMouseMove(event: MouseEvent) {
         event.clientY - gridViewDivRect.top - 2; // -2: border width(2px)
     
     const totalHeight = gridViewDiv.value.clientHeight;
-    const minHeight = totalHeight * 0.1;
-    const maxHeight = totalHeight * 0.5;
+    const minHeight = Math.max(totalHeight * 0.1, 120);
+    const maxHeight = Math.min(totalHeight * 0.5, 320);
 
     config.content.filmStripPaneHeight = Math.min(Math.max(newHeight, minHeight), maxHeight);
   }

@@ -24,8 +24,13 @@ app.use(pinia) // Use Pinia
 const config = useConfigStore() // Use the config store
 
 // apply the current appearance setting
-const theme = en.settings.general.appearance_options[config.settings.appearance] || 'light'; // Default to light if not set
-document.documentElement.setAttribute('data-theme', theme);
+const theme = config.settings.appearance === 0 
+  ? en.settings.general.theme_options_light[config.settings.lightTheme] 
+  : en.settings.general.theme_options_dark[config.settings.darkTheme] 
+  ?? 'dark';
+if (theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+}
 
 // Create the I18n instance
 const i18n = createI18n({
@@ -56,6 +61,12 @@ listen('settings-settingsTabIndex-changed', (event) => {
 })
 listen('settings-appearance-changed', (event) => {
   config.setAppearance(event.payload)
+})
+listen('settings-lightTheme-changed', (event) => {
+  config.setLightTheme(event.payload)
+})
+listen('settings-darkTheme-changed', (event) => {
+  config.setDarkTheme(event.payload)
 })
 listen('settings-language-changed', (event) => {
   config.setLanguage(event.payload)
