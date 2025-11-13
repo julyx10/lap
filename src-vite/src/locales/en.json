@@ -79,6 +79,10 @@
     }
   },
 
+  "info_panel": {
+    "tabs": ["Info", "Preview"]
+  },
+
   "tooltip": {
     "not_found": {
       "albums": "No albums found. Try to add an existing folder which contains images or videos",

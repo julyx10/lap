@@ -38,7 +38,7 @@
         :style="navContainerStyle"
         @wheel="handleNavBoxWheel"
         @click="handleNavBoxClick"
-        @dblclick.stop
+        @dblclick="zoomFit"
       >
         <!-- nav image -->
         <img :src="imageSrc[activeImage]" :style="navImageStyle" draggable="false" />
@@ -671,7 +671,7 @@ const handleImageMouseDown = (event: MouseEvent) => {
     // isZoomFit.value = !isZoomFit.value;
     // updateZoomFit();
   } else if (event.button === 1) { // middle button
-    emit('message-from-image', { message: 'showfileinfo' });
+    // emit('message-from-image', { message: 'showInfoPanel' });
   } else if (event.button === 3) {  // back button
     emit('message-from-image-viewer', { message: 'prev' });
   } else if (event.button === 4) {  // forward button

@@ -129,116 +129,78 @@
       </div>
     </div>
 
-    <!-- content -->
-    <div ref="divContentView" class="flex h-screen overflow-hidden">
-      <!-- image container -->
-      <div ref="viewerContainer" 
-        :class="[
-          'relative flex-1 flex justify-center items-center overflow-hidden select-none', 
-          config.imageViewer.showFileInfo ? 'rounded-r-lg' : '' 
-        ]"
-      >
-        <!-- show zoom scale -->
-        <!-- <transition name="fade">
-          <div v-if="isScaleChanged" 
-            :class="[
-              'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-lg',
-              config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'top-20' : 'top-10'
-            ]"
-          >
-            <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
+    <!-- image container -->
+    <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden select-none">
+      <!-- show zoom scale -->
+      <!-- <transition name="fade">
+        <div v-if="isScaleChanged" 
+          :class="[
+            'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-lg',
+            config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'top-20' : 'top-10'
+          ]"
+        >
+          <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
+        </div>
+      </transition> -->
+
+      <template v-if="fileIndex >= 0">
+        <!-- prev button -->
+        <div v-if="fileIndex > 0"
+          class="absolute left-0 w-16 h-full z-10 flex items-center justify-start cursor-pointer group" 
+        >
+          <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
+            <TButton :icon="IconLeft" :buttonClasses="'rounded-full'" @click="clickPrev()"/>
           </div>
-        </transition> -->
-
-        <template v-if="fileIndex >= 0">
-          <!-- prev button -->
-          <div v-if="fileIndex > 0"
-            class="absolute left-0 w-16 h-full z-10 flex items-center justify-start cursor-pointer group" 
-          >
-            <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
-              <TButton :icon="IconLeft" :buttonClasses="'rounded-full'" @click="clickPrev()"/>
-            </div>
+        </div>
+        <!-- next button -->
+        <div v-if="fileIndex < fileCount - 1"
+          class="absolute right-0 w-16 h-full z-10 flex items-center justify-end cursor-pointer group" 
+        >
+          <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
+            <TButton :icon="IconRight" :buttonClasses="'rounded-full'" @click="clickNext()"/>
           </div>
-          <!-- next button -->
-          <div v-if="fileIndex < fileCount - 1"
-            class="absolute right-0 w-16 h-full z-10 flex items-center justify-end cursor-pointer group" 
-          >
-            <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
-              <TButton :icon="IconRight" :buttonClasses="'rounded-full'" @click="clickNext()"/>
-            </div>
-          </div>
+        </div>
 
-          <!-- image -->
-          <template v-if="fileInfo?.file_type === 1">
-            <Image v-if="imageSrc" 
-              ref="imageRef" 
-              :src="imageSrc" 
-              :rotate="fileInfo?.rotate ?? 0" 
-              :isZoomFit="config.imageViewer.isZoomFit"
-              @dblclick="toggleZoomFit()"
-            ></Image>
-            <div v-if="loadImageError" class="h-full flex flex-col items-center justify-center text-base-content/30">
-              <IconError class="w-8 h-8 mb-2" />
-              <span>{{ $t('image_viewer.failed') }}</span>
-            </div>
-          </template>
-
-          <!-- video -->
-          <template v-if="fileInfo?.file_type === 2">
-            <Video v-if="videoSrc"
-              ref="videoRef"
-              :src="videoSrc"
-              :rotate="fileInfo?.rotate ?? 0"
-              :isZoomFit="config.imageViewer.isZoomFit"
-              @dblclick="toggleZoomFit()"
-            ></Video>
-          </template>
-
-          <!-- comments -->
-          <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
-            class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg select-text" 
-          >
-            <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
-            {{ fileInfo?.comments }}
+        <!-- image -->
+        <template v-if="fileInfo?.file_type === 1">
+          <Image v-if="imageSrc" 
+            ref="imageRef" 
+            :src="imageSrc" 
+            :rotate="fileInfo?.rotate ?? 0" 
+            :isZoomFit="config.imageViewer.isZoomFit"
+            @dblclick="toggleZoomFit()"
+          ></Image>
+          <div v-if="loadImageError" class="h-full flex flex-col items-center justify-center text-base-content/30">
+            <IconError class="w-8 h-8 mb-2" />
+            <span>{{ $t('image_viewer.failed') }}</span>
           </div>
         </template>
 
-        <!-- no image selected -->
-        <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
-          <IconSearch class="w-8 h-8" />
-          <span>{{ $t('tooltip.not_found.files') }}</span>
-        </div>
-      </div> <!-- image container -->
+        <!-- video -->
+        <template v-if="fileInfo?.file_type === 2">
+          <Video v-if="videoSrc"
+            ref="videoRef"
+            :src="videoSrc"
+            :rotate="fileInfo?.rotate ?? 0"
+            :isZoomFit="config.imageViewer.isZoomFit"
+            @dblclick="toggleZoomFit()"
+          ></Video>
+        </template>
 
-      <!-- splitter -->
-      <div v-if="config.imageViewer.showFileInfo" 
-        :class="[ 'w-1 hover:bg-primary cursor-ew-resize transition-colors',
-          isDraggingSplitter ? 'bg-primary' : 'bg-base-300'
-        ]" 
-        @mousedown="startDragging"
-      ></div>
-
-      <!-- File Info -->
-      <transition
-        :enter-active-class="isTransitionDisabled ? '' : 'transition-transform duration-200'"
-        leave-active-class="transition-transform duration-200"
-        enter-from-class="translate-x-full"
-        enter-to-class="translate-x-0"
-        leave-from-class="translate-x-0"
-        leave-to-class="translate-x-full"
-      >
-        <div v-if="config.imageViewer.showFileInfo && fileInfo" ref="previewDiv" 
-          :style="{ width: config.imageViewer.fileInfoPanelWidth + '%' }"
+        <!-- comments -->
+        <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
+          class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg select-text" 
         >
-          <FileInfo 
-            :fileInfo="fileInfo" 
-            :fileIndex="fileIndex" 
-            :fileCount="fileCount" 
-            @close="closeFileInfo" 
-          />
+          <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+          {{ fileInfo?.comments }}
         </div>
-      </transition> <!-- File Info -->
+      </template>
 
+      <!-- no image selected -->
+      <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
+        <IconSearch class="w-8 h-8" />
+        <span>{{ $t('tooltip.not_found.files') }}</span>
+      </div>
     </div>
 
   </div>
@@ -283,7 +245,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, isWin, isMac, setTheme, getSlideShowInterval, getAssetSrc } from '@/common/utils';
-import { copyImage, getFileInfo, getTagsForFile, getFileHasTags, printImage } from '@/common/api';
+import { copyImage, getFileInfo, getFileHasTags, printImage } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
@@ -291,7 +253,6 @@ import Image from '@/components/Image.vue';
 import ImageEditor from '@/components/ImageEditor.vue';
 const Video = defineAsyncComponent(() => import('@/components/Video.vue')); // dynamic import
 
-import FileInfo from '@/components/FileInfo.vue';
 import DropDownMenu from '@/components/DropDownMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
@@ -314,7 +275,6 @@ import {
   IconSearch,
   IconTrash,
   IconCopy,
-  IconInformation,
   IconFullScreen,
   IconRestoreScreen,
   IconPin,
@@ -365,9 +325,6 @@ const showTrashMsgbox = ref(false);
 const showTaggingDialog = ref(false);
 const fileIdsToTag = ref<number[]>([]);
 const showImageEditor = ref(false);
-
-const isDraggingSplitter = ref(false); // Dragging state for the splitter
-const divContentView = ref(null); // Reference to the content view
 
 const toolTipRef = ref(null);
 
@@ -425,14 +382,6 @@ const moreMenuItems = computed(() => {
       label: "-",   // separator
       action: null
     },
-    {
-      label: localeMsg.value.menu.file.information,
-      icon: IconInformation,
-      shortcut: isMac ? '⌘I' : 'Ctrl+I',
-      action: () => {
-        clickShowFileInfo();
-      }
-    },
   ];
 });
 
@@ -442,7 +391,6 @@ const onImageEdited = () => {
   loadImage(filePath.value);
   showImageEditor.value = false;
 };
-
 
 let unlistenResize: () => void;
 let unlistenImg: () => void;
@@ -483,9 +431,6 @@ onMounted(async() => {
         imageScale.value = event.payload.scale;
         imageMinScale.value = event.payload.minScale;
         imageMaxScale.value = event.payload.maxScale;
-        break;
-      case 'showfileinfo':
-        clickShowFileInfo();
         break;
       default:
         break;
@@ -532,7 +477,7 @@ onUnmounted(() => {
 });
 
 // Handle keyboard shortcuts
-function handleKeyDown(event) {
+function handleKeyDown(event: KeyboardEvent) {
   if(uiStore.inputStack.length > 0) {
     return;
   }
@@ -550,8 +495,6 @@ function handleKeyDown(event) {
     clickRotate();
   } else if (isCmdKey && key.toLowerCase() === 't') {
     clickTag();
-  } else if (isCmdKey && key.toLowerCase() === 'i') {
-    clickShowFileInfo();
   } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
     showTrashMsgbox.value = true;
   } else if (keyActions[key]) {
@@ -609,11 +552,6 @@ watch(() => fileId.value, async () => {
     return;
   }
 
-  // get the file's tags
-  if(fileInfo.value.has_tags) {
-    fileInfo.value.tags = await getTagsForFile(fileId.value);
-  }
-
   iconRotate.value = fileInfo.value.rotate || 0;
 
   // load the file based on the file type
@@ -653,7 +591,7 @@ watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlide
 });
 
 // Load the image from the file path
-async function loadImage(filePath) {
+async function loadImage(filePath: string) {
   if(filePath.length === 0) {
     console.log('loadImage - filePath is empty');
     return;
@@ -687,7 +625,7 @@ async function loadImage(filePath) {
 }
 
 // Preload the image from the file path
-async function preLoadImage(filePath) {
+async function preLoadImage(filePath: string) {
   try {
     if (filePath.length > 0 && !imageCache.has(filePath)) {
       const convertedSrc = getAssetSrc(filePath);
@@ -703,7 +641,7 @@ async function preLoadImage(filePath) {
 }
 
 // Load the video from the file path
-async function loadVideo(filePath) {
+async function loadVideo(filePath: string) {
   if(filePath.length === 0) {
     console.log('loadVideo - filePath is empty');
     return;
@@ -832,41 +770,6 @@ const clickTrashFile = async() => {
 // Function to maximize the window and setup full screen
 const toggleFullScreen = () => {
   config.imageViewer.isFullScreen = !config.imageViewer.isFullScreen;
-}
-
-function clickShowFileInfo() {
-  config.imageViewer.showFileInfo = !config.imageViewer.showFileInfo;
-}
-
-// Close the file info panel from the child component
-function closeFileInfo() {
-  config.imageViewer.showFileInfo = false;
-}
-
-/// Dragging the splitter
-function startDragging(event) {
-  isDraggingSplitter.value = true;
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', stopDragging);
-}
-
-/// stop dragging the splitter
-function stopDragging() {
-  isDraggingSplitter.value = false;
-  document.removeEventListener('mousemove', handleMouseMove);
-  document.removeEventListener('mouseup', stopDragging);
-}
-
-/// handle mouse move event
-function handleMouseMove(event) {
-  // console.log('handleMouseMove:', document.documentElement.clientWidth, event.clientX, leftPosition);
-  if (isDraggingSplitter.value) {
-    const windowWidth = document.documentElement.clientWidth - 4; // +4: border width(2px) * 2
-    const leftPosition = divContentView.value.getBoundingClientRect().left;  // -2: border width(2px)
-
-    // Limit width between 10% and 50%
-    config.imageViewer.fileInfoPanelWidth = Math.min(Math.max(((windowWidth - event.clientX)*100) / (windowWidth - leftPosition), 10), 50); 
-  }
 }
 
 </script>

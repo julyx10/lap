@@ -11,9 +11,12 @@ export const useConfigStore = defineStore('configStore', {
       pageSize: 200,              // number of files per page
       layout: 0,                  // 0: grid view, 1: film strip view
       filmStripPaneHeight: 200,   // film strip pane height (px)
+    },
 
-      showFileInfo: false,       // show file info pane
-      fileInfoPaneWidth: 30,     // file info pane width(20-80%)
+    infoPanel: {
+      show: false,               // show info panel
+      tabIndex: 0,               // info panel tab index (0: file info, 1: preview)
+      width: 30,                 // info panel width(20-80%)
     },
 
     search: {
