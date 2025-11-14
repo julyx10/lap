@@ -6,12 +6,18 @@
 import { onMounted, onUnmounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { useConfigStore } from '@/stores/configStore';
+import { setTheme } from '@/common/utils';
 
 onMounted(async () => {
   const win = getCurrentWebviewWindow();
   if (win.label === 'main') {
     window.addEventListener('keydown', handleKeyDown);
   }
+
+  const config = useConfigStore();
+  setTheme(config.settings.appearance, 
+    config.settings.appearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
 });
 
 onUnmounted(async () => {

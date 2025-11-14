@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 import type { Component } from 'vue';
 
 const props = defineProps({

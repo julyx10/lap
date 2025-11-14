@@ -66,7 +66,7 @@
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue';
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 import { getCameraInfo } from '@/common/api';
 import { IconRight, IconCamera } from '@/common/icons';
 

@@ -250,7 +250,8 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { config, isWin, isMac, setTheme, getSlideShowInterval, getAssetSrc } from '@/common/utils';
+import { config } from '@/common/config';
+import { isWin, isMac, setTheme, getSlideShowInterval, getAssetSrc } from '@/common/utils';
 import { copyImage, getFileInfo, getFileHasTags, printImage } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';

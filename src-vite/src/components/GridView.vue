@@ -43,7 +43,7 @@
 
 import { watch, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
 
 import { 

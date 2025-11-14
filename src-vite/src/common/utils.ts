@@ -1,11 +1,7 @@
 import { format } from 'date-fns';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { useConfigStore } from '@/stores/configStore';
 import { useUIStore } from '@/stores/uiStore';
-
-/// config store
-export const config = useConfigStore();
 
 /// get the current operating system (mac, win, or '')
 export function getOS() {
@@ -26,7 +22,6 @@ export const separator = isWin ? '\\' : '/';
 
 /// set the theme
 export function setTheme(appearance: number, themeId: number) {
-  const htmlElement = document.documentElement;
   const theme = appearance === 0 ? [
     "light",
     "cupcake",
@@ -65,7 +60,8 @@ export function setTheme(appearance: number, themeId: number) {
     "sunset",
     "abyss"
   ][themeId] || 'dark';
-  htmlElement.setAttribute('data-theme', theme);
+
+  document.documentElement.setAttribute('data-theme', theme);
 }
 
 /// get the select options for a dropdown list
@@ -83,8 +79,8 @@ export function getFileExtension(fileName: string): string {
 }
 
 /// get the seconds of slide show interval
-export function getSlideShowInterval(): number {
-  return [1, 3, 5, 10, 15, 30][config.settings.slideShowInterval] || 1;
+export function getSlideShowInterval(interval: number): number {
+  return [1, 3, 5, 10, 15, 30][interval] || 1;
 }
 
 /// get days elapsed since the timestamp

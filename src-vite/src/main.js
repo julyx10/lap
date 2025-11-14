@@ -23,15 +23,6 @@ pinia.use(piniaPersistedState)
 app.use(pinia) // Use Pinia
 const config = useConfigStore() // Use the config store
 
-// apply the current appearance setting
-const theme = config.settings.appearance === 0 
-  ? en.settings.general.theme_options_light[config.settings.lightTheme] 
-  : en.settings.general.theme_options_dark[config.settings.darkTheme] 
-  ?? 'dark';
-if (theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-}
-
 // Create the I18n instance
 const i18n = createI18n({
   legacy: false, // Disable legacy mode

@@ -75,7 +75,7 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 import { getFavoriteFolders, setFolderFavorite, getAlbum } from '@/common/api';
 
 import DropDownMenu from '@/components/DropDownMenu.vue';

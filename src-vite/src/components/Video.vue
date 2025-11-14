@@ -27,7 +27,7 @@
 import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 import { IconVideoSlash } from '@/common/icons';
 import videojs from 'video.js/core';
 import 'video.js/dist/video-js.min.css';

@@ -126,7 +126,8 @@ import { ref, watch, nextTick, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { config, isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
+import { config } from '@/common/config';
+import { isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
 import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';

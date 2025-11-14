@@ -89,7 +89,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { config, isWin, isMac } from '@/common/utils';
+import { config } from '@/common/config';
+import { isWin, isMac } from '@/common/utils';
 
 // vue components
 import Album from '@/components/Album.vue';

@@ -66,7 +66,7 @@
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue';
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
 import { IconRight, IconLocation } from '@/common/icons';
 

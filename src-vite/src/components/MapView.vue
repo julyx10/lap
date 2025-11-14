@@ -26,7 +26,7 @@
 
 <script setup>
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { config } from '@/common/utils'
+import { config } from '@/common/config'
 
 import { IconZoomIn, IconZoomOut, IconMapCenter, IconMapDefault, IconMapSatellite } from '@/common/icons'
 import TButton from '@/components/TButton.vue'

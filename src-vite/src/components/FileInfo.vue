@@ -184,7 +184,8 @@
 </template>
 
 <script setup lang="ts">
-import { config, formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
+import { config } from '@/common/config';
+import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
 import { IconClose, IconFile, IconCamera } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';

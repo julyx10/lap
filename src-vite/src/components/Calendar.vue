@@ -87,7 +87,7 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 import { getTakenDates } from '@/common/api';
 import { IconCalendar, IconSortingAsc, IconSortingDesc } from '@/common/icons';
 

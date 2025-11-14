@@ -92,7 +92,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed } from 'vue';
 import { emit } from '@tauri-apps/api/event';
-import { config } from '@/common/utils';
+import { config } from '@/common/config';
 
 // Props
 const props = defineProps({

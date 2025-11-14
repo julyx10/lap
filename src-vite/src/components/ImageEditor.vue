@@ -268,7 +268,8 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
-import { config, getFolderPath, extractFileName, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
+import { config } from '@/common/config';
+import { getFolderPath, extractFileName, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
 import { editImage, copyEditedImage } from '@/common/api';
 
 import TButton from '@/components/TButton.vue';

@@ -29,59 +29,49 @@
         <section v-if="config.settings.tabIndex === 0">
           <!-- select language -->
           <div class="flex items-center justify-between mb-4">
-            <label for="language-select">{{ $t('settings.general.select_language') }}</label>
-            <select id="language-select" class="select" v-model="config.settings.language">
-              <option v-for="(lang, index) in languages" 
-                :key="index" 
-                :value="lang.value"
-              >
+            <label>{{ $t('settings.general.select_language') }}</label>
+            <select class="select" v-model="config.settings.language">
+              <option v-for="(lang, index) in languages" :key="index" :value="lang.value">
                 {{ lang.label }}
               </option>
             </select>
           </div>
           <!-- Appearance -->
           <div class="flex items-center justify-between mb-4">
-            <label for="mouse-wheel">{{ $t('settings.general.appearance') }}</label>
-            <select id="mouse-wheel" class="select" v-model="config.settings.appearance">
-              <option 
-                v-for="(item, index) in appearanceOptions" 
-                :key="index" 
-                :value="item.value" 
-              >
+            <label>{{ $t('settings.general.appearance') }}</label>
+            <select class="select" v-model="config.settings.appearance">
+              <option v-for="(item, index) in appearanceOptions" :key="index" :value="item.value">
                 {{ item.label }}
               </option>
             </select>
           </div>
-          <!-- Theme -->
+          <!-- Color theme -->
           <div class="flex items-center justify-between mb-4">
-            <label for="theme-select">{{ $t('settings.general.theme') }}</label>
-            <select id="theme-select" class="select" v-model="currentTheme">
-              <option v-for="(option, index) in themeOptions" 
-                :key="index" 
-                :value="option.value" 
-              >
+            <label>{{ $t('settings.general.theme') }}</label>
+            <select class="select" v-model="currentTheme">
+              <option v-for="(option, index) in themeOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
           </div>
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-button-text" >{{ $t('settings.general.show_button_text') }}</label>
+            <label>{{ $t('settings.general.show_button_text') }}</label>
             <input type="checkbox" class="toggle" v-model="config.settings.showButtonText" />
           </div>
           <!-- Show button tooltip -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-tool-tip" >{{ $t('settings.general.show_tool_tip') }}</label>
+            <label>{{ $t('settings.general.show_tool_tip') }}</label>
             <input type="checkbox" class="toggle" v-model="config.settings.showToolTip" />
           </div>
           <!-- Show status bar -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-status-bar" >{{ $t('settings.general.show_status_bar') }}</label>
+            <label>{{ $t('settings.general.show_status_bar') }}</label>
             <input type="checkbox" class="toggle" v-model="config.settings.showStatusBar" />
           </div>
           <!-- Debug Mode -->
           <!-- <div class="flex items-center justify-between mb-4">
-            <label for="debug-mode" >{{ $t('settings.general.debug_mode') }}</label>
+            <label>{{ $t('settings.general.debug_mode') }}</label>
             <input type="checkbox" class="toggle" v-model="config.settings.debugMode" />
           </div> -->
 
@@ -104,12 +94,9 @@
 
           <!-- Grid Scaling -->
           <div class="flex items-center justify-between mb-4">
-            <label for="grid_scaling-select">{{ $t('settings.grid_view.scaling') }}</label>
-            <select id="grid_scaling-select" class="select" v-model="config.settings.grid.scaling">
-              <option v-for="(option, index) in gridScalingOptions" 
-                :key="index" 
-                :value="option.value"
-              >
+            <label>{{ $t('settings.grid_view.scaling') }}</label>
+            <select class="select" v-model="config.settings.grid.scaling">
+              <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
@@ -117,12 +104,9 @@
 
           <!-- Primary Label -->
           <div class="flex items-center justify-between mb-4">
-            <label for="grid_label_primary-select">{{ $t('settings.grid_view.label_primary') }}</label>
-            <select id="grid_label_primary-select" class="select" v-model="config.settings.grid.labelPrimary">
-              <option v-for="(option, index) in gridLabelOptions" 
-                :key="index"
-                :value="option.value"
-              >
+            <label>{{ $t('settings.grid_view.label_primary') }}</label>
+            <select class="select" v-model="config.settings.grid.labelPrimary">
+              <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
@@ -130,12 +114,9 @@
 
             <!-- Secondary Label -->
             <div class="flex items-center justify-between mb-4">
-              <label for="grid_label_secondary-select">{{ $t('settings.grid_view.label_secondary') }}</label>
-              <select id="grid_label_secondary-select" class="select" v-model="config.settings.grid.labelSecondary">
-                <option v-for="(option, index) in gridLabelOptions" 
-                  :key="index" 
-                  :value="option.value"
-                >
+              <label>{{ $t('settings.grid_view.label_secondary') }}</label>
+              <select class="select" v-model="config.settings.grid.labelSecondary">
+                <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">
                   {{ option.label }}
                 </option>
               </select>
@@ -143,12 +124,9 @@
 
           <!-- Preview Position -->
           <div class="flex items-center justify-between mb-4">
-            <label for="preview_position-select">{{ $t('settings.filmstrip_view.preview_position') }}</label>
-            <select id="preview_position-select" class="select" v-model="config.settings.filmStripView.previewPosition">
-              <option v-for="(option, index) in filmStripViewPreviewPositionOptions" 
-                :key="index"
-                :value="option.value"
-              >
+            <label>{{ $t('settings.filmstrip_view.preview_position') }}</label>
+            <select class="select" v-model="config.settings.filmStripView.previewPosition">
+              <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
@@ -160,12 +138,9 @@
 
           <!-- Show navigator view -->
           <div class="flex items-center justify-between mb-4">
-            <label for="navigator-view-mode-select" >{{ $t('settings.image_viewer.navigator_view') }}</label>
-            <select id="navigator-view-mode-select" class="select" v-model="config.settings.navigatorViewMode">
-              <option v-for="(option, index) in navigatorViewModeOptions" 
-                :key="index"
-                :value="option.value"
-              >
+            <label>{{ $t('settings.image_viewer.navigator_view') }}</label>
+            <select class="select" v-model="config.settings.navigatorViewMode">
+              <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
@@ -173,12 +148,9 @@
 
           <!-- Navigator view size -->
           <div class="flex items-center justify-between mb-4">
-            <label for="navigator-view-size-select" >{{ $t('settings.image_viewer.navigator_view__size') }}</label>
-            <select id="navigator-view-size-select" class="select" v-model="config.settings.navigatorViewSize">
-              <option v-for="(option, index) in navigatorViewSizeOptions" 
-                :key="index" 
-                :value="option.value"
-              >
+            <label>{{ $t('settings.image_viewer.navigator_view__size') }}</label>
+            <select class="select" v-model="config.settings.navigatorViewSize">
+              <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
@@ -186,13 +158,9 @@
 
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
-            <label for="mouse-wheel">{{ $t('settings.image_viewer.mouse_wheel') }}</label>
-            <select id="mouse-wheel" class="select" v-model="config.settings.mouseWheelMode">
-              <option 
-                v-for="(item, index) in wheelOptions" 
-                :key="index" 
-                :value="item.value" 
-              >
+            <label>{{ $t('settings.image_viewer.mouse_wheel') }}</label>
+            <select class="select" v-model="config.settings.mouseWheelMode">
+              <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">
                 {{ item.label }}
               </option>
             </select>
@@ -212,13 +180,13 @@
 
           <!-- Auto play video -->
           <div class="flex items-center justify-between mb-4">
-            <label for="auto-play-video" >{{ $t('settings.image_viewer.auto_play_video') }}</label>
+            <label>{{ $t('settings.image_viewer.auto_play_video') }}</label>
             <input type="checkbox" class="toggle" v-model="config.settings.autoPlayVideo" />
           </div>
 
           <!-- Show comment -->
           <div class="flex items-center justify-between mb-4">
-            <label for="show-comment" >{{ $t('settings.image_viewer.show_comment') }}</label>
+            <label>{{ $t('settings.image_viewer.show_comment') }}</label>
             <input type="checkbox" class="toggle" v-model="config.settings.showComment" />
           </div>
         </section>
@@ -297,7 +265,8 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
-import { config, setTheme, getSlideShowInterval, formatFileSize } from '@/common/utils';
+import { config } from '@/common/config';
+import { setTheme, getSlideShowInterval, formatFileSize } from '@/common/utils';
 import { getPackageInfo, getBuildTime, getStorageFileInfo, getDbCountAndSum } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';

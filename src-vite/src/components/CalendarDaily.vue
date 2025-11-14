@@ -41,7 +41,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
-import { config, formatDate } from '@/common/utils';
+import { config } from '@/common/config';
+import { formatDate } from '@/common/utils';
 
 const props = defineProps({
   year: {
