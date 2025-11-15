@@ -15,10 +15,7 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              { 
-                'text-primary': config.location.admin1 === location.admin1 && !config.location.name, 
-                // 'text-base-content/30': config.location.admin1 === location.admin1 && !config.location.name 
-              }
+              config.location.admin1 === location.admin1 && !config.location.name ? 'text-primary' : 'hover:text-base-content',
             ]"
             @click="clickLocationAdmin1(location)"
           >
@@ -37,16 +34,13 @@
             <li v-for="name in location.names" class="pl-4">
               <div 
                 :class="[
-                  'ml-4 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                  {
-                    'text-primary': config.location.name === name,
-                    // 'text-base-content/30': config.location.name === name
-                  }
+                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
+                  config.location.name === name ? 'text-primary' : 'hover:text-base-content',
                 ]" 
                 @click="clickLocationName(location.admin1, name)"
               >
                 <!-- <IconCircle class="mx-1 h-5 shrink-0" /> -->
-                <div class="overflow-hidden whitespace-pre text-ellipsis">
+                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
                   {{ name }}
                 </div>
               </div>

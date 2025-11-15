@@ -36,17 +36,17 @@
       </div>
 
       <!-- Tag List -->
-      <div class="max-h-80 overflow-y-auto border border-base-content/10  rounded-box p-2">
+      <div class="max-h-80 overflow-y-auto border border-base-content/10 rounded-box p-2">
         <div v-if="filteredTags.length > 0" class="flex flex-wrap gap-2">
           <div
             v-for="tag in filteredTags"
             :key="tag.id"
             :class="[
-              'badge badge-lg overflow-hidden whitespace-pre text-ellipsis cursor-pointer transition-colors duration-100',
+              'badge badge-lg overflow-hidden whitespace-pre text-ellipsis cursor-pointer transition-colors duration-200',
               {
                 'badge-primary': selectedTags.has(tag.id),
-                'badge-outline border-base-content/30 bg-base-content/20': intermediateTags.has(tag.id) && !selectedTags.has(tag.id),
-                'badge-outline text-base-content/30': !selectedTags.has(tag.id) && !intermediateTags.has(tag.id),
+                'badge-outline border-base-content/30 bg-base-content/30': intermediateTags.has(tag.id) && !selectedTags.has(tag.id),
+                'badge-outline text-base-content/30 hover:text-base-content hover:bg-base-100': !selectedTags.has(tag.id) && !intermediateTags.has(tag.id),
               }
             ]"
             @click="toggleTag(tag.id)"
@@ -62,7 +62,7 @@
       <!-- cancel and OK buttons -->
       <div class="mt-4 flex justify-end space-x-4">
         <button 
-          class="px-4 py-1 rounded-box hover:bg-base-content/30 cursor-pointer" 
+          class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
           @click="clickCancel"
         >{{ $t('msgbox.cancel') }}</button>
         

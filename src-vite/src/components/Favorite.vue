@@ -12,9 +12,7 @@
       <div 
         :class="[ 
           'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
-          { 
-            'text-primary': config.favorite.folderId === 0, 
-          }
+          config.favorite.folderId === 0 ? 'text-primary' : 'hover:text-base-content',
         ]"
         @click="clickFavoriteFiles()"
       >
@@ -34,10 +32,7 @@
             <div 
               :class="[ 
                 'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                { 
-                  'text-primary': config.favorite.folderId === folder.id, 
-                  // 'text-base-content/30': folder.is_hidden,
-                }
+                config.favorite.folderId === folder.id ? 'text-primary' : 'hover:text-base-content',
               ]"
               @click="clickFavoriteFolder(folder)"
             >

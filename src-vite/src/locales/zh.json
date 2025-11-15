@@ -271,7 +271,7 @@
       "error": "选择文件失败。"
     },
     "image_editor": {
-      "title": "图片编辑器",
+      "title": "编辑图片",
       "crop": "裁剪",
       "cancel_crop": "取消",
       "confirm_crop": "确定",

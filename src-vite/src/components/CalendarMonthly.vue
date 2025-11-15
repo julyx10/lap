@@ -5,7 +5,7 @@
     <!-- title -->
     <div 
       :class="[
-        'mt-2 px-2 border-2 rounded-box hover:bg-base-100 text-nowrap cursor-pointer',
+        'mt-2 px-2 border-2 rounded-box hover:bg-base-100 hover:text-base-content text-nowrap cursor-pointer',
         isSelected(year, -1) ? 'border-primary' : 'border-transparent'
       ]"
       @click="clickDate(year, -1)"
@@ -20,7 +20,7 @@
         class="px-2 text-sm flex items-center justify-center border-2 rounded-box text-nowrap"
         :class="[
           isSelected(year, m) ? 'border-primary' : 'border-transparent',
-          sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
+          sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 hover:text-base-content cursor-pointer',
           isThisMonth(year, m) ? 'bg-base-100' : '',
         ]"
         @click="sumMonthCount(m) > 0 ? clickDate(year, m) : null" 

@@ -15,10 +15,7 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              { 
-                'text-primary': config.camera.make === camera.make && !config.camera.model, 
-                // 'text-base-content/30': config.camera.make === camera.make && !config.camera.model 
-              }
+              config.camera.make === camera.make && !config.camera.model ? 'text-primary' : 'hover:text-base-content',
             ]"
             @click="clickCameraMake(camera)"
           >
@@ -37,16 +34,13 @@
             <li v-for="model in camera.models" class="pl-4">
               <div 
                 :class="[
-                  'ml-4 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                  {
-                    'text-primary': config.camera.model === model,
-                    // 'text-base-content/30': config.camera.model === model
-                  }
+                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
+                  config.camera.model === model ? 'text-primary' : 'hover:text-base-content',
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
                 <!-- <IconCircle class="mx-1 h-5 shrink-0" /> -->
-                <div class="overflow-hidden whitespace-pre text-ellipsis">
+                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
                   {{ model }}
                 </div>
               </div>

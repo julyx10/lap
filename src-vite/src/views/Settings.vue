@@ -1,6 +1,6 @@
 <template>
 
-  <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70">
+  <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-200 text-base-content/70">
     <!-- Title Bar -->
     <TitleBar :titlebar="$t('sidebar.settings')" :resizable="false" viewName="Settings"/>
 
@@ -14,8 +14,8 @@
           v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_viewer.title', 'settings.about.title']"
           :key="index"
           :class="[
-            'mb-4 px-1 border-l-2 cursor-pointer', 
-            config.settings.tabIndex === index ? 'text-base-content border-primary transition-colors duration-300' : 'border-transparent ',
+            'mb-4 px-1 border-l-2 cursor-pointer transition-colors duration-300', 
+            config.settings.tabIndex === index ? 'text-base-content border-primary' : 'border-transparent hover:text-base-content',
           ]"
           @click="config.settings.tabIndex = index"
         >
@@ -57,22 +57,22 @@
           <!-- Show button text -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.general.show_button_text') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.settings.showButtonText" />
+            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showButtonText" />
           </div>
           <!-- Show button tooltip -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.general.show_tool_tip') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.settings.showToolTip" />
+            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showToolTip" />
           </div>
           <!-- Show status bar -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.general.show_status_bar') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.settings.showStatusBar" />
+            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showStatusBar" />
           </div>
           <!-- Debug Mode -->
           <!-- <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.general.debug_mode') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.settings.debugMode" />
+            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.debugMode" />
           </div> -->
 
         </section>
@@ -181,13 +181,13 @@
           <!-- Auto play video -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.image_viewer.auto_play_video') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.settings.autoPlayVideo" />
+            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.autoPlayVideo" />
           </div>
 
           <!-- Show comment -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.image_viewer.show_comment') }}</label>
-            <input type="checkbox" class="toggle" v-model="config.settings.showComment" />
+            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showComment" />
           </div>
         </section>
 

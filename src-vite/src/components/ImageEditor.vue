@@ -237,7 +237,7 @@
         <button
           :class="[
             'px-4 py-1 rounded-box',
-            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
+            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 hover:text-base-content cursor-pointer',
           ]" 
           @click="clickCancel"
         >{{ $t('msgbox.image_editor.cancel') }}</button>

@@ -48,7 +48,7 @@
       <!-- cancel and OK buttons -->
       <div class="mt-2 flex justify-end space-x-4">
         <button v-if="cancelText.length > 0"
-          class="px-4 py-1 rounded-box hover:bg-base-100 cursor-pointer" 
+          class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
           @click="clickCancel"
         >{{ cancelText }}</button>
         

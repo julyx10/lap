@@ -34,7 +34,7 @@
         <div tabindex="-1"
           :class="[
             'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
-            selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100'
+            selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content'
           ]"
           @click="handleSelectMode(true)"
         >

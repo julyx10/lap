@@ -271,7 +271,7 @@
       "error": "ファイルを選択できませんでした。"
     },
     "image_editor": {
-      "title": "画像エディタ",
+      "title": "画像を編集",
       "crop": "クロッピング",
       "cancel_crop": "キャンセル",
       "confirm_crop": "確定",

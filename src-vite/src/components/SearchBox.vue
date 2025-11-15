@@ -20,7 +20,7 @@
 
     <!-- Search Icon (Inside input when focused) -->
     <IconSearch
-      class="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 group-hover:text-base-content/70 cursor-pointer"
+      class="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 group-hover:text-base-content cursor-pointer"
       @click="focusInput"
     />
     <!-- Cancel Icon (Only show when there's input) -->

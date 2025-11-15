@@ -44,7 +44,7 @@
               <td>{{ $t('album.edit.hidden') }}</td>
               <td>
                 <div class="tooltip" :data-tip="$t('album.edit.hidden_description')">
-                  <input type="checkbox" class="toggle toggle-sm" v-model="hiddenAlbumValue" />
+                  <input type="checkbox" class="toggle toggle-primary" v-model="hiddenAlbumValue" />
                 </div>
               </td>
             </tr>
@@ -81,7 +81,7 @@
         <!-- cancel and OK buttons -->
         <div class="mt-4 flex justify-end space-x-4">
           <button 
-            class="px-4 py-1 rounded-box hover:bg-base-100 cursor-pointer" 
+            class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
             @click="clickCancel"
           >
             {{ $t('msgbox.cancel') }}

@@ -271,7 +271,7 @@
       "error": "Failed to select file."
     },
     "image_editor": {
-      "title": "Image editor",
+      "title": "Edit image",
       "crop": "Crop",
       "cancel_crop": "Cancel",
       "confirm_crop": "Confirm",

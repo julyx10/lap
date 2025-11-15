@@ -10,15 +10,15 @@
 }
 
 @utility input {
-  @apply h-8 border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary focus:rounded-box;
+  @apply h-8 border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }
 
 @utility textarea {
-  @apply border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary focus:rounded-box;
+  @apply border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }
 
 @utility select {
-  @apply h-8 w-fit rounded-box focus:outline-none focus:rounded-box;
+  @apply h-8 w-fit rounded-box focus:outline-none focus:rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }
 
 /* icon */

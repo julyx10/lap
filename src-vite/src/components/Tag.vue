@@ -14,10 +14,7 @@
           <div
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              {
-                'text-primary': selectedTag && selectedTag.id === tag.id && !isRenamingTag,
-                // 'text-base-content/30': !selectedTag || selectedTag.id !== tag.id || isRenamingTag
-              }
+              selectedTag && selectedTag.id === tag.id && !isRenamingTag ? 'text-primary' : 'hover:text-base-content',
             ]"
             @click="selectTag(tag)"
           >

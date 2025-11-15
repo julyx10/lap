@@ -21,7 +21,7 @@
             <button v-if="!item.hidden"
               :class="[
                 item.label === '-' ? 'mx-2 my-1 border-t border-base-content/30' : 'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
-                item.disabled ? 'text-base-content/30' : 'hover:bg-base-100 hover:rounded-box cursor-pointer',
+                item.disabled ? 'text-base-content/30' : 'hover:bg-base-100 hover:text-base-content hover:rounded-box cursor-pointer',
               ]"
               :key="index"
               @click="handleClick(item)"
