@@ -3,7 +3,7 @@
 
     <!-- Dropdown Trigger -->
     <button tabindex="-1"
-      class="px-2 py-1 w-full h-8 flex items-center rounded-md border border-base-content/30 hover:border-base-content/70 transition-colors duration-300 cursor-pointer text-sm whitespace-nowrap "
+      class="px-2 py-1 w-full h-8 flex items-center rounded-box border border-base-content/30 hover:bg-base-100 transition-colors duration-300 cursor-pointer text-sm whitespace-nowrap "
       text=""
       @click="toggleDropdown"
     >
@@ -16,11 +16,11 @@
 
     <!-- Dropdown Menu -->
     <div v-if="isDropDown"
-      class="menu mt-1 text-base-content/70 bg-base-100 border border-base-content/30 absolute rounded-box shadow-lg z-50"
+      class="menu mt-1 text-base-content/70 bg-base-200 border border-base-content/30 absolute rounded-box shadow-lg z-50"
     >
       <!-- menu group 1 -->
       <button v-for="(option, index) in options"
-        class="p-1 flex flex-row hover:bg-base-content/10 hover:rounded-lg cursor-pointer text-sm whitespace-nowrap "
+        class="p-1 flex flex-row hover:bg-base-100 hover:rounded-box cursor-pointer text-sm whitespace-nowrap "
         :key="index"
         @click="selectOption(index)"
       >
@@ -35,7 +35,7 @@
 
       <!-- menu group 2 -->
       <button v-for="(option, index) in extendOptions"
-        class="p-1 flex flex-row hover:bg-base-content/10 hover:rounded cursor-pointer text-sm whitespace-nowrap "
+        class="p-1 flex flex-row hover:bg-base-100 hover:rounded-box cursor-pointer text-sm whitespace-nowrap "
         :key="index"
         @click="selectExtendOption(index)"
       >

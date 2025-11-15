@@ -2,7 +2,7 @@
     
   <dialog id="moveToDialog" class="modal">
 
-    <div class="w-[600px] max-h-[80%] p-4 flex flex-col text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="w-[600px] max-h-[80%] p-4 flex flex-col text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
 
       <!-- titlebar -->
       <div class="mb-4 flex items-center justify-between text-wrap break-all">
@@ -21,7 +21,7 @@
       </div> -->
 
       <!-- select album and folder -->
-      <div class="border border-base-content/10 pl-1 rounded overflow-auto">
+      <div class="border border-base-content/10 pl-1 rounded-box overflow-auto">
         <AlbumList ref="albumListRef" 
           v-model:albumId="config.destFolder.albumId"
           v-model:folderId="config.destFolder.folderId"
@@ -33,14 +33,14 @@
       <!-- action buttons -->
       <div class="mt-4 flex justify-end space-x-4">
         <button v-if="cancelText.length > 0" 
-          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+          class="px-4 py-1 rounded-box hover:bg-base-100 cursor-pointer" 
           @click="clickCancel"
         >{{ cancelText }}</button>
 
         <button 
           :class="[
-            'px-4 py-1 rounded-lg', 
-            config.destFolder.albumId > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default'
+            'px-4 py-1 rounded-box', 
+            config.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
           ]" 
           @click="clickOk"
         >{{ OkText }}</button>

@@ -10,7 +10,7 @@
         :icon="IconClose" 
         @click="clickCloseEditList"
       />
-      <DropDownMenu v-else 
+      <ContextMenu v-else 
         :iconMenu="IconMore" 
         :menuItems="moreMenuItems"
       />
@@ -36,7 +36,7 @@ import { useUIStore } from '@/stores/uiStore';
 
 import { IconMore, IconAdd, IconOrder, IconRefresh, IconClose } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({

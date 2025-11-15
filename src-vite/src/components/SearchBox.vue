@@ -10,8 +10,8 @@
       v-model="inputValue"
       :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('toolbar.search.placeholder') : '')"
       :class="[
-        'py-1 h-8 w-full text-sm input bg-transparent transition-colors duration-300',
-        isFocused || searchValue.length > 0 ? 'px-8 focus:border border-primary' : 'px-2 group-hover:border-base-content/70 cursor-pointer'
+        'py-1 h-8 w-full text-sm input bg-transparent transition-colors duration-300 rounded-box',
+        isFocused || searchValue.length > 0 ? 'px-8 focus:border focus:rounded-box border-primary' : 'px-2 group-hover:bg-base-100 cursor-pointer'
       ]"
       @focus="handleFocus"
       @blur="handleBlur"

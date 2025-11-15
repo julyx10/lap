@@ -13,10 +13,10 @@
         <li v-for="tag in allTags" :key="tag.id">
           <div
             :class="[
-              'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group',
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
               {
-                'bg-base-content/10 border-primary text-base-content': selectedTag && selectedTag.id === tag.id && !isRenamingTag,
-                'border-transparent': !selectedTag || selectedTag.id !== tag.id || isRenamingTag
+                'text-primary': selectedTag && selectedTag.id === tag.id && !isRenamingTag,
+                // 'text-base-content/30': !selectedTag || selectedTag.id !== tag.id || isRenamingTag
               }
             ]"
             @click="selectTag(tag)"
@@ -38,9 +38,9 @@
               <div class="overflow-hidden whitespace-pre text-ellipsis">
                 {{ tag.name }}
               </div>
-              <DropDownMenu 
+              <ContextMenu 
                 :class="[
-                  'ml-auto px-1 rounded',
+                  'ml-auto flex flex-row items-center text-base-content/30',
                   selectedTag && selectedTag.id !== tag.id ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
@@ -86,7 +86,7 @@ import {
 } from '@/common/icons';
 
 // import TButton from '@/components/TButton.vue';
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
 const props = defineProps({

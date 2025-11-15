@@ -14,10 +14,10 @@
         <li v-for="camera in cameras">
           <div 
             :class="[
-              'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
               { 
-                'text-base-content': config.camera.make === camera.make, 
-                'bg-base-content/10 border-primary'  : config.camera.make === camera.make && !config.camera.model 
+                'text-primary': config.camera.make === camera.make && !config.camera.model, 
+                // 'text-base-content/30': config.camera.make === camera.make && !config.camera.model 
               }
             ]"
             @click="clickCameraMake(camera)"
@@ -37,8 +37,11 @@
             <li v-for="model in camera.models" class="pl-4">
               <div 
                 :class="[
-                  'm-1 pl-3 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
-                  config.camera.model === model ? 'bg-base-content/10 border-primary' : ''
+                  'ml-4 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
+                  {
+                    'text-primary': config.camera.model === model,
+                    // 'text-base-content/30': config.camera.model === model
+                  }
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >

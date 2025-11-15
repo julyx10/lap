@@ -7,12 +7,10 @@
     >
       <div v-if="child.id != 0" 
         :class="[
-          'my-1 mr-1 h-6 flex items-center rounded border-l-2 whitespace-nowrap cursor-pointer group',
+          'mx-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
           {
-            'bg-base-content/10 border-primary text-base-content': selectedFolderId === child.id && !isRenamingFolder,
-            'hover:bg-base-content/10 border-transparent': selectedFolderId !== child.id || isRenamingFolder,
-            'text-base-content/30': isHiddenAlbum,
-            'text-base-content': getFolderPath(config.album.folderPath).includes(child.path)
+            'text-primary': selectedFolderId === child.id && !isRenamingFolder,
+            // 'text-base-content': getFolderPath(config.album.folderPath).includes(child.path)
           }
         ]" 
         @click="clickFolder(rootAlbumId, child)"
@@ -30,7 +28,7 @@
           ref="folderInputRef"
           type="text"
           maxlength="255"
-          class="input px-1 w-full focus:border text-base"
+          class="input px-1 w-full text-base"
           v-model="child.name"
           @keydown.enter = "clickRenameFolder(child.name)"
           @keydown.esc = "handleEscKey($event, child.id)"
@@ -40,11 +38,13 @@
           <div class="overflow-hidden whitespace-pre text-ellipsis">
             {{ child.name }}
           </div>
-          <div class="ml-auto flex flex-row items-center rounded">
-            <IconFavorite v-if="child.is_favorite" 
-              class="h-4 w-4" 
+          <div class="ml-auto flex flex-row items-center text-base-content/30">
+            <TButton v-if="child.is_favorite" 
+              :icon="IconFavorite"
+              :disabled="true"
+              :buttonSize="'small'"
             />
-            <DropDownMenu v-show="componentId === 0 && !isRenamingFolder"
+            <ContextMenu v-show="componentId === 0 && !isRenamingFolder"
               :class="[
                 selectedFolderId != child.id ? 'invisible group-hover:visible' : ''
               ]"
@@ -97,7 +97,7 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox.move_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
+    :title="`${$t('msgbox.move_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name, 32) })}`"
     :message="$t('msgbox.move_to.content')"
     :OkText="$t('msgbox.move_to.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -108,7 +108,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox.copy_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name) })}`"
+    :title="`${$t('msgbox.copy_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name, 32) })}`"
     :message="$t('msgbox.copy_to.content')"
     :OkText="$t('msgbox.copy_to.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -131,10 +131,11 @@ import { isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder 
 import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
+import TButton from '@/components/TButton.vue';
 
 import {
   IconRight,

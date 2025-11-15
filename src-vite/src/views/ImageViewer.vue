@@ -21,7 +21,7 @@
     >
       <div id="responsiveDiv"
         :class="[
-          'px-4 h-12 space-x-2 rounded-lg flex flex-row items-center justify-center bg-base-300',
+          'px-4 h-12 space-x-2 rounded-box flex flex-row items-center justify-center bg-base-300',
           config.imageViewer.isFullScreen && !config.imageViewer.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-2 group-hover:opacity-80 transition-transform duration-300 ease-in-out' : '',
           config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'opacity-80 translate-y-2 transition-transform duration-300 ease-in-out' : ''
         ]"
@@ -109,7 +109,7 @@
           @click="toggleFullScreen()"
         />
 
-        <DropDownMenu
+        <ContextMenu
           :iconMenu="IconMore"
           :menuItems="moreMenuItems"
           :disabled="fileIndex === -1"
@@ -141,7 +141,7 @@
       <!-- <transition name="fade">
         <div v-if="isScaleChanged" 
           :class="[
-            'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-lg',
+            'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-box',
             config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'top-20' : 'top-10'
           ]"
         >
@@ -154,7 +154,7 @@
         <div v-if="fileIndex > 0"
           class="absolute left-0 w-16 h-full z-10 flex items-center justify-start cursor-pointer group" 
         >
-          <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
+          <div class="m-3 rounded-box hidden group-hover:block bg-base-100 cursor-pointer ">
             <TButton :icon="IconLeft" :buttonClasses="'rounded-full'" @click="clickPrev()"/>
           </div>
         </div>
@@ -162,7 +162,7 @@
         <div v-if="fileIndex < fileCount - 1"
           class="absolute right-0 w-16 h-full z-10 flex items-center justify-end cursor-pointer group" 
         >
-          <div class="m-3 rounded-lg hidden group-hover:block bg-base-100 cursor-pointer ">
+          <div class="m-3 rounded-box hidden group-hover:block bg-base-100 cursor-pointer ">
             <TButton :icon="IconRight" :buttonClasses="'rounded-full'" @click="clickNext()"/>
           </div>
         </div>
@@ -195,7 +195,7 @@
 
         <!-- comments -->
         <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
-          class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-lg select-text" 
+          class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-box select-text" 
         >
           <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
           {{ fileInfo?.comments }}
@@ -260,7 +260,7 @@ import Image from '@/components/Image.vue';
 import ImageEditor from '@/components/ImageEditor.vue';
 const Video = defineAsyncComponent(() => import('@/components/Video.vue')); // dynamic import
 
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';

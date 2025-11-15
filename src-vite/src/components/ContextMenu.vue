@@ -13,7 +13,7 @@
       <transition name="fade">
         <div v-if="isDropDown" 
           ref="menu"
-          class="menu text-base-content/70 bg-base-100 border border-base-content/30 absolute rounded-box shadow-lg z-50"
+          class="menu text-base-content/70 bg-base-200 border border-base-content/30 absolute rounded-box shadow-lg z-50"
           :style="menuStyle"
         >
           <!-- menu items -->
@@ -21,7 +21,7 @@
             <button v-if="!item.hidden"
               :class="[
                 item.label === '-' ? 'mx-2 my-1 border-t border-base-content/30' : 'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
-                item.disabled ? 'text-base-content/30' : 'hover:bg-base-content/10 hover:rounded-lg cursor-pointer',
+                item.disabled ? 'text-base-content/30' : 'hover:bg-base-100 hover:rounded-box cursor-pointer',
               ]"
               :key="index"
               @click="handleClick(item)"

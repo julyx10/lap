@@ -11,9 +11,9 @@
       <!-- favorite files -->
       <div 
         :class="[ 
-          'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
+          'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
           { 
-            'text-base-content bg-base-content/10 border-primary': config.favorite.folderId === 0, 
+            'text-primary': config.favorite.folderId === 0, 
           }
         ]"
         @click="clickFavoriteFiles()"
@@ -25,7 +25,7 @@
       </div>
 
       <!-- favorite folders -->
-      <div class="mt-1 px-2 py-1 text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div class="my-2 px-2 py-1 text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('favorite.folders') }}
       </div>
       <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
@@ -33,10 +33,10 @@
           <li v-for="folder in favorite_folders" :key="folder.id">
             <div 
               :class="[ 
-                'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer group', 
+                'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
                 { 
-                  'text-base-content bg-base-content/10 border-primary': config.favorite.folderId === folder.id, 
-                  'text-base-content/30': folder.is_hidden,
+                  'text-primary': config.favorite.folderId === folder.id, 
+                  // 'text-base-content/30': folder.is_hidden,
                 }
               ]"
               @click="clickFavoriteFolder(folder)"
@@ -47,9 +47,9 @@
               <div class="overflow-hidden whitespace-pre text-ellipsis">
                 {{ folder.name }}
               </div>
-              <DropDownMenu
+              <ContextMenu
                 :class="[
-                  'ml-auto px-1 rounded',
+                  'ml-auto flex flex-row items-center text-base-content/30',
                   config.favorite.folderId != folder.id ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
@@ -78,7 +78,7 @@ import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getFavoriteFolders, setFolderFavorite, getAlbum } from '@/common/api';
 
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 
 import { 
   IconMore,

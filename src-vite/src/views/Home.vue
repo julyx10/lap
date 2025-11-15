@@ -11,7 +11,7 @@
       <div
         ref="divSideBar" 
         :class="[
-          'pb-4 rounded-r-lg z-10 bg-base-200',
+          'pb-4 rounded-r-box z-10 bg-base-200',
           isWin ? 'pt-2' : 'pt-10'
         ]" 
         style="user-select: none; min-width: 68px;"
@@ -52,7 +52,7 @@
         leave-to-class="left-pane-hide"
       >
         <div v-show="config.home.sidebarIndex > 0 && showLeftPane" 
-          :class="['py-1 flex bg-base-200 left-pane overflow-hidden rounded-r-lg', { 'no-transition': isDraggingSplitter }]" 
+          :class="['py-1 flex bg-base-200 left-pane overflow-hidden rounded-r-box', { 'no-transition': isDraggingSplitter }]" 
           :style="{ '--left-pane-width': config.home.leftPaneWidth + 'px' }"
         >
           <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
@@ -74,7 +74,7 @@
       <div 
         :class="[
           'flex-1 flex relative bg-base-300',
-          isWin ? 'rounded-tl-lg' : '',
+          isWin ? 'rounded-tl-box' : '',
         ]"
       >
         <Content :titlebar="buttons[config.home.sidebarIndex].text"/>

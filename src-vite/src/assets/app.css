@@ -10,15 +10,15 @@
 }
 
 @utility input {
-  @apply h-8 border-1 focus:border-2 focus:outline-none focus:border-primary focus:rounded;
+  @apply h-8 border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary focus:rounded-box;
 }
 
 @utility textarea {
-  @apply border-1 focus:border-2 focus:outline-none focus:border-primary focus:rounded;
+  @apply border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary focus:rounded-box;
 }
 
 @utility select {
-  @apply h-8 w-fit focus:outline-none;
+  @apply h-8 w-fit rounded-box focus:outline-none focus:rounded-box;
 }
 
 /* icon */

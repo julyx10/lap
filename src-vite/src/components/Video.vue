@@ -8,9 +8,9 @@
       @click.stop="clickPlayVideo"
     >
       <div class="w-16 h-16 rounded-full bg-base-100/50 flex items-center justify-center 
-                  hover:bg-base-100/80 hover:scale-110 transition-all duration-300 ease-out group">
+                  hover:bg-base-100 hover:scale-110 transition-all duration-300 ease-out group">
         <component :is="isReplaying ? IconVideoReplay : IconVideoPlay"
-          class="w-8 h-8 text-base-content/50 transition-colors duration-300 group-hover:text-base-content/80"
+          class="w-8 h-8 text-base-content/50 transition-colors duration-300 group-hover:text-base-content/70"
         />
       </div>
     </div>

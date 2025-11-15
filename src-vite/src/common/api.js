@@ -1,8 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
-import { useConfigStore } from '@/stores/configStore';
+import { config } from '@/common/config';
 import { separator, openFolderDialog, localeComp } from '@/common/utils';
-
-const config = useConfigStore();
 
 // albums
 

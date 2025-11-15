@@ -39,6 +39,8 @@ export { default as IconMasonry } from '@/assets/icons/layout-masonry.svg';
 export { default as IconPreview } from '@/assets/icons/preview-on.svg';
 export { default as IconPreviewOff } from '@/assets/icons/preview-off.svg';
 export { default as IconView } from '@/assets/icons/eye.svg';
+export { default as IconViewOff } from '@/assets/icons/eye-off.svg';
+export { default as IconMonitor } from '@/assets/icons/monitor.svg';
 export { default as IconZoomIn } from '@/assets/icons/zoom-in.svg';
 export { default as IconZoomOut } from '@/assets/icons/zoom-out.svg';
 export { default as IconZoomFit } from '@/assets/icons/zoom-fit.svg';

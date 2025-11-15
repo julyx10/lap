@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full rounded-lg w-full bg-base-200 flex flex-col select-none">
+  <div class="h-full rounded-box w-full bg-base-200 flex flex-col select-none">
     <!-- Title bar -->
     <div class="p-2 flex items-center justify-between">
       <!-- Tabs -->
@@ -128,6 +128,10 @@
             <td>{{ fileInfo.e_artist }}</td>
           </tr>
           <tr>
+            <td class="text-nowrap">{{ $t('file_info.copyright') }}</td>
+            <td>{{ fileInfo.e_copyright }}</td>
+          </tr>
+          <tr>
             <td class="text-nowrap">{{ $t('file_info.taken_at') }}</td>
             <td>{{ fileInfo.e_date_time }}</td>
           </tr>
@@ -160,7 +164,7 @@
 
     <!-- Preview -->
     <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
-      class="flex-1 rounded-lg overflow-hidden"
+      class="flex-1 rounded-box overflow-hidden"
     >
       <template v-if="fileInfo?.file_type === 1">
         <Image v-if="imageSrc"

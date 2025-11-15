@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'border-2 rounded-lg hover:bg-base-100 cursor-pointer group transition-all ease-in-out duration-300',
+      'border-2 rounded-box hover:bg-base-100 cursor-pointer group transition-all ease-in-out duration-300',
       config.content.layout === 0 ? 'p-2' : 'w-48',
       isSelected ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
     ]"
@@ -9,7 +9,7 @@
     @dblclick="$emit('dblclicked')"
   >
     <div class="flex flex-col items-center group">
-      <div v-if="file.thumbnail" class="relative rounded-lg overflow-hidden">
+      <div v-if="file.thumbnail" class="relative rounded-box overflow-hidden">
         <!-- thumbnail -->
         <img :src="file.thumbnail"
           class="transition-all duration-300"
@@ -29,7 +29,7 @@
         <!-- status icons -->
         <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
           <!-- video duration -->
-          <div v-if="file.file_type===2" class="text-xs border rounded-lg px-1 z-10">
+          <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 z-10">
             {{ formatDuration(file.duration) }}
           </div>
           <!-- status icons -->
@@ -46,19 +46,23 @@
           </template>
         </div>
 
-        <!-- select checkbox or more menu -->
-        <div class="absolute right-0 top-0 flex items-center">
-          <component v-if="selectMode"
+        <!-- select checkbox -->
+        <div v-if="selectMode" class="absolute right-1 top-0.5">
+          <component 
             :is="file?.isSelected ? IconChecked : IconUnChecked" 
-            :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-gray-500']" 
+            :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-base-content/30']" 
             @click.stop="$emit('select-toggled')"
           />
-          <DropDownMenu v-else
+        </div>
+
+        <!-- context menu -->
+        <div v-if="!selectMode" class="absolute right-0 top-0">
+          <ContextMenu
             :class="[
               !isSelected ? 'invisible group-hover:visible' : ''
             ]"
             :iconMenu="IconMore"
-            :menuItems="moreMenuItems"
+            :menuItems="contextMenuItems"
             :smallIcon="true"
           />
         </div>
@@ -66,7 +70,7 @@
       
       <!-- skeleton for loading thumbnail -->
       <div v-else 
-        class="skeleton rounded-lg flex items-center justify-center"
+        class="skeleton rounded-box flex items-center justify-center"
         :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
       ></div>
 
@@ -85,11 +89,11 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings } from '@/common/utils';
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 
 import { 
   IconMore,
-  IconView,
+  IconMonitor,
   IconImageEdit,
   IconFavorite,
   IconUnFavorite,
@@ -106,7 +110,7 @@ import {
   IconComment,
   IconLocation,
   IconCameraAperture,
-  IconUpdate,
+  IconRefresh,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -156,14 +160,14 @@ const uiStore = useUIStore();
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const moreMenuItems = computed(() => {
+const contextMenuItems = computed(() => {
   const file = props.file;
   const createAction = (actionName: string) => () => emit('action', actionName);
 
   return [
     {
       label: localeMsg.value.menu.file.view,
-      icon: IconView,
+      icon: IconMonitor,
       shortcut: isMac ? '⌘⏎' : 'Ctrl+Enter',
       action: createAction('open')
     },
@@ -183,7 +187,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.file.update_from_file,
-      icon: IconUpdate,
+      icon: IconRefresh,
       action: createAction('update-from-file')
     },
     {

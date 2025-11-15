@@ -1,7 +1,7 @@
 <template>
 
   <dialog id="imageEditorDialog" class="modal">
-    <div class="relative p-4 flex flex-col gap-2 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="relative p-4 flex flex-col gap-2 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
       
       <!-- Loading overlay -->
       <transition name="fade">
@@ -12,7 +12,7 @@
       
       <!-- title bar -->
       <div class="flex items-center justify-between text-wrap break-all">
-        {{ $t('msgbox.image_editor.title') }} - {{ props.fileInfo.name }}
+        {{ $t('msgbox.image_editor.title') }} - {{ shortenFilename(props.fileInfo.name, 64) }}
         <TButton
           :icon="IconClose"
           :buttonSize="'small'"
@@ -25,7 +25,7 @@
       <div class="flex-grow flex gap-4">
         <div class="flex-1">
           <!-- image container -->
-          <div ref="containerRef" class="relative w-[570px] h-[430px] bg-base-200 cursor-default rounded-lg overflow-hidden select-none">
+          <div ref="containerRef" class="relative w-[570px] h-[430px] outline outline-base-content/30 cursor-default rounded-box overflow-hidden select-none">
             <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
             <!-- crop box -->
             <div v-if="cropStatus > 0" 
@@ -236,22 +236,22 @@
       <div class="flex justify-end gap-4">
         <button
           :class="[
-            'px-4 py-1 rounded-lg',
-            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/30 cursor-pointer',
+            'px-4 py-1 rounded-box',
+            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
           ]" 
           @click="clickCancel"
         >{{ $t('msgbox.image_editor.cancel') }}</button>
         <button 
           :class="[
-            'px-4 py-1 rounded-lg',
-            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-content/30 cursor-pointer',
+            'px-4 py-1 rounded-box',
+            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary hover:text-base-100 cursor-pointer',
           ]" 
           @click="clickCopyImage"
         >{{ $t('msgbox.image_editor.copy_image') }}</button>
         <button 
           :class="[
-            'px-4 py-1 rounded-lg',
-            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary cursor-pointer',
+            'px-4 py-1 rounded-box',
+            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary hover:text-base-100 cursor-pointer',
           ]" 
           @click="clickSave"
         >{{ $t('msgbox.image_editor.ok') }}</button>
@@ -269,7 +269,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { getFolderPath, extractFileName, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
+import { getFolderPath, extractFileName, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
 import { editImage, copyEditedImage } from '@/common/api';
 
 import TButton from '@/components/TButton.vue';

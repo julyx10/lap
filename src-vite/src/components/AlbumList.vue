@@ -1,6 +1,6 @@
 <template>
     <!-- albums -->
-    <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-lg">
+    <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-box">
 
       <!-- drag to change albums' display order -->
       <VueDraggable 
@@ -15,40 +15,43 @@
         <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'my-1 mr-1 pr-1 h-8 flex flex-row items-center rounded border-l-2 whitespace-nowrap cursor-pointer group', 
-              selectedFolderId === album.folderId && !isEditList ? 'bg-base-content/10 border-primary' : 'hover:bg-base-content/10 border-transparent',
-              album.is_hidden ? 'text-base-content/30' : '',
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
               { 
-                'hover:bg-base-content/10': !isDragging && !isEditList,
-                'text-base-content': selectedAlbumId === album.id && !isEditList, 
-                'bg-base-content/10': isEditList,
+                'text-primary': selectedFolderId === album.folderId && !isEditList,
+                // 'text-base-content': selectedAlbumId === album.id && !isEditList, 
               }
             ]"
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
             <component :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
-              class="mx-1 w-5 h-5 t-icon-animate hover:text-base-content cursor-pointer shrink-0" 
+              class="mx-1 w-5 h-5 cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
 
             <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ album.name }}
             </div>
-            <TButton v-if="isEditList" 
-              class="ml-auto text-base-content/70 drag-handle"
-              :icon="IconDragHandle"
-              :buttonSize="'small'"
-            />
-            <DropDownMenu v-else-if="componentId === 0 && !isDragging"
-              :class="[
-                'ml-auto pl-1',
-                !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
-              ]"
-              :iconMenu="IconMore"
-              :menuItems="moreMenuItems"
-              :smallIcon="true"
-            />
+            <div class="ml-auto flex flex-row items-center text-base-content/30">
+              <TButton v-if="album.is_hidden" 
+                :icon="IconViewOff"
+                :disabled="true"
+                :buttonSize="'small'"
+              />
+              <TButton v-if="isEditList" 
+                class="drag-handle"
+                :icon="IconDragHandle"
+                :buttonSize="'small'"
+              />
+              <ContextMenu v-else-if="componentId === 0 && !isDragging"
+                :class="['',
+                  !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
+                ]"
+                :iconMenu="IconMore"
+                :menuItems="moreMenuItems"
+                :smallIcon="true"
+              />
+            </div>
           </div>
           <AlbumFolder v-if="album.is_expanded && !isEditList"
             :children="album.children" 
@@ -133,7 +136,7 @@ import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum,
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
@@ -147,6 +150,7 @@ import {
   IconDragHandle,
   IconEdit,
   IconRemove,
+  IconViewOff,
 } from '@/common/icons';
 
 const props = defineProps({

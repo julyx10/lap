@@ -33,8 +33,8 @@
         <!-- select mode -->
         <div tabindex="-1"
           :class="[
-            'px-2 py-1 h-8 flex flex-row items-center rounded-md border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
-            selectMode ? 'border-primary' : 'border-base-content/30 hover:border-base-content/70'
+            'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
+            selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100'
           ]"
           @click="handleSelectMode(true)"
         >
@@ -44,7 +44,7 @@
             @click.stop="handleSelectMode(false)" 
           />
           <span class="px-1">{{ selectMode ? $t('toolbar.filter.select_count', { count: selectedCount }) : $t('toolbar.filter.select_mode') }}</span>
-          <DropDownMenu v-if="selectMode"
+          <ContextMenu v-if="selectMode"
             :iconMenu="IconArrowDown"
             :menuItems="moreMenuItems"
             :smallIcon="true"
@@ -97,7 +97,7 @@
       >
         <!-- grid view -->
         <div ref="gridScrollContainerRef" 
-          class="bg-base-200 rounded-lg" 
+          class="bg-base-200 rounded-box" 
           :class="{
             'overflow-auto': config.content.layout === 0,
             'overflow-x-auto overflow-y-hidden': config.content.layout === 1
@@ -128,7 +128,7 @@
 
         <!-- preview -->
         <div v-show="config.content.layout === 1" ref="previewDiv" 
-          class="flex-1 rounded-lg overflow-hidden bg-base-200"
+          class="flex-1 rounded-box overflow-hidden bg-base-200"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="w-full h-full flex items-center justify-center"
@@ -211,7 +211,7 @@
           <span>
             {{ selectMode
               ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
-              : shortenFilename(fileList[selectedItemIndex]?.name) + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')'
+              : shortenFilename(fileList[selectedItemIndex]?.name, 32) + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')'
             }}
           </span>
         </div>
@@ -266,7 +266,7 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox.move_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
+    :title="`${$t('msgbox.move_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : shortenFilename(fileList[selectedItemIndex].name, 64) })}`"
     :message="$t('msgbox.move_to.content')"
     :OkText="$t('msgbox.move_to.ok')" 
     :cancelText="$t('msgbox.cancel')"
@@ -277,7 +277,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox.copy_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : fileList[selectedItemIndex].name })}`"
+    :title="`${$t('msgbox.copy_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : shortenFilename(fileList[selectedItemIndex].name, 64) })}`"
     :message="$t('msgbox.copy_to.content')"
     :OkText="$t('msgbox.copy_to.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -340,7 +340,7 @@ import { isWin, isMac, setTheme,
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
-import DropDownMenu from '@/components/DropDownMenu.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import Image from '@/components/Image.vue';

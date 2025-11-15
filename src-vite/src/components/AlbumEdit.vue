@@ -1,7 +1,7 @@
 <template>
 
   <dialog id="albumInfoDialog" class="modal">
-    <div class="w-96 p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="w-96 p-4 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
 
         <!-- title bar -->
         <div class="mb-2 flex items-center justify-between">
@@ -24,7 +24,7 @@
                   v-model="inputNameValue"
                   type="text"
                   maxlength="255"
-                  class="px-2 py-1 w-full input focus:border"
+                  class="px-2 py-1 w-full input"
                 />
               </td>
             </tr>
@@ -36,7 +36,7 @@
                   rows="2"
                   maxlength="1024"
                   :placeholder="$t('album.edit.description_placeholder')"
-                  class="px-2 py-1 mt-2 w-full textarea min-h-[30px] max-h-[200px] focus:border"
+                  class="px-2 py-1 mt-2 w-full textarea min-h-[30px] max-h-[200px]`"
                 ></textarea>
               </td>
             </tr>
@@ -81,15 +81,15 @@
         <!-- cancel and OK buttons -->
         <div class="mt-4 flex justify-end space-x-4">
           <button 
-            class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+            class="px-4 py-1 rounded-box hover:bg-base-100 cursor-pointer" 
             @click="clickCancel"
           >
             {{ $t('msgbox.cancel') }}
           </button>
           <button 
             :class="[
-              'px-4 py-1 rounded-lg', 
-              inputNameValue.trim().length > 0 ? 'hover:bg-primary cursor-pointer' : 'text-base-content/30 cursor-default',
+              'px-4 py-1 rounded-box', 
+              inputNameValue.trim().length > 0 ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default',
             ]" 
             @click="clickOk"
           >

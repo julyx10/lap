@@ -1,6 +1,6 @@
 <template>
   <dialog id="taggingDialog" class="modal" @cancel="clickCancel">
-    <div class="w-[600px] p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="w-[600px] p-4 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
       
       <!-- title bar -->
       <div class="mb-2 flex items-center justify-between">
@@ -19,14 +19,14 @@
           type="text"
           v-model="tagSearch"
           :placeholder="$t('tag.search_tags')"
-          class="input focus:border flex-grow"
+          class="input flex-grow"
         />
         <input
           ref="newTagNameInputRef"
           type="text"
           v-model="newTagName"
           :placeholder="$t('tag.enter_new_tag_name')"
-          class="input focus:border w-1/2"
+          class="input w-1/2"
           @keydown.enter="addNewTag"
         />
         <TButton 
@@ -36,7 +36,7 @@
       </div>
 
       <!-- Tag List -->
-      <div class="max-h-80 overflow-y-auto border border-base-content/10  rounded-md p-2">
+      <div class="max-h-80 overflow-y-auto border border-base-content/10  rounded-box p-2">
         <div v-if="filteredTags.length > 0" class="flex flex-wrap gap-2">
           <div
             v-for="tag in filteredTags"
@@ -62,12 +62,12 @@
       <!-- cancel and OK buttons -->
       <div class="mt-4 flex justify-end space-x-4">
         <button 
-          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+          class="px-4 py-1 rounded-box hover:bg-base-content/30 cursor-pointer" 
           @click="clickCancel"
         >{{ $t('msgbox.cancel') }}</button>
         
         <button 
-          class="px-4 py-1 rounded-lg hover:bg-primary cursor-pointer" 
+          class="px-4 py-1 rounded-box hover:bg-primary hover:text-base-100 cursor-pointer" 
           @click="clickOk"
         >{{ $t('msgbox.ok') }}</button>
 

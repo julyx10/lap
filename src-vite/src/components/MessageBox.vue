@@ -1,7 +1,7 @@
 <template>
 
   <dialog id="messageBoxDialog" class="modal">
-    <div class="w-96 p-4 text-base-content/70 bg-base-100 border border-base-content/30 rounded-box">
+    <div class="w-96 p-4 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
 
       <!-- title bar -->
       <div class="mb-4 flex items-center justify-between">
@@ -26,7 +26,7 @@
           type="text"
           maxlength="255"
           :placeholder="inputPlaceholder"
-          class="px-2 py-1 my-2 w-full input focus:border"
+          class="px-2 py-1 my-2 w-full input"
           @input="validateInput"
           @keydown.enter="clickOk"
         />
@@ -37,7 +37,7 @@
           rows="4"
           minrows="1"
           :placeholder="inputPlaceholder"
-          class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px] focus:border"
+          class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px]"
           @input="validateInput"
           @keydown.enter="clickOk"
         ></textarea>
@@ -48,13 +48,13 @@
       <!-- cancel and OK buttons -->
       <div class="mt-2 flex justify-end space-x-4">
         <button v-if="cancelText.length > 0"
-          class="px-4 py-1 rounded-lg hover:bg-base-content/30 cursor-pointer" 
+          class="px-4 py-1 rounded-box hover:bg-base-100 cursor-pointer" 
           @click="clickCancel"
         >{{ cancelText }}</button>
         
         <button 
           :class="[
-            'px-4 py-1 rounded-lg', 
+            'px-4 py-1 rounded-box', 
             okButtonClasses,
           ]" 
           @click="clickOk"
@@ -138,7 +138,7 @@ const inputErrorMessage = ref('');
 
 const okButtonClasses = computed(() => {
   return !props.showInput || !props.needValidateInput || inputValue.value.trim().length > 0
-    ? (props.warningOk ? 'hover:bg-error cursor-pointer' : 'hover:bg-primary cursor-pointer')
+    ? (props.warningOk ? 'hover:bg-error hover:text-base-100 cursor-pointer' : 'hover:bg-primary hover:text-base-100 cursor-pointer')
     : 'text-base-content/30 cursor-default';
 });
 

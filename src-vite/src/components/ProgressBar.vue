@@ -1,8 +1,8 @@
 <template>
-  <div class="px-2 w-full rounded-lg h-0.5">
+  <div class="px-2 w-full rounded-box h-0.5">
     <div
       :class="[
-        'h-full rounded-lg bg-primary', 
+        'h-full rounded-box bg-primary', 
         hasReached ? 'transition-all duration-300 ease-out' : '',
         fadeClass
       ]"

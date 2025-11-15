@@ -4,7 +4,7 @@
       :data-tip="tooltip"
     >
       <button
-        class="btn btn-ghost btn-square rounded-lg border-0 focus:outline-none shadow-none flex flex-col"
+        class="btn btn-ghost btn-square rounded-box border-0 focus:outline-none shadow-none flex flex-col"
         :class="[
           buttonClasses,
           {

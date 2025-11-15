@@ -14,10 +14,10 @@
         <li v-for="location in locations">
           <div 
             :class="[
-              'my-1 mr-1 h-8 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
               { 
-                'text-base-content': config.location.admin1 === location.admin1, 
-                'bg-base-content/10 border-primary'  : config.location.admin1 === location.admin1 && !config.location.name 
+                'text-primary': config.location.admin1 === location.admin1 && !config.location.name, 
+                // 'text-base-content/30': config.location.admin1 === location.admin1 && !config.location.name 
               }
             ]"
             @click="clickLocationAdmin1(location)"
@@ -37,8 +37,11 @@
             <li v-for="name in location.names" class="pl-4">
               <div 
                 :class="[
-                  'm-1 pl-3 flex items-center rounded border-l-2 border-base-200 hover:bg-base-content/10 whitespace-nowrap cursor-pointer', 
-                  config.location.name === name ? 'bg-base-content/10 border-primary' : ''
+                  'ml-4 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
+                  {
+                    'text-primary': config.location.name === name,
+                    // 'text-base-content/30': config.location.name === name
+                  }
                 ]" 
                 @click="clickLocationName(location.admin1, name)"
               >
