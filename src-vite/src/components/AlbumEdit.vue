@@ -24,7 +24,7 @@
                   v-model="inputNameValue"
                   type="text"
                   maxlength="255"
-                  class="px-2 py-1 w-full input"
+                  class="w-full input"
                 />
               </td>
             </tr>
@@ -36,7 +36,7 @@
                   rows="2"
                   maxlength="1024"
                   :placeholder="$t('album.edit.description_placeholder')"
-                  class="px-2 py-1 mt-2 w-full textarea min-h-[30px] max-h-[200px]`"
+                  class="my-2 w-full textarea min-h-[30px] max-h-[200px]`"
                 ></textarea>
               </td>
             </tr>

@@ -4,7 +4,7 @@
 
     <!-- Title Bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
-      <span class="cursor-default">{{ titlebar }}</span>
+      <span class="pl-1 cursor-default">{{ titlebar }}</span>
     </div>
 
     <!-- Tag List -->

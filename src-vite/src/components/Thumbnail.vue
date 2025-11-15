@@ -1,23 +1,25 @@
 <template>
   <div
     :class="[
-      'border-2 rounded-box hover:bg-base-100 cursor-pointer group transition-all ease-in-out duration-300',
+      'border-2 rounded-box hover:bg-base-100 cursor-pointer group ease-in-out duration-300',
+      isTransitionDisabled ? 'transition-none' : 'transition-all',
       config.content.layout === 0 ? 'p-2' : 'w-48',
-      isSelected ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
+      isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
     ]"
     @click="$emit('clicked')"
     @dblclick="$emit('dblclicked')"
   >
     <div class="flex flex-col items-center group">
-      <div v-if="file.thumbnail" class="relative rounded-box overflow-hidden">
+      <div v-if="file.thumbnail" class="relative rounded-box flex items-center justify-center overflow-hidden">
         <!-- thumbnail -->
         <img :src="file.thumbnail"
-          class="transition-all duration-300"
+          class="duration-300"
           :class="{
-            'group-hover:scale-120': config.content.layout === 1,
+            'group-hover:scale-115': config.content.layout === 1,
             'object-contain': config.settings.grid.scaling === 0,
             'object-cover': config.settings.grid.scaling === 1,
             'object-fill': config.settings.grid.scaling === 2,
+            'transition-all': !isTransitionDisabled,
           }"
           :style="{ 
             ...layoutStyle,
@@ -84,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
@@ -139,6 +141,19 @@ const emit = defineEmits([
     'action'
 ]);
 
+const isTransitionDisabled = ref(false);
+let transitionTimeout: NodeJS.Timeout | null = null;
+
+watch(() => config.content.layout, () => {
+  isTransitionDisabled.value = true;
+  if (transitionTimeout) {
+    clearTimeout(transitionTimeout);
+  }
+  transitionTimeout = setTimeout(() => {
+    isTransitionDisabled.value = false;
+  }, 500);
+});
+
 const layoutStyle = computed(() => {
   if (config.content.layout === 0) {
     return {
@@ -148,8 +163,8 @@ const layoutStyle = computed(() => {
   }
   else if (config.content.layout === 1) {
     return {
-      maxWidth: (config.content.filmStripPaneHeight - 20) + 'px',
-      maxHeight: (config.content.filmStripPaneHeight - 20) + 'px',
+      maxWidth: (config.content.filmStripPaneHeight - 8) + 'px',
+      maxHeight: (config.content.filmStripPaneHeight - 8) + 'px',
       width: config.settings.grid.size + 'px',
       height: config.settings.grid.size + 'px'
     }

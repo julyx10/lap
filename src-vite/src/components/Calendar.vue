@@ -4,7 +4,7 @@
 
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
-      <span class="cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
+      <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
       <div class="flex text-sm items-center cursor-pointer">
         <div role="tablist" class="tabs-sm tabs-border" >
           <a 
@@ -35,7 +35,7 @@
     <template v-if="Object.keys(calendar_dates).length > 0" >
       
         <!-- days of the week in daily calendar -->
-        <div v-if="!config.calendar.isMonthly" class="text-sm text-base-content/30 flex flex-col items-center mr-4">
+        <div v-if="!config.calendar.isMonthly" class="text-sm text-base-content/30 flex flex-col items-center">
           <div class="grid grid-cols-7 gap-2 text-center">
             <div 
               v-for="(day, index) in localeMsg.calendar.weekdays" 

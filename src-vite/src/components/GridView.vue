@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="gridViewRef"
     class="relative w-full h-full focus:outline-none" 
     :class="{ 
       'pointer-events-none': uiStore.inputStack.length > 0,
@@ -10,7 +11,7 @@
       class="p-2 "
       :class="{
         'grid gap-2': config.content.layout === 0,
-        'absolute w-full h-full flex flex-nowrap items-center overflow-x-auto overflow-y-hidden': config.content.layout === 1
+        'absolute w-full h-full flex flex-nowrap items-center': config.content.layout === 1
       }"
       :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` } : { }"
     >
@@ -41,7 +42,7 @@
 
 <script setup lang="ts">
 
-import { watch, nextTick } from 'vue';
+import { watch, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
@@ -77,19 +78,42 @@ defineEmits([
 ]);
 
 const uiStore = useUIStore();
+const gridViewRef = ref(null);
+let resizeObserver: ResizeObserver | null = null;
 
 watch(() => props.selectedItemIndex, (newValue) => {
   scrollToItem(newValue);
 });
 
+watch(() => config.content.layout, () => {
+  scrollToItem(props.selectedItemIndex);
+});
+
+onMounted(() => {
+  if (gridViewRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      scrollToItem(props.selectedItemIndex);
+    });
+    resizeObserver.observe(gridViewRef.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+});
+
 // make the selected item always visible in a scrollable container
 function scrollToItem(index: number) {
-  nextTick(() => {
+  // Using setTimeout to ensure the DOM has been fully updated and rendered,
+  // especially after layout changes which might involve CSS that nextTick doesn't wait for.
+  setTimeout(() => {
     const item = document.getElementById(`item-${index}`);
     if (item) {
-      item.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+      item.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
     }
-  });
+  }, 500);
 };
 
 // function to get the number of columns in the grid

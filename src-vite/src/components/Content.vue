@@ -99,11 +99,12 @@
         <div ref="gridScrollContainerRef" 
           class="bg-base-200 rounded-box" 
           :class="{
-            'overflow-auto': config.content.layout === 0,
+            'overflow-x-hidden overflow-y-auto': config.content.layout === 0,
             'overflow-x-auto overflow-y-hidden': config.content.layout === 1
           }"
           :style="{ height: config.content.layout === 0 ? '100%' : config.content.filmStripPaneHeight + 'px' }" 
           @scroll="handleScroll"
+          @wheel="handleWheel"
         >
           <GridView ref="gridViewRef"
             :selected-item-index="selectedItemIndex"
@@ -634,13 +635,29 @@ function handleItemAction(payload: { action: string, index: number }) {
 
 const gridScrollContainerRef = ref(null);
 
+const handleWheel = (event: WheelEvent) => {
+  if (config.content.layout !== 1) return;
+  const el = gridScrollContainerRef.value;
+  if (el) {
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    el.scrollLeft += delta;
+    event.preventDefault();
+  }
+};
+
 function handleScroll() {
   const el = gridScrollContainerRef.value;
   if (!el) return;
 
-  // scroll to the bottom of the container
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
-    handleNextPage();
+  if (config.content.layout === 0) { // layout 0: grid
+    // scroll to the bottom of the container
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
+      handleNextPage();
+    }
+  } else { // layout 1: carousel
+    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
+      handleNextPage();
+    }
   }
 }
 
@@ -825,12 +842,11 @@ watch(
   }
 );
 
-// watch for show preview on/off
-watch(() => [config.content.layout, config.infoPanel.show, config.infoPanel.tabIndex], () => {
-  if (gridViewRef.value) {
-    gridViewRef.value.scrollToItem(selectedItemIndex.value); 
+// watch for show preview or layout change
+watch(() => [config.content.layout, config.infoPanel.show, config.infoPanel.tabIndex], ([newLayout, newShow, newTabIndex]) => {
+  if(newLayout === 1 || (newShow && newTabIndex === 1)) {
+    updateSelectedImage(selectedItemIndex.value);
   }
-  updatePreview(selectedItemIndex.value);
 });
 
 async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 
@@ -1310,13 +1326,8 @@ function refreshFileList() {
 }
 
 // update image when the select file is changed
-async function updateSelectedImage(index) {
+async function updateSelectedImage(index: number) {
   if(index < 0 || index >= fileList.value.length) return;
-
-  // scroll to the selected item
-  if (gridViewRef.value) {
-    gridViewRef.value.scrollToItem(index); 
-  }
 
   // update the tags for the selected file
   if(config.infoPanel.show && fileList.value[index].has_tags) {

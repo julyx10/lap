@@ -843,13 +843,13 @@ function clampPosition() {
   const maxY = container.height - imgRotatedSize.height * scaleVal + paddingY;
 
   isGrabbing.value = false;
-  if (imgRotatedSize.width * scaleVal > container.width) {
+  if (Math.floor(imgRotatedSize.width * scaleVal) > container.width) {
     pos.x = Math.min(Math.max(pos.x, maxX), paddingX);
     isGrabbing.value = true;
   } else {
     pos.x = (container.width - imgSize.width) / 2;
   }
-  if (imgRotatedSize.height * scaleVal > container.height) {
+  if (Math.floor(imgRotatedSize.height * scaleVal) > container.height) {
     pos.y = Math.min(Math.max(pos.y, maxY), paddingY);
     isGrabbing.value = true;
   } else {
