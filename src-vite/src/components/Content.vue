@@ -95,27 +95,40 @@
           config.settings.filmStripView.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col'
         ]"
       >
-        <!-- grid view -->
-        <div ref="gridScrollContainerRef" 
-          class="bg-base-200 rounded-box" 
-          :class="{
-            'overflow-x-hidden overflow-y-auto': config.content.layout === 0,
-            'overflow-x-auto overflow-y-hidden': config.content.layout === 1
-          }"
-          :style="{ height: config.content.layout === 0 ? '100%' : config.content.filmStripPaneHeight + 'px' }" 
-          @scroll="handleScroll"
-          @wheel="handleWheel"
-        >
-          <GridView ref="gridViewRef"
-            :selected-item-index="selectedItemIndex"
-            :fileList="fileList"
-            :showFolderFiles="showFolderFiles"
-            :selectMode="selectMode"
-            @item-clicked="handleItemClicked"
-            @item-dblclicked="handleItemDblClicked"
-            @item-select-toggled="handleItemSelectToggled"
-            @item-action="handleItemAction"
-          />
+        <div class="relative" :class="{ 'flex-1': config.content.layout === 0 }">
+          <!-- grid view -->
+          <div ref="gridScrollContainerRef" 
+            class="bg-base-200 rounded-box" 
+            :class="{
+              'overflow-x-hidden overflow-y-auto': config.content.layout === 0,
+              'overflow-x-auto overflow-y-hidden': config.content.layout === 1,
+              'absolute inset-0': config.content.layout === 0,
+            }"
+            :style="{ height: config.content.layout === 1 ? config.content.filmStripPaneHeight + 'px' : '' }" 
+            @scroll="handleScroll"
+            @wheel="handleWheel"
+          >
+            <GridView ref="gridViewRef"
+              :selected-item-index="selectedItemIndex"
+              :fileList="fileList"
+              :showFolderFiles="showFolderFiles"
+              :selectMode="selectMode"
+              @item-clicked="handleItemClicked"
+              @item-dblclicked="handleItemDblClicked"
+              @item-select-toggled="handleItemSelectToggled"
+              @item-action="handleItemAction"
+            />
+          </div>
+
+          <!-- Navigation buttons -->
+          <div v-if="config.content.layout === 1 && fileList.length > 0" class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none">
+            <button @click="handleNavigate('prev')" class="p-2 rounded-full pointer-events-auto text-base-content/80 bg-base-200/30 hover:bg-base-300/80">
+              <IconPrev class="w-8 h-8" />
+            </button>
+            <button @click="handleNavigate('next')" class="p-2 rounded-full pointer-events-auto text-base-content/80 bg-base-200/30 hover:bg-base-300/80">
+              <IconNext class="w-8 h-8" />
+            </button>
+          </div>
         </div>
 
         <!-- splitter -->
@@ -383,7 +396,8 @@ import {
   IconFileSearch,
   IconGallery,
   IconGrid,
-  IconInformation,
+  IconNext,
+  IconPrev,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -630,6 +644,14 @@ function handleItemAction(payload: { action: string, index: number }) {
 
   if (actionMap[action]) {
     actionMap[action]();
+  }
+}
+
+function handleNavigate(direction: 'prev' | 'next') {
+  if (direction === 'next') {
+    selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
+  } else {
+    selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
   }
 }
 

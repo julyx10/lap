@@ -1,87 +1,85 @@
 <template>
   <div
     :class="[
-      'border-2 rounded-box hover:bg-base-100 cursor-pointer group ease-in-out duration-300',
+      'border-2 rounded-box flex flex-col items-center hover:bg-base-100 ease-in-out duration-300 cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all',
-      config.content.layout === 0 ? 'p-2' : 'w-48',
+      config.content.layout === 0 ? 'p-2' : 'p-0.5 ml-0.5',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
     ]"
+    :style="containerStyle"
     @click="$emit('clicked')"
     @dblclick="$emit('dblclicked')"
   >
-    <div class="flex flex-col items-center group">
-      <div v-if="file.thumbnail" class="relative rounded-box flex items-center justify-center overflow-hidden">
-        <!-- thumbnail -->
-        <img :src="file.thumbnail"
-          class="duration-300"
-          :class="{
-            'group-hover:scale-115': config.content.layout === 1,
-            'object-contain': config.settings.grid.scaling === 0,
-            'object-cover': config.settings.grid.scaling === 1,
-            'object-fill': config.settings.grid.scaling === 2,
-            'transition-all': !isTransitionDisabled,
-          }"
-          :style="{ 
-            ...layoutStyle,
-            transform: `rotate(${file.rotate}deg)`,
-          }"
-          loading="lazy"
-        />
+    <div v-if="file.thumbnail" class="relative rounded-box flex items-center justify-center overflow-hidden">
+      <!-- image -->
+      <img :src="file.thumbnail"
+        class="duration-300"
+        :class="{
+          'group-hover:scale-115': config.content.layout === 1,
+          'object-contain': config.settings.grid.scaling === 0,
+          'object-cover': config.settings.grid.scaling === 1,
+          'object-fill': config.settings.grid.scaling === 2,
+          'transition-all': !isTransitionDisabled,
+        }"
+        :style="{ 
+          ...layoutStyle,
+          transform: `rotate(${file.rotate}deg)`,
+        }"
+        loading="lazy"
+      />
 
+      <!-- status icons -->
+      <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
+        <!-- video duration -->
+        <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 z-10">
+          {{ formatDuration(file.duration) }}
+        </div>
         <!-- status icons -->
-        <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
-          <!-- video duration -->
-          <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 z-10">
-            {{ formatDuration(file.duration) }}
-          </div>
-          <!-- status icons -->
-          <template v-if="config.content.layout === 0">
-            <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
-            <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
-            <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
-            <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
-            <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
-            <IconRotate v-if="file.rotate % 360 > 0"
-              class="t-icon-size-xs"
-              :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
-            />
-          </template>
-        </div>
-
-        <!-- select checkbox -->
-        <div v-if="selectMode" class="absolute right-1 top-0.5">
-          <component 
-            :is="file?.isSelected ? IconChecked : IconUnChecked" 
-            :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-base-content/30']" 
-            @click.stop="$emit('select-toggled')"
-          />
-        </div>
-
-        <!-- context menu -->
-        <div v-if="!selectMode" class="absolute right-0 top-0">
-          <ContextMenu
-            :class="[
-              !isSelected ? 'invisible group-hover:visible' : ''
-            ]"
-            :iconMenu="IconMore"
-            :menuItems="contextMenuItems"
-            :smallIcon="true"
-          />
-        </div>
+        <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
+        <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
+        <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
+        <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
+        <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
+        <IconRotate v-if="file.rotate % 360 > 0"
+          class="t-icon-size-xs"
+          :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
+        />
       </div>
-      
-      <!-- skeleton for loading thumbnail -->
-      <div v-else 
-        class="skeleton rounded-box flex items-center justify-center"
-        :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
-      ></div>
 
-      <!-- label -->
-      <template v-if="config.content.layout === 0">
-        <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
-        <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
-      </template>
+      <!-- select checkbox -->
+      <div v-if="selectMode" class="absolute right-1 top-0.5">
+        <component 
+          :is="file?.isSelected ? IconChecked : IconUnChecked" 
+          :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-base-content/30']" 
+          @click.stop="$emit('select-toggled')"
+        />
+      </div>
+
+      <!-- context menu -->
+      <div v-if="!selectMode" class="absolute right-0 top-0">
+        <ContextMenu
+          :class="[
+            !isSelected ? 'invisible group-hover:visible' : ''
+          ]"
+          :iconMenu="IconMore"
+          :menuItems="contextMenuItems"
+          :smallIcon="true"
+        />
+      </div>
     </div>
+    
+    <!-- skeleton for loading thumbnail -->
+    <div v-else 
+      class="skeleton rounded-box flex items-center justify-center"
+      :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
+    ></div>
+
+    <!-- label -->
+    <template v-if="config.content.layout === 0">
+      <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
+      <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
+    </template>
+
   </div>
 </template>
 
@@ -154,6 +152,17 @@ watch(() => config.content.layout, () => {
   }, 500);
 });
 
+const containerStyle = computed(() => {
+  if (config.content.layout === 1) {
+    const size = config.content.filmStripPaneHeight;
+    return {
+      width: size + 'px',
+      height: size + 'px',
+    };
+  }
+  return {};
+});
+
 const layoutStyle = computed(() => {
   if (config.content.layout === 0) {
     return {
@@ -162,11 +171,14 @@ const layoutStyle = computed(() => {
     }
   }
   else if (config.content.layout === 1) {
+    const size = config.content.filmStripPaneHeight - 8;
     return {
-      maxWidth: (config.content.filmStripPaneHeight - 8) + 'px',
-      maxHeight: (config.content.filmStripPaneHeight - 8) + 'px',
-      width: config.settings.grid.size + 'px',
-      height: config.settings.grid.size + 'px'
+      maxWidth: size + 'px',
+      maxHeight: size + 'px',
+      minWidth: size + 'px',
+      minHeight: size + 'px',
+      width: size + 'px',
+      height: size + 'px'
     }
   }
 })
