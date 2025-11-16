@@ -9,6 +9,10 @@
   logs: true;
 }
 
+html, body {
+  overscroll-behavior: none;
+}
+
 @utility input {
   @apply h-8 border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }

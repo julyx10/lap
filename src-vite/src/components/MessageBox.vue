@@ -1,80 +1,57 @@
 <template>
-
-  <dialog id="messageBoxDialog" class="modal">
-    <div class="w-96 p-4 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
-
-      <!-- title bar -->
-      <div class="mb-4 flex items-center justify-between">
-        {{ title }}
-        <TButton
-          :icon="IconClose"
-          :buttonSize="'small'"
-          @click="clickCancel"
-        />
+  <ModalDialog :title="title" :width="400" @cancel="clickCancel">
+      <div v-if="message" class="text-sm text-wrap break-all">
+        {{ message }}
       </div>
 
-      <!-- content -->
-      <div class="mt-2">
+      <input v-if="showInput && !multiLine"
+        ref="inputRef"
+        v-model="inputValue"
+        type="text"
+        maxlength="255"
+        :placeholder="inputPlaceholder"
+        class="px-2 py-1 my-2 w-full input"
+        @input="validateInput"
+        @keydown.enter="clickOk"
+      />
 
-        <div v-if="message" class="mb-2 text-sm text-wrap break-all">
-          {{ message }}
-        </div>
+      <textarea v-if="showInput && multiLine"
+        ref="inputRef"
+        v-model="inputValue"
+        rows="4"
+        minrows="1"
+        :placeholder="inputPlaceholder"
+        class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px]"
+        @input="validateInput"
+        @keydown.enter="clickOk"
+      ></textarea>
 
-        <input v-if="showInput && !multiLine"
-          ref="inputRef"
-          v-model="inputValue"
-          type="text"
-          maxlength="255"
-          :placeholder="inputPlaceholder"
-          class="px-2 py-1 my-2 w-full input"
-          @input="validateInput"
-          @keydown.enter="clickOk"
-        />
+      <p class="h-4 text-error text-xs">{{ inputErrorMessage }}</p>
 
-        <textarea v-if="showInput && multiLine"
-          ref="inputRef"
-          v-model="inputValue"
-          rows="4"
-          minrows="1"
-          :placeholder="inputPlaceholder"
-          class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px]"
-          @input="validateInput"
-          @keydown.enter="clickOk"
-        ></textarea>
-
-        <p class="h-4 text-error text-xs">{{ inputErrorMessage }}</p>
-      </div>
-
-      <!-- cancel and OK buttons -->
-      <div class="mt-2 flex justify-end space-x-4">
-        <button v-if="cancelText.length > 0"
-          class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
-          @click="clickCancel"
-        >{{ cancelText }}</button>
-        
-        <button 
-          :class="[
-            'px-4 py-1 rounded-box', 
-            okButtonClasses,
-          ]" 
-          @click="clickOk"
-        >{{ OkText }}</button>
-      </div>
-
+    <!-- cancel and OK buttons -->
+    <div class="mt-2 flex justify-end space-x-4">
+      <button v-if="cancelText.length > 0"
+        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
+        @click="clickCancel"
+      >{{ cancelText }}</button>
+      
+      <button 
+        :class="[
+          'px-4 py-1 rounded-box', 
+          okButtonClasses,
+        ]" 
+        @click="clickOk"
+      >{{ OkText }}</button>
     </div>
-  </dialog>
-
+  </ModalDialog>
 </template>
 
 <script setup lang="ts">
-
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { isValidFileName } from '@/common/utils';
 import { useI18n } from 'vue-i18n';
-import { IconClose } from '@/common/icons';
 import { useUIStore } from '@/stores/uiStore';
-
-import TButton from '@/components/TButton.vue';
+import ModalDialog from '@/components/ModalDialog.vue';
 
 const props = defineProps({
   title: { 
@@ -143,9 +120,6 @@ const okButtonClasses = computed(() => {
 });
 
 onMounted(async () => {
-  const messageBoxDialog = document.getElementById('messageBoxDialog') as HTMLDialogElement | null;
-  messageBoxDialog?.showModal();
-
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('MessageBox');
 
@@ -206,5 +180,4 @@ const clickOk = () => {
 const clickCancel = () => {
   emit('cancel');
 };
-
 </script>

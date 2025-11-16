@@ -123,10 +123,10 @@
           <!-- Navigation buttons -->
           <div v-if="config.content.layout === 1 && fileList.length > 0" class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none">
             <button @click="handleNavigate('prev')" class="p-2 rounded-full pointer-events-auto text-base-content/80 bg-base-200/30 hover:bg-base-300/80">
-              <IconPrev class="w-8 h-8" />
+              <IconLeft class="w-8 h-8" />
             </button>
             <button @click="handleNavigate('next')" class="p-2 rounded-full pointer-events-auto text-base-content/80 bg-base-200/30 hover:bg-base-300/80">
-              <IconNext class="w-8 h-8" />
+              <IconRight class="w-8 h-8" />
             </button>
           </div>
         </div>
@@ -396,8 +396,8 @@ import {
   IconFileSearch,
   IconGallery,
   IconGrid,
-  IconNext,
-  IconPrev,
+  IconLeft,
+  IconRight,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;

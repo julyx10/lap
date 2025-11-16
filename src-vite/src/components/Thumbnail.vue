@@ -282,14 +282,13 @@ const getGridLabelText = (file, option) => {
     case 1: return shortenFilename(file.name);
     case 2: return formatFileSize(file.size);
     case 3: return formatDimensionText(file.width, file.height);
-    case 4: return file.duration > 0 ? formatDuration(file.duration): '-';
-    case 5: return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
-    case 6: return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
-    case 7: return file.e_make && file.e_model ? `${file.e_model}` : '-';
-    case 8: return file.e_lens_model ? `${file.e_lens_model}` : '-';
-    case 9: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias);
-    case 10: return file.e_date_time || '-';
-    case 11: return file.geo_name || '-';
+    case 4: return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
+    case 5: return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
+    case 6: return file.e_make && file.e_model ? `${file.e_model}` : '';
+    case 7: return file.e_lens_model ? `${file.e_lens_model}` : '';
+    case 8: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias);
+    case 9: return file.e_date_time || '';
+    case 10: return file.geo_name || '';
     default: return '';
   }
 };

@@ -472,7 +472,7 @@
       "scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
       "label_primary": "Primary label",
       "label_secondary": "Secondary label",
-      "label_options": ["(Empty)", "Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Camera", "Lens", "Capture settings", "Taken time", "Location"]
+      "label_options": ["(Empty)", "Name", "Size", "Dimension", "Created time", "Modified time", "Camera", "Lens", "Capture settings", "Taken time", "Location"]
     },
     "filmstrip_view": {
       "title": "Filmstrip view",

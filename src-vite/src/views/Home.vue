@@ -7,19 +7,20 @@
     <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
 
-      <!-- left side bar -->
+      <!-- left pane -->
       <div
-        ref="divSideBar" 
-        :class="[
-          'pb-4 rounded-r-box z-10 bg-base-200',
-          isWin ? 'pt-2' : 'pt-10'
-        ]" 
-        style="user-select: none; min-width: 68px;"
+        ref="leftPaneRef" 
+        class="rounded-box flex bg-base-200 z-10 select-none" 
         data-tauri-drag-region
       >
-        <!-- button items -->
-        <div class="h-full flex flex-col items-center" data-tauri-drag-region>
-
+        <!-- side bar -->
+        <div ref="sidebarRef" 
+          :class="[
+            'px-2 pb-4 h-full flex flex-col items-center', 
+            isWin ? 'pt-2' : 'pt-10'
+          ]" 
+          data-tauri-drag-region
+        >
           <div class="space-y-2" >
             <div v-for="(item, index) in buttons" 
               :key="index" 
@@ -42,27 +43,27 @@
           />
         </div>
 
-      </div>
-
-      <!-- left pane -->
-      <transition
-        enter-from-class="left-pane-hide"
-        enter-to-class="left-pane-show"
-        leave-from-class="left-pane-show"
-        leave-to-class="left-pane-hide"
-      >
-        <div v-show="config.home.sidebarIndex > 0 && showLeftPane" 
-          :class="['py-1 flex bg-base-200 left-pane overflow-hidden rounded-r-box', { 'no-transition': isDraggingSplitter }]" 
-          :style="{ '--left-pane-width': config.home.leftPaneWidth + 'px' }"
+        <!-- left pane -->
+        <transition
+          enter-from-class="left-pane-hide"
+          enter-to-class="left-pane-show"
+          leave-from-class="left-pane-show"
+          leave-to-class="left-pane-hide"
         >
-          <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
-        </div>
-      </transition>
+          <div v-show="config.home.sidebarIndex > 0 && showLeftPane" 
+            :class="['flex bg-base-200 left-pane overflow-hidden rounded-r-box', { 'no-transition': isDraggingSplitter }]" 
+            :style="{ '--left-pane-width': config.home.leftPaneWidth + 'px' }"
+          >
+            <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
+          </div>
+        </transition>
+
+      </div>
       
       <!-- splitter -->
       <div 
         :class="[
-          'w-1 transition-colors',
+          'w-1 transition-colors shrink-0',
           config.home.sidebarIndex > 0 && showLeftPane ? 'hover:bg-primary cursor-ew-resize' : '',
           config.home.sidebarIndex > 0 && showLeftPane && isDraggingSplitter ? 'bg-primary' : 'bg-base-300'
         ]" 
@@ -167,7 +168,8 @@ const buttons = computed(() =>  [
 const showLeftPane = ref(true);
 
 /// Splitter for resizing the left pane
-const divSideBar = ref(null);
+const leftPaneRef = ref(null);
+const sidebarRef = ref(null);
 const isDraggingSplitter = ref(false);
 
 onMounted(async () => {
@@ -182,14 +184,14 @@ onUnmounted(() => {
 });
 
 // Handle keydown event
-function handleKeyDown(event) {
+function handleKeyDown(event: KeyboardEvent) {
   const { key, ctrlKey, metaKey } = event.payload;
   // if (event.key === 'Escape') {
   //   appWindow.minimize();
   // }
 };
 
-const clickButton = async (index) => {
+const clickButton = async (index: number) => {
   if(config.home.sidebarIndex === index) {
     showLeftPane.value = !showLeftPane.value;
   } else {
@@ -201,7 +203,7 @@ const clickButton = async (index) => {
 };
 
 // Dragging the splitter
-function startDraggingSplitter(event) {
+function startDraggingSplitter(event: MouseEvent) {
   if(config.home.sidebarIndex <= 0 || !showLeftPane.value) return; // no left pane or left pane is hidden
 
   isDraggingSplitter.value = true;
@@ -210,17 +212,19 @@ function startDraggingSplitter(event) {
 }
 
 // Stop dragging the splitter
-function stopDraggingSplitter() {
+function stopDraggingSplitter(event: MouseEvent) {
   isDraggingSplitter.value = false;
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', stopDraggingSplitter);
 }
 
 // Handle mouse move event
-function handleMouseMove(event) {
-  if (isDraggingSplitter.value && divSideBar.value) {
-    const toolbarWidth = divSideBar.value.offsetWidth + 2;   // 2: border width(2px) * 2
-    config.home.leftPaneWidth = Math.max(event.clientX - toolbarWidth, 100); // Adjust for toolbar width and minimum width
+function handleMouseMove(event: MouseEvent) {
+  if (isDraggingSplitter.value && sidebarRef.value) {
+    const sidebarWidth = sidebarRef.value.offsetWidth + 2;
+    const windowWidth = window.innerWidth;
+    const maxLeftPaneWidth = windowWidth / 2 - sidebarWidth;
+    config.home.leftPaneWidth = Math.max(100, Math.min(event.clientX - sidebarWidth, maxLeftPaneWidth));
   }
 }
 

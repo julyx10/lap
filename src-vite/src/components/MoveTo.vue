@@ -1,55 +1,31 @@
 <template>
-    
-  <dialog id="moveToDialog" class="modal">
-
-    <div class="w-[600px] max-h-[80%] p-4 flex flex-col text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
-
-      <!-- titlebar -->
-      <div class="mb-4 flex items-center justify-between text-wrap break-all">
-        {{ title }} 
-        <!-- {{ title }} {{ config.destFolder.folderPath? '\'' + config.destFolder.folderPath + '\'' : '' }} -->
-        <TButton
-          :icon="IconClose"
-          :buttonSize="'small'"
-          @click="clickCancel"
-        />
-      </div>
-
-      <!-- message -->
-      <!-- <div class="mb-2">
-        {{ message }}
-      </div> -->
-
-      <!-- select album and folder -->
-      <div class="border border-base-content/10 pl-1 rounded-box overflow-auto">
-        <AlbumList ref="albumListRef" 
-          v-model:albumId="config.destFolder.albumId"
-          v-model:folderId="config.destFolder.folderId"
-          v-model:folderPath="config.destFolder.folderPath"
-          :componentId="1"
-        />
-      </div>
-
-      <!-- action buttons -->
-      <div class="mt-4 flex justify-end space-x-4">
-        <button v-if="cancelText.length > 0" 
-          class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
-          @click="clickCancel"
-        >{{ cancelText }}</button>
-
-        <button 
-          :class="[
-            'px-4 py-1 rounded-box', 
-            config.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
-          ]" 
-          @click="clickOk"
-        >{{ OkText }}</button>
-      </div>
-
+  <ModalDialog :title="title" :width="500" @cancel="clickCancel">
+    <!-- select album and folder -->
+    <div class="h-[400px] border border-base-content/30 rounded-box overflow-auto">
+      <AlbumList ref="albumListRef" 
+        v-model:albumId="config.destFolder.albumId"
+        v-model:folderId="config.destFolder.folderId"
+        v-model:folderPath="config.destFolder.folderPath"
+        :componentId="1"
+      />
     </div>
 
-  </dialog> 
+    <!-- action buttons -->
+    <div class="mt-4 flex justify-end space-x-4">
+      <button v-if="cancelText.length > 0" 
+        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
+        @click="clickCancel"
+      >{{ cancelText }}</button>
 
+      <button 
+        :class="[
+          'px-4 py-1 rounded-box', 
+          config.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
+        ]" 
+        @click="clickOk"
+      >{{ OkText }}</button>
+    </div>
+  </ModalDialog>
 </template>
 
 <script setup lang="ts">
@@ -58,9 +34,8 @@ import { config } from '@/common/config';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 
-import { IconClose } from '@/common/icons';
+import ModalDialog from '@/components/ModalDialog.vue';
 import AlbumList from '@/components/AlbumList.vue';
-import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   title: {
@@ -87,9 +62,6 @@ const uiStore = useUIStore();
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
-  const moveToDialog = document.getElementById('moveToDialog');
-  moveToDialog.showModal();
-
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
   uiStore.pushInputHandler('MoveTo');
 });
@@ -101,7 +73,7 @@ onUnmounted(() => {
   uiStore.popInputHandler();
 });
 
-function handleKeyDown(event) {
+function handleKeyDown(event: KeyboardEvent) {
   if (!uiStore.isInputActive('MoveTo')) return;
 
   const { key } = event.payload;

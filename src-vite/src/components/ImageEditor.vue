@@ -1,266 +1,254 @@
 <template>
 
-  <dialog id="imageEditorDialog" class="modal">
-    <div class="relative p-4 flex flex-col gap-2 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
-      
-      <!-- Loading overlay -->
-      <transition name="fade">
-        <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
-          <span class="loading loading-dots text-primary"></span>
-        </div>
-      </transition>
-      
-      <!-- title bar -->
-      <div class="flex items-center justify-between text-wrap break-all">
-        {{ $t('msgbox.image_editor.title') }} - {{ shortenFilename(props.fileInfo.name, 64) }}
-        <TButton
-          :icon="IconClose"
-          :buttonSize="'small'"
-          :disabled="cropStatus===1"
-          @click="clickCancel"
-        />
-      </div>
+  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 64)}`" :width="800" @cancel="clickCancel">
+    <!-- content -->
+    <div class="flex-grow flex gap-4">
+      <div class="flex-1">
+        <!-- image container -->
+        <div ref="containerRef" class="relative w-[570px] h-[430px] outline outline-base-content/30 cursor-default rounded-box overflow-hidden select-none">
 
-      <!-- content -->
-      <div class="flex-grow flex gap-4">
-        <div class="flex-1">
-          <!-- image container -->
-          <div ref="containerRef" class="relative w-[570px] h-[430px] outline outline-base-content/30 cursor-default rounded-box overflow-hidden select-none">
-            <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
-            <!-- crop box -->
-            <div v-if="cropStatus > 0" 
-              :class="[
-                cropStatus === 1 ? 'crop-box-active' : cropStatus === 2 ? 'crop-box-done' : '',
-                cropStatus === 1
-                  ? cropBoxFixed
-                    ? (isDragging ? 'cursor-grabbing no-transition' : 'cursor-grab')
-                    : (isDragging ? 'cursor-move no-transition' : 'cursor-move')
-                  : ''
-              ]"
-              :style="cropBoxStyle" 
-              @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
-              @dblclick="clickDoCrop"
-            >
-              <template v-if="cropStatus===1 && isDragging">
-                <div class="crop-dimensions-display">
-                  {{ crop.width }} x {{ crop.height }}
-                </div>
-                <div class="grid-lines">
-                  <div class="grid-line-h grid-line-h-1"></div>
-                  <div class="grid-line-h grid-line-h-2"></div>
-                  <div class="grid-line-v grid-line-v-1"></div>
-                  <div class="grid-line-v grid-line-v-2"></div>
-                </div>
-              </template>
-              <template v-if="cropStatus===1 && !cropBoxFixed">
-                <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
-                <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
-                <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
-                <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
-                <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
-                <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
-                <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
-                <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
-              </template>
+          <!-- Loading overlay -->
+          <transition name="fade">
+            <div v-if="isProcessing" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+              <span class="loading loading-dots text-primary"></span>
             </div>
-          </div>
+          </transition>
+    
+          <!-- image -->
+          <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
 
-          <!-- crop controls -->
-          <div class="pt-2 flex justify-between">
-            <!-- rotate and flip controls -->
-            <div class="flex gap-2">
-              <TButton
-                :icon="IconRotateLeft"
-                :disabled="cropStatus > 0"
-                :tooltip="$t('msgbox.image_editor.rotate_left')"
-                @click="clickRotate(-90)" 
-              />
-              <TButton
-                :icon="IconRotateRight"
-                :disabled="cropStatus > 0"
-                :tooltip="$t('msgbox.image_editor.rotate_right')"
-                @click="clickRotate(90)" 
-              />
-              <TButton
-                :icon="IconFlipHorizontal"
-                :disabled="cropStatus > 0"
-                :tooltip="$t('msgbox.image_editor.flip_horizontal')"
-                @click="clickFlipX" 
-              />
-              <TButton
-                :icon="IconFlipVertical"
-                :disabled="cropStatus > 0"
-                :tooltip="$t('msgbox.image_editor.flip_vertical')"
-                @click="clickFlipY" 
-              />
-            </div>
-
-            <!-- crop shape controls -->
-            <div 
-              :class="['flex border rounded-box', 
-                cropStatus==1 ? 'border-primary' : 'border-transparent',
-              ]"
-            >
-              <TButton v-if="cropStatus===0 || cropStatus===2"
-                :icon="IconCrop"
-                :selected="cropStatus===2"
-                :tooltip="$t('msgbox.image_editor.crop')"
-                @click="cropStatus===0 ? clickStartCrop() : clickRestoreCrop()" 
-              />
-
-              <div v-if="cropStatus==1" class="flex items-center">
-                <TButton
-                  :icon="IconClose"
-                  :tooltip="$t('msgbox.image_editor.cancel_crop')"
-                  @click="clickCancelCrop" 
-                />
-                <TButton
-                  :icon="IconCropLandscape"
-                  :disabled="cropBoxFixed"
-                  :iconStyle="{ transform: `rotate(${isPortrait ? 90 : 0}deg)`, transition: 'transform 0.3s ease-in-out' }" 
-                  :tooltip="isPortrait ? $t('msgbox.image_editor.crop_shape_portrait') : $t('msgbox.image_editor.crop_shape_landscape')"
-                  @click="togglePortraitAndLandscape" 
-                />
-                <select v-model="config.imageEditor.cropShape" class="select select-bordered" :disabled="cropBoxFixed" @change="onChangeCropShape">
-                  <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                </select>
-                <TButton
-                  :icon="cropBoxFixed ? IconCropMin : IconCropMax"
-                  :tooltip="cropBoxFixed ? $t('msgbox.image_editor.fix_crop_box') : $t('msgbox.image_editor.resize_crop_box')"
-                  @click="toggleCropBoxFixed"
-                />
-                <TButton
-                  :icon="IconOk"
-                  :tooltip="$t('msgbox.image_editor.confirm_crop')"
-                  @click="clickDoCrop"
-                />
-              </div>  
-            </div>
+          <!-- crop box -->
+          <div v-if="cropStatus > 0" 
+            :class="[
+              cropStatus === 1 ? 'crop-box-active' : cropStatus === 2 ? 'crop-box-done' : '',
+              cropStatus === 1
+                ? cropBoxFixed
+                  ? (isDragging ? 'cursor-grabbing no-transition' : 'cursor-grab')
+                  : (isDragging ? 'cursor-move no-transition' : 'cursor-move')
+                : ''
+            ]"
+            :style="cropBoxStyle" 
+            @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
+            @dblclick="clickDoCrop"
+          >
+            <template v-if="cropStatus===1 && isDragging">
+              <div class="crop-dimensions-display">
+                {{ crop.width }} x {{ crop.height }}
+              </div>
+              <div class="grid-lines">
+                <div class="grid-line-h grid-line-h-1"></div>
+                <div class="grid-line-h grid-line-h-2"></div>
+                <div class="grid-line-v grid-line-v-1"></div>
+                <div class="grid-line-v grid-line-v-2"></div>
+              </div>
+            </template>
+            <template v-if="cropStatus===1 && !cropBoxFixed">
+              <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
+              <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
+              <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
+              <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
+              <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
+              <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
+              <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
+              <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
+            </template>
           </div>
         </div>
 
-        <!-- edit controls -->
-        <div class="w-48 flex flex-col gap-4">
-
-          <!-- Resize -->
-          <div>
-            <h3>{{ $t('msgbox.image_editor.resize') }}</h3>
-            <table class="w-full text-sm border-separate border-spacing-2">
-              <tbody>
-                <tr>
-                  <td class="w-1/2">{{ $t('msgbox.image_editor.width') }}</td>
-                  <td>
-                    <input type="number" :placeholder="$t('msgbox.image_editor.width')" class="input input-bordered w-full"
-                      v-model.number="resizedWidth" :disabled="cropStatus==1"
-                      @keypress="onNumberKeyPress"
-                      @blur="handleResizeInput('width')"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td>{{ $t('msgbox.image_editor.height') }}</td>
-                  <td>
-                    <input type="number" :placeholder="$t('msgbox.image_editor.height')" class="input input-bordered w-full"
-                      v-model.number="resizedHeight" :disabled="cropStatus==1"
-                      @keypress="onNumberKeyPress"
-                      @blur="handleResizeInput('height')"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td>{{ $t('msgbox.image_editor.percentage') }}</td>
-                  <td class="flex items-center">
-                    <input type="number" :placeholder="$t('msgbox.image_editor.percentage')" class="input input-bordered w-full"
-                      v-model.number="resizedPercentage" :disabled="cropStatus==1"
-                      @keypress="onNumberKeyPress"
-                      @blur="handleResizeInput('percentage')"
-                    />
-                    <span class="pl-1 text-xs text-base-content/30">%</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- crop controls -->
+        <div class="pt-2 flex justify-between">
+          <!-- rotate and flip controls -->
+          <div class="flex gap-2">
+            <TButton
+              :icon="IconRotateLeft"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.rotate_left')"
+              @click="clickRotate(-90)" 
+            />
+            <TButton
+              :icon="IconRotateRight"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.rotate_right')"
+              @click="clickRotate(90)" 
+            />
+            <TButton
+              :icon="IconFlipHorizontal"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.flip_horizontal')"
+              @click="clickFlipX" 
+            />
+            <TButton
+              :icon="IconFlipVertical"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.flip_vertical')"
+              @click="clickFlipY" 
+            />
           </div>
 
-          <!-- options -->
-          <div>
-            <h3 class="mb-2">{{ $t('msgbox.image_editor.options') }}</h3>
-            <!-- <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" /> -->
+          <!-- crop shape controls -->
+          <div 
+            :class="['flex border rounded-box', 
+              cropStatus==1 ? 'border-primary' : 'border-transparent',
+            ]"
+          >
+            <TButton v-if="cropStatus===0 || cropStatus===2"
+              :icon="IconCrop"
+              :selected="cropStatus===2"
+              :tooltip="$t('msgbox.image_editor.crop')"
+              @click="cropStatus===0 ? clickStartCrop() : clickRestoreCrop()" 
+            />
 
-            <table class="w-full text-sm border-separate border-spacing-2">
-              <tbody>
-                <tr>
-                  <td>{{ $t('msgbox.image_editor.save_as') }}</td>
-                  <td>
-                    <select v-model="config.imageEditor.saveAs" class="select select-bordered w-full" :disabled="cropStatus==1">
-                      <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <td>{{ $t('msgbox.image_editor.format') }}</td>
-                  <td>
-                    <select v-model="config.imageEditor.format" class="select select-bordered w-full" :disabled="cropStatus==1">
-                      <option v-for="option in fileFormatOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <td>{{ $t('msgbox.image_editor.quality') }}</td>
-                  <td>
-                    <select v-model="config.imageEditor.quality" class="select select-bordered w-full" :disabled="cropStatus==1">
-                      <option v-for="option in fileQualityOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                    </select>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <!-- debug -->
-            <!-- <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
-              <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
-              <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
-              <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
-              <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
-              <span>scale: {{ scale.toFixed(2) }}</span>
-              <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
-              <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
-              <span>resized: {{ resizedWidth.toFixed(0) }} x {{ resizedHeight.toFixed(0) }}</span>
-              <span>resizedPercentage: {{ resizedPercentage.toFixed(0) }}%</span>
-            </div> -->
+            <div v-if="cropStatus==1" class="flex items-center">
+              <TButton
+                :icon="IconClose"
+                :tooltip="$t('msgbox.image_editor.cancel_crop')"
+                @click="clickCancelCrop" 
+              />
+              <TButton
+                :icon="IconCropLandscape"
+                :disabled="cropBoxFixed"
+                :iconStyle="{ transform: `rotate(${isPortrait ? 90 : 0}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+                :tooltip="isPortrait ? $t('msgbox.image_editor.crop_shape_portrait') : $t('msgbox.image_editor.crop_shape_landscape')"
+                @click="togglePortraitAndLandscape" 
+              />
+              <select v-model="config.imageEditor.cropShape" class="select select-bordered" :disabled="cropBoxFixed" @change="onChangeCropShape">
+                <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+              </select>
+              <TButton
+                :icon="cropBoxFixed ? IconCropMin : IconCropMax"
+                :tooltip="cropBoxFixed ? $t('msgbox.image_editor.fix_crop_box') : $t('msgbox.image_editor.resize_crop_box')"
+                @click="toggleCropBoxFixed"
+              />
+              <TButton
+                :icon="IconOk"
+                :tooltip="$t('msgbox.image_editor.confirm_crop')"
+                @click="clickDoCrop"
+              />
+            </div>  
           </div>
         </div>
       </div>
 
-      <!-- dialog buttons -->
-      <div class="flex justify-end gap-4">
-        <button
-          :class="[
-            'px-4 py-1 rounded-box',
-            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 hover:text-base-content cursor-pointer',
-          ]" 
-          @click="clickCancel"
-        >{{ $t('msgbox.image_editor.cancel') }}</button>
-        <button 
-          :class="[
-            'px-4 py-1 rounded-box',
-            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary hover:text-base-100 cursor-pointer',
-          ]" 
-          @click="clickCopyImage"
-        >{{ $t('msgbox.image_editor.copy_image') }}</button>
-        <button 
-          :class="[
-            'px-4 py-1 rounded-box',
-            cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary hover:text-base-100 cursor-pointer',
-          ]" 
-          @click="clickSave"
-        >{{ $t('msgbox.image_editor.ok') }}</button>
+      <!-- edit controls -->
+      <div class="w-48 flex flex-col gap-4">
+
+        <!-- Resize -->
+        <div>
+          <h3>{{ $t('msgbox.image_editor.resize') }}</h3>
+          <table class="w-full text-sm border-separate border-spacing-2">
+            <tbody>
+              <tr>
+                <td class="w-1/2">{{ $t('msgbox.image_editor.width') }}</td>
+                <td>
+                  <input type="number" :placeholder="$t('msgbox.image_editor.width')" class="input input-bordered w-full"
+                    v-model.number="resizedWidth" :disabled="cropStatus==1"
+                    @keypress="onNumberKeyPress"
+                    @blur="handleResizeInput('width')"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>{{ $t('msgbox.image_editor.height') }}</td>
+                <td>
+                  <input type="number" :placeholder="$t('msgbox.image_editor.height')" class="input input-bordered w-full"
+                    v-model.number="resizedHeight" :disabled="cropStatus==1"
+                    @keypress="onNumberKeyPress"
+                    @blur="handleResizeInput('height')"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>{{ $t('msgbox.image_editor.percentage') }}</td>
+                <td class="flex items-center">
+                  <input type="number" :placeholder="$t('msgbox.image_editor.percentage')" class="input input-bordered w-full"
+                    v-model.number="resizedPercentage" :disabled="cropStatus==1"
+                    @keypress="onNumberKeyPress"
+                    @blur="handleResizeInput('percentage')"
+                  />
+                  <span class="pl-1 text-xs text-base-content/30">%</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- options -->
+        <div>
+          <h3 class="mb-2">{{ $t('msgbox.image_editor.options') }}</h3>
+          <!-- <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" /> -->
+
+          <table class="w-full text-sm border-separate border-spacing-2">
+            <tbody>
+              <tr>
+                <td>{{ $t('msgbox.image_editor.save_as') }}</td>
+                <td>
+                  <select v-model="config.imageEditor.saveAs" class="select select-bordered w-full" :disabled="cropStatus==1">
+                    <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>{{ $t('msgbox.image_editor.format') }}</td>
+                <td>
+                  <select v-model="config.imageEditor.format" class="select select-bordered w-full" :disabled="cropStatus==1">
+                    <option v-for="option in fileFormatOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>{{ $t('msgbox.image_editor.quality') }}</td>
+                <td>
+                  <select v-model="config.imageEditor.quality" class="select select-bordered w-full" :disabled="cropStatus==1">
+                    <option v-for="option in fileQualityOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- debug -->
+          <!-- <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
+            <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
+            <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
+            <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
+            <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
+            <span>scale: {{ scale.toFixed(2) }}</span>
+            <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
+            <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
+            <span>resized: {{ resizedWidth.toFixed(0) }} x {{ resizedHeight.toFixed(0) }}</span>
+            <span>resizedPercentage: {{ resizedPercentage.toFixed(0) }}%</span>
+          </div> -->
+        </div>
       </div>
     </div>
 
-    <ToolTip ref="toolTipRef" />
+    <!-- dialog buttons -->
+    <div class="flex justify-end gap-4">
+      <button
+        :class="[
+          'px-4 py-1 rounded-box',
+          cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 hover:text-base-content cursor-pointer',
+        ]" 
+        @click="clickCancel"
+      >{{ $t('msgbox.image_editor.cancel') }}</button>
+      <button 
+        :class="[
+          'px-4 py-1 rounded-box',
+          cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary hover:text-base-100 cursor-pointer',
+        ]" 
+        @click="clickCopyImage"
+      >{{ $t('msgbox.image_editor.copy_image') }}</button>
+      <button 
+        :class="[
+          'px-4 py-1 rounded-box',
+          cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary hover:text-base-100 cursor-pointer',
+        ]" 
+        @click="clickSave"
+      >{{ $t('msgbox.image_editor.ok') }}</button>
+    </div>
+  </ModalDialog>
 
-  </dialog>
+  <ToolTip ref="toolTipRef" />
 
 </template>
 
@@ -272,8 +260,9 @@ import { config } from '@/common/config';
 import { getFolderPath, extractFileName, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
 import { editImage, copyEditedImage } from '@/common/api';
 
-import TButton from '@/components/TButton.vue';
 import ToolTip from '@/components/ToolTip.vue';
+import ModalDialog from '@/components/ModalDialog.vue';
+import TButton from '@/components/TButton.vue';
 
 import { 
   IconCrop,
@@ -296,7 +285,7 @@ const props = defineProps({
 });
 
 /// i18n
-const { locale, messages } = useI18n();
+const { messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.settings.language]);
 
 const uiStore = useUIStore();
@@ -407,9 +396,6 @@ const fileQualityOptions = computed(() => {
 });
 
 onMounted(async () => {
-  const dialog = document.getElementById('imageEditorDialog') as HTMLDialogElement | null;
-  dialog?.showModal();
-  
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('ImageEditor');
 
@@ -549,8 +535,9 @@ const onChangeCropShape = () => {
 
 // initialize crop box shape
 const initCropBox = () => {
+  containerRect.value = containerRef.value?.getBoundingClientRect() || null;
   imageRect.value = imageRef.value?.getBoundingClientRect() || null;
-  if (!imageRect.value) return;
+  if (!imageRect.value || !containerRect.value) return;
 
   const selectedShape = cropShapeOptions.value.find(option => option.value === config.imageEditor.cropShape && option.value !== '0');
   if (selectedShape && selectedShape.label) {
@@ -593,8 +580,9 @@ const updateCropFromCropBox = () => {
     return;
   };
   
+  containerRect.value = containerRef.value?.getBoundingClientRect() || null;
   imageRect.value = imageRef.value?.getBoundingClientRect() || null;
-  if (!imageRect.value) return;
+  if (!imageRect.value || !containerRect.value) return;
 
   const imgWidth = rotate.value % 180 === 0 ? imageWidth.value : imageHeight.value;
   const imgHeight = rotate.value % 180 === 0 ? imageHeight.value : imageWidth.value;

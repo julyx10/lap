@@ -1,83 +1,70 @@
 <template>
-  <dialog id="taggingDialog" class="modal" @cancel="clickCancel">
-    <div class="w-[600px] p-4 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box">
-      
-      <!-- title bar -->
-      <div class="mb-2 flex items-center justify-between">
-        {{ $t('tag.edit_tag') }}
-        <TButton
-          :icon="IconClose"
-          :buttonSize="'small'"
-          @click="clickCancel"
-        />
-      </div>
+  <ModalDialog :title="$t('tag.edit_tag')" :width="600" @cancel="clickCancel">
+    <!-- Search and Add New Tag -->
+    <div class="pb-4 flex items-center space-x-2">
+      <input
+        ref="tagSearchInputRef"
+        type="text"
+        v-model="tagSearch"
+        :placeholder="$t('tag.search_tags')"
+        class="input flex-grow"
+      />
+      <input
+        ref="newTagNameInputRef"
+        type="text"
+        v-model="newTagName"
+        :placeholder="$t('tag.enter_new_tag_name')"
+        class="input w-1/2"
+        @keydown.enter="addNewTag"
+      />
+      <TButton 
+        :icon="IconAdd"
+        @click="addNewTag"
+      />
+    </div>
 
-      <!-- Search and Add New Tag -->
-      <div class="py-4 flex items-center space-x-2">
-        <input
-          ref="tagSearchInputRef"
-          type="text"
-          v-model="tagSearch"
-          :placeholder="$t('tag.search_tags')"
-          class="input flex-grow"
-        />
-        <input
-          ref="newTagNameInputRef"
-          type="text"
-          v-model="newTagName"
-          :placeholder="$t('tag.enter_new_tag_name')"
-          class="input w-1/2"
-          @keydown.enter="addNewTag"
-        />
-        <TButton 
-          :icon="IconAdd"
-          @click="addNewTag"
-        />
-      </div>
-
-      <!-- Tag List -->
-      <div class="max-h-80 overflow-y-auto border border-base-content/10 rounded-box p-2">
-        <div v-if="filteredTags.length > 0" class="flex flex-wrap gap-2">
-          <div
-            v-for="tag in filteredTags"
-            :key="tag.id"
-            :class="[
-              'badge badge-lg overflow-hidden whitespace-pre text-ellipsis cursor-pointer transition-colors duration-200',
-              {
-                'badge-primary': selectedTags.has(tag.id),
-                'badge-outline border-base-content/30 bg-base-content/30': intermediateTags.has(tag.id) && !selectedTags.has(tag.id),
-                'badge-outline text-base-content/30 hover:text-base-content hover:bg-base-100': !selectedTags.has(tag.id) && !intermediateTags.has(tag.id),
-              }
-            ]"
-            @click="toggleTag(tag.id)"
-          >
-            {{ tag.name }}
-          </div>
-        </div>
-        <div v-else class="text-center text-gray-500">
-          {{ $t('tag.not_found') }}
+    <!-- Tag List -->
+    <div class="max-h-[180px] overflow-y-auto border border-base-content/10 rounded-box p-2">
+      <div v-if="filteredTags.length > 0" class="flex flex-wrap gap-2">
+        <div
+          v-for="tag in filteredTags"
+          :key="tag.id"
+          :class="[
+            'badge badge-lg overflow-hidden whitespace-pre text-ellipsis cursor-pointer transition-colors duration-200',
+            {
+              'badge-primary': selectedTags.has(tag.id),
+              'badge-outline border-base-content/30 bg-base-content/30': intermediateTags.has(tag.id) && !selectedTags.has(tag.id),
+              'badge-outline text-base-content/30 hover:text-base-content hover:bg-base-100': !selectedTags.has(tag.id) && !intermediateTags.has(tag.id),
+            }
+          ]"
+          @click="toggleTag(tag.id)"
+        >
+          {{ tag.name }}
         </div>
       </div>
-
-      <!-- cancel and OK buttons -->
-      <div class="mt-4 flex justify-end space-x-4">
-        <button 
-          class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
-          @click="clickCancel"
-        >{{ $t('msgbox.cancel') }}</button>
-        
-        <button 
-          class="px-4 py-1 rounded-box hover:bg-primary hover:text-base-100 cursor-pointer" 
-          @click="clickOk"
-        >{{ $t('msgbox.ok') }}</button>
-
+      <div v-else class="text-center text-gray-500">
+        {{ $t('tag.not_found') }}
       </div>
     </div>
-  </dialog>
+
+    <!-- cancel and OK buttons -->
+    <div class="mt-4 flex justify-end space-x-4">
+      <button 
+        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
+        @click="clickCancel"
+      >{{ $t('msgbox.cancel') }}</button>
+      
+      <button 
+        class="px-4 py-1 rounded-box hover:bg-primary hover:text-base-100 cursor-pointer" 
+        @click="clickOk"
+      >{{ $t('msgbox.ok') }}</button>
+
+    </div>
+  </ModalDialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { 
   getAllTags, 
   getTagsForFile, 
@@ -85,9 +72,10 @@ import {
   addTagToFile, 
   removeTagFromFile 
 } from '@/common/api';
-import { IconAdd, IconClose } from '@/common/icons';
+import { IconAdd } from '@/common/icons';
 import TButton from './TButton.vue';
 import { useUIStore } from '@/stores/uiStore';
+import ModalDialog from '@/components/ModalDialog.vue';
 
 const props = defineProps({
   fileIds: {
@@ -119,9 +107,6 @@ const filteredTags = computed(() => {
 });
 
 onMounted(async () => {
-  const taggingDialog = document.getElementById('taggingDialog');
-  taggingDialog.showModal();
-
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('TaggingDialog');
 
@@ -241,5 +226,4 @@ const handleKeyDown = (e: KeyboardEvent) => {
     clickCancel();
   }
 };
-
 </script>
