@@ -56,35 +56,8 @@
         </div>
 
         <!-- crop controls -->
-        <div class="pt-2 flex justify-between">
-          <!-- rotate and flip controls -->
-          <div class="flex gap-2">
-            <TButton
-              :icon="IconRotateLeft"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.rotate_left')"
-              @click="clickRotate(-90)" 
-            />
-            <TButton
-              :icon="IconRotateRight"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.rotate_right')"
-              @click="clickRotate(90)" 
-            />
-            <TButton
-              :icon="IconFlipHorizontal"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.flip_horizontal')"
-              @click="clickFlipX" 
-            />
-            <TButton
-              :icon="IconFlipVertical"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.flip_vertical')"
-              @click="clickFlipY" 
-            />
-          </div>
-
+        <div class="py-2 flex justify-between">
+   
           <!-- crop shape controls -->
           <div 
             :class="['flex border rounded-box', 
@@ -126,6 +99,35 @@
               />
             </div>  
           </div>
+
+          <!-- rotate and flip controls -->
+          <div class="flex gap-2">
+            <TButton
+              :icon="IconRotateLeft"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.rotate_left')"
+              @click="clickRotate(-90)" 
+            />
+            <TButton
+              :icon="IconRotateRight"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.rotate_right')"
+              @click="clickRotate(90)" 
+            />
+            <TButton
+              :icon="IconFlipHorizontal"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.flip_horizontal')"
+              @click="clickFlipX" 
+            />
+            <TButton
+              :icon="IconFlipVertical"
+              :disabled="cropStatus > 0"
+              :tooltip="$t('msgbox.image_editor.flip_vertical')"
+              @click="clickFlipY" 
+            />
+          </div>
+
         </div>
       </div>
 
@@ -595,42 +597,6 @@ const updateCropFromCropBox = () => {
     width: Math.round(scaleX * cropBox.value.width),
     height: Math.round(scaleY * cropBox.value.height)
   };
-
-  // consider the image rotation
-  // switch (rotate.value % 360) {
-  //   case 0:
-  //     crop.value = rotatedCrop;
-  //     break;
-  //   case 90:
-  //   case -270:
-  //     crop.value = {
-  //       left: rotatedCrop.top,
-  //       top:  imageHeight.value - rotatedCrop.left - rotatedCrop.width,
-  //       width: rotatedCrop.height,
-  //       height: rotatedCrop.width
-  //     }
-  //     break;
-  //   case 180:
-  //   case -180:
-  //     crop.value = {
-  //       left: imageWidth.value - rotatedCrop.left - rotatedCrop.width,
-  //       top:  imageHeight.value - rotatedCrop.top - rotatedCrop.height,
-  //       width: rotatedCrop.width,
-  //       height: rotatedCrop.height
-  //     }
-  //     break;
-  //   case 270:
-  //   case -90:
-  //     crop.value = {
-  //       left: imageWidth.value - rotatedCrop.top - rotatedCrop.height,
-  //       top:  rotatedCrop.left,
-  //       width: rotatedCrop.height,
-  //       height: rotatedCrop.width
-  //     }
-  //     break;
-  //   default:
-  //     break;
-  // }
 }
 
 // update crop box from crop

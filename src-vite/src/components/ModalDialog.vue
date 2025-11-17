@@ -2,11 +2,11 @@
   <div class="fixed inset-0 bg-black/30 z-50">
     <div 
       ref="modalDialogRef"
-      class="p-3 text-base-content/70 bg-base-200 border border-base-content/30 rounded-box"
+      class="text-base-content/70 bg-base-200 border border-base-content/30 rounded-box"
       :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
     >
       <!-- title bar -->
-      <div ref="titleBarRef" class="mb-4 flex items-center justify-between">
+      <div ref="titleBarRef" class="p-3 flex items-center justify-between">
         {{ title }}
         <TButton
           :icon="IconClose"
@@ -16,7 +16,9 @@
       </div>
 
       <!-- dialog content -->
-      <slot></slot>
+      <div class="p-3">
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>

@@ -10,7 +10,7 @@
         type="text"
         maxlength="255"
         :placeholder="inputPlaceholder"
-        class="px-2 py-1 my-2 w-full input"
+        class="px-2 py-1 w-full input"
         @input="validateInput"
         @keydown.enter="clickOk"
       />
@@ -21,7 +21,7 @@
         rows="4"
         minrows="1"
         :placeholder="inputPlaceholder"
-        class="px-2 py-1 my-2 w-full textarea min-h-[30px] max-h-[200px]"
+        class="px-2 py-1 w-full textarea min-h-[30px] max-h-[200px]"
         @input="validateInput"
         @keydown.enter="clickOk"
       ></textarea>

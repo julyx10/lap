@@ -122,12 +122,26 @@
 
           <!-- Navigation buttons -->
           <div v-if="config.content.layout === 1 && fileList.length > 0" class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none">
-            <button @click="handleNavigate('prev')" class="p-2 rounded-full pointer-events-auto text-base-content/80 bg-base-200/30 hover:bg-base-300/80">
+            <button 
+              :class="[
+                'p-2 rounded-full pointer-events-auto bg-base-100/30', 
+                selectedItemIndex > 0 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
+              ]"
+              @click="handleNavigate('prev')"
+              @dblclick.stop
+            >
               <IconLeft class="w-8 h-8" />
             </button>
-            <button @click="handleNavigate('next')" class="p-2 rounded-full pointer-events-auto text-base-content/80 bg-base-200/30 hover:bg-base-300/80">
+            <button 
+              :class="[
+                'p-2 rounded-full pointer-events-auto bg-base-100/30', 
+                selectedItemIndex < fileList.length - 1 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
+              ]"
+              @click="handleNavigate('next')" 
+              @dblclick.stop
+            >
               <IconRight class="w-8 h-8" />
-            </button>
+            </button> 
           </div>
         </div>
 

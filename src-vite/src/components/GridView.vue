@@ -110,9 +110,9 @@ function scrollToItem(index: number) {
   setTimeout(() => {
     const item = document.getElementById(`item-${index}`);
     if (item) {
-      item.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
-  }, 500);
+  }, 100);
 };
 
 // function to get the number of columns in the grid
