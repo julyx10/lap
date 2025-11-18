@@ -218,6 +218,9 @@ export function combineFileName(name: string, ext: string): string {
 
 /// shorten a filename while preserving its extension
 export function shortenFilename(fileName: string, maxLength = 16): string {
+  if (!fileName) {
+    return '';
+  }
   if (fileName.length <= maxLength) {
     return fileName;
   }

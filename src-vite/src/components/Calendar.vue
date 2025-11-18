@@ -11,7 +11,7 @@
             role="tab"
             class="tab"
             :class="config.calendar.isMonthly ? 'tab-active' : ''" 
-            @click="config.calendar.isMonthly=true"
+            @click="switchToMonthlyView"
           >
             {{ $t('calendar.month') }}
           </a>
@@ -19,7 +19,7 @@
             role="tab"
             class="tab"
             :class="!config.calendar.isMonthly ? 'tab-active' : ''" 
-            @click="config.calendar.isMonthly=false"
+            @click="switchToDailyView"
           >
             {{ $t('calendar.day') }}
           </a>
@@ -85,7 +85,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getTakenDates } from '@/common/api';
@@ -111,6 +111,47 @@ onMounted( () => {
   console.log('Calendar.vue mounted');
   getCalendarDates();
 });
+
+watch(() => [config.calendar.isMonthly, config.calendar.sortingAsc], () => {
+  scrollToSelected();
+});
+
+function scrollToSelected() {
+  nextTick(() => {
+    if (scrollable.value) {
+      const selectedElement = scrollable.value.querySelector('.border-primary');
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
+          behavior: 'auto', // 'smooth' is not good when switching view
+          block: 'center'
+        });
+      }
+    }
+  });
+}
+
+function switchToMonthlyView() {
+  config.calendar.date = -1;  // -1 means selecting a month
+  config.calendar.isMonthly = true;
+}
+
+function switchToDailyView() {
+  // if a year is selected in month view
+  if (config.calendar.isMonthly && config.calendar.month === -1) {
+    const year = config.calendar.year;
+    if (calendar_dates.value[year]) {
+      const months = Object.keys(calendar_dates.value[year]).map(Number);
+      if (months.length > 0) {
+        if (config.calendar.sortingAsc) {
+          config.calendar.month = Math.min(...months);
+        } else {
+          config.calendar.month = Math.max(...months);
+        }
+      }
+    }
+  }
+  config.calendar.isMonthly = false;
+}
 
 const toggleSortingOrder = () => {
   config.calendar.sortingAsc = !config.calendar.sortingAsc;

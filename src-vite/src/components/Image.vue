@@ -35,7 +35,7 @@
     <transition name="fade">
       <!-- nav container -->
       <div v-if="(config.settings.navigatorViewMode === 0 && isGrabbing) || config.settings.navigatorViewMode === 1" 
-        class="absolute right-4 bottom-4 outline outline-gray-50 rounded-box overflow-hidden shadow-lg shadow-gray-500 z-20" 
+        class="absolute right-4 bottom-4 outline outline-gray-50 overflow-hidden shadow-lg shadow-gray-500 z-20" 
         :style="navContainerStyle"
         @wheel="handleNavBoxWheel"
         @click="handleNavBoxClick"
@@ -44,7 +44,7 @@
         <!-- nav image -->
         <img :src="imageSrc[activeImage]" :style="navImageStyle" draggable="false" />
         <!-- nav box -->
-        <div class="absolute top-0 left-0 border-2 rounded-box border-primary cursor-move" 
+        <div class="absolute top-0 left-0 border-2 border-primary cursor-move" 
           :style="navBoxStyle" 
           @mousedown="handleNavBoxMouseDown"
           @mousemove="handleNavBoxMouseMove"
