@@ -26,12 +26,13 @@
               ]"
               @click.stop="clickExpandLocation(location)"
             />
-            <div class="overflow-hidden whitespace-pre text-ellipsis">
-             {{ location.admin1 }}
+            <div class="flex-1 flex items-center overflow-hidden whitespace-pre text-ellipsis">
+              <span>{{ location.admin1 }}</span>
+              <span class="text-xs text-base-content/30 ml-1">({{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }})</span>
             </div>
           </div>
           <ul v-if="location.is_expanded && location.names.length > 0">
-            <li v-for="name in location.names" class="pl-4">
+            <li v-for="(name, index) in location.names" class="pl-4">
               <div 
                 :class="[
                   'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
@@ -40,8 +41,9 @@
                 @click="clickLocationName(location.admin1, name)"
               >
                 <!-- <IconCircle class="mx-1 h-5 shrink-0" /> -->
-                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
-                  {{ name }}
+                <div class="flex-1 flex items-center px-1 whitespace-pre text-ellipsis overflow-hidden">
+                  <span>{{ name }}</span>
+                  <span class="text-xs text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
                 </div>
               </div>
             </li>

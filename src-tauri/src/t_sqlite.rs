@@ -1448,6 +1448,7 @@ impl AThumb {
 pub struct ATag {
     pub id: i64,
     pub name: String,
+    pub count: Option<i64>,
 }
 
 impl ATag {
@@ -1456,6 +1457,7 @@ impl ATag {
         Ok(Self {
             id: row.get(0)?,
             name: row.get(1)?,
+            count: row.get(2)?,
         })
     }
 
@@ -1464,7 +1466,7 @@ impl ATag {
         let conn = open_conn()?;
         // First, try to fetch the tag to see if it already exists.
         let existing_tag = conn.query_row(
-            "SELECT id, name FROM atags WHERE name = ?1",
+            "SELECT id, name, 0 as count FROM atags WHERE name = ?1",
             params![name],
             Self::from_row
         ).optional().map_err(|e| e.to_string())?;
@@ -1478,14 +1480,27 @@ impl ATag {
                 params![name],
             ).map_err(|e| e.to_string())?;
             let id = conn.last_insert_rowid();
-            Ok(Self { id, name: name.to_string() })
+            Ok(Self { id, name: name.to_string(), count: Some(0) })
         }
     }
 
     /// Get all tags from the db
-    pub fn get_all() -> Result<Vec<Self>, String> {
+    pub fn get_all(is_show_hidden: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let mut stmt = conn.prepare("SELECT id, name FROM atags ORDER BY name ASC")
+        let hidden_clause = if is_show_hidden { "1=1" } else { "(albums.is_hidden = 0)" };
+        let query = format!(
+            "SELECT atags.id, atags.name, SUM(CASE WHEN {} THEN 1 ELSE 0 END) AS count 
+            FROM atags 
+            LEFT JOIN afile_tags ON atags.id = afile_tags.tag_id
+            LEFT JOIN afiles ON afile_tags.file_id = afiles.id
+            LEFT JOIN afolders ON afiles.folder_id = afolders.id
+            LEFT JOIN albums ON afolders.album_id = albums.id
+            GROUP BY atags.id
+            ORDER BY atags.name ASC",
+            hidden_clause
+        );
+        let mut stmt = conn
+            .prepare(query.as_str())
             .map_err(|e| e.to_string())?;
 
         let tags_iter = stmt.query_map([], |row| Self::from_row(row))
@@ -1510,7 +1525,7 @@ impl ATag {
     pub fn get_tags_for_file(file_id: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let mut stmt = conn.prepare(
-            "SELECT t.id, t.name
+            "SELECT t.id, t.name, 0 as count
              FROM atags t
              INNER JOIN afile_tags ft ON t.id = ft.tag_id
              WHERE ft.file_id = ?1
@@ -1589,6 +1604,7 @@ impl ATag {
 pub struct ACamera {
     pub make: String,
     pub models: Vec<String>,
+    pub counts: Vec<i64>,
 }
 
 impl ACamera {
@@ -1598,7 +1614,7 @@ impl ACamera {
         let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
 
         let query = format!(
-            "SELECT a.e_make, a.e_model 
+            "SELECT a.e_make, a.e_model, count(a.id) as count
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -1616,20 +1632,23 @@ impl ACamera {
             .query_map(params![], |row| {
                 let make: String = row.get(0)?;
                 let model: String = row.get(1)?;
-                Ok((make, model))
+                let count: i64 = row.get(2)?;
+                Ok((make, model, count))
             })
             .map_err(|e| e.to_string())?;
 
-        let mut hash_map: HashMap<String, Vec<String>> = HashMap::new();
+        let mut hash_map: HashMap<String, (Vec<String>, Vec<i64>)> = HashMap::new();
 
-        for row in rows {
-            let (make, model) = row.unwrap();
-            hash_map.entry(make).or_insert_with(Vec::new).push(model);
+        for row_result in rows {
+            let (make, model, count) = row_result.map_err(|e| e.to_string())?;
+            let entry = hash_map.entry(make).or_insert_with(|| (Vec::new(), Vec::new()));
+            entry.0.push(model); // Push model to Vec<String>
+            entry.1.push(count); // Push count to Vec<i64>
         }
 
         let mut cameras: Vec<Self> = hash_map
             .into_iter()
-            .map(|(make, models)| Self { make, models })
+            .map(|(make, (models, counts))| Self { make, models, counts })
             .collect();
 
         // Sort the cameras by make
@@ -1643,6 +1662,7 @@ impl ACamera {
 pub struct ALocation {
     pub admin1: String,
     pub names: Vec<String>,
+    pub counts: Vec<i64>,
 }
 
 impl ALocation {
@@ -1652,7 +1672,7 @@ impl ALocation {
         let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
 
         let query = format!(
-            "SELECT a.geo_admin1, a.geo_name 
+            "SELECT a.geo_admin1, a.geo_name, count(a.id) as count
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -1670,20 +1690,23 @@ impl ALocation {
             .query_map(params![], |row| {
                 let admin1: String = row.get(0)?;
                 let name: String = row.get(1)?;
-                Ok((admin1, name))
+                let count: i64 = row.get(2)?;
+                Ok((admin1, name, count))
             })
             .map_err(|e| e.to_string())?;
 
-        let mut hash_map: HashMap<String, Vec<String>> = HashMap::new();
+        let mut hash_map: HashMap<String, (Vec<String>, Vec<i64>)> = HashMap::new();
 
         for row in rows {
-            let (admin1, name) = row.unwrap();
-            hash_map.entry(admin1).or_insert_with(Vec::new).push(name);
+            let (admin1, name, count) = row.unwrap();
+            let entry = hash_map.entry(admin1).or_insert_with(|| (Vec::new(), Vec::new()));
+            entry.0.push(name); // Push name to Vec<String>
+            entry.1.push(count); // Push count to Vec<i64>
         }
 
         let mut locations: Vec<Self> = hash_map
             .into_iter()
-            .map(|(admin1, names)| Self { admin1, names })
+            .map(|(admin1, (names, counts))| Self { admin1, names, counts })
             .collect();
 
         // Sort the locations by admin1

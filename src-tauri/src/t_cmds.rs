@@ -395,8 +395,8 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 
 /// get all tags
 #[tauri::command]
-pub fn get_all_tags() -> Result<Vec<ATag>, String> {
-    ATag::get_all()
+pub fn get_all_tags(is_show_hidden: bool) -> Result<Vec<ATag>, String> {
+    ATag::get_all(is_show_hidden)
         .map_err(|e| format!("Error while getting all tags: {}", e))
 }
 

@@ -582,7 +582,7 @@ export async function setFileFavorite(fileId, isFavorite) {
 // get all tags
 export async function getAllTags() {
   try {
-    const tags = await invoke('get_all_tags');
+    const tags = await invoke('get_all_tags', { isShowHidden: false });
     console.log('getAllTags:', tags);
     if (tags) {
       return tags;

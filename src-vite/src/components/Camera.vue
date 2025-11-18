@@ -5,7 +5,6 @@
     <!-- title bar -->
     <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
       <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
-      <!-- <TButton :icon="IconRefresh" @click="clickReload"/> -->
     </div>
 
     <!-- camera -->
@@ -26,12 +25,13 @@
               ]"
               @click.stop="clickExpandCamera(camera)"
             />
-            <div class="overflow-hidden whitespace-pre text-ellipsis">
-             {{ camera.make }}
+            <div class="flex-1 flex items-center overflow-hidden whitespace-pre text-ellipsis">
+              <span>{{ camera.make }}</span>
+              <span class="text-xs text-base-content/30 ml-1">({{ camera.counts.reduce((a, b) => a + b, 0).toLocaleString() }})</span>
             </div>
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
-            <li v-for="model in camera.models" class="pl-4">
+            <li v-for="(model, index) in camera.models" class="pl-4">
               <div 
                 :class="[
                   'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
@@ -40,8 +40,9 @@
                 @click="clickCameraModel(camera.make, model)"
               >
                 <!-- <IconCircle class="mx-1 h-5 shrink-0" /> -->
-                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
-                  {{ model }}
+                <div class="flex-1 flex items-center px-1 whitespace-pre text-ellipsis overflow-hidden">
+                  <span>{{ model }}</span>
+                  <span class="text-xs text-base-content/30 ml-1">({{ camera.counts[index].toLocaleString() }})</span>
                 </div>
               </div>
             </li>
@@ -91,13 +92,6 @@ onMounted(async () => {
     }
   }
 });
-
-/// reload cameras
-function clickReload() {
-  getCameras();
-  config.camera.make = "";
-  config.camera.model = "";
-};
 
 /// click camera icon to expand or collapse models
 function clickExpandCamera(camera) {

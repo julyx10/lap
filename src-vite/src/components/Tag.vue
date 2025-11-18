@@ -33,7 +33,7 @@
             />
             <template v-else>
               <div class="overflow-hidden whitespace-pre text-ellipsis">
-                {{ tag.name }}
+                {{ tag.name }} <span v-if="tag.count" class="text-xs text-base-content/30 ml-1">({{ tag.count.toLocaleString() }})</span>
               </div>
               <ContextMenu 
                 :class="[
@@ -146,7 +146,7 @@ async function loadTags() {
   }
 }
 
-function selectTag(tag) {
+function selectTag(tag: any) {
   if (isRenamingTag.value) return;
   selectedTag.value = tag;
   config.tag.id = tag.id;

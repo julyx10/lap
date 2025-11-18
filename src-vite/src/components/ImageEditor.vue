@@ -88,7 +88,7 @@
                 <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
               </select>
               <TButton
-                :icon="cropBoxFixed ? IconCropMin : IconCropMax"
+                :icon="cropBoxFixed ? IconZoomOutArea : IconZoomInArea"
                 :tooltip="cropBoxFixed ? $t('msgbox.image_editor.fix_crop_box') : $t('msgbox.image_editor.resize_crop_box')"
                 @click="toggleCropBoxFixed"
               />
@@ -269,8 +269,8 @@ import TButton from '@/components/TButton.vue';
 import { 
   IconCrop,
   IconCropLandscape,
-  IconCropMax,
-  IconCropMin,
+  IconZoomInArea,
+  IconZoomOutArea,
   IconRotateLeft, 
   IconRotateRight, 
   IconFlipVertical, 
