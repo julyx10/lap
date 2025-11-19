@@ -1,16 +1,22 @@
 <template>
   <div
     :class="[
-      'border-2 rounded-box flex flex-col items-center hover:bg-base-100 ease-in-out duration-300 cursor-pointer group',
+      'border-2 flex flex-col items-center hover:bg-base-100 ease-in-out duration-300 cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all',
-      config.content.layout === 0 ? 'p-2' : 'p-0.5 ml-0.5',
+      config.settings.grid.style === 0 ? 'rounded-box' : '',
+      config.content.layout === 0 && config.settings.grid.style === 0 ? 'p-2' : '',
+      config.content.layout === 1 ? 'p-0.5 ml-0.5' : '',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
     ]"
     :style="containerStyle"
     @click="$emit('clicked')"
     @dblclick="$emit('dblclicked')"
   >
-    <div v-if="file.thumbnail" class="relative rounded-box flex items-center justify-center overflow-hidden">
+    <div v-if="file.thumbnail" 
+      :class="[
+        'relative flex items-center justify-center overflow-hidden', 
+        config.settings.grid.style === 0 ? 'rounded-box' : ''
+      ]">
       <!-- image -->
       <img :src="file.thumbnail"
         class="duration-300"
@@ -75,7 +81,7 @@
     ></div>
 
     <!-- label -->
-    <template v-if="config.content.layout === 0">
+    <template v-if="config.content.layout === 0 && config.settings.grid.style === 0">
       <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
       <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
     </template>

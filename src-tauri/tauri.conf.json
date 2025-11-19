@@ -30,7 +30,8 @@
           "$VIDEOS/**",
           "$DOCUMENT/**",
           "$DESKTOP/**",
-          "$DOWNLOAD/**"
+          "$DOWNLOAD/**",
+          "/Volumes/**"
         ]
       }
     }

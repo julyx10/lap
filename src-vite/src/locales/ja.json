@@ -308,8 +308,8 @@
 
   "file_info": {
     "title": "情報",
-    "general_info": "一般情報",
-    "exif_info": "EXIF 情報",
+    "file_info": "ファイル情報",
+    "metadata": "メタデータ",
     "album_name": "アルバム",
     "name": "ファイル名",
     "path": "パス",
@@ -468,6 +468,8 @@
     "grid_view": {
       "title": "グリッドビュー",
       "size": "サムネイルサイズ",
+      "style": "サムネイルビュースタイル",
+      "style_options": ["快適", "コンパクト"],
       "scaling": "サムネイルの拡大縮小",
       "scaling_options": ["全体をフィット", "切り抜きで埋める", "引き伸ばして埋める"],
       "label_primary": "プライマリラベル",

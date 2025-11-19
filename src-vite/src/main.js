@@ -77,6 +77,9 @@ listen('settings-debugMode-changed', (event) => {
 listen('settings-gridSize-changed', (event) => {
   config.setGridSize(event.payload)
 })
+listen('settings-gridStyle-changed', (event) => {
+  config.setGridStyle(event.payload)
+})
 listen('settings-gridScaling-changed', (event) => {
   config.setGridScaling(event.payload)
 })

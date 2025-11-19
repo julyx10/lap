@@ -9,7 +9,7 @@
       class="flex-1 flex p-4 overflow-auto" 
     >
       <!-- Tabs -->
-      <div class="w-32 font-bold">
+      <div class="min-w-32 font-bold">
         <div
           v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_viewer.title', 'settings.about.title']"
           :key="index"
@@ -90,6 +90,16 @@
               :step="10" 
               label=""
             />
+          </div>
+
+          <!-- Grid Style -->
+          <div class="flex items-center justify-between mb-4">
+            <label>{{ $t('settings.grid_view.style') }}</label>
+            <select class="select" v-model="config.settings.grid.style">
+              <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
           </div>
 
           <!-- Grid Scaling -->
@@ -200,7 +210,7 @@
             <table class="w-full">
               <tbody>
                 <tr>
-                  <td>{{ $t('settings.about.package.name') }}</td>
+                  <td class="w-48">{{ $t('settings.about.package.name') }}</td>
                   <td>{{ packageInfo.name }}</td>
                 </tr>
                 <tr>
@@ -236,14 +246,15 @@
                 </tr>
                 <tr>
                   <td>{{ $t('settings.about.storage.file_path') }}</td>
-                   <td>
+                  <td>{{ storageFileInfo.file_path }}</td>
+                   <!-- <td>
                     <input
                       type="text"
                       :value="storageFileInfo.file_path"
                       readonly
                       class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
                     />
-                   </td>
+                   </td> -->
                 </tr>
                 <tr>
                   <td>{{ $t('settings.about.storage.file_size') }}</td>
@@ -335,6 +346,18 @@ const wheelOptions = computed(() => {
 // Define the grid scaling options
 const gridScalingOptions = computed(() => {
   const options = localeMsg.value.settings.grid_view.scaling_options;
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
+// Define the grid style options
+const gridStyleOptions = computed(() => {
+  const options = localeMsg.value.settings.grid_view.style_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -464,6 +487,9 @@ watch(() => config.settings.debugMode, (newValue) => {
 watch(() => config.settings.grid.size, debounce((newValue) => {
   emit('settings-gridSize-changed', newValue);
 }, 100));
+watch(() => config.settings.grid.style, (newValue) => {
+  emit('settings-gridStyle-changed', newValue);
+});
 watch(() => config.settings.grid.scaling, (newValue) => {
   emit('settings-gridScaling-changed', newValue);
 });

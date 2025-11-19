@@ -86,7 +86,8 @@
 
     <ProgressBar v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     <span v-else class="h-0.5 w-full"></span>
-
+      
+    <!-- content view -->
     <div ref="contentViewDiv" class="mt-1 flex-1 flex flex-row overflow-hidden">
 
       <div ref="gridViewDiv" 
@@ -96,6 +97,7 @@
         ]"
       >
         <div class="relative" :class="{ 'flex-1': config.content.layout === 0 }">
+          
           <!-- grid view -->
           <div ref="gridScrollContainerRef" 
             class="bg-base-200 rounded-box" 
@@ -104,11 +106,11 @@
               'overflow-x-auto overflow-y-hidden': config.content.layout === 1,
               'absolute inset-0': config.content.layout === 0,
             }"
-            :style="{ height: config.content.layout === 1 ? config.content.filmStripPaneHeight + 'px' : '' }" 
             @scroll="handleScroll"
             @wheel="handleWheel"
-          >
+            >
             <GridView ref="gridViewRef"
+              :style="{ height: config.content.layout === 1 ? config.content.filmStripPaneHeight + 'px' : '' }"
               :selected-item-index="selectedItemIndex"
               :fileList="fileList"
               :showFolderFiles="showFolderFiles"
@@ -184,10 +186,6 @@
             </template>
           </div>
 
-          <!-- <div v-else class="flex flex-col items-center justify-center text-base-content/30">
-            <IconSearch class="w-8 h-8" />
-            <span>{{ $t('tooltip.not_found.files') }}</span>
-          </div> -->
         </div> <!-- preview -->
 
       </div> <!-- grid view -->
@@ -1556,7 +1554,13 @@ function handleMouseMove(event: MouseEvent) {
     const minHeight = Math.max(totalHeight * 0.1, 120);
     const maxHeight = Math.min(totalHeight * 0.5, 320);
 
-    config.content.filmStripPaneHeight = Math.min(Math.max(newHeight, minHeight), maxHeight);
+    // if scrollbar is visible, subtract the scrollbar height
+    const scrollbarWidth = gridScrollContainerRef.value 
+      ? gridScrollContainerRef.value.scrollWidth > gridScrollContainerRef.value.clientWidth 
+        ? gridScrollContainerRef.value.offsetHeight - gridScrollContainerRef.value.clientHeight 
+        : 0 
+      : 0;
+    config.content.filmStripPaneHeight = Math.min(Math.max(newHeight, minHeight), maxHeight) - scrollbarWidth;
   }
 }
 

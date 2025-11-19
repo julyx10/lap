@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full rounded-box w-full bg-base-200 flex flex-col select-none">
+  <div class="h-full rounded-box w-full bg-base-200 flex flex-col">
     <!-- Title bar -->
     <div class="p-2 flex items-center justify-between">
       <!-- Tabs -->
@@ -33,13 +33,13 @@
     <!-- Info table -->
     <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 pl-1 pb-2 overflow-x-hidden overflow-y-auto">
       <table v-if="fileInfo" class="w-full text-sm border-separate border-spacing-2">
-        <!-- general file info -->
+        <!-- file info -->
         <tbody>
           <tr>
             <td colspan="2">
               <div class="flex items-center">
-                <IconFile class="w-4 h-4" /> 
-                <span class="ml-1 font-bold">{{ $t('file_info.general_info') }}</span>
+                <IconFileInfo class="w-4 h-4" /> 
+                <span class="ml-1 font-bold">{{ $t('file_info.file_info') }}</span>
               </div>
             </td>
           </tr>
@@ -97,13 +97,13 @@
           </tr>
         </tbody>
 
-        <!-- exif info -->
-        <tbody v-if="fileInfo.file_type === 1">
+        <!-- metadata -->
+        <tbody>
           <tr>
             <td colspan="2">
               <div class="mt-2 flex items-center">
                 <IconCamera class="w-4 h-4" /> 
-                <span class="ml-1 font-bold">{{ $t('file_info.exif_info') }}</span>
+                <span class="ml-1 font-bold">{{ $t('file_info.metadata') }}</span>
               </div>
             </td>
           </tr>
@@ -190,7 +190,7 @@
 <script setup lang="ts">
 import { config } from '@/common/config';
 import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
-import { IconClose, IconFile, IconCamera } from '@/common/icons';
+import { IconClose, IconFileInfo, IconCamera } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import MapView from '@/components/MapView.vue';

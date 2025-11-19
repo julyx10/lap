@@ -308,8 +308,8 @@
 
   "file_info": {
     "title": "信息",
-    "general_info": "一般信息",
-    "exif_info": "EXIF 信息",
+    "file_info": "文件信息",
+    "metadata": "元数据",
     "album_name": "相册",
     "name": "文件名",
     "path": "路径",
@@ -469,6 +469,8 @@
     "grid_view": {
       "title": "网格视图",
       "size": "缩略图大小",
+      "style": "缩略图视图样式",
+      "style_options": ["舒适", "紧凑"],
       "scaling": "缩略图缩放",
       "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
       "label_primary": "主标签",

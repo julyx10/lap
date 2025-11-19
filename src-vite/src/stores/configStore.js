@@ -108,6 +108,7 @@ export const useConfigStore = defineStore('configStore', {
       thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
       grid: {
         size: 200,              // grid size, range 120-360
+        style: 0,               // 0: comfortable view, 1: compact view
         scaling: 0,             // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
         labelPrimary: 1,        // Primary label (1: Name)
         labelSecondary: 2,      // Secondary label (2: Dimension)
@@ -169,6 +170,9 @@ export const useConfigStore = defineStore('configStore', {
     // grid view settings
     setGridSize(gridSize) {
       this.settings.grid.size = gridSize;
+    },
+    setGridStyle(gridStyle) {
+      this.settings.grid.style = gridStyle;
     },
     setGridScaling(gridScaling) {
       this.settings.grid.scaling = gridScaling;

@@ -7,11 +7,11 @@
     }"
     tabindex="0" 
   >
-    <div id="gridView" 
-      :class="{
-        'p-2 grid gap-2': config.content.layout === 0,
-        'absolute flex flex-nowrap items-center': config.content.layout === 1
-      }"
+    <div v-if="fileList.length > 0" id="gridView" 
+      :class="[
+        config.content.layout === 0 ? 'p-2 grid' : 'absolute flex flex-nowrap items-center',
+        config.content.layout === 0 && config.settings.grid.style === 0 ? 'gap-2' : '',
+      ]"
       :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` } : { }"
     >
       <!-- thumbnail -->
@@ -30,8 +30,7 @@
       />
     </div>
 
-    <div v-if="fileList.length === 0" class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
-      <IconSearch class="w-8 h-8" />
+    <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
       <span>{{ $t('tooltip.not_found.files') }}</span>
     </div>
 
@@ -45,10 +44,6 @@ import { watch, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
-
-import { 
-  IconSearch,
-} from '@/common/icons';
 
 const props = defineProps({
   selectedItemIndex: {

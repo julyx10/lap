@@ -308,8 +308,8 @@
 
   "file_info": {
     "title": "Info",
-    "general_info": "General info",
-    "exif_info": "EXIF info",
+    "file_info": "File info",
+    "metadata": "Metadata",
     "album_name": "Album",
     "name": "File name",
     "path": "Path",
@@ -468,6 +468,8 @@
     "grid_view": {
       "title": "Grid view",
       "size": "Thumbnail size",
+      "style": "Thumbnail view style",
+      "style_options": ["Comfortable view", "Compact view"],
       "scaling": "Thumbnail scaling",
       "scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
       "label_primary": "Primary label",
