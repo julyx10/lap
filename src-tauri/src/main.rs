@@ -18,6 +18,7 @@ mod t_cmds;
 mod t_sqlite;
 mod t_utils;
 mod t_image;
+mod t_video;
 
 /// The main function is the entry point for the Tauri application.
 fn main() {

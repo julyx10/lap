@@ -14,6 +14,7 @@ use std::fs::File;
 use std::io::BufReader;
 use crate::t_utils;
 use crate::t_image;
+use crate::t_video;
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -453,55 +454,134 @@ impl AFile {
         // get dimensions based on file type
         let (width, height) = match file_type {
             1 => t_image::get_image_dimensions(file_path)?,
-            2 => t_image::get_video_dimensions(file_path)?,
+            2 => t_video::get_video_dimensions(file_path)?,
             _ => (0, 0),
         };
         
         // get duration of video file
         let duration = match file_type {
-            2 => t_image::get_video_duration(file_path)?,
+            2 => t_video::get_video_duration(file_path)?,
             _ => 0,
         };
 
-        // Read EXIF data
-        let exif = File::open(file_path)
-            .map_err(|e| format!("Error opening file: {}", e))
-            .map(|file| {
-                let mut bufreader = BufReader::new(&file);
-                Reader::new().read_from_container(&mut bufreader).ok()
-            })?;
+        // Initialize mutable metadata fields
+        let mut taken_date: Option<String> = None;
+        let mut e_make: Option<String> = None;
+        let mut e_model: Option<String> = None;
+        let mut e_date_time: Option<String> = None;
+        let mut e_software: Option<String> = None;
+        let mut e_artist: Option<String> = None;
+        let mut e_copyright: Option<String> = None;
+        let mut e_description: Option<String> = None;
+        let mut e_lens_make: Option<String> = None;
+        let mut e_lens_model: Option<String> = None;
+        let mut e_exposure_bias: Option<String> = None;
+        let mut e_exposure_time: Option<String> = None;
+        let mut e_f_number: Option<String> = None;
+        let mut e_focal_length: Option<String> = None;
+        let mut e_iso_speed: Option<String> = None;
+        let mut e_flash: Option<String> = None;
+        let mut e_orientation: Option<u32> = None;
+        let mut gps_latitude: Option<f64> = None;
+        let mut gps_longitude: Option<f64> = None;
+        let mut gps_altitude: Option<f64> = None;
 
-        // Extracts EXIF orientation field.
-        // 1: Horizontal (normal)
-        // 2: Mirror horizontal
-        // 3: Rotate 180
-        // 4: Mirror vertical
-        // 5: Mirror horizontal and rotate 270 CW
-        // 6: Rotate 90 CW
-        // 7: Mirror horizontal and rotate 90 CW
-        // 8: Rotate 270 CW
-        let e_orientation = exif
-            .as_ref()
-            .and_then(|exif_data| {
-                exif_data
-                    .get_field(Tag::Orientation, In::PRIMARY)
-                    .and_then(|field| field.value.get_uint(0)) // Return u64 directly
-                    .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
-            });
+        if file_type == 1 { // Image file
+            // Read EXIF data
+            let exif = File::open(file_path)
+                .map_err(|e| format!("Error opening file: {}", e))
+                .map(|file| {
+                    let mut bufreader = BufReader::new(&file);
+                    Reader::new().read_from_container(&mut bufreader).ok()
+                })?;
 
-        // Process flash data
-        let e_flash = exif
-            .as_ref()
-            .and_then(|exif_data| {
-                exif_data
-                    .get_field(Tag::Flash, In::PRIMARY)
-                    .and_then(|field| field.value.get_uint(0))
-                    .map(|val| if val & 1 == 1 { "Fired".to_string() } else { "Not fired".to_string() })
-            });
+            // Extracts EXIF orientation field.
+            // 1: Horizontal (normal)
+            // 2: Mirror horizontal
+            // 3: Rotate 180
+            // 4: Mirror vertical
+            // 5: Mirror horizontal and rotate 270 CW
+            // 6: Rotate 90 CW
+            // 7: Mirror horizontal and rotate 90 CW
+            // 8: Rotate 270 CW
+            e_orientation = exif
+                .as_ref()
+                .and_then(|exif_data| {
+                    exif_data
+                        .get_field(Tag::Orientation, In::PRIMARY)
+                        .and_then(|field| field.value.get_uint(0)) // Return u64 directly
+                        .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
+                });
 
-        // Extract GPS data
-        let (gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc) = 
-            Self::extract_gps_data(&exif);
+            // Process flash data
+            e_flash = exif
+                .as_ref()
+                .and_then(|exif_data| {
+                    exif_data
+                        .get_field(Tag::Flash, In::PRIMARY)
+                        .and_then(|field| field.value.get_uint(0))
+                        .map(|val| if val & 1 == 1 { "Fired".to_string() } else { "Not fired".to_string() })
+                });
+
+            // Extract GPS data
+            let (lat, lon, alt) = 
+                Self::extract_gps_data(&exif);
+            gps_latitude = lat;
+            gps_longitude = lon;
+            gps_altitude = alt;
+            
+            taken_date = Self::get_exif_field(&exif, Tag::DateTimeOriginal)
+                .and_then(|exif_date| t_utils::meta_date_to_string(&exif_date));
+            
+            e_make = Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase());
+            e_model = Self::get_exif_field(&exif, Tag::Model);
+            e_date_time = Self::get_exif_field(&exif, Tag::DateTimeOriginal);
+            e_software = Self::get_exif_field(&exif, Tag::Software);
+            e_artist = Self::get_exif_field(&exif, Tag::Artist);
+            e_copyright = Self::get_exif_field(&exif, Tag::Copyright);
+            e_description = Self::get_exif_field(&exif, Tag::ImageDescription);
+            e_lens_make = Self::get_exif_field(&exif, Tag::LensMake);
+            e_lens_model = Self::get_exif_field(&exif, Tag::LensModel);
+            e_exposure_bias = Self::get_exif_field(&exif, Tag::ExposureBiasValue);
+            e_exposure_time = Self::get_exif_field(&exif, Tag::ExposureTime);
+            e_f_number = Self::get_exif_field(&exif, Tag::FNumber);
+            e_focal_length = Self::get_exif_field(&exif, Tag::FocalLength);
+            e_iso_speed = Self::get_exif_field(&exif, Tag::PhotographicSensitivity);
+
+        } else if file_type == 2 { // Video file
+            if let Ok(video_metadata) = t_video::get_video_metadata(file_path) {
+                e_make = video_metadata.e_make;
+                e_model = video_metadata.e_model;
+                e_date_time = video_metadata.e_date_time;
+                e_software = video_metadata.e_software;
+                gps_latitude = video_metadata.gps_latitude;
+                gps_longitude = video_metadata.gps_longitude;
+                gps_altitude = video_metadata.gps_altitude;
+
+                if let Some(dt) = &e_date_time {
+                    taken_date = t_utils::meta_date_to_string(dt);
+                }
+            }
+        }
+        
+        // Fallback for taken_date if no metadata is found
+        if taken_date.is_none() {
+            taken_date = file_info.modified_str.clone();
+        }
+
+        // Geocoding based on GPS coordinates from any source
+        let (geo_name, geo_admin1, geo_admin2, geo_cc) = 
+            if let (Some(lat), Some(lon)) = (gps_latitude, gps_longitude) {
+                let search_result = t_utils::GEOCODER.search((lat, lon));
+                (
+                    Some(search_result.record.name.clone()),
+                    Some(search_result.record.admin1.clone()),
+                    Some(search_result.record.admin2.clone()),
+                    Some(search_result.record.cc.clone()),
+                )
+            } else {
+                (None, None, None, None)
+            };
 
         let file = Self {
             id: None,
@@ -514,10 +594,7 @@ impl AFile {
             created_at: file_info.created,
             modified_at: file_info.modified,
 
-            taken_date: Self::get_exif_field(&exif, Tag::DateTimeOriginal)
-                .and_then(|exif_date| t_utils::exif_date_to_string(&exif_date))
-                .or_else(|| file_info.modified_str.clone()),
-
+            taken_date,
             width:  e_orientation.map(|orientation| if orientation > 4 { height } else { width }).or(Some(width)),
             height: e_orientation.map(|orientation| if orientation > 4 { width } else { height }).or(Some(height)),
             duration: Some(duration),
@@ -527,20 +604,20 @@ impl AFile {
             comments: None,
             has_tags: Some(false),
 
-            e_make: Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase()),
-            e_model: Self::get_exif_field(&exif, Tag::Model),
-            e_date_time: Self::get_exif_field(&exif, Tag::DateTimeOriginal),
-            e_software: Self::get_exif_field(&exif, Tag::Software),
-            e_artist: Self::get_exif_field(&exif, Tag::Artist),
-            e_copyright: Self::get_exif_field(&exif, Tag::Copyright),
-            e_description: Self::get_exif_field(&exif, Tag::ImageDescription),
-            e_lens_make: Self::get_exif_field(&exif, Tag::LensMake),
-            e_lens_model: Self::get_exif_field(&exif, Tag::LensModel),
-            e_exposure_bias: Self::get_exif_field(&exif, Tag::ExposureBiasValue),
-            e_exposure_time: Self::get_exif_field(&exif, Tag::ExposureTime),
-            e_f_number: Self::get_exif_field(&exif, Tag::FNumber),
-            e_focal_length: Self::get_exif_field(&exif, Tag::FocalLength),
-            e_iso_speed: Self::get_exif_field(&exif, Tag::PhotographicSensitivity),
+            e_make,
+            e_model,
+            e_date_time,
+            e_software,
+            e_artist,
+            e_copyright,
+            e_description,
+            e_lens_make,
+            e_lens_model,
+            e_exposure_bias,
+            e_exposure_time,
+            e_f_number,
+            e_focal_length,
+            e_iso_speed,
             e_flash,
             e_orientation,
 
@@ -561,66 +638,34 @@ impl AFile {
         Ok(file)
     }
 
-    fn extract_gps_data(exif: &Option<exif::Exif>) -> (Option<f64>, Option<f64>, Option<f64>, Option<String>, Option<String>, Option<String>, Option<String>) {
+    fn extract_gps_data(exif: &Option<exif::Exif>) -> (Option<f64>, Option<f64>, Option<f64>) {
         let Some(exif_data) = exif else {
-            return (None, None, None, None, None, None, None);
+            return (None, None, None);
         };
 
-        let lat_val = exif_data
-            .get_field(Tag::GPSLatitude, In::PRIMARY)
-            .and_then(|f| match &f.value {
-                Value::Rational(v) => Some(v.to_vec()),
-                _ => None,
-            });
-        let lat_ref = exif_data
-            .get_field(Tag::GPSLatitudeRef, In::PRIMARY)
-            .map(|f| f.display_value().to_string());
-        let lon_val = exif_data
-            .get_field(Tag::GPSLongitude, In::PRIMARY)
-            .and_then(|f| match &f.value {
-                Value::Rational(v) => Some(v.to_vec()),
-                _ => None,
-            });
-        let lon_ref = exif_data
-            .get_field(Tag::GPSLongitudeRef, In::PRIMARY)
-            .map(|f| f.display_value().to_string());
+        let lat_val = exif_data.get_field(Tag::GPSLatitude, In::PRIMARY).and_then(|f| match &f.value {
+            Value::Rational(v) => Some(v.to_vec()),
+            _ => None,
+        });
+        let lat_ref = exif_data.get_field(Tag::GPSLatitudeRef, In::PRIMARY).map(|f| f.display_value().to_string());
+        let lon_val = exif_data.get_field(Tag::GPSLongitude, In::PRIMARY).and_then(|f| match &f.value {
+            Value::Rational(v) => Some(v.to_vec()),
+            _ => None,
+        });
+        let lon_ref = exif_data.get_field(Tag::GPSLongitudeRef, In::PRIMARY).map(|f| f.display_value().to_string());
 
-        let (gps_lat_str, gps_lon_str, name, admin2, admin1, cc) =
-            if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) =
-                (lat_val, lat_ref, lon_val, lon_ref)
-            {
-                let dec_lat = Self::dms_to_decimal(&lat_v, &lat_r);
-                let dec_lon = Self::dms_to_decimal(&lon_v, &lon_r);
+        let (gps_lat, gps_lon) = if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) = (lat_val, lat_ref, lon_val, lon_ref) {
+            (Self::dms_to_decimal(&lat_v, &lat_r), Self::dms_to_decimal(&lon_v, &lon_r))
+        } else {
+            (None, None)
+        };
 
-                // let lat_str = Self::format_dms(&lat_v, &lat_r);
-                // let lon_str = Self::format_dms(&lon_v, &lon_r);
+        let altitude = exif_data.get_field(Tag::GPSAltitude, In::PRIMARY).and_then(|field| match &field.value {
+            Value::Rational(v) if !v.is_empty() => Some(v[0].num as f64 / v[0].denom as f64),
+            _ => None,
+        });
 
-                let (name, admin2, admin1, cc) = if let (Some(lat), Some(lon)) = (dec_lat, dec_lon) {
-                    let search_result = t_utils::GEOCODER.search((lat, lon));
-                    (
-                        Some(search_result.record.name.clone()),
-                        Some(search_result.record.admin2.clone()),
-                        Some(search_result.record.admin1.clone()),
-                        Some(search_result.record.cc.clone()),
-                    )
-                } else {
-                    (None, None, None, None)
-                };
-                (dec_lat, dec_lon, name, admin2, admin1, cc)
-            } else {
-                (None, None, None, None, None, None)
-            };
-
-        let altitude = exif_data
-            .get_field(Tag::GPSAltitude, In::PRIMARY)
-            .and_then(|field| match &field.value {
-                Value::Rational(v) if !v.is_empty() => {
-                    Some(v[0].num as f64 / v[0].denom as f64)
-                }
-                _ => None,
-            });
-
-        (gps_lat_str, gps_lon_str, altitude, name, admin1, admin2, cc)
+        (gps_lat, gps_lon, altitude)
     }
 
     /// Converts DMS (degrees, minutes, seconds) to decimal degrees.
@@ -1278,7 +1323,7 @@ impl AThumb {
                 if let Some(ext) = t_utils::get_file_extension(file_path) {
                     match ext.to_lowercase().as_str() {
                         "heic" | "heif" => { // heic/heif
-                            match t_image::get_video_thumbnail(file_path, thumbnail_size) {
+                            match t_video::get_video_thumbnail(file_path, thumbnail_size) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1), // empty thumb
                                 Err(_) => (None, 1), // error
@@ -1297,7 +1342,7 @@ impl AThumb {
                 }
             }
             2 => { // video
-                match t_image::get_video_thumbnail(file_path, thumbnail_size) {
+                match t_video::get_video_thumbnail(file_path, thumbnail_size) {
                     Ok(Some(data)) => (Some(data), 0),
                     Ok(None) => (None, 1),
                     Err(_) => (None, 1),

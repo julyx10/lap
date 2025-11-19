@@ -636,15 +636,19 @@ pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
     }
 }
 
-/// Convert an EXIF date string (`YYYY:MM:DD HH:MM:SS`) to a date string (`YYYY-MM-DD`)
-pub fn exif_date_to_string(date: &str) -> Option<String> {
-    // Split date and time parts (ignore time)
+/// Convert an EXIF or ISO 8601 date string to a date string (`YYYY-MM-DD`)
+pub fn meta_date_to_string(date: &str) -> Option<String> {
+    // Try to parse as ISO 8601 (RFC 3339) first, which video metadata often uses
+    if let Ok(datetime) = DateTime::parse_from_rfc3339(date) {
+        return Some(datetime.format("%Y-%m-%d").to_string());
+    }
+
+    // Fallback to EXIF format: YYYY:MM:DD HH:MM:SS
     let parts: Vec<&str> = date.split(' ').collect();
     if parts.is_empty() {
         return None;
     }
 
-    // Split the date part by ':'
     let date_part = parts[0];
     let date_fields: Vec<&str> = date_part.split(':').collect();
 
