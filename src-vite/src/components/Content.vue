@@ -119,6 +119,7 @@
               @item-dblclicked="handleItemDblClicked"
               @item-select-toggled="handleItemSelectToggled"
               @item-action="handleItemAction"
+              @request-scroll="handleRequestScroll"
             />
           </div>
 
@@ -164,26 +165,17 @@
             class="w-full h-full flex items-center justify-center"
             @dblclick="openImageViewer(selectedItemIndex, true)"
           >
-            <template v-if="fileList[selectedItemIndex]?.file_type === 1">
-              <Image v-if="imageSrc"
-                :src="imageSrc" 
-                :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
-                :isZoomFit="true"
-              ></Image>
-              <div v-if="loadImageError" class="h-full flex flex-col items-center justify-center text-base-content/30">
-                <IconError class="w-8 h-8 mb-2" />
-                <span>{{ $t('image_viewer.failed') }}</span>
-              </div>
-            </template>
-
-            <template v-if="fileList[selectedItemIndex]?.file_type === 2">
-              <Video v-if="videoSrc"
-                ref="videoRef"
-                :src="videoSrc"
-                :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
-                :isZoomFit="true"
-              ></Video>
-            </template>
+            <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
+              :filePath="fileList[selectedItemIndex]?.file_path" 
+              :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
+              :isZoomFit="true"
+            ></Image>
+            
+            <Video v-if="fileList[selectedItemIndex]?.file_type === 2"
+              :filePath="fileList[selectedItemIndex]?.file_path"
+              :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
+              :isZoomFit="true"
+            ></Video>
           </div>
 
         </div> <!-- preview -->
@@ -211,8 +203,6 @@
         <div v-if="config.infoPanel.show" :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
             :fileInfo="fileList[selectedItemIndex]" 
-            :imageSrc="imageSrc" 
-            :videoSrc="videoSrc" 
             @close="config.infoPanel.show = false" 
           />
         </div>
@@ -469,10 +459,7 @@ const selectedSize = ref(0);  // selected files size
 
 // film strip view splitter
 const isDraggingfilmStripView = ref(false);      // dragging splitter to resize film strip view
-const imageSrc = ref('');         // preview image source
-const videoSrc = ref('');         // preview video source
 const videoRef = ref(null);       // preview video reference
-const loadImageError = ref(false);   // Track if there was an error loading the image
 
 // info panel splitter
 const isDraggingInfoPanel = ref(false);
@@ -678,6 +665,34 @@ const handleWheel = (event: WheelEvent) => {
     event.preventDefault();
   }
 };
+
+function handleRequestScroll(index: number) {
+  // Using setTimeout to ensure the DOM has been fully updated and rendered,
+  // especially after layout changes which might involve CSS that nextTick doesn't wait for.
+  setTimeout(() => {
+    const item = document.getElementById(`item-${index}`);
+    const container = gridScrollContainerRef.value;
+    if (!item || !container) return;
+
+    if (config.content.layout === 1) { // Manual scroll for Carousel/Filmstrip
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+
+      const newScrollLeft = container.scrollLeft + (itemRect.left - containerRect.left) - (containerRect.width / 2) + (itemRect.width / 2);
+
+      container.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth',
+      });
+    } else { // Grid layout
+      item.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest' 
+      });
+    }
+  }, 100);
+}
 
 function handleScroll() {
   const el = gridScrollContainerRef.value;
@@ -1143,8 +1158,6 @@ async function deleteFileAlways(file) {
 function removeFromFileList(index: number) {
   fileList.value.splice(index, 1);
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
-  // update the preview
-  updatePreview(selectedItemIndex.value);
 }
 
 // update the file info from the file
@@ -1294,55 +1307,6 @@ const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
 
-// get selected image source
-const getImageSrc = async (index) => {
-  if(index < 0 || index >= fileList.value.length) {
-    imageSrc.value = '';
-    return;
-  }
-  
-  let filePath = fileList.value[index].file_path;
-  console.log('getImageSrc:', filePath);
-  try {
-    loadImageError.value = false;
-    
-    let currentIndex = index;
-    const convertedSrc = getAssetSrc(filePath);
-    if(!convertedSrc) {
-      imageSrc.value = '';
-      loadImageError.value = true;
-      return;
-    }
-    // Check if the selected item has changed since the invocation
-    if (currentIndex === index) {
-      // imageSrc.value = `data:image/jpeg;base64,${convertedSrc}`;
-      imageSrc.value = convertedSrc;
-    }
-  } catch (error) {
-    imageSrc.value = '';
-    loadImageError.value = true;
-    console.error('getImageSrc error:', error);
-  }
-}
-
-// get selected video source
-const getVideoSrc = async (index) => {
-  if(index < 0 || index >= fileList.value.length) {
-    videoSrc.value = '';
-    return;
-  }
-
-  let filePath = fileList.value[index].file_path;
-  try {
-    const convertedSrc = getAssetSrc(filePath);
-    console.log('Content getVideoSrc - converted src:', convertedSrc);
-    videoSrc.value = convertedSrc;
-  } catch (error) {
-    videoSrc.value = '';
-    console.error('Content getVideoSrc error:', error);
-  }
-}
-
 function refreshFileList() {
   selectMode.value = false;   // exit multi-select mode
 
@@ -1368,25 +1332,8 @@ async function updateSelectedImage(index: number) {
     fileList.value[index].tags = await getTagsForFile(fileList.value[index].id);
   }
 
-  // update preview
-  updatePreview(index);
-
   // update image viewer if the viewer is open
   openImageViewer(index, false);
-}
-
-function updatePreview(index: number) {
-  if(config.content.layout === 1 || (config.infoPanel.show && config.infoPanel.tabIndex === 1)) {
-    if(fileList.value[index].file_type === 1) {
-      getImageSrc(index);
-    } else if(fileList.value[index].file_type === 2) {
-      getVideoSrc(index);
-    }
-  }
-  else {
-    imageSrc.value = '';
-    videoSrc.value = '';
-  }
 }
 
 // click ok in tagging dialog
@@ -1461,19 +1408,20 @@ async function openImageViewer(index: number, newViewer = false) {
 
   const file = index >= 0 && index < fileCount ? fileList.value[index] : null;
   const fileId = file ? file.id : 0;
-  const encodedFilePath = file ? encodeURIComponent(file.file_path) : '';
+  // const encodedFilePath = file ? encodeURIComponent(file.file_path) : '';
 
   // preload the next image for smooth transition
-  const nextFile = index + 1 >= 0 && index + 1 < fileCount ? fileList.value[index + 1] : null;
-  const nextEncodedFilePath = nextFile ? encodeURIComponent(nextFile.file_path) : '';
+  // const nextFile = index + 1 >= 0 && index + 1 < fileCount ? fileList.value[index + 1] : null;
+  // const nextEncodedFilePath = nextFile ? encodeURIComponent(nextFile.file_path) : '';
   
   // create a new window if it doesn't exist
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!imageWindow) {
     if (newViewer) {
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
-                           `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
+        // url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
+        //                    `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
+        url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}`,
         title: 'Image Viewer',
         width: 1200,
         height: 800,
@@ -1507,8 +1455,8 @@ async function openImageViewer(index: number, newViewer = false) {
       fileId: fileId, 
       fileIndex: index,   // selected file index
       fileCount: fileCount, // total files length
-      filePath: encodedFilePath, 
-      nextFilePath: nextEncodedFilePath,
+      // filePath: encodedFilePath, 
+      // nextFilePath: nextEncodedFilePath,
     });
     if(newViewer) {
       imageWindow.show();

@@ -166,21 +166,17 @@
     <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
       class="flex-1 rounded-box overflow-hidden"
     >
-      <template v-if="fileInfo?.file_type === 1">
-        <Image v-if="imageSrc"
-          :src="imageSrc" 
-          :rotate="fileInfo?.rotate ?? 0" 
-          :isZoomFit="true"
-        ></Image>
-      </template>
+      <Image v-if="fileInfo?.file_type === 1"
+        :filePath="fileInfo?.file_path"
+        :rotate="fileInfo?.rotate ?? 0" 
+        :isZoomFit="true"
+      ></Image>
 
-      <template v-if="fileInfo?.file_type === 2">
-        <Video v-if="videoSrc"
-          :src="videoSrc"
-          :rotate="fileInfo?.rotate ?? 0"
-          :isZoomFit="true"
-        ></Video>
-      </template>
+      <Video v-if="fileInfo?.file_type === 2"
+        :filePath="fileInfo?.file_path"
+        :rotate="fileInfo?.rotate ?? 0"
+        :isZoomFit="true"
+      ></Video>
     </div>
 
   </div>
@@ -200,14 +196,6 @@ import Video from '@/components/Video.vue';
 const props = defineProps({
   fileInfo: {
     type: Object,
-    required: false
-  },
-  imageSrc: {
-    type: String,
-    required: false
-  },
-  videoSrc: {
-    type: String,
     required: false
   },
 });

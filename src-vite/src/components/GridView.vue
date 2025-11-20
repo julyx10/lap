@@ -54,7 +54,7 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  showFolderFiles: {             
+  showFolderFiles: {
     type: Boolean,
     default: false,
   },
@@ -64,11 +64,12 @@ const props = defineProps({
   },
 });
 
-defineEmits([
+const emit = defineEmits([
   'item-clicked',
   'item-dblclicked',
   'item-select-toggled',
   'item-action',
+  'request-scroll',
 ]);
 
 const uiStore = useUIStore();
@@ -76,17 +77,23 @@ const gridViewRef = ref(null);
 let resizeObserver: ResizeObserver | null = null;
 
 watch(() => props.selectedItemIndex, (newValue) => {
-  scrollToItem(newValue);
+  if (newValue !== -1) {
+    emit('request-scroll', newValue);
+  }
 });
 
 watch(() => config.content.layout, () => {
-  scrollToItem(props.selectedItemIndex);
+  if (props.selectedItemIndex !== -1) {
+    emit('request-scroll', props.selectedItemIndex);
+  }
 });
 
 onMounted(() => {
   if (gridViewRef.value) {
     resizeObserver = new ResizeObserver(() => {
-      scrollToItem(props.selectedItemIndex);
+      if (props.selectedItemIndex !== -1) {
+        emit('request-scroll', props.selectedItemIndex);
+      }
     });
     resizeObserver.observe(gridViewRef.value);
   }
@@ -97,18 +104,6 @@ onBeforeUnmount(() => {
     resizeObserver.disconnect();
   }
 });
-
-// make the selected item always visible in a scrollable container
-function scrollToItem(index: number) {
-  // Using setTimeout to ensure the DOM has been fully updated and rendered,
-  // especially after layout changes which might involve CSS that nextTick doesn't wait for.
-  setTimeout(() => {
-    const item = document.getElementById(`item-${index}`);
-    if (item) {
-      item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  }, 100);
-};
 
 // function to get the number of columns in the grid
 function getColumnCount() {
@@ -125,8 +120,7 @@ function getColumnCount() {
   return columnCount;
 }
 
-defineExpose({ 
-  scrollToItem,
+defineExpose({
   getColumnCount,
 });
 

@@ -168,30 +168,22 @@
         </div>
 
         <!-- image -->
-        <template v-if="fileInfo?.file_type === 1">
-          <Image v-if="imageSrc" 
-            ref="imageRef" 
-            :src="imageSrc" 
-            :rotate="fileInfo?.rotate ?? 0" 
-            :isZoomFit="config.imageViewer.isZoomFit"
-            @dblclick="toggleZoomFit()"
-          ></Image>
-          <div v-if="loadImageError" class="h-full flex flex-col items-center justify-center text-base-content/30">
-            <IconError class="w-8 h-8 mb-2" />
-            <span>{{ $t('image_viewer.failed') }}</span>
-          </div>
-        </template>
+        <Image v-if="fileInfo?.file_type === 1"
+          ref="imageRef" 
+          :filePath="fileInfo?.file_path" 
+          :rotate="fileInfo?.rotate ?? 0" 
+          :isZoomFit="config.imageViewer.isZoomFit"
+          @dblclick="toggleZoomFit()"
+        ></Image>
 
         <!-- video -->
-        <template v-if="fileInfo?.file_type === 2">
-          <Video v-if="videoSrc"
-            ref="videoRef"
-            :src="videoSrc"
-            :rotate="fileInfo?.rotate ?? 0"
-            :isZoomFit="config.imageViewer.isZoomFit"
-            @dblclick="toggleZoomFit()"
-          ></Video>
-        </template>
+        <Video v-if="fileInfo?.file_type === 2"
+          ref="videoRef"
+          :filePath="fileInfo?.file_path"
+          :rotate="fileInfo?.rotate ?? 0"
+          :isZoomFit="config.imageViewer.isZoomFit"
+          @dblclick="toggleZoomFit()"
+        ></Video>
 
         <!-- comments -->
         <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
@@ -308,8 +300,8 @@ const appWindow = getCurrentWebviewWindow()
 const fileId = ref(0);       // File ID
 const fileIndex = ref(0);       // Index of the current file
 const fileCount = ref(0);       // Total number of files
-const filePath = ref('');       // File path
-const nextFilePath = ref('');   // Next file path to preload
+// const filePath = ref('');       // File path
+// const nextFilePath = ref('');   // Next file path to preload
 
 const fileInfo = ref(null);
 const iconRotate = ref(0);      // icon rotation angle
@@ -317,10 +309,10 @@ const isTransitionDisabled = ref(true);
 
 const imageRef = ref(null);     // Image reference
 const videoRef = ref(null);     // Video reference
-const imageSrc = ref('');       // Image source
-const videoSrc = ref('');       // Video source
-const imageCache = new Map();   // Cache images to prevent reloading
-const loadImageError = ref(false);   // Track if there was an error loading the image
+// const imageSrc = ref('');       // Image source
+// const videoSrc = ref('');       // Video source
+// const imageCache = new Map();   // Cache images to prevent reloading
+// const loadImageError = ref(false);   // Track if there was an error loading the image
 
 const isSlideShow = ref(false);     // Slide show state
 let timer: NodeJS.Timeout | null = null;  // Timer for slide show
@@ -396,8 +388,8 @@ const moreMenuItems = computed(() => {
 
 const onImageEdited = () => {
   console.log('Image has been edited, refreshing...');
-  imageCache.delete(filePath.value);
-  loadImage(filePath.value);
+  // imageCache.delete(filePath.value);
+  // loadImage(filePath.value);
   showImageEditor.value = false;
 };
 
@@ -415,8 +407,8 @@ onMounted(async() => {
   fileId.value    = Number(urlParams.get('fileId'));
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
-  filePath.value     = decodeURIComponent(urlParams.get('filePath'));
-  nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
+  // filePath.value     = decodeURIComponent(urlParams.get('filePath'));
+  // nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
 
   // Listen 
   unlistenImg = await listen('update-img', async (event) => {
@@ -427,9 +419,9 @@ onMounted(async() => {
     fileId.value    = Number(event.payload.fileId);
     fileIndex.value = Number(event.payload.fileIndex);
     fileCount.value = Number(event.payload.fileCount);
-    filePath.value     = decodeURIComponent(event.payload.filePath);
-    nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
-    console.log('update-img', fileId.value, fileIndex.value, fileCount.value, filePath.value )
+    // filePath.value     = decodeURIComponent(event.payload.filePath);
+    // nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
+    // console.log('update-img', fileId.value, fileIndex.value, fileCount.value, filePath.value )
   });
 
   unlistenImage = await listen('message-from-image', (event) => {
@@ -574,11 +566,11 @@ watch(() => fileId.value, async () => {
   iconRotate.value = fileInfo.value.rotate || 0;
 
   // load the file based on the file type
-  if(fileInfo.value.file_type === 1) {
-    loadImage(filePath.value);
-  } else if(fileInfo.value.file_type === 2) {
-    loadVideo(filePath.value);
-  }
+  // if(fileInfo.value.file_type === 1) {
+  //   loadImage(filePath.value);
+  // } else if(fileInfo.value.file_type === 2) {
+  //   loadVideo(filePath.value);
+  // }
 });
 
 // watch scale
@@ -610,70 +602,70 @@ watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlide
 });
 
 // Load the image from the file path
-async function loadImage(filePath: string) {
-  if(filePath.length === 0) {
-    console.log('loadImage - filePath is empty');
-    return;
-  }
-  try {
-    loadImageError.value = false;
+// async function loadImage(filePath: string) {
+//   if(filePath.length === 0) {
+//     console.log('loadImage - filePath is empty');
+//     return;
+//   }
+//   try {
+//     loadImageError.value = false;
 
-    // Check if the image is already cached
-    if (imageCache.has(filePath)) {
-      imageSrc.value = imageCache.get(filePath);
-    } else {
-      const convertedSrc = getAssetSrc(filePath);
-      if (convertedSrc) {
-        // imageSrc.value = `data:image/jpeg;base64,${convertedSrc}`;
-        imageSrc.value = convertedSrc;
-        imageCache.set(filePath, imageSrc.value);
-      }
-      else {
-        imageSrc.value = '';
-        loadImageError.value = true;
-      }
-    }
+//     // Check if the image is already cached
+//     if (imageCache.has(filePath)) {
+//       imageSrc.value = imageCache.get(filePath);
+//     } else {
+//       const convertedSrc = getAssetSrc(filePath);
+//       if (convertedSrc) {
+//         // imageSrc.value = `data:image/jpeg;base64,${convertedSrc}`;
+//         imageSrc.value = convertedSrc;
+//         imageCache.set(filePath, imageSrc.value);
+//       }
+//       else {
+//         imageSrc.value = '';
+//         loadImageError.value = true;
+//       }
+//     }
 
-    // Preload the next image
-    preLoadImage(nextFilePath.value);
-  } catch (error) {
-    imageSrc.value = '';
-    loadImageError.value = true;
-    console.error('loadImage:', error);
-  }
-}
+//     // Preload the next image
+//     preLoadImage(nextFilePath.value);
+//   } catch (error) {
+//     imageSrc.value = '';
+//     loadImageError.value = true;
+//     console.error('loadImage:', error);
+//   }
+// }
 
-// Preload the image from the file path
-async function preLoadImage(filePath: string) {
-  try {
-    if (filePath.length > 0 && !imageCache.has(filePath)) {
-      const convertedSrc = getAssetSrc(filePath);
-      if (convertedSrc) {
-        // const imageSrc = `data:image/jpeg;base64,${convertedSrc}`;
-        const imageSrc = convertedSrc;
-        imageCache.set(filePath, imageSrc);
-      }
-    }
-  } catch (error) {
-    console.error('preLoadImage:', error);
-  }
-}
+// // Preload the image from the file path
+// async function preLoadImage(filePath: string) {
+//   try {
+//     if (filePath.length > 0 && !imageCache.has(filePath)) {
+//       const convertedSrc = getAssetSrc(filePath);
+//       if (convertedSrc) {
+//         // const imageSrc = `data:image/jpeg;base64,${convertedSrc}`;
+//         const imageSrc = convertedSrc;
+//         imageCache.set(filePath, imageSrc);
+//       }
+//     }
+//   } catch (error) {
+//     console.error('preLoadImage:', error);
+//   }
+// }
 
-// Load the video from the file path
-async function loadVideo(filePath: string) {
-  if(filePath.length === 0) {
-    console.log('loadVideo - filePath is empty');
-    return;
-  }
-  try {
-    const convertedSrc = getAssetSrc(filePath);
-    console.log('loadVideo - original path:', filePath);
-    console.log('loadVideo - converted src:', convertedSrc);
-    videoSrc.value = convertedSrc;
-  } catch (error) {
-    console.error('loadVideo:', error);
-  }
-}
+// // Load the video from the file path
+// async function loadVideo(filePath: string) {
+//   if(filePath.length === 0) {
+//     console.log('loadVideo - filePath is empty');
+//     return;
+//   }
+//   try {
+//     const convertedSrc = getAssetSrc(filePath);
+//     console.log('loadVideo - original path:', filePath);
+//     console.log('loadVideo - converted src:', convertedSrc);
+//     videoSrc.value = convertedSrc;
+//   } catch (error) {
+//     console.error('loadVideo:', error);
+//   }
+// }
 
 function clickPrev() {
   if(fileIndex.value === 0) {
@@ -781,7 +773,7 @@ function updateFileHasTags(fileIds: number[]) {
 
 // click copy image
 const clickCopy = async() => {
-  copyImage(filePath.value).then(() => {
+  copyImage(fileInfo.value.file_path).then(() => {
     toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
   });
 }

@@ -3,6 +3,24 @@
     ref="container"
     class="relative w-full h-full overflow-hidden cursor-pointer"
   >
+
+    <!-- Loading overlay -->
+    <transition name="fade">
+      <div v-if="isLoading" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+        <span class="loading loading-dots text-primary"></span>
+      </div>
+    </transition>
+
+    <!-- Error overlay -->
+    <transition name="fade">
+      <div v-if="loadError" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+        <div class="h-full flex flex-col items-center justify-center text-base-content/30">
+          <IconError class="w-8 h-8 mb-2" />
+          <span>{{ $t('image_viewer.failed') }}</span>
+        </div>
+      </div>
+    </transition>
+
     <!-- main image -->
     <img 
       v-for="(src, index) in imageSrc"
@@ -90,15 +108,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed } from 'vue';
+import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
+import { getAssetSrc } from '@/common/utils';
+
+import { IconError } from '@/common/icons';
 
 // Props
 const props = defineProps({
-  src: {
+  filePath: {
     type: String,
-    required: true,
+    required: false,
   },
   rotate: {
     type: Number,
@@ -139,6 +160,11 @@ const latestMouseEvent = ref<MouseEvent | null>(null);
 // macOS touchpad wheel - accumulate delta values until they reach a threshold
 let wheelDeltaAccumulator = 0;
 let wheelThreshold = 10;
+
+// loading and error overlays
+const isLoading = ref(false);
+const loadError = ref(false);
+let loadingTimeout: NodeJS.Timeout | null = null;
 
 const activeImageEl = ref<HTMLImageElement | null>(null);
 
@@ -455,6 +481,9 @@ onBeforeUnmount(() => {
     resizeObserver.disconnect();
   }
   if (positionObserver) cancelAnimationFrame(positionObserver);
+  if (loadingTimeout) { // Clear timeout on unmount
+    clearTimeout(loadingTimeout);
+  }
 });
 
 const updatePosition = () => {
@@ -472,16 +501,42 @@ const startPositionObserver = () => {
   positionObserver = requestAnimationFrame(observePosition);
 };
 
-// watch src changes
-watch(() => props.src, () => {
-  isZoomFit.value = props.isZoomFit;
+// watch filePath changes
+watch(() => props.filePath, (newFilePath) => {
+  if (loadingTimeout) {
+    clearTimeout(loadingTimeout);
+    loadingTimeout = null;
+  }
 
+  loadError.value = false; // Reset error state
+
+  if (newFilePath) {
+    loadingTimeout = setTimeout(() => {
+      isLoading.value = true;
+    }, 200);
+  } else {
+    isLoading.value = false;
+    return;
+  }
+  
   // preload to the hide image, then swap the image when loaded
-  const nextImageIndex = activeImage.value ^ 1;
-  scale.value[nextImageIndex] = 1;
-  position.value[nextImageIndex] = { x: 0, y: 0 };
-  imageSrc.value[nextImageIndex] = props.src;
-  imageRotate.value[nextImageIndex] = props.rotate;
+  nextTick(() => {
+    isZoomFit.value = props.isZoomFit;
+    const nextImageIndex = activeImage.value ^ 1;
+    scale.value[nextImageIndex] = 1;
+    position.value[nextImageIndex] = { x: 0, y: 0 };
+    try {
+      imageSrc.value[nextImageIndex] = newFilePath ? getAssetSrc(newFilePath) : '';
+      if (!imageSrc.value[nextImageIndex]) { // if getAssetSrc returns empty or falsy
+        loadError.value = true;
+      }
+    } catch (e) {
+      console.error("Error getting asset source:", e);
+      loadError.value = true;
+      imageSrc.value[nextImageIndex] = '';
+    }
+    imageRotate.value[nextImageIndex] = props.rotate;
+  });
 }, { immediate: true });
 
 // watch rotate changes
@@ -544,6 +599,11 @@ watch(() => [containerSize.value, imageSize.value], () => {
 
 // load image
 const onImageLoad = async (img: HTMLImageElement) => {
+  if (loadingTimeout) { // Clear timeout as image is loaded
+    clearTimeout(loadingTimeout);
+    loadingTimeout = null;
+  }
+  isLoading.value = false; // Set to false after transitions are done
   noTransition.value = true; // Set early to prevent transitions during load
 
   const nextIndex = activeImage.value ^ 1;

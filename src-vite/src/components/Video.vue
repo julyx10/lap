@@ -31,6 +31,7 @@ import { config } from '@/common/config';
 import { IconVideoSlash } from '@/common/icons';
 import videojs from 'video.js/core';
 import 'video.js/dist/video-js.min.css';
+import { getAssetSrc } from '@/common/utils';
 import { IconVideoPlay, IconVideoReplay } from '@/common/icons';
 
 import ja from 'video.js/dist/lang/ja.json';
@@ -39,9 +40,9 @@ videojs.addLanguage('ja', ja);
 videojs.addLanguage('zh-CN', zhCN);
 
 const props = defineProps({
-  src: {
+  filePath: {
     type: String,
-    required: true,
+    required: false,
   },
   rotate: {
     type: Number,
@@ -189,8 +190,9 @@ const setupPlayer = () => {
     });
   }
 
-  if (props.src) {
-    if(!canPlay(props.src)) {
+  if (props.filePath) {
+    const assetSrc = getAssetSrc(props.filePath);
+    if(!canPlay(assetSrc)) {
       hasError.value = true;
       errorMessage.value = $t('video.errors.format');
 
@@ -202,7 +204,7 @@ const setupPlayer = () => {
     hasError.value = false;
     errorMessage.value = '';
     isPlaying.value = true;
-    player.value.src(props.src);
+    player.value.src(assetSrc);
     nextTick(() => {
       if(config.settings.autoPlayVideo) {
         player.value?.play();
@@ -265,10 +267,12 @@ onBeforeUnmount(() => {
 
 watch(videoJsLang, (newLang) => player.value?.language(newLang), { immediate: true });
 
-watch(() => props.src, () => { 
-  isSrcChanging = true;
-  if (!props.isZoomFit) scale.value = 1; 
-  setupPlayer(); 
+watch(() => props.filePath, () => { 
+  if (props.filePath) {
+    isSrcChanging = true;
+    if (!props.isZoomFit) scale.value = 1; 
+    setupPlayer(); 
+  }
 });
 
 watch(() => props.rotate, (val) => { 
