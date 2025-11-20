@@ -133,7 +133,7 @@
       "new_folder": "New folder",
       "view": "View",
       "copy": "Copy to clipboard",
-      "edit": "Edit",
+      "edit": "Edit image",
       "update_from_file": "Update from file",
       "print": "Print",
       "rename": "Rename",
@@ -156,7 +156,7 @@
       "unfavorite": "Unfavorite",
       "tag": "Tag",
       "rotate": "Rotate display",
-      "comment": "Add comment"
+      "comment": "Comment"
     },
     "remove": "Remove",
     "delete": "Delete",

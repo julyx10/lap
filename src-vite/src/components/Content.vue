@@ -292,7 +292,7 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox.move_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : shortenFilename(fileList[selectedItemIndex].name, 64) })}`"
+    :title="`${$t('msgbox.move_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : shortenFilename(fileList[selectedItemIndex].name, 32) })}`"
     :message="$t('msgbox.move_to.content')"
     :OkText="$t('msgbox.move_to.ok')" 
     :cancelText="$t('msgbox.cancel')"
@@ -303,7 +303,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox.copy_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : shortenFilename(fileList[selectedItemIndex].name, 64) })}`"
+    :title="`${$t('msgbox.copy_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : shortenFilename(fileList[selectedItemIndex].name, 32) })}`"
     :message="$t('msgbox.copy_to.content')"
     :OkText="$t('msgbox.copy_to.ok')"
     :cancelText="$t('msgbox.cancel')"

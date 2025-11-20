@@ -1,6 +1,6 @@
 <template>
 
-  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 64)}`" :width="800" @cancel="clickCancel">
+  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="800" @cancel="clickCancel">
     <!-- content -->
     <div class="flex-grow flex gap-4">
       <div class="flex-1">

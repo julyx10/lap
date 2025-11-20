@@ -83,7 +83,7 @@
     <!-- label -->
     <template v-if="config.content.layout === 0 && config.settings.grid.style === 0">
       <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
-      <span class="text-xs text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
+      <span class="text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
     </template>
 
   </div>

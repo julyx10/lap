@@ -133,7 +133,7 @@
       "new_folder": "新しいフォルダ",
       "view": "表示",
       "copy": "クリップボードにコピー",
-      "edit": "編集",
+      "edit": "画像を編集",
       "update_from_file": "ファイルから更新",
       "print": "印刷",
       "rename": "名前を変更",
@@ -156,7 +156,7 @@
       "unfavorite": "お気に入り解除",
       "tag": "タグ",
       "rotate": "表示を回転させる",
-      "comment": "コメントを追加"
+      "comment": "コメント"
     },
     "remove": "削除",
     "delete": "削除",

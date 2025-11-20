@@ -105,7 +105,7 @@ function scrollToItem(index: number) {
   setTimeout(() => {
     const item = document.getElementById(`item-${index}`);
     if (item) {
-      item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   }, 100);
 };

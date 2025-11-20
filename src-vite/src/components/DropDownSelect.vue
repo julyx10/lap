@@ -16,7 +16,7 @@
 
     <!-- Dropdown Menu -->
     <div v-if="isDropDown"
-      class="menu mt-1 text-base-content/70 bg-base-200 border border-base-content/30 absolute rounded-box shadow-lg z-50"
+      class="menu mt-1 text-base-content/70 bg-base-200 border border-base-content/30 absolute rounded-box shadow-lg z-500"
     >
       <!-- menu group 1 -->
       <button v-for="(option, index) in options"

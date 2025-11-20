@@ -133,7 +133,7 @@
       "new_folder": "新建文件夹",
       "view": "查看",
       "copy": "复制到剪贴板",
-      "edit": "编辑",
+      "edit": "编辑图片",
       "update_from_file": "从文件更新",
       "print": "打印",
       "rename": "重命名",
@@ -156,7 +156,7 @@
       "unfavorite": "取消收藏",
       "tag": "标签",
       "rotate": "旋转显示",
-      "comment": "添加备注"
+      "comment": "备注"
     },
     "remove": "移除",
     "delete": "删除",

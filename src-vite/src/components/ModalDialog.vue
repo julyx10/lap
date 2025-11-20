@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-black/30 z-50">
+  <div class="fixed inset-0 bg-black/30 z-1000">
     <div 
       ref="modalDialogRef"
       class="text-base-content/70 bg-base-200 border border-base-content/30 rounded-box"
