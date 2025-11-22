@@ -1,11 +1,15 @@
 <template>
 
-  <div class="w-full flex flex-col" style="user-select: none;">
+  <div class="w-full h-full flex flex-col" style="user-select: none;">
     
     <!-- title bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
-      <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
+    <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+      <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
       <!-- <TButton :icon="IconRefresh" @click="clickReload"/> -->
+      <TButton v-show="config.home.showLeftPane"
+        :icon="IconLeftPaneOn"
+        @click="config.home.showLeftPane = false"
+      />
     </div>
 
     <!-- location -->
@@ -67,7 +71,8 @@
 import { ref, onMounted } from 'vue';
 import { config } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
-import { IconRight, IconLocation } from '@/common/icons';
+import { IconLocation, IconLeftPaneOn } from '@/common/icons';
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   titlebar: {

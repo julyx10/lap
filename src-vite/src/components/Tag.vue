@@ -1,10 +1,14 @@
 <template>
 
-  <div class="w-full flex flex-col select-none">
+  <div class="w-full h-full flex flex-col select-none">
 
     <!-- Title Bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
-      <span class="pl-1 cursor-default">{{ titlebar }}</span>
+    <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+      <!-- <span class="pl-1 cursor-default">{{ titlebar }}</span> -->
+      <TButton v-show="config.home.showLeftPane"
+        :icon="IconLeftPaneOn"
+        @click="config.home.showLeftPane = false"
+      />
     </div>
 
     <!-- Tag List -->
@@ -80,9 +84,10 @@ import {
   IconMore, 
   IconRename, 
   IconTrash,
+  IconLeftPaneOn,
 } from '@/common/icons';
 
-// import TButton from '@/components/TButton.vue';
+import TButton from '@/components/TButton.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 

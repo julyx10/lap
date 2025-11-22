@@ -1,7 +1,7 @@
 <template>
-  <div class="h-full rounded-box w-full bg-base-200 flex flex-col">
+  <div class="h-full w-full rounded-l-box bg-base-200 flex flex-col">
     <!-- Title bar -->
-    <div class="p-2 flex items-center justify-between">
+    <div class="p-1 flex items-center justify-between">
       <!-- Tabs -->
       <div role="tablist" class="tabs-sm tabs-border" >
         <a 
@@ -23,15 +23,15 @@
       </div>
 
       <!-- Close button -->
-      <TButton
+      <!-- <TButton
         :icon="IconClose"
         :buttonSize="'small'"
         @click="clickClose"
-      />
+      /> -->
     </div>
 
     <!-- Info table -->
-    <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 pl-1 pb-2 overflow-x-hidden overflow-y-auto">
+    <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 p-1 overflow-x-hidden overflow-y-auto">
       <table v-if="fileInfo" class="w-full text-sm border-separate border-spacing-2">
         <!-- file info -->
         <tbody>
@@ -165,17 +165,18 @@
     <!-- Preview -->
     <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
       class="flex-1 rounded-box overflow-hidden"
+      @dblclick="infoPanelZoomFit = !infoPanelZoomFit"
     >
       <Image v-if="fileInfo?.file_type === 1"
         :filePath="fileInfo?.file_path"
         :rotate="fileInfo?.rotate ?? 0" 
-        :isZoomFit="true"
+        :isZoomFit="infoPanelZoomFit"
       ></Image>
 
       <Video v-if="fileInfo?.file_type === 2"
         :filePath="fileInfo?.file_path"
         :rotate="fileInfo?.rotate ?? 0"
-        :isZoomFit="true"
+        :isZoomFit="infoPanelZoomFit"
       ></Video>
     </div>
 
@@ -184,6 +185,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { config } from '@/common/config';
 import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
 import { IconClose, IconFileInfo, IconCamera } from '@/common/icons';
@@ -199,6 +201,8 @@ const props = defineProps({
     required: false
   },
 });
+
+const infoPanelZoomFit = ref(true);
 
 const emit = defineEmits([
   'close'

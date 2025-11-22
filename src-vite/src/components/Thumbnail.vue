@@ -4,7 +4,7 @@
       'border-2 flex flex-col items-center hover:bg-base-100 ease-in-out duration-300 cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all',
       config.settings.grid.style === 0 ? 'rounded-box' : '',
-      config.content.layout === 0 && config.settings.grid.style === 0 ? 'p-2' : '',
+      config.content.layout === 0 && config.settings.grid.style === 0 ? 'p-1' : '',
       config.content.layout === 1 ? 'p-0.5 ml-0.5' : '',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
     ]"

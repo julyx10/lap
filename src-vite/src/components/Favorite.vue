@@ -1,11 +1,15 @@
 <template>
 
-  <div class="w-full flex flex-col select-none" >
+  <div class="w-full h-full flex flex-col select-none" >
       
       <!-- title bar -->
-      <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
-        <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
+      <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+        <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
         <!-- <TButton :icon="IconRefresh" @click="clickRefresh"/> -->
+        <TButton v-show="config.home.showLeftPane"
+          :icon="IconLeftPaneOn"
+          @click="config.home.showLeftPane = false"
+        />
       </div>
       
       <!-- favorite files -->
@@ -74,12 +78,14 @@ import { config } from '@/common/config';
 import { getFavoriteFolders, setFolderFavorite, getAlbum } from '@/common/api';
 
 import ContextMenu from '@/components/ContextMenu.vue';
+import TButton from '@/components/TButton.vue';
 
 import { 
   IconMore,
   IconFavorite, 
   IconFolderFavorite,
   IconUnFavorite, 
+  IconLeftPaneOn,
 } from '@/common/icons';
 
 const props = defineProps({

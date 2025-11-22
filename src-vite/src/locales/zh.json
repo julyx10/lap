@@ -10,11 +10,9 @@
     "camera": "相机",
     "settings": "设置"
   },
-
   "home": {
     "title": "所有文件"
   },
-
   "album": {
     "edit": {
       "title": "编辑相册",
@@ -32,12 +30,10 @@
       "modified_at": "修改时间"
     }
   },
-
   "favorite": {
     "files": "收藏的文件",
     "folders": "收藏的文件夹"
   },
-
   "tag": {
     "add_tag": "添加新标签",
     "delete_tag": "删除标签",
@@ -46,7 +42,6 @@
     "enter_new_tag_name": "输入新标签名称",
     "not_found": "未找到标签"
   },
-
   "calendar": {
     "day": "日",
     "week": "周",
@@ -55,12 +50,53 @@
     "today": "今天",
     "monthly": "按月",
     "daily": "按日",
-    "weekdays": ["日", "一", "二", "三", "四", "五", "六"],
-    "weekdays_long": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
-    "months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-    "months_long": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+    "weekdays": [
+      "日",
+      "一",
+      "二",
+      "三",
+      "四",
+      "五",
+      "六"
+    ],
+    "weekdays_long": [
+      "星期日",
+      "星期一",
+      "星期二",
+      "星期三",
+      "星期四",
+      "星期五",
+      "星期六"
+    ],
+    "months": [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月"
+    ],
+    "months_long": [
+      "一月",
+      "二月",
+      "三月",
+      "四月",
+      "五月",
+      "六月",
+      "七月",
+      "八月",
+      "九月",
+      "十月",
+      "十一月",
+      "十二月"
+    ]
   },
-
   "toolbar": {
     "search": {
       "title": "搜索",
@@ -69,24 +105,41 @@
     "filter": {
       "select_mode": "选择",
       "select_count": "已选择 {count}",
-      "sort_type_options": ["名称", "大小", "尺寸", "时长", "创建时间", "修改时间", "拍摄时间"],
-      "sort_order_options": ["升序", "降序"],
-      "file_type_options": ["全部", "图片", "视频"]
+      "sort_type_options": [
+        "名称",
+        "大小",
+        "尺寸",
+        "时长",
+        "创建时间",
+        "修改时间",
+        "拍摄时间"
+      ],
+      "sort_order_options": [
+        "升序",
+        "降序"
+      ],
+      "file_type_options": [
+        "全部",
+        "图片",
+        "视频"
+      ]
     },
     "preview": {
       "show": "显示预览",
       "hide": "隐藏预览"
     }
   },
-
   "info_panel": {
-    "tabs": ["信息", "预览"]
+    "tabs": [
+      "信息",
+      "预览"
+    ]
   },
-
   "tooltip": {
     "not_found": {
       "albums": "未找到相册。尝试添加一个包含图片或视频的文件夹",
       "files": "未找到文件",
+      "folder_files": "未找到文件。尝试查找子文件夹",
       "folders": "未找到文件夹",
       "tag": "未找到标签",
       "calendar": "未找到日历数据",
@@ -111,11 +164,9 @@
       "last_image": "已经是最后一张图片"
     }
   },
-
   "statusbar": {
     "files_summary": "{count} 个文件 ({size})"
   },
-
   "menu": {
     "select": {
       "all": "全选",
@@ -162,7 +213,6 @@
     "delete": "删除",
     "refresh": "刷新"
   },
-
   "msgbox": {
     "ok": "确定",
     "cancel": "取消",
@@ -294,18 +344,28 @@
       "pixel": "像素",
       "options": "选项",
       "save_as": "保存",
-      "save_as_options": ["覆盖现有文件", "保存为新文件"],
+      "save_as_options": [
+        "覆盖现有文件",
+        "保存为新文件"
+      ],
       "save_as_placeholder": "输入新文件名",
       "format": "格式",
-      "format_options": ["JPEG", "PNG", "WEBP"],
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
       "quality": "质量",
-      "quality_options": ["高", "中", "低"],
+      "quality_options": [
+        "高",
+        "中",
+        "低"
+      ],
       "copy_image": "复制到剪贴板",
       "ok": "保存",
       "cancel": "取消"
     }
   },
-
   "file_info": {
     "title": "信息",
     "file_info": "文件信息",
@@ -347,7 +407,6 @@
     "comment": "备注",
     "capture_settings": "拍摄设置"
   },
-
   "map": {
     "show_map": "显示地图",
     "hide_map": "隐藏地图",
@@ -355,7 +414,6 @@
     "zoom_out": "缩小",
     "zoom_center": "中心"
   },
-
   "format": {
     "year": "yyyy年",
     "month": "yyyy年M月",
@@ -365,7 +423,6 @@
     "date_time": "yyyy/MM/dd HH:mm:ss",
     "date_time_long": "yyyy年M月d日 HH:mm:ss"
   },
-
   "image_viewer": {
     "title": "图片查看器",
     "loading": "加载中...",
@@ -396,7 +453,6 @@
       "close": "关闭"
     }
   },
-
   "video": {
     "loading": "正在加载视频...",
     "failed": "视频无法播放",
@@ -409,7 +465,6 @@
       "unknown": "未知错误"
     }
   },
-
   "settings": {
     "general": {
       "title": "通用",
@@ -458,7 +513,6 @@
         "日落",
         "深渊"
       ],
-      
       "select_language": "选择语言",
       "show_hidden_album": "显示隐藏相册 (刷新相册时)",
       "show_button_text": "显示按钮文本",
@@ -470,29 +524,63 @@
       "title": "网格视图",
       "size": "缩略图大小",
       "style": "缩略图视图样式",
-      "style_options": ["舒适", "紧凑"],
+      "style_options": [
+        "舒适",
+        "紧凑"
+      ],
       "scaling": "缩略图缩放",
-      "scaling_options": ["适应整个图像", "裁剪填充", "拉伸填充"],
+      "scaling_options": [
+        "适应整个图像",
+        "裁剪填充",
+        "拉伸填充"
+      ],
       "label_primary": "主标签",
       "label_secondary": "副标签",
-      "label_options": ["(空)", "名称", "大小", "尺寸", "创建时间", "修改时间", "相机", "镜头", "拍摄设置", "拍摄时间", "地点"]
+      "label_options": [
+        "(空)",
+        "名称",
+        "大小",
+        "尺寸",
+        "创建时间",
+        "修改时间",
+        "相机",
+        "镜头",
+        "拍摄设置",
+        "拍摄时间",
+        "地点"
+      ]
     },
     "filmstrip_view": {
       "title": "胶片视图",
       "preview_position": "胶片视图的预览位置",
-      "preview_position_options": ["胶片上方", "胶片下方"]
+      "preview_position_options": [
+        "胶片上方",
+        "胶片下方"
+      ]
     },
     "image_viewer": {
       "title": "图片查看器",
       "mouse_wheel": "鼠标滚轮",
-      "mouse_wheel_options": ["上一张/下一张图片 (Ctrl 缩放)", "放大/缩小"],
+      "mouse_wheel_options": [
+        "上一张/下一张图片 (Ctrl 缩放)",
+        "放大/缩小"
+      ],
       "slide_show_interval": "幻灯片放映间隔: {second} 秒",
       "auto_play_video": "自动播放视频",
       "show_comment": "显示备注",
       "navigator_view": "导航视图",
-      "navigator_view_options": ["自动", "总是显示", "总是隐藏"],
+      "navigator_view_options": [
+        "自动",
+        "总是显示",
+        "总是隐藏"
+      ],
       "navigator_view__size": "导航视图大小",
-      "navigator_view_size_options": ["小(160px)", "中(240px)", "大(320px)", "特大(400px)"]
+      "navigator_view_size_options": [
+        "小(160px)",
+        "中(240px)",
+        "大(320px)",
+        "特大(400px)"
+      ]
     },
     "about": {
       "title": "关于",

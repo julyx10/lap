@@ -1,10 +1,10 @@
 <template>
 
-  <div class="flex-1 flex flex-col overflow-hidden" style="user-select: none;">
+  <div class="w-full h-full flex flex-col overflow-hidden" style="user-select: none;">
 
     <!-- title bar -->
-    <div class="px-2 py-3 h-12 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
-      <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span>
+    <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+      <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
       <div class="flex text-sm items-center cursor-pointer">
         <div role="tablist" class="tabs-sm tabs-border" >
           <a 
@@ -28,6 +28,10 @@
         <TButton 
           :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           @click="toggleSortingOrder"
+        />
+        <TButton v-show="config.home.showLeftPane"
+          :icon="IconLeftPaneOn"
+          @click="config.home.showLeftPane = false"
         />
       </div>
     </div>
@@ -56,7 +60,7 @@
         >
           <div v-for="(months, year) in calendar_dates" 
             :class="[
-              'flex',
+              'flex min-w-40',
               config.calendar.sortingAsc ? 'flex-col' : 'flex-col-reverse'
             ]"
           >
@@ -89,7 +93,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getTakenDates } from '@/common/api';
-import { IconCalendar, IconSortingAsc, IconSortingDesc } from '@/common/icons';
+import { IconCalendar, IconSortingAsc, IconSortingDesc, IconLeftPaneOn } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';

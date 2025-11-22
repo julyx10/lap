@@ -10,11 +10,9 @@
     "camera": "カメラ",
     "settings": "設定"
   },
-
   "home": {
     "title": "すべてのファイル"
   },
-
   "album": {
     "edit": {
       "title": "アルバムを編集",
@@ -32,12 +30,10 @@
       "modified_at": "更新日時"
     }
   },
-
   "favorite": {
     "files": "お気に入りのファイル",
     "folders": "お気に入りのフォルダ"
   },
-
   "tag": {
     "add_tag": "新しいタグを追加",
     "delete_tag": "タグを削除",
@@ -46,7 +42,6 @@
     "enter_new_tag_name": "新しいタグ名を入力",
     "not_found": "タグが見つかりません"
   },
-
   "calendar": {
     "day": "日",
     "week": "週",
@@ -55,12 +50,53 @@
     "today": "今日",
     "monthly": "月ごと",
     "daily": "日ごと",
-    "weekdays": ["日", "月", "火", "水", "木", "金", "土"],
-    "weekdays_long": ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"],
-    "months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-    "months_long": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+    "weekdays": [
+      "日",
+      "月",
+      "火",
+      "水",
+      "木",
+      "金",
+      "土"
+    ],
+    "weekdays_long": [
+      "日曜日",
+      "月曜日",
+      "火曜日",
+      "水曜日",
+      "木曜日",
+      "金曜日",
+      "土曜日"
+    ],
+    "months": [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月"
+    ],
+    "months_long": [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月"
+    ]
   },
-
   "toolbar": {
     "search": {
       "title": "検索",
@@ -69,24 +105,41 @@
     "filter": {
       "select_mode": "選択",
       "select_count": "{count} 選択済み",
-      "sort_type_options": ["名前", "サイズ", "寸法", "再生時間", "作成日時", "更新日時", "撮影日時"],
-      "sort_order_options": ["昇順", "降順"],
-      "file_type_options": ["すべて", "画像", "動画"]
+      "sort_type_options": [
+        "名前",
+        "サイズ",
+        "寸法",
+        "再生時間",
+        "作成日時",
+        "更新日時",
+        "撮影日時"
+      ],
+      "sort_order_options": [
+        "昇順",
+        "降順"
+      ],
+      "file_type_options": [
+        "すべて",
+        "画像",
+        "動画"
+      ]
     },
     "preview": {
       "show": "プレビューを表示",
       "hide": "プレビューを非表示"
     }
   },
-
   "info_panel": {
-    "tabs": ["情報", "プレビュー"]
+    "tabs": [
+      "情報",
+      "プレビュー"
+    ]
   },
-
   "tooltip": {
     "not_found": {
       "albums": "アルバムが見つかりません。画像または動画を含むフォルダを追加してみてください",
       "files": "ファイルが見つかりません",
+      "folder_files": "ファイルが見つかりません。サブフォルダを探してみてください",
       "folders": "フォルダが見つかりません",
       "tag": "タグが見つかりません",
       "calendar": "カレンダーデータが見つかりません",
@@ -111,11 +164,9 @@
       "last_image": "すでに最後の画像です"
     }
   },
-
   "statusbar": {
     "files_summary": "{count} ファイル ({size})"
   },
-
   "menu": {
     "select": {
       "all": "すべて選択",
@@ -162,7 +213,6 @@
     "delete": "削除",
     "refresh": "更新"
   },
-
   "msgbox": {
     "ok": "OK",
     "cancel": "キャンセル",
@@ -294,18 +344,28 @@
       "pixel": "ピクセル",
       "options": "オプション",
       "save_as": "保存する",
-      "save_as_options": ["既存のファイルを上書き", "新しいファイルとして保存"],
+      "save_as_options": [
+        "既存のファイルを上書き",
+        "新しいファイルとして保存"
+      ],
       "save_as_placeholder": "新しいファイル名を入力",
       "format": "形式",
-      "format_options": ["JPEG", "PNG", "WEBP"],
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
       "quality": "品質",
-      "quality_options": ["高", "中", "低"],
+      "quality_options": [
+        "高",
+        "中",
+        "低"
+      ],
       "copy_image": "クリップボードにコピー",
       "ok": "保存",
       "cancel": "キャンセル"
     }
   },
-
   "file_info": {
     "title": "情報",
     "file_info": "ファイル情報",
@@ -347,7 +407,6 @@
     "comment": "コメント",
     "capture_settings": "撮影設定"
   },
-
   "map": {
     "show_map": "地図を表示",
     "hide_map": "地図を非表示",
@@ -355,7 +414,6 @@
     "zoom_out": "縮小",
     "zoom_center": "中心"
   },
-
   "format": {
     "year": "yyyy年",
     "month": "yyyy年M月",
@@ -365,7 +423,6 @@
     "date_time": "yyyy/MM/dd HH:mm:ss",
     "date_time_long": "yyyy年M月d日 HH:mm:ss"
   },
-
   "image_viewer": {
     "title": "画像ビューア",
     "loading": "読み込み中...",
@@ -396,7 +453,6 @@
       "close": "閉じる"
     }
   },
-
   "video": {
     "loading": "動画を読み込んでいます...",
     "failed": "動画を再生できません",
@@ -409,7 +465,6 @@
       "unknown": "未知のエラー"
     }
   },
-
   "settings": {
     "general": {
       "title": "一般",
@@ -469,29 +524,63 @@
       "title": "グリッドビュー",
       "size": "サムネイルサイズ",
       "style": "サムネイルビュースタイル",
-      "style_options": ["快適", "コンパクト"],
+      "style_options": [
+        "快適",
+        "コンパクト"
+      ],
       "scaling": "サムネイルの拡大縮小",
-      "scaling_options": ["全体をフィット", "切り抜きで埋める", "引き伸ばして埋める"],
+      "scaling_options": [
+        "全体をフィット",
+        "切り抜きで埋める",
+        "引き伸ばして埋める"
+      ],
       "label_primary": "プライマリラベル",
-      "label_secondary": "セカンダリラベル", 
-      "label_options": ["(空)", "名前", "サイズ", "寸法", "作成日時", "更新日時", "カメラ", "レンズ", "撮影設定", "撮影日時", "場所"]
+      "label_secondary": "セカンダリラベル",
+      "label_options": [
+        "(空)",
+        "名前",
+        "サイズ",
+        "寸法",
+        "作成日時",
+        "更新日時",
+        "カメラ",
+        "レンズ",
+        "撮影設定",
+        "撮影日時",
+        "場所"
+      ]
     },
     "filmstrip_view": {
       "title": "フィルムストリップビュー",
       "preview_position": "フィルムストリップビューのプレビュー位置",
-      "preview_position_options": ["フィルムストリップの上", "フィルムストリップの下"]
+      "preview_position_options": [
+        "フィルムストリップの上",
+        "フィルムストリップの下"
+      ]
     },
     "image_viewer": {
       "title": "画像ビューア",
       "mouse_wheel": "マウスホイール",
-      "mouse_wheel_options": ["前/次の画像 (Ctrlでズーム)", "拡大/縮小"],
+      "mouse_wheel_options": [
+        "前/次の画像 (Ctrlでズーム)",
+        "拡大/縮小"
+      ],
       "slide_show_interval": "スライドショー間隔: {second}秒",
       "auto_play_video": "自動再生ビデオ",
       "show_comment": "コメントを表示",
       "navigator_view": "ナビゲータービュー",
-      "navigator_view_options": ["自動", "常に表示", "常に非表示"],
+      "navigator_view_options": [
+        "自動",
+        "常に表示",
+        "常に非表示"
+      ],
       "navigator_view__size": "ナビゲータービューサイズ",
-      "navigator_view_size_options": ["小(160px)", "中(240px)", "大(320px)", "特大(400px)"]
+      "navigator_view_size_options": [
+        "小(160px)",
+        "中(240px)",
+        "大(320px)",
+        "特大(400px)"
+      ]
     },
     "about": {
       "title": "について",

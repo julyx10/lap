@@ -47,9 +47,9 @@ app.mount('#app')
 console.log('App mounted', app)
 
 // Listen for events
-listen('settings-settingsTabIndex-changed', (event) => {
-  config.setSettingsTabIndex(event.payload)
-})
+// listen('settings-settingsTabIndex-changed', (event) => {
+//   config.setSettingsTabIndex(event.payload)
+// })
 listen('settings-appearance-changed', (event) => {
   config.setAppearance(event.payload)
 })

@@ -10,11 +10,9 @@
     "camera": "Cameras",
     "settings": "Settings"
   },
-
   "home": {
     "title": "All files"
   },
-
   "album": {
     "edit": {
       "title": "Edit album",
@@ -32,12 +30,10 @@
       "modified_at": "Modified at"
     }
   },
-
   "favorite": {
     "files": "Favorite files",
     "folders": "Favorite folders"
   },
-
   "tag": {
     "add_tag": "Add new tag",
     "delete_tag": "Delete tag",
@@ -46,7 +42,6 @@
     "enter_new_tag_name": "Enter new tag name",
     "not_found": "No tags found"
   },
-
   "calendar": {
     "day": "Day",
     "week": "Week",
@@ -55,12 +50,53 @@
     "today": "Today",
     "monthly": "Monthly",
     "daily": "Daily",
-    "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    "weekdays_long": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-    "months_long": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    "weekdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
+    "weekdays_long": [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
+    "months": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ],
+    "months_long": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ]
   },
-
   "toolbar": {
     "search": {
       "title": "Search",
@@ -69,24 +105,41 @@
     "filter": {
       "select_mode": "Select",
       "select_count": "{count} selected",
-      "sort_type_options": ["Name", "Size", "Dimension", "Duration", "Created time", "Modified time", "Taken date"],
-      "sort_order_options": ["Ascending", "Descending"],
-      "file_type_options": ["All", "Images", "Videos"]
+      "sort_type_options": [
+        "Name",
+        "Size",
+        "Dimension",
+        "Duration",
+        "Created time",
+        "Modified time",
+        "Taken date"
+      ],
+      "sort_order_options": [
+        "Ascending",
+        "Descending"
+      ],
+      "file_type_options": [
+        "All",
+        "Images",
+        "Videos"
+      ]
     },
     "preview": {
       "show": "Show preview",
       "hide": "Hide preview"
     }
   },
-
   "info_panel": {
-    "tabs": ["Info", "Preview"]
+    "tabs": [
+      "Info",
+      "Preview"
+    ]
   },
-
   "tooltip": {
     "not_found": {
       "albums": "No albums found. Try to add an existing folder which contains images or videos",
       "files": "No files found",
+      "folder_files": "No files found. Try to find the subfolders",
       "folders": "No folders found",
       "tag": "No tags found",
       "calendar": "No calendar data found",
@@ -111,11 +164,9 @@
       "last_image": "Already the last image"
     }
   },
-
   "statusbar": {
     "files_summary": "{count} files ({size})"
   },
-
   "menu": {
     "select": {
       "all": "Select all",
@@ -162,7 +213,6 @@
     "delete": "Delete",
     "refresh": "Refresh"
   },
-
   "msgbox": {
     "ok": "OK",
     "cancel": "Cancel",
@@ -294,18 +344,28 @@
       "pixel": "Pixels",
       "options": "Options",
       "save_as": "Save as",
-      "save_as_options": ["Overwrite existing file", "Save as new file"],
+      "save_as_options": [
+        "Overwrite existing file",
+        "Save as new file"
+      ],
       "save_as_placeholder": "Enter new file name",
       "format": "Format",
-      "format_options": ["JPEG", "PNG", "WEBP"],
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
       "quality": "Quality",
-      "quality_options": ["High", "Medium", "Low"],
+      "quality_options": [
+        "High",
+        "Medium",
+        "Low"
+      ],
       "copy_image": "Copy to clipboard",
       "ok": "Save",
       "cancel": "Cancel"
     }
   },
-
   "file_info": {
     "title": "Info",
     "file_info": "File info",
@@ -347,7 +407,6 @@
     "comment": "Comment",
     "capture_settings": "Capture settings"
   },
-
   "map": {
     "show_map": "Show map",
     "hide_map": "Hide map",
@@ -355,7 +414,6 @@
     "zoom_out": "Zoom out",
     "zoom_center": "Center"
   },
-
   "format": {
     "year": "yyyy",
     "month": "MMMM yyyy",
@@ -365,7 +423,6 @@
     "date_time": "MM/dd/yyyy HH:mm:ss",
     "date_time_long": "MMMM do, yyyy HH:mm:ss"
   },
-
   "image_viewer": {
     "title": "Image viewer",
     "loading": "Loading...",
@@ -396,7 +453,6 @@
       "close": "Close"
     }
   },
-
   "video": {
     "loading": "Loading video...",
     "failed": "Video could not be played",
@@ -409,7 +465,6 @@
       "unknown": "Unknown error"
     }
   },
-
   "settings": {
     "general": {
       "title": "General",
@@ -469,29 +524,63 @@
       "title": "Grid view",
       "size": "Thumbnail size",
       "style": "Thumbnail view style",
-      "style_options": ["Comfortable view", "Compact view"],
+      "style_options": [
+        "Comfortable view",
+        "Compact view"
+      ],
       "scaling": "Thumbnail scaling",
-      "scaling_options": ["Fit entire image", "Crop to fill", "Stretch to fill"],
+      "scaling_options": [
+        "Fit entire image",
+        "Crop to fill",
+        "Stretch to fill"
+      ],
       "label_primary": "Primary label",
       "label_secondary": "Secondary label",
-      "label_options": ["(Empty)", "Name", "Size", "Dimension", "Created time", "Modified time", "Camera", "Lens", "Capture settings", "Taken time", "Location"]
+      "label_options": [
+        "(Empty)",
+        "Name",
+        "Size",
+        "Dimension",
+        "Created time",
+        "Modified time",
+        "Camera",
+        "Lens",
+        "Capture settings",
+        "Taken time",
+        "Location"
+      ]
     },
     "filmstrip_view": {
       "title": "Filmstrip view",
       "preview_position": "Preview position of filmstrip view",
-      "preview_position_options": ["Above filmstrip", "Below filmstrip"]
+      "preview_position_options": [
+        "Above filmstrip",
+        "Below filmstrip"
+      ]
     },
     "image_viewer": {
       "title": "Image viewer",
       "mouse_wheel": "Mouse wheel",
-      "mouse_wheel_options": ["Previous / Next image (Ctrl to zoom)", "Zoom in / out"],
+      "mouse_wheel_options": [
+        "Previous / Next image (Ctrl to zoom)",
+        "Zoom in / out"
+      ],
       "slide_show_interval": "Slide show interval: {second} second(s)",
       "auto_play_video": "Auto play video",
       "show_comment": "Show comment",
       "navigator_view": "Navigator view",
-      "navigator_view_options": ["Auto", "Always show", "Always hide"],
+      "navigator_view_options": [
+        "Auto",
+        "Always show",
+        "Always hide"
+      ],
       "navigator_view__size": "Navigator view size",
-      "navigator_view_size_options": ["Small(160px)", "Medium(240px)", "Large(320px)", "Extra Large(400px)"]
+      "navigator_view_size_options": [
+        "Small(160px)",
+        "Medium(240px)",
+        "Large(320px)",
+        "Extra Large(400px)"
+      ]
     },
     "about": {
       "title": "About",

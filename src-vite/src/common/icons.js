@@ -56,6 +56,8 @@ export { default as IconMapSatellite } from '@/assets/icons/map-satellite.svg';
 export { default as IconMapCenter } from '@/assets/icons/map-center.svg';
 export { default as IconLock } from '@/assets/icons/lock.svg';
 export { default as IconUnlock } from '@/assets/icons/unlock.svg';
+export { default as IconLeftPaneOn } from '@/assets/icons/left-pane-on.svg';
+export { default as IconLeftPaneOff } from '@/assets/icons/left-pane-off.svg';
 
 // ======================
 // WINDOW ONLY CONTROL ICONS

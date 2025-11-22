@@ -2,7 +2,7 @@
   <div class="fixed inset-0 bg-black/30 z-1000">
     <div 
       ref="modalDialogRef"
-      class="text-base-content/70 bg-base-200 border border-base-content/30 rounded-box"
+      class="text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box"
       :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
     >
       <!-- title bar -->

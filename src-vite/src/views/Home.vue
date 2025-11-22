@@ -7,65 +7,63 @@
     <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
 
-      <!-- left pane -->
-      <div
-        ref="leftPaneRef" 
-        class="rounded-box flex bg-base-200 z-10 select-none" 
-        data-tauri-drag-region
+      <transition
+        enter-active-class="transition-transform duration-200"
+        leave-active-class="transition-transform duration-200"
+        enter-from-class="-translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-from-class="translate-x-0"
+        leave-to-class="-translate-x-full"
       >
-        <!-- side bar -->
-        <div ref="sidebarRef" 
+        <!-- left pane -->
+        <div v-show="config.home.showLeftPane"
           :class="[
-            'px-2 pb-4 h-full flex flex-col items-center', 
-            isWin ? 'pt-2' : 'pt-10'
-          ]" 
+            'flex bg-base-200 rounded-box z-10 select-none', 
+            { 'no-transition': isDraggingSplitter },
+          ]"
+          :style="{ width: config.home.sidebarIndex > 0 ? config.home.leftPaneWidth + 'px' : 'auto' }"
           data-tauri-drag-region
         >
-          <div class="space-y-2" >
-            <div v-for="(item, index) in buttons" 
-              :key="index" 
-            >
+          <!-- side bar -->
+          <div 
+            :class="[
+              'min-w-16 pb-1 h-full flex flex-col items-center space-y-2', 
+              isWin ? 'pt-2' : 'pt-12'
+            ]" 
+            data-tauri-drag-region
+          >
+            <div v-for="(item, index) in buttons" :key="index">
               <TButton 
                 :buttonSize="'large'" 
                 :icon="item.icon" 
                 :text="item.text" 
                 :selected="config.home.sidebarIndex === index"
-                @click="clickButton(index)"
+                @click="config.home.sidebarIndex = index"
               />
             </div>
+
+            <TButton class="mt-auto"
+              :buttonSize="'large'" 
+              :icon="IconSettings" 
+              :text="$t('sidebar.settings')" 
+              @click="clickSettings"
+            />
           </div>
 
-          <TButton class="mt-auto"
-            :buttonSize="'large'" 
-            :icon="IconSettings" 
-            :text="$t('sidebar.settings')" 
-            @click="clickSettings"
-          />
-        </div>
-
-        <!-- left pane -->
-        <transition
-          enter-from-class="left-pane-hide"
-          enter-to-class="left-pane-show"
-          leave-from-class="left-pane-show"
-          leave-to-class="left-pane-hide"
-        >
-          <div v-show="config.home.sidebarIndex > 0 && showLeftPane" 
-            :class="['flex bg-base-200 left-pane overflow-hidden rounded-r-box', { 'no-transition': isDraggingSplitter }]" 
-            :style="{ '--left-pane-width': config.home.leftPaneWidth + 'px' }"
-          >
+          <!-- panel-->
+          <div v-show="config.home.sidebarIndex > 0" class="flex-1 overflow-hidden">
             <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
           </div>
-        </transition>
 
-      </div>
+        </div>
+      </transition> 
       
       <!-- splitter -->
-      <div 
+      <div v-if="config.home.showLeftPane"
         :class="[
-          'w-1 transition-colors shrink-0',
-          config.home.sidebarIndex > 0 && showLeftPane ? 'hover:bg-primary cursor-ew-resize' : '',
-          config.home.sidebarIndex > 0 && showLeftPane && isDraggingSplitter ? 'bg-primary' : 'bg-base-300'
+          'w-1 not-first:transition-colors shrink-0',
+          isDraggingSplitter && config.home.sidebarIndex > 0 ? 'bg-primary' : 'bg-base-300',
+          config.home.sidebarIndex > 0 ? 'hover:bg-primary cursor-ew-resize' : ''
         ]" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
@@ -84,10 +82,9 @@
   </div>
 
 </template>
-   
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { config } from '@/common/config';
@@ -116,10 +113,6 @@ import {
   IconCamera,
   IconSettings,
 } from '@/common/icons';
-
-import { listen } from '@tauri-apps/api/event';
-
-let unlistenKeydown: () => void;
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -165,46 +158,12 @@ const buttons = computed(() =>  [
   // { icon: IconPeople, component: People, text: localeMsg.value.sidebar.people }, 
 ]);
 
-const showLeftPane = ref(true);
-
 /// Splitter for resizing the left pane
-const leftPaneRef = ref(null);
-const sidebarRef = ref(null);
 const isDraggingSplitter = ref(false);
-
-onMounted(async () => {
-  unlistenKeydown = await listen('global-keydown', handleKeyDown);
-  // isFullScreen.value = await appWindow.isMaximized();
-});
-
-onUnmounted(() => {
-  if (unlistenKeydown) {
-    unlistenKeydown();
-  }
-});
-
-// Handle keydown event
-function handleKeyDown(event: KeyboardEvent) {
-  const { key, ctrlKey, metaKey } = event.payload;
-  // if (event.key === 'Escape') {
-  //   appWindow.minimize();
-  // }
-};
-
-const clickButton = async (index: number) => {
-  if(config.home.sidebarIndex === index) {
-    showLeftPane.value = !showLeftPane.value;
-  } else {
-    showLeftPane.value = true;
-  }
-  config.home.sidebarIndex = index;
-
-  // await appWindow.setTitle(buttons.value[index].text);
-};
 
 // Dragging the splitter
 function startDraggingSplitter(event: MouseEvent) {
-  if(config.home.sidebarIndex <= 0 || !showLeftPane.value) return; // no left pane or left pane is hidden
+  if(!config.home.showLeftPane) return; // no left pane or left pane is hidden
 
   isDraggingSplitter.value = true;
   document.addEventListener('mousemove', handleMouseMove);
@@ -220,11 +179,9 @@ function stopDraggingSplitter(event: MouseEvent) {
 
 // Handle mouse move event
 function handleMouseMove(event: MouseEvent) {
-  if (isDraggingSplitter.value && sidebarRef.value) {
-    const sidebarWidth = sidebarRef.value.offsetWidth + 2;
-    const windowWidth = window.innerWidth;
-    const maxLeftPaneWidth = windowWidth / 2 - sidebarWidth;
-    config.home.leftPaneWidth = Math.max(100, Math.min(event.clientX - sidebarWidth, maxLeftPaneWidth));
+  if (isDraggingSplitter.value) {
+    const maxLeftPaneWidth = window.innerWidth / 2;
+    config.home.leftPaneWidth = Math.max(160, Math.min(event.clientX - 2, maxLeftPaneWidth)); // -2: border width(2px)
   }
 }
 
@@ -268,19 +225,3 @@ async function clickSettings() {
 }
 
 </script>
-<style scoped>
-.left-pane {
-  width: var(--left-pane-width);
-  transition: width 200ms ease;
-  will-change: width;
-}
-.left-pane-hide {
-  width: 0 !important;
-}
-.left-pane-show {
-  width: var(--left-pane-width) !important;
-}
-.no-transition {
-  transition: none !important;
-}
-</style>

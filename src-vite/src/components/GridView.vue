@@ -1,7 +1,7 @@
 <template>
   <div
     ref="gridViewRef"
-    class="relative w-full h-full focus:outline-none" 
+    class="relative w-full min-h-full focus:outline-none" 
     :class="{ 
       'pointer-events-none': uiStore.inputStack.length > 0,
     }"
@@ -9,8 +9,8 @@
   >
     <div v-if="fileList.length > 0" id="gridView" 
       :class="[
-        config.content.layout === 0 ? 'p-2 grid' : 'absolute flex flex-nowrap items-center',
-        config.content.layout === 0 && config.settings.grid.style === 0 ? 'gap-2' : '',
+        config.content.layout === 0 ? 'px-1 grid' : 'absolute flex flex-nowrap items-center',
+        config.content.layout === 0 && config.settings.grid.style === 0 ? 'gap-1' : '',
       ]"
       :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` } : { }"
     >
@@ -30,8 +30,8 @@
       />
     </div>
 
-    <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
-      <span>{{ $t('tooltip.not_found.files') }}</span>
+    <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
+      <span>{{ config.home.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
     </div>
 
   </div>

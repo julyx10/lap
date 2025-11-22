@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex-1 flex flex-col select-none"
+  <div class="relative flex-1 flex flex-col select-none"
     :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('AlbumList-edit') }"
     @keydown="handleLocalKeyDown"
   >
@@ -13,21 +13,30 @@
     </transition>
 
     <!-- title bar -->
-    <div class="px-2 pt-1 min-h-12 flex flex-row flex-wrap items-center justify-between" data-tauri-drag-region>
-
-
+    <div :class="
+      [
+        'absolute top-0 left-0 right-0 pr-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-sm z-30',
+        config.home.showLeftPane ? 'pl-2' : 'pl-20'
+      ]" 
+      data-tauri-drag-region
+    >
       <!-- title -->
-      <div v-if="contentTitle.length > 0" class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
-        <component :is=contentIcon class="mr-2 t-icon-size-sm shrink-0"/>
+      <div class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
+        <TButton v-show="!config.home.showLeftPane || config.home.sidebarIndex === 0"
+          :icon="config.home.showLeftPane ? IconLeftPaneOn : IconLeftPaneOff"
+          @click="config.home.showLeftPane = !config.home.showLeftPane"
+        />
+        <IconSeparator v-show="!config.home.showLeftPane || config.home.sidebarIndex === 0" class="t-icon-size-sm text-base-content/30" />
+        <component :is=contentIcon class="mx-2 t-icon-size-sm shrink-0"/>
         <div class="mr-2 cursor-default overflow-hidden whitespace-pre text-ellipsis">
           {{ contentTitle }}
         </div>
       </div>
 
       <!-- toolbar -->
-      <div class="ml-auto h-6 flex flex-row items-center space-x-2 shrink-0">
+      <div class="flex items-center space-x-2 shrink-0">
 
-        <!-- search box - filter file name -->
+        <!-- search box -->
         <SearchBox ref="searchBoxRef" v-model="config.search.text" @click.stop="selectMode = false" /> 
 
         <!-- select mode -->
@@ -68,12 +77,14 @@
           @select="handleSortTypeSelect"
         />
 
+        <!-- separator -->
         <div class="flex flex-row items-center">
+          <IconSeparator class="t-icon-size-sm text-base-content/30" />
           <!-- grid view layout -->
           <TButton
             :icon="config.content.layout === 0 ? IconGrid : IconGallery"
             :iconStyle="{ transform: `rotate(${config.settings.filmStripView.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
-            @click="config.content.layout = config.content.layout === 0 ? 1 : 0"
+            @click="toggleGridViewLayout"
           />
           <!-- show info panel -->
           <TButton
@@ -84,11 +95,13 @@
       </div>
     </div>
 
-    <ProgressBar v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
-    <span v-else class="h-0.5 w-full"></span>
+    <div class="absolute top-12 left-0 right-0 z-20">
+      <ProgressBar v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
+      <span v-else class="h-0.5 w-full"></span>
+    </div>
       
     <!-- content view -->
-    <div ref="contentViewDiv" class="mt-1 flex-1 flex flex-row overflow-hidden">
+    <div ref="contentViewDiv" class="flex-1 flex flex-row overflow-hidden">
 
       <div ref="gridViewDiv" 
         :class="[
@@ -100,12 +113,10 @@
           
           <!-- grid view -->
           <div ref="gridScrollContainerRef" 
-            class="bg-base-200 rounded-box" 
-            :class="{
-              'overflow-x-hidden overflow-y-auto': config.content.layout === 0,
-              'overflow-x-auto overflow-y-hidden': config.content.layout === 1,
-              'absolute inset-0': config.content.layout === 0,
-            }"
+            :class="[
+              config.content.layout === 0 ? 'absolute w-full h-full pt-12 overflow-x-hidden overflow-y-auto no-scrollbar' : 'overflow-x-auto overflow-y-hidden',
+              config.settings.showStatusBar ? 'pb-8' : 'pb-2'
+            ]"
             @scroll="handleScroll"
             @wheel="handleWheel"
             >
@@ -159,22 +170,22 @@
 
         <!-- preview -->
         <div v-show="config.content.layout === 1" ref="previewDiv" 
-          class="flex-1 rounded-box overflow-hidden bg-base-200"
+          class="flex-1 overflow-hidden"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="w-full h-full flex items-center justify-center"
-            @dblclick="openImageViewer(selectedItemIndex, true)"
+            @dblclick="filmStripViewZoomFit = !filmStripViewZoomFit"
           >
             <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
               :filePath="fileList[selectedItemIndex]?.file_path" 
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
-              :isZoomFit="true"
+              :isZoomFit="filmStripViewZoomFit"
             ></Image>
             
             <Video v-if="fileList[selectedItemIndex]?.file_type === 2"
               :filePath="fileList[selectedItemIndex]?.file_path"
               :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
-              :isZoomFit="true"
+              :isZoomFit="filmStripViewZoomFit"
             ></Video>
           </div>
 
@@ -200,7 +211,7 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="config.infoPanel.show" :style="{ width: config.infoPanel.width + '%' }">
+        <div v-if="config.infoPanel.show" class="pt-12 pb-8" :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
             :fileInfo="fileList[selectedItemIndex]" 
             @close="config.infoPanel.show = false" 
@@ -211,7 +222,7 @@
 
     <!-- status bar -->
     <div v-if="config.settings.showStatusBar"
-      class="p-2 flex gap-4 text-sm cursor-default"
+      class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 bg-base-300/80 backdrop-blur-sm flex gap-4 text-sm cursor-default"
     >
       <div class="flex items-center gap-1 flex-shrink-0">
         <IconFileSearch class="t-icon-size-xs" />
@@ -371,6 +382,8 @@ import FileInfo from '@/components/FileInfo.vue';
 
 import {
   IconHome,
+  IconLeftPaneOn,
+  IconLeftPaneOff,
   IconPreview,
   IconPreviewOff,
   IconArrowDown,
@@ -400,6 +413,7 @@ import {
   IconGrid,
   IconLeft,
   IconRight,
+  IconSeparator,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -459,7 +473,8 @@ const selectedSize = ref(0);  // selected files size
 
 // film strip view splitter
 const isDraggingfilmStripView = ref(false);      // dragging splitter to resize film strip view
-const videoRef = ref(null);       // preview video reference
+const filmStripViewZoomFit = ref(true); // film strip view zoom fit
+const videoRef = ref(null);             // preview video reference
 
 // info panel splitter
 const isDraggingInfoPanel = ref(false);
@@ -684,12 +699,33 @@ function handleRequestScroll(index: number) {
         left: newScrollLeft,
         behavior: 'smooth',
       });
-    } else { // Grid layout
-      item.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest' 
-      });
+    } else if (config.content.layout === 0) { // Grid layout
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      
+      const titleBarHeight = 48; // Fixed title bar height
+      const statusBarHeight = config.settings.showStatusBar ? 32 : 0; // Status bar height if visible
+
+      // Calculate visible area relative to the viewport
+      const containerVisibleTop = containerRect.top + titleBarHeight;
+      const containerVisibleBottom = containerRect.bottom - statusBarHeight;
+
+      let newScrollTop = container.scrollTop;
+
+      if (itemRect.top < containerVisibleTop) {
+        // Item is above the visible area
+        newScrollTop -= (containerVisibleTop - itemRect.top);
+      } else if (itemRect.bottom > containerVisibleBottom) {
+        // Item is below the visible area
+        newScrollTop += (itemRect.bottom - containerVisibleBottom);
+      }
+
+      if (newScrollTop !== container.scrollTop) {
+        container.scrollTo({
+          top: newScrollTop,
+          behavior: 'smooth'
+        });
+      }
     }
   }, 100);
 }
@@ -703,7 +739,7 @@ function handleScroll() {
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
       handleNextPage();
     }
-  } else { // layout 1: carousel
+  } else if (config.content.layout === 1) { // layout 1: carousel
     if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
       handleNextPage();
     }
@@ -893,10 +929,15 @@ watch(
 
 // watch for show preview or layout change
 watch(() => [config.content.layout, config.infoPanel.show, config.infoPanel.tabIndex], ([newLayout, newShow, newTabIndex]) => {
-  if(newLayout === 1 || (newShow && newTabIndex === 1)) {
+  if (newLayout === 1 || (newShow && newTabIndex === 1)) {
     updateSelectedImage(selectedItemIndex.value);
   }
 });
+
+function toggleGridViewLayout() {
+  config.content.layout = config.content.layout === 0 ? 1 : 0;
+  filmStripViewZoomFit.value = true;
+}
 
 async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 
   const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset);

@@ -3,8 +3,9 @@ import { defineStore } from 'pinia';
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
     home: {
-      sidebarIndex: 1,            // toolbar index
+      showLeftPane: true,         // show left pane
       leftPaneWidth: 300,         // left pane width
+      sidebarIndex: 1,            // toolbar index
     },
 
     content: {
@@ -129,9 +130,9 @@ export const useConfigStore = defineStore('configStore', {
 
   actions: {
     // tab index
-    setSettingsTabIndex(settingsTabIndex) {
-      this.settings.tabIndex = settingsTabIndex;
-    },
+    // setSettingsTabIndex(settingsTabIndex) {
+    //   this.settings.tabIndex = settingsTabIndex;
+    // },
 
     // general settings
     setAppearance(appearance) {

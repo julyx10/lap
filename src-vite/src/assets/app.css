@@ -13,6 +13,15 @@ html, body {
   overscroll-behavior: none;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
 @utility input {
   @apply h-8 border-1 rounded-box focus:border-2 focus:outline-none focus:border-primary hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }
@@ -37,20 +46,4 @@ html, body {
 }
 .t-icon-size-lg {
   @apply w-8 h-8;
-}
-
-/* animation */
-.t-icon-animate {
-  @apply transition-colors duration-300;
-}
-
-/* fade transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-.fade-enter-to, .fade-leave-from {
-  opacity: 1;
 }
