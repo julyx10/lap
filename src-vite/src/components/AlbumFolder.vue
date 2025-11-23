@@ -41,7 +41,7 @@
               :disabled="true"
               :buttonSize="'small'"
             />
-            <ContextMenu v-show="componentId === 0 && !isRenamingFolder"
+            <ContextMenu v-if="componentId === 0 && !isRenamingFolder"
               :class="[
                 selectedFolderId != child.id ? 'invisible group-hover:visible' : ''
               ]"

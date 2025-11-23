@@ -5,7 +5,7 @@
     <!-- Title Bar -->
     <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
       <!-- <span class="pl-1 cursor-default">{{ titlebar }}</span> -->
-      <TButton v-show="config.home.showLeftPane"
+      <TButton v-if="config.home.showLeftPane"
         :icon="IconLeftPaneOn"
         @click="config.home.showLeftPane = false"
       />

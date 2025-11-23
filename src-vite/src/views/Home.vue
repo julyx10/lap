@@ -8,26 +8,26 @@
     <div class="flex-1 flex overflow-hidden">
 
       <transition
-        enter-active-class="transition-transform duration-200"
-        leave-active-class="transition-transform duration-200"
-        enter-from-class="-translate-x-full"
-        enter-to-class="translate-x-0"
-        leave-from-class="translate-x-0"
-        leave-to-class="-translate-x-full"
+        enter-active-class="transition-all duration-200 ease-in-out overflow-hidden"
+        leave-active-class="transition-all duration-200 ease-in-out overflow-hidden"
+        enter-from-class="!w-0 opacity-0"
+        enter-to-class="opacity-100"
+        leave-from-class="opacity-100"
+        leave-to-class="!w-0 opacity-0"
       >
         <!-- left pane -->
-        <div v-show="config.home.showLeftPane"
+        <div v-if="config.home.showLeftPane"
           :class="[
-            'flex bg-base-200 rounded-box z-10 select-none', 
+            'flex bg-base-200 z-10 select-none', 
             { 'no-transition': isDraggingSplitter },
           ]"
-          :style="{ width: config.home.sidebarIndex > 0 ? config.home.leftPaneWidth + 'px' : 'auto' }"
+          :style="{ width: config.home.sidebarIndex > 0 ? config.home.leftPaneWidth + 'px' : '64px' }"
           data-tauri-drag-region
         >
           <!-- side bar -->
           <div 
             :class="[
-              'min-w-16 pb-1 h-full flex flex-col items-center space-y-2', 
+              'min-w-16 pb-2 h-full flex flex-col items-center space-y-2', 
               isWin ? 'pt-2' : 'pt-12'
             ]" 
             data-tauri-drag-region
@@ -51,7 +51,7 @@
           </div>
 
           <!-- panel-->
-          <div v-show="config.home.sidebarIndex > 0" class="flex-1 overflow-hidden">
+          <div v-if="config.home.sidebarIndex > 0" class="flex-1 overflow-hidden">
             <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
           </div>
 
@@ -59,12 +59,12 @@
       </transition> 
       
       <!-- splitter -->
-      <div v-if="config.home.showLeftPane"
-        :class="[
-          'w-1 not-first:transition-colors shrink-0',
-          isDraggingSplitter && config.home.sidebarIndex > 0 ? 'bg-primary' : 'bg-base-300',
-          config.home.sidebarIndex > 0 ? 'hover:bg-primary cursor-ew-resize' : ''
-        ]" 
+      <div
+        class="w-1 transition-colors shrink-0"
+        :class="{
+          'hover:bg-primary cursor-ew-resize': config.home.showLeftPane && config.home.sidebarIndex > 0,
+          'bg-primary': config.home.showLeftPane && config.home.sidebarIndex > 0 && isDraggingSplitter,
+        }" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
       ></div>
@@ -72,7 +72,7 @@
       <!-- content area -->
       <div 
         :class="[
-          'flex-1 flex relative bg-base-300',
+          'flex-1 flex relative',
           isWin ? 'rounded-tl-box' : '',
         ]"
       >

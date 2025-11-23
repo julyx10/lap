@@ -13,7 +13,7 @@
         :iconMenu="IconMore" 
         :menuItems="moreMenuItems"
       />
-      <TButton v-show="config.home.showLeftPane"
+      <TButton v-if="config.home.showLeftPane"
         :icon="IconLeftPaneOn"
         @click="config.home.showLeftPane = false"
       />

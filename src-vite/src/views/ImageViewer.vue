@@ -116,18 +116,18 @@
           @click.stop
         />
 
-        <TButton v-show="config.imageViewer.isFullScreen"
+        <TButton v-if="config.imageViewer.isFullScreen"
           :icon="IconSeparator"
           :disabled="true"
         />
 
-        <TButton v-show="config.imageViewer.isFullScreen"
+        <TButton v-if="config.imageViewer.isFullScreen"
           :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
           :disabled="fileIndex < 0"
           :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
           @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
         />
-        <TButton v-show="config.imageViewer.isFullScreen"
+        <TButton v-if="config.imageViewer.isFullScreen"
           :icon="IconClose"
           :tooltip="$t('image_viewer.toolbar.close')"
           @click="appWindow.close()"

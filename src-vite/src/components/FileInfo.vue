@@ -1,5 +1,8 @@
 <template>
-  <div class="h-full w-full rounded-l-box bg-base-200 flex flex-col">
+  <div :class="[
+    'h-full w-full bg-base-200 flex flex-col',
+    config.settings.showStatusBar ? 'rounded-l-box' : 'rounded-tl-box'
+  ]">
     <!-- Title bar -->
     <div class="p-1 flex items-center justify-between">
       <!-- Tabs -->
@@ -154,7 +157,7 @@
       </table>
 
       <!-- Map view -->
-      <div class="pl-2 pr-4" v-if="config.fileInfo.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
+      <div class="px-2" v-if="config.fileInfo.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
         <MapView
           :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
           :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"

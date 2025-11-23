@@ -16,19 +16,19 @@
     <div :class="
       [
         'absolute top-0 left-0 right-0 pr-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-sm z-30',
-        config.home.showLeftPane ? 'pl-2' : 'pl-20'
+        config.home.showLeftPane ? 'pl-2' : 'pl-18'
       ]" 
       data-tauri-drag-region
     >
       <!-- title -->
       <div class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
-        <TButton v-show="!config.home.showLeftPane || config.home.sidebarIndex === 0"
+        <TButton v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0"
           :icon="config.home.showLeftPane ? IconLeftPaneOn : IconLeftPaneOff"
           @click="config.home.showLeftPane = !config.home.showLeftPane"
         />
-        <IconSeparator v-show="!config.home.showLeftPane || config.home.sidebarIndex === 0" class="t-icon-size-sm text-base-content/30" />
-        <component :is=contentIcon class="mx-2 t-icon-size-sm shrink-0"/>
-        <div class="mr-2 cursor-default overflow-hidden whitespace-pre text-ellipsis">
+        <IconSeparator v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0" class="t-icon-size-sm text-base-content/30" />
+        <component :is=contentIcon class="t-icon-size-sm shrink-0"/>
+        <div class="mx-2 cursor-default overflow-hidden whitespace-pre text-ellipsis">
           {{ contentTitle }}
         </div>
       </div>
@@ -114,8 +114,13 @@
           <!-- grid view -->
           <div ref="gridScrollContainerRef" 
             :class="[
-              config.content.layout === 0 ? 'absolute w-full h-full pt-12 overflow-x-hidden overflow-y-auto no-scrollbar' : 'overflow-x-auto overflow-y-hidden',
-              config.settings.showStatusBar ? 'pb-8' : 'pb-2'
+              config.content.layout === 0 ? 'absolute w-full h-full overflow-x-hidden overflow-y-auto no-scrollbar' : 'overflow-x-hidden overflow-y-hidden',
+              (config.content.layout === 0 || (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 1)) ? 'pt-12' : '',
+              config.settings.showStatusBar ? 
+                (config.content.layout === 0 ? 'pb-8' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'pb-8' : ''
+              ) : (
+                config.content.layout === 0 ? 'pb-1' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'mb-1' : ''
+              )
             ]"
             @scroll="handleScroll"
             @wheel="handleWheel"
@@ -135,7 +140,17 @@
           </div>
 
           <!-- Navigation buttons -->
-          <div v-if="config.content.layout === 1 && fileList.length > 0" class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none">
+          <div v-if="config.content.layout === 1 && fileList.length > 0" 
+            class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none"
+            :class="[
+              (config.content.layout === 0 || (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 1)) ? 'pt-12' : '',
+              config.settings.showStatusBar ? 
+                (config.content.layout === 0 ? 'pb-8' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'pb-8' : ''
+              ) : (
+                config.content.layout === 0 ? 'pb-1' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'mb-1' : ''
+              )
+            ]"
+          >
             <button 
               :class="[
                 'p-2 rounded-full pointer-events-auto bg-base-100/30', 
@@ -163,14 +178,15 @@
         <div v-if="config.content.layout === 1" 
           :class="[ 
             'h-1 hover:bg-primary cursor-ns-resize transition-colors',
-            isDraggingfilmStripView ? 'bg-primary' : 'bg-base-300'
+            isDraggingFilmStripView ? 'bg-primary' : 'bg-base-300'
           ]" 
           @mousedown="startDraggingfilmStripView"
         ></div>
 
         <!-- preview -->
-        <div v-show="config.content.layout === 1" ref="previewDiv" 
-          class="flex-1 overflow-hidden"
+        <div v-if="config.content.layout === 1" ref="previewDiv" 
+          class="flex-1 rounded-box bg-base-200 overflow-hidden"
+          :class="[ config.settings.filmStripView.previewPosition === 0 ? 'mt-12' : (config.settings.showStatusBar ? 'mb-8' : 'mb-1') ]"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="w-full h-full flex items-center justify-center"
@@ -194,24 +210,27 @@
       </div> <!-- grid view -->
 
       <!-- info panel splitter -->
-      <div v-if="config.infoPanel.show" 
-        :class="[
-          'w-1 hover:bg-primary cursor-ew-resize transition-colors', 
-          isDraggingInfoPanel ? 'bg-primary' : 'bg-base-300'
-        ]" 
+      <div
+        class="w-1 shrink-0 transition-colors"
+        :class="{
+          'hover:bg-primary cursor-ew-resize': config.infoPanel.show,
+          'bg-primary': config.infoPanel.show && isDraggingInfoPanel,
+        }" 
         @mousedown="startDraggingInfoPanelSplitter"
       ></div>
 
       <!-- info panel -->
       <transition
-        enter-active-class="transition-transform duration-200"
-        leave-active-class="transition-transform duration-200"
-        enter-from-class="translate-x-full"
-        enter-to-class="translate-x-0"
-        leave-from-class="translate-x-0"
-        leave-to-class="translate-x-full"
+        enter-active-class="transition-all duration-200 ease-in-out overflow-hidden"
+        leave-active-class="transition-all duration-200 ease-in-out overflow-hidden"
+        enter-from-class="!w-0 opacity-0"
+        enter-to-class="opacity-100"
+        leave-from-class="opacity-100"
+        leave-to-class="!w-0 opacity-0"
       >
-        <div v-if="config.infoPanel.show" class="pt-12 pb-8" :style="{ width: config.infoPanel.width + '%' }">
+        <div v-if="config.infoPanel.show" 
+          :class="[ 'pt-12', config.settings.showStatusBar ? 'pb-8' : '' ]" 
+          :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
             :fileInfo="fileList[selectedItemIndex]" 
             @close="config.infoPanel.show = false" 
@@ -472,7 +491,7 @@ const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
 
 // film strip view splitter
-const isDraggingfilmStripView = ref(false);      // dragging splitter to resize film strip view
+const isDraggingFilmStripView = ref(false);      // dragging splitter to resize film strip view
 const filmStripViewZoomFit = ref(true); // film strip view zoom fit
 const videoRef = ref(null);             // preview video reference
 
@@ -682,6 +701,8 @@ const handleWheel = (event: WheelEvent) => {
 };
 
 function handleRequestScroll(index: number) {
+  if (isDraggingInfoPanel.value || isDraggingFilmStripView.value) return;
+
   // Using setTimeout to ensure the DOM has been fully updated and rendered,
   // especially after layout changes which might involve CSS that nextTick doesn't wait for.
   setTimeout(() => {
@@ -1449,19 +1470,12 @@ async function openImageViewer(index: number, newViewer = false) {
 
   const file = index >= 0 && index < fileCount ? fileList.value[index] : null;
   const fileId = file ? file.id : 0;
-  // const encodedFilePath = file ? encodeURIComponent(file.file_path) : '';
-
-  // preload the next image for smooth transition
-  // const nextFile = index + 1 >= 0 && index + 1 < fileCount ? fileList.value[index + 1] : null;
-  // const nextEncodedFilePath = nextFile ? encodeURIComponent(nextFile.file_path) : '';
   
   // create a new window if it doesn't exist
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!imageWindow) {
     if (newViewer) {
       imageWindow = new WebviewWindow(webViewLabel, {
-        // url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}` + 
-        //                    `&filePath=${encodedFilePath}&nextFilePath=${nextEncodedFilePath}`,
         url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}`,
         title: 'Image Viewer',
         width: 1200,
@@ -1508,7 +1522,7 @@ async function openImageViewer(index: number, newViewer = false) {
 
 /// Dragging the film strip view splitter
 function startDraggingfilmStripView(event: MouseEvent) {
-  isDraggingfilmStripView.value = true;
+  isDraggingFilmStripView.value = true;
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', stopDragging);
 }
@@ -1532,12 +1546,20 @@ function handleMouseMove(event: MouseEvent) {
 
     // Limit width between 20% and 80%
     config.infoPanel.width = Math.min(Math.max(newWidthPercent, 20), 80);
-  } else if(isDraggingfilmStripView.value) {
+  } else if(isDraggingFilmStripView.value) {
     const gridViewDivRect = gridViewDiv.value.getBoundingClientRect();
+    const container = gridScrollContainerRef.value;
+    let verticalSpacing = 0;
+    if (container) {
+      const style = window.getComputedStyle(container);
+      verticalSpacing = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 
+                        parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+    }
+
     const newHeight = 
       config.settings.filmStripView.previewPosition === 0 ? 
-        gridViewDivRect.bottom - event.clientY -2 :
-        event.clientY - gridViewDivRect.top - 2; // -2: border width(2px)
+        gridViewDivRect.bottom - event.clientY - 2 - verticalSpacing :
+        event.clientY - gridViewDivRect.top - 2 - verticalSpacing; // -2: border width(2px)
     
     const totalHeight = gridViewDiv.value.clientHeight;
     const minHeight = Math.max(totalHeight * 0.1, 120);
@@ -1555,7 +1577,7 @@ function handleMouseMove(event: MouseEvent) {
 
 /// stop dragging the splitter
 function stopDragging() {
-  isDraggingfilmStripView.value = false;
+  isDraggingFilmStripView.value = false;
   isDraggingInfoPanel.value = false;
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', stopDragging);

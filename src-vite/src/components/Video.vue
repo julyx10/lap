@@ -1,6 +1,6 @@
 <template>
   <div ref="videoContainer" class="relative w-full h-full cursor-pointer bg-base-200">
-    <video v-show="!hasError" ref="videoElement" class="video-js"></video>
+    <video v-if="!hasError" ref="videoElement" class="video-js"></video>
 
     <!-- Play button overlay when video is paused -->
     <div v-if="!hasError && !isPlaying"
