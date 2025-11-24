@@ -23,14 +23,13 @@
             ]"
             @click="clickLocationAdmin1(location)"
           >
-            <!-- <component :is="location.is_expanded ? IconFolderExpanded : IconFolder" class="mx-1 h-5  shrink-0" @click.stop="clickExpandLocation(location)"/> -->
             <IconLocation
               :class="[
                 'mx-1 h-5 shrink-0 transition-transform', 
               ]"
               @click.stop="clickExpandLocation(location)"
             />
-            <div class="flex-1 flex items-center overflow-hidden whitespace-pre text-ellipsis">
+            <div class="overflow-hidden whitespace-pre text-ellipsis">
               <span>{{ location.admin1 }}</span>
               <span class="text-xs text-base-content/30 ml-1">({{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }})</span>
             </div>
@@ -44,8 +43,7 @@
                 ]" 
                 @click="clickLocationName(location.admin1, name)"
               >
-                <!-- <IconCircle class="mx-1 h-5 shrink-0" /> -->
-                <div class="flex-1 flex items-center px-1 whitespace-pre text-ellipsis overflow-hidden">
+                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
                   <span>{{ name }}</span>
                   <span class="text-xs text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
                 </div>
@@ -57,7 +55,7 @@
     </div>
 
     <!-- Display message if no data are found -->
-    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else class="flex-1 flex flex-col items-center justify-center text-base-content/30">
       <IconLocation class="w-8 h-8" />
       <span class="mt-2">{{ $t('tooltip.not_found.location') }}</span>
     </div>
@@ -87,6 +85,11 @@ onMounted(async () => {
   if (locations.value.length === 0) {
     await getLocations();
 
+    if (locations.value.length === 0) {
+      config.location.admin1 = null;
+      config.location.name = null;
+    }
+    
     if(config.location.admin1 && config.location.name) {
       let location = locations.value.find(location => location.admin1 === config.location.admin1)
       if(location) {

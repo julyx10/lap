@@ -1,5 +1,5 @@
 <template>
-  <div class="px-2 w-full rounded-box h-0.5">
+  <div class="px-1 w-full rounded-box h-0.5">
     <div
       :class="[
         'h-full rounded-box bg-primary', 

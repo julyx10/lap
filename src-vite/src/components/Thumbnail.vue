@@ -15,7 +15,8 @@
     <div v-if="file.thumbnail" 
       :class="[
         'relative flex items-center justify-center overflow-hidden', 
-        config.settings.grid.style === 0 ? 'rounded-box' : ''
+        config.settings.grid.style === 0 ? 'rounded-box' : '',
+        config.settings.grid.style === 1 ? 'w-full' : ''
       ]">
       <!-- image -->
       <img :src="file.thumbnail"
@@ -171,6 +172,13 @@ const containerStyle = computed(() => {
 
 const layoutStyle = computed(() => {
   if (config.content.layout === 0) {
+    if (config.settings.grid.style === 1) {
+      const height = config.settings.grid.size;
+      return {
+        width: '100%',
+        height: height + 'px'
+      }
+    }
     return {
       width: config.settings.grid.size + 'px',
       height: config.settings.grid.size + 'px'

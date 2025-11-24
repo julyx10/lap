@@ -12,7 +12,7 @@
         config.content.layout === 0 ? 'px-1 grid' : 'absolute flex flex-nowrap items-center',
         config.content.layout === 0 && config.settings.grid.style === 0 ? 'gap-1' : '',
       ]"
-      :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fit, minmax(${config.settings.grid.size}px, 1fr))` } : { }"
+      :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fill, minmax(${config.settings.grid.size}px, 1fr))` } : { }"
     >
       <!-- thumbnail -->
       <Thumbnail

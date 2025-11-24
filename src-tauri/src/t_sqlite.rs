@@ -1,3 +1,10 @@
+use crate::t_image;
+use crate::t_utils;
+use crate::t_video;
+use base64::{Engine, engine::general_purpose};
+use exif::{In, Reader, Tag, Value};
+use rusqlite::{Connection, OptionalExtension, Result, params};
+use serde::{Deserialize, Serialize};
 /**
  * project: jc-photo
  * author:  julyxx
@@ -6,27 +13,20 @@
  * date:    2024-08-08
  */
 use std::collections::HashMap;
-use base64::{engine::general_purpose, Engine};
-use exif::{Reader, Tag, Value, In};
-use rusqlite::{params, Connection, OptionalExtension, Result};
-use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
-use crate::t_utils;
-use crate::t_image;
-use crate::t_video;
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Album {
-    pub id: Option<i64>,               // unique id (autoincrement by db)
+    pub id: Option<i64>, // unique id (autoincrement by db)
 
     // album basic info
-    pub name: String,                  // album name (default is folder name)
-    pub path: String,                  // folder path
-    pub created_at: Option<u64>,       // folder create time
-    pub modified_at: Option<u64>,      // folder modified time
-    
+    pub name: String,             // album name (default is folder name)
+    pub path: String,             // folder path
+    pub created_at: Option<u64>,  // folder create time
+    pub modified_at: Option<u64>, // folder modified time
+
     // extra info
     pub display_order_id: Option<i64>, // display order id
     pub avatar_id: Option<i64>,        // album avatar id ( from files table)
@@ -140,7 +140,7 @@ impl Album {
     /// Get all albums(album_type = 1) from the db
     pub fn get_all_albums(show_hidden_album: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        
+
         let query = if show_hidden_album {
             "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
             FROM albums
@@ -151,11 +151,12 @@ impl Album {
             WHERE is_hidden IS NULL OR is_hidden = 0
             ORDER BY display_order_id ASC"
         };
-        
+
         let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
 
         // Execute the query and map the result to Album structs
-        let albums_iter = stmt.query_map([], |row| Self::from_row(row))
+        let albums_iter = stmt
+            .query_map([], |row| Self::from_row(row))
             .map_err(|e| e.to_string())?;
 
         // Collect the results into a Vec<Album>
@@ -182,7 +183,11 @@ impl Album {
     }
 
     /// update a column value
-    pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
+    pub fn update_column(
+        id: i64,
+        column: &str,
+        value: &dyn rusqlite::ToSql,
+    ) -> Result<usize, String> {
         let conn = open_conn()?;
         let query = format!("UPDATE albums SET {} = ?1 WHERE id = ?2", column);
         let result = conn
@@ -190,14 +195,13 @@ impl Album {
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
-
 }
 
 /// Define the album's folder struct
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AFolder {
-    pub id: Option<i64>,          // unique id (autoincrement by db)
-    pub album_id: i64,            // album id (from albums table)
+    pub id: Option<i64>, // unique id (autoincrement by db)
+    pub album_id: i64,   // album id (from albums table)
 
     // folder basic info
     pub name: String,             // folder name
@@ -206,7 +210,7 @@ pub struct AFolder {
     pub modified_at: Option<u64>, // folder modified time
 
     // extra info
-    pub is_favorite: Option<bool>,  // is favorite
+    pub is_favorite: Option<bool>, // is favorite
 }
 
 impl AFolder {
@@ -236,7 +240,7 @@ impl AFolder {
             is_favorite: row.get(6)?,
         })
     }
-    
+
     /// fetch a folder row from db (by path)
     pub fn fetch(folder_path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
@@ -246,8 +250,9 @@ impl AFolder {
                 FROM afolders
                 WHERE path = ?1",
                 params![folder_path],
-                |row| Self::from_row(row)
-            ).optional()
+                |row| Self::from_row(row),
+            )
+            .optional()
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -291,7 +296,6 @@ impl AFolder {
 
     /// rename a folder (update path and name)
     pub fn rename_folder(old_path: &str, new_path: &str) -> Result<usize, String> {
-
         // get folder name
         let folder_name = t_utils::get_file_name(new_path);
 
@@ -300,9 +304,10 @@ impl AFolder {
             .execute(
                 "UPDATE afolders
                 SET path = CONCAT(?2, SUBSTRING(path, LENGTH(?1) + 1)), name = ?3
-                WHERE path LIKE ?1 || '%'", 
+                WHERE path LIKE ?1 || '%'",
                 params![old_path, new_path, folder_name],
-            ).map_err(|e| e.to_string())?;
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -313,9 +318,10 @@ impl AFolder {
             .execute(
                 "UPDATE afolders
                 SET path = CONCAT(?3, SUBSTRING(path, LENGTH(?1) + 1)), album_id = ?2
-                WHERE path LIKE ?1 || '%'", 
+                WHERE path LIKE ?1 || '%'",
                 params![old_path, new_album_id, new_path],
-            ).map_err(|e| e.to_string())?;
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -323,15 +329,17 @@ impl AFolder {
     pub fn delete_folder(folder_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
         let result = conn
-            .execute(
-                "DELETE FROM afolders WHERE id = ?1", 
-                params![folder_id])
+            .execute("DELETE FROM afolders WHERE id = ?1", params![folder_id])
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
-    
+
     // update a column value
-    pub fn update_column(id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
+    pub fn update_column(
+        id: i64,
+        column: &str,
+        value: &dyn rusqlite::ToSql,
+    ) -> Result<usize, String> {
         let conn = open_conn()?;
         let query = format!("UPDATE afolders SET {} = ?1 WHERE id = ?2", column);
         let result = conn
@@ -356,7 +364,11 @@ impl AFolder {
     // get all favorite folders
     pub fn get_favorite_folders(is_show_hidden: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden { "" } else { "AND (b.is_hidden IS NULL OR b.is_hidden = 0)" };
+        let hidden_clause = if is_show_hidden {
+            ""
+        } else {
+            "AND (b.is_hidden IS NULL OR b.is_hidden = 0)"
+        };
 
         let query = format!(
             "SELECT a.id, a.album_id, a.name, a.path, a.created_at, a.modified_at, a.is_favorite
@@ -367,9 +379,7 @@ impl AFolder {
             hidden_clause
         );
 
-        let mut stmt = conn
-            .prepare(query.as_str())
-            .map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let rows = stmt
             .query_map(params![], |row| Self::from_row(row))
@@ -391,20 +401,20 @@ pub struct AFile {
     pub folder_id: i64,  // folder id (from folders table)
 
     // file basic info
-    pub name: String,               // file name
-    pub name_pinyin: Option<String>,// file name pinyin(for sort)
-    pub size: u64,                  // file size
-    pub file_type: Option<i64>,     // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
-    pub created_at: Option<u64>,    // file create time
-    pub modified_at: Option<u64>,   // file modified time
+    pub name: String,                // file name
+    pub name_pinyin: Option<String>, // file name pinyin(for sort)
+    pub size: u64,                   // file size
+    pub file_type: Option<i64>,      // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
+    pub created_at: Option<u64>,     // file create time
+    pub modified_at: Option<u64>,    // file modified time
 
     // file taken date
     pub taken_date: Option<String>, // taken date(yyyy-mm-dd) for calendar view
 
     // image/video
-    pub width: Option<u32>,         // image/video width
-    pub height: Option<u32>,        // image/video height
-    pub duration: Option<u64>,      // video duration
+    pub width: Option<u32>,    // image/video width
+    pub height: Option<u32>,   // image/video height
+    pub duration: Option<u64>, // video duration
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
@@ -436,10 +446,10 @@ pub struct AFile {
     pub gps_altitude: Option<f64>,
 
     // geo info (from http://www.geonames.org/)
-    pub geo_name: Option<String>,      // Location name
-    pub geo_admin1: Option<String>,    // Administrative district 1
-    pub geo_admin2: Option<String>,    // Administrative district 2
-    pub geo_cc: Option<String>,        // Country code
+    pub geo_name: Option<String>,   // Location name
+    pub geo_admin1: Option<String>, // Administrative district 1
+    pub geo_admin2: Option<String>, // Administrative district 2
+    pub geo_cc: Option<String>,     // Country code
 
     // output only
     pub file_path: Option<String>,  // file path (for webview)
@@ -450,14 +460,14 @@ pub struct AFile {
 impl AFile {
     fn new(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
-        
+
         // get dimensions based on file type
         let (width, height) = match file_type {
             1 => t_image::get_image_dimensions(file_path)?,
             2 => t_video::get_video_dimensions(file_path)?,
             _ => (0, 0),
         };
-        
+
         // get duration of video file
         let duration = match file_type {
             2 => t_video::get_video_duration(file_path)?,
@@ -486,7 +496,8 @@ impl AFile {
         let mut gps_longitude: Option<f64> = None;
         let mut gps_altitude: Option<f64> = None;
 
-        if file_type == 1 { // Image file
+        if file_type == 1 {
+            // Image file
             // Read EXIF data
             let exif = File::open(file_path)
                 .map_err(|e| format!("Error opening file: {}", e))
@@ -504,36 +515,37 @@ impl AFile {
             // 6: Rotate 90 CW
             // 7: Mirror horizontal and rotate 90 CW
             // 8: Rotate 270 CW
-            e_orientation = exif
-                .as_ref()
-                .and_then(|exif_data| {
-                    exif_data
-                        .get_field(Tag::Orientation, In::PRIMARY)
-                        .and_then(|field| field.value.get_uint(0)) // Return u64 directly
-                        .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
-                });
+            e_orientation = exif.as_ref().and_then(|exif_data| {
+                exif_data
+                    .get_field(Tag::Orientation, In::PRIMARY)
+                    .and_then(|field| field.value.get_uint(0)) // Return u64 directly
+                    .or(Some(1)) // If no orientation is found, default to 1 (normal orientation)
+            });
 
             // Process flash data
-            e_flash = exif
-                .as_ref()
-                .and_then(|exif_data| {
-                    exif_data
-                        .get_field(Tag::Flash, In::PRIMARY)
-                        .and_then(|field| field.value.get_uint(0))
-                        .map(|val| if val & 1 == 1 { "Fired".to_string() } else { "Not fired".to_string() })
-                });
+            e_flash = exif.as_ref().and_then(|exif_data| {
+                exif_data
+                    .get_field(Tag::Flash, In::PRIMARY)
+                    .and_then(|field| field.value.get_uint(0))
+                    .map(|val| {
+                        if val & 1 == 1 {
+                            "Fired".to_string()
+                        } else {
+                            "Not fired".to_string()
+                        }
+                    })
+            });
 
             // Extract GPS data
-            let (lat, lon, alt) = 
-                Self::extract_gps_data(&exif);
+            let (lat, lon, alt) = Self::extract_gps_data(&exif);
             gps_latitude = lat;
             gps_longitude = lon;
             gps_altitude = alt;
-            
+
             taken_date = Self::get_exif_field(&exif, Tag::DateTimeOriginal)
                 .and_then(|exif_date| t_utils::meta_date_to_string(&exif_date));
-            
-            e_make = Self::get_exif_field(&exif, Tag::Make).map(|s| s.to_uppercase());
+
+            e_make = Self::get_exif_field(&exif, Tag::Make);
             e_model = Self::get_exif_field(&exif, Tag::Model);
             e_date_time = Self::get_exif_field(&exif, Tag::DateTimeOriginal);
             e_software = Self::get_exif_field(&exif, Tag::Software);
@@ -547,8 +559,8 @@ impl AFile {
             e_f_number = Self::get_exif_field(&exif, Tag::FNumber);
             e_focal_length = Self::get_exif_field(&exif, Tag::FocalLength);
             e_iso_speed = Self::get_exif_field(&exif, Tag::PhotographicSensitivity);
-
-        } else if file_type == 2 { // Video file
+        } else if file_type == 2 {
+            // Video file
             if let Ok(video_metadata) = t_video::get_video_metadata(file_path) {
                 e_make = video_metadata.e_make;
                 e_model = video_metadata.e_model;
@@ -563,14 +575,14 @@ impl AFile {
                 }
             }
         }
-        
+
         // Fallback for taken_date if no metadata is found
         if taken_date.is_none() {
             taken_date = file_info.modified_str.clone();
         }
 
         // Geocoding based on GPS coordinates from any source
-        let (geo_name, geo_admin1, geo_admin2, geo_cc) = 
+        let (geo_name, geo_admin1, geo_admin2, geo_cc) =
             if let (Some(lat), Some(lon)) = (gps_latitude, gps_longitude) {
                 let search_result = t_utils::GEOCODER.search((lat, lon));
                 (
@@ -595,8 +607,12 @@ impl AFile {
             modified_at: file_info.modified,
 
             taken_date,
-            width:  e_orientation.map(|orientation| if orientation > 4 { height } else { width }).or(Some(width)),
-            height: e_orientation.map(|orientation| if orientation > 4 { width } else { height }).or(Some(height)),
+            width: e_orientation
+                .map(|orientation| if orientation > 4 { height } else { width })
+                .or(Some(width)),
+            height: e_orientation
+                .map(|orientation| if orientation > 4 { width } else { height })
+                .or(Some(height)),
             duration: Some(duration),
 
             is_favorite: None,
@@ -643,27 +659,42 @@ impl AFile {
             return (None, None, None);
         };
 
-        let lat_val = exif_data.get_field(Tag::GPSLatitude, In::PRIMARY).and_then(|f| match &f.value {
-            Value::Rational(v) => Some(v.to_vec()),
-            _ => None,
-        });
-        let lat_ref = exif_data.get_field(Tag::GPSLatitudeRef, In::PRIMARY).map(|f| f.display_value().to_string());
-        let lon_val = exif_data.get_field(Tag::GPSLongitude, In::PRIMARY).and_then(|f| match &f.value {
-            Value::Rational(v) => Some(v.to_vec()),
-            _ => None,
-        });
-        let lon_ref = exif_data.get_field(Tag::GPSLongitudeRef, In::PRIMARY).map(|f| f.display_value().to_string());
+        let lat_val = exif_data
+            .get_field(Tag::GPSLatitude, In::PRIMARY)
+            .and_then(|f| match &f.value {
+                Value::Rational(v) => Some(v.to_vec()),
+                _ => None,
+            });
+        let lat_ref = exif_data
+            .get_field(Tag::GPSLatitudeRef, In::PRIMARY)
+            .map(|f| f.display_value().to_string());
+        let lon_val = exif_data
+            .get_field(Tag::GPSLongitude, In::PRIMARY)
+            .and_then(|f| match &f.value {
+                Value::Rational(v) => Some(v.to_vec()),
+                _ => None,
+            });
+        let lon_ref = exif_data
+            .get_field(Tag::GPSLongitudeRef, In::PRIMARY)
+            .map(|f| f.display_value().to_string());
 
-        let (gps_lat, gps_lon) = if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) = (lat_val, lat_ref, lon_val, lon_ref) {
-            (Self::dms_to_decimal(&lat_v, &lat_r), Self::dms_to_decimal(&lon_v, &lon_r))
+        let (gps_lat, gps_lon) = if let (Some(lat_v), Some(lat_r), Some(lon_v), Some(lon_r)) =
+            (lat_val, lat_ref, lon_val, lon_ref)
+        {
+            (
+                Self::dms_to_decimal(&lat_v, &lat_r),
+                Self::dms_to_decimal(&lon_v, &lon_r),
+            )
         } else {
             (None, None)
         };
 
-        let altitude = exif_data.get_field(Tag::GPSAltitude, In::PRIMARY).and_then(|field| match &field.value {
-            Value::Rational(v) if !v.is_empty() => Some(v[0].num as f64 / v[0].denom as f64),
-            _ => None,
-        });
+        let altitude = exif_data
+            .get_field(Tag::GPSAltitude, In::PRIMARY)
+            .and_then(|field| match &field.value {
+                Value::Rational(v) if !v.is_empty() => Some(v[0].num as f64 / v[0].denom as f64),
+                _ => None,
+            });
 
         (gps_lat, gps_lon, altitude)
     }
@@ -786,7 +817,11 @@ impl AFile {
             .join(" ");
 
         let final_str = cleaned.trim();
-        if final_str.is_empty() { None } else { Some(final_str.to_string()) }
+        if final_str.is_empty() {
+            None
+        } else {
+            Some(final_str.to_string())
+        }
     }
 
     /// insert a file into db
@@ -913,10 +948,7 @@ impl AFile {
     pub fn delete(id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
         let result = conn
-            .execute(
-                "DELETE FROM afiles WHERE id = ?1",
-                params![id],
-            )
+            .execute("DELETE FROM afiles WHERE id = ?1", params![id])
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -927,7 +959,7 @@ impl AFile {
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id";
-        
+
         format!("{}", base_query)
     }
 
@@ -1008,10 +1040,13 @@ impl AFile {
     }
 
     // query the count and sum by sql
-    fn query_count_and_sum(sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<(i64, i64), String> {
+    fn query_count_and_sum(
+        sql: &str,
+        params: &[&dyn rusqlite::ToSql],
+    ) -> Result<(i64, i64), String> {
         let conn = open_conn()?;
         let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
-    
+
         let result = stmt
             .query_row(params, |row| {
                 let count: i64 = row.get(0)?;
@@ -1019,7 +1054,7 @@ impl AFile {
                 Ok((count, sum))
             })
             .map_err(|e| e.to_string())?;
-    
+
         Ok(result)
     }
 
@@ -1106,11 +1141,15 @@ impl AFile {
     /// update a file info
     pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<Self>, String> {
         // get old file info
-        let old_file_info = Self::get_file_info(file_id)?
-            .ok_or_else(|| "File not found".to_string())?;
+        let old_file_info =
+            Self::get_file_info(file_id)?.ok_or_else(|| "File not found".to_string())?;
 
         // create a new file info
-        let mut new_file_info = Self::new(old_file_info.folder_id, file_path, old_file_info.file_type.unwrap_or(0))?;
+        let mut new_file_info = Self::new(
+            old_file_info.folder_id,
+            file_path,
+            old_file_info.file_type.unwrap_or(0),
+        )?;
         new_file_info.id = Some(file_id);
         new_file_info.is_favorite = old_file_info.is_favorite;
         new_file_info.rotate = old_file_info.rotate;
@@ -1124,7 +1163,11 @@ impl AFile {
     }
 
     /// update a file column value
-    pub fn update_column(file_id: i64, column: &str, value: &dyn rusqlite::ToSql) -> Result<usize, String> {
+    pub fn update_column(
+        file_id: i64,
+        column: &str,
+        value: &dyn rusqlite::ToSql,
+    ) -> Result<usize, String> {
         let conn = open_conn()?;
         let query = format!("UPDATE afiles SET {} = ?1 WHERE id = ?2", column);
         let result = conn
@@ -1132,23 +1175,32 @@ impl AFile {
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
-    
+
     /// Get a file's has_tags status
     pub fn get_has_tags(file_id: i64) -> Result<bool, String> {
         let conn = open_conn()?;
-        let result = conn.query_row(
-            "SELECT has_tags FROM afiles WHERE id = ?1",
-            params![file_id],
-            |row| row.get(0),
-        ).map_err(|e| e.to_string())?;
+        let result = conn
+            .query_row(
+                "SELECT has_tags FROM afiles WHERE id = ?1",
+                params![file_id],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// get all taken dates from db
-    pub fn get_taken_dates(ascending: bool, is_show_hidden: bool) -> Result<Vec<(String, i64)>, String> {
+    pub fn get_taken_dates(
+        ascending: bool,
+        is_show_hidden: bool,
+    ) -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn()?;
-        
-        let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
+
+        let hidden_clause = if is_show_hidden {
+            ""
+        } else {
+            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
+        };
         let order_clause = if ascending { "ASC" } else { "DESC" };
         let query = format!(
             "SELECT a.taken_date, COUNT(1) 
@@ -1167,9 +1219,7 @@ impl AFile {
 
         // Use collect() to simplify result collection
         let results: Vec<(String, i64)> = stmt
-            .query_map(params![], |row| {
-                Ok((row.get(0)?, row.get(1)?))
-            })
+            .query_map(params![], |row| Ok((row.get(0)?, row.get(1)?)))
             .map_err(|e| format!("Query execution failed: {}", e))?
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| format!("Failed to process rows: {}", e))?;
@@ -1185,33 +1235,38 @@ impl AFile {
 
     /// get files
     pub fn get_files(
-        search_text: &str, search_file_type: i64,
-        sort_type: i64, sort_order: i64,
+        search_text: &str,
+        search_file_type: i64,
+        sort_type: i64,
+        sort_order: i64,
         search_folder: &str,
-        start_date: &str, end_date: &str,
-        make: &str, model: &str,
-        location_admin1: &str, location_name: &str,
-        is_favorite: bool, 
+        start_date: &str,
+        end_date: &str,
+        make: &str,
+        model: &str,
+        location_admin1: &str,
+        location_name: &str,
+        is_favorite: bool,
         is_show_hidden: bool,
         tag_id: i64,
-        offset: i64, page_size: i64,
+        offset: i64,
+        page_size: i64,
     ) -> Result<Vec<Self>, String> {
-
         // conditions
         let mut conditions = Vec::new();
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
-    
+
         let like_pattern = format!("%{}%", search_text);
         if !search_text.is_empty() {
             conditions.push("a.name LIKE ? COLLATE NOCASE");
             params.push(&like_pattern);
         }
-    
+
         if search_file_type > 0 {
             conditions.push("a.file_type = ?");
             params.push(&search_file_type);
         }
-    
+
         let folder_exact_pattern = format!("{}/%", search_folder);
         if !search_folder.is_empty() {
             // Match path that starts with search_folder followed by '/' or end of string
@@ -1230,9 +1285,9 @@ impl AFile {
                 params.push(&end_date);
             }
         }
-    
+
         if !make.is_empty() {
-            conditions.push("a.e_make = ?");
+            conditions.push("UPPER(a.e_make) = UPPER(?)");
             params.push(&make);
             if !model.is_empty() {
                 conditions.push("a.e_model = ?");
@@ -1248,26 +1303,26 @@ impl AFile {
                 params.push(&location_name);
             }
         }
-    
+
         if is_favorite {
             conditions.push("a.is_favorite = 1");
         }
-    
+
         if tag_id > 0 {
             conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
             params.push(&tag_id);
         }
-    
+
         if !is_show_hidden {
             conditions.push("(c.is_hidden IS NULL OR c.is_hidden = 0)");
         }
-    
+
         let mut query = Self::build_base_query();
         if !conditions.is_empty() {
             query.push_str(" WHERE ");
             query.push_str(&conditions.join(" AND "));
         }
-    
+
         // sort
         match sort_type {
             0 => query.push_str(" ORDER BY a.name_pinyin"),
@@ -1292,7 +1347,6 @@ impl AFile {
 
         Self::query_files(&query, &params)
     }
-
 }
 
 /// Define the album thumbnail struct
@@ -1300,7 +1354,7 @@ impl AFile {
 pub struct AThumb {
     pub id: Option<i64>, // unique id (autoincrement by db)
     pub file_id: i64,    // file id (from files table)
-    pub error_code: i64,  // error code (0: success, 1: error)
+    pub error_code: i64, // error code (0: success, 1: error)
 
     #[serde(skip)]
     pub thumb_data: Option<Vec<u8>>, // thumbnail data (store into db as BLOB)
@@ -1319,18 +1373,25 @@ impl AThumb {
         thumbnail_size: u32,
     ) -> Result<Option<Self>, String> {
         let (thumb_data, error_code) = match file_type {
-            1 => { // image
+            1 => {
+                // image
                 if let Some(ext) = t_utils::get_file_extension(file_path) {
                     match ext.to_lowercase().as_str() {
-                        "heic" | "heif" => { // heic/heif
+                        "heic" | "heif" => {
+                            // heic/heif
                             match t_video::get_video_thumbnail(file_path, thumbnail_size) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1), // empty thumb
-                                Err(_) => (None, 1), // error
+                                Err(_) => (None, 1),   // error
                             }
-                        },
-                        _ => { // other images
-                            match t_image::get_image_thumbnail(file_path, orientation, thumbnail_size) {
+                        }
+                        _ => {
+                            // other images
+                            match t_image::get_image_thumbnail(
+                                file_path,
+                                orientation,
+                                thumbnail_size,
+                            ) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1),
                                 Err(_) => (None, 1),
@@ -1341,7 +1402,8 @@ impl AThumb {
                     (None, 1)
                 }
             }
-            2 => { // video
+            2 => {
+                // video
                 match t_video::get_video_thumbnail(file_path, thumbnail_size) {
                     Ok(Some(data)) => (Some(data), 0),
                     Ok(None) => (None, 1),
@@ -1434,7 +1496,7 @@ impl AThumb {
             }
         };
         athumb.insert()?;
-        
+
         Self::fetch(file_id)
     }
 
@@ -1442,16 +1504,17 @@ impl AThumb {
     pub fn delete(file_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
         let result = conn
-            .execute(
-                "DELETE FROM athumbs WHERE file_id = ?1",
-                params![file_id],
-            )
+            .execute("DELETE FROM athumbs WHERE file_id = ?1", params![file_id])
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// get the thumbnail count of the folder
-    pub fn get_folder_thumb_count(search_text: &str, search_file_type: i64, folder_id: i64) -> Result<i64, String> {
+    pub fn get_folder_thumb_count(
+        search_text: &str,
+        search_file_type: i64,
+        folder_id: i64,
+    ) -> Result<i64, String> {
         let conn = open_conn()?;
 
         let mut conditions = Vec::new();
@@ -1471,22 +1534,20 @@ impl AThumb {
             params.push(&search_file_type);
         }
 
-        let mut query = "SELECT COUNT(b.id) FROM afiles a JOIN athumbs b ON a.id = b.file_id".to_string();
+        let mut query =
+            "SELECT COUNT(b.id) FROM afiles a JOIN athumbs b ON a.id = b.file_id".to_string();
         if !conditions.is_empty() {
             query.push_str(" WHERE ");
             query.push_str(&conditions.join(" AND "));
         }
 
-        let result = conn.query_row(
-            &query,
-            rusqlite::params_from_iter(params),
-            |row| row.get(0)
-        ).map_err(|e| e.to_string())?;
+        let result = conn
+            .query_row(&query, rusqlite::params_from_iter(params), |row| row.get(0))
+            .map_err(|e| e.to_string())?;
 
         Ok(result)
     }
 }
-
 
 /// Define the Tag struct
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -1510,29 +1571,38 @@ impl ATag {
     pub fn add(name: &str) -> Result<Self, String> {
         let conn = open_conn()?;
         // First, try to fetch the tag to see if it already exists.
-        let existing_tag = conn.query_row(
-            "SELECT id, name, 0 as count FROM atags WHERE name = ?1",
-            params![name],
-            Self::from_row
-        ).optional().map_err(|e| e.to_string())?;
+        let existing_tag = conn
+            .query_row(
+                "SELECT id, name, 0 as count FROM atags WHERE name = ?1",
+                params![name],
+                Self::from_row,
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
 
         if let Some(tag) = existing_tag {
             Ok(tag)
         } else {
             // The tag doesn't exist, so insert it.
-            conn.execute(
-                "INSERT INTO atags (name) VALUES (?1)",
-                params![name],
-            ).map_err(|e| e.to_string())?;
+            conn.execute("INSERT INTO atags (name) VALUES (?1)", params![name])
+                .map_err(|e| e.to_string())?;
             let id = conn.last_insert_rowid();
-            Ok(Self { id, name: name.to_string(), count: Some(0) })
+            Ok(Self {
+                id,
+                name: name.to_string(),
+                count: Some(0),
+            })
         }
     }
 
     /// Get all tags from the db
     pub fn get_all(is_show_hidden: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden { "1=1" } else { "(albums.is_hidden = 0)" };
+        let hidden_clause = if is_show_hidden {
+            "1=1"
+        } else {
+            "(albums.is_hidden = 0)"
+        };
         let query = format!(
             "SELECT atags.id, atags.name, SUM(CASE WHEN {} THEN 1 ELSE 0 END) AS count 
             FROM atags 
@@ -1544,11 +1614,10 @@ impl ATag {
             ORDER BY atags.name ASC",
             hidden_clause
         );
-        let mut stmt = conn
-            .prepare(query.as_str())
-            .map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
-        let tags_iter = stmt.query_map([], |row| Self::from_row(row))
+        let tags_iter = stmt
+            .query_map([], |row| Self::from_row(row))
             .map_err(|e| e.to_string())?;
 
         let mut tags = Vec::new();
@@ -1561,7 +1630,12 @@ impl ATag {
     /// Get tag name by id
     pub fn get_name(tag_id: i64) -> Result<String, String> {
         let conn = open_conn()?;
-        let result = conn.query_row("SELECT name FROM atags WHERE id = ?1", params![tag_id], |row| row.get(0))
+        let result = conn
+            .query_row(
+                "SELECT name FROM atags WHERE id = ?1",
+                params![tag_id],
+                |row| row.get(0),
+            )
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -1569,15 +1643,18 @@ impl ATag {
     /// Get all tags for a specific file
     pub fn get_tags_for_file(file_id: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let mut stmt = conn.prepare(
-            "SELECT t.id, t.name, 0 as count
-             FROM atags t
-             INNER JOIN afile_tags ft ON t.id = ft.tag_id
-             WHERE ft.file_id = ?1
-             ORDER BY t.name ASC"
-        ).map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT t.id, t.name, 0 as count
+                FROM atags t
+                INNER JOIN afile_tags ft ON t.id = ft.tag_id
+                WHERE ft.file_id = ?1
+                ORDER BY t.name ASC",
+            )
+            .map_err(|e| e.to_string())?;
 
-        let tags_iter = stmt.query_map(params![file_id], |row| Self::from_row(row))
+        let tags_iter = stmt
+            .query_map(params![file_id], |row| Self::from_row(row))
             .map_err(|e| e.to_string())?;
 
         let mut tags = Vec::new();
@@ -1593,33 +1670,44 @@ impl ATag {
         conn.execute(
             "INSERT OR IGNORE INTO afile_tags (file_id, tag_id) VALUES (?1, ?2)",
             params![file_id, tag_id],
-        ).map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
         // Update has_tags in afiles table
-        conn.execute("UPDATE afiles SET has_tags = 1 WHERE id = ?1", params![file_id])
-            .map_err(|e| e.to_string())?;
+        conn.execute(
+            "UPDATE afiles SET has_tags = 1 WHERE id = ?1",
+            params![file_id],
+        )
+        .map_err(|e| e.to_string())?;
         Ok(())
     }
 
     /// Remove a tag from a file
     pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
-        let result = conn.execute(
-            "DELETE FROM afile_tags WHERE file_id = ?1 AND tag_id = ?2",
-            params![file_id, tag_id],
-        ).map_err(|e| e.to_string())?;
+        let result = conn
+            .execute(
+                "DELETE FROM afile_tags WHERE file_id = ?1 AND tag_id = ?2",
+                params![file_id, tag_id],
+            )
+            .map_err(|e| e.to_string())?;
 
         // Check if the file still has any tags
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM afile_tags WHERE file_id = ?1",
-            params![file_id],
-            |row| row.get(0),
-        ).map_err(|e| e.to_string())?;
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM afile_tags WHERE file_id = ?1",
+                params![file_id],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
 
         if count == 0 {
             // If no tags left, set has_tags to false
-            conn.execute("UPDATE afiles SET has_tags = 0 WHERE id = ?1", params![file_id])
-                .map_err(|e| e.to_string())?;
+            conn.execute(
+                "UPDATE afiles SET has_tags = 0 WHERE id = ?1",
+                params![file_id],
+            )
+            .map_err(|e| e.to_string())?;
         }
         Ok(result)
     }
@@ -1627,20 +1715,21 @@ impl ATag {
     /// Delete a tag from the database. This will also remove all its associations with files.
     pub fn delete(tag_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;
-        let result = conn.execute(
-            "DELETE FROM atags WHERE id = ?1",
-            params![tag_id],
-        ).map_err(|e| e.to_string())?;
+        let result = conn
+            .execute("DELETE FROM atags WHERE id = ?1", params![tag_id])
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
     /// Rename a tag
     pub fn rename(tag_id: i64, new_name: &str) -> Result<usize, String> {
         let conn = open_conn()?;
-        let result = conn.execute(
-            "UPDATE atags SET name = ?1 WHERE id = ?2",
-            params![new_name, tag_id],
-        ).map_err(|e| e.to_string())?;
+        let result = conn
+            .execute(
+                "UPDATE atags SET name = ?1 WHERE id = ?2",
+                params![new_name, tag_id],
+            )
+            .map_err(|e| e.to_string())?;
         Ok(result)
     }
 }
@@ -1656,22 +1745,24 @@ impl ACamera {
     // get all camera makes and models from db
     pub fn get_from_db(is_show_hidden: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
+        let hidden_clause = if is_show_hidden {
+            ""
+        } else {
+            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
+        };
 
         let query = format!(
-            "SELECT a.e_make, a.e_model, count(a.id) as count
+            "SELECT UPPER(a.e_make), a.e_model, count(a.id) as count
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
             WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL {}
-            GROUP BY a.e_make, a.e_model
-            ORDER BY a.e_make, a.e_model",
+            GROUP BY UPPER(a.e_make), a.e_model
+            ORDER BY UPPER(a.e_make), a.e_model",
             hidden_clause
         );
 
-        let mut stmt = conn
-            .prepare(query.as_str())
-            .map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let rows = stmt
             .query_map(params![], |row| {
@@ -1686,14 +1777,20 @@ impl ACamera {
 
         for row_result in rows {
             let (make, model, count) = row_result.map_err(|e| e.to_string())?;
-            let entry = hash_map.entry(make).or_insert_with(|| (Vec::new(), Vec::new()));
+            let entry = hash_map
+                .entry(make)
+                .or_insert_with(|| (Vec::new(), Vec::new()));
             entry.0.push(model); // Push model to Vec<String>
             entry.1.push(count); // Push count to Vec<i64>
         }
 
         let mut cameras: Vec<Self> = hash_map
             .into_iter()
-            .map(|(make, (models, counts))| Self { make, models, counts })
+            .map(|(make, (models, counts))| Self {
+                make,
+                models,
+                counts,
+            })
             .collect();
 
         // Sort the cameras by make
@@ -1714,22 +1811,24 @@ impl ALocation {
     // get all location admin1 and names from db
     pub fn get_from_db(is_show_hidden: bool) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden { "" } else { "AND (c.is_hidden IS NULL OR c.is_hidden = 0)" };
+        let hidden_clause = if is_show_hidden {
+            ""
+        } else {
+            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
+        };
 
         let query = format!(
             "SELECT a.geo_admin1, a.geo_name, count(a.id) as count
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.geo_admin1 IS NOT NULL AND a.geo_name IS NOT NULL {}
+            WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> '' {}
             GROUP BY a.geo_admin1, a.geo_name
             ORDER BY a.geo_admin1, a.geo_name",
             hidden_clause
         );
 
-        let mut stmt = conn
-            .prepare(query.as_str())
-            .map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let rows = stmt
             .query_map(params![], |row| {
@@ -1744,14 +1843,20 @@ impl ALocation {
 
         for row in rows {
             let (admin1, name, count) = row.unwrap();
-            let entry = hash_map.entry(admin1).or_insert_with(|| (Vec::new(), Vec::new()));
+            let entry = hash_map
+                .entry(admin1)
+                .or_insert_with(|| (Vec::new(), Vec::new()));
             entry.0.push(name); // Push name to Vec<String>
             entry.1.push(count); // Push count to Vec<i64>
         }
 
         let mut locations: Vec<Self> = hash_map
             .into_iter()
-            .map(|(admin1, (names, counts))| Self { admin1, names, counts })
+            .map(|(admin1, (names, counts))| Self {
+                admin1,
+                names,
+                counts,
+            })
             .collect();
 
         // Sort the locations by admin1
@@ -1766,8 +1871,7 @@ fn open_conn() -> Result<Connection, String> {
     let path = t_utils::get_db_file_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
-    Connection::open(&path)
-        .map_err(|e| format!("Failed to open database connection: {}", e))
+    Connection::open(&path).map_err(|e| format!("Failed to open database connection: {}", e))
 }
 
 /// create all tables if not exists
@@ -1788,9 +1892,18 @@ pub fn create_db() -> Result<(), String> {
             is_hidden INTEGER
         )",
         [],
-    ).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_albums_name ON albums(name)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_albums_path ON albums(path)", []).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_albums_name ON albums(name)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_albums_path ON albums(path)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     // folders table
     conn.execute(
@@ -1805,11 +1918,28 @@ pub fn create_db() -> Result<(), String> {
             FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
         )",
         [],
-    ).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_album_id ON afolders(album_id)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_name ON afolders(name)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_path ON afolders(path)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afolders_is_favorite ON afolders(is_favorite)", []).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afolders_album_id ON afolders(album_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afolders_name ON afolders(name)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afolders_path ON afolders(path)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afolders_is_favorite ON afolders(is_favorite)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     // files table
     conn.execute(
@@ -1856,21 +1986,78 @@ pub fn create_db() -> Result<(), String> {
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
-    ).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_name ON afiles(name)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_name_pinyin ON afiles(name_pinyin)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_file_type ON afiles(file_type)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_created_at ON afiles(created_at)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_modified_at ON afiles(modified_at)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_taken_date ON afiles(taken_date)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_is_favorite ON afiles(is_favorite)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_has_tags ON afiles(has_tags)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_make_model ON afiles(e_make, e_model)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_name ON afiles(geo_name)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_admin1 ON afiles(geo_admin1)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_admin2 ON afiles(geo_admin2)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afiles_geo_cc ON afiles(geo_cc)", []).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_name ON afiles(name)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_name_pinyin ON afiles(name_pinyin)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_file_type ON afiles(file_type)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_created_at ON afiles(created_at)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_modified_at ON afiles(modified_at)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_taken_date ON afiles(taken_date)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_is_favorite ON afiles(is_favorite)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_has_tags ON afiles(has_tags)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_make_model ON afiles(e_make, e_model)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_geo_name ON afiles(geo_name)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_geo_admin1 ON afiles(geo_admin1)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_geo_admin2 ON afiles(geo_admin2)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_geo_cc ON afiles(geo_cc)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     // file thumbnail table
     conn.execute(
@@ -1882,8 +2069,13 @@ pub fn create_db() -> Result<(), String> {
             FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
         )",
         [],
-    ).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_athumbs_file_id ON athumbs(file_id)", []).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_athumbs_file_id ON athumbs(file_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     // tags table
     conn.execute(
@@ -1892,8 +2084,13 @@ pub fn create_db() -> Result<(), String> {
             name TEXT NOT NULL UNIQUE
         )",
         [],
-    ).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_atags_name ON atags(name)", []).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_atags_name ON atags(name)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     // file_tags table
     conn.execute(
@@ -1905,9 +2102,18 @@ pub fn create_db() -> Result<(), String> {
             FOREIGN KEY (tag_id) REFERENCES atags(id) ON DELETE CASCADE
         )",
         [],
-    ).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_file_id ON afile_tags(file_id)", []).map_err(|e| e.to_string())?;
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_afile_tags_tag_id ON afile_tags(tag_id)", []).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afile_tags_file_id ON afile_tags(file_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afile_tags_tag_id ON afile_tags(tag_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     Ok(())
 }

@@ -40,7 +40,7 @@
         willChange: 'transform',
       }"
       draggable="false"
-      @load="onImageLoad($event.target as HTMLImageElement)"
+      @load="onImageDomLoad($event.target as HTMLImageElement)"
       @mousedown="handleImageMouseDown"
       @mousemove="handleImageMouseMove"
       @mouseup="handleImageMouseUp"
@@ -167,6 +167,7 @@ const loadError = ref(false);
 let loadingTimeout: NodeJS.Timeout | null = null;
 
 const activeImageEl = ref<HTMLImageElement | null>(null);
+const currentLoadingId = ref(0);
 
 let resizeObserver: ResizeObserver | null = null;
 let positionObserver: number | null = null;
@@ -503,6 +504,10 @@ const startPositionObserver = () => {
 
 // watch filePath changes
 watch(() => props.filePath, (newFilePath) => {
+  // Cancel previous loading
+  currentLoadingId.value++;
+  const loadingId = currentLoadingId.value;
+
   if (loadingTimeout) {
     clearTimeout(loadingTimeout);
     loadingTimeout = null;
@@ -510,33 +515,90 @@ watch(() => props.filePath, (newFilePath) => {
 
   loadError.value = false; // Reset error state
 
-  if (newFilePath) {
-    loadingTimeout = setTimeout(() => {
-      isLoading.value = true;
-    }, 200);
-  } else {
+  if (!newFilePath) {
     isLoading.value = false;
     return;
   }
-  
-  // preload to the hide image, then swap the image when loaded
-  nextTick(() => {
-    isZoomFit.value = props.isZoomFit;
-    const nextImageIndex = activeImage.value ^ 1;
-    scale.value[nextImageIndex] = 1;
-    position.value[nextImageIndex] = { x: 0, y: 0 };
-    try {
-      imageSrc.value[nextImageIndex] = newFilePath ? getAssetSrc(newFilePath) : '';
-      if (!imageSrc.value[nextImageIndex]) { // if getAssetSrc returns empty or falsy
-        loadError.value = true;
-      }
-    } catch (e) {
-      console.error("Error getting asset source:", e);
-      loadError.value = true;
-      imageSrc.value[nextImageIndex] = '';
+
+  // Set timeout to show loading overlay if loading takes too long
+  loadingTimeout = setTimeout(() => {
+    isLoading.value = true;
+  }, 200);
+
+  // Async load image
+  const img = new Image();
+  img.onload = () => {
+    // Check if this load is still valid
+    if (loadingId !== currentLoadingId.value) return;
+
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
     }
-    imageRotate.value[nextImageIndex] = props.rotate;
-  });
+    isLoading.value = false;
+
+    nextTick(() => {
+      isZoomFit.value = props.isZoomFit;
+      const nextImageIndex = activeImage.value ^ 1;
+      scale.value[nextImageIndex] = 1;
+      position.value[nextImageIndex] = { x: 0, y: 0 };
+      
+      imageSrc.value[nextImageIndex] = img.src;
+      imageRotate.value[nextImageIndex] = props.rotate;
+
+      // Update size immediately from the loaded image
+      imageSize.value[nextImageIndex] = { width: img.naturalWidth, height: img.naturalHeight };
+      
+      // Swap dimensions based on rotation
+      if (props.rotate % 180 === 90) {
+        imageSizeRotated.value[nextImageIndex] = { 
+          width: img.naturalHeight, 
+          height: img.naturalWidth 
+        };
+      } else {
+        imageSizeRotated.value[nextImageIndex] = { 
+          width: img.naturalWidth,  
+          height: img.naturalHeight 
+        };
+      }
+
+      // Trigger transition logic
+      onImageReady(nextImageIndex);
+    });
+  };
+
+  img.onerror = () => {
+    if (loadingId !== currentLoadingId.value) return;
+    
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
+    }
+    isLoading.value = false;
+
+    console.error("Error loading image:", newFilePath);
+    loadError.value = true;
+  };
+
+  try {
+    const src = getAssetSrc(newFilePath);
+    if (!src) {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
+      loadError.value = true;
+    } else {
+      img.src = src;
+    }
+  } catch (e) {
+    console.error("Error getting asset source:", e);
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
+    }
+    loadError.value = true;
+  }
 }, { immediate: true });
 
 // watch rotate changes
@@ -597,30 +659,15 @@ watch(() => [containerSize.value, imageSize.value], () => {
   }, 100); // Debounce for 100ms
 });
 
-// load image
-const onImageLoad = async (img: HTMLImageElement) => {
-  if (loadingTimeout) { // Clear timeout as image is loaded
+// Called when the new image is fully loaded and ready to be shown
+const onImageReady = (nextIndex: number) => {
+  // Ensure loading state is cleared (double check)
+  if (loadingTimeout) {
     clearTimeout(loadingTimeout);
     loadingTimeout = null;
   }
-  isLoading.value = false; // Set to false after transitions are done
-  noTransition.value = true; // Set early to prevent transitions during load
-
-  const nextIndex = activeImage.value ^ 1;
-  imageSize.value[nextIndex] = { width: img.naturalWidth, height: img.naturalHeight };
-
-  // swap image width and height
-  if (imageRotate.value[nextIndex] % 180 === 90) {
-    imageSizeRotated.value[nextIndex] = { 
-      width: img.naturalHeight, 
-      height: img.naturalWidth 
-    };
-  } else {
-    imageSizeRotated.value[nextIndex] = { 
-      width: img.naturalWidth,  
-      height: img.naturalHeight 
-    };
-  }
+  isLoading.value = false;
+  noTransition.value = true;
 
   activeImage.value = nextIndex;
 
@@ -679,6 +726,11 @@ const onImageLoad = async (img: HTMLImageElement) => {
       }
     });
   }
+};
+
+// Kept for DOM load event if needed, but main logic is now in onImageReady
+const onImageDomLoad = (img: HTMLImageElement) => {
+  // Optional: could be used for double verification or other DOM-related updates
 };
 
 const rotateRight = () => {

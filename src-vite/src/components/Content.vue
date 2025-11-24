@@ -16,7 +16,7 @@
     <div :class="
       [
         'absolute top-0 left-0 right-0 pr-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-sm z-30',
-        config.home.showLeftPane ? 'pl-2' : 'pl-18'
+        config.home.showLeftPane ? 'pl-1' : 'pl-18'
       ]" 
       data-tauri-drag-region
     >
@@ -27,7 +27,7 @@
           @click="config.home.showLeftPane = !config.home.showLeftPane"
         />
         <IconSeparator v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0" class="t-icon-size-sm text-base-content/30" />
-        <component :is=contentIcon class="t-icon-size-sm shrink-0"/>
+        <component v-if="contentTitle" :is=contentIcon class="t-icon-size-sm shrink-0"/>
         <div class="mx-2 cursor-default overflow-hidden whitespace-pre text-ellipsis">
           {{ contentTitle }}
         </div>
@@ -95,9 +95,9 @@
       </div>
     </div>
 
-    <div class="absolute top-12 left-0 right-0 z-20">
-      <ProgressBar v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
-      <span v-else class="h-0.5 w-full"></span>
+    <!-- progress bar -->
+    <div v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" class="absolute top-11 left-0 right-0 z-50">
+      <ProgressBar :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     </div>
       
     <!-- content view -->
@@ -229,7 +229,7 @@
         leave-to-class="!w-0 opacity-0"
       >
         <div v-if="config.infoPanel.show" 
-          :class="[ 'pt-12', config.settings.showStatusBar ? 'pb-8' : '' ]" 
+          :class="[ 'pt-12 pr-1', config.settings.showStatusBar ? 'pb-8' : 'pb-1' ]" 
           :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
             :fileInfo="fileList[selectedItemIndex]" 

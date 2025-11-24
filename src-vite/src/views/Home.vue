@@ -18,7 +18,8 @@
         <!-- left pane -->
         <div v-if="config.home.showLeftPane"
           :class="[
-            'flex bg-base-200 z-10 select-none', 
+            'flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
+            config.home.sidebarIndex === 0 ? 'mt-12': '',
             { 'no-transition': isDraggingSplitter },
           ]"
           :style="{ width: config.home.sidebarIndex > 0 ? config.home.leftPaneWidth + 'px' : '64px' }"
@@ -28,7 +29,7 @@
           <div 
             :class="[
               'min-w-16 pb-2 h-full flex flex-col items-center space-y-2', 
-              isWin ? 'pt-2' : 'pt-12'
+              isWin ? 'pt-2' : (config.home.sidebarIndex === 0 ? 'pt-2' : 'pt-13')
             ]" 
             data-tauri-drag-region
           >

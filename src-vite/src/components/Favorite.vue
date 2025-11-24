@@ -27,10 +27,10 @@
       </div>
 
       <!-- favorite folders -->
-      <div class="my-2 px-2 py-1 text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div v-if="favorite_folders.length > 0" class="my-2 px-2 py-1 text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('favorite.folders') }}
       </div>
-      <div v-if="favorite_folders.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
+      <div class="flex-grow overflow-x-hidden overflow-y-auto">
         <ul>
           <li v-for="folder in favorite_folders" :key="folder.id">
             <div 
@@ -61,10 +61,10 @@
       </div>
 
       <!-- Display message if no favorite folders are found -->
-      <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30 cursor-default">
+      <!-- <div v-else class="flex-1 flex flex-col items-center justify-center text-base-content/30 cursor-default">
         <IconFolderFavorite class="w-8 h-8" />
         <span class="mt-2 whitespace-nowrap">{{ $t('tooltip.not_found.folders') }}</span>
-      </div>
+      </div> -->
 
     </div>
     

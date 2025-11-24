@@ -65,13 +65,13 @@
     </ul>
 
     <!-- No Albums Found Message -->
-    <div v-else-if="!isLoading && !isEditList" class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else-if="!isLoading && !isEditList" class="flex-1 flex flex-col items-center justify-center text-base-content/30">
       <button class="btn btn-primary" @click="clickNewAlbum">
         <IconAdd class="w-5 h-5" />
         {{ $t('menu.album.add') }}
       </button>
 
-      <span class="mt-4">{{ $t('tooltip.not_found.albums') }}</span>
+      <span class="m-4 text-center">{{ $t('tooltip.not_found.albums') }}</span>
     </div>
 
     <!-- edit album information -->

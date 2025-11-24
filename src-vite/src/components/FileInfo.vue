@@ -1,8 +1,5 @@
 <template>
-  <div :class="[
-    'h-full w-full bg-base-200 flex flex-col',
-    config.settings.showStatusBar ? 'rounded-l-box' : 'rounded-tl-box'
-  ]">
+  <div class="w-full h-full rounded-box bg-base-200 flex flex-col">
     <!-- Title bar -->
     <div class="p-1 flex items-center justify-between">
       <!-- Tabs -->
@@ -157,7 +154,7 @@
       </table>
 
       <!-- Map view -->
-      <div class="px-2" v-if="config.fileInfo.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
+      <div class="px-2 pb-1" v-if="config.fileInfo.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
         <MapView
           :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
           :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
@@ -212,18 +209,17 @@ const emit = defineEmits([
 ]);
 
 function formatGeoLocation() {
-  if (props.fileInfo?.geo_name) {
-    if (props.fileInfo.geo_admin2) {
-      return `${props.fileInfo.geo_name}, ${props.fileInfo.geo_admin2}, ${props.fileInfo.geo_admin1}, ${props.fileInfo.geo_cc}`;
-    }
-    if (props.fileInfo.geo_admin1) {
-      return `${props.fileInfo.geo_name}, ${props.fileInfo.geo_admin1}, ${props.fileInfo.geo_cc}`;
-    }
-    if (props.fileInfo.geo_cc) {
-      return `${props.fileInfo.geo_name}, ${props.fileInfo.geo_cc}`;
-    }
-  }
-  return '';
+  const info = props.fileInfo;
+  if (!info) return "";
+
+  const fields = [
+    info.geo_name,
+    info.geo_admin2,
+    info.geo_admin1,
+    info.geo_cc,
+  ];
+
+  return fields.filter(Boolean).join(", ");
 }
 
 // emit close event

@@ -70,6 +70,7 @@ const isReplaying = ref(false);
 const isFit = ref(false);
 const scale = ref(1);
 const rotate = ref(0);
+const noTransition = ref(false);
 
 let isSrcChanging = false;  // disable transform when src changing
 
@@ -99,6 +100,13 @@ const updateTransform = (resetZoom = false) => {
   if (isSrcChanging) return;
   const video = player.value?.el().querySelector('video');
   if (!video) return;
+
+  // Toggle no-transition class
+  if (noTransition.value) {
+    video.classList.add('no-transition');
+  } else {
+    video.classList.remove('no-transition');
+  }
 
   const videoWidth = player.value?.videoWidth();
   const videoHeight = player.value?.videoHeight();
@@ -182,7 +190,18 @@ const setupPlayer = () => {
       isSrcChanging = false;
       isPlaying.value = config.settings.autoPlayVideo;
       isReplaying.value = false;
+      
+      // Force default zoom fit and disable transition temporarily
+      noTransition.value = true;
+      isFit.value = true;
+      
       updateTransform(true);
+      
+      setTimeout(() => {
+        noTransition.value = false;
+        // Re-apply transform to ensure transition is re-enabled if needed (though class removal is enough)
+        // updateTransform(); 
+      }, 100);
     });
     player.value.on('volumechange', () => {
       config.setVideoVolume(player.value?.volume());
@@ -328,6 +347,9 @@ defineExpose({
   max-width: none !important;
   max-height: none !important;
   transition: transform 0.3s ease-out !important;
+}
+.video-js video.no-transition {
+  transition: none !important;
 }
 .video-js .vjs-control-bar {
   background-color: hsl(var(--b2)) !important;

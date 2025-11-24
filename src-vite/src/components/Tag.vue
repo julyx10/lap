@@ -5,7 +5,11 @@
     <!-- Title Bar -->
     <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
       <!-- <span class="pl-1 cursor-default">{{ titlebar }}</span> -->
-      <TButton v-if="config.home.showLeftPane"
+      <TButton
+        :icon="IconAdd"
+        @click="clickAddTag"
+      />
+      <TButton
         :icon="IconLeftPaneOn"
         @click="config.home.showLeftPane = false"
       />
@@ -14,7 +18,7 @@
     <!-- Tag List -->
     <div v-if="allTags.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
       <ul>
-        <li v-for="tag in allTags" :key="tag.id">
+        <li v-for="tag in allTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
@@ -55,11 +59,25 @@
     </div>
 
     <!-- No Tags Found Message -->
-    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else class="flex-1 flex flex-col items-center justify-center text-base-content/30">
       <IconTag class="w-8 h-8" />
       <span class="mt-2 whitespace-nowrap">{{ $t('tooltip.not_found.tag') }}</span>
     </div>
   </div>
+  
+  <!-- new tag -->
+  <MessageBox
+    v-if="showNewTagMsgbox"
+    :title="$t('msgbox.new_tag.title')"
+    :showInput="true"
+    :inputText="''"
+    :inputPlaceholder="$t('msgbox.new_tag.content')"
+    :needValidateInput="true"
+    :OkText="$t('msgbox.new_tag.ok')"
+    :cancelText="$t('msgbox.cancel')"
+    @ok="clickNewTag"
+    @cancel="showNewTagMsgbox = false"
+  />
 
   <!-- delete tag -->
   <MessageBox
@@ -78,12 +96,13 @@
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { getAllTags, renameTag, deleteTag } from '@/common/api';
+import { getAllTags, renameTag, deleteTag, createTag } from '@/common/api';
 import { 
   IconTag, 
   IconMore, 
   IconRename, 
   IconTrash,
+  IconAdd,
   IconLeftPaneOn,
 } from '@/common/icons';
 
@@ -103,7 +122,7 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
 // tags
-const allTags = ref([]);
+const allTags = ref<any[]>([]);
 const selectedTag = ref(null);
 const isRenamingTag = ref(false);
 const originalTagName = ref('');
@@ -111,6 +130,7 @@ const tagInputRef = ref([]);
 
 // message boxes
 const showDeleteTagMsgbox = ref(false);
+const showNewTagMsgbox = ref(false);
 
 // more menuitems
 const getMoreMenuItems = () => [
@@ -148,6 +168,8 @@ async function loadTags() {
       const index = allTags.value.findIndex(tag => tag.id === config.tag.id);
       selectTag(allTags.value[index >= 0 ? index : 0]);
     }
+  } else {
+    config.tag.id = null;
   }
 }
 
@@ -178,6 +200,37 @@ async function handleRenameTag() {
 function cancelRenameTag() {
   selectedTag.value.name = originalTagName.value; // Revert the name on the selected tag
   isRenamingTag.value = false;
+}
+
+function clickAddTag() {
+  showNewTagMsgbox.value = true;
+}
+
+async function clickNewTag(newTagName: string) {
+  if (!newTagName || newTagName.trim().length === 0) {
+    return;
+  }
+  const result = await createTag(newTagName);
+  if (result) {
+    showNewTagMsgbox.value = false;
+    await loadTags();
+    
+    // select the new tag
+    const newTag = allTags.value.find(tag => tag.name === newTagName);
+    if (newTag) {
+      selectTag(newTag);
+      nextTick(() => {
+        scrollToTag(newTag.id);
+      });
+    }
+  }
+}
+
+function scrollToTag(tagId: number) {
+  const tagElement = document.getElementById(`tag-${tagId}`);
+  if (tagElement) {
+    tagElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
 async function clickDeleteTag() {

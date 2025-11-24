@@ -79,7 +79,7 @@
     </template>
 
     <!-- Display message if no data are found -->
-    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else class="flex-1 flex flex-col items-center justify-center text-base-content/30">
       <IconCalendar class="w-8 h-8" />
       <span class="mt-2">{{ $t('tooltip.not_found.calendar') }}</span>
     </div>
@@ -114,6 +114,12 @@ const calendar_dates = ref([]);
 onMounted( () => {
   console.log('Calendar.vue mounted');
   getCalendarDates();
+
+  if (calendar_dates.value.length === 0) {
+    config.calendar.date = null;
+    config.calendar.month = null;
+    config.calendar.year = null;
+  }
 });
 
 watch(() => [config.calendar.isMonthly, config.calendar.sortingAsc], () => {

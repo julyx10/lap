@@ -22,14 +22,13 @@
             ]"
             @click="clickCameraMake(camera)"
           >
-            <!-- <component :is="camera.is_expanded ? IconFolderExpanded : IconFolder" class="mx-1 h-5  shrink-0" @click.stop="clickExpandCamera(camera)"/> -->
             <IconCamera
               :class="[
                 'mx-1 h-5 shrink-0 transition-transform', 
               ]"
               @click.stop="clickExpandCamera(camera)"
             />
-            <div class="flex-1 flex items-center overflow-hidden whitespace-pre text-ellipsis">
+            <div class="overflow-hidden whitespace-pre text-ellipsis">
               <span>{{ camera.make }}</span>
               <span class="text-xs text-base-content/30 ml-1">({{ camera.counts.reduce((a, b) => a + b, 0).toLocaleString() }})</span>
             </div>
@@ -43,8 +42,7 @@
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
-                <!-- <IconCircle class="mx-1 h-5 shrink-0" /> -->
-                <div class="flex-1 flex items-center px-1 whitespace-pre text-ellipsis overflow-hidden">
+                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
                   <span>{{ model }}</span>
                   <span class="text-xs text-base-content/30 ml-1">({{ camera.counts[index].toLocaleString() }})</span>
                 </div>
@@ -56,7 +54,7 @@
     </div>
 
     <!-- Display message if no data are found -->
-    <div v-else class="mt-10 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else class="flex-1 flex flex-col items-center justify-center text-base-content/30">
       <IconCamera class="w-8 h-8" />
       <span class="mt-2">{{ $t('tooltip.not_found.camera') }}</span>
     </div>
@@ -85,6 +83,11 @@ const cameras = ref([]);
 onMounted(async () => {
   if (cameras.value.length === 0) {
     await getCameras();
+
+    if (cameras.value.length === 0) {
+      config.camera.make = null;
+      config.camera.model = null;
+    }
 
     if(config.camera.make && config.camera.model) {
       let camera = cameras.value.find(camera => camera.make === config.camera.make)
