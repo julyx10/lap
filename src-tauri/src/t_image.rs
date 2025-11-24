@@ -1,3 +1,8 @@
+use arboard::Clipboard;
+use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader};
+use rusqlite::Result;
+use serde::{Deserialize, Serialize};
+use std::io::Cursor;
 /**
  * project: jc-photo
  * author:  julyxx
@@ -5,14 +10,8 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-
 use std::path::Path;
 use std::process::Command;
-use std::io::Cursor;
-use serde::{Deserialize, Serialize};
-use image::{DynamicImage, ImageFormat, ImageReader, GenericImageView};
-use rusqlite::Result;
-use arboard::Clipboard;
 
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
@@ -55,16 +54,19 @@ pub fn get_image_thumbnail(
 
     // Save the thumbnail to an in-memory buffer
     let mut buf = Vec::new();
-    
+
     if output_format == ImageFormat::Jpeg {
         // For JPEG, convert to RGB8 to remove alpha channel
         let rgb_image = adjusted_thumbnail.to_rgb8();
         match rgb_image.write_to(&mut Cursor::new(&mut buf), output_format) {
             Ok(()) => Ok(Some(buf)),
             Err(e) => {
-                eprintln!("Failed to write thumbnail to buffer as {:?}: {}", output_format, e);
+                eprintln!(
+                    "Failed to write thumbnail to buffer as {:?}: {}",
+                    output_format, e
+                );
                 Ok(None)
-            },
+            }
         }
     } else {
         // For PNG, keep RGBA8 to preserve alpha channel
@@ -72,9 +74,12 @@ pub fn get_image_thumbnail(
         match rgba_image.write_to(&mut Cursor::new(&mut buf), output_format) {
             Ok(()) => Ok(Some(buf)),
             Err(e) => {
-                eprintln!("Failed to write thumbnail to buffer as {:?}: {}", output_format, e);
+                eprintln!(
+                    "Failed to write thumbnail to buffer as {:?}: {}",
+                    output_format, e
+                );
                 Ok(None)
-            },
+            }
         }
     }
 }
@@ -99,7 +104,10 @@ pub fn print_image(image_path: &str) -> Result<(), String> {
     };
 
     if !output.status.success() {
-        return Err(format!("Failed to print image: {}", String::from_utf8_lossy(&output.stderr)));
+        return Err(format!(
+            "Failed to print image: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
     }
 
     Ok(())
@@ -132,7 +140,7 @@ pub struct EditParams {
     dest_file_path: String,
     #[serde(rename = "outputFormat")]
     output_format: String,
-    orientation: i32,   // exif orientation value
+    orientation: i32, // exif orientation value
     #[serde(rename = "flipHorizontal")]
     flip_horizontal: bool,
     #[serde(rename = "flipVertical")]
@@ -211,7 +219,7 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
         -90 => img = img.rotate270(),
         -180 => img = img.rotate180(),
         -270 => img = img.rotate90(),
-        _ => {},
+        _ => {}
     }
 
     // Crop
@@ -232,4 +240,46 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
     }
 
     Ok(img)
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_heic_thumbnail_with_sips(
+    file_path: &str,
+    thumbnail_size: u32,
+) -> Result<Option<Vec<u8>>, String> {
+    use std::fs;
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let temp_dir = std::env::temp_dir();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .subsec_nanos();
+    let temp_file = temp_dir.join(format!("thumb_{}.jpg", nanos));
+    let temp_output = temp_file.to_str().ok_or("Invalid temp path")?;
+
+    let output = Command::new("sips")
+        .arg("-Z")
+        .arg(thumbnail_size.to_string())
+        .arg("-s")
+        .arg("format")
+        .arg("jpeg")
+        .arg(file_path)
+        .arg("--out")
+        .arg(temp_output)
+        .output()
+        .map_err(|e| format!("Failed to run sips: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "sips failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    let data = fs::read(&temp_file).map_err(|e| format!("Failed to read temp file: {}", e))?;
+    let _ = fs::remove_file(temp_file);
+
+    Ok(Some(data))
 }

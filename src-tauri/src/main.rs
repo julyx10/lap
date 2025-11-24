@@ -11,13 +11,12 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-
 use tauri::Manager;
 
 mod t_cmds;
+mod t_image;
 mod t_sqlite;
 mod t_utils;
-mod t_image;
 mod t_video;
 
 /// The main function is the entry point for the Tauri application.
@@ -43,7 +42,7 @@ fn main() {
             //     let window = app.get_webview_window("main").unwrap();
             //     window.open_devtools();
             // }
-    
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -51,7 +50,7 @@ fn main() {
                 return;
             }
 
-            if let tauri::WindowEvent::CloseRequested { api, .. }  = event {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 // Prevent the window from closing immediately
                 api.prevent_close();
 
@@ -80,7 +79,6 @@ fn main() {
             t_cmds::edit_album,
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
-
             // folder
             t_cmds::select_folder,
             t_cmds::fetch_folder,
@@ -91,10 +89,10 @@ fn main() {
             t_cmds::copy_folder,
             t_cmds::delete_folder,
             t_cmds::reveal_folder,
-
             // file
-            t_cmds::get_db_count_and_sum,
-            t_cmds::get_db_files,
+            t_cmds::get_total_count_and_sum,
+            t_cmds::get_query_count_and_sum,
+            t_cmds::get_query_files,
             t_cmds::get_folder_files,
             t_cmds::get_folder_thumb_count,
             t_cmds::edit_image,
@@ -112,13 +110,11 @@ fn main() {
             t_cmds::get_file_image,
             t_cmds::set_file_rotate,
             t_cmds::get_file_has_tags,
-
             // favorite
             t_cmds::get_favorite_folders,
             t_cmds::get_folder_favorite,
             t_cmds::set_folder_favorite,
             t_cmds::set_file_favorite,
-
             // tag
             t_cmds::get_all_tags,
             t_cmds::get_tag_name,
@@ -128,19 +124,14 @@ fn main() {
             t_cmds::get_tags_for_file,
             t_cmds::add_tag_to_file,
             t_cmds::remove_tag_from_file,
-
             // calendar
             t_cmds::get_taken_dates,
-
             // camera
             t_cmds::get_camera_info,
-
             // location
             t_cmds::get_location_info,
-
             // print
             t_cmds::print_image,
-
             // settings
             t_cmds::get_package_info,
             t_cmds::get_build_time,

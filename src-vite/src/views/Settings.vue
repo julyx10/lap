@@ -278,7 +278,7 @@ import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { setTheme, getSlideShowInterval, formatFileSize } from '@/common/utils';
-import { getPackageInfo, getBuildTime, getStorageFileInfo, getDbCountAndSum } from '@/common/api';
+import { getPackageInfo, getBuildTime, getStorageFileInfo, getTotalCountAndSum } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -438,8 +438,8 @@ watch(() => config.settings.tabIndex, (newValue) => {
     getStorageFileInfo().then((file) => {
       storageFileInfo.value = file;
     });
-    // Get db file info
-    getDbCountAndSum().then((info) => {
+    // Get total files count and sum
+    getTotalCountAndSum().then((info) => {
       if(info) {
         [totalFileCount.value, totalFileSize.value] = info;
       }

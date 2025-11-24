@@ -1,3 +1,6 @@
+use crate::t_image;
+use crate::t_sqlite::{ACamera, AFile, AFolder, ALocation, ATag, AThumb, Album};
+use crate::t_utils;
 /**
  * project: jc-photo
  * author:  julyxx
@@ -5,11 +8,8 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-use base64::{ engine::general_purpose, Engine };
+use base64::{Engine, engine::general_purpose};
 use std::path::Path;
-use crate::t_sqlite::{Album, AFile, AFolder, AThumb, ATag, ACamera, ALocation};
-use crate::t_image;
-use crate::t_utils;
 use tokio;
 
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
@@ -26,8 +26,7 @@ pub fn get_all_albums(show_hidden_album: bool) -> Result<Vec<Album>, String> {
 /// get one album
 #[tauri::command]
 pub fn get_album(album_id: i64) -> Result<Album, String> {
-    Album::get_album_by_id(album_id)
-        .map_err(|e| format!("Error while getting one album: {}", e))
+    Album::get_album_by_id(album_id).map_err(|e| format!("Error while getting one album: {}", e))
 }
 
 /// add an album
@@ -39,7 +38,12 @@ pub fn add_album(folder_path: &str) -> Result<Album, String> {
 
 /// edit an album
 #[tauri::command]
-pub fn edit_album(id: i64, name: &str, description: &str, is_hidden: bool) -> Result<usize, String> {
+pub fn edit_album(
+    id: i64,
+    name: &str,
+    description: &str,
+    is_hidden: bool,
+) -> Result<usize, String> {
     let _ = Album::update_column(id, "name", &name)
         .map_err(|e| format!("Error while editing album with id {}: {}", id, e));
 
@@ -82,7 +86,7 @@ pub fn fetch_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode,
 /// count all files in a folder (include all sub-folders)
 #[tauri::command]
 pub fn count_folder(path: &str) -> (u64, u64, u64, u64, u64) {
-    t_utils::count_folder_files(path) 
+    t_utils::count_folder_files(path)
 }
 
 /// create a new folder
@@ -122,8 +126,8 @@ pub fn move_folder(folder_path: &str, new_album_id: i64, new_folder_path: &str) 
                 .map_err(|e| format!("Error while moving folder in DB: {}", e));
             Some(new_path)
         }
-        None => None
-    } 
+        None => None,
+    }
 }
 
 /// copy a folder
@@ -151,47 +155,105 @@ pub fn reveal_folder(folder_path: &str) -> Result<(), String> {
 
 // file
 
-/// get db file count and sum
+/// get total file count and sum
 #[tauri::command]
-pub fn get_db_count_and_sum() -> Result<(i64, i64), String> {
-    AFile::get_count_and_sum()
+pub fn get_total_count_and_sum() -> Result<(i64, i64), String> {
+    AFile::get_total_count_and_sum()
         .map_err(|e| format!("Error while getting all files count: {}", e))
 }
 
-/// get db files
+/// get query count and sum
 #[tauri::command]
-pub fn get_db_files(
-    search_text: &str, search_file_type: i64,
-    sort_type: i64, sort_order: i64,
+pub fn get_query_count_and_sum(
+    search_text: &str,
+    search_file_type: i64,
     search_folder: &str,
-    start_date: &str, end_date: &str,
-    make: &str, model: &str,
-    location_admin1: &str, location_name: &str,
-    is_favorite: bool, is_show_hidden: bool,
+    start_date: &str,
+    end_date: &str,
+    make: &str,
+    model: &str,
+    location_admin1: &str,
+    location_name: &str,
+    is_favorite: bool,
+    is_show_hidden: bool,
     tag_id: i64,
-    offset: i64, page_size: i64
-) -> Result<Vec<AFile>, String> {
-    AFile::get_files(
-        search_text, search_file_type,
-        sort_type, sort_order,
+) -> Result<(i64, i64), String> {
+    AFile::get_query_count_and_sum(
+        search_text,
+        search_file_type,
         search_folder,
-        start_date, end_date,
-        make, model, 
-        location_admin1, location_name,
-        is_favorite, is_show_hidden, 
+        start_date,
+        end_date,
+        make,
+        model,
+        location_admin1,
+        location_name,
+        is_favorite,
+        is_show_hidden,
         tag_id,
-        offset, page_size
-    ).map_err(|e| format!("Error while getting all files: {}", e))
+    )
+    .map_err(|e| format!("Error while getting query files count: {}", e))
+}
+
+/// get query file
+#[tauri::command]
+pub fn get_query_files(
+    search_text: &str,
+    search_file_type: i64,
+    sort_type: i64,
+    sort_order: i64,
+    search_folder: &str,
+    start_date: &str,
+    end_date: &str,
+    make: &str,
+    model: &str,
+    location_admin1: &str,
+    location_name: &str,
+    is_favorite: bool,
+    is_show_hidden: bool,
+    tag_id: i64,
+    offset: i64,
+    page_size: i64,
+) -> Result<Vec<AFile>, String> {
+    AFile::get_query_files(
+        search_text,
+        search_file_type,
+        sort_type,
+        sort_order,
+        search_folder,
+        start_date,
+        end_date,
+        make,
+        model,
+        location_admin1,
+        location_name,
+        is_favorite,
+        is_show_hidden,
+        tag_id,
+        offset,
+        page_size,
+    )
+    .map_err(|e| format!("Error while getting all files: {}", e))
 }
 
 /// get all files from the folder
 #[tauri::command]
 pub fn get_folder_files(
-    search_text: &str, search_file_type: i64,
-    sort_type: i64, sort_order: i64,
-    folder_id: i64, folder_path: &str
+    search_text: &str,
+    search_file_type: i64,
+    sort_type: i64,
+    sort_order: i64,
+    folder_id: i64,
+    folder_path: &str,
 ) -> Vec<AFile> {
-    t_utils::get_folder_files(search_text, search_file_type, sort_type, sort_order, folder_id, folder_path)
+    t_utils::get_folder_files(
+        search_text,
+        search_file_type,
+        sort_type,
+        sort_order,
+        folder_id,
+        folder_path,
+    )
 }
 
 /// get the thumbnail count of the folder
@@ -206,17 +268,17 @@ pub fn get_folder_thumb_count(search_text: &str, search_file_type: i64, folder_i
 /// edit an image
 #[tauri::command]
 pub async fn edit_image(params: t_image::EditParams) -> Result<bool, String> {
-    tokio::task::spawn_blocking(move || {
-        Ok(t_image::edit_image(params))
-    }).await.map_err(|e| format!("Task error: {}", e))?
+    tokio::task::spawn_blocking(move || Ok(t_image::edit_image(params)))
+        .await
+        .map_err(|e| format!("Task error: {}", e))?
 }
 
 /// copy an edited image to clipboard
 #[tauri::command]
 pub async fn copy_edited_image(params: t_image::EditParams) -> Result<bool, String> {
-    tokio::task::spawn_blocking(move || {
-        Ok(t_image::copy_edited_image_to_clipboard(params))
-    }).await.map_err(|e| format!("Task error: {}", e))?
+    tokio::task::spawn_blocking(move || Ok(t_image::copy_edited_image_to_clipboard(params)))
+        .await
+        .map_err(|e| format!("Task error: {}", e))?
 }
 
 /// copy image to clipboard
@@ -228,7 +290,9 @@ pub async fn copy_image(file_path: String) -> Result<bool, String> {
         } else {
             Err(format!("Failed to open image: {}", file_path))
         }
-    }).await.map_err(|e| format!("Task error: {}", e))?
+    })
+    .await
+    .map_err(|e| format!("Task error: {}", e))?
 }
 
 /// rename a file
@@ -236,7 +300,6 @@ pub async fn copy_image(file_path: String) -> Result<bool, String> {
 pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Option<String> {
     match t_utils::rename_file(file_path, new_name) {
         Some(new_file_path) => {
-
             let name_pinyin = t_utils::convert_to_pinyin(&new_name);
             if let Err(e) = AFile::update_column(file_id, "name_pinyin", &name_pinyin) {
                 eprintln!("Error while renaming file in DB: {}", e);
@@ -244,22 +307,25 @@ pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Option<Stri
             }
 
             match AFile::update_column(file_id, "name", &new_name) {
-                Ok(_) => {
-                    Some(new_file_path)
-                },
+                Ok(_) => Some(new_file_path),
                 Err(e) => {
                     eprintln!("Error while renaming file in DB: {}", e);
                     None
                 }
             }
-        },
-        None => None
+        }
+        None => None,
     }
 }
 
 /// move a file to dest folder
 #[tauri::command]
-pub fn move_file(file_id: i64, file_path: &str, new_folder_id: i64, new_folder_path: &str) -> Option<String> {
+pub fn move_file(
+    file_id: i64,
+    file_path: &str,
+    new_folder_id: i64,
+    new_folder_path: &str,
+) -> Option<String> {
     let moved_file = t_utils::move_file(file_path, new_folder_path);
     match moved_file {
         Some(new_path) => {
@@ -285,16 +351,14 @@ pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {
     trash::delete(&file_path).map_err(|e| e.to_string())?;
 
     // delete the file from db
-    AFile::delete(file_id)
-        .map_err(|e| format!("Error while deleting file from DB: {}", e))
+    AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))
 }
 
 /// delete a file from db
 #[tauri::command]
 pub fn delete_db_file(file_id: i64) -> Result<usize, String> {
     // delete the file from db
-    AFile::delete(file_id)
-        .map_err(|e| format!("Error while deleting file from DB: {}", e))
+    AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))
 }
 
 /// edit a file's comment
@@ -307,22 +371,28 @@ pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
 /// get a file's thumb image
 #[tauri::command]
 pub async fn get_file_thumb(
-    file_id: i64, 
-    file_path: &str, 
-    file_type: i64, 
-    orientation: i32, 
+    file_id: i64,
+    file_path: &str,
+    file_type: i64,
+    orientation: i32,
     thumbnail_size: u32,
-    force_regenerate: bool
+    force_regenerate: bool,
 ) -> Result<Option<AThumb>, String> {
-    AThumb::add_to_db(file_id, file_path, file_type, orientation, thumbnail_size, force_regenerate)
-        .map_err(|e| format!("Error while adding thumbnail to DB: {}", e))
+    AThumb::add_to_db(
+        file_id,
+        file_path,
+        file_type,
+        orientation,
+        thumbnail_size,
+        force_regenerate,
+    )
+    .map_err(|e| format!("Error while adding thumbnail to DB: {}", e))
 }
 
 /// get a file's info
 #[tauri::command]
 pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
-    AFile::get_file_info(file_id)
-        .map_err(|e| format!("Error while getting file info: {}", e))
+    AFile::get_file_info(file_id).map_err(|e| format!("Error while getting file info: {}", e))
 }
 
 /// update a file's info
@@ -347,7 +417,6 @@ pub fn set_file_rotate(file_id: i64, rotate: i32) -> Result<usize, String> {
     AFile::update_column(file_id, "rotate", &rotate)
         .map_err(|e| format!("Error while setting file rotate: {}", e))
 }
-
 
 /// get a file's has_tags status (true or false)
 #[tauri::command]
@@ -396,36 +465,31 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 /// get all tags
 #[tauri::command]
 pub fn get_all_tags(is_show_hidden: bool) -> Result<Vec<ATag>, String> {
-    ATag::get_all(is_show_hidden)
-        .map_err(|e| format!("Error while getting all tags: {}", e))
+    ATag::get_all(is_show_hidden).map_err(|e| format!("Error while getting all tags: {}", e))
 }
 
 /// get tag name by id
 #[tauri::command]
 pub fn get_tag_name(tag_id: i64) -> Result<String, String> {
-    ATag::get_name(tag_id)
-        .map_err(|e| format!("Error while getting tag name: {}", e))
+    ATag::get_name(tag_id).map_err(|e| format!("Error while getting tag name: {}", e))
 }
 
 /// create a new tag
 #[tauri::command]
 pub fn create_tag(name: &str) -> Result<ATag, String> {
-    ATag::add(name)
-        .map_err(|e| format!("Error while creating tag: {}", e))
+    ATag::add(name).map_err(|e| format!("Error while creating tag: {}", e))
 }
 
 /// rename a tag
 #[tauri::command]
 pub fn rename_tag(tag_id: i64, new_name: &str) -> Result<usize, String> {
-    ATag::rename(tag_id, new_name)
-        .map_err(|e| format!("Error while renaming tag: {}", e))
+    ATag::rename(tag_id, new_name).map_err(|e| format!("Error while renaming tag: {}", e))
 }
 
 /// delete a tag
 #[tauri::command]
 pub fn delete_tag(tag_id: i64) -> Result<usize, String> {
-    ATag::delete(tag_id)
-        .map_err(|e| format!("Error while deleting tag: {}", e))
+    ATag::delete(tag_id).map_err(|e| format!("Error while deleting tag: {}", e))
 }
 
 /// get all tags for a specific file
@@ -453,7 +517,10 @@ pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> 
 
 /// get camera's taken dates
 #[tauri::command]
-pub fn get_taken_dates(ascending: bool, is_show_hidden: bool) -> Result<Vec<(String, i64)>, String> {
+pub fn get_taken_dates(
+    ascending: bool,
+    is_show_hidden: bool,
+) -> Result<Vec<(String, i64)>, String> {
     AFile::get_taken_dates(ascending, is_show_hidden)
         .map_err(|e| format!("Error while getting taken dates: {}", e))
 }
@@ -481,8 +548,7 @@ pub fn get_location_info(is_show_hidden: bool) -> Result<Vec<ALocation>, String>
 /// print an image: uses platform-specific commands to print an image.
 #[tauri::command]
 pub fn print_image(image_path: &str) -> Result<(), String> {
-    t_image::print_image(image_path)
-        .map_err(|e| format!("Error while printing image: {}", e))
+    t_image::print_image(image_path).map_err(|e| format!("Error while printing image: {}", e))
 }
 
 // settings

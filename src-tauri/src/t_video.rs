@@ -10,7 +10,6 @@ use std::collections::HashMap;
  * date:    2025-08-19
  */
 use std::io::Cursor;
-
 /// Get video dimensions using ffmpeg
 pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     ffmpeg_next::init().map_err(|e| format!("ffmpeg init error: {:?}", e))?;
@@ -51,18 +50,6 @@ pub fn get_video_thumbnail(
     file_path: &str,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
-    // Check for HEIC/HEIF on macOS and use sips
-    #[cfg(target_os = "macos")]
-    {
-        let path = std::path::Path::new(file_path);
-        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-            let ext = ext.to_lowercase();
-            if ext == "heic" || ext == "heif" {
-                return get_heic_thumbnail_with_sips(file_path, thumbnail_size);
-            }
-        }
-    }
-
     ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
 
     let mut ictx =
@@ -146,6 +133,9 @@ pub fn get_video_thumbnail(
                 90 => thumbnail.rotate90(),
                 180 => thumbnail.rotate180(),
                 270 => thumbnail.rotate270(),
+                -90 => thumbnail.rotate270(),
+                -180 => thumbnail.rotate180(),
+                -270 => thumbnail.rotate90(),
                 _ => thumbnail,
             };
 
@@ -320,46 +310,4 @@ fn parse_apple_iso6709(raw: &str, m: &mut VideoMetadata) {
     if parts.len() >= 3 {
         m.gps_altitude = parts[2].parse().ok();
     }
-}
-
-#[cfg(target_os = "macos")]
-fn get_heic_thumbnail_with_sips(
-    file_path: &str,
-    thumbnail_size: u32,
-) -> Result<Option<Vec<u8>>, String> {
-    use std::fs;
-    use std::process::Command;
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let temp_dir = std::env::temp_dir();
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .subsec_nanos();
-    let temp_file = temp_dir.join(format!("thumb_{}.jpg", nanos));
-    let temp_output = temp_file.to_str().ok_or("Invalid temp path")?;
-
-    let output = Command::new("sips")
-        .arg("-Z")
-        .arg(thumbnail_size.to_string())
-        .arg("-s")
-        .arg("format")
-        .arg("jpeg")
-        .arg(file_path)
-        .arg("--out")
-        .arg(temp_output)
-        .output()
-        .map_err(|e| format!("Failed to run sips: {}", e))?;
-
-    if !output.status.success() {
-        return Err(format!(
-            "sips failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
-    }
-
-    let data = fs::read(&temp_file).map_err(|e| format!("Failed to read temp file: {}", e))?;
-    let _ = fs::remove_file(temp_file);
-
-    Ok(Some(data))
 }

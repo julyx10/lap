@@ -3,7 +3,7 @@ use crate::t_utils;
 use crate::t_video;
 use base64::{Engine, engine::general_purpose};
 use exif::{In, Reader, Tag, Value};
-use rusqlite::{Connection, OptionalExtension, Result, params};
+use rusqlite::{Connection, OptionalExtension, Result, ToSql, params};
 use serde::{Deserialize, Serialize};
 /**
  * project: jc-photo
@@ -1228,13 +1228,136 @@ impl AFile {
     }
 
     // get total count and size of files
-    pub fn get_count_and_sum() -> Result<(i64, i64), String> {
+    pub fn get_total_count_and_sum() -> Result<(i64, i64), String> {
         let sql = format!("{}", Self::build_count_query());
         Self::query_count_and_sum(&sql, &[])
     }
 
-    /// get files
-    pub fn get_files(
+    // helper to build search query conditions and params
+    fn build_search_query(
+        search_text: &str,
+        search_file_type: i64,
+        search_folder: &str,
+        start_date: &str,
+        end_date: &str,
+        make: &str,
+        model: &str,
+        location_admin1: &str,
+        location_name: &str,
+        is_favorite: bool,
+        is_show_hidden: bool,
+        tag_id: i64,
+    ) -> (String, Vec<Box<dyn ToSql>>) {
+        let mut conditions = Vec::new();
+        let mut params: Vec<Box<dyn ToSql>> = Vec::new();
+
+        if !search_text.is_empty() {
+            conditions.push("a.name LIKE ? COLLATE NOCASE");
+            params.push(Box::new(format!("%{}%", search_text)));
+        }
+
+        if search_file_type > 0 {
+            conditions.push("a.file_type = ?");
+            params.push(Box::new(search_file_type));
+        }
+
+        if !search_folder.is_empty() {
+            // Match path that starts with search_folder followed by '/' or end of string
+            conditions.push("(b.path = ? OR b.path LIKE ?)");
+            params.push(Box::new(search_folder.to_string()));
+            params.push(Box::new(format!("{}/%", search_folder)));
+        }
+
+        if !start_date.is_empty() {
+            if end_date.is_empty() {
+                conditions.push("a.taken_date = ?");
+                params.push(Box::new(start_date.to_string()));
+            } else {
+                conditions.push("a.taken_date >= ? AND a.taken_date <= ?");
+                params.push(Box::new(start_date.to_string()));
+                params.push(Box::new(end_date.to_string()));
+            }
+        }
+
+        if !make.is_empty() {
+            conditions.push("UPPER(a.e_make) = UPPER(?)");
+            params.push(Box::new(make.to_string()));
+            if !model.is_empty() {
+                conditions.push("a.e_model = ?");
+                params.push(Box::new(model.to_string()));
+            }
+        }
+
+        if !location_admin1.is_empty() {
+            conditions.push("a.geo_admin1 = ?");
+            params.push(Box::new(location_admin1.to_string()));
+            if !location_name.is_empty() {
+                conditions.push("a.geo_name = ?");
+                params.push(Box::new(location_name.to_string()));
+            }
+        }
+
+        if is_favorite {
+            conditions.push("a.is_favorite = 1");
+        }
+
+        if tag_id > 0 {
+            conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
+            params.push(Box::new(tag_id));
+        }
+
+        if !is_show_hidden {
+            conditions.push("(c.is_hidden IS NULL OR c.is_hidden = 0)");
+        }
+
+        let where_clause = if !conditions.is_empty() {
+            format!(" WHERE {}", conditions.join(" AND "))
+        } else {
+            String::new()
+        };
+
+        (where_clause, params)
+    }
+
+    // get query count and sum
+    pub fn get_query_count_and_sum(
+        search_text: &str,
+        search_file_type: i64,
+        search_folder: &str,
+        start_date: &str,
+        end_date: &str,
+        make: &str,
+        model: &str,
+        location_admin1: &str,
+        location_name: &str,
+        is_favorite: bool,
+        is_show_hidden: bool,
+        tag_id: i64,
+    ) -> Result<(i64, i64), String> {
+        let (where_clause, params) = Self::build_search_query(
+            search_text,
+            search_file_type,
+            search_folder,
+            start_date,
+            end_date,
+            make,
+            model,
+            location_admin1,
+            location_name,
+            is_favorite,
+            is_show_hidden,
+            tag_id,
+        );
+
+        let mut sql = Self::build_count_query();
+        sql.push_str(&where_clause);
+
+        let final_params: Vec<&dyn ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        Self::query_count_and_sum(&sql, &final_params)
+    }
+
+    // get query files
+    pub fn get_query_files(
         search_text: &str,
         search_file_type: i64,
         sort_type: i64,
@@ -1252,76 +1375,23 @@ impl AFile {
         offset: i64,
         page_size: i64,
     ) -> Result<Vec<Self>, String> {
-        // conditions
-        let mut conditions = Vec::new();
-        let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
-
-        let like_pattern = format!("%{}%", search_text);
-        if !search_text.is_empty() {
-            conditions.push("a.name LIKE ? COLLATE NOCASE");
-            params.push(&like_pattern);
-        }
-
-        if search_file_type > 0 {
-            conditions.push("a.file_type = ?");
-            params.push(&search_file_type);
-        }
-
-        let folder_exact_pattern = format!("{}/%", search_folder);
-        if !search_folder.is_empty() {
-            // Match path that starts with search_folder followed by '/' or end of string
-            conditions.push("(b.path = ? OR b.path LIKE ?)");
-            params.push(&search_folder);
-            params.push(&folder_exact_pattern);
-        }
-
-        if !start_date.is_empty() {
-            if end_date.is_empty() {
-                conditions.push("a.taken_date = ?");
-                params.push(&start_date);
-            } else {
-                conditions.push("a.taken_date >= ? AND a.taken_date <= ?");
-                params.push(&start_date);
-                params.push(&end_date);
-            }
-        }
-
-        if !make.is_empty() {
-            conditions.push("UPPER(a.e_make) = UPPER(?)");
-            params.push(&make);
-            if !model.is_empty() {
-                conditions.push("a.e_model = ?");
-                params.push(&model);
-            }
-        }
-
-        if !location_admin1.is_empty() {
-            conditions.push("a.geo_admin1 = ?");
-            params.push(&location_admin1);
-            if !location_name.is_empty() {
-                conditions.push("a.geo_name = ?");
-                params.push(&location_name);
-            }
-        }
-
-        if is_favorite {
-            conditions.push("a.is_favorite = 1");
-        }
-
-        if tag_id > 0 {
-            conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
-            params.push(&tag_id);
-        }
-
-        if !is_show_hidden {
-            conditions.push("(c.is_hidden IS NULL OR c.is_hidden = 0)");
-        }
+        let (where_clause, params) = Self::build_search_query(
+            search_text,
+            search_file_type,
+            search_folder,
+            start_date,
+            end_date,
+            make,
+            model,
+            location_admin1,
+            location_name,
+            is_favorite,
+            is_show_hidden,
+            tag_id,
+        );
 
         let mut query = Self::build_base_query();
-        if !conditions.is_empty() {
-            query.push_str(" WHERE ");
-            query.push_str(&conditions.join(" AND "));
-        }
+        query.push_str(&where_clause);
 
         // sort
         match sort_type {
@@ -1342,10 +1412,12 @@ impl AFile {
 
         // paging
         query.push_str(" LIMIT ? OFFSET ?");
-        params.push(&page_size);
-        params.push(&offset);
 
-        Self::query_files(&query, &params)
+        let mut final_params: Vec<&dyn ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&page_size);
+        final_params.push(&offset);
+
+        Self::query_files(&query, &final_params)
     }
 }
 
@@ -1379,6 +1451,13 @@ impl AThumb {
                     match ext.to_lowercase().as_str() {
                         "heic" | "heif" => {
                             // heic/heif
+                            #[cfg(target_os = "macos")]
+                            match t_image::get_heic_thumbnail_with_sips(file_path, thumbnail_size) {
+                                Ok(Some(data)) => (Some(data), 0),
+                                Ok(None) => (None, 1), // empty thumb
+                                Err(_) => (None, 1),   // error
+                            }
+                            #[cfg(not(target_os = "macos"))]
                             match t_video::get_video_thumbnail(file_path, thumbnail_size) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1), // empty thumb

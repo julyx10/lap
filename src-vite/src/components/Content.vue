@@ -247,7 +247,7 @@
         <IconFileSearch class="t-icon-size-xs" />
         <span >
           {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}
-          {{ hasMoreFiles ? '...' : '' }}
+          <!-- {{ hasMoreFiles ? '...' : '' }} -->
         </span>
       </div>
 
@@ -376,7 +376,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { getAlbum, getDbFiles, getFolderFiles, getFolderThumbCount, getTagName,
+import { getAlbum, getQueryCountAndSum, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile } from '@/common/api';  
 import { config } from '@/common/config';
@@ -474,7 +474,7 @@ const gridViewDiv = ref<HTMLDivElement | null>(null);
 // file list
 const fileList = ref([]);
 const fileListOffset = ref(0); // offset of the file list (for pagination)
-const hasMoreFiles = ref(true); // has more files to load (for pagination)
+// const hasMoreFiles = ref(true); // has more files to load (for pagination)
 const totalFileCount = ref(0);    // total files' count
 const totalFileSize = ref(0);     // total files' size
 
@@ -768,9 +768,9 @@ function handleScroll() {
 }
 
 function handleNextPage() {
-  if (hasMoreFiles.value) {
-    fileListOffset.value += config.content.pageSize;
-  }
+//   if (hasMoreFiles.value) {
+//     fileListOffset.value += config.content.pageSize;
+//   }
 }
 
 // Keyboard navigation actions
@@ -919,10 +919,10 @@ watch(
 );
 
 // watch for file list size changes
-watch(() => fileList.value.length, (newValue) => {
-  totalFileCount.value = newValue;
-  totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
-});
+// watch(() => fileList.value.length, (newValue) => {
+  // totalFileCount.value = newValue;
+  // totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+// });
 
 // watch for file list offset
 watch(() => fileListOffset.value, (newValue) => {
@@ -960,12 +960,15 @@ function toggleGridViewLayout() {
   filmStripViewZoomFit.value = true;
 }
 
+// get file list 
 async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 
-  const newFiles = await getDbFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset);
-  hasMoreFiles.value = newFiles.length === config.content.pageSize;
-
+  const newFiles = await getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset);
+  // hasMoreFiles.value = newFiles.length === config.content.pageSize;
+  
   if (offset === 0) {
     fileList.value = newFiles;
+    // get query count and sum
+    [totalFileCount.value, totalFileSize.value] = await getQueryCountAndSum(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId);
   } else {
     fileList.value.push(...newFiles);
   }
@@ -991,7 +994,9 @@ async function updateContent() {
           contentTitle.value = album.name + getRelativePath(config.album.folderPath, album.path);
         };
         fileList.value = await getFolderFiles(config.album.folderId, config.album.folderPath);
-        hasMoreFiles.value = false;  // getFolderFiles always get all files
+        totalFileCount.value = fileList.value.length;
+        totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+        // hasMoreFiles.value = false;  // getFolderFiles always get all files
 
         // get the thumbnail count
         await getFolderThumbCount(config.album.folderId).then(count => {

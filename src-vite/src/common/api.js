@@ -262,23 +262,49 @@ export async function revealFolder(folderPath) {
 
 // files
 
-// get db files count and sum
-export async function getDbCountAndSum() {
+// get total files count and sum
+export async function getTotalCountAndSum() {
   try {
-    const result = await invoke('get_db_count_and_sum');
+    const result = await invoke('get_total_count_and_sum');
     if(result) {
       return result;
     };
   } catch (error) {
-    console.error('getDbCountAndSum error:', error);
+    console.error('getTotalCountAndSum error:', error);
   }
   return null;
 }
 
-/// get all files from db (with pagination)
-export async function getDbFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) {
+/// get query files count and sum
+export async function getQueryCountAndSum(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId) {
   try {
-    const files = await invoke('get_db_files', {
+    const result = await invoke('get_query_count_and_sum', {
+      searchText: config.search.text, 
+      searchFileType: config.search.fileType,
+      searchFolder,
+      startDate, 
+      endDate,
+      make, 
+      model,
+      locationAdmin1,
+      locationName,
+      isFavorite, 
+      isShowHidden: false,
+      tagId,
+    });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getQueryCountAndSum error:', error);
+  }
+  return null;
+}
+
+/// get query files from db (with pagination)
+export async function getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) {
+  try {
+    const files = await invoke('get_query_files', {
       searchText: config.search.text, 
       searchFileType: config.search.fileType,
       sortType: config.search.sortType,
@@ -300,7 +326,7 @@ export async function getDbFiles(searchFolder, startDate, endDate, make, model, 
       return files;
     };
   } catch (error) {
-    console.error('getAllFiles error:', error);
+    console.error('getQueryFiles error:', error);
   }
   return null;
 }
