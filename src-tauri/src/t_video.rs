@@ -1,3 +1,7 @@
+use ffmpeg_next as ffmpeg;
+use image::{DynamicImage, ImageFormat, RgbImage};
+use rusqlite::Result;
+use std::collections::HashMap;
 /**
  * project: jc-photo
  * author:  julyxx
@@ -6,10 +10,6 @@
  * date:    2025-08-19
  */
 use std::io::Cursor;
-use std::collections::HashMap;
-use image::{DynamicImage, RgbImage, ImageFormat};
-use ffmpeg_next as ffmpeg;
-use rusqlite::Result;
 
 /// Get video dimensions using ffmpeg
 pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
@@ -23,7 +23,8 @@ pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
             let context = ffmpeg_next::codec::context::Context::from_parameters(input.parameters())
                 .map_err(|e| format!("Failed to get codec context: {}", e))?;
             let decoder = context.decoder();
-            let video = decoder.video()
+            let video = decoder
+                .video()
                 .map_err(|e| format!("Failed to get video decoder: {}", e))?;
             Ok((video.width(), video.height()))
         }
@@ -34,10 +35,11 @@ pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
 /// get video duration using ffmpeg
 pub fn get_video_duration(file_path: &str) -> Result<u64, String> {
     ffmpeg_next::init().map_err(|e| format!("ffmpeg init error: {:?}", e))?;
-    let ictx = ffmpeg_next::format::input(file_path).map_err(|e| format!("Failed to open file: {e}"))?;
+    let ictx =
+        ffmpeg_next::format::input(file_path).map_err(|e| format!("Failed to open file: {e}"))?;
     let duration = ictx.duration();
     let duration_seconds = if duration > 0 {
-        (duration as f64 / ffmpeg_next::ffi::AV_TIME_BASE as f64) as u64  // Convert from AV_TIME_BASE to seconds
+        (duration as f64 / ffmpeg_next::ffi::AV_TIME_BASE as f64) as u64 // Convert from AV_TIME_BASE to seconds
     } else {
         0
     };
@@ -49,10 +51,22 @@ pub fn get_video_thumbnail(
     file_path: &str,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
+    // Check for HEIC/HEIF on macOS and use sips
+    #[cfg(target_os = "macos")]
+    {
+        let path = std::path::Path::new(file_path);
+        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            let ext = ext.to_lowercase();
+            if ext == "heic" || ext == "heif" {
+                return get_heic_thumbnail_with_sips(file_path, thumbnail_size);
+            }
+        }
+    }
+
     ffmpeg::init().map_err(|e| format!("ffmpeg init error: {e}"))?;
 
-    let mut ictx = ffmpeg::format::input(file_path)
-        .map_err(|e| format!("Failed to open file: {e}"))?;
+    let mut ictx =
+        ffmpeg::format::input(file_path).map_err(|e| format!("Failed to open file: {e}"))?;
 
     let input_stream = ictx
         .streams()
@@ -76,7 +90,7 @@ pub fn get_video_thumbnail(
     // For video files, seek to 10% of the duration
     // For HEIC files, we may not have a duration, so we skip seeking
     if ictx.duration() > 0 {
-        ictx.seek(ictx.duration() / 10 , ..)
+        ictx.seek(ictx.duration() / 10, ..)
             .map_err(|e| format!("Seek error: {e}"))?;
     }
 
@@ -119,10 +133,10 @@ pub fn get_video_thumbnail(
                 let end = start + (width as usize * 3);
                 buf.extend_from_slice(&rgb_frame.data(0)[start..end]);
             }
-            
+
             // Create DynamicImage
-            let rgb_image = RgbImage::from_raw(width, height, buf)
-                .ok_or("Failed to create image buffer")?;
+            let rgb_image =
+                RgbImage::from_raw(width, height, buf).ok_or("Failed to create image buffer")?;
             let dyn_image = DynamicImage::ImageRgb8(rgb_image);
 
             // Resize while keeping aspect ratio
@@ -163,8 +177,8 @@ pub struct VideoMetadata {
 pub fn get_video_metadata(file_path: &str) -> Result<VideoMetadata, String> {
     ffmpeg::init().map_err(|e| format!("ffmpeg init error: {:?}", e))?;
 
-    let ictx = ffmpeg::format::input(&file_path)
-        .map_err(|e| format!("Failed to open file: {:?}", e))?;
+    let ictx =
+        ffmpeg::format::input(&file_path).map_err(|e| format!("Failed to open file: {:?}", e))?;
 
     let mut meta = HashMap::<String, String>::new();
 
@@ -221,12 +235,12 @@ pub fn get_video_metadata(file_path: &str) -> Result<VideoMetadata, String> {
     m.e_date_time = first_exist(
         &meta,
         &[
-            "com.apple.quicktime.creationdate",          // Apple
-            "com.android.capture.framedate",             // Android
-            "creation_time",                             // ffmpeg standard
-            "media_time",                                // Some MP4 variants
-            "date",                                      // Some MKV
-            "datetimeoriginal",                          // EXIF pulled through ffmpeg
+            "com.apple.quicktime.creationdate", // Apple
+            "com.android.capture.framedate",    // Android
+            "creation_time",                    // ffmpeg standard
+            "media_time",                       // Some MP4 variants
+            "date",                             // Some MKV
+            "datetimeoriginal",                 // EXIF pulled through ffmpeg
         ],
     );
 
@@ -238,9 +252,9 @@ pub fn get_video_metadata(file_path: &str) -> Result<VideoMetadata, String> {
     if let Some(loc) = first_exist(
         &meta,
         &[
-            "location",                                  // generic
+            "location", // generic
             "location-eng",
-            "com.apple.quicktime.location.iso6709",      // Apple
+            "com.apple.quicktime.location.iso6709", // Apple
         ],
     ) {
         parse_apple_iso6709(&loc, &mut m);
@@ -306,4 +320,46 @@ fn parse_apple_iso6709(raw: &str, m: &mut VideoMetadata) {
     if parts.len() >= 3 {
         m.gps_altitude = parts[2].parse().ok();
     }
+}
+
+#[cfg(target_os = "macos")]
+fn get_heic_thumbnail_with_sips(
+    file_path: &str,
+    thumbnail_size: u32,
+) -> Result<Option<Vec<u8>>, String> {
+    use std::fs;
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let temp_dir = std::env::temp_dir();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .subsec_nanos();
+    let temp_file = temp_dir.join(format!("thumb_{}.jpg", nanos));
+    let temp_output = temp_file.to_str().ok_or("Invalid temp path")?;
+
+    let output = Command::new("sips")
+        .arg("-Z")
+        .arg(thumbnail_size.to_string())
+        .arg("-s")
+        .arg("format")
+        .arg("jpeg")
+        .arg(file_path)
+        .arg("--out")
+        .arg(temp_output)
+        .output()
+        .map_err(|e| format!("Failed to run sips: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "sips failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    let data = fs::read(&temp_file).map_err(|e| format!("Failed to read temp file: {}", e))?;
+    let _ = fs::remove_file(temp_file);
+
+    Ok(Some(data))
 }
