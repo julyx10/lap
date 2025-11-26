@@ -213,7 +213,7 @@ pub fn get_query_files(
     is_show_hidden: bool,
     tag_id: i64,
     offset: i64,
-    page_size: i64,
+    limit: i64,
 ) -> Result<Vec<AFile>, String> {
     AFile::get_query_files(
         search_text,
@@ -231,7 +231,7 @@ pub fn get_query_files(
         is_show_hidden,
         tag_id,
         offset,
-        page_size,
+        limit,
     )
     .map_err(|e| format!("Error while getting all files: {}", e))
 }
@@ -368,7 +368,7 @@ pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
         .map_err(|e| format!("Error while editing file comment: {}", e))
 }
 
-/// get a file's thumb image
+/// get a file's thumb image, if not exist, create a new one
 #[tauri::command]
 pub async fn get_file_thumb(
     file_id: i64,
@@ -378,7 +378,7 @@ pub async fn get_file_thumb(
     thumbnail_size: u32,
     force_regenerate: bool,
 ) -> Result<Option<AThumb>, String> {
-    AThumb::add_to_db(
+    AThumb::get_or_create_thumb(
         file_id,
         file_path,
         file_type,
@@ -386,7 +386,7 @@ pub async fn get_file_thumb(
         thumbnail_size,
         force_regenerate,
     )
-    .map_err(|e| format!("Error while adding thumbnail to DB: {}", e))
+    .map_err(|e| format!("Error while getting or creating thumbnail: {}", e))
 }
 
 /// get a file's info

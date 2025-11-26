@@ -1373,7 +1373,7 @@ impl AFile {
         is_show_hidden: bool,
         tag_id: i64,
         offset: i64,
-        page_size: i64,
+        limit: i64,
     ) -> Result<Vec<Self>, String> {
         let (where_clause, params) = Self::build_search_query(
             search_text,
@@ -1414,7 +1414,7 @@ impl AFile {
         query.push_str(" LIMIT ? OFFSET ?");
 
         let mut final_params: Vec<&dyn ToSql> = params.iter().map(|p| p.as_ref()).collect();
-        final_params.push(&page_size);
+        final_params.push(&limit);
         final_params.push(&offset);
 
         Self::query_files(&query, &final_params)
@@ -1541,8 +1541,8 @@ impl AThumb {
         Ok(result)
     }
 
-    /// insert a thumbnail into db if not exists
-    pub fn add_to_db(
+    /// get or create a thumbnail
+    pub fn get_or_create_thumb(
         file_id: i64,
         file_path: &str,
         file_type: i64,

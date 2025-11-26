@@ -114,7 +114,7 @@
           <!-- grid view -->
           <div ref="gridScrollContainerRef" 
             :class="[
-              config.content.layout === 0 ? 'absolute w-full h-full overflow-x-hidden overflow-y-auto no-scrollbar' : 'overflow-x-hidden overflow-y-hidden',
+              config.content.layout === 0 ? 'absolute w-full h-full overflow-hidden' : 'overflow-x-hidden overflow-y-hidden',
               (config.content.layout === 0 || (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 1)) ? 'pt-12' : '',
               config.settings.showStatusBar ? 
                 (config.content.layout === 0 ? 'pb-8' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'pb-8' : ''
@@ -122,8 +122,6 @@
                 config.content.layout === 0 ? 'pb-1' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'mb-1' : ''
               )
             ]"
-            @scroll="handleScroll"
-            @wheel="handleWheel"
             >
             <GridView ref="gridViewRef"
               :style="{ height: config.content.layout === 1 ? config.content.filmStripPaneHeight + 'px' : '' }"
@@ -136,6 +134,8 @@
               @item-select-toggled="handleItemSelectToggled"
               @item-action="handleItemAction"
               @request-scroll="handleRequestScroll"
+              @visible-range-update="handleVisibleRangeUpdate"
+              @scroll="handleGridScroll"
             />
           </div>
 
@@ -209,6 +209,17 @@
 
       </div> <!-- grid view -->
 
+      <!-- custom scrollbar -->
+      <div v-if="config.content.layout === 0 && fileList.length > 0" class="w-8 mt-12 shrink-0" :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]">
+        <ScrollBar
+          :total="totalFileCount"
+          :pageSize="visibleItemCount"
+          :modelValue="scrollPosition"
+          :markers="timelineMarkers"
+          @update:modelValue="handleScrollUpdate"
+        ></ScrollBar>
+      </div>
+
       <!-- info panel splitter -->
       <div
         class="w-1 shrink-0 transition-colors"
@@ -247,7 +258,6 @@
         <IconFileSearch class="t-icon-size-xs" />
         <span >
           {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}
-          <!-- {{ hasMoreFiles ? '...' : '' }} -->
         </span>
       </div>
 
@@ -398,6 +408,7 @@ import TButton from '@/components/TButton.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
 import ImageEditor from '@/components/ImageEditor.vue';
 import FileInfo from '@/components/FileInfo.vue';
+import ScrollBar from '@/components/ScrollBar.vue';
 
 import {
   IconHome,
@@ -443,7 +454,7 @@ const props = defineProps({
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
 // title of the content 
@@ -472,9 +483,7 @@ const contentViewDiv = ref<HTMLDivElement | null>(null);
 const gridViewDiv = ref<HTMLDivElement | null>(null);
 
 // file list
-const fileList = ref([]);
-const fileListOffset = ref(0); // offset of the file list (for pagination)
-// const hasMoreFiles = ref(true); // has more files to load (for pagination)
+const fileList = ref<any[]>([]);
 const totalFileCount = ref(0);    // total files' count
 const totalFileSize = ref(0);     // total files' size
 
@@ -493,14 +502,14 @@ const selectedSize = ref(0);  // selected files size
 // film strip view splitter
 const isDraggingFilmStripView = ref(false);      // dragging splitter to resize film strip view
 const filmStripViewZoomFit = ref(true); // film strip view zoom fit
-const videoRef = ref(null);             // preview video reference
+const videoRef = ref<HTMLVideoElement | null>(null);             // preview video reference
 
 // info panel splitter
 const isDraggingInfoPanel = ref(false);
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
-const renamingFileName = ref({}); // extract the file name to {name, ext}
+const renamingFileName = ref<{name?: string, ext?: string}>({}); // extract the file name to {name, ext}
 
 const showMoveTo = ref(false);
 const showImageEditor = ref(false);
@@ -514,12 +523,47 @@ const showTaggingDialog = ref(false);
 const fileIdsToTag = ref<number[]>([]);
 
 // grid view
-const gridViewRef = ref(null);
+const gridScrollContainerRef = ref<HTMLElement | null>(null);
+const gridViewRef = ref<any>(null);
 
-const toolTipRef = ref(null);
+const scrollPosition = ref(0);    // scrollbar position (item index)
+
+const containerHeight = ref(0);   // container height
+const containerWidth = ref(0);    // container width
+const gap = 4;                    // Gap between items (must match GridView)
+
+const itemSize = computed(() => config.settings.grid.size + gap);
+
+const columnCount = computed(() => {
+  if (containerWidth.value <= 0 || itemSize.value <= 0) return 4;
+  return Math.max(1, Math.floor(containerWidth.value / itemSize.value));
+});
+
+const visibleItemCount = computed(() => {
+  if (containerHeight.value <= 0 || itemSize.value <= 0) return 20;
+  const rows = Math.floor(containerHeight.value / itemSize.value);
+  return rows * columnCount.value;
+});
+
+const timelineMarkers = ref<{ label: string, position: number }[]>([]);  // timeline markers for scrollbar
+
+const toolTipRef = ref<any>(null);
 const isProcessing = ref(false);  // show processing status
 
-const searchBoxRef = ref(null);
+const searchBoxRef = ref<any>(null);
+
+// Store current query params for virtual scrolling
+const currentQueryParams = ref({
+  searchFolder: "",
+  startDate: "",
+  endDate: "",
+  make: "",
+  model: "",
+  locationAdmin1: "",
+  locationName: "",
+  isFavorite: false,
+  tagId: 0
+});
 
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
@@ -626,6 +670,32 @@ const moreMenuItems = computed(() => {
   return items;
 });
 
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  if (gridScrollContainerRef.value) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        containerHeight.value = entry.contentRect.height;
+        containerWidth.value = entry.contentRect.width;
+      }
+    });
+    resizeObserver.observe(gridScrollContainerRef.value);
+    
+    // Initial values
+    containerHeight.value = gridScrollContainerRef.value.clientHeight;
+    containerWidth.value = gridScrollContainerRef.value.clientWidth;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+  if (unlistenKeydown) unlistenKeydown();
+  if (unlistenImageViewer) unlistenImageViewer();
+});
+
 // New event handlers for GridView
 function handleItemClicked(index: number) {
   selectedItemIndex.value = index;
@@ -675,8 +745,8 @@ function handleItemAction(payload: { action: string, index: number }) {
     'comment': () => showCommentMsgbox.value = true,
   };
 
-  if (actionMap[action]) {
-    actionMap[action]();
+  if ((actionMap as any)[action]) {
+    (actionMap as any)[action]();
   }
 }
 
@@ -688,8 +758,6 @@ function handleNavigate(direction: 'prev' | 'next') {
   }
 }
 
-const gridScrollContainerRef = ref(null);
-
 const handleWheel = (event: WheelEvent) => {
   if (config.content.layout !== 1) return;
   const el = gridScrollContainerRef.value;
@@ -700,78 +768,68 @@ const handleWheel = (event: WheelEvent) => {
   }
 };
 
+function handleGridScroll(event: any) {
+  if (event && event.target) {
+    const scrollTop = event.target.scrollTop;
+    // Convert scrollTop (pixels) to item index
+    const rowIndex = Math.floor(scrollTop / itemSize.value);
+    scrollPosition.value = rowIndex * columnCount.value;
+  }
+}
+
+function handleScrollUpdate(newIndex: number) {
+  scrollPosition.value = newIndex;
+  // Convert item index to scrollTop (pixels)
+  const rowIndex = Math.floor(newIndex / columnCount.value);
+  const newScrollTop = rowIndex * itemSize.value;
+
+  if (config.content.layout === 0 && gridViewRef.value) {
+    gridViewRef.value.scrollToPosition(newScrollTop);
+  } else if (gridScrollContainerRef.value) {
+    gridScrollContainerRef.value.scrollTop = newScrollTop;
+  }
+}
+
 function handleRequestScroll(index: number) {
   if (isDraggingInfoPanel.value || isDraggingFilmStripView.value) return;
 
-  // Using setTimeout to ensure the DOM has been fully updated and rendered,
-  // especially after layout changes which might involve CSS that nextTick doesn't wait for.
+  // Using setTimeout to ensure the DOM has been fully updated and rendered
   setTimeout(() => {
-    const item = document.getElementById(`item-${index}`);
-    const container = gridScrollContainerRef.value;
-    if (!item || !container) return;
+    if (config.content.layout === 0 && gridViewRef.value) {
+       gridViewRef.value.scrollToItem(index);
+    } else if (config.content.layout === 1) {
+       // Existing logic for Filmstrip
+       const item = document.getElementById(`item-${index}`);
+       const container = gridScrollContainerRef.value;
+       if (!item || !container) return;
+       
+       const containerRect = container.getBoundingClientRect();
+       const itemRect = item.getBoundingClientRect();
 
-    if (config.content.layout === 1) { // Manual scroll for Carousel/Filmstrip
-      const containerRect = container.getBoundingClientRect();
-      const itemRect = item.getBoundingClientRect();
+       const newScrollLeft = container.scrollLeft + (itemRect.left - containerRect.left) - (containerRect.width / 2) + (itemRect.width / 2);
 
-      const newScrollLeft = container.scrollLeft + (itemRect.left - containerRect.left) - (containerRect.width / 2) + (itemRect.width / 2);
-
-      container.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth',
-      });
-    } else if (config.content.layout === 0) { // Grid layout
-      const containerRect = container.getBoundingClientRect();
-      const itemRect = item.getBoundingClientRect();
-      
-      const titleBarHeight = 48; // Fixed title bar height
-      const statusBarHeight = config.settings.showStatusBar ? 32 : 0; // Status bar height if visible
-
-      // Calculate visible area relative to the viewport
-      const containerVisibleTop = containerRect.top + titleBarHeight;
-      const containerVisibleBottom = containerRect.bottom - statusBarHeight;
-
-      let newScrollTop = container.scrollTop;
-
-      if (itemRect.top < containerVisibleTop) {
-        // Item is above the visible area
-        newScrollTop -= (containerVisibleTop - itemRect.top);
-      } else if (itemRect.bottom > containerVisibleBottom) {
-        // Item is below the visible area
-        newScrollTop += (itemRect.bottom - containerVisibleBottom);
-      }
-
-      if (newScrollTop !== container.scrollTop) {
-        container.scrollTo({
-          top: newScrollTop,
-          behavior: 'smooth'
-        });
-      }
+       container.scrollTo({
+         left: newScrollLeft,
+         behavior: 'smooth',
+       });
     }
   }, 100);
 }
 
-function handleScroll() {
-  const el = gridScrollContainerRef.value;
-  if (!el) return;
+// function handleScroll() {
+//   // This is now mainly for Filmstrip view (Layout 1) which uses native scrolling on container
+//   const el = gridScrollContainerRef.value;
+//   if (!el) return;
 
-  if (config.content.layout === 0) { // layout 0: grid
-    // scroll to the bottom of the container
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
-      handleNextPage();
-    }
-  } else if (config.content.layout === 1) { // layout 1: carousel
-    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
-      handleNextPage();
-    }
-  }
-}
-
-function handleNextPage() {
-//   if (hasMoreFiles.value) {
-//     fileListOffset.value += config.content.pageSize;
+//   if (config.content.layout === 1) { // layout 1: carousel
+//     if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
+//       handleNextPage();
+//     }
 //   }
-}
+// }
+
+// function handleNextPage() {
+// }
 
 // Keyboard navigation actions
 const keyActions = {
@@ -803,7 +861,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 }
 
 // Global keydown handler (from Tauri)
-const handleKeyDown = (e: KeyboardEvent) => {
+const handleKeyDown = (e: any) => {
   if (uiStore.inputStack.length > 0) {
     return;
   }
@@ -825,8 +883,8 @@ const handleKeyDown = (e: KeyboardEvent) => {
     clickRotate();
   } else if ((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
     showTrashMsgbox.value = true;
-  } else if (keyActions[key]) {
-    keyActions[key]();
+  } else if ((keyActions as any)[key]) {
+    (keyActions as any)[key]();
   } else if (key === 'Escape') {
     if (selectMode.value) {
       handleSelectMode(false);
@@ -838,7 +896,7 @@ onMounted( async() => {
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
-    const { message } = event.payload;
+    const { message } = event.payload as any;
     switch (message) {
       case 'home':
         selectedItemIndex.value = 0;
@@ -912,24 +970,11 @@ watch(
     config.search.text, config.search.fileType, config.search.sortType, config.search.sortOrder,  // search and sort 
   ], 
   () => {
-    fileListOffset.value = 0;   // reset file list offset
+    scrollPosition.value = 0;   // reset file scroll position
     updateContent();
   }, 
   { immediate: true }
 );
-
-// watch for file list size changes
-// watch(() => fileList.value.length, (newValue) => {
-  // totalFileCount.value = newValue;
-  // totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
-// });
-
-// watch for file list offset
-watch(() => fileListOffset.value, (newValue) => {
-  if(newValue > 0) {
-    updateContent();
-  }
-});
 
 // watch for selected item (not in select mode)
 watch(() => selectedItemIndex.value, (newIndex, oldIndex) => {
@@ -960,17 +1005,144 @@ function toggleGridViewLayout() {
   filmStripViewZoomFit.value = true;
 }
 
-// get file list 
-async function getFileList(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) { 
-  const newFiles = await getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset);
-  // hasMoreFiles.value = newFiles.length === config.content.pageSize;
+// Track pending requests to avoid duplicates
+const pendingRequests = new Set();
+
+async function fetchDataRange(start: number, end: number) {
+  // Clamp range
+  start = Math.max(0, start);
+  end = Math.min(totalFileCount.value, end);
   
-  if (offset === 0) {
-    fileList.value = newFiles;
-    // get query count and sum
-    [totalFileCount.value, totalFileSize.value] = await getQueryCountAndSum(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId);
-  } else {
-    fileList.value.push(...newFiles);
+  if (start >= end) return;
+
+  // Fetch in chunks
+  const chunkSize = 200;
+  const startChunk = Math.floor(start / chunkSize);
+  const endChunk = Math.floor((end - 1) / chunkSize);
+
+  console.log(`fetchDataRange: ${start}-${end}, chunks: ${startChunk}-${endChunk}`);
+
+  for (let i = startChunk; i <= endChunk; i++) {
+    const chunkStart = i * chunkSize;
+    
+    // Check if we need to load this chunk
+    // Optimization: Check the first item of the chunk.
+    if (fileList.value[chunkStart] && fileList.value[chunkStart].isPlaceholder) {
+      const key = `${chunkStart}-${chunkSize}`;
+      if (pendingRequests.has(key)) {
+        console.log(`Skipping pending chunk: ${key}`);
+        continue;
+      }
+      
+      pendingRequests.add(key);
+      console.log(`Fetching chunk: ${key}`);
+      
+      // Fetch data
+      const { searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId } = currentQueryParams.value;
+      
+      // We don't await here to allow parallel fetching of chunks, 
+      // but we track pending requests to avoid duplicate fetches.
+      getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, chunkStart, chunkSize)
+        .then(newFiles => {
+          console.log(`Chunk loaded: ${key}, items: ${newFiles?.length}`);
+          if (newFiles) {
+            // Update fileList and collect reactive references
+            const filesToFetch = [];
+            for (let j = 0; j < newFiles.length; j++) {
+              if (chunkStart + j < fileList.value.length) {
+                fileList.value[chunkStart + j] = newFiles[j];
+                filesToFetch.push(fileList.value[chunkStart + j]);
+              }
+            }
+            // Fetch thumbnails for these files
+            if (filesToFetch.length > 0) {
+                console.log(`Fetching thumbnails for chunk: ${key}, count: ${filesToFetch.length}`);
+                getFileListThumb(filesToFetch);
+            }
+          }
+        })
+        .catch(err => {
+            console.error(`Error fetching chunk ${key}:`, err);
+        })
+        .finally(() => {
+          pendingRequests.delete(key);
+        });
+    } else {
+        // console.log(`Chunk already loaded or invalid: ${chunkStart}`);
+    }
+  }
+}
+
+function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number, endIndex: number }) {
+  // Fetch data for visible range + buffer
+  console.log(`handleVisibleRangeUpdate: ${startIndex}-${endIndex}`);
+  const buffer = 200;
+  fetchDataRange(startIndex - buffer, endIndex + buffer);
+}
+
+// get file list 
+async function getFileList(
+  searchFolder: string, 
+  startDate: string, 
+  endDate: string, 
+  make: string, 
+  model: string, 
+  locationAdmin1: string, 
+  locationName: string, 
+  isFavorite: boolean, 
+  tagId: number, 
+  offset = 0, 
+  limit = -1
+) { 
+  // Update current query params
+  currentQueryParams.value = {
+    searchFolder, 
+    startDate, 
+    endDate, 
+    make, 
+    model, 
+    locationAdmin1,   
+    locationName, 
+    isFavorite, 
+    tagId
+  };
+
+  // Reset file list
+  fileList.value = [];
+  totalFileCount.value = 0;
+  totalFileSize.value = 0;
+  
+  // Get count and sum first
+  const result = await getQueryCountAndSum(
+    searchFolder, 
+    startDate, 
+    endDate, 
+    make, 
+    model, 
+    locationAdmin1, 
+    locationName, 
+    isFavorite, 
+    tagId
+  );
+  
+  if (result) {
+    totalFileCount.value = result[0];
+    totalFileSize.value = result[1];
+    
+    // Initialize fileList with placeholders
+    // We use a large array. Vue 3's reactivity system can handle this, 
+    // but for 100k items, shallowRef might be better for fileList if performance is an issue.
+    // However, RecycleScroller needs to detect changes.
+    // Let's use standard ref for now.
+    fileList.value = Array.from({ length: totalFileCount.value }).map((_, i) => ({
+      id: 'ph-' + i,
+      isPlaceholder: true,
+      name: '',
+      size: 0,
+    }));
+    
+    // Fetch initial data (first page)
+    // fetchDataRange(0, 100);
   }
 }
 
@@ -979,7 +1151,7 @@ async function updateContent() {
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.home.title;
-    await getFileList("", "", "", "", "", "", "", false, 0, fileListOffset.value);
+    await getFileList("", "", "", "", "", "", "", false, 0);
   } 
   else if(newIndex === 1) {   // album
     if(config.album.id === null) {
@@ -991,18 +1163,20 @@ async function updateContent() {
         if(config.album.folderPath === album.path) { // current folder is root
           contentTitle.value = album.name;
         } else {
-          contentTitle.value = album.name + getRelativePath(config.album.folderPath, album.path);
+          contentTitle.value = album.name + getRelativePath(config.album.folderPath || "", album.path);
         };
         fileList.value = await getFolderFiles(config.album.folderId, config.album.folderPath);
         totalFileCount.value = fileList.value.length;
         totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
-        // hasMoreFiles.value = false;  // getFolderFiles always get all files
 
         // get the thumbnail count
         await getFolderThumbCount(config.album.folderId).then(count => {
           console.log('updateContent - thumbCount:', count);
           showProgressBar.value = count < fileList.value.length; // show progress bar if the thumbnail count is less than the file list length
         });
+
+        // always get all thumbnail for a folder (gen thumbnail if not exist)
+        getFileListThumb(fileList.value);
       } else {
         contentTitle.value = "";
         fileList.value = [];
@@ -1016,12 +1190,12 @@ async function updateContent() {
     } else {
       if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
-        await getFileList("", "", "", "", "", "", "", true, 0, fileListOffset.value);
+        await getFileList("", "", "", "", "", "", "", true, 0);
       } else {                // favorite folders
         const album = await getAlbum(config.favorite.albumId);
         if(album) {
           contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath, album.path);
-          await getFileList(config.favorite.folderPath, "", "", "", "", "", "", false, 0, fileListOffset.value);
+          await getFileList(config.favorite.folderPath, "", "", "", "", "", "", false, 0);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -1037,7 +1211,7 @@ async function updateContent() {
       const tagName = await getTagName(config.tag.id);
       if (tagName) {
         contentTitle.value = tagName;
-        await getFileList("", "", "", "", "", "", "", false, config.tag.id, fileListOffset.value);
+        await getFileList("", "", "", "", "", "", "", false, config.tag.id);
       } else {
         contentTitle.value = "";
         fileList.value = [];
@@ -1057,7 +1231,7 @@ async function updateContent() {
         contentTitle.value = formatDate(config.calendar.year, config.calendar.month, config.calendar.date, localeMsg.value.format.date_long);
       }
       const [startDate, endDate] = getCalendarDateRange(config.calendar.year, config.calendar.month, config.calendar.date);
-      await getFileList("", startDate, endDate, "", "", "", "", false, 0, fileListOffset.value);
+      await getFileList("", startDate, endDate, "", "", "", "", false, 0);
     }
   }
   else if(newIndex === 5) {   // location
@@ -1067,10 +1241,10 @@ async function updateContent() {
     } else {
       if(config.location.name) {
         contentTitle.value = `${config.location.admin1} > ${config.location.name}`;
-        await getFileList("", "", "", "", "", config.location.admin1, config.location.name, false, 0, fileListOffset.value);
+        await getFileList("", "", "", "", "", config.location.admin1, config.location.name, false, 0);
       } else {
         contentTitle.value = `${config.location.admin1}`;
-        await getFileList("", "", "", "", "", config.location.admin1, "", false, 0, fileListOffset.value);
+        await getFileList("", "", "", "", "", config.location.admin1, "", false, 0);
       } 
     }
   }
@@ -1081,10 +1255,10 @@ async function updateContent() {
     } else {
       if(config.camera.model) {
         contentTitle.value = `${config.camera.make} > ${config.camera.model}`;
-        await getFileList("", "", "", config.camera.make, config.camera.model, "", "", false, 0, fileListOffset.value);
+        await getFileList("", "", "", config.camera.make, config.camera.model, "", "", false, 0);
       } else {
         contentTitle.value = `${config.camera.make}`;
-        await getFileList("", "", "", config.camera.make, "", "", "", false, 0, fileListOffset.value);
+        await getFileList("", "", "", config.camera.make, "", "", "", false, 0);
       } 
     }
   } 
@@ -1211,7 +1385,7 @@ const clickTrashFile = async () => {
 }
 
 // delete a file always (trash or delete from db)
-async function deleteFileAlways(file) {
+async function deleteFileAlways(file: any) {
   const deletedFile = await deleteFile(file.id, file.file_path);
   if(deletedFile) {
     console.log('clickDeleteFile - trashed file:', file.file_path);
@@ -1223,12 +1397,19 @@ async function deleteFileAlways(file) {
 
 // remove an file item from the list and update the selected item index
 function removeFromFileList(index: number) {
+  // remove file from list
   fileList.value.splice(index, 1);
+  
+  // update total file count and size
+  totalFileCount.value = fileList.value.length;
+  totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+  
+  // update selected item index
   selectedItemIndex.value = Math.min(index, fileList.value.length - 1);
 }
 
 // update the file info from the file
-const updateFile = async (file) => {
+const updateFile = async (file: any) => {
   if (isProcessing.value) return;
 
   isProcessing.value = true;
@@ -1253,7 +1434,7 @@ const updateFile = async (file) => {
 }
 
 // force-update the thumbnail for the file
-const updateThumbForFile = async (file) => {
+const updateThumbForFile = async (file: any) => {
   const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, true);
   if(thumb) {
     if(thumb.error_code === 0) {
@@ -1327,7 +1508,7 @@ const clickTag = async () => {
 }
 
 // edit comment
-const clickEditComment = async (newComment) => {
+const clickEditComment = async (newComment: any) => {
   if (selectedItemIndex.value >= 0) {
     const file = fileList.value[selectedItemIndex.value];
     const result = await editFileComment(file.id, newComment);
@@ -1339,7 +1520,7 @@ const clickEditComment = async (newComment) => {
   }
 }
 
-const handleSelectMode = (value) => {
+const handleSelectMode = (value: any) => {
   selectMode.value = value;
   if(!selectMode.value) {
     for (let i = 0; i < fileList.value.length; i++) {
@@ -1348,12 +1529,12 @@ const handleSelectMode = (value) => {
   }
 };
 
-const handleFileTypeSelect = (option, extendOption) => {
+const handleFileTypeSelect = (option: any, extendOption: any) => {
   selectMode.value = false;   // exit multi-select mode
   config.search.fileType = option;
 };
 
-const handleSortTypeSelect = (option, extendOption) => {
+const handleSortTypeSelect = (option: any, extendOption: any) => {
   selectMode.value = false;   // exit multi-select mode
   config.search.sortType = option;
   config.search.sortOrder = extendOption;
@@ -1378,12 +1559,10 @@ function refreshFileList() {
   selectMode.value = false;   // exit multi-select mode
 
   if(fileList.value.length > 0) {
-    if(fileListOffset.value === 0) {  // file list is changed
+    if(scrollPosition.value === 0) {  // reset file scroll position
       selectedItemIndex.value = 0;
       updateSelectedImage(selectedItemIndex.value);
     }
-    
-    getFileListThumb(fileList.value, fileListOffset.value); 
   } else {
     selectedItemIndex.value = -1;
   }
@@ -1418,12 +1597,12 @@ function updateFileHasTags(fileIds: number[]) {
 }
 
 // Get the thumbnail for the files
-async function getFileListThumb(files, offset, concurrencyLimit = 8) {
+async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 8) {
   const result = [];
   let activeRequests = 0;
   thumbCount.value = 0;
 
-  const getThumbForFile = async (file) => {
+  const getThumbForFile = async (file: any) => {
     const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, false);
     if(thumb) {
       if(thumb.error_code === 0) {
@@ -1436,8 +1615,8 @@ async function getFileListThumb(files, offset, concurrencyLimit = 8) {
     return file;
   };
 
-  const runWithConcurrencyLimit = async (files) => {
-    const queue = [];
+  const runWithConcurrencyLimit = async (files: any[]) => {
+    const queue: any[] = [];
 
     for (let i = offset; i < files.length; i++) {
       if (activeRequests >= concurrencyLimit) {
@@ -1491,7 +1670,7 @@ async function openImageViewer(index: number, newViewer = false) {
         decorations: isMac,
         transparent: isWin,
         ...(isMac && {
-          titleBarStyle: 'Overlay',
+          titleBarStyle: 'overlay',
           hiddenTitle: true,
           minimizable: true,
         }),

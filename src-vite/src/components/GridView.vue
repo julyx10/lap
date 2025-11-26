@@ -1,21 +1,56 @@
 <template>
   <div
-    ref="gridViewRef"
-    class="relative w-full min-h-full focus:outline-none" 
+    ref="containerRef"
+    class="relative w-full h-full focus:outline-none" 
     :class="{ 
       'pointer-events-none': uiStore.inputStack.length > 0,
     }"
     tabindex="0" 
   >
-    <div v-if="fileList.length > 0" id="gridView" 
-      :class="[
-        config.content.layout === 0 ? 'px-1 grid' : 'absolute flex flex-nowrap items-center',
-        config.content.layout === 0 && config.settings.grid.style === 0 ? 'gap-1' : '',
-      ]"
-      :style="config.content.layout === 0 ? { gridTemplateColumns: `repeat(auto-fill, minmax(${config.settings.grid.size}px, 1fr))` } : { }"
+    <RecycleScroller
+      v-if="config.content.layout === 0 && fileList.length > 0"
+      ref="scroller"
+      class="scroller h-full no-scrollbar"
+      :items="fileList"
+      :item-size="itemSize"
+      :grid-items="columnCount"
+      key-field="id"
+      :emit-update="true"
+      v-slot="{ item, index }"
+      @update="onUpdate"
+      @scroll="onScroll"
     >
-      <!-- thumbnail -->
-      <Thumbnail
+      <div 
+        class="flex justify-center items-center h-full w-full"
+        :style="{ padding: gap / 2 + 'px' }"
+      >
+        <!-- Debug Info -->
+        <div class="absolute top-0 left-0 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
+          {{ index }} {{ item.isPlaceholder ? 'PH' : 'F' }} {{ item.thumbnail ? 'T' : 'NoT' }}
+        </div>
+        
+        <Thumbnail
+          v-if="item && !item.isPlaceholder"
+          :id="'item-' + index"
+          :file="item"
+          :is-selected="selectMode ? item.isSelected : index === selectedItemIndex"
+          :select-mode="selectMode"
+          :show-folder-files="showFolderFiles"
+          @clicked="$emit('item-clicked', index)"
+          @dblclicked="$emit('item-dblclicked', index)"
+          @select-toggled="$emit('item-select-toggled', index)"
+          @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
+        />
+        <div v-else class="w-full h-full bg-base-200/50 rounded animate-pulse"></div>
+      </div>
+    </RecycleScroller>
+
+    <!-- Filmstrip View (Layout 1) - Horizontal -->
+    <div v-else-if="config.content.layout === 1 && fileList.length > 0" 
+      id="gridView"
+      class="absolute flex flex-nowrap items-center h-full overflow-x-auto"
+    >
+       <Thumbnail
         v-for="(file, index) in fileList"
         :key="index"
         :id="'item-' + index"
@@ -30,7 +65,8 @@
       />
     </div>
 
-    <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
+    <!-- Empty State -->
+    <div v-if="fileList.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
       <span>{{ config.home.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
     </div>
 
@@ -40,28 +76,22 @@
 
 <script setup lang="ts">
 
-import { watch, ref, onMounted, onBeforeUnmount } from 'vue';
+import { watch, ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
+// @ts-ignore
+import { RecycleScroller } from 'vue-virtual-scroller';
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 
-const props = defineProps({
-  selectedItemIndex: {
-    type: Number,
-    required: true,
-  },
-  fileList: {
-    type: Array,
-    required: true,
-  },
-  showFolderFiles: {
-    type: Boolean,
-    default: false,
-  },
-  selectMode: {
-    type: Boolean,
-    default: false,
-  },
+const props = withDefaults(defineProps<{
+  selectedItemIndex: number;
+  fileList: any[];
+  showFolderFiles?: boolean;
+  selectMode?: boolean;
+}>(), {
+  showFolderFiles: false,
+  selectMode: false,
 });
 
 const emit = defineEmits([
@@ -70,32 +100,52 @@ const emit = defineEmits([
   'item-select-toggled',
   'item-action',
   'request-scroll',
+  'visible-range-update',
+  'scroll',
 ]);
 
 const uiStore = useUIStore();
-const gridViewRef = ref(null);
+const containerRef = ref<HTMLElement | null>(null);
+const scroller = ref<any>(null);
+const columnCount = ref(4);
+const containerWidth = ref(0);
+
+const gap = 4; // Gap between items
+
+// item height including gap
+const itemSize = computed(() => {
+  return config.settings.grid.size + gap;
+});
+
 let resizeObserver: ResizeObserver | null = null;
+
+function updateColumnCount() {
+  if (containerRef.value) {
+    containerWidth.value = containerRef.value.clientWidth;
+    const size = itemSize.value;
+    if (size > 0) {
+      columnCount.value = Math.max(1, Math.floor(containerWidth.value / size));
+    }
+  }
+}
+
+watch(() => config.settings.grid.size, () => {
+  updateColumnCount();
+});
 
 watch(() => props.selectedItemIndex, (newValue) => {
   if (newValue !== -1) {
-    emit('request-scroll', newValue);
-  }
-});
-
-watch(() => config.content.layout, () => {
-  if (props.selectedItemIndex !== -1) {
-    emit('request-scroll', props.selectedItemIndex);
+    scrollToItem(newValue);
   }
 });
 
 onMounted(() => {
-  if (gridViewRef.value) {
+  if (containerRef.value) {
     resizeObserver = new ResizeObserver(() => {
-      if (props.selectedItemIndex !== -1) {
-        emit('request-scroll', props.selectedItemIndex);
-      }
+      updateColumnCount();
     });
-    resizeObserver.observe(gridViewRef.value);
+    resizeObserver.observe(containerRef.value);
+    updateColumnCount();
   }
 });
 
@@ -105,23 +155,55 @@ onBeforeUnmount(() => {
   }
 });
 
-// function to get the number of columns in the grid
+function onUpdate(startIndex: number, endIndex: number) {
+  console.log(`onUpdate: ${startIndex}-${endIndex}`);
+  emit('visible-range-update', { startIndex, endIndex });
+}
+
+function onScroll(e: Event) {
+  emit('scroll', e);
+}
+
+function scrollToItem(index: number) {
+  if (scroller.value && config.content.layout === 0) {
+    const el = scroller.value.$el;
+    const itemHeight = itemSize.value;
+    const row = Math.floor(index / columnCount.value);
+    const itemTop = row * itemHeight;
+    const itemBottom = itemTop + itemHeight;
+    const scrollTop = el.scrollTop;
+    const clientHeight = el.clientHeight;
+
+    if (itemTop < scrollTop) {
+      el.scrollTop = itemTop;
+    } else if (itemBottom > scrollTop + clientHeight) {
+      el.scrollTop = itemBottom - clientHeight;
+    }
+  } else {
+    emit('request-scroll', index);
+  }
+}
+
+function scrollToPosition(scrollTop: number) {
+  if (scroller.value && config.content.layout === 0) {
+    scroller.value.$el.scrollTop = scrollTop;
+  }
+}
+
 function getColumnCount() {
-  // get the first element with the id 'gridView'
-  const gridContainer = document.querySelector('#gridView');
-  if (!gridContainer) return 1;
-
-  const computedStyle = getComputedStyle(gridContainer);
-  const gridTemplateColumns = computedStyle.gridTemplateColumns;
-
-  // Split by space to account for grid definitions
-  const columnCount = gridTemplateColumns.split(' ').length;
-
-  return columnCount;
+  return columnCount.value;
 }
 
 defineExpose({
   getColumnCount,
+  scrollToItem,
+  scrollToPosition,
 });
 
 </script>
+
+<style scoped>
+.scroller {
+  height: 100%;
+}
+</style>

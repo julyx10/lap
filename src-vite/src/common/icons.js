@@ -5,6 +5,7 @@ export { default as IconPrev } from '@/assets/icons/nav-prev.svg';
 export { default as IconNext } from '@/assets/icons/nav-next.svg';
 export { default as IconLeft } from '@/assets/icons/arrow-left.svg';
 export { default as IconRight } from '@/assets/icons/arrow-right.svg';
+export { default as IconArrowUp } from '@/assets/icons/arrow-up.svg';
 export { default as IconArrowDown } from '@/assets/icons/arrow-down.svg';
 
 // ======================

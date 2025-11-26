@@ -302,7 +302,7 @@ export async function getQueryCountAndSum(searchFolder, startDate, endDate, make
 }
 
 /// get query files from db (with pagination)
-export async function getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset) {
+export async function getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset, limit) {
   try {
     const files = await invoke('get_query_files', {
       searchText: config.search.text, 
@@ -320,7 +320,7 @@ export async function getQueryFiles(searchFolder, startDate, endDate, make, mode
       isShowHidden: false,
       tagId,
       offset, 
-      pageSize: config.content.pageSize
+      limit,
     });
     if(files) {
       return files;
