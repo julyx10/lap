@@ -5,6 +5,7 @@
 )]
 
 /**
+ * Main entry point for the Tauri application.
  * project: jc-photo
  * author:  julyxx
  * email:   tiangle@gmail.com

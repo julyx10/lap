@@ -1,15 +1,16 @@
-use arboard::Clipboard;
-use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader};
-use rusqlite::Result;
-use serde::{Deserialize, Serialize};
-use std::io::Cursor;
 /**
+ * Image processing utilities.
  * project: jc-photo
  * author:  julyxx
  * email:   tiangle@gmail.com
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
+use arboard::Clipboard;
+use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader};
+use rusqlite::Result;
+use serde::{Deserialize, Serialize};
+use std::io::Cursor;
 use std::path::Path;
 use std::process::Command;
 

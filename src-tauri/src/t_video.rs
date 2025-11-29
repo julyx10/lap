@@ -1,14 +1,15 @@
-use ffmpeg_next as ffmpeg;
-use image::{DynamicImage, ImageFormat, RgbImage};
-use rusqlite::Result;
-use std::collections::HashMap;
 /**
+ * Video processing utilities.
  * project: jc-photo
  * author:  julyxx
  * email:   tiangle@gmail.com
  * GitHub:  /julyx10
- * date:    2025-08-19
+ * date:    2024-08-08
  */
+use ffmpeg_next as ffmpeg;
+use image::{DynamicImage, ImageFormat, RgbImage};
+use rusqlite::Result;
+use std::collections::HashMap;
 use std::io::Cursor;
 /// Get video dimensions using ffmpeg
 pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {

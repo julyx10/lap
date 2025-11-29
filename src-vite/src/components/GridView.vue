@@ -1,56 +1,58 @@
 <template>
   <div
     ref="containerRef"
-    class="relative w-full h-full focus:outline-none" 
+    class="w-full h-full" 
     :class="{ 
       'pointer-events-none': uiStore.inputStack.length > 0,
     }"
-    tabindex="0" 
   >
     <RecycleScroller
-      v-if="config.content.layout === 0 && fileList.length > 0"
+      v-if="fileList.length > 0"
       ref="scroller"
-      class="scroller h-full no-scrollbar"
+      class="w-full h-full no-scrollbar"
+      :class="{
+        'pt-12': config.content.layout === 0,
+        'pb-8': config.content.layout === 0 && config.settings.showStatusBar,
+        'pb-1': config.content.layout === 0 && !config.settings.showStatusBar,
+      }"
       :items="fileList"
-      :item-size="itemSize"
-      :grid-items="columnCount"
+      :direction="config.content.layout === 0 ? 'vertical' : 'horizontal'"
+      :grid-items="config.content.layout === 0 ? columnCount : undefined"
+      :item-size="config.content.layout === 0 ? itemHeight : filmStripItemSize"
+      :item-secondary-size="config.content.layout === 0 ? itemWidth : undefined"
+      :key="config.content.layout"
       key-field="id"
       :emit-update="true"
       v-slot="{ item, index }"
       @update="onUpdate"
       @scroll="onScroll"
     >
-      <div 
-        class="flex justify-center items-center h-full w-full"
-        :style="{ padding: gap / 2 + 'px' }"
-      >
-        <!-- Debug Info -->
-        <div class="absolute top-0 left-0 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
-          {{ index }} {{ item.isPlaceholder ? 'PH' : 'F' }} {{ item.thumbnail ? 'T' : 'NoT' }}
-        </div>
-        
-        <Thumbnail
-          v-if="item && !item.isPlaceholder"
-          :id="'item-' + index"
-          :file="item"
-          :is-selected="selectMode ? item.isSelected : index === selectedItemIndex"
-          :select-mode="selectMode"
-          :show-folder-files="showFolderFiles"
-          @clicked="$emit('item-clicked', index)"
-          @dblclicked="$emit('item-dblclicked', index)"
-          @select-toggled="$emit('item-select-toggled', index)"
-          @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
-        />
-        <div v-else class="w-full h-full bg-base-200/50 rounded animate-pulse"></div>
-      </div>
+      <!-- Debug Info -->
+      <!-- <div class="absolute top-2 left-2 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
+        {{ index }} {{ item.isPlaceholder ? 'PH' : 'F' }} {{ item.thumbnail ? 'T' : 'NoT' }}
+      </div> -->
+      
+      <Thumbnail
+        v-if="item && !item.isPlaceholder"
+        :id="'item-' + index"
+        :file="item"
+        :is-selected="selectMode ? item.isSelected : index === selectedItemIndex"
+        :select-mode="selectMode"
+        :show-folder-files="showFolderFiles"
+        @clicked="$emit('item-clicked', index)"
+        @dblclicked="$emit('item-dblclicked', index)"
+        @select-toggled="$emit('item-select-toggled', index)"
+        @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
+      />
+      <div v-else class="w-full h-full bg-base-200/50 rounded animate-pulse"></div>
     </RecycleScroller>
 
     <!-- Filmstrip View (Layout 1) - Horizontal -->
-    <div v-else-if="config.content.layout === 1 && fileList.length > 0" 
+    <!-- <div v-else-if="config.content.layout === 1 && fileList.length > 0" 
       id="gridView"
       class="absolute flex flex-nowrap items-center h-full overflow-x-auto"
     >
-       <Thumbnail
+      <Thumbnail
         v-for="(file, index) in fileList"
         :key="index"
         :id="'item-' + index"
@@ -63,10 +65,10 @@
         @select-toggled="$emit('item-select-toggled', index)"
         @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
       />
-    </div>
+    </div> -->
 
     <!-- Empty State -->
-    <div v-if="fileList.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
       <span>{{ config.home.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
     </div>
 
@@ -76,7 +78,7 @@
 
 <script setup lang="ts">
 
-import { watch, ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
+import { watch, ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
@@ -110,11 +112,32 @@ const scroller = ref<any>(null);
 const columnCount = ref(4);
 const containerWidth = ref(0);
 
-const gap = 4; // Gap between items
+const gap = 8; // Gap between items
 
-// item height including gap
-const itemSize = computed(() => {
-  return config.settings.grid.size + gap;
+// item width and height(including gap)
+const itemWidth = computed(() => {
+  if (config.settings.grid.style === 0) {
+    return config.settings.grid.size + gap * 2;
+  } else if (config.settings.grid.style === 1) {
+    return config.settings.grid.size;
+  }
+  return 0;
+});
+
+const itemHeight = computed(() => {
+  if (config.settings.grid.style === 0) {
+    let labelHeight = 0
+    if (config.settings.grid.labelPrimary > 0 ) labelHeight += 20;      // height of text-sm
+    if (config.settings.grid.labelSecondary > 0 ) labelHeight += 16;    // height of text-xs
+    return itemWidth.value + gap / 2 + labelHeight;
+  } else if (config.settings.grid.style === 1) {
+    return itemWidth.value + gap / 2;
+  }
+  return 0;
+});
+
+const filmStripItemSize = computed(() => {
+  return config.settings.grid.style === 0 ? config.content.filmStripPaneHeight: config.content.filmStripPaneHeight - gap;
 });
 
 let resizeObserver: ResizeObserver | null = null;
@@ -122,9 +145,8 @@ let resizeObserver: ResizeObserver | null = null;
 function updateColumnCount() {
   if (containerRef.value) {
     containerWidth.value = containerRef.value.clientWidth;
-    const size = itemSize.value;
-    if (size > 0) {
-      columnCount.value = Math.max(1, Math.floor(containerWidth.value / size));
+    if (itemWidth.value > 0) {
+      columnCount.value = Math.max(1, Math.floor(containerWidth.value / itemWidth.value));
     }
   }
 }
@@ -167,10 +189,9 @@ function onScroll(e: Event) {
 function scrollToItem(index: number) {
   if (scroller.value && config.content.layout === 0) {
     const el = scroller.value.$el;
-    const itemHeight = itemSize.value;
     const row = Math.floor(index / columnCount.value);
-    const itemTop = row * itemHeight;
-    const itemBottom = itemTop + itemHeight;
+    const itemTop = row * itemHeight.value;
+    const itemBottom = itemTop + itemHeight.value;
     const scrollTop = el.scrollTop;
     const clientHeight = el.clientHeight;
 
@@ -203,7 +224,4 @@ defineExpose({
 </script>
 
 <style scoped>
-.scroller {
-  height: 100%;
-}
 </style>

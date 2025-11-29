@@ -106,25 +106,17 @@
       <div ref="gridViewDiv" 
         :class="[
           'flex-1 flex',
-          config.settings.filmStripView.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col'
+          config.settings.filmStripView.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col',
+          config.content.layout === 1 ? (config.settings.showStatusBar ? 'mt-12 mb-8' : 'mt-12 mb-1') : ''
         ]"
       >
-        <div class="relative" :class="{ 'flex-1': config.content.layout === 0 }">
-          
+        <div class="relative" 
+          :class="{ 'flex-1': config.content.layout === 0 }"
+          :style="{ height: config.content.layout === 1 ? config.content.filmStripPaneHeight + 'px' : '' }"
+        >
           <!-- grid view -->
-          <div ref="gridScrollContainerRef" 
-            :class="[
-              config.content.layout === 0 ? 'absolute w-full h-full overflow-hidden' : 'overflow-x-hidden overflow-y-hidden',
-              (config.content.layout === 0 || (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 1)) ? 'pt-12' : '',
-              config.settings.showStatusBar ? 
-                (config.content.layout === 0 ? 'pb-8' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'pb-8' : ''
-              ) : (
-                config.content.layout === 0 ? 'pb-1' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'mb-1' : ''
-              )
-            ]"
-            >
+          <div ref="gridScrollContainerRef" class="absolute w-full h-full">
             <GridView ref="gridViewRef"
-              :style="{ height: config.content.layout === 1 ? config.content.filmStripPaneHeight + 'px' : '' }"
               :selected-item-index="selectedItemIndex"
               :fileList="fileList"
               :showFolderFiles="showFolderFiles"
@@ -137,40 +129,31 @@
               @visible-range-update="handleVisibleRangeUpdate"
               @scroll="handleGridScroll"
             />
-          </div>
-
-          <!-- Navigation buttons -->
-          <div v-if="config.content.layout === 1 && fileList.length > 0" 
-            class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none"
-            :class="[
-              (config.content.layout === 0 || (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 1)) ? 'pt-12' : '',
-              config.settings.showStatusBar ? 
-                (config.content.layout === 0 ? 'pb-8' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'pb-8' : ''
-              ) : (
-                config.content.layout === 0 ? 'pb-1' : (config.content.layout === 1 && config.settings.filmStripView.previewPosition === 0) ? 'mb-1' : ''
-              )
-            ]"
-          >
-            <button 
-              :class="[
-                'p-2 rounded-full pointer-events-auto bg-base-100/30', 
-                selectedItemIndex > 0 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
-              ]"
-              @click="handleNavigate('prev')"
-              @dblclick.stop
+            <!-- Navigation buttons -->
+            <div v-if="config.content.layout === 1 && fileList.length > 0" 
+              class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none"
             >
-              <IconLeft class="w-8 h-8" />
-            </button>
-            <button 
-              :class="[
-                'p-2 rounded-full pointer-events-auto bg-base-100/30', 
-                selectedItemIndex < fileList.length - 1 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
-              ]"
-              @click="handleNavigate('next')" 
-              @dblclick.stop
-            >
-              <IconRight class="w-8 h-8" />
-            </button> 
+              <button 
+                :class="[
+                  'p-2 rounded-full pointer-events-auto bg-base-100/30', 
+                  selectedItemIndex > 0 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
+                ]"
+                @click="handleNavigate('prev')"
+                @dblclick.stop
+              >
+                <IconLeft class="w-8 h-8" />
+              </button>
+              <button 
+                :class="[
+                  'p-2 rounded-full pointer-events-auto bg-base-100/30', 
+                  selectedItemIndex < fileList.length - 1 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
+                ]"
+                @click="handleNavigate('next')" 
+                @dblclick.stop
+              >
+                <IconRight class="w-8 h-8" />
+              </button> 
+            </div>
           </div>
         </div>
 
@@ -186,7 +169,6 @@
         <!-- preview -->
         <div v-if="config.content.layout === 1" ref="previewDiv" 
           class="flex-1 rounded-box bg-base-200 overflow-hidden"
-          :class="[ config.settings.filmStripView.previewPosition === 0 ? 'mt-12' : (config.settings.showStatusBar ? 'mb-8' : 'mb-1') ]"
         >
           <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
             class="w-full h-full flex items-center justify-center"

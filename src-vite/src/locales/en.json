@@ -112,7 +112,8 @@
         "Duration",
         "Created time",
         "Modified time",
-        "Taken date"
+        "Taken date",
+        "Random order"
       ],
       "sort_order_options": [
         "Ascending",

@@ -1,11 +1,9 @@
 <template>
   <div
     :class="[
-      'border-2 flex flex-col items-center hover:bg-base-100 ease-in-out duration-300 cursor-pointer group',
-      isTransitionDisabled ? 'transition-none' : 'transition-all',
-      config.settings.grid.style === 0 ? 'rounded-box' : '',
-      config.content.layout === 0 && config.settings.grid.style === 0 ? 'p-1' : '',
-      config.content.layout === 1 ? 'p-0.5 ml-0.5' : '',
+      'border-2 flex flex-col items-center hover:bg-base-100 cursor-pointer group',
+      isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
+      config.settings.grid.style === 0 ? 'm-1 p-1 rounded-box' : '',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
     ]"
     :style="containerStyle"
@@ -16,13 +14,13 @@
       :class="[
         'relative flex items-center justify-center overflow-hidden', 
         config.settings.grid.style === 0 ? 'rounded-box' : '',
-        config.settings.grid.style === 1 ? 'w-full' : ''
+        (config.settings.grid.style === 1 || config.content.layout === 1) ? 'w-full h-full' : ''
       ]">
       <!-- image -->
       <img :src="file.thumbnail"
         class="duration-300"
         :class="{
-          'group-hover:scale-115': config.content.layout === 1,
+          'group-hover:scale-115': config.settings.grid.style === 1,
           'object-contain': config.settings.grid.scaling === 0,
           'object-cover': config.settings.grid.scaling === 1,
           'object-fill': config.settings.grid.scaling === 2,
@@ -57,7 +55,10 @@
       <div v-if="selectMode" class="absolute right-1 top-0.5">
         <component 
           :is="file?.isSelected ? IconChecked : IconUnChecked" 
-          :class="['t-icon-size-sm hover:text-base-content/70', file?.isSelected ? 'text-primary' : 'text-base-content/30']" 
+          :class="[
+            't-icon-size-sm hover:text-base-content/70', 
+            file?.isSelected && uiStore.inputStack.length === 0 ? 'text-primary' : 'text-base-content/30'
+          ]" 
           @click.stop="$emit('select-toggled')"
         />
       </div>
@@ -78,13 +79,13 @@
     <!-- skeleton for loading thumbnail -->
     <div v-else 
       class="skeleton rounded-box flex items-center justify-center"
-      :style="{ width: `${config.settings.grid.size}px`, height: `${config.settings.grid.size}px` }"
+      style="width: 100%; height: 100%"
     ></div>
 
     <!-- label -->
     <template v-if="config.content.layout === 0 && config.settings.grid.style === 0">
-      <span class="pt-1 text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
-      <span class="text-sm text-center">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
+      <span class="w-full text-sm text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
+      <span class="w-full text-xs text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden ">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
     </template>
 
   </div>
@@ -161,7 +162,7 @@ watch(() => config.content.layout, () => {
 
 const containerStyle = computed(() => {
   if (config.content.layout === 1) {
-    const size = config.content.filmStripPaneHeight;
+    const size = config.content.filmStripPaneHeight - 8;
     return {
       width: size + 'px',
       height: size + 'px',
@@ -185,14 +186,9 @@ const layoutStyle = computed(() => {
     }
   }
   else if (config.content.layout === 1) {
-    const size = config.content.filmStripPaneHeight - 8;
     return {
-      maxWidth: size + 'px',
-      maxHeight: size + 'px',
-      minWidth: size + 'px',
-      minHeight: size + 'px',
-      width: size + 'px',
-      height: size + 'px'
+      width: '100%',
+      height: '100%'
     }
   }
 })
@@ -298,11 +294,11 @@ const getGridLabelText = (file, option) => {
     case 3: return formatDimensionText(file.width, file.height);
     case 4: return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
     case 5: return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
-    case 6: return file.e_make && file.e_model ? `${file.e_model}` : '';
-    case 7: return file.e_lens_model ? `${file.e_lens_model}` : '';
-    case 8: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias);
-    case 9: return file.e_date_time || '';
-    case 10: return file.geo_name || '';
+    case 6: return file.e_model || ' ';
+    case 7: return file.e_lens_model || ' ';
+    case 8: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias) || ' ';
+    case 9: return file.e_date_time || ' ';
+    case 10: return file.geo_name || ' ';
     default: return '';
   }
 };

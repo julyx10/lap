@@ -2473,6 +2473,7 @@ dependencies = [
  "once_cell",
  "opener",
  "pinyin",
+ "rand 0.8.5",
  "reverse_geocoder",
  "rusqlite",
  "serde",

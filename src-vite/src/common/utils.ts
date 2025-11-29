@@ -95,12 +95,21 @@ export function getDaysElapsed(timestamp: number): number {
 
 /// format timestamp to string
 export function formatTimestamp(timestamp: number, formatStr: string): string {
-  return format(new Date(timestamp * 1000), formatStr);
+  if (!timestamp || isNaN(timestamp)) return '';
+  try {
+    return format(new Date(timestamp * 1000), formatStr);
+  } catch (e) {
+    return '';
+  }
 }
 
 /// format date to string
 export function formatDate(year: number, month: number, date: number, formatStr: string): string {
-  return format(new Date(year, month - 1, date), formatStr);
+  try {
+    return format(new Date(year, month - 1, date), formatStr);
+  } catch (e) {
+    return '';
+  }
 }
 
 /// get the date range of a month

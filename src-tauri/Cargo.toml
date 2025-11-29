@@ -39,6 +39,7 @@ opener = "0.7.2"
 arboard = "3.5.0"
 pinyin = "0.10.0"
 once_cell = "1.21.3"
+rand = "0.8"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

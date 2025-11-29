@@ -1,3 +1,11 @@
+/**
+ * SQLite database operations.
+ * project: jc-photo
+ * author:  julyxx
+ * email:   tiangle@gmail.com
+ * GitHub:  /julyx10
+ * date:    2024-08-08
+ */
 use crate::t_image;
 use crate::t_utils;
 use crate::t_video;
@@ -5,13 +13,6 @@ use base64::{Engine, engine::general_purpose};
 use exif::{In, Reader, Tag, Value};
 use rusqlite::{Connection, OptionalExtension, Result, ToSql, params};
 use serde::{Deserialize, Serialize};
-/**
- * project: jc-photo
- * author:  julyxx
- * email:   tiangle@gmail.com
- * GitHub:  /julyx10
- * date:    2024-08-08
- */
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
@@ -1402,6 +1403,7 @@ impl AFile {
             4 => query.push_str(" ORDER BY a.created_at"),
             5 => query.push_str(" ORDER BY a.modified_at"),
             6 => query.push_str(" ORDER BY a.taken_date"),
+            7 => query.push_str(" ORDER BY RANDOM()"),
             _ => query.push_str(" ORDER BY a.name_pinyin"),
         }
         match sort_order {

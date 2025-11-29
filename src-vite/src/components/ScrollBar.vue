@@ -15,7 +15,7 @@
       <!-- Thumb -->
       <div v-if="total > pageSize"
         ref="thumbRef"
-        class="absolute left-0 right-0 rounded-full bg-base-content/30 hover:bg-base-content/50 active:bg-base-content/70 transition-colors duration-150"
+        class="absolute left-0 right-0 rounded-full bg-base-content/30 hover:bg-base-content/50 active:bg-base-content/70 transition-colors duration-200"
         :style="{ top: thumbTop + 'px', height: thumbHeight + 'px' }"
         @mousedown.stop="handleThumbMouseDown"
       ></div>
