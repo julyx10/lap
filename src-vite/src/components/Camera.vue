@@ -3,7 +3,7 @@
   <div class="w-full h-full flex flex-col" style="user-select: none;">
     
     <!-- title bar -->
-    <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+    <div class="px-1 h-10 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
       <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
       <TButton v-if="config.home.showLeftPane"
         :icon="IconLeftPaneOn"
@@ -18,7 +18,7 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              config.camera.make === camera.make && !config.camera.model ? 'text-primary' : 'hover:text-base-content',
+              config.camera.make === camera.make && !config.camera.model ? 'text-primary bg-base-100' : 'hover:text-base-content',
             ]"
             @click="clickCameraMake(camera)"
           >
@@ -38,7 +38,7 @@
               <div 
                 :class="[
                   'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                  config.camera.model === model ? 'text-primary' : 'hover:text-base-content',
+                  config.camera.model === model ? 'text-primary bg-base-100' : 'hover:text-base-content',
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >

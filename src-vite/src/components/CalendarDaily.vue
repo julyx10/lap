@@ -5,8 +5,8 @@
     <!-- title -->
     <div 
       :class="[
-        'mt-2 px-2 border-2 rounded-box hover:bg-base-100 hover:text-base-content text-nowrap cursor-pointer',
-        isSelected(year, month, -1) ? 'border-primary' : 'border-transparent'
+        'mt-2 px-2 rounded-box hover:bg-base-100 text-nowrap cursor-pointer',
+        isSelected(year, month, -1) ? 'text-primary bg-base-100' : 'hover:text-base-content'
       ]"
       @click="clickDate(year, month, -1)"
     >
@@ -19,10 +19,10 @@
       <div
         v-for="d in monthDates"
         :key="d.date"
-        class="size-8 text-sm flex items-center justify-center border-2 rounded-box"
+        class="size-8 text-sm flex items-center justify-center rounded-box"
         :class="[
-          isSelected(year, month, d.date) ? 'border-primary' : 'border-transparent',
-          d.count === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 hover:text-base-content cursor-pointer',
+          isSelected(year, month, d.date) ? 'text-primary bg-base-100' : (d.count === 0 ? '' : 'hover:text-base-content'),
+          d.count === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
           isTodayFn(d.date) ? 'bg-base-100' : '',
         ]"
         @click="d.count > 0 ? clickDate(year, month, d.date): null"

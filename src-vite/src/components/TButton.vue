@@ -9,7 +9,7 @@
           buttonClasses,
           {
             'btn-xs hover:bg-transparent': buttonSize === 'small',
-            'btn-md hover:bg-base-100': buttonSize === 'medium',
+            'btn-sm hover:bg-base-100': buttonSize === 'medium',
             'btn-lg hover:bg-base-100': buttonSize === 'large',
             'btn-disabled': disabled,
           }

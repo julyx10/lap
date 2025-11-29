@@ -5,8 +5,8 @@
     <!-- title -->
     <div 
       :class="[
-        'mt-2 px-2 border-2 rounded-box hover:bg-base-100 hover:text-base-content text-nowrap cursor-pointer',
-        isSelected(year, -1) ? 'border-primary' : 'border-transparent'
+        'mt-2 p-1 rounded-box hover:bg-base-100 text-nowrap cursor-pointer',
+        isSelected(year, -1) ? 'text-primary bg-base-100' : 'hover:text-base-content'
       ]"
       @click="clickDate(year, -1)"
     >
@@ -17,10 +17,10 @@
     <div class="py-2 px-1 gap-4 grid grid-cols-4">
       <div v-for="m in 12" 
         :key="m" 
-        class="px-2 text-sm flex items-center justify-center border-2 rounded-box text-nowrap"
+        class="p-1 text-sm flex items-center justify-center rounded-box text-nowrap"
         :class="[
-          isSelected(year, m) ? 'border-primary' : 'border-transparent',
-          sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 hover:text-base-content cursor-pointer',
+          isSelected(year, m) ? 'text-primary bg-base-100' : (sumMonthCount(m) === 0 ? '' : 'hover:text-base-content'),
+          sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
           isThisMonth(year, m) ? 'bg-base-100' : '',
         ]"
         @click="sumMonthCount(m) > 0 ? clickDate(year, m) : null" 

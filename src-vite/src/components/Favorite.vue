@@ -3,7 +3,7 @@
   <div class="w-full h-full flex flex-col select-none" >
       
       <!-- title bar -->
-      <div class="px-1 py-3 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+      <div class="px-1 h-10 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
         <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
         <!-- <TButton :icon="IconRefresh" @click="clickRefresh"/> -->
         <TButton v-if="config.home.showLeftPane"
@@ -16,7 +16,7 @@
       <div 
         :class="[ 
           'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
-          config.favorite.folderId === 0 ? 'text-primary' : 'hover:text-base-content',
+          config.favorite.folderId === 0 ? 'text-primary bg-base-100' : 'hover:text-base-content',
         ]"
         @click="clickFavoriteFiles()"
       >
@@ -36,7 +36,7 @@
             <div 
               :class="[ 
                 'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                config.favorite.folderId === folder.id ? 'text-primary' : 'hover:text-base-content',
+                config.favorite.folderId === folder.id ? 'text-primary bg-base-100' : 'hover:text-base-content',
               ]"
               @click="clickFavoriteFolder(folder)"
             >

@@ -16,7 +16,7 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              selectedFolderId === album.folderId && !isEditList ? 'text-primary' : 'hover:text-base-content',
+              selectedFolderId === album.folderId && !isEditList ? 'text-primary bg-base-100' : 'hover:text-base-content',
             ]"
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"

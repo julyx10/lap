@@ -82,13 +82,13 @@
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
           <!-- grid view layout -->
           <TButton
-            :icon="!config.content.showFilmStrip ? IconGrid : IconGallery"
-            :iconStyle="{ transform: `rotate(${config.settings.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+            :icon="config.content.showFilmStrip ? IconSideBarOn : IconSideBarOff"
+            :iconStyle="{ transform: `rotate(${config.settings.previewPosition === 0 ? -90 : 90}deg)`, transition: 'transform 0.3s ease-in-out' }" 
             @click="toggleGridViewLayout"
           />
           <!-- show info panel -->
           <TButton
-            :icon="config.infoPanel.show ? IconPreview : IconPreviewOff"
+            :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
             @click="config.infoPanel.show = !config.infoPanel.show"
           />
         </div>
@@ -395,8 +395,8 @@ import {
   IconHome,
   IconLeftPaneOn,
   IconLeftPaneOff,
-  IconPreview,
-  IconPreviewOff,
+  IconSideBarOn,
+  IconSideBarOff,
   IconArrowDown,
   IconClose,
   IconCheckAll,
