@@ -5,22 +5,23 @@
     :class="{ 
       'pointer-events-none': uiStore.inputStack.length > 0,
     }"
+    @wheel="onWheel"
   >
     <RecycleScroller
       v-if="fileList.length > 0"
       ref="scroller"
       class="w-full h-full no-scrollbar"
       :class="{
-        'pt-12': config.content.layout === 0,
-        'pb-8': config.content.layout === 0 && config.settings.showStatusBar,
-        'pb-1': config.content.layout === 0 && !config.settings.showStatusBar,
+        'pt-12': !config.content.showFilmStrip,
+        'pb-8': !config.content.showFilmStrip && config.settings.showStatusBar,
+        'pb-1': !config.content.showFilmStrip && !config.settings.showStatusBar,
       }"
       :items="fileList"
-      :direction="config.content.layout === 0 ? 'vertical' : 'horizontal'"
-      :grid-items="config.content.layout === 0 ? columnCount : undefined"
-      :item-size="config.content.layout === 0 ? itemHeight : filmStripItemSize"
-      :item-secondary-size="config.content.layout === 0 ? itemWidth : undefined"
-      :key="config.content.layout"
+      :direction="!config.content.showFilmStrip ? 'vertical' : 'horizontal'"
+      :grid-items="!config.content.showFilmStrip ? columnCount : undefined"
+      :item-size="!config.content.showFilmStrip ? itemHeight : filmStripItemSize"
+      :item-secondary-size="!config.content.showFilmStrip ? itemWidth : undefined"
+      :key="config.content.showFilmStrip ? 'filmstrip' : 'grid'"
       key-field="id"
       :emit-update="true"
       v-slot="{ item, index }"
@@ -41,32 +42,11 @@
         :show-folder-files="showFolderFiles"
         @clicked="$emit('item-clicked', index)"
         @dblclicked="$emit('item-dblclicked', index)"
-        @select-toggled="$emit('item-select-toggled', index)"
+        @select-toggled="(shiftKey) => $emit('item-select-toggled', index, shiftKey)"
         @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
       />
       <div v-else class="w-full h-full bg-base-200/50 rounded animate-pulse"></div>
     </RecycleScroller>
-
-    <!-- Filmstrip View (Layout 1) - Horizontal -->
-    <!-- <div v-else-if="config.content.layout === 1 && fileList.length > 0" 
-      id="gridView"
-      class="absolute flex flex-nowrap items-center h-full overflow-x-auto"
-    >
-      <Thumbnail
-        v-for="(file, index) in fileList"
-        :key="index"
-        :id="'item-' + index"
-        :file="file"
-        :is-selected="selectMode ? file.isSelected : index === selectedItemIndex"
-        :select-mode="selectMode"
-        :show-folder-files="showFolderFiles"
-        @clicked="$emit('item-clicked', index)"
-        @dblclicked="$emit('item-dblclicked', index)"
-        @select-toggled="$emit('item-select-toggled', index)"
-        @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
-      />
-    </div> -->
-
     <!-- Empty State -->
     <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
       <span>{{ config.home.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
@@ -92,6 +72,7 @@ const props = withDefaults(defineProps<{
   showFolderFiles?: boolean;
   selectMode?: boolean;
 }>(), {
+  selectedItemIndex: -1,
   showFolderFiles: false,
   selectMode: false,
 });
@@ -137,7 +118,7 @@ const itemHeight = computed(() => {
 });
 
 const filmStripItemSize = computed(() => {
-  return config.settings.grid.style === 0 ? config.content.filmStripPaneHeight: config.content.filmStripPaneHeight - gap;
+  return config.content.filmStripPaneHeight;
 });
 
 let resizeObserver: ResizeObserver | null = null;
@@ -151,7 +132,7 @@ function updateColumnCount() {
   }
 }
 
-watch(() => config.settings.grid.size, () => {
+watch(() => [config.settings.grid.size, config.settings.grid.style], () => {
   updateColumnCount();
 });
 
@@ -165,6 +146,9 @@ onMounted(() => {
   if (containerRef.value) {
     resizeObserver = new ResizeObserver(() => {
       updateColumnCount();
+      if (props.selectedItemIndex !== -1) {
+        scrollToItem(props.selectedItemIndex);
+      }
     });
     resizeObserver.observe(containerRef.value);
     updateColumnCount();
@@ -186,27 +170,72 @@ function onScroll(e: Event) {
   emit('scroll', e);
 }
 
+function onWheel(e: WheelEvent) {
+  if (config.content.showFilmStrip && scroller.value) {
+    // If it's a vertical scroll (deltaY) and no horizontal scroll (deltaX),
+    // translate it to horizontal scroll
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      scroller.value.$el.scrollLeft += e.deltaY;
+      e.preventDefault(); // Prevent default vertical scrolling behavior if any
+    }
+  }
+}
+
 function scrollToItem(index: number) {
-  if (scroller.value && config.content.layout === 0) {
-    const el = scroller.value.$el;
+  if (!scroller.value) return;
+  
+  const el = scroller.value.$el;
+  
+  if (!config.content.showFilmStrip) {
     const row = Math.floor(index / columnCount.value);
     const itemTop = row * itemHeight.value;
     const itemBottom = itemTop + itemHeight.value;
     const scrollTop = el.scrollTop;
     const clientHeight = el.clientHeight;
+    
+    // Account for top and bottom padding
+    const topPadding = 48; // pt-12 = 48px
+    const bottomPadding = config.settings.showStatusBar ? 32 : 4; // pb-8 = 32px, pb-1 = 4px
+    
+    const viewportTop = scrollTop;
+    const viewportBottom = scrollTop + clientHeight - (topPadding + bottomPadding);
 
-    if (itemTop < scrollTop) {
-      el.scrollTop = itemTop;
-    } else if (itemBottom > scrollTop + clientHeight) {
-      el.scrollTop = itemBottom - clientHeight;
+    // Only scroll if the item is not fully visible
+    const isFullyVisible = itemTop >= viewportTop && itemBottom <= viewportBottom;
+    
+    if (!isFullyVisible) {
+      if (itemTop < viewportTop) {
+        // Item is above viewport, scroll to show it at the top
+        el.scrollTop = itemTop;
+      } else if (itemBottom > viewportBottom) {
+        // Item is below viewport, scroll to show it at the bottom (accounting for bottom padding)
+        el.scrollTop = itemBottom - clientHeight + (topPadding + bottomPadding);
+      }
     }
   } else {
-    emit('request-scroll', index);
+    // Layout 1: Horizontal, center the item
+    const itemSize = filmStripItemSize.value;
+    const itemLeft = index * itemSize;
+    const itemCenter = itemLeft + itemSize / 2;
+    const clientWidth = el.clientWidth;
+    
+    // Calculate target scrollLeft to center the item
+    let targetScrollLeft = itemCenter - clientWidth / 2;
+    
+    // Clamp to bounds
+    targetScrollLeft = Math.max(0, targetScrollLeft);
+    const maxScrollLeft = el.scrollWidth - clientWidth;
+    targetScrollLeft = Math.min(targetScrollLeft, maxScrollLeft);
+    
+    el.scrollTo({
+      left: targetScrollLeft,
+      behavior: 'smooth'
+    });
   }
 }
 
 function scrollToPosition(scrollTop: number) {
-  if (scroller.value && config.content.layout === 0) {
+  if (scroller.value && !config.content.showFilmStrip) {
     scroller.value.$el.scrollTop = scrollTop;
   }
 }
@@ -217,7 +246,6 @@ function getColumnCount() {
 
 defineExpose({
   getColumnCount,
-  scrollToItem,
   scrollToPosition,
 });
 

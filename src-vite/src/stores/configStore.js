@@ -9,8 +9,7 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     content: {
-      pageSize: 200,              // number of files per page
-      layout: 0,                  // 0: grid view, 1: film strip view
+      showFilmStrip: false,       // false: grid view, true: film strip view
       filmStripPaneHeight: 200,   // film strip pane height (px)
     },
 
@@ -114,9 +113,7 @@ export const useConfigStore = defineStore('configStore', {
         labelPrimary: 1,        // Primary label (1: Name)
         labelSecondary: 2,      // Secondary label (2: Dimension)
       },
-      filmStripView: {
-        previewPosition: 0,      // 0: top display, 1: bottom display
-      },
+      previewPosition: 0,       // 0: top display, 1: bottom display
 
       // image viewer settings
       mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
@@ -185,7 +182,7 @@ export const useConfigStore = defineStore('configStore', {
       this.settings.grid.labelSecondary = gridLabelSecondary;
     },
     setfilmStripViewPreviewPosition(filmStripViewPreviewPosition) {
-      this.settings.filmStripView.previewPosition = filmStripViewPreviewPosition;
+      this.settings.previewPosition = filmStripViewPreviewPosition;
     },
     // image viewer settings
     setMouseWheelMode(mouseWheelMode) {

@@ -1,5 +1,10 @@
 <template>
-  <div class="w-full h-full flex flex-col items-center justify-center">
+  <div 
+    :class="[
+      'h-full flex flex-col items-center justify-center',
+      markers.length > 0 ? 'w-8' : 'm-1 w-2'
+    ]"
+  >
     <TButton :icon="IconArrowUp" :buttonSize="'small'" @click="clickPreviousPage" class="shrink-0"/>
     
     <!-- custom area -->

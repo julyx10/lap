@@ -135,7 +135,7 @@
           <!-- Preview Position -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.filmstrip_view.preview_position') }}</label>
-            <select class="select" v-model="config.settings.filmStripView.previewPosition">
+            <select class="select" v-model="config.settings.previewPosition">
               <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
@@ -499,7 +499,7 @@ watch(() => config.settings.grid.labelPrimary, (newValue) => {
 watch(() => config.settings.grid.labelSecondary, (newValue) => {
   emit('settings-gridLabelSecondary-changed', newValue);
 });
-watch(() => config.settings.filmStripView.previewPosition, (newValue) => {
+watch(() => config.settings.previewPosition, (newValue) => {
   emit('settings-filmStripViewPreviewPosition-changed', newValue);
 });
 

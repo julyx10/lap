@@ -17,7 +17,7 @@
           :style="menuStyle"
         >
           <!-- menu items -->
-          <template v-for="(item, index) in menuItems">
+          <template v-for="(item, index) in resolvedMenuItems">
             <button v-if="!item.hidden"
               :class="[
                 item.label === '-' ? 'mx-2 my-1 border-t border-base-content/30' : 'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
@@ -44,7 +44,7 @@
 </template>
   
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, shallowRef, onMounted, onBeforeUnmount, nextTick } from 'vue';
 
 import TButton from '@/components/TButton.vue';
 
@@ -55,7 +55,7 @@ const props = defineProps({
     required: true,
   },
   menuItems: {
-    type: Array,
+    type: [Array, Function], // Accept Array or Function for lazy generation
     required: true,
   },
   smallIcon: {
@@ -67,6 +67,10 @@ const props = defineProps({
     default: false,    
   }
 });
+
+// Resolved menu items (computed on demand)
+// Use shallowRef to avoid making icon components reactive
+const resolvedMenuItems = shallowRef([]);
 
 // Emits
 const emit = defineEmits(['select']);
@@ -103,6 +107,11 @@ const toggleDropdown = async () => {
   isDropDown.value = !isDropDown.value;
 
   if (isDropDown.value) {
+    // Resolve menu items (call function if provided)
+    resolvedMenuItems.value = typeof props.menuItems === 'function' 
+      ? props.menuItems() 
+      : props.menuItems;
+
     await nextTick(); // Ensure menu is rendered before measuring
 
     const rect = dropdown.value.getBoundingClientRect();

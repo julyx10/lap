@@ -5,6 +5,7 @@
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
       config.settings.grid.style === 0 ? 'm-1 p-1 rounded-box' : '',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
+      config.settings.grid.style === 0 && isSelected ? 'bg-base-100' : '',
     ]"
     :style="containerStyle"
     @click="$emit('clicked')"
@@ -14,13 +15,14 @@
       :class="[
         'relative flex items-center justify-center overflow-hidden', 
         config.settings.grid.style === 0 ? 'rounded-box' : '',
-        (config.settings.grid.style === 1 || config.content.layout === 1) ? 'w-full h-full' : ''
+        (config.settings.grid.style === 1 || config.content.showFilmStrip) ? 'w-full h-full' : ''
       ]">
       <!-- image -->
       <img :src="file.thumbnail"
         class="duration-300"
         :class="{
           'group-hover:scale-115': config.settings.grid.style === 1,
+          'scale-115': config.settings.grid.style === 1 && isSelected,
           'object-contain': config.settings.grid.scaling === 0,
           'object-cover': config.settings.grid.scaling === 1,
           'object-fill': config.settings.grid.scaling === 2,
@@ -59,7 +61,7 @@
             't-icon-size-sm hover:text-base-content/70', 
             file?.isSelected && uiStore.inputStack.length === 0 ? 'text-primary' : 'text-base-content/30'
           ]" 
-          @click.stop="$emit('select-toggled')"
+          @click.stop="(event: MouseEvent) => $emit('select-toggled', event.shiftKey)"
         />
       </div>
 
@@ -70,7 +72,7 @@
             !isSelected ? 'invisible group-hover:visible' : ''
           ]"
           :iconMenu="IconMore"
-          :menuItems="contextMenuItems"
+          :menuItems="getContextMenuItems"
           :smallIcon="true"
         />
       </div>
@@ -83,7 +85,7 @@
     ></div>
 
     <!-- label -->
-    <template v-if="config.content.layout === 0 && config.settings.grid.style === 0">
+    <template v-if="!config.content.showFilmStrip && config.settings.grid.style === 0">
       <span class="w-full text-sm text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
       <span class="w-full text-xs text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden ">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
     </template>
@@ -150,7 +152,7 @@ const emit = defineEmits([
 const isTransitionDisabled = ref(false);
 let transitionTimeout: NodeJS.Timeout | null = null;
 
-watch(() => config.content.layout, () => {
+watch(() => config.content.showFilmStrip, () => {
   isTransitionDisabled.value = true;
   if (transitionTimeout) {
     clearTimeout(transitionTimeout);
@@ -161,8 +163,11 @@ watch(() => config.content.layout, () => {
 });
 
 const containerStyle = computed(() => {
-  if (config.content.layout === 1) {
-    const size = config.content.filmStripPaneHeight - 8;
+  if (config.content.showFilmStrip) {
+    // For grid.style === 0, account for margin (4px) and padding (4px) = 8px total
+    const size = config.settings.grid.style === 0 
+      ? config.content.filmStripPaneHeight - 8 
+      : config.content.filmStripPaneHeight;
     return {
       width: size + 'px',
       height: size + 'px',
@@ -172,7 +177,7 @@ const containerStyle = computed(() => {
 });
 
 const layoutStyle = computed(() => {
-  if (config.content.layout === 0) {
+  if (!config.content.showFilmStrip) {
     if (config.settings.grid.style === 1) {
       const height = config.settings.grid.size;
       return {
@@ -185,7 +190,7 @@ const layoutStyle = computed(() => {
       height: config.settings.grid.size + 'px'
     }
   }
-  else if (config.content.layout === 1) {
+  else if (config.content.showFilmStrip) {
     return {
       width: '100%',
       height: '100%'
@@ -197,7 +202,7 @@ const uiStore = useUIStore();
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const contextMenuItems = computed(() => {
+const getContextMenuItems = () => {
   const file = props.file;
   const createAction = (actionName: string) => () => emit('action', actionName);
 
@@ -284,7 +289,7 @@ const contextMenuItems = computed(() => {
       action: createAction('rotate')
     }
   ];
-});
+};
 
 const getGridLabelText = (file, option) => {
   switch (option) {
