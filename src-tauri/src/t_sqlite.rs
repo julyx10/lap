@@ -458,6 +458,35 @@ pub struct AFile {
     pub album_name: Option<String>, // album name (for webview)
 }
 
+/// Define the timeline marker struct for scrollbar markers
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ATimeLine {
+    pub year: Option<i32>,
+    pub month: Option<i32>,
+    pub date: Option<i32>,
+    pub position: i64, // Row index in the sorted fileList
+}
+
+/// Define the query parameters struct for file queries
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryParams {
+    pub search_text: String,
+    pub search_file_type: i64,
+    pub sort_type: i64,
+    pub sort_order: i64,
+    pub search_folder: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub make: String,
+    pub model: String,
+    pub location_admin1: String,
+    pub location_name: String,
+    pub is_favorite: bool,
+    pub is_show_hidden: bool,
+    pub tag_id: i64,
+}
+
 impl AFile {
     fn new(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
         let file_info = t_utils::FileInfo::new(file_path)?;
@@ -1208,7 +1237,7 @@ impl AFile {
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.taken_date IS NOT NULL {}
+            WHERE a.taken_date IS NOT NULL AND a.taken_date > '1970-01-01' {}
             GROUP BY a.taken_date
             ORDER BY a.taken_date {}",
             hidden_clause, order_clause
@@ -1235,79 +1264,66 @@ impl AFile {
     }
 
     // helper to build search query conditions and params
-    fn build_search_query(
-        search_text: &str,
-        search_file_type: i64,
-        search_folder: &str,
-        start_date: &str,
-        end_date: &str,
-        make: &str,
-        model: &str,
-        location_admin1: &str,
-        location_name: &str,
-        is_favorite: bool,
-        is_show_hidden: bool,
-        tag_id: i64,
-    ) -> (String, Vec<Box<dyn ToSql>>) {
+    fn build_search_query(params: &QueryParams) -> (String, Vec<Box<dyn ToSql>>) {
         let mut conditions = Vec::new();
-        let mut params: Vec<Box<dyn ToSql>> = Vec::new();
+        let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
-        if !search_text.is_empty() {
+        if !params.search_text.is_empty() {
             conditions.push("a.name LIKE ? COLLATE NOCASE");
-            params.push(Box::new(format!("%{}%", search_text)));
+            sql_params.push(Box::new(format!("%{}%", params.search_text)));
         }
 
-        if search_file_type > 0 {
+        if params.search_file_type > 0 {
             conditions.push("a.file_type = ?");
-            params.push(Box::new(search_file_type));
+            sql_params.push(Box::new(params.search_file_type));
         }
 
-        if !search_folder.is_empty() {
+        if !params.search_folder.is_empty() {
             // Match path that starts with search_folder followed by '/' or end of string
             conditions.push("(b.path = ? OR b.path LIKE ?)");
-            params.push(Box::new(search_folder.to_string()));
-            params.push(Box::new(format!("{}/%", search_folder)));
+            sql_params.push(Box::new(params.search_folder.clone()));
+            sql_params.push(Box::new(format!("{}/%", params.search_folder)));
         }
 
-        if !start_date.is_empty() {
-            if end_date.is_empty() {
+        if !params.start_date.is_empty() {
+            if params.end_date.is_empty() {
                 conditions.push("a.taken_date = ?");
-                params.push(Box::new(start_date.to_string()));
+                sql_params.push(Box::new(params.start_date.clone()));
             } else {
                 conditions.push("a.taken_date >= ? AND a.taken_date <= ?");
-                params.push(Box::new(start_date.to_string()));
-                params.push(Box::new(end_date.to_string()));
+                sql_params.push(Box::new(params.start_date.clone()));
+                sql_params.push(Box::new(params.end_date.clone()));
             }
         }
 
-        if !make.is_empty() {
+        if !params.make.is_empty() {
             conditions.push("UPPER(a.e_make) = UPPER(?)");
-            params.push(Box::new(make.to_string()));
-            if !model.is_empty() {
+            sql_params.push(Box::new(params.make.clone()));
+            if !params.model.is_empty() {
                 conditions.push("a.e_model = ?");
-                params.push(Box::new(model.to_string()));
+                sql_params.push(Box::new(params.model.clone()));
             }
         }
 
-        if !location_admin1.is_empty() {
+        if !params.location_admin1.is_empty() {
             conditions.push("a.geo_admin1 = ?");
-            params.push(Box::new(location_admin1.to_string()));
-            if !location_name.is_empty() {
+            sql_params.push(Box::new(params.location_admin1.clone()));
+            if !params.location_name.is_empty() {
                 conditions.push("a.geo_name = ?");
-                params.push(Box::new(location_name.to_string()));
+                sql_params.push(Box::new(params.location_name.clone()));
             }
         }
 
-        if is_favorite {
+        if params.is_favorite {
             conditions.push("a.is_favorite = 1");
         }
 
-        if tag_id > 0 {
+        if params.tag_id > 0 {
             conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
-            params.push(Box::new(tag_id));
+            sql_params.push(Box::new(params.tag_id));
         }
 
-        if !is_show_hidden {
+        if !params.is_show_hidden {
             conditions.push("(c.is_hidden IS NULL OR c.is_hidden = 0)");
         }
 
@@ -1317,85 +1333,33 @@ impl AFile {
             String::new()
         };
 
-        (where_clause, params)
+        (where_clause, sql_params)
     }
 
     // get query count and sum
-    pub fn get_query_count_and_sum(
-        search_text: &str,
-        search_file_type: i64,
-        search_folder: &str,
-        start_date: &str,
-        end_date: &str,
-        make: &str,
-        model: &str,
-        location_admin1: &str,
-        location_name: &str,
-        is_favorite: bool,
-        is_show_hidden: bool,
-        tag_id: i64,
-    ) -> Result<(i64, i64), String> {
-        let (where_clause, params) = Self::build_search_query(
-            search_text,
-            search_file_type,
-            search_folder,
-            start_date,
-            end_date,
-            make,
-            model,
-            location_admin1,
-            location_name,
-            is_favorite,
-            is_show_hidden,
-            tag_id,
-        );
+    pub fn get_query_count_and_sum(params: &QueryParams) -> Result<(i64, i64), String> {
+        let (where_clause, sql_params) = Self::build_search_query(params);
 
         let mut sql = Self::build_count_query();
         sql.push_str(&where_clause);
 
-        let final_params: Vec<&dyn ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         Self::query_count_and_sum(&sql, &final_params)
     }
 
     // get query files
     pub fn get_query_files(
-        search_text: &str,
-        search_file_type: i64,
-        sort_type: i64,
-        sort_order: i64,
-        search_folder: &str,
-        start_date: &str,
-        end_date: &str,
-        make: &str,
-        model: &str,
-        location_admin1: &str,
-        location_name: &str,
-        is_favorite: bool,
-        is_show_hidden: bool,
-        tag_id: i64,
+        params: &QueryParams,
         offset: i64,
         limit: i64,
     ) -> Result<Vec<Self>, String> {
-        let (where_clause, params) = Self::build_search_query(
-            search_text,
-            search_file_type,
-            search_folder,
-            start_date,
-            end_date,
-            make,
-            model,
-            location_admin1,
-            location_name,
-            is_favorite,
-            is_show_hidden,
-            tag_id,
-        );
+        let (where_clause, sql_params) = Self::build_search_query(params);
 
         let mut query = Self::build_base_query();
         query.push_str(&where_clause);
 
         // sort
-        match sort_type {
+        match params.sort_type {
             0 => query.push_str(" ORDER BY a.name_pinyin"),
             1 => query.push_str(" ORDER BY a.size"),
             2 => query.push_str(" ORDER BY a.width, a.height"),
@@ -1406,7 +1370,7 @@ impl AFile {
             7 => query.push_str(" ORDER BY RANDOM()"),
             _ => query.push_str(" ORDER BY a.name_pinyin"),
         }
-        match sort_order {
+        match params.sort_order {
             0 => query.push_str(" ASC"),
             1 => query.push_str(" DESC"),
             _ => query.push_str(" ASC"),
@@ -1415,11 +1379,95 @@ impl AFile {
         // paging
         query.push_str(" LIMIT ? OFFSET ?");
 
-        let mut final_params: Vec<&dyn ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         final_params.push(&limit);
         final_params.push(&offset);
-
         Self::query_files(&query, &final_params)
+    }
+
+    // get query timeline markers
+    pub fn get_query_time_line(params: &QueryParams) -> Result<Vec<ATimeLine>, String> {
+        // Only process for time-based sorts (4=created_at, 5=modified_at, 6=taken_date)
+        if params.sort_type < 4 || params.sort_type > 6 {
+            return Ok(Vec::new());
+        }
+
+        let (where_clause, sql_params) = Self::build_search_query(params);
+
+        // Determine date field and extraction logic based on sort_type
+        let (date_field, year_extract, month_extract, date_extract) = match params.sort_type {
+            4 => (
+                "a.created_at",
+                "CAST(strftime('%Y', datetime(a.created_at / 1000, 'unixepoch')) AS INTEGER)",
+                "CAST(strftime('%m', datetime(a.created_at / 1000, 'unixepoch')) AS INTEGER)",
+                "CAST(strftime('%d', datetime(a.created_at / 1000, 'unixepoch')) AS INTEGER)",
+            ),
+            5 => (
+                "a.modified_at",
+                "CAST(strftime('%Y', datetime(a.modified_at / 1000, 'unixepoch')) AS INTEGER)",
+                "CAST(strftime('%m', datetime(a.modified_at / 1000, 'unixepoch')) AS INTEGER)",
+                "CAST(strftime('%d', datetime(a.modified_at / 1000, 'unixepoch')) AS INTEGER)",
+            ),
+            6 => (
+                "a.taken_date",
+                "CAST(substr(a.taken_date, 1, 4) AS INTEGER)",
+                "CAST(substr(a.taken_date, 6, 2) AS INTEGER)",
+                "CAST(substr(a.taken_date, 9, 2) AS INTEGER)",
+            ),
+            _ => unreachable!(),
+        };
+
+        let order_clause = if params.sort_order == 0 {
+            "ASC"
+        } else {
+            "DESC"
+        };
+
+        // Build query with ROW_NUMBER to calculate positions
+        let query = format!(
+            "WITH ranked_files AS (
+                SELECT 
+                    ROW_NUMBER() OVER (ORDER BY {} {}) - 1 AS position,
+                    {} AS year,
+                    {} AS month,
+                    {} AS date
+                FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id
+                {}
+            )
+            SELECT year, month, date, MIN(position) as position
+            FROM ranked_files
+            WHERE year IS NOT NULL
+            GROUP BY year, month, date
+            ORDER BY position {}",
+            date_field,
+            order_clause,
+            year_extract,
+            month_extract,
+            date_extract,
+            where_clause,
+            order_clause
+        );
+
+        let conn = open_conn()?;
+        let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+
+        let timelines = stmt
+            .query_map(final_params.as_slice(), |row| {
+                Ok(ATimeLine {
+                    year: row.get(0)?,
+                    month: row.get(1)?,
+                    date: row.get(2)?,
+                    position: row.get(3)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+
+        Ok(timelines)
     }
 }
 

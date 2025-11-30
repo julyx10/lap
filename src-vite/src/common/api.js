@@ -276,22 +276,9 @@ export async function getTotalCountAndSum() {
 }
 
 /// get query files count and sum
-export async function getQueryCountAndSum(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId) {
+export async function getQueryCountAndSum(params) {
   try {
-    const result = await invoke('get_query_count_and_sum', {
-      searchText: config.search.text, 
-      searchFileType: config.search.fileType,
-      searchFolder,
-      startDate, 
-      endDate,
-      make, 
-      model,
-      locationAdmin1,
-      locationName,
-      isFavorite, 
-      isShowHidden: false,
-      tagId,
-    });
+    const result = await invoke('get_query_count_and_sum', { params });
     if(result) {
       return result;
     };
@@ -301,24 +288,24 @@ export async function getQueryCountAndSum(searchFolder, startDate, endDate, make
   return null;
 }
 
-/// get query files from db (with pagination)
-export async function getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, offset, limit) {
+/// get query timeline markers
+export async function getQueryTimeLine(params) {
   try {
-    const files = await invoke('get_query_files', {
-      searchText: config.search.text, 
-      searchFileType: config.search.fileType,
-      sortType: config.search.sortType,
-      sortOrder: config.search.sortOrder,
-      searchFolder,
-      startDate, 
-      endDate,
-      make, 
-      model,
-      locationAdmin1,
-      locationName,
-      isFavorite, 
-      isShowHidden: false,
-      tagId,
+    const result = await invoke('get_query_time_line', { params });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.error('getQueryTimeLine error:', error);
+  }
+  return null;
+}
+
+/// get query files from db (with pagination)
+export async function getQueryFiles(params, offset, limit) {
+  try {
+    const files = await invoke('get_query_files', { 
+      params,
       offset, 
       limit,
     });

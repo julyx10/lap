@@ -93,6 +93,7 @@ fn main() {
             // file
             t_cmds::get_total_count_and_sum,
             t_cmds::get_query_count_and_sum,
+            t_cmds::get_query_time_line,
             t_cmds::get_query_files,
             t_cmds::get_folder_files,
             t_cmds::get_folder_thumb_count,

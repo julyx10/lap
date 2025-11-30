@@ -111,15 +111,18 @@ const localeMsg = computed(() => messages.value[locale.value]);
 const scrollable = ref(null); // Ref for the scrollable element
 const calendar_dates = ref([]);
 
-onMounted( () => {
+onMounted(async () => {
   console.log('Calendar.vue mounted');
-  getCalendarDates();
+  await getCalendarDates();
+  
+  // Scroll to selected date after data is loaded and DOM is updated
+  scrollToSelected();
 
-  if (calendar_dates.value.length === 0) {
-    config.calendar.date = null;
-    config.calendar.month = null;
-    config.calendar.year = null;
-  }
+  // if (calendar_dates.value.length === 0) {
+  //   config.calendar.date = null;
+  //   config.calendar.month = null;
+  //   config.calendar.year = null;
+  // }
 });
 
 watch(() => [config.calendar.isMonthly, config.calendar.sortingAsc], () => {

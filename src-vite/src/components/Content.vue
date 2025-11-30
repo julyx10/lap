@@ -367,7 +367,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { getAlbum, getQueryCountAndSum, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
+import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
          setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile } from '@/common/api';  
 import { config } from '@/common/config';
@@ -554,6 +554,10 @@ const searchBoxRef = ref<any>(null);
 
 // Store current query params for virtual scrolling
 const currentQueryParams = ref({
+  searchText: "",
+  searchFileType: 0,
+  sortType: 0,
+  sortOrder: 0,
   searchFolder: "",
   startDate: "",
   endDate: "",
@@ -562,7 +566,8 @@ const currentQueryParams = ref({
   locationAdmin1: "",
   locationName: "",
   isFavorite: false,
-  tagId: 0
+  isShowHidden: false,
+  tagId: 0,
 });
 
 let unlistenKeydown: () => void;
@@ -1038,12 +1043,9 @@ async function fetchDataRange(start: number, end: number) {
       pendingRequests.add(key);
       console.log(`Fetching chunk: ${key}`);
       
-      // Fetch data
-      const { searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId } = currentQueryParams.value;
-      
       // We don't await here to allow parallel fetching of chunks, 
       // but we track pending requests to avoid duplicate fetches.
-      getQueryFiles(searchFolder, startDate, endDate, make, model, locationAdmin1, locationName, isFavorite, tagId, chunkStart, chunkSize)
+      getQueryFiles(currentQueryParams.value, chunkStart, chunkSize)
         .then(newFiles => {
           console.log(`Chunk loaded: ${key}, items: ${newFiles?.length}`);
           if (newFiles) {
@@ -1057,8 +1059,8 @@ async function fetchDataRange(start: number, end: number) {
             }
             // Fetch thumbnails for these files
             if (filesToFetch.length > 0) {
-                console.log(`Fetching thumbnails for chunk: ${key}, count: ${filesToFetch.length}`);
-                getFileListThumb(filesToFetch);
+              console.log(`Fetching thumbnails for chunk: ${key}, count: ${filesToFetch.length}`);
+              getFileListThumb(filesToFetch);
             }
           }
         })
@@ -1095,17 +1097,22 @@ async function getFileList(
   offset = 0, 
   limit = -1
 ) { 
-  // Update current query params
+  // Update current query params with all fields
   currentQueryParams.value = {
-    searchFolder, 
-    startDate, 
-    endDate, 
-    make, 
-    model, 
-    locationAdmin1,   
-    locationName, 
-    isFavorite, 
-    tagId
+    searchText: config.search.text,
+    searchFileType: config.search.fileType,
+    sortType: config.search.sortType,
+    sortOrder: config.search.sortOrder,
+    searchFolder,
+    startDate,
+    endDate,
+    make,
+    model,
+    locationAdmin1,
+    locationName,
+    isFavorite,
+    isShowHidden: false,
+    tagId,
   };
 
   // Reset file list
@@ -1114,21 +1121,24 @@ async function getFileList(
   totalFileSize.value = 0;
   
   // Get count and sum first
-  const result = await getQueryCountAndSum(
-    searchFolder, 
-    startDate, 
-    endDate, 
-    make, 
-    model, 
-    locationAdmin1, 
-    locationName, 
-    isFavorite, 
-    tagId
-  );
+  const result = await getQueryCountAndSum(currentQueryParams.value);
   
   if (result) {
     totalFileCount.value = result[0];
     totalFileSize.value = result[1];
+    
+    // Get timeline markers for date-based sorts
+    const timelineData = await getQueryTimeLine(currentQueryParams.value);
+    
+    // Calculate timeline markers with labels
+    if (timelineData && timelineData.length > 0) {
+      timelineMarkers.value = timelineData.map(item => ({
+        label: `${item.year}-${String(item.month).padStart(2, '0')}-${String(item.date).padStart(2, '0')}`,
+        position: item.position
+      }));
+    } else {
+      timelineMarkers.value = [];
+    }
     
     // Initialize fileList with placeholders
     // We use a large array. Vue 3's reactivity system can handle this, 

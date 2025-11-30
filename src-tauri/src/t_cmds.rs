@@ -7,7 +7,9 @@
  * date:    2024-08-08
  */
 use crate::t_image;
-use crate::t_sqlite::{ACamera, AFile, AFolder, ALocation, ATag, AThumb, Album};
+use crate::t_sqlite::{
+    ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, QueryParams,
+};
 use crate::t_utils;
 use base64::{Engine, engine::general_purpose};
 use std::path::Path;
@@ -165,76 +167,23 @@ pub fn get_total_count_and_sum() -> Result<(i64, i64), String> {
 
 /// get query count and sum
 #[tauri::command]
-pub fn get_query_count_and_sum(
-    search_text: &str,
-    search_file_type: i64,
-    search_folder: &str,
-    start_date: &str,
-    end_date: &str,
-    make: &str,
-    model: &str,
-    location_admin1: &str,
-    location_name: &str,
-    is_favorite: bool,
-    is_show_hidden: bool,
-    tag_id: i64,
-) -> Result<(i64, i64), String> {
-    AFile::get_query_count_and_sum(
-        search_text,
-        search_file_type,
-        search_folder,
-        start_date,
-        end_date,
-        make,
-        model,
-        location_admin1,
-        location_name,
-        is_favorite,
-        is_show_hidden,
-        tag_id,
-    )
-    .map_err(|e| format!("Error while getting query files count: {}", e))
+pub fn get_query_count_and_sum(params: QueryParams) -> Result<(i64, i64), String> {
+    AFile::get_query_count_and_sum(&params)
+        .map_err(|e| format!("Error while getting query files count: {}", e))
+}
+
+/// get query time line
+#[tauri::command]
+pub fn get_query_time_line(params: QueryParams) -> Result<Vec<ATimeLine>, String> {
+    AFile::get_query_time_line(&params)
+        .map_err(|e| format!("Error while getting query timeline: {}", e))
 }
 
 /// get query file
 #[tauri::command]
-pub fn get_query_files(
-    search_text: &str,
-    search_file_type: i64,
-    sort_type: i64,
-    sort_order: i64,
-    search_folder: &str,
-    start_date: &str,
-    end_date: &str,
-    make: &str,
-    model: &str,
-    location_admin1: &str,
-    location_name: &str,
-    is_favorite: bool,
-    is_show_hidden: bool,
-    tag_id: i64,
-    offset: i64,
-    limit: i64,
-) -> Result<Vec<AFile>, String> {
-    AFile::get_query_files(
-        search_text,
-        search_file_type,
-        sort_type,
-        sort_order,
-        search_folder,
-        start_date,
-        end_date,
-        make,
-        model,
-        location_admin1,
-        location_name,
-        is_favorite,
-        is_show_hidden,
-        tag_id,
-        offset,
-        limit,
-    )
-    .map_err(|e| format!("Error while getting all files: {}", e))
+pub fn get_query_files(params: QueryParams, offset: i64, limit: i64) -> Result<Vec<AFile>, String> {
+    AFile::get_query_files(&params, offset, limit)
+        .map_err(|e| format!("Error while getting all files: {}", e))
 }
 
 /// get all files from the folder
