@@ -196,7 +196,7 @@
           :total="totalFileCount"
           :pageSize="visibleItemCount"
           :modelValue="scrollPosition"
-          :markers="timelineMarkers"
+          :markers="timelineData"
           @update:modelValue="handleScrollUpdate"
         ></ScrollBar>
       </div>
@@ -545,7 +545,7 @@ const visibleItemCount = computed(() => {
   return rows * columnCount.value;
 });
 
-const timelineMarkers = ref<{ label: string, position: number }[]>([]);  // timeline markers for scrollbar
+const timelineData = ref<any[]>([]);  // timeline markers for scrollbar
 
 const toolTipRef = ref<any>(null);
 const isProcessing = ref(false);  // show processing status
@@ -1094,8 +1094,6 @@ async function getFileList(
   locationName: string, 
   isFavorite: boolean, 
   tagId: number, 
-  offset = 0, 
-  limit = -1
 ) { 
   // Update current query params with all fields
   currentQueryParams.value = {
@@ -1127,18 +1125,9 @@ async function getFileList(
     totalFileCount.value = result[0];
     totalFileSize.value = result[1];
     
-    // Get timeline markers for date-based sorts
-    const timelineData = await getQueryTimeLine(currentQueryParams.value);
-    
-    // Calculate timeline markers with labels
-    if (timelineData && timelineData.length > 0) {
-      timelineMarkers.value = timelineData.map(item => ({
-        label: `${item.year}-${String(item.month).padStart(2, '0')}-${String(item.date).padStart(2, '0')}`,
-        position: item.position
-      }));
-    } else {
-      timelineMarkers.value = [];
-    }
+    // Get timeline data for date-based sorts
+    timelineData.value = await getQueryTimeLine(currentQueryParams.value);
+    console.log('timelineData:', timelineData.value);
     
     // Initialize fileList with placeholders
     // We use a large array. Vue 3's reactivity system can handle this, 
