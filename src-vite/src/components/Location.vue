@@ -3,13 +3,13 @@
   <div class="w-full h-full flex flex-col" style="user-select: none;">
     
     <!-- title bar -->
-    <div class="px-1 h-10 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+    <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
       <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
       <!-- <TButton :icon="IconRefresh" @click="clickReload"/> -->
-      <TButton v-if="config.home.showLeftPane"
+      <!-- <TButton v-if="config.home.showLeftPane"
         :icon="IconLeftPaneOn"
         @click="config.home.showLeftPane = false"
-      />
+      /> -->
     </div>
 
     <!-- location -->

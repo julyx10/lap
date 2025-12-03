@@ -607,21 +607,39 @@ pub fn get_file_extension(file_path: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-/// get file type by extension (1: image, 2: video, 3: music)
+/// get file type by extension (1: image, 2: video, 3: raw)
 pub fn get_file_type(file_path: &str) -> Option<i64> {
-    if let Some(extension) = get_file_extension(file_path) {
-        match extension.to_lowercase().as_str() {
-            "jpg" | "jpeg" | "png" | "gif" | "bmp" | "tiff" | "webp" | "avif" | "heic" | "heif" => {
-                Some(1)
-            } // image
-            "mpg" | "mpeg" | "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "3gp"
-            | "m4v" | "hevc" | "asf" => Some(2), // video
-            // "mp3" | "flac" | "wav" | "m4a" | "ogg" | "wma" | "aac" | "ac3" | "alac"| "aiff" => Some(3),     // music
-            _ => None,
-        }
-    } else {
-        return None; // Return None if the file extension is not found}
+    let ext = get_file_extension(file_path)?.to_lowercase();
+
+    // Normal images
+    let normal_imgs = [
+        "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp", "avif", "heic", "heif",
+    ];
+
+    // RAW formats
+    let raw_imgs = [
+        "cr2", "cr3", "nef", "nrw", "arw", "srf", "sr2", "raf", "rw2", "orf", "pef", "dng",
+    ];
+
+    // Video formats
+    let videos = [
+        "mpg", "mpeg", "mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "3gp", "m4v", "hevc",
+        "asf", "mts", "m2ts", "mod", "tod", "ts",
+    ];
+
+    if normal_imgs.contains(&ext.as_str()) {
+        return Some(1);
     }
+
+    if raw_imgs.contains(&ext.as_str()) {
+        return Some(3);
+    }
+
+    if videos.contains(&ext.as_str()) {
+        return Some(2);
+    }
+
+    None
 }
 
 /// Get the name from a folder or file path

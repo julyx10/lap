@@ -7,6 +7,8 @@ export { default as IconLeft } from '@/assets/icons/arrow-left.svg';
 export { default as IconRight } from '@/assets/icons/arrow-right.svg';
 export { default as IconArrowUp } from '@/assets/icons/arrow-up.svg';
 export { default as IconArrowDown } from '@/assets/icons/arrow-down.svg';
+export { default as IconScrollUp } from '@/assets/icons/scroll-up.svg';
+export { default as IconScrollDown } from '@/assets/icons/scroll-down.svg';
 
 // ======================
 // FILE/FOLDER OPERATIONS

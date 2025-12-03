@@ -15,20 +15,20 @@
     <!-- title bar -->
     <div :class="
       [
-        'absolute top-0 left-0 right-0 pr-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-sm z-30',
-        config.home.showLeftPane ? 'pl-1' : 'pl-18'
+        'absolute top-0 left-2 right-2 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-sm z-30',
+        // config.home.showLeftPane ? 'pl-1' : 'pl-18'
       ]" 
       data-tauri-drag-region
     >
       <!-- title -->
       <div class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
-        <TButton v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0"
+        <!-- <TButton v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0"
           :icon="config.home.showLeftPane ? IconLeftPaneOn : IconLeftPaneOff"
           @click="config.home.showLeftPane = !config.home.showLeftPane"
         />
-        <IconSeparator v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0" class="t-icon-size-sm text-base-content/30" />
+        <IconSeparator v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0" class="t-icon-size-sm text-base-content/30" /> -->
         <component v-if="contentTitle" :is=contentIcon class="t-icon-size-sm shrink-0"/>
-        <div class="mx-2 cursor-default overflow-hidden whitespace-pre text-ellipsis">
+        <div class="mx-1 cursor-default overflow-hidden whitespace-pre text-ellipsis">
           {{ contentTitle }}
         </div>
       </div>
@@ -115,7 +115,7 @@
           :style="{ height: config.content.showFilmStrip ? config.content.filmStripPaneHeight + 'px' : '' }"
         >
           <!-- grid view -->
-          <div ref="gridScrollContainerRef" class="absolute w-full h-full">
+          <div ref="gridScrollContainerRef" class="absolute px-1 w-full h-full">
             <GridView ref="gridViewRef"
               :selected-item-index="selectedItemIndex"
               :fileList="fileList"
@@ -197,7 +197,9 @@
           :pageSize="visibleItemCount"
           :modelValue="scrollPosition"
           :markers="timelineData"
+          :selectedIndex="selectedItemIndex"
           @update:modelValue="handleScrollUpdate"
+          @select-item="handleItemClicked"
         ></ScrollBar>
       </div>
 

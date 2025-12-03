@@ -1,56 +1,95 @@
 <template>
   <div 
     :class="[
-      'h-full flex flex-col items-center justify-center',
-      markers.length > 0 ? 'w-16' : 'm-1 w-2'
+      'h-full flex flex-col items-end justify-center',
+      markers.length > 0 ? 'w-12' : 'w-4'
     ]"
   >
-    <TButton :icon="IconArrowUp" :buttonSize="'small'" @click="clickPreviousPage" class="shrink-0"/>
-    
-    <!-- custom area -->
-    <div ref="trackRef" 
+    <IconScrollUp 
       :class="[
-        'flex-1 w-full relative rounded-full', 
-        total > pageSize ? 'bg-base-200 cursor-pointer' : 'bg-base-200/30'
+        'w-4 h-4 text-base-content/30',
+        total > pageSize ? 'hover:text-base-content/50 cursor-pointer' : '' 
       ]" 
-      @mousedown="handleTrackClick"
-      >
-      <!-- Track background (optional, can be styled via class) -->
-      
-      <!-- Thumb -->
-      <div v-if="total > pageSize"
-        ref="thumbRef"
-        class="absolute left-0 right-0 rounded-full bg-base-content/30 hover:bg-base-content/50 active:bg-base-content/70 transition-colors duration-200"
-        :style="{ top: thumbTop + 'px', height: thumbHeight + 'px' }"
-        @mousedown.stop="handleThumbMouseDown"
-      ></div>
+      @click="clickPreviousPage"
+    />
 
-      <!-- Markers (Years and Months) -->
-      <div v-for="(marker, index) in displayMarkers" :key="index"
-        class="absolute right-0 pointer-events-none px-1 select-none flex items-center justify-end w-full"
-        :class="[
-          marker.isYear ? 'text-[10px] text-base-content/30' : 'text-[9px] text-base-content/30'
-        ]"
-        :style="{ top: marker.top + '%' }"
+    <!-- Main Area -->
+    <div class="flex-1 w-full flex flex-row relative">
+      
+      <!-- Markers Area (Left) -->
+      <div 
+        class="flex-1 h-full relative cursor-pointer"
+        @mouseenter="handleMarkersMouseEnter"
+        @mouseleave="handleMarkersMouseLeave"
+        @mousemove="handleMarkersMouseMove"
+        @click="handleMarkersClick"
       >
-        {{ marker.label }}
-        <!-- Tick mark -->
-        <div class="bg-base-content/30 ml-1" 
+        <!-- Markers (Years and Months) -->
+        <div v-for="(marker, index) in displayMarkers" :key="index"
+          class="absolute w-full right-1 tabular-nums pointer-events-none select-none flex items-center justify-end"
           :class="[
-            marker.isYear ? 'h-[1px] w-[4px]' : (marker.isTick ? 'h-[1px] w-[1px]' : 'h-[1px] w-[4px]')
+            marker.isYear ? 'text-[10px] text-base-content/70' : 'text-[9px] text-base-content/30'
           ]"
+          :style="{ top: marker.top + '%' }"
+        >
+          {{ marker.label }}
+        </div>
+
+        <!-- Hover Marker -->
+        <div v-if="isHovering"
+          class="absolute w-full h-1 bg-primary/50 pointer-events-none z-10 rounded-full"
+          :style="{ top: (hoverY - 2) + 'px' }"
+        ></div>
+
+        <!-- Selected Marker -->
+        <div v-if="selectedTop >= 0"
+          class="absolute w-full h-1 bg-primary pointer-events-none z-10 rounded-full"
+          :style="{ top: selectedTop + 'px' }"
+        ></div>
+
+        <!-- Hover Tooltip -->
+        <div v-if="isHovering && hoverDate"
+          class="absolute right-full mr-2 px-2 py-1 bg-base-300 text-base-content text-xs rounded shadow-lg whitespace-nowrap z-20 pointer-events-none flex items-center border border-base-content/10"
+          :style="{ top: hoverY + 'px', transform: 'translateY(-50%)' }"
+        >
+          {{ hoverDate }}
+          <!-- Arrow -->
+          <div class="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-base-300"></div>
+        </div>
+      </div>
+
+      <!-- Track Area (Right) -->
+      <div ref="trackRef" 
+        :class="[
+          'w-3 relative rounded-full ml-1', 
+          total > pageSize ? 'bg-base-200 cursor-pointer' : 'bg-base-200/30'
+        ]" 
+        @mousedown="handleTrackClick"
+      >
+        <!-- Thumb -->
+        <div v-if="total > pageSize"
+          ref="thumbRef"
+          class="absolute w-3 rounded-full bg-base-content/30 hover:bg-base-content/50 transition-colors duration-200 ease-in-out" 
+          :style="{ top: thumbTop + 'px', height: thumbHeight + 'px' }"
+          @mousedown.stop="handleThumbMouseDown"
         ></div>
       </div>
+
     </div>
 
-    <TButton :icon="IconArrowDown" :buttonSize="'small'" @click="clickNextPage" class="shrink-0"/>
+    <IconScrollDown 
+      :class="[
+        'w-4 h-4 text-base-content/30',
+        total > pageSize ? 'hover:text-base-content/50 cursor-pointer' : '' 
+      ]" 
+      @click="clickNextPage"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import TButton from './TButton.vue';
-import { IconArrowUp, IconArrowDown } from '@/common/icons';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { IconScrollUp, IconScrollDown } from '@/common/icons';
 
 const props = defineProps({
   total: {
@@ -68,10 +107,14 @@ const props = defineProps({
   markers: {
     type: Array as () => Array<{ year: number | null, month: number | null, date: number | null, position: number }>, 
     default: () => []
+  },
+  selectedIndex: {
+    type: Number,
+    default: -1
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'change']);
+const emit = defineEmits(['update:modelValue', 'change', 'select-item']);
 
 const trackRef = ref<HTMLElement | null>(null);
 const thumbRef = ref<HTMLElement | null>(null);
@@ -81,10 +124,15 @@ const isDragging = ref(false);
 const startY = ref(0);
 const startThumbTop = ref(0);
 
+// State for hover
+const isHovering = ref(false);
+const hoverY = ref(0);
+const hoverDate = ref('');
+
 // Computed properties for thumb dimensions and position
 const trackHeight = ref(0);
 
-// Process markers to show Year/Month changes and Date ticks
+// Process markers to show Year/Month changes
 const displayMarkers = computed(() => {
   if (!props.total || props.total === 0 || !props.markers.length) return [];
   
@@ -93,15 +141,16 @@ const displayMarkers = computed(() => {
   const minTickDistance = 5;
 
   // 1. Generate Candidates
-  // We identify the highest priority change for each position
-  const candidates: Array<{ 
-    label: string, 
-    top: number, 
-    type: 'year' | 'month' | 'date', 
-    pixelPos: number,
-    accepted: boolean 
-  }> = [];
+  interface Candidate {
+    label: string;
+    top: number;
+    type: 'year' | 'month';
+    pixelPos: number;
+    showLabel: boolean;
+    showTick: boolean;
+  }
 
+  const candidates: Candidate[] = [];
   let lastYear: number | null = null;
   let lastMonth: number | null = null;
 
@@ -115,132 +164,101 @@ const displayMarkers = computed(() => {
     const month = marker.month;
 
     if (year !== null && year !== lastYear) {
-      // Year change
       candidates.push({
         label: year === 0 ? '' : String(year),
         top: top,
         type: 'year',
         pixelPos: currentPixelPos,
-        accepted: false
+        showLabel: true,
+        showTick: true
       });
       lastYear = year;
       lastMonth = month;
     } else if (month !== null && month !== lastMonth) {
-      // Month change
       candidates.push({
         label: String(month).padStart(2, '0'),
         top: top,
         type: 'month',
         pixelPos: currentPixelPos,
-        accepted: false
+        showLabel: true,
+        showTick: true
       });
       lastMonth = month;
-    } else {
-      // Date change
-      candidates.push({
-        label: '',
-        top: top,
-        type: 'date',
-        pixelPos: currentPixelPos,
-        accepted: false
-      });
     }
   }
 
-  // 2. Filter Years
-  // Check distance to previous accepted Year
-  let lastAcceptedYearPos = -minLabelDistance * 2; // Ensure first one passes
+  // 2. Filter Years (First pass)
+  // Determine which Years have visible labels
+  let lastAcceptedYearPos = -minLabelDistance * 2;
   for (const item of candidates) {
     if (item.type === 'year') {
       if (Math.abs(item.pixelPos - lastAcceptedYearPos) >= minLabelDistance) {
-        item.accepted = true;
+        item.showLabel = true;
         lastAcceptedYearPos = item.pixelPos;
+      } else {
+        item.showLabel = false;
       }
+      item.showTick = true; // Years always show ticks
     }
   }
 
-  // 3. Filter Months
-  // Check distance to prev accepted (Year/Month) AND next accepted Year
-  let lastAcceptedLabelPos = -minLabelDistance * 2;
-  // We need to update lastAcceptedLabelPos as we go, but we also need to look ahead for Years.
-  // Since Years are already decided, we can look ahead.
+  // 3. Filter Months (Second pass)
+  // Check distances for labels and ticks
+  let lastVisibleLabelPos = -minLabelDistance * 2;
+  let lastVisibleTickPos = -minTickDistance * 2;
   
-  // First, let's find the indices of accepted years for fast look-ahead
-  const acceptedYearIndices = candidates
-    .map((item, index) => (item.type === 'year' && item.accepted) ? index : -1)
-    .filter(index => index !== -1);
+  // Pre-calculate visible years for fast look-ahead
+  const visibleYearPositions = candidates
+    .filter(c => c.type === 'year' && c.showLabel)
+    .map(c => c.pixelPos);
+  
+  let nextYearIdx = 0;
 
-  for (let i = 0; i < candidates.length; i++) {
-    const item = candidates[i];
-    
-    if (item.type === 'year' && item.accepted) {
-      lastAcceptedLabelPos = item.pixelPos;
+  for (const item of candidates) {
+    // Update next visible year pointer
+    while (nextYearIdx < visibleYearPositions.length && visibleYearPositions[nextYearIdx] <= item.pixelPos) {
+      nextYearIdx++;
+    }
+    const nextYearPos = nextYearIdx < visibleYearPositions.length ? visibleYearPositions[nextYearIdx] : Infinity;
+
+    if (item.type === 'year') {
+      if (item.showLabel) {
+        lastVisibleLabelPos = item.pixelPos;
+      }
+      lastVisibleTickPos = item.pixelPos;
       continue;
     }
 
     if (item.type === 'month') {
-      // Check prev
-      const distPrev = Math.abs(item.pixelPos - lastAcceptedLabelPos);
-      
-      // Check next Year
-      // Find the first accepted year index that is > i
-      const nextYearIndex = acceptedYearIndices.find(idx => idx > i);
-      let distNext = Infinity;
-      if (nextYearIndex !== undefined) {
-        distNext = Math.abs(candidates[nextYearIndex].pixelPos - item.pixelPos);
+      // Tick Visibility
+      if (Math.abs(item.pixelPos - lastVisibleTickPos) >= minTickDistance) {
+        item.showTick = true;
+        lastVisibleTickPos = item.pixelPos;
+      } else {
+        item.showTick = false;
       }
+
+      // Label Visibility
+      const distPrev = Math.abs(item.pixelPos - lastVisibleLabelPos);
+      const distNext = Math.abs(nextYearPos - item.pixelPos);
 
       if (distPrev >= minLabelDistance && distNext >= minLabelDistance) {
-        item.accepted = true;
-        lastAcceptedLabelPos = item.pixelPos;
+        item.showLabel = true;
+        lastVisibleLabelPos = item.pixelPos;
+      } else {
+        item.showLabel = false;
       }
     }
   }
 
-  // 4. Filter Dates
-  // Check distance to prev accepted (Year/Month/Date) AND next accepted Label (Year/Month)
-  let lastAcceptedItemPos = -minTickDistance * 2;
-  
-  // Find indices of all accepted labels (Years and Months) for look-ahead
-  const acceptedLabelIndices = candidates
-    .map((item, index) => ((item.type === 'year' || item.type === 'month') && item.accepted) ? index : -1)
-    .filter(index => index !== -1);
-
-  for (let i = 0; i < candidates.length; i++) {
-    const item = candidates[i];
-    
-    if (item.accepted) {
-      lastAcceptedItemPos = item.pixelPos;
-      continue;
-    }
-
-    if (item.type === 'date') {
-      // Check prev
-      const distPrev = Math.abs(item.pixelPos - lastAcceptedItemPos);
-      
-      // Check next Label
-      const nextLabelIndex = acceptedLabelIndices.find(idx => idx > i);
-      let distNext = Infinity;
-      if (nextLabelIndex !== undefined) {
-        distNext = Math.abs(candidates[nextLabelIndex].pixelPos - item.pixelPos);
-      }
-
-      if (distPrev >= minTickDistance && distNext >= minTickDistance) {
-        item.accepted = true;
-        lastAcceptedItemPos = item.pixelPos;
-      }
-    }
-  }
-
-  // Return formatted result
   return candidates
-    .filter(item => item.accepted)
+    .filter(item => item.showTick) // Only return items that have at least a tick
     .map(item => ({
-      label: item.label,
+      label: item.showLabel ? item.label : '', // Empty label if hidden
       top: item.top,
       isYear: item.type === 'year',
-      isTick: item.type === 'date',
-      pixelPos: item.pixelPos
+      pixelPos: item.pixelPos,
+      showTick: item.showTick
     }));
 });
 
@@ -287,6 +305,16 @@ const thumbTop = computed(() => {
   const ratio = props.modelValue / maxOffset;
   
   return Math.min(Math.max(0, ratio * maxTop), maxTop);
+});
+
+// Calculate selected item position
+const selectedTop = computed(() => {
+  if (props.selectedIndex < 0 || props.total <= 0) return -1;
+  
+  const ratio = props.selectedIndex / props.total;
+  // Use the full track height for markers
+  const top = ratio * trackHeight.value;
+  return Math.min(top, trackHeight.value);
 });
 
 // --- Interaction Handlers ---
@@ -347,6 +375,78 @@ function updateOffsetFromTop(top: number) {
   const newOffset = Math.round(ratio * maxOffset);
   
   emitUpdate(newOffset);
+}
+
+function handleMarkersMouseEnter() {
+  isHovering.value = true;
+}
+
+function handleMarkersMouseLeave() {
+  isHovering.value = false;
+}
+
+function handleMarkersMouseMove(e: MouseEvent) {
+  if (!trackRef.value) return; // Use trackRef for height calculation as it's the same height
+  const rect = trackRef.value.getBoundingClientRect();
+  const y = e.clientY - rect.top;
+  hoverY.value = y;
+
+  if (!props.markers.length) return;
+
+  const targetIndex = getIndexFromY(y);
+
+  // Find closest marker
+  const marker = findMarkerForIndex(targetIndex);
+  if (marker) {
+    hoverDate.value = formatDate(marker);
+  }
+}
+
+function handleMarkersClick(e: MouseEvent) {
+  if (!trackRef.value) return;
+  const rect = trackRef.value.getBoundingClientRect();
+  const y = e.clientY - rect.top;
+  
+  const targetIndex = getIndexFromY(y);
+  emit('select-item', targetIndex);
+}
+
+function getIndexFromY(y: number) {
+  const height = trackHeight.value;
+  if (height <= 0) return 0;
+  
+  const ratio = Math.max(0, Math.min(y / height, 1));
+  return Math.round(ratio * props.total);
+}
+
+function findMarkerForIndex(index: number) {
+  let low = 0;
+  let high = props.markers.length - 1;
+  let res = null;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    if (props.markers[mid].position <= index) {
+      res = props.markers[mid];
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return res;
+}
+
+function formatDate(marker: { year: number | null, month: number | null, date: number | null }) {
+  const y = marker.year;
+  const m = marker.month;
+  const d = marker.date;
+  
+  if (!y) return '';
+  
+  let str = `${y}`;
+  if (m !== null) str += `-${String(m).padStart(2, '0')}`;
+  if (d !== null) str += `-${String(d).padStart(2, '0')}`;
+  return str;
 }
 
 function emitUpdate(newValue: number) {

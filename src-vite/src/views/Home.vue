@@ -18,18 +18,18 @@
         <!-- left pane -->
         <div v-if="config.home.showLeftPane"
           :class="[
-            'flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
-            config.home.sidebarIndex === 0 ? 'mt-12': '',
-            { 'no-transition': isDraggingSplitter },
+            'relative flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
+            config.home.sidebarIndex === 0 || !showPanel ? 'mt-12 mb-8': '',
+            isDraggingSplitter ? 'no-transition' : 'transition-all duration-200 ease-in-out',
           ]"
-          :style="{ width: config.home.sidebarIndex > 0 ? config.home.leftPaneWidth + 'px' : '64px' }"
+          :style="{ width: config.home.sidebarIndex > 0  && showPanel ? config.home.leftPaneWidth + 'px' : '64px' }"
           data-tauri-drag-region
         >
           <!-- side bar -->
           <div 
             :class="[
-              'min-w-16 pb-2 h-full flex flex-col items-center space-y-2', 
-              isWin ? 'pt-2' : (config.home.sidebarIndex === 0 ? 'pt-2' : 'pt-13')
+              'fixed min-w-16 bottom-10 flex flex-col items-center space-y-2', 
+              isWin ? 'top-2' : 'top-14'
             ]" 
             data-tauri-drag-region
           >
@@ -39,7 +39,7 @@
                 :icon="item.icon" 
                 :text="item.text" 
                 :selected="config.home.sidebarIndex === index"
-                @click="config.home.sidebarIndex = index"
+                @click="clickSidebar(index)"
               />
             </div>
 
@@ -52,7 +52,7 @@
           </div>
 
           <!-- panel-->
-          <div v-if="config.home.sidebarIndex > 0" class="flex-1 overflow-hidden">
+          <div v-if="config.home.sidebarIndex > 0 && showPanel" class="ml-16 pr-0.5 flex-1 overflow-hidden">
             <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
           </div>
 
@@ -79,6 +79,11 @@
       >
         <Content :titlebar="buttons[config.home.sidebarIndex].text"/>
       </div>
+    </div>
+
+    <!-- logo -->
+    <div class="fixed bottom-2 left-3 text-[12px] text-base-content/10 transition-all duration-200 ease-in-out">
+      <span>jc-photo</span>
     </div>
   </div>
 
@@ -161,6 +166,18 @@ const buttons = computed(() =>  [
 
 /// Splitter for resizing the left pane
 const isDraggingSplitter = ref(false);
+
+const showPanel = ref(true);
+
+// click sidebar
+function clickSidebar(index: number) {
+  if (config.home.sidebarIndex === index) {
+    showPanel.value = !showPanel.value;
+  } else {
+    showPanel.value = true;
+    config.home.sidebarIndex = index;
+  }
+}
 
 // Dragging the splitter
 function startDraggingSplitter(event: MouseEvent) {

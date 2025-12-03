@@ -3,7 +3,7 @@
   <div class="w-full h-full flex flex-col overflow-hidden" style="user-select: none;">
 
     <!-- title bar -->
-    <div class="p-1 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+    <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
       <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
       <div class="flex text-sm items-center cursor-pointer">
         <div role="tablist" class="tabs-sm tabs-border" >
@@ -29,17 +29,17 @@
           :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc" 
           @click="toggleSortingOrder"
         />
-        <TButton v-if="config.home.showLeftPane"
+        <!-- <TButton v-if="config.home.showLeftPane"
           :icon="IconLeftPaneOn"
           @click="config.home.showLeftPane = false"
-        />
+        /> -->
       </div>
     </div>
     
     <template v-if="Object.keys(calendar_dates).length > 0" >
       
         <!-- days of the week in daily calendar -->
-        <div v-if="!config.calendar.isMonthly" class="text-sm text-base-content/30 flex flex-col items-center">
+        <div v-if="!config.calendar.isMonthly" class="pr-3 text-sm text-base-content/30 flex flex-col items-center">
           <div class="grid grid-cols-7 gap-2 text-center">
             <div 
               v-for="(day, index) in localeMsg.calendar.weekdays" 
