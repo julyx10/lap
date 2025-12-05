@@ -2,7 +2,7 @@
   <div 
     :class="[
       'h-full flex flex-col items-end justify-center',
-      markers.length > 0 ? 'w-12' : 'w-4'
+      markers.length > 0 ? 'w-13' : 'w-4'
     ]"
   >
     <IconScrollUp 
@@ -26,42 +26,42 @@
       >
         <!-- Markers (Years and Months) -->
         <div v-for="(marker, index) in displayMarkers" :key="index"
-          class="absolute w-full right-1 tabular-nums pointer-events-none select-none flex items-center justify-end"
+          class="absolute w-full right-1 tabular-nums pointer-events-none select-none flex items-center justify-end z-10"
           :class="[
             marker.isYear ? 'text-[10px] text-base-content/70' : 'text-[9px] text-base-content/30'
           ]"
-          :style="{ top: marker.top + '%' }"
+          :style="{ top: marker.top + '%', transform: 'translateY(-50%)' }"
         >
           {{ marker.label }}
         </div>
 
         <!-- Hover Marker -->
         <div v-if="isHovering"
-          class="absolute w-full h-1 bg-primary/50 pointer-events-none z-10 rounded-full"
+          class="absolute w-full h-1 bg-primary/30 pointer-events-none rounded-full"
           :style="{ top: (hoverY - 2) + 'px' }"
         ></div>
 
         <!-- Selected Marker -->
         <div v-if="selectedTop >= 0"
-          class="absolute w-full h-1 bg-primary pointer-events-none z-10 rounded-full"
-          :style="{ top: selectedTop + 'px' }"
+          class="absolute w-full h-1 bg-primary/70 pointer-events-none rounded-full"
+          :style="{ top: (selectedTop - 2) + 'px' }"
         ></div>
 
         <!-- Hover Tooltip -->
         <div v-if="isHovering && hoverDate"
-          class="absolute right-full mr-2 px-2 py-1 bg-base-300 text-base-content text-xs rounded shadow-lg whitespace-nowrap z-20 pointer-events-none flex items-center border border-base-content/10"
+          class="absolute right-full mr-1 px-2 py-1 bg-base-100/50 text-base-content text-xs tabular-nums whitespace-nowrap rounded-box shadow-lg backdrop-blur-md z-20 pointer-events-none flex items-center"
           :style="{ top: hoverY + 'px', transform: 'translateY(-50%)' }"
         >
           {{ hoverDate }}
           <!-- Arrow -->
-          <div class="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-base-300"></div>
+          <!-- <div class="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-base-300"></div> -->
         </div>
       </div>
 
       <!-- Track Area (Right) -->
       <div ref="trackRef" 
         :class="[
-          'w-3 relative rounded-full ml-1', 
+          'w-3 relative rounded-full ml-1 mr-0.5', 
           total > pageSize ? 'bg-base-200 cursor-pointer' : 'bg-base-200/30'
         ]" 
         @mousedown="handleTrackClick"
@@ -389,11 +389,14 @@ function handleMarkersMouseMove(e: MouseEvent) {
   if (!trackRef.value) return; // Use trackRef for height calculation as it's the same height
   const rect = trackRef.value.getBoundingClientRect();
   const y = e.clientY - rect.top;
-  hoverY.value = y;
 
-  if (!props.markers.length) return;
+  if (!props.markers.length || props.total <= 0) return;
 
   const targetIndex = getIndexFromY(y);
+  
+  // Snap hoverY to the item position
+  const snappedY = (targetIndex / props.total) * trackHeight.value;
+  hoverY.value = snappedY;
 
   // Find closest marker
   const marker = findMarkerForIndex(targetIndex);
@@ -416,7 +419,7 @@ function getIndexFromY(y: number) {
   if (height <= 0) return 0;
   
   const ratio = Math.max(0, Math.min(y / height, 1));
-  return Math.round(ratio * props.total);
+  return Math.min(Math.floor(ratio * props.total), props.total - 1);
 }
 
 function findMarkerForIndex(index: number) {

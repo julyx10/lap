@@ -58,8 +58,8 @@
         <component 
           :is="file?.isSelected ? IconChecked : IconUnChecked" 
           :class="[
-            't-icon-size-sm hover:text-base-content/70', 
-            file?.isSelected && uiStore.inputStack.length === 0 ? 'text-primary' : 'text-base-content/30'
+            't-icon-size-sm', 
+            file?.isSelected && uiStore.inputStack.length === 0 ? 'text-primary hover:text-primary' : 'text-base-content/30 hover:text-base-content/70'
           ]" 
           @click.stop="(event: MouseEvent) => $emit('select-toggled', event.shiftKey)"
         />
@@ -80,8 +80,11 @@
     
     <!-- skeleton for loading thumbnail -->
     <div v-else 
-      class="skeleton rounded-box flex items-center justify-center"
-      style="width: 100%; height: 100%"
+      :class="[
+        'relative flex items-center justify-center overflow-hidden skeleton', 
+        config.settings.grid.style === 0 ? 'rounded-box' : '',
+      ]"
+      :style="layoutStyle"
     ></div>
 
     <!-- label -->
@@ -98,7 +101,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings } from '@/common/utils';
+import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCameraInfo } from '@/common/utils';
 import ContextMenu from '@/components/ContextMenu.vue';
 
 import { 
@@ -297,13 +300,11 @@ const getGridLabelText = (file, option) => {
     case 1: return shortenFilename(file.name);
     case 2: return formatFileSize(file.size);
     case 3: return formatDimensionText(file.width, file.height);
-    case 4: return formatTimestamp(file.created_at, localeMsg.value.format.date_time);
-    case 5: return formatTimestamp(file.modified_at, localeMsg.value.format.date_time);
-    case 6: return file.e_model || ' ';
+    case 4: return formatTimestamp(file.taken_date, localeMsg.value.format.date_time) || ' ';
+    case 5: return file.geo_name || ' ';
+    case 6: return formatCameraInfo(file.e_make, file.e_model);
     case 7: return file.e_lens_model || ' ';
     case 8: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias) || ' ';
-    case 9: return file.e_date_time || ' ';
-    case 10: return file.geo_name || ' ';
     default: return '';
   }
 };

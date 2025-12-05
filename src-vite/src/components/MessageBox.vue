@@ -1,32 +1,35 @@
 <template>
   <ModalDialog :title="title" :width="400" @cancel="clickCancel">
-      <div v-if="message" class="text-sm text-wrap break-all">
-        {{ message }}
-      </div>
+    <div v-if="message" class="text-sm text-wrap break-all">
+      {{ message }}
+    </div>
 
+    <div class="flex flex-row items-center">
       <input v-if="showInput && !multiLine"
         ref="inputRef"
         v-model="inputValue"
         type="text"
         maxlength="255"
         :placeholder="inputPlaceholder"
-        class="px-2 py-1 w-full input"
+        class="px-2 py-1 flex-1 min-w-0 input"
         @input="validateInput"
         @keydown.enter="clickOk"
       />
+      <span v-if="inputExtension" class="label px-2">.{{ inputExtension }}</span>
+    </div>
 
-      <textarea v-if="showInput && multiLine"
-        ref="inputRef"
-        v-model="inputValue"
-        rows="4"
-        minrows="1"
-        :placeholder="inputPlaceholder"
-        class="px-2 py-1 w-full textarea min-h-[30px] max-h-[200px]"
-        @input="validateInput"
-        @keydown.enter="clickOk"
-      ></textarea>
+    <textarea v-if="showInput && multiLine"
+      ref="inputRef"
+      v-model="inputValue"
+      rows="4"
+      minrows="1"
+      :placeholder="inputPlaceholder"
+      class="px-2 py-1 w-full textarea min-h-[30px] max-h-[200px]"
+      @input="validateInput"
+      @keydown.enter="clickOk"
+    ></textarea>
 
-      <p class="h-4 text-error text-xs">{{ inputErrorMessage }}</p>
+    <p class="h-4 text-error text-xs">{{ inputErrorMessage }}</p>
 
     <!-- cancel and OK buttons -->
     <div class="mt-2 flex justify-end space-x-4">
@@ -71,6 +74,10 @@ const props = defineProps({
     default: '' 
   },
   inputPlaceholder: {
+    type: String, 
+    default: '' 
+  },
+  inputExtension: {
     type: String, 
     default: '' 
   },

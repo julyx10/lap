@@ -406,11 +406,9 @@ pub struct AFile {
     pub name_pinyin: Option<String>, // file name pinyin(for sort)
     pub size: u64,                   // file size
     pub file_type: Option<i64>,      // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
-    pub created_at: Option<u64>,     // file create time
-    pub modified_at: Option<u64>,    // file modified time
-
-    // file taken date
-    pub taken_date: Option<String>, // taken date(yyyy-mm-dd) for calendar view
+    pub created_at: Option<u64>,     // file create timestamp
+    pub modified_at: Option<u64>,    // file modified timestamp
+    pub taken_date: Option<u64>,     // taken date timestamp (e_date_time || modified_at)
 
     // image/video
     pub width: Option<u32>,    // image/video width
@@ -476,8 +474,8 @@ pub struct QueryParams {
     pub sort_type: i64,
     pub sort_order: i64,
     pub search_folder: String,
-    pub start_date: String,
-    pub end_date: String,
+    pub start_date: u64,
+    pub end_date: u64,
     pub make: String,
     pub model: String,
     pub location_admin1: String,
@@ -505,7 +503,7 @@ impl AFile {
         };
 
         // Initialize mutable metadata fields
-        let mut taken_date: Option<String> = None;
+        let mut taken_date: Option<u64> = None;
         let mut e_make: Option<String> = None;
         let mut e_model: Option<String> = None;
         let mut e_date_time: Option<String> = None;
@@ -573,7 +571,8 @@ impl AFile {
             gps_altitude = alt;
 
             taken_date = Self::get_exif_field(&exif, Tag::DateTimeOriginal)
-                .and_then(|exif_date| t_utils::meta_date_to_string(&exif_date));
+                .and_then(|exif_date| t_utils::meta_date_to_timestamp(&exif_date))
+                .or(file_info.modified);
 
             e_make = Self::get_exif_field(&exif, Tag::Make);
             e_model = Self::get_exif_field(&exif, Tag::Model);
@@ -601,14 +600,9 @@ impl AFile {
                 gps_altitude = video_metadata.gps_altitude;
 
                 if let Some(dt) = &e_date_time {
-                    taken_date = t_utils::meta_date_to_string(dt);
+                    taken_date = t_utils::meta_date_to_timestamp(dt).or(file_info.modified);
                 }
             }
-        }
-
-        // Fallback for taken_date if no metadata is found
-        if taken_date.is_none() {
-            taken_date = file_info.modified_str.clone();
         }
 
         // Geocoding based on GPS coordinates from any source
@@ -1233,13 +1227,13 @@ impl AFile {
         };
         let order_clause = if ascending { "ASC" } else { "DESC" };
         let query = format!(
-            "SELECT a.taken_date, COUNT(1) 
+            "SELECT strftime('%Y-%m-%d', a.taken_date, 'unixepoch', 'localtime') AS taken_date, COUNT(1) 
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.taken_date IS NOT NULL AND a.taken_date > '1970-01-01' {}
-            GROUP BY a.taken_date
-            ORDER BY a.taken_date {}",
+            WHERE a.taken_date IS NOT NULL AND a.taken_date >= 86400 {}
+            GROUP BY (a.taken_date / 86400)
+            ORDER BY (a.taken_date / 86400) {}",
             hidden_clause, order_clause
         );
 
@@ -1285,15 +1279,10 @@ impl AFile {
             sql_params.push(Box::new(format!("{}/%", params.search_folder)));
         }
 
-        if !params.start_date.is_empty() {
-            if params.end_date.is_empty() {
-                conditions.push("a.taken_date = ?");
-                sql_params.push(Box::new(params.start_date.clone()));
-            } else {
-                conditions.push("a.taken_date >= ? AND a.taken_date <= ?");
-                sql_params.push(Box::new(params.start_date.clone()));
-                sql_params.push(Box::new(params.end_date.clone()));
-            }
+        if params.start_date > 0 && params.end_date > 0 {
+            conditions.push("a.taken_date >= ? AND a.taken_date < ?");
+            sql_params.push(Box::new(params.start_date));
+            sql_params.push(Box::new(params.end_date));
         }
 
         if !params.make.is_empty() {
@@ -1364,10 +1353,8 @@ impl AFile {
             1 => query.push_str(" ORDER BY a.size"),
             2 => query.push_str(" ORDER BY a.width, a.height"),
             3 => query.push_str(" ORDER BY a.duration"),
-            4 => query.push_str(" ORDER BY a.created_at"),
-            5 => query.push_str(" ORDER BY a.modified_at"),
-            6 => query.push_str(" ORDER BY a.taken_date"),
-            7 => query.push_str(" ORDER BY RANDOM()"),
+            4 => query.push_str(" ORDER BY a.taken_date"),
+            5 => query.push_str(" ORDER BY RANDOM()"),
             _ => query.push_str(" ORDER BY a.name_pinyin"),
         }
         match params.sort_order {
@@ -1387,8 +1374,8 @@ impl AFile {
 
     // get query timeline markers
     pub fn get_query_time_line(params: &QueryParams) -> Result<Vec<ATimeLine>, String> {
-        // Only process for time-based sorts (4=created_at, 5=modified_at, 6=taken_date)
-        if params.sort_type < 4 || params.sort_type > 6 {
+        // Only process for time-based sorts (4=taken_date)
+        if params.sort_type != 4 {
             return Ok(Vec::new());
         }
 
@@ -1397,22 +1384,10 @@ impl AFile {
         // Determine date field and extraction logic based on sort_type
         let (date_field, year_extract, month_extract, date_extract) = match params.sort_type {
             4 => (
-                "a.created_at",
-                "CAST(strftime('%Y', datetime(a.created_at / 1000, 'unixepoch')) AS INTEGER)",
-                "CAST(strftime('%m', datetime(a.created_at / 1000, 'unixepoch')) AS INTEGER)",
-                "CAST(strftime('%d', datetime(a.created_at / 1000, 'unixepoch')) AS INTEGER)",
-            ),
-            5 => (
-                "a.modified_at",
-                "CAST(strftime('%Y', datetime(a.modified_at / 1000, 'unixepoch')) AS INTEGER)",
-                "CAST(strftime('%m', datetime(a.modified_at / 1000, 'unixepoch')) AS INTEGER)",
-                "CAST(strftime('%d', datetime(a.modified_at / 1000, 'unixepoch')) AS INTEGER)",
-            ),
-            6 => (
                 "a.taken_date",
-                "CAST(substr(a.taken_date, 1, 4) AS INTEGER)",
-                "CAST(substr(a.taken_date, 6, 2) AS INTEGER)",
-                "CAST(substr(a.taken_date, 9, 2) AS INTEGER)",
+                "CAST(strftime('%Y', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%m', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%d', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
             ),
             _ => unreachable!(),
         };
@@ -2081,7 +2056,7 @@ pub fn create_db() -> Result<(), String> {
             file_type INTEGER,
             created_at INTEGER,
             modified_at INTEGER,
-            taken_date TEXT,
+            taken_date INTEGER,
             width INTEGER,
             height INTEGER,
             duration INTEGER,
@@ -2134,16 +2109,6 @@ pub fn create_db() -> Result<(), String> {
     .map_err(|e| e.to_string())?;
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afiles_file_type ON afiles(file_type)",
-        [],
-    )
-    .map_err(|e| e.to_string())?;
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_afiles_created_at ON afiles(created_at)",
-        [],
-    )
-    .map_err(|e| e.to_string())?;
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_afiles_modified_at ON afiles(modified_at)",
         [],
     )
     .map_err(|e| e.to_string())?;

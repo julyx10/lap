@@ -1,7 +1,7 @@
 <template>
   <ModalDialog :title="title" :width="500" @cancel="clickCancel">
     <!-- select album and folder -->
-    <div class="h-[400px] border border-base-content/30 rounded-box overflow-auto">
+    <div class="h-[400px] border border-base-content/5 shadow-lg rounded-box overflow-auto">
       <AlbumList ref="albumListRef" 
         v-model:albumId="config.destFolder.albumId"
         v-model:folderId="config.destFolder.folderId"

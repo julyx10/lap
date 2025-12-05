@@ -114,21 +114,20 @@ export function formatDate(year: number, month: number, date: number, formatStr:
 
 /// get the date range of a month
 export function getCalendarDateRange(year: number, month: number, date: number) {
-  let startDate = "";
-  let endDate = "";
+  let startDate = 0;
+  let endDate = 0;
 
   if (month === -1) { // -1 means selecting a year
-    // get the first and last days of the year.
-    startDate = format(new Date(year, 0, 1), 'yyyy-MM-dd');
-    endDate = format(new Date(year, 11, 31), 'yyyy-MM-dd');
+    startDate = new Date(year, 0, 1).getTime() / 1000;
+    endDate = new Date(year + 1, 0, 1).getTime() / 1000;
   } 
   else if (date === -1) { // -1 means selecting a month
-    // get the first and last days of the month.
-    startDate = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-    endDate = format(new Date(year, month, 0), 'yyyy-MM-dd');
+    startDate = new Date(year, month - 1, 1).getTime() / 1000;
+    endDate = new Date(year, month, 1).getTime() / 1000;
   } 
   else {  // otherwise, get files by date
-    startDate = format(new Date(year, month - 1, date), 'yyyy-MM-dd');
+    startDate = new Date(year, month - 1, date).getTime() / 1000;
+    endDate = new Date(year, month - 1, date + 1).getTime() / 1000;
   }
   return [startDate, endDate];
 }
@@ -171,6 +170,20 @@ export function formatDuration(seconds: number): string {
   }
 }
 
+/// format camera 
+export function formatCameraInfo(make: string, model: string): string {
+  if (!make && !model) return "";
+
+  if (!make) return model;
+  if (!model) return make;
+
+  if (model.toLowerCase().includes(make.toLowerCase())) {
+    return model;
+  }
+
+  return `${make} ${model}`;
+}
+
 /// format capture settings to string
 export function formatCaptureSettings(focal_length: string, exposure_time: string, f_number: string, iso_speed: string, exposure_bias: string): string {
   let result = '';
@@ -211,13 +224,10 @@ export function getRelativePath(path: string, basePath: string): string {
 
 /// extract the name and the extension from a file name
 export function extractFileName(fileName: string): { name: string; ext: string } {
-  const lastDotIndex = fileName.lastIndexOf('.');
-  if (lastDotIndex === -1) {
-    return { name: fileName, ext: '' };
-  }
-  const name = fileName.substring(0, lastDotIndex);
-  const ext = fileName.substring(lastDotIndex + 1);
-  return { name, ext };
+  const idx = fileName.lastIndexOf('.');
+  return idx <= 0
+    ? { name: fileName, ext: '' }
+    : { name: fileName.slice(0, idx), ext: fileName.slice(idx + 1) };
 }
 
 /// combine the name and the extension to a file name

@@ -15,7 +15,7 @@
     <!-- title bar -->
     <div :class="
       [
-        'absolute top-0 left-2 right-2 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-sm z-30',
+        'absolute top-0 left-1 right-1 px-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-md z-30',
         // config.home.showLeftPane ? 'pl-1' : 'pl-18'
       ]" 
       data-tauri-drag-region
@@ -205,8 +205,10 @@
 
       <!-- info panel splitter -->
       <div
-        class="w-1 shrink-0 transition-colors"
+        class="w-1 shrink-0 transition-colors mt-12"
         :class="{
+          'mb-8': config.settings.showStatusBar,
+          'mb-1': !config.settings.showStatusBar,
           'hover:bg-primary cursor-ew-resize': config.infoPanel.show,
           'bg-primary': config.infoPanel.show && isDraggingInfoPanel,
         }" 
@@ -235,7 +237,7 @@
 
     <!-- status bar -->
     <div v-if="config.settings.showStatusBar"
-      class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 bg-base-300/80 backdrop-blur-sm flex gap-4 text-sm cursor-default"
+      class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 bg-base-300/80 backdrop-blur-md flex gap-4 text-sm cursor-default"
     >
       <div class="flex items-center gap-1 flex-shrink-0">
         <IconFileSearch class="t-icon-size-xs" />
@@ -293,6 +295,7 @@
     :showInput="true"
     :inputText="renamingFileName.name"
     :inputPlaceholder="$t('msgbox.rename_file.placeholder')"
+    :inputExtension="renamingFileName.ext"
     :needValidateInput="true"
     :OkText="$t('msgbox.rename_file.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -561,8 +564,8 @@ const currentQueryParams = ref({
   sortType: 0,
   sortOrder: 0,
   searchFolder: "",
-  startDate: "",
-  endDate: "",
+  startDate: 0,
+  endDate: 0,
   make: "",
   model: "",
   locationAdmin1: "",
@@ -979,6 +982,12 @@ watch(
   ], 
   () => {
     scrollPosition.value = 0;   // reset file scroll position
+    
+    // Also reset the GridView scroll position
+    if (gridViewRef.value) {
+      gridViewRef.value.scrollToPosition(0);
+    }
+    
     updateContent();
   }, 
   { immediate: true }
@@ -1028,8 +1037,6 @@ async function fetchDataRange(start: number, end: number) {
   const startChunk = Math.floor(start / chunkSize);
   const endChunk = Math.floor((end - 1) / chunkSize);
 
-  console.log(`fetchDataRange: ${start}-${end}, chunks: ${startChunk}-${endChunk}`);
-
   for (let i = startChunk; i <= endChunk; i++) {
     const chunkStart = i * chunkSize;
     
@@ -1043,13 +1050,11 @@ async function fetchDataRange(start: number, end: number) {
       }
       
       pendingRequests.add(key);
-      console.log(`Fetching chunk: ${key}`);
       
       // We don't await here to allow parallel fetching of chunks, 
       // but we track pending requests to avoid duplicate fetches.
       getQueryFiles(currentQueryParams.value, chunkStart, chunkSize)
         .then(newFiles => {
-          console.log(`Chunk loaded: ${key}, items: ${newFiles?.length}`);
           if (newFiles) {
             // Update fileList and collect reactive references
             const filesToFetch = [];
@@ -1061,7 +1066,6 @@ async function fetchDataRange(start: number, end: number) {
             }
             // Fetch thumbnails for these files
             if (filesToFetch.length > 0) {
-              console.log(`Fetching thumbnails for chunk: ${key}, count: ${filesToFetch.length}`);
               getFileListThumb(filesToFetch);
             }
           }
@@ -1078,9 +1082,18 @@ async function fetchDataRange(start: number, end: number) {
   }
 }
 
+// Track last visible range to avoid redundant fetches
+let lastVisibleRange = { start: -1, end: -1 };
+
 function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number, endIndex: number }) {
+  // Skip if the range hasn't changed significantly
+  if (lastVisibleRange.start === startIndex && lastVisibleRange.end === endIndex) {
+    return;
+  }
+  
+  lastVisibleRange = { start: startIndex, end: endIndex };
+  
   // Fetch data for visible range + buffer
-  console.log(`handleVisibleRangeUpdate: ${startIndex}-${endIndex}`);
   const buffer = 200;
   fetchDataRange(startIndex - buffer, endIndex + buffer);
 }
@@ -1088,8 +1101,8 @@ function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number
 // get file list 
 async function getFileList(
   searchFolder: string, 
-  startDate: string, 
-  endDate: string, 
+  startDate: number, 
+  endDate: number, 
   make: string, 
   model: string, 
   locationAdmin1: string, 
@@ -1129,7 +1142,6 @@ async function getFileList(
     
     // Get timeline data for date-based sorts
     timelineData.value = await getQueryTimeLine(currentQueryParams.value);
-    console.log('timelineData:', timelineData.value);
     
     // Initialize fileList with placeholders
     // We use a large array. Vue 3's reactivity system can handle this, 
@@ -1143,6 +1155,9 @@ async function getFileList(
       size: 0,
     }));
     
+    // Reset visible range tracking when changing views
+    lastVisibleRange = { start: -1, end: -1 };
+    
     // Fetch initial data (first page)
     // fetchDataRange(0, 100);
   }
@@ -1153,7 +1168,7 @@ async function updateContent() {
 
   if(newIndex === 0) {        // home
     contentTitle.value = localeMsg.value.home.title;
-    await getFileList("", "", "", "", "", "", "", false, 0);
+    await getFileList("", 0, 0, "", "", "", "", false, 0);
   } 
   else if(newIndex === 1) {   // album
     if(config.album.id === null) {
@@ -1170,6 +1185,25 @@ async function updateContent() {
         fileList.value = await getFolderFiles(config.album.folderId, config.album.folderPath);
         totalFileCount.value = fileList.value.length;
         totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+
+        // Fetch timeline data for the folder
+        currentQueryParams.value = {
+          searchText: config.search.text,
+          searchFileType: config.search.fileType,
+          sortType: config.search.sortType,
+          sortOrder: config.search.sortOrder,
+          searchFolder: config.album.folderPath,
+          startDate: 0,
+          endDate: 0,
+          make: "",
+          model: "",
+          locationAdmin1: "",
+          locationName: "",
+          isFavorite: false,
+          isShowHidden: false,
+          tagId: 0,
+        };
+        timelineData.value = await getQueryTimeLine(currentQueryParams.value);
 
         // get the thumbnail count
         await getFolderThumbCount(config.album.folderId).then(count => {
@@ -1192,12 +1226,12 @@ async function updateContent() {
     } else {
       if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
-        await getFileList("", "", "", "", "", "", "", true, 0);
+        await getFileList("", 0, 0, "", "", "", "", true, 0);
       } else {                // favorite folders
         const album = await getAlbum(config.favorite.albumId);
         if(album) {
           contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath, album.path);
-          await getFileList(config.favorite.folderPath, "", "", "", "", "", "", false, 0);
+          await getFileList(config.favorite.folderPath, 0, 0, "", "", "", "", false, 0);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -1213,7 +1247,7 @@ async function updateContent() {
       const tagName = await getTagName(config.tag.id);
       if (tagName) {
         contentTitle.value = tagName;
-        await getFileList("", "", "", "", "", "", "", false, config.tag.id);
+        await getFileList("", 0, 0, "", "", "", "", false, config.tag.id);
       } else {
         contentTitle.value = "";
         fileList.value = [];
@@ -1243,10 +1277,10 @@ async function updateContent() {
     } else {
       if(config.location.name) {
         contentTitle.value = `${config.location.admin1} > ${config.location.name}`;
-        await getFileList("", "", "", "", "", config.location.admin1, config.location.name, false, 0);
+        await getFileList("", 0, 0, "", "", config.location.admin1, config.location.name, false, 0);
       } else {
         contentTitle.value = `${config.location.admin1}`;
-        await getFileList("", "", "", "", "", config.location.admin1, "", false, 0);
+        await getFileList("", 0, 0, "", "", config.location.admin1, "", false, 0);
       } 
     }
   }
@@ -1257,10 +1291,10 @@ async function updateContent() {
     } else {
       if(config.camera.model) {
         contentTitle.value = `${config.camera.make} > ${config.camera.model}`;
-        await getFileList("", "", "", config.camera.make, config.camera.model, "", "", false, 0);
+        await getFileList("", 0, 0, config.camera.make, config.camera.model, "", "", false, 0);
       } else {
         contentTitle.value = `${config.camera.make}`;
-        await getFileList("", "", "", config.camera.make, "", "", "", false, 0);
+        await getFileList("", 0, 0, config.camera.make, "", "", "", false, 0);
       } 
     }
   } 
@@ -1572,7 +1606,6 @@ function refreshFileList() {
   } else {
     selectedItemIndex.value = -1;
   }
-  console.log('refreshFileList:', fileList.value);
 }
 
 // update image when the select file is changed
@@ -1765,7 +1798,6 @@ function handleMouseMove(event: MouseEvent) {
   }
 }
 
-/// stop dragging the splitter
 function stopDragging() {
   isDraggingFilmStripView.value = false;
   isDraggingInfoPanel.value = false;
@@ -1773,3 +1805,9 @@ function stopDragging() {
   document.removeEventListener('mouseup', stopDragging);
 }
 </script>
+
+<style scoped>
+.breadcrumbs > ul > li + li:before {
+  content: ">";
+}
+</style>

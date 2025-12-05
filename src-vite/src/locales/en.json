@@ -110,10 +110,8 @@
         "Size",
         "Dimension",
         "Duration",
-        "Created time",
-        "Modified time",
-        "Taken date",
-        "Random order"
+        "Time",
+        "Random"
       ],
       "sort_order_options": [
         "Ascending",
@@ -542,13 +540,11 @@
         "Name",
         "Size",
         "Dimension",
-        "Created time",
-        "Modified time",
+        "Time",
+        "Location",
         "Camera",
         "Lens",
-        "Capture settings",
-        "Taken time",
-        "Location"
+        "Capture settings"
       ]
     },
     "filmstrip_view": {

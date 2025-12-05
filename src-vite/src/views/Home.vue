@@ -63,8 +63,8 @@
       <div
         class="w-1 transition-colors shrink-0"
         :class="{
-          'hover:bg-primary cursor-ew-resize': config.home.showLeftPane && config.home.sidebarIndex > 0,
-          'bg-primary': config.home.showLeftPane && config.home.sidebarIndex > 0 && isDraggingSplitter,
+          'hover:bg-primary cursor-ew-resize': config.home.showLeftPane && showPanel,
+          'bg-primary': config.home.showLeftPane && showPanel && isDraggingSplitter,
         }" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"

@@ -7,7 +7,7 @@
  * date:    2024-08-08
  */
 use crate::t_sqlite::AFile;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, TimeZone};
 use once_cell::sync::Lazy;
 use pinyin::ToPinyin;
 use reverse_geocoder::ReverseGeocoder;
@@ -149,15 +149,7 @@ pub struct FileInfo {
     pub file_name: String,
     pub file_type: Option<String>, // file type (dir, file)
     pub created: Option<u64>,
-    pub modified: Option<u64>,        // modified date as a timestamp
-    pub modified_str: Option<String>, // modified date as a string (YYYY-MM-DD)
-    // pub accessed:  Option<u64>,
-
-    // Windows-specific attributes
-    // pub file_attributes: u32,
-    // volume_serial_number: u32,  // identifies the disk or partition where the file is stored
-    // number_of_links: u32,
-    // file_index: u64,   // uid of the file
+    pub modified: Option<u64>, // modified date as a timestamp
     pub file_size: u64,
 }
 
@@ -172,14 +164,8 @@ impl FileInfo {
             file_path: file_path.to_string(),
             file_name: get_file_name(file_path),
             file_type: metadata.file_type().is_dir().then(|| "dir".to_string()),
-            created: systemtime_to_u64(metadata.created().ok()),
-            modified: systemtime_to_u64(metadata.modified().ok()),
-            modified_str: systemtime_to_string(metadata.modified().ok()),
-            // accessed: systemtime_to_string(metadata.accessed().ok()),
-            // file_attributes: metadata.file_attributes(),
-            // volume_serial_number: metadata.volume_serial_number(),
-            // number_of_links: metadata.number_of_links(),
-            // file_index: metadata.file_index(),
+            created: systemtime_to_timestamp(metadata.created().ok()),
+            modified: systemtime_to_timestamp(metadata.modified().ok()),
             file_size: metadata.len(),
         })
     }
@@ -524,28 +510,27 @@ pub fn get_folder_files(
         .collect();
 
     // sort
-    if sort_type == 7 {
+    if sort_type == 5 {
+        // random
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
         files.shuffle(&mut rng);
     } else {
         files.sort_by(|a, b| {
             let ordering = match sort_type {
-                0 => convert_to_pinyin(&a.name.to_lowercase())
+                0 => convert_to_pinyin(&a.name.to_lowercase()) // name
                     .cmp(&convert_to_pinyin(&b.name.to_lowercase())), // support pinyin
-                1 => a.size.cmp(&b.size),
+                1 => a.size.cmp(&b.size), // size
                 2 => {
                     if a.width == b.width {
                         a.height.cmp(&b.height)
                     } else {
                         a.width.cmp(&b.width)
                     }
-                } // resultion
-                3 => a.duration.cmp(&b.duration),
-                4 => a.created_at.cmp(&b.created_at),
-                5 => a.modified_at.cmp(&b.modified_at),
-                6 => a.taken_date.cmp(&b.taken_date),
-                _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()), // Default to sorting by name
+                } // dimension
+                3 => a.duration.cmp(&b.duration), // duration
+                4 => a.taken_date.cmp(&b.taken_date), // taken date
+                _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()), // name
             };
             if sort_order == 1 {
                 ordering.reverse()
@@ -669,7 +654,7 @@ pub fn convert_to_pinyin(s: &str) -> String {
 }
 
 /// Convert a SystemTime to a u64 timestamp (in seconds since UNIX_EPOCH)
-pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
+pub fn systemtime_to_timestamp(time: Option<SystemTime>) -> Option<u64> {
     match time {
         Some(t) => {
             // Calculate the duration since UNIX_EPOCH
@@ -682,45 +667,44 @@ pub fn systemtime_to_u64(time: Option<SystemTime>) -> Option<u64> {
     }
 }
 
-/// Convert a SystemTime to a string(YYYY-MM-DD)
-pub fn systemtime_to_string(time: Option<SystemTime>) -> Option<String> {
-    match time {
-        Some(t) => {
-            // Calculate the duration since UNIX_EPOCH
-            let duration = t.duration_since(UNIX_EPOCH).ok()?;
-            // Convert to DateTime<Utc> using the duration
-            let datetime = DateTime::<Utc>::from(UNIX_EPOCH + duration);
-            // Format the DateTime to a readable string
-            Some(datetime.format("%Y-%m-%d").to_string())
-        }
-        None => None, // Return None if the input is None
-    }
-}
-
-/// Convert an EXIF or ISO 8601 date string to a date string (`YYYY-MM-DD`)
-pub fn meta_date_to_string(date: &str) -> Option<String> {
+/// Convert an EXIF or ISO 8601 date string to a u64 timestamp
+pub fn meta_date_to_timestamp(date: &str) -> Option<u64> {
     // Try to parse as ISO 8601 (RFC 3339) first, which video metadata often uses
     if let Ok(datetime) = DateTime::parse_from_rfc3339(date) {
-        return Some(datetime.format("%Y-%m-%d").to_string());
+        return Some(datetime.timestamp() as u64);
     }
 
     // Fallback to EXIF format: YYYY:MM:DD HH:MM:SS
+    // Some EXIF dates might use different separators or formats, so we can try to be a bit more robust
+    // Standard EXIF is "YYYY:MM:DD HH:MM:SS"
     let parts: Vec<&str> = date.split(' ').collect();
-    if parts.is_empty() {
+    if parts.len() < 2 {
         return None;
     }
 
     let date_part = parts[0];
-    let date_fields: Vec<&str> = date_part.split(':').collect();
+    let time_part = parts[1];
 
-    if date_fields.len() != 3 {
+    let date_fields: Vec<&str> = date_part.split(':').collect();
+    let time_fields: Vec<&str> = time_part.split(':').collect();
+
+    if date_fields.len() != 3 || time_fields.len() != 3 {
         return None;
     }
 
-    Some(format!(
-        "{}-{}-{}",
-        date_fields[0], date_fields[1], date_fields[2]
-    ))
+    let year = date_fields[0].parse::<i32>().ok()?;
+    let month = date_fields[1].parse::<u32>().ok()?;
+    let day = date_fields[2].parse::<u32>().ok()?;
+    let hour = time_fields[0].parse::<u32>().ok()?;
+    let minute = time_fields[1].parse::<u32>().ok()?;
+    let second = time_fields[2].parse::<u32>().ok()?;
+
+    let dt =
+        chrono::NaiveDate::from_ymd_opt(year, month, day)?.and_hms_opt(hour, minute, second)?;
+
+    // Treat EXIF time as local time (without timezone information)
+    let local_dt = Local.from_local_datetime(&dt).single()?;
+    Some(local_dt.timestamp() as u64)
 }
 
 /// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),

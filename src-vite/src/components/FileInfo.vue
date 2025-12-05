@@ -1,7 +1,7 @@
 <template>
-  <div class="w-full h-full rounded-box bg-base-200 flex flex-col">
+  <div class="w-full h-full rounded-box bg-base-200 flex flex-col overflow-hidden">
     <!-- Title bar -->
-    <div class="p-1 flex items-center justify-between">
+    <div class="px-2 py-1 flex items-center justify-between shrink-0">
       <!-- Tabs -->
       <div role="tablist" class="tabs-sm tabs-border" >
         <a 
@@ -21,140 +21,115 @@
           {{ $t('info_panel.tabs[1]') }}
         </a>
       </div>
-
-      <!-- Close button -->
-      <!-- <TButton
-        :icon="IconClose"
-        :buttonSize="'small'"
-        @click="clickClose"
-      /> -->
     </div>
 
-    <!-- Info table -->
-    <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 p-1 overflow-x-hidden overflow-y-auto">
-      <table v-if="fileInfo" class="w-full text-sm border-separate border-spacing-2">
-        <!-- file info -->
-        <tbody>
-          <tr>
-            <td colspan="2">
-              <div class="flex items-center">
-                <IconFileInfo class="w-4 h-4" /> 
-                <span class="ml-1 font-bold">{{ $t('file_info.file_info') }}</span>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.album_name') }}</td>
-            <td class="text-wrap break-all">{{ fileInfo.album_name }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.path') }}</td>
-            <td class="text-wrap break-all">{{ getFolderPath(fileInfo.file_path) }}</td>
-            <!-- <td>
-              <input
-              type="text"
-              readonly
-              :value="fileInfo.file_path"
-              class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
-              />
-            </td> -->
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.name') }}</td>
-            <td class="text-wrap break-all">{{ fileInfo.name }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.size') }}</td>
-            <td>{{ formatFileSize(fileInfo.size) }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.dimension') }}</td>
-            <td>{{ formatDimensionText(fileInfo.width, fileInfo.height) }}</td>
-          </tr>
-          <tr v-if="fileInfo.file_type === 2">
-            <td class="text-nowrap">{{ $t('file_info.duration') }}</td>
-            <td>{{ formatDuration(fileInfo.duration) }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.created_at') }}</td>
-            <td>{{ formatTimestamp(fileInfo.created_at, $t('format.date_time')) }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.modified_at') }}</td>
-            <td>{{ formatTimestamp(fileInfo.modified_at, $t('format.date_time')) }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.tags') }}</td>
-            <td>
-              <span v-if="fileInfo.tags && fileInfo.tags.length">
-                {{ fileInfo.tags.map(tag => tag.name).join(', ') }}
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.comment') }}</td>
-            <td class="text-wrap">{{ fileInfo.comments }}</td>
-          </tr>
-        </tbody>
+    <!-- Info Content -->
+    <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2">
+      
+      <!-- File Info Section -->
+      <div class="rounded-xl p-4 space-y-2 border border-base-content/5 shadow-lg">
+        <div class="flex items-center gap-2 pb-2">
+          <IconFileInfo class="w-4 h-4" /> 
+          <span class="font-bold text-sm">{{ $t('file_info.file_info') }}</span>
+        </div>
+        
+        <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
+          <!-- Album -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.album_name') }}</div>
+          <div class="text-base-content break-all">{{ fileInfo?.album_name }}</div>
 
-        <!-- metadata -->
-        <tbody>
-          <tr>
-            <td colspan="2">
-              <div class="mt-2 flex items-center">
-                <IconCamera class="w-4 h-4" /> 
-                <span class="ml-1 font-bold">{{ $t('file_info.metadata') }}</span>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.camera') }}</td>
-            <td>{{ fileInfo.e_make }} {{ fileInfo.e_model }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.lens') }}</td>
-            <td>{{ fileInfo.e_lens_model }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.capture_settings') }}</td>
-            <td>{{ formatCaptureSettings(fileInfo.e_focal_length, fileInfo.e_exposure_time, fileInfo.e_f_number, fileInfo.e_iso_speed, fileInfo.e_exposure_bias) }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.software') }}</td>
-            <td>{{ fileInfo.e_software }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.taken_by') }}</td>
-            <td>{{ fileInfo.e_artist }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.copyright') }}</td>
-            <td>{{ fileInfo.e_copyright }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.taken_at') }}</td>
-            <td>{{ fileInfo.e_date_time }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.description') }}</td>
-            <td>{{ fileInfo.e_description }}</td>
-          </tr>
-          <tr>
-            <td class="text-nowrap">{{ $t('file_info.geo_location') }}</td>
-            <td class="flex flex-row justify-between items-center gap-2 pr-2">
-              {{ formatGeoLocation() }}
-              <!-- <TButton v-if="fileInfo.gps_latitude && fileInfo.gps_longitude"
-                :icon="config.fileInfo.showMap ? IconMapDefault : IconMapOff"
-                :buttonSize="'small'"
-                @click="config.fileInfo.showMap = !config.fileInfo.showMap"
-              /> -->
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          <!-- Path -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.path') }}</div>
+          <div class="text-base-content break-all">{{ getFolderPath(fileInfo?.file_path) }}</div>
 
-      <!-- Map view -->
-      <div class="px-2 pb-1" v-if="config.fileInfo.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude">
+          <!-- Name -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.name') }}</div>
+          <div class="text-base-content break-all font-medium">{{ fileInfo?.name }}</div>
+
+          <!-- Size -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.size') }}</div>
+          <div class="text-base-content">{{ formatFileSize(fileInfo?.size) }}</div>
+
+          <!-- Dimension -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.dimension') }}</div>
+          <div class="text-base-content">{{ formatDimensionText(fileInfo?.width, fileInfo?.height) }}</div>
+
+          <!-- Duration -->
+          <template v-if="fileInfo?.file_type === 2">
+            <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.duration') }}</div>
+            <div class="text-base-content">{{ formatDuration(fileInfo?.duration) }}</div>
+          </template>
+
+          <!-- Created At -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.created_at') }}</div>
+          <div class="text-base-content">{{ formatTimestamp(fileInfo?.created_at, $t('format.date_time')) }}</div>
+
+          <!-- Modified At -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.modified_at') }}</div>
+          <div class="text-base-content">{{ formatTimestamp(fileInfo?.modified_at, $t('format.date_time')) }}</div>
+
+          <!-- Tags -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.tags') }}</div>
+          <div class="text-base-content flex flex-wrap gap-1">
+            <template v-if="fileInfo?.tags && fileInfo.tags.length">
+              <span v-for="tag in fileInfo.tags" :key="tag.id" class="badge">{{ tag.name }}</span>
+            </template>
+          </div>
+
+          <!-- Comment -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.comment') }}</div>
+          <div class="text-base-content break-words whitespace-pre-wrap">{{ fileInfo?.comments }}</div>
+        </div>
+      </div>
+
+      <!-- Metadata Section -->
+      <div class="rounded-xl p-4 space-y-3 border border-base-content/5 shadow-lg">
+        <div class="flex items-center gap-2 pb-2">
+          <IconCamera class="w-4 h-4" /> 
+          <span class="font-bold text-sm">{{ $t('file_info.metadata') }}</span>
+        </div>
+
+        <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
+          <!-- Camera -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.camera') }}</div>
+          <div class="text-base-content">{{ formatCameraInfo(fileInfo?.e_make, fileInfo?.e_model) }}</div>
+
+          <!-- Lens -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.lens') }}</div>
+          <div class="text-base-content">{{ fileInfo?.e_lens_model }}</div>
+
+          <!-- Capture Settings -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.capture_settings') }}</div>
+          <div class="text-base-content">{{ formatCaptureSettings(fileInfo?.e_focal_length, fileInfo?.e_exposure_time, fileInfo?.e_f_number, fileInfo?.e_iso_speed, fileInfo?.e_exposure_bias) }}</div>
+
+          <!-- Software -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.software') }}</div>
+          <div class="text-base-content">{{ fileInfo?.e_software }}</div>
+
+          <!-- Taken By -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.taken_by') }}</div>
+          <div class="text-base-content">{{ fileInfo?.e_artist }}</div>
+
+          <!-- Copyright -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.copyright') }}</div>
+          <div class="text-base-content">{{ fileInfo?.e_copyright }}</div>
+
+          <!-- Taken At -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.taken_at') }}</div>
+          <div class="text-base-content">{{ fileInfo?.e_date_time }}</div>
+
+          <!-- Description -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.description') }}</div>
+          <div class="text-base-content break-words">{{ fileInfo?.e_description }}</div>
+
+          <!-- Geo Location -->
+          <div class="font-medium text-base-content/50 tracking-wide">{{ $t('file_info.geo_location') }}</div>
+          <div class="text-base-content">{{ formatGeoLocation() }}</div>
+        </div>
+      </div>
+
+      <!-- Map View -->
+      <div v-if="config.fileInfo.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude" class="">
         <MapView
           :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
           :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
@@ -187,10 +162,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { config } from '@/common/config';
-import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings } from '@/common/utils';
-import { IconClose, IconFileInfo, IconCamera } from '@/common/icons';
+import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings, formatCameraInfo } from '@/common/utils';
+import { IconFileInfo, IconCamera } from '@/common/icons';
 
-import TButton from '@/components/TButton.vue';
 import MapView from '@/components/MapView.vue';
 import Image from '@/components/Image.vue';
 import Video from '@/components/Video.vue';

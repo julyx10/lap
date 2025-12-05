@@ -4,7 +4,7 @@
     <transition name="fade">
       <div v-if="isVisible" class="m-10 fixed inset-0 flex items-center justify-center pointer-events-none z-[1000]">
         <div :class="[
-          'px-4 py-2 rounded-box bg-base-100/80 backdrop-blur-sm shadow-lg',
+          'px-4 py-2 rounded-box bg-base-100/80 backdrop-blur-md shadow-lg',
           isError ? 'text-error-content/70' : 'text-base-content/70'
         ]">
           {{ message }}

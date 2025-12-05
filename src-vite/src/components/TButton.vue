@@ -8,7 +8,7 @@
         :class="[
           buttonClasses,
           {
-            'btn-xs hover:bg-transparent': buttonSize === 'small',
+            'btn-xs hover:bg-base-100/30': buttonSize === 'small',
             'btn-sm hover:bg-base-100': buttonSize === 'medium',
             'btn-lg hover:bg-base-100': buttonSize === 'large',
             'btn-disabled': disabled,

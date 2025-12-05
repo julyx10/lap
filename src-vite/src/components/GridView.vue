@@ -29,9 +29,9 @@
       @scroll="onScroll"
     >
       <!-- Debug Info -->
-      <!-- <div class="absolute top-2 left-2 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
+      <div class="absolute top-2 left-2 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
         {{ index }} {{ item.isPlaceholder ? 'PH' : 'F' }} {{ item.thumbnail ? 'T' : 'NoT' }}
-      </div> -->
+      </div>
       
       <Thumbnail
         v-if="item && !item.isPlaceholder"
@@ -50,7 +50,7 @@
     <!-- Empty State -->
     <div v-else>
       <!-- blur spot -->
-      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-base-100 rounded-full blur-[180px] opacity-100"></div>
+      <!-- <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-base-100 rounded-full blur-[180px] opacity-100"></div> -->
       <div class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
         <span>{{ config.home.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
       </div>
