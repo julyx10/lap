@@ -28,10 +28,8 @@
               ]"
               @click.stop="clickExpandCamera(camera)"
             />
-            <div class="overflow-hidden whitespace-pre text-ellipsis">
-              <span>{{ camera.make }}</span>
-              <span class="text-xs text-base-content/30 ml-1">({{ camera.counts.reduce((a, b) => a + b, 0).toLocaleString() }})</span>
-            </div>
+            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ camera.make }}</span>
+            <span class="mx-1 text-[10px] tabular-nums text-base-content/70">{{ camera.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
             <li v-for="(model, index) in camera.models" class="pl-4">
@@ -44,7 +42,7 @@
               >
                 <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
                   <span>{{ model }}</span>
-                  <span class="text-xs text-base-content/30 ml-1">({{ camera.counts[index].toLocaleString() }})</span>
+                  <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ camera.counts[index].toLocaleString() }})</span>
                 </div>
               </div>
             </li>

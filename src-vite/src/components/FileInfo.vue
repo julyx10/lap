@@ -1,8 +1,7 @@
 <template>
   <div class="w-full h-full rounded-box bg-base-200 flex flex-col overflow-hidden">
     <!-- Title bar -->
-    <div class="px-2 py-1 flex items-center justify-between shrink-0">
-      <!-- Tabs -->
+    <!-- <div class="px-2 py-1 flex items-center justify-between shrink-0">
       <div role="tablist" class="tabs-sm tabs-border" >
         <a 
           role="tab"
@@ -21,13 +20,14 @@
           {{ $t('info_panel.tabs[1]') }}
         </a>
       </div>
-    </div>
+    </div> -->
 
     <!-- Info Content -->
-    <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2">
+    <!-- <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2"> -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2">
       
       <!-- File Info Section -->
-      <div class="rounded-xl p-4 space-y-2 border border-base-content/5 shadow-lg">
+      <div class="rounded-xl p-4 space-y-2 border border-base-content/5">
         <div class="flex items-center gap-2 pb-2">
           <IconFileInfo class="w-4 h-4" /> 
           <span class="font-bold text-sm">{{ $t('file_info.file_info') }}</span>
@@ -83,7 +83,7 @@
       </div>
 
       <!-- Metadata Section -->
-      <div class="rounded-xl p-4 space-y-3 border border-base-content/5 shadow-lg">
+      <div class="rounded-xl p-4 space-y-3 border border-base-content/5">
         <div class="flex items-center gap-2 pb-2">
           <IconCamera class="w-4 h-4" /> 
           <span class="font-bold text-sm">{{ $t('file_info.metadata') }}</span>
@@ -138,7 +138,7 @@
     </div>
 
     <!-- Preview -->
-    <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
+    <!-- <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
       class="flex-1 rounded-box overflow-hidden"
       @dblclick="infoPanelZoomFit = !infoPanelZoomFit"
     >
@@ -153,7 +153,7 @@
         :rotate="fileInfo?.rotate ?? 0"
         :isZoomFit="infoPanelZoomFit"
       ></Video>
-    </div>
+    </div> -->
 
   </div>
 
@@ -166,8 +166,8 @@ import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, g
 import { IconFileInfo, IconCamera } from '@/common/icons';
 
 import MapView from '@/components/MapView.vue';
-import Image from '@/components/Image.vue';
-import Video from '@/components/Video.vue';
+// import Image from '@/components/Image.vue';
+// import Video from '@/components/Video.vue';
 
 const props = defineProps({
   fileInfo: {
@@ -197,8 +197,8 @@ function formatGeoLocation() {
 }
 
 // emit close event
-function clickClose() {
-  emit('close');
-}
+// function clickClose() {
+//   emit('close');
+// }
 
 </script>

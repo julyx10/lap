@@ -157,9 +157,11 @@ onMounted(() => {
     resizeObserver.observe(containerRef.value);
     updateColumnCount();
   }
+  window.addEventListener('keydown', onKeyDown);
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeyDown);
   if (resizeObserver) {
     resizeObserver.disconnect();
   }
@@ -182,6 +184,18 @@ function onWheel(e: WheelEvent) {
       scroller.value.$el.scrollLeft += e.deltaY;
       e.preventDefault(); // Prevent default vertical scrolling behavior if any
     }
+  }
+}
+
+function onKeyDown(e: KeyboardEvent) {
+  // Prevent default scrolling for arrow keys and spacebar
+  if (['ArrowUp', 'ArrowDown', 'Space', ' '].includes(e.key)) {
+    // Allow default behavior if typing in an input
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      return;
+    }
+    e.preventDefault();
   }
 }
 

@@ -134,8 +134,10 @@ export function getCalendarDateRange(year: number, month: number, date: number) 
 
 /// format file size to string
 export function formatFileSize(bytes: number): string {
-  const sizes = ['KB', 'MB', 'GB', 'TB'];
+  if (bytes == null) return '';
   if (bytes === 0) return '0 KB';
+
+  const sizes = ['KB', 'MB', 'GB', 'TB'];
   const i = Math.max(Math.floor(Math.log(bytes) / Math.log(1024)) - 1, 0);
   const fileSize = bytes / Math.pow(1024, i + 1);
   return i === 0 ? `${fileSize.toFixed(0)} ${sizes[i]}` : `${fileSize.toFixed(2)} ${sizes[i]}`;
@@ -153,7 +155,7 @@ export function formatDimensionText(width: number, height: number): string {
       return `${width} x ${height} (${pixel} P)`;
     }
   } else {
-    return '-';
+    return '';
   }
 }
 

@@ -11,6 +11,7 @@ export const useConfigStore = defineStore('configStore', {
     content: {
       showFilmStrip: false,       // false: grid view, true: film strip view
       filmStripPaneHeight: 200,   // film strip pane height (px)
+      showQuickView: false,       // true: quick view visible, false: quick view hidden
     },
 
     infoPanel: {
@@ -120,7 +121,7 @@ export const useConfigStore = defineStore('configStore', {
       slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
       autoPlayVideo: false,       // auto play video
       navigatorViewMode: 0,       // 0: Auto, 1: Always hide, 2: Always show
-      navigatorViewSize: 200,     // navigator view size (120, 200, 320, 480)
+      navigatorViewSize: 240,     // navigator view size (160, 240, 320, 400)
       showComment: true,          // show comment
     },
   }),

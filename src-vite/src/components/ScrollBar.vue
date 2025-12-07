@@ -37,19 +37,19 @@
 
         <!-- Hover Marker -->
         <div v-if="isHovering"
-          class="absolute w-full h-1 bg-primary/30 pointer-events-none rounded-full"
+          class="absolute w-full h-[2px] bg-primary/30 pointer-events-none rounded-full"
           :style="{ top: (hoverY - 2) + 'px' }"
         ></div>
 
         <!-- Selected Marker -->
         <div v-if="selectedTop >= 0"
-          class="absolute w-full h-1 bg-primary/70 pointer-events-none rounded-full"
-          :style="{ top: (selectedTop - 2) + 'px' }"
+          class="absolute w-full h-[2px] bg-primary/70 pointer-events-none rounded-full"
+          :style="{ top: (selectedTop - 2) + 'px', transition: 'all 0.2s ease-in-out' }"
         ></div>
 
         <!-- Hover Tooltip -->
         <div v-if="isHovering && hoverDate"
-          class="absolute right-full mr-1 px-2 py-1 bg-base-100/50 text-base-content text-xs tabular-nums whitespace-nowrap rounded-box shadow-lg backdrop-blur-md z-20 pointer-events-none flex items-center"
+          class="absolute right-full mr-1 px-2 py-1 bg-base-100/50 text-base-content text-xs tabular-nums whitespace-nowrap rounded-box shadow-lg backdrop-blur-sm z-20 pointer-events-none flex items-center"
           :style="{ top: hoverY + 'px', transform: 'translateY(-50%)' }"
         >
           {{ hoverDate }}

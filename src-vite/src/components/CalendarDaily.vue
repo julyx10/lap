@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex flex-col items-center">
+  <div class="flex flex-col items-center mx-auto my-1 min-w-64 rounded-box border border-base-content/5">
 
     <!-- title -->
     <div 
@@ -14,7 +14,7 @@
     </div>
 
     <!-- date list -->
-    <div class="py-2 px-1 grid grid-cols-7 gap-2 text-center">
+    <div class="p-2 grid grid-cols-7 gap-2 text-center">
       <div v-for="n in blankDates" :key="'blank' + n"></div>
       <div
         v-for="d in monthDates"

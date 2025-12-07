@@ -182,6 +182,8 @@
     "file": {
       "new_folder": "新しいフォルダ",
       "view": "表示",
+      "quick_view": "クイックビュー",
+      "view_in_new_window": "新しいウィンドウで表示",
       "copy": "クリップボードにコピー",
       "edit": "画像を編集",
       "update_from_file": "ファイルから更新",

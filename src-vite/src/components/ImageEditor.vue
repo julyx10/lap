@@ -5,7 +5,7 @@
     <div class="flex-grow flex gap-4">
       <div class="flex-1">
         <!-- image container -->
-        <div ref="containerRef" class="relative w-[570px] h-[430px] outline outline-base-content/5 shadow-lg cursor-default rounded-box overflow-hidden select-none">
+        <div ref="containerRef" class="relative w-[570px] h-[430px] outline outline-base-content/5 cursor-default rounded-box overflow-hidden select-none">
 
           <!-- Loading overlay -->
           <transition name="fade">

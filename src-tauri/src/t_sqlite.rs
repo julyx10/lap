@@ -491,7 +491,7 @@ impl AFile {
 
         // get dimensions based on file type
         let (width, height) = match file_type {
-            1 => t_image::get_image_dimensions(file_path)?,
+            1 | 3 => t_image::get_image_dimensions(file_path)?,
             2 => t_video::get_video_dimensions(file_path)?,
             _ => (0, 0),
         };
@@ -524,7 +524,7 @@ impl AFile {
         let mut gps_longitude: Option<f64> = None;
         let mut gps_altitude: Option<f64> = None;
 
-        if file_type == 1 {
+        if file_type == 1 || file_type == 3 {
             // Image file
             // Read EXIF data
             let exif = File::open(file_path)
@@ -598,11 +598,12 @@ impl AFile {
                 gps_latitude = video_metadata.gps_latitude;
                 gps_longitude = video_metadata.gps_longitude;
                 gps_altitude = video_metadata.gps_altitude;
-
-                if let Some(dt) = &e_date_time {
-                    taken_date = t_utils::meta_date_to_timestamp(dt).or(file_info.modified);
-                }
             }
+
+            taken_date = e_date_time
+                .as_ref()
+                .and_then(|dt| t_utils::meta_date_to_timestamp(dt))
+                .or(file_info.modified);
         }
 
         // Geocoding based on GPS coordinates from any source
@@ -1415,14 +1416,8 @@ impl AFile {
             FROM ranked_files
             WHERE year IS NOT NULL
             GROUP BY year, month, date
-            ORDER BY position {}",
-            date_field,
-            order_clause,
-            year_extract,
-            month_extract,
-            date_extract,
-            where_clause,
-            order_clause
+            ORDER BY position ASC",
+            date_field, order_clause, year_extract, month_extract, date_extract, where_clause
         );
 
         let conn = open_conn()?;

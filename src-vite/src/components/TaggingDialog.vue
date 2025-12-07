@@ -24,7 +24,7 @@
     </div>
 
     <!-- Tag List -->
-    <div class="max-h-[180px] overflow-y-auto border border-base-content/5 shadow-lg rounded-box p-2">
+    <div class="max-h-[180px] overflow-y-auto border border-base-content/5 rounded-box p-2">
       <div v-if="filteredTags.length > 0" class="flex flex-wrap gap-2">
         <div
           v-for="tag in filteredTags"

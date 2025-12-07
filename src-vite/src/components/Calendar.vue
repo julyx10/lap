@@ -37,45 +37,46 @@
     </div>
     
     <template v-if="Object.keys(calendar_dates).length > 0" >
-      
+      <!-- calendar -->
+      <div ref="scrollable"
+        class="flex flex-col overflow-x-hidden overflow-y-auto"
+      >
         <!-- days of the week in daily calendar -->
-        <div v-if="!config.calendar.isMonthly" class="pr-3 text-sm text-base-content/30 flex flex-col items-center">
-          <div class="grid grid-cols-7 gap-2 text-center">
+        <div v-if="!config.calendar.isMonthly" 
+          class="sticky top-0 z-10 bg-base-200 min-w-64 text-sm flex flex-col items-center"
+        >
+          <div class="py-1 grid grid-cols-7 gap-2 text-center">
             <div 
               v-for="(day, index) in localeMsg.calendar.weekdays" 
               :key="index" 
               class="p-2 w-8 flex items-center justify-center"
+              :class="[
+                index === selectedWeekday ? 'text-base-content/70' : 'text-base-content/30'
+              ]"
             >
               {{ day }}
             </div>
           </div>
-        </div>  
+        </div>
 
-        <!-- calendar -->
-        <div ref="scrollable"
+        <div v-for="item in sorted_calendar_items" 
+          :key="item.year"
           :class="[
-            'flex overflow-x-hidden overflow-y-auto',
+            'flex min-w-40',
             config.calendar.sortingAsc ? 'flex-col' : 'flex-col-reverse'
           ]"
         >
-          <div v-for="(months, year) in calendar_dates" 
-            :class="[
-              'flex min-w-40',
-              config.calendar.sortingAsc ? 'flex-col' : 'flex-col-reverse'
-            ]"
-          >
-            <CalendarMonthly v-if="config.calendar.isMonthly"
-              :year="Number(year)" 
-              :months="months"
-            />
-            <CalendarDaily v-else v-for="(dates, month) in months" 
-              :year="Number(year)" 
-              :month="Number(month)"
-              :dates="dates"
-            />
-          </div>
+          <CalendarMonthly v-if="config.calendar.isMonthly"
+            :year="Number(item.year)" 
+            :months="item.months"
+          />
+          <CalendarDaily v-else v-for="(dates, month) in item.months" 
+            :year="Number(item.year)" 
+            :month="Number(month)"
+            :dates="dates"
+          />
         </div>
-
+      </div>
     </template>
 
     <!-- Display message if no data are found -->
@@ -108,8 +109,37 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
+const selectedWeekday = computed(() => {
+  if (config.calendar.isMonthly || !config.calendar.year || !config.calendar.month || !config.calendar.date || config.calendar.date <= 0) {
+    return -1;
+  }
+  const date = new Date(config.calendar.year, config.calendar.month - 1, config.calendar.date);
+  return date.getDay();
+});
+
 const scrollable = ref(null); // Ref for the scrollable element
 const calendar_dates = ref([]);
+
+const sorted_calendar_items = computed(() => {
+  const dates = calendar_dates.value;
+  // If array (initial state) or no keys, return empty
+  if (!dates || (Array.isArray(dates) && dates.length === 0)) return [];
+  
+  // keys are years
+  const years = Object.keys(dates).map(Number);
+  
+  // Sort years based on config
+  if (config.calendar.sortingAsc) {
+    years.sort((a, b) => a - b);
+  } else {
+    years.sort((a, b) => b - a);
+  }
+  
+  return years.map(year => ({
+    year: year,
+    months: dates[year]
+  }));
+});
 
 onMounted(async () => {
   console.log('Calendar.vue mounted');

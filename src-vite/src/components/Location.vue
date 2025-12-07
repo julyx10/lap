@@ -29,10 +29,8 @@
               ]"
               @click.stop="clickExpandLocation(location)"
             />
-            <div class="overflow-hidden whitespace-pre text-ellipsis">
-              <span>{{ location.admin1 }}</span>
-              <span class="text-xs text-base-content/30 ml-1">({{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }})</span>
-            </div>
+            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ location.admin1 }}</span>
+            <span class="mx-1 text-[10px] tabular-nums text-base-content/70">{{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="location.is_expanded && location.names.length > 0">
             <li v-for="(name, index) in location.names" class="pl-4">
@@ -45,7 +43,7 @@
               >
                 <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
                   <span>{{ name }}</span>
-                  <span class="text-xs text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
+                  <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
                 </div>
               </div>
             </li>

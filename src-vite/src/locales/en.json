@@ -182,6 +182,8 @@
     "file": {
       "new_folder": "New folder",
       "view": "View",
+      "quick_view": "Quick view",
+      "view_in_new_window": "View in new window",
       "copy": "Copy to clipboard",
       "edit": "Edit image",
       "update_from_file": "Update from file",

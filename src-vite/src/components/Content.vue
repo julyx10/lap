@@ -15,7 +15,8 @@
     <!-- title bar -->
     <div :class="
       [
-        'absolute top-0 left-1 right-1 px-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-md z-30',
+        'absolute top-0 left-1 right-1 px-1 h-12 flex flex-row flex-wrap items-center justify-between z-30',
+        config.content.showQuickView ? 'bg-base-300': 'bg-base-300/80 backdrop-blur-md'
         // config.home.showLeftPane ? 'pl-1' : 'pl-18'
       ]" 
       data-tauri-drag-region
@@ -102,105 +103,124 @@
       
     <!-- content view -->
     <div ref="contentViewDiv" class="flex-1 flex flex-row overflow-hidden">
-
-      <div ref="gridViewDiv" 
-        :class="[
-          'flex-1 flex',
-          config.settings.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col',
-          config.content.showFilmStrip ? (config.settings.showStatusBar ? 'mt-12 mb-8' : 'mt-12 mb-1') : ''
-        ]"
-      >
-        <div class="relative" 
-          :class="{ 'flex-1': !config.content.showFilmStrip }"
-          :style="{ height: config.content.showFilmStrip ? config.content.filmStripPaneHeight + 'px' : '' }"
+      <div class="relative flex-1 flex flex-row overflow-hidden">
+        <div ref="gridViewDiv" 
+          :class="[
+            'flex-1 flex',
+            config.settings.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col',
+            config.content.showFilmStrip ? (config.settings.showStatusBar ? 'mt-12 mb-8' : 'mt-12 mb-1') : ''
+          ]"
         >
-          <!-- grid view -->
-          <div ref="gridScrollContainerRef" class="absolute px-1 w-full h-full">
-            <GridView ref="gridViewRef"
-              :selected-item-index="selectedItemIndex"
-              :fileList="fileList"
-              :showFolderFiles="showFolderFiles"
-              :selectMode="selectMode"
-              @item-clicked="handleItemClicked"
-              @item-dblclicked="handleItemDblClicked"
-              @item-select-toggled="handleItemSelectToggled"
-              @item-action="handleItemAction"
-              @visible-range-update="handleVisibleRangeUpdate"
-              @scroll="handleGridScroll"
-            />
-            <!-- Navigation buttons -->
-            <div v-if="config.content.showFilmStrip && fileList.length > 0" 
-              class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none"
-            >
-              <button 
-                :class="[
-                  'p-2 rounded-full pointer-events-auto bg-base-100/30', 
-                  selectedItemIndex > 0 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
-                ]"
-                @click="handleNavigate('prev')"
-                @dblclick.stop
+          <div class="relative" 
+            :class="{ 'flex-1': !config.content.showFilmStrip }"
+            :style="{ height: config.content.showFilmStrip ? config.content.filmStripPaneHeight + 'px' : '' }"
+          >
+            <!-- grid view -->
+            <div ref="gridScrollContainerRef" class="absolute px-1 w-full h-full">
+              <GridView ref="gridViewRef"
+                :selected-item-index="selectedItemIndex"
+                :fileList="fileList"
+                :showFolderFiles="showFolderFiles"
+                :selectMode="selectMode"
+                @item-clicked="handleItemClicked"
+                @item-dblclicked="handleItemDblClicked"
+                @item-select-toggled="handleItemSelectToggled"
+                @item-action="handleItemAction"
+                @visible-range-update="handleVisibleRangeUpdate"
+                @scroll="handleGridScroll"
+              />
+              <!-- Navigation buttons -->
+              <div v-if="config.content.showFilmStrip && fileList.length > 0" 
+                class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none"
               >
-                <IconLeft class="w-8 h-8" />
-              </button>
-              <button 
-                :class="[
-                  'p-2 rounded-full pointer-events-auto bg-base-100/30', 
-                  selectedItemIndex < fileList.length - 1 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
-                ]"
-                @click="handleNavigate('next')" 
-                @dblclick.stop
-              >
-                <IconRight class="w-8 h-8" />
-              </button> 
+                <button 
+                  :class="[
+                    'p-2 rounded-full pointer-events-auto bg-base-100/30', 
+                    selectedItemIndex > 0 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
+                  ]"
+                  @click="handleNavigate('prev')"
+                  @dblclick.stop
+                >
+                  <IconLeft class="w-8 h-8" />
+                </button>
+                <button 
+                  :class="[
+                    'p-2 rounded-full pointer-events-auto bg-base-100/30', 
+                    selectedItemIndex < fileList.length - 1 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
+                  ]"
+                  @click="handleNavigate('next')" 
+                  @dblclick.stop
+                >
+                  <IconRight class="w-8 h-8" />
+                </button> 
+              </div>
             </div>
           </div>
+
+          <!-- splitter -->
+          <div v-if="config.content.showFilmStrip" 
+            :class="[ 
+              'h-1 hover:bg-primary cursor-ns-resize transition-colors',
+              isDraggingFilmStripView ? 'bg-primary' : 'bg-base-300'
+            ]" 
+            @mousedown="startDraggingfilmStripView"
+          ></div>
+
+          <!-- preview -->
+          <div v-if="config.content.showFilmStrip" ref="previewDiv" 
+            class="flex-1 rounded-box bg-base-200 overflow-hidden"
+          >
+            <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
+              class="w-full h-full flex items-center justify-center"
+            >
+              <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
+                :filePath="fileList[selectedItemIndex]?.file_path" 
+                :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
+                :isZoomFit="true"
+              ></Image>
+              
+              <Video v-if="fileList[selectedItemIndex]?.file_type === 2"
+                :filePath="fileList[selectedItemIndex]?.file_path"
+                :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
+                :isZoomFit="true"
+              ></Video>
+            </div>
+          </div> <!-- preview -->
+        </div> <!-- grid view -->
+
+        <!-- custom scrollbar -->
+        <div v-if="!config.content.showFilmStrip && fileList.length > 0" class="mt-12 shrink-0" :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]">
+          <ScrollBar
+            :total="totalFileCount"
+            :pageSize="visibleItemCount"
+            :modelValue="scrollPosition"
+            :markers="timelineData"
+            :selectedIndex="selectedItemIndex"
+            @update:modelValue="handleScrollUpdate"
+            @select-item="handleItemClicked"
+          ></ScrollBar>
         </div>
 
-        <!-- splitter -->
-        <div v-if="config.content.showFilmStrip" 
-          :class="[ 
-            'h-1 hover:bg-primary cursor-ns-resize transition-colors',
-            isDraggingFilmStripView ? 'bg-primary' : 'bg-base-300'
-          ]" 
-          @mousedown="startDraggingfilmStripView"
-        ></div>
-
-        <!-- preview -->
-        <div v-if="config.content.showFilmStrip" ref="previewDiv" 
-          class="flex-1 rounded-box bg-base-200 overflow-hidden"
+        <!-- Quick View Overlay -->
+        <div v-if="config.content.showQuickView && fileList[selectedItemIndex]" 
+          class="absolute inset-0 z-[60] mt-12 flex items-center justify-center bg-base-200 rounded-box overflow-hidden"
+          :class="[config.settings.showStatusBar ? 'mb-8': 'mb-1']"
+          @dblclick="quickViewZoomFit = !quickViewZoomFit"
         >
-          <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
-            class="w-full h-full flex items-center justify-center"
-            @dblclick="filmStripViewZoomFit = !filmStripViewZoomFit"
-          >
-            <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
-              :filePath="fileList[selectedItemIndex]?.file_path" 
-              :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
-              :isZoomFit="filmStripViewZoomFit"
+          <div class="relative w-full h-full flex items-center justify-center">
+            <Image v-if="fileList[selectedItemIndex].file_type === 1"
+              :filePath="fileList[selectedItemIndex].file_path"
+              :rotate="fileList[selectedItemIndex].rotate ?? 0" 
+              :isZoomFit="quickViewZoomFit"
             ></Image>
-            
-            <Video v-if="fileList[selectedItemIndex]?.file_type === 2"
-              :filePath="fileList[selectedItemIndex]?.file_path"
-              :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
-              :isZoomFit="filmStripViewZoomFit"
+
+            <Video v-if="fileList[selectedItemIndex].file_type === 2"
+              :filePath="fileList[selectedItemIndex].file_path"
+              :rotate="fileList[selectedItemIndex].rotate ?? 0"
+              :isZoomFit="quickViewZoomFit"
             ></Video>
           </div>
-
-        </div> <!-- preview -->
-
-      </div> <!-- grid view -->
-
-      <!-- custom scrollbar -->
-      <div v-if="!config.content.showFilmStrip && fileList.length > 0" class="mt-12 shrink-0" :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]">
-        <ScrollBar
-          :total="totalFileCount"
-          :pageSize="visibleItemCount"
-          :modelValue="scrollPosition"
-          :markers="timelineData"
-          :selectedIndex="selectedItemIndex"
-          @update:modelValue="handleScrollUpdate"
-          @select-item="handleItemClicked"
-        ></ScrollBar>
+        </div>
       </div>
 
       <!-- info panel splitter -->
@@ -235,9 +255,13 @@
       </transition>
     </div>
 
+
     <!-- status bar -->
     <div v-if="config.settings.showStatusBar"
-      class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 bg-base-300/80 backdrop-blur-md flex gap-4 text-sm cursor-default"
+      :class="[
+        'absolute px-2 h-8 bottom-0 left-0 right-0 z-30 flex gap-4 text-sm cursor-default',
+        config.content.showQuickView ? 'bg-base-300': 'bg-base-300/80 backdrop-blur-md'
+      ]"
     >
       <div class="flex items-center gap-1 flex-shrink-0">
         <IconFileSearch class="t-icon-size-xs" />
@@ -485,9 +509,11 @@ const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
 
+// quick view
+const quickViewZoomFit = ref(true); // quick view zoom fit
+
 // film strip view splitter
 const isDraggingFilmStripView = ref(false);      // dragging splitter to resize film strip view
-const filmStripViewZoomFit = ref(true); // film strip view zoom fit
 const videoRef = ref<HTMLVideoElement | null>(null);             // preview video reference
 
 // info panel splitter
@@ -863,8 +889,22 @@ const keyActions = {
 
 // Local keydown handler for navigation (prevents default browser behavior)
 function handleLocalKeyDown(event: KeyboardEvent) {
+  // Check for input targets (prevent toggle while typing)
+  const target = event.target as HTMLElement;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+    return;
+  }
+
   // Keys that we are handling manually for navigation, to prevent default browser behavior (scrolling).
-  const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', ' '];
+  const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
+
+  if ((event.key === 'Enter' || event.key === 'Space' || event.key === ' ') && selectedItemIndex.value >= 0 && fileList.value.length > 0) {
+    config.content.showQuickView = !config.content.showQuickView;
+    quickViewZoomFit.value = true; 
+  }
+  if (event.key === 'Escape' && config.content.showQuickView) {
+    config.content.showQuickView = false;
+  }
 
   if (handledKeys.includes(event.key)) {
     event.preventDefault();
@@ -904,6 +944,7 @@ const handleKeyDown = (e: any) => {
 };
 
 onMounted( async() => {
+  window.addEventListener('keydown', handleLocalKeyDown);
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
@@ -940,6 +981,7 @@ onMounted( async() => {
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleLocalKeyDown);
   // unlisten
   unlistenImageViewer();
   if (unlistenKeydown) {
@@ -987,6 +1029,7 @@ watch(
     if (gridViewRef.value) {
       gridViewRef.value.scrollToPosition(0);
     }
+    config.content.showQuickView = false;
     
     updateContent();
   }, 
@@ -1019,7 +1062,7 @@ watch(() => [config.content.showFilmStrip, config.infoPanel.show, config.infoPan
 
 function toggleGridViewLayout() {
   config.content.showFilmStrip = !config.content.showFilmStrip;
-  filmStripViewZoomFit.value = true;
+  config.content.showQuickView = false;
 }
 
 // Track pending requests to avoid duplicates

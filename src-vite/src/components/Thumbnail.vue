@@ -211,7 +211,7 @@ const getContextMenuItems = () => {
 
   return [
     {
-      label: localeMsg.value.menu.file.view,
+      label: localeMsg.value.menu.file.view_in_new_window,
       icon: IconMonitor,
       shortcut: isMac ? '⌘⏎' : 'Ctrl+Enter',
       action: createAction('open')

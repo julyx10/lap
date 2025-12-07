@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex flex-col items-center select-none">
+  <div class="flex flex-col items-center select-none mx-auto my-1 min-w-64 rounded-box border border-base-content/5">
 
     <!-- title -->
     <div 
@@ -14,7 +14,7 @@
     </div>
 
     <!-- month list -->
-    <div class="py-2 px-1 gap-4 grid grid-cols-4">
+    <div class="p-2 gap-3 grid grid-cols-6">
       <div v-for="m in 12" 
         :key="m" 
         class="p-1 text-sm flex items-center justify-center rounded-box text-nowrap"
