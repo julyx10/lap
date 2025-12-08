@@ -7,7 +7,7 @@
     }"
     @wheel="onWheel"
   >
-    <RecycleScroller
+    <VirtualScroll
       v-if="fileList.length > 0"
       ref="scroller"
       class="w-full h-full no-scrollbar"
@@ -24,14 +24,15 @@
       :key="config.content.showFilmStrip ? 'filmstrip' : 'grid'"
       key-field="id"
       :emit-update="true"
+      :buffer="4"
       v-slot="{ item, index }"
       @update="onUpdate"
       @scroll="onScroll"
     >
       <!-- Debug Info -->
-      <div class="absolute top-2 left-2 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
-        {{ index }} {{ item.isPlaceholder ? 'PH' : 'F' }} {{ item.thumbnail ? 'T' : 'NoT' }}
-      </div>
+      <!-- <div class="absolute top-10 left-4 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
+        {{ index }} {{ item.isPlaceholder ? 'PH' : 'F' }} {{ item.thumbnail ? 'T' : 'NoT' }} {{ item.id }}
+      </div> -->
       
       <Thumbnail
         v-if="item && !item.isPlaceholder"
@@ -46,7 +47,7 @@
         @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
       />
       <div v-else class="w-full h-full bg-base-200/50 rounded animate-pulse"></div>
-    </RecycleScroller>
+    </VirtualScroll>
     <!-- Empty State -->
     <div v-else>
       <!-- blur spot -->
@@ -66,9 +67,7 @@ import { watch, ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
-// @ts-ignore
-import { RecycleScroller } from 'vue-virtual-scroller';
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
+import VirtualScroll from '@/components/VirtualScroll.vue';
 
 const props = withDefaults(defineProps<{
   selectedItemIndex: number;

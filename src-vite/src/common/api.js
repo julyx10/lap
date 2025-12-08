@@ -788,3 +788,40 @@ export async function getStorageFileInfo() {
   }
   return null;
 }
+
+// ai
+
+// check ai status
+export async function checkAiStatus() {
+  try {
+    const status = await invoke('check_ai_status');
+    return status;
+  } catch (error) {
+    console.error('checkAiStatus error:', error);
+  }
+  return 'Unknown';
+}
+
+// generate embedding
+export async function generateEmbedding(fileId) {
+  try {
+    const result = await invoke('generate_embedding', { fileId });
+    return result;
+  } catch (error) {
+    console.error('generateEmbedding error:', error);
+  }
+  return null;
+}
+
+// search images
+export async function searchImages(query, limit) {
+  try {
+    const results = await invoke('search_images', { query, limit });
+    if (results) {
+      return results;
+    }
+  } catch (error) {
+    console.error('searchImages error:', error);
+  }
+  return [];
+}

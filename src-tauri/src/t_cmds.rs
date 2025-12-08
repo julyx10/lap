@@ -6,6 +6,7 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
+use crate::t_ai;
 use crate::t_image;
 use crate::t_sqlite::{
     ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, QueryParams,
@@ -13,6 +14,7 @@ use crate::t_sqlite::{
 use crate::t_utils;
 use base64::{Engine, engine::general_purpose};
 use std::path::Path;
+use tauri::State;
 use tokio;
 
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
@@ -526,4 +528,95 @@ pub fn get_storage_file_info() -> Result<t_utils::FileInfo, String> {
         Ok(info) => Ok(info),
         Err(e) => Err(format!("Failed to get the database file size: {}", e)),
     }
+}
+
+// ai
+#[tauri::command]
+pub fn check_ai_status(state: State<t_ai::AiState>) -> String {
+    let engine = state.0.lock().unwrap();
+    if engine.is_loaded() {
+        "AI Models Loaded".to_string()
+    } else {
+        "AI Engine Initialized (Models Not Loaded)".to_string()
+    }
+}
+
+#[tauri::command]
+pub fn test_ai_embedding(
+    state: State<t_ai::AiState>,
+    text: String,
+    image_path: String,
+) -> Result<String, String> {
+    let mut engine = state.0.lock().unwrap();
+
+    let mut result = String::new();
+
+    if !text.is_empty() {
+        match engine.encode_text(&text) {
+            Ok(vec) => {
+                result.push_str(&format!(
+                    "Text Embedding ('{}'): Length={}, First 5={:?}\n",
+                    text,
+                    vec.len(),
+                    &vec[0..5.min(vec.len())]
+                ));
+            }
+            Err(e) => result.push_str(&format!("Text Encoding Error: {}\n", e)),
+        }
+    }
+
+    if !image_path.is_empty() {
+        match engine.encode_image(&image_path) {
+            Ok(vec) => {
+                result.push_str(&format!(
+                    "Image Embedding: Length={}, First 5={:?}\n",
+                    vec.len(),
+                    &vec[0..5.min(vec.len())]
+                ));
+            }
+            Err(e) => result.push_str(&format!("Image Encoding Error: {}\n", e)),
+        }
+    }
+
+    Ok(result)
+}
+
+#[tauri::command]
+pub fn generate_embedding(state: State<t_ai::AiState>, file_id: i64) -> Result<String, String> {
+    // 1. Fetch file info to get path
+    let file_opt = AFile::get_file_info(file_id).map_err(|e| e.to_string())?;
+    let file = file_opt.ok_or("File not found")?;
+
+    // 2. Check if it's an image
+    // file_type: 1 is image
+    if file.file_type != Some(1) {
+        return Err("File is not an image".to_string());
+    }
+
+    let file_path = file.file_path.ok_or("File path not resolved")?;
+
+    // 3. Generate embedding
+    let mut engine = state.0.lock().unwrap();
+    let embedding = engine.encode_image(&file_path)?;
+
+    // 4. Save to DB
+    let _ = AFile::update_embedding(file_id, embedding).map_err(|e| format!("DB Error: {}", e))?;
+
+    Ok("Embedding generated and saved".to_string())
+}
+
+#[tauri::command]
+pub fn search_images(
+    state: State<t_ai::AiState>,
+    query: String,
+    limit: usize,
+) -> Result<Vec<AFile>, String> {
+    let mut engine = state.0.lock().unwrap();
+    let query_embedding = engine.encode_text(&query)?;
+
+    // Release the lock before DB operation (though not strictly necessary as DB is separate)
+    // But good practice if DB takes time.
+    drop(engine);
+
+    AFile::search_similar_images(query_embedding, limit)
 }

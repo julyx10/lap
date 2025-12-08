@@ -450,6 +450,8 @@ pub struct AFile {
     pub geo_admin2: Option<String>, // Administrative district 2
     pub geo_cc: Option<String>,     // Country code
 
+    pub embeds: Option<Vec<u8>>, // AI embeddings (BLOB)
+
     // output only
     pub file_path: Option<String>,  // file path (for webview)
     pub album_id: Option<i64>,      // album id (for webview)
@@ -670,6 +672,8 @@ impl AFile {
             geo_admin1,
             geo_admin2,
             geo_cc,
+
+            embeds: None,
 
             file_path: None,
             album_id: None,
@@ -999,7 +1003,8 @@ impl AFile {
                 a.e_make, a.e_model, a.e_date_time, a.e_software, a.e_artist, a.e_copyright, a.e_description, a.e_lens_make, a.e_lens_model, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude, a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
                 b.path,
-                c.id AS album_id, c.name AS album_name
+                c.id AS album_id, c.name AS album_name,
+                a.embeds
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id"
@@ -1061,7 +1066,103 @@ impl AFile {
             )),
             album_id: row.get(40)?,
             album_name: row.get(41)?,
+            embeds: row.get(42)?,
         })
+    }
+
+    /// Update embedding for a file
+    pub fn update_embedding(file_id: i64, embedding: Vec<f32>) -> Result<usize, String> {
+        // Convert Vec<f32> to Vec<u8>
+        let mut bytes = Vec::with_capacity(embedding.len() * 4);
+        for val in embedding {
+            bytes.extend_from_slice(&val.to_le_bytes());
+        }
+
+        let conn = open_conn()?;
+        let result = conn
+            .execute(
+                "UPDATE afiles SET embeds = ?1 WHERE id = ?2",
+                params![bytes, file_id],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// Search similar images using cosine similarity
+    pub fn search_similar_images(
+        query_embedding: Vec<f32>,
+        limit: usize,
+    ) -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+
+        // Fetch id and embeds only for performance
+        let mut stmt = conn
+            .prepare("SELECT id, embeds FROM afiles WHERE embeds IS NOT NULL")
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map([], |row| {
+                let id: i64 = row.get(0)?;
+                let embeds_blob: Vec<u8> = row.get(1)?;
+                Ok((id, embeds_blob))
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut scores: Vec<(i64, f32)> = Vec::new();
+
+        // Calculate similarity
+        for row in rows {
+            let (id, embeds_blob) = row.map_err(|e| e.to_string())?;
+
+            // Convert blob back to Vec<f32>
+            let embedding: Vec<f32> = embeds_blob
+                .chunks_exact(4)
+                .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+                .collect();
+
+            if embedding.len() != query_embedding.len() {
+                continue;
+            }
+
+            let score = Self::cosine_similarity(&query_embedding, &embedding);
+            scores.push((id, score));
+        }
+
+        // Sort by score descending
+        scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        // Take top limit
+        let top_ids: Vec<i64> = scores.into_iter().take(limit).map(|(id, _)| id).collect();
+
+        if top_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Fetch full file info for top ids
+        // SQLite doesn't have a simple order by list, so we fetch and re-order in Rust or just return in arbitrary order
+        // (but user usually expects relevance order).
+        // Let's fetch one by one or using IN + re-sort.
+        // For 50 items, fetching one by one is fine locally.
+        let mut results = Vec::new();
+        for id in top_ids {
+            if let Ok(Some(file)) = Self::get_file_info(id) {
+                results.push(file);
+            }
+        }
+
+        Ok(results)
+    }
+
+    fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+        let dot_product: f32 = a.iter().zip(b).map(|(x, y)| x * y).sum();
+        let norm_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
+        let norm_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
+
+        if norm_a == 0.0 || norm_b == 0.0 {
+            0.0
+        } else {
+            dot_product / (norm_a * norm_b)
+        }
     }
 
     // query the count and sum by sql
@@ -2082,11 +2183,16 @@ pub fn create_db() -> Result<(), String> {
             geo_admin1 TEXT,
             geo_admin2 TEXT,
             geo_cc TEXT,
+            embeds BLOB,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
     )
     .map_err(|e| e.to_string())?;
+
+    // Migration: Add embeds column if it doesn't exist
+    // This is a simple migration for dev/MVP. Ideally, use a migration system.
+    let _ = conn.execute("ALTER TABLE afiles ADD COLUMN embeds BLOB", []);
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)",
         [],

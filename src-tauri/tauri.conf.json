@@ -21,7 +21,9 @@
       }
     ],
     "security": {
-      "capabilities": ["default"],
+      "capabilities": [
+        "default"
+      ],
       "assetProtocol": {
         "enable": true,
         "scope": [
@@ -45,6 +47,7 @@
       "icons/icon.icns"
     ],
     "resources": [
+      "resources/models/*"
     ]
   },
   "plugins": {}

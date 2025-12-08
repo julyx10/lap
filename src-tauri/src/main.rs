@@ -14,6 +14,7 @@
  */
 use tauri::Manager;
 
+mod t_ai;
 mod t_cmds;
 mod t_image;
 mod t_sqlite;
@@ -33,9 +34,19 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(t_ai::AiState(std::sync::Mutex::new(t_ai::AiEngine::new())))
         .setup(|_app| {
             // Create the database on startup
             t_sqlite::create_db().expect("error while creating the database");
+
+            // Initialize AI Engine
+            let app_handle = _app.handle();
+            let ai_state = _app.state::<t_ai::AiState>();
+            let mut ai_engine = ai_state.0.lock().unwrap();
+            match ai_engine.load_models(app_handle) {
+                Ok(_) => println!("AI Engine started successfully"),
+                Err(e) => eprintln!("Failed to start AI Engine: {}", e),
+            }
 
             // Open devtools in development mode
             // #[cfg(debug_assertions)] // only include this block in debug builds
@@ -138,6 +149,11 @@ fn main() {
             t_cmds::get_package_info,
             t_cmds::get_build_time,
             t_cmds::get_storage_file_info,
+            // ai
+            t_cmds::check_ai_status,
+            t_cmds::test_ai_embedding,
+            t_cmds::generate_embedding,
+            t_cmds::search_images,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

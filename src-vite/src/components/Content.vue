@@ -37,6 +37,14 @@
       <!-- toolbar -->
       <div class="flex items-center space-x-2 shrink-0">
 
+       <!-- Index Folder Button -->
+        <TButton 
+           :icon="IconBolt" 
+           :class="isIndexing ? 'loading' : ''"
+           @click="handleIndexFolder" 
+           tooltip="Index Current View"
+        />
+
         <!-- search box -->
         <SearchBox ref="searchBoxRef" v-model="config.search.text" @click.stop="selectMode = false" /> 
 
@@ -207,6 +215,15 @@
           :class="[config.settings.showStatusBar ? 'mb-8': 'mb-1']"
           @dblclick="quickViewZoomFit = !quickViewZoomFit"
         >
+          <!-- Close Button -->
+          <TButton 
+            class="absolute top-2 right-2 z-[70]"
+            buttonSize="small"
+            :icon="IconClose"
+            @click.stop="config.content.showQuickView = false"
+            @dblclick.stop
+          />
+
           <div class="relative w-full h-full flex items-center justify-center">
             <Image v-if="fileList[selectedItemIndex].file_type === 1"
               :filePath="fileList[selectedItemIndex].file_path"
@@ -398,7 +415,8 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
-         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile } from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile,
+         searchImages, generateEmbedding, checkAiStatus } from '@/common/api';  
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -454,6 +472,7 @@ import {
   IconLeft,
   IconRight,
   IconSeparator,
+  IconBolt,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -604,6 +623,42 @@ const currentQueryParams = ref({
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
 
+// AI Search
+// const isAiSearchMode = ref(false); // Removed
+// const aiSearchQuery = ref(''); // Removed
+// const aiSearchResults = ref<any[]>([]); // Removed
+const isIndexing = ref(false);
+const aiStatus = ref('');
+
+// Check AI status on mount
+onMounted(async () => {
+  aiStatus.value = await checkAiStatus();
+});
+
+async function handleIndexFolder() {
+  if (fileList.value.length === 0) return;
+  
+  isIndexing.value = true;
+  let count = 0;
+  try {
+    // Iterate over current file list (just visible ones usually, but fileList has all for the folder)
+    for (const file of fileList.value) {
+       // Only index images
+       if (file.file_type === 1) {
+         await generateEmbedding(file.file_id);
+         count++;
+         // Update usage/progress if desired
+       }
+    }
+    alert(`Indexed ${count} images.`);
+  } catch (e) {
+    console.error(e);
+    alert('Indexing failed: ' + e);
+  } finally {
+    isIndexing.value = false;
+  }
+}
+
 // more menuitems
 const moreMenuItems = computed(() => {
   const baseItems = [
@@ -742,7 +797,10 @@ function handleItemClicked(index: number) {
 
 function handleItemDblClicked(index: number) {
   selectedItemIndex.value = index;
-  openImageViewer(index, true);
+
+  // quick view
+  config.content.showQuickView = true;
+  quickViewZoomFit.value = true; 
 }
 
 // Track last selected index for shift-click range selection
@@ -895,14 +953,20 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  // Keys that we are handling manually for navigation, to prevent default browser behavior (scrolling).
+  if (selectedItemIndex.value < 0 || fileList.value.length === 0) {
+    return;
+  }
+
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
-  if ((event.key === 'Enter' || event.key === 'Space' || event.key === ' ') && selectedItemIndex.value >= 0 && fileList.value.length > 0) {
+  if (event.key === 'Enter') {
     config.content.showQuickView = !config.content.showQuickView;
     quickViewZoomFit.value = true; 
   }
-  if (event.key === 'Escape' && config.content.showQuickView) {
+  else if ((event.key === 'Space' || event.key === ' ') && config.content.showQuickView) {
+    quickViewZoomFit.value = !quickViewZoomFit.value; 
+  }
+  else if (event.key === 'Escape' && config.content.showQuickView) {
     config.content.showQuickView = false;
   }
 
@@ -1175,6 +1239,35 @@ async function getFileList(
   fileList.value = [];
   totalFileCount.value = 0;
   totalFileSize.value = 0;
+
+  // AI Search Logic
+  if (config.search.text.trim().startsWith('/') && config.search.text.trim().length > 1) {
+    const query = config.search.text.trim().substring(1).trim();
+    if (query) {
+      isProcessing.value = true;
+      try {
+        const results = await searchImages(query, 100);
+        
+        fileList.value = results.map(file => ({
+           ...file,
+           isPlaceholder: false, // AI results are full items
+           isSelected: false,
+        }));
+        
+        totalFileCount.value = fileList.value.length;
+        totalFileSize.value = fileList.value.reduce((acc, f) => acc + f.size, 0);
+        
+        // Fetch thumbnails
+        getFileListThumb(fileList.value);
+        
+      } catch (e) {
+        console.error("AI Search failed:", e);
+      } finally {
+        isProcessing.value = false;
+      }
+      return; 
+    }
+  }
   
   // Get count and sum first
   const result = await getQueryCountAndSum(currentQueryParams.value);

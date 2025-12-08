@@ -14,7 +14,7 @@ build = "build.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [ "protocol-asset", "devtools"] }
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-window-state = "2.2.1"
 tauri-plugin-shell = "2"
 tauri-plugin-os = "2"
@@ -40,6 +40,9 @@ arboard = "3.5.0"
 pinyin = "0.10.0"
 once_cell = "1.21.3"
 rand = "0.8"
+ort = { version = "2.0.0-rc.9", features = ["download-binaries"] }
+ndarray = "0.16"
+tokenizers = { version = "0.20", default-features = false, features = ["onig"] }
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

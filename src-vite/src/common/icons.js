@@ -148,6 +148,6 @@ export { default as IconVideoReplay } from '@/assets/icons/video-replay.svg';
 export { default as IconVideoFill } from '@/assets/icons/video-fill.svg';
 
 // ======================
-// MAGIC ICONS
+// AI ICONS
 // ======================
-export { default as IconMagic } from '@/assets/icons/magic.svg';
+export { default as IconBolt } from '@/assets/icons/bolt.svg';

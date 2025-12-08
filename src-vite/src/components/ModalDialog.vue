@@ -1,26 +1,28 @@
 <template>
-  <div class="fixed inset-0 bg-black/30 z-1000">
-    <div 
-      ref="modalDialogRef"
-      class="text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box"
-      :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
-    >
-      <!-- title bar -->
-      <div ref="titleBarRef" class="p-3 flex items-center justify-between">
-        {{ title }}
-        <TButton
-          :icon="IconClose"
-          :buttonSize="'small'"
-          @click="clickCancel"
-        />
-      </div>
+  <Teleport to="body">
+    <div class="fixed inset-0 bg-black/30 z-[1000]">
+      <div 
+        ref="modalDialogRef"
+        class="text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box"
+        :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
+      >
+        <!-- title bar -->
+        <div ref="titleBarRef" class="p-3 flex items-center justify-between">
+          {{ title }}
+          <TButton
+            :icon="IconClose"
+            :buttonSize="'small'"
+            @click="clickCancel"
+          />
+        </div>
 
-      <!-- dialog content -->
-      <div class="p-3">
-        <slot></slot>
+        <!-- dialog content -->
+        <div class="p-3">
+          <slot></slot>
+        </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
