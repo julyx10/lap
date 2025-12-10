@@ -1,14 +1,87 @@
 <template>
   <div 
-    class="w-full h-full relative flex items-center justify-center"
+    class="w-full h-full relative flex items-center justify-center group"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
     ref="containerRef"
   >
-    <!-- Previous Button -->
+    <!-- Toolbar -->
+    <div 
+      id="responsiveDiv"
+      :class="computedToolbarClass"
+      data-tauri-drag-region
+    >
+      <TButton
+        :icon="IconPrev"
+        :disabled="fileIndex <= 0 || config.imageViewer.isLocked"
+        :tooltip="$t('image_viewer.toolbar.prev') + ` (${fileIndex + 1}/${fileCount})`"
+        @click="triggerPrev" 
+      />
+      <TButton
+        :icon="IconLock"
+        :disabled="fileIndex < 0"
+        :selected="config.imageViewer.isLocked"
+        :tooltip="config.imageViewer.isLocked ? $t('image_viewer.toolbar.unlock') : $t('image_viewer.toolbar.lock')"
+        @click="config.imageViewer.isLocked = !config.imageViewer.isLocked"
+      />
+      <TButton
+        :icon="IconNext"
+        :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || config.imageViewer.isLocked"
+        :tooltip="$t('image_viewer.toolbar.next') + ` (${fileIndex + 1}/${fileCount})`"
+        @click="triggerNext" 
+      />
+      <TButton
+        :icon="isSlideShow ? IconPause : IconPlay"
+        :disabled="fileIndex < 0 || config.imageViewer.isLocked"
+        :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
+        @click="$emit('toggle-slide-show')" 
+      />
+      <TButton
+        :icon="IconZoomOut"
+        :disabled="fileIndex < 0 || imageScale <= imageMinScale"
+        :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
+        @click="zoomOut"
+      />
+      <TButton
+        :icon="IconZoomIn"
+        :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
+        :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
+        @click="zoomIn" 
+      />
+      <TButton
+        :icon="!config.imageViewer.isZoomFit ? IconZoomFit : IconZoomActual"
+        :disabled="fileIndex < 0"
+        :tooltip="(!config.imageViewer.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
+        @click="config.imageViewer.isZoomFit = !config.imageViewer.isZoomFit"
+      />
+      <TButton v-if="isWin"
+        :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
+        :tooltip="!config.imageViewer.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
+        @click="config.imageViewer.isFullScreen = !config.imageViewer.isFullScreen"
+      />
+
+      <TButton v-if="config.imageViewer.isFullScreen"
+        :icon="IconSeparator"
+        :disabled="true"
+      />
+
+      <TButton v-if="config.imageViewer.isFullScreen"
+        :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
+        :disabled="fileIndex < 0"
+        :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
+        @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
+      />
+      <TButton v-if="config.imageViewer.isFullScreen"
+        :icon="IconClose"
+        :tooltip="$t('image_viewer.toolbar.close')"
+        @click="$emit('close')"
+      />
+    </div>
+
+    <!-- Previous Button (Overlay) -->
     <button 
       v-if="showNavButton && hasPrevious"
-      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 text-base-content/70 transition-opacity duration-300"
+      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 transition-opacity duration-300"
       :class="[ isHoverLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerPrev"
       @dblclick.stop
@@ -16,10 +89,10 @@
       <IconLeft class="w-8 h-8" />
     </button>
 
-    <!-- Next Button -->
+    <!-- Next Button (Overlay) -->
     <button 
       v-if="showNavButton && hasNext"
-      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 text-base-content/70 transition-opacity duration-300"
+      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 transition-opacity duration-300"
       :class="[ isHoverRight ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerNext"
       @dblclick.stop
@@ -32,6 +105,7 @@
       :filePath="file?.file_path" 
       :rotate="file?.rotate ?? 0" 
       :isZoomFit="isZoomFit"
+      @scale="(e) => $emit('scale', e)"
     ></Image>
     
     <Video v-if="file?.file_type === 2"
@@ -48,9 +122,30 @@
 <script setup lang="ts">
 import { defineAsyncComponent, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { config } from '@/common/config';
+import { isWin, getSlideShowInterval } from '@/common/utils';
 import Image from '@/components/Image.vue';
 import ToolTip from '@/components/ToolTip.vue';
-import { IconLeft, IconRight } from '@/common/icons';
+import TButton from '@/components/TButton.vue';
+import { 
+  IconLeft, 
+  IconRight,
+  IconPrev,
+  IconNext,
+  IconPlay,
+  IconPause,
+  IconZoomIn,
+  IconZoomOut,
+  IconZoomFit,
+  IconZoomActual,
+  IconFullScreen,
+  IconRestoreScreen,
+  IconPin,
+  IconUnPin,
+  IconSeparator,
+  IconClose,
+  IconLock,
+} from '@/common/icons';
 
 const Video = defineAsyncComponent(() => import('@/components/Video.vue'));
 
@@ -74,10 +169,36 @@ const props = defineProps({
   hasNext: {
     type: Boolean,
     default: false
+  },
+  // Added ImageToolbar props
+  fileIndex: {
+    type: Number,
+    default: -1
+  },
+  fileCount: {
+    type: Number,
+    default: 0
+  },
+  isSlideShow: {
+    type: Boolean,
+    default: false
+  },
+  imageScale: {
+    type: Number,
+    default: 1
+  },
+  imageMinScale: {
+    type: Number,
+    default: 0
+  },
+  imageMaxScale: {
+    type: Number,
+    default: 10
   }
 });
 
-const emit = defineEmits(['prev', 'next']);
+
+const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale']);
 
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
@@ -87,24 +208,67 @@ const mediaRef = ref<any>(null);
 const toolTipRef = ref<any>(null);
 const isHoverLeft = ref(false);
 const isHoverRight = ref(false);
+const isHoverTop = ref(false);
+const isHoverBottom = ref(false);
+const toolbarPosition = ref<'top' | 'bottom'>('top');
 
 function handleMouseMove(e: MouseEvent) {
   if (!containerRef.value) return;
   
   const rect = containerRef.value.getBoundingClientRect();
   const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
   const width = rect.width;
+  const height = rect.height;
   
-  if (width > 0) {
-    isHoverLeft.value = x < width * 0.2;
-    isHoverRight.value = x > width * 0.8;
+  if (width > 0 && height > 0) {
+    isHoverLeft.value = x < width * 0.1;
+    isHoverRight.value = x > width * 0.9;
+    isHoverTop.value = y < height * 0.1;
+    isHoverBottom.value = y > height * 0.9;
+
+    if (y < height * 0.5) {
+      toolbarPosition.value = 'top';
+    } else {
+      toolbarPosition.value = 'bottom';
+    }
   }
 }
 
 function handleMouseLeave() {
   isHoverLeft.value = false;
   isHoverRight.value = false;
+  isHoverTop.value = false;
+  isHoverBottom.value = false;
 }
+
+const computedToolbarClass = computed(() => {
+  const baseClasses = 'absolute left-1/2 z-[80] px-4 h-12 space-x-2 bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md rounded-box flex flex-row items-center justify-center transform -translate-x-1/2 select-none transition-all duration-300 ease-in-out';
+  
+  const isPinned = config.imageViewer.isPinned;
+  // If pinned, always show at top (or last known position? Standard is top). Let's stick to top for pinned.
+  if (isPinned) {
+    return `${baseClasses} top-2 translate-y-0 opacity-100`;
+  }
+
+  if (toolbarPosition.value === 'bottom') {
+    // Bottom position
+    if (isHoverBottom.value) {
+      return `${baseClasses} bottom-2 translate-y-0 opacity-100`;
+    } else {
+      // Hidden at bottom
+      return `${baseClasses} bottom-2 translate-y-4 opacity-0`;
+    }
+  } else {
+    // Top position (default)
+    if (isHoverTop.value) {
+      return `${baseClasses} top-2 translate-y-0 opacity-100`;
+    } else {
+      // Hidden at top
+      return `${baseClasses} top-2 -translate-y-4 opacity-0`;
+    }
+  }
+});
 
 // Expose methods for parent component (ImageViewer)
 const zoomIn = () => mediaRef.value?.zoomIn();
@@ -140,3 +304,21 @@ defineExpose({
   triggerNext
 });
 </script>
+
+<style scoped>
+/* Disable text selection while dragging */
+* {
+  user-select: none;
+}
+ 
+@media (max-width: 600px) {
+  #responsiveDiv {
+    visibility: hidden;
+  }
+}
+@media (min-width: 600px) {
+  #responsiveDiv {
+    visibility: visible;
+  }
+}
+</style>

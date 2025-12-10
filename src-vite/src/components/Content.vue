@@ -185,12 +185,19 @@
               <MediaViewer
                 ref="filmStripMediaRef"
                 :file="fileList[selectedItemIndex]"
+                :fileIndex="selectedItemIndex"
+                :fileCount="fileList.length"
+                :isSlideShow="isSlideShow"
+                :imageScale="imageScale"
+                :imageMinScale="imageMinScale"
+                :imageMaxScale="imageMaxScale"
                 :isZoomFit="quickViewZoomFit"
                 :showNavButton="true"
                 :hasPrevious="selectedItemIndex > 0"
                 :hasNext="selectedItemIndex < fileList.length - 1"
                 @prev="performNavigate('prev')"
                 @next="performNavigate('next')"
+                @scale="onScale"
               />
             </div>
           </div> <!-- preview -->
@@ -228,12 +235,20 @@
             <MediaViewer
               ref="quickViewMediaRef"
               :file="fileList[selectedItemIndex]"
+              :fileIndex="selectedItemIndex"
+              :fileCount="fileList.length"
+              :isSlideShow="isSlideShow"
+              :imageScale="imageScale"
+              :imageMinScale="imageMinScale"
+              :imageMaxScale="imageMaxScale"
               :isZoomFit="quickViewZoomFit"
               :showNavButton="true"
               :hasPrevious="selectedItemIndex > 0"
               :hasNext="selectedItemIndex < fileList.length - 1"
               @prev="performNavigate('prev')"
               @next="performNavigate('next')"
+              @close="config.content.showQuickView = false"
+              @scale="onScale"
             />
           </div>
         </div>
@@ -523,6 +538,18 @@ const quickViewMediaRef = ref<any>(null);
 
 // quick view
 const quickViewZoomFit = ref(true); // quick view zoom fit
+
+// toolbar state for MediaViewer
+const imageScale = ref(1);
+const imageMinScale = ref(0);
+const imageMaxScale = ref(10);
+const isSlideShow = ref(false); // Default to false for preview/quick view
+
+const onScale = (event: any) => {
+  imageScale.value = event.scale;
+  imageMinScale.value = event.minScale;
+  imageMaxScale.value = event.maxScale;
+};
 
 // film strip view splitter
 const isDraggingFilmStripView = ref(false);      // dragging splitter to resize film strip view

@@ -8,105 +8,32 @@
   >
     <!-- title bar -->
     <TitleBar v-if="!config.imageViewer.isFullScreen"
-      :titlebar="isWin ? `jc-photo ${localeMsg.image_viewer.title}${fileIndex >= 0 ? ` - ${fileIndex + 1}/${fileCount}` : ''}` : ''"
+      :titlebar="fileIndex >= 0 ? fileInfo?.name : localeMsg.image_viewer.title"
       viewName="ImageViewer"
     />
 
-    <!-- Toolbar -->
-    <div 
-      :class="[
-        'absolute left-1/2 z-40 bg-transparent transform -translate-x-1/2 select-none group',
-      ]"
-      data-tauri-drag-region
-    >
-      <div id="responsiveDiv"
-        :class="[
-          'px-4 h-12 space-x-2 rounded-box flex flex-row items-center justify-center bg-base-300',
-          config.imageViewer.isFullScreen && !config.imageViewer.isPinned ? '-translate-y-8 opacity-0 group-hover:translate-y-2 group-hover:opacity-80 transition-transform duration-300 ease-in-out' : '',
-          config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'opacity-80 translate-y-2 transition-transform duration-300 ease-in-out' : ''
-        ]"
-      >
-        <TButton
-          :icon="IconPrev"
-          :disabled="fileIndex <= 0 || config.imageViewer.isLocked"
-          :tooltip="$t('image_viewer.toolbar.prev') + ` (${fileIndex + 1}/${fileCount})`"
-          @click="clickPrev()" 
-        />
-        <TButton
-          :icon="IconLock"
-          :disabled="fileIndex < 0"
-          :selected="config.imageViewer.isLocked"
-          :tooltip="config.imageViewer.isLocked ? $t('image_viewer.toolbar.unlock') : $t('image_viewer.toolbar.lock')"
-          @click="toggleLock()"
-        />
-        <TButton
-          :icon="IconNext"
-          :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || config.imageViewer.isLocked"
-          :tooltip="$t('image_viewer.toolbar.next') + ` (${fileIndex + 1}/${fileCount})`"
-          @click="clickNext()" 
-        />
-        <TButton
-          :icon="isSlideShow ? IconPause : IconPlay"
-          :disabled="fileIndex < 0 || config.imageViewer.isLocked"
-          :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
-          @click="clickSlideShow()" 
-        />
-        <TButton
-          :icon="IconZoomOut"
-          :disabled="fileIndex < 0 || imageScale <= imageMinScale"
-          :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
-          @click="clickZoomOut()"
-        />
-        <TButton
-          :icon="IconZoomIn"
-          :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
-          :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
-          @click="clickZoomIn()" 
-        />
-        <TButton
-          :icon="!config.imageViewer.isZoomFit ? IconZoomFit : IconZoomActual"
-          :disabled="fileIndex < 0"
-          :tooltip="(!config.imageViewer.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
-          @click="toggleZoomFit()"
-        />
-        <TButton v-if="isWin"
-          :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
-          :tooltip="!config.imageViewer.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
-          @click="toggleFullScreen()"
-        />
-
-        <TButton v-if="config.imageViewer.isFullScreen"
-          :icon="IconSeparator"
-          :disabled="true"
-        />
-
-        <TButton v-if="config.imageViewer.isFullScreen"
-          :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
-          :disabled="fileIndex < 0"
-          :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
-          @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
-        />
-        <TButton v-if="config.imageViewer.isFullScreen"
-          :icon="IconClose"
-          :tooltip="$t('image_viewer.toolbar.close')"
-          @click="appWindow.close()"
-        />
-      </div>
-    </div>
-
     <!-- image container -->
-    <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden select-none">
+    <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center bg-base-200 overflow-hidden select-none">
 
       <template v-if="fileIndex >= 0">
         <MediaViewer
           ref="mediaViewerRef"
           :file="fileInfo"
+          :fileIndex="fileIndex"
+          :fileCount="fileCount"
+          :isSlideShow="isSlideShow"
+          :imageScale="imageScale"
+          :imageMinScale="imageMinScale"
+          :imageMaxScale="imageMaxScale"
           :isZoomFit="config.imageViewer.isZoomFit"
           :showNavButton="!config.imageViewer.isLocked"
           :hasPrevious="fileIndex > 0"
           :hasNext="fileIndex < fileCount - 1"
           @prev="onPrev()"
           @next="onNext()"
+          @toggle-slide-show="clickSlideShow()"
+          @close="appWindow.close()"
+          @scale="onScale"
           @dblclick="toggleZoomFit()"
         />
 
@@ -143,27 +70,11 @@ import { isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
 import { getFileInfo } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
-import TButton from '@/components/TButton.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
 
 import { 
-  IconPrev,
-  IconNext,
-  IconPlay,
-  IconPause,
-  IconZoomIn,
-  IconZoomOut,
-  IconZoomFit,
-  IconZoomActual,
   IconSearch,
-  IconFullScreen,
-  IconRestoreScreen,
-  IconPin,
-  IconUnPin,
-  IconSeparator,
-  IconClose,
   IconComment,
-  IconLock,
  } from '@/common/icons';
 
 /// i18n
@@ -193,12 +104,10 @@ const imageMaxScale = ref(10);      // Maximum image scale
 
 let unlistenResize: () => void;
 let unlistenImg: () => void;
-let unlistenImage: () => void;
 let unlistenGridView: () => void;
 
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
-  unlistenResize = await appWindow.listen('tauri://resize', handleResize);     // macOS: Listen for full screen change
 
   const urlParams = new URLSearchParams(window.location.search);
   
@@ -217,19 +126,6 @@ onMounted(async() => {
     fileCount.value = Number(event.payload.fileCount);
   });
 
-  unlistenImage = await listen('message-from-image', (event) => {
-    const { message } = event.payload;
-    console.log('ImageViewer.vue: message-from-image:', message);
-    switch (message) {
-      case 'scale':
-        imageScale.value = event.payload.scale;
-        imageMinScale.value = event.payload.minScale;
-        imageMaxScale.value = event.payload.maxScale;
-        break;
-      default:
-        break;
-    }
-  });
 
   unlistenGridView = await listen('message-from-content', (event) => {
     const { message } = event.payload;
@@ -263,7 +159,6 @@ onUnmounted(() => {
   // unlisten
   unlistenResize();
   unlistenImg();
-  unlistenImage();
   unlistenGridView();
 });
 
@@ -434,22 +329,17 @@ const toggleFullScreen = () => {
   config.imageViewer.isFullScreen = !config.imageViewer.isFullScreen;
 }
 
+const onScale = (event: any) => {
+  imageScale.value = event.scale;
+  imageMinScale.value = event.minScale;
+  imageMaxScale.value = event.maxScale;
+};
+
 </script>
 
 <style scoped>
 /* Disable text selection while dragging */
 * {
   user-select: none;
-}
- 
-@media (max-width: 600px) {
-  #responsiveDiv {
-    visibility: hidden;
-  }
-}
-@media (min-width: 600px) {
-  #responsiveDiv {
-    visibility: visible;
-  }
 }
 </style>

@@ -109,7 +109,7 @@
 
 <script setup lang="ts">
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
-import { emit } from '@tauri-apps/api/event';
+import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
 import { getAssetSrc } from '@/common/utils';
 
@@ -130,6 +130,8 @@ const props = defineProps({
     default: false,
   },
 });
+
+const emit = defineEmits(['message-from-image-viewer', 'scale']);
 
 // container
 const container = ref(null);
@@ -632,8 +634,7 @@ watch(() => imageRotate.value[activeImage.value], (newValue) => {
 
 // display zoom scale for a while
 watch(() => scale.value[activeImage.value], (newValue) => {
-  emit('message-from-image', { 
-    message: 'scale', 
+  emit('scale', { 
     scale: newValue, 
     minScale: minScale.value, 
     maxScale: maxScale.value 

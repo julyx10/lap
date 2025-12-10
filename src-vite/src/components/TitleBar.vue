@@ -3,7 +3,7 @@
   <!-- Custom Title Bar -->
   <div 
     :class="[
-      'w-full flex items-center justify-between font-bold select-none cursor-default',
+      'w-full flex items-center justify-between select-none cursor-default',
       viewName==='ImageViewer' ? 'h-12' : 'h-10',
     ]"
     @contextmenu.prevent
@@ -12,9 +12,9 @@
     <!-- Title Name -->
     <span 
       :class="[
-        'text-nowrap',
+        'text-nowrap text-base-content/70 overflow-hidden whitespace-pre text-ellipsis',
         isWin ? 'ml-4' : '',
-        isMac ? 'm-auto' : ''
+        isMac ? 'm-auto pl-20 pr-4' : ''
       ]" 
       data-tauri-drag-region
     >
