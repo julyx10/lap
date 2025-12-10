@@ -60,7 +60,7 @@
    
           <!-- crop shape controls -->
           <div 
-            :class="['flex border rounded-box', 
+            :class="['flex p-1 border rounded-box', 
               cropStatus==1 ? 'border-primary' : 'border-transparent',
             ]"
           >
@@ -101,7 +101,7 @@
           </div>
 
           <!-- rotate and flip controls -->
-          <div class="flex gap-2">
+          <div class="my-2 flex gap-2">
             <TButton
               :icon="IconRotateLeft"
               :disabled="cropStatus > 0"
@@ -227,10 +227,7 @@
     <!-- dialog buttons -->
     <div class="flex justify-end gap-4">
       <button
-        :class="[
-          'px-4 py-1 rounded-box',
-          cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 hover:text-base-content cursor-pointer',
-        ]" 
+        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer"
         @click="clickCancel"
       >{{ $t('msgbox.image_editor.cancel') }}</button>
       <button 
@@ -894,7 +891,6 @@ const handleResizeInput = (sourceType: 'width' | 'height' | 'percentage') => {
 };
 
 const clickCancel = () => {
-  if (cropStatus.value === 1) return;
   emit('cancel');
 };
 

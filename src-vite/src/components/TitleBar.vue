@@ -4,7 +4,7 @@
   <div 
     :class="[
       'w-full flex items-center justify-between font-bold select-none cursor-default',
-      viewName==='ImageViewer' ? 'h-13' : 'h-10',
+      viewName==='ImageViewer' ? 'h-12' : 'h-10',
     ]"
     @contextmenu.prevent
     data-tauri-drag-region

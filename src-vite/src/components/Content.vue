@@ -146,7 +146,7 @@
                     'p-2 rounded-full pointer-events-auto bg-base-100/30', 
                     selectedItemIndex > 0 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
                   ]"
-                  @click="handleNavigate('prev')"
+                  @click="requestNavigate('prev')"
                   @dblclick.stop
                 >
                   <IconLeft class="w-8 h-8" />
@@ -156,7 +156,7 @@
                     'p-2 rounded-full pointer-events-auto bg-base-100/30', 
                     selectedItemIndex < fileList.length - 1 ? 'text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer' : 'text-base-content/30'
                   ]"
-                  @click="handleNavigate('next')" 
+                  @click="requestNavigate('next')" 
                   @dblclick.stop
                 >
                   <IconRight class="w-8 h-8" />
@@ -176,22 +176,22 @@
 
           <!-- preview -->
           <div v-if="config.content.showFilmStrip" ref="previewDiv" 
-            class="flex-1 rounded-box bg-base-200 overflow-hidden"
+            class="flex-1 bg-base-200 overflow-hidden"
           >
             <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
               class="w-full h-full flex items-center justify-center"
+              @dblclick="quickViewZoomFit = !quickViewZoomFit"
             >
-              <Image v-if="fileList[selectedItemIndex]?.file_type === 1"
-                :filePath="fileList[selectedItemIndex]?.file_path" 
-                :rotate="fileList[selectedItemIndex]?.rotate ?? 0" 
-                :isZoomFit="true"
-              ></Image>
-              
-              <Video v-if="fileList[selectedItemIndex]?.file_type === 2"
-                :filePath="fileList[selectedItemIndex]?.file_path"
-                :rotate="fileList[selectedItemIndex]?.rotate ?? 0"
-                :isZoomFit="true"
-              ></Video>
+              <MediaViewer
+                ref="filmStripMediaRef"
+                :file="fileList[selectedItemIndex]"
+                :isZoomFit="quickViewZoomFit"
+                :showNavButton="true"
+                :hasPrevious="selectedItemIndex > 0"
+                :hasNext="selectedItemIndex < fileList.length - 1"
+                @prev="performNavigate('prev')"
+                @next="performNavigate('next')"
+              />
             </div>
           </div> <!-- preview -->
         </div> <!-- grid view -->
@@ -211,7 +211,7 @@
 
         <!-- Quick View Overlay -->
         <div v-if="config.content.showQuickView && fileList[selectedItemIndex]" 
-          class="absolute inset-0 z-[60] mt-12 flex items-center justify-center bg-base-200 rounded-box overflow-hidden"
+          class="absolute inset-0 z-[60] mt-12 flex items-center justify-center bg-base-200 overflow-hidden"
           :class="[config.settings.showStatusBar ? 'mb-8': 'mb-1']"
           @dblclick="quickViewZoomFit = !quickViewZoomFit"
         >
@@ -225,17 +225,16 @@
           />
 
           <div class="relative w-full h-full flex items-center justify-center">
-            <Image v-if="fileList[selectedItemIndex].file_type === 1"
-              :filePath="fileList[selectedItemIndex].file_path"
-              :rotate="fileList[selectedItemIndex].rotate ?? 0" 
+            <MediaViewer
+              ref="quickViewMediaRef"
+              :file="fileList[selectedItemIndex]"
               :isZoomFit="quickViewZoomFit"
-            ></Image>
-
-            <Video v-if="fileList[selectedItemIndex].file_type === 2"
-              :filePath="fileList[selectedItemIndex].file_path"
-              :rotate="fileList[selectedItemIndex].rotate ?? 0"
-              :isZoomFit="quickViewZoomFit"
-            ></Video>
+              :showNavButton="true"
+              :hasPrevious="selectedItemIndex > 0"
+              :hasNext="selectedItemIndex < fileList.length - 1"
+              @prev="performNavigate('prev')"
+              @next="performNavigate('next')"
+            />
           </div>
         </div>
       </div>
@@ -408,7 +407,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
@@ -420,15 +419,14 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath, getAssetSrc, getSelectOptions, shortenFilename, formatDimensionText, formatCaptureSettings } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath, getSelectOptions, shortenFilename, formatDimensionText, formatCaptureSettings } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
-import Image from '@/components/Image.vue';
-const Video = defineAsyncComponent(() => import('@/components/Video.vue')); // dynamic import
+import MediaViewer from '@/components/MediaViewer.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
@@ -440,8 +438,6 @@ import ScrollBar from '@/components/ScrollBar.vue';
 
 import {
   IconHome,
-  IconLeftPaneOn,
-  IconLeftPaneOff,
   IconSideBarOn,
   IconSideBarOff,
   IconArrowDown,
@@ -454,21 +450,16 @@ import {
   IconMoveTo,
   IconFiles,
   IconFolder,
-  IconSearch,
   IconChecked,
-  IconComment,
   IconTag,
   IconCalendar,
   IconLocation,
   IconCamera,
   IconTrash,
-  IconError,
   IconPhoto,
   IconVideo,
   IconCameraAperture,
   IconFileSearch,
-  IconGallery,
-  IconGrid,
   IconLeft,
   IconRight,
   IconSeparator,
@@ -527,6 +518,8 @@ const showFolderFiles = computed(() =>
 const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
+const filmStripMediaRef = ref<any>(null);
+const quickViewMediaRef = ref<any>(null);
 
 // quick view
 const quickViewZoomFit = ref(true); // quick view zoom fit
@@ -863,11 +856,33 @@ function handleItemAction(payload: { action: string, index: number }) {
   }
 }
 
-function handleNavigate(direction: 'prev' | 'next') {
+function requestNavigate(direction: 'prev' | 'next') {
+  const viewer = config.content.showQuickView ? quickViewMediaRef.value : (config.content.showFilmStrip ? filmStripMediaRef.value : null);
+  
   if (direction === 'next') {
-    selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
+    if (viewer) {
+      viewer.triggerNext();
+    } else {
+      performNavigate('next');
+    }
   } else {
-    selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
+    if (viewer) {
+      viewer.triggerPrev();
+    } else {
+      performNavigate('prev');
+    }
+  }
+}
+
+function performNavigate(direction: 'prev' | 'next') {
+  if (direction === 'next') {
+    if (selectedItemIndex.value < fileList.value.length - 1) {
+      selectedItemIndex.value += 1;
+    }
+  } else {
+    if (selectedItemIndex.value > 0) {
+      selectedItemIndex.value -= 1;
+    }
   }
 }
 
@@ -933,13 +948,11 @@ const keyActions = {
       selectedItemIndex.value = Math.min(selectedItemIndex.value + gridViewRef.value.getColumnCount(), fileList.value.length - 1);
     }
   },
-  ArrowRight: () => selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1),
   ArrowUp: () => {
     if (gridViewRef.value) {
       selectedItemIndex.value = Math.max(selectedItemIndex.value - gridViewRef.value.getColumnCount(), 0);
     }
   },
-  ArrowLeft: () => selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0),
   Home: () => selectedItemIndex.value = 0,
   End: () => selectedItemIndex.value = fileList.value.length - 1,
   '/': () => searchBoxRef.value.focusInput(),
@@ -959,19 +972,25 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
-  if (event.key === 'Enter') {
+  if (event.key === 'Space' || event.key === ' ') {
     config.content.showQuickView = !config.content.showQuickView;
     quickViewZoomFit.value = true; 
   }
-  else if ((event.key === 'Space' || event.key === ' ') && config.content.showQuickView) {
-    quickViewZoomFit.value = !quickViewZoomFit.value; 
-  }
+  // else if ((event.key === 'Space' || event.key === ' ') && config.content.showQuickView) {
+  //   quickViewZoomFit.value = !quickViewZoomFit.value; 
+  // }
   else if (event.key === 'Escape' && config.content.showQuickView) {
     config.content.showQuickView = false;
   }
 
   if (handledKeys.includes(event.key)) {
     event.preventDefault();
+  }
+
+  if (event.key === 'ArrowRight') {
+    requestNavigate('next');
+  } else if (event.key === 'ArrowLeft') {
+    requestNavigate('prev');
   }
 }
 
@@ -1021,22 +1040,10 @@ onMounted( async() => {
         selectedItemIndex.value = fileList.value.length - 1;
         break;
       case 'prev':
-        selectedItemIndex.value = Math.max(selectedItemIndex.value - 1, 0);
+        performNavigate('prev');
         break;
       case 'next':
-        selectedItemIndex.value = Math.min(selectedItemIndex.value + 1, fileList.value.length - 1);
-        break;
-      case 'trash':
-        clickTrashFile();
-        break;
-      case 'favorite':
-        toggleFavorite();
-        break;
-      case 'rotate':
-        clickRotate();
-        break;
-      case 'update-tags':
-        updateFileHasTags([fileList.value[selectedItemIndex.value].id]);
+        performNavigate('next');
         break;
       default:
         break;
@@ -1626,10 +1633,6 @@ const toggleFavorite = async () => {
   if (selectedItemIndex.value >= 0) {
     const item = fileList.value[selectedItemIndex.value];
     item.is_favorite = !item.is_favorite;
-    
-    // notify the image viewer
-    emit('message-from-content', { message: 'favorite', favorite: item.is_favorite });
-
     // update the favorite status in the database
     await setFileFavorite(item.id, item.is_favorite);
   }
@@ -1642,12 +1645,6 @@ const selectModeSetFavorites = async (isFavorite: boolean) => {
       .filter(item => item.isSelected)
       .map(async item => {
         item.is_favorite = isFavorite;
-
-        // notify the image viewer
-        if(selectedItemIndex.value === fileList.value.indexOf(item)) {
-          emit('message-from-content', { message: 'favorite', favorite: item.is_favorite });
-        }
-
         // update the favorite status in the database
         return setFileFavorite(item.id, isFavorite);
       }); 
@@ -1943,7 +1940,4 @@ function stopDragging() {
 </script>
 
 <style scoped>
-.breadcrumbs > ul > li + li:before {
-  content: ">";
-}
 </style>

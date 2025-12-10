@@ -175,6 +175,8 @@
     "album": {
       "add": "添加文件夹",
       "edit": "编辑相册",
+      "hide": "隐藏相册",
+      "unhide": "显示相册",
       "remove": "从相册中移除",
       "refresh": "刷新",
       "reorder": "重新排列"
@@ -197,7 +199,9 @@
       "reveal_in_finder": "在访达中显示",
       "reveal_in_file_explorer": "在文件资源管理器中显示",
       "refresh": "刷新",
-      "information": "信息"
+      "information": "信息",
+      "lock_view": "锁定视图",
+      "unlock_view": "解锁视图"
     },
     "tag": {
       "rename": "重命名标签",
@@ -442,6 +446,7 @@
       "favorite": "收藏",
       "unfavorite": "取消收藏",
       "tag": "标签",
+      "comment": "备注",
       "info": "信息",
       "save": "保存",
       "delete": "删除",

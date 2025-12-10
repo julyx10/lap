@@ -28,73 +28,9 @@
       >
         <TButton
           :icon="IconPrev"
-          :disabled="fileIndex <= 0"
-          :tooltip="$t('image_viewer.toolbar.prev')"
+          :disabled="fileIndex <= 0 || config.imageViewer.isLocked"
+          :tooltip="$t('image_viewer.toolbar.prev') + ` (${fileIndex + 1}/${fileCount})`"
           @click="clickPrev()" 
-        />
-        <div class="min-w-10 text-center text-base-content/30">
-          {{ fileIndex + 1 }}/{{ fileCount }}
-        </div>
-        <TButton
-          :icon="IconNext"
-          :disabled="fileIndex < 0 || fileIndex >= fileCount - 1"
-          :tooltip="$t('image_viewer.toolbar.next')"
-          @click="clickNext()" 
-        />
-        <TButton
-          :icon="isSlideShow ? IconPause : IconPlay"
-          :disabled="fileIndex < 0"
-          :tooltip="isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show') + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
-          @click="clickSlideShow()" 
-        />
-        <TButton
-          :icon="IconZoomOut"
-          :disabled="fileIndex < 0 || imageScale <= imageMinScale"
-          :tooltip="$t('image_viewer.toolbar.zoom_out')"
-          @click="clickZoomOut()"
-        />
-        <div class="min-w-8 text-center text-base-content/30">
-          {{(imageScale * 100).toFixed(0)}} %
-        </div>
-        <TButton
-          :icon="IconZoomIn"
-          :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
-          :tooltip="$t('image_viewer.toolbar.zoom_in')"
-          @click="clickZoomIn()" 
-        />
-        <TButton
-          :icon="!config.imageViewer.isZoomFit ? IconZoomFit : IconZoomActual"
-          :disabled="fileIndex < 0"
-          :tooltip="!config.imageViewer.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
-          @click="toggleZoomFit()"
-        />
-        <TButton
-          :icon="IconImageEdit"
-          :disabled="fileIndex < 0 || fileInfo?.file_type !== 1"
-          :tooltip="$t('image_viewer.toolbar.edit')"
-          @click="showImageEditor = true"
-        />
-        <TButton
-          :icon="IconFavorite"
-          :disabled="fileIndex < 0"
-          :selected="fileInfo?.is_favorite"
-          :tooltip="$t('image_viewer.toolbar.favorite')"
-          @click="toggleFavorite()"
-        />
-        <TButton
-          :icon="IconTag"
-          :disabled="fileIndex < 0"
-          :selected="fileInfo?.has_tags"
-          :tooltip="$t('image_viewer.toolbar.tag')"
-          @click="clickTag()"
-        />
-        <TButton
-          :icon="IconRotate"
-          :disabled="fileIndex < 0"
-          :selected="iconRotate % 360 > 0"
-          :iconStyle="{ transform: `rotate(${(iconRotate)}deg)`, transition: 'transform 0.3s ease-in-out' }" 
-          :tooltip="$t('image_viewer.toolbar.rotate')"
-          @click="clickRotate()"
         />
         <TButton
           :icon="IconLock"
@@ -103,17 +39,40 @@
           :tooltip="config.imageViewer.isLocked ? $t('image_viewer.toolbar.unlock') : $t('image_viewer.toolbar.lock')"
           @click="toggleLock()"
         />
+        <TButton
+          :icon="IconNext"
+          :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || config.imageViewer.isLocked"
+          :tooltip="$t('image_viewer.toolbar.next') + ` (${fileIndex + 1}/${fileCount})`"
+          @click="clickNext()" 
+        />
+        <TButton
+          :icon="isSlideShow ? IconPause : IconPlay"
+          :disabled="fileIndex < 0 || config.imageViewer.isLocked"
+          :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
+          @click="clickSlideShow()" 
+        />
+        <TButton
+          :icon="IconZoomOut"
+          :disabled="fileIndex < 0 || imageScale <= imageMinScale"
+          :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
+          @click="clickZoomOut()"
+        />
+        <TButton
+          :icon="IconZoomIn"
+          :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
+          :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
+          @click="clickZoomIn()" 
+        />
+        <TButton
+          :icon="!config.imageViewer.isZoomFit ? IconZoomFit : IconZoomActual"
+          :disabled="fileIndex < 0"
+          :tooltip="(!config.imageViewer.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
+          @click="toggleZoomFit()"
+        />
         <TButton v-if="isWin"
           :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
           :tooltip="!config.imageViewer.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
           @click="toggleFullScreen()"
-        />
-
-        <ContextMenu
-          :iconMenu="IconMore"
-          :menuItems="moreMenuItems"
-          :disabled="fileIndex === -1"
-          @click.stop
         />
 
         <TButton v-if="config.imageViewer.isFullScreen"
@@ -137,57 +96,23 @@
 
     <!-- image container -->
     <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center overflow-hidden select-none">
-      <!-- show zoom scale -->
-      <!-- <transition name="fade">
-        <div v-if="isScaleChanged" 
-          :class="[
-            'absolute left-1/2 px-2 py-1 z-10 bg-base-100 text-base-content opacity-50 rounded-box',
-            config.imageViewer.isFullScreen && config.imageViewer.isPinned ? 'top-20' : 'top-10'
-          ]"
-        >
-          <slot>{{(imageScale * 100).toFixed(0)}} %</slot>
-        </div>
-      </transition> -->
 
       <template v-if="fileIndex >= 0">
-        <!-- prev button -->
-        <div v-if="fileIndex > 0"
-          class="absolute left-0 w-16 h-full z-10 flex items-center justify-start cursor-pointer group" 
-        >
-          <div class="m-3 rounded-box hidden group-hover:block bg-base-100 cursor-pointer ">
-            <TButton :icon="IconLeft" :buttonClasses="'rounded-full'" @click="clickPrev()"/>
-          </div>
-        </div>
-        <!-- next button -->
-        <div v-if="fileIndex < fileCount - 1"
-          class="absolute right-0 w-16 h-full z-10 flex items-center justify-end cursor-pointer group" 
-        >
-          <div class="m-3 rounded-box hidden group-hover:block bg-base-100 cursor-pointer ">
-            <TButton :icon="IconRight" :buttonClasses="'rounded-full'" @click="clickNext()"/>
-          </div>
-        </div>
-
-        <!-- image -->
-        <Image v-if="fileInfo?.file_type === 1"
-          ref="imageRef" 
-          :filePath="fileInfo?.file_path" 
-          :rotate="fileInfo?.rotate ?? 0" 
+        <MediaViewer
+          ref="mediaViewerRef"
+          :file="fileInfo"
           :isZoomFit="config.imageViewer.isZoomFit"
+          :showNavButton="!config.imageViewer.isLocked"
+          :hasPrevious="fileIndex > 0"
+          :hasNext="fileIndex < fileCount - 1"
+          @prev="onPrev()"
+          @next="onNext()"
           @dblclick="toggleZoomFit()"
-        ></Image>
-
-        <!-- video -->
-        <Video v-if="fileInfo?.file_type === 2"
-          ref="videoRef"
-          :filePath="fileInfo?.file_path"
-          :rotate="fileInfo?.rotate ?? 0"
-          :isZoomFit="config.imageViewer.isZoomFit"
-          @dblclick="toggleZoomFit()"
-        ></Video>
+        />
 
         <!-- comments -->
         <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
-          class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100 opacity-60 rounded-box select-text" 
+          class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text" 
         >
           <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
           {{ fileInfo?.comments }}
@@ -202,60 +127,24 @@
     </div>
 
   </div>
-  
-  <!-- trash -->
-  <MessageBox
-    v-if="showTrashMsgbox"
-    :title="$t('msgbox.trash_file.title')"
-    :message="`${$t('msgbox.trash_file.content', { file: fileInfo?.name })}`"
-    :OkText="$t('msgbox.trash_file.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    :warningOk="true"
-    @ok="clickTrashFile"
-    @cancel="showTrashMsgbox = false"
-  />
 
-  <!-- tag -->
-  <TaggingDialog 
-    v-if="showTaggingDialog"
-    :fileIds="fileIdsToTag"
-    @ok="updateFileHasTags"
-    @cancel="showTaggingDialog = false"
-  />
-
-  <ImageEditor 
-    v-if="showImageEditor"
-    :fileInfo="fileInfo" 
-    @ok="onImageEdited" 
-    @cancel="showImageEditor = false"
-  />
-  
-  <ToolTip ref="toolTipRef" />
-  
 </template>
 
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { isWin, isMac, setTheme, getSlideShowInterval, getAssetSrc } from '@/common/utils';
-import { copyImage, getFileInfo, getFileHasTags, printImage } from '@/common/api';
+import { isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
+import { getFileInfo } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
-import Image from '@/components/Image.vue';
-import ImageEditor from '@/components/ImageEditor.vue';
-const Video = defineAsyncComponent(() => import('@/components/Video.vue')); // dynamic import
-
-import ContextMenu from '@/components/ContextMenu.vue';
-import MessageBox from '@/components/MessageBox.vue';
-import ToolTip from '@/components/ToolTip.vue';
-import TaggingDialog from '@/components/TaggingDialog.vue';
+import MediaViewer from '@/components/MediaViewer.vue';
 
 import { 
   IconPrev,
@@ -266,27 +155,15 @@ import {
   IconZoomOut,
   IconZoomFit,
   IconZoomActual,
-  IconFavorite,
-  IconRotate,
-  IconMore,
-  IconImageEdit,
-  IconPrint,
   IconSearch,
-  IconTrash,
-  IconCopy,
   IconFullScreen,
   IconRestoreScreen,
   IconPin,
   IconUnPin,
-  IconLeft,
-  IconRight,
   IconSeparator,
   IconClose,
   IconComment,
-  IconTag,
-  IconError,
   IconLock,
-  IconUnlock,
  } from '@/common/icons';
 
 /// i18n
@@ -300,19 +177,12 @@ const appWindow = getCurrentWebviewWindow()
 const fileId = ref(0);       // File ID
 const fileIndex = ref(0);       // Index of the current file
 const fileCount = ref(0);       // Total number of files
-// const filePath = ref('');       // File path
-// const nextFilePath = ref('');   // Next file path to preload
 
-const fileInfo = ref(null);
+const fileInfo = ref<any>(null);
 const iconRotate = ref(0);      // icon rotation angle
 const isTransitionDisabled = ref(true);
 
-const imageRef = ref(null);     // Image reference
-const videoRef = ref(null);     // Video reference
-// const imageSrc = ref('');       // Image source
-// const videoSrc = ref('');       // Video source
-// const imageCache = new Map();   // Cache images to prevent reloading
-// const loadImageError = ref(false);   // Track if there was an error loading the image
+const mediaViewerRef = ref<any>(null); // media viewer reference
 
 const isSlideShow = ref(false);     // Slide show state
 let timer: NodeJS.Timeout | null = null;  // Timer for slide show
@@ -320,78 +190,6 @@ let timer: NodeJS.Timeout | null = null;  // Timer for slide show
 const imageScale = ref(1);          // Image scale
 const imageMinScale = ref(0);       // Minimum image scale
 const imageMaxScale = ref(10);      // Maximum image scale
-const isScaleChanged = ref(false);  // Scale changed state
-
-const showTrashMsgbox = ref(false);
-const showTaggingDialog = ref(false);
-const fileIdsToTag = ref<number[]>([]);
-const showImageEditor = ref(false);
-
-const toolTipRef = ref(null);
-
-// more menuitems
-const moreMenuItems = computed(() => {
-  return [
-    {
-      label: localeMsg.value.menu.file.copy,
-      icon: IconCopy,
-      shortcut: isMac ? '⌘C' : 'Ctrl+C',
-      action: () => {
-        clickCopy();
-      }
-    },
-    // {
-    //   label: localeMsg.value.menu.file.print,
-    //   icon: IconPrint,
-    //   action: () => {
-    //     printImage(filePath.value).then(() => {
-    //       toolTipRef.value.showTip(localeMsg.value.tooltip.print_image.success);
-    //     });
-    //   }
-    // },
-    {
-      label: "-",   // separator
-      action: null
-    },
-    // {
-    //   label: localeMsg.value.menu.rename,
-    //   icon: IconRename,
-    //   action: () => {
-    //     console.log('Rename:', filePath.value);
-    //   }
-    // },
-    // {
-    //   label: localeMsg.value.menu.move_to,
-    //   icon: IconMoveTo,
-    //   action: () => {
-    //   }
-    // },
-    // {
-    //   label: localeMsg.value.menu.copy_to,
-    //   action: () => {
-    //   }
-    // },
-    {
-      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
-      icon: IconTrash,
-      shortcut: isMac ? '⌘⌫' : 'Del',
-      action: () => {
-        showTrashMsgbox.value = true;
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    },
-  ];
-});
-
-const onImageEdited = () => {
-  console.log('Image has been edited, refreshing...');
-  // imageCache.delete(filePath.value);
-  // loadImage(filePath.value);
-  showImageEditor.value = false;
-};
 
 let unlistenResize: () => void;
 let unlistenImg: () => void;
@@ -407,21 +205,16 @@ onMounted(async() => {
   fileId.value    = Number(urlParams.get('fileId'));
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
-  // filePath.value     = decodeURIComponent(urlParams.get('filePath'));
-  // nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath'));
 
   // Listen 
   unlistenImg = await listen('update-img', async (event) => {
-    if(uiStore.inputStack.length > 0) {
+    if(uiStore.inputStack.length > 0 || config.imageViewer.isLocked) {
       return;
     }
     
     fileId.value    = Number(event.payload.fileId);
     fileIndex.value = Number(event.payload.fileIndex);
     fileCount.value = Number(event.payload.fileCount);
-    // filePath.value     = decodeURIComponent(event.payload.filePath);
-    // nextFilePath.value = decodeURIComponent(event.payload.nextFilePath);
-    // console.log('update-img', fileId.value, fileIndex.value, fileCount.value, filePath.value )
   });
 
   unlistenImage = await listen('message-from-image', (event) => {
@@ -442,15 +235,12 @@ onMounted(async() => {
     const { message } = event.payload;
     console.log('message-from-content:', message);
     switch (message) {
-      case 'favorite':
-        fileInfo.value.is_favorite = event.payload.favorite;
-        break;
       case 'rotate':
-        if (imageRef.value) {
-          imageRef.value.rotateRight();
+        if (config.imageViewer.isLocked) {
+          return;
         }
-        if (videoRef.value) {
-          videoRef.value.rotateRight();
+        if (mediaViewerRef.value) {
+          mediaViewerRef.value.rotateRight();
         }
         iconRotate.value += 90;
         if (fileInfo.value) {
@@ -484,21 +274,7 @@ function handleKeyDown(event: KeyboardEvent) {
   }
   
   const key = event.key;
-  const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
-
-  if (isCmdKey && key.toLowerCase() === 'c') {
-    clickCopy();
-  } else if (isCmdKey && key.toLowerCase() === 'p') {
-    isSlideShow.value = !isSlideShow.value;
-  } else if (isCmdKey && key.toLowerCase() === 'f') {
-    toggleFavorite();
-  } else if (isCmdKey && key.toLowerCase() === 'r') {
-    clickRotate();
-  } else if (isCmdKey && key.toLowerCase() === 't') {
-    clickTag();
-  } else if((isMac && event.metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    showTrashMsgbox.value = true;
-  } else if (keyActions[key]) {
+  if (keyActions[key]) {
     keyActions[key]();
   }
 }
@@ -557,29 +333,8 @@ watch(() => config.imageViewer.isFullScreen, async (newFullScreen) => {
 // watch file changed
 watch(() => fileId.value, async () => {
   fileInfo.value = await getFileInfo(fileId.value);
-  console.log('fileInfo:', fileInfo.value);
-
-  if(!fileInfo.value) {
-    return;
-  }
-
   iconRotate.value = fileInfo.value.rotate || 0;
-
-  // load the file based on the file type
-  // if(fileInfo.value.file_type === 1) {
-  //   loadImage(filePath.value);
-  // } else if(fileInfo.value.file_type === 2) {
-  //   loadVideo(filePath.value);
-  // }
-});
-
-// watch scale
-watch(() => imageScale.value, () => {
-  isScaleChanged.value = true;
-  
-  setTimeout(() => {
-    isScaleChanged.value = false;
-  }, 1000);
+  console.log('fileInfo:', fileInfo.value);
 });
 
 // watch file index
@@ -601,134 +356,69 @@ watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlide
   }
 });
 
-// Load the image from the file path
-// async function loadImage(filePath: string) {
-//   if(filePath.length === 0) {
-//     console.log('loadImage - filePath is empty');
-//     return;
-//   }
-//   try {
-//     loadImageError.value = false;
-
-//     // Check if the image is already cached
-//     if (imageCache.has(filePath)) {
-//       imageSrc.value = imageCache.get(filePath);
-//     } else {
-//       const convertedSrc = getAssetSrc(filePath);
-//       if (convertedSrc) {
-//         // imageSrc.value = `data:image/jpeg;base64,${convertedSrc}`;
-//         imageSrc.value = convertedSrc;
-//         imageCache.set(filePath, imageSrc.value);
-//       }
-//       else {
-//         imageSrc.value = '';
-//         loadImageError.value = true;
-//       }
-//     }
-
-//     // Preload the next image
-//     preLoadImage(nextFilePath.value);
-//   } catch (error) {
-//     imageSrc.value = '';
-//     loadImageError.value = true;
-//     console.error('loadImage:', error);
-//   }
-// }
-
-// // Preload the image from the file path
-// async function preLoadImage(filePath: string) {
-//   try {
-//     if (filePath.length > 0 && !imageCache.has(filePath)) {
-//       const convertedSrc = getAssetSrc(filePath);
-//       if (convertedSrc) {
-//         // const imageSrc = `data:image/jpeg;base64,${convertedSrc}`;
-//         const imageSrc = convertedSrc;
-//         imageCache.set(filePath, imageSrc);
-//       }
-//     }
-//   } catch (error) {
-//     console.error('preLoadImage:', error);
-//   }
-// }
-
-// // Load the video from the file path
-// async function loadVideo(filePath: string) {
-//   if(filePath.length === 0) {
-//     console.log('loadVideo - filePath is empty');
-//     return;
-//   }
-//   try {
-//     const convertedSrc = getAssetSrc(filePath);
-//     console.log('loadVideo - original path:', filePath);
-//     console.log('loadVideo - converted src:', convertedSrc);
-//     videoSrc.value = convertedSrc;
-//   } catch (error) {
-//     console.error('loadVideo:', error);
-//   }
-// }
-
 function clickPrev() {
-  if(fileIndex.value === 0) {
-    toolTipRef.value.showTip(localeMsg.value.tooltip.image_viewer.first_image);
-  } else {
-    emit('message-from-image-viewer', { message: 'prev' });
-  }
+  if (config.imageViewer.isLocked) return;
+  mediaViewerRef.value?.triggerPrev();
+}
+
+function onPrev() {
+  emit('message-from-image-viewer', { message: 'prev' });
 }
 
 function clickNext() {
-  if(fileIndex.value === fileCount.value - 1) {
-    if(isSlideShow.value) {
-      emit('message-from-image-viewer', { message: 'home' });
-    } else {
-      toolTipRef.value.showTip(localeMsg.value.tooltip.image_viewer.last_image);
-    }
+  if (config.imageViewer.isLocked) return;
+  mediaViewerRef.value?.triggerNext();
+}
+
+function onNext() {
+  if(isSlideShow.value && fileIndex.value === fileCount.value - 1) {
+    emit('message-from-image-viewer', { message: 'home' });
   } else {
     emit('message-from-image-viewer', { message: 'next' });
   }
 }
 
 function clickHome() {
+  if (config.imageViewer.isLocked) return;
   emit('message-from-image-viewer', { message: 'home' });
 }
 
 function clickEnd() {
+  if (config.imageViewer.isLocked) return;
   emit('message-from-image-viewer', { message: 'end' });
 }
 
 function clickSlideShow() {
+  if (config.imageViewer.isLocked) return;
   isSlideShow.value = !isSlideShow.value;
 }
 
 const clickZoomIn = () => {
-  if(imageRef.value) {
-    imageRef.value.zoomIn();
-  }
-  else if(videoRef.value) {
-    videoRef.value.zoomIn();
+  if(mediaViewerRef.value) {
+    mediaViewerRef.value.zoomIn();
   }
 };
 
 const clickZoomOut = () => {
-  if(imageRef.value) {
-    imageRef.value.zoomOut();
-  }
-  else if(videoRef.value) {
-    videoRef.value.zoomOut();
+  if(mediaViewerRef.value) {
+    mediaViewerRef.value.zoomOut();
   }
 };
 
 const clickZoomActual = () => {
-  if(imageRef.value) {
-    imageRef.value.zoomActual();
-  }
-  else if(videoRef.value) {
-    videoRef.value.zoomActual();
+  if(mediaViewerRef.value) {
+    mediaViewerRef.value.zoomActual();
   }
 };
 
 const toggleZoomFit = () => {
   config.imageViewer.isZoomFit =!config.imageViewer.isZoomFit;
 };
+
+// toggle lock status(locked mode: image will not be updated)
+const toggleLock = () => {
+  config.imageViewer.isLocked = !config.imageViewer.isLocked;
+}
 
 const closeWindow = () => {
   if(config.imageViewer.isFullScreen) {
@@ -737,50 +427,6 @@ const closeWindow = () => {
   } else {
     appWindow.close();
   }
-}
-
-// toggle favorite status
-const toggleFavorite = () => {
-  emit('message-from-image-viewer', { message: 'favorite' });
-}
-
-// rotate image
-const clickRotate = () => {
-  emit('message-from-image-viewer', { message: 'rotate' });
-};
-
-// toggle lock status(locked mode: image will not be updated)
-const toggleLock = () => {
-  config.imageViewer.isLocked = !config.imageViewer.isLocked;
-}
-
-// tag image
-const clickTag = () => {
-  fileIdsToTag.value = [fileId.value];
-  showTaggingDialog.value = true;
-};
-
-// click ok in tagging dialog
-function updateFileHasTags(fileIds: number[]) {
-  if(fileIds.length === 0) return;
-  getFileHasTags(fileIds[0]).then(hasTags => {
-    fileInfo.value.has_tags = hasTags;
-  });
-  showTaggingDialog.value = false;
-
-  emit('message-from-image-viewer', { message: 'update-tags' });
-}
-
-// click copy image
-const clickCopy = async() => {
-  copyImage(fileInfo.value.file_path).then(() => {
-    toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
-  });
-}
-
-const clickTrashFile = async() => {
-  emit('message-from-image-viewer', { message: 'trash' });
-  showTrashMsgbox.value = false;
 }
 
 // Function to maximize the window and setup full screen

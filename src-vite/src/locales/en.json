@@ -175,6 +175,8 @@
     "album": {
       "add": "Add folder",
       "edit": "Edit album",
+      "hide": "Hide album",
+      "unhide": "Unhide album",
       "remove": "Remove from albums",
       "refresh": "Refresh",
       "reorder": "Reorder"
@@ -197,7 +199,9 @@
       "reveal_in_finder": "Reveal in Finder",
       "reveal_in_file_explorer": "Reveal in File Explorer",
       "refresh": "Refresh",
-      "information": "Info"
+      "information": "Info",
+      "lock_view": "Lock view",
+      "unlock_view": "Unlock view"
     },
     "tag": {
       "rename": "Rename tag",
@@ -442,6 +446,7 @@
       "favorite": "Favorite",
       "unfavorite": "Unfavorite",
       "tag": "Tag",
+      "comment": "Comment",
       "info": "Info",
       "save": "Save",
       "delete": "Delete",

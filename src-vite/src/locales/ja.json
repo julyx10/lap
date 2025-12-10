@@ -175,6 +175,8 @@
     "album": {
       "add": "フォルダを追加",
       "edit": "アルバムを編集",
+      "hide": "アルバムを非表示",
+      "unhide": "アルバムを表示",
       "remove": "アルバムから移除",
       "refresh": "更新",
       "reorder": "並べ替え"
@@ -197,7 +199,9 @@
       "reveal_in_finder": "Finderで表示",
       "reveal_in_file_explorer": "ファイルエクスプローラーで表示",
       "refresh": "更新",
-      "information": "情報"
+      "information": "情報",
+      "lock_view": "ロックビュー",
+      "unlock_view": "ロックビュー解除"
     },
     "tag": {
       "rename": "タグ名を変更",
@@ -442,6 +446,7 @@
       "favorite": "お気に入り",
       "unfavorite": "お気に入り解除",
       "tag": "タグ",
+      "comment": "コメント",
       "info": "情報",
       "save": "保存",
       "delete": "削除",

@@ -23,14 +23,15 @@
             ]"
             @click="clickLocationAdmin1(location)"
           >
-            <IconLocation
+            <IconRight
               :class="[
-                'mx-1 h-5 shrink-0 transition-transform', 
+                'p-1 w-6 h-6 shrink-0 transition-transform', 
+                location.is_expanded ? 'rotate-90' : ''
               ]"
               @click.stop="clickExpandLocation(location)"
             />
             <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ location.admin1 }}</span>
-            <span class="mx-1 text-[10px] tabular-nums text-base-content/70">{{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
+            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="location.is_expanded && location.names.length > 0">
             <li v-for="(name, index) in location.names" class="pl-4">
@@ -67,7 +68,7 @@
 import { ref, onMounted } from 'vue';
 import { config } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
-import { IconLocation, IconLeftPaneOn } from '@/common/icons';
+import { IconLocation, IconRight } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({

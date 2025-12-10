@@ -40,9 +40,8 @@
               @blur="handleRenameTag"
             />
             <template v-else>
-              <div class="overflow-hidden whitespace-pre text-ellipsis">
-                {{ tag.name }} <span v-if="tag.count" class="text-xs text-base-content/30 ml-1">({{ tag.count.toLocaleString() }})</span>
-              </div>
+              <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ tag.name }}</span>
+              <span v-if="tag.count" class="text-xs tabular-nums text-base-content/30 ml-1">{{ tag.count.toLocaleString() }}</span>
               <ContextMenu 
                 :class="[
                   'ml-auto flex flex-row items-center text-base-content/30',

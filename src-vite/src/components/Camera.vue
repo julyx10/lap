@@ -22,17 +22,18 @@
             ]"
             @click="clickCameraMake(camera)"
           >
-            <IconCamera
+            <IconRight
               :class="[
-                'mx-1 h-5 shrink-0 transition-transform', 
+                'p-1 w-6 h-6 shrink-0 transition-transform', 
+                camera.is_expanded ? 'rotate-90' : ''
               ]"
               @click.stop="clickExpandCamera(camera)"
             />
             <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ camera.make }}</span>
-            <span class="mx-1 text-[10px] tabular-nums text-base-content/70">{{ camera.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
+            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ camera.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
-            <li v-for="(model, index) in camera.models" class="pl-4">
+            <li v-for="(model, index) in camera.models" class="pl-4"> 
               <div 
                 :class="[
                   'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
@@ -66,7 +67,7 @@
 import { ref, onMounted } from 'vue';
 import { config } from '@/common/config';
 import { getCameraInfo } from '@/common/api';
-import { IconCamera, IconLeftPaneOn } from '@/common/icons';
+import { IconCamera, IconRight } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({

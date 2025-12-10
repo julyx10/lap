@@ -31,7 +31,7 @@
             </div>
             <div class="ml-auto flex flex-row items-center text-base-content/30">
               <TButton v-if="album.is_hidden" 
-                :icon="IconViewOff"
+                :icon="IconHide"
                 :disabled="true"
                 :buttonSize="'small'"
               />
@@ -147,7 +147,8 @@ import {
   IconDragHandle,
   IconEdit,
   IconRemove,
-  IconViewOff,
+  IconUnhide,
+  IconHide,
 } from '@/common/icons';
 
 const props = defineProps({
