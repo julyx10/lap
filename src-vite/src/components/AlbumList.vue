@@ -129,7 +129,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { config } from '@/common/config';
 import { isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
-         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder } from '@/common/api';
+         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, setFolderFavorite } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
@@ -149,6 +149,8 @@ import {
   IconRemove,
   IconUnhide,
   IconHide,
+  IconFavorite,
+  IconUnFavorite,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -188,7 +190,7 @@ const errorMessage = ref('');
 
 const toolTipRef = ref(null);
 
-const albums = ref([]);
+const albums = ref<any[]>([]);
 const isEditList = ref(false);  // edit album list
 const isLoading = ref(true);    // loading albums
 const isDragging = ref(false);  // dragging albums
@@ -224,6 +226,17 @@ const moreMenuItems = computed(() => {
       icon: IconNewFolder,
       action: () => {
         showNewFolderMsgbox.value = true;
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: !getAlbumById(selectedAlbumId.value)?.is_favorite ? localeMsg.value.menu.meta.favorite: localeMsg.value.menu.meta.unfavorite,
+      icon: !getAlbumById(selectedAlbumId.value)?.is_favorite ? IconFavorite : IconUnFavorite,
+      action: () => {
+        toggleFavorite();
       }
     },
     // {
@@ -465,6 +478,41 @@ const onDragEnd = async () => {
     await setDisplayOrder(albums.value[i].id, i);
   }
 }
+
+// toggle favorite album
+const toggleFavorite = async () => {
+  const album = getAlbumById(selectedAlbumId.value);
+  if (album) {
+    album.is_favorite = !album.is_favorite;
+    // An album is essentially a folder, and usually album.folderId (if set) would be the one. 
+    // However, 'addAlbum' logic suggests album.path is the root. 
+    // Important: The user said "album has a folder record in afolder db".
+    // Usually albums table has a folder_id or we use the folder associated with it.
+    // If 'album' object from 'getAllAlbums' join fetches folder info (like is_favorite), 
+    // we need to know the 'folderId' corresponding to the album root.
+    // 'getAllAlbums' in api.js calls 'get_all_albums'.
+    // If we look at 'addAlbum' -> 'add_album', it takes 'folderPath'.
+    // Let's assume album.id IS NOT the folder id. 
+    // But 'selectFolder(album.id, album.path)' returns a selectedFolder with 'id'.
+    // Let's check 'clickAlbum'. It calls 'selectFolder' and sets 'album.folderId = selectedFolder.id'.
+    // So 'album.folderId' should function after selection.
+    
+    // If album.folderId is missing (e.g. contextual menu on unselected album?), we might need to fetch it?
+    // But context menu shows for 'selectedAlbumId'. So we likely have clicked it.
+    
+    if (album.folderId) {
+       await setFolderFavorite(album.folderId, album.is_favorite);
+    } else {
+       // Fallback: Try to get folder id from path or select it implicitly? 
+       // For now, let's assume valid selection populated folderId.
+       const selectedFolder = await selectFolder(album.id, album.path);
+       if(selectedFolder) {
+         album.folderId = selectedFolder.id;
+         await setFolderFavorite(album.folderId, album.is_favorite);
+       }
+    }
+  }
+};
 
 // Expose methods
 defineExpose({ 

@@ -4,18 +4,16 @@
     
     <!-- title bar -->
     <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
-      <!-- <TButton :icon="IconRefresh" @click="clickReload"/> -->
-      <!-- <TButton v-if="config.home.showLeftPane"
-        :icon="IconLeftPaneOn"
-        @click="config.home.showLeftPane = false"
-      /> -->
+      <TButton
+        :icon="config.location.sortCount ? IconSortingCount : IconSortingName"
+        @click="config.location.sortCount = !config.location.sortCount"
+      />
     </div>
 
     <!-- location -->
     <div v-if="locations.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
-        <li v-for="location in locations">
+        <li v-for="location in sortedLocations">
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
@@ -65,10 +63,10 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { config } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
-import { IconLocation, IconRight } from '@/common/icons';
+import { IconLocation, IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
@@ -78,24 +76,35 @@ const props = defineProps({
   }
 });
 
-const locations = ref([]);
+const locations = ref<any[]>([]);
+
+const sortedLocations = computed(() => {
+  if (config.location.sortCount) {
+    return [...locations.value].sort((a, b) => {
+      const countA = (a.counts || []).reduce((sum: number, c: number) => sum + c, 0);
+      const countB = (b.counts || []).reduce((sum: number, c: number) => sum + c, 0);
+      return countB - countA;
+    });
+  }
+  return locations.value;
+});
 
 onMounted(async () => {
   if (locations.value.length === 0) {
     await getLocations();
 
     if (locations.value.length === 0) {
-      config.location.admin1 = null;
-      config.location.name = null;
+      (config.location as any).admin1 = null;
+      (config.location as any).name = null;
     }
     
     if(config.location.admin1 && config.location.name) {
-      let location = locations.value.find(location => location.admin1 === config.location.admin1)
+      let location = locations.value.find((location: any) => location.admin1 === config.location.admin1)
       if(location) {
         location.is_expanded = true;     // expand selected location
       } else {
-        config.location.admin1 = null;
-        config.location.name = null;
+        (config.location as any).admin1 = null;
+        (config.location as any).name = null;
       }
     }
   }
@@ -104,34 +113,34 @@ onMounted(async () => {
 /// reload locations
 function clickReload() {
   getLocations();
-  config.location.admin1 = "";
-  config.location.name = "";
+  (config.location as any).admin1 = "";
+  (config.location as any).name = "";
 };
 
 /// click location icon to expand or collapse names
-function clickExpandLocation(location) {
+function clickExpandLocation(location: any) {
   location.is_expanded = !location.is_expanded; 
 };
 
 /// click a location to select it
-function clickLocationAdmin1(location) {
-  config.location.admin1 = location.admin1;
-  config.location.name = "";
+function clickLocationAdmin1(location: any) {
+  (config.location as any).admin1 = location.admin1;
+  (config.location as any).name = null;
 
   location.is_expanded = true;
 }
 
 /// click a location to select it
-function clickLocationName(admin1, name) {
-  config.location.admin1 = admin1;
-  config.location.name = name;
+function clickLocationName(admin1: string, name: string) {
+  (config.location as any).admin1 = admin1;
+  (config.location as any).name = name;
 }
 
 /// get locations from db
 async function getLocations() {
   const fetchedLocations = await getLocationInfo();
   if (fetchedLocations) {
-    locations.value = fetchedLocations.map(location => ({
+    locations.value = fetchedLocations.map((location: any) => ({
       ...location, 
       is_expanded: false,
     }));

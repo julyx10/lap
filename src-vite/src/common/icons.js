@@ -119,6 +119,10 @@ export { default as IconPin } from '@/assets/icons/pin-filled.svg';
 export { default as IconUnPin } from '@/assets/icons/pin.svg';
 export { default as IconSortingAsc } from '@/assets/icons/sorting-asc.svg';
 export { default as IconSortingDesc } from '@/assets/icons/sorting-desc.svg';
+export { default as IconCalendarDown } from '@/assets/icons/calendar-down.svg';
+export { default as IconCalendarUp } from '@/assets/icons/calendar-up.svg';
+export { default as IconSortingName } from '@/assets/icons/sorting-name.svg';
+export { default as IconSortingCount } from '@/assets/icons/sorting-count.svg';
 
 // ======================
 // SYSTEM & APP ICONS

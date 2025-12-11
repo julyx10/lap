@@ -4,17 +4,16 @@
     
     <!-- title bar -->
     <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
-      <!-- <TButton v-if="config.home.showLeftPane"
-        :icon="IconLeftPaneOn"
-        @click="config.home.showLeftPane = false"
-      /> -->
+      <TButton
+        :icon="config.camera.sortCount ? IconSortingCount : IconSortingName"
+        @click="config.camera.sortCount = !config.camera.sortCount"
+      />
     </div>
 
     <!-- camera -->
     <div v-if="cameras.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
-        <li v-for="camera in cameras">
+        <li v-for="camera in sortedCameras">
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
@@ -64,10 +63,10 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { config } from '@/common/config';
 import { getCameraInfo } from '@/common/api';
-import { IconCamera, IconRight } from '@/common/icons';
+import { IconCamera, IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
@@ -77,15 +76,26 @@ const props = defineProps({
   }
 });
 
-const cameras = ref([]);
+const cameras = ref<any[]>([]);
+
+const sortedCameras = computed(() => {
+  if (config.camera.sortCount) {
+    return [...cameras.value].sort((a, b) => {
+      const countA = (a.counts || []).reduce((sum: number, c: number) => sum + c, 0);
+      const countB = (b.counts || []).reduce((sum: number, c: number) => sum + c, 0);
+      return countB - countA;
+    });
+  }
+  return cameras.value;
+});
 
 onMounted(async () => {
   if (cameras.value.length === 0) {
     await getCameras();
 
     if (cameras.value.length === 0) {
-      config.camera.make = null;
-      config.camera.model = null;
+      (config.camera as any).make = null;
+      (config.camera as any).model = null;
     }
 
     if(config.camera.make && config.camera.model) {
@@ -93,37 +103,37 @@ onMounted(async () => {
       if(camera) {
         camera.is_expanded = true;     // expand selected camera
       } else {
-        config.camera.make = null;
-        config.camera.model = null;
+        (config.camera as any).make = null;
+        (config.camera as any).model = null;
       }
     }
   }
 });
 
 /// click camera icon to expand or collapse models
-function clickExpandCamera(camera) {
+function clickExpandCamera(camera: any) {
   camera.is_expanded = !camera.is_expanded; 
 };
 
 /// click a camera to select it
-function clickCameraMake(camera) {
-  config.camera.make = camera.make;
-  config.camera.model = "";
+function clickCameraMake(camera: any) {
+  (config.camera as any).make = camera.make;
+  (config.camera as any).model = null;
 
   camera.is_expanded = true;
 }
 
 /// click a camera to select it
-function clickCameraModel(make, model) {
-  config.camera.make = make;
-  config.camera.model = model;
+function clickCameraModel(make: string, model: string) {
+  (config.camera as any).make = make;
+  (config.camera as any).model = model;
 }
 
 /// get cameras from db
 async function getCameras() {
   const fetchedCameras = await getCameraInfo();
   if (fetchedCameras) {
-    cameras.value = fetchedCameras.map(camera => ({
+    cameras.value = fetchedCameras.map((camera: any) => ({
       ...camera, 
       is_expanded: false,
     }));

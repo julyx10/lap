@@ -4,21 +4,20 @@
 
     <!-- Title Bar -->
     <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <!-- <span class="pl-1 cursor-default">{{ titlebar }}</span> -->
       <TButton
         :icon="IconAdd"
         @click="clickAddTag"
       />
-      <!-- <TButton
-        :icon="IconLeftPaneOn"
-        @click="config.home.showLeftPane = false"
-      /> -->
+      <TButton
+        :icon="config.tag.sortCount ? IconSortingCount : IconSortingName"
+        @click="config.tag.sortCount = !config.tag.sortCount"
+      />
     </div>
 
     <!-- Tag List -->
     <div v-if="allTags.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
       <ul>
-        <li v-for="tag in allTags" :key="tag.id" :id="'tag-' + tag.id">
+        <li v-for="tag in sortedTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
@@ -102,7 +101,8 @@ import {
   IconRename, 
   IconTrash,
   IconAdd,
-  IconLeftPaneOn,
+  IconSortingCount,
+  IconSortingName,
 } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
@@ -126,6 +126,13 @@ const selectedTag = ref(null);
 const isRenamingTag = ref(false);
 const originalTagName = ref('');
 const tagInputRef = ref([]);
+
+const sortedTags = computed(() => {
+  if (config.tag.sortCount) {
+    return [...allTags.value].sort((a, b) => (b.count || 0) - (a.count || 0));
+  }
+  return allTags.value;
+});
 
 // message boxes
 const showDeleteTagMsgbox = ref(false);

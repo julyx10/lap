@@ -26,13 +26,9 @@
         </div>
 
         <TButton 
-          :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc" 
+          :icon="config.calendar.sortingAsc ? IconCalendarDown : IconCalendarUp" 
           @click="toggleSortingOrder"
         />
-        <!-- <TButton v-if="config.home.showLeftPane"
-          :icon="IconLeftPaneOn"
-          @click="config.home.showLeftPane = false"
-        /> -->
       </div>
     </div>
     
@@ -94,7 +90,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getTakenDates } from '@/common/api';
-import { IconCalendar, IconSortingAsc, IconSortingDesc, IconLeftPaneOn } from '@/common/icons';
+import { IconCalendar, IconCalendarDown, IconCalendarUp } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';

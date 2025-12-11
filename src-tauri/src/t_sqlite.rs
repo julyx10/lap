@@ -1801,10 +1801,10 @@ impl ATag {
         let hidden_clause = if is_show_hidden {
             "1=1"
         } else {
-            "(albums.is_hidden = 0)"
+            "(albums.is_hidden = 0 OR albums.is_hidden IS NULL)"
         };
         let query = format!(
-            "SELECT atags.id, atags.name, SUM(CASE WHEN {} THEN 1 ELSE 0 END) AS count 
+            "SELECT atags.id, atags.name, SUM(CASE WHEN afiles.id IS NOT NULL AND ({}) THEN 1 ELSE 0 END) AS count 
             FROM atags 
             LEFT JOIN afile_tags ON atags.id = afile_tags.tag_id
             LEFT JOIN afiles ON afile_tags.file_id = afiles.id

@@ -53,6 +53,7 @@ export const useConfigStore = defineStore('configStore', {
 
     tag: {
       id: null,
+      sortCount: false,     // false: default sort by name, true: sort by count
     },
 
     calendar: {
@@ -66,11 +67,13 @@ export const useConfigStore = defineStore('configStore', {
     camera: {
       make: null,           // selected camera make
       model: null,          // selected camera model
+      sortCount: false,     // false: default sort by name, true: sort by count
     },
 
     location: {
       admin1: null,      // selected location admin1 (e.g. California)
       name: null,        // selected location name (e.g. San Francisco)
+      sortCount: false,  // false: default sort by name, true: sort by count
     },
 
     imageViewer: {

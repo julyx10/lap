@@ -23,11 +23,6 @@
     >
       <!-- title -->
       <div class="flex flex-row items-center min-w-0 flex-1" data-tauri-drag-region>
-        <!-- <TButton v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0"
-          :icon="config.home.showLeftPane ? IconLeftPaneOn : IconLeftPaneOff"
-          @click="config.home.showLeftPane = !config.home.showLeftPane"
-        />
-        <IconSeparator v-if="!config.home.showLeftPane || config.home.sidebarIndex === 0" class="t-icon-size-sm text-base-content/30" /> -->
         <component v-if="contentTitle" :is=contentIcon class="t-icon-size-sm shrink-0"/>
         <div class="mx-1 cursor-default overflow-hidden whitespace-pre text-ellipsis">
           {{ contentTitle }}
@@ -1134,6 +1129,7 @@ watch(
   ], 
   async () => {
     scrollPosition.value = 0;   // reset file scroll position
+    selectedItemIndex.value = 0; // reset selected item index to 0
     
     // Also reset the GridView scroll position
     if (gridViewRef.value) {
@@ -1219,6 +1215,11 @@ async function fetchDataRange(start: number, end: number) {
               if (chunkStart + j < fileList.value.length) {
                 fileList.value[chunkStart + j] = newFiles[j];
                 filesToFetch.push(fileList.value[chunkStart + j]);
+
+                // Update ImageViewer if the selected file is loaded
+                if (chunkStart + j === selectedItemIndex.value) {
+                  openImageViewer(selectedItemIndex.value, false);
+                }
               }
             }
             // Fetch thumbnails for these files
