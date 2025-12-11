@@ -40,13 +40,12 @@
         willChange: 'transform',
       }"
       draggable="false"
-      @load="onImageDomLoad($event.target as HTMLImageElement)"
       @mousedown="handleImageMouseDown"
       @mousemove="handleImageMouseMove"
       @mouseup="handleImageMouseUp"
       @mouseleave="handleImageMouseLeave"
       @wheel="handleImageWheel"
-      @dblclick="zoomFit"
+      @dblclick.stop="toggleZoomFit"
     />
 
     <!-- Navigator view -->
@@ -57,7 +56,7 @@
         :style="navContainerStyle"
         @wheel="handleNavBoxWheel"
         @click="handleNavBoxClick"
-        @dblclick="zoomFit"
+        @dblclick.stop="toggleZoomFit"
       >
         <!-- nav image -->
         <img :src="imageSrc[activeImage]" :style="navImageStyle" draggable="false" />
@@ -131,7 +130,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['message-from-image-viewer', 'scale']);
+const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit']);
 
 // container
 const container = ref(null);
@@ -729,13 +728,12 @@ const onImageReady = (nextIndex: number) => {
   }
 };
 
-// Kept for DOM load event if needed, but main logic is now in onImageReady
-const onImageDomLoad = (img: HTMLImageElement) => {
-  // Optional: could be used for double verification or other DOM-related updates
-};
-
 const rotateRight = () => {
   imageRotate.value[activeImage.value] += 90;
+};
+
+const toggleZoomFit = () => {
+  emit('update:isZoomFit', !props.isZoomFit);
 };
 
 const updateZoomFit = () => {

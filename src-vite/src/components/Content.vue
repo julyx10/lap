@@ -174,13 +174,12 @@
             @mousedown="startDraggingfilmStripView"
           ></div>
 
-          <!-- preview -->
+          <!-- film strip preview -->
           <div v-if="config.content.showFilmStrip" ref="previewDiv" 
             class="flex-1 bg-base-200 overflow-hidden"
           >
             <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
               class="w-full h-full flex items-center justify-center"
-              @dblclick="quickViewZoomFit = !quickViewZoomFit"
             >
               <MediaViewer
                 ref="filmStripMediaRef"
@@ -191,16 +190,17 @@
                 :imageScale="imageScale"
                 :imageMinScale="imageMinScale"
                 :imageMaxScale="imageMaxScale"
-                :isZoomFit="quickViewZoomFit"
+                v-model:isZoomFit="filmStripZoomFit"
                 :showNavButton="true"
                 :hasPrevious="selectedItemIndex > 0"
                 :hasNext="selectedItemIndex < fileList.length - 1"
                 @prev="performNavigate('prev')"
                 @next="performNavigate('next')"
+                @toggle-slide-show="toggleSlideShow"
                 @scale="onScale"
               />
             </div>
-          </div> <!-- preview -->
+          </div> <!-- film strip preview -->
         </div> <!-- grid view -->
 
         <!-- custom scrollbar -->
@@ -220,14 +220,13 @@
         <div v-if="config.content.showQuickView && fileList[selectedItemIndex]" 
           class="absolute inset-0 z-[60] mt-12 flex items-center justify-center bg-base-200 overflow-hidden"
           :class="[config.settings.showStatusBar ? 'mb-8': 'mb-1']"
-          @dblclick="quickViewZoomFit = !quickViewZoomFit"
         >
           <!-- Close Button -->
           <TButton 
             class="absolute top-2 right-2 z-[70]"
             buttonSize="small"
             :icon="IconClose"
-            @click.stop="config.content.showQuickView = false"
+            @click.stop="config.content.showQuickView = false; stopSlideShow()"
             @dblclick.stop
           />
 
@@ -241,13 +240,13 @@
               :imageScale="imageScale"
               :imageMinScale="imageMinScale"
               :imageMaxScale="imageMaxScale"
-              :isZoomFit="quickViewZoomFit"
+              v-model:isZoomFit="quickViewZoomFit"
               :showNavButton="true"
               :hasPrevious="selectedItemIndex > 0"
               :hasNext="selectedItemIndex < fileList.length - 1"
               @prev="performNavigate('prev')"
               @next="performNavigate('next')"
-              @close="config.content.showQuickView = false"
+              @toggle-slide-show="toggleSlideShow"
               @scale="onScale"
             />
           </div>
@@ -434,7 +433,8 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath, getSelectOptions, shortenFilename, formatDimensionText, formatCaptureSettings } from '@/common/utils';
+         extractFileName, combineFileName, getFolderPath, getSelectOptions, 
+         shortenFilename, formatDimensionText, formatCaptureSettings, getSlideShowInterval } from '@/common/utils';
 
 import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -533,11 +533,14 @@ const showFolderFiles = computed(() =>
 const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
-const filmStripMediaRef = ref<any>(null);
-const quickViewMediaRef = ref<any>(null);
 
 // quick view
-const quickViewZoomFit = ref(true); // quick view zoom fit
+const quickViewMediaRef = ref<any>(null);
+const quickViewZoomFit = ref(true);
+
+// film strip view
+const filmStripMediaRef = ref<any>(null);
+const filmStripZoomFit = ref(true);
 
 // toolbar state for MediaViewer
 const imageScale = ref(1);
@@ -800,6 +803,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  stopSlideShow();
   if (resizeObserver) {
     resizeObserver.disconnect();
   }
@@ -815,12 +819,15 @@ function handleItemClicked(index: number) {
   }
 }
 
+// Double click grid view item
 function handleItemDblClicked(index: number) {
   selectedItemIndex.value = index;
 
-  // quick view
-  config.content.showQuickView = true;
-  quickViewZoomFit.value = true; 
+  if (!config.content.showFilmStrip) {
+    // quick view
+    config.content.showQuickView = true;
+    quickViewZoomFit.value = true;
+  }
 }
 
 // Track last selected index for shift-click range selection
@@ -1000,14 +1007,14 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
   if (event.key === 'Space' || event.key === ' ') {
-    config.content.showQuickView = !config.content.showQuickView;
-    quickViewZoomFit.value = true; 
+    if(!config.content.showFilmStrip) {
+      config.content.showQuickView = !config.content.showQuickView;
+      quickViewZoomFit.value = true; 
+    }
   }
-  // else if ((event.key === 'Space' || event.key === ' ') && config.content.showQuickView) {
-  //   quickViewZoomFit.value = !quickViewZoomFit.value; 
-  // }
   else if (event.key === 'Escape' && config.content.showQuickView) {
     config.content.showQuickView = false;
+    stopSlideShow();
   }
 
   if (handledKeys.includes(event.key)) {
@@ -1057,20 +1064,25 @@ onMounted( async() => {
   window.addEventListener('keydown', handleLocalKeyDown);
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
-  unlistenImageViewer = await listen('message-from-image-viewer', (event) => {
+  unlistenImageViewer = await listen('message-from-image-viewer', async (event) => {
     const { message } = event.payload as any;
     switch (message) {
-      case 'home':
-        selectedItemIndex.value = 0;
+      case 'request-file-at-index':
+        const requestIndex = (event.payload as any).index;
+        const file = fileList.value[requestIndex];
+        if (file) {
+           const imageWindow = await WebviewWindow.getByLabel('imageviewer');
+           if (imageWindow) {
+             imageWindow.emit('update-img', {
+               fileId: file.id,
+               fileIndex: requestIndex,
+               fileCount: fileList.value.length,
+             });
+           }
+        }
         break;
-      case 'end':
-        selectedItemIndex.value = fileList.value.length - 1;
-        break;
-      case 'prev':
-        performNavigate('prev');
-        break;
-      case 'next':
-        performNavigate('next');
+      case 'rotate':
+        clickRotate();
         break;
       default:
         break;
@@ -1120,7 +1132,7 @@ watch(
     config.location.admin1, config.location.name,                                   // location
     config.search.text, config.search.fileType, config.search.sortType, config.search.sortOrder,  // search and sort 
   ], 
-  () => {
+  async () => {
     scrollPosition.value = 0;   // reset file scroll position
     
     // Also reset the GridView scroll position
@@ -1129,7 +1141,10 @@ watch(
     }
     config.content.showQuickView = false;
     
-    updateContent();
+    await updateContent();
+
+    // Reset ImageViewer context if open (without focusing/showing it)
+    openImageViewer(selectedItemIndex.value, false);
   }, 
   { immediate: true }
 );
@@ -1159,8 +1174,9 @@ watch(() => [config.content.showFilmStrip, config.infoPanel.show, config.infoPan
 });
 
 function toggleGridViewLayout() {
-  config.content.showFilmStrip = !config.content.showFilmStrip;
   config.content.showQuickView = false;
+  config.content.showFilmStrip = !config.content.showFilmStrip;
+  filmStripZoomFit.value = true;
 }
 
 // Track pending requests to avoid duplicates
@@ -1679,6 +1695,54 @@ const selectModeSetFavorites = async (isFavorite: boolean) => {
   }
 }
 
+// slide show
+let slideShowIntervalId: NodeJS.Timeout | null = null;
+
+function toggleSlideShow() {
+  isSlideShow.value = !isSlideShow.value;
+  if (isSlideShow.value) {
+    startSlideShow();
+  } else {
+    stopSlideShow();
+  }
+}
+
+function clearSlideShowTimer() {
+  if (slideShowIntervalId) {
+    clearInterval(slideShowIntervalId);
+    slideShowIntervalId = null;
+  }
+}
+
+function startSlideShow() {
+  clearSlideShowTimer(); // Clear existing if any
+  const interval = getSlideShowInterval(config.settings.slideShowInterval) * 1000;
+  slideShowIntervalId = setInterval(() => {
+    if (fileList.value.length === 0) return;
+    
+    if (selectedItemIndex.value >= fileList.value.length - 1) {
+      selectedItemIndex.value = 0; // Loop (user requested: skip to first one)
+    } else {
+      selectedItemIndex.value++;
+    }
+  }, interval);
+}
+
+function stopSlideShow() {
+  isSlideShow.value = false;
+  clearSlideShowTimer();
+}
+
+watch(() => config.settings.slideShowInterval, () => {
+  if (isSlideShow.value) {
+    startSlideShow();
+  }
+});
+
+watch(() => config.content.showFilmStrip, () => {
+  stopSlideShow();
+});
+
 // set file rotate
 const clickRotate = async () => {
   if (selectedItemIndex.value >= 0) {
@@ -1776,9 +1840,6 @@ async function updateSelectedImage(index: number) {
   if(config.infoPanel.show && fileList.value[index].has_tags) {
     fileList.value[index].tags = await getTagsForFile(fileList.value[index].id);
   }
-
-  // update image viewer if the viewer is open
-  openImageViewer(index, false);
 }
 
 // click ok in tagging dialog

@@ -26,7 +26,7 @@
           :imageMinScale="imageMinScale"
           :imageMaxScale="imageMaxScale"
           :isZoomFit="config.imageViewer.isZoomFit"
-          :showNavButton="!config.imageViewer.isLocked"
+          :showNavButton="true"
           :hasPrevious="fileIndex > 0"
           :hasNext="fileIndex < fileCount - 1"
           @prev="onPrev()"
@@ -34,6 +34,7 @@
           @toggle-slide-show="clickSlideShow()"
           @close="appWindow.close()"
           @scale="onScale"
+          @update:isZoomFit="(val) => config.imageViewer.isZoomFit = val"
           @dblclick="toggleZoomFit()"
         />
 
@@ -102,7 +103,6 @@ const imageScale = ref(1);          // Image scale
 const imageMinScale = ref(0);       // Minimum image scale
 const imageMaxScale = ref(10);      // Maximum image scale
 
-let unlistenResize: () => void;
 let unlistenImg: () => void;
 let unlistenGridView: () => void;
 
@@ -117,7 +117,7 @@ onMounted(async() => {
 
   // Listen 
   unlistenImg = await listen('update-img', async (event) => {
-    if(uiStore.inputStack.length > 0 || config.imageViewer.isLocked) {
+    if(uiStore.inputStack.length > 0) {
       return;
     }
     
@@ -132,9 +132,6 @@ onMounted(async() => {
     console.log('message-from-content:', message);
     switch (message) {
       case 'rotate':
-        if (config.imageViewer.isLocked) {
-          return;
-        }
         if (mediaViewerRef.value) {
           mediaViewerRef.value.rotateRight();
         }
@@ -157,7 +154,6 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
   
   // unlisten
-  unlistenResize();
   unlistenImg();
   unlistenGridView();
 });
@@ -252,39 +248,44 @@ watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlide
 });
 
 function clickPrev() {
-  if (config.imageViewer.isLocked) return;
-  mediaViewerRef.value?.triggerPrev();
-}
-
-function onPrev() {
-  emit('message-from-image-viewer', { message: 'prev' });
-}
-
-function clickNext() {
-  if (config.imageViewer.isLocked) return;
-  mediaViewerRef.value?.triggerNext();
-}
-
-function onNext() {
-  if(isSlideShow.value && fileIndex.value === fileCount.value - 1) {
-    emit('message-from-image-viewer', { message: 'home' });
+  if (fileIndex.value > 0) {
+      emit('message-from-image-viewer', { message: 'request-file-at-index', index: fileIndex.value - 1 });
   } else {
-    emit('message-from-image-viewer', { message: 'next' });
+     mediaViewerRef.value?.showMessage((localeMsg.value as any).tooltip.image_viewer.first_image);
   }
 }
 
+function onPrev() {
+  clickPrev();
+}
+
+function clickNext() {
+  // Fix loop for slideshow
+  if (isSlideShow.value && fileIndex.value >= fileCount.value - 1) {
+    emit('message-from-image-viewer', { message: 'request-file-at-index', index: 0 });
+    return;
+  }
+  
+  if (fileIndex.value < fileCount.value - 1) {
+    emit('message-from-image-viewer', { message: 'request-file-at-index', index: fileIndex.value + 1 });
+  } else {
+    mediaViewerRef.value?.showMessage((localeMsg.value as any).tooltip.image_viewer.last_image);
+  }
+}
+
+function onNext() {
+  clickNext();
+}
+
 function clickHome() {
-  if (config.imageViewer.isLocked) return;
-  emit('message-from-image-viewer', { message: 'home' });
+  emit('message-from-image-viewer', { message: 'request-file-at-index', index: 0 });
 }
 
 function clickEnd() {
-  if (config.imageViewer.isLocked) return;
-  emit('message-from-image-viewer', { message: 'end' });
+  emit('message-from-image-viewer', { message: 'request-file-at-index', index: fileCount.value - 1 });
 }
 
 function clickSlideShow() {
-  if (config.imageViewer.isLocked) return;
   isSlideShow.value = !isSlideShow.value;
 }
 
@@ -309,11 +310,6 @@ const clickZoomActual = () => {
 const toggleZoomFit = () => {
   config.imageViewer.isZoomFit =!config.imageViewer.isZoomFit;
 };
-
-// toggle lock status(locked mode: image will not be updated)
-const toggleLock = () => {
-  config.imageViewer.isLocked = !config.imageViewer.isLocked;
-}
 
 const closeWindow = () => {
   if(config.imageViewer.isFullScreen) {

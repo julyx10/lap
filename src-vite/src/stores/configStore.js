@@ -75,7 +75,6 @@ export const useConfigStore = defineStore('configStore', {
 
     imageViewer: {
       isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
-      isLocked: false,            // true: locked mode; false: unlocked mode (image will not be updated)
       isFullScreen: false,        // full screen mode
       isPinned: true,             // pinned mode
     },

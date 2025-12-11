@@ -13,26 +13,19 @@
     >
       <TButton
         :icon="IconPrev"
-        :disabled="fileIndex <= 0 || config.imageViewer.isLocked"
+        :disabled="fileIndex <= 0 || isSlideShow"
         :tooltip="$t('image_viewer.toolbar.prev') + ` (${fileIndex + 1}/${fileCount})`"
         @click="triggerPrev" 
       />
       <TButton
-        :icon="IconLock"
-        :disabled="fileIndex < 0"
-        :selected="config.imageViewer.isLocked"
-        :tooltip="config.imageViewer.isLocked ? $t('image_viewer.toolbar.unlock') : $t('image_viewer.toolbar.lock')"
-        @click="config.imageViewer.isLocked = !config.imageViewer.isLocked"
-      />
-      <TButton
         :icon="IconNext"
-        :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || config.imageViewer.isLocked"
+        :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || isSlideShow"
         :tooltip="$t('image_viewer.toolbar.next') + ` (${fileIndex + 1}/${fileCount})`"
         @click="triggerNext" 
       />
       <TButton
         :icon="isSlideShow ? IconPause : IconPlay"
-        :disabled="fileIndex < 0 || config.imageViewer.isLocked"
+        :disabled="fileIndex < 0"
         :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
         @click="$emit('toggle-slide-show')" 
       />
@@ -49,10 +42,16 @@
         @click="zoomIn" 
       />
       <TButton
-        :icon="!config.imageViewer.isZoomFit ? IconZoomFit : IconZoomActual"
+        :icon="!isZoomFit ? IconZoomFit : IconZoomActual"
         :disabled="fileIndex < 0"
-        :tooltip="(!config.imageViewer.isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
-        @click="config.imageViewer.isZoomFit = !config.imageViewer.isZoomFit"
+        :tooltip="(!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
+        @click="$emit('update:isZoomFit', !isZoomFit)"
+      />
+      <TButton
+        :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
+        :disabled="fileIndex < 0"
+        :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
+        @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
       />
       <TButton v-if="isWin"
         :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
@@ -80,7 +79,7 @@
 
     <!-- Previous Button (Overlay) -->
     <button 
-      v-if="showNavButton && hasPrevious"
+      v-if="showNavButton && hasPrevious && !isSlideShow"
       class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 transition-opacity duration-300"
       :class="[ isHoverLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerPrev"
@@ -91,7 +90,7 @@
 
     <!-- Next Button (Overlay) -->
     <button 
-      v-if="showNavButton && hasNext"
+      v-if="showNavButton && hasNext && !isSlideShow"
       class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 transition-opacity duration-300"
       :class="[ isHoverRight ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerNext"
@@ -105,6 +104,7 @@
       :filePath="file?.file_path" 
       :rotate="file?.rotate ?? 0" 
       :isZoomFit="isZoomFit"
+      @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
       @scale="(e) => $emit('scale', e)"
     ></Image>
     
@@ -144,7 +144,6 @@ import {
   IconUnPin,
   IconSeparator,
   IconClose,
-  IconLock,
 } from '@/common/icons';
 
 const Video = defineAsyncComponent(() => import('@/components/Video.vue'));
@@ -198,7 +197,7 @@ const props = defineProps({
 });
 
 
-const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale']);
+const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit']);
 
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
