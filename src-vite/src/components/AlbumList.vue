@@ -35,6 +35,11 @@
                 :disabled="true"
                 :buttonSize="'small'"
               />
+              <TButton v-if="album.is_favorite" 
+                :icon="IconFavorite"
+                :disabled="true"
+                :buttonSize="'small'"
+              />
               <TButton v-if="isEditList" 
                 class="drag-handle"
                 :icon="IconDragHandle"
@@ -45,7 +50,7 @@
                   !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
-                :menuItems="moreMenuItems"
+                :menuItems="() => getMoreMenuItems(album)"
                 :smallIcon="true"
               />
             </div>
@@ -77,13 +82,13 @@
     <!-- edit album information -->
     <AlbumEdit
       v-if="showAlbumEdit"
-      :albumId="albumId"
-      :inputName="getAlbumById(albumId).name"
-      :inputDescription="getAlbumById(albumId).description"
-      :hiddenAlbum="getAlbumById(albumId).is_hidden"
-      :albumPath="getAlbumById(albumId).path"
-      :createdAt="formatTimestamp(getAlbumById(albumId).created_at, $t('format.date_time'))"
-      :modifiedAt="formatTimestamp(getAlbumById(albumId).modified_at, $t('format.date_time'))"
+      :isNewAlbum="isNewAlbum"
+      :albumId="isNewAlbum ? 0 : albumId"
+      :inputName="isNewAlbum ? '' : getAlbumById(albumId)?.name"
+      :inputDescription="isNewAlbum ? '' : getAlbumById(albumId)?.description"
+      :albumPath="isNewAlbum ? '' : getAlbumById(albumId)?.path"
+      :createdAt="isNewAlbum ? '' : formatTimestamp(getAlbumById(albumId)?.created_at, $t('format.date_time'))"
+      :modifiedAt="isNewAlbum ? '' : formatTimestamp(getAlbumById(albumId)?.modified_at, $t('format.date_time'))"
       @ok="clickAlbumInfo"
       @cancel="showAlbumEdit = false"
     />
@@ -191,6 +196,7 @@ const errorMessage = ref('');
 const toolTipRef = ref(null);
 
 const albums = ref<any[]>([]);
+const isNewAlbum = ref(false);
 const isEditList = ref(false);  // edit album list
 const isLoading = ref(true);    // loading albums
 const isDragging = ref(false);  // dragging albums
@@ -199,8 +205,8 @@ const getAlbumById = (id: number) => albums.value.find(album => album.id === id)
 
 const emit = defineEmits(['update:albumId', 'update:folderId', 'update:folderPath']);
 
-// more menuitems
-const moreMenuItems = computed(() => {
+// Get menu items for a specific album (function for lazy evaluation)
+const getMoreMenuItems = (album: any) => {
   return [
 
     {
@@ -208,6 +214,7 @@ const moreMenuItems = computed(() => {
       icon: IconEdit,
       action: () => {
         showAlbumEdit.value = true;
+        isNewAlbum.value = false;
       }
     },
     {
@@ -233,21 +240,28 @@ const moreMenuItems = computed(() => {
       action: () => {}
     },
     {
-      label: !getAlbumById(selectedAlbumId.value)?.is_favorite ? localeMsg.value.menu.meta.favorite: localeMsg.value.menu.meta.unfavorite,
-      icon: !getAlbumById(selectedAlbumId.value)?.is_favorite ? IconFavorite : IconUnFavorite,
+      label: !album?.is_favorite ? localeMsg.value.menu.meta.favorite : localeMsg.value.menu.meta.unfavorite,
+      icon: !album?.is_favorite ? IconFavorite : IconUnFavorite,
       action: () => {
-        toggleFavorite();
+        toggleFavorite(album);
+      }
+    },
+    {
+      label: !album?.is_hidden ? localeMsg.value.menu.album.hide : localeMsg.value.menu.album.unhide,
+      icon: !album?.is_hidden ? IconHide : IconUnhide,
+      action: () => {
+        toggleHidden(album);
       }
     },
     // {
     //   label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
     //   // icon: IconExternal,
     //   action: () => {
-    //     revealFolder(getAlbumById(selectedAlbumId.value).path);
+    //     revealFolder(album.path);
     //   }
     // },
   ];
-});
+};
 
 onMounted( async () => {
   if (albums.value.length === 0) {
@@ -307,11 +321,13 @@ watch(() => [ selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.
 
 /// Add a new album
 const clickNewAlbum = async () => {
-  const new_album = await addAlbum();
-  if(new_album) {
-    albums.value.push(new_album);
-    clickAlbum(new_album);
-  }
+  // const new_album = await addAlbum();
+  // if(new_album) {
+  //   albums.value.push(new_album);
+  //   clickAlbum(new_album);
+  // }
+  showAlbumEdit.value = true;
+  isNewAlbum.value = true;
 };
 
 // Refresh albums function
@@ -329,15 +345,31 @@ const refreshAlbums = async () => {
   }
 };
 
-/// edit album information
-const clickAlbumInfo = async (newName, newDescription, newIsHidden) => {
-  const result = await editAlbum(selectedAlbumId.value, newName, newDescription, newIsHidden);
-  if(result) {
+/// edit album information or add new album
+const clickAlbumInfo = async (folderPath, newName, newDescription, isNew) => {
+  if (isNew) {
+    // Add new album
+    const newAlbum = await addAlbum(folderPath);
+    if (newAlbum) {
+      // Update album name and description if different from folder name
+      if (newName !== newAlbum.name || newDescription) {
+        await editAlbum(newAlbum.id, newName, newDescription, false);
+        newAlbum.name = newName;
+        newAlbum.description = newDescription;
+      }
+      albums.value.push(newAlbum);
+      clickAlbum(newAlbum);
+      showAlbumEdit.value = false;
+    }
+  } else {
+    // Edit existing album
     let album = getAlbumById(selectedAlbumId.value);
-    album.name = newName;
-    album.description = newDescription;
-    album.is_hidden = newIsHidden;
-    showAlbumEdit.value = false;
+    const result = await editAlbum(selectedAlbumId.value, newName, newDescription, album.is_hidden ?? false);
+    if(result) {
+      album.name = newName;
+      album.description = newDescription;
+      showAlbumEdit.value = false;
+    }
   }
 };
 
@@ -480,8 +512,11 @@ const onDragEnd = async () => {
 }
 
 // toggle favorite album
-const toggleFavorite = async () => {
-  const album = getAlbumById(selectedAlbumId.value);
+const toggleFavorite = async (album?: any) => {
+  // If album not provided, fallback to selectedAlbumId
+  if (!album) {
+    album = getAlbumById(selectedAlbumId.value);
+  }
   if (album) {
     album.is_favorite = !album.is_favorite;
     // An album is essentially a folder, and usually album.folderId (if set) would be the one. 
@@ -511,6 +546,18 @@ const toggleFavorite = async () => {
          await setFolderFavorite(album.folderId, album.is_favorite);
        }
     }
+  }
+};
+
+// toggle hidden album
+const toggleHidden = async (album?: any) => {
+  // If album not provided, fallback to selectedAlbumId
+  if (!album) {
+    album = getAlbumById(selectedAlbumId.value);
+  }
+  if (album) {
+    album.is_hidden = !album.is_hidden;
+    await editAlbum(album.id, album.name, album.description, album.is_hidden);
   }
 };
 

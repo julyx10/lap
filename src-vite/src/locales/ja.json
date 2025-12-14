@@ -15,11 +15,15 @@
   },
   "album": {
     "edit": {
+      "title_add": "アルバムを追加",
       "title": "アルバムを編集",
-      "name": "名前",
+      "folder": "アルバムフォルダ",
+      "select_folder": "フォルダを選択",
+      "name": "アルバム名",
       "description": "説明",
       "description_placeholder": "アルバムの説明を入力",
-      "folder": "フォルダ",
+      "index": "インデックス",
+      "generate_index": "インデックスを生成",
       "hidden": "非表示",
       "hidden_description": "非表示のアルバムはアルバムリストにのみ表示されます",
       "images": "画像",
@@ -161,7 +165,8 @@
     "image_viewer": {
       "first_image": "すでに最初の画像です",
       "last_image": "すでに最後の画像です"
-    }
+    },
+    "album_exists": "このアルバムはすでに存在します"
   },
   "statusbar": {
     "files_summary": "{count} ファイル ({size})"
@@ -173,7 +178,7 @@
       "invert": "選択を反転"
     },
     "album": {
-      "add": "フォルダを追加",
+      "add": "アルバムを追加",
       "edit": "アルバムを編集",
       "hide": "アルバムを非表示",
       "unhide": "アルバムを表示",

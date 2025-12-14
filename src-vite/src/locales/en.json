@@ -15,11 +15,15 @@
   },
   "album": {
     "edit": {
+      "title_add": "Add album",
       "title": "Edit album",
-      "name": "Name",
+      "folder": "Album Folder",
+      "select_folder": "Select a folder",
+      "name": "Album Name",
       "description": "Description",
       "description_placeholder": "Enter album's description",
-      "folder": "Folder",
+      "index": "Index",
+      "generate_index": "Generate index",
       "hidden": "Hidden",
       "hidden_description": "Hidden album will only be shown in the album list",
       "images": "Images",
@@ -161,7 +165,8 @@
     "image_viewer": {
       "first_image": "Already the first image",
       "last_image": "Already the last image"
-    }
+    },
+    "album_exists": "This album already exists"
   },
   "statusbar": {
     "files_summary": "{count} files ({size})"
@@ -173,7 +178,7 @@
       "invert": "Invert selection"
     },
     "album": {
-      "add": "Add folder",
+      "add": "Add album",
       "edit": "Edit album",
       "hide": "Hide album",
       "unhide": "Unhide album",

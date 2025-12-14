@@ -27,34 +27,35 @@
         :icon="isSlideShow ? IconPause : IconPlay"
         :disabled="fileIndex < 0"
         :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
-        @click="$emit('toggle-slide-show')" 
+        @click="handleToggleSlideShow" 
       />
       <TButton
         :icon="IconZoomOut"
-        :disabled="fileIndex < 0 || imageScale <= imageMinScale"
+        :disabled="fileIndex < 0 || imageScale <= imageMinScale || isSlideShow"
         :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
         @click="zoomOut"
       />
       <TButton
         :icon="IconZoomIn"
-        :disabled="fileIndex < 0 || imageScale >= imageMaxScale"
+        :disabled="fileIndex < 0 || imageScale >= imageMaxScale || isSlideShow"
         :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
         @click="zoomIn" 
       />
       <TButton
         :icon="!isZoomFit ? IconZoomFit : IconZoomActual"
-        :disabled="fileIndex < 0"
+        :disabled="fileIndex < 0 || isSlideShow"
         :tooltip="(!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
         @click="$emit('update:isZoomFit', !isZoomFit)"
       />
       <TButton
         :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
-        :disabled="fileIndex < 0"
+        :disabled="fileIndex < 0 || isSlideShow"
         :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
         @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
       />
       <TButton v-if="isWin"
         :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
+        :disabled="isSlideShow"
         :tooltip="!config.imageViewer.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
         @click="config.imageViewer.isFullScreen = !config.imageViewer.isFullScreen"
       />
@@ -104,8 +105,10 @@
       :filePath="file?.file_path" 
       :rotate="file?.rotate ?? 0" 
       :isZoomFit="isZoomFit"
+      :isSlideShow="isSlideShow"
       @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
       @scale="(e) => $emit('scale', e)"
+      @message-from-image-viewer="handleMessageFromImageViewer"
     ></Image>
     
     <Video v-if="file?.file_type === 2"
@@ -292,6 +295,21 @@ const triggerNext = () => {
     showTip((localeMsg.value as any).tooltip.image_viewer.last_image);
   }
 }
+
+const handleToggleSlideShow = () => {
+  if (!props.isSlideShow) {
+    emit('update:isZoomFit', true);
+  }
+  emit('toggle-slide-show');
+}
+
+const handleMessageFromImageViewer = (payload: { message: string }) => {
+  if (payload.message === 'prev') {
+    triggerPrev();
+  } else if (payload.message === 'next') {
+    triggerNext();
+  }
+};
 
 defineExpose({
   zoomIn,

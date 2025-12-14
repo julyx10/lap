@@ -290,9 +290,8 @@
     >
       <div class="flex items-center gap-1 flex-shrink-0">
         <IconFileSearch class="t-icon-size-xs" />
-        <span >
-          {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}
-        </span>
+        <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 }} / </span>
+        <span > {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }} </span>
       </div>
 
       <template v-if="selectedItemIndex >= 0">
@@ -311,9 +310,14 @@
           <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
         </div>
 
+        <div v-if="config.content.showFilmStrip || config.content.showQuickView" class="flex items-center gap-1 flex-shrink-0">
+          <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
+          <span> {{ (imageScale * 100).toFixed(0) }}% </span>
+        </div>
+
         <div v-if="fileList[selectedItemIndex]?.e_model" class="flex items-center gap-1 flex-shrink-0">
           <IconCamera class="t-icon-size-xs" />
-          <span> {{ fileList[selectedItemIndex]?.e_model }} ({{ fileList[selectedItemIndex]?.e_lens_model }})</span>
+          <span> {{ fileList[selectedItemIndex]?.e_model }} {{ fileList[selectedItemIndex]?.e_lens_model ? ' (' + fileList[selectedItemIndex]?.e_lens_model + ')' : '' }}</span>
         </div>
 
         <div v-if="fileList[selectedItemIndex]?.e_focal_length || fileList[selectedItemIndex]?.e_exposure_time || fileList[selectedItemIndex]?.e_f_number || fileList[selectedItemIndex]?.e_iso_speed || fileList[selectedItemIndex]?.e_exposure_bias" class="flex items-center gap-1 flex-shrink-0">
@@ -474,6 +478,8 @@ import {
   IconRight,
   IconSeparator,
   IconBolt,
+  IconZoomIn,
+  IconZoomOut
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -1387,7 +1393,7 @@ async function updateContent() {
           locationAdmin1: "",
           locationName: "",
           isFavorite: false,
-          isShowHidden: false,
+          isShowHidden: true,
           tagId: 0,
         };
         timelineData.value = await getQueryTimeLine(currentQueryParams.value);

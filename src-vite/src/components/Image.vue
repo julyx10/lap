@@ -22,31 +22,38 @@
     </transition>
 
     <!-- main image -->
-    <img 
-      v-for="(src, index) in imageSrc"
-      v-show="activeImage === index"
-      ref="activeImageEl"
-      :key="`img-${index}`"
-      :src="src"
-      :class="isGrabbing ? (isDraggingImage ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'"
-      :style="{
-        position: 'absolute',
-        minWidth:  `${imageSize[index].width}px`,
-        minHeight: `${imageSize[index].height}px`,
-        transform: `translate(${position[index].x}px, ${position[index].y}px) 
-                    scale(${scale[index]}) 
-                    rotate(${imageRotate[index]}deg)`,
-        transition: !isDraggingImage && !noTransition ? (isDraggingNavBox ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out') : 'none',
-        willChange: 'transform',
-      }"
-      draggable="false"
-      @mousedown="handleImageMouseDown"
-      @mousemove="handleImageMouseMove"
-      @mouseup="handleImageMouseUp"
-      @mouseleave="handleImageMouseLeave"
-      @wheel="handleImageWheel"
-      @dblclick.stop="toggleZoomFit"
-    />
+    <TransitionGroup :name="isSlideShow ? 'slide-in' : ''">
+      <div 
+        v-for="(src, index) in imageSrc"
+        v-show="activeImage === index"
+        :key="`img-${index}`"
+        class="slide-wrapper absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+      >
+        <img
+          ref="activeImageEl"
+          :src="src"
+          :class="isGrabbing ? (isDraggingImage ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'"
+          :style="{
+            position: 'absolute',
+            minWidth: `${imageSize[index].width}px`,
+            minHeight: `${imageSize[index].height}px`,
+            transform: `translate(${position[index].x}px, ${position[index].y}px) 
+                        scale(${scale[index]}) 
+                        rotate(${imageRotate[index]}deg)`,
+            transition: !isDraggingImage && !noTransition ? (isDraggingNavBox ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out') : 'none',
+            willChange: 'transform',
+            pointerEvents: 'auto'
+          }"
+          draggable="false"
+          @mousedown="handleImageMouseDown"
+          @mousemove="handleImageMouseMove"
+          @mouseup="handleImageMouseUp"
+          @mouseleave="handleImageMouseLeave"
+          @wheel="handleImageWheel"
+          @dblclick.stop="toggleZoomFit"
+        />
+      </div>
+    </TransitionGroup>
 
     <!-- Navigator view -->
     <transition name="fade">
@@ -108,7 +115,7 @@
 
 <script setup lang="ts">
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
-import { listen } from '@tauri-apps/api/event';
+// import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
 import { getAssetSrc } from '@/common/utils';
 
@@ -128,6 +135,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isSlideShow: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit']);
@@ -143,7 +154,7 @@ const activeImage = ref(1);                 // which image is active (0 or 1)
 const imageSrc = ref(['', '']);             // image source
 const position = shallowRef([{ x: 0, y: 0 }, { x: 0, y: 0 }]); // Image position (top-left corner)
 const scale = ref([1, 1]);                  // Image scale (zoom level)
-const minScale = ref(0);                    // Minimum zoom level
+const minScale = ref(0.1);                    // Minimum zoom level
 const maxScale = ref(10);                   // Maximum zoom level
 const imageRotate = ref([0, 0]);            // Image rotation
 const imageSize = ref([{ width: 0, height: 0 }, { width: 0, height: 0 }]);       // actual image size
@@ -703,9 +714,9 @@ const onImageReady = (nextIndex: number) => {
       clampPosition();
 
       // Also update the other image's position to match for smooth transitions
-      const otherImageIndex = activeImage.value ^ 1;
-      imageSrc.value[otherImageIndex] = '';
-      position.value[otherImageIndex] = position.value[activeImage.value];
+      // const otherImageIndex = activeImage.value ^ 1;
+      // imageSrc.value[otherImageIndex] = '';
+      // position.value[otherImageIndex] = position.value[activeImage.value];
     } else {
       // For isZoomFit, the original logic is fine.
       updateZoomFit();
@@ -733,6 +744,7 @@ const rotateRight = () => {
 };
 
 const toggleZoomFit = () => {
+  if (props.isSlideShow) return;
   emit('update:isZoomFit', !props.isZoomFit);
 };
 
@@ -741,9 +753,9 @@ const updateZoomFit = () => {
   isZoomFit.value ? zoomFit() : zoomReset();
 
   // set the hide image to the same position
-  const nextImageIndex = activeImage.value ^ 1;
-  imageSrc.value[nextImageIndex] = '';
-  position.value[nextImageIndex] = position.value[activeImage.value];
+  // const nextImageIndex = activeImage.value ^ 1;
+  // imageSrc.value[nextImageIndex] = '';
+  // position.value[nextImageIndex] = position.value[activeImage.value];
 };
 
 // Zoom to fit image in container
@@ -876,21 +888,31 @@ const handleImageWheel = (event: WheelEvent) => {
   }
 };
 
-// wheel zoom
+// wheel zoom - Industry standard fixed-step approach
 const wheelZoom = (event: WheelEvent, zoomFactor: number) => {
-  const container = containerSize.value;
-  const imgRotatedSize = imageSizeRotated.value[activeImage.value];
+  const currentScale = scale.value[activeImage.value];
   
-  minScale.value = Math.min(
-    0.1, 
-    Math.min(
-      container.width / imgRotatedSize.width, 
-      container.height / imgRotatedSize.height
-    ) * 0.5
-  );
-
-  // Clamp zoom level
-  const newScale = Math.min(Math.max(scale.value[activeImage.value] / (1 + event.deltaY * zoomFactor / 100), minScale.value), maxScale.value);
+  // Normalize delta to wheel "notches" (standard mouse ~100 per notch)
+  let delta = event.deltaY;
+  if (event.deltaMode === 1) { // DOM_DELTA_LINE
+    delta *= 40;
+  } else if (event.deltaMode === 2) { // DOM_DELTA_PAGE
+    delta *= 800;
+  }
+  
+  // Convert to notches (standard mice report ~100 per notch)
+  // Use sign for direction, clamp magnitude for consistency
+  const notches = Math.sign(delta) * Math.min(Math.abs(delta) / 100, 2);
+  
+  // Fixed 15% zoom per notch - industry standard (Photoshop, Figma)
+  // scroll up (negative delta) = zoom in, scroll down = zoom out
+  const ZOOM_FACTOR = 0.15;
+  const multiplier = Math.pow(1 + ZOOM_FACTOR, -notches);
+  
+  let newScale = currentScale * multiplier;
+  newScale = Math.min(Math.max(newScale, minScale.value), maxScale.value);
+  
+  // zoom at cursor position
   const containerPosVal = containerPos.value;
   zoomImage(event.clientX - containerPosVal.x, event.clientY - containerPosVal.y, newScale);
 };
@@ -905,15 +927,23 @@ const zoomOut = () => {
   const container = containerSize.value;
   const imgRotatedSize = imageSizeRotated.value[activeImage.value];
   
-  minScale.value = Math.min(
-    0.1, 
-    Math.min(
-      container.width / imgRotatedSize.width, 
-      container.height / imgRotatedSize.height
-    ) * 0.5
+  // Calculate potential min scale based on fit, but respect hard floor of 0.1 if desired?
+  // User asked for "lowest scale 10%". 
+  // We'll prioritize 0.1, but if fitting requires less, we might have a conflict.
+  // Assuming 0.1 is the hard floor relevant to the user's request.
+  
+  const fitScale = Math.min(
+    container.width / imgRotatedSize.width, 
+    container.height / imgRotatedSize.height
   );
+  
+  // Update minScale to be at least 0.1. 
+  // If we want to allow "Overview mode" smaller than 0.1 we can adjust.
+  // But given the "bug report" of 0%, we stick to 0.1.
+  minScale.value = 0.1;
 
   const newScale = Math.max(scale.value[activeImage.value] / 2, minScale.value);
+  const containerPosVal = containerPos.value;
   zoomImage(container.width / 2, container.height / 2, newScale);
 };
 
@@ -978,3 +1008,19 @@ defineExpose({
 });
 
 </script>
+
+<style scoped>
+/* Slideshow transition */
+.slide-in-enter-active,
+.slide-in-leave-active {
+  transition: transform 0.8s ease;
+}
+
+.slide-in-enter-from {
+  transform: translateX(calc(100% + 10px));
+}
+
+.slide-in-leave-to {
+  transform: translateX(calc(-100% - 10px));
+}
+</style>

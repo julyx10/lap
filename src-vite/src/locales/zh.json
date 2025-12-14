@@ -15,11 +15,15 @@
   },
   "album": {
     "edit": {
+      "title_add": "添加相册",
       "title": "编辑相册",
-      "name": "名称",
+      "folder": "相册文件夹",
+      "select_folder": "选择文件夹",
+      "name": "相册名",
       "description": "描述",
       "description_placeholder": "输入相册描述",
-      "folder": "文件夹",
+      "index": "索引",
+      "generate_index": "生成索引",
       "hidden": "隐藏",
       "hidden_description": "隐藏相册仅在相册列表中显示",
       "images": "图片",
@@ -161,7 +165,8 @@
     "image_viewer": {
       "first_image": "已经是第一张图片",
       "last_image": "已经是最后一张图片"
-    }
+    },
+    "album_exists": "此相册已存在"
   },
   "statusbar": {
     "files_summary": "{count} 个文件 ({size})"
@@ -173,7 +178,7 @@
       "invert": "反选"
     },
     "album": {
-      "add": "添加文件夹",
+      "add": "添加相册",
       "edit": "编辑相册",
       "hide": "隐藏相册",
       "unhide": "显示相册",

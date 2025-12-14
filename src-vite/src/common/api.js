@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { config } from '@/common/config';
-import { separator, openFolderDialog, localeComp } from '@/common/utils';
+import { separator, localeComp } from '@/common/utils';
 
 // albums
 
@@ -16,6 +16,13 @@ export async function getAllAlbums(showHiddenAlbum) {
         is_expanded: false,
         children: null,
       }));
+
+       // get album's favorite status
+       for (let i = 0; i < albums.length; i++) {
+        const album = albums[i];
+        album.is_favorite = await getFolderFavorite(album.path);
+      }
+
       return albums;
     } 
   } catch (error) {
@@ -42,18 +49,18 @@ export async function getAlbum(albumId) {
 }
 
 // add an album to db
-export async function addAlbum() {
+export async function addAlbum(folderPath) {
+  if(!folderPath) {
+    return null;
+  }
   try {
-    const folderPath = await openFolderDialog();
-    if (folderPath) {
-      const newAlbum = await invoke('add_album', { folderPath });
-      console.log('add_album', newAlbum);
-      if(newAlbum) {
-        return {
-          ...newAlbum,
-          is_expanded: false,
-          children: null,
-        };
+    const newAlbum = await invoke('add_album', { folderPath });
+    console.log('add_album', newAlbum);
+    if(newAlbum) {
+      return {
+        ...newAlbum,
+        is_expanded: false,
+        children: null,
       };
     };
   } catch (error) {

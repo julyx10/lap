@@ -27,7 +27,7 @@
       </div>
 
       <!-- favorite folders -->
-      <div v-if="favorite_folders.length > 0" class="my-2 px-2 py-1 text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div v-if="favorite_folders.length > 0" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('favorite.folders') }}
       </div>
       <div class="flex-grow overflow-x-hidden overflow-y-auto">
