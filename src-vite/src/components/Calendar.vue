@@ -39,7 +39,7 @@
       >
         <!-- days of the week in daily calendar -->
         <div v-if="!config.calendar.isMonthly" 
-          class="sticky top-0 z-10 bg-base-200 min-w-64 text-sm flex flex-col items-center"
+          class="sticky top-0 z-10 bg-base-200 min-w-48 text-sm flex flex-col items-center"
         >
           <div class="py-1 grid grid-cols-7 gap-2 text-center">
             <div 
@@ -58,7 +58,7 @@
         <div v-for="item in sorted_calendar_items" 
           :key="item.year"
           :class="[
-            'flex min-w-40',
+            'flex min-w-48',
             config.calendar.sortingAsc ? 'flex-col' : 'flex-col-reverse'
           ]"
         >

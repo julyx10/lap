@@ -17,7 +17,6 @@
       [
         'absolute top-0 left-1 right-1 px-1 h-12 flex flex-row flex-wrap items-center justify-between z-30',
         config.content.showQuickView ? 'bg-base-300': 'bg-base-300/80 backdrop-blur-md'
-        // config.home.showLeftPane ? 'pl-1' : 'pl-18'
       ]" 
       data-tauri-drag-region
     >
@@ -31,17 +30,8 @@
 
       <!-- toolbar -->
       <div class="flex items-center space-x-2 shrink-0">
-
-       <!-- Index Folder Button -->
-        <TButton 
-           :icon="IconBolt" 
-           :class="isIndexing ? 'loading' : ''"
-           @click="handleIndexFolder" 
-           tooltip="Index Current View"
-        />
-
         <!-- search box -->
-        <SearchBox ref="searchBoxRef" v-model="config.search.text" @click.stop="selectMode = false" /> 
+        <SearchBox ref="searchBoxRef" v-model="config.search.fileName" @click.stop="selectMode = false" /> 
 
         <!-- select mode -->
         <div tabindex="-1"
@@ -100,7 +90,7 @@
     </div>
 
     <!-- progress bar -->
-    <div v-if="config.home.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" class="absolute top-11 left-0 right-0 z-50">
+    <div v-if="config.main.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" class="absolute top-11 left-0 right-0 z-50">
       <ProgressBar :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     </div>
       
@@ -427,8 +417,8 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
-         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile,
-         searchImages, generateEmbedding, checkAiStatus } from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile } from '@/common/api';  
+import { format } from 'date-fns';
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -451,7 +441,9 @@ import FileInfo from '@/components/FileInfo.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
 
 import {
-  IconHome,
+  IconPhotoAll,
+  IconCalendarDay,
+  IconBolt,
   IconSideBarOn,
   IconSideBarOff,
   IconArrowDown,
@@ -477,7 +469,6 @@ import {
   IconLeft,
   IconRight,
   IconSeparator,
-  IconBolt,
   IconZoomIn,
   IconZoomOut
 } from '@/common/icons';
@@ -495,12 +486,23 @@ const uiStore = useUIStore();
 
 // title of the content 
 const contentIcon = computed(() => {
-  const index = config.home.sidebarIndex;
+  const index = config.main.sidebarIndex;
   
   switch (index) {
-    case 0: return IconHome;
+    case 0: 
+      switch (config.home.optionIndex) {
+        case 0: return IconPhotoAll;
+        case 1: return IconCalendarDay;
+        case 10: return IconBolt;
+        default: return IconPhotoAll;
+      }
     case 1: return IconFolder;
-    case 2: return config.favorite.folderId && config.favorite.folderId > 0 ? IconFolderFavorite : IconFavorite;
+    case 2: 
+      switch (config.favorite.folderId) {
+        case 0: return IconFavorite;
+        case 1: return IconFolderFavorite;
+        default: return IconFolderFavorite;
+      }
     case 3: return IconTag;
     case 4: return IconCalendar;
     case 5: return IconLocation;
@@ -527,7 +529,7 @@ const selectedItemIndex = ref(-1);
 
 // config.favorite.folderId = 0: means favorite files
 const showFolderFiles = computed(() =>
- config.home.sidebarIndex === 1 || (config.home.sidebarIndex === 2 && config.favorite.folderId !== 0)
+ config.main.sidebarIndex === 1 || (config.main.sidebarIndex === 2 && config.favorite.folderId !== 0)
 );
 
 // mutil select mode
@@ -628,7 +630,8 @@ const searchBoxRef = ref<any>(null);
 
 // Store current query params for virtual scrolling
 const currentQueryParams = ref({
-  searchText: "",
+  searchImageText: "",
+  searchFileName: "",
   searchFileType: 0,
   sortType: 0,
   sortOrder: 0,
@@ -646,42 +649,6 @@ const currentQueryParams = ref({
 
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
-
-// AI Search
-// const isAiSearchMode = ref(false); // Removed
-// const aiSearchQuery = ref(''); // Removed
-// const aiSearchResults = ref<any[]>([]); // Removed
-const isIndexing = ref(false);
-const aiStatus = ref('');
-
-// Check AI status on mount
-onMounted(async () => {
-  aiStatus.value = await checkAiStatus();
-});
-
-async function handleIndexFolder() {
-  if (fileList.value.length === 0) return;
-  
-  isIndexing.value = true;
-  let count = 0;
-  try {
-    // Iterate over current file list (just visible ones usually, but fileList has all for the folder)
-    for (const file of fileList.value) {
-       // Only index images
-       if (file.file_type === 1) {
-         await generateEmbedding(file.file_id);
-         count++;
-         // Update usage/progress if desired
-       }
-    }
-    alert(`Indexed ${count} images.`);
-  } catch (e) {
-    console.error(e);
-    alert('Indexing failed: ' + e);
-  } finally {
-    isIndexing.value = false;
-  }
-}
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -862,7 +829,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'open': () => openImageViewer(selectedItemIndex.value, true),
     'edit': () => showImageEditor.value = true,
     'copy': () => clickCopyImage(fileList.value[selectedItemIndex.value].file_path),
-    'update-from-file': () => updateFile(fileList.value[selectedItemIndex.value]),
+    'update-file-index': () => updateFile(fileList.value[selectedItemIndex.value]),
     'rename': () => {
       renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
       showRenameMsgbox.value = true;
@@ -876,7 +843,7 @@ function handleItemAction(payload: { action: string, index: number }) {
         config.album.id = selectedFile.album_id;
         config.album.folderId = selectedFile.folder_id;
         config.album.folderPath = getFolderPath(selectedFile.file_path);
-        config.home.sidebarIndex = 1;
+        config.main.sidebarIndex = 1;
       }
     },
     'reveal': () => revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path)),
@@ -1124,14 +1091,15 @@ watch(() => config.settings.language, (newLanguage) => {
 /// watch for file list changes
 watch(
   () => [
-    config.home.sidebarIndex,      // toolbar index
-    config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
+    config.main.sidebarIndex,      // toolbar index
+    config.home.optionIndex,       // home option index
     config.album.id, config.album.folderId, config.album.folderPath,                 // album
-    config.tag.id,                                                                 // tag
+    config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
+    config.tag.id,                                                                   // tag
     config.calendar.year, config.calendar.month, config.calendar.date,               // calendar
-    config.camera.make, config.camera.model,                                        // camera 
-    config.location.admin1, config.location.name,                                   // location
-    config.search.text, config.search.fileType, config.search.sortType, config.search.sortOrder,  // search and sort 
+    config.location.admin1, config.location.name,                                    // location
+    config.camera.make, config.camera.model,                                         // camera 
+    config.search.imageText, config.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder,  // search and sort 
   ], 
   async () => {
     scrollPosition.value = 0;   // reset file scroll position
@@ -1264,6 +1232,7 @@ function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number
 
 // get file list 
 async function getFileList(
+  searchImageText: string,
   searchFolder: string, 
   startDate: number, 
   endDate: number, 
@@ -1276,7 +1245,8 @@ async function getFileList(
 ) { 
   // Update current query params with all fields
   currentQueryParams.value = {
-    searchText: config.search.text,
+    searchImageText,
+    searchFileName: config.search.fileName,
     searchFileType: config.search.fileType,
     sortType: config.search.sortType,
     sortOrder: config.search.sortOrder,
@@ -1296,36 +1266,6 @@ async function getFileList(
   fileList.value = [];
   totalFileCount.value = 0;
   totalFileSize.value = 0;
-
-  // AI Search Logic
-  if (config.search.text.trim().startsWith('/') && config.search.text.trim().length > 1) {
-    const query = config.search.text.trim().substring(1).trim();
-    if (query) {
-      isProcessing.value = true;
-      try {
-        const results = await searchImages(query, 100);
-        
-        fileList.value = results.map(file => ({
-           ...file,
-           isPlaceholder: false, // AI results are full items
-           isSelected: false,
-        }));
-        
-        totalFileCount.value = fileList.value.length;
-        totalFileSize.value = fileList.value.reduce((acc, f) => acc + f.size, 0);
-        
-        // Fetch thumbnails
-        getFileListThumb(fileList.value);
-        
-      } catch (e) {
-        console.error("AI Search failed:", e);
-      } finally {
-        isProcessing.value = false;
-      }
-      return; 
-    }
-  }
-  
   // Get count and sum first
   const result = await getQueryCountAndSum(currentQueryParams.value);
   
@@ -1337,10 +1277,6 @@ async function getFileList(
     timelineData.value = await getQueryTimeLine(currentQueryParams.value);
     
     // Initialize fileList with placeholders
-    // We use a large array. Vue 3's reactivity system can handle this, 
-    // but for 100k items, shallowRef might be better for fileList if performance is an issue.
-    // However, RecycleScroller needs to detect changes.
-    // Let's use standard ref for now.
     fileList.value = Array.from({ length: totalFileCount.value }).map((_, i) => ({
       id: 'ph-' + i,
       isPlaceholder: true,
@@ -1350,20 +1286,25 @@ async function getFileList(
     
     // Reset visible range tracking when changing views
     lastVisibleRange = { start: -1, end: -1 };
-    
-    // Fetch initial data (first page)
-    // fetchDataRange(0, 100);
   }
 }
 
 async function updateContent() {
-  const newIndex = config.home.sidebarIndex;
+  const newIndex = config.main.sidebarIndex;
 
   if(newIndex === 0) {        // home
-    contentTitle.value = localeMsg.value.home.title;
-    await getFileList("", 0, 0, "", "", "", "", false, 0);
+    if(config.home.optionIndex === 0) {
+      contentTitle.value = localeMsg.value.home.all_files;
+      await getFileList("", "", 0, 0, "", "", "", "", false, 0);
+    } else if(config.home.optionIndex === 1) {
+      contentTitle.value = localeMsg.value.home.on_this_day + " - " + format(new Date(), localeMsg.value.format.month_date);
+      await getFileList("", "", -1, -1, "", "", "", "", false, 0);    // startdate and enddate is -1 means this day
+    } else if(config.home.optionIndex === 10) {
+      contentTitle.value = localeMsg.value.home.image_search;
+      await getFileList(config.search.imageText, "", 0, 0, "", "", "", "", false, 0);
+    }
   } 
-  else if(newIndex === 1) {   // album
+  else if(newIndex === 1) {   // album  
     if(config.album.id === null) {
       contentTitle.value = "";
       fileList.value = [];
@@ -1381,7 +1322,8 @@ async function updateContent() {
 
         // Fetch timeline data for the folder
         currentQueryParams.value = {
-          searchText: config.search.text,
+          searchImageText: "",
+          searchFileName: config.search.fileName,
           searchFileType: config.search.fileType,
           sortType: config.search.sortType,
           sortOrder: config.search.sortOrder,
@@ -1419,12 +1361,12 @@ async function updateContent() {
     } else {
       if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
-        await getFileList("", 0, 0, "", "", "", "", true, 0);
+        await getFileList("", "", 0, 0, "", "", "", "", true, 0);
       } else {                // favorite folders
         const album = await getAlbum(config.favorite.albumId);
         if(album) {
           contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath, album.path);
-          await getFileList(config.favorite.folderPath, 0, 0, "", "", "", "", false, 0);
+          await getFileList("", config.favorite.folderPath, 0, 0, "", "", "", "", false, 0);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -1440,7 +1382,7 @@ async function updateContent() {
       const tagName = await getTagName(config.tag.id);
       if (tagName) {
         contentTitle.value = tagName;
-        await getFileList("", 0, 0, "", "", "", "", false, config.tag.id);
+        await getFileList("", "", 0, 0, "", "", "", "", false, config.tag.id);
       } else {
         contentTitle.value = "";
         fileList.value = [];
@@ -1460,7 +1402,7 @@ async function updateContent() {
         contentTitle.value = formatDate(config.calendar.year, config.calendar.month, config.calendar.date, localeMsg.value.format.date_long);
       }
       const [startDate, endDate] = getCalendarDateRange(config.calendar.year, config.calendar.month, config.calendar.date);
-      await getFileList("", startDate, endDate, "", "", "", "", false, 0);
+      await getFileList("", "", startDate, endDate, "", "", "", "", false, 0);
     }
   }
   else if(newIndex === 5) {   // location
@@ -1470,10 +1412,10 @@ async function updateContent() {
     } else {
       if(config.location.name) {
         contentTitle.value = `${config.location.admin1} > ${config.location.name}`;
-        await getFileList("", 0, 0, "", "", config.location.admin1, config.location.name, false, 0);
+        await getFileList("", "", 0, 0, "", "", config.location.admin1, config.location.name, false, 0);
       } else {
         contentTitle.value = `${config.location.admin1}`;
-        await getFileList("", 0, 0, "", "", config.location.admin1, "", false, 0);
+        await getFileList("", "", 0, 0, "", "", config.location.admin1, "", false, 0);
       } 
     }
   }
@@ -1484,16 +1426,16 @@ async function updateContent() {
     } else {
       if(config.camera.model) {
         contentTitle.value = `${config.camera.make} > ${config.camera.model}`;
-        await getFileList("", 0, 0, config.camera.make, config.camera.model, "", "", false, 0);
+        await getFileList("", "", 0, 0, config.camera.make, config.camera.model, "", "", false, 0);
       } else {
         contentTitle.value = `${config.camera.make}`;
-        await getFileList("", 0, 0, config.camera.make, "", "", "", false, 0);
+        await getFileList("", "", 0, 0, config.camera.make, "", "", "", false, 0);
       } 
     }
   } 
 
-  if(config.search.text) {
-    contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.search.text;
+  if(config.search.fileName) {
+    contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.search.fileName;
   }
 
   refreshFileList();

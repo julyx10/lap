@@ -218,13 +218,6 @@ const getMoreMenuItems = (album: any) => {
       }
     },
     {
-      label: localeMsg.value.menu.album.remove,
-      icon: IconRemove,
-      action: () => {
-        showRemoveAlbumMsgbox.value = true;
-      }
-    },
-    {
       label: "-",   // separator
       action: () => {}
     },
@@ -251,6 +244,13 @@ const getMoreMenuItems = (album: any) => {
       icon: !album?.is_hidden ? IconHide : IconUnhide,
       action: () => {
         toggleHidden(album);
+      }
+    },
+    {
+      label: localeMsg.value.menu.album.remove,
+      icon: IconRemove,
+      action: () => {
+        showRemoveAlbumMsgbox.value = true;
       }
     },
     // {
@@ -321,11 +321,6 @@ watch(() => [ selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.
 
 /// Add a new album
 const clickNewAlbum = async () => {
-  // const new_album = await addAlbum();
-  // if(new_album) {
-  //   albums.value.push(new_album);
-  //   clickAlbum(new_album);
-  // }
   showAlbumEdit.value = true;
   isNewAlbum.value = true;
 };

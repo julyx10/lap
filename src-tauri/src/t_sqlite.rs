@@ -450,12 +450,12 @@ pub struct AFile {
     pub geo_admin2: Option<String>, // Administrative district 2
     pub geo_cc: Option<String>,     // Country code
 
-    pub embeds: Option<Vec<u8>>, // AI embeddings (BLOB)
-
     // output only
-    pub file_path: Option<String>,  // file path (for webview)
-    pub album_id: Option<i64>,      // album id (for webview)
-    pub album_name: Option<String>, // album name (for webview)
+    pub file_path: Option<String>,   // file path (for webview)
+    pub album_id: Option<i64>,       // album id (for webview)
+    pub album_name: Option<String>,  // album name (for webview)
+    pub has_thumbnail: Option<bool>, // has thumbnail (for webview)
+    pub has_embedding: Option<bool>, // has embedding (for webview)
 }
 
 /// Define the timeline marker struct for scrollbar markers
@@ -471,13 +471,14 @@ pub struct ATimeLine {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryParams {
-    pub search_text: String,
+    pub search_image_text: String, // image search text (for AI search)
+    pub search_file_name: String,  // file name search
     pub search_file_type: i64,
     pub sort_type: i64,
     pub sort_order: i64,
     pub search_folder: String,
-    pub start_date: u64,
-    pub end_date: u64,
+    pub start_date: i64,
+    pub end_date: i64,
     pub make: String,
     pub model: String,
     pub location_admin1: String,
@@ -673,11 +674,11 @@ impl AFile {
             geo_admin2,
             geo_cc,
 
-            embeds: None,
-
             file_path: None,
             album_id: None,
             album_name: None,
+            has_thumbnail: None,
+            has_embedding: None,
         };
 
         Ok(file)
@@ -1004,7 +1005,8 @@ impl AFile {
                 a.gps_latitude, a.gps_longitude, a.gps_altitude, a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
                 b.path,
                 c.id AS album_id, c.name AS album_name,
-                a.embeds
+                (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
+                CASE WHEN a.embeds IS NOT NULL THEN 1 ELSE 0 END AS has_embedding
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id"
@@ -1066,7 +1068,8 @@ impl AFile {
             )),
             album_id: row.get(40)?,
             album_name: row.get(41)?,
-            embeds: row.get(42)?,
+            has_thumbnail: row.get::<_, Option<i64>>(42)?.map(|v| v == 1),
+            has_embedding: row.get::<_, Option<i64>>(43)?.map(|v| v == 1),
         })
     }
 
@@ -1364,9 +1367,11 @@ impl AFile {
         let mut conditions = Vec::new();
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
-        if !params.search_text.is_empty() {
+        if !params.search_image_text.is_empty() {}
+
+        if !params.search_file_name.is_empty() {
             conditions.push("a.name LIKE ? COLLATE NOCASE");
-            sql_params.push(Box::new(format!("%{}%", params.search_text)));
+            sql_params.push(Box::new(format!("%{}%", params.search_file_name)));
         }
 
         if params.search_file_type > 0 {
@@ -1385,6 +1390,12 @@ impl AFile {
             conditions.push("a.taken_date >= ? AND a.taken_date < ?");
             sql_params.push(Box::new(params.start_date));
             sql_params.push(Box::new(params.end_date));
+        } else if params.start_date == -1 && params.end_date == -1 {
+            // "On This Day" feature: find all photos taken on the same month and day as today
+            let now = chrono::Local::now();
+            let today_month_day = now.format("%m-%d").to_string();
+            conditions.push("strftime('%m-%d', a.taken_date, 'unixepoch', 'localtime') = ?");
+            sql_params.push(Box::new(today_month_day));
         }
 
         if !params.make.is_empty() {
@@ -1430,9 +1441,7 @@ impl AFile {
     // get query count and sum
     pub fn get_query_count_and_sum(params: &QueryParams) -> Result<(i64, i64), String> {
         let (where_clause, sql_params) = Self::build_search_query(params);
-
-        let mut sql = Self::build_count_query();
-        sql.push_str(&where_clause);
+        let sql = format!("{}{}", Self::build_count_query(), where_clause);
 
         let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         Self::query_count_and_sum(&sql, &final_params)
@@ -1711,7 +1720,7 @@ impl AThumb {
 
     /// get the thumbnail count of the folder
     pub fn get_folder_thumb_count(
-        search_text: &str,
+        search_file_name: &str,
         search_file_type: i64,
         folder_id: i64,
     ) -> Result<i64, String> {
@@ -1723,8 +1732,8 @@ impl AThumb {
         conditions.push("a.folder_id = ?");
         params.push(&folder_id);
 
-        let like_pattern = format!("%{}%", search_text);
-        if !search_text.is_empty() {
+        let like_pattern = format!("%{}%", search_file_name);
+        if !search_file_name.is_empty() {
             conditions.push("a.name LIKE ? COLLATE NOCASE");
             params.push(&like_pattern);
         }

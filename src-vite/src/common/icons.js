@@ -121,6 +121,7 @@ export { default as IconSortingAsc } from '@/assets/icons/sorting-asc.svg';
 export { default as IconSortingDesc } from '@/assets/icons/sorting-desc.svg';
 export { default as IconCalendarDown } from '@/assets/icons/calendar-down.svg';
 export { default as IconCalendarUp } from '@/assets/icons/calendar-up.svg';
+export { default as IconCalendarDay } from '@/assets/icons/calendar-day.svg';
 export { default as IconSortingName } from '@/assets/icons/sorting-name.svg';
 export { default as IconSortingCount } from '@/assets/icons/sorting-count.svg';
 
@@ -129,6 +130,7 @@ export { default as IconSortingCount } from '@/assets/icons/sorting-count.svg';
 // ======================
 export { default as IconHome } from '@/assets/icons/home.svg';
 export { default as IconPhoto } from '@/assets/icons/photo.svg';
+export { default as IconPhotoAll } from '@/assets/icons/photo-all.svg';
 export { default as IconVideo } from '@/assets/icons/video.svg';
 export { default as IconVideoSlash } from '@/assets/icons/video-slash.svg';
 export { default as IconMusic } from '@/assets/icons/musical.svg';

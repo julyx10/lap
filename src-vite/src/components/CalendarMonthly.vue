@@ -1,6 +1,6 @@
 <template>
 
-  <div class="flex flex-col items-center select-none mx-auto my-1 min-w-64 rounded-box border border-base-content/5">
+  <div class="flex flex-col items-center select-none mx-auto my-1 min-w-48 rounded-box border border-base-content/5">
 
     <!-- title -->
     <div 

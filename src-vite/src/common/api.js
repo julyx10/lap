@@ -329,7 +329,7 @@ export async function getQueryFiles(params, offset, limit) {
 export async function getFolderFiles(folderId, folderPath) {
   try {
     let files = await invoke('get_folder_files', { 
-      searchText: config.search.text, 
+      searchFileName: config.search.fileName, 
       searchFileType: config.search.fileType,
       sortType: config.search.sortType,
       sortOrder: config.search.sortOrder,
@@ -349,7 +349,7 @@ export async function getFolderFiles(folderId, folderPath) {
 export async function getFolderThumbCount(folderId) {
   try {
     let count = await invoke('get_folder_thumb_count', { 
-      searchText: config.search.text, 
+      searchFileName: config.search.fileName, 
       searchFileType: config.search.fileType,
       folderId, 
     });
@@ -829,6 +829,19 @@ export async function searchImages(query, limit) {
     }
   } catch (error) {
     console.error('searchImages error:', error);
+  }
+  return [];
+}
+
+// search image IDs with scores (for testing)
+export async function searchImageIds(query, limit) {
+  try {
+    const results = await invoke('search_image_ids', { query, limit });
+    if (results) {
+      return results;
+    }
+  } catch (error) {
+    console.error('searchImageIds error:', error);
   }
   return [];
 }

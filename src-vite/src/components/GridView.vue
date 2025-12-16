@@ -53,7 +53,7 @@
       <!-- blur spot -->
       <!-- <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-base-100 rounded-full blur-[180px] opacity-100"></div> -->
       <div class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
-        <span>{{ config.home.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
+        <span>{{ config.main.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
       </div>
     </div>
 

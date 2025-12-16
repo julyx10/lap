@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
-    home: {
+    main: {
       showLeftPane: true,         // show left pane
       leftPaneWidth: 300,         // left pane width
       sidebarIndex: 1,            // toolbar index
@@ -21,10 +21,11 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     search: {
-      text: '',             // filter file name
-      fileType: 0,          // filter file type (0: all, 1: image, 2: video)
-      sortType: 0,          // sort type
-      sortOrder: 0,         // sort order(0: ascending, 1: descending)
+      imageText: '',            // filter image text
+      fileName: '',             // filter file name
+      fileType: 0,              // filter file type (0: all, 1: image, 2: video)
+      sortType: 0,              // sort type
+      sortOrder: 0,             // sort order(0: ascending, 1: descending)
     },
 
     fileInfo: {
@@ -37,6 +38,12 @@ export const useConfigStore = defineStore('configStore', {
       albumId: null,          // destination album id
       folderId: null,         // destination folder id
       folderPath: null,       // destination folder path
+    },
+
+    home: {
+      optionIndex: 0,          // 0: all files, 1: on this day, 10: image search
+      searchHistory: [],       // search history
+      searchHistoryIndex: -1,  // current search history index
     },
 
     album: {

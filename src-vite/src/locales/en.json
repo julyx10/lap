@@ -11,7 +11,12 @@
     "settings": "Settings"
   },
   "home": {
-    "title": "Home"
+    "title": "Home",
+    "all_files": "All Files",
+    "on_this_day": "On this day",
+    "image_search": "Image Search",
+    "image_search_placeholder": "Search images by text",
+    "image_search_history": "Search History"
   },
   "album": {
     "edit": {
@@ -22,8 +27,11 @@
       "name": "Album Name",
       "description": "Description",
       "description_placeholder": "Enter album's description",
-      "index": "Index",
+      "index": "Image index",
       "generate_index": "Generate index",
+      "indexing": "Indexing...",
+      "indexed": "Indexed",
+      "generate_index_description": "Images with index can be searched by text",
       "hidden": "Hidden",
       "hidden_description": "Hidden album will only be shown in the album list",
       "images": "Images",
@@ -104,7 +112,7 @@
   "toolbar": {
     "search": {
       "title": "Search",
-      "placeholder": "Type '/' to search"
+      "placeholder": "Search file name"
     },
     "filter": {
       "select_mode": "Select",
@@ -177,11 +185,15 @@
       "none": "Select none",
       "invert": "Invert selection"
     },
+    "home": {
+      "clear_history": "Clear search history",
+      "delete": "Delete"
+    },
     "album": {
       "add": "Add album",
       "edit": "Edit album",
-      "hide": "Hide album",
-      "unhide": "Unhide album",
+      "hide": "Hide",
+      "unhide": "Unhide",
       "remove": "Remove from albums",
       "refresh": "Refresh",
       "reorder": "Reorder"
@@ -193,7 +205,7 @@
       "view_in_new_window": "View in new window",
       "copy": "Copy to clipboard",
       "edit": "Edit image",
-      "update_from_file": "Update from file",
+      "update_file_index": "Update file index",
       "print": "Print",
       "rename": "Rename",
       "move_to": "Move to",
@@ -228,6 +240,11 @@
     "cancel": "Cancel",
     "input": {
       "file_name_invalid": "File name cannot contain the following characters: \\ / : * ? \" < > |."
+    },
+    "clear_search_history": {
+      "title": "Clear search history",
+      "content": "Are you sure you want to clear the search history?",
+      "ok": "Clear"
     },
     "remove_album": {
       "title": "Remove from albums",
@@ -429,6 +446,7 @@
     "month": "MMMM yyyy",
     "date": "MM/dd/yyyy",
     "date_long": "MMMM do, yyyy",
+    "month_date": "MMMM do",
     "date_long_with_weekday": "eeee, MMMM do, yyyy",
     "date_time": "MM/dd/yyyy HH:mm:ss",
     "date_time_long": "MMMM do, yyyy HH:mm:ss"

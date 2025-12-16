@@ -123,7 +123,7 @@ import {
   IconComment,
   IconLocation,
   IconCameraAperture,
-  IconRefresh,
+  IconBolt,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -231,9 +231,9 @@ const getContextMenuItems = () => {
       action: createAction('copy')
     },
     {
-      label: localeMsg.value.menu.file.update_from_file,
-      icon: IconRefresh,
-      action: createAction('update-from-file')
+      label: localeMsg.value.menu.file.update_file_index,
+      icon: IconBolt,
+      action: createAction('update-file-index')
     },
     {
       label: localeMsg.value.menu.file.goto_album,

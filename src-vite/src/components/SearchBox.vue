@@ -8,6 +8,7 @@
       ref="searchInputRef"
       type="text"
       v-model="inputValue"
+      maxlength="255"
       :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('toolbar.search.placeholder') : '')"
       :class="[
         'py-1 h-8 w-full text-sm input bg-transparent transition-colors duration-300 rounded-box',

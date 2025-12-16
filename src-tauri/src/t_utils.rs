@@ -464,7 +464,7 @@ pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
 /// Get all files in a folder(not include sub-folders)
 /// Returns a vector of AFile instances
 pub fn get_folder_files(
-    search_text: &str,
+    search_file_name: &str,
     search_file_type: i64,
     sort_type: i64,
     sort_order: i64,
@@ -483,10 +483,10 @@ pub fn get_folder_files(
             let file_path = path.to_str()?;
             let file_name = path.file_name()?.to_str()?;
 
-            if !search_text.is_empty()
+            if !search_file_name.is_empty()
                 && !file_name
                     .to_lowercase()
-                    .contains(search_text.to_lowercase().as_str())
+                    .contains(search_file_name.to_lowercase().as_str())
             {
                 return None;
             }

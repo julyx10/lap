@@ -191,7 +191,7 @@ pub fn get_query_files(params: QueryParams, offset: i64, limit: i64) -> Result<V
 /// get all files from the folder
 #[tauri::command]
 pub fn get_folder_files(
-    search_text: &str,
+    search_file_name: &str,
     search_file_type: i64,
     sort_type: i64,
     sort_order: i64,
@@ -199,7 +199,7 @@ pub fn get_folder_files(
     folder_path: &str,
 ) -> Vec<AFile> {
     t_utils::get_folder_files(
-        search_text,
+        search_file_name,
         search_file_type,
         sort_type,
         sort_order,
@@ -210,8 +210,12 @@ pub fn get_folder_files(
 
 /// get the thumbnail count of the folder
 #[tauri::command]
-pub fn get_folder_thumb_count(search_text: &str, search_file_type: i64, folder_id: i64) -> i64 {
-    match AThumb::get_folder_thumb_count(search_text, search_file_type, folder_id) {
+pub fn get_folder_thumb_count(
+    search_file_name: &str,
+    search_file_type: i64,
+    folder_id: i64,
+) -> i64 {
+    match AThumb::get_folder_thumb_count(search_file_name, search_file_type, folder_id) {
         Ok(count) => count,
         Err(_) => 0,
     }

@@ -11,7 +11,12 @@
     "settings": "设置"
   },
   "home": {
-    "title": "主页"
+    "title": "主页",
+    "all_files": "所有文件",
+    "on_this_day": "今日照片",
+    "image_search": "图片搜索",
+    "image_search_placeholder": "按文本搜索图片",
+    "image_search_history": "搜索历史"
   },
   "album": {
     "edit": {
@@ -22,8 +27,11 @@
       "name": "相册名",
       "description": "描述",
       "description_placeholder": "输入相册描述",
-      "index": "索引",
+      "index": "图片索引",
       "generate_index": "生成索引",
+      "indexing": "索引生成中...",
+      "indexed": "索引生成完成",
+      "generate_index_description": "生成索引后，图片可以被文本搜索",
       "hidden": "隐藏",
       "hidden_description": "隐藏相册仅在相册列表中显示",
       "images": "图片",
@@ -104,7 +112,7 @@
   "toolbar": {
     "search": {
       "title": "搜索",
-      "placeholder": "按 '/' 搜索"
+      "placeholder": "搜索文件名"
     },
     "filter": {
       "select_mode": "选择",
@@ -177,11 +185,15 @@
       "none": "取消全选",
       "invert": "反选"
     },
+    "home": {
+      "clear_history": "清空查询历史",
+      "delete": "删除"
+    },
     "album": {
       "add": "添加相册",
       "edit": "编辑相册",
-      "hide": "隐藏相册",
-      "unhide": "显示相册",
+      "hide": "隐藏",
+      "unhide": "显示",
       "remove": "从相册中移除",
       "refresh": "刷新",
       "reorder": "重新排列"
@@ -193,7 +205,7 @@
       "view_in_new_window": "在新窗口中查看",
       "copy": "复制到剪贴板",
       "edit": "编辑图片",
-      "update_from_file": "从文件更新",
+      "update_file_index": "更新文件索引",
       "print": "打印",
       "rename": "重命名",
       "move_to": "移动到",
@@ -228,6 +240,11 @@
     "cancel": "取消",
     "input": {
       "file_name_invalid": "文件名不能包含以下字符: \\ / : * ? \" < > |."
+    },
+    "clear_search_history": {
+      "title": "清空搜索历史",
+      "content": "确定要清空搜索历史吗？",
+      "ok": "清空"
     },
     "remove_album": {
       "title": "从相册中移除",
@@ -429,6 +446,7 @@
     "month": "yyyy年M月",
     "date": "yyyy/MM/dd",
     "date_long": "yyyy年M月d日",
+    "month_date": "M月d日",
     "date_long_with_weekday": "yyyy年M月d日",
     "date_time": "yyyy/MM/dd HH:mm:ss",
     "date_time_long": "yyyy年M月d日 HH:mm:ss"

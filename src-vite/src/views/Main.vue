@@ -16,13 +16,13 @@
         leave-to-class="!w-0 opacity-0"
       >
         <!-- left pane -->
-        <div v-if="config.home.showLeftPane"
+        <div v-if="config.main.showLeftPane"
           :class="[
             'relative flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
-            config.home.sidebarIndex === 0 || !showPanel ? 'mt-12 mb-8': '',
+            !showPanel ? 'mt-12 mb-8': '',
             isDraggingSplitter ? 'no-transition' : 'transition-all duration-200 ease-in-out',
           ]"
-          :style="{ width: config.home.sidebarIndex > 0  && showPanel ? config.home.leftPaneWidth + 'px' : '64px' }"
+          :style="{ width: showPanel ? config.main.leftPaneWidth + 'px' : '64px' }"
           data-tauri-drag-region
         >
           <!-- side bar -->
@@ -38,7 +38,7 @@
                 :buttonSize="'large'" 
                 :icon="item.icon" 
                 :text="item.text" 
-                :selected="config.home.sidebarIndex === index"
+                :selected="config.main.sidebarIndex === index"
                 @click="clickSidebar(index)"
               />
             </div>
@@ -52,8 +52,8 @@
           </div>
 
           <!-- panel-->
-          <div v-if="config.home.sidebarIndex > 0 && showPanel" class="ml-16 pr-0.5 flex-1 overflow-hidden">
-            <component :is="buttons[config.home.sidebarIndex].component" :titlebar="buttons[config.home.sidebarIndex].text"/>
+          <div v-if="showPanel" class="ml-16 pr-0.5 flex-1 overflow-hidden">
+            <component :is="buttons[config.main.sidebarIndex].component" :titlebar="buttons[config.main.sidebarIndex].text"/>
           </div>
 
         </div>
@@ -63,8 +63,8 @@
       <div
         class="w-1 transition-colors shrink-0"
         :class="{
-          'hover:bg-primary cursor-ew-resize': config.home.showLeftPane && showPanel,
-          'bg-primary': config.home.showLeftPane && showPanel && isDraggingSplitter,
+          'hover:bg-primary cursor-ew-resize': config.main.showLeftPane && showPanel,
+          'bg-primary': config.main.showLeftPane && showPanel && isDraggingSplitter,
         }" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
@@ -77,7 +77,7 @@
           isWin ? 'rounded-tl-box' : '',
         ]"
       >
-        <Content :titlebar="buttons[config.home.sidebarIndex].text"/>
+        <Content :titlebar="buttons[config.main.sidebarIndex].text"/>
       </div>
     </div>
 
@@ -97,6 +97,7 @@ import { config } from '@/common/config';
 import { isWin, isMac } from '@/common/utils';
 
 // vue components
+import Home from '@/components/Home.vue';
 import Album from '@/components/Album.vue';
 import Favorite from '@/components/Favorite.vue';
 import Tag from '@/components/Tag.vue';
@@ -128,7 +129,7 @@ const localeMsg = computed(() => messages.value[locale.value]);
 const buttons = computed(() =>  [
   { 
     icon: IconHome,
-    component: null,
+    component: Home,
     text: localeMsg.value.sidebar.home
   },
   { 
@@ -171,17 +172,17 @@ const showPanel = ref(true);
 
 // click sidebar
 function clickSidebar(index: number) {
-  if (config.home.sidebarIndex === index) {
+  if (config.main.sidebarIndex === index) {
     showPanel.value = !showPanel.value;
   } else {
     showPanel.value = true;
-    config.home.sidebarIndex = index;
+    config.main.sidebarIndex = index;
   }
 }
 
 // Dragging the splitter
 function startDraggingSplitter(event: MouseEvent) {
-  if(!config.home.showLeftPane) return; // no left pane or left pane is hidden
+  if(!config.main.showLeftPane) return; // no left pane or left pane is hidden
 
   isDraggingSplitter.value = true;
   document.addEventListener('mousemove', handleMouseMove);
@@ -199,7 +200,7 @@ function stopDraggingSplitter(event: MouseEvent) {
 function handleMouseMove(event: MouseEvent) {
   if (isDraggingSplitter.value) {
     const maxLeftPaneWidth = window.innerWidth / 2;
-    config.home.leftPaneWidth = Math.max(160, Math.min(event.clientX - 6, maxLeftPaneWidth)); // -2: border width(2px)
+    config.main.leftPaneWidth = Math.max(160, Math.min(event.clientX - 6, maxLeftPaneWidth)); // -2: border width(2px)
   }
 }
 
