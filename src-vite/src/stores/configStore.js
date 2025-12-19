@@ -24,7 +24,7 @@ export const useConfigStore = defineStore('configStore', {
       imageText: '',            // filter image text
       fileName: '',             // filter file name
       fileType: 0,              // filter file type (0: all, 1: image, 2: video)
-      sortType: 0,              // sort type
+      sortType: 0,              // sort type (default to time)
       sortOrder: 0,             // sort order(0: ascending, 1: descending)
     },
 
@@ -41,7 +41,8 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     home: {
-      optionIndex: 0,          // 0: all files, 1: on this day, 10: image search
+      optionIndex: 0,          // 0: all files, 1: on this day, 2: similar images, 10: image search
+      similarImageId: null,    // similar image id
       searchHistory: [],       // search history
       searchHistoryIndex: -1,  // current search history index
     },
@@ -132,15 +133,17 @@ export const useConfigStore = defineStore('configStore', {
       navigatorViewMode: 0,       // 0: Auto, 1: Always hide, 2: Always show
       navigatorViewSize: 240,     // navigator view size (160, 240, 320, 400)
       showComment: true,          // show comment
+
+      // image search settings
+      imageSearch: {
+        threshold: [0.8, 0.75, 0.5, 0.3], // 0: Very High, 1: High, 2: Medium, 3: Low
+        thresholdIndex: 3,                 // image search threshold index (default is Low)
+        limit: 1000,                       // image search limit
+      },
     },
   }),
 
   actions: {
-    // tab index
-    // setSettingsTabIndex(settingsTabIndex) {
-    //   this.settings.tabIndex = settingsTabIndex;
-    // },
-
     // general settings
     setAppearance(appearance) {
       this.settings.appearance = appearance;
@@ -194,6 +197,7 @@ export const useConfigStore = defineStore('configStore', {
     setfilmStripViewPreviewPosition(filmStripViewPreviewPosition) {
       this.settings.previewPosition = filmStripViewPreviewPosition;
     },
+
     // image viewer settings
     setMouseWheelMode(mouseWheelMode) {
       this.settings.mouseWheelMode = mouseWheelMode;
@@ -212,6 +216,14 @@ export const useConfigStore = defineStore('configStore', {
     },
     setShowComment(showComment) {
       this.settings.showComment = showComment;
+    },
+    
+    // image search settings
+    setImageSearchThresholdIndex(imageSearchThresholdIndex) {
+      this.settings.imageSearch.thresholdIndex = imageSearchThresholdIndex;
+    },
+    setImageSearchLimit(imageSearchLimit) {
+      this.settings.imageSearch.limit = imageSearchLimit;
     },
   },
   persist: true

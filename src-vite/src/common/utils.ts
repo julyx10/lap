@@ -295,7 +295,6 @@ export async function openFolderDialog() {
 export function localeComp(lang: string, str1: string, str2: string) {
   const localeMap = {
     'zh': 'zh-Hans-CN', // chinese
-    'ja': 'ja-JP',      // japanese
     'en': 'en-US',      // english
   };
 

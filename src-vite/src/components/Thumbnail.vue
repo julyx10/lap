@@ -123,7 +123,7 @@ import {
   IconComment,
   IconLocation,
   IconCameraAperture,
-  IconBolt,
+  IconImageSearch,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -231,9 +231,10 @@ const getContextMenuItems = () => {
       action: createAction('copy')
     },
     {
-      label: localeMsg.value.menu.file.update_file_index,
-      icon: IconBolt,
-      action: createAction('update-file-index')
+      label: localeMsg.value.menu.file.search_similar_images,
+      icon: IconImageSearch,
+      disabled: file.file_type !== 1,
+      action: createAction('search-similar')
     },
     {
       label: localeMsg.value.menu.file.goto_album,

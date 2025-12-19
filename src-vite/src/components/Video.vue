@@ -34,9 +34,7 @@ import 'video.js/dist/video-js.min.css';
 import { getAssetSrc } from '@/common/utils';
 import { IconVideoPlay, IconVideoReplay } from '@/common/icons';
 
-import ja from 'video.js/dist/lang/ja.json';
 import zhCN from 'video.js/dist/lang/zh-CN.json';
-videojs.addLanguage('ja', ja);
 videojs.addLanguage('zh-CN', zhCN);
 
 const props = defineProps({

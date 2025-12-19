@@ -55,8 +55,8 @@
         ></textarea>
       </div>
       
-      <template v-if="!isNewAlbum">
-        <!-- index -->
+      <!-- index -->
+      <!-- <template v-if="!isNewAlbum">
         <div class="h-8 flex items-center">{{ $t('album.edit.index') }}</div>
         <div v-if="!isIndexing" class="flex flex-col items-start gap-y-1">
           <button 
@@ -81,7 +81,7 @@
             @click="clickStopIndex"
           />
         </div>
-      </template>
+      </template> -->
 
       <template v-if="selectedFolder !== ''">
         <!-- Images -->

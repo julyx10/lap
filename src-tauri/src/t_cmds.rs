@@ -183,8 +183,22 @@ pub fn get_query_time_line(params: QueryParams) -> Result<Vec<ATimeLine>, String
 
 /// get query file
 #[tauri::command]
-pub fn get_query_files(params: QueryParams, offset: i64, limit: i64) -> Result<Vec<AFile>, String> {
-    AFile::get_query_files(&params, offset, limit)
+pub fn get_query_files(
+    state: State<t_ai::AiState>,
+    params: QueryParams,
+    offset: i64,
+    limit: i64,
+) -> Result<Vec<AFile>, String> {
+    let embedding = if !params.search_image_text.is_empty() {
+        let mut engine = state.0.lock().unwrap();
+        // Return error if encoding fails, or maybe just log and ignore?
+        // Better to return error so user knows why it failed.
+        Some(engine.encode_text(&params.search_image_text)?)
+    } else {
+        None
+    };
+
+    AFile::get_query_files(&params, offset, limit, embedding)
         .map_err(|e| format!("Error while getting all files: {}", e))
 }
 

@@ -19,7 +19,7 @@
       ]"
       @click="config.home.optionIndex = 0; isSearchFocused = false; config.home.searchHistoryIndex = -1"
     >
-      <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
+      <IconHome class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
         {{ $t('home.all_files') }}
       </div>
@@ -36,6 +36,20 @@
       <IconCalendarDay class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
         {{ $t('home.on_this_day') }}
+      </div>
+    </div>
+
+    <!-- search similar images -->
+    <div 
+      :class="[ 
+        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
+        config.home.optionIndex === 2 ? 'text-primary bg-base-100' : 'hover:text-base-content',
+      ]"
+      @click="config.home.optionIndex = 2; isSearchFocused = false; config.home.searchHistoryIndex = -1"
+    >
+      <IconImageSearch class="mx-1 w-5 h-5 shrink-0" />
+      <div class="overflow-hidden whitespace-pre text-ellipsis">
+        {{ $t('home.similar_images') }}
       </div>
     </div>
 
@@ -74,16 +88,16 @@
     </div>
 
     <!-- search history -->
-    <div v-for="(item, index) in config.home.searchHistory"  :key="index">
-      <div 
+    <div class="overflow-y-auto" >
+      <div v-for="(item, index) in config.home.searchHistory" :key="index"
         class="mx-2 p-2 text-sm rounded-box flex items-center"
         :class="[ 
-          'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
+          'mx-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
           config.home.searchHistoryIndex === index ? 'text-primary bg-base-100' : 'hover:text-base-content',
         ]"
         @click="handleSearchHistoryClick(index, item)"
       >
-        {{ item }}
+        <span class="overflow-hidden whitespace-pre text-ellipsis">- {{ item }}</span>
         <ContextMenu
           :class="[
             'ml-auto flex flex-row items-center text-base-content/30',
@@ -95,7 +109,12 @@
         />
       </div>  
     </div>
-  </div> 
+
+    <!-- tips -->
+    <div v-if="config.home.searchHistory.length === 0" class="px-2 mt-2 text-sm text-base-content/30">
+      {{ $t('home.image_search_tips') }}
+    </div>
+  </div>
 
   <!-- clear history messagebox -->
   <MessageBox
@@ -119,7 +138,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
 
-import { IconMore, IconTrash, IconCalendarDay, IconPhotoAll, IconBolt } from '@/common/icons';
+import { IconMore, IconTrash, IconCalendarDay, IconHome, IconBolt, IconSimilar, IconImageSearch } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({

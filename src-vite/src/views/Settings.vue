@@ -300,7 +300,6 @@ const storageFileInfo = ref('');
 
 const languages = [
   { label: 'English', value: 'en' },
-  { label: '日本語',  value: 'ja' },
   { label: '中文',    value: 'zh' },
 ];
 

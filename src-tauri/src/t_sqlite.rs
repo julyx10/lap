@@ -1367,8 +1367,6 @@ impl AFile {
         let mut conditions = Vec::new();
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
-        if !params.search_image_text.is_empty() {}
-
         if !params.search_file_name.is_empty() {
             conditions.push("a.name LIKE ? COLLATE NOCASE");
             sql_params.push(Box::new(format!("%{}%", params.search_file_name)));
@@ -1452,9 +1450,100 @@ impl AFile {
         params: &QueryParams,
         offset: i64,
         limit: i64,
+        query_embedding: Option<Vec<f32>>,
     ) -> Result<Vec<Self>, String> {
         let (where_clause, sql_params) = Self::build_search_query(params);
 
+        if let Some(embedding) = query_embedding {
+            // Hybrid search: SQL filter + Vector Similarity
+
+            // 1. Fetch params matching SQL conditions (id, embeds)
+            // We need to join tables because conditions might involve them
+            // Reuse logic from build_base_query for JOINs, but only select id and embeds
+            let mut query = "SELECT a.id, a.embeds FROM afiles a 
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id"
+                .to_string();
+
+            if where_clause.is_empty() {
+                query.push_str(" WHERE a.embeds IS NOT NULL");
+            } else {
+                query.push_str(&where_clause);
+                query.push_str(" AND a.embeds IS NOT NULL");
+            }
+
+            let conn = open_conn()?;
+            let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+            let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+
+            let rows = stmt
+                .query_map(final_params.as_slice(), |row| {
+                    let id: i64 = row.get(0)?;
+                    let embeds_blob: Vec<u8> = row.get(1)?;
+                    Ok((id, embeds_blob))
+                })
+                .map_err(|e| e.to_string())?;
+
+            let mut scores: Vec<(i64, f32)> = Vec::new();
+
+            // Debug: print query embedding length
+            println!("[AI Search] Query embedding length: {}", embedding.len());
+            let mut match_count = 0;
+
+            for row in rows {
+                let (id, embeds_blob) = row.map_err(|e| e.to_string())?;
+
+                // Convert blob to Vec<f32>
+                let file_embedding: Vec<f32> = embeds_blob
+                    .chunks_exact(4)
+                    .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+                    .collect();
+
+                match_count += 1;
+                let score = Self::cosine_similarity(&embedding, &file_embedding);
+
+                // Threshold filtering
+                if score > 0.25 {
+                    scores.push((id, score));
+                }
+            }
+
+            println!(
+                "[AI Search] Matched: {}, Kept: {}",
+                match_count,
+                scores.len()
+            );
+
+            // 2. Sort by similarity score descending
+            scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+            // 3. Apply paging
+            let start = offset as usize;
+            if start >= scores.len() {
+                return Ok(Vec::new());
+            }
+            let end = (start + limit as usize).min(scores.len());
+            let top_ids: Vec<i64> = scores[start..end].iter().map(|(id, _)| *id).collect();
+
+            if top_ids.is_empty() {
+                return Ok(Vec::new());
+            }
+
+            // 4. Fetch full file info for result IDs
+            // We fetch them and map to the original order
+            let mut results = Vec::new();
+            // Fetch individually to preserve order (or use IN and map)
+            // Since limit is small (e.g. 50), individual fetches are acceptable for SQLite local DB.
+            for id in top_ids {
+                if let Ok(Some(file)) = Self::get_file_info(id) {
+                    results.push(file);
+                }
+            }
+
+            return Ok(results);
+        }
+
+        // Standard SQL-only search
         let mut query = Self::build_base_query();
         query.push_str(&where_clause);
 

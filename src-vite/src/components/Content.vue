@@ -13,11 +13,7 @@
     </transition>
 
     <!-- title bar -->
-    <div :class="
-      [
-        'absolute top-0 left-1 right-1 px-1 h-12 flex flex-row flex-wrap items-center justify-between z-30',
-        config.content.showQuickView ? 'bg-base-300': 'bg-base-300/80 backdrop-blur-md'
-      ]" 
+    <div class="absolute top-0 left-1 right-1 px-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-md z-30" 
       data-tauri-drag-region
     >
       <!-- title -->
@@ -203,7 +199,7 @@
 
         <!-- Quick View Overlay -->
         <div v-if="config.content.showQuickView && fileList[selectedItemIndex]" 
-          class="absolute inset-0 z-[60] mt-12 flex items-center justify-center bg-base-200 overflow-hidden"
+          class="absolute inset-0 z-[60] mt-12 flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
           :class="[config.settings.showStatusBar ? 'mb-8': 'mb-1']"
         >
           <!-- Close Button -->
@@ -270,13 +266,9 @@
       </transition>
     </div>
 
-
     <!-- status bar -->
     <div v-if="config.settings.showStatusBar"
-      :class="[
-        'absolute px-2 h-8 bottom-0 left-0 right-0 z-30 flex gap-4 text-sm cursor-default',
-        config.content.showQuickView ? 'bg-base-300': 'bg-base-300/80 backdrop-blur-md'
-      ]"
+      class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 flex gap-4 text-sm cursor-default bg-base-300/80 backdrop-blur-md"
     >
       <div class="flex items-center gap-1 flex-shrink-0">
         <IconFileSearch class="t-icon-size-xs" />
@@ -320,6 +312,14 @@
           <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
         </div>
       </template>
+    </div>
+
+    <!-- image indexing status -->
+    <div class="absolute bottom-0 right-4 h-8 flex items-center gap-2 text-xs text-base-content/70 bg-base-300/0 backdrop-blur-md z-50">
+      <IconSeparator class="h-6 w-6 text-base-content/30" />
+      <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
+      <div class="w-3 h-4 loading loading-bars"></div>
+      <span>{{ $t('album.edit.indexing') + ' (' + 1234 + '/' + 123456 + ')' }}</span>
     </div>
   </div>
 
@@ -470,7 +470,9 @@ import {
   IconRight,
   IconSeparator,
   IconZoomIn,
-  IconZoomOut
+  IconZoomOut,
+  IconPlay,
+  IconPause
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;

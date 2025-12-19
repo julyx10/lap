@@ -30,7 +30,7 @@
       <div class="rounded-box p-2 space-y-2 border border-base-content/5">
         <div class="flex items-center gap-2">
           <IconFileInfo class="w-4 h-4" /> 
-          <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.file_info') }}</span>
+          <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.title') }}</span>
         </div>
         
         <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
@@ -39,7 +39,7 @@
           <div class="text-base-content/70 break-all">{{ fileInfo?.album_name }}</div>
 
           <!-- Path -->
-          <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.path') }}</div>
+          <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.folder') }}</div>
           <div class="text-base-content/70 break-all">{{ getFolderPath(fileInfo?.file_path) }}</div>
 
           <!-- Name -->

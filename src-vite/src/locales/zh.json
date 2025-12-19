@@ -11,29 +11,27 @@
     "settings": "设置"
   },
   "home": {
-    "title": "主页",
     "all_files": "所有文件",
-    "on_this_day": "今日照片",
+    "on_this_day": "历史上的今天",
+    "similar_images": "相似图片",
     "image_search": "图片搜索",
     "image_search_placeholder": "按文本搜索图片",
-    "image_search_history": "搜索历史"
+    "image_search_history": "搜索历史",
+    "image_search_tips": "输入图片描述。例如，输入\"sunset over the ocean\"来找到匹配的照片。",
+    "indexing": "索引中...",
+    "index_paused": "索引暂停",
+    "index_resume": "继续索引",
+    "indexed": "索引完成"
   },
   "album": {
     "edit": {
       "title_add": "添加相册",
       "title": "编辑相册",
-      "folder": "相册文件夹",
+      "folder": "文件夹",
       "select_folder": "选择文件夹",
-      "name": "相册名",
+      "name": "名称",
       "description": "描述",
       "description_placeholder": "输入相册描述",
-      "index": "图片索引",
-      "generate_index": "生成索引",
-      "indexing": "索引生成中...",
-      "indexed": "索引生成完成",
-      "generate_index_description": "生成索引后，图片可以被文本搜索",
-      "hidden": "隐藏",
-      "hidden_description": "隐藏相册仅在相册列表中显示",
       "images": "图片",
       "videos": "视频",
       "files_count": "{count} 个文件 ({size})",
@@ -118,11 +116,11 @@
       "select_mode": "选择",
       "select_count": "已选择 {count}",
       "sort_type_options": [
+        "时间",
+        "相关",
         "名称",
         "大小",
         "尺寸",
-        "时长",
-        "时间",
         "随机"
       ],
       "sort_order_options": [
@@ -134,10 +132,6 @@
         "图片",
         "视频"
       ]
-    },
-    "preview": {
-      "show": "显示预览",
-      "hide": "隐藏预览"
     }
   },
   "info_panel": {
@@ -187,53 +181,46 @@
     },
     "home": {
       "clear_history": "清空查询历史",
-      "delete": "删除"
+      "delete": "删除",
+      "pin": "固定",
+      "unpin": "取消固定"
     },
     "album": {
-      "add": "添加相册",
-      "edit": "编辑相册",
+      "add": "添加相册...",
+      "edit": "编辑相册...",
       "hide": "隐藏",
-      "unhide": "显示",
+      "unhide": "取消隐藏",
       "remove": "从相册中移除",
       "refresh": "刷新",
       "reorder": "重新排列"
     },
     "file": {
-      "new_folder": "新建文件夹",
-      "view": "查看",
-      "quick_view": "快速预览",
-      "view_in_new_window": "在新窗口中查看",
+      "new_folder": "新建文件夹...",
+      "view_in_new_window": "在新窗口中查看...",
       "copy": "复制到剪贴板",
-      "edit": "编辑图片",
-      "update_file_index": "更新文件索引",
+      "edit": "编辑图片...",
+      "search_similar_images": "搜索相似图片",
       "print": "打印",
       "rename": "重命名",
-      "move_to": "移动到",
-      "copy_to": "复制到",
+      "move_to": "移动到...",
+      "copy_to": "复制到...",
       "move_to_trash": "移到废纸篓",
       "delete": "删除",
       "goto_album": "前往相册",
-      "reveal_in_finder": "在访达中显示",
-      "reveal_in_file_explorer": "在文件资源管理器中显示",
-      "refresh": "刷新",
-      "information": "信息",
-      "lock_view": "锁定视图",
-      "unlock_view": "解锁视图"
+      "reveal_in_finder": "在访达中显示...",
+      "reveal_in_file_explorer": "在文件资源管理器中显示..."
     },
     "tag": {
-      "rename": "重命名标签",
-      "delete": "删除标签"
+      "rename": "重命名",
+      "delete": "删除"
     },
     "meta": {
       "favorite": "收藏",
       "unfavorite": "取消收藏",
-      "tag": "标签",
-      "rotate": "旋转显示",
-      "comment": "备注"
-    },
-    "remove": "移除",
-    "delete": "删除",
-    "refresh": "刷新"
+      "tag": "标签...",
+      "comment": "备注...",
+      "rotate": "旋转显示"
+    }
   },
   "msgbox": {
     "ok": "确定",
@@ -357,8 +344,8 @@
       "crop_shape_landscape": "横屏",
       "crop_shape_portrait": "竖屏",
       "aspect_ratio": "宽高比",
-      "fix_crop_box": "固定裁剪框",
-      "resize_crop_box": "调整裁剪框",
+      "zoom_in": "放大",
+      "zoom_out": "缩小",
       "rotate_left": "逆时针旋转",
       "rotate_right": "顺时针旋转",
       "flip_horizontal": "水平翻转",
@@ -394,12 +381,11 @@
     }
   },
   "file_info": {
-    "title": "信息",
-    "file_info": "文件信息",
+    "title": "文件信息",
     "metadata": "元数据",
     "album_name": "相册",
     "name": "文件名",
-    "path": "路径",
+    "folder": "文件夹",
     "dimension": "尺寸",
     "size": "大小",
     "duration": "时长",
@@ -473,8 +459,6 @@
       "info": "信息",
       "save": "保存",
       "delete": "删除",
-      "lock": "锁定视图",
-      "unlock": "解锁视图",
       "fullscreen": "全屏",
       "exit_fullscreen": "退出全屏",
       "pin": "固定工具栏",
@@ -607,6 +591,16 @@
         "中(240px)",
         "大(320px)",
         "特大(400px)"
+      ]
+    },
+    "image_search": {
+      "title": "图片搜索",
+      "similarity": "图片相似度",
+      "similarity_options": [
+        "极高",
+        "高",
+        "中",
+        "低"
       ]
     },
     "about": {

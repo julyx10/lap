@@ -89,7 +89,7 @@
               </select>
               <TButton
                 :icon="cropBoxFixed ? IconZoomOut : IconZoomIn"
-                :tooltip="cropBoxFixed ? $t('msgbox.image_editor.resize_crop_box') : $t('msgbox.image_editor.fix_crop_box')"
+                :tooltip="cropBoxFixed ? $t('msgbox.image_editor.zoom_out') : $t('msgbox.image_editor.zoom_in')"
                 @click="toggleCropBoxFixed"
               />
               <TButton

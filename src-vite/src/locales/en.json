@@ -11,29 +11,27 @@
     "settings": "Settings"
   },
   "home": {
-    "title": "Home",
     "all_files": "All Files",
     "on_this_day": "On this day",
+    "similar_images": "Similar Images",
     "image_search": "Image Search",
     "image_search_placeholder": "Search images by text",
-    "image_search_history": "Search History"
+    "image_search_history": "Search History",
+    "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find matching photos.",
+    "indexing": "Indexing...",
+    "index_paused": "Indexing paused",
+    "index_resume": "Resume indexing",
+    "indexed": "Indexed"
   },
   "album": {
     "edit": {
       "title_add": "Add album",
       "title": "Edit album",
-      "folder": "Album Folder",
+      "folder": "Folder",
       "select_folder": "Select a folder",
-      "name": "Album Name",
+      "name": "Name",
       "description": "Description",
       "description_placeholder": "Enter album's description",
-      "index": "Image index",
-      "generate_index": "Generate index",
-      "indexing": "Indexing...",
-      "indexed": "Indexed",
-      "generate_index_description": "Images with index can be searched by text",
-      "hidden": "Hidden",
-      "hidden_description": "Hidden album will only be shown in the album list",
       "images": "Images",
       "videos": "Videos",
       "files_count": "{count} files ({size})",
@@ -118,11 +116,11 @@
       "select_mode": "Select",
       "select_count": "{count} selected",
       "sort_type_options": [
+        "Time",
+        "Relevance",
         "Name",
         "Size",
         "Dimension",
-        "Duration",
-        "Time",
         "Random"
       ],
       "sort_order_options": [
@@ -134,10 +132,6 @@
         "Images",
         "Videos"
       ]
-    },
-    "preview": {
-      "show": "Show preview",
-      "hide": "Hide preview"
     }
   },
   "info_panel": {
@@ -187,11 +181,13 @@
     },
     "home": {
       "clear_history": "Clear search history",
-      "delete": "Delete"
+      "delete": "Delete",
+      "pin": "Pin",
+      "unpin": "Unpin"
     },
     "album": {
-      "add": "Add album",
-      "edit": "Edit album",
+      "add": "Add album...",
+      "edit": "Edit album...",
       "hide": "Hide",
       "unhide": "Unhide",
       "remove": "Remove from albums",
@@ -199,41 +195,32 @@
       "reorder": "Reorder"
     },
     "file": {
-      "new_folder": "New folder",
-      "view": "View",
-      "quick_view": "Quick view",
-      "view_in_new_window": "View in new window",
+      "new_folder": "New folder...",
+      "view_in_new_window": "View in new window...",
       "copy": "Copy to clipboard",
-      "edit": "Edit image",
-      "update_file_index": "Update file index",
+      "edit": "Edit image...",
+      "search_similar_images": "Search similar images",
       "print": "Print",
       "rename": "Rename",
-      "move_to": "Move to",
-      "copy_to": "Copy to",
+      "move_to": "Move to...",
+      "copy_to": "Copy to...",
       "move_to_trash": "Move to trash",
       "delete": "Delete",
       "goto_album": "Go to album",
-      "reveal_in_finder": "Reveal in Finder",
-      "reveal_in_file_explorer": "Reveal in File Explorer",
-      "refresh": "Refresh",
-      "information": "Info",
-      "lock_view": "Lock view",
-      "unlock_view": "Unlock view"
+      "reveal_in_finder": "Reveal in Finder...",
+      "reveal_in_file_explorer": "Reveal in File Explorer..."
     },
     "tag": {
-      "rename": "Rename tag",
-      "delete": "Delete tag"
+      "rename": "Rename",
+      "delete": "Delete"
     },
     "meta": {
       "favorite": "Favorite",
       "unfavorite": "Unfavorite",
-      "tag": "Tag",
-      "rotate": "Rotate display",
-      "comment": "Comment"
-    },
-    "remove": "Remove",
-    "delete": "Delete",
-    "refresh": "Refresh"
+      "tag": "Tag...",
+      "comment": "Comment...",
+      "rotate": "Rotate display"
+    }
   },
   "msgbox": {
     "ok": "OK",
@@ -357,8 +344,8 @@
       "crop_shape_landscape": "Landscape",
       "crop_shape_portrait": "Portrait",
       "aspect_ratio": "Aspect ratio",
-      "fix_crop_box": "Fix crop box",
-      "resize_crop_box": "Resize crop box",
+      "zoom_in": "Zoom in",
+      "zoom_out": "Zoom out",
       "rotate_left": "Rotate left",
       "rotate_right": "Rotate right",
       "flip_horizontal": "Flip horizontal",
@@ -394,12 +381,11 @@
     }
   },
   "file_info": {
-    "title": "Info",
-    "file_info": "File info",
+    "title": "File info",
     "metadata": "Metadata",
     "album_name": "Album",
     "name": "File name",
-    "path": "Path",
+    "folder": "Folder",
     "dimension": "Dimension",
     "size": "Size",
     "duration": "Duration",
@@ -473,8 +459,6 @@
       "info": "Info",
       "save": "Save",
       "delete": "Delete",
-      "lock": "Lock view",
-      "unlock": "Unlock view",
       "fullscreen": "Fullscreen",
       "exit_fullscreen": "Exit fullscreen",
       "pin": "Pin toolbar",
@@ -607,6 +591,16 @@
         "Medium(240px)",
         "Large(320px)",
         "Extra Large(400px)"
+      ]
+    },
+    "image_search": {
+      "title": "Image search",
+      "similarity": "Image similarity",
+      "similarity_options": [
+        "Very high",
+        "High",
+        "Medium",
+        "Low"
       ]
     },
     "about": {

@@ -143,6 +143,7 @@ import {
   IconTrash,
   IconFavorite,
   IconUnFavorite,
+  IconCopyTo,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -236,7 +237,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.file.copy_to,
-      // icon: IconCopyTo,
+      icon: IconCopyTo, 
       action: () => {
         showCopyTo.value = true;  // show copy-to message box
       }

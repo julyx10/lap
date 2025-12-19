@@ -32,6 +32,9 @@ export { default as IconFileSearch } from '@/assets/icons/file-search.svg';
 export { default as IconError } from '@/assets/icons/error.svg';
 export { default as IconLink } from '@/assets/icons/link.svg';
 export { default as IconGoto } from '@/assets/icons/goto.svg';
+export { default as IconHistory } from '@/assets/icons/history.svg';
+export { default as IconSimilar } from '@/assets/icons/similar.svg';
+export { default as IconImageSearch } from '@/assets/icons/image-search.svg';
 
 // ======================
 // VIEW CONTROL ICONS

@@ -799,15 +799,15 @@ export async function getStorageFileInfo() {
 // ai
 
 // check ai status
-export async function checkAiStatus() {
-  try {
-    const status = await invoke('check_ai_status');
-    return status;
-  } catch (error) {
-    console.error('checkAiStatus error:', error);
-  }
-  return 'Unknown';
-}
+// export async function checkAiStatus() {
+//   try {
+//     const status = await invoke('check_ai_status');
+//     return status;
+//   } catch (error) {
+//     console.error('checkAiStatus error:', error);
+//   }
+//   return 'Unknown';
+// }
 
 // generate embedding
 export async function generateEmbedding(fileId) {
@@ -821,27 +821,40 @@ export async function generateEmbedding(fileId) {
 }
 
 // search images
-export async function searchImages(query, limit) {
-  try {
-    const results = await invoke('search_images', { query, limit });
-    if (results) {
-      return results;
-    }
-  } catch (error) {
-    console.error('searchImages error:', error);
-  }
-  return [];
-}
+// export async function searchImages(query, limit) {
+//   try {
+//     const results = await invoke('search_images', { query, limit });
+//     if (results) {
+//       return results;
+//     }
+//   } catch (error) {
+//     console.error('searchImages error:', error);
+//   }
+//   return [];
+// }
 
 // search image IDs with scores (for testing)
-export async function searchImageIds(query, limit) {
+// export async function searchImageIds(query, limit) {
+//   try {
+//     const results = await invoke('search_image_ids', { query, limit });
+//     if (results) {
+//       return results;
+//     }
+//   } catch (error) {
+//     console.error('searchImageIds error:', error);
+//   }
+//   return [];
+// }
+
+// search similar to image
+export async function searchSimilarToImage(fileId, limit) {
   try {
-    const results = await invoke('search_image_ids', { query, limit });
+    const results = await invoke('search_similar_to_image', { fileId, limit });
     if (results) {
       return results;
     }
   } catch (error) {
-    console.error('searchImageIds error:', error);
+    console.error('searchSimilarToImage error:', error);
   }
   return [];
 }

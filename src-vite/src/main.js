@@ -11,7 +11,6 @@ import '@/assets/app.css'
 
 // I18n
 import en from '@/locales/en.json'
-import ja from '@/locales/ja.json'
 import zh from '@/locales/zh.json'
 
 // Create the app instance
@@ -30,7 +29,6 @@ const i18n = createI18n({
   fallbackLocale: "en",
   messages: {
     en,
-    ja,
     zh
   },
 })
@@ -47,9 +45,6 @@ app.mount('#app')
 console.log('App mounted', app)
 
 // Listen for events
-// listen('settings-settingsTabIndex-changed', (event) => {
-//   config.setSettingsTabIndex(event.payload)
-// })
 listen('settings-appearance-changed', (event) => {
   config.setAppearance(event.payload)
 })
@@ -109,4 +104,10 @@ listen('settings-navigatorViewSize-changed', (event) => {
 })
 listen('settings-showComment-changed', (event) => {
   config.setShowComment(event.payload)
+})
+listen('settings-imageSearchThresholdIndex-changed', (event) => {
+  config.setImageSearchThresholdIndex(event.payload)
+})
+listen('settings-imageSearchLimit-changed', (event) => {
+  config.setImageSearchLimit(event.payload)
 })
