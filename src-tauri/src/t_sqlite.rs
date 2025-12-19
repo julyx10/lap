@@ -1,3 +1,4 @@
+use crate::t_ai;
 /**
  * SQLite database operations.
  * project: jc-photo
@@ -16,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
+use tauri::State;
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -486,6 +488,9 @@ pub struct QueryParams {
     pub is_favorite: bool,
     pub is_show_hidden: bool,
     pub tag_id: i64,
+    pub similar_image_id: Option<i64>,
+    pub image_search_limit: i64,
+    pub image_search_threshold: f32,
 }
 
 impl AFile {
@@ -1073,101 +1078,6 @@ impl AFile {
         })
     }
 
-    /// Update embedding for a file
-    pub fn update_embedding(file_id: i64, embedding: Vec<f32>) -> Result<usize, String> {
-        // Convert Vec<f32> to Vec<u8>
-        let mut bytes = Vec::with_capacity(embedding.len() * 4);
-        for val in embedding {
-            bytes.extend_from_slice(&val.to_le_bytes());
-        }
-
-        let conn = open_conn()?;
-        let result = conn
-            .execute(
-                "UPDATE afiles SET embeds = ?1 WHERE id = ?2",
-                params![bytes, file_id],
-            )
-            .map_err(|e| e.to_string())?;
-        Ok(result)
-    }
-
-    /// Search similar images using cosine similarity
-    pub fn search_similar_images(
-        query_embedding: Vec<f32>,
-        limit: usize,
-    ) -> Result<Vec<Self>, String> {
-        let conn = open_conn()?;
-
-        // Fetch id and embeds only for performance
-        let mut stmt = conn
-            .prepare("SELECT id, embeds FROM afiles WHERE embeds IS NOT NULL")
-            .map_err(|e| e.to_string())?;
-
-        let rows = stmt
-            .query_map([], |row| {
-                let id: i64 = row.get(0)?;
-                let embeds_blob: Vec<u8> = row.get(1)?;
-                Ok((id, embeds_blob))
-            })
-            .map_err(|e| e.to_string())?;
-
-        let mut scores: Vec<(i64, f32)> = Vec::new();
-
-        // Calculate similarity
-        for row in rows {
-            let (id, embeds_blob) = row.map_err(|e| e.to_string())?;
-
-            // Convert blob back to Vec<f32>
-            let embedding: Vec<f32> = embeds_blob
-                .chunks_exact(4)
-                .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
-                .collect();
-
-            if embedding.len() != query_embedding.len() {
-                continue;
-            }
-
-            let score = Self::cosine_similarity(&query_embedding, &embedding);
-            scores.push((id, score));
-        }
-
-        // Sort by score descending
-        scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-        // Take top limit
-        let top_ids: Vec<i64> = scores.into_iter().take(limit).map(|(id, _)| id).collect();
-
-        if top_ids.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        // Fetch full file info for top ids
-        // SQLite doesn't have a simple order by list, so we fetch and re-order in Rust or just return in arbitrary order
-        // (but user usually expects relevance order).
-        // Let's fetch one by one or using IN + re-sort.
-        // For 50 items, fetching one by one is fine locally.
-        let mut results = Vec::new();
-        for id in top_ids {
-            if let Ok(Some(file)) = Self::get_file_info(id) {
-                results.push(file);
-            }
-        }
-
-        Ok(results)
-    }
-
-    fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
-        let dot_product: f32 = a.iter().zip(b).map(|(x, y)| x * y).sum();
-        let norm_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
-        let norm_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
-
-        if norm_a == 0.0 || norm_b == 0.0 {
-            0.0
-        } else {
-            dot_product / (norm_a * norm_b)
-        }
-    }
-
     // query the count and sum by sql
     fn query_count_and_sum(
         sql: &str,
@@ -1363,7 +1273,7 @@ impl AFile {
     }
 
     // helper to build search query conditions and params
-    fn build_search_query(params: &QueryParams) -> (String, Vec<Box<dyn ToSql>>) {
+    fn build_where_clause(params: &QueryParams) -> (String, Vec<Box<dyn ToSql>>) {
         let mut conditions = Vec::new();
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
@@ -1436,23 +1346,111 @@ impl AFile {
         (where_clause, sql_params)
     }
 
-    // get query count and sum
-    pub fn get_query_count_and_sum(params: &QueryParams) -> Result<(i64, i64), String> {
-        let (where_clause, sql_params) = Self::build_search_query(params);
-        let sql = format!("{}{}", Self::build_count_query(), where_clause);
+    /// get query count and sum
+    pub fn get_query_count_and_sum(
+        state: &State<t_ai::AiState>,
+        params: &QueryParams,
+    ) -> Result<(i64, i64), String> {
+        let embedding = Self::get_query_embedding(&state, &params)?;
+        let (where_clause, sql_params) = Self::build_where_clause(params);
+
+        // Hybrid search: SQL filter + Vector Similarity
+        if let Some(embedding) = embedding {
+            // Fetch id, embeds, and size (for sum)
+            let mut query = "SELECT a.id, a.embeds, a.size FROM afiles a 
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id"
+                .to_string();
+
+            if where_clause.is_empty() {
+                query.push_str(" WHERE a.embeds IS NOT NULL");
+            } else {
+                query.push_str(&where_clause);
+                query.push_str(" AND a.embeds IS NOT NULL");
+            }
+
+            let conn = open_conn()?;
+            let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+            let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+
+            let rows = stmt
+                .query_map(final_params.as_slice(), |row| {
+                    let id: i64 = row.get(0)?;
+                    let embeds_blob: Vec<u8> = row.get(1)?;
+                    let size: i64 = row.get(2)?;
+                    Ok((id, embeds_blob, size))
+                })
+                .map_err(|e| e.to_string())?;
+
+            let mut all_matches: Vec<(f32, i64)> = Vec::new();
+
+            for row in rows {
+                let (_, embeds_blob, size) = row.map_err(|e| e.to_string())?;
+
+                // Convert blob to Vec<f32>
+                let file_embedding: Vec<f32> = embeds_blob
+                    .chunks_exact(4)
+                    .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+                    .collect();
+
+                let score = Self::cosine_similarity(&embedding, &file_embedding);
+
+                let threshold = if params.image_search_threshold > 0.0 {
+                    params.image_search_threshold
+                } else {
+                    0.25
+                };
+                // Threshold filtering matching get_query_files
+                if score > threshold {
+                    all_matches.push((score, size));
+                }
+            }
+
+            // Sort by score descending to get the best matches
+            all_matches.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+
+            // Cap results
+            let limit = if params.image_search_limit > 0 {
+                params.image_search_limit as usize
+            } else {
+                all_matches.len()
+            };
+
+            let final_matches = if all_matches.len() > limit {
+                &all_matches[0..limit]
+            } else {
+                &all_matches[..]
+            };
+
+            let count = final_matches.len() as i64;
+            let total_size = final_matches.iter().map(|(_, size)| *size).sum();
+
+            return Ok((count, total_size));
+        }
+
+        // Standard SQL-only search
+        let sql = format!(
+            "SELECT COUNT(a.id), SUM(a.size) FROM afiles a 
+            LEFT JOIN afolders b ON a.folder_id = b.id 
+            LEFT JOIN albums c ON b.album_id = c.id
+            {}",
+            where_clause
+        );
 
         let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+
         Self::query_count_and_sum(&sql, &final_params)
     }
 
     // get query files
     pub fn get_query_files(
+        state: &State<t_ai::AiState>,
         params: &QueryParams,
         offset: i64,
         limit: i64,
-        query_embedding: Option<Vec<f32>>,
     ) -> Result<Vec<Self>, String> {
-        let (where_clause, sql_params) = Self::build_search_query(params);
+        let query_embedding = Self::get_query_embedding(&state, &params)?;
+        let (where_clause, sql_params) = Self::build_where_clause(params);
 
         if let Some(embedding) = query_embedding {
             // Hybrid search: SQL filter + Vector Similarity
@@ -1502,8 +1500,13 @@ impl AFile {
                 match_count += 1;
                 let score = Self::cosine_similarity(&embedding, &file_embedding);
 
+                let threshold = if params.image_search_threshold > 0.0 {
+                    params.image_search_threshold
+                } else {
+                    0.25
+                };
                 // Threshold filtering
-                if score > 0.25 {
+                if score > threshold {
                     scores.push((id, score));
                 }
             }
@@ -1516,6 +1519,11 @@ impl AFile {
 
             // 2. Sort by similarity score descending
             scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+            // Cap results by image_search_limit
+            if params.image_search_limit > 0 && scores.len() > params.image_search_limit as usize {
+                scores.truncate(params.image_search_limit as usize);
+            }
 
             // 3. Apply paging
             let start = offset as usize;
@@ -1549,13 +1557,13 @@ impl AFile {
 
         // sort
         match params.sort_type {
-            0 => query.push_str(" ORDER BY a.name_pinyin"),
-            1 => query.push_str(" ORDER BY a.size"),
-            2 => query.push_str(" ORDER BY a.width, a.height"),
-            3 => query.push_str(" ORDER BY a.duration"),
-            4 => query.push_str(" ORDER BY a.taken_date"),
-            5 => query.push_str(" ORDER BY RANDOM()"),
-            _ => query.push_str(" ORDER BY a.name_pinyin"),
+            0 => query.push_str(" ORDER BY a.taken_date"), // Time
+            // 1 => NYI, // Relevance
+            2 => query.push_str(" ORDER BY a.name_pinyin"), // Name
+            3 => query.push_str(" ORDER BY a.size"),        // Size
+            4 => query.push_str(" ORDER BY a.width, a.height"), // Dimension
+            5 => query.push_str(" ORDER BY RANDOM()"),      // Random
+            _ => query.push_str(" ORDER BY a.taken_date"),  // Default to time
         }
         match params.sort_order {
             0 => query.push_str(" ASC"),
@@ -1574,16 +1582,19 @@ impl AFile {
 
     // get query timeline markers
     pub fn get_query_time_line(params: &QueryParams) -> Result<Vec<ATimeLine>, String> {
-        // Only process for time-based sorts (4=taken_date)
-        if params.sort_type != 4 {
+        // Only process for time-based sorts (0=taken_date) and non-AI searches
+        if params.sort_type != 0
+            || params.similar_image_id.is_some()
+            || !params.search_image_text.is_empty()
+        {
             return Ok(Vec::new());
         }
 
-        let (where_clause, sql_params) = Self::build_search_query(params);
+        let (where_clause, sql_params) = Self::build_where_clause(params);
 
         // Determine date field and extraction logic based on sort_type
         let (date_field, year_extract, month_extract, date_extract) = match params.sort_type {
-            4 => (
+            0 => (
                 "a.taken_date",
                 "CAST(strftime('%Y', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
                 "CAST(strftime('%m', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
@@ -1637,6 +1648,176 @@ impl AFile {
             .map_err(|e| e.to_string())?;
 
         Ok(timelines)
+    }
+
+    // --- AI Logic ---
+
+    /// get query embedding from search text or similar image id
+    pub fn get_query_embedding(
+        state: &State<t_ai::AiState>,
+        params: &QueryParams,
+    ) -> Result<Option<Vec<f32>>, String> {
+        if !params.search_image_text.is_empty() {
+            let mut engine = state.0.lock().unwrap();
+            Ok(Some(engine.encode_text(&params.search_image_text)?))
+        } else if let Some(file_id) = params.similar_image_id {
+            Ok(Some(Self::get_embedding_by_id(file_id)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn get_embedding_by_id(file_id: i64) -> Result<Vec<f32>, String> {
+        let conn = open_conn()?;
+        let embeds_blob: Vec<u8> = conn
+            .query_row(
+                "SELECT embeds FROM afiles WHERE id = ?1 AND embeds IS NOT NULL",
+                params![file_id],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Image embedding not found".to_string())?;
+
+        let embedding: Vec<f32> = embeds_blob
+            .chunks_exact(4)
+            .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+            .collect();
+
+        Ok(embedding)
+    }
+
+    /// generate embedding for a file
+    pub fn generate_embedding(
+        state: &State<t_ai::AiState>,
+        file_id: i64,
+    ) -> Result<String, String> {
+        // 1. Fetch file info to get path
+        let file_opt = Self::get_file_info(file_id).map_err(|e| e.to_string())?;
+        let file = file_opt.ok_or("File not found")?;
+
+        // 2. Check if it's an image
+        // file_type: 1 is image, 3 is HEIC
+        if file.file_type != Some(1) && file.file_type != Some(3) {
+            return Err("File is not an image".to_string());
+        }
+
+        let file_path = file.file_path.ok_or("File path not resolved")?;
+
+        // 3. Generate embedding
+        let mut engine = state.0.lock().unwrap();
+        let embedding = engine.encode_image(&file_path)?;
+
+        // 4. Save to DB
+        let _ =
+            Self::update_embedding(file_id, embedding).map_err(|e| format!("DB Error: {}", e))?;
+
+        Ok("Embedding generated and saved".to_string())
+    }
+
+    /// Update embedding for a file
+    pub fn update_embedding(file_id: i64, embedding: Vec<f32>) -> Result<usize, String> {
+        // Convert Vec<f32> to Vec<u8>
+        let mut bytes = Vec::with_capacity(embedding.len() * 4);
+        for val in embedding {
+            bytes.extend_from_slice(&val.to_le_bytes());
+        }
+
+        let conn = open_conn()?;
+        let result = conn
+            .execute(
+                "UPDATE afiles SET embeds = ?1 WHERE id = ?2",
+                params![bytes, file_id],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// check ai status
+    // pub fn check_ai_status(state: &State<t_ai::AiState>) -> String {
+    //     let engine = state.0.lock().unwrap();
+    //     if engine.is_loaded() {
+    //         "AI Models Loaded".to_string()
+    //     } else {
+    //         "AI Engine Initialized (Models Not Loaded)".to_string()
+    //     }
+    // }
+
+    // pub fn search_similar_image(file_id: i64, limit: usize) -> Result<Vec<Self>, String> {
+    //     let query_embedding = Self::get_embedding_by_id(file_id)?;
+
+    //     let conn = open_conn()?;
+
+    //     // Fetch id and embeds only for performance
+    //     let mut stmt = conn
+    //         .prepare("SELECT id, embeds FROM afiles WHERE embeds IS NOT NULL")
+    //         .map_err(|e| e.to_string())?;
+
+    //     let rows = stmt
+    //         .query_map([], |row| {
+    //             let id: i64 = row.get(0)?;
+    //             let embeds_blob: Vec<u8> = row.get(1)?;
+    //             Ok((id, embeds_blob))
+    //         })
+    //         .map_err(|e| e.to_string())?;
+
+    //     let mut scores: Vec<(i64, f32)> = Vec::new();
+
+    //     // Calculate similarity
+    //     for row in rows {
+    //         let (id, embeds_blob) = row.map_err(|e| e.to_string())?;
+
+    //         // Convert blob back to Vec<f32>
+    //         let embedding: Vec<f32> = embeds_blob
+    //             .chunks_exact(4)
+    //             .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+    //             .collect();
+
+    //         if embedding.len() != query_embedding.len() {
+    //             continue;
+    //         }
+
+    //         let score = Self::cosine_similarity(&query_embedding, &embedding);
+    //         scores.push((id, score));
+    //     }
+
+    //     // Sort by score descending
+    //     scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    //     // Take top limit
+    //     let top_ids: Vec<i64> = scores.into_iter().take(limit).map(|(id, _)| id).collect();
+
+    //     if top_ids.is_empty() {
+    //         return Ok(Vec::new());
+    //     }
+
+    //     // Fetch full file info for top ids
+    //     // SQLite doesn't have a simple order by list, so we fetch and re-order in Rust or just return in arbitrary order
+    //     // (but user usually expects relevance order).
+    //     // Let's fetch one by one or using IN + re-sort.
+    //     // For 50 items, fetching one by one is fine locally.
+    //     let mut results = Vec::new();
+    //     for id in top_ids {
+    //         if let Ok(file) = Self::get_file_info(id) {
+    //             if let Some(f) = file {
+    //                 results.push(f);
+    //             }
+    //         }
+    //     }
+
+    //     Ok(results)
+    // }
+
+    fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+        let dot_product: f32 = a.iter().zip(b).map(|(x, y)| x * y).sum();
+        let norm_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
+        let norm_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
+
+        if norm_a == 0.0 || norm_b == 0.0 {
+            0.0
+        } else {
+            dot_product / (norm_a * norm_b)
+        }
     }
 }
 

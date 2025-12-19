@@ -518,19 +518,19 @@ pub fn get_folder_files(
     } else {
         files.sort_by(|a, b| {
             let ordering = match sort_type {
-                0 => convert_to_pinyin(&a.name.to_lowercase()) // name
+                0 => a.taken_date.cmp(&b.taken_date), // Time
+                // 1 => NYI,     // Relevance
+                2 => convert_to_pinyin(&a.name.to_lowercase()) // name
                     .cmp(&convert_to_pinyin(&b.name.to_lowercase())), // support pinyin
-                1 => a.size.cmp(&b.size), // size
-                2 => {
+                3 => a.size.cmp(&b.size), // size
+                4 => {
                     if a.width == b.width {
                         a.height.cmp(&b.height)
                     } else {
                         a.width.cmp(&b.width)
                     }
                 } // dimension
-                3 => a.duration.cmp(&b.duration), // duration
-                4 => a.taken_date.cmp(&b.taken_date), // taken date
-                _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()), // name
+                _ => a.taken_date.cmp(&b.taken_date), // Default to taken date
             };
             if sort_order == 1 {
                 ordering.reverse()

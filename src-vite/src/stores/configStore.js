@@ -43,6 +43,7 @@ export const useConfigStore = defineStore('configStore', {
     home: {
       optionIndex: 0,          // 0: all files, 1: on this day, 2: similar images, 10: image search
       similarImageId: null,    // similar image id
+      similarImageName: '',    // similar image name
       searchHistory: [],       // search history
       searchHistoryIndex: -1,  // current search history index
     },

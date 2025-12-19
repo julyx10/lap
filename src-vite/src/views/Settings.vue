@@ -11,7 +11,7 @@
       <!-- Tabs -->
       <div class="min-w-32 font-bold">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_viewer.title', 'settings.about.title']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_viewer.title', 'settings.image_search.title', 'settings.about.title']"
           :key="index"
           :class="[
             'mb-4 px-1 border-l-2 cursor-pointer transition-colors duration-300', 
@@ -200,9 +200,22 @@
             <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showComment" />
           </div>
         </section>
+        
+        <!-- Image Search tab -->
+        <section v-else-if="config.settings.tabIndex === 3">
+          <!-- Image search threshold -->
+          <div class="flex items-center justify-between mb-4">
+            <label>{{ $t('settings.image_search.similarity') }}</label>
+            <select class="select" v-model="config.settings.imageSearch.thresholdIndex">
+              <option v-for="(option, index) in similarityOptions" :key="index" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </section>
 
         <!-- About Section -->
-        <section v-else-if="config.settings.tabIndex === 3">
+        <section v-else-if="config.settings.tabIndex === 4">
 
           <div class="flex flex-col items-center justify-between mb-4">
             <!-- <label class="font-bold mb-4">jc-photo</label> -->
@@ -402,7 +415,6 @@ const navigatorViewSizeOptions = computed(() => {
   return result;
 });
 
-// Define the preview position options
 const filmStripViewPreviewPositionOptions = computed(() => {
   const options = localeMsg.value.settings.filmstrip_view.preview_position_options;
   const result = [];
@@ -412,6 +424,17 @@ const filmStripViewPreviewPositionOptions = computed(() => {
   }
 
   return result;
+});
+
+// Define the similarity options
+const similarityOptions = computed(() => {
+  const options = localeMsg.value.settings.image_search.similarity_options;
+  // Ensure values is an array to handle state persistence issues
+  const values = Array.isArray(config.settings.imageSearch.threshold) 
+    ? config.settings.imageSearch.threshold 
+    : [0.8, 0.65, 0.5, 0.35]; 
+  // Map index dummy as the value since v-model is thresholdIndex
+  return values.map((val, i) => ({ label: options[i], value: i }));
 });
 
 onMounted(() => {
@@ -424,7 +447,7 @@ onUnmounted(() => {
 
 // Handle the settings tab index change
 watch(() => config.settings.tabIndex, (newValue) => {
-  if (newValue === 3) {   // about tab
+  if (newValue === 4) {   // about tab
     // Get package info
     getPackageInfo().then((info) => {
       packageInfo.value = info;
@@ -518,6 +541,15 @@ watch(() => config.settings.navigatorViewSize, (newValue) => {
 watch(() => config.settings.autoPlayVideo, (newValue) => {
   emit('settings-autoPlayVideo-changed', newValue);
 });
+
+// image search settings
+watch(() => config.settings.imageSearch.thresholdIndex, (newValue) => {
+  emit('settings-imageSearchThresholdIndex-changed', newValue);
+});
+watch(() => config.settings.imageSearch.limit, (newValue) => {
+  emit('settings-imageSearchLimit-changed', newValue);
+});
+
 // Handle keyboard shortcuts
 function handleKeyDown(event) {
   const navigationKeys = ['Tab', 'Escape'];
@@ -530,7 +562,7 @@ function handleKeyDown(event) {
   switch (event.key) {
     case 'Tab':
       config.settings.tabIndex += 1;
-      config.settings.tabIndex = config.settings.tabIndex % 4; // 4 tabs
+      config.settings.tabIndex = config.settings.tabIndex % 5; // 5 tabs
       break;
     case 'Escape':
       appWindow.close(); // Close the window

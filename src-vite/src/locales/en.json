@@ -141,6 +141,7 @@
     ]
   },
   "tooltip": {
+    "loading": "Loading...",
     "not_found": {
       "albums": "No albums found. Try to add an existing folder which contains images or videos",
       "files": "No files found",

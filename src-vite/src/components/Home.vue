@@ -33,7 +33,7 @@
       ]"
       @click="config.home.optionIndex = 1; isSearchFocused = false; config.home.searchHistoryIndex = -1"
     >
-      <IconCalendarDay class="mx-1 w-5 h-5 shrink-0" />
+      <IconHistory class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
         {{ $t('home.on_this_day') }}
       </div>
@@ -138,7 +138,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
 
-import { IconMore, IconTrash, IconCalendarDay, IconHome, IconBolt, IconSimilar, IconImageSearch } from '@/common/icons';
+import { IconMore, IconTrash, IconCalendarDay, IconHome, IconBolt, IconSimilar, IconImageSearch, IconHistory } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({

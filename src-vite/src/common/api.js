@@ -820,41 +820,15 @@ export async function generateEmbedding(fileId) {
   return null;
 }
 
-// search images
-// export async function searchImages(query, limit) {
+// search similar image
+// export async function searchSimilarImage(fileId, limit) {
 //   try {
-//     const results = await invoke('search_images', { query, limit });
+//     const results = await invoke('search_similar_image', { fileId, limit });
 //     if (results) {
 //       return results;
 //     }
 //   } catch (error) {
-//     console.error('searchImages error:', error);
+//     console.error('searchSimilarImage error:', error);
 //   }
 //   return [];
 // }
-
-// search image IDs with scores (for testing)
-// export async function searchImageIds(query, limit) {
-//   try {
-//     const results = await invoke('search_image_ids', { query, limit });
-//     if (results) {
-//       return results;
-//     }
-//   } catch (error) {
-//     console.error('searchImageIds error:', error);
-//   }
-//   return [];
-// }
-
-// search similar to image
-export async function searchSimilarToImage(fileId, limit) {
-  try {
-    const results = await invoke('search_similar_to_image', { fileId, limit });
-    if (results) {
-      return results;
-    }
-  } catch (error) {
-    console.error('searchSimilarToImage error:', error);
-  }
-  return [];
-}

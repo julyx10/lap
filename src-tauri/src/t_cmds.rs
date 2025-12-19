@@ -169,8 +169,11 @@ pub fn get_total_count_and_sum() -> Result<(i64, i64), String> {
 
 /// get query count and sum
 #[tauri::command]
-pub fn get_query_count_and_sum(params: QueryParams) -> Result<(i64, i64), String> {
-    AFile::get_query_count_and_sum(&params)
+pub fn get_query_count_and_sum(
+    state: State<t_ai::AiState>,
+    params: QueryParams,
+) -> Result<(i64, i64), String> {
+    AFile::get_query_count_and_sum(&state, &params)
         .map_err(|e| format!("Error while getting query files count: {}", e))
 }
 
@@ -189,16 +192,7 @@ pub fn get_query_files(
     offset: i64,
     limit: i64,
 ) -> Result<Vec<AFile>, String> {
-    let embedding = if !params.search_image_text.is_empty() {
-        let mut engine = state.0.lock().unwrap();
-        // Return error if encoding fails, or maybe just log and ignore?
-        // Better to return error so user knows why it failed.
-        Some(engine.encode_text(&params.search_image_text)?)
-    } else {
-        None
-    };
-
-    AFile::get_query_files(&params, offset, limit, embedding)
+    AFile::get_query_files(&state, &params, offset, limit)
         .map_err(|e| format!("Error while getting all files: {}", e))
 }
 
@@ -549,92 +543,21 @@ pub fn get_storage_file_info() -> Result<t_utils::FileInfo, String> {
 }
 
 // ai
-#[tauri::command]
-pub fn check_ai_status(state: State<t_ai::AiState>) -> String {
-    let engine = state.0.lock().unwrap();
-    if engine.is_loaded() {
-        "AI Models Loaded".to_string()
-    } else {
-        "AI Engine Initialized (Models Not Loaded)".to_string()
-    }
-}
 
-#[tauri::command]
-pub fn test_ai_embedding(
-    state: State<t_ai::AiState>,
-    text: String,
-    image_path: String,
-) -> Result<String, String> {
-    let mut engine = state.0.lock().unwrap();
+// /// check ai status
+// #[tauri::command]
+// pub fn check_ai_status(state: State<t_ai::AiState>) -> String {
+//     AFile::check_ai_status(&state)
+// }
 
-    let mut result = String::new();
-
-    if !text.is_empty() {
-        match engine.encode_text(&text) {
-            Ok(vec) => {
-                result.push_str(&format!(
-                    "Text Embedding ('{}'): Length={}, First 5={:?}\n",
-                    text,
-                    vec.len(),
-                    &vec[0..5.min(vec.len())]
-                ));
-            }
-            Err(e) => result.push_str(&format!("Text Encoding Error: {}\n", e)),
-        }
-    }
-
-    if !image_path.is_empty() {
-        match engine.encode_image(&image_path) {
-            Ok(vec) => {
-                result.push_str(&format!(
-                    "Image Embedding: Length={}, First 5={:?}\n",
-                    vec.len(),
-                    &vec[0..5.min(vec.len())]
-                ));
-            }
-            Err(e) => result.push_str(&format!("Image Encoding Error: {}\n", e)),
-        }
-    }
-
-    Ok(result)
-}
-
+/// generate embedding for a file
 #[tauri::command]
 pub fn generate_embedding(state: State<t_ai::AiState>, file_id: i64) -> Result<String, String> {
-    // 1. Fetch file info to get path
-    let file_opt = AFile::get_file_info(file_id).map_err(|e| e.to_string())?;
-    let file = file_opt.ok_or("File not found")?;
-
-    // 2. Check if it's an image
-    // file_type: 1 is image
-    if file.file_type != Some(1) {
-        return Err("File is not an image".to_string());
-    }
-
-    let file_path = file.file_path.ok_or("File path not resolved")?;
-
-    // 3. Generate embedding
-    let mut engine = state.0.lock().unwrap();
-    let embedding = engine.encode_image(&file_path)?;
-
-    // 4. Save to DB
-    let _ = AFile::update_embedding(file_id, embedding).map_err(|e| format!("DB Error: {}", e))?;
-
-    Ok("Embedding generated and saved".to_string())
+    AFile::generate_embedding(&state, file_id)
 }
 
-#[tauri::command]
-pub fn search_images(
-    state: State<t_ai::AiState>,
-    query: String,
-    limit: usize,
-) -> Result<Vec<AFile>, String> {
-    let mut engine = state.0.lock().unwrap();
-    let query_embedding = engine.encode_text(&query)?;
-
-    // Release the lock before DB operation (though not strictly necessary as DB is separate)
-    // But good practice if DB takes time.
-    drop(engine);
-
-    AFile::search_similar_images(query_embedding, limit)
-}
+// search similar images
+// #[tauri::command]
+// pub fn search_similar_image(file_id: i64, limit: usize) -> Result<Vec<AFile>, String> {
+//     AFile::search_similar_image(file_id, limit)
+// }
