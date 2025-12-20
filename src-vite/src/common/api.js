@@ -799,15 +799,15 @@ export async function getStorageFileInfo() {
 // ai
 
 // check ai status
-// export async function checkAiStatus() {
-//   try {
-//     const status = await invoke('check_ai_status');
-//     return status;
-//   } catch (error) {
-//     console.error('checkAiStatus error:', error);
-//   }
-//   return 'Unknown';
-// }
+export async function checkAiStatus() {
+  try {
+    const status = await invoke('check_ai_status');
+    return status;
+  } catch (error) {
+    console.error('checkAiStatus error:', error);
+  }
+  return 'Unknown';
+}
 
 // generate embedding
 export async function generateEmbedding(fileId) {
@@ -820,15 +820,15 @@ export async function generateEmbedding(fileId) {
   return null;
 }
 
-// search similar image
-// export async function searchSimilarImage(fileId, limit) {
-//   try {
-//     const results = await invoke('search_similar_image', { fileId, limit });
-//     if (results) {
-//       return results;
-//     }
-//   } catch (error) {
-//     console.error('searchSimilarImage error:', error);
-//   }
-//   return [];
-// }
+// search similar images
+export async function searchSimilarImages(params) {
+  try {
+    const results = await invoke('search_similar_images', { params });
+    if (results) {
+      return results;
+    }
+  } catch (error) {
+    console.error('searchSimilarImages error:', error);
+  }
+  return [];
+}

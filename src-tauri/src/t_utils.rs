@@ -510,7 +510,7 @@ pub fn get_folder_files(
         .collect();
 
     // sort
-    if sort_type == 5 {
+    if sort_type == 4 {
         // random
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
@@ -519,11 +519,10 @@ pub fn get_folder_files(
         files.sort_by(|a, b| {
             let ordering = match sort_type {
                 0 => a.taken_date.cmp(&b.taken_date), // Time
-                // 1 => NYI,     // Relevance
-                2 => convert_to_pinyin(&a.name.to_lowercase()) // name
+                1 => convert_to_pinyin(&a.name.to_lowercase()) // name
                     .cmp(&convert_to_pinyin(&b.name.to_lowercase())), // support pinyin
-                3 => a.size.cmp(&b.size), // size
-                4 => {
+                2 => a.size.cmp(&b.size),             // size
+                3 => {
                     if a.width == b.width {
                         a.height.cmp(&b.height)
                     } else {

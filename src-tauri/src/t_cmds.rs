@@ -9,7 +9,8 @@
 use crate::t_ai;
 use crate::t_image;
 use crate::t_sqlite::{
-    ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, QueryParams,
+    ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams,
+    QueryParams,
 };
 use crate::t_utils;
 use base64::{Engine, engine::general_purpose};
@@ -169,11 +170,8 @@ pub fn get_total_count_and_sum() -> Result<(i64, i64), String> {
 
 /// get query count and sum
 #[tauri::command]
-pub fn get_query_count_and_sum(
-    state: State<t_ai::AiState>,
-    params: QueryParams,
-) -> Result<(i64, i64), String> {
-    AFile::get_query_count_and_sum(&state, &params)
+pub fn get_query_count_and_sum(params: QueryParams) -> Result<(i64, i64), String> {
+    AFile::get_query_count_and_sum(&params)
         .map_err(|e| format!("Error while getting query files count: {}", e))
 }
 
@@ -186,14 +184,9 @@ pub fn get_query_time_line(params: QueryParams) -> Result<Vec<ATimeLine>, String
 
 /// get query file
 #[tauri::command]
-pub fn get_query_files(
-    state: State<t_ai::AiState>,
-    params: QueryParams,
-    offset: i64,
-    limit: i64,
-) -> Result<Vec<AFile>, String> {
-    AFile::get_query_files(&state, &params, offset, limit)
-        .map_err(|e| format!("Error while getting all files: {}", e))
+pub fn get_query_files(params: QueryParams, offset: i64, limit: i64) -> Result<Vec<AFile>, String> {
+    AFile::get_query_files(&params, offset, limit)
+        .map_err(|e| format!("Error while getting query files: {}", e))
 }
 
 /// get all files from the folder
@@ -544,11 +537,11 @@ pub fn get_storage_file_info() -> Result<t_utils::FileInfo, String> {
 
 // ai
 
-// /// check ai status
-// #[tauri::command]
-// pub fn check_ai_status(state: State<t_ai::AiState>) -> String {
-//     AFile::check_ai_status(&state)
-// }
+/// check ai status
+#[tauri::command]
+pub fn check_ai_status(state: State<t_ai::AiState>) -> String {
+    AFile::check_ai_status(&state)
+}
 
 /// generate embedding for a file
 #[tauri::command]
@@ -557,7 +550,11 @@ pub fn generate_embedding(state: State<t_ai::AiState>, file_id: i64) -> Result<S
 }
 
 // search similar images
-// #[tauri::command]
-// pub fn search_similar_image(file_id: i64, limit: usize) -> Result<Vec<AFile>, String> {
-//     AFile::search_similar_image(file_id, limit)
-// }
+#[tauri::command]
+pub fn search_similar_images(
+    state: State<t_ai::AiState>,
+    params: ImageSearchParams,
+) -> Result<Vec<AFile>, String> {
+    AFile::search_similar_images(&state, params)
+        .map_err(|e| format!("Error while searching similar images: {}", e))
+}

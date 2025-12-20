@@ -21,7 +21,6 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     search: {
-      imageText: '',            // filter image text
       fileName: '',             // filter file name
       fileType: 0,              // filter file type (0: all, 1: image, 2: video)
       sortType: 0,              // sort type (default to time)
@@ -44,6 +43,7 @@ export const useConfigStore = defineStore('configStore', {
       optionIndex: 0,          // 0: all files, 1: on this day, 2: similar images, 10: image search
       similarImageId: null,    // similar image id
       similarImageName: '',    // similar image name
+      searchText: '',          // search text
       searchHistory: [],       // search history
       searchHistoryIndex: -1,  // current search history index
     },
@@ -137,7 +137,7 @@ export const useConfigStore = defineStore('configStore', {
 
       // image search settings
       imageSearch: {
-        threshold: [0.8, 0.75, 0.5, 0.3], // 0: Very High, 1: High, 2: Medium, 3: Low
+        threshold: [0.8, 0.6, 0.4, 0.25], // 0: Very High, 1: High, 2: Medium, 3: Low
         thresholdIndex: 3,                 // image search threshold index (default is Low)
         limit: 1000,                       // image search limit
       },

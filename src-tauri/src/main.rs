@@ -150,9 +150,9 @@ fn main() {
             t_cmds::get_build_time,
             t_cmds::get_storage_file_info,
             // ai
-            // t_cmds::check_ai_status,
+            t_cmds::check_ai_status,
             t_cmds::generate_embedding,
-            // t_cmds::search_similar_image,
+            t_cmds::search_similar_images,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

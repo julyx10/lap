@@ -423,7 +423,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
-         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile } from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile, searchSimilarImages } from '@/common/api';  
 import { format } from 'date-fns';
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
@@ -652,7 +652,6 @@ const searchBoxRef = ref<any>(null);
 
 // Store current query params for virtual scrolling
 const currentQueryParams = ref({
-  searchImageText: "",
   searchFileName: "",
   searchFileType: 0,
   sortType: 0,
@@ -667,9 +666,14 @@ const currentQueryParams = ref({
   isFavorite: false,
   isShowHidden: false,
   tagId: 0,
-  similarImageId: null as number | null,
-  imageSearchLimit: 0,
-  imageSearchThreshold: 0,
+});
+
+// ai image search params
+const currentImageSearchParams = ref({
+  searchText: "",
+  fileId: 0,
+  threshold: 0,
+  limit: 0,
 });
 
 let unlistenKeydown: () => void;
@@ -1127,14 +1131,14 @@ watch(() => config.settings.language, (newLanguage) => {
 watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
-    config.home.optionIndex, config.home.similarImageId,                             // home
+    config.home.optionIndex, config.home.similarImageId, config.home.searchText,     // home
     config.album.id, config.album.folderId, config.album.folderPath,                 // album
     config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
     config.tag.id,                                                                   // tag
     config.calendar.year, config.calendar.month, config.calendar.date,               // calendar
     config.location.admin1, config.location.name,                                    // location
     config.camera.make, config.camera.model,                                         // camera 
-    config.search.imageText, config.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
+    config.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
   ], 
   () => {
     scrollPosition.value = 0;   // reset file scroll position
@@ -1267,7 +1271,6 @@ function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number
 
 // get file list 
 async function getFileList(
-  searchImageText: string,
   searchFolder: string, 
   startDate: number, 
   endDate: number, 
@@ -1281,7 +1284,6 @@ async function getFileList(
 ) { 
   // Update current query params with all fields
   currentQueryParams.value = {
-    searchImageText,
     searchFileName: config.search.fileName,
     searchFileType: config.search.fileType,
     sortType: config.search.sortType,
@@ -1296,9 +1298,6 @@ async function getFileList(
     isFavorite,
     isShowHidden: false,
     tagId,
-    similarImageId: (config.main.sidebarIndex === 0 && config.home.optionIndex === 2) ? config.home.similarImageId : null,
-    imageSearchLimit: config.settings.imageSearch.limit,
-    imageSearchThreshold: config.settings.imageSearch.threshold[config.settings.imageSearch.thresholdIndex],
   };
 
   // Set loading state
@@ -1358,6 +1357,53 @@ async function getFileList(
   }
 }
 
+async function getImageSearchFileList(searchText: string, fileId: number, requestId: number) {
+  currentImageSearchParams.value = {
+    searchText,
+    fileId,
+    threshold: config.settings.imageSearch.threshold[config.settings.imageSearch.thresholdIndex],
+    limit: config.settings.imageSearch.limit,
+  };
+
+  // set loading state
+  isLoading.value = true;
+
+  try {
+    // Check if the request is still valid. 
+    if (requestId !== currentContentRequestId) {
+      return;
+    }
+    
+    searchSimilarImages(currentImageSearchParams.value).then(result => {
+      if (result) {
+        fileList.value = result;
+        totalFileCount.value = fileList.value.length;
+        totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+
+        // Reset visible range tracking when changing views
+        lastVisibleRange = { start: -1, end: -1 };
+        
+        // Fetch thumbnails for the search results
+        getFileListThumb(fileList.value);
+        refreshFileList();
+      }
+    });
+  } catch (err) {
+    console.error('getImageSearchFileList error:', err);
+    if (requestId === currentContentRequestId) {
+      fileList.value = [];
+      totalFileCount.value = 0;
+      totalFileSize.value = 0;
+      refreshFileList();
+    }
+  } finally {
+    // Only clear loading state if this is still the active request
+    if (requestId === currentContentRequestId) {
+      isLoading.value = false;
+    }
+  }
+}
+
 async function updateContent() {
   const requestId = ++currentContentRequestId;
   const newIndex = config.main.sidebarIndex;
@@ -1370,16 +1416,16 @@ async function updateContent() {
   if(newIndex === 0) {        // home
     if(config.home.optionIndex === 0) {
       contentTitle.value = localeMsg.value.home.all_files;
-      getFileList("", "", 0, 0, "", "", "", "", false, 0, requestId);
+      getFileList("", 0, 0, "", "", "", "", false, 0, requestId);
     } else if(config.home.optionIndex === 1) {
       contentTitle.value = localeMsg.value.home.on_this_day + " - " + format(new Date(), localeMsg.value.format.month_date);
-      getFileList("", "", -1, -1, "", "", "", "", false, 0, requestId);    // startdate and enddate is -1 means this day
+      getFileList("", -1, -1, "", "", "", "", false, 0, requestId);    // startdate and enddate is -1 means this day
     } else if(config.home.optionIndex === 2) {   // similar images
       contentTitle.value = localeMsg.value.home.similar_images + ' - ' + config.home.similarImageName;
-      getFileList("", "", 0, 0, "", "", "", "", false, 0, requestId);
+      getImageSearchFileList("", config.home.similarImageId || 0, requestId);
     } else if(config.home.optionIndex === 10) { // image search
-      contentTitle.value = localeMsg.value.home.image_search + ' - ' + config.search.imageText;
-      getFileList(config.search.imageText, "", 0, 0, "", "", "", "", false, 0, requestId);
+      contentTitle.value = localeMsg.value.home.image_search + ' - ' + config.home.searchText;
+      getImageSearchFileList(config.home.searchText, 0, requestId);
     }
   } 
   else if(newIndex === 1) {   // album  
@@ -1404,7 +1450,6 @@ async function updateContent() {
 
           // Fetch timeline data for the folder
           currentQueryParams.value = {
-            searchImageText: "",
             searchFileName: config.search.fileName,
             searchFileType: config.search.fileType,
             sortType: config.search.sortType,
@@ -1419,9 +1464,6 @@ async function updateContent() {
             isFavorite: false,
             isShowHidden: true,
             tagId: 0,
-            similarImageId: null,
-            imageSearchLimit: config.settings.imageSearch.limit,
-            imageSearchThreshold: config.settings.imageSearch.threshold[config.settings.imageSearch.thresholdIndex],
           };
           getQueryTimeLine(currentQueryParams.value).then(data => {
             if (requestId === currentContentRequestId) timelineData.value = data;
@@ -1453,13 +1495,13 @@ async function updateContent() {
     } else {
       if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
-        getFileList("", "", 0, 0, "", "", "", "", true, 0, requestId);
+        getFileList("", 0, 0, "", "", "", "", true, 0, requestId);
       } else {                // favorite folders
         getAlbum(config.favorite.albumId).then(album => {
           if (requestId !== currentContentRequestId) return;
           if(album) {
             contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath || "", album.path);
-            getFileList("", config.favorite.folderPath || "", 0, 0, "", "", "", "", false, 0, requestId);
+            getFileList(config.favorite.folderPath || "", 0, 0, "", "", "", "", false, 0, requestId);
           } else {
             contentTitle.value = "";
             fileList.value = [];
@@ -1478,7 +1520,7 @@ async function updateContent() {
         if (requestId !== currentContentRequestId) return;
         if (tagName) {
           contentTitle.value = tagName;
-          getFileList("", "", 0, 0, "", "", "", "", false, config.tag.id || 0, requestId);
+          getFileList("", 0, 0, "", "", "", "", false, config.tag.id, requestId);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -1500,7 +1542,7 @@ async function updateContent() {
         contentTitle.value = formatDate(config.calendar.year, config.calendar.month, config.calendar.date, localeMsg.value.format.date_long);
       }
       const [startDate, endDate] = getCalendarDateRange(config.calendar.year, config.calendar.month, config.calendar.date);
-      getFileList("", "", startDate, endDate, "", "", "", "", false, 0, requestId);
+      getFileList("", startDate, endDate, "", "", "", "", false, 0, requestId);
     }
   }
   else if(newIndex === 5) {   // location
@@ -1510,10 +1552,10 @@ async function updateContent() {
     } else {
       if(config.location.name) {
         contentTitle.value = `${config.location.admin1} > ${config.location.name}`;
-        getFileList("", "", 0, 0, "", "", config.location.admin1, config.location.name, false, 0, requestId);
+        getFileList("", 0, 0, "", "", config.location.admin1, config.location.name, false, 0, requestId);
       } else {
         contentTitle.value = `${config.location.admin1}`;
-        getFileList("", "", 0, 0, "", "", config.location.admin1, "", false, 0, requestId);
+        getFileList("", 0, 0, "", "", config.location.admin1, "", false, 0, requestId);
       } 
     }
   }
@@ -1524,10 +1566,10 @@ async function updateContent() {
     } else {
       if(config.camera.model) {
         contentTitle.value = `${config.camera.make} > ${config.camera.model}`;
-        getFileList("", "", 0, 0, config.camera.make, config.camera.model, "", "", false, 0, requestId);
+        getFileList("", 0, 0, config.camera.make, config.camera.model, "", "", false, 0, requestId);
       } else {
         contentTitle.value = `${config.camera.make}`;
-        getFileList("", "", 0, 0, config.camera.make, "", "", "", false, 0, requestId);
+        getFileList("", 0, 0, config.camera.make, "", "", "", false, 0, requestId);
       } 
     }
   } 

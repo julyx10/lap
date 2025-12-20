@@ -211,7 +211,7 @@ function handleSearchHistoryClick(index: number, item: string) {
   config.home.searchHistoryIndex = index;
   
   searchQuery.value = item;
-  config.search.imageText = item;
+  config.home.searchText = item;
 }
 
 function clearHistory() {
@@ -238,7 +238,7 @@ function handleSearch() {
     config.home.searchHistoryIndex = 0;
   }
 
-  config.search.imageText = query;
+  config.home.searchText = query;
   searchQuery.value = '';
 }
 

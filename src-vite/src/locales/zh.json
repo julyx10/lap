@@ -117,7 +117,6 @@
       "select_count": "已选择 {count}",
       "sort_type_options": [
         "时间",
-        "相关",
         "名称",
         "大小",
         "尺寸",
