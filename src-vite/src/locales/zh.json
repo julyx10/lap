@@ -2,6 +2,7 @@
   "sidebar": {
     "home": "主页",
     "album": "相册",
+    "search": "搜索",
     "favorite": "收藏",
     "tag": "标签",
     "calendar": "日历",
@@ -11,9 +12,8 @@
     "settings": "设置"
   },
   "home": {
-    "all_files": "所有文件",
-    "on_this_day": "历史上的今天",
     "similar_images": "相似图片",
+    "on_this_day": "历史上的今天",
     "image_search": "图片搜索",
     "image_search_placeholder": "按文本搜索图片",
     "image_search_history": "搜索历史",
@@ -24,6 +24,8 @@
     "indexed": "索引完成"
   },
   "album": {
+    "all_files": "所有文件",
+    "album_list": "相册列表",
     "edit": {
       "title_add": "添加相册",
       "title": "编辑相册",
@@ -190,6 +192,8 @@
       "edit": "编辑相册...",
       "hide": "隐藏",
       "unhide": "取消隐藏",
+      "include_in_search": "包含在搜索中",
+      "exclude_from_search": "从搜索中排除",
       "remove": "从相册中移除",
       "refresh": "刷新",
       "reorder": "重新排列"
@@ -200,6 +204,7 @@
       "copy": "复制到剪贴板",
       "edit": "编辑图片...",
       "search_similar_images": "搜索相似图片",
+      "on_this_day": "历史上的今天",
       "print": "打印",
       "rename": "重命名",
       "move_to": "移动到...",

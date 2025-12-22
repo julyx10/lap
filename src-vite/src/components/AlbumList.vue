@@ -218,14 +218,17 @@ const getMoreMenuItems = (album: any) => {
       }
     },
     {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
       label: localeMsg.value.menu.file.new_folder,
       icon: IconNewFolder,
       action: () => {
         showNewFolderMsgbox.value = true;
+      }
+    },
+    {
+      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+      // icon: IconExternal,
+      action: () => {
+        revealFolder(album.path);
       }
     },
     {
@@ -240,7 +243,11 @@ const getMoreMenuItems = (album: any) => {
       }
     },
     {
-      label: !album?.is_hidden ? localeMsg.value.menu.album.hide : localeMsg.value.menu.album.unhide,
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: !album?.is_hidden ? localeMsg.value.menu.album.exclude_from_search : localeMsg.value.menu.album.include_in_search,
       icon: !album?.is_hidden ? IconHide : IconUnhide,
       action: () => {
         toggleHidden(album);
@@ -253,13 +260,6 @@ const getMoreMenuItems = (album: any) => {
         showRemoveAlbumMsgbox.value = true;
       }
     },
-    // {
-    //   label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-    //   // icon: IconExternal,
-    //   action: () => {
-    //     revealFolder(album.path);
-    //   }
-    // },
   ];
 };
 
@@ -334,8 +334,8 @@ const refreshAlbums = async () => {
     console.error('Failed to refresh albums:', error);
   } finally {
     isLoading.value = false;
-    selectedAlbumId.value = 0;
-    selectedFolderId.value = 0;
+    selectedAlbumId.value = -1;
+    selectedFolderId.value = -1;
     selectedFolderPath.value = "";
   }
 };

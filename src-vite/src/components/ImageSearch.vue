@@ -12,51 +12,23 @@
     </div>
 
     <!-- all files -->
-    <div 
+    <!-- <div 
       :class="[ 
         'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
         config.home.optionIndex === 0 ? 'text-primary bg-base-100' : 'hover:text-base-content',
       ]"
       @click="config.home.optionIndex = 0; isSearchFocused = false; config.home.searchHistoryIndex = -1"
     >
-      <IconHome class="mx-1 w-5 h-5 shrink-0" />
+      <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
         {{ $t('home.all_files') }}
       </div>
-    </div>
+    </div> -->
 
-    <!-- on this day -->
-    <div 
-      :class="[ 
-        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
-        config.home.optionIndex === 1 ? 'text-primary bg-base-100' : 'hover:text-base-content',
-      ]"
-      @click="config.home.optionIndex = 1; isSearchFocused = false; config.home.searchHistoryIndex = -1"
-    >
-      <IconHistory class="mx-1 w-5 h-5 shrink-0" />
-      <div class="overflow-hidden whitespace-pre text-ellipsis">
-        {{ $t('home.on_this_day') }}
-      </div>
-    </div>
-
-    <!-- search similar images -->
-    <div 
-      :class="[ 
-        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
-        config.home.optionIndex === 2 ? 'text-primary bg-base-100' : 'hover:text-base-content',
-      ]"
-      @click="config.home.optionIndex = 2; isSearchFocused = false; config.home.searchHistoryIndex = -1"
-    >
-      <IconImageSearch class="mx-1 w-5 h-5 shrink-0" />
-      <div class="overflow-hidden whitespace-pre text-ellipsis">
-        {{ $t('home.similar_images') }}
-      </div>
-    </div>
-
-    <!-- image search -->
-    <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+    <!-- image search text -->
+    <!-- <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
       {{ $t('home.image_search') }}
-    </div>
+    </div> -->
 
     <div
       :class="[ 
@@ -65,9 +37,9 @@
       ]"
       @click="focusSearchInput"
     >
-      <IconBolt 
+      <IconSearch 
         :class="[
-          'absolute left-2 top-1/2 transform -translate-y-1/2 w-5 h-5 cursor-pointer rounded-box z-10',
+          'absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
           isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
         ]"
       />
@@ -138,7 +110,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
 
-import { IconMore, IconTrash, IconCalendarDay, IconHome, IconBolt, IconSimilar, IconImageSearch, IconHistory } from '@/common/icons';
+import { IconMore, IconTrash, IconSearch } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({
@@ -217,6 +189,8 @@ function handleSearchHistoryClick(index: number, item: string) {
 function clearHistory() {
   config.home.searchHistory = [];
   config.home.searchHistoryIndex = -1;
+  config.home.searchText = '';
+
   showClearHistoryMsgbox.value = false;
 }
 
@@ -236,6 +210,11 @@ function handleSearch() {
   } else {
     config.home.searchHistory.unshift(query);
     config.home.searchHistoryIndex = 0;
+
+    // Limit the history size
+    if (config.home.searchHistory.length > config.home.maxSearchHistory) {
+      config.home.searchHistory.pop();
+    }
   }
 
   config.home.searchText = query;

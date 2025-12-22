@@ -265,9 +265,14 @@ function getColumnCount() {
   return columnCount.value;
 }
 
+function getScrollTop() {
+  return scroller.value ? scroller.value.$el.scrollTop : 0;
+}
+
 defineExpose({
   getColumnCount,
   scrollToPosition,
+  getScrollTop,
 });
 
 </script>

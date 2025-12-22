@@ -497,6 +497,7 @@ pub struct ImageSearchParams {
     pub file_id: Option<i64>, // file id (for similar image search)
     pub threshold: f32,       // search threshold
     pub limit: i64,           // search limit
+    pub is_show_hidden: bool, // show hidden files
 }
 
 impl AFile {
@@ -1575,10 +1576,22 @@ impl AFile {
         // 2. Perform Vector Search
         let conn = open_conn()?;
 
-        // Fetch id and embeds only for performance
-        let mut stmt = conn
-            .prepare("SELECT id, embeds FROM afiles WHERE embeds IS NOT NULL")
-            .map_err(|e| e.to_string())?;
+        let hidden_clause = if params.is_show_hidden {
+            ""
+        } else {
+            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
+        };
+
+        let query = format!(
+            "SELECT a.id, a.embeds 
+            FROM afiles a
+            LEFT JOIN afolders b ON a.folder_id = b.id
+            LEFT JOIN albums c ON b.album_id = c.id
+            WHERE a.embeds IS NOT NULL {}",
+            hidden_clause
+        );
+
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
         let rows = stmt
             .query_map([], |row| {

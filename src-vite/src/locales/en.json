@@ -2,6 +2,7 @@
   "sidebar": {
     "home": "Home",
     "album": "Albums",
+    "search": "Search",
     "favorite": "Favorites",
     "tag": "Tags",
     "calendar": "Calendar",
@@ -11,9 +12,8 @@
     "settings": "Settings"
   },
   "home": {
-    "all_files": "All Files",
-    "on_this_day": "On this day",
     "similar_images": "Similar Images",
+    "on_this_day": "On This Day",
     "image_search": "Image Search",
     "image_search_placeholder": "Search images by text",
     "image_search_history": "Search History",
@@ -24,6 +24,8 @@
     "indexed": "Indexed"
   },
   "album": {
+    "all_files": "All Files",
+    "album_list": "Album List",
     "edit": {
       "title_add": "Add album",
       "title": "Edit album",
@@ -190,6 +192,8 @@
       "edit": "Edit album...",
       "hide": "Hide",
       "unhide": "Unhide",
+      "include_in_search": "Include in search",
+      "exclude_from_search": "Exclude from search",
       "remove": "Remove from albums",
       "refresh": "Refresh",
       "reorder": "Reorder"
@@ -200,6 +204,7 @@
       "copy": "Copy to clipboard",
       "edit": "Edit image...",
       "search_similar_images": "Search similar images",
+      "on_this_day": "On this day",
       "print": "Print",
       "rename": "Rename",
       "move_to": "Move to...",

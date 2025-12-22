@@ -14,6 +14,25 @@
         :menuItems="moreMenuItems"
       />
     </div>
+    
+    <!-- all files -->
+    <div 
+      :class="[ 
+        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
+        config.album.id === -1 ? 'text-primary bg-base-100' : 'hover:text-base-content',
+      ]"
+      @click="config.album.id = -1, config.album.folderId = -1, config.album.folderPath = '';"
+    >
+      <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
+      <div class="overflow-hidden whitespace-pre text-ellipsis">
+        {{ $t('album.all_files') }}
+      </div>
+    </div>
+
+    <!-- album list -->
+    <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      {{ $t('album.album_list') }}
+    </div>
 
     <AlbumList ref="albumListRef" 
       :key="albumListKey"
@@ -33,7 +52,7 @@ import { config } from '@/common/config';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 
-import { IconMore, IconAdd, IconOrder, IconRefresh, IconClose, IconLeftPaneOn } from '@/common/icons';
+import { IconMore, IconAdd, IconOrder, IconRefresh, IconClose, IconPhotoAll } from '@/common/icons';
 import AlbumList from '@/components/AlbumList.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import TButton from '@/components/TButton.vue';

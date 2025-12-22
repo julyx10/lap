@@ -18,12 +18,13 @@
     >
       <!-- title -->
       <div class="mr-1 flex flex-row items-center gap-1 min-w-0 flex-1" data-tauri-drag-region>
-        <TButton v-if="config.main.sidebarIndex === 0 && config.home.optionIndex === 2 && preSidebarIndex > 0" 
+        <TButton v-if="isSimilarSearchMode" 
           :icon="IconPrev" 
           :buttonSize="'medium'" 
-          @click="config.main.sidebarIndex = preSidebarIndex" 
+          @click="exitSimilarSearchMode" 
         />
-        <component v-if="contentTitle" :is=contentIcon class="t-icon-size-sm shrink-0"/>
+        <IconImageSearch v-if="isSimilarSearchMode" class="t-icon-size-sm shrink-0"/>
+        <component v-if="contentTitle && !isSimilarSearchMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
         <div class="cursor-default overflow-hidden whitespace-pre text-ellipsis">
           {{ contentTitle }}
         </div>
@@ -273,59 +274,61 @@
     </div>
 
     <!-- status bar -->
-    <div v-if="config.settings.showStatusBar"
-      class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 flex gap-4 text-sm cursor-default bg-base-300/80 backdrop-blur-md"
+    <div v-if="config.settings.showStatusBar" class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 flex items-center justify-between text-sm cursor-default"
+      :class="config.settings.showStatusBar ? 'bg-base-300/80 backdrop-blur-md' : 'pointer-events-none'"
     >
-      <div class="flex items-center gap-1 flex-shrink-0">
-        <IconFileSearch class="t-icon-size-xs" />
-        <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 }} / </span>
-        <span > {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }} </span>
+      <div class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden">
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <IconFileSearch class="t-icon-size-xs" />
+          <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 }} / </span>
+          <span > {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }} </span>
+        </div>
+
+        <template v-if="selectedItemIndex >= 0">
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <component :is="selectMode ? IconCheckAll : IconChecked" class="t-icon-size-xs" />
+            <span>
+              {{ selectMode
+                ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
+                : shortenFilename(fileList[selectedItemIndex]?.name, 32) + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')'
+              }}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <component :is="fileList[selectedItemIndex]?.file_type === 1 ? IconPhoto : IconVideo" class="t-icon-size-xs" />
+            <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
+          </div>
+
+          <div v-if="config.content.showFilmStrip || config.content.showQuickView" class="flex items-center gap-1 flex-shrink-0">
+            <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
+            <span> {{ (imageScale * 100).toFixed(0) }}% </span>
+          </div>
+
+          <div v-if="fileList[selectedItemIndex]?.e_model" class="flex items-center gap-1 flex-shrink-0">
+            <IconCamera class="t-icon-size-xs" />
+            <span> {{ fileList[selectedItemIndex]?.e_model }} {{ fileList[selectedItemIndex]?.e_lens_model ? ' (' + fileList[selectedItemIndex]?.e_lens_model + ')' : '' }}</span>
+          </div>
+
+          <div v-if="fileList[selectedItemIndex]?.e_focal_length || fileList[selectedItemIndex]?.e_exposure_time || fileList[selectedItemIndex]?.e_f_number || fileList[selectedItemIndex]?.e_iso_speed || fileList[selectedItemIndex]?.e_exposure_bias" class="flex items-center gap-1 flex-shrink-0">
+            <IconCameraAperture class="t-icon-size-xs" />
+            <span> {{ formatCaptureSettings(fileList[selectedItemIndex]?.e_focal_length, fileList[selectedItemIndex]?.e_exposure_time, fileList[selectedItemIndex]?.e_f_number, fileList[selectedItemIndex]?.e_iso_speed, fileList[selectedItemIndex]?.e_exposure_bias) }}</span>
+          </div>
+
+          <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex items-center gap-1 flex-shrink-0">
+            <IconLocation class="t-icon-size-xs" />
+            <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
+          </div>
+        </template>
       </div>
 
-      <template v-if="selectedItemIndex >= 0">
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <component :is="selectMode ? IconCheckAll : IconChecked" class="t-icon-size-xs" />
-          <span>
-            {{ selectMode
-              ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
-              : shortenFilename(fileList[selectedItemIndex]?.name, 32) + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')'
-            }}
-          </span>
-        </div>
-
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <component :is="fileList[selectedItemIndex]?.file_type === 1 ? IconPhoto : IconVideo" class="t-icon-size-xs" />
-          <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
-        </div>
-
-        <div v-if="config.content.showFilmStrip || config.content.showQuickView" class="flex items-center gap-1 flex-shrink-0">
-          <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
-          <span> {{ (imageScale * 100).toFixed(0) }}% </span>
-        </div>
-
-        <div v-if="fileList[selectedItemIndex]?.e_model" class="flex items-center gap-1 flex-shrink-0">
-          <IconCamera class="t-icon-size-xs" />
-          <span> {{ fileList[selectedItemIndex]?.e_model }} {{ fileList[selectedItemIndex]?.e_lens_model ? ' (' + fileList[selectedItemIndex]?.e_lens_model + ')' : '' }}</span>
-        </div>
-
-        <div v-if="fileList[selectedItemIndex]?.e_focal_length || fileList[selectedItemIndex]?.e_exposure_time || fileList[selectedItemIndex]?.e_f_number || fileList[selectedItemIndex]?.e_iso_speed || fileList[selectedItemIndex]?.e_exposure_bias" class="flex items-center gap-1 flex-shrink-0">
-          <IconCameraAperture class="t-icon-size-xs" />
-          <span> {{ formatCaptureSettings(fileList[selectedItemIndex]?.e_focal_length, fileList[selectedItemIndex]?.e_exposure_time, fileList[selectedItemIndex]?.e_f_number, fileList[selectedItemIndex]?.e_iso_speed, fileList[selectedItemIndex]?.e_exposure_bias) }}</span>
-        </div>
-
-        <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex items-center gap-1 flex-shrink-0">
-          <IconLocation class="t-icon-size-xs" />
-          <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
-        </div>
-      </template>
-    </div>
-
-    <!-- image indexing status -->
-    <div class="absolute bottom-0 right-4 h-8 flex items-center gap-2 text-xs text-base-content/70 bg-base-300/0 backdrop-blur-md z-50">
-      <IconSeparator class="h-6 w-6 text-base-content/30" />
-      <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
-      <div class="w-3 h-4 loading loading-bars"></div>
-      <span>{{ $t('home.indexing') + ' (' + 1234 + '/' + 123456 + ')' }}</span>
+      <!-- image indexing status -->
+      <div class="flex items-center gap-2 text-xs text-base-content/70 pointer-events-auto flex-shrink-0 ml-2">
+        <IconSeparator v-if="config.settings.showStatusBar" class="h-6 w-6 text-base-content/30" />
+        <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
+        <div class="w-3 h-4 loading loading-bars"></div>
+        <span>{{ $t('home.indexing') + ' (' + 1234 + '/' + 123456 + ')' }}</span>
+      </div>
     </div>
   </div>
 
@@ -423,7 +426,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
          copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
-         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile, searchSimilarImages } from '@/common/api';  
+         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile, searchSimilarImages, generateEmbedding } from '@/common/api';  
 import { format } from 'date-fns';
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
@@ -486,6 +489,8 @@ import {
   IconGallery,
   IconImageSearch,
   IconPrev,
+  IconHistory,
+  IconSearch,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -499,22 +504,16 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
-// title of the content 
-const preSidebarIndex = ref(0);     // previous sidebar index (for back action)
-
 const contentIcon = computed(() => {
   const index = config.main.sidebarIndex;
   
   switch (index) {
     case 0: 
-      switch (config.home.optionIndex) {
-        case 0: return IconHome;
-        case 1: return IconCalendarDay;
-        case 2: return IconImageSearch;
-        case 10: return IconBolt;
-        default: return IconPhotoAll;
+      switch (config.album.id) {
+        case -1: return IconPhotoAll;
+        default: return IconFolder;
       }
-    case 1: return IconFolder;
+    case 1: return IconSearch;
     case 2: 
       switch (config.favorite.folderId) {
         case 0: return IconFavorite;
@@ -674,7 +673,12 @@ const currentImageSearchParams = ref({
   fileId: 0,
   threshold: 0,
   limit: 0,
+  isShowHidden: false,
 });
+
+// Similar Search Mode State
+const isSimilarSearchMode = ref(false);
+const backupState = ref<any>(null);
 
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
@@ -881,15 +885,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'rotate': clickRotate,
     'tag': clickTag,
     'comment': () => showCommentMsgbox.value = true,
-    'search-similar': () => {
-      config.home.similarImageId = fileList.value[selectedItemIndex.value].id;
-      config.home.similarImageName = fileList.value[selectedItemIndex.value].name;
-      if (config.main.sidebarIndex > 0) {
-        preSidebarIndex.value = config.main.sidebarIndex;
-      }
-      config.main.sidebarIndex = 0; // home
-      config.home.optionIndex = 2; // similar images 
-    },
+    'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
   };
 
   if ((actionMap as any)[action]) {
@@ -1048,6 +1044,8 @@ const handleKeyDown = (e: any) => {
     openImageViewer(selectedItemIndex.value, true);
   } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
     clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
+  } else if (isCmdKey && key.toLowerCase() === 's') {
+    enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
   } else if (isCmdKey && key.toLowerCase() === 'e') {
     showImageEditor.value = true;
   } else if (isCmdKey && key.toLowerCase() === 'f') {
@@ -1063,6 +1061,8 @@ const handleKeyDown = (e: any) => {
   } else if (key === 'Escape') {
     if (selectMode.value) {
       handleSelectMode(false);
+    } else if(isSimilarSearchMode.value) {
+      exitSimilarSearchMode();
     }
   }
 };
@@ -1131,7 +1131,7 @@ watch(() => config.settings.language, (newLanguage) => {
 watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
-    config.home.optionIndex, config.home.similarImageId, config.home.searchText,     // home
+    config.home.optionIndex, config.home.searchText,     // home
     config.album.id, config.album.folderId, config.album.folderPath,                 // album
     config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
     config.tag.id,                                                                   // tag
@@ -1363,6 +1363,7 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
     fileId,
     threshold: config.settings.imageSearch.threshold[config.settings.imageSearch.thresholdIndex],
     limit: config.settings.imageSearch.limit,
+    isShowHidden: false,
   };
 
   // set loading state
@@ -1405,6 +1406,10 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
 }
 
 async function updateContent() {
+  // Reset Similar Search Mode on any content update
+  isSimilarSearchMode.value = false;
+  backupState.value = null;
+
   const requestId = ++currentContentRequestId;
   const newIndex = config.main.sidebarIndex;
 
@@ -1413,25 +1418,13 @@ async function updateContent() {
   totalFileCount.value = 0;
   totalFileSize.value = 0;
 
-  if(newIndex === 0) {        // home
-    if(config.home.optionIndex === 0) {
-      contentTitle.value = localeMsg.value.home.all_files;
-      getFileList("", 0, 0, "", "", "", "", false, 0, requestId);
-    } else if(config.home.optionIndex === 1) {
-      contentTitle.value = localeMsg.value.home.on_this_day + " - " + format(new Date(), localeMsg.value.format.month_date);
-      getFileList("", -1, -1, "", "", "", "", false, 0, requestId);    // startdate and enddate is -1 means this day
-    } else if(config.home.optionIndex === 2) {   // similar images
-      contentTitle.value = localeMsg.value.home.similar_images + ' - ' + config.home.similarImageName;
-      getImageSearchFileList("", config.home.similarImageId || 0, requestId);
-    } else if(config.home.optionIndex === 10) { // image search
-      contentTitle.value = localeMsg.value.home.image_search + ' - ' + config.home.searchText;
-      getImageSearchFileList(config.home.searchText, 0, requestId);
-    }
-  } 
-  else if(newIndex === 1) {   // album  
+  if(newIndex === 0) {   // album  
     if(config.album.id === null) {
       contentTitle.value = "";
       fileList.value = [];
+    } else if(config.album.id === -1) {
+      contentTitle.value = localeMsg.value.album.all_files;
+      getFileList("", 0, 0, "", "", "", "", false, 0, requestId);
     } else {
       getAlbum(config.album.id).then(async album => {
         if (requestId !== currentContentRequestId) return;
@@ -1488,6 +1481,10 @@ async function updateContent() {
       });
     }
   }
+  else if(newIndex === 1) {        // search
+    contentTitle.value = localeMsg.value.home.image_search + ' - ' + config.home.searchText;
+    getImageSearchFileList(config.home.searchText, 0, requestId);
+  } 
   else if(newIndex === 2) {   // favorite
     if(config.favorite.folderId === null) {
       contentTitle.value = "";
@@ -1577,6 +1574,81 @@ async function updateContent() {
   if(config.search.fileName) {
     contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.search.fileName;
   }
+}
+
+// --- Similar Search Mode Logic ---
+function enterSimilarSearchMode(file: any) {
+  if (file.file_type !== 1 && file.file_type !== 3) {
+    return;
+  }
+  // 1. Backup current state
+  backupState.value = {
+    fileList: [...fileList.value],
+    totalFileCount: totalFileCount.value,
+    totalFileSize: totalFileSize.value,
+    contentTitle: contentTitle.value,
+    selectedItemIndex: selectedItemIndex.value,
+    scrollPosition: scrollPosition.value,
+    timelineData: [...timelineData.value],
+    currentQueryParams: { ...currentQueryParams.value },
+    thumbCount: thumbCount.value,
+    showProgressBar: showProgressBar.value,
+    
+    // GridView specific backup
+    scrollTop: gridViewRef.value ? gridViewRef.value.getScrollTop() : 0,
+  };
+
+  // 2. Set mode
+  isSimilarSearchMode.value = true;
+  
+  // 3. Update Title to indicate context
+  // We keep the prefix related to where we are (e.g. Album Name), but maybe append " > Similar Images"
+  // Or just replace it temporarily. Let's replace it to be clear.
+  contentTitle.value = localeMsg.value.home.similar_images + ' - ' + file.name;
+
+  // 4. Perform Search (reusing existing API call logic)
+  // We need a unique Request ID for this new "view"
+  const requestId = ++currentContentRequestId;
+  
+  // Reset list for loading state
+  fileList.value = [];
+  totalFileCount.value = 0;
+  totalFileSize.value = 0;
+  
+  getImageSearchFileList("", file.id, requestId);
+}
+
+function exitSimilarSearchMode() {
+  if (!backupState.value) return;
+
+  const state = backupState.value;
+  
+  // 1. Restore State
+  fileList.value = state.fileList;
+  totalFileCount.value = state.totalFileCount;
+  totalFileSize.value = state.totalFileSize;
+  contentTitle.value = state.contentTitle;
+  selectedItemIndex.value = state.selectedItemIndex;
+  scrollPosition.value = state.scrollPosition;
+  timelineData.value = state.timelineData;
+  currentQueryParams.value = state.currentQueryParams;
+  thumbCount.value = state.thumbCount;
+  showProgressBar.value = state.showProgressBar;
+
+  // 2. Reset Mode
+  isSimilarSearchMode.value = false;
+  backupState.value = null;
+
+  // 3. Restore Scroll Position (need to wait for Vue to re-render the list)
+  // Using nextTick or a small timeout
+  setTimeout(() => {
+    if (gridViewRef.value) {
+      gridViewRef.value.scrollToPosition(state.scrollTop);
+    }
+  }, 0);
+  
+  // 4. Ensure the originally selected item is highlighted/visible logic is handled by the restored index
+  updateSelectedImage(selectedItemIndex.value);
 }
 
 // update the file info from the image editor
@@ -1943,6 +2015,31 @@ function updateFileHasTags(fileIds: number[]) {
   showTaggingDialog.value = false;
 }
 
+// embedding queue
+const embeddingQueue: any[] = [];
+let isGeneratingEmbeddings = false;
+
+async function processEmbeddingQueue() {
+  if (isGeneratingEmbeddings) return;
+  isGeneratingEmbeddings = true;
+
+  while (embeddingQueue.length > 0) {
+    const file = embeddingQueue.shift();
+    // check if the file still exists in the fileList and need embedding
+    // (user might have navigated away, but we can still process if we want, 
+    // but better to check if it's still relevant or just process it for background indexing)
+    
+    // Generates embedding one by one to avoid blocking main thread/ui
+    await generateEmbedding(file.id);
+    file.has_embedding = true;
+
+    // Small delay to yield to main thread if needed, though await above yields.
+    // await new Promise(resolve => setTimeout(resolve, 10)); 
+  }
+
+  isGeneratingEmbeddings = false;
+}
+
 // Get the thumbnail for the files
 async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 8) {
   const result = [];
@@ -1958,6 +2055,12 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 8) 
         file.thumbnail = thumbnailPlaceholder;
       }
       thumbCount.value++; 
+      
+      // generate embedding if not exist
+      if ((file.file_type === 1 || file.file_type === 3) && !file.has_embedding) {
+        // queue it to generate in background
+        embeddingQueue.push(file);
+      }
     }
     return file;
   };
@@ -1990,6 +2093,11 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 8) 
 
   result.push(...await runWithConcurrencyLimit(files));
   console.log('All thumbnails fetched successfully.');
+  
+  // start processing embedding queue
+  if (embeddingQueue.length > 0) {
+    processEmbeddingQueue();
+  }
 }
 
 // Open the image viewer window

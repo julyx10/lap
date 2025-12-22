@@ -217,23 +217,10 @@ const getContextMenuItems = () => {
       action: createAction('open')
     },
     {
-      label: localeMsg.value.menu.file.edit,
-      icon: IconImageEdit,
-      shortcut: isMac ? '⌘E' : 'Ctrl+E',
-      disabled: file.file_type !== 1,
-      action: createAction('edit')
-    },
-    {
-      label: localeMsg.value.menu.file.copy,
-      icon: IconCopy,
-      shortcut: isMac ? '⌘C' : 'Ctrl+C',
-      disabled: file.file_type !== 1,
-      action: createAction('copy')
-    },
-    {
       label: localeMsg.value.menu.file.search_similar_images,
       icon: IconImageSearch,
-      disabled: file.file_type !== 1,
+      shortcut: isMac ? '⌘S' : 'Ctrl+S',
+      disabled: file.file_type !== 1 && file.file_type !== 3,
       action: createAction('search-similar')
     },
     {
@@ -243,10 +230,23 @@ const getContextMenuItems = () => {
       action: createAction('goto-folder')
     },
     {
-      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-      action: createAction('reveal')
+      label: "-",   // separator
+      action: () => {}
     },
-    { label: "-", action: null },
+    {
+      label: localeMsg.value.menu.file.edit,
+      icon: IconImageEdit,
+      shortcut: isMac ? '⌘E' : 'Ctrl+E',
+      disabled: file.file_type !== 1 && file.file_type !== 3,
+      action: createAction('edit')
+    },
+    {
+      label: localeMsg.value.menu.file.copy,
+      icon: IconCopy,
+      shortcut: isMac ? '⌘C' : 'Ctrl+C',
+      disabled: file.file_type !== 1 && file.file_type !== 3,
+      action: createAction('copy')
+    },
     {
       label: localeMsg.value.menu.file.rename,
       icon: IconRename,
@@ -291,7 +291,7 @@ const getContextMenuItems = () => {
       icon: IconRotate,
       shortcut: isMac ? '⌘R' : 'Ctrl+R',
       action: createAction('rotate')
-    }
+    },
   ];
 };
 

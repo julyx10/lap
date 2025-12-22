@@ -97,8 +97,8 @@ import { config } from '@/common/config';
 import { isWin, isMac } from '@/common/utils';
 
 // vue components
-import Home from '@/components/Home.vue';
 import Album from '@/components/Album.vue';
+import ImageSearch from '@/components/ImageSearch.vue';
 import Favorite from '@/components/Favorite.vue';
 import Tag from '@/components/Tag.vue';
 import Calendar from '@/components/Calendar.vue';
@@ -111,13 +111,13 @@ import Content from '@/components/Content.vue';
 
 import {
   IconHome,
-  IconFolder,
   IconFavorite,
   IconTag,
   IconCalendar,
   IconLocation,
   IconPeople,
   IconCamera,
+  IconSearch,
   IconSettings,
 } from '@/common/icons';
 
@@ -128,14 +128,14 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // buttons 
 const buttons = computed(() =>  [
   { 
-    icon: IconHome,
-    component: Home,
-    text: localeMsg.value.sidebar.home
+    icon: IconHome,  
+    component: Album,
+    text: localeMsg.value.sidebar.home 
   },
   { 
-    icon: IconFolder,  
-    component: Album,
-    text: localeMsg.value.sidebar.album 
+    icon: IconSearch,
+    component: ImageSearch,
+    text: localeMsg.value.sidebar.search
   },
   { 
     icon: IconFavorite, 
