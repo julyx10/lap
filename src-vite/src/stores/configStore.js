@@ -5,7 +5,7 @@ export const useConfigStore = defineStore('configStore', {
     main: {
       showLeftPane: true,         // show left pane
       leftPaneWidth: 300,         // left pane width
-      sidebarIndex: 1,            // toolbar index
+      sidebarIndex: 0,            // toolbar index
     },
 
     content: {
@@ -16,8 +16,9 @@ export const useConfigStore = defineStore('configStore', {
 
     infoPanel: {
       show: false,               // show info panel
-      tabIndex: 0,               // info panel tab index (0: file info, 1: preview)
       width: 30,                 // info panel width(20-80%)
+      showMap: true,             // show map
+      mapTheme: 0,               // 0: standard, 2: satellite
     },
 
     search: {
@@ -27,11 +28,6 @@ export const useConfigStore = defineStore('configStore', {
       sortOrder: 0,             // sort order(0: ascending, 1: descending)
     },
 
-    fileInfo: {
-      showMap: true,          // show map
-      mapTheme: 0,            // 0: standard, 2: satellite
-    },
-
     // move/copy to... destination folder
     destFolder: {
       albumId: null,          // destination album id
@@ -39,23 +35,25 @@ export const useConfigStore = defineStore('configStore', {
       folderPath: null,       // destination folder path
     },
 
-    home: {
-      optionIndex: 0,          // 0: all files, 1: on this day, 10: image search
+    album: {
+      id: 0,                  // 0 means all files (default)
+      folderId: null,            
+      folderPath: '',
+    },
+
+    imageSearch: {
+      searchType: 0,           // 0: image search, 1: similar image search
       searchText: '',          // search text
       searchHistory: [],       // search history
       searchHistoryIndex: -1,  // current search history index
-      maxSearchHistory: 20,   // max search history
-    },
-
-    album: {
-      id: null,
-      folderId: null,
-      folderPath: null,
+      similarImageHistory: [], // similar image history
+      similarImageHistoryIndex: -1, // current similar image history index
+      maxSearchHistory: 20,    // max search history
     },
 
     favorite: {
       albumId: null,
-      folderId: null,
+      folderId: 0,             // 0 means favorite files (default)
       folderPath: null,
     },
 
@@ -66,7 +64,7 @@ export const useConfigStore = defineStore('configStore', {
 
     calendar: {
       isMonthly: true,    // display monthly or daily calendar
-      sortingAsc: true,   // sorting order
+      sortingAsc: false,   // sorting order
       year: null,         // selected year (...2024)
       month: null,        // selected month (1-12)
       date: null,         // selected date (1-31), -1 means selecting a month

@@ -19,8 +19,9 @@
       <!-- title -->
       <div class="mr-1 flex flex-row items-center gap-1 min-w-0 flex-1" data-tauri-drag-region>
         <TButton v-if="isSimilarSearchMode" 
-          :icon="IconPrev" 
-          :buttonSize="'medium'" 
+          :icon="IconRestore" 
+          :buttonSize="'medium'"
+          :selected="true"
           @click="exitSimilarSearchMode" 
         />
         <IconImageSearch v-if="isSimilarSearchMode" class="t-icon-size-sm shrink-0"/>
@@ -115,7 +116,7 @@
               <GridView ref="gridViewRef"
                 :selected-item-index="selectedItemIndex"
                 :fileList="fileList"
-                :showFolderFiles="showFolderFiles"
+                :showFolderFiles="config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0"
                 :selectMode="selectMode"
                 :loading="isLoading"
                 @item-clicked="handleItemClicked"
@@ -277,7 +278,8 @@
     <div v-if="config.settings.showStatusBar" class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 flex items-center justify-between text-sm cursor-default"
       :class="config.settings.showStatusBar ? 'bg-base-300/80 backdrop-blur-md' : 'pointer-events-none'"
     >
-      <div class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden">
+      <!-- file status -->
+      <div v-if="fileList.length > 0" class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden">
         <div class="flex items-center gap-1 flex-shrink-0">
           <IconFileSearch class="t-icon-size-xs" />
           <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 }} / </span>
@@ -322,12 +324,12 @@
         </template>
       </div>
 
-      <!-- image indexing status -->
-      <div class="flex items-center gap-2 text-xs text-base-content/70 pointer-events-auto flex-shrink-0 ml-2">
+      <!-- indexing status -->
+      <div class="ml-auto flex items-center text-xs text-base-content/70 pointer-events-auto flex-shrink-0">
         <IconSeparator v-if="config.settings.showStatusBar" class="h-6 w-6 text-base-content/30" />
         <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
         <div class="w-3 h-4 loading loading-bars"></div>
-        <span>{{ $t('home.indexing') + ' (' + 1234 + '/' + 123456 + ')' }}</span>
+        <span class="pl-2">{{ $t('search.indexing') + '  (' + (1234).toLocaleString() + ' / ' + (123456).toLocaleString() + ')' }}</span>
       </div>
     </div>
   </div>
@@ -424,10 +426,11 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount, getTagName,
-         copyImage, renameFile, moveFile, copyFile, editFileComment, getFileThumb, revealFolder, updateFileInfo,
-         setFileFavorite, setFileRotate, getFileHasTags, deleteFile, deleteDbFile, getTagsForFile, searchSimilarImages, generateEmbedding } from '@/common/api';  
-import { format } from 'date-fns';
+import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount,
+         copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
+         setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
+         revealFolder, getTagName,
+         updateFileInfo} from '@/common/api';  
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -491,6 +494,7 @@ import {
   IconPrev,
   IconHistory,
   IconSearch,
+  IconRestore,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -510,7 +514,7 @@ const contentIcon = computed(() => {
   switch (index) {
     case 0: 
       switch (config.album.id) {
-        case -1: return IconPhotoAll;
+        case 0: return IconPhotoAll;
         default: return IconFolder;
       }
     case 1: return IconSearch;
@@ -543,11 +547,6 @@ const totalFileCount = ref(0);    // total files' count
 const totalFileSize = ref(0);     // total files' size
 
 const selectedItemIndex = ref(-1);
-
-// config.favorite.folderId = 0: means favorite files
-const showFolderFiles = computed(() =>
- config.main.sidebarIndex === 1 || (config.main.sidebarIndex === 2 && config.favorite.folderId !== 0)
-);
 
 // mutil select mode
 const selectMode = ref(false);
@@ -877,7 +876,7 @@ function handleItemAction(payload: { action: string, index: number }) {
         config.album.id = selectedFile.album_id;
         config.album.folderId = selectedFile.folder_id;
         config.album.folderPath = getFolderPath(selectedFile.file_path);
-        config.main.sidebarIndex = 1;
+        config.main.sidebarIndex = 0;
       }
     },
     'reveal': () => revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path)),
@@ -1061,8 +1060,6 @@ const handleKeyDown = (e: any) => {
   } else if (key === 'Escape') {
     if (selectMode.value) {
       handleSelectMode(false);
-    } else if(isSimilarSearchMode.value) {
-      exitSimilarSearchMode();
     }
   }
 };
@@ -1131,8 +1128,8 @@ watch(() => config.settings.language, (newLanguage) => {
 watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
-    config.home.optionIndex, config.home.searchText,     // home
-    config.album.id, config.album.folderId, config.album.folderPath,                 // album
+    config.album.id, config.album.folderId, config.album.folderPath,                 // home(album)
+    config.imageSearch.searchText, config.imageSearch.similarImageHistoryIndex, config.imageSearch.searchType,      // image search
     config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
     config.tag.id,                                                                   // tag
     config.calendar.year, config.calendar.month, config.calendar.date,               // calendar
@@ -1176,11 +1173,27 @@ watch(
 );
 
 // watch for show preview or layout change
-watch(() => [config.content.showFilmStrip, config.infoPanel.show, config.infoPanel.tabIndex], ([newLayout, newShow, newTabIndex]) => {
-  if (newLayout || (newShow && newTabIndex === 1)) {
+watch(() => [config.content.showFilmStrip], ([newLayout]) => {
+  if (newLayout) {
     updateSelectedImage(selectedItemIndex.value);
   }
 });
+
+// Watch similar search history index
+// watch(() => config.imageSearch.similarImageHistoryIndex, async (newIndex) => {
+//     if (newIndex >= 0 && newIndex < config.imageSearch.similarImageHistory.length) {
+//       const fileId = config.imageSearch.similarImageHistory[newIndex];
+//       if (fileId) {
+//         const fileInfo = await getFileInfo(fileId);
+//         if (fileInfo) {
+//           enterSimilarSearchMode(fileInfo);
+//         }
+//       }
+//     } else {
+//       fileList.value = [];
+//     }
+//   }
+// );
 
 function toggleGridViewLayout() {
   config.content.showQuickView = false;
@@ -1333,21 +1346,13 @@ async function getFileList(
       
       // Reset visible range tracking when changing views
       lastVisibleRange = { start: -1, end: -1 };
-
-      refreshFileList();
     } else {
       fileList.value = [];
-      totalFileCount.value = 0;
-      totalFileSize.value = 0;
-      refreshFileList();
     }
   } catch (err) {
     console.error('getFileList error:', err);
     if (requestId === currentContentRequestId) {
       fileList.value = [];
-      totalFileCount.value = 0;
-      totalFileSize.value = 0;
-      refreshFileList();
     }
   } finally {
     // Only clear loading state if this is still the active request
@@ -1386,16 +1391,12 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
         
         // Fetch thumbnails for the search results
         getFileListThumb(fileList.value);
-        refreshFileList();
       }
     });
   } catch (err) {
     console.error('getImageSearchFileList error:', err);
     if (requestId === currentContentRequestId) {
       fileList.value = [];
-      totalFileCount.value = 0;
-      totalFileSize.value = 0;
-      refreshFileList();
     }
   } finally {
     // Only clear loading state if this is still the active request
@@ -1415,14 +1416,12 @@ async function updateContent() {
 
   // Reset file list immediately to reflect UI change
   fileList.value = [];
-  totalFileCount.value = 0;
-  totalFileSize.value = 0;
 
   if(newIndex === 0) {   // album  
     if(config.album.id === null) {
       contentTitle.value = "";
       fileList.value = [];
-    } else if(config.album.id === -1) {
+    } else if(config.album.id === 0) {   // all files
       contentTitle.value = localeMsg.value.album.all_files;
       getFileList("", 0, 0, "", "", "", "", false, 0, requestId);
     } else {
@@ -1472,18 +1471,33 @@ async function updateContent() {
 
           // always get all thumbnail for a folder (gen thumbnail if not exist)
           getFileListThumb(fileList.value);
-          refreshFileList();
         } else {
           contentTitle.value = "";
           fileList.value = [];
-          refreshFileList();
         }
       });
     }
   }
-  else if(newIndex === 1) {        // search
-    contentTitle.value = localeMsg.value.home.image_search + ' - ' + config.home.searchText;
-    getImageSearchFileList(config.home.searchText, 0, requestId);
+  else if(newIndex === 1) {   // image search
+    if(config.imageSearch.searchType === 0) {   // search
+      if (config.imageSearch.searchText) {
+        contentTitle.value = localeMsg.value.search.title + ' - ' + config.imageSearch.searchText;
+        getImageSearchFileList(config.imageSearch.searchText, 0, requestId);
+      } else {
+        contentTitle.value = localeMsg.value.search.title;
+        fileList.value = [];
+      }
+    } else {   // similar
+      const index = config.imageSearch.similarImageHistoryIndex;
+      if (index >= 0 && index < config.imageSearch.similarImageHistory.length) {
+        const file = await getFileInfo(config.imageSearch.similarImageHistory[index]);
+        contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
+        getImageSearchFileList("", config.imageSearch.similarImageHistory[index], requestId);
+      } else {
+        contentTitle.value = localeMsg.value.search.similar_images;
+        fileList.value = [];
+      }
+    }
   } 
   else if(newIndex === 2) {   // favorite
     if(config.favorite.folderId === null) {
@@ -1502,7 +1516,6 @@ async function updateContent() {
           } else {
             contentTitle.value = "";
             fileList.value = [];
-            refreshFileList();
           }
         });
       }
@@ -1521,7 +1534,6 @@ async function updateContent() {
         } else {
           contentTitle.value = "";
           fileList.value = [];
-          refreshFileList();
         }
       });
     }
@@ -1574,6 +1586,9 @@ async function updateContent() {
   if(config.search.fileName) {
     contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.search.fileName;
   }
+
+  // refresh file list
+  // refreshFileList();
 }
 
 // --- Similar Search Mode Logic ---
@@ -1582,38 +1597,58 @@ function enterSimilarSearchMode(file: any) {
     return;
   }
   // 1. Backup current state
-  backupState.value = {
-    fileList: [...fileList.value],
-    totalFileCount: totalFileCount.value,
-    totalFileSize: totalFileSize.value,
-    contentTitle: contentTitle.value,
-    selectedItemIndex: selectedItemIndex.value,
-    scrollPosition: scrollPosition.value,
-    timelineData: [...timelineData.value],
-    currentQueryParams: { ...currentQueryParams.value },
-    thumbCount: thumbCount.value,
-    showProgressBar: showProgressBar.value,
-    
-    // GridView specific backup
-    scrollTop: gridViewRef.value ? gridViewRef.value.getScrollTop() : 0,
-  };
+  if (!isSimilarSearchMode.value) {
+    backupState.value = {
+      fileList: [...fileList.value],
+      totalFileCount: totalFileCount.value,
+      totalFileSize: totalFileSize.value,
+      contentTitle: contentTitle.value,
+      selectedItemIndex: selectedItemIndex.value,
+      scrollPosition: scrollPosition.value,
+      timelineData: [...timelineData.value],
+      currentQueryParams: { ...currentQueryParams.value },
+      thumbCount: thumbCount.value,
+      showProgressBar: showProgressBar.value,
+      
+      // GridView specific backup
+      scrollTop: gridViewRef.value ? gridViewRef.value.getScrollTop() : 0,
+    };
+  }
 
   // 2. Set mode
   isSimilarSearchMode.value = true;
   
   // 3. Update Title to indicate context
-  // We keep the prefix related to where we are (e.g. Album Name), but maybe append " > Similar Images"
-  // Or just replace it temporarily. Let's replace it to be clear.
-  contentTitle.value = localeMsg.value.home.similar_images + ' - ' + file.name;
+  contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
+
+  // Update similar image search history
+  const existingIndex = (config.imageSearch.similarImageHistory as any[]).findIndex(item => item === file.id);
+  
+  if (existingIndex !== -1) {
+    config.imageSearch.similarImageHistoryIndex = existingIndex;
+  } else {
+    (config.imageSearch.similarImageHistory as any[]).unshift(file.id);
+    config.imageSearch.similarImageHistoryIndex = 0;
+    
+    if (config.imageSearch.similarImageHistory.length > config.imageSearch.maxSearchHistory) {
+      (config.imageSearch.similarImageHistory as any[]).pop();
+    }
+  }
 
   // 4. Perform Search (reusing existing API call logic)
-  // We need a unique Request ID for this new "view"
   const requestId = ++currentContentRequestId;
   
   // Reset list for loading state
   fileList.value = [];
   totalFileCount.value = 0;
   totalFileSize.value = 0;
+  
+  // Reset scroll and selection
+  scrollPosition.value = 0;
+  selectedItemIndex.value = 0;
+  if (gridViewRef.value) {
+    gridViewRef.value.scrollToPosition(0);
+  }
   
   getImageSearchFileList("", file.id, requestId);
 }
@@ -1978,18 +2013,20 @@ const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
 
-function refreshFileList() {
-  selectMode.value = false;   // exit multi-select mode
+// function refreshFileList() {
+//   selectMode.value = false;   // exit multi-select mode
 
-  if(fileList.value.length > 0) {
-    if(scrollPosition.value === 0) {  // reset file scroll position
-      selectedItemIndex.value = 0;
-      updateSelectedImage(selectedItemIndex.value);
-    }
-  } else {
-    selectedItemIndex.value = -1;
-  }
-}
+//   if(fileList.value.length > 0) {
+//     if(scrollPosition.value === 0) {  // reset file scroll position
+//       selectedItemIndex.value = 0;
+//       updateSelectedImage(selectedItemIndex.value);
+//     }
+//   } else {
+//     selectedItemIndex.value = -1;
+//     totalFileCount.value = 0;
+//     totalFileSize.value = 0;
+//   }
+// }
 
 // update image when the select file is changed
 async function updateSelectedImage(index: number) {

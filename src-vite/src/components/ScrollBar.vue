@@ -18,7 +18,7 @@
       
       <!-- Markers Area (Left) -->
       <div 
-        class="flex-1 h-full relative cursor-pointer"
+        class="flex-1 h-full relative cursor-ns-resize"
         @mouseenter="handleMarkersMouseEnter"
         @mouseleave="handleMarkersMouseLeave"
         @mousemove="handleMarkersMouseMove"
@@ -38,13 +38,13 @@
         <!-- Hover Marker -->
         <div v-if="isHovering"
           class="absolute w-full h-[2px] bg-primary/30 pointer-events-none rounded-full"
-          :style="{ top: (hoverY - 2) + 'px' }"
+          :style="{ top: (hoverY - 1) + 'px' }"
         ></div>
 
         <!-- Selected Marker -->
         <div v-if="selectedTop >= 0"
           class="absolute w-full h-[2px] bg-primary/70 pointer-events-none rounded-full"
-          :style="{ top: (selectedTop - 2) + 'px', transition: 'all 0.2s ease-in-out' }"
+          :style="{ top: (selectedTop - 1) + 'px', transition: 'all 0.2s ease-in-out' }"
         ></div>
 
         <!-- Hover Tooltip -->

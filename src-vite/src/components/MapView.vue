@@ -17,7 +17,7 @@
         @click="zoomCenter"
       />
       <TButton
-        :icon="config.fileInfo.mapTheme === 0 ? IconMapDefault : IconMapSatellite"
+        :icon="config.infoPanel.mapTheme === 0 ? IconMapDefault : IconMapSatellite"
         @click="toggleMap"
       />
     </div>
@@ -166,12 +166,12 @@ function zoomCenter() {
 }
 
 function toggleMap() {
-  config.fileInfo.mapTheme = config.fileInfo.mapTheme === 0 ? 1 : 0;
+  config.infoPanel.mapTheme = config.infoPanel.mapTheme === 0 ? 1 : 0;
   updateTheme();
 }
 
 function updateTheme() {
-  const theme = mapTheme[Number(config.fileInfo.mapTheme)] || mapTheme[0]
+  const theme = mapTheme[Number(config.infoPanel.mapTheme)] || mapTheme[0]
   if (map) {
     if (layer) {
       map.removeLayer(layer)

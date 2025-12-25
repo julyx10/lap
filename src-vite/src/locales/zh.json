@@ -11,13 +11,14 @@
     "camera": "相机",
     "settings": "设置"
   },
-  "home": {
+  "search": {
+    "title": "图片搜索",
+    "search_images": "搜索",
     "similar_images": "相似图片",
-    "on_this_day": "历史上的今天",
-    "image_search": "图片搜索",
     "image_search_placeholder": "按文本搜索图片",
     "image_search_history": "搜索历史",
-    "image_search_tips": "输入图片描述。例如，输入\"sunset over the ocean\"来找到匹配的照片。",
+    "image_search_tips": "输入图片描述。例如，输入\"sunset over the ocean\"来搜索相关图片。",
+    "similar_images_tips": "选择一个图片来搜索相似图片",
     "indexing": "索引中...",
     "index_paused": "索引暂停",
     "index_resume": "继续索引",

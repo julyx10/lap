@@ -230,6 +230,10 @@ const getContextMenuItems = () => {
       action: createAction('goto-folder')
     },
     {
+      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+      action: createAction('reveal')
+    },
+    {
       label: "-",   // separator
       action: () => {}
     },

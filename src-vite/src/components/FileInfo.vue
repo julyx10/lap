@@ -1,29 +1,6 @@
 <template>
   <div class="w-full h-full rounded-box bg-base-200 flex flex-col overflow-hidden">
-    <!-- Title bar -->
-    <!-- <div class="px-2 py-1 flex items-center justify-between shrink-0">
-      <div role="tablist" class="tabs-sm tabs-border" >
-        <a 
-          role="tab"
-          class="tab"
-          :class="config.infoPanel.tabIndex === 0 ? 'tab-active' : ''" 
-          @click="config.infoPanel.tabIndex = 0"
-        >
-          {{ $t('info_panel.tabs[0]') }}
-        </a>
-        <a 
-          role="tab"
-          class="tab"
-          :class="config.infoPanel.tabIndex === 1 ? 'tab-active' : ''" 
-          @click="config.infoPanel.tabIndex = 1"
-        >
-          {{ $t('info_panel.tabs[1]') }}
-        </a>
-      </div>
-    </div> -->
-
     <!-- Info Content -->
-    <!-- <div v-if="config.infoPanel.tabIndex === 0" class="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2"> -->
     <div class="my-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-2">
       
       <!-- File Info Section -->
@@ -129,31 +106,13 @@
       </div>
 
       <!-- Map View -->
-      <div v-if="config.fileInfo.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude" class="">
+      <div v-if="config.infoPanel.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude" class="">
         <MapView
           :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
           :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
         />
       </div>
     </div>
-
-    <!-- Preview -->
-    <!-- <div v-if="config.infoPanel.tabIndex === 1" ref="previewDiv" 
-      class="flex-1 rounded-box overflow-hidden"
-      @dblclick="infoPanelZoomFit = !infoPanelZoomFit"
-    >
-      <Image v-if="fileInfo?.file_type === 1"
-        :filePath="fileInfo?.file_path"
-        :rotate="fileInfo?.rotate ?? 0" 
-        :isZoomFit="infoPanelZoomFit"
-      ></Image>
-
-      <Video v-if="fileInfo?.file_type === 2"
-        :filePath="fileInfo?.file_path"
-        :rotate="fileInfo?.rotate ?? 0"
-        :isZoomFit="infoPanelZoomFit"
-      ></Video>
-    </div> -->
 
   </div>
 
@@ -166,8 +125,6 @@ import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, g
 import { IconFileInfo, IconCamera } from '@/common/icons';
 
 import MapView from '@/components/MapView.vue';
-// import Image from '@/components/Image.vue';
-// import Video from '@/components/Video.vue';
 
 const props = defineProps({
   fileInfo: {

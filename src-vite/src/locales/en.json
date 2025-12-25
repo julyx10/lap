@@ -11,13 +11,14 @@
     "camera": "Cameras",
     "settings": "Settings"
   },
-  "home": {
+  "search": {
+    "title": "Image Search",
+    "search_images": "Search",
     "similar_images": "Similar Images",
-    "on_this_day": "On This Day",
-    "image_search": "Image Search",
     "image_search_placeholder": "Search images by text",
     "image_search_history": "Search History",
-    "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find matching photos.",
+    "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find related images.",
+    "similar_images_tips": "Select an image to find similar images",
     "indexing": "Indexing...",
     "index_paused": "Indexing paused",
     "index_resume": "Resume indexing",

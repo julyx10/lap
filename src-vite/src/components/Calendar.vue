@@ -4,32 +4,29 @@
 
     <!-- title bar -->
     <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
-      <div class="flex text-sm items-center cursor-pointer">
-        <div role="tablist" class="tabs-sm tabs-border" >
-          <a 
-            role="tab"
-            class="tab"
-            :class="config.calendar.isMonthly ? 'tab-active' : ''" 
-            @click="switchToMonthlyView"
-          >
-            {{ $t('calendar.month') }}
-          </a>
-          <a 
-            role="tab"
-            class="tab"
-            :class="!config.calendar.isMonthly ? 'tab-active' : ''" 
-            @click="switchToDailyView"
-          >
-            {{ $t('calendar.day') }}
-          </a>
-        </div>
-
-        <TButton 
-          :icon="config.calendar.sortingAsc ? IconCalendarDown : IconCalendarUp" 
-          @click="toggleSortingOrder"
-        />
+      <div role="tablist" class="tabs-sm tabs-border" >
+        <a 
+          role="tab"
+          class="tab"
+          :class="config.calendar.isMonthly ? 'tab-active' : ''" 
+          @click="switchToMonthlyView"
+        >
+          {{ $t('calendar.month') }}
+        </a>
+        <a 
+          role="tab"
+          class="tab"
+          :class="!config.calendar.isMonthly ? 'tab-active' : ''" 
+          @click="switchToDailyView"
+        >
+          {{ $t('calendar.day') }}
+        </a>
       </div>
+
+      <TButton 
+        :icon="config.calendar.sortingAsc ? IconCalendarDown : IconCalendarUp" 
+        @click="toggleSortingOrder"
+      />
     </div>
     
     <template v-if="Object.keys(calendar_dates).length > 0" >
