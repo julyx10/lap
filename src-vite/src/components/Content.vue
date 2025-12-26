@@ -13,77 +13,136 @@
     </transition>
 
     <!-- title bar -->
-    <div class="absolute top-0 left-1 right-1 px-1 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-md z-30" 
+    <div class="absolute top-0 left-0 right-0 px-2 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-md z-30" 
       data-tauri-drag-region
     >
       <!-- title -->
       <div class="mr-1 flex flex-row items-center gap-1 min-w-0 flex-1" data-tauri-drag-region>
+        <IconImageSearch v-if="isSimilarSearchMode" class="t-icon-size-sm shrink-0 text-primary"/>
+        <component v-if="contentTitle && !isSimilarSearchMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
+        <div class="mr-auto cursor-default overflow-hidden whitespace-pre text-ellipsis">
+          <span :class="isSimilarSearchMode ? 'text-primary' : ''" data-tauri-drag-region>{{ contentTitle }}</span>
+        </div>
         <TButton v-if="isSimilarSearchMode" 
           :icon="IconRestore" 
           :buttonSize="'medium'"
           :selected="true"
           @click="exitSimilarSearchMode" 
         />
-        <IconImageSearch v-if="isSimilarSearchMode" class="t-icon-size-sm shrink-0"/>
-        <component v-if="contentTitle && !isSimilarSearchMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
-        <div class="cursor-default overflow-hidden whitespace-pre text-ellipsis">
-          {{ contentTitle }}
-        </div>
       </div>
 
       <!-- toolbar -->
-      <div class="flex items-center space-x-2 shrink-0">
-        <!-- search box -->
-        <SearchBox ref="searchBoxRef" v-model="config.search.fileName" @click.stop="selectMode = false" /> 
+      <div class="flex items-center gap-2 shrink-0">
 
-        <!-- select mode -->
-        <div tabindex="-1"
-          :class="[
-            'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
-            selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content'
-          ]"
-          @click="handleSelectMode(true)"
-        >
-          <TButton v-if="selectMode"
-            :icon="IconClose"
-            :buttonSize="'small'"
-            @click.stop="handleSelectMode(false)" 
+        <!-- filter and sort section -->
+        <template v-if="config.main.sidebarIndex !== 1 && !isSimilarSearchMode && !config.content.showQuickView">
+          <!-- search box -->
+          <SearchBox ref="searchBoxRef" v-model="config.search.fileName" @click.stop="selectMode = false" /> 
+
+          <!-- file type options -->
+          <DropDownSelect
+            :options="fileTypeOptions"
+            :defaultIndex="config.search.fileType"
+            @select="handleFileTypeSelect"
           />
-          <span class="px-1">{{ selectMode ? $t('toolbar.filter.select_count', { count: selectedCount }) : $t('toolbar.filter.select_mode') }}</span>
-          <ContextMenu v-if="selectMode"
-            :iconMenu="IconArrowDown"
-            :menuItems="moreMenuItems"
+
+          <!-- sort type options -->
+          <DropDownSelect
+            :options="sortOptions"
+            :defaultIndex="config.search.sortType"
+            :extendOptions="sortExtendOptions"
+            :defaultExtendIndex="config.search.sortOrder"
+            @select="handleSortTypeSelect"
+          />
+        </template>
+
+        <!-- image viewer section -->
+        <template v-if="config.content.showQuickView">
+          <TButton
+            :icon="IconPrev"
+            :disabled="selectedItemIndex <= 0 || isSlideShow"
+            :tooltip="$t('image_viewer.toolbar.prev') + ` (${selectedItemIndex + 1}/${fileList.length})`"
+            @click="performNavigate('prev')" 
+          />
+          <TButton
+            :icon="IconNext"
+            :disabled="selectedItemIndex < 0 || selectedItemIndex >= fileList.length - 1 || isSlideShow"
+            :tooltip="$t('image_viewer.toolbar.next') + ` (${selectedItemIndex + 1}/${fileList.length})`"
+            @click="performNavigate('next')" 
+          />
+          <TButton
+            :icon="isSlideShow ? IconPause : IconPlay"
+            :disabled="selectedItemIndex < 0"
+            :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
+            @click="toggleSlideShow()" 
+          />
+          <TButton
+            :icon="IconZoomOut"
+            :disabled="selectedItemIndex < 0 || imageScale <= imageMinScale || isSlideShow"
+            :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
+            @click="triggerMediaZoomOut"
+          />
+          <TButton
+            :icon="IconZoomIn"
+            :disabled="selectedItemIndex < 0 || imageScale >= imageMaxScale || isSlideShow"
+            :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
+            @click="triggerMediaZoomIn" 
+          />
+          <TButton
+            :icon="!activeZoomFit ? IconZoomFit : IconZoomActual"
+            :disabled="selectedItemIndex < 0 || isSlideShow"
+            :tooltip="(!activeZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
+            @click="activeZoomFit = !activeZoomFit"
+          />
+          <ContextMenu
+            :iconMenu="IconMore"
+            :menuItems="singleFileMenuItems"
             :smallIcon="true"
+            :disabled="selectedItemIndex < 0 || isSlideShow"
             @click.stop
           />
-        </div>
-        
-        <!-- file type options -->
-        <DropDownSelect
-          :options="fileTypeOptions"
-          :defaultIndex="config.search.fileType"
-          @select="handleFileTypeSelect"
-        />
+        </template>
 
-        <!-- sort type options -->
-        <DropDownSelect
-          :options="sortOptions"
-          :defaultIndex="config.search.sortType"
-          :extendOptions="sortExtendOptions"
-          :defaultExtendIndex="config.search.sortOrder"
-          @select="handleSortTypeSelect"
-        />
-
-        <!-- separator -->
+        <!-- select and layout section -->
         <div class="flex flex-row items-center">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
-          <!-- grid view layout -->
+
+          <!-- multi-select mode -->
+          <TButton v-if="!selectMode"
+            :icon="IconCheckAll"
+            :disabled="config.content.showQuickView"
+            @click="selectMode = true"
+          />
+          <div v-else
+            tabindex="-1"
+            :class="[
+              'px-1 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
+              selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content'
+            ]"
+            @click="handleSelectMode(true)"
+          >
+            <TButton v-if="selectMode"
+              :icon="IconClose"
+              :buttonSize="'small'"
+              @click.stop="handleSelectMode(false)" 
+            />
+            <span class="px-1">{{ selectMode ? $t('toolbar.filter.select_count', { count: selectedCount }) : $t('toolbar.filter.select_mode') }}</span>
+            <ContextMenu v-if="selectMode"
+              :iconMenu="IconArrowDown"
+              :menuItems="moreMenuItems"
+              :smallIcon="true"
+              @click.stop
+            />
+          </div>
+
+          <!-- toggle layout -->
           <TButton
             :icon="config.content.showFilmStrip ? IconGallery : IconGrid"
             :iconStyle="{ transform: `rotate(${config.settings.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
             @click="toggleGridViewLayout"
           />
-          <!-- show info panel -->
+
+          <!-- toggle info panel -->
           <TButton
             :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
             @click="config.infoPanel.show = !config.infoPanel.show"
@@ -116,7 +175,7 @@
               <GridView ref="gridViewRef"
                 :selected-item-index="selectedItemIndex"
                 :fileList="fileList"
-                :showFolderFiles="config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0"
+                :showFolderFiles="config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0 ? true : false"
                 :selectMode="selectMode"
                 :loading="isLoading"
                 @item-clicked="handleItemClicked"
@@ -495,7 +554,15 @@ import {
   IconHistory,
   IconSearch,
   IconRestore,
+  IconZoomFit,
+  IconZoomActual,
+  IconPin,
+  IconUnPin,
+  IconNext,
+  IconMore,
 } from '@/common/icons';
+
+import { useFileMenuItems } from '@/common/fileMenu';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
 
@@ -566,6 +633,50 @@ const imageScale = ref(1);
 const imageMinScale = ref(0);
 const imageMaxScale = ref(10);
 const isSlideShow = ref(false);
+
+const activeZoomFit = computed({
+  get: () => config.content.showQuickView ? quickViewZoomFit.value : filmStripZoomFit.value,
+  set: (val) => {
+    if (config.content.showQuickView) {
+      quickViewZoomFit.value = val;
+    } else {
+      filmStripZoomFit.value = val;
+    }
+  }
+});
+
+function triggerMediaZoomIn() {
+  if (config.content.showQuickView) {
+    quickViewMediaRef.value?.zoomIn();
+  } else {
+    filmStripMediaRef.value?.zoomIn();
+  }
+}
+
+function triggerMediaZoomOut() {
+  if (config.content.showQuickView) {
+    quickViewMediaRef.value?.zoomOut();
+  } else {
+    filmStripMediaRef.value?.zoomOut();
+  }
+}
+
+const showFolderFiles = computed(() => !!(config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0));
+
+const selectedFile = computed(() => {
+  if (selectedItemIndex.value >= 0 && selectedItemIndex.value < fileList.value.length) {
+    return fileList.value[selectedItemIndex.value];
+  }
+  return null;
+});
+
+const singleFileMenuItems = useFileMenuItems(
+  selectedFile,
+  localeMsg,
+  isMac,
+  showFolderFiles,
+  (action) => handleItemAction({ action, index: selectedItemIndex.value })
+);
 
 // Request ID tracking to prevent race conditions during async content updates
 let currentContentRequestId = 0;
@@ -1124,12 +1235,38 @@ watch(() => config.settings.language, (newLanguage) => {
     updateContent();
 });
 
+/// watch image search params
+watch(
+  () => [
+    config.imageSearch.searchText, 
+    config.imageSearch.similarImageHistoryIndex, 
+    config.imageSearch.searchType
+  ],
+  () => {
+    // Only update content if we are currently in the Image Search view (index 1)
+    if (config.main.sidebarIndex === 1) {
+      scrollPosition.value = 0;   // reset file scroll position
+      selectedItemIndex.value = 0; // reset selected item index to 0
+      
+      // Also reset the GridView scroll position
+      if (gridViewRef.value) {
+        gridViewRef.value.scrollToPosition(0);
+      }
+      config.content.showQuickView = false;
+      
+      updateContent();
+
+      // Reset ImageViewer context if open (without focusing/showing it)
+      openImageViewer(selectedItemIndex.value, false);
+    }
+  }
+);
+
 /// watch for file list changes
 watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
     config.album.id, config.album.folderId, config.album.folderPath,                 // home(album)
-    config.imageSearch.searchText, config.imageSearch.similarImageHistoryIndex, config.imageSearch.searchType,      // image search
     config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
     config.tag.id,                                                                   // tag
     config.calendar.year, config.calendar.month, config.calendar.date,               // calendar
@@ -1373,6 +1510,7 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
 
   // set loading state
   isLoading.value = true;
+  timelineData.value = []; // reset timeline data
 
   try {
     // Check if the request is still valid. 
@@ -1582,13 +1720,6 @@ async function updateContent() {
       } 
     }
   } 
-
-  if(config.search.fileName) {
-    contentTitle.value += ' - ' + localeMsg.value.toolbar.search.title + ': ' + config.search.fileName;
-  }
-
-  // refresh file list
-  // refreshFileList();
 }
 
 // --- Similar Search Mode Logic ---
@@ -1617,6 +1748,7 @@ function enterSimilarSearchMode(file: any) {
 
   // 2. Set mode
   isSimilarSearchMode.value = true;
+  config.content.showQuickView = false;
   
   // 3. Update Title to indicate context
   contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
@@ -1673,6 +1805,7 @@ function exitSimilarSearchMode() {
   // 2. Reset Mode
   isSimilarSearchMode.value = false;
   backupState.value = null;
+  config.content.showQuickView = false;
 
   // 3. Restore Scroll Position (need to wait for Vue to re-render the list)
   // Using nextTick or a small timeout

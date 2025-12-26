@@ -93,8 +93,8 @@
     <!-- similar images -->
     <template v-else>
       <div class="overflow-x-hidden overflow-y-auto flex-1">
-        <div v-if="similarImageHistory.length === 0" class="px-2 mt-2 text-sm text-base-content/30">
-          {{ $t('search.similar_images_tips') }}
+        <div v-if="similarImageHistory.length === 0" class="m-2 flex items-center justify-center text-sm text-base-content/30">
+          <span class="text-center">{{ $t('search.similar_images_tips') }}</span>
         </div>
         
         <div v-for="(fileId, index) in similarImageHistory" :key="index"

@@ -72,7 +72,7 @@
             !isSelected ? 'invisible group-hover:visible' : ''
           ]"
           :iconMenu="IconMore"
-          :menuItems="getContextMenuItems"
+          :menuItems="menuItems"
           :smallIcon="true"
         />
       </div>
@@ -97,33 +97,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCameraInfo } from '@/common/utils';
 import ContextMenu from '@/components/ContextMenu.vue';
+import { useFileMenuItems } from '@/common/fileMenu';
 
 import { 
   IconMore,
-  IconMonitor,
-  IconImageEdit,
   IconFavorite,
-  IconUnFavorite,
   IconTag,
   IconRotate,
-  IconCopy,
-  IconRename,
-  IconMoveTo,
-  IconCopyTo,
-  IconTrash,
-  IconGoto,
   IconChecked,
   IconUnChecked,
   IconComment,
   IconLocation,
   IconCameraAperture,
-  IconImageSearch,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -205,99 +196,13 @@ const uiStore = useUIStore();
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
-const getContextMenuItems = () => {
-  const file = props.file;
-  const createAction = (actionName: string) => () => emit('action', actionName);
-
-  return [
-    {
-      label: localeMsg.value.menu.file.view_in_new_window,
-      icon: IconMonitor,
-      shortcut: isMac ? '⌘⏎' : 'Ctrl+Enter',
-      action: createAction('open')
-    },
-    {
-      label: localeMsg.value.menu.file.search_similar_images,
-      icon: IconImageSearch,
-      shortcut: isMac ? '⌘S' : 'Ctrl+S',
-      disabled: file.file_type !== 1 && file.file_type !== 3,
-      action: createAction('search-similar')
-    },
-    {
-      label: localeMsg.value.menu.file.goto_album,
-      disabled: props.showFolderFiles,
-      icon: IconGoto,
-      action: createAction('goto-folder')
-    },
-    {
-      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-      action: createAction('reveal')
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.file.edit,
-      icon: IconImageEdit,
-      shortcut: isMac ? '⌘E' : 'Ctrl+E',
-      disabled: file.file_type !== 1 && file.file_type !== 3,
-      action: createAction('edit')
-    },
-    {
-      label: localeMsg.value.menu.file.copy,
-      icon: IconCopy,
-      shortcut: isMac ? '⌘C' : 'Ctrl+C',
-      disabled: file.file_type !== 1 && file.file_type !== 3,
-      action: createAction('copy')
-    },
-    {
-      label: localeMsg.value.menu.file.rename,
-      icon: IconRename,
-      action: createAction('rename')
-    },
-    {
-      label: localeMsg.value.menu.file.move_to,
-      icon: IconMoveTo,
-      action: createAction('move-to')
-    },
-    {
-      label: localeMsg.value.menu.file.copy_to,
-      icon: IconCopyTo,
-      action: createAction('copy-to')
-    },
-    {
-      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
-      icon: IconTrash,
-      shortcut: isMac ? '⌘⌫' : 'Del',
-      action: createAction('trash')
-    },
-    { label: "-", action: null },
-    {
-      label: file.is_favorite ? localeMsg.value.menu.meta.unfavorite : localeMsg.value.menu.meta.favorite,
-      icon: file.is_favorite ? IconUnFavorite : IconFavorite,
-      shortcut: isMac ? '⌘F' : 'Ctrl+F',
-      action: createAction('favorite')
-    },
-    {
-      label: localeMsg.value.menu.meta.tag,
-      icon: IconTag,
-      shortcut: isMac ? '⌘T' : 'Ctrl+T',
-      action: createAction('tag')
-    },
-    {
-      label: localeMsg.value.menu.meta.comment,
-      icon: IconComment,
-      action: createAction('comment')
-    },
-    {
-      label: localeMsg.value.menu.meta.rotate,
-      icon: IconRotate,
-      shortcut: isMac ? '⌘R' : 'Ctrl+R',
-      action: createAction('rotate')
-    },
-  ];
-};
+const menuItems = useFileMenuItems(
+  toRef(props, 'file'),
+  localeMsg,
+  isMac,
+  toRef(props, 'showFolderFiles'),
+  (action) => emit('action', action)
+);
 
 const getGridLabelText = (file, option) => {
   switch (option) {
