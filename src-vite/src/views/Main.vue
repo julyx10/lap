@@ -110,7 +110,6 @@ import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
 
 import {
-  IconHome,
   IconFavorite,
   IconTag,
   IconCalendar,
@@ -119,6 +118,7 @@ import {
   IconCamera,
   IconSearch,
   IconSettings,
+  IconAlbums,
 } from '@/common/icons';
 
 /// i18n
@@ -128,9 +128,9 @@ const localeMsg = computed(() => messages.value[locale.value]);
 // buttons 
 const buttons = computed(() =>  [
   { 
-    icon: IconHome,  
+    icon: IconAlbums,  
     component: Album,
-    text: localeMsg.value.sidebar.home 
+    text: localeMsg.value.sidebar.album 
   },
   { 
     icon: IconSearch,

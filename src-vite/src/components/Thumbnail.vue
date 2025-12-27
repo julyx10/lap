@@ -1,11 +1,11 @@
 <template>
   <div
     :class="[
-      'border-2 flex flex-col items-center hover:bg-base-100 cursor-pointer group',
+      'border-2 flex flex-col items-center cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
       config.settings.grid.style === 0 ? 'm-1 p-1 rounded-box' : '',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
-      config.settings.grid.style === 0 && isSelected ? 'bg-base-100' : '',
+      config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 ',
     ]"
     :style="containerStyle"
     @click="$emit('clicked')"

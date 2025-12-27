@@ -11,8 +11,8 @@
       <!-- favorite files -->
       <div 
         :class="[ 
-          'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
-          config.favorite.folderId === 0 ? 'text-primary bg-base-100' : 'hover:text-base-content',
+          'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
+          config.favorite.folderId === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
         ]"
         @click="clickFavoriteFiles()"
       >
@@ -31,8 +31,8 @@
           <li v-for="folder in favorite_folders" :key="folder.id">
             <div 
               :class="[ 
-                'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                config.favorite.folderId === folder.id ? 'text-primary bg-base-100' : 'hover:text-base-content',
+                'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+                config.favorite.folderId === folder.id ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
               ]"
               @click="clickFavoriteFolder(folder)"
             >

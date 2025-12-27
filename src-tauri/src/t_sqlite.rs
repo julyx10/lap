@@ -1837,11 +1837,7 @@ impl AThumb {
     }
 
     /// get the thumbnail count of the folder
-    pub fn get_folder_thumb_count(
-        search_file_name: &str,
-        search_file_type: i64,
-        folder_id: i64,
-    ) -> Result<i64, String> {
+    pub fn get_folder_thumb_count(file_type: i64, folder_id: i64) -> Result<i64, String> {
         let conn = open_conn()?;
 
         let mut conditions = Vec::new();
@@ -1850,15 +1846,9 @@ impl AThumb {
         conditions.push("a.folder_id = ?");
         params.push(&folder_id);
 
-        let like_pattern = format!("%{}%", search_file_name);
-        if !search_file_name.is_empty() {
-            conditions.push("a.name LIKE ? COLLATE NOCASE");
-            params.push(&like_pattern);
-        }
-
-        if search_file_type > 0 {
+        if file_type > 0 {
             conditions.push("a.file_type = ?");
-            params.push(&search_file_type);
+            params.push(&file_type);
         }
 
         let mut query =

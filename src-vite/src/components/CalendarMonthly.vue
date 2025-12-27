@@ -5,8 +5,8 @@
     <!-- title -->
     <div 
       :class="[
-        'mt-2 p-1 rounded-box hover:bg-base-100 text-nowrap cursor-pointer',
-        isSelected(year, -1) ? 'text-primary bg-base-100' : 'hover:text-base-content'
+        'mt-2 p-1 rounded-box text-nowrap cursor-pointer',
+        isSelected(year, -1) ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30'
       ]"
       @click="clickDate(year, -1)"
     >
@@ -19,7 +19,7 @@
         :key="m" 
         class="p-1 text-sm flex items-center justify-center rounded-box text-nowrap"
         :class="[
-          isSelected(year, m) ? 'text-primary bg-base-100' : (sumMonthCount(m) === 0 ? '' : 'hover:text-base-content'),
+          isSelected(year, m) ? 'text-primary bg-base-100 hover:bg-base-100' : (sumMonthCount(m) === 0 ? '' : 'hover:text-base-content hover:bg-base-100/30'),
           sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
           isThisMonth(year, m) ? 'bg-base-100' : '',
         ]"

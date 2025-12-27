@@ -7,8 +7,8 @@
     >
       <div v-if="child.id != 0" 
         :class="[
-          'mx-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
-          selectedFolderId === child.id && !isRenamingFolder ? 'text-primary bg-base-100' : 'hover:text-base-content',
+          'mx-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
+          selectedFolderId === child.id && !isRenamingFolder ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
         ]" 
         @click="clickFolder(rootAlbumId, child)"
         @dblclick="expandFolder(child)"

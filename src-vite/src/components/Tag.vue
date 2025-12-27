@@ -20,8 +20,8 @@
         <li v-for="tag in sortedTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              selectedTag && selectedTag.id === tag.id && !isRenamingTag ? 'text-primary bg-base-100' : 'hover:text-base-content',
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+              selectedTag && selectedTag.id === tag.id && !isRenamingTag ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="selectTag(tag)"
           >

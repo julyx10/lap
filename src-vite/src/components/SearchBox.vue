@@ -12,7 +12,7 @@
       :placeholder="searchValue.length > 0 ? searchValue :  (isFocused ? $t('toolbar.search.placeholder') : '')"
       :class="[
         'py-1 h-8 w-full text-sm input bg-transparent transition-colors duration-300 rounded-box',
-        isFocused || searchValue.length > 0 ? 'px-8 focus:border focus:rounded-box border-primary' : 'px-2 group-hover:bg-base-100 cursor-pointer'
+        isFocused || searchValue.length > 0 ? 'px-8 focus:border focus:rounded-box border-primary' : 'px-2 group-hover:bg-base-100/30 cursor-pointer'
       ]"
       @focus="handleFocus"
       @blur="handleBlur"
@@ -20,7 +20,7 @@
     />
 
     <!-- Search Icon (Inside input when focused) -->
-    <IconSearch
+    <IconFilter
       class="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 group-hover:text-base-content z-10 cursor-pointer"
       @click="focusInput"
     />
@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
-import { IconClose, IconSearch } from '@/common/icons';
+import { IconClose, IconFilter } from '@/common/icons';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 

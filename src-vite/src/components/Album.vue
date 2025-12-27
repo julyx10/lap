@@ -18,8 +18,8 @@
     <!-- all files -->
     <div 
       :class="[ 
-        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group',
-        config.album.id === 0 ? 'text-primary bg-base-100' : 'hover:text-base-content',
+        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
+        config.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
       ]"
       @click="config.album.id = 0, config.album.folderId = null, config.album.folderPath = '';"
     >

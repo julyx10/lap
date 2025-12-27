@@ -37,7 +37,7 @@
         <!-- filter and sort section -->
         <template v-if="config.main.sidebarIndex !== 1 && !isSimilarSearchMode && !config.content.showQuickView">
           <!-- search box -->
-          <SearchBox ref="searchBoxRef" v-model="config.search.fileName" @click.stop="selectMode = false" /> 
+          <!-- <SearchBox ref="searchBoxRef" v-model="config.search.fileName" @click.stop="selectMode = false" />  -->
 
           <!-- file type options -->
           <DropDownSelect
@@ -761,10 +761,10 @@ const searchBoxRef = ref<any>(null);
 
 // Store current query params for virtual scrolling
 const currentQueryParams = ref({
-  searchFileName: "",
   searchFileType: 0,
   sortType: 0,
   sortOrder: 0,
+  searchFileName: "",
   searchFolder: "",
   startDate: 0,
   endDate: 0,
@@ -1238,9 +1238,9 @@ watch(() => config.settings.language, (newLanguage) => {
 /// watch image search params
 watch(
   () => [
-    config.imageSearch.searchText, 
-    config.imageSearch.similarImageHistoryIndex, 
-    config.imageSearch.searchType
+    config.search.searchText, 
+    config.search.similarImageHistoryIndex, 
+    config.search.searchType
   ],
   () => {
     // Only update content if we are currently in the Image Search view (index 1)
@@ -1317,9 +1317,9 @@ watch(() => [config.content.showFilmStrip], ([newLayout]) => {
 });
 
 // Watch similar search history index
-// watch(() => config.imageSearch.similarImageHistoryIndex, async (newIndex) => {
-//     if (newIndex >= 0 && newIndex < config.imageSearch.similarImageHistory.length) {
-//       const fileId = config.imageSearch.similarImageHistory[newIndex];
+// watch(() => config.search.similarImageHistoryIndex, async (newIndex) => {
+//     if (newIndex >= 0 && newIndex < config.search.similarImageHistory.length) {
+//       const fileId = config.search.similarImageHistory[newIndex];
 //       if (fileId) {
 //         const fileInfo = await getFileInfo(fileId);
 //         if (fileInfo) {
@@ -1421,23 +1421,30 @@ function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number
 
 // get file list 
 async function getFileList(
-  searchFolder: string, 
-  startDate: number, 
-  endDate: number, 
-  make: string, 
-  model: string, 
-  locationAdmin1: string, 
-  locationName: string, 
-  isFavorite: boolean, 
-  tagId: number, 
+  {
+    searchFileType = config.search.fileType, 
+    sortType = config.search.sortType, 
+    sortOrder = config.search.sortOrder, 
+    searchFileName = '', 
+    searchFolder = '', 
+    startDate = 0, 
+    endDate = 0, 
+    make = '', 
+    model = '', 
+    locationAdmin1 = '', 
+    locationName = '', 
+    isFavorite = false, 
+    isShowHidden = false,
+    tagId = 0
+  } = {},
   requestId: number, 
 ) { 
   // Update current query params with all fields
   currentQueryParams.value = {
-    searchFileName: config.search.fileName,
-    searchFileType: config.search.fileType,
-    sortType: config.search.sortType,
-    sortOrder: config.search.sortOrder,
+    searchFileType,
+    sortType,
+    sortOrder,
+    searchFileName,
     searchFolder,
     startDate,
     endDate,
@@ -1446,7 +1453,7 @@ async function getFileList(
     locationAdmin1,
     locationName,
     isFavorite,
-    isShowHidden: false,
+    isShowHidden,
     tagId,
   };
 
@@ -1561,7 +1568,7 @@ async function updateContent() {
       fileList.value = [];
     } else if(config.album.id === 0) {   // all files
       contentTitle.value = localeMsg.value.album.all_files;
-      getFileList("", 0, 0, "", "", "", "", false, 0, requestId);
+      getFileList({}, requestId);
     } else {
       getAlbum(config.album.id).then(async album => {
         if (requestId !== currentContentRequestId) return;
@@ -1580,10 +1587,10 @@ async function updateContent() {
 
           // Fetch timeline data for the folder
           currentQueryParams.value = {
-            searchFileName: config.search.fileName,
             searchFileType: config.search.fileType,
             sortType: config.search.sortType,
             sortOrder: config.search.sortOrder,
+            searchFileName: "",
             searchFolder: config.album.folderPath || "",
             startDate: 0,
             endDate: 0,
@@ -1617,22 +1624,30 @@ async function updateContent() {
     }
   }
   else if(newIndex === 1) {   // image search
-    if(config.imageSearch.searchType === 0) {   // search
-      if (config.imageSearch.searchText) {
-        contentTitle.value = localeMsg.value.search.title + ' - ' + config.imageSearch.searchText;
-        getImageSearchFileList(config.imageSearch.searchText, 0, requestId);
+    if(config.search.searchType === 0) {   // search
+      if (config.search.searchText) {
+        contentTitle.value = localeMsg.value.search.search_images + ' - ' + config.search.searchText;
+        getImageSearchFileList(config.search.searchText, 0, requestId);
       } else {
-        contentTitle.value = localeMsg.value.search.title;
+        contentTitle.value = localeMsg.value.search.search_images;
         fileList.value = [];
       }
-    } else {   // similar
-      const index = config.imageSearch.similarImageHistoryIndex;
-      if (index >= 0 && index < config.imageSearch.similarImageHistory.length) {
-        const file = await getFileInfo(config.imageSearch.similarImageHistory[index]);
+    } else if (config.search.searchType === 1) { // similar
+      const index = config.search.similarImageHistoryIndex;
+      if (index >= 0 && index < config.search.similarImageHistory.length) {
+        const file = await getFileInfo(config.search.similarImageHistory[index]);
         contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
-        getImageSearchFileList("", config.imageSearch.similarImageHistory[index], requestId);
+        getImageSearchFileList("", config.search.similarImageHistory[index], requestId);
       } else {
         contentTitle.value = localeMsg.value.search.similar_images;
+        fileList.value = [];
+      }
+    } else {   // filename search
+      if (config.search.fileName) {
+        contentTitle.value = localeMsg.value.search.filename_search + ' - ' + config.search.fileName;
+        getFileList({ searchFileName: config.search.fileName }, requestId);
+      } else {
+        contentTitle.value = localeMsg.value.search.filename_search;
         fileList.value = [];
       }
     }
@@ -1644,13 +1659,13 @@ async function updateContent() {
     } else {
       if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
-        getFileList("", 0, 0, "", "", "", "", true, 0, requestId);
+        getFileList({ isFavorite: true }, requestId);
       } else {                // favorite folders
         getAlbum(config.favorite.albumId).then(album => {
           if (requestId !== currentContentRequestId) return;
           if(album) {
             contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath || "", album.path);
-            getFileList(config.favorite.folderPath || "", 0, 0, "", "", "", "", false, 0, requestId);
+            getFileList({ searchFolder: config.favorite.folderPath || "" }, requestId);
           } else {
             contentTitle.value = "";
             fileList.value = [];
@@ -1668,7 +1683,7 @@ async function updateContent() {
         if (requestId !== currentContentRequestId) return;
         if (tagName) {
           contentTitle.value = tagName;
-          getFileList("", 0, 0, "", "", "", "", false, config.tag.id, requestId);
+          getFileList({ tagId: config.tag.id || 0 }, requestId);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -1689,7 +1704,7 @@ async function updateContent() {
         contentTitle.value = formatDate(config.calendar.year, config.calendar.month, config.calendar.date, localeMsg.value.format.date_long);
       }
       const [startDate, endDate] = getCalendarDateRange(config.calendar.year, config.calendar.month, config.calendar.date);
-      getFileList("", startDate, endDate, "", "", "", "", false, 0, requestId);
+      getFileList({ startDate, endDate }, requestId);
     }
   }
   else if(newIndex === 5) {   // location
@@ -1699,10 +1714,10 @@ async function updateContent() {
     } else {
       if(config.location.name) {
         contentTitle.value = `${config.location.admin1} > ${config.location.name}`;
-        getFileList("", 0, 0, "", "", config.location.admin1, config.location.name, false, 0, requestId);
+        getFileList({ locationAdmin1: config.location.admin1, locationName: config.location.name }, requestId);
       } else {
         contentTitle.value = `${config.location.admin1}`;
-        getFileList("", 0, 0, "", "", config.location.admin1, "", false, 0, requestId);
+        getFileList({ locationAdmin1: config.location.admin1 }, requestId);
       } 
     }
   }
@@ -1713,10 +1728,10 @@ async function updateContent() {
     } else {
       if(config.camera.model) {
         contentTitle.value = `${config.camera.make} > ${config.camera.model}`;
-        getFileList("", 0, 0, config.camera.make, config.camera.model, "", "", false, 0, requestId);
+        getFileList({ make: config.camera.make, model: config.camera.model }, requestId);
       } else {
         contentTitle.value = `${config.camera.make}`;
-        getFileList("", 0, 0, config.camera.make, "", "", "", false, 0, requestId);
+        getFileList({ make: config.camera.make }, requestId);
       } 
     }
   } 
@@ -1754,16 +1769,16 @@ function enterSimilarSearchMode(file: any) {
   contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
 
   // Update similar image search history
-  const existingIndex = (config.imageSearch.similarImageHistory as any[]).findIndex(item => item === file.id);
+  const existingIndex = (config.search.similarImageHistory as any[]).findIndex(item => item === file.id);
   
   if (existingIndex !== -1) {
-    config.imageSearch.similarImageHistoryIndex = existingIndex;
+    config.search.similarImageHistoryIndex = existingIndex;
   } else {
-    (config.imageSearch.similarImageHistory as any[]).unshift(file.id);
-    config.imageSearch.similarImageHistoryIndex = 0;
+    (config.search.similarImageHistory as any[]).unshift(file.id);
+    config.search.similarImageHistoryIndex = 0;
     
-    if (config.imageSearch.similarImageHistory.length > config.imageSearch.maxSearchHistory) {
-      (config.imageSearch.similarImageHistory as any[]).pop();
+    if (config.search.similarImageHistory.length > config.search.maxSearchHistory) {
+      (config.search.similarImageHistory as any[]).pop();
     }
   }
 

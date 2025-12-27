@@ -16,8 +16,8 @@
         <li v-for="camera in sortedCameras">
           <div 
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              config.camera.make === camera.make && !config.camera.model ? 'text-primary bg-base-100' : 'hover:text-base-content',
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+              config.camera.make === camera.make && !config.camera.model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickCameraMake(camera)"
           >
@@ -35,8 +35,8 @@
             <li v-for="(model, index) in camera.models" class="pl-4"> 
               <div 
                 :class="[
-                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                  config.camera.model === model ? 'text-primary bg-base-100' : 'hover:text-base-content',
+                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+                  config.camera.model === model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >

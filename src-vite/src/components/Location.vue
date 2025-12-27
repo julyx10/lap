@@ -16,8 +16,8 @@
         <li v-for="location in sortedLocations">
           <div 
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-              config.location.admin1 === location.admin1 && !config.location.name ? 'text-primary bg-base-100' : 'hover:text-base-content',
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+              config.location.admin1 === location.admin1 && !config.location.name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickLocationAdmin1(location)"
           >
@@ -35,8 +35,8 @@
             <li v-for="(name, index) in location.names" class="pl-4">
               <div 
                 :class="[
-                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer hover:bg-base-100 group', 
-                  config.location.name === name ? 'text-primary bg-base-100' : 'hover:text-base-content',
+                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+                  config.location.name === name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
                 ]" 
                 @click="clickLocationName(location.admin1, name)"
               >

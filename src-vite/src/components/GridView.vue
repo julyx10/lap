@@ -55,7 +55,7 @@
         <span class="text-sm text-base-content/50">{{ $t('tooltip.loading') }}</span>
       </div>
       <div v-else class="text-base-content/30 flex flex-col items-center">
-        <span>{{ config.main.sidebarIndex === 1 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
+        <span>{{ config.main.sidebarIndex === 0 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
       </div>
     </div>
 

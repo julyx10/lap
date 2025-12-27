@@ -11,19 +11,6 @@
     "camera": "Cameras",
     "settings": "Settings"
   },
-  "search": {
-    "title": "Image Search",
-    "search_images": "Search",
-    "similar_images": "Similar Images",
-    "image_search_placeholder": "Search images by text",
-    "image_search_history": "Search History",
-    "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find related images.",
-    "similar_images_tips": "Select an image to find similar images",
-    "indexing": "Indexing...",
-    "index_paused": "Indexing paused",
-    "index_resume": "Resume indexing",
-    "indexed": "Indexed"
-  },
   "album": {
     "all_files": "All Files",
     "album_list": "Album List",
@@ -42,6 +29,21 @@
       "created_at": "Created at",
       "modified_at": "Modified at"
     }
+  },
+  "search": {
+    "title": "Image Search",
+    "search_images": "AI Search",
+    "similar_images": "Similar",
+    "filename_search": "Filename",
+    "image_search_placeholder": "Search images by text",
+    "image_search_history": "Search History",
+    "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find related images.",
+    "similar_images_tips": "Select an image to find similar images",
+    "filename_search_tips": "Enter a filename to search",
+    "indexing": "Indexing...",
+    "index_paused": "Indexing paused",
+    "index_resume": "Resume indexing",
+    "indexed": "Indexed"
   },
   "favorite": {
     "files": "Favorite files",

@@ -329,8 +329,7 @@ export async function getQueryFiles(params, offset, limit) {
 export async function getFolderFiles(folderId, folderPath) {
   try {
     let files = await invoke('get_folder_files', { 
-      searchFileName: config.search.fileName, 
-      searchFileType: config.search.fileType,
+      fileType: config.search.fileType,
       sortType: config.search.sortType,
       sortOrder: config.search.sortOrder,
       folderId, 
@@ -349,8 +348,7 @@ export async function getFolderFiles(folderId, folderPath) {
 export async function getFolderThumbCount(folderId) {
   try {
     let count = await invoke('get_folder_thumb_count', { 
-      searchFileName: config.search.fileName, 
-      searchFileType: config.search.fileType,
+      fileType: config.search.fileType,
       folderId, 
     });
     if(count) {
