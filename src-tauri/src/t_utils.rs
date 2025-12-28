@@ -6,7 +6,7 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-use crate::t_sqlite::AFile;
+use crate::t_sqlite::{AFile, Album};
 use chrono::{DateTime, Local, TimeZone};
 use once_cell::sync::Lazy;
 use pinyin::ToPinyin;
@@ -14,6 +14,7 @@ use reverse_geocoder::ReverseGeocoder;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::{Emitter, Manager, State};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 
 // reverse geocoder
@@ -469,34 +470,45 @@ pub fn get_folder_files(
     sort_order: i64,
     folder_id: i64,
     folder_path: &str,
+    from_db_only: bool,
 ) -> Vec<AFile> {
-    let mut files: Vec<AFile> = WalkDir::new(folder_path)
-        .min_depth(1)
-        .max_depth(1)
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter(|entry| entry.file_type().is_file())
-        .filter_map(|entry| {
-            let path = entry.path();
-            let file_path = path.to_str()?;
+    let mut files: Vec<AFile> = if from_db_only {
+        match AFile::get_files_by_folder_id(folder_id) {
+            Ok(files) => files,
+            Err(e) => {
+                eprintln!("Failed to get files from DB: {}", e);
+                Vec::new()
+            }
+        }
+    } else {
+        WalkDir::new(folder_path)
+            .min_depth(1)
+            .max_depth(1)
+            .into_iter()
+            .filter_map(Result::ok)
+            .filter(|entry| entry.file_type().is_file())
+            .filter_map(|entry| {
+                let path = entry.path();
+                let file_path = path.to_str()?;
 
-            if let Some(ftype) = get_file_type(file_path) {
-                if file_type == 0 || file_type == ftype {
-                    match AFile::add_to_db(folder_id, file_path, file_type) {
-                        Ok(file) => Some(file),
-                        Err(e) => {
-                            eprintln!("Failed to add file to DB: {} ({})", file_path, e);
-                            None
+                if let Some(ftype) = get_file_type(file_path) {
+                    if file_type == 0 || file_type == ftype {
+                        match AFile::add_to_db(folder_id, file_path, file_type) {
+                            Ok(file) => Some(file),
+                            Err(e) => {
+                                eprintln!("Failed to add file to DB: {} ({})", file_path, e);
+                                None
+                            }
                         }
+                    } else {
+                        None
                     }
                 } else {
                     None
                 }
-            } else {
-                None
-            }
-        })
-        .collect();
+            })
+            .collect()
+    };
 
     // sort
     if sort_type == 4 {
@@ -723,4 +735,96 @@ pub fn get_db_file_path() -> Result<String, String> {
     let db_path = app_data_dir.join("main.db");
 
     Ok(db_path.to_string_lossy().into_owned())
+}
+
+#[derive(serde::Serialize, Clone)]
+struct ProgressPayload {
+    album_id: i64,
+    current: u64,
+    total: u64,
+}
+
+#[derive(serde::Serialize, Clone)]
+struct FinishedPayload {
+    album_id: i64,
+}
+
+pub async fn index_album_worker(
+    app_handle: &tauri::AppHandle,
+    album_id: i64,
+    thumbnail_size: u32,
+) -> Result<(), String> {
+    // 1. Get album info
+    let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
+
+    // 2. Count total files
+    let (_folders, image_count, _image_size, video_count, _video_size) =
+        count_folder_files(&album.path);
+    let total_files = image_count + video_count;
+
+    // 3. Emit start progress
+    let mut current_progress = 0;
+    app_handle
+        .emit(
+            "index_progress",
+            ProgressPayload {
+                album_id,
+                current: current_progress,
+                total: total_files,
+            },
+        )
+        .map_err(|e| e.to_string())?;
+
+    // 4. Traverse and index
+    for entry in WalkDir::new(&album.path).into_iter().filter_map(Result::ok) {
+        if entry.file_type().is_file() {
+            let path_str = entry.path().to_string_lossy().to_string();
+            if let Some(ftype) = get_file_type(&path_str) {
+                let parent_path = entry
+                    .path()
+                    .parent()
+                    .unwrap_or(Path::new(&album.path))
+                    .to_string_lossy()
+                    .to_string();
+
+                if let Ok(folder) = crate::t_sqlite::AFolder::add_to_db(album_id, &parent_path) {
+                    if let Ok(file) =
+                        crate::t_sqlite::AFile::add_to_db(folder.id.unwrap(), &path_str, ftype)
+                    {
+                        // Generate thumbnail
+                        let _ = crate::t_sqlite::AThumb::get_or_create_thumb(
+                            file.id.unwrap(),
+                            &path_str,
+                            ftype,
+                            file.e_orientation.unwrap_or(1) as i32,
+                            thumbnail_size,
+                            false,
+                        );
+
+                        // Generate embedding
+                        let ai_state: State<crate::t_ai::AiState> = app_handle.state();
+                        let _ =
+                            crate::t_sqlite::AFile::generate_embedding(&ai_state, file.id.unwrap());
+                    }
+                }
+
+                current_progress += 1;
+                let _ = app_handle.emit(
+                    "index_progress",
+                    ProgressPayload {
+                        album_id,
+                        current: current_progress,
+                        total: total_files,
+                    },
+                );
+            }
+        }
+    }
+
+    // 5. Emit finished
+    app_handle
+        .emit("index_finished", FinishedPayload { album_id })
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
 }

@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
 import { separator, localeComp } from '@/common/utils';
 
@@ -326,14 +327,15 @@ export async function getQueryFiles(params, offset, limit) {
 }
 
 // get all files from the folder (no pagination)
-export async function getFolderFiles(folderId, folderPath) {
+export async function getFolderFiles(folderId, folderPath, fromDbOnly) {
   try {
     let files = await invoke('get_folder_files', { 
       fileType: config.search.fileType,
       sortType: config.search.sortType,
       sortOrder: config.search.sortOrder,
       folderId, 
-      folderPath, 
+      folderPath,
+      fromDbOnly: fromDbOnly || false,
     });
     if(files) {
       return files;
@@ -829,4 +831,25 @@ export async function searchSimilarImages(params) {
     console.error('searchSimilarImages error:', error);
   }
   return [];
+}
+
+// indexing
+
+// index album
+export async function indexAlbum(albumId) {
+  try {
+    await invoke('index_album', { albumId, thumbnailSize: config.settings.thumbnailSize || 512 });
+  } catch (error) {
+    console.error('indexAlbum error:', error);
+  }
+}
+
+// listen index progress
+export async function listenIndexProgress(callback) {
+  return await listen('index_progress', callback);
+}
+
+// listen index finished
+export async function listenIndexFinished(callback) {
+  return await listen('index_finished', callback);
 }

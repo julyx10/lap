@@ -40,7 +40,8 @@
     "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find related images.",
     "similar_images_tips": "Select an image to find similar images",
     "filename_search_tips": "Enter a filename to search",
-    "indexing": "Indexing...",
+    "indexing_album": "Indexing '{album}' ...",
+    "indexing": "Indexing ...",
     "index_paused": "Indexing paused",
     "index_resume": "Resume indexing",
     "indexed": "Indexed"
@@ -193,8 +194,7 @@
     "album": {
       "add": "Add album...",
       "edit": "Edit album...",
-      "hide": "Hide",
-      "unhide": "Unhide",
+      "update_index": "Update index",
       "include_in_search": "Include in search",
       "exclude_from_search": "Exclude from search",
       "remove": "Remove from albums",
@@ -206,7 +206,7 @@
       "view_in_new_window": "View in new window...",
       "copy": "Copy to clipboard",
       "edit": "Edit image...",
-      "search_similar_images": "Search similar images",
+      "find_similar_images": "Find similar images",
       "on_this_day": "On this day",
       "print": "Print",
       "rename": "Rename",

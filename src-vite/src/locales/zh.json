@@ -40,7 +40,8 @@
     "image_search_tips": "输入描述以搜索图片。例如：输入\"sunset over the ocean\"",
     "similar_images_tips": "选择一张图片以查找相似图片",
     "filename_search_tips": "输入文件名进行搜索",
-    "indexing": "索引中...",
+    "indexing_album": "'{album}' 索引中 ...",
+    "indexing": "索引中 ...",
     "index_paused": "索引暂停",
     "index_resume": "继续索引",
     "indexed": "已索引"
@@ -193,8 +194,7 @@
     "album": {
       "add": "添加相册...",
       "edit": "编辑相册...",
-      "hide": "隐藏",
-      "unhide": "取消隐藏",
+      "update_index": "更新索引",
       "include_in_search": "包含在搜索中",
       "exclude_from_search": "从搜索中排除",
       "remove": "从相册中移除",
@@ -206,7 +206,7 @@
       "view_in_new_window": "在新窗口中查看...",
       "copy": "复制到剪贴板",
       "edit": "编辑图片...",
-      "search_similar_images": "搜索相似图片",
+      "find_similar_images": "查找相似图片",
       "on_this_day": "历史上的今天",
       "print": "打印",
       "rename": "重命名",

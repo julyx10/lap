@@ -207,12 +207,12 @@ const menuItems = useFileMenuItems(
 const getGridLabelText = (file, option) => {
   switch (option) {
     case 0: return '';
-    case 1: return shortenFilename(file.name);
-    case 2: return formatFileSize(file.size);
-    case 3: return formatDimensionText(file.width, file.height);
+    case 1: return shortenFilename(file.name) || ' ';
+    case 2: return formatFileSize(file.size) || ' ';
+    case 3: return formatDimensionText(file.width, file.height) || ' ';
     case 4: return formatTimestamp(file.taken_date, localeMsg.value.format.date_time) || ' ';
     case 5: return file.geo_name || ' ';
-    case 6: return formatCameraInfo(file.e_make, file.e_model);
+    case 6: return formatCameraInfo(file.e_make, file.e_model) || ' ';
     case 7: return file.e_lens_model || ' ';
     case 8: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias) || ' ';
     default: return '';

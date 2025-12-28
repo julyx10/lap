@@ -1464,6 +1464,37 @@ impl AFile {
         Ok(timelines)
     }
 
+    // get all files in a folder by folder id (DB only)
+    pub fn get_files_by_folder_id(folder_id: i64) -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, folder_id, name, name_pinyin, size, file_type, created_at, modified_at, taken_date,
+                    width, height, duration, is_favorite, rotate, comments, has_tags,
+                    e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description,
+                    e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
+                    gps_latitude, gps_longitude, gps_altitude,
+                    geo_name, geo_admin1, geo_admin2, geo_cc,
+                    has_thumbnail, has_embedding
+                FROM afiles
+                WHERE folder_id = ?1
+                ORDER BY name ASC",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map(params![folder_id], |row| Self::from_row(row))
+            .map_err(|e| e.to_string())?;
+
+        let mut files = Vec::new();
+        for file in rows {
+            if let Ok(f) = file {
+                files.push(f);
+            }
+        }
+        Ok(files)
+    }
+
     // --- AI Logic ---
 
     /// check ai status
@@ -1514,11 +1545,18 @@ impl AFile {
 
         let file_path = file.file_path.ok_or("File path not resolved")?;
 
-        // 3. Generate embedding
+        // 3. Check if embedding exists
+        if let Ok(embeds) = Self::get_embedding_by_id(file_id) {
+            if !embeds.is_empty() {
+                return Ok("Embedding already exists".to_string());
+            }
+        }
+
+        // 4. Generate embedding
         let mut engine = state.0.lock().unwrap();
         let embedding = engine.encode_image(&file_path)?;
 
-        // 4. Save to DB
+        // 5. Save to DB
         let _ =
             Self::update_embedding(file_id, embedding).map_err(|e| format!("DB Error: {}", e))?;
 

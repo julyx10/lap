@@ -74,6 +74,21 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
         .map_err(|e| format!("Error while setting album display order: {}", e))
 }
 
+/// index album
+#[tauri::command]
+pub fn index_album(
+    app_handle: tauri::AppHandle,
+    album_id: i64,
+    thumbnail_size: u32,
+) -> Result<(), String> {
+    tauri::async_runtime::spawn(async move {
+        if let Err(e) = t_utils::index_album_worker(&app_handle, album_id, thumbnail_size).await {
+            eprintln!("Error indexing album {}: {}", album_id, e);
+        }
+    });
+    Ok(())
+}
+
 // folder
 
 // click to select a sub-folder under an album
@@ -197,8 +212,16 @@ pub fn get_folder_files(
     sort_order: i64,
     folder_id: i64,
     folder_path: &str,
+    from_db_only: Option<bool>,
 ) -> Vec<AFile> {
-    t_utils::get_folder_files(file_type, sort_type, sort_order, folder_id, folder_path)
+    t_utils::get_folder_files(
+        file_type,
+        sort_type,
+        sort_order,
+        folder_id,
+        folder_path,
+        from_db_only.unwrap_or(false),
+    )
 }
 
 /// get the thumbnail count of the folder

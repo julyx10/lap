@@ -21,6 +21,15 @@ export const useConfigStore = defineStore('configStore', {
       mapTheme: 0,               // 0: standard, 2: satellite
     },
 
+    // indexing
+    index: {
+      status: 0,                 // 0: idle, 1: indexing
+      albumQueue: [],            // index album queue: [id1, id2, ...]
+      albumName: '',             // current album name
+      indexed: 0,                // current album's indexed count
+      total: 0,                  // current album's total count
+    },
+
     search: {
       searchType: 0,           // 0: ai search, 1: similar image, 2: filename search
       maxSearchHistory: 20,    // max search history

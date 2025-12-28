@@ -16,18 +16,29 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-              selectedFolderId === album.folderId && !isEditList ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+              selectedFolderId === album.folderId && !isEditList ? 'text-primary bg-base-100 hover:bg-base-100' : (config.index.albumQueue.includes(album.id) ? '' : 'hover:text-base-content hover:bg-base-100/30'),
+              config.index.albumQueue.includes(album.id) ? 'text-base-content/30 pointer-events-none' : ''
             ]"
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
-            <component :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
+            <!-- Indexing Icon -->
+            <IconUpdate v-if="config.index.albumQueue.includes(album.id)" 
+              :class="['mx-1 w-5 h-5', config.index.albumQueue[0] === album.id ? 'animate-spin' : '']" 
+            />
+            <component v-else :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
               class="mx-1 w-5 h-5 cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
 
             <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ album.name }}
+              <span v-if="config.index.albumQueue.includes(album.id)" class="text-xs">
+                 {{  config.index.albumQueue[0] === album.id 
+                     ? `(${$t('search.indexing')} ${config.index.indexed.toLocaleString()} / ${config.index.total.toLocaleString()})` 
+                     : `(${$t('search.indexing')})` 
+                 }}
+              </span>
             </div>
             <div class="ml-auto flex flex-row items-center text-base-content/30">
               <TButton v-if="album.is_hidden" 
@@ -45,13 +56,19 @@
                 :icon="IconDragHandle"
                 :buttonSize="'small'"
               />
-              <ContextMenu v-else-if="componentId === 0 && !isDragging"
+              <ContextMenu v-else-if="componentId === 0 && !isDragging && !config.index.albumQueue.includes(album.id)"
                 :class="['',
                   !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
                 :menuItems="() => getMoreMenuItems(album)"
                 :smallIcon="true"
+              />
+              <TButton v-if="config.index.albumQueue.includes(album.id)" 
+                class="pointer-events-auto"
+                :icon="IconRestore"
+                :buttonSize="'small'"
+                @click="cancelIndexing(album.id)"
               />
             </div>
           </div>
@@ -128,7 +145,7 @@
 <script setup lang="ts">
 
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
-import { listen } from '@tauri-apps/api/event';
+import { listen, emit as tauriEmit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
 import { config } from '@/common/config';
@@ -156,6 +173,8 @@ import {
   IconHide,
   IconFavorite,
   IconUnFavorite,
+  IconUpdate,
+  IconRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -218,6 +237,34 @@ const getMoreMenuItems = (album: any) => {
       }
     },
     {
+      label: localeMsg.value.menu.album.update_index,
+      icon: IconUpdate,
+      action: () => {
+        if (!config.index.albumQueue.includes(album.id)) {
+          config.index.albumQueue.push(album.id);
+          config.index.status = 1;
+        }
+      }
+    },
+    {
+      label: !album?.is_hidden ? localeMsg.value.menu.album.exclude_from_search : localeMsg.value.menu.album.include_in_search,
+      icon: !album?.is_hidden ? IconHide : IconUnhide,
+      action: () => {
+        toggleHidden(album);
+      }
+    },
+    {
+      label: localeMsg.value.menu.album.remove,
+      icon: IconRemove,
+      action: () => {
+        showRemoveAlbumMsgbox.value = true;
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
       label: localeMsg.value.menu.file.new_folder,
       icon: IconNewFolder,
       action: () => {
@@ -240,24 +287,6 @@ const getMoreMenuItems = (album: any) => {
       icon: !album?.is_favorite ? IconFavorite : IconUnFavorite,
       action: () => {
         toggleFavorite(album);
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: !album?.is_hidden ? localeMsg.value.menu.album.exclude_from_search : localeMsg.value.menu.album.include_in_search,
-      icon: !album?.is_hidden ? IconHide : IconUnhide,
-      action: () => {
-        toggleHidden(album);
-      }
-    },
-    {
-      label: localeMsg.value.menu.album.remove,
-      icon: IconRemove,
-      action: () => {
-        showRemoveAlbumMsgbox.value = true;
       }
     },
   ];
@@ -355,6 +384,9 @@ const clickAlbumInfo = async (folderPath, newName, newDescription, isNew) => {
       albums.value.push(newAlbum);
       clickAlbum(newAlbum);
       showAlbumEdit.value = false;
+      
+      // add the new album to the index queue
+      config.index.albumQueue.push(newAlbum.id);   
     }
   } else {
     // Edit existing album
@@ -405,6 +437,29 @@ const clickAlbum = async (album) => {
 const dlbClickAlbum = async (album) => {
   clickAlbum(album);
   expandAlbum(album);
+};
+
+/// cancel indexing
+const cancelIndexing = async (albumId) => {
+  const index = config.index.albumQueue.indexOf(albumId);
+  if (index === -1) return;
+
+  if (index === 0) {
+    // Active one: remove and restart processing for next
+    config.index.albumQueue.shift();
+    config.index.indexed = 0;
+    config.index.total = 0;
+    
+    // reset status
+    config.index.status = 0;
+    
+    // trigger Content.vue to process next using global event
+    await tauriEmit('trigger-next-album');
+    
+  } else {
+    // Pending one: just remove
+    config.index.albumQueue.splice(index, 1);
+  }
 };
 
 /// click album icon to expand or collapse next level folders

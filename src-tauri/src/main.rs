@@ -91,6 +91,7 @@ fn main() {
             t_cmds::edit_album,
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
+            t_cmds::index_album,
             // folder
             t_cmds::select_folder,
             t_cmds::fetch_folder,

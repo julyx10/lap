@@ -37,7 +37,7 @@ export const useFileMenuItems = (
         action: createAction('open')
       },
       {
-        label: localeMsg.value.menu.file.search_similar_images,
+        label: localeMsg.value.menu.file.find_similar_images,
         icon: IconImageSearch,
         shortcut: isMac ? '⌘S' : 'Ctrl+S',
         disabled: f.file_type !== 1 && f.file_type !== 3,

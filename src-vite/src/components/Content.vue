@@ -384,12 +384,13 @@
       </div>
 
       <!-- indexing status -->
-      <div class="ml-auto flex items-center text-xs text-base-content/70 pointer-events-auto flex-shrink-0">
-        <IconSeparator v-if="config.settings.showStatusBar" class="h-6 w-6 text-base-content/30" />
+      <!-- <div v-if="config.index.status === 1" class="ml-auto flex items-center text-xs text-base-content/70 pointer-events-auto flex-shrink-0"> -->
+        <!-- <IconSeparator class="h-6 w-6 text-base-content/30" /> -->
         <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
-        <div class="w-3 h-4 loading loading-bars"></div>
-        <span class="pl-2">{{ $t('search.indexing') + '  (' + (1234).toLocaleString() + ' / ' + (123456).toLocaleString() + ')' }}</span>
-      </div>
+        <!-- <div class="w-3 h-4 loading text-primary/70"></div> -->
+        <!-- <IconUpdate class="w-4 h-4 ml-2 animate-spin text-primary/70" /> -->
+        <!-- <span class="pl-2 text-primary/70">{{ $t('search.indexing', { album: config.index.albumName }) + ' (' + (config.index.indexed).toLocaleString() + ' / ' + (config.index.total).toLocaleString() + ')' }}</span> -->
+      <!-- </div> -->
     </div>
   </div>
 
@@ -488,7 +489,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount,
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
-         revealFolder, getTagName,
+         revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished,
          updateFileInfo} from '@/common/api';  
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
@@ -540,6 +541,7 @@ import {
   IconLeft,
   IconRight,
   IconSeparator,
+  IconUpdate,
   IconZoomIn,
   IconZoomOut,
   IconPlay,
@@ -1175,6 +1177,42 @@ const handleKeyDown = (e: any) => {
   }
 };
 
+// --- Indexing Logic ---
+let unlistenIndexProgress: (() => void) | undefined;
+let unlistenIndexFinished: (() => void) | undefined;
+let unlistenTriggerNextAlbum: (() => void) | undefined;
+
+async function processNextAlbum() {
+  if (config.index.albumQueue.length > 0) {
+    const albumId = config.index.albumQueue[0];
+    const album = await getAlbum(albumId);
+    if (album) {
+      config.index.albumName = album.name;
+      config.index.indexed = 0;
+      config.index.total = 0;
+      await indexAlbum(albumId);
+    } else {
+      // album not found (maybe deleted), remove from queue and process next
+      config.index.albumQueue.shift();
+      processNextAlbum();
+    }
+  } else {
+    config.index.status = 0;
+  }
+}
+
+watch(() => config.index.status, (newStatus) => {
+  if (newStatus === 1 && config.index.albumQueue.length > 0) {
+    processNextAlbum();
+  }
+});
+
+watch(() => config.index.albumQueue.length, (newLength) => {
+   if (newLength > 0 && config.index.status === 0) {
+       config.index.status = 1; 
+   }
+});
+
 onMounted( async() => {
   window.addEventListener('keydown', handleLocalKeyDown);
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
@@ -1203,6 +1241,41 @@ onMounted( async() => {
         break;
     }
   });
+
+  // Indexing listeners
+  unlistenIndexProgress = await listenIndexProgress((event: any) => {
+    const { album_id, current, total } = event.payload;
+    if (config.index.albumQueue.length > 0 && config.index.albumQueue[0] === album_id) {
+        config.index.indexed = current;
+        config.index.total = total;
+    }
+  });
+
+  unlistenIndexFinished = await listenIndexFinished((event: any) => {
+     const { album_id } = event.payload;
+     if (config.index.albumQueue.length > 0 && config.index.albumQueue[0] === album_id) {
+         config.index.albumQueue.shift();
+         if (config.index.albumQueue.length > 0) {
+            processNextAlbum();
+         } else {
+            config.index.status = 0;
+         }
+     }
+  });
+
+  // Listen for manual trigger from AlbumList
+  unlistenTriggerNextAlbum = await listen('trigger-next-album', () => {
+      processNextAlbum();
+  });
+
+  // Auto-resume indexing
+  if (config.index.albumQueue.length > 0) {
+     if (config.index.status === 1) {
+        processNextAlbum();
+     } else {
+        config.index.status = 1;
+     }
+  }
 });
 
 onBeforeUnmount(() => {
@@ -1211,6 +1284,9 @@ onBeforeUnmount(() => {
   unlistenImageViewer();
   if (unlistenKeydown) {
     unlistenKeydown();
+  }
+  if (unlistenTriggerNextAlbum) {
+    unlistenTriggerNextAlbum();
   }
 });
 
@@ -1243,22 +1319,24 @@ watch(
     config.search.searchType
   ],
   () => {
-    // Only update content if we are currently in the Image Search view (index 1)
-    if (config.main.sidebarIndex === 1) {
-      scrollPosition.value = 0;   // reset file scroll position
-      selectedItemIndex.value = 0; // reset selected item index to 0
-      
-      // Also reset the GridView scroll position
-      if (gridViewRef.value) {
-        gridViewRef.value.scrollToPosition(0);
+    setTimeout(() => {
+      // Only update content if we are currently in the Image Search view (index 1)
+      if (config.main.sidebarIndex === 1) {
+        scrollPosition.value = 0;   // reset file scroll position
+        selectedItemIndex.value = 0; // reset selected item index to 0
+        
+        // Also reset the GridView scroll position
+        if (gridViewRef.value) {
+          gridViewRef.value.scrollToPosition(0);
+        }
+        config.content.showQuickView = false;
+        
+        updateContent();
+  
+        // Reset ImageViewer context if open (without focusing/showing it)
+        openImageViewer(selectedItemIndex.value, false);
       }
-      config.content.showQuickView = false;
-      
-      updateContent();
-
-      // Reset ImageViewer context if open (without focusing/showing it)
-      openImageViewer(selectedItemIndex.value, false);
-    }
+    }, 0);
   }
 );
 
@@ -1275,19 +1353,21 @@ watch(
     config.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
   ], 
   () => {
-    scrollPosition.value = 0;   // reset file scroll position
-    selectedItemIndex.value = 0; // reset selected item index to 0
-    
-    // Also reset the GridView scroll position
-    if (gridViewRef.value) {
-      gridViewRef.value.scrollToPosition(0);
-    }
-    config.content.showQuickView = false;
-    
-    updateContent();
-
-    // Reset ImageViewer context if open (without focusing/showing it)
-    openImageViewer(selectedItemIndex.value, false);
+    setTimeout(() => {
+      scrollPosition.value = 0;   // reset file scroll position
+      selectedItemIndex.value = 0; // reset selected item index to 0
+      
+      // Also reset the GridView scroll position
+      if (gridViewRef.value) {
+        gridViewRef.value.scrollToPosition(0);
+      }
+      config.content.showQuickView = false;
+      
+      updateContent();
+  
+      // Reset ImageViewer context if open (without focusing/showing it)
+      openImageViewer(selectedItemIndex.value, false);
+    }, 0);
   }, 
   { immediate: true }
 );
@@ -1315,22 +1395,6 @@ watch(() => [config.content.showFilmStrip], ([newLayout]) => {
     updateSelectedImage(selectedItemIndex.value);
   }
 });
-
-// Watch similar search history index
-// watch(() => config.search.similarImageHistoryIndex, async (newIndex) => {
-//     if (newIndex >= 0 && newIndex < config.search.similarImageHistory.length) {
-//       const fileId = config.search.similarImageHistory[newIndex];
-//       if (fileId) {
-//         const fileInfo = await getFileInfo(fileId);
-//         if (fileInfo) {
-//           enterSimilarSearchMode(fileInfo);
-//         }
-//       }
-//     } else {
-//       fileList.value = [];
-//     }
-//   }
-// );
 
 function toggleGridViewLayout() {
   config.content.showQuickView = false;
@@ -1578,44 +1642,7 @@ async function updateContent() {
           } else {
             contentTitle.value = album.name + getRelativePath(config.album.folderPath || "", album.path);
           };
-          const albumFiles = await getFolderFiles(config.album.folderId, config.album.folderPath);
-          if (requestId !== currentContentRequestId) return;
-
-          fileList.value = albumFiles;
-          totalFileCount.value = fileList.value.length;
-          totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
-
-          // Fetch timeline data for the folder
-          currentQueryParams.value = {
-            searchFileType: config.search.fileType,
-            sortType: config.search.sortType,
-            sortOrder: config.search.sortOrder,
-            searchFileName: "",
-            searchFolder: config.album.folderPath || "",
-            startDate: 0,
-            endDate: 0,
-            make: "",
-            model: "",
-            locationAdmin1: "",
-            locationName: "",
-            isFavorite: false,
-            isShowHidden: true,
-            tagId: 0,
-          };
-          getQueryTimeLine(currentQueryParams.value).then(data => {
-            if (requestId === currentContentRequestId) timelineData.value = data;
-          });
-
-          // get the thumbnail count
-          getFolderThumbCount(config.album.folderId).then(count => {
-            if (requestId === currentContentRequestId) {
-              console.log('updateContent - thumbCount:', count);
-              showProgressBar.value = count < fileList.value.length; 
-            }
-          });
-
-          // always get all thumbnail for a folder (gen thumbnail if not exist)
-          getFileListThumb(fileList.value);
+          getFileList({ searchFolder: config.album.folderPath }, requestId);
         } else {
           contentTitle.value = "";
           fileList.value = [];
@@ -1645,7 +1672,7 @@ async function updateContent() {
     } else {   // filename search
       if (config.search.fileName) {
         contentTitle.value = localeMsg.value.search.filename_search + ' - ' + config.search.fileName;
-        getFileList({ searchFileName: config.search.fileName }, requestId);
+        getFileList({ searchFileName: config.search.fileName, sortType: 1, sortOrder: 0 }, requestId); // sort by name
       } else {
         contentTitle.value = localeMsg.value.search.filename_search;
         fileList.value = [];
@@ -2160,21 +2187,6 @@ const sortOptions = computed(() => {
 const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
-
-// function refreshFileList() {
-//   selectMode.value = false;   // exit multi-select mode
-
-//   if(fileList.value.length > 0) {
-//     if(scrollPosition.value === 0) {  // reset file scroll position
-//       selectedItemIndex.value = 0;
-//       updateSelectedImage(selectedItemIndex.value);
-//     }
-//   } else {
-//     selectedItemIndex.value = -1;
-//     totalFileCount.value = 0;
-//     totalFileSize.value = 0;
-//   }
-// }
 
 // update image when the select file is changed
 async function updateSelectedImage(index: number) {
