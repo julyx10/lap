@@ -833,23 +833,32 @@ export async function searchSimilarImages(params) {
   return [];
 }
 
-// indexing
+// scanning
 
-// index album
-export async function indexAlbum(albumId) {
+// scan album
+export async function scanAlbum(albumId) {
   try {
-    await invoke('index_album', { albumId, thumbnailSize: config.settings.thumbnailSize || 512 });
+    await invoke('scan_album', { albumId, thumbnailSize: config.settings.thumbnailSize || 512 });
   } catch (error) {
-    console.error('indexAlbum error:', error);
+    console.error('scanAlbum error:', error);
   }
 }
 
-// listen index progress
-export async function listenIndexProgress(callback) {
-  return await listen('index_progress', callback);
+// cancel scan
+export async function cancelScan(albumId) {
+  try {
+    await invoke('cancel_scan', { albumId });
+  } catch (error) {
+    console.error('cancelScan error:', error);
+  }
 }
 
-// listen index finished
-export async function listenIndexFinished(callback) {
-  return await listen('index_finished', callback);
+// listen scan progress
+export async function listenScanProgress(callback) {
+  return await listen('scan_progress', callback);
+}
+
+// listen scan finished
+export async function listenScanFinished(callback) {
+  return await listen('scan_finished', callback);
 }

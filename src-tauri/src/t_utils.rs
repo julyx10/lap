@@ -11,8 +11,10 @@ use chrono::{DateTime, Local, TimeZone};
 use once_cell::sync::Lazy;
 use pinyin::ToPinyin;
 use reverse_geocoder::ReverseGeocoder;
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{Emitter, Manager, State};
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
@@ -749,8 +751,9 @@ struct FinishedPayload {
     album_id: i64,
 }
 
-pub async fn index_album_worker(
+pub async fn scan_album_worker(
     app_handle: &tauri::AppHandle,
+    cancellation_token: Arc<Mutex<HashMap<i64, bool>>>,
     album_id: i64,
     thumbnail_size: u32,
 ) -> Result<(), String> {
@@ -766,7 +769,7 @@ pub async fn index_album_worker(
     let mut current_progress = 0;
     app_handle
         .emit(
-            "index_progress",
+            "scan_progress",
             ProgressPayload {
                 album_id,
                 current: current_progress,
@@ -777,6 +780,12 @@ pub async fn index_album_worker(
 
     // 4. Traverse and index
     for entry in WalkDir::new(&album.path).into_iter().filter_map(Result::ok) {
+        // Check cancellation
+        if let Some(&true) = cancellation_token.lock().unwrap().get(&album_id) {
+            println!("Indexing cancelled for album {}", album_id);
+            break;
+        }
+
         if entry.file_type().is_file() {
             let path_str = entry.path().to_string_lossy().to_string();
             if let Some(ftype) = get_file_type(&path_str) {
@@ -810,7 +819,7 @@ pub async fn index_album_worker(
 
                 current_progress += 1;
                 let _ = app_handle.emit(
-                    "index_progress",
+                    "scan_progress",
                     ProgressPayload {
                         album_id,
                         current: current_progress,
@@ -823,7 +832,7 @@ pub async fn index_album_worker(
 
     // 5. Emit finished
     app_handle
-        .emit("index_finished", FinishedPayload { album_id })
+        .emit("scan_finished", FinishedPayload { album_id })
         .map_err(|e| e.to_string())?;
 
     Ok(())

@@ -13,7 +13,7 @@
   },
   "album": {
     "all_files": "所有文件",
-    "album_list": "相册列表",
+    "album_list": "相册",
     "edit": {
       "title_add": "添加相册",
       "title": "编辑相册",
@@ -28,6 +28,10 @@
       "files_counting": "正在统计文件...",
       "created_at": "创建时间",
       "modified_at": "修改时间"
+    },
+    "no_albums": {
+      "title": "还没有相册",
+      "description": "添加包含图片或视频的文件夹以开始使用"
     }
   },
   "search": {
@@ -40,11 +44,12 @@
     "image_search_tips": "输入描述以搜索图片。例如：输入\"sunset over the ocean\"",
     "similar_images_tips": "选择一张图片以查找相似图片",
     "filename_search_tips": "输入文件名进行搜索",
-    "indexing_album": "'{album}' 索引中 ...",
-    "indexing": "索引中 ...",
-    "index_paused": "索引暂停",
-    "index_resume": "继续索引",
-    "indexed": "已索引"
+    "scan": {
+      "title": "扫描 '{album}' ...",
+      "scanned": "已扫描 {count} / {total} 文件",
+      "description": "准备您的相册用于搜索和快速预览。这可能需要几分钟时间来处理大型相册。",
+      "cancel": "取消扫描"
+    }
   },
   "favorite": {
     "files": "收藏的文件",
@@ -194,7 +199,7 @@
     "album": {
       "add": "添加相册...",
       "edit": "编辑相册...",
-      "update_index": "更新索引",
+      "scan": "扫描相册文件",
       "include_in_search": "包含在搜索中",
       "exclude_from_search": "从搜索中排除",
       "remove": "从相册中移除",

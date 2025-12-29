@@ -16,7 +16,7 @@
         leave-to-class="!w-0 opacity-0"
       >
         <!-- left pane -->
-        <div v-if="config.main.showLeftPane"
+        <div v-if="config.main.showLeftPane && !config.content.isFullScreen"
           :class="[
             'relative flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
             !showPanel ? 'mt-12 mb-8': '',
@@ -60,7 +60,7 @@
       </transition> 
       
       <!-- splitter -->
-      <div
+      <div v-if="!config.content.isFullScreen"
         class="w-1 transition-colors shrink-0"
         :class="{
           'hover:bg-primary cursor-ew-resize': config.main.showLeftPane && showPanel,

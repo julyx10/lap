@@ -14,8 +14,12 @@ use crate::t_sqlite::{
 };
 use crate::t_utils;
 use base64::{Engine, engine::general_purpose};
+use std::collections::HashMap;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 use tauri::State;
+
+pub struct ScanCancellation(pub Arc<Mutex<HashMap<i64, bool>>>);
 use tokio;
 
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
@@ -74,18 +78,33 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
         .map_err(|e| format!("Error while setting album display order: {}", e))
 }
 
-/// index album
+/// scan album
 #[tauri::command]
-pub fn index_album(
+pub fn scan_album(
     app_handle: tauri::AppHandle,
+    state: State<ScanCancellation>,
     album_id: i64,
     thumbnail_size: u32,
 ) -> Result<(), String> {
+    // Reset cancellation flag
+    state.0.lock().unwrap().insert(album_id, false);
+    let cancellation_token = state.0.clone();
+
     tauri::async_runtime::spawn(async move {
-        if let Err(e) = t_utils::index_album_worker(&app_handle, album_id, thumbnail_size).await {
-            eprintln!("Error indexing album {}: {}", album_id, e);
+        if let Err(e) =
+            t_utils::scan_album_worker(&app_handle, cancellation_token, album_id, thumbnail_size)
+                .await
+        {
+            eprintln!("Error scanning album {}: {}", album_id, e);
         }
     });
+    Ok(())
+}
+
+/// cancel scan
+#[tauri::command]
+pub fn cancel_scan(state: State<ScanCancellation>, album_id: i64) -> Result<(), String> {
+    state.0.lock().unwrap().insert(album_id, true);
     Ok(())
 }
 

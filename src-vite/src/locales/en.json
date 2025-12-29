@@ -13,7 +13,7 @@
   },
   "album": {
     "all_files": "All Files",
-    "album_list": "Album List",
+    "album_list": "Albums",
     "edit": {
       "title_add": "Add album",
       "title": "Edit album",
@@ -28,6 +28,10 @@
       "files_counting": "Counting files...",
       "created_at": "Created at",
       "modified_at": "Modified at"
+    },
+    "no_albums": {
+      "title": "No albums added yet",
+      "description": "Add an album containing images or videos to get started"
     }
   },
   "search": {
@@ -40,11 +44,12 @@
     "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find related images.",
     "similar_images_tips": "Select an image to find similar images",
     "filename_search_tips": "Enter a filename to search",
-    "indexing_album": "Indexing '{album}' ...",
-    "indexing": "Indexing ...",
-    "index_paused": "Indexing paused",
-    "index_resume": "Resume indexing",
-    "indexed": "Indexed"
+    "scan": {
+      "title": "Scanning '{album}' ...",
+      "scanned": "Scanned: {count} / {total} files",
+      "description": "Preparing your album for search and quick view. This may take a few minutes for large albums.",
+      "cancel": "Cancel scanning"
+    }
   },
   "favorite": {
     "files": "Favorite files",
@@ -194,7 +199,7 @@
     "album": {
       "add": "Add album...",
       "edit": "Edit album...",
-      "update_index": "Update index",
+      "scan": "Scan album files",
       "include_in_search": "Include in search",
       "exclude_from_search": "Exclude from search",
       "remove": "Remove from albums",

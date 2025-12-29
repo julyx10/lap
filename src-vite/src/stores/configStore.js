@@ -12,6 +12,7 @@ export const useConfigStore = defineStore('configStore', {
       showFilmStrip: false,       // false: grid view, true: film strip view
       filmStripPaneHeight: 200,   // film strip pane height (px)
       showQuickView: false,       // true: quick view visible, false: quick view hidden
+      isFullScreen: false,        // true: full screen mode
     },
 
     infoPanel: {
@@ -21,12 +22,12 @@ export const useConfigStore = defineStore('configStore', {
       mapTheme: 0,               // 0: standard, 2: satellite
     },
 
-    // indexing
-    index: {
-      status: 0,                 // 0: idle, 1: indexing
-      albumQueue: [],            // index album queue: [id1, id2, ...]
+    // scanning album
+    scan: {
+      status: 0,                 // 0: idle, 1: scanning
+      albumQueue: [],            // scanning album queue: [id1, id2, ...]
       albumName: '',             // current album name
-      indexed: 0,                // current album's indexed count
+      count: 0,                  // current album's scanned count
       total: 0,                  // current album's total count
     },
 

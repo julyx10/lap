@@ -35,6 +35,9 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(t_ai::AiState(std::sync::Mutex::new(t_ai::AiEngine::new())))
+        .manage(t_cmds::ScanCancellation(std::sync::Arc::new(
+            std::sync::Mutex::new(std::collections::HashMap::new()),
+        )))
         .setup(|_app| {
             // Create the database on startup
             t_sqlite::create_db().expect("error while creating the database");
@@ -91,7 +94,8 @@ fn main() {
             t_cmds::edit_album,
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
-            t_cmds::index_album,
+            t_cmds::scan_album,
+            t_cmds::cancel_scan,
             // folder
             t_cmds::select_folder,
             t_cmds::fetch_folder,

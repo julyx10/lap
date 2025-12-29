@@ -16,31 +16,24 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-              selectedFolderId === album.folderId && !isEditList ? 'text-primary bg-base-100 hover:bg-base-100' : (config.index.albumQueue.includes(album.id) ? '' : 'hover:text-base-content hover:bg-base-100/30'),
-              config.index.albumQueue.includes(album.id) ? 'text-base-content/30 pointer-events-none' : ''
+              selectedFolderId === album.folderId && !isEditList ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
-            <!-- Indexing Icon -->
-            <IconUpdate v-if="config.index.albumQueue.includes(album.id)" 
-              :class="['mx-1 w-5 h-5', config.index.albumQueue[0] === album.id ? 'animate-spin' : '']" 
-            />
-            <component v-else :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
+            <component :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
               class="mx-1 w-5 h-5 cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
 
             <div class="overflow-hidden whitespace-pre text-ellipsis">
               {{ album.name }}
-              <span v-if="config.index.albumQueue.includes(album.id)" class="text-xs">
-                 {{  config.index.albumQueue[0] === album.id 
-                     ? `(${$t('search.indexing')} ${config.index.indexed.toLocaleString()} / ${config.index.total.toLocaleString()})` 
-                     : `(${$t('search.indexing')})` 
-                 }}
-              </span>
             </div>
             <div class="ml-auto flex flex-row items-center text-base-content/30">
+              <!-- Scanning Icon -->
+              <IconUpdate v-if="config.scan.albumQueue.includes(album.id)" 
+                :class="['mx-1 w-4 h-4', config.scan.albumQueue[0] === album.id ? 'animate-spin' : '']" 
+              />
               <TButton v-if="album.is_hidden" 
                 :icon="IconHide"
                 :disabled="true"
@@ -56,19 +49,13 @@
                 :icon="IconDragHandle"
                 :buttonSize="'small'"
               />
-              <ContextMenu v-else-if="componentId === 0 && !isDragging && !config.index.albumQueue.includes(album.id)"
+              <ContextMenu v-else-if="componentId === 0 && !isDragging"
                 :class="['',
                   !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
                 :menuItems="() => getMoreMenuItems(album)"
                 :smallIcon="true"
-              />
-              <TButton v-if="config.index.albumQueue.includes(album.id)" 
-                class="pointer-events-auto"
-                :icon="IconRestore"
-                :buttonSize="'small'"
-                @click="cancelIndexing(album.id)"
               />
             </div>
           </div>
@@ -87,13 +74,14 @@
     </ul>
 
     <!-- No Albums Found Message -->
-    <div v-else-if="!isLoading && !isEditList" class="flex-1 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else-if="!isLoading && !isEditList" class="flex-1 flex flex-col items-center justify-center gap-2 text-base-content/30">
+      <span class="text-center">{{ $t('album.no_albums.title') }}</span>
+      <span class="text-sm text-center">{{ $t('album.no_albums.description') }}</span>
       <button class="btn btn-primary" @click="clickNewAlbum">
         <IconAdd class="w-5 h-5" />
         {{ $t('menu.album.add') }}
       </button>
 
-      <span class="m-4 text-center">{{ $t('tooltip.not_found.albums') }}</span>
     </div>
 
     <!-- edit album information -->
@@ -237,12 +225,12 @@ const getMoreMenuItems = (album: any) => {
       }
     },
     {
-      label: localeMsg.value.menu.album.update_index,
+      label: localeMsg.value.menu.album.scan,
       icon: IconUpdate,
       action: () => {
-        if (!config.index.albumQueue.includes(album.id)) {
-          config.index.albumQueue.push(album.id);
-          config.index.status = 1;
+        if (!config.scan.albumQueue.includes(album.id)) {
+          config.scan.albumQueue.push(album.id);
+          config.scan.status = 1;
         }
       }
     },
@@ -385,8 +373,8 @@ const clickAlbumInfo = async (folderPath, newName, newDescription, isNew) => {
       clickAlbum(newAlbum);
       showAlbumEdit.value = false;
       
-      // add the new album to the index queue
-      config.index.albumQueue.push(newAlbum.id);   
+      // add the new album to the scan queue
+      config.scan.albumQueue.push(newAlbum.id);   
     }
   } else {
     // Edit existing album
@@ -441,24 +429,24 @@ const dlbClickAlbum = async (album) => {
 
 /// cancel indexing
 const cancelIndexing = async (albumId) => {
-  const index = config.index.albumQueue.indexOf(albumId);
+  const index = config.scan.albumQueue.indexOf(albumId);
   if (index === -1) return;
 
   if (index === 0) {
     // Active one: remove and restart processing for next
-    config.index.albumQueue.shift();
-    config.index.indexed = 0;
-    config.index.total = 0;
+    config.scan.albumQueue.shift();
+    config.scan.count = 0;
+    config.scan.total = 0;
     
     // reset status
-    config.index.status = 0;
+    config.scan.status = 0;
     
     // trigger Content.vue to process next using global event
     await tauriEmit('trigger-next-album');
     
   } else {
     // Pending one: just remove
-    config.index.albumQueue.splice(index, 1);
+    config.scan.albumQueue.splice(index, 1);
   }
 };
 

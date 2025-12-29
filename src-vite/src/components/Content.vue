@@ -94,12 +94,23 @@
             :tooltip="(!activeZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
             @click="activeZoomFit = !activeZoomFit"
           />
+          <TButton
+            :icon="!config.content.isFullScreen ? IconFullScreen : IconRestoreScreen"
+            :tooltip="!config.content.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
+            @click="config.content.isFullScreen = !config.content.isFullScreen"
+          />
           <ContextMenu
             :iconMenu="IconMore"
             :menuItems="singleFileMenuItems"
             :smallIcon="true"
             :disabled="selectedItemIndex < 0 || isSlideShow"
             @click.stop
+          />
+          <TButton
+            :icon="IconClose"
+            :disabled="selectedItemIndex < 0 || isSlideShow"
+            :tooltip="$t('image_viewer.toolbar.close')"
+            @click="config.content.showQuickView = false; stopSlideShow()"
           />
         </template>
 
@@ -266,15 +277,18 @@
 
         <!-- Quick View Overlay -->
         <div v-if="config.content.showQuickView && fileList[selectedItemIndex]" 
-          class="absolute inset-0 z-[60] mt-12 flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
-          :class="[config.settings.showStatusBar ? 'mb-8': 'mb-1']"
+          class="absolute inset-0 z-[60] flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
+          :class="[
+            !config.content.isFullScreen ? 'mt-12' : '',
+            !config.content.isFullScreen ? (config.settings.showStatusBar ? 'mb-8': 'mb-1') : ''
+          ]"
         >
           <!-- Close Button -->
           <TButton 
             class="absolute top-2 right-2 z-[70]"
             buttonSize="small"
-            :icon="IconClose"
-            @click.stop="config.content.showQuickView = false; stopSlideShow()"
+            :icon="config.content.isFullScreen ? IconRestoreScreen : IconClose"
+            @click.stop="config.content.isFullScreen ? config.content.isFullScreen = false : (config.content.showQuickView = false); stopSlideShow()"
             @dblclick.stop
           />
 
@@ -298,6 +312,18 @@
               @scale="onScale"
             />
           </div>
+        </div>
+
+        <!-- Scanning Overlay -->
+        <div v-if="isScanningCurrentAlbum" class="absolute inset-0 z-50 bg-base-100/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-base-content/30">
+          <IconUpdate class="mx-1 w-8 h-8 animate-spin" />  
+          <span class="text-lg text-center">{{ $t('search.scan.title', { album: config.scan.albumName }) }}</span>
+          <span class="text-center">{{ $t('search.scan.scanned', { count: config.scan.count, total: config.scan.total }) }}</span>
+          <span class="text-sm text-center">{{ $t('search.scan.description') }}</span>
+          <button class="btn btn-primary" @click="cancelScanning">
+            <IconClose class="w-5 h-5" />
+            {{ $t('search.scan.cancel') }}
+          </button>
         </div>
       </div>
 
@@ -384,13 +410,13 @@
       </div>
 
       <!-- indexing status -->
-      <!-- <div v-if="config.index.status === 1" class="ml-auto flex items-center text-xs text-base-content/70 pointer-events-auto flex-shrink-0"> -->
+      <!-- <div v-if="config.scan.status === 1" class="ml-auto flex items-center text-xs text-base-content/70 pointer-events-auto flex-shrink-0"> -->
         <!-- <IconSeparator class="h-6 w-6 text-base-content/30" /> -->
         <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
         <!-- <div class="w-3 h-4 loading text-primary/70"></div> -->
-        <!-- <IconUpdate class="w-4 h-4 ml-2 animate-spin text-primary/70" /> -->
-        <!-- <span class="pl-2 text-primary/70">{{ $t('search.indexing', { album: config.index.albumName }) + ' (' + (config.index.indexed).toLocaleString() + ' / ' + (config.index.total).toLocaleString() + ')' }}</span> -->
-      <!-- </div> -->
+        <!-- <IconUpdate class="w-4 h-4 ml-2 animate-spin text-primary/70" />
+        <span class="pl-2 text-primary/70">{{ $t('search.scan.title', { album: config.scan.albumName }) + ' (' + (config.scan.count).toLocaleString() + ' / ' + (config.scan.total).toLocaleString() + ')' }}</span>
+      </div> -->
     </div>
   </div>
 
@@ -489,8 +515,8 @@ import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount,
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
-         revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished,
-         updateFileInfo} from '@/common/api';  
+         revealFolder, getTagName, scanAlbum, listenScanProgress, listenScanFinished,
+         updateFileInfo, cancelScan} from '@/common/api';  
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -562,6 +588,8 @@ import {
   IconUnPin,
   IconNext,
   IconMore,
+  IconFullScreen,
+  IconRestoreScreen,
 } from '@/common/icons';
 
 import { useFileMenuItems } from '@/common/fileMenu';
@@ -1119,6 +1147,10 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
+  if (isScanningCurrentAlbum.value) {
+    return;
+  }
+
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
   if (event.key === 'Space' || event.key === ' ') {
@@ -1128,8 +1160,12 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     }
   }
   else if (event.key === 'Escape' && config.content.showQuickView) {
-    config.content.showQuickView = false;
-    stopSlideShow();
+    if (config.content.isFullScreen) {
+      config.content.isFullScreen = false;
+    } else {
+      config.content.showQuickView = false;
+      stopSlideShow();
+    }
   }
 
   if (handledKeys.includes(event.key)) {
@@ -1177,41 +1213,79 @@ const handleKeyDown = (e: any) => {
   }
 };
 
-// --- Indexing Logic ---
-let unlistenIndexProgress: (() => void) | undefined;
-let unlistenIndexFinished: (() => void) | undefined;
+// --- Scanning Logic ---
+let unlistenScanProgress: (() => void) | undefined;
+let unlistenScanFinished: (() => void) | undefined;
 let unlistenTriggerNextAlbum: (() => void) | undefined;
 
 async function processNextAlbum() {
-  if (config.index.albumQueue.length > 0) {
-    const albumId = config.index.albumQueue[0];
+  if (config.scan.albumQueue.length > 0) {
+    const albumId = config.scan.albumQueue[0];
     const album = await getAlbum(albumId);
     if (album) {
-      config.index.albumName = album.name;
-      config.index.indexed = 0;
-      config.index.total = 0;
-      await indexAlbum(albumId);
+      config.scan.albumName = album.name;
+      config.scan.count = 0;
+      config.scan.total = 0;
+      await scanAlbum(albumId);
     } else {
       // album not found (maybe deleted), remove from queue and process next
-      config.index.albumQueue.shift();
+      config.scan.albumQueue.shift();
       processNextAlbum();
     }
   } else {
-    config.index.status = 0;
+    config.scan.status = 0;
   }
 }
 
-watch(() => config.index.status, (newStatus) => {
-  if (newStatus === 1 && config.index.albumQueue.length > 0) {
-    processNextAlbum();
+// Check if current album is being scanned
+const isScanningCurrentAlbum = computed(() => {
+  return config.main.sidebarIndex === 0 && // Album mode
+         config.album.id !== null && config.album.id !== 0 && // Valid album
+         config.scan.albumQueue.includes(config.album.id);
+});
+
+watch(isScanningCurrentAlbum, (val) => {
+  if (val) {
+    uiStore.pushInputHandler('scanning');
+  } else {
+    // Only pop if relevant? Or just pop assuming it's LIFO and we match?
+    // User logic usually implies pushing when showing, popping when hiding.
+    // If multiple things push, LIFO applies.
+    if (uiStore.isInputActive('scanning')) {
+        uiStore.popInputHandler();
+    }
   }
 });
 
-watch(() => config.index.albumQueue.length, (newLength) => {
-   if (newLength > 0 && config.index.status === 0) {
-       config.index.status = 1; 
-   }
-});
+// Cancel scanning for current album
+async function cancelScanning() {
+  const albumId = config.album.id;
+  const index = config.scan.albumQueue.indexOf(albumId);
+  if (index === -1) return;
+
+  if (index === 0) {
+    // Active one: remove and restart processing for next
+    config.scan.albumQueue.shift();
+    config.scan.count = 0;
+    config.scan.total = 0;
+    
+    // reset status
+    config.scan.status = 0;
+
+    // Call backend to cancel
+    cancelScan(albumId);
+    
+    // trigger processing next
+    // Do not call immediately to avoid parallel indexing
+    setTimeout(() => {
+      processNextAlbum();
+    }, 1000);
+
+  } else {
+    // Pending one: just remove
+    config.scan.albumQueue.splice(index, 1);
+  }
+}
 
 onMounted( async() => {
   window.addEventListener('keydown', handleLocalKeyDown);
@@ -1242,38 +1316,36 @@ onMounted( async() => {
     }
   });
 
-  // Indexing listeners
-  unlistenIndexProgress = await listenIndexProgress((event: any) => {
+  // Scanning listeners
+  unlistenScanProgress = await listenScanProgress((event: any) => {
     const { album_id, current, total } = event.payload;
-    if (config.index.albumQueue.length > 0 && config.index.albumQueue[0] === album_id) {
-        config.index.indexed = current;
-        config.index.total = total;
+    if (config.scan.albumQueue.length > 0 && config.scan.albumQueue[0] === album_id) {
+        config.scan.count = current;
+        config.scan.total = total;
     }
   });
 
-  unlistenIndexFinished = await listenIndexFinished((event: any) => {
+  unlistenScanFinished = await listenScanFinished((event: any) => {
      const { album_id } = event.payload;
-     if (config.index.albumQueue.length > 0 && config.index.albumQueue[0] === album_id) {
-         config.index.albumQueue.shift();
-         if (config.index.albumQueue.length > 0) {
+     if (config.scan.albumQueue.length > 0 && config.scan.albumQueue[0] === album_id) {
+         config.scan.albumQueue.shift();
+         if (config.scan.albumQueue.length > 0) {
             processNextAlbum();
          } else {
-            config.index.status = 0;
+            config.scan.status = 0;
          }
      }
   });
 
-  // Listen for manual trigger from AlbumList
   unlistenTriggerNextAlbum = await listen('trigger-next-album', () => {
       processNextAlbum();
   });
 
-  // Auto-resume indexing
-  if (config.index.albumQueue.length > 0) {
-     if (config.index.status === 1) {
+  if (config.scan.albumQueue.length > 0) {
+     if (config.scan.status === 1) {
         processNextAlbum();
      } else {
-        config.index.status = 1;
+        config.scan.status = 1;
      }
   }
 });
@@ -1282,12 +1354,10 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleLocalKeyDown);
   // unlisten
   unlistenImageViewer();
-  if (unlistenKeydown) {
-    unlistenKeydown();
-  }
-  if (unlistenTriggerNextAlbum) {
-    unlistenTriggerNextAlbum();
-  }
+  if (unlistenKeydown) unlistenKeydown();
+  if (unlistenTriggerNextAlbum) unlistenTriggerNextAlbum();
+  if (unlistenScanProgress) unlistenScanProgress();
+  if (unlistenScanFinished) unlistenScanFinished();
 });
 
 /// watch appearance
@@ -1309,6 +1379,18 @@ watch(() => config.settings.darkTheme, (newDarkTheme) => {
 watch(() => config.settings.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.settings.language
     updateContent();
+});
+
+watch(() => config.scan.status, (newStatus) => {
+  if (newStatus === 1 && config.scan.albumQueue.length > 0) {
+    processNextAlbum();
+  }
+});
+
+watch(() => config.scan.albumQueue.length, (newLength) => {
+   if (newLength > 0 && config.scan.status === 0) {
+       config.scan.status = 1; 
+   }
 });
 
 /// watch image search params
@@ -1624,12 +1706,14 @@ async function updateContent() {
   const newIndex = config.main.sidebarIndex;
 
   // Reset file list immediately to reflect UI change
+  isLoading.value = true;
   fileList.value = [];
 
   if(newIndex === 0) {   // album  
     if(config.album.id === null) {
       contentTitle.value = "";
       fileList.value = [];
+      isLoading.value = false;
     } else if(config.album.id === 0) {   // all files
       contentTitle.value = localeMsg.value.album.all_files;
       getFileList({}, requestId);
@@ -1646,6 +1730,7 @@ async function updateContent() {
         } else {
           contentTitle.value = "";
           fileList.value = [];
+          isLoading.value = false;
         }
       });
     }
@@ -1658,6 +1743,7 @@ async function updateContent() {
       } else {
         contentTitle.value = localeMsg.value.search.search_images;
         fileList.value = [];
+        isLoading.value = false;
       }
     } else if (config.search.searchType === 1) { // similar
       const index = config.search.similarImageHistoryIndex;
@@ -1668,6 +1754,7 @@ async function updateContent() {
       } else {
         contentTitle.value = localeMsg.value.search.similar_images;
         fileList.value = [];
+        isLoading.value = false;
       }
     } else {   // filename search
       if (config.search.fileName) {
@@ -1676,6 +1763,7 @@ async function updateContent() {
       } else {
         contentTitle.value = localeMsg.value.search.filename_search;
         fileList.value = [];
+        isLoading.value = false;
       }
     }
   } 
@@ -1683,6 +1771,7 @@ async function updateContent() {
     if(config.favorite.folderId === null) {
       contentTitle.value = "";
       fileList.value = [];
+      isLoading.value = false;
     } else {
       if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
@@ -1696,6 +1785,7 @@ async function updateContent() {
           } else {
             contentTitle.value = "";
             fileList.value = [];
+            isLoading.value = false;
           }
         });
       }

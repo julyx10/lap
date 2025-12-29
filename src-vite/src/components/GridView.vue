@@ -50,12 +50,8 @@
     </VirtualScroll>
     <!-- Empty State / Loading -->
     <div v-else class="absolute inset-0 flex flex-col items-center justify-center">
-      <div v-if="loading" class="flex flex-col items-center gap-y-2">
-        <span class="loading loading-spinner loading-lg text-primary"></span>
-        <span class="text-sm text-base-content/50">{{ $t('tooltip.loading') }}</span>
-      </div>
-      <div v-else class="text-base-content/30 flex flex-col items-center">
-        <span>{{ config.main.sidebarIndex === 0 ? $t('tooltip.not_found.folder_files') : $t('tooltip.not_found.files') }}</span>
+      <div class="text-base-content/30 flex flex-col items-center">
+        <span>{{ loading ? $t('tooltip.loading') : $t('tooltip.not_found.files') }}</span>
       </div>
     </div>
 
