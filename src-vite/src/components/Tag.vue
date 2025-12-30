@@ -57,9 +57,9 @@
     </div>
 
     <!-- No Tags Found Message -->
-    <div v-else class="flex-1 flex flex-col items-center justify-center text-base-content/30">
-      <IconTag class="w-8 h-8" />
-      <span class="mt-2 whitespace-nowrap">{{ $t('tooltip.not_found.tag') }}</span>
+    <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
+      <!-- <IconTag class="w-8 h-8" /> -->
+      <span class="text-sm">{{ $t('tooltip.not_found.tag') }}</span>
     </div>
   </div>
   

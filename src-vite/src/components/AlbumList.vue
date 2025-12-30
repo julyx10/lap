@@ -30,26 +30,17 @@
               {{ album.name }}
             </div>
             <div class="ml-auto flex flex-row items-center text-base-content/30">
-              <!-- Scanning Icon -->
-              <IconUpdate v-if="config.scan.albumQueue.includes(album.id)" 
-                :class="['mx-1 w-4 h-4', config.scan.albumQueue[0] === album.id ? 'animate-spin' : '']" 
+              <TButton v-if="album.is_favorite" 
+                :icon="IconFavorite"
+                :disabled="true"
+                :buttonSize="'small'"
               />
               <TButton v-if="album.is_hidden" 
                 :icon="IconHide"
                 :disabled="true"
                 :buttonSize="'small'"
               />
-              <TButton v-if="album.is_favorite" 
-                :icon="IconFavorite"
-                :disabled="true"
-                :buttonSize="'small'"
-              />
-              <TButton v-if="isEditList" 
-                class="drag-handle"
-                :icon="IconDragHandle"
-                :buttonSize="'small'"
-              />
-              <ContextMenu v-else-if="componentId === 0 && !isDragging"
+              <ContextMenu v-if="componentId === 0 && !isEditList && !config.scan.albumQueue.includes(album.id)"
                 :class="['',
                   !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
                 ]"
@@ -57,9 +48,19 @@
                 :menuItems="() => getMoreMenuItems(album)"
                 :smallIcon="true"
               />
+              <!-- when scanning, replace context menu with Scanning Icon -->
+              <IconUpdate v-if="config.scan.albumQueue.includes(album.id)" 
+                :class="['mx-1 w-4 h-4', config.scan.albumQueue[0] === album.id ? 'animate-spin' : '']" 
+              />
+              <!-- dragging handle -->
+              <TButton v-if="isEditList" 
+                class="drag-handle"
+                :icon="IconDragHandle"
+                :buttonSize="'small'"
+              />
             </div>
           </div>
-          <AlbumFolder v-if="album.is_expanded && !isEditList"
+          <AlbumFolder v-if="album.is_expanded && !isEditList && !config.scan.albumQueue.includes(album.id)"
             :children="album.children" 
             :rootAlbumId="album.id"
             :isHiddenAlbum="album.is_hidden ? true : false"
@@ -74,14 +75,13 @@
     </ul>
 
     <!-- No Albums Found Message -->
-    <div v-else-if="!isLoading && !isEditList" class="flex-1 flex flex-col items-center justify-center gap-2 text-base-content/30">
+    <div v-else-if="!isLoading && !isEditList" class="mt-8 px-2 flex flex-col items-center justify-center gap-2 text-base-content/30">
       <span class="text-center">{{ $t('album.no_albums.title') }}</span>
       <span class="text-sm text-center">{{ $t('album.no_albums.description') }}</span>
       <button class="btn btn-primary" @click="clickNewAlbum">
         <IconAdd class="w-5 h-5" />
         {{ $t('menu.album.add') }}
       </button>
-
     </div>
 
     <!-- edit album information -->
@@ -425,29 +425,6 @@ const clickAlbum = async (album) => {
 const dlbClickAlbum = async (album) => {
   clickAlbum(album);
   expandAlbum(album);
-};
-
-/// cancel indexing
-const cancelIndexing = async (albumId) => {
-  const index = config.scan.albumQueue.indexOf(albumId);
-  if (index === -1) return;
-
-  if (index === 0) {
-    // Active one: remove and restart processing for next
-    config.scan.albumQueue.shift();
-    config.scan.count = 0;
-    config.scan.total = 0;
-    
-    // reset status
-    config.scan.status = 0;
-    
-    // trigger Content.vue to process next using global event
-    await tauriEmit('trigger-next-album');
-    
-  } else {
-    // Pending one: just remove
-    config.scan.albumQueue.splice(index, 1);
-  }
 };
 
 /// click album icon to expand or collapse next level folders

@@ -315,10 +315,14 @@
         </div>
 
         <!-- Scanning Overlay -->
-        <div v-if="isScanningCurrentAlbum" class="absolute inset-0 z-50 bg-base-100/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-base-content/30">
-          <IconUpdate class="mx-1 w-8 h-8 animate-spin" />  
-          <span class="text-lg text-center">{{ $t('search.scan.title', { album: config.scan.albumName }) }}</span>
-          <span class="text-center">{{ $t('search.scan.scanned', { count: config.scan.count, total: config.scan.total }) }}</span>
+        <div v-if="isScanning" class="absolute inset-0 z-50 bg-base-100/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-base-content/30">
+          <IconUpdate class="mx-1 w-8 h-8" 
+            :class="config.scan.albumQueue[0] === config.album.id ? 'animate-spin' : ''" 
+          />  
+          <span class="text-lg text-center">{{ config.scan.albumQueue[0] === config.album.id
+            ? $t('search.scan.scanning', { album: config.scan.albumName, count: config.scan.count, total: config.scan.total }) 
+            : $t('search.scan.wait_scan') 
+          }}</span>
           <span class="text-sm text-center">{{ $t('search.scan.description') }}</span>
           <button class="btn btn-primary" @click="cancelScanning">
             <IconClose class="w-5 h-5" />
@@ -415,7 +419,7 @@
         <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
         <!-- <div class="w-3 h-4 loading text-primary/70"></div> -->
         <!-- <IconUpdate class="w-4 h-4 ml-2 animate-spin text-primary/70" />
-        <span class="pl-2 text-primary/70">{{ $t('search.scan.title', { album: config.scan.albumName }) + ' (' + (config.scan.count).toLocaleString() + ' / ' + (config.scan.total).toLocaleString() + ')' }}</span>
+        <span class="pl-2 text-primary/70">{{ $t('search.scan.scanning', { album: config.scan.albumName }) + ' (' + (config.scan.count).toLocaleString() + ' / ' + (config.scan.total).toLocaleString() + ')' }}</span>
       </div> -->
     </div>
   </div>
@@ -1147,7 +1151,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  if (isScanningCurrentAlbum.value) {
+  if (isScanning.value) {
     return;
   }
 
@@ -1238,13 +1242,13 @@ async function processNextAlbum() {
 }
 
 // Check if current album is being scanned
-const isScanningCurrentAlbum = computed(() => {
+const isScanning = computed(() => {
   return config.main.sidebarIndex === 0 && // Album mode
          config.album.id !== null && config.album.id !== 0 && // Valid album
          config.scan.albumQueue.includes(config.album.id);
 });
 
-watch(isScanningCurrentAlbum, (val) => {
+watch(isScanning, (val) => {
   if (val) {
     uiStore.pushInputHandler('scanning');
   } else {
@@ -1706,14 +1710,12 @@ async function updateContent() {
   const newIndex = config.main.sidebarIndex;
 
   // Reset file list immediately to reflect UI change
-  isLoading.value = true;
   fileList.value = [];
+  isLoading.value = true;
 
   if(newIndex === 0) {   // album  
     if(config.album.id === null) {
       contentTitle.value = "";
-      fileList.value = [];
-      isLoading.value = false;
     } else if(config.album.id === 0) {   // all files
       contentTitle.value = localeMsg.value.album.all_files;
       getFileList({}, requestId);
@@ -1729,8 +1731,6 @@ async function updateContent() {
           getFileList({ searchFolder: config.album.folderPath }, requestId);
         } else {
           contentTitle.value = "";
-          fileList.value = [];
-          isLoading.value = false;
         }
       });
     }
@@ -1742,8 +1742,6 @@ async function updateContent() {
         getImageSearchFileList(config.search.searchText, 0, requestId);
       } else {
         contentTitle.value = localeMsg.value.search.search_images;
-        fileList.value = [];
-        isLoading.value = false;
       }
     } else if (config.search.searchType === 1) { // similar
       const index = config.search.similarImageHistoryIndex;
@@ -1753,8 +1751,6 @@ async function updateContent() {
         getImageSearchFileList("", config.search.similarImageHistory[index], requestId);
       } else {
         contentTitle.value = localeMsg.value.search.similar_images;
-        fileList.value = [];
-        isLoading.value = false;
       }
     } else {   // filename search
       if (config.search.fileName) {
@@ -1762,16 +1758,12 @@ async function updateContent() {
         getFileList({ searchFileName: config.search.fileName, sortType: 1, sortOrder: 0 }, requestId); // sort by name
       } else {
         contentTitle.value = localeMsg.value.search.filename_search;
-        fileList.value = [];
-        isLoading.value = false;
       }
     }
   } 
   else if(newIndex === 2) {   // favorite
     if(config.favorite.folderId === null) {
       contentTitle.value = "";
-      fileList.value = [];
-      isLoading.value = false;
     } else {
       if(config.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
@@ -1784,8 +1776,6 @@ async function updateContent() {
             getFileList({ searchFolder: config.favorite.folderPath || "" }, requestId);
           } else {
             contentTitle.value = "";
-            fileList.value = [];
-            isLoading.value = false;
           }
         });
       }
@@ -1794,7 +1784,6 @@ async function updateContent() {
   else if(newIndex === 3) {   // tag
     if (config.tag.id === null) {
       contentTitle.value = "";
-      fileList.value = [];
     } else {
       getTagName(config.tag.id).then(tagName => {
         if (requestId !== currentContentRequestId) return;
@@ -1803,7 +1792,6 @@ async function updateContent() {
           getFileList({ tagId: config.tag.id || 0 }, requestId);
         } else {
           contentTitle.value = "";
-          fileList.value = [];
         }
       });
     }
@@ -1811,7 +1799,6 @@ async function updateContent() {
   else if(newIndex === 4) {   // calendar
     if(config.calendar.year === null) {
       contentTitle.value = "";
-      fileList.value = [];
     } else {
       if (config.calendar.month === -1) {          // yearly
         contentTitle.value = formatDate(config.calendar.year, 1, 1, localeMsg.value.format.year);
@@ -1827,7 +1814,6 @@ async function updateContent() {
   else if(newIndex === 5) {   // location
     if(config.location.admin1 === null) {
       contentTitle.value = "";
-      fileList.value = [];
     } else {
       if(config.location.name) {
         contentTitle.value = `${config.location.admin1} > ${config.location.name}`;
@@ -1841,7 +1827,6 @@ async function updateContent() {
   else if(newIndex === 6) {   // camera
     if(config.camera.make === null) {
       contentTitle.value = "";
-      fileList.value = [];
     } else {
       if(config.camera.model) {
         contentTitle.value = `${config.camera.make} > ${config.camera.model}`;
@@ -1852,6 +1837,10 @@ async function updateContent() {
       } 
     }
   } 
+
+  if(fileList.value.length === 0) {
+    isLoading.value = false;
+  }
 }
 
 // --- Similar Search Mode Logic ---

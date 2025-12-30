@@ -73,9 +73,9 @@
     </template>
 
     <!-- Display message if no data are found -->
-    <div v-else class="flex-1 flex flex-col items-center justify-center text-base-content/30">
-      <IconCalendar class="w-8 h-8" />
-      <span class="mt-2">{{ $t('tooltip.not_found.calendar') }}</span>
+    <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
+      <!-- <IconCalendar class="w-8 h-8" /> -->
+      <span class="text-sm">{{ $t('tooltip.not_found.calendar') }}</span>
     </div>
   </div>
   

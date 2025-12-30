@@ -70,8 +70,8 @@
 
       <!-- search history -->
       <div class="overflow-y-auto flex-1" >
-        <div v-if="config.search.searchHistory.length === 0" class="px-2 mt-2 text-sm text-base-content/30">
-          {{ $t('search.image_search_tips') }}
+        <div v-if="config.search.searchHistory.length === 0" class="m-2 flex flex-col items-center justify-center text-sm text-base-content/30">
+          <span class="text-center">{{ $t('search.image_search_tips') }}</span>
         </div>  
 
         <div v-for="(item, index) in config.search.searchHistory" :key="index"

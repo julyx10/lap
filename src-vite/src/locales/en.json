@@ -45,10 +45,10 @@
     "similar_images_tips": "Select an image to find similar images",
     "filename_search_tips": "Enter a filename to search",
     "scan": {
-      "title": "Scanning '{album}' ...",
-      "scanned": "Scanned: {count} / {total} files",
-      "description": "Preparing your album for search and quick view. This may take a few minutes for large albums.",
-      "cancel": "Cancel scanning"
+      "wait_scan": "Wait for scan...",
+      "scanning": "Scanning '{album}'... {count} / {total}",
+      "description": "Preparing your album for search and quick view. Large albums may take a few minutes.",
+      "cancel": "Cancel scan"
     }
   },
   "favorite": {

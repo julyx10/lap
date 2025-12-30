@@ -45,9 +45,9 @@
     "similar_images_tips": "选择一张图片以查找相似图片",
     "filename_search_tips": "输入文件名进行搜索",
     "scan": {
-      "title": "扫描 '{album}' ...",
-      "scanned": "已扫描 {count} / {total} 文件",
-      "description": "准备您的相册用于搜索和快速预览。这可能需要几分钟时间来处理大型相册。",
+      "wait_scan": "等待扫描...",
+      "scanning": "正在扫描 '{album}'... {count} / {total}",
+      "description": "准备相册用于搜索和快速预览。大型相册可能需要几分钟。",
       "cancel": "取消扫描"
     }
   },
