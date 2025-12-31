@@ -14,18 +14,22 @@
     </div>
 
     <!-- month list -->
-    <div class="p-2 gap-3 grid grid-cols-6">
+    <div class="p-2 grid grid-cols-4 gap-2 text-center">
       <div v-for="m in 12" 
         :key="m" 
-        class="p-1 text-sm flex items-center justify-center rounded-box text-nowrap"
-        :class="[
-          isSelected(year, m) ? 'text-primary bg-base-100 hover:bg-base-100' : (sumMonthCount(m) === 0 ? '' : 'hover:text-base-content hover:bg-base-100/30'),
-          sumMonthCount(m) === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
-          isThisMonth(year, m) ? 'bg-base-100' : '',
-        ]"
+        class="size-10 p-1 text-xs flex items-center justify-center rounded-box"
+        :class="{
+          'bg-base-100 cursor-default': sumMonthCount(m) === 0,
+          'text-base-content/70 hover:text-base-content cursor-pointer': sumMonthCount(m) > 0,
+          'bg-base-content/20': sumMonthCount(m) > 0 && sumMonthCount(m) < 100,
+          'bg-base-content/50': sumMonthCount(m) >= 100 && sumMonthCount(m) < 1000,
+          'bg-base-content/80 text-[10px]': sumMonthCount(m) >= 1000,
+          'bg-primary/70 text-primary-content/70 hover:text-primary-content/70': isSelected(year, m),
+          'border border-base-content/20': isThisMonth(year, m),
+        }"
         @click="sumMonthCount(m) > 0 ? clickDate(year, m) : null" 
       >
-        {{ localeMsg.calendar.months[m - 1] }}
+        {{ sumMonthCount(m) > 0 ? (sumMonthCount(m) < 10000 ? sumMonthCount(m) : '9k+') : '' }}
       </div>
     </div>
 
