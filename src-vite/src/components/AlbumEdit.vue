@@ -1,11 +1,11 @@
 <template>
   <ModalDialog :title="isNewAlbum ? $t('album.edit.title_add') : $t('album.edit.title')" @cancel="clickCancel">
     <!-- two column grid layout -->
-    <div class="w-full text-sm text-nowrap grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-center">
+    <div class="w-full text-sm text-nowrap grid grid-cols-[auto_1fr_auto] gap-x-2 gap-y-1 items-center">
       <!-- Folder -->
-      <div class="h-8 flex items-center">{{ $t('album.edit.folder') }}</div>
-      <div class="h-8 flex items-center justify-between gap-x-2">
-         <input v-if="selectedFolder !== ''"
+      <div class="h-8 flex items-center col-start-1">{{ $t('album.edit.folder') }}</div>
+      <div class="h-8 flex items-center justify-between gap-x-2 col-start-2">
+        <input v-if="selectedFolder !== ''"
           type="text"
           readonly
           :value="selectedFolder"
@@ -29,9 +29,14 @@
         />
       </div>
 
+      <!-- Cover Image -->
+      <div v-if="coverPreview" class="col-start-3 row-span-2">
+        <img :src="coverPreview" class="w-20 h-20 object-cover rounded-box shadow-md border border-base-content/10" />
+      </div>
+
       <!-- Name -->
-      <div class="flex items-center">{{ $t('album.edit.name') }}</div>
-      <div>
+      <div class="flex items-center col-start-1">{{ $t('album.edit.name') }}</div>
+      <div class="col-start-2">
         <input
           ref="inputNameRef"
           v-model="inputNameValue"
@@ -41,10 +46,10 @@
           class="w-full input"
         />
       </div>
-      
+
       <!-- Description -->
-      <div class="flex items-start pt-2">{{ $t('album.edit.description') }}</div>
-      <div>
+      <div class="flex items-start pt-2 col-start-1">{{ $t('album.edit.description') }}</div>
+      <div class="col-start-2 col-span-2">
         <textarea
           v-model="inputDescriptionValue"
           rows="2"
@@ -54,51 +59,23 @@
           class="my-2 w-full textarea min-h-[50px] max-h-[200px]"
         ></textarea>
       </div>
-      
-      <!-- index -->
-      <!-- <template v-if="!isNewAlbum">
-        <div class="h-8 flex items-center">{{ $t('album.edit.index') }}</div>
-        <div v-if="!isIndexing" class="flex flex-col items-start gap-y-1">
-          <button 
-            :class="[
-              'px-2 py-1 rounded-box  flex items-center gap-x-1',
-              indexedImageCount < totalImageCount ? 'bg-primary/70 text-base-100 hover:bg-primary hover:text-base-100 cursor-pointer' : 'bg-base-100/70 text-base-content/30'
-            ]" 
-            @click="indexedImageCount < totalImageCount ? clickGenerateIndex() : null"
-          >
-            <IconBolt class="w-4 h-4" />
-            <span v-if="indexedImageCount < totalImageCount">{{ $t('album.edit.generate_index') + ' (' + indexedImageCount + '/' + totalImageCount + ')' }}</span>
-            <span v-else>{{ $t('album.edit.indexed') + ' (' + indexedImageCount + '/' + totalImageCount + ')' }}</span>
-          </button>
-          <span v-if="!isIndexing && indexedImageCount < totalImageCount" class="text-xs text-base-content/50 text-wrap break-words max-w-full">{{ $t('album.edit.generate_index_description') }}</span>
-        </div>
-        <div v-else class="flex flex-row items-center gap-x-1">
-          <div class="size-4 loading"></div>
-          <span class="mr-auto text-xs text-base-content/50 text-wrap break-words max-w-full">{{ $t('album.edit.indexing') + ' (' + indexedImageCount + '/' + totalImageCount + ')' }}</span>
-          <TButton
-            :icon="IconClose"
-            :buttonSize="'small'"
-            @click="clickStopIndex"
-          />
-        </div>
-      </template> -->
 
       <template v-if="selectedFolder !== ''">
         <!-- Images -->
-        <div class="h-8 flex items-center">{{ $t('album.edit.images') }}</div>
-        <div class="h-8 flex items-center">{{ totalImageCount >= 0 ? $t('album.edit.files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album.edit.files_counting') }}</div>
+        <div class="h-8 flex items-center col-start-1">{{ $t('album.edit.images') }}</div>
+        <div class="h-8 flex items-center col-start-2 col-span-2">{{ totalImageCount >= 0 ? $t('album.edit.files_count', {count: totalImageCount.toLocaleString(), size: formatFileSize(totalImageSize) }) : $t('album.edit.files_counting') }}</div>
         <!-- Videos -->
-        <div class="h-8 flex items-center">{{ $t('album.edit.videos') }}</div>
-        <div class="h-8 flex items-center">{{ totalVideoCount >= 0 ? $t('album.edit.files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album.info.files_counting') }}</div>
+        <div class="h-8 flex items-center col-start-1">{{ $t('album.edit.videos') }}</div>
+        <div class="h-8 flex items-center col-start-2 col-span-2">{{ totalVideoCount >= 0 ? $t('album.edit.files_count', {count: totalVideoCount.toLocaleString(), size: formatFileSize(totalVideoSize) }) : $t('album.info.files_counting') }}</div>
       </template>
       
       <template v-if="!isNewAlbum">
         <!-- Created At -->
-        <div class="h-8 flex items-center">{{ $t('album.edit.created_at') }}</div>
-        <div class="h-8 flex items-center">{{ createdAt }}</div>
+        <div class="h-8 flex items-center col-start-1">{{ $t('album.edit.created_at') }}</div>
+        <div class="h-8 flex items-center col-start-2 col-span-2">{{ createdAt }}</div>
         <!-- Modified At -->
-        <div class="h-8 flex items-center">{{ $t('album.edit.modified_at') }}</div>
-        <div class="h-8 flex items-center">{{ modifiedAt }}</div>
+        <div class="h-8 flex items-center col-start-1">{{ $t('album.edit.modified_at') }}</div>
+        <div class="h-8 flex items-center col-start-2 col-span-2">{{ modifiedAt }}</div>
       </template>
     </div>
 
@@ -128,7 +105,7 @@
 
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { countFolder, getAllAlbums, fetchFolder, selectFolder, getFolderFiles, getFileThumb, generateEmbedding } from '@/common/api';
+import { countFolder, getAllAlbums, getFileThumb, getFileInfo } from '@/common/api';
 import { formatFileSize, openFolderDialog } from '@/common/utils';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
@@ -136,7 +113,7 @@ import { config } from '@/common/config';
 import ModalDialog from '@/components/ModalDialog.vue';
 import TButton from '@/components/TButton.vue';
 import ToolTip from '@/components/ToolTip.vue';
-import { IconNewFolder, IconBolt, IconClose } from '@/common/icons';
+import { IconNewFolder } from '@/common/icons';
 
 const props = defineProps({
   isNewAlbum: {
@@ -158,6 +135,10 @@ const props = defineProps({
   albumPath: { 
     type: String, 
     default: '' 
+  },
+  albumCoverFileId: { 
+    type: Number, 
+    default: null 
   },
   createdAt: { 
     type: String, 
@@ -191,6 +172,9 @@ const totalImageSize = ref(-1);
 const totalVideoCount = ref(0);
 const totalVideoSize = ref(0);
 
+// cover preview
+const coverPreview = ref('');
+
 // image recognition
 const isIndexing = ref(false);
 const indexedImageCount = ref(0);
@@ -199,10 +183,12 @@ let shouldStopIndexing = false;
 
 watch(() => selectedFolder.value, (newPath) => {
   if(newPath) {
-    // get folder name
-    const folderName = newPath.split('/').pop();
-    inputNameValue.value = folderName || '';
-    inputDescriptionValue.value = '';
+    if (props.isNewAlbum) {
+      // get folder name
+      const folderName = newPath.split('/').pop();
+      inputNameValue.value = folderName || '';
+      inputDescriptionValue.value = '';
+    }
 
     countFolder(newPath).then((res) => {
       [totalFolderCount.value, totalImageCount.value, totalImageSize.value, totalVideoCount.value, totalVideoSize.value] = res;
@@ -217,8 +203,21 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('AlbumEdit');
   
-  if (!props.isNewAlbum) {
+  if (props.isNewAlbum) {
+    clickSelectFolder();
+  }
+  else {
     selectedFolder.value = props.albumPath;
+
+    if (props.albumCoverFileId) {
+      const file = await getFileInfo(props.albumCoverFileId);
+      if (file) {
+        const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, false);
+        if (thumb && thumb.error_code === 0) {
+          coverPreview.value = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+        }
+      }
+    }
 
     setTimeout(() => {
       inputNameRef.value?.focus();
@@ -238,93 +237,6 @@ const clickSelectFolder = async () => {
   if (folderPath) {
     selectedFolder.value = folderPath;
   }
-};
-
-const clickGenerateIndex = async () => {
-  isIndexing.value = true;
-  shouldStopIndexing = false;
-  indexedImageCount.value = 0;
-  
-  try {
-    const albumPath = selectedFolder.value || props.albumPath;
-    
-    // Helper function to process all folders recursively
-    const processFolders = async (folderPath: string) => {
-      if (shouldStopIndexing) return;
-      
-      // Fetch folder structure (non-recursive to get folder info with id)
-      let folder = await fetchFolder(folderPath, false);
-      if (!folder) return;
-      
-      // If folder doesn't have a database id, add it to the database
-      let folderId = folder.id;
-      if (!folderId) {
-        const selectedFolder = await selectFolder(props.albumId, folderPath);
-        if (selectedFolder) {
-          folderId = selectedFolder.id;
-        }
-      }
-      
-      // Only process if we have a valid folder id
-      if (folderId) {
-        // Get all files in this folder
-        const files = await getFolderFiles(folderId, folderPath);
-        
-        if (files && Array.isArray(files)) {
-          for (const file of files) {
-            if (shouldStopIndexing) break;
-            
-            // Skip invalid files
-            if (!file || !file.id) continue;
-            
-            // Skip non-image files (file_type 1 for images, 3 for HEIC)
-            if (file.file_type !== 1 && file.file_type !== 3) {
-              continue;
-            }
-            
-            // Generate thumbnail (getFileThumb returns has_thumbnail status)
-            // This will create thumbnail if it doesn't exist
-            await getFileThumb(
-              file.id, 
-              file.file_path, 
-              file.file_type, 
-              file.e_orientation || 0, 
-              config.settings.thumbnailSize,
-              false // don't force regenerate
-            );
-            
-            // Generate embedding if not exists
-            if (!file.has_embedding) {
-              await generateEmbedding(file.id);
-            }
-            
-            indexedImageCount.value++;
-          }
-        }
-      }
-      
-      // Process child folders recursively
-      if (folder.children && folder.children.length > 0) {
-        for (const child of folder.children) {
-          if (shouldStopIndexing) break;
-          await processFolders(child.path);
-        }
-      }
-    };
-    
-    // Start processing from the album root
-    await processFolders(albumPath);
-    
-  } catch (error) {
-    console.error('Error generating index:', error);
-  } finally {
-    isIndexing.value = false;
-  }
-};
-
-const clickStopIndex = () => {
-  shouldStopIndexing = true;
-  isIndexing.value = false;
 };
 
 function handleKeyDown(event: KeyboardEvent) {

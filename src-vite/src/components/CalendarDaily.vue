@@ -19,15 +19,20 @@
       <div
         v-for="d in monthDates"
         :key="d.date"
-        class="size-8 text-sm flex items-center justify-center rounded-box"
-        :class="[
-          isSelected(year, month, d.date) ? 'text-primary bg-base-100 hover:bg-base-100' : (d.count === 0 ? '' : 'hover:text-base-content hover:bg-base-100/30'),
-          d.count === 0 ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100 cursor-pointer',
-          isTodayFn(d.date) ? 'bg-base-100' : '',
-        ]"
+        class="size-6 p-1 text-xs flex items-center justify-center rounded-box"
+        :class="{
+          'bg-base-100 cursor-default': d.count === 0,
+          'text-base-content/70 hover:text-base-content cursor-pointer': d.count > 0,
+          'bg-base-content/20': d.count > 0 && d.count < 10,
+          'bg-base-content/50': d.count >= 10 && d.count < 100,
+          'bg-base-content/80 text-[10px]': d.count >= 100,
+          'bg-primary/70 text-primary-content/70 hover:text-primary-content/70': isSelected(year, month, d.date),
+          'border border-base-content/20': isTodayFn(d.date),
+        }"
         @click="d.count > 0 ? clickDate(year, month, d.date): null"
       >
-        {{ Number(d.date) }}
+        {{ d.count > 0 ? (d.count < 1000 ? d.count : '999+') : '' }}
+        <!-- {{ Number(d.date) }} -->
       </div>
     </div>
 
@@ -96,7 +101,7 @@ function getMonthDates(year, month, dates = []) {
     const date = i + 1;
     return {
       date: date,
-      count: dateMap.get(date) || 0 // Use the count from the input if available, else default to 0
+      count: Number(dateMap.get(date) || 0), // Use the count from the input if available, else default to 0
     };
   });
 

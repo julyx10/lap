@@ -38,6 +38,7 @@
                 :buttonSize="'large'" 
                 :icon="item.icon" 
                 :text="item.text" 
+                :disabled="config.main.albumCount === 0 && index !== 0"
                 :selected="config.main.sidebarIndex === index"
                 @click="clickSidebar(index)"
               />

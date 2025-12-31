@@ -4,7 +4,7 @@
 
     <!-- title bar -->
     <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <div role="tablist" class="tabs-sm tabs-border" >
+      <div v-if="Object.keys(calendar_dates).length > 0" role="tablist" class="tabs-sm tabs-border" >
         <a 
           role="tab"
           class="tab"
@@ -38,7 +38,7 @@
         <div v-if="!config.calendar.isMonthly" 
           class="sticky top-0 z-10 bg-base-200 min-w-48 text-sm flex flex-col items-center"
         >
-          <div class="py-1 grid grid-cols-7 gap-2 text-center">
+          <div class="py-1 grid grid-cols-7 text-center">
             <div 
               v-for="(day, index) in localeMsg.calendar.weekdays" 
               :key="index" 

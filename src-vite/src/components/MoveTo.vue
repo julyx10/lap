@@ -20,7 +20,7 @@
       <button 
         :class="[
           'px-4 py-1 rounded-box', 
-          config.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
+          config.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-primary-content cursor-pointer' : 'text-primary-content/70 cursor-default'
         ]" 
         @click="clickOk"
       >{{ OkText }}</button>

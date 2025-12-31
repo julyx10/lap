@@ -14,6 +14,8 @@ import {
   IconGoto,
   IconComment,
   IconImageSearch,
+  IconSimilar,
+  IconFiles,
 } from '@/common/icons';
 
 export const useFileMenuItems = (
@@ -38,7 +40,7 @@ export const useFileMenuItems = (
       },
       {
         label: localeMsg.value.menu.file.find_similar_images,
-        icon: IconImageSearch,
+        icon: IconSimilar,
         shortcut: isMac ? '⌘S' : 'Ctrl+S',
         disabled: f.file_type !== 1 && f.file_type !== 3,
         action: createAction('search-similar')
@@ -52,6 +54,10 @@ export const useFileMenuItems = (
       {
         label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
         action: createAction('reveal')
+      },
+      {
+        label: localeMsg.value.menu.file.set_album_cover,
+        action: createAction('set-album-cover')
       },
       {
         label: "-",   // separator
@@ -83,7 +89,7 @@ export const useFileMenuItems = (
       },
       {
         label: localeMsg.value.menu.file.copy_to,
-        icon: IconCopyTo,
+        icon: IconFiles,
         action: createAction('copy-to')
       },
       {

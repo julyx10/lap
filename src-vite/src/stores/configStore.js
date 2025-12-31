@@ -4,8 +4,9 @@ export const useConfigStore = defineStore('configStore', {
   state: () => ({
     main: {
       showLeftPane: true,         // show left pane
-      leftPaneWidth: 300,         // left pane width
+      leftPaneWidth: 320,         // left pane width
       sidebarIndex: 0,            // toolbar index
+      albumCount: 0,              // album count
     },
 
     content: {

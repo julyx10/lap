@@ -94,6 +94,7 @@ fn main() {
             t_cmds::edit_album,
             t_cmds::remove_album,
             t_cmds::set_album_display_order,
+            t_cmds::set_album_cover,
             t_cmds::scan_album,
             t_cmds::cancel_scan,
             // folder

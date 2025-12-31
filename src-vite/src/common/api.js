@@ -112,6 +112,19 @@ export async function setDisplayOrder(albumId, order) {
   return null;
 }
 
+// set album cover
+export async function setAlbumCover(albumId, fileId) {
+  try {
+    const result = await invoke('set_album_cover', { id: albumId, fileId });
+    if (result) {
+      return result;
+    }
+  } catch (error) {
+    console.log('Failed to set album cover:', error);
+  }
+  return null;
+}
+
 // folders
 
 // select a folder to an album

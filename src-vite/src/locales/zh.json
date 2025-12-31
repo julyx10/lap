@@ -163,6 +163,10 @@
       "people": "未找到人物数据",
       "camera": "未找到相机数据"
     },
+    "set_album_cover": {
+      "success": "相册封面设置成功",
+      "failed": "无法设置相册封面"
+    },
     "copy_image": {
       "success": "图片已复制到剪贴板",
       "failed": "复制图片到剪贴板失败。不支持的格式或文件已损坏。"
@@ -219,9 +223,10 @@
       "copy_to": "复制到...",
       "move_to_trash": "移到废纸篓",
       "delete": "删除",
-      "goto_album": "前往相册",
+      "goto_album": "前往相册文件夹",
       "reveal_in_finder": "在访达中显示...",
-      "reveal_in_file_explorer": "在文件资源管理器中显示..."
+      "reveal_in_file_explorer": "在文件资源管理器中显示...",
+      "set_album_cover": "设置为相册封面"
     },
     "tag": {
       "rename": "重命名",

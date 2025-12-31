@@ -1,7 +1,12 @@
 <template>
     <!-- albums -->
     <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-box">
-
+      
+      <!-- title -->
+      <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+        {{ $t('album.album_list') }}
+      </div>
+      
       <!-- drag to change albums' display order -->
       <VueDraggable 
         v-model="albums" 
@@ -15,31 +20,41 @@
         <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
               selectedFolderId === album.folderId && !isEditList ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickAlbum(album)"
             @dblclick="dlbClickAlbum(album)"
           >
-            <component :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
+            <div v-if="album.cover_file_id && albumCovers[album.id]" class="w-10 h-10 mr-2 shrink-0" @click.stop="expandAlbum(album)">
+              <img :src="albumCovers[album.id]" alt="" class="w-full h-full object-cover rounded-box">
+            </div>
+            <component v-else :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
               class="mx-1 w-5 h-5 cursor-pointer shrink-0" 
               @click.stop="expandAlbum(album)"
             />
 
-            <div class="overflow-hidden whitespace-pre text-ellipsis">
-              {{ album.name }}
+            <div class="flex flex-col overflow-hidden">
+              <div class="overflow-hidden whitespace-pre text-ellipsis">
+                {{ album.name }} 
+              </div>
+              <div v-if="album.description" class="text-xs text-base-content/50 overflow-hidden whitespace-nowrap text-ellipsis">
+                {{ album.description }}
+              </div>
             </div>
-            <div class="ml-auto flex flex-row items-center text-base-content/30">
-              <TButton v-if="album.is_favorite" 
-                :icon="IconFavorite"
-                :disabled="true"
-                :buttonSize="'small'"
-              />
-              <TButton v-if="album.is_hidden" 
-                :icon="IconHide"
-                :disabled="true"
-                :buttonSize="'small'"
-              />
+
+            <!-- Right side: Count and Status Icons -->
+            <div class="ml-auto pl-1 mr-1 flex flex-col items-end justify-center text-xs text-base-content/30 space-y-0.5">
+               <span v-if="album.total > 0">
+                  {{ album.scanned >= album.total ? album.total.toLocaleString() : album.scanned.toLocaleString() + '/' + album.total.toLocaleString() }}
+               </span>
+               <div class="flex flex-row items-center space-x-1">
+                  <IconFavorite v-if="album.is_favorite" class="w-4 h-4 min-mt-0" />
+                  <IconHide v-if="album.is_hidden" class="w-4 h-4 min-mt-0" />
+               </div>
+            </div>
+
+            <div class="flex flex-row items-center text-base-content/30">
               <ContextMenu v-if="componentId === 0 && !isEditList && !config.scan.albumQueue.includes(album.id)"
                 :class="['',
                   !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
@@ -92,6 +107,7 @@
       :inputName="isNewAlbum ? '' : getAlbumById(albumId)?.name"
       :inputDescription="isNewAlbum ? '' : getAlbumById(albumId)?.description"
       :albumPath="isNewAlbum ? '' : getAlbumById(albumId)?.path"
+      :albumCoverFileId="isNewAlbum ? null : getAlbumById(albumId)?.cover_file_id"
       :createdAt="isNewAlbum ? '' : formatTimestamp(getAlbumById(albumId)?.created_at, $t('format.date_time'))"
       :modifiedAt="isNewAlbum ? '' : formatTimestamp(getAlbumById(albumId)?.modified_at, $t('format.date_time'))"
       @ok="clickAlbumInfo"
@@ -139,7 +155,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { config } from '@/common/config';
 import { isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
-         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, setFolderFavorite } from '@/common/api';
+         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, setFolderFavorite, getFileThumb } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
@@ -189,6 +205,7 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
 
 let unlistenSelectFolder: () => void;
+let unlistenAlbumCoverChanged: () => void;
 
 const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
@@ -203,6 +220,7 @@ const errorMessage = ref('');
 const toolTipRef = ref(null);
 
 const albums = ref<any[]>([]);
+const albumCovers = ref<Record<number, string>>({});
 const isNewAlbum = ref(false);
 const isEditList = ref(false);  // edit album list
 const isLoading = ref(true);    // loading albums
@@ -280,9 +298,25 @@ const getMoreMenuItems = (album: any) => {
   ];
 };
 
+const loadAlbumCovers = async () => {
+  for (const album of albums.value) {
+    if (album.cover_file_id) {
+       try {
+        const thumb = await getFileThumb(album.cover_file_id, "", 0, 0, 256, false);
+        if (thumb && thumb.error_code === 0) {
+          albumCovers.value[album.id] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+        }
+      } catch (error) {
+        console.error(`Failed to load cover for album ${album.id}:`, error);
+      }
+    }
+  }
+};
+
 onMounted( async () => {
   if (albums.value.length === 0) {
     albums.value = await getAllAlbums(true);
+    await loadAlbumCovers();
     isLoading.value = false;
 
     if (props.albumId > 0) {
@@ -318,10 +352,40 @@ onMounted( async () => {
     }
   });
 
+  // listen for album-cover-changed event
+  unlistenAlbumCoverChanged = await listen('album-cover-changed', async (event: any) => {
+    const { albumId, fileId } = event.payload;
+    const album = getAlbumById(albumId);
+    if (album) {
+      if (fileId) {
+        // manual update
+        album.cover_file_id = fileId;
+      } else {
+        // scan finished update, reload album to get new cover
+         const updatedAlbums = await getAllAlbums(true);
+         const updatedAlbum = updatedAlbums.find(a => a.id === albumId);
+         if (updatedAlbum) {
+             album.cover_file_id = updatedAlbum.cover_file_id;
+         }
+      }
+      
+      // Update the cover in albumCovers
+      if (album.cover_file_id) {
+        const thumb = await getFileThumb(album.cover_file_id, "", 0, 0, 256, false);
+        if (thumb && thumb.error_code === 0) {
+          albumCovers.value[albumId] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+        }
+      } else {
+        delete albumCovers.value[albumId];
+      }
+    }
+  });
+
 });
 
 onBeforeUnmount(() => {
-  unlistenSelectFolder();
+  if (unlistenSelectFolder) unlistenSelectFolder();
+  if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
@@ -334,6 +398,11 @@ watch(() => [ selectedAlbumId.value, selectedFolderId.value, selectedFolderPath.
   emit('update:albumId', newAlbumId);
   emit('update:folderId', newFolderId);
   emit('update:folderPath', newFolderPath);
+});
+
+// Update album count in config
+watch(() => albums.value.length, (newCount) => {
+  config.main.albumCount = newCount;
 });
 
 /// Add a new album
@@ -351,7 +420,7 @@ const refreshAlbums = async () => {
     console.error('Failed to refresh albums:', error);
   } finally {
     isLoading.value = false;
-    selectedAlbumId.value = -1;
+    selectedAlbumId.value = 0;
     selectedFolderId.value = -1;
     selectedFolderPath.value = "";
   }

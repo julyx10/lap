@@ -380,8 +380,7 @@ watch(
       if (historyItems.value[fileId] && !thumbnails.value[fileId]) {
         try {
           const file = historyItems.value[fileId];
-          // getFileThumb(fileId, filePath, fileType, orientation, thumbnailSize, forceRegenerate)
-          const thumb = await getFileThumb(file.id, file.file_path, file.file_type || 1, file.e_orientation || 0, 200, false);
+          const thumb = await getFileThumb(file.id, file.file_path, file.file_type || 1, file.e_orientation || 0, config.settings.thumbnailSize, false);
           if (thumb && thumb.error_code === 0) {
             thumbnails.value[file.id] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
           }

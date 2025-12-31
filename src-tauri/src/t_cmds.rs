@@ -78,6 +78,13 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
         .map_err(|e| format!("Error while setting album display order: {}", e))
 }
 
+/// set album cover
+#[tauri::command]
+pub fn set_album_cover(id: i64, file_id: i64) -> Result<usize, String> {
+    Album::update_column(id, "cover_file_id", &file_id)
+        .map_err(|e| format!("Error while setting album cover: {}", e))
+}
+
 /// scan album
 #[tauri::command]
 pub fn scan_album(

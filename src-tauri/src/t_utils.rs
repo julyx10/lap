@@ -778,6 +778,9 @@ pub async fn scan_album_worker(
         )
         .map_err(|e| e.to_string())?;
 
+    // update progress to db
+    let _ = Album::update_progress(album_id, 0, total_files);
+
     // 4. Traverse and index
     for entry in WalkDir::new(&album.path).into_iter().filter_map(Result::ok) {
         // Check cancellation
@@ -826,14 +829,25 @@ pub async fn scan_album_worker(
                         total: total_files,
                     },
                 );
+
+                // update progress to db every 50 items
+                if current_progress % 50 == 0 {
+                    let _ = Album::update_progress(album_id, current_progress, total_files);
+                }
             }
         }
     }
+
+    // scan finished
+    let _ = Album::update_progress(album_id, current_progress, total_files);
 
     // 5. Emit finished
     app_handle
         .emit("scan_finished", FinishedPayload { album_id })
         .map_err(|e| e.to_string())?;
+
+    // 6. Set album cover if needed
+    let _ = Album::auto_set_cover(album_id);
 
     Ok(())
 }

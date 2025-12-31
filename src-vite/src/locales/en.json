@@ -41,7 +41,7 @@
     "filename_search": "Filename",
     "image_search_placeholder": "Search images by text",
     "image_search_history": "Search History",
-    "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find related images.",
+    "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find relevant images.",
     "similar_images_tips": "Select an image to find similar images",
     "filename_search_tips": "Enter a filename to search",
     "scan": {
@@ -163,6 +163,10 @@
       "people": "No people data found",
       "camera": "No camera data found"
     },
+    "set_album_cover": {
+      "success": "Album cover set successfully",
+      "failed": "Failed to set album cover"
+    },
     "copy_image": {
       "success": "Image copied to clipboard",
       "failed": "Failed to copy image to clipboard. Unsupported format or file is corrupted."
@@ -219,9 +223,10 @@
       "copy_to": "Copy to...",
       "move_to_trash": "Move to trash",
       "delete": "Delete",
-      "goto_album": "Go to album",
+      "goto_album": "Go to album folder",
       "reveal_in_finder": "Reveal in Finder...",
-      "reveal_in_file_explorer": "Reveal in File Explorer..."
+      "reveal_in_file_explorer": "Reveal in File Explorer...",
+      "set_album_cover": "Set as album cover"
     },
     "tag": {
       "rename": "Rename",

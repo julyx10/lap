@@ -121,7 +121,7 @@
           <!-- multi-select mode -->
           <TButton v-if="!selectMode"
             :icon="IconCheckAll"
-            :disabled="config.content.showQuickView"
+            :disabled="config.content.showQuickView || fileList.length === 0"
             @click="selectMode = true"
           />
           <div v-else
@@ -320,7 +320,7 @@
             :class="config.scan.albumQueue[0] === config.album.id ? 'animate-spin' : ''" 
           />  
           <span class="text-lg text-center">{{ config.scan.albumQueue[0] === config.album.id
-            ? $t('search.scan.scanning', { album: config.scan.albumName, count: config.scan.count, total: config.scan.total }) 
+            ? $t('search.scan.scanning', { album: config.scan.albumName, count: config.scan.count.toLocaleString(), total: config.scan.total.toLocaleString() }) 
             : $t('search.scan.wait_scan') 
           }}</span>
           <span class="text-sm text-center">{{ $t('search.scan.description') }}</span>
@@ -512,14 +512,14 @@
 <script setup lang="ts">
 
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
-import { emit, listen } from '@tauri-apps/api/event';
+import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount,
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
-         revealFolder, getTagName, scanAlbum, listenScanProgress, listenScanFinished,
+         revealFolder, getTagName, scanAlbum, listenScanProgress, listenScanFinished, setAlbumCover,
          updateFileInfo, cancelScan} from '@/common/api';  
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
@@ -999,6 +999,19 @@ function handleItemSelectToggled(index: number, shiftKey: boolean = false) {
   lastSelectedIndex.value = index;
 }
 
+async function clickSetAlbumCover() {
+  const file = fileList.value[selectedItemIndex.value];
+  if (file && config.album.id) {
+    try {
+      await setAlbumCover(config.album.id, file.id);
+      await tauriEmit('album-cover-changed', { albumId: config.album.id, fileId: file.id });
+      toolTipRef.value.showTip(localeMsg.value.tooltip.set_album_cover.success);
+    } catch (error) {
+      toolTipRef.value.showTip(localeMsg.value.tooltip.set_album_cover.failed, true);
+    }
+  }
+}
+
 function handleItemAction(payload: { action: string, index: number }) {
   const { action, index } = payload;
   selectedItemIndex.value = index; // Ensure the item for the action is selected
@@ -1030,6 +1043,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'tag': clickTag,
     'comment': () => showCommentMsgbox.value = true,
     'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
+    'set-album-cover': clickSetAlbumCover,
   };
 
   if ((actionMap as any)[action]) {
@@ -1252,12 +1266,10 @@ watch(isScanning, (val) => {
   if (val) {
     uiStore.pushInputHandler('scanning');
   } else {
-    // Only pop if relevant? Or just pop assuming it's LIFO and we match?
-    // User logic usually implies pushing when showing, popping when hiding.
-    // If multiple things push, LIFO applies.
     if (uiStore.isInputActive('scanning')) {
         uiStore.popInputHandler();
     }
+    updateContent()
   }
 });
 
@@ -1329,16 +1341,18 @@ onMounted( async() => {
     }
   });
 
-  unlistenScanFinished = await listenScanFinished((event: any) => {
-     const { album_id } = event.payload;
-     if (config.scan.albumQueue.length > 0 && config.scan.albumQueue[0] === album_id) {
-         config.scan.albumQueue.shift();
-         if (config.scan.albumQueue.length > 0) {
-            processNextAlbum();
-         } else {
-            config.scan.status = 0;
-         }
-     }
+  unlistenScanFinished = await listenScanFinished(async (event: any) => {
+    const { album_id } = event.payload;
+    // notify album list to update cover
+    await tauriEmit('album-cover-changed', { albumId: album_id, fileId: null });
+    if (config.scan.albumQueue.length > 0 && config.scan.albumQueue[0] === album_id) {
+      config.scan.albumQueue.shift();
+      if (config.scan.albumQueue.length > 0) {
+        processNextAlbum();
+      } else {
+        config.scan.status = 0;
+      }
+    }
   });
 
   unlistenTriggerNextAlbum = await listen('trigger-next-album', () => {
@@ -1728,7 +1742,7 @@ async function updateContent() {
           } else {
             contentTitle.value = album.name + getRelativePath(config.album.folderPath || "", album.path);
           };
-          getFileList({ searchFolder: config.album.folderPath }, requestId);
+          getFileList({ searchFolder: config.album.folderPath, isShowHidden: true }, requestId);
         } else {
           contentTitle.value = "";
         }
@@ -2197,7 +2211,7 @@ const clickRotate = async () => {
     fileList.value[selectedItemIndex.value].rotate += 90;
 
     // notify the image viewer
-    emit('message-from-content', { message: 'rotate' });
+    tauriEmit('message-from-content', { message: 'rotate' });
 
     // update the rotate status in the database
     setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);

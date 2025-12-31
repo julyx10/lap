@@ -32,9 +32,11 @@ pub struct Album {
 
     // extra info
     pub display_order_id: Option<i64>, // display order id
-    pub avatar_id: Option<i64>,        // album avatar id ( from files table)
+    pub cover_file_id: Option<i64>,    // album cover file id
     pub description: Option<String>,   // album description
     pub is_hidden: Option<bool>,       // is hidden
+    pub scanned: Option<u64>,          // scanned files count
+    pub total: Option<u64>,            // total files count
 }
 
 impl Album {
@@ -48,9 +50,11 @@ impl Album {
             created_at: file_info.created,
             modified_at: file_info.modified,
             display_order_id: None,
-            avatar_id: None,
+            cover_file_id: None,
             description: None,
             is_hidden: None,
+            scanned: Some(0),
+            total: Some(0),
         })
     }
 
@@ -63,9 +67,11 @@ impl Album {
             created_at: row.get(3)?,
             modified_at: row.get(4)?,
             display_order_id: row.get(5)?,
-            avatar_id: row.get(6)?,
+            cover_file_id: row.get(6)?,
             description: row.get(7)?,
             is_hidden: row.get(8)?,
+            scanned: row.get(9)?,
+            total: row.get(10)?,
         })
     }
 
@@ -73,7 +79,7 @@ impl Album {
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden 
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
             FROM albums WHERE path = ?1",
             params![path],
             |row| Self::from_row(row)
@@ -96,17 +102,19 @@ impl Album {
 
         // Insert the new album into the db
         let result = conn.execute(
-            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             params![
                 self.name,
                 self.path,
                 self.created_at,
                 self.modified_at,
                 self.display_order_id,
-                self.avatar_id,
+                self.cover_file_id,
                 self.description,
                 self.is_hidden,
+                self.scanned,
+                self.total,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -145,11 +153,11 @@ impl Album {
         let conn = open_conn()?;
 
         let query = if show_hidden_album {
-            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
             FROM albums
             ORDER BY display_order_id ASC"
         } else {
-            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
             FROM albums
             WHERE is_hidden IS NULL OR is_hidden = 0
             ORDER BY display_order_id ASC"
@@ -177,7 +185,7 @@ impl Album {
     pub fn get_album_by_id(id: i64) -> Result<Self, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, avatar_id, description, is_hidden
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
             FROM albums WHERE id = ?1",
             params![id],
             |row| Self::from_row(row)
@@ -197,6 +205,64 @@ impl Album {
             .execute(&query, params![value, id])
             .map_err(|e| e.to_string())?;
         Ok(result)
+    }
+
+    /// update scanned and total progress
+    pub fn update_progress(id: i64, scanned: u64, total: u64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .execute(
+                "UPDATE albums SET scanned = ?1, total = ?2 WHERE id = ?3",
+                params![scanned, total, id],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// set album cover to the first file (image/video) if not set
+    pub fn auto_set_cover(id: i64) -> Result<(), String> {
+        let conn = open_conn()?;
+
+        // 1. check if cover_file_id is set
+        let cover_file_id: Option<i64> = conn
+            .query_row(
+                "SELECT cover_file_id FROM albums WHERE id = ?1",
+                params![id],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+
+        if cover_file_id.unwrap_or(0) > 0 {
+            return Ok(());
+        }
+
+        // 2. get the first formatted file (image or video)
+        let file_id: Option<i64> = conn
+            .query_row(
+                "SELECT a.id 
+                FROM afiles a
+                JOIN afolders b ON a.folder_id = b.id
+                JOIN athumbs c ON a.id = c.file_id
+                WHERE b.album_id = ?1 AND (a.file_type = 1 OR a.file_type = 2)
+                ORDER BY a.taken_date ASC
+                LIMIT 1",
+                params![id],
+                |row| row.get(0),
+            )
+            .optional() // returns Option<i64>
+            .map_err(|e| e.to_string())?;
+
+        // 3. update cover_file_id
+        if let Some(fid) = file_id {
+            let _ = conn
+                .execute(
+                    "UPDATE albums SET cover_file_id = ?1 WHERE id = ?2",
+                    params![fid, id],
+                )
+                .map_err(|e| e.to_string())?;
+        }
+
+        Ok(())
     }
 }
 
@@ -2242,7 +2308,7 @@ pub fn create_db() -> Result<(), String> {
             created_at INTEGER,
             modified_at INTEGER,
             display_order_id INTEGER,
-            avatar_id INTEGER,
+            cover_file_id INTEGER,
             description TEXT,
             is_hidden INTEGER
         )",
@@ -2348,6 +2414,14 @@ pub fn create_db() -> Result<(), String> {
     // Migration: Add embeds column if it doesn't exist
     // This is a simple migration for dev/MVP. Ideally, use a migration system.
     let _ = conn.execute("ALTER TABLE afiles ADD COLUMN embeds BLOB", []);
+    let _ = conn.execute("ALTER TABLE albums ADD COLUMN scanned INTEGER", []);
+    let _ = conn.execute("ALTER TABLE albums ADD COLUMN total INTEGER", []);
+    let _ = conn.execute(
+        "ALTER TABLE albums RENAME COLUMN avatar_id TO cover_file_id",
+        [],
+    );
+    let _ = conn.execute("ALTER TABLE albums ADD COLUMN cover_file_id INTEGER", []);
+
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)",
         [],

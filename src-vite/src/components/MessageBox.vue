@@ -122,7 +122,7 @@ const inputErrorMessage = ref('');
 
 const okButtonClasses = computed(() => {
   return !props.showInput || !props.needValidateInput || inputValue.value.trim().length > 0
-    ? (props.warningOk ? 'hover:bg-error hover:text-base-100 cursor-pointer' : 'hover:bg-primary hover:text-base-100 cursor-pointer')
+    ? (props.warningOk ? 'hover:bg-error hover:text-base-100 cursor-pointer' : 'hover:bg-primary hover:text-primary-content cursor-pointer')
     : 'text-base-content/30 cursor-default';
 });
 

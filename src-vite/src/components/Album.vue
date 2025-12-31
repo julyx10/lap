@@ -27,11 +27,9 @@
       <div class="overflow-hidden whitespace-pre text-ellipsis">
         {{ $t('album.all_files') }}
       </div>
-    </div>
-
-    <!-- album list -->
-    <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
-      {{ $t('album.album_list') }}
+      <span v-if="totalCount > 0" class="ml-auto px-1 text-xs text-base-content/30">
+        {{ totalCount.toLocaleString() }}
+      </span>
     </div>
 
     <AlbumList ref="albumListRef" 
@@ -53,6 +51,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 
 import { IconMore, IconAdd, IconOrder, IconRefresh, IconClose, IconPhotoAll } from '@/common/icons';
+import { getTotalCountAndSum } from '@/common/api';
 import AlbumList from '@/components/AlbumList.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import TButton from '@/components/TButton.vue';
@@ -70,9 +69,17 @@ const localeMsg = computed(() => messages.value[locale.value]);
 const uiStore = useUIStore();
 
 let unlistenKeydown: () => void;
+const totalCount = ref(0);
 
 onMounted(async () => {
-  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+    unlistenKeydown = await listen('global-keydown', handleKeyDown);
+
+    // get total count
+    getTotalCountAndSum().then((result) => {
+      if(result) {
+        totalCount.value = result[0];
+      }
+    });
 });
 
 onUnmounted(() => {
