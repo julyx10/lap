@@ -2223,6 +2223,7 @@ impl ACamera {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ALocation {
+    pub cc: String,
     pub admin1: String,
     pub names: Vec<String>,
     pub counts: Vec<i64>,
@@ -2239,13 +2240,13 @@ impl ALocation {
         };
 
         let query = format!(
-            "SELECT a.geo_admin1, a.geo_name, count(a.id) as count
+            "SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
             WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> '' {}
-            GROUP BY a.geo_admin1, a.geo_name
-            ORDER BY a.geo_admin1, a.geo_name",
+            GROUP BY a.geo_cc, a.geo_admin1, a.geo_name
+            ORDER BY a.geo_cc, a.geo_admin1, a.geo_name",
             hidden_clause
         );
 
@@ -2253,19 +2254,20 @@ impl ALocation {
 
         let rows = stmt
             .query_map(params![], |row| {
-                let admin1: String = row.get(0)?;
-                let name: String = row.get(1)?;
-                let count: i64 = row.get(2)?;
-                Ok((admin1, name, count))
+                let cc: String = row.get(0)?;
+                let admin1: String = row.get(1)?;
+                let name: String = row.get(2)?;
+                let count: i64 = row.get(3)?;
+                Ok((cc, admin1, name, count))
             })
             .map_err(|e| e.to_string())?;
 
-        let mut hash_map: HashMap<String, (Vec<String>, Vec<i64>)> = HashMap::new();
+        let mut hash_map: HashMap<(String, String), (Vec<String>, Vec<i64>)> = HashMap::new();
 
         for row in rows {
-            let (admin1, name, count) = row.unwrap();
+            let (cc, admin1, name, count) = row.map_err(|e| e.to_string())?;
             let entry = hash_map
-                .entry(admin1)
+                .entry((cc, admin1))
                 .or_insert_with(|| (Vec::new(), Vec::new()));
             entry.0.push(name); // Push name to Vec<String>
             entry.1.push(count); // Push count to Vec<i64>
@@ -2273,7 +2275,8 @@ impl ALocation {
 
         let mut locations: Vec<Self> = hash_map
             .into_iter()
-            .map(|(admin1, (names, counts))| Self {
+            .map(|((cc, admin1), (names, counts))| Self {
+                cc,
                 admin1,
                 names,
                 counts,

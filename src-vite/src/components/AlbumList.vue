@@ -20,7 +20,7 @@
         <li v-for="album in albums" :key="album.id">
           <div 
             :class="[
-              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
               selectedFolderId === album.folderId && !isEditList ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickAlbum(album)"
@@ -38,7 +38,7 @@
               <div class="overflow-hidden whitespace-pre text-ellipsis">
                 {{ album.name }} 
               </div>
-              <div v-if="album.description" class="text-xs text-base-content/50 overflow-hidden whitespace-nowrap text-ellipsis">
+              <div v-if="album.description" class="text-xs overflow-hidden whitespace-nowrap text-ellipsis">
                 {{ album.description }}
               </div>
             </div>
@@ -52,17 +52,20 @@
                   <IconFavorite v-if="album.is_favorite" class="w-4 h-4 min-mt-0" />
                   <IconHide v-if="album.is_hidden" class="w-4 h-4 min-mt-0" />
                </div>
-            </div>
+            </div>  
 
             <div class="flex flex-row items-center text-base-content/30">
-              <ContextMenu v-if="componentId === 0 && !isEditList && !config.scan.albumQueue.includes(album.id)"
-                :class="['',
-                  !selectedFolderId || selectedFolderId != album.folderId ? 'invisible group-hover:visible' : ''
+              <div v-if="componentId === 0 && !isEditList && !config.scan.albumQueue.includes(album.id)"
+                :class="[
+                  !selectedFolderId || selectedFolderId != album.folderId ? 'hidden group-hover:block' : ''
                 ]"
-                :iconMenu="IconMore"
-                :menuItems="() => getMoreMenuItems(album)"
-                :smallIcon="true"
-              />
+              >
+                <ContextMenu
+                  :iconMenu="IconMore"
+                  :menuItems="() => getMoreMenuItems(album)"
+                  :smallIcon="true"
+                />
+              </div>
               <!-- when scanning, replace context menu with Scanning Icon -->
               <IconUpdate v-if="config.scan.albumQueue.includes(album.id)" 
                 :class="['mx-1 w-4 h-4', config.scan.albumQueue[0] === album.id ? 'animate-spin' : '']" 

@@ -6,7 +6,8 @@
     <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
       <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
       <TButton v-if="isEditList" 
-        :icon="IconClose" 
+        :icon="IconRestore"
+        :selected="true"
         @click="clickCloseEditList"
       />
       <ContextMenu v-else 
@@ -50,7 +51,7 @@ import { config } from '@/common/config';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 
-import { IconMore, IconAdd, IconOrder, IconRefresh, IconClose, IconPhotoAll } from '@/common/icons';
+import { IconMore, IconAdd, IconOrder, IconRefresh, IconPhotoAll, IconRestore } from '@/common/icons';
 import { getTotalCountAndSum } from '@/common/api';
 import AlbumList from '@/components/AlbumList.vue';
 import ContextMenu from '@/components/ContextMenu.vue';

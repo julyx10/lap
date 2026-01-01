@@ -85,7 +85,7 @@ export function getSlideShowInterval(interval: number): number {
 
 /// get days elapsed since the timestamp
 export function getDaysElapsed(timestamp: number): number {
-  if(!timestamp) {
+  if (!timestamp) {
     return 0;
   }
   const currentTimestamp = Date.now() / 1000;
@@ -120,11 +120,11 @@ export function getCalendarDateRange(year: number, month: number, date: number) 
   if (month === -1) { // -1 means selecting a year
     startDate = new Date(year, 0, 1).getTime() / 1000;
     endDate = new Date(year + 1, 0, 1).getTime() / 1000;
-  } 
+  }
   else if (date === -1) { // -1 means selecting a month
     startDate = new Date(year, month - 1, 1).getTime() / 1000;
     endDate = new Date(year, month, 1).getTime() / 1000;
-  } 
+  }
   else {  // otherwise, get files by date
     startDate = new Date(year, month - 1, date).getTime() / 1000;
     endDate = new Date(year, month - 1, date + 1).getTime() / 1000;
@@ -282,8 +282,8 @@ export async function openFolderDialog() {
     multiple: false,  // Allows selecting only one folder
   });
 
-  if (selected ) {
-    console.log('Selected folder:', selected );
+  if (selected) {
+    console.log('Selected folder:', selected);
     return selected;
   } else {
     console.log('No folder selected.');
@@ -323,4 +323,15 @@ export function getAssetSrc(filePath: string): string {
   const version = uiStore.getFileVersion(filePath);
   const assetUrl = convertFileSrc(filePath);
   return version > 0 ? `${assetUrl}?v=${version}` : assetUrl;
+}
+
+// get country name from country code
+export function getCountryName(cc: string, lang: string = 'en'): string {
+  if (!cc) return '';
+  try {
+    const regionNames = new Intl.DisplayNames([lang], { type: 'region' });
+    return regionNames.of(cc) || cc;
+  } catch (e) {
+    return cc;
+  }
 }

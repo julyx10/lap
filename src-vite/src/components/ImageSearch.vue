@@ -41,7 +41,7 @@
     <template v-if="config.search.searchType === 0">
       <div
         :class="[ 
-          'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
+          'p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
           isSearchFocused ? 'text-base-content/70' : 'text-base-content/30 hover:text-base-content/70 hover:bg-base-100',
         ]"
         @click="focusSearchInput"
@@ -74,16 +74,25 @@
           <span class="text-center">{{ $t('search.image_search_tips') }}</span>
         </div>  
 
-        <div v-for="(item, index) in config.search.searchHistory" :key="index"
-          class="mx-2 p-2 text-sm rounded-box flex items-center"
+        <div v-for="(item, index) in searchHistoryList" :key="index"
+          class="mx-1 p-1 text-sm rounded-box flex items-center"
           :class="[ 
-            'mx-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+            'h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
             config.search.searchHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
           ]"
           @click="handleSearchHistoryClick(index, item)"
         >
-          <IconDot class="w-4 h-4 mr-1 shrink-0" />
-          <span class="overflow-hidden whitespace-pre text-ellipsis">{{ item }}</span>
+          <div v-if="typeof item !== 'string' && item.file_id" class="relative w-10 h-10 mr-2 shrink-0 overflow-hidden rounded-box">
+             <img 
+               v-if="thumbnails[item.file_id]"
+               class="w-full h-full object-cover" 
+               :src="thumbnails[item.file_id]" 
+             />
+             <div v-else class="w-full h-full bg-base-300 animate-pulse"></div>
+          </div>
+          <IconDot v-else class="w-4 h-4 mr-1 shrink-0" />
+          
+          <span class="overflow-hidden whitespace-pre text-ellipsis">{{ typeof item === 'string' ? item : item.text }}</span>
           <ContextMenu
             :class="[
               'ml-auto flex flex-row items-center text-base-content/30',
@@ -106,14 +115,14 @@
         </div>
         
         <div v-for="(fileId, index) in similarImageHistory" :key="index"
-          class="mx-2 p-2 text-sm rounded-box flex items-center"
+          class="mx-1 p-1 text-sm rounded-box flex items-center"
           :class="[ 
-            'mx-1 p-1 h-16 flex items-center gap-2 rounded-box whitespace-nowrap cursor-pointer group', 
+            'h-12 flex items-center gap-2 rounded-box whitespace-nowrap cursor-pointer group', 
             config.search.similarImageHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
           ]"
           @click="handleSimilarHistoryClick(index, fileId)"
         >
-          <div class="relative w-12 h-12 shrink-0 overflow-hidden rounded">
+          <div class="relative w-10 h-10 shrink-0 overflow-hidden rounded-box">
              <img 
                v-if="thumbnails[fileId]"
                class="w-full h-full object-cover" 
@@ -142,7 +151,7 @@
     <template v-else-if="config.search.searchType === 2">
       <div
         :class="[ 
-          'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
+          'p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
           isSearchFocused ? 'text-base-content/70' : 'text-base-content/30 hover:text-base-content/70 hover:bg-base-100',
         ]"
         @click="focusSearchInput"
@@ -237,10 +246,13 @@ function syncSearchState() {
         focusSearchInput();
       });
     } else {
-      const item = config.search.searchHistory[config.search.searchHistoryIndex];
+      const history = config.search.searchHistory as any[];
+      const item = history[config.search.searchHistoryIndex];
       if (item) {
-        searchQuery.value = item;
-        config.search.searchText = item;
+        // Handle both string and object formats
+        const text = typeof item === 'string' ? item : item.text;
+        searchQuery.value = text;
+        config.search.searchText = text;
       }
     }
   } else if (config.search.searchType === 2) {
@@ -293,7 +305,7 @@ const moreMenuItems = computed(() => {
   ];
 });
 
-function handleSearchHistoryClick(index: number, item: string) {
+function handleSearchHistoryClick(index: number, item: any) {
   isSearchFocused.value = true;
   config.search.searchHistoryIndex = index;
   // watcher will sync searchQuery and searchText
@@ -323,17 +335,24 @@ function handleSearch() {
   if (searchQuery.value.trim().length === 0) return;
   
   const query = searchQuery.value.trim();
-  const existingIndex = config.search.searchHistory.indexOf(query);
+  const history = config.search.searchHistory as any[];
+  
+  // Find existing index considering both string and object formats
+  const existingIndex = history.findIndex((item: any) => {
+    const text = typeof item === 'string' ? item : item.text;
+    return text === query;
+  });
   
   if (existingIndex !== -1) {
     config.search.searchHistoryIndex = existingIndex;
   } else {
-    config.search.searchHistory.unshift(query);
+    // Add new item as object
+    history.unshift({ text: query, file_id: null });
     config.search.searchHistoryIndex = 0;
 
     // Limit the history size
-    if (config.search.searchHistory.length > config.search.maxSearchHistory) {
-      config.search.searchHistory.pop();
+    if (history.length > config.search.maxSearchHistory) {
+      history.pop();
     }
   }
 
@@ -353,45 +372,68 @@ function handleKeyDown(event: any) {
 
 // similar image search history
 const historyItems = ref<Record<number, any>>({});
-const thumbnails = ref<Record<number, string>>({});
+const thumbnails = ref<Record<number, string>>({}); // Shared for both now? Or we should check if we need separate. 
+// Ideally we can share the thumbnails cache by ID. 
+// But let's check how usage differs. 
+// 'thumbnails' is currently keyed by fileId. So it can be shared!
 
 const similarImageHistory = computed(() => config.search.similarImageHistory as number[]);
+const searchHistory = computed(() => config.search.searchHistory);
+const searchHistoryList = computed(() => config.search.searchHistory as any[]);
+
 const emit = defineEmits(['search-similar-from-history']);
 
+
+// Watcher for Similar Image History
 watch(
   () => config.search.similarImageHistory,
-  async (newHistory) => {
-    // We treat 'newHistory' as number[]
+  (newHistory) => {
     const history = newHistory as number[]; 
-    for (const fileId of history) {
-      if (!fileId) continue;
-
-      if (!historyItems.value[fileId]) {
-        try {
-           const info = await getFileInfo(fileId);
-           if (info) {
-             historyItems.value[fileId] = info;
-           }
-        } catch (e) {
-          console.error('Failed to load file info', fileId, e);
-        }
-      }
-
-      if (historyItems.value[fileId] && !thumbnails.value[fileId]) {
-        try {
-          const file = historyItems.value[fileId];
-          const thumb = await getFileThumb(file.id, file.file_path, file.file_type || 1, file.e_orientation || 0, config.settings.thumbnailSize, false);
-          if (thumb && thumb.error_code === 0) {
-            thumbnails.value[file.id] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-          }
-        } catch (e) {
-          console.error('Failed to load thumbnail for history item', fileId, e);
-        }
-      }
-    }
+    fetchThumbnailsForIds(history);
   },
   { immediate: true, deep: true }
 );
+
+// Watcher for Text Search History (to fetch thumbnails)
+watch(
+  () => config.search.searchHistory,
+  (newHistory) => {
+    const idsToFetch = newHistory
+      .filter(item => typeof item !== 'string' && item.file_id)
+      .map(item => (item as any).file_id);
+    fetchThumbnailsForIds(idsToFetch);
+  },
+  { immediate: true, deep: true }
+);
+
+async function fetchThumbnailsForIds(ids: number[]) {
+  for (const fileId of ids) {
+    if (!fileId) continue;
+
+    if (!historyItems.value[fileId]) {
+      try {
+         const info = await getFileInfo(fileId);
+         if (info) {
+           historyItems.value[fileId] = info;
+         }
+      } catch (e) {
+        console.error('Failed to load file info', fileId, e);
+      }
+    }
+
+    if (historyItems.value[fileId] && !thumbnails.value[fileId]) {
+      try {
+        const file = historyItems.value[fileId];
+        const thumb = await getFileThumb(file.id, file.file_path, file.file_type || 1, file.e_orientation || 0, config.settings.thumbnailSize, false);
+        if (thumb && thumb.error_code === 0) {
+          thumbnails.value[file.id] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+        }
+      } catch (e) {
+        console.error('Failed to load thumbnail for history item', fileId, e);
+      }
+    }
+  }
+}
 
 function handleSimilarHistoryClick(index: number, fileId: number) {
   if(config.search.similarImageHistoryIndex === index) {

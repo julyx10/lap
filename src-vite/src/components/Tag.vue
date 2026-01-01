@@ -20,7 +20,7 @@
         <li v-for="tag in sortedTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
               selectedTag && selectedTag.id === tag.id && !isRenamingTag ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="selectTag(tag)"
@@ -41,15 +41,18 @@
             <template v-else>
               <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ tag.name }}</span>
               <span v-if="tag.count" class="text-xs tabular-nums text-base-content/30 ml-1">{{ tag.count.toLocaleString() }}</span>
-              <ContextMenu 
-                :class="[
+              
+              <div :class="[
                   'ml-auto flex flex-row items-center text-base-content/30',
-                  selectedTag && selectedTag.id !== tag.id ? 'invisible group-hover:visible' : ''
+                  selectedTag && selectedTag.id === tag.id ? '' : 'hidden group-hover:block'
                 ]"
-                :iconMenu="IconMore"
-                :menuItems="getMoreMenuItems()"
-                :smallIcon="true"
-              />
+              >
+                <ContextMenu 
+                  :iconMenu="IconMore"
+                  :menuItems="getMoreMenuItems()"
+                  :smallIcon="true"
+                />
+              </div>
             </template>
           </div>
         </li>

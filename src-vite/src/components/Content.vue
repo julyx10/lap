@@ -1698,6 +1698,24 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
         // Reset visible range tracking when changing views
         lastVisibleRange = { start: -1, end: -1 };
         
+        // Update search history with the first result's file_id
+        if (searchText && result.length > 0) {
+          const history = config.search.searchHistory as any[];
+          const index = history.findIndex((item: any) => {
+             const text = typeof item === 'string' ? item : item.text;
+             return text === searchText;
+          });
+
+          if (index !== -1) {
+             const item = history[index];
+             if (typeof item !== 'string' && !item.file_id) {
+               item.file_id = result[0].id;
+             } else if (typeof item === 'string') {
+               history[index] = { text: item, file_id: result[0].id };
+             }
+          }
+        }
+
         // Fetch thumbnails for the search results
         getFileListThumb(fileList.value);
       }

@@ -86,9 +86,10 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     location: {
-      admin1: null,      // selected location admin1 (e.g. California)
-      name: null,        // selected location name (e.g. San Francisco)
-      sortCount: false,  // false: default sort by name, true: sort by count
+      cc: null,             // selected location country code (e.g. US)
+      admin1: null,         // selected location admin1 (e.g. California)
+      name: null,           // selected location name (e.g. San Francisco)
+      sortCount: false,     // false: default sort by name, true: sort by count
     },
 
     imageViewer: {

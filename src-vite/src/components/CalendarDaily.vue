@@ -6,7 +6,7 @@
     <div 
       :class="[
         'mt-2 px-2 rounded-box text-nowrap cursor-pointer',
-        isSelected(year, month, -1) ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30'
+        isSelected(year, month, -1) ? 'text-primary bg-base-100 hover:bg-base-100 selected-item' : 'hover:text-base-content hover:bg-base-100/30'
       ]"
       @click="clickDate(year, month, -1)"
     >
@@ -26,7 +26,7 @@
           'bg-base-content/20': d.count > 0 && d.count < 10,
           'bg-base-content/50': d.count >= 10 && d.count < 100,
           'bg-base-content/80 text-[10px]': d.count >= 100,
-          'bg-primary/70 text-primary-content/70 hover:text-primary-content/70': isSelected(year, month, d.date),
+          'bg-primary/70 text-primary-content/70 hover:text-primary-content/70 selected-item': isSelected(year, month, d.date),
           'border border-base-content/20': isTodayFn(d.date),
         }"
         @click="d.count > 0 ? clickDate(year, month, d.date): null"

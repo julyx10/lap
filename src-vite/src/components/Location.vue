@@ -28,7 +28,7 @@
               ]"
               @click.stop="clickExpandLocation(location)"
             />
-            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ location.admin1 }}</span>
+            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
             <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="location.is_expanded && location.names.length > 0">
@@ -38,7 +38,7 @@
                   'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
                   config.location.name === name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
                 ]" 
-                @click="clickLocationName(location.admin1, name)"
+                @click="clickLocationName(location, name)"
               >
                 <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
                   <span>{{ name }}</span>
@@ -62,11 +62,12 @@
 
 
 <script setup lang="ts">
-
 import { ref, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
-import { IconLocation, IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
+import { getCountryName } from '@/common/utils';
+import { IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
@@ -75,6 +76,8 @@ const props = defineProps({
     required: true
   }
 });
+
+const { locale } = useI18n(); // get locale for country name translation
 
 const locations = ref<any[]>([]);
 
@@ -94,28 +97,23 @@ onMounted(async () => {
     await getLocations();
 
     if (locations.value.length === 0) {
+      (config.location as any).cc = null;
       (config.location as any).admin1 = null;
       (config.location as any).name = null;
     }
     
-    if(config.location.admin1 && config.location.name) {
+    if(config.location.cc && config.location.admin1 && config.location.name) {
       let location = locations.value.find((location: any) => location.admin1 === config.location.admin1)
       if(location) {
         location.is_expanded = true;     // expand selected location
       } else {
+        (config.location as any).cc = null;
         (config.location as any).admin1 = null;
         (config.location as any).name = null;
       }
     }
   }
 });
-
-/// reload locations
-function clickReload() {
-  getLocations();
-  (config.location as any).admin1 = "";
-  (config.location as any).name = "";
-};
 
 /// click location icon to expand or collapse names
 function clickExpandLocation(location: any) {
@@ -124,6 +122,7 @@ function clickExpandLocation(location: any) {
 
 /// click a location to select it
 function clickLocationAdmin1(location: any) {
+  (config.location as any).cc = location.cc;
   (config.location as any).admin1 = location.admin1;
   (config.location as any).name = null;
 
@@ -131,8 +130,9 @@ function clickLocationAdmin1(location: any) {
 }
 
 /// click a location to select it
-function clickLocationName(admin1: string, name: string) {
-  (config.location as any).admin1 = admin1;
+function clickLocationName(location: any, name: string) {
+  (config.location as any).cc = location.cc;
+  (config.location as any).admin1 = location.admin1;
   (config.location as any).name = name;
 }
 

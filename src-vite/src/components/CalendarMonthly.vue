@@ -6,7 +6,7 @@
     <div 
       :class="[
         'mt-2 p-1 rounded-box text-nowrap cursor-pointer',
-        isSelected(year, -1) ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30'
+        isSelected(year, -1) ? 'text-primary bg-base-100 hover:bg-base-100 selected-item' : 'hover:text-base-content hover:bg-base-100/30'
       ]"
       @click="clickDate(year, -1)"
     >
@@ -14,17 +14,17 @@
     </div>
 
     <!-- month list -->
-    <div class="p-2 grid grid-cols-4 gap-2 text-center">
+    <div class="p-2 grid grid-cols-6 gap-x-2 gap-y-2 text-center">
       <div v-for="m in 12" 
         :key="m" 
-        class="size-10 p-1 text-xs flex items-center justify-center rounded-box"
+        class="size-8 p-1 text-xs flex items-center justify-center rounded-box"
         :class="{
           'bg-base-100 cursor-default': sumMonthCount(m) === 0,
           'text-base-content/70 hover:text-base-content cursor-pointer': sumMonthCount(m) > 0,
           'bg-base-content/20': sumMonthCount(m) > 0 && sumMonthCount(m) < 100,
           'bg-base-content/50': sumMonthCount(m) >= 100 && sumMonthCount(m) < 1000,
-          'bg-base-content/80 text-[10px]': sumMonthCount(m) >= 1000,
-          'bg-primary/70 text-primary-content/70 hover:text-primary-content/70': isSelected(year, m),
+          'bg-base-content/80': sumMonthCount(m) >= 1000,
+          'bg-primary/70 text-primary-content/70 hover:text-primary-content/70 selected-item': isSelected(year, m),
           'border border-base-content/20': isThisMonth(year, m),
         }"
         @click="sumMonthCount(m) > 0 ? clickDate(year, m) : null" 

@@ -155,7 +155,7 @@ watch(() => [config.calendar.isMonthly, config.calendar.sortingAsc], () => {
 function scrollToSelected() {
   nextTick(() => {
     if (scrollable.value) {
-      const selectedElement = scrollable.value.querySelector('.text-primary');
+      const selectedElement = scrollable.value.querySelector('.selected-item') || scrollable.value.querySelector('.text-primary');
       if (selectedElement) {
         selectedElement.scrollIntoView({
           behavior: 'auto', // 'smooth' is not good when switching view
