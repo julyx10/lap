@@ -543,6 +543,7 @@ pub struct QueryParams {
     pub search_file_type: i64,
     pub sort_type: i64,
     pub sort_order: i64,
+    pub search_all_subfolders: String,
     pub search_folder: String,
     pub start_date: i64,
     pub end_date: i64,
@@ -1320,8 +1321,8 @@ impl AFile {
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
             WHERE a.taken_date IS NOT NULL AND a.taken_date >= 86400 {}
-            GROUP BY (a.taken_date / 86400)
-            ORDER BY (a.taken_date / 86400) {}",
+            GROUP BY strftime('%Y-%m-%d', a.taken_date, 'unixepoch', 'localtime')
+            ORDER BY taken_date {}",
             hidden_clause, order_clause
         );
 
@@ -1360,11 +1361,16 @@ impl AFile {
             sql_params.push(Box::new(params.search_file_type));
         }
 
-        if !params.search_folder.is_empty() {
+        if !params.search_all_subfolders.is_empty() {
             // Match path that starts with search_folder followed by '/' or end of string
             conditions.push("(b.path = ? OR b.path LIKE ?)");
+            sql_params.push(Box::new(params.search_all_subfolders.clone()));
+            sql_params.push(Box::new(format!("{}/%", params.search_all_subfolders)));
+        }
+
+        if !params.search_folder.is_empty() {
+            conditions.push("(b.path = ?)");
             sql_params.push(Box::new(params.search_folder.clone()));
-            sql_params.push(Box::new(format!("{}/%", params.search_folder)));
         }
 
         if params.start_date > 0 && params.end_date > 0 {

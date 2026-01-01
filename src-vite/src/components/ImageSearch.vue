@@ -90,7 +90,7 @@
              />
              <div v-else class="w-full h-full bg-base-300 animate-pulse"></div>
           </div>
-          <IconDot v-else class="w-4 h-4 mr-1 shrink-0" />
+          <IconSearch v-else class="w-4 h-4 mx-1 shrink-0" />
           
           <span class="overflow-hidden whitespace-pre text-ellipsis">{{ typeof item === 'string' ? item : item.text }}</span>
           <ContextMenu

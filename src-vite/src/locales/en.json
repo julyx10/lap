@@ -216,6 +216,7 @@
       "copy": "Copy to clipboard",
       "edit": "Edit image...",
       "find_similar_images": "Find similar images",
+      "find_album_folder": "Find album folder",
       "on_this_day": "On this day",
       "print": "Print",
       "rename": "Rename",
@@ -223,7 +224,6 @@
       "copy_to": "Copy to...",
       "move_to_trash": "Move to trash",
       "delete": "Delete",
-      "goto_album": "Go to album folder",
       "reveal_in_finder": "Reveal in Finder...",
       "reveal_in_file_explorer": "Reveal in File Explorer...",
       "set_album_cover": "Set as album cover"

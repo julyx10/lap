@@ -15,7 +15,8 @@ export { default as IconScrollDown } from '@/assets/icons/scroll-down.svg';
 // ======================
 export { default as IconAlbums } from '@/assets/icons/albums.svg';
 export { default as IconFolder } from '@/assets/icons/folder.svg';
-export { default as IconFolderExpanded } from '@/assets/icons/folder-open.svg';
+export { default as IconFolderExpanded } from '@/assets/icons/folder-expanded.svg';
+export { default as IconFolderCollapsed } from '@/assets/icons/folder-collapsed.svg';
 export { default as IconNewFolder } from '@/assets/icons/folder-plus.svg';
 export { default as IconFolderFavorite } from '@/assets/icons/folder-star.svg';
 export { default as IconOrder } from '@/assets/icons/order.svg';

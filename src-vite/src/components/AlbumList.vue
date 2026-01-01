@@ -27,12 +27,15 @@
             @dblclick="dlbClickAlbum(album)"
           >
             <div v-if="album.cover_file_id && albumCovers[album.id]" class="w-10 h-10 mr-2 shrink-0" @click.stop="expandAlbum(album)">
-              <img :src="albumCovers[album.id]" alt="" class="w-full h-full object-cover rounded-box">
+              <img :src="albumCovers[album.id]" class="w-full h-full object-cover rounded-box">
             </div>
-            <component v-else :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolder" 
-              class="mx-1 w-5 h-5 cursor-pointer shrink-0" 
+            <div v-else class="skeleton w-10 h-10 mr-2 shrink-0">
+
+            </div>
+            <!-- <component v-else :is="album.is_expanded && !isEditList ? IconFolderExpanded : IconFolderCollapsed" 
+              class="w-6 h-6 mr-2 shrink-0" 
               @click.stop="expandAlbum(album)"
-            />
+            /> -->
 
             <div class="flex flex-col overflow-hidden">
               <div class="overflow-hidden whitespace-pre text-ellipsis">
@@ -158,7 +161,8 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { config } from '@/common/config';
 import { isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
-         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, setFolderFavorite, getFileThumb } from '@/common/api';
+         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, setFolderFavorite, getFileThumb,
+         getAlbum, listenScanProgress, listenScanFinished } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
@@ -169,7 +173,7 @@ import TButton from '@/components/TButton.vue';
 
 import {
   IconAdd,
-  IconFolder,
+  IconFolderCollapsed,
   IconFolderExpanded,
   IconNewFolder,
   IconMore,
@@ -209,6 +213,8 @@ const localeMsg = computed(() => messages.value[locale.value]);
 
 let unlistenSelectFolder: () => void;
 let unlistenAlbumCoverChanged: () => void;
+let unlistenScanProgress: (() => void) | undefined;
+let unlistenScanFinished: (() => void) | undefined;
 
 const selectedAlbumId = ref(0);
 const selectedFolderId = ref(0);
@@ -384,11 +390,37 @@ onMounted( async () => {
     }
   });
 
+  // listen for scan progress
+  unlistenScanProgress = await listenScanProgress(async (event: any) => {
+    const { album_id, current, total } = event.payload;
+    const album = getAlbumById(album_id);
+    if (album) {
+      album.scanned = current;
+      album.total = total;
+    }
+  });
+
+  // listen for scan finished
+  unlistenScanFinished = await listenScanFinished(async (event: any) => {
+    const { album_id } = event.payload;
+    const album = getAlbumById(album_id);
+    if (album) {
+      const updatedAlbum = await getAlbum(album_id);
+      if (updatedAlbum) {
+        album.scanned = updatedAlbum.scanned;
+        album.total = updatedAlbum.total;
+        album.cover_file_id = updatedAlbum.cover_file_id;
+      }
+    }
+  });
+
 });
 
 onBeforeUnmount(() => {
   if (unlistenSelectFolder) unlistenSelectFolder();
   if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
+  if (unlistenScanProgress) unlistenScanProgress();
+  if (unlistenScanFinished) unlistenScanFinished();
 });
 
 watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {

@@ -18,16 +18,17 @@
     >
       <!-- title -->
       <div class="mr-1 flex flex-row items-center gap-1 min-w-0 flex-1" data-tauri-drag-region>
-        <IconImageSearch v-if="isSimilarSearchMode" class="t-icon-size-sm shrink-0 text-primary"/>
-        <component v-if="contentTitle && !isSimilarSearchMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
+        <IconImageSearch v-if="tempViewMode === 'similar'" class="t-icon-size-sm shrink-0 text-primary"/>
+        <IconFolderExpanded v-if="tempViewMode === 'album'" class="t-icon-size-sm shrink-0 text-primary"/>
+        <component v-if="contentTitle && !isTempViewMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
         <div class="mr-auto cursor-default overflow-hidden whitespace-pre text-ellipsis">
-          <span :class="isSimilarSearchMode ? 'text-primary' : ''" data-tauri-drag-region>{{ contentTitle }}</span>
+          <span :class="isTempViewMode ? 'text-primary' : ''" data-tauri-drag-region>{{ contentTitle }}</span>
         </div>
-        <TButton v-if="isSimilarSearchMode" 
+        <TButton v-if="isTempViewMode" 
           :icon="IconRestore" 
           :buttonSize="'medium'"
           :selected="true"
-          @click="exitSimilarSearchMode" 
+          @click="exitTempViewMode" 
         />
       </div>
 
@@ -35,7 +36,7 @@
       <div class="flex items-center gap-2 shrink-0">
 
         <!-- filter and sort section -->
-        <template v-if="config.main.sidebarIndex !== 1 && !isSimilarSearchMode && !config.content.showQuickView">
+        <template v-if="config.main.sidebarIndex !== 1 && !isTempViewMode && !config.content.showQuickView">
           <!-- search box -->
           <!-- <SearchBox ref="searchBoxRef" v-model="config.search.fileName" @click.stop="selectMode = false" />  -->
 
@@ -557,7 +558,7 @@ import {
   IconFolderFavorite,
   IconMoveTo,
   IconFiles,
-  IconFolder,
+  IconFolderExpanded,
   IconChecked,
   IconTag,
   IconCalendar,
@@ -616,7 +617,7 @@ const contentIcon = computed(() => {
     case 0: 
       switch (config.album.id) {
         case 0: return IconPhotoAll;
-        default: return IconFolder;
+        default: return IconFolderExpanded;
       }
     case 1: return IconSearch;
     case 2: 
@@ -799,6 +800,7 @@ const currentQueryParams = ref({
   sortType: 0,
   sortOrder: 0,
   searchFileName: "",
+  searchAllSubfolders: "",
   searchFolder: "",
   startDate: 0,
   endDate: 0,
@@ -821,7 +823,8 @@ const currentImageSearchParams = ref({
 });
 
 // Similar Search Mode State
-const isSimilarSearchMode = ref(false);
+const tempViewMode = ref<'none' | 'similar' | 'album'>('none');
+const isTempViewMode = computed(() => tempViewMode.value !== 'none');
 const backupState = ref<any>(null);
 
 let unlistenKeydown: () => void;
@@ -1028,13 +1031,10 @@ function handleItemAction(payload: { action: string, index: number }) {
     'move-to': () => showMoveTo.value = true,
     'copy-to': () => showCopyTo.value = true,
     'trash': () => showTrashMsgbox.value = true,
-    'goto-folder': () => {
+    'album-folder': () => {
       const selectedFile = fileList.value[selectedItemIndex.value];
       if (selectedFile) {
-        config.album.id = selectedFile.album_id;
-        config.album.folderId = selectedFile.folder_id;
-        config.album.folderPath = getFolderPath(selectedFile.file_path);
-        config.main.sidebarIndex = 0;
+        enterAlbumPreviewMode(selectedFile);
       }
     },
     'reveal': () => revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path)),
@@ -1590,6 +1590,7 @@ async function getFileList(
     sortType = config.search.sortType, 
     sortOrder = config.search.sortOrder, 
     searchFileName = '', 
+    searchAllSubfolders = '',
     searchFolder = '', 
     startDate = 0, 
     endDate = 0, 
@@ -1609,6 +1610,7 @@ async function getFileList(
     sortType,
     sortOrder,
     searchFileName,
+    searchAllSubfolders,
     searchFolder,
     startDate,
     endDate,
@@ -1734,8 +1736,8 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
 }
 
 async function updateContent() {
-  // Reset Similar Search Mode on any content update
-  isSimilarSearchMode.value = false;
+  // Reset temp view mode on any content update
+  tempViewMode.value = 'none';
   backupState.value = null;
 
   const requestId = ++currentContentRequestId;
@@ -1757,10 +1759,11 @@ async function updateContent() {
         if(album) {
           if(config.album.folderPath === album.path) { // current folder is root
             contentTitle.value = album.name;
+            getFileList({ searchAllSubfolders: config.album.folderPath, isShowHidden: true }, requestId);
           } else {
             contentTitle.value = album.name + getRelativePath(config.album.folderPath || "", album.path);
+            getFileList({ searchFolder: config.album.folderPath, isShowHidden: true }, requestId);
           };
-          getFileList({ searchFolder: config.album.folderPath, isShowHidden: true }, requestId);
         } else {
           contentTitle.value = "";
         }
@@ -1805,7 +1808,7 @@ async function updateContent() {
           if (requestId !== currentContentRequestId) return;
           if(album) {
             contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath || "", album.path);
-            getFileList({ searchFolder: config.favorite.folderPath || "" }, requestId);
+            getFileList({ searchAllSubfolders: config.favorite.folderPath || "" }, requestId);
           } else {
             contentTitle.value = "";
           }
@@ -1881,7 +1884,7 @@ function enterSimilarSearchMode(file: any) {
     return;
   }
   // 1. Backup current state
-  if (!isSimilarSearchMode.value) {
+  if (tempViewMode.value === 'none') {
     backupState.value = {
       fileList: [...fileList.value],
       totalFileCount: totalFileCount.value,
@@ -1900,7 +1903,7 @@ function enterSimilarSearchMode(file: any) {
   }
 
   // 2. Set mode
-  isSimilarSearchMode.value = true;
+  tempViewMode.value = 'similar';
   config.content.showQuickView = false;
   
   // 3. Update Title to indicate context
@@ -1938,7 +1941,64 @@ function enterSimilarSearchMode(file: any) {
   getImageSearchFileList("", file.id, requestId);
 }
 
-function exitSimilarSearchMode() {
+function enterAlbumPreviewMode(file: any) {
+  if (!file.album_id) return;
+
+  // 1. Backup current state
+  if (tempViewMode.value === 'none') {
+    backupState.value = {
+      fileList: [...fileList.value],
+      totalFileCount: totalFileCount.value,
+      totalFileSize: totalFileSize.value,
+      contentTitle: contentTitle.value,
+      selectedItemIndex: selectedItemIndex.value,
+      scrollPosition: scrollPosition.value,
+      timelineData: [...timelineData.value],
+      currentQueryParams: { ...currentQueryParams.value },
+      thumbCount: thumbCount.value,
+      showProgressBar: showProgressBar.value,
+      
+      // GridView specific backup
+      scrollTop: gridViewRef.value ? gridViewRef.value.getScrollTop() : 0,
+    };
+  }
+  
+  // 2. Set mode
+  tempViewMode.value = 'album';
+  config.content.showQuickView = false;
+  
+  // 3. Update Title and Fetch Files
+  const folderPath = getFolderPath(file.file_path);
+
+  getAlbum(file.album_id).then((album: any) => {
+    if (album) {
+      if(folderPath === album.path) { // current folder is root
+        contentTitle.value = album.name;
+      } else {
+        contentTitle.value = album.name + getRelativePath(folderPath || "", album.path);
+      };
+    }
+  });
+
+  // 4. Fetch Files
+  const requestId = ++currentContentRequestId;
+  
+  // Reset list for loading state
+  fileList.value = [];
+  totalFileCount.value = 0;
+  totalFileSize.value = 0;
+  
+  // Reset scroll and selection
+  scrollPosition.value = 0;
+  selectedItemIndex.value = 0;
+  if (gridViewRef.value) {
+    gridViewRef.value.scrollToPosition(0);
+  }
+  
+  getFileList({ searchFolder: folderPath, isShowHidden: true }, requestId);
+}
+
+function exitTempViewMode() {
   if (!backupState.value) return;
 
   const state = backupState.value;
@@ -1956,7 +2016,7 @@ function exitSimilarSearchMode() {
   showProgressBar.value = state.showProgressBar;
 
   // 2. Reset Mode
-  isSimilarSearchMode.value = false;
+  tempViewMode.value = 'none';
   backupState.value = null;
   config.content.showQuickView = false;
 

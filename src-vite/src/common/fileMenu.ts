@@ -16,6 +16,7 @@ import {
   IconImageSearch,
   IconSimilar,
   IconFiles,
+  IconFolder,
 } from '@/common/icons';
 
 export const useFileMenuItems = (
@@ -46,10 +47,10 @@ export const useFileMenuItems = (
         action: createAction('search-similar')
       },
       {
-        label: localeMsg.value.menu.file.goto_album,
+        label: localeMsg.value.menu.file.find_album_folder,
         disabled: showFolderFiles.value,
-        icon: IconGoto,
-        action: createAction('goto-folder')
+        icon: IconFolder,
+        action: createAction('album-folder')
       },
       {
         label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
