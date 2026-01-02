@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="w-full h-full relative flex items-center justify-center group"
+    class="w-full h-full relative flex flex-col items-center justify-center group"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
     ref="containerRef"
@@ -14,13 +14,13 @@
       <TButton
         :icon="IconPrev"
         :disabled="fileIndex <= 0 || isSlideShow"
-        :tooltip="$t('image_viewer.toolbar.prev') + ` (${fileIndex + 1}/${fileCount})`"
+        :tooltip="$t('image_viewer.toolbar.prev')"
         @click="triggerPrev" 
       />
       <TButton
         :icon="IconNext"
         :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || isSlideShow"
-        :tooltip="$t('image_viewer.toolbar.next') + ` (${fileIndex + 1}/${fileCount})`"
+        :tooltip="$t('image_viewer.toolbar.next')"
         @click="triggerNext" 
       />
       <TButton
@@ -86,22 +86,22 @@
         @click.stop
       />
       <IconSeparator class="t-icon-size-sm text-base-content/30" />
-      <TButton
-        :icon="!config.content.isFullScreen ? IconFullScreen : IconRestoreScreen"
-        :disabled="isSlideShow"
-        :tooltip="!config.content.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
-        @click="config.content.isFullScreen = !config.content.isFullScreen"
+      <TButton v-if="showFullScreenButton"
+        :icon="!uiStore.isFullScreen ? IconFullScreen : IconRestoreScreen"
+        :tooltip="!uiStore.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
+        @click="uiStore.isFullScreen = !uiStore.isFullScreen"
       />
-      <TButton
+      <TButton v-if="showPinButton && !uiStore.isFullScreen"
         :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
         :disabled="fileIndex < 0"
         :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
         @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
       />
       <TButton
+        v-if="showCloseButton && config.imageViewer.isPinned"
         :icon="IconClose"
         :tooltip="$t('image_viewer.toolbar.close')"
-        @click="$emit('close')"
+        @click.stop="$emit('close')"
       />
     </div>
 
@@ -127,23 +127,35 @@
       <IconRight class="w-8 h-8" />
     </button>
 
-    <Image v-if="file?.file_type === 1"
-      ref="mediaRef"
-      :filePath="file?.file_path" 
-      :rotate="file?.rotate ?? 0" 
-      :isZoomFit="isZoomFit"
-      :isSlideShow="isSlideShow"
-      @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
-      @scale="(e) => $emit('scale', e)"
-      @message-from-image-viewer="handleMessageFromImageViewer"
-    ></Image>
-    
-    <Video v-if="file?.file_type === 2"
-      ref="mediaRef"
-      :filePath="file?.file_path"
-      :rotate="file?.rotate ?? 0"
-      :isZoomFit="isZoomFit"
-    ></Video>
+    <!-- Close Button (Top Right) -->
+    <button 
+      v-if="showCloseButton && !config.imageViewer.isPinned"
+      class="absolute right-2 top-2 z-[90] p-2 rounded-full text-base-content/30 hover:text-base-content/70 hover:bg-base-100/70 backdrop-blur-md cursor-pointer transition-opacity duration-300"
+      @click.stop="$emit('close')"
+      @dblclick.stop
+    >
+      <IconClose class="w-4 h-4" />
+    </button>
+
+    <div class="flex-1 w-full min-h-0 relative">
+      <Image v-if="file?.file_type === 1"
+        ref="mediaRef"
+        :filePath="file?.file_path" 
+        :rotate="file?.rotate ?? 0" 
+        :isZoomFit="isZoomFit"
+        :isSlideShow="isSlideShow"
+        @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
+        @scale="(e) => $emit('scale', e)"
+        @message-from-image-viewer="handleMessageFromImageViewer"
+      ></Image>
+      
+      <Video v-if="file?.file_type === 2"
+        ref="mediaRef"
+        :filePath="file?.file_path"
+        :rotate="file?.rotate ?? 0"
+        :isZoomFit="isZoomFit"
+      ></Video>
+    </div>
 
     <ToolTip ref="toolTipRef" />
   </div>
@@ -153,7 +165,10 @@
 import { defineAsyncComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
+import { useUIStore } from '@/stores/uiStore';
 import { isWin, getSlideShowInterval } from '@/common/utils';
+
+const uiStore = useUIStore();
 import Image from '@/components/Image.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
@@ -204,6 +219,18 @@ const props = defineProps({
     default: false
   },
   hasNext: {
+    type: Boolean,
+    default: false
+  },
+  showCloseButton: {
+    type: Boolean,
+    default: false
+  },
+  showFullScreenButton: {
+    type: Boolean,
+    default: false
+  },
+  showPinButton: {
     type: Boolean,
     default: false
   },
@@ -282,8 +309,8 @@ function handleMouseMove(e: MouseEvent) {
   if (width > 0 && height > 0) {
     isHoverLeft.value = x < width * 0.1;
     isHoverRight.value = x > width * 0.9;
-    isHoverTop.value = y < height * 0.1;
-    isHoverBottom.value = y > height * 0.9;
+    isHoverTop.value = y < 60;
+    isHoverBottom.value = y > height - 60;
 
     if (y < height * 0.5) {
       toolbarPosition.value = 'top';
@@ -301,29 +328,29 @@ function handleMouseLeave() {
 }
 
 const computedToolbarClass = computed(() => {
-  const baseClasses = 'absolute left-1/2 z-[80] px-2 h-12 space-x-1 bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md rounded-box flex flex-row items-center justify-center transform -translate-x-1/2 select-none transition-all duration-300 ease-in-out';
+  const commonClasses = 'absolute z-[80] h-10 space-x-1 flex flex-row items-center justify-center select-none';
   
   const isPinned = config.imageViewer.isPinned;
-  // If pinned, always show at top (or last known position? Standard is top). Let's stick to top for pinned.
-  if (isPinned) {
-    return `${baseClasses} top-2 translate-y-0 opacity-100`;
-  }
 
-  if (toolbarPosition.value === 'bottom') {
-    // Bottom position
-    if (isHoverBottom.value) {
-      return `${baseClasses} bottom-2 translate-y-0 opacity-100`;
-    } else {
-      // Hidden at bottom
-      return `${baseClasses} bottom-2 translate-y-4 opacity-0`;
-    }
+  if (isPinned && !uiStore.isFullScreen) {
+    // Fixed Top Bar
+    return `${commonClasses} relative top-0 left-0 w-full`;
   } else {
-    // Top position (default)
-    if (isHoverTop.value) {
-      return `${baseClasses} top-2 translate-y-0 opacity-100`;
+    // Floating Hover Bar
+    const floatingClasses = 'left-1/2 -translate-x-1/2 px-2 rounded-box bg-base-100/30 hover:bg-base-100/70 transition-[opacity,transform] duration-300 ease-in-out';
+    
+    if (toolbarPosition.value === 'bottom') {
+       if (isHoverBottom.value) {
+          return `${commonClasses} ${floatingClasses} bottom-2 opacity-100`;
+       } else {
+          return `${commonClasses} ${floatingClasses} bottom-2 opacity-0`; 
+       }
     } else {
-      // Hidden at top
-      return `${baseClasses} top-2 -translate-y-4 opacity-0`;
+       if (isHoverTop.value) {
+          return `${commonClasses} ${floatingClasses} top-2 opacity-100`;
+       } else {
+          return `${commonClasses} ${floatingClasses} top-2 opacity-0`;
+       }
     }
   }
 });

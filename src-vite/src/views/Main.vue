@@ -16,7 +16,7 @@
         leave-to-class="!w-0 opacity-0"
       >
         <!-- left pane -->
-        <div v-if="config.main.showLeftPane && !config.content.isFullScreen"
+        <div v-if="config.main.showLeftPane && !uiStore.isFullScreen"
           :class="[
             'relative flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
             !showPanel ? 'mt-12 mb-8': '',
@@ -61,7 +61,7 @@
       </transition> 
       
       <!-- splitter -->
-      <div v-if="!config.content.isFullScreen"
+      <div v-if="!uiStore.isFullScreen"
         class="w-1 transition-colors shrink-0"
         :class="{
           'hover:bg-primary cursor-ew-resize': config.main.showLeftPane && showPanel,
@@ -95,7 +95,10 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { config } from '@/common/config';
+import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac } from '@/common/utils';
+
+const uiStore = useUIStore();
 
 // vue components
 import Album from '@/components/Album.vue';

@@ -12,8 +12,6 @@ export const useConfigStore = defineStore('configStore', {
     content: {
       showFilmStrip: false,       // false: grid view, true: film strip view
       filmStripPaneHeight: 200,   // film strip pane height (px)
-      showQuickView: false,       // true: quick view visible, false: quick view hidden
-      isFullScreen: false,        // true: full screen mode
     },
 
     infoPanel: {
@@ -94,7 +92,6 @@ export const useConfigStore = defineStore('configStore', {
 
     imageViewer: {
       isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
-      isFullScreen: false,        // full screen mode
       isPinned: true,             // pinned mode
     },
 

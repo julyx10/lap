@@ -27,6 +27,7 @@
           :imageMaxScale="imageMaxScale"
           :isZoomFit="config.imageViewer.isZoomFit"
           :showNavButton="true"
+          :showPinButton="true"
           :hasPrevious="fileIndex > 0"
           :hasNext="fileIndex < fileCount - 1"
           @prev="onPrev()"

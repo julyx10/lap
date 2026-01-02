@@ -13,7 +13,8 @@
     </transition>
 
     <!-- title bar -->
-    <div class="absolute top-0 left-0 right-0 px-2 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-md z-30" 
+    <div v-if="!uiStore.isFullScreen"
+      class="absolute top-0 left-0 right-0 px-2 h-12 flex flex-row flex-wrap items-center justify-between bg-base-300/80 backdrop-blur-md z-30"  
       data-tauri-drag-region
     >
       <!-- title -->
@@ -36,7 +37,7 @@
       <div class="flex items-center gap-2 shrink-0">
 
         <!-- filter and sort section -->
-        <template v-if="config.main.sidebarIndex !== 1 && !isTempViewMode && !config.content.showQuickView">
+        <template v-if="config.main.sidebarIndex !== 1 && !isTempViewMode && !uiStore.showQuickView">
           <!-- file type options -->
           <DropDownSelect
             :options="fileTypeOptions"
@@ -61,7 +62,7 @@
           <!-- multi-select mode -->
           <TButton v-if="!selectMode"
             :icon="IconCheckAll"
-            :disabled="config.content.showQuickView || fileList.length === 0"
+            :disabled="uiStore.showQuickView || fileList.length === 0"
             @click="selectMode = true"
           />
           <div v-else
@@ -191,6 +192,7 @@
                 :imageMaxScale="imageMaxScale"
                 v-model:isZoomFit="filmStripZoomFit"
                 :showNavButton="true"
+                :showPinButton="true"
                 :hasPrevious="selectedItemIndex > 0"
                 :hasNext="selectedItemIndex < fileList.length - 1"
                 @prev="performNavigate('prev')"
@@ -217,22 +219,13 @@
         </div>
 
         <!-- Quick View Overlay -->
-        <div v-if="config.content.showQuickView && fileList[selectedItemIndex]" 
+        <div v-if="uiStore.showQuickView && fileList[selectedItemIndex]" 
           class="absolute inset-0 z-[60] flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
           :class="[
-            !config.content.isFullScreen ? 'mt-12' : '',
-            !config.content.isFullScreen ? (config.settings.showStatusBar ? 'mb-8': 'mb-1') : ''
+            !uiStore.isFullScreen ? 'mt-12' : '',
+            !uiStore.isFullScreen ? (config.settings.showStatusBar ? 'mb-8': 'mb-1') : ''
           ]"
         >
-          <!-- Close Button -->
-          <!-- <TButton 
-            class="absolute top-2 right-2 z-[70]"
-            buttonSize="small"
-            :icon="config.content.isFullScreen ? IconRestoreScreen : IconClose"
-            @click.stop="config.content.isFullScreen ? config.content.isFullScreen = false : (config.content.showQuickView = false); stopSlideShow()"
-            @dblclick.stop
-          /> -->
-
           <div class="relative w-full h-full flex items-center justify-center">
             <MediaViewer
               ref="quickViewMediaRef"
@@ -245,6 +238,9 @@
               :imageMaxScale="imageMaxScale"
               v-model:isZoomFit="quickViewZoomFit"
               :showNavButton="true"
+              :showCloseButton="true"
+              :showFullScreenButton="true"
+              :showPinButton="true"
               :hasPrevious="selectedItemIndex > 0"
               :hasNext="selectedItemIndex < fileList.length - 1"
               @prev="performNavigate('prev')"
@@ -252,7 +248,7 @@
               @toggle-slide-show="toggleSlideShow"
               @scale="onScale"
               @item-action="handleItemAction"
-              @close="config.content.showQuickView = false; stopSlideShow()"
+              @close="uiStore.showQuickView = false; uiStore.isFullScreen = false; stopSlideShow()"
             />
           </div>
         </div>
@@ -295,7 +291,7 @@
         leave-from-class="opacity-100"
         leave-to-class="!w-0 opacity-0"
       >
-        <div v-if="config.infoPanel.show" 
+        <div v-if="config.infoPanel.show && !uiStore.isFullScreen" 
           :class="[ 'pt-12 pr-1', config.settings.showStatusBar ? 'pb-8' : 'pb-1' ]" 
           :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
@@ -334,7 +330,7 @@
             <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
           </div>
 
-          <div v-if="config.content.showFilmStrip || config.content.showQuickView" class="flex items-center gap-1 flex-shrink-0">
+          <div v-if="config.content.showFilmStrip || uiStore.showQuickView" class="flex items-center gap-1 flex-shrink-0">
             <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
             <span> {{ (imageScale * 100).toFixed(0) }}% </span>
           </div>
@@ -864,7 +860,7 @@ function handleItemDblClicked(index: number) {
 
   if (!config.content.showFilmStrip) {
     // quick view
-    config.content.showQuickView = true;
+    uiStore.showQuickView = true;
     quickViewZoomFit.value = true;
   }
 }
@@ -942,7 +938,7 @@ function handleItemAction(payload: { action: string, index: number }) {
 }
 
 function requestNavigate(direction: 'prev' | 'next') {
-  const viewer = config.content.showQuickView ? quickViewMediaRef.value : (config.content.showFilmStrip ? filmStripMediaRef.value : null);
+  const viewer = uiStore.showQuickView ? quickViewMediaRef.value : (config.content.showFilmStrip ? filmStripMediaRef.value : null);
   
   if (direction === 'next') {
     if (viewer) {
@@ -1063,15 +1059,15 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   if (event.key === 'Space' || event.key === ' ') {
     if(!config.content.showFilmStrip) {
-      config.content.showQuickView = !config.content.showQuickView;
+      uiStore.showQuickView = !uiStore.showQuickView;
       quickViewZoomFit.value = true; 
     }
   }
-  else if (event.key === 'Escape' && config.content.showQuickView) {
-    if (config.content.isFullScreen) {
-      config.content.isFullScreen = false;
+  else if (event.key === 'Escape' && uiStore.showQuickView) {
+    if (uiStore.isFullScreen) {
+      uiStore.isFullScreen = false;
     } else {
-      config.content.showQuickView = false;
+      uiStore.showQuickView = false;
       stopSlideShow();
     }
   }
@@ -1319,7 +1315,7 @@ watch(
         if (gridViewRef.value) {
           gridViewRef.value.scrollToPosition(0);
         }
-        config.content.showQuickView = false;
+        uiStore.showQuickView = false;
         
         updateContent();
   
@@ -1351,7 +1347,7 @@ watch(
       if (gridViewRef.value) {
         gridViewRef.value.scrollToPosition(0);
       }
-      config.content.showQuickView = false;
+      uiStore.showQuickView = false;
       
       updateContent();
   
@@ -1387,7 +1383,7 @@ watch(() => [config.content.showFilmStrip], ([newLayout]) => {
 });
 
 function toggleGridViewLayout() {
-  config.content.showQuickView = false;
+  uiStore.showQuickView = false;
   config.content.showFilmStrip = !config.content.showFilmStrip;
   filmStripZoomFit.value = true;
 }
@@ -1794,7 +1790,7 @@ function enterSimilarSearchMode(file: any) {
 
   // 2. Set mode
   tempViewMode.value = 'similar';
-  config.content.showQuickView = false;
+  uiStore.showQuickView = false;
   
   // 3. Update Title to indicate context
   contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
@@ -1855,7 +1851,7 @@ function enterAlbumPreviewMode(file: any) {
   
   // 2. Set mode
   tempViewMode.value = 'album';
-  config.content.showQuickView = false;
+  uiStore.showQuickView = false;
   
   // 3. Update Title and Fetch Files
   const folderPath = getFolderPath(file.file_path);
@@ -1908,7 +1904,7 @@ function exitTempViewMode() {
   // 2. Reset Mode
   tempViewMode.value = 'none';
   backupState.value = null;
-  config.content.showQuickView = false;
+  uiStore.showQuickView = false;
 
   // 3. Restore Scroll Position (need to wait for Vue to re-render the list)
   // Using nextTick or a small timeout
@@ -2459,7 +2455,7 @@ function handleMouseMove(event: MouseEvent) {
         event.clientY - gridViewDivRect.top - 2 - verticalSpacing; // -2: border width(2px)
     
     const totalHeight = gridViewDiv.value.clientHeight;
-    const minHeight = Math.max(totalHeight * 0.1, 120);
+    const minHeight = Math.max(totalHeight * 0.1, 80);
     const maxHeight = Math.min(totalHeight * 0.5, 320);
 
     // if scrollbar is visible, subtract the scrollbar height
