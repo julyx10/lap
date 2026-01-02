@@ -173,8 +173,6 @@ import TButton from '@/components/TButton.vue';
 
 import {
   IconAdd,
-  IconFolderCollapsed,
-  IconFolderExpanded,
   IconNewFolder,
   IconMore,
   IconDragHandle,

@@ -85,7 +85,7 @@ listen('settings-gridLabelSecondary-changed', (event) => {
   config.setGridLabelSecondary(event.payload)
 })
 listen('settings-filmStripViewPreviewPosition-changed', (event) => {
-  config.setfilmStripViewPreviewPosition(event.payload)
+  config.setFilmStripViewPreviewPosition(event.payload)
 })
 listen('settings-mouseWheelMode-changed', (event) => {
   config.setMouseWheelMode(event.payload)

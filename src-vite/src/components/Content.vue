@@ -21,7 +21,7 @@
         <IconImageSearch v-if="tempViewMode === 'similar'" class="t-icon-size-sm shrink-0 text-primary"/>
         <IconFolderExpanded v-if="tempViewMode === 'album'" class="t-icon-size-sm shrink-0 text-primary"/>
         <component v-if="contentTitle && !isTempViewMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
-        <div class="mr-auto cursor-default overflow-hidden whitespace-pre text-ellipsis">
+        <div class="cursor-default overflow-hidden whitespace-pre text-ellipsis">
           <span :class="isTempViewMode ? 'text-primary' : ''" data-tauri-drag-region>{{ contentTitle }}</span>
         </div>
         <TButton v-if="isTempViewMode" 
@@ -37,9 +37,6 @@
 
         <!-- filter and sort section -->
         <template v-if="config.main.sidebarIndex !== 1 && !isTempViewMode && !config.content.showQuickView">
-          <!-- search box -->
-          <!-- <SearchBox ref="searchBoxRef" v-model="config.search.fileName" @click.stop="selectMode = false" />  -->
-
           <!-- file type options -->
           <DropDownSelect
             :options="fileTypeOptions"
@@ -54,64 +51,6 @@
             :extendOptions="sortExtendOptions"
             :defaultExtendIndex="config.search.sortOrder"
             @select="handleSortTypeSelect"
-          />
-        </template>
-
-        <!-- image viewer section -->
-        <template v-if="config.content.showQuickView">
-          <TButton
-            :icon="IconPrev"
-            :disabled="selectedItemIndex <= 0 || isSlideShow"
-            :tooltip="$t('image_viewer.toolbar.prev') + ` (${selectedItemIndex + 1}/${fileList.length})`"
-            @click="performNavigate('prev')" 
-          />
-          <TButton
-            :icon="IconNext"
-            :disabled="selectedItemIndex < 0 || selectedItemIndex >= fileList.length - 1 || isSlideShow"
-            :tooltip="$t('image_viewer.toolbar.next') + ` (${selectedItemIndex + 1}/${fileList.length})`"
-            @click="performNavigate('next')" 
-          />
-          <TButton
-            :icon="isSlideShow ? IconPause : IconPlay"
-            :disabled="selectedItemIndex < 0"
-            :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
-            @click="toggleSlideShow()" 
-          />
-          <TButton
-            :icon="IconZoomOut"
-            :disabled="selectedItemIndex < 0 || imageScale <= imageMinScale || isSlideShow"
-            :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
-            @click="triggerMediaZoomOut"
-          />
-          <TButton
-            :icon="IconZoomIn"
-            :disabled="selectedItemIndex < 0 || imageScale >= imageMaxScale || isSlideShow"
-            :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
-            @click="triggerMediaZoomIn" 
-          />
-          <TButton
-            :icon="!activeZoomFit ? IconZoomFit : IconZoomActual"
-            :disabled="selectedItemIndex < 0 || isSlideShow"
-            :tooltip="(!activeZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
-            @click="activeZoomFit = !activeZoomFit"
-          />
-          <TButton
-            :icon="!config.content.isFullScreen ? IconFullScreen : IconRestoreScreen"
-            :tooltip="!config.content.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
-            @click="config.content.isFullScreen = !config.content.isFullScreen"
-          />
-          <ContextMenu
-            :iconMenu="IconMore"
-            :menuItems="singleFileMenuItems"
-            :smallIcon="true"
-            :disabled="selectedItemIndex < 0 || isSlideShow"
-            @click.stop
-          />
-          <TButton
-            :icon="IconClose"
-            :disabled="selectedItemIndex < 0 || isSlideShow"
-            :tooltip="$t('image_viewer.toolbar.close')"
-            @click="config.content.showQuickView = false; stopSlideShow()"
           />
         </template>
 
@@ -258,6 +197,7 @@
                 @next="performNavigate('next')"
                 @toggle-slide-show="toggleSlideShow"
                 @scale="onScale"
+                @item-action="handleItemAction"
               />
             </div>
           </div> <!-- film strip preview -->
@@ -285,13 +225,13 @@
           ]"
         >
           <!-- Close Button -->
-          <TButton 
+          <!-- <TButton 
             class="absolute top-2 right-2 z-[70]"
             buttonSize="small"
             :icon="config.content.isFullScreen ? IconRestoreScreen : IconClose"
             @click.stop="config.content.isFullScreen ? config.content.isFullScreen = false : (config.content.showQuickView = false); stopSlideShow()"
             @dblclick.stop
-          />
+          /> -->
 
           <div class="relative w-full h-full flex items-center justify-center">
             <MediaViewer
@@ -311,6 +251,8 @@
               @next="performNavigate('next')"
               @toggle-slide-show="toggleSlideShow"
               @scale="onScale"
+              @item-action="handleItemAction"
+              @close="config.content.showQuickView = false; stopSlideShow()"
             />
           </div>
         </div>
@@ -413,15 +355,6 @@
           </div>
         </template>
       </div>
-
-      <!-- indexing status -->
-      <!-- <div v-if="config.scan.status === 1" class="ml-auto flex items-center text-xs text-base-content/70 pointer-events-auto flex-shrink-0"> -->
-        <!-- <IconSeparator class="h-6 w-6 text-base-content/30" /> -->
-        <!-- <TButton :icon="IconPlay" :buttonSize="'small'" @click="null" /> -->
-        <!-- <div class="w-3 h-4 loading text-primary/70"></div> -->
-        <!-- <IconUpdate class="w-4 h-4 ml-2 animate-spin text-primary/70" />
-        <span class="pl-2 text-primary/70">{{ $t('search.scan.scanning', { album: config.scan.albumName }) + ' (' + (config.scan.count).toLocaleString() + ' / ' + (config.scan.total).toLocaleString() + ')' }}</span>
-      </div> -->
     </div>
   </div>
 
@@ -528,7 +461,6 @@ import { isWin, isMac, setTheme,
          extractFileName, combineFileName, getFolderPath, getSelectOptions, 
          shortenFilename, formatDimensionText, formatCaptureSettings, getSlideShowInterval } from '@/common/utils';
 
-import SearchBox from '@/components/SearchBox.vue';
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -545,8 +477,6 @@ import ScrollBar from '@/components/ScrollBar.vue';
 
 import {
   IconPhotoAll,
-  IconCalendarDay,
-  IconBolt,
   IconSideBarOn,
   IconSideBarOff,
   IconArrowDown,
@@ -575,25 +505,12 @@ import {
   IconUpdate,
   IconZoomIn,
   IconZoomOut,
-  IconPlay,
-  IconPause,
-  IconHome,
-  IconSimilar,
   IconCopyTo,
   IconGrid,
   IconGallery,
   IconImageSearch,
-  IconPrev,
-  IconHistory,
   IconSearch,
   IconRestore,
-  IconZoomFit,
-  IconZoomActual,
-  IconPin,
-  IconUnPin,
-  IconNext,
-  IconMore,
-  IconFullScreen,
   IconRestoreScreen,
 } from '@/common/icons';
 
@@ -668,33 +585,6 @@ const imageScale = ref(1);
 const imageMinScale = ref(0);
 const imageMaxScale = ref(10);
 const isSlideShow = ref(false);
-
-const activeZoomFit = computed({
-  get: () => config.content.showQuickView ? quickViewZoomFit.value : filmStripZoomFit.value,
-  set: (val) => {
-    if (config.content.showQuickView) {
-      quickViewZoomFit.value = val;
-    } else {
-      filmStripZoomFit.value = val;
-    }
-  }
-});
-
-function triggerMediaZoomIn() {
-  if (config.content.showQuickView) {
-    quickViewMediaRef.value?.zoomIn();
-  } else {
-    filmStripMediaRef.value?.zoomIn();
-  }
-}
-
-function triggerMediaZoomOut() {
-  if (config.content.showQuickView) {
-    quickViewMediaRef.value?.zoomOut();
-  } else {
-    filmStripMediaRef.value?.zoomOut();
-  }
-}
 
 const showFolderFiles = computed(() => !!(config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0));
 

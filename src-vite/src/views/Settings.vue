@@ -11,7 +11,7 @@
       <!-- Tabs -->
       <div class="min-w-32 font-bold">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_viewer.title', 'settings.image_search.title', 'settings.about.title']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.about.title']"
           :key="index"
           :class="[
             'mb-4 px-1 border-l-2 cursor-pointer transition-colors duration-300', 
@@ -79,8 +79,18 @@
 
         <!-- Grid view tab -->
         <section v-if="config.settings.tabIndex === 1">
+          
+          <!-- Grid view Style -->
+          <div class="flex items-center justify-between mb-4">
+            <label>{{ $t('settings.grid_view.style') }}</label>
+            <select class="select" v-model="config.settings.grid.style">
+              <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
 
-          <!-- Grid Size -->
+          <!-- Grid thumbnail Size -->
           <div class="flex items-center justify-between mb-4">
             <label for="grid_size" >{{ $t('settings.grid_view.size') }}</label>
             <SliderInput 
@@ -92,17 +102,7 @@
             />
           </div>
 
-          <!-- Grid Style -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.grid_view.style') }}</label>
-            <select class="select" v-model="config.settings.grid.style">
-              <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Grid Scaling -->
+          <!-- Grid  thumbnail Scaling -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.grid_view.scaling') }}</label>
             <select class="select" v-model="config.settings.grid.scaling">
@@ -132,6 +132,12 @@
               </select>
             </div>
 
+
+        </section>
+
+        <!-- Image Viewer tab -->
+        <section v-else-if="config.settings.tabIndex === 2">
+
           <!-- Preview Position -->
           <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.filmstrip_view.preview_position') }}</label>
@@ -141,14 +147,9 @@
               </option>
             </select>
           </div>
-        </section>
-
-        <!-- Image Viewer tab -->
-        <section v-else-if="config.settings.tabIndex === 2">
-
           <!-- Show navigator view -->
           <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_viewer.navigator_view') }}</label>
+            <label>{{ $t('settings.image_view.navigator_view') }}</label>
             <select class="select" v-model="config.settings.navigatorViewMode">
               <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">
                 {{ option.label }}
@@ -158,7 +159,7 @@
 
           <!-- Navigator view size -->
           <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_viewer.navigator_view__size') }}</label>
+            <label>{{ $t('settings.image_view.navigator_view__size') }}</label>
             <select class="select" v-model="config.settings.navigatorViewSize">
               <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">
                 {{ option.label }}
@@ -168,7 +169,7 @@
 
           <!-- mouse wheel mode -->
           <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_viewer.mouse_wheel') }}</label>
+            <label>{{ $t('settings.image_view.mouse_wheel') }}</label>
             <select class="select" v-model="config.settings.mouseWheelMode">
               <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">
                 {{ item.label }}
@@ -178,7 +179,7 @@
 
           <!-- slide show interval -->
           <div class="flex items-center justify-between mb-4">
-            <label for="autoplay-interval" >{{ $t('settings.image_viewer.slide_show_interval', { second: getSlideShowInterval(config.settings.slideShowInterval) }) }}</label>
+            <label for="autoplay-interval" >{{ $t('settings.image_view.slide_show_interval', { second: getSlideShowInterval(config.settings.slideShowInterval) }) }}</label>
             <SliderInput 
               v-model="config.settings.slideShowInterval" 
               :min="0" 
@@ -190,13 +191,13 @@
 
           <!-- Auto play video -->
           <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_viewer.auto_play_video') }}</label>
+            <label>{{ $t('settings.image_view.auto_play_video') }}</label>
             <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.autoPlayVideo" />
           </div>
 
           <!-- Show comment -->
           <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_viewer.show_comment') }}</label>
+            <label>{{ $t('settings.image_view.show_comment') }}</label>
             <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showComment" />
           </div>
         </section>
@@ -348,7 +349,7 @@ const currentTheme = computed({
 
 // Define the wheel options using computed to react to language changes
 const wheelOptions = computed(() => {
-  const options = localeMsg.value.settings.image_viewer.mouse_wheel_options; // returns an array
+  const options = localeMsg.value.settings.image_view.mouse_wheel_options; // returns an array
   return [
     { label: options[0], value: 0 },  // 0: previous / next
     { label: options[1], value: 1 },  // 1: zoom in / out
@@ -393,7 +394,7 @@ const gridLabelOptions = computed(() => {
 
 // Define the navigator view mode options
 const navigatorViewModeOptions = computed(() => {
-  const options = localeMsg.value.settings.image_viewer.navigator_view_options;
+  const options = localeMsg.value.settings.image_view.navigator_view_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -405,7 +406,7 @@ const navigatorViewModeOptions = computed(() => {
 
 // Define the navigator view size options
 const navigatorViewSizeOptions = computed(() => {
-  const options = localeMsg.value.settings.image_viewer.navigator_view_size_options;
+  const options = localeMsg.value.settings.image_view.navigator_view_size_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {

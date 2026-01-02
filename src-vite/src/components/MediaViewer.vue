@@ -47,31 +47,58 @@
         :tooltip="(!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
         @click="$emit('update:isZoomFit', !isZoomFit)"
       />
-      <TButton
-        :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
+      <IconSeparator class="t-icon-size-sm text-base-content/30" />
+      <template v-if="showExtraIcons">
+        <TButton
+          :icon="IconFavorite"
+          :disabled="fileIndex < 0 || isSlideShow"
+          :selected="file?.is_favorite"
+          :tooltip="file?.is_favorite ? $t('menu.meta.unfavorite') : $t('menu.meta.favorite')"
+          @click="$emit('item-action', { action: 'favorite', index: fileIndex })"
+        />
+        <TButton
+          :icon="IconTag"
+          :disabled="fileIndex < 0 || isSlideShow"
+          :selected="file?.has_tags"
+          :tooltip="$t('menu.meta.tag')"
+          @click="$emit('item-action', { action: 'tag', index: fileIndex })"
+        />
+        <TButton
+          :icon="IconComment"
+          :disabled="fileIndex < 0 || isSlideShow"
+          :selected="!!file?.comments"
+          :tooltip="$t('menu.meta.comment')"
+          @click="$emit('item-action', { action: 'comment', index: fileIndex })"
+        />
+        <TButton
+          :icon="IconRotate"
+          :disabled="fileIndex < 0 || isSlideShow"
+          :iconStyle="{ transform: `rotate(${file?.rotate ?? 0}deg)`, transition: 'transform 0.3s' }"
+          :selected="file?.rotate % 360 > 0"
+          :tooltip="$t('menu.meta.rotate')"
+          @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
+        />
+      </template>
+      <ContextMenu
+        :iconMenu="IconMore"
+        :menuItems="singleFileMenuItems"
         :disabled="fileIndex < 0 || isSlideShow"
-        :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
-        @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
+        @click.stop
       />
-      <TButton v-if="isWin"
-        :icon="!config.imageViewer.isFullScreen ? IconFullScreen : IconRestoreScreen"
+      <IconSeparator class="t-icon-size-sm text-base-content/30" />
+      <TButton
+        :icon="!config.content.isFullScreen ? IconFullScreen : IconRestoreScreen"
         :disabled="isSlideShow"
-        :tooltip="!config.imageViewer.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
-        @click="config.imageViewer.isFullScreen = !config.imageViewer.isFullScreen"
+        :tooltip="!config.content.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
+        @click="config.content.isFullScreen = !config.content.isFullScreen"
       />
-
-      <TButton v-if="config.imageViewer.isFullScreen"
-        :icon="IconSeparator"
-        :disabled="true"
-      />
-
-      <TButton v-if="config.imageViewer.isFullScreen"
+      <TButton
         :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
         :disabled="fileIndex < 0"
         :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
         @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
       />
-      <TButton v-if="config.imageViewer.isFullScreen"
+      <TButton
         :icon="IconClose"
         :tooltip="$t('image_viewer.toolbar.close')"
         @click="$emit('close')"
@@ -81,7 +108,7 @@
     <!-- Previous Button (Overlay) -->
     <button 
       v-if="showNavButton && hasPrevious && !isSlideShow"
-      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 transition-opacity duration-300"
+      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 cursor-pointer transition-opacity duration-300"
       :class="[ isHoverLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerPrev"
       @dblclick.stop
@@ -92,7 +119,7 @@
     <!-- Next Button (Overlay) -->
     <button 
       v-if="showNavButton && hasNext && !isSlideShow"
-      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 transition-opacity duration-300"
+      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 cursor-pointer transition-opacity duration-300"
       :class="[ isHoverRight ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerNext"
       @dblclick.stop
@@ -123,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, computed } from 'vue';
+import { defineAsyncComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { isWin, getSlideShowInterval } from '@/common/utils';
@@ -147,7 +174,15 @@ import {
   IconUnPin,
   IconSeparator,
   IconClose,
+  IconMore,
+  IconFavorite,
+  IconTag,
+  IconComment,
+  IconRotate,
 } from '@/common/icons';
+import { isMac } from '@/common/utils';
+import ContextMenu from '@/components/ContextMenu.vue';
+import { useFileMenuItems } from '@/common/fileMenu';
 
 const Video = defineAsyncComponent(() => import('@/components/Video.vue'));
 
@@ -199,8 +234,7 @@ const props = defineProps({
   }
 });
 
-
-const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit']);
+const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit', 'item-action']);
 
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
@@ -213,6 +247,28 @@ const isHoverRight = ref(false);
 const isHoverTop = ref(false);
 const isHoverBottom = ref(false);
 const toolbarPosition = ref<'top' | 'bottom'>('top');
+
+// Responsive toolbar
+const containerWidth = ref(0);
+const showExtraIcons = computed(() => containerWidth.value > 600);
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        containerWidth.value = entry.contentRect.width;
+      }
+    });
+    resizeObserver.observe(containerRef.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+});
 
 function handleMouseMove(e: MouseEvent) {
   if (!containerRef.value) return;
@@ -245,7 +301,7 @@ function handleMouseLeave() {
 }
 
 const computedToolbarClass = computed(() => {
-  const baseClasses = 'absolute left-1/2 z-[80] px-4 h-12 space-x-2 bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md rounded-box flex flex-row items-center justify-center transform -translate-x-1/2 select-none transition-all duration-300 ease-in-out';
+  const baseClasses = 'absolute left-1/2 z-[80] px-2 h-12 space-x-1 bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md rounded-box flex flex-row items-center justify-center transform -translate-x-1/2 select-none transition-all duration-300 ease-in-out';
   
   const isPinned = config.imageViewer.isPinned;
   // If pinned, always show at top (or last known position? Standard is top). Let's stick to top for pinned.
@@ -320,6 +376,23 @@ defineExpose({
   triggerPrev,
   triggerNext
 });
+
+const showFolderFiles = computed(() => {
+  // Logic from Content.vue: config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0
+  // Since we don't have direct access to determining if we are in "Folder" view vs "Album" view easily without repeating logic,
+  // We can check config directly.
+  return !!(config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0);
+});
+
+const selectedFile = computed(() => props.file);
+
+const singleFileMenuItems = useFileMenuItems(
+  selectedFile,
+  localeMsg,
+  isMac,
+  showFolderFiles,
+  (action) => emit('item-action', { action, index: props.fileIndex })
+);
 </script>
 
 <style scoped>

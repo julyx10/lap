@@ -553,12 +553,12 @@
     },
     "grid_view": {
       "title": "Grid view",
-      "size": "Thumbnail size",
-      "style": "Thumbnail view style",
+      "style": "Grid view style",
       "style_options": [
         "Comfortable view",
         "Compact view"
       ],
+      "size": "Thumbnail size",
       "scaling": "Thumbnail scaling",
       "scaling_options": [
         "Fit entire image",
@@ -587,8 +587,8 @@
         "Below filmstrip"
       ]
     },
-    "image_viewer": {
-      "title": "Image viewer",
+    "image_view": {
+      "title": "Image view",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": [
         "Previous / Next image (Ctrl to zoom)",
@@ -596,8 +596,8 @@
       ],
       "slide_show_interval": "Slide show interval: {second} second(s)",
       "auto_play_video": "Auto play video",
-      "show_comment": "Show comment",
-      "navigator_view": "Navigator view",
+      "show_comment": "Show comment ",
+      "navigator_view": "Show navigator view ",
       "navigator_view_options": [
         "Auto",
         "Always show",

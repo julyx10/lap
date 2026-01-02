@@ -132,14 +132,14 @@ export const useConfigStore = defineStore('configStore', {
         labelPrimary: 1,        // Primary label (1: Name)
         labelSecondary: 2,      // Secondary label (2: Dimension)
       },
-      previewPosition: 0,       // 0: top display, 1: bottom display
-
-      // image viewer settings
+      
+      // image view settings
+      previewPosition: 0,         // 0: top display, 1: bottom display
       mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
       slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
-      autoPlayVideo: false,       // auto play video
       navigatorViewMode: 0,       // 0: Auto, 1: Always hide, 2: Always show
       navigatorViewSize: 240,     // navigator view size (160, 240, 320, 400)
+      autoPlayVideo: false,       // auto play video
       showComment: true,          // show comment
 
       // image search settings
@@ -202,11 +202,11 @@ export const useConfigStore = defineStore('configStore', {
     setGridLabelSecondary(gridLabelSecondary) {
       this.settings.grid.labelSecondary = gridLabelSecondary;
     },
-    setfilmStripViewPreviewPosition(filmStripViewPreviewPosition) {
+
+    // image view settings
+    setFilmStripViewPreviewPosition(filmStripViewPreviewPosition) {
       this.settings.previewPosition = filmStripViewPreviewPosition;
     },
-
-    // image viewer settings
     setMouseWheelMode(mouseWheelMode) {
       this.settings.mouseWheelMode = mouseWheelMode;
     },

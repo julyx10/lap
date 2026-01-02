@@ -4,11 +4,12 @@
 
     <!-- Play button overlay when video is paused -->
     <div v-if="!hasError && !isPlaying"
-      class="absolute inset-0 flex items-center justify-center cursor-pointer"
-      @click.stop="clickPlayVideo"
+      class="absolute inset-0 flex items-center justify-center pointer-events-none"
     >
       <div class="w-16 h-16 rounded-full bg-base-100/50 flex items-center justify-center 
-                  hover:bg-base-100 hover:scale-110 transition-all duration-300 ease-out group">
+                  hover:bg-base-100 hover:scale-110 transition-all duration-300 ease-out group pointer-events-auto cursor-pointer"
+           @click.stop="clickPlayVideo"
+      >
         <component :is="isReplaying ? IconVideoReplay : IconVideoPlay"
           class="w-8 h-8 text-base-content/50 transition-colors duration-300 group-hover:text-base-content/70"
         />
