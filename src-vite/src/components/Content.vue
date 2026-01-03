@@ -37,7 +37,7 @@
       <div class="flex items-center gap-2 shrink-0">
 
         <!-- filter and sort section -->
-        <template v-if="config.main.sidebarIndex !== 1 && !isTempViewMode && !uiStore.showQuickView">
+        <template v-if="config.main.sidebarIndex !== 1 && !isTempViewMode && !showQuickView">
           <!-- file type options -->
           <DropDownSelect
             :options="fileTypeOptions"
@@ -62,7 +62,7 @@
           <!-- multi-select mode -->
           <TButton v-if="!selectMode"
             :icon="IconCheckAll"
-            :disabled="uiStore.showQuickView || fileList.length === 0"
+            :disabled="showQuickView || fileList.length === 0"
             @click="selectMode = true"
           />
           <div v-else
@@ -183,7 +183,11 @@
             >
               <MediaViewer
                 ref="filmStripMediaRef"
+                :mode="1"
+                :isFullScreen="false"
                 :file="fileList[selectedItemIndex]"
+                :hasPrevious="selectedItemIndex > 0"
+                :hasNext="selectedItemIndex < fileList.length - 1"
                 :fileIndex="selectedItemIndex"
                 :fileCount="fileList.length"
                 :isSlideShow="isSlideShow"
@@ -191,10 +195,6 @@
                 :imageMinScale="imageMinScale"
                 :imageMaxScale="imageMaxScale"
                 v-model:isZoomFit="filmStripZoomFit"
-                :showNavButton="true"
-                :showPinButton="true"
-                :hasPrevious="selectedItemIndex > 0"
-                :hasNext="selectedItemIndex < fileList.length - 1"
                 @prev="performNavigate('prev')"
                 @next="performNavigate('next')"
                 @toggle-slide-show="toggleSlideShow"
@@ -219,17 +219,20 @@
         </div>
 
         <!-- Quick View Overlay -->
-        <div v-if="uiStore.showQuickView && fileList[selectedItemIndex]" 
+        <div v-if="showQuickView && fileList[selectedItemIndex]" 
           class="absolute inset-0 z-[60] flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
           :class="[
-            !uiStore.isFullScreen ? 'mt-12' : '',
-            !uiStore.isFullScreen ? (config.settings.showStatusBar ? 'mb-8': 'mb-1') : ''
+            !uiStore.isFullScreen ? (config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12 mb-1') : ''
           ]"
         >
           <div class="relative w-full h-full flex items-center justify-center">
             <MediaViewer
               ref="quickViewMediaRef"
+              :mode="0"
+              :isFullScreen="uiStore.isFullScreen"
               :file="fileList[selectedItemIndex]"
+              :hasPrevious="selectedItemIndex > 0"
+              :hasNext="selectedItemIndex < fileList.length - 1"
               :fileIndex="selectedItemIndex"
               :fileCount="fileList.length"
               :isSlideShow="isSlideShow"
@@ -237,18 +240,13 @@
               :imageMinScale="imageMinScale"
               :imageMaxScale="imageMaxScale"
               v-model:isZoomFit="quickViewZoomFit"
-              :showNavButton="true"
-              :showCloseButton="true"
-              :showFullScreenButton="true"
-              :showPinButton="true"
-              :hasPrevious="selectedItemIndex > 0"
-              :hasNext="selectedItemIndex < fileList.length - 1"
               @prev="performNavigate('prev')"
               @next="performNavigate('next')"
               @toggle-slide-show="toggleSlideShow"
               @scale="onScale"
               @item-action="handleItemAction"
-              @close="uiStore.showQuickView = false; uiStore.isFullScreen = false; stopSlideShow()"
+              @toggle-full-screen="uiStore.isFullScreen = !uiStore.isFullScreen"
+              @close="showQuickView = false; uiStore.isFullScreen = false; stopSlideShow()"
             />
           </div>
         </div>
@@ -271,7 +269,7 @@
       </div>
 
       <!-- info panel splitter -->
-      <div
+      <div v-if="config.infoPanel.show && !uiStore.isFullScreen"
         class="w-1 shrink-0 transition-colors mt-12"
         :class="{
           'mb-8': config.settings.showStatusBar,
@@ -291,7 +289,7 @@
         leave-from-class="opacity-100"
         leave-to-class="!w-0 opacity-0"
       >
-        <div v-if="config.infoPanel.show && !uiStore.isFullScreen" 
+        <div v-if="config.infoPanel.show && !uiStore.isFullScreen"
           :class="[ 'pt-12 pr-1', config.settings.showStatusBar ? 'pb-8' : 'pb-1' ]" 
           :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
@@ -308,10 +306,10 @@
     >
       <!-- file status -->
       <div v-if="fileList.length > 0" class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden">
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <IconFileSearch class="t-icon-size-xs" />
-          <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 }} / </span>
-          <span > {{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }} </span>
+        <div class="flex items-center flex-shrink-0">
+          <IconFileSearch class="t-icon-size-xs mr-1" />
+          <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 + '/' }}</span>
+          <span>{{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}</span>
         </div>
 
         <template v-if="selectedItemIndex >= 0">
@@ -330,7 +328,7 @@
             <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
           </div>
 
-          <div v-if="config.content.showFilmStrip || uiStore.showQuickView" class="flex items-center gap-1 flex-shrink-0">
+          <div v-if="config.content.showFilmStrip || showQuickView" class="flex items-center gap-1 flex-shrink-0">
             <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
             <span> {{ (imageScale * 100).toFixed(0) }}% </span>
           </div>
@@ -569,6 +567,7 @@ const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
 
 // quick view
+const showQuickView = ref(false);
 const quickViewMediaRef = ref<any>(null);
 const quickViewZoomFit = ref(true);
 
@@ -591,13 +590,13 @@ const selectedFile = computed(() => {
   return null;
 });
 
-const singleFileMenuItems = useFileMenuItems(
-  selectedFile,
-  localeMsg,
-  isMac,
-  showFolderFiles,
-  (action) => handleItemAction({ action, index: selectedItemIndex.value })
-);
+// const singleFileMenuItems = useFileMenuItems(
+//   selectedFile,
+//   localeMsg,
+//   isMac,
+//   showFolderFiles,
+//   (action) => handleItemAction({ action, index: selectedItemIndex.value })
+// );
 
 // Request ID tracking to prevent race conditions during async content updates
 let currentContentRequestId = 0;
@@ -860,7 +859,7 @@ function handleItemDblClicked(index: number) {
 
   if (!config.content.showFilmStrip) {
     // quick view
-    uiStore.showQuickView = true;
+    showQuickView.value = true;
     quickViewZoomFit.value = true;
   }
 }
@@ -902,6 +901,8 @@ async function clickSetAlbumCover() {
 }
 
 function handleItemAction(payload: { action: string, index: number }) {
+  if (isSlideShow.value) return;
+
   const { action, index } = payload;
   selectedItemIndex.value = index; // Ensure the item for the action is selected
 
@@ -938,7 +939,7 @@ function handleItemAction(payload: { action: string, index: number }) {
 }
 
 function requestNavigate(direction: 'prev' | 'next') {
-  const viewer = uiStore.showQuickView ? quickViewMediaRef.value : (config.content.showFilmStrip ? filmStripMediaRef.value : null);
+  const viewer = showQuickView.value ? quickViewMediaRef.value : (config.content.showFilmStrip ? filmStripMediaRef.value : null);
   
   if (direction === 'next') {
     if (viewer) {
@@ -1055,19 +1056,24 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
+  // Disable keyboard events during slideshow (except Escape)
+  if (isSlideShow.value && event.key !== 'Escape') {
+    return;
+  }
+
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
   if (event.key === 'Space' || event.key === ' ') {
     if(!config.content.showFilmStrip) {
-      uiStore.showQuickView = !uiStore.showQuickView;
+      showQuickView.value = !showQuickView.value;
       quickViewZoomFit.value = true; 
     }
   }
-  else if (event.key === 'Escape' && uiStore.showQuickView) {
+  else if (event.key === 'Escape' && showQuickView.value) {
     if (uiStore.isFullScreen) {
       uiStore.isFullScreen = false;
     } else {
-      uiStore.showQuickView = false;
+      showQuickView.value = false;
       stopSlideShow();
     }
   }
@@ -1090,6 +1096,12 @@ const handleKeyDown = (e: any) => {
   }
 
   const { key, metaKey } = e.payload;
+
+  // Disable global shortcuts during slideshow (except Escape for safety, though handled in local)
+  if (isSlideShow.value && key !== 'Escape') {
+    return;
+  }
+
   const isCmdKey = isMac ? metaKey : e.payload.ctrlKey;
 
   if (isCmdKey && key === 'Enter') {   // Open shortcut
@@ -1210,9 +1222,6 @@ onMounted( async() => {
            }
         }
         break;
-      case 'rotate':
-        clickRotate();
-        break;
       default:
         break;
     }
@@ -1315,7 +1324,6 @@ watch(
         if (gridViewRef.value) {
           gridViewRef.value.scrollToPosition(0);
         }
-        uiStore.showQuickView = false;
         
         updateContent();
   
@@ -1347,7 +1355,6 @@ watch(
       if (gridViewRef.value) {
         gridViewRef.value.scrollToPosition(0);
       }
-      uiStore.showQuickView = false;
       
       updateContent();
   
@@ -1383,7 +1390,7 @@ watch(() => [config.content.showFilmStrip], ([newLayout]) => {
 });
 
 function toggleGridViewLayout() {
-  uiStore.showQuickView = false;
+  showQuickView.value = false;
   config.content.showFilmStrip = !config.content.showFilmStrip;
   filmStripZoomFit.value = true;
 }
@@ -1624,6 +1631,8 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
 async function updateContent() {
   // Reset temp view mode on any content update
   tempViewMode.value = 'none';
+  showQuickView.value = false;
+
   backupState.value = null;
 
   const requestId = ++currentContentRequestId;
@@ -1790,7 +1799,7 @@ function enterSimilarSearchMode(file: any) {
 
   // 2. Set mode
   tempViewMode.value = 'similar';
-  uiStore.showQuickView = false;
+  showQuickView.value = false;
   
   // 3. Update Title to indicate context
   contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
@@ -1851,7 +1860,7 @@ function enterAlbumPreviewMode(file: any) {
   
   // 2. Set mode
   tempViewMode.value = 'album';
-  uiStore.showQuickView = false;
+  showQuickView.value = false;
   
   // 3. Update Title and Fetch Files
   const folderPath = getFolderPath(file.file_path);
@@ -1903,8 +1912,8 @@ function exitTempViewMode() {
 
   // 2. Reset Mode
   tempViewMode.value = 'none';
+  showQuickView.value = false;
   backupState.value = null;
-  uiStore.showQuickView = false;
 
   // 3. Restore Scroll Position (need to wait for Vue to re-render the list)
   // Using nextTick or a small timeout
@@ -2175,7 +2184,7 @@ const clickRotate = async () => {
     fileList.value[selectedItemIndex.value].rotate += 90;
 
     // notify the image viewer
-    tauriEmit('message-from-content', { message: 'rotate' });
+    tauriEmit('message-from-content', { message: 'rotate', fileId: fileList.value[selectedItemIndex.value].id });
 
     // update the rotate status in the database
     setFileRotate(fileList.value[selectedItemIndex.value].id, fileList.value[selectedItemIndex.value].rotate);

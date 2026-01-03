@@ -5,7 +5,6 @@ export const useUIStore = defineStore('ui', {
   state: () => ({
     inputStack: [],
     fileVersions: {},
-    showQuickView: false,
     isFullScreen: false,
   }),
   getters: {

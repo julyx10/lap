@@ -3,40 +3,33 @@
   <div
     :class="[
       'relative w-screen h-screen flex flex-col overflow-hidden bg-base-300 text-base-content/70',
-      config.imageViewer.isFullScreen ? 'fixed top-0 left-0 z-50' : '',
+      isFullScreen ? 'fixed top-0 left-0 z-50' : '',
     ]"
   >
-    <!-- title bar -->
-    <TitleBar v-if="!config.imageViewer.isFullScreen"
-      :titlebar="fileIndex >= 0 ? fileInfo?.name : localeMsg.image_viewer.title"
-      viewName="ImageViewer"
-    />
-
-    <!-- image container -->
     <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center bg-base-200 overflow-hidden select-none">
 
       <template v-if="fileIndex >= 0">
         <MediaViewer
           ref="mediaViewerRef"
+          :mode="2"
+          :isFullScreen="isFullScreen"
           :file="fileInfo"
+          :hasPrevious="fileIndex > 0"
+          :hasNext="fileIndex < fileCount - 1"
           :fileIndex="fileIndex"
           :fileCount="fileCount"
           :isSlideShow="isSlideShow"
           :imageScale="imageScale"
           :imageMinScale="imageMinScale"
           :imageMaxScale="imageMaxScale"
-          :isZoomFit="config.imageViewer.isZoomFit"
-          :showNavButton="true"
-          :showPinButton="true"
-          :hasPrevious="fileIndex > 0"
-          :hasNext="fileIndex < fileCount - 1"
-          @prev="onPrev()"
-          @next="onNext()"
+          :isZoomFit="isZoomFit"
+          @prev="clickPrev()"
+          @next="clickNext()"
           @toggle-slide-show="clickSlideShow()"
-          @close="appWindow.close()"
-          @scale="onScale"
-          @update:isZoomFit="(val) => config.imageViewer.isZoomFit = val"
+          @scale="clickScale"
+          @update:isZoomFit="(val) => isZoomFit = val"
           @dblclick="toggleZoomFit()"
+          @close="appWindow.close()"
         />
 
         <!-- comments -->
@@ -59,7 +52,6 @@
 
 </template>
 
-
 <script setup lang="ts">
 
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
@@ -71,7 +63,6 @@ import { config } from '@/common/config';
 import { isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
 import { getFileInfo } from '@/common/api';
 
-import TitleBar from '@/components/TitleBar.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
 
 import { 
@@ -96,6 +87,8 @@ const iconRotate = ref(0);      // icon rotation angle
 const isTransitionDisabled = ref(true);
 
 const mediaViewerRef = ref<any>(null); // media viewer reference
+const isFullScreen = ref(false);
+const isZoomFit = ref(true);
 
 const isSlideShow = ref(false);     // Slide show state
 let timer: NodeJS.Timeout | null = null;  // Timer for slide show
@@ -109,6 +102,7 @@ let unlistenGridView: () => void;
 
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('resize', handleResize);
 
   const urlParams = new URLSearchParams(window.location.search);
   
@@ -129,16 +123,18 @@ onMounted(async() => {
 
 
   unlistenGridView = await listen('message-from-content', (event) => {
-    const { message } = event.payload;
-    console.log('message-from-content:', message);
+    const { message, fileId: targetFileId } = event.payload as any;
+    console.log('message-from-content:', message, targetFileId);
     switch (message) {
       case 'rotate':
-        if (mediaViewerRef.value) {
-          mediaViewerRef.value.rotateRight();
-        }
-        iconRotate.value += 90;
-        if (fileInfo.value) {
-          fileInfo.value.rotate = (fileInfo.value.rotate || 0) + 90;
+        if (targetFileId === fileId.value) {
+          if (mediaViewerRef.value) {
+            mediaViewerRef.value.rotateRight();
+          }
+          iconRotate.value += 90;
+          if (fileInfo.value) {
+            fileInfo.value.rotate = (fileInfo.value.rotate || 0) + 90;
+          }
         }
         break;
       default:
@@ -149,10 +145,13 @@ onMounted(async() => {
   setTimeout(() => {
     isTransitionDisabled.value = false;
   }, 500);
+
+  await handleResize();
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('resize', handleResize);
   
   // unlisten
   unlistenImg();
@@ -164,10 +163,15 @@ function handleKeyDown(event: KeyboardEvent) {
   if(uiStore.inputStack.length > 0) {
     return;
   }
+
+  // Disable keyboard events during slideshow (except Escape)
+  if (isSlideShow.value && event.key !== 'Escape') {
+    return;
+  }
   
   const key = event.key;
-  if (keyActions[key]) {
-    keyActions[key]();
+  if ((keyActions as any)[key]) {
+    (keyActions as any)[key]();
   }
 }
 
@@ -188,8 +192,11 @@ const keyActions = {
 // Handle resize event
 const handleResize = async () => {
   if(isMac) {
-    config.imageViewer.isFullScreen = await appWindow.isFullscreen();
-    console.log('handleFullScreenChange:', config.imageViewer.isFullScreen);
+    const checkFullScreen = async () => {
+      isFullScreen.value = await appWindow.isFullscreen();
+    };
+    await checkFullScreen();
+    setTimeout(checkFullScreen, 600); 
   }
 };
 
@@ -214,12 +221,17 @@ watch(() => config.settings.language, (newLanguage) => {
     locale.value = newLanguage; // update locale based on config.settings.language
 });
 
-// watch full screen (win only)
-watch(() => config.imageViewer.isFullScreen, async (newFullScreen) => {
-  if(!isWin) return;
-  await appWindow.setFullscreen(newFullScreen);
-  await appWindow.setResizable(!newFullScreen);
-  // await appWindow.setDecorations(false);
+// watch full screen
+watch(() => isFullScreen.value, async (newFullScreen) => {
+  if(isWin) {
+    await appWindow.setFullscreen(newFullScreen);
+    await appWindow.setResizable(!newFullScreen);
+    // await appWindow.setDecorations(false);
+  } else if (isMac) {
+      if (newFullScreen !== await appWindow.isFullscreen()) {
+        await appWindow.setFullscreen(newFullScreen);
+    }
+  }
 }); 
 
 // watch file changed
@@ -256,10 +268,6 @@ function clickPrev() {
   }
 }
 
-function onPrev() {
-  clickPrev();
-}
-
 function clickNext() {
   // Fix loop for slideshow
   if (isSlideShow.value && fileIndex.value >= fileCount.value - 1) {
@@ -272,10 +280,6 @@ function clickNext() {
   } else {
     mediaViewerRef.value?.showMessage((localeMsg.value as any).tooltip.image_viewer.last_image);
   }
-}
-
-function onNext() {
-  clickNext();
 }
 
 function clickHome() {
@@ -309,24 +313,19 @@ const clickZoomActual = () => {
 };
 
 const toggleZoomFit = () => {
-  config.imageViewer.isZoomFit =!config.imageViewer.isZoomFit;
+  isZoomFit.value = !isZoomFit.value;
 };
 
 const closeWindow = () => {
-  if(config.imageViewer.isFullScreen) {
-    config.imageViewer.isFullScreen = false;
+  if(isFullScreen.value) {
+    isFullScreen.value = false;
     appWindow.setFocus();
   } else {
     appWindow.close();
   }
 }
 
-// Function to maximize the window and setup full screen
-const toggleFullScreen = () => {
-  config.imageViewer.isFullScreen = !config.imageViewer.isFullScreen;
-}
-
-const onScale = (event: any) => {
+const clickScale = (event: any) => {
   imageScale.value = event.scale;
   imageMinScale.value = event.minScale;
   imageMaxScale.value = event.maxScale;
@@ -335,7 +334,6 @@ const onScale = (event: any) => {
 </script>
 
 <style scoped>
-/* Disable text selection while dragging */
 * {
   user-select: none;
 }

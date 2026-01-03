@@ -90,9 +90,14 @@ export const useConfigStore = defineStore('configStore', {
       sortCount: false,     // false: default sort by name, true: sort by count
     },
 
-    imageViewer: {
-      isZoomFit: true,            // true: zoom to fit container; false: original size(scale = 1)
-      isPinned: true,             // pinned mode
+    mediaViewer: {
+      isZoomFit: true,      // true: zoom to fit container; false: original size(scale = 1)
+      isPinned: true,       // pinned mode
+    },
+
+    video: {
+      muted: false,           // video muted
+      volume: 1.0,            // video volume (0.0-1.0)
     },
 
     imageEditor: {
@@ -100,11 +105,6 @@ export const useConfigStore = defineStore('configStore', {
       saveAs: 0,                // image editor save as (0: Overwrite existing file, 1: Save as new file)
       format: 0,                // image editor format (0: JPEG, 1: PNG, 2: WEBP)
       quality: 0,               // image editor quality (0: High, 1: Medium, 2: Low)
-    },
-
-    video: {
-      muted: false,           // video muted
-      volume: 1.0,            // video volume (0.0-1.0)
     },
 
     settings: {

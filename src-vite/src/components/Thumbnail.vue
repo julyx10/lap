@@ -66,7 +66,7 @@
       </div>
 
       <!-- context menu -->
-      <div v-if="!selectMode" class="absolute right-0 top-0">
+      <div v-if="!selectMode && !config.content.showFilmStrip" class="absolute right-0 top-0">
         <ContextMenu
           :class="[
             !isSelected ? 'invisible group-hover:visible' : ''

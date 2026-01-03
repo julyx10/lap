@@ -11,104 +11,117 @@
       :class="computedToolbarClass"
       data-tauri-drag-region
     >
-      <TButton
-        :icon="IconPrev"
-        :disabled="fileIndex <= 0 || isSlideShow"
-        :tooltip="$t('image_viewer.toolbar.prev')"
-        @click="triggerPrev" 
-      />
-      <TButton
-        :icon="IconNext"
-        :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || isSlideShow"
-        :tooltip="$t('image_viewer.toolbar.next')"
-        @click="triggerNext" 
-      />
-      <TButton
-        :icon="isSlideShow ? IconPause : IconPlay"
-        :disabled="fileIndex < 0"
-        :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
-        @click="handleToggleSlideShow" 
-      />
-      <TButton
-        :icon="IconZoomOut"
-        :disabled="fileIndex < 0 || imageScale <= imageMinScale || isSlideShow"
-        :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
-        @click="zoomOut"
-      />
-      <TButton
-        :icon="IconZoomIn"
-        :disabled="fileIndex < 0 || imageScale >= imageMaxScale || isSlideShow"
-        :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
-        @click="zoomIn" 
-      />
-      <TButton
-        :icon="!isZoomFit ? IconZoomFit : IconZoomActual"
-        :disabled="fileIndex < 0 || isSlideShow"
-        :tooltip="(!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
-        @click="$emit('update:isZoomFit', !isZoomFit)"
-      />
-      <IconSeparator class="t-icon-size-sm text-base-content/30" />
-      <template v-if="showExtraIcons">
+      <!-- File Name (Pinned Mode) -->
+      <div 
+        v-if="props.mode === 2 && !isFullScreen" 
+        class="absolute left-20 text-sm text-base-content/70 truncate select-none"
+        :style="{ maxWidth: filenameMaxWidth + 'px' }"
+        data-tauri-drag-region
+      >
+        {{ fileIndex + 1 }}/{{ fileCount }} {{ file?.name }}
+      </div>
+      
+      <div ref="buttonsRef" class="flex items-center space-x-1">
         <TButton
-          :icon="IconFavorite"
-          :disabled="fileIndex < 0 || isSlideShow"
-          :selected="file?.is_favorite"
-          :tooltip="file?.is_favorite ? $t('menu.meta.unfavorite') : $t('menu.meta.favorite')"
-          @click="$emit('item-action', { action: 'favorite', index: fileIndex })"
+          :icon="IconPrev"
+          :disabled="fileIndex <= 0 || isSlideShow"
+          :tooltip="$t('image_viewer.toolbar.prev')"
+          @click="triggerPrev" 
         />
         <TButton
-          :icon="IconTag"
-          :disabled="fileIndex < 0 || isSlideShow"
-          :selected="file?.has_tags"
-          :tooltip="$t('menu.meta.tag')"
-          @click="$emit('item-action', { action: 'tag', index: fileIndex })"
+          :icon="IconNext"
+          :disabled="fileIndex < 0 || fileIndex >= fileCount - 1 || isSlideShow"
+          :tooltip="$t('image_viewer.toolbar.next')"
+          @click="triggerNext" 
         />
         <TButton
-          :icon="IconComment"
-          :disabled="fileIndex < 0 || isSlideShow"
-          :selected="!!file?.comments"
-          :tooltip="$t('menu.meta.comment')"
-          @click="$emit('item-action', { action: 'comment', index: fileIndex })"
+          :icon="isSlideShow ? IconPause : IconPlay"
+          :disabled="fileIndex < 0"
+          :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
+          @click="handleToggleSlideShow" 
         />
         <TButton
-          :icon="IconRotate"
-          :disabled="fileIndex < 0 || isSlideShow"
-          :iconStyle="{ transform: `rotate(${file?.rotate ?? 0}deg)`, transition: 'transform 0.3s' }"
-          :selected="file?.rotate % 360 > 0"
-          :tooltip="$t('menu.meta.rotate')"
-          @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
+          :icon="IconZoomOut"
+          :disabled="fileIndex < 0 || imageScale <= imageMinScale || isSlideShow"
+          :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
+          @click="zoomOut"
         />
-      </template>
-      <ContextMenu
-        :iconMenu="IconMore"
-        :menuItems="singleFileMenuItems"
-        :disabled="fileIndex < 0 || isSlideShow"
-        @click.stop
-      />
-      <IconSeparator class="t-icon-size-sm text-base-content/30" />
-      <TButton v-if="showFullScreenButton"
-        :icon="!uiStore.isFullScreen ? IconFullScreen : IconRestoreScreen"
-        :tooltip="!uiStore.isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
-        @click="uiStore.isFullScreen = !uiStore.isFullScreen"
-      />
-      <TButton v-if="showPinButton && !uiStore.isFullScreen"
-        :icon="config.imageViewer.isPinned ? IconPin : IconUnPin"
-        :disabled="fileIndex < 0"
-        :tooltip="!config.imageViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
-        @click="config.imageViewer.isPinned = !config.imageViewer.isPinned"
-      />
-      <TButton
-        v-if="showCloseButton && config.imageViewer.isPinned"
-        :icon="IconClose"
-        :tooltip="$t('image_viewer.toolbar.close')"
-        @click.stop="$emit('close')"
-      />
+        <TButton
+          :icon="IconZoomIn"
+          :disabled="fileIndex < 0 || imageScale >= imageMaxScale || isSlideShow"
+          :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
+          @click="zoomIn" 
+        />
+        <TButton
+          :icon="!isZoomFit ? IconZoomFit : IconZoomActual"
+          :disabled="fileIndex < 0 || isSlideShow"
+          :tooltip="(!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
+          @click="$emit('update:isZoomFit', !isZoomFit)"
+        />
+        <template v-if="showExtraIcons && mode !== 2">
+          <IconSeparator class="t-icon-size-sm text-base-content/30" />
+          <TButton
+            :icon="IconFavorite"
+            :disabled="fileIndex < 0 || isSlideShow"
+            :selected="file?.is_favorite && !isSlideShow"
+            :tooltip="file?.is_favorite ? $t('menu.meta.unfavorite') : $t('menu.meta.favorite')"
+            @click="$emit('item-action', { action: 'favorite', index: fileIndex })"
+          />
+          <TButton
+            :icon="IconTag"
+            :disabled="fileIndex < 0 || isSlideShow"
+            :selected="file?.has_tags && !isSlideShow"
+            :tooltip="$t('menu.meta.tag')"
+            @click="$emit('item-action', { action: 'tag', index: fileIndex })"
+          />
+          <TButton
+            :icon="IconComment"
+            :disabled="fileIndex < 0 || isSlideShow"
+            :selected="!!file?.comments && !isSlideShow"
+            :tooltip="$t('menu.meta.comment')"
+            @click="$emit('item-action', { action: 'comment', index: fileIndex })"
+          />
+          <TButton
+            :icon="IconRotate"
+            :disabled="fileIndex < 0 || isSlideShow"
+            :iconStyle="{ transform: `rotate(${file?.rotate ?? 0}deg)`, transition: 'transform 0.3s' }"
+            :selected="file?.rotate % 360 > 0 && !isSlideShow"
+            :tooltip="$t('menu.meta.rotate')"
+            @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
+          />
+        </template>
+        <ContextMenu v-if="mode !== 2"
+          :iconMenu="IconMore"
+          :menuItems="singleFileMenuItems"
+          :disabled="fileIndex < 0 || isSlideShow"
+          @click.stop
+        />
+        <IconSeparator v-if="mode !== 2" class="t-icon-size-sm text-base-content/30" />
+        <TButton v-if="mode === 0"
+          :icon="!isFullScreen ? IconFullScreen : IconRestoreScreen"
+          :tooltip="!isFullScreen ? $t('image_viewer.toolbar.fullscreen') : $t('image_viewer.toolbar.exit_fullscreen')"
+          @click="$emit('toggle-full-screen')"
+        />
+        <TButton v-if="mode !== 2"
+          :icon="config.mediaViewer.isPinned ? IconPin : IconUnPin"
+          :disabled="fileIndex < 0"
+          :tooltip="!config.mediaViewer.isPinned ? $t('image_viewer.toolbar.pin') : $t('image_viewer.toolbar.unpin')"
+          @click="config.mediaViewer.isPinned = !config.mediaViewer.isPinned"
+        />
+        <TButton
+          v-if="mode === 0 && config.mediaViewer.isPinned"
+          :icon="IconClose"
+          :disabled="isSlideShow"
+          :tooltip="$t('image_viewer.toolbar.close')"
+          @click.stop="$emit('close')"
+        />
+      </div>
     </div>
 
     <!-- Previous Button (Overlay) -->
     <button 
-      v-if="showNavButton && hasPrevious && !isSlideShow"
-      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 cursor-pointer transition-opacity duration-300"
+      v-if="hasPrevious && !isSlideShow"
+      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/70 backdrop-blur-md cursor-pointer"
       :class="[ isHoverLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerPrev"
       @dblclick.stop
@@ -118,8 +131,8 @@
 
     <!-- Next Button (Overlay) -->
     <button 
-      v-if="showNavButton && hasNext && !isSlideShow"
-      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:bg-base-100/70 backdrop-blur-md text-base-content/70 cursor-pointer transition-opacity duration-300"
+      v-if="hasNext && !isSlideShow"
+      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/70 backdrop-blur-md cursor-pointer"
       :class="[ isHoverRight ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerNext"
       @dblclick.stop
@@ -129,8 +142,8 @@
 
     <!-- Close Button (Top Right) -->
     <button 
-      v-if="showCloseButton && !config.imageViewer.isPinned"
-      class="absolute right-2 top-2 z-[90] p-2 rounded-full text-base-content/30 hover:text-base-content/70 hover:bg-base-100/70 backdrop-blur-md cursor-pointer transition-opacity duration-300"
+      v-if="mode === 0 && !config.mediaViewer.isPinned"
+      class="absolute right-2 top-2 z-[90] p-2 rounded-full text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer"
       @click.stop="$emit('close')"
       @dblclick.stop
     >
@@ -165,10 +178,8 @@
 import { defineAsyncComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { useUIStore } from '@/stores/uiStore';
 import { isWin, getSlideShowInterval } from '@/common/utils';
 
-const uiStore = useUIStore();
 import Image from '@/components/Image.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
@@ -202,17 +213,18 @@ import { useFileMenuItems } from '@/common/fileMenu';
 const Video = defineAsyncComponent(() => import('@/components/Video.vue'));
 
 const props = defineProps({
+  // 0: quick view, 1: filmstrip, 2: image viewer
+  mode: {
+    type: Number,
+    default: 0
+  },
+  isFullScreen: {
+    type: Boolean,
+    default: false
+  },
   file: {
     type: Object,
     default: null
-  },
-  isZoomFit: {
-    type: Boolean,
-    default: true
-  },
-  showNavButton: {
-    type: Boolean,
-    default: false
   },
   hasPrevious: {
     type: Boolean,
@@ -222,19 +234,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  showCloseButton: {
-    type: Boolean,
-    default: false
-  },
-  showFullScreenButton: {
-    type: Boolean,
-    default: false
-  },
-  showPinButton: {
-    type: Boolean,
-    default: false
-  },
-  // Added ImageToolbar props
   fileIndex: {
     type: Number,
     default: -1
@@ -258,10 +257,14 @@ const props = defineProps({
   imageMaxScale: {
     type: Number,
     default: 10
-  }
+  },
+  isZoomFit: {
+    type: Boolean,
+    default: true
+  },
 });
 
-const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit', 'item-action']);
+const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit', 'item-action', 'toggle-full-screen']);
 
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value]);
@@ -277,17 +280,34 @@ const toolbarPosition = ref<'top' | 'bottom'>('top');
 
 // Responsive toolbar
 const containerWidth = ref(0);
+const buttonsRef = ref<HTMLElement | null>(null);
+const buttonsWidth = ref(0);
+const filenameMaxWidth = computed(() => {
+  if (containerWidth.value > 0 && buttonsWidth.value > 0) {
+    const val = (containerWidth.value / 2) - (buttonsWidth.value / 2) - 100;
+    return Math.max(0, val);
+  }
+  return 200; // Fallback
+});
 const showExtraIcons = computed(() => containerWidth.value > 600);
 let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
-  if (containerRef.value) {
-    resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
+  resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.target === containerRef.value) {
         containerWidth.value = entry.contentRect.width;
+      } else if (entry.target === buttonsRef.value) {
+        buttonsWidth.value = entry.contentRect.width;
       }
-    });
+    }
+  });
+
+  if (containerRef.value) {
     resizeObserver.observe(containerRef.value);
+  }
+  if (buttonsRef.value) {
+    resizeObserver.observe(buttonsRef.value);
   }
 });
 
@@ -328,11 +348,11 @@ function handleMouseLeave() {
 }
 
 const computedToolbarClass = computed(() => {
-  const commonClasses = 'absolute z-[80] h-10 space-x-1 flex flex-row items-center justify-center select-none';
+  const commonClasses = 'absolute z-[80] h-10 flex flex-row items-center justify-center select-none';
   
-  const isPinned = config.imageViewer.isPinned;
+  const isPinned = props.isFullScreen ? false : (props.mode === 2 ? true : config.mediaViewer.isPinned);
 
-  if (isPinned && !uiStore.isFullScreen) {
+  if (isPinned) {
     // Fixed Top Bar
     return `${commonClasses} relative top-0 left-0 w-full`;
   } else {
@@ -413,13 +433,17 @@ const showFolderFiles = computed(() => {
 
 const selectedFile = computed(() => props.file);
 
-const singleFileMenuItems = useFileMenuItems(
-  selectedFile,
-  localeMsg,
-  isMac,
-  showFolderFiles,
-  (action) => emit('item-action', { action, index: props.fileIndex })
-);
+const singleFileMenuItems = computed(() => {
+  if (props.mode === 2) return [];
+
+  return useFileMenuItems(
+    selectedFile,
+    localeMsg,
+    isMac,
+    showFolderFiles,
+    (action) => emit('item-action', { action, index: props.fileIndex })
+  ).value;
+});
 </script>
 
 <style scoped>
