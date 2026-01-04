@@ -37,6 +37,7 @@
         <TButton
           :icon="isSlideShow ? IconPause : IconPlay"
           :disabled="fileIndex < 0"
+          :selected="isSlideShow"
           :tooltip="(isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show')) + ` (${getSlideShowInterval(config.settings.slideShowInterval)}s)`"
           @click="handleToggleSlideShow" 
         />

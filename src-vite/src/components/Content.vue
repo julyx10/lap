@@ -356,7 +356,8 @@
   <ImageEditor 
     v-if="showImageEditor"
     :fileInfo="fileList[selectedItemIndex]" 
-    @ok="onImageEdited" 
+    @success="onImageEdited(true)" 
+    @failed="onImageEdited(false)"
     @cancel="showImageEditor = false"
   />
 
@@ -910,7 +911,6 @@ function handleItemAction(payload: { action: string, index: number }) {
     'open': () => openImageViewer(selectedItemIndex.value, true),
     'edit': () => showImageEditor.value = true,
     'copy': () => clickCopyImage(fileList.value[selectedItemIndex.value].file_path),
-    'update-file-index': () => updateFile(fileList.value[selectedItemIndex.value]),
     'rename': () => {
       renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
       showRenameMsgbox.value = true;
@@ -1632,6 +1632,8 @@ async function updateContent() {
   // Reset temp view mode on any content update
   tempViewMode.value = 'none';
   showQuickView.value = false;
+  isSlideShow.value = false;
+  stopSlideShow();
 
   backupState.value = null;
 
@@ -1928,11 +1930,18 @@ function exitTempViewMode() {
 }
 
 // update the file info from the image editor
-const onImageEdited = () => {
-  console.log('onImageEdited:', fileList.value[selectedItemIndex.value]);
-  updateFile(fileList.value[selectedItemIndex.value]);
+const onImageEdited = (success: boolean) => {
+  if (success) {
+    toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.success);
+    showImageEditor.value = false;
 
-  showImageEditor.value = false;
+    // update file info if save as is overwrite
+    if(config.imageEditor.saveAs === 0) {
+      updateFile(fileList.value[selectedItemIndex.value]);
+    }
+  } else {
+    toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.failed, true);
+  }
 }
 
 const clickCopyImage = async (filePath: string) => {
@@ -2086,11 +2095,11 @@ const updateFile = async (file: any) => {
     }
   } finally {
     isProcessing.value = false;
-    if (success) {
-      toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.success);
-    } else {
-      toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.failed, true);
-    }
+    // if (success) {
+    //   toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.success);
+    // } else {
+    //   toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.failed, true);
+    // }
   }
 }
 

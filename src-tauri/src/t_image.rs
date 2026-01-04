@@ -149,6 +149,7 @@ pub struct EditParams {
     rotate: i32,
     crop: CropData,
     resize: ResizeData,
+    quality: Option<u8>,
 }
 
 /// edit an image and save to dest file
@@ -161,7 +162,19 @@ pub fn edit_image(params: EditParams) -> bool {
             _ => image::ImageFormat::Jpeg,
         };
 
-        return img.save_with_format(path, format).is_ok();
+        let quality = params.quality.unwrap_or(80);
+
+        if format == image::ImageFormat::Jpeg {
+            if let Ok(file) = std::fs::File::create(path) {
+                let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(file, quality);
+                let _ = encoder.encode_image(&img);
+                return true;
+            }
+        } else {
+            return img.save_with_format(path, format).is_ok();
+        }
+
+        return false;
     }
     false
 }

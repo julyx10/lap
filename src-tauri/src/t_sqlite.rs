@@ -51,7 +51,7 @@ impl Album {
             modified_at: file_info.modified,
             display_order_id: None,
             cover_file_id: None,
-            description: None,
+            description: Some(String::new()),
             is_hidden: None,
             scanned: Some(0),
             total: Some(0),

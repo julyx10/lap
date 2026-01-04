@@ -197,7 +197,7 @@
                   </select>
                 </td>
               </tr>
-              <tr>
+              <tr v-if="config.imageEditor.format == 0">
                 <td>{{ $t('msgbox.image_editor.quality') }}</td>
                 <td>
                   <select v-model="config.imageEditor.quality" class="select select-bordered w-full" :disabled="cropStatus==1">
@@ -288,7 +288,7 @@ const { messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.settings.language]);
 
 const uiStore = useUIStore();
-const emit = defineEmits(['ok', 'cancel']);
+const emit = defineEmits(['success', 'failed', 'cancel']);
 
 const toolTipRef = ref(null);
 const isProcessing = ref(false);  // show processing status
@@ -895,7 +895,12 @@ const clickCancel = () => {
 };
 
 const setEditParams = () => {
-  const fileName = combineFileName(newFileName.value, fileFormatOptions.value[config.imageEditor.format].label.toLowerCase());
+  let name = newFileName.value;
+  if(config.imageEditor.saveAs === 1) { // 1: Save as new file
+    name += "_edited";
+  }
+
+  const fileName = combineFileName(name, fileFormatOptions.value[config.imageEditor.format].label.toLowerCase());
   const destFilePath = getFullPath(getFolderPath(props.fileInfo.file_path), fileName);
   const orientation = props.fileInfo.e_orientation || 1;
 
@@ -903,6 +908,7 @@ const setEditParams = () => {
     sourceFilePath: props.fileInfo.file_path,
     destFilePath: destFilePath,
     outputFormat: fileFormatOptions.value[config.imageEditor.format].label.toLowerCase(),
+    quality: [90, 80, 60][config.imageEditor.quality] || 80,
     orientation: orientation,
     flipHorizontal: isFlippedX.value,
     flipVertical: isFlippedY.value,
@@ -953,11 +959,10 @@ const clickSave = async () => {
   } finally {
     isProcessing.value = false;
     if (success) {
-      toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.success);
       uiStore.updateFileVersion(props.fileInfo.file_path);
-      emit('ok');
+      emit('success');
     } else {
-      toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.failed, true);
+      emit('failed');
     }
   }
 };

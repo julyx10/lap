@@ -104,7 +104,7 @@ export const useConfigStore = defineStore('configStore', {
       cropShape: 0,             // image editor crop shape (0: Custom, 1: 1:1, 2: 1:2, 3: 2:3, 4: 3:4, 5: 9:16) 
       saveAs: 0,                // image editor save as (0: Overwrite existing file, 1: Save as new file)
       format: 0,                // image editor format (0: JPEG, 1: PNG, 2: WEBP)
-      quality: 0,               // image editor quality (0: High, 1: Medium, 2: Low)
+      quality: 0,               // jpeg quality (0: High, 1: Medium, 2: Low), [90, 80, 60]
     },
 
     settings: {

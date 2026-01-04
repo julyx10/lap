@@ -6,8 +6,10 @@
       <!-- File Info Section -->
       <div class="rounded-box p-2 space-y-2 border border-base-content/5">
         <div class="flex items-center gap-2">
-          <IconFileInfo class="w-4 h-4" /> 
-          <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.title') }}</span>
+          <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
+          <div v-else class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
+          <!-- <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.title') }}</span> -->
+          <span class="font-bold text-sm text-base-content/70 overflow-hidden truncate">{{ fileInfo?.name }}</span>
         </div>
         
         <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
@@ -20,8 +22,8 @@
           <div class="text-base-content/70 break-all">{{ getFolderPath(fileInfo?.file_path) }}</div>
 
           <!-- Name -->
-          <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.name') }}</div>
-          <div class="text-base-content/70 break-all font-medium">{{ fileInfo?.name }}</div>
+          <!-- <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.name') }}</div> -->
+          <!-- <div class="text-base-content/70 break-all font-medium">{{ fileInfo?.name }}</div> -->
 
           <!-- Size -->
           <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.size') }}</div>
@@ -120,9 +122,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings, formatCameraInfo } from '@/common/utils';
-import { IconFileInfo, IconCamera } from '@/common/icons';
+import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName } from '@/common/utils';
+import { IconCamera } from '@/common/icons';
 
 import MapView from '@/components/MapView.vue';
 
@@ -133,7 +136,7 @@ const props = defineProps({
   },
 });
 
-const infoPanelZoomFit = ref(true);
+const { locale } = useI18n();
 
 const emit = defineEmits([
   'close'
@@ -147,7 +150,7 @@ function formatGeoLocation() {
     info.geo_name,
     info.geo_admin2,
     info.geo_admin1,
-    info.geo_cc,
+    info.geo_cc ? getCountryName(info.geo_cc, locale.value) : info.geo_cc,
   ];
 
   return fields.filter(Boolean).join(", ");

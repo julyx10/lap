@@ -688,30 +688,55 @@ const onImageReady = (nextIndex: number) => {
       const imgIndex = activeImage.value;
       const imgSize = imageSize.value[imgIndex];
       const container = containerSize.value;
+      const prevImgIndex = imgIndex ^ 1;
       
-      // Use current mouse position relative to container
-      const cursorX = mousePosition.value.x - containerPos.value.x;
-      const cursorY = mousePosition.value.y - containerPos.value.y;
-
-      // Calculate a conceptual "before" state, as if the image was fitted to the container.
-      const fitScale = Math.min(container.width / imgSize.width, container.height / imgSize.height);
-      const initialPos = {
-        x: (container.width - imgSize.width) / 2,
-        y: (container.height - imgSize.height) / 2,
-      };
-
-      // Now, use the logic from zoomImage to transition from the "fit" state to the 100% state.
-      const newScale = 1;
-      const imageOffsetX = ((fitScale - newScale) * ((cursorX - initialPos.x) - imgSize.width / 2)) / fitScale;
-      const imageOffsetY = ((fitScale - newScale) * ((cursorY - initialPos.y) - imgSize.height / 2)) / fitScale;
+      // Check if we should preserve the previous position
+      // Condition: Previous image (scaled and rotated) is larger than container
+      const prevScale = scale.value[prevImgIndex];
+      const prevRotatedSize = imageSizeRotated.value[prevImgIndex];
       
-      scale.value[imgIndex] = newScale;
-      position.value[imgIndex] = {
-        x: initialPos.x + imageOffsetX,
-        y: initialPos.y + imageOffsetY,
-      };
-      triggerRef(position);
-      clampPosition();
+      // We must handle the case where prevRotatedSize might be 0 if no image was loaded there, 
+      // but usually there is one if we are navigating.
+      // If it's the first image, prevScale might be default.
+      
+      const isPrevLarger = (prevRotatedSize.width * prevScale > container.width) || 
+                           (prevRotatedSize.height * prevScale > container.height);
+
+      if (isPrevLarger) {
+        // Carry over the scale and position from the previous image
+        scale.value[imgIndex] = prevScale;
+        position.value[imgIndex] = { ...position.value[prevImgIndex] };
+        
+        // Clamp to ensure the new image isn't out of bounds if it's smaller
+        triggerRef(position);
+        clampPosition();
+      } else {
+        // Original logic: reset to center or zoom to cursor
+        
+        // Use current mouse position relative to container
+        const cursorX = mousePosition.value.x - containerPos.value.x;
+        const cursorY = mousePosition.value.y - containerPos.value.y;
+
+        // Calculate a conceptual "before" state, as if the image was fitted to the container.
+        const fitScale = Math.min(container.width / imgSize.width, container.height / imgSize.height);
+        const initialPos = {
+          x: (container.width - imgSize.width) / 2,
+          y: (container.height - imgSize.height) / 2,
+        };
+
+        // Now, use the logic from zoomImage to transition from the "fit" state to the 100% state.
+        const newScale = 1;
+        const imageOffsetX = ((fitScale - newScale) * ((cursorX - initialPos.x) - imgSize.width / 2)) / fitScale;
+        const imageOffsetY = ((fitScale - newScale) * ((cursorY - initialPos.y) - imgSize.height / 2)) / fitScale;
+        
+        scale.value[imgIndex] = newScale;
+        position.value[imgIndex] = {
+          x: initialPos.x + imageOffsetX,
+          y: initialPos.y + imageOffsetY,
+        };
+        triggerRef(position);
+        clampPosition();
+      }
 
       // Also update the other image's position to match for smooth transitions
       // const otherImageIndex = activeImage.value ^ 1;
