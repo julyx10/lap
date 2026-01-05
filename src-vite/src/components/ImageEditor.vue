@@ -179,7 +179,7 @@
           <h3 class="mb-2">{{ $t('msgbox.image_editor.options') }}</h3>
           <!-- <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" /> -->
 
-          <table class="w-full text-sm border-separate border-spacing-2">
+          <table class="w-full text-sm text-nowrap border-separate border-spacing-2">
             <tbody>
               <tr>
                 <td>{{ $t('msgbox.image_editor.save_as') }}</td>

@@ -3,13 +3,15 @@
 
     <!-- Dropdown Trigger -->
     <button tabindex="-1"
-      class="px-2 py-1 w-full h-8 flex items-center rounded-box border border-base-content/30 hover:bg-base-100/30 hover:text-base-content transition-colors duration-300 cursor-pointer text-sm whitespace-nowrap "
-      text=""
+      class="px-2 py-1 w-full h-8 flex items-center outline-none rounded-box border border-base-content/30 transition-colors duration-300 text-sm whitespace-nowrap"
+      :class="disabled ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100/30 hover:text-base-content cursor-pointer'"
+      :disabled="disabled"
       @click="toggleDropdown"
     >
       {{ options[optionIndex].label }}{{ extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}
       <TButton
         :icon="IconArrowDown"
+        :disabled="disabled"
         :buttonSize="'small'"
       />
     </button>
@@ -80,6 +82,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
@@ -111,6 +117,7 @@ const handleKeyDown = (event) => {
 };
 
 const toggleDropdown = async () => {
+  if (props.disabled) return;
   isDropDown.value = !isDropDown.value;
 
   if (isDropDown.value) {

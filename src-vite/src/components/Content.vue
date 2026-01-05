@@ -36,31 +36,52 @@
       <!-- toolbar -->
       <div class="flex items-center gap-2 shrink-0">
 
-        <!-- filter and sort section -->
-        <template v-if="config.main.sidebarIndex !== 1 && !isTempViewMode && !showQuickView">
-          <!-- file type options -->
-          <DropDownSelect
-            :options="fileTypeOptions"
-            :defaultIndex="config.search.fileType"
-            @select="handleFileTypeSelect"
+      <!-- select mode -->
+        <div tabindex="-1"
+          :class="[
+            'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
+            selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content'
+          ]"
+          @click="handleSelectMode(true)"
+        >
+          <TButton v-if="selectMode"
+            :icon="IconClose"
+            :buttonSize="'small'"
+            @click.stop="handleSelectMode(false)" 
           />
+          <span class="px-1">{{ selectMode ? $t('toolbar.filter.select_count', { count: selectedCount }) : $t('toolbar.filter.select_mode') }}</span>
+          <ContextMenu v-if="selectMode"
+            :iconMenu="IconArrowDown"
+            :menuItems="moreMenuItems"
+            :smallIcon="true"
+            @click.stop
+          />
+        </div>
 
-          <!-- sort type options -->
-          <DropDownSelect
-            :options="sortOptions"
-            :defaultIndex="config.search.sortType"
-            :extendOptions="sortExtendOptions"
-            :defaultExtendIndex="config.search.sortOrder"
-            @select="handleSortTypeSelect"
-          />
-        </template>
+        <!-- file type options -->
+        <DropDownSelect
+          :options="fileTypeOptions"
+          :defaultIndex="config.search.fileType"
+          :disabled="config.main.sidebarIndex === 1 || isTempViewMode"
+          @select="handleFileTypeSelect"
+        />
+
+        <!-- sort type options -->
+        <DropDownSelect
+          :options="sortOptions"
+          :defaultIndex="config.search.sortType"
+          :extendOptions="sortExtendOptions"
+          :defaultExtendIndex="config.search.sortOrder"
+          :disabled="config.main.sidebarIndex === 1 || isTempViewMode"
+          @select="handleSortTypeSelect"
+        />
 
         <!-- select and layout section -->
         <div class="flex flex-row items-center">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
 
           <!-- multi-select mode -->
-          <TButton v-if="!selectMode"
+          <!-- <TButton v-if="!selectMode"
             :icon="IconCheckAll"
             :disabled="showQuickView || fileList.length === 0"
             @click="selectMode = true"
@@ -85,7 +106,7 @@
               :smallIcon="true"
               @click.stop
             />
-          </div>
+          </div> -->
 
           <!-- toggle layout -->
           <TButton
@@ -1439,6 +1460,7 @@ async function fetchDataRange(start: number, end: number) {
                 // Update ImageViewer if the selected file is loaded
                 if (chunkStart + j === selectedItemIndex.value) {
                   openImageViewer(selectedItemIndex.value, false);
+                  updateSelectedImage(selectedItemIndex.value);
                 }
               }
             }
@@ -2234,6 +2256,8 @@ const handleSelectMode = (value: any) => {
     for (let i = 0; i < fileList.value.length; i++) {
       fileList.value[i].isSelected = false;
     }
+  } else {
+    showQuickView.value = false;
   }
 };
 

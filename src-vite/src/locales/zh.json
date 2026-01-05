@@ -378,7 +378,7 @@
       "save_as": "保存",
       "save_as_options": [
         "覆盖现有文件",
-        "保存为新文件"
+        "新文件"
       ],
       "save_as_placeholder": "输入新文件名",
       "format": "格式",

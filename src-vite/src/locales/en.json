@@ -378,7 +378,7 @@
       "save_as": "Save as",
       "save_as_options": [
         "Overwrite existing file",
-        "Save as new file"
+        "New file"
       ],
       "save_as_placeholder": "Enter new file name",
       "format": "Format",

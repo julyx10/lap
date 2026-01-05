@@ -3,7 +3,7 @@
     <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-box">
       
       <!-- title -->
-      <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div v-if="componentId === 0" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('album.album_list') }}
       </div>
       
