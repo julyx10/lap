@@ -3,17 +3,22 @@
     <li v-for="child in children"
       :key="child.id" 
       :id="'folder-' + child.id" 
-      class="pl-4"
+      :class="{ 'pl-4': child.path !== folderPath }"
     >
       <div v-if="child.id != 0" 
         :class="[
           'mx-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
-          selectedFolderId === child.id && !isRenamingFolder ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+          !config.album.selected && config.album.folderPath === child.path && !isRenamingFolder ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
         ]" 
-        @click="clickFolder(rootAlbumId, child)"
+        @click="clickFolder(albumId, child)"
         @dblclick="expandFolder(child)"
       >
         <span v-if="child.children && child.children.length == 0" class="w-6 shrink-0"></span>
+        <component v-else-if="child.path === folderPath"
+          :is="child.is_expanded && child.children && child.children.length > 0 ? IconFolderExpanded : IconFolderCollapsed"
+          class="mx-1 w-6 h-6 shrink-0"
+          @click.stop="expandFolder(child)"
+        />
         <IconRight v-else
           :class="[
             'p-1 w-6 h-6 shrink-0 transition-transform', 
@@ -21,7 +26,7 @@
           ]"
           @click.stop="expandFolder(child)"
         />
-        <input v-if="isRenamingFolder && selectedFolderId === child.id"
+        <input v-if="isRenamingFolder && config.album.folderPath === child.path"
           ref="folderInputRef"
           type="text"
           maxlength="255"
@@ -43,7 +48,7 @@
             />
             <ContextMenu v-if="componentId === 0 && !isRenamingFolder"
               :class="[
-                selectedFolderId != child.id ? 'invisible group-hover:visible' : ''
+                config.album.folderPath != child.path ? 'invisible group-hover:visible' : ''
               ]"
               :iconMenu="IconMore"
               :menuItems="moreMenuItems"
@@ -55,11 +60,9 @@
       <AlbumFolder v-if="child.is_expanded && child.id != 0" 
         :key="child.id"
         :children="child.children" 
-        :rootAlbumId="rootAlbumId"
         :isHiddenAlbum="isHiddenAlbum"
-        :albumId="selectedAlbumId"
-        :folderId="selectedFolderId"
-        :folderPath="selectedFolderPath"
+        :albumId="albumId"
+        :folderPath="folderPath"
         :componentId="componentId"
       />
     </li>
@@ -83,7 +86,7 @@
   <MessageBox
     v-if="showTrashFolderMsgbox"
     :title="$t('msgbox.trash_folder.title')"
-    :message="`${$t('msgbox.trash_folder.content', { folder: getFolderById(selectedFolderId).name })}`"
+    :message="`${$t('msgbox.trash_folder.content', { folder: selectedFolder?.name })}`"
     :OkText="$t('msgbox.trash_folder.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
@@ -94,7 +97,7 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox.move_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name, 32) })}`"
+    :title="`${$t('msgbox.move_to.title', { source: shortenFilename(selectedFolder?.name, 32) })}`"
     :message="$t('msgbox.move_to.content')"
     :OkText="$t('msgbox.move_to.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -105,7 +108,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox.copy_to.title', { source: shortenFilename(getFolderById(selectedFolderId).name, 32) })}`"
+    :title="`${$t('msgbox.copy_to.title', { source: shortenFilename(selectedFolder?.name, 32) })}`"
     :message="$t('msgbox.copy_to.content')"
     :OkText="$t('msgbox.copy_to.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -119,12 +122,11 @@
 
 <script setup lang="ts">
 
-import { ref, watch, nextTick, computed } from 'vue';
-import { emit } from '@tauri-apps/api/event';
+import { ref, nextTick, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { isMac, shortenFilename, getFolderPath, isValidFileName, scrollToFolder } from '@/common/utils';
+import { isMac, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
 import { createFolder, renameFolder, selectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
@@ -144,6 +146,8 @@ import {
   IconFavorite,
   IconUnFavorite,
   IconCopyTo,
+  IconFolderExpanded,
+  IconFolderCollapsed,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -151,19 +155,11 @@ const props = defineProps({
     type: Array,
     required: false,
   },
-  rootAlbumId: {    // root album id
-    type: Number, 
-    required: true,
-  },
   isHiddenAlbum: {    // is hidden album
     type: Boolean,
     required: true,
   },
   albumId: {    // selected album id (v-model value)
-    type: Number, 
-    required: true,
-  },
-  folderId: {   // selected folder id (v-model value)
     type: Number, 
     required: true,
   },
@@ -179,15 +175,11 @@ const props = defineProps({
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
 const getFolderById = (id) => props.children.find(child => child.id === id);
-
-// current selected folder
-const selectedAlbumId = ref(0);
-const selectedFolderId = ref(0);
-const selectedFolderPath = ref('');
+const selectedFolder = computed(() => getFolderById(config.album.folderId));
 
 // rename folder
 const isRenamingFolder = ref(false);
@@ -204,7 +196,7 @@ const toolTipRef = ref(null);
 
 // more menuitems
 const moreMenuItems = computed(() => {
-  const folder = getFolderById(selectedFolderId.value);
+  const folder = selectedFolder.value;
 
   return [
     {
@@ -249,13 +241,13 @@ const moreMenuItems = computed(() => {
         showTrashFolderMsgbox.value = true;
       }
     },
-    // {
-    //   label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-    //   // icon: IconOpenFolder,
-    //   action: () => {
-    //     revealFolder(selectedFolderPath.value);
-    //   }
-    // },
+    {
+      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+      // icon: IconOpenFolder,
+      action: () => {
+        revealFolder(config.album.folderPath);
+      }
+    },
     {
       label: "-",   // separator
       action: null
@@ -267,59 +259,25 @@ const moreMenuItems = computed(() => {
         toggleFavorite();
       }
     },
-    // {
-    //   label: "-",   // separator
-    //   action: null
-    // },
-    // {
-    //   label: localeMsg.value.menu.refresh,
-    //   icon: IconRefresh,
-    //   action: async() => {
-    //     const folder = getFolderById(selectedFolderId.value);
-    //     await expandFolder(folder, true); // force refresh
-    //   }
-    // }
   ];
 });
 
-watch(() => [ props.albumId, props.folderId, props.folderPath ], ([ newAlbumId, newFolderId, newFolderPath ]) => {
-  selectedAlbumId.value = newAlbumId;
-  selectedFolderId.value = newFolderId;
-  selectedFolderPath.value = newFolderPath;
-}, { immediate: true });
-
-watch(() => selectedFolderId.value, (newFolderId, oldFolderId) => {
-  if (newFolderId && isRenamingFolder.value) {
-    handleEscKey(new Event('keydown'), oldFolderId);
-  }
-});
-
 /// click folder to select
-const clickFolder = async (albumId, folder) => {
+const clickFolder = async (albumId: number, folder: any) => {
   console.log('AlbumFolder.vue-clickFolder:', albumId, folder);
   const selectedFolder = await selectFolder(albumId, folder.path);
   if (selectedFolder) {
-    selectedAlbumId.value = albumId;
-    selectedFolderId.value = selectedFolder.id;
-    selectedFolderPath.value = selectedFolder.path;
-
-    // insert new property 'id' to folder object
-    folder.id = selectedFolder.id;
-    
-    emit('message-from-select-folder', { 
-      message: 'click-folder',
-      albumId: selectedAlbumId.value, 
-      folderId: selectedFolderId.value, 
-      folderPath: selectedFolderPath.value,
-      componentId: props.componentId
-    });
+    config.album.id = albumId;
+    config.album.folderId = selectedFolder.id;
+    config.album.folderPath = selectedFolder.path;
+    config.album.selected = false;
   } else {
     toolTipRef.value.showTip(localeMsg.value.msgbox.select_folder.error);
   }
 };
 
 /// click expand icon to toggle folder expansion
-const expandFolder = async (folder, forceRefresh = false) => {
+const expandFolder = async (folder: any, forceRefresh = false) => {
   folder.is_expanded = forceRefresh ? true : !folder.is_expanded;
 
   if (folder.is_expanded && (!folder.children || forceRefresh)) {
@@ -331,19 +289,18 @@ const expandFolder = async (folder, forceRefresh = false) => {
 };
 
 /// Create new folder
-const clickNewFolder = async (newFolderName) => {
-  const newFolderPath = await createFolder(selectedFolderPath.value, newFolderName);
+const clickNewFolder = async (newFolderName: string) => {
+  const newFolderPath = await createFolder(config.album.folderPath, newFolderName);
   if(newFolderPath) {
-    let folder = getFolderById(selectedFolderId.value);
+    let folder = selectedFolder.value;
     if (!folder.children) folder.children = [];
     folder.children.push({ name: newFolderName, path: newFolderPath });
     showNewFolderMsgbox.value = false;
 
     expandFolder(folder, true).then(() => {
-      let folderId = folder.children[folder.children.length - 1].id;
-      console
-      clickFolder(selectedAlbumId.value, folderId).then(() => {
-        scrollToFolder(folderId);
+      let newFolder = folder.children[folder.children.length - 1];
+      clickFolder(props.albumId, newFolder).then(() => {
+        scrollToFolder(newFolder.id);
       });
     });
   } else {
@@ -353,7 +310,7 @@ const clickNewFolder = async (newFolderName) => {
 };
 
 /// Rename folder
-const clickRenameFolder = async (newFolderName) => {
+const clickRenameFolder = async (newFolderName: string) => {
   // verfify new folder name is valid
   if (!newFolderName || newFolderName.trim().length === 0 || !isValidFileName(newFolderName)) {
     console.log('AlbumFolder.vue-clickRenameFolder: invalid folder name');
@@ -363,21 +320,15 @@ const clickRenameFolder = async (newFolderName) => {
     isRenamingFolder.value = false;   // no change
     uiStore.popInputHandler();
   } else {
-    const newFolderPath = await renameFolder(selectedFolderPath.value, newFolderName);
+    const newFolderPath = await renameFolder(config.album.folderPath, newFolderName);
     if(newFolderPath) {    // rename success
-      let folder = getFolderById(selectedFolderId.value);
+      let folder = selectedFolder.value;
       folder.name = newFolderName;
-      updateFolderPath(folder, selectedFolderPath.value, newFolderPath);
+      updateFolderPath(folder, config.album.folderPath, newFolderPath);
 
       // update selected folder path
-      selectedFolderPath.value = newFolderPath;
-      emit('message-from-select-folder', { 
-        message: 'rename-folder', 
-        albumId: selectedAlbumId.value, 
-        folderId: selectedFolderId.value, 
-        folderPath: selectedFolderPath.value,
-        componentId: props.componentId
-      });
+      config.album.folderPath = newFolderPath;
+
       isRenamingFolder.value = false;
       uiStore.popInputHandler();
     }
@@ -385,7 +336,7 @@ const clickRenameFolder = async (newFolderName) => {
 };
 
 /// rename folder path and children paths
-function updateFolderPath(folder, oldpath, newPath) {
+function updateFolderPath(folder: any, oldpath: string, newPath: string) {
     folder.path = newPath + folder.path.slice(oldpath.length);
 
     if (folder.children) {
@@ -396,7 +347,7 @@ function updateFolderPath(folder, oldpath, newPath) {
 }
 
 /// handle ESC key to cancel renaming folder
-const handleEscKey = (event, folderID) => {
+const handleEscKey = (event: KeyboardEvent, folderID: number) => {
   event.preventDefault();
 
   let folder = getFolderById(folderID);
@@ -408,18 +359,12 @@ const handleEscKey = (event, folderID) => {
 
 // move folder to dest folder
 const clickMoveTo = async () => {
-  moveFolder(selectedFolderPath.value, config.destFolder.albumId, config.destFolder.folderPath).then((newPath) => {
+  moveFolder(config.album.folderPath, config.destFolder.albumId, config.destFolder.folderPath).then((newPath) => {
     if (newPath) {
       // remove the folder from the current folder
-      let folder = getFolderById(selectedFolderId.value);
+      let folder = selectedFolder.value; 
       folder.id = 0; // remove id to avoid click folder again
       
-      // refresh the dest folder
-      emit('message-from-select-folder', { 
-        message: 'refresh-folder',
-        folderPath: newPath,                   // select new folder
-      });
-
       // close move-to dialog
       showMoveTo.value = false;
     } else {
@@ -430,7 +375,7 @@ const clickMoveTo = async () => {
 
 // copy folder to dest folder
 const clickCopyTo = async () => {
-  copyFolder(selectedFolderPath.value, config.destFolder.folderPath).then((newPath) => {
+  copyFolder(config.album.folderPath, config.destFolder.folderPath).then((newPath) => {
     if (newPath) {
       // close copy-to dialog
       showCopyTo.value = false;
@@ -442,19 +387,12 @@ const clickCopyTo = async () => {
 
 /// trash selected folder
 const clickTrashFolder = async () => {
-  const isDeleted = await deleteFolder(selectedFolderId.value, selectedFolderPath.value);
+  const isDeleted = await deleteFolder(config.album.folderId, config.album.folderPath);
   if (isDeleted) {
-    let folder = getFolderById(selectedFolderId.value);
+    let folder = selectedFolder.value;
     folder.is_deleted = true;
     folder.id = 0; // remove id to avoid click folder again
 
-    emit('message-from-select-folder', {
-      message: 'trash-folder',
-      albumId: selectedAlbumId.value, 
-      folderId: 0, 
-      folderPath: "",
-      componentId: props.componentId
-    });
     showTrashFolderMsgbox.value = false;
   } else {
     console.log('AlbumFolder.vue-clickTrashFolder', localeMsg.value.msgbox.trash_folder.error);
@@ -464,7 +402,7 @@ const clickTrashFolder = async () => {
 
 // toggle favorite folder
 const toggleFavorite = async () => {
-  const folder = getFolderById(selectedFolderId.value);
+  const folder = selectedFolder.value;
   folder.is_favorite = !folder.is_favorite;
 
   await setFolderFavorite(folder.id, folder.is_favorite);

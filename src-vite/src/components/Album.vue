@@ -3,8 +3,8 @@
   <div class="w-full h-full flex flex-col select-none">
 
     <!-- title bar -->
-    <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
+    <div class="p-1 h-12 flex items-center justify-end whitespace-nowrap" data-tauri-drag-region>
+      <div v-if="isEditList" class="pl-1 text-primary cursor-pointer" @click="clickCloseEditList">{{ $t('menu.album.reorder_exit') }}</div>
       <TButton v-if="isEditList" 
         :icon="IconRestore"
         :selected="true"
@@ -19,10 +19,12 @@
     <!-- all files -->
     <div 
       :class="[ 
-        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
-        config.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap group',
+        isEditList 
+          ? 'text-base-content/30' 
+          : (config.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100 cursor-pointer' : 'hover:text-base-content hover:bg-base-100/30 cursor-pointer'),
       ]"
-      @click="config.album.id = 0, config.album.folderId = null, config.album.folderPath = '', config.album.selected = false;"
+      @click="clickAllFiles"
     >
       <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
@@ -35,10 +37,6 @@
 
     <AlbumList ref="albumListRef" 
       :key="albumListKey"
-      v-model:albumId="config.album.id"
-      v-model:folderId="config.album.folderId"
-      v-model:folderPath="config.album.folderPath"
-      v-model:selected="config.album.selected"
       :componentId="0"
     />
   </div> 
@@ -67,7 +65,7 @@ const props = defineProps({
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
 let unlistenKeydown: () => void;
@@ -131,13 +129,22 @@ const moreMenuItems = computed(() => {
   ];
 });
 
+const clickAllFiles = () => {
+  if(!isEditList.value) {
+    config.album.id = 0;
+    config.album.folderId = null;
+    config.album.folderPath = '';
+    config.album.selected = false;
+  }
+};
+
 const clickCloseEditList = () => {
   isEditList.value = false;
   albumListRef.value.isEditList = false;
   uiStore.popInputHandler();
 };
 
-const handleKeyDown = (event) => {
+const handleKeyDown = (event: KeyboardEvent) => {
   if (isEditList.value && event.payload.key === 'Escape') {
     clickCloseEditList();
   }

@@ -74,14 +74,12 @@ import { config } from '@/common/config';
 import { getFavoriteFolders, setFolderFavorite, getAlbum } from '@/common/api';
 
 import ContextMenu from '@/components/ContextMenu.vue';
-import TButton from '@/components/TButton.vue';
 
 import { 
   IconMore,
   IconFavorite, 
   IconFolderFavorite,
   IconUnFavorite, 
-  IconLeftPaneOn,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -93,7 +91,7 @@ const props = defineProps({
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 // favorite folders
 const favorite_folders = ref([]);

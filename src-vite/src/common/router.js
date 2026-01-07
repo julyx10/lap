@@ -4,8 +4,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 const routes = [
   {
     path: '/',
-    name: 'Main',
-    component: () => import('@/views/Main.vue'),
+    name: 'Home',
+    component: () => import('@/views/Home.vue'),
   },
   {
     path: '/image-viewer',

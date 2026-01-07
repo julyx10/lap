@@ -523,7 +523,7 @@ const contentIcon = computed(() => {
     case 0: 
       switch (config.album.id) {
         case 0: return IconPhotoAll;
-        default: return IconFolderExpanded;
+        default: return config.album.selected ? IconPhotoAll :IconFolderExpanded;
       }
     case 1: return IconSearch;
     case 2: 
@@ -1332,7 +1332,7 @@ watch(
 watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
-    config.album.id, config.album.folderId, config.album.folderPath,                 // home(album)
+    config.album.id, config.album.folderId, config.album.folderPath, config.album.selected, // album
     config.favorite.albumId, config.favorite.folderId, config.favorite.folderPath,   // favorite files and folder
     config.tag.id,                                                                   // tag
     config.calendar.year, config.calendar.month, config.calendar.date,               // calendar
@@ -1649,7 +1649,7 @@ async function updateContent() {
       getAlbum(config.album.id).then(async album => {
         if (requestId !== currentContentRequestId) return;
         if(album) {
-          if(config.album.folderPath === album.path) { // current folder is root
+          if(config.album.selected) { // album is selected, show all files including subfolders
             contentTitle.value = album.name;
             getFileList({ searchAllSubfolders: config.album.folderPath, isShowHidden: true }, requestId);
           } else {

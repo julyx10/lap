@@ -268,7 +268,7 @@ const props = defineProps({
 const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit', 'item-action', 'toggle-full-screen']);
 
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const containerRef = ref<HTMLElement | null>(null);
 const mediaRef = ref<any>(null);

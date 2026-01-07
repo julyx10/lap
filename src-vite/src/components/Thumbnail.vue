@@ -194,7 +194,7 @@ const layoutStyle = computed(() => {
 
 const uiStore = useUIStore();
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const menuItems = useFileMenuItems(
   toRef(props, 'file'),

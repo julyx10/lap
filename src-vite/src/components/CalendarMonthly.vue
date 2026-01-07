@@ -37,7 +37,7 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -57,7 +57,7 @@ const props = defineProps({
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 // Title for the year
 const yearTitle = computed(() => formatDate(props.year, 1, 1, localeMsg.value.format.year));

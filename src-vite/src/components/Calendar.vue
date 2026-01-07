@@ -87,7 +87,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getTakenDates } from '@/common/api';
-import { IconCalendar, IconSortingAsc, IconSortingDesc } from '@/common/icons';
+import { IconSortingAsc, IconSortingDesc } from '@/common/icons';
 
 import TButton from '@/components/TButton.vue';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
@@ -100,7 +100,7 @@ const props = defineProps({
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value]);
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const selectedWeekday = computed(() => {
   if (config.calendar.isMonthly || !config.calendar.year || !config.calendar.month || !config.calendar.date || config.calendar.date <= 0) {

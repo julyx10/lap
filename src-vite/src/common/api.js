@@ -165,24 +165,44 @@ export async function expandFinalFolder(rootFolder, finalPath) {
   let relativePath = finalPath.replace(rootFolder.path, '');
 
   const pathArray = relativePath.split(separator).filter(Boolean); // Split and remove empty strings
-  let currentFolder = rootFolder;
+  
+  // If there's no relative path, we're already at the target
+  if (pathArray.length === 0) {
+    return null;
+  }
+  
+  // rootFolder.children is now [folderObject], start from that folderObject
+  if (!rootFolder.children || rootFolder.children.length === 0) {
+    return null;
+  }
+  
+  // The first child is the root folder representation (e.g., folder1)
+  let currentFolder = rootFolder.children[0];
+  currentFolder.is_expanded = true;
+  
+  // Load its children if not already loaded
+  if (!currentFolder.children) {
+    const subFolders = await fetchFolder(currentFolder.path, false);
+    if (subFolders) {
+      currentFolder.children = subFolders.children;
+    }
+  }
 
   for (let i = 0; i < pathArray.length; i++) {
-    // fetch sub-folders
-    const subFolders = await fetchFolder(currentFolder.path, false);
-    if(subFolders) {
-      currentFolder.children = subFolders.children;
-
-      if(currentFolder.children && currentFolder.children.length > 0) {
-        for (let child of currentFolder.children) {
-          if(child.name === pathArray[i]) {
-            if( i < pathArray.length - 1) {
-              child.is_expanded = true;
-              currentFolder = child;
-              break;
-            } else {  // last folder
-              return child;
+    if(currentFolder.children && currentFolder.children.length > 0) {
+      for (let child of currentFolder.children) {
+        if(child.name === pathArray[i]) {
+          if( i < pathArray.length - 1) {
+            child.is_expanded = true;
+            // fetch sub-folders for this child
+            const subFolders = await fetchFolder(child.path, false);
+            if(subFolders) {
+              child.children = subFolders.children;
             }
+            currentFolder = child;
+            break;
+          } else {  // last folder
+            return child;
           }
         }
       }

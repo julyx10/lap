@@ -283,7 +283,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -299,7 +299,7 @@ import SliderInput from '@/components/SliderInput.vue';
 
 /// i18n
 const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[config.settings.language]);
+const localeMsg = computed(() => messages.value[config.settings.language] as any);
 
 const appWindow = getCurrentWebviewWindow()
 
