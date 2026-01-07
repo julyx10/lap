@@ -206,9 +206,10 @@
       "scan": "Scan album files",
       "include_in_search": "Include in search",
       "exclude_from_search": "Exclude from search",
-      "remove": "Remove from albums",
+      "remove": "Remove album",
       "refresh": "Refresh",
-      "reorder": "Reorder"
+      "reorder": "Reorder",
+      "reorder_exit": "Exit reorder"
     },
     "file": {
       "new_folder": "New folder...",
@@ -252,7 +253,7 @@
       "ok": "Clear"
     },
     "remove_album": {
-      "title": "Remove from albums",
+      "title": "Remove album",
       "content": "The album '{album}' will be removed. This action will not delete the actual files.",
       "ok": "Remove"
     },

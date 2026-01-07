@@ -22,7 +22,7 @@
         'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
         config.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
       ]"
-      @click="config.album.id = 0, config.album.folderId = null, config.album.folderPath = '';"
+      @click="config.album.id = 0, config.album.folderId = null, config.album.folderPath = '', config.album.selected = false;"
     >
       <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
@@ -38,6 +38,7 @@
       v-model:albumId="config.album.id"
       v-model:folderId="config.album.folderId"
       v-model:folderPath="config.album.folderPath"
+      v-model:selected="config.album.selected"
       :componentId="0"
     />
   </div> 

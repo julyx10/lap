@@ -36,11 +36,12 @@
       <!-- toolbar -->
       <div class="flex items-center gap-2 shrink-0">
 
-      <!-- select mode -->
+        <!-- select mode -->
         <div tabindex="-1"
           :class="[
-            'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
-            selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content'
+            'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0',
+            fileList.length === 0 ? 'text-base-content/30' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content cursor-pointer',
+            selectMode ? 'border-primary' : ''
           ]"
           @click="handleSelectMode(true)"
         >
@@ -62,7 +63,7 @@
         <DropDownSelect
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
-          :disabled="config.main.sidebarIndex === 1 || isTempViewMode"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode"
           @select="handleFileTypeSelect"
         />
 
@@ -72,41 +73,13 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="config.main.sidebarIndex === 1 || isTempViewMode"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode"
           @select="handleSortTypeSelect"
         />
 
         <!-- select and layout section -->
         <div class="flex flex-row items-center">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
-
-          <!-- multi-select mode -->
-          <!-- <TButton v-if="!selectMode"
-            :icon="IconCheckAll"
-            :disabled="showQuickView || fileList.length === 0"
-            @click="selectMode = true"
-          />
-          <div v-else
-            tabindex="-1"
-            :class="[
-              'px-1 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0 cursor-pointer',
-              selectMode ? 'border-primary' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content'
-            ]"
-            @click="handleSelectMode(true)"
-          >
-            <TButton v-if="selectMode"
-              :icon="IconClose"
-              :buttonSize="'small'"
-              @click.stop="handleSelectMode(false)" 
-            />
-            <span class="px-1">{{ selectMode ? $t('toolbar.filter.select_count', { count: selectedCount }) : $t('toolbar.filter.select_mode') }}</span>
-            <ContextMenu v-if="selectMode"
-              :iconMenu="IconArrowDown"
-              :menuItems="moreMenuItems"
-              :smallIcon="true"
-              @click.stop
-            />
-          </div> -->
 
           <!-- toggle layout -->
           <TButton
@@ -148,7 +121,7 @@
               <GridView ref="gridViewRef"
                 :selected-item-index="selectedItemIndex"
                 :fileList="fileList"
-                :showFolderFiles="config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0 ? true : false"
+                :showFolderFiles="config.main.sidebarIndex === 0 && !config.album.selected ? true : false"
                 :selectMode="selectMode"
                 :loading="isLoading"
                 @item-clicked="handleItemClicked"
@@ -603,14 +576,14 @@ const imageMinScale = ref(0);
 const imageMaxScale = ref(10);
 const isSlideShow = ref(false);
 
-const showFolderFiles = computed(() => !!(config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0));
+// const showFolderFiles = computed(() => !!(config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0));
 
-const selectedFile = computed(() => {
-  if (selectedItemIndex.value >= 0 && selectedItemIndex.value < fileList.value.length) {
-    return fileList.value[selectedItemIndex.value];
-  }
-  return null;
-});
+// const selectedFile = computed(() => {
+//   if (selectedItemIndex.value >= 0 && selectedItemIndex.value < fileList.value.length) {
+//     return fileList.value[selectedItemIndex.value];
+//   }
+//   return null;
+// });
 
 // const singleFileMenuItems = useFileMenuItems(
 //   selectedFile,
@@ -2251,6 +2224,8 @@ const clickEditComment = async (newComment: any) => {
 }
 
 const handleSelectMode = (value: any) => {
+  if(fileList.value.length === 0) return;
+
   selectMode.value = value;
   if(!selectMode.value) {
     for (let i = 0; i < fileList.value.length; i++) {

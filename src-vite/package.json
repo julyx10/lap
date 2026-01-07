@@ -1,7 +1,7 @@
 {
   "name": "src-vue",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.js",
@@ -22,6 +22,7 @@
     "lodash": "^4.17.21",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
+    "prettier": "^3.7.4",
     "video.js": "^8.23.4",
     "vue": "^3.5.22",
     "vue-draggable-plus": "^0.6.0",

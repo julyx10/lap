@@ -53,9 +53,10 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     album: {
-      id: 0,                  // 0 means all files (default)
-      folderId: null,            
-      folderPath: '',
+      id: 0,                  // current album id (0: show all files)
+      folderId: null,         // current folder id
+      folderPath: '',         // current folder path
+      selected: false,        // album is selected(true: show all album's files, false: show folderPath's files only)
     },
 
     favorite: {

@@ -5,10 +5,9 @@
       
       <!-- File Info Section -->
       <div class="rounded-box p-2 space-y-2 border border-base-content/5">
-        <div class="flex items-center gap-2">
-          <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
-          <div v-else class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
-          <!-- <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.title') }}</span> -->
+        <div class="w-10 h-10 flex items-center gap-2 rounded-box shrink-0">
+          <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="object-cover" />
+          <div v-else class="object-cover"></div>
           <span class="font-bold text-sm text-base-content/70 overflow-hidden truncate">{{ fileInfo?.name }}</span>
         </div>
         
@@ -20,10 +19,6 @@
           <!-- Path -->
           <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.folder') }}</div>
           <div class="text-base-content/70 break-all">{{ getFolderPath(fileInfo?.file_path) }}</div>
-
-          <!-- Name -->
-          <!-- <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.name') }}</div> -->
-          <!-- <div class="text-base-content/70 break-all font-medium">{{ fileInfo?.name }}</div> -->
 
           <!-- Size -->
           <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.size') }}</div>
@@ -64,8 +59,8 @@
       <!-- Metadata Section -->
       <div class="rounded-box p-2 space-y-3 border border-base-content/5">
         <div class="flex items-center gap-2">
-          <IconCamera class="w-4 h-4" /> 
-          <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.metadata') }}</span>
+          <IconCamera class="w-4 h-4 text-base-content/30" /> 
+          <span class="font-bold text-sm text-base-content/30">{{ $t('file_info.metadata') }}</span>
         </div>
 
         <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">

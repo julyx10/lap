@@ -81,15 +81,17 @@
               />
             </div>
           </div>
-          <AlbumFolder v-if="album.is_expanded && !isEditList && !config.scan.albumQueue.includes(album.id)"
-            :children="album.children" 
-            :rootAlbumId="album.id"
-            :isHiddenAlbum="album.is_hidden ? true : false"
-            :albumId="selectedAlbumId"
-            :folderId="selectedFolderId"
-            :folderPath="selectedFolderPath"
-            :componentId="componentId"
-          />
+          <div v-if="album.is_expanded && !isEditList && !config.scan.albumQueue.includes(album.id)"  class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
+            <AlbumFolder 
+              :children="album.children" 
+              :rootAlbumId="album.id"
+              :isHiddenAlbum="album.is_hidden ? true : false"
+              :albumId="selectedAlbumId"
+              :folderId="selectedFolderId"
+              :folderPath="selectedFolderPath"
+              :componentId="componentId"
+            />
+          </div>
         </li>
       </VueDraggable>
 
@@ -116,7 +118,7 @@
       :albumCoverFileId="isNewAlbum ? null : getAlbumById(albumId)?.cover_file_id"
       :createdAt="isNewAlbum ? '' : formatTimestamp(getAlbumById(albumId)?.created_at, $t('format.date_time'))"
       :modifiedAt="isNewAlbum ? '' : formatTimestamp(getAlbumById(albumId)?.modified_at, $t('format.date_time'))"
-      @ok="clickAlbumInfo"
+      @ok="clickEditAlbum"
       @cancel="showAlbumEdit = false"
     />
 
@@ -199,6 +201,10 @@ const props = defineProps({
     type: String,
     required: false
   },
+  selected: {     // album is selected(true: show all album's files, false: show folderPath's files only)
+    type: Boolean,
+    required: false
+  },
   componentId: {  // 0: album pane; 1: move/copy to mode(select destination folder)
     type: Number,
     default: 0
@@ -273,50 +279,57 @@ const getMoreMenuItems = (album: any) => {
         showRemoveAlbumMsgbox.value = true;
       }
     },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.file.new_folder,
-      icon: IconNewFolder,
-      action: () => {
-        showNewFolderMsgbox.value = true;
-      }
-    },
-    {
-      label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-      // icon: IconExternal,
-      action: () => {
-        revealFolder(album.path);
-      }
-    },
-    {
-      label: "-",   // separator
-      action: () => {}
-    },
-    {
-      label: !album?.is_favorite ? localeMsg.value.menu.meta.favorite : localeMsg.value.menu.meta.unfavorite,
-      icon: !album?.is_favorite ? IconFavorite : IconUnFavorite,
-      action: () => {
-        toggleFavorite(album);
-      }
-    },
+    // {
+    //   label: "-",   // separator
+    //   action: () => {}
+    // },
+    // {
+    //   label: localeMsg.value.menu.file.new_folder,
+    //   icon: IconNewFolder,
+    //   action: () => {
+    //     showNewFolderMsgbox.value = true;
+    //   }
+    // },
+    // {
+    //   label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+    //   // icon: IconExternal,
+    //   action: () => {
+    //     revealFolder(album.path);
+    //   }
+    // },
+    // {
+    //   label: "-",   // separator
+    //   action: () => {}
+    // },
+    // {
+    //   label: !album?.is_favorite ? localeMsg.value.menu.meta.favorite : localeMsg.value.menu.meta.unfavorite,
+    //   icon: !album?.is_favorite ? IconFavorite : IconUnFavorite,
+    //   action: () => {
+    //     toggleFavorite(album);
+    //   }
+    // },
   ];
+};
+
+// Load cover thumbnail for a single album
+const loadAlbumCover = async (albumId: number, coverFileId: number | null) => {
+  if (coverFileId) {
+    try {
+      const thumb = await getFileThumb(coverFileId, "", 0, 0, config.settings.thumbnailSize, false);
+      if (thumb && thumb.error_code === 0) {
+        albumCovers.value[albumId] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
+      }
+    } catch (error) {
+      console.error(`Failed to load cover for album ${albumId}:`, error);
+    }
+  } else {
+    delete albumCovers.value[albumId];
+  }
 };
 
 const loadAlbumCovers = async () => {
   for (const album of albums.value) {
-    if (album.cover_file_id) {
-       try {
-        const thumb = await getFileThumb(album.cover_file_id, "", 0, 0, 256, false);
-        if (thumb && thumb.error_code === 0) {
-          albumCovers.value[album.id] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-        }
-      } catch (error) {
-        console.error(`Failed to load cover for album ${album.id}:`, error);
-      }
-    }
+    await loadAlbumCover(album.id, album.cover_file_id);
   }
 };
 
@@ -377,14 +390,7 @@ onMounted( async () => {
       }
       
       // Update the cover in albumCovers
-      if (album.cover_file_id) {
-        const thumb = await getFileThumb(album.cover_file_id, "", 0, 0, 256, false);
-        if (thumb && thumb.error_code === 0) {
-          albumCovers.value[albumId] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-        }
-      } else {
-        delete albumCovers.value[albumId];
-      }
+      await loadAlbumCover(albumId, album.cover_file_id);
     }
   });
 
@@ -408,6 +414,9 @@ onMounted( async () => {
         album.scanned = updatedAlbum.scanned;
         album.total = updatedAlbum.total;
         album.cover_file_id = updatedAlbum.cover_file_id;
+        
+        // Reload the cover thumbnail
+        await loadAlbumCover(album_id, album.cover_file_id);
       }
     }
   });
@@ -460,7 +469,7 @@ const refreshAlbums = async () => {
 };
 
 /// edit album information or add new album
-const clickAlbumInfo = async (folderPath, newName, newDescription, isNew) => {
+const clickEditAlbum = async (folderPath, newName, newDescription, isNew) => {
   if (isNew) {
     // Add new album
     const newAlbum = await addAlbum(folderPath);
@@ -542,35 +551,35 @@ const expandAlbum = async (album, forceRefresh = false) => {
 };
 
 /// Create new folder
-const clickNewFolder = async (folderName) => {
-  const newFolderPath = await createFolder(selectedFolderPath.value, folderName);
-  if(newFolderPath) {
-    let album = getAlbumById(selectedAlbumId.value);
-    let newFolder = -1;
+// const clickNewFolder = async (folderName) => {
+//   const newFolderPath = await createFolder(selectedFolderPath.value, folderName);
+//   if(newFolderPath) {
+//     let album = getAlbumById(selectedAlbumId.value);
+//     let newFolder = -1;
 
-    if(!album.children) {
-      await expandAlbum(album);
-      newFolder = album.children.find(folder => folder.name === folderName);
-    } else {
-      album.is_expanded = true;
-      album.children.push({ name: folderName, path: newFolderPath });
-      newFolder = album.children[album.children.length - 1];
-    }
+//     if(!album.children) {
+//       await expandAlbum(album);
+//       newFolder = album.children.find(folder => folder.name === folderName);
+//     } else {
+//       album.is_expanded = true;
+//       album.children.push({ name: folderName, path: newFolderPath });
+//       newFolder = album.children[album.children.length - 1];
+//     }
 
-    // select the new folder
-    clickFolder(album.id, newFolder).then(() => {
-      // scroll to the new folder
-      scrollToFolder(newFolder.id);
-    });
+//     // select the new folder
+//     clickFolder(album.id, newFolder).then(() => {
+//       // scroll to the new folder
+//       scrollToFolder(newFolder.id);
+//     });
 
-    // close the message box
-    showNewFolderMsgbox.value = false;
+//     // close the message box
+//     showNewFolderMsgbox.value = false;
 
-    errorMessage.value = '';
-  } else {
-    errorMessage.value = localeMsg.value.msgbox.new_folder.error;
-  }
-};
+//     errorMessage.value = '';
+//   } else {
+//     errorMessage.value = localeMsg.value.msgbox.new_folder.error;
+//   }
+// };
 
 /// click folder to select
 const clickFolder = async (albumId, folder) => {
@@ -629,42 +638,42 @@ const onDragEnd = async () => {
 }
 
 // toggle favorite album
-const toggleFavorite = async (album?: any) => {
-  // If album not provided, fallback to selectedAlbumId
-  if (!album) {
-    album = getAlbumById(selectedAlbumId.value);
-  }
-  if (album) {
-    album.is_favorite = !album.is_favorite;
-    // An album is essentially a folder, and usually album.folderId (if set) would be the one. 
-    // However, 'addAlbum' logic suggests album.path is the root. 
-    // Important: The user said "album has a folder record in afolder db".
-    // Usually albums table has a folder_id or we use the folder associated with it.
-    // If 'album' object from 'getAllAlbums' join fetches folder info (like is_favorite), 
-    // we need to know the 'folderId' corresponding to the album root.
-    // 'getAllAlbums' in api.js calls 'get_all_albums'.
-    // If we look at 'addAlbum' -> 'add_album', it takes 'folderPath'.
-    // Let's assume album.id IS NOT the folder id. 
-    // But 'selectFolder(album.id, album.path)' returns a selectedFolder with 'id'.
-    // Let's check 'clickAlbum'. It calls 'selectFolder' and sets 'album.folderId = selectedFolder.id'.
-    // So 'album.folderId' should function after selection.
+// const toggleFavorite = async (album?: any) => {
+//   // If album not provided, fallback to selectedAlbumId
+//   if (!album) {
+//     album = getAlbumById(selectedAlbumId.value);
+//   }
+//   if (album) {
+//     album.is_favorite = !album.is_favorite;
+//     // An album is essentially a folder, and usually album.folderId (if set) would be the one. 
+//     // However, 'addAlbum' logic suggests album.path is the root. 
+//     // Important: The user said "album has a folder record in afolder db".
+//     // Usually albums table has a folder_id or we use the folder associated with it.
+//     // If 'album' object from 'getAllAlbums' join fetches folder info (like is_favorite), 
+//     // we need to know the 'folderId' corresponding to the album root.
+//     // 'getAllAlbums' in api.js calls 'get_all_albums'.
+//     // If we look at 'addAlbum' -> 'add_album', it takes 'folderPath'.
+//     // Let's assume album.id IS NOT the folder id. 
+//     // But 'selectFolder(album.id, album.path)' returns a selectedFolder with 'id'.
+//     // Let's check 'clickAlbum'. It calls 'selectFolder' and sets 'album.folderId = selectedFolder.id'.
+//     // So 'album.folderId' should function after selection.
     
-    // If album.folderId is missing (e.g. contextual menu on unselected album?), we might need to fetch it?
-    // But context menu shows for 'selectedAlbumId'. So we likely have clicked it.
+//     // If album.folderId is missing (e.g. contextual menu on unselected album?), we might need to fetch it?
+//     // But context menu shows for 'selectedAlbumId'. So we likely have clicked it.
     
-    if (album.folderId) {
-       await setFolderFavorite(album.folderId, album.is_favorite);
-    } else {
-       // Fallback: Try to get folder id from path or select it implicitly? 
-       // For now, let's assume valid selection populated folderId.
-       const selectedFolder = await selectFolder(album.id, album.path);
-       if(selectedFolder) {
-         album.folderId = selectedFolder.id;
-         await setFolderFavorite(album.folderId, album.is_favorite);
-       }
-    }
-  }
-};
+//     if (album.folderId) {
+//        await setFolderFavorite(album.folderId, album.is_favorite);
+//     } else {
+//        // Fallback: Try to get folder id from path or select it implicitly? 
+//        // For now, let's assume valid selection populated folderId.
+//        const selectedFolder = await selectFolder(album.id, album.path);
+//        if(selectedFolder) {
+//          album.folderId = selectedFolder.id;
+//          await setFolderFavorite(album.folderId, album.is_favorite);
+//        }
+//     }
+//   }
+// };
 
 // toggle hidden album
 const toggleHidden = async (album?: any) => {
