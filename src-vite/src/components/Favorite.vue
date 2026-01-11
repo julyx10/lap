@@ -72,6 +72,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getFavoriteFolders, setFolderFavorite, getAlbum } from '@/common/api';
+import { getFolderName } from '@/common/utils';
 
 import ContextMenu from '@/components/ContextMenu.vue';
 
@@ -119,6 +120,7 @@ onMounted(() => {
       favorite_folders.value.forEach((folder) => {
         getAlbum(folder.album_id).then((album) => {
           folder.is_hidden = album.is_hidden;
+          folder.name = getFolderName(folder.path);
         });
       });
 

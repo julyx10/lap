@@ -22,6 +22,12 @@ export const useUIStore = defineStore('ui', {
     popInputHandler() {
       this.inputStack.pop();
     },
+    removeInputHandler(name) {
+      const index = this.inputStack.indexOf(name);
+      if (index !== -1) {
+        this.inputStack.splice(index, 1);
+      }
+    },
     updateFileVersion(filePath) {
       const currentVersion = this.fileVersions[filePath] || 0;
       this.fileVersions[filePath] = currentVersion + 1;

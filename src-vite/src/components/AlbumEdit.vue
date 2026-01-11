@@ -12,10 +12,7 @@
           class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
         />
         <button v-if="selectedFolder === ''"
-          :class="[
-            'px-2 py-1 rounded-box hover:bg-primary hover:text-base-100 flex items-center gap-x-1 cursor-pointer', 
-            albumPath === '' ? 'bg-primary/70 text-base-100' : ''
-          ]" 
+          class="btn btn-primary btn-sm rounded-box"
           @click="clickSelectFolder"
         >
           <IconNewFolder class="w-4 h-4" />
@@ -227,7 +224,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('AlbumEdit');
   // Stop indexing if component is unmounted
   shouldStopIndexing = true;
 });

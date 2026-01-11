@@ -185,12 +185,12 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
 
 /// delete a folder
 #[tauri::command]
-pub fn delete_folder(folder_id: i64, folder_path: &str) -> Result<usize, String> {
+pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
     // trash the folder
     trash::delete(&folder_path).map_err(|e| e.to_string())?;
 
-    // delete the folder from db
-    AFolder::delete_folder(folder_id)
+    // delete the folder and all children from db
+    AFolder::delete_folder(folder_path)
         .map_err(|e| format!("Error while deleting folder from DB: {}", e))
 }
 

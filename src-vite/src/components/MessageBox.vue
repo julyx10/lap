@@ -13,7 +13,6 @@
         :placeholder="inputPlaceholder"
         class="px-2 py-1 flex-1 min-w-0 input"
         @input="validateInput"
-        @keydown.enter="clickOk"
       />
       <span v-if="inputExtension" class="label px-2">.{{ inputExtension }}</span>
     </div>
@@ -26,7 +25,6 @@
       :placeholder="inputPlaceholder"
       class="px-2 py-1 w-full textarea min-h-[30px] max-h-[200px]"
       @input="validateInput"
-      @keydown.enter="clickOk"
     ></textarea>
 
     <p class="h-4 text-error text-xs">{{ inputErrorMessage }}</p>
@@ -139,7 +137,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('MessageBox');
 });
 
 watch(() => props.errorMessage, (newValue) => {

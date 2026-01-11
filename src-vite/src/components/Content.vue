@@ -40,7 +40,7 @@
         <div tabindex="-1"
           :class="[
             'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0',
-            fileList.length === 0 ? 'text-base-content/30' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content cursor-pointer',
+            fileList.length === 0 || isScanning ? 'text-base-content/30' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content cursor-pointer',
             selectMode ? 'border-primary' : ''
           ]"
           @click="handleSelectMode(true)"
@@ -63,7 +63,7 @@
         <DropDownSelect
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isScanning"
           @select="handleFileTypeSelect"
         />
 
@@ -73,7 +73,7 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isScanning"
           @select="handleSortTypeSelect"
         />
 
@@ -85,12 +85,14 @@
           <TButton
             :icon="config.content.showFilmStrip ? IconGallery : IconGrid"
             :iconStyle="{ transform: `rotate(${config.settings.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+            :disabled="isScanning"
             @click="toggleGridViewLayout"
           />
 
           <!-- toggle info panel -->
           <TButton
             :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
+            :disabled="isScanning"
             @click="config.infoPanel.show = !config.infoPanel.show"
           />
         </div>
@@ -98,12 +100,12 @@
     </div>
 
     <!-- progress bar -->
-    <div v-if="config.main.sidebarIndex === 1 && fileList.length > 0 && showProgressBar" class="absolute top-11 left-0 right-0 z-50">
+    <div v-if="fileList.length > 0 && showProgressBar" class="absolute top-11 left-0 right-0 z-50">
       <ProgressBar :percent="Number(((thumbCount / fileList.length) * 100).toFixed(0))" />
     </div>
-      
+
     <!-- content view -->
-    <div ref="contentViewDiv" class="flex-1 flex flex-row overflow-hidden">
+    <div ref="contentViewDiv" class="relative flex-1 flex flex-row overflow-hidden">
       <div class="relative flex-1 flex flex-row overflow-hidden">
         <div ref="gridViewDiv" 
           :class="[
@@ -244,22 +246,6 @@
             />
           </div>
         </div>
-
-        <!-- Scanning Overlay -->
-        <div v-if="isScanning" class="absolute inset-0 z-50 bg-base-100/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-base-content/30">
-          <IconUpdate class="mx-1 w-8 h-8" 
-            :class="config.scan.albumQueue[0] === config.album.id ? 'animate-spin' : ''" 
-          />  
-          <span class="text-lg text-center">{{ config.scan.albumQueue[0] === config.album.id
-            ? $t('search.scan.scanning', { album: config.scan.albumName, count: config.scan.count.toLocaleString(), total: config.scan.total.toLocaleString() }) 
-            : $t('search.scan.wait_scan') 
-          }}</span>
-          <span class="text-sm text-center">{{ $t('search.scan.description') }}</span>
-          <button class="btn btn-primary" @click="cancelScanning">
-            <IconClose class="w-5 h-5" />
-            {{ $t('search.scan.cancel') }}
-          </button>
-        </div>
       </div>
 
       <!-- info panel splitter -->
@@ -292,6 +278,25 @@
           />
         </div>
       </transition>
+
+      <!-- Scanning Overlay -->
+      <div v-if="isScanning" 
+        class="absolute inset-0 z-100 bg-base-200/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-base-content/30"
+        :class="[ config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12 mb-1' ]"
+      >
+        <IconUpdate class="mx-1 w-8 h-8" 
+          :class="config.scan.albumQueue[0] === config.album.id ? 'animate-spin' : ''" 
+        />  
+        <span class="text-lg text-center">{{ config.scan.albumQueue[0] === config.album.id
+          ? $t('search.scan.scanning', { album: config.scan.albumName, count: config.scan.count.toLocaleString(), total: config.scan.total.toLocaleString() }) 
+          : $t('search.scan.wait_scan') 
+        }}</span>
+        <span class="text-sm text-center">{{ $t('search.scan.description') }}</span>
+        <button class="btn btn-primary" @click="cancelScanning">
+          <IconClose class="w-5 h-5" />
+          {{ $t('search.scan.cancel') }}
+        </button>
+      </div>
     </div>
 
     <!-- status bar -->
@@ -447,7 +452,7 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
-         extractFileName, combineFileName, getFolderPath, getSelectOptions, 
+         extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
          shortenFilename, formatDimensionText, formatCaptureSettings, getSlideShowInterval } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -541,6 +546,11 @@ const contentIcon = computed(() => {
 });
 const contentTitle = ref("");
 
+// album's folder mode
+const showFolderFiles = computed(() => 
+  config.main.sidebarIndex === 0 && config.album.id && config.album.id > 0 && !config.album.selected
+);
+
 // progress bar
 const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const showProgressBar = ref(false); // show progress bar
@@ -576,22 +586,6 @@ const imageMinScale = ref(0);
 const imageMaxScale = ref(10);
 const isSlideShow = ref(false);
 
-// const showFolderFiles = computed(() => !!(config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0));
-
-// const selectedFile = computed(() => {
-//   if (selectedItemIndex.value >= 0 && selectedItemIndex.value < fileList.value.length) {
-//     return fileList.value[selectedItemIndex.value];
-//   }
-//   return null;
-// });
-
-// const singleFileMenuItems = useFileMenuItems(
-//   selectedFile,
-//   localeMsg,
-//   isMac,
-//   showFolderFiles,
-//   (action) => handleItemAction({ action, index: selectedItemIndex.value })
-// );
 
 // Request ID tracking to prevent race conditions during async content updates
 let currentContentRequestId = 0;
@@ -1150,18 +1144,20 @@ async function processNextAlbum() {
 // Check if current album is being scanned
 const isScanning = computed(() => {
   return config.main.sidebarIndex === 0 && // Album mode
-         config.album.id !== null && config.album.id !== 0 && // Valid album
+         !!config.album.id && config.album.id > 0 && // Valid album
          config.scan.albumQueue.includes(config.album.id);
 });
 
 watch(isScanning, (val) => {
+  // Always remove first to clear any stale entries
+  uiStore.removeInputHandler('scanning');
+  
   if (val) {
+    showQuickView.value = false;
+    // Push fresh handler when scanning starts
     uiStore.pushInputHandler('scanning');
   } else {
-    if (uiStore.isInputActive('scanning')) {
-        uiStore.popInputHandler();
-    }
-    updateContent()
+    updateContent();
   }
 });
 
@@ -1631,6 +1627,10 @@ async function updateContent() {
   stopSlideShow();
 
   backupState.value = null;
+  
+  // Increment request ID to cancel any previous thumbnail generation and reset queue
+  currentThumbRequestId++;
+  thumbCount.value = 0;
 
   const requestId = ++currentContentRequestId;
   const newIndex = config.main.sidebarIndex;
@@ -1649,13 +1649,55 @@ async function updateContent() {
       getAlbum(config.album.id).then(async album => {
         if (requestId !== currentContentRequestId) return;
         if(album) {
-          if(config.album.selected) { // album is selected, show all files including subfolders
+          if(config.album.selected) {     
+            // album is selected, show all files including subfolders
             contentTitle.value = album.name;
             getFileList({ searchAllSubfolders: config.album.folderPath, isShowHidden: true }, requestId);
-          } else {
-            contentTitle.value = album.name + getRelativePath(config.album.folderPath || "", album.path);
-            getFileList({ searchFolder: config.album.folderPath, isShowHidden: true }, requestId);
-          };
+          } else {                        
+            // folder is selected, show files in the folder
+            contentTitle.value = getFolderName(album.path) + getRelativePath(config.album.folderPath || "", album.path);
+            
+            // Get files from file system (not from DB) and generate thumbnails if needed
+            const folderFiles = await getFolderFiles(config.album.folderId, config.album.folderPath, false);
+            if (requestId !== currentContentRequestId) return;
+
+            fileList.value = folderFiles;
+            totalFileCount.value = fileList.value.length;
+            totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+
+            // Fetch timeline data for the folder
+            currentQueryParams.value = {
+              searchFileType: config.search.fileType,
+              sortType: config.search.sortType,
+              sortOrder: config.search.sortOrder,
+              searchFileName: "",
+              searchAllSubfolders: "",
+              searchFolder: config.album.folderPath || "",
+              startDate: 0,
+              endDate: 0,
+              make: "",
+              model: "",
+              locationAdmin1: "",
+              locationName: "",
+              isFavorite: false,
+              isShowHidden: true,
+              tagId: 0,
+            };
+            getQueryTimeLine(currentQueryParams.value).then(data => {
+              if (requestId === currentContentRequestId) timelineData.value = data;
+            });
+
+            // Get the thumbnail count to show progress bar if needed
+            getFolderThumbCount(config.album.folderId).then(count => {
+              if (requestId === currentContentRequestId) {
+                console.log('updateContent - thumbCount:', count);
+                showProgressBar.value = count < fileList.value.length; 
+              }
+            });
+
+            // Always get all thumbnails for a folder (generate if not exist)
+            getFileListThumb(fileList.value);
+          }
         } else {
           contentTitle.value = "";
         }
@@ -1699,7 +1741,7 @@ async function updateContent() {
         getAlbum(config.favorite.albumId).then(album => {
           if (requestId !== currentContentRequestId) return;
           if(album) {
-            contentTitle.value = localeMsg.value.favorite.folders + getRelativePath(config.favorite.folderPath || "", album.path);
+            contentTitle.value = getFolderName(album.path) + getRelativePath(config.favorite.folderPath || "", album.path);
             getFileList({ searchAllSubfolders: config.favorite.folderPath || "" }, requestId);
           } else {
             contentTitle.value = "";
@@ -1775,6 +1817,11 @@ function enterSimilarSearchMode(file: any) {
   if (file.file_type !== 1 && file.file_type !== 3) {
     return;
   }
+
+  // Increment request ID to cancel any previous thumbnail generation and reset queue
+  currentThumbRequestId++;
+  thumbCount.value = 0;
+
   // 1. Backup current state
   if (tempViewMode.value === 'none') {
     backupState.value = {
@@ -1855,6 +1902,10 @@ function enterAlbumPreviewMode(file: any) {
     };
   }
   
+  // Increment request ID to cancel any previous thumbnail generation and reset queue
+  currentThumbRequestId++;
+  thumbCount.value = 0;
+
   // 2. Set mode
   tempViewMode.value = 'album';
   showQuickView.value = false;
@@ -1867,7 +1918,7 @@ function enterAlbumPreviewMode(file: any) {
       if(folderPath === album.path) { // current folder is root
         contentTitle.value = album.name;
       } else {
-        contentTitle.value = album.name + getRelativePath(folderPath || "", album.path);
+        contentTitle.value = getFolderName(album.path) + getRelativePath(folderPath || "", album.path);
       };
     }
   });
@@ -1906,6 +1957,9 @@ function exitTempViewMode() {
   currentQueryParams.value = state.currentQueryParams;
   thumbCount.value = state.thumbCount;
   showProgressBar.value = state.showProgressBar;
+
+  // Increment request ID to cancel any previous thumbnail generation (from temp view)
+  currentThumbRequestId++;
 
   // 2. Reset Mode
   tempViewMode.value = 'none';
@@ -2224,7 +2278,7 @@ const clickEditComment = async (newComment: any) => {
 }
 
 const handleSelectMode = (value: any) => {
-  if(fileList.value.length === 0) return;
+  if(fileList.value.length === 0 || isScanning.value) return;
 
   selectMode.value = value;
   if(!selectMode.value) {
@@ -2286,39 +2340,33 @@ function updateFileHasTags(fileIds: number[]) {
   showTaggingDialog.value = false;
 }
 
-// embedding queue
-const embeddingQueue: any[] = [];
-let isGeneratingEmbeddings = false;
+// Helper to yield to main thread
+const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
 
-async function processEmbeddingQueue() {
-  if (isGeneratingEmbeddings) return;
-  isGeneratingEmbeddings = true;
+// Track current thumbnail request to enable cancellation when switching folders
+let currentThumbRequestId = 0;
 
-  while (embeddingQueue.length > 0) {
-    const file = embeddingQueue.shift();
-    // check if the file still exists in the fileList and need embedding
-    // (user might have navigated away, but we can still process if we want, 
-    // but better to check if it's still relevant or just process it for background indexing)
-    
-    // Generates embedding one by one to avoid blocking main thread/ui
-    await generateEmbedding(file.id);
-    file.has_embedding = true;
-
-    // Small delay to yield to main thread if needed, though await above yields.
-    // await new Promise(resolve => setTimeout(resolve, 10)); 
-  }
-
-  isGeneratingEmbeddings = false;
-}
-
-// Get the thumbnail for the files
-async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 8) {
-  const result = [];
+// Get the thumbnail for the files (non-blocking, runs in background)
+// Automatically cancels when a new request starts (e.g., switching folders)
+async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 4) {
+  // Use current request ID to check for cancellation
+  const requestId = currentThumbRequestId;
+  
   let activeRequests = 0;
-  thumbCount.value = 0;
 
   const getThumbForFile = async (file: any) => {
+    // Check if this request is still valid before fetching
+    if (requestId !== currentThumbRequestId) {
+      return null; // Request cancelled
+    }
+    
     const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, false);
+    
+    // Check again after async operation
+    if (requestId !== currentThumbRequestId) {
+      return null; // Request cancelled
+    }
+    
     if(thumb) {
       if(thumb.error_code === 0) {
         file.thumbnail = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
@@ -2326,20 +2374,21 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 8) 
         file.thumbnail = thumbnailPlaceholder;
       }
       thumbCount.value++; 
-      
-      // generate embedding if not exist
-      if ((file.file_type === 1 || file.file_type === 3) && !file.has_embedding) {
-        // queue it to generate in background
-        embeddingQueue.push(file);
-      }
     }
     return file;
   };
 
   const runWithConcurrencyLimit = async (files: any[]) => {
     const queue: any[] = [];
+    let processedCount = 0;
 
     for (let i = offset; i < files.length; i++) {
+      // Check if request was cancelled before starting new file
+      if (requestId !== currentThumbRequestId) {
+        console.log(`Thumbnail generation cancelled (request ${requestId} superseded by ${currentThumbRequestId})`);
+        return; // Stop processing
+      }
+      
       if (activeRequests >= concurrencyLimit) {
         await Promise.race(queue); // Wait for the first promise to complete
       }
@@ -2349,26 +2398,38 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 8) 
           // Remove the finished promise from the queue
           queue.splice(queue.indexOf(filePromise), 1);
           activeRequests--;
+          processedCount++;
           return file;
         })
         .catch((error) => {
+          queue.splice(queue.indexOf(filePromise), 1);
+          activeRequests--;
+          processedCount++;
           console.log('Error fetching thumbnail:', error);
         });
 
       queue.push(filePromise);
       activeRequests++;
+
+      // Yield to main thread every 10 files to keep UI responsive
+      if (i > 0 && i % 10 === 0) {
+        await yieldToMain();
+      }
     }
 
-    return Promise.all(queue);
+    // Wait for remaining promises (only if not cancelled)
+    if (requestId === currentThumbRequestId && queue.length > 0) {
+      await Promise.all(queue);
+    }
   };
 
-  result.push(...await runWithConcurrencyLimit(files));
-  console.log('All thumbnails fetched successfully.');
-  
-  // start processing embedding queue
-  if (embeddingQueue.length > 0) {
-    processEmbeddingQueue();
-  }
+  // Run in background - don't block caller
+  runWithConcurrencyLimit(files).then(() => {
+    // Only log if this request wasn't cancelled
+    if (requestId === currentThumbRequestId) {
+      console.log('All thumbnails fetched successfully.');
+    }
+  });
 }
 
 // Open the image viewer window

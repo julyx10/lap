@@ -404,7 +404,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('ImageEditor');
 });
 
 const onImageLoad = async () => {

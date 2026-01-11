@@ -37,7 +37,7 @@
 
     <AlbumList ref="albumListRef" 
       :key="albumListKey"
-      :componentId="0"
+      selectionSource="album"
     />
   </div> 
 
@@ -86,7 +86,7 @@ onUnmounted(() => {
   if (unlistenKeydown) {
     unlistenKeydown();
   }
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('AlbumList-edit');
 });
 
 const albumListRef = ref<AlbumList | null>(null);
@@ -141,7 +141,7 @@ const clickAllFiles = () => {
 const clickCloseEditList = () => {
   isEditList.value = false;
   albumListRef.value.isEditList = false;
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('AlbumList-edit');
 };
 
 const handleKeyDown = (event: KeyboardEvent) => {

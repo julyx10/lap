@@ -276,9 +276,9 @@ export async function copyFolder(folderPath, newFolderPath) {
 }
 
 // delete a folder
-export async function deleteFolder(folderId, folderPath) {
+export async function deleteFolder(folderPath) {
   try {
-    const result = await invoke('delete_folder', { folderId, folderPath });
+    const result = await invoke('delete_folder', { folderPath });
     if(result) {
       return result;
     };

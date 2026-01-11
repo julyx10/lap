@@ -289,7 +289,7 @@ onUnmounted(() => {
   if (unlistenKeydown) {
     unlistenKeydown();
   }
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('ImageSearch');
 });
 
 // more menuitems

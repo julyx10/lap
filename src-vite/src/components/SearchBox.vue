@@ -105,7 +105,7 @@ const handleBlur = () => {
   if (inputValue.value.length === 0) {
     isFocused.value = false;
   }
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('SearchBox');
 };
 
 function handleInput(event) {

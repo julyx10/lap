@@ -220,6 +220,15 @@ export function getFolderPath(filepath: string | null | undefined): string {
   return filepath.substring(0, lastSlashIndex);
 }
 
+/// get file folder name
+export function getFolderName(path: string): string {
+  const lastSlashIndex = path.lastIndexOf(separator);
+  if (lastSlashIndex === -1) {
+    return path;
+  }
+  return path.substring(lastSlashIndex + 1);
+}
+
 export function getRelativePath(path: string, basePath: string): string {
   return path.replace(basePath, '').split(separator).join(' > ');;
 }

@@ -29,11 +29,6 @@
       @update="onUpdate"
       @scroll="onScroll"
     >
-      <!-- Debug Info -->
-      <!-- <div class="absolute top-10 left-4 bg-black/50 text-white text-[10px] z-50 p-1 pointer-events-none">
-        {{ index }} {{ item.isPlaceholder ? 'PH' : 'F' }} {{ item.thumbnail ? 'T' : 'NoT' }} {{ item.id }}
-      </div> -->
-      
       <Thumbnail
         v-if="item && !item.isPlaceholder"
         :id="'item-' + index"

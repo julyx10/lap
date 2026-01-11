@@ -5,12 +5,14 @@
       
       <!-- File Info Section -->
       <div class="rounded-box p-2 space-y-2 border border-base-content/5">
-        <div class="w-10 h-10 flex items-center gap-2 rounded-box shrink-0">
-          <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="object-cover" />
-          <div v-else class="object-cover"></div>
+        <div class="flex items-center gap-2">
+          <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
+          <div v-else-if="fileInfo" class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
+          <div v-else class="w-10 h-10 bg-base-content/5 rounded-box shrink-0"></div>
+          <!-- <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.title') }}</span> -->
           <span class="font-bold text-sm text-base-content/70 overflow-hidden truncate">{{ fileInfo?.name }}</span>
         </div>
-        
+
         <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
           <!-- Album -->
           <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.album_name') }}</div>

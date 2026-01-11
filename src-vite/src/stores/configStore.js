@@ -11,7 +11,7 @@ export const useConfigStore = defineStore('configStore', {
 
     content: {
       showFilmStrip: false,       // false: grid view, true: film strip view
-      filmStripPaneHeight: 200,   // film strip pane height (px)
+      filmStripPaneHeight: 160,   // film strip pane height (px)
     },
 
     infoPanel: {
@@ -50,6 +50,7 @@ export const useConfigStore = defineStore('configStore', {
       albumId: null,          // destination album id
       folderId: null,         // destination folder id
       folderPath: null,       // destination folder path
+      selected: false,        // destination album is selected
     },
 
     album: {
@@ -124,7 +125,7 @@ export const useConfigStore = defineStore('configStore', {
       // grid view settings
       thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
       grid: {
-        size: 200,              // grid size, range 120-360
+        size: 160,              // grid size, range 120-360
         style: 0,               // 0: comfortable view, 1: compact view
         scaling: 0,             // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
         labelPrimary: 1,        // Primary label (1: Name)

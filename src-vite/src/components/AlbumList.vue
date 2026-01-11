@@ -3,14 +3,14 @@
     <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-box">
       
       <!-- title -->
-      <div v-if="componentId === 0" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div v-if="isMainPane" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('album.album_list') }}
       </div>
       
       <!-- drag to change albums' display order -->
       <VueDraggable 
         v-model="albums" 
-        :disabled="componentId !== 0 || !isEditList"
+        :disabled="!isMainPane || !isEditList"
         group="album-folder"
         :handle="'.drag-handle'" 
         :animation="200"
@@ -21,8 +21,8 @@
           <div 
             :class="[
               'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
-              config.album.id === album.id && !isEditList 
-                ? (config.album.selected ? 'text-primary bg-base-100 hover:bg-base-100' : 'text-primary')
+              selection.albumId.value === album.id && !isEditList 
+                ? (selection.selected.value ? 'text-primary bg-base-100 hover:bg-base-100' : 'text-primary')
                 : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickAlbum(album)"
@@ -54,9 +54,9 @@
             </div>  
 
             <div class="flex flex-row items-center text-base-content/30">
-              <div v-if="componentId === 0 && !isEditList && !config.scan.albumQueue.includes(album.id)"
+              <div v-if="isMainPane && !isEditList && !config.scan.albumQueue.includes(album.id)"
                 :class="[
-                  config.album.id === album.id && config.album.selected ? '' : 'hidden group-hover:block'
+                  selection.albumId.value === album.id && selection.selected.value ? '' : 'hidden group-hover:block'
                 ]"
               >
                 <ContextMenu
@@ -78,15 +78,20 @@
               />
             </div>
           </div>
-          <div v-if="album.is_expanded && !isEditList && !config.scan.albumQueue.includes(album.id)"  class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
-            <AlbumFolder 
-              :children="album.children" 
-              :isHiddenAlbum="album.is_hidden ? true : false"
-              :albumId="album.id"
-              :folderPath="album.path"
-              :componentId="componentId"
-            />
-          </div>
+          <transition
+            enter-active-class="transition-all duration-200 ease-out overflow-hidden"
+            enter-from-class="max-h-0"
+            enter-to-class="max-h-96"
+          >
+            <div v-if="album.is_expanded && !isEditList && !config.scan.albumQueue.includes(album.id)" class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
+              <AlbumFolder 
+                :children="album.children" 
+                :isHiddenAlbum="album.is_hidden ? true : false"
+                :albumId="album.id"
+                :rootPath="album.path"
+              />
+            </div>
+          </transition>
         </li>
       </VueDraggable>
 
@@ -96,7 +101,7 @@
     <div v-else-if="!isLoading && !isEditList" class="mt-8 px-2 flex flex-col items-center justify-center gap-2 text-base-content/30">
       <span class="text-center">{{ $t('album.no_albums.title') }}</span>
       <span class="text-sm text-center">{{ $t('album.no_albums.description') }}</span>
-      <button class="btn btn-primary" @click="clickNewAlbum">
+      <button class="btn btn-primary rounded-box" @click="clickNewAlbum">
         <IconAdd class="w-5 h-5" />
         {{ $t('menu.album.add') }}
       </button>
@@ -106,7 +111,7 @@
     <AlbumEdit
       v-if="showAlbumEdit"
       :isNewAlbum="isNewAlbum"
-      :albumId="isNewAlbum ? 0 : config.album.id"
+      :albumId="isNewAlbum ? 0 : selection.albumId.value"
       :inputName="isNewAlbum ? '' : selectedAlbum?.name"
       :inputDescription="isNewAlbum ? '' : selectedAlbum?.description"
       :albumPath="isNewAlbum ? '' : selectedAlbum?.path"
@@ -129,48 +134,30 @@
       @cancel="showRemoveAlbumMsgbox = false"
     />
 
-    <!-- new folder -->
-    <MessageBox
-      v-if="showNewFolderMsgbox"
-      :title="$t('msgbox.new_folder.title')"
-      :showInput="true"
-      :inputText="''"
-      :inputPlaceholder="$t('msgbox.new_folder.placeholder')"
-      :needValidateInput="true"
-      :OkText="$t('msgbox.new_folder.ok')"
-      :cancelText="$t('msgbox.cancel')"
-      :errorMessage="errorMessage"
-      @ok="clickNewFolder"
-      @cancel="showNewFolderMsgbox = false"
-      @reset="errorMessage = ''"
-    />
-
-    <ToolTip ref="toolTipRef" />
-
 </template>
 
 <script setup lang="ts">
 
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
-import { listen, emit as tauriEmit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
+import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
-import { isMac, scrollToFolder, formatTimestamp } from '@/common/utils';
+import { scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
-         createFolder, selectFolder, fetchFolder, expandFinalFolder, revealFolder, setFolderFavorite, getFileThumb,
+         selectFolder as apiSelectFolder, fetchFolder, expandFinalFolder, getFileThumb,
          getAlbum, listenScanProgress, listenScanFinished } from '@/common/api';
+import { Album, Folder } from '@/common/types';
+import { useAlbumSelectionProvider, SelectionSource } from '@/composables/useAlbumSelection';
 
 import AlbumFolder from '@/components/AlbumFolder.vue';
 import AlbumEdit from '@/components/AlbumEdit.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
-import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
 
 import {
   IconAdd,
-  IconNewFolder,
   IconMore,
   IconDragHandle,
   IconEdit,
@@ -178,35 +165,38 @@ import {
   IconUnhide,
   IconHide,
   IconFavorite,
-  IconUnFavorite,
   IconUpdate,
-  IconRestore,
 } from '@/common/icons';
 
-const props = defineProps({
-  componentId: {  // 0: album pane; 1: move/copy to mode(select destination folder)
-    type: Number,
-    default: 0
-  }
-});
+const props = defineProps<{
+  selectionSource: SelectionSource;
+}>();
 
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
+// Set up the selection context using provide/inject
+// Pass the expandAndSelectFolder callback so the composable can trigger folder expansion
+const selection = useAlbumSelectionProvider(
+  props.selectionSource,
+  async (albumIdVal: number, folderPathVal: string) => {
+    await clickFinalSubFolder(albumIdVal, folderPathVal);
+  }
+);
+
 let unlistenAlbumCoverChanged: () => void;
 let unlistenScanProgress: (() => void) | undefined;
 let unlistenScanFinished: (() => void) | undefined;
 
+// Computed to check if we're in main album pane
+const isMainPane = computed(() => props.selectionSource === 'album');
+
 // message boxes
 const showAlbumEdit = ref(false);           // show edit album
 const showRemoveAlbumMsgbox = ref(false);   // show remove album
-const showNewFolderMsgbox = ref(false);     // show new folder
-const errorMessage = ref('');
 
-const toolTipRef = ref(null);
-
-const albums = ref<any[]>([]);
+const albums = ref<Album[]>([]);
 const albumCovers = ref<Record<number, string>>({});
 const isNewAlbum = ref(false);
 const isEditList = ref(false);  // edit album list
@@ -214,7 +204,7 @@ const isLoading = ref(true);    // loading albums
 const isDragging = ref(false);  // dragging albums
 
 const getAlbumById = (id: number) => albums.value.find(album => album.id === id);
-const selectedAlbum = computed(() => getAlbumById(config.album.id)) || {};
+const selectedAlbum = computed(() => getAlbumById(selection.albumId.value)) || {};
 
 // Get menu items for a specific album (function for lazy evaluation)
 const getMoreMenuItems = (album: any) => {
@@ -283,16 +273,16 @@ onMounted( async () => {
     await loadAlbumCovers();
     isLoading.value = false;
 
-    if (config.album.id > 0) {
+    if (selection.albumId.value > 0) {
       // expand and select the current album and folder
-      clickFinalSubFolder(config.album.id, config.album.folderPath);
+      clickFinalSubFolder(selection.albumId.value, selection.folderPath.value);
     }
   }
 
   // listen for album-cover-changed event
   unlistenAlbumCoverChanged = await listen('album-cover-changed', async (event: any) => {
-    const { albumId, fileId } = event.payload;
-    const album = getAlbumById(albumId);
+    const { albumId: eventAlbumId, fileId } = event.payload;
+    const album = getAlbumById(eventAlbumId);
     if (album) {
       if (fileId) {
         // manual update
@@ -300,14 +290,14 @@ onMounted( async () => {
       } else {
         // scan finished update, reload album to get new cover
          const updatedAlbums = await getAllAlbums(true);
-         const updatedAlbum = updatedAlbums.find(a => a.id === albumId);
+         const updatedAlbum = updatedAlbums.find(a => a.id === eventAlbumId);
          if (updatedAlbum) {
              album.cover_file_id = updatedAlbum.cover_file_id;
          }
       }
       
       // Update the cover in albumCovers
-      await loadAlbumCover(albumId, album.cover_file_id);
+      await loadAlbumCover(eventAlbumId, album.cover_file_id);
     }
   });
 
@@ -368,17 +358,17 @@ const refreshAlbums = async () => {
   } finally {
     isLoading.value = false;
     
-    config.album.id = 0;      // show all files
-    config.album.folderPath = "";
-    config.album.selected = false;
+    selection.albumId.value = 0;      // show all files
+    selection.folderPath.value = "";
+    selection.selected.value = false;
   }
 };
 
 /// edit album information or add new album
-const clickEditAlbum = async (folderPath: string, newName: string, newDescription: string, isNew: boolean) => {
+const clickEditAlbum = async (folderPathParam: string, newName: string, newDescription: string, isNew: boolean) => {
   if (isNew) {
     // Add new album
-    const newAlbum = await addAlbum(folderPath);
+    const newAlbum = await addAlbum(folderPathParam);
     if (newAlbum) {
       // Update album name and description if different from folder name
       if (newName !== newAlbum.name || newDescription) {
@@ -395,8 +385,8 @@ const clickEditAlbum = async (folderPath: string, newName: string, newDescriptio
     }
   } else {
     // Edit existing album
-    const result = await editAlbum(config.album.id, newName, newDescription, selectedAlbum.value.is_hidden ?? false);
-    if(result) {
+    const result = await editAlbum(selection.albumId.value, newName, newDescription, selectedAlbum.value?.is_hidden ?? false);
+    if(result && selectedAlbum.value) {
       selectedAlbum.value.name = newName;
       selectedAlbum.value.description = newDescription;
       showAlbumEdit.value = false;
@@ -406,29 +396,25 @@ const clickEditAlbum = async (folderPath: string, newName: string, newDescriptio
 
 /// Remove an album from the list
 const clickRemoveAlbum = async () => {
-  const removedAlbum = await removeAlbum(config.album.id);
+  const removedAlbum = await removeAlbum(selection.albumId.value);
   if(removedAlbum) {
     showRemoveAlbumMsgbox.value = false;
 
     // remove the album from the list
-    albums.value = albums.value.filter(album => album.id !== config.album.id);
+    albums.value = albums.value.filter(album => album.id !== selection.albumId.value);
     showAlbumEdit.value = false; // Close the edit dialog if it's open
 
-    config.album.id = 0;
-    config.album.folderPath = "";
-    config.album.selected = false;
+    selection.resetSelection();
   }
 };
 
 /// click a album to select it
-const clickAlbum = async (album: any) => {
+const clickAlbum = async (album: Album) => {
   if(isEditList.value) {
     return;
   }
 
-  config.album.id = album.id;
-  config.album.folderPath = album.path;
-  config.album.selected = true;
+  selection.selectAlbum(album);
 };
 
 /// dlb click album to select it and expand/collapse its folders
@@ -461,37 +447,28 @@ const expandAlbum = async (album: any, forceRefresh = false) => {
 };
 
 /// click folder to select
-const clickFolder = async (albumId: number, folder: any) => {
+const clickFolder = async (albumIdVal: number, folder: Folder) => {
   console.log('AlbumList.vue-clickFolder:', folder);
-  const selectedFolder = await selectFolder(albumId, folder.path);
-  if(selectedFolder) {
-    config.album.id = albumId;
-    config.album.folderId = selectedFolder.id;
-    config.album.folderPath = selectedFolder.path;
-    config.album.selected = false;
-
-  } else {
-    toolTipRef.value.showTip(localeMsg.value.msgbox.select_folder.error);
-  }
+  await selection.selectFolder(albumIdVal, folder);
 };
 
 /// click the final sub-folder to select it
-const clickFinalSubFolder = async (albumId: number, folderPath: string) => {
+const clickFinalSubFolder = async (albumIdVal: number, folderPathVal: string) => {
 
-  console.log('AlbumList.vue-clickFinalSubFolder:', albumId, folderPath);
-  let album = getAlbumById(albumId);
+  console.log('AlbumList.vue-clickFinalSubFolder:', albumIdVal, folderPathVal);
+  let album = getAlbumById(albumIdVal);
   if(!album) {
     return;
   }
 
-  if (config.album.selected) {  // album is selected
+  if (selection.selected.value) {  // album is selected
     clickAlbum(album);
   } else {    // album's sub-folder is selected
     // expand the album's folder
     await expandAlbum(album, true);
 
     // recursively expand the final sub-folder path
-    expandFinalFolder(album, folderPath).then((folder) => {
+    expandFinalFolder(album, folderPathVal).then((folder: Folder | null) => {
       if(folder) {
         clickFolder(album.id, folder).then(() => {
           scrollToFolder(folder.id);
@@ -517,8 +494,10 @@ const onDragEnd = async () => {
 
 // toggle hidden album
 const toggleHidden = async () => {
-  selectedAlbum.value.is_hidden = !selectedAlbum.value.is_hidden;
-  await editAlbum(selectedAlbum.value.id, selectedAlbum.value.name, selectedAlbum.value.description, selectedAlbum.value.is_hidden);
+  if (selectedAlbum.value) {
+    selectedAlbum.value.is_hidden = !selectedAlbum.value.is_hidden;
+    await editAlbum(selectedAlbum.value.id, selectedAlbum.value.name ?? '', selectedAlbum.value.description ?? '', selectedAlbum.value.is_hidden);
+  }
 };
 
 // Expose methods
@@ -526,6 +505,7 @@ defineExpose({
   isEditList,
   clickNewAlbum,
   refreshAlbums,
+  clickFinalSubFolder,
 });
 
 </script>

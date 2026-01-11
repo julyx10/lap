@@ -3,10 +3,7 @@
     <!-- select album and folder -->
     <div class="h-[400px] border border-base-content/5 rounded-box overflow-auto">
       <AlbumList ref="albumListRef" 
-        v-model:albumId="config.destFolder.albumId"
-        v-model:folderId="config.destFolder.folderId"
-        v-model:folderPath="config.destFolder.folderPath"
-        :componentId="1"
+        selectionSource="destFolder"
       />
     </div>
 
@@ -70,7 +67,7 @@ onUnmounted(() => {
   if (unlistenKeydown) {
     unlistenKeydown();
   }
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('MoveTo');
 });
 
 function handleKeyDown(event: KeyboardEvent) {

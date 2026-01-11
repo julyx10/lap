@@ -394,12 +394,42 @@ impl AFolder {
         Ok(result)
     }
 
-    /// delete a folder from db
-    pub fn delete_folder(folder_id: i64) -> Result<usize, String> {
+    /// delete a folder and all its child folders and files from db
+    pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
         let conn = open_conn()?;
-        let result = conn
-            .execute("DELETE FROM afolders WHERE id = ?1", params![folder_id])
+
+        // First, get all folder IDs that will be deleted (the folder itself and all children)
+        let folder_ids: Vec<i64> = {
+            let mut stmt = conn
+                .prepare("SELECT id FROM afolders WHERE path = ?1 OR path LIKE ?2")
+                .map_err(|e| e.to_string())?;
+
+            let path_pattern = format!("{}/%", folder_path);
+            let rows = stmt
+                .query_map(params![folder_path, path_pattern], |row| row.get(0))
+                .map_err(|e| e.to_string())?;
+
+            rows.filter_map(|r| r.ok()).collect()
+        };
+
+        // Delete all files in those folders
+        for folder_id in &folder_ids {
+            conn.execute(
+                "DELETE FROM afiles WHERE folder_id = ?1",
+                params![folder_id],
+            )
             .map_err(|e| e.to_string())?;
+        }
+
+        // Delete the folders (the folder and all its children)
+        let path_pattern = format!("{}/%", folder_path);
+        let result = conn
+            .execute(
+                "DELETE FROM afolders WHERE path = ?1 OR path LIKE ?2",
+                params![folder_path, path_pattern],
+            )
+            .map_err(|e| e.to_string())?;
+
         Ok(result)
     }
 
@@ -1220,8 +1250,8 @@ impl AFile {
             // check file modified time
             let file_info = t_utils::FileInfo::new(file_path)?;
             if file.modified_at != file_info.modified {
-                // delete the old file
-                Self::delete(folder_id)?;
+                // delete the old file (using its actual id, not the folder_id)
+                Self::delete(file.id.unwrap())?;
             } else {
                 return Ok(file);
             }
@@ -1538,33 +1568,11 @@ impl AFile {
 
     // get all files in a folder by folder id (DB only)
     pub fn get_files_by_folder_id(folder_id: i64) -> Result<Vec<Self>, String> {
-        let conn = open_conn()?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT id, folder_id, name, name_pinyin, size, file_type, created_at, modified_at, taken_date,
-                    width, height, duration, is_favorite, rotate, comments, has_tags,
-                    e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description,
-                    e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                    gps_latitude, gps_longitude, gps_altitude,
-                    geo_name, geo_admin1, geo_admin2, geo_cc,
-                    has_thumbnail, has_embedding
-                FROM afiles
-                WHERE folder_id = ?1
-                ORDER BY name ASC",
-            )
-            .map_err(|e| e.to_string())?;
-
-        let rows = stmt
-            .query_map(params![folder_id], |row| Self::from_row(row))
-            .map_err(|e| e.to_string())?;
-
-        let mut files = Vec::new();
-        for file in rows {
-            if let Ok(f) = file {
-                files.push(f);
-            }
-        }
-        Ok(files)
+        let sql = format!(
+            "{} WHERE a.folder_id = ?1 ORDER BY a.name ASC",
+            Self::build_base_query()
+        );
+        Self::query_files(&sql, &[&folder_id])
     }
 
     // --- AI Logic ---
@@ -1864,12 +1872,12 @@ impl AThumb {
         let conn = open_conn()?;
         let result = conn
             .execute(
-                "INSERT INTO athumbs (file_id, error_code, thumb_data) 
+                "INSERT OR IGNORE INTO athumbs (file_id, error_code, thumb_data) 
                 VALUES (?1, ?2, ?3)",
                 params![self.file_id, self.error_code, self.thumb_data,],
             )
             .map_err(|e| e.to_string())?;
-        Ok(result)
+        Ok(result) // 0: already exists, ignore, 1: inserted
     }
 
     /// fetch a thumbnail from db by file_id
@@ -2319,7 +2327,9 @@ pub fn create_db() -> Result<(), String> {
             display_order_id INTEGER,
             cover_file_id INTEGER,
             description TEXT,
-            is_hidden INTEGER
+            is_hidden INTEGER,
+            scanned INTEGER DEFAULT 0,
+            total INTEGER DEFAULT 0
         )",
         [],
     )
@@ -2419,18 +2429,11 @@ pub fn create_db() -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
-
-    // Migration: Add embeds column if it doesn't exist
-    // This is a simple migration for dev/MVP. Ideally, use a migration system.
-    let _ = conn.execute("ALTER TABLE afiles ADD COLUMN embeds BLOB", []);
-    let _ = conn.execute("ALTER TABLE albums ADD COLUMN scanned INTEGER", []);
-    let _ = conn.execute("ALTER TABLE albums ADD COLUMN total INTEGER", []);
-    let _ = conn.execute(
-        "ALTER TABLE albums RENAME COLUMN avatar_id TO cover_file_id",
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_folder_id_name ON afiles(folder_id, name)",
         [],
-    );
-    let _ = conn.execute("ALTER TABLE albums ADD COLUMN cover_file_id INTEGER", []);
-
+    )
+    .map_err(|e| e.to_string())?;
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afiles_folder_id ON afiles(folder_id)",
         [],
@@ -2496,7 +2499,7 @@ pub fn create_db() -> Result<(), String> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS athumbs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_id INTEGER NOT NULL,
+            file_id INTEGER NOT NULL UNIQUE,
             error_code INTEGER NOT NULL,
             thumb_data BLOB,
             FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE

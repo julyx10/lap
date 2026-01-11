@@ -120,7 +120,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown);
-  uiStore.popInputHandler();
+  uiStore.removeInputHandler('TaggingDialog');
 });
 
 // load all tags

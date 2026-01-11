@@ -122,7 +122,7 @@
     <!-- Previous Button (Overlay) -->
     <button 
       v-if="hasPrevious && !isSlideShow"
-      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/70 backdrop-blur-md cursor-pointer"
+      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/80 backdrop-blur-md cursor-pointer"
       :class="[ isHoverLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerPrev"
       @dblclick.stop
@@ -133,7 +133,7 @@
     <!-- Next Button (Overlay) -->
     <button 
       v-if="hasNext && !isSlideShow"
-      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/70 backdrop-blur-md cursor-pointer"
+      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/80 backdrop-blur-md cursor-pointer"
       :class="[ isHoverRight ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
       @click.stop="triggerNext"
       @dblclick.stop

@@ -495,7 +495,7 @@ pub fn get_folder_files(
 
                 if let Some(ftype) = get_file_type(file_path) {
                     if file_type == 0 || file_type == ftype {
-                        match AFile::add_to_db(folder_id, file_path, file_type) {
+                        match AFile::add_to_db(folder_id, file_path, ftype) {
                             Ok(file) => Some(file),
                             Err(e) => {
                                 eprintln!("Failed to add file to DB: {} ({})", file_path, e);

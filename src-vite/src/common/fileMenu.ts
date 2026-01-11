@@ -58,7 +58,6 @@ export const useFileMenuItems = (
       },
       {
         label: localeMsg.value.menu.file.set_album_cover,
-        disabled: !showFolderFiles.value,
         action: createAction('set-album-cover')
       },
       {
