@@ -150,6 +150,13 @@ pub struct EditParams {
     crop: CropData,
     resize: ResizeData,
     quality: Option<u8>,
+    // New adjustments
+    filter: Option<String>,  // "grayscale", "sepia", "invert"
+    brightness: Option<i32>, // -100 to 100
+    contrast: Option<f32>,   // -100.0 to 100.0
+    blur: Option<f32>,       // sigma > 0
+    hue_rotate: Option<i32>, // degrees
+    saturation: Option<f32>, // multiplier, 1.0 is normal
 }
 
 /// edit an image and save to dest file
@@ -217,7 +224,7 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
         _ => img,
     };
 
-    // Flip
+    // 1. Flip
     if params.flip_horizontal {
         img = img.fliph();
     }
@@ -225,7 +232,7 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
         img = img.flipv();
     }
 
-    // Rotate
+    // 2. Rotate
     match params.rotate {
         90 => img = img.rotate90(),
         180 => img = img.rotate180(),
@@ -236,7 +243,7 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
         _ => {}
     }
 
-    // Crop
+    // 3. Crop
     if params.crop.width > 0 && params.crop.height > 0 {
         img = img.crop_imm(
             params.crop.x,
@@ -246,10 +253,101 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
         );
     }
 
-    // Resize
+    // 4. Resize
     if let (Some(w), Some(h)) = (params.resize.width, params.resize.height) {
         if w > 0 && h > 0 {
             img = img.resize_exact(w, h, image::imageops::FilterType::Lanczos3);
+        }
+    }
+
+    // 5. Adjustments & Filters
+
+    // Brightness: -100 to 100.
+    if let Some(b) = params.brightness {
+        if b != 0 {
+            img = img.brighten(b);
+        }
+    }
+
+    // Contrast: -100.0 to 100.0.
+    if let Some(c) = params.contrast {
+        if c != 0.0 {
+            img = img.adjust_contrast(c);
+        }
+    }
+
+    // Blur
+    if let Some(sigma) = params.blur {
+        if sigma > 0.0 {
+            img = img.blur(sigma);
+        }
+    }
+
+    // Hue Rotate
+    if let Some(hue) = params.hue_rotate {
+        if hue != 0 {
+            img = img.huerotate(hue);
+        }
+    }
+
+    // Saturation
+    if let Some(saturation) = params.saturation {
+        if (saturation - 1.0).abs() > f32::EPSILON {
+            let mut rgba = img.to_rgba8();
+            for pixel in rgba.pixels_mut() {
+                let r = pixel[0] as f32;
+                let g = pixel[1] as f32;
+                let b = pixel[2] as f32;
+
+                // Simple saturation: blend pixel with its grayscale value
+                // Luma = 0.299 * R + 0.587 * G + 0.114 * B
+                let luma = 0.299 * r + 0.587 * g + 0.114 * b;
+
+                let new_r = (luma + saturation * (r - luma)).clamp(0.0, 255.0) as u8;
+                let new_g = (luma + saturation * (g - luma)).clamp(0.0, 255.0) as u8;
+                let new_b = (luma + saturation * (b - luma)).clamp(0.0, 255.0) as u8;
+
+                pixel[0] = new_r;
+                pixel[1] = new_g;
+                pixel[2] = new_b;
+            }
+            img = DynamicImage::ImageRgba8(rgba);
+        }
+    }
+
+    // Filter
+    if let Some(filter) = &params.filter {
+        match filter.as_str() {
+            "grayscale" => {
+                img = DynamicImage::ImageLuma8(img.to_luma8());
+            }
+            "invert" => {
+                img.invert();
+            }
+            "sepia" => {
+                // Manual Sepia implementation since standard image crate might not have it exposed simply
+                // Formula:
+                // R = (r * 0.393) + (g * 0.769) + (b * 0.189)
+                // G = (r * 0.349) + (g * 0.686) + (b * 0.168)
+                // B = (r * 0.272) + (g * 0.534) + (b * 0.131)
+                let mut rgba = img.to_rgba8();
+                for pixel in rgba.pixels_mut() {
+                    let r = pixel[0] as f32;
+                    let g = pixel[1] as f32;
+                    let b = pixel[2] as f32;
+
+                    let new_r = (r * 0.393 + g * 0.769 + b * 0.189).min(255.0) as u8;
+                    let new_g = (r * 0.349 + g * 0.686 + b * 0.168).min(255.0) as u8;
+                    let new_b = (r * 0.272 + g * 0.534 + b * 0.131).min(255.0) as u8;
+
+                    pixel[0] = new_r;
+                    pixel[1] = new_g;
+                    pixel[2] = new_b;
+                    // alpha unchanged
+                }
+                img = DynamicImage::ImageRgba8(rgba);
+            }
+            _ => {}
         }
     }
 

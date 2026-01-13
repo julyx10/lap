@@ -396,6 +396,7 @@ export async function getFolderThumbCount(folderId) {
 }
 
 // edit an image
+// params: { sourceFilePath, destFilePath, outputFormat, orientation, flipHorizontal, flipVertical, rotate, crop, resize, quality, filter, brightness, contrast, blur }
 export async function editImage(params) {
   try {
     return await invoke('edit_image', { params });

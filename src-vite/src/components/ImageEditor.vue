@@ -1,11 +1,11 @@
 <template>
 
-  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="800" @cancel="clickCancel">
+  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="830" @cancel="clickCancel">
     <!-- content -->
-    <div class="flex-grow flex gap-4">
+    <div class="flex-grow flex gap-4 select-none">
       <div class="flex-1">
         <!-- image container -->
-        <div ref="containerRef" class="relative w-[570px] h-[430px] outline outline-base-content/5 cursor-default rounded-box overflow-hidden select-none">
+        <div ref="containerRef" class="relative w-[610px] h-[460px] outline outline-base-content/5 cursor-default rounded-box overflow-hidden select-none">
 
           <!-- Loading overlay -->
           <transition name="fade">
@@ -131,95 +131,216 @@
         </div>
       </div>
 
-      <!-- edit controls -->
-      <div class="w-48 flex flex-col gap-4">
+      <!-- edit controls / adjustments -->
+      <div class="w-48 flex flex-col gap-2 overflow-y-auto">
 
-        <!-- Resize -->
-        <div>
-          <h3>{{ $t('msgbox.image_editor.resize') }}</h3>
-          <table class="w-full text-sm border-separate border-spacing-2">
-            <tbody>
-              <tr>
-                <td class="w-1/2">{{ $t('msgbox.image_editor.width') }}</td>
-                <td>
-                  <input type="number" :placeholder="$t('msgbox.image_editor.width')" class="input input-bordered w-full"
-                    v-model.number="resizedWidth" :disabled="cropStatus==1"
-                    @keypress="onNumberKeyPress"
-                    @blur="handleResizeInput('width')"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td>{{ $t('msgbox.image_editor.height') }}</td>
-                <td>
-                  <input type="number" :placeholder="$t('msgbox.image_editor.height')" class="input input-bordered w-full"
-                    v-model.number="resizedHeight" :disabled="cropStatus==1"
-                    @keypress="onNumberKeyPress"
-                    @blur="handleResizeInput('height')"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td>{{ $t('msgbox.image_editor.percentage') }}</td>
-                <td class="flex items-center">
-                  <input type="number" :placeholder="$t('msgbox.image_editor.percentage')" class="input input-bordered w-full"
-                    v-model.number="resizedPercentage" :disabled="cropStatus==1"
-                    @keypress="onNumberKeyPress"
-                    @blur="handleResizeInput('percentage')"
-                  />
-                  <span class="pl-1 text-xs text-base-content/30">%</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Tabs -->
+        <div role="tablist" class="tabs tabs-border">
+          <a role="tab" :class="['tab', {'tab-active': activeTab === 'adjust'}]" @click="activeTab = 'adjust'">{{ $t('msgbox.image_editor.tab_adjust') }}</a>
+          <a role="tab" :class="['tab', {'tab-active': activeTab === 'export'}]" @click="activeTab = 'export'">{{ $t('msgbox.image_editor.tab_export') }}</a>
         </div>
 
-        <!-- options -->
-        <div>
-          <h3 class="mb-2">{{ $t('msgbox.image_editor.options') }}</h3>
-          <!-- <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" /> -->
+        <!-- Adjust Tab Content -->
+        <div v-show="activeTab === 'adjust'" class="flex flex-col gap-4 p-1">
+          <!-- filters -->
+          <div>
+            <h3>{{ $t('msgbox.image_editor.filters') }}</h3>
+            <div class="flex flex-col gap-2 mt-2">
+              <label class="label cursor-pointer justify-start gap-2 h-8">
+                <input type="radio" name="filter" class="radio radio-xs" value="" v-model="selectedFilter" />
+                <span class="text-sm">{{ $t('msgbox.image_editor.filter_none') }}</span>
+              </label>
+              <label class="label cursor-pointer justify-start gap-2 h-8">
+                <input type="radio" name="filter" class="radio radio-xs" value="grayscale" v-model="selectedFilter" />
+                <span class="text-sm">{{ $t('msgbox.image_editor.filter_grayscale') }}</span>
+              </label>
+              <label class="label cursor-pointer justify-start gap-2 h-8">
+                <input type="radio" name="filter" class="radio radio-xs" value="sepia" v-model="selectedFilter" />
+                <span class="text-sm">{{ $t('msgbox.image_editor.filter_sepia') }}</span>
+              </label>
+              <label class="label cursor-pointer justify-start gap-2 h-8">
+                <input type="radio" name="filter" class="radio radio-xs" value="invert" v-model="selectedFilter" />
+                <span class="text-sm">{{ $t('msgbox.image_editor.filter_invert') }}</span>
+              </label>
+            </div>
+          </div>
 
-          <table class="w-full text-sm text-nowrap border-separate border-spacing-2">
-            <tbody>
-              <tr>
-                <td>{{ $t('msgbox.image_editor.save_as') }}</td>
-                <td>
-                  <select v-model="config.imageEditor.saveAs" class="select select-bordered w-full" :disabled="cropStatus==1">
-                    <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td>{{ $t('msgbox.image_editor.format') }}</td>
-                <td>
-                  <select v-model="config.imageEditor.format" class="select select-bordered w-full" :disabled="cropStatus==1">
-                    <option v-for="option in fileFormatOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                  </select>
-                </td>
-              </tr>
-              <tr v-if="config.imageEditor.format == 0">
-                <td>{{ $t('msgbox.image_editor.quality') }}</td>
-                <td>
-                  <select v-model="config.imageEditor.quality" class="select select-bordered w-full" :disabled="cropStatus==1">
-                    <option v-for="option in fileQualityOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                  </select>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- adjustments -->
+          <div>
+            <div class="flex justify-between">
+              <span>{{ $t('msgbox.image_editor.adjustments') }}</span>
+              <TButton :icon="IconRestore" :buttonSize="'small'" @click="resetAdjustments">{{ $t('msgbox.image_editor.reset') }}</TButton>
+            </div>
+            <div class="flex flex-col gap-2 mt-2 text-sm text-base-content/70">
+              
+              <!-- Brightness -->
+              <div class="flex flex-col">
+                <div class="flex justify-between">
+                  <span>{{ $t('msgbox.image_editor.brightness') }}</span>
+                  <span>{{ brightness }}</span>
+                </div>
+                <SliderInput 
+                  v-model="brightness" 
+                  :min="-100" 
+                  :max="100" 
+                  :step="1" 
+                  label=""
+                />
+              </div>
 
-          <!-- debug -->
-          <!-- <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
-            <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
-            <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
-            <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
-            <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
-            <span>scale: {{ scale.toFixed(2) }}</span>
-            <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
-            <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
-            <span>resized: {{ resizedWidth.toFixed(0) }} x {{ resizedHeight.toFixed(0) }}</span>
-            <span>resizedPercentage: {{ resizedPercentage.toFixed(0) }}%</span>
-          </div> -->
+              <!-- Contrast -->
+              <div class="flex flex-col">
+                <div class="flex justify-between">
+                  <span>{{ $t('msgbox.image_editor.contrast') }}</span>
+                  <span>{{ contrast }}</span>
+                </div>
+                <SliderInput 
+                  v-model="contrast" 
+                  :min="-100" 
+                  :max="100" 
+                  :step="1" 
+                  label=""
+                />
+              </div>
+
+              <!-- Saturation -->
+              <div class="flex flex-col">
+                <div class="flex justify-between">
+                  <span>{{ $t('msgbox.image_editor.saturation') }}</span>
+                  <span>{{ saturation }}</span>
+                </div>
+                <SliderInput 
+                  v-model="saturation" 
+                  :min="0" 
+                  :max="200" 
+                  :step="1" 
+                  label=""
+                />
+              </div>
+
+              <!-- Hue -->
+              <div class="flex flex-col">
+                <div class="flex justify-between">
+                  <span>{{ $t('msgbox.image_editor.hue_rotate') }}</span>
+                  <span>{{ hue }}</span>
+                </div>
+                <SliderInput 
+                  v-model="hue" 
+                  :min="-180" 
+                  :max="180" 
+                  :step="1" 
+                  label=""
+                />
+              </div>
+
+              <!-- Blur -->
+              <!-- <div class="flex flex-col">
+                <div class="flex justify-between">
+                  <span>{{ $t('msgbox.image_editor.blur') }}</span>
+                  <span>{{ blur }}</span>
+                </div>
+                <SliderInput 
+                  v-model="blur" 
+                  :min="0" 
+                  :max="10" 
+                  :step="0.1" 
+                  label=""
+                />
+              </div> -->
+
+            </div>
+          </div>
+        </div>
+       
+        <!-- Export Tab Content -->
+        <div v-show="activeTab === 'export'" class="flex flex-col gap-4 p-1">
+          <!-- Resize -->
+          <div>
+            <h3>{{ $t('msgbox.image_editor.resize') }}</h3>
+            <table class="w-full text-sm border-separate border-spacing-2">
+              <tbody>
+                <tr>
+                  <td class="w-1/2">{{ $t('msgbox.image_editor.width') }}</td>
+                  <td>
+                    <input type="number" :placeholder="$t('msgbox.image_editor.width')" class="input input-bordered w-full"
+                      v-model.number="resizedWidth" :disabled="cropStatus==1"
+                      @keypress="onNumberKeyPress"
+                      @blur="handleResizeInput('width')"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('msgbox.image_editor.height') }}</td>
+                  <td>
+                    <input type="number" :placeholder="$t('msgbox.image_editor.height')" class="input input-bordered w-full"
+                      v-model.number="resizedHeight" :disabled="cropStatus==1"
+                      @keypress="onNumberKeyPress"
+                      @blur="handleResizeInput('height')"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('msgbox.image_editor.percentage') }}</td>
+                  <td class="flex items-center">
+                    <input type="number" :placeholder="$t('msgbox.image_editor.percentage')" class="input input-bordered w-full"
+                      v-model.number="resizedPercentage" :disabled="cropStatus==1"
+                      @keypress="onNumberKeyPress"
+                      @blur="handleResizeInput('percentage')"
+                    />
+                    <span class="pl-1 text-xs text-base-content/30">%</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- options -->
+          <div>
+            <h3 class="mb-2">{{ $t('msgbox.image_editor.options') }}</h3>
+            <!-- <input type="text" :placeholder="$t('msgbox.image_editor.save_as_placeholder')" v-model="newFileName" class="input input-bordered w-full px-2" :disabled="cropStatus==1" /> -->
+
+            <table class="w-full text-sm text-nowrap border-separate border-spacing-2">
+              <tbody>
+                <tr>
+                  <td>{{ $t('msgbox.image_editor.save_as') }}</td>
+                  <td>
+                    <select v-model="config.imageEditor.saveAs" class="select select-bordered w-full" :disabled="cropStatus==1">
+                      <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('msgbox.image_editor.format') }}</td>
+                  <td>
+                    <select v-model="config.imageEditor.format" class="select select-bordered w-full" :disabled="cropStatus==1">
+                      <option v-for="option in fileFormatOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr v-if="config.imageEditor.format == 0">
+                  <td>{{ $t('msgbox.image_editor.quality') }}</td>
+                  <td>
+                    <select v-model="config.imageEditor.quality" class="select select-bordered w-full" :disabled="cropStatus==1">
+                      <option v-for="option in fileQualityOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- debug -->
+            <!-- <div class="text-[10px] text-base-content/30 flex flex-col gap-1 mt-2">
+              <span>containerRect: {{ containerRect?.left.toFixed(0) }}, {{ containerRect?.top.toFixed(0) }}, {{ containerRect?.width.toFixed(0) }}, {{ containerRect?.height.toFixed(0) }}</span>
+              <span>containerBounds: {{ containerBounds?.left.toFixed(0) }}, {{ containerBounds?.top.toFixed(0) }}, {{ containerBounds?.width.toFixed(0) }}, {{ containerBounds?.height.toFixed(0) }}</span>
+              <span>imageRect: {{ imageRect?.left.toFixed(0) }}, {{ imageRect?.top.toFixed(0) }}, {{ imageRect?.width.toFixed(0) }}, {{ imageRect?.height.toFixed(0) }}</span>
+              <span>cropBox:{{ cropBox.left.toFixed(0) }}, {{ cropBox.top.toFixed(0) }}, {{ cropBox.width.toFixed(0) }}, {{ cropBox.height.toFixed(0) }}</span> 
+              <span>scale: {{ scale.toFixed(2) }}</span>
+              <span>position: {{ position.left.toFixed(0) }}, {{ position.top.toFixed(0) }}</span>
+              <span>crop: {{ crop.left.toFixed(0) }}, {{ crop.top.toFixed(0) }}, {{ crop.width.toFixed(0) }}, {{ crop.height.toFixed(0) }}</span>
+              <span>resized: {{ resizedWidth.toFixed(0) }} x {{ resizedHeight.toFixed(0) }}</span>
+              <span>resizedPercentage: {{ resizedPercentage.toFixed(0) }}%</span>
+            </div> -->
+          </div>
         </div>
       </div>
     </div>
@@ -262,6 +383,7 @@ import { editImage, copyEditedImage } from '@/common/api';
 import ToolTip from '@/components/ToolTip.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import TButton from '@/components/TButton.vue';
+import SliderInput from '@/components/SliderInput.vue';
 
 import { 
   IconCrop,
@@ -274,6 +396,7 @@ import {
   IconFlipHorizontal,
   IconClose, 
   IconOk,
+  IconRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -292,6 +415,7 @@ const emit = defineEmits(['success', 'failed', 'cancel']);
 
 const toolTipRef = ref(null);
 const isProcessing = ref(false);  // show processing status
+const activeTab = ref('adjust'); // 'adjust', 'export'
 
 // container
 const containerRef = ref<HTMLElement | null>(null);
@@ -326,6 +450,16 @@ const imageStyle = computed(() => ({
     scaleX(${isFlippedX.value ? -1 : 1}) 
     scaleY(${isFlippedY.value ? -1 : 1}) 
     scale(${scale.value})
+  `,
+  filter: `
+    brightness(${100 + brightness.value}%)
+    contrast(${100 + contrast.value}%)
+    blur(${blur.value}px)
+    hue-rotate(${hue.value}deg)
+    saturate(${saturation.value}%)
+    ${selectedFilter.value === 'grayscale' ? 'grayscale(100%)' : ''}
+    ${selectedFilter.value === 'sepia' ? 'sepia(100%)' : ''}
+    ${selectedFilter.value === 'invert' ? 'invert(100%)' : ''}
   `,
   transition: enableTransition.value ? 'transform 0.3s ease' : 'none',
 }));
@@ -380,6 +514,14 @@ const cropShapeOptions = computed(() => {
 const resizedWidth = ref(0);
 const resizedHeight = ref(0);
 const resizedPercentage = ref(100);
+
+// adjustments
+const selectedFilter = ref(''); // '', 'grayscale', 'sepia', 'invert'
+const brightness = ref(0); // -100 to 100
+const contrast = ref(0);   // -100 to 100
+const blur = ref(0);       // 0 to 10
+const hue = ref(0);        // -180 to 180
+const saturation = ref(100); // 0 to 200 (percent)
 
 // save as
 const newFileName = ref('');
@@ -474,6 +616,17 @@ const initImageEditor = () => {
       config.imageEditor.format = 0;
       break;
   }
+
+  resetAdjustments();
+};
+
+const resetAdjustments = () => {
+  selectedFilter.value = '';
+  brightness.value = 0;
+  contrast.value = 0;
+  blur.value = 0;
+  hue.value = 0;
+  saturation.value = 100;
 };
 
 const clickStartCrop = () => {
@@ -923,6 +1076,13 @@ const setEditParams = () => {
       width: resizedWidth.value,
       height: resizedHeight.value,
     },
+    // adjustments
+    filter: selectedFilter.value || null,
+    brightness: brightness.value !== 0 ? brightness.value : null,
+    contrast: contrast.value !== 0 ? contrast.value : null,
+    blur: blur.value > 0 ? blur.value : null,
+    hue_rotate: hue.value !== 0 ? hue.value : null,
+    saturation: saturation.value !== 100 ? saturation.value / 100.0 : null,
   };
 };
 
