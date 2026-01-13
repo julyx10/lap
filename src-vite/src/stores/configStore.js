@@ -21,12 +21,13 @@ export const useConfigStore = defineStore('configStore', {
       mapTheme: 0,               // 0: standard, 2: satellite
     },
 
-    // scanning album
-    scan: {
-      status: 0,                 // 0: idle, 1: scanning
-      albumQueue: [],            // scanning album queue: [id1, id2, ...]
+    // indexing album
+    index: {
+      status: 0,                 // 0: idle, 1: indexing
+      /** @type {number[]} */
+      albumQueue: [],            // indexing album queue: [id1, id2, ...]
       albumName: '',             // current album name
-      count: 0,                  // current album's scanned count
+      indexed: 0,                  // current album's indexed count
       total: 0,                  // current album's total count
     },
 

@@ -1,10 +1,22 @@
 <template>
-  <div ref="videoContainer" class="relative w-full h-full cursor-pointer bg-base-200">
-    <video v-if="!hasError" ref="videoElement" class="video-js"></video>
+  <div ref="videoContainer" class="relative w-full h-full cursor-pointer">
+    
+    <TransitionGroup :name="isSlideShow ? 'slide-in' : ''">
+      <div 
+        v-for="index in [0, 1]" 
+        v-show="activeVideo === index"
+        :key="`vid-${index}`"
+        class="slide-wrapper absolute inset-0 w-full h-full pointer-events-none"
+      >
+        <div class="w-full h-full pointer-events-auto">
+          <video :ref="(el) => { if(el) videoElements[index] = el as HTMLVideoElement }" class="video-js"></video>
+        </div>
+      </div>
+    </TransitionGroup>
 
     <!-- Play button overlay when video is paused -->
     <div v-if="!hasError && !isPlaying"
-      class="absolute inset-0 flex items-center justify-center pointer-events-none"
+      class="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
     >
       <div class="w-16 h-16 rounded-full bg-base-100/50 flex items-center justify-center 
                   hover:bg-base-100 hover:scale-110 transition-all duration-300 ease-out group pointer-events-auto cursor-pointer"
@@ -16,7 +28,7 @@
       </div>
     </div>
 
-    <div v-if="hasError" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30">
+    <div v-if="hasError" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/30 z-10">
       <IconVideoSlash class="w-8 h-8 mb-2" />
       <div class="text-center">{{ errorMessage }}</div>
     </div>
@@ -26,7 +38,6 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
-import { emit } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { IconVideoSlash } from '@/common/icons';
@@ -51,13 +62,17 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isSlideShow: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const { t: $t } = useI18n(); // i18n
-
+ 
 const videoContainer = ref<HTMLDivElement | null>(null);
-const videoElement = ref<HTMLVideoElement | null>(null);
-const player = ref<ReturnType<typeof videojs> | null>(null);
+const videoElements = ref<HTMLVideoElement[]>([]);
+const players = ref<(ReturnType<typeof videojs> | null)[]>([null, null]);
 
 const videoJsLang = computed(() => (config.settings.language === 'zh' ? 'zh-CN' : config.settings.language));
 
@@ -71,7 +86,9 @@ const scale = ref(1);
 const rotate = ref(0);
 const noTransition = ref(false);
 
-let isSrcChanging = false;  // disable transform when src changing
+// Double buffering state
+const activeVideo = ref(0);
+let currentLoadingId = 0;
 
 const playerOptions = computed(() => ({
   responsive: false,
@@ -95,9 +112,11 @@ const playerOptions = computed(() => ({
   },
 }));
 
+const getActivePlayer = () => players.value[activeVideo.value];
+
 const updateTransform = (resetZoom = false) => {
-  if (isSrcChanging) return;
-  const video = player.value?.el().querySelector('video');
+  const player = getActivePlayer();
+  const video = player?.el().querySelector('video');
   if (!video) return;
 
   // Toggle no-transition class
@@ -107,8 +126,8 @@ const updateTransform = (resetZoom = false) => {
     video.classList.remove('no-transition');
   }
 
-  const videoWidth = player.value?.videoWidth();
-  const videoHeight = player.value?.videoHeight();
+  const videoWidth = player?.videoWidth();
+  const videoHeight = player?.videoHeight();
   const containerWidth = videoContainer.value?.clientWidth;
   const containerHeight = videoContainer.value?.clientHeight;
   const isRotated = rotate.value % 180 !== 0;
@@ -131,111 +150,169 @@ const updateTransform = (resetZoom = false) => {
       scale.value = Math.min(containerWidth / w, containerHeight / h);
     }
 
-    rotate.value = props.rotate;
+    rotate.value = props.rotate; // use prop rotate for reset
   }
   video.style.transform = `translate(-50%, -50%) rotate(${rotate.value}deg) scale(${scale.value})`;
 };
 
-const setupPlayer = () => {
-  if (!videoElement.value) return;
+const setupPlayer = (index: number) => {
+  const el = videoElements.value[index];
+  if (!el) return;
 
-  if (!player.value) {
-    player.value = videojs(videoElement.value, playerOptions.value);
-    player.value.volume(config.video.volume);
-    player.value.muted(config.video.muted);
+  if (!players.value[index]) {
+    players.value[index] = videojs(el, playerOptions.value);
+    
+    const player = players.value[index]!;
+    // Set volume/mute from config immediately
+    player.volume(config.video.volume);
+    player.muted(config.video.muted);
 
-    player.value.on('error', () => {
-      hasError.value = true;
-      const errorObj = player.value?.error();
-      if (errorObj) {
-        switch (errorObj.code) {
-          case 1:
-            errorMessage.value = $t('video.errors.aborted');
-            break;
-          case 2:
-            errorMessage.value = $t('video.errors.network');
-            break;
-          case 3:
-            errorMessage.value = $t('video.errors.decode');
-            break;
-          case 4:
-            errorMessage.value = $t('video.errors.format');
-            break;
-          default:
-            errorMessage.value = $t('video.errors.unknown');
-        }
-      } else {
-        errorMessage.value = $t('video.errors.unknown');
+    player.on('error', () => {
+      // Only handle error if this player is the active one or the one being loaded
+      const isActive = activeVideo.value === index;
+      
+      const errorObj = player.error();
+      if (!errorObj) return;
+      
+      let msg = $t('video.errors.unknown');
+      switch (errorObj.code) {
+        case 1: msg = $t('video.errors.aborted'); break;
+        case 2: msg = $t('video.errors.network'); break;
+        case 3: msg = $t('video.errors.decode'); break;
+        case 4: msg = $t('video.errors.format'); break;
+        default: msg = $t('video.errors.unknown');
+      }
+
+      if (isActive) {
+        hasError.value = true;
+        errorMessage.value = msg;
+        isPlaying.value = false;
+        isReplaying.value = false;
       }
     });
 
-    // Add event listeners for play/pause state
-    player.value.on('play', () => {
-      isPlaying.value = true;
-      isReplaying.value = false;
-    });
-
-    player.value.on('pause', () => {
-      isPlaying.value = false;
-      isReplaying.value = false;
-    });
-
-    player.value.on('ended', () => {
-      isPlaying.value = false;
-      isReplaying.value = true;
-    });
-
-    player.value.on('loadeddata', () => {
-      isSrcChanging = false;
-      isPlaying.value = config.settings.autoPlayVideo;
-      isReplaying.value = false;
-      
-      // Force default zoom fit and disable transition temporarily
-      noTransition.value = true;
-      isFit.value = true;
-      
-      updateTransform(true);
-      
-      setTimeout(() => {
-        noTransition.value = false;
-        // Re-apply transform to ensure transition is re-enabled if needed (though class removal is enough)
-        // updateTransform(); 
-      }, 100);
-    });
-    player.value.on('volumechange', () => {
-      config.setVideoVolume(player.value?.volume());
-      config.setVideoMuted(player.value?.muted());
-    });
-  }
-
-  if (props.filePath) {
-    const assetSrc = getAssetSrc(props.filePath);
-    if(!canPlay(assetSrc)) {
-      hasError.value = true;
-      errorMessage.value = $t('video.errors.format');
-
-      // set player src to empty
-      player.value?.src('');
-      player.value?.pause();
-      return;
-    }
-    hasError.value = false;
-    errorMessage.value = '';
-    isPlaying.value = true;
-    player.value.src(assetSrc);
-    nextTick(() => {
-      if(config.settings.autoPlayVideo) {
-        player.value?.play();
+    player.on('play', () => {
+      if (activeVideo.value === index) {
+        isPlaying.value = true;
+        isReplaying.value = false;
       }
     });
-  } else {
-    player.value.pause();
-    player.value.currentTime(0);
+
+    player.on('pause', () => {
+      if (activeVideo.value === index) {
+        isPlaying.value = false;
+        isReplaying.value = false;
+      }
+    });
+
+    player.on('ended', () => {
+      if (activeVideo.value === index) {
+        isPlaying.value = false;
+        isReplaying.value = true;
+      }
+    });
+
+    player.on('volumechange', () => {
+      if (activeVideo.value === index) {
+        config.setVideoVolume(player.volume());
+        config.setVideoMuted(player.muted());
+      }
+    });
   }
 };
 
+const clickPlayVideo = () => getActivePlayer()?.play();
+
+const loadVideo = (filePath: string) => {
+  currentLoadingId++;
+  const loadingId = currentLoadingId;
+  const nextUpIndex = activeVideo.value ^ 1;
+
+  // Ensure player exists
+  if (!players.value[nextUpIndex]) {
+    setupPlayer(nextUpIndex);
+  }
+  
+  const player = players.value[nextUpIndex];
+  if (!player) return;
+
+  // Stop previous playback
+  player.pause();
+  player.currentTime(0);
+
+  // Check file format
+  const assetSrc = getAssetSrc(filePath);
+  if(!canPlay(assetSrc)) {
+    // If format invalid, switch immediately to show error
+    activeVideo.value = nextUpIndex;
+    hasError.value = true;
+    errorMessage.value = $t('video.errors.format');
+    player.src('');
+    return;
+  }
+
+  // Preload
+  hasError.value = false;
+  player.src(assetSrc);
+
+  // One-time event listeners
+  const onLoaded = () => {
+    if (loadingId !== currentLoadingId) return; // Cancelled
+    
+    // Swap
+    activeVideo.value = nextUpIndex;
+    
+    // Reset state for new video
+    isPlaying.value = config.settings.autoPlayVideo;
+    isReplaying.value = false;
+    hasError.value = false;
+    
+    // Pause previous
+    const prevPlayer = players.value[nextUpIndex ^ 1];
+    if (prevPlayer) {
+      prevPlayer.pause();
+      prevPlayer.currentTime(0);
+    }
+    
+    // Setup for display
+    noTransition.value = true;
+    isFit.value = props.isZoomFit;
+    
+    // Apply transform immediately (before transition removal)
+    updateTransform(true);
+    
+    setTimeout(() => {
+      noTransition.value = false;
+      // Re-evaluate transform just in case
+      // updateTransform(false);
+    }, 100);
+
+    if (config.settings.autoPlayVideo) {
+      player.play();
+    }
+    
+    // Clean up
+    player.off('loadeddata', onLoaded);
+    player.off('error', onError);
+  };
+
+  const onError = () => {
+    if (loadingId !== currentLoadingId) return;
+    
+    activeVideo.value = nextUpIndex;
+    hasError.value = true;
+    // Error message set by player error handler
+    
+    player.off('loadeddata', onLoaded);
+    player.off('error', onError);
+  };
+
+  player.one('loadeddata', onLoaded);
+  player.one('error', onError);
+};
+
+
 // check if the file can be played
-// only support mp4, webm, ogg, mov format
 function canPlay(file: string): boolean {
   const ext = file.split('.').pop()?.toLowerCase();
   const video = document.createElement('video');
@@ -256,55 +333,68 @@ function canPlay(file: string): boolean {
   }
 }
 
-const clickPlayVideo = () => player.value?.play();
-
 let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
-  setupPlayer();
-  if (videoElement.value?.parentElement) {
+  // Initialize both players
+  nextTick(() => {
+    setupPlayer(0);
+    setupPlayer(1);
+    
+    // Start loading first video
+    if (props.filePath) {
+      // Force load into index 0 directly for first run
+      const index = 0;
+      activeVideo.value = index;
+      const player = players.value[index];
+      if (player) {
+         loadVideo(props.filePath);
+      }
+    }
+  });
+
+  if (videoContainer.value) {
     resizeObserver = new ResizeObserver(() => {
       updateTransform(props.isZoomFit)
     });
-    resizeObserver.observe(videoElement.value.parentElement);
+    resizeObserver.observe(videoContainer.value);
   }
 });
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
-  if (player.value) {
-    player.value.off('play');
-    player.value.off('pause');
-    player.value.off('ended');
-    player.value.off('loadeddata');
-    player.value.off('volumechange');
-    player.value.dispose();
-    player.value = null;
-  }
+  players.value.forEach(p => {
+    if (p) {
+      p.off('play');
+      p.off('pause');
+      p.off('ended');
+      p.off('loadeddata');
+      p.off('volumechange');
+      p.off('error');
+      p.dispose();
+    }
+  });
+  players.value = [null, null];
 });
 
-watch(videoJsLang, (newLang) => player.value?.language(newLang), { immediate: true });
+watch(videoJsLang, (newLang) => {
+  players.value.forEach(p => p?.language(newLang));
+});
 
-watch(() => props.filePath, () => { 
-  if (props.filePath) {
-    isSrcChanging = true;
-    if (!props.isZoomFit) scale.value = 1; 
-    setupPlayer(); 
+watch(() => props.filePath, (newPath) => { 
+  if (newPath) {
+    loadVideo(newPath); 
   }
 });
 
 watch(() => props.rotate, (val) => { 
   rotate.value = val; 
   updateTransform(); 
-}, { immediate: true });
+});
 
 watch(() => props.isZoomFit, (val) => { 
   isFit.value = val; 
   updateTransform(true); 
-}, { immediate: true });
-
-watch(() => scale.value, (val) => {
-  emit('message-from-image', { message: 'scale', scale: val, minScale: 0.1, maxScale: 10 });
 });
 
 const zoomIn = () => { 
@@ -329,7 +419,9 @@ defineExpose({
   zoomOut, 
   zoomActual, 
   rotateRight,
-  pause: () => player.value?.pause(),
+  pause: () => {
+    players.value.forEach(p => p?.pause());
+  },
 });
 </script>
 
@@ -337,7 +429,7 @@ defineExpose({
 .video-js {
   width: 100% !important;
   height: 100% !important;
-  background-color: hsl(var(--b1)) !important;
+  background-color: transparent !important;
   color: hsl(var(--bc)) !important;
 }
 .video-js video {
@@ -358,5 +450,19 @@ defineExpose({
 }
 .vjs-volume-panel {
   position: relative !important;
+}
+
+/* Slideshow transition */
+.slide-in-enter-active,
+.slide-in-leave-active {
+  transition: transform 0.8s ease;
+}
+
+.slide-in-enter-from {
+  transform: translateX(calc(100% + 10px));
+}
+
+.slide-in-leave-to {
+  transform: translateX(calc(-100% - 10px));
 }
 </style>

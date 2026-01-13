@@ -36,12 +36,11 @@
       />
 
       <!-- status icons -->
-      <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30">
+      <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/70">
         <!-- video duration -->
-        <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 z-10">
+        <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 mr-1">
           {{ formatDuration(file.duration) }}
         </div>
-        <!-- status icons -->
         <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
         <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
         <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
@@ -51,6 +50,8 @@
           class="t-icon-size-xs"
           :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
         />
+        <!-- embedding status -->
+        <IconUpdate v-if="!file.has_embedding" class="t-icon-size-xs"></IconUpdate>
       </div>
 
       <!-- select checkbox -->
@@ -115,6 +116,7 @@ import {
   IconComment,
   IconLocation,
   IconCameraAperture,
+  IconUpdate,
 } from '@/common/icons';
 
 const props = defineProps({

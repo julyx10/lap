@@ -4,13 +4,23 @@
     <div class="my-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-2">
       
       <!-- File Info Section -->
-      <div class="rounded-box p-2 space-y-2 border border-base-content/5">
-        <div class="flex items-center gap-2">
+      <div class="rounded-box p-1 space-y-2 border border-base-content/5">
+        <div class="flex items-center">
           <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
           <div v-else-if="fileInfo" class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
           <div v-else class="w-10 h-10 bg-base-content/5 rounded-box shrink-0"></div>
-          <!-- <span class="font-bold text-sm text-base-content/70">{{ $t('file_info.title') }}</span> -->
-          <span class="font-bold text-sm text-base-content/70 overflow-hidden truncate">{{ fileInfo?.name }}</span>
+          <span class="ml-2 mr-auto font-bold text-sm text-base-content/70 break-all">{{ fileInfo?.name }}</span>
+          
+          <TButton v-if="fileInfo && !fileInfo?.has_embedding"
+            :icon="IconUpdate"
+            :buttonSize="'small'"
+            @click.stop="$emit('update')"
+          />
+          <TButton
+            :icon="IconClose"
+            :buttonSize="'small'"
+            @click.stop="$emit('close')"
+          />
         </div>
 
         <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
@@ -118,11 +128,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName } from '@/common/utils';
 import { IconCamera } from '@/common/icons';
+import { IconClose, IconUpdate } from '@/common/icons';
+import TButton from '@/components/TButton.vue';
 
 import MapView from '@/components/MapView.vue';
 

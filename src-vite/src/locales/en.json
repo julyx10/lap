@@ -44,11 +44,11 @@
     "image_search_tips": "Enter a description to search images. For example, type \"sunset over the ocean\" to find relevant images.",
     "similar_images_tips": "Select an image to find similar images",
     "filename_search_tips": "Enter a filename to search",
-    "scan": {
-      "wait_scan": "Wait for scan...",
-      "scanning": "Scanning '{album}'... {count} / {total}",
+    "index": {
+      "wait_index": "Wait for index...",
+      "indexing": "Indexing '{album}'... {count} / {total}",
       "description": "Preparing your album for search and quick view. Large albums may take a few minutes.",
-      "cancel": "Cancel scan"
+      "cancel": "Cancel indexing"
     }
   },
   "favorite": {
@@ -203,7 +203,7 @@
     "album": {
       "add": "Add album...",
       "edit": "Edit album...",
-      "scan": "Scan album files",
+      "index": "Index album files",
       "include_in_search": "Include in search",
       "exclude_from_search": "Exclude from search",
       "remove": "Remove album",

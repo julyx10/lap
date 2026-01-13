@@ -465,7 +465,7 @@ pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
 }
 
 /// Get all files in a folder(not include sub-folders)
-/// Returns a vector of AFile instances
+/// Returns (files, new_count, updated_count)
 pub fn get_folder_files(
     file_type: i64,
     sort_type: i64,
@@ -473,7 +473,10 @@ pub fn get_folder_files(
     folder_id: i64,
     folder_path: &str,
     from_db_only: bool,
-) -> Vec<AFile> {
+) -> (Vec<AFile>, u32, u32) {
+    let mut new_count = 0;
+    let mut updated_count = 0;
+
     let mut files: Vec<AFile> = if from_db_only {
         match AFile::get_files_by_folder_id(folder_id) {
             Ok(files) => files,
@@ -483,33 +486,39 @@ pub fn get_folder_files(
             }
         }
     } else {
-        WalkDir::new(folder_path)
+        let mut file_list = Vec::new();
+        for entry in WalkDir::new(folder_path)
             .min_depth(1)
             .max_depth(1)
             .into_iter()
             .filter_map(Result::ok)
             .filter(|entry| entry.file_type().is_file())
-            .filter_map(|entry| {
-                let path = entry.path();
-                let file_path = path.to_str()?;
+        {
+            let path = entry.path();
+            let file_path_str = match path.to_str() {
+                Some(p) => p,
+                None => continue,
+            };
 
-                if let Some(ftype) = get_file_type(file_path) {
-                    if file_type == 0 || file_type == ftype {
-                        match AFile::add_to_db(folder_id, file_path, ftype) {
-                            Ok(file) => Some(file),
-                            Err(e) => {
-                                eprintln!("Failed to add file to DB: {} ({})", file_path, e);
-                                None
+            if let Some(ftype) = get_file_type(file_path_str) {
+                if file_type == 0 || file_type == ftype {
+                    match AFile::add_to_db(folder_id, file_path_str, ftype) {
+                        Ok((file, status)) => {
+                            if status == 1 {
+                                new_count += 1;
+                            } else if status == 2 {
+                                updated_count += 1;
                             }
+                            file_list.push(file);
                         }
-                    } else {
-                        None
+                        Err(e) => {
+                            eprintln!("Failed to add file to DB: {} ({})", file_path_str, e);
+                        }
                     }
-                } else {
-                    None
                 }
-            })
-            .collect()
+            }
+        }
+        file_list
     };
 
     // sort
@@ -542,7 +551,7 @@ pub fn get_folder_files(
         });
     }
 
-    files
+    (files, new_count, updated_count)
 }
 
 /// get folder and file count and total file size (include all sub-folders)
@@ -751,7 +760,7 @@ struct FinishedPayload {
     album_id: i64,
 }
 
-pub async fn scan_album_worker(
+pub async fn index_album_worker(
     app_handle: &tauri::AppHandle,
     cancellation_token: Arc<Mutex<HashMap<i64, bool>>>,
     album_id: i64,
@@ -769,7 +778,7 @@ pub async fn scan_album_worker(
     let mut current_progress = 0;
     app_handle
         .emit(
-            "scan_progress",
+            "index_progress",
             ProgressPayload {
                 album_id,
                 current: current_progress,
@@ -800,7 +809,7 @@ pub async fn scan_album_worker(
                     .to_string();
 
                 if let Ok(folder) = crate::t_sqlite::AFolder::add_to_db(album_id, &parent_path) {
-                    if let Ok(file) =
+                    if let Ok((file, _)) =
                         crate::t_sqlite::AFile::add_to_db(folder.id.unwrap(), &path_str, ftype)
                     {
                         // Generate thumbnail
@@ -822,7 +831,7 @@ pub async fn scan_album_worker(
 
                 current_progress += 1;
                 let _ = app_handle.emit(
-                    "scan_progress",
+                    "index_progress",
                     ProgressPayload {
                         album_id,
                         current: current_progress,
@@ -838,12 +847,12 @@ pub async fn scan_album_worker(
         }
     }
 
-    // scan finished
+    // index finished
     let _ = Album::update_progress(album_id, current_progress, total_files);
 
     // 5. Emit finished
     app_handle
-        .emit("scan_finished", FinishedPayload { album_id })
+        .emit("index_finished", FinishedPayload { album_id })
         .map_err(|e| e.to_string())?;
 
     // 6. Set album cover if needed

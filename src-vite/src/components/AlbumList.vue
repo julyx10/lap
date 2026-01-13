@@ -43,18 +43,25 @@
             </div>
 
             <!-- Right side: Count and Status Icons -->
-            <div class="ml-auto pl-1 mr-1 flex flex-col items-end justify-center text-xs text-base-content/30 space-y-0.5">
-               <span v-if="album.total > 0">
-                  {{ album.scanned >= album.total ? album.total.toLocaleString() : album.scanned.toLocaleString() + '/' + album.total.toLocaleString() }}
-               </span>
-               <div class="flex flex-row items-center space-x-1">
-                  <IconFavorite v-if="album.is_favorite" class="w-4 h-4 min-mt-0" />
-                  <IconHide v-if="album.is_hidden" class="w-4 h-4 min-mt-0" />
-               </div>
+            <div class="ml-auto pl-1 flex items-center justify-center text-xs text-base-content/30">
+              <TButton v-if="album.indexed !== undefined && album.total !== undefined && album.indexed < album.total" 
+                :icon="IconUpdate"
+                :iconClasses="(config.index.albumQueue as any).includes(album.id) ? ['animate-spin'] : []"
+                :buttonSize="'small'"
+                @click="clickIndexAlbum(album.id)"
+              />
+              <span v-else>
+                {{ album.total.toLocaleString() }}
+              </span>
+              <TButton v-if="album.is_hidden" 
+                :icon="IconSearchOff"
+                :buttonSize="'small'"
+                @click="toggleHidden()"
+              />
             </div>  
 
             <div class="flex flex-row items-center text-base-content/30">
-              <div v-if="isMainPane && !isEditList && !config.scan.albumQueue.includes(album.id)"
+              <div v-if="isMainPane && !isEditList"
                 :class="[
                   selection.albumId.value === album.id && selection.selected.value ? '' : 'hidden group-hover:block'
                 ]"
@@ -65,10 +72,6 @@
                   :smallIcon="true"
                 />
               </div>
-              <!-- when scanning, replace context menu with Scanning Icon -->
-              <IconUpdate v-if="config.scan.albumQueue.includes(album.id)" 
-                :class="['mx-1 w-4 h-4', config.scan.albumQueue[0] === album.id ? 'animate-spin' : '']" 
-              />
               <!-- dragging handle -->
               <TButton v-if="isEditList" 
                 class="drag-handle"
@@ -83,7 +86,7 @@
             enter-from-class="max-h-0"
             enter-to-class="max-h-96"
           >
-            <div v-if="album.is_expanded && !isEditList && !config.scan.albumQueue.includes(album.id)" class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
+            <div v-if="album.is_expanded && !isEditList && !(config.index.albumQueue as any).includes(album.id)" class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
               <AlbumFolder 
                 :children="album.children" 
                 :isHiddenAlbum="album.is_hidden ? true : false"
@@ -145,8 +148,8 @@ import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
 import { scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
-         selectFolder as apiSelectFolder, fetchFolder, expandFinalFolder, getFileThumb,
-         getAlbum, listenScanProgress, listenScanFinished } from '@/common/api';
+         fetchFolder, expandFinalFolder, getFileThumb,
+         getAlbum, listenIndexProgress, listenIndexFinished } from '@/common/api';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelectionProvider, SelectionSource } from '@/composables/useAlbumSelection';
 
@@ -162,10 +165,9 @@ import {
   IconDragHandle,
   IconEdit,
   IconRemove,
-  IconUnhide,
-  IconHide,
-  IconFavorite,
   IconUpdate,
+  IconSearch,
+  IconSearchOff,
 } from '@/common/icons';
 
 const props = defineProps<{
@@ -186,8 +188,8 @@ const selection = useAlbumSelectionProvider(
 );
 
 let unlistenAlbumCoverChanged: () => void;
-let unlistenScanProgress: (() => void) | undefined;
-let unlistenScanFinished: (() => void) | undefined;
+let unlistenIndexProgress: (() => void) | undefined;
+let unlistenIndexFinished: (() => void) | undefined;
 
 // Computed to check if we're in main album pane
 const isMainPane = computed(() => props.selectionSource === 'album');
@@ -219,18 +221,15 @@ const getMoreMenuItems = (album: any) => {
       }
     },
     {
-      label: localeMsg.value.menu.album.scan,
+      label: localeMsg.value.menu.album.index,
       icon: IconUpdate,
       action: () => {
-        if (!config.scan.albumQueue.includes(album.id)) {
-          config.scan.albumQueue.push(album.id);
-          config.scan.status = 1;
-        }
+        clickIndexAlbum(album.id);
       }
     },
     {
       label: !album?.is_hidden ? localeMsg.value.menu.album.exclude_from_search : localeMsg.value.menu.album.include_in_search,
-      icon: !album?.is_hidden ? IconHide : IconUnhide,
+      icon: !album?.is_hidden ? IconSearchOff : IconSearch,
       action: () => {
         toggleHidden();
       }
@@ -288,12 +287,12 @@ onMounted( async () => {
         // manual update
         album.cover_file_id = fileId;
       } else {
-        // scan finished update, reload album to get new cover
-         const updatedAlbums = await getAllAlbums(true);
-         const updatedAlbum = updatedAlbums.find(a => a.id === eventAlbumId);
-         if (updatedAlbum) {
-             album.cover_file_id = updatedAlbum.cover_file_id;
-         }
+        // indexing finished update, reload album to get new cover
+        const updatedAlbums = await getAllAlbums(true);
+        const updatedAlbum = updatedAlbums.find(a => a.id === eventAlbumId);
+        if (updatedAlbum) {
+          album.cover_file_id = updatedAlbum.cover_file_id;
+        }
       }
       
       // Update the cover in albumCovers
@@ -301,24 +300,24 @@ onMounted( async () => {
     }
   });
 
-  // listen for scan progress
-  unlistenScanProgress = await listenScanProgress(async (event: any) => {
+  // listen for index progress
+  unlistenIndexProgress = await listenIndexProgress(async (event: any) => {
     const { album_id, current, total } = event.payload;
     const album = getAlbumById(album_id);
     if (album) {
-      album.scanned = current;
+      album.indexed = current;
       album.total = total;
     }
   });
 
-  // listen for scan finished
-  unlistenScanFinished = await listenScanFinished(async (event: any) => {
+  // listen for index finished
+  unlistenIndexFinished = await listenIndexFinished(async (event: any) => {
     const { album_id } = event.payload;
     const album = getAlbumById(album_id);
     if (album) {
       const updatedAlbum = await getAlbum(album_id);
       if (updatedAlbum) {
-        album.scanned = updatedAlbum.scanned;
+        album.indexed = updatedAlbum.indexed;
         album.total = updatedAlbum.total;
         album.cover_file_id = updatedAlbum.cover_file_id;
         
@@ -332,8 +331,8 @@ onMounted( async () => {
 
 onBeforeUnmount(() => {
   if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
-  if (unlistenScanProgress) unlistenScanProgress();
-  if (unlistenScanFinished) unlistenScanFinished();
+  if (unlistenIndexProgress) unlistenIndexProgress();
+  if (unlistenIndexFinished) unlistenIndexFinished();
 });
 
 
@@ -380,8 +379,8 @@ const clickEditAlbum = async (folderPathParam: string, newName: string, newDescr
       clickAlbum(newAlbum);
       showAlbumEdit.value = false;
       
-      // add the new album to the scan queue
-      config.scan.albumQueue.push(newAlbum.id);   
+      // add the new album to the index queue
+      config.index.albumQueue.push(newAlbum.id);   
     }
   } else {
     // Edit existing album
@@ -393,6 +392,14 @@ const clickEditAlbum = async (folderPathParam: string, newName: string, newDescr
     }
   }
 };
+
+/// Index an album
+const clickIndexAlbum = async (albumId: number) => {
+  if (!(config.index.albumQueue as any).includes(albumId)) {
+    config.index.albumQueue.push(albumId);
+    config.index.status = 1;
+  }
+}
 
 /// Remove an album from the list
 const clickRemoveAlbum = async () => {

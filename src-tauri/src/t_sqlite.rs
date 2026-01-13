@@ -35,7 +35,7 @@ pub struct Album {
     pub cover_file_id: Option<i64>,    // album cover file id
     pub description: Option<String>,   // album description
     pub is_hidden: Option<bool>,       // is hidden
-    pub scanned: Option<u64>,          // scanned files count
+    pub indexed: Option<u64>,          // indexed files count
     pub total: Option<u64>,            // total files count
 }
 
@@ -53,7 +53,7 @@ impl Album {
             cover_file_id: None,
             description: Some(String::new()),
             is_hidden: None,
-            scanned: Some(0),
+            indexed: Some(0),
             total: Some(0),
         })
     }
@@ -70,7 +70,7 @@ impl Album {
             cover_file_id: row.get(6)?,
             description: row.get(7)?,
             is_hidden: row.get(8)?,
-            scanned: row.get(9)?,
+            indexed: row.get(9)?,
             total: row.get(10)?,
         })
     }
@@ -79,7 +79,7 @@ impl Album {
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
             FROM albums WHERE path = ?1",
             params![path],
             |row| Self::from_row(row)
@@ -102,7 +102,7 @@ impl Album {
 
         // Insert the new album into the db
         let result = conn.execute(
-            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total) 
+            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total) 
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             params![
                 self.name,
@@ -113,7 +113,7 @@ impl Album {
                 self.cover_file_id,
                 self.description,
                 self.is_hidden,
-                self.scanned,
+                self.indexed,
                 self.total,
             ],
         ).map_err(|e| e.to_string())?;
@@ -153,11 +153,11 @@ impl Album {
         let conn = open_conn()?;
 
         let query = if show_hidden_album {
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
             FROM albums
             ORDER BY display_order_id ASC"
         } else {
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
             FROM albums
             WHERE is_hidden IS NULL OR is_hidden = 0
             ORDER BY display_order_id ASC"
@@ -185,7 +185,7 @@ impl Album {
     pub fn get_album_by_id(id: i64) -> Result<Self, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, scanned, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
             FROM albums WHERE id = ?1",
             params![id],
             |row| Self::from_row(row)
@@ -207,13 +207,13 @@ impl Album {
         Ok(result)
     }
 
-    /// update scanned and total progress
-    pub fn update_progress(id: i64, scanned: u64, total: u64) -> Result<usize, String> {
+    /// update indexed and total progress
+    pub fn update_progress(id: i64, indexed: u64, total: u64) -> Result<usize, String> {
         let conn = open_conn()?;
         let result = conn
             .execute(
-                "UPDATE albums SET scanned = ?1, total = ?2 WHERE id = ?3",
-                params![scanned, total, id],
+                "UPDATE albums SET indexed = ?1, total = ?2 WHERE id = ?3",
+                params![indexed, total, id],
             )
             .map_err(|e| e.to_string())?;
         Ok(result)
@@ -1243,18 +1243,39 @@ impl AFile {
     }
 
     /// insert a file into db if not exists
-    pub fn add_to_db(folder_id: i64, file_path: &str, file_type: i64) -> Result<Self, String> {
+    /// Returns (file, status)
+    /// status: 0 - existing, 1 - new, 2 - updated
+    pub fn add_to_db(
+        folder_id: i64,
+        file_path: &str,
+        file_type: i64,
+    ) -> Result<(Self, i32), String> {
         // Check if the file exists
         let existing_file = Self::fetch(folder_id, file_path)?;
         if let Some(file) = existing_file {
-            // check file modified time
+            // check file modified time or if thumbnail is missing
             let file_info = t_utils::FileInfo::new(file_path)?;
-            if file.modified_at != file_info.modified {
-                // delete the old file (using its actual id, not the folder_id)
-                Self::delete(file.id.unwrap())?;
-            } else {
-                return Ok(file);
+            let modified = file.modified_at != file_info.modified;
+            let missing_thumb = !file.has_thumbnail.unwrap_or(false);
+
+            if modified || missing_thumb {
+                if let Some(mut updated_file) = Self::update_file_info(file.id.unwrap(), file_path)?
+                {
+                    // If modified, delete old thumbnail and remove embeds data
+                    if modified {
+                        let _ = AThumb::delete(file.id.unwrap());
+                        // remove embeds data
+                        let conn = open_conn()?;
+                        let _ = conn.execute(
+                            "UPDATE afiles SET embeds = NULL WHERE id = ?1",
+                            params![file.id.unwrap()],
+                        );
+                        updated_file.has_embedding = Some(false);
+                    }
+                    return Ok((updated_file, 2));
+                }
             }
+            return Ok((file, 0));
         }
 
         // insert the new file into the database
@@ -1262,7 +1283,7 @@ impl AFile {
 
         // return the newly inserted file
         let new_file = Self::fetch(folder_id, file_path)?;
-        Ok(new_file.unwrap())
+        Ok((new_file.unwrap(), 1))
     }
 
     /// get a file info from db by file_id
@@ -2328,7 +2349,7 @@ pub fn create_db() -> Result<(), String> {
             cover_file_id INTEGER,
             description TEXT,
             is_hidden INTEGER,
-            scanned INTEGER DEFAULT 0,
+            indexed INTEGER DEFAULT 0,
             total INTEGER DEFAULT 0
         )",
         [],

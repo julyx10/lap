@@ -362,7 +362,7 @@ export async function getQueryFiles(params, offset, limit) {
 // get all files from the folder (no pagination)
 export async function getFolderFiles(folderId, folderPath, fromDbOnly) {
   try {
-    let files = await invoke('get_folder_files', { 
+    let result = await invoke('get_folder_files', { 
       fileType: config.search.fileType,
       sortType: config.search.sortType,
       sortOrder: config.search.sortOrder,
@@ -370,13 +370,13 @@ export async function getFolderFiles(folderId, folderPath, fromDbOnly) {
       folderPath,
       fromDbOnly: fromDbOnly || false,
     });
-    if(files) {
-      return files;
+    if(result) {
+      return result;
     };
   } catch (error) {
     console.error('getFolderFiles error:', error);
   }
-  return [null, null, null];
+  return [null, 0, 0];
 };
 
 // get the thumbnail count of the folder
@@ -866,32 +866,32 @@ export async function searchSimilarImages(params) {
   return [];
 }
 
-// scanning
+// indexing
 
-// scan album
-export async function scanAlbum(albumId) {
+// index album
+export async function indexAlbum(albumId) {
   try {
-    await invoke('scan_album', { albumId, thumbnailSize: config.settings.thumbnailSize || 512 });
+    await invoke('index_album', { albumId, thumbnailSize: config.settings.thumbnailSize || 512 });
   } catch (error) {
-    console.error('scanAlbum error:', error);
+    console.error('indexAlbum error:', error);
   }
 }
 
-// cancel scan
-export async function cancelScan(albumId) {
+// cancel indexing
+export async function cancelIndexing(albumId) {
   try {
-    await invoke('cancel_scan', { albumId });
+    await invoke('cancel_indexing', { albumId });
   } catch (error) {
-    console.error('cancelScan error:', error);
+    console.error('cancelIndexing error:', error);
   }
 }
 
-// listen scan progress
-export async function listenScanProgress(callback) {
-  return await listen('scan_progress', callback);
+// listen index progress
+export async function listenIndexProgress(callback) {
+  return await listen('index_progress', callback);
 }
 
-// listen scan finished
-export async function listenScanFinished(callback) {
-  return await listen('scan_finished', callback);
+// listen index finished
+export async function listenIndexFinished(callback) {
+  return await listen('index_finished', callback);
 }

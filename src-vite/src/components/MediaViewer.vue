@@ -112,7 +112,6 @@
         <TButton
           v-if="mode === 0 && config.mediaViewer.isPinned"
           :icon="IconClose"
-          :disabled="isSlideShow"
           :tooltip="$t('image_viewer.toolbar.close')"
           @click.stop="$emit('close')"
         />
@@ -168,6 +167,7 @@
         :filePath="file?.file_path"
         :rotate="file?.rotate ?? 0"
         :isZoomFit="isZoomFit"
+        :isSlideShow="isSlideShow"
       ></Video>
     </div>
 

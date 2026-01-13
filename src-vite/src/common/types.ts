@@ -25,7 +25,7 @@ export interface Album {
     is_favorite?: boolean;
     is_hidden?: boolean;
     total?: number;
-    scanned?: number;
+    indexed?: number;
     created_at?: string;
     modified_at?: string;
     children?: Folder[];

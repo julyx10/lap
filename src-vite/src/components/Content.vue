@@ -40,7 +40,7 @@
         <div tabindex="-1"
           :class="[
             'px-2 py-1 h-8 flex flex-row items-center rounded-box border border-content focus:outline-none text-sm shrink-0',
-            fileList.length === 0 || isScanning ? 'text-base-content/30' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content cursor-pointer',
+            fileList.length === 0 || isIndexing ? 'text-base-content/30' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content cursor-pointer',
             selectMode ? 'border-primary' : ''
           ]"
           @click="handleSelectMode(true)"
@@ -63,7 +63,7 @@
         <DropDownSelect
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isScanning"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isIndexing"
           @select="handleFileTypeSelect"
         />
 
@@ -73,7 +73,7 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isScanning"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isIndexing"
           @select="handleSortTypeSelect"
         />
 
@@ -85,14 +85,14 @@
           <TButton
             :icon="config.content.showFilmStrip ? IconGallery : IconGrid"
             :iconStyle="{ transform: `rotate(${config.settings.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
-            :disabled="isScanning"
+            :disabled="isIndexing"
             @click="toggleGridViewLayout"
           />
 
           <!-- toggle info panel -->
           <TButton
             :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
-            :disabled="isScanning"
+            :disabled="isIndexing"
             @click="config.infoPanel.show = !config.infoPanel.show"
           />
         </div>
@@ -279,22 +279,22 @@
         </div>
       </transition>
 
-      <!-- Scanning Overlay -->
-      <div v-if="isScanning" 
+      <!-- Indexing Overlay -->
+      <div v-if="isIndexing" 
         class="absolute inset-0 z-100 bg-base-200/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-base-content/30"
         :class="[ config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12 mb-1' ]"
       >
         <IconUpdate class="mx-1 w-8 h-8" 
-          :class="config.scan.albumQueue[0] === config.album.id ? 'animate-spin' : ''" 
+          :class="config.index.albumQueue[0] === config.album.id ? 'animate-spin' : ''" 
         />  
-        <span class="text-lg text-center">{{ config.scan.albumQueue[0] === config.album.id
-          ? $t('search.scan.scanning', { album: config.scan.albumName, count: config.scan.count.toLocaleString(), total: config.scan.total.toLocaleString() }) 
-          : $t('search.scan.wait_scan') 
+        <span class="text-lg text-center">{{ config.index.albumQueue[0] === config.album.id
+          ? $t('search.index.indexing', { album: config.index.albumName, count: config.index.indexed.toLocaleString(), total: config.index.total.toLocaleString() }) 
+          : $t('search.index.wait_index') 
         }}</span>
-        <span class="text-sm text-center">{{ $t('search.scan.description') }}</span>
-        <button class="btn btn-primary" @click="cancelScanning">
+        <span class="text-sm text-center">{{ $t('search.index.description') }}</span>
+        <button class="btn btn-primary" @click="cancelIndexing">
           <IconClose class="w-5 h-5" />
-          {{ $t('search.scan.cancel') }}
+          {{ $t('search.index.cancel') }}
         </button>
       </div>
     </div>
@@ -447,8 +447,8 @@ import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount,
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
-         revealFolder, getTagName, scanAlbum, listenScanProgress, listenScanFinished, setAlbumCover,
-         updateFileInfo, cancelScan} from '@/common/api';  
+         revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
+         updateFileInfo, cancelIndexing as cancelIndexingApi} from '@/common/api';  
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -1040,7 +1040,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  if (isScanning.value) {
+  if (isIndexing.value) {
     return;
   }
 
@@ -1117,67 +1117,67 @@ const handleKeyDown = (e: any) => {
   }
 };
 
-// --- Scanning Logic ---
-let unlistenScanProgress: (() => void) | undefined;
-let unlistenScanFinished: (() => void) | undefined;
+// --- Indexing Logic ---
+let unlistenIndexProgress: (() => void) | undefined;
+let unlistenIndexFinished: (() => void) | undefined;
 let unlistenTriggerNextAlbum: (() => void) | undefined;
 
 async function processNextAlbum() {
-  if (config.scan.albumQueue.length > 0) {
-    const albumId = config.scan.albumQueue[0];
+  if (config.index.albumQueue.length > 0) {
+    const albumId = config.index.albumQueue[0];
     const album = await getAlbum(albumId);
     if (album) {
-      config.scan.albumName = album.name;
-      config.scan.count = 0;
-      config.scan.total = 0;
-      await scanAlbum(albumId);
+      config.index.albumName = album.name;
+      config.index.indexed = 0;
+      config.index.total = 0;
+      await indexAlbum(albumId);
     } else {
       // album not found (maybe deleted), remove from queue and process next
-      config.scan.albumQueue.shift();
+      config.index.albumQueue.shift();
       processNextAlbum();
     }
   } else {
-    config.scan.status = 0;
+    config.index.status = 0;
   }
 }
 
-// Check if current album is being scanned
-const isScanning = computed(() => {
+// Check if current album is being indexed
+const isIndexing = computed(() => {
   return config.main.sidebarIndex === 0 && // Album mode
          !!config.album.id && config.album.id > 0 && // Valid album
-         config.scan.albumQueue.includes(config.album.id);
+         config.index.albumQueue.includes(config.album.id);
 });
 
-watch(isScanning, (val) => {
+watch(isIndexing, (val) => {
   // Always remove first to clear any stale entries
-  uiStore.removeInputHandler('scanning');
+  uiStore.removeInputHandler('indexing');
   
   if (val) {
     showQuickView.value = false;
-    // Push fresh handler when scanning starts
-    uiStore.pushInputHandler('scanning');
+    // Push fresh handler when indexing starts
+    uiStore.pushInputHandler('indexing');
   } else {
     updateContent();
   }
 });
 
-// Cancel scanning for current album
-async function cancelScanning() {
+// Cancel indexing for current album
+async function cancelIndexing() {
   const albumId = config.album.id;
-  const index = config.scan.albumQueue.indexOf(albumId);
+  const index = config.index.albumQueue.indexOf(albumId);
   if (index === -1) return;
 
   if (index === 0) {
     // Active one: remove and restart processing for next
-    config.scan.albumQueue.shift();
-    config.scan.count = 0;
-    config.scan.total = 0;
+    config.index.albumQueue.shift();
+    config.index.indexed = 0;
+    config.index.total = 0;
     
     // reset status
-    config.scan.status = 0;
+    config.index.status = 0;
 
     // Call backend to cancel
-    cancelScan(albumId);
+    cancelIndexingApi(albumId);
     
     // trigger processing next
     // Do not call immediately to avoid parallel indexing
@@ -1187,7 +1187,7 @@ async function cancelScanning() {
 
   } else {
     // Pending one: just remove
-    config.scan.albumQueue.splice(index, 1);
+    config.index.albumQueue.splice(index, 1);
   }
 }
 
@@ -1217,25 +1217,25 @@ onMounted( async() => {
     }
   });
 
-  // Scanning listeners
-  unlistenScanProgress = await listenScanProgress((event: any) => {
+  // Indexing listeners
+  unlistenIndexProgress = await listenIndexProgress(async (event: any) => {
     const { album_id, current, total } = event.payload;
-    if (config.scan.albumQueue.length > 0 && config.scan.albumQueue[0] === album_id) {
-        config.scan.count = current;
-        config.scan.total = total;
+    if (config.index.albumQueue.length > 0 && config.index.albumQueue[0] === album_id) {
+        config.index.indexed = current;
+        config.index.total = total;
     }
   });
 
-  unlistenScanFinished = await listenScanFinished(async (event: any) => {
+  unlistenIndexFinished = await listenIndexFinished(async (event: any) => {
     const { album_id } = event.payload;
     // notify album list to update cover
     await tauriEmit('album-cover-changed', { albumId: album_id, fileId: null });
-    if (config.scan.albumQueue.length > 0 && config.scan.albumQueue[0] === album_id) {
-      config.scan.albumQueue.shift();
-      if (config.scan.albumQueue.length > 0) {
+    if (config.index.albumQueue.length > 0 && config.index.albumQueue[0] === album_id) {
+      config.index.albumQueue.shift();
+      if (config.index.albumQueue.length > 0) {
         processNextAlbum();
       } else {
-        config.scan.status = 0;
+        config.index.status = 0;
       }
     }
   });
@@ -1244,11 +1244,11 @@ onMounted( async() => {
       processNextAlbum();
   });
 
-  if (config.scan.albumQueue.length > 0) {
-     if (config.scan.status === 1) {
+  if (config.index.albumQueue.length > 0) {
+     if (config.index.status === 1) {
         processNextAlbum();
      } else {
-        config.scan.status = 1;
+        config.index.status = 1;
      }
   }
 });
@@ -1259,8 +1259,8 @@ onBeforeUnmount(() => {
   unlistenImageViewer();
   if (unlistenKeydown) unlistenKeydown();
   if (unlistenTriggerNextAlbum) unlistenTriggerNextAlbum();
-  if (unlistenScanProgress) unlistenScanProgress();
-  if (unlistenScanFinished) unlistenScanFinished();
+  if (unlistenIndexProgress) unlistenIndexProgress();
+  if (unlistenIndexFinished) unlistenIndexFinished();
 });
 
 /// watch appearance
@@ -1284,15 +1284,15 @@ watch(() => config.settings.language, (newLanguage) => {
     updateContent();
 });
 
-watch(() => config.scan.status, (newStatus) => {
-  if (newStatus === 1 && config.scan.albumQueue.length > 0) {
+watch(() => config.index.status, (newStatus) => {
+  if (newStatus === 1 && config.index.albumQueue.length > 0) {
     processNextAlbum();
   }
 });
 
-watch(() => config.scan.albumQueue.length, (newLength) => {
-   if (newLength > 0 && config.scan.status === 0) {
-       config.scan.status = 1; 
+watch(() => config.index.albumQueue.length, (newLength) => {
+   if (newLength > 0 && config.index.status === 0) {
+       config.index.status = 1; 
    }
 });
 
@@ -1658,10 +1658,12 @@ async function updateContent() {
             contentTitle.value = getFolderName(album.path) + getRelativePath(config.album.folderPath || "", album.path);
             
             // Get files from file system (not from DB) and generate thumbnails if needed
-            const folderFiles = await getFolderFiles(config.album.folderId, config.album.folderPath, false);
+            const [folderFiles, newCount, updatedCount] = await getFolderFiles(config.album.folderId, config.album.folderPath, false);
             if (requestId !== currentContentRequestId) return;
+            
+            console.log(`getFolderFiles: found ${newCount} new files and updated ${updatedCount} files.`);
 
-            fileList.value = folderFiles;
+            fileList.value = folderFiles || [];
             totalFileCount.value = fileList.value.length;
             totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
 
@@ -2278,7 +2280,7 @@ const clickEditComment = async (newComment: any) => {
 }
 
 const handleSelectMode = (value: any) => {
-  if(fileList.value.length === 0 || isScanning.value) return;
+  if(fileList.value.length === 0 || isIndexing.value) return;
 
   selectMode.value = value;
   if(!selectMode.value) {

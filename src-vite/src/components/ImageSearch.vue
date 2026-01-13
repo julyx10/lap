@@ -48,7 +48,7 @@
       >
         <IconSearch 
           :class="[
-            'absolute left-2 mx-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
+            'absolute left-2 ml-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
             isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
           ]"
         />
@@ -58,7 +58,7 @@
           v-model="searchQuery"
           :placeholder="$t('search.image_search_placeholder')"
           :class="[
-            'pl-8 w-full input bg-transparent rounded-box',
+            'pl-7 w-full input bg-transparent rounded-box',
             isSearchFocused ? 'border-primary' : 'border-base-content/30 group-hover:border-base-content/70 cursor-pointer',
           ]"
           maxlength="255"
@@ -168,7 +168,7 @@
           v-model="config.search.fileName"
           :placeholder="$t('search.filename_search_tips')"
           :class="[
-            'pl-8 w-full input bg-transparent rounded-box',
+            'pl-7 w-full input bg-transparent rounded-box',
             isSearchFocused ? 'border-primary' : 'border-base-content/30 group-hover:border-base-content/70 cursor-pointer',
           ]"
           maxlength="255"

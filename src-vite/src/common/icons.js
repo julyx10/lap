@@ -80,6 +80,7 @@ export { default as IconAdd } from '@/assets/icons/plus.svg';
 export { default as IconRemove } from '@/assets/icons/minus.svg';
 export { default as IconClose } from '@/assets/icons/close.svg';
 export { default as IconSearch } from '@/assets/icons/search.svg';
+export { default as IconSearchOff } from '@/assets/icons/search-off.svg';
 export { default as IconMore } from '@/assets/icons/more.svg';
 export { default as IconDot } from '@/assets/icons/dot.svg';
 export { default as IconEdit } from '@/assets/icons/edit.svg';
@@ -161,3 +162,6 @@ export { default as IconVideoFill } from '@/assets/icons/video-fill.svg';
 // AI ICONS
 // ======================
 export { default as IconBolt } from '@/assets/icons/bolt.svg';
+export { default as IconIndexReady } from '@/assets/icons/index-ready.svg';
+export { default as IconIndexWaiting } from '@/assets/icons/index-waiting.svg';
+export { default as IconIndexRunning } from '@/assets/icons/index-running.svg';

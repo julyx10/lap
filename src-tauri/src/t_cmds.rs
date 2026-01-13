@@ -19,7 +19,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tauri::State;
 
-pub struct ScanCancellation(pub Arc<Mutex<HashMap<i64, bool>>>);
+pub struct IndexCancellation(pub Arc<Mutex<HashMap<i64, bool>>>);
 use tokio;
 
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
@@ -85,11 +85,11 @@ pub fn set_album_cover(id: i64, file_id: i64) -> Result<usize, String> {
         .map_err(|e| format!("Error while setting album cover: {}", e))
 }
 
-/// scan album
+/// index album
 #[tauri::command]
-pub fn scan_album(
+pub fn index_album(
     app_handle: tauri::AppHandle,
-    state: State<ScanCancellation>,
+    state: State<IndexCancellation>,
     album_id: i64,
     thumbnail_size: u32,
 ) -> Result<(), String> {
@@ -99,18 +99,18 @@ pub fn scan_album(
 
     tauri::async_runtime::spawn(async move {
         if let Err(e) =
-            t_utils::scan_album_worker(&app_handle, cancellation_token, album_id, thumbnail_size)
+            t_utils::index_album_worker(&app_handle, cancellation_token, album_id, thumbnail_size)
                 .await
         {
-            eprintln!("Error scanning album {}: {}", album_id, e);
+            eprintln!("Error indexing album {}: {}", album_id, e);
         }
     });
     Ok(())
 }
 
-/// cancel scan
+/// cancel indexing
 #[tauri::command]
-pub fn cancel_scan(state: State<ScanCancellation>, album_id: i64) -> Result<(), String> {
+pub fn cancel_indexing(state: State<IndexCancellation>, album_id: i64) -> Result<(), String> {
     state.0.lock().unwrap().insert(album_id, true);
     Ok(())
 }
@@ -239,7 +239,7 @@ pub fn get_folder_files(
     folder_id: i64,
     folder_path: &str,
     from_db_only: Option<bool>,
-) -> Vec<AFile> {
+) -> (Vec<AFile>, u32, u32) {
     t_utils::get_folder_files(
         file_type,
         sort_type,
