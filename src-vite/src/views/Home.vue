@@ -64,7 +64,7 @@
       <div v-if="!uiStore.isFullScreen"
         class="w-1 transition-colors shrink-0"
         :class="{
-          'hover:bg-primary cursor-ew-resize': config.main.showLeftPane && showPanel,
+          'hover:bg-primary cursor-col-resize': config.main.showLeftPane && showPanel,
           'bg-primary': config.main.showLeftPane && showPanel && isDraggingSplitter,
         }" 
         @mousedown="startDraggingSplitter"

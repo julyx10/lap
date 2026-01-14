@@ -549,6 +549,16 @@ export async function getFileImage(filePath) {
   return null;
 }
 
+// check if file exists
+export async function checkFileExists(filePath) {
+  try {
+    return await invoke('check_file_exists', { filePath });
+  } catch (error) {
+    console.error('Failed to check file exists:', error);
+  }
+  return false;
+}
+
 // set file rotate
 export async function setFileRotate(fileId, fileRotate) {
   try {

@@ -405,6 +405,12 @@ pub async fn get_file_image(file_path: String) -> Result<String, String> {
     }
 }
 
+/// check if file exists
+#[tauri::command]
+pub fn check_file_exists(file_path: &str) -> bool {
+    Path::new(file_path).exists()
+}
+
 /// set a file's rotate status
 #[tauri::command]
 pub fn set_file_rotate(file_id: i64, rotate: i32) -> Result<usize, String> {

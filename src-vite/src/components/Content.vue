@@ -81,6 +81,13 @@
         <div class="flex flex-row items-center">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
 
+          <!-- refresh file list -->
+          <TButton
+            :icon="IconRefresh"
+            :disabled="isIndexing"
+            @click="updateContent()"
+          />
+
           <!-- toggle layout -->
           <TButton
             :icon="config.content.showFilmStrip ? IconGallery : IconGrid"
@@ -164,7 +171,7 @@
           <!-- splitter -->
           <div v-if="config.content.showFilmStrip" 
             :class="[ 
-              'h-1 hover:bg-primary cursor-ns-resize transition-colors',
+              'h-1 hover:bg-primary cursor-row-resize transition-colors',
               isDraggingFilmStripView ? 'bg-primary' : 'bg-base-300'
             ]" 
             @mousedown="startDraggingfilmStripView"
@@ -254,7 +261,7 @@
         :class="{
           'mb-8': config.settings.showStatusBar,
           'mb-1': !config.settings.showStatusBar,
-          'hover:bg-primary cursor-ew-resize': config.infoPanel.show,
+          'hover:bg-primary cursor-col-resize': config.infoPanel.show,
           'bg-primary': config.infoPanel.show && isDraggingInfoPanel,
         }" 
         @mousedown="startDraggingInfoPanelSplitter"
@@ -506,6 +513,7 @@ import {
   IconSearch,
   IconRestore,
   IconRestoreScreen,
+  IconRefresh,
 } from '@/common/icons';
 
 import { useFileMenuItems } from '@/common/fileMenu';

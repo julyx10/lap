@@ -18,7 +18,7 @@
       
       <!-- Markers Area (Left) -->
       <div 
-        class="flex-1 h-full relative cursor-ns-resize"
+        class="flex-1 h-full relative cursor-row-resize"
         @mouseenter="handleMarkersMouseEnter"
         @mouseleave="handleMarkersMouseLeave"
         @mousemove="handleMarkersMouseMove"

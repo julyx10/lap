@@ -27,8 +27,8 @@ pub struct Album {
     // album basic info
     pub name: String,             // album name (default is folder name)
     pub path: String,             // folder path
-    pub created_at: Option<u64>,  // folder create time
-    pub modified_at: Option<u64>, // folder modified time
+    pub created_at: Option<i64>,  // folder create time
+    pub modified_at: Option<i64>, // folder modified time
 
     // extra info
     pub display_order_id: Option<i64>, // display order id
@@ -275,8 +275,8 @@ pub struct AFolder {
     // folder basic info
     pub name: String,             // folder name
     pub path: String,             // folder path
-    pub created_at: Option<u64>,  // folder create time
-    pub modified_at: Option<u64>, // folder modified time
+    pub created_at: Option<i64>,  // folder create time
+    pub modified_at: Option<i64>, // folder modified time
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
@@ -502,16 +502,16 @@ pub struct AFile {
     // file basic info
     pub name: String,                // file name
     pub name_pinyin: Option<String>, // file name pinyin(for sort)
-    pub size: u64,                   // file size
+    pub size: i64,                   // file size
     pub file_type: Option<i64>,      // file type (0: all, 1: image, 2: video, 3: audio, 4: other)
-    pub created_at: Option<u64>,     // file create timestamp
-    pub modified_at: Option<u64>,    // file modified timestamp
-    pub taken_date: Option<u64>,     // taken date timestamp (e_date_time || modified_at)
+    pub created_at: Option<i64>,     // file create timestamp
+    pub modified_at: Option<i64>,    // file modified timestamp
+    pub taken_date: Option<i64>,     // taken date timestamp (e_date_time || modified_at)
 
     // image/video
     pub width: Option<u32>,    // image/video width
     pub height: Option<u32>,   // image/video height
-    pub duration: Option<u64>, // video duration
+    pub duration: Option<i64>, // video duration
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
@@ -610,12 +610,12 @@ impl AFile {
 
         // get duration of video file
         let duration = match file_type {
-            2 => t_video::get_video_duration(file_path)?,
+            2 => t_video::get_video_duration(file_path)? as i64,
             _ => 0,
         };
 
         // Initialize mutable metadata fields
-        let mut taken_date: Option<u64> = None;
+        let mut taken_date: Option<i64> = None;
         let mut e_make: Option<String> = None;
         let mut e_model: Option<String> = None;
         let mut e_date_time: Option<String> = None;

@@ -1,5 +1,5 @@
 <template>
-  <div class="h-8 flex flex-col items-start justify-center" :style="{width: slider_width + 'px'}">
+  <div class="h-6 flex flex-col items-start justify-center" :style="{width: slider_width + 'px'}">
     <label v-if="label.length > 0" :for="id" class="mb-2">
       {{ label }}: <span>{{ sliderValue }}</span>
     </label>

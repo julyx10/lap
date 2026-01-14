@@ -151,9 +151,9 @@ pub struct FileInfo {
     pub file_path: String,
     pub file_name: String,
     pub file_type: Option<String>, // file type (dir, file)
-    pub created: Option<u64>,
-    pub modified: Option<u64>, // modified date as a timestamp
-    pub file_size: u64,
+    pub created: Option<i64>,
+    pub modified: Option<i64>, // modified date as a timestamp
+    pub file_size: i64,
 }
 
 impl FileInfo {
@@ -169,7 +169,7 @@ impl FileInfo {
             file_type: metadata.file_type().is_dir().then(|| "dir".to_string()),
             created: systemtime_to_timestamp(metadata.created().ok()),
             modified: systemtime_to_timestamp(metadata.modified().ok()),
-            file_size: metadata.len(),
+            file_size: metadata.len() as i64,
         })
     }
 }
@@ -664,25 +664,31 @@ pub fn convert_to_pinyin(s: &str) -> String {
         .collect()
 }
 
-/// Convert a SystemTime to a u64 timestamp (in seconds since UNIX_EPOCH)
-pub fn systemtime_to_timestamp(time: Option<SystemTime>) -> Option<u64> {
+/// Convert a SystemTime to a i64 timestamp (in seconds since UNIX_EPOCH)
+pub fn systemtime_to_timestamp(time: Option<SystemTime>) -> Option<i64> {
     match time {
         Some(t) => {
             // Calculate the duration since UNIX_EPOCH
             match t.duration_since(UNIX_EPOCH) {
-                Ok(duration) => Some(duration.as_secs()),
-                Err(_) => None, // Handle the case where `SystemTime` is before UNIX_EPOCH
+                Ok(duration) => Some(duration.as_secs() as i64),
+                Err(_) => {
+                    // pre-1970
+                    match UNIX_EPOCH.duration_since(t) {
+                        Ok(duration) => Some(-(duration.as_secs() as i64)),
+                        Err(_) => None,
+                    }
+                }
             }
         }
         None => None, // Return None if the input is None
     }
 }
 
-/// Convert an EXIF or ISO 8601 date string to a u64 timestamp
-pub fn meta_date_to_timestamp(date: &str) -> Option<u64> {
+/// Convert an EXIF or ISO 8601 date string to a i64 timestamp
+pub fn meta_date_to_timestamp(date: &str) -> Option<i64> {
     // Try to parse as ISO 8601 (RFC 3339) first, which video metadata often uses
     if let Ok(datetime) = DateTime::parse_from_rfc3339(date) {
-        return Some(datetime.timestamp() as u64);
+        return Some(datetime.timestamp());
     }
 
     // Fallback to EXIF format: YYYY:MM:DD HH:MM:SS
@@ -715,7 +721,7 @@ pub fn meta_date_to_timestamp(date: &str) -> Option<u64> {
 
     // Treat EXIF time as local time (without timezone information)
     let local_dt = Local.from_local_datetime(&dt).single()?;
-    Some(local_dt.timestamp() as u64)
+    Some(local_dt.timestamp())
 }
 
 /// EXIF GPS data is often stored in a format that includes degrees, minutes, and seconds (DMS),

@@ -146,19 +146,19 @@
           <div>
             <h3>{{ $t('msgbox.image_editor.filters') }}</h3>
             <div class="flex flex-col gap-2 mt-2">
-              <label class="label cursor-pointer justify-start gap-2 h-8">
+              <label class="label cursor-pointer justify-start gap-2 h-6">
                 <input type="radio" name="filter" class="radio radio-xs" value="" v-model="selectedFilter" />
                 <span class="text-sm">{{ $t('msgbox.image_editor.filter_none') }}</span>
               </label>
-              <label class="label cursor-pointer justify-start gap-2 h-8">
+              <label class="label cursor-pointer justify-start gap-2 h-6">
                 <input type="radio" name="filter" class="radio radio-xs" value="grayscale" v-model="selectedFilter" />
                 <span class="text-sm">{{ $t('msgbox.image_editor.filter_grayscale') }}</span>
               </label>
-              <label class="label cursor-pointer justify-start gap-2 h-8">
+              <label class="label cursor-pointer justify-start gap-2 h-6">
                 <input type="radio" name="filter" class="radio radio-xs" value="sepia" v-model="selectedFilter" />
                 <span class="text-sm">{{ $t('msgbox.image_editor.filter_sepia') }}</span>
               </label>
-              <label class="label cursor-pointer justify-start gap-2 h-8">
+              <label class="label cursor-pointer justify-start gap-2 h-6">
                 <input type="radio" name="filter" class="radio radio-xs" value="invert" v-model="selectedFilter" />
                 <span class="text-sm">{{ $t('msgbox.image_editor.filter_invert') }}</span>
               </label>
@@ -169,7 +169,12 @@
           <div>
             <div class="flex justify-between">
               <span>{{ $t('msgbox.image_editor.adjustments') }}</span>
-              <TButton :icon="IconRestore" :buttonSize="'small'" @click="resetAdjustments">{{ $t('msgbox.image_editor.reset') }}</TButton>
+              <TButton v-if="hasAdjustments" 
+                :icon="IconRestore" 
+                :buttonSize="'small'" 
+                :selected="true"
+                @click="resetAdjustments">
+              </TButton>
             </div>
             <div class="flex flex-col gap-2 mt-2 text-sm text-base-content/70">
               
@@ -184,6 +189,7 @@
                   :min="-100" 
                   :max="100" 
                   :step="1" 
+                  :slider_width="170"
                   label=""
                 />
               </div>
@@ -199,6 +205,7 @@
                   :min="-100" 
                   :max="100" 
                   :step="1" 
+                  :slider_width="170"
                   label=""
                 />
               </div>
@@ -214,6 +221,7 @@
                   :min="0" 
                   :max="200" 
                   :step="1" 
+                  :slider_width="170"
                   label=""
                 />
               </div>
@@ -229,6 +237,7 @@
                   :min="-180" 
                   :max="180" 
                   :step="1" 
+                  :slider_width="170"
                   label=""
                 />
               </div>
@@ -244,6 +253,7 @@
                   :min="0" 
                   :max="10" 
                   :step="0.1" 
+                  :slider_width="170"
                   label=""
                 />
               </div> -->
@@ -378,7 +388,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getFolderPath, extractFileName, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
-import { editImage, copyEditedImage } from '@/common/api';
+import { editImage, copyEditedImage, checkFileExists } from '@/common/api';
 
 import ToolTip from '@/components/ToolTip.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
@@ -620,8 +630,15 @@ const initImageEditor = () => {
   resetAdjustments();
 };
 
+const hasAdjustments = computed(() => {
+  return brightness.value !== 0 ||
+    contrast.value !== 0 ||
+    blur.value !== 0 ||
+    hue.value !== 0 ||
+    saturation.value !== 100;
+});
+
 const resetAdjustments = () => {
-  selectedFilter.value = '';
   brightness.value = 0;
   contrast.value = 0;
   blur.value = 0;
@@ -1047,20 +1064,22 @@ const clickCancel = () => {
   emit('cancel');
 };
 
-const setEditParams = () => {
-  let name = newFileName.value;
-  if(config.imageEditor.saveAs === 1) { // 1: Save as new file
-    name += "_edited";
+const setEditParams = (overrides: { fileName?: string; destFilePath?: string; outputFormat?: string } = {}) => {
+  let name = overrides.fileName || newFileName.value;
+
+  let outputFormat = overrides.outputFormat || fileFormatOptions.value[config.imageEditor.format].label.toLowerCase();
+  
+  let destFilePath = overrides.destFilePath;
+  if (!destFilePath) {
+    destFilePath = getFullPath(getFolderPath(props.fileInfo.file_path), combineFileName(name, outputFormat));
   }
 
-  const fileName = combineFileName(name, fileFormatOptions.value[config.imageEditor.format].label.toLowerCase());
-  const destFilePath = getFullPath(getFolderPath(props.fileInfo.file_path), fileName);
   const orientation = props.fileInfo.e_orientation || 1;
 
   return {
     sourceFilePath: props.fileInfo.file_path,
     destFilePath: destFilePath,
-    outputFormat: fileFormatOptions.value[config.imageEditor.format].label.toLowerCase(),
+    outputFormat: outputFormat,
     quality: [90, 80, 60][config.imageEditor.quality] || 80,
     orientation: orientation,
     flipHorizontal: isFlippedX.value,
@@ -1113,7 +1132,38 @@ const clickSave = async () => {
 
   let success = false;
   try {
-    const editParams = setEditParams();
+    let overrides: { fileName?: string; destFilePath?: string; outputFormat?: string } = {};
+
+    if (config.imageEditor.saveAs === 1) { // 1: Save as new file
+      // calculate unique filename
+      const folderPath = getFolderPath(props.fileInfo.file_path);
+      const ext = fileFormatOptions.value[config.imageEditor.format].label.toLowerCase();
+      
+      let baseName = newFileName.value;
+      
+      let counter = 1;
+      let candidateName = `${baseName}_${counter}`;
+      let candidatePath = getFullPath(folderPath, combineFileName(candidateName, ext));
+      
+      while (await checkFileExists(candidatePath)) {
+        counter++;
+        candidateName = `${baseName}_${counter}`;
+        candidatePath = getFullPath(folderPath, combineFileName(candidateName, ext));
+      }
+      // set overrides
+      overrides.fileName = candidateName;
+      overrides.destFilePath = candidatePath; // optimization: we already calculated path
+    } else if (config.imageEditor.saveAs === 0) { // 0: Overwrite
+      // Force use of original filename/path regardless of inputs
+      const originalPath = props.fileInfo.file_path;
+      const ext = getFileExtension(props.fileInfo.name).toLowerCase();
+      const outputFormat = (ext === 'jpg' || ext === 'jpeg') ? 'jpg' : ext;
+
+      overrides.destFilePath = originalPath;
+      overrides.outputFormat = outputFormat;
+    }
+
+    const editParams = setEditParams(overrides);
     console.log(editParams);
     success = await editImage(editParams);
   } finally {
