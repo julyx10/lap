@@ -4,7 +4,13 @@
       
       <!-- title -->
       <div v-if="isMainPane" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
-        {{ $t('album.album_list') }}
+        <span class="flex-1">{{ $t('album.album_list') }}</span>
+        <TButton v-if="isEditList" 
+          :icon="IconRestore"
+          :selected="true"
+          :buttonSize="'small'"
+          @click="clickCloseEditList"
+        />
       </div>
       
       <!-- drag to change albums' display order -->
@@ -146,6 +152,7 @@ import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
 import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
+import { useUIStore } from '@/stores/uiStore';
 import { scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
          fetchFolder, expandFinalFolder, getFileThumb,
@@ -168,6 +175,7 @@ import {
   IconUpdate,
   IconSearch,
   IconSearchOff,
+  IconRestore,
 } from '@/common/icons';
 
 const props = defineProps<{
@@ -177,6 +185,7 @@ const props = defineProps<{
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
+const uiStore = useUIStore();
 
 // Set up the selection context using provide/inject
 // Pass the expandAndSelectFolder callback so the composable can trigger folder expansion
@@ -186,6 +195,8 @@ const selection = useAlbumSelectionProvider(
     await clickFinalSubFolder(albumIdVal, folderPathVal);
   }
 );
+
+let unlistenKeydown: () => void;
 
 let unlistenAlbumCoverChanged: () => void;
 let unlistenIndexProgress: (() => void) | undefined;
@@ -267,6 +278,8 @@ const loadAlbumCovers = async () => {
 };
 
 onMounted( async () => {
+  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+
   if (albums.value.length === 0) {
     albums.value = await getAllAlbums(true);
     await loadAlbumCovers();
@@ -330,6 +343,7 @@ onMounted( async () => {
 });
 
 onBeforeUnmount(() => {
+  if (unlistenKeydown) unlistenKeydown();
   if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
   if (unlistenIndexProgress) unlistenIndexProgress();
   if (unlistenIndexFinished) unlistenIndexFinished();
@@ -507,6 +521,16 @@ const toggleHidden = async () => {
   }
 };
 
+const clickCloseEditList = () => {
+  isEditList.value = false;
+  uiStore.removeInputHandler('AlbumList-edit');
+};
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (isEditList.value && event.payload.key === 'Escape') {
+    clickCloseEditList();
+  }
+};
 // Expose methods
 defineExpose({ 
   isEditList,

@@ -224,55 +224,28 @@
             <table class="w-full">
               <tbody>
                 <tr>
-                  <td class="w-48">{{ $t('settings.about.package.name') }}</td>
+                  <td class="h-8">{{ $t('settings.about.package.name') }}</td>
                   <td>{{ packageInfo.name }}</td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings.about.package.version') }}</td>
+                  <td class="h-8">{{ $t('settings.about.package.version') }}</td>
                   <td>{{ packageInfo.version }}</td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings.about.package.build_time') }}</td>
+                  <td class="h-8">{{ $t('settings.about.package.build_time') }}</td>
                   <td>{{ buildTime }}</td>
                 </tr>
-                <!-- <tr>
-                  <td>{{ $t('settings.about.package_website') }}</td>
-                  <td>{{ packageInfo.homepage }}</td>
+                <tr>
+                  <td class="h-8">{{ $t('settings.about.package.website') }}</td>
+                  <td class="link"><a target="_blank" :href="packageInfo.homepage">{{ packageInfo.homepage }}</a></td>
                 </tr>
                 <tr>
-                  <td>{{ $t('settings.about.package_license') }}</td>
+                  <td class="h-8">{{ $t('settings.about.package.license') }}</td>
                   <td>{{ packageInfo.license}}</td>
-                </tr> -->
+                </tr>
                 <tr>
-                  <td>{{ $t('settings.about.package.author') }}</td>
+                  <td class="h-8">{{ $t('settings.about.package.author') }}</td>
                   <td>{{ packageInfo.authors[0]}}</td>
-                </tr>
-                <tr>
-                  <td colspan="2" class="h-4"> </td>
-                </tr>
-                <tr>
-                  <td>{{ $t('settings.about.storage.total_file_count') }}</td>
-                  <td>{{ totalFileCount.toLocaleString() }}</td>
-                </tr>
-                <tr>
-                  <td>{{ $t('settings.about.storage.total_file_size') }}</td>
-                  <td>{{ formatFileSize(totalFileSize) }}</td>
-                </tr>
-                <tr>
-                  <td>{{ $t('settings.about.storage.file_path') }}</td>
-                  <td>{{ storageFileInfo.file_path }}</td>
-                   <!-- <td>
-                    <input
-                      type="text"
-                      :value="storageFileInfo.file_path"
-                      readonly
-                      class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
-                    />
-                   </td> -->
-                </tr>
-                <tr>
-                  <td>{{ $t('settings.about.storage.file_size') }}</td>
-                  <td>{{ formatFileSize(storageFileInfo.file_size) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -291,8 +264,8 @@ import { emit } from '@tauri-apps/api/event';
 import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { setTheme, getSlideShowInterval, formatFileSize } from '@/common/utils';
-import { getPackageInfo, getBuildTime, getStorageFileInfo, getTotalCountAndSum } from '@/common/api';
+import { setTheme, getSlideShowInterval } from '@/common/utils';
+import { getPackageInfo, getBuildTime } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -310,7 +283,6 @@ const totalFileSize = ref(0);
 // storage file info
 const packageInfo = ref(null);
 const buildTime = ref('');
-const storageFileInfo = ref('');
 
 const languages = [
   { label: 'English', value: 'en' },
@@ -457,16 +429,6 @@ watch(() => config.settings.tabIndex, (newValue) => {
     getBuildTime().then((time) => {
       buildTime.value = time;
     });
-    // Get storage file info
-    getStorageFileInfo().then((file) => {
-      storageFileInfo.value = file;
-    });
-    // Get total files count and sum
-    getTotalCountAndSum().then((info) => {
-      if(info) {
-        [totalFileCount.value, totalFileSize.value] = info;
-      }
-    });
   }
 }, { immediate: true });
 
@@ -507,7 +469,7 @@ watch(() => config.settings.debugMode, (newValue) => {
 });
 
 // grid view settings
-watch(() => config.settings.grid.size, debounce((newValue) => {
+watch(() => config.settings.grid.size, debounce((newValue: number) => {
   emit('settings-gridSize-changed', newValue);
 }, 100));
 watch(() => config.settings.grid.style, (newValue) => {
@@ -552,7 +514,7 @@ watch(() => config.settings.imageSearch.limit, (newValue) => {
 });
 
 // Handle keyboard shortcuts
-function handleKeyDown(event) {
+function handleKeyDown(event: KeyboardEvent) {
   const navigationKeys = ['Tab', 'Escape'];
   
   // Disable default behavior for certain keys

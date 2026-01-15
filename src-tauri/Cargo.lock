@@ -2576,6 +2576,7 @@ dependencies = [
  "tokenizers",
  "tokio",
  "trash",
+ "uuid",
  "walkdir",
 ]
 

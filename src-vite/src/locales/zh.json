@@ -200,6 +200,12 @@
       "pin": "固定",
       "unpin": "取消固定"
     },
+    "library": {
+      "add": "添加库...",
+      "edit": "编辑库...",
+      "remove": "移除库",
+      "default": "默认库"
+    },
     "album": {
       "add": "添加相册...",
       "edit": "编辑相册...",
@@ -245,12 +251,30 @@
     "ok": "确定",
     "cancel": "取消",
     "input": {
-      "file_name_invalid": "文件名不能包含以下字符: \\ / : * ? \" < > |."
+      "file_name_invalid": "名称不能包含以下字符: \\ / : * ? \" < > |."
     },
     "clear_search_history": {
       "title": "清空搜索历史",
       "content": "确定要清空搜索历史吗？",
       "ok": "清空"
+    },
+    "edit_library": {
+      "title_add": "添加库",
+      "title_edit": "编辑库",
+      "name": "名称",
+      "placeholder": "输入库的名称",
+      "total_file_count": "总文件数",
+      "total_file_size": "总文件大小",
+      "library_file_path": "库文件路径",
+      "library_file_size": "库文件大小",
+      "created_at": "创建时间"
+    },
+    "remove_library": {
+      "title": "移除库",
+      "content": "确定要移除 '{library}' 吗？这将永久删除数据库文件。",
+      "ok": "移除",
+      "success": "库 '{library}' 已成功移除。",
+      "error": "无法移除库。"
     },
     "remove_album": {
       "title": "移除相册",
@@ -646,12 +670,6 @@
         "author": "作者",
         "license": "许可证",
         "website": "网站"
-      },
-      "storage": {
-        "total_file_count": "总文件数",
-        "total_file_size": "总文件大小",
-        "file_path": "存储文件路径",
-        "file_size": "存储文件大小"
       }
     }
   }

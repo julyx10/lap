@@ -76,6 +76,8 @@ export { default as IconWinRestore } from '@/assets/icons/window-restore.svg';
 // ======================
 // ACTION & TOOLBAR ICONS
 // ======================
+export { default as IconLibraryAdd } from '@/assets/icons/library-add.svg';
+export { default as IconLibraryRemove } from '@/assets/icons/library-remove.svg';
 export { default as IconAdd } from '@/assets/icons/plus.svg';
 export { default as IconRemove } from '@/assets/icons/minus.svg';
 export { default as IconClose } from '@/assets/icons/close.svg';

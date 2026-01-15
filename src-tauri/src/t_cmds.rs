@@ -7,6 +7,7 @@
  * date:    2024-08-08
  */
 use crate::t_ai;
+use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
 use crate::t_image;
 use crate::t_sqlite::{
     ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams,
@@ -18,11 +19,69 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tauri::State;
-
-pub struct IndexCancellation(pub Arc<Mutex<HashMap<i64, bool>>>);
 use tokio;
 
+// cancellation token for indexing
+pub struct IndexCancellation(pub Arc<Mutex<HashMap<i64, bool>>>);
+
+// build info
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
+
+// library
+
+/// get app config (libraries list and current library)
+#[tauri::command]
+pub fn get_app_config() -> Result<AppConfig, String> {
+    t_config::load_app_config()
+}
+
+/// add a new library
+#[tauri::command]
+pub fn add_library(name: &str) -> Result<Library, String> {
+    t_config::add_library(name)
+}
+
+/// edit library name
+#[tauri::command]
+pub fn edit_library(id: &str, name: &str) -> Result<(), String> {
+    t_config::edit_library(id, name)
+}
+
+/// remove a library (also deletes the database file)
+#[tauri::command]
+pub fn remove_library(id: &str) -> Result<(), String> {
+    t_config::remove_library(id)
+}
+
+/// switch to a different library
+#[tauri::command]
+pub fn switch_library(id: &str) -> Result<(), String> {
+    t_config::switch_library(id)
+}
+
+/// get library statistics
+#[tauri::command]
+pub fn get_library_info(id: &str) -> Result<LibraryInfo, String> {
+    t_config::get_library_info(id)
+}
+
+/// save library state
+#[tauri::command]
+pub fn save_library_state(id: &str, state: LibraryState) -> Result<(), String> {
+    t_config::save_library_state(id, state)
+}
+
+/// get library state
+#[tauri::command]
+pub fn get_library_state(id: &str) -> Result<LibraryState, String> {
+    t_config::get_library_state(id)
+}
+
+/// get current library state
+#[tauri::command]
+pub fn get_current_library_state() -> Result<LibraryState, String> {
+    t_config::get_current_library_state()
+}
 
 // album
 
@@ -569,7 +628,7 @@ pub fn get_build_time() -> u64 {
 #[tauri::command]
 pub fn get_storage_file_info() -> Result<t_utils::FileInfo, String> {
     // Get the database file path
-    let db_file_path = t_utils::get_db_file_path()
+    let db_file_path = t_config::get_current_db_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
     match t_utils::FileInfo::new(&db_file_path) {

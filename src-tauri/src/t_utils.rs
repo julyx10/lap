@@ -737,23 +737,6 @@ pub fn dms_to_decimal(degrees: f64, minutes: f64, seconds: f64, direction: Optio
     decimal
 }
 
-/// get main.db file path
-pub fn get_db_file_path() -> Result<String, String> {
-    // Get the local AppData directory
-    let app_data_dir = dirs::data_local_dir()
-        .ok_or_else(|| "Failed to get the local AppData directory".to_string())?
-        .join("jc-photo");
-
-    // Ensure the directory exists
-    fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create AppData directory: {}", e))?;
-
-    // Construct the path for main.db
-    let db_path = app_data_dir.join("main.db");
-
-    Ok(db_path.to_string_lossy().into_owned())
-}
-
 #[derive(serde::Serialize, Clone)]
 struct ProgressPayload {
     album_id: i64,

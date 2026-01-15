@@ -3,6 +3,118 @@ import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
 import { separator, localeComp } from '@/common/utils';
 
+// library
+
+// get app config (libraries list and current library)
+export async function getAppConfig() {
+  try {
+    const config = await invoke('get_app_config');
+    if (config) {
+      return config;
+    }
+  } catch (error) {
+    console.error('Failed to get app config:', error);
+  }
+  return null;
+}
+
+// add a new library
+export async function addLibrary(name) {
+  try {
+    const library = await invoke('add_library', { name });
+    if (library) {
+      return library;
+    }
+  } catch (error) {
+    console.error('Failed to add library:', error);
+    throw error;
+  }
+  return null;
+}
+
+// edit library name
+export async function editLibrary(id, name) {
+  try {
+    await invoke('edit_library', { id, name });
+    return true;
+  } catch (error) {
+    console.error('Failed to edit library:', error);
+    throw error;
+  }
+}
+
+// remove a library (also deletes the database file)
+export async function removeLibrary(id) {
+  try {
+    await invoke('remove_library', { id });
+    return true;
+  } catch (error) {
+    console.error('Failed to remove library:', error);
+    throw error;
+  }
+}
+
+// switch to a different library
+export async function switchLibrary(id) {
+  try {
+    await invoke('switch_library', { id });
+    return true;
+  } catch (error) {
+    console.error('Failed to switch library:', error);
+    throw error;
+  }
+}
+
+// get library info
+export async function getLibraryInfo(id) {
+  try {
+    const info = await invoke('get_library_info', { id });
+    if (info) {
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to get library info:', error);
+  }
+  return null;
+}
+
+// save library state
+export async function saveLibraryState(id, state) {
+  try {
+    await invoke('save_library_state', { id, state });
+    return true;
+  } catch (error) {
+    console.error('Failed to save library state:', error);
+  }
+  return false;
+}
+
+// get library state
+export async function getLibraryState(id) {
+  try {
+    const state = await invoke('get_library_state', { id });
+    if (state) {
+      return state;
+    }
+  } catch (error) {
+    console.error('Failed to get library state:', error);
+  }
+  return null;
+}
+
+// get current library state
+export async function getCurrentLibraryState() {
+  try {
+    const state = await invoke('get_current_library_state');
+    if (state) {
+      return state;
+    }
+  } catch (error) {
+    console.error('Failed to get current library state:', error);
+  }
+  return null;
+}
+
 // albums
 
 // get all albums

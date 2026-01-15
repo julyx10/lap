@@ -16,6 +16,7 @@ use tauri::Manager;
 
 mod t_ai;
 mod t_cmds;
+mod t_config;
 mod t_image;
 mod t_sqlite;
 mod t_utils;
@@ -87,6 +88,16 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            // library
+            t_cmds::get_app_config,
+            t_cmds::add_library,
+            t_cmds::edit_library,
+            t_cmds::remove_library,
+            t_cmds::switch_library,
+            t_cmds::get_library_info,
+            t_cmds::save_library_state,
+            t_cmds::get_library_state,
+            t_cmds::get_current_library_state,
             // album
             t_cmds::get_all_albums,
             t_cmds::get_album,

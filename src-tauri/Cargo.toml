@@ -43,6 +43,7 @@ rand = "0.8"
 ort = { version = "2.0.0-rc.9", features = ["download-binaries"] }
 ndarray = "0.16"
 tokenizers = { version = "0.20", default-features = false, features = ["onig"] }
+uuid = { version = "1", features = ["v4"] }
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

@@ -1,4 +1,3 @@
-use crate::t_ai;
 /**
  * SQLite database operations.
  * project: jc-photo
@@ -7,6 +6,8 @@ use crate::t_ai;
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
+use crate::t_ai;
+use crate::t_config;
 use crate::t_image;
 use crate::t_utils;
 use crate::t_video;
@@ -2327,7 +2328,7 @@ impl ALocation {
 
 /// get connection to the db
 fn open_conn() -> Result<Connection, String> {
-    let path = t_utils::get_db_file_path()
+    let path = t_config::get_current_db_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
     Connection::open(&path).map_err(|e| format!("Failed to open database connection: {}", e))

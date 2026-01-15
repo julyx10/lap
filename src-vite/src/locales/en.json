@@ -200,6 +200,12 @@
       "pin": "Pin",
       "unpin": "Unpin"
     },
+    "library": {
+      "add": "Add library...",
+      "edit": "Edit library...",
+      "remove": "Remove library",
+      "default": "Default library"
+    },
     "album": {
       "add": "Add album...",
       "edit": "Edit album...",
@@ -245,12 +251,30 @@
     "ok": "OK",
     "cancel": "Cancel",
     "input": {
-      "file_name_invalid": "File name cannot contain the following characters: \\ / : * ? \" < > |."
+      "file_name_invalid": "Name cannot contain the following characters: \\ / : * ? \" < > |."
     },
     "clear_search_history": {
       "title": "Clear search history",
       "content": "Are you sure you want to clear the search history?",
       "ok": "Clear"
+    },
+    "edit_library": {
+      "title_add": "Add library",
+      "title_edit": "Edit library",
+      "name": "Name",
+      "placeholder": "Enter library name",
+      "total_file_count": "Total file count",
+      "total_file_size": "Total file size",
+      "library_file_path": "Library file path",
+      "library_file_size": "Library file size",
+      "created_at": "Created at"
+    },
+    "remove_library": {
+      "title": "Remove library",
+      "content": "Are you sure you want to remove '{library}'? This will permanently delete the database file.",
+      "ok": "Remove",
+      "success": "The library '{library}' has been removed.",
+      "error": "Cannot remove the library."
     },
     "remove_album": {
       "title": "Remove album",
@@ -646,12 +670,6 @@
         "author": "Author",
         "license": "License",
         "website": "Website"
-      },
-      "storage": {
-        "total_file_count": "Total file count",
-        "total_file_size": "Total file size",
-        "file_path": "Storage file path",
-        "file_size": "Storage file size"
       }
     }
   }
