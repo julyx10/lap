@@ -53,20 +53,82 @@
           </div>
 
           <!-- panel-->
-          <div v-if="showPanel" class="ml-16 pr-0.5 flex-1 overflow-hidden">
+          <div v-if="showPanel" class="ml-16 pr-0.5 flex-1 flex flex-col overflow-hidden">
             <!-- library title -->
-            <div class="mb-2 p-2 h-10 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
-              <span class="flex-1 overflow-hidden whitespace-pre text-center text-ellipsis text-base-content/70">
-                {{ currentLibrary?.name }}
-              </span>
+            <div class="mb-2 p-2 h-10 flex items-center justify-between whitespace-nowrap shrink-0" data-tauri-drag-region>
+              
+              <!-- Library dropdown selector -->
               <ContextMenu
-                :iconMenu="IconMore"
                 :menuItems="libraryMenuItems"
-                :smallIcon="true"
-              />
+              >
+                <template #trigger="{ toggle }">
+                  <button 
+                    class="px-2 py-1 flex items-center gap-1 rounded-box text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer transition-colors"
+                    @click="toggle"
+                  >
+                    <span class="overflow-hidden whitespace-pre text-ellipsis max-w-32">{{ currentLibrary?.name || 'Library' }}</span>
+                    <IconArrowDown class="w-3 h-3 shrink-0 opacity-50" />
+                  </button>
+                </template>
+              </ContextMenu>
+              
+              <!-- tab-specific action buttons -->
+              <div class="flex items-center gap-1">
+                <!-- Album: Add Album -->
+                <TButton v-if="config.main.sidebarIndex === 0"
+                  :icon="IconAdd"
+                  :tooltip="$t('menu.album.add')"
+                  @click="panelRef?.albumListRef?.clickNewAlbum()"
+                />
+                
+                <!-- Search: Clear History -->
+                <TButton v-if="config.main.sidebarIndex === 1"
+                  :icon="IconTrash"
+                  :tooltip="$t('menu.home.clear_history')"
+                  @click="panelRef?.clearHistory()"
+                />
+                
+                <!-- Tag: Add Tag + Order -->
+                <template v-if="config.main.sidebarIndex === 3">
+                  <TButton
+                    :icon="IconAdd"
+                    :tooltip="$t('menu.tag.add')"
+                    @click="panelRef?.clickAddTag()"
+                  />
+                  <TButton
+                    :icon="config.tag.sortCount ? IconSortingCount : IconSortingName"
+                    :tooltip="$t('menu.home.sort')"
+                    @click="config.tag.sortCount = !config.tag.sortCount"
+                  />
+                </template>
+                
+                <!-- Calendar: Order -->
+                <TButton v-if="config.main.sidebarIndex === 4"
+                  :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc"
+                  :tooltip="$t('menu.home.sort')"
+                  @click="config.calendar.sortingAsc = !config.calendar.sortingAsc"
+                />
+                
+                <!-- Location: Order -->
+                <TButton v-if="config.main.sidebarIndex === 5"
+                  :icon="libConfig.location.sortCount ? IconSortingCount : IconSortingName"
+                  :tooltip="$t('menu.home.sort')"
+                  @click="libConfig.location.sortCount = !libConfig.location.sortCount"
+                />
+                
+                <!-- Camera: Order -->
+                <TButton v-if="config.main.sidebarIndex === 6"
+                  :icon="config.camera.sortCount ? IconSortingCount : IconSortingName"
+                  :tooltip="$t('menu.home.sort')"
+                  @click="config.camera.sortCount = !config.camera.sortCount"
+                />
+              </div>
             </div>
 
-            <component :is="buttons[config.main.sidebarIndex].component" :titlebar="buttons[config.main.sidebarIndex].text"/>
+            <!-- Component panel (flex-1 to fill remaining space) -->
+            <div class="flex-1 overflow-hidden">
+              <component ref="panelRef" :is="buttons[config.main.sidebarIndex].component" :titlebar="buttons[config.main.sidebarIndex].text"/>
+            </div>
           </div>
 
         </div>
@@ -167,7 +229,17 @@ import {
   IconLibraryAdd,
   IconEdit,
   IconLibraryRemove,
+  IconAdd,
+  IconTrash,
+  IconSortingAsc,
+  IconSortingDesc,
+  IconSortingCount,
+  IconSortingName,
+  IconArrowDown,
 } from '@/common/icons';
+
+// Panel component ref
+const panelRef = ref<any>(null);
 
 /// i18n
 const { locale, messages } = useI18n();

@@ -28,6 +28,7 @@
         <TButton v-if="isTempViewMode" 
           :icon="IconRestore" 
           :buttonSize="'medium'"
+          :tooltip="$t('toolbar.filter.exit_temp_view_mode')"
           :selected="true"
           @click="exitTempViewMode" 
         />

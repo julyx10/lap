@@ -17,26 +17,11 @@
         <span>{{ $t('album.all_files') }}</span>
       </div>
 
-      <!-- Right side: Count and Context Menu -->
+      <!-- Right side: Count -->
       <div class="ml-auto flex items-center">
-        <span v-if="totalCount > 0" class="px-1 text-xs text-base-content/30 mr-1">
+        <span v-if="totalCount > 0" class="px-1 text-xs text-base-content/30">
           {{ totalCount.toLocaleString() }}
         </span>
-
-        <!-- Albums Context Menu -->
-        <div v-if="!albumListRef?.isEditList" 
-          class="text-base-content/30"
-          :class="[
-            libConfig.album.id === 0 ? '' : 'hidden group-hover:block'
-          ]"
-          @click.stop
-        >
-          <ContextMenu 
-            :iconMenu="IconMore" 
-            :menuItems="albumsMenuItems"
-            :smallIcon="true"
-          />
-        </div>
       </div>
     </div>
 
@@ -128,5 +113,9 @@ const clickLibrary = () => {
     libConfig.album.selected = false;
   }
 };
+
+defineExpose({
+  albumListRef,
+});
 
 </script>

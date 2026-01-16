@@ -31,10 +31,6 @@
           {{ $t('search.filename_search') }}
         </a>
       </div>
-      <ContextMenu 
-        :iconMenu="IconMore" 
-        :menuItems="moreMenuItems"
-      />
     </div>
 
     <!-- 0: search text -->
@@ -469,5 +465,9 @@ function deleteSimilarHistoryItem(index: number) {
     libConfig.search.similarImageHistoryIndex--;
   }
 }
+
+defineExpose({
+  clearHistory,
+});
 
 </script>

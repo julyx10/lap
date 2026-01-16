@@ -167,9 +167,8 @@ import {
   IconEdit,
   IconRemove,
   IconUpdate,
-  IconSearch,
-  IconSearchOff,
   IconRestore,
+  IconOrder,
 } from '@/common/icons';
 
 const props = defineProps<{
@@ -216,7 +215,6 @@ const selectedAlbum = computed(() => getAlbumById(selection.albumId.value)) || {
 // Get menu items for a specific album (function for lazy evaluation)
 const getMoreMenuItems = (album: any) => {
   return [
-
     {
       label: localeMsg.value.menu.album.edit,
       icon: IconEdit,
@@ -230,6 +228,18 @@ const getMoreMenuItems = (album: any) => {
       icon: IconUpdate,
       action: () => {
         clickIndexAlbum(album.id);
+      }
+    },
+    {
+      label: "-",   // separator
+      action: () => {}
+    },
+    {
+      label: localeMsg.value.menu.album.reorder,
+      icon: IconOrder,
+      action: () => {
+        isEditList.value = true;
+        uiStore.pushInputHandler('AlbumList-edit');
       }
     },
     {

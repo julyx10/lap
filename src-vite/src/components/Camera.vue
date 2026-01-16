@@ -1,15 +1,6 @@
 <template>
 
   <div class="w-full h-full flex flex-col" style="user-select: none;">
-    
-    <!-- title bar -->
-    <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <TButton
-        :icon="config.camera.sortCount ? IconSortingCount : IconSortingName"
-        @click="config.camera.sortCount = !config.camera.sortCount"
-      />
-    </div>
-
     <!-- camera -->
     <div v-if="cameras.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>

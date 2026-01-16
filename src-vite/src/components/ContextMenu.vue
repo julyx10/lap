@@ -2,12 +2,15 @@
   <div ref="dropdown" class="relative inline-block text-left">
 
     <!-- Dropdown Trigger -->
-    <TButton
-      :icon="iconMenu"
-      :buttonSize="smallIcon ? 'small' : 'medium'"
-      :disabled="disabled"
-      @click="toggleDropdown" 
-    />
+    <slot name="trigger" :toggle="toggleDropdown">
+      <!-- Default trigger button when no slot provided -->
+      <TButton
+        :icon="iconMenu"
+        :buttonSize="smallIcon ? 'small' : 'medium'"
+        :disabled="disabled"
+        @click="toggleDropdown" 
+      />
+    </slot>
     <!-- Dropdown Menu -->
     <teleport to="body">
       <transition name="fade">
@@ -44,15 +47,18 @@
 </template>
   
 <script setup>
-import { ref, shallowRef, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, shallowRef, onMounted, onBeforeUnmount, nextTick, useSlots } from 'vue';
 
 import TButton from '@/components/TButton.vue';
+
+const slots = useSlots();
 
 // Props
 const props = defineProps({
   iconMenu : {
     type: Object, // SVG is typically imported as an object
-    required: true,
+    required: false, // Not required when using slot
+    default: null,
   },
   menuItems: {
     type: [Array, Function], // Accept Array or Function for lazy generation

@@ -9,11 +9,7 @@
       @click="toggleDropdown"
     >
       {{ options[optionIndex].label }}{{ extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}
-      <TButton
-        :icon="IconArrowDown"
-        :disabled="disabled"
-        :buttonSize="'small'"
-      />
+      <IconArrowDown class="ml-1 w-3 h-3 shrink-0 opacity-50" />
     </button>
 
     <!-- Dropdown Menu -->

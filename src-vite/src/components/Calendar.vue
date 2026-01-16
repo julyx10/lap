@@ -2,9 +2,9 @@
 
   <div class="w-full h-full flex flex-col overflow-hidden" style="user-select: none;">
 
-    <!-- title bar -->
-    <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <div v-if="Object.keys(calendar_dates).length > 0" role="tablist" class="tabs-sm tabs-border" >
+    <!-- month/day tabs -->
+    <div v-if="Object.keys(calendar_dates).length > 0" class="mx-1 mb-1" >
+      <div role="tablist" class="tabs-sm tabs-border">
         <a 
           role="tab"
           class="tab"
@@ -22,17 +22,12 @@
           {{ $t('calendar.day') }}
         </a>
       </div>
-
-      <TButton 
-        :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc" 
-        @click="toggleSortingOrder"
-      />
     </div>
     
     <template v-if="Object.keys(calendar_dates).length > 0" >
       <!-- calendar -->
       <div ref="scrollable"
-        class="flex flex-col overflow-x-hidden overflow-y-auto"
+        class="flex-1 flex flex-col overflow-x-hidden overflow-y-auto"
       >
         <!-- days of the week in daily calendar -->
         <div v-if="!config.calendar.isMonthly" 

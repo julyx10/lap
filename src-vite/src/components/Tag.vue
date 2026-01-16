@@ -1,19 +1,6 @@
 <template>
 
   <div class="w-full h-full flex flex-col select-none">
-
-    <!-- Title Bar -->
-    <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
-      <TButton
-        :icon="IconAdd"
-        @click="clickAddTag"
-      />
-      <TButton
-        :icon="config.tag.sortCount ? IconSortingCount : IconSortingName"
-        @click="config.tag.sortCount = !config.tag.sortCount"
-      />
-    </div>
-
     <!-- Tag List -->
     <div v-if="allTags.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
       <ul>
@@ -269,4 +256,9 @@ async function clickDeleteTag() {
   }
 }
 
+defineExpose({
+  clickAddTag,
+});
+
 </script>
+
