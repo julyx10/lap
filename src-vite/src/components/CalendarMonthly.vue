@@ -41,7 +41,7 @@
 
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
+import { libConfig } from '@/common/config';
 import { formatDate } from '@/common/utils';
 
 const props = defineProps({
@@ -81,15 +81,15 @@ function isThisMonth(year, month) {
 }
 
 // Check if the year or month is selected
-const isSelected = (year, month) => config.calendar.year === year && config.calendar.month === month;
+const isSelected = (year, month) => libConfig.calendar.year === year && libConfig.calendar.month === month;
 
 // click a year or a month to select it
 const clickDate = (year, month) => {
-  config.calendar.year = year;
-  config.calendar.month = month; // -1 means selecting a year
-  config.calendar.date = -1;   // -1 means selecting a month
+  libConfig.calendar.year = year;
+  libConfig.calendar.month = month; // -1 means selecting a year
+  libConfig.calendar.date = -1;   // -1 means selecting a month
 
-  console.log('clickDate:', config.calendar.year, config.calendar.month, config.calendar.date);
+  console.log('clickDate:', libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date);
 };
 
 </script>

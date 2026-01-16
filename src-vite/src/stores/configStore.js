@@ -1,3 +1,6 @@
+/**
+ * Config Store - Global application configuration
+ */
 import { defineStore } from 'pinia';
 
 export const useConfigStore = defineStore('configStore', {
@@ -21,75 +24,28 @@ export const useConfigStore = defineStore('configStore', {
       mapTheme: 0,               // 0: standard, 2: satellite
     },
 
-    // indexing album
-    index: {
-      status: 0,                 // 0: idle, 1: indexing
-      /** @type {number[]} */
-      albumQueue: [],            // indexing album queue: [id1, id2, ...]
-      albumName: '',             // current album name
-      indexed: 0,                  // current album's indexed count
-      total: 0,                  // current album's total count
-    },
-
     search: {
       searchType: 0,           // 0: ai search, 1: similar image, 2: filename search
       maxSearchHistory: 20,    // max search history
-      searchText: '',          // ai search text
-      searchHistory: [],       // ai search history
-      searchHistoryIndex: -1,  // current ai search history index
-      similarImageHistory: [], // similar image history
-      similarImageHistoryIndex: -1, // current similar image history index
-      fileName: '',             // file name search text
-      // filter and sort
       fileType: 0,              // filter file type (0: all, 1: image, 2: video)
       sortType: 0,              // sort type (default to time)
       sortOrder: 0,             // sort order(0: ascending, 1: descending)
     },
 
-    // move/copy to... destination folder
-    destFolder: {
-      albumId: null,          // destination album id
-      folderId: null,         // destination folder id
-      folderPath: null,       // destination folder path
-      selected: false,        // destination album is selected
-    },
-
-    album: {
-      id: 0,                  // current album id (0: show all files)
-      folderId: null,         // current folder id
-      folderPath: '',         // current folder path
-      selected: false,        // album is selected(true: show all album's files, false: show folderPath's files only)
-    },
-
-    favorite: {
-      albumId: null,
-      folderId: 0,             // 0 means favorite files (default)
-      folderPath: null,
-    },
-
     tag: {
-      id: null,
       sortCount: false,     // false: default sort by name, true: sort by count
     },
 
     calendar: {
       isMonthly: true,    // display monthly or daily calendar
       sortingAsc: false,   // sorting order
-      year: null,         // selected year (...2024)
-      month: null,        // selected month (1-12)
-      date: null,         // selected date (1-31), -1 means selecting a month
     },
 
     camera: {
-      make: null,           // selected camera make
-      model: null,          // selected camera model
       sortCount: false,     // false: default sort by name, true: sort by count
     },
 
     location: {
-      cc: null,             // selected location country code (e.g. US)
-      admin1: null,         // selected location admin1 (e.g. California)
-      name: null,           // selected location name (e.g. San Francisco)
       sortCount: false,     // false: default sort by name, true: sort by count
     },
 

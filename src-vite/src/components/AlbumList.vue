@@ -52,7 +52,7 @@
             <div class="ml-auto pl-1 flex items-center justify-center text-xs text-base-content/30">
               <TButton v-if="album.indexed !== undefined && album.total !== undefined && album.indexed < album.total" 
                 :icon="IconUpdate"
-                :iconClasses="(config.index.albumQueue as any).includes(album.id) ? ['animate-spin'] : []"
+                :iconClasses="(libConfig.index.albumQueue as any).includes(album.id) ? ['animate-spin'] : []"
                 :buttonSize="'small'"
                 @click="clickIndexAlbum(album.id)"
               />
@@ -92,7 +92,7 @@
             enter-from-class="max-h-0"
             enter-to-class="max-h-96"
           >
-            <div v-if="album.is_expanded && !isEditList && !(config.index.albumQueue as any).includes(album.id)" class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
+            <div v-if="album.is_expanded && !isEditList && !(libConfig.index.albumQueue as any).includes(album.id)" class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
               <AlbumFolder 
                 :children="album.children" 
                 :isHiddenAlbum="album.is_hidden ? true : false"
@@ -151,7 +151,7 @@ import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VueDraggable } from 'vue-draggable-plus'
 import { listen } from '@tauri-apps/api/event';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { scrollToFolder, formatTimestamp } from '@/common/utils';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
@@ -394,7 +394,7 @@ const clickEditAlbum = async (folderPathParam: string, newName: string, newDescr
       showAlbumEdit.value = false;
       
       // add the new album to the index queue
-      config.index.albumQueue.push(newAlbum.id);   
+      libConfig.index.albumQueue.push(newAlbum.id);   
     }
   } else {
     // Edit existing album
@@ -409,9 +409,9 @@ const clickEditAlbum = async (folderPathParam: string, newName: string, newDescr
 
 /// Index an album
 const clickIndexAlbum = async (albumId: number) => {
-  if (!(config.index.albumQueue as any).includes(albumId)) {
-    config.index.albumQueue.push(albumId);
-    config.index.status = 1;
+  if (!(libConfig.index.albumQueue as any).includes(albumId)) {
+    libConfig.index.albumQueue.push(albumId);
+    libConfig.index.status = 1;
   }
 }
 

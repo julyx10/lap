@@ -15,26 +15,35 @@ use uuid::Uuid;
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct AlbumState {
     pub id: i64,
+    #[serde(alias = "folder_id")]
     pub folder_id: Option<i64>,
+    #[serde(alias = "folder_path")]
     pub folder_path: String,
     pub selected: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct FavoriteState {
+    #[serde(alias = "album_id")]
     pub album_id: Option<i64>,
+    #[serde(alias = "folder_id")]
     pub folder_id: i64,
+    #[serde(alias = "folder_path")]
     pub folder_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct TagState {
     pub id: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct CalendarState {
     pub year: Option<i32>,
     pub month: Option<i32>,
@@ -42,40 +51,70 @@ pub struct CalendarState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct CameraState {
     pub make: Option<String>,
     pub model: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct LocationState {
     pub cc: Option<String>,
     pub admin1: Option<String>,
     pub name: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SearchHistoryEntry {
+    Legacy(String),
+    Rich(SearchHistoryItem),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchHistoryItem {
+    pub text: String,
+    pub file_id: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct SearchState {
+    #[serde(alias = "search_text")]
     pub search_text: String,
-    pub search_history: Vec<String>,
+    #[serde(alias = "search_history")]
+    pub search_history: Vec<SearchHistoryEntry>,
+    #[serde(alias = "search_history_index")]
     pub search_history_index: i32,
+    #[serde(alias = "similar_image_history")]
     pub similar_image_history: Vec<i64>,
+    #[serde(alias = "similar_image_history_index")]
     pub similar_image_history_index: i32,
+    #[serde(alias = "file_name")]
     pub file_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct DestFolderState {
+    #[serde(alias = "album_id")]
     pub album_id: Option<i64>,
+    #[serde(alias = "folder_id")]
     pub folder_id: Option<i64>,
+    #[serde(alias = "folder_path")]
     pub folder_path: Option<String>,
     pub selected: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct IndexState {
     pub status: i32,
+    #[serde(alias = "album_queue")]
     pub album_queue: Vec<i64>,
+    #[serde(alias = "album_name")]
     pub album_name: String,
     pub indexed: i64,
     pub total: i64,
@@ -83,6 +122,7 @@ pub struct IndexState {
 
 /// Per-library state that persists across sessions
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct LibraryState {
     pub album: AlbumState,
     pub favorite: FavoriteState,
@@ -91,6 +131,7 @@ pub struct LibraryState {
     pub camera: CameraState,
     pub location: LocationState,
     pub search: SearchState,
+    #[serde(alias = "dest_folder")]
     pub dest_folder: DestFolderState,
     pub index: IndexState,
 }

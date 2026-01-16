@@ -85,7 +85,7 @@
 
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { getTakenDates } from '@/common/api';
 import { IconSortingAsc, IconSortingDesc } from '@/common/icons';
 
@@ -103,10 +103,10 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const selectedWeekday = computed(() => {
-  if (config.calendar.isMonthly || !config.calendar.year || !config.calendar.month || !config.calendar.date || config.calendar.date <= 0) {
+  if (config.calendar.isMonthly || !libConfig.calendar.year || !libConfig.calendar.month || !libConfig.calendar.date || libConfig.calendar.date <= 0) {
     return -1;
   }
-  const date = new Date(config.calendar.year, config.calendar.month - 1, config.calendar.date);
+  const date = new Date(libConfig.calendar.year, libConfig.calendar.month - 1, libConfig.calendar.date);
   return date.getDay();
 });
 
@@ -142,9 +142,9 @@ onMounted(async () => {
   scrollToSelected();
 
   // if (calendar_dates.value.length === 0) {
-  //   config.calendar.date = null;
-  //   config.calendar.month = null;
-  //   config.calendar.year = null;
+  //   libConfig.calendar.date = null;
+  //   libConfig.calendar.month = null;
+  //   libConfig.calendar.year = null;
   // }
 });
 
@@ -167,21 +167,21 @@ function scrollToSelected() {
 }
 
 function switchToMonthlyView() {
-  config.calendar.date = -1;  // -1 means selecting a month
+  libConfig.calendar.date = -1;  // -1 means selecting a month
   config.calendar.isMonthly = true;
 }
 
 function switchToDailyView() {
   // if a year is selected in month view
-  if (config.calendar.isMonthly && config.calendar.month === -1) {
-    const year = config.calendar.year;
+  if (config.calendar.isMonthly && libConfig.calendar.month === -1) {
+    const year = libConfig.calendar.year;
     if (calendar_dates.value[year]) {
       const months = Object.keys(calendar_dates.value[year]).map(Number);
       if (months.length > 0) {
         if (config.calendar.sortingAsc) {
-          config.calendar.month = Math.min(...months);
+          libConfig.calendar.month = Math.min(...months);
         } else {
-          config.calendar.month = Math.max(...months);
+          libConfig.calendar.month = Math.max(...months);
         }
       }
     }

@@ -17,7 +17,7 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-              config.camera.make === camera.make && !config.camera.model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+              libConfig.camera.make === camera.make && !libConfig.camera.model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickCameraMake(camera)"
           >
@@ -36,7 +36,7 @@
               <div 
                 :class="[
                   'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-                  config.camera.model === model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+                  libConfig.camera.model === model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
                 ]" 
                 @click="clickCameraModel(camera.make, model)"
               >
@@ -64,9 +64,9 @@
 <script setup lang="ts">
 
 import { ref, onMounted, computed } from 'vue';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { getCameraInfo } from '@/common/api';
-import { IconCamera, IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
+import { IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
@@ -94,17 +94,17 @@ onMounted(async () => {
     await getCameras();
 
     if (cameras.value.length === 0) {
-      (config.camera as any).make = null;
-      (config.camera as any).model = null;
+      (libConfig.camera as any).make = null;
+      (libConfig.camera as any).model = null;
     }
 
-    if(config.camera.make && config.camera.model) {
-      let camera = cameras.value.find(camera => camera.make === config.camera.make)
+    if(libConfig.camera.make && libConfig.camera.model) {
+      let camera = cameras.value.find(camera => camera.make === libConfig.camera.make)
       if(camera) {
         camera.is_expanded = true;     // expand selected camera
       } else {
-        (config.camera as any).make = null;
-        (config.camera as any).model = null;
+        (libConfig.camera as any).make = null;
+        (libConfig.camera as any).model = null;
       }
     }
   }
@@ -117,16 +117,16 @@ function clickExpandCamera(camera: any) {
 
 /// click a camera to select it
 function clickCameraMake(camera: any) {
-  (config.camera as any).make = camera.make;
-  (config.camera as any).model = null;
+  (libConfig.camera as any).make = camera.make;
+  (libConfig.camera as any).model = null;
 
   camera.is_expanded = true;
 }
 
 /// click a camera to select it
 function clickCameraModel(make: string, model: string) {
-  (config.camera as any).make = make;
-  (config.camera as any).model = model;
+  (libConfig.camera as any).make = make;
+  (libConfig.camera as any).model = model;
 }
 
 /// get cameras from db

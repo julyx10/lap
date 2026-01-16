@@ -1,3 +1,10 @@
+use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
+use crate::t_image;
+use crate::t_sqlite::{
+    ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams,
+    QueryParams,
+};
+use crate::t_utils;
 /**
  * Tauri commands for frontend-backend communication.
  * project: jc-photo
@@ -6,14 +13,7 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-use crate::t_ai;
-use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
-use crate::t_image;
-use crate::t_sqlite::{
-    ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams,
-    QueryParams,
-};
-use crate::t_utils;
+use crate::{t_ai, t_sqlite};
 use base64::{Engine, engine::general_purpose};
 use std::collections::HashMap;
 use std::path::Path;
@@ -56,7 +56,8 @@ pub fn remove_library(id: &str) -> Result<(), String> {
 /// switch to a different library
 #[tauri::command]
 pub fn switch_library(id: &str) -> Result<(), String> {
-    t_config::switch_library(id)
+    t_config::switch_library(id)?;
+    t_sqlite::create_db()
 }
 
 /// get library statistics

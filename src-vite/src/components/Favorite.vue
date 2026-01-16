@@ -12,7 +12,7 @@
       <div 
         :class="[ 
           'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
-          config.favorite.folderId === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+          libConfig.favorite.folderId === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
         ]"
         @click="clickFavoriteFiles()"
       >
@@ -32,7 +32,7 @@
             <div 
               :class="[ 
                 'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-                config.favorite.folderId === folder.id ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+                libConfig.favorite.folderId === folder.id ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
               ]"
               @click="clickFavoriteFolder(folder)"
             >
@@ -45,7 +45,7 @@
               <ContextMenu
                 :class="[
                   'ml-auto flex flex-row items-center text-base-content/30',
-                  config.favorite.folderId != folder.id ? 'invisible group-hover:visible' : ''
+                  libConfig.favorite.folderId != folder.id ? 'invisible group-hover:visible' : ''
                 ]"
                 :iconMenu="IconMore"
                 :menuItems="favoriteFolderMenuItems"
@@ -70,7 +70,7 @@
 
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
+import { libConfig } from '@/common/config';
 import { getFavoriteFolders, setFolderFavorite, getAlbum } from '@/common/api';
 import { getFolderName } from '@/common/utils';
 
@@ -132,41 +132,41 @@ onMounted(() => {
 // click favorite files
 function clickFavoriteFiles() {
   console.log('clickFavoriteFiles');
-  config.favorite.albumId = null;
-  config.favorite.folderId = 0;    // 0 means favorite files
-  config.favorite.folderPath = '';
+  libConfig.favorite.albumId = null;
+  libConfig.favorite.folderId = 0;    // 0 means favorite files
+  libConfig.favorite.folderPath = '';
 }
 
 // click favorite folder
 function clickFavoriteFolder(folder: any) {
   console.log('clickFavoriteFolder', folder);
-  config.favorite.albumId = folder.album_id;
-  config.favorite.folderId = folder.id;
-  config.favorite.folderPath = folder.path;
+  libConfig.favorite.albumId = folder.album_id;
+  libConfig.favorite.folderId = folder.id;
+  libConfig.favorite.folderPath = folder.path;
 }
 
 // unfavorite
 function UnFavorite() {
   console.log('UnFavorite');
-  setFolderFavorite(config.favorite.folderId, false).then(() => {
+  setFolderFavorite(libConfig.favorite.folderId, false).then(() => {
     // get the index of the folder
-    const index = favorite_folders.value.findIndex((f: any) => f.id === config.favorite.folderId);
+    const index = favorite_folders.value.findIndex((f: any) => f.id === libConfig.favorite.folderId);
 
     // remove the folder from the list
-    favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== config.favorite.folderId);
+    favorite_folders.value = favorite_folders.value.filter((f: any) => f.id !== libConfig.favorite.folderId);
 
     if (favorite_folders.value.length === 0) {
-      config.favorite.folderId = 0;  // 0 means favorite files
-      config.favorite.albumId = 0;
-      config.favorite.folderPath = '';
+      libConfig.favorite.folderId = 0;  // 0 means favorite files
+      libConfig.favorite.albumId = 0;
+      libConfig.favorite.folderPath = '';
     } else if (index === 0) {  // if the folder is the first one, set the first one as the favorite
-      config.favorite.folderId = favorite_folders.value[index].id;
-      config.favorite.albumId = favorite_folders.value[index].album_id;
-      config.favorite.folderPath = favorite_folders.value[index].path;
+      libConfig.favorite.folderId = favorite_folders.value[index].id;
+      libConfig.favorite.albumId = favorite_folders.value[index].album_id;
+      libConfig.favorite.folderPath = favorite_folders.value[index].path;
     } else {
-      config.favorite.folderId = favorite_folders.value[index - 1].id;
-      config.favorite.albumId = favorite_folders.value[index - 1].album_id;
-      config.favorite.folderPath = favorite_folders.value[index - 1].path;
+      libConfig.favorite.folderId = favorite_folders.value[index - 1].id;
+      libConfig.favorite.albumId = favorite_folders.value[index - 1].album_id;
+      libConfig.favorite.folderPath = favorite_folders.value[index - 1].path;
     }
 
     console.log('favorite_folders', favorite_folders.value);

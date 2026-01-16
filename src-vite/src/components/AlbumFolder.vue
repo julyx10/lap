@@ -129,9 +129,9 @@
 import { ref, nextTick, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { config } from '@/common/config';
+import { libConfig } from '@/common/config';
 import { isMac, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
-import { createFolder, renameFolder, selectFolder as apiSelectFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
+import { createFolder, renameFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
 import { Folder } from '@/common/types';
 import { useAlbumSelection } from '@/composables/useAlbumSelection';
 
@@ -373,8 +373,8 @@ const clickMoveTo = async () => {
   const movedFolderPath = selection.folderPath.value;
   const movedFolder = selectedFolder.value;
   const movedFolderName = movedFolder?.name;
-  const destAlbumId = config.destFolder.albumId;
-  const destFolderPath = config.destFolder.folderPath;
+  const destAlbumId = libConfig.destFolder.albumId;
+  const destFolderPath = libConfig.destFolder.folderPath;
   
   moveFolder(movedFolderPath, destAlbumId, destFolderPath).then(async (newPath) => {
     if (newPath) {
@@ -401,7 +401,7 @@ const clickMoveTo = async () => {
 
 // copy folder to dest folder
 const clickCopyTo = async () => {
-  copyFolder(selection.folderPath.value, config.destFolder.folderPath ?? '').then((newPath) => {
+  copyFolder(selection.folderPath.value, libConfig.destFolder.folderPath ?? '').then((newPath) => {
     if (newPath) {
       // close copy-to dialog
       showCopyTo.value = false;

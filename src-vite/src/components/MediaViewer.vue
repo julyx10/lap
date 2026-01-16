@@ -178,7 +178,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { isWin, getSlideShowInterval } from '@/common/utils';
 
 import Image from '@/components/Image.vue';
@@ -427,10 +427,7 @@ defineExpose({
 });
 
 const showFolderFiles = computed(() => {
-  // Logic from Content.vue: config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0
-  // Since we don't have direct access to determining if we are in "Folder" view vs "Album" view easily without repeating logic,
-  // We can check config directly.
-  return !!(config.main.sidebarIndex === 0 && config.album.id && config.album.id !== 0);
+  return !!(config.main.sidebarIndex === 0 && libConfig.album.id && libConfig.album.id !== 0);
 });
 
 const selectedFile = computed(() => props.file);

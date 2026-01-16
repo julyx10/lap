@@ -46,7 +46,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
-import { config } from '@/common/config';
+import { libConfig } from '@/common/config';
 import { formatDate } from '@/common/utils';
 
 const props = defineProps({
@@ -84,9 +84,9 @@ const monthDates = getMonthDates(props.year, props.month, props.dates);
 const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date));
 
 // Check if the date is selected
-const isSelected = (year, month, date) => config.calendar.year === year &&
-                                          config.calendar.month === month && 
-                                          config.calendar.date === date;
+const isSelected = (year, month, date) => libConfig.calendar.year === year &&
+                                          libConfig.calendar.month === month && 
+                                          libConfig.calendar.date === date;
 
 // Generate an array of { date, count } objects for the month
 function getMonthDates(year, month, dates = []) {
@@ -111,11 +111,11 @@ function getMonthDates(year, month, dates = []) {
 
 // click a date to select it
 const clickDate = (year, month, date) => {
-  config.calendar.year = year;
-  config.calendar.month = month; // -1 means selecting a year
-  config.calendar.date = date;   // -1 means selecting a month
+  libConfig.calendar.year = year;
+  libConfig.calendar.month = month; // -1 means selecting a year
+  libConfig.calendar.date = date;   // -1 means selecting a month
 
-  console.log('clickDate:', config.calendar.year, config.calendar.month, config.calendar.date);
+  console.log('clickDate:', libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date);
 };
 
 </script>

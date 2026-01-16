@@ -5,8 +5,8 @@
     <!-- title bar -->
     <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
       <TButton
-        :icon="config.location.sortCount ? IconSortingCount : IconSortingName"
-        @click="config.location.sortCount = !config.location.sortCount"
+        :icon="libConfig.location.sortCount ? IconSortingCount : IconSortingName"
+        @click="libConfig.location.sortCount = !libConfig.location.sortCount"
       />
     </div>
 
@@ -17,7 +17,7 @@
           <div 
             :class="[
               'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-              config.location.admin1 === location.admin1 && !config.location.name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+              libConfig.location.admin1 === location.admin1 && !libConfig.location.name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click="clickLocationAdmin1(location)"
           >
@@ -36,7 +36,7 @@
               <div 
                 :class="[
                   'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-                  config.location.name === name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+                  libConfig.location.name === name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
                 ]" 
                 @click="clickLocationName(location, name)"
               >
@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
+import { libConfig } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
 import { getCountryName } from '@/common/utils';
 import { IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
@@ -82,7 +82,7 @@ const { locale } = useI18n(); // get locale for country name translation
 const locations = ref<any[]>([]);
 
 const sortedLocations = computed(() => {
-  if (config.location.sortCount) {
+  if (libConfig.location.sortCount) {
     return [...locations.value].sort((a, b) => {
       const countA = (a.counts || []).reduce((sum: number, c: number) => sum + c, 0);
       const countB = (b.counts || []).reduce((sum: number, c: number) => sum + c, 0);
@@ -97,19 +97,19 @@ onMounted(async () => {
     await getLocations();
 
     if (locations.value.length === 0) {
-      (config.location as any).cc = null;
-      (config.location as any).admin1 = null;
-      (config.location as any).name = null;
+      (libConfig.location as any).cc = null;
+      (libConfig.location as any).admin1 = null;
+      (libConfig.location as any).name = null;
     }
     
-    if(config.location.cc && config.location.admin1 && config.location.name) {
-      let location = locations.value.find((location: any) => location.admin1 === config.location.admin1)
+    if(libConfig.location.cc && libConfig.location.admin1 && libConfig.location.name) {
+      let location = locations.value.find((location: any) => location.admin1 === libConfig.location.admin1)
       if(location) {
         location.is_expanded = true;     // expand selected location
       } else {
-        (config.location as any).cc = null;
-        (config.location as any).admin1 = null;
-        (config.location as any).name = null;
+        (libConfig.location as any).cc = null;
+        (libConfig.location as any).admin1 = null;
+        (libConfig.location as any).name = null;
       }
     }
   }
@@ -122,18 +122,18 @@ function clickExpandLocation(location: any) {
 
 /// click a location to select it
 function clickLocationAdmin1(location: any) {
-  (config.location as any).cc = location.cc;
-  (config.location as any).admin1 = location.admin1;
-  (config.location as any).name = null;
+  (libConfig.location as any).cc = location.cc;
+  (libConfig.location as any).admin1 = location.admin1;
+  (libConfig.location as any).name = null;
 
   location.is_expanded = true;
 }
 
 /// click a location to select it
 function clickLocationName(location: any, name: string) {
-  (config.location as any).cc = location.cc;
-  (config.location as any).admin1 = location.admin1;
-  (config.location as any).name = name;
+  (libConfig.location as any).cc = location.cc;
+  (libConfig.location as any).admin1 = location.admin1;
+  (libConfig.location as any).name = name;
 }
 
 /// get locations from db

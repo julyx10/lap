@@ -70,7 +70,7 @@
 
       <!-- search history -->
       <div class="overflow-y-auto flex-1" >
-        <div v-if="config.search.searchHistory.length === 0" class="m-2 flex flex-col items-center justify-center text-sm text-base-content/30">
+        <div v-if="libConfig.search.searchHistory.length === 0" class="m-2 flex flex-col items-center justify-center text-sm text-base-content/30">
           <span class="text-center">{{ $t('search.image_search_tips') }}</span>
         </div>  
 
@@ -78,7 +78,7 @@
           class="mx-1 p-1 text-sm rounded-box flex items-center"
           :class="[ 
             'h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-            config.search.searchHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
+            libConfig.search.searchHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
           ]"
           @click="handleSearchHistoryClick(index, item)"
         >
@@ -96,7 +96,7 @@
           <ContextMenu
             :class="[
               'ml-auto flex flex-row items-center text-base-content/30',
-              config.search.searchHistoryIndex != index ? 'invisible group-hover:visible' : ''
+              libConfig.search.searchHistoryIndex != index ? 'invisible group-hover:visible' : ''
             ]"
             :iconMenu="IconMore"
             :menuItems="searchHistoryMenuItems"
@@ -118,7 +118,7 @@
           class="mx-1 p-1 text-sm rounded-box flex items-center"
           :class="[ 
             'h-12 flex items-center gap-2 rounded-box whitespace-nowrap cursor-pointer group', 
-            config.search.similarImageHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
+            libConfig.search.similarImageHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
           ]"
           @click="handleSimilarHistoryClick(index, fileId)"
         >
@@ -137,7 +137,7 @@
           <ContextMenu
             :class="[
               'ml-auto flex flex-row items-center text-base-content/30',
-              config.search.similarImageHistoryIndex != index ? 'invisible group-hover:visible' : ''
+              libConfig.search.similarImageHistoryIndex != index ? 'invisible group-hover:visible' : ''
             ]"
             :iconMenu="IconMore"
             :menuItems="getSimilarHistoryMenuItems(index)"
@@ -165,7 +165,7 @@
         <input 
           ref="searchInputRef"
           type="text"
-          v-model="config.search.fileName"
+          v-model="libConfig.search.fileName"
           :placeholder="$t('search.filename_search_tips')"
           :class="[
             'pl-7 w-full input bg-transparent rounded-box',
@@ -197,8 +197,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
-import { listen, emit as tauriEmit } from '@tauri-apps/api/event';
+import { config, libConfig } from '@/common/config';
+import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
 import { getFileThumb, getFileInfo } from '@/common/api';
@@ -239,21 +239,22 @@ const isSearchFocused = ref(false);
 
 function syncSearchState() {
   if (config.search.searchType === 0) {
-    if (config.search.searchHistoryIndex === -1) {
-      searchQuery.value = '';
-      config.search.searchText = '';
-      nextTick(() => {
-        focusSearchInput();
-      });
-    } else {
-      const history = config.search.searchHistory as any[];
-      const item = history[config.search.searchHistoryIndex];
+    if (libConfig.search.searchHistoryIndex !== -1) {
+      const history = libConfig.search.searchHistory as any[];
+      const item = history[libConfig.search.searchHistoryIndex];
       if (item) {
         // Handle both string and object formats
         const text = typeof item === 'string' ? item : item.text;
+        libConfig.search.searchText = text;
         searchQuery.value = text;
-        config.search.searchText = text;
       }
+    } else {
+      // If index is -1, do not clear searchText. 
+      // It might be loaded from persistence or typed by user.
+      searchQuery.value = libConfig.search.searchText || '';
+      nextTick(() => {
+        focusSearchInput();
+      });
     }
   } else if (config.search.searchType === 2) {
     nextTick(() => {
@@ -263,7 +264,7 @@ function syncSearchState() {
 }
 
 watch(
-  () => config.search.searchHistoryIndex,
+  () => libConfig.search.searchHistoryIndex,
   () => {
     syncSearchState();
   }
@@ -307,35 +308,35 @@ const moreMenuItems = computed(() => {
 
 function handleSearchHistoryClick(index: number, item: any) {
   isSearchFocused.value = true;
-  config.search.searchHistoryIndex = index;
+  libConfig.search.searchHistoryIndex = index;
   // watcher will sync searchQuery and searchText
 }
 
 function clearHistory() {
   if(config.search.searchType === 0) {
-    config.search.searchText = '';
-    config.search.searchHistory = [];
-    config.search.searchHistoryIndex = -1;
+    libConfig.search.searchText = '';
+    libConfig.search.searchHistory = [];
+    libConfig.search.searchHistoryIndex = -1;
   } else if (config.search.searchType === 1) {
-    config.search.similarImageHistory = [];
-    config.search.similarImageHistoryIndex = -1;
+    libConfig.search.similarImageHistory = [];
+    libConfig.search.similarImageHistoryIndex = -1;
   } else if (config.search.searchType === 2) {
-    config.search.fileName = '';
+    libConfig.search.fileName = '';
   }
 
   showClearHistoryMsgbox.value = false;
 }
 
 function deleteHistoryItem() {
-  config.search.searchHistory.splice(config.search.searchHistoryIndex, 1);
-  config.search.searchHistoryIndex = -1;
+  libConfig.search.searchHistory.splice(libConfig.search.searchHistoryIndex, 1);
+  libConfig.search.searchHistoryIndex = -1;
 }
 
 function handleSearch() {
   if (searchQuery.value.trim().length === 0) return;
   
   const query = searchQuery.value.trim();
-  const history = config.search.searchHistory as any[];
+  const history = libConfig.search.searchHistory as any[];
   
   // Find existing index considering both string and object formats
   const existingIndex = history.findIndex((item: any) => {
@@ -344,11 +345,11 @@ function handleSearch() {
   });
   
   if (existingIndex !== -1) {
-    config.search.searchHistoryIndex = existingIndex;
+    libConfig.search.searchHistoryIndex = existingIndex;
   } else {
     // Add new item as object
     history.unshift({ text: query, file_id: null });
-    config.search.searchHistoryIndex = 0;
+    libConfig.search.searchHistoryIndex = 0;
 
     // Limit the history size
     if (history.length > config.search.maxSearchHistory) {
@@ -356,7 +357,7 @@ function handleSearch() {
     }
   }
 
-  config.search.searchText = query;
+  libConfig.search.searchText = query;
 }
 
 function handleEscKey() {
@@ -377,16 +378,16 @@ const thumbnails = ref<Record<number, string>>({}); // Shared for both now? Or w
 // But let's check how usage differs. 
 // 'thumbnails' is currently keyed by fileId. So it can be shared!
 
-const similarImageHistory = computed(() => config.search.similarImageHistory as number[]);
-const searchHistory = computed(() => config.search.searchHistory);
-const searchHistoryList = computed(() => config.search.searchHistory as any[]);
+const similarImageHistory = computed(() => libConfig.search.similarImageHistory as number[]);
+const searchHistory = computed(() => libConfig.search.searchHistory);
+const searchHistoryList = computed(() => libConfig.search.searchHistory as any[]);
 
 const emit = defineEmits(['search-similar-from-history']);
 
 
 // Watcher for Similar Image History
 watch(
-  () => config.search.similarImageHistory,
+  () => libConfig.search.similarImageHistory,
   (newHistory) => {
     const history = newHistory as number[]; 
     fetchThumbnailsForIds(history);
@@ -396,7 +397,7 @@ watch(
 
 // Watcher for Text Search History (to fetch thumbnails)
 watch(
-  () => config.search.searchHistory,
+  () => libConfig.search.searchHistory,
   (newHistory) => {
     const idsToFetch = newHistory
       .filter(item => typeof item !== 'string' && item.file_id)
@@ -436,10 +437,10 @@ async function fetchThumbnailsForIds(ids: number[]) {
 }
 
 function handleSimilarHistoryClick(index: number, fileId: number) {
-  if(config.search.similarImageHistoryIndex === index) {
+  if(libConfig.search.similarImageHistoryIndex === index) {
     return;
   }
-  config.search.similarImageHistoryIndex = index;
+  libConfig.search.similarImageHistoryIndex = index;
   
   if (historyItems.value[fileId]) {
     nextTick(() => {
@@ -461,11 +462,11 @@ function getSimilarHistoryMenuItems(index: number) {
 }
 
 function deleteSimilarHistoryItem(index: number) {
-  (config.search.similarImageHistory as any[]).splice(index, 1);
-  if (config.search.similarImageHistoryIndex === index) {
-    config.search.similarImageHistoryIndex = -1;
-  } else if (config.search.similarImageHistoryIndex > index) {
-    config.search.similarImageHistoryIndex--;
+  (libConfig.search.similarImageHistory as any[]).splice(index, 1);
+  if (libConfig.search.similarImageHistoryIndex === index) {
+    libConfig.search.similarImageHistoryIndex = -1;
+  } else if (libConfig.search.similarImageHistoryIndex > index) {
+    libConfig.search.similarImageHistoryIndex--;
   }
 }
 

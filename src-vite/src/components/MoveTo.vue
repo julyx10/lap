@@ -17,7 +17,7 @@
       <button 
         :class="[
           'px-4 py-1 rounded-box', 
-          config.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-primary-content cursor-pointer' : 'text-primary-content/70 cursor-default'
+          libConfig.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-primary-content cursor-pointer' : 'text-primary-content/70 cursor-default'
         ]" 
         @click="clickOk"
       >{{ OkText }}</button>
@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import { config } from '@/common/config';
+import { libConfig } from '@/common/config';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 

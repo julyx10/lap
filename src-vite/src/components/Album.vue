@@ -18,7 +18,7 @@
         'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap group',
         albumListRef?.isEditList 
           ? 'text-base-content/30' 
-          : (config.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100 cursor-pointer' : 'hover:text-base-content hover:bg-base-100/30 cursor-pointer'),
+          : (libConfig.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100 cursor-pointer' : 'hover:text-base-content hover:bg-base-100/30 cursor-pointer'),
       ]"
       @click="clickLibrary"
     >
@@ -37,7 +37,7 @@
         <div v-if="!albumListRef?.isEditList" 
           class="text-base-content/30"
           :class="[
-            config.album.id === 0 ? '' : 'hidden group-hover:block'
+            libConfig.album.id === 0 ? '' : 'hidden group-hover:block'
           ]"
           @click.stop
         >
@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
+import { libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 
 import { IconMore, IconAdd, IconOrder, IconRefresh, IconPhotoAll, IconEdit, IconLibraryAdd, IconLibraryRemove, IconDot } from '@/common/icons';
@@ -242,21 +242,24 @@ const albumsMenuItems = computed(() => {
 
 const clickLibrary = () => {
   if(!albumListRef.value?.isEditList) {
-    config.album.id = 0;
-    config.album.folderId = null;
-    config.album.folderPath = '';
-    config.album.selected = false;
+    libConfig.album.id = 0;
+    libConfig.album.folderId = null;
+    libConfig.album.folderPath = '';
+    libConfig.album.selected = false;
   }
 };
 
 const doSwitchLibrary = async (libraryId: string) => {
   try {
     // Cancel any running indexing before switching
-    if (config.index.status > 0 && config.index.albumQueue.length > 0) {
-      for (const albumId of config.index.albumQueue) {
+    if (libConfig.index.status > 0 && libConfig.index.albumQueue.length > 0) {
+      for (const albumId of libConfig.index.albumQueue) {
         await cancelIndexing(albumId);
       }
     }
+    
+    // Save current library state before switching
+    await libConfig.save();
     
     await switchLibrary(libraryId);
     // Reload the app to switch database

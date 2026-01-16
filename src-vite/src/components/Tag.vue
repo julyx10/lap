@@ -96,7 +96,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { getAllTags, renameTag, deleteTag, createTag } from '@/common/api';
 import { 
   IconTag, 
@@ -174,18 +174,18 @@ async function loadTags() {
   if (tags) {
     allTags.value = tags;
     if (allTags.value.length > 0 && !selectedTag.value) {
-      const index = allTags.value.findIndex(tag => tag.id === config.tag.id);
+      const index = allTags.value.findIndex(tag => tag.id === libConfig.tag.id);
       selectTag(allTags.value[index >= 0 ? index : 0]);
     }
   } else {
-    config.tag.id = null;
+    libConfig.tag.id = null;
   }
 }
 
 function selectTag(tag: any) {
   if (isRenamingTag.value) return;
   selectedTag.value = tag;
-  config.tag.id = tag.id;
+  libConfig.tag.id = tag.id;
 }
 
 async function handleRenameTag() {
@@ -259,11 +259,11 @@ async function clickDeleteTag() {
           selectTag(allTags.value[0]);
         } else {
           selectedTag.value = null;
-          config.tag.id = null;
+          libConfig.tag.id = null;
         }
       } else {
         selectedTag.value = null;
-        config.tag.id = null;
+        libConfig.tag.id = null;
       }
     }
   }

@@ -1,5 +1,5 @@
-import { ref, provide, inject, computed, Ref } from 'vue';
-import { config } from '@/common/config';
+import { provide, inject, computed, Ref } from 'vue';
+import { libConfig } from '@/common/config';
 import { selectFolder as apiSelectFolder } from '@/common/api';
 import { Album, Folder, AlbumSelectionContext, ALBUM_SELECTION_KEY } from '@/common/types';
 
@@ -16,48 +16,47 @@ export function useAlbumSelectionProvider(
     source: SelectionSource,
     onExpandAndSelect?: (albumId: number, folderPath: string) => Promise<void>
 ) {
-    // Create refs that stay in sync with config
-    // Note: config.album uses 'id', config.destFolder uses 'albumId'
+    // Create refs that stay in sync with libConfig
     const albumId = computed({
-        get: () => source === 'album' ? (config.album.id ?? 0) : (config.destFolder.albumId ?? 0),
+        get: () => source === 'album' ? (libConfig.album.id ?? 0) : (libConfig.destFolder.albumId ?? 0),
         set: (val: number) => {
             if (source === 'album') {
-                config.album.id = val;
+                libConfig.album.id = val;
             } else {
-                config.destFolder.albumId = val;
+                libConfig.destFolder.albumId = val;
             }
         }
     });
 
     const folderId = computed({
-        get: () => source === 'album' ? config.album.folderId : config.destFolder.folderId,
+        get: () => source === 'album' ? libConfig.album.folderId : libConfig.destFolder.folderId,
         set: (val: number | null) => {
             if (source === 'album') {
-                config.album.folderId = val;
+                libConfig.album.folderId = val;
             } else {
-                config.destFolder.folderId = val;
+                libConfig.destFolder.folderId = val;
             }
         }
     });
 
     const folderPath = computed({
-        get: () => source === 'album' ? (config.album.folderPath ?? '') : (config.destFolder.folderPath ?? ''),
+        get: () => source === 'album' ? (libConfig.album.folderPath ?? '') : (libConfig.destFolder.folderPath ?? ''),
         set: (val: string) => {
             if (source === 'album') {
-                config.album.folderPath = val;
+                libConfig.album.folderPath = val;
             } else {
-                config.destFolder.folderPath = val;
+                libConfig.destFolder.folderPath = val;
             }
         }
     });
 
     const selected = computed({
-        get: () => source === 'album' ? (config.album.selected ?? false) : (config.destFolder.selected ?? false),
+        get: () => source === 'album' ? (libConfig.album.selected ?? false) : (libConfig.destFolder.selected ?? false),
         set: (val: boolean) => {
             if (source === 'album') {
-                config.album.selected = val;
+                libConfig.album.selected = val;
             } else {
-                config.destFolder.selected = val;
+                libConfig.destFolder.selected = val;
             }
         }
     });
