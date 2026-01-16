@@ -35,7 +35,6 @@ pub struct Album {
     pub display_order_id: Option<i64>, // display order id
     pub cover_file_id: Option<i64>,    // album cover file id
     pub description: Option<String>,   // album description
-    pub is_hidden: Option<bool>,       // is hidden
     pub indexed: Option<u64>,          // indexed files count
     pub total: Option<u64>,            // total files count
 }
@@ -53,7 +52,6 @@ impl Album {
             display_order_id: None,
             cover_file_id: None,
             description: Some(String::new()),
-            is_hidden: None,
             indexed: Some(0),
             total: Some(0),
         })
@@ -70,9 +68,8 @@ impl Album {
             display_order_id: row.get(5)?,
             cover_file_id: row.get(6)?,
             description: row.get(7)?,
-            is_hidden: row.get(8)?,
-            indexed: row.get(9)?,
-            total: row.get(10)?,
+            indexed: row.get(8)?,
+            total: row.get(9)?,
         })
     }
 
@@ -80,7 +77,7 @@ impl Album {
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
             FROM albums WHERE path = ?1",
             params![path],
             |row| Self::from_row(row)
@@ -103,8 +100,8 @@ impl Album {
 
         // Insert the new album into the db
         let result = conn.execute(
-            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
                 self.name,
                 self.path,
@@ -113,7 +110,6 @@ impl Album {
                 self.display_order_id,
                 self.cover_file_id,
                 self.description,
-                self.is_hidden,
                 self.indexed,
                 self.total,
             ],
@@ -150,19 +146,13 @@ impl Album {
     }
 
     /// Get all albums(album_type = 1) from the db
-    pub fn get_all_albums(show_hidden_album: bool) -> Result<Vec<Self>, String> {
+    pub fn get_all_albums() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
-        let query = if show_hidden_album {
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
+        let query = 
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
             FROM albums
-            ORDER BY display_order_id ASC"
-        } else {
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
-            FROM albums
-            WHERE is_hidden IS NULL OR is_hidden = 0
-            ORDER BY display_order_id ASC"
-        };
+            ORDER BY display_order_id ASC";
 
         let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
 
@@ -186,7 +176,7 @@ impl Album {
     pub fn get_album_by_id(id: i64) -> Result<Self, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, is_hidden, indexed, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
             FROM albums WHERE id = ?1",
             params![id],
             |row| Self::from_row(row)
@@ -462,21 +452,14 @@ impl AFolder {
     }
 
     // get all favorite folders
-    pub fn get_favorite_folders(is_show_hidden: bool) -> Result<Vec<Self>, String> {
+    pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden {
-            ""
-        } else {
-            "AND (b.is_hidden IS NULL OR b.is_hidden = 0)"
-        };
 
         let query = format!(
             "SELECT a.id, a.album_id, a.name, a.path, a.created_at, a.modified_at, a.is_favorite
             FROM afolders a
-            LEFT JOIN albums b ON a.album_id = b.id
-            WHERE a.is_favorite = 1 {}
+            WHERE a.is_favorite = 1
             ORDER BY a.name",
-            hidden_clause
         );
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
@@ -583,7 +566,6 @@ pub struct QueryParams {
     pub location_admin1: String,
     pub location_name: String,
     pub is_favorite: bool,
-    pub is_show_hidden: bool,
     pub tag_id: i64,
 }
 
@@ -595,7 +577,6 @@ pub struct ImageSearchParams {
     pub file_id: Option<i64>, // file id (for similar image search)
     pub threshold: f32,       // search threshold
     pub limit: i64,           // search limit
-    pub is_show_hidden: bool, // show hidden files
 }
 
 impl AFile {
@@ -1355,27 +1336,17 @@ impl AFile {
     }
 
     /// get all taken dates from db
-    pub fn get_taken_dates(
-        ascending: bool,
-        is_show_hidden: bool,
-    ) -> Result<Vec<(String, i64)>, String> {
+    pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn()?;
 
-        let hidden_clause = if is_show_hidden {
-            ""
-        } else {
-            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
-        };
         let order_clause = if ascending { "ASC" } else { "DESC" };
         let query = format!(
             "SELECT strftime('%Y-%m-%d', a.taken_date, 'unixepoch', 'localtime') AS taken_date, COUNT(1) 
             FROM afiles a
-            LEFT JOIN afolders b ON a.folder_id = b.id
-            LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.taken_date IS NOT NULL AND a.taken_date >= 86400 {}
+            WHERE a.taken_date IS NOT NULL AND a.taken_date >= 86400
             GROUP BY strftime('%Y-%m-%d', a.taken_date, 'unixepoch', 'localtime')
             ORDER BY taken_date {}",
-            hidden_clause, order_clause
+            order_clause
         );
 
         let mut stmt = conn
@@ -1462,10 +1433,6 @@ impl AFile {
         if params.tag_id > 0 {
             conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
             sql_params.push(Box::new(params.tag_id));
-        }
-
-        if !params.is_show_hidden {
-            conditions.push("(c.is_hidden IS NULL OR c.is_hidden = 0)");
         }
 
         let where_clause = if !conditions.is_empty() {
@@ -1557,7 +1524,6 @@ impl AFile {
                     {} AS date
                 FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
-                LEFT JOIN albums c ON b.album_id = c.id
                 {}
             )
             SELECT year, month, date, MIN(position) as position
@@ -1716,19 +1682,10 @@ impl AFile {
         // 2. Perform Vector Search
         let conn = open_conn()?;
 
-        let hidden_clause = if params.is_show_hidden {
-            ""
-        } else {
-            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
-        };
-
         let query = format!(
             "SELECT a.id, a.embeds 
             FROM afiles a
-            LEFT JOIN afolders b ON a.folder_id = b.id
-            LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.embeds IS NOT NULL {}",
-            hidden_clause
+            WHERE a.embeds IS NOT NULL"
         );
 
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
@@ -2053,23 +2010,15 @@ impl ATag {
     }
 
     /// Get all tags from the db
-    pub fn get_all(is_show_hidden: bool) -> Result<Vec<Self>, String> {
+    pub fn get_all() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden {
-            "1=1"
-        } else {
-            "(albums.is_hidden = 0 OR albums.is_hidden IS NULL)"
-        };
         let query = format!(
-            "SELECT atags.id, atags.name, SUM(CASE WHEN afiles.id IS NOT NULL AND ({}) THEN 1 ELSE 0 END) AS count 
+            "SELECT atags.id, atags.name, SUM(CASE WHEN afiles.id IS NOT NULL THEN 1 ELSE 0 END) AS count 
             FROM atags 
             LEFT JOIN afile_tags ON atags.id = afile_tags.tag_id
             LEFT JOIN afiles ON afile_tags.file_id = afiles.id
-            LEFT JOIN afolders ON afiles.folder_id = afolders.id
-            LEFT JOIN albums ON afolders.album_id = albums.id
             GROUP BY atags.id
-            ORDER BY atags.name ASC",
-            hidden_clause
+            ORDER BY atags.name ASC"
         );
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
@@ -2200,23 +2149,14 @@ pub struct ACamera {
 
 impl ACamera {
     // get all camera makes and models from db
-    pub fn get_from_db(is_show_hidden: bool) -> Result<Vec<Self>, String> {
+    pub fn get_from_db() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden {
-            ""
-        } else {
-            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
-        };
-
         let query = format!(
             "SELECT UPPER(a.e_make), a.e_model, count(a.id) as count
             FROM afiles a
-            LEFT JOIN afolders b ON a.folder_id = b.id
-            LEFT JOIN albums c ON b.album_id = c.id
-            WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL {}
+            WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL
             GROUP BY UPPER(a.e_make), a.e_model
-            ORDER BY UPPER(a.e_make), a.e_model",
-            hidden_clause
+            ORDER BY UPPER(a.e_make), a.e_model"
         );
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
@@ -2267,23 +2207,15 @@ pub struct ALocation {
 
 impl ALocation {
     // get all location admin1 and names from db
-    pub fn get_from_db(is_show_hidden: bool) -> Result<Vec<Self>, String> {
+    pub fn get_from_db() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let hidden_clause = if is_show_hidden {
-            ""
-        } else {
-            "AND (c.is_hidden IS NULL OR c.is_hidden = 0)"
-        };
 
         let query = format!(
             "SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
             FROM afiles a
-            LEFT JOIN afolders b ON a.folder_id = b.id
-            LEFT JOIN albums c ON b.album_id = c.id
-            WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> '' {}
+            WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> ''
             GROUP BY a.geo_cc, a.geo_admin1, a.geo_name
-            ORDER BY a.geo_cc, a.geo_admin1, a.geo_name",
-            hidden_clause
+            ORDER BY a.geo_cc, a.geo_admin1, a.geo_name"
         );
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
@@ -2349,7 +2281,6 @@ pub fn create_db() -> Result<(), String> {
             display_order_id INTEGER,
             cover_file_id INTEGER,
             description TEXT,
-            is_hidden INTEGER,
             indexed INTEGER DEFAULT 0,
             total INTEGER DEFAULT 0
         )",

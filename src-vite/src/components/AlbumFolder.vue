@@ -65,7 +65,6 @@
       <AlbumFolder v-if="child.is_expanded && child.id != 0" 
         :key="child.id"
         :children="child.children" 
-        :isHiddenAlbum="isHiddenAlbum"
         :albumId="albumId"
         :rootPath="rootPath"
       />
@@ -158,7 +157,6 @@ import {
 
 const props = defineProps<{
   children?: Folder[];      // subfolders
-  isHiddenAlbum: boolean;   // is hidden album
   albumId: number;          // album id for this folder tree
   rootPath: string;         // root folder path (album path)
 }>();

@@ -59,11 +59,6 @@
               <span v-else>
                 {{ album.total.toLocaleString() }}
               </span>
-              <TButton v-if="album.is_hidden" 
-                :icon="IconSearchOff"
-                :buttonSize="'small'"
-                @click="toggleHidden()"
-              />
             </div>  
 
             <div class="flex flex-row items-center text-base-content/30">
@@ -95,7 +90,6 @@
             <div v-if="album.is_expanded && !isEditList && !(libConfig.index.albumQueue as any).includes(album.id)" class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
               <AlbumFolder 
                 :children="album.children" 
-                :isHiddenAlbum="album.is_hidden ? true : false"
                 :albumId="album.id"
                 :rootPath="album.path"
               />
@@ -236,13 +230,6 @@ const getMoreMenuItems = (album: any) => {
       icon: IconUpdate,
       action: () => {
         clickIndexAlbum(album.id);
-      }
-    },
-    {
-      label: !album?.is_hidden ? localeMsg.value.menu.album.exclude_from_search : localeMsg.value.menu.album.include_in_search,
-      icon: !album?.is_hidden ? IconSearchOff : IconSearch,
-      action: () => {
-        toggleHidden();
       }
     },
     {
@@ -398,7 +385,7 @@ const clickEditAlbum = async (folderPathParam: string, newName: string, newDescr
     }
   } else {
     // Edit existing album
-    const result = await editAlbum(selection.albumId.value, newName, newDescription, selectedAlbum.value?.is_hidden ?? false);
+    const result = await editAlbum(selection.albumId.value, newName, newDescription);
     if(result && selectedAlbum.value) {
       selectedAlbum.value.name = newName;
       selectedAlbum.value.description = newDescription;
@@ -512,14 +499,6 @@ const onDragEnd = async () => {
     await setDisplayOrder(albums.value[i].id, i);
   }
 }
-
-// toggle hidden album
-const toggleHidden = async () => {
-  if (selectedAlbum.value) {
-    selectedAlbum.value.is_hidden = !selectedAlbum.value.is_hidden;
-    await editAlbum(selectedAlbum.value.id, selectedAlbum.value.name ?? '', selectedAlbum.value.description ?? '', selectedAlbum.value.is_hidden);
-  }
-};
 
 const clickCloseEditList = () => {
   isEditList.value = false;

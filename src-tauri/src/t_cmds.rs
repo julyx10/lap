@@ -88,9 +88,8 @@ pub fn get_current_library_state() -> Result<LibraryState, String> {
 
 /// get all albums
 #[tauri::command]
-pub fn get_all_albums(show_hidden_album: bool) -> Result<Vec<Album>, String> {
-    Album::get_all_albums(show_hidden_album)
-        .map_err(|e| format!("Error while getting all albums: {}", e))
+pub fn get_all_albums() -> Result<Vec<Album>, String> {
+    Album::get_all_albums().map_err(|e| format!("Error while getting all albums: {}", e))
 }
 
 /// get one album
@@ -108,19 +107,11 @@ pub fn add_album(folder_path: &str) -> Result<Album, String> {
 
 /// edit an album
 #[tauri::command]
-pub fn edit_album(
-    id: i64,
-    name: &str,
-    description: &str,
-    is_hidden: bool,
-) -> Result<usize, String> {
+pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, String> {
     let _ = Album::update_column(id, "name", &name)
         .map_err(|e| format!("Error while editing album with id {}: {}", id, e));
 
-    let _ = Album::update_column(id, "description", &description)
-        .map_err(|e| format!("Error while editing album with id {}: {}", id, e));
-
-    Album::update_column(id, "is_hidden", &is_hidden)
+    Album::update_column(id, "description", &description)
         .map_err(|e| format!("Error while editing album with id {}: {}", id, e))
 }
 
@@ -489,8 +480,8 @@ pub fn get_file_has_tags(file_id: i64) -> Result<bool, String> {
 
 /// get all favorite folders
 #[tauri::command]
-pub fn get_favorite_folders(is_show_hidden: bool) -> Result<Vec<AFolder>, String> {
-    AFolder::get_favorite_folders(is_show_hidden)
+pub fn get_favorite_folders() -> Result<Vec<AFolder>, String> {
+    AFolder::get_favorite_folders()
         .map_err(|e| format!("Error while getting favorite folders: {}", e))
 }
 
@@ -524,8 +515,8 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 
 /// get all tags
 #[tauri::command]
-pub fn get_all_tags(is_show_hidden: bool) -> Result<Vec<ATag>, String> {
-    ATag::get_all(is_show_hidden).map_err(|e| format!("Error while getting all tags: {}", e))
+pub fn get_all_tags() -> Result<Vec<ATag>, String> {
+    ATag::get_all().map_err(|e| format!("Error while getting all tags: {}", e))
 }
 
 /// get tag name by id
@@ -577,30 +568,24 @@ pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> 
 
 /// get camera's taken dates
 #[tauri::command]
-pub fn get_taken_dates(
-    ascending: bool,
-    is_show_hidden: bool,
-) -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates(ascending, is_show_hidden)
-        .map_err(|e| format!("Error while getting taken dates: {}", e))
+pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates(ascending).map_err(|e| format!("Error while getting taken dates: {}", e))
 }
 
 // camera
 
 /// get a file's camera make and model info
 #[tauri::command]
-pub fn get_camera_info(is_show_hidden: bool) -> Result<Vec<ACamera>, String> {
-    ACamera::get_from_db(is_show_hidden)
-        .map_err(|e| format!("Error while getting camera info: {}", e))
+pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
+    ACamera::get_from_db().map_err(|e| format!("Error while getting camera info: {}", e))
 }
 
 // location
 
 /// get a file's location info
 #[tauri::command]
-pub fn get_location_info(is_show_hidden: bool) -> Result<Vec<ALocation>, String> {
-    ALocation::get_from_db(is_show_hidden)
-        .map_err(|e| format!("Error while getting location info: {}", e))
+pub fn get_location_info() -> Result<Vec<ALocation>, String> {
+    ALocation::get_from_db().map_err(|e| format!("Error while getting location info: {}", e))
 }
 
 // print

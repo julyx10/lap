@@ -118,10 +118,10 @@ export async function getCurrentLibraryState() {
 // albums
 
 // get all albums
-export async function getAllAlbums(showHiddenAlbum) {
+export async function getAllAlbums() {
   try {
     let albums = [];
-    const fetchedAlbums = await invoke('get_all_albums', { showHiddenAlbum });
+    const fetchedAlbums = await invoke('get_all_albums');
     console.log('get_all_albums', fetchedAlbums);
     if (fetchedAlbums) {
       albums = fetchedAlbums.map(album => ({
@@ -183,9 +183,9 @@ export async function addAlbum(folderPath) {
 }
 
 // edit an album's profile
-export async function editAlbum(albumId, newName, newDespription, newIsHidden) {
+export async function editAlbum(albumId, newName, newDespription) {
   try {
-    const album = await invoke('edit_album', { id: albumId, name: newName, description: newDespription, isHidden: newIsHidden });
+    const album = await invoke('edit_album', { id: albumId, name: newName, description: newDespription });
     console.log('edit_album', album);
     if (album) {
       return album;
@@ -702,7 +702,7 @@ export async function getFileHasTags(fileId) {
 // get favorite folders
 export async function getFavoriteFolders() {
   try {
-    const favoriteFolders = await invoke('get_favorite_folders', { isShowHidden: false });
+    const favoriteFolders = await invoke('get_favorite_folders');
     if (favoriteFolders) {
       // sort favorite folders by name in locale order 
       favoriteFolders.sort((a, b) => localeComp(config.settings.language, a.name, b.name));
@@ -758,7 +758,7 @@ export async function setFileFavorite(fileId, isFavorite) {
 // get all tags
 export async function getAllTags() {
   try {
-    const tags = await invoke('get_all_tags', { isShowHidden: false });
+    const tags = await invoke('get_all_tags');
     console.log('getAllTags:', tags);
     if (tags) {
       return tags;
@@ -855,7 +855,7 @@ export async function removeTagFromFile(fileId, tagId) {
 // get taken dates
 export async function getTakenDates(ascending = true) {
   try {
-    const taken_dates = await invoke('get_taken_dates', { ascending, isShowHidden: false });
+    const taken_dates = await invoke('get_taken_dates', { ascending });
     if (taken_dates) {
       return taken_dates;
     }
@@ -870,7 +870,7 @@ export async function getTakenDates(ascending = true) {
 // get camera info
 export async function getCameraInfo() {
   try {
-    const cameraInfo = await invoke('get_camera_info', { isShowHidden: false });
+    const cameraInfo = await invoke('get_camera_info');
     if (cameraInfo) {
       return cameraInfo;
     }
@@ -885,7 +885,7 @@ export async function getCameraInfo() {
 // get location info
 export async function getLocationInfo() {
   try {
-    const locationInfo = await invoke('get_location_info', { isShowHidden: false });
+    const locationInfo = await invoke('get_location_info');
     if (locationInfo) {
       return locationInfo;
     }

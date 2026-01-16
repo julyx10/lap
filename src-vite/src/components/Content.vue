@@ -688,7 +688,6 @@ const currentQueryParams = ref({
   locationAdmin1: "",
   locationName: "",
   isFavorite: false,
-  isShowHidden: false,
   tagId: 0,
 });
 
@@ -698,7 +697,6 @@ const currentImageSearchParams = ref({
   fileId: 0,
   threshold: 0,
   limit: 0,
-  isShowHidden: false,
 });
 
 // Similar Search Mode State
@@ -1488,7 +1486,6 @@ async function getFileList(
     locationAdmin1 = '', 
     locationName = '', 
     isFavorite = false, 
-    isShowHidden = false,
     tagId = 0
   } = {},
   requestId: number, 
@@ -1508,7 +1505,6 @@ async function getFileList(
     locationAdmin1,
     locationName,
     isFavorite,
-    isShowHidden,
     tagId,
   };
 
@@ -1567,7 +1563,6 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
     fileId,
     threshold: config.settings.imageSearch.threshold[config.settings.imageSearch.thresholdIndex],
     limit: config.settings.imageSearch.limit,
-    isShowHidden: false,
   };
 
   // set loading state
@@ -1687,7 +1682,6 @@ async function updateContent() {
               locationAdmin1: "",
               locationName: "",
               isFavorite: false,
-              isShowHidden: true,
               tagId: 0,
             };
             getQueryTimeLine(currentQueryParams.value).then(data => {

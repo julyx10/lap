@@ -3,10 +3,10 @@
   <div class="w-full h-full flex flex-col select-none" >
       
       <!-- title bar -->
-      <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
+      <!-- <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region> -->
         <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
         <!-- <TButton :icon="IconRefresh" @click="clickRefresh"/> -->
-      </div>
+      <!-- </div> -->
       
       <!-- favorite files -->
       <div 
@@ -118,10 +118,7 @@ onMounted(() => {
 
       // get album info
       favorite_folders.value.forEach((folder) => {
-        getAlbum(folder.album_id).then((album) => {
-          folder.is_hidden = album.is_hidden;
-          folder.name = getFolderName(folder.path);
-        });
+        folder.name = getFolderName(folder.path);
       });
 
       console.log('favorite_folders', favorite_folders.value);

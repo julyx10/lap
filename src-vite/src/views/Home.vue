@@ -54,6 +54,18 @@
 
           <!-- panel-->
           <div v-if="showPanel" class="ml-16 pr-0.5 flex-1 overflow-hidden">
+            <!-- library title -->
+            <div class="mb-2 p-2 h-10 flex items-center justify-between whitespace-nowrap" data-tauri-drag-region>
+              <span class="flex-1 overflow-hidden whitespace-pre text-center text-ellipsis text-base-content/70">
+                {{ currentLibrary?.name }}
+              </span>
+              <ContextMenu
+                :iconMenu="IconMore"
+                :menuItems="libraryMenuItems"
+                :smallIcon="true"
+              />
+            </div>
+
             <component :is="buttons[config.main.sidebarIndex].component" :titlebar="buttons[config.main.sidebarIndex].text"/>
           </div>
 
@@ -86,17 +98,41 @@
     <div class="fixed bottom-2 left-3 text-[12px] text-base-content/10 transition-all duration-200 ease-in-out">
       <span>jc-photo</span>
     </div>
+
+    <!-- Library Edit Dialog -->
+    <LibraryEdit
+      v-if="showLibraryEdit"
+      :isNewLibrary="isNewLibrary"
+      :libraryId="editingLibrary?.id || ''"
+      :libraryName="editingLibrary?.name || ''"
+      :createdAt="editingLibrary?.created_at || 0"
+      @ok="onLibraryEditOk"
+      @cancel="showLibraryEdit = false"
+    />
+
+    <!-- Remove Library Confirmation -->
+    <MessageBox
+      v-if="showRemoveLibraryMsgbox"
+      :title="$t('msgbox.remove_library.title')"
+      :message="$t('msgbox.remove_library.content', { library: currentLibrary?.name })"
+      :OkText="$t('msgbox.remove_library.ok')"
+      :cancelText="$t('msgbox.cancel')"
+      :warningOk="true"
+      @ok="confirmRemoveLibrary"
+      @cancel="showRemoveLibraryMsgbox = false"
+    />
   </div>
 
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac } from '@/common/utils';
+import { getAppConfig, switchLibrary, removeLibrary, cancelIndexing } from '@/common/api';
 
 const uiStore = useUIStore();
 
@@ -112,6 +148,9 @@ import Camera from '@/components/Camera.vue';
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
+import LibraryEdit from '@/components/LibraryEdit.vue';
+import MessageBox from '@/components/MessageBox.vue';
 
 import {
   IconFavorite,
@@ -123,11 +162,148 @@ import {
   IconSearch,
   IconSettings,
   IconAlbums,
+  IconMore,
+  IconDot,
+  IconLibraryAdd,
+  IconEdit,
+  IconLibraryRemove,
 } from '@/common/icons';
 
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
+
+// Library state
+interface Library {
+  id: string;
+  name: string;
+  created_at: number;
+}
+
+interface AppConfig {
+  current_library_id: string;
+  libraries: Library[];
+}
+
+const appConfig = ref<AppConfig | null>(null);
+const currentLibrary = computed(() => 
+  appConfig.value?.libraries.find(l => l.id === appConfig.value?.current_library_id) || null
+);
+
+// Library edit dialog state
+const showLibraryEdit = ref(false);
+const isNewLibrary = ref(false);
+const editingLibrary = ref<Library | null>(null);
+
+// Remove library confirmation
+const showRemoveLibraryMsgbox = ref(false);
+
+onMounted(async () => {
+  appConfig.value = await getAppConfig();
+});
+
+const libraryMenuItems = computed(() => {
+  const items: any[] = [];
+  
+  // Add all libraries for switching
+  if (appConfig.value?.libraries) {
+    for (const lib of appConfig.value.libraries) {
+      const isSelected = lib.id === appConfig.value.current_library_id;
+      items.push({
+        label: lib.name,
+        icon: isSelected ? IconDot : null,
+        action: () => {
+          if (!isSelected) {
+            doSwitchLibrary(lib.id);
+          }
+        }
+      });
+    }
+  }
+  
+  items.push({
+    label: "-",
+    action: () => {}
+  });
+  
+  items.push({
+    label: localeMsg.value.menu.library.add,
+    icon: IconLibraryAdd,
+    action: () => {
+      isNewLibrary.value = true;
+      editingLibrary.value = null;
+      showLibraryEdit.value = true;
+    }
+  });
+  
+  items.push({
+    label: localeMsg.value.menu.library.edit,
+    icon: IconEdit,
+    action: () => {
+      isNewLibrary.value = false;
+      editingLibrary.value = currentLibrary.value;
+      showLibraryEdit.value = true;
+    }
+  });
+  
+  items.push({
+    label: localeMsg.value.menu.library.remove,
+    icon: IconLibraryRemove,
+    disabled: appConfig.value?.libraries.length === 1,
+    action: () => {
+      if (appConfig.value?.libraries.length === 1) return;
+      showRemoveLibraryMsgbox.value = true;
+    }
+  });
+  
+  return items;
+});
+
+const doSwitchLibrary = async (libraryId: string) => {
+  try {
+    // Cancel any running indexing before switching
+    if (libConfig.index.status > 0 && libConfig.index.albumQueue.length > 0) {
+      for (const albumId of libConfig.index.albumQueue) {
+        await cancelIndexing(albumId);
+      }
+    }
+    
+    // Save current library state before switching
+    await libConfig.save();
+    
+    await switchLibrary(libraryId);
+    // Reload the app to switch database
+    window.location.reload();
+  } catch (error) {
+    console.error('Failed to switch library:', error);
+  }
+};
+
+const onLibraryEditOk = async (library: Library) => {
+  showLibraryEdit.value = false;
+  
+  if (isNewLibrary.value) {
+    // Switch to the new library
+    await doSwitchLibrary(library.id);
+  } else {
+    // Reload config to get updated name
+    appConfig.value = await getAppConfig();
+  }
+};
+
+const confirmRemoveLibrary = async () => {
+  showRemoveLibraryMsgbox.value = false;
+  
+  if (!currentLibrary.value) return;
+  
+  try {
+    await removeLibrary(currentLibrary.value.id);
+    // Reload app to switch to the new current library
+    window.location.reload();
+  } catch (error) {
+    console.error('Failed to remove library:', error);
+  }
+};
 
 // buttons 
 const buttons = computed(() =>  [

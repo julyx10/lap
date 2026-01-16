@@ -3,7 +3,7 @@
   <div class="w-full h-full flex flex-col select-none">
 
     <!-- title bar -->
-    <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region>
+    <div class="px-1 h-10 flex items-start justify-between whitespace-nowrap" data-tauri-drag-region>
       <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
       <div role="tablist" class="tabs-sm tabs-border" >
         <a 
@@ -41,7 +41,7 @@
     <template v-if="config.search.searchType === 0">
       <div
         :class="[ 
-          'p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
+          'mb-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
           isSearchFocused ? 'text-base-content/70' : 'text-base-content/30 hover:text-base-content/70 hover:bg-base-100',
         ]"
         @click="focusSearchInput"

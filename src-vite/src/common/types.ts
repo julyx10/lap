@@ -23,7 +23,6 @@ export interface Album {
     cover_file_id?: number;
     is_expanded?: boolean;
     is_favorite?: boolean;
-    is_hidden?: boolean;
     total?: number;
     indexed?: number;
     created_at?: string;
