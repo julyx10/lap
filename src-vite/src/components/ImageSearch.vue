@@ -453,8 +453,13 @@ function deleteSimilarHistoryItem(index: number) {
   }
 }
 
+function showClearConfirmation() {
+  showClearHistoryMsgbox.value = true;
+}
+
 defineExpose({
   clearHistory,
+  showClearConfirmation,
 });
 
 </script>

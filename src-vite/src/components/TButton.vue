@@ -1,4 +1,5 @@
 <template>
+  <div>
     <div 
       ref="buttonRef"
       class="relative inline-block"
@@ -60,6 +61,7 @@
         </div>
       </transition>
     </teleport>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -64,7 +64,7 @@
         <DropDownSelect
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isIndexing"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 2 || isTempViewMode || isIndexing"
           @select="handleFileTypeSelect"
         />
 
@@ -74,7 +74,7 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 1 || isTempViewMode || isIndexing"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 2 || isTempViewMode || isIndexing"
           @select="handleSortTypeSelect"
         />
 
@@ -540,16 +540,16 @@ const contentIcon = computed(() => {
         case 0: return IconPhotoAll;
         default: return libConfig.album.selected ? IconPhotoAll :IconFolderExpanded;
       }
-    case 1: return IconSearch;
-    case 2: 
+    case 1: 
       switch (libConfig.favorite.folderId) {
         case 0: return IconFavorite;
         case 1: return IconFolderFavorite;
         default: return IconFolderFavorite;
       }
-    case 3: return IconTag;
-    case 4: return IconCalendar;
-    case 5: return IconLocation;
+    case 2: return IconSearch;
+    case 3: return IconCalendar;
+    case 4: return IconLocation;
+    case 5: return IconTag;
     case 6: return IconCamera;
     default: return IconFiles;
   }
@@ -1314,7 +1314,7 @@ watch(
   () => {
     setTimeout(() => {
       // Only update content if we are currently in the Image Search view (index 1)
-      if (config.main.sidebarIndex === 1) {
+      if (config.main.sidebarIndex === 2) {
         scrollPosition.value = 0;   // reset file scroll position
         selectedItemIndex.value = 0; // reset selected item index to 0
         
@@ -1710,7 +1710,27 @@ async function updateContent() {
       });
     }
   }
-  else if(newIndex === 1) {   // image search
+  else if(newIndex === 1) {   // favorite
+    if(libConfig.favorite.folderId === null) {
+      contentTitle.value = "";
+    } else {
+      if(libConfig.favorite.folderId === 0) { // favorite files
+        contentTitle.value = localeMsg.value.favorite.files;
+        getFileList({ isFavorite: true }, requestId);
+      } else {                // favorite folders
+        getAlbum(libConfig.favorite.albumId).then(album => {
+          if (requestId !== currentContentRequestId) return;
+          if(album) {
+            contentTitle.value = getFolderName(album.path) + getRelativePath(libConfig.favorite.folderPath || "", album.path);
+            getFileList({ searchAllSubfolders: libConfig.favorite.folderPath || "" }, requestId);
+          } else {
+            contentTitle.value = "";
+          }
+        });
+      }
+    }
+  }
+  else if(newIndex === 2) {   // image search
     if(config.search.searchType === 0) {   // search
       if (libConfig.search.searchText) {
         contentTitle.value = localeMsg.value.search.search_images + ' - ' + libConfig.search.searchText;
@@ -1736,42 +1756,7 @@ async function updateContent() {
       }
     }
   } 
-  else if(newIndex === 2) {   // favorite
-    if(libConfig.favorite.folderId === null) {
-      contentTitle.value = "";
-    } else {
-      if(libConfig.favorite.folderId === 0) { // favorite files
-        contentTitle.value = localeMsg.value.favorite.files;
-        getFileList({ isFavorite: true }, requestId);
-      } else {                // favorite folders
-        getAlbum(libConfig.favorite.albumId).then(album => {
-          if (requestId !== currentContentRequestId) return;
-          if(album) {
-            contentTitle.value = getFolderName(album.path) + getRelativePath(libConfig.favorite.folderPath || "", album.path);
-            getFileList({ searchAllSubfolders: libConfig.favorite.folderPath || "" }, requestId);
-          } else {
-            contentTitle.value = "";
-          }
-        });
-      }
-    }
-  }
-  else if(newIndex === 3) {   // tag
-    if (libConfig.tag.id === null) {
-      contentTitle.value = "";
-    } else {
-      getTagName(libConfig.tag.id).then(tagName => {
-        if (requestId !== currentContentRequestId) return;
-        if (tagName) {
-          contentTitle.value = tagName;
-          getFileList({ tagId: libConfig.tag.id || 0 }, requestId);
-        } else {
-          contentTitle.value = "";
-        }
-      });
-    }
-  }
-  else if(newIndex === 4) {   // calendar
+  else if(newIndex === 3) {   // calendar
     if(libConfig.calendar.year === null) {
       contentTitle.value = "";
     } else {
@@ -1786,7 +1771,7 @@ async function updateContent() {
       getFileList({ startDate, endDate }, requestId);
     }
   }
-  else if(newIndex === 5) {   // location
+  else if(newIndex === 4) {   // location
     if(libConfig.location.admin1 === null) {
       contentTitle.value = "";
     } else {
@@ -1797,6 +1782,21 @@ async function updateContent() {
         contentTitle.value = `${libConfig.location.admin1}`;
         getFileList({ locationAdmin1: libConfig.location.admin1 }, requestId);
       } 
+    }
+  }
+  else if(newIndex === 5) {   // tag
+    if (libConfig.tag.id === null) {
+      contentTitle.value = "";
+    } else {
+      getTagName(libConfig.tag.id).then(tagName => {
+        if (requestId !== currentContentRequestId) return;
+        if (tagName) {
+          contentTitle.value = tagName;
+          getFileList({ tagId: libConfig.tag.id || 0 }, requestId);
+        } else {
+          contentTitle.value = "";
+        }
+      });
     }
   }
   else if(newIndex === 6) {   // camera

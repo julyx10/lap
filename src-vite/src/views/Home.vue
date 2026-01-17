@@ -84,14 +84,28 @@
                 />
                 
                 <!-- Search: Clear History -->
-                <TButton v-if="config.main.sidebarIndex === 1"
+                <TButton v-if="config.main.sidebarIndex === 2"
                   :icon="IconTrash"
                   :tooltip="$t('toolbar.tooltip.clear_history')"
-                  @click="panelRef?.clearHistory()"
+                  @click="panelRef?.showClearConfirmation()"
                 />
                 
+                <!-- Calendar: Order -->
+                <TButton v-if="config.main.sidebarIndex === 3"
+                  :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc"
+                  :tooltip="$t('toolbar.tooltip.sort')"
+                  @click="config.calendar.sortingAsc = !config.calendar.sortingAsc"
+                />
+                
+                <!-- Location: Order -->
+                <TButton v-if="config.main.sidebarIndex === 4"
+                  :icon="libConfig.location.sortCount ? IconSortingCount : IconSortingName"
+                  :tooltip="$t('toolbar.tooltip.sort')"
+                  @click="libConfig.location.sortCount = !libConfig.location.sortCount"
+                />
+
                 <!-- Tag: Add Tag + Order -->
-                <template v-if="config.main.sidebarIndex === 3">
+                <template v-if="config.main.sidebarIndex === 5">
                   <TButton
                     :icon="IconAdd"
                     :tooltip="$t('tag.add_tag')"
@@ -103,21 +117,7 @@
                     @click="config.tag.sortCount = !config.tag.sortCount"
                   />
                 </template>
-                
-                <!-- Calendar: Order -->
-                <TButton v-if="config.main.sidebarIndex === 4"
-                  :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc"
-                  :tooltip="$t('toolbar.tooltip.sort')"
-                  @click="config.calendar.sortingAsc = !config.calendar.sortingAsc"
-                />
-                
-                <!-- Location: Order -->
-                <TButton v-if="config.main.sidebarIndex === 5"
-                  :icon="libConfig.location.sortCount ? IconSortingCount : IconSortingName"
-                  :tooltip="$t('toolbar.tooltip.sort')"
-                  @click="libConfig.location.sortCount = !libConfig.location.sortCount"
-                />
-                
+
                 <!-- Camera: Order -->
                 <TButton v-if="config.main.sidebarIndex === 6"
                   :icon="config.camera.sortCount ? IconSortingCount : IconSortingName"
@@ -407,19 +407,14 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.album 
   },
   { 
-    icon: IconSearch,
-    component: ImageSearch,
-    text: localeMsg.value.sidebar.search
-  },
-  { 
     icon: IconFavorite, 
     component: Favorite,
     text: localeMsg.value.sidebar.favorite 
   },
   { 
-    icon: IconTag,
-    component: Tag,
-    text: localeMsg.value.sidebar.tag 
+    icon: IconSearch,
+    component: ImageSearch,
+    text: localeMsg.value.sidebar.search
   },
   { 
     icon: IconCalendar, 
@@ -430,6 +425,11 @@ const buttons = computed(() =>  [
     icon: IconLocation, 
     component: Location, 
     text: localeMsg.value.sidebar.location 
+  },
+  { 
+    icon: IconTag,
+    component: Tag,
+    text: localeMsg.value.sidebar.tag 
   },
   { 
     icon: IconCamera,  
