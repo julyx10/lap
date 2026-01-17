@@ -78,7 +78,7 @@
         </section>
 
         <!-- Grid view tab -->
-        <section v-if="config.settings.tabIndex === 1">
+        <section v-else-if="config.settings.tabIndex === 1">
           
           <!-- Grid view Style -->
           <div class="flex items-center justify-between mb-4">
@@ -276,10 +276,6 @@ const localeMsg = computed(() => messages.value[config.settings.language] as any
 
 const appWindow = getCurrentWebviewWindow()
 
-// get all db files' count and sum(without pagination)
-const totalFileCount = ref(0);
-const totalFileSize = ref(0);
-
 // storage file info
 const packageInfo = ref(null);
 const buildTime = ref('');
@@ -410,8 +406,11 @@ const similarityOptions = computed(() => {
   return values.map((val, i) => ({ label: options[i], value: i }));
 });
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
+  
+  // Show window after mount
+  await appWindow.show();
 });
 
 onUnmounted(() => {

@@ -142,6 +142,16 @@
         "Images",
         "Videos"
       ]
+    },
+    "tooltip": {
+      "restore": "Restore",
+      "refresh": "Refresh",
+      "grid_view": "Grid view",
+      "filmstrip_view": "Filmstrip view",
+      "show_info": "Show info",
+      "hide_info": "Hide info",
+      "clear_history": "Clear search history",
+      "sort": "Sort"
     }
   },
   "info_panel": {
@@ -195,7 +205,6 @@
       "invert": "Invert selection"
     },
     "home": {
-      "clear_history": "Clear search history",
       "delete": "Delete",
       "pin": "Pin",
       "unpin": "Unpin"

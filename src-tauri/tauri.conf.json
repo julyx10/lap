@@ -10,6 +10,7 @@
   },
   "app": {
     "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -17,7 +18,9 @@
         "width": 1200,
         "height": 800,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "visible": false,
+        "transparent": true
       }
     ],
     "security": {

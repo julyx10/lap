@@ -44,6 +44,8 @@
               />
             </div>
 
+            <div class="flex-1"></div>
+
             <TButton class="mt-auto"
               :buttonSize="'large'" 
               :icon="IconSettings" 
@@ -77,14 +79,14 @@
                 <!-- Album: Add Album -->
                 <TButton v-if="config.main.sidebarIndex === 0"
                   :icon="IconAdd"
-                  :tooltip="$t('menu.album.add')"
+                  :tooltip="$t('album.edit.title_add')"
                   @click="panelRef?.albumListRef?.clickNewAlbum()"
                 />
                 
                 <!-- Search: Clear History -->
                 <TButton v-if="config.main.sidebarIndex === 1"
                   :icon="IconTrash"
-                  :tooltip="$t('menu.home.clear_history')"
+                  :tooltip="$t('toolbar.tooltip.clear_history')"
                   @click="panelRef?.clearHistory()"
                 />
                 
@@ -92,12 +94,12 @@
                 <template v-if="config.main.sidebarIndex === 3">
                   <TButton
                     :icon="IconAdd"
-                    :tooltip="$t('menu.tag.add')"
+                    :tooltip="$t('tag.add_tag')"
                     @click="panelRef?.clickAddTag()"
                   />
                   <TButton
                     :icon="config.tag.sortCount ? IconSortingCount : IconSortingName"
-                    :tooltip="$t('menu.home.sort')"
+                    :tooltip="$t('toolbar.tooltip.sort')"
                     @click="config.tag.sortCount = !config.tag.sortCount"
                   />
                 </template>
@@ -105,21 +107,21 @@
                 <!-- Calendar: Order -->
                 <TButton v-if="config.main.sidebarIndex === 4"
                   :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc"
-                  :tooltip="$t('menu.home.sort')"
+                  :tooltip="$t('toolbar.tooltip.sort')"
                   @click="config.calendar.sortingAsc = !config.calendar.sortingAsc"
                 />
                 
                 <!-- Location: Order -->
                 <TButton v-if="config.main.sidebarIndex === 5"
                   :icon="libConfig.location.sortCount ? IconSortingCount : IconSortingName"
-                  :tooltip="$t('menu.home.sort')"
+                  :tooltip="$t('toolbar.tooltip.sort')"
                   @click="libConfig.location.sortCount = !libConfig.location.sortCount"
                 />
                 
                 <!-- Camera: Order -->
                 <TButton v-if="config.main.sidebarIndex === 6"
                   :icon="config.camera.sortCount ? IconSortingCount : IconSortingName"
-                  :tooltip="$t('menu.home.sort')"
+                  :tooltip="$t('toolbar.tooltip.sort')"
                   @click="config.camera.sortCount = !config.camera.sortCount"
                 />
               </div>
@@ -301,7 +303,9 @@ const libraryMenuItems = computed(() => {
   items.push({
     label: localeMsg.value.menu.library.add,
     icon: IconLibraryAdd,
+    disabled: (appConfig.value?.libraries.length || 0) >= config.main.maxLibraryCount,
     action: () => {
+      if ((appConfig.value?.libraries.length || 0) >= config.main.maxLibraryCount) return;
       isNewLibrary.value = true;
       editingLibrary.value = null;
       showLibraryEdit.value = true;
@@ -321,9 +325,11 @@ const libraryMenuItems = computed(() => {
   items.push({
     label: localeMsg.value.menu.library.remove,
     icon: IconLibraryRemove,
-    disabled: appConfig.value?.libraries.length === 1,
+    disabled: appConfig.value?.libraries.length === 1 || currentLibrary.value?.id === appConfig.value?.libraries[0]?.id,
     action: () => {
-      if (appConfig.value?.libraries.length === 1) return;
+      if (!appConfig.value?.libraries) return;
+      if (appConfig.value.libraries.length === 1) return;
+      if (currentLibrary.value?.id === appConfig.value.libraries[0]?.id) return;
       showRemoveLibraryMsgbox.value = true;
     }
   });
@@ -344,10 +350,18 @@ const doSwitchLibrary = async (libraryId: string) => {
     await libConfig.save();
     
     await switchLibrary(libraryId);
+    
+    // Fade out before reload to prevent flash
+    document.body.style.transition = 'opacity 0.15s ease-out';
+    document.body.style.opacity = '0';
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
     // Reload the app to switch database
     window.location.reload();
   } catch (error) {
     console.error('Failed to switch library:', error);
+    // Restore opacity if error occurs
+    document.body.style.opacity = '1';
   }
 };
 
@@ -370,10 +384,18 @@ const confirmRemoveLibrary = async () => {
   
   try {
     await removeLibrary(currentLibrary.value.id);
+    
+    // Fade out before reload to prevent flash
+    document.body.style.transition = 'opacity 0.15s ease-out';
+    document.body.style.opacity = '0';
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
     // Reload app to switch to the new current library
     window.location.reload();
   } catch (error) {
     console.error('Failed to remove library:', error);
+    // Restore opacity if error occurs
+    document.body.style.opacity = '1';
   }
 };
 
@@ -473,8 +495,9 @@ async function clickSettings() {
     minWidth: 600,
     minHeight: 400,
     resizable: true,
+    visible: false, // Start hidden, will show after mount
+    transparent: true, // Prevent white flash on show (Tauri 2.x workaround)
     decorations: isMac, // true for macOS, false for Windows
-    transparent: isWin, // true for Windows, false for macOS
     ...(isMac && {
       titleBarStyle: 'Overlay',
       hiddenTitle: true,

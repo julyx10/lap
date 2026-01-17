@@ -51,6 +51,7 @@
           :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
         />
         <!-- embedding status -->
+        <!-- <IconIndexReady v-if="file.has_embedding" class="t-icon-size-xs"></IconIndexReady> -->
         <IconUpdate v-if="!file.has_embedding" class="t-icon-size-xs"></IconUpdate>
       </div>
 
@@ -117,6 +118,7 @@ import {
   IconLocation,
   IconCameraAperture,
   IconUpdate,
+  IconIndexReady,
 } from '@/common/icons';
 
 const props = defineProps({

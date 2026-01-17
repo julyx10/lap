@@ -201,7 +201,7 @@ onMounted(async () => {
   uiStore.pushInputHandler('AlbumEdit');
   
   if (props.isNewAlbum) {
-    clickSelectFolder();
+    // clickSelectFolder();
   }
   else {
     selectedFolder.value = props.albumPath;

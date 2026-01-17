@@ -142,6 +142,16 @@
         "图片",
         "视频"
       ]
+    },
+    "tooltip": {
+      "restore": "恢复",
+      "refresh": "刷新",
+      "grid_view": "网格视图",
+      "filmstrip_view": "胶片视图",
+      "show_info": "显示信息",
+      "hide_info": "隐藏信息",
+      "clear_history": "清空搜索历史",
+      "sort": "排序"
     }
   },
   "info_panel": {
@@ -195,7 +205,6 @@
       "invert": "反选"
     },
     "home": {
-      "clear_history": "清空查询历史",
       "delete": "删除",
       "pin": "固定",
       "unpin": "取消固定"

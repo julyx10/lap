@@ -10,6 +10,7 @@ export const useConfigStore = defineStore('configStore', {
       leftPaneWidth: 320,         // left pane width
       sidebarIndex: 0,            // toolbar index
       albumCount: 0,              // album count
+      maxLibraryCount: 10,        // max library count
     },
 
     content: {
@@ -67,7 +68,7 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     settings: {
-      tabIndex: 0,               // settings tab index (0: general, 1: grid view, 2: image viewer, 3: about)
+      tabIndex: 0,               // settings tab index (0: general, 1: grid view, 2: image view, 3: image search, 4: about)
 
       // general settings
       language: 'en',             // default language
@@ -132,6 +133,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setDebugMode(debugMode) {
       this.settings.debugMode = debugMode;
+    },
+    setSettingsTabIndex(tabIndex) {
+      this.settings.tabIndex = tabIndex;
     },
 
     // video settings

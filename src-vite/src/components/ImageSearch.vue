@@ -289,19 +289,6 @@ onUnmounted(() => {
   uiStore.removeInputHandler('ImageSearch');
 });
 
-// more menuitems
-const moreMenuItems = computed(() => {
-  return [
-    {
-      label: localeMsg.value.menu.home.clear_history,
-      icon: IconTrash,
-      action: () => {
-        showClearHistoryMsgbox.value = true;
-      }
-    },
-  ];
-});
-
 function handleSearchHistoryClick(index: number, item: any) {
   isSearchFocused.value = true;
   libConfig.search.searchHistoryIndex = index;

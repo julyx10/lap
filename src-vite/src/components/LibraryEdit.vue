@@ -12,7 +12,7 @@
           ref="inputNameRef"
           v-model="inputNameValue"
           type="text"
-          maxlength="255"
+          maxlength="32"
           class="w-full input"
           :placeholder="$t('msgbox.edit_library.placeholder')"
           @input="validateInput"

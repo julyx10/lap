@@ -147,6 +147,13 @@ onMounted(async() => {
   }, 500);
 
   await handleResize();
+  
+  // Show window after mount (if it was created hidden)
+  try {
+    await appWindow.show();
+  } catch (e) {
+    // Window might already be visible, ignore error
+  }
 });
 
 onUnmounted(() => {

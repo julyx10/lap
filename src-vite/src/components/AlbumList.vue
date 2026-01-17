@@ -50,12 +50,15 @@
 
             <!-- Right side: Count and Status Icons -->
             <div class="ml-auto pl-1 flex items-center justify-center text-xs text-base-content/30">
-              <TButton v-if="album.indexed !== undefined && album.total !== undefined && album.indexed < album.total" 
+              <!-- <TButton v-if="album.indexed !== undefined && album.total !== undefined && album.indexed < album.total" 
                 :icon="IconUpdate"
                 :iconClasses="(libConfig.index.albumQueue as any).includes(album.id) ? ['animate-spin'] : []"
                 :buttonSize="'small'"
                 @click="clickIndexAlbum(album.id)"
-              />
+              /> -->
+              <div v-if="album.indexed !== undefined && album.total !== undefined && album.indexed < album.total" @click="clickIndexAlbum(album.id)">
+                <component :is="libConfig.index.albumQueue[0] === album.id ? IconIndexRunning : IconIndexWaiting" class="mx-1 w-4 h-4 hover:text-base-content" />
+              </div>
               <span v-else>
                 {{ album.total.toLocaleString() }}
               </span>
@@ -74,12 +77,13 @@
                 />
               </div>
               <!-- dragging handle -->
-              <TButton v-if="isEditList" 
-                class="drag-handle"
-                :icon="IconDragHandle"
-                :buttonSize="'small'"
-                :selected="true"
-              />
+              <div v-if="isEditList" class="drag-handle">
+                <TButton 
+                  :icon="IconDragHandle"
+                  :buttonSize="'small'"
+                  :selected="true"
+                />
+              </div>
             </div>
           </div>
           <transition
@@ -169,6 +173,9 @@ import {
   IconUpdate,
   IconRestore,
   IconOrder,
+  IconIndexReady,
+  IconIndexRunning,
+  IconIndexWaiting,
 } from '@/common/icons';
 
 const props = defineProps<{
@@ -225,7 +232,7 @@ const getMoreMenuItems = (album: any) => {
     },
     {
       label: localeMsg.value.menu.album.index,
-      icon: IconUpdate,
+      icon: IconIndexReady,
       action: () => {
         clickIndexAlbum(album.id);
       }

@@ -69,6 +69,9 @@ listen('settings-showStatusBar-changed', (event) => {
 listen('settings-debugMode-changed', (event) => {
   config.setDebugMode(event.payload)
 })
+listen('settings-settingsTabIndex-changed', (event) => {
+  config.setSettingsTabIndex(event.payload)
+})
 listen('settings-gridSize-changed', (event) => {
   config.setGridSize(event.payload)
 })

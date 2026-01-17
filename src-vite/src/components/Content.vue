@@ -28,7 +28,7 @@
         <TButton v-if="isTempViewMode" 
           :icon="IconRestore" 
           :buttonSize="'medium'"
-          :tooltip="$t('toolbar.filter.exit_temp_view_mode')"
+          :tooltip="$t('toolbar.tooltip.restore')"
           :selected="true"
           @click="exitTempViewMode" 
         />
@@ -85,6 +85,7 @@
           <!-- refresh file list -->
           <TButton
             :icon="IconRefresh"
+            :tooltip="$t('toolbar.tooltip.refresh')"
             :disabled="isIndexing"
             @click="updateContent()"
           />
@@ -93,6 +94,7 @@
           <TButton
             :icon="config.content.showFilmStrip ? IconGallery : IconGrid"
             :iconStyle="{ transform: `rotate(${config.settings.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
+            :tooltip="config.content.showFilmStrip ? $t('toolbar.tooltip.filmstrip_view') : $t('toolbar.tooltip.grid_view')"
             :disabled="isIndexing"
             @click="toggleGridViewLayout"
           />
@@ -100,6 +102,7 @@
           <!-- toggle info panel -->
           <TButton
             :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
+            :tooltip="config.infoPanel.show ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
             :disabled="isIndexing"
             @click="config.infoPanel.show = !config.infoPanel.show"
           />
@@ -292,9 +295,7 @@
         class="absolute inset-0 z-100 bg-base-200/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-base-content/30"
         :class="[ config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12 mb-1' ]"
       >
-        <IconUpdate class="mx-1 w-8 h-8" 
-          :class="libConfig.index.albumQueue[0] === libConfig.album.id ? 'animate-spin' : ''" 
-        />  
+        <component :is="libConfig.index.albumQueue[0] === libConfig.album.id ? IconIndexRunning : IconIndexWaiting" class="mx-1 w-8 h-8" />
         <span class="text-lg text-center">{{ libConfig.index.albumQueue[0] === libConfig.album.id
           ? $t('search.index.indexing', { album: libConfig.index.albumName, count: libConfig.index.indexed.toLocaleString(), total: libConfig.index.total.toLocaleString() }) 
           : $t('search.index.wait_index') 
@@ -514,6 +515,9 @@ import {
   IconSearch,
   IconRestore,
   IconRefresh,
+  IconIndexReady,
+  IconIndexRunning,
+  IconIndexWaiting,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -2456,8 +2460,9 @@ async function openImageViewer(index: number, newViewer = false) {
         minWidth: 800,
         minHeight: 600,
         resizable: true,
+        visible: false, // Start hidden, will show after mount
+        transparent: true, // Prevent white flash on show (Tauri 2.x workaround)
         decorations: isMac,
-        transparent: isWin,
         ...(isMac && {
           titleBarStyle: 'overlay',
           hiddenTitle: true,
