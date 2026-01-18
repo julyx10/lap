@@ -151,7 +151,11 @@
       "show_info": "Show info",
       "hide_info": "Hide info",
       "clear_history": "Clear search history",
-      "sort": "Sort"
+      "sort": "Sort",
+      "monthly": "Monthly",
+      "daily": "Daily",
+      "time_asc": "Time Asc",
+      "time_desc": "Time Desc"
     }
   },
   "info_panel": {

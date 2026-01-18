@@ -18,6 +18,10 @@ export const useConfigStore = defineStore('configStore', {
       filmStripPaneHeight: 160,   // film strip pane height (px)
     },
 
+    leftPanel: {
+      sortCount: false,           // false: default sort by name, true: sort by count
+    },
+
     infoPanel: {
       show: false,               // show info panel
       width: 30,                 // info panel width(20-80%)
@@ -33,21 +37,9 @@ export const useConfigStore = defineStore('configStore', {
       sortOrder: 0,             // sort order(0: ascending, 1: descending)
     },
 
-    tag: {
-      sortCount: false,     // false: default sort by name, true: sort by count
-    },
-
     calendar: {
       isMonthly: true,    // display monthly or daily calendar
       sortingAsc: false,   // sorting order
-    },
-
-    camera: {
-      sortCount: false,     // false: default sort by name, true: sort by count
-    },
-
-    location: {
-      sortCount: false,     // false: default sort by name, true: sort by count
     },
 
     mediaViewer: {

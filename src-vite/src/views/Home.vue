@@ -91,38 +91,31 @@
                 />
                 
                 <!-- Calendar: Order -->
-                <TButton v-if="config.main.sidebarIndex === 3"
-                  :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc"
-                  :tooltip="$t('toolbar.tooltip.sort')"
-                  @click="config.calendar.sortingAsc = !config.calendar.sortingAsc"
-                />
-                
-                <!-- Location: Order -->
-                <TButton v-if="config.main.sidebarIndex === 4"
-                  :icon="libConfig.location.sortCount ? IconSortingCount : IconSortingName"
-                  :tooltip="$t('toolbar.tooltip.sort')"
-                  @click="libConfig.location.sortCount = !libConfig.location.sortCount"
-                />
-
-                <!-- Tag: Add Tag + Order -->
-                <template v-if="config.main.sidebarIndex === 5">
-                  <TButton
-                    :icon="IconAdd"
-                    :tooltip="$t('tag.add_tag')"
-                    @click="panelRef?.clickAddTag()"
+                <template v-if="config.main.sidebarIndex === 3">
+                  <TButton 
+                    :icon="config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay"
+                    :tooltip="config.calendar.isMonthly ? $t('toolbar.tooltip.monthly') : $t('toolbar.tooltip.daily')"
+                    @click="config.calendar.isMonthly ? panelRef?.switchToDailyView() : panelRef?.switchToMonthlyView()"
                   />
-                  <TButton
-                    :icon="config.tag.sortCount ? IconSortingCount : IconSortingName"
-                    :tooltip="$t('toolbar.tooltip.sort')"
-                    @click="config.tag.sortCount = !config.tag.sortCount"
+                  <TButton 
+                    :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc"
+                    :tooltip="config.calendar.sortingAsc ? $t('toolbar.tooltip.time_asc') : $t('toolbar.tooltip.time_desc')"
+                    @click="config.calendar.sortingAsc = !config.calendar.sortingAsc"
                   />
                 </template>
+                
+                <!-- Tag: Add Tag  -->
+                <TButton v-if="config.main.sidebarIndex === 5"
+                  :icon="IconAdd"
+                  :tooltip="$t('tag.add_tag')"
+                  @click="panelRef?.clickAddTag()"
+                />
 
-                <!-- Camera: Order -->
-                <TButton v-if="config.main.sidebarIndex === 6"
-                  :icon="config.camera.sortCount ? IconSortingCount : IconSortingName"
+                <!-- tag, location, camera: Order -->
+                <TButton v-if="config.main.sidebarIndex === 4 || config.main.sidebarIndex === 5 || config.main.sidebarIndex === 6"
+                  :icon="config.leftPanel.sortCount ? IconSortingName : IconSortingCount"
                   :tooltip="$t('toolbar.tooltip.sort')"
-                  @click="config.camera.sortCount = !config.camera.sortCount"
+                  @click="config.leftPanel.sortCount = !config.leftPanel.sortCount"
                 />
               </div>
             </div>
@@ -238,6 +231,8 @@ import {
   IconSortingCount,
   IconSortingName,
   IconArrowDown,
+  IconCalendarMonth,
+  IconCalendarDay,
 } from '@/common/icons';
 
 // Panel component ref

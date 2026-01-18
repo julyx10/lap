@@ -55,11 +55,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { libConfig } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
 import { getCountryName } from '@/common/utils';
-import { IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
-import TButton from '@/components/TButton.vue';
+import { IconRight } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {
@@ -73,7 +72,7 @@ const { locale } = useI18n(); // get locale for country name translation
 const locations = ref<any[]>([]);
 
 const sortedLocations = computed(() => {
-  if (libConfig.location.sortCount) {
+  if (config.leftPanel.sortCount) {
     return [...locations.value].sort((a, b) => {
       const countA = (a.counts || []).reduce((sum: number, c: number) => sum + c, 0);
       const countB = (b.counts || []).reduce((sum: number, c: number) => sum + c, 0);

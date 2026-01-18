@@ -151,7 +151,11 @@
       "show_info": "显示信息",
       "hide_info": "隐藏信息",
       "clear_history": "清空搜索历史",
-      "sort": "排序"
+      "sort": "排序",
+      "monthly": "按月",
+      "daily": "按日",
+      "time_asc": "时间升序",
+      "time_desc": "时间降序"
     }
   },
   "info_panel": {

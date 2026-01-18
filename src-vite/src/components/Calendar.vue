@@ -2,28 +2,6 @@
 
   <div class="w-full h-full flex flex-col overflow-hidden" style="user-select: none;">
 
-    <!-- month/day tabs -->
-    <div v-if="Object.keys(calendar_dates).length > 0" class="mx-1 mb-1" >
-      <div role="tablist" class="tabs-sm tabs-border">
-        <a 
-          role="tab"
-          class="tab"
-          :class="config.calendar.isMonthly ? 'tab-active' : ''" 
-          @click="switchToMonthlyView"
-        >
-          {{ $t('calendar.month') }}
-        </a>
-        <a 
-          role="tab"
-          class="tab"
-          :class="!config.calendar.isMonthly ? 'tab-active' : ''" 
-          @click="switchToDailyView"
-        >
-          {{ $t('calendar.day') }}
-        </a>
-      </div>
-    </div>
-    
     <template v-if="Object.keys(calendar_dates).length > 0" >
       <!-- calendar -->
       <div ref="scrollable"
@@ -37,7 +15,7 @@
             <div 
               v-for="(day, index) in localeMsg.calendar.weekdays" 
               :key="index" 
-              class="p-2 w-8 flex items-center justify-center"
+              class="p-1 w-8 flex items-center justify-center"
               :class="[
                 index === selectedWeekday ? 'text-base-content/70' : 'text-base-content/30'
               ]"
@@ -82,9 +60,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getTakenDates } from '@/common/api';
-import { IconSortingAsc, IconSortingDesc } from '@/common/icons';
 
-import TButton from '@/components/TButton.vue';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
 
@@ -224,5 +200,10 @@ function transformArray(dates) {
 
   return result;
 }
+
+defineExpose({
+  switchToMonthlyView,
+  switchToDailyView,
+});
 
 </script>

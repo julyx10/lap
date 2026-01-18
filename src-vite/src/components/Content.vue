@@ -19,11 +19,11 @@
     >
       <!-- title -->
       <div class="mr-1 flex flex-row items-center gap-1 min-w-0 flex-1" data-tauri-drag-region>
-        <IconImageSearch v-if="tempViewMode === 'similar'" class="t-icon-size-sm shrink-0 text-primary"/>
-        <IconFolderExpanded v-if="tempViewMode === 'album'" class="t-icon-size-sm shrink-0 text-primary"/>
+        <IconImageSearch v-if="tempViewMode === 'similar'" class="t-icon-size-sm shrink-0"/>
+        <IconFolderExpanded v-if="tempViewMode === 'album'" class="t-icon-size-sm shrink-0"/>
         <component v-if="contentTitle && !isTempViewMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
         <div class="cursor-default overflow-hidden whitespace-pre text-ellipsis">
-          <span :class="isTempViewMode ? 'text-primary' : ''" data-tauri-drag-region>{{ contentTitle }}</span>
+          <span data-tauri-drag-region>{{ contentTitle }}</span>
         </div>
         <TButton v-if="isTempViewMode" 
           :icon="IconRestore" 

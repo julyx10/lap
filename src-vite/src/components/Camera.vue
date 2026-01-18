@@ -57,8 +57,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { config, libConfig } from '@/common/config';
 import { getCameraInfo } from '@/common/api';
-import { IconRight, IconSortingCount, IconSortingName } from '@/common/icons';
-import TButton from '@/components/TButton.vue';
+import { IconRight } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {
@@ -70,7 +69,7 @@ const props = defineProps({
 const cameras = ref<any[]>([]);
 
 const sortedCameras = computed(() => {
-  if (config.camera.sortCount) {
+  if (config.leftPanel.sortCount) {
     return [...cameras.value].sort((a, b) => {
       const countA = (a.counts || []).reduce((sum: number, c: number) => sum + c, 0);
       const countB = (b.counts || []).reduce((sum: number, c: number) => sum + c, 0);

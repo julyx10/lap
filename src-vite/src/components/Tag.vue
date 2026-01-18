@@ -90,12 +90,8 @@ import {
   IconMore, 
   IconRename, 
   IconTrash,
-  IconAdd,
-  IconSortingCount,
-  IconSortingName,
 } from '@/common/icons';
 
-import TButton from '@/components/TButton.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
@@ -118,7 +114,7 @@ const originalTagName = ref('');
 const tagInputRef = ref([]);
 
 const sortedTags = computed(() => {
-  if (config.tag.sortCount) {
+  if (config.leftPanel.sortCount) {
     return [...allTags.value].sort((a, b) => (b.count || 0) - (a.count || 0));
   }
   return allTags.value;

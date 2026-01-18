@@ -17,7 +17,7 @@
     <div class="p-2 grid grid-cols-6 gap-x-2 gap-y-2 text-center">
       <div v-for="m in 12" 
         :key="m" 
-        class="size-8 p-1 text-xs flex items-center justify-center rounded-box"
+        class="size-7 text-xs flex items-center justify-center rounded-box"
         :class="{
           'bg-base-100 cursor-default': sumMonthCount(m) === 0,
           'text-base-content/70 hover:text-base-content cursor-pointer': sumMonthCount(m) > 0,
