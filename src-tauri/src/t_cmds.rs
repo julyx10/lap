@@ -660,6 +660,7 @@ pub fn index_faces(
     status_state: State<t_face::FaceIndexingStatus>,
     progress_state: State<t_face::FaceIndexProgressState>,
     cluster_epsilon: Option<f32>,
+    image_source: Option<i64>,
 ) -> Result<(), String> {
     t_face::run_face_indexing(
         app_handle,
@@ -668,6 +669,7 @@ pub fn index_faces(
         (*status_state).clone(),
         (*progress_state).clone(),
         cluster_epsilon,
+        image_source,
     )
 }
 

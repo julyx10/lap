@@ -3,6 +3,7 @@
  * Handles face detection (RetinaFace) and embedding (MobileFaceNet) using ONNX Runtime.
  */
 use crate::{t_cluster, t_sqlite};
+use image::DynamicImage;
 use ndarray::Array;
 use ort::{
     inputs,
@@ -82,8 +83,8 @@ impl FaceEngine {
             .resolve("resources/models", tauri::path::BaseDirectory::Resource)
             .map_err(|e| format!("Failed to resolve resource path: {}", e))?;
 
-        let detection_model_path = resource_dir.join("det_500m.onnx");
-        let embedding_model_path = resource_dir.join("w600k_mbf.onnx");
+        let detection_model_path = resource_dir.join("det_10g.onnx");
+        let embedding_model_path = resource_dir.join("w600k_r50.onnx");
 
         // Check if models exist
         if !detection_model_path.exists() {
@@ -130,15 +131,18 @@ impl FaceEngine {
         self.detection_model.is_some() && self.embedding_model.is_some()
     }
 
-    /// Detect faces in an image
+    /// Detect faces in an image (from path)
     pub fn detect_faces(&mut self, image_path: &str) -> Result<Vec<FaceBox>, String> {
         if !self.is_loaded() {
             return Err("Face models not loaded".to_string());
         }
-
-        // Load and preprocess image for detection
+        // Load image
         let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+        self.detect_faces_impl(&img)
+    }
 
+    /// Detect faces implementation (from DynamicImage)
+    fn detect_faces_impl(&mut self, img: &DynamicImage) -> Result<Vec<FaceBox>, String> {
         let original_width = img.width() as f32;
         let original_height = img.height() as f32;
 
@@ -291,7 +295,7 @@ impl FaceEngine {
         anchors
     }
 
-    /// Get face embedding from a cropped face region
+    /// Get face embedding from a cropped face region (from path)
     pub fn get_face_embedding(
         &mut self,
         image_path: &str,
@@ -300,9 +304,16 @@ impl FaceEngine {
         if !self.is_loaded() {
             return Err("Face models not loaded".to_string());
         }
-
         let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+        self.get_face_embedding_impl(&img, bbox)
+    }
 
+    /// Get face embedding implementation (from DynamicImage)
+    fn get_face_embedding_impl(
+        &mut self,
+        img: &DynamicImage,
+        bbox: &FaceBox,
+    ) -> Result<Vec<f32>, String> {
         // Crop face region with some padding
         let padding = 0.2;
         let x = (bbox.x - bbox.width * padding).max(0.0) as u32;
@@ -365,12 +376,56 @@ impl FaceEngine {
     }
 
     /// Process image: detect all faces and get embeddings
+    /// Filters out low-quality faces (low confidence, small size)
     pub fn process_image(&mut self, image_path: &str) -> Result<Vec<FaceData>, String> {
-        let faces = self.detect_faces(image_path)?;
+        // Get image dimensions
+        let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+        self.process_image_impl(&img)
+    }
+
+    /// Process image from memory (bytes)
+    pub fn process_image_from_memory(
+        &mut self,
+        image_data: &[u8],
+    ) -> Result<Vec<FaceData>, String> {
+        let img = image::load_from_memory(image_data)
+            .map_err(|e| format!("Failed to load image from memory: {}", e))?;
+        self.process_image_impl(&img)
+    }
+
+    /// Internal process logic reused by both file and memory based processing
+    fn process_image_impl(&mut self, img: &DynamicImage) -> Result<Vec<FaceData>, String> {
+        // Quality thresholds
+        const MIN_CONFIDENCE: f32 = 0.7; // Minimum detection confidence
+        const MIN_FACE_RATIO: f32 = 0.005; // Face must be at least 0.5% of image area
+        const MIN_FACE_SIZE: f32 = 40.0; // Minimum face size in pixels
+
+        let img_width = img.width() as f32;
+        let img_height = img.height() as f32;
+        let img_area = img_width * img_height;
+
+        let faces = self.detect_faces_impl(img)?;
 
         let mut results = Vec::new();
         for face in faces {
-            let embedding = self.get_face_embedding(image_path, &face)?;
+            // Filter 1: Skip low confidence faces
+            if face.confidence < MIN_CONFIDENCE {
+                continue;
+            }
+
+            // Filter 2: Skip very small faces (likely background people)
+            let face_area = face.width * face.height;
+            if face_area / img_area < MIN_FACE_RATIO {
+                continue;
+            }
+
+            // Filter 3: Skip faces smaller than minimum pixel size
+            if face.width < MIN_FACE_SIZE || face.height < MIN_FACE_SIZE {
+                continue;
+            }
+
+            // Get embedding for quality face
+            let embedding = self.get_face_embedding_impl(img, &face)?;
             results.push(FaceData {
                 bbox: face,
                 embedding,
@@ -431,12 +486,16 @@ pub fn run_face_indexing(
     status_token_struct: FaceIndexingStatus,
     progress_token_struct: FaceIndexProgressState,
     cluster_epsilon: Option<f32>,
+    image_source: Option<i64>, // 0: Original (default), 1: Thumbnail
 ) -> Result<(), String> {
     let cancel_token = cancel_token_struct.0.clone();
     let status_token = status_token_struct.0.clone();
     let progress_token = progress_token_struct.0.clone();
     // Use provided epsilon or default to 0.42
     let epsilon = cluster_epsilon.unwrap_or(0.42);
+    // Use proper image source check.
+    // Default to strict (0/Original) if not specified or invalid.
+    let use_thumbnail = image_source.unwrap_or(0) == 1;
 
     // Check if already running
     {
@@ -551,7 +610,27 @@ pub fn run_face_indexing(
 
             let mut engine = face_state.0.lock().unwrap();
 
-            match engine.process_image(&file_path) {
+            let process_result = if use_thumbnail {
+                // Try to fetch thumbnail first
+                match t_sqlite::AThumb::fetch(file_id) {
+                    Ok(Some(thumb)) => {
+                        if let Some(data) = &thumb.thumb_data {
+                            engine.process_image_from_memory(data)
+                        } else {
+                            // Thumb exists but no data? Fallback
+                            engine.process_image(&file_path)
+                        }
+                    }
+                    _ => {
+                        // Failed to fetch or no thumb, fallback to original
+                        engine.process_image(&file_path)
+                    }
+                }
+            } else {
+                engine.process_image(&file_path)
+            };
+
+            match process_result {
                 Ok(faces) => {
                     let has_faces = !faces.is_empty();
                     let status = if has_faces { 1 } else { 2 };
@@ -632,7 +711,24 @@ pub fn run_face_indexing(
             }),
         );
 
-        let total_persons = match t_cluster::cluster_faces(epsilon) {
+        let cancel_token_cluster = cancel_token.clone();
+        let total_persons = match t_cluster::cluster_faces(
+            epsilon,
+            |progress| {
+                let _ = app_handle.emit(
+                    "cluster_progress",
+                    serde_json::json!({
+                        "phase": progress.phase,
+                        "current": progress.current,
+                        "total": progress.total,
+                    }),
+                );
+            },
+            || {
+                // Check if user has cancelled
+                *cancel_token_cluster.lock().unwrap()
+            },
+        ) {
             Ok(count) => count,
             Err(e) => {
                 eprintln!("Clustering failed: {}", e);

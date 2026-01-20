@@ -1900,7 +1900,7 @@ impl AThumb {
     }
 
     /// fetch a thumbnail from db by file_id
-    fn fetch(file_id: i64) -> Result<Option<Self>, String> {
+    pub fn fetch(file_id: i64) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         let result = conn
             .query_row(
@@ -2190,16 +2190,17 @@ pub struct Person {
 }
 
 impl Person {
-    /// Get all persons with face counts and thumbnail
+    /// Get all persons with face counts and pre-stored thumbnail
+    /// Optimized: single query, no runtime image processing
     pub fn get_all() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         
-        // Get persons with face count and cover face thumbnail
+        // Single query with JOIN for count, directly fetch pre-stored thumbnail
         let query = "
-            SELECT p.id, p.name, 
-                   (SELECT COUNT(*) FROM faces f WHERE f.person_id = p.id) as count,
-                   p.cover_face_id
+            SELECT p.id, p.name, COUNT(f.id) as count, p.thumbnail
             FROM persons p
+            LEFT JOIN faces f ON f.person_id = p.id
+            GROUP BY p.id
             ORDER BY count DESC, p.name ASC
         ";
         
@@ -2207,41 +2208,47 @@ impl Person {
         
         let persons_iter = stmt
             .query_map([], |row| {
-                Ok((
-                    row.get::<_, i64>(0)?,
-                    row.get::<_, Option<String>>(1)?,
-                    row.get::<_, Option<i64>>(2)?,
-                    row.get::<_, Option<i64>>(3)?,
-                ))
+                let thumb_data: Option<Vec<u8>> = row.get(3)?;
+                let thumbnail = thumb_data
+                    .as_ref()
+                    .map(|data| general_purpose::STANDARD.encode(data));
+                Ok(Self {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    count: row.get(2)?,
+                    thumbnail,
+                })
             })
             .map_err(|e| e.to_string())?;
         
         let mut persons = Vec::new();
         for person_result in persons_iter {
-            let (id, name, count, cover_face_id) = person_result.map_err(|e| e.to_string())?;
-            
-            // Get thumbnail from cover face if available
-            let thumbnail = if let Some(face_id) = cover_face_id {
-                Self::get_face_thumbnail(&conn, face_id)?
-            } else {
-                // Get thumbnail from first face of this person
-                Self::get_first_face_thumbnail(&conn, id)?
-            };
-            
-            persons.push(Self {
-                id,
-                name,
-                count,
-                thumbnail,
-            });
+            persons.push(person_result.map_err(|e| e.to_string())?);
         }
         
         Ok(persons)
     }
     
-    /// Get face thumbnail as base64 string
-    fn get_face_thumbnail(conn: &Connection, face_id: i64) -> Result<Option<String>, String> {
-        // Get the file_id, bbox, and original dimensions
+    /// Generate thumbnail for a person from their cover face or first face
+    /// Returns the thumbnail as JPEG bytes
+    fn generate_thumbnail(conn: &Connection, person_id: i64, cover_face_id: Option<i64>) -> Result<Option<Vec<u8>>, String> {
+        // Determine which face to use
+        let face_id = if let Some(fid) = cover_face_id {
+            fid
+        } else {
+            // Get first face of this person
+            let result: Result<i64, _> = conn.query_row(
+                "SELECT id FROM faces WHERE person_id = ?1 LIMIT 1",
+                params![person_id],
+                |row| row.get(0),
+            );
+            match result {
+                Ok(fid) => fid,
+                Err(_) => return Ok(None), // No faces for this person
+            }
+        };
+        
+        // Get face info: file_id, bbox, and original image dimensions
         let query = "
             SELECT f.id, faces.bbox, f.width, f.height
             FROM faces 
@@ -2275,14 +2282,11 @@ impl Person {
                 let (thumb_w, thumb_h) = img.dimensions();
                 
                 // Calculate scale factor (Thumb / Original)
-                // Note: Thumbnails are typically max 200px (or similar config) long edge
-                // We should rely on ratios.
                 let scale_x = thumb_w as f32 / orig_w as f32;
                 let scale_y = thumb_h as f32 / orig_h as f32;
                 
-                // Crop coordinates in thumbnail space
-                // Expand the crop slightly for better visual
-                let expansion = 0.2; // 20% expansion
+                // Crop coordinates in thumbnail space with 20% expansion
+                let expansion = 0.2;
                 let face_x = bbox.x * scale_x;
                 let face_y = bbox.y * scale_y;
                 let face_w = bbox.width * scale_x;
@@ -2297,12 +2301,12 @@ impl Person {
                 if crop_w > 0 && crop_h > 0 {
                     let cropped = img.crop_imm(crop_x, crop_y, crop_w, crop_h);
                     
-                    // Encode back to JPEG
+                    // Encode to JPEG bytes
                     let mut buffer = Cursor::new(Vec::new());
                     cropped.write_to(&mut buffer, ImageFormat::Jpeg)
                         .map_err(|e| format!("Failed to encode face thumbnail: {}", e))?;
                         
-                    return Ok(Some(general_purpose::STANDARD.encode(buffer.into_inner())));
+                    return Ok(Some(buffer.into_inner()));
                 }
             }
         }
@@ -2310,19 +2314,56 @@ impl Person {
         Ok(None)
     }
     
-    /// Get thumbnail from first face of a person
-    fn get_first_face_thumbnail(conn: &Connection, person_id: i64) -> Result<Option<String>, String> {
-        let result: Result<i64, _> = conn.query_row(
-            "SELECT id FROM faces WHERE person_id = ?1 LIMIT 1",
+    /// Update thumbnail for a specific person
+    #[allow(dead_code)]
+    pub fn update_thumbnail(person_id: i64) -> Result<(), String> {
+        let conn = open_conn()?;
+        
+        // Get cover_face_id for this person
+        let cover_face_id: Option<i64> = conn.query_row(
+            "SELECT cover_face_id FROM persons WHERE id = ?1",
             params![person_id],
             |row| row.get(0),
-        );
+        ).optional().map_err(|e| e.to_string())?.flatten();
         
-        if let Ok(face_id) = result {
-            return Self::get_face_thumbnail(conn, face_id);
+        // Generate thumbnail
+        let thumbnail = Self::generate_thumbnail(&conn, person_id, cover_face_id)?;
+        
+        // Update in database
+        conn.execute(
+            "UPDATE persons SET thumbnail = ?1 WHERE id = ?2",
+            params![thumbnail, person_id],
+        ).map_err(|e| e.to_string())?;
+        
+        Ok(())
+    }
+    
+    /// Update thumbnails for all persons (called after clustering)
+    pub fn update_all_thumbnails() -> Result<(), String> {
+        let conn = open_conn()?;
+        
+        // Get all person IDs and their cover_face_ids
+        let mut stmt = conn.prepare(
+            "SELECT id, cover_face_id FROM persons"
+        ).map_err(|e| e.to_string())?;
+        
+        let persons: Vec<(i64, Option<i64>)> = stmt
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        
+        // Generate and update thumbnail for each person
+        for (person_id, cover_face_id) in persons {
+            if let Ok(Some(thumbnail)) = Self::generate_thumbnail(&conn, person_id, cover_face_id) {
+                let _ = conn.execute(
+                    "UPDATE persons SET thumbnail = ?1 WHERE id = ?2",
+                    params![thumbnail, person_id],
+                );
+            }
         }
         
-        Ok(None)
+        Ok(())
     }
     
     /// Rename a person
@@ -2947,11 +2988,15 @@ pub fn create_db() -> Result<(), String> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             cover_face_id INTEGER,
+            thumbnail BLOB,
             created_at INTEGER
         )",
         [],
     )
     .map_err(|e| e.to_string())?;
+    
+    // Migration: add thumbnail column if not exists (for existing databases)
+    let _ = conn.execute("ALTER TABLE persons ADD COLUMN thumbnail BLOB", []);
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_persons_name ON persons(name)",
         [],

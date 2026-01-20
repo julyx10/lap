@@ -2,22 +2,27 @@
   <div class="w-full h-full flex flex-col select-none relative overflow-hidden">
     <!-- Face Indexing Progress Overlay -->
     <div v-if="isIndexing" 
-      class="absolute inset-0 z-50 bg-base-200/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-base-content/50"
+      class="absolute inset-0 z-50 bg-base-200/80 backdrop-blur-md"
     >
-      <IconRefresh class="w-8 h-8 animate-spin" />
-      <span class="text-lg text-center">
-        {{ indexProgress.phase === 'clustering' 
-          ? $t('face_index.clustering') 
-          : $t('face_index.indexing', { current: indexProgress.current.toLocaleString(), total: indexProgress.total.toLocaleString() }) 
-        }}
-      </span>
-      <span v-if="indexProgress.faces_found > 0" class="text-sm text-center">
-        {{ $t('face_index.faces_found', { count: indexProgress.faces_found.toLocaleString() }) }}
-      </span>
-      <button class="btn btn-outline btn-sm" @click="clickCancelIndex">
-        <IconClose class="w-4 h-4" />
-        {{ $t('face_index.cancel') }}
-      </button>
+      <div class="mt-8 px-2 flex flex-col items-center text-base-content/30">
+        <IconRefresh class="w-8 h-8 mb-2 animate-spin" />
+        <span class="text-sm text-center">
+          {{ indexProgress.phase === 'clustering' 
+            ? $t('face_index.clustering') 
+            : $t('face_index.indexing', { current: indexProgress.current.toLocaleString(), total: indexProgress.total.toLocaleString() }) 
+          }}
+        </span>
+        <span v-if="indexProgress.phase === 'clustering' && clusterProgressText" class="text-xs text-center mt-1">
+          {{ clusterProgressText }}
+        </span>
+        <span v-else-if="indexProgress.faces_found > 0" class="text-xs text-center mt-1">
+          {{ $t('face_index.faces_found', { count: indexProgress.faces_found.toLocaleString() }) }}
+        </span>
+        <button class="btn btn-primary btn-sm mt-4" @click="clickCancelIndex">
+          <IconClose class="w-4 h-4" />
+          {{ $t('face_index.cancel') }}
+        </button>
+      </div>
     </div>
 
     <!-- Person List -->
@@ -78,7 +83,7 @@
     </div>
 
     <!-- No Persons Found Message -->
-    <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
+    <div v-else-if="!isIndexing" class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
       <IconPerson class="w-8 h-8 mb-2" />
       <span class="text-sm text-center">{{ $t('tooltip.not_found.person') }}</span>
       <span class="text-xs text-center mt-1">{{ $t('tooltip.not_found.person_hint') }}</span>
@@ -106,7 +111,7 @@
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
-import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished } from '@/common/api';
+import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress } from '@/common/api';
 import { 
   IconPerson, 
   IconMore, 
@@ -143,16 +148,42 @@ const indexProgress = ref({
   faces_found: 0,
   phase: 'indexing'
 });
+const clusterProgress = ref({
+  phase: '',
+  current: 0,
+  total: 0
+});
 
 // Event listener unsubscribe functions
 let unlistenProgress: (() => void) | null = null;
 let unlistenFinished: (() => void) | null = null;
+let unlistenCluster: (() => void) | null = null;
 
 const sortedPersons = computed(() => {
   if (config.leftPanel.sortCount) {
     return [...allPersons.value].sort((a, b) => (b.count || 0) - (a.count || 0));
   }
   return allPersons.value;
+});
+
+// Computed property to format cluster progress text using i18n
+const { t } = useI18n();
+const clusterProgressText = computed(() => {
+  const { phase, current, total } = clusterProgress.value;
+  switch (phase) {
+    case 'graph':
+      return t('face_index.cluster_graph', { percent: current });
+    case 'iterate':
+      return t('face_index.cluster_iterate', { current, total });
+    case 'converged':
+      return t('face_index.cluster_converged', { current });
+    case 'assign':
+      return t('face_index.cluster_assign', { current, total });
+    case 'thumbnail':
+      return t('face_index.cluster_thumbnail');
+    default:
+      return '';
+  }
 });
 
 // message boxes
@@ -204,13 +235,20 @@ onMounted(async () => {
   unlistenFinished = await listenFaceIndexFinished((event: any) => {
     isIndexing.value = false;
     indexProgress.value = { current: 0, total: 0, faces_found: 0, phase: 'indexing' };
+    clusterProgress.value = { phase: '', current: 0, total: 0 };
     loadPersons(); // Reload persons after indexing completes
+  });
+  
+  // Listen for detailed clustering progress
+  unlistenCluster = await listenClusterProgress((event: any) => {
+    clusterProgress.value = event.payload;
   });
 });
 
 onUnmounted(() => {
   if (unlistenProgress) unlistenProgress();
   if (unlistenFinished) unlistenFinished();
+  if (unlistenCluster) unlistenCluster();
 });
 
 async function loadPersons() {
@@ -303,9 +341,12 @@ async function clickIndexFaces() {
     // Get cluster threshold from array using index
     const face = config.settings.face;
     const thresholdIndex = face?.clusterThresholdIndex ?? 2; // Default: Medium (index 2)
-    const thresholds = face?.clusterThreshold ?? [0.45, 0.55, 0.65, 0.75];
-    const clusterEpsilon = thresholds[thresholdIndex] ?? 0.65;
-    await indexFaces(clusterEpsilon);
+    // Use getter for thresholds to ensure we get the latest values, even if state is old
+    const thresholds = config.faceClusterThresholds ?? [0.35, 0.45, 0.55, 0.65];
+    const clusterEpsilon = thresholds[thresholdIndex] ?? 0.55;
+    console.log('clusterEpsilon', clusterEpsilon);
+    const imageSource = face?.imageSource ?? 0;
+    await indexFaces(clusterEpsilon, imageSource);
     await loadPersons();
   } catch (e) {
     console.error('indexFaces error:', e);

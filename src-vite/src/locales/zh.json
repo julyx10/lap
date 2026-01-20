@@ -56,6 +56,11 @@
     "indexing": "正在索引人脸... {current} / {total}",
     "clustering": "正在聚类人脸...",
     "faces_found": "已发现 {count} 张人脸",
+    "cluster_graph": "正在构建相似图: {percent}%",
+    "cluster_iterate": "聚类迭代 {current}/{total}",
+    "cluster_converged": "在第 {current} 次迭代收敛",
+    "cluster_assign": "创建人物 {current}/{total}",
+    "cluster_thumbnail": "生成缩略图...",
     "cancel": "取消"
   },
   "favorite": {

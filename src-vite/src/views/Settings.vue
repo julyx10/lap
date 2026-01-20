@@ -414,10 +414,8 @@ const filmStripViewPreviewPositionOptions = computed(() => {
 // Define the similarity options
 const similarityOptions = computed(() => {
   const options = localeMsg.value.settings.image_search.similarity_options;
-  // Ensure values is an array to handle state persistence issues
-  const values = Array.isArray(config.settings.imageSearch.threshold) 
-    ? config.settings.imageSearch.threshold 
-    : [0.8, 0.65, 0.5, 0.35]; 
+  // Use getter to retrieve thresholds
+  const values = config.imageSearchThresholds ?? [0.8, 0.6, 0.4, 0.25]; 
   // Map index dummy as the value since v-model is thresholdIndex
   return values.map((val, i) => ({ label: options[i], value: i }));
 });

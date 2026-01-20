@@ -1,146 +1,246 @@
 use crate::t_sqlite::{Face, Person};
+use rand::seq::SliceRandom;
+use std::collections::HashMap;
 
-/// DBSCAN parameters
-// const EPSILON: f32 = 0.42; // Now read from config
-const MIN_SAMPLES: usize = 2; // Minimum number of faces to form a cluster
+/// Clustering progress information
+#[derive(Clone, serde::Serialize)]
+pub struct ClusterProgress {
+    pub phase: String, // "graph", "iterate", "converged", "assign", "thumbnail"
+    pub current: usize,
+    pub total: usize,
+}
 
-/// Calculate cosine distance between two embeddings
+/// Calculate cosine distance between two PRE-PARSED embeddings
 /// Distance = 1.0 - Cosine Similarity
-fn cosine_distance(a: &[u8], b: &[u8]) -> f32 {
-    let emb1: Vec<f32> = a
-        .chunks(4)
-        .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap()))
-        .collect();
-
-    let emb2: Vec<f32> = b
-        .chunks(4)
-        .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap()))
-        .collect();
-
+/// NOTE: Assumes input vectors are already normalized!
+fn cosine_distance(emb1: &[f32], emb2: &[f32]) -> f32 {
+    // Dot product of normalized vectors = cosine similarity
     let dot_product: f32 = emb1.iter().zip(emb2.iter()).map(|(x, y)| x * y).sum();
-    let norm1: f32 = emb1.iter().map(|x| x * x).sum::<f32>().sqrt();
-    let norm2: f32 = emb2.iter().map(|x| x * x).sum::<f32>().sqrt();
 
-    if norm1 == 0.0 || norm2 == 0.0 {
-        return 1.0;
-    }
-
-    let similarity = dot_product / (norm1 * norm2);
     // Clamp similarity to [-1.0, 1.0] to handle floating point errors
-    let similarity = similarity.clamp(-1.0, 1.0);
+    let similarity = dot_product.clamp(-1.0, 1.0);
     1.0 - similarity
 }
 
-/// Run DBSCAN clustering on ALL faces (resets existing assignments)
-pub fn cluster_faces(epsilon: f32) -> Result<usize, String> {
+/// Helper: Parse raw byte embedding to normalized f32 vector
+fn parse_embedding(bytes: &[u8]) -> Vec<f32> {
+    let emb_vec: Vec<f32> = bytes
+        .chunks(4)
+        .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap()))
+        .collect();
+
+    // Normalize
+    let norm: f32 = emb_vec.iter().map(|x| x * x).sum::<f32>().sqrt();
+    if norm > 0.0 {
+        emb_vec.iter().map(|x| x / norm).collect()
+    } else {
+        emb_vec // Should not happen for valid embeddings
+    }
+}
+
+/// Edge in the similarity graph
+#[derive(Clone)]
+struct Edge {
+    to: usize,   // Target node index
+    weight: f32, // Edge weight (similarity = 1 - distance)
+}
+
+/// Run Chinese Whispers clustering on ALL faces
+///
+/// Re-implemented with performance optimizations:
+/// 1. Pre-parses all embeddings to avoid allocations in inner loop (O(n) memory alloc)
+/// 2. Uses zero-allocation distance calculation
+/// 3. Returns Chinese Whispers algorithm for better quality (less chaining)
+pub fn cluster_faces<F, C>(
+    threshold: f32,
+    mut progress_fn: F,
+    is_cancelled_fn: C,
+) -> Result<usize, String>
+where
+    F: FnMut(ClusterProgress),
+    C: Fn() -> bool,
+{
     // 1. Reset all existing assignments and delete persons
     Face::reset_all_assignments()?;
 
-    // 2. Get ALL faces for re-clustering
+    // 2. Get ALL faces for clustering
     let faces = Face::get_all()?;
-    if faces.is_empty() {
+    let n = faces.len();
+    if n == 0 {
         return Ok(0);
     }
 
-    let n = faces.len();
-    let mut labels = vec![0; n]; // 0: undefined, -1: noise, >0: cluster id
-    let mut cluster_id = 0;
-
-    // 2. DBSCAN Algorithm
-    for i in 0..n {
-        if labels[i] != 0 {
-            continue;
-        }
-
-        let neighbors = region_query(&faces, i, epsilon);
-
-        if neighbors.len() < MIN_SAMPLES {
-            labels[i] = -1; // Noise
+    // 3. Pre-parse embeddings (Optimize: do this once)
+    let mut parsed_embeddings: Vec<Option<Vec<f32>>> = Vec::with_capacity(n);
+    for face in &faces {
+        if let Some(bytes) = &face.embedding {
+            parsed_embeddings.push(Some(parse_embedding(bytes)));
         } else {
-            cluster_id += 1;
-            expand_cluster(&faces, &mut labels, i, &neighbors, cluster_id, epsilon);
+            parsed_embeddings.push(None);
         }
     }
 
-    // 3. Create persons for clusters and assign faces
-    let mut total_assigned = 0;
-    for cid in 1..=cluster_id {
-        // Collect faces in this cluster
-        let cluster_indices: Vec<usize> = labels
-            .iter()
-            .enumerate()
-            .filter(|&(_, &l)| l == cid)
-            .map(|(i, _)| i)
-            .collect();
+    // 4. Build similarity graph
+    let mut graph: Vec<Vec<Edge>> = vec![Vec::new(); n];
+    let total_pairs = n * (n - 1) / 2;
+    let mut pairs_done: usize = 0;
+    let mut last_pct = 0;
 
-        if cluster_indices.is_empty() {
-            continue;
+    for i in 0..n {
+        // Check for cancellation
+        if is_cancelled_fn() {
+            return Ok(0);
         }
 
-        // Create a new person
-        // Check if there's any existing person we might match? (Future improvement)
-        let person_name = format!("Person {}", cid); // Temporary naming
+        if let Some(emb_i) = &parsed_embeddings[i] {
+            for j in (i + 1)..n {
+                if let Some(emb_j) = &parsed_embeddings[j] {
+                    let dist = cosine_distance(emb_i, emb_j);
+
+                    if dist < threshold {
+                        let weight = 1.0 - dist;
+                        graph[i].push(Edge { to: j, weight });
+                        graph[j].push(Edge { to: i, weight });
+                    }
+                }
+                pairs_done += 1;
+            }
+        } else {
+            pairs_done += n - 1 - i;
+        }
+
+        // Report progress every 5%
+        let current_pct = if total_pairs > 0 {
+            pairs_done * 100 / total_pairs
+        } else {
+            100
+        };
+        if current_pct >= last_pct + 5 || pairs_done == total_pairs {
+            progress_fn(ClusterProgress {
+                phase: "graph".to_string(), // Revert to "graph" phase for CW
+                current: current_pct,
+                total: 100,
+            });
+            last_pct = current_pct;
+        }
+    }
+
+    // 5. Run Chinese Whispers Algorithm
+    let mut labels: Vec<usize> = (0..n).collect();
+    let mut order: Vec<usize> = (0..n).collect();
+    let mut rng = rand::thread_rng();
+    let max_iterations = 20;
+
+    for iter in 0..max_iterations {
+        // Check for cancellation
+        if is_cancelled_fn() {
+            return Ok(0);
+        }
+
+        let mut changed = false;
+
+        progress_fn(ClusterProgress {
+            phase: "iterate".to_string(),
+            current: iter + 1,
+            total: max_iterations,
+        });
+
+        order.shuffle(&mut rng);
+
+        for &node in &order {
+            if graph[node].is_empty() {
+                continue;
+            }
+
+            // Count weighted votes
+            let mut label_weights: HashMap<usize, f32> = HashMap::new();
+            for edge in &graph[node] {
+                let neighbor_label = labels[edge.to];
+                *label_weights.entry(neighbor_label).or_insert(0.0) += edge.weight;
+            }
+
+            // Find best label
+            let best_label = label_weights
+                .into_iter()
+                .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+                .map(|(label, _)| label)
+                .unwrap_or(labels[node]);
+
+            if labels[node] != best_label {
+                labels[node] = best_label;
+                changed = true;
+            }
+        }
+
+        if !changed {
+            progress_fn(ClusterProgress {
+                phase: "converged".to_string(),
+                current: iter + 1,
+                total: max_iterations,
+            });
+            break;
+        }
+    }
+
+    // Check for cancellation before assignment
+    if is_cancelled_fn() {
+        return Ok(0);
+    }
+
+    // 6. Collect clusters
+    let mut cluster_map: HashMap<usize, Vec<usize>> = HashMap::new();
+    for (i, &label) in labels.iter().enumerate() {
+        if !graph[i].is_empty() {
+            cluster_map.entry(label).or_default().push(i);
+        }
+    }
+
+    // 7. Filter clusters
+    const MIN_SAMPLES: usize = 2;
+    let valid_clusters: Vec<_> = cluster_map
+        .into_iter()
+        .filter(|(_, face_indices)| face_indices.len() >= MIN_SAMPLES)
+        .collect();
+
+    let total_clusters = valid_clusters.len();
+
+    // 8. Assign faces to persons
+    let mut total_assigned = 0;
+
+    for (cluster_idx, (_, cluster_face_indices)) in valid_clusters.into_iter().enumerate() {
+        if is_cancelled_fn() {
+            return Ok(total_assigned);
+        }
+
+        progress_fn(ClusterProgress {
+            phase: "assign".to_string(),
+            current: cluster_idx + 1,
+            total: total_clusters,
+        });
+
+        let person_name = format!("Person {}", cluster_idx + 1);
         let person_id = Person::create(Some(&person_name))?;
 
-        // Assign faces to person
-        for &idx in &cluster_indices {
-            let face_id = faces[idx].id;
-            Face::assign_to_person(face_id, person_id)?;
+        for face_idx in cluster_face_indices {
+            Face::assign_to_person(faces[face_idx].id, person_id)?;
             total_assigned += 1;
         }
     }
 
+    // 9. Generate thumbnails
+    progress_fn(ClusterProgress {
+        phase: "thumbnail".to_string(),
+        current: 0,
+        total: total_clusters,
+    });
+
+    Person::update_all_thumbnails()?;
+
+    progress_fn(ClusterProgress {
+        phase: "thumbnail".to_string(),
+        current: total_clusters,
+        total: total_clusters,
+    });
+
     Ok(total_assigned)
-}
-
-fn region_query(faces: &[Face], point_idx: usize, epsilon: f32) -> Vec<usize> {
-    let mut neighbors = Vec::new();
-    let point_emb = faces[point_idx].embedding.as_ref().unwrap();
-
-    for i in 0..faces.len() {
-        if let Some(emb) = &faces[i].embedding {
-            let dist = cosine_distance(point_emb, emb);
-
-            if dist <= epsilon {
-                neighbors.push(i);
-            }
-        }
-    }
-
-    neighbors
-}
-
-fn expand_cluster(
-    faces: &[Face],
-    labels: &mut Vec<i32>,
-    point_idx: usize,
-    neighbor_pts: &[usize],
-    cluster_id: i32,
-    epsilon: f32,
-) {
-    labels[point_idx] = cluster_id;
-
-    let mut search_queue = neighbor_pts.to_vec();
-    let mut i = 0;
-
-    while i < search_queue.len() {
-        let p_idx = search_queue[i];
-
-        if labels[p_idx] == -1 {
-            labels[p_idx] = cluster_id; // Change noise to border point
-        } else if labels[p_idx] == 0 {
-            labels[p_idx] = cluster_id;
-
-            let p_neighbors = region_query(faces, p_idx, epsilon);
-            if p_neighbors.len() >= MIN_SAMPLES {
-                for &pn in &p_neighbors {
-                    if !search_queue.contains(&pn) {
-                        search_queue.push(pn);
-                    }
-                }
-            }
-        }
-
-        i += 1;
-    }
 }

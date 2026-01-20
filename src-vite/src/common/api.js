@@ -1020,9 +1020,9 @@ export async function listenIndexFinished(callback) {
 }
 
 // index faces for all images in library
-export async function indexFaces(clusterEpsilon) {
+export async function indexFaces(clusterEpsilon, imageSource) {
   try {
-    const result = await invoke('index_faces', { clusterEpsilon });
+    const result = await invoke('index_faces', { clusterEpsilon, imageSource: imageSource || 0 });
     return result;
   } catch (error) {
     console.error('Failed to index faces:', error);
@@ -1057,6 +1057,11 @@ export async function listenFaceIndexProgress(callback) {
 // listen face index finished
 export async function listenFaceIndexFinished(callback) {
   return await listen('face_index_finished', callback);
+}
+
+// listen cluster progress (for clustering phase)
+export async function listenClusterProgress(callback) {
+  return await listen('cluster_progress', callback);
 }
 
 // person (face recognition)

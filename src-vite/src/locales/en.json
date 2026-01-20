@@ -56,6 +56,11 @@
     "indexing": "Indexing faces... {current} / {total}",
     "clustering": "Clustering faces...",
     "faces_found": "{count} faces found",
+    "cluster_graph": "Building similarity graph: {percent}%",
+    "cluster_iterate": "Clustering iteration {current}/{total}",
+    "cluster_converged": "Converged at iteration {current}",
+    "cluster_assign": "Creating person {current}/{total}",
+    "cluster_thumbnail": "Generating thumbnails...",
     "cancel": "Cancel"
   },
   "favorite": {

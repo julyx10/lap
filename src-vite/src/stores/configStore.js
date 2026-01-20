@@ -93,23 +93,30 @@ export const useConfigStore = defineStore('configStore', {
 
       // image search settings
       imageSearch: {
-        threshold: [0.8, 0.6, 0.4, 0.25], // 0: Very High, 1: High, 2: Medium, 3: Low
         thresholdIndex: 3,                 // image search threshold index (default is Low)
         limit: 1000,                       // image search limit
       },
       
       // face recognition settings
       face: {
-        // Cluster threshold: cosine distance (lower = stricter, higher = looser)
-        // Very High: 0.45 (very strict, may over-split same person)
-        // High: 0.55 (strict, good for photos with clear faces)
-        // Medium: 0.65 (balanced, recommended for most photos)
-        // Low: 0.75 (loose, may merge different people)
-        clusterThreshold: [0.45, 0.55, 0.65, 0.75],
-        clusterThresholdIndex: 2, // Default: Medium (0.65)
+        // image source
+        imageSource: 0, // 0: original, 1: thumbnail
+        
+        // Cluster threshold index: 0=Very High, 1=High, 2=Medium, 3=Low
+        clusterThresholdIndex: 2, // Default: Medium
       },
     },
   }),
+
+  getters: {
+    // Image search threshold values
+    // [Very High, High, Medium, Low]
+    imageSearchThresholds: () => [0.8, 0.6, 0.4, 0.25],
+    
+    // Cluster threshold values: cosine distance (lower = stricter, higher = looser)
+    // [Very High, High, Medium, Low]
+    faceClusterThresholds: () => [0.35, 0.45, 0.55, 0.65],
+  },
 
   actions: {
     // general settings

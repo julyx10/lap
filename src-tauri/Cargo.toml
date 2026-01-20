@@ -13,6 +13,9 @@ build = "build.rs"
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[profile.dev.package."*"]
+opt-level = 3
+
 [dependencies]
 tauri = { version = "2", features = [ "macos-private-api", "protocol-asset", "devtools"] }
 tauri-plugin-window-state = "2.2.1"
