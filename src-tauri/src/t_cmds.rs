@@ -1,10 +1,3 @@
-use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
-use crate::t_image;
-use crate::t_sqlite::{
-    ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams,
-    QueryParams,
-};
-use crate::t_utils;
 /**
  * Tauri commands for frontend-backend communication.
  * project: jc-photo
@@ -13,7 +6,16 @@ use crate::t_utils;
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
+use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
+use crate::t_face;
+use crate::t_image;
+use crate::t_sqlite::{
+    ACamera, AFile, AFolder, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams, Person,
+    QueryParams,
+};
+use crate::t_utils;
 use crate::{t_ai, t_sqlite};
+
 use base64::{Engine, engine::general_purpose};
 use std::collections::HashMap;
 use std::path::Path;
@@ -623,7 +625,7 @@ pub fn get_storage_file_info() -> Result<t_utils::FileInfo, String> {
     }
 }
 
-// ai
+// image search
 
 /// check ai status
 #[tauri::command]
@@ -645,4 +647,67 @@ pub fn search_similar_images(
 ) -> Result<Vec<AFile>, String> {
     AFile::search_similar_images(&state, params)
         .map_err(|e| format!("Error while searching similar images: {}", e))
+}
+
+// face recognition
+
+/// index faces for all images in the current library
+#[tauri::command]
+pub fn index_faces(
+    app_handle: tauri::AppHandle,
+    state: State<t_face::FaceState>,
+    cancel_state: State<t_face::FaceIndexCancellation>,
+    status_state: State<t_face::FaceIndexingStatus>,
+    progress_state: State<t_face::FaceIndexProgressState>,
+    cluster_epsilon: Option<f32>,
+) -> Result<(), String> {
+    t_face::run_face_indexing(
+        app_handle,
+        (*state).clone(),
+        (*cancel_state).clone(),
+        (*status_state).clone(),
+        (*progress_state).clone(),
+        cluster_epsilon,
+    )
+}
+
+/// cancel face indexing
+#[tauri::command]
+pub fn cancel_face_index(state: State<t_face::FaceIndexCancellation>) -> Result<(), String> {
+    *state.0.lock().unwrap() = true;
+
+    Ok(())
+}
+
+/// check if face indexing is running, return (is_running, progress)
+#[tauri::command]
+pub fn is_face_indexing(
+    status_state: State<t_face::FaceIndexingStatus>,
+    progress_state: State<t_face::FaceIndexProgressState>,
+) -> Result<(bool, Option<t_face::FaceIndexProgress>), String> {
+    let is_running = *status_state.0.lock().unwrap();
+    let progress = if is_running {
+        Some(progress_state.0.lock().unwrap().clone())
+    } else {
+        None
+    };
+    Ok((is_running, progress))
+}
+
+/// get all persons with face counts
+#[tauri::command]
+pub fn get_persons() -> Result<Vec<Person>, String> {
+    Person::get_all().map_err(|e| format!("Error while getting persons: {}", e))
+}
+
+/// rename a person
+#[tauri::command]
+pub fn rename_person(person_id: i64, name: String) -> Result<usize, String> {
+    Person::rename(person_id, &name).map_err(|e| format!("Error while renaming person: {}", e))
+}
+
+/// delete a person
+#[tauri::command]
+pub fn delete_person(person_id: i64) -> Result<usize, String> {
+    Person::delete(person_id).map_err(|e| format!("Error while deleting person: {}", e))
 }

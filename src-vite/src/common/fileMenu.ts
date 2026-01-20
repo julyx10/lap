@@ -17,6 +17,7 @@ import {
   IconSimilar,
   IconFiles,
   IconFolder,
+  IconPerson,
 } from '@/common/icons';
 
 export const useFileMenuItems = (
@@ -47,14 +48,15 @@ export const useFileMenuItems = (
         action: createAction('search-similar')
       },
       {
+        label: localeMsg.value.menu.file.find_person_images,
+        icon: IconPerson,
+        action: createAction('person-folder')
+      },
+      {
         label: localeMsg.value.menu.file.find_album_folder,
         disabled: showFolderFiles.value,
         icon: IconFolder,
         action: createAction('album-folder')
-      },
-      {
-        label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-        action: createAction('reveal')
       },
       {
         label: localeMsg.value.menu.file.set_album_cover,
@@ -98,6 +100,10 @@ export const useFileMenuItems = (
         icon: IconTrash,
         shortcut: isMac ? '⌘⌫' : 'Del',
         action: createAction('trash')
+      },
+      {
+        label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+        action: createAction('reveal')
       },
       { label: "-", action: null },
       {

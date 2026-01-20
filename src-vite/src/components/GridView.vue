@@ -162,7 +162,6 @@ onBeforeUnmount(() => {
 });
 
 function onUpdate(startIndex: number, endIndex: number) {
-  console.log(`onUpdate: ${startIndex}-${endIndex}`);
   emit('visible-range-update', { startIndex, endIndex });
 }
 

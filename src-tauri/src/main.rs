@@ -15,8 +15,10 @@
 use tauri::Manager;
 
 mod t_ai;
+mod t_cluster;
 mod t_cmds;
 mod t_config;
+mod t_face;
 mod t_image;
 mod t_sqlite;
 mod t_utils;
@@ -36,8 +38,25 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(t_ai::AiState(std::sync::Mutex::new(t_ai::AiEngine::new())))
+        .manage(t_face::FaceState(std::sync::Arc::new(
+            std::sync::Mutex::new(t_face::FaceEngine::new()),
+        )))
         .manage(t_cmds::IndexCancellation(std::sync::Arc::new(
             std::sync::Mutex::new(std::collections::HashMap::new()),
+        )))
+        .manage(t_face::FaceIndexCancellation(std::sync::Arc::new(
+            std::sync::Mutex::new(false),
+        )))
+        .manage(t_face::FaceIndexingStatus(std::sync::Arc::new(
+            std::sync::Mutex::new(false),
+        )))
+        .manage(t_face::FaceIndexProgressState(std::sync::Arc::new(
+            std::sync::Mutex::new(t_face::FaceIndexProgress {
+                current: 0,
+                total: 0,
+                faces_found: 0,
+                phase: "indexing".to_string(),
+            }),
         )))
         .setup(|_app| {
             // Create the database on startup
@@ -171,6 +190,13 @@ fn main() {
             t_cmds::check_ai_status,
             t_cmds::generate_embedding,
             t_cmds::search_similar_images,
+            // person (face recognition)
+            t_cmds::index_faces,
+            t_cmds::cancel_face_index,
+            t_cmds::is_face_indexing,
+            t_cmds::get_persons,
+            t_cmds::rename_person,
+            t_cmds::delete_person,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

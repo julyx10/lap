@@ -952,7 +952,7 @@ export async function getStorageFileInfo() {
   return null;
 }
 
-// ai
+// image search
 
 // check ai status
 export async function checkAiStatus() {
@@ -1018,3 +1018,81 @@ export async function listenIndexProgress(callback) {
 export async function listenIndexFinished(callback) {
   return await listen('index_finished', callback);
 }
+
+// index faces for all images in library
+export async function indexFaces(clusterEpsilon) {
+  try {
+    const result = await invoke('index_faces', { clusterEpsilon });
+    return result;
+  } catch (error) {
+    console.error('Failed to index faces:', error);
+  }
+  return null;
+}
+
+// cancel face indexing
+export async function cancelFaceIndex() {
+  try {
+    await invoke('cancel_face_index');
+  } catch (error) {
+    console.error('Failed to cancel face index:', error);
+  }
+}
+
+// check if face indexing is running
+export async function isFaceIndexing() {
+  try {
+    return await invoke('is_face_indexing');
+  } catch (error) {
+    console.error('Failed to check face indexing status:', error);
+    return false;
+  }
+}
+
+// listen face index progress
+export async function listenFaceIndexProgress(callback) {
+  return await listen('face_index_progress', callback);
+}
+
+// listen face index finished
+export async function listenFaceIndexFinished(callback) {
+  return await listen('face_index_finished', callback);
+}
+
+// person (face recognition)
+
+// get all persons
+export async function getPersons() {
+  try {
+    const persons = await invoke('get_persons');
+    if (persons) {
+      return persons;
+    }
+  } catch (error) {
+    console.error('Failed to get persons:', error);
+  }
+  return null;
+}
+
+// rename a person
+export async function renamePerson(personId, name) {
+  try {
+    const result = await invoke('rename_person', { personId, name });
+    return result;
+  } catch (error) {
+    console.error('Failed to rename person:', error);
+  }
+  return null;
+}
+
+// delete a person (faces will have person_id set to null)
+export async function deletePerson(personId) {
+  try {
+    const result = await invoke('delete_person', { personId });
+    return result;
+  } catch (error) {
+    console.error('Failed to delete person:', error);
+  }
+  return null;
+}
+

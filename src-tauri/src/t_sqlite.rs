@@ -14,11 +14,21 @@ use crate::t_video;
 use base64::{Engine, engine::general_purpose};
 use exif::{In, Reader, Tag, Value};
 use rusqlite::{Connection, OptionalExtension, Result, ToSql, params};
+use image::{ImageFormat, GenericImageView};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Cursor};
 use tauri::State;
+
+/// Face Bounding Box struct (matching JSON storage)
+#[derive(Debug, Deserialize)]
+struct FaceBBox {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+}
 
 /// Define the Album struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -502,6 +512,7 @@ pub struct AFile {
     pub rotate: Option<i32>,       // rotate angle (0, 90, 180, 270)
     pub comments: Option<String>,  // comments
     pub has_tags: Option<bool>,    // has tags
+    pub has_faces: Option<i32>,    // has faces (0: unprocessed, 1: has faces, 2: no faces)
 
     // exif info
     pub e_make: Option<String>,  // camera make
@@ -567,6 +578,7 @@ pub struct QueryParams {
     pub location_name: String,
     pub is_favorite: bool,
     pub tag_id: i64,
+    pub person_id: i64,
 }
 
 /// Define the AI image search parameters struct
@@ -738,6 +750,7 @@ impl AFile {
             rotate: None,
             comments: None,
             has_tags: Some(false),
+            has_faces: Some(0),
 
             e_make,
             e_model,
@@ -1097,7 +1110,9 @@ impl AFile {
                 b.path,
                 c.id AS album_id, c.name AS album_name,
                 (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
-                CASE WHEN a.embeds IS NOT NULL THEN 1 ELSE 0 END AS has_embedding
+                (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
+                CASE WHEN a.embeds IS NOT NULL THEN 1 ELSE 0 END AS has_embedding,
+                a.has_faces
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id"
@@ -1161,6 +1176,7 @@ impl AFile {
             album_name: row.get(41)?,
             has_thumbnail: row.get::<_, Option<i64>>(42)?.map(|v| v == 1),
             has_embedding: row.get::<_, Option<i64>>(43)?.map(|v| v == 1),
+            has_faces: row.get::<_, Option<i32>>(44)?,
         })
     }
 
@@ -1370,7 +1386,11 @@ impl AFile {
     }
 
     // helper to build search query conditions and params
-    fn build_where_clause(params: &QueryParams) -> (String, Vec<Box<dyn ToSql>>) {
+    // Returns (joins_clause, where_clause, params)
+    fn build_search_query_parts(
+        params: &QueryParams,
+    ) -> (String, String, Vec<Box<dyn ToSql>>) {
+        let mut joins = Vec::new();
         let mut conditions = Vec::new();
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
@@ -1431,9 +1451,22 @@ impl AFile {
         }
 
         if params.tag_id > 0 {
-            conditions.push("a.id IN (SELECT file_id FROM afile_tags WHERE tag_id = ?)");
+            joins.push("INNER JOIN afile_tags at ON a.id = at.file_id");
+            conditions.push("at.tag_id = ?");
             sql_params.push(Box::new(params.tag_id));
         }
+
+        if params.person_id > 0 {
+            joins.push("INNER JOIN faces f ON a.id = f.file_id");
+            conditions.push("f.person_id = ?");
+            sql_params.push(Box::new(params.person_id));
+        }
+
+        let joins_clause = if !joins.is_empty() {
+            format!(" {}", joins.join(" "))
+        } else {
+            String::new()
+        };
 
         let where_clause = if !conditions.is_empty() {
             format!(" WHERE {}", conditions.join(" AND "))
@@ -1441,13 +1474,13 @@ impl AFile {
             String::new()
         };
 
-        (where_clause, sql_params)
+        (joins_clause, where_clause, sql_params)
     }
 
     // get query count and sum
     pub fn get_query_count_and_sum(params: &QueryParams) -> Result<(i64, i64), String> {
-        let (where_clause, sql_params) = Self::build_where_clause(params);
-        let sql = format!("{}{}", Self::build_count_query(), where_clause);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let sql = format!("{}{}{}", Self::build_count_query(), joins, where_clause);
 
         let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         Self::query_count_and_sum(&sql, &final_params)
@@ -1459,10 +1492,16 @@ impl AFile {
         offset: i64,
         limit: i64,
     ) -> Result<Vec<Self>, String> {
-        let (where_clause, sql_params) = Self::build_where_clause(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
 
         let mut query = Self::build_base_query();
+        query.push_str(&joins);
         query.push_str(&where_clause);
+
+        // fix issues that some files have multiple identical person_ids
+        if params.person_id > 0 {
+            query.push_str(" GROUP BY a.id");
+        }
 
         // sort
         match params.sort_type {
@@ -1495,7 +1534,7 @@ impl AFile {
             return Ok(Vec::new());
         }
 
-        let (where_clause, sql_params) = Self::build_where_clause(params);
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
 
         // Determine date field and extraction logic based on sort_type
         let (date_field, year_extract, month_extract, date_extract) = match params.sort_type {
@@ -1525,13 +1564,14 @@ impl AFile {
                 FROM afiles a
                 LEFT JOIN afolders b ON a.folder_id = b.id
                 {}
+                {}
             )
             SELECT year, month, date, MIN(position) as position
             FROM ranked_files
             WHERE year IS NOT NULL
             GROUP BY year, month, date
             ORDER BY position ASC",
-            date_field, order_clause, year_extract, month_extract, date_extract, where_clause
+            date_field, order_clause, year_extract, month_extract, date_extract, joins, where_clause
         );
 
         let conn = open_conn()?;
@@ -2140,6 +2180,390 @@ impl ATag {
     }
 }
 
+/// Person struct for face recognition
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Person {
+    pub id: i64,
+    pub name: Option<String>,
+    pub count: Option<i64>,
+    pub thumbnail: Option<String>, // Base64 encoded face thumbnail
+}
+
+impl Person {
+    /// Get all persons with face counts and thumbnail
+    pub fn get_all() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        
+        // Get persons with face count and cover face thumbnail
+        let query = "
+            SELECT p.id, p.name, 
+                   (SELECT COUNT(*) FROM faces f WHERE f.person_id = p.id) as count,
+                   p.cover_face_id
+            FROM persons p
+            ORDER BY count DESC, p.name ASC
+        ";
+        
+        let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+        
+        let persons_iter = stmt
+            .query_map([], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, Option<String>>(1)?,
+                    row.get::<_, Option<i64>>(2)?,
+                    row.get::<_, Option<i64>>(3)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?;
+        
+        let mut persons = Vec::new();
+        for person_result in persons_iter {
+            let (id, name, count, cover_face_id) = person_result.map_err(|e| e.to_string())?;
+            
+            // Get thumbnail from cover face if available
+            let thumbnail = if let Some(face_id) = cover_face_id {
+                Self::get_face_thumbnail(&conn, face_id)?
+            } else {
+                // Get thumbnail from first face of this person
+                Self::get_first_face_thumbnail(&conn, id)?
+            };
+            
+            persons.push(Self {
+                id,
+                name,
+                count,
+                thumbnail,
+            });
+        }
+        
+        Ok(persons)
+    }
+    
+    /// Get face thumbnail as base64 string
+    fn get_face_thumbnail(conn: &Connection, face_id: i64) -> Result<Option<String>, String> {
+        // Get the file_id, bbox, and original dimensions
+        let query = "
+            SELECT f.id, faces.bbox, f.width, f.height
+            FROM faces 
+            JOIN afiles f ON faces.file_id = f.id
+            WHERE faces.id = ?1
+        ";
+        
+        let result: Result<(i64, String, Option<u32>, Option<u32>), _> = conn.query_row(
+            query,
+            params![face_id],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+        );
+        
+        if let Ok((file_id, bbox_json, Some(orig_w), Some(orig_h))) = result {
+            // Get thumbnail from athumbs
+            let thumb_result: Result<Option<Vec<u8>>, _> = conn.query_row(
+                "SELECT thumb_data FROM athumbs WHERE file_id = ?1",
+                params![file_id],
+                |row| row.get(0),
+            );
+            
+            if let Ok(Some(thumb_data)) = thumb_result {
+                // Parse bbox
+                let bbox: FaceBBox = serde_json::from_str(&bbox_json)
+                    .map_err(|e| format!("Failed to parse bbox: {}", e))?;
+
+                // Load thumbnail image
+                let img = image::load_from_memory(&thumb_data)
+                    .map_err(|e| format!("Failed to load thumbnail: {}", e))?;
+                
+                let (thumb_w, thumb_h) = img.dimensions();
+                
+                // Calculate scale factor (Thumb / Original)
+                // Note: Thumbnails are typically max 200px (or similar config) long edge
+                // We should rely on ratios.
+                let scale_x = thumb_w as f32 / orig_w as f32;
+                let scale_y = thumb_h as f32 / orig_h as f32;
+                
+                // Crop coordinates in thumbnail space
+                // Expand the crop slightly for better visual
+                let expansion = 0.2; // 20% expansion
+                let face_x = bbox.x * scale_x;
+                let face_y = bbox.y * scale_y;
+                let face_w = bbox.width * scale_x;
+                let face_h = bbox.height * scale_y;
+                
+                let crop_x = (face_x - face_w * expansion).max(0.0) as u32;
+                let crop_y = (face_y - face_h * expansion).max(0.0) as u32;
+                let crop_w = (face_w * (1.0 + 2.0 * expansion)).min(thumb_w as f32 - crop_x as f32) as u32;
+                let crop_h = (face_h * (1.0 + 2.0 * expansion)).min(thumb_h as f32 - crop_y as f32) as u32;
+                
+                // Ensure valid crop dimensions
+                if crop_w > 0 && crop_h > 0 {
+                    let cropped = img.crop_imm(crop_x, crop_y, crop_w, crop_h);
+                    
+                    // Encode back to JPEG
+                    let mut buffer = Cursor::new(Vec::new());
+                    cropped.write_to(&mut buffer, ImageFormat::Jpeg)
+                        .map_err(|e| format!("Failed to encode face thumbnail: {}", e))?;
+                        
+                    return Ok(Some(general_purpose::STANDARD.encode(buffer.into_inner())));
+                }
+            }
+        }
+        
+        Ok(None)
+    }
+    
+    /// Get thumbnail from first face of a person
+    fn get_first_face_thumbnail(conn: &Connection, person_id: i64) -> Result<Option<String>, String> {
+        let result: Result<i64, _> = conn.query_row(
+            "SELECT id FROM faces WHERE person_id = ?1 LIMIT 1",
+            params![person_id],
+            |row| row.get(0),
+        );
+        
+        if let Ok(face_id) = result {
+            return Self::get_face_thumbnail(conn, face_id);
+        }
+        
+        Ok(None)
+    }
+    
+    /// Rename a person
+    pub fn rename(person_id: i64, new_name: &str) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .execute(
+                "UPDATE persons SET name = ?1 WHERE id = ?2",
+                params![new_name, person_id],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+    
+    /// Delete a person (faces will have person_id set to NULL)
+    pub fn delete(person_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        
+        // First, unlink all faces from this person
+        conn.execute(
+            "UPDATE faces SET person_id = NULL WHERE person_id = ?1",
+            params![person_id],
+        )
+        .map_err(|e| e.to_string())?;
+        
+        // Then delete the person
+        let result = conn
+            .execute("DELETE FROM persons WHERE id = ?1", params![person_id])
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+    
+    /// Create a new person (usually from face clustering)
+    pub fn create(name: Option<&str>) -> Result<i64, String> {
+        let conn = open_conn()?;
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0);
+        
+        conn.execute(
+            "INSERT INTO persons (name, created_at) VALUES (?1, ?2)",
+            params![name, now],
+        )
+        .map_err(|e| e.to_string())?;
+        
+        Ok(conn.last_insert_rowid())
+    }
+}
+
+/// Face struct for storing detected faces
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Face {
+    pub id: i64,
+    pub file_id: i64,
+    pub bbox: String,           // JSON: {"x": f32, "y": f32, "width": f32, "height": f32, "confidence": f32}
+    pub embedding: Option<Vec<u8>>, // 512-dimensional float32 embedding as bytes
+    pub person_id: Option<i64>,
+    pub created_at: i64,
+}
+
+impl Face {
+    /// Add a new face to the database
+    pub fn add(file_id: i64, bbox: &str, embedding: &[f32]) -> Result<i64, String> {
+        let conn = open_conn()?;
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0);
+        
+        // Convert f32 embedding to bytes
+        let embedding_bytes: Vec<u8> = embedding
+            .iter()
+            .flat_map(|f| f.to_le_bytes())
+            .collect();
+        
+        conn.execute(
+            "INSERT INTO faces (file_id, bbox, embedding, created_at) VALUES (?1, ?2, ?3, ?4)",
+            params![file_id, bbox, embedding_bytes, now],
+        )
+        .map_err(|e| e.to_string())?;
+        
+        Ok(conn.last_insert_rowid())
+    }
+    
+    /// Check if a file already has faces detected
+    /// Check if a file has faces
+    #[allow(dead_code)]
+    pub fn file_has_faces(file_id: i64) -> Result<bool, String> {
+        let conn = open_conn()?;
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM faces WHERE file_id = ?1",
+                params![file_id],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(count > 0)
+    }
+    
+    /// Get all faces without a person assigned (for clustering)
+    #[allow(dead_code)]
+    pub fn get_unassigned() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, file_id, bbox, embedding, person_id, created_at 
+                 FROM faces WHERE person_id IS NULL",
+            )
+            .map_err(|e| e.to_string())?;
+        
+        let faces = stmt
+            .query_map([], |row| {
+                Ok(Self {
+                    id: row.get(0)?,
+                    file_id: row.get(1)?,
+                    bbox: row.get(2)?,
+                    embedding: row.get(3)?,
+                    person_id: row.get(4)?,
+                    created_at: row.get(5)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        
+        Ok(faces)
+    }
+    
+    /// Get ALL faces (for re-clustering)
+    pub fn get_all() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, file_id, bbox, embedding, person_id, created_at FROM faces",
+            )
+            .map_err(|e| e.to_string())?;
+        
+        let faces = stmt
+            .query_map([], |row| {
+                Ok(Self {
+                    id: row.get(0)?,
+                    file_id: row.get(1)?,
+                    bbox: row.get(2)?,
+                    embedding: row.get(3)?,
+                    person_id: row.get(4)?,
+                    created_at: row.get(5)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        
+        Ok(faces)
+    }
+    
+    /// Reset all face assignments and delete all persons (for re-clustering)
+    pub fn reset_all_assignments() -> Result<(), String> {
+        let conn = open_conn()?;
+        
+        // Clear all person_id from faces
+        conn.execute("UPDATE faces SET person_id = NULL", [])
+            .map_err(|e| e.to_string())?;
+        
+        // Delete all persons
+        conn.execute("DELETE FROM persons", [])
+            .map_err(|e| e.to_string())?;
+        
+        Ok(())
+    }
+    
+    /// Assign a face to a person
+    pub fn assign_to_person(face_id: i64, person_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .execute(
+                "UPDATE faces SET person_id = ?1 WHERE id = ?2",
+                params![person_id, face_id],
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+    
+    /// Get all image file IDs that haven't been processed for faces yet
+    pub fn get_unprocessed_image_files() -> Result<Vec<(i64, String)>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT a.id, f.path || '/' || a.name as file_path
+                 FROM afiles a 
+                 JOIN afolders f ON a.folder_id = f.id
+                 WHERE a.file_type = 1 
+                   AND (a.has_faces IS NULL OR a.has_faces = 0)
+                 ORDER BY a.id",
+            )
+            .map_err(|e| e.to_string())?;
+        
+        let files = stmt
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        
+        Ok(files)
+    }
+
+    /// Mark a file as scanned for faces
+    /// status: 1 = has faces, 2 = no faces found
+    pub fn mark_scanned(file_id: i64, status: i32) -> Result<(), String> {
+        let conn = open_conn()?;
+        conn.execute(
+            "UPDATE afiles SET has_faces = ?1 WHERE id = ?2",
+            params![status, file_id],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Get statistics for face indexing
+    /// Returns (processed_count, total_faces)
+    pub fn get_stats() -> Result<(usize, usize), String> {
+        let conn = open_conn()?;
+        
+        // Count processed files (has_faces > 0)
+        let processed: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM afiles WHERE has_faces > 0 AND file_type = 1",
+            [],
+            |row| row.get(0),
+        ).unwrap_or(0);
+
+        // Count total faces
+        let faces: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM faces",
+            [],
+            |row| row.get(0),
+        ).unwrap_or(0);
+
+        Ok((processed as usize, faces as usize))
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ACamera {
     pub make: String,
@@ -2353,6 +2777,7 @@ pub fn create_db() -> Result<(), String> {
             rotate INTEGER,
             comments TEXT,
             has_tags INTEGER,
+            has_faces INTEGER DEFAULT 0,
             e_make TEXT,
             e_model TEXT,
             e_date_time TEXT,
@@ -2419,6 +2844,18 @@ pub fn create_db() -> Result<(), String> {
     .map_err(|e| e.to_string())?;
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afiles_has_tags ON afiles(has_tags)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    
+    // Migration: Add has_faces column if it doesn't exist
+    // We try to add it, if it fails it likely exists. 
+    // Ideally we should check strict versioning but for now this is robust enough for simple addition.
+    let _ = conn.execute("ALTER TABLE afiles ADD COLUMN has_faces INTEGER DEFAULT 0", []);
+    
+    // Create index for has_faces
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_has_faces ON afiles(has_faces)",
         [],
     )
     .map_err(|e| e.to_string())?;
@@ -2500,6 +2937,49 @@ pub fn create_db() -> Result<(), String> {
     .map_err(|e| e.to_string())?;
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afile_tags_tag_id ON afile_tags(tag_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // persons table (for face recognition)
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS persons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            cover_face_id INTEGER,
+            created_at INTEGER
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_persons_name ON persons(name)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // faces table (for face recognition)
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS faces (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            bbox TEXT,
+            embedding BLOB,
+            person_id INTEGER,
+            created_at INTEGER,
+            FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE,
+            FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE SET NULL
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_faces_file_id ON faces(file_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_faces_person_id ON faces(person_id)",
         [],
     )
     .map_err(|e| e.to_string())?;

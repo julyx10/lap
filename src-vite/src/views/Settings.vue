@@ -205,13 +205,29 @@
         <!-- Image Search tab -->
         <section v-else-if="config.settings.tabIndex === 3">
           <!-- Image search threshold -->
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between mb-2">
             <label>{{ $t('settings.image_search.similarity') }}</label>
             <select class="select" v-model="config.settings.imageSearch.thresholdIndex">
               <option v-for="(option, index) in similarityOptions" :key="index" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
+          </div>
+          <div class="text-xs text-base-content/50 mb-4">
+            {{ $t('settings.image_search.similarity_hint') }}
+          </div>
+
+          <!-- Face Clustering Threshold -->
+          <div class="flex items-center justify-between mb-2">
+            <label>{{ $t('settings.face_recognition.similarity') }}</label>
+            <select class="select" v-model="config.settings.face.clusterThresholdIndex">
+              <option v-for="(option, index) in faceClusterOptions" :key="index" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <div class="text-xs text-base-content/50 mb-4">
+            {{ $t('settings.face_recognition.cluster_threshold_hint') }}
           </div>
         </section>
 
@@ -406,6 +422,14 @@ const similarityOptions = computed(() => {
   return values.map((val, i) => ({ label: options[i], value: i }));
 });
 
+// Define the face cluster threshold options
+const faceClusterOptions = computed(() => {
+  const options = localeMsg.value.settings.face_recognition?.cluster_threshold_options || 
+    ['Very High', 'High', 'Medium', 'Low'];
+  // Map index as value since v-model is clusterThresholdIndex
+  return options.map((label: string, i: number) => ({ label, value: i }));
+});
+
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   
@@ -510,6 +534,11 @@ watch(() => config.settings.imageSearch.thresholdIndex, (newValue) => {
 });
 watch(() => config.settings.imageSearch.limit, (newValue) => {
   emit('settings-imageSearchLimit-changed', newValue);
+});
+
+// face settings
+watch(() => config.settings.face.clusterThresholdIndex, (newValue) => {
+  emit('settings-faceClusterThresholdIndex-changed', newValue);
 });
 
 // Handle keyboard shortcuts

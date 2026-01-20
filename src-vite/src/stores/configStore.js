@@ -97,6 +97,17 @@ export const useConfigStore = defineStore('configStore', {
         thresholdIndex: 3,                 // image search threshold index (default is Low)
         limit: 1000,                       // image search limit
       },
+      
+      // face recognition settings
+      face: {
+        // Cluster threshold: cosine distance (lower = stricter, higher = looser)
+        // Very High: 0.45 (very strict, may over-split same person)
+        // High: 0.55 (strict, good for photos with clear faces)
+        // Medium: 0.65 (balanced, recommended for most photos)
+        // Low: 0.75 (loose, may merge different people)
+        clusterThreshold: [0.45, 0.55, 0.65, 0.75],
+        clusterThresholdIndex: 2, // Default: Medium (0.65)
+      },
     },
   }),
 
@@ -184,6 +195,15 @@ export const useConfigStore = defineStore('configStore', {
     },
     setImageSearchLimit(imageSearchLimit) {
       this.settings.imageSearch.limit = imageSearchLimit;
+    },
+
+    // face recognition settings
+    setFaceClusterThresholdIndex(index) {
+      if (!this.settings.face) {
+        this.settings.face = { clusterThresholdIndex: index };
+      } else {
+        this.settings.face.clusterThresholdIndex = index;
+      }
     },
   },
   persist: true

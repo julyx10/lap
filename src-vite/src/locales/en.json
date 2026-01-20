@@ -7,7 +7,7 @@
     "tag": "Tags",
     "calendar": "Calendar",
     "location": "Location",
-    "people": "People",
+    "person": "Person",
     "camera": "Cameras",
     "settings": "Settings"
   },
@@ -50,6 +50,13 @@
       "description": "Preparing your album for search and quick view. Large albums may take a few minutes.",
       "cancel": "Cancel indexing"
     }
+  },
+  "face_index": {
+    "start": "Index Faces",
+    "indexing": "Indexing faces... {current} / {total}",
+    "clustering": "Clustering faces...",
+    "faces_found": "{count} faces found",
+    "cancel": "Cancel"
   },
   "favorite": {
     "files": "Favorite files",
@@ -151,6 +158,7 @@
       "show_info": "Show info",
       "hide_info": "Hide info",
       "clear_history": "Clear search history",
+      "index_faces": "Index faces",
       "sort": "Sort",
       "monthly": "Monthly",
       "daily": "Daily",
@@ -174,7 +182,8 @@
       "tag": "No tags found",
       "calendar": "No calendar data found",
       "location": "No location data found",
-      "people": "No people data found",
+      "person": "No person data found",
+      "person_hint": "Try to index the faces in the albums",
       "camera": "No camera data found"
     },
     "set_album_cover": {
@@ -236,6 +245,7 @@
       "copy": "Copy to clipboard",
       "edit": "Edit image...",
       "find_similar_images": "Find similar images",
+      "find_person_images": "Find person images",
       "find_album_folder": "Find album folder",
       "on_this_day": "On this day",
       "print": "Print",
@@ -270,6 +280,11 @@
       "title": "Clear search history",
       "content": "Are you sure you want to clear the search history?",
       "ok": "Clear"
+    },
+    "delete_person": {
+      "title": "Delete person",
+      "content": "Are you sure you want to delete '{person}'?",
+      "ok": "Delete"
     },
     "edit_library": {
       "title_add": "Add library",
@@ -665,11 +680,24 @@
     "image_search": {
       "title": "Image search",
       "similarity": "Image similarity",
+      "similarity_hint": "Higher = More similar (less results), Lower = Less similar (more results)",
       "similarity_options": [
         "Very high",
         "High",
         "Medium",
         "Low"
+      ]
+    },
+    "face_recognition": {
+      "title": "Face Recognition",
+      "similarity": "Face similarity",
+      "cluster_threshold": "Clustering Threshold",
+      "cluster_threshold_hint": "Higher = Stricter (more persons), Lower = Looser (may merge different people)",
+      "cluster_threshold_options": [
+        "Very High (Strict)",
+        "High",
+        "Medium (Recommended)",
+        "Low (Loose)"
       ]
     },
     "about": {

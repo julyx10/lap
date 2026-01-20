@@ -45,6 +45,11 @@ export const useLibraryStore = defineStore('libraryStore', {
       name: null,             // location name
     },
 
+    person: {
+      id: null,               // selected person id
+      name: null,             // selected person name
+    },
+
     search: {
       searchText: '',         // AI search text
       searchHistory: [],      // AI search history

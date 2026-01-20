@@ -7,7 +7,7 @@
     "tag": "标签",
     "calendar": "日历",
     "location": "地点",
-    "people": "人物",
+    "person": "人物",
     "camera": "相机",
     "settings": "设置"
   },
@@ -50,6 +50,13 @@
       "description": "准备相册用于搜索和快速预览。大型相册可能需要几分钟。",
       "cancel": "取消索引"
     }
+  },
+  "face_index": {
+    "start": "索引人脸",
+    "indexing": "正在索引人脸... {current} / {total}",
+    "clustering": "正在聚类人脸...",
+    "faces_found": "已发现 {count} 张人脸",
+    "cancel": "取消"
   },
   "favorite": {
     "files": "收藏的文件",
@@ -151,6 +158,7 @@
       "show_info": "显示信息",
       "hide_info": "隐藏信息",
       "clear_history": "清空搜索历史",
+      "index_faces": "索引人脸",
       "sort": "排序",
       "monthly": "按月",
       "daily": "按日",
@@ -174,7 +182,8 @@
       "tag": "未找到标签",
       "calendar": "未找到日历数据",
       "location": "未找到地点数据",
-      "people": "未找到人物数据",
+      "person": "未找到人物数据",
+      "person_hint": "尝试索引相册中的人脸",
       "camera": "未找到相机数据"
     },
     "set_album_cover": {
@@ -236,6 +245,7 @@
       "copy": "复制到剪贴板",
       "edit": "编辑图片...",
       "find_similar_images": "查找相似图片",
+      "find_person_images": "查找人物图片",
       "find_album_folder": "查找相册文件夹",
       "on_this_day": "历史上的今天",
       "print": "打印",
@@ -270,6 +280,11 @@
       "title": "清空搜索历史",
       "content": "确定要清空搜索历史吗？",
       "ok": "清空"
+    },
+    "delete_person": {
+      "title": "删除人物",
+      "content": "确定要删除 '{person}' 吗？",
+      "ok": "删除"
     },
     "edit_library": {
       "title_add": "添加库",
@@ -665,11 +680,24 @@
     "image_search": {
       "title": "图片搜索",
       "similarity": "图片相似度",
+      "similarity_hint": "较高 = 更少结果, 较低 = 更多结果",
       "similarity_options": [
         "极高",
         "高",
         "中",
         "低"
+      ]
+    },
+    "face_recognition": {
+      "title": "人脸识别",
+      "similarity": "人脸相似度",
+      "cluster_threshold": "聚类阈值",
+      "cluster_threshold_hint": "较高 = 更严格 (更多人物)，较低 = 更宽松 (可能合并不同的人)",
+      "cluster_threshold_options": [
+        "极高 (严格)",
+        "高",
+        "中 (推荐)",
+        "低 (宽松)"
       ]
     },
     "about": {

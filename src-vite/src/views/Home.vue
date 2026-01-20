@@ -90,8 +90,15 @@
                   @click="panelRef?.showClearConfirmation()"
                 />
                 
+                <!-- Person: Index Faces -->
+                <TButton v-if="config.main.sidebarIndex === 3"
+                  :icon="IconRefresh"
+                  :tooltip="$t('toolbar.tooltip.index_faces')"
+                  @click="panelRef?.clickIndexFaces()"
+                />
+
                 <!-- Calendar: Order -->
-                <template v-if="config.main.sidebarIndex === 3">
+                <template v-if="config.main.sidebarIndex === 4">
                   <TButton 
                     :icon="config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay"
                     :tooltip="config.calendar.isMonthly ? $t('toolbar.tooltip.monthly') : $t('toolbar.tooltip.daily')"
@@ -105,14 +112,14 @@
                 </template>
                 
                 <!-- Tag: Add Tag  -->
-                <TButton v-if="config.main.sidebarIndex === 5"
+                <TButton v-if="config.main.sidebarIndex === 6"
                   :icon="IconAdd"
                   :tooltip="$t('tag.add_tag')"
                   @click="panelRef?.clickAddTag()"
                 />
 
                 <!-- tag, location, camera: Order -->
-                <TButton v-if="config.main.sidebarIndex === 4 || config.main.sidebarIndex === 5 || config.main.sidebarIndex === 6"
+                <TButton v-if="config.main.sidebarIndex === 5 || config.main.sidebarIndex === 6 || config.main.sidebarIndex === 7"
                   :icon="config.leftPanel.sortCount ? IconSortingName : IconSortingCount"
                   :tooltip="$t('toolbar.tooltip.sort')"
                   @click="config.leftPanel.sortCount = !config.leftPanel.sortCount"
@@ -189,7 +196,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac } from '@/common/utils';
-import { getAppConfig, switchLibrary, removeLibrary, cancelIndexing } from '@/common/api';
+import { getAppConfig, switchLibrary, removeLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
 
 const uiStore = useUIStore();
 
@@ -200,7 +207,7 @@ import Favorite from '@/components/Favorite.vue';
 import Tag from '@/components/Tag.vue';
 import Calendar from '@/components/Calendar.vue';
 import Location from '@/components/Location.vue';
-// import People from '@/components/People.vue';
+import Person from '@/components/Person.vue';
 import Camera from '@/components/Camera.vue';
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
@@ -212,10 +219,9 @@ import MessageBox from '@/components/MessageBox.vue';
 import {
   IconFavorite,
   IconTag,
-  IconCalendar,
   IconLocation,
-  IconPeople,
-  IconCamera,
+  IconPerson,
+  IconCameraAperture,
   IconSearch,
   IconSettings,
   IconAlbums,
@@ -233,6 +239,7 @@ import {
   IconArrowDown,
   IconCalendarMonth,
   IconCalendarDay,
+  IconRefresh,
 } from '@/common/icons';
 
 // Panel component ref
@@ -341,6 +348,9 @@ const doSwitchLibrary = async (libraryId: string) => {
       }
     }
     
+    // Cancel face indexing if running
+    await cancelFaceIndex();
+    
     // Save current library state before switching
     await libConfig.save();
     
@@ -412,7 +422,12 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.search
   },
   { 
-    icon: IconCalendar, 
+    icon: IconPerson, 
+    component: Person, 
+    text: localeMsg.value.sidebar.person 
+  },
+  { 
+    icon: IconCalendarDay, 
     component: Calendar,
     text: localeMsg.value.sidebar.calendar 
   },
@@ -427,11 +442,10 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.tag 
   },
   { 
-    icon: IconCamera,  
+    icon: IconCameraAperture,  
     component: Camera,
     text: localeMsg.value.sidebar.camera 
   },
-  // { icon: IconPeople, component: People, text: localeMsg.value.sidebar.people }, 
 ]);
 
 /// Splitter for resizing the left pane
@@ -482,7 +496,7 @@ async function clickSettings() {
     return;
   }
 
-  const options = {
+  const options: any = {
     url: '/settings',
     title: 'Settings',
     width: 600,

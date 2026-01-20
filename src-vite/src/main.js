@@ -114,3 +114,7 @@ listen('settings-imageSearchThresholdIndex-changed', (event) => {
 listen('settings-imageSearchLimit-changed', (event) => {
   config.setImageSearchLimit(event.payload)
 })
+listen('settings-faceClusterThresholdIndex-changed', (event) => {
+  config.setFaceClusterThresholdIndex(event.payload)
+})
+  

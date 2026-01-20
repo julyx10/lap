@@ -47,8 +47,8 @@
 
     <!-- Display message if no data are found -->
     <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
-      <!-- <IconCalendar class="w-8 h-8" /> -->
-      <span class="text-sm">{{ $t('tooltip.not_found.calendar') }}</span>
+      <IconCalendar class="w-8 h-8 mb-2" />
+      <span class="text-sm text-center">{{ $t('tooltip.not_found.calendar') }}</span>
     </div>
   </div>
   
@@ -61,6 +61,7 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getTakenDates } from '@/common/api';
 
+import {IconCalendar} from '@/common/icons';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
 

@@ -518,6 +518,9 @@ import {
   IconIndexReady,
   IconIndexRunning,
   IconIndexWaiting,
+  IconPerson,
+  IconCalendarMonth,
+  IconCalendarDay,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -547,10 +550,12 @@ const contentIcon = computed(() => {
         default: return IconFolderFavorite;
       }
     case 2: return IconSearch;
-    case 3: return IconCalendar;
-    case 4: return IconLocation;
-    case 5: return IconTag;
-    case 6: return IconCamera;
+    case 3: return IconPerson;
+    case 4: return config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay;
+
+    case 5: return IconLocation;
+    case 6: return IconTag;
+    case 7: return IconCameraAperture;
     default: return IconFiles;
   }
 });
@@ -694,6 +699,7 @@ const currentQueryParams = ref({
   locationName: "",
   isFavorite: false,
   tagId: 0,
+  personId: 0,
 });
 
 // ai image search params
@@ -1338,11 +1344,12 @@ watch(
     config.main.sidebarIndex,      // toolbar index
     libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected, // album
     libConfig.favorite.albumId, libConfig.favorite.folderId, libConfig.favorite.folderPath,   // favorite files and folder
-    libConfig.tag.id,                                                                   // tag
-    libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date,               // calendar
-    libConfig.location.admin1, libConfig.location.name,                                    // location
-    libConfig.camera.make, libConfig.camera.model,                                         // camera 
     libConfig.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
+    libConfig.person.id,                                                              // person
+    libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date,       // calendar
+    libConfig.tag.id,                                                                 // tag
+    libConfig.location.admin1, libConfig.location.name,                               // location
+    libConfig.camera.make, libConfig.camera.model,                                    // camera 
   ], 
   () => {
     setTimeout(() => {
@@ -1491,7 +1498,8 @@ async function getFileList(
     locationAdmin1 = '', 
     locationName = '', 
     isFavorite = false, 
-    tagId = 0
+    tagId = 0,
+    personId = 0
   } = {},
   requestId: number, 
 ) { 
@@ -1511,6 +1519,7 @@ async function getFileList(
     locationName,
     isFavorite,
     tagId,
+    personId,
   };
 
   // Set loading state
@@ -1688,6 +1697,7 @@ async function updateContent() {
               locationName: "",
               isFavorite: false,
               tagId: 0,
+              personId: 0,
             };
             getQueryTimeLine(currentQueryParams.value).then(data => {
               if (requestId === currentContentRequestId) timelineData.value = data;
@@ -1756,7 +1766,15 @@ async function updateContent() {
       }
     }
   } 
-  else if(newIndex === 3) {   // calendar
+  else if(newIndex === 3) {   // person
+    if (libConfig.person.id === null) {
+      contentTitle.value = "";
+    } else {
+      contentTitle.value = libConfig.person.name || `${localeMsg.value.sidebar.person}`;
+      getFileList({ personId: libConfig.person.id }, requestId);
+    }
+  }
+  else if(newIndex === 4) {   // calendar
     if(libConfig.calendar.year === null) {
       contentTitle.value = "";
     } else {
@@ -1771,7 +1789,7 @@ async function updateContent() {
       getFileList({ startDate, endDate }, requestId);
     }
   }
-  else if(newIndex === 4) {   // location
+  else if(newIndex === 5) {   // location
     if(libConfig.location.admin1 === null) {
       contentTitle.value = "";
     } else {
@@ -1784,7 +1802,7 @@ async function updateContent() {
       } 
     }
   }
-  else if(newIndex === 5) {   // tag
+  else if(newIndex === 6) {   // tag
     if (libConfig.tag.id === null) {
       contentTitle.value = "";
     } else {
@@ -1799,7 +1817,7 @@ async function updateContent() {
       });
     }
   }
-  else if(newIndex === 6) {   // camera
+  else if(newIndex === 7) {   // camera
     if(libConfig.camera.make === null) {
       contentTitle.value = "";
     } else {

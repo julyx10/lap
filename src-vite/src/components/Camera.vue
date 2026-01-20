@@ -44,8 +44,8 @@
 
     <!-- Display message if no data are found -->
     <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
-      <!-- <IconCamera class="w-8 h-8" /> -->
-      <span class="text-sm">{{ $t('tooltip.not_found.camera') }}</span>
+      <IconCamera class="w-8 h-8 mb-2" />
+      <span class="text-sm text-center">{{ $t('tooltip.not_found.camera') }}</span>
     </div>
   </div>
 
@@ -57,7 +57,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { config, libConfig } from '@/common/config';
 import { getCameraInfo } from '@/common/api';
-import { IconRight } from '@/common/icons';
+import { IconRight, IconCamera } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {

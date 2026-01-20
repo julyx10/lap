@@ -146,7 +146,7 @@ export { default as IconMusic } from '@/assets/icons/musical.svg';
 export { default as IconTag } from '@/assets/icons/tag.svg';
 export { default as IconCalendar } from '@/assets/icons/calendar.svg';
 export { default as IconLocation } from '@/assets/icons/map-pin.svg';
-export { default as IconPeople } from '@/assets/icons/user.svg';
+export { default as IconPerson } from '@/assets/icons/user.svg';
 export { default as IconCamera } from '@/assets/icons/camera.svg';
 export { default as IconCameraAperture } from '@/assets/icons/camera-aperture.svg';
 export { default as IconGps } from '@/assets/icons/gps.svg';
