@@ -37,6 +37,7 @@
 
       <!-- status icons -->
       <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/70">
+        {{ file.has_faces }}
         <!-- video duration -->
         <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 mr-1">
           {{ formatDuration(file.duration) }}

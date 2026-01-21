@@ -457,7 +457,7 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
-         updateFileInfo, cancelIndexing as cancelIndexingApi} from '@/common/api';  
+         updateFileInfo, cancelIndexing as cancelIndexingApi, getFacesForFile} from '@/common/api';  
 import { config, libConfig } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -932,6 +932,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'tag': clickTag,
     'comment': () => showCommentMsgbox.value = true,
     'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
+    'find-person': () => enterPersonSearchMode(fileList.value[selectedItemIndex.value]),
     'set-album-cover': clickSetAlbumCover,
   };
 
@@ -1575,7 +1576,7 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
   currentImageSearchParams.value = {
     searchText,
     fileId,
-    threshold: config.settings.imageSearch.threshold[config.settings.imageSearch.thresholdIndex],
+    threshold: config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
     limit: config.settings.imageSearch.limit,
   };
 
@@ -1902,6 +1903,70 @@ function enterSimilarSearchMode(file: any) {
   }
   
   getImageSearchFileList("", file.id, requestId);
+}
+
+// --- Person Search Mode Logic ---
+async function enterPersonSearchMode(file: any) {
+  if (!file) return;
+
+  // fetch faces
+  const faces = await getFacesForFile(file.id);
+  if (!faces || faces.length === 0) {
+     toolTipRef.value.showTip(localeMsg.value.tooltip.not_found.person || "No person found", true);
+     return;
+  }
+
+  // Find first face with person_id
+  const face = faces.find((f: any) => f.person_id && f.person_id > 0);
+  if (!face) {
+     toolTipRef.value.showTip(localeMsg.value.tooltip.not_found.person || "No person found", true);
+     return;
+  }
+
+  // Increment request ID to cancel any previous thumbnail generation and reset queue
+  currentThumbRequestId++;
+  thumbCount.value = 0;
+
+  // 1. Backup current state
+  if (tempViewMode.value === 'none') {
+    backupState.value = {
+      fileList: [...fileList.value],
+      totalFileCount: totalFileCount.value,
+      totalFileSize: totalFileSize.value,
+      contentTitle: contentTitle.value,
+      selectedItemIndex: selectedItemIndex.value,
+      scrollPosition: scrollPosition.value,
+      timelineData: [...timelineData.value],
+      currentQueryParams: { ...currentQueryParams.value },
+      thumbCount: thumbCount.value,
+      showProgressBar: showProgressBar.value,
+      scrollTop: gridViewRef.value ? gridViewRef.value.getScrollTop() : 0,
+    };
+  }
+
+  // 2. Set mode
+  tempViewMode.value = 'person';
+  showQuickView.value = false;
+
+  // 3. Update Title to indicate context
+  contentTitle.value = localeMsg.value.menu.file.find_person_images;
+
+  // 4. Perform Search
+  const requestId = ++currentContentRequestId;
+  
+  // Reset list for loading state
+  fileList.value = [];
+  totalFileCount.value = 0;
+  totalFileSize.value = 0;
+  
+  // Reset scroll and selection
+  scrollPosition.value = 0;
+  selectedItemIndex.value = 0;
+  if (gridViewRef.value) {
+    gridViewRef.value.scrollToPosition(0);
+  }
+  
+  getFileList({ personId: face.person_id }, requestId);
 }
 
 function enterAlbumPreviewMode(file: any) {

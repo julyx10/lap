@@ -55,8 +55,6 @@ pub struct FaceData {
 struct Anchor {
     cx: f32,
     cy: f32,
-    w: f32,
-    h: f32,
 }
 
 pub struct FaceEngine {
@@ -131,40 +129,38 @@ impl FaceEngine {
         self.detection_model.is_some() && self.embedding_model.is_some()
     }
 
-    /// Detect faces in an image (from path)
-    pub fn detect_faces(&mut self, image_path: &str) -> Result<Vec<FaceBox>, String> {
-        if !self.is_loaded() {
-            return Err("Face models not loaded".to_string());
-        }
-        // Load image
-        let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
-        self.detect_faces_impl(&img)
-    }
-
     /// Detect faces implementation (from DynamicImage)
-    fn detect_faces_impl(&mut self, img: &DynamicImage) -> Result<Vec<FaceBox>, String> {
+    fn detect_faces(&mut self, img: &DynamicImage) -> Result<Vec<FaceBox>, String> {
         let original_width = img.width() as f32;
         let original_height = img.height() as f32;
 
         // RetinaFace typically expects 640x640 input
         let target_size = 640;
-        let img_resized = img.resize_exact(
-            target_size,
-            target_size,
-            image::imageops::FilterType::Triangle,
-        );
+        // Resize preserving aspect ratio (Letterbox)
+        // Use max dimension to fit within target
+        let scale = (target_size as f32) / original_width.max(original_height);
+        // Use round() to minimize truncation error
+        let new_w = (original_width * scale).round() as u32;
+        let new_h = (original_height * scale).round() as u32;
+
+        let img_resized = img.resize_exact(new_w, new_h, image::imageops::FilterType::Triangle);
         let rgb_img = img_resized.to_rgb8();
 
+        // Standard InsightFace/RetinaFace preprocessing aligns to Top-Left (0,0)
+
         // Normalize: (pixel - 127.5) / 128.0
+        // Initialize with zeros (padding)
         let mut array = Array::zeros((1, 3, target_size as usize, target_size as usize));
         for (x, y, pixel) in rgb_img.enumerate_pixels() {
             let r = (pixel[0] as f32 - 127.5) / 128.0;
             let g = (pixel[1] as f32 - 127.5) / 128.0;
             let b = (pixel[2] as f32 - 127.5) / 128.0;
 
-            array[[0, 0, y as usize, x as usize]] = r;
-            array[[0, 1, y as usize, x as usize]] = g;
-            array[[0, 2, y as usize, x as usize]] = b;
+            // Place image at top-left (0,0)
+            // RetinaFace (InsightFace) models typically expect BGR input
+            array[[0, 0, y as usize, x as usize]] = b; // Blue
+            array[[0, 1, y as usize, x as usize]] = g; // Green
+            array[[0, 2, y as usize, x as usize]] = r; // Red
         }
 
         let input_value = Value::from_array(array).map_err(|e| e.to_string())?;
@@ -190,7 +186,7 @@ impl FaceEngine {
                 (2, 5, 8), // Stride 32
             ];
 
-            let confidence_threshold = 0.5;
+            let confidence_threshold = 0.6;
 
             for (i, &stride) in strides.iter().enumerate() {
                 let (score_idx, box_idx, _) = indices[i];
@@ -216,33 +212,40 @@ impl FaceEngine {
                         continue;
                     }
 
-                    // Decode box: [dx, dy, dw, dh]
-                    let dx = boxes_data[j * 4];
-                    let dy = boxes_data[j * 4 + 1];
-                    let dw = boxes_data[j * 4 + 2];
-                    let dh = boxes_data[j * 4 + 3];
+                    // Decode box: [l, t, r, b] (distances from center, normalized by stride)
+                    // This assumes SCRFD model (det_10g.onnx) which outputs distances
+                    let l = boxes_data[j * 4];
+                    let t = boxes_data[j * 4 + 1];
+                    let r = boxes_data[j * 4 + 2];
+                    let b = boxes_data[j * 4 + 3];
 
-                    let variance = [0.1, 0.2];
+                    // SCRFD uses stride-scaled distances
+                    // x1 = cx - l * stride
+                    // y1 = cy - t * stride
+                    // x2 = cx + r * stride
+                    // y2 = cy + b * stride
 
-                    let cx = anchor.cx + dx * variance[0] * anchor.w;
-                    let cy = anchor.cy + dy * variance[0] * anchor.h;
-                    let w = anchor.w * (dw * variance[1]).exp();
-                    let h = anchor.h * (dh * variance[1]).exp();
-
-                    let x1 = cx - w / 2.0;
-                    let y1 = cy - h / 2.0;
-                    let x2 = cx + w / 2.0;
-                    let y2 = cy + h / 2.0;
+                    let x1 = anchor.cx - l * stride as f32;
+                    let y1 = anchor.cy - t * stride as f32;
+                    let x2 = anchor.cx + r * stride as f32;
+                    let y2 = anchor.cy + b * stride as f32;
 
                     // Scale back to original image
-                    let scale_x = original_width / target_size as f32;
-                    let scale_y = original_height / target_size as f32;
+                    // Use effective scale factors derived from actual resized dimensions
+                    let inv_scale_x = original_width / new_w as f32;
+                    let inv_scale_y = original_height / new_h as f32;
+
+                    // Scale directly (no padding offset)
+                    let original_x1 = x1 * inv_scale_x;
+                    let original_y1 = y1 * inv_scale_y;
+                    let original_x2 = x2 * inv_scale_x;
+                    let original_y2 = y2 * inv_scale_y;
 
                     all_detections.push(FaceBox {
-                        x: x1 * scale_x,
-                        y: y1 * scale_y,
-                        width: (x2 - x1) * scale_x,
-                        height: (y2 - y1) * scale_y,
+                        x: original_x1,
+                        y: original_y1,
+                        width: original_x2 - original_x1,
+                        height: original_y2 - original_y1,
                         confidence: score,
                         landmarks: None,
                     });
@@ -256,8 +259,7 @@ impl FaceEngine {
         faces = self.nms(faces, 0.4);
 
         if faces.is_empty() {
-            // Debug print if no faces found
-            // println!("No faces found after NMS.");
+            // No faces found after NMS
         }
 
         Ok(faces)
@@ -275,41 +277,21 @@ impl FaceEngine {
 
         for y in 0..feature_h {
             for x in 0..feature_w {
-                for &min_size in min_sizes {
-                    let s_kx = min_size as f32; // / target_size? No, usually absolute pixels in 640x640
-                    let s_ky = min_size as f32;
-
+                for &_min_size in min_sizes {
                     // Dense anchor centers
-                    let cx = (x as f32 + 0.5) * stride as f32;
-                    let cy = (y as f32 + 0.5) * stride as f32;
+                    // Adjusted to 0.0 (top-left) from 0.5 (center) to fix systematic bottom-right shift
+                    let cx = (x as f32) * stride as f32;
+                    let cy = (y as f32) * stride as f32;
 
-                    anchors.push(Anchor {
-                        cx,
-                        cy,
-                        w: s_kx,
-                        h: s_ky,
-                    });
+                    anchors.push(Anchor { cx, cy });
                 }
             }
         }
         anchors
     }
 
-    /// Get face embedding from a cropped face region (from path)
-    pub fn get_face_embedding(
-        &mut self,
-        image_path: &str,
-        bbox: &FaceBox,
-    ) -> Result<Vec<f32>, String> {
-        if !self.is_loaded() {
-            return Err("Face models not loaded".to_string());
-        }
-        let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
-        self.get_face_embedding_impl(&img, bbox)
-    }
-
     /// Get face embedding implementation (from DynamicImage)
-    fn get_face_embedding_impl(
+    fn get_face_embedding(
         &mut self,
         img: &DynamicImage,
         bbox: &FaceBox,
@@ -376,35 +358,23 @@ impl FaceEngine {
     }
 
     /// Process image: detect all faces and get embeddings
-    /// Filters out low-quality faces (low confidence, small size)
+    /// Filters out low-quality faces (low confidence, small size, blurry)
     pub fn process_image(&mut self, image_path: &str) -> Result<Vec<FaceData>, String> {
         // Get image dimensions
         let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
-        self.process_image_impl(&img)
-    }
 
-    /// Process image from memory (bytes)
-    pub fn process_image_from_memory(
-        &mut self,
-        image_data: &[u8],
-    ) -> Result<Vec<FaceData>, String> {
-        let img = image::load_from_memory(image_data)
-            .map_err(|e| format!("Failed to load image from memory: {}", e))?;
-        self.process_image_impl(&img)
-    }
-
-    /// Internal process logic reused by both file and memory based processing
-    fn process_image_impl(&mut self, img: &DynamicImage) -> Result<Vec<FaceData>, String> {
         // Quality thresholds
-        const MIN_CONFIDENCE: f32 = 0.7; // Minimum detection confidence
-        const MIN_FACE_RATIO: f32 = 0.005; // Face must be at least 0.5% of image area
-        const MIN_FACE_SIZE: f32 = 40.0; // Minimum face size in pixels
+        // Quality thresholds - Recommended Values
+        const MIN_CONFIDENCE: f32 = 0.65; // 0.6-0.7 is standard. 0.65 balances precision/recall.
+        const MIN_FACE_RATIO: f32 = 0.0; // Disabled. Rely on absolute pixel size instead (better for high-res photos).
+        const MIN_FACE_SIZE: f32 = 90.0; // 80-112px is minimum for good recognition. 90.0 is a safe high-quality baseline.
+        // const MIN_BLUR_SCORE: f32 = 100.0; // Standard Laplacian variance threshold. Below 100 is usually blurry.
 
         let img_width = img.width() as f32;
         let img_height = img.height() as f32;
         let img_area = img_width * img_height;
 
-        let faces = self.detect_faces_impl(img)?;
+        let faces = self.detect_faces(&img)?;
 
         let mut results = Vec::new();
         for face in faces {
@@ -424,8 +394,14 @@ impl FaceEngine {
                 continue;
             }
 
+            // Filter 4: Skip blurry faces
+            // let blur_score = self.calculate_blur_score(&img, &face);
+            // if blur_score < MIN_BLUR_SCORE {
+            //     continue;
+            // }
+
             // Get embedding for quality face
-            let embedding = self.get_face_embedding_impl(img, &face)?;
+            let embedding = self.get_face_embedding(&img, &face)?;
             results.push(FaceData {
                 bbox: face,
                 embedding,
@@ -434,6 +410,59 @@ impl FaceEngine {
 
         Ok(results)
     }
+
+    /// Calculate blur score using Variance of Laplacian
+    // fn calculate_blur_score(&self, img: &DynamicImage, bbox: &FaceBox) -> f32 {
+    //     let x = bbox.x.max(0.0) as u32;
+    //     let y = bbox.y.max(0.0) as u32;
+    //     // Check bounds to ensure we don't crash on cropping
+    //     let w = bbox.width.min(img.width() as f32 - bbox.x) as u32;
+    //     let h = bbox.height.min(img.height() as f32 - bbox.y) as u32;
+
+    //     if w < 3 || h < 3 {
+    //         return 0.0;
+    //     }
+
+    //     let crop = img.crop_imm(x, y, w, h).to_luma8();
+    //     let (width, height) = crop.dimensions();
+
+    //     let mut mean = 0.0;
+    //     let mut count = 0;
+    //     let mut laplacian_values = Vec::with_capacity((width * height) as usize);
+
+    //     // Simple Laplacian kernel:
+    //     //  0  1  0
+    //     //  1 -4  1
+    //     //  0  1  0
+
+    //     for y in 1..height - 1 {
+    //         for x in 1..width - 1 {
+    //             let p = crop.get_pixel(x, y).0[0] as i16;
+    //             let top = crop.get_pixel(x, y - 1).0[0] as i16;
+    //             let bottom = crop.get_pixel(x, y + 1).0[0] as i16;
+    //             let left = crop.get_pixel(x - 1, y).0[0] as i16;
+    //             let right = crop.get_pixel(x + 1, y).0[0] as i16;
+
+    //             let sum = top + bottom + left + right - 4 * p;
+    //             let val = sum as f32;
+
+    //             laplacian_values.push(val);
+    //             mean += val;
+    //             count += 1;
+    //         }
+    //     }
+
+    //     if count == 0 {
+    //         return 0.0;
+    //     }
+
+    //     mean /= count as f32;
+
+    //     let variance = laplacian_values
+    //         .iter()
+    //         .fold(0.0, |acc, &val| acc + (val - mean).powi(2));
+    //     variance / count as f32
+    // }
 
     /// Non-maximum suppression
     fn nms(&self, mut boxes: Vec<FaceBox>, iou_threshold: f32) -> Vec<FaceBox> {
@@ -486,16 +515,12 @@ pub fn run_face_indexing(
     status_token_struct: FaceIndexingStatus,
     progress_token_struct: FaceIndexProgressState,
     cluster_epsilon: Option<f32>,
-    image_source: Option<i64>, // 0: Original (default), 1: Thumbnail
 ) -> Result<(), String> {
     let cancel_token = cancel_token_struct.0.clone();
     let status_token = status_token_struct.0.clone();
     let progress_token = progress_token_struct.0.clone();
     // Use provided epsilon or default to 0.42
     let epsilon = cluster_epsilon.unwrap_or(0.42);
-    // Use proper image source check.
-    // Default to strict (0/Original) if not specified or invalid.
-    let use_thumbnail = image_source.unwrap_or(0) == 1;
 
     // Check if already running
     {
@@ -610,25 +635,7 @@ pub fn run_face_indexing(
 
             let mut engine = face_state.0.lock().unwrap();
 
-            let process_result = if use_thumbnail {
-                // Try to fetch thumbnail first
-                match t_sqlite::AThumb::fetch(file_id) {
-                    Ok(Some(thumb)) => {
-                        if let Some(data) = &thumb.thumb_data {
-                            engine.process_image_from_memory(data)
-                        } else {
-                            // Thumb exists but no data? Fallback
-                            engine.process_image(&file_path)
-                        }
-                    }
-                    _ => {
-                        // Failed to fetch or no thumb, fallback to original
-                        engine.process_image(&file_path)
-                    }
-                }
-            } else {
-                engine.process_image(&file_path)
-            };
+            let process_result = engine.process_image(&file_path);
 
             match process_result {
                 Ok(faces) => {

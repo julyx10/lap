@@ -660,7 +660,6 @@ pub fn index_faces(
     status_state: State<t_face::FaceIndexingStatus>,
     progress_state: State<t_face::FaceIndexProgressState>,
     cluster_epsilon: Option<f32>,
-    image_source: Option<i64>,
 ) -> Result<(), String> {
     t_face::run_face_indexing(
         app_handle,
@@ -669,7 +668,6 @@ pub fn index_faces(
         (*status_state).clone(),
         (*progress_state).clone(),
         cluster_epsilon,
-        image_source,
     )
 }
 
@@ -679,6 +677,12 @@ pub fn cancel_face_index(state: State<t_face::FaceIndexCancellation>) -> Result<
     *state.0.lock().unwrap() = true;
 
     Ok(())
+}
+
+/// reset all faces (delete all faces and persons)
+#[tauri::command]
+pub fn reset_faces() -> Result<(), String> {
+    t_sqlite::Face::reset_all().map_err(|e| format!("Error while resetting faces: {}", e))
 }
 
 /// check if face indexing is running, return (is_running, progress)
@@ -712,4 +716,11 @@ pub fn rename_person(person_id: i64, name: String) -> Result<usize, String> {
 #[tauri::command]
 pub fn delete_person(person_id: i64) -> Result<usize, String> {
     Person::delete(person_id).map_err(|e| format!("Error while deleting person: {}", e))
+}
+
+/// get faces for a file
+#[tauri::command]
+pub fn get_faces_for_file(file_id: i64) -> Result<Vec<t_sqlite::Face>, String> {
+    t_sqlite::Face::get_for_file(file_id)
+        .map_err(|e| format!("Error while getting faces for file: {}", e))
 }

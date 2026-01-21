@@ -99,9 +99,6 @@ export const useConfigStore = defineStore('configStore', {
       
       // face recognition settings
       face: {
-        // image source
-        imageSource: 0, // 0: original, 1: thumbnail
-        
         // Cluster threshold index: 0=Very High, 1=High, 2=Medium, 3=Low
         clusterThresholdIndex: 2, // Default: Medium
       },

@@ -1020,9 +1020,9 @@ export async function listenIndexFinished(callback) {
 }
 
 // index faces for all images in library
-export async function indexFaces(clusterEpsilon, imageSource) {
+export async function indexFaces(clusterEpsilon) {
   try {
-    const result = await invoke('index_faces', { clusterEpsilon, imageSource: imageSource || 0 });
+    const result = await invoke('index_faces', { clusterEpsilon });
     return result;
   } catch (error) {
     console.error('Failed to index faces:', error);
@@ -1037,6 +1037,17 @@ export async function cancelFaceIndex() {
   } catch (error) {
     console.error('Failed to cancel face index:', error);
   }
+}
+
+// reset faces
+export async function resetFaces() {
+  try {
+    await invoke('reset_faces');
+    return true;
+  } catch (error) {
+    console.error('Failed to reset faces:', error);
+  }
+  return false;
 }
 
 // check if face indexing is running
@@ -1097,6 +1108,19 @@ export async function deletePerson(personId) {
     return result;
   } catch (error) {
     console.error('Failed to delete person:', error);
+  }
+  return null;
+}
+
+// get faces for a file
+export async function getFacesForFile(fileId) {
+  try {
+    const faces = await invoke('get_faces_for_file', { fileId });
+    if (faces) {
+      return faces;
+    }
+  } catch (error) {
+    console.error('Failed to get faces for file:', error);
   }
   return null;
 }

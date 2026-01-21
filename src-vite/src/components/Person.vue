@@ -92,6 +92,10 @@
         {{ $t('face_index.start') }}
       </button>
     </div>
+
+    <button class="btn btn-ghost btn-xs mt-4 text-base-content/20 hover:text-error" @click="clickResetFaces">
+      Reset Faces
+    </button>
   </div>
 
   <!-- Delete person confirmation -->
@@ -111,7 +115,7 @@
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
-import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress } from '@/common/api';
+import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress, resetFaces } from '@/common/api';
 import { 
   IconPerson, 
   IconMore, 
@@ -345,8 +349,7 @@ async function clickIndexFaces() {
     const thresholds = config.faceClusterThresholds ?? [0.35, 0.45, 0.55, 0.65];
     const clusterEpsilon = thresholds[thresholdIndex] ?? 0.55;
     console.log('clusterEpsilon', clusterEpsilon);
-    const imageSource = face?.imageSource ?? 0;
-    await indexFaces(clusterEpsilon, imageSource);
+    await indexFaces(clusterEpsilon);
     await loadPersons();
   } catch (e) {
     console.error('indexFaces error:', e);
@@ -358,6 +361,14 @@ async function clickIndexFaces() {
 // Cancel face indexing
 async function clickCancelIndex() {
   await cancelFaceIndex();
+}
+
+// Reset faces
+async function clickResetFaces() {
+  if (confirm('Are you sure you want to delete ALL face data? This cannot be undone.')) {
+    await resetFaces();
+    await loadPersons();
+  }
 }
 
 defineExpose({

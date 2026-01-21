@@ -50,7 +50,7 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.file.find_person_images,
         icon: IconPerson,
-        action: createAction('person-folder')
+        action: createAction('find-person')
       },
       {
         label: localeMsg.value.menu.file.find_album_folder,

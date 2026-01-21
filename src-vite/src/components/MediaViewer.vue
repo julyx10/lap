@@ -154,6 +154,7 @@
       <Image v-if="file?.file_type === 1"
         ref="mediaRef"
         :filePath="file?.file_path" 
+        :fileId="file?.id"
         :rotate="file?.rotate ?? 0" 
         :isZoomFit="isZoomFit"
         :isSlideShow="isSlideShow"

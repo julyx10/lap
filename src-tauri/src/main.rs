@@ -193,10 +193,12 @@ fn main() {
             // person (face recognition)
             t_cmds::index_faces,
             t_cmds::cancel_face_index,
+            t_cmds::reset_faces,
             t_cmds::is_face_indexing,
             t_cmds::get_persons,
             t_cmds::rename_person,
             t_cmds::delete_person,
+            t_cmds::get_faces_for_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");

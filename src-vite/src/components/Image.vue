@@ -55,6 +55,88 @@
       </div>
     </TransitionGroup>
 
+    <!-- Faces Overlay -->
+    <div 
+      v-if="showFaces && faces.length > 0 && !isDraggingImage && !isSlideShow"
+      class="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+    >
+      <div
+        class="absolute"
+        :style="{
+          width: `${imageSize[activeImage].width}px`,
+          height: `${imageSize[activeImage].height}px`,
+          transform: `translate(${position[activeImage].x}px, ${position[activeImage].y}px) 
+                      scale(${scale[activeImage]}) 
+                      rotate(${imageRotate[activeImage]}deg)`,
+          transition: !isDraggingImage && !noTransition ? (isDraggingNavBox ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out') : 'none',
+        }"
+      >
+        <div
+          v-for="face in faces"
+          :key="face.id"
+          v-show="face.person_id === libConfig.person.id"
+          class="absolute group"
+          :style="{
+            left: `${face.bbox.x}px`,
+            top: `${face.bbox.y}px`,
+            width: `${face.bbox.width}px`,
+            height: `${face.bbox.height}px`,
+          }"
+        >
+          <!-- Corner: Top Left -->
+          <div 
+            class="absolute top-0 left-0 w-1/8 h-1/8 border-secondary/50 rounded-tl-lg"
+            :style="{ 
+              borderTopWidth: `${2 / scale[activeImage]}px`, 
+              borderLeftWidth: `${2 / scale[activeImage]}px` 
+            }"
+          ></div>
+          
+          <!-- Corner: Top Right -->
+          <div 
+            class="absolute top-0 right-0 w-1/8 h-1/8 border-secondary/50 rounded-tr-lg"
+            :style="{ 
+              borderTopWidth: `${2 / scale[activeImage]}px`, 
+              borderRightWidth: `${2 / scale[activeImage]}px` 
+            }"
+          ></div>
+
+          <!-- Corner: Bottom Left -->
+          <div 
+            class="absolute bottom-0 left-0 w-1/8 h-1/8 border-secondary/50 rounded-bl-lg"
+            :style="{ 
+              borderBottomWidth: `${2 / scale[activeImage]}px`, 
+              borderLeftWidth: `${2 / scale[activeImage]}px` 
+            }"
+          ></div>
+
+          <!-- Corner: Bottom Right -->
+          <div 
+            class="absolute bottom-0 right-0 w-1/8 h-1/8 border-secondary/50 rounded-br-lg"
+            :style="{ 
+              borderBottomWidth: `${2 / scale[activeImage]}px`, 
+              borderRightWidth: `${2 / scale[activeImage]}px` 
+            }"
+          ></div>
+
+          <!-- Person Name Tag (Hover) -->
+          <!-- <div 
+            class="hidden group-hover:flex absolute left-1/2 -translate-x-1/2 
+                   bg-black/60 backdrop-blur-sm text-white text-xs font-medium 
+                   px-2 py-1 rounded shadow-sm whitespace-nowrap z-10 pointer-events-none"
+            :style="{
+              bottom: '100%',
+              marginBottom: `${8 / scale[activeImage]}px`,
+              transform: `translateX(-50%) scale(${1 / scale[activeImage]})`,
+              transformOrigin: 'bottom center',
+            }"
+          >
+            {{ face.person_id ? `Person ${face.person_id}` : 'Unknown' }}
+          </div> -->
+        </div>
+      </div>
+    </div>
+
     <!-- Navigator view -->
     <transition name="fade">
       <!-- nav container -->
@@ -116,8 +198,9 @@
 <script setup lang="ts">
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 // import { listen } from '@tauri-apps/api/event';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { getAssetSrc } from '@/common/utils';
+import { getFacesForFile } from '@/common/api';
 
 import { IconError } from '@/common/icons';
 
@@ -138,6 +221,10 @@ const props = defineProps({
   isSlideShow: {
     type: Boolean,
     default: false,
+  },
+  fileId: {
+    type: Number,
+    required: false,
   },
 });
 
@@ -165,6 +252,10 @@ const isGrabbing = ref(false);              // Grabbing state
 const noTransition = ref(false);            // Disable transition temporarily
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const mousePosition = ref({ x: 0, y: 0 });  // Current mouse position
+
+const faces = ref<any[]>([]); // Store faces for the current image
+const showFaces = ref(true); // Toggle to show/hide faces
+
 
 let animationFrameId: number | null = null;
 const latestMouseEvent = ref<MouseEvent | null>(null);
@@ -610,6 +701,28 @@ watch(() => props.filePath, (newFilePath) => {
       loadingTimeout = null;
     }
     loadError.value = true;
+  }
+}, { immediate: true });
+
+// watch fileId changes to fetch faces
+watch(() => props.fileId, async (newFileId) => {
+  faces.value = []; // Clear previous faces
+  if (newFileId) {
+    const result = await getFacesForFile(newFileId);
+    if (result && result.length > 0) {
+      // Parse bbox JSON string for each face
+      faces.value = result.map(face => {
+        try {
+          return {
+            ...face,
+            bbox: JSON.parse(face.bbox)
+          };
+        } catch (e) {
+          console.error("Error parsing face bbox", e);
+          return null;
+        }
+      }).filter(f => f);
+    }
   }
 }, { immediate: true });
 

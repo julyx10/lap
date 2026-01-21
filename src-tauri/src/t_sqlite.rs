@@ -1110,7 +1110,6 @@ impl AFile {
                 b.path,
                 c.id AS album_id, c.name AS album_name,
                 (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
-                (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
                 CASE WHEN a.embeds IS NOT NULL THEN 1 ELSE 0 END AS has_embedding,
                 a.has_faces
             FROM afiles a 
@@ -1480,7 +1479,19 @@ impl AFile {
     // get query count and sum
     pub fn get_query_count_and_sum(params: &QueryParams) -> Result<(i64, i64), String> {
         let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
-        let sql = format!("{}{}{}", Self::build_count_query(), joins, where_clause);
+        
+        let sql = if params.person_id > 0 {
+            // Use subquery with GROUP BY to handle potential duplicate rows when joining faces
+            format!(
+                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a 
+                LEFT JOIN afolders b ON a.folder_id = b.id 
+                LEFT JOIN albums c ON b.album_id = c.id 
+                {}{} GROUP BY a.id)",
+                joins, where_clause
+            )
+        } else {
+            format!("{}{}{}", Self::build_count_query(), joins, where_clause)
+        };
 
         let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
         Self::query_count_and_sum(&sql, &final_params)
@@ -2248,66 +2259,133 @@ impl Person {
             }
         };
         
-        // Get face info: file_id, bbox, and original image dimensions
+        // Get face info and file info
         let query = "
-            SELECT f.id, faces.bbox, f.width, f.height
+            SELECT f.id, faces.bbox, f.width, f.height, f.e_orientation, f.name, fd.path
             FROM faces 
             JOIN afiles f ON faces.file_id = f.id
+            JOIN afolders fd ON f.folder_id = fd.id
             WHERE faces.id = ?1
         ";
         
-        let result: Result<(i64, String, Option<u32>, Option<u32>), _> = conn.query_row(
+        let result: Result<(i64, String, Option<u32>, Option<u32>, Option<i32>, String, String), _> = conn.query_row(
             query,
             params![face_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+            |row| Ok((
+                row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, 
+                row.get(5)?, row.get(6)?
+            )),
         );
         
-        if let Ok((file_id, bbox_json, Some(orig_w), Some(orig_h))) = result {
-            // Get thumbnail from athumbs
-            let thumb_result: Result<Option<Vec<u8>>, _> = conn.query_row(
-                "SELECT thumb_data FROM athumbs WHERE file_id = ?1",
-                params![file_id],
-                |row| row.get(0),
-            );
-            
-            if let Ok(Some(thumb_data)) = thumb_result {
-                // Parse bbox
-                let bbox: FaceBBox = serde_json::from_str(&bbox_json)
-                    .map_err(|e| format!("Failed to parse bbox: {}", e))?;
+        if let Ok((file_id, bbox_json, Some(orig_w), Some(orig_h), orientation_opt, file_name, folder_path)) = result {
+            // Parse bbox
+            let mut bbox: FaceBBox = serde_json::from_str(&bbox_json)
+                .map_err(|e| format!("Failed to parse bbox: {}", e))?;
 
-                // Load thumbnail image
-                let img = image::load_from_memory(&thumb_data)
-                    .map_err(|e| format!("Failed to load thumbnail: {}", e))?;
+            let orientation = orientation_opt.unwrap_or(1); // Default to Normal
+            let (rotated_w, rotated_h) = match orientation {
+                6 | 8 => (orig_h, orig_w), // 90 or 270 degrees: width and height swapped
+                _ => (orig_w, orig_h),
+            };
+
+            // Transform bbox to rotated space
+            bbox = match orientation {
+                6 => { // Rotated 90 CW (Right Top)
+                    FaceBBox {
+                        x: orig_h as f32 - bbox.y - bbox.height,
+                        y: bbox.x,
+                        width: bbox.height,
+                        height: bbox.width,
+                    }
+                },
+                8 => { // Rotated 270 CW (Left Bottom)
+                    FaceBBox {
+                        x: bbox.y,
+                        y: orig_w as f32 - bbox.x - bbox.width,
+                        width: bbox.height,
+                        height: bbox.width,
+                    }
+                },
+                3 => { // Rotated 180 (Bottom Right)
+                    FaceBBox {
+                        x: orig_w as f32 - bbox.x - bbox.width,
+                        y: orig_h as f32 - bbox.y - bbox.height,
+                        width: bbox.width,
+                        height: bbox.height,
+                    }
+                },
+                _ => bbox, // Normal or Unknown
+            };
+
+            // Try to load original image first for high quality
+            let full_path = std::path::Path::new(&folder_path).join(&file_name);
+            let original_img_res = image::open(&full_path);
+
+            // Use original image if available, otherwise fallback to thumbnail
+            let (img, current_w, current_h) = if let Ok(mut dyn_img) = original_img_res {
+                // Apply rotation to match the bbox we just transformed
+                dyn_img = match orientation {
+                    3 => dyn_img.rotate180(),
+                    6 => dyn_img.rotate90(),
+                    8 => dyn_img.rotate270(),
+                    _ => dyn_img,
+                };
+                let (w, h) = dyn_img.dimensions();
+                (dyn_img, w, h)
+            } else {
+                // Fallback: Get thumbnail from athumbs
+                 let thumb_result: Result<Option<Vec<u8>>, _> = conn.query_row(
+                    "SELECT thumb_data FROM athumbs WHERE file_id = ?1",
+                    params![file_id],
+                    |row| row.get(0),
+                );
                 
-                let (thumb_w, thumb_h) = img.dimensions();
-                
-                // Calculate scale factor (Thumb / Original)
-                let scale_x = thumb_w as f32 / orig_w as f32;
-                let scale_y = thumb_h as f32 / orig_h as f32;
-                
-                // Crop coordinates in thumbnail space with 20% expansion
-                let expansion = 0.2;
-                let face_x = bbox.x * scale_x;
-                let face_y = bbox.y * scale_y;
-                let face_w = bbox.width * scale_x;
-                let face_h = bbox.height * scale_y;
-                
-                let crop_x = (face_x - face_w * expansion).max(0.0) as u32;
-                let crop_y = (face_y - face_h * expansion).max(0.0) as u32;
-                let crop_w = (face_w * (1.0 + 2.0 * expansion)).min(thumb_w as f32 - crop_x as f32) as u32;
-                let crop_h = (face_h * (1.0 + 2.0 * expansion)).min(thumb_h as f32 - crop_y as f32) as u32;
-                
-                // Ensure valid crop dimensions
-                if crop_w > 0 && crop_h > 0 {
-                    let cropped = img.crop_imm(crop_x, crop_y, crop_w, crop_h);
-                    
-                    // Encode to JPEG bytes
-                    let mut buffer = Cursor::new(Vec::new());
-                    cropped.write_to(&mut buffer, ImageFormat::Jpeg)
-                        .map_err(|e| format!("Failed to encode face thumbnail: {}", e))?;
-                        
-                    return Ok(Some(buffer.into_inner()));
+                if let Ok(Some(thumb_data)) = thumb_result {
+                     if let Ok(thumb_img) = image::load_from_memory(&thumb_data) {
+                        let (w, h) = thumb_img.dimensions();
+                        (thumb_img, w, h)
+                     } else {
+                         return Ok(None);
+                     }
+                } else {
+                    return Ok(None);
                 }
+            };
+            
+            // Calculate scale factor (Current Image / Rotated Dimensions)
+            // Use f64 for better precision during scaling, though f32 is likely fine
+            let scale_x = current_w as f32 / rotated_w as f32;
+            let scale_y = current_h as f32 / rotated_h as f32;
+            
+            // Crop coordinates with expansion
+            let expansion = 0.2;
+            let face_x = bbox.x * scale_x;
+            let face_y = bbox.y * scale_y;
+            let face_w = bbox.width * scale_x;
+            let face_h = bbox.height * scale_y;
+            
+            let crop_x = (face_x - face_w * expansion).max(0.0) as u32;
+            let crop_y = (face_y - face_h * expansion).max(0.0) as u32;
+            // Ensure we don't go out of bounds
+            let crop_w = (face_w * (1.0 + 2.0 * expansion) as f32).min((current_w - crop_x) as f32) as u32;
+            let crop_h = (face_h * (1.0 + 2.0 * expansion) as f32).min((current_h - crop_y) as f32) as u32;
+            
+            if crop_w > 0 && crop_h > 0 {
+                let mut cropped = img.crop_imm(crop_x, crop_y, crop_w, crop_h);
+                
+                // If the crop is very large (from original image), resize it to a reasonable thumbnail size
+                // e.g. 200x200 to save DB space and bandwidth
+                let max_thumb_size = 200;
+                if crop_w > max_thumb_size || crop_h > max_thumb_size {
+                    cropped = cropped.resize(max_thumb_size, max_thumb_size, image::imageops::FilterType::Lanczos3);
+                }
+                
+                // Encode to JPEG bytes
+                let mut buffer = Cursor::new(Vec::new());
+                cropped.write_to(&mut buffer, ImageFormat::Jpeg)
+                    .map_err(|e| format!("Failed to encode face thumbnail: {}", e))?;
+                    
+                return Ok(Some(buffer.into_inner()));
             }
         }
         
@@ -2464,19 +2542,50 @@ impl Face {
         Ok(count > 0)
     }
     
-    /// Get all faces without a person assigned (for clustering)
-    #[allow(dead_code)]
-    pub fn get_unassigned() -> Result<Vec<Self>, String> {
+    /// Reset all face data: delete all faces and persons
+    pub fn reset_all() -> Result<(), String> {
+        let conn = open_conn()?;
+        
+        // Use a transaction
+        conn.execute("BEGIN TRANSACTION", params![]).map_err(|e| e.to_string())?;
+        
+        if let Err(e) = conn.execute("DELETE FROM faces", params![]) {
+             let _ = conn.execute("ROLLBACK", params![]);
+             return Err(e.to_string());
+        }
+        
+        if let Err(e) = conn.execute("DELETE FROM persons", params![]) {
+             let _ = conn.execute("ROLLBACK", params![]);
+             return Err(e.to_string());
+        }
+
+        // Reset has_faces flag in afiles
+        if let Err(e) = conn.execute("UPDATE afiles SET has_faces = 0", params![]) {
+             let _ = conn.execute("ROLLBACK", params![]);
+             return Err(e.to_string());
+        }
+        
+        // Vacuum to reclaim space (optional, but good for reset)
+        // Note: VACUUM cannot be run inside a transaction in some SQLite versions/modes,
+        // but here we just commit first.
+        
+        conn.execute("COMMIT", params![]).map_err(|e| e.to_string())?;
+        
+        Ok(())
+    }
+    
+    /// Get faces for a specific file
+    pub fn get_for_file(file_id: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
                 "SELECT id, file_id, bbox, embedding, person_id, created_at 
-                 FROM faces WHERE person_id IS NULL",
+                 FROM faces WHERE file_id = ?1",
             )
             .map_err(|e| e.to_string())?;
         
         let faces = stmt
-            .query_map([], |row| {
+            .query_map([file_id], |row| {
                 Ok(Self {
                     id: row.get(0)?,
                     file_id: row.get(1)?,
@@ -2492,7 +2601,7 @@ impl Face {
         
         Ok(faces)
     }
-    
+
     /// Get ALL faces (for re-clustering)
     pub fn get_all() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;

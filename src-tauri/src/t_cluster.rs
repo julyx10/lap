@@ -80,8 +80,9 @@ where
         }
     }
 
-    // 4. Build similarity graph
-    let mut graph: Vec<Vec<Edge>> = vec![Vec::new(); n];
+    // 4. Build K-NN Graph
+    // Step A: Collect all potential edges (candidates)
+    let mut candidate_lists: Vec<Vec<(usize, f32)>> = vec![Vec::new(); n];
     let total_pairs = n * (n - 1) / 2;
     let mut pairs_done: usize = 0;
     let mut last_pct = 0;
@@ -99,8 +100,11 @@ where
 
                     if dist < threshold {
                         let weight = 1.0 - dist;
-                        graph[i].push(Edge { to: j, weight });
-                        graph[j].push(Edge { to: i, weight });
+                        // Square weight to punish weak links further (optional but recommended)
+                        let adjusted_weight = weight * weight;
+
+                        candidate_lists[i].push((j, adjusted_weight));
+                        candidate_lists[j].push((i, adjusted_weight));
                     }
                 }
                 pairs_done += 1;
@@ -117,11 +121,28 @@ where
         };
         if current_pct >= last_pct + 5 || pairs_done == total_pairs {
             progress_fn(ClusterProgress {
-                phase: "graph".to_string(), // Revert to "graph" phase for CW
+                phase: "graph".to_string(),
                 current: current_pct,
                 total: 100,
             });
             last_pct = current_pct;
+        }
+    }
+
+    // Step B: Prune edges to Top-K (K-NN)
+    const K_NEIGHBORS: usize = 80;
+    let mut graph: Vec<Vec<Edge>> = vec![Vec::new(); n];
+
+    for (i, candidates) in candidate_lists.iter_mut().enumerate() {
+        // Sort by weight descending (strongest similarity first)
+        candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        // Keep only Top-K
+        let count = std::cmp::min(candidates.len(), K_NEIGHBORS);
+
+        for k in 0..count {
+            let (target, weight) = candidates[k];
+            graph[i].push(Edge { to: target, weight });
         }
     }
 
