@@ -76,6 +76,10 @@
     "not_found": "No tags found"
   },
   "calendar": {
+    "on_this_day": "On this day",
+    "title": "Calendar",
+    "monthly_view": "Monthly view",
+    "daily_view": "Daily view",
     "day": "Day",
     "week": "Week",
     "month": "Month",

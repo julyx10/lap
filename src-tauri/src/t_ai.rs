@@ -2,6 +2,8 @@
  * AI Engine module
  * Handles ONNX Runtime sessions and model inference.
  */
+use crate::t_common;
+use image::DynamicImage;
 use ndarray::{Array, Array4};
 use ort::{
     inputs,
@@ -40,9 +42,9 @@ impl AiEngine {
             .resolve("resources/models", tauri::path::BaseDirectory::Resource)
             .map_err(|e| format!("Failed to resolve resource path: {}", e))?;
 
-        let text_model_path = resource_dir.join("text_model.onnx");
-        let vision_model_path = resource_dir.join("vision_model.onnx");
-        let tokenizer_path = resource_dir.join("tokenizer.json");
+        let text_model_path = resource_dir.join(t_common::AI_TEXT_MODEL);
+        let vision_model_path = resource_dir.join(t_common::AI_VISION_MODEL);
+        let tokenizer_path = resource_dir.join(t_common::AI_TOKENIZER);
 
         // Load Tokenizer
         let tokenizer = Tokenizer::from_file(&tokenizer_path)
@@ -66,8 +68,7 @@ impl AiEngine {
 
         self.text_model = Some(text_model);
 
-        // Load Vision Model (Lazy load or load here for now)
-        // For MVP locally, load both
+        // Load Vision Model
         let vision_model = Session::builder()
             .map_err(|e| e.to_string())?
             .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -103,7 +104,6 @@ impl AiEngine {
             .map_err(|e| format!("Tokenization error: {}", e))?;
 
         let input_ids = encoding.get_ids();
-        // let attention_mask = encoding.get_attention_mask(); // Not used by this specific ONNX model
 
         let input_ids_array = Array::from_shape_vec(
             (1, input_ids.len()),
@@ -111,15 +111,7 @@ impl AiEngine {
         )
         .map_err(|e| e.to_string())?;
 
-        // let attention_mask_array = Array::from_shape_vec(
-        //     (1, attention_mask.len()),
-        //     attention_mask.iter().map(|&x| x as i64).collect(),
-        // )
-        // .map_err(|e| e.to_string())?;
-
         let input_ids_value = Value::from_array(input_ids_array).map_err(|e| e.to_string())?;
-        // let attention_mask_value =
-        //     Value::from_array(attention_mask_array).map_err(|e| e.to_string())?;
 
         let outputs = self
             .text_model
@@ -127,21 +119,14 @@ impl AiEngine {
             .unwrap()
             .run(inputs![
                 "input_ids" => input_ids_value,
-                // "attention_mask" => attention_mask_value
             ])
             .map_err(|e| format!("Inference error: {}", e))?;
-
-        // Extract pooler_output (usually the last output or named "pooler_output")
-        // For standard CLIP export, it's often the second output, or we look by name.
-        // Assuming typical index 1 is pooler_output (index 0 is last_hidden_state)
-        // Let's try getting by name or index. Standard HF uses "pooler_output" or "text_embeds"
 
         let embedding = if let Some(vals) = outputs.get("pooler_output") {
             vals
         } else if let Some(vals) = outputs.get("text_embeds") {
             vals
         } else {
-            // Fallback to second output if available, else first
             &outputs[0]
         };
 
@@ -149,7 +134,6 @@ impl AiEngine {
             .try_extract_tensor::<f32>()
             .map_err(|e| format!("Failed to extract tensor: {}", e))?;
 
-        // Return as Vec
         Ok(embedding_data.to_vec())
     }
 
@@ -159,6 +143,22 @@ impl AiEngine {
         }
 
         let image_input = self.preprocess_image(image_path)?;
+        self.run_vision_model(image_input)
+    }
+
+    pub fn encode_image_from_bytes(&mut self, image_bytes: &[u8]) -> Result<Vec<f32>, String> {
+        if !self.is_loaded() {
+            return Err("AI models not loaded".to_string());
+        }
+
+        let img = image::load_from_memory(image_bytes)
+            .map_err(|e| format!("Failed to load image from memory: {}", e))?;
+        let image_input = self.preprocess_dynamic_image(img)?;
+
+        self.run_vision_model(image_input)
+    }
+
+    fn run_vision_model(&mut self, image_input: Array4<f32>) -> Result<Vec<f32>, String> {
         let image_input_value = Value::from_array(image_input).map_err(|e| e.to_string())?;
 
         let outputs = self
@@ -170,7 +170,6 @@ impl AiEngine {
             ])
             .map_err(|e| format!("Inference error: {}", e))?;
 
-        // Vision model usually outputs "pooler_output" or "image_embeds"
         let embedding = if let Some(vals) = outputs.get("pooler_output") {
             vals
         } else if let Some(vals) = outputs.get("image_embeds") {
@@ -188,13 +187,15 @@ impl AiEngine {
 
     fn preprocess_image(&self, path: &str) -> Result<Array4<f32>, String> {
         let img = image::open(path).map_err(|e| format!("Failed to open image: {}", e))?;
+        self.preprocess_dynamic_image(img)
+    }
+
+    fn preprocess_dynamic_image(&self, img: DynamicImage) -> Result<Array4<f32>, String> {
         // resize to 224x224
         let img = img.resize_exact(224, 224, image::imageops::FilterType::Triangle);
         let rgb_img = img.to_rgb8();
 
         // Normalize
-        // Mean: [0.48145466, 0.4578275, 0.40821073]
-        // Std: [0.26862954, 0.26130258, 0.27577711]
         let mean = [0.48145466, 0.4578275, 0.40821073];
         let std = [0.26862954, 0.26130258, 0.27577711];
 

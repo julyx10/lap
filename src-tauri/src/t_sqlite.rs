@@ -1673,7 +1673,19 @@ impl AFile {
 
         // 4. Generate embedding
         let mut engine = state.0.lock().unwrap();
-        let embedding = engine.encode_image(&file_path)?;
+        
+        // Optimized: Use thumbnail if available (much faster than loading original)
+        // Fallback to original file if thumbnail is missing or fails to process
+        let embedding = match AThumb::fetch(file_id) {
+            Ok(Some(thumb)) if thumb.thumb_data.is_some() => {
+                let thumb_bytes = thumb.thumb_data.as_ref().unwrap();
+                engine.encode_image_from_bytes(thumb_bytes).or_else(|_| {
+                    // If thumbnail processing fails (e.g. corrupted), try original
+                    engine.encode_image(&file_path)
+                })
+            }
+            _ => engine.encode_image(&file_path),
+        }?;
 
         // 5. Save to DB
         let _ =
@@ -2500,6 +2512,7 @@ pub struct Face {
     pub bbox: String,           // JSON: {"x": f32, "y": f32, "width": f32, "height": f32, "confidence": f32}
     pub embedding: Option<Vec<u8>>, // 512-dimensional float32 embedding as bytes
     pub person_id: Option<i64>,
+    pub person_name: Option<String>,
     pub created_at: i64,
 }
 
@@ -2579,8 +2592,10 @@ impl Face {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT id, file_id, bbox, embedding, person_id, created_at 
-                 FROM faces WHERE file_id = ?1",
+                "SELECT f.id, f.file_id, f.bbox, f.embedding, f.person_id, f.created_at, p.name 
+                 FROM faces f
+                 LEFT JOIN persons p ON f.person_id = p.id
+                 WHERE f.file_id = ?1",
             )
             .map_err(|e| e.to_string())?;
         
@@ -2593,6 +2608,7 @@ impl Face {
                     embedding: row.get(3)?,
                     person_id: row.get(4)?,
                     created_at: row.get(5)?,
+                    person_name: row.get(6)?,
                 })
             })
             .map_err(|e| e.to_string())?
@@ -2620,6 +2636,7 @@ impl Face {
                     embedding: row.get(3)?,
                     person_id: row.get(4)?,
                     created_at: row.get(5)?,
+                    person_name: None,
                 })
             })
             .map_err(|e| e.to_string())?
@@ -2657,21 +2674,28 @@ impl Face {
     }
     
     /// Get all image file IDs that haven't been processed for faces yet
-    pub fn get_unprocessed_image_files() -> Result<Vec<(i64, String)>, String> {
+    /// Returns: Vec<(id, file_path, width, height)>
+    pub fn get_unprocessed_image_files() -> Result<Vec<(i64, String, i64, i64)>, String> {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT a.id, f.path || '/' || a.name as file_path
+                "SELECT a.id, f.path || '/' || a.name as file_path, a.width, a.height
                  FROM afiles a 
                  JOIN afolders f ON a.folder_id = f.id
                  WHERE a.file_type = 1 
                    AND (a.has_faces IS NULL OR a.has_faces = 0)
+                   AND a.width IS NOT NULL AND a.height IS NOT NULL
                  ORDER BY a.id",
             )
             .map_err(|e| e.to_string())?;
         
         let files = stmt
-            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+            .query_map([], |row| Ok((
+                row.get(0)?, 
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?
+            )))
             .map_err(|e| e.to_string())?
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| e.to_string())?;

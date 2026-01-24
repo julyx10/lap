@@ -19,13 +19,20 @@
     >
       <!-- title -->
       <div class="mr-1 flex flex-row items-center gap-1 min-w-0 flex-1" data-tauri-drag-region>
-        <IconImageSearch v-if="tempViewMode === 'similar'" class="t-icon-size-sm shrink-0"/>
-        <IconFolderExpanded v-if="tempViewMode === 'album'" class="t-icon-size-sm shrink-0"/>
-        <component v-if="contentTitle && !isTempViewMode" :is=contentIcon class="t-icon-size-sm shrink-0"/>
+        <component v-if="currentTitleIcon" 
+          :is="currentTitleIcon" 
+          class="t-icon-size-sm shrink-0"
+          :class="{ 'cursor-pointer text-primary': tempViewMode !== 'none' }" 
+          @click="handleTitleClick"
+        />
         <div class="cursor-default overflow-hidden whitespace-pre text-ellipsis">
-          <span data-tauri-drag-region>{{ contentTitle }}</span>
+          <span 
+            :class="{ 'cursor-pointer text-primary': tempViewMode !== 'none' }"
+            data-tauri-drag-region 
+            @click="handleTitleClick"
+          >{{ contentTitle }}</span>
         </div>
-        <TButton v-if="isTempViewMode" 
+        <TButton v-if="tempViewMode !== 'none'" 
           :icon="IconRestore" 
           :buttonSize="'medium'"
           :tooltip="$t('toolbar.tooltip.restore')"
@@ -64,7 +71,7 @@
         <DropDownSelect
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 2 || isTempViewMode || isIndexing"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
           @select="handleFileTypeSelect"
         />
 
@@ -74,7 +81,7 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 2 || isTempViewMode || isIndexing"
+          :disabled="fileList.length === 0 || config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
           @select="handleSortTypeSelect"
         />
 
@@ -134,7 +141,7 @@
               <GridView ref="gridViewRef"
                 :selected-item-index="selectedItemIndex"
                 :fileList="fileList"
-                :showFolderFiles="config.main.sidebarIndex === 0 && !libConfig.album.selected ? true : false"
+                :showFolderFiles="showFolderFiles"
                 :selectMode="selectMode"
                 :loading="isLoading"
                 @item-clicked="handleItemClicked"
@@ -457,7 +464,7 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
-         updateFileInfo, cancelIndexing as cancelIndexingApi, getFacesForFile} from '@/common/api';  
+         updateFileInfo, cancelIndexing as cancelIndexingApi, getFacesForFile, listenFaceIndexProgress } from '@/common/api';  
 import { config, libConfig } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -494,7 +501,6 @@ import {
   IconFolderExpanded,
   IconChecked,
   IconTag,
-  IconCalendar,
   IconLocation,
   IconCamera,
   IconTrash,
@@ -511,14 +517,13 @@ import {
   IconCopyTo,
   IconGrid,
   IconGallery,
-  IconImageSearch,
-  IconSearch,
   IconRestore,
   IconRefresh,
-  IconIndexReady,
   IconIndexRunning,
   IconIndexWaiting,
-  IconPerson,
+  IconPhotoSearch,
+  IconPersonSearch,
+  IconFolderSearch,
   IconCalendarMonth,
   IconCalendarDay,
 } from '@/common/icons';
@@ -534,36 +539,11 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
-const contentIcon = computed(() => {
-  const index = config.main.sidebarIndex;
-  
-  switch (index) {
-    case 0: 
-      switch (libConfig.album.id) {
-        case 0: return IconPhotoAll;
-        default: return libConfig.album.selected ? IconPhotoAll :IconFolderExpanded;
-      }
-    case 1: 
-      switch (libConfig.favorite.folderId) {
-        case 0: return IconFavorite;
-        case 1: return IconFolderFavorite;
-        default: return IconFolderFavorite;
-      }
-    case 2: return IconSearch;
-    case 3: return IconPerson;
-    case 4: return config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay;
-
-    case 5: return IconLocation;
-    case 6: return IconTag;
-    case 7: return IconCameraAperture;
-    default: return IconFiles;
-  }
-});
 const contentTitle = ref("");
 
 // album's folder mode
 const showFolderFiles = computed(() => 
-  config.main.sidebarIndex === 0 && libConfig.album.id && libConfig.album.id > 0 && !libConfig.album.selected
+  Boolean(config.main.sidebarIndex === 0 && libConfig.album.id && libConfig.album.id > 0 && !libConfig.album.selected)
 );
 
 // progress bar
@@ -711,12 +691,45 @@ const currentImageSearchParams = ref({
 });
 
 // Similar Search Mode State
-const tempViewMode = ref<'none' | 'similar' | 'album'>('none');
-const isTempViewMode = computed(() => tempViewMode.value !== 'none');
+const tempViewMode = ref<'none' | 'similar' | 'album' | 'person'>('none');
+const currentTitleIcon = computed(() => {
+  switch (tempViewMode.value) {
+    case 'none':
+      if (contentTitle.value) {
+        switch (config.main.sidebarIndex) {
+          case 0: 
+            switch (libConfig.album.id) {
+              case 0: return IconPhotoAll;
+              default: return libConfig.album.selected ? IconPhotoAll : IconFolderExpanded;
+            }
+          case 1: 
+            switch (libConfig.favorite.folderId) {
+              case 0: return IconFavorite;
+              case 1: return IconFolderFavorite;
+              default: return IconFolderFavorite;
+            }
+          case 2: return config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay;
+          case 3: return IconPhotoSearch;
+          case 4: return IconPersonSearch;
+          case 5: return IconTag;
+          case 6: return IconLocation;
+          case 7: return IconCameraAperture;
+          default: return IconFiles;
+        }
+      }
+      return null;
+    case 'similar': return IconPhotoSearch;
+    case 'album': return IconFolderSearch;
+    case 'person': return IconPersonSearch;
+    default: return null;
+  }
+});
+
 const backupState = ref<any>(null);
 
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
+let unlistenFaceIndexProgress: (() => void) | null = null;
 
 // more menuitems
 const moreMenuItems = computed(() => {
@@ -1266,6 +1279,18 @@ onMounted( async() => {
         libConfig.index.status = 1;
      }
   }
+
+  // Face Indexing listeners
+  unlistenFaceIndexProgress = await listenFaceIndexProgress((event: any) => {
+    // Clear file list if in Person view (sidebarIndex === 4) and file list is not empty
+    if (config.main.sidebarIndex === 4 && fileList.value.length > 0) {
+      fileList.value = [];
+      totalFileCount.value = 0;
+      totalFileSize.value = 0;
+      scrollPosition.value = 0;
+      selectedItemIndex.value = -1;
+    }
+  });
 });
 
 onBeforeUnmount(() => {
@@ -1276,6 +1301,7 @@ onBeforeUnmount(() => {
   if (unlistenTriggerNextAlbum) unlistenTriggerNextAlbum();
   if (unlistenIndexProgress) unlistenIndexProgress();
   if (unlistenIndexFinished) unlistenIndexFinished();
+  if (unlistenFaceIndexProgress) unlistenFaceIndexProgress();
 });
 
 /// watch appearance
@@ -1321,7 +1347,7 @@ watch(
   () => {
     setTimeout(() => {
       // Only update content if we are currently in the Image Search view (index 1)
-      if (config.main.sidebarIndex === 2) {
+      if (config.main.sidebarIndex === 3) {
         scrollPosition.value = 0;   // reset file scroll position
         selectedItemIndex.value = 0; // reset selected item index to 0
         
@@ -1353,7 +1379,13 @@ watch(
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
   ], 
   () => {
+    // Skip if in temp view mode to prevent race conditions
+    if (tempViewMode.value !== 'none') return;
+    
     setTimeout(() => {
+      // Double check in case tempViewMode changed during setTimeout
+      if (tempViewMode.value !== 'none') return;
+      
       scrollPosition.value = 0;   // reset file scroll position
       selectedItemIndex.value = 0; // reset selected item index to 0
       
@@ -1741,7 +1773,25 @@ async function updateContent() {
       }
     }
   }
-  else if(newIndex === 2) {   // image search
+  else if(newIndex === 2) {   // calendar
+    if(libConfig.calendar.year === null) {
+      contentTitle.value = "";
+    } else if (libConfig.calendar.year === -1) {  // on this day
+      contentTitle.value = localeMsg.value.calendar.on_this_day;
+      getFileList({ startDate: -1, endDate: -1 }, requestId);
+    } else {
+      if (libConfig.calendar.month === -1) {          // yearly
+        contentTitle.value = formatDate(libConfig.calendar.year, 1, 1, localeMsg.value.format.year);
+      } else if (libConfig.calendar.date === -1) {    // monthly
+        contentTitle.value = formatDate(libConfig.calendar.year, libConfig.calendar.month, 1, localeMsg.value.format.month);
+      } else {                                    // daily
+        contentTitle.value = formatDate(libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date, localeMsg.value.format.date_long);
+      }
+      const [startDate, endDate] = getCalendarDateRange(libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date);
+      getFileList({ startDate, endDate }, requestId);
+    }
+  }
+  else if(newIndex === 3) {   // image search
     if(config.search.searchType === 0) {   // search
       if (libConfig.search.searchText) {
         contentTitle.value = localeMsg.value.search.search_images + ' - ' + libConfig.search.searchText;
@@ -1767,7 +1817,7 @@ async function updateContent() {
       }
     }
   } 
-  else if(newIndex === 3) {   // person
+  else if(newIndex === 4) {   // person
     if (libConfig.person.id === null) {
       contentTitle.value = "";
     } else {
@@ -1775,35 +1825,7 @@ async function updateContent() {
       getFileList({ personId: libConfig.person.id }, requestId);
     }
   }
-  else if(newIndex === 4) {   // calendar
-    if(libConfig.calendar.year === null) {
-      contentTitle.value = "";
-    } else {
-      if (libConfig.calendar.month === -1) {          // yearly
-        contentTitle.value = formatDate(libConfig.calendar.year, 1, 1, localeMsg.value.format.year);
-      } else if (libConfig.calendar.date === -1) {    // monthly
-        contentTitle.value = formatDate(libConfig.calendar.year, libConfig.calendar.month, 1, localeMsg.value.format.month);
-      } else {                                    // daily
-        contentTitle.value = formatDate(libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date, localeMsg.value.format.date_long);
-      }
-      const [startDate, endDate] = getCalendarDateRange(libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date);
-      getFileList({ startDate, endDate }, requestId);
-    }
-  }
-  else if(newIndex === 5) {   // location
-    if(libConfig.location.admin1 === null) {
-      contentTitle.value = "";
-    } else {
-      if(libConfig.location.name) {
-        contentTitle.value = `${libConfig.location.admin1} > ${libConfig.location.name}`;
-        getFileList({ locationAdmin1: libConfig.location.admin1, locationName: libConfig.location.name }, requestId);
-      } else {
-        contentTitle.value = `${libConfig.location.admin1}`;
-        getFileList({ locationAdmin1: libConfig.location.admin1 }, requestId);
-      } 
-    }
-  }
-  else if(newIndex === 6) {   // tag
+  else if(newIndex === 5) {   // tag
     if (libConfig.tag.id === null) {
       contentTitle.value = "";
     } else {
@@ -1816,6 +1838,19 @@ async function updateContent() {
           contentTitle.value = "";
         }
       });
+    }
+  }
+  else if(newIndex === 6) {   // location
+    if(libConfig.location.admin1 === null) {
+      contentTitle.value = "";
+    } else {
+      if(libConfig.location.name) {
+        contentTitle.value = `${libConfig.location.admin1} > ${libConfig.location.name}`;
+        getFileList({ locationAdmin1: libConfig.location.admin1, locationName: libConfig.location.name }, requestId);
+      } else {
+        contentTitle.value = `${libConfig.location.admin1}`;
+        getFileList({ locationAdmin1: libConfig.location.admin1 }, requestId);
+      } 
     }
   }
   else if(newIndex === 7) {   // camera
@@ -1907,19 +1942,21 @@ function enterSimilarSearchMode(file: any) {
 
 // --- Person Search Mode Logic ---
 async function enterPersonSearchMode(file: any) {
-  if (!file) return;
+  if (!file || !file.id) {
+    return;
+  }
 
   // fetch faces
   const faces = await getFacesForFile(file.id);
   if (!faces || faces.length === 0) {
-     toolTipRef.value.showTip(localeMsg.value.tooltip.not_found.person || "No person found", true);
+     toolTipRef.value?.showTip(localeMsg.value.tooltip.not_found.person || "No person found", false);
      return;
   }
 
   // Find first face with person_id
   const face = faces.find((f: any) => f.person_id && f.person_id > 0);
   if (!face) {
-     toolTipRef.value.showTip(localeMsg.value.tooltip.not_found.person || "No person found", true);
+     toolTipRef.value?.showTip(localeMsg.value.tooltip.not_found.person || "No person found", false);
      return;
   }
 
@@ -1948,10 +1985,14 @@ async function enterPersonSearchMode(file: any) {
   tempViewMode.value = 'person';
   showQuickView.value = false;
 
-  // 3. Update Title to indicate context
-  contentTitle.value = localeMsg.value.menu.file.find_person_images;
+  // 3. Update libConfig.person to reflect the found person
+  libConfig.person.id = face.person_id;
+  libConfig.person.name = face.person_name || null;
 
-  // 4. Perform Search
+  // 4. Update Title to indicate context
+  contentTitle.value = face.person_name || localeMsg.value.sidebar.person;
+
+  // 5. Perform Search
   const requestId = ++currentContentRequestId;
   
   // Reset list for loading state
@@ -2065,6 +2106,40 @@ function exitTempViewMode() {
   
   // 4. Ensure the originally selected item is highlighted/visible logic is handled by the restored index
   updateSelectedImage(selectedItemIndex.value);
+}
+
+function handleTitleClick() {
+  switch (tempViewMode.value) {
+    case 'similar':
+      config.main.sidebarIndex = 3;   // search tab
+      config.search.searchType = 1;   // similar image 
+      break;
+    case 'person':
+      config.main.sidebarIndex = 4;   // person tab
+      break;
+    case 'album':
+      config.main.sidebarIndex = 0;   // album tab
+
+      // Get first file to extract album info
+      const file = fileList.value[0];
+      if (!file || !file.album_id || !file.folder_id) return;
+      
+      const folderPath = getFolderPath(file.file_path);
+      
+      // Set libConfig.album to select this folder in Album tab
+      libConfig.album.id = file.album_id;
+      libConfig.album.folderId = file.folder_id;
+      libConfig.album.folderPath = folderPath;
+      libConfig.album.selected = false;
+      
+      // Emit event to trigger album expansion in AlbumList
+      tauriEmit('expand-album-folder', { albumId: file.album_id, folderPath: folderPath });
+      break;
+    default:
+      break;
+  }
+
+  exitTempViewMode();
 }
 
 // update the file info from the image editor

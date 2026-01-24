@@ -76,6 +76,10 @@
     "not_found": "未找到标签"
   },
   "calendar": {
+    "on_this_day": "历史上的今天",
+    "title": "日历",
+    "monthly_view": "月视图",
+    "daily_view": "日视图",
     "day": "日",
     "week": "周",
     "month": "月",

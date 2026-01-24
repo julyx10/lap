@@ -116,6 +116,7 @@ export const useLibraryStore = defineStore('libraryStore', {
             search: this.search,
             destFolder: this.destFolder,
             index: this.index,
+            person: this.person,
           };
           
           await saveLibraryState(this._libraryId, stateToSave);

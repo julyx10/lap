@@ -120,6 +120,13 @@ pub struct IndexState {
     pub total: i64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonState {
+    pub id: Option<i64>,
+    pub name: Option<String>,
+}
+
 /// Per-library state that persists across sessions
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -130,6 +137,8 @@ pub struct LibraryState {
     pub calendar: CalendarState,
     pub camera: CameraState,
     pub location: LocationState,
+    #[serde(default)]
+    pub person: PersonState,
     pub search: SearchState,
     #[serde(alias = "dest_folder")]
     pub dest_folder: DestFolderState,

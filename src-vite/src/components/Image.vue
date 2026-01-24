@@ -57,7 +57,7 @@
 
     <!-- Faces Overlay -->
     <div 
-      v-if="showFaces && faces.length > 0 && !isDraggingImage && !isSlideShow"
+      v-if="config.main.sidebarIndex === 4 && faces.length > 0 && !isDraggingImage && !isSlideShow"
       class="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
     >
       <div
@@ -254,8 +254,6 @@ const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag c
 const mousePosition = ref({ x: 0, y: 0 });  // Current mouse position
 
 const faces = ref<any[]>([]); // Store faces for the current image
-const showFaces = ref(true); // Toggle to show/hide faces
-
 
 let animationFrameId: number | null = null;
 const latestMouseEvent = ref<MouseEvent | null>(null);

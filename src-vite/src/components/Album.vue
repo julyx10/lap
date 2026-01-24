@@ -13,7 +13,7 @@
       @click="clickLibrary"
     >
       <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
-      <div class="overflow-hidden whitespace-pre text-ellipsis font-bold">
+      <div class="overflow-hidden whitespace-pre text-ellipsis">
         <span>{{ $t('album.all_files') }}</span>
       </div>
 
@@ -39,10 +39,9 @@ import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 
-import { IconMore, IconAdd, IconOrder, IconRefresh, IconPhotoAll } from '@/common/icons';
+import { IconAdd, IconOrder, IconRefresh, IconPhotoAll } from '@/common/icons';
 import { getTotalCountAndSum } from '@/common/api';
 import AlbumList from '@/components/AlbumList.vue';
-import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({
   titlebar: {

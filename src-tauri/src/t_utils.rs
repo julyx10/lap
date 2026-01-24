@@ -6,6 +6,7 @@
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
+use crate::t_common;
 use crate::t_sqlite::{AFile, Album};
 use chrono::{DateTime, Local, TimeZone};
 use once_cell::sync::Lazy;
@@ -608,20 +609,13 @@ pub fn get_file_type(file_path: &str) -> Option<i64> {
     let ext = get_file_extension(file_path)?.to_lowercase();
 
     // Normal images
-    let normal_imgs = [
-        "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp", "avif", "heic", "heif",
-    ];
+    let normal_imgs = t_common::NORMAL_IMGS;
 
     // RAW formats
-    let raw_imgs = [
-        "cr2", "cr3", "nef", "nrw", "arw", "srf", "sr2", "raf", "rw2", "orf", "pef", "dng",
-    ];
+    let raw_imgs = t_common::RAW_IMGS;
 
     // Video formats
-    let videos = [
-        "mpg", "mpeg", "mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "3gp", "m4v", "hevc",
-        "asf", "mts", "m2ts", "mod", "tod", "ts",
-    ];
+    let videos = t_common::VIDEOS;
 
     if normal_imgs.contains(&ext.as_str()) {
         return Some(1);

@@ -1,8 +1,24 @@
 <template>
 
   <div class="w-full h-full flex flex-col overflow-hidden" style="user-select: none;">
+    <!-- on this day -->
+    <div 
+      :class="[ 
+        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
+        libConfig.calendar.year === -1 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+      ]"
+      @click="libConfig.calendar.year = -1"
+    >
+      <IconHistory class="mx-1 w-5 h-5 shrink-0" />
+      <div class="overflow-hidden whitespace-pre text-ellipsis">
+        {{ $t('calendar.on_this_day') }}
+      </div>
+    </div>
 
     <template v-if="Object.keys(calendar_dates).length > 0" >
+    <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+        {{ $t('calendar.title') }}
+    </div>
       <!-- calendar -->
       <div ref="scrollable"
         class="flex-1 flex flex-col overflow-x-hidden overflow-y-auto"
@@ -61,7 +77,7 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getTakenDates } from '@/common/api';
 
-import {IconCalendar} from '@/common/icons';
+import {IconCalendar, IconHistory} from '@/common/icons';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
 

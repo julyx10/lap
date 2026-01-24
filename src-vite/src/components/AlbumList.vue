@@ -199,6 +199,7 @@ const selection = useAlbumSelectionProvider(
 let unlistenKeydown: () => void;
 
 let unlistenAlbumCoverChanged: () => void;
+let unlistenExpandAlbumFolder: (() => void) | undefined;
 let unlistenIndexProgress: (() => void) | undefined;
 let unlistenIndexFinished: (() => void) | undefined;
 
@@ -317,6 +318,14 @@ onMounted( async () => {
     }
   });
 
+  // listen for expand-album-folder event (from Content.vue "Find Album Folder" action)
+  unlistenExpandAlbumFolder = await listen('expand-album-folder', async (event: any) => {
+    const { albumId, folderPath } = event.payload;
+    if (albumId && folderPath) {
+      await clickFinalSubFolder(albumId, folderPath);
+    }
+  });
+
   // listen for index progress
   unlistenIndexProgress = await listenIndexProgress(async (event: any) => {
     const { album_id, current, total } = event.payload;
@@ -349,10 +358,10 @@ onMounted( async () => {
 onBeforeUnmount(() => {
   if (unlistenKeydown) unlistenKeydown();
   if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
+  if (unlistenExpandAlbumFolder) unlistenExpandAlbumFolder();
   if (unlistenIndexProgress) unlistenIndexProgress();
   if (unlistenIndexFinished) unlistenIndexFinished();
 });
-
 
 // Update album count in config
 watch(() => albums.value.length, (newCount) => {
@@ -527,6 +536,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
     clickCloseEditList();
   }
 };
+
 // Expose methods
 defineExpose({ 
   isEditList,

@@ -1,9 +1,12 @@
 <template>
-  <router-view />
+  <div v-if="!isReady" class="w-screen h-screen flex items-center justify-center bg-base-300">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+  <router-view v-else />
 </template>
  
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
@@ -11,6 +14,7 @@ import { useLibraryStore } from '@/stores/libraryStore';
 import { setTheme } from '@/common/utils';
 
 const libConfig = useLibraryStore();
+const isReady = ref(false);
 
 onMounted(async () => {
   const win = getCurrentWebviewWindow();
@@ -29,6 +33,7 @@ onMounted(async () => {
     console.error('[App] Library initialization failed:', error);
     // Continue anyway - user can retry from UI
   } finally {
+    isReady.value = true;
     // Show window after everything is loaded (main window only)
     if (win.label === 'main') {
       await win.show();

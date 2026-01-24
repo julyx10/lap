@@ -1,3 +1,4 @@
+use crate::t_common;
 use crate::t_sqlite::{Face, Person};
 use rand::seq::SliceRandom;
 use std::collections::HashMap;
@@ -130,7 +131,7 @@ where
     }
 
     // Step B: Prune edges to Top-K (K-NN)
-    const K_NEIGHBORS: usize = 80;
+    const K_NEIGHBORS: usize = t_common::K_NEIGHBORS;
     let mut graph: Vec<Vec<Edge>> = vec![Vec::new(); n];
 
     for (i, candidates) in candidate_lists.iter_mut().enumerate() {
@@ -211,13 +212,13 @@ where
     // 6. Collect clusters
     let mut cluster_map: HashMap<usize, Vec<usize>> = HashMap::new();
     for (i, &label) in labels.iter().enumerate() {
-        if !graph[i].is_empty() {
-            cluster_map.entry(label).or_default().push(i);
-        }
+        // if !graph[i].is_empty() {
+        cluster_map.entry(label).or_default().push(i);
+        // }
     }
 
     // 7. Filter clusters
-    const MIN_SAMPLES: usize = 2;
+    const MIN_SAMPLES: usize = t_common::MIN_SAMPLES;
     let valid_clusters: Vec<_> = cluster_map
         .into_iter()
         .filter(|(_, face_indices)| face_indices.len() >= MIN_SAMPLES)

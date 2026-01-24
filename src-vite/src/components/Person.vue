@@ -166,8 +166,9 @@ let unlistenCluster: (() => void) | null = null;
 const sortedPersons = computed(() => {
   if (config.leftPanel.sortCount) {
     return [...allPersons.value].sort((a, b) => (b.count || 0) - (a.count || 0));
+  } else {
+    return [...allPersons.value].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
   }
-  return allPersons.value;
 });
 
 // Computed property to format cluster progress text using i18n

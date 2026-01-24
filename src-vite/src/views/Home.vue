@@ -83,43 +83,42 @@
                   @click="panelRef?.albumListRef?.clickNewAlbum()"
                 />
                 
-                <!-- Search: Clear History -->
-                <TButton v-if="config.main.sidebarIndex === 2"
-                  :icon="IconTrash"
-                  :tooltip="$t('toolbar.tooltip.clear_history')"
-                  @click="panelRef?.showClearConfirmation()"
-                />
-                
-                <!-- Person: Index Faces -->
-                <TButton v-if="config.main.sidebarIndex === 3"
-                  :icon="IconRefresh"
-                  :tooltip="$t('toolbar.tooltip.index_faces')"
-                  @click="panelRef?.clickIndexFaces()"
-                />
-
                 <!-- Calendar: Order -->
-                <template v-if="config.main.sidebarIndex === 4">
-                  <TButton 
-                    :icon="config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay"
-                    :tooltip="config.calendar.isMonthly ? $t('toolbar.tooltip.monthly') : $t('toolbar.tooltip.daily')"
-                    @click="config.calendar.isMonthly ? panelRef?.switchToDailyView() : panelRef?.switchToMonthlyView()"
-                  />
+                <template v-if="config.main.sidebarIndex === 2">
+                  <div role="tablist" class="tabs tabs-xs tabs-border flex-nowrap">
+                    <a role="tab" :class="['tab', {'tab-active': config.calendar.isMonthly}]" @click="panelRef?.switchToMonthlyView()">{{ $t('toolbar.tooltip.monthly') }}</a>
+                    <a role="tab" :class="['tab', {'tab-active': !config.calendar.isMonthly}]" @click="panelRef?.switchToDailyView()">{{ $t('toolbar.tooltip.daily') }}</a>
+                  </div>
                   <TButton 
                     :icon="config.calendar.sortingAsc ? IconSortingAsc : IconSortingDesc"
                     :tooltip="config.calendar.sortingAsc ? $t('toolbar.tooltip.time_asc') : $t('toolbar.tooltip.time_desc')"
                     @click="config.calendar.sortingAsc = !config.calendar.sortingAsc"
                   />
                 </template>
+
+                <!-- Search: Clear History -->
+                <TButton v-if="config.main.sidebarIndex === 3"
+                  :icon="IconTrash"
+                  :tooltip="$t('toolbar.tooltip.clear_history')"
+                  @click="panelRef?.showClearConfirmation()"
+                />
                 
+                <!-- Person: Index Faces -->
+                <TButton v-if="config.main.sidebarIndex === 4"
+                  :icon="IconRefresh"
+                  :tooltip="$t('toolbar.tooltip.index_faces')"
+                  @click="panelRef?.clickIndexFaces()"
+                />
+
                 <!-- Tag: Add Tag  -->
-                <TButton v-if="config.main.sidebarIndex === 6"
+                <TButton v-if="config.main.sidebarIndex === 5"
                   :icon="IconAdd"
                   :tooltip="$t('tag.add_tag')"
                   @click="panelRef?.clickAddTag()"
                 />
 
-                <!-- tag, location, camera: Order -->
-                <TButton v-if="config.main.sidebarIndex === 5 || config.main.sidebarIndex === 6 || config.main.sidebarIndex === 7"
+                <!-- person, tag, location, camera: Order -->
+                <TButton v-if="config.main.sidebarIndex === 4 || config.main.sidebarIndex === 5 || config.main.sidebarIndex === 6 || config.main.sidebarIndex === 7"
                   :icon="config.leftPanel.sortCount ? IconSortingName : IconSortingCount"
                   :tooltip="$t('toolbar.tooltip.sort')"
                   @click="config.leftPanel.sortCount = !config.leftPanel.sortCount"
@@ -374,6 +373,9 @@ const onLibraryEditOk = async (library: Library) => {
   showLibraryEdit.value = false;
   
   if (isNewLibrary.value) {
+    // Switch to Album tab
+    config.main.sidebarIndex = 0;
+    
     // Switch to the new library
     await doSwitchLibrary(library.id);
   } else {
@@ -417,6 +419,11 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.favorite 
   },
   { 
+    icon: IconCalendarDay, 
+    component: Calendar,
+    text: localeMsg.value.sidebar.calendar 
+  },
+  { 
     icon: IconSearch,
     component: ImageSearch,
     text: localeMsg.value.sidebar.search
@@ -427,19 +434,14 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.person 
   },
   { 
-    icon: IconCalendarDay, 
-    component: Calendar,
-    text: localeMsg.value.sidebar.calendar 
+    icon: IconTag,
+    component: Tag,
+    text: localeMsg.value.sidebar.tag 
   },
   { 
     icon: IconLocation, 
     component: Location, 
     text: localeMsg.value.sidebar.location 
-  },
-  { 
-    icon: IconTag,
-    component: Tag,
-    text: localeMsg.value.sidebar.tag 
   },
   { 
     icon: IconCameraAperture,  

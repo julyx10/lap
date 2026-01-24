@@ -17,6 +17,7 @@ use tauri::Manager;
 mod t_ai;
 mod t_cluster;
 mod t_cmds;
+mod t_common;
 mod t_config;
 mod t_face;
 mod t_image;

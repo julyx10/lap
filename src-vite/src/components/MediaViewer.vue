@@ -13,7 +13,7 @@
     >
       <!-- File Name (Pinned Mode) -->
       <div 
-        v-if="props.mode === 2 && !isFullScreen" 
+        v-if="mode === 2 && !isFullScreen" 
         class="absolute left-20 text-sm text-base-content/70 truncate select-none"
         :style="{ maxWidth: filenameMaxWidth + 'px' }"
         data-tauri-drag-region
@@ -110,7 +110,7 @@
           @click="config.mediaViewer.isPinned = !config.mediaViewer.isPinned"
         />
         <TButton
-          v-if="mode === 0 && config.mediaViewer.isPinned"
+          v-if="mode === 0"
           :icon="IconClose"
           :tooltip="$t('image_viewer.toolbar.close')"
           @click.stop="$emit('close')"
@@ -364,15 +364,23 @@ const computedToolbarClass = computed(() => {
     
     if (toolbarPosition.value === 'bottom') {
        if (isHoverBottom.value) {
-          return `${commonClasses} ${floatingClasses} bottom-2 opacity-100`;
+          if (props.file.file_type === 2) {
+            return `${commonClasses} ${floatingClasses} bottom-8 opacity-100`;
+          } else {
+            return `${commonClasses} ${floatingClasses} bottom-4 opacity-100`;
+          }
        } else {
-          return `${commonClasses} ${floatingClasses} bottom-2 opacity-0`; 
+          if (props.file.file_type === 2) {
+            return `${commonClasses} ${floatingClasses} bottom-8 opacity-0`;
+          } else {
+            return `${commonClasses} ${floatingClasses} bottom-4 opacity-0`;
+          }
        }
     } else {
        if (isHoverTop.value) {
-          return `${commonClasses} ${floatingClasses} top-2 opacity-100`;
+          return `${commonClasses} ${floatingClasses} top-4 opacity-100`;
        } else {
-          return `${commonClasses} ${floatingClasses} top-2 opacity-0`;
+          return `${commonClasses} ${floatingClasses} top-4 opacity-0`;
        }
     }
   }

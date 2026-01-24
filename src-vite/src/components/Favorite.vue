@@ -2,12 +2,6 @@
 
   <div class="w-full h-full flex flex-col select-none" >
       
-      <!-- title bar -->
-      <!-- <div class="p-1 h-12 flex items-start justify-end whitespace-nowrap" data-tauri-drag-region> -->
-        <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
-        <!-- <TButton :icon="IconRefresh" @click="clickRefresh"/> -->
-      <!-- </div> -->
-      
       <!-- favorite files -->
       <div 
         :class="[ 

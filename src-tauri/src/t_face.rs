@@ -2,7 +2,7 @@
  * Face Recognition module
  * Handles face detection (RetinaFace) and embedding (MobileFaceNet) using ONNX Runtime.
  */
-use crate::{t_cluster, t_sqlite};
+use crate::{t_cluster, t_common, t_sqlite};
 use image::DynamicImage;
 use ndarray::Array;
 use ort::{
@@ -81,8 +81,8 @@ impl FaceEngine {
             .resolve("resources/models", tauri::path::BaseDirectory::Resource)
             .map_err(|e| format!("Failed to resolve resource path: {}", e))?;
 
-        let detection_model_path = resource_dir.join("det_10g.onnx");
-        let embedding_model_path = resource_dir.join("w600k_r50.onnx");
+        let detection_model_path = resource_dir.join(t_common::DETECTION_MODEL);
+        let embedding_model_path = resource_dir.join(t_common::EMBEDDING_MODEL);
 
         // Check if models exist
         if !detection_model_path.exists() {
@@ -134,8 +134,16 @@ impl FaceEngine {
         let original_width = img.width() as f32;
         let original_height = img.height() as f32;
 
-        // RetinaFace typically expects 640x640 input
-        let target_size = 640;
+        // RetinaFace typically expects 640x640 input, but works with any size divisible by 32 (stride 32).
+        // Optimization: For small images (like thumbnails ~512px), use their native size slightly rounded up.
+        // For large images, downscale to 640px max dimension.
+        let max_dim = original_width.max(original_height);
+        let target_size = if max_dim < 640.0 {
+            // Round up to nearest multiple of 32
+            ((max_dim as u32 + 31) / 32) * 32
+        } else {
+            640
+        };
         // Resize preserving aspect ratio (Letterbox)
         // Use max dimension to fit within target
         let scale = (target_size as f32) / original_width.max(original_height);
@@ -143,24 +151,57 @@ impl FaceEngine {
         let new_w = (original_width * scale).round() as u32;
         let new_h = (original_height * scale).round() as u32;
 
-        let img_resized = img.resize_exact(new_w, new_h, image::imageops::FilterType::Triangle);
-        let rgb_img = img_resized.to_rgb8();
+        let rgb_buf; // Owned buffer if needed
+        let rgb_img = if new_w == img.width() && new_h == img.height() {
+            // Optimization: Skip resize if unnecessary
+            if let Some(buf) = img.as_rgb8() {
+                buf
+            } else {
+                rgb_buf = img.to_rgb8();
+                &rgb_buf
+            }
+        } else {
+            rgb_buf = img
+                .resize_exact(new_w, new_h, image::imageops::FilterType::Triangle)
+                .into_rgb8();
+            &rgb_buf
+        };
 
         // Standard InsightFace/RetinaFace preprocessing aligns to Top-Left (0,0)
 
         // Normalize: (pixel - 127.5) / 128.0
         // Initialize with zeros (padding)
         let mut array = Array::zeros((1, 3, target_size as usize, target_size as usize));
-        for (x, y, pixel) in rgb_img.enumerate_pixels() {
-            let r = (pixel[0] as f32 - 127.5) / 128.0;
-            let g = (pixel[1] as f32 - 127.5) / 128.0;
-            let b = (pixel[2] as f32 - 127.5) / 128.0;
 
-            // Place image at top-left (0,0)
-            // RetinaFace (InsightFace) models typically expect BGR input
-            array[[0, 0, y as usize, x as usize]] = b; // Blue
-            array[[0, 1, y as usize, x as usize]] = g; // Green
-            array[[0, 2, y as usize, x as usize]] = r; // Red
+        if let Some(slice) = array.as_slice_mut() {
+            let area = (target_size as usize) * (target_size as usize);
+            let offset_b = 0;
+            let offset_g = area;
+            let offset_r = area * 2;
+            let target_w = target_size as usize;
+
+            for (x, y, pixel) in rgb_img.enumerate_pixels() {
+                let r = (pixel[0] as f32 - 127.5) / 128.0;
+                let g = (pixel[1] as f32 - 127.5) / 128.0;
+                let b = (pixel[2] as f32 - 127.5) / 128.0;
+
+                let idx = (y as usize) * target_w + (x as usize);
+
+                slice[offset_b + idx] = b;
+                slice[offset_g + idx] = g;
+                slice[offset_r + idx] = r;
+            }
+        } else {
+            // Fallback if array is not contiguous (should not happen with default init)
+            for (x, y, pixel) in rgb_img.enumerate_pixels() {
+                let r = (pixel[0] as f32 - 127.5) / 128.0;
+                let g = (pixel[1] as f32 - 127.5) / 128.0;
+                let b = (pixel[2] as f32 - 127.5) / 128.0;
+
+                array[[0, 0, y as usize, x as usize]] = b; // Blue
+                array[[0, 1, y as usize, x as usize]] = g; // Green
+                array[[0, 2, y as usize, x as usize]] = r; // Red
+            }
         }
 
         let input_value = Value::from_array(array).map_err(|e| e.to_string())?;
@@ -306,23 +347,60 @@ impl FaceEngine {
         let max_x = (x + w).min(img.width());
         let max_y = (y + h).min(img.height());
 
+        // Optimize: check if we can reuse the crop or if we need to resize
+        // MobileFaceNet expects 112x112
+        let target_size = 112;
         let face_crop = img.crop_imm(x, y, max_x - x, max_y - y);
-
-        // Resize to MobileFaceNet input size (112x112)
-        let face_resized = face_crop.resize_exact(112, 112, image::imageops::FilterType::Triangle);
-        let rgb_face = face_resized.to_rgb8();
+        let rgb_buf;
+        let rgb_face = if face_crop.width() == target_size && face_crop.height() == target_size {
+            if let Some(buf) = face_crop.as_rgb8() {
+                buf
+            } else {
+                rgb_buf = face_crop.to_rgb8();
+                &rgb_buf
+            }
+        } else {
+            rgb_buf = face_crop
+                .resize_exact(
+                    target_size,
+                    target_size,
+                    image::imageops::FilterType::Triangle,
+                )
+                .into_rgb8();
+            &rgb_buf
+        };
 
         // Normalize: (pixel - 127.5) / 128.0
         let mut array = Array::zeros((1, 3, 112, 112));
 
-        for (fx, fy, pixel) in rgb_face.enumerate_pixels() {
-            let r = (pixel[0] as f32 - 127.5) / 128.0;
-            let g = (pixel[1] as f32 - 127.5) / 128.0;
-            let b = (pixel[2] as f32 - 127.5) / 128.0;
+        // Optimize: use slice access
+        if let Some(slice) = array.as_slice_mut() {
+            let area = 112 * 112;
+            let offset_g = area;
+            let offset_b = area * 2;
+            let width = 112;
 
-            array[[0, 0, fy as usize, fx as usize]] = r;
-            array[[0, 1, fy as usize, fx as usize]] = g;
-            array[[0, 2, fy as usize, fx as usize]] = b;
+            for (x, y, pixel) in rgb_face.enumerate_pixels() {
+                let r = (pixel[0] as f32 - 127.5) / 128.0;
+                let g = (pixel[1] as f32 - 127.5) / 128.0;
+                let b = (pixel[2] as f32 - 127.5) / 128.0;
+
+                let idx = (y as usize) * width + (x as usize);
+
+                slice[idx] = r;
+                slice[offset_g + idx] = g;
+                slice[offset_b + idx] = b;
+            }
+        } else {
+            for (fx, fy, pixel) in rgb_face.enumerate_pixels() {
+                let r = (pixel[0] as f32 - 127.5) / 128.0;
+                let g = (pixel[1] as f32 - 127.5) / 128.0;
+                let b = (pixel[2] as f32 - 127.5) / 128.0;
+
+                array[[0, 0, fy as usize, fx as usize]] = r;
+                array[[0, 1, fy as usize, fx as usize]] = g;
+                array[[0, 2, fy as usize, fx as usize]] = b;
+            }
         }
 
         let input_value = Value::from_array(array).map_err(|e| e.to_string())?;
@@ -359,110 +437,114 @@ impl FaceEngine {
 
     /// Process image: detect all faces and get embeddings
     /// Filters out low-quality faces (low confidence, small size, blurry)
-    pub fn process_image(&mut self, image_path: &str) -> Result<Vec<FaceData>, String> {
-        // Get image dimensions
+    pub fn process_image(
+        &mut self,
+        image_path: &str,
+    ) -> Result<(Vec<FaceData>, (u32, u32)), String> {
         let img = image::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+        self.process_dynamic_image(&img)
+    }
 
-        // Quality thresholds
-        // Quality thresholds - Recommended Values
-        const MIN_CONFIDENCE: f32 = 0.65; // 0.6-0.7 is standard. 0.65 balances precision/recall.
-        const MIN_FACE_RATIO: f32 = 0.0; // Disabled. Rely on absolute pixel size instead (better for high-res photos).
-        const MIN_FACE_SIZE: f32 = 90.0; // 80-112px is minimum for good recognition. 90.0 is a safe high-quality baseline.
-        // const MIN_BLUR_SCORE: f32 = 100.0; // Standard Laplacian variance threshold. Below 100 is usually blurry.
+    pub fn process_image_from_bytes(
+        &mut self,
+        image_bytes: &[u8],
+    ) -> Result<(Vec<FaceData>, (u32, u32)), String> {
+        let img = image::load_from_memory(image_bytes)
+            .map_err(|e| format!("Failed to load image from memory: {}", e))?;
+        self.process_dynamic_image(&img)
+    }
 
-        let img_width = img.width() as f32;
-        let img_height = img.height() as f32;
-        let img_area = img_width * img_height;
-
-        let faces = self.detect_faces(&img)?;
+    fn process_dynamic_image(
+        &mut self,
+        img: &DynamicImage,
+    ) -> Result<(Vec<FaceData>, (u32, u32)), String> {
+        let faces = self.detect_faces(img)?;
 
         let mut results = Vec::new();
         for face in faces {
             // Filter 1: Skip low confidence faces
-            if face.confidence < MIN_CONFIDENCE {
+            if face.confidence < t_common::MIN_CONFIDENCE {
                 continue;
             }
 
             // Filter 2: Skip very small faces (likely background people)
-            let face_area = face.width * face.height;
-            if face_area / img_area < MIN_FACE_RATIO {
-                continue;
-            }
-
-            // Filter 3: Skip faces smaller than minimum pixel size
-            if face.width < MIN_FACE_SIZE || face.height < MIN_FACE_SIZE {
-                continue;
-            }
-
-            // Filter 4: Skip blurry faces
-            // let blur_score = self.calculate_blur_score(&img, &face);
-            // if blur_score < MIN_BLUR_SCORE {
+            // let face_area = face.width * face.height;
+            // let img_width = img.width() as f32;
+            // let img_height = img.height() as f32;
+            // let img_area = img_width * img_height;
+            // if face_area / img_area < t_common::MIN_FACE_RATIO {
             //     continue;
             // }
 
+            // Filter 3: Skip faces smaller than minimum pixel size
+            // if face.width < t_common::MIN_FACE_SIZE || face.height < t_common::MIN_FACE_SIZE {
+            //     continue;
+            // }
+
+            // Filter 4: Skip blurry faces
+            let blur_score = self.calculate_blur_score(&img, &face);
+            if blur_score < t_common::MIN_BLUR_SCORE {
+                continue;
+            }
+
             // Get embedding for quality face
-            let embedding = self.get_face_embedding(&img, &face)?;
+            let embedding = self.get_face_embedding(img, &face)?;
             results.push(FaceData {
                 bbox: face,
                 embedding,
             });
         }
 
-        Ok(results)
+        Ok((results, (img.width(), img.height())))
     }
 
     /// Calculate blur score using Variance of Laplacian
-    // fn calculate_blur_score(&self, img: &DynamicImage, bbox: &FaceBox) -> f32 {
-    //     let x = bbox.x.max(0.0) as u32;
-    //     let y = bbox.y.max(0.0) as u32;
-    //     // Check bounds to ensure we don't crash on cropping
-    //     let w = bbox.width.min(img.width() as f32 - bbox.x) as u32;
-    //     let h = bbox.height.min(img.height() as f32 - bbox.y) as u32;
+    /// Optimized: Uses Welford's online algorithm to avoid allocating a large vector
+    fn calculate_blur_score(&self, img: &DynamicImage, bbox: &FaceBox) -> f32 {
+        let x = bbox.x.max(0.0) as u32;
+        let y = bbox.y.max(0.0) as u32;
+        // Check bounds to ensure we don't crash on cropping
+        let w = bbox.width.min(img.width() as f32 - bbox.x) as u32;
+        let h = bbox.height.min(img.height() as f32 - bbox.y) as u32;
 
-    //     if w < 3 || h < 3 {
-    //         return 0.0;
-    //     }
+        if w < 3 || h < 3 {
+            return 0.0;
+        }
 
-    //     let crop = img.crop_imm(x, y, w, h).to_luma8();
-    //     let (width, height) = crop.dimensions();
+        let crop = img.crop_imm(x, y, w, h).to_luma8();
+        let (width, height) = crop.dimensions();
 
-    //     let mut mean = 0.0;
-    //     let mut count = 0;
-    //     let mut laplacian_values = Vec::with_capacity((width * height) as usize);
+        // Online variance calculation (Welford's algorithm)
+        let mut count = 0usize;
+        let mut m2 = 0.0;
+        let mut mean = 0.0;
 
-    //     // Simple Laplacian kernel:
-    //     //  0  1  0
-    //     //  1 -4  1
-    //     //  0  1  0
+        for y in 1..height - 1 {
+            for x in 1..width - 1 {
+                let p = crop.get_pixel(x, y).0[0] as i16;
+                let top = crop.get_pixel(x, y - 1).0[0] as i16;
+                let bottom = crop.get_pixel(x, y + 1).0[0] as i16;
+                let left = crop.get_pixel(x - 1, y).0[0] as i16;
+                let right = crop.get_pixel(x + 1, y).0[0] as i16;
 
-    //     for y in 1..height - 1 {
-    //         for x in 1..width - 1 {
-    //             let p = crop.get_pixel(x, y).0[0] as i16;
-    //             let top = crop.get_pixel(x, y - 1).0[0] as i16;
-    //             let bottom = crop.get_pixel(x, y + 1).0[0] as i16;
-    //             let left = crop.get_pixel(x - 1, y).0[0] as i16;
-    //             let right = crop.get_pixel(x + 1, y).0[0] as i16;
+                let sum = top + bottom + left + right - 4 * p;
+                let val = sum as f32;
 
-    //             let sum = top + bottom + left + right - 4 * p;
-    //             let val = sum as f32;
+                count += 1;
+                let delta = val - mean;
+                mean += delta / count as f32;
+                let delta2 = val - mean;
+                m2 += delta * delta2;
+            }
+        }
 
-    //             laplacian_values.push(val);
-    //             mean += val;
-    //             count += 1;
-    //         }
-    //     }
+        if count < 2 {
+            return 0.0;
+        }
 
-    //     if count == 0 {
-    //         return 0.0;
-    //     }
-
-    //     mean /= count as f32;
-
-    //     let variance = laplacian_values
-    //         .iter()
-    //         .fold(0.0, |acc, &val| acc + (val - mean).powi(2));
-    //     variance / count as f32
-    // }
+        // Variance
+        m2 / (count as f32)
+    }
 
     /// Non-maximum suppression
     fn nms(&self, mut boxes: Vec<FaceBox>, iou_threshold: f32) -> Vec<FaceBox> {
@@ -491,13 +573,18 @@ impl FaceEngine {
     }
 
     /// Intersection over Union
+    /// Optimized: Simplified redundant max(0.0) for valid boxes
     fn iou(&self, a: &FaceBox, b: &FaceBox) -> f32 {
         let x1 = a.x.max(b.x);
         let y1 = a.y.max(b.y);
         let x2 = (a.x + a.width).min(b.x + b.width);
         let y2 = (a.y + a.height).min(b.y + b.height);
 
-        let inter_area = (x2 - x1).max(0.0) * (y2 - y1).max(0.0);
+        if x2 <= x1 || y2 <= y1 {
+            return 0.0;
+        }
+
+        let inter_area = (x2 - x1) * (y2 - y1);
         let a_area = a.width * a.height;
         let b_area = b.width * b.height;
 
@@ -625,7 +712,7 @@ pub fn run_face_indexing(
         // 3. Image Processing Loop
         let mut cancelled = false;
 
-        for (file_id, file_path) in files {
+        for (file_id, file_path, width, height) in files {
             if *cancel_token.lock().unwrap() {
                 cancelled = true;
                 break;
@@ -635,10 +722,34 @@ pub fn run_face_indexing(
 
             let mut engine = face_state.0.lock().unwrap();
 
-            let process_result = engine.process_image(&file_path);
+            // Optimization: Try to use thumbnail first
+            // We need to know if we used a thumbnail to scale the bbox
+            let (process_result, used_thumb) = match t_sqlite::AThumb::fetch(file_id) {
+                Ok(Some(thumb)) if thumb.thumb_data.is_some() => {
+                    let thumb_bytes = thumb.thumb_data.as_ref().unwrap();
+                    match engine.process_image_from_bytes(thumb_bytes) {
+                        Ok(res) => (Ok(res), true),
+                        Err(_) => (engine.process_image(&file_path), false),
+                    }
+                }
+                _ => (engine.process_image(&file_path), false),
+            };
 
             match process_result {
-                Ok(faces) => {
+                Ok((mut faces, (proc_w, proc_h))) => {
+                    // If we used a thumbnail, scale bbox to original size
+                    if used_thumb {
+                        let scale_x = width as f32 / proc_w as f32;
+                        let scale_y = height as f32 / proc_h as f32;
+
+                        for face in &mut faces {
+                            face.bbox.x *= scale_x;
+                            face.bbox.y *= scale_y;
+                            face.bbox.width *= scale_x;
+                            face.bbox.height *= scale_y;
+                        }
+                    }
+
                     let has_faces = !faces.is_empty();
                     let status = if has_faces { 1 } else { 2 };
 

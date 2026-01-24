@@ -14,10 +14,10 @@ import {
   IconGoto,
   IconComment,
   IconImageSearch,
-  IconSimilar,
+  IconPhotoSearch,
   IconFiles,
-  IconFolder,
-  IconPerson,
+  IconFolderSearch,
+  IconPersonSearch,
 } from '@/common/icons';
 
 export const useFileMenuItems = (
@@ -42,20 +42,20 @@ export const useFileMenuItems = (
       },
       {
         label: localeMsg.value.menu.file.find_similar_images,
-        icon: IconSimilar,
+        icon: IconPhotoSearch,
         shortcut: isMac ? '⌘S' : 'Ctrl+S',
         disabled: f.file_type !== 1 && f.file_type !== 3,
         action: createAction('search-similar')
       },
       {
         label: localeMsg.value.menu.file.find_person_images,
-        icon: IconPerson,
+        icon: IconPersonSearch,
         action: createAction('find-person')
       },
       {
         label: localeMsg.value.menu.file.find_album_folder,
         disabled: showFolderFiles.value,
-        icon: IconFolder,
+        icon: IconFolderSearch,
         action: createAction('album-folder')
       },
       {
