@@ -1,21 +1,18 @@
 /**
- * project: jc-photo
+ * project: Lap
  * author:  julyxx
- * email:   tiangle@gmail.com
  * GitHub:  /julyx10
  * date:    2024-08-08
  */
-
 use std::env;
+use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::fmt::Write;
 
 fn main() {
-
     write_build_info();
-    
+
     // build tauri
     tauri_build::build();
 }
@@ -31,7 +28,12 @@ fn write_build_info() {
     let timestamp = now.as_secs();
 
     let mut formatted = String::new();
-    write!(&mut formatted, "pub const BUILD_UNIX_TIME: u64 = {};", timestamp).unwrap();
+    write!(
+        &mut formatted,
+        "pub const BUILD_UNIX_TIME: u64 = {};",
+        timestamp
+    )
+    .unwrap();
 
     fs::write(dest_path, formatted).unwrap();
 }

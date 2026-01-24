@@ -1,7 +1,7 @@
 /**
  * App configuration management.
  * Handles app-config.json for multi-library support.
- * project: jc-photo
+ * project: Lap
  * author:  julyxx
  * date:    2025-01-15
  */
@@ -181,11 +181,11 @@ impl Default for AppConfig {
     }
 }
 
-/// Get the AppData directory for jc-photo
+/// Get the AppData directory for app
 pub fn get_app_data_dir() -> Result<PathBuf, String> {
     dirs::data_local_dir()
         .ok_or_else(|| "Failed to get the local AppData directory".to_string())
-        .map(|p| p.join("jc-photo"))
+        .map(|p| p.join("Lap"))
 }
 
 /// Get the libraries directory path

@@ -1,14 +1,14 @@
-# jc-photo
+# Lap
 
-Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (Rust) and Vue 3. jc-photo helps you browse large folders, curate albums, tag and favorite items, and view images/videos in a fluid desktop experience.
+Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (Rust) and Vue 3. Lap helps you browse large folders, curate albums, tag and favorite items, and view images/videos in a fluid desktop experience.
 
 ## Download
 
 | Platform | Download | File Type | Notes |
 |:--|:--|:--|:--|
-| **macOS (Intel / Apple Silicon)** | [jc-photo_0.1.0_aarch64.dmg](https://github.com/julyx10/jc-photo/releases/download/pre-release/jc-photo_0.1.0_aarch64.dmg) | `.dmg` | Apple Silicon |
+| **macOS (Intel / Apple Silicon)** | [lap_0.1.0_aarch64.dmg](https://github.com/julyx10/lap/releases/download/pre-release/lap_0.1.0_aarch64.dmg) | `.dmg` | Apple Silicon |
 
-> Notes: Visit the [Releases page](https://github.com/julyx10/jc-photo/releases) for older versions and changelogs.
+> Notes: Visit the [Releases page](https://github.com/julyx10/lap/releases) for older versions and changelogs.
 
 <table>
   <tr>
@@ -205,12 +205,12 @@ cargo tauri build
 
 ## Notes on data
 
-- jc-photo maintains a local SQLite database to index albums, folders, files, tags, and metadata
+- Lap maintains a local SQLite database to index albums, folders, files, tags, and metadata
 - Thumbnails are generated locally; progress is shown while they build
 
 ## Acknowledgments
 
-Thanks to the open-source libraries and tools that make jc-photo possible:
+Thanks to the open-source libraries and tools that make Lap possible:
 
 - Desktop (Rust/Tauri)
   - Tauri 2 (tauri, tauri-build, plugins: window-state, shell, os, fs, dialog)

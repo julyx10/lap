@@ -1,8 +1,7 @@
 /**
  * SQLite database operations.
- * project: jc-photo
+ * project: Lap
  * author:  julyxx
- * email:   tiangle@gmail.com
  * GitHub:  /julyx10
  * date:    2024-08-08
  */

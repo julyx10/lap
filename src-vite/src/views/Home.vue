@@ -2,7 +2,7 @@
   
   <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70">
     <!-- Title Bar -->
-    <TitleBar v-if="isWin" titlebar="jc-photo" viewName="Home"/>
+    <TitleBar v-if="isWin" titlebar="Lap" viewName="Home"/>
 
     <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
@@ -159,7 +159,7 @@
 
     <!-- logo -->
     <div class="fixed bottom-2 left-3 text-[12px] text-base-content/10 transition-all duration-200 ease-in-out">
-      <span>jc-photo</span>
+      <span>Lap</span>
     </div>
 
     <!-- Library Edit Dialog -->

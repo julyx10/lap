@@ -3,6 +3,43 @@
 version = 4
 
 [[package]]
+name = "Lap"
+version = "0.1.0"
+dependencies = [
+ "arboard",
+ "base64 0.22.1",
+ "chrono",
+ "dirs 5.0.1",
+ "ffmpeg-next",
+ "image",
+ "imagesize",
+ "kamadak-exif",
+ "native-dialog",
+ "ndarray",
+ "once_cell",
+ "opener",
+ "ort",
+ "pinyin",
+ "rand 0.8.5",
+ "reverse_geocoder",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-os",
+ "tauri-plugin-shell",
+ "tauri-plugin-window-state",
+ "tokenizers",
+ "tokio",
+ "trash",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2541,43 +2578,6 @@ dependencies = [
  "gobject-sys",
  "libc",
  "system-deps",
-]
-
-[[package]]
-name = "jc-photo"
-version = "0.1.0"
-dependencies = [
- "arboard",
- "base64 0.22.1",
- "chrono",
- "dirs 5.0.1",
- "ffmpeg-next",
- "image",
- "imagesize",
- "kamadak-exif",
- "native-dialog",
- "ndarray",
- "once_cell",
- "opener",
- "ort",
- "pinyin",
- "rand 0.8.5",
- "reverse_geocoder",
- "rusqlite",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-os",
- "tauri-plugin-shell",
- "tauri-plugin-window-state",
- "tokenizers",
- "tokio",
- "trash",
- "uuid",
- "walkdir",
 ]
 
 [[package]]

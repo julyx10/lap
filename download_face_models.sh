@@ -1,5 +1,5 @@
 #!/bin/bash
-# Download Face Recognition models for jc-photo
+# Download Face Recognition models
 # Models: InsightFace buffalo_s bundle
 #   - det_500m.onnx (face detection - 2.52 MB)
 #   - w600k_mbf.onnx (MobileFaceNet embedding - 13.6 MB)

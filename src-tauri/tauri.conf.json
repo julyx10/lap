@@ -1,7 +1,7 @@
 {
-  "productName": "jc-photo",
+  "productName": "Lap",
   "version": "0.1.0",
-  "identifier": "com.julyxx.jc-photo",
+  "identifier": "com.julyxx.lap",
   "build": {
     "beforeBuildCommand": "pnpm build",
     "beforeDevCommand": "pnpm dev",

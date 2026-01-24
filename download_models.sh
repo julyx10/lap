@@ -1,5 +1,5 @@
 #!/bin/bash
-# Download AI models for jc-photo
+# Download AI models
 
 echo "Creating resources directory..."
 mkdir -p src-tauri/resources/models

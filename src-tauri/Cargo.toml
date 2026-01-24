@@ -1,9 +1,9 @@
 [package]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-name = "jc-photo"
+name = "Lap"
 version = "0.1.0"
-description = "A fast, local-first photo manager built with Tauri + Vue 3."
-homepage = "https://github.com/julyx10/jc-photo"
+description = "A local-first, ai-powered photo manager built with Tauri + Vue 3."
+homepage = "https://github.com/julyx10/lap"
 authors = ["@liulichuan"]
 edition = "2024"
 license = "GPL-3.0-or-later"
@@ -17,7 +17,11 @@ tauri-build = { version = "2", features = [] }
 opt-level = 3
 
 [dependencies]
-tauri = { version = "2", features = [ "macos-private-api", "protocol-asset", "devtools"] }
+tauri = { version = "2", features = [
+    "macos-private-api",
+    "protocol-asset",
+    "devtools",
+] }
 tauri-plugin-window-state = "2.2.1"
 tauri-plugin-shell = "2"
 tauri-plugin-os = "2"

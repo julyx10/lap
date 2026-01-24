@@ -235,7 +235,6 @@
         <section v-else-if="config.settings.tabIndex === 4">
 
           <div class="flex flex-col items-center justify-between mb-4">
-            <!-- <label class="font-bold mb-4">jc-photo</label> -->
 
             <table class="w-full">
               <tbody>
