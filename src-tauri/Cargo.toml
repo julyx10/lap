@@ -2,7 +2,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 name = "Lap"
 version = "0.1.0"
-description = "A local-first, ai-powered photo manager built with Tauri + Vue 3."
+description = "A Local-first, AI-powered Photo manager."
 homepage = "https://github.com/julyx10/lap"
 authors = ["@liulichuan"]
 edition = "2024"

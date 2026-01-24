@@ -112,6 +112,8 @@ fn main() {
             t_cmds::add_library,
             t_cmds::edit_library,
             t_cmds::remove_library,
+            t_cmds::hide_library,
+            t_cmds::reorder_libraries,
             t_cmds::switch_library,
             t_cmds::get_library_info,
             t_cmds::save_library_state,

@@ -232,39 +232,8 @@
         </section>
 
         <!-- About Section -->
-        <section v-else-if="config.settings.tabIndex === 4">
-
-          <div class="flex flex-col items-center justify-between mb-4">
-
-            <table class="w-full">
-              <tbody>
-                <tr>
-                  <td class="h-8">{{ $t('settings.about.package.name') }}</td>
-                  <td>{{ packageInfo.name }}</td>
-                </tr>
-                <tr>
-                  <td class="h-8">{{ $t('settings.about.package.version') }}</td>
-                  <td>{{ packageInfo.version }}</td>
-                </tr>
-                <tr>
-                  <td class="h-8">{{ $t('settings.about.package.build_time') }}</td>
-                  <td>{{ buildTime }}</td>
-                </tr>
-                <tr>
-                  <td class="h-8">{{ $t('settings.about.package.website') }}</td>
-                  <td class="link"><a target="_blank" :href="packageInfo.homepage">{{ packageInfo.homepage }}</a></td>
-                </tr>
-                <tr>
-                  <td class="h-8">{{ $t('settings.about.package.license') }}</td>
-                  <td>{{ packageInfo.license}}</td>
-                </tr>
-                <tr>
-                  <td class="h-8">{{ $t('settings.about.package.author') }}</td>
-                  <td>{{ packageInfo.authors[0]}}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <section v-else-if="config.settings.tabIndex === 4" class="h-full">
+          <SettingsAbout />
         </section>
       </div>
     </div>  
@@ -280,20 +249,16 @@ import { debounce } from 'lodash';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { setTheme, getSlideShowInterval } from '@/common/utils';
-import { getPackageInfo, getBuildTime } from '@/common/api';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
+import SettingsAbout from '@/components/SettingsAbout.vue';
 
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.settings.language] as any);
 
 const appWindow = getCurrentWebviewWindow()
-
-// storage file info
-const packageInfo = ref(null);
-const buildTime = ref('');
 
 const languages = [
   { label: 'English', value: 'en' },
@@ -437,20 +402,6 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
-
-// Handle the settings tab index change
-watch(() => config.settings.tabIndex, (newValue) => {
-  if (newValue === 4) {   // about tab
-    // Get package info
-    getPackageInfo().then((info) => {
-      packageInfo.value = info;
-    });
-    // Get build time
-    getBuildTime().then((time) => {
-      buildTime.value = time;
-    });
-  }
-}, { immediate: true });
 
 // general settings
 watch(() => config.settings.tabIndex, (newValue) => {

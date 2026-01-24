@@ -234,6 +234,7 @@
     "library": {
       "add": "添加库...",
       "edit": "编辑库...",
+      "manage": "管理库...",
       "remove": "移除库",
       "default": "默认库"
     },
@@ -282,6 +283,7 @@
   "msgbox": {
     "ok": "确定",
     "cancel": "取消",
+    "close": "关闭",
     "input": {
       "file_name_invalid": "名称不能包含以下字符: \\ / : * ? \" < > |."
     },
@@ -295,13 +297,23 @@
       "content": "确定要删除 '{person}' 吗？",
       "ok": "删除"
     },
-    "edit_library": {
-      "title_add": "添加库",
-      "title_edit": "编辑库",
+    "manage_libraries": {
+      "title": "管理库",
       "name": "名称",
+      "visible": "可见",
+      "action": "操作",
+      "default": "默认库",
+      "current": "当前库",
+      "show": "显示",
+      "hide": "隐藏",
+      "delete": "删除",
+      "reorder": "重新排列",
+      "rename": "重命名",
+      "add_new": "添加新库",
+      "add": "添加",
       "placeholder": "输入库的名称",
-      "total_file_count": "总文件数",
-      "total_file_size": "总文件大小",
+      "max_limit_reached": "已达到库数量限制",
+      "created_at_lower": "创建于",
       "library_file_path": "库文件路径",
       "library_file_size": "库文件大小",
       "created_at": "创建时间"

@@ -158,31 +158,15 @@
     </div>
 
     <!-- logo -->
-    <div class="fixed bottom-2 left-3 text-[12px] text-base-content/10 transition-all duration-200 ease-in-out">
-      <span>Lap</span>
+    <div class="fixed bottom-2 left-6 text-[12px] text-base-content/10">
+      <span>{{ appName }}</span>
     </div>
 
-    <!-- Library Edit Dialog -->
-    <LibraryEdit
-      v-if="showLibraryEdit"
-      :isNewLibrary="isNewLibrary"
-      :libraryId="editingLibrary?.id || ''"
-      :libraryName="editingLibrary?.name || ''"
-      :createdAt="editingLibrary?.created_at || 0"
-      @ok="onLibraryEditOk"
-      @cancel="showLibraryEdit = false"
-    />
-
-    <!-- Remove Library Confirmation -->
-    <MessageBox
-      v-if="showRemoveLibraryMsgbox"
-      :title="$t('msgbox.remove_library.title')"
-      :message="$t('msgbox.remove_library.content', { library: currentLibrary?.name })"
-      :OkText="$t('msgbox.remove_library.ok')"
-      :cancelText="$t('msgbox.cancel')"
-      :warningOk="true"
-      @ok="confirmRemoveLibrary"
-      @cancel="showRemoveLibraryMsgbox = false"
+    <!-- Manage Libraries Dialog -->
+    <ManageLibraries
+      v-if="showManageLibraries"
+      @ok="onManageLibrariesOk"
+      @cancel="showManageLibraries = false"
     />
   </div>
 
@@ -192,12 +176,11 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { getName } from '@tauri-apps/api/app';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac } from '@/common/utils';
-import { getAppConfig, switchLibrary, removeLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
-
-const uiStore = useUIStore();
+import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
 
 // vue components
 import Album from '@/components/Album.vue';
@@ -212,8 +195,7 @@ import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
-import LibraryEdit from '@/components/LibraryEdit.vue';
-import MessageBox from '@/components/MessageBox.vue';
+import ManageLibraries from '@/components/ManageLibraries.vue';
 
 import {
   IconFavorite,
@@ -224,11 +206,7 @@ import {
   IconSearch,
   IconSettings,
   IconAlbums,
-  IconMore,
   IconDot,
-  IconLibraryAdd,
-  IconEdit,
-  IconLibraryRemove,
   IconAdd,
   IconTrash,
   IconSortingAsc,
@@ -236,23 +214,26 @@ import {
   IconSortingCount,
   IconSortingName,
   IconArrowDown,
-  IconCalendarMonth,
   IconCalendarDay,
   IconRefresh,
 } from '@/common/icons';
 
-// Panel component ref
-const panelRef = ref<any>(null);
-
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
+
+const uiStore = useUIStore();
+
+// Panel component ref
+const panelRef = ref<any>(null);
+const showPanel = ref(true);
 
 // Library state
 interface Library {
   id: string;
   name: string;
   created_at: number;
+  hidden: boolean;
 }
 
 interface AppConfig {
@@ -265,146 +246,13 @@ const currentLibrary = computed(() =>
   appConfig.value?.libraries.find(l => l.id === appConfig.value?.current_library_id) || null
 );
 
-// Library edit dialog state
-const showLibraryEdit = ref(false);
-const isNewLibrary = ref(false);
-const editingLibrary = ref<Library | null>(null);
+// Manage Libraries dialog state
+const showManageLibraries = ref(false);
 
-// Remove library confirmation
-const showRemoveLibraryMsgbox = ref(false);
+/// Splitter for resizing the left pane
+const isDraggingSplitter = ref(false);
 
-onMounted(async () => {
-  appConfig.value = await getAppConfig();
-});
-
-const libraryMenuItems = computed(() => {
-  const items: any[] = [];
-  
-  // Add all libraries for switching
-  if (appConfig.value?.libraries) {
-    for (const lib of appConfig.value.libraries) {
-      const isSelected = lib.id === appConfig.value.current_library_id;
-      items.push({
-        label: lib.name,
-        icon: isSelected ? IconDot : null,
-        action: () => {
-          if (!isSelected) {
-            doSwitchLibrary(lib.id);
-          }
-        }
-      });
-    }
-  }
-  
-  items.push({
-    label: "-",
-    action: () => {}
-  });
-  
-  items.push({
-    label: localeMsg.value.menu.library.add,
-    icon: IconLibraryAdd,
-    disabled: (appConfig.value?.libraries.length || 0) >= config.main.maxLibraryCount,
-    action: () => {
-      if ((appConfig.value?.libraries.length || 0) >= config.main.maxLibraryCount) return;
-      isNewLibrary.value = true;
-      editingLibrary.value = null;
-      showLibraryEdit.value = true;
-    }
-  });
-  
-  items.push({
-    label: localeMsg.value.menu.library.edit,
-    icon: IconEdit,
-    action: () => {
-      isNewLibrary.value = false;
-      editingLibrary.value = currentLibrary.value;
-      showLibraryEdit.value = true;
-    }
-  });
-  
-  items.push({
-    label: localeMsg.value.menu.library.remove,
-    icon: IconLibraryRemove,
-    disabled: appConfig.value?.libraries.length === 1 || currentLibrary.value?.id === appConfig.value?.libraries[0]?.id,
-    action: () => {
-      if (!appConfig.value?.libraries) return;
-      if (appConfig.value.libraries.length === 1) return;
-      if (currentLibrary.value?.id === appConfig.value.libraries[0]?.id) return;
-      showRemoveLibraryMsgbox.value = true;
-    }
-  });
-  
-  return items;
-});
-
-const doSwitchLibrary = async (libraryId: string) => {
-  try {
-    // Cancel any running indexing before switching
-    if (libConfig.index.status > 0 && libConfig.index.albumQueue.length > 0) {
-      for (const albumId of libConfig.index.albumQueue) {
-        await cancelIndexing(albumId);
-      }
-    }
-    
-    // Cancel face indexing if running
-    await cancelFaceIndex();
-    
-    // Save current library state before switching
-    await libConfig.save();
-    
-    await switchLibrary(libraryId);
-    
-    // Fade out before reload to prevent flash
-    document.body.style.transition = 'opacity 0.15s ease-out';
-    document.body.style.opacity = '0';
-    await new Promise(resolve => setTimeout(resolve, 150));
-    
-    // Reload the app to switch database
-    window.location.reload();
-  } catch (error) {
-    console.error('Failed to switch library:', error);
-    // Restore opacity if error occurs
-    document.body.style.opacity = '1';
-  }
-};
-
-const onLibraryEditOk = async (library: Library) => {
-  showLibraryEdit.value = false;
-  
-  if (isNewLibrary.value) {
-    // Switch to Album tab
-    config.main.sidebarIndex = 0;
-    
-    // Switch to the new library
-    await doSwitchLibrary(library.id);
-  } else {
-    // Reload config to get updated name
-    appConfig.value = await getAppConfig();
-  }
-};
-
-const confirmRemoveLibrary = async () => {
-  showRemoveLibraryMsgbox.value = false;
-  
-  if (!currentLibrary.value) return;
-  
-  try {
-    await removeLibrary(currentLibrary.value.id);
-    
-    // Fade out before reload to prevent flash
-    document.body.style.transition = 'opacity 0.15s ease-out';
-    document.body.style.opacity = '0';
-    await new Promise(resolve => setTimeout(resolve, 150));
-    
-    // Reload app to switch to the new current library
-    window.location.reload();
-  } catch (error) {
-    console.error('Failed to remove library:', error);
-    // Restore opacity if error occurs
-    document.body.style.opacity = '1';
-  }
-};
+const appName = ref('');
 
 // buttons 
 const buttons = computed(() =>  [
@@ -450,10 +298,85 @@ const buttons = computed(() =>  [
   },
 ]);
 
-/// Splitter for resizing the left pane
-const isDraggingSplitter = ref(false);
+const libraryMenuItems = computed(() => {
+  const items: any[] = [];
+  
+  // Add all libraries for switching
+  if (appConfig.value?.libraries) {
+    for (const lib of appConfig.value.libraries) {
+      if (lib.hidden) continue; // Skip hidden libraries
+      const isSelected = lib.id === appConfig.value.current_library_id;
+      items.push({
+        label: lib.name,
+        icon: isSelected ? IconDot : null,
+        action: () => {
+          if (!isSelected) {
+            doSwitchLibrary(lib.id);
+          }
+        }
+      });
+    }
+  }
+  items.push({
+    label: "-",
+    action: () => {}
+  });
+  items.push({
+    label: localeMsg.value.menu.library.manage,
+    // icon: IconEdit,
+    action: () => {
+      showManageLibraries.value = true;
+    }
+  });
+  return items;
+});
 
-const showPanel = ref(true);
+
+onMounted(async () => {
+  appConfig.value = await getAppConfig();
+  
+  try {
+    const name = await getName();
+    if (name) appName.value = name;
+  } catch (e) {
+    console.error('Failed to get app name:', e);
+  }
+});
+
+const doSwitchLibrary = async (libraryId: string) => {
+  try {
+    // Cancel any running indexing before switching
+    if (libConfig.index.status > 0 && libConfig.index.albumQueue.length > 0) {
+      for (const albumId of libConfig.index.albumQueue) {
+        await cancelIndexing(albumId);
+      }
+    }
+    
+    // Cancel face indexing if running
+    await cancelFaceIndex();
+    
+    // Save current library state before switching
+    await libConfig.save();
+    
+    await switchLibrary(libraryId);
+    
+    // Fade out before reload to prevent flash
+    document.body.style.transition = 'opacity 0.15s ease-out';
+    document.body.style.opacity = '0';
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    // Reload the app to switch database
+    window.location.reload();
+  } catch (error) {
+    console.error('Failed to switch library:', error);
+    // Restore opacity if error occurs
+    document.body.style.opacity = '1';
+  }
+};
+
+const onManageLibrariesOk = async () => {
+  appConfig.value = await getAppConfig();
+};
 
 // click sidebar
 function clickSidebar(index: number) {

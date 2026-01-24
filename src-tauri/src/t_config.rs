@@ -157,6 +157,8 @@ pub struct Library {
     pub created_at: i64,
     #[serde(default)]
     pub state: LibraryState,
+    #[serde(default)]
+    pub hidden: bool,
 }
 
 /// App configuration stored in app-config.json
@@ -176,6 +178,7 @@ impl Default for AppConfig {
                 name: "Default Library".to_string(),
                 created_at: now,
                 state: LibraryState::default(),
+                hidden: false,
             }],
         }
     }
@@ -185,7 +188,7 @@ impl Default for AppConfig {
 pub fn get_app_data_dir() -> Result<PathBuf, String> {
     dirs::data_local_dir()
         .ok_or_else(|| "Failed to get the local AppData directory".to_string())
-        .map(|p| p.join("Lap"))
+        .map(|p| p.join("com.julyxx.lap"))
 }
 
 /// Get the libraries directory path
@@ -262,7 +265,9 @@ pub fn add_library(name: &str) -> Result<Library, String> {
         id: id.clone(),
         name: name.to_string(),
         created_at: now,
+
         state: LibraryState::default(),
+        hidden: false,
     };
 
     config.libraries.push(library.clone());
@@ -393,4 +398,53 @@ pub fn get_library_state(id: &str) -> Result<LibraryState, String> {
 pub fn get_current_library_state() -> Result<LibraryState, String> {
     let config = load_app_config()?;
     get_library_state(&config.current_library_id)
+}
+
+/// Hide/Show a library
+pub fn hide_library(id: &str, hidden: bool) -> Result<(), String> {
+    let mut config = load_app_config()?;
+
+    // Cannot hide the current library
+    if config.current_library_id == id && hidden {
+        return Err("Cannot hide the current library".to_string());
+    }
+
+    if let Some(lib) = config.libraries.iter_mut().find(|l| l.id == id) {
+        lib.hidden = hidden;
+        save_app_config(&config)?;
+        Ok(())
+    } else {
+        Err("Library not found".to_string())
+    }
+}
+
+/// Reorder libraries
+pub fn reorder_libraries(ids: Vec<String>) -> Result<(), String> {
+    let mut config = load_app_config()?;
+
+    // Create a map for quick lookup
+    let mut lib_map: std::collections::HashMap<String, Library> = config
+        .libraries
+        .drain(..)
+        .map(|l| (l.id.clone(), l))
+        .collect();
+
+    let mut new_libraries = Vec::new();
+
+    // Rebuild the list based on the new order
+    for id in ids {
+        if let Some(lib) = lib_map.remove(&id) {
+            new_libraries.push(lib);
+        }
+    }
+
+    // Append any remaining libraries (shouldn't happen if frontend is correct, but safe fallback)
+    for (_, lib) in lib_map {
+        new_libraries.push(lib);
+    }
+
+    config.libraries = new_libraries;
+    save_app_config(&config)?;
+
+    Ok(())
 }

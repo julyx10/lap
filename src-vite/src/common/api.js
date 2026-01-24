@@ -54,6 +54,28 @@ export async function removeLibrary(id) {
   }
 }
 
+// hide a library
+export async function hideLibrary(id, hidden) {
+  try {
+    await invoke('hide_library', { id, hidden });
+    return true;
+  } catch (error) {
+    console.error('Failed to hide library:', error);
+    throw error;
+  }
+}
+
+// reorder libraries
+export async function reorderLibraries(ids) {
+  try {
+    await invoke('reorder_libraries', { ids });
+    return true;
+  } catch (error) {
+    console.error('Failed to reorder libraries:', error);
+    throw error;
+  }
+}
+
 // switch to a different library
 export async function switchLibrary(id) {
   try {

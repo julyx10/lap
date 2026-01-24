@@ -234,6 +234,7 @@
     "library": {
       "add": "Add library...",
       "edit": "Edit library...",
+      "manage": "Manage libraries...",
       "remove": "Remove library",
       "default": "Default library"
     },
@@ -282,6 +283,7 @@
   "msgbox": {
     "ok": "OK",
     "cancel": "Cancel",
+    "close": "Close",
     "input": {
       "file_name_invalid": "Name cannot contain the following characters: \\ / : * ? \" < > |."
     },
@@ -295,13 +297,23 @@
       "content": "Are you sure you want to delete '{person}'?",
       "ok": "Delete"
     },
-    "edit_library": {
-      "title_add": "Add library",
-      "title_edit": "Edit library",
+    "manage_libraries": {
+      "title": "Manage libraries",
       "name": "Name",
+      "visible": "Visible",
+      "action": "Action",
+      "default": "Default library",
+      "current": "Current library",
+      "show": "Show",
+      "hide": "Hide",
+      "delete": "Delete",
+      "reorder": "Reorder",
+      "rename": "Rename",
+      "add_new": "Add new",
+      "add": "Add",
       "placeholder": "Enter library name",
-      "total_file_count": "Total file count",
-      "total_file_size": "Total file size",
+      "max_limit_reached": "Library limit reached",
+      "created_at_lower": "created at",
       "library_file_path": "Library file path",
       "library_file_size": "Library file size",
       "created_at": "Created at"

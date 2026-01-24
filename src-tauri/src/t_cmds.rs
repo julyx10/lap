@@ -36,10 +36,21 @@ pub fn get_app_config() -> Result<AppConfig, String> {
     t_config::load_app_config()
 }
 
-/// add a new library
 #[tauri::command]
 pub fn add_library(name: &str) -> Result<Library, String> {
     t_config::add_library(name)
+}
+
+/// hide a library
+#[tauri::command]
+pub fn hide_library(id: &str, hidden: bool) -> Result<(), String> {
+    t_config::hide_library(id, hidden)
+}
+
+/// reorder libraries
+#[tauri::command]
+pub fn reorder_libraries(ids: Vec<String>) -> Result<(), String> {
+    t_config::reorder_libraries(ids)
 }
 
 /// edit library name
