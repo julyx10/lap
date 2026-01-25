@@ -17,7 +17,7 @@
       <button 
         :class="[
           'px-4 py-1 rounded-box', 
-          libConfig.destFolder.albumId > 0 ? 'hover:bg-primary hover:text-primary-content cursor-pointer' : 'text-primary-content/70 cursor-default'
+          libConfig.destFolder.albumId > 0 && !libConfig.destFolder.selected ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
         ]" 
         @click="clickOk"
       >{{ OkText }}</button>
@@ -87,7 +87,9 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 const clickOk = () => {
-  emit('ok');
+  if (libConfig.destFolder.albumId > 0 && !libConfig.destFolder.selected) {
+    emit('ok');
+  }
 };
 
 const clickCancel = () => {

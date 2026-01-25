@@ -90,10 +90,10 @@
     ></div>
 
     <!-- label -->
-    <template v-if="!config.content.showFilmStrip && config.settings.grid.style === 0">
+    <div v-if="!config.content.showFilmStrip && config.settings.grid.style === 0" class="flex flex-col items-center" :class="{ 'text-primary': isSelected }">
       <span class="w-full text-sm text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
       <span class="w-full text-xs text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden ">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
-    </template>
+    </div>
 
   </div>
 </template>

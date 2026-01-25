@@ -1,247 +1,236 @@
 <template>
-
-  <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-200 text-base-content/70">
+  <div class="w-screen h-screen flex flex-col bg-base-300 text-base-content/70 overflow-hidden">
     <!-- Title Bar -->
-    <TitleBar :titlebar="$t('sidebar.settings')" :resizable="false" viewName="Settings"/>
+    <TitleBar :titlebar="$t('sidebar.settings')" :resizable="false" viewName="Settings" class="shrink-0 z-50" />
 
-    <!-- Main Content -->
-    <div 
-      class="flex-1 flex p-4 overflow-auto" 
-    >
-      <!-- Tabs -->
-      <div class="min-w-32 font-bold">
+    <div class="flex flex-1 overflow-hidden relative">
+      <!-- Sidebar -->
+      <div class="w-40 m-1 p-2 bg-base-200/30 flex flex-col rounded-box overflow-y-auto shrink-0 select-none">
         <div
           v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.about.title']"
           :key="index"
           :class="[
-            'mb-4 px-1 border-l-2 cursor-pointer transition-colors duration-300', 
-            config.settings.tabIndex === index ? 'text-base-content border-primary' : 'border-transparent hover:text-base-content',
+            'p-3 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
+            config.settings.tabIndex === index 
+              ? 'bg-base-100 text-primary' 
+              : 'hover:text-base-content hover:bg-base-100/30'
           ]"
           @click="config.settings.tabIndex = index"
         >
           {{ $t(tab) }}
         </div>
       </div>
-    
-      <div class="grow px-2">
 
-        <!-- General tab -->
-        <section v-if="config.settings.tabIndex === 0">
-          <!-- select language -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.select_language') }}</label>
-            <select class="select" v-model="config.settings.language">
-              <option v-for="(lang, index) in languages" :key="index" :value="lang.value">
-                {{ lang.label }}
-              </option>
-            </select>
-          </div>
-          <!-- Appearance -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.appearance') }}</label>
-            <select class="select" v-model="config.settings.appearance">
-              <option v-for="(item, index) in appearanceOptions" :key="index" :value="item.value">
-                {{ item.label }}
-              </option>
-            </select>
-          </div>
-          <!-- Color theme -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.theme') }}</label>
-            <select class="select" v-model="currentTheme">
-              <option v-for="(option, index) in themeOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-          <!-- Show button text -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.show_button_text') }}</label>
-            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showButtonText" />
-          </div>
-          <!-- Show button tooltip -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.show_tool_tip') }}</label>
-            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showToolTip" />
-          </div>
-          <!-- Show status bar -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.show_status_bar') }}</label>
-            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showStatusBar" />
-          </div>
-          <!-- Show map -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.show_map') }}</label>
-            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showMap" />
-          </div>
-          <!-- Debug Mode -->
-          <!-- <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.general.debug_mode') }}</label>
-            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.debugMode" />
-          </div> -->
-
-        </section>
-
-        <!-- Grid view tab -->
-        <section v-else-if="config.settings.tabIndex === 1">
+      <!-- Main Content -->
+      <div class="p-2 mr-1 flex-1 overflow-y-auto scrollbar-hide bg-base-300 cursor-default">
+        <div class="">
           
-          <!-- Grid view Style -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.grid_view.style') }}</label>
-            <select class="select" v-model="config.settings.grid.style">
-              <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Grid thumbnail Size -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="grid_size" >{{ $t('settings.grid_view.size') }}</label>
-            <SliderInput 
-              v-model="config.settings.grid.size" 
-              :min="120" 
-              :max="320" 
-              :step="10" 
-              label=""
-            />
-          </div>
-
-          <!-- Grid  thumbnail Scaling -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.grid_view.scaling') }}</label>
-            <select class="select" v-model="config.settings.grid.scaling">
-              <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Primary Label -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.grid_view.label_primary') }}</label>
-            <select class="select" v-model="config.settings.grid.labelPrimary">
-              <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-            <!-- Secondary Label -->
-            <div class="flex items-center justify-between mb-4">
-              <label>{{ $t('settings.grid_view.label_secondary') }}</label>
-              <select class="select" v-model="config.settings.grid.labelSecondary">
-                <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">
-                  {{ option.label }}
-                </option>
+          <!-- General Tab -->
+          <div v-if="config.settings.tabIndex === 0" class="flex flex-col">
+            <!-- Language -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.select_language') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.language">
+                <option v-for="(lang, index) in languages" :key="index" :value="lang.value">{{ lang.label }}</option>
               </select>
             </div>
-
-
-        </section>
-
-        <!-- Image Viewer tab -->
-        <section v-else-if="config.settings.tabIndex === 2">
-
-          <!-- Preview Position -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.filmstrip_view.preview_position') }}</label>
-            <select class="select" v-model="config.settings.previewPosition">
-              <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-          <!-- Show navigator view -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_view.navigator_view') }}</label>
-            <select class="select" v-model="config.settings.navigatorViewMode">
-              <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Navigator view size -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_view.navigator_view__size') }}</label>
-            <select class="select" v-model="config.settings.navigatorViewSize">
-              <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- mouse wheel mode -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_view.mouse_wheel') }}</label>
-            <select class="select" v-model="config.settings.mouseWheelMode">
-              <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">
-                {{ item.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- slide show interval -->
-          <div class="flex items-center justify-between mb-4">
-            <label for="autoplay-interval" >{{ $t('settings.image_view.slide_show_interval', { second: getSlideShowInterval(config.settings.slideShowInterval) }) }}</label>
-            <SliderInput 
-              v-model="config.settings.slideShowInterval" 
-              :min="0" 
-              :max="5" 
-              :step="1" 
-              label=""
-            />
+            <!-- Appearance -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.appearance') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.appearance">
+                <option v-for="(item, index) in appearanceOptions" :key="index" :value="item.value">{{ item.label }}</option>
+              </select>
+            </div>
+            <!-- Theme -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.theme') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="currentTheme">
+                <option v-for="(option, index) in themeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Show Button Text -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.show_button_text') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showButtonText" />
+            </div>
+            <!-- Show Tooltips -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.show_tool_tip') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showToolTip" />
+            </div>
+            <!-- Show Status Bar -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.show_status_bar') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showStatusBar" />
+            </div>
+             <!-- Show Map -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.show_map') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.general.show_map_hint') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showMap" />
+            </div>
           </div>
 
-          <!-- Auto play video -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_view.auto_play_video') }}</label>
-            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.autoPlayVideo" />
+          <!-- Grid View Tab -->
+          <div v-else-if="config.settings.tabIndex === 1" class="flex flex-col">
+             <!-- Style -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.grid_view.style') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.style">
+                <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Size -->
+            <div class="flex items-center justify-between p-2 min-h-12 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.grid_view.size') }}</div>
+              </div>
+              <div class="w-48 flex justify-end">
+                <SliderInput v-model="config.settings.grid.size" :min="120" :max="320" :step="10" label="" />
+              </div>
+            </div>
+             <!-- Scaling -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.grid_view.scaling') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling">
+                <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Primary Label -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.grid_view.label_primary') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.grid_view.label_primary_hint') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary">
+                 <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Secondary Label -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.grid_view.label_secondary') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.grid_view.label_secondary_hint') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary">
+                 <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Show comment -->
-          <div class="flex items-center justify-between mb-4">
-            <label>{{ $t('settings.image_view.show_comment') }}</label>
-            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showComment" />
-          </div>
-        </section>
-        
-        <!-- Image Search tab -->
-        <section v-else-if="config.settings.tabIndex === 3">
-          <!-- Image search threshold -->
-          <div class="flex items-center justify-between mb-2">
-            <label>{{ $t('settings.image_search.similarity') }}</label>
-            <select class="select" v-model="config.settings.imageSearch.thresholdIndex">
-              <option v-for="(option, index) in similarityOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-          <div class="text-xs text-base-content/50 mb-4">
-            {{ $t('settings.image_search.similarity_hint') }}
+          <!-- Image View Tab -->
+          <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col">
+            <!-- Preview Position -->
+             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.previewPosition">
+                 <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Navigator View -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.image_view.navigator_view') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewMode">
+                 <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Navigator Size -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.image_view.navigator_view__size') }}</div>
+              </div>
+               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewSize">
+                 <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Mouse Wheel -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.image_view.mouse_wheel') }}</div>
+              </div>
+               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.mouseWheelMode">
+                 <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">{{ item.label }}</option>
+              </select>
+            </div>
+            <!-- Slide Show -->
+            <div class="flex items-center justify-between p-2 min-h-12 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div class="text-nowrap">{{ $t('settings.image_view.slide_show_interval', { second: getSlideShowInterval(config.settings.slideShowInterval) }) }}</div>
+              </div>
+              <div class="w-48 flex justify-end">
+                <SliderInput v-model="config.settings.slideShowInterval" :min="0" :max="5" :step="1" label="" />
+              </div>
+            </div>
+            <!-- Auto Play Video -->
+             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.image_view.auto_play_video') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.autoPlayVideo" />
+            </div>
+            <!-- Show Comment -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.image_view.show_comment') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showComment" />
+            </div>
           </div>
 
-          <!-- Face Clustering Threshold -->
-          <div class="flex items-center justify-between mb-2">
-            <label>{{ $t('settings.face_recognition.similarity') }}</label>
-            <select class="select" v-model="config.settings.face.clusterThresholdIndex">
-              <option v-for="(option, index) in faceClusterOptions" :key="index" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
+          <!-- Image Search Tab -->
+          <div v-else-if="config.settings.tabIndex === 3" class="flex flex-col overflow-hidden">
+             <!-- Threshold -->
+             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.image_search.similarity') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.image_search.similarity_hint') }}</div>
+              </div>
+               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.imageSearch.thresholdIndex">
+                 <option v-for="(option, index) in similarityOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Face Cluster -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.face_recognition.similarity') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.face_recognition.cluster_threshold_hint') }}</div>
+              </div>
+               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.face.clusterThresholdIndex">
+                 <option v-for="(option, index) in faceClusterOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
           </div>
-          <div class="text-xs text-base-content/50 mb-4">
-            {{ $t('settings.face_recognition.cluster_threshold_hint') }}
-          </div>
-        </section>
 
-        <!-- About Section -->
-        <section v-else-if="config.settings.tabIndex === 4" class="h-full">
-          <SettingsAbout />
-        </section>
+          <!-- About Tab -->
+          <div v-else-if="config.settings.tabIndex === 4" class="py-2">
+             <SettingsAbout />
+          </div>
+
+        </div>
       </div>
-    </div>  
+    </div>
   </div>
 </template>
 

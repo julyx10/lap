@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full h-[300px] border border-base-content/30 rounded-box overflow-hidden">
+  <div class="relative w-full h-full min-h-[300px] border border-base-content/30 rounded-box overflow-hidden">
     <div ref="mapEl" style="width:100%; height:100%;"></div>
     <div class="absolute top-2 left-2 flex bg-base-100/30 hover:bg-base-100/70 rounded-box z-[500] cursor-pointer">
       <TButton

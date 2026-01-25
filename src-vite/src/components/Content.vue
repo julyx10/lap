@@ -905,10 +905,12 @@ function handleItemSelectToggled(index: number, shiftKey: boolean = false) {
 
 async function clickSetAlbumCover() {
   const file = fileList.value[selectedItemIndex.value];
-  if (file && libConfig.album.id) {
+  const albumId = libConfig.album.id || file?.album_id;
+  
+  if (file && albumId) {
     try {
-      await setAlbumCover(libConfig.album.id, file.id);
-      await tauriEmit('album-cover-changed', { albumId: libConfig.album.id, fileId: file.id });
+      await setAlbumCover(albumId, file.id);
+      await tauriEmit('album-cover-changed', { albumId: albumId, fileId: file.id });
       toolTipRef.value.showTip(localeMsg.value.tooltip.set_album_cover.success);
     } catch (error) {
       toolTipRef.value.showTip(localeMsg.value.tooltip.set_album_cover.failed, true);

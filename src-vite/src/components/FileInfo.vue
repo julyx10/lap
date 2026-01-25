@@ -1,10 +1,10 @@
 <template>
   <div class="w-full h-full rounded-box bg-base-200 flex flex-col overflow-hidden">
     <!-- Info Content -->
-    <div class="my-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-2">
+    <div class="my-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-2 flex flex-col">
       
       <!-- File Info Section -->
-      <div class="rounded-box p-1 space-y-2 border border-base-content/5">
+      <div class="rounded-box p-2 space-y-3 border border-base-content/5">
         <div class="flex items-center">
           <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
           <div v-else-if="fileInfo" class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
@@ -72,10 +72,15 @@
       <div class="rounded-box p-2 space-y-3 border border-base-content/5">
         <div class="flex items-center gap-2">
           <IconCamera class="w-4 h-4 text-base-content/30" /> 
-          <span class="font-bold text-sm text-base-content/30">{{ $t('file_info.metadata') }}</span>
+          <span class="font-bold text-base-content/30 mr-auto">{{ $t('file_info.metadata') }}</span>
+          <TButton
+            :icon="config.infoPanel.showMetadata ? IconArrowUp : IconArrowDown"
+            :buttonSize="'small'"
+            @click.stop="toggleMetadata"
+          />
         </div>
 
-        <div class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
+        <div v-if="config.infoPanel.showMetadata" class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm">
           <!-- Camera -->
           <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.camera') }}</div>
           <div class="text-base-content/70">{{ formatCameraInfo(fileInfo?.e_make, fileInfo?.e_model) }}</div>
@@ -115,7 +120,7 @@
       </div>
 
       <!-- Map View -->
-      <div v-if="config.settings.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude" class="">
+      <div v-if="config.settings.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude" class="flex-1">
         <MapView
           :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
           :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
@@ -132,7 +137,7 @@ import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName } from '@/common/utils';
 import { IconCamera } from '@/common/icons';
-import { IconClose, IconUpdate } from '@/common/icons';
+import { IconClose, IconArrowDown, IconArrowUp, IconUpdate } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 import MapView from '@/components/MapView.vue';
@@ -149,6 +154,10 @@ const { locale } = useI18n();
 const emit = defineEmits([
   'close'
 ]);
+
+function toggleMetadata() {
+  config.infoPanel.showMetadata = !config.infoPanel.showMetadata;
+}
 
 function formatGeoLocation() {
   const info = props.fileInfo;

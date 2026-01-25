@@ -6,7 +6,7 @@
     @cancel="clickClose"
   >
     <!-- Library list -->
-    <div class="flex flex-col h-full border border-base-content/10 rounded-box overflow-hidden relative">
+    <div class="flex flex-col flex-1 min-h-0 border border-base-content/10 rounded-box overflow-hidden relative">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 pt-2 text-sm text-base-content/30 border-base-content/10 mr-9">
         <div>{{ $t('msgbox.manage_libraries.name') }}</div>
@@ -15,7 +15,7 @@
 
       <VueDraggable 
         v-model="libraries" 
-        class="flex-1 overflow-x-hidden overflow-y-auto p-1 max-h-[240px] rounded-box select-none"
+        class="flex-1 overflow-x-hidden overflow-y-auto p-1 rounded-box select-none"
         :animation="200"
         handle=".drag-handle"
         :disabled="showAddInput || isRenaming"
@@ -94,7 +94,8 @@
       </VueDraggable>
     </div>
 
-    <div class="flex justify-between items-center mt-auto pt-2">
+    <!-- button area -->
+    <div class="flex justify-between items-center shrink-0 pt-2">
       <!-- Add New Library -->
       <div class="flex items-center gap-2 p-2 w-2/3 rounded-box" :class="showAddInput ? ' border border-primary' : 'border border-transparent'">
         <TButton 
@@ -133,7 +134,6 @@
       </div>
       <div v-if="inputErrorMessage" class="text-error text-xs mt-1 px-2">{{ inputErrorMessage }}</div>
 
-      <!-- Footer Buttons -->
       <button 
         class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer shrink-0" 
         @click="clickClose"
@@ -153,7 +153,6 @@
       @ok="doDeleteLibrary"
       @cancel="showDeleteConfirm = false"
     />
-
   </ModalDialog>
 </template>
 

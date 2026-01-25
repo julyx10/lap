@@ -3,11 +3,11 @@
     <div class="fixed inset-0 bg-black/30 z-[600]">
       <div 
         ref="modalDialogRef"
-        class="text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box overflow-hidden"
+        class="text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box overflow-hidden flex flex-col"
         :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
       >
         <!-- title bar -->
-        <div ref="titleBarRef" class="p-3 flex items-center justify-between select-none cursor-default">
+        <div ref="titleBarRef" class="p-3 flex items-center justify-between select-none cursor-default shrink-0">
           {{ title }}
           <TButton
             :icon="IconClose"
@@ -17,7 +17,7 @@
         </div>
 
         <!-- dialog content -->
-        <div class="p-3">
+        <div class="px-3 pb-3 flex-1 min-h-0 flex flex-col">
           <slot></slot>
         </div>
       </div>

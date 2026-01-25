@@ -296,6 +296,11 @@ onMounted( async () => {
     }
   }
 
+  // If in selection mode (MoveTo/CopyTo), auto-expand all albums
+  if (!isMainPane.value && albums.value.length > 0) {
+    Promise.all(albums.value.map(album => expandAlbum(album, true)));
+  }
+
   // listen for album-cover-changed event
   unlistenAlbumCoverChanged = await listen('album-cover-changed', async (event: any) => {
     const { albumId: eventAlbumId, fileId } = event.payload;
@@ -448,6 +453,12 @@ const clickAlbum = async (album: Album) => {
     return;
   }
 
+  // In MoveTo dialog, disable album selection and toggle expansion instead
+  if (!isMainPane.value) {
+    expandAlbum(album);
+    return;
+  }
+
   selection.selectAlbum(album);
 };
 
@@ -462,7 +473,8 @@ const expandAlbum = async (album: any, forceRefresh = false) => {
   const willExpand = forceRefresh ? true : !album.is_expanded;
   
   // Collapse all other albums when expanding one (accordion behavior)
-  if (willExpand) {
+  // Only enabled in Main Pane to keep UI clean. In MoveTo dialog, allow multiple expansions.
+  if (willExpand && isMainPane.value) {
     albums.value.forEach(a => {
       if (a.id !== album.id) {
         a.is_expanded = false;

@@ -25,6 +25,7 @@ export const useConfigStore = defineStore('configStore', {
     infoPanel: {
       show: false,               // show info panel
       width: 30,                 // info panel width(20-80%)
+      showMetadata: false,       // show metadata
       mapTheme: 0,               // 0: standard, 2: satellite
     },
 

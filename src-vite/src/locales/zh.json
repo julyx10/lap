@@ -637,6 +637,7 @@
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",
       "show_map": "显示地图",
+      "show_map_hint": "需要网络访问",
       "debug_mode": "调试模式"
     },
     "grid_view": {
@@ -654,7 +655,9 @@
         "拉伸填充"
       ],
       "label_primary": "主标签",
+      "label_primary_hint": "只有在视图样式为舒适模式时才会显示",
       "label_secondary": "副标签",
+      "label_secondary_hint": "只有在视图样式为舒适模式时才会显示",
       "label_options": [
         "(空)",
         "名称",

@@ -309,7 +309,7 @@
       "delete": "Delete",
       "reorder": "Reorder",
       "rename": "Rename",
-      "add_new": "Add new",
+      "add_new": "Add new library",
       "add": "Add",
       "placeholder": "Enter library name",
       "max_limit_reached": "Library limit reached",
@@ -637,6 +637,7 @@
       "show_tool_tip": "Show tooltips",
       "show_status_bar": "Show status bar",
       "show_map": "Show map",
+      "show_map_hint": "Requires network access",
       "debug_mode": "Debug mode"
     },
     "grid_view": {
@@ -654,7 +655,9 @@
         "Stretch to fill"
       ],
       "label_primary": "Primary label",
+      "label_primary_hint": "Only displayed when the grid view style is comfortable",
       "label_secondary": "Secondary label",
+      "label_secondary_hint": "Only displayed when the grid view style is comfortable",
       "label_options": [
         "(Empty)",
         "Name",
