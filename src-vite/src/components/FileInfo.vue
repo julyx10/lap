@@ -115,7 +115,7 @@
       </div>
 
       <!-- Map View -->
-      <div v-if="config.infoPanel.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude" class="">
+      <div v-if="config.settings.showMap && fileInfo?.gps_latitude && fileInfo?.gps_longitude" class="">
         <MapView
           :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
           :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"

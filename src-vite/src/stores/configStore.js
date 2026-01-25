@@ -25,7 +25,6 @@ export const useConfigStore = defineStore('configStore', {
     infoPanel: {
       show: false,               // show info panel
       width: 30,                 // info panel width(20-80%)
-      showMap: true,             // show map
       mapTheme: 0,               // 0: standard, 2: satellite
     },
 
@@ -70,6 +69,7 @@ export const useConfigStore = defineStore('configStore', {
       showButtonText: true,       // show button text
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
+      showMap: true,              // show map
       debugMode: false,           // debug mode
 
       // grid view settings
@@ -192,7 +192,9 @@ export const useConfigStore = defineStore('configStore', {
     setShowComment(showComment) {
       this.settings.showComment = showComment;
     },
-    
+    setShowMap(showMap) {
+      this.settings.showMap = showMap;
+    },
     // image search settings
     setImageSearchThresholdIndex(imageSearchThresholdIndex) {
       this.settings.imageSearch.thresholdIndex = imageSearchThresholdIndex;

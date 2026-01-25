@@ -69,6 +69,11 @@
             <label>{{ $t('settings.general.show_status_bar') }}</label>
             <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showStatusBar" />
           </div>
+          <!-- Show map -->
+          <div class="flex items-center justify-between mb-4">
+            <label>{{ $t('settings.general.show_map') }}</label>
+            <input type="checkbox" class="toggle toggle-primary" v-model="config.settings.showMap" />
+          </div>
           <!-- Debug Mode -->
           <!-- <div class="flex items-center justify-between mb-4">
             <label>{{ $t('settings.general.debug_mode') }}</label>
@@ -431,6 +436,9 @@ watch(() => config.settings.showToolTip, (newValue) => {
 });
 watch(() => config.settings.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
+});
+watch(() => config.settings.showMap, (newValue) => {
+  emit('settings-showMap-changed', newValue);
 });
 watch(() => config.settings.showComment, (newValue) => {
   emit('settings-showComment-changed', newValue);

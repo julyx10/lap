@@ -636,6 +636,7 @@
       "show_button_text": "Show button text",
       "show_tool_tip": "Show tooltips",
       "show_status_bar": "Show status bar",
+      "show_map": "Show map",
       "debug_mode": "Debug mode"
     },
     "grid_view": {

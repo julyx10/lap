@@ -636,6 +636,7 @@
       "show_button_text": "显示按钮文本",
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",
+      "show_map": "显示地图",
       "debug_mode": "调试模式"
     },
     "grid_view": {
