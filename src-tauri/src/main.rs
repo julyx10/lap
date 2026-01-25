@@ -20,6 +20,7 @@ mod t_common;
 mod t_config;
 mod t_face;
 mod t_image;
+mod t_migration;
 mod t_sqlite;
 mod t_utils;
 mod t_video;
@@ -37,6 +38,7 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(t_ai::AiState(std::sync::Mutex::new(t_ai::AiEngine::new())))
         .manage(t_face::FaceState(std::sync::Arc::new(
             std::sync::Mutex::new(t_face::FaceEngine::new()),

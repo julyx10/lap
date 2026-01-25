@@ -2867,6 +2867,9 @@ fn open_conn() -> Result<Connection, String> {
 pub fn create_db() -> Result<(), String> {
     let conn = open_conn()?;
 
+    // Run migrations
+    crate::t_migration::check_and_migrate(&conn)?;
+
     // albums table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS albums (
