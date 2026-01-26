@@ -14,9 +14,11 @@
         @dblclick="expandFolder(child)"
       >
         <!-- icon -->
-        <component v-if="child.path === rootPath"
-          :is="child.is_expanded ? IconFolderExpanded : IconFolderCollapsed"
-          class="mx-1 w-6 h-6 shrink-0"
+        <IconRight v-if="child.path === rootPath"
+          :class="[
+            'p-1 w-6 h-6 shrink-0 transition-transform', 
+            child.is_expanded ? 'rotate-90' : ''
+          ]"
           @click.stop="expandFolder(child)"
         />
         <template v-else>
@@ -151,8 +153,6 @@ import {
   IconFavorite,
   IconUnFavorite,
   IconCopyTo,
-  IconFolderExpanded,
-  IconFolderCollapsed,
 } from '@/common/icons';
 
 const props = defineProps<{
@@ -202,7 +202,7 @@ const toolTipRef = ref(null);
 
 // more menuitems - function that takes the folder being right-clicked
 const getMenuItemsForFolder = (folder: any) => {
-  const isRoot = folder.path === props.folderPath;
+  const isRoot = folder.path === props.rootPath;
   return [
     {
       label: localeMsg.value.menu.file.new_folder,

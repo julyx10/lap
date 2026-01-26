@@ -1,6 +1,6 @@
 <template>
     <!-- albums -->
-    <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-box">
+    <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-box select-none">
       
       <!-- title -->
       <div v-if="isMainPane" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
@@ -31,10 +31,16 @@
                 ? (selection.selected.value ? 'text-primary bg-base-100 hover:bg-base-100' : 'text-primary')
                 : 'hover:text-base-content hover:bg-base-100/30',
             ]"
-            @click="clickAlbum(album)"
-            @dblclick="dlbClickAlbum(album)"
+            @click.stop="clickAlbum(album)"
+            @dblclick.stop="dlbClickAlbum(album)"
           >
-            <div v-if="album.cover_file_id && albumCovers[album.id]" class="w-10 h-10 mr-2 shrink-0" @click.stop="dlbClickAlbum(album)">
+            <IconRight
+              class="p-1 w-6 h-6 shrink-0 transition-transform hover:text-base-content"
+              :class="{ 'rotate-90': album.is_expanded }"
+              @click.stop="expandAlbum(album)"
+              @dblclick.stop
+            />
+            <div v-if="album.cover_file_id && albumCovers[album.id]" class="w-10 h-10 mr-2 shrink-0" @click.stop="clickAlbum(album)">
               <img :src="albumCovers[album.id]" class="w-full h-full object-cover rounded-box">
             </div>
             <div v-else class="skeleton w-10 h-10 mr-2 shrink-0"></div>
@@ -91,7 +97,7 @@
             enter-from-class="max-h-0"
             enter-to-class="max-h-96"
           >
-            <div v-if="album.is_expanded && !isEditList && !(libConfig.index.albumQueue as any).includes(album.id)" class="mx-2 my-1 py-1 rounded-box bg-base-300/70">
+            <div v-if="album.is_expanded && !isEditList && !(libConfig.index.albumQueue as any).includes(album.id)" class="ml-8 mr-2 my-1 py-1 rounded-box border border-base-content/5 shadow-sm">
               <AlbumFolder 
                 :children="album.children" 
                 :albumId="album.id"
@@ -176,6 +182,7 @@ import {
   IconIndexReady,
   IconIndexRunning,
   IconIndexWaiting,
+  IconRight,
 } from '@/common/icons';
 
 const props = defineProps<{

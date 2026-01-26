@@ -47,7 +47,7 @@
                 @click.stop
               />
               <div v-else class="min-w-0 flex items-center">
-                <span class="truncate font-medium cursor-default" :title="lib.name">{{ lib.name }}</span>
+                <span class="truncate cursor-default" :class="{ 'text-primary': lib.id === currentLibraryId }" :title="lib.name">{{ lib.name }}</span>
                 <span v-if="lib.id === 'default'" class="shrink-0 text-xs p-1 ml-2 rounded-box bg-base-100/50">{{ $t('msgbox.manage_libraries.default') }}</span>
               </div>
             </div>
@@ -97,7 +97,7 @@
     <!-- button area -->
     <div class="flex justify-between items-center shrink-0 pt-2">
       <!-- Add New Library -->
-      <div class="flex items-center gap-2 p-2 w-2/3 rounded-box" :class="showAddInput ? ' border border-primary' : 'border border-transparent'">
+      <div class="flex items-center gap-2 p-2 w-2/3 rounded-box" :class="showAddInput ? ' border border-base-content/10' : 'border border-transparent'">
         <TButton 
           v-if="!showAddInput" 
           :icon="IconAdd" 

@@ -428,8 +428,8 @@
     },
     "image_editor": {
       "title": "Edit image",
-      "tab_adjust": "Adjust",
-      "tab_export": "Export",
+      "tab_edit": "Edit",
+      "tab_save": "Save",
       "filters": "Filters",
       "filter_none": "None",
       "filter_grayscale": "Grayscale",
@@ -483,7 +483,8 @@
       ],
       "copy_image": "Copy to clipboard",
       "ok": "Save",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "overwrite_confirm": "Are you sure you want to overwrite the original file? This action cannot be undone."
     }
   },
   "file_info": {

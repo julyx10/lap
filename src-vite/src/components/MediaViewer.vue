@@ -120,9 +120,12 @@
 
     <!-- Previous Button (Overlay) -->
     <button 
-      v-if="hasPrevious && !isSlideShow"
-      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/80 backdrop-blur-md cursor-pointer"
-      :class="[ isHoverLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
+      v-if="!isSlideShow"
+      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
+      :class="[ 
+        isHoverLeft ? (hasPrevious ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
+      ]"
+      :disabled="!hasPrevious"
       @click.stop="triggerPrev"
       @dblclick.stop
     >
@@ -131,9 +134,12 @@
 
     <!-- Next Button (Overlay) -->
     <button 
-      v-if="hasNext && !isSlideShow"
-      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 hover:text-base-content hover:bg-base-100/80 backdrop-blur-md cursor-pointer"
-      :class="[ isHoverRight ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none' ]"
+      v-if="!isSlideShow"
+      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
+      :class="[ 
+        isHoverRight ? (hasNext ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
+      ]"
+      :disabled="!hasNext"
       @click.stop="triggerNext"
       @dblclick.stop
     >

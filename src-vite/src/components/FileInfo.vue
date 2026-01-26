@@ -4,18 +4,18 @@
     <div class="my-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-2 flex flex-col">
       
       <!-- File Info Section -->
-      <div class="rounded-box p-2 space-y-3 border border-base-content/5">
+      <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
         <div class="flex items-center">
           <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
           <div v-else-if="fileInfo" class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
           <div v-else class="w-10 h-10 bg-base-content/5 rounded-box shrink-0"></div>
           <span class="ml-2 mr-auto font-bold text-sm text-base-content/70 break-all">{{ fileInfo?.name }}</span>
           
-          <TButton v-if="fileInfo && !fileInfo?.has_embedding"
+          <!-- <TButton v-if="fileInfo && !fileInfo?.has_embedding"
             :icon="IconUpdate"
             :buttonSize="'small'"
             @click.stop="$emit('update')"
-          />
+          /> -->
           <TButton
             :icon="IconClose"
             :buttonSize="'small'"
@@ -69,7 +69,7 @@
       </div>
 
       <!-- Metadata Section -->
-      <div class="rounded-box p-2 space-y-3 border border-base-content/5">
+      <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
         <div class="flex items-center gap-2">
           <IconCamera class="w-4 h-4 text-base-content/30" /> 
           <span class="font-bold text-base-content/30 mr-auto">{{ $t('file_info.metadata') }}</span>
