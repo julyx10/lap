@@ -5,7 +5,7 @@
       class="absolute inset-0 z-50 bg-base-200/80 backdrop-blur-md"
     >
       <div class="mt-8 px-2 flex flex-col items-center text-base-content/30">
-        <IconRefresh class="w-8 h-8 mb-2 animate-spin" />
+        <IconUpdate class="w-8 h-8 mb-2 animate-spin" />
         <span class="text-sm text-center">
           {{ indexProgress.phase === 'clustering' 
             ? $t('face_index.clustering') 
@@ -88,14 +88,11 @@
       <span class="text-sm text-center">{{ $t('tooltip.not_found.person') }}</span>
       <span class="text-xs text-center mt-1">{{ $t('tooltip.not_found.person_hint') }}</span>
       <button class="btn btn-primary btn-sm mt-4" @click="clickIndexFaces">
-        <IconRefresh class="w-4 h-4" />
+        <IconUpdate class="w-4 h-4" />
         {{ $t('face_index.start') }}
       </button>
     </div>
 
-    <button class="btn btn-ghost btn-xs mt-4 text-base-content/20 hover:text-error" @click="clickResetFaces">
-      Reset Faces
-    </button>
   </div>
 
   <!-- Delete person confirmation -->
@@ -109,6 +106,18 @@
     @ok="clickDeletePerson"
     @cancel="showDeletePersonMsgbox = false"
   />
+
+  <!-- Reset faces confirmation -->
+  <MessageBox
+    v-if="showResetFacesMsgbox"
+    :title="$t('msgbox.reset_faces.title')"
+    :message="$t('msgbox.reset_faces.content')"
+    :OkText="$t('msgbox.reset_faces.ok')"
+    :cancelText="$t('msgbox.cancel')"
+    :warningOk="true"
+    @ok="onResetFacesConfirm"
+    @cancel="showResetFacesMsgbox = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -121,7 +130,7 @@ import {
   IconMore, 
   IconRename, 
   IconTrash,
-  IconRefresh,
+  IconUpdate,
   IconClose,
 } from '@/common/icons';
 
@@ -193,6 +202,7 @@ const clusterProgressText = computed(() => {
 
 // message boxes
 const showDeletePersonMsgbox = ref(false);
+const showResetFacesMsgbox = ref(false);
 
 // more menuitems
 const getMoreMenuItems = () => [
@@ -366,16 +376,20 @@ async function clickCancelIndex() {
 
 // Reset faces
 async function clickResetFaces() {
-  if (confirm('Are you sure you want to delete ALL face data? This cannot be undone.')) {
-    await resetFaces();
-    await loadPersons();
-  }
+  showResetFacesMsgbox.value = true;
+}
+
+async function onResetFacesConfirm() {
+  showResetFacesMsgbox.value = false;
+  await resetFaces();
+  await loadPersons();
 }
 
 defineExpose({
   clickIndexFaces,
   clickCancelIndex,
   loadPersons,
+  clickResetFaces,
 });
 
 </script>

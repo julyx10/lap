@@ -1086,6 +1086,39 @@ impl AFile {
         Ok(result)
     }
 
+    /// get all file IDs for a specific album
+    /// Returns a map of file path to file ID
+    pub fn get_all_ids_in_album(album_id: i64) -> Result<HashMap<String, i64>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT a.id, b.path, a.name
+                FROM afiles a
+                JOIN afolders b ON a.folder_id = b.id
+                WHERE b.album_id = ?1",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map(params![album_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut files = HashMap::new();
+        for row in rows {
+            if let Ok((id, folder_path, name)) = row {
+                let full_path = t_utils::get_file_path(&folder_path, &name);
+                files.insert(full_path, id);
+            }
+        }
+        Ok(files)
+    }
+    
     // Helper function to build the count SQL query
     fn build_count_query() -> String {
         let base_query = "SELECT COUNT(*), SUM(a.size)

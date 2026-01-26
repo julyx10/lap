@@ -302,7 +302,7 @@
         class="absolute inset-0 z-100 bg-base-200/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-base-content/30"
         :class="[ config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12 mb-1' ]"
       >
-        <component :is="libConfig.index.albumQueue[0] === libConfig.album.id ? IconIndexRunning : IconIndexWaiting" class="mx-1 w-8 h-8" />
+        <IconUpdate class="mx-1 w-8 h-8 animate-spin"/>
         <span class="text-lg text-center">{{ libConfig.index.albumQueue[0] === libConfig.album.id
           ? $t('search.index.indexing', { album: libConfig.index.albumName, count: libConfig.index.indexed.toLocaleString(), total: libConfig.index.total.toLocaleString() }) 
           : $t('search.index.wait_index') 
@@ -519,8 +519,6 @@ import {
   IconGallery,
   IconRestore,
   IconRefresh,
-  IconIndexRunning,
-  IconIndexWaiting,
   IconPhotoSearch,
   IconPersonSearch,
   IconFolderSearch,

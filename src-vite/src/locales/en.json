@@ -268,7 +268,21 @@
       "reveal_in_file_explorer": "Reveal in File Explorer...",
       "set_album_cover": "Set as album cover"
     },
+    "calendar": {
+      "monthly": "Monthly view",
+      "daily": "Daily view",
+      "time_asc": "Time Asc",
+      "time_desc": "Time Desc"
+    },
+    "search": {
+      "clear_history": "Clear search history"
+    },
+    "person": {
+      "index_faces": "Index faces",
+      "reset_index": "Reset index"
+    },
     "tag": {
+      "add": "Add tag...",
       "rename": "Rename",
       "delete": "Delete"
     },
@@ -278,14 +292,24 @@
       "tag": "Tag...",
       "comment": "Comment...",
       "rotate": "Rotate display"
+    },
+    "sort": {
+      "sort_by_name": "Sort by name",
+      "sort_by_count": "Sort by count"
     }
   },
   "msgbox": {
     "ok": "OK",
+    "reset": "Reset",
     "cancel": "Cancel",
     "close": "Close",
     "input": {
       "file_name_invalid": "Name cannot contain the following characters: \\ / : * ? \" < > |."
+    },
+    "reset_faces": {
+      "title": "Reset index",
+      "content": "Are you sure you want to delete ALL face data? This cannot be undone.",
+      "ok": "Reset"
     },
     "clear_search_history": {
       "title": "Clear search history",

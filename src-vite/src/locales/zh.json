@@ -268,7 +268,21 @@
       "reveal_in_file_explorer": "在文件资源管理器中显示...",
       "set_album_cover": "设置为相册封面"
     },
+    "calendar": {
+      "monthly": "月视图",
+      "daily": "日视图",
+      "time_asc": "时间升序",
+      "time_desc": "时间降序"
+    },
+    "search": {
+      "clear_history": "清空搜索历史"
+    },
+    "person": {
+      "index_faces": "索引人脸",
+      "reset_index": "重置索引"
+    },
     "tag": {
+      "add": "添加标签...",
       "rename": "重命名",
       "delete": "删除"
     },
@@ -278,14 +292,24 @@
       "tag": "标签...",
       "comment": "备注...",
       "rotate": "旋转显示"
+    },
+    "sort": {
+      "sort_by_name": "按名称排序",
+      "sort_by_count": "按数量排序"
     }
   },
   "msgbox": {
     "ok": "确定",
+    "reset": "重置",
     "cancel": "取消",
     "close": "关闭",
     "input": {
       "file_name_invalid": "名称不能包含以下字符: \\ / : * ? \" < > |."
+    },
+    "reset_faces": {
+      "title": "重置索引",
+      "content": "确定要删除所有面部数据吗？此操作无法撤销。",
+      "ok": "重置"
     },
     "clear_search_history": {
       "title": "清空搜索历史",

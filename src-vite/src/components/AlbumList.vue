@@ -5,12 +5,6 @@
       <!-- title -->
       <div v-if="isMainPane" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
         <span class="flex-1">{{ $t('album.album_list') }}</span>
-        <TButton v-if="isEditList" 
-          :icon="IconRestore"
-          :selected="true"
-          :buttonSize="'small'"
-          @click="clickCloseEditList"
-        />
       </div>
       
       <!-- drag to change albums' display order -->
@@ -62,8 +56,12 @@
                 :buttonSize="'small'"
                 @click="clickIndexAlbum(album.id)"
               /> -->
-              <div v-if="album.indexed !== undefined && album.total !== undefined && album.indexed < album.total" @click="clickIndexAlbum(album.id)">
-                <component :is="libConfig.index.albumQueue[0] === album.id ? IconIndexRunning : IconIndexWaiting" class="mx-1 w-4 h-4 hover:text-base-content" />
+              <div v-if="(album.indexed !== undefined && album.total !== undefined && album.indexed < album.total) || libConfig.index.albumQueue.includes(album.id)" @click="clickIndexAlbum(album.id)">
+                <component 
+                  :is="libConfig.index.albumQueue.includes(album.id) ? IconUpdate : IconUpdateAlert"
+                  class="mx-1 w-4 h-4 hover:text-base-content" 
+                  :class="libConfig.index.albumQueue.includes(album.id) ? 'animate-spin' : ''" 
+                />
               </div>
               <span v-else>
                 {{ album.total.toLocaleString() }}
@@ -177,17 +175,16 @@ import {
   IconEdit,
   IconRemove,
   IconUpdate,
-  IconRestore,
+  IconUpdateAlert,
   IconOrder,
-  IconIndexReady,
-  IconIndexRunning,
-  IconIndexWaiting,
   IconRight,
 } from '@/common/icons';
 
 const props = defineProps<{
   selectionSource: SelectionSource;
 }>();
+
+const emit = defineEmits(['editDataChanged']);
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -240,7 +237,7 @@ const getMoreMenuItems = (album: any) => {
     },
     {
       label: localeMsg.value.menu.album.index,
-      icon: IconIndexReady,
+      icon: IconUpdate,
       action: () => {
         clickIndexAlbum(album.id);
       }
@@ -548,13 +545,20 @@ const onDragEnd = async () => {
 const clickCloseEditList = () => {
   isEditList.value = false;
   uiStore.removeInputHandler('AlbumList-edit');
+  emit('editDataChanged', false);
+};
+
+const clickReorder = () => {
+  isEditList.value = true;
+  uiStore.pushInputHandler('AlbumList-edit');
+  emit('editDataChanged', true);
 };
 
 const handleKeyDown = (event: KeyboardEvent) => {
   if (isEditList.value && event.payload.key === 'Escape') {
     clickCloseEditList();
   }
-};
+};``
 
 // Expose methods
 defineExpose({ 
@@ -562,6 +566,8 @@ defineExpose({
   clickNewAlbum,
   refreshAlbums,
   clickFinalSubFolder,
+  clickReorder,
+  clickCloseEditList,
 });
 
 </script>

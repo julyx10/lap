@@ -756,6 +756,9 @@ pub async fn index_album_worker(
         count_folder_files(&album.path);
     let total_files = image_count + video_count;
 
+    // Get all existing files in DB for this album to track deletions
+    let mut all_files_map = AFile::get_all_ids_in_album(album_id).unwrap_or_default();
+
     // 3. Emit start progress
     let mut current_progress = 0;
     app_handle
@@ -773,10 +776,12 @@ pub async fn index_album_worker(
     let _ = Album::update_progress(album_id, 0, total_files);
 
     // 4. Traverse and index
+    let mut is_cancelled = false;
     for entry in WalkDir::new(&album.path).into_iter().filter_map(Result::ok) {
         // Check cancellation
         if let Some(&true) = cancellation_token.lock().unwrap().get(&album_id) {
             println!("Indexing cancelled for album {}", album_id);
+            is_cancelled = true;
             break;
         }
 
@@ -808,6 +813,9 @@ pub async fn index_album_worker(
                         let ai_state: State<crate::t_ai::AiState> = app_handle.state();
                         let _ =
                             crate::t_sqlite::AFile::generate_embedding(&ai_state, file.id.unwrap());
+
+                        // Remove from map to mark as exists
+                        all_files_map.remove(&path_str);
                     }
                 }
 
@@ -826,6 +834,18 @@ pub async fn index_album_worker(
                     let _ = Album::update_progress(album_id, current_progress, total_files);
                 }
             }
+        }
+    }
+
+    // Delete files that are in DB but not in file system
+    if !is_cancelled && !all_files_map.is_empty() {
+        println!(
+            "Deleting {} files from DB that are no longer in file system for album {}",
+            all_files_map.len(),
+            album_id
+        );
+        for (_, file_id) in all_files_map {
+            let _ = AFile::delete(file_id);
         }
     }
 

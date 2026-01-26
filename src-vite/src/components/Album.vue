@@ -28,6 +28,7 @@
     <AlbumList ref="albumListRef" 
       :key="albumListKey"
       selectionSource="album"
+      @editDataChanged="(val) => emit('editDataChanged', val)"
     />
   </div> 
 
@@ -49,6 +50,8 @@ const props = defineProps({
     required: true
   }
 });
+
+const emit = defineEmits(['editDataChanged']);
 
 /// i18n
 const { locale, messages } = useI18n();
