@@ -61,7 +61,9 @@
     "cluster_converged": "Converged at iteration {current}",
     "cluster_assign": "Creating person {current}/{total}",
     "cluster_thumbnail": "Generating thumbnails...",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "incomplete": "Face indexing incomplete ({count} photos unprocessed)",
+    "resume": "Resume Indexing"
   },
   "favorite": {
     "files": "Favorite files",

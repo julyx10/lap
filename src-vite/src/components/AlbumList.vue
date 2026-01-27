@@ -176,7 +176,6 @@ import {
   IconRemove,
   IconUpdate,
   IconUpdateAlert,
-  IconOrder,
   IconRight,
 } from '@/common/icons';
 
@@ -245,14 +244,6 @@ const getMoreMenuItems = (album: any) => {
     {
       label: "-",   // separator
       action: () => {}
-    },
-    {
-      label: localeMsg.value.menu.album.reorder,
-      icon: IconOrder,
-      action: () => {
-        isEditList.value = true;
-        uiStore.pushInputHandler('AlbumList-edit');
-      }
     },
     {
       label: localeMsg.value.menu.album.remove,

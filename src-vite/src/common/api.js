@@ -1082,6 +1082,16 @@ export async function isFaceIndexing() {
   }
 }
 
+// get face indexing stats
+export async function getFaceStats() {
+  try {
+    return await invoke('get_face_stats');
+  } catch (error) {
+    console.error('Failed to get face stats:', error);
+    return null;
+  }
+}
+
 // listen face index progress
 export async function listenFaceIndexProgress(callback) {
   return await listen('face_index_progress', callback);

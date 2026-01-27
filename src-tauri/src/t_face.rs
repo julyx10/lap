@@ -34,6 +34,15 @@ pub struct FaceIndexProgress {
 #[derive(Clone)]
 pub struct FaceIndexProgressState(pub Arc<Mutex<FaceIndexProgress>>);
 
+// face stats
+#[derive(Clone, serde::Serialize)]
+pub struct FaceStats {
+    pub total: usize,
+    pub processed: usize,
+    pub unprocessed: usize,
+    pub faces: usize,
+}
+
 /// Detected face bounding box and landmarks
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FaceBox {

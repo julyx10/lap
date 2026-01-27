@@ -2,15 +2,13 @@
     
   <div class="w-full h-full flex flex-col select-none">
 
-    <!-- library (All Files) -->
+    <!-- All Files -->
     <div 
       :class="[ 
-        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap group',
-        albumListRef?.isEditList 
-          ? 'text-base-content/30' 
-          : (libConfig.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100 cursor-pointer' : 'hover:text-base-content hover:bg-base-100/30 cursor-pointer'),
+        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer',
+        (libConfig.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30'),
       ]"
-      @click="clickLibrary"
+      @click="clickAllFiles"
     >
       <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
       <div class="overflow-hidden whitespace-pre text-ellipsis">
@@ -35,12 +33,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
-import { useUIStore } from '@/stores/uiStore';
 
-import { IconAdd, IconOrder, IconRefresh, IconPhotoAll } from '@/common/icons';
+import { IconPhotoAll } from '@/common/icons';
 import { getTotalCountAndSum } from '@/common/api';
 import AlbumList from '@/components/AlbumList.vue';
 
@@ -56,7 +53,6 @@ const emit = defineEmits(['editDataChanged']);
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
-const uiStore = useUIStore();
 
 const totalCount = ref(0);
 
@@ -74,46 +70,11 @@ onMounted(async () => {
   });
 });
 
-onUnmounted(() => {
-  uiStore.removeInputHandler('AlbumList-edit');
-});
-
-const albumsMenuItems = computed(() => {
-  return [
-    {
-      label: localeMsg.value.menu.album.add,
-      icon: IconAdd,
-      action: () => {
-        albumListRef.value?.clickNewAlbum();
-      }
-    },
-    {
-      label: localeMsg.value.menu.album.refresh,
-      icon: IconRefresh,
-      action: async () => {
-        albumListRef.value?.refreshAlbums(); 
-      }
-    },
-    {
-      label: localeMsg.value.menu.album.reorder,
-      icon: IconOrder,
-      action: () => {
-        if (albumListRef.value) {
-          albumListRef.value.isEditList = true;
-        }
-        uiStore.pushInputHandler('AlbumList-edit');
-      }
-    },
-  ];
-});
-
-const clickLibrary = () => {
-  if(!albumListRef.value?.isEditList) {
+const clickAllFiles = () => {
     libConfig.album.id = 0;
     libConfig.album.folderId = null;
     libConfig.album.folderPath = '';
     libConfig.album.selected = false;
-  }
 };
 
 defineExpose({

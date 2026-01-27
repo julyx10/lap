@@ -199,6 +199,7 @@ fn main() {
             t_cmds::cancel_face_index,
             t_cmds::reset_faces,
             t_cmds::is_face_indexing,
+            t_cmds::get_face_stats,
             t_cmds::get_persons,
             t_cmds::rename_person,
             t_cmds::delete_person,

@@ -681,6 +681,20 @@ pub fn index_faces(
     )
 }
 
+/// get face indexing stats
+#[tauri::command]
+pub fn get_face_stats() -> Result<t_face::FaceStats, String> {
+    let (total, processed, unprocessed, faces) = t_sqlite::Face::get_stats_full()
+        .map_err(|e| format!("Error while getting face stats: {}", e))?;
+
+    Ok(t_face::FaceStats {
+        total,
+        processed,
+        unprocessed,
+        faces,
+    })
+}
+
 /// cancel face indexing
 #[tauri::command]
 pub fn cancel_face_index(state: State<t_face::FaceIndexCancellation>) -> Result<(), String> {

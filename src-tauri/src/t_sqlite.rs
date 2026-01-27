@@ -2768,6 +2768,34 @@ impl Face {
 
         Ok((processed as usize, faces as usize))
     }
+
+    /// Get full statistics for face indexing
+    /// Returns (total_images, processed_images, unprocessed_images, total_faces)
+    pub fn get_stats_full() -> Result<(usize, usize, usize, usize), String> {
+        let conn = open_conn()?;
+        
+        let total: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM afiles WHERE file_type = 1",
+            [],
+            |row| row.get(0),
+        ).unwrap_or(0);
+
+        let processed: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM afiles WHERE has_faces > 0 AND file_type = 1",
+            [],
+            |row| row.get(0),
+        ).unwrap_or(0);
+
+        let faces: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM faces",
+            [],
+            |row| row.get(0),
+        ).unwrap_or(0);
+
+        let unprocessed = total - processed;
+
+        Ok((total as usize, processed as usize, unprocessed as usize, faces as usize))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -25,6 +25,19 @@
       </div>
     </div>
 
+    <!-- Incomplete Indexing Warning Banner -->
+    <div v-if="allPersons.length > 0 && incompleteCount > 0 && !isIndexing" class="flex-none px-2 py-2">
+        <div class="p-3 bg-warning/10 text-warning rounded-box flex flex-row items-center gap-2">
+          <IconUpdate class="w-5 h-5 shrink-0" />
+          <span class="text-xs flex-1">
+            {{ $t('face_index.incomplete', { count: incompleteCount.toLocaleString() }) }}
+          </span>
+          <button class="btn btn-xs btn-warning btn-outline bg-base-100" @click="clickIndexFaces">
+            {{ $t('face_index.resume') }}
+          </button>
+        </div>
+    </div>
+
     <!-- Person List -->
     <div v-if="allPersons.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
       <ul>
@@ -85,12 +98,21 @@
     <!-- No Persons Found Message -->
     <div v-else-if="!isIndexing" class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
       <IconPerson class="w-8 h-8 mb-2" />
-      <span class="text-sm text-center">{{ $t('tooltip.not_found.person') }}</span>
-      <span class="text-xs text-center mt-1">{{ $t('tooltip.not_found.person_hint') }}</span>
-      <button class="btn btn-primary btn-sm mt-4" @click="clickIndexFaces">
-        <IconUpdate class="w-4 h-4" />
-        {{ $t('face_index.start') }}
-      </button>
+      <template v-if="incompleteCount > 0">
+         <span class="text-sm text-center text-warning">{{ $t('face_index.incomplete', { count: incompleteCount.toLocaleString() }) }}</span>
+         <button class="btn btn-warning btn-sm mt-4" @click="clickIndexFaces">
+          <IconUpdate class="w-4 h-4" />
+          {{ $t('face_index.resume') }}
+        </button>
+      </template>
+      <template v-else>
+        <span class="text-sm text-center">{{ $t('tooltip.not_found.person') }}</span>
+        <span class="text-xs text-center mt-1">{{ $t('tooltip.not_found.person_hint') }}</span>
+        <button class="btn btn-primary btn-sm mt-4" @click="clickIndexFaces">
+          <IconUpdate class="w-4 h-4" />
+          {{ $t('face_index.start') }}
+        </button>
+      </template>
     </div>
 
   </div>
@@ -124,7 +146,7 @@
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
-import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress, resetFaces } from '@/common/api';
+import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress, resetFaces, getFaceStats } from '@/common/api';
 import { 
   IconPerson, 
   IconMore, 
@@ -166,6 +188,7 @@ const clusterProgress = ref({
   current: 0,
   total: 0
 });
+const incompleteCount = ref(0);
 
 // Event listener unsubscribe functions
 let unlistenProgress: (() => void) | null = null;
@@ -230,6 +253,7 @@ const getMoreMenuItems = () => [
 
 onMounted(async () => {
   loadPersons();
+  checkFaceStats();
   
   // Check if indexing is already running and restore progress
   const [isRunning, progress] = await isFaceIndexing();
@@ -252,6 +276,7 @@ onMounted(async () => {
     indexProgress.value = { current: 0, total: 0, faces_found: 0, phase: 'indexing' };
     clusterProgress.value = { phase: '', current: 0, total: 0 };
     loadPersons(); // Reload persons after indexing completes
+    checkFaceStats();
   });
   
   // Listen for detailed clustering progress
@@ -362,6 +387,7 @@ async function clickIndexFaces() {
     console.log('clusterEpsilon', clusterEpsilon);
     await indexFaces(clusterEpsilon);
     await loadPersons();
+    await checkFaceStats();
   } catch (e) {
     console.error('indexFaces error:', e);
   } finally {
@@ -383,6 +409,14 @@ async function onResetFacesConfirm() {
   showResetFacesMsgbox.value = false;
   await resetFaces();
   await loadPersons();
+  checkFaceStats();
+}
+
+async function checkFaceStats() {
+  const stats = await getFaceStats();
+  if (stats) {
+    incompleteCount.value = stats.unprocessed;
+  }
 }
 
 defineExpose({

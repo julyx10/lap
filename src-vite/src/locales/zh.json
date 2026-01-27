@@ -61,7 +61,9 @@
     "cluster_converged": "在第 {current} 次迭代收敛",
     "cluster_assign": "创建人物 {current}/{total}",
     "cluster_thumbnail": "生成缩略图...",
-    "cancel": "取消"
+    "cancel": "取消",
+    "incomplete": "人脸索引未完成 ({count} 张照片未处理)",
+    "resume": "继续索引"
   },
   "favorite": {
     "files": "收藏的文件",
