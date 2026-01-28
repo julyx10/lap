@@ -108,9 +108,6 @@ listen('settings-navigatorViewSize-changed', (event) => {
 listen('settings-showComment-changed', (event) => {
   config.setShowComment(event.payload)
 })
-listen('settings-showMap-changed', (event) => {
-  config.setShowMap(event.payload)
-})
 listen('settings-imageSearchThresholdIndex-changed', (event) => {
   config.setImageSearchThresholdIndex(event.payload)
 })

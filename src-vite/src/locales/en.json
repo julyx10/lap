@@ -516,6 +516,7 @@
   "file_info": {
     "title": "File info",
     "metadata": "Metadata",
+    "location": "Location",
     "album_name": "Album",
     "name": "File name",
     "folder": "Folder",

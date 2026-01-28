@@ -75,14 +75,6 @@
               </div>
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showStatusBar" />
             </div>
-             <!-- Show Map -->
-            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.general.show_map') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.general.show_map_hint') }}</div>
-              </div>
-              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showMap" />
-            </div>
           </div>
 
           <!-- Grid View Tab -->
@@ -425,9 +417,6 @@ watch(() => config.settings.showToolTip, (newValue) => {
 });
 watch(() => config.settings.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
-});
-watch(() => config.settings.showMap, (newValue) => {
-  emit('settings-showMap-changed', newValue);
 });
 watch(() => config.settings.showComment, (newValue) => {
   emit('settings-showComment-changed', newValue);
