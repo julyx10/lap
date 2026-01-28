@@ -47,3 +47,14 @@ html, body {
 .t-icon-size-lg {
   @apply w-8 h-8;
 }
+
+/* transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

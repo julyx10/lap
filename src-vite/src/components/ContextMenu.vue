@@ -9,6 +9,7 @@
         :buttonSize="smallIcon ? 'small' : 'medium'"
         :disabled="disabled"
         @click="toggleDropdown" 
+        @dblclick.stop
       />
     </slot>
     <!-- Dropdown Menu -->
@@ -176,5 +177,3 @@ const handleClick = (item) => {
 };
 
 </script>
-
-  

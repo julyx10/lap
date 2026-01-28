@@ -220,7 +220,7 @@ const onBeforeEnter = (el: any) => {
 }
 
 const onEnter = (el: any) => {
-  el.style.transition = 'all 0.3s ease';
+  el.style.transition = 'all 0.1s ease';
   // Check scrollHeight to know final height
   el.style.height = el.scrollHeight + 'px';
   el.style.opacity = '1';
@@ -231,7 +231,7 @@ const onAfterEnter = (el: any) => {
 }
 
 const onLeave = (el: any) => {
-  el.style.transition = 'all 0.3s ease';
+  el.style.transition = 'all 0.1s ease';
   // Force height back to explicit pixel value for animation
   el.style.height = el.scrollHeight + 'px';
   // Force repaint to ensure transition triggers

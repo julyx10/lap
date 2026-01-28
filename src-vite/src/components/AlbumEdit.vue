@@ -1,18 +1,18 @@
 <template>
   <ModalDialog :title="isNewAlbum ? $t('album.edit.title_add') : $t('album.edit.title')" @cancel="clickCancel">
     <!-- two column grid layout -->
-    <div class="w-full text-sm text-nowrap grid grid-cols-[auto_1fr_auto] gap-x-2 gap-y-1 items-center">
+    <div class="w-full text-sm text-nowrap grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-1 items-center">
       <!-- Folder -->
       <div class="h-8 flex items-center col-start-1">{{ $t('album.edit.folder') }}</div>
-      <div class="h-8 flex items-center justify-between gap-x-2 col-start-2">
+      <div class="h-12 flex items-center justify-between gap-x-2 col-start-2">
         <input v-if="selectedFolder !== ''"
           type="text"
           readonly
           :value="selectedFolder"
-          class="py-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
+          class="p-1 w-full border-none focus:border-none focus:ring-0 focus:outline-none"
         />
         <button v-if="selectedFolder === ''"
-          class="btn btn-primary btn-sm rounded-box"
+          class="btn btn-primary rounded-box"
           @click="clickSelectFolder"
         >
           <IconNewFolder class="w-4 h-4" />
@@ -20,7 +20,6 @@
         </button>
         <TButton v-if="isNewAlbum && selectedFolder !== ''"
           :icon="IconNewFolder"
-          :buttonSize="'small'"
           :selected="true"
           @click="clickSelectFolder"
         />
