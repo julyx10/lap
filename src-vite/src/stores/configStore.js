@@ -86,7 +86,7 @@ export const useConfigStore = defineStore('configStore', {
       
       // image view settings
       previewPosition: 0,         // 0: top display, 1: bottom display
-      mouseWheelMode: 0,          // 0: previous/next, 1: zoom in/out
+      mouseWheelMode: 1,          // 0: previous/next, 1: zoom in/out (default)
       slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
       navigatorViewMode: 0,       // 0: Auto, 1: Always hide, 2: Always show
       navigatorViewSize: 240,     // navigator view size (160, 240, 320, 400)
@@ -176,9 +176,9 @@ export const useConfigStore = defineStore('configStore', {
     setFilmStripViewPreviewPosition(filmStripViewPreviewPosition) {
       this.settings.previewPosition = filmStripViewPreviewPosition;
     },
-    setMouseWheelMode(mouseWheelMode) {
-      this.settings.mouseWheelMode = mouseWheelMode;
-    },
+    // setMouseWheelMode(mouseWheelMode) {
+    //   this.settings.mouseWheelMode = mouseWheelMode;
+    // },
     setSlideShowInterval(slideShowInterval) {
       this.settings.slideShowInterval = slideShowInterval;
     },

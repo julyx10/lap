@@ -1,5 +1,5 @@
 <template>
-  <div ref="videoContainer" class="relative w-full h-full cursor-pointer">
+  <div ref="videoContainer" class="relative w-full h-full cursor-pointer" @wheel.prevent="handleWheel">
     
     <TransitionGroup :name="isSlideShow ? 'slide-in' : ''">
       <div 
@@ -68,6 +68,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['message-from-video-viewer']);
+
 const { t: $t } = useI18n(); // i18n
  
 const videoContainer = ref<HTMLDivElement | null>(null);
@@ -89,6 +91,13 @@ const noTransition = ref(false);
 // Double buffering state
 const activeVideo = ref(0);
 let currentLoadingId = 0;
+
+// Touchpad detection and gesture handling
+let isTouchpadDevice = false;
+let horizontalDeltaAccumulator = 0;
+let gestureResetTimeout: ReturnType<typeof setTimeout> | null = null;
+let hasNavigatedThisGesture = false;
+const HORIZONTAL_NAV_THRESHOLD = 100;
 
 const playerOptions = computed(() => ({
   responsive: false,
@@ -423,6 +432,60 @@ defineExpose({
     players.value.forEach(p => p?.pause());
   },
 });
+
+// Wheel event handler for touchpad support
+function handleWheel(event: WheelEvent) {
+  // Detect touchpad via horizontal delta (sticky)
+  if (event.deltaX !== 0) {
+    isTouchpadDevice = true;
+  }
+  
+  // Reset timeout - when no events for 150ms, reset gesture state
+  if (gestureResetTimeout) clearTimeout(gestureResetTimeout);
+  gestureResetTimeout = setTimeout(() => {
+    horizontalDeltaAccumulator = 0;
+    hasNavigatedThisGesture = false;
+  }, 150);
+  
+  if (isTouchpadDevice) {
+    // Touchpad: horizontal = navigation, vertical = zoom
+    horizontalDeltaAccumulator += event.deltaX;
+    
+    if (!hasNavigatedThisGesture && Math.abs(horizontalDeltaAccumulator) >= HORIZONTAL_NAV_THRESHOLD) {
+      const direction = horizontalDeltaAccumulator > 0 ? 'next' : 'prev';
+      emit('message-from-video-viewer', { message: direction });
+      hasNavigatedThisGesture = true;
+      horizontalDeltaAccumulator = 0;
+    }
+    
+    // Vertical = zoom
+    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+      const zoomFactor = 0.01;
+      const delta = -event.deltaY * zoomFactor;
+      scale.value = Math.max(0.1, Math.min(10, scale.value + delta));
+      updateTransform();
+    }
+  } else {
+    // Mouse wheel: zoom in/out based on mouseWheelMode
+    if (config.settings.mouseWheelMode === 0) {
+      if (event.ctrlKey) {
+        const zoomFactor = 0.1;
+        scale.value = event.deltaY < 0 
+          ? Math.min(scale.value * (1 + zoomFactor), 10)
+          : Math.max(scale.value * (1 - zoomFactor), 0.1);
+        updateTransform();
+      } else {
+        emit('message-from-video-viewer', { message: event.deltaY < 0 ? 'prev' : 'next' });
+      }
+    } else {
+      const zoomFactor = 0.1;
+      scale.value = event.deltaY < 0 
+        ? Math.min(scale.value * (1 + zoomFactor), 10)
+        : Math.max(scale.value * (1 - zoomFactor), 0.1);
+      updateTransform();
+    }
+  }
+}
 </script>
 
 <style>

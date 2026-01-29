@@ -22,11 +22,11 @@
     </transition>
 
     <!-- main image -->
-    <TransitionGroup :name="isSlideShow ? 'slide-in' : ''">
+    <TransitionGroup :name="transitionName" @after-leave="handleTransitionEnd">
       <div 
         v-for="(src, index) in imageSrc"
         v-show="activeImage === index"
-        :key="`img-${index}`"
+        :key="`img-${src}-${index}`"
         class="slide-wrapper absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
       >
         <img
@@ -37,11 +37,12 @@
             position: 'absolute',
             minWidth: `${imageSize[index].width}px`,
             minHeight: `${imageSize[index].height}px`,
-            transform: `translate(${position[index].x}px, ${position[index].y}px) 
+            transform: `translate3d(${position[index].x}px, ${position[index].y}px, 0) 
                         scale(${scale[index]}) 
                         rotate(${imageRotate[index]}deg)`,
-            transition: !isDraggingImage && !noTransition ? (isDraggingNavBox ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out') : 'none',
+            transition: !isDraggingImage && !noTransition && !isWheelZooming ? (isDraggingNavBox ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out') : 'none',
             willChange: 'transform',
+            backfaceVisibility: 'hidden',
             pointerEvents: 'auto'
           }"
           draggable="false"
@@ -261,7 +262,31 @@ const latestMouseEvent = ref<MouseEvent | null>(null);
 // macOS touchpad wheel - accumulate delta values until they reach a threshold
 let wheelDeltaAccumulator = 0;
 let wheelThreshold = 10;
+// Improved gesture handling for touchpad
+const gestureType = ref<'none' | 'zoom' | 'nav'>('none');
+let horizontalDeltaAccumulator = 0;
+let verticalDeltaAccumulator = 0;
+let gestureResetTimeout: NodeJS.Timeout | null = null;
+let hasNavigatedThisGesture = false;
+let lastDeltaX = 0;
 
+const GESTURE_LOCK_THRESHOLD = 10;
+const HORIZONTAL_NAV_THRESHOLD = 100; // 100px threshold
+const isWheelZooming = ref(false);
+let wheelZoomTimeout: NodeJS.Timeout | null = null;
+
+// Touchpad detection - sticky once detected
+let isTouchpadDevice = false;
+
+// Swipe state
+const navDirection = ref<'next' | 'prev' | ''>('');
+const transitionName = computed(() => {
+  if (props.isSlideShow) return 'slide-next';
+  if (navDirection.value) {
+    return navDirection.value === 'next' ? 'slide-next' : 'slide-prev';
+  }
+  return '';
+});
 // loading and error overlays
 const isLoading = ref(false);
 const loadError = ref(false);
@@ -790,7 +815,7 @@ const onImageReady = (nextIndex: number) => {
   }
   isLoading.value = false;
   noTransition.value = true;
-
+  // Transitioning active image
   activeImage.value = nextIndex;
 
   const applyZoom = () => {
@@ -994,26 +1019,102 @@ const updateDragPosition = () => {
   animationFrameId = null; // reset animation frame ID
 };
 
+// Simple reset - clear all swipe state
+function resetSwipeState() {
+  gestureType.value = 'none';
+  horizontalDeltaAccumulator = 0;
+  verticalDeltaAccumulator = 0;
+  hasNavigatedThisGesture = false;
+  lastDeltaX = 0;
+  navDirection.value = '';
+  noTransition.value = false;
+  if (gestureResetTimeout) {
+    clearTimeout(gestureResetTimeout);
+    gestureResetTimeout = null;
+  }
+}
+
+function handleTransitionEnd() {
+  navDirection.value = '';
+}
+
 // mouse wheel zoom
-const handleImageWheel = (event: WheelEvent) => {
+function handleImageWheel(event: WheelEvent) {
   event.preventDefault();
   event.stopPropagation();
 
-  // macbook touchpad
-  const isTouchPad = Math.abs(event.deltaY) < 4 && event.deltaMode === 0;
+  // Simple touchpad detection: if there's horizontal delta, it's a touchpad
+  // Mouse wheels only scroll vertically (deltaY only)
+  // Once detected, stays true for the session (sticky)
+  if (event.deltaX !== 0) {
+    isTouchpadDevice = true;
+  }
+  
+  const isTouchPad = isTouchpadDevice;
+
+  // Reset timeout - when no events for 150ms, reset gesture state
+  if (gestureResetTimeout) clearTimeout(gestureResetTimeout);
+  gestureResetTimeout = setTimeout(() => {
+    resetSwipeState();
+  }, 150);
 
   if (isTouchPad) {
-    // accumulate delta values until they reach a threshold
-    wheelDeltaAccumulator += event.deltaY;
-    if (Math.abs(wheelDeltaAccumulator) < wheelThreshold) {
+    // If already navigated this gesture, check if speed increased
+    if (hasNavigatedThisGesture) {
+      const speedIncreased = Math.abs(event.deltaX) > Math.abs(lastDeltaX) + 5;
+      if (!speedIncreased) {
+        lastDeltaX = event.deltaX;
+        return; // Block - not a new intentional flick
+      }
+      // Speed increased - allow new navigation
+      hasNavigatedThisGesture = false;
+      horizontalDeltaAccumulator = 0;
+    }
+    lastDeltaX = event.deltaX;
+
+    // Determine gesture direction
+    if (gestureType.value === 'none') {
+      horizontalDeltaAccumulator += event.deltaX;
+      verticalDeltaAccumulator += event.deltaY;
+
+      const absX = Math.abs(horizontalDeltaAccumulator);
+      const absY = Math.abs(verticalDeltaAccumulator);
+
+      if (absX > GESTURE_LOCK_THRESHOLD || absY > GESTURE_LOCK_THRESHOLD) {
+        gestureType.value = absX > absY ? 'nav' : 'zoom';
+      }
       return;
     }
-    wheelDeltaAccumulator = 0;
+
+    if (gestureType.value === 'nav') {
+      horizontalDeltaAccumulator += event.deltaX;
+
+      // Trigger navigation when threshold reached
+      if (Math.abs(horizontalDeltaAccumulator) >= HORIZONTAL_NAV_THRESHOLD) {
+        const direction = horizontalDeltaAccumulator > 0 ? 'next' : 'prev';
+        navDirection.value = direction;
+        hasNavigatedThisGesture = true;
+        horizontalDeltaAccumulator = 0;
+        gestureType.value = 'none'; // Allow new image to be centered
+        emit('message-from-image-viewer', { message: direction });
+      }
+      return;
+    }
   }
+
+  // If we're here and it's a touchpad, gestureType must be 'zoom' or it's a regular mouse
+  isWheelZooming.value = true;
+  if (wheelZoomTimeout) clearTimeout(wheelZoomTimeout);
+  wheelZoomTimeout = setTimeout(() => {
+    isWheelZooming.value = false;
+  }, 200);
 
   const zoomFactor = isTouchPad ? 1 : 0.1; // Adjust sensitivity
 
-  if (config.settings.mouseWheelMode === 0) {  // 0: previous/next image
+  // Touchpad always zooms; mouseWheelMode only affects regular mouse
+  if (isTouchPad) {
+    wheelZoom(event, zoomFactor);
+  } else if (config.settings.mouseWheelMode === 0) {  // 0: previous/next image
     if (event.ctrlKey) {     // ctrl + mouse wheel: zoom in / out
       wheelZoom(event, zoomFactor);
     } else {
@@ -1022,10 +1123,10 @@ const handleImageWheel = (event: WheelEvent) => {
   } else if (config.settings.mouseWheelMode === 1) {  // 1: zoom in / out
     wheelZoom(event, zoomFactor);
   }
-};
+}
 
 // wheel zoom - Industry standard fixed-step approach
-const wheelZoom = (event: WheelEvent, zoomFactor: number) => {
+function wheelZoom(event: WheelEvent, zoomFactor: number) {
   const currentScale = scale.value[activeImage.value];
   
   // Normalize delta to wheel "notches" (standard mouse ~100 per notch)
@@ -1038,11 +1139,10 @@ const wheelZoom = (event: WheelEvent, zoomFactor: number) => {
   
   // Convert to notches (standard mice report ~100 per notch)
   // Use sign for direction, clamp magnitude for consistency
-  const notches = Math.sign(delta) * Math.min(Math.abs(delta) / 100, 2);
+  const notches = Math.sign(delta) * (Math.abs(delta) / 100);
   
-  // Fixed 15% zoom per notch - industry standard (Photoshop, Figma)
-  // scroll up (negative delta) = zoom in, scroll down = zoom out
-  const ZOOM_FACTOR = 0.15;
+  // Fixed 20% zoom per notch
+  const ZOOM_FACTOR = 0.2;
   const multiplier = Math.pow(1 + ZOOM_FACTOR, -notches);
   
   let newScale = currentScale * multiplier;
@@ -1051,7 +1151,7 @@ const wheelZoom = (event: WheelEvent, zoomFactor: number) => {
   // zoom at cursor position
   const containerPosVal = containerPos.value;
   zoomImage(event.clientX - containerPosVal.x, event.clientY - containerPosVal.y, newScale);
-};
+}
 
 const zoomIn = () => {
   const newScale = Math.min(scale.value[activeImage.value] * 2, maxScale.value);
@@ -1107,6 +1207,9 @@ function zoomImage(cursorX: number, cursorY: number, newScale: number) {
 
 // Ensure image stays within container
 function clampPosition() {
+  // Skip clamping during horizontal swipe to avoid jitter
+  if (gestureType.value === 'nav') return;
+  
   const imgIndex = activeImage.value;
   const imgRotatedSize = imageSizeRotated.value[imgIndex];
   const imgSize = imageSize.value[imgIndex];
@@ -1146,17 +1249,27 @@ defineExpose({
 </script>
 
 <style scoped>
-/* Slideshow transition */
-.slide-in-enter-active,
-.slide-in-leave-active {
-  transition: transform 0.8s ease;
+/* Slideshow / Swipe transition */
+.slide-next-enter-active,
+.slide-next-leave-active,
+.slide-prev-enter-active,
+.slide-prev-leave-active {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.slide-in-enter-from {
-  transform: translateX(calc(100% + 10px));
+/* next: current leaves left, new enters from right */
+.slide-next-enter-from {
+  transform: translateX(100%);
+}
+.slide-next-leave-to {
+  transform: translateX(-100%);
 }
 
-.slide-in-leave-to {
-  transform: translateX(calc(-100% - 10px));
+/* prev: current leaves right, new enters from left */
+.slide-prev-enter-from {
+  transform: translateX(-100%);
+}
+.slide-prev-leave-to {
+  transform: translateX(100%);
 }
 </style>

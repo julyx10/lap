@@ -1547,18 +1547,14 @@ impl AFile {
         }
 
         // sort
+        let dir = if params.sort_order == 1 { "DESC" } else { "ASC" };
         match params.sort_type {
-            0 => query.push_str(" ORDER BY a.taken_date"),  // Time
-            1 => query.push_str(" ORDER BY a.name_pinyin"), // Name
-            2 => query.push_str(" ORDER BY a.size"),        // Size
-            3 => query.push_str(" ORDER BY a.width, a.height"), // Dimension
-            4 => query.push_str(" ORDER BY RANDOM()"),      // Random
-            _ => query.push_str(" ORDER BY a.taken_date"),  // Default to time
-        }
-        match params.sort_order {
-            0 => query.push_str(" ASC"),
-            1 => query.push_str(" DESC"),
-            _ => query.push_str(" ASC"),
+            0 => query.push_str(&format!(" ORDER BY a.taken_date {}", dir)),
+            1 => query.push_str(&format!(" ORDER BY a.name_pinyin {}", dir)),
+            2 => query.push_str(&format!(" ORDER BY a.size {}", dir)),
+            3 => query.push_str(&format!(" ORDER BY a.width {}, a.height {}", dir, dir)),
+            4 => query.push_str(" ORDER BY RANDOM()"),
+            _ => query.push_str(&format!(" ORDER BY a.taken_date {}", dir)),
         }
 
         // paging

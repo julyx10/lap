@@ -1079,10 +1079,18 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
-  if (event.key === 'Space' || event.key === ' ') {
-    if(!config.content.showFilmStrip) {
-      showQuickView.value = !showQuickView.value;
-      quickViewZoomFit.value = true; 
+  if (event.key === 'Enter') {
+    if (!showQuickView.value && !config.content.showFilmStrip) {
+      showQuickView.value = true;
+      quickViewZoomFit.value = true;
+    }
+  } 
+  else if (event.key === 'Space' || event.key === ' ') {
+    if (showQuickView.value) {
+      quickViewZoomFit.value = !quickViewZoomFit.value;
+    } else if (!config.content.showFilmStrip) {
+      showQuickView.value = true;
+      quickViewZoomFit.value = true;
     }
   }
   else if (event.key === 'Escape' && showQuickView.value) {

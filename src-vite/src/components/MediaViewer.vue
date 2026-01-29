@@ -175,6 +175,7 @@
         :rotate="file?.rotate ?? 0"
         :isZoomFit="isZoomFit"
         :isSlideShow="isSlideShow"
+        @message-from-video-viewer="handleMessageFromImageViewer"
       ></Video>
     </div>
 

@@ -716,6 +716,7 @@
       "slide_show_interval": "幻灯片放映间隔: {second} 秒",
       "auto_play_video": "自动播放视频",
       "show_comment": "显示备注",
+      "show_comment_hint": "当在新窗口查看图片时，显示备注",
       "navigator_view": "显示导航视图",
       "navigator_view_options": [
         "自动",

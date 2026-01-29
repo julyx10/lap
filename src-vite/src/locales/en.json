@@ -716,6 +716,7 @@
       "slide_show_interval": "Slide show interval: {second} second(s)",
       "auto_play_video": "Auto play video",
       "show_comment": "Show comment ",
+      "show_comment_hint": "When view in new window, show image comment",
       "navigator_view": "Show navigator view ",
       "navigator_view_options": [
         "Auto",

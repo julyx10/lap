@@ -158,14 +158,14 @@
               </select>
             </div>
             <!-- Mouse Wheel -->
-            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <!-- <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
                 <div>{{ $t('settings.image_view.mouse_wheel') }}</div>
               </div>
                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.mouseWheelMode">
                  <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">{{ item.label }}</option>
               </select>
-            </div>
+            </div> -->
             <!-- Slide Show -->
             <div class="flex items-center justify-between p-2 min-h-12 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
@@ -186,6 +186,7 @@
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
                 <div>{{ $t('settings.image_view.show_comment') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.image_view.show_comment_hint') }}</div>
               </div>
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showComment" />
             </div>
@@ -282,13 +283,13 @@ const currentTheme = computed({
 });
 
 // Define the wheel options using computed to react to language changes
-const wheelOptions = computed(() => {
-  const options = localeMsg.value.settings.image_view.mouse_wheel_options; // returns an array
-  return [
-    { label: options[0], value: 0 },  // 0: previous / next
-    { label: options[1], value: 1 },  // 1: zoom in / out
-  ];
-});
+// const wheelOptions = computed(() => {
+//   const options = localeMsg.value.settings.image_view.mouse_wheel_options; // returns an array
+//   return [
+//     { label: options[0], value: 0 },  // 0: previous / next
+//     { label: options[1], value: 1 },  // 1: zoom in / out
+//   ];
+// });
 
 // Define the grid scaling options
 const gridScalingOptions = computed(() => {
@@ -446,9 +447,9 @@ watch(() => config.settings.previewPosition, (newValue) => {
 });
 
 // image viewer settings
-watch(() => config.settings.mouseWheelMode, (newValue) => {
-  emit('settings-mouseWheelMode-changed', newValue);
-});
+// watch(() => config.settings.mouseWheelMode, (newValue) => {
+//   emit('settings-mouseWheelMode-changed', newValue);
+// });
 watch(() => config.settings.slideShowInterval, (newValue) => {
   emit('settings-slideShowInterval-changed', newValue);
 });
