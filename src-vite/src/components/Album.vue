@@ -4,6 +4,7 @@
 
     <!-- All Files -->
     <div 
+      v-if="hasAlbums"
       :class="[ 
         'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer',
         (libConfig.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30'),
@@ -60,6 +61,9 @@ const albumListRef = ref<InstanceType<typeof AlbumList> | null>(null);
 
 // refresh component
 const albumListKey = ref(0);
+
+// Check if there are any albums
+const hasAlbums = computed(() => (albumListRef.value?.albums?.length ?? 0) > 0);
 
 onMounted(async () => {
   // get total count

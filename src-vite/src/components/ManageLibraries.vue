@@ -47,11 +47,18 @@
                 @click.stop
               />
               <div v-else class="min-w-0 flex items-center">
-                <span class="truncate cursor-default" :class="{ 'text-primary': lib.id === currentLibraryId }" :title="lib.name">{{ lib.name }}</span>
-                <span v-if="lib.id === 'default'" class="shrink-0 text-xs p-1 ml-2 rounded-box bg-base-100/50">{{ $t('msgbox.manage_libraries.default') }}</span>
+                <span class="truncate cursor-default" 
+                  :class="{ 
+                    'text-primary': lib.id === currentLibraryId,
+                  }"
+                >
+                  {{ lib.name }}
+                </span>
+                <span v-if="lib.id === 'default'" class="shrink-0 text-xs px-2 py-1 ml-2 rounded-box bg-base-100/30">{{ $t('msgbox.manage_libraries.default') }}</span>
+                <span v-if="lib.hidden" class="shrink-0 text-xs px-2 py-1 ml-2 rounded-box bg-base-100/30">{{ $t('msgbox.manage_libraries.hide') }}</span>
               </div>
             </div>
-            <div class="text-xs opacity-50 truncate mt-0.5" :title="libraryStats[lib.id]?.db_file_path">
+            <div class="text-xs text-base-content/30 truncate">
               <span v-if="libraryStats[lib.id]">
                 {{ formatFileSize(libraryStats[lib.id].db_file_size || 0) }}, {{ $t('msgbox.manage_libraries.created_at_lower') }} {{ formatTimestamp(lib.created_at, t('format.date_time')) }}
               </span>
@@ -70,7 +77,7 @@
             <TButton
               :icon="lib.hidden ? IconHide : IconUnhide"
               :buttonSize="'small'"
-              :disabled="lib.id === 'default' || showAddInput || isRenaming"
+              :disabled="lib.id === 'default' || lib.id === currentLibraryId || showAddInput || isRenaming"
               :tooltip="lib.hidden ? $t('msgbox.manage_libraries.show') : $t('msgbox.manage_libraries.hide')"
               @click.stop="toggleVisibility(lib)"
             />

@@ -106,6 +106,8 @@ const props = defineProps({
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
+const emit = defineEmits(['editDataChanged']);
+
 // tags
 const allTags = ref<any[]>([]);
 const selectedTag = ref(null);

@@ -166,6 +166,8 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['editDataChanged']);
+
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);

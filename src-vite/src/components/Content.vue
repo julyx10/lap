@@ -214,6 +214,7 @@
                 @toggle-slide-show="toggleSlideShow"
                 @scale="onScale"
                 @item-action="handleItemAction"
+                @slideshow-next="handleSlideshowNext"
               />
             </div>
           </div> <!-- film strip preview -->
@@ -261,6 +262,7 @@
               @item-action="handleItemAction"
               @toggle-full-screen="uiStore.isFullScreen = !uiStore.isFullScreen"
               @close="showQuickView = false; uiStore.isFullScreen = false; stopSlideShow()"
+              @slideshow-next="handleSlideshowNext"
             />
           </div>
         </div>
@@ -1333,6 +1335,20 @@ watch(() => config.settings.language, (newLanguage) => {
     updateContent();
 });
 
+// Load tags when info panel is opened
+watch(() => config.infoPanel.show, async (newShow) => {
+  if (newShow && selectedItemIndex.value >= 0 && selectedItemIndex.value < fileList.value.length) {
+    const file = fileList.value[selectedItemIndex.value];
+    if (file.has_tags && !file.tags) {
+      // Load tags if has_tags is true but tags not yet loaded
+      fileList.value[selectedItemIndex.value] = {
+        ...file,
+        tags: await getTagsForFile(file.id)
+      };
+    }
+  }
+});
+
 watch(() => libConfig.index.status, (newStatus) => {
   if (newStatus === 1 && libConfig.index.albumQueue.length > 0) {
     processNextAlbum();
@@ -2379,18 +2395,46 @@ function clearSlideShowTimer() {
   }
 }
 
-function startSlideShow() {
-  clearSlideShowTimer(); // Clear existing if any
+// Check if current file is a video
+function isCurrentFileVideo() {
+  const currentFile = fileList.value[selectedItemIndex.value];
+  return currentFile?.file_type === 2;
+}
+
+// Advance to next slide (handles looping)
+function advanceSlideShow() {
+  if (fileList.value.length === 0) return;
+  
+  if (selectedItemIndex.value >= fileList.value.length - 1) {
+    selectedItemIndex.value = 0; // Loop
+  } else {
+    selectedItemIndex.value++;
+  }
+  
+  // Schedule next advance based on file type
+  scheduleNextSlide();
+}
+
+// Schedule the next slide transition
+function scheduleNextSlide() {
+  clearSlideShowTimer();
+  
+  if (!isSlideShow.value) return;
+  
+  // If current file is video, don't set timer - video's ended event will trigger next
+  if (isCurrentFileVideo()) {
+    return;
+  }
+  
+  // For images, use the configured interval
   const interval = getSlideShowInterval(config.settings.slideShowInterval) * 1000;
-  slideShowIntervalId = setInterval(() => {
-    if (fileList.value.length === 0) return;
-    
-    if (selectedItemIndex.value >= fileList.value.length - 1) {
-      selectedItemIndex.value = 0; // Loop (user requested: skip to first one)
-    } else {
-      selectedItemIndex.value++;
-    }
+  slideShowIntervalId = setTimeout(() => {
+    advanceSlideShow();
   }, interval);
+}
+
+function startSlideShow() {
+  scheduleNextSlide();
 }
 
 function stopSlideShow() {
@@ -2398,9 +2442,16 @@ function stopSlideShow() {
   clearSlideShowTimer();
 }
 
-watch(() => config.settings.slideShowInterval, () => {
+// Called when video ends in slideshow mode
+function handleSlideshowNext() {
   if (isSlideShow.value) {
-    startSlideShow();
+    advanceSlideShow();
+  }
+}
+
+watch(() => config.settings.slideShowInterval, () => {
+  if (isSlideShow.value && !isCurrentFileVideo()) {
+    scheduleNextSlide();
   }
 });
 

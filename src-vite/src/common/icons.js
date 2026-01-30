@@ -13,6 +13,7 @@ export { default as IconScrollDown } from '@/assets/icons/scroll-down.svg';
 // ======================
 // FILE/FOLDER OPERATIONS
 // ======================
+export { default as IconStack } from '@/assets/icons/stack.svg';
 export { default as IconAlbums } from '@/assets/icons/albums.svg';
 export { default as IconFolder } from '@/assets/icons/folder.svg';
 export { default as IconFolderExpanded } from '@/assets/icons/folder-expanded.svg';

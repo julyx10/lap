@@ -68,7 +68,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['message-from-video-viewer']);
+const emit = defineEmits(['message-from-video-viewer', 'slideshow-next']);
 
 const { t: $t } = useI18n(); // i18n
  
@@ -218,6 +218,11 @@ const setupPlayer = (index: number) => {
       if (activeVideo.value === index) {
         isPlaying.value = false;
         isReplaying.value = true;
+        
+        // In slideshow mode, automatically move to next
+        if (props.isSlideShow) {
+          emit('slideshow-next');
+        }
       }
     });
 
@@ -296,7 +301,8 @@ const loadVideo = (filePath: string) => {
       // updateTransform(false);
     }, 100);
 
-    if (config.settings.autoPlayVideo) {
+    // Auto-play if setting enabled OR in slideshow mode
+    if (config.settings.autoPlayVideo || props.isSlideShow) {
       player.play();
     }
     
@@ -404,6 +410,16 @@ watch(() => props.rotate, (val) => {
 watch(() => props.isZoomFit, (val) => { 
   isFit.value = val; 
   updateTransform(true); 
+});
+
+// When slideshow starts, auto-play the current video
+watch(() => props.isSlideShow, (newVal) => {
+  if (newVal) {
+    const player = getActivePlayer();
+    if (player && !isPlaying.value) {
+      player.play();
+    }
+  }
 });
 
 const zoomIn = () => { 

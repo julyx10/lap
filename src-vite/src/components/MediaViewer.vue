@@ -176,6 +176,7 @@
         :isZoomFit="isZoomFit"
         :isSlideShow="isSlideShow"
         @message-from-video-viewer="handleMessageFromImageViewer"
+        @slideshow-next="emit('slideshow-next')"
       ></Video>
     </div>
 
@@ -274,7 +275,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit', 'item-action', 'toggle-full-screen']);
+const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit', 'item-action', 'toggle-full-screen', 'slideshow-next']);
 
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);

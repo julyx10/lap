@@ -38,7 +38,6 @@
                 :buttonSize="'large'" 
                 :icon="item.icon" 
                 :text="item.text" 
-                :disabled="config.main.albumCount === 0 && index !== 0"
                 :selected="config.main.sidebarIndex === index"
                 @click="clickSidebar(index)"
               />
@@ -68,6 +67,7 @@
                     class="px-2 py-1 flex items-center gap-1 rounded-box text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer transition-colors"
                     @click="toggle"
                   >
+                    <IconStack class="w-5 h-5 shrink-0" />
                     <span class="overflow-hidden whitespace-pre text-ellipsis max-w-32">{{ currentLibrary?.name || 'Library' }}</span>
                     <IconArrowDown class="w-3 h-3 shrink-0 opacity-50" />
                   </button>
@@ -84,12 +84,11 @@
                   @click="clickRestoreAlbumOrder"
                 />
                 <!-- Default Context Menu -->
-                <ContextMenu v-else :menuItems="moreMenuItems" :disabled="moreMenuItems.length === 0">
+                <ContextMenu v-else-if="moreMenuItems.length > 0" :menuItems="moreMenuItems">
                   <template #trigger="{ toggle }">
                     <TButton 
                       :icon="IconMore"
                       :buttonSize="'medium'"
-                      :disabled="moreMenuItems.length === 0"
                       @click="toggle"
                     />
                   </template>
@@ -183,12 +182,8 @@ import {
   IconDot,
   IconAdd,
   IconTrash,
-  IconSortingAsc,
-  IconSortingDesc,
-  IconSortingCount,
-  IconSortingName,
+  IconStack,
   IconArrowDown,
-  IconCalendarMonth,
   IconCalendarDay,
   IconUpdate,
   IconMore,

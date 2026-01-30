@@ -349,6 +349,11 @@ onMounted( async () => {
         
         // Reload the cover thumbnail
         await loadAlbumCover(album_id, album.cover_file_id);
+        
+        // Refresh folder tree if album is expanded (to show newly indexed folders)
+        if (album.is_expanded) {
+          await expandAlbum(album, true); // forceRefresh = true
+        }
       }
     }
   });
@@ -361,11 +366,6 @@ onBeforeUnmount(() => {
   if (unlistenExpandAlbumFolder) unlistenExpandAlbumFolder();
   if (unlistenIndexProgress) unlistenIndexProgress();
   if (unlistenIndexFinished) unlistenIndexFinished();
-});
-
-// Update album count in config
-watch(() => albums.value.length, (newCount) => {
-  config.main.albumCount = newCount;
 });
 
 /// Add a new album
@@ -553,6 +553,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 // Expose methods
 defineExpose({ 
+  albums,
   isEditList,
   clickNewAlbum,
   refreshAlbums,

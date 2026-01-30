@@ -10,7 +10,7 @@
           v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.about.title']"
           :key="index"
           :class="[
-            'p-3 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
+            'px-3 py-2 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
             config.settings.tabIndex === index 
               ? 'bg-base-100 text-primary' 
               : 'hover:text-base-content hover:bg-base-100/30'

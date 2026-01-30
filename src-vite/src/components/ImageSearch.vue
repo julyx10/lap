@@ -365,8 +365,7 @@ const similarImageHistory = computed(() => libConfig.search.similarImageHistory 
 const searchHistory = computed(() => libConfig.search.searchHistory);
 const searchHistoryList = computed(() => libConfig.search.searchHistory as any[]);
 
-const emit = defineEmits(['search-similar-from-history']);
-
+const emit = defineEmits(['search-similar-from-history', 'editDataChanged']);
 
 // Watcher for Similar Image History
 watch(

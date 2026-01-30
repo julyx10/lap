@@ -179,8 +179,8 @@
               <!-- Brightness -->
               <div class="flex flex-col gap-1">
                 <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span class="font-medium">{{ $t('msgbox.image_editor.brightness') }}</span>
-                  <span class="font-mono bg-base-200 px-1 rounded">{{ brightness > 0 ? '+' : ''}}{{ brightness }}</span>
+                  <span>{{ $t('msgbox.image_editor.brightness') }}</span>
+                  <span>{{ brightness > 0 ? '+' : ''}}{{ brightness }}</span>
                 </div>
                 <SliderInput 
                   v-model="brightness" 
@@ -188,15 +188,14 @@
                   :max="100" 
                   :step="1" 
                   :slider_width="200"
-                  label=""
                 />
               </div>
 
               <!-- Contrast -->
               <div class="flex flex-col gap-1">
                 <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span class="font-medium">{{ $t('msgbox.image_editor.contrast') }}</span>
-                  <span class="font-mono bg-base-200 px-1 rounded">{{ contrast > 0 ? '+' : ''}}{{ contrast }}</span>
+                  <span>{{ $t('msgbox.image_editor.contrast') }}</span>
+                  <span>{{ contrast > 0 ? '+' : ''}}{{ contrast }}</span>
                 </div>
                 <SliderInput 
                   v-model="contrast" 
@@ -204,15 +203,14 @@
                   :max="100" 
                   :step="1" 
                   :slider_width="200"
-                  label=""
                 />
               </div>
 
               <!-- Saturation -->
               <div class="flex flex-col gap-1">
                 <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span class="font-medium">{{ $t('msgbox.image_editor.saturation') }}</span>
-                  <span class="font-mono bg-base-200 px-1 rounded">{{ saturation }}%</span>
+                  <span>{{ $t('msgbox.image_editor.saturation') }}</span>
+                  <span>{{ saturation }}%</span>
                 </div>
                 <SliderInput 
                   v-model="saturation" 
@@ -220,15 +218,14 @@
                   :max="200" 
                   :step="1" 
                   :slider_width="200"
-                  label=""
                 />
               </div>
 
               <!-- Hue -->
               <div class="flex flex-col gap-1">
                 <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span class="font-medium">{{ $t('msgbox.image_editor.hue_rotate') }}</span>
-                  <span class="font-mono bg-base-200 px-1 rounded">{{ hue }}°</span>
+                  <span>{{ $t('msgbox.image_editor.hue_rotate') }}</span>
+                  <span>{{ hue }}°</span>
                 </div>
                 <SliderInput 
                   v-model="hue" 
@@ -236,7 +233,6 @@
                   :max="180" 
                   :step="1" 
                   :slider_width="200"
-                  label=""
                 />
               </div>
             </div>

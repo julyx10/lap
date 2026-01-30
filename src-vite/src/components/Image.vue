@@ -2,6 +2,7 @@
   <div
     ref="container"
     class="relative w-full h-full overflow-hidden cursor-pointer"
+    @wheel="handleImageWheel"
   >
 
     <!-- Loading overlay -->
@@ -50,7 +51,6 @@
           @mousemove="handleImageMouseMove"
           @mouseup="handleImageMouseUp"
           @mouseleave="handleImageMouseLeave"
-          @wheel="handleImageWheel"
           @dblclick.stop="toggleZoomFit"
         />
       </div>

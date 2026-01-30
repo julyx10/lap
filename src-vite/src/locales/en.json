@@ -45,10 +45,10 @@
     "similar_images_tips": "Select an image to find similar images",
     "filename_search_tips": "Enter a filename to search",
     "index": {
-      "wait_index": "Wait for index...",
-      "indexing": "Indexing '{album}'... {count} / {total}",
+      "wait_index": "Wait for update...",
+      "indexing": "Updating '{album}'... {count} / {total}",
       "description": "Preparing your album for search and quick view. Large albums may take a few minutes.",
-      "cancel": "Cancel indexing"
+      "cancel": "Cancel update"
     }
   },
   "face_index": {
@@ -243,7 +243,7 @@
     "album": {
       "add": "Add album...",
       "edit": "Edit album...",
-      "index": "Index album files",
+      "index": "Update album files",
       "include_in_search": "Include in search",
       "exclude_from_search": "Exclude from search",
       "remove": "Remove album",

@@ -50,6 +50,7 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.file.find_person_images,
         icon: IconPersonSearch,
+        disabled: f.file_type !== 1 && f.file_type !== 3,
         action: createAction('find-person')
       },
       {

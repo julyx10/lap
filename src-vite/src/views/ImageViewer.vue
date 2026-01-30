@@ -30,6 +30,7 @@
           @update:isZoomFit="(val) => isZoomFit = val"
           @dblclick="toggleZoomFit()"
           @close="appWindow.close()"
+          @slideshow-next="handleSlideshowNext"
         />
 
         <!-- comments -->
@@ -256,14 +257,49 @@ watch(() => fileIndex.value, async (newIndex) => {
   } 
 });
 
-watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlideShow, newInterval]) => {
+// Check if current file is a video
+function isCurrentFileVideo() {
+  return fileInfo.value?.file_type === 2;
+}
+
+// Schedule next slide based on file type
+function scheduleNextSlide() {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+  
+  if (!isSlideShow.value) return;
+  
+  // If current file is video, don't set timer - video's ended event will trigger next
+  if (isCurrentFileVideo()) {
+    return;
+  }
+  
+  // For images, use the configured interval
+  const interval = getSlideShowInterval(config.settings.slideShowInterval) * 1000;
+  timer = setTimeout(() => {
+    clickNext();
+    scheduleNextSlide();
+  }, interval);
+}
+
+// Called when video ends in slideshow mode
+function handleSlideshowNext() {
+  if (isSlideShow.value) {
+    clickNext();
+    scheduleNextSlide();
+  }
+}
+
+watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlideShow]) => {
   if(newIsSlideShow) {
-    clearInterval(timer);
-    timer = setInterval(() => {
-      clickNext();
-    }, getSlideShowInterval(newInterval) * 1000);
+    scheduleNextSlide();
   } else {
-    clearInterval(timer);
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
   }
 });
 

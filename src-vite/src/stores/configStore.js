@@ -9,7 +9,6 @@ export const useConfigStore = defineStore('configStore', {
       showLeftPane: true,         // show left pane
       leftPaneWidth: 320,         // left pane width
       sidebarIndex: 0,            // toolbar index
-      albumCount: 0,              // album count
       maxLibraryCount: 10,        // max library count
     },
 
