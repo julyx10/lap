@@ -1,0 +1,770 @@
+{
+  "sidebar": {
+    "home": "Inicio",
+    "album": "Álbumes",
+    "search": "Buscar",
+    "favorite": "Favoritos",
+    "tag": "Etiquetas",
+    "calendar": "Calendario",
+    "location": "Ubicación",
+    "person": "Personas",
+    "camera": "Cámaras",
+    "settings": "Ajustes"
+  },
+  "album": {
+    "all_files": "Todos los archivos",
+    "album_list": "Álbumes",
+    "edit": {
+      "title_add": "Añadir álbum",
+      "title": "Editar álbum",
+      "folder": "Carpeta",
+      "select_folder": "Seleccionar carpeta",
+      "name": "Nombre",
+      "description": "Descripción",
+      "description_placeholder": "Introduce la descripción del álbum",
+      "images": "Imágenes",
+      "videos": "Vídeos",
+      "files_count": "{count} archivos ({size})",
+      "files_counting": "Contando archivos...",
+      "created_at": "Creado el",
+      "modified_at": "Modificado el"
+    },
+    "no_albums": {
+      "title": "Aún no hay álbumes",
+      "description": "Añade un álbum con imágenes o vídeos para empezar"
+    }
+  },
+  "search": {
+    "title": "Búsqueda de imágenes",
+    "search_images": "Búsqueda IA",
+    "similar_images": "Similares",
+    "filename_search": "Nombre de archivo",
+    "image_search_placeholder": "Buscar imágenes por texto",
+    "image_search_history": "Historial",
+    "image_search_tips": "Introduce una descripción para buscar. Por ejemplo: \"puest de sol en el océano\".",
+    "similar_images_tips": "Selecciona una imagen para buscar similares",
+    "filename_search_tips": "Introduce un nombre de archivo",
+    "index": {
+      "wait_index": "Esperando actualización...",
+      "indexing": "Actualizando '{album}'... {count} / {total}",
+      "description": "Preparando álbum para búsqueda. Puede tardar unos minutos.",
+      "cancel": "Cancelar actualización"
+    }
+  },
+  "face_index": {
+    "start": "Indexar caras",
+    "indexing": "Indexando caras... {current} / {total}",
+    "clustering": "Agrupando caras...",
+    "faces_found": "{count} caras encontradas",
+    "cluster_graph": "Construyendo gráfico: {percent}%",
+    "cluster_iterate": "Iteración {current}/{total}",
+    "cluster_converged": "Convergencia en iteración {current}",
+    "cluster_assign": "Creando persona {current}/{total}",
+    "cluster_thumbnail": "Generando miniaturas...",
+    "cancel": "Cancelar",
+    "incomplete": "Indexación incompleta ({count} fotos sin procesar)",
+    "resume": "Reanudar"
+  },
+  "favorite": {
+    "files": "Archivos favoritos",
+    "folders": "Carpetas favoritas"
+  },
+  "tag": {
+    "add_tag": "Añadir etiqueta",
+    "delete_tag": "Eliminar etiqueta",
+    "edit_tag": "Editar etiqueta",
+    "search_tags": "Buscar etiquetas",
+    "enter_new_tag_name": "Introduce nuevo nombre",
+    "not_found": "No se encontraron etiquetas"
+  },
+  "calendar": {
+    "on_this_day": "Un día como hoy",
+    "title": "Calendario",
+    "monthly_view": "Vista mensual",
+    "daily_view": "Vista diaria",
+    "day": "Día",
+    "week": "Semana",
+    "month": "Mes",
+    "year": "Año",
+    "today": "Hoy",
+    "monthly": "Mensual",
+    "daily": "Diario",
+    "weekdays": [
+      "Dom",
+      "Lun",
+      "Mar",
+      "Mié",
+      "Jue",
+      "Vie",
+      "Sáb"
+    ],
+    "weekdays_long": [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado"
+    ],
+    "months": [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic"
+    ],
+    "months_long": [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre"
+    ]
+  },
+  "toolbar": {
+    "search": {
+      "title": "Buscar",
+      "placeholder": "Buscar archivo"
+    },
+    "filter": {
+      "select_mode": "Seleccionar",
+      "select_count": "{count} seleccionados",
+      "sort_type_options": [
+        "Tiempo",
+        "Nombre",
+        "Tamaño",
+        "Dimensión",
+        "Aleatorio"
+      ],
+      "sort_order_options": [
+        "Ascendente",
+        "Descendente"
+      ],
+      "file_type_options": [
+        "Todos",
+        "Imágenes",
+        "Vídeos"
+      ]
+    },
+    "tooltip": {
+      "restore": "Restaurar",
+      "refresh": "Actualizar",
+      "grid_view": "Vista cuadrícula",
+      "filmstrip_view": "Vista tira",
+      "show_info": "Ver info",
+      "hide_info": "Ocultar info",
+      "clear_history": "Borrar historial",
+      "index_faces": "Indexar caras",
+      "sort": "Ordenar",
+      "monthly": "Mensual",
+      "daily": "Diario",
+      "time_asc": "Tiempo Asc",
+      "time_desc": "Tiempo Desc"
+    }
+  },
+  "info_panel": {
+    "tabs": [
+      "Info",
+      "Vista previa"
+    ]
+  },
+  "tooltip": {
+    "loading": "Cargando...",
+    "not_found": {
+      "albums": "No se encontraron álbumes",
+      "files": "No se encontraron archivos",
+      "folder_files": "No hay archivos. Busca en subcarpetas",
+      "folders": "No se encontraron carpetas",
+      "tag": "No se encontraron etiquetas",
+      "calendar": "Sin datos de calendario",
+      "location": "Sin datos de ubicación",
+      "person": "Sin datos de personas",
+      "person_hint": "Intenta indexar las caras",
+      "camera": "Sin datos de cámara"
+    },
+    "set_album_cover": {
+      "success": "Portada establecida",
+      "failed": "Fallo al establecer portada"
+    },
+    "copy_image": {
+      "success": "Imagen copiada",
+      "failed": "Fallo al copiar imagen"
+    },
+    "save_image": {
+      "success": "Imagen guardada",
+      "failed": "Fallo al guardar imagen"
+    },
+    "update_image": {
+      "success": "Imagen actualizada",
+      "failed": "Fallo al actualizar imagen"
+    },
+    "image_viewer": {
+      "first_image": "Es la primera imagen",
+      "last_image": "Es la última imagen"
+    },
+    "album_exists": "Este álbum ya existe"
+  },
+  "statusbar": {
+    "files_summary": "{count} archivos ({size})"
+  },
+  "menu": {
+    "select": {
+      "all": "Seleccionar todo",
+      "none": "Deseleccionar",
+      "invert": "Invertir selección"
+    },
+    "home": {
+      "delete": "Eliminar",
+      "pin": "Fijar",
+      "unpin": "Desfijar"
+    },
+    "library": {
+      "add": "Añadir biblioteca...",
+      "edit": "Editar biblioteca...",
+      "manage": "Gestionar bibliotecas...",
+      "remove": "Eliminar biblioteca",
+      "default": "Biblioteca por defecto"
+    },
+    "album": {
+      "add": "Añadir álbum...",
+      "edit": "Editar álbum...",
+      "index": "Actualizar archivos",
+      "include_in_search": "Incluir en búsqueda",
+      "exclude_from_search": "Excluir de búsqueda",
+      "remove": "Eliminar álbum",
+      "refresh": "Actualizar",
+      "reorder": "Reordenar",
+      "reorder_exit": "Salir de reordenar"
+    },
+    "file": {
+      "new_folder": "Nueva carpeta...",
+      "view_in_new_window": "Ver en nueva ventana...",
+      "copy": "Copiar a portapapeles",
+      "edit": "Editar imagen...",
+      "find_similar_images": "Buscar similares",
+      "find_person_images": "Buscar fotos de persona",
+      "find_album_folder": "Buscar carpeta de álbum",
+      "on_this_day": "Un día como hoy",
+      "print": "Imprimir",
+      "rename": "Renombrar",
+      "move_to": "Mover a...",
+      "copy_to": "Copiar a...",
+      "move_to_trash": "Mover a papelera",
+      "delete": "Eliminar",
+      "reveal_in_finder": "Mostrar en Finder...",
+      "reveal_in_file_explorer": "Mostrar en Explorador...",
+      "set_album_cover": "Establecer como portada"
+    },
+    "calendar": {
+      "monthly": "Vista mensual",
+      "daily": "Vista diaria",
+      "time_asc": "Tiempo Asc",
+      "time_desc": "Tiempo Desc"
+    },
+    "search": {
+      "clear_history": "Borrar historial"
+    },
+    "person": {
+      "index_faces": "Indexar caras",
+      "reset_index": "Reiniciar índice"
+    },
+    "tag": {
+      "add": "Añadir etiqueta...",
+      "rename": "Renombrar",
+      "delete": "Eliminar"
+    },
+    "meta": {
+      "favorite": "Favorito",
+      "unfavorite": "No favorito",
+      "tag": "Etiquetar...",
+      "comment": "Comentar...",
+      "rotate": "Rotar"
+    },
+    "sort": {
+      "sort_by_name": "Por nombre",
+      "sort_by_count": "Por cantidad"
+    }
+  },
+  "msgbox": {
+    "ok": "OK",
+    "reset": "Reiniciar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "input": {
+      "file_name_invalid": "Nombre inválido: \\ / : * ? \" < > |."
+    },
+    "reset_faces": {
+      "title": "Reiniciar índice",
+      "content": "¿Borrar todos los datos faciales? No se puede deshacer.",
+      "ok": "Reiniciar"
+    },
+    "clear_search_history": {
+      "title": "Borrar historial",
+      "content": "¿Seguro que quieres borrar el historial?",
+      "ok": "Borrar"
+    },
+    "delete_person": {
+      "title": "Eliminar persona",
+      "content": "¿Seguro que quieres eliminar a '{person}'?",
+      "ok": "Eliminar"
+    },
+    "manage_libraries": {
+      "title": "Gestionar bibliotecas",
+      "name": "Nombre",
+      "visible": "Visible",
+      "action": "Acción",
+      "default": "Por defecto",
+      "current": "Actual",
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "delete": "Eliminar",
+      "reorder": "Reordenar",
+      "rename": "Renombrar",
+      "add_new": "Añadir nueva",
+      "add": "Añadir",
+      "placeholder": "Nombre de biblioteca",
+      "max_limit_reached": "Límite alcanzado",
+      "created_at_lower": "creado el",
+      "library_file_path": "Ruta archivo",
+      "library_file_size": "Tamaño archivo",
+      "created_at": "Creado el"
+    },
+    "remove_library": {
+      "title": "Eliminar biblioteca",
+      "content": "¿Eliminar '{library}'? Se borrará el archivo de base de datos.",
+      "ok": "Eliminar",
+      "success": "'{library}' eliminada.",
+      "error": "No se pudo eliminar."
+    },
+    "remove_album": {
+      "title": "Eliminar álbum",
+      "content": "'{album}' será eliminado. Los archivos no se borran.",
+      "ok": "Eliminar"
+    },
+    "rename_folder": {
+      "title": "Renombrar carpeta",
+      "content": "Introduce nuevo nombre:",
+      "ok": "Renombrar",
+      "error": "No se pudo renombrar."
+    },
+    "new_folder": {
+      "title": "Nueva carpeta",
+      "placeholder": "Nombre de carpeta",
+      "ok": "Crear",
+      "error": "No se pudo crear."
+    },
+    "delete_folder": {
+      "title": "Eliminar carpeta",
+      "content": "'{folder}' y su contenido serán eliminados.",
+      "ok": "Eliminar",
+      "success": "'{folder}' eliminada.",
+      "error": "No se pudo eliminar."
+    },
+    "trash_folder": {
+      "title": "Mover a papelera",
+      "content": "'{folder}' irá a la papelera.",
+      "ok": "A papelera",
+      "success": "'{folder}' movida a papelera.",
+      "error": "No se pudo mover a papelera."
+    },
+    "move_to": {
+      "title": "Mover '{source}' a",
+      "content": "Elige destino:",
+      "ok": "Mover",
+      "error": "No se pudo mover."
+    },
+    "copy_to": {
+      "title": "Copiar '{source}' a",
+      "content": "Elige destino:",
+      "ok": "Copiar",
+      "error": "No se pudo copiar."
+    },
+    "rename_file": {
+      "title": "Renombrar archivo",
+      "placeholder": "Nuevo nombre",
+      "ok": "Renombrar",
+      "error": "No se pudo renombrar."
+    },
+    "delete_file": {
+      "title": "Eliminar archivo",
+      "content": "'{file}' será eliminado.",
+      "ok": "Eliminar",
+      "success": "'{file}' eliminado.",
+      "error": "No se pudo eliminar."
+    },
+    "delete_files": {
+      "title": "Eliminar archivos",
+      "content": "{count} archivos serán eliminados.",
+      "ok": "Eliminar todo",
+      "success": "{count} archivos eliminados.",
+      "error": "No se pudieron eliminar."
+    },
+    "trash_file": {
+      "title": "A papelera",
+      "content": "'{file}' irá a la papelera.",
+      "ok": "A papelera",
+      "success": "'{file}' en papelera.",
+      "error": "No se pudo mover."
+    },
+    "trash_files": {
+      "title": "A papelera",
+      "content": "{count} archivos irán a la papelera.",
+      "ok": "A papelera",
+      "success": "{count} archivos en papelera.",
+      "error": "No se pudieron mover."
+    },
+    "new_tag": {
+      "title": "Nueva etiqueta",
+      "content": "Nombre etiqueta:",
+      "ok": "Crear",
+      "error": "No se pudo crear."
+    },
+    "delete_tag": {
+      "title": "Eliminar etiqueta",
+      "content": "'{tag}' será eliminada.",
+      "ok": "Eliminar",
+      "success": "'{tag}' eliminada.",
+      "error": "No se pudo eliminar."
+    },
+    "edit_comment": {
+      "title": "Editar comentario",
+      "placeholder": "Introduce comentario",
+      "ok": "Guardar"
+    },
+    "select_folder": {
+      "error": "Fallo al seleccionar carpeta."
+    },
+    "select_file": {
+      "error": "Fallo al seleccionar archivo."
+    },
+    "image_editor": {
+      "title": "Editar imagen",
+      "tab_edit": "Editar",
+      "tab_save": "Guardar",
+      "filters": "Filtros",
+      "filter_none": "Ninguno",
+      "filter_grayscale": "Escala grises",
+      "filter_sepia": "Sepia",
+      "filter_invert": "Invertir",
+      "adjustments": "Ajustes",
+      "brightness": "Brillo",
+      "contrast": "Contraste",
+      "blur": "Desenf.",
+      "hue_rotate": "Matiz",
+      "saturation": "Saturación",
+      "reset": "Reset",
+      "crop": "Recortar",
+      "cancel_crop": "Cancelar",
+      "confirm_crop": "Confirmar",
+      "crop_shape": "Forma",
+      "crop_shape_custom": "Personal",
+      "crop_shape_landscape": "Paisaje",
+      "crop_shape_portrait": "Retrato",
+      "aspect_ratio": "Proporción",
+      "zoom_in": "Zoom in",
+      "zoom_out": "Zoom out",
+      "rotate_left": "Rotar izq",
+      "rotate_right": "Rotar der",
+      "flip_horizontal": "Voltea hor",
+      "flip_vertical": "Voltea ver",
+      "restore": "Restaurar",
+      "resize": "Redimensionar",
+      "width": "Ancho",
+      "height": "Alto",
+      "percentage": "Porcentaje",
+      "pixel": "Píxeles",
+      "options": "Opciones",
+      "save_as": "Guardar como",
+      "save_as_options": [
+        "Sobrescribir",
+        "Nuevo archivo"
+      ],
+      "save_as_placeholder": "Nombre de archivo",
+      "format": "Formato",
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
+      "quality": "Calidad",
+      "quality_options": [
+        "Alta",
+        "Media",
+        "Baja"
+      ],
+      "copy_image": "Copiar imagen",
+      "ok": "Guardar",
+      "cancel": "Cancelar",
+      "overwrite_confirm": "¿Sobrescribir archivo original? No se puede deshacer."
+    }
+  },
+  "file_info": {
+    "title": "Info archivo",
+    "metadata": "Metadatos",
+    "location": "Ubicación",
+    "album_name": "Álbum",
+    "name": "Nombre",
+    "folder": "Carpeta",
+    "dimension": "Dimensión",
+    "size": "Tamaño",
+    "duration": "Duración",
+    "created_at": "Creado el",
+    "modified_at": "Modificado el",
+    "camera": "Cámara",
+    "camera_make": "Fabricante",
+    "camera_model": "Modelo",
+    "taken_at": "Tomada el",
+    "taken_by": "Tomada por",
+    "software": "Software",
+    "artist": "Artista",
+    "copyright": "Copyright",
+    "description": "Descripción",
+    "lens": "Lente",
+    "lens_make": "Fab. lente",
+    "lens_model": "Mod. lente",
+    "exposure_bias": "Exp. bias",
+    "exposure_time": "Tiempo exp.",
+    "aperture": "Apertura",
+    "focal_length": "Dist. focal",
+    "iso": "ISO",
+    "flash": "Flash",
+    "color_type": "Tipo color",
+    "bit_depth": "Profundidad",
+    "alpha_channel": "Canal alfa",
+    "gps_latitude": "Latitud",
+    "gps_longitude": "Longitud",
+    "gps_altitude": "Altitud",
+    "geo_location": "Ubicación",
+    "tags": "Etiquetas",
+    "comment": "Comentario",
+    "capture_settings": "Ajustes captura"
+  },
+  "map": {
+    "show_map": "Ver mapa",
+    "hide_map": "Ocultar mapa",
+    "zoom_in": "Acercar",
+    "zoom_out": "Alejar",
+    "zoom_center": "Centrar"
+  },
+  "format": {
+    "year": "yyyy",
+    "month": "MMMM yyyy",
+    "date": "dd/MM/yyyy",
+    "date_long": "d 'de' MMMM 'de' yyyy",
+    "month_date": "d 'de' MMMM",
+    "date_long_with_weekday": "EEEE, d 'de' MMMM 'de' yyyy",
+    "date_time": "dd/MM/yyyy HH:mm:ss",
+    "date_time_long": "d 'de' MMMM 'de' yyyy HH:mm:ss"
+  },
+  "image_viewer": {
+    "title": "Visor",
+    "loading": "Cargando...",
+    "failed": "Fallo al cargar imagen.",
+    "toolbar": {
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "slide_show": "Presentación",
+      "pause": "Pausa",
+      "zoom_in": "Acercar",
+      "zoom_out": "Alejar",
+      "zoom_fit": "Ajustar",
+      "zoom_actual": "Tamaño real",
+      "edit": "Editar",
+      "rotate": "Rotar",
+      "favorite": "Favorito",
+      "unfavorite": "No favorito",
+      "tag": "Etiquetar",
+      "comment": "Comentar",
+      "info": "Info",
+      "save": "Guardar",
+      "delete": "Borrar",
+      "fullscreen": "Pantalla comp.",
+      "exit_fullscreen": "Salir pantalla comp.",
+      "pin": "Fijar barra",
+      "unpin": "Desfijar barra",
+      "close": "Cerrar"
+    }
+  },
+  "video": {
+    "loading": "Cargando vídeo...",
+    "failed": "Error reproducción",
+    "errors": {
+      "aborted": "Abortado",
+      "network": "Error red",
+      "decode": "Error decodificación",
+      "format": "No soportado",
+      "timeout": "Tiempo agotado",
+      "unknown": "Error desconocido"
+    }
+  },
+  "settings": {
+    "general": {
+      "title": "General",
+      "appearance": "Apariencia",
+      "appearance_options": [
+        "Claro",
+        "Oscuro"
+      ],
+      "theme": "Tema",
+      "theme_options_light": [
+        "Por defecto",
+        "Cupcake",
+        "Bumblebee",
+        "Emerald",
+        "Corporate",
+        "Retro",
+        "Cyberpunk",
+        "Valentine",
+        "Garden",
+        "Lofi",
+        "Pastel",
+        "Fantasy",
+        "Wireframe",
+        "Cmyk",
+        "Autumn",
+        "Acid",
+        "Lemonade",
+        "Winter",
+        "Nord",
+        "Caramellatte",
+        "Silk"
+      ],
+      "theme_options_dark": [
+        "Por defecto",
+        "Synthwave",
+        "Halloween",
+        "Forest",
+        "Aqua",
+        "Black",
+        "Luxury",
+        "Dracula",
+        "Business",
+        "Night",
+        "Coffee",
+        "Dim",
+        "Sunset",
+        "Abyss"
+      ],
+      "select_language": "Idioma",
+      "show_button_text": "Mostrar texto botones",
+      "show_tool_tip": "Mostrar tooltips",
+      "show_status_bar": "Mostrar barra estado",
+      "show_map": "Mostrar mapa",
+      "show_map_hint": "Requiere internet",
+      "debug_mode": "Modo depuración"
+    },
+    "grid_view": {
+      "title": "Vista cuadrícula",
+      "style": "Estilo",
+      "style_options": [
+        "Cómodo",
+        "Compacto"
+      ],
+      "size": "Tamaño miniatura",
+      "scaling": "Escalado",
+      "scaling_options": [
+        "Ajustar imagen",
+        "Recortar para llenar",
+        "Estirar"
+      ],
+      "label_primary": "Etiqueta primaria",
+      "label_primary_hint": "Solo en estilo cómodo",
+      "label_secondary": "Etiqueta secundaria",
+      "label_secondary_hint": "Solo en estilo cómodo",
+      "label_options": [
+        "(Vacío)",
+        "Nombre",
+        "Tamaño",
+        "Dimensión",
+        "Tiempo",
+        "Ubicación",
+        "Cámara",
+        "Lente",
+        "Ajustes captura"
+      ]
+    },
+    "filmstrip_view": {
+      "title": "Vista tira",
+      "preview_position": "Posición vista previa",
+      "preview_position_options": [
+        "Arriba",
+        "Abajo"
+      ]
+    },
+    "image_view": {
+      "title": "Vista imagen",
+      "mouse_wheel": "Rueda ratón",
+      "mouse_wheel_options": [
+        "Ant/Sig (Ctrl zoom)",
+        "Zoom in/out"
+      ],
+      "slide_show_interval": "Intervalo: {second} s",
+      "auto_play_video": "Autoreproducir vídeo",
+      "show_comment": "Mostrar comentario",
+      "show_comment_hint": "Mostrar en nueva ventana",
+      "navigator_view": "Vista navegador",
+      "navigator_view_options": [
+        "Auto",
+        "Siempre",
+        "Nunca"
+      ],
+      "navigator_view__size": "Tamaño navegador",
+      "navigator_view_size_options": [
+        "Pequeño(160px)",
+        "Medio(240px)",
+        "Grande(320px)",
+        "Extra Grande(400px)"
+      ]
+    },
+    "image_search": {
+      "title": "Búsqueda img",
+      "similarity": "Similitud",
+      "similarity_hint": "Más alto = Menos resultados",
+      "similarity_options": [
+        "Muy alta",
+        "Alta",
+        "Media",
+        "Baja"
+      ]
+    },
+    "face_recognition": {
+      "title": "Reconocimiento facial",
+      "similarity": "Similitud cara",
+      "cluster_threshold": "Umbral agrupación",
+      "cluster_threshold_hint": "Alto = Estricto, Bajo = Laxo",
+      "cluster_threshold_options": [
+        "Muy alto",
+        "Alto",
+        "Medio",
+        "Bajo"
+      ]
+    },
+    "about": {
+      "title": "Acerca de",
+      "package": {
+        "name": "Nombre paquete",
+        "description": "Descripción",
+        "version": "Versión",
+        "build_time": "Tiempo compilación",
+        "author": "Autor",
+        "license": "Licencia",
+        "website": "Web"
+      }
+    }
+  }
+}

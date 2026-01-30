@@ -248,8 +248,15 @@ const localeMsg = computed(() => messages.value[config.settings.language] as any
 const appWindow = getCurrentWebviewWindow()
 
 const languages = [
+  { label: 'Deutsch', value: 'de' },
   { label: 'English', value: 'en' },
+  { label: 'Español', value: 'es' },
+  { label: 'Français', value: 'fr' },
+  { label: 'Português', value: 'pt' },
+  { label: 'Русский', value: 'ru' },
   { label: '中文',    value: 'zh' },
+  { label: '日本語',   value: 'ja' },
+  { label: '한국어',   value: 'ko' },
 ];
 
 const appearanceOptions = computed(() => {

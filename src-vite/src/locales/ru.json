@@ -1,0 +1,770 @@
+{
+    "sidebar": {
+        "home": "Главная",
+        "album": "Альбомы",
+        "search": "Поиск",
+        "favorite": "Избранное",
+        "tag": "Теги",
+        "calendar": "Календарь",
+        "location": "Место",
+        "person": "Люди",
+        "camera": "Камеры",
+        "settings": "Настройки"
+    },
+    "album": {
+        "all_files": "Все файлы",
+        "album_list": "Альбомы",
+        "edit": {
+            "title_add": "Добавить альбом",
+            "title": "Редактировать альбом",
+            "folder": "Папка",
+            "select_folder": "Выберите папку",
+            "name": "Имя",
+            "description": "Описание",
+            "description_placeholder": "Введите описание",
+            "images": "Изображения",
+            "videos": "Видео",
+            "files_count": "{count} файлов ({size})",
+            "files_counting": "Подсчет файлов...",
+            "created_at": "Создано",
+            "modified_at": "Изменено"
+        },
+        "no_albums": {
+            "title": "Нет альбомов",
+            "description": "Добавьте папку с медиафайлами, чтобы начать"
+        }
+    },
+    "search": {
+        "title": "Поиск изображений",
+        "search_images": "AI Поиск",
+        "similar_images": "Похожие",
+        "filename_search": "Имя файла",
+        "image_search_placeholder": "Поиск по тексту",
+        "image_search_history": "История поиска",
+        "image_search_tips": "Введите описание. Например: \"закат над океаном\".",
+        "similar_images_tips": "Выберите изображение для поиска похожих",
+        "filename_search_tips": "Введите имя файла",
+        "index": {
+            "wait_index": "Ожидание обновления...",
+            "indexing": "Обновление '{album}'... {count} / {total}",
+            "description": "Подготовка к поиску. Это может занять несколько минут.",
+            "cancel": "Отмена"
+        }
+    },
+    "face_index": {
+        "start": "Индексировать лица",
+        "indexing": "Индексация... {current} / {total}",
+        "clustering": "Кластеризация...",
+        "faces_found": "Найдено {count} лиц",
+        "cluster_graph": "Построение графа: {percent}%",
+        "cluster_iterate": "Итерация {current}/{total}",
+        "cluster_converged": "Сходимость на {current}",
+        "cluster_assign": "Создание персоны {current}/{total}",
+        "cluster_thumbnail": "Создание миниатюр...",
+        "cancel": "Отмена",
+        "incomplete": "Не завершено ({count} фото осталось)",
+        "resume": "Продолжить"
+    },
+    "favorite": {
+        "files": "Избранные файлы",
+        "folders": "Избранные папки"
+    },
+    "tag": {
+        "add_tag": "Добавить тег",
+        "delete_tag": "Удалить тег",
+        "edit_tag": "Редактировать тег",
+        "search_tags": "Поиск тегов",
+        "enter_new_tag_name": "Новое имя тега",
+        "not_found": "Теги не найдены"
+    },
+    "calendar": {
+        "on_this_day": "В этот день",
+        "title": "Календарь",
+        "monthly_view": "Месяц",
+        "daily_view": "День",
+        "day": "День",
+        "week": "Неделя",
+        "month": "Месяц",
+        "year": "Год",
+        "today": "Сегодня",
+        "monthly": "По месяцам",
+        "daily": "По дням",
+        "weekdays": [
+            "Вс",
+            "Пн",
+            "Вт",
+            "Ср",
+            "Чт",
+            "Пт",
+            "Сб"
+        ],
+        "weekdays_long": [
+            "Воскресенье",
+            "Понедельник",
+            "Вторник",
+            "Среда",
+            "Четверг",
+            "Пятница",
+            "Суббота"
+        ],
+        "months": [
+            "Янв",
+            "Фев",
+            "Мар",
+            "Апр",
+            "Май",
+            "Июн",
+            "Июл",
+            "Авг",
+            "Сен",
+            "Окт",
+            "Ноя",
+            "Дек"
+        ],
+        "months_long": [
+            "Январь",
+            "Февраль",
+            "Март",
+            "Апрель",
+            "Май",
+            "Июнь",
+            "Июль",
+            "Август",
+            "Сентябрь",
+            "Октябрь",
+            "Ноябрь",
+            "Декабрь"
+        ]
+    },
+    "toolbar": {
+        "search": {
+            "title": "Поиск",
+            "placeholder": "Имя файла"
+        },
+        "filter": {
+            "select_mode": "Выбор",
+            "select_count": "Выбрано {count}",
+            "sort_type_options": [
+                "Время",
+                "Имя",
+                "Размер",
+                "Измерение",
+                "Случайно"
+            ],
+            "sort_order_options": [
+                "По возрастанию",
+                "По убыванию"
+            ],
+            "file_type_options": [
+                "Все",
+                "Изображения",
+                "Видео"
+            ]
+        },
+        "tooltip": {
+            "restore": "Восстановить",
+            "refresh": "Обновить",
+            "grid_view": "Сетка",
+            "filmstrip_view": "Лента",
+            "show_info": "Показать инфо",
+            "hide_info": "Скрыть инфо",
+            "clear_history": "Очистить историю",
+            "index_faces": "Индексировать лица",
+            "sort": "Сортировка",
+            "monthly": "По месяцам",
+            "daily": "По дням",
+            "time_asc": "Время Возр",
+            "time_desc": "Время Убыв"
+        }
+    },
+    "info_panel": {
+        "tabs": [
+            "Инфо",
+            "Превью"
+        ]
+    },
+    "tooltip": {
+        "loading": "Загрузка...",
+        "not_found": {
+            "albums": "Альбомы не найдены",
+            "files": "Файлы не найдены",
+            "folder_files": "Нет файлов. Проверьте подпапки",
+            "folders": "Папки не найдены",
+            "tag": "Теги не найдены",
+            "calendar": "Нет данных календаря",
+            "location": "Нет данных о местоположении",
+            "person": "Нет данных о людях",
+            "person_hint": "Попробуйте проиндексировать лица",
+            "camera": "Нет данных о камере"
+        },
+        "set_album_cover": {
+            "success": "Обложка установлена",
+            "failed": "Ошибка установки обложки"
+        },
+        "copy_image": {
+            "success": "Скопировано в буфер",
+            "failed": "Ошибка копирования"
+        },
+        "save_image": {
+            "success": "Сохранено",
+            "failed": "Ошибка сохранения"
+        },
+        "update_image": {
+            "success": "Обновлено",
+            "failed": "Ошибка обновления"
+        },
+        "image_viewer": {
+            "first_image": "Первое изображение",
+            "last_image": "Последнее изображение"
+        },
+        "album_exists": "Альбом уже существует"
+    },
+    "statusbar": {
+        "files_summary": "{count} файлов ({size})"
+    },
+    "menu": {
+        "select": {
+            "all": "Выбрать все",
+            "none": "Снять выбор",
+            "invert": "Инвертировать"
+        },
+        "home": {
+            "delete": "Удалить",
+            "pin": "Закрепить",
+            "unpin": "Открепить"
+        },
+        "library": {
+            "add": "Добавить библиотеку...",
+            "edit": "Редактировать...",
+            "manage": "Управление...",
+            "remove": "Удалить библиотеку",
+            "default": "По умолчанию"
+        },
+        "album": {
+            "add": "Добавить альбом...",
+            "edit": "Редактировать...",
+            "index": "Обновить файлы",
+            "include_in_search": "Включить в поиск",
+            "exclude_from_search": "Исключить из поиска",
+            "remove": "Удалить альбом",
+            "refresh": "Обновить",
+            "reorder": "Переупорядочить",
+            "reorder_exit": "Закончить"
+        },
+        "file": {
+            "new_folder": "Новая папка...",
+            "view_in_new_window": "В новом окне...",
+            "copy": "Копировать в буфер",
+            "edit": "Редактировать...",
+            "find_similar_images": "Найти похожие",
+            "find_person_images": "Найти фото человека",
+            "find_album_folder": "Найти папку альбома",
+            "on_this_day": "В этот день",
+            "print": "Печать",
+            "rename": "Переименовать",
+            "move_to": "Переместить в...",
+            "copy_to": "Копировать в...",
+            "move_to_trash": "В корзину",
+            "delete": "Удалить",
+            "reveal_in_finder": "Показать в Finder...",
+            "reveal_in_file_explorer": "Показать в Проводнике...",
+            "set_album_cover": "Сделать обложкой"
+        },
+        "calendar": {
+            "monthly": "Месяц",
+            "daily": "День",
+            "time_asc": "Время Возр",
+            "time_desc": "Время Убыв"
+        },
+        "search": {
+            "clear_history": "Очистить историю"
+        },
+        "person": {
+            "index_faces": "Индексировать лица",
+            "reset_index": "Сбросить индекс"
+        },
+        "tag": {
+            "add": "Добавить тег...",
+            "rename": "Переименовать",
+            "delete": "Удалить"
+        },
+        "meta": {
+            "favorite": "В избранное",
+            "unfavorite": "Убрать из избранного",
+            "tag": "Теги...",
+            "comment": "Комментарий...",
+            "rotate": "Повернуть"
+        },
+        "sort": {
+            "sort_by_name": "По имени",
+            "sort_by_count": "По количеству"
+        }
+    },
+    "msgbox": {
+        "ok": "ОК",
+        "reset": "Сброс",
+        "cancel": "Отмена",
+        "close": "Закрыть",
+        "input": {
+            "file_name_invalid": "Недопустимые символы: \\ / : * ? \" < > |."
+        },
+        "reset_faces": {
+            "title": "Сброс индекса",
+            "content": "Удалить все данные о лицах? Это действие необратимо.",
+            "ok": "Сбросить"
+        },
+        "clear_search_history": {
+            "title": "Очистить историю",
+            "content": "Вы уверены?",
+            "ok": "Очистить"
+        },
+        "delete_person": {
+            "title": "Удалить персону",
+            "content": "Удалить '{person}'?",
+            "ok": "Удалить"
+        },
+        "manage_libraries": {
+            "title": "Управление библиотеками",
+            "name": "Имя",
+            "visible": "Видимость",
+            "action": "Действие",
+            "default": "По умолчанию",
+            "current": "Текущая",
+            "show": "Показать",
+            "hide": "Скрыть",
+            "delete": "Удалить",
+            "reorder": "Порядок",
+            "rename": "Переименовать",
+            "add_new": "Добавить новую",
+            "add": "Добавить",
+            "placeholder": "Имя библиотеки",
+            "max_limit_reached": "Лимит достигнут",
+            "created_at_lower": "создано",
+            "library_file_path": "Путь к файлу",
+            "library_file_size": "Размер файла",
+            "created_at": "Создано"
+        },
+        "remove_library": {
+            "title": "Удалить библиотеку",
+            "content": "Удалить '{library}'? Файл БД будет удален.",
+            "ok": "Удалить",
+            "success": "'{library}' удалена.",
+            "error": "Ошибка удаления."
+        },
+        "remove_album": {
+            "title": "Удалить альбом",
+            "content": "Альбом '{album}' будет удален. Файлы останутся.",
+            "ok": "Удалить"
+        },
+        "rename_folder": {
+            "title": "Переименовать папку",
+            "content": "Новое имя:",
+            "ok": "Переименовать",
+            "error": "Ошибка переименования."
+        },
+        "new_folder": {
+            "title": "Новая папка",
+            "placeholder": "Имя папки",
+            "ok": "Создать",
+            "error": "Ошибка создания."
+        },
+        "delete_folder": {
+            "title": "Удалить папку",
+            "content": "Папка '{folder}' и содержимое будут удалены.",
+            "ok": "Удалить",
+            "success": "'{folder}' удалена.",
+            "error": "Ошибка удаления."
+        },
+        "trash_folder": {
+            "title": "В корзину",
+            "content": "'{folder}' будет перемещена в корзину.",
+            "ok": "В корзину",
+            "success": "Перемещено в корзину.",
+            "error": "Ошибка перемещения."
+        },
+        "move_to": {
+            "title": "Переместить '{source}'",
+            "content": "Выберите назначение:",
+            "ok": "Переместить",
+            "error": "Ошибка перемещения."
+        },
+        "copy_to": {
+            "title": "Копировать '{source}'",
+            "content": "Выберите назначение:",
+            "ok": "Копировать",
+            "error": "Ошибка копирования."
+        },
+        "rename_file": {
+            "title": "Переименовать файл",
+            "placeholder": "Новое имя",
+            "ok": "Переименовать",
+            "error": "Ошибка переименования."
+        },
+        "delete_file": {
+            "title": "Удалить файл",
+            "content": "Файл '{file}' будет удален.",
+            "ok": "Удалить",
+            "success": "Удалено.",
+            "error": "Ошибка удаления."
+        },
+        "delete_files": {
+            "title": "Удалить файлы",
+            "content": "{count} файлов будут удалены.",
+            "ok": "Удалить все",
+            "success": "{count} файлов удалено.",
+            "error": "Ошибка удаления."
+        },
+        "trash_file": {
+            "title": "В корзину",
+            "content": "'{file}' будет перемещен в корзину.",
+            "ok": "В корзину",
+            "success": "Перемещено в корзину.",
+            "error": "Ошибка перемещения."
+        },
+        "trash_files": {
+            "title": "В корзину",
+            "content": "{count} файлов будут перемещены в корзину.",
+            "ok": "В корзину",
+            "success": "{count} файлов в корзине.",
+            "error": "Ошибка перемещения."
+        },
+        "new_tag": {
+            "title": "Новый тег",
+            "content": "Имя тега:",
+            "ok": "Создать",
+            "error": "Ошибка создания."
+        },
+        "delete_tag": {
+            "title": "Удалить тег",
+            "content": "Тег '{tag}' будет удален.",
+            "ok": "Удалить",
+            "success": "Удалено.",
+            "error": "Ошибка удаления."
+        },
+        "edit_comment": {
+            "title": "Редактировать комментарий",
+            "placeholder": "Комментарий",
+            "ok": "Сохранить"
+        },
+        "select_folder": {
+            "error": "Ошибка выбора папки."
+        },
+        "select_file": {
+            "error": "Ошибка выбора файла."
+        },
+        "image_editor": {
+            "title": "Редактор",
+            "tab_edit": "Ред.",
+            "tab_save": "Сохр.",
+            "filters": "Фильтры",
+            "filter_none": "Нет",
+            "filter_grayscale": "Ч/Б",
+            "filter_sepia": "Сепия",
+            "filter_invert": "Инверсия",
+            "adjustments": "Коррекция",
+            "brightness": "Яркость",
+            "contrast": "Контраст",
+            "blur": "Размытие",
+            "hue_rotate": "Оттенок",
+            "saturation": "Насыщенность",
+            "reset": "Сброс",
+            "crop": "Обрезка",
+            "cancel_crop": "Отмена",
+            "confirm_crop": "ОК",
+            "crop_shape": "Форма",
+            "crop_shape_custom": "Свой",
+            "crop_shape_landscape": "Пейзаж",
+            "crop_shape_portrait": "Портрет",
+            "aspect_ratio": "Пропорции",
+            "zoom_in": "Зум +",
+            "zoom_out": "Зум -",
+            "rotate_left": "Влево",
+            "rotate_right": "Вправо",
+            "flip_horizontal": "Отразить по гор.",
+            "flip_vertical": "Отразить по верт.",
+            "restore": "Восстановить",
+            "resize": "Размер",
+            "width": "Ширина",
+            "height": "Высота",
+            "percentage": "Процент",
+            "pixel": "Пиксели",
+            "options": "Опции",
+            "save_as": "Сохранить как",
+            "save_as_options": [
+                "Перезаписать",
+                "Новый файл"
+            ],
+            "save_as_placeholder": "Имя файла",
+            "format": "Формат",
+            "format_options": [
+                "JPEG",
+                "PNG",
+                "WEBP"
+            ],
+            "quality": "Качество",
+            "quality_options": [
+                "Высокое",
+                "Среднее",
+                "Низкое"
+            ],
+            "copy_image": "Копировать",
+            "ok": "Сохранить",
+            "cancel": "Отмена",
+            "overwrite_confirm": "Перезаписать файл? Это действие необратимо."
+        }
+    },
+    "file_info": {
+        "title": "Информация",
+        "metadata": "Метаданные",
+        "location": "Место",
+        "album_name": "Альбом",
+        "name": "Имя",
+        "folder": "Папка",
+        "dimension": "Размеры",
+        "size": "Размер",
+        "duration": "Длительность",
+        "created_at": "Создан",
+        "modified_at": "Изменен",
+        "camera": "Камера",
+        "camera_make": "Производитель",
+        "camera_model": "Модель",
+        "taken_at": "Снято",
+        "taken_by": "Автор",
+        "software": "ПО",
+        "artist": "Художник",
+        "copyright": "Копирайт",
+        "description": "Описание",
+        "lens": "Объектив",
+        "lens_make": "Производитель",
+        "lens_model": "Модель",
+        "exposure_bias": "Сдвиг экспозиции",
+        "exposure_time": "Выдержка",
+        "aperture": "Диафрагма",
+        "focal_length": "Фокусное раст.",
+        "iso": "ISO",
+        "flash": "Вспышка",
+        "color_type": "Тип цвета",
+        "bit_depth": "Глубина цвета",
+        "alpha_channel": "Альфа-канал",
+        "gps_latitude": "Широта",
+        "gps_longitude": "Долгота",
+        "gps_altitude": "Высота",
+        "geo_location": "Местоположение",
+        "tags": "Теги",
+        "comment": "Комментарий",
+        "capture_settings": "Параметры съемки"
+    },
+    "map": {
+        "show_map": "Показать карту",
+        "hide_map": "Скрыть карту",
+        "zoom_in": "Зум +",
+        "zoom_out": "Зум -",
+        "zoom_center": "Центр"
+    },
+    "format": {
+        "year": "yyyy",
+        "month": "MMMM yyyy",
+        "date": "dd.MM.yyyy",
+        "date_long": "d MMMM yyyy",
+        "month_date": "d MMMM",
+        "date_long_with_weekday": "EEEE, d MMMM yyyy",
+        "date_time": "dd.MM.yyyy HH:mm:ss",
+        "date_time_long": "d MMMM yyyy HH:mm:ss"
+    },
+    "image_viewer": {
+        "title": "Просмотр",
+        "loading": "Загрузка...",
+        "failed": "Ошибка загрузки.",
+        "toolbar": {
+            "prev": "Пред.",
+            "next": "След.",
+            "slide_show": "Слайд-шоу",
+            "pause": "Пауза",
+            "zoom_in": "Зум +",
+            "zoom_out": "Зум -",
+            "zoom_fit": "По размеру",
+            "zoom_actual": "1:1",
+            "edit": "Ред.",
+            "rotate": "Поворот",
+            "favorite": "Избранное",
+            "unfavorite": "Убрать",
+            "tag": "Тег",
+            "comment": "Коммент",
+            "info": "Инфо",
+            "save": "Сохр.",
+            "delete": "Удалить",
+            "fullscreen": "Полный экран",
+            "exit_fullscreen": "Выход",
+            "pin": "Закрепить",
+            "unpin": "Открепить",
+            "close": "Закрыть"
+        }
+    },
+    "video": {
+        "loading": "Загрузка видео...",
+        "failed": "Ошибка воспроизведения",
+        "errors": {
+            "aborted": "Прервано",
+            "network": "Ошибка сети",
+            "decode": "Ошибка декодирования",
+            "format": "Не поддерживается",
+            "timeout": "Тайм-аут",
+            "unknown": "Неизвестная ошибка"
+        }
+    },
+    "settings": {
+        "general": {
+            "title": "Общие",
+            "appearance": "Внешний вид",
+            "appearance_options": [
+                "Светлый",
+                "Темный"
+            ],
+            "theme": "Тема",
+            "theme_options_light": [
+                "По умолчанию",
+                "Cupcake",
+                "Bumblebee",
+                "Emerald",
+                "Corporate",
+                "Retro",
+                "Cyberpunk",
+                "Valentine",
+                "Garden",
+                "Lofi",
+                "Pastel",
+                "Fantasy",
+                "Wireframe",
+                "Cmyk",
+                "Autumn",
+                "Acid",
+                "Lemonade",
+                "Winter",
+                "Nord",
+                "Caramellatte",
+                "Silk"
+            ],
+            "theme_options_dark": [
+                "По умолчанию",
+                "Synthwave",
+                "Halloween",
+                "Forest",
+                "Aqua",
+                "Black",
+                "Luxury",
+                "Dracula",
+                "Business",
+                "Night",
+                "Coffee",
+                "Dim",
+                "Sunset",
+                "Abyss"
+            ],
+            "select_language": "Язык",
+            "show_button_text": "Текст кнопок",
+            "show_tool_tip": "Подсказки",
+            "show_status_bar": "Строка состояния",
+            "show_map": "Карта",
+            "show_map_hint": "Нужен интернет",
+            "debug_mode": "Режим отладки"
+        },
+        "grid_view": {
+            "title": "Сетка",
+            "style": "Стиль",
+            "style_options": [
+                "Комфортный",
+                "Компактный"
+            ],
+            "size": "Размер",
+            "scaling": "Масштабирование",
+            "scaling_options": [
+                "Целиком",
+                "Заполнение",
+                "Растягивание"
+            ],
+            "label_primary": "Основная метка",
+            "label_primary_hint": "Только для комфортного стиля",
+            "label_secondary": "Вторичная метка",
+            "label_secondary_hint": "Только для комфортного стиля",
+            "label_options": [
+                "(Пусто)",
+                "Имя",
+                "Размер",
+                "Измерение",
+                "Время",
+                "Место",
+                "Камера",
+                "Объектив",
+                "Настройки"
+            ]
+        },
+        "filmstrip_view": {
+            "title": "Лента",
+            "preview_position": "Позиция превью",
+            "preview_position_options": [
+                "Сверху",
+                "Снизу"
+            ]
+        },
+        "image_view": {
+            "title": "Просмотр",
+            "mouse_wheel": "Колесо мыши",
+            "mouse_wheel_options": [
+                "Пред/След (Ctrl зум)",
+                "Зум +/-"
+            ],
+            "slide_show_interval": "Интервал: {second} сек",
+            "auto_play_video": "Автовоспроизведение видео",
+            "show_comment": "Показывать комментарий",
+            "show_comment_hint": "В новом окне",
+            "navigator_view": "Навигатор",
+            "navigator_view_options": [
+                "Авто",
+                "Всегда",
+                "Никогда"
+            ],
+            "navigator_view__size": "Размер",
+            "navigator_view_size_options": [
+                "Мал(160px)",
+                "Сред(240px)",
+                "Бол(320px)",
+                "Огр(400px)"
+            ]
+        },
+        "image_search": {
+            "title": "Поиск",
+            "similarity": "Сходство",
+            "similarity_hint": "Выше = Меньше результатов",
+            "similarity_options": [
+                "Очень высокое",
+                "Высокое",
+                "Среднее",
+                "Низкое"
+            ]
+        },
+        "face_recognition": {
+            "title": "Распознавание лиц",
+            "similarity": "Сходство лиц",
+            "cluster_threshold": "Порог кластеризации",
+            "cluster_threshold_hint": "Высокий = Строго",
+            "cluster_threshold_options": [
+                "Очень высокий",
+                "Высокий",
+                "Средний",
+                "Низкий"
+            ]
+        },
+        "about": {
+            "title": "О программе",
+            "package": {
+                "name": "Имя пакета",
+                "description": "Описание",
+                "version": "Версия",
+                "build_time": "Время сборки",
+                "author": "Автор",
+                "license": "Лицензия",
+                "website": "Сайт"
+            }
+        }
+    }
+}
