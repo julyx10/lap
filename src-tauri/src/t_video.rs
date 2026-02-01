@@ -113,7 +113,7 @@ pub fn get_video_thumbnail(
                 .map_err(|e| format!("Scaling error: {e}"))?;
 
             // avoid stride error
-            let stride = rgb_frame.stride(0) as usize;
+            let stride = rgb_frame.stride(0);
             let mut buf = Vec::with_capacity((width * height * 3) as usize);
             for y in 0..height as usize {
                 let start = y * stride;
@@ -301,7 +301,7 @@ fn parse_apple_iso6709(raw: &str, m: &mut VideoMetadata) {
         parts.push(current);
     }
 
-    if parts.len() >= 1 {
+    if !parts.is_empty() {
         m.gps_latitude = parts[0].parse().ok();
     }
     if parts.len() >= 2 {

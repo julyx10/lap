@@ -20,7 +20,6 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tauri::State;
-use tokio;
 
 // cancellation token for indexing
 pub struct IndexCancellation(pub Arc<Mutex<HashMap<i64, bool>>>);
@@ -250,7 +249,7 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
 #[tauri::command]
 pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
     // trash the folder
-    trash::delete(&folder_path).map_err(|e| e.to_string())?;
+    trash::delete(folder_path).map_err(|e| e.to_string())?;
 
     // delete the folder and all children from db
     AFolder::delete_folder(folder_path)
@@ -316,10 +315,7 @@ pub fn get_folder_files(
 /// get the thumbnail count of the folder
 #[tauri::command]
 pub fn get_folder_thumb_count(file_type: i64, folder_id: i64) -> i64 {
-    match AThumb::get_folder_thumb_count(file_type, folder_id) {
-        Ok(count) => count,
-        Err(_) => 0,
-    }
+    AThumb::get_folder_thumb_count(file_type, folder_id).unwrap_or_default()
 }
 
 /// edit an image
@@ -342,7 +338,7 @@ pub async fn copy_edited_image(params: t_image::EditParams) -> Result<bool, Stri
 #[tauri::command]
 pub async fn copy_image(file_path: String) -> Result<bool, String> {
     tokio::task::spawn_blocking(move || {
-        if let Ok(img) = image::open(&Path::new(&file_path)) {
+        if let Ok(img) = image::open(Path::new(&file_path)) {
             Ok(t_image::copy_image_to_clipboard(img))
         } else {
             Err(format!("Failed to open image: {}", file_path))
@@ -357,7 +353,7 @@ pub async fn copy_image(file_path: String) -> Result<bool, String> {
 pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Option<String> {
     match t_utils::rename_file(file_path, new_name) {
         Some(new_file_path) => {
-            let name_pinyin = t_utils::convert_to_pinyin(&new_name);
+            let name_pinyin = t_utils::convert_to_pinyin(new_name);
             if let Err(e) = AFile::update_column(file_id, "name_pinyin", &name_pinyin) {
                 eprintln!("Error while renaming file in DB: {}", e);
                 return None;
@@ -405,7 +401,7 @@ pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
 #[tauri::command]
 pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {
     // trash the file
-    trash::delete(&file_path).map_err(|e| e.to_string())?;
+    trash::delete(file_path).map_err(|e| e.to_string())?;
 
     // delete the file from db
     AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))

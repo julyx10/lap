@@ -27,12 +27,12 @@
 
     <!-- Incomplete Indexing Warning Banner -->
     <div v-if="allPersons.length > 0 && incompleteCount > 0 && !isIndexing" class="flex-none px-2 py-2">
-        <div class="p-3 bg-warning/10 text-warning rounded-box flex flex-row items-center gap-2">
+        <div class="p-3 rounded-box flex flex-row items-center gap-2">
           <IconUpdate class="w-5 h-5 shrink-0" />
           <span class="text-xs flex-1">
             {{ $t('face_index.incomplete', { count: incompleteCount.toLocaleString() }) }}
           </span>
-          <button class="btn btn-xs btn-warning btn-outline bg-base-100" @click="clickIndexFaces">
+          <button class="btn btn-xs btn-primary" @click="clickIndexFaces">
             {{ $t('face_index.resume') }}
           </button>
         </div>
@@ -99,8 +99,8 @@
     <div v-else-if="!isIndexing" class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
       <IconPerson class="w-8 h-8 mb-2" />
       <template v-if="incompleteCount > 0">
-         <span class="text-sm text-center text-warning">{{ $t('face_index.incomplete', { count: incompleteCount.toLocaleString() }) }}</span>
-         <button class="btn btn-warning btn-sm mt-4" @click="clickIndexFaces">
+         <span class="text-sm text-center">{{ $t('face_index.incomplete', { count: incompleteCount.toLocaleString() }) }}</span>
+         <button class="btn btn-primary btn-sm mt-4" @click="clickIndexFaces">
           <IconUpdate class="w-4 h-4" />
           {{ $t('face_index.resume') }}
         </button>

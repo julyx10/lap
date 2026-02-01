@@ -89,7 +89,7 @@ impl Album {
             "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
             FROM albums WHERE path = ?1",
             params![path],
-            |row| Self::from_row(row)
+            Self::from_row
         ).optional().map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -167,7 +167,7 @@ impl Album {
 
         // Execute the query and map the result to Album structs
         let albums_iter = stmt
-            .query_map([], |row| Self::from_row(row))
+            .query_map([], Self::from_row)
             .map_err(|e| e.to_string())?;
 
         // Collect the results into a Vec<Album>
@@ -188,7 +188,7 @@ impl Album {
             "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
             FROM albums WHERE id = ?1",
             params![id],
-            |row| Self::from_row(row)
+            Self::from_row
         ).map_err(|e| e.to_string())?;
         Ok(result)
     }
@@ -319,7 +319,7 @@ impl AFolder {
                 FROM afolders
                 WHERE path = ?1",
                 params![folder_path],
-                |row| Self::from_row(row),
+                Self::from_row,
             )
             .optional()
             .map_err(|e| e.to_string())?;
@@ -464,17 +464,15 @@ impl AFolder {
     pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
-        let query = format!(
-            "SELECT a.id, a.album_id, a.name, a.path, a.created_at, a.modified_at, a.is_favorite
+        let query = "SELECT a.id, a.album_id, a.name, a.path, a.created_at, a.modified_at, a.is_favorite
             FROM afolders a
             WHERE a.is_favorite = 1
-            ORDER BY a.name",
-        );
+            ORDER BY a.name".to_string();
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let rows = stmt
-            .query_map(params![], |row| Self::from_row(row))
+            .query_map(params![], Self::from_row)
             .map_err(|e| e.to_string())?;
 
         let mut folders = Vec::new();
@@ -931,8 +929,7 @@ impl AFile {
         };
 
         let cleaned = raw
-            .replace('"', "")
-            .replace('\'', "")
+            .replace(['"', '\''], "")
             .lines()
             .map(|line| {
                 let mut s = line.trim().to_string();
@@ -1126,7 +1123,7 @@ impl AFile {
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id";
 
-        format!("{}", base_query)
+        base_query.to_string()
     }
 
     // build the base SQL query
@@ -1237,7 +1234,7 @@ impl AFile {
         let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
 
         let rows = stmt
-            .query_map(params, |row| Self::from_row(row))
+            .query_map(params, Self::from_row)
             .map_err(|e| e.to_string())?;
 
         let mut files = Vec::new();
@@ -1263,7 +1260,7 @@ impl AFile {
             .query_row(
                 &sql,
                 params![folder_id, t_utils::get_file_name(file_path)],
-                |row| Self::from_row(row),
+                Self::from_row,
             )
             .optional()
             .map_err(|e| e.to_string())?;
@@ -1324,7 +1321,7 @@ impl AFile {
 
         // Execute the query with file_id as the parameter
         let result = conn
-            .query_row(&sql, params![file_id], |row| Self::from_row(row))
+            .query_row(&sql, params![file_id], Self::from_row)
             .optional()
             .map_err(|e| e.to_string())?;
 
@@ -1412,7 +1409,7 @@ impl AFile {
 
     // get total count and size of files
     pub fn get_total_count_and_sum() -> Result<(i64, i64), String> {
-        let sql = format!("{}", Self::build_count_query());
+        let sql = Self::build_count_query().to_string();
         Self::query_count_and_sum(&sql, &[])
     }
 
@@ -1773,11 +1770,9 @@ impl AFile {
         // 2. Perform Vector Search
         let conn = open_conn()?;
 
-        let query = format!(
-            "SELECT a.id, a.embeds 
+        let query = "SELECT a.id, a.embeds 
             FROM afiles a
-            WHERE a.embeds IS NOT NULL"
-        );
+            WHERE a.embeds IS NOT NULL".to_string();
 
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
@@ -2103,18 +2098,16 @@ impl ATag {
     /// Get all tags from the db
     pub fn get_all() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let query = format!(
-            "SELECT atags.id, atags.name, SUM(CASE WHEN afiles.id IS NOT NULL THEN 1 ELSE 0 END) AS count 
+        let query = "SELECT atags.id, atags.name, SUM(CASE WHEN afiles.id IS NOT NULL THEN 1 ELSE 0 END) AS count 
             FROM atags 
             LEFT JOIN afile_tags ON atags.id = afile_tags.tag_id
             LEFT JOIN afiles ON afile_tags.file_id = afiles.id
             GROUP BY atags.id
-            ORDER BY atags.name ASC"
-        );
+            ORDER BY atags.name ASC".to_string();
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let tags_iter = stmt
-            .query_map([], |row| Self::from_row(row))
+            .query_map([], Self::from_row)
             .map_err(|e| e.to_string())?;
 
         let mut tags = Vec::new();
@@ -2151,7 +2144,7 @@ impl ATag {
             .map_err(|e| e.to_string())?;
 
         let tags_iter = stmt
-            .query_map(params![file_id], |row| Self::from_row(row))
+            .query_map(params![file_id], Self::from_row)
             .map_err(|e| e.to_string())?;
 
         let mut tags = Vec::new();
@@ -2407,8 +2400,8 @@ impl Person {
             let crop_x = (face_x - face_w * expansion).max(0.0) as u32;
             let crop_y = (face_y - face_h * expansion).max(0.0) as u32;
             // Ensure we don't go out of bounds
-            let crop_w = (face_w * (1.0 + 2.0 * expansion) as f32).min((current_w - crop_x) as f32) as u32;
-            let crop_h = (face_h * (1.0 + 2.0 * expansion) as f32).min((current_h - crop_y) as f32) as u32;
+            let crop_w = (face_w * (1.0 + 2.0 * expansion)).min((current_w - crop_x) as f32) as u32;
+            let crop_h = (face_h * (1.0 + 2.0 * expansion)).min((current_h - crop_y) as f32) as u32;
             
             if crop_w > 0 && crop_h > 0 {
                 let mut cropped = img.crop_imm(crop_x, crop_y, crop_w, crop_h);
@@ -2805,13 +2798,11 @@ impl ACamera {
     // get all camera makes and models from db
     pub fn get_from_db() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
-        let query = format!(
-            "SELECT UPPER(a.e_make), a.e_model, count(a.id) as count
+        let query = "SELECT UPPER(a.e_make), a.e_model, count(a.id) as count
             FROM afiles a
             WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL
             GROUP BY UPPER(a.e_make), a.e_model
-            ORDER BY UPPER(a.e_make), a.e_model"
-        );
+            ORDER BY UPPER(a.e_make), a.e_model".to_string();
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
@@ -2864,13 +2855,11 @@ impl ALocation {
     pub fn get_from_db() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
-        let query = format!(
-            "SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
+        let query = "SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
             FROM afiles a
             WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> ''
             GROUP BY a.geo_cc, a.geo_admin1, a.geo_name
-            ORDER BY a.geo_cc, a.geo_admin1, a.geo_name"
-        );
+            ORDER BY a.geo_cc, a.geo_admin1, a.geo_name".to_string();
 
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 

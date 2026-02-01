@@ -123,7 +123,10 @@ const playerOptions = computed(() => ({
 
 const getActivePlayer = () => players.value[activeVideo.value];
 
-const updateTransform = (resetZoom = false) => {
+const updateTransform = (options: boolean | { resetRotation?: boolean, recalcScale?: boolean } = false) => {
+  const resetRotation = typeof options === 'boolean' ? options : (options.resetRotation ?? false);
+  const recalcScale = typeof options === 'boolean' ? options : (options.recalcScale ?? false);
+
   const player = getActivePlayer();
   const video = player?.el().querySelector('video');
   if (!video) return;
@@ -133,6 +136,10 @@ const updateTransform = (resetZoom = false) => {
     video.classList.add('no-transition');
   } else {
     video.classList.remove('no-transition');
+  }
+
+  if (resetRotation) {
+    rotate.value = props.rotate; // use prop rotate for reset
   }
 
   const videoWidth = player?.videoWidth();
@@ -151,15 +158,13 @@ const updateTransform = (resetZoom = false) => {
   video.style.height = 'auto';
 
   // reset zoom and rotate when loading new video or when zoom fit is changed
-  if(resetZoom) {
+  if(recalcScale) {
     scale.value = 1;
     if (isFit.value && videoWidth && videoHeight && containerWidth && containerHeight) {
       const w = isRotated ? videoHeight : videoWidth;
       const h = isRotated ? videoWidth : videoHeight;
       scale.value = Math.min(containerWidth / w, containerHeight / h);
     }
-
-    rotate.value = props.rotate; // use prop rotate for reset
   }
   video.style.transform = `translate(-50%, -50%) rotate(${rotate.value}deg) scale(${scale.value})`;
 };
@@ -293,7 +298,7 @@ const loadVideo = (filePath: string) => {
     isFit.value = props.isZoomFit;
     
     // Apply transform immediately (before transition removal)
-    updateTransform(true);
+    updateTransform(true); // resetRotation=true, recalcScale=true
     
     setTimeout(() => {
       noTransition.value = false;
@@ -370,7 +375,7 @@ onMounted(() => {
 
   if (videoContainer.value) {
     resizeObserver = new ResizeObserver(() => {
-      updateTransform(props.isZoomFit)
+      updateTransform({ recalcScale: true })
     });
     resizeObserver.observe(videoContainer.value);
   }
@@ -409,7 +414,7 @@ watch(() => props.rotate, (val) => {
 
 watch(() => props.isZoomFit, (val) => { 
   isFit.value = val; 
-  updateTransform(true); 
+  updateTransform({ recalcScale: true }); 
 });
 
 // When slideshow starts, auto-play the current video

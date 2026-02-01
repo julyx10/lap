@@ -427,7 +427,7 @@ impl FaceEngine {
             .map_err(|e| format!("Failed to extract embedding: {}", e))?;
 
         // Normalize embedding to unit vector
-        let emb_vec: Vec<f32> = embedding_data.iter().copied().collect();
+        let emb_vec: Vec<f32> = embedding_data.to_vec();
         let norm: f32 = emb_vec.iter().map(|x| x * x).sum::<f32>().sqrt();
         let normalized: Vec<f32> = emb_vec.iter().map(|x| x / norm).collect();
 
@@ -491,7 +491,7 @@ impl FaceEngine {
             // }
 
             // Filter 4: Skip blurry faces
-            let blur_score = self.calculate_blur_score(&img, &face);
+            let blur_score = self.calculate_blur_score(img, &face);
             if blur_score < t_common::MIN_BLUR_SCORE {
                 continue;
             }

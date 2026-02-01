@@ -192,7 +192,7 @@ pub fn create_new_folder(folder_path: &str) -> Option<String> {
         }
         Err(e) => {
             eprintln!("Failed to create folder '{}': {}", folder_path, e);
-            return None;
+            None
         }
     }
 }
@@ -366,11 +366,9 @@ pub fn copy_folder(folder_path: &str, dest_folder: &str) -> Option<String> {
                 );
                 return None;
             }
-        } else {
-            if let Err(e) = fs::copy(entry.path(), &dest_path) {
-                eprintln!("Failed to copy file to '{}': {}", dest_path.display(), e);
-                return None;
-            }
+        } else if let Err(e) = fs::copy(entry.path(), &dest_path) {
+            eprintln!("Failed to copy file to '{}': {}", dest_path.display(), e);
+            return None;
         }
     }
 
@@ -389,7 +387,7 @@ pub fn move_file(file_path: &str, dest_folder: &str) -> Option<String> {
     let destination = get_unique_path(destination);
 
     // Try to move the file
-    match fs::rename(&source, &destination) {
+    match fs::rename(source, &destination) {
         Ok(_) => {
             println!("File moved successfully: {}", destination.display());
             destination.to_str().map(|s| s.to_string())
@@ -412,7 +410,7 @@ pub fn copy_file(file_path: &str, dest_folder: &str) -> Option<String> {
     let destination = get_unique_path(destination);
 
     // Try to copy the file
-    match fs::copy(&source, &destination) {
+    match fs::copy(source, &destination) {
         Ok(_) => {
             println!("File copied successfully: {}", destination.display());
             destination.to_str().map(|s| s.to_string())
