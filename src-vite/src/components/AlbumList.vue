@@ -100,6 +100,7 @@
                 :children="album.children" 
                 :albumId="album.id"
                 :rootPath="album.path"
+                :allowContextMenu="isMainPane"
               />
             </div>
           </transition>

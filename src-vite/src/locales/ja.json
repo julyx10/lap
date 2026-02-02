@@ -1,7 +1,7 @@
 {
     "sidebar": {
         "home": "ホーム",
-        "album": "アルバム",
+        "library": "ライブラリ",
         "search": "検索",
         "favorite": "お気に入り",
         "tag": "タグ",
@@ -332,6 +332,7 @@
             "current": "現在",
             "show": "表示",
             "hide": "非表示",
+            "hidden": "非表示",
             "delete": "削除",
             "reorder": "並べ替え",
             "rename": "名前変更",

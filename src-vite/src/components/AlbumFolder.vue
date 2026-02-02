@@ -52,7 +52,7 @@
               :disabled="true"
               :buttonSize="'small'"
             />
-            <ContextMenu v-if="isMainPane && !isRenamingFolder"
+            <ContextMenu v-if="allowContextMenu && !isRenamingFolder"
               :class="[
                 selection.folderPath.value != child.path ? 'invisible group-hover:visible' : ''
               ]"
@@ -68,6 +68,7 @@
         :children="child.children" 
         :albumId="albumId"
         :rootPath="rootPath"
+        :allowContextMenu="allowContextMenu"
       />
     </li>
   </ul>
@@ -160,13 +161,11 @@ const props = defineProps<{
   children?: Folder[];      // subfolders
   albumId: number;          // album id for this folder tree
   rootPath: string;         // root folder path (album path)
+  allowContextMenu?: boolean; // whether to show context menu
 }>();
 
 // Inject selection context from AlbumList
 const selection = useAlbumSelection();
-
-// Computed to check if we're in main album pane (not MoveTo dialog)
-const isMainPane = computed(() => selection.albumId.value !== undefined);
 
 /// i18n
 const { locale, messages } = useI18n();

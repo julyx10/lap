@@ -2,13 +2,24 @@
   <ModalDialog :title="$t('tag.edit_tag')" :width="600" @cancel="clickCancel">
     <!-- Search and Add New Tag -->
     <div class="pb-4 flex items-center space-x-2">
-      <input
-        ref="tagSearchInputRef"
-        type="text"
-        v-model="tagSearch"
-        :placeholder="$t('tag.search_tags')"
-        class="input flex-grow"
-      />
+      <div 
+        :class="[
+          'flex-grow h-8 flex items-center rounded-box transition-colors bg-base-100',
+          isSearchFocused ? 'border-2 border-primary' : 'border border-neutral-content/20 hover:border-neutral-content/50'
+        ]"
+      >
+        <IconSearch class="ml-2 w-4 h-4 text-base-content/50" />
+        <input
+          ref="tagSearchInputRef"
+          type="text"
+          v-model="tagSearch"
+          :placeholder="$t('tag.search_tags')"
+          class="w-full bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none"
+          @focus="isSearchFocused = true"
+          @blur="isSearchFocused = false"
+        />
+      </div>
+
       <input
         ref="newTagNameInputRef"
         type="text"
@@ -19,6 +30,7 @@
       />
       <TButton 
         :icon="IconAdd"
+        :tooltip="$t('tag.add_tag')"
         @click="addNewTag"
       />
     </div>
@@ -72,7 +84,7 @@ import {
   addTagToFile, 
   removeTagFromFile 
 } from '@/common/api';
-import { IconAdd } from '@/common/icons';
+import { IconAdd, IconSearch } from '@/common/icons';
 import TButton from './TButton.vue';
 import { useUIStore } from '@/stores/uiStore';
 import ModalDialog from '@/components/ModalDialog.vue';
@@ -92,6 +104,7 @@ const tagSearchInputRef = ref(null);
 const newTagNameInputRef = ref(null);
 const tagSearch = ref('');
 const newTagName = ref('');
+const isSearchFocused = ref(false);
 
 // Sets to track tag states
 const selectedTags = ref<Set<number>>(new Set()); // Tags present on ALL selected files

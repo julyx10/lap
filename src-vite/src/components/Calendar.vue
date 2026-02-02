@@ -16,9 +16,9 @@
     </div>
 
     <template v-if="Object.keys(calendar_dates).length > 0" >
-    <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('calendar.title') }}
-    </div>
+      </div>
       <!-- calendar -->
       <div ref="scrollable"
         class="flex-1 flex flex-col overflow-x-hidden overflow-y-auto"

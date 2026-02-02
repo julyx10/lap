@@ -50,17 +50,19 @@
                 <span class="truncate cursor-default" 
                   :class="{ 
                     'text-primary': lib.id === currentLibraryId,
+                    'text-base-content/30': lib.hidden,
                   }"
                 >
                   {{ lib.name }}
                 </span>
                 <span v-if="lib.id === 'default'" class="shrink-0 text-xs px-2 py-1 ml-2 rounded-box bg-base-100/30">{{ $t('msgbox.manage_libraries.default') }}</span>
-                <span v-if="lib.hidden" class="shrink-0 text-xs px-2 py-1 ml-2 rounded-box bg-base-100/30">{{ $t('msgbox.manage_libraries.hide') }}</span>
+                <span v-if="lib.hidden" class="shrink-0 text-xs px-2 py-1 ml-2 rounded-box bg-base-100/30">{{ $t('msgbox.manage_libraries.hidden') }}</span>
               </div>
             </div>
             <div class="text-xs text-base-content/30 truncate">
               <span v-if="libraryStats[lib.id]">
-                {{ formatFileSize(libraryStats[lib.id].db_file_size || 0) }}, {{ $t('msgbox.manage_libraries.created_at_lower') }} {{ formatTimestamp(lib.created_at, t('format.date_time')) }}
+                {{ $t('statusbar.files_summary', { count: libraryStats[lib.id].fileCount.toLocaleString(), size: formatFileSize(libraryStats[lib.id].totalSize) }) }}
+                {{ ', '  + $t('msgbox.manage_libraries.created_at_lower') + ' ' + formatTimestamp(lib.created_at, t('format.date_time')) }}
               </span>
             </div>
           </div>
@@ -77,7 +79,7 @@
             <TButton
               :icon="lib.hidden ? IconHide : IconUnhide"
               :buttonSize="'small'"
-              :disabled="lib.id === 'default' || lib.id === currentLibraryId || showAddInput || isRenaming"
+              :disabled="lib.id === 'default' || showAddInput || isRenaming"
               :tooltip="lib.hidden ? $t('msgbox.manage_libraries.show') : $t('msgbox.manage_libraries.hide')"
               @click.stop="toggleVisibility(lib)"
             />
@@ -142,7 +144,7 @@
       <div v-if="inputErrorMessage" class="text-error text-xs mt-1 px-2">{{ inputErrorMessage }}</div>
 
       <button 
-        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer shrink-0" 
+        class="px-4 py-1 rounded-box hover:bg-primary hover:text-base-content cursor-pointer shrink-0" 
         @click="clickClose"
       >
         {{ $t('msgbox.close') }}
@@ -364,8 +366,6 @@ const doAddLibrary = async () => {
 };
 
 const toggleVisibility = async (lib: any) => {
-  if (lib.id === currentLibraryId.value) return; // Cannot hide current
-  
   const newHidden = !lib.hidden;
   try {
     await hideLibrary(lib.id, newHidden);

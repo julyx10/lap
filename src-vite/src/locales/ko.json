@@ -1,7 +1,7 @@
 {
     "sidebar": {
         "home": "홈",
-        "album": "앨범",
+        "library": "라이브러리",
         "search": "검색",
         "favorite": "즐겨찾기",
         "tag": "태그",
@@ -332,6 +332,7 @@
             "current": "현재",
             "show": "보이기",
             "hide": "숨기기",
+            "hidden": "숨김",
             "delete": "삭제",
             "reorder": "순서",
             "rename": "이름변경",

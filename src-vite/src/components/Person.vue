@@ -409,6 +409,14 @@ async function clickResetFaces() {
 
 async function onResetFacesConfirm() {
   showResetFacesMsgbox.value = false;
+  
+  // Reset selection and config
+  selectedPerson.value = null;
+  if (libConfig.person) {
+    libConfig.person.id = null;
+    libConfig.person.name = null;
+  }
+
   await resetFaces();
   await loadPersons();
   checkFaceStats();

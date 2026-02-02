@@ -1,7 +1,7 @@
 {
     "sidebar": {
         "home": "Início",
-        "album": "Álbuns",
+        "library": "Biblioteca",
         "search": "Pesquisar",
         "favorite": "Favoritos",
         "tag": "Tags",
@@ -332,6 +332,7 @@
             "current": "Atual",
             "show": "Mostrar",
             "hide": "Ocultar",
+            "hidden": "Oculto",
             "delete": "Excluir",
             "reorder": "Reordenar",
             "rename": "Renomear",

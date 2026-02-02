@@ -1,7 +1,7 @@
 {
   "sidebar": {
     "home": "主页",
-    "album": "相册",
+    "library": "图库",
     "search": "搜索",
     "favorite": "收藏",
     "tag": "标签",
@@ -332,6 +332,7 @@
       "current": "当前库",
       "show": "显示",
       "hide": "隐藏",
+      "hidden": "已隐藏",
       "delete": "删除",
       "reorder": "重新排列",
       "rename": "重命名",

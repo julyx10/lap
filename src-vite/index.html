@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lap</title>
+    <script>
+      (function() {
+        try {
+          var config = JSON.parse(localStorage.getItem('configStore'));
+          var isDark = true;
+          if (config && config.settings && config.settings.appearance === 0) {
+            isDark = false;
+          }
+          
+          var color = isDark ? '#1d232a' : '#ffffff';
+          document.documentElement.style.backgroundColor = color;
+        } catch (e) {
+          document.documentElement.style.backgroundColor = '#1d232a';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

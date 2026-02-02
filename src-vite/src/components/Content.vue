@@ -1066,6 +1066,32 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
+  // Check if there are modal dialogs
+  if (uiStore.inputStack.length > 0) {
+    return;
+  }
+
+  if (event.key === 'Escape') {
+    if (uiStore.isFullScreen) {
+      uiStore.isFullScreen = false;
+      event.preventDefault();
+      return;
+    } else if (showQuickView.value) {
+      showQuickView.value = false;
+      stopSlideShow();
+      event.preventDefault();
+      return;
+    } else if (selectMode.value) {
+      handleSelectMode(false);
+      event.preventDefault();
+      return;
+    } else if (tempViewMode.value !== 'none') {
+      exitTempViewMode();
+      event.preventDefault();
+      return;
+    }
+  }
+
   if (selectedItemIndex.value < 0 || fileList.value.length === 0) {
     return;
   }
@@ -1081,7 +1107,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
-  if (event.key === 'Enter') {
+  if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
     if (!showQuickView.value && !config.content.showFilmStrip) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
@@ -1093,14 +1119,6 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     } else if (!config.content.showFilmStrip) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
-    }
-  }
-  else if (event.key === 'Escape' && showQuickView.value) {
-    if (uiStore.isFullScreen) {
-      uiStore.isFullScreen = false;
-    } else {
-      showQuickView.value = false;
-      stopSlideShow();
     }
   }
 
@@ -1148,10 +1166,6 @@ const handleKeyDown = (e: any) => {
     showTrashMsgbox.value = true;
   } else if ((keyActions as any)[key]) {
     (keyActions as any)[key]();
-  } else if (key === 'Escape') {
-    if (selectMode.value) {
-      handleSelectMode(false);
-    }
   }
 };
 

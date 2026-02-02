@@ -349,9 +349,12 @@ pub fn switch_library(id: &str) -> Result<(), String> {
 
 /// Get library info
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LibraryInfo {
     pub db_file_size: i64,
     pub db_file_path: String,
+    pub file_count: i64,
+    pub total_size: i64,
 }
 
 pub fn get_library_info(id: &str) -> Result<LibraryInfo, String> {
@@ -364,9 +367,23 @@ pub fn get_library_info(id: &str) -> Result<LibraryInfo, String> {
         0
     };
 
+    // Open connection to the library's DB to get file stats
+    let conn = rusqlite::Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open library DB: {}", e))?;
+
+    let (file_count, total_size): (i64, i64) = conn
+        .query_row(
+            "SELECT COUNT(id), COALESCE(SUM(size), 0) FROM afiles",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .unwrap_or((0, 0));
+
     Ok(LibraryInfo {
         db_file_size,
         db_file_path: db_path,
+        file_count,
+        total_size,
     })
 }
 
@@ -405,9 +422,9 @@ pub fn hide_library(id: &str, hidden: bool) -> Result<(), String> {
     let mut config = load_app_config()?;
 
     // Cannot hide the current library
-    if config.current_library_id == id && hidden {
-        return Err("Cannot hide the current library".to_string());
-    }
+    // if config.current_library_id == id && hidden {
+    //     return Err("Cannot hide the current library".to_string());
+    // }
 
     if let Some(lib) = config.libraries.iter_mut().find(|l| l.id == id) {
         lib.hidden = hidden;

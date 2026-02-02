@@ -156,7 +156,7 @@ import { isWin, isMac } from '@/common/utils';
 import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
 
 // vue components
-import Album from '@/components/Album.vue';
+import Library from '@/components/Library.vue';
 import ImageSearch from '@/components/ImageSearch.vue';
 import Favorite from '@/components/Favorite.vue';
 import Tag from '@/components/Tag.vue';
@@ -178,7 +178,6 @@ import {
   IconCameraAperture,
   IconSearch,
   IconSettings,
-  IconAlbums,
   IconDot,
   IconAdd,
   IconTrash,
@@ -189,6 +188,7 @@ import {
   IconMore,
   IconOrder,
   IconRestore,
+  IconPhotoAll,
 } from '@/common/icons';
 
 const isAlbumReorderMode = ref(false);
@@ -367,9 +367,9 @@ const appName = ref('');
 // buttons 
 const buttons = computed(() =>  [
   { 
-    icon: IconAlbums,  
-    component: Album,
-    text: localeMsg.value.sidebar.album 
+    icon: IconPhotoAll,  
+    component: Library,
+    text: localeMsg.value.sidebar.library
   },
   { 
     icon: IconFavorite, 
@@ -470,22 +470,19 @@ const doSwitchLibrary = async (libraryId: string) => {
     
     await switchLibrary(libraryId);
     
-    // Fade out before reload to prevent flash
-    document.body.style.transition = 'opacity 0.15s ease-out';
-    document.body.style.opacity = '0';
-    await new Promise(resolve => setTimeout(resolve, 150));
-    
-    // Reload the app to switch database
     window.location.reload();
   } catch (error) {
     console.error('Failed to switch library:', error);
-    // Restore opacity if error occurs
-    document.body.style.opacity = '1';
   }
 };
 
 const onManageLibrariesOk = async () => {
+  const oldLibId = appConfig.value?.current_library_id;
   appConfig.value = await getAppConfig();
+
+  if (oldLibId && appConfig.value?.current_library_id !== oldLibId) {
+    window.location.reload();
+  }
 };
 
 // click sidebar
