@@ -9,7 +9,7 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
 
 | Platform | Download | File Size | Notes |
 |:--|:--|:--|:--|
-| **macOS (Apple Silicon)** | [Lap_0.1.0_aarch64.dmg](https://github.com/julyx10/lap/releases/download/pre-release/Lap_0.1.0_aarch64.dmg) | 321.5 MB | Includes embedded AI models for offline capability |
+| **macOS (Apple Silicon)** | [Lap_0.1.0_aarch64.dmg](https://github.com/julyx10/lap/releases/download/v0.1.0/Lap_0.1.0_aarch64.dmg) | 307 MB | Includes embedded AI models for offline capability |
 | **Windows (Intel)** | [ - ](-) | ` - ` | Coming soon |
 
 > Notes: Visit the [Releases page](https://github.com/julyx10/lap/releases) for older versions and changelogs.
