@@ -20,6 +20,9 @@ onMounted(async () => {
   const win = getCurrentWebviewWindow();
   if (win.label === 'main') {
     window.addEventListener('keydown', handleKeyDown);
+    if (import.meta.env.PROD) {
+      window.addEventListener('contextmenu', handleContextMenu);
+    }
   }
 
   const config = useConfigStore();
@@ -48,6 +51,9 @@ onUnmounted(async () => {
   const win = getCurrentWebviewWindow();
   if (win.label === 'main') {
     window.removeEventListener('keydown', handleKeyDown);
+    if (import.meta.env.PROD) {
+      window.removeEventListener('contextmenu', handleContextMenu);
+    }
   }
 });
 
@@ -59,6 +65,10 @@ const handleKeyDown = (event) => {
     metaKey: event.metaKey,
     shiftKey: event.shiftKey,
   });
+};
+
+const handleContextMenu = (e) => {
+  e.preventDefault();
 };
 
 </script>
