@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/screenshots/logo.png" alt="Lap Logo" width="120" style="border-radius: 20px">
+  <img src="docs/logo.png" alt="Lap Logo" width="120" style="border-radius: 20px">
   <h1>Lap</h1>
 </div>
 
@@ -169,3 +169,7 @@ Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) for details.
 ## Acknowledgments
 
 Built on the shoulders of giants: Tauri, Vue, Rusqlite, FFmpeg, and many other open-source crates and libraries.
+
+<div align="center">
+  <img src="docs/logo2.png" alt="Lap Logo" width="200" style="border-radius: 20px">
+</div>

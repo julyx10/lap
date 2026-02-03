@@ -8,7 +8,20 @@
         <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
         <div v-else-if="fileInfo" class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
         <div v-else class="w-10 h-10 bg-base-content/5 rounded-box shrink-0"></div>
-        <span class="ml-2 mr-auto font-bold text-sm text-base-content/70 break-all">{{ fileInfo?.name }}</span>
+        <input 
+          v-if="isRenaming"
+          ref="renameInputRef"
+          v-model="renamingName" 
+          class="ml-2 mr-auto font-bold text-sm text-base-content input input-xs input-bordered p-1 h-6 leading-6"
+          @blur="finishRename"
+          @keydown.enter="finishRename"
+          @keydown.esc="cancelRename"
+          @click.stop
+        />
+        <span v-else 
+          class="ml-2 mr-auto font-bold text-sm text-base-content/70 break-all cursor-text hover:bg-base-content/10 rounded px-1 -mx-1 transition-colors"
+          @click.stop="startRename"
+        >{{ fileInfo?.name }}</span>
         
         <!-- <TButton v-if="fileInfo && !fileInfo?.has_embedding"
           :icon="IconUpdate"
@@ -179,9 +192,16 @@
 </template>
 
 <script setup lang="ts">
+import { ref, nextTick, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { formatTimestamp, formatFileSize, formatDuration, formatDimensionText, getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName } from '@/common/utils';
+import { renameFile } from '@/common/api';
+import { 
+  formatTimestamp, formatFileSize, formatDuration, formatDimensionText, 
+  getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName,
+  extractFileName, combineFileName, isValidFileName
+} from '@/common/utils';
 import { IconClose, IconFileInfo, IconCamera, IconLocation, IconArrowDown, IconArrowUp } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
@@ -194,11 +214,78 @@ const props = defineProps({
   },
 });
 
-const { locale } = useI18n();
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value] as any);
+const uiStore = useUIStore();
+
 
 const emit = defineEmits([
   'close'
 ]);
+
+// Rename logic
+const isRenaming = ref(false);
+const renamingName = ref('');
+const renameInputRef = ref<HTMLInputElement | null>(null);
+
+const startRename = () => {
+  if (!props.fileInfo) return;
+  
+  const { name } = extractFileName(props.fileInfo.name);
+  renamingName.value = name;
+  isRenaming.value = true;
+  uiStore.pushInputHandler('FileInfo-rename');
+  
+  nextTick(() => {
+    if (renameInputRef.value) {
+      renameInputRef.value.focus();
+      renameInputRef.value.select();
+    }
+  });
+};
+
+const cancelRename = () => {
+  isRenaming.value = false;
+  uiStore.removeInputHandler('FileInfo-rename');
+};
+
+const finishRename = async () => {
+  if (!isRenaming.value || !props.fileInfo) return;
+
+  const newName = renamingName.value.trim();
+  const { ext } = extractFileName(props.fileInfo.name);
+  
+  // Validation
+  if (!newName || !isValidFileName(newName)) {
+    // Optionally show error toast
+    console.warn('Invalid filename');
+    cancelRename();
+    return;
+  }
+
+  const fullNewName = combineFileName(newName, ext);
+  
+  // If no change, just cancel
+  if (fullNewName === props.fileInfo.name) {
+    cancelRename();
+    return;
+  }
+
+  // Call API
+  const newPath = await renameFile(props.fileInfo.id, props.fileInfo.file_path, fullNewName);
+  
+  if (newPath) {
+    // Update local props to reflect change immediately (assuming parent passes object ref)
+    props.fileInfo.name = fullNewName;
+    props.fileInfo.file_path = newPath;
+  } else {
+    // Optionally show error
+    console.error('Rename failed');
+  }
+
+  cancelRename();
+};
+
 
 function formatGeoLocation() {
   const info = props.fileInfo;
