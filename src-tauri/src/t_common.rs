@@ -25,8 +25,8 @@ pub const AI_TOKENIZER: &str = "tokenizer.json";
 // Face Recognition Constants
 
 // models
-pub const DETECTION_MODEL: &str = "det_10g.onnx"; // RetinaFace
-pub const EMBEDDING_MODEL: &str = "w600k_r50.onnx"; // MobileFaceNet
+pub const DETECTION_MODEL: &str = "det_500m.onnx"; // RetinaFace
+pub const EMBEDDING_MODEL: &str = "w600k_mbf.onnx"; // MobileFaceNet
 
 // Quality thresholds - Recommended Values
 pub const MIN_CONFIDENCE: f32 = 0.65; // 0.6-0.7 is standard. 0.65 balances precision/recall.

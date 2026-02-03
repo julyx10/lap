@@ -1,7 +1,7 @@
 [package]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 name = "Lap"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Local-first, AI-powered Photo manager."
 homepage = "https://github.com/julyx10/lap"
 authors = ["@liulichuan"]
@@ -12,6 +12,12 @@ build = "build.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true
+panic = "abort"
 
 [profile.dev.package."*"]
 opt-level = 3

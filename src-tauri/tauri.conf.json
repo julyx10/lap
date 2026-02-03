@@ -1,6 +1,6 @@
 {
   "productName": "Lap",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.julyxx.lap",
   "build": {
     "beforeBuildCommand": "pnpm build",
@@ -58,7 +58,7 @@
       "endpoints": [
         "https://github.com/julyx10/lap/releases/latest/download/latest.json"
       ],
-      "pubkey": "YOUR_PUBLIC_KEY_HERE"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDUzMEQ0QzM2RTRDOUNEMjUKUldRbHpjbmtOa3dOVXlBYm0rYk9lY2FtVGpzWTJ2NkRqdUtSOEN4eUxwRlVTaUlVbkJ4aHhQS3gK"
     }
   }
 }
