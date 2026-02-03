@@ -13,6 +13,14 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
 | **Windows (Intel)** | [ - ](-) | ` - ` | Coming soon |
 
 > Notes: Visit the [Releases page](https://github.com/julyx10/lap/releases) for older versions and changelogs.
+>
+> ⚠️ **macOS Note**: If you see "App is damaged", it is because the app is not currently notarized by Apple.
+>
+> **Option 1 (Recommended)**: Run this command in Terminal:
+> ```bash
+> xattr -cr /Applications/Lap.app
+> ```
+> **Option 2**: Go to **System Settings** > **Privacy & Security**, look for the blockage message, and click **Open Anyway**.
 
 <table>
   <tr>
