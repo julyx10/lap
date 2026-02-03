@@ -1,249 +1,165 @@
-# Lap
+<div align="center">
+  <img src="docs/screenshots/logo.png" alt="Lap Logo" width="120" style="border-radius: 20px">
+  <h1>Lap</h1>
+</div>
 
 Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (Rust) and Vue 3. Lap helps you browse large folders, curate albums, tag and favorite items, and view images/videos in a fluid desktop experience.
 
 ## Download
 
-| Platform | Download | File Type | Notes |
+| Platform | Download | File Size | Notes |
 |:--|:--|:--|:--|
-| **macOS (Intel / Apple Silicon)** | [lap_0.1.0_aarch64.dmg](https://github.com/julyx10/lap/releases/download/pre-release/lap_0.1.0_aarch64.dmg) | `.dmg` | Apple Silicon |
+| **macOS (Apple Silicon)** | [Lap_0.1.0_aarch64.dmg](https://github.com/julyx10/lap/releases/download/pre-release/Lap_0.1.0_aarch64.dmg) | 321.5 MB | Includes embedded AI models for offline capability |
+| **Windows (Intel)** | [ - ](-) | ` - ` | Coming soon |
 
 > Notes: Visit the [Releases page](https://github.com/julyx10/lap/releases) for older versions and changelogs.
 
 <table>
   <tr>
     <td align="center">
-      <strong>Home</strong><br>
-      <img src="docs/screenshots/02%20screenshot-home.png" alt="Home" width="520">
+      <strong>Library - Dark Theme</strong><br>
+      <img src="docs/screenshots/01%20lap-main-dark.png" alt="Library" width="520">
       <br>
-      <em>Quickly browse all thumbnails with live preview and inline actions.</em>
+      <em>Quickly browse all thumbnails. Display in comfortable layout.</em>
     </td>
     <td align="center">
-      <strong>Image Viewer</strong><br>
-      <img src="docs/screenshots/10%20screenshot-imageviewer.png" alt="Image Viewer" width="520">
+      <strong>AI Search - Light Theme</strong><br>
+      <img src="docs/screenshots/02%20lap-ai-search.png" alt="AI Search" width="520">
       <br>
-      <em>Zoom (fit/actual), rotate, favorite/tag, comments, slideshow, file info.</em>
+      <em>Search by image content using AI. Display in filmstrip view.</em>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <strong>Home — Dark Theme</strong><br>
-      <img src="docs/screenshots/01%20screenshot-home-dark.png" alt="Home — Dark Theme" width="520">
+      <strong>Calendar</strong><br>
+      <img src="docs/screenshots/03%20lap-calendar.png" alt="Calendar" width="520">
       <br>
-      <em>Dark mode for low‑light environments; context menu to manage selections.</em>
+      <em>Find items by year, month, or day. Display in compact layout.</em>
     </td>
-    <td align="center">
-      <strong>Home — Light Theme</strong><br>
-      <img src="docs/screenshots/03%20screenshot-home-light.png" alt="Home — Light Theme" width="520">
-      <br>
-      <em>Light mode; supports all 35 built‑in daisyUI themes.</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <strong>Albums</strong><br>
-      <img src="docs/screenshots/04%20screenshot-album-video.png" alt="Albums" width="520">
-      <br>
-      <em>Album with videos; preview pane plays clips inline.</em>
-    </td>
-    <td align="center">
-      <strong>Favorites</strong><br>
-      <img src="docs/screenshots/05%20screenshot-favorites.png" alt="Favorites" width="520">
-      <br>
-      <em>Star files and folders you use most for quick access.</em>
-    </td>
-  </tr>
-  <tr>
     <td align="center">
       <strong>Tags</strong><br>
-      <img src="docs/screenshots/06%20screenshot-tags.png" alt="Tags" width="520">
+      <img src="docs/screenshots/04%20lap-tag.png" alt="Tags" width="520">
       <br>
       <em>Browse by tag; add/remove tags on selected items.</em>
     </td>
+  </tr>
+  <tr>
     <td align="center">
-      <strong>Calendar</strong><br>
-      <img src="docs/screenshots/07%20screenshot-calendar.png" alt="Calendar" width="520">
+      <strong>Location</strong><br>
+      <img src="docs/screenshots/05%20lap-location.png" alt="Location" width="520">
       <br>
-      <em>Find items by year, month, or day.</em>
+      <em>Find items by location. Display in map view based on GPS metadata.</em>
+    </td>
+    <td align="center">
+      <strong>Camera</strong><br>
+      <img src="docs/screenshots/06%20lap-camera.png" alt="Camera" width="520">
+      <br>
+      <em>Find items by camera make and model.</em>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <strong>Locations</strong><br>
-      <img src="docs/screenshots/08%20screenshot-locations.png" alt="Locations" width="520">
+      <strong>Edit Image</strong><br>
+      <img src="docs/screenshots/07%20lap-edit-image.png" alt="Edit Image" width="520">
       <br>
-      <em>Group by place/admin area using EXIF GPS and reverse geocoding.</em>
+      <em>Perform the basic edits on images.</em>
     </td>
     <td align="center">
-      <strong>Camera View</strong><br>
-      <img src="docs/screenshots/09%20screenshot-camera.png" alt="Camera View" width="520">
+      <strong>Video</strong><br>
+      <img src="docs/screenshots/08%20lap-video.png" alt="Video" width="520">
       <br>
-      <em>Explore by camera make/model and compare counts per device.</em>
+      <em>Play videos with built-in player.</em>
     </td>
   </tr>
 </table>
 
 > Notes: The sample images in above screenshots are sourced from [Wikimedia Commons](https://commons.wikimedia.org/).  
 
+## Why LAP?
+
+**LAP** stands for **Local-first, AI-powered Photo management**. The name also represents the three hierarchical layers of organization: **Library**, **Album**, and **Photo**.
+
+LAP was created because I cannot find a satisfying photo management app on macOS for users who own **large and long-term photo collections**.
+
+Many existing apps either feel too limited, or require importing photos into closed systems that duplicate files and restrict workflows.
+
+LAP focuses on **organizing, browsing, and finding photos**, not replacing professional editing tools.
+
+## Who Is LAP For?
+
+LAP is designed for users who manage **a large number of photos**, such as:
+
+- Photography enthusiasts and professionals
+- Families maintaining long-term photo archives
+- Anyone who prefers folder-based photo organization
+
+These users need **fast browsing, flexible navigation, and powerful search**, rather than heavy editing features.
+
+## What LAP Is Not
+
+- LAP is **not** a cloud-based photo service. The only scenario it access network is to display map.
+- LAP is **not** a photo syncing or backup solution.
+- LAP is **not** a professional image editing tool.
+
+Its goal is to manage, browse, and search photos efficiently, while keeping files fully under the user’s control.
+
 ## Features
 
-- Albums and folders
-  - Add folders as albums; browse nested folders; optionally hide albums
-  - Favorite folders for quick access; order albums; reveal folders in Finder/Explorer
-- Fast thumbnail grid
-  - Lazy, concurrent thumbnail generation; progress indicator while thumbs build
-  - Configurable thumbnail size and label styles (name/size/dimensions/dates/duration)
-- Search, filter and sort
-  - File name search; filter by file type; multiple sort types with asc/desc
-- Preview pane
-  - Inline image/video preview with rotate and comments
-- Powerful image viewer
-  - Keyboard driven navigation (prev/next/home/end), slideshow with configurable interval
-  - Zoom in/out/fit/actual; rotate; favorite; tag; comment overlay; copy image to clipboard; print
-  - Full screen mode (with pin/unpin UI) and file info panel
-- Metadata views
-  - Favorites (files/folders), Tags, Calendar (year/month/day), Camera (make/model), Location (admin area/place)
-- File operations (local, safe)
-  - Rename, move, copy, delete (uses Trash on supported OS), go to folder, reveal in system file manager
-- Tagging and comments
-  - Add/remove tags; edit per‑file comments; see tag state directly in grid and viewer
-- Local, private, and fast
-  - All processing is on your machine; SQLite indexing, EXIF parsing, and thumbnails via Rust crates (EXIF, image, FFmpeg)
-- Appearance and localization
-  - Theme switching (35 built-in themes per your preference)
-  - Multi-language UI (switch language at runtime)
+### 📂 Organization & Libraries
+- **Multi-Library Support**: Create and manage separate photo libraries; switch between them instantly.
+- **Folder-Based Structure**: Reflects your actual file system. Add any folder as an album.
+- **Lazy Loading**: Handles giant photo collections with ease using virtual scrolling and concurrent thumbnail generation.
 
-## Supported file types
+### 🤖 AI Search & Smart Catalog
+- **AI Search**: Search by image content or find similar images using the local AI.
+- **Face Recognition**: Private, offline face detection and clustering to group photos by person.
+- **Metadata Grouping**: Auto-organize by **Location** (GPS/Reverse Geocoding), **Camera** (Make/Model), and **Time** (Year/Month/Day).
 
-Images
-- JPEG (.jpg, .jpeg)
-- PNG (.png)
-- GIF (.gif)
-- BMP (.bmp)
-- TIFF (.tif, .tiff)
-- WebP (.webp)
-- HEIC (.heic) - depends on your OS
+### 🔒 Privacy & Control
+- **Local-First**: All AI processing (face recognition) and indexing happens on your device. No data leaves your machine.
+- **Safe File Operations**: Rename, move, copy, and delete (Trash support) directly from the app.
+- **No Lock-In**: Your photos stay in your folders.
 
-Videos
-- Thumbnail generation: MP4, MOV, MKV, WebM, AVI, M4V and many others supported by FFmpeg
-- Playback in app: depends on your OS WebView codec support. Tested working:
-  - MP4 (H.264/AAC)
-  - MOV (H.264/AAC)
-  - WebM/MKV support varies by platform; on macOS, WebM/VP9 may not play in the system WebView.
+### 🎨 UX & Customization
+- **Theme Support**: Seamless switching between **Light** and **Dark** modes to suit your environment.
+- **Multi-Language**: Fully localized in English, Simplified Chinese, German, French, Japanese, Korean, Russian, Spanish, and Portuguese.
 
-> Notes: Camera RAW formats are not currently supported for inline viewing.
+## Supported Formats
 
-## Common keyboard shortcuts
+| Type | Formats | Notes |
+| :--- | :--- | :--- |
+| **Images** | JPG, PNG, GIF, BMP, TIFF, WebP, HEIC | HEIC depends on OS support. |
+| **Videos** | MP4, MOV, MKV, WebM, AVI | Playback depends on OS WebView codecs. |
 
-Main Window and Viewer
-- Arrow keys: Navigate items
-- Home / End: Jump to first/last
-- Cmd/Ctrl + Enter: Open
-- Delete (or Cmd + Backspace on macOS): Delete / move to Trash
-- Cmd/Ctrl + F: Toggle Favorite
-- Cmd/Ctrl + T: Tag
-- Cmd/Ctrl + R: Rotate
-- Cmd/Ctrl + C: Copy image to clipboard (for images)
+## Development
 
-Viewer
-- Space: Toggle Zoom Fit
-- = / - : Zoom in / out
-- 0: Zoom actual size
+### Tech Stack
+- **Core**: [Tauri 2](https://tauri.app) (Rust), cross-platform desktop app framework
+- **Frontend**: Vue 3, Vite, Tailwind CSS, daisyUI
+- **Data**: SQLite, locally embedded for indexing and metadata storage
+- **AI/Media**: Based on the latest open-source LLM for image understanding
 
-## Tech stack
+### Build & Run
 
-- Desktop: Tauri 2 (Rust), custom asset protocol and Tauri plugins (fs, os, shell, dialog, window-state)
-- Backend: Rust, rusqlite (SQLite), exif parsing, reverse geocoding, FFmpeg (via ffmpeg-next), image processing
-- Frontend: Vue 3, Vite 6, TypeScript, Pinia, Tailwind CSS v4 + daisyUI, Video.js, Cropper.js, vue-i18n
+**Prerequisites**: Node.js 18+, Rust (stable), and platform build tools (Xcode for macOS, MSVC for Windows).
 
-## Requirements
-
-- macOS, Windows, or Linux
-- Rust (stable toolchain) and Cargo
-- Node.js >= 18 and pnpm (recommended)
-- Platform build tooling
-  - macOS: Xcode Command Line Tools
-  - Windows: Visual Studio Build Tools (MSVC)
-  - Linux: system toolchain per Tauri 2 docs
-
-
-## Getting started (development)
-
-1) Install frontend dependencies
-
-```
+```bash
+# 1. Install frontend dependencies
 cd src-vite
 pnpm install
-```
 
-2) Start the desktop app in dev mode (runs Vite dev server and opens Tauri)
-
-```
+# 2. Run in development mode
 cd ../src-tauri
 cargo tauri dev
-```
 
-- The dev server URL is configured at http://localhost:3580 (see src-tauri/tauri.conf.json)
-- The Tauri runner will call `pnpm dev` for the frontend using the config
-
-## Production build
-
-Build the optimized frontend and bundle the desktop app:
-
-```
-# From repo root (frontend build is handled by tauri beforeBuildCommand)
-cd src-tauri
+# 3. Build for production
 cargo tauri build
 ```
 
-- Output artifacts (installers/binaries) are generated under `src-tauri/target` according to your OS
+## License
 
-## Configuration & security
-
-- Asset protocol enabled; access scopes limited to safe locations (e.g., $HOME, $PICTURES, $VIDEOS, $DOCUMENT, $DESKTOP, $DOWNLOAD)
-- All data and processing remain local; no network services are required
-
-## Notes on data
-
-- Lap maintains a local SQLite database to index albums, folders, files, tags, and metadata
-- Thumbnails are generated locally; progress is shown while they build
+Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-Thanks to the open-source libraries and tools that make Lap possible:
-
-- Desktop (Rust/Tauri)
-  - Tauri 2 (tauri, tauri-build, plugins: window-state, shell, os, fs, dialog)
-  - serde, serde_json
-  - rusqlite (SQLite)
-  - chrono
-  - kamadak-exif
-  - reverse_geocoder
-  - ffmpeg-next (FFmpeg)
-  - image, imagesize
-  - tokio
-  - dirs, walkdir
-  - trash
-  - base64
-  - opener
-  - arboard
-  - pinyin
-  - once_cell
-
-- Frontend (Vue)
-  - Vue 3, vue-router, vue-i18n, @vue/compiler-sfc
-  - Vite, @vitejs/plugin-vue, vite-plugin-vue-devtools, vite-svg-loader
-  - Tailwind CSS v4, daisyUI, @tailwindcss/vite, @tailwindcss/postcss, PostCSS, Autoprefixer
-  - TypeScript, @types/node
-  - Pinia, pinia-plugin-persistedstate
-  - Video.js
-  - Cropper.js
-  - date-fns, lodash
-  - vue-draggable-plus, vue-lazyload
-
-## License
-
-This project is licensed under the GPL-3.0-or-later.
-
-See LICENSE for details.
-
+Built on the shoulders of giants: Tauri, Vue, Rusqlite, FFmpeg, and many other open-source crates and libraries.
