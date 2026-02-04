@@ -88,6 +88,7 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.file.rename,
         icon: IconRename,
+        shortcut: isMac ? '⌘R' : 'Ctrl+R',
         action: createAction('rename')
       },
       {
@@ -127,7 +128,7 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.meta.rotate,
         icon: IconRotate,
-        shortcut: isMac ? '⌘R' : 'Ctrl+R',
+        // shortcut: isMac ? '⌘R' : 'Ctrl+R',
         action: createAction('rotate')
       },
     ];

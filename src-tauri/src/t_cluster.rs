@@ -97,6 +97,12 @@ where
         if let Some(emb_i) = &parsed_embeddings[i] {
             for j in (i + 1)..n {
                 if let Some(emb_j) = &parsed_embeddings[j] {
+                    // Faces in the same file cannot be edges (prevents merging distinct people in same photo)
+                    if faces[i].file_id == faces[j].file_id {
+                        pairs_done += 1;
+                        continue;
+                    }
+
                     let dist = cosine_distance(emb_i, emb_j);
 
                     if dist < threshold {

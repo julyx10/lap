@@ -32,7 +32,7 @@ pub const EMBEDDING_MODEL: &str = "w600k_mbf.onnx"; // MobileFaceNet
 pub const MIN_CONFIDENCE: f32 = 0.65; // 0.6-0.7 is standard. 0.65 balances precision/recall.
 // pub const MIN_FACE_RATIO: f32 = 0.0; // Disabled. Rely on absolute pixel size instead (better for high-res photos).
 // pub const MIN_FACE_SIZE: f32 = 90.0; // 80-112px is minimum for good recognition. 90.0 is a safe high-quality baseline.
-pub const MIN_BLUR_SCORE: f32 = 100.0; // Standard Laplacian variance threshold. Below 100 is usually blurry.
+pub const MIN_BLUR_SCORE: f32 = 200.0; // Standard Laplacian variance threshold. Below 100 is usually blurry.
 
 // Clustering Constants
 pub const K_NEIGHBORS: usize = 80; // Prune edges to Top-K (K-NN)

@@ -87,9 +87,24 @@
     ></div>
 
     <!-- label -->
-    <div v-if="!config.content.showFilmStrip && config.settings.grid.style === 0" class="flex flex-col items-center" :class="{ 'text-primary': isSelected }">
-      <span class="w-full text-sm text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden">{{ getGridLabelText(file, config.settings.grid.labelPrimary) }}</span>
-      <span class="w-full text-xs text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden ">{{ getGridLabelText(file, config.settings.grid.labelSecondary) }}</span>
+    <div 
+      v-if="!config.content.showFilmStrip && config.settings.grid.style === 0" 
+      class="flex flex-col items-center" 
+      :class="{ 'text-primary': isSelected }"
+      :style="{ width: layoutStyle.width }"
+    >
+      <span 
+        class="w-full text-sm text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
+        :title="getGridLabelTooltip(file, config.settings.grid.labelPrimary)"
+      >
+        {{ getGridLabelText(file, config.settings.grid.labelPrimary) }}
+      </span>
+      <span 
+        class="w-full text-xs text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
+        :title="getGridLabelTooltip(file, config.settings.grid.labelSecondary)"
+      >
+        {{ getGridLabelText(file, config.settings.grid.labelSecondary) }}
+      </span>
     </div>
 
   </div>
@@ -216,5 +231,11 @@ const getGridLabelText = (file, option) => {
     case 8: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias) || ' ';
     default: return '';
   }
+};
+
+const getGridLabelTooltip = (file, option) => {
+  if (option === 1) return file.name;
+  const text = getGridLabelText(file, option);
+  return text === ' ' ? '' : text;
 };
 </script>

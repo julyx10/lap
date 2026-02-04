@@ -1,16 +1,19 @@
 <div align="center">
   <img src="docs/logo.png" alt="Lap Logo" width="120" style="border-radius: 20px">
   <h1>Lap</h1>
+  <h3>Your Photos, Your Rules. The Local-First, AI-Powered Photo Manager.</h3>
 </div>
 
-Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (Rust) and Vue 3. Lap helps you browse large folders, curate albums, tag and favorite items, and view images/videos in a fluid desktop experience.
+**Lap** is a lightning-fast, cross-platform photo manager built for people who love their files. It combines the privacy of folder-based organization with the power of modern AI—all running 100% locally on your device.
+
+Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep your memories safe without a cloud subscription.
 
 ## Download
 
 | Platform | Download | File Size | Notes |
 |:--|:--|:--|:--|
-| **macOS (Apple Silicon)** | [Download Latest .dmg](https://github.com/julyx10/lap/releases/latest) | ~150 MB | Includes embedded AI models for offline capability |
-| **Windows (Intel)** | [ - ](-) | ` - ` | Coming soon |
+| **macOS (Apple Silicon)** | [Download Latest .dmg](https://github.com/julyx10/lap/releases/latest) | ~150 MB | Includes embedded AI models |
+| **Windows (Intel)** | - | - | Coming soon |
 
 > ⚠️ **macOS Note**: If you see "App is damaged", it is because the app is not currently notarized by Apple.
 >
@@ -26,13 +29,13 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
       <strong>Library - Dark Theme</strong><br>
       <img src="docs/screenshots/01%20lap-main-dark.png" alt="Library" width="520">
       <br>
-      <em>Quickly browse all thumbnails. Display in comfortable layout.</em>
+      <em>Handle 100k+ photos with smooth scrolling and instant thumbnails.</em>
     </td>
     <td align="center">
       <strong>AI Search - Light Theme</strong><br>
       <img src="docs/screenshots/02%20lap-ai-search.png" alt="AI Search" width="520">
       <br>
-      <em>Search by image content using AI. Display in filmstrip view.</em>
+      <em>"Sunset over the ocean" — Find exact moments with offline AI.</em>
     </td>
   </tr>
   <tr>
@@ -40,13 +43,13 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
       <strong>Calendar</strong><br>
       <img src="docs/screenshots/03%20lap-calendar.png" alt="Calendar" width="520">
       <br>
-      <em>Find items by year, month, or day. Display in compact layout.</em>
+      <em>Time-travel through your memories by year, month, or day.</em>
     </td>
     <td align="center">
       <strong>Tags</strong><br>
       <img src="docs/screenshots/04%20lap-tag.png" alt="Tags" width="520">
       <br>
-      <em>Browse by tag; add/remove tags on selected items.</em>
+      <em>Organize your way: Bulk tagging and powerful filtering.</em>
     </td>
   </tr>
   <tr>
@@ -54,13 +57,13 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
       <strong>Location</strong><br>
       <img src="docs/screenshots/05%20lap-location.png" alt="Location" width="520">
       <br>
-      <em>Find items by location. Display in map view based on GPS metadata.</em>
+      <em>Interactive Map View: See where your story happened.</em>
     </td>
     <td align="center">
       <strong>Camera</strong><br>
       <img src="docs/screenshots/06%20lap-camera.png" alt="Camera" width="520">
       <br>
-      <em>Find items by camera make and model.</em>
+      <em>Group by Gear: Rediscover shots by Camera Make & Model.</em>
     </td>
   </tr>
   <tr>
@@ -68,13 +71,13 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
       <strong>Edit Image</strong><br>
       <img src="docs/screenshots/07%20lap-edit-image.png" alt="Edit Image" width="520">
       <br>
-      <em>Perform the basic edits on images.</em>
+      <em>Quick essential edits without leaving your flow.</em>
     </td>
     <td align="center">
       <strong>Video</strong><br>
       <img src="docs/screenshots/08%20lap-video.png" alt="Video" width="520">
       <br>
-      <em>Play videos with built-in player.</em>
+      <em>Integrated Player: Watch videos seamlessly alongside photos.</em>
     </td>
   </tr>
 </table>
@@ -83,52 +86,54 @@ Local-first, fast, cross‑platform photo and video manager built with Tauri 2 (
 
 ## Why LAP?
 
-**LAP** stands for **Local-first, AI-powered Photo management**. The name also represents the three hierarchical layers of organization: **Library**, **Album**, and **Photo**.
+**LAP** stands for **Local-first, AI-powered Photo management**.
 
-LAP was created because I cannot find a satisfying photo management app on macOS for users who own **large and long-term photo collections**.
+We built Lap because we were tired of choosing between **privacy** (dumb folder viewers) and **convenience** (cloud services that scan your life). Lap gives you both.
 
-Many existing apps either feel too limited, or require importing photos into closed systems that duplicate files and restrict workflows.
+### 🌟 Key Highlights
 
-LAP focuses on **organizing, browsing, and finding photos**, not replacing professional editing tools.
+#### 🤖 AI That Lives on Your Device
+- **Natural Language Search**: Type "red car in rain" or "sunset at beach". The AI understands content, not just keywords.
+- **Smart Face Recognition**: Automatically groups people. Rename "Person 1" to "Dad" and find all his photos instantly.
+- **Similar Image Search**: Find the best shot in a burst sequence or locate duplicates.
+- **Zero Privacy Risk**: All AI models run **locally**. Your photos never leave your computer.
+
+#### 📂 Your Files, Your Control
+- **No Import Required**: Lap reads your existing folders. No "library files", no duplication, no vendor lock-in.
+- **File System Sync**: Move a file in Finder/Explorer? Lap updates instantly. Move it in Lap? It moves on disk.
+- **Multi-Library**: Manage work assets separate from family archives. Switch in milliseconds.
+
+#### ⚡ Built for Performance
+- **Rust Core**: Powered by Tauri 2 and Rust for blazing speed and tiny memory footprint.
+- **Lazy Loading**: Designed to handle libraries with **hundreds of thousands** of assets without stuttering.
+
+#### 🎨 Delightful Experience
+- **Beautiful Design**: A modern, fluid interface that feels at home on macOS and Windows.
+- **Customizable**: Light/Dark modes with 10+ accent colors.
+- **Multi-Language**: Speaks your language (English, Chinese, German, French, Japanese, and more).
+
+## Comparison
+
+| Feature | Cloud Albums (Google/iCloud) | Classic Viewers (XnView/IrfanView) | **Lap** |
+| :--- | :---: | :---: | :---: |
+| **Privacy** | ❌ (Data mining) | ✅ | ✅ (100% Offline) |
+| **AI Search** | ✅ | ❌ | ✅ (Local AI) |
+| **Organization** | Restricted (Album based) | Folder based | **Folder + AI Smart View** |
+| **Performance** | Network dependent | Good | **Excellent** |
+| **Lock-in** | High | None | **None** |
 
 ## Who Is LAP For?
 
-LAP is designed for users who manage **a large number of photos**, such as:
-
-- Photography enthusiasts and professionals
-- Families maintaining long-term photo archives
-- Anyone who prefers folder-based photo organization
-
-These users need **fast browsing, flexible navigation, and powerful search**, rather than heavy editing features.
+- **Photographers**: Manage huge RAW collections by folder.
+- **Privacy Advocates**: Enjoy AI features without Big Tech surveillance.
+- **Archivists**: Search terabytes of family history instantly.
+- **Everyone**: Who wants a fast, beautiful way to enjoy their memories.
 
 ## What LAP Is Not
 
-- LAP is **not** a cloud-based photo service. The only scenario it access network is to display map.
-- LAP is **not** a photo syncing or backup solution.
-- LAP is **not** a professional image editing tool.
-
-Its goal is to manage, browse, and search photos efficiently, while keeping files fully under the user’s control.
-
-## Features
-
-### 📂 Organization & Libraries
-- **Multi-Library Support**: Create and manage separate photo libraries; switch between them instantly.
-- **Folder-Based Structure**: Reflects your actual file system. Add any folder as an album.
-- **Lazy Loading**: Handles giant photo collections with ease using virtual scrolling and concurrent thumbnail generation.
-
-### 🤖 AI Search & Smart Catalog
-- **AI Search**: Search by image content or find similar images using the local AI.
-- **Face Recognition**: Private, offline face detection and clustering to group photos by person.
-- **Metadata Grouping**: Auto-organize by **Location** (GPS/Reverse Geocoding), **Camera** (Make/Model), and **Time** (Year/Month/Day).
-
-### 🔒 Privacy & Control
-- **Local-First**: All AI processing (face recognition) and indexing happens on your device. No data leaves your machine.
-- **Safe File Operations**: Rename, move, copy, and delete (Trash support) directly from the app.
-- **No Lock-In**: Your photos stay in your folders.
-
-### 🎨 UX & Customization
-- **Theme Support**: Seamless switching between **Light** and **Dark** modes to suit your environment.
-- **Multi-Language**: Fully localized in English, Simplified Chinese, German, French, Japanese, Korean, Russian, Spanish, and Portuguese.
+- ❌ A Cloud Service: We don't host your photos. You own them.
+- ❌ A Photoshop Replacement: We focus on management and browsing, not heavy retouching.
+- ❌ A Sync Tool: We don't touch your cloud settings. We manage local files.
 
 ## Supported Formats
 

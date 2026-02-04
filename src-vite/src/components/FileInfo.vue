@@ -177,7 +177,7 @@
           @leave="onLeave"
         >
           <div v-if="config.infoPanel.showMap" class="overflow-hidden flex-1 flex flex-col min-h-0">
-            <div class="w-full rounded-box overflow-hidden mt-2 relative z-0 flex-1 min-h-[200px]">
+            <div class="w-full rounded-box overflow-hidden relative z-0 flex-1 min-h-[200px]">
               <MapView
                 :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
                 :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"

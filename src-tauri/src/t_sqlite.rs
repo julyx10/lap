@@ -2273,26 +2273,40 @@ impl Person {
         Ok(persons)
     }
     
-    /// Generate thumbnail for a person from their cover face or first face
+    /// Generate thumbnail for a person from their cover face or best quality face
     /// Returns the thumbnail as JPEG bytes
     fn generate_thumbnail(conn: &Connection, person_id: i64, cover_face_id: Option<i64>) -> Result<Option<Vec<u8>>, String> {
-        // Determine which face to use
-        let face_id = if let Some(fid) = cover_face_id {
-            fid
-        } else {
-            // Get first face of this person
-            let result: Result<i64, _> = conn.query_row(
-                "SELECT id FROM faces WHERE person_id = ?1 LIMIT 1",
+        // 1. Determine which face to use
+        let get_best_face = || -> Result<i64, rusqlite::Error> {
+            conn.query_row(
+                "SELECT id FROM faces WHERE person_id = ?1 ORDER BY (json_extract(bbox, '$.width') * json_extract(bbox, '$.height')) DESC LIMIT 1",
                 params![person_id],
                 |row| row.get(0),
-            );
-            match result {
+            )
+        };
+
+        let face_id = if let Some(fid) = cover_face_id {
+            // Validate that cover_face_id actually belongs to this person
+            let is_valid: bool = conn.query_row(
+                "SELECT EXISTS(SELECT 1 FROM faces WHERE id = ?1 AND person_id = ?2)",
+                params![fid, person_id],
+                |row| row.get(0),
+            ).unwrap_or(false);
+            
+            if is_valid { fid } else {
+                match get_best_face() {
+                    Ok(fid) => fid,
+                    Err(_) => return Ok(None),
+                }
+            }
+        } else {
+             match get_best_face() {
                 Ok(fid) => fid,
-                Err(_) => return Ok(None), // No faces for this person
+                Err(_) => return Ok(None),
             }
         };
         
-        // Get face info and file info
+        // 2. Get face info and file info
         let query = "
             SELECT f.id, faces.bbox, f.width, f.height, f.e_orientation, f.name, fd.path
             FROM faces 
@@ -2301,7 +2315,7 @@ impl Person {
             WHERE faces.id = ?1
         ";
         
-        let result: Result<(i64, String, Option<u32>, Option<u32>, Option<i32>, String, String), _> = conn.query_row(
+        let row: Result<(i64, String, Option<u32>, Option<u32>, Option<i32>, String, String), _> = conn.query_row(
             query,
             params![face_id],
             |row| Ok((
@@ -2309,115 +2323,121 @@ impl Person {
                 row.get(5)?, row.get(6)?
             )),
         );
+
+        let (file_id, bbox_json, orig_w_opt, orig_h_opt, orientation_opt, file_name, folder_path) = match row {
+            Ok(r) => r,
+            Err(_) => return Ok(None),
+        };
         
-        if let Ok((file_id, bbox_json, Some(orig_w), Some(orig_h), orientation_opt, file_name, folder_path)) = result {
-            // Parse bbox
-            let mut bbox: FaceBBox = serde_json::from_str(&bbox_json)
-                .map_err(|e| format!("Failed to parse bbox: {}", e))?;
+        let bbox: FaceBBox = match serde_json::from_str(&bbox_json) {
+            Ok(b) => b,
+            Err(_) => return Ok(None),
+        };
 
-            let orientation = orientation_opt.unwrap_or(1); // Default to Normal
-            let (rotated_w, rotated_h) = match orientation {
-                6 | 8 => (orig_h, orig_w), // 90 or 270 degrees: width and height swapped
-                _ => (orig_w, orig_h),
+        let orientation = orientation_opt.unwrap_or(1); // Default to Normal
+        
+        // 3. Load Image (Original or Thumbnail)
+        let full_path = std::path::Path::new(&folder_path).join(&file_name);
+        
+        // Helper to load and rotate original image
+        let load_original = || -> Option<(image::DynamicImage, u32, u32)> {
+             let mut dyn_img = image::open(&full_path).ok()?;
+             dyn_img = match orientation {
+                3 => dyn_img.rotate180(),
+                6 => dyn_img.rotate90(),
+                8 => dyn_img.rotate270(),
+                _ => dyn_img,
             };
+            let (w, h) = dyn_img.dimensions();
+            Some((dyn_img, w, h))
+        };
 
-            // Transform bbox to rotated space
-            bbox = match orientation {
-                6 => { // Rotated 90 CW (Right Top)
-                    FaceBBox {
-                        x: orig_h as f32 - bbox.y - bbox.height,
-                        y: bbox.x,
-                        width: bbox.height,
-                        height: bbox.width,
-                    }
-                },
-                8 => { // Rotated 270 CW (Left Bottom)
-                    FaceBBox {
-                        x: bbox.y,
-                        y: orig_w as f32 - bbox.x - bbox.width,
-                        width: bbox.height,
-                        height: bbox.width,
-                    }
-                },
-                3 => { // Rotated 180 (Bottom Right)
-                    FaceBBox {
-                        x: orig_w as f32 - bbox.x - bbox.width,
-                        y: orig_h as f32 - bbox.y - bbox.height,
-                        width: bbox.width,
-                        height: bbox.height,
-                    }
-                },
-                _ => bbox, // Normal or Unknown
-            };
+        // Helper to load thumbnail from DB
+        let load_thumbnail = || -> Option<(image::DynamicImage, u32, u32)> {
+            let thumb_data: Option<Vec<u8>> = conn.query_row(
+                "SELECT thumb_data FROM athumbs WHERE file_id = ?1",
+                params![file_id],
+                |row| row.get(0),
+            ).ok()?;
+            
+            let data = thumb_data?;
+            let img = image::load_from_memory(&data).ok()?;
+            let (w, h) = img.dimensions();
+            Some((img, w, h))
+        };
 
-            // Try to load original image first for high quality
-            let full_path = std::path::Path::new(&folder_path).join(&file_name);
-            let original_img_res = image::open(&full_path);
+        let (mut img, img_w, img_h) = match load_original().or_else(load_thumbnail) {
+            Some(res) => res,
+            None => return Ok(None),
+        };
 
-            // Use original image if available, otherwise fallback to thumbnail
-            let (img, current_w, current_h) = if let Ok(mut dyn_img) = original_img_res {
-                // Apply rotation to match the bbox we just transformed
-                dyn_img = match orientation {
-                    3 => dyn_img.rotate180(),
-                    6 => dyn_img.rotate90(),
-                    8 => dyn_img.rotate270(),
-                    _ => dyn_img,
-                };
-                let (w, h) = dyn_img.dimensions();
-                (dyn_img, w, h)
-            } else {
-                // Fallback: Get thumbnail from athumbs
-                 let thumb_result: Result<Option<Vec<u8>>, _> = conn.query_row(
-                    "SELECT thumb_data FROM athumbs WHERE file_id = ?1",
-                    params![file_id],
-                    |row| row.get(0),
-                );
-                
-                if let Ok(Some(thumb_data)) = thumb_result {
-                     if let Ok(thumb_img) = image::load_from_memory(&thumb_data) {
-                        let (w, h) = thumb_img.dimensions();
-                        (thumb_img, w, h)
-                     } else {
-                         return Ok(None);
-                     }
-                } else {
-                    return Ok(None);
-                }
-            };
+        // 4. Calculate Dimensions & BBox
+        let (ref_w, ref_h) = if let (Some(ow), Some(oh)) = (orig_w_opt, orig_h_opt) {
+            match orientation {
+                6 | 8 => (oh, ow),
+                _ => (ow, oh),
+            }
+        } else {
+            (img_w, img_h)
+        };
+        
+        let transformed_bbox = if orig_w_opt.is_some() && orig_h_opt.is_some() {
+            let orig_w = orig_w_opt.unwrap();
+            let orig_h = orig_h_opt.unwrap();
+            match orientation {
+                6 => FaceBBox {
+                    x: orig_h as f32 - bbox.y - bbox.height,
+                    y: bbox.x,
+                    width: bbox.height,
+                    height: bbox.width,
+                },
+                8 => FaceBBox {
+                    x: bbox.y,
+                    y: orig_w as f32 - bbox.x - bbox.width,
+                    width: bbox.height,
+                    height: bbox.width,
+                },
+                3 => FaceBBox {
+                    x: orig_w as f32 - bbox.x - bbox.width,
+                    y: orig_h as f32 - bbox.y - bbox.height,
+                    width: bbox.width,
+                    height: bbox.height,
+                },
+                _ => bbox,
+            }
+        } else {
+            bbox
+        };
+
+        // 5. Crop and Resize
+        let scale_x = img_w as f32 / ref_w as f32;
+        let scale_y = img_h as f32 / ref_h as f32;
+        let expansion = 0.2;
+        
+        let face_x = transformed_bbox.x * scale_x;
+        let face_y = transformed_bbox.y * scale_y;
+        let face_w = transformed_bbox.width * scale_x;
+        let face_h = transformed_bbox.height * scale_y;
+        
+        let crop_x = (face_x - face_w * expansion).max(0.0) as u32;
+        let crop_y = (face_y - face_h * expansion).max(0.0) as u32;
+        let crop_w = (face_w * (1.0 + 2.0 * expansion)).min((img_w.saturating_sub(crop_x)) as f32) as u32;
+        let crop_h = (face_h * (1.0 + 2.0 * expansion)).min((img_h.saturating_sub(crop_y)) as f32) as u32;
+        
+        if crop_w > 0 && crop_h > 0 && crop_x < img_w && crop_y < img_h {
+            // Use crop() for DynamicImage type consistency
+            let mut cropped = img.crop(crop_x, crop_y, crop_w.min(img_w - crop_x), crop_h.min(img_h - crop_y));
             
-            // Calculate scale factor (Current Image / Rotated Dimensions)
-            // Use f64 for better precision during scaling, though f32 is likely fine
-            let scale_x = current_w as f32 / rotated_w as f32;
-            let scale_y = current_h as f32 / rotated_h as f32;
+            // Resize if too large
+            let max_thumb_size = 200;
+            if cropped.width() > max_thumb_size || cropped.height() > max_thumb_size {
+                cropped = cropped.resize(max_thumb_size, max_thumb_size, image::imageops::FilterType::Lanczos3);
+            }
             
-            // Crop coordinates with expansion
-            let expansion = 0.2;
-            let face_x = bbox.x * scale_x;
-            let face_y = bbox.y * scale_y;
-            let face_w = bbox.width * scale_x;
-            let face_h = bbox.height * scale_y;
-            
-            let crop_x = (face_x - face_w * expansion).max(0.0) as u32;
-            let crop_y = (face_y - face_h * expansion).max(0.0) as u32;
-            // Ensure we don't go out of bounds
-            let crop_w = (face_w * (1.0 + 2.0 * expansion)).min((current_w - crop_x) as f32) as u32;
-            let crop_h = (face_h * (1.0 + 2.0 * expansion)).min((current_h - crop_y) as f32) as u32;
-            
-            if crop_w > 0 && crop_h > 0 {
-                let mut cropped = img.crop_imm(crop_x, crop_y, crop_w, crop_h);
-                
-                // If the crop is very large (from original image), resize it to a reasonable thumbnail size
-                // e.g. 200x200 to save DB space and bandwidth
-                let max_thumb_size = 200;
-                if crop_w > max_thumb_size || crop_h > max_thumb_size {
-                    cropped = cropped.resize(max_thumb_size, max_thumb_size, image::imageops::FilterType::Lanczos3);
-                }
-                
-                // Encode to JPEG bytes
-                let mut buffer = Cursor::new(Vec::new());
-                cropped.write_to(&mut buffer, ImageFormat::Jpeg)
-                    .map_err(|e| format!("Failed to encode face thumbnail: {}", e))?;
-                    
+            // Encode to JPEG (with RGB8 conversion for transparency support)
+            let rgb_img = cropped.to_rgb8();
+            let mut buffer = Cursor::new(Vec::new());
+            if rgb_img.write_to(&mut buffer, ImageFormat::Jpeg).is_ok() {
                 return Ok(Some(buffer.into_inner()));
             }
         }
@@ -2906,7 +2926,13 @@ fn open_conn() -> Result<Connection, String> {
     let path = t_config::get_current_db_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
-    Connection::open(&path).map_err(|e| format!("Failed to open database connection: {}", e))
+    let conn = Connection::open(&path).map_err(|e| format!("Failed to open database connection: {}", e))?;
+    
+    // Enable foreign key constraints
+    conn.execute("PRAGMA foreign_keys = ON", [])
+        .map_err(|e| format!("Failed to enable foreign keys: {}", e))?;
+    
+    Ok(conn)
 }
 
 /// create all tables if not exists

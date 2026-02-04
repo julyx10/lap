@@ -39,7 +39,7 @@
     </div>
 
     <!-- Person List -->
-    <div v-if="allPersons.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
+    <div v-if="allPersons.length > 0" class="grow overflow-x-hidden overflow-y-auto">
       <ul>
         <li v-for="person in sortedPersons" :key="person.id" :id="'person-' + person.id">
           <div
@@ -392,7 +392,6 @@ async function clickIndexFaces() {
     await checkFaceStats();
   } catch (e) {
     console.error('indexFaces error:', e);
-  } finally {
     isIndexing.value = false;
   }
 }

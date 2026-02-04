@@ -71,7 +71,7 @@
         <DropDownSelect
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
+          :disabled="config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
           @select="handleFileTypeSelect"
         />
 
@@ -81,7 +81,7 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="fileList.length === 0 || config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
+          :disabled="config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
           @select="handleSortTypeSelect"
         />
 
@@ -322,15 +322,15 @@
       :class="config.settings.showStatusBar ? 'bg-base-300/80 backdrop-blur-md' : 'pointer-events-none'"
     >
       <!-- file status -->
-      <div v-if="fileList.length > 0" class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden">
-        <div class="flex items-center flex-shrink-0">
+      <div v-if="fileList.length > 0" class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap">
+        <div class="flex items-center shink-0">
           <IconFileSearch class="t-icon-size-xs mr-1" />
           <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 + '/' }}</span>
           <span>{{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}</span>
         </div>
 
         <template v-if="selectedItemIndex >= 0">
-          <div class="flex items-center gap-1 flex-shrink-0">
+          <div class="flex items-center gap-1 shink-0">
             <component :is="selectMode ? IconCheckAll : IconChecked" class="t-icon-size-xs" />
             <span>
               {{ selectMode
@@ -340,27 +340,27 @@
             </span>
           </div>
 
-          <div class="flex items-center gap-1 flex-shrink-0">
+          <div class="flex items-center gap-1 shink-0">
             <component :is="fileList[selectedItemIndex]?.file_type === 1 ? IconPhoto : IconVideo" class="t-icon-size-xs" />
             <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
           </div>
 
-          <div v-if="config.content.showFilmStrip || showQuickView" class="flex items-center gap-1 flex-shrink-0">
+          <div v-if="config.content.showFilmStrip || showQuickView" class="flex items-center gap-1 shink-0">
             <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
             <span> {{ (imageScale * 100).toFixed(0) }}% </span>
           </div>
 
-          <div v-if="fileList[selectedItemIndex]?.e_model" class="flex items-center gap-1 flex-shrink-0">
+          <div v-if="fileList[selectedItemIndex]?.e_model" class="flex items-center gap-1 shink-0">
             <IconCamera class="t-icon-size-xs" />
             <span> {{ fileList[selectedItemIndex]?.e_model }} {{ fileList[selectedItemIndex]?.e_lens_model ? ' (' + fileList[selectedItemIndex]?.e_lens_model + ')' : '' }}</span>
           </div>
 
-          <div v-if="fileList[selectedItemIndex]?.e_focal_length || fileList[selectedItemIndex]?.e_exposure_time || fileList[selectedItemIndex]?.e_f_number || fileList[selectedItemIndex]?.e_iso_speed || fileList[selectedItemIndex]?.e_exposure_bias" class="flex items-center gap-1 flex-shrink-0">
+          <div v-if="fileList[selectedItemIndex]?.e_focal_length || fileList[selectedItemIndex]?.e_exposure_time || fileList[selectedItemIndex]?.e_f_number || fileList[selectedItemIndex]?.e_iso_speed || fileList[selectedItemIndex]?.e_exposure_bias" class="flex items-center gap-1 shink-0">
             <IconCameraAperture class="t-icon-size-xs" />
             <span> {{ formatCaptureSettings(fileList[selectedItemIndex]?.e_focal_length, fileList[selectedItemIndex]?.e_exposure_time, fileList[selectedItemIndex]?.e_f_number, fileList[selectedItemIndex]?.e_iso_speed, fileList[selectedItemIndex]?.e_exposure_bias) }}</span>
           </div>
 
-          <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex items-center gap-1 flex-shrink-0">
+          <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex items-center gap-1 shink-0">
             <IconLocation class="t-icon-size-xs" />
             <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
           </div>
@@ -390,7 +390,7 @@
     :OkText="$t('msgbox.rename_file.ok')"
     :cancelText="$t('msgbox.cancel')"
     :errorMessage="errorMessage"
-    @ok="clickRenameFile"
+    @ok="onRenameFile"
     @cancel="showRenameMsgbox = false"
     @reset="errorMessage = ''"
   />
@@ -402,7 +402,7 @@
     :message="$t('msgbox.move_to.content')"
     :OkText="$t('msgbox.move_to.ok')" 
     :cancelText="$t('msgbox.cancel')"
-    @ok="clickMoveTo"
+    @ok="onMoveTo"
     @cancel="showMoveTo = false"
   />
 
@@ -413,7 +413,7 @@
     :message="$t('msgbox.copy_to.content')"
     :OkText="$t('msgbox.copy_to.ok')"
     :cancelText="$t('msgbox.cancel')"
-    @ok="clickCopyTo"
+    @ok="onCopyTo"
     @cancel="showCopyTo = false"
   />
 
@@ -425,7 +425,7 @@
     :OkText="selectMode ? $t('msgbox.trash_files.ok') : $t('msgbox.trash_file.ok')"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
-    @ok="clickTrashFile"
+    @ok="onTrashFile"
     @cancel="showTrashMsgbox = false"
   />
 
@@ -447,7 +447,7 @@
     :multiLine="true"
     :OkText="$t('msgbox.ok')"
     :cancelText="$t('msgbox.cancel')"
-    @ok="clickEditComment"
+    @ok="onEditComment"
     @cancel="showCommentMsgbox = false"
   />
 
@@ -903,6 +903,11 @@ function handleItemSelectToggled(index: number, shiftKey: boolean = false) {
   lastSelectedIndex.value = index;
 }
 
+function clickRename() {
+  renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
+  showRenameMsgbox.value = true;
+}
+
 async function clickSetAlbumCover() {
   const file = fileList.value[selectedItemIndex.value];
   const albumId = libConfig.album.id || file?.album_id;
@@ -928,10 +933,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'open': () => openImageViewer(selectedItemIndex.value, true),
     'edit': () => showImageEditor.value = true,
     'copy': () => clickCopyImage(fileList.value[selectedItemIndex.value].file_path),
-    'rename': () => {
-      renamingFileName.value = extractFileName(fileList.value[selectedItemIndex.value].name);
-      showRenameMsgbox.value = true;
-    },
+    'rename': clickRename,
     'move-to': () => showMoveTo.value = true,
     'copy-to': () => showCopyTo.value = true,
     'trash': () => showTrashMsgbox.value = true,
@@ -1161,7 +1163,7 @@ const handleKeyDown = (e: any) => {
   } else if (isCmdKey && key.toLowerCase() === 't') {
     clickTag();
   } else if (isCmdKey && key.toLowerCase() === 'r') {
-    clickRotate();
+    clickRename();
   } else if ((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
     showTrashMsgbox.value = true;
   } else if ((keyActions as any)[key]) {
@@ -2213,14 +2215,13 @@ const clickCopyImage = async (filePath: string) => {
   }
 }
 
-// click rename menu item
-const clickRenameFile = async (newName: string) => {
+const onRenameFile = async (newName: string) => {
   if(selectedItemIndex.value >= 0) {
     const file = fileList.value[selectedItemIndex.value];
     const fileName = combineFileName(newName, renamingFileName.value.ext);
     const newFilePath = await renameFile(file.id, file.file_path, fileName );
     if(newFilePath) {
-      console.log('clickRenameFile:', newFilePath);
+      console.log('onRenameFile:', newFilePath);
       file.name = fileName;
       file.file_path = newFilePath;
       showRenameMsgbox.value = false;
@@ -2231,15 +2232,14 @@ const clickRenameFile = async (newName: string) => {
   }
 }
 
-// click move to menu item
-const clickMoveTo = async () => {
+const onMoveTo = async () => {
   if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
     const moves = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
         const movedFile = await moveFile(item.id, item.file_path, libConfig.destFolder.folderId, libConfig.destFolder.folderPath);
         if(movedFile) {
-          console.log('clickMoveTo:', movedFile);
+          console.log('onMoveTo:', movedFile);
           removeFromFileList(fileList.value.indexOf(item));
         }
       });
@@ -2250,22 +2250,21 @@ const clickMoveTo = async () => {
     const file = fileList.value[selectedItemIndex.value];
     const movedFile = await moveFile(file.id, file.file_path, libConfig.destFolder.folderId, libConfig.destFolder.folderPath);
     if(movedFile) {
-      console.log('clickMoveTo:', movedFile);
+      console.log('onMoveTo:', movedFile);
       removeFromFileList(selectedItemIndex.value);
     }
   }
   showMoveTo.value = false;
 }
 
-// click copy to menu item
-const clickCopyTo = async () => {
+const onCopyTo = async () => {
   if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
     const copies = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
         const copiedFile = await copyFile(item.file_path, libConfig.destFolder.folderPath);
         if(copiedFile) {
-          console.log('clickCopyTo:', copiedFile);
+          console.log('onCopyTo:', copiedFile);
         }
       });
     await Promise.all(copies); // parallelize DB updates
@@ -2275,14 +2274,13 @@ const clickCopyTo = async () => {
     const file = fileList.value[selectedItemIndex.value];
     const copiedFile = await copyFile(file.file_path, libConfig.destFolder.folderPath);
     if(copiedFile) {
-      console.log('clickCopyTo:', copiedFile);
+      console.log('onCopyTo:', copiedFile);
     }
   }
   showCopyTo.value = false;
 }
 
-// click trash menu item
-const clickTrashFile = async () => {
+const onTrashFile = async () => {
   if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
     const deletes = fileList.value
       .filter(item => item.isSelected)
@@ -2501,13 +2499,12 @@ const clickTag = async () => {
   showTaggingDialog.value = true;
 }
 
-// edit comment
-const clickEditComment = async (newComment: any) => {
+const onEditComment = async (newComment: any) => {
   if (selectedItemIndex.value >= 0) {
     const file = fileList.value[selectedItemIndex.value];
     const result = await editFileComment(file.id, newComment);
     if(result) {
-      console.log('clickEditComment:', newComment);
+      console.log('onEditComment:', newComment);
       file.comments = newComment;
       showCommentMsgbox.value = false;
     }
