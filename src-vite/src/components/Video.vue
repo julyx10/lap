@@ -1,7 +1,7 @@
 <template>
   <div ref="videoContainer" class="relative w-full h-full cursor-pointer" @wheel.prevent="handleWheel">
     
-    <TransitionGroup :name="isSlideShow ? 'slide-in' : ''">
+    <TransitionGroup :name="transitionName" @after-leave="handleTransitionEnd">
       <div 
         v-for="index in [0, 1]" 
         v-show="activeVideo === index"
@@ -95,9 +95,43 @@ let currentLoadingId = 0;
 // Touchpad detection and gesture handling
 let isTouchpadDevice = false;
 let horizontalDeltaAccumulator = 0;
+let verticalDeltaAccumulator = 0; // Added
 let gestureResetTimeout: ReturnType<typeof setTimeout> | null = null;
 let hasNavigatedThisGesture = false;
+
+// Gesture Handling
+const gestureType = ref<'none' | 'zoom' | 'nav'>('none');
+const navDirection = ref<'next' | 'prev' | ''>('');
+let lastDeltaX = 0;
+const GESTURE_LOCK_THRESHOLD = 10;
 const HORIZONTAL_NAV_THRESHOLD = 100;
+
+const transitionName = computed(() => {
+  if (props.isSlideShow) return 'slide-next';
+  if (navDirection.value) {
+    return navDirection.value === 'next' ? 'slide-next' : 'slide-prev';
+  }
+  return '';
+});
+
+function handleTransitionEnd() {
+  navDirection.value = '';
+}
+
+// Simple reset - clear all swipe state
+function resetSwipeState() {
+  gestureType.value = 'none';
+  horizontalDeltaAccumulator = 0;
+  verticalDeltaAccumulator = 0;
+  hasNavigatedThisGesture = false;
+  lastDeltaX = 0;
+  navDirection.value = '';
+  // noTransition.value = false; // Video handles this differently via loaded metadata
+  if (gestureResetTimeout) {
+    clearTimeout(gestureResetTimeout);
+    gestureResetTimeout = null;
+  }
+}
 
 const playerOptions = computed(() => ({
   responsive: false,
@@ -456,6 +490,8 @@ defineExpose({
 
 // Wheel event handler for touchpad support
 function handleWheel(event: WheelEvent) {
+  event.preventDefault(); // Prevent default immediately
+
   // Detect touchpad via horizontal delta (sticky)
   if (event.deltaX !== 0) {
     isTouchpadDevice = true;
@@ -464,23 +500,55 @@ function handleWheel(event: WheelEvent) {
   // Reset timeout - when no events for 150ms, reset gesture state
   if (gestureResetTimeout) clearTimeout(gestureResetTimeout);
   gestureResetTimeout = setTimeout(() => {
-    horizontalDeltaAccumulator = 0;
-    hasNavigatedThisGesture = false;
+    resetSwipeState();
   }, 150);
   
-  if (isTouchpadDevice) {
-    // Touchpad: horizontal = navigation, vertical = zoom
-    horizontalDeltaAccumulator += event.deltaX;
-    
-    if (!hasNavigatedThisGesture && Math.abs(horizontalDeltaAccumulator) >= HORIZONTAL_NAV_THRESHOLD) {
-      const direction = horizontalDeltaAccumulator > 0 ? 'next' : 'prev';
-      emit('message-from-video-viewer', { message: direction });
-      hasNavigatedThisGesture = true;
+  const isTouchPad = isTouchpadDevice;
+
+  if (isTouchPad) {
+     // If already navigated this gesture, check if speed increased (flick)
+    if (hasNavigatedThisGesture) {
+      const speedIncreased = Math.abs(event.deltaX) > Math.abs(lastDeltaX) + 5;
+      if (!speedIncreased) {
+        lastDeltaX = event.deltaX;
+        return; // Block - not a new intentional flick
+      }
+      // Speed increased - allow new navigation
+      hasNavigatedThisGesture = false;
       horizontalDeltaAccumulator = 0;
     }
+    lastDeltaX = event.deltaX;
+
+    // Determine gesture direction
+    if (gestureType.value === 'none') {
+      horizontalDeltaAccumulator += event.deltaX;
+      verticalDeltaAccumulator += event.deltaY;
+
+      const absX = Math.abs(horizontalDeltaAccumulator);
+      const absY = Math.abs(verticalDeltaAccumulator);
+
+      if (absX > GESTURE_LOCK_THRESHOLD || absY > GESTURE_LOCK_THRESHOLD) {
+        gestureType.value = absX > absY ? 'nav' : 'zoom';
+      }
+      return;
+    }
+
+    if (gestureType.value === 'nav') {
+      horizontalDeltaAccumulator += event.deltaX;
     
-    // Vertical = zoom
-    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+      if (!hasNavigatedThisGesture && Math.abs(horizontalDeltaAccumulator) >= HORIZONTAL_NAV_THRESHOLD) {
+        const direction = horizontalDeltaAccumulator > 0 ? 'next' : 'prev';
+        navDirection.value = direction; // Set direction for transition
+        emit('message-from-video-viewer', { message: direction });
+        hasNavigatedThisGesture = true;
+        horizontalDeltaAccumulator = 0;
+        gestureType.value = 'none';
+      }
+      return;
+    }
+    
+    // Vertical = zoom (implied gestureType === 'zoom' or fallback)
+    if (gestureType.value === 'zoom' || Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
       const zoomFactor = 0.01;
       const delta = -event.deltaY * zoomFactor;
       scale.value = Math.max(0.1, Math.min(10, scale.value + delta));
@@ -496,7 +564,8 @@ function handleWheel(event: WheelEvent) {
           : Math.max(scale.value * (1 - zoomFactor), 0.1);
         updateTransform();
       } else {
-        emit('message-from-video-viewer', { message: event.deltaY < 0 ? 'prev' : 'next' });
+        const direction = event.deltaY < 0 ? 'prev' : 'next';
+        emit('message-from-video-viewer', { message: direction });
       }
     } else {
       const zoomFactor = 0.1;
@@ -537,16 +606,39 @@ function handleWheel(event: WheelEvent) {
 }
 
 /* Slideshow transition */
+/* Slideshow / Swipe transition */
+.slide-next-enter-active,
+.slide-next-leave-active,
+.slide-prev-enter-active,
+.slide-prev-leave-active {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* next: current leaves left, new enters from right */
+.slide-next-enter-from {
+  transform: translateX(100%);
+}
+.slide-next-leave-to {
+  transform: translateX(-100%);
+}
+
+/* prev: current leaves right, new enters from left */
+.slide-prev-enter-from {
+  transform: translateX(-100%);
+}
+.slide-prev-leave-to {
+  transform: translateX(100%);
+}
+
+/* Backwards compatibility for pure slideshow usage if needed, though replaced above */
 .slide-in-enter-active,
 .slide-in-leave-active {
-  transition: transform 0.8s ease;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .slide-in-enter-from {
-  transform: translateX(calc(100% + 10px));
+  transform: translateX(100%);
 }
-
 .slide-in-leave-to {
-  transform: translateX(calc(-100% - 10px));
+  transform: translateX(-100%);
 }
 </style>

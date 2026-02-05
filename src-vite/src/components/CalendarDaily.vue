@@ -21,7 +21,7 @@
         :key="d.date"
         class="size-6 p-1 text-xs flex items-center justify-center rounded-box"
         :class="{
-          'bg-base-100 cursor-default': d.count === 0,
+          'bg-base-content/5 cursor-default scale-80': d.count === 0,
           'text-base-content/70 hover:text-base-content cursor-pointer': d.count > 0,
           'bg-base-content/20': d.count > 0 && d.count < 10,
           'bg-base-content/50': d.count >= 10 && d.count < 100,

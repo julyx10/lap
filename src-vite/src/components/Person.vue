@@ -433,6 +433,7 @@ defineExpose({
   clickCancelIndex,
   loadPersons,
   clickResetFaces,
+  isIndexing,
 });
 
 </script>

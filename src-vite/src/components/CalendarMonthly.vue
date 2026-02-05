@@ -19,7 +19,7 @@
         :key="m" 
         class="size-7 text-xs flex items-center justify-center rounded-box"
         :class="{
-          'bg-base-100 cursor-default': sumMonthCount(m) === 0,
+          'bg-base-content/5 cursor-default scale-80': sumMonthCount(m) === 0,
           'text-base-content/70 hover:text-base-content cursor-pointer': sumMonthCount(m) > 0,
           'bg-base-content/20': sumMonthCount(m) > 0 && sumMonthCount(m) < 100,
           'bg-base-content/50': sumMonthCount(m) >= 100 && sumMonthCount(m) < 1000,

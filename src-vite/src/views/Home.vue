@@ -266,12 +266,14 @@ const moreMenuItems = computed(() => {
       {
         label: localeMsg.value.menu.person.index_faces,
         icon: IconUpdate,
-        action: () => panelRef.value?.clickIndexFaces()
+        action: () => panelRef.value?.clickIndexFaces(),
+        disabled: panelRef.value?.isIndexing
       },
       {
         label: localeMsg.value.menu.person.reset_index,
         icon: IconTrash,
-        action: () => panelRef.value?.clickResetFaces()
+        action: () => panelRef.value?.clickResetFaces(),
+        disabled: panelRef.value?.isIndexing
       },
       { label: '-' },
       {

@@ -845,7 +845,7 @@ const onImageReady = (nextIndex: number) => {
         
         // Clamp to ensure the new image isn't out of bounds if it's smaller
         triggerRef(position);
-        clampPosition();
+        clampPosition(true);
       } else {
         // Original logic: reset to center or zoom to cursor
         
@@ -871,7 +871,7 @@ const onImageReady = (nextIndex: number) => {
           y: initialPos.y + imageOffsetY,
         };
         triggerRef(position);
-        clampPosition();
+        clampPosition(true);
       }
 
       // Also update the other image's position to match for smooth transitions
@@ -880,7 +880,7 @@ const onImageReady = (nextIndex: number) => {
       // position.value[otherImageIndex] = position.value[activeImage.value];
     } else {
       // For isZoomFit, the original logic is fine.
-      updateZoomFit();
+      updateZoomFit(true);
     }
 
     setTimeout(() => {
@@ -909,9 +909,9 @@ const toggleZoomFit = () => {
   emit('update:isZoomFit', !props.isZoomFit);
 };
 
-const updateZoomFit = () => {
+const updateZoomFit = (force: boolean = false) => {
   console.log('updateZoomFit');
-  isZoomFit.value ? zoomFit() : zoomReset();
+  isZoomFit.value ? zoomFit(force) : zoomReset(force);
 
   // set the hide image to the same position
   // const nextImageIndex = activeImage.value ^ 1;
@@ -920,7 +920,7 @@ const updateZoomFit = () => {
 };
 
 // Zoom to fit image in container
-const zoomFit = () => {
+const zoomFit = (force: boolean = false) => {
   console.log('zoomFit');
   const container = containerSize.value;
   const imgRotatedSize = imageSizeRotated.value[activeImage.value];
@@ -933,15 +933,15 @@ const zoomFit = () => {
     : container.width / imgRotatedSize.width;
 
   // set position to center
-  zoomImage(container.width / 2, container.height / 2, scale);
+  zoomImage(container.width / 2, container.height / 2, scale, force);
 };
 
 // Reset zoom level and position
-const zoomReset = () => {
+const zoomReset = (force: boolean = false) => {
   console.log('zoomReset');
   const mousePos = mousePosition.value;
   const containerPosVal = containerPos.value;
-  zoomImage(mousePos.x - containerPosVal.x, mousePos.y - containerPosVal.y, 1);
+  zoomImage(mousePos.x - containerPosVal.x, mousePos.y - containerPosVal.y, 1, force);
 };
 
 // start dragging
@@ -1189,7 +1189,7 @@ const zoomActual = () => {
 };
 
 // Zoom image at cursor position
-function zoomImage(cursorX: number, cursorY: number, newScale: number) {
+function zoomImage(cursorX: number, cursorY: number, newScale: number, force: boolean = false) {
   const imgIndex = activeImage.value;
   const currentScale = scale.value[imgIndex];
   const pos = position.value[imgIndex];
@@ -1202,13 +1202,13 @@ function zoomImage(cursorX: number, cursorY: number, newScale: number) {
   pos.y += imageOffsetY;
 
   scale.value[imgIndex] = newScale;
-  clampPosition();
+  clampPosition(force);
 }
 
 // Ensure image stays within container
-function clampPosition() {
+function clampPosition(force: boolean = false) {
   // Skip clamping during horizontal swipe to avoid jitter
-  if (gestureType.value === 'nav') return;
+  if (!force && gestureType.value === 'nav') return;
   
   const imgIndex = activeImage.value;
   const imgRotatedSize = imageSizeRotated.value[imgIndex];
