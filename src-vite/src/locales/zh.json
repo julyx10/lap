@@ -765,6 +765,21 @@
         "author": "作者",
         "license": "许可证",
         "website": "网站"
+      },
+      "auto_update": {
+        "check": "检查更新",
+        "checking": "检查中...",
+        "install": "安装并重启",
+        "installing": "安装中...",
+        "new_version_available": "新版本可用: {version}",
+        "latest_version": "您已是最新版本",
+        "downloading_update": "正在下载更新...",
+        "downloading_started": "开始下载...",
+        "downloading": "下载中... {percent}%",
+        "download_finished": "下载完成。正在安装...",
+        "update_installed": "更新已安装。正在重启...",
+        "failed_check": "检查更新失败",
+        "failed_install": "安装更新失败"
       }
     }
   }

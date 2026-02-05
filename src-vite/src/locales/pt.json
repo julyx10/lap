@@ -1,771 +1,786 @@
 {
-    "sidebar": {
-        "home": "Início",
-        "library": "Biblioteca",
-        "search": "Pesquisar",
-        "favorite": "Favoritos",
-        "tag": "Tags",
-        "calendar": "Calendário",
-        "location": "Local",
-        "person": "Pessoas",
-        "camera": "Câmeras",
-        "settings": "Ajustes"
+  "sidebar": {
+    "home": "Início",
+    "library": "Biblioteca",
+    "search": "Pesquisar",
+    "favorite": "Favoritos",
+    "tag": "Tags",
+    "calendar": "Calendário",
+    "location": "Local",
+    "person": "Pessoas",
+    "camera": "Câmeras",
+    "settings": "Ajustes"
+  },
+  "album": {
+    "all_files": "Todos os arquivos",
+    "album_list": "Álbuns",
+    "edit": {
+      "title_add": "Adicionar álbum",
+      "title": "Editar álbum",
+      "folder": "Pasta",
+      "select_folder": "Selecionar pasta",
+      "name": "Nome",
+      "description": "Descrição",
+      "description_placeholder": "Digite a descrição",
+      "images": "Imagens",
+      "videos": "Vídeos",
+      "files_count": "{count} arquivos ({size})",
+      "files_counting": "Contando arquivos...",
+      "created_at": "Criado em",
+      "modified_at": "Modificado em"
     },
-    "album": {
-        "all_files": "Todos os arquivos",
-        "album_list": "Álbuns",
-        "edit": {
-            "title_add": "Adicionar álbum",
-            "title": "Editar álbum",
-            "folder": "Pasta",
-            "select_folder": "Selecionar pasta",
-            "name": "Nome",
-            "description": "Descrição",
-            "description_placeholder": "Digite a descrição",
-            "images": "Imagens",
-            "videos": "Vídeos",
-            "files_count": "{count} arquivos ({size})",
-            "files_counting": "Contando arquivos...",
-            "created_at": "Criado em",
-            "modified_at": "Modificado em"
-        },
-        "no_albums": {
-            "title": "Sem álbuns",
-            "description": "Adicione um álbum para começar"
-        }
-    },
+    "no_albums": {
+      "title": "Sem álbuns",
+      "description": "Adicione um álbum para começar"
+    }
+  },
+  "search": {
+    "title": "Pesquisa de imagem",
+    "search_images": "Pesquisa IA",
+    "similar_images": "Semelhantes",
+    "filename_search": "Nome do arquivo",
+    "image_search_placeholder": "Pesquisar imagens por texto",
+    "image_search_history": "Histórico",
+    "image_search_tips": "Digite uma descrição. Ex: \"pôr do sol no oceano\".",
+    "similar_images_tips": "Selecione uma imagem para encontrar semelhantes",
+    "filename_search_tips": "Digite um nome de arquivo",
+    "index": {
+      "wait_index": "Aguardando atualização...",
+      "indexing": "Atualizando '{album}'... {count} / {total}",
+      "description": "Preparando álbum para pesquisa. Pode levar alguns minutos.",
+      "cancel": "Cancelar"
+    }
+  },
+  "face_index": {
+    "start": "Indexar rostos",
+    "indexing": "Indexando rostos... {current} / {total}",
+    "clustering": "Agrupando rostos...",
+    "faces_found": "{count} rostos encontrados",
+    "cluster_graph": "Construindo gráfico: {percent}%",
+    "cluster_iterate": "Iteração {current}/{total}",
+    "cluster_converged": "Convergência na iteração {current}",
+    "cluster_assign": "Criando pessoa {current}/{total}",
+    "cluster_thumbnail": "Gerando miniaturas...",
+    "cancel": "Cancelar",
+    "incomplete": "Incompleto ({count} fotos restantes)",
+    "resume": "Retomar"
+  },
+  "favorite": {
+    "files": "Arquivos favoritos",
+    "folders": "Pastas favoritas"
+  },
+  "tag": {
+    "add_tag": "Adicionar tag",
+    "delete_tag": "Excluir tag",
+    "edit_tag": "Editar tag",
+    "search_tags": "Pesquisar tags",
+    "enter_new_tag_name": "Novo nome da tag",
+    "not_found": "Tags não encontradas"
+  },
+  "calendar": {
+    "on_this_day": "Neste dia",
+    "title": "Calendário",
+    "monthly_view": "Visão mensal",
+    "daily_view": "Visão diária",
+    "day": "Dia",
+    "week": "Semana",
+    "month": "Mês",
+    "year": "Ano",
+    "today": "Hoje",
+    "monthly": "Mensal",
+    "daily": "Diário",
+    "weekdays": [
+      "Dom",
+      "Seg",
+      "Ter",
+      "Qua",
+      "Qui",
+      "Sex",
+      "Sáb"
+    ],
+    "weekdays_long": [
+      "Domingo",
+      "Segunda-feira",
+      "Terça-feira",
+      "Quarta-feira",
+      "Quinta-feira",
+      "Sexta-feira",
+      "Sábado"
+    ],
+    "months": [
+      "Jan",
+      "Fev",
+      "Mar",
+      "Abr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Set",
+      "Out",
+      "Nov",
+      "Dez"
+    ],
+    "months_long": [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro"
+    ]
+  },
+  "toolbar": {
     "search": {
-        "title": "Pesquisa de imagem",
-        "search_images": "Pesquisa IA",
-        "similar_images": "Semelhantes",
-        "filename_search": "Nome do arquivo",
-        "image_search_placeholder": "Pesquisar imagens por texto",
-        "image_search_history": "Histórico",
-        "image_search_tips": "Digite uma descrição. Ex: \"pôr do sol no oceano\".",
-        "similar_images_tips": "Selecione uma imagem para encontrar semelhantes",
-        "filename_search_tips": "Digite um nome de arquivo",
-        "index": {
-            "wait_index": "Aguardando atualização...",
-            "indexing": "Atualizando '{album}'... {count} / {total}",
-            "description": "Preparando álbum para pesquisa. Pode levar alguns minutos.",
-            "cancel": "Cancelar"
-        }
+      "title": "Pesquisar",
+      "placeholder": "Nome do arquivo"
     },
-    "face_index": {
-        "start": "Indexar rostos",
-        "indexing": "Indexando rostos... {current} / {total}",
-        "clustering": "Agrupando rostos...",
-        "faces_found": "{count} rostos encontrados",
-        "cluster_graph": "Construindo gráfico: {percent}%",
-        "cluster_iterate": "Iteração {current}/{total}",
-        "cluster_converged": "Convergência na iteração {current}",
-        "cluster_assign": "Criando pessoa {current}/{total}",
-        "cluster_thumbnail": "Gerando miniaturas...",
-        "cancel": "Cancelar",
-        "incomplete": "Incompleto ({count} fotos restantes)",
-        "resume": "Retomar"
-    },
-    "favorite": {
-        "files": "Arquivos favoritos",
-        "folders": "Pastas favoritas"
-    },
-    "tag": {
-        "add_tag": "Adicionar tag",
-        "delete_tag": "Excluir tag",
-        "edit_tag": "Editar tag",
-        "search_tags": "Pesquisar tags",
-        "enter_new_tag_name": "Novo nome da tag",
-        "not_found": "Tags não encontradas"
-    },
-    "calendar": {
-        "on_this_day": "Neste dia",
-        "title": "Calendário",
-        "monthly_view": "Visão mensal",
-        "daily_view": "Visão diária",
-        "day": "Dia",
-        "week": "Semana",
-        "month": "Mês",
-        "year": "Ano",
-        "today": "Hoje",
-        "monthly": "Mensal",
-        "daily": "Diário",
-        "weekdays": [
-            "Dom",
-            "Seg",
-            "Ter",
-            "Qua",
-            "Qui",
-            "Sex",
-            "Sáb"
-        ],
-        "weekdays_long": [
-            "Domingo",
-            "Segunda-feira",
-            "Terça-feira",
-            "Quarta-feira",
-            "Quinta-feira",
-            "Sexta-feira",
-            "Sábado"
-        ],
-        "months": [
-            "Jan",
-            "Fev",
-            "Mar",
-            "Abr",
-            "Mai",
-            "Jun",
-            "Jul",
-            "Ago",
-            "Set",
-            "Out",
-            "Nov",
-            "Dez"
-        ],
-        "months_long": [
-            "Janeiro",
-            "Fevereiro",
-            "Março",
-            "Abril",
-            "Maio",
-            "Junho",
-            "Julho",
-            "Agosto",
-            "Setembro",
-            "Outubro",
-            "Novembro",
-            "Dezembro"
-        ]
-    },
-    "toolbar": {
-        "search": {
-            "title": "Pesquisar",
-            "placeholder": "Nome do arquivo"
-        },
-        "filter": {
-            "select_mode": "Seleção",
-            "select_count": "{count} selecionados",
-            "sort_type_options": [
-                "Tempo",
-                "Nome",
-                "Tamanho",
-                "Dimensão",
-                "Aleatório"
-            ],
-            "sort_order_options": [
-                "Crescente",
-                "Decrescente"
-            ],
-            "file_type_options": [
-                "Todos",
-                "Imagens",
-                "Vídeos"
-            ]
-        },
-        "tooltip": {
-            "restore": "Restaurar",
-            "refresh": "Atualizar",
-            "grid_view": "Grade",
-            "filmstrip_view": "Tira de filme",
-            "show_info": "Mostrar info",
-            "hide_info": "Ocultar info",
-            "clear_history": "Limpar histórico",
-            "index_faces": "Indexar rostos",
-            "sort": "Ordenar",
-            "monthly": "Mensal",
-            "daily": "Diário",
-            "time_asc": "Tempo Asc",
-            "time_desc": "Tempo Desc"
-        }
-    },
-    "info_panel": {
-        "tabs": [
-            "Info",
-            "Prévia"
-        ]
+    "filter": {
+      "select_mode": "Seleção",
+      "select_count": "{count} selecionados",
+      "sort_type_options": [
+        "Tempo",
+        "Nome",
+        "Tamanho",
+        "Dimensão",
+        "Aleatório"
+      ],
+      "sort_order_options": [
+        "Crescente",
+        "Decrescente"
+      ],
+      "file_type_options": [
+        "Todos",
+        "Imagens",
+        "Vídeos"
+      ]
     },
     "tooltip": {
-        "loading": "Carregando...",
-        "not_found": {
-            "albums": "Nenhum álbum encontrado",
-            "files": "Nenhum arquivo encontrado",
-            "folder_files": "Sem arquivos. Tente subpastas",
-            "folders": "Nenhuma pasta encontrada",
-            "tag": "Nenhuma tag encontrada",
-            "calendar": "Sem dados de calendário",
-            "location": "Sem dados de localização",
-            "person": "Sem dados de pessoa",
-            "person_hint": "Tente indexar os rostos",
-            "camera": "Sem dados de câmera"
-        },
-        "set_album_cover": {
-            "success": "Capa definida",
-            "failed": "Falha ao definir capa"
-        },
-        "copy_image": {
-            "success": "Imagem copiada",
-            "failed": "Falha ao copiar"
-        },
-        "save_image": {
-            "success": "Imagem salva",
-            "failed": "Falha ao salvar"
-        },
-        "update_image": {
-            "success": "Imagem atualizada",
-            "failed": "Falha ao atualizar"
-        },
-        "image_viewer": {
-            "first_image": "Primeira imagem",
-            "last_image": "Última imagem"
-        },
-        "album_exists": "Este álbum já existe"
+      "restore": "Restaurar",
+      "refresh": "Atualizar",
+      "grid_view": "Grade",
+      "filmstrip_view": "Tira de filme",
+      "show_info": "Mostrar info",
+      "hide_info": "Ocultar info",
+      "clear_history": "Limpar histórico",
+      "index_faces": "Indexar rostos",
+      "sort": "Ordenar",
+      "monthly": "Mensal",
+      "daily": "Diário",
+      "time_asc": "Tempo Asc",
+      "time_desc": "Tempo Desc"
+    }
+  },
+  "info_panel": {
+    "tabs": [
+      "Info",
+      "Prévia"
+    ]
+  },
+  "tooltip": {
+    "loading": "Carregando...",
+    "not_found": {
+      "albums": "Nenhum álbum encontrado",
+      "files": "Nenhum arquivo encontrado",
+      "folder_files": "Sem arquivos. Tente subpastas",
+      "folders": "Nenhuma pasta encontrada",
+      "tag": "Nenhuma tag encontrada",
+      "calendar": "Sem dados de calendário",
+      "location": "Sem dados de localização",
+      "person": "Sem dados de pessoa",
+      "person_hint": "Tente indexar os rostos",
+      "camera": "Sem dados de câmera"
     },
-    "statusbar": {
-        "files_summary": "{count} arquivos ({size})"
+    "set_album_cover": {
+      "success": "Capa definida",
+      "failed": "Falha ao definir capa"
     },
-    "menu": {
-        "select": {
-            "all": "Selecionar tudo",
-            "none": "Desmarcar",
-            "invert": "Inverter seleção"
-        },
-        "home": {
-            "delete": "Excluir",
-            "pin": "Fixar",
-            "unpin": "Desafixar"
-        },
-        "library": {
-            "add": "Adicionar biblioteca...",
-            "edit": "Editar biblioteca...",
-            "manage": "Gerenciar bibliotecas...",
-            "remove": "Remover biblioteca",
-            "default": "Biblioteca padrão"
-        },
-        "album": {
-            "add": "Adicionar álbum...",
-            "edit": "Editar álbum...",
-            "index": "Atualizar arquivos",
-            "include_in_search": "Incluir na pesquisa",
-            "exclude_from_search": "Excluir da pesquisa",
-            "remove": "Remover álbum",
-            "refresh": "Atualizar",
-            "reorder": "Reordenar",
-            "reorder_exit": "Sair de reordenar"
-        },
-        "file": {
-            "new_folder": "Nova pasta...",
-            "view_in_new_window": "Ver em nova janela...",
-            "copy": "Copiar para área de transferência",
-            "edit": "Editar imagem...",
-            "find_similar_images": "Encontrar semelhantes",
-            "find_person_images": "Encontrar fotos de pessoa",
-            "find_album_folder": "Encontrar pasta do álbum",
-            "on_this_day": "Neste dia",
-            "print": "Imprimir",
-            "rename": "Renomear",
-            "move_to": "Mover para...",
-            "copy_to": "Copiar para...",
-            "move_to_trash": "Mover para lixeira",
-            "delete": "Excluir",
-            "reveal_in_finder": "Mostrar no Finder...",
-            "reveal_in_file_explorer": "Mostrar no Explorer...",
-            "set_album_cover": "Definir como capa"
-        },
-        "calendar": {
-            "monthly": "Visão mensal",
-            "daily": "Visão diária",
-            "time_asc": "Tempo Asc",
-            "time_desc": "Tempo Desc"
-        },
-        "search": {
-            "clear_history": "Limpar histórico"
-        },
-        "person": {
-            "index_faces": "Indexar rostos",
-            "reset_index": "Redefinir índice"
-        },
-        "tag": {
-            "add": "Adicionar tag...",
-            "rename": "Renomear",
-            "delete": "Excluir"
-        },
-        "meta": {
-            "favorite": "Favoritar",
-            "unfavorite": "Desfavoritar",
-            "tag": "Tag...",
-            "comment": "Comentar...",
-            "rotate": "Girar"
-        },
-        "sort": {
-            "sort_by_name": "Por nome",
-            "sort_by_count": "Por quantidade"
-        }
+    "copy_image": {
+      "success": "Imagem copiada",
+      "failed": "Falha ao copiar"
     },
-    "msgbox": {
-        "ok": "OK",
-        "reset": "Redefinir",
-        "cancel": "Cancelar",
-        "close": "Fechar",
-        "input": {
-            "file_name_invalid": "Nome inválido: \\ / : * ? \" < > |."
-        },
-        "reset_faces": {
-            "title": "Redefinir índice",
-            "content": "Excluir todos os dados de rosto? Irreversível.",
-            "ok": "Redefinir"
-        },
-        "clear_search_history": {
-            "title": "Limpar histórico",
-            "content": "Tem certeza que deseja limpar o histórico?",
-            "ok": "Limpar"
-        },
-        "delete_person": {
-            "title": "Excluir pessoa",
-            "content": "Tem certeza que deseja excluir '{person}'?",
-            "ok": "Excluir"
-        },
-        "manage_libraries": {
-            "title": "Gerenciar bibliotecas",
-            "name": "Nome",
-            "visible": "Visível",
-            "action": "Ação",
-            "default": "Padrão",
-            "current": "Atual",
-            "show": "Mostrar",
-            "hide": "Ocultar",
-            "hidden": "Oculto",
-            "delete": "Excluir",
-            "reorder": "Reordenar",
-            "rename": "Renomear",
-            "add_new": "Adicionar nova",
-            "add": "Adicionar",
-            "placeholder": "Nome da biblioteca",
-            "max_limit_reached": "Limite atingido",
-            "created_at_lower": "criado em",
-            "library_file_path": "Caminho do arquivo",
-            "library_file_size": "Tamanho do arquivo",
-            "created_at": "Criado em"
-        },
-        "remove_library": {
-            "title": "Remover biblioteca",
-            "content": "Remover '{library}'? O arquivo do banco de dados será excluído.",
-            "ok": "Remover",
-            "success": "'{library}' removida.",
-            "error": "Falha ao remover."
-        },
-        "remove_album": {
-            "title": "Remover álbum",
-            "content": "O álbum '{album}' será removido. Arquivos permanecem.",
-            "ok": "Remover"
-        },
-        "rename_folder": {
-            "title": "Renomear pasta",
-            "content": "Novo nome:",
-            "ok": "Renomear",
-            "error": "Falha ao renomear."
-        },
-        "new_folder": {
-            "title": "Nova pasta",
-            "placeholder": "Nome da pasta",
-            "ok": "Criar",
-            "error": "Falha ao criar."
-        },
-        "delete_folder": {
-            "title": "Excluir pasta",
-            "content": "'{folder}' e conteúdo serão excluídos.",
-            "ok": "Excluir",
-            "success": "'{folder}' excluída.",
-            "error": "Falha ao excluir."
-        },
-        "trash_folder": {
-            "title": "Mover para lixeira",
-            "content": "'{folder}' irá para a lixeira.",
-            "ok": "Lixeira",
-            "success": "'{folder}' movida para a lixeira.",
-            "error": "Falha ao mover."
-        },
-        "move_to": {
-            "title": "Mover '{source}' para",
-            "content": "Selecione o destino:",
-            "ok": "Mover",
-            "error": "Falha ao mover."
-        },
-        "copy_to": {
-            "title": "Copiar '{source}' para",
-            "content": "Selecione o destino:",
-            "ok": "Copiar",
-            "error": "Falha ao copiar."
-        },
-        "rename_file": {
-            "title": "Renomear arquivo",
-            "placeholder": "Novo nome",
-            "ok": "Renomear",
-            "error": "Falha ao renomear."
-        },
-        "delete_file": {
-            "title": "Excluir arquivo",
-            "content": "O arquivo '{file}' será excluído.",
-            "ok": "Excluir",
-            "success": "'{file}' excluído.",
-            "error": "Falha ao excluir."
-        },
-        "delete_files": {
-            "title": "Excluir arquivos",
-            "content": "{count} arquivos serão excluídos.",
-            "ok": "Excluir tudo",
-            "success": "{count} arquivos excluídos.",
-            "error": "Falha ao excluir."
-        },
-        "trash_file": {
-            "title": "Mover para lixeira",
-            "content": "O arquivo '{file}' irá para a lixeira.",
-            "ok": "Lixeira",
-            "success": "'{file}' na lixeira.",
-            "error": "Falha ao mover."
-        },
-        "trash_files": {
-            "title": "Mover para lixeira",
-            "content": "{count} arquivos irão para a lixeira.",
-            "ok": "Lixeira",
-            "success": "{count} arquivos na lixeira.",
-            "error": "Falha ao mover."
-        },
-        "new_tag": {
-            "title": "Nova tag",
-            "content": "Nome da tag:",
-            "ok": "Criar",
-            "error": "Falha ao criar."
-        },
-        "delete_tag": {
-            "title": "Excluir tag",
-            "content": "A tag '{tag}' será excluída.",
-            "ok": "Excluir",
-            "success": "'{tag}' excluída.",
-            "error": "Falha ao excluir."
-        },
-        "edit_comment": {
-            "title": "Editar comentário",
-            "placeholder": "Comentário",
-            "ok": "Salvar"
-        },
-        "select_folder": {
-            "error": "Falha ao selecionar pasta."
-        },
-        "select_file": {
-            "error": "Falha ao selecionar arquivo."
-        },
-        "image_editor": {
-            "title": "Editor de imagem",
-            "tab_edit": "Editar",
-            "tab_save": "Salvar",
-            "filters": "Filtros",
-            "filter_none": "Nenhum",
-            "filter_grayscale": "Escala de cinza",
-            "filter_sepia": "Sépia",
-            "filter_invert": "Inverter",
-            "adjustments": "Ajustes",
-            "brightness": "Brilho",
-            "contrast": "Contraste",
-            "blur": "Desfoque",
-            "hue_rotate": "Matiz",
-            "saturation": "Saturação",
-            "reset": "Redefinir",
-            "crop": "Cortar",
-            "cancel_crop": "Cancelar",
-            "confirm_crop": "Confirmar",
-            "crop_shape": "Forma",
-            "crop_shape_custom": "Personalizado",
-            "crop_shape_landscape": "Paisagem",
-            "crop_shape_portrait": "Retrato",
-            "aspect_ratio": "Proporção",
-            "zoom_in": "Zoom in",
-            "zoom_out": "Zoom out",
-            "rotate_left": "Girar esq",
-            "rotate_right": "Girar dir",
-            "flip_horizontal": "Espelhar hor",
-            "flip_vertical": "Espelhar ver",
-            "restore": "Restaurar",
-            "resize": "Redimensionar",
-            "width": "Largura",
-            "height": "Altura",
-            "percentage": "Porcentagem",
-            "pixel": "Pixels",
-            "options": "Opções",
-            "save_as": "Salvar como",
-            "save_as_options": [
-                "Sobrescrever",
-                "Novo arquivo"
-            ],
-            "save_as_placeholder": "Nome do arquivo",
-            "format": "Formato",
-            "format_options": [
-                "JPEG",
-                "PNG",
-                "WEBP"
-            ],
-            "quality": "Qualidade",
-            "quality_options": [
-                "Alta",
-                "Média",
-                "Baixa"
-            ],
-            "copy_image": "Copiar",
-            "ok": "Salvar",
-            "cancel": "Cancelar",
-            "overwrite_confirm": "Sobrescrever arquivo original? Irreversível."
-        }
+    "save_image": {
+      "success": "Imagem salva",
+      "failed": "Falha ao salvar"
     },
-    "file_info": {
-        "title": "Info do arquivo",
-        "metadata": "Metadados",
-        "location": "Localização",
-        "album_name": "Álbum",
-        "name": "Nome",
-        "folder": "Pasta",
-        "dimension": "Dimensão",
-        "size": "Tamanho",
-        "duration": "Duração",
-        "created_at": "Criado em",
-        "modified_at": "Modificado em",
-        "camera": "Câmera",
-        "camera_make": "Fabricante",
-        "camera_model": "Modelo",
-        "taken_at": "Tirada em",
-        "taken_by": "Por",
-        "software": "Software",
-        "artist": "Artista",
-        "copyright": "Copyright",
-        "description": "Descrição",
-        "lens": "Lente",
-        "lens_make": "Fabr. lente",
-        "lens_model": "Mod. lente",
-        "exposure_bias": "Comp. Exp.",
-        "exposure_time": "Tempo Exp.",
-        "aperture": "Abertura",
-        "focal_length": "Dist. Focal",
-        "iso": "ISO",
-        "flash": "Flash",
-        "color_type": "Tipo de cor",
-        "bit_depth": "Bits",
-        "alpha_channel": "Alfa",
-        "gps_latitude": "Latitude",
-        "gps_longitude": "Longitude",
-        "gps_altitude": "Altitude",
-        "geo_location": "Local",
-        "tags": "Tags",
-        "comment": "Comentário",
-        "capture_settings": "Config. captura"
-    },
-    "map": {
-        "show_map": "Mostrar mapa",
-        "hide_map": "Ocultar mapa",
-        "zoom_in": "Zoom in",
-        "zoom_out": "Zoom out",
-        "zoom_center": "Centralizar"
-    },
-    "format": {
-        "year": "yyyy",
-        "month": "MMMM yyyy",
-        "date": "dd/MM/yyyy",
-        "date_long": "d 'de' MMMM 'de' yyyy",
-        "month_date": "d 'de' MMMM",
-        "date_long_with_weekday": "EEEE, d 'de' MMMM 'de' yyyy",
-        "date_time": "dd/MM/yyyy HH:mm:ss",
-        "date_time_long": "d 'de' MMMM 'de' yyyy HH:mm:ss"
+    "update_image": {
+      "success": "Imagem atualizada",
+      "failed": "Falha ao atualizar"
     },
     "image_viewer": {
-        "title": "Visualizador",
-        "loading": "Carregando...",
-        "failed": "Falha ao carregar.",
-        "toolbar": {
-            "prev": "Anterior",
-            "next": "Próximo",
-            "slide_show": "Apresentação",
-            "pause": "Pausa",
-            "zoom_in": "Zoom in",
-            "zoom_out": "Zoom out",
-            "zoom_fit": "Ajustar",
-            "zoom_actual": "Tamanho real",
-            "edit": "Editar",
-            "rotate": "Girar",
-            "favorite": "Favorito",
-            "unfavorite": "Desfavoritar",
-            "tag": "Tag",
-            "comment": "Comentar",
-            "info": "Info",
-            "save": "Salvar",
-            "delete": "Excluir",
-            "fullscreen": "Tela cheia",
-            "exit_fullscreen": "Sair tela cheia",
-            "pin": "Fixar barra",
-            "unpin": "Desafixar barra",
-            "close": "Fechar"
-        }
+      "first_image": "Primeira imagem",
+      "last_image": "Última imagem"
     },
-    "video": {
-        "loading": "Carregando vídeo...",
-        "failed": "Erro na reprodução",
-        "errors": {
-            "aborted": "Abortado",
-            "network": "Erro de rede",
-            "decode": "Erro de decodificação",
-            "format": "Não suportado",
-            "timeout": "Tempo esgotado",
-            "unknown": "Erro desconhecido"
-        }
+    "album_exists": "Este álbum já existe"
+  },
+  "statusbar": {
+    "files_summary": "{count} arquivos ({size})"
+  },
+  "menu": {
+    "select": {
+      "all": "Selecionar tudo",
+      "none": "Desmarcar",
+      "invert": "Inverter seleção"
     },
-    "settings": {
-        "general": {
-            "title": "Geral",
-            "appearance": "Aparência",
-            "appearance_options": [
-                "Claro",
-                "Escuro"
-            ],
-            "theme": "Tema",
-            "theme_options_light": [
-                "Padrão",
-                "Cupcake",
-                "Bumblebee",
-                "Emerald",
-                "Corporate",
-                "Retro",
-                "Cyberpunk",
-                "Valentine",
-                "Garden",
-                "Lofi",
-                "Pastel",
-                "Fantasy",
-                "Wireframe",
-                "Cmyk",
-                "Autumn",
-                "Acid",
-                "Lemonade",
-                "Winter",
-                "Nord",
-                "Caramellatte",
-                "Silk"
-            ],
-            "theme_options_dark": [
-                "Padrão",
-                "Synthwave",
-                "Halloween",
-                "Forest",
-                "Aqua",
-                "Black",
-                "Luxury",
-                "Dracula",
-                "Business",
-                "Night",
-                "Coffee",
-                "Dim",
-                "Sunset",
-                "Abyss"
-            ],
-            "select_language": "Idioma",
-            "show_button_text": "Texto nos botões",
-            "show_tool_tip": "Dicas de ferramenta",
-            "show_status_bar": "Barra de status",
-            "show_map": "Mostrar mapa",
-            "show_map_hint": "Requer internet",
-            "debug_mode": "Modo debug"
-        },
-        "grid_view": {
-            "title": "Grade",
-            "style": "Estilo",
-            "style_options": [
-                "Confortável",
-                "Compacto"
-            ],
-            "size": "Tamanho",
-            "scaling": "Escala",
-            "scaling_options": [
-                "Ajustar tudo",
-                "Preencher",
-                "Esticar"
-            ],
-            "label_primary": "Rótulo principal",
-            "label_primary_hint": "Apenas estilo confortável",
-            "label_secondary": "Rótulo secundário",
-            "label_secondary_hint": "Apenas estilo confortável",
-            "label_options": [
-                "(Vazio)",
-                "Nome",
-                "Tamanho",
-                "Dimensão",
-                "Tempo",
-                "Local",
-                "Câmera",
-                "Lente",
-                "Configurações"
-            ]
-        },
-        "filmstrip_view": {
-            "title": "Tira de filme",
-            "preview_position": "Posição prévia",
-            "preview_position_options": [
-                "Acima",
-                "Abaixo"
-            ]
-        },
-        "image_view": {
-            "title": "Visualizar",
-            "mouse_wheel": "Roda do mouse",
-            "mouse_wheel_options": [
-                "Ant/Próx (Ctrl zoom)",
-                "Zoom +/-"
-            ],
-            "slide_show_interval": "Intervalo: {second} s",
-            "auto_play_video": "Auto reproduzir vídeo",
-            "show_comment": "Mostrar comentário",
-            "show_comment_hint": "Em nova janela",
-            "navigator_view": "Navegador",
-            "navigator_view_options": [
-                "Auto",
-                "Sempre",
-                "Nunca"
-            ],
-            "navigator_view__size": "Tamanho",
-            "navigator_view_size_options": [
-                "Peq(160px)",
-                "Méd(240px)",
-                "Grd(320px)",
-                "XG(400px)"
-            ]
-        },
-        "image_search": {
-            "title": "Pesquisa img",
-            "similarity": "Similaridade",
-            "similarity_hint": "Alto = Menos resultados",
-            "similarity_options": [
-                "Muito alta",
-                "Alta",
-                "Média",
-                "Baixa"
-            ]
-        },
-        "face_recognition": {
-            "title": "Reconhecimento facial",
-            "similarity": "Similaridade facial",
-            "cluster_threshold": "Limite de cluster",
-            "cluster_threshold_hint": "Alto = Rígido",
-            "cluster_threshold_options": [
-                "Muito alto",
-                "Alto",
-                "Médio",
-                "Baixo"
-            ]
-        },
-        "about": {
-            "title": "Sobre",
-            "package": {
-                "name": "Nome do pacote",
-                "description": "Descrição",
-                "version": "Versão",
-                "build_time": "Hora do build",
-                "author": "Autor",
-                "license": "Licença",
-                "website": "Site"
-            }
-        }
+    "home": {
+      "delete": "Excluir",
+      "pin": "Fixar",
+      "unpin": "Desafixar"
+    },
+    "library": {
+      "add": "Adicionar biblioteca...",
+      "edit": "Editar biblioteca...",
+      "manage": "Gerenciar bibliotecas...",
+      "remove": "Remover biblioteca",
+      "default": "Biblioteca padrão"
+    },
+    "album": {
+      "add": "Adicionar álbum...",
+      "edit": "Editar álbum...",
+      "index": "Atualizar arquivos",
+      "include_in_search": "Incluir na pesquisa",
+      "exclude_from_search": "Excluir da pesquisa",
+      "remove": "Remover álbum",
+      "refresh": "Atualizar",
+      "reorder": "Reordenar",
+      "reorder_exit": "Sair de reordenar"
+    },
+    "file": {
+      "new_folder": "Nova pasta...",
+      "view_in_new_window": "Ver em nova janela...",
+      "copy": "Copiar para área de transferência",
+      "edit": "Editar imagem...",
+      "find_similar_images": "Encontrar semelhantes",
+      "find_person_images": "Encontrar fotos de pessoa",
+      "find_album_folder": "Encontrar pasta do álbum",
+      "on_this_day": "Neste dia",
+      "print": "Imprimir",
+      "rename": "Renomear",
+      "move_to": "Mover para...",
+      "copy_to": "Copiar para...",
+      "move_to_trash": "Mover para lixeira",
+      "delete": "Excluir",
+      "reveal_in_finder": "Mostrar no Finder...",
+      "reveal_in_file_explorer": "Mostrar no Explorer...",
+      "set_album_cover": "Definir como capa"
+    },
+    "calendar": {
+      "monthly": "Visão mensal",
+      "daily": "Visão diária",
+      "time_asc": "Tempo Asc",
+      "time_desc": "Tempo Desc"
+    },
+    "search": {
+      "clear_history": "Limpar histórico"
+    },
+    "person": {
+      "index_faces": "Indexar rostos",
+      "reset_index": "Redefinir índice"
+    },
+    "tag": {
+      "add": "Adicionar tag...",
+      "rename": "Renomear",
+      "delete": "Excluir"
+    },
+    "meta": {
+      "favorite": "Favoritar",
+      "unfavorite": "Desfavoritar",
+      "tag": "Tag...",
+      "comment": "Comentar...",
+      "rotate": "Girar"
+    },
+    "sort": {
+      "sort_by_name": "Por nome",
+      "sort_by_count": "Por quantidade"
     }
+  },
+  "msgbox": {
+    "ok": "OK",
+    "reset": "Redefinir",
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "input": {
+      "file_name_invalid": "Nome inválido: \\ / : * ? \" < > |."
+    },
+    "reset_faces": {
+      "title": "Redefinir índice",
+      "content": "Excluir todos os dados de rosto? Irreversível.",
+      "ok": "Redefinir"
+    },
+    "clear_search_history": {
+      "title": "Limpar histórico",
+      "content": "Tem certeza que deseja limpar o histórico?",
+      "ok": "Limpar"
+    },
+    "delete_person": {
+      "title": "Excluir pessoa",
+      "content": "Tem certeza que deseja excluir '{person}'?",
+      "ok": "Excluir"
+    },
+    "manage_libraries": {
+      "title": "Gerenciar bibliotecas",
+      "name": "Nome",
+      "visible": "Visível",
+      "action": "Ação",
+      "default": "Padrão",
+      "current": "Atual",
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "hidden": "Oculto",
+      "delete": "Excluir",
+      "reorder": "Reordenar",
+      "rename": "Renomear",
+      "add_new": "Adicionar nova",
+      "add": "Adicionar",
+      "placeholder": "Nome da biblioteca",
+      "max_limit_reached": "Limite atingido",
+      "created_at_lower": "criado em",
+      "library_file_path": "Caminho do arquivo",
+      "library_file_size": "Tamanho do arquivo",
+      "created_at": "Criado em"
+    },
+    "remove_library": {
+      "title": "Remover biblioteca",
+      "content": "Remover '{library}'? O arquivo do banco de dados será excluído.",
+      "ok": "Remover",
+      "success": "'{library}' removida.",
+      "error": "Falha ao remover."
+    },
+    "remove_album": {
+      "title": "Remover álbum",
+      "content": "O álbum '{album}' será removido. Arquivos permanecem.",
+      "ok": "Remover"
+    },
+    "rename_folder": {
+      "title": "Renomear pasta",
+      "content": "Novo nome:",
+      "ok": "Renomear",
+      "error": "Falha ao renomear."
+    },
+    "new_folder": {
+      "title": "Nova pasta",
+      "placeholder": "Nome da pasta",
+      "ok": "Criar",
+      "error": "Falha ao criar."
+    },
+    "delete_folder": {
+      "title": "Excluir pasta",
+      "content": "'{folder}' e conteúdo serão excluídos.",
+      "ok": "Excluir",
+      "success": "'{folder}' excluída.",
+      "error": "Falha ao excluir."
+    },
+    "trash_folder": {
+      "title": "Mover para lixeira",
+      "content": "'{folder}' irá para a lixeira.",
+      "ok": "Lixeira",
+      "success": "'{folder}' movida para a lixeira.",
+      "error": "Falha ao mover."
+    },
+    "move_to": {
+      "title": "Mover '{source}' para",
+      "content": "Selecione o destino:",
+      "ok": "Mover",
+      "error": "Falha ao mover."
+    },
+    "copy_to": {
+      "title": "Copiar '{source}' para",
+      "content": "Selecione o destino:",
+      "ok": "Copiar",
+      "error": "Falha ao copiar."
+    },
+    "rename_file": {
+      "title": "Renomear arquivo",
+      "placeholder": "Novo nome",
+      "ok": "Renomear",
+      "error": "Falha ao renomear."
+    },
+    "delete_file": {
+      "title": "Excluir arquivo",
+      "content": "O arquivo '{file}' será excluído.",
+      "ok": "Excluir",
+      "success": "'{file}' excluído.",
+      "error": "Falha ao excluir."
+    },
+    "delete_files": {
+      "title": "Excluir arquivos",
+      "content": "{count} arquivos serão excluídos.",
+      "ok": "Excluir tudo",
+      "success": "{count} arquivos excluídos.",
+      "error": "Falha ao excluir."
+    },
+    "trash_file": {
+      "title": "Mover para lixeira",
+      "content": "O arquivo '{file}' irá para a lixeira.",
+      "ok": "Lixeira",
+      "success": "'{file}' na lixeira.",
+      "error": "Falha ao mover."
+    },
+    "trash_files": {
+      "title": "Mover para lixeira",
+      "content": "{count} arquivos irão para a lixeira.",
+      "ok": "Lixeira",
+      "success": "{count} arquivos na lixeira.",
+      "error": "Falha ao mover."
+    },
+    "new_tag": {
+      "title": "Nova tag",
+      "content": "Nome da tag:",
+      "ok": "Criar",
+      "error": "Falha ao criar."
+    },
+    "delete_tag": {
+      "title": "Excluir tag",
+      "content": "A tag '{tag}' será excluída.",
+      "ok": "Excluir",
+      "success": "'{tag}' excluída.",
+      "error": "Falha ao excluir."
+    },
+    "edit_comment": {
+      "title": "Editar comentário",
+      "placeholder": "Comentário",
+      "ok": "Salvar"
+    },
+    "select_folder": {
+      "error": "Falha ao selecionar pasta."
+    },
+    "select_file": {
+      "error": "Falha ao selecionar arquivo."
+    },
+    "image_editor": {
+      "title": "Editor de imagem",
+      "tab_edit": "Editar",
+      "tab_save": "Salvar",
+      "filters": "Filtros",
+      "filter_none": "Nenhum",
+      "filter_grayscale": "Escala de cinza",
+      "filter_sepia": "Sépia",
+      "filter_invert": "Inverter",
+      "adjustments": "Ajustes",
+      "brightness": "Brilho",
+      "contrast": "Contraste",
+      "blur": "Desfoque",
+      "hue_rotate": "Matiz",
+      "saturation": "Saturação",
+      "reset": "Redefinir",
+      "crop": "Cortar",
+      "cancel_crop": "Cancelar",
+      "confirm_crop": "Confirmar",
+      "crop_shape": "Forma",
+      "crop_shape_custom": "Personalizado",
+      "crop_shape_landscape": "Paisagem",
+      "crop_shape_portrait": "Retrato",
+      "aspect_ratio": "Proporção",
+      "zoom_in": "Zoom in",
+      "zoom_out": "Zoom out",
+      "rotate_left": "Girar esq",
+      "rotate_right": "Girar dir",
+      "flip_horizontal": "Espelhar hor",
+      "flip_vertical": "Espelhar ver",
+      "restore": "Restaurar",
+      "resize": "Redimensionar",
+      "width": "Largura",
+      "height": "Altura",
+      "percentage": "Porcentagem",
+      "pixel": "Pixels",
+      "options": "Opções",
+      "save_as": "Salvar como",
+      "save_as_options": [
+        "Sobrescrever",
+        "Novo arquivo"
+      ],
+      "save_as_placeholder": "Nome do arquivo",
+      "format": "Formato",
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
+      "quality": "Qualidade",
+      "quality_options": [
+        "Alta",
+        "Média",
+        "Baixa"
+      ],
+      "copy_image": "Copiar",
+      "ok": "Salvar",
+      "cancel": "Cancelar",
+      "overwrite_confirm": "Sobrescrever arquivo original? Irreversível."
+    }
+  },
+  "file_info": {
+    "title": "Info do arquivo",
+    "metadata": "Metadados",
+    "location": "Localização",
+    "album_name": "Álbum",
+    "name": "Nome",
+    "folder": "Pasta",
+    "dimension": "Dimensão",
+    "size": "Tamanho",
+    "duration": "Duração",
+    "created_at": "Criado em",
+    "modified_at": "Modificado em",
+    "camera": "Câmera",
+    "camera_make": "Fabricante",
+    "camera_model": "Modelo",
+    "taken_at": "Tirada em",
+    "taken_by": "Por",
+    "software": "Software",
+    "artist": "Artista",
+    "copyright": "Copyright",
+    "description": "Descrição",
+    "lens": "Lente",
+    "lens_make": "Fabr. lente",
+    "lens_model": "Mod. lente",
+    "exposure_bias": "Comp. Exp.",
+    "exposure_time": "Tempo Exp.",
+    "aperture": "Abertura",
+    "focal_length": "Dist. Focal",
+    "iso": "ISO",
+    "flash": "Flash",
+    "color_type": "Tipo de cor",
+    "bit_depth": "Bits",
+    "alpha_channel": "Alfa",
+    "gps_latitude": "Latitude",
+    "gps_longitude": "Longitude",
+    "gps_altitude": "Altitude",
+    "geo_location": "Local",
+    "tags": "Tags",
+    "comment": "Comentário",
+    "capture_settings": "Config. captura"
+  },
+  "map": {
+    "show_map": "Mostrar mapa",
+    "hide_map": "Ocultar mapa",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "zoom_center": "Centralizar"
+  },
+  "format": {
+    "year": "yyyy",
+    "month": "MMMM yyyy",
+    "date": "dd/MM/yyyy",
+    "date_long": "d 'de' MMMM 'de' yyyy",
+    "month_date": "d 'de' MMMM",
+    "date_long_with_weekday": "EEEE, d 'de' MMMM 'de' yyyy",
+    "date_time": "dd/MM/yyyy HH:mm:ss",
+    "date_time_long": "d 'de' MMMM 'de' yyyy HH:mm:ss"
+  },
+  "image_viewer": {
+    "title": "Visualizador",
+    "loading": "Carregando...",
+    "failed": "Falha ao carregar.",
+    "toolbar": {
+      "prev": "Anterior",
+      "next": "Próximo",
+      "slide_show": "Apresentação",
+      "pause": "Pausa",
+      "zoom_in": "Zoom in",
+      "zoom_out": "Zoom out",
+      "zoom_fit": "Ajustar",
+      "zoom_actual": "Tamanho real",
+      "edit": "Editar",
+      "rotate": "Girar",
+      "favorite": "Favorito",
+      "unfavorite": "Desfavoritar",
+      "tag": "Tag",
+      "comment": "Comentar",
+      "info": "Info",
+      "save": "Salvar",
+      "delete": "Excluir",
+      "fullscreen": "Tela cheia",
+      "exit_fullscreen": "Sair tela cheia",
+      "pin": "Fixar barra",
+      "unpin": "Desafixar barra",
+      "close": "Fechar"
+    }
+  },
+  "video": {
+    "loading": "Carregando vídeo...",
+    "failed": "Erro na reprodução",
+    "errors": {
+      "aborted": "Abortado",
+      "network": "Erro de rede",
+      "decode": "Erro de decodificação",
+      "format": "Não suportado",
+      "timeout": "Tempo esgotado",
+      "unknown": "Erro desconhecido"
+    }
+  },
+  "settings": {
+    "general": {
+      "title": "Geral",
+      "appearance": "Aparência",
+      "appearance_options": [
+        "Claro",
+        "Escuro"
+      ],
+      "theme": "Tema",
+      "theme_options_light": [
+        "Padrão",
+        "Cupcake",
+        "Bumblebee",
+        "Emerald",
+        "Corporate",
+        "Retro",
+        "Cyberpunk",
+        "Valentine",
+        "Garden",
+        "Lofi",
+        "Pastel",
+        "Fantasy",
+        "Wireframe",
+        "Cmyk",
+        "Autumn",
+        "Acid",
+        "Lemonade",
+        "Winter",
+        "Nord",
+        "Caramellatte",
+        "Silk"
+      ],
+      "theme_options_dark": [
+        "Padrão",
+        "Synthwave",
+        "Halloween",
+        "Forest",
+        "Aqua",
+        "Black",
+        "Luxury",
+        "Dracula",
+        "Business",
+        "Night",
+        "Coffee",
+        "Dim",
+        "Sunset",
+        "Abyss"
+      ],
+      "select_language": "Idioma",
+      "show_button_text": "Texto nos botões",
+      "show_tool_tip": "Dicas de ferramenta",
+      "show_status_bar": "Barra de status",
+      "show_map": "Mostrar mapa",
+      "show_map_hint": "Requer internet",
+      "debug_mode": "Modo debug"
+    },
+    "grid_view": {
+      "title": "Grade",
+      "style": "Estilo",
+      "style_options": [
+        "Confortável",
+        "Compacto"
+      ],
+      "size": "Tamanho",
+      "scaling": "Escala",
+      "scaling_options": [
+        "Ajustar tudo",
+        "Preencher",
+        "Esticar"
+      ],
+      "label_primary": "Rótulo principal",
+      "label_primary_hint": "Apenas estilo confortável",
+      "label_secondary": "Rótulo secundário",
+      "label_secondary_hint": "Apenas estilo confortável",
+      "label_options": [
+        "(Vazio)",
+        "Nome",
+        "Tamanho",
+        "Dimensão",
+        "Tempo",
+        "Local",
+        "Câmera",
+        "Lente",
+        "Configurações"
+      ]
+    },
+    "filmstrip_view": {
+      "title": "Tira de filme",
+      "preview_position": "Posição prévia",
+      "preview_position_options": [
+        "Acima",
+        "Abaixo"
+      ]
+    },
+    "image_view": {
+      "title": "Visualizar",
+      "mouse_wheel": "Roda do mouse",
+      "mouse_wheel_options": [
+        "Ant/Próx (Ctrl zoom)",
+        "Zoom +/-"
+      ],
+      "slide_show_interval": "Intervalo: {second} s",
+      "auto_play_video": "Auto reproduzir vídeo",
+      "show_comment": "Mostrar comentário",
+      "show_comment_hint": "Em nova janela",
+      "navigator_view": "Navegador",
+      "navigator_view_options": [
+        "Auto",
+        "Sempre",
+        "Nunca"
+      ],
+      "navigator_view__size": "Tamanho",
+      "navigator_view_size_options": [
+        "Peq(160px)",
+        "Méd(240px)",
+        "Grd(320px)",
+        "XG(400px)"
+      ]
+    },
+    "image_search": {
+      "title": "Pesquisa img",
+      "similarity": "Similaridade",
+      "similarity_hint": "Alto = Menos resultados",
+      "similarity_options": [
+        "Muito alta",
+        "Alta",
+        "Média",
+        "Baixa"
+      ]
+    },
+    "face_recognition": {
+      "title": "Reconhecimento facial",
+      "similarity": "Similaridade facial",
+      "cluster_threshold": "Limite de cluster",
+      "cluster_threshold_hint": "Alto = Rígido",
+      "cluster_threshold_options": [
+        "Muito alto",
+        "Alto",
+        "Médio",
+        "Baixo"
+      ]
+    },
+    "about": {
+      "title": "Sobre",
+      "package": {
+        "name": "Nome do pacote",
+        "description": "Descrição",
+        "version": "Versão",
+        "build_time": "Hora do build",
+        "author": "Autor",
+        "license": "Licença",
+        "website": "Site"
+      },
+      "auto_update": {
+        "check": "Verificar atualizações",
+        "checking": "Verificando...",
+        "install": "Instalar e Reiniciar",
+        "installing": "Instalando...",
+        "new_version_available": "Nova versão disponível: {version}",
+        "latest_version": "Você está na versão mais recente.",
+        "downloading_update": "Baixando atualização...",
+        "downloading_started": "Download iniciado...",
+        "downloading": "Baixando... {percent}%",
+        "download_finished": "Download concluído. Instalando...",
+        "update_installed": "Atualização instalada. Reiniciando...",
+        "failed_check": "Falha ao verificar atualizações",
+        "failed_install": "Falha ao instalar atualização"
+      }
+    }
+  }
 }

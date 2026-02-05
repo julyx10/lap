@@ -765,6 +765,21 @@
         "author": "Autor",
         "license": "Licencia",
         "website": "Web"
+      },
+      "auto_update": {
+        "check": "Buscar actualizaciones",
+        "checking": "Buscando...",
+        "install": "Instalar y reiniciar",
+        "installing": "Instalando...",
+        "new_version_available": "Nueva versión disponible: {version}",
+        "latest_version": "Estás en la última versión.",
+        "downloading_update": "Descargando actualización...",
+        "downloading_started": "Descarga iniciada...",
+        "downloading": "Descargando... {percent}%",
+        "download_finished": "Descarga finalizada. Instalando...",
+        "update_installed": "Actualización instalada. Reiniciando...",
+        "failed_check": "Error al buscar actualizaciones",
+        "failed_install": "Error al instalar la actualización"
       }
     }
   }

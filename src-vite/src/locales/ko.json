@@ -1,771 +1,786 @@
 {
-    "sidebar": {
-        "home": "홈",
-        "library": "라이브러리",
-        "search": "검색",
-        "favorite": "즐겨찾기",
-        "tag": "태그",
-        "calendar": "달력",
-        "location": "위치",
-        "person": "인물",
-        "camera": "카메라",
-        "settings": "설정"
+  "sidebar": {
+    "home": "홈",
+    "library": "라이브러리",
+    "search": "검색",
+    "favorite": "즐겨찾기",
+    "tag": "태그",
+    "calendar": "달력",
+    "location": "위치",
+    "person": "인물",
+    "camera": "카메라",
+    "settings": "설정"
+  },
+  "album": {
+    "all_files": "모든 파일",
+    "album_list": "앨범",
+    "edit": {
+      "title_add": "앨범 추가",
+      "title": "앨범 편집",
+      "folder": "폴더",
+      "select_folder": "폴더 선택",
+      "name": "이름",
+      "description": "설명",
+      "description_placeholder": "앨범 설명 입력",
+      "images": "이미지",
+      "videos": "비디오",
+      "files_count": "{count} 파일 ({size})",
+      "files_counting": "파일 계산 중...",
+      "created_at": "생성일",
+      "modified_at": "수정일"
     },
-    "album": {
-        "all_files": "모든 파일",
-        "album_list": "앨범",
-        "edit": {
-            "title_add": "앨범 추가",
-            "title": "앨범 편집",
-            "folder": "폴더",
-            "select_folder": "폴더 선택",
-            "name": "이름",
-            "description": "설명",
-            "description_placeholder": "앨범 설명 입력",
-            "images": "이미지",
-            "videos": "비디오",
-            "files_count": "{count} 파일 ({size})",
-            "files_counting": "파일 계산 중...",
-            "created_at": "생성일",
-            "modified_at": "수정일"
-        },
-        "no_albums": {
-            "title": "앨범이 없습니다",
-            "description": "이미지나 비디오가 포함된 폴더를 추가하여 시작하세요"
-        }
-    },
+    "no_albums": {
+      "title": "앨범이 없습니다",
+      "description": "이미지나 비디오가 포함된 폴더를 추가하여 시작하세요"
+    }
+  },
+  "search": {
+    "title": "이미지 검색",
+    "search_images": "AI 검색",
+    "similar_images": "유사 이미지",
+    "filename_search": "파일 이름",
+    "image_search_placeholder": "텍스트로 이미지 검색",
+    "image_search_history": "검색 기록",
+    "image_search_tips": "검색할 내용을 입력하세요. 예: \"바다 위의 일몰\"",
+    "similar_images_tips": "이미지를 선택하여 유사한 이미지 찾기",
+    "filename_search_tips": "파일 이름 입력",
+    "index": {
+      "wait_index": "업데이트 대기 중...",
+      "indexing": "'{album}' 업데이트 중... {count} / {total}",
+      "description": "검색을 위해 앨범을 준비 중입니다. 몇 분 정도 걸릴 수 있습니다.",
+      "cancel": "업데이트 취소"
+    }
+  },
+  "face_index": {
+    "start": "얼굴 인덱싱",
+    "indexing": "얼굴 인덱싱 중... {current} / {total}",
+    "clustering": "얼굴 클러스터링 중...",
+    "faces_found": "{count}개의 얼굴 찾음",
+    "cluster_graph": "유사도 그래프 생성 중: {percent}%",
+    "cluster_iterate": "반복 {current}/{total}",
+    "cluster_converged": "반복 {current}에서 수렴됨",
+    "cluster_assign": "인물 생성 중 {current}/{total}",
+    "cluster_thumbnail": "썸네일 생성 중...",
+    "cancel": "취소",
+    "incomplete": "인덱싱 미완료 ({count}장 미처리)",
+    "resume": "인덱싱 재개"
+  },
+  "favorite": {
+    "files": "즐겨찾는 파일",
+    "folders": "즐겨찾는 폴더"
+  },
+  "tag": {
+    "add_tag": "태그 추가",
+    "delete_tag": "태그 삭제",
+    "edit_tag": "태그 편집",
+    "search_tags": "태그 검색",
+    "enter_new_tag_name": "새 태그 이름 입력",
+    "not_found": "태그를 찾을 수 없음"
+  },
+  "calendar": {
+    "on_this_day": "과거의 오늘",
+    "title": "달력",
+    "monthly_view": "월별 보기",
+    "daily_view": "일별 보기",
+    "day": "일",
+    "week": "주",
+    "month": "월",
+    "year": "년",
+    "today": "오늘",
+    "monthly": "월별",
+    "daily": "일별",
+    "weekdays": [
+      "일",
+      "월",
+      "화",
+      "수",
+      "목",
+      "금",
+      "토"
+    ],
+    "weekdays_long": [
+      "일요일",
+      "월요일",
+      "화요일",
+      "수요일",
+      "목요일",
+      "금요일",
+      "토요일"
+    ],
+    "months": [
+      "1월",
+      "2월",
+      "3월",
+      "4월",
+      "5월",
+      "6월",
+      "7월",
+      "8월",
+      "9월",
+      "10월",
+      "11월",
+      "12월"
+    ],
+    "months_long": [
+      "1월",
+      "2월",
+      "3월",
+      "4월",
+      "5월",
+      "6월",
+      "7월",
+      "8월",
+      "9월",
+      "10월",
+      "11월",
+      "12월"
+    ]
+  },
+  "toolbar": {
     "search": {
-        "title": "이미지 검색",
-        "search_images": "AI 검색",
-        "similar_images": "유사 이미지",
-        "filename_search": "파일 이름",
-        "image_search_placeholder": "텍스트로 이미지 검색",
-        "image_search_history": "검색 기록",
-        "image_search_tips": "검색할 내용을 입력하세요. 예: \"바다 위의 일몰\"",
-        "similar_images_tips": "이미지를 선택하여 유사한 이미지 찾기",
-        "filename_search_tips": "파일 이름 입력",
-        "index": {
-            "wait_index": "업데이트 대기 중...",
-            "indexing": "'{album}' 업데이트 중... {count} / {total}",
-            "description": "검색을 위해 앨범을 준비 중입니다. 몇 분 정도 걸릴 수 있습니다.",
-            "cancel": "업데이트 취소"
-        }
+      "title": "검색",
+      "placeholder": "파일 이름"
     },
-    "face_index": {
-        "start": "얼굴 인덱싱",
-        "indexing": "얼굴 인덱싱 중... {current} / {total}",
-        "clustering": "얼굴 클러스터링 중...",
-        "faces_found": "{count}개의 얼굴 찾음",
-        "cluster_graph": "유사도 그래프 생성 중: {percent}%",
-        "cluster_iterate": "반복 {current}/{total}",
-        "cluster_converged": "반복 {current}에서 수렴됨",
-        "cluster_assign": "인물 생성 중 {current}/{total}",
-        "cluster_thumbnail": "썸네일 생성 중...",
-        "cancel": "취소",
-        "incomplete": "인덱싱 미완료 ({count}장 미처리)",
-        "resume": "인덱싱 재개"
-    },
-    "favorite": {
-        "files": "즐겨찾는 파일",
-        "folders": "즐겨찾는 폴더"
-    },
-    "tag": {
-        "add_tag": "태그 추가",
-        "delete_tag": "태그 삭제",
-        "edit_tag": "태그 편집",
-        "search_tags": "태그 검색",
-        "enter_new_tag_name": "새 태그 이름 입력",
-        "not_found": "태그를 찾을 수 없음"
-    },
-    "calendar": {
-        "on_this_day": "과거의 오늘",
-        "title": "달력",
-        "monthly_view": "월별 보기",
-        "daily_view": "일별 보기",
-        "day": "일",
-        "week": "주",
-        "month": "월",
-        "year": "년",
-        "today": "오늘",
-        "monthly": "월별",
-        "daily": "일별",
-        "weekdays": [
-            "일",
-            "월",
-            "화",
-            "수",
-            "목",
-            "금",
-            "토"
-        ],
-        "weekdays_long": [
-            "일요일",
-            "월요일",
-            "화요일",
-            "수요일",
-            "목요일",
-            "금요일",
-            "토요일"
-        ],
-        "months": [
-            "1월",
-            "2월",
-            "3월",
-            "4월",
-            "5월",
-            "6월",
-            "7월",
-            "8월",
-            "9월",
-            "10월",
-            "11월",
-            "12월"
-        ],
-        "months_long": [
-            "1월",
-            "2월",
-            "3월",
-            "4월",
-            "5월",
-            "6월",
-            "7월",
-            "8월",
-            "9월",
-            "10월",
-            "11월",
-            "12월"
-        ]
-    },
-    "toolbar": {
-        "search": {
-            "title": "검색",
-            "placeholder": "파일 이름"
-        },
-        "filter": {
-            "select_mode": "선택",
-            "select_count": "{count}개 선택됨",
-            "sort_type_options": [
-                "시간",
-                "이름",
-                "크기",
-                "치수",
-                "무작위"
-            ],
-            "sort_order_options": [
-                "오름차순",
-                "내림차순"
-            ],
-            "file_type_options": [
-                "모두",
-                "이미지",
-                "비디오"
-            ]
-        },
-        "tooltip": {
-            "restore": "복원",
-            "refresh": "새로고침",
-            "grid_view": "그리드 보기",
-            "filmstrip_view": "필름스트립 보기",
-            "show_info": "정보 보기",
-            "hide_info": "정보 숨기기",
-            "clear_history": "기록 지우기",
-            "index_faces": "얼굴 인덱싱",
-            "sort": "정렬",
-            "monthly": "월별",
-            "daily": "일별",
-            "time_asc": "오래된 순",
-            "time_desc": "최신 순"
-        }
-    },
-    "info_panel": {
-        "tabs": [
-            "정보",
-            "미리보기"
-        ]
+    "filter": {
+      "select_mode": "선택",
+      "select_count": "{count}개 선택됨",
+      "sort_type_options": [
+        "시간",
+        "이름",
+        "크기",
+        "치수",
+        "무작위"
+      ],
+      "sort_order_options": [
+        "오름차순",
+        "내림차순"
+      ],
+      "file_type_options": [
+        "모두",
+        "이미지",
+        "비디오"
+      ]
     },
     "tooltip": {
-        "loading": "로딩 중...",
-        "not_found": {
-            "albums": "앨범을 찾을 수 없습니다",
-            "files": "파일을 찾을 수 없습니다",
-            "folder_files": "파일이 없습니다. 하위 폴더를 확인하세요",
-            "folders": "폴더를 찾을 수 없습니다",
-            "tag": "태그를 찾을 수 없습니다",
-            "calendar": "달력 데이터가 없습니다",
-            "location": "위치 데이터가 없습니다",
-            "person": "인물 데이터가 없습니다",
-            "person_hint": "얼굴 인덱싱을 시도해보세요",
-            "camera": "카메라 데이터가 없습니다"
-        },
-        "set_album_cover": {
-            "success": "앨범 커버 설정 완료",
-            "failed": "앨범 커버 설정 실패"
-        },
-        "copy_image": {
-            "success": "이미지 복사됨",
-            "failed": "이미지 복사 실패"
-        },
-        "save_image": {
-            "success": "이미지 저장됨",
-            "failed": "이미지 저장 실패"
-        },
-        "update_image": {
-            "success": "이미지 업데이트됨",
-            "failed": "이미지 업데이트 실패"
-        },
-        "image_viewer": {
-            "first_image": "첫 번째 이미지입니다",
-            "last_image": "마지막 이미지입니다"
-        },
-        "album_exists": "이미 존재하는 앨범입니다"
+      "restore": "복원",
+      "refresh": "새로고침",
+      "grid_view": "그리드 보기",
+      "filmstrip_view": "필름스트립 보기",
+      "show_info": "정보 보기",
+      "hide_info": "정보 숨기기",
+      "clear_history": "기록 지우기",
+      "index_faces": "얼굴 인덱싱",
+      "sort": "정렬",
+      "monthly": "월별",
+      "daily": "일별",
+      "time_asc": "오래된 순",
+      "time_desc": "최신 순"
+    }
+  },
+  "info_panel": {
+    "tabs": [
+      "정보",
+      "미리보기"
+    ]
+  },
+  "tooltip": {
+    "loading": "로딩 중...",
+    "not_found": {
+      "albums": "앨범을 찾을 수 없습니다",
+      "files": "파일을 찾을 수 없습니다",
+      "folder_files": "파일이 없습니다. 하위 폴더를 확인하세요",
+      "folders": "폴더를 찾을 수 없습니다",
+      "tag": "태그를 찾을 수 없습니다",
+      "calendar": "달력 데이터가 없습니다",
+      "location": "위치 데이터가 없습니다",
+      "person": "인물 데이터가 없습니다",
+      "person_hint": "얼굴 인덱싱을 시도해보세요",
+      "camera": "카메라 데이터가 없습니다"
     },
-    "statusbar": {
-        "files_summary": "{count} 파일 ({size})"
+    "set_album_cover": {
+      "success": "앨범 커버 설정 완료",
+      "failed": "앨범 커버 설정 실패"
     },
-    "menu": {
-        "select": {
-            "all": "모두 선택",
-            "none": "선택 해제",
-            "invert": "선택 반전"
-        },
-        "home": {
-            "delete": "삭제",
-            "pin": "고정",
-            "unpin": "고정 해제"
-        },
-        "library": {
-            "add": "라이브러리 추가...",
-            "edit": "라이브러리 편집...",
-            "manage": "라이브러리 관리...",
-            "remove": "라이브러리 제거",
-            "default": "기본 라이브러리"
-        },
-        "album": {
-            "add": "앨범 추가...",
-            "edit": "앨범 편집...",
-            "index": "파일 업데이트",
-            "include_in_search": "검색에 포함",
-            "exclude_from_search": "검색에서 제외",
-            "remove": "앨범 제거",
-            "refresh": "새로고침",
-            "reorder": "순서 변경",
-            "reorder_exit": "순서 변경 종료"
-        },
-        "file": {
-            "new_folder": "새 폴더...",
-            "view_in_new_window": "새 창에서 보기...",
-            "copy": "클립보드에 복사",
-            "edit": "이미지 편집...",
-            "find_similar_images": "유사 이미지 찾기",
-            "find_person_images": "인물 이미지 찾기",
-            "find_album_folder": "앨범 폴더 찾기",
-            "on_this_day": "과거의 오늘",
-            "print": "인쇄",
-            "rename": "이름 변경",
-            "move_to": "이동...",
-            "copy_to": "복사...",
-            "move_to_trash": "휴지통으로 이동",
-            "delete": "삭제",
-            "reveal_in_finder": "Finder에서 보기...",
-            "reveal_in_file_explorer": "탐색기에서 보기...",
-            "set_album_cover": "앨범 커버로 설정"
-        },
-        "calendar": {
-            "monthly": "월별 보기",
-            "daily": "일별 보기",
-            "time_asc": "오래된 순",
-            "time_desc": "최신 순"
-        },
-        "search": {
-            "clear_history": "검색 기록 지우기"
-        },
-        "person": {
-            "index_faces": "얼굴 인덱싱",
-            "reset_index": "인덱스 초기화"
-        },
-        "tag": {
-            "add": "태그 추가...",
-            "rename": "이름 변경",
-            "delete": "삭제"
-        },
-        "meta": {
-            "favorite": "즐겨찾기",
-            "unfavorite": "즐겨찾기 해제",
-            "tag": "태그...",
-            "comment": "코멘트...",
-            "rotate": "회전"
-        },
-        "sort": {
-            "sort_by_name": "이름순",
-            "sort_by_count": "개수순"
-        }
+    "copy_image": {
+      "success": "이미지 복사됨",
+      "failed": "이미지 복사 실패"
     },
-    "msgbox": {
-        "ok": "확인",
-        "reset": "초기화",
-        "cancel": "취소",
-        "close": "닫기",
-        "input": {
-            "file_name_invalid": "사용할 수 없는 문자가 포함되어 있습니다: \\ / : * ? \" < > |."
-        },
-        "reset_faces": {
-            "title": "인덱스 초기화",
-            "content": "모든 얼굴 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
-            "ok": "초기화"
-        },
-        "clear_search_history": {
-            "title": "기록 지우기",
-            "content": "검색 기록을 지우시겠습니까?",
-            "ok": "지우기"
-        },
-        "delete_person": {
-            "title": "인물 삭제",
-            "content": "'{person}' 님을 삭제하시겠습니까?",
-            "ok": "삭제"
-        },
-        "manage_libraries": {
-            "title": "라이브러리 관리",
-            "name": "이름",
-            "visible": "표시",
-            "action": "작업",
-            "default": "기본",
-            "current": "현재",
-            "show": "보이기",
-            "hide": "숨기기",
-            "hidden": "숨김",
-            "delete": "삭제",
-            "reorder": "순서",
-            "rename": "이름변경",
-            "add_new": "새 라이브러리 추가",
-            "add": "추가",
-            "placeholder": "라이브러리 이름",
-            "max_limit_reached": "제한 도달",
-            "created_at_lower": "생성일",
-            "library_file_path": "파일 경로",
-            "library_file_size": "파일 크기",
-            "created_at": "생성일"
-        },
-        "remove_library": {
-            "title": "라이브러리 제거",
-            "content": "'{library}'을(를) 제거하시겠습니까? 데이터베이스 파일이 삭제됩니다.",
-            "ok": "제거",
-            "success": "'{library}' 제거됨.",
-            "error": "제거 실패."
-        },
-        "remove_album": {
-            "title": "앨범 제거",
-            "content": "'{album}'이(가) 제거됩니다. 파일은 삭제되지 않습니다.",
-            "ok": "제거"
-        },
-        "rename_folder": {
-            "title": "폴더 이름 변경",
-            "content": "새 폴더 이름:",
-            "ok": "변경",
-            "error": "변경 실패."
-        },
-        "new_folder": {
-            "title": "새 폴더",
-            "placeholder": "폴더 이름",
-            "ok": "생성",
-            "error": "생성 실패."
-        },
-        "delete_folder": {
-            "title": "폴더 삭제",
-            "content": "'{folder}' 및 모든 내용이 삭제됩니다.",
-            "ok": "삭제",
-            "success": "'{folder}' 삭제됨.",
-            "error": "삭제 실패."
-        },
-        "trash_folder": {
-            "title": "휴지통으로 이동",
-            "content": "'{folder}'을(를) 휴지통으로 이동합니다.",
-            "ok": "휴지통",
-            "success": "'{folder}' 휴지통으로 이동됨.",
-            "error": "이동 실패."
-        },
-        "move_to": {
-            "title": "'{source}' 이동",
-            "content": "대상 폴더 선택:",
-            "ok": "이동",
-            "error": "이동 실패."
-        },
-        "copy_to": {
-            "title": "'{source}' 복사",
-            "content": "대상 폴더 선택:",
-            "ok": "복사",
-            "error": "복사 실패."
-        },
-        "rename_file": {
-            "title": "파일 이름 변경",
-            "placeholder": "새 파일 이름",
-            "ok": "변경",
-            "error": "변경 실패."
-        },
-        "delete_file": {
-            "title": "파일 삭제",
-            "content": "'{file}'이(가) 삭제됩니다.",
-            "ok": "삭제",
-            "success": "'{file}' 삭제됨.",
-            "error": "삭제 실패."
-        },
-        "delete_files": {
-            "title": "파일 삭제",
-            "content": "{count}개의 파일이 삭제됩니다.",
-            "ok": "모두 삭제",
-            "success": "{count}개 파일 삭제됨.",
-            "error": "삭제 실패."
-        },
-        "trash_file": {
-            "title": "휴지통으로 이동",
-            "content": "'{file}'을(를) 휴지통으로 이동합니다.",
-            "ok": "휴지통",
-            "success": "'{file}' 휴지통으로 이동됨.",
-            "error": "이동 실패."
-        },
-        "trash_files": {
-            "title": "휴지통으로 이동",
-            "content": "{count}개의 파일을 휴지통으로 이동합니다.",
-            "ok": "휴지통",
-            "success": "{count}개 파일 휴지통으로 이동됨.",
-            "error": "이동 실패."
-        },
-        "new_tag": {
-            "title": "새 태그",
-            "content": "태그 이름:",
-            "ok": "생성",
-            "error": "생성 실패."
-        },
-        "delete_tag": {
-            "title": "태그 삭제",
-            "content": "'{tag}' 태그가 삭제됩니다.",
-            "ok": "삭제",
-            "success": "'{tag}' 삭제됨.",
-            "error": "삭제 실패."
-        },
-        "edit_comment": {
-            "title": "코멘트 편집",
-            "placeholder": "코멘트",
-            "ok": "저장"
-        },
-        "select_folder": {
-            "error": "폴더 선택 실패."
-        },
-        "select_file": {
-            "error": "파일 선택 실패."
-        },
-        "image_editor": {
-            "title": "이미지 편집",
-            "tab_edit": "편집",
-            "tab_save": "저장",
-            "filters": "필터",
-            "filter_none": "없음",
-            "filter_grayscale": "흑백",
-            "filter_sepia": "세피아",
-            "filter_invert": "반전",
-            "adjustments": "조정",
-            "brightness": "밝기",
-            "contrast": "대비",
-            "blur": "흐림",
-            "hue_rotate": "색조",
-            "saturation": "채도",
-            "reset": "초기화",
-            "crop": "자르기",
-            "cancel_crop": "취소",
-            "confirm_crop": "확인",
-            "crop_shape": "모양",
-            "crop_shape_custom": "사용자 지정",
-            "crop_shape_landscape": "가로",
-            "crop_shape_portrait": "세로",
-            "aspect_ratio": "비율",
-            "zoom_in": "확대",
-            "zoom_out": "축소",
-            "rotate_left": "왼쪽 회전",
-            "rotate_right": "오른쪽 회전",
-            "flip_horizontal": "좌우 반전",
-            "flip_vertical": "상하 반전",
-            "restore": "복구",
-            "resize": "크기 조절",
-            "width": "너비",
-            "height": "높이",
-            "percentage": "퍼센트",
-            "pixel": "픽셀",
-            "options": "옵션",
-            "save_as": "다른 이름으로 저장",
-            "save_as_options": [
-                "덮어쓰기",
-                "새 파일"
-            ],
-            "save_as_placeholder": "파일 이름",
-            "format": "형식",
-            "format_options": [
-                "JPEG",
-                "PNG",
-                "WEBP"
-            ],
-            "quality": "품질",
-            "quality_options": [
-                "높음",
-                "중간",
-                "낮음"
-            ],
-            "copy_image": "복사",
-            "ok": "저장",
-            "cancel": "취소",
-            "overwrite_confirm": "원본 파일을 덮어쓰시겠습니까? 되돌릴 수 없습니다."
-        }
+    "save_image": {
+      "success": "이미지 저장됨",
+      "failed": "이미지 저장 실패"
     },
-    "file_info": {
-        "title": "파일 정보",
-        "metadata": "메타데이터",
-        "location": "위치",
-        "album_name": "앨범",
-        "name": "이름",
-        "folder": "폴더",
-        "dimension": "해상도",
-        "size": "크기",
-        "duration": "재생시간",
-        "created_at": "생성일",
-        "modified_at": "수정일",
-        "camera": "카메라",
-        "camera_make": "제조사",
-        "camera_model": "모델",
-        "taken_at": "촬영일",
-        "taken_by": "촬영자",
-        "software": "소프트웨어",
-        "artist": "작가",
-        "copyright": "저작권",
-        "description": "설명",
-        "lens": "렌즈",
-        "lens_make": "렌즈 제조사",
-        "lens_model": "렌즈 모델",
-        "exposure_bias": "노출 보정",
-        "exposure_time": "노출 시간",
-        "aperture": "조리개",
-        "focal_length": "초점 거리",
-        "iso": "ISO",
-        "flash": "플래시",
-        "color_type": "색상 유형",
-        "bit_depth": "비트 심도",
-        "alpha_channel": "알파 채널",
-        "gps_latitude": "위도",
-        "gps_longitude": "경도",
-        "gps_altitude": "고도",
-        "geo_location": "위치",
-        "tags": "태그",
-        "comment": "코멘트",
-        "capture_settings": "촬영 설정"
-    },
-    "map": {
-        "show_map": "지도 보기",
-        "hide_map": "지도 숨기기",
-        "zoom_in": "확대",
-        "zoom_out": "축소",
-        "zoom_center": "중심"
-    },
-    "format": {
-        "year": "yyyy년",
-        "month": "yyyy년 M월",
-        "date": "yyyy/MM/dd",
-        "date_long": "yyyy년 M월 d일",
-        "month_date": "M월 d일",
-        "date_long_with_weekday": "yyyy년 M월 d일 EEEE",
-        "date_time": "yyyy/MM/dd HH:mm:ss",
-        "date_time_long": "yyyy년 M월 d일 HH:mm:ss"
+    "update_image": {
+      "success": "이미지 업데이트됨",
+      "failed": "이미지 업데이트 실패"
     },
     "image_viewer": {
-        "title": "이미지 뷰어",
-        "loading": "로딩 중...",
-        "failed": "로딩 실패.",
-        "toolbar": {
-            "prev": "이전",
-            "next": "다음",
-            "slide_show": "슬라이드쇼",
-            "pause": "일시정지",
-            "zoom_in": "확대",
-            "zoom_out": "축소",
-            "zoom_fit": "화면 맞춤",
-            "zoom_actual": "실제 크기",
-            "edit": "편집",
-            "rotate": "회전",
-            "favorite": "즐겨찾기",
-            "unfavorite": "즐겨찾기 해제",
-            "tag": "태그",
-            "comment": "코멘트",
-            "info": "정보",
-            "save": "저장",
-            "delete": "삭제",
-            "fullscreen": "전체 화면",
-            "exit_fullscreen": "전체 화면 종료",
-            "pin": "도구 모음 고정",
-            "unpin": "고정 해제",
-            "close": "닫기"
-        }
+      "first_image": "첫 번째 이미지입니다",
+      "last_image": "마지막 이미지입니다"
     },
-    "video": {
-        "loading": "비디오 로딩 중...",
-        "failed": "재생 실패",
-        "errors": {
-            "aborted": "중단됨",
-            "network": "네트워크 오류",
-            "decode": "디코딩 오류",
-            "format": "지원하지 않음",
-            "timeout": "시간 초과",
-            "unknown": "알 수 없는 오류"
-        }
+    "album_exists": "이미 존재하는 앨범입니다"
+  },
+  "statusbar": {
+    "files_summary": "{count} 파일 ({size})"
+  },
+  "menu": {
+    "select": {
+      "all": "모두 선택",
+      "none": "선택 해제",
+      "invert": "선택 반전"
     },
-    "settings": {
-        "general": {
-            "title": "일반",
-            "appearance": "외관",
-            "appearance_options": [
-                "라이트",
-                "다크"
-            ],
-            "theme": "테마",
-            "theme_options_light": [
-                "기본",
-                "컵케이크",
-                "범블비",
-                "에메랄드",
-                "코퍼레이트",
-                "레트로",
-                "사이버펑크",
-                "발렌타인",
-                "가든",
-                "로파이",
-                "파스텔",
-                "판타지",
-                "와이어프레임",
-                "CMYK",
-                "가을",
-                "에시드",
-                "레모네이드",
-                "겨울",
-                "노르드",
-                "카라멜라떼",
-                "실크"
-            ],
-            "theme_options_dark": [
-                "기본",
-                "신스웨이브",
-                "할로윈",
-                "숲",
-                "아쿠아",
-                "블랙",
-                "럭셔리",
-                "드라큘라",
-                "비즈니스",
-                "나이트",
-                "커피",
-                "딤",
-                "석양",
-                "심해"
-            ],
-            "select_language": "언어",
-            "show_button_text": "버튼 텍스트 표시",
-            "show_tool_tip": "툴팁 표시",
-            "show_status_bar": "상태 표시줄",
-            "show_map": "지도 표시",
-            "show_map_hint": "인터넷 필요",
-            "debug_mode": "디버그 모드"
-        },
-        "grid_view": {
-            "title": "그리드 보기",
-            "style": "스타일",
-            "style_options": [
-                "편안하게",
-                "콤팩트"
-            ],
-            "size": "크기",
-            "scaling": "비율",
-            "scaling_options": [
-                "전체 맞춤",
-                "채우기",
-                "늘리기"
-            ],
-            "label_primary": "주 라벨",
-            "label_primary_hint": "편안한 스타일 전용",
-            "label_secondary": "보조 라벨",
-            "label_secondary_hint": "편안한 스타일 전용",
-            "label_options": [
-                "(없음)",
-                "이름",
-                "크기",
-                "치수",
-                "시간",
-                "위치",
-                "카메라",
-                "렌즈",
-                "설정"
-            ]
-        },
-        "filmstrip_view": {
-            "title": "필름스트립",
-            "preview_position": "미리보기 위치",
-            "preview_position_options": [
-                "위",
-                "아래"
-            ]
-        },
-        "image_view": {
-            "title": "이미지 보기",
-            "mouse_wheel": "마우스 휠",
-            "mouse_wheel_options": [
-                "이전/다음 (Ctrl 확대)",
-                "확대/축소"
-            ],
-            "slide_show_interval": "간격: {second}초",
-            "auto_play_video": "비디오 자동 재생",
-            "show_comment": "코멘트 표시",
-            "show_comment_hint": "새 창에서 보기 시",
-            "navigator_view": "내비게이터",
-            "navigator_view_options": [
-                "자동",
-                "항상 표시",
-                "항상 숨김"
-            ],
-            "navigator_view__size": "크기",
-            "navigator_view_size_options": [
-                "작게(160px)",
-                "중간(240px)",
-                "크게(320px)",
-                "아주 크게(400px)"
-            ]
-        },
-        "image_search": {
-            "title": "이미지 검색",
-            "similarity": "유사도",
-            "similarity_hint": "높음 = 결과 적음",
-            "similarity_options": [
-                "매우 높음",
-                "높음",
-                "중간",
-                "낮음"
-            ]
-        },
-        "face_recognition": {
-            "title": "얼굴 인식",
-            "similarity": "얼굴 유사도",
-            "cluster_threshold": "클러스터 임계값",
-            "cluster_threshold_hint": "높음 = 엄격함",
-            "cluster_threshold_options": [
-                "매우 높음",
-                "높음",
-                "중간",
-                "낮음"
-            ]
-        },
-        "about": {
-            "title": "정보",
-            "package": {
-                "name": "패키지 이름",
-                "description": "설명",
-                "version": "버전",
-                "build_time": "빌드 시간",
-                "author": "작성자",
-                "license": "라이선스",
-                "website": "웹사이트"
-            }
-        }
+    "home": {
+      "delete": "삭제",
+      "pin": "고정",
+      "unpin": "고정 해제"
+    },
+    "library": {
+      "add": "라이브러리 추가...",
+      "edit": "라이브러리 편집...",
+      "manage": "라이브러리 관리...",
+      "remove": "라이브러리 제거",
+      "default": "기본 라이브러리"
+    },
+    "album": {
+      "add": "앨범 추가...",
+      "edit": "앨범 편집...",
+      "index": "파일 업데이트",
+      "include_in_search": "검색에 포함",
+      "exclude_from_search": "검색에서 제외",
+      "remove": "앨범 제거",
+      "refresh": "새로고침",
+      "reorder": "순서 변경",
+      "reorder_exit": "순서 변경 종료"
+    },
+    "file": {
+      "new_folder": "새 폴더...",
+      "view_in_new_window": "새 창에서 보기...",
+      "copy": "클립보드에 복사",
+      "edit": "이미지 편집...",
+      "find_similar_images": "유사 이미지 찾기",
+      "find_person_images": "인물 이미지 찾기",
+      "find_album_folder": "앨범 폴더 찾기",
+      "on_this_day": "과거의 오늘",
+      "print": "인쇄",
+      "rename": "이름 변경",
+      "move_to": "이동...",
+      "copy_to": "복사...",
+      "move_to_trash": "휴지통으로 이동",
+      "delete": "삭제",
+      "reveal_in_finder": "Finder에서 보기...",
+      "reveal_in_file_explorer": "탐색기에서 보기...",
+      "set_album_cover": "앨범 커버로 설정"
+    },
+    "calendar": {
+      "monthly": "월별 보기",
+      "daily": "일별 보기",
+      "time_asc": "오래된 순",
+      "time_desc": "최신 순"
+    },
+    "search": {
+      "clear_history": "검색 기록 지우기"
+    },
+    "person": {
+      "index_faces": "얼굴 인덱싱",
+      "reset_index": "인덱스 초기화"
+    },
+    "tag": {
+      "add": "태그 추가...",
+      "rename": "이름 변경",
+      "delete": "삭제"
+    },
+    "meta": {
+      "favorite": "즐겨찾기",
+      "unfavorite": "즐겨찾기 해제",
+      "tag": "태그...",
+      "comment": "코멘트...",
+      "rotate": "회전"
+    },
+    "sort": {
+      "sort_by_name": "이름순",
+      "sort_by_count": "개수순"
     }
+  },
+  "msgbox": {
+    "ok": "확인",
+    "reset": "초기화",
+    "cancel": "취소",
+    "close": "닫기",
+    "input": {
+      "file_name_invalid": "사용할 수 없는 문자가 포함되어 있습니다: \\ / : * ? \" < > |."
+    },
+    "reset_faces": {
+      "title": "인덱스 초기화",
+      "content": "모든 얼굴 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+      "ok": "초기화"
+    },
+    "clear_search_history": {
+      "title": "기록 지우기",
+      "content": "검색 기록을 지우시겠습니까?",
+      "ok": "지우기"
+    },
+    "delete_person": {
+      "title": "인물 삭제",
+      "content": "'{person}' 님을 삭제하시겠습니까?",
+      "ok": "삭제"
+    },
+    "manage_libraries": {
+      "title": "라이브러리 관리",
+      "name": "이름",
+      "visible": "표시",
+      "action": "작업",
+      "default": "기본",
+      "current": "현재",
+      "show": "보이기",
+      "hide": "숨기기",
+      "hidden": "숨김",
+      "delete": "삭제",
+      "reorder": "순서",
+      "rename": "이름변경",
+      "add_new": "새 라이브러리 추가",
+      "add": "추가",
+      "placeholder": "라이브러리 이름",
+      "max_limit_reached": "제한 도달",
+      "created_at_lower": "생성일",
+      "library_file_path": "파일 경로",
+      "library_file_size": "파일 크기",
+      "created_at": "생성일"
+    },
+    "remove_library": {
+      "title": "라이브러리 제거",
+      "content": "'{library}'을(를) 제거하시겠습니까? 데이터베이스 파일이 삭제됩니다.",
+      "ok": "제거",
+      "success": "'{library}' 제거됨.",
+      "error": "제거 실패."
+    },
+    "remove_album": {
+      "title": "앨범 제거",
+      "content": "'{album}'이(가) 제거됩니다. 파일은 삭제되지 않습니다.",
+      "ok": "제거"
+    },
+    "rename_folder": {
+      "title": "폴더 이름 변경",
+      "content": "새 폴더 이름:",
+      "ok": "변경",
+      "error": "변경 실패."
+    },
+    "new_folder": {
+      "title": "새 폴더",
+      "placeholder": "폴더 이름",
+      "ok": "생성",
+      "error": "생성 실패."
+    },
+    "delete_folder": {
+      "title": "폴더 삭제",
+      "content": "'{folder}' 및 모든 내용이 삭제됩니다.",
+      "ok": "삭제",
+      "success": "'{folder}' 삭제됨.",
+      "error": "삭제 실패."
+    },
+    "trash_folder": {
+      "title": "휴지통으로 이동",
+      "content": "'{folder}'을(를) 휴지통으로 이동합니다.",
+      "ok": "휴지통",
+      "success": "'{folder}' 휴지통으로 이동됨.",
+      "error": "이동 실패."
+    },
+    "move_to": {
+      "title": "'{source}' 이동",
+      "content": "대상 폴더 선택:",
+      "ok": "이동",
+      "error": "이동 실패."
+    },
+    "copy_to": {
+      "title": "'{source}' 복사",
+      "content": "대상 폴더 선택:",
+      "ok": "복사",
+      "error": "복사 실패."
+    },
+    "rename_file": {
+      "title": "파일 이름 변경",
+      "placeholder": "새 파일 이름",
+      "ok": "변경",
+      "error": "변경 실패."
+    },
+    "delete_file": {
+      "title": "파일 삭제",
+      "content": "'{file}'이(가) 삭제됩니다.",
+      "ok": "삭제",
+      "success": "'{file}' 삭제됨.",
+      "error": "삭제 실패."
+    },
+    "delete_files": {
+      "title": "파일 삭제",
+      "content": "{count}개의 파일이 삭제됩니다.",
+      "ok": "모두 삭제",
+      "success": "{count}개 파일 삭제됨.",
+      "error": "삭제 실패."
+    },
+    "trash_file": {
+      "title": "휴지통으로 이동",
+      "content": "'{file}'을(를) 휴지통으로 이동합니다.",
+      "ok": "휴지통",
+      "success": "'{file}' 휴지통으로 이동됨.",
+      "error": "이동 실패."
+    },
+    "trash_files": {
+      "title": "휴지통으로 이동",
+      "content": "{count}개의 파일을 휴지통으로 이동합니다.",
+      "ok": "휴지통",
+      "success": "{count}개 파일 휴지통으로 이동됨.",
+      "error": "이동 실패."
+    },
+    "new_tag": {
+      "title": "새 태그",
+      "content": "태그 이름:",
+      "ok": "생성",
+      "error": "생성 실패."
+    },
+    "delete_tag": {
+      "title": "태그 삭제",
+      "content": "'{tag}' 태그가 삭제됩니다.",
+      "ok": "삭제",
+      "success": "'{tag}' 삭제됨.",
+      "error": "삭제 실패."
+    },
+    "edit_comment": {
+      "title": "코멘트 편집",
+      "placeholder": "코멘트",
+      "ok": "저장"
+    },
+    "select_folder": {
+      "error": "폴더 선택 실패."
+    },
+    "select_file": {
+      "error": "파일 선택 실패."
+    },
+    "image_editor": {
+      "title": "이미지 편집",
+      "tab_edit": "편집",
+      "tab_save": "저장",
+      "filters": "필터",
+      "filter_none": "없음",
+      "filter_grayscale": "흑백",
+      "filter_sepia": "세피아",
+      "filter_invert": "반전",
+      "adjustments": "조정",
+      "brightness": "밝기",
+      "contrast": "대비",
+      "blur": "흐림",
+      "hue_rotate": "색조",
+      "saturation": "채도",
+      "reset": "초기화",
+      "crop": "자르기",
+      "cancel_crop": "취소",
+      "confirm_crop": "확인",
+      "crop_shape": "모양",
+      "crop_shape_custom": "사용자 지정",
+      "crop_shape_landscape": "가로",
+      "crop_shape_portrait": "세로",
+      "aspect_ratio": "비율",
+      "zoom_in": "확대",
+      "zoom_out": "축소",
+      "rotate_left": "왼쪽 회전",
+      "rotate_right": "오른쪽 회전",
+      "flip_horizontal": "좌우 반전",
+      "flip_vertical": "상하 반전",
+      "restore": "복구",
+      "resize": "크기 조절",
+      "width": "너비",
+      "height": "높이",
+      "percentage": "퍼센트",
+      "pixel": "픽셀",
+      "options": "옵션",
+      "save_as": "다른 이름으로 저장",
+      "save_as_options": [
+        "덮어쓰기",
+        "새 파일"
+      ],
+      "save_as_placeholder": "파일 이름",
+      "format": "형식",
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
+      "quality": "품질",
+      "quality_options": [
+        "높음",
+        "중간",
+        "낮음"
+      ],
+      "copy_image": "복사",
+      "ok": "저장",
+      "cancel": "취소",
+      "overwrite_confirm": "원본 파일을 덮어쓰시겠습니까? 되돌릴 수 없습니다."
+    }
+  },
+  "file_info": {
+    "title": "파일 정보",
+    "metadata": "메타데이터",
+    "location": "위치",
+    "album_name": "앨범",
+    "name": "이름",
+    "folder": "폴더",
+    "dimension": "해상도",
+    "size": "크기",
+    "duration": "재생시간",
+    "created_at": "생성일",
+    "modified_at": "수정일",
+    "camera": "카메라",
+    "camera_make": "제조사",
+    "camera_model": "모델",
+    "taken_at": "촬영일",
+    "taken_by": "촬영자",
+    "software": "소프트웨어",
+    "artist": "작가",
+    "copyright": "저작권",
+    "description": "설명",
+    "lens": "렌즈",
+    "lens_make": "렌즈 제조사",
+    "lens_model": "렌즈 모델",
+    "exposure_bias": "노출 보정",
+    "exposure_time": "노출 시간",
+    "aperture": "조리개",
+    "focal_length": "초점 거리",
+    "iso": "ISO",
+    "flash": "플래시",
+    "color_type": "색상 유형",
+    "bit_depth": "비트 심도",
+    "alpha_channel": "알파 채널",
+    "gps_latitude": "위도",
+    "gps_longitude": "경도",
+    "gps_altitude": "고도",
+    "geo_location": "위치",
+    "tags": "태그",
+    "comment": "코멘트",
+    "capture_settings": "촬영 설정"
+  },
+  "map": {
+    "show_map": "지도 보기",
+    "hide_map": "지도 숨기기",
+    "zoom_in": "확대",
+    "zoom_out": "축소",
+    "zoom_center": "중심"
+  },
+  "format": {
+    "year": "yyyy년",
+    "month": "yyyy년 M월",
+    "date": "yyyy/MM/dd",
+    "date_long": "yyyy년 M월 d일",
+    "month_date": "M월 d일",
+    "date_long_with_weekday": "yyyy년 M월 d일 EEEE",
+    "date_time": "yyyy/MM/dd HH:mm:ss",
+    "date_time_long": "yyyy년 M월 d일 HH:mm:ss"
+  },
+  "image_viewer": {
+    "title": "이미지 뷰어",
+    "loading": "로딩 중...",
+    "failed": "로딩 실패.",
+    "toolbar": {
+      "prev": "이전",
+      "next": "다음",
+      "slide_show": "슬라이드쇼",
+      "pause": "일시정지",
+      "zoom_in": "확대",
+      "zoom_out": "축소",
+      "zoom_fit": "화면 맞춤",
+      "zoom_actual": "실제 크기",
+      "edit": "편집",
+      "rotate": "회전",
+      "favorite": "즐겨찾기",
+      "unfavorite": "즐겨찾기 해제",
+      "tag": "태그",
+      "comment": "코멘트",
+      "info": "정보",
+      "save": "저장",
+      "delete": "삭제",
+      "fullscreen": "전체 화면",
+      "exit_fullscreen": "전체 화면 종료",
+      "pin": "도구 모음 고정",
+      "unpin": "고정 해제",
+      "close": "닫기"
+    }
+  },
+  "video": {
+    "loading": "비디오 로딩 중...",
+    "failed": "재생 실패",
+    "errors": {
+      "aborted": "중단됨",
+      "network": "네트워크 오류",
+      "decode": "디코딩 오류",
+      "format": "지원하지 않음",
+      "timeout": "시간 초과",
+      "unknown": "알 수 없는 오류"
+    }
+  },
+  "settings": {
+    "general": {
+      "title": "일반",
+      "appearance": "외관",
+      "appearance_options": [
+        "라이트",
+        "다크"
+      ],
+      "theme": "테마",
+      "theme_options_light": [
+        "기본",
+        "컵케이크",
+        "범블비",
+        "에메랄드",
+        "코퍼레이트",
+        "레트로",
+        "사이버펑크",
+        "발렌타인",
+        "가든",
+        "로파이",
+        "파스텔",
+        "판타지",
+        "와이어프레임",
+        "CMYK",
+        "가을",
+        "에시드",
+        "레모네이드",
+        "겨울",
+        "노르드",
+        "카라멜라떼",
+        "실크"
+      ],
+      "theme_options_dark": [
+        "기본",
+        "신스웨이브",
+        "할로윈",
+        "숲",
+        "아쿠아",
+        "블랙",
+        "럭셔리",
+        "드라큘라",
+        "비즈니스",
+        "나이트",
+        "커피",
+        "딤",
+        "석양",
+        "심해"
+      ],
+      "select_language": "언어",
+      "show_button_text": "버튼 텍스트 표시",
+      "show_tool_tip": "툴팁 표시",
+      "show_status_bar": "상태 표시줄",
+      "show_map": "지도 표시",
+      "show_map_hint": "인터넷 필요",
+      "debug_mode": "디버그 모드"
+    },
+    "grid_view": {
+      "title": "그리드 보기",
+      "style": "스타일",
+      "style_options": [
+        "편안하게",
+        "콤팩트"
+      ],
+      "size": "크기",
+      "scaling": "비율",
+      "scaling_options": [
+        "전체 맞춤",
+        "채우기",
+        "늘리기"
+      ],
+      "label_primary": "주 라벨",
+      "label_primary_hint": "편안한 스타일 전용",
+      "label_secondary": "보조 라벨",
+      "label_secondary_hint": "편안한 스타일 전용",
+      "label_options": [
+        "(없음)",
+        "이름",
+        "크기",
+        "치수",
+        "시간",
+        "위치",
+        "카메라",
+        "렌즈",
+        "설정"
+      ]
+    },
+    "filmstrip_view": {
+      "title": "필름스트립",
+      "preview_position": "미리보기 위치",
+      "preview_position_options": [
+        "위",
+        "아래"
+      ]
+    },
+    "image_view": {
+      "title": "이미지 보기",
+      "mouse_wheel": "마우스 휠",
+      "mouse_wheel_options": [
+        "이전/다음 (Ctrl 확대)",
+        "확대/축소"
+      ],
+      "slide_show_interval": "간격: {second}초",
+      "auto_play_video": "비디오 자동 재생",
+      "show_comment": "코멘트 표시",
+      "show_comment_hint": "새 창에서 보기 시",
+      "navigator_view": "내비게이터",
+      "navigator_view_options": [
+        "자동",
+        "항상 표시",
+        "항상 숨김"
+      ],
+      "navigator_view__size": "크기",
+      "navigator_view_size_options": [
+        "작게(160px)",
+        "중간(240px)",
+        "크게(320px)",
+        "아주 크게(400px)"
+      ]
+    },
+    "image_search": {
+      "title": "이미지 검색",
+      "similarity": "유사도",
+      "similarity_hint": "높음 = 결과 적음",
+      "similarity_options": [
+        "매우 높음",
+        "높음",
+        "중간",
+        "낮음"
+      ]
+    },
+    "face_recognition": {
+      "title": "얼굴 인식",
+      "similarity": "얼굴 유사도",
+      "cluster_threshold": "클러스터 임계값",
+      "cluster_threshold_hint": "높음 = 엄격함",
+      "cluster_threshold_options": [
+        "매우 높음",
+        "높음",
+        "중간",
+        "낮음"
+      ]
+    },
+    "about": {
+      "title": "정보",
+      "package": {
+        "name": "패키지 이름",
+        "description": "설명",
+        "version": "버전",
+        "build_time": "빌드 시간",
+        "author": "작성자",
+        "license": "라이선스",
+        "website": "웹사이트"
+      },
+      "auto_update": {
+        "check": "업데이트 확인",
+        "checking": "확인 중...",
+        "install": "설치 및 재시작",
+        "installing": "설치 중...",
+        "new_version_available": "새 버전을 사용할 수 있습니다: {version}",
+        "latest_version": "최신 버전입니다.",
+        "downloading_update": "업데이트 다운로드 중...",
+        "downloading_started": "다운로드 시작됨...",
+        "downloading": "다운로드 중... {percent}%",
+        "download_finished": "다운로드 완료. 설치 중...",
+        "update_installed": "업데이트 설치 완료. 재시작 중...",
+        "failed_check": "업데이트 확인 실패",
+        "failed_install": "업데이트 설치 실패"
+      }
+    }
+  }
 }

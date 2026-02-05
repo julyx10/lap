@@ -1,771 +1,786 @@
 {
-    "sidebar": {
-        "home": "ホーム",
-        "library": "ライブラリ",
-        "search": "検索",
-        "favorite": "お気に入り",
-        "tag": "タグ",
-        "calendar": "カレンダー",
-        "location": "場所",
-        "person": "人物",
-        "camera": "カメラ",
-        "settings": "設定"
+  "sidebar": {
+    "home": "ホーム",
+    "library": "ライブラリ",
+    "search": "検索",
+    "favorite": "お気に入り",
+    "tag": "タグ",
+    "calendar": "カレンダー",
+    "location": "場所",
+    "person": "人物",
+    "camera": "カメラ",
+    "settings": "設定"
+  },
+  "album": {
+    "all_files": "すべてのファイル",
+    "album_list": "アルバム",
+    "edit": {
+      "title_add": "アルバムを追加",
+      "title": "アルバムを編集",
+      "folder": "フォルダー",
+      "select_folder": "フォルダーを選択",
+      "name": "名前",
+      "description": "説明",
+      "description_placeholder": "アルバムの説明を入力",
+      "images": "画像",
+      "videos": "動画",
+      "files_count": "{count} ファイル ({size})",
+      "files_counting": "ファイルを計算中...",
+      "created_at": "作成日",
+      "modified_at": "変更日"
     },
-    "album": {
-        "all_files": "すべてのファイル",
-        "album_list": "アルバム",
-        "edit": {
-            "title_add": "アルバムを追加",
-            "title": "アルバムを編集",
-            "folder": "フォルダー",
-            "select_folder": "フォルダーを選択",
-            "name": "名前",
-            "description": "説明",
-            "description_placeholder": "アルバムの説明を入力",
-            "images": "画像",
-            "videos": "動画",
-            "files_count": "{count} ファイル ({size})",
-            "files_counting": "ファイルを計算中...",
-            "created_at": "作成日",
-            "modified_at": "変更日"
-        },
-        "no_albums": {
-            "title": "アルバムがありません",
-            "description": "画像や動画を含むフォルダーを追加して始めましょう"
-        }
-    },
+    "no_albums": {
+      "title": "アルバムがありません",
+      "description": "画像や動画を含むフォルダーを追加して始めましょう"
+    }
+  },
+  "search": {
+    "title": "画像検索",
+    "search_images": "AI検索",
+    "similar_images": "類似画像",
+    "filename_search": "ファイル名",
+    "image_search_placeholder": "テキストで画像を検索",
+    "image_search_history": "検索履歴",
+    "image_search_tips": "検索したい内容を入力してください。例：「海に沈む夕日」",
+    "similar_images_tips": "画像を選択して類似画像を検索",
+    "filename_search_tips": "ファイル名を入力して検索",
+    "index": {
+      "wait_index": "更新を待機中...",
+      "indexing": "'{album}' を更新中... {count} / {total}",
+      "description": "検索の準備をしています。これには数分かかる場合があります。",
+      "cancel": "更新をキャンセル"
+    }
+  },
+  "face_index": {
+    "start": "顔をインデックス",
+    "indexing": "顔をインデックス中... {current} / {total}",
+    "clustering": "顔をクラスタリング中...",
+    "faces_found": "{count} 個の顔が見つかりました",
+    "cluster_graph": "類似度グラフを構築中: {percent}%",
+    "cluster_iterate": "反復 {current}/{total}",
+    "cluster_converged": "反復 {current} で収束しました",
+    "cluster_assign": "人物を作成中 {current}/{total}",
+    "cluster_thumbnail": "サムネイルを生成中...",
+    "cancel": "キャンセル",
+    "incomplete": "インデックスが不完全です（{count} 枚未処理）",
+    "resume": "インデックスを再開"
+  },
+  "favorite": {
+    "files": "お気に入りファイル",
+    "folders": "お気に入りフォルダー"
+  },
+  "tag": {
+    "add_tag": "タグを追加",
+    "delete_tag": "タグを削除",
+    "edit_tag": "タグを編集",
+    "search_tags": "タグを検索",
+    "enter_new_tag_name": "新しいタグ名を入力",
+    "not_found": "タグが見つかりません"
+  },
+  "calendar": {
+    "on_this_day": "この日",
+    "title": "カレンダー",
+    "monthly_view": "月表示",
+    "daily_view": "日表示",
+    "day": "日",
+    "week": "週",
+    "month": "月",
+    "year": "年",
+    "today": "今日",
+    "monthly": "月別",
+    "daily": "日別",
+    "weekdays": [
+      "日",
+      "月",
+      "火",
+      "水",
+      "木",
+      "金",
+      "土"
+    ],
+    "weekdays_long": [
+      "日曜日",
+      "月曜日",
+      "火曜日",
+      "水曜日",
+      "木曜日",
+      "金曜日",
+      "土曜日"
+    ],
+    "months": [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月"
+    ],
+    "months_long": [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月"
+    ]
+  },
+  "toolbar": {
     "search": {
-        "title": "画像検索",
-        "search_images": "AI検索",
-        "similar_images": "類似画像",
-        "filename_search": "ファイル名",
-        "image_search_placeholder": "テキストで画像を検索",
-        "image_search_history": "検索履歴",
-        "image_search_tips": "検索したい内容を入力してください。例：「海に沈む夕日」",
-        "similar_images_tips": "画像を選択して類似画像を検索",
-        "filename_search_tips": "ファイル名を入力して検索",
-        "index": {
-            "wait_index": "更新を待機中...",
-            "indexing": "'{album}' を更新中... {count} / {total}",
-            "description": "検索の準備をしています。これには数分かかる場合があります。",
-            "cancel": "更新をキャンセル"
-        }
+      "title": "検索",
+      "placeholder": "ファイル名を検索"
     },
-    "face_index": {
-        "start": "顔をインデックス",
-        "indexing": "顔をインデックス中... {current} / {total}",
-        "clustering": "顔をクラスタリング中...",
-        "faces_found": "{count} 個の顔が見つかりました",
-        "cluster_graph": "類似度グラフを構築中: {percent}%",
-        "cluster_iterate": "反復 {current}/{total}",
-        "cluster_converged": "反復 {current} で収束しました",
-        "cluster_assign": "人物を作成中 {current}/{total}",
-        "cluster_thumbnail": "サムネイルを生成中...",
-        "cancel": "キャンセル",
-        "incomplete": "インデックスが不完全です（{count} 枚未処理）",
-        "resume": "インデックスを再開"
-    },
-    "favorite": {
-        "files": "お気に入りファイル",
-        "folders": "お気に入りフォルダー"
-    },
-    "tag": {
-        "add_tag": "タグを追加",
-        "delete_tag": "タグを削除",
-        "edit_tag": "タグを編集",
-        "search_tags": "タグを検索",
-        "enter_new_tag_name": "新しいタグ名を入力",
-        "not_found": "タグが見つかりません"
-    },
-    "calendar": {
-        "on_this_day": "この日",
-        "title": "カレンダー",
-        "monthly_view": "月表示",
-        "daily_view": "日表示",
-        "day": "日",
-        "week": "週",
-        "month": "月",
-        "year": "年",
-        "today": "今日",
-        "monthly": "月別",
-        "daily": "日別",
-        "weekdays": [
-            "日",
-            "月",
-            "火",
-            "水",
-            "木",
-            "金",
-            "土"
-        ],
-        "weekdays_long": [
-            "日曜日",
-            "月曜日",
-            "火曜日",
-            "水曜日",
-            "木曜日",
-            "金曜日",
-            "土曜日"
-        ],
-        "months": [
-            "1月",
-            "2月",
-            "3月",
-            "4月",
-            "5月",
-            "6月",
-            "7月",
-            "8月",
-            "9月",
-            "10月",
-            "11月",
-            "12月"
-        ],
-        "months_long": [
-            "1月",
-            "2月",
-            "3月",
-            "4月",
-            "5月",
-            "6月",
-            "7月",
-            "8月",
-            "9月",
-            "10月",
-            "11月",
-            "12月"
-        ]
-    },
-    "toolbar": {
-        "search": {
-            "title": "検索",
-            "placeholder": "ファイル名を検索"
-        },
-        "filter": {
-            "select_mode": "選択",
-            "select_count": "{count} 個選択中",
-            "sort_type_options": [
-                "時間",
-                "名前",
-                "サイズ",
-                "寸法",
-                "ランダム"
-            ],
-            "sort_order_options": [
-                "昇順",
-                "降順"
-            ],
-            "file_type_options": [
-                "すべて",
-                "画像",
-                "動画"
-            ]
-        },
-        "tooltip": {
-            "restore": "復元",
-            "refresh": "更新",
-            "grid_view": "グリッド表示",
-            "filmstrip_view": "フィルムストリップ表示",
-            "show_info": "情報を表示",
-            "hide_info": "情報を隠す",
-            "clear_history": "履歴を消去",
-            "index_faces": "顔をインデックス",
-            "sort": "並べ替え",
-            "monthly": "月別",
-            "daily": "日別",
-            "time_asc": "古い順",
-            "time_desc": "新しい順"
-        }
-    },
-    "info_panel": {
-        "tabs": [
-            "情報",
-            "プレビュー"
-        ]
+    "filter": {
+      "select_mode": "選択",
+      "select_count": "{count} 個選択中",
+      "sort_type_options": [
+        "時間",
+        "名前",
+        "サイズ",
+        "寸法",
+        "ランダム"
+      ],
+      "sort_order_options": [
+        "昇順",
+        "降順"
+      ],
+      "file_type_options": [
+        "すべて",
+        "画像",
+        "動画"
+      ]
     },
     "tooltip": {
-        "loading": "読み込み中...",
-        "not_found": {
-            "albums": "アルバムが見つかりません",
-            "files": "ファイルが見つかりません",
-            "folder_files": "ファイルがありません。サブフォルダーを確認してください",
-            "folders": "フォルダーが見つかりません",
-            "tag": "タグが見つかりません",
-            "calendar": "カレンダーデータがありません",
-            "location": "位置情報データがありません",
-            "person": "人物データがありません",
-            "person_hint": "顔のインデックス作成を試してください",
-            "camera": "カメラデータがありません"
-        },
-        "set_album_cover": {
-            "success": "アルバムの表紙を設定しました",
-            "failed": "表紙の設定に失敗しました"
-        },
-        "copy_image": {
-            "success": "画像をコピーしました",
-            "failed": "画像のコピーに失敗しました"
-        },
-        "save_image": {
-            "success": "画像を保存しました",
-            "failed": "画像の保存に失敗しました"
-        },
-        "update_image": {
-            "success": "画像を更新しました",
-            "failed": "画像の更新に失敗しました"
-        },
-        "image_viewer": {
-            "first_image": "最初の画像です",
-            "last_image": "最後の画像です"
-        },
-        "album_exists": "このアルバムは既に存在します"
+      "restore": "復元",
+      "refresh": "更新",
+      "grid_view": "グリッド表示",
+      "filmstrip_view": "フィルムストリップ表示",
+      "show_info": "情報を表示",
+      "hide_info": "情報を隠す",
+      "clear_history": "履歴を消去",
+      "index_faces": "顔をインデックス",
+      "sort": "並べ替え",
+      "monthly": "月別",
+      "daily": "日別",
+      "time_asc": "古い順",
+      "time_desc": "新しい順"
+    }
+  },
+  "info_panel": {
+    "tabs": [
+      "情報",
+      "プレビュー"
+    ]
+  },
+  "tooltip": {
+    "loading": "読み込み中...",
+    "not_found": {
+      "albums": "アルバムが見つかりません",
+      "files": "ファイルが見つかりません",
+      "folder_files": "ファイルがありません。サブフォルダーを確認してください",
+      "folders": "フォルダーが見つかりません",
+      "tag": "タグが見つかりません",
+      "calendar": "カレンダーデータがありません",
+      "location": "位置情報データがありません",
+      "person": "人物データがありません",
+      "person_hint": "顔のインデックス作成を試してください",
+      "camera": "カメラデータがありません"
     },
-    "statusbar": {
-        "files_summary": "{count} ファイル ({size})"
+    "set_album_cover": {
+      "success": "アルバムの表紙を設定しました",
+      "failed": "表紙の設定に失敗しました"
     },
-    "menu": {
-        "select": {
-            "all": "すべて選択",
-            "none": "選択解除",
-            "invert": "選択を反転"
-        },
-        "home": {
-            "delete": "削除",
-            "pin": "固定",
-            "unpin": "固定解除"
-        },
-        "library": {
-            "add": "ライブラリを追加...",
-            "edit": "ライブラリを編集...",
-            "manage": "ライブラリを管理...",
-            "remove": "ライブラリを削除",
-            "default": "デフォルトライブラリ"
-        },
-        "album": {
-            "add": "アルバムを追加...",
-            "edit": "アルバムを編集...",
-            "index": "ファイルを更新",
-            "include_in_search": "検索に含める",
-            "exclude_from_search": "検索から除外",
-            "remove": "アルバムを削除",
-            "refresh": "更新",
-            "reorder": "並べ替え",
-            "reorder_exit": "並べ替え終了"
-        },
-        "file": {
-            "new_folder": "新しいフォルダー...",
-            "view_in_new_window": "新しいウィンドウで表示...",
-            "copy": "クリップボードにコピー",
-            "edit": "画像を編集...",
-            "find_similar_images": "類似画像を検索",
-            "find_person_images": "この人の画像を検索",
-            "find_album_folder": "アルバムフォルダーを開く",
-            "on_this_day": "この日",
-            "print": "印刷",
-            "rename": "名前を変更",
-            "move_to": "移動...",
-            "copy_to": "コピー...",
-            "move_to_trash": "ゴミ箱に入れる",
-            "delete": "削除",
-            "reveal_in_finder": "Finderで表示...",
-            "reveal_in_file_explorer": "エクスプローラーで表示...",
-            "set_album_cover": "アルバムの表紙に設定"
-        },
-        "calendar": {
-            "monthly": "月表示",
-            "daily": "日表示",
-            "time_asc": "古い順",
-            "time_desc": "新しい順"
-        },
-        "search": {
-            "clear_history": "検索履歴を消去"
-        },
-        "person": {
-            "index_faces": "顔をインデックス",
-            "reset_index": "インデックスをリセット"
-        },
-        "tag": {
-            "add": "タグを追加...",
-            "rename": "名前を変更",
-            "delete": "削除"
-        },
-        "meta": {
-            "favorite": "お気に入り",
-            "unfavorite": "お気に入り解除",
-            "tag": "タグ付け...",
-            "comment": "コメント...",
-            "rotate": "回転"
-        },
-        "sort": {
-            "sort_by_name": "名前順",
-            "sort_by_count": "数順"
-        }
+    "copy_image": {
+      "success": "画像をコピーしました",
+      "failed": "画像のコピーに失敗しました"
     },
-    "msgbox": {
-        "ok": "OK",
-        "reset": "リセット",
-        "cancel": "キャンセル",
-        "close": "閉じる",
-        "input": {
-            "file_name_invalid": "名前に次の文字は使えません: \\ / : * ? \" < > |."
-        },
-        "reset_faces": {
-            "title": "インデックスをリセット",
-            "content": "すべての顔データを削除しますか？この操作は取り消せません。",
-            "ok": "リセット"
-        },
-        "clear_search_history": {
-            "title": "履歴を消去",
-            "content": "検索履歴を消去してもよろしいですか？",
-            "ok": "消去"
-        },
-        "delete_person": {
-            "title": "人物を削除",
-            "content": "'{person}' を削除してもよろしいですか？",
-            "ok": "削除"
-        },
-        "manage_libraries": {
-            "title": "ライブラリ管理",
-            "name": "名前",
-            "visible": "表示",
-            "action": "操作",
-            "default": "デフォルト",
-            "current": "現在",
-            "show": "表示",
-            "hide": "非表示",
-            "hidden": "非表示",
-            "delete": "削除",
-            "reorder": "並べ替え",
-            "rename": "名前変更",
-            "add_new": "新規追加",
-            "add": "追加",
-            "placeholder": "ライブラリ名",
-            "max_limit_reached": "上限に達しました",
-            "created_at_lower": "作成日時",
-            "library_file_path": "ファイルパス",
-            "library_file_size": "ファイルサイズ",
-            "created_at": "作成日時"
-        },
-        "remove_library": {
-            "title": "ライブラリを削除",
-            "content": "'{library}' を削除しますか？データベースファイルも削除されます。",
-            "ok": "削除",
-            "success": "'{library}' を削除しました。",
-            "error": "削除できませんでした。"
-        },
-        "remove_album": {
-            "title": "アルバムを削除",
-            "content": "'{album}' を削除します。ファイルは削除されません。",
-            "ok": "削除"
-        },
-        "rename_folder": {
-            "title": "フォルダー名を変更",
-            "content": "新しいフォルダー名:",
-            "ok": "変更",
-            "error": "変更できませんでした。"
-        },
-        "new_folder": {
-            "title": "新しいフォルダー",
-            "placeholder": "フォルダー名",
-            "ok": "作成",
-            "error": "作成できませんでした。"
-        },
-        "delete_folder": {
-            "title": "フォルダーを削除",
-            "content": "'{folder}' とその中身をすべて削除します。",
-            "ok": "削除",
-            "success": "'{folder}' を削除しました。",
-            "error": "削除できませんでした。"
-        },
-        "trash_folder": {
-            "title": "ゴミ箱に移動",
-            "content": "'{folder}' をゴミ箱に移動します。",
-            "ok": "移動",
-            "success": "'{folder}' をゴミ箱に移動しました。",
-            "error": "移動できませんでした。"
-        },
-        "move_to": {
-            "title": "'{source}' を移動",
-            "content": "移動先を選択:",
-            "ok": "移動",
-            "error": "移動できませんでした。"
-        },
-        "copy_to": {
-            "title": "'{source}' をコピー",
-            "content": "コピー先を選択:",
-            "ok": "コピー",
-            "error": "コピーできませんでした。"
-        },
-        "rename_file": {
-            "title": "ファイル名を変更",
-            "placeholder": "新しいファイル名",
-            "ok": "変更",
-            "error": "変更できませんでした。"
-        },
-        "delete_file": {
-            "title": "ファイルを削除",
-            "content": "'{file}' を削除します。",
-            "ok": "削除",
-            "success": "'{file}' を削除しました。",
-            "error": "削除できませんでした。"
-        },
-        "delete_files": {
-            "title": "ファイルを削除",
-            "content": "{count} 個のファイルを削除します。",
-            "ok": "すべて削除",
-            "success": "{count} 個のファイルを削除しました。",
-            "error": "削除できませんでした。"
-        },
-        "trash_file": {
-            "title": "ゴミ箱に移動",
-            "content": "'{file}' をゴミ箱に移動します。",
-            "ok": "移動",
-            "success": "'{file}' をゴミ箱に移動しました。",
-            "error": "移動できませんでした。"
-        },
-        "trash_files": {
-            "title": "ゴミ箱に移動",
-            "content": "{count} 個のファイルをゴミ箱に移動します。",
-            "ok": "移動",
-            "success": "{count} 個のファイルをゴミ箱に移動しました。",
-            "error": "移動できませんでした。"
-        },
-        "new_tag": {
-            "title": "新しいタグ",
-            "content": "タグ名:",
-            "ok": "作成",
-            "error": "作成できませんでした。"
-        },
-        "delete_tag": {
-            "title": "タグを削除",
-            "content": "'{tag}' を削除します。",
-            "ok": "削除",
-            "success": "'{tag}' を削除しました。",
-            "error": "削除できませんでした。"
-        },
-        "edit_comment": {
-            "title": "コメントを編集",
-            "placeholder": "コメント",
-            "ok": "保存"
-        },
-        "select_folder": {
-            "error": "フォルダー選択に失敗しました。"
-        },
-        "select_file": {
-            "error": "ファイル選択に失敗しました。"
-        },
-        "image_editor": {
-            "title": "画像を編集",
-            "tab_edit": "編集",
-            "tab_save": "保存",
-            "filters": "フィルタ",
-            "filter_none": "なし",
-            "filter_grayscale": "グレースケール",
-            "filter_sepia": "セピア",
-            "filter_invert": "反転",
-            "adjustments": "調整",
-            "brightness": "明るさ",
-            "contrast": "コントラスト",
-            "blur": "ぼかし",
-            "hue_rotate": "色相",
-            "saturation": "彩度",
-            "reset": "リセット",
-            "crop": "切り抜き",
-            "cancel_crop": "キャンセル",
-            "confirm_crop": "確定",
-            "crop_shape": "形状",
-            "crop_shape_custom": "カスタム",
-            "crop_shape_landscape": "横",
-            "crop_shape_portrait": "縦",
-            "aspect_ratio": "アスペクト比",
-            "zoom_in": "拡大",
-            "zoom_out": "縮小",
-            "rotate_left": "左回転",
-            "rotate_right": "右回転",
-            "flip_horizontal": "左右反転",
-            "flip_vertical": "上下反転",
-            "restore": "元に戻す",
-            "resize": "サイズ変更",
-            "width": "幅",
-            "height": "高さ",
-            "percentage": "パーセント",
-            "pixel": "ピクセル",
-            "options": "オプション",
-            "save_as": "名前を付けて保存",
-            "save_as_options": [
-                "上書き",
-                "新規ファイル"
-            ],
-            "save_as_placeholder": "ファイル名",
-            "format": "形式",
-            "format_options": [
-                "JPEG",
-                "PNG",
-                "WEBP"
-            ],
-            "quality": "画質",
-            "quality_options": [
-                "高",
-                "中",
-                "低"
-            ],
-            "copy_image": "コピー",
-            "ok": "保存",
-            "cancel": "キャンセル",
-            "overwrite_confirm": "元のファイルを上書きしますか？この操作は取り消せません。"
-        }
+    "save_image": {
+      "success": "画像を保存しました",
+      "failed": "画像の保存に失敗しました"
     },
-    "file_info": {
-        "title": "ファイル情報",
-        "metadata": "メタデータ",
-        "location": "場所",
-        "album_name": "アルバム",
-        "name": "ファイル名",
-        "folder": "フォルダー",
-        "dimension": "寸法",
-        "size": "サイズ",
-        "duration": "長さ",
-        "created_at": "作成日時",
-        "modified_at": "変更日時",
-        "camera": "カメラ",
-        "camera_make": "メーカー",
-        "camera_model": "モデル",
-        "taken_at": "撮影日時",
-        "taken_by": "撮影者",
-        "software": "ソフトウェア",
-        "artist": "アーティスト",
-        "copyright": "著作権",
-        "description": "説明",
-        "lens": "レンズ",
-        "lens_make": "レンズメーカー",
-        "lens_model": "レンズモデル",
-        "exposure_bias": "露出補正",
-        "exposure_time": "露出時間",
-        "aperture": "絞り",
-        "focal_length": "焦点距離",
-        "iso": "ISO感度",
-        "flash": "フラッシュ",
-        "color_type": "カラータイプ",
-        "bit_depth": "ビット深度",
-        "alpha_channel": "アルファチャンネル",
-        "gps_latitude": "緯度",
-        "gps_longitude": "経度",
-        "gps_altitude": "高度",
-        "geo_location": "位置",
-        "tags": "タグ",
-        "comment": "コメント",
-        "capture_settings": "撮影設定"
-    },
-    "map": {
-        "show_map": "地図を表示",
-        "hide_map": "地図を隠す",
-        "zoom_in": "拡大",
-        "zoom_out": "縮小",
-        "zoom_center": "中心"
-    },
-    "format": {
-        "year": "yyyy年",
-        "month": "yyyy年M月",
-        "date": "yyyy/MM/dd",
-        "date_long": "yyyy年M月d日",
-        "month_date": "M月d日",
-        "date_long_with_weekday": "yyyy年M月d日(EEE)",
-        "date_time": "yyyy/MM/dd HH:mm:ss",
-        "date_time_long": "yyyy年M月d日 HH:mm:ss"
+    "update_image": {
+      "success": "画像を更新しました",
+      "failed": "画像の更新に失敗しました"
     },
     "image_viewer": {
-        "title": "画像ビューア",
-        "loading": "読み込み中...",
-        "failed": "読み込みに失敗しました。",
-        "toolbar": {
-            "prev": "前へ",
-            "next": "次へ",
-            "slide_show": "スライドショー",
-            "pause": "一時停止",
-            "zoom_in": "拡大",
-            "zoom_out": "縮小",
-            "zoom_fit": "画面に合わせる",
-            "zoom_actual": "実際のサイズ",
-            "edit": "編集",
-            "rotate": "回転",
-            "favorite": "お気に入り",
-            "unfavorite": "お気に入り解除",
-            "tag": "タグ",
-            "comment": "コメント",
-            "info": "情報",
-            "save": "保存",
-            "delete": "削除",
-            "fullscreen": "全画面",
-            "exit_fullscreen": "全画面終了",
-            "pin": "バーを固定",
-            "unpin": "固定解除",
-            "close": "閉じる"
-        }
+      "first_image": "最初の画像です",
+      "last_image": "最後の画像です"
     },
-    "video": {
-        "loading": "動画を読み込み中...",
-        "failed": "再生できません",
-        "errors": {
-            "aborted": "中止されました",
-            "network": "ネットワークエラー",
-            "decode": "デコードエラー",
-            "format": "非対応形式",
-            "timeout": "タイムアウト",
-            "unknown": "不明なエラー"
-        }
+    "album_exists": "このアルバムは既に存在します"
+  },
+  "statusbar": {
+    "files_summary": "{count} ファイル ({size})"
+  },
+  "menu": {
+    "select": {
+      "all": "すべて選択",
+      "none": "選択解除",
+      "invert": "選択を反転"
     },
-    "settings": {
-        "general": {
-            "title": "一般",
-            "appearance": "外観",
-            "appearance_options": [
-                "ライト",
-                "ダーク"
-            ],
-            "theme": "テーマ",
-            "theme_options_light": [
-                "デフォルト",
-                "カップケーキ",
-                "バンブルビー",
-                "エメラルド",
-                "コーポレート",
-                "レトロ",
-                "サイバーパンク",
-                "バレンタイン",
-                "ガーデン",
-                "ローファイ",
-                "パステル",
-                "ファンタジー",
-                "ワイヤーフレーム",
-                "CMYK",
-                "オータム",
-                "アシッド",
-                "レモネード",
-                "ウィンター",
-                "ノルド",
-                "キャラメルラテ",
-                "シルク"
-            ],
-            "theme_options_dark": [
-                "デフォルト",
-                "シンセウェーブ",
-                "ハロウィン",
-                "フォレスト",
-                "アクア",
-                "ブラック",
-                "ラグジュアリー",
-                "ドラキュラ",
-                "ビジネス",
-                "ナイト",
-                "コーヒー",
-                "ディム",
-                "サンセット",
-                "アビス"
-            ],
-            "select_language": "言語",
-            "show_button_text": "ボタンテキスト",
-            "show_tool_tip": "ツールチップ",
-            "show_status_bar": "ステータスバー",
-            "show_map": "地図を表示",
-            "show_map_hint": "インターネット接続が必要です",
-            "debug_mode": "デバッグモード"
-        },
-        "grid_view": {
-            "title": "グリッド表示",
-            "style": "スタイル",
-            "style_options": [
-                "快適",
-                "コンパクト"
-            ],
-            "size": "サイズ",
-            "scaling": "スケーリング",
-            "scaling_options": [
-                "全体を表示",
-                "埋める",
-                "引き伸ばす"
-            ],
-            "label_primary": "メインラベル",
-            "label_primary_hint": "快適スタイルのみ",
-            "label_secondary": "サブラベル",
-            "label_secondary_hint": "快適スタイルのみ",
-            "label_options": [
-                "(なし)",
-                "名前",
-                "サイズ",
-                "寸法",
-                "時間",
-                "場所",
-                "カメラ",
-                "レンズ",
-                "設定"
-            ]
-        },
-        "filmstrip_view": {
-            "title": "フィルムストリップ",
-            "preview_position": "プレビュー位置",
-            "preview_position_options": [
-                "上",
-                "下"
-            ]
-        },
-        "image_view": {
-            "title": "画像表示",
-            "mouse_wheel": "マウスホイール",
-            "mouse_wheel_options": [
-                "前/次へ (Ctrlで拡大)",
-                "拡大/縮小"
-            ],
-            "slide_show_interval": "間隔: {second} 秒",
-            "auto_play_video": "動画自動再生",
-            "show_comment": "コメントを表示",
-            "show_comment_hint": "新しいウィンドウで表示時",
-            "navigator_view": "ナビゲーター",
-            "navigator_view_options": [
-                "自動",
-                "常に表示",
-                "常に非表示"
-            ],
-            "navigator_view__size": "サイズ",
-            "navigator_view_size_options": [
-                "小(160px)",
-                "中(240px)",
-                "大(320px)",
-                "特大(400px)"
-            ]
-        },
-        "image_search": {
-            "title": "画像検索",
-            "similarity": "類似度",
-            "similarity_hint": "高い = 結果が少ない",
-            "similarity_options": [
-                "非常に高い",
-                "高い",
-                "中",
-                "低い"
-            ]
-        },
-        "face_recognition": {
-            "title": "顔認識",
-            "similarity": "顔類似度",
-            "cluster_threshold": "クラスタしきい値",
-            "cluster_threshold_hint": "高い = 厳しい",
-            "cluster_threshold_options": [
-                "非常に高い",
-                "高い",
-                "中",
-                "低い"
-            ]
-        },
-        "about": {
-            "title": "情報",
-            "package": {
-                "name": "パッケージ名",
-                "description": "説明",
-                "version": "バージョン",
-                "build_time": "ビルド日時",
-                "author": "作者",
-                "license": "ライセンス",
-                "website": "ウェブサイト"
-            }
-        }
+    "home": {
+      "delete": "削除",
+      "pin": "固定",
+      "unpin": "固定解除"
+    },
+    "library": {
+      "add": "ライブラリを追加...",
+      "edit": "ライブラリを編集...",
+      "manage": "ライブラリを管理...",
+      "remove": "ライブラリを削除",
+      "default": "デフォルトライブラリ"
+    },
+    "album": {
+      "add": "アルバムを追加...",
+      "edit": "アルバムを編集...",
+      "index": "ファイルを更新",
+      "include_in_search": "検索に含める",
+      "exclude_from_search": "検索から除外",
+      "remove": "アルバムを削除",
+      "refresh": "更新",
+      "reorder": "並べ替え",
+      "reorder_exit": "並べ替え終了"
+    },
+    "file": {
+      "new_folder": "新しいフォルダー...",
+      "view_in_new_window": "新しいウィンドウで表示...",
+      "copy": "クリップボードにコピー",
+      "edit": "画像を編集...",
+      "find_similar_images": "類似画像を検索",
+      "find_person_images": "この人の画像を検索",
+      "find_album_folder": "アルバムフォルダーを開く",
+      "on_this_day": "この日",
+      "print": "印刷",
+      "rename": "名前を変更",
+      "move_to": "移動...",
+      "copy_to": "コピー...",
+      "move_to_trash": "ゴミ箱に入れる",
+      "delete": "削除",
+      "reveal_in_finder": "Finderで表示...",
+      "reveal_in_file_explorer": "エクスプローラーで表示...",
+      "set_album_cover": "アルバムの表紙に設定"
+    },
+    "calendar": {
+      "monthly": "月表示",
+      "daily": "日表示",
+      "time_asc": "古い順",
+      "time_desc": "新しい順"
+    },
+    "search": {
+      "clear_history": "検索履歴を消去"
+    },
+    "person": {
+      "index_faces": "顔をインデックス",
+      "reset_index": "インデックスをリセット"
+    },
+    "tag": {
+      "add": "タグを追加...",
+      "rename": "名前を変更",
+      "delete": "削除"
+    },
+    "meta": {
+      "favorite": "お気に入り",
+      "unfavorite": "お気に入り解除",
+      "tag": "タグ付け...",
+      "comment": "コメント...",
+      "rotate": "回転"
+    },
+    "sort": {
+      "sort_by_name": "名前順",
+      "sort_by_count": "数順"
     }
+  },
+  "msgbox": {
+    "ok": "OK",
+    "reset": "リセット",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "input": {
+      "file_name_invalid": "名前に次の文字は使えません: \\ / : * ? \" < > |."
+    },
+    "reset_faces": {
+      "title": "インデックスをリセット",
+      "content": "すべての顔データを削除しますか？この操作は取り消せません。",
+      "ok": "リセット"
+    },
+    "clear_search_history": {
+      "title": "履歴を消去",
+      "content": "検索履歴を消去してもよろしいですか？",
+      "ok": "消去"
+    },
+    "delete_person": {
+      "title": "人物を削除",
+      "content": "'{person}' を削除してもよろしいですか？",
+      "ok": "削除"
+    },
+    "manage_libraries": {
+      "title": "ライブラリ管理",
+      "name": "名前",
+      "visible": "表示",
+      "action": "操作",
+      "default": "デフォルト",
+      "current": "現在",
+      "show": "表示",
+      "hide": "非表示",
+      "hidden": "非表示",
+      "delete": "削除",
+      "reorder": "並べ替え",
+      "rename": "名前変更",
+      "add_new": "新規追加",
+      "add": "追加",
+      "placeholder": "ライブラリ名",
+      "max_limit_reached": "上限に達しました",
+      "created_at_lower": "作成日時",
+      "library_file_path": "ファイルパス",
+      "library_file_size": "ファイルサイズ",
+      "created_at": "作成日時"
+    },
+    "remove_library": {
+      "title": "ライブラリを削除",
+      "content": "'{library}' を削除しますか？データベースファイルも削除されます。",
+      "ok": "削除",
+      "success": "'{library}' を削除しました。",
+      "error": "削除できませんでした。"
+    },
+    "remove_album": {
+      "title": "アルバムを削除",
+      "content": "'{album}' を削除します。ファイルは削除されません。",
+      "ok": "削除"
+    },
+    "rename_folder": {
+      "title": "フォルダー名を変更",
+      "content": "新しいフォルダー名:",
+      "ok": "変更",
+      "error": "変更できませんでした。"
+    },
+    "new_folder": {
+      "title": "新しいフォルダー",
+      "placeholder": "フォルダー名",
+      "ok": "作成",
+      "error": "作成できませんでした。"
+    },
+    "delete_folder": {
+      "title": "フォルダーを削除",
+      "content": "'{folder}' とその中身をすべて削除します。",
+      "ok": "削除",
+      "success": "'{folder}' を削除しました。",
+      "error": "削除できませんでした。"
+    },
+    "trash_folder": {
+      "title": "ゴミ箱に移動",
+      "content": "'{folder}' をゴミ箱に移動します。",
+      "ok": "移動",
+      "success": "'{folder}' をゴミ箱に移動しました。",
+      "error": "移動できませんでした。"
+    },
+    "move_to": {
+      "title": "'{source}' を移動",
+      "content": "移動先を選択:",
+      "ok": "移動",
+      "error": "移動できませんでした。"
+    },
+    "copy_to": {
+      "title": "'{source}' をコピー",
+      "content": "コピー先を選択:",
+      "ok": "コピー",
+      "error": "コピーできませんでした。"
+    },
+    "rename_file": {
+      "title": "ファイル名を変更",
+      "placeholder": "新しいファイル名",
+      "ok": "変更",
+      "error": "変更できませんでした。"
+    },
+    "delete_file": {
+      "title": "ファイルを削除",
+      "content": "'{file}' を削除します。",
+      "ok": "削除",
+      "success": "'{file}' を削除しました。",
+      "error": "削除できませんでした。"
+    },
+    "delete_files": {
+      "title": "ファイルを削除",
+      "content": "{count} 個のファイルを削除します。",
+      "ok": "すべて削除",
+      "success": "{count} 個のファイルを削除しました。",
+      "error": "削除できませんでした。"
+    },
+    "trash_file": {
+      "title": "ゴミ箱に移動",
+      "content": "'{file}' をゴミ箱に移動します。",
+      "ok": "移動",
+      "success": "'{file}' をゴミ箱に移動しました。",
+      "error": "移動できませんでした。"
+    },
+    "trash_files": {
+      "title": "ゴミ箱に移動",
+      "content": "{count} 個のファイルをゴミ箱に移動します。",
+      "ok": "移動",
+      "success": "{count} 個のファイルをゴミ箱に移動しました。",
+      "error": "移動できませんでした。"
+    },
+    "new_tag": {
+      "title": "新しいタグ",
+      "content": "タグ名:",
+      "ok": "作成",
+      "error": "作成できませんでした。"
+    },
+    "delete_tag": {
+      "title": "タグを削除",
+      "content": "'{tag}' を削除します。",
+      "ok": "削除",
+      "success": "'{tag}' を削除しました。",
+      "error": "削除できませんでした。"
+    },
+    "edit_comment": {
+      "title": "コメントを編集",
+      "placeholder": "コメント",
+      "ok": "保存"
+    },
+    "select_folder": {
+      "error": "フォルダー選択に失敗しました。"
+    },
+    "select_file": {
+      "error": "ファイル選択に失敗しました。"
+    },
+    "image_editor": {
+      "title": "画像を編集",
+      "tab_edit": "編集",
+      "tab_save": "保存",
+      "filters": "フィルタ",
+      "filter_none": "なし",
+      "filter_grayscale": "グレースケール",
+      "filter_sepia": "セピア",
+      "filter_invert": "反転",
+      "adjustments": "調整",
+      "brightness": "明るさ",
+      "contrast": "コントラスト",
+      "blur": "ぼかし",
+      "hue_rotate": "色相",
+      "saturation": "彩度",
+      "reset": "リセット",
+      "crop": "切り抜き",
+      "cancel_crop": "キャンセル",
+      "confirm_crop": "確定",
+      "crop_shape": "形状",
+      "crop_shape_custom": "カスタム",
+      "crop_shape_landscape": "横",
+      "crop_shape_portrait": "縦",
+      "aspect_ratio": "アスペクト比",
+      "zoom_in": "拡大",
+      "zoom_out": "縮小",
+      "rotate_left": "左回転",
+      "rotate_right": "右回転",
+      "flip_horizontal": "左右反転",
+      "flip_vertical": "上下反転",
+      "restore": "元に戻す",
+      "resize": "サイズ変更",
+      "width": "幅",
+      "height": "高さ",
+      "percentage": "パーセント",
+      "pixel": "ピクセル",
+      "options": "オプション",
+      "save_as": "名前を付けて保存",
+      "save_as_options": [
+        "上書き",
+        "新規ファイル"
+      ],
+      "save_as_placeholder": "ファイル名",
+      "format": "形式",
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
+      "quality": "画質",
+      "quality_options": [
+        "高",
+        "中",
+        "低"
+      ],
+      "copy_image": "コピー",
+      "ok": "保存",
+      "cancel": "キャンセル",
+      "overwrite_confirm": "元のファイルを上書きしますか？この操作は取り消せません。"
+    }
+  },
+  "file_info": {
+    "title": "ファイル情報",
+    "metadata": "メタデータ",
+    "location": "場所",
+    "album_name": "アルバム",
+    "name": "ファイル名",
+    "folder": "フォルダー",
+    "dimension": "寸法",
+    "size": "サイズ",
+    "duration": "長さ",
+    "created_at": "作成日時",
+    "modified_at": "変更日時",
+    "camera": "カメラ",
+    "camera_make": "メーカー",
+    "camera_model": "モデル",
+    "taken_at": "撮影日時",
+    "taken_by": "撮影者",
+    "software": "ソフトウェア",
+    "artist": "アーティスト",
+    "copyright": "著作権",
+    "description": "説明",
+    "lens": "レンズ",
+    "lens_make": "レンズメーカー",
+    "lens_model": "レンズモデル",
+    "exposure_bias": "露出補正",
+    "exposure_time": "露出時間",
+    "aperture": "絞り",
+    "focal_length": "焦点距離",
+    "iso": "ISO感度",
+    "flash": "フラッシュ",
+    "color_type": "カラータイプ",
+    "bit_depth": "ビット深度",
+    "alpha_channel": "アルファチャンネル",
+    "gps_latitude": "緯度",
+    "gps_longitude": "経度",
+    "gps_altitude": "高度",
+    "geo_location": "位置",
+    "tags": "タグ",
+    "comment": "コメント",
+    "capture_settings": "撮影設定"
+  },
+  "map": {
+    "show_map": "地図を表示",
+    "hide_map": "地図を隠す",
+    "zoom_in": "拡大",
+    "zoom_out": "縮小",
+    "zoom_center": "中心"
+  },
+  "format": {
+    "year": "yyyy年",
+    "month": "yyyy年M月",
+    "date": "yyyy/MM/dd",
+    "date_long": "yyyy年M月d日",
+    "month_date": "M月d日",
+    "date_long_with_weekday": "yyyy年M月d日(EEE)",
+    "date_time": "yyyy/MM/dd HH:mm:ss",
+    "date_time_long": "yyyy年M月d日 HH:mm:ss"
+  },
+  "image_viewer": {
+    "title": "画像ビューア",
+    "loading": "読み込み中...",
+    "failed": "読み込みに失敗しました。",
+    "toolbar": {
+      "prev": "前へ",
+      "next": "次へ",
+      "slide_show": "スライドショー",
+      "pause": "一時停止",
+      "zoom_in": "拡大",
+      "zoom_out": "縮小",
+      "zoom_fit": "画面に合わせる",
+      "zoom_actual": "実際のサイズ",
+      "edit": "編集",
+      "rotate": "回転",
+      "favorite": "お気に入り",
+      "unfavorite": "お気に入り解除",
+      "tag": "タグ",
+      "comment": "コメント",
+      "info": "情報",
+      "save": "保存",
+      "delete": "削除",
+      "fullscreen": "全画面",
+      "exit_fullscreen": "全画面終了",
+      "pin": "バーを固定",
+      "unpin": "固定解除",
+      "close": "閉じる"
+    }
+  },
+  "video": {
+    "loading": "動画を読み込み中...",
+    "failed": "再生できません",
+    "errors": {
+      "aborted": "中止されました",
+      "network": "ネットワークエラー",
+      "decode": "デコードエラー",
+      "format": "非対応形式",
+      "timeout": "タイムアウト",
+      "unknown": "不明なエラー"
+    }
+  },
+  "settings": {
+    "general": {
+      "title": "一般",
+      "appearance": "外観",
+      "appearance_options": [
+        "ライト",
+        "ダーク"
+      ],
+      "theme": "テーマ",
+      "theme_options_light": [
+        "デフォルト",
+        "カップケーキ",
+        "バンブルビー",
+        "エメラルド",
+        "コーポレート",
+        "レトロ",
+        "サイバーパンク",
+        "バレンタイン",
+        "ガーデン",
+        "ローファイ",
+        "パステル",
+        "ファンタジー",
+        "ワイヤーフレーム",
+        "CMYK",
+        "オータム",
+        "アシッド",
+        "レモネード",
+        "ウィンター",
+        "ノルド",
+        "キャラメルラテ",
+        "シルク"
+      ],
+      "theme_options_dark": [
+        "デフォルト",
+        "シンセウェーブ",
+        "ハロウィン",
+        "フォレスト",
+        "アクア",
+        "ブラック",
+        "ラグジュアリー",
+        "ドラキュラ",
+        "ビジネス",
+        "ナイト",
+        "コーヒー",
+        "ディム",
+        "サンセット",
+        "アビス"
+      ],
+      "select_language": "言語",
+      "show_button_text": "ボタンテキスト",
+      "show_tool_tip": "ツールチップ",
+      "show_status_bar": "ステータスバー",
+      "show_map": "地図を表示",
+      "show_map_hint": "インターネット接続が必要です",
+      "debug_mode": "デバッグモード"
+    },
+    "grid_view": {
+      "title": "グリッド表示",
+      "style": "スタイル",
+      "style_options": [
+        "快適",
+        "コンパクト"
+      ],
+      "size": "サイズ",
+      "scaling": "スケーリング",
+      "scaling_options": [
+        "全体を表示",
+        "埋める",
+        "引き伸ばす"
+      ],
+      "label_primary": "メインラベル",
+      "label_primary_hint": "快適スタイルのみ",
+      "label_secondary": "サブラベル",
+      "label_secondary_hint": "快適スタイルのみ",
+      "label_options": [
+        "(なし)",
+        "名前",
+        "サイズ",
+        "寸法",
+        "時間",
+        "場所",
+        "カメラ",
+        "レンズ",
+        "設定"
+      ]
+    },
+    "filmstrip_view": {
+      "title": "フィルムストリップ",
+      "preview_position": "プレビュー位置",
+      "preview_position_options": [
+        "上",
+        "下"
+      ]
+    },
+    "image_view": {
+      "title": "画像表示",
+      "mouse_wheel": "マウスホイール",
+      "mouse_wheel_options": [
+        "前/次へ (Ctrlで拡大)",
+        "拡大/縮小"
+      ],
+      "slide_show_interval": "間隔: {second} 秒",
+      "auto_play_video": "動画自動再生",
+      "show_comment": "コメントを表示",
+      "show_comment_hint": "新しいウィンドウで表示時",
+      "navigator_view": "ナビゲーター",
+      "navigator_view_options": [
+        "自動",
+        "常に表示",
+        "常に非表示"
+      ],
+      "navigator_view__size": "サイズ",
+      "navigator_view_size_options": [
+        "小(160px)",
+        "中(240px)",
+        "大(320px)",
+        "特大(400px)"
+      ]
+    },
+    "image_search": {
+      "title": "画像検索",
+      "similarity": "類似度",
+      "similarity_hint": "高い = 結果が少ない",
+      "similarity_options": [
+        "非常に高い",
+        "高い",
+        "中",
+        "低い"
+      ]
+    },
+    "face_recognition": {
+      "title": "顔認識",
+      "similarity": "顔類似度",
+      "cluster_threshold": "クラスタしきい値",
+      "cluster_threshold_hint": "高い = 厳しい",
+      "cluster_threshold_options": [
+        "非常に高い",
+        "高い",
+        "中",
+        "低い"
+      ]
+    },
+    "about": {
+      "title": "情報",
+      "package": {
+        "name": "パッケージ名",
+        "description": "説明",
+        "version": "バージョン",
+        "build_time": "ビルド日時",
+        "author": "作者",
+        "license": "ライセンス",
+        "website": "ウェブサイト"
+      },
+      "auto_update": {
+        "check": "更新を確認",
+        "checking": "確認中...",
+        "install": "インストールして再起動",
+        "installing": "インストール中...",
+        "new_version_available": "新しいバージョンが利用可能です: {version}",
+        "latest_version": "最新バージョンです。",
+        "downloading_update": "更新をダウンロード中...",
+        "downloading_started": "ダウンロードを開始しました...",
+        "downloading": "ダウンロード中... {percent}%",
+        "download_finished": "ダウンロード完了。インストール中...",
+        "update_installed": "更新が完了しました。再起動します...",
+        "failed_check": "更新の確認に失敗しました",
+        "failed_install": "更新のインストールに失敗しました"
+      }
+    }
+  }
 }

@@ -765,6 +765,21 @@
         "author": "Author",
         "license": "License",
         "website": "Website"
+      },
+      "auto_update": {
+        "check": "Check Update",
+        "checking": "Checking...",
+        "install": "Install & Restart",
+        "installing": "Installing...",
+        "new_version_available": "New version available: {version}",
+        "latest_version": "You are on the latest version.",
+        "downloading_update": "Downloading update...",
+        "downloading_started": "Started downloading...",
+        "downloading": "Downloading... {percent}%",
+        "download_finished": "Download finished. Installing...",
+        "update_installed": "Update installed. Restarting...",
+        "failed_check": "Failed to check for updates",
+        "failed_install": "Failed to install update"
       }
     }
   }

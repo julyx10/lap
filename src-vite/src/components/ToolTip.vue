@@ -4,7 +4,7 @@
       <div v-if="isVisible" class="fixed inset-0 flex items-center justify-center pointer-events-none z-[900]">
         <div :class="[
           'px-4 py-2 rounded-box bg-base-100/80 backdrop-blur-md shadow-lg',
-          isError ? 'text-error-content/70' : 'text-base-content/70'
+          isError ? 'text-error/70' : 'text-base-content/70'
         ]">
           {{ message }}
         </div>

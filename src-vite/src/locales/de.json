@@ -1,771 +1,786 @@
 {
-    "sidebar": {
-        "home": "Startseite",
-        "library": "Bibliothek",
-        "search": "Suche",
-        "favorite": "Favoriten",
-        "tag": "Tags",
-        "calendar": "Kalender",
-        "location": "Ort",
-        "person": "Personen",
-        "camera": "Kameras",
-        "settings": "Einstellungen"
+  "sidebar": {
+    "home": "Startseite",
+    "library": "Bibliothek",
+    "search": "Suche",
+    "favorite": "Favoriten",
+    "tag": "Tags",
+    "calendar": "Kalender",
+    "location": "Ort",
+    "person": "Personen",
+    "camera": "Kameras",
+    "settings": "Einstellungen"
+  },
+  "album": {
+    "all_files": "Alle Dateien",
+    "album_list": "Alben",
+    "edit": {
+      "title_add": "Album hinzufügen",
+      "title": "Album bearbeiten",
+      "folder": "Ordner",
+      "select_folder": "Ordner wählen",
+      "name": "Name",
+      "description": "Beschreibung",
+      "description_placeholder": "Beschreibung eingeben",
+      "images": "Bilder",
+      "videos": "Videos",
+      "files_count": "{count} Dateien ({size})",
+      "files_counting": "Zähle Dateien...",
+      "created_at": "Erstellt am",
+      "modified_at": "Geändert am"
     },
-    "album": {
-        "all_files": "Alle Dateien",
-        "album_list": "Alben",
-        "edit": {
-            "title_add": "Album hinzufügen",
-            "title": "Album bearbeiten",
-            "folder": "Ordner",
-            "select_folder": "Ordner wählen",
-            "name": "Name",
-            "description": "Beschreibung",
-            "description_placeholder": "Beschreibung eingeben",
-            "images": "Bilder",
-            "videos": "Videos",
-            "files_count": "{count} Dateien ({size})",
-            "files_counting": "Zähle Dateien...",
-            "created_at": "Erstellt am",
-            "modified_at": "Geändert am"
-        },
-        "no_albums": {
-            "title": "Keine Alben",
-            "description": "Fügen Sie ein Album hinzu, um zu beginnen"
-        }
-    },
+    "no_albums": {
+      "title": "Keine Alben",
+      "description": "Fügen Sie ein Album hinzu, um zu beginnen"
+    }
+  },
+  "search": {
+    "title": "Bildsuche",
+    "search_images": "KI-Suche",
+    "similar_images": "Ähnliche",
+    "filename_search": "Dateiname",
+    "image_search_placeholder": "Nach Text suchen",
+    "image_search_history": "Suchverlauf",
+    "image_search_tips": "Geben Sie eine Beschreibung ein. Z.B. \"Sonnenuntergang am Meer\".",
+    "similar_images_tips": "Wählen Sie ein Bild für ähnliche Bilder",
+    "filename_search_tips": "Dateinamen eingeben",
+    "index": {
+      "wait_index": "Warte auf Update...",
+      "indexing": "Update '{album}'... {count} / {total}",
+      "description": "Bereite Album für Suche vor. Dies kann einige Minuten dauern.",
+      "cancel": "Abbrechen"
+    }
+  },
+  "face_index": {
+    "start": "Gesichter indexieren",
+    "indexing": "Indexiere Gesichter... {current} / {total}",
+    "clustering": "Gruppiere Gesichter...",
+    "faces_found": "{count} Gesichter gefunden",
+    "cluster_graph": "Erstelle Graph: {percent}%",
+    "cluster_iterate": "Iteration {current}/{total}",
+    "cluster_converged": "Konvergiert bei Iteration {current}",
+    "cluster_assign": "Erstelle Person {current}/{total}",
+    "cluster_thumbnail": "Erstelle Vorschaubilder...",
+    "cancel": "Abbrechen",
+    "incomplete": "Indexierung unvollständig ({count} Fotos offen)",
+    "resume": "Fortsetzen"
+  },
+  "favorite": {
+    "files": "Favorisierte Dateien",
+    "folders": "Favorisierte Ordner"
+  },
+  "tag": {
+    "add_tag": "Tag hinzufügen",
+    "delete_tag": "Tag löschen",
+    "edit_tag": "Tag bearbeiten",
+    "search_tags": "Tags suchen",
+    "enter_new_tag_name": "Neuer Tag-Name",
+    "not_found": "Keine Tags gefunden"
+  },
+  "calendar": {
+    "on_this_day": "An diesem Tag",
+    "title": "Kalender",
+    "monthly_view": "Monatsansicht",
+    "daily_view": "Tagesansicht",
+    "day": "Tag",
+    "week": "Woche",
+    "month": "Monat",
+    "year": "Jahr",
+    "today": "Heute",
+    "monthly": "Monatlich",
+    "daily": "Täglich",
+    "weekdays": [
+      "So",
+      "Mo",
+      "Di",
+      "Mi",
+      "Do",
+      "Fr",
+      "Sa"
+    ],
+    "weekdays_long": [
+      "Sonntag",
+      "Montag",
+      "Dienstag",
+      "Mittwoch",
+      "Donnerstag",
+      "Freitag",
+      "Samstag"
+    ],
+    "months": [
+      "Jan",
+      "Feb",
+      "Mär",
+      "Apr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Dez"
+    ],
+    "months_long": [
+      "Januar",
+      "Februar",
+      "März",
+      "April",
+      "Mai",
+      "Juni",
+      "Juli",
+      "August",
+      "September",
+      "Oktober",
+      "November",
+      "Dezember"
+    ]
+  },
+  "toolbar": {
     "search": {
-        "title": "Bildsuche",
-        "search_images": "KI-Suche",
-        "similar_images": "Ähnliche",
-        "filename_search": "Dateiname",
-        "image_search_placeholder": "Nach Text suchen",
-        "image_search_history": "Suchverlauf",
-        "image_search_tips": "Geben Sie eine Beschreibung ein. Z.B. \"Sonnenuntergang am Meer\".",
-        "similar_images_tips": "Wählen Sie ein Bild für ähnliche Bilder",
-        "filename_search_tips": "Dateinamen eingeben",
-        "index": {
-            "wait_index": "Warte auf Update...",
-            "indexing": "Update '{album}'... {count} / {total}",
-            "description": "Bereite Album für Suche vor. Dies kann einige Minuten dauern.",
-            "cancel": "Abbrechen"
-        }
+      "title": "Suchen",
+      "placeholder": "Dateiname"
     },
-    "face_index": {
-        "start": "Gesichter indexieren",
-        "indexing": "Indexiere Gesichter... {current} / {total}",
-        "clustering": "Gruppiere Gesichter...",
-        "faces_found": "{count} Gesichter gefunden",
-        "cluster_graph": "Erstelle Graph: {percent}%",
-        "cluster_iterate": "Iteration {current}/{total}",
-        "cluster_converged": "Konvergiert bei Iteration {current}",
-        "cluster_assign": "Erstelle Person {current}/{total}",
-        "cluster_thumbnail": "Erstelle Vorschaubilder...",
-        "cancel": "Abbrechen",
-        "incomplete": "Indexierung unvollständig ({count} Fotos offen)",
-        "resume": "Fortsetzen"
-    },
-    "favorite": {
-        "files": "Favorisierte Dateien",
-        "folders": "Favorisierte Ordner"
-    },
-    "tag": {
-        "add_tag": "Tag hinzufügen",
-        "delete_tag": "Tag löschen",
-        "edit_tag": "Tag bearbeiten",
-        "search_tags": "Tags suchen",
-        "enter_new_tag_name": "Neuer Tag-Name",
-        "not_found": "Keine Tags gefunden"
-    },
-    "calendar": {
-        "on_this_day": "An diesem Tag",
-        "title": "Kalender",
-        "monthly_view": "Monatsansicht",
-        "daily_view": "Tagesansicht",
-        "day": "Tag",
-        "week": "Woche",
-        "month": "Monat",
-        "year": "Jahr",
-        "today": "Heute",
-        "monthly": "Monatlich",
-        "daily": "Täglich",
-        "weekdays": [
-            "So",
-            "Mo",
-            "Di",
-            "Mi",
-            "Do",
-            "Fr",
-            "Sa"
-        ],
-        "weekdays_long": [
-            "Sonntag",
-            "Montag",
-            "Dienstag",
-            "Mittwoch",
-            "Donnerstag",
-            "Freitag",
-            "Samstag"
-        ],
-        "months": [
-            "Jan",
-            "Feb",
-            "Mär",
-            "Apr",
-            "Mai",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Okt",
-            "Nov",
-            "Dez"
-        ],
-        "months_long": [
-            "Januar",
-            "Februar",
-            "März",
-            "April",
-            "Mai",
-            "Juni",
-            "Juli",
-            "August",
-            "September",
-            "Oktober",
-            "November",
-            "Dezember"
-        ]
-    },
-    "toolbar": {
-        "search": {
-            "title": "Suchen",
-            "placeholder": "Dateiname"
-        },
-        "filter": {
-            "select_mode": "Auswahl",
-            "select_count": "{count} ausgewählt",
-            "sort_type_options": [
-                "Zeit",
-                "Name",
-                "Größe",
-                "Dimension",
-                "Zufällig"
-            ],
-            "sort_order_options": [
-                "Aufsteigend",
-                "Absteigend"
-            ],
-            "file_type_options": [
-                "Alle",
-                "Bilder",
-                "Videos"
-            ]
-        },
-        "tooltip": {
-            "restore": "Wiederherstellen",
-            "refresh": "Aktualisieren",
-            "grid_view": "Rasteransicht",
-            "filmstrip_view": "Filmstreifen",
-            "show_info": "Info anzeigen",
-            "hide_info": "Info ausblenden",
-            "clear_history": "Verlauf löschen",
-            "index_faces": "Gesichter indexieren",
-            "sort": "Sortieren",
-            "monthly": "Monatlich",
-            "daily": "Täglich",
-            "time_asc": "Zeit Auf",
-            "time_desc": "Zeit Ab"
-        }
-    },
-    "info_panel": {
-        "tabs": [
-            "Info",
-            "Vorschau"
-        ]
+    "filter": {
+      "select_mode": "Auswahl",
+      "select_count": "{count} ausgewählt",
+      "sort_type_options": [
+        "Zeit",
+        "Name",
+        "Größe",
+        "Dimension",
+        "Zufällig"
+      ],
+      "sort_order_options": [
+        "Aufsteigend",
+        "Absteigend"
+      ],
+      "file_type_options": [
+        "Alle",
+        "Bilder",
+        "Videos"
+      ]
     },
     "tooltip": {
-        "loading": "Laden...",
-        "not_found": {
-            "albums": "Keine Alben gefunden",
-            "files": "Keine Dateien gefunden",
-            "folder_files": "Keine Dateien. Versuchen Sie Unterordner",
-            "folders": "Keine Ordner gefunden",
-            "tag": "Keine Tags gefunden",
-            "calendar": "Keine Kalenderdaten",
-            "location": "Keine Ortsdaten",
-            "person": "Keine Personendaten",
-            "person_hint": "Versuchen Sie Gesichter zu indexieren",
-            "camera": "Keine Kameradaten"
-        },
-        "set_album_cover": {
-            "success": "Cover gesetzt",
-            "failed": "Fehler beim Setzen des Covers"
-        },
-        "copy_image": {
-            "success": "Bild kopiert",
-            "failed": "Fehler beim Kopieren"
-        },
-        "save_image": {
-            "success": "Bild gespeichert",
-            "failed": "Fehler beim Speichern"
-        },
-        "update_image": {
-            "success": "Bild aktualisiert",
-            "failed": "Fehler beim Aktualisieren"
-        },
-        "image_viewer": {
-            "first_image": "Erstes Bild",
-            "last_image": "Letztes Bild"
-        },
-        "album_exists": "Album existiert bereits"
+      "restore": "Wiederherstellen",
+      "refresh": "Aktualisieren",
+      "grid_view": "Rasteransicht",
+      "filmstrip_view": "Filmstreifen",
+      "show_info": "Info anzeigen",
+      "hide_info": "Info ausblenden",
+      "clear_history": "Verlauf löschen",
+      "index_faces": "Gesichter indexieren",
+      "sort": "Sortieren",
+      "monthly": "Monatlich",
+      "daily": "Täglich",
+      "time_asc": "Zeit Auf",
+      "time_desc": "Zeit Ab"
+    }
+  },
+  "info_panel": {
+    "tabs": [
+      "Info",
+      "Vorschau"
+    ]
+  },
+  "tooltip": {
+    "loading": "Laden...",
+    "not_found": {
+      "albums": "Keine Alben gefunden",
+      "files": "Keine Dateien gefunden",
+      "folder_files": "Keine Dateien. Versuchen Sie Unterordner",
+      "folders": "Keine Ordner gefunden",
+      "tag": "Keine Tags gefunden",
+      "calendar": "Keine Kalenderdaten",
+      "location": "Keine Ortsdaten",
+      "person": "Keine Personendaten",
+      "person_hint": "Versuchen Sie Gesichter zu indexieren",
+      "camera": "Keine Kameradaten"
     },
-    "statusbar": {
-        "files_summary": "{count} Dateien ({size})"
+    "set_album_cover": {
+      "success": "Cover gesetzt",
+      "failed": "Fehler beim Setzen des Covers"
     },
-    "menu": {
-        "select": {
-            "all": "Alles auswählen",
-            "none": "Auswahl aufheben",
-            "invert": "Auswahl umkehren"
-        },
-        "home": {
-            "delete": "Löschen",
-            "pin": "Anheften",
-            "unpin": "Lösen"
-        },
-        "library": {
-            "add": "Bibliothek hinzufügen...",
-            "edit": "Bibliothek bearbeiten...",
-            "manage": "Bibliotheken verwalten...",
-            "remove": "Bibliothek entfernen",
-            "default": "Standard-Bibliothek"
-        },
-        "album": {
-            "add": "Album hinzufügen...",
-            "edit": "Album bearbeiten...",
-            "index": "Dateien aktualisieren",
-            "include_in_search": "In Suche einbeziehen",
-            "exclude_from_search": "Vom Suchen ausschließen",
-            "remove": "Album entfernen",
-            "refresh": "Aktualisieren",
-            "reorder": "Neu ordnen",
-            "reorder_exit": "Neu ordnen beenden"
-        },
-        "file": {
-            "new_folder": "Neuer Ordner...",
-            "view_in_new_window": "In neuem Fenster...",
-            "copy": "In die Zwischenablage",
-            "edit": "Bild bearbeiten...",
-            "find_similar_images": "Ähnliche finden",
-            "find_person_images": "Personenbilder finden",
-            "find_album_folder": "Albumordner finden",
-            "on_this_day": "An diesem Tag",
-            "print": "Drucken",
-            "rename": "Umbenennen",
-            "move_to": "Verschieben nach...",
-            "copy_to": "Kopieren nach...",
-            "move_to_trash": "In Papierkorb",
-            "delete": "Löschen",
-            "reveal_in_finder": "Im Finder anzeigen...",
-            "reveal_in_file_explorer": "Im Explorer anzeigen...",
-            "set_album_cover": "Als Albumcover setzen"
-        },
-        "calendar": {
-            "monthly": "Monatsansicht",
-            "daily": "Tagesansicht",
-            "time_asc": "Zeit Auf",
-            "time_desc": "Zeit Ab"
-        },
-        "search": {
-            "clear_history": "Suchverlauf löschen"
-        },
-        "person": {
-            "index_faces": "Gesichter indexieren",
-            "reset_index": "Index zurücksetzen"
-        },
-        "tag": {
-            "add": "Tag hinzufügen...",
-            "rename": "Umbenennen",
-            "delete": "Löschen"
-        },
-        "meta": {
-            "favorite": "Favorisieren",
-            "unfavorite": "Entfavorisieren",
-            "tag": "Taggen...",
-            "comment": "Kommentieren...",
-            "rotate": "Drehen"
-        },
-        "sort": {
-            "sort_by_name": "Nach Name",
-            "sort_by_count": "Nach Anzahl"
-        }
+    "copy_image": {
+      "success": "Bild kopiert",
+      "failed": "Fehler beim Kopieren"
     },
-    "msgbox": {
-        "ok": "OK",
-        "reset": "Zurücksetzen",
-        "cancel": "Abbrechen",
-        "close": "Schließen",
-        "input": {
-            "file_name_invalid": "Ungültiger Name: \\ / : * ? \" < > |."
-        },
-        "reset_faces": {
-            "title": "Index zurücksetzen",
-            "content": "Alle Gesichtsdaten löschen? Kann nicht rückgängig gemacht werden.",
-            "ok": "Zurücksetzen"
-        },
-        "clear_search_history": {
-            "title": "Verlauf löschen",
-            "content": "Sicher, dass Sie den Verlauf löschen wollen?",
-            "ok": "Löschen"
-        },
-        "delete_person": {
-            "title": "Person löschen",
-            "content": "Sicher, dass Sie '{person}' löschen wollen?",
-            "ok": "Löschen"
-        },
-        "manage_libraries": {
-            "title": "Bibliotheken verwalten",
-            "name": "Name",
-            "visible": "Sichtbar",
-            "action": "Aktion",
-            "default": "Standard",
-            "current": "Aktuell",
-            "show": "Anzeigen",
-            "hide": "Ausblenden",
-            "hidden": "Ausgeblendet",
-            "delete": "Löschen",
-            "reorder": "Ordnen",
-            "rename": "Umbenennen",
-            "add_new": "Neue hinzufügen",
-            "add": "Hinzufügen",
-            "placeholder": "Bibliotheksname",
-            "max_limit_reached": "Limit erreicht",
-            "created_at_lower": "erstellt am",
-            "library_file_path": "Dateipfad",
-            "library_file_size": "Dateigröße",
-            "created_at": "Erstellt am"
-        },
-        "remove_library": {
-            "title": "Bibliothek entfernen",
-            "content": "'{library}' entfernen? Datenbankdatei wird gelöscht.",
-            "ok": "Entfernen",
-            "success": "'{library}' entfernt.",
-            "error": "Entfernen fehlgeschlagen."
-        },
-        "remove_album": {
-            "title": "Album entfernen",
-            "content": "'{album}' wird entfernt. Dateien bleiben erhalten.",
-            "ok": "Entfernen"
-        },
-        "rename_folder": {
-            "title": "Ordner umbenennen",
-            "content": "Neuer Name:",
-            "ok": "Umbenennen",
-            "error": "Fehler beim Umbenennen."
-        },
-        "new_folder": {
-            "title": "Neuer Ordner",
-            "placeholder": "Ordnername",
-            "ok": "Erstellen",
-            "error": "Fehler beim Erstellen."
-        },
-        "delete_folder": {
-            "title": "Ordner löschen",
-            "content": "'{folder}' und Inhalt werden gelöscht.",
-            "ok": "Löschen",
-            "success": "'{folder}' gelöscht.",
-            "error": "Fehler beim Löschen."
-        },
-        "trash_folder": {
-            "title": "In Papierkorb",
-            "content": "'{folder}' wird in den Papierkorb verschoben.",
-            "ok": "Papierkorb",
-            "success": "'{folder}' in Papierkorb.",
-            "error": "Fehler beim Verschieben."
-        },
-        "move_to": {
-            "title": "Verschiebe '{source}' nach",
-            "content": "Zielordner wählen:",
-            "ok": "Verschieben",
-            "error": "Fehler beim Verschieben."
-        },
-        "copy_to": {
-            "title": "Kopiere '{source}' nach",
-            "content": "Zielordner wählen:",
-            "ok": "Kopieren",
-            "error": "Fehler beim Kopieren."
-        },
-        "rename_file": {
-            "title": "Datei umbenennen",
-            "placeholder": "Neuer Name",
-            "ok": "Umbenennen",
-            "error": "Fehler beim Umbenennen."
-        },
-        "delete_file": {
-            "title": "Datei löschen",
-            "content": "'{file}' wird gelöscht.",
-            "ok": "Löschen",
-            "success": "'{file}' gelöscht.",
-            "error": "Fehler beim Löschen."
-        },
-        "delete_files": {
-            "title": "Dateien löschen",
-            "content": "{count} Dateien werden gelöscht.",
-            "ok": "Alle löschen",
-            "success": "{count} Dateien gelöscht.",
-            "error": "Fehler beim Löschen."
-        },
-        "trash_file": {
-            "title": "In Papierkorb",
-            "content": "'{file}' wird in den Papierkorb verschoben.",
-            "ok": "Papierkorb",
-            "success": "'{file}' in Papierkorb.",
-            "error": "Fehler beim Verschieben."
-        },
-        "trash_files": {
-            "title": "In Papierkorb",
-            "content": "{count} Dateien werden in den Papierkorb verschoben.",
-            "ok": "Papierkorb",
-            "success": "{count} Dateien in Papierkorb.",
-            "error": "Fehler beim Verschieben."
-        },
-        "new_tag": {
-            "title": "Neuer Tag",
-            "content": "Tag-Name:",
-            "ok": "Erstellen",
-            "error": "Fehler beim Erstellen."
-        },
-        "delete_tag": {
-            "title": "Tag löschen",
-            "content": "'{tag}' wird gelöscht.",
-            "ok": "Löschen",
-            "success": "'{tag}' gelöscht.",
-            "error": "Fehler beim Löschen."
-        },
-        "edit_comment": {
-            "title": "Kommentar bearbeiten",
-            "placeholder": "Kommentar",
-            "ok": "Speichern"
-        },
-        "select_folder": {
-            "error": "Ordnerauswahl fehlgeschlagen."
-        },
-        "select_file": {
-            "error": "Dateiauswahl fehlgeschlagen."
-        },
-        "image_editor": {
-            "title": "Bild bearbeiten",
-            "tab_edit": "Bearb.",
-            "tab_save": "Speichern",
-            "filters": "Filter",
-            "filter_none": "Kein",
-            "filter_grayscale": "Graustufen",
-            "filter_sepia": "Sepia",
-            "filter_invert": "Invertieren",
-            "adjustments": "Anpassungen",
-            "brightness": "Helligkeit",
-            "contrast": "Kontrast",
-            "blur": "Unschärfe",
-            "hue_rotate": "Farbton",
-            "saturation": "Sättigung",
-            "reset": "Reset",
-            "crop": "Zuschneiden",
-            "cancel_crop": "Abbrechen",
-            "confirm_crop": "Bestätigen",
-            "crop_shape": "Form",
-            "crop_shape_custom": "Benutzerdef.",
-            "crop_shape_landscape": "Landschaft",
-            "crop_shape_portrait": "Porträt",
-            "aspect_ratio": "Seitenverhältnis",
-            "zoom_in": "Zoom +",
-            "zoom_out": "Zoom -",
-            "rotate_left": "Links drehen",
-            "rotate_right": "Rechts drehen",
-            "flip_horizontal": "Horizontal spiegeln",
-            "flip_vertical": "Vertikal spiegeln",
-            "restore": "Wiederherstellen",
-            "resize": "Größe ändern",
-            "width": "Breite",
-            "height": "Höhe",
-            "percentage": "Prozent",
-            "pixel": "Pixel",
-            "options": "Optionen",
-            "save_as": "Speichern unter",
-            "save_as_options": [
-                "Überschreiben",
-                "Neue Datei"
-            ],
-            "save_as_placeholder": "Dateiname",
-            "format": "Format",
-            "format_options": [
-                "JPEG",
-                "PNG",
-                "WEBP"
-            ],
-            "quality": "Qualität",
-            "quality_options": [
-                "Hoch",
-                "Mittel",
-                "Niedrig"
-            ],
-            "copy_image": "Kopieren",
-            "ok": "Speichern",
-            "cancel": "Abbrechen",
-            "overwrite_confirm": "Originaldatei überschreiben? Kann nicht rückgängig gemacht werden."
-        }
+    "save_image": {
+      "success": "Bild gespeichert",
+      "failed": "Fehler beim Speichern"
     },
-    "file_info": {
-        "title": "Datei-Info",
-        "metadata": "Metadaten",
-        "location": "Ort",
-        "album_name": "Album",
-        "name": "Name",
-        "folder": "Ordner",
-        "dimension": "Dimension",
-        "size": "Größe",
-        "duration": "Dauer",
-        "created_at": "Erstellt am",
-        "modified_at": "Geändert am",
-        "camera": "Kamera",
-        "camera_make": "Hersteller",
-        "camera_model": "Modell",
-        "taken_at": "Aufgenommen am",
-        "taken_by": "Aufgenommen von",
-        "software": "Software",
-        "artist": "Künstler",
-        "copyright": "Urheberrecht",
-        "description": "Beschreibung",
-        "lens": "Objektiv",
-        "lens_make": "Obj. Hersteller",
-        "lens_model": "Obj. Modell",
-        "exposure_bias": "Belichtungskorr.",
-        "exposure_time": "Belichtungszeit",
-        "aperture": "Blende",
-        "focal_length": "Brennweite",
-        "iso": "ISO",
-        "flash": "Blitz",
-        "color_type": "Farbtyp",
-        "bit_depth": "Bittiefe",
-        "alpha_channel": "Alphakanal",
-        "gps_latitude": "Breitengrad",
-        "gps_longitude": "Längengrad",
-        "gps_altitude": "Höhe",
-        "geo_location": "Ort",
-        "tags": "Tags",
-        "comment": "Kommentar",
-        "capture_settings": "Aufnahmeeinst."
-    },
-    "map": {
-        "show_map": "Karte anzeigen",
-        "hide_map": "Karte ausblenden",
-        "zoom_in": "Zoom +",
-        "zoom_out": "Zoom -",
-        "zoom_center": "Zentrieren"
-    },
-    "format": {
-        "year": "yyyy",
-        "month": "MMMM yyyy",
-        "date": "dd.MM.yyyy",
-        "date_long": "d. MMMM yyyy",
-        "month_date": "d. MMMM",
-        "date_long_with_weekday": "EEEE, d. MMMM yyyy",
-        "date_time": "dd.MM.yyyy HH:mm:ss",
-        "date_time_long": "d. MMMM yyyy HH:mm:ss"
+    "update_image": {
+      "success": "Bild aktualisiert",
+      "failed": "Fehler beim Aktualisieren"
     },
     "image_viewer": {
-        "title": "Bildbetrachter",
-        "loading": "Lade...",
-        "failed": "Fehler beim Laden.",
-        "toolbar": {
-            "prev": "Vorheriges",
-            "next": "Nächstes",
-            "slide_show": "Diashow",
-            "pause": "Pause",
-            "zoom_in": "Zoom +",
-            "zoom_out": "Zoom -",
-            "zoom_fit": "Einpassen",
-            "zoom_actual": "Tatsächliche Größe",
-            "edit": "Bearbeiten",
-            "rotate": "Drehen",
-            "favorite": "Favorit",
-            "unfavorite": "Entfavorisieren",
-            "tag": "Taggen",
-            "comment": "Kommentar",
-            "info": "Info",
-            "save": "Speichern",
-            "delete": "Löschen",
-            "fullscreen": "Vollbild",
-            "exit_fullscreen": "Vollbild beenden",
-            "pin": "Leiste anheften",
-            "unpin": "Leiste lösen",
-            "close": "Schließen"
-        }
+      "first_image": "Erstes Bild",
+      "last_image": "Letztes Bild"
     },
-    "video": {
-        "loading": "Lade Video...",
-        "failed": "Wiedergabefehler",
-        "errors": {
-            "aborted": "Abgebrochen",
-            "network": "Netzwerkfehler",
-            "decode": "Dekodierfehler",
-            "format": "Nicht unterstützt",
-            "timeout": "Zeitüberschreitung",
-            "unknown": "Unbekannter Fehler"
-        }
+    "album_exists": "Album existiert bereits"
+  },
+  "statusbar": {
+    "files_summary": "{count} Dateien ({size})"
+  },
+  "menu": {
+    "select": {
+      "all": "Alles auswählen",
+      "none": "Auswahl aufheben",
+      "invert": "Auswahl umkehren"
     },
-    "settings": {
-        "general": {
-            "title": "Allgemein",
-            "appearance": "Erscheinungsbild",
-            "appearance_options": [
-                "Hell",
-                "Dunkel"
-            ],
-            "theme": "Design",
-            "theme_options_light": [
-                "Standard",
-                "Cupcake",
-                "Bumblebee",
-                "Emerald",
-                "Corporate",
-                "Retro",
-                "Cyberpunk",
-                "Valentine",
-                "Garden",
-                "Lofi",
-                "Pastel",
-                "Fantasy",
-                "Wireframe",
-                "Cmyk",
-                "Autumn",
-                "Acid",
-                "Lemonade",
-                "Winter",
-                "Nord",
-                "Caramellatte",
-                "Silk"
-            ],
-            "theme_options_dark": [
-                "Standard",
-                "Synthwave",
-                "Halloween",
-                "Forest",
-                "Aqua",
-                "Black",
-                "Luxury",
-                "Dracula",
-                "Business",
-                "Night",
-                "Coffee",
-                "Dim",
-                "Sunset",
-                "Abyss"
-            ],
-            "select_language": "Sprache",
-            "show_button_text": "Button-Text",
-            "show_tool_tip": "Tooltips",
-            "show_status_bar": "Statusleiste",
-            "show_map": "Karte anzeigen",
-            "show_map_hint": "Benötigt Internet",
-            "debug_mode": "Debug-Modus"
-        },
-        "grid_view": {
-            "title": "Rasteransicht",
-            "style": "Stil",
-            "style_options": [
-                "Komfortabel",
-                "Kompakt"
-            ],
-            "size": "Größe",
-            "scaling": "Skalierung",
-            "scaling_options": [
-                "Ganzes Bild",
-                "Füllen",
-                "Strecken"
-            ],
-            "label_primary": "Hauptlabel",
-            "label_primary_hint": "Nur bei Komfortabel",
-            "label_secondary": "Sekundärlabel",
-            "label_secondary_hint": "Nur bei Komfortabel",
-            "label_options": [
-                "(Leer)",
-                "Name",
-                "Größe",
-                "Dimension",
-                "Zeit",
-                "Ort",
-                "Kamera",
-                "Objektiv",
-                "Einstellungen"
-            ]
-        },
-        "filmstrip_view": {
-            "title": "Filmstreifen",
-            "preview_position": "Vorschauposition",
-            "preview_position_options": [
-                "Oben",
-                "Unten"
-            ]
-        },
-        "image_view": {
-            "title": "Bildansicht",
-            "mouse_wheel": "Mausrad",
-            "mouse_wheel_options": [
-                "Vorher/Nächst (Strg Zoom)",
-                "Zoom +/-"
-            ],
-            "slide_show_interval": "Intervall: {second} s",
-            "auto_play_video": "Video Autoplay",
-            "show_comment": "Kommentar zeigen",
-            "show_comment_hint": "In neuem Fenster",
-            "navigator_view": "Navigator",
-            "navigator_view_options": [
-                "Auto",
-                "Immer",
-                "Nie"
-            ],
-            "navigator_view__size": "Größe",
-            "navigator_view_size_options": [
-                "Klein(160px)",
-                "Mittel(240px)",
-                "Groß(320px)",
-                "Extra Groß(400px)"
-            ]
-        },
-        "image_search": {
-            "title": "Bildsuche",
-            "similarity": "Ähnlichkeit",
-            "similarity_hint": "Hoch = Weniger Ergebnisse",
-            "similarity_options": [
-                "Sehr hoch",
-                "Hoch",
-                "Mittel",
-                "Niedrig"
-            ]
-        },
-        "face_recognition": {
-            "title": "Gesichtserkennung",
-            "similarity": "Gesichtsähnlichkeit",
-            "cluster_threshold": "Cluster-Schwellenwert",
-            "cluster_threshold_hint": "Hoch = Strikt",
-            "cluster_threshold_options": [
-                "Sehr hoch",
-                "Hoch",
-                "Mittel",
-                "Niedrig"
-            ]
-        },
-        "about": {
-            "title": "Über",
-            "package": {
-                "name": "Paketname",
-                "description": "Beschreibung",
-                "version": "Version",
-                "build_time": "Build-Zeit",
-                "author": "Autor",
-                "license": "Lizenz",
-                "website": "Webseite"
-            }
-        }
+    "home": {
+      "delete": "Löschen",
+      "pin": "Anheften",
+      "unpin": "Lösen"
+    },
+    "library": {
+      "add": "Bibliothek hinzufügen...",
+      "edit": "Bibliothek bearbeiten...",
+      "manage": "Bibliotheken verwalten...",
+      "remove": "Bibliothek entfernen",
+      "default": "Standard-Bibliothek"
+    },
+    "album": {
+      "add": "Album hinzufügen...",
+      "edit": "Album bearbeiten...",
+      "index": "Dateien aktualisieren",
+      "include_in_search": "In Suche einbeziehen",
+      "exclude_from_search": "Vom Suchen ausschließen",
+      "remove": "Album entfernen",
+      "refresh": "Aktualisieren",
+      "reorder": "Neu ordnen",
+      "reorder_exit": "Neu ordnen beenden"
+    },
+    "file": {
+      "new_folder": "Neuer Ordner...",
+      "view_in_new_window": "In neuem Fenster...",
+      "copy": "In die Zwischenablage",
+      "edit": "Bild bearbeiten...",
+      "find_similar_images": "Ähnliche finden",
+      "find_person_images": "Personenbilder finden",
+      "find_album_folder": "Albumordner finden",
+      "on_this_day": "An diesem Tag",
+      "print": "Drucken",
+      "rename": "Umbenennen",
+      "move_to": "Verschieben nach...",
+      "copy_to": "Kopieren nach...",
+      "move_to_trash": "In Papierkorb",
+      "delete": "Löschen",
+      "reveal_in_finder": "Im Finder anzeigen...",
+      "reveal_in_file_explorer": "Im Explorer anzeigen...",
+      "set_album_cover": "Als Albumcover setzen"
+    },
+    "calendar": {
+      "monthly": "Monatsansicht",
+      "daily": "Tagesansicht",
+      "time_asc": "Zeit Auf",
+      "time_desc": "Zeit Ab"
+    },
+    "search": {
+      "clear_history": "Suchverlauf löschen"
+    },
+    "person": {
+      "index_faces": "Gesichter indexieren",
+      "reset_index": "Index zurücksetzen"
+    },
+    "tag": {
+      "add": "Tag hinzufügen...",
+      "rename": "Umbenennen",
+      "delete": "Löschen"
+    },
+    "meta": {
+      "favorite": "Favorisieren",
+      "unfavorite": "Entfavorisieren",
+      "tag": "Taggen...",
+      "comment": "Kommentieren...",
+      "rotate": "Drehen"
+    },
+    "sort": {
+      "sort_by_name": "Nach Name",
+      "sort_by_count": "Nach Anzahl"
     }
+  },
+  "msgbox": {
+    "ok": "OK",
+    "reset": "Zurücksetzen",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "input": {
+      "file_name_invalid": "Ungültiger Name: \\ / : * ? \" < > |."
+    },
+    "reset_faces": {
+      "title": "Index zurücksetzen",
+      "content": "Alle Gesichtsdaten löschen? Kann nicht rückgängig gemacht werden.",
+      "ok": "Zurücksetzen"
+    },
+    "clear_search_history": {
+      "title": "Verlauf löschen",
+      "content": "Sicher, dass Sie den Verlauf löschen wollen?",
+      "ok": "Löschen"
+    },
+    "delete_person": {
+      "title": "Person löschen",
+      "content": "Sicher, dass Sie '{person}' löschen wollen?",
+      "ok": "Löschen"
+    },
+    "manage_libraries": {
+      "title": "Bibliotheken verwalten",
+      "name": "Name",
+      "visible": "Sichtbar",
+      "action": "Aktion",
+      "default": "Standard",
+      "current": "Aktuell",
+      "show": "Anzeigen",
+      "hide": "Ausblenden",
+      "hidden": "Ausgeblendet",
+      "delete": "Löschen",
+      "reorder": "Ordnen",
+      "rename": "Umbenennen",
+      "add_new": "Neue hinzufügen",
+      "add": "Hinzufügen",
+      "placeholder": "Bibliotheksname",
+      "max_limit_reached": "Limit erreicht",
+      "created_at_lower": "erstellt am",
+      "library_file_path": "Dateipfad",
+      "library_file_size": "Dateigröße",
+      "created_at": "Erstellt am"
+    },
+    "remove_library": {
+      "title": "Bibliothek entfernen",
+      "content": "'{library}' entfernen? Datenbankdatei wird gelöscht.",
+      "ok": "Entfernen",
+      "success": "'{library}' entfernt.",
+      "error": "Entfernen fehlgeschlagen."
+    },
+    "remove_album": {
+      "title": "Album entfernen",
+      "content": "'{album}' wird entfernt. Dateien bleiben erhalten.",
+      "ok": "Entfernen"
+    },
+    "rename_folder": {
+      "title": "Ordner umbenennen",
+      "content": "Neuer Name:",
+      "ok": "Umbenennen",
+      "error": "Fehler beim Umbenennen."
+    },
+    "new_folder": {
+      "title": "Neuer Ordner",
+      "placeholder": "Ordnername",
+      "ok": "Erstellen",
+      "error": "Fehler beim Erstellen."
+    },
+    "delete_folder": {
+      "title": "Ordner löschen",
+      "content": "'{folder}' und Inhalt werden gelöscht.",
+      "ok": "Löschen",
+      "success": "'{folder}' gelöscht.",
+      "error": "Fehler beim Löschen."
+    },
+    "trash_folder": {
+      "title": "In Papierkorb",
+      "content": "'{folder}' wird in den Papierkorb verschoben.",
+      "ok": "Papierkorb",
+      "success": "'{folder}' in Papierkorb.",
+      "error": "Fehler beim Verschieben."
+    },
+    "move_to": {
+      "title": "Verschiebe '{source}' nach",
+      "content": "Zielordner wählen:",
+      "ok": "Verschieben",
+      "error": "Fehler beim Verschieben."
+    },
+    "copy_to": {
+      "title": "Kopiere '{source}' nach",
+      "content": "Zielordner wählen:",
+      "ok": "Kopieren",
+      "error": "Fehler beim Kopieren."
+    },
+    "rename_file": {
+      "title": "Datei umbenennen",
+      "placeholder": "Neuer Name",
+      "ok": "Umbenennen",
+      "error": "Fehler beim Umbenennen."
+    },
+    "delete_file": {
+      "title": "Datei löschen",
+      "content": "'{file}' wird gelöscht.",
+      "ok": "Löschen",
+      "success": "'{file}' gelöscht.",
+      "error": "Fehler beim Löschen."
+    },
+    "delete_files": {
+      "title": "Dateien löschen",
+      "content": "{count} Dateien werden gelöscht.",
+      "ok": "Alle löschen",
+      "success": "{count} Dateien gelöscht.",
+      "error": "Fehler beim Löschen."
+    },
+    "trash_file": {
+      "title": "In Papierkorb",
+      "content": "'{file}' wird in den Papierkorb verschoben.",
+      "ok": "Papierkorb",
+      "success": "'{file}' in Papierkorb.",
+      "error": "Fehler beim Verschieben."
+    },
+    "trash_files": {
+      "title": "In Papierkorb",
+      "content": "{count} Dateien werden in den Papierkorb verschoben.",
+      "ok": "Papierkorb",
+      "success": "{count} Dateien in Papierkorb.",
+      "error": "Fehler beim Verschieben."
+    },
+    "new_tag": {
+      "title": "Neuer Tag",
+      "content": "Tag-Name:",
+      "ok": "Erstellen",
+      "error": "Fehler beim Erstellen."
+    },
+    "delete_tag": {
+      "title": "Tag löschen",
+      "content": "'{tag}' wird gelöscht.",
+      "ok": "Löschen",
+      "success": "'{tag}' gelöscht.",
+      "error": "Fehler beim Löschen."
+    },
+    "edit_comment": {
+      "title": "Kommentar bearbeiten",
+      "placeholder": "Kommentar",
+      "ok": "Speichern"
+    },
+    "select_folder": {
+      "error": "Ordnerauswahl fehlgeschlagen."
+    },
+    "select_file": {
+      "error": "Dateiauswahl fehlgeschlagen."
+    },
+    "image_editor": {
+      "title": "Bild bearbeiten",
+      "tab_edit": "Bearb.",
+      "tab_save": "Speichern",
+      "filters": "Filter",
+      "filter_none": "Kein",
+      "filter_grayscale": "Graustufen",
+      "filter_sepia": "Sepia",
+      "filter_invert": "Invertieren",
+      "adjustments": "Anpassungen",
+      "brightness": "Helligkeit",
+      "contrast": "Kontrast",
+      "blur": "Unschärfe",
+      "hue_rotate": "Farbton",
+      "saturation": "Sättigung",
+      "reset": "Reset",
+      "crop": "Zuschneiden",
+      "cancel_crop": "Abbrechen",
+      "confirm_crop": "Bestätigen",
+      "crop_shape": "Form",
+      "crop_shape_custom": "Benutzerdef.",
+      "crop_shape_landscape": "Landschaft",
+      "crop_shape_portrait": "Porträt",
+      "aspect_ratio": "Seitenverhältnis",
+      "zoom_in": "Zoom +",
+      "zoom_out": "Zoom -",
+      "rotate_left": "Links drehen",
+      "rotate_right": "Rechts drehen",
+      "flip_horizontal": "Horizontal spiegeln",
+      "flip_vertical": "Vertikal spiegeln",
+      "restore": "Wiederherstellen",
+      "resize": "Größe ändern",
+      "width": "Breite",
+      "height": "Höhe",
+      "percentage": "Prozent",
+      "pixel": "Pixel",
+      "options": "Optionen",
+      "save_as": "Speichern unter",
+      "save_as_options": [
+        "Überschreiben",
+        "Neue Datei"
+      ],
+      "save_as_placeholder": "Dateiname",
+      "format": "Format",
+      "format_options": [
+        "JPEG",
+        "PNG",
+        "WEBP"
+      ],
+      "quality": "Qualität",
+      "quality_options": [
+        "Hoch",
+        "Mittel",
+        "Niedrig"
+      ],
+      "copy_image": "Kopieren",
+      "ok": "Speichern",
+      "cancel": "Abbrechen",
+      "overwrite_confirm": "Originaldatei überschreiben? Kann nicht rückgängig gemacht werden."
+    }
+  },
+  "file_info": {
+    "title": "Datei-Info",
+    "metadata": "Metadaten",
+    "location": "Ort",
+    "album_name": "Album",
+    "name": "Name",
+    "folder": "Ordner",
+    "dimension": "Dimension",
+    "size": "Größe",
+    "duration": "Dauer",
+    "created_at": "Erstellt am",
+    "modified_at": "Geändert am",
+    "camera": "Kamera",
+    "camera_make": "Hersteller",
+    "camera_model": "Modell",
+    "taken_at": "Aufgenommen am",
+    "taken_by": "Aufgenommen von",
+    "software": "Software",
+    "artist": "Künstler",
+    "copyright": "Urheberrecht",
+    "description": "Beschreibung",
+    "lens": "Objektiv",
+    "lens_make": "Obj. Hersteller",
+    "lens_model": "Obj. Modell",
+    "exposure_bias": "Belichtungskorr.",
+    "exposure_time": "Belichtungszeit",
+    "aperture": "Blende",
+    "focal_length": "Brennweite",
+    "iso": "ISO",
+    "flash": "Blitz",
+    "color_type": "Farbtyp",
+    "bit_depth": "Bittiefe",
+    "alpha_channel": "Alphakanal",
+    "gps_latitude": "Breitengrad",
+    "gps_longitude": "Längengrad",
+    "gps_altitude": "Höhe",
+    "geo_location": "Ort",
+    "tags": "Tags",
+    "comment": "Kommentar",
+    "capture_settings": "Aufnahmeeinst."
+  },
+  "map": {
+    "show_map": "Karte anzeigen",
+    "hide_map": "Karte ausblenden",
+    "zoom_in": "Zoom +",
+    "zoom_out": "Zoom -",
+    "zoom_center": "Zentrieren"
+  },
+  "format": {
+    "year": "yyyy",
+    "month": "MMMM yyyy",
+    "date": "dd.MM.yyyy",
+    "date_long": "d. MMMM yyyy",
+    "month_date": "d. MMMM",
+    "date_long_with_weekday": "EEEE, d. MMMM yyyy",
+    "date_time": "dd.MM.yyyy HH:mm:ss",
+    "date_time_long": "d. MMMM yyyy HH:mm:ss"
+  },
+  "image_viewer": {
+    "title": "Bildbetrachter",
+    "loading": "Lade...",
+    "failed": "Fehler beim Laden.",
+    "toolbar": {
+      "prev": "Vorheriges",
+      "next": "Nächstes",
+      "slide_show": "Diashow",
+      "pause": "Pause",
+      "zoom_in": "Zoom +",
+      "zoom_out": "Zoom -",
+      "zoom_fit": "Einpassen",
+      "zoom_actual": "Tatsächliche Größe",
+      "edit": "Bearbeiten",
+      "rotate": "Drehen",
+      "favorite": "Favorit",
+      "unfavorite": "Entfavorisieren",
+      "tag": "Taggen",
+      "comment": "Kommentar",
+      "info": "Info",
+      "save": "Speichern",
+      "delete": "Löschen",
+      "fullscreen": "Vollbild",
+      "exit_fullscreen": "Vollbild beenden",
+      "pin": "Leiste anheften",
+      "unpin": "Leiste lösen",
+      "close": "Schließen"
+    }
+  },
+  "video": {
+    "loading": "Lade Video...",
+    "failed": "Wiedergabefehler",
+    "errors": {
+      "aborted": "Abgebrochen",
+      "network": "Netzwerkfehler",
+      "decode": "Dekodierfehler",
+      "format": "Nicht unterstützt",
+      "timeout": "Zeitüberschreitung",
+      "unknown": "Unbekannter Fehler"
+    }
+  },
+  "settings": {
+    "general": {
+      "title": "Allgemein",
+      "appearance": "Erscheinungsbild",
+      "appearance_options": [
+        "Hell",
+        "Dunkel"
+      ],
+      "theme": "Design",
+      "theme_options_light": [
+        "Standard",
+        "Cupcake",
+        "Bumblebee",
+        "Emerald",
+        "Corporate",
+        "Retro",
+        "Cyberpunk",
+        "Valentine",
+        "Garden",
+        "Lofi",
+        "Pastel",
+        "Fantasy",
+        "Wireframe",
+        "Cmyk",
+        "Autumn",
+        "Acid",
+        "Lemonade",
+        "Winter",
+        "Nord",
+        "Caramellatte",
+        "Silk"
+      ],
+      "theme_options_dark": [
+        "Standard",
+        "Synthwave",
+        "Halloween",
+        "Forest",
+        "Aqua",
+        "Black",
+        "Luxury",
+        "Dracula",
+        "Business",
+        "Night",
+        "Coffee",
+        "Dim",
+        "Sunset",
+        "Abyss"
+      ],
+      "select_language": "Sprache",
+      "show_button_text": "Button-Text",
+      "show_tool_tip": "Tooltips",
+      "show_status_bar": "Statusleiste",
+      "show_map": "Karte anzeigen",
+      "show_map_hint": "Benötigt Internet",
+      "debug_mode": "Debug-Modus"
+    },
+    "grid_view": {
+      "title": "Rasteransicht",
+      "style": "Stil",
+      "style_options": [
+        "Komfortabel",
+        "Kompakt"
+      ],
+      "size": "Größe",
+      "scaling": "Skalierung",
+      "scaling_options": [
+        "Ganzes Bild",
+        "Füllen",
+        "Strecken"
+      ],
+      "label_primary": "Hauptlabel",
+      "label_primary_hint": "Nur bei Komfortabel",
+      "label_secondary": "Sekundärlabel",
+      "label_secondary_hint": "Nur bei Komfortabel",
+      "label_options": [
+        "(Leer)",
+        "Name",
+        "Größe",
+        "Dimension",
+        "Zeit",
+        "Ort",
+        "Kamera",
+        "Objektiv",
+        "Einstellungen"
+      ]
+    },
+    "filmstrip_view": {
+      "title": "Filmstreifen",
+      "preview_position": "Vorschauposition",
+      "preview_position_options": [
+        "Oben",
+        "Unten"
+      ]
+    },
+    "image_view": {
+      "title": "Bildansicht",
+      "mouse_wheel": "Mausrad",
+      "mouse_wheel_options": [
+        "Vorher/Nächst (Strg Zoom)",
+        "Zoom +/-"
+      ],
+      "slide_show_interval": "Intervall: {second} s",
+      "auto_play_video": "Video Autoplay",
+      "show_comment": "Kommentar zeigen",
+      "show_comment_hint": "In neuem Fenster",
+      "navigator_view": "Navigator",
+      "navigator_view_options": [
+        "Auto",
+        "Immer",
+        "Nie"
+      ],
+      "navigator_view__size": "Größe",
+      "navigator_view_size_options": [
+        "Klein(160px)",
+        "Mittel(240px)",
+        "Groß(320px)",
+        "Extra Groß(400px)"
+      ]
+    },
+    "image_search": {
+      "title": "Bildsuche",
+      "similarity": "Ähnlichkeit",
+      "similarity_hint": "Hoch = Weniger Ergebnisse",
+      "similarity_options": [
+        "Sehr hoch",
+        "Hoch",
+        "Mittel",
+        "Niedrig"
+      ]
+    },
+    "face_recognition": {
+      "title": "Gesichtserkennung",
+      "similarity": "Gesichtsähnlichkeit",
+      "cluster_threshold": "Cluster-Schwellenwert",
+      "cluster_threshold_hint": "Hoch = Strikt",
+      "cluster_threshold_options": [
+        "Sehr hoch",
+        "Hoch",
+        "Mittel",
+        "Niedrig"
+      ]
+    },
+    "about": {
+      "title": "Über",
+      "package": {
+        "name": "Paketname",
+        "description": "Beschreibung",
+        "version": "Version",
+        "build_time": "Build-Zeit",
+        "author": "Autor",
+        "license": "Lizenz",
+        "website": "Webseite"
+      },
+      "auto_update": {
+        "check": "Nach Updates suchen",
+        "checking": "Suchen...",
+        "install": "Installieren & Neustarten",
+        "installing": "Installieren...",
+        "new_version_available": "Neue Version verfügbar: {version}",
+        "latest_version": "Sie sind auf dem neuesten Stand.",
+        "downloading_update": "Update wird heruntergeladen...",
+        "downloading_started": "Download gestartet...",
+        "downloading": "Herunterladen... {percent}%",
+        "download_finished": "Download abgeschlossen. Installieren...",
+        "update_installed": "Update installiert. Neustart...",
+        "failed_check": "Fehler beim Suchen nach Updates",
+        "failed_install": "Fehler beim Installieren des Updates"
+      }
+    }
+  }
 }
