@@ -3,14 +3,14 @@
     <div ref="mapEl" style="width:100%; height:100%;"></div>
     <div class="absolute top-2 left-2 flex bg-base-100/30 hover:bg-base-100/70 rounded-box z-500 cursor-pointer">
       <TButton
-        :icon="IconZoomIn"
-        :disabled="zoom >= 18"
-        @click="zoomIn"
-      />
-      <TButton
         :icon="IconZoomOut"
         :disabled="zoom <= 0"
         @click="zoomOut"
+      />
+      <TButton
+        :icon="IconZoomIn"
+        :disabled="zoom >= 18"
+        @click="zoomIn"
       />
       <TButton
         :icon="IconMapCenter"
