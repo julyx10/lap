@@ -58,6 +58,9 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: --verbose
+          beforeBuildCommand: |
+             pnpm install
+             chmod +x download_models.sh && ./download_models.sh
 
       - name: Manual Notarization (macOS)
         if: matrix.platform == 'macos-latest'
