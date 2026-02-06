@@ -45,7 +45,7 @@ dirs = "5.0.1"
 walkdir = "2.5.0"
 trash = "3.0.0"
 base64 = "0.22.1"
-image = "0.25.6"
+image = "0.25.5"
 imagesize = "0.13.0"
 ffmpeg-next = { version = "8.0.0", features = ["static", "build"] }
 tokio = { version = "1.44.1", features = ["full"] }
