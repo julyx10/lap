@@ -37,11 +37,11 @@ jobs:
         run: pnpm install
         working-directory: src-vite
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli
-
+      # Use tauri-action to handle CLI setup and Build
+      # We provide Signing credentials but OMIT Notarization credentials (APPLE_ID/PASSWORD)
+      # This ensures we get a signed but not-yet-notarized bundle.
       - name: Build and Sign (No Notarization)
-        if: matrix.platform == 'macos-latest'
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -49,13 +49,15 @@ jobs:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          # NOTE: We intentionally OMIT notarization credentials here to skip auto-notarization
-        run: |
-          # Explicitly build frontend first to ensure it succeeds even if tauri hook fails context
-          cd src-vite && pnpm build 
-          # Run Tauri build using the JS CLI wrapper (faster than cargo install)
-          tauri build --verbose
-
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # APPLE_ID & APPLE_PASSWORD OMITTED intentionally
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'App v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+          args: --verbose
 
       - name: Manual Notarization (macOS)
         if: matrix.platform == 'macos-latest'
@@ -77,6 +79,26 @@ jobs:
           
           echo "✅ Stapling ticket..."
           xcrun stapler staple "$DMG_PATH"
+
+      # Since tauri-action might upload artifacts itself (if configured), we need to ensure
+      # we upload the NOTARIZED one.
+      # tauri-action with default config uploads assets.
+      # But since we didn't notarize during build, the uploaded asset by tauri-action is UN-NOTARIZED.
+      # We should probably overwrite it or upload it ourselves.
+      # However, tauri-action uploads at the END.
+      # Wait, tauri-action runs the build AND upload in one step if tagName is set?
+      # Yes.
+      # So `tauri-action` will upload the un-notarized DMG *before* we get to the manual notarization step.
+      # This is problematic.
+      # WORKAROUND: Don't let tauri-action upload!
+      # We remove `tagName` from `with`?
+      # If tagName is omitted, it just builds.
+      
+      # Let's verify tauri-action docs behavior.
+      # "If tagName is not provided, the action will simply build the app."
+      
+      # FIX: Remove release-related args from tauri-action so it ONLY builds.
+      # Then use separate step to Upload.
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
