@@ -60,6 +60,13 @@
           </a>
         </div>
 
+        <div class="font-semibold">GitHub</div>
+        <div>
+          <a :href="packageInfo.repository" target="_blank" class="link hover:text-primary-focus">
+            {{ packageInfo.repository }}
+          </a>
+        </div>
+
       </div>
     </div>
     
@@ -106,7 +113,7 @@ async function checkForUpdates() {
   
   try {
     const update = await check();
-    if (update && update.available) {
+    if (update) {
       updateAvailable.value = true;
       updateVersion.value = update.version;
       updateBody.value = update.body || '';

@@ -1,0 +1,15 @@
+{
+    "name": "lap-website",
+    "version": "1.0.0",
+    "description": "Website for Lap app",
+    "scripts": {
+        "dev": "vitepress dev",
+        "build": "vitepress build",
+        "preview": "vitepress preview"
+    },
+    "devDependencies": {
+        "vitepress": "^1.0.0",
+        "vue": "^3.0.0"
+    },
+    "packageManager": "pnpm@9.0.0"
+}

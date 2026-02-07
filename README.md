@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/logo.png" alt="Lap Logo" width="120" style="border-radius: 20px">
+  <img src="docs/public/logo.png" alt="Lap Logo" width="120" style="border-radius: 20px">
   <h1>Lap</h1>
   <h3>Your Photos, Your Rules. The Local-First, AI-Powered Photo Manager.</h3>
 </div>
@@ -7,6 +7,8 @@
 **Lap** is a lightning-fast, cross-platform photo manager built for people who love their files. It combines the privacy of folder-based organization with the power of modern AI—all running 100% locally on your device.
 
 Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep your memories safe without a cloud subscription.
+
+🌐 **Website**: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
 
 ## Download
 
@@ -27,13 +29,13 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
   <tr>
     <td align="center">
       <strong>Library - Dark Theme</strong><br>
-      <img src="docs/screenshots/01%20lap-main-dark.png" alt="Library" width="520">
+      <img src="docs/public/screenshots/01%20lap-main-dark.jpg" alt="Library" width="520">
       <br>
       <em>Handle 100k+ photos with smooth scrolling and instant thumbnails.</em>
     </td>
     <td align="center">
       <strong>AI Search - Light Theme</strong><br>
-      <img src="docs/screenshots/02%20lap-ai-search.png" alt="AI Search" width="520">
+      <img src="docs/public/screenshots/02%20lap-ai-search.jpg" alt="AI Search" width="520">
       <br>
       <em>"Sunset over the ocean" — Find exact moments with offline AI.</em>
     </td>
@@ -41,13 +43,13 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
   <tr>
     <td align="center">
       <strong>Calendar</strong><br>
-      <img src="docs/screenshots/03%20lap-calendar.png" alt="Calendar" width="520">
+      <img src="docs/public/screenshots/03%20lap-calendar.jpg" alt="Calendar" width="520">
       <br>
       <em>Time-travel through your memories by year, month, or day.</em>
     </td>
     <td align="center">
       <strong>Tags</strong><br>
-      <img src="docs/screenshots/04%20lap-tag.png" alt="Tags" width="520">
+      <img src="docs/public/screenshots/04%20lap-tag.jpg" alt="Tags" width="520">
       <br>
       <em>Organize your way: Bulk tagging and powerful filtering.</em>
     </td>
@@ -55,13 +57,13 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
   <tr>
     <td align="center">
       <strong>Location</strong><br>
-      <img src="docs/screenshots/05%20lap-location.png" alt="Location" width="520">
+      <img src="docs/public/screenshots/05%20lap-location.jpg" alt="Location" width="520">
       <br>
       <em>Interactive Map View: See where your story happened.</em>
     </td>
     <td align="center">
       <strong>Camera</strong><br>
-      <img src="docs/screenshots/06%20lap-camera.png" alt="Camera" width="520">
+      <img src="docs/public/screenshots/06%20lap-camera.jpg" alt="Camera" width="520">
       <br>
       <em>Group by Gear: Rediscover shots by Camera Make & Model.</em>
     </td>
@@ -69,13 +71,13 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
   <tr>
     <td align="center">
       <strong>Edit Image</strong><br>
-      <img src="docs/screenshots/07%20lap-edit-image.png" alt="Edit Image" width="520">
+      <img src="docs/public/screenshots/07%20lap-edit-image.jpg" alt="Edit Image" width="520">
       <br>
       <em>Quick essential edits without leaving your flow.</em>
     </td>
     <td align="center">
       <strong>Video</strong><br>
-      <img src="docs/screenshots/08%20lap-video.png" alt="Video" width="520">
+      <img src="docs/public/screenshots/08%20lap-video.jpg" alt="Video" width="520">
       <br>
       <em>Integrated Player: Watch videos seamlessly alongside photos.</em>
     </td>
@@ -176,5 +178,5 @@ Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) for details.
 Built on the shoulders of giants: Tauri, Vue, Rusqlite, FFmpeg, and many other open-source crates and libraries.
 
 <div align="center">
-  <img src="docs/logo2.png" alt="Lap Logo" width="200" style="border-radius: 20px">
+  <img src="docs/public/logo2.png" alt="Lap Logo" width="200" style="border-radius: 20px">
 </div>
