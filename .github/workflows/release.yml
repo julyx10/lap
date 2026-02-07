@@ -82,7 +82,9 @@ jobs:
         with:
           args: --verbose
 
-      - name: Notarize DMG (macOS)
+      # Submit notarization without waiting (async) to avoid CI timeout
+      # After CI completes, manually check status and staple before publishing
+      - name: Submit Notarization (Async)
         if: matrix.platform == 'macos-latest'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -97,20 +99,31 @@ jobs:
           fi
           echo "Found: $DMG_PATH"
 
-          echo "⏳ Uploading to Apple for notarization..."
+          echo "⏳ Submitting to Apple for notarization (async, no wait)..."
           xcrun notarytool submit "$DMG_PATH" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait
+            --team-id "$APPLE_TEAM_ID"
+          
+          echo "✅ Notarization submitted. Check status later with:"
+          echo "   xcrun notarytool history --apple-id \$APPLE_ID --password \$APPLE_PASSWORD --team-id \$APPLE_TEAM_ID"
 
-          echo "✅ Stapling notarization ticket..."
-          xcrun stapler staple "$DMG_PATH"
-
-      - name: Upload Release Assets
+      # Upload draft release - DMG is NOT stapled yet
+      - name: Upload Draft Release (Pending Notarization)
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             src-tauri/target/release/bundle/dmg/*.dmg
           draft: true
+          body: |
+            ⚠️ **Notarization Pending**
+            
+            The DMG has been submitted for Apple notarization but is NOT yet stapled.
+            
+            **Before publishing this release:**
+            1. Check notarization status: `xcrun notarytool history ...`
+            2. Download the DMG from this draft
+            3. Staple: `xcrun stapler staple <filename>.dmg`
+            4. Re-upload the stapled DMG
+            5. Publish the release
