@@ -18,7 +18,7 @@ jobs:
           - platform: macos-latest
             target: aarch64-apple-darwin
             arch: aarch64
-          - platform: macos-13  # Intel runner for x86_64 - ffmpeg-sys-next can't cross-compile
+          - platform: macos-12  # Intel runner for x86_64 - ffmpeg-sys-next can't cross-compile
             target: x86_64-apple-darwin
             arch: x86_64
     runs-on: ${{ matrix.platform }}
