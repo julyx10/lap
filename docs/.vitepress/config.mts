@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+    base: '/lap/',
     title: "Lap",
     description: "Local-first, AI-powered photo manager",
     head: [['link', { rel: 'icon', href: '/logo.png' }]],
