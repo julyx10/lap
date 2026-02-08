@@ -3,11 +3,11 @@ layout: home
 
 hero:
   name: "Lap"
-  text: "Your Photos, Your Rules."
-  tagline: "The local-first, AI-powered photo manager."
+  text: "Local-first, AI-powered Photo manager."
+  tagline: ""
   image:
-    src: /logo.png
-    alt: Lap Logo
+    src: /screenshots/lap-home.png
+    alt: Lap Screenshot
   actions:
     - theme: brand
       text: Download
@@ -17,72 +17,50 @@ hero:
       link: https://github.com/julyx10/lap
 
 features:
-  - title: Privacy First
-    details: Stop trading your privacy for convenience. Lap runs 100% offline. Your photos never leave your device.
+  - title: 100% Private
+    details: Stop trading privacy for convenience. Runs entirely offline. Your photos never leave your device.
     icon: 🔒
-  - title: Blazing Fast
-    details: Built with Rust and Tauri. Designed to handle libraries with 100,000+ assets smoothly.
+  - title: High Performance
+    details: Built with Rust and Tauri. Designed to handle libraries with 100,000+ assets with ease.
     icon: ⚡
-  - title: Local AI Magic
-    details: Find "cat in the grass", recognize faces, and discover similar shots—all powered by local AI.
+  - title: Smart Local AI
+    details: Search by content, recognize faces, and find similar shots—all processed 100% locally.
     icon: 🧠
   - title: File System Sync
     details: No proprietary database lock-in. Move a file in Finder, it updates in Lap instantly.
     icon: 📂
-  - title: Cross Platform
-    details: Available on macOS (Apple Silicon). Windows version coming soon.
+  - title: Multi-Platform
+    details: Native on macOS (Apple Silicon). Windows and Linux support arriving soon.
     icon: 🖥️
-  - title: Open Source
-    details: Community driven and transparent. Built with modern tech like Vue and Tauri.
+  - title: Open & Transparent
+    details: Community-driven and transparent source code. Built with modern tech like Vue and Tauri.
     icon: 🤝
 ---
 
-## Screenshots
-
-<div class="screenshots-grid">
-  <div class="screenshot-item">
-    <h4>Library - Dark Theme</h4>
-    <img src="/screenshots/01 lap-main-dark.jpg" alt="Library" />
-    <p>Handle 100k+ photos with smooth scrolling and instant thumbnails.</p>
-  </div>
-  <div class="screenshot-item">
-    <h4>AI Search - Light Theme</h4>
-    <img src="/screenshots/02 lap-ai-search.jpg" alt="AI Search" />
-    <p>"Sunset over the ocean" — Find exact moments with offline AI.</p>
-  </div>
-  <div class="screenshot-item">
-    <h4>Calendar</h4>
-    <img src="/screenshots/03 lap-calendar.jpg" alt="Calendar" />
-    <p>Time-travel through your memories by year, month, or day.</p>
-  </div>
-  <div class="screenshot-item">
-    <h4>Tags</h4>
-    <img src="/screenshots/04 lap-tag.jpg" alt="Tags" />
-    <p>Organize your way: Bulk tagging and powerful filtering.</p>
-  </div>
-  <div class="screenshot-item">
-    <h4>Location</h4>
-    <img src="/screenshots/05 lap-location.jpg" alt="Location" />
-    <p>Interactive Map View: See where your story happened.</p>
-  </div>
-  <div class="screenshot-item">
-    <h4>Camera</h4>
-    <img src="/screenshots/06 lap-camera.jpg" alt="Camera" />
-    <p>Group by Gear: Rediscover shots by Camera Make & Model.</p>
-  </div>
-  <div class="screenshot-item">
-    <h4>Edit Image</h4>
-    <img src="/screenshots/07 lap-edit-image.jpg" alt="Edit Image" />
-    <p>Quick essential edits without leaving your flow.</p>
-  </div>
-  <div class="screenshot-item">
-    <h4>Video</h4>
-    <img src="/screenshots/08 lap-video.jpg" alt="Video" />
-    <p>Integrated Player: Watch videos seamlessly alongside photos.</p>
-  </div>
-</div>
-
 <script setup>
+import { ref, onMounted } from 'vue'
+
+const isZoomed = ref(false)
+const imgSrc = ref('')
+
+onMounted(() => {
+  // Use a MutationObserver or a timeout to wait for VPHero to render if needed,
+  // but usually onMounted is enough for static SSR content in VitePress.
+  const interval = setInterval(() => {
+    const heroImg = document.querySelector('.VPHero .image-src')
+    if (heroImg) {
+      heroImg.style.cursor = 'zoom-in'
+      heroImg.addEventListener('click', (e) => {
+        imgSrc.value = e.target.src
+        isZoomed.value = true
+      })
+      clearInterval(interval)
+    }
+  }, 100)
+  
+  // Clean up interval after 5 seconds just in case
+  setTimeout(() => clearInterval(interval), 5000)
+})
 </script>
 
 <style>
@@ -91,43 +69,135 @@ features:
   --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #bd34fe 30%, #41d1ff);
 }
 
-.screenshots-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  margin-top: 32px;
-  padding: 0 24px;
+.VPNavBarTitle .logo {
+  border-radius: 8px;
 }
 
-@media (max-width: 768px) {
-  .screenshots-grid {
-    grid-template-columns: 1fr;
+/* Desktop layout - side by side 50/50 */
+@media (min-width: 960px) {
+  .VPHero .container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+  }
+  
+  .VPHero.has-image .main {
+    flex: 0 0 50% !important;
+    width: 50% !important;
+    max-width: none !important;
+    padding-right: 48px;
+  }
+  
+  .VPHero .image {
+    flex: 0 0 50% !important;
+    width: 50% !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    order: 2 !important;
+    margin: 0 !important;
+  }
+
+  .VPHero .image-container {
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    perspective: 1000px !important;
+  }
+
+  /* Force image and background to fill the 50% container */
+  .VPHero .image-src,
+  .VPHero .image-bg {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    width: 100% !important;
+  }
+
+  /* User adjustment for image scaling and perspective */
+  .VPHero .image-src {
+    transform: rotateX(5deg) rotateY(-10deg) rotateZ(0deg) !important;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .VPHero .image-src:hover {
+    transform: rotateY(0deg) rotateX(0deg) scale(1.05) !important;
+  }
+
+  /* Smaller font size for hero text */
+  .VPHero .text {
+    font-size: 32px !important;
+    line-height: 40px !important;
   }
 }
 
-.screenshot-item {
-  text-align: center;
-  background: var(--vp-c-bg-soft);
-  border-radius: 12px;
-  padding: 16px;
+@media (min-width: 960px) {
+  .VPHero .text {
+    font-size: 40px !important;
+    line-height: 48px !important;
+  }
 }
 
-.screenshot-item h4 {
-  margin: 0 0 12px 0;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
+/* Lightbox Styles */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  cursor: zoom-out;
+  animation: fadeIn 0.3s ease;
 }
 
-.screenshot-item img {
-  width: 100%;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  transform-origin: center;
+  animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.screenshot-item p {
-  margin: 12px 0 0 0;
-  font-size: 14px;
-  color: var(--vp-c-text-2);
-  font-style: italic;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  color: white;
+  font-size: 48px;
+  font-weight: 200;
+  cursor: pointer;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.close-btn:hover {
+  transform: scale(1.1);
 }
 </style>
+
+<div v-if="isZoomed" class="lightbox-overlay" @click="isZoomed = false">
+  <img :src="imgSrc" class="lightbox-img" />
+  <div class="close-btn">&times;</div>
+</div>

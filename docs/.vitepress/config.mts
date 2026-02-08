@@ -26,7 +26,7 @@ export default defineConfig({
         ],
         footer: {
             message: 'Released under the GPL-3.0 License.',
-            copyright: 'Copyright © 2024 Lap Contributors'
+            copyright: 'Copyright © 2026 Lap Contributors'
         }
     }
 })
