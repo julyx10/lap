@@ -267,8 +267,8 @@ const setupPlayer = (index: number) => {
 
     player.on('volumechange', () => {
       if (activeVideo.value === index) {
-        config.setVideoVolume(player.volume());
-        config.setVideoMuted(player.muted());
+        config.video.volume = player.volume();
+        config.video.muted = player.muted();
       }
     });
   }
@@ -417,7 +417,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
-  players.value.forEach(p => {
+  players.value.forEach((p: ReturnType<typeof videojs> | null) => {
     if (p) {
       p.off('play');
       p.off('pause');
@@ -432,7 +432,7 @@ onBeforeUnmount(() => {
 });
 
 watch(videoJsLang, (newLang) => {
-  players.value.forEach(p => p?.language(newLang));
+  players.value.forEach((p: ReturnType<typeof videojs> | null) => p?.language(newLang));
 });
 
 watch(() => props.filePath, (newPath) => { 
@@ -484,7 +484,7 @@ defineExpose({
   zoomActual, 
   rotateRight,
   pause: () => {
-    players.value.forEach(p => p?.pause());
+    players.value.forEach((p: ReturnType<typeof videojs> | null) => p?.pause());
   },
 });
 

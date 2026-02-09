@@ -261,7 +261,7 @@ const clickOk = async () => {
   if (inputNameValue.value.trim().length > 0 && selectedFolder.value.length > 0) {
     // Check if album with this path already exists
     if (props.isNewAlbum) {
-      const albums = await getAllAlbums(false);
+      const albums = await getAllAlbums();
       const exists = albums?.some((album: any) => album.path === selectedFolder.value);
       if (exists) {
         toolTipRef.value?.showTip(t('tooltip.album_exists'));

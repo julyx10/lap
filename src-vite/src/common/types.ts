@@ -25,8 +25,8 @@ export interface Album {
     is_favorite?: boolean;
     total?: number;
     indexed?: number;
-    created_at?: string;
-    modified_at?: string;
+    created_at?: number;
+    modified_at?: number;
     children?: Folder[];
 }
 
@@ -55,3 +55,34 @@ export interface AlbumSelectionContext {
  * Injection key for album selection context
  */
 export const ALBUM_SELECTION_KEY = Symbol('albumSelection');
+
+/**
+ * Represents a face bounding box
+ */
+export interface BBox {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+/**
+ * Represents a face record from the API/DB (raw data)
+ */
+export interface RawFace {
+    id: number;
+    file_id: number;
+    person_id: number;
+    person_name?: string;
+    bbox: string; // JSON string
+    created_at?: number;
+    modified_at?: number;
+}
+
+/**
+ * Represents a face record with parsed bounding box
+ */
+export interface Face extends Omit<RawFace, 'bbox'> {
+    bbox: BBox;
+}
+

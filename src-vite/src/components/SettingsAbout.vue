@@ -5,7 +5,7 @@
     <div class="ml-4 flex flex-row items-center justify-center gap-2">
       <!-- App Logo -->
       <div class="">
-        <img :src="LogoFull" class="w-24 h-24 mx-auto rounded-box drop-shadow-lg" />
+        <img src="@/assets/images/logo.png" class="w-24 h-24 mx-auto rounded-box drop-shadow-lg" />
       </div>
       <div class="flex flex-col">
         <h3 class="text-xl font-bold">{{ packageInfo.name }}</h3>
@@ -78,7 +78,6 @@
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getPackageInfo, getBuildTime } from '@/common/api';
-import LogoFull from '@/assets/images/logo.png';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import ToolTip from '@/components/ToolTip.vue';

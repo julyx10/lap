@@ -4,7 +4,7 @@
     <div class="pb-4 flex items-center space-x-2">
       <div 
         :class="[
-          'flex-grow h-8 flex items-center rounded-box transition-colors bg-base-100',
+          'grow h-8 flex items-center rounded-box transition-colors bg-base-100',
           isSearchFocused ? 'border-2 border-primary' : 'border border-neutral-content/20 hover:border-neutral-content/50'
         ]"
       >
@@ -100,8 +100,8 @@ const emit = defineEmits(['ok', 'cancel']);
 const uiStore = useUIStore();
 
 const allTags = ref<any[]>([]);
-const tagSearchInputRef = ref(null);
-const newTagNameInputRef = ref(null);
+const tagSearchInputRef = ref<HTMLInputElement | null>(null);
+const newTagNameInputRef = ref<HTMLInputElement | null>(null);
 const tagSearch = ref('');
 const newTagName = ref('');
 const isSearchFocused = ref(false);
@@ -155,7 +155,7 @@ async function loadExistingTagsForFiles() {
   // Fetch tags for each file
   for (const fileId of props.fileIds) {
     const tags = (await getTagsForFile(fileId)) || [];
-    const tagIdsForFile = new Set(tags.map((tag: any) => tag.id));
+    const tagIdsForFile = new Set<number>(tags.map((tag: any) => tag.id));
     tagsPerFile.set(fileId, tagIdsForFile);
     tags.forEach((tag: any) => allUniqueTagIds.add(tag.id));
   }

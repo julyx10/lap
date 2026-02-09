@@ -17,7 +17,7 @@
       <transition name="fade">
         <div v-if="isDropDown"
           ref="menu"
-          class="menu mt-1 text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 absolute rounded-box shadow-lg z-[500]"
+          class="menu mt-1 text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 absolute rounded-box shadow-lg z-500"
           :style="menuStyle"
         >
           <!-- menu group 1 -->

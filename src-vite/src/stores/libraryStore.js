@@ -11,6 +11,7 @@ export const useLibraryStore = defineStore('libraryStore', {
     _initialized: false,
 
     // Per-library state
+    /** @type {{ id: number, folderId: number | null, folderPath: string, selected: boolean }} */
     album: {
       id: 0,                  // current album id (0: show all files)
       folderId: null,         // current folder id
@@ -18,38 +19,45 @@ export const useLibraryStore = defineStore('libraryStore', {
       selected: false,        // album is selected
     },
 
+    /** @type {{ albumId: number | null, folderId: number, folderPath: string }} */
     favorite: {
       albumId: null,
       folderId: 0,            // 0 means favorite files (default)
-      folderPath: null,
+      folderPath: '',
     },
 
+    /** @type {{ id: number | null }} */
     tag: {
       id: null,
     },
 
+    /** @type {{ year: number | null, month: number | null, date: number | null }} */
     calendar: {
       year: null,             // selected year
       month: null,            // selected month (1-12)
       date: null,             // selected date (1-31), -1 means selecting a month
     },
 
+    /** @type {{ make: string | null, model: string | null }} */
     camera: {
       make: null,             // selected camera make
       model: null,            // selected camera model
     },
 
+    /** @type {{ cc: string | null, admin1: string | null, name: string | null }} */
     location: {
       cc: null,               // country code
       admin1: null,           // admin1 (state/province)
       name: null,             // location name
     },
 
+    /** @type {{ id: number | null, name: string | null }} */
     person: {
       id: null,               // selected person id
       name: null,             // selected person name
     },
 
+    /** @type {{ searchText: string, searchHistory: (string | { text: string, file_id: number | null })[], searchHistoryIndex: number, similarImageHistory: number[], similarImageHistoryIndex: number, fileName: string }} */
     search: {
       searchText: '',         // AI search text
       searchHistory: [],      // AI search history
@@ -59,6 +67,7 @@ export const useLibraryStore = defineStore('libraryStore', {
       fileName: '',           // filename search text
     },
 
+    /** @type {{ albumId: number | null, folderId: number | null, folderPath: string | null, selected: boolean }} */
     destFolder: {
       albumId: null,          // destination album id
       folderId: null,         // destination folder id

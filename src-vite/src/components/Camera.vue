@@ -20,7 +20,7 @@
               @click.stop="clickExpandCamera(camera)"
             />
             <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ camera.make }}</span>
-            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ camera.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
+            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ camera.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
             <li v-for="(model, index) in camera.models" class="pl-4"> 

@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 bg-black/30 z-[600]">
+    <div class="fixed inset-0 bg-black/30 z-600">
       <div 
         ref="modalDialogRef"
         class="text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box overflow-hidden flex flex-col"

@@ -20,7 +20,7 @@
               @click.stop="clickExpandLocation(location)"
             />
             <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
-            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ location.counts.reduce((a, b) => a + b, 0).toLocaleString() }}</span>
+            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ location.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="location.is_expanded && location.names.length > 0">
             <li v-for="(name, index) in location.names" class="pl-4">

@@ -20,7 +20,7 @@
       <div v-if="favorite_folders.length > 0" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
         {{ $t('favorite.folders') }}
       </div>
-      <div class="flex-grow overflow-x-hidden overflow-y-auto">
+      <div class="grow overflow-x-hidden overflow-y-auto">
         <ul>
           <li v-for="folder in favorite_folders" :key="folder.id">
             <div 
@@ -89,7 +89,13 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 // favorite folders
-const favorite_folders = ref([]);
+interface FavoriteFolder {
+  id: number;
+  album_id: number;
+  path: string;
+  name?: string;
+}
+const favorite_folders = ref<FavoriteFolder[]>([]);
 
 // favorite folder menuitems
 const favoriteFolderMenuItems = computed(() => {
@@ -148,7 +154,7 @@ function UnFavorite() {
 
     if (favorite_folders.value.length === 0) {
       libConfig.favorite.folderId = 0;  // 0 means favorite files
-      libConfig.favorite.albumId = 0;
+      libConfig.favorite.albumId = null;
       libConfig.favorite.folderPath = '';
     } else if (index === 0) {  // if the folder is the first one, set the first one as the favorite
       libConfig.favorite.folderId = favorite_folders.value[index].id;

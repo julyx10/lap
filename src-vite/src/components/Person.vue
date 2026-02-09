@@ -177,7 +177,7 @@ const allPersons = ref<any[]>([]);
 const selectedPerson = ref<any>(null);
 const isRenamingPerson = ref(false);
 const originalPersonName = ref('');
-const personInputRef = ref([]);
+const personInputRef = ref<HTMLInputElement[]>([]);
 const isIndexing = ref(false);
 const indexProgress = ref({
   current: 0,
@@ -312,7 +312,7 @@ function selectPerson(person: any) {
   if (isRenamingPerson.value) return;
   selectedPerson.value = person;
   if (!libConfig.person) {
-    libConfig.person = { id: null };
+    libConfig.person = { id: null, name: null };
   }
   libConfig.person.id = person.id;
   libConfig.person.name = person.name;

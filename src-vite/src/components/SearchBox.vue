@@ -20,7 +20,7 @@
     />
 
     <!-- Search Icon (Inside input when focused) -->
-    <IconFilter
+    <IconSearch
       class="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 group-hover:text-base-content z-10 cursor-pointer"
       @click="focusInput"
     />
@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
-import { IconClose, IconFilter } from '@/common/icons';
+import { IconClose, IconSearch } from '@/common/icons';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -53,7 +53,7 @@ const uiStore = useUIStore();
 const inputValue = ref('');
 const isFocused = ref(false);
 const searchValue = ref(props.modelValue);
-const searchInputRef = ref(null);
+const searchInputRef = ref<HTMLInputElement | null>(null);
 
 let unlistenKeydown: () => void;
 
@@ -71,7 +71,7 @@ watch(() => props.modelValue, (newValue) => {
   inputValue.value = newValue; 
 }, { immediate: true });
 
-function handleKeyDown(event) {
+function handleKeyDown(event: any) {
   if (!uiStore.isInputActive('SearchBox')) return;
 
   const { key } = event.payload;
@@ -108,7 +108,7 @@ const handleBlur = () => {
   uiStore.removeInputHandler('SearchBox');
 };
 
-function handleInput(event) {
+function handleInput(event: any) {
   // if (inputValue.value.length === 0)
   //   emit('update:modelValue', inputValue.value);
 };
@@ -122,7 +122,7 @@ const clickSearch = () => {
   updateSearch(inputValue.value.trim());
 };
 
-const updateSearch = (value) => {
+const updateSearch = (value: string) => {
   emit('update:modelValue', value);
   searchValue.value = value;
 

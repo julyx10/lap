@@ -3,6 +3,7 @@
     class="w-full h-full relative flex flex-col items-center justify-center group"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
+    @contextmenu.prevent="handleContextMenu"
     ref="containerRef"
   >
     <!-- Toolbar -->
@@ -92,6 +93,7 @@
           />
         </template>
         <ContextMenu v-if="mode !== 2"
+          ref="contextMenuRef"
           :iconMenu="IconMore"
           :menuItems="singleFileMenuItems"
           :disabled="fileIndex < 0 || isSlideShow"
@@ -121,7 +123,7 @@
     <!-- Previous Button (Overlay) -->
     <button 
       v-if="!isSlideShow"
-      class="absolute left-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
+      class="absolute left-2 top-1/2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
       :class="[ 
         isHoverLeft ? (hasPrevious ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
       ]"
@@ -135,7 +137,7 @@
     <!-- Next Button (Overlay) -->
     <button 
       v-if="!isSlideShow"
-      class="absolute right-2 top-1/2 -translate-y-1/2 z-[70] p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
+      class="absolute right-2 top-1/2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
       :class="[ 
         isHoverRight ? (hasNext ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
       ]"
@@ -149,7 +151,7 @@
     <!-- Close Button (Top Right) -->
     <button 
       v-if="mode === 0 && !config.mediaViewer.isPinned"
-      class="absolute right-2 top-2 z-[90] p-2 rounded-full text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer"
+      class="absolute right-2 top-2 z-90 p-2 rounded-full text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer"
       @click.stop="$emit('close')"
       @dblclick.stop
     >
@@ -280,6 +282,7 @@ const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale',
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
+const contextMenuRef = ref<any>(null);
 const containerRef = ref<HTMLElement | null>(null);
 const mediaRef = ref<any>(null);
 const toolTipRef = ref<any>(null);
@@ -356,6 +359,12 @@ function handleMouseLeave() {
   isHoverRight.value = false;
   isHoverTop.value = false;
   isHoverBottom.value = false;
+}
+
+function handleContextMenu(e: MouseEvent) {
+  if (contextMenuRef.value) {
+    contextMenuRef.value.open(e.clientX, e.clientY);
+  }
 }
 
 const computedToolbarClass = computed(() => {

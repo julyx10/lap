@@ -63,10 +63,10 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 const yearTitle = computed(() => formatDate(props.year, 1, 1, localeMsg.value.format.year));
 
 // Sum the count values for the given month
-function sumMonthCount(month) {
+function sumMonthCount(month: number) {
   let sum = 0;
   if (props.months[month]) {
-    props.months[month].forEach(entry => {
+    props.months[month].forEach((entry: any) => {
       sum += Number(entry.count) || 0; // Sum the count values, defaulting to 0 if missing
     });
   }
@@ -74,17 +74,17 @@ function sumMonthCount(month) {
 }
 
 // Check if the given month is this month
-function isThisMonth(year, month) {
+function isThisMonth(year: number, month: number) {
   const now = new Date();
   // Check if the given year and month match the current year and month
   return year === now.getFullYear() && (month - 1) === now.getMonth();
 }
 
 // Check if the year or month is selected
-const isSelected = (year, month) => libConfig.calendar.year === year && libConfig.calendar.month === month;
+const isSelected = (year: number, month: number) => libConfig.calendar.year === year && libConfig.calendar.month === month;
 
 // click a year or a month to select it
-const clickDate = (year, month) => {
+const clickDate = (year: number, month: number) => {
   libConfig.calendar.year = year;
   libConfig.calendar.month = month; // -1 means selecting a year
   libConfig.calendar.date = -1;   // -1 means selecting a month

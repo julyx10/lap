@@ -43,11 +43,16 @@
 
 <script setup lang="ts">
 
-import { computed } from 'vue';
+import { computed, PropType } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getDaysInMonth, startOfMonth, getDay, isToday } from 'date-fns';
 import { libConfig } from '@/common/config';
 import { formatDate } from '@/common/utils';
+
+interface DateItem {
+  date: number;
+  count: number;
+}
 
 const props = defineProps({
   year: {
@@ -59,7 +64,7 @@ const props = defineProps({
     required: true,
   },
   dates: {
-    type: Array,
+    type: Array as PropType<DateItem[]>,
     required: true,
   },
 });
@@ -81,15 +86,15 @@ const blankDates = computed(() => {
 const monthDates = getMonthDates(props.year, props.month, props.dates);
 
 // Check if the given date is today
-const isTodayFn = (date) => isToday(new Date(props.year, props.month - 1, date));
+const isTodayFn = (date: number) => isToday(new Date(props.year, props.month - 1, date));
 
 // Check if the date is selected
-const isSelected = (year, month, date) => libConfig.calendar.year === year &&
+const isSelected = (year: number, month: number, date: number) => libConfig.calendar.year === year &&
                                           libConfig.calendar.month === month && 
                                           libConfig.calendar.date === date;
 
 // Generate an array of { date, count } objects for the month
-function getMonthDates(year, month, dates = []) {
+function getMonthDates(year: number, month: number, dates: DateItem[] = []) {
   // Get the number of days in the month
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
 
@@ -110,7 +115,7 @@ function getMonthDates(year, month, dates = []) {
 }
 
 // click a date to select it
-const clickDate = (year, month, date) => {
+const clickDate = (year: number, month: number, date: number) => {
   libConfig.calendar.year = year;
   libConfig.calendar.month = month; // -1 means selecting a year
   libConfig.calendar.date = date;   // -1 means selecting a month

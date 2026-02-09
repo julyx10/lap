@@ -7,7 +7,8 @@ let _config = null;
 let _libConfig = null;
 
 // Getter that lazily initializes the config store
-export const config = new Proxy({}, {
+/** @type {ReturnType<typeof useConfigStore>} */
+export const config = new Proxy(/** @type {any} */ ({}), {
   get(_, prop) {
     if (!_config) {
       _config = useConfigStore();
@@ -24,7 +25,8 @@ export const config = new Proxy({}, {
 });
 
 // Getter that lazily initializes the library store
-export const libConfig = new Proxy({}, {
+/** @type {ReturnType<typeof useLibraryStore>} */
+export const libConfig = new Proxy(/** @type {any} */ ({}), {
   get(_, prop) {
     if (!_libConfig) {
       _libConfig = useLibraryStore();

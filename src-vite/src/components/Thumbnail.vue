@@ -198,7 +198,7 @@ const layoutStyle = computed(() => {
       height: config.settings.grid.size + 'px'
     }
   }
-  else if (config.content.showFilmStrip) {
+  else {
     return {
       width: '100%',
       height: '100%'
@@ -218,7 +218,7 @@ const menuItems = useFileMenuItems(
   (action) => emit('action', action)
 );
 
-const getGridLabelText = (file, option) => {
+const getGridLabelText = (file: any, option: number) => {
   switch (option) {
     case 0: return '';
     case 1: return shortenFilename(file.name) || ' ';
@@ -233,7 +233,7 @@ const getGridLabelText = (file, option) => {
   }
 };
 
-const getGridLabelTooltip = (file, option) => {
+const getGridLabelTooltip = (file: any, option: number) => {
   if (option === 1) return file.name;
   const text = getGridLabelText(file, option);
   return text === ' ' ? '' : text;

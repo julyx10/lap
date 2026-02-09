@@ -2,7 +2,7 @@
 
   <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="868" @cancel="clickCancel">
     <!-- content -->
-    <div class="flex-grow flex gap-4 select-none">
+    <div class="grow flex gap-4 select-none">
       <div class="flex-1">
         <!-- image container -->
         <div ref="containerRef" class="relative w-[610px] h-[460px] outline outline-base-content/5 cursor-default rounded-box overflow-hidden select-none">
@@ -359,7 +359,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, type CSSProperties } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
@@ -400,7 +400,7 @@ const localeMsg = computed(() => messages.value[config.settings.language] as any
 const uiStore = useUIStore();
 const emit = defineEmits(['success', 'failed', 'cancel']);
 
-const toolTipRef = ref(null);
+const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 const isProcessing = ref(false);  // show processing status
 const activeTab = ref('adjust'); // 'adjust', 'export'
 
@@ -426,7 +426,7 @@ const isFlippedY = ref(false);
 const scale = ref(1);
 const rotate = ref(0);  // 0, 90, 180, 270, -90, -180, -270
 
-const imageStyle = computed(() => ({
+const imageStyle = computed((): CSSProperties => ({
   display: 'block',
   minWidth: `${imageWidth.value}px`,
   minHeight: `${imageHeight.value}px`,
@@ -709,7 +709,7 @@ const initCropBox = () => {
   imageRect.value = imageRef.value?.getBoundingClientRect() || null;
   if (!imageRect.value || !containerRect.value) return;
 
-  const selectedShape = cropShapeOptions.value.find(option => option.value === config.imageEditor.cropShape && option.value !== '0');
+  const selectedShape = cropShapeOptions.value.find(option => option.value === String(config.imageEditor.cropShape) && option.value !== '0');
   if (selectedShape && selectedShape.label) {
     const parts = selectedShape.label.split(':');
     const aspectRatio = parseInt(parts[0]) / parseInt(parts[1]);
@@ -775,6 +775,7 @@ const updateCropBoxFromCrop = () => {
   }
 
   imageRect.value = imageRectOriginal.value;
+  if (!imageRect.value || !containerRect.value) return;
 
   const imgWidth = rotate.value % 180 === 0 ? imageWidth.value : imageHeight.value;
   const imgHeight = rotate.value % 180 === 0 ? imageHeight.value : imageWidth.value;
@@ -911,6 +912,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
       position.value.top = initialImagePosition.top + clamped_dy;
 
     } else if (dragHandle.value === 'move') {
+      if (!imageRect.value) return;
       const imageLeft = imageRect.value.left - containerRect.value.left;
       const imageTop = imageRect.value.top - containerRect.value.top;
       const imageRight = imageLeft + imageRect.value.width;
@@ -929,6 +931,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
       cropBox.value.top = newTop;
 
     } else { // Resize logic
+      if (!imageRect.value) return;
       const imageLeft = imageRect.value.left - containerRect.value.left;
       const imageTop = imageRect.value.top - containerRect.value.top;
       const imageRight = imageLeft + imageRect.value.width;
@@ -946,7 +949,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
         proposedBox.top += dy;
       }
 
-      const shape = config.imageEditor.cropShape;
+      const shape = String(config.imageEditor.cropShape);
       if (shape !== '0') {
         const selectedShape = cropShapeOptions.value.find(o => o.value === shape);
         if (selectedShape && selectedShape.label) {
@@ -1119,9 +1122,9 @@ const clickCopyImage = async () => {
   } finally {
     isProcessing.value = false;
     if (success) {
-      toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.success);
+      toolTipRef.value?.showTip(localeMsg.value.tooltip.copy_image.success);
     } else {
-      toolTipRef.value.showTip(localeMsg.value.tooltip.copy_image.failed, true);
+      toolTipRef.value?.showTip(localeMsg.value.tooltip.copy_image.failed, true);
     }
   }
 };

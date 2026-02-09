@@ -58,8 +58,6 @@ import { emit } from '@tauri-apps/api/event';
 import { getCurrentWindow  } from '@tauri-apps/api/window';
 import { isWin, isMac } from '@/common/utils';
 
-// import SearchBox from '@/components/SearchBox.vue';
-
 import { 
   IconWinMinus,
   IconWinMaximize,

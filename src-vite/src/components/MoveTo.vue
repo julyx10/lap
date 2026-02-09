@@ -17,7 +17,7 @@
       <button 
         :class="[
           'px-4 py-1 rounded-box', 
-          libConfig.destFolder.albumId > 0 && !libConfig.destFolder.selected ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
+          (libConfig.destFolder.albumId ?? 0) > 0 && !libConfig.destFolder.selected ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
         ]" 
         @click="clickOk"
       >{{ OkText }}</button>
@@ -28,11 +28,15 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import { libConfig } from '@/common/config';
-import { listen } from '@tauri-apps/api/event';
+import { listen, type Event } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 
 import ModalDialog from '@/components/ModalDialog.vue';
 import AlbumList from '@/components/AlbumList.vue';
+
+interface KeyPayload {
+  key: string;
+}
 
 const props = defineProps({
   title: {
@@ -59,7 +63,7 @@ const uiStore = useUIStore();
 let unlistenKeydown: () => void;
 
 onMounted(async () => {
-  unlistenKeydown = await listen('global-keydown', handleKeyDown);
+  unlistenKeydown = await listen<KeyPayload>('global-keydown', handleKeyDown);
   uiStore.pushInputHandler('MoveTo');
 });
 
@@ -70,7 +74,7 @@ onUnmounted(() => {
   uiStore.removeInputHandler('MoveTo');
 });
 
-function handleKeyDown(event: KeyboardEvent) {
+function handleKeyDown(event: Event<KeyPayload>) {
   if (!uiStore.isInputActive('MoveTo')) return;
 
   const { key } = event.payload;
@@ -87,7 +91,7 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 const clickOk = () => {
-  if (libConfig.destFolder.albumId > 0 && !libConfig.destFolder.selected) {
+  if ((libConfig.destFolder.albumId ?? 0) > 0 && !libConfig.destFolder.selected) {
     emit('ok');
   }
 };

@@ -64,7 +64,7 @@
                 />
               </div>
               <span v-else>
-                {{ album.total.toLocaleString() }}
+                {{ (album.total ?? 0).toLocaleString() }}
               </span>
             </div>  
 
@@ -127,9 +127,9 @@
       :inputName="isNewAlbum ? '' : selectedAlbum?.name"
       :inputDescription="isNewAlbum ? '' : selectedAlbum?.description"
       :albumPath="isNewAlbum ? '' : selectedAlbum?.path"
-      :albumCoverFileId="isNewAlbum ? null : selectedAlbum?.cover_file_id"
-      :createdAt="isNewAlbum ? '' : formatTimestamp(selectedAlbum?.created_at, $t('format.date_time'))"
-      :modifiedAt="isNewAlbum ? '' : formatTimestamp(selectedAlbum?.modified_at, $t('format.date_time'))"
+      :albumCoverFileId="isNewAlbum ? undefined : selectedAlbum?.cover_file_id"
+      :createdAt="isNewAlbum ? '' : formatTimestamp(selectedAlbum?.created_at ?? 0, $t('format.date_time'))"
+      :modifiedAt="isNewAlbum ? '' : formatTimestamp(selectedAlbum?.modified_at ?? 0, $t('format.date_time'))"
       @ok="clickEditAlbum"
       @cancel="showAlbumEdit = false"
     />
@@ -274,7 +274,7 @@ const loadAlbumCover = async (albumId: number, coverFileId: number | null) => {
 
 const loadAlbumCovers = async () => {
   for (const album of albums.value) {
-    await loadAlbumCover(album.id, album.cover_file_id);
+    await loadAlbumCover(album.id, album.cover_file_id ?? null);
   }
 };
 
@@ -282,7 +282,7 @@ onMounted( async () => {
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   if (albums.value.length === 0) {
-    albums.value = await getAllAlbums(true);
+    albums.value = await getAllAlbums();
     await loadAlbumCovers();
     isLoading.value = false;
 
@@ -307,15 +307,15 @@ onMounted( async () => {
         album.cover_file_id = fileId;
       } else {
         // indexing finished update, reload album to get new cover
-        const updatedAlbums = await getAllAlbums(true);
-        const updatedAlbum = updatedAlbums.find(a => a.id === eventAlbumId);
+        const updatedAlbums = await getAllAlbums();
+        const updatedAlbum = updatedAlbums.find((a: Album) => a.id === eventAlbumId);
         if (updatedAlbum) {
           album.cover_file_id = updatedAlbum.cover_file_id;
         }
       }
       
       // Update the cover in albumCovers
-      await loadAlbumCover(eventAlbumId, album.cover_file_id);
+      await loadAlbumCover(eventAlbumId, album.cover_file_id ?? null);
     }
   });
 
@@ -349,7 +349,7 @@ onMounted( async () => {
         album.cover_file_id = updatedAlbum.cover_file_id;
         
         // Reload the cover thumbnail
-        await loadAlbumCover(album_id, album.cover_file_id);
+        await loadAlbumCover(album_id, album.cover_file_id ?? null);
         
         // Refresh folder tree if album is expanded (to show newly indexed folders)
         if (album.is_expanded) {
@@ -379,7 +379,7 @@ const clickNewAlbum = async () => {
 const refreshAlbums = async () => {
   isLoading.value = true;
   try {
-    albums.value = await getAllAlbums(true);
+    albums.value = await getAllAlbums();
   } catch (error) {
     console.error('Failed to refresh albums:', error);
   } finally {
@@ -399,7 +399,7 @@ const clickEditAlbum = async (folderPathParam: string, newName: string, newDescr
     if (newAlbum) {
       // Update album name and description if different from folder name
       if (newName !== newAlbum.name || newDescription) {
-        await editAlbum(newAlbum.id, newName, newDescription, false);
+        await editAlbum(newAlbum.id, newName, newDescription);
         newAlbum.name = newName;
         newAlbum.description = newDescription;
       }
@@ -546,11 +546,11 @@ const clickReorder = () => {
   emit('editDataChanged', true);
 };
 
-const handleKeyDown = (event: KeyboardEvent) => {
+const handleKeyDown = (event: { payload: { key: string } }) => {
   if (isEditList.value && event.payload.key === 'Escape') {
     clickCloseEditList();
   }
-};``
+};
 
 // Expose methods
 defineExpose({ 

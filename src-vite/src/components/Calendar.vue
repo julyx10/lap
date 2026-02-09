@@ -98,8 +98,9 @@ const selectedWeekday = computed(() => {
   return date.getDay();
 });
 
-const scrollable = ref(null); // Ref for the scrollable element
-const calendar_dates = ref([]);
+const scrollable = ref<HTMLDivElement | null>(null); // Ref for the scrollable element
+type CalendarDates = Record<number, Record<number, { date: number; count: number }[]>>;
+const calendar_dates = ref<CalendarDates>({});
 
 const sorted_calendar_items = computed(() => {
   const dates = calendar_dates.value;
@@ -163,7 +164,7 @@ function switchToDailyView() {
   // if a year is selected in month view
   if (config.calendar.isMonthly && libConfig.calendar.month === -1) {
     const year = libConfig.calendar.year;
-    if (calendar_dates.value[year]) {
+    if (year !== null && year !== undefined && calendar_dates.value[year]) {
       const months = Object.keys(calendar_dates.value[year]).map(Number);
       if (months.length > 0) {
         if (config.calendar.sortingAsc) {
@@ -191,8 +192,8 @@ async function getCalendarDates() {
 
 /// input: [['2024-10-15', 5], ['2023-01-01', 10]];
 /// output: [{2024: {10: {15: 5}}, {2023: {01: {01: 10}}}]
-function transformArray(dates) {
-  const result = {};
+function transformArray(dates: [string, number][]): CalendarDates {
+  const result: CalendarDates = {};
 
   dates.forEach(item => {
     const [dateFormat, count] = item;  // dateForamat: 'yyyy-mm-dd'

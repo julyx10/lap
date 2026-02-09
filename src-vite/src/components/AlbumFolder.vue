@@ -102,7 +102,7 @@
   <!-- move to -->
   <MoveTo
     v-if="showMoveTo"
-    :title="`${$t('msgbox.move_to.title', { source: shortenFilename(selectedFolder?.name, 32) })}`"
+    :title="`${$t('msgbox.move_to.title', { source: shortenFilename(selectedFolder?.name ?? '', 32) })}`"
     :message="$t('msgbox.move_to.content')"
     :OkText="$t('msgbox.move_to.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -113,7 +113,7 @@
   <!-- copy to -->
   <MoveTo
     v-if="showCopyTo"
-    :title="`${$t('msgbox.copy_to.title', { source: shortenFilename(selectedFolder?.name, 32) })}`"
+    :title="`${$t('msgbox.copy_to.title', { source: shortenFilename(selectedFolder?.name ?? '', 32) })}`"
     :message="$t('msgbox.copy_to.content')"
     :OkText="$t('msgbox.copy_to.ok')"
     :cancelText="$t('msgbox.cancel')"
@@ -198,7 +198,7 @@ const showTrashFolderMsgbox = ref(false);
 const showMoveTo = ref(false);
 const showCopyTo = ref(false);
 
-const toolTipRef = ref(null);
+const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 
 // more menuitems - function that takes the folder being right-clicked
 const getMenuItemsForFolder = (folder: any) => {
@@ -348,7 +348,7 @@ function updateFolderPath(folder: any, oldpath: string, newPath: string) {
     folder.path = newPath + folder.path.slice(oldpath.length);
 
     if (folder.children) {
-        folder.children.forEach(child => {
+        folder.children.forEach((child: Folder) => {
             updateFolderPath(child, oldpath, newPath); // recursive
         });
     }

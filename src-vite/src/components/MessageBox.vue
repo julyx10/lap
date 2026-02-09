@@ -1,6 +1,6 @@
 <template>
   <ModalDialog :title="title" :width="400" @cancel="clickCancel">
-    <div v-if="message" class="text-sm text-wrap break-words">
+    <div v-if="message" class="text-sm text-wrap wrap-break-word">
       {{ message }}
     </div>
 

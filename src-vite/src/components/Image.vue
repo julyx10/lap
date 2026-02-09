@@ -161,38 +161,6 @@
       </div>
     </transition>
 
-    <!-- debug -->
-    <!-- <div class="absolute top-4 right-4">
-      <table class="text-sm text-base-content/30 border-separate border-spacing-2 bg-base-100 rounded-box p-2">
-        <tbody>
-          <tr>
-            <td>containerSize</td>
-            <td>{{ containerSize.width.toFixed(0) }} x {{ containerSize.height.toFixed(0) }}</td>
-          </tr>
-          <tr>
-            <td>imageSize</td>
-            <td>{{ imageSize[activeImage].width }} x {{ imageSize[activeImage].height }}</td>
-          </tr>
-          <tr>
-            <td>imageSizeRotated</td>
-            <td>{{ imageSizeRotated[activeImage].width }} x {{ imageSizeRotated[activeImage].height }}</td>
-          </tr>
-          <tr>
-            <td>scale</td>
-            <td>{{ scale[activeImage].toFixed(2) }}</td>
-          </tr>
-          <tr>
-            <td>position</td>
-            <td class="w-40">{{ position[activeImage].x.toFixed(2) }}, {{ position[activeImage].y.toFixed(2) }}</td>
-          </tr>
-          <tr>
-            <td>mousePosition</td>
-            <td>{{ mousePosition.x.toFixed(2) }}, {{ mousePosition.y.toFixed(2) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div> -->
-
   </div>
 </template>
 
@@ -202,6 +170,7 @@ import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, compute
 import { config, libConfig } from '@/common/config';
 import { getAssetSrc } from '@/common/utils';
 import { getFacesForFile } from '@/common/api';
+import { RawFace, Face } from '@/common/types';
 
 import { IconError } from '@/common/icons';
 
@@ -338,7 +307,7 @@ const navImageStyle = computed(() => {
   return {
     minWidth: `${imgSize.width}px`,
     minHeight: `${imgSize.height}px`,
-    position: 'absolute',
+    position: 'absolute' as const,
     left: `${(navContainerSize.value.width - imgSize.width) / 2}px`,
     top: `${(navContainerSize.value.height - imgSize.height) / 2}px`,
     transform: `scale(${scale}) rotate(${rotation}deg)`,
@@ -734,7 +703,7 @@ watch(() => props.fileId, async (newFileId) => {
     const result = await getFacesForFile(newFileId);
     if (result && result.length > 0) {
       // Parse bbox JSON string for each face
-      faces.value = result.map(face => {
+      faces.value = result.map((face: RawFace) => {
         try {
           return {
             ...face,
@@ -744,7 +713,7 @@ watch(() => props.fileId, async (newFileId) => {
           console.error("Error parsing face bbox", e);
           return null;
         }
-      }).filter(f => f);
+      }).filter((f: Face | null) => f);
     }
   }
 }, { immediate: true });

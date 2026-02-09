@@ -5,10 +5,9 @@ version = "0.1.3"
 description = "A Local-first, AI-powered Photo manager."
 homepage = "https://julyx10.github.io/lap"
 repository = "https://github.com/julyx10/lap"
-authors = ["@julyx10"]
+authors = ["julyx10 <tiangle@gmail.com>"]
 edition = "2024"
 license = "GPL-3.0-or-later"
-exclude = ["main.db"]
 build = "build.rs"
 
 [build-dependencies]

@@ -5,9 +5,16 @@
 
       <!-- Title -->
       <div class="flex items-center">
-        <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-10 h-10 object-cover rounded-box shrink-0" />
-        <div v-else-if="fileInfo" class="w-10 h-10 skeleton object-cover rounded-box shrink-0"></div>
-        <div v-else class="w-10 h-10 bg-base-content/5 rounded-box shrink-0"></div>
+        <div class="relative w-10 h-10 rounded-box shrink-0">
+          <img v-if="fileInfo?.thumbnail" :src="fileInfo.thumbnail" class="w-full h-full object-cover rounded-box" />
+          <div v-else-if="fileInfo" class="w-full h-full skeleton object-cover rounded-box"></div>
+          <div v-else class="w-full h-full bg-base-content/5 rounded-box"></div>
+          
+          <div v-if="fileInfo?.is_favorite" class="absolute -bottom-1 -right-1 drop-shadow-md">
+            <IconFavorite class="t-icon-size-xs" />
+          </div>
+        </div>
+        
         <input 
           v-if="isRenaming"
           ref="renameInputRef"
@@ -41,7 +48,7 @@
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
           @click.stop="config.infoPanel.showBasicInfo = !config.infoPanel.showBasicInfo"
         >
-          <IconFileInfo class="w-4 h-4 " /> 
+          <component :is="fileInfo?.file_type === 1 ? IconPhoto : IconVideo" class="w-4 h-4" />
           <span class="font-bold mr-auto">{{ $t('file_info.title') }}</span>
           <TButton
             :icon="config.infoPanel.showBasicInfo ? IconArrowUp : IconArrowDown"
@@ -95,7 +102,7 @@
 
             <!-- Comment -->
             <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.comment') }}</div>
-            <div class="text-base-content/70 break-words whitespace-pre-wrap">{{ fileInfo?.comments }}</div>
+            <div class="text-base-content/70 wrap-break-words whitespace-pre-wrap">{{ fileInfo?.comments }}</div>
           </div>
         </Transition>
       </div>
@@ -104,7 +111,7 @@
       <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
 
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content" @click.stop="config.infoPanel.showMetadata = !config.infoPanel.showMetadata">
-          <IconCamera class="w-4 h-4 " /> 
+          <IconCameraAperture class="w-4 h-4 " /> 
           <span class="font-bold mr-auto">{{ $t('file_info.metadata') }}</span>
           <TButton
             :icon="config.infoPanel.showMetadata ? IconArrowUp : IconArrowDown"
@@ -148,7 +155,7 @@
 
             <!-- Description -->
             <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.description') }}</div>
-            <div class="text-base-content/70 break-words">{{ fileInfo?.e_description }}</div>
+            <div class="text-base-content/70 wrap-break-words">{{ fileInfo?.e_description }}</div>
 
             <!-- Geo Location -->
             <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.geo_location') }}</div>
@@ -202,7 +209,7 @@ import {
   getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName,
   extractFileName, combineFileName, isValidFileName
 } from '@/common/utils';
-import { IconClose, IconFileInfo, IconCamera, IconLocation, IconArrowDown, IconArrowUp } from '@/common/icons';
+import { IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, IconVideo, IconPhoto, IconFavorite } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 import MapView from '@/components/MapView.vue';

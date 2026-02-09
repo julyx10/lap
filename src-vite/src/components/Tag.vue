@@ -2,7 +2,7 @@
 
   <div class="w-full h-full flex flex-col select-none">
     <!-- Tag List -->
-    <div v-if="allTags.length > 0" class="flex-grow overflow-x-hidden overflow-y-auto">
+    <div v-if="allTags.length > 0" class="grow overflow-x-hidden overflow-y-auto">
       <ul>
         <li v-for="tag in sortedTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
@@ -110,10 +110,10 @@ const emit = defineEmits(['editDataChanged']);
 
 // tags
 const allTags = ref<any[]>([]);
-const selectedTag = ref(null);
+const selectedTag = ref<any>(null);
 const isRenamingTag = ref(false);
 const originalTagName = ref('');
-const tagInputRef = ref([]);
+const tagInputRef = ref<HTMLInputElement[]>([]);
 
 const sortedTags = computed(() => {
   if (config.leftPanel.sortCount) {

@@ -48,7 +48,7 @@
 </template>
   
 <script setup>
-import { ref, shallowRef, onMounted, onBeforeUnmount, nextTick, useSlots } from 'vue';
+import { ref, shallowRef, onMounted, onBeforeUnmount, nextTick, useSlots, watch } from 'vue';
 
 import TButton from '@/components/TButton.vue';
 
@@ -90,8 +90,7 @@ const menuStyle = ref({});
 
 // Add event listener when the component is mounted
 onMounted(() => {
-  document.addEventListener('mousedown', handleClickOutside, { capture: true });
-  document.addEventListener('keydown', handleKeyDown);
+  // Wait to attach until open
 });
 
 // Remove event listener when the component is destroyed
@@ -100,65 +99,95 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeyDown);
 });
 
+// Watch for dropdown state to attach/detach listeners
+watch(isDropDown, (val) => {
+  if (val) {
+    document.addEventListener('mousedown', handleClickOutside, { capture: true });
+    document.addEventListener('keydown', handleKeyDown);
+  } else {
+    document.removeEventListener('mousedown', handleClickOutside, { capture: true });
+    document.removeEventListener('keydown', handleKeyDown);
+  }
+});
+
 // Handle Escape key press
 const handleKeyDown = (event) => {
   if (isDropDown.value && event.key === 'Escape') {
+    event.stopPropagation();
     isDropDown.value = false;
   }
 };
 
-// Toggle dropdown menu
-const toggleDropdown = async () => {
+// Open dropdown menu at specific coordinates or relative to the trigger
+const open = async (x, y) => {
   if (props.disabled) return;
 
-  isDropDown.value = !isDropDown.value;
+  isDropDown.value = true;
 
-  if (isDropDown.value) {
-    // Resolve menu items (call function if provided)
-    resolvedMenuItems.value = typeof props.menuItems === 'function' 
-      ? props.menuItems() 
-      : props.menuItems;
+  // Resolve menu items (call function if provided)
+  resolvedMenuItems.value = typeof props.menuItems === 'function' 
+    ? props.menuItems() 
+    : props.menuItems;
 
-    await nextTick(); // Ensure menu is rendered before measuring
+  await nextTick(); // Ensure menu is rendered before measuring
 
+  const menuRect = menu.value.getBoundingClientRect();
+  
+  const padding = 8; // A smaller padding for a snug fit.
+  const menuWidth = menuRect.width;
+  const menuHeight = menuRect.height;
+  const winWidth = window.innerWidth;
+  const winHeight = window.innerHeight;
+  const scrollY = window.scrollY;
+
+  let top, left;
+
+  if (x !== undefined && y !== undefined) {
+    // Open at specific coordinates (e.g., context menu)
+    top = y + scrollY;
+    left = x + window.scrollX;
+  } else {
+    // Open relative to trigger button
     const rect = dropdown.value.getBoundingClientRect();
-    const menuRect = menu.value.getBoundingClientRect();
-    
-    const padding = 8; // A smaller padding for a snug fit.
-    const menuWidth = menuRect.width;
-    const menuHeight = menuRect.height;
-    const winWidth = window.innerWidth;
-    const winHeight = window.innerHeight;
-    const scrollY = window.scrollY;
+    top = rect.bottom + scrollY;
+    left = rect.left + window.scrollX;
 
-    let top = rect.bottom + scrollY;
-    let left = rect.left + window.scrollX;
-
-    // Check bottom boundary
+    // Check bottom boundary for trigger-relative positioning
     if (top + menuHeight > winHeight + scrollY - padding) {
-      // Not enough space below, try to place above
       top = rect.top - menuHeight + scrollY;
     }
+  }
 
-    // Check top boundary (after potentially flipping)
-    if (top < scrollY + padding) {
-      // Still not enough space (menu is too tall), align to top
-      top = scrollY + padding;
-    }
+  // Common boundary checks
+  // Check bottom boundary (for context menu or general overflow)
+  if (top + menuHeight > winHeight + scrollY - padding) {
+     top = winHeight + scrollY - menuHeight - padding;
+  }
 
-    // Check right boundary
-    if (left + menuWidth > winWidth - padding) {
-      // Align to the right edge
-      left = winWidth - menuWidth - padding;
-    }
+  // Check top boundary
+  if (top < scrollY + padding) {
+    top = scrollY + padding;
+  }
 
-    // Check left boundary
-    if (left < padding) {
-      // Align to the left edge
-      left = padding;
-    }
+  // Check right boundary
+  if (left + menuWidth > winWidth - padding) {
+    left = winWidth - menuWidth - padding;
+  }
 
-    menuStyle.value = { top: `${top}px`, left: `${left}px` };
+  // Check left boundary
+  if (left < padding) {
+    left = padding;
+  }
+
+  menuStyle.value = { top: `${top}px`, left: `${left}px` };
+};
+
+// Toggle dropdown menu
+const toggleDropdown = async () => {
+  if (isDropDown.value) {
+    isDropDown.value = false;
+  } else {
+    open();
   }
 };
 
@@ -175,5 +204,10 @@ const handleClick = (item) => {
     isDropDown.value = false;
   }
 };
+
+defineExpose({
+  open
+});
+
 
 </script>

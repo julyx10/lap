@@ -54,7 +54,7 @@
         <div 
           v-if="isHovered && tooltip && config.settings.showToolTip"
           ref="tooltipRef"
-          class="fixed z-[1000] px-2 py-1 text-xs whitespace-nowrap rounded-box bg-neutral text-neutral-content shadow-lg pointer-events-none"
+          class="fixed z-1000 px-2 py-1 text-xs whitespace-nowrap rounded-box bg-neutral text-neutral-content shadow-lg pointer-events-none"
           :style="tooltipStyle"
         >
           {{ tooltip }}

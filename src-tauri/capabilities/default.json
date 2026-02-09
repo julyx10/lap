@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Default capabilities",
+  "description": "Capabilities for Lap photo management app",
   "local": true,
   "windows": [
     "main",
@@ -17,7 +17,6 @@
     "core:window:allow-set-minimizable",
     "core:window:allow-set-closable",
     "core:window:allow-set-title",
-    "core:window:allow-maximize",
     "core:window:allow-maximize",
     "core:window:allow-unmaximize",
     "core:window:allow-minimize",

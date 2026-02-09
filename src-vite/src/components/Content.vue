@@ -235,7 +235,7 @@
 
         <!-- Quick View Overlay -->
         <div v-if="showQuickView && fileList[selectedItemIndex]" 
-          class="absolute inset-0 z-[60] flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
+          class="absolute inset-0 z-60 flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
           :class="[
             !uiStore.isFullScreen ? (config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12 mb-1') : ''
           ]"
@@ -1739,7 +1739,7 @@ async function updateContent() {
           if(libConfig.album.selected) {     
             // album is selected, show all files including subfolders
             contentTitle.value = album.name;
-            getFileList({ searchAllSubfolders: libConfig.album.folderPath, isShowHidden: true }, requestId);
+            getFileList({ searchAllSubfolders: libConfig.album.folderPath }, requestId);
           } else {                        
             // folder is selected, show files in the folder
             contentTitle.value = getFolderName(album.path) + getRelativePath(libConfig.album.folderPath || "", album.path);
@@ -1821,13 +1821,13 @@ async function updateContent() {
       getFileList({ startDate: -1, endDate: -1 }, requestId);
     } else {
       if (libConfig.calendar.month === -1) {          // yearly
-        contentTitle.value = formatDate(libConfig.calendar.year, 1, 1, localeMsg.value.format.year);
+        contentTitle.value = formatDate(libConfig.calendar.year!, 1, 1, localeMsg.value.format.year);
       } else if (libConfig.calendar.date === -1) {    // monthly
-        contentTitle.value = formatDate(libConfig.calendar.year, libConfig.calendar.month, 1, localeMsg.value.format.month);
+        contentTitle.value = formatDate(libConfig.calendar.year!, libConfig.calendar.month!, 1, localeMsg.value.format.month);
       } else {                                    // daily
-        contentTitle.value = formatDate(libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date, localeMsg.value.format.date_long);
+        contentTitle.value = formatDate(libConfig.calendar.year!, libConfig.calendar.month!, libConfig.calendar.date!, localeMsg.value.format.date_long);
       }
-      const [startDate, endDate] = getCalendarDateRange(libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date);
+      const [startDate, endDate] = getCalendarDateRange(libConfig.calendar.year!, libConfig.calendar.month!, libConfig.calendar.date!);
       getFileList({ startDate, endDate }, requestId);
     }
   }
@@ -2108,7 +2108,7 @@ function enterAlbumPreviewMode(file: any) {
     gridViewRef.value.scrollToPosition(0);
   }
   
-  getFileList({ searchFolder: folderPath, isShowHidden: true }, requestId);
+  getFileList({ searchFolder: folderPath }, requestId);
 }
 
 function exitTempViewMode() {
@@ -2218,7 +2218,7 @@ const clickCopyImage = async (filePath: string) => {
 const onRenameFile = async (newName: string) => {
   if(selectedItemIndex.value >= 0) {
     const file = fileList.value[selectedItemIndex.value];
-    const fileName = combineFileName(newName, renamingFileName.value.ext);
+    const fileName = combineFileName(newName, renamingFileName.value.ext ?? '');
     const newFilePath = await renameFile(file.id, file.file_path, fileName );
     if(newFilePath) {
       console.log('onRenameFile:', newFilePath);
