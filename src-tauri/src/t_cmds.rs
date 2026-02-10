@@ -1,8 +1,7 @@
 /**
  * Tauri commands for frontend-backend communication.
  * project: Lap
- * author:  julyxx
- * GitHub:  /julyx10
+ * author:  julyx10
  * date:    2024-08-08
  */
 use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};

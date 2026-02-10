@@ -48,7 +48,7 @@
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
           @click.stop="config.infoPanel.showBasicInfo = !config.infoPanel.showBasicInfo"
         >
-          <component :is="fileInfo?.file_type === 1 ? IconPhoto : IconVideo" class="w-4 h-4" />
+          <component :is="fileInfo?.file_type === 2 ? IconFile : IconFile" class="w-4 h-4" />
           <span class="font-bold mr-auto">{{ $t('file_info.title') }}</span>
           <TButton
             :icon="config.infoPanel.showBasicInfo ? IconArrowUp : IconArrowDown"
@@ -209,7 +209,7 @@ import {
   getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName,
   extractFileName, combineFileName, isValidFileName
 } from '@/common/utils';
-import { IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, IconVideo, IconPhoto, IconFavorite } from '@/common/icons';
+import { IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, IconFavorite, IconFile } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 
 import MapView from '@/components/MapView.vue';

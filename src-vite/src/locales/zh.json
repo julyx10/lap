@@ -45,10 +45,10 @@
     "similar_images_tips": "选择一张图片以查找相似图片",
     "filename_search_tips": "输入文件名进行搜索",
     "index": {
-      "wait_index": "等待更新...",
-      "indexing": "正在更新 '{album}'... {count} / {total}",
-      "description": "准备相册用于搜索和快速预览。大型相册可能需要几分钟。",
-      "cancel": "取消更新"
+      "wait_index": "等待扫描...",
+      "indexing": "正在扫描 '{album}'... {count} / {total}",
+      "description": "生成缩略图用于搜索和快速预览。大型相册可能需要几分钟。",
+      "cancel": "取消扫描"
     }
   },
   "face_index": {
@@ -241,7 +241,7 @@
     "album": {
       "add": "添加相册...",
       "edit": "编辑相册...",
-      "index": "更新相册文件",
+      "index": "扫描相册文件",
       "include_in_search": "包含在搜索中",
       "exclude_from_search": "从搜索中排除",
       "remove": "移除相册",

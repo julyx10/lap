@@ -2,9 +2,9 @@
   <div class="flex flex-col items-center justify-start p-2 gap-4 text-center h-full text-base-content/70 cursor-default">
     
     <!-- App Header -->
-    <div class="ml-4 flex flex-row items-center justify-center gap-2">
+    <div class="px-4 flex flex-row items-center justify-start gap-4">
       <!-- App Logo -->
-      <div class="">
+      <div class="shrink-0">
         <img src="@/assets/images/logo.png" class="w-24 h-24 mx-auto rounded-box drop-shadow-lg" />
       </div>
       <div class="flex flex-col">
@@ -14,7 +14,7 @@
     </div>
 
     <!-- Info Grid -->
-    <div class="w-full max-w-md bg-base-200/30 rounded-lg p-4">
+    <div class="w-full max-w-md text-base-content/30 bg-base-200/30 rounded-lg p-4">
       <div class="grid grid-cols-[100px_1fr] gap-4 text-left text-sm">
         
         <div class="font-semibold">{{ $t('settings.about.package.version') }}</div>
@@ -50,8 +50,8 @@
         <div class="font-semibold">{{ $t('settings.about.package.license') }}</div>
         <div>{{ packageInfo.license }}</div>
 
-        <!-- <div class="font-semibold">{{ $t('settings.about.package.author') }}</div>
-        <div>{{ packageInfo.authors && packageInfo.authors[0] }}</div> -->
+        <div class="font-semibold">{{ $t('settings.about.package.author') }}</div>
+        <div>{{ packageInfo.authors && packageInfo.authors[0] }}</div>
 
         <div class="font-semibold">{{ $t('settings.about.package.website') }}</div>
         <div>
@@ -60,12 +60,12 @@
           </a>
         </div>
 
-        <div class="font-semibold">GitHub</div>
+        <!-- <div class="font-semibold">GitHub</div>
         <div>
           <a :href="packageInfo.repository" target="_blank" class="link hover:text-primary-focus">
             {{ packageInfo.repository }}
           </a>
-        </div>
+        </div> -->
 
       </div>
     </div>

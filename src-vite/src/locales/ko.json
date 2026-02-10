@@ -45,10 +45,10 @@
     "similar_images_tips": "이미지를 선택하여 유사한 이미지 찾기",
     "filename_search_tips": "파일 이름 입력",
     "index": {
-      "wait_index": "업데이트 대기 중...",
-      "indexing": "'{album}' 업데이트 중... {count} / {total}",
-      "description": "검색을 위해 앨범을 준비 중입니다. 몇 분 정도 걸릴 수 있습니다.",
-      "cancel": "업데이트 취소"
+      "wait_index": "스캔 대기 중...",
+      "indexing": "'{album}' 스캔 중... {count} / {total}",
+      "description": "검색 및 미리보기를 위한 썸네일을 생성 중입니다. 대규모 앨범의 경우 몇 분 정도 걸릴 수 있습니다.",
+      "cancel": "스캔 취소"
     }
   },
   "face_index": {
@@ -241,7 +241,7 @@
     "album": {
       "add": "앨범 추가...",
       "edit": "앨범 편집...",
-      "index": "파일 업데이트",
+      "index": "앨범 스캔",
       "include_in_search": "검색에 포함",
       "exclude_from_search": "검색에서 제외",
       "remove": "앨범 제거",

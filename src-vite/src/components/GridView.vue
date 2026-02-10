@@ -24,6 +24,7 @@
       :key="config.settings.grid.style === 3 ? 'filmstrip' : 'grid'"
       :geometry="config.settings.grid.style === 2 ? layoutGeometry : undefined"
       :content-height="config.settings.grid.style === 2 ? layoutContentHeight : undefined"
+      :transition="isLayoutTransitioning"
       key-field="id"
       :emit-update="true"
       :buffer="4"
@@ -100,7 +101,7 @@ const containerWidth = ref(0);
 // Justified Layout State
 const layoutGeometry = ref<Geometry[]>([]);
 const layoutContentHeight = ref(0);
-
+const isLayoutTransitioning = ref(false);
 const startGridSize = ref(0);
 
 const gap = 8; // Gap between items
@@ -165,7 +166,11 @@ function updateLayout() {
 }
 
 watch(() => [config.settings.grid.size, config.settings.grid.style], () => {
+  isLayoutTransitioning.value = true;
   updateLayout();
+  setTimeout(() => {
+    isLayoutTransitioning.value = false;
+  }, 500);
 });
 
 watch(() => props.fileList, () => {

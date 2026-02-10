@@ -2,8 +2,8 @@
  * App configuration management.
  * Handles app-config.json for multi-library support.
  * project: Lap
- * author:  julyxx
- * date:    2025-01-15
+ * author:  julyx10
+ * date:    2026-01-15
  */
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -188,7 +188,7 @@ impl Default for AppConfig {
 pub fn get_app_data_dir() -> Result<PathBuf, String> {
     dirs::data_local_dir()
         .ok_or_else(|| "Failed to get the local AppData directory".to_string())
-        .map(|p| p.join("com.julyxx.lap"))
+        .map(|p| p.join("com.julyx10.lap"))
 }
 
 /// Get the libraries directory path

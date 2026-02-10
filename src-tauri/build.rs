@@ -1,7 +1,6 @@
 /**
  * project: Lap
- * author:  julyxx
- * GitHub:  /julyx10
+ * author:  julyx10
  * date:    2024-08-08
  */
 use std::env;

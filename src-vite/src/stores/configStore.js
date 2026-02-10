@@ -77,9 +77,9 @@ export const useConfigStore = defineStore('configStore', {
       grid: {
         size: 160,               // grid size, range 120-360
         style: 0,                // 0: card view, 1: tile view, 2: justified view, 3: filmstrip view
-        scaling: 0,              // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
+        scaling: 1,              // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
         labelPrimary: 1,         // card view: primary label (1: Name)
-        labelSecondary: 2,       // card view: secondary label (2: Dimension)
+        labelSecondary: 3,       // card view: secondary label (3: Dimension)
         previewPosition: 0,      // filmstrip view: preview position (0: top display, 1: bottom display)
       },
       
@@ -88,7 +88,7 @@ export const useConfigStore = defineStore('configStore', {
       slideShowInterval: 1,      // slide show interval in seconds [1, 3, 5, 10, 30, 60]
       navigatorViewMode: 0,      // 0: Auto, 1: Always hide, 2: Always show
       navigatorViewSize: 240,    // navigator view size (160, 240, 320, 400)
-      autoPlayVideo: false,      // auto play video
+      autoPlayVideo: true,       // auto play video
       showComment: true,         // show comment
 
       // image search settings

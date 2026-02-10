@@ -10,6 +10,7 @@
         v-for="poolItem in visibleItems" 
         :key="poolItem.item[keyField]"
         class="absolute"
+        :class="{ 'transition-all duration-500 ease-in-out': transition }"
         :style="getItemStyle(poolItem)"
       >
         <slot 
@@ -35,12 +36,14 @@ const props = withDefaults(defineProps<{
   emitUpdate?: boolean;
   geometry?: { x: number, y: number, width: number, height: number }[]; // Pre-calculated layout
   contentHeight?: number; // Total height for pre-calculated layout
+  transition?: boolean;
 }>(), {
   gridItems: 1,
   direction: 'vertical',
   keyField: 'id',
   buffer: 2, // Number of rows/cols to buffer
   emitUpdate: false,
+  transition: false,
 });
 
 const emit = defineEmits(['update', 'scroll']);

@@ -45,10 +45,10 @@
     "similar_images_tips": "Selecciona una imagen para buscar similares",
     "filename_search_tips": "Introduce un nombre de archivo",
     "index": {
-      "wait_index": "Esperando actualización...",
-      "indexing": "Actualizando '{album}'... {count} / {total}",
-      "description": "Preparando álbum para búsqueda. Puede tardar unos minutos.",
-      "cancel": "Cancelar actualización"
+      "wait_index": "Esperando escaneo...",
+      "indexing": "Escaneando '{album}'... {count} / {total}",
+      "description": "Generando miniaturas para búsqueda y vista previa. Puede tardar unos minutos.",
+      "cancel": "Cancelar escaneo"
     }
   },
   "face_index": {
@@ -241,7 +241,7 @@
     "album": {
       "add": "Añadir álbum...",
       "edit": "Editar álbum...",
-      "index": "Actualizar archivos",
+      "index": "Escanear álbum",
       "include_in_search": "Incluir en búsqueda",
       "exclude_from_search": "Excluir de búsqueda",
       "remove": "Eliminar álbum",
