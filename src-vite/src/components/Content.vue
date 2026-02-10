@@ -71,7 +71,7 @@
         <DropDownSelect
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
-          :disabled="config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
+          :disabled="config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing || showQuickView"
           @select="handleFileTypeSelect"
         />
 
@@ -81,7 +81,7 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing"
+          :disabled="config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing || showQuickView"
           @select="handleSortTypeSelect"
         />
 
@@ -89,21 +89,45 @@
         <div class="flex flex-row items-center">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
 
+          <!-- grid size slider -->
+          <div class="flex flex-row items-center gap-2 px-2 shrink-0 group">
+            <!-- <IconZoomOut 
+              class="t-icon-size-xs text-base-content/30 hover:text-base-content cursor-pointer transition-colors" 
+              @click="config.settings.grid.size = Math.max(120, config.settings.grid.size - 40)"
+            /> -->
+            <!-- <input 
+              type="range" 
+              min="120" 
+              max="360" 
+              v-model.number="config.settings.grid.size" 
+              class="range range-xs w-24"
+            /> -->
+            <SliderInput v-model="config.settings.grid.size" :min="120" :max="360" :step="1" label="" :slider_width="80" :disabled="config.settings.grid.style === 3 || isIndexing || showQuickView" />
+
+            <!-- <IconZoomIn 
+              class="t-icon-size-xs text-base-content/30 hover:text-base-content cursor-pointer transition-colors" 
+              @click="config.settings.grid.size = Math.min(360, config.settings.grid.size + 40)"
+            /> -->
+          </div>
+
+          <!-- toggle layout -->
+          <TButton
+            :icon="[IconCard, IconTile, IconJustified, IconFilmstrip][config.settings.grid.style]"
+            :iconStyle="{ 
+              transform: `rotate(${config.settings.grid.style === 3 && config.settings.grid.previewPosition === 1 ? 180 : 0}deg)`, 
+              transition: 'transform 0.3s ease-in-out' 
+            }" 
+            :tooltip="localeMsg.settings.gallery_view.style_options[config.settings.grid.style]"
+            :disabled="isIndexing || showQuickView"
+            @click="toggleGridViewLayout"
+          />
+          
           <!-- refresh file list -->
           <TButton
             :icon="IconRefresh"
             :tooltip="$t('toolbar.tooltip.refresh')"
-            :disabled="isIndexing"
+            :disabled="isIndexing || showQuickView"
             @click="updateContent()"
-          />
-
-          <!-- toggle layout -->
-          <TButton
-            :icon="config.content.showFilmStrip ? IconGallery : IconGrid"
-            :iconStyle="{ transform: `rotate(${config.settings.previewPosition === 0 ? 0 : 180}deg)`, transition: 'transform 0.3s ease-in-out' }" 
-            :tooltip="config.content.showFilmStrip ? $t('toolbar.tooltip.filmstrip_view') : $t('toolbar.tooltip.grid_view')"
-            :disabled="isIndexing"
-            @click="toggleGridViewLayout"
           />
 
           <!-- toggle info panel -->
@@ -128,13 +152,13 @@
         <div ref="gridViewDiv" 
           :class="[
             'flex-1 flex',
-            config.settings.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col',
-            config.content.showFilmStrip ? (config.settings.showStatusBar ? 'mt-12 mb-8' : 'mt-12 mb-1') : ''
+            config.settings.grid.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col',
+            config.settings.grid.style === 3 ? (config.settings.showStatusBar ? 'mt-12 mb-8' : 'mt-12 mb-1') : ''
           ]"
         >
           <div class="relative" 
-            :class="{ 'flex-1': !config.content.showFilmStrip }"
-            :style="{ height: config.content.showFilmStrip ? config.content.filmStripPaneHeight + 'px' : '' }"
+            :class="{ 'flex-1': config.settings.grid.style !== 3 }"
+            :style="{ height: config.settings.grid.style === 3 ? config.content.filmStripPaneHeight + 'px' : '' }"
           >
             <!-- grid view -->
             <div ref="gridScrollContainerRef" class="absolute px-1 w-full h-full">
@@ -154,7 +178,7 @@
                 @layout-update="handleLayoutUpdate"
               />
               <!-- Navigation buttons -->
-              <div v-if="config.content.showFilmStrip && fileList.length > 0" 
+              <div v-if="(config.settings.grid.style === 3 || config.settings.grid.style === 1) && fileList.length > 0" 
                 class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none"
               >
                 <button 
@@ -182,7 +206,7 @@
           </div>
 
           <!-- splitter -->
-          <div v-if="config.content.showFilmStrip" 
+          <div v-if="config.settings.grid.style === 3" 
             :class="[ 
               'h-1 hover:bg-primary cursor-row-resize transition-colors',
               isDraggingFilmStripView ? 'bg-primary' : 'bg-base-300'
@@ -191,7 +215,7 @@
           ></div>
 
           <!-- film strip preview -->
-          <div v-if="config.content.showFilmStrip" ref="previewDiv" 
+          <div v-if="config.settings.grid.style === 3" ref="previewDiv" 
             class="flex-1 bg-base-200 overflow-hidden"
           >
             <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
@@ -223,7 +247,7 @@
         </div> <!-- grid view -->
 
         <!-- custom scrollbar -->
-        <div v-if="!config.content.showFilmStrip && fileList.length > 0" class="mt-12 shrink-0" :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]">
+        <div v-if="config.settings.grid.style !== 3 && fileList.length > 0" class="mt-12 shrink-0" :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]">
           <ScrollBar
             :total="totalFileCount"
             :pageSize="visibleItemCount"
@@ -347,7 +371,7 @@
             <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
           </div>
 
-          <div v-if="config.content.showFilmStrip || showQuickView" class="flex items-center gap-1 shink-0">
+          <div v-if="config.settings.grid.style === 3 || showQuickView" class="flex items-center gap-1 shink-0">
             <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
             <span> {{ (imageScale * 100).toFixed(0) }}% </span>
           </div>
@@ -488,6 +512,7 @@ import TaggingDialog from '@/components/TaggingDialog.vue';
 import ImageEditor from '@/components/ImageEditor.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
+import SliderInput from '@/components/SliderInput.vue';
 
 import {
   IconPhotoAll,
@@ -519,8 +544,10 @@ import {
   IconZoomIn,
   IconZoomOut,
   IconCopyTo,
-  IconGrid,
-  IconGallery,
+  IconCard,
+  IconTile,
+  IconJustified,
+  IconFilmstrip,
   IconRestore,
   IconRefresh,
   IconPhotoSearch,
@@ -881,7 +908,7 @@ function handleItemClicked(index: number) {
 function handleItemDblClicked(index: number) {
   selectedItemIndex.value = index;
 
-  if (!config.content.showFilmStrip) {
+  if (config.settings.grid.style !== 3) {
     // quick view
     showQuickView.value = true;
     quickViewZoomFit.value = true;
@@ -967,7 +994,7 @@ function handleItemAction(payload: { action: string, index: number }) {
 }
 
 function requestNavigate(direction: 'prev' | 'next') {
-  const viewer = showQuickView.value ? quickViewMediaRef.value : (config.content.showFilmStrip ? filmStripMediaRef.value : null);
+  const viewer = showQuickView.value ? quickViewMediaRef.value : (config.settings.grid.style === 3 ? filmStripMediaRef.value : null);
   
   if (direction === 'next') {
     if (viewer) {
@@ -997,7 +1024,7 @@ function performNavigate(direction: 'prev' | 'next') {
 }
 
 function updateScrollPosition(currentScrollTop: number, currentScrollHeight: number) {
-    if (!config.content.showFilmStrip) {
+    if (config.settings.grid.style !== 3) {
       // Calculate max scroll top
       const totalRows = Math.ceil(totalFileCount.value / columnCount.value);
       const topPadding = 48;
@@ -1048,7 +1075,7 @@ function handleLayoutUpdate({ height }: { height: number }) {
 function handleScrollUpdate(newIndex: number) {
   scrollPosition.value = newIndex;
   
-  if (!config.content.showFilmStrip && gridViewRef.value) {
+  if (config.settings.grid.style !== 3 && gridViewRef.value) {
     // Calculate ratio (0 to 1)
     const maxIndex = Math.max(1, totalFileCount.value - visibleItemCount.value);
     const ratio = Math.min(1, Math.max(0, newIndex / maxIndex));
@@ -1158,7 +1185,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
   if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
-    if (!showQuickView.value && !config.content.showFilmStrip) {
+    if (!showQuickView.value && config.settings.grid.style !== 3) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
     }
@@ -1166,7 +1193,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   else if (event.key === 'Space' || event.key === ' ') {
     if (showQuickView.value) {
       quickViewZoomFit.value = !quickViewZoomFit.value;
-    } else if (!config.content.showFilmStrip) {
+    } else if (config.settings.grid.style !== 3) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
     }
@@ -1509,16 +1536,17 @@ watch(
 );
 
 // watch for show preview or layout change
-watch(() => [config.content.showFilmStrip], ([newLayout]) => {
-  if (newLayout) {
-    updateSelectedImage(selectedItemIndex.value);
-  }
+watch(() => config.settings.grid.style, () => {
+  updateSelectedImage(selectedItemIndex.value);
+  stopSlideShow();
 });
 
 function toggleGridViewLayout() {
   showQuickView.value = false;
-  config.content.showFilmStrip = !config.content.showFilmStrip;
-  filmStripZoomFit.value = true;
+  config.settings.grid.style = (config.settings.grid.style + 1) % 4;
+  if (config.settings.grid.style === 3) {
+    filmStripZoomFit.value = true;
+  }
 }
 
 // Track pending requests to avoid duplicates
@@ -2517,10 +2545,6 @@ watch(() => config.settings.slideShowInterval, () => {
   }
 });
 
-watch(() => config.content.showFilmStrip, () => {
-  stopSlideShow();
-});
-
 // set file rotate
 const clickRotate = async () => {
   if (selectedItemIndex.value >= 0) {
@@ -2813,7 +2837,7 @@ function handleMouseMove(event: MouseEvent) {
     }
 
     const newHeight = 
-      config.settings.previewPosition === 0 ? 
+      config.settings.grid.previewPosition === 0 ? 
         gridViewDivRect.bottom - event.clientY - 2 - verticalSpacing :
         event.clientY - gridViewDivRect.top - 2 - verticalSpacing; // -2: border width(2px)
     

@@ -7,7 +7,7 @@
       <!-- Sidebar -->
       <div class="w-40 m-1 p-2 bg-base-200/30 flex flex-col rounded-box overflow-y-auto shrink-0 select-none">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.about.title']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.gallery_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.about.title']"
           :key="index"
           :class="[
             'px-3 py-2 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
@@ -77,68 +77,66 @@
             </div>
           </div>
 
-          <!-- Grid View Tab -->
+          <!-- Gallery View Tab -->
           <div v-else-if="config.settings.tabIndex === 1" class="flex flex-col">
              <!-- Style -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.grid_view.style') }}</div>
+                <div>{{ $t('settings.gallery_view.style') }}</div>
               </div>
               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.style">
                 <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
             <!-- Size -->
-            <div class="flex items-center justify-between p-2 min-h-12 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+            <!-- <div class="flex items-center justify-between p-2 min-h-12 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.grid_view.size') }}</div>
+                <div>{{ $t('settings.gallery_view.size') }}</div>
               </div>
               <div class="w-48 flex justify-end">
                 <SliderInput v-model="config.settings.grid.size" :min="120" :max="320" :step="10" label="" />
               </div>
-            </div>
+            </div> -->
              <!-- Scaling -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.grid_view.scaling') }}</div>
+                <div>{{ $t('settings.gallery_view.scaling') }}</div>
               </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling">
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling" :disabled="config.settings.grid.style !== 0 && config.settings.grid.style !== 1">
                 <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
             <!-- Primary Label -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.grid_view.label_primary') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.grid_view.label_primary_hint') }}</div>
+                <div>{{ $t('settings.gallery_view.label_primary') }}</div>
               </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary">
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary" :disabled="config.settings.grid.style !== 0">
                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
             <!-- Secondary Label -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.grid_view.label_secondary') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.grid_view.label_secondary_hint') }}</div>
+                <div>{{ $t('settings.gallery_view.label_secondary') }}</div>
               </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary">
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary" :disabled="config.settings.grid.style !== 0">
                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <!-- Preview Position -->
+             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.previewPosition" :disabled="config.settings.grid.style !== 3">
+                 <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
           </div>
 
           <!-- Image View Tab -->
           <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col">
-            <!-- Preview Position -->
-             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.previewPosition">
-                 <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
             <!-- Navigator View -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
@@ -300,7 +298,7 @@ const currentTheme = computed({
 
 // Define the grid scaling options
 const gridScalingOptions = computed(() => {
-  const options = localeMsg.value.settings.grid_view.scaling_options;
+  const options = localeMsg.value.settings.gallery_view.scaling_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -312,7 +310,7 @@ const gridScalingOptions = computed(() => {
 
 // Define the grid style options
 const gridStyleOptions = computed(() => {
-  const options = localeMsg.value.settings.grid_view.style_options;
+  const options = localeMsg.value.settings.gallery_view.style_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -324,7 +322,7 @@ const gridStyleOptions = computed(() => {
 
 // Define the grid label options
 const gridLabelOptions = computed(() => {
-  const options = localeMsg.value.settings.grid_view.label_options;
+  const options = localeMsg.value.settings.gallery_view.label_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -449,7 +447,7 @@ watch(() => config.settings.grid.labelPrimary, (newValue) => {
 watch(() => config.settings.grid.labelSecondary, (newValue) => {
   emit('settings-gridLabelSecondary-changed', newValue);
 });
-watch(() => config.settings.previewPosition, (newValue) => {
+watch(() => config.settings.grid.previewPosition, (newValue) => {
   emit('settings-filmStripViewPreviewPosition-changed', newValue);
 });
 

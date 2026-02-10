@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "Восстановить",
       "refresh": "Обновить",
-      "grid_view": "Сетка",
-      "filmstrip_view": "Лента",
       "show_info": "Показать инфо",
       "hide_info": "Скрыть инфо",
       "clear_history": "Очистить историю",
@@ -669,9 +667,9 @@
       "show_map_hint": "Нужен интернет",
       "debug_mode": "Режим отладки"
     },
-    "grid_view": {
-      "title": "Сетка",
-      "style": "Стиль",
+    "gallery_view": {
+      "title": "Галерея",
+      "style": "Стиль галереи",
       "style_options": [
         "Карточки",
         "Плитка",

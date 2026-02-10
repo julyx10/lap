@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "Restaurer",
       "refresh": "Actualiser",
-      "grid_view": "Vue grille",
-      "filmstrip_view": "Vue pellicule",
       "show_info": "Afficher info",
       "hide_info": "Masquer info",
       "clear_history": "Effacer historique",
@@ -669,9 +667,9 @@
       "show_map_hint": "Requiert internet",
       "debug_mode": "Mode débogage"
     },
-    "grid_view": {
-      "title": "Vue grille",
-      "style": "Style",
+    "gallery_view": {
+      "title": "Vue galerie",
+      "style": "Style de vue galerie",
       "style_options": [
         "Vue carte",
         "Vue mosaïque",

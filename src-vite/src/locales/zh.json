@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "恢复",
       "refresh": "刷新",
-      "grid_view": "网格视图",
-      "filmstrip_view": "胶片视图",
       "show_info": "显示信息",
       "hide_info": "隐藏信息",
       "clear_history": "清空搜索历史",
@@ -669,9 +667,9 @@
       "show_map_hint": "需要网络访问",
       "debug_mode": "调试模式"
     },
-    "grid_view": {
-      "title": "网格视图",
-      "style": "网格视图样式",
+    "gallery_view": {
+      "title": "画廊视图",
+      "style": "画廊视图样式",
       "style_options": [
         "卡片视图",
         "平铺视图",

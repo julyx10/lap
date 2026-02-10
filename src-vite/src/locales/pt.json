@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "Restaurar",
       "refresh": "Atualizar",
-      "grid_view": "Grade",
-      "filmstrip_view": "Tira de filme",
       "show_info": "Mostrar info",
       "hide_info": "Ocultar info",
       "clear_history": "Limpar histórico",
@@ -669,9 +667,9 @@
       "show_map_hint": "Requer internet",
       "debug_mode": "Modo debug"
     },
-    "grid_view": {
-      "title": "Grade",
-      "style": "Estilo",
+    "gallery_view": {
+      "title": "Galeria",
+      "style": "Estilo da galeria",
       "style_options": [
         "Visualização em cartões",
         "Visualização em mosaico",

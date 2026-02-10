@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "Wiederherstellen",
       "refresh": "Aktualisieren",
-      "grid_view": "Rasteransicht",
-      "filmstrip_view": "Filmstreifen",
       "show_info": "Info anzeigen",
       "hide_info": "Info ausblenden",
       "clear_history": "Verlauf löschen",
@@ -669,9 +667,9 @@
       "show_map_hint": "Benötigt Internet",
       "debug_mode": "Debug-Modus"
     },
-    "grid_view": {
-      "title": "Rasteransicht",
-      "style": "Stil",
+    "gallery_view": {
+      "title": "Galerieansicht",
+      "style": "Galerieansicht-Stil",
       "style_options": [
         "Kartenansicht",
         "Kachelansicht",

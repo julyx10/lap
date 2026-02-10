@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "復元",
       "refresh": "更新",
-      "grid_view": "グリッド表示",
-      "filmstrip_view": "フィルムストリップ表示",
       "show_info": "情報を表示",
       "hide_info": "情報を隠す",
       "clear_history": "履歴を消去",
@@ -669,9 +667,9 @@
       "show_map_hint": "インターネット接続が必要です",
       "debug_mode": "デバッグモード"
     },
-    "grid_view": {
-      "title": "グリッド表示",
-      "style": "スタイル",
+    "gallery_view": {
+      "title": "ギャラリー表示",
+      "style": "ギャラリー表示形式",
       "style_options": [
         "カード表示",
         "タイル表示",

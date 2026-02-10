@@ -12,18 +12,18 @@
       ref="scroller"
       class="w-full h-full no-scrollbar"
       :class="{
-        'pt-12': !config.content.showFilmStrip,
-        'pb-8': !config.content.showFilmStrip && config.settings.showStatusBar,
-        'pb-1': !config.content.showFilmStrip && !config.settings.showStatusBar,
+        'pt-12': config.settings.grid.style !== 3,
+        'pb-8': config.settings.grid.style !== 3 && config.settings.showStatusBar,
+        'pb-1': config.settings.grid.style !== 3 && !config.settings.showStatusBar,
       }"
       :items="fileList"
-      :direction="!config.content.showFilmStrip ? 'vertical' : 'horizontal'"
-      :grid-items="!config.content.showFilmStrip ? columnCount : undefined"
-      :item-size="!config.content.showFilmStrip ? itemHeight : filmStripItemSize"
-      :item-secondary-size="!config.content.showFilmStrip ? itemWidth : undefined"
-      :key="config.content.showFilmStrip ? 'filmstrip' : 'grid'"
-      :geometry="(config.settings.grid.style === 2 || config.content.showFilmStrip) ? layoutGeometry : undefined"
-      :content-height="(config.settings.grid.style === 2 || config.content.showFilmStrip) ? layoutContentHeight : undefined"
+      :direction="config.settings.grid.style === 3 ? 'horizontal' : 'vertical'"
+      :grid-items="config.settings.grid.style === 3 ? 1 : columnCount"
+      :item-size="config.settings.grid.style === 3 ? filmStripItemSize : itemHeight"
+      :item-secondary-size="config.settings.grid.style !== 3 ? itemWidth : undefined"
+      :key="config.settings.grid.style === 3 ? 'filmstrip' : 'grid'"
+      :geometry="config.settings.grid.style === 2 ? layoutGeometry : undefined"
+      :content-height="config.settings.grid.style === 2 ? layoutContentHeight : undefined"
       key-field="id"
       :emit-update="true"
       :buffer="4"
@@ -107,32 +107,21 @@ const gap = 8; // Gap between items
 
 // item width and height(including gap)
 const itemWidth = computed(() => {
-  if (config.settings.grid.style === 0) {
-    return config.settings.grid.size + gap * 2;
-  } else if (config.settings.grid.style === 1) {
-    return config.settings.grid.size;
-  } else if (config.settings.grid.style === 2) {
-    // For justified layout, we don't have a fixed item width.
-    // Return a dummy value or the target row height?
-    // VirtualScroll might not use this if geometry is passed.
-    return config.settings.grid.size; 
-  }
-  return 0;
+  const { style, size } = config.settings.grid;
+  if (style === 0) return size + gap * 2;
+  return size;
 });
 
 const itemHeight = computed(() => {
-  if (config.settings.grid.style === 0) {
-    let labelHeight = 0
-    if (config.settings.grid.labelPrimary > 0 ) labelHeight += 20;      // height of text-sm
-    if (config.settings.grid.labelSecondary > 0 ) labelHeight += 16;    // height of text-xs
-    return itemWidth.value + gap / 2 + labelHeight;
-  } else if (config.settings.grid.style === 1) {
-    return itemWidth.value + gap / 2;
-  } else if (config.settings.grid.style === 2) {
-     // Justified layout height is variable, but roughly around target size
-     return config.settings.grid.size;
+  const { style, size } = config.settings.grid;
+  if (style === 0) {
+    let labelHeight = 0;
+    if (config.settings.grid.labelPrimary > 0) labelHeight += 20;   // text-sm
+    if (config.settings.grid.labelSecondary > 0) labelHeight += 16; // text-xs
+    return itemWidth.value + gap * 0.5 + labelHeight;
   }
-  return 0;
+  if (style === 1) return itemWidth.value + gap * 0.5;
+  return size;
 });
 
 const filmStripItemSize = computed(() => {
@@ -153,23 +142,10 @@ function updateColumnCount() {
 function updateLayout() {
   updateColumnCount();
   
-  if (config.content.showFilmStrip) {
-    if (config.settings.grid.style === 2) {
-      // Calculate Linear Row Layout (Filmstrip) for Justified View
-      const result = calculateLinearRowLayout(
-        props.fileList,
-        config.content.filmStripPaneHeight,
-        0
-      );
-      layoutGeometry.value = result.boxes;
-      layoutContentHeight.value = result.containerWidth; // Used as totalSize in VirtualScroll
-      emit('layout-update', { height: result.containerWidth }); 
-    } else {
-      // For Card/Tile view in Filmstrip, use default VirtualScroll logic (fixed width = height)
-      layoutGeometry.value = [];
-      layoutContentHeight.value = 0; // Let VirtualScroll handle total size calculation based on item count
-      emit('layout-update', { height: 0 });
-    }
+  if (config.settings.grid.style === 3) {
+    layoutGeometry.value = [];
+    layoutContentHeight.value = 0;
+    emit('layout-update', { height: 0 });
   } else if (config.settings.grid.style === 2 && containerWidth.value > 0) {
     // Calculate Justified Layout
     const result = calculateJustifiedLayout(
@@ -188,7 +164,7 @@ function updateLayout() {
   }
 }
 
-watch(() => [config.settings.grid.size, config.settings.grid.style, config.content.showFilmStrip], () => {
+watch(() => [config.settings.grid.size, config.settings.grid.style], () => {
   updateLayout();
 });
 
@@ -260,7 +236,7 @@ function onScroll(e: Event) {
 }
 
 function onWheel(e: WheelEvent) {
-  if (config.content.showFilmStrip && scroller.value) {
+  if (config.settings.grid.style === 3 && scroller.value) {
     // If it's a vertical scroll (deltaY) and no horizontal scroll (deltaX),
     // translate it to horizontal scroll
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -287,7 +263,7 @@ function scrollToItem(index: number) {
   
   const el = scroller.value.$el;
   
-  if (!config.content.showFilmStrip) {
+  if (config.settings.grid.style !== 3) {
     let itemTop = 0;
     let itemBottom = 0;
 
@@ -348,7 +324,7 @@ function scrollToItem(index: number) {
 }
 
 function scrollToPosition(scrollTop: number) {
-  if (scroller.value && !config.content.showFilmStrip) {
+  if (scroller.value && config.settings.grid.style !== 3) {
     scroller.value.$el.scrollTop = scrollTop;
   }
 }

@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "복원",
       "refresh": "새로고침",
-      "grid_view": "그리드 보기",
-      "filmstrip_view": "필름스트립 보기",
       "show_info": "정보 보기",
       "hide_info": "정보 숨기기",
       "clear_history": "기록 지우기",
@@ -669,9 +667,9 @@
       "show_map_hint": "인터넷 필요",
       "debug_mode": "디버그 모드"
     },
-    "grid_view": {
-      "title": "그리드 보기",
-      "style": "스타일",
+    "gallery_view": {
+      "title": "갤러리 보기",
+      "style": "갤러리 보기 스타일",
       "style_options": [
         "카드 보기",
         "타일 보기",

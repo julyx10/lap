@@ -164,8 +164,6 @@
     "tooltip": {
       "restore": "Restore",
       "refresh": "Refresh",
-      "grid_view": "Grid view",
-      "filmstrip_view": "Filmstrip view",
       "show_info": "Show info",
       "hide_info": "Hide info",
       "clear_history": "Clear search history",
@@ -669,9 +667,9 @@
       "show_map_hint": "Requires network access",
       "debug_mode": "Debug mode"
     },
-    "grid_view": {
-      "title": "Grid view",
-      "style": "Grid view style",
+    "gallery_view": {
+      "title": "Gallery view",
+      "style": "Gallery view style",
       "style_options": [
         "Card view",
         "Tile view",

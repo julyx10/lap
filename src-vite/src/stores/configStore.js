@@ -13,7 +13,6 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     content: {
-      showFilmStrip: false,       // false: grid view, true: film strip view
       filmStripPaneHeight: 160,   // film strip pane height (px)
     },
 
@@ -76,26 +75,26 @@ export const useConfigStore = defineStore('configStore', {
       // grid view settings
       thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
       grid: {
-        size: 160,              // grid size, range 120-360
-        style: 0,               // 0: Tile view, 1: grid view, 2: justified view
-        scaling: 0,             // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
-        labelPrimary: 1,        // Primary label (1: Name)
-        labelSecondary: 2,      // Secondary label (2: Dimension)
+        size: 160,               // grid size, range 120-360
+        style: 0,                // 0: card view, 1: tile view, 2: justified view, 3: filmstrip view
+        scaling: 0,              // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
+        labelPrimary: 1,         // card view: primary label (1: Name)
+        labelSecondary: 2,       // card view: secondary label (2: Dimension)
+        previewPosition: 0,      // filmstrip view: preview position (0: top display, 1: bottom display)
       },
       
       // image view settings
-      previewPosition: 0,         // 0: top display, 1: bottom display
-      mouseWheelMode: 1,          // 0: previous/next, 1: zoom in/out (default)
-      slideShowInterval: 1,       // slide show interval in seconds [1, 3, 5, 10, 30, 60]
-      navigatorViewMode: 0,       // 0: Auto, 1: Always hide, 2: Always show
-      navigatorViewSize: 240,     // navigator view size (160, 240, 320, 400)
-      autoPlayVideo: false,       // auto play video
-      showComment: true,          // show comment
+      mouseWheelMode: 1,         // 0: previous/next, 1: zoom in/out (default)
+      slideShowInterval: 1,      // slide show interval in seconds [1, 3, 5, 10, 30, 60]
+      navigatorViewMode: 0,      // 0: Auto, 1: Always hide, 2: Always show
+      navigatorViewSize: 240,    // navigator view size (160, 240, 320, 400)
+      autoPlayVideo: false,      // auto play video
+      showComment: true,         // show comment
 
       // image search settings
       imageSearch: {
-        thresholdIndex: 3,                 // image search threshold index (default is Low)
-        limit: 1000,                       // image search limit
+        thresholdIndex: 3,         // image search threshold index (default is Low)
+        limit: 1000,               // image search limit
       },
       
       // face recognition settings
@@ -173,7 +172,7 @@ export const useConfigStore = defineStore('configStore', {
 
     // image view settings
     setFilmStripViewPreviewPosition(filmStripViewPreviewPosition) {
-      this.settings.previewPosition = filmStripViewPreviewPosition;
+      this.settings.grid.previewPosition = filmStripViewPreviewPosition;
     },
     // setMouseWheelMode(mouseWheelMode) {
     //   this.settings.mouseWheelMode = mouseWheelMode;

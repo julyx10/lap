@@ -14,16 +14,8 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
 
 | Platform | Download | File Size | Notes |
 |:--|:--|:--|:--|
-| **macOS (Apple Silicon)** | [Download Latest .dmg](https://github.com/julyx10/lap/releases/latest) | ~150 MB | Includes embedded AI models |
-| **Windows (Intel)** | - | - | Coming soon |
-
-> ⚠️ **macOS Note**: If you see "App is damaged", it is because the app is not currently notarized by Apple.
->
-> **Option 1 (Recommended)**: Run this command in Terminal:
-> ```bash
-> xattr -cr /Applications/Lap.app
-> ```
-> **Option 2**: Go to **System Settings** > **Privacy & Security**, look for the blockage message, and click **Open Anyway**.
+| **macOS** | [Download Latest .dmg](https://github.com/julyx10/lap/releases/latest) | ~150 MB | Includes embedded AI models |
+| **Windows** | - | - | Coming soon |
 
 <table>
   <tr>

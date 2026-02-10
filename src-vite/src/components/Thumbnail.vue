@@ -3,8 +3,7 @@
     :class="[
       'border-2 flex flex-col items-center cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
-      config.settings.grid.style === 0 ? 'p-1 rounded-box' + (config.content.showFilmStrip ? '' : ' m-1') : '',
-      (config.settings.grid.style === 2 || config.content.showFilmStrip) ? 'w-full h-full' : '',
+      config.settings.grid.style === 0 ? 'p-1 rounded-box' : 'w-full h-full',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
@@ -15,8 +14,7 @@
     <div v-if="file.thumbnail" 
       :class="[
         'relative flex items-center justify-center overflow-hidden', 
-        config.settings.grid.style === 0 ? 'rounded-box' : '',
-        (config.settings.grid.style === 1 || config.settings.grid.style === 2 || config.content.showFilmStrip) ? 'w-full h-full' : ''
+        config.settings.grid.style === 0 ? 'rounded-box' : 'w-full h-full',
       ]">
       <!-- image -->
       <img :src="file.thumbnail"
@@ -66,7 +64,7 @@
       </div>
 
       <!-- context menu -->
-      <div v-if="!selectMode && !config.content.showFilmStrip" class="absolute right-0 top-0">
+      <div v-if="!selectMode && config.settings.grid.style !== 3" class="absolute right-0 top-0">
         <ContextMenu
           :class="[
             !isSelected ? 'invisible group-hover:visible' : ''
@@ -89,7 +87,7 @@
 
     <!-- label -->
     <div 
-      v-if="!config.content.showFilmStrip && config.settings.grid.style === 0" 
+      v-if="config.settings.grid.style === 0" 
       class="flex flex-col items-center" 
       :class="{ 'text-primary': isSelected }"
       :style="{ width: layoutStyle.width }"
@@ -161,7 +159,7 @@ const emit = defineEmits([
 const isTransitionDisabled = ref(false);
 let transitionTimeout: NodeJS.Timeout | null = null;
 
-watch(() => config.content.showFilmStrip, () => {
+watch(() => config.settings.grid.style, () => {
   isTransitionDisabled.value = true;
   if (transitionTimeout) {
     clearTimeout(transitionTimeout);
@@ -171,43 +169,14 @@ watch(() => config.content.showFilmStrip, () => {
   }, 500);
 });
 
-const containerStyle = computed(() => {
-  if (config.content.showFilmStrip) {
-    return {
-      width: '100%',
-      height: '100%',
-    };
-  }
-  return {};
-});
+const containerStyle = computed(() => (config.settings.grid.style === 3 ? { width: '100%', height: '100%' } : {}));
 
 const layoutStyle = computed(() => {
-  if (!config.content.showFilmStrip) {
-    if (config.settings.grid.style === 1) {
-      const height = config.settings.grid.size;
-      return {
-        width: '100%',
-        height: height + 'px'
-      }
-    }
-    if (config.settings.grid.style === 2) {
-      return {
-        width: '100%',
-        height: '100%'
-      }
-    }
-    return {
-      width: config.settings.grid.size + 'px',
-      height: config.settings.grid.size + 'px'
-    }
-  }
-  else {
-    return {
-      width: '100%',
-      height: '100%'
-    }
-  }
-})
+  const { style, size } = config.settings.grid;
+  if (style === 0) return { width: `${size}px`, height: `${size}px` };
+  if (style === 1) return { width: '100%', height: `${size}px` };
+  return { width: '100%', height: '100%' };
+});
 
 const uiStore = useUIStore();
 const { locale, messages } = useI18n();

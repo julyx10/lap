@@ -12,6 +12,7 @@
       :max="max"
       :step="step"
       @input="updateValue"
+      :disabled="disabled"
     />
   </div>
 </template>
@@ -47,6 +48,10 @@ const props = defineProps({
   slider_width: {
     type: Number,
     default: 160,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 });
 
