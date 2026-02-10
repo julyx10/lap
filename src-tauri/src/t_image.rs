@@ -35,7 +35,7 @@ pub fn get_image_thumbnail(
     let img = img_reader
         .decode()
         .map_err(|e| format!("Failed to decode image: {}", e))?;
-    let thumbnail = img.thumbnail(thumbnail_size, thumbnail_size);
+    let thumbnail = img.thumbnail(u32::MAX, thumbnail_size);
 
     // Adjust the image orientation based on the EXIF orientation value
     let adjusted_thumbnail = match orientation {
@@ -371,7 +371,7 @@ pub fn get_heic_thumbnail_with_sips(
     let temp_output = temp_file.to_str().ok_or("Invalid temp path")?;
 
     let output = Command::new("sips")
-        .arg("-Z")
+        .arg("--resampleHeight")
         .arg(thumbnail_size.to_string())
         .arg("-s")
         .arg("format")

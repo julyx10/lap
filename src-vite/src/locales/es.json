@@ -673,8 +673,10 @@
       "title": "Vista cuadrícula",
       "style": "Estilo",
       "style_options": [
-        "Cómodo",
-        "Compacto"
+        "Vista de tarjeta",
+        "Vista mosaico",
+        "Vista justificada",
+        "Vista de tira"
       ],
       "size": "Tamaño miniatura",
       "scaling": "Escalado",
@@ -683,10 +685,8 @@
         "Recortar para llenar",
         "Estirar"
       ],
-      "label_primary": "Etiqueta primaria",
-      "label_primary_hint": "Solo en estilo cómodo",
-      "label_secondary": "Etiqueta secundaria",
-      "label_secondary_hint": "Solo en estilo cómodo",
+      "label_primary": "Etiqueta primaria de vista de tarjeta",
+      "label_secondary": "Etiqueta secundaria de vista de tarjeta",
       "label_options": [
         "(Vacío)",
         "Nombre",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "Vista tira",
-      "preview_position": "Posición vista previa",
+      "preview_position": "Posición de vista previa de tira",
       "preview_position_options": [
         "Arriba",
         "Abajo"

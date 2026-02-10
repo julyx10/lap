@@ -673,8 +673,10 @@
       "title": "Vue grille",
       "style": "Style",
       "style_options": [
-        "Confortable",
-        "Compact"
+        "Vue carte",
+        "Vue mosaïque",
+        "Vue justifiée",
+        "Vue pellicule"
       ],
       "size": "Taille",
       "scaling": "Mise à l'échelle",
@@ -683,10 +685,8 @@
         "Remplir",
         "Étirer"
       ],
-      "label_primary": "Étiquette princ.",
-      "label_primary_hint": "Style confortable uniq.",
-      "label_secondary": "Étiquette sec.",
-      "label_secondary_hint": "Style confortable uniq.",
+      "label_primary": "Étiquette princ. vue carte",
+      "label_secondary": "Étiquette sec. vue carte",
       "label_options": [
         "(Vide)",
         "Nom",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "Vue pellicule",
-      "preview_position": "Position aperçu",
+      "preview_position": "Position aperçu vue pellicule",
       "preview_position_options": [
         "Au-dessus",
         "En-dessous"

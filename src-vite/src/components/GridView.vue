@@ -22,6 +22,8 @@
       :item-size="!config.content.showFilmStrip ? itemHeight : filmStripItemSize"
       :item-secondary-size="!config.content.showFilmStrip ? itemWidth : undefined"
       :key="config.content.showFilmStrip ? 'filmstrip' : 'grid'"
+      :geometry="(config.settings.grid.style === 2 || config.content.showFilmStrip) ? layoutGeometry : undefined"
+      :content-height="(config.settings.grid.style === 2 || config.content.showFilmStrip) ? layoutContentHeight : undefined"
       key-field="id"
       :emit-update="true"
       :buffer="4"
@@ -56,11 +58,12 @@
 
 <script setup lang="ts">
 
-import { watch, ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { watch, ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
 import VirtualScroll from '@/components/VirtualScroll.vue';
+import { calculateJustifiedLayout, calculateLinearRowLayout, type Geometry } from '@/common/layout';
 
 const props = withDefaults(defineProps<{
   selectedItemIndex: number;
@@ -68,11 +71,13 @@ const props = withDefaults(defineProps<{
   showFolderFiles?: boolean;
   selectMode?: boolean;
   loading?: boolean;
+  layoutVersion?: number;
 }>(), {
   selectedItemIndex: -1,
   showFolderFiles: false,
   selectMode: false,
   loading: false,
+  layoutVersion: 0,
 });
 
 const emit = defineEmits([
@@ -83,6 +88,7 @@ const emit = defineEmits([
   'request-scroll',
   'visible-range-update',
   'scroll',
+  'layout-update',
 ]);
 
 const uiStore = useUIStore();
@@ -90,6 +96,12 @@ const containerRef = ref<HTMLElement | null>(null);
 const scroller = ref<any>(null);
 const columnCount = ref(4);
 const containerWidth = ref(0);
+
+// Justified Layout State
+const layoutGeometry = ref<Geometry[]>([]);
+const layoutContentHeight = ref(0);
+
+const startGridSize = ref(0);
 
 const gap = 8; // Gap between items
 
@@ -99,6 +111,11 @@ const itemWidth = computed(() => {
     return config.settings.grid.size + gap * 2;
   } else if (config.settings.grid.style === 1) {
     return config.settings.grid.size;
+  } else if (config.settings.grid.style === 2) {
+    // For justified layout, we don't have a fixed item width.
+    // Return a dummy value or the target row height?
+    // VirtualScroll might not use this if geometry is passed.
+    return config.settings.grid.size; 
   }
   return 0;
 });
@@ -111,6 +128,9 @@ const itemHeight = computed(() => {
     return itemWidth.value + gap / 2 + labelHeight;
   } else if (config.settings.grid.style === 1) {
     return itemWidth.value + gap / 2;
+  } else if (config.settings.grid.style === 2) {
+     // Justified layout height is variable, but roughly around target size
+     return config.settings.grid.size;
   }
   return 0;
 });
@@ -130,8 +150,54 @@ function updateColumnCount() {
   }
 }
 
-watch(() => [config.settings.grid.size, config.settings.grid.style], () => {
+function updateLayout() {
   updateColumnCount();
+  
+  if (config.content.showFilmStrip) {
+    if (config.settings.grid.style === 2) {
+      // Calculate Linear Row Layout (Filmstrip) for Justified View
+      const result = calculateLinearRowLayout(
+        props.fileList,
+        config.content.filmStripPaneHeight,
+        0
+      );
+      layoutGeometry.value = result.boxes;
+      layoutContentHeight.value = result.containerWidth; // Used as totalSize in VirtualScroll
+      emit('layout-update', { height: result.containerWidth }); 
+    } else {
+      // For Card/Tile view in Filmstrip, use default VirtualScroll logic (fixed width = height)
+      layoutGeometry.value = [];
+      layoutContentHeight.value = 0; // Let VirtualScroll handle total size calculation based on item count
+      emit('layout-update', { height: 0 });
+    }
+  } else if (config.settings.grid.style === 2 && containerWidth.value > 0) {
+    // Calculate Justified Layout
+    const result = calculateJustifiedLayout(
+      props.fileList,
+      containerWidth.value,
+      config.settings.grid.size, // Target row height
+      0 // Use correct spacing
+    );
+    layoutGeometry.value = result.boxes;
+    layoutContentHeight.value = result.containerHeight;
+    emit('layout-update', { height: result.containerHeight });
+  } else {
+    layoutGeometry.value = [];
+    layoutContentHeight.value = 0;
+    emit('layout-update', { height: 0 });
+  }
+}
+
+watch(() => [config.settings.grid.size, config.settings.grid.style, config.content.showFilmStrip], () => {
+  updateLayout();
+});
+
+watch(() => props.fileList, () => {
+  updateLayout();
+});
+
+watch(() => props.layoutVersion, () => {
+  updateLayout();
 });
 
 watch(() => props.selectedItemIndex, (newValue) => {
@@ -143,23 +209,47 @@ watch(() => props.selectedItemIndex, (newValue) => {
 onMounted(() => {
   if (containerRef.value) {
     resizeObserver = new ResizeObserver(() => {
-      updateColumnCount();
+      // updateColumnCount(); // merged into updateLayout
+      updateLayout();
       if (props.selectedItemIndex !== -1) {
         scrollToItem(props.selectedItemIndex);
       }
     });
     resizeObserver.observe(containerRef.value);
-    updateColumnCount();
+    updateLayout();
+
+    // gesture events for macOS touchpad pinch
+    containerRef.value.addEventListener('gesturestart', onGestureStart as any);
+    containerRef.value.addEventListener('gesturechange', onGestureChange as any);
   }
   window.addEventListener('keydown', onKeyDown);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeyDown);
+  if (containerRef.value) {
+    containerRef.value.removeEventListener('gesturestart', onGestureStart as any);
+    containerRef.value.removeEventListener('gesturechange', onGestureChange as any);
+  }
   if (resizeObserver) {
     resizeObserver.disconnect();
   }
 });
+
+function onGestureStart(e: any) {
+  e.preventDefault();
+  startGridSize.value = config.settings.grid.size;
+}
+
+function onGestureChange(e: any) {
+  e.preventDefault();
+  if (startGridSize.value > 0) {
+    let newSize = Math.round(startGridSize.value * e.scale);
+    // Clamp between 120 and 360
+    newSize = Math.max(120, Math.min(360, newSize));
+    config.settings.grid.size = newSize;
+  }
+}
 
 function onUpdate(startIndex: number, endIndex: number) {
   emit('visible-range-update', { startIndex, endIndex });
@@ -198,9 +288,21 @@ function scrollToItem(index: number) {
   const el = scroller.value.$el;
   
   if (!config.content.showFilmStrip) {
-    const row = Math.floor(index / columnCount.value);
-    const itemTop = row * itemHeight.value;
-    const itemBottom = itemTop + itemHeight.value;
+    let itemTop = 0;
+    let itemBottom = 0;
+
+    if (config.settings.grid.style === 2 && layoutGeometry.value[index]) {
+      // Justified Layout
+      const box = layoutGeometry.value[index];
+      itemTop = box.y;
+      itemBottom = box.y + box.height;
+    } else {
+      // Normal Grid Logic
+      const row = Math.floor(index / columnCount.value);
+      itemTop = row * itemHeight.value;
+      itemBottom = itemTop + itemHeight.value;
+    }
+
     const scrollTop = el.scrollTop;
     const clientHeight = el.clientHeight;
     
@@ -259,10 +361,61 @@ function getScrollTop() {
   return scroller.value ? scroller.value.$el.scrollTop : 0;
 }
 
+function getNextItemIndex(currentIndex: number, direction: 'up' | 'down'): number {
+  if (config.settings.grid.style !== 2 || layoutGeometry.value.length === 0) {
+    return -1;
+  }
+
+  const currentBox = layoutGeometry.value[currentIndex];
+  if (!currentBox) return currentIndex;
+
+  const centerX = currentBox.x + currentBox.width / 2;
+  const currentY = currentBox.y;
+  
+  // Find all items in the target direction
+  let candidates: { index: number; box: Geometry; diffY: number }[] = [];
+
+  layoutGeometry.value.forEach((box, index) => {
+    if (direction === 'down') {
+      if (box.y > currentY + 1) { // +1 for tolerance
+         candidates.push({ index, box, diffY: box.y - currentY });
+      }
+    } else {
+      if (box.y < currentY - 1) { // -1 for tolerance
+         candidates.push({ index, box, diffY: currentY - box.y });
+      }
+    }
+  });
+
+  if (candidates.length === 0) return currentIndex;
+
+  // Find the closest row (smallest diffY)
+  const minDiffY = Math.min(...candidates.map(c => c.diffY));
+  
+  // Filter candidates to only those in the closest row
+  const rowCandidates = candidates.filter(c => Math.abs(c.diffY - minDiffY) < 5); // 5px tolerance
+
+  // Find item with closest centerX
+  let closestIndex = -1;
+  let minDistX = Infinity;
+
+  rowCandidates.forEach(c => {
+    const boxCenterX = c.box.x + c.box.width / 2;
+    const dist = Math.abs(boxCenterX - centerX);
+    if (dist < minDistX) {
+      minDistX = dist;
+      closestIndex = c.index;
+    }
+  });
+
+  return closestIndex !== -1 ? closestIndex : currentIndex;
+}
+
 defineExpose({
   getColumnCount,
   scrollToPosition,
   getScrollTop,
+  getNextItemIndex
 });
 
 </script>

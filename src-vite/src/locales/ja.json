@@ -673,8 +673,10 @@
       "title": "グリッド表示",
       "style": "スタイル",
       "style_options": [
-        "快適",
-        "コンパクト"
+        "カード表示",
+        "タイル表示",
+        "整列表示",
+        "フィルムストリップ表示"
       ],
       "size": "サイズ",
       "scaling": "スケーリング",
@@ -683,10 +685,8 @@
         "埋める",
         "引き伸ばす"
       ],
-      "label_primary": "メインラベル",
-      "label_primary_hint": "快適スタイルのみ",
-      "label_secondary": "サブラベル",
-      "label_secondary_hint": "快適スタイルのみ",
+      "label_primary": "カード表示メインラベル",
+      "label_secondary": "カード表示サブラベル",
       "label_options": [
         "(なし)",
         "名前",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "フィルムストリップ",
-      "preview_position": "プレビュー位置",
+      "preview_position": "フィルムストリップ表示プレビュー位置",
       "preview_position_options": [
         "上",
         "下"

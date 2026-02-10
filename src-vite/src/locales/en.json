@@ -673,8 +673,10 @@
       "title": "Grid view",
       "style": "Grid view style",
       "style_options": [
-        "Comfortable view",
-        "Compact view"
+        "Card view",
+        "Tile view",
+        "Justified view",
+        "Filmstrip view"
       ],
       "size": "Thumbnail size",
       "scaling": "Thumbnail scaling",
@@ -683,10 +685,8 @@
         "Crop to fill",
         "Stretch to fill"
       ],
-      "label_primary": "Primary label",
-      "label_primary_hint": "Only displayed when the grid view style is comfortable",
-      "label_secondary": "Secondary label",
-      "label_secondary_hint": "Only displayed when the grid view style is comfortable",
+      "label_primary": "Card view primary label",
+      "label_secondary": "Card view secondary label",
       "label_options": [
         "(Empty)",
         "Name",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "Filmstrip view",
-      "preview_position": "Preview position of filmstrip view",
+      "preview_position": "Filmstrip view preview position",
       "preview_position_options": [
         "Above filmstrip",
         "Below filmstrip"

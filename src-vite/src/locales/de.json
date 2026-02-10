@@ -673,8 +673,10 @@
       "title": "Rasteransicht",
       "style": "Stil",
       "style_options": [
-        "Komfortabel",
-        "Kompakt"
+        "Kartenansicht",
+        "Kachelansicht",
+        "Blocksatzansicht",
+        "Filmstreifenansicht"
       ],
       "size": "Größe",
       "scaling": "Skalierung",
@@ -683,10 +685,8 @@
         "Füllen",
         "Strecken"
       ],
-      "label_primary": "Hauptlabel",
-      "label_primary_hint": "Nur bei Komfortabel",
-      "label_secondary": "Sekundärlabel",
-      "label_secondary_hint": "Nur bei Komfortabel",
+      "label_primary": "Kartenansicht Hauptlabel",
+      "label_secondary": "Kartenansicht Sekundärlabel",
       "label_options": [
         "(Leer)",
         "Name",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "Filmstreifen",
-      "preview_position": "Vorschauposition",
+      "preview_position": "Filmstreifenansicht Vorschauposition",
       "preview_position_options": [
         "Oben",
         "Unten"

@@ -144,12 +144,14 @@
                 :showFolderFiles="showFolderFiles"
                 :selectMode="selectMode"
                 :loading="isLoading"
+                :layout-version="layoutVersion"
                 @item-clicked="handleItemClicked"
                 @item-dblclicked="handleItemDblClicked"
                 @item-select-toggled="handleItemSelectToggled"
                 @item-action="handleItemAction"
                 @visible-range-update="handleVisibleRangeUpdate"
                 @scroll="handleGridScroll"
+                @layout-update="handleLayoutUpdate"
               />
               <!-- Navigation buttons -->
               <div v-if="config.content.showFilmStrip && fileList.length > 0" 
@@ -325,7 +327,7 @@
       <div v-if="fileList.length > 0" class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap">
         <div class="flex items-center shink-0">
           <IconFileSearch class="t-icon-size-xs mr-1" />
-          <span v-if="selectedItemIndex >= 0"> {{ selectedItemIndex + 1 + '/' }}</span>
+          <span v-if="selectedItemIndex >= 0"> {{ (selectedItemIndex + 1).toLocaleString() + '/' }}</span>
           <span>{{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}</span>
         </div>
 
@@ -621,6 +623,8 @@ const scrollPosition = ref(0);    // scrollbar position (item index)
 
 const containerHeight = ref(0);   // container height
 const containerWidth = ref(0);    // container width
+const layoutContentHeight = ref(0); // reported content height from GridView
+const layoutVersion = ref(0);     // version to force layout update
 const gap = 8;                    // Gap between items (must match GridView)
 
 const itemWidth = computed(() => {
@@ -628,6 +632,8 @@ const itemWidth = computed(() => {
     return config.settings.grid.size + gap * 2;
   } else if (config.settings.grid.style === 1) {
     return config.settings.grid.size;
+  } else if (config.settings.grid.style === 2) {
+    return config.settings.grid.size; // Approximation for Justified View
   }
   return 0;
 });
@@ -640,6 +646,8 @@ const itemSize = computed(() => {
     return itemWidth.value + gap / 2 + labelHeight;
   } else if (config.settings.grid.style === 1) {
     return itemWidth.value + gap / 2;
+  } else if (config.settings.grid.style === 2) {
+    return config.settings.grid.size + gap / 2; // Row height + vertical gap (4px)
   }
   return 0;
 });
@@ -988,30 +996,52 @@ function performNavigate(direction: 'prev' | 'next') {
   }
 }
 
-function handleGridScroll(event: any) {
-  if (event && event.target) {
-    const scrollTop = event.target.scrollTop;
-    
+function updateScrollPosition(currentScrollTop: number, currentScrollHeight: number) {
     if (!config.content.showFilmStrip) {
       // Calculate max scroll top
       const totalRows = Math.ceil(totalFileCount.value / columnCount.value);
       const topPadding = 48;
       const bottomPadding = config.settings.showStatusBar ? 32 : 4;
-      const totalHeight = totalRows * itemSize.value + topPadding + bottomPadding;
-      const maxScrollTop = Math.max(0, totalHeight - containerHeight.value);
+      
+      // Determine effective scroll height
+      // If provided (from event), use it. Otherwise calculate based on layout.
+      let scrollHeight = currentScrollHeight;
+      if (!scrollHeight) {
+         const contentHeight = (config.settings.grid.style === 2 && layoutContentHeight.value > 0) 
+            ? layoutContentHeight.value 
+            : (totalRows * itemSize.value);
+         scrollHeight = contentHeight + topPadding + bottomPadding;
+      }
+
+      const maxScrollTop = Math.max(0, scrollHeight - containerHeight.value);
       
       if (maxScrollTop <= 0) {
         scrollPosition.value = 0;
       } else {
-        const ratio = Math.min(1, Math.max(0, scrollTop / maxScrollTop));
+        const ratio = Math.min(1, Math.max(0, currentScrollTop / maxScrollTop));
         const maxIndex = Math.max(1, totalFileCount.value - visibleItemCount.value);
         scrollPosition.value = Math.round(ratio * maxIndex);
       }
     } else {
       // Fallback for filmstrip or other layouts (horizontal)
-      const rowIndex = Math.floor(scrollTop / itemSize.value);
+      const rowIndex = Math.floor(currentScrollTop / itemSize.value);
       scrollPosition.value = rowIndex * columnCount.value;
     }
+}
+
+function handleGridScroll(event: any) {
+  if (event && event.target) {
+    updateScrollPosition(
+        event.target.scrollTop, 
+        event.target.scrollHeight
+    );
+  }
+}
+
+function handleLayoutUpdate({ height }: { height: number }) {
+  layoutContentHeight.value = height;
+  if (gridViewRef.value) {
+    updateScrollPosition(gridViewRef.value.getScrollTop(), 0);
   }
 }
 
@@ -1027,7 +1057,13 @@ function handleScrollUpdate(newIndex: number) {
     const totalRows = Math.ceil(totalFileCount.value / columnCount.value);
     const topPadding = 48;
     const bottomPadding = config.settings.showStatusBar ? 32 : 4;
-    const totalHeight = totalRows * itemSize.value + topPadding + bottomPadding;
+    
+    // Use reported layout height if available (style 2), otherwise calculate
+    const contentHeight = (config.settings.grid.style === 2 && layoutContentHeight.value > 0) 
+      ? layoutContentHeight.value 
+      : (totalRows * itemSize.value);
+      
+    const totalHeight = contentHeight + topPadding + bottomPadding;
     const maxScrollTop = Math.max(0, totalHeight - containerHeight.value);
     
     const newScrollTop = ratio * maxScrollTop;
@@ -1047,12 +1083,24 @@ function handleScrollUpdate(newIndex: number) {
 const keyActions = {
   ArrowDown: () => {
     if (gridViewRef.value) {
-      selectedItemIndex.value = Math.min(selectedItemIndex.value + gridViewRef.value.getColumnCount(), fileList.value.length - 1);
+      if (config.settings.grid.style === 2) {
+        // Use geometry-aware navigation for Justified View
+        const nextIndex = gridViewRef.value.getNextItemIndex(selectedItemIndex.value, 'down');
+        selectedItemIndex.value = nextIndex !== -1 ? nextIndex : selectedItemIndex.value;
+      } else {
+        selectedItemIndex.value = Math.min(selectedItemIndex.value + gridViewRef.value.getColumnCount(), fileList.value.length - 1);
+      }
     }
   },
   ArrowUp: () => {
     if (gridViewRef.value) {
-      selectedItemIndex.value = Math.max(selectedItemIndex.value - gridViewRef.value.getColumnCount(), 0);
+      if (config.settings.grid.style === 2) {
+        // Use geometry-aware navigation for Justified View
+        const nextIndex = gridViewRef.value.getNextItemIndex(selectedItemIndex.value, 'up');
+        selectedItemIndex.value = nextIndex !== -1 ? nextIndex : selectedItemIndex.value;
+      } else {
+        selectedItemIndex.value = Math.max(selectedItemIndex.value - gridViewRef.value.getColumnCount(), 0);
+      }
     }
   },
   Home: () => selectedItemIndex.value = 0,
@@ -1525,6 +1573,8 @@ async function fetchDataRange(start: number, end: number) {
             if (filesToFetch.length > 0) {
               getFileListThumb(filesToFetch);
             }
+            // Trigger layout update since file dimensions might have changed
+            layoutVersion.value++;
           }
         })
         .catch(err => {

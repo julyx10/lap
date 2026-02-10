@@ -673,8 +673,10 @@
       "title": "网格视图",
       "style": "网格视图样式",
       "style_options": [
-        "舒适",
-        "紧凑"
+        "卡片视图",
+        "平铺视图",
+        "自适应视图",
+        "胶片视图"
       ],
       "size": "缩略图大小",
       "scaling": "缩略图缩放",
@@ -683,10 +685,8 @@
         "裁剪填充",
         "拉伸填充"
       ],
-      "label_primary": "主标签",
-      "label_primary_hint": "只有在视图样式为舒适模式时才会显示",
-      "label_secondary": "副标签",
-      "label_secondary_hint": "只有在视图样式为舒适模式时才会显示",
+      "label_primary": "卡片视图主标签",
+      "label_secondary": "卡片视图副标签",
       "label_options": [
         "(空)",
         "名称",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "胶片视图",
-      "preview_position": "胶片视图的预览位置",
+      "preview_position": "胶片视图预览位置",
       "preview_position_options": [
         "胶片上方",
         "胶片下方"

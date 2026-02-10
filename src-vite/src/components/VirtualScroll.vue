@@ -33,6 +33,8 @@ const props = withDefaults(defineProps<{
   keyField?: string;
   buffer?: number;
   emitUpdate?: boolean;
+  geometry?: { x: number, y: number, width: number, height: number }[]; // Pre-calculated layout
+  contentHeight?: number; // Total height for pre-calculated layout
 }>(), {
   gridItems: 1,
   direction: 'vertical',
@@ -54,7 +56,10 @@ const totalCount = computed(() => props.items.length);
 
 const totalRows = computed(() => Math.ceil(totalCount.value / props.gridItems));
 
-const totalSize = computed(() => totalRows.value * props.itemSize);
+const totalSize = computed(() => {
+  if (props.contentHeight !== undefined) return props.contentHeight;
+  return totalRows.value * props.itemSize;
+});
 
 const wrapperStyle = computed((): CSSProperties => {
   return isVertical.value
@@ -63,6 +68,62 @@ const wrapperStyle = computed((): CSSProperties => {
 });
 
 const visibleRange = computed(() => {
+  if (props.geometry) {
+    // Binary search for start and end indices
+    const scrollTop = scrollOffset.value;
+    const viewportHeight = containerSize.value;
+    const scrollBottom = scrollTop + viewportHeight;
+    
+    // Find start index: first item where y + height >= scrollTop
+    let start = 0;
+    let low = 0; 
+    let high = props.geometry.length - 1;
+    
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const box = props.geometry[mid];
+      const boxStart = isVertical.value ? box.y : box.x;
+      const boxSize = isVertical.value ? box.height : box.width;
+      
+      if (boxStart + boxSize >= scrollOffset.value) {
+        start = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+    
+    // Find end index: first item where y > scrollBottom
+    let end = props.geometry.length;
+    low = start;
+    high = props.geometry.length - 1;
+    
+    // Simple linear scan for end optimization since usually not too far?
+    // Or binary search again.
+    // Let's do binary search for consistency.
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const box = props.geometry[mid];
+      const boxStart = isVertical.value ? box.y : box.x;
+      if (boxStart > scrollOffset.value + containerSize.value) {
+        end = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+    
+    // Apply buffer (approximate rows logic)
+    // We don't have rows, so just add buffer * gridItems?
+    // Using gridItems as rough "items per row" estimate
+    const bufferCount = props.buffer * (props.gridItems || 4); 
+    
+    return {
+      start: Math.max(0, start - bufferCount),
+      end: Math.min(totalCount.value, end + bufferCount)
+    };
+  }
+
   const start = Math.floor(scrollOffset.value / props.itemSize);
   const visibleCount = Math.ceil(containerSize.value / props.itemSize);
   
@@ -80,14 +141,25 @@ const visibleItems = computed(() => {
   const { start, end } = visibleRange.value;
   const result = [];
   
-  const startIndex = start * props.gridItems;
-  const endIndex = Math.min(totalCount.value, end * props.gridItems);
-  
-  for (let i = startIndex; i < endIndex; i++) {
-    result.push({
-      item: props.items[i],
-      index: i,
-    });
+  if (props.geometry) {
+    for (let i = start; i < end; i++) {
+        if (i < props.items.length) {
+            result.push({
+                item: props.items[i],
+                index: i,
+            });
+        }
+    }
+  } else {
+    const startIndex = start * props.gridItems;
+    const endIndex = Math.min(totalCount.value, end * props.gridItems);
+    
+    for (let i = startIndex; i < endIndex; i++) {
+      result.push({
+        item: props.items[i],
+        index: i,
+      });
+    }
   }
   
   return result;
@@ -95,6 +167,18 @@ const visibleItems = computed(() => {
 
 function getItemStyle(poolItem: { item: any, index: number }): CSSProperties {
   const { index } = poolItem;
+  
+  if (props.geometry && props.geometry[index]) {
+    const box = props.geometry[index];
+    return {
+      position: 'absolute',
+      top: `${box.y}px`,
+      left: `${box.x}px`,
+      width: `${box.width}px`,
+      height: `${box.height}px`,
+    };
+  }
+
   const row = Math.floor(index / props.gridItems);
   const col = index % props.gridItems;
   

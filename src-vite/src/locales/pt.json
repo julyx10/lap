@@ -673,8 +673,10 @@
       "title": "Grade",
       "style": "Estilo",
       "style_options": [
-        "Confortável",
-        "Compacto"
+        "Visualização em cartões",
+        "Visualização em mosaico",
+        "Visualização justificada",
+        "Visualização em tira de filme"
       ],
       "size": "Tamanho",
       "scaling": "Escala",
@@ -683,10 +685,8 @@
         "Preencher",
         "Esticar"
       ],
-      "label_primary": "Rótulo principal",
-      "label_primary_hint": "Apenas estilo confortável",
-      "label_secondary": "Rótulo secundário",
-      "label_secondary_hint": "Apenas estilo confortável",
+      "label_primary": "Rótulo principal de visualização em cartões",
+      "label_secondary": "Rótulo secundário de visualização em cartões",
       "label_options": [
         "(Vazio)",
         "Nome",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "Tira de filme",
-      "preview_position": "Posição prévia",
+      "preview_position": "Posição prévia da tira de filme",
       "preview_position_options": [
         "Acima",
         "Abaixo"

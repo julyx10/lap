@@ -673,8 +673,10 @@
       "title": "그리드 보기",
       "style": "스타일",
       "style_options": [
-        "편안하게",
-        "콤팩트"
+        "카드 보기",
+        "타일 보기",
+        "양쪽 맞춤 보기",
+        "필름스트립 보기"
       ],
       "size": "크기",
       "scaling": "비율",
@@ -683,10 +685,8 @@
         "채우기",
         "늘리기"
       ],
-      "label_primary": "주 라벨",
-      "label_primary_hint": "편안한 스타일 전용",
-      "label_secondary": "보조 라벨",
-      "label_secondary_hint": "편안한 스타일 전용",
+      "label_primary": "카드 보기 주 라벨",
+      "label_secondary": "카드 보기 보조 라벨",
       "label_options": [
         "(없음)",
         "이름",
@@ -701,7 +701,7 @@
     },
     "filmstrip_view": {
       "title": "필름스트립",
-      "preview_position": "미리보기 위치",
+      "preview_position": "필름스트립 보기 미리보기 위치",
       "preview_position_options": [
         "위",
         "아래"

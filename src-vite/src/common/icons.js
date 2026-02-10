@@ -42,10 +42,10 @@ export { default as IconImageSearch } from '@/assets/icons/image-search.svg';
 // ======================
 // VIEW CONTROL ICONS
 // ======================
-export { default as IconGrid } from '@/assets/icons/layout-grid.svg';
-export { default as IconGallery } from '@/assets/icons/layout-gallery.svg';
-export { default as IconCarousel } from '@/assets/icons/layout-carousel.svg';
-export { default as IconMasonry } from '@/assets/icons/layout-masonry.svg';
+export { default as IconCard } from '@/assets/icons/layout-card.svg';
+export { default as IconTile } from '@/assets/icons/layout-tile.svg';
+export { default as IconJustified } from '@/assets/icons/layout-justified.svg';
+export { default as IconFilmstrip } from '@/assets/icons/layout-filmstrip.svg';
 export { default as IconSideBarOn } from '@/assets/icons/sidebar-on.svg';
 export { default as IconSideBarOff } from '@/assets/icons/sidebar-off.svg';
 export { default as IconUnhide } from '@/assets/icons/eye.svg';

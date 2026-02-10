@@ -127,7 +127,7 @@ pub fn get_video_thumbnail(
             let dyn_image = DynamicImage::ImageRgb8(rgb_image);
 
             // Resize while keeping aspect ratio
-            let thumbnail = dyn_image.thumbnail(thumbnail_size, thumbnail_size);
+            let thumbnail = dyn_image.thumbnail(u32::MAX, thumbnail_size);
 
             let adjusted_thumbnail = match rotation {
                 90 => thumbnail.rotate90(),

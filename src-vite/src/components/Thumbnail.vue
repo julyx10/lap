@@ -3,7 +3,8 @@
     :class="[
       'border-2 flex flex-col items-center cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
-      config.settings.grid.style === 0 ? 'm-1 p-1 rounded-box' : '',
+      config.settings.grid.style === 0 ? 'p-1 rounded-box' + (config.content.showFilmStrip ? '' : ' m-1') : '',
+      (config.settings.grid.style === 2 || config.content.showFilmStrip) ? 'w-full h-full' : '',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
@@ -15,7 +16,7 @@
       :class="[
         'relative flex items-center justify-center overflow-hidden', 
         config.settings.grid.style === 0 ? 'rounded-box' : '',
-        (config.settings.grid.style === 1 || config.content.showFilmStrip) ? 'w-full h-full' : ''
+        (config.settings.grid.style === 1 || config.settings.grid.style === 2 || config.content.showFilmStrip) ? 'w-full h-full' : ''
       ]">
       <!-- image -->
       <img :src="file.thumbnail"
@@ -23,9 +24,9 @@
         :class="{
           'group-hover:scale-115': config.settings.grid.style === 1,
           'scale-115': config.settings.grid.style === 1 && isSelected,
-          'object-contain': config.settings.grid.scaling === 0,
-          'object-cover': config.settings.grid.scaling === 1,
-          'object-fill': config.settings.grid.scaling === 2,
+          'object-contain': config.settings.grid.style !== 2 && config.settings.grid.scaling === 0,
+          'object-cover': config.settings.grid.style === 2 || config.settings.grid.scaling === 1,
+          'object-fill': config.settings.grid.style !== 2 && config.settings.grid.scaling === 2,
           'transition-all': !isTransitionDisabled,
         }"
         :style="{ 
@@ -172,13 +173,9 @@ watch(() => config.content.showFilmStrip, () => {
 
 const containerStyle = computed(() => {
   if (config.content.showFilmStrip) {
-    // For grid.style === 0, account for margin (4px) and padding (4px) = 8px total
-    const size = config.settings.grid.style === 0 
-      ? config.content.filmStripPaneHeight - 8 
-      : config.content.filmStripPaneHeight;
     return {
-      width: size + 'px',
-      height: size + 'px',
+      width: '100%',
+      height: '100%',
     };
   }
   return {};
@@ -191,6 +188,12 @@ const layoutStyle = computed(() => {
       return {
         width: '100%',
         height: height + 'px'
+      }
+    }
+    if (config.settings.grid.style === 2) {
+      return {
+        width: '100%',
+        height: '100%'
       }
     }
     return {
