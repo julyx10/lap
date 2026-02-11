@@ -112,13 +112,13 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 | :--- | :---: | :---: | :---: |
 | **Privacy** | ❌ (Data mining) | ✅ | ✅ (100% Offline) |
 | **AI Search** | ✅ | ❌ | ✅ (Local AI) |
-| **Organization** | Restricted (Album based) | Folder based | **Folder + AI Smart View** |
-| **Performance** | Network dependent | Good | **Excellent** |
+| **Organization** | Restricted (Album based) | Folder based | **Folder + AI/Smart View** |
+| **Performance** | Network dependent | **Excellent** | **Excellent** |
 | **Lock-in** | High | None | **None** |
 
 ## Who Is LAP For?
 
-- **Photographers**: Manage huge RAW collections by folder.
+- **Photographers**: Manage huge collections by folder.
 - **Privacy Advocates**: Enjoy AI features without Big Tech surveillance.
 - **Archivists**: Search terabytes of family history instantly.
 - **Everyone**: Who wants a fast, beautiful way to enjoy their memories.
