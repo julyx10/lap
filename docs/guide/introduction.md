@@ -18,4 +18,5 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 
 Lap is currently available for macOS (Apple Silicon). Windows support is coming soon.
 
-[Download the latest release](https://github.com/julyx10/lap/releases)
+- [Download the latest release](https://github.com/julyx10/lap/releases)
+- [Check out what's new in v0.1.4](/guide/release-notes/v0.1.4)

@@ -30,7 +30,7 @@ features:
     details: No proprietary database lock-in. Move a file in Finder, it updates in Lap instantly.
     icon: 📂
   - title: Multi-Platform
-    details: Native on macOS (Apple Silicon). Windows and Linux support arriving soon.
+    details: Native on macOS (Apple Silicon). Windows support coming soon.
     icon: 🖥️
   - title: Open & Transparent
     details: Community-driven and transparent source code. Built with modern tech like Vue and Tauri.
@@ -201,3 +201,5 @@ onMounted(() => {
   <img :src="imgSrc" class="lightbox-img" />
   <div class="close-btn">&times;</div>
 </div>
+
+<Starfield />

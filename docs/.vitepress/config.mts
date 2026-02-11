@@ -19,6 +19,16 @@ export default defineConfig({
                     { text: 'Introduction', link: '/guide/introduction' },
                     { text: 'Getting Started', link: '/guide/getting-started' }
                 ]
+            },
+            {
+                text: 'Release Notes',
+                items: [
+                    { text: 'v0.1.4', link: '/guide/release-notes/v0.1.4' },
+                    { text: 'v0.1.3', link: '/guide/release-notes/v0.1.3' },
+                    { text: 'v0.1.2', link: '/guide/release-notes/v0.1.2' },
+                    { text: 'v0.1.1', link: '/guide/release-notes/v0.1.1' },
+                    { text: 'v0.1.0', link: '/guide/release-notes/v0.1.0' }
+                ]
             }
         ],
         socialLinks: [
