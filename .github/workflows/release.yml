@@ -22,25 +22,38 @@ permissions:
   contents: write
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          ALL_TARGETS='[
+            {"platform": "macos-latest", "target": "aarch64-apple-darwin", "arch": "aarch64"},
+            {"platform": "macos-13", "target": "x86_64-apple-darwin", "arch": "x86_64"},
+            {"platform": "ubuntu-22.04", "target": "x86_64-unknown-linux-gnu", "arch": "x86_64"},
+            {"platform": "windows-latest", "target": "x86_64-pc-windows-msvc", "arch": "x86_64"}
+          ]'
+          
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_target }}" != "all" ]; then
+            SELECTED_TARGET=$(echo $ALL_TARGETS | jq -c ".[] | select(.target == \"${{ github.event.inputs.build_target }}\")")
+            if [ -z "$SELECTED_TARGET" ]; then
+              echo "Error: Invalid target ${{ github.event.inputs.build_target }}"
+              exit 1
+            fi
+            MATRIX="{\"include\": [$SELECTED_TARGET]}"
+          else
+            MATRIX="{\"include\": $ALL_TARGETS}"
+          fi
+          
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
   build:
+    needs: setup
+    runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - platform: macos-latest
-            target: aarch64-apple-darwin
-            arch: aarch64
-          - platform: macos-13
-            target: x86_64-apple-darwin
-            arch: x86_64
-          - platform: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            arch: x86_64
-          - platform: windows-latest
-            target: x86_64-pc-windows-msvc
-            arch: x86_64
-    runs-on: ${{ matrix.platform }}
-    if: (github.event_name != 'workflow_dispatch') || (github.event.inputs.build_target == 'all') || (github.event.inputs.build_target == matrix.target)
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -67,13 +80,14 @@ jobs:
           version: 8
 
       - name: Get pnpm store directory
+        id: pnpm-cache
         shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
       - name: Cache pnpm dependencies
         uses: actions/cache@v4
         with:
-          path: ${{ env.STORE_PATH || '' }}
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
@@ -205,12 +219,19 @@ jobs:
       - name: Generate latest.json
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "Processing version: $VERSION"
           
           # Find files for each architecture
-          AARCH64_DMG=$(find release-files -name "*aarch64*.dmg" | head -n 1)
-          X86_64_DMG=$(find release-files -name "*x86_64*.dmg" | head -n 1)
+          AARCH64_DMG=$(find release-files \( -name "*aarch64*.dmg" -o -name "*arm64*.dmg" \) | head -n 1)
+          X86_64_DMG=$(find release-files \( -name "*x86_64*.dmg" -o -name "*x64*.dmg" \) | head -n 1)
           LINUX_DEB=$(find release-files -name "*.deb" | head -n 1)
           WINDOWS_MSI=$(find release-files -name "*.msi" | head -n 1)
+          
+          echo "Found artifacts:"
+          echo "  AARCH64_DMG: $AARCH64_DMG"
+          echo "  X86_64_DMG: $X86_64_DMG"
+          echo "  LINUX_DEB: $LINUX_DEB"
+          echo "  WINDOWS_MSI: $WINDOWS_MSI"
           
           AARCH64_DMG_NAME=$(basename "$AARCH64_DMG" 2>/dev/null || echo "")
           X86_64_DMG_NAME=$(basename "$X86_64_DMG" 2>/dev/null || echo "")
@@ -222,21 +243,18 @@ jobs:
           X86_64_SIG=""
           LINUX_SIG=""
           WINDOWS_SIG=""
-          if [ -f "${AARCH64_DMG}.sig" ]; then
-            AARCH64_SIG=$(cat "${AARCH64_DMG}.sig")
-          fi
-          if [ -f "${X86_64_DMG}.sig" ]; then
-            X86_64_SIG=$(cat "${X86_64_DMG}.sig")
-          fi
-          if [ -f "${LINUX_DEB}.sig" ]; then
-            LINUX_SIG=$(cat "${LINUX_DEB}.sig")
-          fi
-          if [ -f "${WINDOWS_MSI}.sig" ]; then
-            WINDOWS_SIG=$(cat "${WINDOWS_MSI}.sig")
-          fi
           
-          # Create latest.json
-          cat > release-files/latest.json << EOF
+          [ -f "${AARCH64_DMG}.sig" ] && AARCH64_SIG=$(cat "${AARCH64_DMG}.sig")
+          [ -f "${X86_64_DMG}.sig" ] && X86_64_SIG=$(cat "${X86_64_DMG}.sig")
+          [ -f "${LINUX_DEB}.sig" ] && LINUX_SIG=$(cat "${LINUX_DEB}.sig")
+          [ -f "${WINDOWS_MSI}.sig" ] && WINDOWS_SIG=$(cat "${WINDOWS_MSI}.sig")
+          
+          echo "Signatures found: "
+          echo "  AARCH64: ${#AARCH64_SIG} chars"
+          echo "  X86_64: ${#X86_64_SIG} chars"
+          
+          # Create latest.json (terminator must be at the start of the line in the shell script)
+          cat > release-files/latest.json <<EOF
           {
             "version": "${VERSION}",
             "notes": "See the release notes on GitHub for details.",
