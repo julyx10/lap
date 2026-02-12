@@ -5,6 +5,18 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      build_target:
+        description: 'Target to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-msvc
 
 permissions:
   contents: write
@@ -28,6 +40,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             arch: x86_64
     runs-on: ${{ matrix.platform }}
+    if: (github.event_name != 'workflow_dispatch') || (github.event.inputs.build_target == 'all') || (github.event.inputs.build_target == matrix.target)
 
     steps:
       - name: Checkout repository
