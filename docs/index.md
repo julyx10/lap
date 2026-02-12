@@ -6,7 +6,7 @@ hero:
   text: "Local-first, AI-powered Photo manager."
   tagline: ""
   image:
-    src: /screenshots/lap-home.png
+    src: /screenshots/lap-home1.png
     alt: Lap Screenshot
   actions:
     - theme: brand
