@@ -78,7 +78,7 @@ const visibleRange = computed(() => {
     const scrollBottom = scrollTop + viewportHeight;
     
     // Find start index: first item where y + height >= scrollTop
-    let start = 0;
+    let start = props.geometry.length; // Default to end (none visible)
     let low = 0; 
     let high = props.geometry.length - 1;
     
@@ -222,8 +222,9 @@ function getItemStyle(poolItem: { item: any, index: number }): CSSProperties {
 
 const emitUpdate = () => {
   if (props.emitUpdate) {
-    const startIdx = visibleRange.value.start * props.gridItems;
-    const endIdx = Math.min(totalCount.value, visibleRange.value.end * props.gridItems);
+    const isGeometry = !!props.geometry;
+    const startIdx = visibleRange.value.start * (isGeometry ? 1 : props.gridItems);
+    const endIdx = Math.min(totalCount.value, visibleRange.value.end * (isGeometry ? 1 : props.gridItems));
     emit('update', startIdx, endIdx);
   }
 };
