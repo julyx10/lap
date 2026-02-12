@@ -168,6 +168,13 @@ function updateLayout() {
 watch(() => [config.settings.grid.size, config.settings.grid.style], () => {
   isLayoutTransitioning.value = true;
   updateLayout();
+  
+  if (props.selectedItemIndex !== -1) {
+    nextTick(() => {
+      scrollToItem(props.selectedItemIndex);
+    });
+  }
+
   setTimeout(() => {
     isLayoutTransitioning.value = false;
   }, 500);

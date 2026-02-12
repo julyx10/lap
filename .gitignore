@@ -8,7 +8,5 @@ build_x86_64.sh
 set_version.py
 sign_release.sh
 check_notarization.sh
-ChangeLog.md
 MACOS_SIGNING.md
-Lap.zip
 publish_release.sh

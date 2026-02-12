@@ -23,11 +23,7 @@ panic = "abort"
 opt-level = 3
 
 [dependencies]
-tauri = { version = "2", features = [
-    "macos-private-api",
-    "protocol-asset",
-    "devtools",
-] }
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-window-state = "2.2.1"
 tauri-plugin-shell = "2"
 tauri-plugin-os = "2"
@@ -58,6 +54,9 @@ ort = { version = "2.0.0-rc.9", features = ["download-binaries"] }
 ndarray = "0.16"
 tokenizers = { version = "0.20", default-features = false, features = ["onig"] }
 uuid = { version = "1", features = ["v4"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+tauri = { version = "2", features = ["macos-private-api"] }
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

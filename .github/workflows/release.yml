@@ -18,14 +18,30 @@ jobs:
           - platform: macos-latest
             target: aarch64-apple-darwin
             arch: aarch64
-          - platform: macos-12  # Intel runner for x86_64 - ffmpeg-sys-next can't cross-compile
+          - platform: macos-13
             target: x86_64-apple-darwin
+            arch: x86_64
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            arch: x86_64
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
             arch: x86_64
     runs-on: ${{ matrix.platform }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install system dependencies (macOS)
+        if: startsWith(matrix.platform, 'macos')
+        run: brew install nasm pkg-config
+
+      - name: Install system dependencies (Linux only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -90,6 +106,7 @@ jobs:
 
       # Submit notarization without waiting (async) to avoid CI timeout
       - name: Submit Notarization (Async)
+        if: startsWith(matrix.platform, 'macos')
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
@@ -116,8 +133,18 @@ jobs:
           echo "✅ Notarization submitted. Check status later with:"
           echo "   xcrun notarytool history --apple-id \$APPLE_ID --password \$APPLE_PASSWORD --team-id \$APPLE_TEAM_ID"
 
-      # Upload DMG as artifact for the release job
-      - name: Upload Build Artifact
+      # Specific for Linux: upload .deb as artifact
+      - name: Upload Build Artifact (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+          path: src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+          if-no-files-found: error
+
+      # Upload DMG as artifact for the release job (macOS only)
+      - name: Upload Build Artifact (macOS)
+        if: startsWith(matrix.platform, 'macos')
         uses: actions/upload-artifact@v4
         with:
           name: dmg-${{ matrix.arch }}
@@ -126,6 +153,19 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg.sig
             src-tauri/target/release/bundle/dmg/*.dmg
             src-tauri/target/release/bundle/dmg/*.dmg.sig
+          if-no-files-found: error
+
+      # Upload MSI as artifact (Windows only)
+      - name: Upload Build Artifact (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: msi-${{ matrix.arch }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi.sig
+            src-tauri/target/release/bundle/msi/*.msi.sig
           if-no-files-found: error
 
   # Create release after all builds complete
@@ -144,6 +184,8 @@ jobs:
         run: |
           mkdir -p release-files
           find artifacts -name "*.dmg" -exec cp {} release-files/ \;
+          find artifacts -name "*.deb" -exec cp {} release-files/ \;
+          find artifacts -name "*.msi" -exec cp {} release-files/ \;
           find artifacts -name "*.sig" -exec cp {} release-files/ \; 2>/dev/null || true
           ls -la release-files/
 
@@ -151,21 +193,33 @@ jobs:
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
           
-          # Find DMG files for each architecture
+          # Find files for each architecture
           AARCH64_DMG=$(find release-files -name "*aarch64*.dmg" | head -n 1)
           X86_64_DMG=$(find release-files -name "*x86_64*.dmg" | head -n 1)
+          LINUX_DEB=$(find release-files -name "*.deb" | head -n 1)
+          WINDOWS_MSI=$(find release-files -name "*.msi" | head -n 1)
           
           AARCH64_DMG_NAME=$(basename "$AARCH64_DMG" 2>/dev/null || echo "")
           X86_64_DMG_NAME=$(basename "$X86_64_DMG" 2>/dev/null || echo "")
+          LINUX_DEB_NAME=$(basename "$LINUX_DEB" 2>/dev/null || echo "")
+          WINDOWS_MSI_NAME=$(basename "$WINDOWS_MSI" 2>/dev/null || echo "")
           
           # Get signatures if available
           AARCH64_SIG=""
           X86_64_SIG=""
+          LINUX_SIG=""
+          WINDOWS_SIG=""
           if [ -f "${AARCH64_DMG}.sig" ]; then
             AARCH64_SIG=$(cat "${AARCH64_DMG}.sig")
           fi
           if [ -f "${X86_64_DMG}.sig" ]; then
             X86_64_SIG=$(cat "${X86_64_DMG}.sig")
+          fi
+          if [ -f "${LINUX_DEB}.sig" ]; then
+            LINUX_SIG=$(cat "${LINUX_DEB}.sig")
+          fi
+          if [ -f "${WINDOWS_MSI}.sig" ]; then
+            WINDOWS_SIG=$(cat "${WINDOWS_MSI}.sig")
           fi
           
           # Create latest.json
@@ -182,6 +236,14 @@ jobs:
               "darwin-x86_64": {
                 "signature": "${X86_64_SIG}",
                 "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${X86_64_DMG_NAME}"
+              },
+              "linux-x86_64": {
+                "signature": "${LINUX_SIG}",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${LINUX_DEB_NAME}"
+              },
+              "windows-x86_64": {
+                "signature": "${WINDOWS_SIG}",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${WINDOWS_MSI_NAME}"
               }
             }
           }

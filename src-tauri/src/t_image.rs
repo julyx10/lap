@@ -93,7 +93,7 @@ pub fn print_image(image_path: &str) -> Result<(), String> {
             .arg(image_path)
             .output()
             .map_err(|e| e.to_string())?
-    } else if cfg!(target_os = "macos") {
+    } else if cfg!(any(target_os = "macos", target_os = "linux")) {
         Command::new("lp")
             .arg(image_path)
             .output()
