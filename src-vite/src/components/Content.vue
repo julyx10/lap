@@ -390,6 +390,12 @@
             <IconLocation class="t-icon-size-xs" />
             <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
           </div>
+
+          <div class="flex items-center gap-1 shink-0">
+            <IconClock class="t-icon-size-xs" />
+            <span> {{ formatTimestamp(fileList[selectedItemIndex]?.taken_date, $t('format.date_time')) }} </span>
+          </div>
+
         </template>
       </div>
     </div>
@@ -497,7 +503,8 @@ import { config, libConfig } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         shortenFilename, formatDimensionText, formatCaptureSettings, getSlideShowInterval } from '@/common/utils';
+         shortenFilename, formatDimensionText, formatCaptureSettings, getSlideShowInterval, 
+         formatTimestamp} from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -555,6 +562,7 @@ import {
   IconFolderSearch,
   IconCalendarMonth,
   IconCalendarDay,
+  IconClock,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;

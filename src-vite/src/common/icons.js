@@ -134,6 +134,7 @@ export { default as IconCalendarDown } from '@/assets/icons/calendar-down.svg';
 export { default as IconCalendarUp } from '@/assets/icons/calendar-up.svg';
 export { default as IconCalendarMonth } from '@/assets/icons/calendar-month.svg';
 export { default as IconCalendarDay } from '@/assets/icons/calendar-day.svg';
+export { default as IconClock } from '@/assets/icons/icon-clock.svg';
 export { default as IconSortingName } from '@/assets/icons/sorting-name.svg';
 export { default as IconSortingCount } from '@/assets/icons/sorting-count.svg';
 

@@ -14,7 +14,9 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
 
 | Platform | Download | File Size | Notes |
 |:--|:--|:--|:--|
-| **macOS** | [Download Latest .dmg](https://github.com/julyx10/lap/releases/latest) | ~150 MB | Includes embedded AI models |
+| **macOS (Apple Silicon)** | [Download .dmg (aarch64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | M1/M2/M3/M4, ✅ Notarized by Apple |
+| **macOS (Intel)** | [Download .dmg (x86_64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | x86_64, ✅ Notarized by Apple, ⚠️ Not yet tested |
+| **Linux** | [Download .deb (amd64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | Ubuntu/Debian x86_64 |
 | **Windows** | - | - | Coming soon |
 
 <table>
@@ -95,14 +97,14 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 #### 📂 Your Files, Your Control
 - **No Import Required**: Lap reads your existing folders. No "library files", no duplication, no vendor lock-in.
 - **File System Sync**: Move a file in Finder/Explorer? Lap updates instantly. Move it in Lap? It moves on disk.
-- **Multi-Library**: Manage work assets separate from family archives. Switch in milliseconds.
+- **Multi-Library**: Manage work assets separate from family archives.
 
 #### ⚡ Built for Performance
 - **Rust Core**: Powered by Tauri 2 and Rust for blazing speed and tiny memory footprint.
 - **Lazy Loading**: Designed to handle libraries with **hundreds of thousands** of assets without stuttering.
 
 #### 🎨 Delightful Experience
-- **Beautiful Design**: A modern, fluid interface that feels at home on macOS and Windows.
+- **Beautiful Design**: Built with Tailwind CSS & daisyUI, a modern, fluid interface that feels at home on macOS, Linux, and Windows.
 - **Customizable**: Light/Dark modes with 10+ accent colors.
 - **Multi-Language**: Speaks your language (English, Chinese, German, French, Japanese, and more).
 
@@ -112,7 +114,7 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 | :--- | :---: | :---: | :---: |
 | **Privacy** | ❌ (Data mining) | ✅ | ✅ (100% Offline) |
 | **AI Search** | ✅ | ❌ | ✅ (Local AI) |
-| **Organization** | Restricted (Album based) | Folder based | **Folder + AI/Smart View** |
+| **Organization** | Restricted (Album based) | Folder based | **Folder-native + Smart Views** |
 | **Performance** | Network dependent | **Excellent** | **Excellent** |
 | **Lock-in** | High | None | **None** |
 
@@ -142,32 +144,36 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 - **Core**: [Tauri 2](https://tauri.app) (Rust), cross-platform desktop app framework
 - **Frontend**: Vue 3, Vite, Tailwind CSS, daisyUI
 - **Data**: SQLite, locally embedded for indexing and metadata storage
-- **AI/Media**: Based on the latest open-source LLM for image understanding
+- **AI/Media**: [CLIP ViT-B/32](https://github.com/openai/CLIP) for image search, [InsightFace](https://github.com/deepinsight/insightface) for face recognition, FFmpeg for video
 
 ### Build & Run
 
-**Prerequisites**: Node.js 18+, Rust (stable), and platform build tools (Xcode for macOS, MSVC for Windows).
+**Prerequisites**:
+- [Node.js](https://nodejs.org/) 20+ and [pnpm](https://pnpm.io/) 8+
+- [Rust](https://www.rust-lang.org/tools/install) (stable)
+- Platform build tools:
+  - **macOS**: Xcode Command Line Tools (`xcode-select --install`), `brew install nasm pkg-config`
+  - **Linux**: `sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf nasm clang pkg-config`
+
+**Recommended editors**: [VS Code](https://code.visualstudio.com/), [Cursor](https://cursor.com/), or [Antigravity](https://antigravity.dev/)
 
 ```bash
-# 1. Install frontend dependencies
-cd src-vite
-pnpm install
+# 1. Download AI models
+./scripts/download_models.sh
 
-# 2. Run in development mode
-cd ../src-tauri
+# 2. Install frontend dependencies
+cd src-vite && pnpm install && cd ..
+
+# 3. Run in development mode
 cargo tauri dev
 
-# 3. Build for production
+# 4. Build for production
 cargo tauri build
 ```
 
 ## License
 
 Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-Built on the shoulders of giants: Tauri, Vue, Rusqlite, FFmpeg, and many other open-source crates and libraries.
 
 <div align="center">
   <img src="docs/public/logo2.png" alt="Lap Logo" width="200" style="border-radius: 20px">
