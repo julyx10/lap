@@ -16,7 +16,6 @@ on:
           - aarch64-apple-darwin
           - x86_64-apple-darwin
           - x86_64-unknown-linux-gnu
-          - x86_64-pc-windows-msvc
 
 permissions:
   contents: write
@@ -29,24 +28,20 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          ALL_TARGETS='[
-            {"platform": "macos-latest", "target": "aarch64-apple-darwin", "arch": "aarch64"},
-            {"platform": "macos-latest", "target": "x86_64-apple-darwin", "arch": "x86_64"},
-            {"platform": "ubuntu-22.04", "target": "x86_64-unknown-linux-gnu", "arch": "x86_64"},
-            {"platform": "windows-latest", "target": "x86_64-pc-windows-msvc", "arch": "x86_64"}
-          ]'
+          ALL_TARGETS='[{"platform":"macos-latest","target":"aarch64-apple-darwin","arch":"aarch64"},{"platform":"macos-15-intel","target":"x86_64-apple-darwin","arch":"x86_64"},{"platform":"ubuntu-22.04","target":"x86_64-unknown-linux-gnu","arch":"x86_64"}]'
           
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_target }}" != "all" ]; then
-            SELECTED_TARGET=$(echo $ALL_TARGETS | jq -c ".[] | select(.target == \"${{ github.event.inputs.build_target }}\")")
-            if [ -z "$SELECTED_TARGET" ]; then
+            SELECTED_TARGET=$(echo "$ALL_TARGETS" | jq -c "[.[] | select(.target == \"${{ github.event.inputs.build_target }}\")]")
+            if [ "$SELECTED_TARGET" == "[]" ]; then
               echo "Error: Invalid target ${{ github.event.inputs.build_target }}"
               exit 1
             fi
-            MATRIX="{\"include\": [$SELECTED_TARGET]}"
+            MATRIX=$(echo "$SELECTED_TARGET" | jq -c '{include: .}')
           else
-            MATRIX="{\"include\": $ALL_TARGETS}"
+            MATRIX=$(echo "$ALL_TARGETS" | jq -c '{include: .}')
           fi
           
+          echo "Generated matrix: $MATRIX"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
   build:
     needs: setup
@@ -60,14 +55,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install system dependencies (macOS)
-        if: startsWith(matrix.platform, 'macos')
+        if: contains(matrix.platform, 'macos')
         run: brew install nasm pkg-config
 
       - name: Install system dependencies (Linux only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            nasm clang pkg-config libssl-dev libglib2.0-dev libgtk-3-dev \
+            libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -115,7 +112,8 @@ jobs:
         working-directory: src-vite
 
       - name: Download AI Models
-        run: python download_models.py
+        shell: bash
+        run: bash scripts/download_models.sh
 
       # Build for specific target
       - name: Build and Sign (${{ matrix.arch }})
@@ -133,7 +131,7 @@ jobs:
 
       # Submit notarization without waiting (async) to avoid CI timeout
       - name: Submit Notarization (Async)
-        if: startsWith(matrix.platform, 'macos')
+        if: contains(matrix.platform, 'macos')
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
@@ -171,7 +169,7 @@ jobs:
 
       # Upload DMG as artifact for the release job (macOS only)
       - name: Upload Build Artifact (macOS)
-        if: startsWith(matrix.platform, 'macos')
+        if: contains(matrix.platform, 'macos')
         uses: actions/upload-artifact@v4
         with:
           name: dmg-${{ matrix.arch }}
@@ -182,18 +180,6 @@ jobs:
             src-tauri/target/release/bundle/dmg/*.dmg.sig
           if-no-files-found: error
 
-      # Upload MSI as artifact (Windows only)
-      - name: Upload Build Artifact (Windows)
-        if: matrix.platform == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: msi-${{ matrix.arch }}
-          path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi.sig
-            src-tauri/target/release/bundle/msi/*.msi.sig
-          if-no-files-found: error
 
   # Create release after all builds complete
   release:
@@ -212,7 +198,6 @@ jobs:
           mkdir -p release-files
           find artifacts -name "*.dmg" -exec cp {} release-files/ \;
           find artifacts -name "*.deb" -exec cp {} release-files/ \;
-          find artifacts -name "*.msi" -exec cp {} release-files/ \;
           find artifacts -name "*.sig" -exec cp {} release-files/ \; 2>/dev/null || true
           ls -la release-files/
 
@@ -225,35 +210,30 @@ jobs:
           AARCH64_DMG=$(find release-files \( -name "*aarch64*.dmg" -o -name "*arm64*.dmg" \) | head -n 1)
           X86_64_DMG=$(find release-files \( -name "*x86_64*.dmg" -o -name "*x64*.dmg" \) | head -n 1)
           LINUX_DEB=$(find release-files -name "*.deb" | head -n 1)
-          WINDOWS_MSI=$(find release-files -name "*.msi" | head -n 1)
           
           echo "Found artifacts:"
           echo "  AARCH64_DMG: $AARCH64_DMG"
           echo "  X86_64_DMG: $X86_64_DMG"
           echo "  LINUX_DEB: $LINUX_DEB"
-          echo "  WINDOWS_MSI: $WINDOWS_MSI"
           
           AARCH64_DMG_NAME=$(basename "$AARCH64_DMG" 2>/dev/null || echo "")
           X86_64_DMG_NAME=$(basename "$X86_64_DMG" 2>/dev/null || echo "")
           LINUX_DEB_NAME=$(basename "$LINUX_DEB" 2>/dev/null || echo "")
-          WINDOWS_MSI_NAME=$(basename "$WINDOWS_MSI" 2>/dev/null || echo "")
           
           # Get signatures if available
           AARCH64_SIG=""
           X86_64_SIG=""
           LINUX_SIG=""
-          WINDOWS_SIG=""
           
           [ -f "${AARCH64_DMG}.sig" ] && AARCH64_SIG=$(cat "${AARCH64_DMG}.sig")
           [ -f "${X86_64_DMG}.sig" ] && X86_64_SIG=$(cat "${X86_64_DMG}.sig")
           [ -f "${LINUX_DEB}.sig" ] && LINUX_SIG=$(cat "${LINUX_DEB}.sig")
-          [ -f "${WINDOWS_MSI}.sig" ] && WINDOWS_SIG=$(cat "${WINDOWS_MSI}.sig")
           
           echo "Signatures found: "
           echo "  AARCH64: ${#AARCH64_SIG} chars"
           echo "  X86_64: ${#X86_64_SIG} chars"
           
-          # Create latest.json (terminator must be at the start of the line in the shell script)
+          # Create latest.json
           cat > release-files/latest.json <<EOF
           {
             "version": "${VERSION}",
@@ -271,10 +251,6 @@ jobs:
               "linux-x86_64": {
                 "signature": "${LINUX_SIG}",
                 "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${LINUX_DEB_NAME}"
-              },
-              "windows-x86_64": {
-                "signature": "${WINDOWS_SIG}",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${WINDOWS_MSI_NAME}"
               }
             }
           }
@@ -291,11 +267,11 @@ jobs:
           body: |
             ⚠️ **Notarization Pending**
             
-            Both DMGs have been submitted for Apple notarization but are NOT yet stapled.
+            DMGs have been submitted for Apple notarization but are NOT yet stapled.
             
             **Before publishing this release:**
             1. Check notarization status: `xcrun notarytool history ...`
-            2. Download both DMGs from this draft
+            2. Download DMGs from this draft
             3. Staple each: `xcrun stapler staple <filename>.dmg`
             4. Re-upload the stapled DMGs
             5. Update latest.json if needed
