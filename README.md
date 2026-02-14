@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/public/logo.png" alt="Lap Logo" width="120" style="border-radius: 20px">
+  <img src="docs/public/icon.png" alt="Lap Logo" width="120" style="border-radius: 20px">
   <h1>Lap</h1>
   <h3>Your Photos, Your Rules. The Local-First, AI-Powered Photo Manager.</h3>
 </div>

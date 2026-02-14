@@ -2,7 +2,7 @@
   
   <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70">
     <!-- Title Bar -->
-    <TitleBar v-if="isWin" titlebar="Lap" viewName="Home"/>
+    <TitleBar v-if="isWin" titlebar="Lap" viewName="Home" :icon="iconLogo"/>
 
     <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
@@ -19,7 +19,7 @@
         <div v-if="config.main.showLeftPane && !uiStore.isFullScreen"
           :class="[
             'relative flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
-            !showPanel ? 'mt-12 mb-8': '',
+            !showPanel && isMac ? 'mt-12 mb-8': '',
             isDraggingSplitter ? 'no-transition' : 'transition-all duration-200 ease-in-out',
           ]"
           :style="{ width: showPanel ? config.main.leftPaneWidth + 'px' : '64px' }"
@@ -28,8 +28,7 @@
           <!-- side bar -->
           <div 
             :class="[
-              'fixed min-w-16 bottom-10 flex flex-col items-center space-y-2', 
-              isWin ? 'top-2' : 'top-14'
+              'fixed top-14 min-w-16 bottom-10 flex flex-col items-center space-y-2', 
             ]" 
             data-tauri-drag-region
           >
@@ -169,6 +168,7 @@ import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import ManageLibraries from '@/components/ManageLibraries.vue';
+import iconLogo from '@/assets/images/logo.png';
 
 import {
   IconFavorite,

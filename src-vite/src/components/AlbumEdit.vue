@@ -102,7 +102,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { countFolder, getAllAlbums, getFileThumb, getFileInfo } from '@/common/api';
-import { formatFileSize, openFolderDialog } from '@/common/utils';
+import { formatFileSize, openFolderDialog, getFolderName } from '@/common/utils';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 
@@ -181,8 +181,7 @@ watch(() => selectedFolder.value, (newPath) => {
   if(newPath) {
     if (props.isNewAlbum) {
       // get folder name
-      const folderName = newPath.split('/').pop();
-      inputNameValue.value = folderName || '';
+      inputNameValue.value = getFolderName(newPath);
       inputDescriptionValue.value = '';
     }
 

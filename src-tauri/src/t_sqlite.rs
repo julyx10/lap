@@ -403,7 +403,7 @@ impl AFolder {
                 .prepare("SELECT id FROM afolders WHERE path = ?1 OR path LIKE ?2")
                 .map_err(|e| e.to_string())?;
 
-            let path_pattern = format!("{}/%", folder_path);
+            let path_pattern = format!("{}{}%", folder_path, std::path::MAIN_SEPARATOR);
             let rows = stmt
                 .query_map(params![folder_path, path_pattern], |row| row.get(0))
                 .map_err(|e| e.to_string())?;
@@ -421,7 +421,7 @@ impl AFolder {
         }
 
         // Delete the folders (the folder and all its children)
-        let path_pattern = format!("{}/%", folder_path);
+        let path_pattern = format!("{}{}%", folder_path, std::path::MAIN_SEPARATOR);
         let result = conn
             .execute(
                 "DELETE FROM afolders WHERE path = ?1 OR path LIKE ?2",
@@ -1435,7 +1435,7 @@ impl AFile {
             // Match path that starts with search_folder followed by '/' or end of string
             conditions.push("(b.path = ? OR b.path LIKE ?)");
             sql_params.push(Box::new(params.search_all_subfolders.clone()));
-            sql_params.push(Box::new(format!("{}/%", params.search_all_subfolders)));
+            sql_params.push(Box::new(format!("{}{}%", params.search_all_subfolders, std::path::MAIN_SEPARATOR)));
         }
 
         if !params.search_folder.is_empty() {

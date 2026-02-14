@@ -10,16 +10,31 @@
     data-tauri-drag-region
   >
     <!-- Title Name -->
-    <span 
+    <!-- Icon & Title Container -->
+    <div 
       :class="[
-        'text-nowrap text-base-content/70 overflow-hidden whitespace-pre text-ellipsis',
-        isWin ? 'ml-4' : '',
+        'flex items-center overflow-hidden',
+        isWin ? 'ml-2' : '',
         isMac ? 'm-auto pl-20 pr-4' : ''
-      ]" 
+      ]"
       data-tauri-drag-region
     >
-      {{ titlebar }}
-    </span>
+      <!-- Icon -->
+      <img 
+        v-if="icon" 
+        :src="icon" 
+        class="w-5 h-5 mr-2 select-none rounded" 
+        data-tauri-drag-region 
+      />
+      
+      <!-- Title Name -->
+      <span 
+        class="text-nowrap text-base-content/70 overflow-hidden whitespace-pre text-ellipsis"
+        data-tauri-drag-region
+      >
+        {{ titlebar }}
+      </span>
+    </div>
 
     <!-- <div id="titlebar" class="grow h-full flex justify-center items-center" data-tauri-drag-region> -->
       <!-- <SearchBox 
@@ -77,6 +92,10 @@ const props = defineProps({
   resizable: {
     type: Boolean,
     default: true,
+  },
+  icon: {
+    type: String,
+    default: '',
   }
 });
 
