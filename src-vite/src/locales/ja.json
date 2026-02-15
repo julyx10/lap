@@ -488,10 +488,10 @@
       "percentage": "パーセント",
       "pixel": "ピクセル",
       "options": "オプション",
-      "save_as": "名前を付けて保存",
+      "save_as": "ファイルを保存",
       "save_as_options": [
-        "上書き",
-        "新規ファイル"
+        "元ファイルを上書き",
+        "新規ファイルとして保存"
       ],
       "save_as_placeholder": "ファイル名",
       "format": "形式",
@@ -509,6 +509,8 @@
       "copy_image": "コピー",
       "ok": "保存",
       "cancel": "キャンセル",
+      "overwrite": "上書き",
+      "save_as_new": "名前を付けて保存",
       "overwrite_confirm": "元のファイルを上書きしますか？この操作は取り消せません。"
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "ギャラリー表示",
-      "style": "ギャラリー表示形式",
+      "style": "グリッド表示レイアウト",
       "style_options": [
         "カード表示",
         "タイル表示",
-        "整列表示",
-        "フィルムストリップ表示"
+        "整列表示"
       ],
       "size": "サイズ",
       "scaling": "スケーリング",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "フィルムストリップ",
-      "preview_position": "フィルムストリップ表示プレビュー位置",
+      "title": "フィルムストリップ・プレビュー",
+      "preview_position": "フィルムストリップ・プレビュー位置",
       "preview_position_options": [
         "上",
         "下"
@@ -716,13 +717,13 @@
       "auto_play_video": "動画自動再生",
       "show_comment": "コメントを表示",
       "show_comment_hint": "新しいウィンドウで表示時",
-      "navigator_view": "ナビゲーター",
+      "navigator_view": "ナビゲーターの表示",
       "navigator_view_options": [
         "自動",
         "常に表示",
         "常に非表示"
       ],
-      "navigator_view__size": "サイズ",
+      "navigator_view__size": "ナビゲーターのサイズ",
       "navigator_view_size_options": [
         "小(160px)",
         "中(240px)",

@@ -488,10 +488,10 @@
       "percentage": "Prozent",
       "pixel": "Pixel",
       "options": "Optionen",
-      "save_as": "Speichern unter",
+      "save_as": "Datei speichern",
       "save_as_options": [
-        "Überschreiben",
-        "Neue Datei"
+        "Originaldatei überschreiben",
+        "Als neue Datei speichern"
       ],
       "save_as_placeholder": "Dateiname",
       "format": "Format",
@@ -509,6 +509,8 @@
       "copy_image": "Kopieren",
       "ok": "Speichern",
       "cancel": "Abbrechen",
+      "overwrite": "Überschreiben",
+      "save_as_new": "Speichern unter",
       "overwrite_confirm": "Originaldatei überschreiben? Kann nicht rückgängig gemacht werden."
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "Galerieansicht",
-      "style": "Galerieansicht-Stil",
+      "style": "Rasteransicht-Layout",
       "style_options": [
         "Kartenansicht",
         "Kachelansicht",
-        "Blocksatzansicht",
-        "Filmstreifenansicht"
+        "Blocksatzansicht"
       ],
       "size": "Größe",
       "scaling": "Skalierung",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "Filmstreifen",
-      "preview_position": "Filmstreifenansicht Vorschauposition",
+      "title": "Filmstreifen-Vorschau",
+      "preview_position": "Filmstreifen-Vorschauposition",
       "preview_position_options": [
         "Oben",
         "Unten"
@@ -716,13 +717,13 @@
       "auto_play_video": "Video Autoplay",
       "show_comment": "Kommentar zeigen",
       "show_comment_hint": "In neuem Fenster",
-      "navigator_view": "Navigator",
+      "navigator_view": "Navigator-Sichtbarkeit",
       "navigator_view_options": [
         "Auto",
         "Immer",
         "Nie"
       ],
-      "navigator_view__size": "Größe",
+      "navigator_view__size": "Navigator-Größe",
       "navigator_view_size_options": [
         "Klein(160px)",
         "Mittel(240px)",

@@ -488,10 +488,10 @@
       "percentage": "Pourcentage",
       "pixel": "Pixels",
       "options": "Options",
-      "save_as": "Enregistrer sous",
+      "save_as": "Enregistrer le fichier",
       "save_as_options": [
-        "Écraser",
-        "Nouveau fichier"
+        "Écraser le fichier original",
+        "Enregistrer comme nouveau fichier"
       ],
       "save_as_placeholder": "Nom fichier",
       "format": "Format",
@@ -509,6 +509,8 @@
       "copy_image": "Copier",
       "ok": "Enregistrer",
       "cancel": "Annuler",
+      "overwrite": "Écraser",
+      "save_as_new": "Enregistrer sous",
       "overwrite_confirm": "Écraser le fichier original ? Irréversible."
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "Vue galerie",
-      "style": "Style de vue galerie",
+      "style": "Disposition de la grille",
       "style_options": [
         "Vue carte",
         "Vue mosaïque",
-        "Vue justifiée",
-        "Vue pellicule"
+        "Vue justifiée"
       ],
       "size": "Taille",
       "scaling": "Mise à l'échelle",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "Vue pellicule",
-      "preview_position": "Position aperçu vue pellicule",
+      "title": "Aperçu de la pellicule",
+      "preview_position": "Position de l'aperçu de la pellicule",
       "preview_position_options": [
         "Au-dessus",
         "En-dessous"
@@ -716,13 +717,13 @@
       "auto_play_video": "Lecture auto vidéo",
       "show_comment": "Afficher commentaire",
       "show_comment_hint": "Dans nouvelle fenêtre",
-      "navigator_view": "Navigateur",
+      "navigator_view": "Visibilité du navigateur",
       "navigator_view_options": [
         "Auto",
         "Toujours",
         "Jamais"
       ],
-      "navigator_view__size": "Taille navigateur",
+      "navigator_view__size": "Taille du navigateur",
       "navigator_view_size_options": [
         "Petit(160px)",
         "Moyen(240px)",

@@ -129,8 +129,8 @@ jobs:
         with:
           args: --verbose --target ${{ matrix.target }}
 
-      # Submit notarization without waiting (async) to avoid CI timeout
-      - name: Submit Notarization (Async)
+      # Notarize and Staple (Sync)
+      - name: Notarize and Staple
         if: contains(matrix.platform, 'macos')
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -149,14 +149,16 @@ jobs:
           fi
           echo "Found: $DMG_PATH"
 
-          echo "⏳ Submitting to Apple for notarization (async, no wait)..."
+          echo "⏳ Submitting to Apple for notarization (waiting)..."
           xcrun notarytool submit "$DMG_PATH" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID"
-          
-          echo "✅ Notarization submitted. Check status later with:"
-          echo "   xcrun notarytool history --apple-id \$APPLE_ID --password \$APPLE_PASSWORD --team-id \$APPLE_TEAM_ID"
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          echo "✅ Notarization accepted. Proceeding to staple..."
+          xcrun stapler staple "$DMG_PATH"
+          echo "✅ Stapling complete."
 
       # Specific for Linux: upload .deb as artifact
       - name: Upload Build Artifact (Linux)
@@ -259,21 +261,11 @@ jobs:
           echo "Generated latest.json:"
           cat release-files/latest.json
 
-      - name: Upload Draft Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: release-files/*
           draft: true
-          body: |
-            ⚠️ **Notarization Pending**
-            
-            DMGs have been submitted for Apple notarization but are NOT yet stapled.
-            
-            **Before publishing this release:**
-            1. Check notarization status: `xcrun notarytool history ...`
-            2. Download DMGs from this draft
-            3. Staple each: `xcrun stapler staple <filename>.dmg`
-            4. Re-upload the stapled DMGs
-            5. Update latest.json if needed
-            6. Publish the release
+          prerelease: false
+          generate_release_notes: true
 

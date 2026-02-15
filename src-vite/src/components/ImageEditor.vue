@@ -340,14 +340,14 @@
           cropStatus===1 ? 'text-base-content/30 cursor-default' : 'hover:bg-primary hover:text-base-100 cursor-pointer',
         ]" 
         @click="clickSave"
-      >{{ config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as') : $t('msgbox.image_editor.ok') }}</button>
+      >{{ config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}</button>
     </div>
   </ModalDialog>
 
   <ToolTip ref="toolTipRef" />
 
   <MessageBox v-if="showOverwriteConfirm"
-    :title="$t('msgbox.image_editor.save_as')"
+    :title="$t('msgbox.image_editor.overwrite')"
     :message="$t('msgbox.image_editor.overwrite_confirm')"
     :warningOk="true"
     :OkText="$t('msgbox.ok')"

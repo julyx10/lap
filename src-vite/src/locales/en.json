@@ -490,8 +490,8 @@
       "options": "Options",
       "save_as": "Save as",
       "save_as_options": [
-        "Overwrite existing file",
-        "New file"
+        "Overwrite original file",
+        "Save as a new file"
       ],
       "save_as_placeholder": "Enter new file name",
       "format": "Format",
@@ -509,6 +509,8 @@
       "copy_image": "Copy to clipboard",
       "ok": "Save",
       "cancel": "Cancel",
+      "overwrite": "Overwrite",
+      "save_as_new": "Save as",
       "overwrite_confirm": "Are you sure you want to overwrite the original file? This action cannot be undone."
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "Gallery view",
-      "style": "Gallery view style",
+      "style": "Grid view layout",
       "style_options": [
         "Card view",
         "Tile view",
-        "Justified view",
-        "Filmstrip view"
+        "Justified view"
       ],
       "size": "Thumbnail size",
       "scaling": "Thumbnail scaling",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "Filmstrip view",
-      "preview_position": "Filmstrip view preview position",
+      "title": "Filmstrip Preview",
+      "preview_position": "Filmstrip preview position",
       "preview_position_options": [
         "Above filmstrip",
         "Below filmstrip"
@@ -716,13 +717,13 @@
       "auto_play_video": "Auto play video",
       "show_comment": "Show comment ",
       "show_comment_hint": "When view in new window, show image comment",
-      "navigator_view": "Show navigator view ",
+      "navigator_view": "Navigator visibility",
       "navigator_view_options": [
         "Auto",
         "Always show",
         "Always hide"
       ],
-      "navigator_view__size": "Navigator view size",
+      "navigator_view__size": "Navigator size",
       "navigator_view_size_options": [
         "Small(160px)",
         "Medium(240px)",

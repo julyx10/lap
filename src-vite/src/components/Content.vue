@@ -72,6 +72,7 @@
           :options="fileTypeOptions"
           :defaultIndex="config.search.fileType"
           :disabled="config.main.sidebarIndex === 3 || tempViewMode !== 'none' || isIndexing || showQuickView"
+          :selected="config.search.fileType !== 0"
           @select="handleFileTypeSelect"
         />
 
@@ -88,52 +89,50 @@
         <!-- select and layout section -->
         <div class="flex flex-row items-center">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
-
-          <!-- grid size slider -->
-          <div class="flex flex-row items-center gap-2 px-2 shrink-0 group">
-            <!-- <IconZoomOut 
-              class="t-icon-size-xs text-base-content/30 hover:text-base-content cursor-pointer transition-colors" 
-              @click="config.settings.grid.size = Math.max(120, config.settings.grid.size - 40)"
-            /> -->
-            <!-- <input 
-              type="range" 
-              min="120" 
-              max="360" 
-              v-model.number="config.settings.grid.size" 
-              class="range range-xs w-24"
-            /> -->
-            <SliderInput v-model="config.settings.grid.size" :min="120" :max="360" :step="1" label="" :slider_width="80" :disabled="config.settings.grid.style === 3 || isIndexing || showQuickView" />
-
-            <!-- <IconZoomIn 
-              class="t-icon-size-xs text-base-content/30 hover:text-base-content cursor-pointer transition-colors" 
-              @click="config.settings.grid.size = Math.min(360, config.settings.grid.size + 40)"
-            /> -->
-          </div>
-
-          <!-- toggle layout -->
-          <TButton
-            :icon="[IconCard, IconTile, IconJustified, IconFilmstrip][config.settings.grid.style]"
-            :iconStyle="{ 
-              transform: `rotate(${config.settings.grid.style === 3 && config.settings.grid.previewPosition === 1 ? 180 : 0}deg)`, 
-              transition: 'transform 0.3s ease-in-out' 
-            }" 
-            :tooltip="localeMsg.settings.gallery_view.style_options[config.settings.grid.style]"
-            :disabled="isIndexing || showQuickView"
-            @click="toggleGridViewLayout"
-          />
           
           <!-- refresh file list -->
-          <TButton
+          <!-- Bugfix: need to update album files when the album is updated -->
+          <!-- <TButton
             :icon="IconRefresh"
             :tooltip="$t('toolbar.tooltip.refresh')"
             :disabled="isIndexing || showQuickView"
             @click="updateContent()"
+          /> -->
+          
+          <!-- grid size slider -->
+          <div class="flex flex-row items-center gap-2 px-2 shrink-0 group">
+            <SliderInput v-model="config.settings.grid.size" 
+              :min="120" :max="360" :step="1" label="" :slider_width="80" 
+              :disabled="isIndexing || showQuickView" 
+            />
+          </div>
+
+          <!-- grid styles cycle -->
+          <TButton
+            :icon="[IconCard, IconTile, IconJustified][config.settings.grid.style]"
+            :tooltip="localeMsg.settings.gallery_view.style_options[config.settings.grid.style]"
+            :disabled="isIndexing || showQuickView"
+            @click="cycleGridStyle"
+          />
+
+          <!-- toggle filmstrip -->
+          <TButton
+            :icon="IconFilmstrip"
+            :iconStyle="{ 
+              transform: `rotate(${config.settings.grid.previewPosition === 1 ? 180 : 0}deg)`, 
+              transition: 'transform 0.3s ease-in-out' 
+            }" 
+            :tooltip="localeMsg.settings.filmstrip_view.title"
+            :selected="config.settings.grid.showFilmStrip"
+            :disabled="isIndexing || showQuickView"
+            @click="toggleFilmstripView"
           />
 
           <!-- toggle info panel -->
           <TButton
             :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
             :tooltip="config.infoPanel.show ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
+            :selected="config.infoPanel.show"
             :disabled="isIndexing"
             @click="config.infoPanel.show = !config.infoPanel.show"
           />
@@ -153,15 +152,15 @@
           :class="[
             'flex-1 flex',
             config.settings.grid.previewPosition === 0 ? 'flex-col-reverse' : 'flex-col',
-            config.settings.grid.style === 3 ? (config.settings.showStatusBar ? 'mt-12 mb-8' : 'mt-12 mb-1') : ''
+            config.settings.grid.showFilmStrip ? (config.settings.showStatusBar ? 'mt-12 mb-8' : 'mt-12 mb-1') : ''
           ]"
         >
           <div class="relative" 
-            :class="{ 'flex-1': config.settings.grid.style !== 3 }"
-            :style="{ height: config.settings.grid.style === 3 ? config.content.filmStripPaneHeight + 'px' : '' }"
+            :class="{ 'flex-1': !config.settings.grid.showFilmStrip }"
+            :style="{ height: config.settings.grid.showFilmStrip ? itemSize + 'px' : '' }"
           >
             <!-- grid view -->
-            <div ref="gridScrollContainerRef" class="absolute px-1 w-full h-full">
+            <div ref="gridScrollContainerRef" class="absolute w-full h-full">
               <GridView ref="gridViewRef"
                 :selected-item-index="selectedItemIndex"
                 :fileList="fileList"
@@ -178,7 +177,7 @@
                 @layout-update="handleLayoutUpdate"
               />
               <!-- Navigation buttons -->
-              <div v-if="(config.settings.grid.style === 3) && fileList.length > 0" 
+              <div v-if="config.settings.grid.showFilmStrip && fileList.length > 0" 
                 class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none"
               >
                 <button 
@@ -205,17 +204,10 @@
             </div>
           </div>
 
-          <!-- splitter -->
-          <div v-if="config.settings.grid.style === 3" 
-            :class="[ 
-              'h-1 hover:bg-primary cursor-row-resize transition-colors',
-              isDraggingFilmStripView ? 'bg-primary' : 'bg-base-300'
-            ]" 
-            @mousedown="startDraggingfilmStripView"
-          ></div>
+          <div v-if="config.settings.grid.showFilmStrip" class="h-1"></div>
 
           <!-- film strip preview -->
-          <div v-if="config.settings.grid.style === 3" ref="previewDiv" 
+          <div v-if="config.settings.grid.showFilmStrip" ref="previewDiv" 
             class="flex-1 bg-base-200 overflow-hidden"
           >
             <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
@@ -247,7 +239,10 @@
         </div> <!-- grid view -->
 
         <!-- custom scrollbar -->
-        <div v-if="config.settings.grid.style !== 3 && fileList.length > 0" class="mt-12 shrink-0" :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]">
+        <div v-if="!config.settings.grid.showFilmStrip && fileList.length > 0" 
+          class="mt-12 shrink-0" 
+          :class="[ config.settings.showStatusBar ? 'mb-8' : 'mb-1' ]"
+        >
           <ScrollBar
             :total="totalFileCount"
             :pageSize="visibleItemCount"
@@ -371,7 +366,7 @@
             <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
           </div>
 
-          <div v-if="config.settings.grid.style === 3 || showQuickView" class="flex items-center gap-1 shink-0">
+          <div v-if="config.settings.grid.showFilmStrip || showQuickView" class="flex items-center gap-1 shink-0">
             <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
             <span> {{ (imageScale * 100).toFixed(0) }}% </span>
           </div>
@@ -618,7 +613,6 @@ const imageMinScale = ref(0);
 const imageMaxScale = ref(10);
 const isSlideShow = ref(false);
 
-
 // Request ID tracking to prevent race conditions during async content updates
 let currentContentRequestId = 0;
 
@@ -628,8 +622,6 @@ const onScale = (event: any) => {
   imageMaxScale.value = event.maxScale;
 };
 
-// film strip view splitter
-const isDraggingFilmStripView = ref(false);      // dragging splitter to resize film strip view
 const videoRef = ref<HTMLVideoElement | null>(null);             // preview video reference
 
 // info panel splitter
@@ -664,7 +656,7 @@ const gap = 8;                    // Gap between items (must match GridView)
 
 const itemWidth = computed(() => {
   if (config.settings.grid.style === 0) {
-    return config.settings.grid.size + gap * 2;
+    return config.settings.grid.size + 20; // size + padding/border/gap(20)
   } else if (config.settings.grid.style === 1) {
     return config.settings.grid.size;
   } else if (config.settings.grid.style === 2) {
@@ -676,13 +668,13 @@ const itemWidth = computed(() => {
 const itemSize = computed(() => {
   if (config.settings.grid.style === 0) {
     let labelHeight = 0
-    if (config.settings.grid.labelPrimary > 0 ) labelHeight += 20;      // height of text-sm
+    if (config.settings.grid.labelPrimary > 0 ) labelHeight += 16;      // height of text-sm
     if (config.settings.grid.labelSecondary > 0 ) labelHeight += 16;    // height of text-xs
-    return itemWidth.value + gap / 2 + labelHeight;
+    return config.settings.grid.size + 20 + labelHeight; // size + padding/border/gap(20) + labels
   } else if (config.settings.grid.style === 1) {
     return itemWidth.value + gap / 2;
   } else if (config.settings.grid.style === 2) {
-    return config.settings.grid.size + gap / 2; // Row height + vertical gap (4px)
+    return config.settings.grid.size;
   }
   return 0;
 });
@@ -916,7 +908,7 @@ function handleItemClicked(index: number) {
 function handleItemDblClicked(index: number) {
   selectedItemIndex.value = index;
 
-  if (config.settings.grid.style !== 3) {
+  if (!config.settings.grid.showFilmStrip) {
     // quick view
     showQuickView.value = true;
     quickViewZoomFit.value = true;
@@ -1002,7 +994,7 @@ function handleItemAction(payload: { action: string, index: number }) {
 }
 
 function requestNavigate(direction: 'prev' | 'next') {
-  const viewer = showQuickView.value ? quickViewMediaRef.value : (config.settings.grid.style === 3 ? filmStripMediaRef.value : null);
+  const viewer = showQuickView.value ? quickViewMediaRef.value : (config.settings.grid.showFilmStrip ? filmStripMediaRef.value : null);
   
   if (direction === 'next') {
     if (viewer) {
@@ -1032,7 +1024,7 @@ function performNavigate(direction: 'prev' | 'next') {
 }
 
 function updateScrollPosition(currentScrollTop: number, currentScrollHeight: number) {
-    if (config.settings.grid.style !== 3) {
+    if (!config.settings.grid.showFilmStrip) {
       // Calculate max scroll top
       const totalRows = Math.ceil(totalFileCount.value / columnCount.value);
       const topPadding = 48;
@@ -1057,7 +1049,7 @@ function updateScrollPosition(currentScrollTop: number, currentScrollHeight: num
         const maxIndex = Math.max(1, totalFileCount.value - visibleItemCount.value);
         scrollPosition.value = Math.round(ratio * maxIndex);
       }
-    } else {
+    } else if (config.settings.grid.showFilmStrip) {
       // Fallback for filmstrip or other layouts (horizontal)
       const rowIndex = Math.floor(currentScrollTop / itemSize.value);
       scrollPosition.value = rowIndex * columnCount.value;
@@ -1083,7 +1075,7 @@ function handleLayoutUpdate({ height }: { height: number }) {
 function handleScrollUpdate(newIndex: number) {
   scrollPosition.value = newIndex;
   
-  if (config.settings.grid.style !== 3 && gridViewRef.value) {
+  if (!config.settings.grid.showFilmStrip && gridViewRef.value) {
     // Calculate ratio (0 to 1)
     const maxIndex = Math.max(1, totalFileCount.value - visibleItemCount.value);
     const ratio = Math.min(1, Math.max(0, newIndex / maxIndex));
@@ -1193,7 +1185,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
   if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
-    if (!showQuickView.value && config.settings.grid.style !== 3) {
+    if (!showQuickView.value && !config.settings.grid.showFilmStrip) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
     }
@@ -1201,7 +1193,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   else if (event.key === 'Space' || event.key === ' ') {
     if (showQuickView.value) {
       quickViewZoomFit.value = !quickViewZoomFit.value;
-    } else if (config.settings.grid.style !== 3) {
+    } else if (!config.settings.grid.showFilmStrip) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
     }
@@ -1549,12 +1541,18 @@ watch(() => config.settings.grid.style, () => {
   stopSlideShow();
 });
 
-function toggleGridViewLayout() {
+function toggleFilmstripView() {
   showQuickView.value = false;
-  config.settings.grid.style = (config.settings.grid.style + 1) % 4;
-  if (config.settings.grid.style === 3) {
+  config.settings.grid.showFilmStrip = !config.settings.grid.showFilmStrip;
+  if (config.settings.grid.showFilmStrip) {
     filmStripZoomFit.value = true;
   }
+}
+
+function cycleGridStyle() {
+  showQuickView.value = false;
+  // Cycle between 0, 1, 2 (Card, Tile, Justified)
+  config.settings.grid.style = (config.settings.grid.style + 1) % 3;
 }
 
 // Track pending requests to avoid duplicates
@@ -1595,7 +1593,16 @@ async function fetchDataRange(start: number, end: number) {
             const filesToFetch = [];
             for (let j = 0; j < newFiles.length; j++) {
               if (chunkStart + j < fileList.value.length) {
-                fileList.value[chunkStart + j] = newFiles[j];
+                const existingItem = fileList.value[chunkStart + j];
+                // Preserve client-side state
+                const isSelected = existingItem ? existingItem.isSelected : false;
+                const rotate = existingItem ? (existingItem.rotate || 0) : 0;
+
+                fileList.value[chunkStart + j] = { 
+                  ...newFiles[j], 
+                  isSelected,
+                  rotate: rotate || newFiles[j].rotate || 0
+                };
                 filesToFetch.push(fileList.value[chunkStart + j]);
 
                 // Update ImageViewer if the selected file is loaded
@@ -2809,11 +2816,11 @@ async function openImageViewer(index: number, newViewer = false) {
 }
 
 /// Dragging the film strip view splitter
-function startDraggingfilmStripView(event: MouseEvent) {
-  isDraggingFilmStripView.value = true;
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', stopDragging);
-}
+// function startDraggingfilmStripView(event: MouseEvent) {
+//   isDraggingFilmStripView.value = true;
+//   document.addEventListener('mousemove', handleMouseMove);
+//   document.addEventListener('mouseup', stopDragging);
+// }
 
 /// Dragging the info panel splitter
 function startDraggingInfoPanelSplitter(event: MouseEvent) {
@@ -2834,37 +2841,11 @@ function handleMouseMove(event: MouseEvent) {
 
     // Limit width between 20% and 80%
     config.infoPanel.width = Math.min(Math.max(newWidthPercent, 20), 80);
-  } else if(isDraggingFilmStripView.value) {
-    const gridViewDivRect = gridViewDiv.value.getBoundingClientRect();
-    const container = gridScrollContainerRef.value;
-    let verticalSpacing = 0;
-    if (container) {
-      const style = window.getComputedStyle(container);
-      verticalSpacing = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 
-                        parseFloat(style.marginTop) + parseFloat(style.marginBottom);
-    }
-
-    const newHeight = 
-      config.settings.grid.previewPosition === 0 ? 
-        gridViewDivRect.bottom - event.clientY - 2 - verticalSpacing :
-        event.clientY - gridViewDivRect.top - 2 - verticalSpacing; // -2: border width(2px)
-    
-    const totalHeight = gridViewDiv.value.clientHeight;
-    const minHeight = Math.max(totalHeight * 0.1, 80);
-    const maxHeight = Math.min(totalHeight * 0.5, 320);
-
-    // if scrollbar is visible, subtract the scrollbar height
-    const scrollbarWidth = gridScrollContainerRef.value 
-      ? gridScrollContainerRef.value.scrollWidth > gridScrollContainerRef.value.clientWidth 
-        ? gridScrollContainerRef.value.offsetHeight - gridScrollContainerRef.value.clientHeight 
-        : 0 
-      : 0;
-    config.content.filmStripPaneHeight = Math.min(Math.max(newHeight, minHeight), maxHeight) - scrollbarWidth;
   }
 }
 
 function stopDragging() {
-  isDraggingFilmStripView.value = false;
+  // isDraggingFilmStripView.value = false;
   isDraggingInfoPanel.value = false;
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', stopDragging);

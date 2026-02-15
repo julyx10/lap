@@ -12,16 +12,16 @@
       ref="scroller"
       class="w-full h-full no-scrollbar"
       :class="{
-        'pt-12': config.settings.grid.style !== 3,
-        'pb-8': config.settings.grid.style !== 3 && config.settings.showStatusBar,
-        'pb-1': config.settings.grid.style !== 3 && !config.settings.showStatusBar,
+        'pt-12': !config.settings.grid.showFilmStrip,
+        'pb-8': !config.settings.grid.showFilmStrip && config.settings.showStatusBar,
+        'pb-1': !config.settings.grid.showFilmStrip && !config.settings.showStatusBar,
       }"
       :items="fileList"
-      :direction="config.settings.grid.style === 3 ? 'horizontal' : 'vertical'"
-      :grid-items="config.settings.grid.style === 3 ? 1 : columnCount"
-      :item-size="config.settings.grid.style === 3 ? filmStripItemSize : itemHeight"
-      :item-secondary-size="config.settings.grid.style !== 3 ? itemWidth : undefined"
-      :key="config.settings.grid.style === 3 ? 'filmstrip' : 'grid'"
+      :direction="config.settings.grid.showFilmStrip ? 'horizontal' : 'vertical'"
+      :grid-items="config.settings.grid.showFilmStrip ? 1 : columnCount"
+      :item-size="config.settings.grid.showFilmStrip ? filmStripItemSize : itemHeight"
+      :item-secondary-size="!config.settings.grid.showFilmStrip ? itemWidth : undefined"
+      :key="`${config.settings.grid.showFilmStrip}`"
       :geometry="config.settings.grid.style === 2 ? layoutGeometry : undefined"
       :content-height="config.settings.grid.style === 2 ? layoutContentHeight : undefined"
       :transition="isLayoutTransitioning"
@@ -32,19 +32,21 @@
       @update="onUpdate"
       @scroll="onScroll"
     >
-      <Thumbnail
-        v-if="item && !item.isPlaceholder"
-        :id="'item-' + index"
-        :file="item"
-        :is-selected="selectMode ? item.isSelected : index === selectedItemIndex"
-        :select-mode="selectMode"
-        :show-folder-files="showFolderFiles"
-        @clicked="$emit('item-clicked', index)"
-        @dblclicked="$emit('item-dblclicked', index)"
-        @select-toggled="(shiftKey) => $emit('item-select-toggled', index, shiftKey)"
-        @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
-      />
-      <div v-else class="w-full h-full bg-base-200/50 rounded animate-pulse"></div>
+      <div class="w-full h-full flex items-center justify-center">
+        <Thumbnail
+          v-if="item && !item.isPlaceholder"
+          :id="'item-' + index"
+          :file="item"
+          :is-selected="selectMode ? item.isSelected : index === selectedItemIndex"
+          :select-mode="selectMode"
+          :show-folder-files="showFolderFiles"
+          @clicked="$emit('item-clicked', index)"
+          @dblclicked="$emit('item-dblclicked', index)"
+          @select-toggled="(shiftKey) => $emit('item-select-toggled', index, shiftKey)"
+          @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
+        />
+        <div v-else class="w-full h-full bg-base-200/50 rounded animate-pulse"></div>
+      </div>
     </VirtualScroll>
     <!-- Empty State / Loading -->
     <div v-else class="absolute inset-0 flex flex-col items-center justify-center">
@@ -98,9 +100,37 @@ const scroller = ref<any>(null);
 const columnCount = ref(4);
 const containerWidth = ref(0);
 
-// Justified Layout State
-const layoutGeometry = ref<Geometry[]>([]);
-const layoutContentHeight = ref(0);
+// Layout Geometry Calculation
+const layoutGeometryResult = computed(() => {
+  if (props.fileList.length === 0) {
+    return { boxes: [], contentSize: 0 };
+  }
+
+  const { style, size, showFilmStrip } = config.settings.grid;
+
+  if (showFilmStrip) {
+    if (style === 2) {
+      // Justified Layout in Filmstrip (Horizontal)
+      const result = calculateLinearRowLayout(props.fileList, size, 0);
+      return { boxes: result.boxes, contentSize: result.containerWidth };
+    }
+    return { boxes: [], contentSize: 0 };
+  } else if (style === 2 && containerWidth.value > 0) {
+    // Justified Layout (Vertical)
+    const result = calculateJustifiedLayout(
+      props.fileList,
+      containerWidth.value,
+      size,
+      0
+    );
+    return { boxes: result.boxes, contentSize: result.containerHeight };
+  }
+  return { boxes: [], contentSize: 0 };
+});
+
+const layoutGeometry = computed(() => layoutGeometryResult.value.boxes);
+const layoutContentHeight = computed(() => layoutGeometryResult.value.contentSize);
+
 const isLayoutTransitioning = ref(false);
 const startGridSize = ref(0);
 
@@ -109,7 +139,7 @@ const gap = 8; // Gap between items
 // item width and height(including gap)
 const itemWidth = computed(() => {
   const { style, size } = config.settings.grid;
-  if (style === 0) return size + gap * 2;
+  if (style === 0) return size + 20; // size + padding(4*2) + border(2*2) + gap(8)
   return size;
 });
 
@@ -117,16 +147,16 @@ const itemHeight = computed(() => {
   const { style, size } = config.settings.grid;
   if (style === 0) {
     let labelHeight = 0;
-    if (config.settings.grid.labelPrimary > 0) labelHeight += 20;   // text-sm
+    if (config.settings.grid.labelPrimary > 0) labelHeight += 18;   // text-sm
     if (config.settings.grid.labelSecondary > 0) labelHeight += 16; // text-xs
-    return itemWidth.value + gap * 0.5 + labelHeight;
+    return size + 20 + labelHeight; // size + padding/border/gap(20) + labels
   }
   if (style === 1) return itemWidth.value + gap * 0.5;
   return size;
 });
 
 const filmStripItemSize = computed(() => {
-  return config.content.filmStripPaneHeight;
+  return itemWidth.value;
 });
 
 let resizeObserver: ResizeObserver | null = null;
@@ -142,32 +172,12 @@ function updateColumnCount() {
 
 function updateLayout() {
   updateColumnCount();
-  
-  if (config.settings.grid.style === 3) {
-    layoutGeometry.value = [];
-    layoutContentHeight.value = 0;
-    emit('layout-update', { height: 0 });
-  } else if (config.settings.grid.style === 2 && containerWidth.value > 0) {
-    // Calculate Justified Layout
-    const result = calculateJustifiedLayout(
-      props.fileList,
-      containerWidth.value,
-      config.settings.grid.size, // Target row height
-      0 // Use correct spacing
-    );
-    layoutGeometry.value = result.boxes;
-    layoutContentHeight.value = result.containerHeight;
-    emit('layout-update', { height: result.containerHeight });
-  } else {
-    layoutGeometry.value = [];
-    layoutContentHeight.value = 0;
-    emit('layout-update', { height: 0 });
-  }
+  emit('layout-update', { height: layoutContentHeight.value });
 }
 
-watch(() => [config.settings.grid.size, config.settings.grid.style], () => {
+watch(() => [config.settings.grid.size, config.settings.grid.style, config.settings.grid.showFilmStrip], () => {
   isLayoutTransitioning.value = true;
-  updateLayout();
+  updateColumnCount();
   
   if (props.selectedItemIndex !== -1) {
     nextTick(() => {
@@ -186,6 +196,10 @@ watch(() => props.fileList, () => {
 
 watch(() => props.layoutVersion, () => {
   updateLayout();
+});
+
+watch(layoutContentHeight, (newHeight) => {
+  emit('layout-update', { height: newHeight });
 });
 
 watch(() => props.selectedItemIndex, (newValue) => {
@@ -248,7 +262,7 @@ function onScroll(e: Event) {
 }
 
 function onWheel(e: WheelEvent) {
-  if (config.settings.grid.style === 3 && scroller.value) {
+  if (config.settings.grid.showFilmStrip && scroller.value) {
     // If it's a vertical scroll (deltaY) and no horizontal scroll (deltaX),
     // translate it to horizontal scroll
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -275,7 +289,7 @@ function scrollToItem(index: number) {
   
   const el = scroller.value.$el;
   
-  if (config.settings.grid.style !== 3) {
+  if (!config.settings.grid.showFilmStrip) {
     let itemTop = 0;
     let itemBottom = 0;
 
@@ -315,9 +329,20 @@ function scrollToItem(index: number) {
     }
   } else {
     // Layout 1: Horizontal, center the item
-    const itemSize = filmStripItemSize.value;
-    const itemLeft = index * itemSize;
-    const itemCenter = itemLeft + itemSize / 2;
+    let itemLeft = 0;
+    let itemWidthValue = 0;
+
+    if (config.settings.grid.style === 2 && layoutGeometry.value[index]) {
+      const box = layoutGeometry.value[index];
+      itemLeft = box.x;
+      itemWidthValue = box.width;
+    } else {
+      const itemSize = filmStripItemSize.value;
+      itemLeft = index * itemSize;
+      itemWidthValue = itemSize;
+    }
+
+    const itemCenter = itemLeft + itemWidthValue / 2;
     const clientWidth = el.clientWidth;
     
     // Calculate target scrollLeft to center the item
@@ -336,7 +361,7 @@ function scrollToItem(index: number) {
 }
 
 function scrollToPosition(scrollTop: number) {
-  if (scroller.value && config.settings.grid.style !== 3) {
+  if (scroller.value && !config.settings.grid.showFilmStrip) {
     scroller.value.$el.scrollTop = scrollTop;
   }
 }

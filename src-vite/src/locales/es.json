@@ -488,10 +488,10 @@
       "percentage": "Porcentaje",
       "pixel": "Píxeles",
       "options": "Opciones",
-      "save_as": "Guardar como",
+      "save_as": "Guardar archivo",
       "save_as_options": [
-        "Sobrescribir",
-        "Nuevo archivo"
+        "Sobrescribir archivo original",
+        "Guardar como nuevo archivo"
       ],
       "save_as_placeholder": "Nombre de archivo",
       "format": "Formato",
@@ -509,6 +509,8 @@
       "copy_image": "Copiar imagen",
       "ok": "Guardar",
       "cancel": "Cancelar",
+      "overwrite": "Sobrescribir",
+      "save_as_new": "Guardar como",
       "overwrite_confirm": "¿Sobrescribir archivo original? No se puede deshacer."
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "Vista de galería",
-      "style": "Estilo de vista de galería",
+      "style": "Diseño de cuadrícula",
       "style_options": [
         "Vista de tarjeta",
         "Vista mosaico",
-        "Vista justificada",
-        "Vista de tira"
+        "Vista justificada"
       ],
       "size": "Tamaño miniatura",
       "scaling": "Escalado",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "Vista tira",
-      "preview_position": "Posición de vista previa de tira",
+      "title": "Vista previa de tira de película",
+      "preview_position": "Posición de vista previa de tira de película",
       "preview_position_options": [
         "Arriba",
         "Abajo"
@@ -716,13 +717,13 @@
       "auto_play_video": "Autoreproducir vídeo",
       "show_comment": "Mostrar comentario",
       "show_comment_hint": "Mostrar en nueva ventana",
-      "navigator_view": "Vista navegador",
+      "navigator_view": "Visibilidad del navegador",
       "navigator_view_options": [
         "Auto",
         "Siempre",
         "Nunca"
       ],
-      "navigator_view__size": "Tamaño navegador",
+      "navigator_view__size": "Tamaño del navegador",
       "navigator_view_size_options": [
         "Pequeño(160px)",
         "Medio(240px)",

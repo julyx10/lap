@@ -488,10 +488,10 @@
       "percentage": "百分比",
       "pixel": "像素",
       "options": "选项",
-      "save_as": "保存",
+      "save_as": "保存文件",
       "save_as_options": [
-        "覆盖现有文件",
-        "新文件"
+        "覆盖原文件",
+        "另存为新文件"
       ],
       "save_as_placeholder": "输入新文件名",
       "format": "格式",
@@ -509,6 +509,8 @@
       "copy_image": "复制到剪贴板",
       "ok": "保存",
       "cancel": "取消",
+      "overwrite": "覆盖",
+      "save_as_new": "另存为",
       "overwrite_confirm": "确定覆盖现有文件吗？该操作无法撤销。"
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "画廊视图",
-      "style": "画廊视图样式",
+      "style": "网格视图布局",
       "style_options": [
         "卡片视图",
         "平铺视图",
-        "自适应视图",
-        "胶片视图"
+        "自适应视图"
       ],
       "size": "缩略图大小",
       "scaling": "缩略图缩放",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "胶片视图",
-      "preview_position": "胶片视图预览位置",
+      "title": "胶片预览",
+      "preview_position": "胶片预览位置",
       "preview_position_options": [
         "胶片上方",
         "胶片下方"
@@ -716,13 +717,13 @@
       "auto_play_video": "自动播放视频",
       "show_comment": "显示备注",
       "show_comment_hint": "当在新窗口查看图片时，显示备注",
-      "navigator_view": "显示导航视图",
+      "navigator_view": "导航器显示",
       "navigator_view_options": [
         "自动",
         "总是显示",
         "总是隐藏"
       ],
-      "navigator_view__size": "导航视图大小",
+      "navigator_view__size": "导航器大小",
       "navigator_view_size_options": [
         "小(160px)",
         "中(240px)",

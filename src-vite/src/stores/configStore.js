@@ -76,7 +76,8 @@ export const useConfigStore = defineStore('configStore', {
       thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
       grid: {
         size: 160,               // grid size, range 120-360
-        style: 0,                // 0: card view, 1: tile view, 2: justified view, 3: filmstrip view
+        style: 0,                // 0: card view, 1: tile view, 2: justified view
+        showFilmStrip: false,    // show filmstrip view
         scaling: 1,              // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
         labelPrimary: 1,         // card view: primary label (1: Name)
         labelSecondary: 3,       // card view: secondary label (3: Dimension)
@@ -168,6 +169,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setGridLabelSecondary(gridLabelSecondary) {
       this.settings.grid.labelSecondary = gridLabelSecondary;
+    },
+    setShowFilmStrip(showFilmStrip) {
+      this.settings.grid.showFilmStrip = showFilmStrip;
     },
 
     // image view settings

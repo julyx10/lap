@@ -488,10 +488,10 @@
       "percentage": "퍼센트",
       "pixel": "픽셀",
       "options": "옵션",
-      "save_as": "다른 이름으로 저장",
+      "save_as": "파일 저장",
       "save_as_options": [
-        "덮어쓰기",
-        "새 파일"
+        "원본 파일 덮어쓰기",
+        "새 파일로 저장"
       ],
       "save_as_placeholder": "파일 이름",
       "format": "형식",
@@ -509,6 +509,8 @@
       "copy_image": "복사",
       "ok": "저장",
       "cancel": "취소",
+      "overwrite": "덮어쓰기",
+      "save_as_new": "다른 이름으로 저장",
       "overwrite_confirm": "원본 파일을 덮어쓰시겠습니까? 되돌릴 수 없습니다."
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "갤러리 보기",
-      "style": "갤러리 보기 스타일",
+      "style": "그리드 뷰 레이아웃",
       "style_options": [
         "카드 보기",
         "타일 보기",
-        "양쪽 맞춤 보기",
-        "필름스트립 보기"
+        "양쪽 맞춤 보기"
       ],
       "size": "크기",
       "scaling": "비율",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "필름스트립",
-      "preview_position": "필름스트립 보기 미리보기 위치",
+      "title": "필름스트립 미리보기",
+      "preview_position": "필름스트립 미리보기 위치",
       "preview_position_options": [
         "위",
         "아래"
@@ -716,13 +717,13 @@
       "auto_play_video": "비디오 자동 재생",
       "show_comment": "코멘트 표시",
       "show_comment_hint": "새 창에서 보기 시",
-      "navigator_view": "내비게이터",
+      "navigator_view": "내비게이터 표시",
       "navigator_view_options": [
         "자동",
         "항상 표시",
         "항상 숨김"
       ],
-      "navigator_view__size": "크기",
+      "navigator_view__size": "내비게이터 크기",
       "navigator_view_size_options": [
         "작게(160px)",
         "중간(240px)",

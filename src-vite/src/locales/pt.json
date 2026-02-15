@@ -488,10 +488,10 @@
       "percentage": "Porcentagem",
       "pixel": "Pixels",
       "options": "Opções",
-      "save_as": "Salvar como",
+      "save_as": "Salvar arquivo",
       "save_as_options": [
-        "Sobrescrever",
-        "Novo arquivo"
+        "Sobrescrever arquivo original",
+        "Salvar como novo arquivo"
       ],
       "save_as_placeholder": "Nome do arquivo",
       "format": "Formato",
@@ -509,6 +509,8 @@
       "copy_image": "Copiar",
       "ok": "Salvar",
       "cancel": "Cancelar",
+      "overwrite": "Sobrescrever",
+      "save_as_new": "Salvar como",
       "overwrite_confirm": "Sobrescrever arquivo original? Irreversível."
     }
   },
@@ -669,12 +671,11 @@
     },
     "gallery_view": {
       "title": "Galeria",
-      "style": "Estilo da galeria",
+      "style": "Layout da grade",
       "style_options": [
         "Visualização em cartões",
         "Visualização em mosaico",
-        "Visualização justificada",
-        "Visualização em tira de filme"
+        "Visualização justificada"
       ],
       "size": "Tamanho",
       "scaling": "Escala",
@@ -698,8 +699,8 @@
       ]
     },
     "filmstrip_view": {
-      "title": "Tira de filme",
-      "preview_position": "Posição prévia da tira de filme",
+      "title": "Antevisão da película",
+      "preview_position": "Posição da antevisão da película",
       "preview_position_options": [
         "Acima",
         "Abaixo"
@@ -716,13 +717,13 @@
       "auto_play_video": "Auto reproduzir vídeo",
       "show_comment": "Mostrar comentário",
       "show_comment_hint": "Em nova janela",
-      "navigator_view": "Navegador",
+      "navigator_view": "Visibilidade do navegador",
       "navigator_view_options": [
         "Auto",
         "Sempre",
         "Nunca"
       ],
-      "navigator_view__size": "Tamanho",
+      "navigator_view__size": "Tamanho do navegador",
       "navigator_view_size_options": [
         "Peq(160px)",
         "Méd(240px)",

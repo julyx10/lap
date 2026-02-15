@@ -3,8 +3,11 @@
 
     <!-- Dropdown Trigger -->
     <button tabindex="-1"
-      class="px-2 py-1 w-full h-8 flex items-center outline-none rounded-box border border-base-content/30 transition-colors duration-300 text-sm whitespace-nowrap"
-      :class="disabled ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100/30 hover:text-base-content cursor-pointer'"
+      class="px-2 py-1 w-full h-8 flex items-center outline-none rounded-box border transition-colors duration-300 text-sm whitespace-nowrap"
+      :class="[
+        disabled ? 'text-base-content/30 cursor-default' : 'hover:bg-base-100/30 hover:text-base-content cursor-pointer', 
+        selected ? 'border-primary' : 'border-base-content/30'
+      ]"
       :disabled="disabled"
       @click="toggleDropdown"
     >
@@ -82,6 +85,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  selected: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 // Emits

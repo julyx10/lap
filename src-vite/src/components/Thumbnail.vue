@@ -3,19 +3,20 @@
     :class="[
       'border-2 flex flex-col items-center cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
-      config.settings.grid.style === 0 ? 'p-1 rounded-box' : 'w-full h-full',
+      config.settings.grid.style === 0 ? 'p-1 rounded-box w-fit h-fit' : 'w-full h-full',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
-    :style="containerStyle"
     @click="$emit('clicked')"
     @dblclick="$emit('dblclicked')"
   >
     <div v-if="file.thumbnail" 
+      ref="containerRef"
       :class="[
         'relative flex items-center justify-center overflow-hidden', 
         config.settings.grid.style === 0 ? 'rounded-box' : 'w-full h-full',
-      ]">
+      ]"
+      :style="layoutStyle">
       <!-- image -->
       <img :src="file.thumbnail"
         class="duration-300"
@@ -27,10 +28,7 @@
           'object-fill': config.settings.grid.style !== 2 && config.settings.grid.scaling === 2,
           'transition-all': !isTransitionDisabled,
         }"
-        :style="{ 
-          ...layoutStyle,
-          transform: `rotate(${file.rotate}deg)`,
-        }"
+        :style="imgStyle"
         loading="lazy"
       />
 
@@ -64,7 +62,7 @@
       </div>
 
       <!-- context menu -->
-      <div v-if="!selectMode && config.settings.grid.style !== 3" class="absolute right-0 top-0">
+      <div v-if="!selectMode" class="absolute right-0 top-0">
         <ContextMenu
           :class="[
             !isSelected ? 'invisible group-hover:visible' : ''
@@ -110,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, toRef } from 'vue';
+import { computed, ref, watch, toRef, onMounted, onBeforeUnmount, type CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
@@ -159,6 +157,34 @@ const emit = defineEmits([
 const isTransitionDisabled = ref(false);
 let transitionTimeout: NodeJS.Timeout | null = null;
 
+const containerRef = ref<HTMLElement | null>(null);
+const containerWidth = ref(0);
+const containerHeight = ref(0);
+let resizeObserver: ResizeObserver | null = null;
+
+// Robust ResizeObserver setup using watch to handle v-if
+watch(containerRef, (el) => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+  if (el) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        containerWidth.value = entry.contentRect.width;
+        containerHeight.value = entry.contentRect.height;
+      }
+    });
+    resizeObserver.observe(el);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+});
+
 watch(() => config.settings.grid.style, () => {
   isTransitionDisabled.value = true;
   if (transitionTimeout) {
@@ -169,13 +195,63 @@ watch(() => config.settings.grid.style, () => {
   }, 500);
 });
 
-const containerStyle = computed(() => (config.settings.grid.style === 3 ? { width: '100%', height: '100%' } : {}));
+watch(() => props.file.rotate, () => {
+  isTransitionDisabled.value = true;
+  if (transitionTimeout) {
+    clearTimeout(transitionTimeout);
+  }
+  transitionTimeout = setTimeout(() => {
+    isTransitionDisabled.value = false;
+  }, 500);
+});
+
 
 const layoutStyle = computed(() => {
   const { style, size } = config.settings.grid;
   if (style === 0) return { width: `${size}px`, height: `${size}px` };
   if (style === 1) return { width: '100%', height: `${size}px` };
   return { width: '100%', height: '100%' };
+});
+
+const imgStyle = computed((): CSSProperties => {
+  const { style, size } = config.settings.grid;
+  const isRotated = props.file.rotate && props.file.rotate % 180 !== 0;
+
+  if (isRotated) {
+    let w = containerWidth.value;
+    let h = containerHeight.value;
+
+    // Optimization: For fixed-size grid (style 0), we know dimensions immediately
+    if ((w === 0 || h === 0) && style === 0) {
+      w = size;
+      h = size;
+    }
+
+    if (w > 0 && h > 0) {
+      return {
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        width: `${h}px`,
+        height: `${w}px`,
+        maxWidth: 'none',
+        maxHeight: 'none',
+        flex: 'none',
+        transform: `translate(-50%, -50%) rotate(${props.file.rotate}deg)`,
+        opacity: 1,
+      };
+    }
+    
+    // Fallback: Hide until dimensions are known to prevent blinking/glitches
+    return { opacity: 0 };
+  }
+
+  // Standard behavior for non-swapped rotations (0, 180, 360...)
+  return {
+    ...layoutStyle.value,
+    transform: `rotate(${props.file.rotate || 0}deg)`,
+    opacity: 1,
+  } as CSSProperties;
 });
 
 const uiStore = useUIStore();

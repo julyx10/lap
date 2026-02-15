@@ -129,7 +129,7 @@
               <div class="flex flex-col gap-0.5">
                 <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
               </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.previewPosition" :disabled="config.settings.grid.style !== 3">
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.previewPosition">
                  <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
@@ -205,7 +205,10 @@
             <!-- Face Cluster -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.face_recognition.similarity') }}</div>
+                <div class="flex items-center">
+                  <div>{{ $t('settings.face_recognition.similarity') }}</div>
+                  <div class="ml-2 px-1.5 py-0.5 text-[10px] bg-secondary/10 text-secondary rounded font-bold tracking-wider leading-none">BETA</div>
+                </div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.face_recognition.cluster_threshold_hint') }}</div>
               </div>
                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.face.clusterThresholdIndex">

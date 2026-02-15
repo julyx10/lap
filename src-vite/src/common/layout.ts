@@ -30,8 +30,11 @@ export function calculateJustifiedLayout(
         // Calculate total aspect ratio of the row
         let totalAspectRatio = 0;
         rowItems.forEach(item => {
-            const w = item.width || 100;
-            const h = item.height || 100;
+            let w = item.width || 100;
+            let h = item.height || 100;
+            if (item.rotate && item.rotate % 180 !== 0) {
+                [w, h] = [h, w];
+            }
             totalAspectRatio += w / h;
         });
 
@@ -52,8 +55,11 @@ export function calculateJustifiedLayout(
         // Generate geometry for each item in this row
         let currentX = 0;
         rowItems.forEach((item, index) => {
-            const w = item.width || 100;
-            const h = item.height || 100;
+            let w = item.width || 100;
+            let h = item.height || 100;
+            if (item.rotate && item.rotate % 180 !== 0) {
+                [w, h] = [h, w];
+            }
             const aspectRatio = w / h;
 
             const itemWidth = rowHeight * aspectRatio;
@@ -74,8 +80,11 @@ export function calculateJustifiedLayout(
     let currentRowWidth = 0;
 
     items.forEach(item => {
-        const w = item.width || 100;
-        const h = item.height || 100;
+        let w = item.width || 100;
+        let h = item.height || 100;
+        if (item.rotate && item.rotate % 180 !== 0) {
+            [w, h] = [h, w];
+        }
         // Width if scaled to targetHeight
         const scaledWidth = (w / h) * targetHeight;
 
@@ -109,7 +118,14 @@ export function calculateJustifiedLayout(
 
             // 1. Break BEFORE adding this item:
             // previous row has `currentRow`.
-            const prevAspect = currentRow.reduce((acc, it) => acc + (it.width || 100) / (it.height || 100), 0);
+            const prevAspect = currentRow.reduce((acc, it) => {
+                let w = it.width || 100;
+                let h = it.height || 100;
+                if (it.rotate && it.rotate % 180 !== 0) {
+                    [w, h] = [h, w];
+                }
+                return acc + w / h;
+            }, 0);
             const prevWidthAvail = containerWidth - Math.max(0, currentRow.length - 1) * spacingX;
             const heightIfBreakBefore = prevWidthAvail / prevAspect;
 
@@ -172,8 +188,11 @@ export function calculateLinearRowLayout(
     let currentX = 0;
 
     items.forEach(item => {
-        const w = item.width && item.width > 0 ? item.width : 100;
-        const h = item.height && item.height > 0 ? item.height : 100;
+        let w = item.width && item.width > 0 ? item.width : 100;
+        let h = item.height && item.height > 0 ? item.height : 100;
+        if (item.rotate && item.rotate % 180 !== 0) {
+            [w, h] = [h, w];
+        }
         const aspectRatio = w / h;
 
         const itemWidth = targetHeight * aspectRatio;
