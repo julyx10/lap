@@ -1,6 +1,6 @@
 {
   "productName": "Lap",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "identifier": "com.julyx10.lap",
   "build": {
     "beforeBuildCommand": "pnpm build",
@@ -10,7 +10,7 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "macOSPrivateApi": false,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
