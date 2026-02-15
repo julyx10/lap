@@ -202,4 +202,4 @@ onMounted(() => {
   <div class="close-btn">&times;</div>
 </div>
 
-<Starfield />
+<Fireworks />
