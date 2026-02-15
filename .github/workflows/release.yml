@@ -160,13 +160,31 @@ jobs:
           xcrun stapler staple "$DMG_PATH"
           echo "✅ Stapling complete."
 
+          echo "🔏 Re-signing stapled DMG..."
+          echo "${TAURI_SIGNING_PRIVATE_KEY}" > ./private.key
+          
+          # Install Tauri CLI if needed (using local npx to avoid global install issues if possible, or just npx)
+          # We use npx to run the latest version or the one compatible? 
+          # tauri-action ignores dependencies? 
+          # Let's try `npx @tauri-apps/cli` directly.
+          if [ -n "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}" ]; then
+            export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}"
+          fi
+          
+          npx -y @tauri-apps/cli signer sign -k ./private.key "$DMG_PATH"
+          
+          rm ./private.key
+          echo "✅ Re-signing complete."
+
       # Specific for Linux: upload .deb as artifact
       - name: Upload Build Artifact (Linux)
         if: matrix.platform == 'ubuntu-22.04'
         uses: actions/upload-artifact@v4
         with:
           name: deb-${{ matrix.arch }}
-          path: src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.sig
           if-no-files-found: error
 
       # Upload DMG as artifact for the release job (macOS only)
