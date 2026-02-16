@@ -1,12 +1,17 @@
 <div align="center">
   <img src="docs/public/icon.png" alt="Lap Logo" width="120" style="border-radius: 20px">
   <h1>Lap</h1>
-  <h3>Your Photos, Your Rules. The Local-First, AI-Powered Photo Manager.</h3>
+  <h3>A Local-first, AI-powered Photo manager built with Tauri + Vue 3.</h3>
+
+  <p>
+    <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
+    <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
+    <a href="https://github.com/julyx10/lap/stargazers"><img src="https://img.shields.io/github/stars/julyx10/lap" alt="GitHub stars"></a>
+    <a href="https://github.com/julyx10/lap/blob/main/LICENSE"><img src="https://img.shields.io/github/license/julyx10/lap" alt="GitHub license"></a>
+  </p>
 </div>
 
-**Lap** is a lightning-fast, cross-platform photo manager built for people who love their files. It combines the privacy of folder-based organization with the power of modern AI—all running 100% locally on your device.
-
-Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep your memories safe without a cloud subscription.
+**Lap** is a lightning-fast photo manager designed for massive local libraries. It allows you to manage files directly while offering a silky-smooth browsing experience for both photos and videos. Combining the privacy of folder-based organization with the power of modern AI—all running 100% locally on your device.
 
 🌐 **Website**: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
 
@@ -14,15 +19,15 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
 
 | Platform | Download | File Size | Notes |
 |:--|:--|:--|:--|
-| **macOS (Apple Silicon)** | [Download .dmg (aarch64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | M1/M2/M3/M4, ✅ Notarized by Apple |
-| **macOS (Intel)** | [Download .dmg (x86_64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | x86_64, ✅ Notarized by Apple, ⚠️ Not yet tested |
-| **Linux** | [Download .deb (amd64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | Ubuntu/Debian x86_64 |
+| **macOS (Apple Silicon)** | [Download .dmg (aarch64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | ✅ Notarized by Apple, ✅ Fully tested |
+| **macOS (Intel)** | [Download .dmg (x64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | ✅ Notarized by Apple, ⚠️ Not yet tested |
+| **Linux (Ubuntu/Debian)** | [Download .deb (amd64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | ⚠️ Not yet tested |
 | **Windows** | - | - | Coming soon |
 
 <table>
   <tr>
     <td align="center">
-      <strong>Library - Dark Theme</strong><br>
+      <strong>Library</strong><br>
       <img src="docs/public/screenshots/01%20lap-main-dark.jpg" alt="Library" width="520">
       <br>
       <em>Handle 100k+ photos with smooth scrolling and instant thumbnails.</em>
@@ -84,15 +89,9 @@ Browse 100,000+ photos smoothly, finding "cat in the grass" instantly, and keep 
 
 **LAP** stands for **Local-first, AI-powered Photo management**.
 
-We built Lap because we were tired of choosing between **privacy** (dumb folder viewers) and **convenience** (cloud services that scan your life). Lap gives you both.
+I built Lap because I was tired of choosing between **privacy** (dumb folder viewers) and **convenience** (cloud services that scan your life). Lap gives you both.
 
 ### 🌟 Key Highlights
-
-#### 🤖 AI That Lives on Your Device
-- **Natural Language Search**: Type "red car in rain" or "sunset at beach". The AI understands content, not just keywords.
-- **Smart Face Recognition**: Automatically groups people. Rename "Person 1" to "Dad" and find all his photos instantly.
-- **Similar Image Search**: Find the best shot in a burst sequence or locate duplicates.
-- **Zero Privacy Risk**: All AI models run **locally**. Your photos never leave your computer.
 
 #### 📂 Your Files, Your Control
 - **No Import Required**: Lap reads your existing folders. No "library files", no duplication, no vendor lock-in.
@@ -102,6 +101,12 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 #### ⚡ Built for Performance
 - **Rust Core**: Powered by Tauri 2 and Rust for blazing speed and tiny memory footprint.
 - **Lazy Loading**: Designed to handle libraries with **hundreds of thousands** of assets without stuttering.
+
+#### 🤖 AI That Lives on Your Device
+- **Natural Language Search**: Type "lady in red" or "sunset at beach". The AI understands content, not just keywords.
+- **Similar Image Search**: Find the best shot in a burst sequence or locate duplicates.
+- **Smart Face Recognition (BETA)**: Automatically groups people. Rename "Person 1" to "Dad" and find all his photos instantly.
+- **Zero Privacy Risk**: All AI models run **locally**. Your photos never leave your computer.
 
 #### 🎨 Delightful Experience
 - **Beautiful Design**: Built with Tailwind CSS & daisyUI, a modern, fluid interface that feels at home on macOS, Linux, and Windows.
@@ -144,7 +149,7 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 - **Core**: [Tauri 2](https://tauri.app) (Rust), cross-platform desktop app framework
 - **Frontend**: Vue 3, Vite, Tailwind CSS, daisyUI
 - **Data**: SQLite, locally embedded for indexing and metadata storage
-- **AI/Media**: [CLIP ViT-B/32](https://github.com/openai/CLIP) for image search, [InsightFace](https://github.com/deepinsight/insightface) for face recognition, FFmpeg for video
+- **AI/Media**: [CLIP](https://github.com/openai/CLIP) for image search, [InsightFace](https://github.com/deepinsight/insightface) for face recognition, FFmpeg for video
 
 ### Build & Run
 
