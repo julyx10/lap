@@ -142,33 +142,24 @@
 
         <!-- Adjust Tab Content -->
         <div v-show="activeTab === 'adjust'" class="flex flex-col gap-4 p-1">
-          <!-- filters -->
-          <div>
-            <h3 class="font-bold text-sm mb-2 opacity-70">{{ $t('msgbox.image_editor.filters') }}</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <div 
-                v-for="f in ['none', 'grayscale', 'sepia', 'invert']"
-                :key="f"
-                class="flex items-center justify-center p-2 rounded-box border cursor-pointer transition-all duration-200 text-xs hover:bg-base-200"
-                :class="[
-                  (selectedFilter === (f === 'none' ? '' : f)) 
-                    ? 'border-primary bg-primary/5 text-primary' 
-                    : 'border-base-content/10 text-base-content/70'
-                ]"
-                @click="selectedFilter = (f === 'none' ? '' : f)"
-              >
-                {{ f === 'none' ? $t('msgbox.image_editor.filter_none') : $t(`msgbox.image_editor.filter_${f}`) }}
-              </div>
-            </div>
-          </div>
 
-          <!-- adjustments -->
+
+          <!-- presets -->
           <div>
-            <div class="flex justify-between items-center mb-2 h-8">
-              <span class="font-bold text-sm opacity-70">{{ $t('msgbox.image_editor.adjustments') }}</span>
+            <div class="flex items-end gap-2 mb-4">
+              <div class="form-control w-full">
+                <label class="label py-1">
+                  <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.presets.title') }}</span>
+                </label>
+                <select v-model="selectedPreset" class="select select-bordered select-sm w-full">
+                  <option v-for="option in presetOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+
               <TButton v-if="hasAdjustments" 
                 :icon="IconRestore" 
                 :buttonSize="'small'" 
+                class="mb-px"
                 :selected="true"
                 :tooltip="$t('msgbox.image_editor.reset')"
                 @click="resetAdjustments">
@@ -359,7 +350,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, type CSSProperties } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch, type CSSProperties } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
@@ -523,6 +514,87 @@ const fileQualityOptions = computed(() => {
   return getSelectOptions(localeMsg.value.msgbox.image_editor.quality_options);
 });
 
+// Presets
+const selectedPreset = ref('natural');
+
+const presetOptions = computed(() => {
+  const options = [
+    { value: 'custom', label: localeMsg.value.msgbox.image_editor.presets.custom },
+    { value: 'natural', label: localeMsg.value.msgbox.image_editor.presets.natural },
+    { value: 'vivid', label: localeMsg.value.msgbox.image_editor.presets.vivid },
+    { value: 'muted', label: localeMsg.value.msgbox.image_editor.presets.muted },
+    { value: 'warm', label: localeMsg.value.msgbox.image_editor.presets.warm },
+    { value: 'cool', label: localeMsg.value.msgbox.image_editor.presets.cool },
+    { value: 'bw', label: localeMsg.value.msgbox.image_editor.presets.bw },
+    { value: 'vintage', label: localeMsg.value.msgbox.image_editor.presets.vintage },
+    { value: 'kodak', label: localeMsg.value.msgbox.image_editor.presets.kodak },
+    { value: 'toyo', label: localeMsg.value.msgbox.image_editor.presets.toyo },
+    { value: 'cinematic', label: localeMsg.value.msgbox.image_editor.presets.cinematic },
+    { value: 'dramatic', label: localeMsg.value.msgbox.image_editor.presets.dramatic },
+    { value: 'cyberpunk', label: localeMsg.value.msgbox.image_editor.presets.cyberpunk },
+    { value: 'invert', label: localeMsg.value.msgbox.image_editor.presets.invert },
+  ];
+  return options;
+});
+
+const presets: Record<string, any> = {
+  natural: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: '' },
+  vivid: { brightness: 0, contrast: 10, saturation: 120, hue: 0, blur: 0, filter: '' },
+  muted: { brightness: 0, contrast: -10, saturation: 80, hue: 0, blur: 0, filter: '' },
+  warm: { brightness: 5, contrast: 0, saturation: 100, hue: 5, blur: 0, filter: '' },
+  cool: { brightness: 5, contrast: 0, saturation: 100, hue: -5, blur: 0, filter: '' },
+  bw: { brightness: 0, contrast: 0, saturation: 0, hue: 0, blur: 0, filter: 'grayscale' },
+  vintage: { brightness: 10, contrast: -10, saturation: 60, hue: 0, blur: 0, filter: 'sepia' },
+  invert: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: 'invert' },
+  kodak: { brightness: 10, contrast: 15, saturation: 120, hue: -5, blur: 0, filter: '' },
+  toyo: { brightness: 5, contrast: 0, saturation: 110, hue: 5, blur: 0, filter: '' },
+  cinematic: { brightness: 0, contrast: 20, saturation: 80, hue: 0, blur: 0, filter: '' },
+  dramatic: { brightness: 0, contrast: 30, saturation: 110, hue: 0, blur: 0, filter: '' },
+  cyberpunk: { brightness: 10, contrast: 20, saturation: 130, hue: -15, blur: 0, filter: '' },
+};
+
+let isApplyingPreset = false;
+
+watch(selectedPreset, (newVal) => {
+  if (newVal === 'custom') return;
+  const p = presets[newVal];
+  if (p) {
+    isApplyingPreset = true;
+    brightness.value = p.brightness;
+    contrast.value = p.contrast;
+    saturation.value = p.saturation;
+    hue.value = p.hue;
+    blur.value = p.blur;
+    selectedFilter.value = p.filter;
+    nextTick(() => {
+      isApplyingPreset = false;
+    });
+  }
+});
+
+// Watch for manual changes to reset to custom
+watch([brightness, contrast, saturation, hue, blur, selectedFilter], () => {
+  if (isApplyingPreset) return;
+  
+  // Check if current values match the selected preset
+  // If not, switch to custom
+  if (selectedPreset.value !== 'custom') {
+    const p = presets[selectedPreset.value];
+    if (p) {
+      if (
+        brightness.value !== p.brightness ||
+        contrast.value !== p.contrast ||
+        saturation.value !== p.saturation ||
+        hue.value !== p.hue ||
+        blur.value !== p.blur ||
+        selectedFilter.value !== p.filter
+      ) {
+         selectedPreset.value = 'custom';
+      }
+    }
+  }
+});
+
 // Overwrite Confirmation Logic
 const showOverwriteConfirm = ref(false);
 
@@ -640,11 +712,7 @@ const hasAdjustments = computed(() => {
 });
 
 const resetAdjustments = () => {
-  brightness.value = 0;
-  contrast.value = 0;
-  blur.value = 0;
-  hue.value = 0;
-  saturation.value = 100;
+  selectedPreset.value = 'natural';
 };
 
 const clickStartCrop = () => {

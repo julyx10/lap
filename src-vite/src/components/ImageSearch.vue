@@ -54,7 +54,7 @@
           v-model="searchQuery"
           :placeholder="$t('search.image_search_placeholder')"
           :class="[
-            'pl-7 w-full input bg-transparent rounded-box',
+            'pl-7 pr-7 w-full input bg-transparent rounded-box',
             isSearchFocused ? 'border-primary' : 'border-base-content/30 group-hover:border-base-content/70 cursor-pointer',
           ]"
           maxlength="255"
@@ -62,6 +62,14 @@
           @keydown.enter = "handleSearch()"
           @keydown.esc = "handleEscKey()"
         >
+        <IconClose 
+           v-if="searchQuery"
+          :class="[
+            'absolute right-2 mr-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
+            isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
+          ]"
+          @click.stop="searchQuery = ''; focusSearchInput()"
+        />
       </div>
 
       <!-- search history -->
@@ -164,7 +172,7 @@
           v-model="libConfig.search.fileName"
           :placeholder="$t('search.filename_search_tips')"
           :class="[
-            'pl-7 w-full input bg-transparent rounded-box',
+            'pl-7 pr-7 w-full input bg-transparent rounded-box',
             isSearchFocused ? 'border-primary' : 'border-base-content/30 group-hover:border-base-content/70 cursor-pointer',
           ]"
           maxlength="255"
@@ -172,6 +180,14 @@
           @keydown.enter = "handleEscKey()"
           @keydown.esc = "handleEscKey()"
         >
+        <IconClose 
+           v-if="libConfig.search.fileName"
+          :class="[
+            'absolute right-2 mr-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
+            isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
+          ]"
+          @click.stop="libConfig.search.fileName = ''; focusSearchInput()"
+        />
       </div>
     </template>
   </div>
@@ -199,7 +215,7 @@ import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
 import { getFileThumb, getFileInfo } from '@/common/api';
 
-import { IconMore, IconTrash, IconSearch, IconDot } from '@/common/icons';
+import { IconMore, IconTrash, IconSearch, IconDot, IconClose } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({
