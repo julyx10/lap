@@ -6,9 +6,6 @@
 # will have schema files for capabilities auto-completion
 /gen/schemas
 
-# ignore database files
-main.db
-
 # ignore AI models
 resources/models
 

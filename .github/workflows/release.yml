@@ -162,18 +162,14 @@ jobs:
           xcrun stapler staple "$DMG_PATH"
           echo "✅ Stapling complete."
 
-           echo "🔏 Re-signing stapled DMG..."
+          echo "🔏 Re-signing stapled DMG..."
            
-           if [ -n "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}" ]; then
-             export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}"
-           fi
+          # Compatible with versions that expect TAURI_KEY_PASSWORD
+          export TAURI_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}"
            
-           # standard way is to set TAURI_SIGNING_PRIVATE_KEY env var
-           export TAURI_SIGNING_PRIVATE_KEY="${TAURI_SIGNING_PRIVATE_KEY}"
+          npx -y @tauri-apps/cli signer sign "$DMG_PATH"
            
-           npx -y @tauri-apps/cli signer sign "$DMG_PATH"
-           
-           echo "✅ Re-signing complete."
+          echo "✅ Re-signing complete."
 
       # Specific for Linux: upload .deb as artifact
       - name: Upload Build Artifact (Linux)
