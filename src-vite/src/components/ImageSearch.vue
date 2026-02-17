@@ -86,14 +86,14 @@
           ]"
           @click="handleSearchHistoryClick(index, item)"
         >
-          <div v-if="typeof item !== 'string' && item.file_id" class="relative w-10 h-10 mr-2 shrink-0 overflow-hidden rounded-box">
-             <img 
-               v-if="thumbnails[item.file_id]"
-               class="w-full h-full object-cover" 
-               :src="thumbnails[item.file_id]" 
-             />
-             <div v-else class="w-full h-full bg-base-300 animate-pulse"></div>
-          </div>
+        <div v-if="typeof item !== 'string' && item.fileId" class="relative w-10 h-10 mr-2 shrink-0 overflow-hidden rounded-box">
+           <img 
+             v-if="thumbnails[item.fileId]"
+             class="w-full h-full object-cover" 
+             :src="thumbnails[item.fileId]" 
+           />
+           <div v-else class="w-full h-full bg-base-300 animate-pulse"></div>
+        </div>
           <IconSearch v-else class="w-4 h-4 mx-1 shrink-0" />
           
           <span class="overflow-hidden whitespace-pre text-ellipsis">{{ typeof item === 'string' ? item : item.text }}</span>
@@ -347,7 +347,7 @@ function handleSearch() {
     libConfig.search.searchHistoryIndex = existingIndex;
   } else {
     // Add new item as object
-    history.unshift({ text: query, file_id: null });
+    history.unshift({ text: query, fileId: null });
     libConfig.search.searchHistoryIndex = 0;
 
     // Limit the history size
@@ -398,8 +398,8 @@ watch(
   () => libConfig.search.searchHistory,
   (newHistory) => {
     const idsToFetch = newHistory
-      .filter(item => typeof item !== 'string' && item.file_id)
-      .map(item => (item as any).file_id);
+      .filter(item => typeof item !== 'string' && item.fileId)
+      .map(item => (item as any).fileId);
     fetchThumbnailsForIds(idsToFetch);
   },
   { immediate: true, deep: true }

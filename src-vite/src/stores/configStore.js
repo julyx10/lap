@@ -27,6 +27,7 @@ export const useConfigStore = defineStore('configStore', {
       showBasicInfo: true,       // show basic info
       showMetadata: true,        // show metadata
       showMap: true,             // show map
+      showHistogram: true,       // show image histogram
       mapTheme: 0,               // 0: standard, 2: satellite
       showAdjust: true,          // show image adjustment
       showResize: true,          // show image resize

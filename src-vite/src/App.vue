@@ -6,7 +6,7 @@
 </template>
  
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useConfigStore } from '@/stores/configStore';
@@ -15,6 +15,13 @@ import { setTheme } from '@/common/utils';
 
 const libConfig = useLibraryStore();
 const isReady = ref(false);
+
+// Auto-save library state when any config changes
+watch(() => libConfig.$state, () => {
+  if (libConfig._initialized) {
+    libConfig.save();
+  }
+}, { deep: true });
 
 onMounted(async () => {
   const win = getCurrentWebviewWindow();
@@ -45,9 +52,6 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  // Save state on app exit/reload
-  libConfig.save();
-
   const win = getCurrentWebviewWindow();
   if (win.label === 'main') {
     window.removeEventListener('keydown', handleKeyDown);

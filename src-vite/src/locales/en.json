@@ -454,6 +454,10 @@
     "image_editor": {
       "title": "Edit image",
       "tab_edit": "Adjust",
+      "histogram": "Histogram",
+      "light": "Light",
+      "color": "Color",
+      "compare": "Compare",
       "presets": {
         "title": "Presets",
         "custom": "Custom",

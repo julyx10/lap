@@ -1776,10 +1776,13 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
 
           if (index !== -1) {
              const item = history[index];
-             if (typeof item !== 'string' && !item.file_id) {
-               item.file_id = result[0].id;
-             } else if (typeof item === 'string') {
-               history[index] = { text: item, file_id: result[0].id };
+             const firstId = result[0].id;
+
+             // Always update the history item's fileId to the latest first result
+             if (typeof item === 'string') {
+               history[index] = { text: item, fileId: firstId };
+             } else {
+               item.fileId = firstId;
              }
           }
         }

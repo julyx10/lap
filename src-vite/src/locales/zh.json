@@ -454,6 +454,10 @@
     "image_editor": {
       "title": "编辑图片",
       "tab_edit": "调整",
+      "histogram": "直方图",
+      "light": "光影",
+      "color": "颜色",
+      "compare": "对比",
       "presets": {
         "title": "预设",
         "natural": "自然",

@@ -16,7 +16,7 @@
     </div>
 
     <!-- Info Content -->
-    <div v-if="fileInfo" v-show="activeTab === 'info'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-2 flex flex-col">
+    <div v-if="fileInfo" v-show="activeTab === 'info'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-3 flex flex-col bg-base-200/50">
 
       <!-- Title / Thumbnail -->
       <!-- <div class="flex justify-center p-2">
@@ -32,13 +32,13 @@
       </div> -->
 
       <!-- File Info Section -->
-      <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
+      <div class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
 
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
           @click.stop="config.infoPanel.showBasicInfo = !config.infoPanel.showBasicInfo"
         >
-          <component :is="fileInfo?.file_type === 2 ? IconFile : IconFile" class="w-4 h-4" />
-          <span class="font-bold mr-auto">{{ $t('file_info.title') }}</span>
+          <IconFile class="w-4 h-4" />
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.title') }}</span>
           <TButton
             :icon="config.infoPanel.showBasicInfo ? IconArrowUp : IconArrowDown"
             :buttonSize="'small'"
@@ -48,79 +48,80 @@
         <Transition
           @before-enter="onBeforeEnter"
           @enter="onEnter"
+          @after-enter="onAfterEnter"
           @leave="onLeave"
         >
-          <div v-if="config.infoPanel.showBasicInfo" class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm overflow-hidden">
-            <!-- Name (Moved here) -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.name') }}</div>
+          <div v-if="config.infoPanel.showBasicInfo" class="grid grid-cols-[80px_1fr] gap-y-3 gap-x-4 text-xs overflow-hidden">
+            <!-- Name -->
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25 py-1">{{ $t('file_info.name') }}</div>
             <div class="flex items-center">
               <input 
                 v-if="isRenaming"
                 ref="renameInputRef"
                 v-model="renamingName" 
-                class="font-bold text-sm text-base-content input input-xs input-bordered p-1 h-6 leading-6 w-full"
+                class="font-bold text-xs text-base-content input input-xs input-bordered p-1 h-6 leading-6 w-full"
                 @blur="finishRename"
                 @keydown.enter="finishRename"
                 @keydown.esc="cancelRename"
                 @click.stop
               />
               <span v-else 
-                class="font-bold text-sm text-base-content/70 break-all cursor-text hover:bg-base-content/10 rounded px-1 -mx-1 transition-colors"
+                class="font-semibold text-xs text-base-content/65 break-all cursor-text hover:bg-base-content/10 rounded px-1 -mx-1 transition-colors"
                 @click.stop="startRename"
               >{{ fileInfo?.name }}</span>
             </div>
 
             <!-- Album -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.album_name') }}</div>
-            <div class="text-base-content/70 break-all">{{ fileInfo?.album_name }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.album_name') }}</div>
+            <div class="text-xs font-semibold text-base-content/65 break-all">{{ fileInfo?.album_name }}</div>
 
             <!-- Path -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.folder') }}</div>
-            <div class="text-base-content/70 break-all">{{ getFolderPath(fileInfo?.file_path) }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.folder') }}</div>
+            <div class="text-xs font-semibold text-base-content/65 break-all">{{ getFolderPath(fileInfo?.file_path) }}</div>
 
             <!-- Size -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.size') }}</div>
-            <div class="text-base-content/70">{{ formatFileSize(fileInfo?.size) }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.size') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ formatFileSize(fileInfo?.size) }}</div>
 
             <!-- Dimension -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.dimension') }}</div>
-            <div class="text-base-content/70">{{ formatDimensionText(fileInfo?.width, fileInfo?.height) }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.dimension') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ formatDimensionText(fileInfo?.width, fileInfo?.height) }}</div>
 
             <!-- Duration -->
             <template v-if="fileInfo?.file_type === 2">
-              <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.duration') }}</div>
-              <div class="text-base-content/70">{{ formatDuration(fileInfo?.duration) }}</div>
+              <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.duration') }}</div>
+              <div class="text-xs font-semibold text-base-content/65">{{ formatDuration(fileInfo?.duration) }}</div>
             </template>
 
             <!-- Created At -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.created_at') }}</div>
-            <div class="text-base-content/70">{{ formatTimestamp(fileInfo?.created_at, $t('format.date_time')) }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.created_at') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ formatTimestamp(fileInfo?.created_at, $t('format.date_time')) }}</div>
 
             <!-- Modified At -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.modified_at') }}</div>
-            <div class="text-base-content/70">{{ formatTimestamp(fileInfo?.modified_at, $t('format.date_time')) }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.modified_at') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ formatTimestamp(fileInfo?.modified_at, $t('format.date_time')) }}</div>
 
             <!-- Tags -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.tags') }}</div>
-            <div class="text-base-content/70 flex flex-wrap gap-1">
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.tags') }}</div>
+            <div class="text-xs font-semibold text-base-content/65 flex flex-wrap gap-1">
               <template v-if="fileInfo?.tags && fileInfo.tags.length">
-                <span v-for="tag in fileInfo.tags" :key="tag.id" class="badge">{{ tag.name }}</span>
+                <span v-for="tag in fileInfo.tags" :key="tag.id" class="badge badge-sm badge-ghost font-medium">{{ tag.name }}</span>
               </template>
             </div>
 
             <!-- Comment -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.comment') }}</div>
-            <div class="text-base-content/70 wrap-break-words whitespace-pre-wrap">{{ fileInfo?.comments }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.comment') }}</div>
+            <div class="text-xs font-semibold text-base-content/65 wrap-break-words whitespace-pre-wrap">{{ fileInfo?.comments }}</div>
           </div>
         </Transition>
       </div>
 
       <!-- Metadata Section -->
-      <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
+      <div class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
 
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content" @click.stop="config.infoPanel.showMetadata = !config.infoPanel.showMetadata">
           <IconCameraAperture class="w-4 h-4 " /> 
-          <span class="font-bold mr-auto">{{ $t('file_info.metadata') }}</span>
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.metadata') }}</span>
           <TButton
             :icon="config.infoPanel.showMetadata ? IconArrowUp : IconArrowDown"
             :buttonSize="'small'"
@@ -130,55 +131,56 @@
         <Transition
           @before-enter="onBeforeEnter"
           @enter="onEnter"
+          @after-enter="onAfterEnter"
           @leave="onLeave"
         >
-          <div v-if="config.infoPanel.showMetadata" class="grid grid-cols-[100px_1fr] gap-y-3 gap-x-4 text-sm overflow-hidden">
+          <div v-if="config.infoPanel.showMetadata" class="grid grid-cols-[80px_1fr] gap-y-3 gap-x-4 text-xs overflow-hidden">
             <!-- Camera -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.camera') }}</div>
-            <div class="text-base-content/70">{{ formatCameraInfo(fileInfo?.e_make, fileInfo?.e_model) }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.camera') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ formatCameraInfo(fileInfo?.e_make, fileInfo?.e_model) }}</div>
 
             <!-- Lens -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.lens') }}</div>
-            <div class="text-base-content/70">{{ fileInfo?.e_lens_model }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.lens') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ fileInfo?.e_lens_model }}</div>
 
             <!-- Capture Settings -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.capture_settings') }}</div>
-            <div class="text-base-content/70">{{ formatCaptureSettings(fileInfo?.e_focal_length, fileInfo?.e_exposure_time, fileInfo?.e_f_number, fileInfo?.e_iso_speed, fileInfo?.e_exposure_bias) }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.capture_settings') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ formatCaptureSettings(fileInfo?.e_focal_length, fileInfo?.e_exposure_time, fileInfo?.e_f_number, fileInfo?.e_iso_speed, fileInfo?.e_exposure_bias) }}</div>
 
             <!-- Software -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.software') }}</div>
-            <div class="text-base-content/70">{{ fileInfo?.e_software }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.software') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ fileInfo?.e_software }}</div>
 
             <!-- Taken By -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.taken_by') }}</div>
-            <div class="text-base-content/70">{{ fileInfo?.e_artist }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.taken_by') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ fileInfo?.e_artist }}</div>
 
             <!-- Copyright -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.copyright') }}</div>
-            <div class="text-base-content/70">{{ fileInfo?.e_copyright }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.copyright') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ fileInfo?.e_copyright }}</div>
 
             <!-- Taken At -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.taken_at') }}</div>
-            <div class="text-base-content/70">{{ fileInfo?.e_date_time }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.taken_at') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ fileInfo?.e_date_time }}</div>
 
             <!-- Description -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.description') }}</div>
-            <div class="text-base-content/70 wrap-break-words">{{ fileInfo?.e_description }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.description') }}</div>
+            <div class="text-xs font-semibold text-base-content/65 wrap-break-words">{{ fileInfo?.e_description }}</div>
 
             <!-- Geo Location -->
-            <div class="font-medium text-base-content/30 tracking-wide">{{ $t('file_info.geo_location') }}</div>
-            <div class="text-base-content/70">{{ formatGeoLocation() }}</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.geo_location') }}</div>
+            <div class="text-xs font-semibold text-base-content/65">{{ formatGeoLocation() }}</div>
           </div>
         </Transition>
       </div>
 
       <!-- Map View -->
       <div v-if="fileInfo?.gps_latitude && fileInfo?.gps_longitude" 
-        class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm flex flex-col transition-[flex-grow]" 
+        class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm flex flex-col transition-[flex-grow]" 
         :class="{ 'flex-1 min-h-[300px]': config.infoPanel.showMap }">
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content shrink-0" @click.stop="config.infoPanel.showMap = !config.infoPanel.showMap">
           <IconLocation class="w-4 h-4 " /> 
-          <span class="font-bold mr-auto">{{ $t('file_info.location') }}</span>
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.location') }}</span>
           <TButton
             :icon="config.infoPanel.showMap ? IconArrowUp : IconArrowDown"
             :buttonSize="'small'"
@@ -192,7 +194,7 @@
           @leave="onLeave"
         >
           <div v-if="config.infoPanel.showMap" class="overflow-hidden flex-1 flex flex-col min-h-0">
-            <div class="w-full rounded-box overflow-hidden relative z-0 flex-1 min-h-[200px]">
+            <div class="w-full rounded-box overflow-hidden relative z-0 flex-1 min-h-[200px] border border-base-content/5">
               <MapView
                 :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
                 :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
@@ -204,7 +206,82 @@
     </div>
 
     <!-- Edit Content -->
-    <div v-if="fileInfo && fileInfo.file_type === 1" v-show="activeTab === 'edit'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-2 flex flex-col min-h-0">
+    <div v-if="fileInfo && fileInfo.file_type === 1" v-show="activeTab === 'edit'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-3 flex flex-col min-h-0 bg-base-200/50">
+      
+      <!-- Histogram Section -->
+      <div v-if="config.infoPanel.showHistogram" class="rounded-box p-3 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.image_editor.histogram') || 'Histogram' }}</span>
+          <div class="flex gap-1 text-[10px] text-base-content/40 font-mono">
+            <span>R</span><span>G</span><span>B</span>
+          </div>
+        </div>
+        <!-- Simple dynamic SVG Histogram -->
+        <svg viewBox="0 0 256 60" class="w-full h-12 opacity-80">
+          <defs>
+            <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="currentColor" stop-opacity="0.5" />
+              <stop offset="100%" stop-color="currentColor" stop-opacity="0.1" />
+            </linearGradient>
+          </defs>
+          <path 
+            :d="generateHistogramPath()" 
+            fill="url(#histGradient)" 
+            class="transition-all duration-300 text-primary"
+          />
+        </svg>
+      </div>
+
+      <!-- Shooting Info Summary -->
+      <div class="px-2 py-1 flex items-center justify-between text-[11px] font-medium text-base-content/40 uppercase tracking-tight">
+        <div class="flex gap-2">
+          <span>{{ fileInfo.e_exposure_time || '1/125s' }}</span>
+          <span>f/{{ fileInfo.e_f_number || '2.8' }}</span>
+          <span>ISO {{ fileInfo.e_iso_speed || '100' }}</span>
+        </div>
+        <span>{{ fileInfo.width }}x{{ fileInfo.height }}</span>
+      </div>
+
+      <!-- Preset Gallery -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-[11px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.image_editor.presets.title') }}</span>
+          <span class="text-[10px] text-primary/70 font-bold uppercase">{{ selectedPreset }}</span>
+        </div>
+        <div class="flex flex-wrap gap-2 pb-2">
+          <div 
+            v-for="option in presetOptions" 
+            :key="option.value"
+            @click="selectedPreset = option.value"
+            class="shrink-0 w-[calc(33.33%-6px)] group cursor-pointer"
+          >
+            <div 
+              :class="[
+                'aspect-4/3 rounded-lg border-2 transition-all duration-200 flex items-center justify-center overflow-hidden mb-1 relative',
+                selectedPreset === option.value ? 'border-primary ring-2 ring-primary/20 scale-95' : 'border-base-content/5 hover:border-base-content/20'
+              ]"
+            >
+              <div class="w-full h-full bg-base-300 flex items-center justify-center relative">
+                <img 
+                  v-if="fileInfo.file_path"
+                  :src="getAssetSrc(fileInfo.file_path)" 
+                  class="w-full h-full object-cover pointer-events-none"
+                  :style="getPresetThumbnailStyle(option.value)"
+                />
+                <IconPalette v-else class="w-4 h-4 text-base-content/10" />
+                <div v-if="selectedPreset === option.value" class="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                   <div class="bg-primary text-primary-content rounded-full p-0.5">
+                     <IconOk class="w-3 h-3" />
+                   </div>
+                </div>
+              </div>
+            </div>
+            <div class="text-[9px] text-center truncate font-medium text-base-content/50 group-hover:text-base-content transition-colors uppercase tracking-tight">
+              {{ option.label }}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Adjust Section -->
       <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
@@ -231,19 +308,15 @@
         <Transition
           @before-enter="onBeforeEnter"
           @enter="onEnter"
+          @after-enter="onAfterEnter"
           @leave="onLeave"
         >
-          <div v-if="config.infoPanel.showAdjust" class="space-y-4 overflow-hidden">
-            <div class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
-              <label class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.presets.title') }}</label>
-              <select v-model="selectedPreset" class="select select-bordered select-xs w-full h-7">
-                <option v-for="option in presetOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            
+          <div v-if="config.infoPanel.showAdjust" class="space-y-5 overflow-hidden py-1">
+            <!-- Light Group -->
             <div class="space-y-3">
-              <div v-for="adj in adjustmentSliders" :key="adj.key" class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
-                <div class="font-medium text-base-content/30 tracking-wide text-sm">{{ adj.label }}</div>
+              <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/20 mb-2">{{ $t('msgbox.image_editor.light') || 'Light' }}</div>
+              <div v-for="adj in lightSliders" :key="adj.key" class="grid grid-cols-[80px_1fr] gap-x-4 items-center">
+                <div class="font-medium text-base-content/40 tracking-wide text-xs">{{ adj.label }}</div>
                 <div class="flex items-center gap-2 pr-2">
                   <SliderInput 
                     v-model="adj.model.value" 
@@ -252,7 +325,27 @@
                     :step="adj.step" 
                     class="flex-1"
                   />
-                  <span class="text-xs text-base-content/70 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
+                  <span class="text-[10px] font-mono text-base-content/60 w-6 text-right shrink-0">{{ adj.valueDisplay }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="h-px bg-base-content/5 mx-1"></div>
+
+            <!-- Color Group -->
+            <div class="space-y-3">
+              <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/20 mb-2">{{ $t('msgbox.image_editor.color') || 'Color' }}</div>
+              <div v-for="adj in colorSliders" :key="adj.key" class="grid grid-cols-[80px_1fr] gap-x-4 items-center">
+                <div class="font-medium text-base-content/40 tracking-wide text-xs">{{ adj.label }}</div>
+                <div class="flex items-center gap-2 pr-2">
+                  <SliderInput 
+                    v-model="adj.model.value" 
+                    :min="adj.min" 
+                    :max="adj.max" 
+                    :step="adj.step" 
+                    class="flex-1"
+                  />
+                  <span class="text-[10px] font-mono text-base-content/60 w-6 text-right shrink-0">{{ adj.valueDisplay }}</span>
                 </div>
               </div>
             </div>
@@ -276,6 +369,7 @@
         <Transition
           @before-enter="onBeforeEnter"
           @enter="onEnter"
+          @after-enter="onAfterEnter"
           @leave="onLeave"
         >
           <div v-if="config.infoPanel.showResize" class="space-y-3 overflow-hidden">
@@ -323,6 +417,7 @@
         <Transition
           @before-enter="onBeforeEnter"
           @enter="onEnter"
+          @after-enter="onAfterEnter"
           @leave="onLeave"
         >
           <div v-if="config.infoPanel.showSettings" class="space-y-4 overflow-hidden">
@@ -351,10 +446,23 @@
       </div>
 
       <!-- Action Button -->
-      <div class="flex flex-col gap-2 p-2">
-         <button class="btn btn-primary btn-sm w-full" :disabled="isProcessing" @click="clickSave">
-           {{ config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}
-         </button>
+      <div class="flex flex-col gap-2 p-2 mt-auto">
+         <div class="flex gap-2">
+           <button 
+             class="btn btn-sm flex-1" 
+             :class="isComparing ? 'btn-primary' : 'btn-ghost border-base-content/10'"
+             @mousedown="isComparing = true"
+             @mouseup="isComparing = false"
+             @mouseleave="isComparing = false"
+           >
+             <IconSimilar class="w-4 h-4" />
+             {{ $t('msgbox.image_editor.compare') || 'Compare' }}
+           </button>
+           <button class="btn btn-primary btn-sm flex-2" :disabled="isProcessing" @click="clickSave">
+             <IconSave class="w-4 h-4 shadow-sm" />
+             {{ config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}
+           </button>
+         </div>
       </div>
     </div>
 
@@ -380,10 +488,21 @@ import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { renameFile, editImage, checkFileExists } from '@/common/api';
 import { 
-  formatTimestamp, formatFileSize, formatDuration, formatDimensionText, 
-  getFolderPath, formatCaptureSettings, formatCameraInfo, getCountryName,
-  extractFileName, combineFileName, isValidFileName, getSelectOptions,
-  getFileExtension, getFullPath
+  extractFileName, 
+  getFileExtension, 
+  getFolderPath, 
+  formatDimensionText, 
+  formatFileSize, 
+  formatTimestamp,
+  getAssetSrc,
+  formatDuration,
+  formatCaptureSettings,
+  formatCameraInfo,
+  getCountryName,
+  combineFileName,
+  isValidFileName,
+  getSelectOptions,
+  getFullPath
 } from '@/common/utils';
 import { 
   IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
@@ -419,6 +538,7 @@ const activeTab = computed({
 });
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 const isProcessing = ref(false);
+const isComparing = ref(false);
 
 // Adjustment state
 const brightness = ref(0);
@@ -475,29 +595,81 @@ const fileQualityOptions = computed(() => getSelectOptions(localeMsg.value.msgbo
 
 const showOverwriteConfirm = ref(false);
 
-const thumbnailStyle = computed(() => ({
-  filter: `
-    brightness(${100 + brightness.value}%)
-    contrast(${100 + contrast.value}%)
-    blur(${blur.value}px)
-    hue-rotate(${hue.value}deg)
-    saturate(${saturation.value}%)
-    ${selectedFilter.value === 'grayscale' ? 'grayscale(100%)' : ''}
-    ${selectedFilter.value === 'sepia' ? 'sepia(100%)' : ''}
-    ${selectedFilter.value === 'invert' ? 'invert(100%)' : ''}
-  `
-}));
+const thumbnailStyle = computed(() => {
+  if (isComparing.value) return {};
+  return {
+    filter: `
+      brightness(${100 + brightness.value}%)
+      contrast(${100 + contrast.value}%)
+      blur(${blur.value}px)
+      hue-rotate(${hue.value}deg)
+      saturate(${saturation.value}%)
+      ${selectedFilter.value === 'grayscale' ? 'grayscale(100%)' : ''}
+      ${selectedFilter.value === 'sepia' ? 'sepia(100%)' : ''}
+      ${selectedFilter.value === 'invert' ? 'invert(100%)' : ''}
+    `
+  };
+});
 
 const hasAdjustments = computed(() => 
   brightness.value !== 0 || contrast.value !== 0 || blur.value !== 0 || hue.value !== 0 || saturation.value !== 100 || selectedFilter.value !== ''
 );
 
-const adjustmentSliders = computed(() => [
+const lightSliders = computed(() => [
   { key: 'brightness', label: localeMsg.value.msgbox.image_editor.brightness, model: brightness, min: -100, max: 100, step: 1, valueDisplay: `${brightness.value > 0 ? '+' : ''}${brightness.value}` },
   { key: 'contrast', label: localeMsg.value.msgbox.image_editor.contrast, model: contrast, min: -100, max: 100, step: 1, valueDisplay: `${contrast.value > 0 ? '+' : ''}${contrast.value}` },
+]);
+
+const colorSliders = computed(() => [
   { key: 'saturation', label: localeMsg.value.msgbox.image_editor.saturation, model: saturation, min: 0, max: 200, step: 1, valueDisplay: `${saturation.value}%` },
   { key: 'hue', label: localeMsg.value.msgbox.image_editor.hue_rotate, model: hue, min: -180, max: 180, step: 1, valueDisplay: `${hue.value}°` },
 ]);
+
+// For a cool visual effect, we generate a pseudo-histogram that reacts to sliders
+const generateHistogramPath = () => {
+  const points = [];
+  const width = 256;
+  const height = 50;
+  const b = brightness.value / 2;
+  const c = (contrast.value + 100) / 100;
+
+  for (let i = 0; i <= width; i += 4) {
+    // A base multi-modal curve mimicking exposure distribution
+    let y = 10 * Math.sin(i / 20) + 15 * Math.sin(i / 10) + 25;
+    
+    // Shift based on brightness
+    let x = i + b;
+    // Stretch based on contrast
+    x = (x - 128) * c + 128;
+
+    if (x >= 0 && x <= width) {
+      points.push(`${x},${height - y}`);
+    }
+  }
+  
+  points.sort((a, b) => parseFloat(a) - parseFloat(b));
+  if (points.length === 0) return "";
+  
+  return `M ${points[0]} ` + points.map(p => `L ${p}`).join(" ") + ` L ${width},${height} L 0,${height} Z`;
+};
+
+const getPresetThumbnailStyle = (presetKey: string) => {
+  if (presetKey === 'custom') return thumbnailStyle.value;
+  const p = presets[presetKey];
+  if (!p) return {};
+  return {
+    filter: `
+      brightness(${100 + p.brightness}%)
+      contrast(${100 + p.contrast}%)
+      blur(${p.blur}px)
+      hue-rotate(${p.hue}deg)
+      saturate(${p.saturation}%)
+      ${p.filter === 'grayscale' ? 'grayscale(100%)' : ''}
+      ${p.filter === 'sepia' ? 'sepia(100%)' : ''}
+      ${p.filter === 'invert' ? 'invert(100%)' : ''}
+    `
+  };
+};
 
 let isApplyingPreset = false;
 watch(selectedPreset, (newVal) => {
