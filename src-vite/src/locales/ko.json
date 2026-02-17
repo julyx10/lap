@@ -454,6 +454,13 @@
     "image_editor": {
       "title": "이미지 편집",
       "tab_edit": "조정",
+      "histogram": "히스토그램",
+      "light": "조명",
+      "color": "색상",
+      "compare": "비교",
+      "shadows": "쉐도우",
+      "midtones": "미드톤",
+      "highlights": "하이ライト",
       "presets": {
         "title": "프리셋",
         "natural": "자연",

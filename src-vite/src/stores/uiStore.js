@@ -6,6 +6,15 @@ export const useUIStore = defineStore('ui', {
     inputStack: [],
     fileVersions: {},
     isFullScreen: false,
+    activeAdjustments: {
+      filePath: null,
+      brightness: 0,
+      contrast: 0,
+      saturation: 100,
+      hue: 0,
+      blur: 0,
+      filter: null
+    }
   }),
   getters: {
     isInputActive: (state) => (name) => {
@@ -32,5 +41,22 @@ export const useUIStore = defineStore('ui', {
       const currentVersion = this.fileVersions[filePath] || 0;
       this.fileVersions[filePath] = currentVersion + 1;
     },
+    setActiveAdjustments(filePath, adjustments) {
+      this.activeAdjustments = {
+        filePath,
+        ...adjustments
+      };
+    },
+    clearActiveAdjustments() {
+      this.activeAdjustments = {
+        filePath: null,
+        brightness: 0,
+        contrast: 0,
+        saturation: 100,
+        hue: 0,
+        blur: 0,
+        filter: null
+      };
+    }
   },
 });

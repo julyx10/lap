@@ -41,6 +41,7 @@ export { default as IconImageSearch } from '@/assets/icons/image-search.svg';
 export { default as IconSave } from '@/assets/icons/save.svg';
 export { default as IconPalette } from '@/assets/icons/palette.svg';
 export { default as IconResize } from '@/assets/icons/resize.svg';
+export { default as IconAdjustments } from '@/assets/icons/adjustments.svg';
 
 // ======================
 // VIEW CONTROL ICONS

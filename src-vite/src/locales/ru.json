@@ -454,6 +454,13 @@
     "image_editor": {
       "title": "Редактор",
       "tab_edit": "Коррекция",
+      "histogram": "Гистограмма",
+      "light": "Свет",
+      "color": "Цвет",
+      "compare": "Сравнение",
+      "shadows": "Тени",
+      "midtones": "Средние тона",
+      "highlights": "Света",
       "presets": {
         "title": "Пресеты",
         "natural": "Естественный",

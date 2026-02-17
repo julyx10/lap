@@ -454,6 +454,13 @@
     "image_editor": {
       "title": "画像を編集",
       "tab_edit": "調整",
+      "histogram": "ヒストグラム",
+      "light": "ライト",
+      "color": "カラー",
+      "compare": "比較",
+      "shadows": "シャドウ",
+      "midtones": "中間トーン",
+      "highlights": "ハイライト",
       "presets": {
         "title": "プリセット",
         "natural": "ナチュラル",

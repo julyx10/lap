@@ -458,6 +458,9 @@
       "light": "光影",
       "color": "颜色",
       "compare": "对比",
+      "shadows": "阴影",
+      "midtones": "中间调",
+      "highlights": "高光",
       "presets": {
         "title": "预设",
         "natural": "自然",

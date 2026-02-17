@@ -210,77 +210,96 @@
       
       <!-- Histogram Section -->
       <div v-if="config.infoPanel.showHistogram" class="rounded-box p-3 bg-base-300/30 border border-base-content/5 shadow-sm">
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between mb-3 px-0.5">
           <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.image_editor.histogram') || 'Histogram' }}</span>
-          <div class="flex gap-1 text-[10px] text-base-content/40 font-mono">
-            <span>R</span><span>G</span><span>B</span>
+          <div class="flex gap-2 text-[9px] font-bold text-base-content/60 uppercase tracking-tighter tabular-nums">
+            {{ formatCaptureSettings(fileInfo?.e_focal_length, fileInfo?.e_exposure_time, fileInfo?.e_f_number, fileInfo?.e_iso_speed, fileInfo?.e_exposure_bias) }}
           </div>
         </div>
-        <!-- Simple dynamic SVG Histogram -->
-        <svg viewBox="0 0 256 60" class="w-full h-12 opacity-80">
-          <defs>
-            <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="currentColor" stop-opacity="0.5" />
-              <stop offset="100%" stop-color="currentColor" stop-opacity="0.1" />
-            </linearGradient>
-          </defs>
-          <path 
-            :d="generateHistogramPath()" 
-            fill="url(#histGradient)" 
-            class="transition-all duration-300 text-primary"
-          />
-        </svg>
-      </div>
-
-      <!-- Shooting Info Summary -->
-      <div class="px-2 py-1 flex items-center justify-between text-[11px] font-medium text-base-content/40 uppercase tracking-tight">
-        <div class="flex gap-2">
-          <span>{{ fileInfo.e_exposure_time || '1/125s' }}</span>
-          <span>f/{{ fileInfo.e_f_number || '2.8' }}</span>
-          <span>ISO {{ fileInfo.e_iso_speed || '100' }}</span>
+        
+        <!-- Refined SVG Histogram -->
+        <div class="relative w-full aspect-4/1 mb-1.5 px-0.5">
+          <svg viewBox="0 0 256 64" class="w-full h-full" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--p)" stop-opacity="0.6" />
+                <stop offset="100%" stop-color="var(--p)" stop-opacity="0.1" />
+              </linearGradient>
+            </defs>
+            <!-- Professional Grid -->
+            <g class="text-base-content/5">
+              <line x1="64" y1="0" x2="64" y2="64" stroke="currentColor" stroke-width="0.5" />
+              <line x1="128" y1="0" x2="128" y2="64" stroke="currentColor" stroke-width="0.5" />
+              <line x1="192" y1="0" x2="192" y2="64" stroke="currentColor" stroke-width="0.5" />
+            </g>
+            
+            <path 
+              :d="generateHistogramPath()" 
+              fill="url(#histGradient)" 
+              class="transition-all duration-300 text-primary"
+            />
+          </svg>
         </div>
-        <span>{{ fileInfo.width }}x{{ fileInfo.height }}</span>
+
+        <div class="flex justify-between px-0.5 text-[8px] uppercase tracking-tighter font-black text-base-content/25">
+          <span>{{ $t('msgbox.image_editor.shadows') || 'Shadows' }}</span>
+          <span>{{ $t('msgbox.image_editor.midtones') || 'Midtones' }}</span>
+          <span>{{ $t('msgbox.image_editor.highlights') || 'Highlights' }}</span>
+        </div>
       </div>
 
       <!-- Preset Gallery -->
-      <div class="space-y-2">
-        <div class="flex items-center justify-between px-1">
-          <span class="text-[11px] uppercase tracking-widest font-bold text-base-content/30">{{ $t('msgbox.image_editor.presets.title') }}</span>
-          <span class="text-[10px] text-primary/70 font-bold uppercase">{{ selectedPreset }}</span>
+      <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
+        <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
+          @click.stop="config.infoPanel.showPresets = !config.infoPanel.showPresets"
+        >
+          <IconPalette class="w-4 h-4" />
+          <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.presets.title') }}</span>
+          <span v-if="config.infoPanel.showPresets" class="text-[10px] text-primary/70 font-bold uppercase mr-1">{{ presetOptions.find(o => o.value === selectedPreset)?.label || selectedPreset }}</span>
+          <TButton
+            :icon="config.infoPanel.showPresets ? IconArrowUp : IconArrowDown"
+            :buttonSize="'small'"
+          />
         </div>
-        <div class="flex flex-wrap gap-2 pb-2">
-          <div 
-            v-for="option in presetOptions" 
-            :key="option.value"
-            @click="selectedPreset = option.value"
-            class="shrink-0 w-[calc(33.33%-6px)] group cursor-pointer"
-          >
+
+        <Transition
+          @before-enter="onBeforeEnter"
+          @enter="onEnter"
+          @after-enter="onAfterEnter"
+          @leave="onLeave"
+        >
+          <div v-if="config.infoPanel.showPresets" class="flex flex-wrap gap-2 pb-1 overflow-hidden">
             <div 
-              :class="[
-                'aspect-4/3 rounded-lg border-2 transition-all duration-200 flex items-center justify-center overflow-hidden mb-1 relative',
-                selectedPreset === option.value ? 'border-primary ring-2 ring-primary/20 scale-95' : 'border-base-content/5 hover:border-base-content/20'
-              ]"
+              v-for="option in presetOptions" 
+              :key="option.value"
+              @click="selectedPreset = option.value"
+              class="shrink-0 w-[calc(33.33%-6px)] max-w-[160px] group cursor-pointer"
             >
-              <div class="w-full h-full bg-base-300 flex items-center justify-center relative">
-                <img 
-                  v-if="fileInfo.file_path"
-                  :src="getAssetSrc(fileInfo.file_path)" 
-                  class="w-full h-full object-cover pointer-events-none"
-                  :style="getPresetThumbnailStyle(option.value)"
-                />
-                <IconPalette v-else class="w-4 h-4 text-base-content/10" />
-                <div v-if="selectedPreset === option.value" class="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                   <div class="bg-primary text-primary-content rounded-full p-0.5">
-                     <IconOk class="w-3 h-3" />
-                   </div>
+              <div 
+                :class="[
+                  'aspect-4/3 rounded-box border-2 transition-all duration-200 flex items-center justify-center overflow-hidden mb-1 relative',
+                  selectedPreset === option.value ? 'border-primary ring-2 ring-primary/20' : 'border-base-content/5 hover:border-base-content/20'
+                ]"
+              >
+                <div class="w-full h-full bg-base-300 flex items-center justify-center relative overflow-hidden rounded-[inherit] isolation-isolate">
+                  <img 
+                    v-if="fileInfo.file_path"
+                    :src="getAssetSrc(fileInfo.file_path)" 
+                    class="w-full h-full object-cover pointer-events-none rounded-[inherit] block"
+                    :style="{ 
+                      ...getPresetThumbnailStyle(option.value),
+                      transform: 'translateZ(0)'
+                    }"
+                  />
+                  <IconPalette v-else class="w-4 h-4 text-base-content/10" />
                 </div>
               </div>
-            </div>
-            <div class="text-[9px] text-center truncate font-medium text-base-content/50 group-hover:text-base-content transition-colors uppercase tracking-tight">
-              {{ option.label }}
+              <div class="text-[9px] text-center truncate font-medium text-base-content/50 group-hover:text-base-content transition-colors uppercase tracking-tight">
+                {{ option.label }}
+              </div>
             </div>
           </div>
-        </div>
+        </Transition>
       </div>
 
       <!-- Adjust Section -->
@@ -288,7 +307,7 @@
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
           @click.stop="config.infoPanel.showAdjust = !config.infoPanel.showAdjust"
         >
-          <IconPalette class="w-4 h-4" />
+          <IconAdjustments class="w-4 h-4" />
           <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.tab_edit') }}</span>
           <div class="flex items-center gap-1">
             <TButton v-if="hasAdjustments" 
@@ -404,12 +423,12 @@
       <!-- Save Section -->
       <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
-          @click.stop="config.infoPanel.showSettings = !config.infoPanel.showSettings"
+          @click.stop="config.infoPanel.showSaveOptions = !config.infoPanel.showSaveOptions"
         >
           <IconSave class="w-4 h-4" />
           <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.options') }}</span>
           <TButton
-            :icon="config.infoPanel.showSettings ? IconArrowUp : IconArrowDown"
+            :icon="config.infoPanel.showSaveOptions ? IconArrowUp : IconArrowDown"
             :buttonSize="'small'"
           />
         </div>
@@ -420,7 +439,7 @@
           @after-enter="onAfterEnter"
           @leave="onLeave"
         >
-          <div v-if="config.infoPanel.showSettings" class="space-y-4 overflow-hidden">
+          <div v-if="config.infoPanel.showSaveOptions" class="space-y-4 overflow-hidden">
             <div class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
               <label class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.save_as') }}</label>
               <select v-model="config.imageEditor.saveAs" class="select select-bordered select-xs h-7 w-full font-bold text-base-content/70">
@@ -506,7 +525,7 @@ import {
 } from '@/common/utils';
 import { 
   IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
-  IconFavorite, IconFile, IconRestore, IconImageEdit, IconCrop, IconSave, IconPalette, IconResize
+  IconFavorite, IconFile, IconRestore, IconImageEdit, IconCrop, IconSave, IconPalette, IconResize, IconAdjustments
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -550,19 +569,62 @@ const selectedFilter = ref('');
 const selectedPreset = ref('natural');
 
 const presets: Record<string, any> = {
-  natural: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: '' },
-  vivid: { brightness: 0, contrast: 10, saturation: 120, hue: 0, blur: 0, filter: '' },
-  muted: { brightness: 0, contrast: -10, saturation: 80, hue: 0, blur: 0, filter: '' },
-  warm: { brightness: 5, contrast: 0, saturation: 100, hue: 5, blur: 0, filter: '' },
-  cool: { brightness: 5, contrast: 0, saturation: 100, hue: -5, blur: 0, filter: '' },
-  bw: { brightness: 0, contrast: 0, saturation: 0, hue: 0, blur: 0, filter: 'grayscale' },
-  vintage: { brightness: 10, contrast: -10, saturation: 60, hue: 0, blur: 0, filter: 'sepia' },
-  invert: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: 'invert' },
-  kodak: { brightness: 10, contrast: 15, saturation: 120, hue: -5, blur: 0, filter: '' },
-  toyo: { brightness: 5, contrast: 0, saturation: 110, hue: 5, blur: 0, filter: '' },
-  cinematic: { brightness: 0, contrast: 20, saturation: 80, hue: 0, blur: 0, filter: '' },
-  dramatic: { brightness: 0, contrast: 30, saturation: 110, hue: 0, blur: 0, filter: '' },
-  cyberpunk: { brightness: 10, contrast: 20, saturation: 130, hue: -15, blur: 0, filter: '' },
+  natural: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: "" },
+  vivid: { brightness: 0, contrast: 10, saturation: 120, hue: 0, blur: 0, filter: "" },
+  muted: { brightness: 0, contrast: -10, saturation: 80, hue: 0, blur: 0, filter: "" },
+  warm: { brightness: 5, contrast: 0, saturation: 100, hue: 5, blur: 0, filter: "" },
+  cool: { brightness: 5, contrast: 0, saturation: 100, hue: -5, blur: 0, filter: "" },
+  bw: { brightness: 0, contrast: 0, saturation: 0, hue: 0, blur: 0, filter: "grayscale" },
+  vintage: { brightness: 10, contrast: -10, saturation: 60, hue: 0, blur: 0, filter: "sepia" },
+  invert: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: "invert" },
+  kodak: { brightness: 10, contrast: 15, saturation: 120, hue: -5, blur: 0, filter: "" },
+  toyo: { brightness: 5, contrast: 0, saturation: 110, hue: 5, blur: 0, filter: "" },
+  cinematic: { brightness: 0, contrast: 20, saturation: 80, hue: 0, blur: 0, filter: "" },
+  dramatic: { brightness: 0, contrast: 30, saturation: 110, hue: 0, blur: 0, filter: "" },
+  cyberpunk: { brightness: 10, contrast: 20, saturation: 130, hue: -15, blur: 0, filter: "" },
+};
+
+// Histogram state
+const histogramData = ref<number[]>(new Array(256).fill(0));
+
+const updateRealHistogram = () => {
+  if (!props.fileInfo || !props.fileInfo.file_path) return;
+  
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = getAssetSrc(props.fileInfo.file_path);
+  
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+    
+    // Use a small size for performance (64x64 is enough for a general trend)
+    const size = 64;
+    canvas.width = size;
+    canvas.height = size;
+    ctx.drawImage(img, 0, 0, size, size);
+    
+    const imageData = ctx.getImageData(0, 0, size, size).data;
+    const hist = new Array(256).fill(0);
+    
+    for (let i = 0; i < imageData.length; i += 4) {
+      // Luminosity calculation (Rec. 709)
+      const r = imageData[i];
+      const g = imageData[i + 1];
+      const b = imageData[i + 2];
+      const gray = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+      hist[gray]++;
+    }
+    
+    // Normalize heights (max height is 58 to leave some padding)
+    const maxVal = Math.max(...hist);
+    if (maxVal > 0) {
+      histogramData.value = hist.map(v => (v / maxVal) * 58);
+    } else {
+      histogramData.value = new Array(256).fill(0);
+    }
+  };
 };
 
 const presetOptions = computed(() => [
@@ -625,32 +687,57 @@ const colorSliders = computed(() => [
   { key: 'hue', label: localeMsg.value.msgbox.image_editor.hue_rotate, model: hue, min: -180, max: 180, step: 1, valueDisplay: `${hue.value}°` },
 ]);
 
-// For a cool visual effect, we generate a pseudo-histogram that reacts to sliders
+// Generate a crisp, Adobe-style smooth histogram path
 const generateHistogramPath = () => {
-  const points = [];
+  if (!props.fileInfo || !histogramData.value) return "";
+  
   const width = 256;
-  const height = 50;
-  const b = brightness.value / 2;
+  const height = 64;
+  const b = brightness.value;
   const c = (contrast.value + 100) / 100;
 
-  for (let i = 0; i <= width; i += 4) {
-    // A base multi-modal curve mimicking exposure distribution
-    let y = 10 * Math.sin(i / 20) + 15 * Math.sin(i / 10) + 25;
-    
-    // Shift based on brightness
-    let x = i + b;
-    // Stretch based on contrast
-    x = (x - 128) * c + 128;
+  const sampledPoints: {x: number, y: number}[] = [];
+  const step = 4; // Adobe uses higher granularity for crisp peaks
 
-    if (x >= 0 && x <= width) {
-      points.push(`${x},${height - y}`);
+  for (let i = 0; i <= 256; i += step) {
+    // Moderate average (Adobe balance) to get a clean but detailed look
+    let sum = 0;
+    let count = 0;
+    const windowSize = 10; 
+    for (let j = Math.max(0, i - windowSize); j < Math.min(256, i + windowSize); j++) {
+      sum += histogramData.value[j];
+      count++;
+    }
+    const val = count > 0 ? sum / count : 0;
+    
+    let x = (i + b - 128) * c + 128;
+    let y = height - val;
+
+    if (x >= -20 && x <= width + 20) {
+      sampledPoints.push({ x, y });
     }
   }
   
-  points.sort((a, b) => parseFloat(a) - parseFloat(b));
-  if (points.length === 0) return "";
+  if (sampledPoints.length < 2) return "";
+
+  let path = `M 0,${height}`;
   
-  return `M ${points[0]} ` + points.map(p => `L ${p}`).join(" ") + ` L ${width},${height} L 0,${height} Z`;
+  for (let i = 0; i < sampledPoints.length; i++) {
+    const p = sampledPoints[i];
+    if (i === 0) {
+      path += ` L ${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    } else {
+      const prev = sampledPoints[i - 1];
+      const cp1x = prev.x + (p.x - prev.x) / 2;
+      const cp1y = prev.y;
+      const cp2x = prev.x + (p.x - prev.x) / 2;
+      const cp2y = p.y;
+      path += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    }
+  }
+  
+  path += ` L ${width},${height} Z`;
+  return path;
 };
 
 const getPresetThumbnailStyle = (presetKey: string) => {
@@ -810,15 +897,24 @@ const handleOverwriteConfirm = () => {
 };
 
 watch(() => props.fileInfo, () => {
-  if (activeTab.value === 'edit') initEditState();
+  if (activeTab.value === 'edit') {
+    initEditState();
+    updateRealHistogram();
+  }
 }, { deep: true, immediate: true });
 
 onMounted(() => {
-  if (activeTab.value === 'edit') initEditState();
+  if (activeTab.value === 'edit') {
+    initEditState();
+    updateRealHistogram();
+  }
 });
 
 watch(activeTab, (newVal) => {
-  if (newVal === 'edit') initEditState();
+  if (newVal === 'edit') {
+    initEditState();
+    updateRealHistogram();
+  }
 });
 
 // Rename logic

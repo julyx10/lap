@@ -454,6 +454,13 @@
     "image_editor": {
       "title": "Bild bearbeiten",
       "tab_edit": "Anpassen",
+      "histogram": "Histogramm",
+      "light": "Licht",
+      "color": "Farbe",
+      "compare": "Vergleich",
+      "shadows": "Schatten",
+      "midtones": "Mitteltöne",
+      "highlights": "Glanzlichter",
       "presets": {
         "title": "Voreinstellungen",
         "natural": "Natürlich",

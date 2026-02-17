@@ -458,6 +458,9 @@
       "light": "Light",
       "color": "Color",
       "compare": "Compare",
+      "shadows": "Shadows",
+      "midtones": "Midtones",
+      "highlights": "Highlights",
       "presets": {
         "title": "Presets",
         "custom": "Custom",

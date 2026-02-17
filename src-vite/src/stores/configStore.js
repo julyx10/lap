@@ -29,9 +29,10 @@ export const useConfigStore = defineStore('configStore', {
       showMap: true,             // show map
       showHistogram: true,       // show image histogram
       mapTheme: 0,               // 0: standard, 2: satellite
+      showPresets: true,         // show image presets
       showAdjust: true,          // show image adjustment
       showResize: true,          // show image resize
-      showSettings: true,        // show save options
+      showSaveOptions: true,     // show save options
     },
 
     search: {
