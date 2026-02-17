@@ -38,6 +38,9 @@ export { default as IconGoto } from '@/assets/icons/goto.svg';
 export { default as IconHistory } from '@/assets/icons/history.svg';
 export { default as IconSimilar } from '@/assets/icons/similar.svg';
 export { default as IconImageSearch } from '@/assets/icons/image-search.svg';
+export { default as IconSave } from '@/assets/icons/save.svg';
+export { default as IconPalette } from '@/assets/icons/palette.svg';
+export { default as IconResize } from '@/assets/icons/resize.svg';
 
 // ======================
 // VIEW CONTROL ICONS

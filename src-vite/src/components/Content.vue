@@ -316,6 +316,8 @@
           <FileInfo 
             :fileInfo="fileList[selectedItemIndex]" 
             @close="config.infoPanel.show = false" 
+            @success="onImageEdited(true)"
+            @failed="onImageEdited(false)"
           />
         </div>
       </transition>
