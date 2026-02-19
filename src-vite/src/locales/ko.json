@@ -178,7 +178,7 @@
   "info_panel": {
     "tabs": [
       "정보",
-      "미리보기"
+      "조정"
     ]
   },
   "tooltip": {
@@ -300,9 +300,14 @@
   },
   "msgbox": {
     "ok": "확인",
+    "discard": "취소",
     "reset": "초기화",
     "cancel": "취소",
     "close": "닫기",
+    "unsaved_changes": {
+      "title": "저장되지 않은 변경 사항",
+      "message": "저장되지 않은 변경 사항이 있습니다. 취소하시겠습니까?"
+    },
     "input": {
       "file_name_invalid": "사용할 수 없는 문자가 포함되어 있습니다: \\ / : * ? \" < > |."
     },
@@ -484,7 +489,7 @@
       "filter_grayscale": "흑백",
       "filter_sepia": "세피아",
       "filter_invert": "반전",
-      "adjustments": "조정",
+      "adjustments": "수동 조정",
       "brightness": "밝기",
       "contrast": "대비",
       "blur": "흐림",

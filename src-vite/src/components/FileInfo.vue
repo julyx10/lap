@@ -4,9 +4,27 @@
     <div class="flex items-center w-full shrink-0 px-2 mb-2">
       <div role="tablist" class="tabs tabs-sm tabs-border flex-1">
         <a role="tab" :class="['tab mx-1', { 'tab-active': activeTab === 'info' }]" @click="activeTab = 'info'">{{ $t('info_panel.tabs[0]') }}</a>
-        <a role="tab" :class="['tab mx-1', { 'tab-active': activeTab === 'edit' }]" @click="activeTab = 'edit'">{{ $t('image_viewer.toolbar.edit') }}</a>
+        <a role="tab" :class="['tab mx-1', { 'tab-active': activeTab === 'edit' }]" @click="activeTab = 'edit'">{{ $t('info_panel.tabs[1]') }}</a>
       </div>
-      <div class="mt-2">
+      <div class="mt-2 flex items-center gap-1">
+        <template v-if="activeTab === 'edit' && hasChanges">
+          <TButton
+            :icon="IconRestore"
+            :tooltip="$t('msgbox.image_editor.reset')"
+            :buttonSize="'small'"
+            :selected="true"
+            @click.stop="resetAll"
+          />
+          <TButton
+            :icon="IconSave"
+            :tooltip="$t('msgbox.image_editor.save')"
+            :buttonSize="'small'"
+            :selected="true"
+            :loading="isProcessing"
+            @click.stop="quickSave"
+          />
+          <div class="w-px h-4 bg-base-content/10 mx-1"></div>
+        </template>
         <TButton
           :icon="IconClose"
           :buttonSize="'small'"
@@ -248,6 +266,7 @@
         </div>
       </div>
 
+
       <!-- Preset Gallery -->
       <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
@@ -308,20 +327,11 @@
           @click.stop="config.infoPanel.showAdjust = !config.infoPanel.showAdjust"
         >
           <IconAdjustments class="w-4 h-4" />
-          <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.tab_edit') }}</span>
-          <div class="flex items-center gap-1">
-            <TButton v-if="hasAdjustments" 
-              :icon="IconRestore" 
-              :buttonSize="'small'" 
-              :selected="true"
-              :tooltip="$t('msgbox.image_editor.reset')"
-              @click.stop="resetAdjustments">
-            </TButton>
-            <TButton
-              :icon="config.infoPanel.showAdjust ? IconArrowUp : IconArrowDown"
-              :buttonSize="'small'"
-            />
-          </div>
+          <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.adjustments') }}</span>
+          <TButton
+            :icon="config.infoPanel.showAdjust ? IconArrowUp : IconArrowDown"
+            :buttonSize="'small'"
+          />
         </div>
 
         <Transition
@@ -372,136 +382,17 @@
         </Transition>
       </div>
 
-      <!-- Resize Section -->
-      <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
-        <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
-          @click.stop="config.infoPanel.showResize = !config.infoPanel.showResize"
-        >
-          <IconResize class="w-4 h-4" />
-          <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.resize') }}</span>
-          <TButton
-            :icon="config.infoPanel.showResize ? IconArrowUp : IconArrowDown"
-            :buttonSize="'small'"
-          />
-        </div>
 
-        <Transition
-          @before-enter="onBeforeEnter"
-          @enter="onEnter"
-          @after-enter="onAfterEnter"
-          @leave="onLeave"
-        >
-          <div v-if="config.infoPanel.showResize" class="space-y-3 overflow-hidden">
-            <div class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
-              <div class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.width') }}</div>
-              <input type="number" class="input input-bordered input-xs h-7 w-full font-bold text-base-content/70"
-                v-model.number="resizedWidth"
-                @blur="handleResizeInput('width')"
-              />
-            </div>
-            <div class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
-              <div class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.height') }}</div>
-              <input type="number" class="input input-bordered input-xs h-7 w-full font-bold text-base-content/70"
-                v-model.number="resizedHeight"
-                @blur="handleResizeInput('height')"
-              />
-            </div>
-            <div class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
-              <div class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.percentage') }}</div>
-              <div class="join w-full">
-                <input type="number" class="input input-bordered input-xs h-7 join-item flex-1 font-bold text-base-content/70"
-                  v-model.number="resizedPercentage"
-                  @blur="handleResizeInput('percentage')"
-                />
-                <span class="btn btn-xs h-7 join-item no-animation pointer-events-none opacity-50 px-2">%</span>
-              </div>
-            </div>
-          </div>
-        </Transition>
-      </div>
 
-      <!-- Save Section -->
-      <div class="rounded-box p-2 space-y-3 border border-base-content/5 shadow-sm">
-        <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
-          @click.stop="config.infoPanel.showSaveOptions = !config.infoPanel.showSaveOptions"
-        >
-          <IconSave class="w-4 h-4" />
-          <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.options') }}</span>
-          <TButton
-            :icon="config.infoPanel.showSaveOptions ? IconArrowUp : IconArrowDown"
-            :buttonSize="'small'"
-          />
-        </div>
-
-        <Transition
-          @before-enter="onBeforeEnter"
-          @enter="onEnter"
-          @after-enter="onAfterEnter"
-          @leave="onLeave"
-        >
-          <div v-if="config.infoPanel.showSaveOptions" class="space-y-4 overflow-hidden">
-            <div class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
-              <label class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.save_as') }}</label>
-              <select v-model="config.imageEditor.saveAs" class="select select-bordered select-xs h-7 w-full font-bold text-base-content/70">
-                <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            
-            <div class="grid grid-cols-[100px_1fr] gap-x-4 items-center" v-if="config.imageEditor.saveAs !== 0">
-              <label class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.format') }}</label>
-              <select v-model="config.imageEditor.format" class="select select-bordered select-xs h-7 w-full font-bold text-base-content/70">
-                <option v-for="option in fileFormatOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            
-            <div v-if="config.imageEditor.saveAs !== 0 && config.imageEditor.format == 0" class="grid grid-cols-[100px_1fr] gap-x-4 items-center">
-              <label class="font-medium text-base-content/30 tracking-wide text-sm">{{ $t('msgbox.image_editor.quality') }}</label>
-              <select v-model="config.imageEditor.quality" class="select select-bordered select-xs h-7 w-full font-bold text-base-content/70">
-                <option v-for="option in fileQualityOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Action Button -->
-      <div class="flex flex-col gap-2 p-2 mt-auto">
-         <div class="flex gap-2">
-           <button 
-             class="btn btn-sm flex-1" 
-             :class="isComparing ? 'btn-primary' : 'btn-ghost border-base-content/10'"
-             @mousedown="isComparing = true"
-             @mouseup="isComparing = false"
-             @mouseleave="isComparing = false"
-           >
-             <IconSimilar class="w-4 h-4" />
-             {{ $t('msgbox.image_editor.compare') || 'Compare' }}
-           </button>
-           <button class="btn btn-primary btn-sm flex-2" :disabled="isProcessing" @click="clickSave">
-             <IconSave class="w-4 h-4 shadow-sm" />
-             {{ config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}
-           </button>
-         </div>
-      </div>
     </div>
 
-    <!-- Overwrite Confirm -->
-    <MessageBox v-if="showOverwriteConfirm"
-      :title="$t('msgbox.image_editor.overwrite')"
-      :message="$t('msgbox.image_editor.overwrite_confirm')"
-      :warningOk="true"
-      :OkText="$t('msgbox.ok')"
-      :cancelText="$t('msgbox.cancel')"
-      @ok="handleOverwriteConfirm"
-      @cancel="showOverwriteConfirm = false"
-    />
 
     <ToolTip ref="toolTipRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, computed, watch, onMounted } from 'vue';
+import { ref, nextTick, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
@@ -525,11 +416,10 @@ import {
 } from '@/common/utils';
 import { 
   IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
-  IconFavorite, IconFile, IconRestore, IconImageEdit, IconCrop, IconSave, IconPalette, IconResize, IconAdjustments
+  IconFile, IconRestore, IconSave, IconPalette, IconAdjustments,
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import SliderInput from '@/components/SliderInput.vue';
-import MessageBox from '@/components/MessageBox.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import MapView from '@/components/MapView.vue';
 
@@ -557,7 +447,9 @@ const activeTab = computed({
 });
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 const isProcessing = ref(false);
-const isComparing = ref(false);
+
+let isApplyingPreset = false;
+let isInitializing = false;
 
 // Adjustment state
 const brightness = ref(0);
@@ -599,8 +491,8 @@ const updateRealHistogram = () => {
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     
-    // Use a small size for performance (64x64 is enough for a general trend)
-    const size = 64;
+    // Use a larger size for better resolution (256x256 matches histogram bins)
+    const size = 256;
     canvas.width = size;
     canvas.height = size;
     ctx.drawImage(img, 0, 0, size, size);
@@ -650,15 +542,7 @@ const resizedHeight = ref(0);
 const resizedPercentage = ref(100);
 const newFileName = ref('');
 
-// Save options
-const fileSaveAsOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.save_as_options));
-const fileFormatOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.format_options));
-const fileQualityOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.quality_options));
-
-const showOverwriteConfirm = ref(false);
-
 const thumbnailStyle = computed(() => {
-  if (isComparing.value) return {};
   return {
     filter: `
       brightness(${100 + brightness.value}%)
@@ -673,9 +557,7 @@ const thumbnailStyle = computed(() => {
   };
 });
 
-const hasAdjustments = computed(() => 
-  brightness.value !== 0 || contrast.value !== 0 || blur.value !== 0 || hue.value !== 0 || saturation.value !== 100 || selectedFilter.value !== ''
-);
+const hasChanges = computed(() => uiStore.hasActiveChanges(props.fileInfo));
 
 const lightSliders = computed(() => [
   { key: 'brightness', label: localeMsg.value.msgbox.image_editor.brightness, model: brightness, min: -100, max: 100, step: 1, valueDisplay: `${brightness.value > 0 ? '+' : ''}${brightness.value}` },
@@ -693,27 +575,28 @@ const generateHistogramPath = () => {
   
   const width = 256;
   const height = 64;
-  const b = brightness.value;
-  const c = (contrast.value + 100) / 100;
+  const br = (100 + brightness.value) / 100;
+  const ct = (100 + contrast.value) / 100;
 
   const sampledPoints: {x: number, y: number}[] = [];
-  const step = 4; // Adobe uses higher granularity for crisp peaks
+  const step = 2; // Higher granularity
 
   for (let i = 0; i <= 256; i += step) {
-    // Moderate average (Adobe balance) to get a clean but detailed look
+    // Tighter average ( Adobe balance) for crisper peaks
     let sum = 0;
     let count = 0;
-    const windowSize = 10; 
+    const windowSize = 2; 
     for (let j = Math.max(0, i - windowSize); j < Math.min(256, i + windowSize); j++) {
       sum += histogramData.value[j];
       count++;
     }
     const val = count > 0 ? sum / count : 0;
     
-    let x = (i + b - 128) * c + 128;
+    // Multiplicative brightness then contrast (matching CSS filters)
+    let x = (i * br - 128) * ct + 128;
     let y = height - val;
 
-    if (x >= -20 && x <= width + 20) {
+    if (x >= -10 && x <= width + 10) {
       sampledPoints.push({ x, y });
     }
   }
@@ -758,7 +641,6 @@ const getPresetThumbnailStyle = (presetKey: string) => {
   };
 };
 
-let isApplyingPreset = false;
 watch(selectedPreset, (newVal) => {
   if (newVal === 'custom') return;
   const p = presets[newVal];
@@ -770,6 +652,19 @@ watch(selectedPreset, (newVal) => {
     hue.value = p.hue;
     blur.value = p.blur;
     selectedFilter.value = p.filter;
+    
+    // Sync to store for preview
+    if (props.fileInfo && !isInitializing) {
+       uiStore.setActiveAdjustments(props.fileInfo.file_path, {
+        brightness: brightness.value,
+        contrast: contrast.value,
+        saturation: saturation.value,
+        hue: hue.value,
+        blur: blur.value,
+         filter: selectedFilter.value,
+       });
+    }
+    
     nextTick(() => isApplyingPreset = false);
   }
 });
@@ -782,119 +677,99 @@ watch([brightness, contrast, saturation, hue, blur, selectedFilter], () => {
       selectedPreset.value = 'custom';
     }
   }
+  
+  if (isInitializing) return;
+
+  // Sync to store for preview
+  if (props.fileInfo) {
+    uiStore.setActiveAdjustments(props.fileInfo.file_path, {
+      brightness: brightness.value,
+      contrast: contrast.value,
+      saturation: saturation.value,
+      hue: hue.value,
+      blur: blur.value,
+      filter: selectedFilter.value,
+    });
+  }
 });
 
-const initEditState = () => {
-  if (!props.fileInfo) return;
-  resizedWidth.value = props.fileInfo.width;
-  resizedHeight.value = props.fileInfo.height;
-  resizedPercentage.value = 100;
-  newFileName.value = extractFileName(props.fileInfo.name).name;
-  
-  const ext = getFileExtension(props.fileInfo.name).toLowerCase();
-  if (['jpg', 'jpeg'].includes(ext)) config.imageEditor.format = 0;
-  else if (ext === 'png') config.imageEditor.format = 1;
-  else if (ext === 'webp') config.imageEditor.format = 2;
-  
-  resetAdjustments();
-};
 
 const resetAdjustments = () => {
+  const p = presets.natural;
+  brightness.value = p.brightness;
+  contrast.value = p.contrast;
+  saturation.value = p.saturation;
+  hue.value = p.hue;
+  blur.value = p.blur;
+  selectedFilter.value = p.filter;
   selectedPreset.value = 'natural';
 };
 
-const handleResizeInput = (type: string) => {
+const resetAll = () => {
+  uiStore.clearActiveAdjustments();
+  initEditState();
+};
+
+const quickSave = async () => {
   if (!props.fileInfo) return;
-  const originalWidth = props.fileInfo.width;
-  const originalHeight = props.fileInfo.height;
-
-  if (type === 'width') {
-    resizedPercentage.value = Math.round((resizedWidth.value / originalWidth) * 100);
-    resizedHeight.value = Math.round((originalHeight * resizedPercentage.value) / 100);
-  } else if (type === 'height') {
-    resizedPercentage.value = Math.round((resizedHeight.value / originalHeight) * 100);
-    resizedWidth.value = Math.round((originalWidth * resizedPercentage.value) / 100);
-  } else if (type === 'percentage') {
-    resizedWidth.value = Math.round((originalWidth * resizedPercentage.value) / 100);
-    resizedHeight.value = Math.round((originalHeight * resizedPercentage.value) / 100);
-  }
-};
-
-const setEditParams = (overrides: any = {}) => {
-  if (!props.fileInfo) return null;
-  
-  const ext = fileFormatOptions.value[config.imageEditor.format].label.toLowerCase();
-  const outputFormat = overrides.outputFormat || (ext === 'jpg' || ext === 'jpeg' ? 'jpg' : ext);
-  
-  return {
-    sourceFilePath: props.fileInfo.file_path,
-    destFilePath: overrides.destFilePath || props.fileInfo.file_path,
-    outputFormat: outputFormat,
-    quality: [90, 80, 60][config.imageEditor.quality] || 80,
-    resize: {
-      width: resizedWidth.value,
-      height: resizedHeight.value,
-    },
-    // adjustments
-    filter: selectedFilter.value || null,
-    brightness: brightness.value !== 0 ? brightness.value : null,
-    contrast: contrast.value !== 0 ? contrast.value : null,
-    blur: blur.value > 0 ? blur.value : null,
-    hue_rotate: hue.value !== 0 ? hue.value : null,
-    saturation: saturation.value !== 100 ? saturation.value / 100.0 : null,
-  };
-};
-
-const executeSave = async (overrides: any = {}) => {
   isProcessing.value = true;
-  let success = false;
-  let params = null;
   try {
-    params = setEditParams(overrides);
-    if (params) success = await editImage(params);
-  } finally {
-    isProcessing.value = false;
-    if (success && params && props.fileInfo) {
+    const editParams = {
+      file_path: props.fileInfo.file_path,
+      dest_file_path: props.fileInfo.file_path,
+      brightness: brightness.value,
+      contrast: contrast.value,
+      saturation: saturation.value,
+      hue: hue.value,
+      blur: blur.value,
+      filter: selectedFilter.value,
+      rotate: 0,
+      flip_h: false,
+      flip_v: false,
+      crop: null,
+      resize_width: 0,
+      resize_height: 0,
+    };
+    const success = await editImage(editParams);
+    if (success) {
       uiStore.updateFileVersion(props.fileInfo.file_path);
+      uiStore.clearActiveAdjustments();
       emit('success');
       toolTipRef.value?.showTip(localeMsg.value.tooltip.save_image.success);
     } else {
       toolTipRef.value?.showTip(localeMsg.value.tooltip.save_image.failed, true);
     }
+  } finally {
+    isProcessing.value = false;
   }
 };
 
-const clickSave = async () => {
-  if (isProcessing.value || !props.fileInfo) return;
+const initEditState = () => {
+  if (!props.fileInfo) return;
+  
+  isInitializing = true;
 
-  if (config.imageEditor.saveAs === 1) { // Save as new
-    isProcessing.value = true;
-    try {
-      const folderPath = getFolderPath(props.fileInfo.file_path);
-      const ext = fileFormatOptions.value[config.imageEditor.format].label.toLowerCase();
-      let baseName = newFileName.value;
-      let counter = 1;
-      let candidateName = `${baseName}_${counter}`;
-      let candidatePath = getFullPath(folderPath, combineFileName(candidateName, ext));
-      
-      while (await checkFileExists(candidatePath)) {
-        counter++;
-        candidateName = `${baseName}_${counter}`;
-        candidatePath = getFullPath(folderPath, combineFileName(candidateName, ext));
-      }
-      await executeSave({ fileName: candidateName, destFilePath: candidatePath });
-    } catch(err) {
-      isProcessing.value = false;
-    }
+  // Check if we have active adjustments for this file in store
+  if (uiStore.activeAdjustments.filePath === props.fileInfo.file_path) {
+    const adj = uiStore.activeAdjustments as any;
+    brightness.value = adj.brightness || 0;
+    contrast.value = adj.contrast || 0;
+    saturation.value = adj.saturation ?? 100;
+    hue.value = adj.hue || 0;
+    blur.value = adj.blur || 0;
+    selectedFilter.value = adj.filter || '';
   } else {
-    showOverwriteConfirm.value = true;
+    // New file or no adjustments, reset to defaults
+    resetAdjustments();
   }
+  
+  newFileName.value = extractFileName(props.fileInfo.name).name;
+  
+  nextTick(() => {
+    isInitializing = false;
+  });
 };
 
-const handleOverwriteConfirm = () => {
-  showOverwriteConfirm.value = false;
-  executeSave();
-};
 
 watch(() => props.fileInfo, () => {
   if (activeTab.value === 'edit') {
@@ -908,6 +783,11 @@ onMounted(() => {
     initEditState();
     updateRealHistogram();
   }
+});
+
+onBeforeUnmount(() => {
+  // We do NOT clear active adjustments here anymore to support persistence across panel toggles
+  // uiStore.clearActiveAdjustments();
 });
 
 watch(activeTab, (newVal) => {

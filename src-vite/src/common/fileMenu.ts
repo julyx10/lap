@@ -60,10 +60,6 @@ export const useFileMenuItems = (
         action: createAction('album-folder')
       },
       {
-        label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-        action: createAction('reveal')
-      },
-      {
         label: localeMsg.value.menu.file.set_album_cover,
         action: createAction('set-album-cover')
       },
@@ -106,6 +102,10 @@ export const useFileMenuItems = (
         icon: IconTrash,
         shortcut: isMac ? '⌘⌫' : 'Del',
         action: createAction('trash')
+      },
+      {
+        label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+        action: createAction('reveal')
       },
       { label: "-", action: null },
       {

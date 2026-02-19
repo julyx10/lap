@@ -178,7 +178,7 @@
   "info_panel": {
     "tabs": [
       "Info",
-      "Prévia"
+      "Ajustar"
     ]
   },
   "tooltip": {
@@ -300,9 +300,14 @@
   },
   "msgbox": {
     "ok": "OK",
+    "discard": "Descartar",
     "reset": "Redefinir",
     "cancel": "Cancelar",
     "close": "Fechar",
+    "unsaved_changes": {
+      "title": "Alterações não salvas",
+      "message": "Você tem alterações não salvas. Deseja descartá-las?"
+    },
     "input": {
       "file_name_invalid": "Nome inválido: \\ / : * ? \" < > |."
     },
@@ -484,7 +489,7 @@
       "filter_grayscale": "Escala de cinza",
       "filter_sepia": "Sépia",
       "filter_invert": "Inverter",
-      "adjustments": "Ajustes",
+      "adjustments": "Ajuste manual",
       "brightness": "Brilho",
       "contrast": "Contraste",
       "blur": "Desfoque",

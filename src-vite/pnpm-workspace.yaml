@@ -1,0 +1,4 @@
+onlyBuiltDependencies:
+  - edgedriver
+  - esbuild
+  - geckodriver

@@ -178,7 +178,7 @@
   "info_panel": {
     "tabs": [
       "Инфо",
-      "Превью"
+      "Настройка"
     ]
   },
   "tooltip": {
@@ -300,9 +300,14 @@
   },
   "msgbox": {
     "ok": "ОК",
+    "discard": "Сбросить",
     "reset": "Сброс",
     "cancel": "Отмена",
     "close": "Закрыть",
+    "unsaved_changes": {
+      "title": "Несохраненные изменения",
+      "message": "У вас есть несохраненные изменения. Вы хотите их сбросить?"
+    },
     "input": {
       "file_name_invalid": "Недопустимые символы: \\ / : * ? \" < > |."
     },
@@ -484,7 +489,7 @@
       "filter_grayscale": "Ч/Б",
       "filter_sepia": "Сепия",
       "filter_invert": "Инверсия",
-      "adjustments": "Коррекция",
+      "adjustments": "Ручная настройка",
       "brightness": "Яркость",
       "contrast": "Контраст",
       "blur": "Размытие",

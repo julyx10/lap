@@ -134,7 +134,7 @@
             :tooltip="config.infoPanel.show ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
             :selected="config.infoPanel.show"
             :disabled="isIndexing"
-            @click="config.infoPanel.show = !config.infoPanel.show"
+            @click="config.infoPanel.show ? checkUnsavedChanges(() => config.infoPanel.show = false) : config.infoPanel.show = true"
           />
         </div>
       </div>
@@ -315,7 +315,7 @@
           :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
             :fileInfo="fileList[selectedItemIndex]" 
-            @close="config.infoPanel.show = false" 
+            @close="checkUnsavedChanges(() => config.infoPanel.show = false)" 
             @success="onImageEdited(true)"
             @failed="onImageEdited(false)"
           />
@@ -480,6 +480,18 @@
     @cancel="showCommentMsgbox = false"
   />
 
+  <!-- Unsaved Changes Confirmation -->
+  <MessageBox
+    v-if="showUnsavedChangesMsgbox"
+    :title="$t('msgbox.unsaved_changes.title') || 'Unsaved Changes'"
+    :message="$t('msgbox.unsaved_changes.message') || 'You have unsaved changes. Do you want to discard them?'"
+    :OkText="$t('msgbox.discard') || 'Discard'"
+    :cancelText="$t('msgbox.cancel')"
+    :warningOk="true"
+    @ok="confirmDiscard"
+    @cancel="cancelDiscard"
+  />
+
   <ToolTip ref="toolTipRef" />
 
 </template>
@@ -639,6 +651,41 @@ const showCopyTo = ref(false);
 const showTrashMsgbox = ref(false);
 const showCommentMsgbox = ref(false);
 const errorMessage = ref('');
+
+// Unsaved changes confirmation
+const showUnsavedChangesMsgbox = ref(false);
+const pendingAction = ref<(() => void) | null>(null);
+
+const confirmDiscard = () => {
+  showUnsavedChangesMsgbox.value = false;
+  // Clear active adjustments in store to "discard" the changes
+  uiStore.clearActiveAdjustments();
+  if (pendingAction.value) {
+    pendingAction.value();
+    pendingAction.value = null;
+  }
+};
+
+const cancelDiscard = () => {
+  showUnsavedChangesMsgbox.value = false;
+  pendingAction.value = null;
+};
+
+// Check if current file has unsaved changes
+const hasUnsavedChanges = computed(() => {
+  if (!config.infoPanel.show) return false;
+  const currentFile = fileList.value[selectedItemIndex.value];
+  return uiStore.hasActiveChanges(currentFile);
+});
+
+const checkUnsavedChanges = (action: () => void) => {
+  if (hasUnsavedChanges.value) {
+    pendingAction.value = action;
+    showUnsavedChangesMsgbox.value = true;
+  } else {
+    action();
+  }
+};
 
 // tagging dialog
 const showTaggingDialog = ref(false);
@@ -900,21 +947,25 @@ onBeforeUnmount(() => {
 
 // New event handlers for GridView
 function handleItemClicked(index: number) {
-  selectedItemIndex.value = index;
-  if (selectMode.value) {
-    fileList.value[index].isSelected = !fileList.value[index].isSelected;
-  }
+  checkUnsavedChanges(() => {
+    selectedItemIndex.value = index;
+    if (selectMode.value) {
+      fileList.value[index].isSelected = !fileList.value[index].isSelected;
+    }
+  });
 }
 
 // Double click grid view item
 function handleItemDblClicked(index: number) {
-  selectedItemIndex.value = index;
+  checkUnsavedChanges(() => {
+    selectedItemIndex.value = index;
 
-  if (!config.settings.grid.showFilmStrip) {
-    // quick view
-    showQuickView.value = true;
-    quickViewZoomFit.value = true;
-  }
+    if (!config.settings.grid.showFilmStrip) {
+      // quick view
+      showQuickView.value = true;
+      quickViewZoomFit.value = true;
+    }
+  });
 }
 
 // Track last selected index for shift-click range selection
@@ -991,26 +1042,38 @@ function handleItemAction(payload: { action: string, index: number }) {
   };
 
   if ((actionMap as any)[action]) {
-    (actionMap as any)[action]();
+    // Check for unsaved changes before performing action, especially if it might change the context
+    // Most actions here operate on `index` which becomes the selected index. 
+    // If index is different from current selectedItemIndex, we should check.
+    
+    if (index !== selectedItemIndex.value) {
+        checkUnsavedChanges(() => {
+             (actionMap as any)[action]();
+        });
+    } else {
+         (actionMap as any)[action]();
+    }
   }
 }
 
 function requestNavigate(direction: 'prev' | 'next') {
-  const viewer = showQuickView.value ? quickViewMediaRef.value : (config.settings.grid.showFilmStrip ? filmStripMediaRef.value : null);
-  
-  if (direction === 'next') {
-    if (viewer) {
-      viewer.triggerNext();
+  checkUnsavedChanges(() => {
+    const viewer = showQuickView.value ? quickViewMediaRef.value : (config.settings.grid.showFilmStrip ? filmStripMediaRef.value : null);
+    
+    if (direction === 'next') {
+      if (viewer) {
+        viewer.triggerNext();
+      } else {
+        performNavigate('next');
+      }
     } else {
-      performNavigate('next');
+      if (viewer) {
+        viewer.triggerPrev();
+      } else {
+        performNavigate('prev');
+      }
     }
-  } else {
-    if (viewer) {
-      viewer.triggerPrev();
-    } else {
-      performNavigate('prev');
-    }
-  }
+  });
 }
 
 function performNavigate(direction: 'prev' | 'next') {
@@ -1111,29 +1174,41 @@ function handleScrollUpdate(newIndex: number) {
 // Keyboard navigation actions
 const keyActions = {
   ArrowDown: () => {
-    if (gridViewRef.value) {
-      if (config.settings.grid.style === 2) {
-        // Use geometry-aware navigation for Justified View
-        const nextIndex = gridViewRef.value.getNextItemIndex(selectedItemIndex.value, 'down');
-        selectedItemIndex.value = nextIndex !== -1 ? nextIndex : selectedItemIndex.value;
-      } else {
-        selectedItemIndex.value = Math.min(selectedItemIndex.value + gridViewRef.value.getColumnCount(), fileList.value.length - 1);
+    checkUnsavedChanges(() => {
+      if (gridViewRef.value) {
+        if (config.settings.grid.style === 2) {
+          // Use geometry-aware navigation for Justified View
+          const nextIndex = gridViewRef.value.getNextItemIndex(selectedItemIndex.value, 'down');
+          selectedItemIndex.value = nextIndex !== -1 ? nextIndex : selectedItemIndex.value;
+        } else {
+          selectedItemIndex.value = Math.min(selectedItemIndex.value + gridViewRef.value.getColumnCount(), fileList.value.length - 1);
+        }
       }
-    }
+    });
   },
   ArrowUp: () => {
-    if (gridViewRef.value) {
-      if (config.settings.grid.style === 2) {
-        // Use geometry-aware navigation for Justified View
-        const nextIndex = gridViewRef.value.getNextItemIndex(selectedItemIndex.value, 'up');
-        selectedItemIndex.value = nextIndex !== -1 ? nextIndex : selectedItemIndex.value;
-      } else {
-        selectedItemIndex.value = Math.max(selectedItemIndex.value - gridViewRef.value.getColumnCount(), 0);
+    checkUnsavedChanges(() => {
+      if (gridViewRef.value) {
+        if (config.settings.grid.style === 2) {
+          // Use geometry-aware navigation for Justified View
+          const nextIndex = gridViewRef.value.getNextItemIndex(selectedItemIndex.value, 'up');
+          selectedItemIndex.value = nextIndex !== -1 ? nextIndex : selectedItemIndex.value;
+        } else {
+          selectedItemIndex.value = Math.max(selectedItemIndex.value - gridViewRef.value.getColumnCount(), 0);
+        }
       }
-    }
+    });
   },
-  Home: () => selectedItemIndex.value = 0,
-  End: () => selectedItemIndex.value = fileList.value.length - 1,
+  Home: () => {
+    checkUnsavedChanges(() => {
+      selectedItemIndex.value = 0;
+    });
+  },
+  End: () => {
+    checkUnsavedChanges(() => {
+      selectedItemIndex.value = fileList.value.length - 1;
+    });
+  },
   '/': () => searchBoxRef.value.focusInput(),
 };
 
@@ -1252,6 +1327,7 @@ const handleKeyDown = (e: any) => {
 let unlistenIndexProgress: (() => void) | undefined;
 let unlistenIndexFinished: (() => void) | undefined;
 let unlistenTriggerNextAlbum: (() => void) | undefined;
+let unlistenRefreshContent: (() => void) | undefined;
 
 async function processNextAlbum() {
   if (libConfig.index.albumQueue.length > 0) {
@@ -1371,6 +1447,11 @@ onMounted( async() => {
     }
   });
 
+  // listen for external refresh requests (e.g. from folder context menu)
+  unlistenRefreshContent = await listen('refresh-content', () => {
+    updateContent();
+  });
+
   unlistenTriggerNextAlbum = await listen('trigger-next-album', () => {
       processNextAlbum();
   });
@@ -1404,6 +1485,7 @@ onBeforeUnmount(() => {
   if (unlistenTriggerNextAlbum) unlistenTriggerNextAlbum();
   if (unlistenIndexProgress) unlistenIndexProgress();
   if (unlistenIndexFinished) unlistenIndexFinished();
+  if (unlistenRefreshContent) unlistenRefreshContent();
   if (unlistenFaceIndexProgress) unlistenFaceIndexProgress();
 });
 
@@ -1496,6 +1578,9 @@ watch(
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
   ], 
   () => {
+    // Clear active adjustments when the file list changes to avoid unnecessary confirmation dialogs
+    uiStore.clearActiveAdjustments();
+
     // Skip if in temp view mode to prevent race conditions
     if (tempViewMode.value !== 'none') return;
     

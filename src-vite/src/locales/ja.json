@@ -178,7 +178,7 @@
   "info_panel": {
     "tabs": [
       "情報",
-      "プレビュー"
+      "調整"
     ]
   },
   "tooltip": {
@@ -300,9 +300,14 @@
   },
   "msgbox": {
     "ok": "OK",
+    "discard": "破棄",
     "reset": "リセット",
     "cancel": "キャンセル",
     "close": "閉じる",
+    "unsaved_changes": {
+      "title": "未保存の変更",
+      "message": "未保存の変更があります。破棄しますか？"
+    },
     "input": {
       "file_name_invalid": "名前に次の文字は使えません: \\ / : * ? \" < > |."
     },
@@ -484,7 +489,7 @@
       "filter_grayscale": "グレースケール",
       "filter_sepia": "セピア",
       "filter_invert": "反転",
-      "adjustments": "調整",
+      "adjustments": "手動調整",
       "brightness": "明るさ",
       "contrast": "コントラスト",
       "blur": "ぼかし",

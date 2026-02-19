@@ -155,7 +155,11 @@ import {
   IconCopyTo,
   IconFolderExpanded,
   IconFolderCollapsed,
+  IconRefresh,
 } from '@/common/icons';
+
+// used for cross-component communication (Content.vue listens for this event)
+import { emit as tauriEmit } from '@tauri-apps/api/event';
 
 const props = defineProps<{
   children?: Folder[];      // subfolders
@@ -204,6 +208,15 @@ const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 const getMenuItemsForFolder = (folder: any) => {
   const isRoot = folder.path === props.rootPath;
   return [
+    {
+      label: localeMsg.value.menu.album.refresh,
+      icon: IconRefresh,
+      action: () => {
+        tauriEmit('refresh-content');
+        // always refresh the folder tree as well
+        expandFolder(folder, true);
+      }
+    },
     {
       label: localeMsg.value.menu.file.new_folder,
       icon: IconNewFolder,

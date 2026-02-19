@@ -13,7 +13,11 @@ export const useUIStore = defineStore('ui', {
       saturation: 100,
       hue: 0,
       blur: 0,
-      filter: null
+      rotate: 0,
+      flipX: false,
+      flipY: false,
+      filter: null,
+      resize: null
     }
   }),
   getters: {
@@ -23,6 +27,28 @@ export const useUIStore = defineStore('ui', {
     getFileVersion: (state) => (filePath) => {
       return state.fileVersions[filePath] || 0;
     },
+    hasActiveChanges: (state) => (fileInfo) => {
+      if (!state.activeAdjustments.filePath || !fileInfo) return false;
+      if (state.activeAdjustments.filePath !== fileInfo.file_path) return false;
+
+      const adj = state.activeAdjustments;
+      const hasAdjustments = adj.brightness !== 0 || 
+                             adj.contrast !== 0 || 
+                             adj.saturation !== 100 || 
+                             adj.hue !== 0 || 
+                             adj.blur !== 0 || 
+                             !!adj.filter;
+      
+      const hasTransform = adj.rotate !== 0 || adj.flipX || adj.flipY;
+      
+      let hasResize = false;
+      if (adj.resize) {
+        hasResize = Math.round(adj.resize.width) !== Math.round(fileInfo.width) || 
+                    Math.round(adj.resize.height) !== Math.round(fileInfo.height);
+      }
+      
+      return hasAdjustments || hasTransform || hasResize;
+    }
   },
   actions: {
     pushInputHandler(name) {
@@ -43,6 +69,7 @@ export const useUIStore = defineStore('ui', {
     },
     setActiveAdjustments(filePath, adjustments) {
       this.activeAdjustments = {
+        ...this.activeAdjustments,
         filePath,
         ...adjustments
       };
@@ -55,7 +82,11 @@ export const useUIStore = defineStore('ui', {
         saturation: 100,
         hue: 0,
         blur: 0,
-        filter: null
+        rotate: 0,
+        flipX: false,
+        flipY: false,
+        filter: null,
+        resize: null
       };
     }
   },

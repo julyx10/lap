@@ -40,11 +40,14 @@
             minHeight: `${imageSize[index].height}px`,
             transform: `translate3d(${position[index].x}px, ${position[index].y}px, 0) 
                         scale(${scale[index]}) 
-                        rotate(${imageRotate[index]}deg)`,
+                        rotate(${imageRotate[index] + (uiStore.activeAdjustments.filePath === props.filePath ? uiStore.activeAdjustments.rotate : 0)}deg)
+                        scaleX(${uiStore.activeAdjustments.filePath === props.filePath && uiStore.activeAdjustments.flipX ? -1 : 1})
+                        scaleY(${uiStore.activeAdjustments.filePath === props.filePath && uiStore.activeAdjustments.flipY ? -1 : 1})`,
             transition: !isDraggingImage && !noTransition && !isWheelZooming ? (isDraggingNavBox ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out') : 'none',
             willChange: 'transform',
             backfaceVisibility: 'hidden',
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            filter: adjustmentStyle(src)
           }"
           draggable="false"
           @mousedown="handleImageMouseDown"
@@ -166,7 +169,7 @@
 
 <script setup lang="ts">
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
-// import { listen } from '@tauri-apps/api/event';
+import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { getAssetSrc } from '@/common/utils';
 import { getFacesForFile } from '@/common/api';
@@ -199,6 +202,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit']);
+
+const uiStore = useUIStore();
 
 // container
 const container = ref(null);
@@ -282,6 +287,45 @@ const navContainerSize = computed(() => {
       height: max_size,
     };
   }
+});
+
+
+
+const adjustmentStyle = computed(() => (src: string) => {
+  if (!uiStore.activeAdjustments.filePath) return '';
+  
+  // Check if current image matches the one being edited
+  // We need to compare paths. The src might be a full URL (asset://...) while filePath is absolute path
+  // But usually we can check if src contains the filePath or if we have the original filePath prop
+  
+  // Simpler: Check if the currently viewing file path matches the one in adjustment
+  // defined in props.filePath or we can use the passed in src if we can decode it.
+  
+  // Actually, props.filePath is dependable for the *current* image, but we have two images in the DOM (previous and current).
+  // The 'src' in the v-for loop is the asset URL.
+  // Let's try to match loosely or use props.filePath if activeImage index matches
+  
+  // Better approach:
+  // calculated adjustments should only apply if the source file matches the edited file.
+  // However, mapping src (asset url) back to file path is tricky without util.
+  // But we know 'src-vite' uses 'asset://' + filepath or similar.
+  // Let's use a simpler heuristic: if props.filePath matches store's filePath, apply to the active image.
+  
+  if (uiStore.activeAdjustments.filePath === props.filePath) {
+     const adj = uiStore.activeAdjustments;
+     const parts = [];
+     if (adj.brightness !== 0) parts.push(`brightness(${100 + adj.brightness}%)`);
+     if (adj.contrast !== 0) parts.push(`contrast(${100 + adj.contrast}%)`);
+     if (adj.saturation !== 100) parts.push(`saturate(${adj.saturation}%)`);
+     if (adj.hue !== 0) parts.push(`hue-rotate(${adj.hue}deg)`);
+     if (adj.blur > 0) parts.push(`blur(${adj.blur}px)`);
+     if (adj.filter === 'grayscale') parts.push('grayscale(100%)');
+     if (adj.filter === 'sepia') parts.push('sepia(100%)');
+     if (adj.filter === 'invert') parts.push('invert(100%)');
+     
+     return parts.join(' ');
+  }
+  return '';
 });
 
 // navigator container style

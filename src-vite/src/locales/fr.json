@@ -178,7 +178,7 @@
   "info_panel": {
     "tabs": [
       "Info",
-      "Aperçu"
+      "Ajuster"
     ]
   },
   "tooltip": {
@@ -300,9 +300,14 @@
   },
   "msgbox": {
     "ok": "OK",
+    "discard": "Abandonner",
     "reset": "Réinitialiser",
     "cancel": "Annuler",
     "close": "Fermer",
+    "unsaved_changes": {
+      "title": "Modifications non enregistrées",
+      "message": "Vous avez des modifications non enregistrées. Voulez-vous les abandonner ?"
+    },
     "input": {
       "file_name_invalid": "Nom invalide: \\ / : * ? \" < > |."
     },
@@ -484,7 +489,7 @@
       "filter_grayscale": "Gris",
       "filter_sepia": "Sépia",
       "filter_invert": "Inversé",
-      "adjustments": "Ajustements",
+      "adjustments": "Réglage manuel",
       "brightness": "Luminosité",
       "contrast": "Contraste",
       "blur": "Flou",

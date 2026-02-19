@@ -178,7 +178,7 @@
   "info_panel": {
     "tabs": [
       "Info",
-      "Vorschau"
+      "Anpassen"
     ]
   },
   "tooltip": {
@@ -300,9 +300,14 @@
   },
   "msgbox": {
     "ok": "OK",
+    "discard": "Verwerfen",
     "reset": "Zurücksetzen",
     "cancel": "Abbrechen",
     "close": "Schließen",
+    "unsaved_changes": {
+      "title": "Nicht gespeicherte Änderungen",
+      "message": "Sie haben nicht gespeicherte Änderungen. Möchten Sie diese verwerfen?"
+    },
     "input": {
       "file_name_invalid": "Ungültiger Name: \\ / : * ? \" < > |."
     },
@@ -484,7 +489,7 @@
       "filter_grayscale": "Graustufen",
       "filter_sepia": "Sepia",
       "filter_invert": "Invertieren",
-      "adjustments": "Anpassungen",
+      "adjustments": "Manuell",
       "brightness": "Helligkeit",
       "contrast": "Kontrast",
       "blur": "Unschärfe",

@@ -133,105 +133,7 @@
 
       <!-- edit controls / adjustments -->
       <div class="w-56 flex flex-col gap-2 overflow-y-auto">
-
-        <!-- Tabs -->
-        <div role="tablist" class="tabs tabs-border">
-          <a role="tab" :class="['tab', {'tab-active': activeTab === 'adjust'}]" @click="activeTab = 'adjust'">{{ $t('msgbox.image_editor.tab_edit') }}</a>
-          <a role="tab" :class="['tab', {'tab-active': activeTab === 'export'}]" @click="activeTab = 'export'">{{ $t('msgbox.image_editor.tab_save') }}</a>
-        </div>
-
-        <!-- Adjust Tab Content -->
-        <div v-show="activeTab === 'adjust'" class="flex flex-col gap-4 p-1">
-
-
-          <!-- presets -->
-          <div>
-            <div class="flex items-end gap-2 mb-4">
-              <div class="form-control w-full">
-                <label class="label py-1">
-                  <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.presets.title') }}</span>
-                </label>
-                <select v-model="selectedPreset" class="select select-bordered select-sm w-full">
-                  <option v-for="option in presetOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-
-              <TButton v-if="hasAdjustments" 
-                :icon="IconRestore" 
-                :buttonSize="'small'" 
-                class="mb-px"
-                :selected="true"
-                :tooltip="$t('msgbox.image_editor.reset')"
-                @click="resetAdjustments">
-              </TButton>
-            </div>
-            
-            <div class="flex flex-col gap-4 text-sm">
-              <!-- Brightness -->
-              <div class="flex flex-col gap-1">
-                <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span>{{ $t('msgbox.image_editor.brightness') }}</span>
-                  <span>{{ brightness > 0 ? '+' : ''}}{{ brightness }}</span>
-                </div>
-                <SliderInput 
-                  v-model="brightness" 
-                  :min="-100" 
-                  :max="100" 
-                  :step="1" 
-                  :slider_width="200"
-                />
-              </div>
-
-              <!-- Contrast -->
-              <div class="flex flex-col gap-1">
-                <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span>{{ $t('msgbox.image_editor.contrast') }}</span>
-                  <span>{{ contrast > 0 ? '+' : ''}}{{ contrast }}</span>
-                </div>
-                <SliderInput 
-                  v-model="contrast" 
-                  :min="-100" 
-                  :max="100" 
-                  :step="1" 
-                  :slider_width="200"
-                />
-              </div>
-
-              <!-- Saturation -->
-              <div class="flex flex-col gap-1">
-                <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span>{{ $t('msgbox.image_editor.saturation') }}</span>
-                  <span>{{ saturation }}%</span>
-                </div>
-                <SliderInput 
-                  v-model="saturation" 
-                  :min="0" 
-                  :max="200" 
-                  :step="1" 
-                  :slider_width="200"
-                />
-              </div>
-
-              <!-- Hue -->
-              <div class="flex flex-col gap-1">
-                <div class="flex justify-between items-end text-xs text-base-content/70">
-                  <span>{{ $t('msgbox.image_editor.hue_rotate') }}</span>
-                  <span>{{ hue }}°</span>
-                </div>
-                <SliderInput 
-                  v-model="hue" 
-                  :min="-180" 
-                  :max="180" 
-                  :step="1" 
-                  :slider_width="200"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-       
-        <!-- Export Tab Content -->
-        <div v-show="activeTab === 'export'" class="flex flex-col gap-4 p-1">
+        <div class="flex flex-col gap-4 p-1">
           <!-- Resize -->
           <div>
             <h3 class="font-bold text-sm mb-2 opacity-70">{{ $t('msgbox.image_editor.resize') }}</h3>
@@ -306,8 +208,6 @@
               </div>
             </div>
           </div>
-
-
         </div>
       </div>
     </div>
@@ -374,7 +274,6 @@ import {
   IconFlipHorizontal,
   IconClose, 
   IconOk,
-  IconRestore,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -385,15 +284,14 @@ const props = defineProps({
 });
 
 /// i18n
-const { messages } = useI18n();
-const localeMsg = computed(() => messages.value[config.settings.language] as any);
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const uiStore = useUIStore();
 const emit = defineEmits(['success', 'failed', 'cancel']);
 
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 const isProcessing = ref(false);  // show processing status
-const activeTab = ref('adjust'); // 'adjust', 'export'
 
 // container
 const containerRef = ref<HTMLElement | null>(null);
@@ -494,12 +392,12 @@ const resizedHeight = ref(0);
 const resizedPercentage = ref(100);
 
 // adjustments
-const selectedFilter = ref(''); // '', 'grayscale', 'sepia', 'invert'
-const brightness = ref(0); // -100 to 100
-const contrast = ref(0);   // -100 to 100
-const blur = ref(0);       // 0 to 10
-const hue = ref(0);        // -180 to 180
-const saturation = ref(100); // 0 to 200 (percent)
+const selectedFilter = ref(''); 
+const brightness = ref(0); 
+const contrast = ref(0);   
+const blur = ref(0);       
+const hue = ref(0);        
+const saturation = ref(100); 
 
 // save as
 const newFileName = ref('');
@@ -512,87 +410,6 @@ const fileFormatOptions = computed(() => {
 });
 const fileQualityOptions = computed(() => {
   return getSelectOptions(localeMsg.value.msgbox.image_editor.quality_options);
-});
-
-// Presets
-const selectedPreset = ref('natural');
-
-const presetOptions = computed(() => {
-  const options = [
-    { value: 'custom', label: localeMsg.value.msgbox.image_editor.presets.custom },
-    { value: 'natural', label: localeMsg.value.msgbox.image_editor.presets.natural },
-    { value: 'vivid', label: localeMsg.value.msgbox.image_editor.presets.vivid },
-    { value: 'muted', label: localeMsg.value.msgbox.image_editor.presets.muted },
-    { value: 'warm', label: localeMsg.value.msgbox.image_editor.presets.warm },
-    { value: 'cool', label: localeMsg.value.msgbox.image_editor.presets.cool },
-    { value: 'bw', label: localeMsg.value.msgbox.image_editor.presets.bw },
-    { value: 'vintage', label: localeMsg.value.msgbox.image_editor.presets.vintage },
-    { value: 'kodak', label: localeMsg.value.msgbox.image_editor.presets.kodak },
-    { value: 'toyo', label: localeMsg.value.msgbox.image_editor.presets.toyo },
-    { value: 'cinematic', label: localeMsg.value.msgbox.image_editor.presets.cinematic },
-    { value: 'dramatic', label: localeMsg.value.msgbox.image_editor.presets.dramatic },
-    { value: 'cyberpunk', label: localeMsg.value.msgbox.image_editor.presets.cyberpunk },
-    { value: 'invert', label: localeMsg.value.msgbox.image_editor.presets.invert },
-  ];
-  return options;
-});
-
-const presets: Record<string, any> = {
-  natural: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: '' },
-  vivid: { brightness: 0, contrast: 10, saturation: 120, hue: 0, blur: 0, filter: '' },
-  muted: { brightness: 0, contrast: -10, saturation: 80, hue: 0, blur: 0, filter: '' },
-  warm: { brightness: 5, contrast: 0, saturation: 100, hue: 5, blur: 0, filter: '' },
-  cool: { brightness: 5, contrast: 0, saturation: 100, hue: -5, blur: 0, filter: '' },
-  bw: { brightness: 0, contrast: 0, saturation: 0, hue: 0, blur: 0, filter: 'grayscale' },
-  vintage: { brightness: 10, contrast: -10, saturation: 60, hue: 0, blur: 0, filter: 'sepia' },
-  invert: { brightness: 0, contrast: 0, saturation: 100, hue: 0, blur: 0, filter: 'invert' },
-  kodak: { brightness: 10, contrast: 15, saturation: 120, hue: -5, blur: 0, filter: '' },
-  toyo: { brightness: 5, contrast: 0, saturation: 110, hue: 5, blur: 0, filter: '' },
-  cinematic: { brightness: 0, contrast: 20, saturation: 80, hue: 0, blur: 0, filter: '' },
-  dramatic: { brightness: 0, contrast: 30, saturation: 110, hue: 0, blur: 0, filter: '' },
-  cyberpunk: { brightness: 10, contrast: 20, saturation: 130, hue: -15, blur: 0, filter: '' },
-};
-
-let isApplyingPreset = false;
-
-watch(selectedPreset, (newVal) => {
-  if (newVal === 'custom') return;
-  const p = presets[newVal];
-  if (p) {
-    isApplyingPreset = true;
-    brightness.value = p.brightness;
-    contrast.value = p.contrast;
-    saturation.value = p.saturation;
-    hue.value = p.hue;
-    blur.value = p.blur;
-    selectedFilter.value = p.filter;
-    nextTick(() => {
-      isApplyingPreset = false;
-    });
-  }
-});
-
-// Watch for manual changes to reset to custom
-watch([brightness, contrast, saturation, hue, blur, selectedFilter], () => {
-  if (isApplyingPreset) return;
-  
-  // Check if current values match the selected preset
-  // If not, switch to custom
-  if (selectedPreset.value !== 'custom') {
-    const p = presets[selectedPreset.value];
-    if (p) {
-      if (
-        brightness.value !== p.brightness ||
-        contrast.value !== p.contrast ||
-        saturation.value !== p.saturation ||
-        hue.value !== p.hue ||
-        blur.value !== p.blur ||
-        selectedFilter.value !== p.filter
-      ) {
-         selectedPreset.value = 'custom';
-      }
-    }
-  }
 });
 
 // Overwrite Confirmation Logic
@@ -634,6 +451,14 @@ onUnmounted(() => {
 
 const onImageLoad = async () => {
   await nextTick() // wait for Vue DOM update
+  
+  if (imageRef.value && (imageWidth.value === 0 || imageHeight.value === 0)) {
+    imageWidth.value = imageRef.value.naturalWidth;
+    imageHeight.value = imageRef.value.naturalHeight;
+  }
+  
+  fitImageToContainer();
+  
   requestAnimationFrame(() => {
     enableTransition.value = true;
     isProcessing.value = false;
@@ -641,6 +466,12 @@ const onImageLoad = async () => {
 };
 
 const initImageEditor = () => {
+  // image
+  imageSrc.value = getAssetSrc(props.fileInfo.file_path);
+  imageWidth.value = props.fileInfo.width;
+  imageHeight.value = props.fileInfo.height;
+  isPortrait.value = imageHeight.value > imageWidth.value;
+
   // container 
   containerRect.value = containerRef.value?.getBoundingClientRect() || null;
   if (!containerRect.value) return;
@@ -652,67 +483,33 @@ const initImageEditor = () => {
     height: containerRect.value.height - containerPadding * 2,
   };
 
-  // image
-  imageSrc.value = getAssetSrc(props.fileInfo.file_path);
-  imageWidth.value = props.fileInfo.width;
-  imageHeight.value = props.fileInfo.height;
-
   // image transform init
   enableTransition.value = false;
   
-  // flip init
-  isFlippedX.value = false;
-  isFlippedY.value = false;
-  
-  // rotate
-  rotate.value = 0;
-  
-  // crop init
-  cropStatus.value = 0;
-  isPortrait.value = imageWidth.value < imageHeight.value;
-  cropBoxFixed.value = false;     // false: can resize the crop box; true: fix the crop box size, drag to move image
-  
-  // cropped image
-  cropBox.value = { left: 0, top: 0, width: 0, height: 0 };
-  fitImageToContainer();
-
-  // resize init
-  resizedWidth.value = imageWidth.value;
-  resizedHeight.value = imageHeight.value;
-  resizedPercentage.value = 100;
-
-  // save as name init
-  newFileName.value = extractFileName(props.fileInfo.name).name;
-  const fileExt = getFileExtension(props.fileInfo.name).toLowerCase();
-  switch (fileExt) {
-    case 'jpg':
-    case 'jpeg':
-      config.imageEditor.format = 0;
-      break;
-    case 'png':
-      config.imageEditor.format = 1;
-      break;
-    case 'webp':
-      config.imageEditor.format = 2;
-      break;
-    default:
-      config.imageEditor.format = 0;
-      break;
+  // Inherit adjustments from uiStore
+  if (uiStore.activeAdjustments.filePath === props.fileInfo.file_path) {
+    const adj = uiStore.activeAdjustments;
+    brightness.value = adj.brightness || 0;
+    contrast.value = adj.contrast || 0;
+    saturation.value = adj.saturation ?? 100;
+    hue.value = adj.hue || 0;
+    blur.value = adj.blur || 0;
+    selectedFilter.value = adj.filter || '';
+    rotate.value = adj.rotate || 0;
+    isFlippedX.value = !!adj.flipX;
+    isFlippedY.value = !!adj.flipY;
+  } else {
+     // Default state
+     brightness.value = 0;
+     contrast.value = 0;
+     saturation.value = 100;
+     hue.value = 0;
+     blur.value = 0;
+     selectedFilter.value = '';
+     rotate.value = 0;
+     isFlippedX.value = false;
+     isFlippedY.value = false;
   }
-
-  resetAdjustments();
-};
-
-const hasAdjustments = computed(() => {
-  return brightness.value !== 0 ||
-    contrast.value !== 0 ||
-    blur.value !== 0 ||
-    hue.value !== 0 ||
-    saturation.value !== 100;
-});
-
-const resetAdjustments = () => {
-  selectedPreset.value = 'natural';
 };
 
 const clickStartCrop = () => {
@@ -868,6 +665,7 @@ const scaleFit = (imgWidth: number, imgHeight: number) => {
 
 // fit image to container
 const fitImageToContainer = () => {
+  containerRect.value = containerRef.value?.getBoundingClientRect() || null;
   if (!containerRect.value) return;
 
   position.value = { 
