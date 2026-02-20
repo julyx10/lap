@@ -302,8 +302,8 @@
               >
                 <div class="w-full h-full bg-base-300 flex items-center justify-center relative overflow-hidden rounded-[inherit] isolation-isolate">
                   <img 
-                    v-if="fileInfo.file_path"
-                    :src="getAssetSrc(fileInfo.file_path)" 
+                    v-if="fileInfo.thumbnail"
+                    :src="fileInfo.thumbnail" 
                     class="w-full h-full object-cover pointer-events-none rounded-[inherit] block"
                     :style="{ 
                       ...getPresetThumbnailStyle(option.value),
@@ -396,7 +396,7 @@ import { ref, nextTick, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { renameFile, editImage, checkFileExists } from '@/common/api';
+import { renameFile, editImage } from '@/common/api';
 import { 
   extractFileName, 
   getFileExtension, 
@@ -404,7 +404,6 @@ import {
   formatDimensionText, 
   formatFileSize, 
   formatTimestamp,
-  getAssetSrc,
   formatDuration,
   formatCaptureSettings,
   formatCameraInfo,
@@ -480,11 +479,11 @@ const presets: Record<string, any> = {
 const histogramData = ref<number[]>(new Array(256).fill(0));
 
 const updateRealHistogram = () => {
-  if (!props.fileInfo || !props.fileInfo.file_path) return;
+  if (!props.fileInfo || !props.fileInfo.thumbnail) return;
   
   const img = new Image();
   img.crossOrigin = "anonymous";
-  img.src = getAssetSrc(props.fileInfo.file_path);
+  img.src = props.fileInfo.thumbnail;
   
   img.onload = () => {
     const canvas = document.createElement("canvas");
@@ -714,26 +713,31 @@ const quickSave = async () => {
   if (!props.fileInfo) return;
   isProcessing.value = true;
   try {
+    const ext = getFileExtension(props.fileInfo.name).toLowerCase();
+    const outputFormat = (ext === 'jpg' || ext === 'jpeg') ? 'jpg' : ext;
+    const orientation = props.fileInfo.e_orientation || 1;
+
     const editParams = {
-      file_path: props.fileInfo.file_path,
-      dest_file_path: props.fileInfo.file_path,
-      brightness: brightness.value,
-      contrast: contrast.value,
-      saturation: saturation.value,
-      hue: hue.value,
-      blur: blur.value,
-      filter: selectedFilter.value,
+      sourceFilePath: props.fileInfo.file_path,
+      destFilePath: props.fileInfo.file_path,
+      outputFormat: outputFormat,
+      quality: 80,
+      orientation: orientation,
+      flipHorizontal: false,
+      flipVertical: false,
       rotate: 0,
-      flip_h: false,
-      flip_v: false,
-      crop: null,
-      resize_width: 0,
-      resize_height: 0,
+      crop: { x: 0, y: 0, width: 0, height: 0 },
+      resize: { width: props.fileInfo.width, height: props.fileInfo.height },
+      filter: selectedFilter.value || null,
+      brightness: brightness.value !== 0 ? brightness.value : null,
+      contrast: contrast.value !== 0 ? contrast.value : null,
+      blur: blur.value > 0 ? blur.value : null,
+      hue_rotate: hue.value !== 0 ? hue.value : null,
+      saturation: saturation.value !== 100 ? saturation.value / 100.0 : null,
     };
     const success = await editImage(editParams);
     if (success) {
       uiStore.updateFileVersion(props.fileInfo.file_path);
-      uiStore.clearActiveAdjustments();
       emit('success');
       toolTipRef.value?.showTip(localeMsg.value.tooltip.save_image.success);
     } else {

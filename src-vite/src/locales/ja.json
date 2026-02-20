@@ -483,7 +483,6 @@
         "invert": "反転",
         "custom": "カスタム"
       },
-      "tab_save": "保存",
       "filters": "フィルタ",
       "filter_none": "なし",
       "filter_grayscale": "グレースケール",
@@ -517,6 +516,7 @@
       "percentage": "パーセント",
       "pixel": "ピクセル",
       "options": "オプション",
+      "save": "保存",
       "save_as": "ファイルを保存",
       "save_as_options": [
         "元ファイルを上書き",

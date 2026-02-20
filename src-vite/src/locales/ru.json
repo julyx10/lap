@@ -483,7 +483,6 @@
         "invert": "Инверсия",
         "custom": "Пользовательский"
       },
-      "tab_save": "Сохр.",
       "filters": "Фильтры",
       "filter_none": "Нет",
       "filter_grayscale": "Ч/Б",
@@ -517,6 +516,7 @@
       "percentage": "Процент",
       "pixel": "Пиксели",
       "options": "Опции",
+      "save": "Сохр.",
       "save_as": "Сохранить файл",
       "save_as_options": [
         "Перезаписать исходный файл",

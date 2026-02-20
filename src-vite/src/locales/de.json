@@ -483,7 +483,6 @@
         "invert": "Umkehren",
         "custom": "Benutzerdefiniert"
       },
-      "tab_save": "Speichern",
       "filters": "Filter",
       "filter_none": "Kein",
       "filter_grayscale": "Graustufen",
@@ -517,6 +516,7 @@
       "percentage": "Prozent",
       "pixel": "Pixel",
       "options": "Optionen",
+      "save": "Speichern",
       "save_as": "Datei speichern",
       "save_as_options": [
         "Originaldatei überschreiben",

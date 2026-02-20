@@ -483,7 +483,6 @@
         "invert": "반전",
         "custom": "사용자 정의"
       },
-      "tab_save": "저장",
       "filters": "필터",
       "filter_none": "없음",
       "filter_grayscale": "흑백",
@@ -517,6 +516,7 @@
       "percentage": "퍼센트",
       "pixel": "픽셀",
       "options": "옵션",
+      "save": "저장",
       "save_as": "파일 저장",
       "save_as_options": [
         "원본 파일 덮어쓰기",

@@ -498,7 +498,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
@@ -2368,13 +2368,8 @@ function handleTitleClick() {
 // update the file info from the image editor
 const onImageEdited = (success: boolean) => {
   if (success) {
-    toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.success);
     showImageEditor.value = false;
-
-    // update file info if save as is overwrite
-    if(config.imageEditor.saveAs === 0) {
-      updateFile(fileList.value[selectedItemIndex.value]);
-    }
+    updateFile(fileList.value[selectedItemIndex.value]);
   } else {
     toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.failed, true);
   }
@@ -2523,15 +2518,21 @@ const updateFile = async (file: any) => {
       Object.assign(file, updatedFile);
       await updateThumbForFile(file);
       await updateSelectedImage(selectedItemIndex.value);
+
+      // Force Image.vue to reload the saved image by briefly nullifying file_path
+      // to trigger its filePath watcher (since the path itself hasn't changed, only the version)
+      const savedPath = file.file_path;
+      file.file_path = '';
+      await nextTick();
+      file.file_path = savedPath;
+
+      // Clear CSS filter adjustments after image reload is triggered
+      uiStore.clearActiveAdjustments();
+
       success = true;
     }
   } finally {
     isProcessing.value = false;
-    // if (success) {
-    //   toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.success);
-    // } else {
-    //   toolTipRef.value.showTip(localeMsg.value.tooltip.update_image.failed, true);
-    // }
   }
 }
 

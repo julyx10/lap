@@ -483,7 +483,6 @@
         "cyberpunk": "Cyberpunk",
         "invert": "Invert"
       },
-      "tab_save": "Save",
       "filters": "Filters",
       "filter_none": "None",
       "filter_grayscale": "Grayscale",
@@ -517,6 +516,7 @@
       "percentage": "Percentage",
       "pixel": "Pixels",
       "options": "Options",
+      "save": "Save",
       "save_as": "Save as",
       "save_as_options": [
         "Overwrite original file",

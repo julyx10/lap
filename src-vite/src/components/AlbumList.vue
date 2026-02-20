@@ -292,11 +292,6 @@ onMounted( async () => {
     }
   }
 
-  // If in selection mode (MoveTo/CopyTo), auto-expand all albums
-  if (!isMainPane.value && albums.value.length > 0) {
-    Promise.all(albums.value.map(album => expandAlbum(album, true)));
-  }
-
   // listen for album-cover-changed event
   unlistenAlbumCoverChanged = await listen('album-cover-changed', async (event: any) => {
     const { albumId: eventAlbumId, fileId } = event.payload;

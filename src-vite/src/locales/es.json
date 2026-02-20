@@ -483,7 +483,6 @@
         "invert": "Invertir",
         "custom": "Personalizado"
       },
-      "tab_save": "Guardar",
       "filters": "Filtros",
       "filter_none": "Ninguno",
       "filter_grayscale": "Escala grises",
@@ -517,6 +516,7 @@
       "percentage": "Porcentaje",
       "pixel": "Píxeles",
       "options": "Opciones",
+      "save": "Guardar",
       "save_as": "Guardar archivo",
       "save_as_options": [
         "Sobrescribir archivo original",

@@ -483,7 +483,6 @@
         "invert": "反转",
         "custom": "自定义"
       },
-      "tab_save": "保存",
       "filters": "滤镜",
       "filter_none": "原图",
       "filter_grayscale": "灰度",
@@ -517,6 +516,7 @@
       "percentage": "百分比",
       "pixel": "像素",
       "options": "选项",
+      "save": "保存",
       "save_as": "保存文件",
       "save_as_options": [
         "覆盖原文件",
