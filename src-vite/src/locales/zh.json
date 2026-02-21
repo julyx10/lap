@@ -306,7 +306,7 @@
     "close": "关闭",
     "unsaved_changes": {
       "title": "未保存的更改",
-      "message": "您有未保存的更改。确定要丢弃这些更改吗？"
+      "message": "您有未保存的更改。确定要保存这些更改吗？"
     },
     "input": {
       "file_name_invalid": "名称不能包含以下字符: \\ / : * ? \" < > |."

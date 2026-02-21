@@ -306,7 +306,7 @@
     "close": "Schließen",
     "unsaved_changes": {
       "title": "Nicht gespeicherte Änderungen",
-      "message": "Sie haben nicht gespeicherte Änderungen. Möchten Sie diese verwerfen?"
+      "message": "Sie haben nicht gespeicherte Änderungen. Möchten Sie diese speichern?"
     },
     "input": {
       "file_name_invalid": "Ungültiger Name: \\ / : * ? \" < > |."

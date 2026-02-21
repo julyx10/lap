@@ -306,7 +306,7 @@
     "close": "Fechar",
     "unsaved_changes": {
       "title": "Alterações não salvas",
-      "message": "Você tem alterações não salvas. Deseja descartá-las?"
+      "message": "Você tem alterações não salvas. Deseja salvá-las?"
     },
     "input": {
       "file_name_invalid": "Nome inválido: \\ / : * ? \" < > |."

@@ -306,7 +306,7 @@
     "close": "Cerrar",
     "unsaved_changes": {
       "title": "Cambios sin guardar",
-      "message": "Tienes cambios sin guardar. ¿Quieres descartarlos?"
+      "message": "Tienes cambios sin guardar. ¿Quieres guardarlos?"
     },
     "input": {
       "file_name_invalid": "Nombre inválido: \\ / : * ? \" < > |."

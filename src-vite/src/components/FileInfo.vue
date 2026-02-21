@@ -7,7 +7,8 @@
         <a role="tab" :class="['tab mx-1', { 'tab-active': activeTab === 'edit' }]" @click="activeTab = 'edit'">{{ $t('info_panel.tabs[1]') }}</a>
       </div>
       <div class="mt-2 flex items-center gap-1">
-        <template v-if="activeTab === 'edit' && hasChanges">
+        <!-- Buttons -->
+        <template v-if="activeTab === 'edit' && hasChanges && !isSaving">
           <TButton
             :icon="IconRestore"
             :tooltip="$t('msgbox.image_editor.reset')"
@@ -446,6 +447,7 @@ const activeTab = computed({
 });
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 const isProcessing = ref(false);
+const isSaving = ref(false);
 
 let isApplyingPreset = false;
 let isInitializing = false;
@@ -709,42 +711,56 @@ const resetAll = () => {
   initEditState();
 };
 
-const quickSave = async () => {
-  if (!props.fileInfo) return;
-  isProcessing.value = true;
-  try {
-    const ext = getFileExtension(props.fileInfo.name).toLowerCase();
-    const outputFormat = (ext === 'jpg' || ext === 'jpeg') ? 'jpg' : ext;
-    const orientation = props.fileInfo.e_orientation || 1;
+const quickSave = async (): Promise<boolean> => {
+  if (!props.fileInfo) return false;
+  
+  isSaving.value = true;
 
-    const editParams = {
-      sourceFilePath: props.fileInfo.file_path,
-      destFilePath: props.fileInfo.file_path,
-      outputFormat: outputFormat,
-      quality: 80,
-      orientation: orientation,
-      flipHorizontal: false,
-      flipVertical: false,
-      rotate: 0,
-      crop: { x: 0, y: 0, width: 0, height: 0 },
-      resize: { width: props.fileInfo.width, height: props.fileInfo.height },
-      filter: selectedFilter.value || null,
-      brightness: brightness.value !== 0 ? brightness.value : null,
-      contrast: contrast.value !== 0 ? contrast.value : null,
-      blur: blur.value > 0 ? blur.value : null,
-      hue_rotate: hue.value !== 0 ? hue.value : null,
-      saturation: saturation.value !== 100 ? saturation.value / 100.0 : null,
-    };
+  const currentFilePath = props.fileInfo.file_path;
+  const currentFileName = props.fileInfo.name;
+  const currentWidth = props.fileInfo.width;
+  const currentHeight = props.fileInfo.height;
+  const currentOrientation = props.fileInfo.e_orientation || 1;
+
+  const ext = getFileExtension(currentFileName).toLowerCase();
+  const outputFormat = (ext === 'jpg' || ext === 'jpeg') ? 'jpg' : ext;
+
+  const editParams = {
+    sourceFilePath: currentFilePath,
+    destFilePath: currentFilePath,
+    outputFormat: outputFormat,
+    quality: 80,
+    orientation: currentOrientation,
+    flipHorizontal: false,
+    flipVertical: false,
+    rotate: 0,
+    crop: { x: 0, y: 0, width: 0, height: 0 },
+    resize: { width: currentWidth, height: currentHeight },
+    filter: selectedFilter.value || null,
+    brightness: brightness.value !== 0 ? brightness.value : null,
+    contrast: contrast.value !== 0 ? contrast.value : null,
+    blur: blur.value > 0 ? blur.value : null,
+    hue_rotate: hue.value !== 0 ? hue.value : null,
+    saturation: saturation.value !== 100 ? saturation.value / 100.0 : null,
+  };
+
+  // Background processing
+  try {
     const success = await editImage(editParams);
     if (success) {
-      uiStore.updateFileVersion(props.fileInfo.file_path);
+      uiStore.updateFileVersion(currentFilePath);
       emit('success');
       toolTipRef.value?.showTip(localeMsg.value.tooltip.save_image.success);
+      return true;
     } else {
+      isSaving.value = false;
       toolTipRef.value?.showTip(localeMsg.value.tooltip.save_image.failed, true);
+      return false;
     }
-  } finally {
-    isProcessing.value = false;
+  } catch {
+    isSaving.value = false;
+    toolTipRef.value?.showTip(localeMsg.value.tooltip.save_image.failed, true);
+    return false;
   }
 };
 
@@ -775,12 +791,21 @@ const initEditState = () => {
 };
 
 
-watch(() => props.fileInfo, () => {
+watch(() => props.fileInfo?.id, () => {
   if (activeTab.value === 'edit') {
     initEditState();
     updateRealHistogram();
   }
-}, { deep: true, immediate: true });
+}, { immediate: true });
+
+watch(() => uiStore.activeAdjustments.filePath, (newVal) => {
+  if (!newVal) {
+    if (activeTab.value === 'edit') {
+      initEditState();
+    }
+    isSaving.value = false;
+  }
+});
 
 onMounted(() => {
   if (activeTab.value === 'edit') {
@@ -905,5 +930,7 @@ const onLeave = (el: any) => {
   el.style.height = '0';
   el.style.opacity = '0';
 }
-
+defineExpose({
+  quickSave
+});
 </script>

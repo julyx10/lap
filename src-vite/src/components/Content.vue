@@ -314,6 +314,7 @@
           :class="[ 'pt-12 pr-1', config.settings.showStatusBar ? 'pb-8' : 'pb-1' ]" 
           :style="{ width: config.infoPanel.width + '%' }">
           <FileInfo 
+            ref="fileInfoRef"
             :fileInfo="fileList[selectedItemIndex]" 
             @close="checkUnsavedChanges(() => config.infoPanel.show = false)" 
             @success="onImageEdited(true)"
@@ -484,12 +485,14 @@
   <MessageBox
     v-if="showUnsavedChangesMsgbox"
     :title="$t('msgbox.unsaved_changes.title') || 'Unsaved Changes'"
-    :message="$t('msgbox.unsaved_changes.message') || 'You have unsaved changes. Do you want to discard them?'"
-    :OkText="$t('msgbox.discard') || 'Discard'"
+    :message="$t('msgbox.unsaved_changes.message') || 'You have unsaved changes. Do you want to save them?'"
+    :OkText="$t('msgbox.image_editor.save') || 'Save'"
     :cancelText="$t('msgbox.cancel')"
-    :warningOk="true"
-    @ok="confirmDiscard"
+    :thirdText="$t('msgbox.discard') || 'Discard'"
+    :warningThird="true"
+    @ok="confirmSave"
     @cancel="cancelDiscard"
+    @third="confirmDiscard"
   />
 
   <ToolTip ref="toolTipRef" />
@@ -655,6 +658,18 @@ const errorMessage = ref('');
 // Unsaved changes confirmation
 const showUnsavedChangesMsgbox = ref(false);
 const pendingAction = ref<(() => void) | null>(null);
+const fileInfoRef = ref<any>(null);
+
+const confirmSave = async () => {
+  showUnsavedChangesMsgbox.value = false;
+  if (fileInfoRef.value) {
+    const success = await fileInfoRef.value.quickSave();
+    if (success && pendingAction.value) {
+      pendingAction.value();
+      pendingAction.value = null;
+    }
+  }
+};
 
 const confirmDiscard = () => {
   showUnsavedChangesMsgbox.value = false;
@@ -946,17 +961,33 @@ onBeforeUnmount(() => {
 });
 
 // New event handlers for GridView
-function handleItemClicked(index: number) {
+function handleItemClicked(index: number, shiftKey: boolean = false) {
+  if (index === selectedItemIndex.value) {
+    if (selectMode.value) {
+      handleItemSelectToggled(index, shiftKey);
+    }
+    return;
+  }
+  
   checkUnsavedChanges(() => {
     selectedItemIndex.value = index;
     if (selectMode.value) {
-      fileList.value[index].isSelected = !fileList.value[index].isSelected;
+      handleItemSelectToggled(index, shiftKey);
     }
   });
 }
 
 // Double click grid view item
 function handleItemDblClicked(index: number) {
+  if (index === selectedItemIndex.value) {
+    if (!config.settings.grid.showFilmStrip) {
+      // quick view
+      showQuickView.value = true;
+      quickViewZoomFit.value = true;
+    }
+    return;
+  }
+  
   checkUnsavedChanges(() => {
     selectedItemIndex.value = index;
 
@@ -1077,15 +1108,17 @@ function requestNavigate(direction: 'prev' | 'next') {
 }
 
 function performNavigate(direction: 'prev' | 'next') {
-  if (direction === 'next') {
-    if (selectedItemIndex.value < fileList.value.length - 1) {
-      selectedItemIndex.value += 1;
+  checkUnsavedChanges(() => {
+    if (direction === 'next') {
+      if (selectedItemIndex.value < fileList.value.length - 1) {
+        selectedItemIndex.value += 1;
+      }
+    } else {
+      if (selectedItemIndex.value > 0) {
+        selectedItemIndex.value -= 1;
+      }
     }
-  } else {
-    if (selectedItemIndex.value > 0) {
-      selectedItemIndex.value -= 1;
-    }
-  }
+  });
 }
 
 function updateScrollPosition(currentScrollTop: number, currentScrollHeight: number) {
@@ -2507,11 +2540,6 @@ function removeFromFileList(index: number = 0) {
 
 // update the file info from the file
 const updateFile = async (file: any) => {
-  if (isProcessing.value) return;
-
-  isProcessing.value = true;
-
-  let success = false;
   try {
     const updatedFile = await updateFileInfo(file.id, file.file_path);
     if (updatedFile) {
@@ -2528,11 +2556,9 @@ const updateFile = async (file: any) => {
 
       // Clear CSS filter adjustments after image reload is triggered
       uiStore.clearActiveAdjustments();
-
-      success = true;
     }
-  } finally {
-    isProcessing.value = false;
+  } catch (err) {
+    console.error('Failed to update file info:', err);
   }
 }
 

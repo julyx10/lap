@@ -306,7 +306,7 @@
     "close": "閉じる",
     "unsaved_changes": {
       "title": "未保存の変更",
-      "message": "未保存の変更があります。破棄しますか？"
+      "message": "未保存の変更があります。保存しますか？"
     },
     "input": {
       "file_name_invalid": "名前に次の文字は使えません: \\ / : * ? \" < > |."

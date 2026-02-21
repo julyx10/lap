@@ -29,8 +29,13 @@
 
     <p class="h-4 text-error text-xs">{{ inputErrorMessage }}</p>
 
-    <!-- cancel and OK buttons -->
+    <!-- buttons -->
     <div class="mt-2 flex justify-end space-x-4">
+      <button v-if="thirdText.length > 0"
+        :class="['px-4 py-1 rounded-box cursor-pointer', warningThird ? 'hover:bg-error hover:text-base-100' : 'hover:bg-base-100 hover:text-base-content']" 
+        @click="clickThird"
+      >{{ thirdText }}</button>
+
       <button v-if="cancelText.length > 0"
         class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
         @click="clickCancel"
@@ -102,6 +107,14 @@ const props = defineProps({
   errorMessage: { 
     type: String, 
     default: '' 
+  },
+  thirdText: {
+    type: String,
+    default: ''
+  },
+  warningThird: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -110,7 +123,7 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
-const emit = defineEmits(['ok', 'cancel', 'reset']);
+const emit = defineEmits(['ok', 'cancel', 'reset', 'third']);
 
 // input 
 const inputRef = ref<HTMLInputElement | null>(null);
@@ -184,5 +197,9 @@ const clickOk = () => {
 
 const clickCancel = () => {
   emit('cancel');
+};
+
+const clickThird = () => {
+  emit('third');
 };
 </script>

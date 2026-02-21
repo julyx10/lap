@@ -306,7 +306,7 @@
     "close": "Close",
     "unsaved_changes": {
       "title": "Unsaved Changes",
-      "message": "You have unsaved changes. Do you want to discard them?"
+      "message": "You have unsaved changes. Do you want to save them?"
     },
     "input": {
       "file_name_invalid": "Name cannot contain the following characters: \\ / : * ? \" < > |."

@@ -40,7 +40,7 @@
           :is-selected="selectMode ? item.isSelected : index === selectedItemIndex"
           :select-mode="selectMode"
           :show-folder-files="showFolderFiles"
-          @clicked="$emit('item-clicked', index)"
+          @clicked="(shiftKey) => $emit('item-clicked', index, shiftKey)"
           @dblclicked="$emit('item-dblclicked', index)"
           @select-toggled="(shiftKey) => $emit('item-select-toggled', index, shiftKey)"
           @action="(actionName) => $emit('item-action', { action: actionName, index: index })"

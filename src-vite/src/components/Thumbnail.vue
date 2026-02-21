@@ -7,7 +7,7 @@
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
-    @click="$emit('clicked')"
+    @click="(event: MouseEvent) => $emit('clicked', event.shiftKey)"
     @dblclick="$emit('dblclicked')"
   >
     <div v-if="file.thumbnail" 
