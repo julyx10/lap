@@ -182,17 +182,37 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.sig
           if-no-files-found: error
 
-      # Upload DMG as artifact for the release job (macOS only)
+      # Rename .app.tar.gz to include architecture so they don't overwrite each other
+      - name: Rename macOS App Bundles
+        if: contains(matrix.platform, 'macos')
+        run: |
+          echo "Renaming macOS .app.tar.gz bundles to include architecture..."
+          for file in $(find src-tauri/target -name "*.app.tar.gz"); do
+            dir=$(dirname "$file")
+            base=$(basename "$file" .app.tar.gz)
+            mv "$file" "$dir/${base}_${{ matrix.arch }}.app.tar.gz"
+          done
+          for file in $(find src-tauri/target -name "*.app.tar.gz.sig"); do
+            dir=$(dirname "$file")
+            base=$(basename "$file" .app.tar.gz.sig)
+            mv "$file" "$dir/${base}_${{ matrix.arch }}.app.tar.gz.sig"
+          done
+
+      # Upload artifacts for the release job (macOS only)
       - name: Upload Build Artifact (macOS)
         if: contains(matrix.platform, 'macos')
         uses: actions/upload-artifact@v4
         with:
-          name: dmg-${{ matrix.arch }}
+          name: macos-${{ matrix.arch }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg.sig
             src-tauri/target/release/bundle/dmg/*.dmg
             src-tauri/target/release/bundle/dmg/*.dmg.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
+            src-tauri/target/release/bundle/macos/*.app.tar.gz
+            src-tauri/target/release/bundle/macos/*.app.tar.gz.sig
           if-no-files-found: error
 
 
@@ -213,6 +233,7 @@ jobs:
           mkdir -p release-files
           find artifacts -name "*.dmg" -exec cp {} release-files/ \;
           find artifacts -name "*.deb" -exec cp {} release-files/ \;
+          find artifacts -name "*.app.tar.gz" -exec cp {} release-files/ \;
           find artifacts -name "*.sig" -exec cp {} release-files/ \; 2>/dev/null || true
           ls -la release-files/
 
@@ -225,28 +246,40 @@ jobs:
           AARCH64_DMG=$(find release-files \( -name "*aarch64*.dmg" -o -name "*arm64*.dmg" \) | head -n 1)
           X86_64_DMG=$(find release-files \( -name "*x86_64*.dmg" -o -name "*x64*.dmg" \) | head -n 1)
           LINUX_DEB=$(find release-files -name "*.deb" | head -n 1)
+          AARCH64_APP=$(find release-files \( -name "*aarch64*.app.tar.gz" -o -name "*arm64*.app.tar.gz" \) | head -n 1)
+          X86_64_APP=$(find release-files \( -name "*x86_64*.app.tar.gz" -o -name "*x64*.app.tar.gz" \) | head -n 1)
           
           echo "Found artifacts:"
           echo "  AARCH64_DMG: $AARCH64_DMG"
           echo "  X86_64_DMG: $X86_64_DMG"
           echo "  LINUX_DEB: $LINUX_DEB"
+          echo "  AARCH64_APP: $AARCH64_APP"
+          echo "  X86_64_APP: $X86_64_APP"
           
           AARCH64_DMG_NAME=$(basename "$AARCH64_DMG" 2>/dev/null || echo "")
           X86_64_DMG_NAME=$(basename "$X86_64_DMG" 2>/dev/null || echo "")
           LINUX_DEB_NAME=$(basename "$LINUX_DEB" 2>/dev/null || echo "")
+          AARCH64_APP_NAME=$(basename "$AARCH64_APP" 2>/dev/null || echo "")
+          X86_64_APP_NAME=$(basename "$X86_64_APP" 2>/dev/null || echo "")
           
           # Get signatures if available
           AARCH64_SIG=""
           X86_64_SIG=""
           LINUX_SIG=""
+          AARCH64_APP_SIG=""
+          X86_64_APP_SIG=""
           
           [ -f "${AARCH64_DMG}.sig" ] && AARCH64_SIG=$(cat "${AARCH64_DMG}.sig")
           [ -f "${X86_64_DMG}.sig" ] && X86_64_SIG=$(cat "${X86_64_DMG}.sig")
           [ -f "${LINUX_DEB}.sig" ] && LINUX_SIG=$(cat "${LINUX_DEB}.sig")
+          [ -f "${AARCH64_APP}.sig" ] && AARCH64_APP_SIG=$(cat "${AARCH64_APP}.sig")
+          [ -f "${X86_64_APP}.sig" ] && X86_64_APP_SIG=$(cat "${X86_64_APP}.sig")
           
           echo "Signatures found: "
           echo "  AARCH64: ${#AARCH64_SIG} chars"
           echo "  X86_64: ${#X86_64_SIG} chars"
+          echo "  AARCH64_APP: ${#AARCH64_APP_SIG} chars"
+          echo "  X86_64_APP: ${#X86_64_APP_SIG} chars"
           
           # Create latest.json
           cat > release-files/latest.json <<EOF
@@ -256,12 +289,12 @@ jobs:
             "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "platforms": {
               "darwin-aarch64": {
-                "signature": "${AARCH64_SIG}",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${AARCH64_DMG_NAME}"
+                "signature": "${AARCH64_APP_SIG}",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${AARCH64_APP_NAME}"
               },
               "darwin-x86_64": {
-                "signature": "${X86_64_SIG}",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${X86_64_DMG_NAME}"
+                "signature": "${X86_64_APP_SIG}",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${X86_64_APP_NAME}"
               },
               "linux-x86_64": {
                 "signature": "${LINUX_SIG}",

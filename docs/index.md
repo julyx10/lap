@@ -6,12 +6,15 @@ hero:
   text: "Local-first, AI-powered Photo manager."
   tagline: ""
   image:
-    src: /screenshots/lap-home1.png
+    src: /screenshots/lap-home3.png
     alt: Lap Screenshot
   actions:
     - theme: brand
       text: Download
       link: https://github.com/julyx10/lap/releases/latest
+    - theme: alt
+      text: What's New in v0.1.6
+      link: /guide/release-notes/v0.1.6
     - theme: alt
       text: View on GitHub
       link: https://github.com/julyx10/lap
@@ -201,5 +204,3 @@ onMounted(() => {
   <img :src="imgSrc" class="lightbox-img" />
   <div class="close-btn">&times;</div>
 </div>
-
-<Fireworks />

@@ -421,7 +421,7 @@ const hue = ref(0);
 const saturation = ref(100); 
 
 // save as
-const newFileName = ref('');
+const newFileName = ref(props.fileInfo.name.substring(0, props.fileInfo.name.lastIndexOf('.')) || props.fileInfo.name);
 
 const fileSaveAsOptions = computed(() => {
   return getSelectOptions(localeMsg.value.msgbox.image_editor.save_as_options);

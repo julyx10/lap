@@ -12,6 +12,7 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 - **Blazing Fast**: Powered by Rust and Tauri 2.
 - **AI Search**: Natural language search ("red car in rain") running locally.
 - **Face Recognition**: Private face clustering.
+- **Built-in Image Editor**: Quickly adjust, crop, rotate, and style your photos directly in the app.
 - **File System Sync**: Reflects your actual folder structure.
 
 ## Getting Started
@@ -19,4 +20,4 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 Lap is currently available for macOS (Apple Silicon). Windows support is coming soon.
 
 - [Download the latest release](https://github.com/julyx10/lap/releases)
-- [Check out what's new in v0.1.5](/guide/release-notes/v0.1.5)
+- [Check out what's new in v0.1.6](/guide/release-notes/v0.1.6)

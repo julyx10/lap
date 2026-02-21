@@ -1,6 +1,6 @@
 {
   "productName": "Lap",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "identifier": "com.julyx10.lap",
   "build": {
     "beforeBuildCommand": "pnpm build",
@@ -47,6 +47,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/icon.png",
       "icons/icon.ico",
