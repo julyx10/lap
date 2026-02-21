@@ -179,7 +179,16 @@
     "tabs": [
       "Info",
       "Ajuster"
-    ]
+    ],
+    "select_hint": "Cliquez sur un élément pour le sélectionner ou le désélectionner. Maintenez ⇧ Maj pour sélectionner une plage.",
+    "edit_disabled": "Sélectionnez une seule image pour l'éditer",
+    "type_image": "Image",
+    "type_images": "Images",
+    "type_video": "Vidéo",
+    "type_videos": "Vidéos",
+    "favorite_all": "Favori",
+    "unfavorite_all": "Retirer",
+    "tag_all": "Tag"
   },
   "tooltip": {
     "loading": "Chargement...",
@@ -510,6 +519,7 @@
       "flip_horizontal": "Miroir H",
       "flip_vertical": "Miroir V",
       "restore": "Restaurer",
+      "transform": "Transformer",
       "resize": "Redimensionner",
       "width": "Largeur",
       "height": "Hauteur",

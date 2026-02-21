@@ -179,7 +179,16 @@
     "tabs": [
       "Info",
       "Adjust"
-    ]
+    ],
+    "select_hint": "Click an item to select or deselect it. Hold ⇧ Shift to select a range.",
+    "edit_disabled": "Select a single image to edit",
+    "type_image": "Image",
+    "type_images": "Images",
+    "type_video": "Video",
+    "type_videos": "Videos",
+    "favorite_all": "Favorite",
+    "unfavorite_all": "Unfavorite",
+    "tag_all": "Tag"
   },
   "tooltip": {
     "loading": "Loading...",
@@ -510,6 +519,7 @@
       "flip_horizontal": "Flip horizontal",
       "flip_vertical": "Flip vertical",
       "restore": "Restore",
+      "transform": "Transform",
       "resize": "Resize",
       "width": "Width",
       "height": "Height",

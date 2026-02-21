@@ -179,7 +179,16 @@
     "tabs": [
       "信息",
       "调整"
-    ]
+    ],
+    "select_hint": "点击项目以选择或取消选择。按住 ⇧ Shift 键可选择范围。",
+    "edit_disabled": "请选择单个图片进行编辑",
+    "type_image": "张图片",
+    "type_images": "张图片",
+    "type_video": "个视频",
+    "type_videos": "个视频",
+    "favorite_all": "收藏",
+    "unfavorite_all": "取消收藏",
+    "tag_all": "标签"
   },
   "tooltip": {
     "loading": "加载中...",
@@ -510,6 +519,7 @@
       "flip_horizontal": "水平翻转",
       "flip_vertical": "垂直翻转",
       "restore": "还原",
+      "transform": "变换",
       "resize": "调整尺寸",
       "width": "宽度",
       "height": "高度",

@@ -4,11 +4,11 @@
     <div class="flex items-center w-full shrink-0 px-2 mb-2">
       <div role="tablist" class="tabs tabs-sm tabs-border flex-1">
         <a role="tab" :class="['tab mx-1', { 'tab-active': activeTab === 'info' }]" @click="activeTab = 'info'">{{ $t('info_panel.tabs[0]') }}</a>
-        <a role="tab" :class="['tab mx-1', { 'tab-active': activeTab === 'edit' }]" @click="activeTab = 'edit'">{{ $t('info_panel.tabs[1]') }}</a>
+        <a role="tab" :class="['tab mx-1', { 'tab-active': activeTab === 'edit' && !multiSelect, 'opacity-30 cursor-not-allowed': multiSelect }]" @click="!multiSelect && (activeTab = 'edit')">{{ $t('info_panel.tabs[1]') }}</a>
       </div>
       <div class="mt-2 flex items-center gap-1">
         <!-- Buttons -->
-        <template v-if="activeTab === 'edit' && hasChanges && !isSaving">
+        <template v-if="activeTab === 'edit' && hasChanges && !isSaving && !multiSelect">
           <TButton
             :icon="IconRestore"
             :tooltip="$t('msgbox.image_editor.reset')"
@@ -35,7 +35,73 @@
     </div>
 
     <!-- Info Content -->
-    <div v-if="fileInfo" v-show="activeTab === 'info'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-3 flex flex-col bg-base-200/50">
+    <!-- Multi-Select: No files selected yet -->
+    <div v-if="multiSelect && selectedFiles.length === 0" v-show="activeTab === 'info'" class="mb-2 px-2 flex-1 flex items-center justify-center bg-base-200/50">
+      <div class="text-center text-base-content/40 space-y-3 max-w-[200px]">
+        <IconFiles class="w-8 h-8 mx-auto text-base-content/30" />
+        <p class="text-xs font-medium leading-relaxed">{{ $t('info_panel.select_hint') }}</p>
+      </div>
+    </div>
+
+    <!-- Multi-Select Summary View -->
+    <div v-if="multiSelect && selectedFiles.length > 0" v-show="activeTab === 'info'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-3 flex flex-col bg-base-200/50">
+      <div class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
+        <!-- Header -->
+        <div class="flex items-center gap-2 text-base-content/70">
+          <IconCheckAll class="w-4 h-4" />
+          <span class="font-bold uppercase text-xs tracking-wide">{{ $t('toolbar.filter.select_count', { count: selectedFiles.length }) + ' (' + formatFileSize(multiSelectTotalSize) + ')' }}</span>
+        </div>
+
+        <!-- Thumbnail Grid -->
+        <div class="grid grid-cols-3 gap-1">
+          <div v-for="(file, idx) in selectedFiles.slice(0, selectedFiles.length <= 20 ? 20 : 19)" :key="file.id || idx"
+            class="aspect-square rounded-md overflow-hidden bg-base-content/5 border border-base-content/5 cursor-pointer relative group"
+            @click="emit('deselect', file)">
+            <img v-if="file.thumbnail" :src="file.thumbnail" class="w-full h-full object-cover" />
+            <div v-else class="w-full h-full skeleton"></div>
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <IconClose class="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <div v-if="selectedFiles.length > 20"
+            class="aspect-square rounded-md overflow-hidden bg-base-content/5 border border-base-content/5 flex items-center justify-center">
+            <span class="text-xs font-bold text-base-content/40">+{{ selectedFiles.length - 19 }}</span>
+          </div>
+        </div>
+
+        <!-- Summary Info -->
+        <div class="space-y-2 text-xs">
+          <!-- File type breakdown -->
+          <div class="flex items-center gap-1 text-base-content/50 font-medium">
+            <span>{{ multiSelectTypeBreakdown }}</span>
+          </div>
+
+          <!-- Date range -->
+          <div v-if="multiSelectDateRange" class="flex items-center gap-1 text-base-content/50 font-medium">
+            <span>{{ multiSelectDateRange }}</span>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="flex gap-1 pt-1">
+          <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('favoriteAll')">
+            <IconFavorite class="w-3.5 h-3.5" />
+            <span>{{ $t('info_panel.favorite_all') }}</span>
+          </button>
+          <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('unfavoriteAll')">
+            <IconUnFavorite class="w-3.5 h-3.5" />
+            <span>{{ $t('info_panel.unfavorite_all') }}</span>
+          </button>
+          <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('tagAll')">
+            <IconTag class="w-3.5 h-3.5" />
+            <span>{{ $t('info_panel.tag_all') }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Single-File Info Content -->
+    <div v-if="fileInfo && !multiSelect" v-show="activeTab === 'info'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-3 flex flex-col bg-base-200/50">
 
       <!-- Title / Thumbnail -->
       <!-- <div class="flex justify-center p-2">
@@ -225,7 +291,15 @@
     </div>
 
     <!-- Edit Content -->
-    <div v-if="fileInfo && fileInfo.file_type === 1" v-show="activeTab === 'edit'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-3 flex flex-col min-h-0 bg-base-200/50">
+    <!-- Multi-select: Adjust tab disabled message -->
+    <div v-if="multiSelect" v-show="activeTab === 'edit'" class="mb-2 px-2 flex-1 flex items-center justify-center bg-base-200/50">
+      <div class="text-center text-base-content/30 space-y-2">
+        <IconAdjustments class="w-8 h-8 mx-auto opacity-30" />
+        <p class="text-xs font-medium">{{ $t('info_panel.edit_disabled') }}</p>
+      </div>
+    </div>
+
+    <div v-if="fileInfo && fileInfo.file_type === 1 && !multiSelect" v-show="activeTab === 'edit'" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden space-y-3 flex flex-col min-h-0 bg-base-200/50">
       
       <!-- Histogram Section -->
       <div v-if="config.infoPanel.showHistogram" class="rounded-box p-3 bg-base-300/30 border border-base-content/5 shadow-sm">
@@ -416,7 +490,8 @@ import {
 } from '@/common/utils';
 import { 
   IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
-  IconFile, IconRestore, IconSave, IconPalette, IconAdjustments,
+  IconFile, IconFiles, IconRestore, IconSave, IconPalette, IconAdjustments,
+  IconCheckAll, IconFavorite, IconUnFavorite, IconTag,
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -428,6 +503,14 @@ const props = defineProps({
     type: Object,
     required: false
   },
+  multiSelect: {
+    type: Boolean,
+    default: false
+  },
+  selectedFiles: {
+    type: Array as () => any[],
+    default: () => []
+  },
 });
 
 const { locale, messages } = useI18n();
@@ -437,7 +520,11 @@ const uiStore = useUIStore();
 
 const emit = defineEmits([
   'close',
-  'success'
+  'success',
+  'deselect',
+  'favoriteAll',
+  'unfavoriteAll',
+  'tagAll'
 ]);
 
 // Tabs logic
@@ -446,6 +533,32 @@ const activeTab = computed({
   set: (val) => config.infoPanel.activeTab = val
 });
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
+
+// Multi-select computed
+const multiSelectTotalSize = computed(() => {
+  return props.selectedFiles.reduce((total: number, f: any) => total + (f.size || 0), 0);
+});
+
+const multiSelectDateRange = computed(() => {
+  if (props.selectedFiles.length === 0) return '';
+  const dates = props.selectedFiles
+    .map((f: any) => f.created_at)
+    .filter(Boolean)
+    .sort();
+  if (dates.length === 0) return '';
+  const first = formatTimestamp(dates[0], 'YYYY-MM-DD');
+  const last = formatTimestamp(dates[dates.length - 1], 'YYYY-MM-DD');
+  return first === last ? first : `${first} — ${last}`;
+});
+
+const multiSelectTypeBreakdown = computed(() => {
+  const images = props.selectedFiles.filter((f: any) => f.file_type === 1).length;
+  const videos = props.selectedFiles.filter((f: any) => f.file_type === 2).length;
+  const parts = [];
+  if (images > 0) parts.push(`${images} ${images === 1 ? localeMsg.value.info_panel.type_image : localeMsg.value.info_panel.type_images}`);
+  if (videos > 0) parts.push(`${videos} ${videos === 1 ? localeMsg.value.info_panel.type_video : localeMsg.value.info_panel.type_videos}`);
+  return parts.join(' · ');
+});
 const isProcessing = ref(false);
 const isSaving = ref(false);
 
@@ -797,6 +910,20 @@ watch(() => props.fileInfo?.id, () => {
     updateRealHistogram();
   }
 }, { immediate: true });
+
+// When the thumbnail loads asynchronously (e.g. first item), regenerate histogram
+watch(() => props.fileInfo?.thumbnail, (newThumb) => {
+  if (newThumb && activeTab.value === 'edit') {
+    updateRealHistogram();
+  }
+});
+
+// Auto-switch to Info tab when entering multi-select mode
+watch(() => props.multiSelect, (isMulti) => {
+  if (isMulti && activeTab.value === 'edit') {
+    activeTab.value = 'info';
+  }
+});
 
 watch(() => uiStore.activeAdjustments.filePath, (newVal) => {
   if (!newVal) {

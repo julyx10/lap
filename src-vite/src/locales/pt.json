@@ -179,7 +179,16 @@
     "tabs": [
       "Info",
       "Ajustar"
-    ]
+    ],
+    "select_hint": "Clique em um item para selecionar ou desmarcar. Segure ⇧ Shift para selecionar um intervalo.",
+    "edit_disabled": "Selecione uma única imagem para editar",
+    "type_image": "Imagem",
+    "type_images": "Imagens",
+    "type_video": "Vídeo",
+    "type_videos": "Vídeos",
+    "favorite_all": "Favorito",
+    "unfavorite_all": "Remover",
+    "tag_all": "Tag"
   },
   "tooltip": {
     "loading": "Carregando...",
@@ -510,6 +519,7 @@
       "flip_horizontal": "Espelhar hor",
       "flip_vertical": "Espelhar ver",
       "restore": "Restaurar",
+      "transform": "Transformar",
       "resize": "Redimensionar",
       "width": "Largura",
       "height": "Altura",

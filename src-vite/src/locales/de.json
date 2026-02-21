@@ -179,7 +179,16 @@
     "tabs": [
       "Info",
       "Anpassen"
-    ]
+    ],
+    "select_hint": "Klicken Sie auf ein Element, um es auszuwählen oder abzuwählen. Halten Sie ⇧ Umschalttaste für eine Bereichsauswahl.",
+    "edit_disabled": "Wählen Sie ein einzelnes Bild zum Bearbeiten",
+    "type_image": "Bild",
+    "type_images": "Bilder",
+    "type_video": "Video",
+    "type_videos": "Videos",
+    "favorite_all": "Favorit",
+    "unfavorite_all": "Entfernen",
+    "tag_all": "Tag"
   },
   "tooltip": {
     "loading": "Laden...",
@@ -510,6 +519,7 @@
       "flip_horizontal": "Horizontal spiegeln",
       "flip_vertical": "Vertikal spiegeln",
       "restore": "Wiederherstellen",
+      "transform": "Transformieren",
       "resize": "Größe ändern",
       "width": "Breite",
       "height": "Höhe",

@@ -316,9 +316,15 @@
           <FileInfo 
             ref="fileInfoRef"
             :fileInfo="fileList[selectedItemIndex]" 
+            :multiSelect="selectMode"
+            :selectedFiles="selectedFiles"
             @close="checkUnsavedChanges(() => config.infoPanel.show = false)" 
             @success="onImageEdited(true)"
             @failed="onImageEdited(false)"
+            @deselect="(file: any) => file.isSelected = false"
+            @favoriteAll="selectModeSetFavorites(true)"
+            @unfavoriteAll="selectModeSetFavorites(false)"
+            @tagAll="clickTag"
           />
         </div>
       </transition>
@@ -614,6 +620,7 @@ const selectedItemIndex = ref(-1);
 const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
+const selectedFiles = computed(() => selectMode.value ? fileList.value.filter(f => f.isSelected) : []);
 
 // quick view
 const showQuickView = ref(false);

@@ -1,11 +1,11 @@
 <template>
 
-  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="868" @cancel="clickCancel">
+  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="984" @cancel="clickCancel">
     <!-- content -->
-    <div class="grow flex gap-4 select-none">
-      <div class="flex-1">
+    <div class="h-[516px] flex gap-4 select-none">
+      <div class="flex-none h-full aspect-4/3 flex flex-col min-w-0">
         <!-- image container -->
-        <div ref="containerRef" class="relative w-[610px] h-[460px] outline outline-base-content/5 cursor-default rounded-box overflow-hidden select-none">
+        <div ref="containerRef" class="relative flex-1 outline outline-base-content/5 cursor-default rounded-box overflow-hidden select-none">
 
           <!-- Loading overlay -->
           <transition name="fade">
@@ -54,24 +54,57 @@
             </template>
           </div>
         </div>
+      </div>
 
-        <!-- crop controls -->
-        <div class="py-2 flex justify-between">
-   
-          <!-- crop shape controls -->
-          <div 
-            :class="['flex p-1 border rounded-box', 
-              cropStatus==1 ? 'border-primary' : 'border-transparent',
-            ]"
-          >
-            <TButton v-if="cropStatus===0 || cropStatus===2"
-              :icon="IconCrop"
-              :selected="cropStatus===2"
-              :tooltip="$t('msgbox.image_editor.crop')"
-              @click="cropStatus===0 ? clickStartCrop() : clickRestoreCrop()" 
-            />
+      <!-- Right: Sidebar -->
+      <div class="w-64 flex flex-col gap-2 overflow-y-auto">
 
-            <div v-if="cropStatus==1" class="flex items-center">
+        <!-- Transform Section -->
+        <div class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5">
+          <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
+            @click="showTransform = !showTransform">
+            <IconCrop class="w-4 h-4" />
+            <span class="font-bold text-xs uppercase tracking-wide mr-auto">{{ $t('msgbox.image_editor.transform') }}</span>
+            <component :is="showTransform ? IconArrowUp : IconArrowDown" class="w-3.5 h-3.5 opacity-50" />
+          </div>
+          <div v-if="showTransform">
+            <!-- Default: all tools in one row -->
+            <div v-if="cropStatus !== 1" class="flex items-center gap-1">
+              <TButton
+                :icon="IconCrop"
+                :selected="cropStatus===2"
+                :tooltip="$t('msgbox.image_editor.crop')"
+                @click="cropStatus===0 ? clickStartCrop() : clickRestoreCrop()" 
+              />
+              <IconSeparator class="t-icon-size-sm text-base-content/30" />
+              <TButton
+                :icon="IconRotateLeft"
+                :disabled="cropStatus > 0"
+                :tooltip="$t('msgbox.image_editor.rotate_left')"
+                @click="clickRotate(-90)" 
+              />
+              <TButton
+                :icon="IconRotateRight"
+                :disabled="cropStatus > 0"
+                :tooltip="$t('msgbox.image_editor.rotate_right')"
+                @click="clickRotate(90)" 
+              />
+              <TButton
+                :icon="IconFlipHorizontal"
+                :disabled="cropStatus > 0"
+                :tooltip="$t('msgbox.image_editor.flip_horizontal')"
+                @click="clickFlipX" 
+              />
+              <TButton
+                :icon="IconFlipVertical"
+                :disabled="cropStatus > 0"
+                :tooltip="$t('msgbox.image_editor.flip_vertical')"
+                @click="clickFlipY" 
+              />
+            </div>
+
+            <!-- Crop active: sub-controls replace the row -->
+            <div v-else class="flex items-center gap-1 p-1 rounded-box border border-primary">
               <TButton
                 :icon="IconClose"
                 :tooltip="$t('msgbox.image_editor.cancel_crop')"
@@ -84,7 +117,7 @@
                 :tooltip="isPortrait ? $t('msgbox.image_editor.crop_shape_portrait') : $t('msgbox.image_editor.crop_shape_landscape')"
                 @click="togglePortraitAndLandscape" 
               />
-              <select v-model="config.imageEditor.cropShape" class="select select-bordered" :disabled="cropBoxFixed" @change="onChangeCropShape">
+              <select v-model="config.imageEditor.cropShape" class="select select-bordered select-xs flex-1 min-w-0" :disabled="cropBoxFixed" @change="onChangeCropShape">
                 <option v-for="option in cropShapeOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
               </select>
               <TButton
@@ -97,46 +130,19 @@
                 :tooltip="$t('msgbox.image_editor.confirm_crop')"
                 @click="clickDoCrop"
               />
-            </div>  
+            </div>
           </div>
-
-          <!-- rotate and flip controls -->
-          <div class="my-2 flex gap-2">
-            <TButton
-              :icon="IconRotateLeft"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.rotate_left')"
-              @click="clickRotate(-90)" 
-            />
-            <TButton
-              :icon="IconRotateRight"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.rotate_right')"
-              @click="clickRotate(90)" 
-            />
-            <TButton
-              :icon="IconFlipHorizontal"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.flip_horizontal')"
-              @click="clickFlipX" 
-            />
-            <TButton
-              :icon="IconFlipVertical"
-              :disabled="cropStatus > 0"
-              :tooltip="$t('msgbox.image_editor.flip_vertical')"
-              @click="clickFlipY" 
-            />
-          </div>
-
         </div>
-      </div>
 
-      <!-- edit controls / adjustments -->
-      <div class="w-56 flex flex-col gap-2 overflow-y-auto">
-        <div class="flex flex-col gap-4 p-1">
-          <!-- Resize -->
-          <div>
-            <h3 class="font-bold text-sm mb-2 opacity-70">{{ $t('msgbox.image_editor.resize') }}</h3>
+        <!-- Resize Section -->
+        <div class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5">
+          <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
+            @click="showResize = !showResize">
+            <IconResize class="w-4 h-4" />
+            <span class="font-bold text-xs uppercase tracking-wide mr-auto">{{ $t('msgbox.image_editor.resize') }}</span>
+            <component :is="showResize ? IconArrowUp : IconArrowDown" class="w-3.5 h-3.5 opacity-50" />
+          </div>
+          <div v-if="showResize" class="space-y-2">
             <div class="grid grid-cols-2 gap-2">
               <div class="form-control w-full">
                 <label class="label py-1">
@@ -159,7 +165,7 @@
                 />
               </div>
             </div>
-            <div class="form-control w-full mt-2">
+            <div class="form-control w-full">
               <label class="label py-1">
                 <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.percentage') }}</span>
               </label>
@@ -173,42 +179,48 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- options -->
-          <div>
-            <h3 class="font-bold text-sm mb-2 opacity-70">{{ $t('msgbox.image_editor.options') }}</h3>
-            <div class="flex flex-col gap-2">
+        <!-- Options Section -->
+        <div class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5">
+          <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content"
+            @click="showOptions = !showOptions">
+            <IconSave class="w-4 h-4" />
+            <span class="font-bold text-xs uppercase tracking-wide mr-auto">{{ $t('msgbox.image_editor.options') }}</span>
+            <component :is="showOptions ? IconArrowUp : IconArrowDown" class="w-3.5 h-3.5 opacity-50" />
+          </div>
+          <div v-if="showOptions" class="space-y-2">
+            <div class="form-control w-full">
+              <label class="label py-1">
+                <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.save_as') }}</span>
+              </label>
+              <select v-model="config.imageEditor.saveAs" class="select select-bordered select-sm w-full" :disabled="cropStatus==1">
+                <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            
+            <div v-if="config.imageEditor.saveAs !== 0" class="grid grid-cols-2 gap-2">
               <div class="form-control w-full">
                 <label class="label py-1">
-                  <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.save_as') }}</span>
+                  <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.format') }}</span>
                 </label>
-                <select v-model="config.imageEditor.saveAs" class="select select-bordered select-sm w-full" :disabled="cropStatus==1">
-                  <option v-for="option in fileSaveAsOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                <select v-model="config.imageEditor.format" class="select select-bordered select-sm w-full" :disabled="cropStatus==1">
+                  <option v-for="option in fileFormatOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
                 </select>
               </div>
               
-              <div v-if="config.imageEditor.saveAs !== 0" class="grid grid-cols-2 gap-2">
-                <div class="form-control w-full">
-                  <label class="label py-1">
-                    <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.format') }}</span>
-                  </label>
-                  <select v-model="config.imageEditor.format" class="select select-bordered select-sm w-full" :disabled="cropStatus==1">
-                    <option v-for="option in fileFormatOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                  </select>
-                </div>
-                
-                <div v-if="config.imageEditor.format == 0" class="form-control w-full">
-                  <label class="label py-1">
-                    <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.quality') }}</span>
-                  </label>
-                  <select v-model="config.imageEditor.quality" class="select select-bordered select-sm w-full" :disabled="cropStatus==1">
-                    <option v-for="option in fileQualityOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
-                  </select>
-                </div>
+              <div v-if="config.imageEditor.format == 0" class="form-control w-full">
+                <label class="label py-1">
+                  <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.quality') }}</span>
+                </label>
+                <select v-model="config.imageEditor.quality" class="select select-bordered select-sm w-full" :disabled="cropStatus==1">
+                  <option v-for="option in fileQualityOptions" :value="option.value" :key="option.value">{{ option.label }}</option>
+                </select>
               </div>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -254,14 +266,13 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch, type CSSPropert
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { getFolderPath, extractFileName, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
+import { getFolderPath, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
 import { editImage, copyEditedImage, checkFileExists } from '@/common/api';
 
 import ToolTip from '@/components/ToolTip.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';
-import SliderInput from '@/components/SliderInput.vue';
 
 import { 
   IconCrop,
@@ -274,6 +285,11 @@ import {
   IconFlipHorizontal,
   IconClose, 
   IconOk,
+  IconArrowUp,
+  IconArrowDown,
+  IconResize,
+  IconSave,
+  IconSeparator,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -292,6 +308,11 @@ const emit = defineEmits(['success', 'failed', 'cancel']);
 
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 const isProcessing = ref(false);  // show processing status
+
+// sidebar section toggles
+const showTransform = ref(true);
+const showResize = ref(true);
+const showOptions = ref(true);
 
 // container
 const containerRef = ref<HTMLElement | null>(null);

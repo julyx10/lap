@@ -179,7 +179,16 @@
     "tabs": [
       "情報",
       "調整"
-    ]
+    ],
+    "select_hint": "クリックで選択・解除。⇧ Shift キーを押しながら範囲選択できます。",
+    "edit_disabled": "編集するには画像を1つ選択してください",
+    "type_image": "枚の画像",
+    "type_images": "枚の画像",
+    "type_video": "本の動画",
+    "type_videos": "本の動画",
+    "favorite_all": "お気に入り",
+    "unfavorite_all": "お気に入り解除",
+    "tag_all": "タグ"
   },
   "tooltip": {
     "loading": "読み込み中...",
@@ -510,6 +519,7 @@
       "flip_horizontal": "左右反転",
       "flip_vertical": "上下反転",
       "restore": "元に戻す",
+      "transform": "変形",
       "resize": "サイズ変更",
       "width": "幅",
       "height": "高さ",

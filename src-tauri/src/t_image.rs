@@ -259,18 +259,35 @@ fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
     }
 
     // 5. Adjustments & Filters
+    // NOTE: These implementations match CSS filter spec so preview == saved result.
 
-    // Brightness: -100 to 100.
+    // Brightness: CSS brightness(X%) multiplies each channel by X/100.
+    // Frontend sends -100..100, meaning factor = (100 + b) / 100.
     if let Some(b) = params.brightness {
         if b != 0 {
-            img = img.brighten(b);
+            let factor = (100 + b) as f32 / 100.0;
+            let mut rgba = img.to_rgba8();
+            for pixel in rgba.pixels_mut() {
+                pixel[0] = (pixel[0] as f32 * factor).clamp(0.0, 255.0) as u8;
+                pixel[1] = (pixel[1] as f32 * factor).clamp(0.0, 255.0) as u8;
+                pixel[2] = (pixel[2] as f32 * factor).clamp(0.0, 255.0) as u8;
+            }
+            img = DynamicImage::ImageRgba8(rgba);
         }
     }
 
-    // Contrast: -100.0 to 100.0.
+    // Contrast: CSS contrast(X%) scales deviation from 128 gray by X/100.
+    // Frontend sends -100..100, meaning factor = (100 + c) / 100.
     if let Some(c) = params.contrast {
         if c != 0.0 {
-            img = img.adjust_contrast(c);
+            let factor = (100.0 + c) / 100.0;
+            let mut rgba = img.to_rgba8();
+            for pixel in rgba.pixels_mut() {
+                pixel[0] = ((pixel[0] as f32 - 128.0) * factor + 128.0).clamp(0.0, 255.0) as u8;
+                pixel[1] = ((pixel[1] as f32 - 128.0) * factor + 128.0).clamp(0.0, 255.0) as u8;
+                pixel[2] = ((pixel[2] as f32 - 128.0) * factor + 128.0).clamp(0.0, 255.0) as u8;
+            }
+            img = DynamicImage::ImageRgba8(rgba);
         }
     }
 

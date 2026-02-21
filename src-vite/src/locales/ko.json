@@ -179,7 +179,16 @@
     "tabs": [
       "정보",
       "조정"
-    ]
+    ],
+    "select_hint": "항목을 클릭하여 선택하거나 해제합니다. ⇧ Shift 키를 눌러 범위를 선택할 수 있습니다.",
+    "edit_disabled": "편집하려면 이미지를 하나만 선택하세요",
+    "type_image": "개 이미지",
+    "type_images": "개 이미지",
+    "type_video": "개 비디오",
+    "type_videos": "개 비디오",
+    "favorite_all": "즐겨찾기",
+    "unfavorite_all": "즐겨찾기 해제",
+    "tag_all": "태그"
   },
   "tooltip": {
     "loading": "로딩 중...",
@@ -510,6 +519,7 @@
       "flip_horizontal": "좌우 반전",
       "flip_vertical": "상하 반전",
       "restore": "복구",
+      "transform": "변형",
       "resize": "크기 조절",
       "width": "너비",
       "height": "높이",
