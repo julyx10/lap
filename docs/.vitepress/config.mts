@@ -4,7 +4,21 @@ export default defineConfig({
     base: '/lap/',
     title: "Lap",
     description: "Local-first, AI-powered photo manager",
-    head: [['link', { rel: 'icon', href: '/logo.png' }]],
+    head: [
+        ['link', { rel: 'icon', href: '/logo.png' }],
+        [
+            'script',
+            { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-SVT0K4C2ET' }
+        ],
+        [
+            'script',
+            {},
+            `window.dataLayer = window.dataLayer || [];
+             function gtag(){dataLayer.push(arguments);}
+             gtag('js', new Date());
+             gtag('config', 'G-SVT0K4C2ET');`
+        ]
+    ],
     themeConfig: {
         logo: '/logo.png',
         nav: [
@@ -23,6 +37,7 @@ export default defineConfig({
             {
                 text: 'Release Notes',
                 items: [
+                    { text: 'v0.1.6', link: '/guide/release-notes/v0.1.6' },
                     { text: 'v0.1.5', link: '/guide/release-notes/v0.1.5' },
                     { text: 'v0.1.4', link: '/guide/release-notes/v0.1.4' },
                     { text: 'v0.1.3', link: '/guide/release-notes/v0.1.3' },

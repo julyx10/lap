@@ -29,14 +29,14 @@ features:
   - title: Smart Local AI
     details: Search by content, recognize faces, and find similar shots—all processed 100% locally.
     icon: 🧠
-  - title: File System Sync
-    details: No proprietary database lock-in. Move a file in Finder, it updates in Lap instantly.
+  - title: Direct Folder Management
+    details: No proprietary databases. Just add a folder to manage files directly in Lap. External changes like renaming sync easily.
     icon: 📂
   - title: Multi-Platform
-    details: Native on macOS (Apple Silicon). Windows support coming soon.
+    details: Native on macOS (Apple Silicon & Intel) and Linux. Windows support coming soon.
     icon: 🖥️
-  - title: Open & Transparent
-    details: Community-driven and transparent source code. Built with modern tech like Vue and Tauri.
+  - title: Open Source
+    details: Community-driven and transparent source code.
     icon: 🤝
 ---
 
