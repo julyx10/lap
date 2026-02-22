@@ -225,7 +225,7 @@
     </div>
 
     <!-- dialog buttons -->
-    <div class="flex justify-end gap-4">
+    <div class="mt-4 flex justify-end gap-4">
       <button
         class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer"
         @click="clickCancel"
@@ -507,30 +507,28 @@ const initImageEditor = () => {
   // image transform init
   enableTransition.value = false;
   
-  // Inherit adjustments from uiStore
+  // Inherit only spatial transforms (rotate/flip) from uiStore
+  // Note: Filter/color adjustments (brightness, contrast, etc.) are NOT inherited
+  // because the ImageEditor loads the original file from disk, and those are
+  // unsaved CSS-preview-only values from the Adjust tab.
   if (uiStore.activeAdjustments.filePath === props.fileInfo.file_path) {
     const adj = uiStore.activeAdjustments;
-    brightness.value = adj.brightness || 0;
-    contrast.value = adj.contrast || 0;
-    saturation.value = adj.saturation ?? 100;
-    hue.value = adj.hue || 0;
-    blur.value = adj.blur || 0;
-    selectedFilter.value = adj.filter || '';
     rotate.value = adj.rotate || 0;
     isFlippedX.value = !!adj.flipX;
     isFlippedY.value = !!adj.flipY;
   } else {
-     // Default state
-     brightness.value = 0;
-     contrast.value = 0;
-     saturation.value = 100;
-     hue.value = 0;
-     blur.value = 0;
-     selectedFilter.value = '';
      rotate.value = 0;
      isFlippedX.value = false;
      isFlippedY.value = false;
   }
+
+  // Always start with default filter/color values
+  brightness.value = 0;
+  contrast.value = 0;
+  saturation.value = 100;
+  hue.value = 0;
+  blur.value = 0;
+  selectedFilter.value = '';
 };
 
 const clickStartCrop = () => {

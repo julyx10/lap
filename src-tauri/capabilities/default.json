@@ -57,6 +57,7 @@
     "os:default",
     "shell:default",
     "fs:default",
-    "fs:scope"
+    "fs:scope",
+    "updater:default"
   ]
 }
