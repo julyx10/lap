@@ -190,11 +190,19 @@ jobs:
           for file in $(find src-tauri/target -name "*.app.tar.gz"); do
             dir=$(dirname "$file")
             base=$(basename "$file" .app.tar.gz)
+            if [[ "$base" == *"_${{ matrix.arch }}" ]]; then
+              echo "Skipping $file (already contains architecture suffix)"
+              continue
+            fi
             mv "$file" "$dir/${base}_${{ matrix.arch }}.app.tar.gz"
           done
           for file in $(find src-tauri/target -name "*.app.tar.gz.sig"); do
             dir=$(dirname "$file")
             base=$(basename "$file" .app.tar.gz.sig)
+            if [[ "$base" == *"_${{ matrix.arch }}" ]]; then
+              echo "Skipping $file (already contains architecture suffix)"
+              continue
+            fi
             mv "$file" "$dir/${base}_${{ matrix.arch }}.app.tar.gz.sig"
           done
 

@@ -312,15 +312,15 @@
         
         <!-- Refined SVG Histogram -->
         <div class="relative w-full aspect-4/1 mb-1.5 px-0.5">
-          <svg viewBox="0 0 256 64" class="w-full h-full" preserveAspectRatio="none">
+          <svg viewBox="0 0 256 64" class="w-full h-full text-primary" preserveAspectRatio="none">
             <defs>
               <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--p)" stop-opacity="0.6" />
-                <stop offset="100%" stop-color="var(--p)" stop-opacity="0.1" />
+                <stop offset="0%" stop-color="currentColor" stop-opacity="0.6" />
+                <stop offset="100%" stop-color="currentColor" stop-opacity="0.1" />
               </linearGradient>
             </defs>
             <!-- Professional Grid -->
-            <g class="text-base-content/5">
+            <g class="text-base-content/20">
               <line x1="64" y1="0" x2="64" y2="64" stroke="currentColor" stroke-width="0.5" />
               <line x1="128" y1="0" x2="128" y2="64" stroke="currentColor" stroke-width="0.5" />
               <line x1="192" y1="0" x2="192" y2="64" stroke="currentColor" stroke-width="0.5" />
@@ -329,7 +329,7 @@
             <path 
               :d="generateHistogramPath()" 
               fill="url(#histGradient)" 
-              class="transition-all duration-300 text-primary"
+              class="transition-all duration-300"
             />
           </svg>
         </div>
