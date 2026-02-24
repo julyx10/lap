@@ -1,8 +1,7 @@
 <div align="center">
   <img src="docs/public/icon.png" alt="Lap Logo" width="120" style="border-radius: 20px">
   <h1>Lap</h1>
-  <h3>A Local-first, AI-powered Photo manager built with Tauri + Vue 3.</h3>
-
+  <h3>Family-friendly, offline photo manager for 10k+ photos.</h3>
   <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
@@ -11,175 +10,84 @@
   </p>
 </div>
 
-**Lap** is a lightning-fast photo manager designed for massive local libraries. It allows you to manage files directly while offering a silky-smooth browsing experience for both photos and videos. Combining the privacy of folder-based organization with the power of modern AI—all running 100% locally on your device.
+Lap was created by a photography enthusiast who couldn't find a truly satisfying photo manager on MacBook.
+It is designed for two daily needs: organizing family albums and browsing/searching massive local photo libraries.
 
-🌐 **Website**: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
+Website: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
+
+## Core Highlights
+
+- **Large-scale photo organization**: Built for family albums and photographer archives, with classification and search by **date, location, camera, and face recognition** across **10k+ photos**.
+- **Multi-Library workflow**: Separate work and family libraries with clean boundaries and quick switching.
+- **Local AI search**: Natural-language search, similar-image discovery, and face clustering run on-device for fast results.
+- **Local folder management and sync**: No import required. Use your real folders directly; changes in Finder are reflected in Lap, and file moves in Lap stay synced on disk.
+- **100% offline privacy**: No cloud upload, no remote processing, no vendor lock-in.
 
 ## Download
 
-| Platform | Download | File Size | Notes |
-|:--|:--|:--|:--|
-| **macOS (Apple Silicon)** | [Download .dmg (aarch64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | ✅ Notarized by Apple, ✅ Fully tested |
-| **macOS (Intel)** | [Download .dmg (x64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | ✅ Notarized by Apple, ⚠️ Not yet tested |
-| **Linux (Ubuntu/Debian)** | [Download .deb (amd64)](https://github.com/julyx10/lap/releases/latest) | ~150 MB | ⚠️ Not yet tested |
-| **Windows** | - | - | Coming soon |
+| Platform | Download | Notes |
+| :-- | :-- | :-- |
+| **macOS (Apple Silicon)** | [Download .dmg (aarch64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple, fully tested |
+| **macOS (Intel)** | [Download .dmg (x64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple |
+| **Linux (Ubuntu/Debian)** | [Download .deb (amd64)](https://github.com/julyx10/lap/releases/latest) | Community testing welcome |
+| **Windows** | - | Coming soon |
 
-<table>
-  <tr>
-    <td align="center">
-      <strong>Library</strong><br>
-      <img src="docs/public/screenshots/01%20lap-main-dark.jpg" alt="Library" width="520">
-      <br>
-      <em>Handle 100k+ photos with smooth scrolling and instant thumbnails.</em>
-    </td>
-    <td align="center">
-      <strong>AI Search - Light Theme</strong><br>
-      <img src="docs/public/screenshots/02%20lap-ai-search.jpg" alt="AI Search" width="520">
-      <br>
-      <em>"Sunset over the ocean" — Find exact moments with offline AI.</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <strong>Calendar</strong><br>
-      <img src="docs/public/screenshots/03%20lap-calendar.jpg" alt="Calendar" width="520">
-      <br>
-      <em>Time-travel through your memories by year, month, or day.</em>
-    </td>
-    <td align="center">
-      <strong>Tags</strong><br>
-      <img src="docs/public/screenshots/04%20lap-tag.jpg" alt="Tags" width="520">
-      <br>
-      <em>Organize your way: Bulk tagging and powerful filtering.</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <strong>Location</strong><br>
-      <img src="docs/public/screenshots/05%20lap-location.jpg" alt="Location" width="520">
-      <br>
-      <em>Interactive Map View: See where your story happened.</em>
-    </td>
-    <td align="center">
-      <strong>Camera</strong><br>
-      <img src="docs/public/screenshots/06%20lap-camera.jpg" alt="Camera" width="520">
-      <br>
-      <em>Group by Gear: Rediscover shots by Camera Make & Model.</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <strong>Edit Image</strong><br>
-      <img src="docs/public/screenshots/07%20lap-edit-image.jpg" alt="Edit Image" width="520">
-      <br>
-      <em>Quick essential edits without leaving your flow.</em>
-    </td>
-    <td align="center">
-      <strong>Video</strong><br>
-      <img src="docs/public/screenshots/08%20lap-video.jpg" alt="Video" width="520">
-      <br>
-      <em>Integrated Player: Watch videos seamlessly alongside photos.</em>
-    </td>
-  </tr>
-</table>
+## Product Snapshot
 
-> Notes: The sample images in above screenshots are sourced from [Wikimedia Commons](https://commons.wikimedia.org/).  
+<p align="center">
+  <img src="docs/public/screenshots/lap-home3.png" alt="Lap Library" width="900">
+</p>
 
-## Why LAP?
+<p align="center">
+  <img src="docs/public/screenshots/lap-search.png" alt="Lap AI Search" width="900">
+</p>
 
-**LAP** stands for **Local-first, AI-powered Photo management**.
-
-I built Lap because I was tired of choosing between **privacy** (dumb folder viewers) and **convenience** (cloud services that scan your life). Lap gives you both.
-
-### 🌟 Key Highlights
-
-#### 📂 Your Files, Your Control
-- **No Import Required**: Lap reads your existing folders. No "library files", no duplication, no vendor lock-in.
-- **File System Sync**: Move a file in Finder/Explorer? Lap updates instantly. Move it in Lap? It moves on disk.
-- **Multi-Library**: Manage work assets separate from family archives.
-
-#### ⚡ Built for Performance
-- **Rust Core**: Powered by Tauri 2 and Rust for blazing speed and tiny memory footprint.
-- **Lazy Loading**: Designed to handle libraries with **hundreds of thousands** of assets without stuttering.
-
-#### 🤖 AI That Lives on Your Device
-- **Natural Language Search**: Type "lady in red" or "sunset at beach". The AI understands content, not just keywords.
-- **Similar Image Search**: Find the best shot in a burst sequence or locate duplicates.
-- **Smart Face Recognition (BETA)**: Automatically groups people. Rename "Person 1" to "Dad" and find all his photos instantly.
-- **Zero Privacy Risk**: All AI models run **locally**. Your photos never leave your computer.
-
-#### 🎨 Delightful Experience
-- **Beautiful Design**: Built with Tailwind CSS & daisyUI, a modern, fluid interface that feels at home on macOS, Linux, and Windows.
-- **Customizable**: Light/Dark modes with 10+ accent colors.
-- **Multi-Language**: Speaks your language (English, Chinese, German, French, Japanese, and more).
+> Notes: Screenshot sample images come from [Wikimedia Commons](https://commons.wikimedia.org/).
 
 ## Comparison
 
-| Feature | Cloud Albums (Google/iCloud) | Classic Viewers (XnView/IrfanView) | **Lap** |
+| Feature | Cloud Albums (Google/iCloud) | Classic Viewers | **Lap** |
 | :--- | :---: | :---: | :---: |
-| **Privacy** | ❌ (Data mining) | ✅ | ✅ (100% Offline) |
-| **AI Search** | ✅ | ❌ | ✅ (Local AI) |
-| **Organization** | Restricted (Album based) | Folder based | **Folder-native + Smart Views** |
-| **Performance** | Network dependent | **Excellent** | **Excellent** |
-| **Lock-in** | High | None | **None** |
-
-## Who Is LAP For?
-
-- **Photographers**: Manage huge collections by folder.
-- **Privacy Advocates**: Enjoy AI features without Big Tech surveillance.
-- **Archivists**: Search terabytes of family history instantly.
-- **Everyone**: Who wants a fast, beautiful way to enjoy their memories.
-
-## What LAP Is Not
-
-- ❌ A Cloud Service: We don't host your photos. You own them.
-- ❌ A Photoshop Replacement: We focus on management and browsing, not heavy retouching.
-- ❌ A Sync Tool: We don't touch your cloud settings. We manage local files.
+| Privacy | ❌ | ✅ | ✅ |
+| AI Search | ✅ | ❌ | ✅ |
+| Folder-native file control | ❌ | ✅ | ✅ |
+| Offline-first | ❌ | ✅ | ✅ |
+| Vendor lock-in | High | None | None |
 
 ## Supported Formats
 
-| Type | Formats | Notes |
-| :--- | :--- | :--- |
-| **Images** | JPG, PNG, GIF, BMP, TIFF, WebP, HEIC | HEIC depends on OS support. |
-| **Videos** | MP4, MOV, MKV, WebM, AVI | Playback depends on OS WebView codecs. |
+| Type | Formats |
+| :--- | :--- |
+| Images | JPG, PNG, GIF, BMP, TIFF, WebP, HEIC |
+| Videos | MP4, MOV, MKV, WebM, AVI |
 
 ## Development
 
-### Tech Stack
-- **Core**: [Tauri 2](https://tauri.app) (Rust), cross-platform desktop app framework
-- **Frontend**: Vue 3, Vite, Tailwind CSS, daisyUI
-- **Data**: SQLite, locally embedded for indexing and metadata storage
-- **AI/Media**: [CLIP](https://github.com/openai/CLIP) for image search, [InsightFace](https://github.com/deepinsight/insightface) for face recognition, FFmpeg for video
+Tech stack:
+- Core: [Tauri 2](https://tauri.app/) + Rust
+- Frontend: Vue 3 + Vite
+- Data: SQLite
+- AI/media: CLIP, InsightFace, FFmpeg
 
-### Build & Run
-
-**Prerequisites**:
-- [Node.js](https://nodejs.org/) 20+ and [pnpm](https://pnpm.io/) 8+
-- [Rust](https://www.rust-lang.org/tools/install) (stable)
-- Platform build tools:
-  - **macOS**: Xcode Command Line Tools (`xcode-select --install`), `brew install nasm pkg-config`
-  - **Linux**: `sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf nasm clang pkg-config`
-
-**Recommended editors**: [VS Code](https://code.visualstudio.com/), [Cursor](https://cursor.com/), or [Antigravity](https://antigravity.dev/)
+Quick start:
 
 ```bash
-# 1. Download AI models
+# Download AI models
 ./scripts/download_models.sh
 
-# 2. Install frontend dependencies
+# Install frontend deps
 cd src-vite && pnpm install && cd ..
 
-# 3. Run in development mode
+# Run dev app
 cargo tauri dev
-
-# 4. Build for production
-cargo tauri build
 ```
+
+Requirements:
+- Node.js 20+, pnpm 8+
+- Rust stable
+- macOS: `xcode-select --install`, `brew install nasm pkg-config`
+- Linux: `sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf nasm clang pkg-config`
 
 ## License
 
-Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) for details.
-
-<div align="center">
-  <img src="docs/public/logo2.png" alt="Lap Logo" width="200" style="border-radius: 20px">
-</div>
+GPL-3.0-or-later. See [LICENSE](LICENSE).
