@@ -17,25 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup MSYS2 toolchain for FFmpeg build
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            mingw-w64-x86_64-nasm
-            mingw-w64-x86_64-pkgconf
-            make
-            perl
-            yasm
-            diffutils
-
-      - name: Add MSYS2 binaries to PATH
-        shell: pwsh
-        run: |
-          "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -44,7 +25,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -79,11 +60,56 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: src-vite
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Download AI Models (Windows)
         shell: pwsh
         run: .\scripts\download_models.ps1
+
+      - name: Force app frontend build command (Windows CI only)
+        shell: pwsh
+        run: |
+          $path = "src-tauri/tauri.conf.json"
+          $json = Get-Content $path -Raw | ConvertFrom-Json
+          $json.build.beforeBuildCommand = "pnpm --dir ../src-vite build || pnpm --dir src-vite build"
+          $json | ConvertTo-Json -Depth 100 | Set-Content -Path $path -Encoding utf8
+
+      - name: Setup MSVC build environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build FFmpeg with vcpkg (Windows dynamic)
+        shell: pwsh
+        run: |
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          & "$vcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
+          & "$vcpkgRoot\vcpkg.exe" install ffmpeg:x64-windows --clean-after-build
+
+          $dllCandidates = @(
+            (Join-Path $vcpkgRoot "installed\x64-windows\bin"),
+            (Join-Path $vcpkgRoot "packages\ffmpeg_x64-windows\bin")
+          )
+          $ffmpegDllDir = $dllCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $ffmpegDllDir) {
+            throw "FFmpeg DLL directory not found. Checked: $($dllCandidates -join ', ')"
+          }
+          $destDir = "src-tauri/resources/ffmpeg"
+          New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+          $dlls = Get-ChildItem -Path $ffmpegDllDir -Filter "*.dll" -File -ErrorAction SilentlyContinue
+          $copied = 0
+          foreach ($file in $dlls) {
+            Copy-Item $file.FullName $destDir -Force
+            $copied++
+          }
+          if ($copied -eq 0) {
+            throw "No DLL files found in $ffmpegDllDir"
+          }
+
+          "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VCPKGRS_TRIPLET=x64-windows" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VCPKGRS_DYNAMIC=1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Build and Sign (Windows x64)
         uses: tauri-apps/tauri-action@v0.5
@@ -91,18 +117,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          FFMPEG_STATIC: "1"
         with:
-          args: --verbose --target x86_64-pc-windows-msvc
+          projectPath: .
+          args: --verbose --target x86_64-pc-windows-msvc --bundles msi
 
       - name: Upload Build Artifact (Windows)
         uses: actions/upload-artifact@v4
         with:
           name: windows-x86_64
           path: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip.sig
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.zip
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.zip.sig
@@ -122,6 +145,72 @@ jobs:
 
       - name: Show release files
         run: ls -la release-files
+
+      - name: Wait for GitHub Release to be available
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          for i in $(seq 1 20); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Release $TAG is available."
+              exit 0
+            fi
+            echo "Release $TAG not ready yet (attempt $i/20), waiting 15s..."
+            sleep 15
+          done
+          echo "Timed out waiting for release $TAG."
+          exit 1
+
+      - name: Update latest.json with Windows updater entry
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+
+          MSI_ZIP="$(find release-files -maxdepth 1 -name '*.msi.zip' | head -n 1)"
+          MSI_SIG_FILE="${MSI_ZIP}.sig"
+          if [ -z "${MSI_ZIP}" ] || [ ! -f "${MSI_ZIP}" ]; then
+            echo "No MSI updater archive (*.msi.zip) found."
+            exit 1
+          fi
+          if [ ! -f "${MSI_SIG_FILE}" ]; then
+            echo "Missing MSI updater signature file: ${MSI_SIG_FILE}"
+            exit 1
+          fi
+
+          MSI_ZIP_NAME="$(basename "${MSI_ZIP}")"
+          WINDOWS_SIG="$(cat "${MSI_SIG_FILE}")"
+
+          if gh release download "$TAG" -p "latest.json" -D release-files >/dev/null 2>&1; then
+            echo "Downloaded existing latest.json."
+          else
+            echo "latest.json not found, creating a new one."
+            cat > release-files/latest.json <<EOF
+          {
+            "version": "${VERSION}",
+            "notes": "See the release notes on GitHub for details.",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {}
+          }
+          EOF
+          fi
+
+          tmp="$(mktemp)"
+          jq \
+            --arg version "${VERSION}" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg sig "${WINDOWS_SIG}" \
+            --arg url "https://github.com/${{ github.repository }}/releases/download/${TAG}/${MSI_ZIP_NAME}" \
+            '
+            .version = $version
+            | .pub_date = $pub_date
+            | .platforms = (.platforms // {})
+            | .platforms["windows-x86_64"] = {"signature": $sig, "url": $url}
+            ' release-files/latest.json > "$tmp"
+          mv "$tmp" release-files/latest.json
 
       - name: Upload Windows assets to GitHub Release
         env:

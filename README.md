@@ -28,9 +28,9 @@ Website: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
 | Platform | Download | Notes |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | [Download .dmg (aarch64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple, fully tested |
-| **macOS (Intel)** | [Download .dmg (x64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple |
+| **macOS (Intel)** | [Download .dmg (x64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple, not test yet |
 | **Linux (Ubuntu/Debian)** | [Download .deb (amd64)](https://github.com/julyx10/lap/releases/latest) | Community testing welcome |
-| **Windows** | - | Coming soon |
+| **Windows (x64)** | [Download .msi](https://github.com/julyx10/lap/releases/latest) | MSI installer available |
 
 ## Product Snapshot
 
