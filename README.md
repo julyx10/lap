@@ -15,6 +15,8 @@ It is designed for two daily needs: organizing family albums and browsing/search
 
 Website: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
 
+Demo Video: [https://youtu.be/niMD1tTzS24](https://youtu.be/niMD1tTzS24)
+
 ## Core Highlights
 
 - **Large-scale photo organization**: Built for family albums and photographer archives, with classification and search by **date, location, camera, and face recognition** across **10k+ photos**.
@@ -28,9 +30,9 @@ Website: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
 | Platform | Download | Notes |
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | [Download .dmg (aarch64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple, fully tested |
-| **macOS (Intel)** | [Download .dmg (x64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple, not test yet |
+| **macOS (Intel)** | [Download .dmg (x64)](https://github.com/julyx10/lap/releases/latest) | Notarized by Apple, not fully tested yet |
 | **Linux (Ubuntu/Debian)** | [Download .deb (amd64)](https://github.com/julyx10/lap/releases/latest) | Community testing welcome |
-| **Windows (x64)** | [Download .msi](https://github.com/julyx10/lap/releases/latest) | MSI installer available |
+| **Windows (x64)** | [Download .msi](https://github.com/julyx10/lap/releases/latest) | Tested on Windows 11 |
 
 ## Product Snapshot
 
