@@ -17,24 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup MSYS2 toolchain for FFmpeg build
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            mingw-w64-x86_64-nasm
-            mingw-w64-x86_64-pkgconf
-            make
-            perl
-            yasm
-            diffutils
-
-      - name: Add MSYS2 binaries to PATH
-        shell: pwsh
-        run: |
-          "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -97,17 +79,45 @@ jobs:
         with:
           arch: x64
 
+      - name: Build FFmpeg with vcpkg (Windows static)
+        shell: pwsh
+        run: |
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          & "$vcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
+          & "$vcpkgRoot\vcpkg.exe" install ffmpeg:x64-windows-static-md --clean-after-build
+
+          $ffmpegToolsDir = Join-Path $vcpkgRoot "installed\x64-windows-static-md\tools\ffmpeg"
+          if (-not (Test-Path $ffmpegToolsDir)) {
+            throw "FFmpeg tools directory not found: $ffmpegToolsDir"
+          }
+          $destDir = "src-tauri/resources/ffmpeg"
+          New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+          Copy-Item "$ffmpegToolsDir\ffmpeg.exe" "$destDir\ffmpeg.exe" -Force
+          Copy-Item "$ffmpegToolsDir\ffprobe.exe" "$destDir\ffprobe.exe" -Force
+
+          "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VCPKGRS_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VCPKGRS_DYNAMIC=0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Add FFmpeg resources to bundle (Windows CI only)
+        shell: pwsh
+        run: |
+          $path = "src-tauri/tauri.conf.json"
+          $json = Get-Content $path -Raw | ConvertFrom-Json
+          $resources = @($json.bundle.resources)
+          if ($resources -notcontains "resources/ffmpeg/*") {
+            $resources += "resources/ffmpeg/*"
+          }
+          $json.bundle.resources = $resources
+          $json | ConvertTo-Json -Depth 100 | Set-Content -Path $path -Encoding utf8
+
       - name: Build and Sign (Windows x64)
         uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          FFMPEG_STATIC: "1"
-          NASM: C:\msys64\mingw64\bin\nasm.exe
-          PKG_CONFIG: C:\msys64\mingw64\bin\pkgconf.exe
-          MAKE: C:\msys64\usr\bin\make.exe
-          PERL: C:\msys64\usr\bin\perl.exe
         with:
           projectPath: .
           args: --verbose --target x86_64-pc-windows-msvc
@@ -139,6 +149,22 @@ jobs:
 
       - name: Show release files
         run: ls -la release-files
+
+      - name: Wait for GitHub Release to be available
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          for i in $(seq 1 20); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Release $TAG is available."
+              exit 0
+            fi
+            echo "Release $TAG not ready yet (attempt $i/20), waiting 15s..."
+            sleep 15
+          done
+          echo "Timed out waiting for release $TAG."
+          exit 1
 
       - name: Upload Windows assets to GitHub Release
         env:
