@@ -55,7 +55,7 @@ tokenizers = { version = "0.20", default-features = false, features = ["onig"] }
 uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-ffmpeg-next = { version = "8.0.0", features = ["static"] }
+ffmpeg-next = { version = "8.0.0" }
 
 [target.'cfg(not(target_os = "windows"))'.dependencies]
 ffmpeg-next = { version = "8.0.0", features = ["static", "build"] }

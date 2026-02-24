@@ -9,5 +9,11 @@
         "dragDropEnabled": false
       }
     ]
+  },
+  "bundle": {
+    "resources": {
+      "resources/models/*": "resources/models",
+      "resources/ffmpeg/*.dll": ""
+    }
   }
 }
