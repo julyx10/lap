@@ -1,0 +1,131 @@
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2 toolchain for FFmpeg build
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-pkgconf
+            make
+            perl
+            yasm
+            diffutils
+
+      - name: Add MSYS2 binaries to PATH
+        shell: pwsh
+        run: |
+          "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: windows-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            windows-pnpm-store-
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\.cargo\bin\
+            ~\.cargo\registry\index\
+            ~\.cargo\registry\cache\
+            ~\.cargo\git\db\
+            src-tauri\target\
+          key: windows-x86_64-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            windows-x86_64-cargo-
+
+      - name: Install frontend dependencies
+        working-directory: src-vite
+        run: pnpm install
+
+      - name: Download AI Models (Windows)
+        shell: pwsh
+        run: .\scripts\download_models.ps1
+
+      - name: Build and Sign (Windows x64)
+        uses: tauri-apps/tauri-action@v0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          FFMPEG_STATIC: "1"
+        with:
+          args: --verbose --target x86_64-pc-windows-msvc
+
+      - name: Upload Build Artifact (Windows)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x86_64
+          path: |
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip.sig
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.zip
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.zip.sig
+          if-no-files-found: error
+
+  publish-windows:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-x86_64
+          path: release-files
+
+      - name: Show release files
+        run: ls -la release-files
+
+      - name: Upload Windows assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release upload "$TAG" release-files/* --clobber
