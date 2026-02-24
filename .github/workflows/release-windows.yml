@@ -173,7 +173,7 @@ jobs:
           echo "Timed out waiting for release $TAG."
           exit 1
 
-      - name: Update latest.json with Windows platform
+      - name: Update latest.json with Windows updater entry
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -183,13 +183,12 @@ jobs:
 
           MSI_ZIP="$(find release-files -maxdepth 1 -name '*.msi.zip' | head -n 1)"
           MSI_SIG_FILE="${MSI_ZIP}.sig"
-
           if [ -z "${MSI_ZIP}" ] || [ ! -f "${MSI_ZIP}" ]; then
-            echo "Windows updater archive (*.msi.zip) not found."
+            echo "No MSI updater archive (*.msi.zip) found."
             exit 1
           fi
           if [ ! -f "${MSI_SIG_FILE}" ]; then
-            echo "Windows updater signature not found: ${MSI_SIG_FILE}"
+            echo "Missing MSI updater signature file: ${MSI_SIG_FILE}"
             exit 1
           fi
 
@@ -197,9 +196,9 @@ jobs:
           WINDOWS_SIG="$(cat "${MSI_SIG_FILE}")"
 
           if gh release download "$TAG" -p "latest.json" -D release-files >/dev/null 2>&1; then
-            echo "Downloaded existing latest.json from release."
+            echo "Downloaded existing latest.json."
           else
-            echo "latest.json not found on release; creating a new one."
+            echo "latest.json not found, creating a new one."
             cat > release-files/latest.json <<EOF
           {
             "version": "${VERSION}",
@@ -213,17 +212,16 @@ jobs:
           tmp="$(mktemp)"
           jq \
             --arg version "${VERSION}" \
-            --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg sig "${WINDOWS_SIG}" \
             --arg url "https://github.com/${{ github.repository }}/releases/download/${TAG}/${MSI_ZIP_NAME}" \
             '
             .version = $version
-            | .pub_date = $now
+            | .pub_date = $pub_date
             | .platforms = (.platforms // {})
             | .platforms["windows-x86_64"] = {"signature": $sig, "url": $url}
             ' release-files/latest.json > "$tmp"
           mv "$tmp" release-files/latest.json
-          cat release-files/latest.json
 
       - name: Upload Windows assets to GitHub Release
         env:
