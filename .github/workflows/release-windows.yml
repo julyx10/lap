@@ -85,6 +85,14 @@ jobs:
         shell: pwsh
         run: .\scripts\download_models.ps1
 
+      - name: Force app frontend build command (Windows CI only)
+        shell: pwsh
+        run: |
+          $path = "src-tauri/tauri.conf.json"
+          $json = Get-Content $path -Raw | ConvertFrom-Json
+          $json.build.beforeBuildCommand = "pnpm --dir src-vite build"
+          $json | ConvertTo-Json -Depth 100 | Set-Content -Path $path -Encoding utf8
+
       - name: Build and Sign (Windows x64)
         uses: tauri-apps/tauri-action@v0.5
         env:
@@ -93,7 +101,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           FFMPEG_STATIC: "1"
         with:
-          projectPath: src-vite
+          projectPath: .
           args: --verbose --target x86_64-pc-windows-msvc
 
       - name: Upload Build Artifact (Windows)
