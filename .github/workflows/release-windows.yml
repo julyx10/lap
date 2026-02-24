@@ -97,25 +97,14 @@ jobs:
           }
           $destDir = "src-tauri/resources/ffmpeg"
           New-Item -ItemType Directory -Force -Path $destDir | Out-Null
-          $dllPatterns = @(
-            "avcodec*.dll",
-            "avdevice*.dll",
-            "avfilter*.dll",
-            "avformat*.dll",
-            "avutil*.dll",
-            "swresample*.dll",
-            "swscale*.dll"
-          )
+          $dlls = Get-ChildItem -Path $ffmpegDllDir -Filter "*.dll" -File -ErrorAction SilentlyContinue
           $copied = 0
-          foreach ($pattern in $dllPatterns) {
-            $matches = Get-ChildItem -Path $ffmpegDllDir -Filter $pattern -File -ErrorAction SilentlyContinue
-            foreach ($file in $matches) {
-              Copy-Item $file.FullName $destDir -Force
-              $copied++
-            }
+          foreach ($file in $dlls) {
+            Copy-Item $file.FullName $destDir -Force
+            $copied++
           }
           if ($copied -eq 0) {
-            throw "No FFmpeg runtime DLLs matched whitelist in $ffmpegDllDir"
+            throw "No DLL files found in $ffmpegDllDir"
           }
 
           "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
