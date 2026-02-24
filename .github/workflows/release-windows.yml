@@ -90,7 +90,7 @@ jobs:
         run: |
           $path = "src-tauri/tauri.conf.json"
           $json = Get-Content $path -Raw | ConvertFrom-Json
-          $json.build.beforeBuildCommand = "pnpm --dir src-vite build"
+          $json.build.beforeBuildCommand = "pnpm --dir ../src-vite build || pnpm --dir src-vite build"
           $json | ConvertTo-Json -Depth 100 | Set-Content -Path $path -Encoding utf8
 
       - name: Build and Sign (Windows x64)
