@@ -93,6 +93,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           FFMPEG_STATIC: "1"
         with:
+          projectPath: src-vite
           args: --verbose --target x86_64-pc-windows-msvc
 
       - name: Upload Build Artifact (Windows)
