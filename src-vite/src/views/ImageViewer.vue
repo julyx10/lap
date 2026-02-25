@@ -266,6 +266,7 @@ const rightFileInfo = ref<any>(null);
 
 let unlistenImg: () => void;
 let unlistenGridView: () => void;
+let unlistenFilesDeleted: (() => void) | null = null;
 
 onMounted(async() => {
   window.addEventListener('keydown', handleKeyDown);
@@ -349,6 +350,39 @@ onMounted(async() => {
     }
   });
 
+  unlistenFilesDeleted = await listen('files-deleted', (event: any) => {
+    const deletedIds = Array.isArray(event?.payload?.fileIds)
+      ? event.payload.fileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+      : [];
+    const nextCount = Number(event?.payload?.fileCount);
+    if (!Number.isNaN(nextCount) && nextCount >= 0) {
+      fileCount.value = nextCount;
+    }
+
+    if (fileCount.value <= 0) {
+      fileId.value = 0;
+      fileIndex.value = -1;
+      rightFileId.value = 0;
+      rightFileIndex.value = -1;
+      rightFileInfo.value = null;
+      return;
+    }
+
+    const leftDeleted = deletedIds.includes(fileId.value);
+    const rightDeleted = deletedIds.includes(rightFileId.value);
+
+    if (leftDeleted || fileIndex.value >= fileCount.value) {
+      const targetIndex = Math.max(0, Math.min(fileIndex.value, fileCount.value - 1));
+      requestFileAtIndex(targetIndex, 'left');
+    }
+
+    if (isSplit.value && (rightDeleted || rightFileIndex.value >= fileCount.value)) {
+      const fallbackBase = rightFileIndex.value >= 0 ? rightFileIndex.value : (fileIndex.value + 1);
+      const targetIndex = Math.max(0, Math.min(fallbackBase, fileCount.value - 1));
+      requestFileAtIndex(targetIndex, 'right');
+    }
+  });
+
   setTimeout(() => {
     isTransitionDisabled.value = false;
   }, 500);
@@ -370,6 +404,7 @@ onUnmounted(() => {
   // unlisten
   unlistenImg();
   unlistenGridView();
+  if (unlistenFilesDeleted) unlistenFilesDeleted();
 });
 
 // Handle keyboard shortcuts

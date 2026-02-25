@@ -1375,6 +1375,7 @@ let unlistenIndexProgress: (() => void) | undefined;
 let unlistenIndexFinished: (() => void) | undefined;
 let unlistenTriggerNextAlbum: (() => void) | undefined;
 let unlistenRefreshContent: (() => void) | undefined;
+let unlistenFilesDeleted: (() => void) | undefined;
 
 async function processNextAlbum() {
   if (libConfig.index.albumQueue.length > 0) {
@@ -1502,7 +1503,35 @@ onMounted( async() => {
   });
 
   unlistenTriggerNextAlbum = await listen('trigger-next-album', () => {
-      processNextAlbum();
+    processNextAlbum();
+  });
+
+  unlistenFilesDeleted = await listen('files-deleted', async (event: any) => {
+    if (event?.payload?.source === 'content') return;
+    const deletedIds = Array.isArray(event?.payload?.fileIds)
+      ? event.payload.fileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+      : [];
+    if (deletedIds.length === 0 || fileList.value.length === 0) return;
+
+    const deleteSet = new Set(deletedIds);
+    let removedAny = false;
+    for (let i = fileList.value.length - 1; i >= 0; i--) {
+      if (deleteSet.has(fileList.value[i].id)) {
+        fileList.value.splice(i, 1);
+        removedAny = true;
+      }
+    }
+    if (!removedAny) return;
+
+    totalFileCount.value = fileList.value.length;
+    totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+    if (fileList.value.length === 0) {
+      selectedItemIndex.value = -1;
+    } else {
+      selectedItemIndex.value = Math.min(selectedItemIndex.value, fileList.value.length - 1);
+      if (selectedItemIndex.value < 0) selectedItemIndex.value = 0;
+    }
+    await updateSelectedImage(selectedItemIndex.value);
   });
 
   if (libConfig.index.albumQueue.length > 0) {
@@ -1535,6 +1564,7 @@ onBeforeUnmount(() => {
   if (unlistenIndexProgress) unlistenIndexProgress();
   if (unlistenIndexFinished) unlistenIndexFinished();
   if (unlistenRefreshContent) unlistenRefreshContent();
+  if (unlistenFilesDeleted) unlistenFilesDeleted();
   if (unlistenFaceIndexProgress) unlistenFaceIndexProgress();
 });
 
@@ -2519,6 +2549,7 @@ const onCopyTo = async () => {
 }
 
 const onTrashFile = async () => {
+  const deletedFileIds: number[] = [];
   const shouldAdvanceDedup =
     config.infoPanel.show &&
     config.infoPanel.activeTab === 'dedup' &&
@@ -2531,13 +2562,15 @@ const onTrashFile = async () => {
     for (const id of ids) {
       const index = fileList.value.findIndex(file => file.id === id);
       if (index === -1) continue;
+      deletedFileIds.push(id);
       await deleteFileAlways(fileList.value[index]);
       removeFromFileList(index);
     }
   }
   else if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
-    const deletes = fileList.value
-      .filter(item => item.isSelected)
+    const selectedItems = fileList.value.filter(item => item.isSelected);
+    deletedFileIds.push(...selectedItems.map(item => item.id));
+    const deletes = selectedItems
       .map(async item => {
         await deleteFileAlways(item);
         removeFromFileList(fileList.value.indexOf(item));
@@ -2546,9 +2579,20 @@ const onTrashFile = async () => {
     selectMode.value = false; // exit multi-select mode
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
+    deletedFileIds.push(fileList.value[selectedItemIndex.value].id);
     await deleteFileAlways(fileList.value[selectedItemIndex.value]);
     removeFromFileList(selectedItemIndex.value);
   }
+
+  if (deletedFileIds.length > 0) {
+    tauriEmit('files-deleted', {
+      source: 'content',
+      fileIds: deletedFileIds,
+      fileCount: fileList.value.length,
+      selectedIndex: selectedItemIndex.value,
+    });
+  }
+
   closeTrashMsgbox();
   updateSelectedImage(selectedItemIndex.value);
 

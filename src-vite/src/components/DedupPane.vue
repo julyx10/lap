@@ -105,7 +105,7 @@
                 selectedFileId === file.id
                   ? 'border-primary bg-primary/10'
                   : 'border-base-content/10 bg-base-100/40 hover:border-base-content/20 hover:bg-base-100/60',
-                isDupSelected(activeGroup.key, file.id) ? '!border-warning/60! bg-warning/10!' : '',
+                isDupSelected(activeGroup.key, file.id) ? '!border-warning/60 !bg-warning/10' : '',
               ]"
               @click="emit('select-file', file.id)"
               @dblclick="emit('preview-file', file.id)"
