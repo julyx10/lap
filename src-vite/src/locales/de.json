@@ -166,6 +166,7 @@
       "refresh": "Aktualisieren",
       "show_info": "Info anzeigen",
       "hide_info": "Info ausblenden",
+      "open_dedup": "Duplikate finden",
       "clear_history": "Verlauf löschen",
       "index_faces": "Gesichter indexieren",
       "sort": "Sortieren",
@@ -188,7 +189,21 @@
     "type_videos": "Videos",
     "favorite_all": "Favorit",
     "unfavorite_all": "Entfernen",
-    "tag_all": "Tag"
+    "tag_all": "Tag",
+    "dedup": {
+      "title": "Duplikate",
+      "empty_title": "Keine potenziellen Duplikate in dieser Liste",
+      "empty_desc": "Erweitern Sie den Filter oder prüfen Sie eine andere Dateiliste.",
+      "reclaimable_size": "Freigebbar",
+      "groups_title": "Gruppen",
+      "group_label": "Gruppe {index}",
+      "items": "Elemente",
+      "keep_label": "Behalten",
+      "select_group_duplicates": "Alle Duplikate auswählen",
+      "compare_group": "Vergleichen",
+      "set_keep": "Als Behalten markieren",
+      "duplicate_files_summary": "{count} doppelte Dateien ({size})"
+    }
   },
   "tooltip": {
     "loading": "Laden...",

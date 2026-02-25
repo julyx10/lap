@@ -130,11 +130,19 @@
 
           <!-- toggle info panel -->
           <TButton
+            :icon="IconSimilar"
+            :tooltip="$t('toolbar.tooltip.open_dedup')"
+            :selected="config.infoPanel.show && config.infoPanel.activeTab === 'dedup'"
+            :disabled="isIndexing || showQuickView || fileList.length === 0"
+            @click="toggleDedupPanel"
+          />
+
+          <TButton
             :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
             :tooltip="config.infoPanel.show ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
-            :selected="config.infoPanel.show"
+            :selected="config.infoPanel.show && config.infoPanel.activeTab !== 'dedup'"
             :disabled="isIndexing"
-            @click="config.infoPanel.show ? checkUnsavedChanges(() => config.infoPanel.show = false) : config.infoPanel.show = true"
+            @click="toggleInfoPanel"
           />
         </div>
       </div>
@@ -313,7 +321,18 @@
         <div v-if="config.infoPanel.show && !uiStore.isFullScreen"
           :class="[ 'pt-12 pr-1', config.settings.showStatusBar ? 'pb-8' : 'pb-1' ]" 
           :style="{ width: config.infoPanel.width + '%' }">
-          <FileInfo 
+          <DedupPane
+            v-if="config.infoPanel.activeTab === 'dedup'"
+            :file-list="fileList"
+            :selected-file-id="fileList[selectedItemIndex]?.id"
+            @close="checkUnsavedChanges(() => config.infoPanel.show = false)"
+            @select-file="handleDedupSelectFile"
+            @preview-file="handleDedupPreviewFile"
+            @compare-group="handleDedupCompareGroup"
+            @trash-selected-duplicates="handleDedupTrashSelectedDuplicates"
+          />
+          <FileInfo
+            v-else
             ref="fileInfoRef"
             :fileInfo="fileList[selectedItemIndex]" 
             :multiSelect="selectMode"
@@ -413,13 +432,13 @@
   <!-- move to trash -->
   <MessageBox
     v-if="showTrashMsgbox"
-    :title="selectMode ? $t('msgbox.trash_files.title') : $t('msgbox.trash_file.title')"
-    :message="selectMode ? $t('msgbox.trash_files.content', { count: selectedCount.toLocaleString() }) : $t('msgbox.trash_file.content', { file: fileList[selectedItemIndex].name })"
-    :OkText="selectMode ? $t('msgbox.trash_files.ok') : $t('msgbox.trash_file.ok')"
+    :title="trashMsgboxTitle"
+    :message="trashMsgboxMessage"
+    :OkText="trashMsgboxOkText"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     @ok="onTrashFile"
-    @cancel="showTrashMsgbox = false"
+    @cancel="closeTrashMsgbox"
   />
 
   <!-- tag -->
@@ -492,6 +511,7 @@ import TButton from '@/components/TButton.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
 import ImageEditor from '@/components/ImageEditor.vue';
 import FileInfo from '@/components/FileInfo.vue';
+import DedupPane from '@/components/DedupPane.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
 import StatusBar from '@/components/StatusBar.vue';
@@ -527,6 +547,7 @@ import {
   IconRestore,
   IconRefresh,
   IconPhotoSearch,
+  IconSimilar,
   IconPersonSearch,
   IconFolderSearch,
   IconCalendarMonth,
@@ -609,6 +630,9 @@ const showMoveTo = ref(false);
 const showImageEditor = ref(false);
 const showCopyTo = ref(false);
 const showTrashMsgbox = ref(false);
+const dedupReclaimBytes = ref(0);
+const dedupTrashGroupKey = ref('');
+const dedupDeleteFileIds = ref<number[]>([]);
 const showCommentMsgbox = ref(false);
 const errorMessage = ref('');
 
@@ -658,6 +682,39 @@ const checkUnsavedChanges = (action: () => void) => {
     action();
   }
 };
+
+const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = []) => {
+  dedupReclaimBytes.value = Math.max(0, reclaimBytes);
+  dedupTrashGroupKey.value = groupKey || '';
+  dedupDeleteFileIds.value = Array.isArray(fileIds) ? [...new Set(fileIds)] : [];
+  showTrashMsgbox.value = true;
+};
+
+const closeTrashMsgbox = () => {
+  showTrashMsgbox.value = false;
+  dedupReclaimBytes.value = 0;
+  dedupTrashGroupKey.value = '';
+  dedupDeleteFileIds.value = [];
+};
+
+const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0);
+
+const trashMsgboxTitle = computed(() =>
+  (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.title : localeMsg.value.msgbox.trash_file.title
+);
+
+const trashMsgboxOkText = computed(() =>
+  (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.ok : localeMsg.value.msgbox.trash_file.ok
+);
+
+const trashMsgboxMessage = computed(() => {
+  const deleteCount = isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value;
+  const base = (isDedupTrash.value || selectMode.value)
+    ? localeMsg.value.msgbox.trash_files.content.replace('{count}', deleteCount.toLocaleString())
+    : localeMsg.value.msgbox.trash_file.content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || '');
+  if (dedupReclaimBytes.value <= 0 || !(isDedupTrash.value || selectMode.value)) return base;
+  return `${base}\n${localeMsg.value.info_panel.dedup.reclaimable_size}: ${formatFileSize(dedupReclaimBytes.value)}`;
+});
 
 // tagging dialog
 const showTaggingDialog = ref(false);
@@ -847,7 +904,7 @@ const moreMenuItems = computed(() => {
       icon: IconTrash,
       disabled: selectedCount.value === 0,
       action: () => {
-        showTrashMsgbox.value = true;
+        openTrashMsgbox();
       }
     },
   ];
@@ -1012,7 +1069,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'rename': clickRename,
     'move-to': () => showMoveTo.value = true,
     'copy-to': () => showCopyTo.value = true,
-    'trash': () => showTrashMsgbox.value = true,
+    'trash': () => openTrashMsgbox(),
     'album-folder': () => {
       const selectedFile = fileList.value[selectedItemIndex.value];
       if (selectedFile) {
@@ -1307,7 +1364,7 @@ const handleKeyDown = (e: any) => {
   } else if (isCmdKey && key.toLowerCase() === 'r') {
     clickRename();
   } else if ((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    showTrashMsgbox.value = true;
+    openTrashMsgbox();
   } else if ((keyActions as any)[key]) {
     (keyActions as any)[key]();
   }
@@ -2462,7 +2519,23 @@ const onCopyTo = async () => {
 }
 
 const onTrashFile = async () => {
-  if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
+  const shouldAdvanceDedup =
+    config.infoPanel.show &&
+    config.infoPanel.activeTab === 'dedup' &&
+    !!dedupTrashGroupKey.value;
+  const preDeleteGroups = shouldAdvanceDedup ? buildDuplicateGroups(fileList.value) : [];
+  const currentDedupGroupKey = dedupTrashGroupKey.value;
+
+  if (dedupDeleteFileIds.value.length > 0) {
+    const ids = [...dedupDeleteFileIds.value];
+    for (const id of ids) {
+      const index = fileList.value.findIndex(file => file.id === id);
+      if (index === -1) continue;
+      await deleteFileAlways(fileList.value[index]);
+      removeFromFileList(index);
+    }
+  }
+  else if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
     const deletes = fileList.value
       .filter(item => item.isSelected)
       .map(async item => {
@@ -2476,8 +2549,33 @@ const onTrashFile = async () => {
     await deleteFileAlways(fileList.value[selectedItemIndex.value]);
     removeFromFileList(selectedItemIndex.value);
   }
-  showTrashMsgbox.value = false;
+  closeTrashMsgbox();
   updateSelectedImage(selectedItemIndex.value);
+
+  if (shouldAdvanceDedup) {
+    const postDeleteGroups = buildDuplicateGroups(fileList.value);
+    if (postDeleteGroups.length > 0) {
+      const previousIndex = preDeleteGroups.findIndex(group => group.key === currentDedupGroupKey);
+      const orderedNextKeys =
+        previousIndex >= 0
+          ? [
+              ...preDeleteGroups.slice(previousIndex + 1).map(group => group.key),
+              ...preDeleteGroups.slice(0, previousIndex).map(group => group.key),
+            ]
+          : [];
+      const availableKeys = new Set(postDeleteGroups.map(group => group.key));
+      const nextKey = orderedNextKeys.find(key => availableKeys.has(key)) || postDeleteGroups[0].key;
+      const nextGroup = postDeleteGroups.find(group => group.key === nextKey);
+      const nextFileId = nextGroup?.files?.[0]?.id;
+      if (nextFileId) {
+        const index = fileList.value.findIndex(file => file.id === nextFileId);
+        if (index !== -1) {
+          selectedItemIndex.value = index;
+          updateSelectedImage(index);
+        }
+      }
+    }
+  }
 }
 
 // delete a file always (trash or delete from db)
@@ -2711,6 +2809,111 @@ const handleSortTypeSelect = (option: any, extendOption: any) => {
   config.search.sortOrder = extendOption;
 };
 
+const toggleInfoPanel = () => {
+  checkUnsavedChanges(() => {
+    if (config.infoPanel.show) {
+      if (config.infoPanel.activeTab === 'dedup') {
+        config.infoPanel.activeTab = 'info';
+      } else {
+        config.infoPanel.show = false;
+      }
+      return;
+    }
+    if (config.infoPanel.activeTab === 'dedup') {
+      config.infoPanel.activeTab = 'info';
+    }
+    config.infoPanel.show = true;
+  });
+};
+
+const toggleDedupPanel = () => {
+  checkUnsavedChanges(() => {
+    if (config.infoPanel.show && config.infoPanel.activeTab === 'dedup') {
+      config.infoPanel.show = false;
+      return;
+    }
+    config.infoPanel.activeTab = 'dedup';
+    config.infoPanel.show = true;
+  });
+};
+
+const handleDedupSelectFile = (fileId: number) => {
+  const index = fileList.value.findIndex(file => file.id === fileId);
+  if (index !== -1) {
+    checkUnsavedChanges(() => {
+      selectedItemIndex.value = index;
+    });
+  }
+};
+
+const handleDedupPreviewFile = (fileId: number) => {
+  const index = fileList.value.findIndex(file => file.id === fileId);
+  if (index !== -1) {
+    handleItemDblClicked(index);
+  }
+};
+
+const buildPotentialDupKey = (file: any): string | null => {
+  if (!file || !file.id || !file.size) return null;
+
+  const fileType = Number(file.file_type || 0);
+  if (fileType === 1) {
+    return `img:${file.size}:${Number(file.width || 0)}x${Number(file.height || 0)}`;
+  }
+  if (fileType === 2) {
+    return `vid:${file.size}:${Math.round(Number(file.duration || 0))}`;
+  }
+  const ext = String(file.name || '').split('.').pop()?.toLowerCase() || 'unknown';
+  return `file:${file.size}:${ext}`;
+};
+
+const buildDuplicateGroups = (files: any[]) => {
+  const groups = new Map<string, any[]>();
+  for (const file of files) {
+    const key = buildPotentialDupKey(file);
+    if (!key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(file);
+  }
+
+  return Array.from(groups.entries())
+    .filter(([, grouped]) => grouped.length > 1)
+    .map(([key, grouped]) => {
+      const sorted = [...grouped].sort((a, b) =>
+        String(a?.name || '').toLowerCase().localeCompare(String(b?.name || '').toLowerCase())
+      );
+      const fileSize = Number(sorted[0]?.size || 0);
+      return {
+        key,
+        files: sorted,
+        reclaimableBytes: Math.max(0, sorted.length - 1) * fileSize,
+      };
+    })
+    .sort((a, b) => {
+      if (b.reclaimableBytes !== a.reclaimableBytes) return b.reclaimableBytes - a.reclaimableBytes;
+      return b.files.length - a.files.length;
+    });
+};
+
+const handleDedupCompareGroup = async (groupKey: string, keepFileId: number) => {
+  const grouped = fileList.value.filter(file => buildPotentialDupKey(file) === groupKey);
+  if (grouped.length <= 1) return;
+
+  const leftId = grouped.some(file => file.id === keepFileId) ? keepFileId : grouped[0]?.id;
+  const rightId = grouped.find(file => file.id !== leftId)?.id;
+  const leftIndex = fileList.value.findIndex(file => file.id === leftId);
+  const rightIndex = fileList.value.findIndex(file => file.id === rightId);
+  if (leftIndex < 0 || rightIndex < 0) return;
+
+  selectedItemIndex.value = leftIndex;
+  await openImageViewer(leftIndex, true, false, { rightIndex, forceSplit: true });
+};
+
+const handleDedupTrashSelectedDuplicates = (groupKey: string, fileIds: number[], reclaimableBytes: number) => {
+  if (!groupKey || !fileIds || fileIds.length === 0) return;
+  openTrashMsgbox(reclaimableBytes, groupKey, fileIds);
+};
+
 // file type options
 const fileTypeOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.file_type_options);
@@ -2843,7 +3046,12 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 4) 
 }
 
 // Open the image viewer window
-async function openImageViewer(index: number, newViewer = false, syncFromFileListChange = false) {
+async function openImageViewer(
+  index: number,
+  newViewer = false,
+  syncFromFileListChange = false,
+  options: { rightIndex?: number; forceSplit?: boolean } = {}
+) {
 
   const webViewLabel = 'imageviewer';
 
@@ -2870,6 +3078,19 @@ async function openImageViewer(index: number, newViewer = false, syncFromFileLis
       rightIndex = 1;
     }
   }
+  if (typeof options.rightIndex === 'number') {
+    rightIndex = options.rightIndex;
+  }
+  if (options.forceSplit) {
+    if (!config.imageViewer) {
+      (config as any).imageViewer = { isSplit: true, isSyncViewport: false };
+    } else {
+      config.imageViewer.isSplit = true;
+    }
+    if (rightIndex < 0 && fileCount > 0) {
+      rightIndex = Math.min(leftIndex + 1, fileCount - 1);
+    }
+  }
 
   const leftFile = getRealFileAt(leftIndex);
   const rightFile = getRealFileAt(rightIndex);
@@ -2880,8 +3101,9 @@ async function openImageViewer(index: number, newViewer = false, syncFromFileLis
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!imageWindow) {
     if (newViewer) {
+      const forceSplitParam = options.forceSplit ? 1 : 0;
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${leftFileId}&fileIndex=${leftIndex}&fileCount=${fileCount}`,
+        url: `/image-viewer?fileId=${leftFileId}&fileIndex=${leftIndex}&fileCount=${fileCount}&rightFileId=${rightFileId}&rightFileIndex=${rightIndex}&forceSplit=${forceSplitParam}`,
         title: 'Image Viewer',
         width: 1200,
         height: 800,
@@ -2918,11 +3140,12 @@ async function openImageViewer(index: number, newViewer = false, syncFromFileLis
       fileCount: fileCount, // total files length
       pane: 'left',
       resetSplit: newViewer,
+      forceSplit: options.forceSplit === true ? true : undefined,
       // filePath: encodedFilePath, 
       // nextFilePath: nextEncodedFilePath,
     });
 
-    if (syncFromFileListChange) {
+    if (syncFromFileListChange || rightIndex >= 0) {
       await imageWindow.emit('update-img', {
         fileId: rightFileId,
         fileIndex: rightIndex,

@@ -23,7 +23,7 @@ export const useConfigStore = defineStore('configStore', {
     infoPanel: {
       show: false,               // show info panel
       width: 30,                 // info panel width(20-80%)
-      activeTab: 'info',         // active tab ('info', 'edit')
+      activeTab: 'info',         // active tab ('info', 'edit', 'dedup')
       showBasicInfo: true,       // show basic info
       showMetadata: true,        // show metadata
       showMap: true,             // show map

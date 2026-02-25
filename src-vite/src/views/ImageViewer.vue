@@ -276,10 +276,14 @@ onMounted(async() => {
   fileId.value    = Number(urlParams.get('fileId'));
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
-  isSplit.value = !!config.imageViewer?.isSplit;
+  const initialRightFileId = Number(urlParams.get('rightFileId') || '0');
+  const initialRightFileIndex = Number(urlParams.get('rightFileIndex') || '-1');
+  const forceSplit = urlParams.get('forceSplit') === '1';
+
+  isSplit.value = forceSplit ? true : !!config.imageViewer?.isSplit;
   isSyncViewport.value = isSplit.value ? !!config.imageViewer?.isSyncViewport : false;
-  rightFileId.value = 0;
-  rightFileIndex.value = -1;
+  rightFileId.value = initialRightFileId > 0 ? initialRightFileId : 0;
+  rightFileIndex.value = initialRightFileId > 0 ? initialRightFileIndex : -1;
   rightFileInfo.value = null;
   rightIsZoomFit.value = true;
   activePane.value = 'left';
@@ -291,6 +295,15 @@ onMounted(async() => {
     }
 
     const pane = event.payload?.pane === 'right' ? 'right' : 'left';
+    if (typeof event.payload?.forceSplit === 'boolean') {
+      isSplit.value = !!event.payload.forceSplit;
+      if (!isSplit.value) {
+        rightFileId.value = 0;
+        rightFileIndex.value = -1;
+        rightFileInfo.value = null;
+        rightIsZoomFit.value = true;
+      }
+    }
     if (event.payload?.resetSplit) {
       isSplit.value = !!config.imageViewer?.isSplit;
       isSyncViewport.value = isSplit.value ? !!config.imageViewer?.isSyncViewport : false;

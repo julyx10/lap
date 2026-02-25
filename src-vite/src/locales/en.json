@@ -166,6 +166,7 @@
       "refresh": "Refresh",
       "show_info": "Show info",
       "hide_info": "Hide info",
+      "open_dedup": "Find duplicates",
       "clear_history": "Clear search history",
       "index_faces": "Index faces",
       "sort": "Sort",
@@ -188,7 +189,21 @@
     "type_videos": "Videos",
     "favorite_all": "Favorite",
     "unfavorite_all": "Unfavorite",
-    "tag_all": "Tag"
+    "tag_all": "Tag",
+    "dedup": {
+      "title": "Duplicates",
+      "empty_title": "No potential duplicates in this list",
+      "empty_desc": "Try widening filters or running dedup on another file list.",
+      "reclaimable_size": "Reclaimable",
+      "groups_title": "Groups",
+      "group_label": "Group {index}",
+      "items": "items",
+      "keep_label": "Keep",
+      "select_group_duplicates": "Select all duplicates",
+      "compare_group": "Compare",
+      "set_keep": "Set as keep",
+      "duplicate_files_summary": "{count} duplicate files ({size})"
+    }
   },
   "tooltip": {
     "loading": "Loading...",

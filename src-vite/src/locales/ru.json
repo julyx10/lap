@@ -166,6 +166,7 @@
       "refresh": "Обновить",
       "show_info": "Показать инфо",
       "hide_info": "Скрыть инфо",
+      "open_dedup": "Найти дубликаты",
       "clear_history": "Очистить историю",
       "index_faces": "Индексировать лица",
       "sort": "Сортировка",
@@ -188,7 +189,21 @@
     "type_videos": "Видео",
     "favorite_all": "Избранное",
     "unfavorite_all": "Убрать",
-    "tag_all": "Тег"
+    "tag_all": "Тег",
+    "dedup": {
+      "title": "Дубликаты",
+      "empty_title": "В этом списке нет потенциальных дубликатов",
+      "empty_desc": "Попробуйте расширить фильтры или проверить другой список файлов.",
+      "reclaimable_size": "Освободить",
+      "groups_title": "Группы",
+      "group_label": "Группа {index}",
+      "items": "элементов",
+      "keep_label": "Оставить",
+      "select_group_duplicates": "Выбрать все дубликаты",
+      "compare_group": "Сравнить",
+      "set_keep": "Сделать сохраняемым",
+      "duplicate_files_summary": "{count} дублирующихся файлов ({size})"
+    }
   },
   "tooltip": {
     "loading": "Загрузка...",

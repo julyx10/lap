@@ -166,6 +166,7 @@
       "refresh": "刷新",
       "show_info": "显示信息",
       "hide_info": "隐藏信息",
+      "open_dedup": "查找重复",
       "clear_history": "清空搜索历史",
       "index_faces": "索引人脸",
       "sort": "排序",
@@ -188,7 +189,21 @@
     "type_videos": "个视频",
     "favorite_all": "收藏",
     "unfavorite_all": "取消收藏",
-    "tag_all": "标签"
+    "tag_all": "标签",
+    "dedup": {
+      "title": "重复项",
+      "empty_title": "当前列表没有潜在重复项",
+      "empty_desc": "可以放宽筛选条件，或在其他文件列表中执行去重。",
+      "reclaimable_size": "可回收",
+      "groups_title": "分组列表",
+      "group_label": "分组 {index}",
+      "items": "项",
+      "keep_label": "保留",
+      "select_group_duplicates": "选择所有重复项",
+      "compare_group": "对比",
+      "set_keep": "设为保留",
+      "duplicate_files_summary": "{count} 个重复的文件（{size}）"
+    }
   },
   "tooltip": {
     "loading": "加载中...",

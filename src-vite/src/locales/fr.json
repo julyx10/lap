@@ -166,6 +166,7 @@
       "refresh": "Actualiser",
       "show_info": "Afficher info",
       "hide_info": "Masquer info",
+      "open_dedup": "Trouver les doublons",
       "clear_history": "Effacer historique",
       "index_faces": "Indexer visages",
       "sort": "Trier",
@@ -188,7 +189,21 @@
     "type_videos": "Vidéos",
     "favorite_all": "Favori",
     "unfavorite_all": "Retirer",
-    "tag_all": "Tag"
+    "tag_all": "Tag",
+    "dedup": {
+      "title": "Doublons",
+      "empty_title": "Aucun doublon potentiel dans cette liste",
+      "empty_desc": "Essayez d'élargir les filtres ou d'analyser une autre liste de fichiers.",
+      "reclaimable_size": "Récupérable",
+      "groups_title": "Groupes",
+      "group_label": "Groupe {index}",
+      "items": "éléments",
+      "keep_label": "Conserver",
+      "select_group_duplicates": "Sélectionner tous les doublons",
+      "compare_group": "Comparer",
+      "set_keep": "Définir comme à conserver",
+      "duplicate_files_summary": "{count} fichiers en double ({size})"
+    }
   },
   "tooltip": {
     "loading": "Chargement...",

@@ -166,6 +166,7 @@
       "refresh": "更新",
       "show_info": "情報を表示",
       "hide_info": "情報を隠す",
+      "open_dedup": "重複を検索",
       "clear_history": "履歴を消去",
       "index_faces": "顔をインデックス",
       "sort": "並べ替え",
@@ -188,7 +189,21 @@
     "type_videos": "本の動画",
     "favorite_all": "お気に入り",
     "unfavorite_all": "お気に入り解除",
-    "tag_all": "タグ"
+    "tag_all": "タグ",
+    "dedup": {
+      "title": "重複",
+      "empty_title": "このリストに重複候補はありません",
+      "empty_desc": "フィルターを広げるか、別のファイルリストで実行してください。",
+      "reclaimable_size": "削減可能",
+      "groups_title": "グループ",
+      "group_label": "グループ {index}",
+      "items": "件",
+      "keep_label": "保持",
+      "select_group_duplicates": "すべての重複を選択",
+      "compare_group": "比較",
+      "set_keep": "保持対象に設定",
+      "duplicate_files_summary": "重複ファイル {count} 件（{size}）"
+    }
   },
   "tooltip": {
     "loading": "読み込み中...",

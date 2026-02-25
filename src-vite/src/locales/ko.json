@@ -166,6 +166,7 @@
       "refresh": "새로고침",
       "show_info": "정보 보기",
       "hide_info": "정보 숨기기",
+      "open_dedup": "중복 찾기",
       "clear_history": "기록 지우기",
       "index_faces": "얼굴 인덱싱",
       "sort": "정렬",
@@ -188,7 +189,21 @@
     "type_videos": "개 비디오",
     "favorite_all": "즐겨찾기",
     "unfavorite_all": "즐겨찾기 해제",
-    "tag_all": "태그"
+    "tag_all": "태그",
+    "dedup": {
+      "title": "중복",
+      "empty_title": "현재 목록에 중복 후보가 없습니다",
+      "empty_desc": "필터를 넓히거나 다른 파일 목록에서 실행해 보세요.",
+      "reclaimable_size": "정리 가능",
+      "groups_title": "그룹",
+      "group_label": "그룹 {index}",
+      "items": "개",
+      "keep_label": "유지",
+      "select_group_duplicates": "모든 중복 선택",
+      "compare_group": "비교",
+      "set_keep": "유지 항목으로 설정",
+      "duplicate_files_summary": "중복 파일 {count}개 ({size})"
+    }
   },
   "tooltip": {
     "loading": "로딩 중...",
