@@ -227,6 +227,9 @@ const isGrabbing = ref(false);              // Grabbing state
 const noTransition = ref(false);            // Disable transition temporarily
 const lastMousePosition = ref({ x: 0, y: 0 }); // Last mouse position for drag calculations
 const mousePosition = ref({ x: 0, y: 0 });  // Current mouse position
+const mouseDragNavDeltaX = ref(0);
+const mouseDragNavDeltaY = ref(0);
+const mouseDragNavTriggered = ref(false);
 
 const faces = ref<any[]>([]); // Store faces for the current image
 
@@ -246,6 +249,7 @@ let lastDeltaX = 0;
 
 const GESTURE_LOCK_THRESHOLD = 10;
 const HORIZONTAL_NAV_THRESHOLD = 100; // 100px threshold
+const MOUSE_DRAG_NAV_THRESHOLD = 120;
 const isWheelZooming = ref(false);
 let wheelZoomTimeout: NodeJS.Timeout | null = null;
 
@@ -965,6 +969,9 @@ const handleImageMouseDown = (event: MouseEvent) => {
   if (event.button === 0) {     // left click: drag image
     isDraggingImage.value = true;
     lastMousePosition.value = { x: event.clientX, y: event.clientY };
+    mouseDragNavDeltaX.value = 0;
+    mouseDragNavDeltaY.value = 0;
+    mouseDragNavTriggered.value = false;
   } else if (event.button === 2) { // right click: toggle zoom fit
     // TODO: use context menu
     // isZoomFit.value = !isZoomFit.value;
@@ -996,6 +1003,9 @@ const handleImageMouseMove = (event: MouseEvent) => {
 // stop dragging
 const handleImageMouseUp = () => {
   isDraggingImage.value = false;
+  mouseDragNavDeltaX.value = 0;
+  mouseDragNavDeltaY.value = 0;
+  mouseDragNavTriggered.value = false;
 };
 
 // mouse leave
@@ -1019,6 +1029,30 @@ const updateDragPosition = () => {
 
   const scaledWidth = imageRotatedSize.width * scaleVal;
   const scaledHeight = imageRotatedSize.height * scaleVal;
+  const rawDeltaX = event.clientX - lastPos.x;
+  const rawDeltaY = event.clientY - lastPos.y;
+
+  // In zoom-fit mode, horizontal drag acts like touchpad swipe navigation.
+  if (isZoomFit.value && !props.isSlideShow) {
+    mouseDragNavDeltaX.value += rawDeltaX;
+    mouseDragNavDeltaY.value += rawDeltaY;
+
+    if (!mouseDragNavTriggered.value) {
+      const absX = Math.abs(mouseDragNavDeltaX.value);
+      const absY = Math.abs(mouseDragNavDeltaY.value);
+      if (absX >= MOUSE_DRAG_NAV_THRESHOLD && absX > absY) {
+        const direction = mouseDragNavDeltaX.value > 0 ? 'prev' : 'next';
+        navDirection.value = direction;
+        emit('message-from-image-viewer', { message: direction });
+        mouseDragNavTriggered.value = true;
+        isDraggingImage.value = false;
+      }
+    }
+
+    lastMousePosition.value = { x: event.clientX, y: event.clientY };
+    animationFrameId = null;
+    return;
+  }
 
   const deltaX = scaledWidth <= container.width ? 0 : event.clientX - lastPos.x;
   const deltaY = scaledHeight <= container.height ? 0 : event.clientY - lastPos.y;
