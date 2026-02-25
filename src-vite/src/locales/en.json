@@ -637,7 +637,12 @@
       "exit_fullscreen": "Exit fullscreen",
       "pin": "Pin toolbar",
       "unpin": "Unpin toolbar",
-      "close": "Close"
+      "close": "Close",
+      "split_on": "Enable split view",
+      "split_off": "Disable split view",
+      "sync_viewport_on": "Enable Linked zoom",
+      "sync_viewport_off": "Disable Linked zoom",
+      "sync_viewport_need_split": "Enable split view first"
     }
   },
   "video": {

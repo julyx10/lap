@@ -65,6 +65,11 @@ export const useConfigStore = defineStore('configStore', {
       quality: 0,               // jpeg quality (0: High, 1: Medium, 2: Low), [90, 80, 60]
     },
 
+    imageViewer: {
+      isSplit: false,           // split view
+      isSyncViewport: false,    // sync viewport
+    },
+
     settings: {
       tabIndex: 0,               // settings tab index (0: general, 1: grid view, 2: image view, 3: image search, 4: about)
 

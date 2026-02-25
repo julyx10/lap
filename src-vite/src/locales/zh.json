@@ -637,7 +637,12 @@
       "exit_fullscreen": "退出全屏",
       "pin": "固定工具栏",
       "unpin": "取消固定工具栏",
-      "close": "关闭"
+      "close": "关闭",
+      "split_on": "开启分屏视图",
+      "split_off": "关闭分屏视图",
+      "sync_viewport_on": "开启联动缩放",
+      "sync_viewport_off": "关闭联动缩放",
+      "sync_viewport_need_split": "请先开启分屏视图"
     }
   },
   "video": {

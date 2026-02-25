@@ -637,7 +637,12 @@
       "exit_fullscreen": "Salir pantalla comp.",
       "pin": "Fijar barra",
       "unpin": "Desfijar barra",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "split_on": "Activar vista dividida",
+      "split_off": "Desactivar vista dividida",
+      "sync_viewport_on": "Activar zoom vinculado",
+      "sync_viewport_off": "Desactivar zoom vinculado",
+      "sync_viewport_need_split": "Primero activa la vista dividida"
     }
   },
   "video": {

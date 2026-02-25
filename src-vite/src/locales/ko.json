@@ -637,7 +637,12 @@
       "exit_fullscreen": "전체 화면 종료",
       "pin": "도구 모음 고정",
       "unpin": "고정 해제",
-      "close": "닫기"
+      "close": "닫기",
+      "split_on": "분할 보기 켜기",
+      "split_off": "분할 보기 끄기",
+      "sync_viewport_on": "연동 줌 켜기",
+      "sync_viewport_off": "연동 줌 끄기",
+      "sync_viewport_need_split": "먼저 분할 보기를 켜세요"
     }
   },
   "video": {

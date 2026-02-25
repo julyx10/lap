@@ -347,62 +347,19 @@
       </div>
     </div>
 
-    <!-- status bar -->
-    <div v-if="config.settings.showStatusBar" class="absolute px-2 h-8 bottom-0 left-0 right-0 z-30 flex items-center justify-between text-sm cursor-default"
-      :class="config.settings.showStatusBar ? 'bg-base-300/80 backdrop-blur-md' : 'pointer-events-none'"
-    >
-      <!-- file status -->
-      <div v-if="fileList.length > 0" class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap">
-        <div class="flex items-center shink-0">
-          <IconFileSearch class="t-icon-size-xs mr-1" />
-          <span v-if="selectedItemIndex >= 0"> {{ (selectedItemIndex + 1).toLocaleString() + '/' }}</span>
-          <span>{{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}</span>
-        </div>
-
-        <template v-if="selectedItemIndex >= 0">
-          <div class="flex items-center gap-1 shink-0">
-            <component :is="selectMode ? IconCheckAll : IconChecked" class="t-icon-size-xs" />
-            <span>
-              {{ selectMode
-                ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) + ' (' + formatFileSize(selectedSize) + ')'
-                : shortenFilename(fileList[selectedItemIndex]?.name, 32) + ' (' + formatFileSize(fileList[selectedItemIndex]?.size) + ')'
-              }}
-            </span>
-          </div>
-
-          <div class="flex items-center gap-1 shink-0">
-            <component :is="fileList[selectedItemIndex]?.file_type === 1 ? IconPhoto : IconVideo" class="t-icon-size-xs" />
-            <span> {{ formatDimensionText(fileList[selectedItemIndex]?.width, fileList[selectedItemIndex]?.height) }} </span>
-          </div>
-
-          <div v-if="config.settings.grid.showFilmStrip || showQuickView" class="flex items-center gap-1 shink-0">
-            <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
-            <span> {{ (imageScale * 100).toFixed(0) }}% </span>
-          </div>
-
-          <div v-if="fileList[selectedItemIndex]?.e_model" class="flex items-center gap-1 shink-0">
-            <IconCamera class="t-icon-size-xs" />
-            <span> {{ fileList[selectedItemIndex]?.e_model }} {{ fileList[selectedItemIndex]?.e_lens_model ? ' (' + fileList[selectedItemIndex]?.e_lens_model + ')' : '' }}</span>
-          </div>
-
-          <div v-if="fileList[selectedItemIndex]?.e_focal_length || fileList[selectedItemIndex]?.e_exposure_time || fileList[selectedItemIndex]?.e_f_number || fileList[selectedItemIndex]?.e_iso_speed || fileList[selectedItemIndex]?.e_exposure_bias" class="flex items-center gap-1 shink-0">
-            <IconCameraAperture class="t-icon-size-xs" />
-            <span> {{ formatCaptureSettings(fileList[selectedItemIndex]?.e_focal_length, fileList[selectedItemIndex]?.e_exposure_time, fileList[selectedItemIndex]?.e_f_number, fileList[selectedItemIndex]?.e_iso_speed, fileList[selectedItemIndex]?.e_exposure_bias) }}</span>
-          </div>
-
-          <div v-if="fileList[selectedItemIndex]?.geo_name" class="flex items-center gap-1 shink-0">
-            <IconLocation class="t-icon-size-xs" />
-            <span> {{ fileList[selectedItemIndex]?.geo_name }}</span>
-          </div>
-
-          <div class="flex items-center gap-1 shink-0">
-            <IconClock class="t-icon-size-xs" />
-            <span> {{ formatTimestamp(fileList[selectedItemIndex]?.taken_date, $t('format.date_time')) }} </span>
-          </div>
-
-        </template>
-      </div>
-    </div>
+    <StatusBar
+      v-if="config.settings.showStatusBar"
+      :file-list="fileList"
+      :selected-item-index="selectedItemIndex"
+      :total-file-count="totalFileCount"
+      :total-file-size="totalFileSize"
+      :select-mode="selectMode"
+      :selected-count="selectedCount"
+      :selected-size="selectedSize"
+      :show-film-strip="config.settings.grid.showFilmStrip"
+      :show-quick-view="showQuickView"
+      :image-scale="imageScale"
+    />
   </div>
 
   <!-- image editor -->
@@ -521,8 +478,7 @@ import { config, libConfig } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         shortenFilename, formatDimensionText, formatCaptureSettings, getSlideShowInterval, 
-         formatTimestamp} from '@/common/utils';
+         shortenFilename, getSlideShowInterval } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -538,6 +494,7 @@ import ImageEditor from '@/components/ImageEditor.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
+import StatusBar from '@/components/StatusBar.vue';
 
 import {
   IconPhotoAll,
@@ -556,18 +513,12 @@ import {
   IconChecked,
   IconTag,
   IconLocation,
-  IconCamera,
-  IconTrash,
-  IconPhoto,
-  IconVideo,
   IconCameraAperture,
-  IconFileSearch,
+  IconTrash,
   IconLeft,
   IconRight,
   IconSeparator,
   IconUpdate,
-  IconZoomIn,
-  IconZoomOut,
   IconCopyTo,
   IconCard,
   IconTile,
@@ -580,7 +531,6 @@ import {
   IconFolderSearch,
   IconCalendarMonth,
   IconCalendarDay,
-  IconClock,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -1447,6 +1397,7 @@ onMounted( async() => {
     switch (message) {
       case 'request-file-at-index':
         const requestIndex = (event.payload as any).index;
+        const pane = (event.payload as any).pane === 'right' ? 'right' : 'left';
         const file = fileList.value[requestIndex];
         if (file) {
            const imageWindow = await WebviewWindow.getByLabel('imageviewer');
@@ -1455,6 +1406,7 @@ onMounted( async() => {
                fileId: file.id,
                fileIndex: requestIndex,
                fileCount: fileList.value.length,
+               pane,
              });
            }
         }
@@ -1598,7 +1550,7 @@ watch(
         updateContent();
   
         // Reset ImageViewer context if open (without focusing/showing it)
-        openImageViewer(selectedItemIndex.value, false);
+        openImageViewer(selectedItemIndex.value, false, true);
       }
     }, 0);
   }
@@ -1639,7 +1591,7 @@ watch(
       updateContent();
   
       // Reset ImageViewer context if open (without focusing/showing it)
-      openImageViewer(selectedItemIndex.value, false);
+      openImageViewer(selectedItemIndex.value, false, true);
     }, 0);
   }, 
   { immediate: true }
@@ -1734,7 +1686,11 @@ async function fetchDataRange(start: number, end: number) {
 
                 // Update ImageViewer if the selected file is loaded
                 if (chunkStart + j === selectedItemIndex.value) {
-                  openImageViewer(selectedItemIndex.value, false);
+                  if (selectedItemIndex.value === 0) {
+                    openImageViewer(selectedItemIndex.value, false, true);
+                  } else {
+                    openImageViewer(selectedItemIndex.value, false);
+                  }
                   updateSelectedImage(selectedItemIndex.value);
                 }
               }
@@ -1845,16 +1801,21 @@ async function getFileList(
         name: '',
         size: 0,
       }));
+      if (totalFileCount.value === 0) {
+        openImageViewer(0, false, true);
+      }
       
       // Reset visible range tracking when changing views
       lastVisibleRange = { start: -1, end: -1 };
     } else {
       fileList.value = [];
+      openImageViewer(0, false, true);
     }
   } catch (err) {
     console.error('getFileList error:', err);
     if (requestId === currentContentRequestId) {
       fileList.value = [];
+      openImageViewer(0, false, true);
     }
   } finally {
     // Only clear loading state if this is still the active request
@@ -1887,6 +1848,7 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
         fileList.value = result;
         totalFileCount.value = fileList.value.length;
         totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+        openImageViewer(0, false, true);
 
         // Reset visible range tracking when changing views
         lastVisibleRange = { start: -1, end: -1 };
@@ -1965,7 +1927,7 @@ async function updateContent() {
             getFileList({ searchAllSubfolders: libConfig.album.folderPath }, requestId);
           } else {                        
             // folder is selected, show files in the folder
-            contentTitle.value = getFolderName(album.path) + getRelativePath(libConfig.album.folderPath || "", album.path);
+          contentTitle.value = getFolderName(album.path) + getRelativePath(libConfig.album.folderPath || "", album.path);
             
             // Get files from file system (not from DB) and generate thumbnails if needed
             const [folderFiles, newCount, updatedCount] = await getFolderFiles(libConfig.album.folderId, libConfig.album.folderPath, false);
@@ -1976,6 +1938,7 @@ async function updateContent() {
             fileList.value = folderFiles || [];
             totalFileCount.value = fileList.value.length;
             totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+            openImageViewer(0, false, true);
 
             // Fetch timeline data for the folder
             currentQueryParams.value = {
@@ -2880,21 +2843,45 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 4) 
 }
 
 // Open the image viewer window
-async function openImageViewer(index: number, newViewer = false) {
+async function openImageViewer(index: number, newViewer = false, syncFromFileListChange = false) {
 
   const webViewLabel = 'imageviewer';
 
   const fileCount = fileList.value.length;
+  const isRealFile = (item: any) => !!item && !item.isPlaceholder && typeof item.id === 'number';
+  const getRealFileAt = (targetIndex: number) => {
+    if (targetIndex < 0 || targetIndex >= fileCount) return null;
+    const file = fileList.value[targetIndex];
+    return isRealFile(file) ? file : null;
+  };
 
-  const file = index >= 0 && index < fileCount ? fileList.value[index] : null;
-  const fileId = file ? file.id : 0;
+  let leftIndex = index;
+  let rightIndex = -1;
+
+  if (syncFromFileListChange) {
+    if (fileCount === 0) {
+      leftIndex = -1;
+      rightIndex = -1;
+    } else if (fileCount === 1) {
+      leftIndex = 0;
+      rightIndex = 0;
+    } else {
+      leftIndex = 0;
+      rightIndex = 1;
+    }
+  }
+
+  const leftFile = getRealFileAt(leftIndex);
+  const rightFile = getRealFileAt(rightIndex);
+  const leftFileId = leftFile ? leftFile.id : 0;
+  const rightFileId = rightFile ? rightFile.id : 0;
   
   // create a new window if it doesn't exist
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!imageWindow) {
     if (newViewer) {
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${fileId}&fileIndex=${index}&fileCount=${fileCount}`,
+        url: `/image-viewer?fileId=${leftFileId}&fileIndex=${leftIndex}&fileCount=${fileCount}`,
         title: 'Image Viewer',
         width: 1200,
         height: 800,
@@ -2926,12 +2913,24 @@ async function openImageViewer(index: number, newViewer = false) {
     }
   } else {    // update the existing window
     await imageWindow.emit('update-img', { 
-      fileId: fileId, 
-      fileIndex: index,   // selected file index
+      fileId: leftFileId, 
+      fileIndex: leftIndex,   // selected file index
       fileCount: fileCount, // total files length
+      pane: 'left',
+      resetSplit: newViewer,
       // filePath: encodedFilePath, 
       // nextFilePath: nextEncodedFilePath,
     });
+
+    if (syncFromFileListChange) {
+      await imageWindow.emit('update-img', {
+        fileId: rightFileId,
+        fileIndex: rightIndex,
+        fileCount: fileCount,
+        pane: 'right',
+      });
+    }
+
     if(newViewer) {
       imageWindow.show();
     }

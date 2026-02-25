@@ -201,7 +201,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit']);
+const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit', 'viewport-change']);
 
 const uiStore = useUIStore();
 
@@ -271,6 +271,7 @@ const currentLoadingId = ref(0);
 
 let resizeObserver: ResizeObserver | null = null;
 let positionObserver: number | null = null;
+const suppressViewportEmit = ref(false);
 
 // navigator view mode
 const navContainerSize = computed(() => {
@@ -1218,6 +1219,87 @@ function zoomImage(cursorX: number, cursorY: number, newScale: number, force: bo
   clampPosition(force);
 }
 
+function getViewportState() {
+  const imgIndex = activeImage.value;
+  const imgRotatedSize = imageSizeRotated.value[imgIndex];
+  const imgSize = imageSize.value[imgIndex];
+  const scaleVal = scale.value[imgIndex];
+  const container = containerSize.value;
+  const pos = position.value[imgIndex];
+
+  const scaledWidth = imgRotatedSize.width * scaleVal;
+  const scaledHeight = imgRotatedSize.height * scaleVal;
+  const paddingX = (scaledWidth - imgSize.width) / 2;
+  const paddingY = (scaledHeight - imgSize.height) / 2;
+  const maxX = container.width - scaledWidth + paddingX;
+  const maxY = container.height - scaledHeight + paddingY;
+
+  let normX = 0.5;
+  let normY = 0.5;
+
+  if (Math.floor(scaledWidth) > container.width && paddingX !== maxX) {
+    normX = (pos.x - maxX) / (paddingX - maxX);
+  }
+  if (Math.floor(scaledHeight) > container.height && paddingY !== maxY) {
+    normY = (pos.y - maxY) / (paddingY - maxY);
+  }
+
+  return {
+    scale: scaleVal,
+    normX: Math.min(Math.max(normX, 0), 1),
+    normY: Math.min(Math.max(normY, 0), 1),
+  };
+}
+
+function applyViewportState(viewport: { scale?: number; normX?: number; normY?: number }, silent = false) {
+  if (!viewport || typeof viewport.scale !== 'number') return;
+
+  const imgIndex = activeImage.value;
+  const imgRotatedSize = imageSizeRotated.value[imgIndex];
+  const imgSize = imageSize.value[imgIndex];
+  const container = containerSize.value;
+  const safeScale = Math.min(Math.max(viewport.scale, minScale.value), maxScale.value);
+
+  scale.value[imgIndex] = safeScale;
+
+  const scaledWidth = imgRotatedSize.width * safeScale;
+  const scaledHeight = imgRotatedSize.height * safeScale;
+  const paddingX = (scaledWidth - imgSize.width) / 2;
+  const paddingY = (scaledHeight - imgSize.height) / 2;
+  const maxX = container.width - scaledWidth + paddingX;
+  const maxY = container.height - scaledHeight + paddingY;
+
+  const normX = Math.min(Math.max(viewport.normX ?? 0.5, 0), 1);
+  const normY = Math.min(Math.max(viewport.normY ?? 0.5, 0), 1);
+
+  if (Math.floor(scaledWidth) > container.width && paddingX !== maxX) {
+    position.value[imgIndex].x = maxX + normX * (paddingX - maxX);
+  } else {
+    position.value[imgIndex].x = (container.width - imgSize.width) / 2;
+  }
+
+  if (Math.floor(scaledHeight) > container.height && paddingY !== maxY) {
+    position.value[imgIndex].y = maxY + normY * (paddingY - maxY);
+  } else {
+    position.value[imgIndex].y = (container.height - imgSize.height) / 2;
+  }
+
+  if (silent) {
+    // Sync path: disable transition for this frame to avoid trailing.
+    noTransition.value = true;
+  }
+
+  suppressViewportEmit.value = silent;
+  clampPosition(true);
+  suppressViewportEmit.value = false;
+
+  if (silent) {
+    requestAnimationFrame(() => {
+      noTransition.value = false;
+    });
+  }
+}
+
 // Ensure image stays within container
 function clampPosition(force: boolean = false) {
   // Skip clamping during horizontal swipe to avoid jitter
@@ -1249,6 +1331,10 @@ function clampPosition(force: boolean = false) {
     pos.y = (container.height - imgSize.height) / 2;
   }
   triggerRef(position);
+
+  if (!suppressViewportEmit.value) {
+    emit('viewport-change', getViewportState());
+  }
 };
 
 // Expose methods
@@ -1256,7 +1342,9 @@ defineExpose({
   zoomIn, 
   zoomOut,
   zoomActual,
-  rotateRight
+  rotateRight,
+  getViewportState,
+  applyViewportState,
 });
 
 </script>

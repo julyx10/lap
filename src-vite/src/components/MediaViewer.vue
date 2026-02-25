@@ -13,14 +13,14 @@
       data-tauri-drag-region
     >
       <!-- File Name (Pinned Mode) -->
-      <div 
+      <!-- <div 
         v-if="mode === 2 && !isFullScreen" 
         class="absolute left-20 text-sm text-base-content/70 truncate select-none"
         :style="{ maxWidth: filenameMaxWidth + 'px' }"
         data-tauri-drag-region
       >
         {{ fileIndex + 1 }}/{{ fileCount }} {{ file?.name }}
-      </div>
+      </div> -->
       
       <div ref="buttonsRef" class="flex items-center space-x-1">
         <TButton
@@ -158,7 +158,7 @@
       <IconClose class="w-4 h-4" />
     </button>
 
-    <div class="flex-1 w-full min-h-0 relative">
+    <div class="flex-1 w-full min-h-0 relative" @dblclick="$emit('media-dblclick')">
       <Image v-if="file?.file_type === 1"
         ref="mediaRef"
         :filePath="file?.file_path" 
@@ -168,6 +168,7 @@
         :isSlideShow="isSlideShow"
         @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
         @scale="(e) => $emit('scale', e)"
+        @viewport-change="(e) => $emit('viewport-change', e)"
         @message-from-image-viewer="handleMessageFromImageViewer"
       ></Image>
       
@@ -277,7 +278,19 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['prev', 'next', 'toggle-slide-show', 'close', 'scale', 'update:isZoomFit', 'item-action', 'toggle-full-screen', 'slideshow-next']);
+const emit = defineEmits([
+  'prev', 
+  'next', 
+  'toggle-slide-show', 
+  'close', 
+  'scale', 
+  'update:isZoomFit', 
+  'item-action', 
+  'toggle-full-screen', 
+  'slideshow-next', 
+  'media-dblclick', 
+  'viewport-change'
+]);
 
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
@@ -408,6 +421,8 @@ const zoomIn = () => mediaRef.value?.zoomIn();
 const zoomOut = () => mediaRef.value?.zoomOut();
 const zoomActual = () => mediaRef.value?.zoomActual();
 const rotateRight = () => mediaRef.value?.rotateRight();
+const getViewportState = () => mediaRef.value?.getViewportState?.();
+const applyViewportState = (viewport: any, silent = false) => mediaRef.value?.applyViewportState?.(viewport, silent);
 const showMessage = (message: string, isWarning: boolean = false) => toolTipRef.value?.showTip(message, isWarning);
 const showTip = (message: string, isWarning: boolean = false) => toolTipRef.value?.showTip(message, isWarning);
 
@@ -447,6 +462,8 @@ defineExpose({
   zoomOut,
   zoomActual,
   rotateRight,
+  getViewportState,
+  applyViewportState,
   showMessage,
   triggerPrev,
   triggerNext

@@ -637,7 +637,12 @@
       "exit_fullscreen": "Vollbild beenden",
       "pin": "Leiste anheften",
       "unpin": "Leiste lösen",
-      "close": "Schließen"
+      "close": "Schließen",
+      "split_on": "Geteilte Ansicht aktivieren",
+      "split_off": "Geteilte Ansicht deaktivieren",
+      "sync_viewport_on": "Gekoppelten Zoom aktivieren",
+      "sync_viewport_off": "Gekoppelten Zoom deaktivieren",
+      "sync_viewport_need_split": "Bitte zuerst die geteilte Ansicht aktivieren"
     }
   },
   "video": {

@@ -6,9 +6,32 @@
       isFullScreen ? 'fixed top-0 left-0 z-50' : '',
     ]"
   >
-    <div ref="viewerContainer" class="relative flex-1 flex justify-center items-center bg-base-200 overflow-hidden select-none">
+    <div class="absolute right-1 top-1 z-95 flex items-center gap-1">
+      <TButton
+        :icon="IconLink"
+        :selected="isSplit && isSyncViewport"
+        :disabled="!isSplit"
+        :tooltip="isSplit
+          ? (isSyncViewport ? $t('image_viewer.toolbar.sync_viewport_off') : $t('image_viewer.toolbar.sync_viewport_on'))
+          : $t('image_viewer.toolbar.sync_viewport_need_split')"
+        @click="toggleSyncViewport()"
+      />
+      <TButton
+        :icon="IconSplitOn"
+        :selected="isSplit"
+        :tooltip="isSplit ? $t('image_viewer.toolbar.split_off') : $t('image_viewer.toolbar.split_on')"
+        @click="toggleSplit()"
+      />
+    </div>
 
-      <template v-if="fileIndex >= 0">
+    <div
+      ref="viewerContainer"
+      :class="[
+        'relative flex-1 flex justify-center items-center overflow-hidden select-none',
+        config.settings.showStatusBar ? 'pb-8' : '',
+      ]"
+    >
+      <template v-if="!isSplit && fileIndex >= 0">
         <MediaViewer
           ref="mediaViewerRef"
           :mode="2"
@@ -27,8 +50,8 @@
           @next="clickNext()"
           @toggle-slide-show="clickSlideShow()"
           @scale="clickScale"
-          @update:isZoomFit="(val) => isZoomFit = val"
-          @dblclick="toggleZoomFit()"
+          @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'left')"
+          @media-dblclick="toggleZoomFit()"
           @close="appWindow.close()"
           @slideshow-next="handleSlideshowNext"
         />
@@ -42,11 +65,134 @@
         </div>
       </template>
 
+      <template v-else-if="isSplit && fileIndex >= 0">
+        <div class="w-full h-full flex">
+          <div
+            class="relative w-1/2 h-full border-r border-base-content/10"
+            @mousedown="setActivePane('left')"
+          >
+            <IconDot
+              v-if="activePane === 'left'"
+              class="absolute right-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
+            />
+            <MediaViewer
+              ref="mediaViewerRef"
+              :mode="2"
+              :isFullScreen="isFullScreen"
+              :file="fileInfo"
+              :hasPrevious="fileIndex > 0"
+              :hasNext="fileIndex < fileCount - 1"
+              :fileIndex="fileIndex"
+              :fileCount="fileCount"
+              :isSlideShow="false"
+              :imageScale="imageScale"
+              :imageMinScale="imageMinScale"
+              :imageMaxScale="imageMaxScale"
+              :isZoomFit="isZoomFit"
+              @prev="clickPrev('left')"
+              @next="clickNext('left')"
+              @scale="clickScale($event, 'left')"
+              @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'left')"
+              @media-dblclick="toggleZoomFit('left')"
+              @viewport-change="handleViewportChange($event, 'left')"
+              @close="appWindow.close()"
+            />
+            <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
+              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
+            >
+              <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+              {{ fileInfo?.comments }}
+            </div>
+          </div>
+
+          <div
+            class="relative w-1/2 h-full"
+            @mousedown="setActivePane('right')"
+          >
+            <IconDot
+              v-if="activePane === 'right'"
+              class="absolute left-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
+            />
+            <MediaViewer
+              ref="rightMediaViewerRef"
+              :mode="2"
+              :isFullScreen="isFullScreen"
+              :file="rightFileInfo"
+              :hasPrevious="rightFileIndex > 0"
+              :hasNext="rightFileIndex < fileCount - 1"
+              :fileIndex="rightFileIndex"
+              :fileCount="fileCount"
+              :isSlideShow="false"
+              :imageScale="rightImageScale"
+              :imageMinScale="rightImageMinScale"
+              :imageMaxScale="rightImageMaxScale"
+              :isZoomFit="rightIsZoomFit"
+              @prev="clickPrev('right')"
+              @next="clickNext('right')"
+              @scale="clickScale($event, 'right')"
+              @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'right')"
+              @media-dblclick="toggleZoomFit('right')"
+              @viewport-change="handleViewportChange($event, 'right')"
+              @close="appWindow.close()"
+            />
+            <div v-if="config.settings.showComment && rightFileInfo?.comments?.length > 0" 
+              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
+            >
+              <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+              {{ rightFileInfo?.comments }}
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- no image selected -->
       <div v-else class="flex flex-col items-center justify-center w-full h-full text-base-content/30">
         <IconSearch class="w-8 h-8" />
         <span>{{ $t('tooltip.not_found.files') }}</span>
       </div>
+    </div>
+
+    <div
+      v-if="config.settings.showStatusBar"
+      class="absolute bottom-0 left-0 right-0 z-30 h-8 bg-base-300/80 backdrop-blur-md"
+    >
+      <template v-if="!isSplit">
+        <StatusBar
+          :selected-file="fileInfo"
+          :selected-item-index="fileIndex"
+          :total-file-count="fileCount"
+          :total-file-size="fileInfo?.size || 0"
+          :image-scale="imageScale"
+          :show-scale="true"
+          :is-embedded="true"
+        />
+      </template>
+      <template v-else>
+        <div class="h-8 flex">
+          <div class="w-1/2 border-r border-base-content/10">
+            <StatusBar
+              :selected-file="fileInfo"
+              :selected-item-index="fileIndex"
+              :total-file-count="fileCount"
+              :total-file-size="fileInfo?.size || 0"
+              :image-scale="imageScale"
+              :show-scale="true"
+              :is-embedded="true"
+            />
+          </div>
+          <div class="w-1/2">
+            <StatusBar
+              :selected-file="rightFileInfo"
+              :selected-item-index="rightFileIndex"
+              :total-file-count="fileCount"
+              :total-file-size="rightFileInfo?.size || 0"
+              :image-scale="rightImageScale"
+              :show-scale="true"
+              :is-embedded="true"
+            />
+          </div>
+        </div>
+      </template>
     </div>
 
   </div>
@@ -65,10 +211,16 @@ import { isWin, isMac, setTheme, getSlideShowInterval } from '@/common/utils';
 import { getFileInfo } from '@/common/api';
 
 import MediaViewer from '@/components/MediaViewer.vue';
+import TButton from '@/components/TButton.vue';
+import StatusBar from '@/components/StatusBar.vue';
 
 import { 
   IconSearch,
   IconComment,
+  IconDot,
+  IconLink,
+  IconSplitOn,
+  IconSplitOff,
  } from '@/common/icons';
 
 /// i18n
@@ -88,8 +240,15 @@ const iconRotate = ref(0);      // icon rotation angle
 const isTransitionDisabled = ref(true);
 
 const mediaViewerRef = ref<any>(null); // media viewer reference
+const rightMediaViewerRef = ref<any>(null); // right media viewer reference (split mode)
 const isFullScreen = ref(false);
 const isZoomFit = ref(true);
+const rightIsZoomFit = ref(true);
+const isSplit = ref(false);
+const activePane = ref<'left' | 'right'>('left');
+const isSyncViewport = ref(false);
+const syncingPane = ref<'left' | 'right' | ''>('');
+const animateSyncOnce = ref(false);
 
 const isSlideShow = ref(false);     // Slide show state
 let timer: NodeJS.Timeout | null = null;  // Timer for slide show
@@ -97,6 +256,13 @@ let timer: NodeJS.Timeout | null = null;  // Timer for slide show
 const imageScale = ref(1);          // Image scale
 const imageMinScale = ref(0);       // Minimum image scale
 const imageMaxScale = ref(10);      // Maximum image scale
+const rightImageScale = ref(1);     // Right image scale
+const rightImageMinScale = ref(0);  // Right minimum scale
+const rightImageMaxScale = ref(10); // Right maximum scale
+
+const rightFileId = ref(0);         // Right file ID
+const rightFileIndex = ref(-1);     // Right file index
+const rightFileInfo = ref<any>(null);
 
 let unlistenImg: () => void;
 let unlistenGridView: () => void;
@@ -110,16 +276,40 @@ onMounted(async() => {
   fileId.value    = Number(urlParams.get('fileId'));
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
+  isSplit.value = !!config.imageViewer?.isSplit;
+  isSyncViewport.value = isSplit.value ? !!config.imageViewer?.isSyncViewport : false;
+  rightFileId.value = 0;
+  rightFileIndex.value = -1;
+  rightFileInfo.value = null;
+  rightIsZoomFit.value = true;
+  activePane.value = 'left';
 
   // Listen 
   unlistenImg = await listen('update-img', async (event: any) => {
     if(uiStore.inputStack.length > 0) {
       return;
     }
-    
-    fileId.value    = Number(event.payload.fileId);
-    fileIndex.value = Number(event.payload.fileIndex);
+
+    const pane = event.payload?.pane === 'right' ? 'right' : 'left';
+    if (event.payload?.resetSplit) {
+      isSplit.value = !!config.imageViewer?.isSplit;
+      isSyncViewport.value = isSplit.value ? !!config.imageViewer?.isSyncViewport : false;
+      if (!isSplit.value) {
+        rightFileId.value = 0;
+        rightFileIndex.value = -1;
+        rightFileInfo.value = null;
+        rightIsZoomFit.value = true;
+      }
+    }
+
     fileCount.value = Number(event.payload.fileCount);
+    if (pane === 'right') {
+      rightFileId.value = Number(event.payload.fileId);
+      rightFileIndex.value = Number(event.payload.fileIndex);
+    } else {
+      fileId.value = Number(event.payload.fileId);
+      fileIndex.value = Number(event.payload.fileIndex);
+    }
   });
 
 
@@ -129,12 +319,15 @@ onMounted(async() => {
     switch (message) {
       case 'rotate':
         if (targetFileId === fileId.value) {
-          if (mediaViewerRef.value) {
-            mediaViewerRef.value.rotateRight();
-          }
+          mediaViewerRef.value?.rotateRight();
           iconRotate.value += 90;
           if (fileInfo.value) {
             fileInfo.value.rotate = (fileInfo.value.rotate || 0) + 90;
+          }
+        } else if (targetFileId === rightFileId.value) {
+          rightMediaViewerRef.value?.rotateRight();
+          if (rightFileInfo.value) {
+            rightFileInfo.value.rotate = (rightFileInfo.value.rotate || 0) + 90;
           }
         }
         break;
@@ -184,18 +377,87 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 const keyActions = {
-  ArrowLeft:  () => clickPrev(),
-  ArrowRight: () => clickNext(),
-  Home:       () => clickHome(),
-  End:        () => clickEnd(),
-  ArrowUp:    () => clickZoomIn(),
-  ArrowDown:  () => clickZoomOut(),
-  '=':        () => clickZoomIn(),
-  '-':        () => clickZoomOut(),
-  '0':        () => clickZoomActual(),
-  ' ':        () => toggleZoomFit(),
+  ArrowLeft:  () => clickPrev(getActivePane()),
+  ArrowRight: () => clickNext(getActivePane()),
+  Home:       () => clickHome(getActivePane()),
+  End:        () => clickEnd(getActivePane()),
+  ArrowUp:    () => clickZoomIn(getActivePane()),
+  ArrowDown:  () => clickZoomOut(getActivePane()),
+  '=':        () => clickZoomIn(getActivePane()),
+  '-':        () => clickZoomOut(getActivePane()),
+  '0':        () => clickZoomActual(getActivePane()),
+  ' ':        () => toggleZoomFit(getActivePane()),
   Escape:     () => closeWindow(),
 };
+
+function getActivePane(): 'left' | 'right' {
+  return isSplit.value ? activePane.value : 'left';
+}
+
+function setActivePane(pane: 'left' | 'right') {
+  activePane.value = pane;
+}
+
+function getViewerRef(pane: 'left' | 'right') {
+  return pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+}
+
+function getFileInfoByPane(pane: 'left' | 'right') {
+  return pane === 'right' ? rightFileInfo.value : fileInfo.value;
+}
+
+function isImagePane(pane: 'left' | 'right') {
+  return getFileInfoByPane(pane)?.file_type === 1;
+}
+
+function syncViewportFrom(pane: 'left' | 'right', animate = false) {
+  if (!isSplit.value || !isSyncViewport.value) return;
+  if (!isImagePane('left') || !isImagePane('right')) return;
+
+  const sourceRef = getViewerRef(pane);
+  const targetPane = pane === 'left' ? 'right' : 'left';
+  const targetRef = getViewerRef(targetPane);
+  const viewport = sourceRef?.getViewportState?.();
+  if (!viewport) return;
+
+  syncingPane.value = pane;
+  targetRef?.applyViewportState?.(viewport, !animate);
+  syncingPane.value = '';
+}
+
+function handleViewportChange(viewport: any, pane: 'left' | 'right') {
+  if (!isSplit.value || !isSyncViewport.value) return;
+  if (syncingPane.value) return;
+  if (!isImagePane('left') || !isImagePane('right')) return;
+
+  const targetPane = pane === 'left' ? 'right' : 'left';
+  const shouldAnimate = animateSyncOnce.value;
+  animateSyncOnce.value = false;
+  syncingPane.value = pane;
+  // Drag/wheel sync stays no-animation; zoom-fit sync can opt-in animation.
+  getViewerRef(targetPane)?.applyViewportState?.(viewport, !shouldAnimate);
+  syncingPane.value = '';
+}
+
+function getZoomFitByPane(pane: 'left' | 'right') {
+  return pane === 'right' ? rightIsZoomFit.value : isZoomFit.value;
+}
+
+function setZoomFitByPane(pane: 'left' | 'right', val: boolean) {
+  if (pane === 'right') {
+    rightIsZoomFit.value = val;
+    return;
+  }
+  isZoomFit.value = val;
+}
+
+function handleZoomFitUpdate(val: boolean, pane: 'left' | 'right') {
+  setActivePane(pane);
+  setZoomFitByPane(pane, val);
+  if (isSplit.value && isSyncViewport.value && isImagePane('left') && isImagePane('right')) {
+    animateSyncOnce.value = true;
+  }
+}
 
 // Handle resize event
 const handleResize = async () => {
@@ -247,6 +509,14 @@ watch(() => fileId.value, async () => {
   fileInfo.value = await getFileInfo(fileId.value);
   iconRotate.value = fileInfo.value.rotate || 0;
   console.log('fileInfo:', fileInfo.value);
+});
+
+watch(() => rightFileId.value, async () => {
+  if (rightFileId.value > 0) {
+    rightFileInfo.value = await getFileInfo(rightFileId.value);
+  } else {
+    rightFileInfo.value = null;
+  }
 });
 
 // watch file index
@@ -303,60 +573,106 @@ watch(() => [isSlideShow.value, config.settings.slideShowInterval], ([newIsSlide
   }
 });
 
-function clickPrev() {
-  if (fileIndex.value > 0) {
-      emit('message-from-image-viewer', { message: 'request-file-at-index', index: fileIndex.value - 1 });
+function ensureRightPaneLoaded() {
+  if (!isSplit.value) return;
+  if (rightFileIndex.value >= 0 && rightFileId.value > 0) return;
+  if (fileCount.value <= 0 || fileIndex.value < 0) return;
+
+  const nextIndex = Math.min(fileIndex.value + 1, fileCount.value - 1);
+  requestFileAtIndex(nextIndex, 'right');
+}
+
+watch(() => isSplit.value, (val) => {
+  if (!config.imageViewer) {
+    (config as any).imageViewer = { isSplit: false, isSyncViewport: false };
+  }
+  config.imageViewer.isSplit = val;
+  if (!val) {
+    isSyncViewport.value = false;
   } else {
-     mediaViewerRef.value?.showMessage((localeMsg.value as any).tooltip.image_viewer.first_image);
+    ensureRightPaneLoaded();
+  }
+});
+
+watch(() => isSyncViewport.value, (val) => {
+  if (!config.imageViewer) {
+    (config as any).imageViewer = { isSplit: false, isSyncViewport: false };
+  }
+  config.imageViewer.isSyncViewport = val;
+});
+
+watch(() => [fileIndex.value, fileCount.value], () => {
+  ensureRightPaneLoaded();
+});
+
+function requestFileAtIndex(index: number, pane: 'left' | 'right' = 'left') {
+  emit('message-from-image-viewer', { message: 'request-file-at-index', index, pane });
+}
+
+function clickPrev(pane: 'left' | 'right' = 'left') {
+  setActivePane(pane);
+  const currentIndex = pane === 'right' ? rightFileIndex.value : fileIndex.value;
+  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+  if (currentIndex > 0) {
+    requestFileAtIndex(currentIndex - 1, pane);
+  } else {
+    viewerRef?.showMessage((localeMsg.value as any).tooltip.image_viewer.first_image);
   }
 }
 
-function clickNext() {
+function clickNext(pane: 'left' | 'right' = 'left') {
+  setActivePane(pane);
+  const currentIndex = pane === 'right' ? rightFileIndex.value : fileIndex.value;
+  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+
   // Fix loop for slideshow
-  if (isSlideShow.value && fileIndex.value >= fileCount.value - 1) {
-    emit('message-from-image-viewer', { message: 'request-file-at-index', index: 0 });
+  if (pane === 'left' && isSlideShow.value && currentIndex >= fileCount.value - 1) {
+    requestFileAtIndex(0, pane);
     return;
   }
   
-  if (fileIndex.value < fileCount.value - 1) {
-    emit('message-from-image-viewer', { message: 'request-file-at-index', index: fileIndex.value + 1 });
+  if (currentIndex < fileCount.value - 1) {
+    requestFileAtIndex(currentIndex + 1, pane);
   } else {
-    mediaViewerRef.value?.showMessage((localeMsg.value as any).tooltip.image_viewer.last_image);
+    viewerRef?.showMessage((localeMsg.value as any).tooltip.image_viewer.last_image);
   }
 }
 
-function clickHome() {
-  emit('message-from-image-viewer', { message: 'request-file-at-index', index: 0 });
+function clickHome(pane: 'left' | 'right' = 'left') {
+  setActivePane(pane);
+  requestFileAtIndex(0, pane);
 }
 
-function clickEnd() {
-  emit('message-from-image-viewer', { message: 'request-file-at-index', index: fileCount.value - 1 });
+function clickEnd(pane: 'left' | 'right' = 'left') {
+  setActivePane(pane);
+  requestFileAtIndex(fileCount.value - 1, pane);
 }
 
 function clickSlideShow() {
   isSlideShow.value = !isSlideShow.value;
 }
 
-const clickZoomIn = () => {
-  if(mediaViewerRef.value) {
-    mediaViewerRef.value.zoomIn();
-  }
+const clickZoomIn = (pane: 'left' | 'right' = 'left') => {
+  setActivePane(pane);
+  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+  viewerRef?.zoomIn();
 };
 
-const clickZoomOut = () => {
-  if(mediaViewerRef.value) {
-    mediaViewerRef.value.zoomOut();
-  }
+const clickZoomOut = (pane: 'left' | 'right' = 'left') => {
+  setActivePane(pane);
+  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+  viewerRef?.zoomOut();
 };
 
-const clickZoomActual = () => {
-  if(mediaViewerRef.value) {
-    mediaViewerRef.value.zoomActual();
-  }
+const clickZoomActual = (pane: 'left' | 'right' = 'left') => {
+  setActivePane(pane);
+  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+  viewerRef?.zoomActual();
 };
 
-const toggleZoomFit = () => {
-  isZoomFit.value = !isZoomFit.value;
+const toggleZoomFit = (pane: 'left' | 'right' = 'left') => {
+  const current = getZoomFitByPane(pane);
+  handleZoomFitUpdate(!current, pane);
 };
 
 const closeWindow = () => {
@@ -368,10 +684,49 @@ const closeWindow = () => {
   }
 }
 
-const clickScale = (event: any) => {
+const clickScale = (event: any, pane: 'left' | 'right' = 'left') => {
+  if (pane === 'right') {
+    rightImageScale.value = event.scale;
+    rightImageMinScale.value = event.minScale;
+    rightImageMaxScale.value = event.maxScale;
+    return;
+  }
+
   imageScale.value = event.scale;
   imageMinScale.value = event.minScale;
   imageMaxScale.value = event.maxScale;
+};
+
+const toggleSplit = () => {
+  const willEnable = !isSplit.value;
+  isSplit.value = willEnable;
+  activePane.value = 'left';
+  if (!willEnable) {
+    isSyncViewport.value = false;
+  }
+
+  if (willEnable) {
+    if (isSlideShow.value) {
+      isSlideShow.value = false;
+    }
+    rightIsZoomFit.value = true;
+    rightImageScale.value = 1;
+    rightImageMinScale.value = 0;
+    rightImageMaxScale.value = 10;
+
+    if (fileCount.value > 0) {
+      const nextIndex = Math.min(fileIndex.value + 1, fileCount.value - 1);
+      requestFileAtIndex(nextIndex, 'right');
+    }
+  }
+};
+
+const toggleSyncViewport = () => {
+  if (!isSplit.value) return;
+  isSyncViewport.value = !isSyncViewport.value;
+  if (isSyncViewport.value) {
+    syncViewportFrom(activePane.value);
+  }
 };
 
 </script>

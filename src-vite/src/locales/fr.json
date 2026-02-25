@@ -637,7 +637,12 @@
       "exit_fullscreen": "Quitter plein écran",
       "pin": "Épingler barre",
       "unpin": "Désépingler barre",
-      "close": "Fermer"
+      "close": "Fermer",
+      "split_on": "Activer la vue fractionnée",
+      "split_off": "Désactiver la vue fractionnée",
+      "sync_viewport_on": "Activer le zoom lié",
+      "sync_viewport_off": "Désactiver le zoom lié",
+      "sync_viewport_need_split": "Activez d'abord la vue fractionnée"
     }
   },
   "video": {

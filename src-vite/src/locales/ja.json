@@ -637,7 +637,12 @@
       "exit_fullscreen": "全画面終了",
       "pin": "バーを固定",
       "unpin": "固定解除",
-      "close": "閉じる"
+      "close": "閉じる",
+      "split_on": "分割表示を有効にする",
+      "split_off": "分割表示を無効にする",
+      "sync_viewport_on": "連動ズームを有効にする",
+      "sync_viewport_off": "連動ズームを無効にする",
+      "sync_viewport_need_split": "先に分割表示を有効にしてください"
     }
   },
   "video": {
