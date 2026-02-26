@@ -291,6 +291,12 @@ pub fn get_query_files(params: QueryParams, offset: i64, limit: i64) -> Result<V
         .map_err(|e| format!("Error while getting query files: {}", e))
 }
 
+#[tauri::command]
+pub fn get_query_file_position(params: QueryParams, file_id: i64) -> Result<Option<i64>, String> {
+    AFile::get_query_file_position(&params, file_id)
+        .map_err(|e| format!("Error while getting query file position: {}", e))
+}
+
 /// get all files from the folder
 #[tauri::command]
 pub fn get_folder_files(
@@ -742,4 +748,64 @@ pub fn delete_person(person_id: i64) -> Result<usize, String> {
 pub fn get_faces_for_file(file_id: i64) -> Result<Vec<t_sqlite::Face>, String> {
     t_sqlite::Face::get_for_file(file_id)
         .map_err(|e| format!("Error while getting faces for file: {}", e))
+}
+
+// ----------------------------------------------------------------------------
+// Deduplication Commands
+// ----------------------------------------------------------------------------
+
+#[tauri::command]
+pub fn dedup_start_scan(
+    app_handle: tauri::AppHandle,
+    state: tauri::State<'_, crate::t_dedup::DedupState>,
+    params: Option<crate::t_sqlite::QueryParams>,
+    file_ids: Option<Vec<i64>>,
+) -> Result<(), String> {
+    crate::t_dedup::start_scan(app_handle, state, params, file_ids)
+}
+
+#[tauri::command]
+pub fn dedup_get_scan_status(
+    state: tauri::State<'_, crate::t_dedup::DedupState>,
+) -> Result<crate::t_dedup::DedupScanStatus, String> {
+    let status = state.status.lock().unwrap();
+    Ok(status.clone())
+}
+
+#[tauri::command]
+pub fn dedup_cancel_scan(
+    state: tauri::State<'_, crate::t_dedup::DedupState>,
+) -> Result<(), String> {
+    state
+        .cancel_flag
+        .store(true, std::sync::atomic::Ordering::SeqCst);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn dedup_list_groups(
+    page: u32,
+    page_size: u32,
+    sort_by: String, // E.g., "size_desc", "count_desc"
+    filter: String,  // E.g., "all", "unreviewed"
+) -> Result<Vec<crate::t_dedup::DedupGroup>, String> {
+    crate::t_dedup::list_groups(page, page_size, &sort_by, &filter)
+}
+
+#[tauri::command]
+pub fn dedup_get_group(group_id: i64) -> Result<crate::t_dedup::DedupGroup, String> {
+    crate::t_dedup::get_group(group_id)
+}
+
+#[tauri::command]
+pub fn dedup_set_keep(group_id: i64, file_id: i64) -> Result<(), String> {
+    crate::t_dedup::set_keep(group_id, file_id)
+}
+
+#[tauri::command]
+pub fn dedup_delete_selected(
+    group_ids: Option<Vec<i64>>,
+    file_ids: Option<Vec<i64>>,
+) -> Result<(), String> {
+    crate::t_dedup::delete_selected(group_ids, file_ids)
 }

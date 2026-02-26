@@ -16,19 +16,19 @@
   - independent navigation remains, linked zoom optional.
 
 ## Matching Rule (V1)
-- Duplicate key = `sha256 + file_size`.
-- Rationale: high precision, low false positives.
+- Duplicate key = `blake3 + file_size`.
+- Rationale: high precision, low false positives, faster hashing for large libraries.
 
 ## Data Model
 
 ### New table: `file_hashes`
 - `file_id INTEGER PRIMARY KEY` (FK to files)
-- `sha256 TEXT NOT NULL`
+- `hash TEXT NOT NULL` (blake3 hex)
 - `file_size INTEGER NOT NULL`
 - `mtime INTEGER NOT NULL`
 - `computed_at INTEGER NOT NULL`
 - Indexes:
-  - `idx_file_hashes_sha_size (sha256, file_size)`
+  - `idx_file_hashes_hash_size (hash, file_size)`
   - `idx_file_hashes_mtime (mtime)`
 
 ### New table: `duplicate_groups`
@@ -67,7 +67,7 @@ Pick best file by deterministic score (higher wins):
    - missing hash
 2. Upsert `file_hashes`.
 3. Rebuild or incrementally update groups:
-   - `GROUP BY sha256, file_size HAVING COUNT(*) > 1`
+   - `GROUP BY hash, file_size HAVING COUNT(*) > 1`
 4. For each group, refresh `duplicate_groups` + `duplicate_group_items`.
 5. Recompute `is_keep` from score unless user manually overrides.
 

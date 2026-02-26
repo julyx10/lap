@@ -8,13 +8,46 @@ struct Migration {
 
 fn get_migrations() -> Vec<Migration> {
     vec![
-        // Initial setup is version 0 (implicit).
-        // Version 1 example:
-        // Migration {
-        //     version: 1,
-        //     description: "Create initial tables",
-        //     sql: "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY);",
-        // },
+        Migration {
+            version: 1,
+            description: "Create deduplication tables",
+            sql: "
+                CREATE TABLE IF NOT EXISTS file_hashes (
+                    file_id INTEGER PRIMARY KEY,
+                    hash TEXT NOT NULL,
+                    file_size INTEGER NOT NULL,
+                    mtime INTEGER NOT NULL,
+                    computed_at INTEGER NOT NULL,
+                    FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_file_hashes_hash_size ON file_hashes(hash, file_size);
+                CREATE INDEX IF NOT EXISTS idx_file_hashes_mtime ON file_hashes(mtime);
+
+                CREATE TABLE IF NOT EXISTS duplicate_groups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    hash TEXT NOT NULL,
+                    file_size INTEGER NOT NULL,
+                    file_count INTEGER NOT NULL,
+                    total_size INTEGER NOT NULL,
+                    reviewed INTEGER NOT NULL DEFAULT 0,
+                    updated_at INTEGER NOT NULL
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS uidx_duplicate_groups_hash_size ON duplicate_groups(hash, file_size);
+
+                CREATE TABLE IF NOT EXISTS duplicate_group_items (
+                    group_id INTEGER NOT NULL,
+                    file_id INTEGER NOT NULL,
+                    is_keep INTEGER NOT NULL DEFAULT 0,
+                    is_selected INTEGER NOT NULL DEFAULT 0,
+                    score REAL NOT NULL DEFAULT 0,
+                    PRIMARY KEY (group_id, file_id),
+                    FOREIGN KEY (group_id) REFERENCES duplicate_groups(id) ON DELETE CASCADE,
+                    FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_dup_items_group ON duplicate_group_items(group_id);
+                CREATE INDEX IF NOT EXISTS idx_dup_items_file ON duplicate_group_items(file_id);
+            ",
+        },
     ]
 }
 

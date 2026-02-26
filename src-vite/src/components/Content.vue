@@ -325,6 +325,9 @@
             v-if="config.infoPanel.activeTab === 'dedup'"
             :file-list="fileList"
             :selected-file-id="fileList[selectedItemIndex]?.id"
+            :dedup-scan-key="dedupScanKey"
+            :dedup-query-params="dedupQueryParams"
+            :dedup-scope-file-ids="dedupScopeFileIds"
             @close="checkUnsavedChanges(() => config.infoPanel.show = false)"
             @select-file="handleDedupSelectFile"
             @preview-file="handleDedupPreviewFile"
@@ -492,7 +495,8 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
-         updateFileInfo, cancelIndexing as cancelIndexingApi, getFacesForFile, listenFaceIndexProgress } from '@/common/api';  
+         updateFileInfo, cancelIndexing as cancelIndexingApi, getFacesForFile, listenFaceIndexProgress,
+         dedupGetGroup, getQueryFilePosition } from '@/common/api';  
 import { config, libConfig } from '@/common/config';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
@@ -805,6 +809,31 @@ const currentImageSearchParams = ref({
 
 // Similar Search Mode State
 const tempViewMode = ref<'none' | 'similar' | 'album' | 'person'>('none');
+const dedupQueryParams = computed(() => {
+  if (tempViewMode.value === 'similar') return null;
+  if (config.main.sidebarIndex === 3 && config.search.searchType === 1) return null;
+  return { ...currentQueryParams.value };
+});
+
+const dedupScopeFileIds = computed(() => {
+  if (dedupQueryParams.value) return null;
+  const ids = fileList.value
+    .map((file: any) => Number(file?.id))
+    .filter((id: number) => Number.isFinite(id) && id > 0);
+  return ids.length > 0 ? ids : null;
+});
+
+const dedupScanKey = computed(() => {
+  if (totalFileCount.value <= 0) return '';
+  if (dedupQueryParams.value) {
+    return `query:${JSON.stringify(dedupQueryParams.value)}|count:${totalFileCount.value}`;
+  }
+  if (dedupScopeFileIds.value && dedupScopeFileIds.value.length > 0) {
+    return `scope:${dedupScopeFileIds.value.join(',')}`;
+  }
+  return '';
+});
+
 const currentTitleIcon = computed(() => {
   switch (tempViewMode.value) {
     case 'none':
@@ -2881,20 +2910,36 @@ const toggleDedupPanel = () => {
   });
 };
 
-const handleDedupSelectFile = (fileId: number) => {
-  const index = fileList.value.findIndex(file => file.id === fileId);
-  if (index !== -1) {
-    checkUnsavedChanges(() => {
-      selectedItemIndex.value = index;
-    });
+async function resolveFileIndexForDedup(fileId: number): Promise<number> {
+  const loadedIndex = fileList.value.findIndex(file => file.id === fileId);
+  if (loadedIndex !== -1) return loadedIndex;
+
+  const position = await getQueryFilePosition(currentQueryParams.value, fileId);
+  if (position === null || position < 0 || position >= totalFileCount.value) {
+    return -1;
   }
+
+  const buffer = 200;
+  await fetchDataRange(position - buffer, position + buffer);
+  return position;
+}
+
+const handleDedupSelectFile = (fileId: number) => {
+  checkUnsavedChanges(async () => {
+    const index = await resolveFileIndexForDedup(fileId);
+    if (index === -1) return;
+    selectedItemIndex.value = index;
+    updateSelectedImage(index);
+  });
 };
 
 const handleDedupPreviewFile = (fileId: number) => {
-  const index = fileList.value.findIndex(file => file.id === fileId);
-  if (index !== -1) {
+  checkUnsavedChanges(async () => {
+    const index = await resolveFileIndexForDedup(fileId);
+    if (index === -1) return;
+    selectedItemIndex.value = index;
     handleItemDblClicked(index);
-  }
+  });
 };
 
 const buildPotentialDupKey = (file: any): string | null => {
@@ -2939,12 +2984,18 @@ const buildDuplicateGroups = (files: any[]) => {
     });
 };
 
-const handleDedupCompareGroup = async (groupKey: string, keepFileId: number) => {
-  const grouped = fileList.value.filter(file => buildPotentialDupKey(file) === groupKey);
-  if (grouped.length <= 1) return;
+const handleDedupCompareGroup = async (groupId: string, keepFileId: number) => {
+  const numericGroupId = Number(groupId);
+  if (!Number.isFinite(numericGroupId) || numericGroupId <= 0) return;
 
-  const leftId = grouped.some(file => file.id === keepFileId) ? keepFileId : grouped[0]?.id;
-  const rightId = grouped.find(file => file.id !== leftId)?.id;
+  const group = await dedupGetGroup(numericGroupId);
+  const itemIds = Array.isArray(group?.items)
+    ? group.items.map((item: any) => Number(item?.file_id)).filter((id: number) => Number.isFinite(id) && id > 0)
+    : [];
+  if (itemIds.length <= 1) return;
+
+  const leftId = itemIds.includes(keepFileId) ? keepFileId : itemIds[0];
+  const rightId = itemIds.find(id => id !== leftId);
   const leftIndex = fileList.value.findIndex(file => file.id === leftId);
   const rightIndex = fileList.value.findIndex(file => file.id === rightId);
   if (leftIndex < 0 || rightIndex < 0) return;

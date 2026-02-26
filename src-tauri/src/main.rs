@@ -17,6 +17,7 @@ mod t_cluster;
 mod t_cmds;
 mod t_common;
 mod t_config;
+mod t_dedup;
 mod t_face;
 mod t_image;
 mod t_migration;
@@ -59,6 +60,7 @@ fn main() {
                 phase: "indexing".to_string(),
             }),
         )))
+        .manage(t_dedup::DedupState::default())
         .setup(|_app| {
             // Create the database on startup
             t_sqlite::create_db().expect("error while creating the database");
@@ -145,6 +147,7 @@ fn main() {
             t_cmds::get_query_count_and_sum,
             t_cmds::get_query_time_line,
             t_cmds::get_query_files,
+            t_cmds::get_query_file_position,
             t_cmds::get_folder_files,
             t_cmds::get_folder_thumb_count,
             t_cmds::edit_image,
@@ -203,6 +206,14 @@ fn main() {
             t_cmds::rename_person,
             t_cmds::delete_person,
             t_cmds::get_faces_for_file,
+            // dedup
+            t_cmds::dedup_start_scan,
+            t_cmds::dedup_get_scan_status,
+            t_cmds::dedup_cancel_scan,
+            t_cmds::dedup_list_groups,
+            t_cmds::dedup_get_group,
+            t_cmds::dedup_set_keep,
+            t_cmds::dedup_delete_selected,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");
