@@ -192,6 +192,7 @@
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplikate",
+      "scanning": "Duplikate werden gescannt...",
       "empty_title": "Keine potenziellen Duplikate in dieser Liste",
       "empty_desc": "Erweitern Sie den Filter oder prüfen Sie eine andere Dateiliste.",
       "reclaimable_size": "Freigebbar",

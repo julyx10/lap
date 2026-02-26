@@ -192,6 +192,7 @@
     "tag_all": "タグ",
     "dedup": {
       "title": "重複",
+      "scanning": "重複をスキャン中...",
       "empty_title": "このリストに重複候補はありません",
       "empty_desc": "フィルターを広げるか、別のファイルリストで実行してください。",
       "reclaimable_size": "削減可能",

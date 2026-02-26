@@ -2,16 +2,19 @@
   <div class="w-full h-full rounded-box bg-base-200 flex flex-col overflow-hidden">
     <div class="flex items-center w-full shrink-0 px-2 mb-2">
       <div class="flex items-center gap-2 text-base-content/70 px-2 mt-2">
-        <IconSimilar class="w-5 h-5" />
         <span class="uppercase text-sm tracking-wide">{{ $t('info_panel.dedup.title') }}</span>
       </div>
       <div class="ml-auto mt-2 flex items-center gap-1">
-        <button class="btn btn-xs btn-ghost" :disabled="isDedupLoading" @click="triggerBackendDedup(true)">
-          <IconRefresh class="w-3.5 h-3.5" />
-          {{ $t('toolbar.tooltip.refresh') }}
-        </button>
+        <TButton
+          :icon="IconRefresh"
+          :tooltip="$t('toolbar.tooltip.refresh')"
+          :buttonSize="'small'"
+          :disabled="isDedupLoading"
+          @click.stop="triggerBackendDedup(true)"
+        />
         <TButton
           :icon="IconClose"
+          :tooltip="$t('msgbox.close')"
           :buttonSize="'small'"
           @click.stop="$emit('close')"
         />
@@ -28,7 +31,7 @@
 
       <div v-else-if="duplicateGroups.length === 0" class="flex-1 flex items-center justify-center">
         <div class="text-center text-base-content/40 space-y-3 max-w-[240px]">
-          <IconFiles class="w-8 h-8 mx-auto text-base-content/30" />
+          <IconSimilar class="w-8 h-8 mx-auto text-base-content/30" />
           <p class="text-xs font-medium">{{ $t('info_panel.dedup.empty_title') }}</p>
           <p class="text-xs text-base-content/40">{{ $t('info_panel.dedup.empty_desc') }}</p>
         </div>
@@ -109,7 +112,12 @@
                 <div class="min-w-0 flex-1">
                   <div class="text-[10px] uppercase tracking-widest text-primary/80 font-bold">{{ $t('info_panel.dedup.keep_label') }}</div>
                   <div class="text-xs font-semibold text-base-content/75 truncate">{{ activeGroup.keepItem.file.name }}</div>
-                  <div class="text-[11px] text-base-content/50 truncate">{{ getFolderPath(activeGroup.keepItem.file.file_path) }}</div>
+                  <div
+                    class="text-[11px] text-base-content/50 truncate"
+                    :title="getFolderPath(activeGroup.keepItem.file.file_path)"
+                  >
+                    {{ getFolderPath(activeGroup.keepItem.file.file_path) }}
+                  </div>
                 </div>
               </div>
             </button>
@@ -138,7 +146,12 @@
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="text-xs font-semibold text-base-content/75 truncate">{{ item.file?.name }}</div>
-                  <div class="text-[11px] text-base-content/50 truncate">{{ getFolderPath(item.file?.file_path) }}</div>
+                  <div
+                    class="text-[11px] text-base-content/50 truncate"
+                    :title="getFolderPath(item.file?.file_path)"
+                  >
+                    {{ getFolderPath(item.file?.file_path) }}
+                  </div>
                   <div class="text-[11px] text-base-content/45">
                     {{ formatFileSize(item.file?.size || 0) }}
                     <template v-if="item.file?.width && item.file?.height"> · {{ item.file.width }} x {{ item.file.height }}</template>
@@ -393,8 +406,14 @@ async function triggerBackendDedup(force = false) {
   }
 
   if (!force && dedupPaneGlobalState.lastScanKey === props.dedupScanKey) {
-    isDedupLoading.value = false;
+    isDedupLoading.value = true;
+    const status = await dedupGetScanStatus();
+    if (status?.state === 'running') {
+      queuedScanKey.value = props.dedupScanKey;
+      return;
+    }
     await fetchGroups();
+    isDedupLoading.value = false;
     return;
   }
 
@@ -430,11 +449,13 @@ watch(
       selectedGroupId.value = null;
       return;
     }
+    isDedupLoading.value = true;
     if (newKey !== oldKey) {
       await triggerBackendDedup();
       return;
     }
     await fetchGroups();
+    isDedupLoading.value = false;
   },
   { immediate: true }
 );
@@ -449,6 +470,9 @@ watch(selectedGroupId, (groupId, prevGroupId) => {
 });
 
 onMounted(async () => {
+  if (props.dedupScanKey) {
+    isDedupLoading.value = true;
+  }
   const status = await dedupGetScanStatus();
   if (status?.state === 'running') {
     isDedupLoading.value = true;

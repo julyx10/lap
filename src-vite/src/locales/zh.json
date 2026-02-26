@@ -192,6 +192,7 @@
     "tag_all": "标签",
     "dedup": {
       "title": "重复项",
+      "scanning": "扫描重复项中...",
       "empty_title": "当前列表没有潜在重复项",
       "empty_desc": "可以放宽筛选条件，或在其他文件列表中执行去重。",
       "reclaimable_size": "可回收",

@@ -138,7 +138,7 @@
           />
 
           <TButton
-            :icon="config.infoPanel.show ? IconSideBarOn : IconSideBarOff"
+            :icon="IconInformation"
             :tooltip="config.infoPanel.show ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
             :selected="config.infoPanel.show && config.infoPanel.activeTab !== 'dedup'"
             :disabled="isIndexing"
@@ -347,6 +347,8 @@
             @favoriteAll="selectModeSetFavorites(true)"
             @unfavoriteAll="selectModeSetFavorites(false)"
             @tagAll="clickTag"
+            @quick-edit-tag="clickTag"
+            @quick-edit-comment="openCommentEditor"
           />
         </div>
       </transition>
@@ -522,8 +524,6 @@ import StatusBar from '@/components/StatusBar.vue';
 
 import {
   IconPhotoAll,
-  IconSideBarOn,
-  IconSideBarOff,
   IconArrowDown,
   IconClose,
   IconCheckAll,
@@ -550,6 +550,7 @@ import {
   IconFilmstrip,
   IconRestore,
   IconRefresh,
+  IconInformation,
   IconPhotoSearch,
   IconSimilar,
   IconPersonSearch,
@@ -2858,6 +2859,12 @@ const onEditComment = async (newComment: any) => {
   }
 }
 
+const openCommentEditor = () => {
+  if (selectedItemIndex.value >= 0) {
+    showCommentMsgbox.value = true;
+  }
+}
+
 const handleSelectMode = (value: any) => {
   if(fileList.value.length === 0 || showQuickView.value || isIndexing.value) return;
 
@@ -3040,8 +3047,10 @@ function updateFileHasTags(fileIds: number[]) {
     const index = fileList.value.findIndex(f => f.id === fileId);
     if (index !== -1) {
       const newFile = fileList.value[index];
-      getFileHasTags(fileId).then(hasTags => {
+      getFileHasTags(fileId).then(async hasTags => {
         newFile.has_tags = hasTags;
+        // Keep Info tab in sync after tagging dialog closes.
+        newFile.tags = hasTags ? ((await getTagsForFile(fileId)) || []) : [];
       });
     }
   }

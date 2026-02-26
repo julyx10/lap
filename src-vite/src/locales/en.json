@@ -192,6 +192,7 @@
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplicates",
+      "scanning": "Scanning duplicates...",
       "empty_title": "No potential duplicates in this list",
       "empty_desc": "Try widening filters or running dedup on another file list.",
       "reclaimable_size": "Reclaimable",

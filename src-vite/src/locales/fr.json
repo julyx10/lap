@@ -192,6 +192,7 @@
     "tag_all": "Tag",
     "dedup": {
       "title": "Doublons",
+      "scanning": "Analyse des doublons en cours...",
       "empty_title": "Aucun doublon potentiel dans cette liste",
       "empty_desc": "Essayez d'élargir les filtres ou d'analyser une autre liste de fichiers.",
       "reclaimable_size": "Récupérable",

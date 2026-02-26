@@ -192,6 +192,7 @@
     "tag_all": "태그",
     "dedup": {
       "title": "중복",
+      "scanning": "중복 항목 스캔 중...",
       "empty_title": "현재 목록에 중복 후보가 없습니다",
       "empty_desc": "필터를 넓히거나 다른 파일 목록에서 실행해 보세요.",
       "reclaimable_size": "정리 가능",

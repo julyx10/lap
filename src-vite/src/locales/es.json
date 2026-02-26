@@ -192,6 +192,7 @@
     "tag_all": "Etiqueta",
     "dedup": {
       "title": "Duplicados",
+      "scanning": "Escaneando duplicados...",
       "empty_title": "No hay duplicados potenciales en esta lista",
       "empty_desc": "Prueba ampliar los filtros o revisar otra lista de archivos.",
       "reclaimable_size": "Recuperable",

@@ -55,11 +55,18 @@
         </div>
       </template>
     </div>
+    <div
+      v-if="showDebugBadge"
+      class="ml-2 shrink-0 px-2 py-0.5 rounded-full border border-warning/40 text-warning text-[10px] font-mono font-semibold tracking-wide"
+    >
+      DEBUG {{ appVersion ? `v${appVersion}` : '' }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { getVersion } from '@tauri-apps/api/app';
 import {
   formatFileSize,
   shortenFilename,
@@ -137,6 +144,8 @@ const props = defineProps({
 });
 
 const hasData = computed(() => props.fileList.length > 0 || !!props.selectedFile);
+const showDebugBadge = import.meta.env.DEV;
+const appVersion = ref('');
 const currentFile = computed(() => {
   if (props.selectedFile) return props.selectedFile;
   return props.fileList[props.selectedItemIndex];
@@ -145,5 +154,14 @@ const containerClass = computed(() => {
   const base = 'px-2 h-8 flex items-center justify-between text-sm cursor-default bg-base-300/80 backdrop-blur-md';
   if (props.isEmbedded) return base;
   return `${base} absolute bottom-0 left-0 right-0 z-30`;
+});
+
+onMounted(async () => {
+  if (!showDebugBadge) return;
+  try {
+    appVersion.value = await getVersion();
+  } catch (error) {
+    console.error('Failed to get app version for debug badge:', error);
+  }
 });
 </script>

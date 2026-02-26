@@ -28,6 +28,7 @@
         </template>
         <TButton
           :icon="IconClose"
+          :tooltip="$t('msgbox.close')"
           :buttonSize="'small'"
           @click.stop="$emit('close')"
         />
@@ -188,15 +189,33 @@
 
             <!-- Tags -->
             <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.tags') }}</div>
-            <div class="text-xs font-semibold text-base-content/65 flex flex-wrap gap-1">
-              <template v-if="fileInfo?.tags && fileInfo.tags.length">
-                <span v-for="tag in fileInfo.tags" :key="tag.id" class="badge badge-sm badge-ghost font-medium">{{ tag.name }}</span>
-              </template>
+            <div class="group flex items-start gap-1">
+              <div class="text-xs font-semibold text-base-content/65 flex flex-wrap gap-1 flex-1 min-w-0">
+                <template v-if="fileInfo?.tags && fileInfo.tags.length">
+                  <span v-for="tag in fileInfo.tags" :key="tag.id" class="badge badge-sm badge-ghost font-medium">{{ tag.name }}</span>
+                </template>
+              </div>
+              <TButton
+                :icon="IconEdit"
+                :tooltip="$t('menu.meta.tag')"
+                :buttonSize="'small'"
+                :class="['opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out']"
+                @click.stop="emit('quickEditTag')"
+              />
             </div>
 
             <!-- Comment -->
             <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.comment') }}</div>
-            <div class="text-xs font-semibold text-base-content/65 wrap-break-words whitespace-pre-wrap">{{ fileInfo?.comments }}</div>
+            <div class="group flex items-start gap-1">
+              <div class="text-xs font-semibold text-base-content/65 wrap-break-words whitespace-pre-wrap flex-1 min-w-0">{{ fileInfo?.comments }}</div>
+              <TButton
+                :icon="IconEdit"
+                :tooltip="$t('menu.meta.comment')"
+                :buttonSize="'small'"
+                :class="['opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out']"
+                @click.stop="emit('quickEditComment')"
+              />
+            </div>
           </div>
         </Transition>
       </div>
@@ -491,7 +510,7 @@ import {
 import { 
   IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
   IconFile, IconFiles, IconRestore, IconSave, IconPalette, IconAdjustments,
-  IconCheckAll, IconFavorite, IconUnFavorite, IconTag,
+  IconCheckAll, IconFavorite, IconUnFavorite, IconTag, IconEdit,
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -524,7 +543,9 @@ const emit = defineEmits([
   'deselect',
   'favoriteAll',
   'unfavoriteAll',
-  'tagAll'
+  'tagAll',
+  'quickEditTag',
+  'quickEditComment',
 ]);
 
 // Tabs logic
