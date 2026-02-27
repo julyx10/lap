@@ -75,7 +75,16 @@
     "edit_tag": "태그 편집",
     "search_tags": "태그 검색",
     "enter_new_tag_name": "새 태그 이름 입력",
-    "not_found": "태그를 찾을 수 없음"
+    "not_found": "태그를 찾을 수 없음",
+    "smart_group": "스마트 태그",
+    "custom_group": "사용자 태그",
+    "smart_items": {
+      "people": "인물",
+      "kids": "아이",
+      "pets": "반려동물",
+      "food": "음식",
+      "travel": "여행"
+    }
   },
   "calendar": {
     "on_this_day": "과거의 오늘",

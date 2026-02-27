@@ -75,7 +75,16 @@
     "edit_tag": "编辑标签",
     "search_tags": "搜索标签",
     "enter_new_tag_name": "输入新标签名称",
-    "not_found": "未找到标签"
+    "not_found": "未找到标签",
+    "smart_group": "智能标签",
+    "custom_group": "自定义标签",
+    "smart_items": {
+      "people": "人物",
+      "kids": "孩子",
+      "pets": "宠物",
+      "food": "美食",
+      "travel": "旅行"
+    }
   },
   "calendar": {
     "on_this_day": "历史上的今天",

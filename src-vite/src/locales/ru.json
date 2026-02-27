@@ -75,7 +75,16 @@
     "edit_tag": "Редактировать тег",
     "search_tags": "Поиск тегов",
     "enter_new_tag_name": "Новое имя тега",
-    "not_found": "Теги не найдены"
+    "not_found": "Теги не найдены",
+    "smart_group": "Умные теги",
+    "custom_group": "Пользовательские теги",
+    "smart_items": {
+      "people": "Люди",
+      "kids": "Дети",
+      "pets": "Питомцы",
+      "food": "Еда",
+      "travel": "Путешествия"
+    }
   },
   "calendar": {
     "on_this_day": "В этот день",

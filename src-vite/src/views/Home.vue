@@ -260,20 +260,13 @@ const moreMenuItems = computed(() => {
     ];
   }
   
-  // 4: Person
+  // 4: Tags
   if (index === 4) {
-    return [
+     return [
       {
-        label: localeMsg.value.menu.person.index_faces,
-        icon: IconUpdate,
-        action: () => panelRef.value?.clickIndexFaces(),
-        disabled: panelRef.value?.isIndexing
-      },
-      {
-        label: localeMsg.value.menu.person.reset_index,
-        icon: IconTrash,
-        action: () => panelRef.value?.clickResetFaces(),
-        disabled: panelRef.value?.isIndexing
+        label: localeMsg.value.menu.tag.add,
+        icon: IconAdd,
+        action: () => panelRef.value?.clickAddTag()
       },
       { label: '-' },
       {
@@ -289,13 +282,20 @@ const moreMenuItems = computed(() => {
     ];
   }
   
-  // 5: Tags
+  // 5: Person
   if (index === 5) {
-     return [
+    return [
       {
-        label: localeMsg.value.menu.tag.add,
-        icon: IconAdd,
-        action: () => panelRef.value?.clickAddTag()
+        label: localeMsg.value.menu.person.index_faces,
+        icon: IconUpdate,
+        action: () => panelRef.value?.clickIndexFaces(),
+        disabled: panelRef.value?.isIndexing
+      },
+      {
+        label: localeMsg.value.menu.person.reset_index,
+        icon: IconTrash,
+        action: () => panelRef.value?.clickResetFaces(),
+        disabled: panelRef.value?.isIndexing
       },
       { label: '-' },
       {
@@ -389,14 +389,14 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.search
   },
   { 
-    icon: IconPerson, 
-    component: Person, 
-    text: localeMsg.value.sidebar.person 
-  },
-  { 
     icon: IconTag,
     component: Tag,
     text: localeMsg.value.sidebar.tag 
+  },
+  { 
+    icon: IconPerson, 
+    component: Person, 
+    text: localeMsg.value.sidebar.person 
   },
   { 
     icon: IconLocation, 

@@ -429,6 +429,9 @@ impl FaceEngine {
         // Normalize embedding to unit vector
         let emb_vec: Vec<f32> = embedding_data.to_vec();
         let norm: f32 = emb_vec.iter().map(|x| x * x).sum::<f32>().sqrt();
+        if !norm.is_finite() || norm <= f32::EPSILON {
+            return Err("Invalid face embedding norm".to_string());
+        }
         let normalized: Vec<f32> = emb_vec.iter().map(|x| x / norm).collect();
 
         Ok(normalized)
@@ -557,7 +560,7 @@ impl FaceEngine {
 
     /// Non-maximum suppression
     fn nms(&self, mut boxes: Vec<FaceBox>, iou_threshold: f32) -> Vec<FaceBox> {
-        boxes.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap());
+        boxes.sort_by(|a, b| b.confidence.total_cmp(&a.confidence));
 
         let mut keep = Vec::new();
         let mut suppressed = vec![false; boxes.len()];
@@ -862,6 +865,7 @@ pub fn run_face_indexing(
                 0
             }
         };
+        let cancelled_during_cluster = *cancel_token.lock().unwrap();
 
         // 5. Finished
         let _ = app_handle.emit(
@@ -869,7 +873,7 @@ pub fn run_face_indexing(
             serde_json::json!({
                 "total_faces": total_faces,
                 "total_persons": total_persons,
-                "cancelled": false
+                "cancelled": cancelled_during_cluster
             }),
         );
         reset_status();

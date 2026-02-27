@@ -61,7 +61,7 @@
 
     <!-- Faces Overlay -->
     <div 
-      v-if="config.main.sidebarIndex === 4 && faces.length > 0 && !isDraggingImage && !isSlideShow"
+      v-if="config.main.sidebarIndex === 5 && faces.length > 0 && !isDraggingImage && !isSlideShow"
       class="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
     >
       <div

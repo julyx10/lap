@@ -1,7 +1,7 @@
 <div align="center">
   <img src="docs/public/icon.png" alt="Lap Logo" width="120" style="border-radius: 20px">
   <h1>Lap</h1>
-  <h3>Family-friendly, offline photo manager for 10k+ photos.</h3>
+  <h3>Offline-first photo manager for large local libraries.</h3>
   <p>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/v/release/julyx10/lap" alt="GitHub release"></a>
     <a href="https://github.com/julyx10/lap/releases"><img src="https://img.shields.io/github/downloads/julyx10/lap/total" alt="GitHub all releases"></a>
@@ -10,20 +10,28 @@
   </p>
 </div>
 
-Lap was created by a photography enthusiast who couldn't find a truly satisfying photo manager on MacBook.
-It is designed for two daily needs: organizing family albums and browsing/searching massive local photo libraries.
+Lap is a desktop photo manager for people who keep their original files in local folders and want modern search plus full control.
+It is designed for everyday family albums and large personal archives (10k+ photos/videos), without cloud lock-in.
 
-Website: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
+- Website: [https://julyx10.github.io/lap/](https://julyx10.github.io/lap/)
+- Demo video: [https://youtu.be/niMD1tTzS24](https://youtu.be/niMD1tTzS24)
+- Releases: [https://github.com/julyx10/lap/releases](https://github.com/julyx10/lap/releases)
 
-Demo Video: [https://youtu.be/niMD1tTzS24](https://youtu.be/niMD1tTzS24)
+## Why Lap
 
-## Core Highlights
+- **Folder-native workflow**: use real disk folders directly, no import library required.
+- **Offline-first AI**: text/image search, similar-image search, and face clustering run locally.
+- **Built for scale**: smooth browsing and organization across large libraries.
+- **Privacy by design**: no cloud upload, no remote inference, no vendor lock-in.
 
-- **Large-scale photo organization**: Built for family albums and photographer archives, with classification and search by **date, location, camera, and face recognition** across **10k+ photos**.
-- **Multi-Library workflow**: Separate work and family libraries with clean boundaries and quick switching.
-- **Local AI search**: Natural-language search, similar-image discovery, and face clustering run on-device for fast results.
-- **Local folder management and sync**: No import required. Use your real folders directly; changes in Finder are reflected in Lap, and file moves in Lap stay synced on disk.
-- **100% offline privacy**: No cloud upload, no remote processing, no vendor lock-in.
+## Features
+
+- **Organization and filtering**: date, location, camera, tags, favorites, and faces.
+- **Smart tags (family-focused)**: one-click semantic categories like people, kids, pets, food, and travel.
+- **Multi-library management**: separate work/family libraries and switch quickly.
+- **Duplicate cleanup**: hash-based duplicate detection and batch move to trash.
+- **Built-in editor**: crop, rotate, flip, resize, and basic adjustments.
+- **Disk sync**: operations in Lap map to your filesystem; external file changes can be refreshed.
 
 ## Download
 
@@ -44,7 +52,29 @@ Demo Video: [https://youtu.be/niMD1tTzS24](https://youtu.be/niMD1tTzS24)
   <img src="docs/public/screenshots/lap-search.png" alt="Lap AI Search" width="900">
 </p>
 
-> Notes: Screenshot sample images come from [Wikimedia Commons](https://commons.wikimedia.org/).
+> Screenshot sample images come from [Wikimedia Commons](https://commons.wikimedia.org/).
+
+## Build from Source
+
+Requirements:
+- Node.js 20+, pnpm 8+
+- Rust stable
+- macOS: `xcode-select --install`, `brew install nasm pkg-config`
+- Linux: `sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf nasm clang pkg-config`
+
+Run locally:
+
+```bash
+# Download AI models
+./scripts/download_models.sh
+# Windows (PowerShell): .\scripts\download_models.ps1
+
+# Install frontend deps
+cd src-vite && pnpm install && cd ..
+
+# Run dev app
+cargo tauri dev
+```
 
 ## Comparison
 
@@ -63,32 +93,12 @@ Demo Video: [https://youtu.be/niMD1tTzS24](https://youtu.be/niMD1tTzS24)
 | Images | JPG, PNG, GIF, BMP, TIFF, WebP, HEIC |
 | Videos | MP4, MOV, MKV, WebM, AVI |
 
-## Development
+## Architecture
 
-Tech stack:
 - Core: [Tauri 2](https://tauri.app/) + Rust
 - Frontend: Vue 3 + Vite
 - Data: SQLite
 - AI/media: CLIP, InsightFace, FFmpeg
-
-Quick start:
-
-```bash
-# Download AI models
-./scripts/download_models.sh
-
-# Install frontend deps
-cd src-vite && pnpm install && cd ..
-
-# Run dev app
-cargo tauri dev
-```
-
-Requirements:
-- Node.js 20+, pnpm 8+
-- Rust stable
-- macOS: `xcode-select --install`, `brew install nasm pkg-config`
-- Linux: `sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf nasm clang pkg-config`
 
 ## License
 

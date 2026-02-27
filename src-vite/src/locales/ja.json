@@ -75,7 +75,16 @@
     "edit_tag": "タグを編集",
     "search_tags": "タグを検索",
     "enter_new_tag_name": "新しいタグ名を入力",
-    "not_found": "タグが見つかりません"
+    "not_found": "タグが見つかりません",
+    "smart_group": "スマートタグ",
+    "custom_group": "カスタムタグ",
+    "smart_items": {
+      "people": "人物",
+      "kids": "子ども",
+      "pets": "ペット",
+      "food": "料理",
+      "travel": "旅行"
+    }
   },
   "calendar": {
     "on_this_day": "この日",

@@ -26,9 +26,10 @@ export const useLibraryStore = defineStore('libraryStore', {
       folderPath: '',
     },
 
-    /** @type {{ id: number | null }} */
+    /** @type {{ id: number | null, smartId: string | null }} */
     tag: {
       id: null,
+      smartId: null,
     },
 
     /** @type {{ year: number | null, month: number | null, date: number | null }} */

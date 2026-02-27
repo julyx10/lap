@@ -24,18 +24,26 @@ fn cosine_distance(emb1: &[f32], emb2: &[f32]) -> f32 {
 }
 
 /// Helper: Parse raw byte embedding to normalized f32 vector
-fn parse_embedding(bytes: &[u8]) -> Vec<f32> {
+fn parse_embedding(bytes: &[u8]) -> Option<Vec<f32>> {
+    // Embedding bytes should be tightly packed f32 values.
+    // If not, skip this embedding instead of panicking.
+    if bytes.is_empty() || bytes.len() % 4 != 0 {
+        return None;
+    }
     let emb_vec: Vec<f32> = bytes
-        .chunks(4)
-        .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap()))
+        .chunks_exact(4)
+        .map(|chunk| {
+            let arr = [chunk[0], chunk[1], chunk[2], chunk[3]];
+            f32::from_le_bytes(arr)
+        })
         .collect();
 
     // Normalize
     let norm: f32 = emb_vec.iter().map(|x| x * x).sum::<f32>().sqrt();
     if norm > 0.0 {
-        emb_vec.iter().map(|x| x / norm).collect()
+        Some(emb_vec.iter().map(|x| x / norm).collect())
     } else {
-        emb_vec // Should not happen for valid embeddings
+        None
     }
 }
 
@@ -75,7 +83,7 @@ where
     let mut parsed_embeddings: Vec<Option<Vec<f32>>> = Vec::with_capacity(n);
     for face in &faces {
         if let Some(bytes) = &face.embedding {
-            parsed_embeddings.push(Some(parse_embedding(bytes)));
+            parsed_embeddings.push(parse_embedding(bytes));
         } else {
             parsed_embeddings.push(None);
         }

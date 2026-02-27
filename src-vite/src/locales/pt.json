@@ -75,7 +75,16 @@
     "edit_tag": "Editar tag",
     "search_tags": "Pesquisar tags",
     "enter_new_tag_name": "Novo nome da tag",
-    "not_found": "Tags não encontradas"
+    "not_found": "Tags não encontradas",
+    "smart_group": "Tags inteligentes",
+    "custom_group": "Tags personalizados",
+    "smart_items": {
+      "people": "Pessoas",
+      "kids": "Crianças",
+      "pets": "Pets",
+      "food": "Comida",
+      "travel": "Viagem"
+    }
   },
   "calendar": {
     "on_this_day": "Neste dia",

@@ -75,7 +75,16 @@
     "edit_tag": "Editar etiqueta",
     "search_tags": "Buscar etiquetas",
     "enter_new_tag_name": "Introduce nuevo nombre",
-    "not_found": "No se encontraron etiquetas"
+    "not_found": "No se encontraron etiquetas",
+    "smart_group": "Etiquetas inteligentes",
+    "custom_group": "Etiquetas personalizadas",
+    "smart_items": {
+      "people": "Personas",
+      "kids": "Niños",
+      "pets": "Mascotas",
+      "food": "Comida",
+      "travel": "Viajes"
+    }
   },
   "calendar": {
     "on_this_day": "Un día como hoy",

@@ -212,38 +212,42 @@
             </div>
           </div>
 
-          <div v-if="config.settings.grid.showFilmStrip" class="h-1"></div>
+          <transition name="filmstrip-preview">
+            <div v-if="config.settings.grid.showFilmStrip" class="h-1"></div>
+          </transition>
 
           <!-- film strip preview -->
-          <div v-if="config.settings.grid.showFilmStrip" ref="previewDiv" 
-            class="flex-1 bg-base-200 overflow-hidden"
-          >
-            <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
-              class="w-full h-full flex items-center justify-center"
+          <transition name="filmstrip-preview">
+            <div v-if="config.settings.grid.showFilmStrip" ref="previewDiv" 
+              class="flex-1 bg-base-200 overflow-hidden filmstrip-preview-pane"
             >
-              <MediaViewer
-                ref="filmStripMediaRef"
-                :mode="1"
-                :isFullScreen="false"
-                :file="fileList[selectedItemIndex]"
-                :hasPrevious="selectedItemIndex > 0"
-                :hasNext="selectedItemIndex < fileList.length - 1"
-                :fileIndex="selectedItemIndex"
-                :fileCount="fileList.length"
-                :isSlideShow="isSlideShow"
-                :imageScale="imageScale"
-                :imageMinScale="imageMinScale"
-                :imageMaxScale="imageMaxScale"
-                v-model:isZoomFit="filmStripZoomFit"
-                @prev="performNavigate('prev')"
-                @next="performNavigate('next')"
-                @toggle-slide-show="toggleSlideShow"
-                @scale="onScale"
-                @item-action="handleItemAction"
-                @slideshow-next="handleSlideshowNext"
-              />
+              <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
+                class="w-full h-full flex items-center justify-center"
+              >
+                <MediaViewer
+                  ref="filmStripMediaRef"
+                  :mode="1"
+                  :isFullScreen="false"
+                  :file="fileList[selectedItemIndex]"
+                  :hasPrevious="selectedItemIndex > 0"
+                  :hasNext="selectedItemIndex < fileList.length - 1"
+                  :fileIndex="selectedItemIndex"
+                  :fileCount="fileList.length"
+                  :isSlideShow="isSlideShow"
+                  :imageScale="imageScale"
+                  :imageMinScale="imageMinScale"
+                  :imageMaxScale="imageMaxScale"
+                  v-model:isZoomFit="filmStripZoomFit"
+                  @prev="performNavigate('prev')"
+                  @next="performNavigate('next')"
+                  @toggle-slide-show="toggleSlideShow"
+                  @scale="onScale"
+                  @item-action="handleItemAction"
+                  @slideshow-next="handleSlideshowNext"
+                />
+              </div>
             </div>
-          </div> <!-- film strip preview -->
+          </transition> <!-- film strip preview -->
         </div> <!-- grid view -->
 
         <!-- custom scrollbar -->
@@ -500,6 +504,7 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
          updateFileInfo, cancelIndexing as cancelIndexingApi, getFacesForFile, listenFaceIndexProgress,
          dedupGetGroup, getQueryFilePosition } from '@/common/api';  
 import { config, libConfig } from '@/common/config';
+import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
 import { isWin, isMac, setTheme,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
@@ -853,8 +858,8 @@ const currentTitleIcon = computed(() => {
             }
           case 2: return config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay;
           case 3: return IconPhotoSearch;
-          case 4: return IconPersonSearch;
-          case 5: return IconTag;
+          case 4: return IconTag;
+          case 5: return IconPersonSearch;
           case 6: return IconLocation;
           case 7: return IconCameraAperture;
           default: return IconFiles;
@@ -1574,8 +1579,8 @@ onMounted( async() => {
 
   // Face Indexing listeners
   unlistenFaceIndexProgress = await listenFaceIndexProgress((event: any) => {
-    // Clear file list if in Person view (sidebarIndex === 4) and file list is not empty
-    if (config.main.sidebarIndex === 4 && fileList.value.length > 0) {
+    // Clear file list if in Person view (sidebarIndex === 5) and file list is not empty
+    if (config.main.sidebarIndex === 5 && fileList.value.length > 0) {
       fileList.value = [];
       totalFileCount.value = 0;
       totalFileSize.value = 0;
@@ -1682,7 +1687,7 @@ watch(
     libConfig.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
     libConfig.person.id,                                                              // person
     libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date,       // calendar
-    libConfig.tag.id,                                                                 // tag
+    libConfig.tag.id, libConfig.tag.smartId,                                          // tag
     libConfig.location.admin1, libConfig.location.name,                               // location
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
   ], 
@@ -1942,11 +1947,17 @@ async function getFileList(
   }
 }
 
-async function getImageSearchFileList(searchText: string, fileId: number, requestId: number) {
+async function getImageSearchFileList(
+  searchText: string,
+  fileId: number,
+  requestId: number,
+  updateHistory = true,
+  thresholdOverride?: number,
+) {
   currentImageSearchParams.value = {
     searchText,
     fileId,
-    threshold: config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
+    threshold: thresholdOverride ?? config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
     limit: config.settings.imageSearch.limit,
   };
 
@@ -1971,7 +1982,7 @@ async function getImageSearchFileList(searchText: string, fileId: number, reques
         lastVisibleRange = { start: -1, end: -1 };
         
         // Update search history with the first result's file_id
-        if (searchText && result.length > 0) {
+        if (updateHistory && searchText && result.length > 0) {
           const history = libConfig.search.searchHistory as any[];
           const index = history.findIndex((item: any) => {
              const text = typeof item === 'string' ? item : item.text;
@@ -2160,16 +2171,18 @@ async function updateContent() {
       }
     }
   } 
-  else if(newIndex === 4) {   // person
-    if (libConfig.person.id === null) {
-      contentTitle.value = "";
-    } else {
-      contentTitle.value = libConfig.person.name || `${localeMsg.value.sidebar.person}`;
-      getFileList({ personId: libConfig.person.id }, requestId);
-    }
-  }
-  else if(newIndex === 5) {   // tag
-    if (libConfig.tag.id === null) {
+  else if(newIndex === 4) {   // tag
+    if (libConfig.tag.smartId) {
+      const smartTag = getSmartTagById(libConfig.tag.smartId);
+      if (!smartTag) {
+        contentTitle.value = "";
+        return;
+      }
+      contentTitle.value =
+        localeMsg.value.tag.smart_items?.[smartTag.id]
+        || smartTag.id;
+      getImageSearchFileList(smartTag.prompt, 0, requestId, false, SMART_TAG_SEARCH_THRESHOLD);
+    } else if (libConfig.tag.id === null) {
       contentTitle.value = "";
     } else {
       getTagName(libConfig.tag.id).then(tagName => {
@@ -2181,6 +2194,14 @@ async function updateContent() {
           contentTitle.value = "";
         }
       });
+    }
+  }
+  else if(newIndex === 5) {   // person
+    if (libConfig.person.id === null) {
+      contentTitle.value = "";
+    } else {
+      contentTitle.value = libConfig.person.name || `${localeMsg.value.sidebar.person}`;
+      getFileList({ personId: libConfig.person.id }, requestId);
     }
   }
   else if(newIndex === 6) {   // location
@@ -3303,4 +3324,24 @@ function stopDragging() {
 </script>
 
 <style scoped>
+.filmstrip-preview-pane {
+  transform-origin: top center;
+}
+
+.filmstrip-preview-enter-active,
+.filmstrip-preview-leave-active {
+  transition: opacity 220ms ease, transform 260ms ease;
+}
+
+.filmstrip-preview-enter-from,
+.filmstrip-preview-leave-to {
+  opacity: 0;
+  transform: scaleY(0.92);
+}
+
+.filmstrip-preview-enter-to,
+.filmstrip-preview-leave-from {
+  opacity: 1;
+  transform: scaleY(1);
+}
 </style>

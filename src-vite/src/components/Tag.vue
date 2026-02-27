@@ -1,9 +1,50 @@
 <template>
 
   <div class="w-full h-full flex flex-col select-none">
-    <!-- Tag List -->
-    <div v-if="allTags.length > 0" class="grow overflow-x-hidden overflow-y-auto">
+    <div class="grow overflow-x-hidden overflow-y-auto">
+      <!-- smart tags -->
       <ul>
+        <li>
+          <div
+            :class="[
+              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
+              selectedSmartTagId ? 'text-primary' : '',
+              'hover:text-base-content hover:bg-base-100/30',
+            ]"
+            @click="isSmartExpanded = !isSmartExpanded"
+          >
+            <IconBolt
+              class="mx-1 h-5 shrink-0" 
+            />
+            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ localeMsg.tag.smart_group }}</span>
+            <IconArrowDown
+              class="mx-1 h-4 w-4 shrink-0 transition-transform duration-200"
+              :style="{ transform: isSmartExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }"
+            />
+          </div>
+        </li>
+
+        <li v-for="item in smartTagItems" v-show="isSmartExpanded" :key="item.id" :id="'smart-tag-' + item.id">
+          <div
+            :class="[
+              'mx-1 ml-7 p-1 h-9 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out',
+              selectedSmartTagId === item.id ? 'text-primary bg-base-100 hover:bg-base-100' : '',
+              'hover:text-base-content hover:bg-base-100/30',
+            ]"
+            @click="selectSmartTag(item.id)"
+          >
+            <IconTag class="mx-1 h-4 shrink-0 text-base-content/70" />
+            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ item.label }}</span>
+          </div>
+        </li>
+      </ul>
+
+      <!-- custom tags -->
+      <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+        {{ localeMsg.tag.custom_group }}
+      </div>
+
+      <ul v-if="allTags.length > 0">
         <li v-for="tag in sortedTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
             :class="[
@@ -12,8 +53,8 @@
             ]"
             @click="selectTag(tag)"
           >
-            <IconTag 
-              class="mx-1 h-5 shrink-0" 
+            <IconTag
+              class="mx-1 h-5 shrink-0"
             />
             <input v-if="selectedTag && selectedTag.id === tag.id && isRenamingTag"
               ref="tagInputRef"
@@ -28,13 +69,13 @@
             <template v-else>
               <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ tag.name }}</span>
               <span v-if="tag.count" class="text-xs tabular-nums text-base-content/30 ml-1">{{ tag.count.toLocaleString() }}</span>
-              
+
               <div :class="[
                   'ml-auto flex flex-row items-center text-base-content/30',
                   selectedTag && selectedTag.id === tag.id ? '' : 'hidden group-hover:block'
                 ]"
               >
-                <ContextMenu 
+                <ContextMenu
                   :iconMenu="IconMore"
                   :menuItems="getMoreMenuItems()"
                   :smallIcon="true"
@@ -47,7 +88,7 @@
     </div>
 
     <!-- No Tags Found Message -->
-    <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
+    <div v-if="allTags.length === 0" class="mt-2 mb-4 px-2 flex flex-col items-center justify-center text-base-content/30">
       <IconTag class="w-8 h-8 mb-2" />
       <span class="text-sm text-center">{{ $t('tooltip.not_found.tag') }}</span>
     </div>
@@ -86,11 +127,14 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getAllTags, renameTag, deleteTag, createTag } from '@/common/api';
 import { 
-  IconTag, 
+  IconTag,
+  IconBolt,
+  IconArrowDown,
   IconMore, 
   IconRename, 
   IconTrash,
 } from '@/common/icons';
+import { SMART_TAG_CATEGORIES, getSmartTagById } from '@/common/smartTags';
 
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -111,6 +155,8 @@ const emit = defineEmits(['editDataChanged']);
 // tags
 const allTags = ref<any[]>([]);
 const selectedTag = ref<any>(null);
+const selectedSmartTagId = ref<string | null>(libConfig.tag.smartId || null);
+const isSmartExpanded = ref(true);
 const isRenamingTag = ref(false);
 const originalTagName = ref('');
 const tagInputRef = ref<HTMLInputElement[]>([]);
@@ -120,6 +166,16 @@ const sortedTags = computed(() => {
     return [...allTags.value].sort((a, b) => (b.count || 0) - (a.count || 0));
   }
   return allTags.value;
+});
+
+const smartTagItems = computed(() => {
+  return SMART_TAG_CATEGORIES.map(category => {
+    const item = category.items[0];
+    return {
+      id: item.id,
+      label: localeMsg.value.tag.smart_items?.[item.id] || item.id,
+    };
+  });
 });
 
 // message boxes
@@ -151,6 +207,10 @@ const getMoreMenuItems = () => [
 ];
 
 onMounted(() => {
+  if (selectedSmartTagId.value && !getSmartTagById(selectedSmartTagId.value)) {
+    selectedSmartTagId.value = null;
+    libConfig.tag.smartId = null;
+  }
   loadTags();
 });
 
@@ -158,6 +218,9 @@ async function loadTags() {
   const tags = await getAllTags();
   if (tags) {
     allTags.value = tags;
+    if (selectedSmartTagId.value) {
+      return;
+    }
     if (allTags.value.length > 0 && !selectedTag.value) {
       const index = allTags.value.findIndex(tag => tag.id === libConfig.tag.id);
       selectTag(allTags.value[index >= 0 ? index : 0]);
@@ -170,7 +233,17 @@ async function loadTags() {
 function selectTag(tag: any) {
   if (isRenamingTag.value) return;
   selectedTag.value = tag;
+  selectedSmartTagId.value = null;
+  libConfig.tag.smartId = null;
   libConfig.tag.id = tag.id;
+}
+
+function selectSmartTag(smartTagId: string) {
+  if (isRenamingTag.value) return;
+  selectedSmartTagId.value = smartTagId;
+  selectedTag.value = null;
+  libConfig.tag.id = null;
+  libConfig.tag.smartId = smartTagId;
 }
 
 async function handleRenameTag() {
@@ -245,10 +318,12 @@ async function clickDeleteTag() {
         } else {
           selectedTag.value = null;
           libConfig.tag.id = null;
+          libConfig.tag.smartId = null;
         }
       } else {
         selectedTag.value = null;
         libConfig.tag.id = null;
+        libConfig.tag.smartId = null;
       }
     }
   }
@@ -259,4 +334,3 @@ defineExpose({
 });
 
 </script>
-

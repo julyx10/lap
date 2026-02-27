@@ -1,5 +1,6 @@
 .vscode/
 target/
+skills/
 .DS_Store
 .env
 dev.sh
