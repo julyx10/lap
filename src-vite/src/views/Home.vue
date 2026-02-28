@@ -1,6 +1,15 @@
 <template>
   
   <div class="w-screen h-screen flex flex-col overflow-hidden select-none bg-base-300 text-base-content/70">
+    <transition name="fade">
+      <div
+        v-if="isSwitchingLibrary"
+        class="absolute inset-0 z-60 bg-base-300/60 backdrop-blur-sm flex items-center justify-center"
+      >
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    </transition>
+
     <!-- Title Bar -->
     <TitleBar v-if="isWin" titlebar="Lap" viewName="Home" :icon="iconLogo"/>
 
@@ -192,6 +201,7 @@ import {
 } from '@/common/icons';
 
 const isAlbumReorderMode = ref(false);
+const isSwitchingLibrary = ref(false);
 
 const moreMenuItems = computed(() => {
   const index = config.main.sidebarIndex;
@@ -457,6 +467,8 @@ onMounted(async () => {
 
 const doSwitchLibrary = async (libraryId: string) => {
   try {
+    isSwitchingLibrary.value = true;
+
     // Cancel any running indexing before switching
     if (libConfig.index.status > 0 && libConfig.index.albumQueue.length > 0) {
       for (const albumId of libConfig.index.albumQueue) {
@@ -474,6 +486,7 @@ const doSwitchLibrary = async (libraryId: string) => {
     
     window.location.reload();
   } catch (error) {
+    isSwitchingLibrary.value = false;
     console.error('Failed to switch library:', error);
   }
 };

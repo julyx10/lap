@@ -1,40 +1,38 @@
 <template>
 
-  <div class="w-full h-full flex flex-col" style="user-select: none;">
+  <div class="sidebar-panel">
     <!-- location -->
     <div v-if="locations.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
         <li v-for="location in sortedLocations">
-          <div 
+          <div
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-              libConfig.location.admin1 === location.admin1 && !libConfig.location.name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+              'sidebar-item',
+              libConfig.location.admin1 === location.admin1 && !libConfig.location.name ? 'sidebar-item-selected' : 'sidebar-item-hover',
             ]"
             @click="clickLocationAdmin1(location)"
           >
             <IconRight
               :class="[
-                'p-1 w-6 h-6 shrink-0 transition-transform', 
+                'p-1 w-6 h-6 shrink-0 transition-transform',
                 location.is_expanded ? 'rotate-90' : ''
               ]"
               @click.stop="clickExpandLocation(location)"
             />
-            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
-            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ location.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
+            <span class="sidebar-item-label">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
+            <span class="sidebar-item-count">{{ location.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="location.is_expanded && location.names.length > 0">
             <li v-for="(name, index) in location.names" class="pl-4">
-              <div 
+              <div
                 :class="[
-                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-                  libConfig.location.name === name ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
-                ]" 
+                  'sidebar-item sidebar-item-compact ml-3',
+                  libConfig.location.name === name ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                ]"
                 @click="clickLocationName(location, name)"
               >
-                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
-                  <span>{{ name }}</span>
-                  <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
-                </div>
+                <span class="sidebar-item-label">{{ name }}</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
               </div>
             </li>
           </ul>
@@ -44,8 +42,8 @@
 
     <!-- Display message if no data are found -->
     <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
-      <IconLocation class="w-8 h-8 mb-2" />
-      <span class="text-sm text-center">{{ $t('tooltip.not_found.location') }}</span>
+        <IconLocation class="w-8 h-8 mb-2" />
+        <span class="text-sm text-center">{{ $t('tooltip.not_found.location') }}</span>
     </div>
   </div>
 

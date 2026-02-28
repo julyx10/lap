@@ -1,40 +1,38 @@
 <template>
 
-  <div class="w-full h-full flex flex-col" style="user-select: none;">
+  <div class="sidebar-panel">
     <!-- camera -->
     <div v-if="cameras.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
         <li v-for="camera in sortedCameras">
-          <div 
+          <div
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-              libConfig.camera.make === camera.make && !libConfig.camera.model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+              'sidebar-item',
+              libConfig.camera.make === camera.make && !libConfig.camera.model ? 'sidebar-item-selected' : 'sidebar-item-hover',
             ]"
             @click="clickCameraMake(camera)"
           >
             <IconRight
               :class="[
-                'p-1 w-6 h-6 shrink-0 transition-transform', 
+                'p-1 w-6 h-6 shrink-0 transition-transform',
                 camera.is_expanded ? 'rotate-90' : ''
               ]"
               @click.stop="clickExpandCamera(camera)"
             />
-            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ camera.make }}</span>
-            <span class="mx-1 text-xs tabular-nums text-base-content/30">{{ camera.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
+            <span class="sidebar-item-label">{{ camera.make }}</span>
+            <span class="sidebar-item-count">{{ camera.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
           </div>
           <ul v-if="camera.is_expanded && camera.models.length > 0">
             <li v-for="(model, index) in camera.models" class="pl-4"> 
-              <div 
+              <div
                 :class="[
-                  'ml-3 mr-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-                  libConfig.camera.model === model ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
-                ]" 
+                  'sidebar-item sidebar-item-compact ml-3',
+                  libConfig.camera.model === model ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                ]"
                 @click="clickCameraModel(camera.make, model)"
               >
-                <div class="px-1 whitespace-pre text-ellipsis overflow-hidden">
-                  <span>{{ model }}</span>
-                  <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ camera.counts[index].toLocaleString() }})</span>
-                </div>
+                <span class="sidebar-item-label">{{ model }}</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ camera.counts[index].toLocaleString() }})</span>
               </div>
             </li>
           </ul>
@@ -44,8 +42,8 @@
 
     <!-- Display message if no data are found -->
     <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
-      <IconCamera class="w-8 h-8 mb-2" />
-      <span class="text-sm text-center">{{ $t('tooltip.not_found.camera') }}</span>
+        <IconCamera class="w-8 h-8 mb-2" />
+        <span class="text-sm text-center">{{ $t('tooltip.not_found.camera') }}</span>
     </div>
   </div>
 

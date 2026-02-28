@@ -58,3 +58,47 @@ html, body {
 .fade-leave-to {
   opacity: 0;
 }
+
+/* sidebar layout */
+@utility sidebar-panel {
+  @apply w-full h-full flex flex-col select-none;
+}
+
+/* sidebar section header */
+@utility sidebar-section-label {
+  @apply px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap;
+}
+
+/* sidebar list items */
+@utility sidebar-item {
+  @apply mx-1 px-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer transition-all duration-200 ease-in-out;
+}
+
+@utility sidebar-item-hover {
+  @apply hover:text-base-content hover:bg-base-100/30;
+}
+
+@utility sidebar-item-selected {
+  @apply text-primary bg-base-100 hover:bg-base-100;
+}
+
+@utility sidebar-item-compact {
+  @apply h-8 mr-1;
+}
+
+@utility sidebar-item-media {
+  @apply h-12;
+}
+
+@utility sidebar-item-label {
+  @apply flex-1 overflow-hidden whitespace-pre text-ellipsis;
+}
+
+@utility sidebar-item-count {
+  @apply ml-1 text-xs tabular-nums text-base-content/30;
+}
+
+/* sidebar empty state */
+@utility sidebar-empty {
+  @apply mt-2 mb-4 px-2 flex flex-col items-center justify-center text-base-content/30;
+}

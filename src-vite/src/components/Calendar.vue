@@ -1,22 +1,22 @@
 <template>
 
-  <div class="w-full h-full flex flex-col overflow-hidden" style="user-select: none;">
+  <div class="sidebar-panel overflow-hidden">
     <!-- on this day -->
     <div 
       :class="[ 
-        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
-        libConfig.calendar.year === -1 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+        'sidebar-item',
+        libConfig.calendar.year === -1 ? 'sidebar-item-selected' : 'sidebar-item-hover',
       ]"
       @click="libConfig.calendar.year = -1"
     >
       <IconHistory class="mx-1 w-5 h-5 shrink-0" />
-      <div class="overflow-hidden whitespace-pre text-ellipsis">
+      <div class="sidebar-item-label">
         {{ $t('calendar.on_this_day') }}
       </div>
     </div>
 
     <template v-if="Object.keys(calendar_dates).length > 0" >
-      <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div class="sidebar-section-label">
         {{ $t('calendar.title') }}
       </div>
       <!-- calendar -->

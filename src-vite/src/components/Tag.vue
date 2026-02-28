@@ -1,22 +1,20 @@
 <template>
 
-  <div class="w-full h-full flex flex-col select-none">
+  <div class="sidebar-panel">
     <div class="grow overflow-x-hidden overflow-y-auto">
       <!-- smart tags -->
       <ul>
         <li>
           <div
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
+              'sidebar-item',
               selectedSmartTagId ? 'text-primary' : '',
-              'hover:text-base-content hover:bg-base-100/30',
+              'sidebar-item-hover',
             ]"
             @click="isSmartExpanded = !isSmartExpanded"
           >
-            <IconBolt
-              class="mx-1 h-5 shrink-0" 
-            />
-            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ localeMsg.tag.smart_group }}</span>
+            <IconBolt class="mx-1 h-5 shrink-0" />
+            <span class="sidebar-item-label">{{ localeMsg.tag.smart_group }}</span>
             <IconArrowDown
               class="mx-1 h-4 w-4 shrink-0 transition-transform duration-200"
               :style="{ transform: isSmartExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }"
@@ -27,20 +25,19 @@
         <li v-for="item in smartTagItems" v-show="isSmartExpanded" :key="item.id" :id="'smart-tag-' + item.id">
           <div
             :class="[
-              'mx-1 ml-7 p-1 h-9 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out',
-              selectedSmartTagId === item.id ? 'text-primary bg-base-100 hover:bg-base-100' : '',
-              'hover:text-base-content hover:bg-base-100/30',
+              'sidebar-item ml-7',
+              selectedSmartTagId === item.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
             ]"
             @click="selectSmartTag(item.id)"
           >
-            <IconTag class="mx-1 h-4 shrink-0 text-base-content/70" />
-            <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ item.label }}</span>
+            <IconTag class="mx-1 h-4 shrink-0" />
+            <span class="sidebar-item-label">{{ item.label }}</span>
           </div>
         </li>
       </ul>
 
       <!-- custom tags -->
-      <div class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div class="sidebar-section-label">
         {{ localeMsg.tag.custom_group }}
       </div>
 
@@ -48,14 +45,12 @@
         <li v-for="tag in sortedTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
             :class="[
-              'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
-              selectedTag && selectedTag.id === tag.id && !isRenamingTag ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+              'sidebar-item group',
+              selectedTag && selectedTag.id === tag.id && !isRenamingTag ? 'sidebar-item-selected' : 'sidebar-item-hover',
             ]"
             @click="selectTag(tag)"
           >
-            <IconTag
-              class="mx-1 h-5 shrink-0"
-            />
+            <IconTag class="mx-1 h-5 shrink-0" />
             <input v-if="selectedTag && selectedTag.id === tag.id && isRenamingTag"
               ref="tagInputRef"
               type="text"
@@ -66,31 +61,27 @@
               @keydown.esc="cancelRenameTag"
               @blur="handleRenameTag"
             />
-            <template v-else>
-              <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">{{ tag.name }}</span>
-              <span v-if="tag.count" class="text-xs tabular-nums text-base-content/30 ml-1">{{ tag.count.toLocaleString() }}</span>
-
-              <div :class="[
-                  'ml-auto flex flex-row items-center text-base-content/30',
-                  selectedTag && selectedTag.id === tag.id ? '' : 'hidden group-hover:block'
-                ]"
-              >
-                <ContextMenu
-                  :iconMenu="IconMore"
-                  :menuItems="getMoreMenuItems()"
-                  :smallIcon="true"
-                />
-              </div>
-            </template>
+            <span v-else class="sidebar-item-label">{{ tag.name }}</span>
+            <span v-if="!isRenamingTag && tag.count" class="sidebar-item-count">{{ tag.count.toLocaleString() }}</span>
+            <ContextMenu
+              v-if="!isRenamingTag"
+              :class="[
+                'ml-auto flex flex-row items-center text-base-content/30',
+                selectedTag && selectedTag.id === tag.id ? '' : 'hidden group-hover:block'
+              ]"
+              :iconMenu="IconMore"
+              :menuItems="getMoreMenuItems()"
+              :smallIcon="true"
+            />
           </div>
         </li>
       </ul>
     </div>
 
     <!-- No Tags Found Message -->
-    <div v-if="allTags.length === 0" class="mt-2 mb-4 px-2 flex flex-col items-center justify-center text-base-content/30">
-      <IconTag class="w-8 h-8 mb-2" />
-      <span class="text-sm text-center">{{ $t('tooltip.not_found.tag') }}</span>
+    <div v-if="allTags.length === 0" class="sidebar-empty">
+        <IconTag class="w-8 h-8 mb-2" />
+        <span class="text-sm text-center">{{ $t('tooltip.not_found.tag') }}</span>
     </div>
   </div>
   
@@ -156,7 +147,7 @@ const emit = defineEmits(['editDataChanged']);
 const allTags = ref<any[]>([]);
 const selectedTag = ref<any>(null);
 const selectedSmartTagId = ref<string | null>(libConfig.tag.smartId || null);
-const isSmartExpanded = ref(true);
+const isSmartExpanded = ref(Boolean(libConfig.tag.smartId));
 const isRenamingTag = ref(false);
 const originalTagName = ref('');
 const tagInputRef = ref<HTMLInputElement[]>([]);

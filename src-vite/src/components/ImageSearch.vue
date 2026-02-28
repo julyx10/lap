@@ -1,6 +1,6 @@
 <template>
     
-  <div class="w-full h-full flex flex-col select-none">
+  <div class="sidebar-panel">
 
     <!-- title bar -->
     <div class="px-1 h-10 flex items-start justify-between whitespace-nowrap" data-tauri-drag-region>
@@ -74,15 +74,14 @@
 
       <!-- search history -->
       <div class="overflow-y-auto flex-1" >
-        <div v-if="libConfig.search.searchHistory.length === 0" class="m-2 flex flex-col items-center justify-center text-sm text-base-content/30">
+        <div v-if="libConfig.search.searchHistory.length === 0" class="sidebar-empty text-sm">
           <span class="text-center">{{ $t('search.image_search_tips') }}</span>
         </div>  
 
         <div v-for="(item, index) in searchHistoryList" :key="index"
-          class="mx-1 p-1 text-sm rounded-box flex items-center"
           :class="[ 
-            'h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-            libConfig.search.searchHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
+            'sidebar-item sidebar-item-media text-sm group',
+            libConfig.search.searchHistoryIndex === index ? 'sidebar-item-selected' : 'hover:text-base-content hover:bg-base-100/70',
           ]"
           @click="handleSearchHistoryClick(index, item)"
         >
@@ -96,7 +95,7 @@
         </div>
           <IconSearch v-else class="w-4 h-4 mx-1 shrink-0" />
           
-          <span class="overflow-hidden whitespace-pre text-ellipsis">{{ typeof item === 'string' ? item : item.text }}</span>
+          <span class="sidebar-item-label">{{ typeof item === 'string' ? item : item.text }}</span>
           <ContextMenu
             :class="[
               'ml-auto flex flex-row items-center text-base-content/30',
@@ -114,15 +113,14 @@
     <!-- 1: similar images -->
     <template v-else-if="config.search.searchType === 1">
       <div class="overflow-x-hidden overflow-y-auto flex-1">
-        <div v-if="similarImageHistory.length === 0" class="m-2 flex items-center justify-center text-sm text-base-content/30">
+        <div v-if="similarImageHistory.length === 0" class="sidebar-empty text-sm">
           <span class="text-center">{{ $t('search.similar_images_tips') }}</span>
         </div>
         
         <div v-for="(fileId, index) in similarImageHistory" :key="index"
-          class="mx-1 p-1 text-sm rounded-box flex items-center"
           :class="[ 
-            'h-12 flex items-center gap-2 rounded-box whitespace-nowrap cursor-pointer group', 
-            libConfig.search.similarImageHistoryIndex === index ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/70',
+            'sidebar-item sidebar-item-media text-sm gap-2 group',
+            libConfig.search.similarImageHistoryIndex === index ? 'sidebar-item-selected' : 'hover:text-base-content hover:bg-base-100/70',
           ]"
           @click="handleSimilarHistoryClick(index, fileId)"
         >

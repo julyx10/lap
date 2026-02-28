@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full flex flex-col select-none relative overflow-hidden">
+  <div class="sidebar-panel relative overflow-hidden">
     <!-- Face Indexing Progress Overlay -->
     <div v-if="isIndexing" 
       class="absolute inset-0 z-50 bg-base-200/80 backdrop-blur-md"
@@ -44,8 +44,8 @@
         <li v-for="person in sortedPersons" :key="person.id" :id="'person-' + person.id">
           <div
             :class="[
-              'mx-1 p-1 h-12 flex items-center gap-2 rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
-              selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+              'sidebar-item sidebar-item-media gap-2 group',
+              selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
             ]"
             @click="selectPerson(person)"
           >
@@ -71,10 +71,10 @@
               @blur="handleRenamePerson"
             />
             <template v-else>
-              <span class="flex-1 overflow-hidden whitespace-pre text-ellipsis">
+              <span class="sidebar-item-label">
                 {{ person.name || `Person ${person.id}` }}
               </span>
-              <span v-if="person.count" class="text-xs tabular-nums text-base-content/30 ml-1">
+              <span v-if="person.count" class="sidebar-item-count">
                 {{ person.count.toLocaleString() }}
               </span>
               

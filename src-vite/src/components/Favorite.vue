@@ -1,39 +1,37 @@
 <template>
 
-  <div class="w-full h-full flex flex-col select-none" >
+  <div class="sidebar-panel" >
       
       <!-- favorite files -->
-      <div 
-        :class="[ 
-          'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group',
-          libConfig.favorite.folderId === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+      <div
+        :class="[
+          'sidebar-item',
+          libConfig.favorite.folderId === 0 ? 'sidebar-item-selected' : 'sidebar-item-hover',
         ]"
         @click="clickFavoriteFiles()"
       >
         <IconFavorite class="mx-1 w-5 h-5 shrink-0" />
-        <div class="overflow-hidden whitespace-pre text-ellipsis">
+        <div class="sidebar-item-label">
           {{ $t('favorite.files') }}
         </div>
       </div>
 
       <!-- favorite folders -->
-      <div v-if="favorite_folders.length > 0" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
+      <div v-if="favorite_folders.length > 0" class="sidebar-section-label">
         {{ $t('favorite.folders') }}
       </div>
       <div class="grow overflow-x-hidden overflow-y-auto">
         <ul>
           <li v-for="folder in favorite_folders" :key="folder.id">
-            <div 
-              :class="[ 
-                'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group', 
-                libConfig.favorite.folderId === folder.id ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30',
+            <div
+              :class="[
+                'sidebar-item group',
+                libConfig.favorite.folderId === folder.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
               ]"
               @click="clickFavoriteFolder(folder)"
             >
-              <IconFolderFavorite
-                class="mx-1 h-5 shrink-0"
-              />
-              <div class="overflow-hidden whitespace-pre text-ellipsis">
+              <IconFolderFavorite class="mx-1 h-5 shrink-0" />
+              <div class="sidebar-item-label">
                 {{ folder.name }}
               </div>
               <ContextMenu

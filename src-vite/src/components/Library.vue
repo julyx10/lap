@@ -1,22 +1,20 @@
 <template>
     
-  <div class="w-full h-full flex flex-col select-none">
+  <div class="sidebar-panel">
 
     <!-- All Files -->
-    <div 
+    <div
       v-if="hasAlbums"
-      :class="[ 
-        'mx-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer',
-        (libConfig.album.id === 0 ? 'text-primary bg-base-100 hover:bg-base-100' : 'hover:text-base-content hover:bg-base-100/30'),
+      :class="[
+        'sidebar-item',
+        libConfig.album.id === 0 ? 'sidebar-item-selected' : 'sidebar-item-hover',
       ]"
       @click="clickAllFiles"
     >
       <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
-      <div class="overflow-hidden whitespace-pre text-ellipsis">
+      <div class="sidebar-item-label">
         <span>{{ $t('album.all_files') }}</span>
       </div>
-
-      <!-- Right side: Count -->
       <div class="ml-auto flex items-center">
         <span v-if="totalCount > 0" class="px-1 text-xs text-base-content/30">
           {{ totalCount.toLocaleString() }}

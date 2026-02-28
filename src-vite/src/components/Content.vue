@@ -212,42 +212,38 @@
             </div>
           </div>
 
-          <transition name="filmstrip-preview">
-            <div v-if="config.settings.grid.showFilmStrip" class="h-1"></div>
-          </transition>
+          <div v-if="config.settings.grid.showFilmStrip" class="h-1"></div>
 
           <!-- film strip preview -->
-          <transition name="filmstrip-preview">
-            <div v-if="config.settings.grid.showFilmStrip" ref="previewDiv" 
-              class="flex-1 bg-base-200 overflow-hidden filmstrip-preview-pane"
+          <div v-if="config.settings.grid.showFilmStrip" ref="previewDiv" 
+            class="flex-1 bg-base-200 overflow-hidden"
+          >
+            <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
+              class="w-full h-full flex items-center justify-center"
             >
-              <div v-if="selectedItemIndex >= 0 && selectedItemIndex < fileList.length"
-                class="w-full h-full flex items-center justify-center"
-              >
-                <MediaViewer
-                  ref="filmStripMediaRef"
-                  :mode="1"
-                  :isFullScreen="false"
-                  :file="fileList[selectedItemIndex]"
-                  :hasPrevious="selectedItemIndex > 0"
-                  :hasNext="selectedItemIndex < fileList.length - 1"
-                  :fileIndex="selectedItemIndex"
-                  :fileCount="fileList.length"
-                  :isSlideShow="isSlideShow"
-                  :imageScale="imageScale"
-                  :imageMinScale="imageMinScale"
-                  :imageMaxScale="imageMaxScale"
-                  v-model:isZoomFit="filmStripZoomFit"
-                  @prev="performNavigate('prev')"
-                  @next="performNavigate('next')"
-                  @toggle-slide-show="toggleSlideShow"
-                  @scale="onScale"
-                  @item-action="handleItemAction"
-                  @slideshow-next="handleSlideshowNext"
-                />
-              </div>
+              <MediaViewer
+                ref="filmStripMediaRef"
+                :mode="1"
+                :isFullScreen="false"
+                :file="fileList[selectedItemIndex]"
+                :hasPrevious="selectedItemIndex > 0"
+                :hasNext="selectedItemIndex < fileList.length - 1"
+                :fileIndex="selectedItemIndex"
+                :fileCount="fileList.length"
+                :isSlideShow="isSlideShow"
+                :imageScale="imageScale"
+                :imageMinScale="imageMinScale"
+                :imageMaxScale="imageMaxScale"
+                v-model:isZoomFit="filmStripZoomFit"
+                @prev="performNavigate('prev')"
+                @next="performNavigate('next')"
+                @toggle-slide-show="toggleSlideShow"
+                @scale="onScale"
+                @item-action="handleItemAction"
+                @slideshow-next="handleSlideshowNext"
+              />
             </div>
-          </transition> <!-- film strip preview -->
+          </div> <!-- film strip preview -->
         </div> <!-- grid view -->
 
         <!-- custom scrollbar -->
@@ -2479,7 +2475,7 @@ function handleTitleClick() {
       config.search.searchType = 1;   // similar image 
       break;
     case 'person':
-      config.main.sidebarIndex = 4;   // person tab
+      config.main.sidebarIndex = 5;   // person tab
       break;
     case 'album':
       config.main.sidebarIndex = 0;   // album tab
@@ -3322,26 +3318,3 @@ function stopDragging() {
   document.removeEventListener('mouseup', stopDragging);
 }
 </script>
-
-<style scoped>
-.filmstrip-preview-pane {
-  transform-origin: top center;
-}
-
-.filmstrip-preview-enter-active,
-.filmstrip-preview-leave-active {
-  transition: opacity 220ms ease, transform 260ms ease;
-}
-
-.filmstrip-preview-enter-from,
-.filmstrip-preview-leave-to {
-  opacity: 0;
-  transform: scaleY(0.92);
-}
-
-.filmstrip-preview-enter-to,
-.filmstrip-preview-leave-from {
-  opacity: 1;
-  transform: scaleY(1);
-}
-</style>
