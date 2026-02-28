@@ -37,6 +37,7 @@
           :mode="2"
           :isFullScreen="isFullScreen"
           :file="fileInfo"
+          :nextFilePath="nextFilePath"
           :hasPrevious="fileIndex > 0"
           :hasNext="fileIndex < fileCount - 1"
           :fileIndex="fileIndex"
@@ -80,6 +81,7 @@
               :mode="2"
               :isFullScreen="isFullScreen"
               :file="fileInfo"
+              :nextFilePath="nextFilePath"
               :hasPrevious="fileIndex > 0"
               :hasNext="fileIndex < fileCount - 1"
               :fileIndex="fileIndex"
@@ -118,6 +120,7 @@
               :mode="2"
               :isFullScreen="isFullScreen"
               :file="rightFileInfo"
+              :nextFilePath="rightNextFilePath"
               :hasPrevious="rightFileIndex > 0"
               :hasNext="rightFileIndex < fileCount - 1"
               :fileIndex="rightFileIndex"
@@ -236,6 +239,7 @@ const fileIndex = ref(0);       // Index of the current file
 const fileCount = ref(0);       // Total number of files
 
 const fileInfo = ref<any>(null);
+const nextFilePath = ref('');
 const iconRotate = ref(0);      // icon rotation angle
 const isTransitionDisabled = ref(true);
 
@@ -263,6 +267,7 @@ const rightImageMaxScale = ref(10); // Right maximum scale
 const rightFileId = ref(0);         // Right file ID
 const rightFileIndex = ref(-1);     // Right file index
 const rightFileInfo = ref<any>(null);
+const rightNextFilePath = ref('');
 
 let unlistenImg: () => void;
 let unlistenGridView: () => void;
@@ -277,8 +282,10 @@ onMounted(async() => {
   fileId.value    = Number(urlParams.get('fileId'));
   fileIndex.value = Number(urlParams.get('fileIndex'));
   fileCount.value = Number(urlParams.get('fileCount'));
+  nextFilePath.value = decodeURIComponent(urlParams.get('nextFilePath') || '');
   const initialRightFileId = Number(urlParams.get('rightFileId') || '0');
   const initialRightFileIndex = Number(urlParams.get('rightFileIndex') || '-1');
+  rightNextFilePath.value = decodeURIComponent(urlParams.get('rightNextFilePath') || '');
   const forceSplit = urlParams.get('forceSplit') === '1';
 
   isSplit.value = forceSplit ? true : !!config.imageViewer?.isSplit;
@@ -302,6 +309,7 @@ onMounted(async() => {
         rightFileId.value = 0;
         rightFileIndex.value = -1;
         rightFileInfo.value = null;
+        rightNextFilePath.value = '';
         rightIsZoomFit.value = true;
       }
     }
@@ -312,6 +320,7 @@ onMounted(async() => {
         rightFileId.value = 0;
         rightFileIndex.value = -1;
         rightFileInfo.value = null;
+        rightNextFilePath.value = '';
         rightIsZoomFit.value = true;
       }
     }
@@ -320,9 +329,11 @@ onMounted(async() => {
     if (pane === 'right') {
       rightFileId.value = Number(event.payload.fileId);
       rightFileIndex.value = Number(event.payload.fileIndex);
+      rightNextFilePath.value = event.payload.nextFilePath || '';
     } else {
       fileId.value = Number(event.payload.fileId);
       fileIndex.value = Number(event.payload.fileIndex);
+      nextFilePath.value = event.payload.nextFilePath || '';
     }
   });
 
@@ -362,9 +373,11 @@ onMounted(async() => {
     if (fileCount.value <= 0) {
       fileId.value = 0;
       fileIndex.value = -1;
+      nextFilePath.value = '';
       rightFileId.value = 0;
       rightFileIndex.value = -1;
       rightFileInfo.value = null;
+      rightNextFilePath.value = '';
       return;
     }
 

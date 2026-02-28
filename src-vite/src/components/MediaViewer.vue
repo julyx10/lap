@@ -163,6 +163,7 @@
         ref="mediaRef"
         :filePath="file?.file_path" 
         :fileId="file?.id"
+        :nextFilePath="nextFilePath"
         :rotate="file?.rotate ?? 0" 
         :isZoomFit="isZoomFit"
         :isSlideShow="isSlideShow"
@@ -255,6 +256,10 @@ const props = defineProps({
   fileCount: {
     type: Number,
     default: 0
+  },
+  nextFilePath: {
+    type: String,
+    default: ''
   },
   isSlideShow: {
     type: Boolean,

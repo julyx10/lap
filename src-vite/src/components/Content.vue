@@ -226,6 +226,7 @@
                 :mode="1"
                 :isFullScreen="false"
                 :file="fileList[selectedItemIndex]"
+                :nextFilePath="getNextImagePath(selectedItemIndex)"
                 :hasPrevious="selectedItemIndex > 0"
                 :hasNext="selectedItemIndex < fileList.length - 1"
                 :fileIndex="selectedItemIndex"
@@ -275,6 +276,7 @@
               :mode="0"
               :isFullScreen="uiStore.isFullScreen"
               :file="fileList[selectedItemIndex]"
+              :nextFilePath="getNextImagePath(selectedItemIndex)"
               :hasPrevious="selectedItemIndex > 0"
               :hasNext="selectedItemIndex < fileList.length - 1"
               :fileIndex="selectedItemIndex"
@@ -616,6 +618,11 @@ const imageScale = ref(1);
 const imageMinScale = ref(0);
 const imageMaxScale = ref(10);
 const isSlideShow = ref(false);
+
+function getNextImagePath(index: number): string {
+  const target = fileList.value[index + 1];
+  return target && !target.isPlaceholder && target.file_type === 1 ? target.file_path : '';
+}
 
 // Request ID tracking to prevent race conditions during async content updates
 let currentContentRequestId = 0;
@@ -1499,6 +1506,7 @@ onMounted( async() => {
                fileId: file.id,
                fileIndex: requestIndex,
                fileCount: fileList.value.length,
+               nextFilePath: getNextImagePath(requestIndex),
                pane,
              });
            }
@@ -3223,6 +3231,10 @@ async function openImageViewer(
     const file = fileList.value[targetIndex];
     return isRealFile(file) ? file : null;
   };
+  const getNextImageFilePath = (targetIndex: number) => {
+    const file = getRealFileAt(targetIndex + 1);
+    return file?.file_type === 1 ? file.file_path : '';
+  };
 
   let leftIndex = index;
   let rightIndex = -1;
@@ -3257,6 +3269,8 @@ async function openImageViewer(
   const rightFile = getRealFileAt(rightIndex);
   const leftFileId = leftFile ? leftFile.id : 0;
   const rightFileId = rightFile ? rightFile.id : 0;
+  const leftNextFilePath = getNextImageFilePath(leftIndex);
+  const rightNextFilePath = getNextImageFilePath(rightIndex);
   
   // create a new window if it doesn't exist
   let imageWindow = await WebviewWindow.getByLabel(webViewLabel);
@@ -3264,7 +3278,7 @@ async function openImageViewer(
     if (newViewer) {
       const forceSplitParam = options.forceSplit ? 1 : 0;
       imageWindow = new WebviewWindow(webViewLabel, {
-        url: `/image-viewer?fileId=${leftFileId}&fileIndex=${leftIndex}&fileCount=${fileCount}&rightFileId=${rightFileId}&rightFileIndex=${rightIndex}&forceSplit=${forceSplitParam}`,
+        url: `/image-viewer?fileId=${leftFileId}&fileIndex=${leftIndex}&fileCount=${fileCount}&rightFileId=${rightFileId}&rightFileIndex=${rightIndex}&forceSplit=${forceSplitParam}&nextFilePath=${encodeURIComponent(leftNextFilePath)}&rightNextFilePath=${encodeURIComponent(rightNextFilePath)}`,
         title: 'Image Viewer',
         width: 1200,
         height: 800,
@@ -3299,6 +3313,7 @@ async function openImageViewer(
       fileId: leftFileId, 
       fileIndex: leftIndex,   // selected file index
       fileCount: fileCount, // total files length
+      nextFilePath: leftNextFilePath,
       pane: 'left',
       resetSplit: newViewer,
       forceSplit: options.forceSplit === true ? true : undefined,
@@ -3311,6 +3326,7 @@ async function openImageViewer(
         fileId: rightFileId,
         fileIndex: rightIndex,
         fileCount: fileCount,
+        nextFilePath: rightNextFilePath,
         pane: 'right',
       });
     }

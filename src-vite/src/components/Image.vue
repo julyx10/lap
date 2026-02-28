@@ -5,6 +5,17 @@
     @wheel="handleImageWheel"
   >
 
+    <!-- hidden warm image -->
+    <img
+      v-if="warmedNextSrc"
+      :src="warmedNextSrc"
+      class="absolute inset-0 opacity-0 pointer-events-none select-none"
+      decoding="sync"
+      loading="eager"
+      draggable="false"
+      aria-hidden="true"
+    />
+
     <!-- Loading overlay -->
     <transition name="fade">
       <div v-if="isLoading" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
@@ -183,6 +194,10 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  nextFilePath: {
+    type: String,
+    default: '',
+  },
   rotate: {
     type: Number,
     default: 0,
@@ -272,6 +287,8 @@ let loadingTimeout: NodeJS.Timeout | null = null;
 
 const activeImageEl = ref<HTMLImageElement | null>(null);
 const currentLoadingId = ref(0);
+const preloadCache = new Map<string, Promise<{ src: string; naturalWidth: number; naturalHeight: number }>>();
+const warmedNextSrc = ref('');
 
 let resizeObserver: ResizeObserver | null = null;
 let positionObserver: number | null = null;
@@ -332,6 +349,78 @@ const adjustmentStyle = computed(() => (src: string) => {
   }
   return '';
 });
+
+function loadImageResource(filePath?: string) {
+  if (!filePath) {
+    return Promise.reject(new Error('Missing file path'));
+  }
+
+  const cached = preloadCache.get(filePath);
+  if (cached) {
+    return cached;
+  }
+
+  const loadPromise = new Promise<{ src: string; naturalWidth: number; naturalHeight: number }>((resolve, reject) => {
+    let src = '';
+
+    try {
+      src = getAssetSrc(filePath);
+    } catch (error) {
+      preloadCache.delete(filePath);
+      reject(error);
+      return;
+    }
+
+    if (!src) {
+      preloadCache.delete(filePath);
+      reject(new Error('Failed to resolve asset source'));
+      return;
+    }
+
+    const img = new Image();
+
+    img.onload = async () => {
+      try {
+        if (typeof img.decode === 'function') {
+          await img.decode();
+        }
+      } catch {
+        // Fall back to onload completion if decode fails.
+      }
+
+      resolve({
+        src,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+      });
+    };
+
+    img.onerror = () => {
+      preloadCache.delete(filePath);
+      reject(new Error(`Error loading image: ${filePath}`));
+    };
+
+    img.src = src;
+  });
+
+  preloadCache.set(filePath, loadPromise);
+  return loadPromise;
+}
+
+function warmImage(filePath?: string) {
+  if (!filePath || filePath === props.filePath) {
+    warmedNextSrc.value = '';
+    return;
+  }
+
+  void loadImageResource(filePath).then((loaded) => {
+    if (props.nextFilePath === filePath) {
+      warmedNextSrc.value = loaded.src;
+    }
+  }).catch(() => {
+    // Ignore preload failures and let the main load path surface errors.
+  });
+}
 
 // navigator container style
 const navContainerStyle = computed(() => {
@@ -647,7 +736,12 @@ const startPositionObserver = () => {
 };
 
 // watch filePath changes
-watch(() => props.filePath, (newFilePath) => {
+watch(() => props.nextFilePath, (nextFilePath) => {
+  warmImage(nextFilePath);
+}, { immediate: true });
+
+// watch filePath changes
+watch(() => props.filePath, async (newFilePath) => {
   // Cancel previous loading
   currentLoadingId.value++;
   const loadingId = currentLoadingId.value;
@@ -669,10 +763,8 @@ watch(() => props.filePath, (newFilePath) => {
     isLoading.value = true;
   }, 200);
 
-  // Async load image
-  const img = new Image();
-  img.onload = () => {
-    // Check if this load is still valid
+  try {
+    const loaded = await loadImageResource(newFilePath);
     if (loadingId !== currentLoadingId.value) return;
 
     if (loadingTimeout) {
@@ -686,57 +778,31 @@ watch(() => props.filePath, (newFilePath) => {
       const nextImageIndex = activeImage.value ^ 1;
       scale.value[nextImageIndex] = 1;
       position.value[nextImageIndex] = { x: 0, y: 0 };
-      
-      imageSrc.value[nextImageIndex] = img.src;
-      imageRotate.value[nextImageIndex] = props.rotate;
 
-      // Update size immediately from the loaded image
-      imageSize.value[nextImageIndex] = { width: img.naturalWidth, height: img.naturalHeight };
-      
-      // Swap dimensions based on rotation
+      imageSrc.value[nextImageIndex] = loaded.src;
+      imageRotate.value[nextImageIndex] = props.rotate;
+      imageSize.value[nextImageIndex] = {
+        width: loaded.naturalWidth,
+        height: loaded.naturalHeight,
+      };
+
       if (props.rotate % 180 === 90) {
-        imageSizeRotated.value[nextImageIndex] = { 
-          width: img.naturalHeight, 
-          height: img.naturalWidth 
+        imageSizeRotated.value[nextImageIndex] = {
+          width: loaded.naturalHeight,
+          height: loaded.naturalWidth,
         };
       } else {
-        imageSizeRotated.value[nextImageIndex] = { 
-          width: img.naturalWidth,  
-          height: img.naturalHeight 
+        imageSizeRotated.value[nextImageIndex] = {
+          width: loaded.naturalWidth,
+          height: loaded.naturalHeight,
         };
       }
 
-      // Trigger transition logic
       onImageReady(nextImageIndex);
     });
-  };
-
-  img.onerror = () => {
-    if (loadingId !== currentLoadingId.value) return;
-    
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      loadingTimeout = null;
-    }
-    isLoading.value = false;
-
-    console.error("Error loading image:", newFilePath);
-    loadError.value = true;
-  };
-
-  try {
-    const src = getAssetSrc(newFilePath);
-    if (!src) {
-      if (loadingTimeout) {
-        clearTimeout(loadingTimeout);
-        loadingTimeout = null;
-      }
-      loadError.value = true;
-    } else {
-      img.src = src;
-    }
   } catch (e) {
     console.error("Error getting asset source:", e);
+    if (loadingId !== currentLoadingId.value) return;
     if (loadingTimeout) {
       clearTimeout(loadingTimeout);
       loadingTimeout = null;
