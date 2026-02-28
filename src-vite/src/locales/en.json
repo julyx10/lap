@@ -846,6 +846,7 @@
         "website": "Website"
       },
       "auto_update": {
+        "update": "Update",
         "check": "Check Update",
         "checking": "Checking...",
         "install": "Install & Restart",

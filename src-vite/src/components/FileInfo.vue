@@ -84,24 +84,25 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="flex gap-1 pt-1">
-          <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('favoriteAll')">
-            <IconHeartFilled class="w-3.5 h-3.5" />
-            <span>{{ $t('info_panel.favorite_all') }}</span>
-          </button>
-          <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('unfavoriteAll')">
-            <IconHeart class="w-3.5 h-3.5" />
-            <span>{{ $t('info_panel.unfavorite_all') }}</span>
-          </button>
-          <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('tagAll')">
-            <IconTag class="w-3.5 h-3.5" />
-            <span>{{ $t('info_panel.tag_all') }}</span>
-          </button>
-          <div class="ml-auto flex items-center gap-0.5">
+        <div class="flex items-center gap-1 pt-1">
+          <div class="h-6 flex items-center gap-0.5">
+            <button
+              class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0 mr-1"
+              :title="multiSelectFavorite ? $t('info_panel.unfavorite_all') : $t('info_panel.favorite_all')"
+              @click="emit(multiSelectFavorite ? 'unfavoriteAll' : 'favoriteAll')"
+            >
+              <component
+                :is="multiSelectFavorite ? IconHeartFilled : IconHeart"
+                class="w-3.5 h-3.5"
+                :class="multiSelectFavorite ? 'text-error' : 'text-base-content/30'"
+              />
+            </button>
+            <div class="w-px h-4 bg-base-content/10 mx-1"></div>
+            <span class="mr-1 text-[11px] font-medium text-base-content/50">{{ $t('favorite.ratings') }}</span>
             <button
               v-for="rating in [1, 2, 3, 4, 5]"
               :key="rating"
-              class="btn btn-ghost btn-xs btn-square"
+              class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0"
               :title="getRatingLabel(rating)"
               @click="emit('setRatingAll', multiSelectRating === rating ? 0 : rating)"
             >
@@ -112,6 +113,10 @@
               />
             </button>
           </div>
+          <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('tagAll')">
+            <IconTag class="w-3.5 h-3.5" />
+            <span>{{ $t('info_panel.tag_all') }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -615,8 +620,8 @@ const multiSelectDateRange = computed(() => {
     .filter(Boolean)
     .sort();
   if (dates.length === 0) return '';
-  const first = formatTimestamp(dates[0], 'yyyy-MM-dd');
-  const last = formatTimestamp(dates[dates.length - 1], 'yyyy-MM-dd');
+  const first = formatTimestamp(dates[0], localeMsg.value.format.date);
+  const last = formatTimestamp(dates[dates.length - 1], localeMsg.value.format.date);
   return first === last ? first : `${first} — ${last}`;
 });
 
@@ -634,6 +639,13 @@ const multiSelectRating = computed(() => {
   const ratings = props.selectedFiles.map((f: any) => Number(f.rating || 0));
   const first = ratings[0];
   return ratings.every((rating: number) => rating === first) ? first : null;
+});
+
+const multiSelectFavorite = computed(() => {
+  if (!props.selectedFiles.length) return false;
+  const favorites = props.selectedFiles.map((f: any) => Boolean(f.is_favorite));
+  const first = favorites[0];
+  return favorites.every((favorite: boolean) => favorite === first) ? first : false;
 });
 
 function getRatingLabel(rating: number) {

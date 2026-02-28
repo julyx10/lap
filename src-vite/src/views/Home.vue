@@ -83,6 +83,18 @@
                 </template>
               </ContextMenu>
 
+              <button
+                v-if="updateAvailable || isInstallingUpdate"
+                class="badge badge-sm border-0 px-2 py-2 font-medium transition-colors"
+                :class="updateAvailable ? 'badge-primary cursor-pointer' : 'badge-neutral/60 cursor-default'"
+                :disabled="isInstallingUpdate"
+                :title="updateButtonTooltip"
+                @click="installAvailableUpdate"
+              >
+                <span v-if="isInstallingUpdate" class="loading loading-spinner loading-xs"></span>
+                <span>{{ isInstallingUpdate ? $t('settings.about.auto_update.installing') : $t('settings.about.auto_update.update') }}</span>
+              </button>
+
             </div>
 
             <!-- Component panel (flex-1 to fill remaining space) -->
@@ -130,6 +142,8 @@
       @ok="onManageLibrariesOk"
       @cancel="showManageLibraries = false"
     />
+
+    <ToolTip ref="toolTipRef" />
   </div>
 
 </template>
@@ -139,6 +153,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getName } from '@tauri-apps/api/app';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac } from '@/common/utils';
@@ -158,6 +174,7 @@ import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import ManageLibraries from '@/components/ManageLibraries.vue';
+import ToolTip from '@/components/ToolTip.vue';
 import iconLogo from '@/assets/images/logo.png';
 
 import {
@@ -213,6 +230,22 @@ const showManageLibraries = ref(false);
 const isDraggingSplitter = ref(false);
 
 const appName = ref('');
+const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
+const updateAvailable = ref(false);
+const isCheckingUpdate = ref(false);
+const isInstallingUpdate = ref(false);
+const updateVersion = ref('');
+let currentUpdate: any = null;
+
+const updateButtonTooltip = computed(() => {
+  if (isInstallingUpdate.value) {
+    return localeMsg.value.settings.about.auto_update.installing;
+  }
+  if (updateAvailable.value && updateVersion.value) {
+    return localeMsg.value.settings.about.auto_update.new_version_available.replace('{version}', updateVersion.value);
+  }
+  return localeMsg.value.settings.about.auto_update.update;
+});
 
 // buttons 
 const buttons = computed(() =>  [
@@ -301,7 +334,57 @@ onMounted(async () => {
   } catch (e) {
     console.error('Failed to get app name:', e);
   }
+
+  void autoCheckForUpdates();
 });
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (typeof error === 'string' && error.trim()) return error;
+  if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
+    return (error as any).message;
+  }
+  return fallback;
+}
+
+async function autoCheckForUpdates() {
+  if (isCheckingUpdate.value) return;
+
+  isCheckingUpdate.value = true;
+  updateAvailable.value = false;
+  updateVersion.value = '';
+  currentUpdate = null;
+
+  try {
+    const update = await check();
+    if (!update) return;
+
+    updateAvailable.value = true;
+    updateVersion.value = update.version;
+    currentUpdate = update;
+    toolTipRef.value?.showTip(localeMsg.value.settings.about.auto_update.new_version_available.replace('{version}', update.version));
+  } catch (error: unknown) {
+    console.error('Failed to auto check for updates:', error);
+  } finally {
+    isCheckingUpdate.value = false;
+  }
+}
+
+async function installAvailableUpdate() {
+  if (!currentUpdate || isInstallingUpdate.value) return;
+
+  try {
+    isInstallingUpdate.value = true;
+    toolTipRef.value?.showTip(localeMsg.value.settings.about.auto_update.downloading_update);
+    await currentUpdate.downloadAndInstall();
+    toolTipRef.value?.showTip(localeMsg.value.settings.about.auto_update.update_installed);
+    await relaunch();
+  } catch (error: unknown) {
+    const message = getErrorMessage(error, localeMsg.value.settings.about.auto_update.failed_install);
+    console.error('Failed to install update:', error);
+    toolTipRef.value?.showTip(message, true);
+    isInstallingUpdate.value = false;
+  }
+}
 
 const doSwitchLibrary = async (libraryId: string) => {
   try {

@@ -846,6 +846,7 @@
         "website": "Site web"
       },
       "auto_update": {
+        "update": "Mettre à jour",
         "check": "Vérifier les mises à jour",
         "checking": "Vérification...",
         "install": "Installer et redémarrer",

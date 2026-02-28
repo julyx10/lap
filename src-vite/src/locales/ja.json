@@ -846,6 +846,7 @@
         "website": "ウェブサイト"
       },
       "auto_update": {
+        "update": "更新",
         "check": "更新を確認",
         "checking": "確認中...",
         "install": "インストールして再起動",

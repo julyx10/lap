@@ -846,6 +846,7 @@
         "website": "网站"
       },
       "auto_update": {
+        "update": "更新",
         "check": "检查更新",
         "checking": "检查中...",
         "install": "安装并重启",

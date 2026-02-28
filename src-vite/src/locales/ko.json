@@ -846,6 +846,7 @@
         "website": "웹사이트"
       },
       "auto_update": {
+        "update": "업데이트",
         "check": "업데이트 확인",
         "checking": "확인 중...",
         "install": "설치 및 재시작",
