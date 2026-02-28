@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "收藏的文件",
-    "folders": "收藏的文件夹"
+    "folders": "收藏的文件夹",
+    "ratings": "评分",
+    "clear_rating": "清除评分",
+    "five_stars": "5 星",
+    "four_stars": "4 星",
+    "three_stars": "3 星",
+    "two_stars": "2 星",
+    "one_star": "1 星"
   },
   "tag": {
     "add_tag": "添加新标签",

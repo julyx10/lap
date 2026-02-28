@@ -48,7 +48,7 @@
           </div>
           <div class="ml-auto flex flex-row items-center text-base-content/30">
             <TButton v-if="child.is_favorite" 
-              :icon="IconFavorite"
+              :icon="IconHeartFilled"
               :disabled="true"
               :buttonSize="'small'"
             />
@@ -152,7 +152,7 @@ import {
   IconRename,
   IconMoveTo,
   IconTrash,
-  IconFavorite,
+  IconHeartFilled,
   IconCopyTo,
   IconFolderExpanded,
   IconFolderCollapsed,
@@ -279,7 +279,7 @@ const getMenuItemsForFolder = (folder: any) => {
     // },
     // {
     //   label: !folder?.is_favorite ? localeMsg.value.menu.meta.favorite : localeMsg.value.menu.meta.unfavorite,
-    //   icon: !folder?.is_favorite ? IconFavorite : IconUnFavorite,
+    //   icon: !folder?.is_favorite ? IconStar : IconUnFavorite,
     //   disabled: isRoot,
     //   action: () => {
     //     toggleFavorite();

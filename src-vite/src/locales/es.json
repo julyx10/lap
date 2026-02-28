@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "Archivos favoritos",
-    "folders": "Carpetas favoritas"
+    "folders": "Carpetas favoritas",
+    "ratings": "Valoraciones",
+    "clear_rating": "Quitar valoración",
+    "five_stars": "5 estrellas",
+    "four_stars": "4 estrellas",
+    "three_stars": "3 estrellas",
+    "two_stars": "2 estrellas",
+    "one_star": "1 estrella"
   },
   "tag": {
     "add_tag": "Añadir etiqueta",

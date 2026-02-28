@@ -38,9 +38,12 @@
         <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 mr-1">
           {{ formatDuration(file.duration) }}
         </div>
+        <div v-if="file.rating > 0" class="text-[10px] font-semibold rounded-box px-1 mr-1 bg-base-100/60 text-warning">
+          {{ file.rating }}★
+        </div>
         <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
         <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
-        <IconFavorite v-if="file.is_favorite" class="t-icon-size-xs"></IconFavorite>
+        <IconHeartFilled v-if="file.is_favorite" class="t-icon-size-xs"></IconHeartFilled>
         <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
         <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
         <IconRotate v-if="file.rotate % 360 > 0"
@@ -118,7 +121,7 @@ import { useFileMenuItems } from '@/common/fileMenu';
 
 import { 
   IconMore,
-  IconFavorite,
+  IconHeartFilled,
   IconTag,
   IconRotate,
   IconChecked,

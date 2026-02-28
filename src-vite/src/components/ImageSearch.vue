@@ -3,24 +3,24 @@
   <div class="sidebar-panel">
     <!-- title bar -->
     <div class="sidebar-panel-header" data-tauri-drag-region>
-      <div role="tablist" class="sidebar-header-tabs">
+      <div role="tablist" class="tabs tabs-sm tabs-border flex-1">
         <a
           role="tab"
-          :class="['sidebar-header-tab', { 'tab-active': config.search.searchType === 0 }]"
+          :class="['tab mx-1', { 'tab-active': config.search.searchType === 0 }]"
           @click="handleTabClick(0)"
         >
           {{ $t('search.search_images') }}
         </a>
         <a
           role="tab"
-          :class="['sidebar-header-tab', { 'tab-active': config.search.searchType === 1 }]"
+          :class="['tab mx-1', { 'tab-active': config.search.searchType === 1 }]"
           @click="handleTabClick(1)"
         >
           {{ $t('search.similar_images') }}
         </a>
         <a
           role="tab"
-          :class="['sidebar-header-tab', { 'tab-active': config.search.searchType === 2 }]"
+          :class="['tab mx-1', { 'tab-active': config.search.searchType === 2 }]"
           @click="handleTabClick(2)"
         >
           {{ $t('search.filename_search') }}

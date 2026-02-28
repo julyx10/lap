@@ -346,6 +346,9 @@
             @deselect="(file: any) => file.isSelected = false"
             @favoriteAll="selectModeSetFavorites(true)"
             @unfavoriteAll="selectModeSetFavorites(false)"
+            @toggleFavorite="toggleFavorite"
+            @setRating="setSelectedFileRating"
+            @setRatingAll="selectModeSetRatings"
             @tagAll="clickTag"
             @quick-edit-tag="clickTag"
             @quick-edit-comment="openCommentEditor"
@@ -495,7 +498,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFolderFiles, getFolderThumbCount,
          copyImage, renameFile, moveFile, copyFile, deleteFile, deleteDbFile, editFileComment, getFileThumb, getFileInfo,
-         setFileRotate, getFileHasTags, setFileFavorite, getTagsForFile, searchSimilarImages, generateEmbedding, 
+         setFileRotate, getFileHasTags, setFileFavorite, setFileRating, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, cancelIndexing as cancelIndexingApi, getFacesForFile, listenFaceIndexProgress,
          dedupGetGroup, getQueryFilePosition } from '@/common/api';  
@@ -529,8 +532,8 @@ import {
   IconClose,
   IconCheckAll,
   IconCheckNone,
-  IconFavorite,
-  IconUnFavorite,
+  IconHeart,
+  IconHeartFilled,
   IconFolderFavorite,
   IconMoveTo,
   IconFiles,
@@ -797,6 +800,7 @@ const currentQueryParams = ref({
   locationAdmin1: "",
   locationName: "",
   isFavorite: false,
+  rating: 0,
   tagId: 0,
   personId: 0,
 });
@@ -848,7 +852,7 @@ const currentTitleIcon = computed(() => {
             }
           case 1: 
             switch (libConfig.favorite.folderId) {
-              case 0: return IconFavorite;
+              case 0: return IconHeart;
               case 1: return IconFolderFavorite;
               default: return IconFolderFavorite;
             }
@@ -947,7 +951,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.meta.favorite,
-      icon: IconFavorite,
+      icon: IconHeartFilled,
       disabled: selectedCount.value === 0,
       action: () => {
         selectModeSetFavorites(true);
@@ -955,7 +959,7 @@ const moreMenuItems = computed(() => {
     },
     {
       label: localeMsg.value.menu.meta.unfavorite,
-      icon: IconUnFavorite,
+      icon: IconHeart,
       disabled: selectedCount.value === 0,
       action: () => {
         selectModeSetFavorites(false);
@@ -1679,7 +1683,7 @@ watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
     libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected, // album
-    libConfig.favorite.albumId, libConfig.favorite.folderId, libConfig.favorite.folderPath,   // favorite files and folder
+    libConfig.favorite.albumId, libConfig.favorite.folderId, libConfig.favorite.folderPath, libConfig.favorite.rating, // favorite files and rating
     libConfig.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
     libConfig.person.id,                                                              // person
     libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date,       // calendar
@@ -1865,6 +1869,7 @@ async function getFileList(
     locationAdmin1 = '', 
     locationName = '', 
     isFavorite = false, 
+    rating = 0,
     tagId = 0,
     personId = 0
   } = {},
@@ -1885,6 +1890,7 @@ async function getFileList(
     locationAdmin1,
     locationName,
     isFavorite,
+    rating,
     tagId,
     personId,
   };
@@ -2079,6 +2085,7 @@ async function updateContent() {
               locationAdmin1: "",
               locationName: "",
               isFavorite: false,
+              rating: 0,
               tagId: 0,
               personId: 0,
             };
@@ -2107,7 +2114,18 @@ async function updateContent() {
     if(libConfig.favorite.folderId === null) {
       contentTitle.value = "";
     } else {
-      if(libConfig.favorite.folderId === 0) { // favorite files
+      if (libConfig.favorite.rating > 0) {
+        const keyMap: Record<number, string> = {
+          5: 'five_stars',
+          4: 'four_stars',
+          3: 'three_stars',
+          2: 'two_stars',
+          1: 'one_star',
+        };
+        const key = keyMap[libConfig.favorite.rating] || '';
+        contentTitle.value = key ? localeMsg.value.favorite[key] : `${libConfig.favorite.rating}★`;
+        getFileList({ rating: libConfig.favorite.rating }, requestId);
+      } else if(libConfig.favorite.folderId === 0) { // favorite files
         contentTitle.value = localeMsg.value.favorite.files;
         getFileList({ isFavorite: true }, requestId);
       } else {                // favorite folders
@@ -2754,6 +2772,28 @@ const selectModeSetFavorites = async (isFavorite: boolean) => {
         return setFileFavorite(item.id, isFavorite);
       }); 
     await Promise.all(updates); // parallelize DB updates
+  }
+}
+
+const setSelectedFileRating = async (rating: number) => {
+  if (selectedItemIndex.value >= 0) {
+    const item = fileList.value[selectedItemIndex.value];
+    const normalized = item.rating === rating ? 0 : rating;
+    item.rating = normalized;
+    await setFileRating(item.id, normalized);
+  }
+};
+
+const selectModeSetRatings = async (rating: number) => {
+  if (selectMode.value && selectedCount.value > 0) {
+    const normalized = Math.max(0, Math.min(5, rating));
+    const updates = fileList.value
+      .filter(item => item.isSelected)
+      .map(async item => {
+        item.rating = normalized;
+        return setFileRating(item.id, normalized);
+      });
+    await Promise.all(updates);
   }
 }
 

@@ -130,8 +130,10 @@ export { default as IconUnChecked } from '@/assets/icons/checkbox-unchecked.svg'
 export { default as IconCheckAll } from '@/assets/icons/checkbox-checkall.svg';
 export { default as IconCheckNone } from '@/assets/icons/checkbox-uncheckall.svg';
 export { default as IconUnFavorite } from '@/assets/icons/star-off.svg';
-export { default as IconFavorite } from '@/assets/icons/star.svg';
-export { default as IconFavoriteFilled } from '@/assets/icons/star-filled.svg';
+export { default as IconStar } from '@/assets/icons/star.svg';
+export { default as IconStarFilled } from '@/assets/icons/star-filled.svg';
+export { default as IconHeart } from '@/assets/icons/heart.svg';
+export { default as IconHeartFilled } from '@/assets/icons/heart-fill.svg';
 export { default as IconPin } from '@/assets/icons/pin-filled.svg';
 export { default as IconUnPin } from '@/assets/icons/pin.svg';
 export { default as IconSortingAsc } from '@/assets/icons/sorting-asc.svg';

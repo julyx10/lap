@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "즐겨찾는 파일",
-    "folders": "즐겨찾는 폴더"
+    "folders": "즐겨찾는 폴더",
+    "ratings": "평점",
+    "clear_rating": "평점 지우기",
+    "five_stars": "5점",
+    "four_stars": "4점",
+    "three_stars": "3점",
+    "two_stars": "2점",
+    "one_star": "1점"
   },
   "tag": {
     "add_tag": "태그 추가",

@@ -791,6 +791,19 @@ export async function setFileFavorite(fileId, isFavorite) {
   return null;
 }
 
+// set file rating
+export async function setFileRating(fileId, rating) {
+  try {
+    const result = await invoke('set_file_rating', { fileId, rating });
+    if(result !== null && result !== undefined) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set file rating:', error);
+  }
+  return null;
+}
+
 // tags
 
 // get all tags

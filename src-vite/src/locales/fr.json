@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "Fichiers favoris",
-    "folders": "Dossiers favoris"
+    "folders": "Dossiers favoris",
+    "ratings": "Notes",
+    "clear_rating": "Effacer la note",
+    "five_stars": "5 étoiles",
+    "four_stars": "4 étoiles",
+    "three_stars": "3 étoiles",
+    "two_stars": "2 étoiles",
+    "one_star": "1 étoile"
   },
   "tag": {
     "add_tag": "Ajouter tag",

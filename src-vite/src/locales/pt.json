@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "Arquivos favoritos",
-    "folders": "Pastas favoritas"
+    "folders": "Pastas favoritas",
+    "ratings": "Classificações",
+    "clear_rating": "Limpar classificação",
+    "five_stars": "5 estrelas",
+    "four_stars": "4 estrelas",
+    "three_stars": "3 estrelas",
+    "two_stars": "2 estrelas",
+    "one_star": "1 estrela"
   },
   "tag": {
     "add_tag": "Adicionar tag",

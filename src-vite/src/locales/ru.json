@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "Избранные файлы",
-    "folders": "Избранные папки"
+    "folders": "Избранные папки",
+    "ratings": "Оценки",
+    "clear_rating": "Сбросить оценку",
+    "five_stars": "5 звезд",
+    "four_stars": "4 звезды",
+    "three_stars": "3 звезды",
+    "two_stars": "2 звезды",
+    "one_star": "1 звезда"
   },
   "tag": {
     "add_tag": "Добавить тег",

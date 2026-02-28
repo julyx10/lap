@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "Favorite files",
-    "folders": "Favorite folders"
+    "folders": "Favorite folders",
+    "ratings": "Ratings",
+    "clear_rating": "Clear rating",
+    "five_stars": "5 stars",
+    "four_stars": "4 stars",
+    "three_stars": "3 stars",
+    "two_stars": "2 stars",
+    "one_star": "1 star"
   },
   "tag": {
     "add_tag": "Add new tag",

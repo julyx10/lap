@@ -524,6 +524,14 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
         .map_err(|e| format!("Error while setting file favorite: {}", e))
 }
 
+/// set a file's rating (0-5)
+#[tauri::command]
+pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
+    let clamped = rating.clamp(0, 5);
+    AFile::update_column(file_id, "rating", &clamped)
+        .map_err(|e| format!("Error while setting file rating: {}", e))
+}
+
 // tag
 
 /// get all tags

@@ -67,7 +67,14 @@
   },
   "favorite": {
     "files": "お気に入りファイル",
-    "folders": "お気に入りフォルダー"
+    "folders": "お気に入りフォルダー",
+    "ratings": "評価",
+    "clear_rating": "評価をクリア",
+    "five_stars": "5つ星",
+    "four_stars": "4つ星",
+    "three_stars": "3つ星",
+    "two_stars": "2つ星",
+    "one_star": "1つ星"
   },
   "tag": {
     "add_tag": "タグを追加",

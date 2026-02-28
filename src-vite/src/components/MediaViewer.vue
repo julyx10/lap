@@ -63,7 +63,7 @@
         <template v-if="showExtraIcons && mode !== 2">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
           <TButton
-            :icon="IconFavorite"
+            :icon="file?.is_favorite ? IconHeartFilled : IconHeart"
             :disabled="fileIndex < 0 || isSlideShow"
             :selected="file?.is_favorite && !isSlideShow"
             :tooltip="file?.is_favorite ? $t('menu.meta.unfavorite') : $t('menu.meta.favorite')"
@@ -214,8 +214,8 @@ import {
   IconSeparator,
   IconClose,
   IconMore,
-  IconFavorite,
-  IconFavoriteFilled,
+  IconHeart,
+  IconHeartFilled,
   IconTag,
   IconComment,
   IconRotate,

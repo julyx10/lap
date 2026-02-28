@@ -161,7 +161,7 @@ import ManageLibraries from '@/components/ManageLibraries.vue';
 import iconLogo from '@/assets/images/logo.png';
 
 import {
-  IconFavorite,
+  IconHeart,
   IconTag,
   IconLocation,
   IconPerson,
@@ -222,7 +222,7 @@ const buttons = computed(() =>  [
     text: localeMsg.value.sidebar.album
   },
   { 
-    icon: IconFavorite, 
+    icon: IconHeart, 
     component: Favorite,
     text: localeMsg.value.sidebar.favorite 
   },

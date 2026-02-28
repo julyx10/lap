@@ -34,6 +34,8 @@ pub struct FavoriteState {
     pub folder_id: i64,
     #[serde(alias = "folder_path")]
     pub folder_path: Option<String>,
+    #[serde(default)]
+    pub rating: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

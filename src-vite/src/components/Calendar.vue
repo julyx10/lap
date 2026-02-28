@@ -17,17 +17,17 @@
 
     <template v-if="Object.keys(calendar_dates).length > 0" >
       <div class="sidebar-panel-header">
-        <div role="tablist" class="sidebar-header-tabs">
+        <div role="tablist" class="tabs tabs-sm tabs-border flex-1">
           <a
             role="tab"
-            :class="['sidebar-header-tab', { 'tab-active': config.calendar.isMonthly }]"
+            :class="['tab mx-1', { 'tab-active': config.calendar.isMonthly }]"
             @click="switchToMonthlyView()"
           >
             {{ localeMsg.menu.calendar.monthly }}
           </a>
           <a
             role="tab"
-            :class="['sidebar-header-tab', { 'tab-active': !config.calendar.isMonthly }]"
+            :class="['tab mx-1', { 'tab-active': !config.calendar.isMonthly }]"
             @click="switchToDailyView()"
           >
             {{ localeMsg.menu.calendar.daily }}

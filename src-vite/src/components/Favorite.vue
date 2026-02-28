@@ -3,14 +3,39 @@
     <div
       :class="[
         'sidebar-item',
-        libConfig.favorite.folderId === 0 ? 'sidebar-item-selected' : 'sidebar-item-hover',
+        libConfig.favorite.folderId === 0 && libConfig.favorite.rating === 0 ? 'sidebar-item-selected' : 'sidebar-item-hover',
       ]"
       @click="clickFavoriteFiles()"
     >
-      <IconFavorite class="mx-1 w-5 h-5 shrink-0" />
+      <IconHeart class="mx-1 w-5 h-5 shrink-0" />
       <div class="sidebar-item-label">
         {{ $t('favorite.files') }}
       </div>
+    </div>
+
+    <div class="sidebar-panel-header">
+      <span class="sidebar-panel-header-title">{{ $t('favorite.ratings') }}</span>
+    </div>
+    <div class="grow overflow-x-hidden overflow-y-auto">
+      <ul>
+        <li v-for="rating in [5, 4, 3, 2, 1]" :key="rating">
+          <div
+            :class="[
+              'sidebar-item',
+              libConfig.favorite.rating === rating ? 'sidebar-item-selected' : 'sidebar-item-hover',
+            ]"
+            @click="clickRating(rating)"
+          >
+            <div class="mx-1 flex items-center gap-0.5">
+              <IconStarFilled
+                v-for="index in rating"
+                :key="index"
+                class="w-4 h-4 shrink-0"
+              />
+            </div>
+          </div>
+        </li>
+      </ul>
     </div>
 
     <!-- Hidden for now: favorite folders
@@ -51,7 +76,7 @@
 <script setup lang="ts">
 import { libConfig } from '@/common/config';
 
-import { IconFavorite } from '@/common/icons';
+import { IconHeart, IconStarFilled } from '@/common/icons';
 
 // Hidden for now: favorite folder support kept here for easy restore.
 // import { ref, computed, onMounted } from 'vue';
@@ -105,10 +130,18 @@ function clickFavoriteFiles() {
   libConfig.favorite.albumId = null;
   libConfig.favorite.folderId = 0;    // 0 means favorite files
   libConfig.favorite.folderPath = '';
+  libConfig.favorite.rating = 0;
 }
 
 if (libConfig.favorite.folderId !== 0) {
   clickFavoriteFiles();
+}
+
+function clickRating(rating) {
+  libConfig.favorite.albumId = null;
+  libConfig.favorite.folderId = 0;
+  libConfig.favorite.folderPath = '';
+  libConfig.favorite.rating = rating;
 }
 
 // Hidden for now: favorite folders

@@ -171,6 +171,7 @@ fn main() {
             t_cmds::get_folder_favorite,
             t_cmds::set_folder_favorite,
             t_cmds::set_file_favorite,
+            t_cmds::set_file_rating,
             // tag
             t_cmds::get_all_tags,
             t_cmds::get_tag_name,

@@ -86,17 +86,32 @@
         <!-- Quick Actions -->
         <div class="flex gap-1 pt-1">
           <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('favoriteAll')">
-            <IconFavorite class="w-3.5 h-3.5" />
+            <IconHeartFilled class="w-3.5 h-3.5" />
             <span>{{ $t('info_panel.favorite_all') }}</span>
           </button>
           <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('unfavoriteAll')">
-            <IconUnFavorite class="w-3.5 h-3.5" />
+            <IconHeart class="w-3.5 h-3.5" />
             <span>{{ $t('info_panel.unfavorite_all') }}</span>
           </button>
           <button class="btn btn-xs btn-ghost gap-1 text-base-content/50 hover:text-base-content" @click="emit('tagAll')">
             <IconTag class="w-3.5 h-3.5" />
             <span>{{ $t('info_panel.tag_all') }}</span>
           </button>
+          <div class="ml-auto flex items-center gap-0.5">
+            <button
+              v-for="rating in [1, 2, 3, 4, 5]"
+              :key="rating"
+              class="btn btn-ghost btn-xs btn-square"
+              :title="getRatingLabel(rating)"
+              @click="emit('setRatingAll', multiSelectRating === rating ? 0 : rating)"
+            >
+              <component
+                :is="(multiSelectRating || 0) >= rating ? IconStarFilled : IconStar"
+                class="w-3.5 h-3.5"
+                :class="(multiSelectRating || 0) >= rating ? 'text-warning' : 'text-base-content/30'"
+              />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -112,7 +127,7 @@
           <div v-else class="w-full h-full bg-base-content/5 rounded-box"></div>
           
           <div v-if="fileInfo?.is_favorite" class="absolute -bottom-1 -right-1 drop-shadow-md">
-            <IconFavorite class="t-icon-size-xs" />
+            <IconHeartFilled class="t-icon-size-xs" />
           </div>
         </div>
       </div> -->
@@ -186,6 +201,36 @@
             <!-- Modified At -->
             <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.modified_at') }}</div>
             <div class="text-xs font-semibold text-base-content/65">{{ formatTimestamp(fileInfo?.modified_at, $t('format.date_time')) }}</div>
+
+            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('menu.meta.favorite') }}</div>
+            <div class="h-6 flex items-center gap-0.5">
+              <button
+                class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0 mr-1"
+                :title="fileInfo?.is_favorite ? $t('menu.meta.unfavorite') : $t('menu.meta.favorite')"
+                @click.stop="emit('toggleFavorite')"
+              >
+                <component
+                  :is="fileInfo?.is_favorite ? IconHeartFilled : IconHeart"
+                  class="w-3.5 h-3.5"
+                  :class="fileInfo?.is_favorite ? 'text-error' : 'text-base-content/30'"
+                />
+              </button>
+              <div class="w-px h-4 bg-base-content/10 mr-1"></div>
+              <span class="mr-1 text-[11px] font-medium text-base-content/50">{{ $t('favorite.ratings') }}</span>
+              <button
+                v-for="rating in [1, 2, 3, 4, 5]"
+                :key="rating"
+                class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0"
+                :title="getRatingLabel(rating)"
+                @click.stop="emit('setRating', (fileInfo?.rating || 0) === rating ? 0 : rating)"
+              >
+                <component
+                  :is="(fileInfo?.rating || 0) >= rating ? IconStarFilled : IconStar"
+                  class="w-3.5 h-3.5"
+                  :class="(fileInfo?.rating || 0) >= rating ? 'text-warning' : 'text-base-content/30'"
+                />
+              </button>
+            </div>
 
             <!-- Tags -->
             <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('file_info.tags') }}</div>
@@ -510,7 +555,7 @@ import {
 import { 
   IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
   IconFile, IconFiles, IconRestore, IconSave, IconPalette, IconAdjustments,
-  IconCheckAll, IconFavorite, IconUnFavorite, IconTag, IconEdit,
+  IconCheckAll, IconHeart, IconHeartFilled, IconStar, IconStarFilled, IconTag, IconEdit,
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import SliderInput from '@/components/SliderInput.vue';
@@ -543,6 +588,9 @@ const emit = defineEmits([
   'deselect',
   'favoriteAll',
   'unfavoriteAll',
+  'toggleFavorite',
+  'setRating',
+  'setRatingAll',
   'tagAll',
   'quickEditTag',
   'quickEditComment',
@@ -567,8 +615,8 @@ const multiSelectDateRange = computed(() => {
     .filter(Boolean)
     .sort();
   if (dates.length === 0) return '';
-  const first = formatTimestamp(dates[0], 'YYYY-MM-DD');
-  const last = formatTimestamp(dates[dates.length - 1], 'YYYY-MM-DD');
+  const first = formatTimestamp(dates[0], 'yyyy-MM-dd');
+  const last = formatTimestamp(dates[dates.length - 1], 'yyyy-MM-dd');
   return first === last ? first : `${first} — ${last}`;
 });
 
@@ -580,6 +628,26 @@ const multiSelectTypeBreakdown = computed(() => {
   if (videos > 0) parts.push(`${videos} ${videos === 1 ? localeMsg.value.info_panel.type_video : localeMsg.value.info_panel.type_videos}`);
   return parts.join(' · ');
 });
+
+const multiSelectRating = computed(() => {
+  if (!props.selectedFiles.length) return 0;
+  const ratings = props.selectedFiles.map((f: any) => Number(f.rating || 0));
+  const first = ratings[0];
+  return ratings.every((rating: number) => rating === first) ? first : null;
+});
+
+function getRatingLabel(rating: number) {
+  const keys: Record<number, string> = {
+    5: 'five_stars',
+    4: 'four_stars',
+    3: 'three_stars',
+    2: 'two_stars',
+    1: 'one_star',
+  };
+  const key = keys[rating];
+  return localeMsg.value.favorite?.[key] || `${rating}★`;
+}
+
 const isProcessing = ref(false);
 const isSaving = ref(false);
 

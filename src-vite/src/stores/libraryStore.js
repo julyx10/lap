@@ -19,11 +19,12 @@ export const useLibraryStore = defineStore('libraryStore', {
       selected: false,        // album is selected
     },
 
-    /** @type {{ albumId: number | null, folderId: number, folderPath: string }} */
+    /** @type {{ albumId: number | null, folderId: number, folderPath: string, rating: number }} */
     favorite: {
       albumId: null,
       folderId: 0,            // 0 means favorite files (default)
       folderPath: '',
+      rating: 0,
     },
 
     /** @type {{ id: number | null, smartId: string | null }} */

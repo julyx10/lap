@@ -507,6 +507,7 @@ pub struct AFile {
 
     // extra info
     pub is_favorite: Option<bool>, // is favorite
+    pub rating: Option<i32>,       // 0-5 stars
     pub rotate: Option<i32>,       // rotate angle (0, 90, 180, 270)
     pub comments: Option<String>,  // comments
     pub has_tags: Option<bool>,    // has tags
@@ -575,6 +576,7 @@ pub struct QueryParams {
     pub location_admin1: String,
     pub location_name: String,
     pub is_favorite: bool,
+    pub rating: i64,
     pub tag_id: i64,
     pub person_id: i64,
 }
@@ -745,6 +747,7 @@ impl AFile {
             duration: Some(duration),
 
             is_favorite: None,
+            rating: Some(0),
             rotate: None,
             comments: None,
             has_tags: Some(false),
@@ -964,11 +967,11 @@ impl AFile {
                 name, name_pinyin, size, file_type, created_at, modified_at, 
                 taken_date,
                 width, height, duration,
-                is_favorite, rotate, comments, has_tags,
+                is_favorite, rating, rotate, comments, has_tags,
                 e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description, e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39)",
             params![
                 self.folder_id,
 
@@ -986,6 +989,7 @@ impl AFile {
                 self.duration,
 
                 self.is_favorite,
+                self.rating,
                 self.rotate,
                 self.comments,
                 self.has_tags,
@@ -1027,9 +1031,10 @@ impl AFile {
                 name = ?1, name_pinyin = ?2, size = ?3, file_type = ?4, created_at = ?5, modified_at = ?6,
                 taken_date = ?7,
                 width = ?8, height = ?9, duration = ?10,
-                e_make = ?11, e_model = ?12, e_date_time = ?13, e_software = ?14, e_artist = ?15, e_copyright = ?16, e_description = ?17, e_lens_make = ?18, e_lens_model = ?19, e_exposure_bias = ?20, e_exposure_time = ?21, e_f_number = ?22, e_focal_length = ?23, e_iso_speed = ?24, e_flash = ?25, e_orientation = ?26,
-                gps_latitude = ?27, gps_longitude = ?28, gps_altitude = ?29, geo_name = ?30, geo_admin1 = ?31, geo_admin2 = ?32, geo_cc = ?33
-            WHERE id = ?34",
+                rating = ?11,
+                e_make = ?12, e_model = ?13, e_date_time = ?14, e_software = ?15, e_artist = ?16, e_copyright = ?17, e_description = ?18, e_lens_make = ?19, e_lens_model = ?20, e_exposure_bias = ?21, e_exposure_time = ?22, e_f_number = ?23, e_focal_length = ?24, e_iso_speed = ?25, e_flash = ?26, e_orientation = ?27,
+                gps_latitude = ?28, gps_longitude = ?29, gps_altitude = ?30, geo_name = ?31, geo_admin1 = ?32, geo_admin2 = ?33, geo_cc = ?34
+            WHERE id = ?35",
             params![
                 file.name,
                 file.name_pinyin,
@@ -1044,6 +1049,7 @@ impl AFile {
                 file.height,
                 file.duration,
 
+                file.rating,
                 file.e_make,
                 file.e_model,
                 file.e_date_time,
@@ -1134,7 +1140,7 @@ impl AFile {
                 a.name, a.name_pinyin, a.size, a.file_type, a.created_at, a.modified_at, 
                 a.taken_date,
                 a.width, a.height, a.duration,
-                a.is_favorite, a.rotate, a.comments, a.has_tags,
+                a.is_favorite, a.rating, a.rotate, a.comments, a.has_tags,
                 a.e_make, a.e_model, a.e_date_time, a.e_software, a.e_artist, a.e_copyright, a.e_description, a.e_lens_make, a.e_lens_model, a.e_exposure_bias, a.e_exposure_time, a.e_f_number, a.e_focal_length, a.e_iso_speed, a.e_flash, a.e_orientation,
                 a.gps_latitude, a.gps_longitude, a.gps_altitude, a.geo_name, a.geo_admin1, a.geo_admin2, a.geo_cc,
                 b.path,
@@ -1168,44 +1174,45 @@ impl AFile {
             duration: row.get(11)?,
 
             is_favorite: row.get(12)?,
-            rotate: row.get(13)?,
-            comments: row.get(14)?,
-            has_tags: row.get(15)?,
+            rating: row.get(13)?,
+            rotate: row.get(14)?,
+            comments: row.get(15)?,
+            has_tags: row.get(16)?,
 
-            e_make: row.get(16)?,
-            e_model: row.get(17)?,
-            e_date_time: row.get(18)?,
-            e_software: row.get(19)?,
-            e_artist: row.get(20)?,
-            e_copyright: row.get(21)?,
-            e_description: row.get(22)?,
-            e_lens_make: row.get(23)?,
-            e_lens_model: row.get(24)?,
-            e_exposure_bias: row.get(25)?,
-            e_exposure_time: row.get(26)?,
-            e_f_number: row.get(27)?,
-            e_focal_length: row.get(28)?,
-            e_iso_speed: row.get(29)?,
-            e_flash: row.get(30)?,
-            e_orientation: row.get(31)?,
+            e_make: row.get(17)?,
+            e_model: row.get(18)?,
+            e_date_time: row.get(19)?,
+            e_software: row.get(20)?,
+            e_artist: row.get(21)?,
+            e_copyright: row.get(22)?,
+            e_description: row.get(23)?,
+            e_lens_make: row.get(24)?,
+            e_lens_model: row.get(25)?,
+            e_exposure_bias: row.get(26)?,
+            e_exposure_time: row.get(27)?,
+            e_f_number: row.get(28)?,
+            e_focal_length: row.get(29)?,
+            e_iso_speed: row.get(30)?,
+            e_flash: row.get(31)?,
+            e_orientation: row.get(32)?,
 
-            gps_latitude: row.get(32)?,
-            gps_longitude: row.get(33)?,
-            gps_altitude: row.get(34)?,
-            geo_name: row.get(35)?,
-            geo_admin1: row.get(36)?,
-            geo_admin2: row.get(37)?,
-            geo_cc: row.get(38)?,
+            gps_latitude: row.get(33)?,
+            gps_longitude: row.get(34)?,
+            gps_altitude: row.get(35)?,
+            geo_name: row.get(36)?,
+            geo_admin1: row.get(37)?,
+            geo_admin2: row.get(38)?,
+            geo_cc: row.get(39)?,
 
             file_path: Some(t_utils::get_file_path(
-                row.get::<_, String>(39)?.as_str(),
+                row.get::<_, String>(40)?.as_str(),
                 row.get::<_, String>(2)?.as_str(),
             )),
-            album_id: row.get(40)?,
-            album_name: row.get(41)?,
-            has_thumbnail: row.get::<_, Option<i64>>(42)?.map(|v| v == 1),
-            has_embedding: row.get::<_, Option<i64>>(43)?.map(|v| v == 1),
-            has_faces: row.get::<_, Option<i32>>(44)?,
+            album_id: row.get(41)?,
+            album_name: row.get(42)?,
+            has_thumbnail: row.get::<_, Option<i64>>(43)?.map(|v| v == 1),
+            has_embedding: row.get::<_, Option<i64>>(44)?.map(|v| v == 1),
+            has_faces: row.get::<_, Option<i32>>(45)?,
         })
     }
 
@@ -1343,6 +1350,7 @@ impl AFile {
         )?;
         new_file_info.id = Some(file_id);
         new_file_info.is_favorite = old_file_info.is_favorite;
+        new_file_info.rating = old_file_info.rating;
         new_file_info.rotate = old_file_info.rotate;
         new_file_info.comments = old_file_info.comments;
         new_file_info.has_tags = old_file_info.has_tags;
@@ -1479,6 +1487,11 @@ impl AFile {
 
         if params.is_favorite {
             conditions.push("a.is_favorite = 1");
+        }
+
+        if params.rating > 0 {
+            conditions.push("a.rating = ?");
+            sql_params.push(Box::new(params.rating));
         }
 
         if params.tag_id > 0 {
@@ -3119,6 +3132,7 @@ pub fn create_db() -> Result<(), String> {
             height INTEGER,
             duration INTEGER,
             is_favorite INTEGER,
+            rating INTEGER NOT NULL DEFAULT 0,
             rotate INTEGER,
             comments TEXT,
             has_tags INTEGER,
@@ -3200,6 +3214,16 @@ pub fn create_db() -> Result<(), String> {
         "ALTER TABLE afiles ADD COLUMN has_faces INTEGER DEFAULT 0",
         [],
     );
+    let _ = conn.execute(
+        "ALTER TABLE afiles ADD COLUMN rating INTEGER NOT NULL DEFAULT 0",
+        [],
+    );
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_rating ON afiles(rating)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     // Create index for has_faces
     conn.execute(

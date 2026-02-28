@@ -2,8 +2,8 @@ import { computed, Ref } from 'vue';
 import {
   IconMonitor,
   IconImageEdit,
-  IconFavorite,
-  IconUnFavorite,
+  IconHeart,
+  IconHeartFilled,
   IconTag,
   IconRotate,
   IconCopy,
@@ -110,7 +110,7 @@ export const useFileMenuItems = (
       { label: "-", action: null },
       {
         label: f.is_favorite ? localeMsg.value.menu.meta.unfavorite : localeMsg.value.menu.meta.favorite,
-        icon: f.is_favorite ? IconUnFavorite : IconFavorite,
+        icon: f.is_favorite ? IconHeart : IconHeartFilled,
         shortcut: isMac ? '⌘F' : 'Ctrl+F',
         action: createAction('favorite')
       },
