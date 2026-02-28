@@ -592,6 +592,7 @@
     "title": "Datei-Info",
     "metadata": "Metadaten",
     "location": "Ort",
+    "map": "Karte",
     "album_name": "Album",
     "name": "Name",
     "folder": "Ordner",

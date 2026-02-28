@@ -207,7 +207,9 @@
               <div class="flex flex-col gap-0.5">
                 <div class="flex items-center">
                   <div>{{ $t('settings.face_recognition.similarity') }}</div>
-                  <div class="ml-2 px-1.5 py-0.5 text-[10px] bg-secondary/10 text-secondary rounded font-bold tracking-wider leading-none">BETA</div>
+                  <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
+                    BETA
+                  </span>
                 </div>
                 <div class="text-xs text-base-content/30">{{ $t('settings.face_recognition.cluster_threshold_hint') }}</div>
               </div>

@@ -592,6 +592,7 @@
     "title": "파일 정보",
     "metadata": "메타데이터",
     "location": "위치",
+    "map": "지도",
     "album_name": "앨범",
     "name": "이름",
     "folder": "폴더",

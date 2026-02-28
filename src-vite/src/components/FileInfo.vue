@@ -329,7 +329,7 @@
         :class="{ 'flex-1 min-h-[300px]': config.infoPanel.showMap }">
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content shrink-0" @click.stop="config.infoPanel.showMap = !config.infoPanel.showMap">
           <IconLocation class="w-4 h-4 " /> 
-          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.location') }}</span>
+          <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.map') }}</span>
           <TButton
             :icon="config.infoPanel.showMap ? IconArrowUp : IconArrowDown"
             :buttonSize="'small'"
@@ -413,7 +413,7 @@
         >
           <IconPalette class="w-4 h-4" />
           <span class="font-bold mr-auto">{{ $t('msgbox.image_editor.presets.title') }}</span>
-          <span v-if="config.infoPanel.showPresets" class="text-[10px] text-primary/70 font-bold uppercase mr-1">{{ presetOptions.find(o => o.value === selectedPreset)?.label || selectedPreset }}</span>
+          <span class="text-[10px] text-primary/70 font-bold uppercase mr-1">{{ presetOptions.find(o => o.value === selectedPreset)?.label || selectedPreset }}</span>
           <TButton
             :icon="config.infoPanel.showPresets ? IconArrowUp : IconArrowDown"
             :buttonSize="'small'"

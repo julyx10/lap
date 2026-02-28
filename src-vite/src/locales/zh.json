@@ -592,6 +592,7 @@
     "title": "文件信息",
     "metadata": "元数据",
     "location": "地点",
+    "map": "地图",
     "album_name": "相册",
     "name": "文件名",
     "folder": "文件夹",

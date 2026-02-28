@@ -127,3 +127,21 @@ html, body {
 @utility sidebar-empty {
   @apply mt-2 mb-4 px-2 flex flex-col items-center justify-center text-base-content/30;
 }
+
+/* thumbnail badges */
+@utility thumb-badge {
+  @apply inline-flex h-5 items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold tracking-[0.02em] shadow-sm backdrop-blur-sm;
+  border-color: color-mix(in srgb, white 22%, transparent);
+  background: color-mix(in srgb, black 54%, transparent);
+  color: rgba(255, 255, 255, 0.94);
+}
+
+@utility thumb-badge-muted {
+  background: color-mix(in srgb, black 40%, transparent);
+}
+
+@utility thumb-badge-highlight {
+  border-color: color-mix(in srgb, var(--color-warning) 50%, white 16%);
+  background: color-mix(in srgb, var(--color-warning) 22%, black 48%);
+  color: color-mix(in srgb, white 88%, var(--color-warning) 12%);
+}

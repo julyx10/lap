@@ -32,24 +32,41 @@
         loading="lazy"
       />
 
-      <!-- status icons -->
-      <div class="absolute left-1 top-1 flex items-center text-sm text-base-content/30 group-hover:bg-base-100/10 rounded-box">
-        <!-- video duration -->
-        <div v-if="file.file_type===2" class="text-xs border rounded-box px-1 mr-1">
-          {{ formatDuration(file.duration) }}
+      <!-- status badges -->
+      <div
+        v-if="statusBadges.length > 0"
+        class="pointer-events-none absolute inset-x-0 top-0 h-16 bg-linear-to-b from-black/48 via-black/12 to-transparent"
+      />
+      <div
+        v-if="statusBadges.length > 0"
+        class="pointer-events-none absolute left-1 top-1 z-10 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-1"
+      >
+        <div
+          v-for="badge in statusBadges"
+          :key="badge.key"
+          :class="['thumb-badge', badge.highlight ? 'thumb-badge-highlight' : 'thumb-badge-muted']"
+        >
+          <template v-if="badge.icons?.length">
+            <div class="flex items-center gap-0.5">
+              <component
+                :is="entry.icon"
+                v-for="(entry, index) in badge.icons"
+                :key="`${badge.key}-${index}`"
+                class="h-3.5 w-3.5 shrink-0"
+                :style="entry.style"
+              />
+            </div>
+          </template>
+          <component
+            v-else-if="badge.icon"
+            :is="badge.icon"
+            class="h-3.5 w-3.5 shrink-0"
+            :style="badge.iconStyle"
+          />
+          <span v-if="badge.label" class="leading-none">
+            {{ badge.label }}
+          </span>
         </div>
-        <div v-if="file.rating > 0" class="text-[10px] font-semibold rounded-box px-1 mr-1 bg-base-100/60 text-warning">
-          {{ file.rating }}★
-        </div>
-        <IconCameraAperture v-if="file.e_model && file.e_model !== ''" class="t-icon-size-xs "></IconCameraAperture>
-        <IconLocation v-if="file.geo_name" class="t-icon-size-xs "></IconLocation>
-        <IconHeartFilled v-if="file.is_favorite" class="t-icon-size-xs"></IconHeartFilled>
-        <IconTag v-if="file.has_tags" class="t-icon-size-xs "></IconTag>
-        <IconComment v-if="file.comments?.length > 0" class="t-icon-size-xs "></IconComment>
-        <IconRotate v-if="file.rotate % 360 > 0"
-          class="t-icon-size-xs"
-          :style="{ transform: `rotate(${file.rotate}deg)`, transition: 'transform 0.3s ease-in-out' }"
-        />
       </div>
 
       <!-- select checkbox -->
@@ -111,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, toRef, onMounted, onBeforeUnmount, type CSSProperties } from 'vue';
+import { computed, ref, watch, toRef, onBeforeUnmount, type CSSProperties, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
@@ -127,8 +144,8 @@ import {
   IconChecked,
   IconUnChecked,
   IconComment,
-  IconLocation,
-  IconCameraAperture,
+  IconClock,
+  IconStarFilled,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -289,4 +306,86 @@ const getGridLabelTooltip = (file: any, option: number) => {
   const text = getGridLabelText(file, option);
   return text === ' ' ? '' : text;
 };
+
+type ThumbnailBadge = {
+  key: string;
+  icon?: Component;
+  icons?: Array<{
+    icon: Component;
+    style?: CSSProperties;
+  }>;
+  label?: string;
+  highlight?: boolean;
+  iconStyle?: CSSProperties;
+};
+
+const normalizedRotate = computed(() => {
+  const rotate = Number(props.file.rotate || 0) % 360;
+  return rotate < 0 ? rotate + 360 : rotate;
+});
+
+const statusBadges = computed<ThumbnailBadge[]>(() => {
+  const badges: ThumbnailBadge[] = [];
+  const rating = Number(props.file.rating || 0);
+  const isVideo = props.file.file_type === 2;
+  const metaIcons: ThumbnailBadge['icons'] = [];
+
+  if (props.file.is_favorite) {
+    badges.push({
+      key: 'favorite',
+      icon: IconHeartFilled,
+      highlight: true,
+      label: rating > 0 ? `${rating}` : undefined,
+    });
+  } else if (rating > 0) {
+    badges.push({
+      key: 'rating',
+      icon: IconStarFilled,
+      label: `${rating}`,
+      highlight: true,
+    });
+  }
+  
+  if (isVideo) {
+    badges.push({
+      key: 'duration',
+      icon: IconClock,
+      label: formatDuration(props.file.duration),
+    });
+  }
+
+  if (props.file.has_tags) {
+    metaIcons.push({
+      icon: IconTag,
+    });
+  }
+
+  if (props.file.comments?.length > 0) {
+    metaIcons.push({
+      icon: IconComment,
+    });
+  }
+
+  if (normalizedRotate.value > 0) {
+    metaIcons.push({
+      icon: IconRotate,
+      style: {
+        transform: `rotate(${normalizedRotate.value}deg)`,
+        transition: 'transform 0.3s ease-in-out',
+      },
+    });
+  }
+
+  if (metaIcons.length > 0) {
+    const visibleIcons = metaIcons.slice(0, 3);
+    const extraCount = metaIcons.length - visibleIcons.length;
+    badges.push({
+      key: 'meta',
+      icons: visibleIcons,
+      label: extraCount > 0 ? `+${extraCount}` : undefined,
+    });
+  }
+
+  return badges;
+});
 </script>
