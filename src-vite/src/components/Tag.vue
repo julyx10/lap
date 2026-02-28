@@ -37,8 +37,14 @@
       </ul>
 
       <!-- custom tags -->
-      <div class="sidebar-section-label">
-        {{ localeMsg.tag.custom_group }}
+      <div class="sidebar-panel-header">
+        <span class="sidebar-panel-header-title">{{ localeMsg.tag.custom_group }}</span>
+        <ContextMenu
+          class="sidebar-panel-action"
+          :menuItems="panelMenuItems"
+          :iconMenu="IconMore"
+          :smallIcon="true"
+        />
       </div>
 
       <ul v-if="allTags.length > 0">
@@ -63,16 +69,19 @@
             />
             <span v-else class="sidebar-item-label">{{ tag.name }}</span>
             <span v-if="!isRenamingTag && tag.count" class="sidebar-item-count">{{ tag.count.toLocaleString() }}</span>
-            <ContextMenu
+            <div
               v-if="!isRenamingTag"
               :class="[
                 'ml-auto flex flex-row items-center text-base-content/30',
-                selectedTag && selectedTag.id === tag.id ? '' : 'hidden group-hover:block'
+                selectedTag && selectedTag.id === tag.id ? '' : 'hidden'
               ]"
-              :iconMenu="IconMore"
-              :menuItems="getMoreMenuItems()"
-              :smallIcon="true"
-            />
+            >
+              <ContextMenu
+                :iconMenu="IconMore"
+                :menuItems="getMoreMenuItems()"
+                :smallIcon="true"
+              />
+            </div>
           </div>
         </li>
       </ul>
@@ -118,8 +127,10 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getAllTags, renameTag, deleteTag, createTag } from '@/common/api';
 import { 
+  IconAdd,
   IconTag,
   IconBolt,
+  IconDot,
   IconArrowDown,
   IconMore, 
   IconRename, 
@@ -168,6 +179,25 @@ const smartTagItems = computed(() => {
     };
   });
 });
+
+const panelMenuItems = computed(() => [
+  {
+    label: localeMsg.value.menu.tag.add,
+    icon: IconAdd,
+    action: () => clickAddTag(),
+  },
+  { label: '-' },
+  {
+    label: localeMsg.value.menu.sort.sort_by_name,
+    icon: config.leftPanel.sortCount ? null : IconDot,
+    action: () => { config.leftPanel.sortCount = false; },
+  },
+  {
+    label: localeMsg.value.menu.sort.sort_by_count,
+    icon: config.leftPanel.sortCount ? IconDot : null,
+    action: () => { config.leftPanel.sortCount = true; },
+  },
+]);
 
 // message boxes
 const showDeleteTagMsgbox = ref(false);

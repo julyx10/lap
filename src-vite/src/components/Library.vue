@@ -1,10 +1,8 @@
 <template>
     
   <div class="sidebar-panel">
-
     <!-- All Files -->
     <div
-      v-if="hasAlbums"
       :class="[
         'sidebar-item',
         libConfig.album.id === 0 ? 'sidebar-item-selected' : 'sidebar-item-hover',
@@ -33,7 +31,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
 
 import { IconPhotoAll } from '@/common/icons';
@@ -48,10 +45,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['editDataChanged']);
-
-/// i18n
-const { locale, messages } = useI18n();
-const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const totalCount = ref(0);
 

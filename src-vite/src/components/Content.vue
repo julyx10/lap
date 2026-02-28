@@ -2196,7 +2196,7 @@ async function updateContent() {
     if (libConfig.person.id === null) {
       contentTitle.value = "";
     } else {
-      contentTitle.value = libConfig.person.name || `${localeMsg.value.sidebar.person}`;
+      contentTitle.value = libConfig.person.name || `${localeMsg.value.sidebar.people}`;
       getFileList({ personId: libConfig.person.id }, requestId);
     }
   }
@@ -2350,7 +2350,7 @@ async function enterPersonSearchMode(file: any) {
   libConfig.person.name = face.person_name || null;
 
   // 4. Update Title to indicate context
-  contentTitle.value = face.person_name || localeMsg.value.sidebar.person;
+  contentTitle.value = face.person_name || localeMsg.value.sidebar.people;
 
   // 5. Perform Search
   const requestId = ++currentContentRequestId;

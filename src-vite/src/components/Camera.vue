@@ -1,6 +1,11 @@
 <template>
 
   <div class="sidebar-panel">
+    <div class="sidebar-panel-header">
+      <span class="sidebar-panel-header-title">{{ localeMsg.sidebar.camera }}</span>
+      <ContextMenu class="sidebar-panel-action" :menuItems="cameraPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
+    </div>
+
     <!-- camera -->
     <div v-if="cameras.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
@@ -53,9 +58,11 @@
 <script setup lang="ts">
 
 import { ref, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getCameraInfo } from '@/common/api';
-import { IconRight, IconCamera } from '@/common/icons';
+import { IconCamera, IconDot, IconMore, IconRight } from '@/common/icons';
+import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({
   titlebar: {
@@ -63,6 +70,9 @@ const props = defineProps({
     required: true
   }
 });
+
+const { locale, messages } = useI18n();
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const cameras = ref<any[]>([]);
 
@@ -76,6 +86,19 @@ const sortedCameras = computed(() => {
   }
   return cameras.value;
 });
+
+const cameraPanelMenuItems = computed(() => [
+  {
+    label: localeMsg.value.menu.sort.sort_by_name,
+    icon: config.leftPanel.sortCount ? null : IconDot,
+    action: () => { config.leftPanel.sortCount = false; },
+  },
+  {
+    label: localeMsg.value.menu.sort.sort_by_count,
+    icon: config.leftPanel.sortCount ? IconDot : null,
+    action: () => { config.leftPanel.sortCount = true; },
+  },
+]);
 
 onMounted(async () => {
   if (cameras.value.length === 0) {

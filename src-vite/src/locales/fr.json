@@ -1,13 +1,13 @@
 {
   "sidebar": {
     "home": "Accueil",
-    "library": "Bibliothèque",
+    "album": "Albums",
     "search": "Recherche",
     "favorite": "Favoris",
     "tag": "Tags",
     "calendar": "Calendrier",
     "location": "Lieu",
-    "person": "Personnes",
+    "people": "Personnes",
     "camera": "Appareils",
     "settings": "Paramètres"
   },
@@ -36,7 +36,7 @@
   },
   "search": {
     "title": "Recherche d'images",
-    "search_images": "Recherche IA",
+    "search_images": "Recherche",
     "similar_images": "Similaires",
     "filename_search": "Nom de fichier",
     "image_search_placeholder": "Rechercher par texte",
@@ -217,6 +217,9 @@
   },
   "tooltip": {
     "loading": "Chargement...",
+    "beta": {
+      "person": "La reconnaissance faciale est en bêta et peut être imprécise."
+    },
     "not_found": {
       "albums": "Aucun album trouvé",
       "files": "Aucun fichier trouvé",
@@ -303,8 +306,8 @@
       "set_album_cover": "Définir comme couverture"
     },
     "calendar": {
-      "monthly": "Vue mensuelle",
-      "daily": "Vue journalière",
+      "monthly": "Mensuel",
+      "daily": "Quotidien",
       "time_asc": "Temps Crois",
       "time_desc": "Temps Décrois"
     },

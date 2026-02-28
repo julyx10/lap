@@ -3,8 +3,16 @@
     <ul v-if="albums.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto rounded-box select-none">
       
       <!-- title -->
-      <div v-if="isMainPane" class="px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap">
-        <span class="flex-1">{{ $t('album.album_list') }}</span>
+      <div v-if="isMainPane" class="sidebar-panel-header">
+        <span class="sidebar-panel-header-title flex-1">{{ $t('album.album_list') }}</span>
+        <TButton
+          v-if="isEditList"
+          :icon="IconRestore"
+          :buttonSize="'small'"
+          :selected="true"
+          @click="clickCloseEditList"
+        />
+        <ContextMenu v-else class="sidebar-panel-action" :menuItems="panelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
       </div>
       
       <!-- drag to change albums' display order -->
@@ -175,6 +183,7 @@ import {
   IconDragHandle,
   IconEdit,
   IconRemove,
+  IconRestore,
   IconUpdate,
   IconUpdateAlert,
   IconRight,
@@ -209,6 +218,20 @@ let unlistenIndexFinished: (() => void) | undefined;
 
 // Computed to check if we're in main album pane
 const isMainPane = computed(() => props.selectionSource === 'album');
+
+const panelMenuItems = computed(() => [
+  {
+    label: localeMsg.value.menu.album.add,
+    icon: IconAdd,
+    action: () => clickNewAlbum(),
+  },
+  { label: '-' },
+  {
+    label: localeMsg.value.menu.album.reorder || 'Reorder',
+    icon: IconDragHandle,
+    action: () => clickReorder(),
+  },
+]);
 
 // message boxes
 const showAlbumEdit = ref(false);           // show edit album

@@ -1,13 +1,13 @@
 {
   "sidebar": {
     "home": "Главная",
-    "library": "Библиотека",
+    "album": "Альбомы",
     "search": "Поиск",
     "favorite": "Избранное",
     "tag": "Теги",
     "calendar": "Календарь",
     "location": "Место",
-    "person": "Люди",
+    "people": "Люди",
     "camera": "Камеры",
     "settings": "Настройки"
   },
@@ -36,7 +36,7 @@
   },
   "search": {
     "title": "Поиск изображений",
-    "search_images": "AI Поиск",
+    "search_images": "Поиск",
     "similar_images": "Похожие",
     "filename_search": "Имя файла",
     "image_search_placeholder": "Поиск по тексту",
@@ -217,6 +217,9 @@
   },
   "tooltip": {
     "loading": "Загрузка...",
+    "beta": {
+      "person": "Распознавание лиц находится в бета-версии и может работать неточно."
+    },
     "not_found": {
       "albums": "Альбомы не найдены",
       "files": "Файлы не найдены",

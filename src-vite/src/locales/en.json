@@ -1,13 +1,13 @@
 {
   "sidebar": {
     "home": "Home",
-    "library": "Library",
+    "album": "Albums",
     "search": "Search",
     "favorite": "Favorites",
     "tag": "Tags",
     "calendar": "Calendar",
     "location": "Location",
-    "person": "Person",
+    "people": "People",
     "camera": "Cameras",
     "settings": "Settings"
   },
@@ -36,7 +36,7 @@
   },
   "search": {
     "title": "Image Search",
-    "search_images": "AI Search",
+    "search_images": "Search",
     "similar_images": "Similar",
     "filename_search": "Filename",
     "image_search_placeholder": "Search images by text",
@@ -217,6 +217,9 @@
   },
   "tooltip": {
     "loading": "Loading...",
+    "beta": {
+      "person": "Face recognition is in beta and may be inaccurate."
+    },
     "not_found": {
       "albums": "No albums found. Try to add an existing folder which contains images or videos",
       "files": "No files found",
@@ -303,8 +306,8 @@
       "set_album_cover": "Set as album cover"
     },
     "calendar": {
-      "monthly": "Monthly view",
-      "daily": "Daily view",
+      "monthly": "Monthly",
+      "daily": "Daily",
       "time_asc": "Time Asc",
       "time_desc": "Time Desc"
     },

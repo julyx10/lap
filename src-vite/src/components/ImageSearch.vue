@@ -1,36 +1,32 @@
 <template>
     
   <div class="sidebar-panel">
-
     <!-- title bar -->
-    <div class="px-1 h-10 flex items-start justify-between whitespace-nowrap" data-tauri-drag-region>
-      <!-- <span class="pl-1 cursor-default" data-tauri-drag-region>{{ titlebar }}</span> -->
-      <div role="tablist" class="tabs-sm tabs-border" >
-        <a 
+    <div class="sidebar-panel-header" data-tauri-drag-region>
+      <div role="tablist" class="sidebar-header-tabs">
+        <a
           role="tab"
-          class="tab"
-          :class="config.search.searchType === 0 ? 'tab-active' : ''" 
+          :class="['sidebar-header-tab', { 'tab-active': config.search.searchType === 0 }]"
           @click="handleTabClick(0)"
         >
           {{ $t('search.search_images') }}
         </a>
-        <a 
+        <a
           role="tab"
-          class="tab"
-          :class="config.search.searchType === 1 ? 'tab-active' : ''" 
+          :class="['sidebar-header-tab', { 'tab-active': config.search.searchType === 1 }]"
           @click="handleTabClick(1)"
         >
           {{ $t('search.similar_images') }}
         </a>
-        <a 
+        <a
           role="tab"
-          class="tab"
-          :class="config.search.searchType === 2 ? 'tab-active' : ''" 
+          :class="['sidebar-header-tab', { 'tab-active': config.search.searchType === 2 }]"
           @click="handleTabClick(2)"
         >
           {{ $t('search.filename_search') }}
         </a>
       </div>
+      <ContextMenu class="sidebar-panel-action" :menuItems="searchPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 
     <!-- 0: search text -->
@@ -229,6 +225,14 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
 const showClearHistoryMsgbox = ref(false);
+
+const searchPanelMenuItems = computed(() => [
+  {
+    label: localeMsg.value.menu.search.clear_history,
+    icon: IconTrash,
+    action: () => showClearConfirmation(),
+  },
+]);
 
 const searchHistoryMenuItems = computed(() => {
   return [

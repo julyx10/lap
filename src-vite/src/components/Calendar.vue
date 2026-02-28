@@ -16,31 +16,29 @@
     </div>
 
     <template v-if="Object.keys(calendar_dates).length > 0" >
-      <div class="sidebar-section-label">
-        {{ $t('calendar.title') }}
+      <div class="sidebar-panel-header">
+        <div role="tablist" class="sidebar-header-tabs">
+          <a
+            role="tab"
+            :class="['sidebar-header-tab', { 'tab-active': config.calendar.isMonthly }]"
+            @click="switchToMonthlyView()"
+          >
+            {{ localeMsg.menu.calendar.monthly }}
+          </a>
+          <a
+            role="tab"
+            :class="['sidebar-header-tab', { 'tab-active': !config.calendar.isMonthly }]"
+            @click="switchToDailyView()"
+          >
+            {{ localeMsg.menu.calendar.daily }}
+          </a>
+        </div>
+        <ContextMenu class="sidebar-panel-action" :menuItems="calendarMenuItems" :iconMenu="IconMore" :smallIcon="true" />
       </div>
       <!-- calendar -->
       <div ref="scrollable"
         class="flex-1 flex flex-col overflow-x-hidden overflow-y-auto"
       >
-        <!-- days of the week in daily calendar -->
-        <div v-if="!config.calendar.isMonthly" 
-          class="sticky top-0 z-10 bg-base-200 min-w-48 text-sm flex flex-col items-center"
-        >
-          <div class="py-1 grid grid-cols-7 text-center">
-            <div 
-              v-for="(day, index) in localeMsg.calendar.weekdays" 
-              :key="index" 
-              class="p-1 w-8 flex items-center justify-center"
-              :class="[
-                index === selectedWeekday ? 'text-base-content/70' : 'text-base-content/30'
-              ]"
-            >
-              {{ day }}
-            </div>
-          </div>
-        </div>
-
         <div v-for="item in sorted_calendar_items" 
           :key="item.year"
           :class="[
@@ -77,9 +75,10 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getTakenDates } from '@/common/api';
 
-import {IconCalendar, IconHistory} from '@/common/icons';
+import { IconCalendar, IconDot, IconHistory, IconMore } from '@/common/icons';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 
 // props
 const props = defineProps({
@@ -89,14 +88,6 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
-
-const selectedWeekday = computed(() => {
-  if (config.calendar.isMonthly || !libConfig.calendar.year || !libConfig.calendar.month || !libConfig.calendar.date || libConfig.calendar.date <= 0) {
-    return -1;
-  }
-  const date = new Date(libConfig.calendar.year, libConfig.calendar.month - 1, libConfig.calendar.date);
-  return date.getDay();
-});
 
 const scrollable = ref<HTMLDivElement | null>(null); // Ref for the scrollable element
 type CalendarDates = Record<number, Record<number, { date: number; count: number }[]>>;
@@ -122,6 +113,19 @@ const sorted_calendar_items = computed(() => {
     months: dates[year]
   }));
 });
+
+const calendarMenuItems = computed(() => [
+  {
+    label: localeMsg.value.menu.calendar.time_asc,
+    icon: config.calendar.sortingAsc ? IconDot : null,
+    action: () => { config.calendar.sortingAsc = true; },
+  },
+  {
+    label: localeMsg.value.menu.calendar.time_desc,
+    icon: config.calendar.sortingAsc ? null : IconDot,
+    action: () => { config.calendar.sortingAsc = false; },
+  },
+]);
 
 onMounted(async () => {
   console.log('Calendar.vue mounted');

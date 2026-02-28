@@ -46,6 +46,7 @@
                 :buttonSize="'large'" 
                 :icon="item.icon" 
                 :text="item.text" 
+                :tooltip="item.tooltip || ''"
                 :selected="config.main.sidebarIndex === index"
                 @click="clickSidebar(index)"
               />
@@ -64,7 +65,7 @@
           <!-- panel-->
           <div v-if="showPanel" class="ml-16 pr-0.5 flex-1 flex flex-col overflow-hidden">
             <!-- library title -->
-            <div class="mb-2 p-2 h-10 flex items-center justify-between whitespace-nowrap shrink-0" data-tauri-drag-region>
+            <div class="mb-2 p-1 h-10 flex items-center justify-between whitespace-nowrap shrink-0" data-tauri-drag-region>
               
               <!-- Library dropdown selector -->
               <ContextMenu
@@ -81,27 +82,7 @@
                   </button>
                 </template>
               </ContextMenu>
-              
-              <!-- More Menu for all tabs -->
-              <div class="ml-1">
-                <!-- IconUpdate for Album Reorder Mode -->
-                <TButton v-if="isAlbumReorderMode"
-                  :icon="IconRestore"
-                  :buttonSize="'medium'"
-                  :selected="true"
-                  @click="clickRestoreAlbumOrder"
-                />
-                <!-- Default Context Menu -->
-                <ContextMenu v-else-if="moreMenuItems.length > 0" :menuItems="moreMenuItems">
-                  <template #trigger="{ toggle }">
-                    <TButton 
-                      :icon="IconMore"
-                      :buttonSize="'medium'"
-                      @click="toggle"
-                    />
-                  </template>
-                </ContextMenu>
-              </div>  
+
             </div>
 
             <!-- Component panel (flex-1 to fill remaining space) -->
@@ -188,157 +169,14 @@ import {
   IconSearch,
   IconSettings,
   IconDot,
-  IconAdd,
-  IconTrash,
   IconStack,
   IconArrowDown,
   IconCalendarDay,
-  IconUpdate,
-  IconMore,
-  IconOrder,
-  IconRestore,
   IconPhotoAll,
 } from '@/common/icons';
 
 const isAlbumReorderMode = ref(false);
 const isSwitchingLibrary = ref(false);
-
-const moreMenuItems = computed(() => {
-  const index = config.main.sidebarIndex;
-  
-  // 0: Album
-  if (index === 0) {
-    return [
-      {
-        label: localeMsg.value.menu.album.add,
-        icon: IconAdd,
-        action: () => panelRef.value?.albumListRef?.clickNewAlbum()
-      },
-      { label: '-' },
-      {
-        label: localeMsg.value.menu.album.reorder || 'Reorder',
-        icon: IconOrder,
-        action: () => panelRef.value?.albumListRef?.clickReorder()
-      }
-    ];
-  }
-  
-  // 1: Favorites - No menu items
-  if (index === 1) {
-    return [];
-  }
-  
-  // 2: Calendar - Sort options
-  if (index === 2) {
-    // Calendar view toggle is handled by tabs in the template usually, 
-    // but request specified menu item: "Time Asc, Time Desc (one is selected)"
-    // The user request said: "Time Asc, Time Desc (one is selected per the status of config)"
-    // This implies toggle logic or radio feel.
-    return [
-       {
-        label: localeMsg.value.menu.calendar.monthly,
-        icon: config.calendar.isMonthly ? IconDot : null,
-        action: () => panelRef.value?.switchToMonthlyView()
-      },
-      {
-        label: localeMsg.value.menu.calendar.daily,
-        icon: config.calendar.isMonthly ? null : IconDot,
-        action: () => panelRef.value?.switchToDailyView()
-      },
-      { label: '-' },
-      {
-        label: localeMsg.value.menu.calendar.time_asc,
-        icon: config.calendar.sortingAsc ? IconDot : null,
-        action: () => { config.calendar.sortingAsc = !config.calendar.sortingAsc; }
-      },
-      {
-        label: localeMsg.value.menu.calendar.time_desc,
-        icon: config.calendar.sortingAsc ? null : IconDot,
-        action: () => { config.calendar.sortingAsc = !config.calendar.sortingAsc; }
-      }
-    ];
-  }
-  
-  // 3: Search - Clear History
-  if (index === 3) {
-    return [
-      {
-        label: localeMsg.value.menu.search.clear_history,
-        icon: IconTrash,
-        action: () => panelRef.value?.showClearConfirmation()
-      }
-    ];
-  }
-  
-  // 4: Tags
-  if (index === 4) {
-     return [
-      {
-        label: localeMsg.value.menu.tag.add,
-        icon: IconAdd,
-        action: () => panelRef.value?.clickAddTag()
-      },
-      { label: '-' },
-      {
-        label: localeMsg.value.menu.sort.sort_by_name,
-        icon: config.leftPanel.sortCount ? null : IconDot,
-        action: () => config.leftPanel.sortCount = false
-      },
-      {
-        label: localeMsg.value.menu.sort.sort_by_count,
-        icon: config.leftPanel.sortCount ? IconDot : null,
-        action: () => config.leftPanel.sortCount = true
-      }
-    ];
-  }
-  
-  // 5: Person
-  if (index === 5) {
-    return [
-      {
-        label: localeMsg.value.menu.person.index_faces,
-        icon: IconUpdate,
-        action: () => panelRef.value?.clickIndexFaces(),
-        disabled: panelRef.value?.isIndexing
-      },
-      {
-        label: localeMsg.value.menu.person.reset_index,
-        icon: IconTrash,
-        action: () => panelRef.value?.clickResetFaces(),
-        disabled: panelRef.value?.isIndexing
-      },
-      { label: '-' },
-      {
-        label: localeMsg.value.menu.sort.sort_by_name,
-        icon: config.leftPanel.sortCount ? null : IconDot,
-        action: () => config.leftPanel.sortCount = false
-      },
-      {
-        label: localeMsg.value.menu.sort.sort_by_count,
-        icon: config.leftPanel.sortCount ? IconDot : null,
-        action: () => config.leftPanel.sortCount = true
-      }
-    ];
-  }
-  
-  // 6: Location & 7: Camera
-  if (index === 6 || index === 7) {
-    return [
-      {
-        label: localeMsg.value.menu.sort.sort_by_name,
-        icon: config.leftPanel.sortCount ? null : IconDot,
-        action: () => config.leftPanel.sortCount = false
-      },
-      {
-        label: localeMsg.value.menu.sort.sort_by_count,
-        icon: config.leftPanel.sortCount ? IconDot : null,
-        action: () => config.leftPanel.sortCount = true
-      }
-    ];
-  }
-
-  return [];
-});
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -381,7 +219,7 @@ const buttons = computed(() =>  [
   { 
     icon: IconPhotoAll,  
     component: Library,
-    text: localeMsg.value.sidebar.library
+    text: localeMsg.value.sidebar.album
   },
   { 
     icon: IconFavorite, 
@@ -406,7 +244,7 @@ const buttons = computed(() =>  [
   { 
     icon: IconPerson, 
     component: Person, 
-    text: localeMsg.value.sidebar.person 
+    text: localeMsg.value.sidebar.people
   },
   { 
     icon: IconLocation, 
@@ -578,10 +416,6 @@ const onEditDataChanged = (isEdit: boolean) => {
   if (config.main.sidebarIndex === 0) { // Album tab
     isAlbumReorderMode.value = isEdit;
   }
-};
-
-const clickRestoreAlbumOrder = () => {
-  panelRef.value?.albumListRef?.clickCloseEditList();
 };
 
 </script>

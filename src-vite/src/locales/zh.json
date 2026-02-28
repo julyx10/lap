@@ -1,13 +1,13 @@
 {
   "sidebar": {
     "home": "主页",
-    "library": "图库",
+    "album": "相册",
     "search": "搜索",
     "favorite": "收藏",
     "tag": "标签",
     "calendar": "日历",
     "location": "地点",
-    "person": "人物",
+    "people": "人物",
     "camera": "相机",
     "settings": "设置"
   },
@@ -36,7 +36,7 @@
   },
   "search": {
     "title": "图片搜索",
-    "search_images": "智能搜图",
+    "search_images": "搜索",
     "similar_images": "相似图片",
     "filename_search": "文件名",
     "image_search_placeholder": "搜索图片内容",
@@ -217,6 +217,9 @@
   },
   "tooltip": {
     "loading": "加载中...",
+    "beta": {
+      "person": "人脸识别仍处于测试阶段，结果可能不准确。"
+    },
     "not_found": {
       "albums": "未找到相册。尝试添加一个包含图片或视频的文件夹",
       "files": "未找到文件",
@@ -303,8 +306,8 @@
       "set_album_cover": "设置为相册封面"
     },
     "calendar": {
-      "monthly": "月视图",
-      "daily": "日视图",
+      "monthly": "按月",
+      "daily": "按日",
       "time_asc": "时间升序",
       "time_desc": "时间降序"
     },

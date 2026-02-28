@@ -69,6 +69,31 @@ html, body {
   @apply px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap;
 }
 
+/* sidebar panel header */
+@utility sidebar-panel-header {
+  @apply px-2 h-10 mb-2 flex items-center justify-between gap-2 whitespace-nowrap shrink-0;
+  background-image: linear-gradient(to right, color-mix(in srgb, currentColor 6%, transparent), color-mix(in srgb, currentColor 6%, transparent));
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: calc(100% - 1rem) 1px;
+}
+
+@utility sidebar-panel-header-title {
+  @apply h-5 inline-flex items-center text-[13px] font-semibold tracking-[0.01em] text-base-content/85;
+}
+
+@utility sidebar-panel-action {
+  @apply shrink-0 text-base-content/30 hover:text-base-content/70 transition-colors;
+}
+
+@utility sidebar-header-tabs {
+  @apply tabs tabs-sm tabs-border flex-1 items-center;
+}
+
+@utility sidebar-header-tab {
+  @apply tab h-8 px-2 text-[13px] font-medium text-base-content/55;
+}
+
 /* sidebar list items */
 @utility sidebar-item {
   @apply mx-1 px-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer transition-all duration-200 ease-in-out;

@@ -1,13 +1,13 @@
 {
   "sidebar": {
     "home": "ホーム",
-    "library": "ライブラリ",
+    "album": "アルバム",
     "search": "検索",
     "favorite": "お気に入り",
     "tag": "タグ",
     "calendar": "カレンダー",
     "location": "場所",
-    "person": "人物",
+    "people": "人物",
     "camera": "カメラ",
     "settings": "設定"
   },
@@ -36,7 +36,7 @@
   },
   "search": {
     "title": "画像検索",
-    "search_images": "AI検索",
+    "search_images": "検索",
     "similar_images": "類似画像",
     "filename_search": "ファイル名",
     "image_search_placeholder": "テキストで画像を検索",
@@ -217,6 +217,9 @@
   },
   "tooltip": {
     "loading": "読み込み中...",
+    "beta": {
+      "person": "顔認識はベータ版のため、結果が正確でない場合があります。"
+    },
     "not_found": {
       "albums": "アルバムが見つかりません",
       "files": "ファイルが見つかりません",
@@ -303,8 +306,8 @@
       "set_album_cover": "アルバムの表紙に設定"
     },
     "calendar": {
-      "monthly": "月表示",
-      "daily": "日表示",
+      "monthly": "月別",
+      "daily": "日別",
       "time_asc": "古い順",
       "time_desc": "新しい順"
     },

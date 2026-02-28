@@ -132,7 +132,9 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { libConfig } from '@/common/config';
 import { isMac, shortenFilename, isValidFileName, scrollToFolder } from '@/common/utils';
-import { createFolder, renameFolder, fetchFolder, moveFolder, copyFolder, setFolderFavorite, revealFolder, deleteFolder } from '@/common/api';
+import { createFolder, renameFolder, fetchFolder, moveFolder, copyFolder, revealFolder, deleteFolder } from '@/common/api';
+// Hidden for now: folder favorite support.
+// import { setFolderFavorite } from '@/common/api';
 import { Folder } from '@/common/types';
 import { useAlbumSelection } from '@/composables/useAlbumSelection';
 
@@ -151,12 +153,13 @@ import {
   IconMoveTo,
   IconTrash,
   IconFavorite,
-  IconUnFavorite,
   IconCopyTo,
   IconFolderExpanded,
   IconFolderCollapsed,
   IconRefresh,
 } from '@/common/icons';
+// Hidden for now: folder favorite support.
+// import { IconUnFavorite } from '@/common/icons';
 
 // used for cross-component communication (Content.vue listens for this event)
 import { emit as tauriEmit } from '@tauri-apps/api/event';
@@ -269,18 +272,19 @@ const getMenuItemsForFolder = (folder: any) => {
         revealFolder(folder.path);
       }
     },
-    {
-      label: "-",
-      action: null
-    },
-    {
-      label: !folder?.is_favorite ? localeMsg.value.menu.meta.favorite: localeMsg.value.menu.meta.unfavorite,
-      icon: !folder?.is_favorite ? IconFavorite : IconUnFavorite,
-      disabled: isRoot,
-      action: () => {
-        toggleFavorite();
-      }
-    },
+    // Hidden for now: favorite folders
+    // {
+    //   label: "-",
+    //   action: null
+    // },
+    // {
+    //   label: !folder?.is_favorite ? localeMsg.value.menu.meta.favorite : localeMsg.value.menu.meta.unfavorite,
+    //   icon: !folder?.is_favorite ? IconFavorite : IconUnFavorite,
+    //   disabled: isRoot,
+    //   action: () => {
+    //     toggleFavorite();
+    //   }
+    // },
   ];
 };
 
@@ -456,16 +460,14 @@ const clickTrashFolder = async () => {
   }
 };
 
-// toggle favorite folder
-const toggleFavorite = async () => {
-  const folder = selectedFolder.value;
-  if (!folder || !selection.folderId.value) {
-    console.log('AlbumFolder.vue-toggleFavorite: folder or folderId not found');
-    return;
-  }
-  folder.is_favorite = !folder.is_favorite;
-
-  await setFolderFavorite(selection.folderId.value, folder.is_favorite ?? false);
-};
+// Hidden for now: favorite folders
+// const toggleFavorite = async () => {
+//   const folder = selectedFolder.value;
+//   if (!folder || !selection.folderId.value) {
+//     return;
+//   }
+//   folder.is_favorite = !folder.is_favorite;
+//   await setFolderFavorite(selection.folderId.value, folder.is_favorite ?? false);
+// };
 
 </script>

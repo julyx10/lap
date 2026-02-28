@@ -38,6 +38,23 @@
         </div>
     </div>
 
+    <div class="sidebar-panel-header">
+      <div class="flex items-center gap-2">
+        <span class="sidebar-panel-header-title">{{ localeMsg.sidebar.people }}</span>
+        <div
+          ref="betaBadgeRef"
+          class="relative"
+          @mouseenter="showBetaTooltip"
+          @mouseleave="hideBetaTooltip"
+        >
+          <span class="px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
+            BETA
+          </span>
+        </div>
+      </div>
+      <ContextMenu class="sidebar-panel-action" :menuItems="personPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
+    </div>
+
     <!-- Person List -->
     <div v-if="allPersons.length > 0" class="grow overflow-x-hidden overflow-y-auto">
       <ul>
@@ -140,6 +157,19 @@
     @ok="onResetFacesConfirm"
     @cancel="showResetFacesMsgbox = false"
   />
+
+  <teleport to="body">
+    <transition name="fade">
+      <div
+        v-if="isBetaTooltipVisible && config.settings.showToolTip"
+        ref="betaTooltipRef"
+        class="fixed z-1000 px-2 py-1 text-xs whitespace-nowrap rounded-box bg-neutral text-neutral-content shadow-lg pointer-events-none"
+        :style="betaTooltipStyle"
+      >
+        {{ $t('tooltip.beta.person') }}
+      </div>
+    </transition>
+  </teleport>
 </template>
 
 <script setup lang="ts">
@@ -149,6 +179,7 @@ import { config, libConfig } from '@/common/config';
 import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress, resetFaces, getFaceStats } from '@/common/api';
 import { 
   IconPerson, 
+  IconDot,
   IconMore, 
   IconRename, 
   IconTrash,
@@ -191,6 +222,10 @@ const clusterProgress = ref({
   total: 0
 });
 const incompleteCount = ref(0);
+const betaBadgeRef = ref<HTMLElement | null>(null);
+const betaTooltipRef = ref<HTMLElement | null>(null);
+const isBetaTooltipVisible = ref(false);
+const betaTooltipStyle = ref<Record<string, string>>({});
 
 // Event listener unsubscribe functions
 let unlistenProgress: (() => void) | null = null;
@@ -224,6 +259,32 @@ const clusterProgressText = computed(() => {
       return '';
   }
 });
+
+const personPanelMenuItems = computed(() => [
+  {
+    label: localeMsg.value.menu.person.index_faces,
+    icon: IconUpdate,
+    action: () => clickIndexFaces(),
+    disabled: isIndexing.value,
+  },
+  {
+    label: localeMsg.value.menu.person.reset_index,
+    icon: IconTrash,
+    action: () => clickResetFaces(),
+    disabled: isIndexing.value,
+  },
+  { label: '-' },
+  {
+    label: localeMsg.value.menu.sort.sort_by_name,
+    icon: config.leftPanel.sortCount ? null : IconDot,
+    action: () => { config.leftPanel.sortCount = false; },
+  },
+  {
+    label: localeMsg.value.menu.sort.sort_by_count,
+    icon: config.leftPanel.sortCount ? IconDot : null,
+    action: () => { config.leftPanel.sortCount = true; },
+  },
+]);
 
 // message boxes
 const showDeletePersonMsgbox = ref(false);
@@ -426,6 +487,41 @@ async function checkFaceStats() {
   if (stats) {
     incompleteCount.value = stats.unprocessed;
   }
+}
+
+async function showBetaTooltip() {
+  if (!config.settings.showToolTip || !betaBadgeRef.value) return;
+
+  isBetaTooltipVisible.value = true;
+  await nextTick();
+
+  if (!betaBadgeRef.value || !betaTooltipRef.value) return;
+
+  const rect = betaBadgeRef.value.getBoundingClientRect();
+  const tooltipRect = betaTooltipRef.value.getBoundingClientRect();
+  const padding = 4;
+
+  let top = rect.bottom + padding;
+  let left = rect.left + (rect.width - tooltipRect.width) / 2;
+
+  if (left + tooltipRect.width > window.innerWidth - padding) {
+    left = window.innerWidth - tooltipRect.width - padding;
+  }
+  if (left < padding) {
+    left = padding;
+  }
+  if (top + tooltipRect.height > window.innerHeight - padding) {
+    top = rect.top - tooltipRect.height - padding;
+  }
+
+  betaTooltipStyle.value = {
+    top: `${top}px`,
+    left: `${left}px`,
+  };
+}
+
+function hideBetaTooltip() {
+  isBetaTooltipVisible.value = false;
 }
 
 defineExpose({

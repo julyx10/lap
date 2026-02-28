@@ -1,6 +1,11 @@
 <template>
 
   <div class="sidebar-panel">
+    <div class="sidebar-panel-header">
+      <span class="sidebar-panel-header-title">{{ localeMsg.sidebar.location }}</span>
+      <ContextMenu class="sidebar-panel-action" :menuItems="locationPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
+    </div>
+
     <!-- location -->
     <div v-if="locations.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
       <ul>
@@ -56,7 +61,8 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
 import { getCountryName } from '@/common/utils';
-import { IconRight, IconLocation } from '@/common/icons';
+import { IconDot, IconLocation, IconMore, IconRight } from '@/common/icons';
+import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({
   titlebar: {
@@ -65,7 +71,8 @@ const props = defineProps({
   }
 });
 
-const { locale } = useI18n(); // get locale for country name translation
+const { locale, messages } = useI18n(); // get locale for country name translation
+const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const locations = ref<any[]>([]);
 
@@ -79,6 +86,19 @@ const sortedLocations = computed(() => {
   }
   return locations.value;
 });
+
+const locationPanelMenuItems = computed(() => [
+  {
+    label: localeMsg.value.menu.sort.sort_by_name,
+    icon: config.leftPanel.sortCount ? null : IconDot,
+    action: () => { config.leftPanel.sortCount = false; },
+  },
+  {
+    label: localeMsg.value.menu.sort.sort_by_count,
+    icon: config.leftPanel.sortCount ? IconDot : null,
+    action: () => { config.leftPanel.sortCount = true; },
+  },
+]);
 
 onMounted(async () => {
   if (locations.value.length === 0) {
