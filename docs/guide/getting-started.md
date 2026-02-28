@@ -8,11 +8,18 @@
 2.  Open the disk image and drag **Lap** to your **Applications** folder.
 3.  Double-click to launch.
 
-> **Note**: If you see a "App is damaged" warning, please refer to the README or run `xattr -cr /Applications/Lap.app` in Terminal.
+### Linux (Ubuntu/Debian)
+
+1. Download the latest `.deb` package from the [Releases page](https://github.com/julyx10/lap/releases).
+2. Install it with your package manager or run `sudo apt install ./lap_<version>_amd64.deb`.
+3. Launch **Lap** from your applications menu.
 
 ### Windows
 
-Windows support is currently in development. Stay tuned!
+1. Download the latest `.msi` installer from the [Releases page](https://github.com/julyx10/lap/releases).
+2. Run the installer and complete the setup wizard.
+3. Launch **Lap** from the Start menu or desktop shortcut.
+
 
 ## First Run
 
@@ -21,7 +28,3 @@ When you open Lap for the first time:
 1.  **Grant Permissions**: Lap needs access to your folders to display photos.
 2.  **Add a Library**: Point Lap to a folder containing your photos.
 3.  **Let it Index**: Lap will scan your files and generate thumbnails. This happens locally and is very fast.
-
-## AI Features
-
-The AI features (search, face recognition) run automatically in the background. You can start searching with natural language immediately after indexing is complete.

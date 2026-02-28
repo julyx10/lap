@@ -1,6 +1,6 @@
 {
   "productName": "Lap",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "identifier": "com.julyx10.lap",
   "build": {
     "beforeBuildCommand": "pnpm build",

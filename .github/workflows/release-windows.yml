@@ -146,20 +146,21 @@ jobs:
       - name: Show release files
         run: ls -la release-files
 
-      - name: Wait for GitHub Release to be available
+      - name: Wait for latest.json asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           for i in $(seq 1 20); do
-            if gh release view "$TAG" >/dev/null 2>&1; then
-              echo "Release $TAG is available."
+            rm -f release-files/latest.json
+            if gh release download "$TAG" -p "latest.json" -D release-files >/dev/null 2>&1; then
+              echo "latest.json for $TAG is available."
               exit 0
             fi
-            echo "Release $TAG not ready yet (attempt $i/20), waiting 15s..."
+            echo "latest.json not ready yet for $TAG (attempt $i/20), waiting 15s..."
             sleep 15
           done
-          echo "Timed out waiting for release $TAG."
+          echo "Timed out waiting for latest.json on release $TAG."
           exit 1
 
       - name: Update latest.json with Windows updater entry
@@ -184,18 +185,11 @@ jobs:
           MSI_ZIP_NAME="$(basename "${MSI_ZIP}")"
           WINDOWS_SIG="$(cat "${MSI_SIG_FILE}")"
 
-          if gh release download "$TAG" -p "latest.json" -D release-files >/dev/null 2>&1; then
-            echo "Downloaded existing latest.json."
-          else
-            echo "latest.json not found, creating a new one."
-            cat > release-files/latest.json <<EOF
-          {
-            "version": "${VERSION}",
-            "notes": "See the release notes on GitHub for details.",
-            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "platforms": {}
-          }
-          EOF
+          rm -f release-files/latest.json
+          gh release download "$TAG" -p "latest.json" -D release-files >/dev/null 2>&1
+          if [ ! -f release-files/latest.json ]; then
+            echo "latest.json is required but was not downloaded."
+            exit 1
           fi
 
           tmp="$(mktemp)"

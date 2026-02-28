@@ -13,8 +13,8 @@ hero:
       text: Download
       link: https://github.com/julyx10/lap/releases/latest
     - theme: alt
-      text: What's New in v0.1.6
-      link: /guide/release-notes/v0.1.6
+      text: What's New in v0.1.7
+      link: /guide/release-notes/v0.1.7
     - theme: alt
       text: View on GitHub
       link: https://github.com/julyx10/lap
@@ -33,7 +33,7 @@ features:
     details: No proprietary databases. Just add a folder to manage files directly in Lap. External changes like renaming sync easily.
     icon: 📂
   - title: Multi-Platform
-    details: Native on macOS (Apple Silicon & Intel) and Linux. Windows support coming soon.
+    details: Native on macOS (Apple Silicon & Intel), Linux, and Windows.
     icon: 🖥️
   - title: Open Source
     details: Community-driven and transparent source code.

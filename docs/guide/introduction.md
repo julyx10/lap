@@ -17,7 +17,10 @@ We built Lap because we were tired of choosing between **privacy** (dumb folder 
 
 ## Getting Started
 
-Lap is currently available for macOS (Apple Silicon). Windows support is coming soon.
+Lap is currently available for macOS, Linux, and Windows.
 
 - [Download the latest release](https://github.com/julyx10/lap/releases)
-- [Check out what's new in v0.1.6](/guide/release-notes/v0.1.6)
+- macOS: Download the latest `.dmg` and drag **Lap** into **Applications**.
+- Linux: Download the latest `.deb` package and install it with your package manager.
+- Windows: Download the latest `.msi` installer and complete the setup wizard.
+- [Check out what's new in v0.1.7](/guide/release-notes/v0.1.7)
