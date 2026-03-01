@@ -131,8 +131,7 @@ jobs:
           name: windows-x86_64
           path: |
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.zip
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.zip.sig
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.sig
           if-no-files-found: error
 
   publish-windows:
@@ -184,18 +183,18 @@ jobs:
           TAG="${{ github.event.inputs.release_tag }}"
           VERSION="${TAG#v}"
 
-          MSI_ZIP="$(find release-files -maxdepth 1 -name '*.msi.zip' | head -n 1)"
-          MSI_SIG_FILE="${MSI_ZIP}.sig"
-          if [ -z "${MSI_ZIP}" ] || [ ! -f "${MSI_ZIP}" ]; then
-            echo "No MSI updater archive (*.msi.zip) found."
+          MSI_FILE="$(find release-files -maxdepth 1 -name '*.msi' | head -n 1)"
+          MSI_SIG_FILE="$(find release-files -maxdepth 1 -name '*.msi.sig' | head -n 1)"
+          if [ -z "${MSI_FILE}" ] || [ ! -f "${MSI_FILE}" ]; then
+            echo "No MSI installer (*.msi) found."
             exit 1
           fi
-          if [ ! -f "${MSI_SIG_FILE}" ]; then
-            echo "Missing MSI updater signature file: ${MSI_SIG_FILE}"
+          if [ -z "${MSI_SIG_FILE}" ] || [ ! -f "${MSI_SIG_FILE}" ]; then
+            echo "Missing MSI updater signature file (*.msi.sig)."
             exit 1
           fi
 
-          MSI_ZIP_NAME="$(basename "${MSI_ZIP}")"
+          MSI_NAME="$(basename "${MSI_FILE}")"
           WINDOWS_SIG="$(cat "${MSI_SIG_FILE}")"
 
           rm -f release-files/latest.json
@@ -210,7 +209,7 @@ jobs:
             --arg version "${VERSION}" \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg sig "${WINDOWS_SIG}" \
-            --arg url "https://github.com/${{ github.repository }}/releases/download/${TAG}/${MSI_ZIP_NAME}" \
+            --arg url "https://github.com/${{ github.repository }}/releases/download/${TAG}/${MSI_NAME}" \
             '
             .version = $version
             | .pub_date = $pub_date
