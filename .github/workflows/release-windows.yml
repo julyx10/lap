@@ -149,14 +149,23 @@ jobs:
       - name: Show release files
         run: ls -la release-files
 
+      - name: Show current release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${{ github.event.inputs.release_tag }}"
+          gh release view "$TAG" -R "$GH_REPO" --json assets --jq '.assets[].name'
+
       - name: Wait for latest.json asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           TAG="${{ github.event.inputs.release_tag }}"
           for i in $(seq 1 80); do
             rm -f release-files/latest.json
-            if gh release download "$TAG" -p "latest.json" -D release-files >/dev/null 2>&1; then
+            if gh release download "$TAG" -R "$GH_REPO" -p "latest.json" -D release-files >/dev/null 2>&1; then
               echo "latest.json for $TAG is available."
               exit 0
             fi
@@ -169,6 +178,7 @@ jobs:
       - name: Update latest.json with Windows updater entry
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           TAG="${{ github.event.inputs.release_tag }}"
@@ -189,7 +199,7 @@ jobs:
           WINDOWS_SIG="$(cat "${MSI_SIG_FILE}")"
 
           rm -f release-files/latest.json
-          gh release download "$TAG" -p "latest.json" -D release-files >/dev/null 2>&1
+          gh release download "$TAG" -R "$GH_REPO" -p "latest.json" -D release-files >/dev/null 2>&1
           if [ ! -f release-files/latest.json ]; then
             echo "latest.json is required but was not downloaded."
             exit 1
@@ -212,6 +222,7 @@ jobs:
       - name: Upload Windows assets to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           TAG="${{ github.event.inputs.release_tag }}"
-          gh release upload "$TAG" release-files/* --clobber
+          gh release upload "$TAG" -R "$GH_REPO" release-files/* --clobber
