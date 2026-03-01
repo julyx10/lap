@@ -3,7 +3,7 @@
   <div class="sidebar-panel">
     <!-- title bar -->
     <div class="sidebar-panel-header" data-tauri-drag-region>
-      <div role="tablist" class="tabs tabs-sm tabs-border flex-1">
+      <div role="tablist" class="tabs tabs-sm tabs-border flex-1 flex-nowrap">
         <a
           role="tab"
           :class="['tab mx-1', { 'tab-active': config.search.searchType === 0 }]"

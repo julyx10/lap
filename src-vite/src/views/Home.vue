@@ -346,8 +346,17 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+const UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+const UPDATE_CHECK_KEY = 'lap_last_update_check';
+
 async function autoCheckForUpdates() {
   if (isCheckingUpdate.value) return;
+
+  // Throttle: skip if last check was less than 24 hours ago
+  const lastCheck = localStorage.getItem(UPDATE_CHECK_KEY);
+  if (lastCheck && Date.now() - Number(lastCheck) < UPDATE_CHECK_INTERVAL) {
+    return;
+  }
 
   isCheckingUpdate.value = true;
   updateAvailable.value = false;
@@ -356,6 +365,7 @@ async function autoCheckForUpdates() {
 
   try {
     const update = await check();
+    localStorage.setItem(UPDATE_CHECK_KEY, String(Date.now()));
     if (!update) return;
 
     updateAvailable.value = true;

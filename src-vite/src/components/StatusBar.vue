@@ -57,7 +57,7 @@
     </div>
     <div
       v-if="showDebugBadge"
-      class="ml-2 shrink-0 px-2 py-0.5 rounded-full border border-warning/40 text-warning text-[10px] font-mono font-semibold tracking-wide"
+      class="absolute right-2 shrink-0 px-2 py-1 rounded-full bg-warning/30 text-warning text-[10px] font-mono font-semibold tracking-wide"
     >
       DEBUG {{ appVersion ? `v${appVersion}` : '' }}
     </div>

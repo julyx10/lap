@@ -25,12 +25,23 @@
           :class="{ 'cursor-pointer text-primary': tempViewMode !== 'none' }" 
           @click="handleTitleClick"
         />
-        <div class="cursor-default overflow-hidden whitespace-pre text-ellipsis">
-          <span 
-            :class="{ 'cursor-pointer text-primary': tempViewMode !== 'none' }"
-            data-tauri-drag-region 
-            @click="handleTitleClick"
-          >{{ contentTitle }}</span>
+        <div class="overflow-hidden min-w-0">
+          <div v-if="contentTitle" class="breadcrumbs p-0 min-h-0" data-tauri-drag-region>
+            <ul>
+              <li v-for="(seg, idx) in titleSegments" :key="idx">
+                <a
+                  v-if="idx < titleSegments.length - 1"
+                  class="cursor-pointer text-base-content/50 hover:text-primary transition-colors"
+                  @click.stop="handleBreadcrumbClick(idx)"
+                >{{ seg }}</a>
+                <span
+                  v-else
+                  :class="{ 'cursor-pointer text-primary': tempViewMode !== 'none' }"
+                  @click="handleTitleClick"
+                >{{ seg }}</span>
+              </li>
+            </ul>
+          </div>
         </div>
         <TButton v-if="tempViewMode !== 'none'" 
           :icon="IconRestore" 
@@ -506,7 +517,7 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
          dedupGetGroup, getQueryFilePosition } from '@/common/api';  
 import { config, libConfig } from '@/common/config';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
-import { isWin, isMac, setTheme,
+import { isWin, isMac, setTheme, separator,
          formatFileSize, formatDate, getCalendarDateRange, getRelativePath, 
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
          shortenFilename, getSlideShowInterval } from '@/common/utils';
@@ -577,6 +588,59 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
 const contentTitle = ref("");
+
+const titleSegments = computed(() => {
+  if (!contentTitle.value) return [];
+  const parts = contentTitle.value.split(' > ');
+  return parts.length > 1 ? parts : [contentTitle.value];
+});
+
+function handleBreadcrumbClick(segmentIndex: number) {
+  const sidebarIndex = config.main.sidebarIndex;
+
+  // Location: clicking parent segment navigates to admin1 only
+  if (sidebarIndex === 6) {
+    if (segmentIndex === 0) {
+      libConfig.location.name = null;
+    }
+    return;
+  }
+
+  // Camera: clicking parent segment navigates to make only
+  if (sidebarIndex === 7) {
+    if (segmentIndex === 0) {
+      libConfig.camera.model = null;
+    }
+    return;
+  }
+
+  // Album folders (index 0) or Favorite folders (index 1): navigate to parent folder
+  if (sidebarIndex === 0 || sidebarIndex === 1) {
+    const segments = titleSegments.value;
+    // The first segment is the album/folder root name.
+    // Remaining segments are relative path components.
+    // To navigate to segmentIndex, we rebuild the folder path.
+    const currentPath = sidebarIndex === 0
+      ? (libConfig.album.folderPath || '')
+      : (libConfig.favorite.folderPath || '');
+
+    if (!currentPath) return;
+
+    // Split the current path to reconstruct the target path
+    const pathParts = currentPath.split(separator);
+    // segments[0] = root folder name, segments[1..] = path parts after root
+    // segmentIndex=0 means navigate to root, so we go up (segments.length - 1 - segmentIndex) levels
+    const levelsToGoUp = segments.length - 1 - segmentIndex;
+    const targetPath = pathParts.slice(0, pathParts.length - levelsToGoUp).join(separator);
+
+    if (sidebarIndex === 0) {
+      libConfig.album.folderPath = targetPath;
+      tauriEmit('expand-album-folder', { albumId: libConfig.album.id, folderPath: targetPath });
+    } else {
+      libConfig.favorite.folderPath = targetPath;
+    }
+  }
+}
 
 // album's folder mode
 const showFolderFiles = computed(() => 
@@ -2179,7 +2243,7 @@ async function updateContent() {
       const index = libConfig.search.similarImageHistoryIndex;
       if (index >= 0 && index < libConfig.search.similarImageHistory.length) {
         const file = await getFileInfo(libConfig.search.similarImageHistory[index]);
-        contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
+        contentTitle.value = localeMsg.value.search.similar_images + ' - ' + shortenFilename(file.name, 32);
         getImageSearchFileList("", libConfig.search.similarImageHistory[index], requestId);
       } else {
         contentTitle.value = localeMsg.value.search.similar_images;
