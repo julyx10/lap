@@ -179,6 +179,8 @@
         :rotate="file?.rotate ?? 0"
         :isZoomFit="isZoomFit"
         :isSlideShow="isSlideShow"
+        @scale="(e) => $emit('scale', e)"
+        @viewport-change="(e) => $emit('viewport-change', e)"
         @message-from-video-viewer="handleMessageFromImageViewer"
         @slideshow-next="emit('slideshow-next')"
       ></Video>

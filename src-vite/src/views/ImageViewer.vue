@@ -463,17 +463,15 @@ function getViewerRef(pane: 'left' | 'right') {
   return pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
 }
 
-function getFileInfoByPane(pane: 'left' | 'right') {
-  return pane === 'right' ? rightFileInfo.value : fileInfo.value;
-}
-
-function isImagePane(pane: 'left' | 'right') {
-  return getFileInfoByPane(pane)?.file_type === 1;
+function haveMatchingSyncableMedia() {
+  const leftType = fileInfo.value?.file_type;
+  const rightType = rightFileInfo.value?.file_type;
+  return (leftType === 1 || leftType === 2) && leftType === rightType;
 }
 
 function syncViewportFrom(pane: 'left' | 'right', animate = false) {
   if (!isSplit.value || !isSyncViewport.value) return;
-  if (!isImagePane('left') || !isImagePane('right')) return;
+  if (!haveMatchingSyncableMedia()) return;
 
   const sourceRef = getViewerRef(pane);
   const targetPane = pane === 'left' ? 'right' : 'left';
@@ -489,7 +487,7 @@ function syncViewportFrom(pane: 'left' | 'right', animate = false) {
 function handleViewportChange(viewport: any, pane: 'left' | 'right') {
   if (!isSplit.value || !isSyncViewport.value) return;
   if (syncingPane.value) return;
-  if (!isImagePane('left') || !isImagePane('right')) return;
+  if (!haveMatchingSyncableMedia()) return;
 
   const targetPane = pane === 'left' ? 'right' : 'left';
   const shouldAnimate = animateSyncOnce.value;
@@ -515,7 +513,7 @@ function setZoomFitByPane(pane: 'left' | 'right', val: boolean) {
 function handleZoomFitUpdate(val: boolean, pane: 'left' | 'right') {
   setActivePane(pane);
   setZoomFitByPane(pane, val);
-  if (isSplit.value && isSyncViewport.value && isImagePane('left') && isImagePane('right')) {
+  if (isSplit.value && isSyncViewport.value && haveMatchingSyncableMedia()) {
     animateSyncOnce.value = true;
   }
 }

@@ -1,14 +1,14 @@
 <template>
-  <div ref="videoContainer" class="relative w-full h-full cursor-pointer" @wheel.prevent="handleWheel">
+  <div ref="videoContainer" class="relative w-full h-full overflow-hidden cursor-pointer" @wheel.prevent="handleWheel">
     
     <TransitionGroup :name="transitionName" @after-leave="handleTransitionEnd">
       <div 
         v-for="index in [0, 1]" 
         v-show="activeVideo === index"
         :key="`vid-${index}`"
-        class="slide-wrapper absolute inset-0 w-full h-full pointer-events-none"
+        class="slide-wrapper absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
       >
-        <div class="w-full h-full pointer-events-auto">
+        <div class="w-full h-full pointer-events-auto overflow-hidden">
           <video :ref="(el) => { if(el) videoElements[index] = el as HTMLVideoElement }" class="video-js"></video>
         </div>
       </div>
@@ -68,7 +68,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['message-from-video-viewer', 'slideshow-next']);
+const emit = defineEmits(['message-from-video-viewer', 'slideshow-next', 'scale', 'viewport-change']);
 
 const { t: $t } = useI18n(); // i18n
  
@@ -201,6 +201,17 @@ const updateTransform = (options: boolean | { resetRotation?: boolean, recalcSca
     }
   }
   video.style.transform = `translate(-50%, -50%) rotate(${rotate.value}deg) scale(${scale.value})`;
+
+  emit('scale', {
+    scale: scale.value,
+    minScale: 0.1,
+    maxScale: 10,
+  });
+  emit('viewport-change', {
+    scale: scale.value,
+    isZoomFit: isFit.value,
+    fileType: 2,
+  });
 };
 
 const setupPlayer = (index: number) => {
@@ -478,11 +489,47 @@ const rotateRight = () => {
   updateTransform();
 };
 
+function getViewportState() {
+  return {
+    scale: scale.value,
+    isZoomFit: isFit.value,
+    fileType: 2,
+  };
+}
+
+function applyViewportState(viewport: { scale?: number; isZoomFit?: boolean }, silent = false) {
+  if (!viewport) return;
+
+  if (typeof viewport.isZoomFit === 'boolean') {
+    isFit.value = viewport.isZoomFit;
+    if (viewport.isZoomFit) {
+      updateTransform({ recalcScale: true });
+      return;
+    }
+  }
+
+  if (typeof viewport.scale === 'number') {
+    scale.value = Math.max(0.1, Math.min(10, viewport.scale));
+    isFit.value = false;
+    if (silent) {
+      noTransition.value = true;
+      updateTransform();
+      requestAnimationFrame(() => {
+        noTransition.value = false;
+      });
+      return;
+    }
+    updateTransform();
+  }
+}
+
 defineExpose({ 
   zoomIn, 
   zoomOut, 
   zoomActual, 
   rotateRight,
+  getViewportState,
+  applyViewportState,
   pause: () => {
     players.value.forEach((p: ReturnType<typeof videojs> | null) => p?.pause());
   },
