@@ -354,8 +354,8 @@
             :multiSelect="selectMode"
             :selectedFiles="selectedFiles"
             @close="checkUnsavedChanges(() => config.infoPanel.show = false)" 
-            @success="onImageEdited(true)"
-            @failed="onImageEdited(false)"
+            @success="onFileSaved(true)"
+            @failed="onFileSaved(false)"
             @deselect="(file: any) => file.isSelected = false"
             @favoriteAll="selectModeSetFavorites(true)"
             @unfavoriteAll="selectModeSetFavorites(false)"
@@ -402,13 +402,13 @@
     />
   </div>
 
-  <!-- image editor -->
-  <ImageEditor 
-    v-if="showImageEditor"
+  <!-- transform -->
+  <Transform
+    v-if="showTransform"
     :fileInfo="fileList[selectedItemIndex]" 
-    @success="onImageEdited(true)" 
-    @failed="onImageEdited(false)"
-    @cancel="showImageEditor = false"
+    @success="onFileSaved(true)"
+    @failed="onFileSaved(false)"
+    @cancel="showTransform = false"
   />
 
   <!-- rename -->
@@ -532,7 +532,7 @@ import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
 import TaggingDialog from '@/components/TaggingDialog.vue';
-import ImageEditor from '@/components/ImageEditor.vue';
+import Transform from '@/components/Transform.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import DedupPane from '@/components/DedupPane.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
@@ -707,7 +707,7 @@ const showRenameMsgbox = ref(false);  // show rename message box
 const renamingFileName = ref<{name?: string, ext?: string}>({}); // extract the file name to {name, ext}
 
 const showMoveTo = ref(false);
-const showImageEditor = ref(false);
+const showTransform = ref(false);
 const showCopyTo = ref(false);
 const showTrashMsgbox = ref(false);
 const dedupReclaimBytes = ref(0);
@@ -1179,7 +1179,7 @@ function handleItemAction(payload: { action: string, index: number }) {
 
   const actionMap = {
     'open': () => openImageViewer(selectedItemIndex.value, true),
-    'edit': () => showImageEditor.value = true,
+    'edit': () => showTransform.value = true,
     'copy': () => clickCopyImage(fileList.value[selectedItemIndex.value].file_path),
     'rename': clickRename,
     'move-to': () => showMoveTo.value = true,
@@ -1472,7 +1472,7 @@ const handleKeyDown = (e: any) => {
   } else if (isCmdKey && key.toLowerCase() === 's') {
     enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
   } else if (isCmdKey && key.toLowerCase() === 'e') {
-    showImageEditor.value = true;
+    showTransform.value = true;
   } else if (isCmdKey && key.toLowerCase() === 'f') {
     toggleFavorite();
   } else if (isCmdKey && key.toLowerCase() === 't') {
@@ -2608,10 +2608,10 @@ function handleTitleClick() {
   exitTempViewMode();
 }
 
-// update the file info from the image editor
-const onImageEdited = (success: boolean) => {
+// update file state after a save from either FileInfo or Transform
+const onFileSaved = (success: boolean) => {
   if (success) {
-    showImageEditor.value = false;
+    showTransform.value = false;
     updateFile(fileList.value[selectedItemIndex.value]);
   } else {
     toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.failed, true);

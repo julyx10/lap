@@ -1,9 +1,7 @@
 import { computed, Ref } from 'vue';
 import {
   IconMonitor,
-  IconImageEdit,
   IconHeart,
-  IconHeartFilled,
   IconStar,
   IconStarFilled,
   IconTag,
@@ -13,13 +11,12 @@ import {
   IconMoveTo,
   IconCopyTo,
   IconTrash,
-  IconGoto,
   IconComment,
-  IconImageSearch,
   IconPhotoSearch,
   IconFiles,
   IconFolderSearch,
   IconPersonSearch,
+  IconCrop,
 } from '@/common/icons';
 
 export const useFileMenuItems = (
@@ -70,8 +67,8 @@ export const useFileMenuItems = (
         action: () => { }
       },
       {
-        label: localeMsg.value.menu.file.edit,
-        icon: IconImageEdit,
+        label: localeMsg.value.menu.file.transform,
+        icon: IconCrop,
         shortcut: isMac ? '⌘E' : 'Ctrl+E',
         disabled: f.file_type !== 1 && f.file_type !== 3,
         action: createAction('edit')
