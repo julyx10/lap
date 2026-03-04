@@ -208,9 +208,15 @@
     "tag_all": "Tag",
     "dedup": {
       "title": "Doublons",
+      "tabs": {
+        "exact": "Exacts",
+        "similar": "Similaires"
+      },
       "scanning": "Analyse des doublons en cours...",
       "empty_title": "Aucun doublon potentiel dans cette liste",
       "empty_desc": "Essayez d'élargir les filtres ou d'analyser une autre liste de fichiers.",
+      "similar_title": "Les photos similaires arrivent ensuite",
+      "similar_desc": "Cet onglet sera utilisé pour les images visuellement similaires lorsque le flux des doublons exacts sera étendu.",
       "reclaimable_size": "Récupérable",
       "groups_title": "Groupes",
       "group_label": "Groupe {index}",
@@ -303,7 +309,7 @@
       "new_folder": "Nouveau dossier...",
       "view_in_new_window": "Détacher fenêtre...",
       "copy": "Copier dans presse-papiers",
-      "transform": "Transformer...",
+      "edit_image": "Modifier l'image...",
       "find_similar_images": "Trouver similaires",
       "find_person_images": "Trouver photos personne",
       "find_album_folder": "Ouvrir dossier album",
@@ -519,6 +525,7 @@
       "highlights": "Hautes lumières",
       "presets": {
         "title": "Préréglages",
+        "custom": "Personnalisé",
         "natural": "Naturel",
         "vivid": "Vif",
         "muted": "Atténué",
@@ -531,8 +538,7 @@
         "cinematic": "Cinématique",
         "dramatic": "Dramatique",
         "cyberpunk": "Cyberpunk",
-        "invert": "Inverser",
-        "custom": "Personnalisé"
+        "invert": "Inverser"
       },
       "filters": "Filtres",
       "filter_none": "Aucun",
@@ -568,6 +574,7 @@
       "original": "Original",
       "output": "Sortie",
       "resize": "Redimensionner",
+      "keep_aspect_ratio": "Conserver les proportions",
       "width": "Largeur",
       "height": "Hauteur",
       "percentage": "Pourcentage",

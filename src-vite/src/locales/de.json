@@ -208,9 +208,15 @@
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplikate",
+      "tabs": {
+        "exact": "Exakt",
+        "similar": "Ähnlich"
+      },
       "scanning": "Duplikate werden gescannt...",
       "empty_title": "Keine potenziellen Duplikate in dieser Liste",
       "empty_desc": "Erweitern Sie den Filter oder prüfen Sie eine andere Dateiliste.",
+      "similar_title": "Ähnliche Fotos folgen als Nächstes",
+      "similar_desc": "Dieser Tab wird für visuell ähnliche Bilder verwendet, sobald der Workflow für exakte Duplikate erweitert wurde.",
       "reclaimable_size": "Freigebbar",
       "groups_title": "Gruppen",
       "group_label": "Gruppe {index}",
@@ -303,7 +309,7 @@
       "new_folder": "Neuer Ordner...",
       "view_in_new_window": "In neuem Fenster...",
       "copy": "In die Zwischenablage",
-      "transform": "Transformieren...",
+      "edit_image": "Bild bearbeiten...",
       "find_similar_images": "Ähnliche finden",
       "find_person_images": "Personenbilder finden",
       "find_album_folder": "Albumordner finden",
@@ -519,6 +525,7 @@
       "highlights": "Glanzlichter",
       "presets": {
         "title": "Voreinstellungen",
+        "custom": "Benutzerdefiniert",
         "natural": "Natürlich",
         "vivid": "Lebhaft",
         "muted": "Gedämpft",
@@ -531,8 +538,7 @@
         "cinematic": "Kino",
         "dramatic": "Dramatisch",
         "cyberpunk": "Cyberpunk",
-        "invert": "Umkehren",
-        "custom": "Benutzerdefiniert"
+        "invert": "Umkehren"
       },
       "filters": "Filter",
       "filter_none": "Kein",
@@ -568,6 +574,7 @@
       "original": "Original",
       "output": "Ausgabe",
       "resize": "Größe ändern",
+      "keep_aspect_ratio": "Seitenverhältnis beibehalten",
       "width": "Breite",
       "height": "Höhe",
       "percentage": "Prozent",

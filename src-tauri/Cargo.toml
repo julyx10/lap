@@ -2,7 +2,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 name = "Lap"
 version = "0.1.7"
-description = "A Local-first, AI-powered Photo manager."
+description = "An offline-first photo manager for large local libraries."
 homepage = "https://julyx10.github.io/lap"
 repository = "https://github.com/julyx10/lap"
 authors = ["julyx10 <tiangle@gmail.com>"]
@@ -23,7 +23,11 @@ panic = "abort"
 opt-level = 3
 
 [dependencies]
-tauri = { version = "2", features = [ "macos-private-api", "protocol-asset", "devtools"] }
+tauri = { version = "2", features = [
+    "macos-private-api",
+    "protocol-asset",
+    "devtools",
+] }
 tauri-plugin-window-state = "2.2.1"
 tauri-plugin-shell = "2"
 tauri-plugin-os = "2"

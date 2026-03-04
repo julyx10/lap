@@ -208,9 +208,15 @@
     "tag_all": "태그",
     "dedup": {
       "title": "중복",
+      "tabs": {
+        "exact": "동일",
+        "similar": "유사"
+      },
       "scanning": "중복 항목 스캔 중...",
       "empty_title": "현재 목록에 중복 후보가 없습니다",
       "empty_desc": "필터를 넓히거나 다른 파일 목록에서 실행해 보세요.",
+      "similar_title": "유사 사진 기능은 다음 단계로 준비 중입니다",
+      "similar_desc": "정확한 중복 워크플로를 확장한 뒤 이 탭은 시각적으로 유사한 이미지를 위해 사용됩니다.",
       "reclaimable_size": "정리 가능",
       "groups_title": "그룹",
       "group_label": "그룹 {index}",
@@ -303,7 +309,7 @@
       "new_folder": "새 폴더...",
       "view_in_new_window": "새 창에서 보기...",
       "copy": "클립보드에 복사",
-      "transform": "변형...",
+      "edit_image": "이미지 편집...",
       "find_similar_images": "유사 이미지 찾기",
       "find_person_images": "인물 이미지 찾기",
       "find_album_folder": "앨범 폴더 찾기",
@@ -519,6 +525,7 @@
       "highlights": "하이ライト",
       "presets": {
         "title": "프리셋",
+        "custom": "사용자 정의",
         "natural": "자연",
         "vivid": "선명",
         "muted": "차분함",
@@ -531,8 +538,7 @@
         "cinematic": "영화 같은",
         "dramatic": "드라마틱",
         "cyberpunk": "사이버펑크",
-        "invert": "반전",
-        "custom": "사용자 정의"
+        "invert": "반전"
       },
       "filters": "필터",
       "filter_none": "없음",
@@ -568,6 +574,7 @@
       "original": "원본",
       "output": "출력",
       "resize": "크기 조절",
+      "keep_aspect_ratio": "종횡비 유지",
       "width": "너비",
       "height": "높이",
       "percentage": "퍼센트",
@@ -575,7 +582,6 @@
       "options": "옵션",
       "save": "저장",
       "save_file": "파일 저장",
-      "save_as": "저장 방식",
       "save_as_options": [
         "원본 파일 덮어쓰기",
         "새 파일로 저장"

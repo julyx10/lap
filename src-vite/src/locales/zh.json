@@ -309,7 +309,7 @@
       "new_folder": "新建文件夹...",
       "view_in_new_window": "在新窗口中查看...",
       "copy": "复制到剪贴板",
-      "transform": "变换...",
+      "edit_image": "编辑图片...",
       "find_similar_images": "查找相似图片",
       "find_person_images": "查找人物图片",
       "find_album_folder": "查找相册文件夹",
@@ -525,6 +525,7 @@
       "highlights": "高光",
       "presets": {
         "title": "预设",
+        "custom": "自定义",
         "natural": "自然",
         "vivid": "鲜艳",
         "muted": "柔和",
@@ -537,8 +538,7 @@
         "cinematic": "电影感",
         "dramatic": "戏剧性",
         "cyberpunk": "赛博朋克",
-        "invert": "反转",
-        "custom": "自定义"
+        "invert": "反转"
       },
       "filters": "滤镜",
       "filter_none": "原图",
@@ -574,6 +574,7 @@
       "original": "原始",
       "output": "输出",
       "resize": "调整尺寸",
+      "keep_aspect_ratio": "保持纵横比",
       "width": "宽度",
       "height": "高度",
       "percentage": "百分比",

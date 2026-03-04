@@ -1,76 +1,70 @@
 <template>
 
-  <ModalDialog :title="`${$t('msgbox.image_editor.transform')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="1040" @cancel="clickCancel">
+  <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="1040" @cancel="clickCancel">
     <div class="h-[560px] flex gap-4 select-none">
-      <div ref="containerRef" class="relative flex-1 min-w-0 h-full rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm cursor-default">
-        <transition name="fade">
-          <div v-if="isProcessing" class="absolute inset-0 z-50 flex items-center justify-center bg-base-100/55 backdrop-blur-sm">
-            <span class="loading loading-dots text-primary"></span>
+      <div class="flex-1 min-w-0 h-full flex items-start">
+        <div ref="containerRef" class="relative w-full aspect-4/3 max-h-full rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm cursor-default">
+          <transition name="fade">
+            <div v-if="isProcessing" class="absolute inset-0 z-50 flex items-center justify-center bg-base-100/55 backdrop-blur-sm">
+              <span class="loading loading-dots text-primary"></span>
+            </div>
+          </transition>
+
+          <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
+
+          <div v-if="cropStatus === 1 || cropApplied"
+            :class="[
+              cropStatus === 1 ? 'crop-box-active' : 'crop-box-done',
+              cropStatus === 1
+                ? (
+                  cropBoxFixed
+                    ? (isDragging ? 'cursor-grabbing no-transition' : 'cursor-grab')
+                    : (isDragging ? 'cursor-move no-transition' : 'cursor-move')
+                )
+                : ''
+            ]"
+            :style="cropBoxStyle"
+            @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
+            @dblclick="clickDoCrop"
+          >
+            <template v-if="cropStatus===1 && isDragging">
+              <div class="crop-dimensions-display">
+                {{ crop.width }} x {{ crop.height }}
+              </div>
+              <div class="grid-lines">
+                <div class="grid-line-h grid-line-h-1"></div>
+                <div class="grid-line-h grid-line-h-2"></div>
+                <div class="grid-line-v grid-line-v-1"></div>
+                <div class="grid-line-v grid-line-v-2"></div>
+              </div>
+            </template>
+            <template v-if="cropStatus===1 && !cropBoxFixed">
+              <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
+              <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
+              <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
+              <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
+              <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
+              <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
+              <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
+              <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
+            </template>
           </div>
-        </transition>
-
-        <img ref="imageRef" :src="imageSrc" :style="imageStyle" draggable="false" @load="onImageLoad" />
-
-        <div v-if="cropStatus === 1 || cropApplied"
-          :class="[
-            cropStatus === 1 ? 'crop-box-active' : 'crop-box-done',
-            cropStatus === 1
-              ? (
-                cropBoxFixed
-                  ? (isDragging ? 'cursor-grabbing no-transition' : 'cursor-grab')
-                  : (isDragging ? 'cursor-move no-transition' : 'cursor-move')
-              )
-              : ''
-          ]"
-          :style="cropBoxStyle"
-          @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
-          @dblclick="clickDoCrop"
-        >
-          <template v-if="cropStatus===1 && isDragging">
-            <div class="crop-dimensions-display">
-              {{ crop.width }} x {{ crop.height }}
-            </div>
-            <div class="grid-lines">
-              <div class="grid-line-h grid-line-h-1"></div>
-              <div class="grid-line-h grid-line-h-2"></div>
-              <div class="grid-line-v grid-line-v-1"></div>
-              <div class="grid-line-v grid-line-v-2"></div>
-            </div>
-          </template>
-          <template v-if="cropStatus===1 && !cropBoxFixed">
-            <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
-            <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
-            <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
-            <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
-            <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
-            <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
-            <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
-            <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
-          </template>
         </div>
       </div>
 
-      <div class="w-72 flex flex-col gap-3 overflow-y-auto">
+      <div class="w-[268px] flex flex-col gap-3 overflow-y-auto">
 
-        <section class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
-          <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">
-            {{ $t('file_info.dimension') }}
+        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.transform') }}</div>
+            <TButton
+              buttonSize="small"
+              :icon="IconRestore"
+              :disabled="cropStatus === 1 || !hasEditImageChanges || cropApplied"
+              :tooltip="$t('msgbox.image_editor.reset')"
+              @click="clickRestoreAll"
+            />
           </div>
-
-          <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <div class="rounded-box bg-base-100/65 px-3 py-2">
-              <div class="uppercase tracking-wide text-base-content/35">{{ $t('msgbox.image_editor.original') }}</div>
-              <div class="mt-1 font-semibold text-base-content/80">{{ originalDimensions }}</div>
-            </div>
-            <div class="rounded-box bg-base-100/65 px-3 py-2">
-              <div class="uppercase tracking-wide text-base-content/35">{{ $t('msgbox.image_editor.output') }}</div>
-              <div class="mt-1 font-semibold text-base-content/80">{{ outputDimensions }}</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
-          <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.transform') }}</div>
 
           <div class="flex gap-3">
             <TButton
@@ -97,21 +91,24 @@
               :tooltip="$t('msgbox.image_editor.flip_vertical')"
               @click="clickFlipY"
             />
-            <TButton
-              :icon="IconRestore"
-              :disabled="cropStatus === 1 || !hasTransformChanges || cropApplied"
-              :tooltip="$t('msgbox.image_editor.restore')"
-              @click="clickRestoreAll"
-            />
           </div>
         </section>
 
-        <section class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
-          <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.crop') }}</div>
+        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.crop') }}</div>
+            <TButton
+              buttonSize="small"
+              :icon="IconRestore"
+              :disabled="cropStatus === 0 && !cropApplied"
+              :tooltip="$t('msgbox.image_editor.reset')"
+              @click="clearCrop"
+            />
+          </div>
 
           <div v-if="cropStatus === 0" class="flex items-center gap-2">
             <TButton
-              :icon="cropApplied ? IconRestore : IconCrop"
+              :icon="IconCrop"
               :selected="cropApplied"
               :tooltip="cropApplied ? $t('msgbox.image_editor.restore') : $t('msgbox.image_editor.crop')"
               @click="toggleCropMode"
@@ -163,6 +160,60 @@
           </div>
         </section>
 
+        <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.resize') }}</div>
+            <TButton
+              buttonSize="small"
+              :icon="IconRestore"
+              :disabled="cropStatus === 1 || !hasResizeChanges"
+              :tooltip="$t('msgbox.image_editor.reset')"
+              @click="resetResize"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div class="form-control w-full">
+              <label class="label py-1">
+                <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.width') }}</span>
+              </label>
+              <input
+                v-model="resizeWidthInput"
+                type="number"
+                min="1"
+                :max="maxResizeWidth"
+                step="1"
+                inputmode="numeric"
+                class="input input-bordered input-sm w-full"
+                :disabled="cropStatus === 1"
+                @input="handleResizeWidthInput"
+              />
+            </div>
+
+            <div class="form-control w-full">
+              <label class="label py-1">
+                <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.height') }}</span>
+              </label>
+              <input
+                v-model="resizeHeightInput"
+                type="number"
+                min="1"
+                :max="maxResizeHeight"
+                step="1"
+                inputmode="numeric"
+                class="input input-bordered input-sm w-full"
+                :disabled="cropStatus === 1"
+                @input="handleResizeHeightInput"
+              />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between rounded-box bg-base-100/35 px-3 py-2">
+            <span class="text-xs text-base-content/65">{{ $t('msgbox.image_editor.keep_aspect_ratio') }}</span>
+            <input type="checkbox" class="toggle toggle-primary toggle-sm shrink-0" v-model="keepAspectRatio" :disabled="cropStatus === 1" />
+          </div>
+        </section>
+
         <section class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm">
           <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.save_file') }}</div>
 
@@ -197,7 +248,7 @@
       </div>
     </div>
 
-    <div class="mt-4 flex justify-end space-x-4">
+    <div class="mt-1 flex justify-end space-x-4">
       <button
         class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer"
         @click="clickCancel"
@@ -227,7 +278,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, type CSSProperties } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch, type CSSProperties } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
@@ -321,18 +372,72 @@ const cropBoxStyle = computed(() => ({
   height: `${cropBox.value.height}px`,
 }));
 
-const originalDimensions = computed(() => `${props.fileInfo.width} × ${props.fileInfo.height}`);
-const outputDimensions = computed(() => {
-  if ((cropStatus.value === 1 || cropApplied.value) && crop.value.width > 0 && crop.value.height > 0) {
-    return `${crop.value.width} × ${crop.value.height}`;
+const baseOutputWidth = computed(() => {
+  if ((cropStatus.value === 1 || cropApplied.value) && crop.value.width > 0) {
+    return crop.value.width;
+  }
+  return rotate.value % 180 !== 0 ? imageHeight.value : imageWidth.value;
+});
+const baseOutputHeight = computed(() => {
+  if ((cropStatus.value === 1 || cropApplied.value) && crop.value.height > 0) {
+    return crop.value.height;
+  }
+  return rotate.value % 180 !== 0 ? imageWidth.value : imageHeight.value;
+});
+const resizeWidthInput = ref('');
+const resizeHeightInput = ref('');
+const keepAspectRatio = ref(true);
+const resizeAspectRatio = computed(() => {
+  if (!baseOutputWidth.value || !baseOutputHeight.value) return 1;
+  return baseOutputWidth.value / baseOutputHeight.value;
+});
+const parsedResizeWidth = computed(() => {
+  const width = Number.parseInt(resizeWidthInput.value, 10);
+  return Number.isFinite(width) && width > 0 ? width : null;
+});
+const parsedResizeHeight = computed(() => {
+  const height = Number.parseInt(resizeHeightInput.value, 10);
+  return Number.isFinite(height) && height > 0 ? height : null;
+});
+const maxResizeWidth = computed(() => Math.max(1, baseOutputWidth.value));
+const maxResizeHeight = computed(() => Math.max(1, baseOutputHeight.value));
+const hasResizeChanges = computed(() => {
+  return (
+    resizeWidthInput.value !== String(baseOutputWidth.value) ||
+    resizeHeightInput.value !== String(baseOutputHeight.value) ||
+    !keepAspectRatio.value
+  );
+});
+const resizeOutput = computed(() => {
+  const widthInput = parsedResizeWidth.value;
+  const heightInput = parsedResizeHeight.value;
+  const baseWidth = baseOutputWidth.value;
+  const baseHeight = baseOutputHeight.value;
+  const ratio = resizeAspectRatio.value || 1;
+
+  if (!widthInput && !heightInput) {
+    return { width: baseWidth, height: baseHeight, hasResize: false };
   }
 
-  const width = rotate.value % 180 !== 0 ? imageHeight.value : imageWidth.value;
-  const height = rotate.value % 180 !== 0 ? imageWidth.value : imageHeight.value;
-  return `${width} × ${height}`;
-});
+  if (keepAspectRatio.value) {
+    if (widthInput && heightInput) {
+      return { width: widthInput, height: heightInput, hasResize: true };
+    }
+    if (widthInput) {
+      return { width: widthInput, height: Math.max(1, Math.round(widthInput / ratio)), hasResize: true };
+    }
+    if (heightInput) {
+      return { width: Math.max(1, Math.round(heightInput * ratio)), height: heightInput, hasResize: true };
+    }
+  }
 
-const hasTransformChanges = computed(() =>
+  return {
+    width: widthInput || baseWidth,
+    height: heightInput || baseHeight,
+    hasResize: !!widthInput || !!heightInput,
+  };
+});
+const hasEditImageChanges = computed(() =>
   rotate.value % 360 !== 0 ||
   isFlippedX.value ||
   isFlippedY.value
@@ -388,17 +493,66 @@ const handleOverwriteCancel = () => {
   isProcessing.value = false;
 };
 
+const handleResizeWidthInput = () => {
+  const width = parsedResizeWidth.value;
+  if (!width) return;
+
+  const clampedWidth = Math.min(maxResizeWidth.value, Math.max(1, width));
+  if (clampedWidth !== width) {
+    resizeWidthInput.value = String(clampedWidth);
+  }
+
+  if (!keepAspectRatio.value) return;
+  resizeHeightInput.value = String(Math.min(maxResizeHeight.value, Math.max(1, Math.round(clampedWidth / resizeAspectRatio.value))));
+};
+
+const handleResizeHeightInput = () => {
+  const height = parsedResizeHeight.value;
+  if (!height) return;
+
+  const clampedHeight = Math.min(maxResizeHeight.value, Math.max(1, height));
+  if (clampedHeight !== height) {
+    resizeHeightInput.value = String(clampedHeight);
+  }
+
+  if (!keepAspectRatio.value) return;
+  resizeWidthInput.value = String(Math.min(maxResizeWidth.value, Math.max(1, Math.round(clampedHeight * resizeAspectRatio.value))));
+};
+
+const resetResize = () => {
+  resizeWidthInput.value = String(baseOutputWidth.value);
+  resizeHeightInput.value = String(baseOutputHeight.value);
+  keepAspectRatio.value = true;
+};
+
+watch(
+  () => [baseOutputWidth.value, baseOutputHeight.value],
+  ([width, height]) => {
+    resizeWidthInput.value = String(width);
+    resizeHeightInput.value = String(height);
+  },
+  { immediate: true }
+);
+
+watch(
+  () => keepAspectRatio.value,
+  (enabled) => {
+    if (!enabled || !parsedResizeWidth.value) return;
+    resizeHeightInput.value = String(Math.max(1, Math.round(parsedResizeWidth.value / resizeAspectRatio.value)));
+  }
+);
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
-  uiStore.pushInputHandler('Transform');
+  uiStore.pushInputHandler('EditImage');
 
   isProcessing.value = true;
-  initTransform();
+  initEditImage();
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-  uiStore.removeInputHandler('Transform');
+  uiStore.removeInputHandler('EditImage');
 });
 
 const onImageLoad = async () => {
@@ -417,7 +571,7 @@ const onImageLoad = async () => {
   });
 };
 
-const initTransform = () => {
+const initEditImage = () => {
   imageSrc.value = getAssetSrc(props.fileInfo.file_path);
   imageWidth.value = props.fileInfo.width;
   imageHeight.value = props.fileInfo.height;
@@ -806,7 +960,7 @@ const startDrag = (handle: string, event: MouseEvent) => {
 };
 
 function handleKeyDown(event: KeyboardEvent) {
-  if (!uiStore.isInputActive('Transform')) return;
+  if (!uiStore.isInputActive('EditImage')) return;
 
   switch (event.key) {
     case 'Enter':
@@ -861,8 +1015,8 @@ const setEditParams = (overrides: { fileName?: string; destFilePath?: string; ou
       height: crop.value.height,
     },
     resize: {
-      width: null,
-      height: null,
+      width: resizeOutput.value.hasResize && resizeOutput.value.width !== baseOutputWidth.value ? resizeOutput.value.width : null,
+      height: resizeOutput.value.hasResize && resizeOutput.value.height !== baseOutputHeight.value ? resizeOutput.value.height : null,
     },
     filter: null,
     brightness: null,

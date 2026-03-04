@@ -208,9 +208,15 @@
     "tag_all": "タグ",
     "dedup": {
       "title": "重複",
+      "tabs": {
+        "exact": "完全一致",
+        "similar": "類似"
+      },
       "scanning": "重複をスキャン中...",
       "empty_title": "このリストに重複候補はありません",
       "empty_desc": "フィルターを広げるか、別のファイルリストで実行してください。",
+      "similar_title": "類似写真は次に対応予定です",
+      "similar_desc": "完全一致の重複ワークフローを拡張した後、このタブは見た目が似ている画像に使われます。",
       "reclaimable_size": "削減可能",
       "groups_title": "グループ",
       "group_label": "グループ {index}",
@@ -303,7 +309,7 @@
       "new_folder": "新しいフォルダー...",
       "view_in_new_window": "新しいウィンドウで表示...",
       "copy": "クリップボードにコピー",
-      "transform": "変形...",
+      "edit_image": "画像を編集...",
       "find_similar_images": "類似画像を検索",
       "find_person_images": "この人の画像を検索",
       "find_album_folder": "アルバムフォルダーを開く",
@@ -519,6 +525,7 @@
       "highlights": "ハイライト",
       "presets": {
         "title": "プリセット",
+        "custom": "カスタム",
         "natural": "ナチュラル",
         "vivid": "ビビッド",
         "muted": "落ち着いた",
@@ -531,8 +538,7 @@
         "cinematic": "シネマティック",
         "dramatic": "ドラマチック",
         "cyberpunk": "サイバーパンク",
-        "invert": "反転",
-        "custom": "カスタム"
+        "invert": "反転"
       },
       "filters": "フィルタ",
       "filter_none": "なし",
@@ -568,6 +574,7 @@
       "original": "元画像",
       "output": "出力",
       "resize": "サイズ変更",
+      "keep_aspect_ratio": "縦横比を維持",
       "width": "幅",
       "height": "高さ",
       "percentage": "パーセント",
