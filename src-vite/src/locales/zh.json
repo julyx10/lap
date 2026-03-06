@@ -158,7 +158,7 @@
       "placeholder": "搜索文件名"
     },
     "filter": {
-      "select_mode": "选择",
+      "select_mode": "选择项",
       "select_count": "已选择 {count}",
       "sort_type_options": [
         "时间",
@@ -203,8 +203,10 @@
     "type_images": "张图片",
     "type_video": "个视频",
     "type_videos": "个视频",
+    "select_title": "选择",
     "favorite_all": "收藏",
     "unfavorite_all": "取消收藏",
+    "action": "操作",
     "tag_all": "标签",
     "dedup": {
       "title": "重复项",

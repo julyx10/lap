@@ -203,8 +203,10 @@
     "type_images": "Images",
     "type_video": "Vidéo",
     "type_videos": "Vidéos",
+    "select_title": "Sélection",
     "favorite_all": "Favori",
     "unfavorite_all": "Retirer",
+    "action": "Action",
     "tag_all": "Tag",
     "dedup": {
       "title": "Doublons",

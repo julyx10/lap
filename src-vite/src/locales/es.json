@@ -158,7 +158,7 @@
       "placeholder": "Buscar archivo"
     },
     "filter": {
-      "select_mode": "Seleccionar",
+      "select_mode": "Selección",
       "select_count": "{count} seleccionados",
       "sort_type_options": [
         "Tiempo",
@@ -203,8 +203,10 @@
     "type_images": "Imágenes",
     "type_video": "Video",
     "type_videos": "Videos",
+    "select_title": "Selección",
     "favorite_all": "Favorito",
     "unfavorite_all": "Quitar",
+    "action": "Acción",
     "tag_all": "Etiqueta",
     "dedup": {
       "title": "Duplicados",

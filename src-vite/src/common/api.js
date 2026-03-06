@@ -1107,6 +1107,16 @@ export async function dedupListGroups(page = 1, pageSize = 50, sortBy = 'size_de
   }
 }
 
+// get deduplication overview
+export async function dedupGetOverview() {
+  try {
+    const overview = await invoke('dedup_get_overview');
+    return overview;
+  } catch (error) {
+    console.error('dedupGetOverview error:', error);
+  }
+}
+
 // get deduplication group
 export async function dedupGetGroup(groupId) {
   try {

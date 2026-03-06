@@ -802,6 +802,11 @@ pub fn dedup_list_groups(
 }
 
 #[tauri::command]
+pub fn dedup_get_overview() -> Result<crate::t_dedup::DedupOverview, String> {
+    crate::t_dedup::get_overview()
+}
+
+#[tauri::command]
 pub fn dedup_get_group(group_id: i64) -> Result<crate::t_dedup::DedupGroup, String> {
     crate::t_dedup::get_group(group_id)
 }

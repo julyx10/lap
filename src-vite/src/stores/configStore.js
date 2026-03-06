@@ -6,8 +6,6 @@ import { defineStore } from 'pinia';
 export const useConfigStore = defineStore('configStore', {
   state: () => ({
     main: {
-      showLeftPane: true,         // show left pane
-      leftPaneWidth: 320,         // left pane width
       sidebarIndex: 0,            // toolbar index
       maxLibraryCount: 20,        // max library count
     },
@@ -17,29 +15,23 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     leftPanel: {
+      show: true,                 // show left pane
+      width: 320,                 // left pane width
       sortCount: false,           // false: default sort by name, true: sort by count
     },
 
+    rightPanel: {
+      show: false,                // show right panel
+      width: 30,                  // panel width(20-80%)
+      mode: 'info',               // right panel mode ('info' | 'dedup')
+    },
+
     infoPanel: {
-      show: false,               // show info panel
-      width: 30,                 // info panel width(20-80%)
-      activeTab: 'info',         // active tab ('info', 'edit')
       showBasicInfo: true,       // show basic info
       showMetadata: true,        // show metadata
       showMap: true,             // show map
       showHistogram: true,       // show image histogram
       mapTheme: 0,               // 0: standard, 2: satellite
-      showPresets: true,         // show image presets
-      showAdjust: true,          // show image adjustment
-      showResize: true,          // show image resize
-      showSaveOptions: true,     // show save options
-    },
-
-    dupPanel: {
-      show: false,               // show dedup panel
-      width: 30,                 // dedup panel width(20-80%)
-      activeTab: 'exact',        // active tab ('exact', 'similar')
-      keepStrategy: 'best_quality', // best_quality | oldest_created | oldest_modified
     },
 
     search: {
@@ -243,9 +235,6 @@ export const useConfigStore = defineStore('configStore', {
       }
     },
 
-    setDedupKeepStrategy(strategy) {
-      this.dupPanel.keepStrategy = strategy;
-    },
   },
   persist: true
 });

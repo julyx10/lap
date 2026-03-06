@@ -62,29 +62,6 @@
       <!-- toolbar -->
       <div class="flex items-center gap-2 shrink-0">
 
-        <!-- select mode -->
-        <div tabindex="-1"
-          :class="[
-            'px-2 py-1 h-8 flex flex-row items-center rounded-box border focus:outline-none text-sm shrink-0',
-            fileList.length === 0 || showQuickView || isIndexing ? 'text-base-content/30' : 'border-base-content/30 hover:bg-base-100 hover:text-base-content cursor-pointer',
-            selectMode ? 'border-primary' : ''
-          ]"
-          @click="handleSelectMode(true)"
-        >
-          <TButton v-if="selectMode"
-            :icon="IconClose"
-            :buttonSize="'small'"
-            @click.stop="handleSelectMode(false)" 
-          />
-          <span class="px-1">{{ selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : $t('toolbar.filter.select_mode') }}</span>
-          <ContextMenu v-if="selectMode"
-            :iconMenu="IconArrowDown"
-            :menuItems="moreMenuItems"
-            :smallIcon="true"
-            @click.stop
-          />
-        </div>
-
         <!-- file type options -->
         <DropDownSelect
           :options="fileTypeOptions"
@@ -147,12 +124,20 @@
           />
 
           <IconSeparator class="t-icon-size text-base-content/30" />
+          <!-- toggle select mode -->
+          <TButton
+            :icon="IconChecked"
+            :tooltip="$t('toolbar.filter.select_mode')"
+            :selected="selectMode"
+            :disabled="fileList.length === 0 || showQuickView || isIndexing"
+            @click="handleSelectMode(!selectMode)"
+          />
 
           <!-- toggle dedup panel -->
           <TButton
             :icon="IconSimilar"
             :tooltip="$t('toolbar.tooltip.open_dedup')"
-            :selected="config.dupPanel.show"
+            :selected="isDedupPanelOpen"
             :disabled="isIndexing || showQuickView || fileList.length === 0"
             @click="toggleDedupPanel"
           />
@@ -160,8 +145,8 @@
           <!-- toggle info panel -->
           <TButton
             :icon="IconInformation"
-            :tooltip="config.infoPanel.show ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
-            :selected="config.infoPanel.show"
+            :tooltip="isInfoPanelOpen ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
+            :selected="isInfoPanelOpen"
             :disabled="isIndexing"
             @click="toggleInfoPanel"
           />
@@ -323,13 +308,13 @@
       </div>
 
       <!-- info panel splitter -->
-      <div v-if="(config.infoPanel.show || config.dupPanel.show) && !uiStore.isFullScreen"
+      <div v-if="(config.rightPanel.show || selectMode) && !uiStore.isFullScreen"
         class="w-1 shrink-0 transition-colors mt-12"
         :class="{
           'mb-8': config.settings.showStatusBar,
           'mb-1': !config.settings.showStatusBar,
-          'hover:bg-primary cursor-col-resize': config.infoPanel.show || config.dupPanel.show,
-          'bg-primary': (config.infoPanel.show || config.dupPanel.show) && isDraggingInfoPanel,
+          'hover:bg-primary cursor-col-resize': config.rightPanel.show || selectMode,
+          'bg-primary': (config.rightPanel.show || selectMode) && isDraggingInfoPanel,
         }" 
         @mousedown="startDraggingInfoPanelSplitter"
       ></div>
@@ -343,37 +328,47 @@
         leave-from-class="opacity-100"
         leave-to-class="!w-0 opacity-0"
       >
-        <div v-if="(config.infoPanel.show || config.dupPanel.show) && !uiStore.isFullScreen"
+        <div v-if="(config.rightPanel.show || selectMode) && !uiStore.isFullScreen"
           :class="[ 'pt-12 pr-1', config.settings.showStatusBar ? 'pb-8' : 'pb-1' ]" 
           :style="{ width: activeRightPanelWidth + '%' }">
           <DedupPane
-            v-if="config.dupPanel.show"
+            v-if="isDedupPanelOpen"
             :file-list="fileList"
             :selected-file-id="fileList[selectedItemIndex]?.id"
             :dedup-scan-key="dedupScanKey"
             :dedup-query-params="dedupQueryParams"
-            @close="config.dupPanel.show = false"
+            @close="config.rightPanel.show = false"
             @select-file="handleDedupSelectFile"
             @preview-file="handleDedupPreviewFile"
             @compare-group="handleDedupCompareGroup"
             @trash-selected-duplicates="handleDedupTrashSelectedDuplicates"
           />
+          <SelectionPanel
+            v-else-if="selectMode"
+            :selected-files="selectedFiles"
+            :selected-count="selectedCount"
+            :selected-size="selectedSize"
+            @close="handleSelectMode(false)"
+            @select-all="selectAllInCurrentList"
+            @select-none="selectNoneInCurrentList"
+            @select-invert="invertSelectionInCurrentList"
+            @move-to="showMoveTo = true"
+            @copy-to="showCopyTo = true"
+            @trash="openTrashMsgbox()"
+            @favorite-all="selectModeSetFavorites(true)"
+            @unfavorite-all="selectModeSetFavorites(false)"
+            @set-rating-all="selectModeSetRatings"
+            @tag-all="clickTag"
+          />
           <FileInfo
             v-else
             ref="fileInfoRef"
             :fileInfo="fileList[selectedItemIndex]" 
-            :multiSelect="selectMode"
-            :selectedFiles="selectedFiles"
-            @close="checkUnsavedChanges(() => config.infoPanel.show = false)" 
+            @close="checkUnsavedChanges(() => config.rightPanel.show = false)" 
             @success="onFileSaved(true)"
             @failed="onFileSaved(false)"
-            @deselect="(file: any) => file.isSelected = false"
-            @favoriteAll="selectModeSetFavorites(true)"
-            @unfavoriteAll="selectModeSetFavorites(false)"
             @toggleFavorite="toggleFavorite"
             @setRating="setSelectedFileRating"
-            @setRatingAll="selectModeSetRatings"
-            @tagAll="clickTag"
             @quick-edit-tag="clickTag"
             @quick-edit-comment="openCommentEditor"
           />
@@ -542,7 +537,6 @@ import { isWin, isMac, setTheme, separator,
          shortenFilename, getSlideShowInterval } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
-import ContextMenu from '@/components/ContextMenu.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
@@ -555,13 +549,13 @@ import EditImage from '@/components/EditImage.vue';
 import AdjustImage from '@/components/AdjustImage.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import DedupPane from '@/components/DedupPane.vue';
+import SelectionPanel from '@/components/SelectionPanel.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
 import StatusBar from '@/components/StatusBar.vue';
 
 import {
   IconPhotoAll,
-  IconArrowDown,
   IconClose,
   IconCheckAll,
   IconCheckNone,
@@ -772,7 +766,9 @@ const errorMessage = ref('');
 const showUnsavedChangesMsgbox = ref(false);
 const pendingAction = ref<(() => void) | null>(null);
 const fileInfoRef = ref<any>(null);
-const activeRightPanelWidth = computed(() => config.dupPanel.show ? config.dupPanel.width : config.infoPanel.width);
+const isDedupPanelOpen = computed(() => config.rightPanel.show && config.rightPanel.mode === 'dedup');
+const isInfoPanelOpen = computed(() => config.rightPanel.show && config.rightPanel.mode === 'info');
+const activeRightPanelWidth = computed(() => config.rightPanel.width);
 
 const confirmSave = async () => {
   showUnsavedChangesMsgbox.value = false;
@@ -802,7 +798,7 @@ const cancelDiscard = () => {
 
 // Check if current file has unsaved changes
 const hasUnsavedChanges = computed(() => {
-  if (!config.infoPanel.show) return false;
+  if (!isInfoPanelOpen.value) return false;
   const currentFile = fileList.value[selectedItemIndex.value];
   return uiStore.hasActiveChanges(currentFile);
 });
@@ -986,109 +982,6 @@ const backupState = ref<any>(null);
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
 let unlistenFaceIndexProgress: (() => void) | null = null;
-
-// more menuitems
-const moreMenuItems = computed(() => {
-  const baseItems = [
-    {
-      label: localeMsg.value.menu.select.all,
-      icon: IconCheckAll,
-      action: () => {
-        for (let i = 0; i < fileList.value.length; i++) {
-          fileList.value[i].isSelected = true;
-        }
-        selectMode.value = true;
-      }
-    },
-    {
-      label: localeMsg.value.menu.select.none,
-      icon: IconCheckNone,
-      action: () => {
-        for (let i = 0; i < fileList.value.length; i++) {
-          fileList.value[i].isSelected = false;
-        }
-        selectMode.value = true;
-      }
-    },
-    {
-      label: localeMsg.value.menu.select.invert,
-      action: () => {
-        for (let i = 0; i < fileList.value.length; i++) {
-          fileList.value[i].isSelected = !fileList.value[i].isSelected;
-        }
-        selectMode.value = true;
-      }
-    },
-    {
-      label: "-",   // separator
-      action: null
-    }
-  ];
-
-  const fileOperationItems = [
-    {
-      label: localeMsg.value.menu.file.move_to,
-      icon: IconMoveTo,
-      disabled: selectedCount.value === 0,
-      action: () => {
-        showMoveTo.value = true;
-      }
-    },
-    {
-      label: localeMsg.value.menu.file.copy_to,
-      disabled: selectedCount.value === 0,
-      icon: IconCopyTo,
-      action: () => {
-        showCopyTo.value = true;
-      }
-    },
-    {
-      label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
-      icon: IconTrash,
-      disabled: selectedCount.value === 0,
-      action: () => {
-        openTrashMsgbox();
-      }
-    },
-  ];
-
-  const metadataItems = [
-    { 
-      label: "-",   // separator
-      action: null
-    },
-    {
-      label: localeMsg.value.menu.meta.favorite,
-      icon: IconHeartFilled,
-      disabled: selectedCount.value === 0,
-      action: () => {
-        selectModeSetFavorites(true);
-      }
-    },
-    {
-      label: localeMsg.value.menu.meta.unfavorite,
-      icon: IconHeart,
-      disabled: selectedCount.value === 0,
-      action: () => {
-        selectModeSetFavorites(false);
-      }
-    },
-    {
-      label: localeMsg.value.menu.meta.tag,
-      icon: IconTag,
-      disabled: selectedCount.value === 0,
-      action: () => {
-        clickTag();
-      }
-    }
-  ];
-
-  let items = [...baseItems];
-  items.push(...fileOperationItems);
-  items.push(...metadataItems);
-
-  return items;
-});
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -1472,6 +1365,8 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   else if (event.key === 'Space' || event.key === ' ') {
     if (showQuickView.value) {
       quickViewZoomFit.value = !quickViewZoomFit.value;
+    } else if (config.settings.grid.showFilmStrip) {
+      filmStripZoomFit.value = !filmStripZoomFit.value;
     } else if (!config.settings.grid.showFilmStrip) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
@@ -1768,7 +1663,7 @@ watch(() => config.settings.language, (newLanguage) => {
 });
 
 // Load tags when info panel is opened
-watch(() => config.infoPanel.show, async (newShow) => {
+watch(() => isInfoPanelOpen.value, async (newShow) => {
   if (newShow && selectedItemIndex.value >= 0 && selectedItemIndex.value < fileList.value.length) {
     const file = fileList.value[selectedItemIndex.value];
     if (file.has_tags && !file.tags) {
@@ -2768,7 +2663,7 @@ const onCopyTo = async () => {
 const onTrashFile = async () => {
   const deletedFileIds: number[] = [];
   const shouldAdvanceDedup =
-    config.dupPanel.show &&
+    isDedupPanelOpen.value &&
     !!dedupTrashGroupKey.value;
   const preDeleteGroups = shouldAdvanceDedup ? buildDuplicateGroups(fileList.value) : [];
   const currentDedupGroupKey = dedupTrashGroupKey.value;
@@ -3088,8 +2983,29 @@ const openCommentEditor = () => {
   }
 }
 
+const selectAllInCurrentList = () => {
+  for (let i = 0; i < fileList.value.length; i++) {
+    fileList.value[i].isSelected = true;
+  }
+  selectMode.value = true;
+};
+
+const selectNoneInCurrentList = () => {
+  for (let i = 0; i < fileList.value.length; i++) {
+    fileList.value[i].isSelected = false;
+  }
+  selectMode.value = true;
+};
+
+const invertSelectionInCurrentList = () => {
+  for (let i = 0; i < fileList.value.length; i++) {
+    fileList.value[i].isSelected = !fileList.value[i].isSelected;
+  }
+  selectMode.value = true;
+};
+
 const handleSelectMode = (value: any) => {
-  if(fileList.value.length === 0 || showQuickView.value || isIndexing.value) return;
+  if (value && (fileList.value.length === 0 || showQuickView.value || isIndexing.value)) return;
 
   selectMode.value = value;
   if(!selectMode.value) {
@@ -3098,6 +3014,7 @@ const handleSelectMode = (value: any) => {
     }
   } else {
     showQuickView.value = false;
+    config.rightPanel.show = false;
   }
 };
 
@@ -3114,23 +3031,25 @@ const handleSortTypeSelect = (option: any, extendOption: any) => {
 
 const toggleInfoPanel = () => {
   checkUnsavedChanges(() => {
-    if (config.infoPanel.show) {
-      config.infoPanel.show = false;
+    if (isInfoPanelOpen.value) {
+      config.rightPanel.show = false;
       return;
     }
-    config.dupPanel.show = false;
-    config.infoPanel.show = true;
+    handleSelectMode(false);
+    config.rightPanel.mode = 'info';
+    config.rightPanel.show = true;
   });
 };
 
 const toggleDedupPanel = () => {
   checkUnsavedChanges(() => {
-    if (config.dupPanel.show) {
-      config.dupPanel.show = false;
+    if (isDedupPanelOpen.value) {
+      config.rightPanel.show = false;
       return;
     }
-    config.infoPanel.show = false;
-    config.dupPanel.show = true;
+    handleSelectMode(false);
+    config.rightPanel.mode = 'dedup';
+    config.rightPanel.show = true;
   });
 };
 
@@ -3253,7 +3172,7 @@ async function updateSelectedImage(index: number) {
   if(index < 0 || index >= fileList.value.length) return;
 
   // update the tags for the selected file
-  if(config.infoPanel.show && fileList.value[index].has_tags) {
+  if(isInfoPanelOpen.value && fileList.value[index].has_tags) {
     fileList.value[index].tags = await getTagsForFile(fileList.value[index].id);
   }
 }
@@ -3517,11 +3436,7 @@ function handleMouseMove(event: MouseEvent) {
 
     // Limit width between 20% and 80%
     const clampedWidth = Math.min(Math.max(newWidthPercent, 20), 80);
-    if (config.dupPanel.show) {
-      config.dupPanel.width = clampedWidth;
-    } else {
-      config.infoPanel.width = clampedWidth;
-    }
+    config.rightPanel.width = clampedWidth;
   }
 }
 

@@ -21,7 +21,8 @@
         :key="d.date"
         class="size-6 p-1 text-xs flex items-center justify-center rounded-box"
         :class="{
-          'bg-base-content/5 cursor-default scale-80': d.count === 0,
+          'bg-base-content/5 cursor-default scale-80': d.count === 0 && isWeekend(d.date),
+          'bg-base-content/10 cursor-default scale-80': d.count === 0 && !isWeekend(d.date),
           'text-base-content/70 hover:text-base-content cursor-pointer': d.count > 0,
           'bg-base-content/20': d.count > 0 && d.count < 10,
           'bg-base-content/50': d.count >= 10 && d.count < 100,
@@ -87,6 +88,10 @@ const monthDates = getMonthDates(props.year, props.month, props.dates);
 
 // Check if the given date is today
 const isTodayFn = (date: number) => isToday(new Date(props.year, props.month - 1, date));
+const isWeekend = (date: number) => {
+  const weekday = getDay(new Date(props.year, props.month - 1, date));
+  return weekday === 0 || weekday === 6;
+};
 
 // Check if the date is selected
 const isSelected = (year: number, month: number, date: number) => libConfig.calendar.year === year &&
@@ -124,4 +129,3 @@ const clickDate = (year: number, month: number, date: number) => {
 };
 
 </script>
-

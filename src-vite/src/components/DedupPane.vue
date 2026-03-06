@@ -42,10 +42,25 @@
           <div class="flex items-center gap-2 text-base-content/70">
             <span class="font-bold uppercase text-xs tracking-wide">{{ $t('info_panel.dedup.groups_title') }}</span>
             <span class="ml-auto text-xs font-semibold text-base-content/65">
-              {{ $t('info_panel.dedup.duplicate_files_summary', { count: duplicateFileCount.toLocaleString(), size: formatFileSize(reclaimableBytes) }) }}
+              {{ $t('info_panel.dedup.duplicate_files_summary', { count: totalDuplicateFileCount.toLocaleString(), size: formatFileSize(totalReclaimableBytes) }) }}
             </span>
           </div>
-          <div class="text-[11px] text-base-content/45">
+          <div class="flex flex-wrap items-center gap-1">
+            <button class="btn btn-xs btn-ghost text-base-content/70 hover:text-base-content" @click="selectAllDuplicatesInList">
+              <IconCheckAll class="w-3.5 h-3.5" />
+              {{ $t('menu.select.all') }}
+            </button>
+            <button
+              class="btn btn-xs btn-ghost"
+              :class="selectedDuplicatesCountInList === 0 ? 'text-base-content/30' : 'text-base-content/70 hover:text-base-content'"
+              :disabled="selectedDuplicatesCountInList === 0"
+              @click="clearAllSelectedInList"
+            >
+              <IconCheckNone class="w-3.5 h-3.5" />
+              {{ $t('menu.select.none') }}
+            </button>
+          </div>
+          <div v-if="showGroupLimitHint" class="text-[11px] text-base-content/45">
             {{ $t('info_panel.dedup.group_limit_hint', { count: DEDUP_GROUP_LIMIT }) }}
           </div>
           <div class="space-y-1 max-h-40 overflow-y-auto overflow-x-hidden pr-1">
@@ -75,17 +90,17 @@
           </div>
 
           <div class="flex flex-wrap gap-1">
-            <button class="btn btn-xs btn-ghost text-base-content/60 hover:text-base-content" @click="emit('compare-group', String(activeGroup.id), activeGroup.keepItem?.file_id || 0)">
+            <button class="btn btn-xs btn-ghost text-base-content/70 hover:text-base-content" @click="emit('compare-group', String(activeGroup.id), activeGroup.keepItem?.file_id || 0)">
               <IconSplitOn class="w-3.5 h-3.5" />
               {{ $t('info_panel.dedup.compare_group') }}
             </button>
-            <button class="btn btn-xs btn-ghost text-base-content/60 hover:text-base-content" @click="selectGroupDuplicates(activeGroup.id, activeGroup.keepItem?.file_id || 0)">
+            <button class="btn btn-xs btn-ghost text-base-content/70 hover:text-base-content" @click="selectGroupDuplicates(activeGroup.id, activeGroup.keepItem?.file_id || 0)">
               <component :is="isAllGroupDuplicatesSelected(activeGroup.id) ? IconCheckNone : IconCheckAll" class="w-3.5 h-3.5" />
               {{ isAllGroupDuplicatesSelected(activeGroup.id) ? $t('menu.select.none') : $t('info_panel.dedup.select_group_duplicates') }}
             </button>
             <button
               class="btn btn-xs btn-ghost"
-              :class="selectedDeleteCount === 0 ? 'text-base-content/35 opacity-45' : 'text-error'"
+              :class="selectedDeleteCount === 0 ? 'text-base-content/30' : 'text-error'"
               :disabled="selectedDeleteCount === 0"
               @click="trashSelectedDuplicates(activeGroup.id, selectedDeleteBytes)"
             >
@@ -134,9 +149,9 @@
                   ? 'border-primary/50 bg-primary/8'
                   : 'border-base-content/8 bg-base-100/30 hover:border-base-content/18 hover:bg-base-100/50',
                 (isDupSelected(activeGroup.id, item.file_id) && selectedFileId === item.file_id)
-                  ? '!border-warning/50 !bg-warning/8'
+                  ? 'border-warning/50 bg-warning/8 hover:border-warning/50 hover:bg-warning/8'
                   : (isDupSelected(activeGroup.id, item.file_id)
-                    ? '!border-warning/18 !bg-warning/4 hover:!border-warning/28 hover:!bg-warning/8'
+                    ? 'border-warning/18 bg-warning/4 hover:border-warning/28 hover:bg-warning/8'
                     : ''),
               ]"
               @click="onDuplicateItemClick(activeGroup.id, item.file_id)"
@@ -185,7 +200,7 @@ import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { formatFileSize, getFolderPath, isMac } from '@/common/utils';
 import TButton from '@/components/TButton.vue';
 import { IconCheckAll, IconCheckNone, IconClose, IconSimilar, IconSplitOn, IconTrash, IconRefresh } from '@/common/icons';
-import { dedupStartScan, dedupGetScanStatus, listenDedupScanProgress, dedupListGroups, dedupSetKeep, getFileThumb } from '@/common/api';
+import { dedupStartScan, dedupGetScanStatus, dedupGetOverview, listenDedupScanProgress, dedupListGroups, dedupSetKeep, getFileThumb } from '@/common/api';
 import { config } from '@/common/config';
 
 const dedupPaneGlobalState = ((globalThis as any).__lapDedupPaneState ||= {
@@ -227,6 +242,9 @@ const unlistenDedupProgress = ref<null | (() => void)>(null);
 const queuedScanKey = ref('');
 const rawGroups = ref<any[]>([]);
 const selectedGroupId = ref<number | null>(null);
+const totalGroupCount = ref(0);
+const totalDuplicateFileCount = ref(0);
+const totalReclaimableBytes = ref(0);
 const duplicateGroups = computed(() =>
   rawGroups.value.map((group: any) => {
     const keepItem = (group.items || []).find((i: any) => i.is_keep === 1) || null;
@@ -250,12 +268,13 @@ const activeGroupIndex = computed(() => {
   return duplicateGroups.value.findIndex(group => group.id === activeGroup.value.id);
 });
 
-const duplicateFileCount = computed(() =>
-  duplicateGroups.value.reduce((sum, group) => sum + Number(group.file_count || 0), 0)
-);
-
-const reclaimableBytes = computed(() =>
-  duplicateGroups.value.reduce((sum, group) => sum + Number(group.reclaimableBytes || 0), 0)
+const showGroupLimitHint = computed(() => totalGroupCount.value > DEDUP_GROUP_LIMIT);
+const selectedDuplicatesCountInList = computed(() =>
+  duplicateGroups.value.reduce((sum, group) => {
+    const set = selectedDupIdsByGroup.value.get(group.id);
+    if (!set || set.size === 0) return sum;
+    return sum + group.duplicateItems.filter((item: any) => set.has(item.file_id)).length;
+  }, 0)
 );
 
 const selectedDeleteCount = computed(() => {
@@ -324,6 +343,22 @@ function selectGroupDuplicates(groupId: number, keepFileId: number) {
   }
 }
 
+function selectAllDuplicatesInList() {
+  for (const group of duplicateGroups.value) {
+    const set = getDupSelectedSet(group.id);
+    set.clear();
+    for (const item of group.duplicateItems) {
+      if (item.file_id > 0) set.add(item.file_id);
+    }
+  }
+}
+
+function clearAllSelectedInList() {
+  for (const key of Array.from(selectedDupIdsByGroup.value.keys())) {
+    selectedDupIdsByGroup.value.get(key)?.clear();
+  }
+}
+
 function isAllGroupDuplicatesSelected(groupId: number) {
   const group = duplicateGroups.value.find(g => g.id === groupId);
   if (!group || group.duplicateItems.length === 0) return false;
@@ -367,12 +402,25 @@ async function hydrateGroupThumbnails(groups: any[]) {
   await Promise.all(tasks);
 }
 
+async function refreshOverview() {
+  try {
+    const overview = await dedupGetOverview();
+    if (!overview) return;
+    totalGroupCount.value = Number(overview.total_groups || 0);
+    totalDuplicateFileCount.value = Number(overview.total_files || 0);
+    totalReclaimableBytes.value = Number(overview.total_reclaimable_bytes || 0);
+  } catch (error) {
+    console.error('refreshOverview error:', error);
+  }
+}
+
 async function fetchGroups(preferredGroupId: number | null = null) {
   try {
     const groups = await dedupListGroups(1, DEDUP_GROUP_LIMIT, 'size_desc', 'all');
     const normalized = Array.isArray(groups) ? groups : [];
     await hydrateGroupThumbnails(normalized);
     rawGroups.value = normalized;
+    await refreshOverview();
 
     const available = new Set(rawGroups.value.map((group: any) => Number(group.id)));
     for (const key of Array.from(selectedDupIdsByGroup.value.keys())) {
@@ -407,6 +455,7 @@ async function triggerBackendDedup(force = false) {
   if (!force && dedupPaneGlobalState.lastScanKey === props.dedupScanKey) {
     isDedupLoading.value = true;
     const status = await dedupGetScanStatus();
+    totalGroupCount.value = Math.max(Number(status?.groups || 0), rawGroups.value.length);
     if (status?.state === 'running') {
       queuedScanKey.value = props.dedupScanKey;
       return;
@@ -420,6 +469,7 @@ async function triggerBackendDedup(force = false) {
 
   try {
     const status = await dedupGetScanStatus();
+    totalGroupCount.value = Math.max(Number(status?.groups || 0), rawGroups.value.length);
     if (status?.state === 'running') {
       queuedScanKey.value = props.dedupScanKey;
       return;
@@ -429,6 +479,7 @@ async function triggerBackendDedup(force = false) {
     dedupPaneGlobalState.lastScanKey = props.dedupScanKey;
 
     const latest = await dedupGetScanStatus();
+    totalGroupCount.value = Math.max(Number(latest?.groups || 0), rawGroups.value.length);
     if (latest?.state !== 'running') {
       isDedupLoading.value = false;
       await fetchGroups();
@@ -446,6 +497,9 @@ watch(
       isDedupLoading.value = false;
       rawGroups.value = [];
       selectedGroupId.value = null;
+      totalGroupCount.value = 0;
+      totalDuplicateFileCount.value = 0;
+      totalReclaimableBytes.value = 0;
       return;
     }
     isDedupLoading.value = true;
@@ -473,6 +527,7 @@ onMounted(async () => {
     isDedupLoading.value = true;
   }
   const status = await dedupGetScanStatus();
+  await refreshOverview();
   if (status?.state === 'running') {
     isDedupLoading.value = true;
   } else if (props.dedupScanKey) {
@@ -481,6 +536,7 @@ onMounted(async () => {
 
   unlistenDedupProgress.value = await listenDedupScanProgress(async (event: any) => {
     const state = event?.payload?.state;
+    totalGroupCount.value = Math.max(Number(event?.payload?.groups || 0), totalGroupCount.value);
     if (state === 'running') {
       isDedupLoading.value = true;
       return;

@@ -158,7 +158,7 @@
       "placeholder": "Имя файла"
     },
     "filter": {
-      "select_mode": "Выбор",
+      "select_mode": "Выделение",
       "select_count": "Выбрано {count}",
       "sort_type_options": [
         "Время",
@@ -203,8 +203,10 @@
     "type_images": "Изображения",
     "type_video": "Видео",
     "type_videos": "Видео",
+    "select_title": "Выбор",
     "favorite_all": "Избранное",
     "unfavorite_all": "Убрать",
+    "action": "Действие",
     "tag_all": "Тег",
     "dedup": {
       "title": "Дубликаты",

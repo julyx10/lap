@@ -25,13 +25,13 @@
         leave-to-class="!w-0 opacity-0"
       >
         <!-- left pane -->
-        <div v-if="config.main.showLeftPane && !uiStore.isFullScreen"
+        <div v-if="config.leftPanel.show && !uiStore.isFullScreen"
           :class="[
             'relative flex bg-base-200 rounded-box my-1 ml-1 z-10 select-none', 
             !showPanel && isMac ? 'mt-12 mb-8': '',
             isDraggingSplitter ? 'no-transition' : 'transition-all duration-200 ease-in-out',
           ]"
-          :style="{ width: showPanel ? config.main.leftPaneWidth + 'px' : '64px' }"
+          :style="{ width: showPanel ? config.leftPanel.width + 'px' : '64px' }"
           data-tauri-drag-region
         >
           <!-- side bar -->
@@ -113,8 +113,8 @@
       <div v-if="!uiStore.isFullScreen"
         class="w-1 transition-colors shrink-0"
         :class="{
-          'hover:bg-primary cursor-col-resize': config.main.showLeftPane && showPanel,
-          'bg-primary': config.main.showLeftPane && showPanel && isDraggingSplitter,
+          'hover:bg-primary cursor-col-resize': config.leftPanel.show && showPanel,
+          'bg-primary': config.leftPanel.show && showPanel && isDraggingSplitter,
         }" 
         @mousedown="startDraggingSplitter"
         @mouseup="stopDraggingSplitter"
@@ -423,7 +423,7 @@ function clickSidebar(index: number) {
 
 // Dragging the splitter
 function startDraggingSplitter(event: MouseEvent) {
-  if(!config.main.showLeftPane) return; // no left pane or left pane is hidden
+  if(!config.leftPanel.show) return; // no left pane or left pane is hidden
 
   isDraggingSplitter.value = true;
   document.addEventListener('mousemove', handleMouseMove);
@@ -441,7 +441,7 @@ function stopDraggingSplitter(event: MouseEvent) {
 function handleMouseMove(event: MouseEvent) {
   if (isDraggingSplitter.value) {
     const maxLeftPaneWidth = window.innerWidth / 2;
-    config.main.leftPaneWidth = Math.max(160, Math.min(event.clientX - 6, maxLeftPaneWidth)); // -2: border width(2px)
+    config.leftPanel.width = Math.max(160, Math.min(event.clientX - 6, maxLeftPaneWidth)); // -2: border width(2px)
   }
 }
 

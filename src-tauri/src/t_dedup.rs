@@ -580,6 +580,35 @@ pub struct DedupGroupItem {
     pub file: Option<AFile>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DedupOverview {
+    pub total_groups: i64,
+    pub total_files: i64,
+    pub total_reclaimable_bytes: i64,
+}
+
+pub fn get_overview() -> Result<DedupOverview, String> {
+    let conn = get_db_conn()?;
+    let (total_groups, total_files, total_reclaimable_bytes) = conn
+        .query_row(
+            "SELECT 
+                COALESCE(COUNT(*), 0),
+                COALESCE(SUM(file_count), 0),
+                COALESCE(SUM(total_size - file_size), 0)
+             FROM duplicate_groups
+             WHERE file_count > 1",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )
+        .map_err(|e| e.to_string())?;
+
+    Ok(DedupOverview {
+        total_groups,
+        total_files,
+        total_reclaimable_bytes,
+    })
+}
+
 pub fn list_groups(
     page: u32,
     page_size: u32,

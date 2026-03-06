@@ -203,8 +203,10 @@
     "type_images": "Bilder",
     "type_video": "Video",
     "type_videos": "Videos",
+    "select_title": "Auswahl",
     "favorite_all": "Favorit",
     "unfavorite_all": "Entfernen",
+    "action": "Aktion",
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplikate",

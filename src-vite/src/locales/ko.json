@@ -158,7 +158,7 @@
       "placeholder": "파일 이름"
     },
     "filter": {
-      "select_mode": "선택",
+      "select_mode": "선택 항목",
       "select_count": "{count}개 선택됨",
       "sort_type_options": [
         "시간",
@@ -203,8 +203,10 @@
     "type_images": "개 이미지",
     "type_video": "개 비디오",
     "type_videos": "개 비디오",
+    "select_title": "선택",
     "favorite_all": "즐겨찾기",
     "unfavorite_all": "즐겨찾기 해제",
+    "action": "작업",
     "tag_all": "태그",
     "dedup": {
       "title": "중복",

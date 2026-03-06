@@ -158,7 +158,7 @@
       "placeholder": "Search file name"
     },
     "filter": {
-      "select_mode": "Select",
+      "select_mode": "Selection",
       "select_count": "{count} selected",
       "sort_type_options": [
         "Time",
@@ -203,8 +203,10 @@
     "type_images": "Images",
     "type_video": "Video",
     "type_videos": "Videos",
+    "select_title": "Select",
     "favorite_all": "Favorite",
     "unfavorite_all": "Unfavorite",
+    "action": "Action",
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplicates",

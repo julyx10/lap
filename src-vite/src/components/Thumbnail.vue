@@ -39,7 +39,7 @@
       />
       <div
         v-if="statusBadges.length > 0"
-        class="pointer-events-none absolute left-1 top-1 z-10 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-1"
+        class="pointer-events-none absolute left-0.5 top-0.5 z-10 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-1"
       >
         <div
           v-for="badge in statusBadges"
@@ -70,19 +70,20 @@
       </div>
 
       <!-- select checkbox -->
-      <div v-if="selectMode" class="absolute right-1 top-0.5">
-        <component 
-          :is="file?.isSelected ? IconChecked : IconUnChecked" 
-          :class="[
-            't-icon-size-sm', 
-            file?.isSelected && uiStore.inputStack.length === 0 ? 'text-primary hover:text-primary' : 'text-base-content/30 hover:text-base-content/70'
-          ]" 
-          @click.stop="(event: MouseEvent) => $emit('select-toggled', event.shiftKey)"
-        />
+      <div v-if="selectMode" class="absolute right-0.5 top-0.5">
+        <label class="flex items-center text-primary cursor-pointer" @click.stop>
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm"
+            :class="file?.isSelected ? 'checkbox-primary' : ''"
+            :checked="Boolean(file?.isSelected)"
+            @click.stop="(event: MouseEvent) => $emit('select-toggled', event.shiftKey)"
+          />
+        </label>
       </div>
 
       <!-- context menu -->
-      <div v-if="!selectMode" class="absolute right-0 top-0">
+      <div v-if="!selectMode" class="absolute right-0.5 top-0.5">
         <ContextMenu
           :class="[
             !isSelected ? 'invisible group-hover:visible' : ''
@@ -141,8 +142,6 @@ import {
   IconHeartFilled,
   IconTag,
   IconRotate,
-  IconChecked,
-  IconUnChecked,
   IconComment,
   IconClock,
   IconStarFilled,

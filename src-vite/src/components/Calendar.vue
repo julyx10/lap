@@ -40,6 +40,13 @@
       <div ref="scrollable"
         class="flex-1 flex flex-col overflow-x-hidden overflow-y-auto"
       >
+        <div v-if="!config.calendar.isMonthly" class="mx-auto min-w-48 rounded-box border border-transparent">
+          <div class="px-2 pb-1 grid grid-cols-7 gap-2 text-center text-[11px] font-semibold text-base-content/30">
+            <div v-for="(weekday, idx) in weekdayLabels" :key="`weekday-${idx}`" class="size-6 flex items-center justify-center">
+              {{ weekday }}
+            </div>
+          </div>
+        </div>
         <div v-for="item in sorted_calendar_items" 
           :key="item.year"
           :class="[
@@ -89,6 +96,7 @@ const props = defineProps({
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
+const weekdayLabels = computed(() => localeMsg.value.calendar?.weekdays || ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
 
 const scrollable = ref<HTMLDivElement | null>(null); // Ref for the scrollable element
 type CalendarDates = Record<number, Record<number, { date: number; count: number }[]>>;

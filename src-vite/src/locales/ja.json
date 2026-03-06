@@ -158,7 +158,7 @@
       "placeholder": "ファイル名を検索"
     },
     "filter": {
-      "select_mode": "選択",
+      "select_mode": "選択項目",
       "select_count": "{count} 個選択中",
       "sort_type_options": [
         "時間",
@@ -203,8 +203,10 @@
     "type_images": "枚の画像",
     "type_video": "本の動画",
     "type_videos": "本の動画",
+    "select_title": "選択",
     "favorite_all": "お気に入り",
     "unfavorite_all": "お気に入り解除",
+    "action": "操作",
     "tag_all": "タグ",
     "dedup": {
       "title": "重複",

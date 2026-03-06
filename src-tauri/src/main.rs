@@ -212,6 +212,7 @@ fn main() {
             t_cmds::dedup_get_scan_status,
             t_cmds::dedup_cancel_scan,
             t_cmds::dedup_list_groups,
+            t_cmds::dedup_get_overview,
             t_cmds::dedup_get_group,
             t_cmds::dedup_set_keep,
             t_cmds::dedup_delete_selected,
