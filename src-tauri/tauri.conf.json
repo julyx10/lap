@@ -3,8 +3,8 @@
   "version": "0.1.7",
   "identifier": "com.julyx10.lap",
   "build": {
-    "beforeBuildCommand": "pnpm build",
-    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm --dir ../src-vite build",
+    "beforeDevCommand": "pnpm --dir ../src-vite dev",
     "devUrl": "http://localhost:3580",
     "frontendDist": "../src-vite/dist"
   },

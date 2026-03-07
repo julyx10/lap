@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="w-full h-full relative flex flex-col items-center justify-center group"
+    :class="['w-full relative flex flex-col items-center justify-center', toolbarOnly ? '' : 'h-full group']"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
     @contextmenu.prevent="handleContextMenu"
@@ -8,20 +8,19 @@
   >
     <!-- Toolbar -->
     <div 
+      v-if="showToolbar"
       id="responsiveDiv"
       :class="computedToolbarClass"
+      :style="showWindowControls && isWin ? { paddingLeft: '144px', paddingRight: '144px' } : undefined"
       data-tauri-drag-region
     >
-      <!-- File Name (Pinned Mode) -->
-      <!-- <div 
-        v-if="mode === 2 && !isFullScreen" 
-        class="absolute left-20 text-sm text-base-content/70 truncate select-none"
-        :style="{ maxWidth: filenameMaxWidth + 'px' }"
-        data-tauri-drag-region
-      >
-        {{ fileIndex + 1 }}/{{ fileCount }} {{ file?.name }}
-      </div> -->
-      
+      <!-- App Icon + Title (left side, ImageViewer on Windows) -->
+      <div v-if="isWin && mode === 2" class="absolute left-0 top-0 h-10 flex items-center px-3 select-none" data-tauri-drag-region>
+        <img :src="iconLogo" class="w-5 h-5 mr-2 rounded" data-tauri-drag-region />
+        <span class="text-nowrap text-sm text-base-content/70 overflow-hidden whitespace-pre text-ellipsis" data-tauri-drag-region>
+          {{ $t('image_viewer.title') }}
+        </span>
+      </div>
       <div ref="buttonsRef" class="flex items-center space-x-1">
         <TButton
           :icon="IconPrev"
@@ -135,6 +134,25 @@
             @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
           />
         </template>
+        <!-- Split/Sync Viewport Buttons (ImageViewer mode only) -->
+        <template v-if="mode === 2">
+          <IconSeparator class="t-icon-size-sm text-base-content/30" />
+          <TButton
+            :icon="IconLink"
+            :selected="isSplit && isSyncViewport"
+            :disabled="!isSplit"
+            :tooltip="isSplit
+              ? (isSyncViewport ? $t('image_viewer.toolbar.sync_viewport_off') : $t('image_viewer.toolbar.sync_viewport_on'))
+              : $t('image_viewer.toolbar.sync_viewport_need_split')"
+            @click="$emit('item-action', { action: 'toggle-sync-viewport' })"
+          />
+          <TButton
+            :icon="IconSplitOn"
+            :selected="isSplit"
+            :tooltip="isSplit ? $t('image_viewer.toolbar.split_off') : $t('image_viewer.toolbar.split_on')"
+            @click="$emit('item-action', { action: 'toggle-split' })"
+          />
+        </template>
         <ContextMenu v-if="mode !== 2"
           ref="contextMenuRef"
           :iconMenu="IconMore"
@@ -166,6 +184,25 @@
       </div>
     </div>
 
+    <!-- Window Control Buttons (top-right) -->
+    <div v-if="showToolbar && showWindowControls && isWin" class="absolute top-0 right-0 z-[90] flex items-center" @mousedown.stop>
+      <IconWinMinus 
+        class="p-3 w-12 h-10 text-base-content/70 hover:text-base-content hover:bg-base-100 transition-colors duration-300 cursor-pointer" 
+        @click.stop="minimizeWindow" 
+      />
+      <component :is="isMaximized ? IconWinRestore : IconWinMaximize" 
+        class="p-3 w-12 h-10 text-base-content/70 hover:text-base-content hover:bg-base-100 transition-colors duration-300 cursor-pointer" 
+        @click.stop="toggleMaximizeWindow" 
+      />
+      <IconClose 
+        class="p-3 w-12 h-10 text-base-content/70 hover:text-base-content hover:bg-red-500 transition-colors duration-300 cursor-pointer" 
+        @mousedown.stop="$emit('close')"
+        @click.stop="$emit('close')" 
+      />
+    </div>
+
+    <!-- Elements below only rendered when not toolbar-only -->
+    <template v-if="!toolbarOnly">
     <!-- Previous Button (Overlay) -->
     <button 
       v-if="!isSlideShow"
@@ -259,12 +296,14 @@
     </div>
 
     <ToolTip ref="toolTipRef" />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { defineAsyncComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { config, libConfig } from '@/common/config';
 import { isWin, getSlideShowInterval } from '@/common/utils';
 
@@ -298,9 +337,15 @@ import {
   IconComment,
   IconRotate,
   IconDot,
+  IconWinMinus,
+  IconWinMaximize,
+  IconWinRestore,
+  IconLink,
+  IconSplitOn,
 } from '@/common/icons';
 import { isMac } from '@/common/utils';
 import ContextMenu from '@/components/ContextMenu.vue';
+import iconLogo from '@/assets/images/logo.png';
 import { useFileMenuItems } from '@/common/fileMenu';
 
 const Video = defineAsyncComponent(() => import('@/components/Video.vue'));
@@ -371,6 +416,26 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  isSplit: {
+    type: Boolean,
+    default: false
+  },
+  isSyncViewport: {
+    type: Boolean,
+    default: false
+  },
+  showWindowControls: {
+    type: Boolean,
+    default: false
+  },
+  showToolbar: {
+    type: Boolean,
+    default: true
+  },
+  toolbarOnly: {
+    type: Boolean,
+    default: false
+  },
 });
 
 const emit = defineEmits([
@@ -414,6 +479,23 @@ const filenameMaxWidth = computed(() => {
   return 200; // Fallback
 });
 const showExtraIcons = computed(() => containerWidth.value > 600);
+// Window control state (Windows + ImageViewer mode)
+const winAppWindow = isWin ? getCurrentWindow() : null;
+const isMaximized = ref(false);
+
+const minimizeWindow = () => winAppWindow?.minimize();
+const toggleMaximizeWindow = () => {
+  winAppWindow?.isMaximized().then((maximized) => {
+    if (maximized) {
+      isMaximized.value = false;
+      winAppWindow?.unmaximize();
+    } else {
+      isMaximized.value = true;
+      winAppWindow?.maximize();
+    }
+  });
+};
+const closeWindow = () => winAppWindow?.close();
 const effectiveSlideShowIntervalIndex = computed(() => {
   return props.slideShowIntervalIndex ?? config.settings.slideShowInterval;
 });

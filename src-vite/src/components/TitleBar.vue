@@ -36,29 +36,25 @@
       </span>
     </div>
 
-    <!-- <div id="titlebar" class="grow h-full flex justify-center items-center" data-tauri-drag-region> -->
-      <!-- <SearchBox 
-        v-if="viewName==='Home'" 
-        class="relative w-1/3 min-w-[100px] max-w-[400px] invisible md:visible" 
-        id="responsiveDiv"
-        v-model="searchValue"
-        @mousedown.stop
-      /> -->
-    <!-- </div> -->
+    <!-- Center Slot -->
+    <div class="flex-1 flex items-center justify-center" data-tauri-drag-region>
+      <slot></slot>
+    </div>
 
     <!-- Window Control Buttons -->
-    <div v-if="isWin" class="h-10 mb-auto flex items-center">
+    <div v-if="isWin" class="h-10 mb-auto flex items-center" @mousedown.stop>
       <IconWinMinus v-if="resizable" 
         class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-base-100 transition-colors duration-300" 
-        @click="minimizeWindow" 
+        @click.stop="minimizeWindow" 
       />
       <component v-if="resizable" :is="isMaximized ? IconWinRestore : IconWinMaximize" 
         class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-base-100 transition-colors duration-300" 
-        @click="toggleMaximizeWindow" 
+        @click.stop="toggleMaximizeWindow" 
       />
       <IconClose 
         class="p-3 w-12 h-full text-base-content/70 hover:text-base-content hover:bg-red-500 transition-colors duration-300" 
-        @click="closeWindow" 
+        @mousedown.stop="closeWindow"
+        @click.stop="closeWindow" 
       />
     </div>
 

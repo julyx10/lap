@@ -6,23 +6,6 @@
       isFullScreen ? 'fixed top-0 left-0 z-50' : '',
     ]"
   >
-    <div class="absolute right-1 top-1 z-95 flex items-center gap-1">
-      <TButton
-        :icon="IconLink"
-        :selected="isSplit && isSyncViewport"
-        :disabled="!isSplit"
-        :tooltip="isSplit
-          ? (isSyncViewport ? $t('image_viewer.toolbar.sync_viewport_off') : $t('image_viewer.toolbar.sync_viewport_on'))
-          : $t('image_viewer.toolbar.sync_viewport_need_split')"
-        @click="toggleSyncViewport()"
-      />
-      <TButton
-        :icon="IconSplitOn"
-        :selected="isSplit"
-        :tooltip="isSplit ? $t('image_viewer.toolbar.split_off') : $t('image_viewer.toolbar.split_on')"
-        @click="toggleSplit()"
-      />
-    </div>
 
     <div
       ref="viewerContainer"
@@ -50,6 +33,9 @@
           :imageMinScale="imageMinScale"
           :imageMaxScale="imageMaxScale"
           :isZoomFit="isZoomFit"
+          :isSplit="isSplit"
+          :isSyncViewport="isSyncViewport"
+          :showWindowControls="true"
           @prev="clickPrev()"
           @next="clickNext()"
           @toggle-slide-show="clickSlideShow()"
@@ -58,7 +44,7 @@
           @scale="clickScale"
           @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'left')"
           @media-dblclick="toggleZoomFit()"
-          @close="appWindow.close()"
+          @close="closeWindow"
           @slideshow-next="handleSlideshowNext"
         />
 
@@ -72,92 +58,129 @@
       </template>
 
       <template v-else-if="isSplit && fileIndex >= 0">
-        <div class="w-full h-full flex">
-          <div
-            class="relative w-1/2 h-full border-r border-base-content/10"
-            @mousedown="setActivePane('left')"
-          >
-            <IconDot
-              v-if="activePane === 'left'"
-              class="absolute right-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
-            />
-            <MediaViewer
-              ref="mediaViewerRef"
-              :mode="2"
-              :isFullScreen="isFullScreen"
-              :file="fileInfo"
-              :nextFilePath="nextFilePath"
-              :hasPrevious="fileIndex > 0"
-              :hasNext="fileIndex < fileCount - 1"
-              :fileIndex="fileIndex"
-              :fileCount="fileCount"
-              :isSlideShow="false"
-              :canSlideShow="false"
-              :canInteract="activePane === 'left'"
-              :imageScale="imageScale"
-              :imageMinScale="imageMinScale"
-              :imageMaxScale="imageMaxScale"
-              :isZoomFit="isZoomFit"
-              @prev="clickPrev('left')"
-              @next="clickNext('left')"
-              @toggle-slide-show="clickSlideShow('left')"
-              @item-action="handleItemAction"
-              @scale="clickScale($event, 'left')"
-              @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'left')"
-              @media-dblclick="toggleZoomFit('left')"
-              @viewport-change="handleViewportChange($event, 'left')"
-              @close="appWindow.close()"
-              @slideshow-next="handleSlideshowNext"
-            />
-            <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
-              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
-            >
-              <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
-              {{ fileInfo?.comments }}
-            </div>
-          </div>
+        <div class="w-full h-full flex flex-col">
+          <!-- Shared toolbar above both panes -->
+          <MediaViewer
+            :mode="2"
+            :toolbarOnly="true"
+            :showToolbar="true"
+            :showWindowControls="true"
+            :isFullScreen="isFullScreen"
+            :file="activePane === 'left' ? fileInfo : rightFileInfo"
+            :nextFilePath="activePane === 'left' ? nextFilePath : rightNextFilePath"
+            :hasPrevious="activePane === 'left' ? fileIndex > 0 : rightFileIndex > 0"
+            :hasNext="activePane === 'left' ? fileIndex < fileCount - 1 : rightFileIndex < fileCount - 1"
+            :fileIndex="activePane === 'left' ? fileIndex : rightFileIndex"
+            :fileCount="fileCount"
+            :isSlideShow="false"
+            :canSlideShow="false"
+            :canInteract="true"
+            :imageScale="activePane === 'left' ? imageScale : rightImageScale"
+            :imageMinScale="activePane === 'left' ? imageMinScale : rightImageMinScale"
+            :imageMaxScale="activePane === 'left' ? imageMaxScale : rightImageMaxScale"
+            :isZoomFit="activePane === 'left' ? isZoomFit : rightIsZoomFit"
+            :isSplit="isSplit"
+            :isSyncViewport="isSyncViewport"
+            @prev="clickPrev(activePane)"
+            @next="clickNext(activePane)"
+            @toggle-slide-show="clickSlideShow(activePane)"
+            @item-action="handleItemAction"
+            @scale="clickScale($event, activePane)"
+            @update:isZoomFit="(val) => handleZoomFitUpdate(val, activePane)"
+            @close="closeWindow"
+            @slideshow-next="handleSlideshowNext"
+          />
 
-          <div
-            class="relative w-1/2 h-full"
-            @mousedown="setActivePane('right')"
-          >
-            <IconDot
-              v-if="activePane === 'right'"
-              class="absolute left-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
-            />
-            <MediaViewer
-              ref="rightMediaViewerRef"
-              :mode="2"
-              :isFullScreen="isFullScreen"
-              :file="rightFileInfo"
-              :nextFilePath="rightNextFilePath"
-              :hasPrevious="rightFileIndex > 0"
-              :hasNext="rightFileIndex < fileCount - 1"
-              :fileIndex="rightFileIndex"
-              :fileCount="fileCount"
-              :isSlideShow="false"
-              :canSlideShow="false"
-              :canInteract="activePane === 'right'"
-              :imageScale="rightImageScale"
-              :imageMinScale="rightImageMinScale"
-              :imageMaxScale="rightImageMaxScale"
-              :isZoomFit="rightIsZoomFit"
-              @prev="clickPrev('right')"
-              @next="clickNext('right')"
-              @toggle-slide-show="clickSlideShow('right')"
-              @item-action="handleItemAction"
-              @scale="clickScale($event, 'right')"
-              @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'right')"
-              @media-dblclick="toggleZoomFit('right')"
-              @viewport-change="handleViewportChange($event, 'right')"
-              @close="appWindow.close()"
-              @slideshow-next="handleSlideshowNext"
-            />
-            <div v-if="config.settings.showComment && rightFileInfo?.comments?.length > 0" 
-              class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
+          <!-- Split Panes -->
+          <div class="flex-1 flex min-h-0">
+            <div
+              class="relative w-1/2 h-full border-r border-base-content/10"
+              @mousedown="setActivePane('left')"
             >
-              <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
-              {{ rightFileInfo?.comments }}
+              <IconDot
+                v-if="activePane === 'left'"
+                class="absolute right-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
+              />
+              <MediaViewer
+                ref="mediaViewerRef"
+                :mode="2"
+                :isFullScreen="isFullScreen"
+                :file="fileInfo"
+                :nextFilePath="nextFilePath"
+                :hasPrevious="fileIndex > 0"
+                :hasNext="fileIndex < fileCount - 1"
+                :fileIndex="fileIndex"
+                :fileCount="fileCount"
+                :isSlideShow="false"
+                :canSlideShow="false"
+                :canInteract="activePane === 'left'"
+                :showToolbar="false"
+                :imageScale="imageScale"
+                :imageMinScale="imageMinScale"
+                :imageMaxScale="imageMaxScale"
+                :isZoomFit="isZoomFit"
+                @prev="clickPrev('left')"
+                @next="clickNext('left')"
+                @toggle-slide-show="clickSlideShow('left')"
+                @item-action="handleItemAction"
+                @scale="clickScale($event, 'left')"
+                @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'left')"
+                @media-dblclick="toggleZoomFit('left')"
+                @viewport-change="handleViewportChange($event, 'left')"
+                @close="closeWindow"
+                @slideshow-next="handleSlideshowNext"
+              />
+              <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
+                class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
+              >
+                <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+                {{ fileInfo?.comments }}
+              </div>
+            </div>
+
+            <div
+              class="relative w-1/2 h-full"
+              @mousedown="setActivePane('right')"
+            >
+              <IconDot
+                v-if="activePane === 'right'"
+                class="absolute left-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
+              />
+              <MediaViewer
+                ref="rightMediaViewerRef"
+                :mode="2"
+                :isFullScreen="isFullScreen"
+                :file="rightFileInfo"
+                :nextFilePath="rightNextFilePath"
+                :hasPrevious="rightFileIndex > 0"
+                :hasNext="rightFileIndex < fileCount - 1"
+                :fileIndex="rightFileIndex"
+                :fileCount="fileCount"
+                :isSlideShow="false"
+                :canSlideShow="false"
+                :canInteract="activePane === 'right'"
+                :showToolbar="false"
+                :imageScale="rightImageScale"
+                :imageMinScale="rightImageMinScale"
+                :imageMaxScale="rightImageMaxScale"
+                :isZoomFit="rightIsZoomFit"
+                @prev="clickPrev('right')"
+                @next="clickNext('right')"
+                @toggle-slide-show="clickSlideShow('right')"
+                @item-action="handleItemAction"
+                @scale="clickScale($event, 'right')"
+                @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'right')"
+                @media-dblclick="toggleZoomFit('right')"
+                @viewport-change="handleViewportChange($event, 'right')"
+                @close="closeWindow"
+                @slideshow-next="handleSlideshowNext"
+              />
+              <div v-if="config.settings.showComment && rightFileInfo?.comments?.length > 0" 
+                class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
+              >
+                <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
+                {{ rightFileInfo?.comments }}
+              </div>
             </div>
           </div>
         </div>
@@ -265,9 +288,6 @@ import {
   IconSearch,
   IconComment,
   IconDot,
-  IconLink,
-  IconSplitOn,
-  IconSplitOff,
  } from '@/common/icons';
 
 /// i18n
@@ -330,6 +350,7 @@ const activeFileId = computed(() => {
 });
 
 onMounted(async() => {
+  appWindow.setFocus();
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('resize', handleResize);
 
@@ -1040,6 +1061,12 @@ const handleItemAction = async (payload: { action: string }) => {
     case 'rating-4':
     case 'rating-5':
       await setCurrentFileRating(Number(payload.action.split('-')[1]), pane);
+      break;
+    case 'toggle-split':
+      toggleSplit();
+      break;
+    case 'toggle-sync-viewport':
+      toggleSyncViewport();
       break;
     default:
       break;

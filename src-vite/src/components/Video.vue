@@ -392,7 +392,10 @@ function canPlay(file: string): boolean {
     case 'ogv':
       return !!video.canPlayType('video/ogg');
     case 'mov':
-      return !!video.canPlayType('video/quicktime');
+      // WebView2 on Windows may return "" for video/quicktime even if it can play the H.264 stream inside.
+      // We return true to let the player attempt playback. If it fails (e.g. HEVC without extensions),
+      // the player's error handler will catch it.
+      return true;
     default:
       return false; // unsupported format
   }
