@@ -7,10 +7,23 @@
  */
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+
+static APP_IDENTIFIER: OnceLock<String> = OnceLock::new();
+static CONFIG_IO_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+pub fn set_app_identifier(identifier: &str) {
+    let _ = APP_IDENTIFIER.set(identifier.to_string());
+}
+
+fn config_io_lock() -> &'static Mutex<()> {
+    CONFIG_IO_LOCK.get_or_init(|| Mutex::new(()))
+}
 
 // ============================================================================
 // LibraryState sub-structs for per-library config persistence
@@ -190,9 +203,23 @@ impl Default for AppConfig {
 
 /// Get the AppData directory for app
 pub fn get_app_data_dir() -> Result<PathBuf, String> {
+    let app_dir_name = get_app_data_folder_name();
     dirs::data_local_dir()
         .ok_or_else(|| "Failed to get the local AppData directory".to_string())
-        .map(|p| p.join("com.julyx10.lap"))
+        .map(|p| p.join(app_dir_name))
+}
+
+fn get_app_data_folder_name() -> String {
+    let identifier = APP_IDENTIFIER
+        .get()
+        .cloned()
+        .unwrap_or_else(|| "com.julyx10.lap".to_string());
+
+    if cfg!(debug_assertions) {
+        format!("{}.debug", identifier)
+    } else {
+        identifier
+    }
 }
 
 /// Get the libraries directory path
@@ -214,6 +241,13 @@ pub fn get_config_file_path() -> Result<PathBuf, String> {
 
 /// Load app config from file, create default if not exists
 pub fn load_app_config() -> Result<AppConfig, String> {
+    let _guard = config_io_lock()
+        .lock()
+        .map_err(|_| "Config lock poisoned".to_string())?;
+    load_app_config_locked()
+}
+
+fn load_app_config_locked() -> Result<AppConfig, String> {
     let config_path = get_config_file_path()?;
 
     if config_path.exists() {
@@ -228,7 +262,7 @@ pub fn load_app_config() -> Result<AppConfig, String> {
                 Err(parse_err) => {
                     // Handle rare corruption patterns (e.g. concatenated JSON objects)
                     if let Some(config) = parse_first_json_object::<AppConfig>(&content) {
-                        let _ = save_app_config(&config);
+                        let _ = save_app_config_locked(&config);
                         return Ok(config);
                     }
 
@@ -241,17 +275,48 @@ pub fn load_app_config() -> Result<AppConfig, String> {
             }
         }
 
-        Err(last_err.unwrap_or_else(|| "Failed to parse config file".to_string()))
+        // Keep the bad file for diagnosis and recover as much as possible.
+        let backup_msg = backup_corrupt_config(&config_path)
+            .map(|p| format!(" Backed up to '{}'.", p.display()))
+            .unwrap_or_else(|e| format!(" Backup failed: {}.", e));
+        let parse_msg = last_err.unwrap_or_else(|| "Failed to parse config file".to_string());
+
+        match recover_app_config_from_library_dbs() {
+            Ok(recovered) => {
+                eprintln!(
+                    "{}{} Recovered app config from existing library database files.",
+                    parse_msg, backup_msg
+                );
+                save_app_config_locked(&recovered)?;
+                Ok(recovered)
+            }
+            Err(recover_err) => {
+                eprintln!(
+                    "{}{} Failed to recover from library DB files: {}. Falling back to default config.",
+                    parse_msg, backup_msg, recover_err
+                );
+                let config = AppConfig::default();
+                save_app_config_locked(&config)?;
+                Ok(config)
+            }
+        }
     } else {
         // Create default config
         let config = AppConfig::default();
-        save_app_config(&config)?;
+        save_app_config_locked(&config)?;
         Ok(config)
     }
 }
 
 /// Save app config to file
 pub fn save_app_config(config: &AppConfig) -> Result<(), String> {
+    let _guard = config_io_lock()
+        .lock()
+        .map_err(|_| "Config lock poisoned".to_string())?;
+    save_app_config_locked(config)
+}
+
+fn save_app_config_locked(config: &AppConfig) -> Result<(), String> {
     let config_path = get_config_file_path()?;
     let content = serde_json::to_string_pretty(config)
         .map_err(|e| format!("Failed to serialize config: {}", e))?;
@@ -288,15 +353,32 @@ fn write_atomic(path: &Path, content: &str) -> Result<(), String> {
         stamp
     ));
 
-    fs::write(&tmp_path, content).map_err(|e| format!("Failed to write temp file: {}", e))?;
+    let mut tmp_file = fs::File::create(&tmp_path)
+        .map_err(|e| format!("Failed to create temp file: {}", e))?;
+    tmp_file
+        .write_all(content.as_bytes())
+        .map_err(|e| format!("Failed to write temp file: {}", e))?;
+    tmp_file
+        .sync_all()
+        .map_err(|e| format!("Failed to sync temp config file: {}", e))?;
+    drop(tmp_file);
 
     match fs::rename(&tmp_path, path) {
-        Ok(_) => Ok(()),
+        Ok(_) => {
+            // Best-effort directory sync to persist rename metadata.
+            if let Ok(dir_file) = fs::File::open(parent) {
+                let _ = dir_file.sync_all();
+            }
+            Ok(())
+        }
         Err(rename_err) => {
             // Windows fallback: rename may fail when target exists.
             if path.exists() {
                 let _ = fs::remove_file(path);
                 if fs::rename(&tmp_path, path).is_ok() {
+                    if let Ok(dir_file) = fs::File::open(parent) {
+                        let _ = dir_file.sync_all();
+                    }
                     return Ok(());
                 }
             }
@@ -304,6 +386,86 @@ fn write_atomic(path: &Path, content: &str) -> Result<(), String> {
             Err(format!("Failed to atomically replace config file: {}", rename_err))
         }
     }
+}
+
+fn backup_corrupt_config(path: &Path) -> Result<PathBuf, String> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| "Config path has no parent directory".to_string())?;
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("app-config");
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| format!("Failed to get timestamp: {}", e))?
+        .as_secs();
+    let backup_path = parent.join(format!("{}-corrupt-{}.json", stem, stamp));
+    fs::rename(path, &backup_path)
+        .or_else(|_| fs::copy(path, &backup_path).map(|_| ()))
+        .map_err(|e| format!("Failed to backup corrupted config file: {}", e))?;
+    Ok(backup_path)
+}
+
+fn recover_app_config_from_library_dbs() -> Result<AppConfig, String> {
+    let lib_dir = get_libraries_dir()?;
+    let read_dir = fs::read_dir(&lib_dir)
+        .map_err(|e| format!("Failed to read libraries directory '{}': {}", lib_dir.display(), e))?;
+
+    let mut libraries: Vec<Library> = Vec::new();
+    let now = chrono::Utc::now().timestamp();
+
+    for entry in read_dir {
+        let entry = entry.map_err(|e| format!("Failed to read libraries directory entry: {}", e))?;
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) != Some("db") {
+            continue;
+        }
+
+        let Some(id) = path.file_stem().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        if id.trim().is_empty() {
+            continue;
+        }
+
+        let default_name = if id == "default" {
+            "Default Library".to_string()
+        } else {
+            format!("Library {}", &id.chars().take(8).collect::<String>())
+        };
+        let created_at = fs::metadata(&path)
+            .ok()
+            .and_then(|m| m.created().or_else(|_| m.modified()).ok())
+            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(now);
+
+        libraries.push(Library {
+            id: id.to_string(),
+            name: default_name,
+            created_at,
+            state: LibraryState::default(),
+            hidden: false,
+        });
+    }
+
+    if libraries.is_empty() {
+        return Err("No library database files found".to_string());
+    }
+
+    libraries.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+
+    let current_library_id = if libraries.iter().any(|l| l.id == "default") {
+        "default".to_string()
+    } else {
+        libraries[0].id.clone()
+    };
+
+    Ok(AppConfig {
+        current_library_id,
+        libraries,
+    })
 }
 
 /// Get the database file path for a library

@@ -15,8 +15,12 @@ use image::{GenericImageView, ImageFormat};
 use rusqlite::{Connection, OptionalExtension, Result, ToSql, params};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::fs::File;
 use std::io::{BufReader, Cursor};
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
 
 /// Face Bounding Box struct (matching JSON storage)
@@ -3038,6 +3042,15 @@ fn open_conn() -> Result<Connection, String> {
     let conn = Connection::open(&path)
         .map_err(|e| format!("Failed to open database connection: {}", e))?;
 
+    conn.busy_timeout(Duration::from_secs(5))
+        .map_err(|e| format!("Failed to set SQLite busy timeout: {}", e))?;
+
+    conn.query_row("PRAGMA journal_mode = WAL", [], |row| row.get::<_, String>(0))
+        .map_err(|e| format!("Failed to enable WAL mode: {}", e))?;
+
+    conn.execute("PRAGMA synchronous = NORMAL", [])
+        .map_err(|e| format!("Failed to set SQLite synchronous mode: {}", e))?;
+
     // Enable foreign key constraints
     conn.execute("PRAGMA foreign_keys = ON", [])
         .map_err(|e| format!("Failed to enable foreign keys: {}", e))?;
@@ -3047,6 +3060,18 @@ fn open_conn() -> Result<Connection, String> {
 
 /// create all tables if not exists
 pub fn create_db() -> Result<(), String> {
+    match create_db_internal() {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            eprintln!("create_db failed: {}. Trying recovery...", err);
+            recover_current_db_file()?;
+            create_db_internal()
+                .map_err(|e| format!("Database recovery retry failed: {}", e))
+        }
+    }
+}
+
+fn create_db_internal() -> Result<(), String> {
     let conn = open_conn()?;
 
     // Run migrations
@@ -3431,4 +3456,74 @@ pub fn create_db() -> Result<(), String> {
     .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+fn recover_current_db_file() -> Result<(), String> {
+    let db_path = t_config::get_current_db_path()
+        .map_err(|e| format!("Failed to get current db path during recovery: {}", e))?;
+    let db_path = PathBuf::from(db_path);
+
+    if !db_path.exists() {
+        // Nothing to quarantine, next create_db_internal will create a new DB.
+        return Ok(());
+    }
+
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| format!("Failed to get timestamp for db recovery: {}", e))?
+        .as_secs();
+
+    let db_name = db_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("library.db")
+        .to_string();
+
+    let backup_db = db_path.with_file_name(format!("{}.corrupt-{}", db_name, stamp));
+    move_or_copy(&db_path, &backup_db)?;
+
+    let wal_path = path_with_suffix(&db_path, "-wal");
+    if wal_path.exists() {
+        let backup_wal = path_with_suffix(&backup_db, "-wal");
+        let _ = move_or_copy(&wal_path, &backup_wal);
+    }
+
+    let shm_path = path_with_suffix(&db_path, "-shm");
+    if shm_path.exists() {
+        let backup_shm = path_with_suffix(&backup_db, "-shm");
+        let _ = move_or_copy(&shm_path, &backup_shm);
+    }
+
+    eprintln!(
+        "Database file quarantined for recovery: '{}' -> '{}'",
+        db_path.display(),
+        backup_db.display()
+    );
+
+    Ok(())
+}
+
+fn path_with_suffix(path: &Path, suffix: &str) -> PathBuf {
+    let s = format!("{}{}", path.to_string_lossy(), suffix);
+    PathBuf::from(s)
+}
+
+fn move_or_copy(src: &Path, dst: &Path) -> Result<(), String> {
+    match fs::rename(src, dst) {
+        Ok(_) => Ok(()),
+        Err(rename_err) => {
+            fs::copy(src, dst)
+                .map_err(|copy_err| {
+                    format!(
+                        "Failed to move '{}' to '{}' (rename: {}, copy: {})",
+                        src.display(),
+                        dst.display(),
+                        rename_err,
+                        copy_err
+                    )
+                })?;
+            fs::remove_file(src)
+                .map_err(|e| format!("Failed to remove source file '{}': {}", src.display(), e))
+        }
+    }
 }

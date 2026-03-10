@@ -27,12 +27,16 @@ mod t_video;
 
 /// The main function is the entry point for the Tauri application.
 fn main() {
+    std::panic::set_hook(Box::new(|panic_info| {
+        eprintln!("Unhandled panic: {}", panic_info);
+    }));
+
     let builder = tauri::Builder::default();
 
     // #[cfg(debug_assertions)]
     // let builder = builder.plugin(tauri_plugin_devtools::init());
 
-    builder
+    let run_result = builder
         .plugin(tauri_plugin_window_state::Builder::default().build()) // macOS: ~/Library/Application Support/{APP_NAME}/window-state.json
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_os::init())
@@ -62,13 +66,11 @@ fn main() {
         )))
         .manage(t_dedup::DedupState::default())
         .setup(|_app| {
+            t_config::set_app_identifier(&_app.config().identifier);
+
             // Create the database on startup
             if let Err(e) = t_sqlite::create_db() {
-                return Err(std::io::Error::other(format!(
-                    "error while creating the database: {}",
-                    e
-                ))
-                .into());
+                eprintln!("Failed to initialize database: {}", e);
             }
 
             if let Err(e) = t_utils::restore_album_scopes(&_app.handle()) {
@@ -228,6 +230,9 @@ fn main() {
             t_cmds::dedup_set_keep,
             t_cmds::dedup_delete_selected,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running application");
+        .run(tauri::generate_context!());
+
+    if let Err(err) = run_result {
+        eprintln!("Error while running application: {}", err);
+    }
 }
