@@ -79,9 +79,12 @@ jobs:
         run: bash scripts/download_models.sh
 
       - name: Build app (unsigned)
-        shell: bash
-        run: |
-          cargo tauri build --manifest-path src-tauri/Cargo.toml --verbose
+        uses: tauri-apps/tauri-action@v0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: .
+          args: --verbose --bundles app,dmg --config '{"bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":null}}'
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
