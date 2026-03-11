@@ -12,13 +12,24 @@ use std::io::Cursor;
 use std::path::Path;
 use std::process::Command;
 
+use std::panic;
+
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
-    // Use imagesize to get width and height
-    let dimensions = imagesize::size(file_path).map_err(|e| e.to_string())?; // Map error to String if any
+    // Catch potential panics in the third-party imagesize crate
+    let result = panic::catch_unwind(|| imagesize::size(file_path));
 
-    // Return the dimensions as (width, height)
-    Ok((dimensions.width as u32, dimensions.height as u32))
+    match result {
+        Ok(Ok(dimensions)) => Ok((dimensions.width as u32, dimensions.height as u32)),
+        Ok(Err(e)) => Err(e.to_string()),
+        Err(_) => {
+            eprintln!("Panic caught while getting dimensions for: {}", file_path);
+            Err(
+                "Failed to parse image dimensions due to panic (corrupt or invalid file)"
+                    .to_string(),
+            )
+        }
+    }
 }
 
 /// Get a thumbnail from an image file path
@@ -27,58 +38,68 @@ pub fn get_image_thumbnail(
     orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
-    // Open and decode the image
-    let img_reader =
-        ImageReader::open(file_path).map_err(|e| format!("Failed to open image: {}", e))?;
-    let img_format = img_reader.format().ok_or("Could not detect image format")?;
-    let img = img_reader
-        .decode()
-        .map_err(|e| format!("Failed to decode image: {}", e))?;
-    let thumbnail = img.thumbnail(u32::MAX, thumbnail_size);
+    let result = panic::catch_unwind(|| {
+        // Open and decode the image
+        let img_reader =
+            ImageReader::open(file_path).map_err(|e| format!("Failed to open image: {}", e))?;
+        let img_format = img_reader.format().ok_or("Could not detect image format")?;
+        let img = img_reader
+            .decode()
+            .map_err(|e| format!("Failed to decode image: {}", e))?;
+        let thumbnail = img.thumbnail(u32::MAX, thumbnail_size);
 
-    // Adjust the image orientation based on the EXIF orientation value
-    let adjusted_thumbnail = match orientation {
-        3 => thumbnail.rotate180(),
-        6 => thumbnail.rotate90(),
-        8 => thumbnail.rotate270(),
-        _ => thumbnail,
-    };
+        // Adjust the image orientation based on the EXIF orientation value
+        let adjusted_thumbnail = match orientation {
+            3 => thumbnail.rotate180(),
+            6 => thumbnail.rotate90(),
+            8 => thumbnail.rotate270(),
+            _ => thumbnail,
+        };
 
-    // Determine output format based on input format
-    let output_format = if img_format == ImageFormat::Png {
-        ImageFormat::Png
-    } else {
-        ImageFormat::Jpeg
-    };
+        // Determine output format based on input format
+        let output_format = if img_format == ImageFormat::Png {
+            ImageFormat::Png
+        } else {
+            ImageFormat::Jpeg
+        };
 
-    // Save the thumbnail to an in-memory buffer
-    let mut buf = Vec::new();
+        // Save the thumbnail to an in-memory buffer
+        let mut buf = Vec::new();
 
-    if output_format == ImageFormat::Jpeg {
-        // For JPEG, convert to RGB8 to remove alpha channel
-        let rgb_image = adjusted_thumbnail.to_rgb8();
-        match rgb_image.write_to(&mut Cursor::new(&mut buf), output_format) {
-            Ok(()) => Ok(Some(buf)),
-            Err(e) => {
-                eprintln!(
-                    "Failed to write thumbnail to buffer as {:?}: {}",
-                    output_format, e
-                );
-                Ok(None)
+        if output_format == ImageFormat::Jpeg {
+            // For JPEG, convert to RGB8 to remove alpha channel
+            let rgb_image = adjusted_thumbnail.to_rgb8();
+            match rgb_image.write_to(&mut Cursor::new(&mut buf), output_format) {
+                Ok(()) => Ok(Some(buf)),
+                Err(e) => {
+                    eprintln!(
+                        "Failed to write thumbnail to buffer as {:?}: {}",
+                        output_format, e
+                    );
+                    Ok(None)
+                }
+            }
+        } else {
+            // For PNG, keep RGBA8 to preserve alpha channel
+            let rgba_image = adjusted_thumbnail.to_rgba8();
+            match rgba_image.write_to(&mut Cursor::new(&mut buf), output_format) {
+                Ok(()) => Ok(Some(buf)),
+                Err(e) => {
+                    eprintln!(
+                        "Failed to write thumbnail to buffer as {:?}: {}",
+                        output_format, e
+                    );
+                    Ok(None)
+                }
             }
         }
-    } else {
-        // For PNG, keep RGBA8 to preserve alpha channel
-        let rgba_image = adjusted_thumbnail.to_rgba8();
-        match rgba_image.write_to(&mut Cursor::new(&mut buf), output_format) {
-            Ok(()) => Ok(Some(buf)),
-            Err(e) => {
-                eprintln!(
-                    "Failed to write thumbnail to buffer as {:?}: {}",
-                    output_format, e
-                );
-                Ok(None)
-            }
+    });
+
+    match result {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!("Panic caught while creating image thumbnail for: {}", file_path);
+            Ok(None)
         }
     }
 }
@@ -381,7 +402,7 @@ pub fn get_heic_thumbnail_with_sips(
     let temp_dir = std::env::temp_dir();
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .map_err(|e| format!("System clock error: {}", e))?
         .subsec_nanos();
     let temp_file = temp_dir.join(format!("thumb_{}.jpg", nanos));
     let temp_output = temp_file.to_str().ok_or("Invalid temp path")?;

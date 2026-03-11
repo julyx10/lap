@@ -813,26 +813,33 @@ pub async fn index_album_worker(
                     .to_string();
 
                 if let Ok(folder) = crate::t_sqlite::AFolder::add_to_db(album_id, &parent_path) {
-                    if let Ok((file, _)) =
-                        crate::t_sqlite::AFile::add_to_db(folder.id.unwrap(), &path_str, ftype)
-                    {
-                        // Generate thumbnail
-                        let _ = crate::t_sqlite::AThumb::get_or_create_thumb(
-                            file.id.unwrap(),
-                            &path_str,
-                            ftype,
-                            file.e_orientation.unwrap_or(1) as i32,
-                            thumbnail_size,
-                            false,
-                        );
+                    if let Some(folder_id) = folder.id {
+                        if let Ok((file, _)) =
+                            crate::t_sqlite::AFile::add_to_db(folder_id, &path_str, ftype)
+                        {
+                            if let Some(file_id) = file.id {
+                                // Generate thumbnail
+                                let _ = crate::t_sqlite::AThumb::get_or_create_thumb(
+                                    file_id,
+                                    &path_str,
+                                    ftype,
+                                    file.e_orientation.unwrap_or(1) as i32,
+                                    thumbnail_size,
+                                    false,
+                                );
 
-                        // Generate embedding
-                        let ai_state: State<crate::t_ai::AiState> = app_handle.state();
-                        let _ =
-                            crate::t_sqlite::AFile::generate_embedding(&ai_state, file.id.unwrap());
+                                // Generate embedding
+                                let ai_state: State<crate::t_ai::AiState> = app_handle.state();
+                                let _ = crate::t_sqlite::AFile::generate_embedding(&ai_state, file_id);
 
-                        // Remove from map to mark as exists
-                        all_files_map.remove(&path_str);
+                                // Remove from map to mark as exists
+                                all_files_map.remove(&path_str);
+                            } else {
+                                eprintln!("Indexed file has no id, skipping follow-up tasks: {}", path_str);
+                            }
+                        }
+                    } else {
+                        eprintln!("Indexed folder has no id, skipping file: {}", parent_path);
                     }
                 }
 
@@ -869,13 +876,14 @@ pub async fn index_album_worker(
     // index finished
     let _ = Album::update_progress(album_id, current_progress, total_files);
 
-    // 5. Emit finished
+    // 5. Set album cover if needed (must happen before index_finished event)
+    // so frontend refresh gets the latest cover_file_id immediately.
+    let _ = Album::auto_set_cover(album_id);
+
+    // 6. Emit finished
     app_handle
         .emit("index_finished", FinishedPayload { album_id })
         .map_err(|e| e.to_string())?;
-
-    // 6. Set album cover if needed
-    let _ = Album::auto_set_cover(album_id);
 
     Ok(())
 }

@@ -641,7 +641,17 @@ impl AFile {
                 .map_err(|e| format!("Error opening file: {}", e))
                 .map(|file| {
                     let mut bufreader = BufReader::new(&file);
-                    Reader::new().read_from_container(&mut bufreader).ok()
+                    // Catch unwind in case of corrupted EXIF panic
+                    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        Reader::new().read_from_container(&mut bufreader).ok()
+                    }))
+                    .unwrap_or_else(|_| {
+                        eprintln!(
+                            "Panic caught while parsing EXIF for: {}",
+                            file_path
+                        );
+                        None
+                    })
                 })?;
 
             // Extracts EXIF orientation field.
@@ -1297,20 +1307,24 @@ impl AFile {
             let missing_thumb = !file.has_thumbnail.unwrap_or(false);
 
             if modified || missing_thumb {
-                if let Some(mut updated_file) = Self::update_file_info(file.id.unwrap(), file_path)?
-                {
-                    // If modified, delete old thumbnail and remove embeds data
-                    if modified {
-                        let _ = AThumb::delete(file.id.unwrap());
-                        // remove embeds data
-                        let conn = open_conn()?;
-                        let _ = conn.execute(
-                            "UPDATE afiles SET embeds = NULL WHERE id = ?1",
-                            params![file.id.unwrap()],
-                        );
-                        updated_file.has_embedding = Some(false);
+                if let Some(file_id) = file.id {
+                    if let Some(mut updated_file) = Self::update_file_info(file_id, file_path)? {
+                        // If modified, delete old thumbnail and remove embeds data
+                        if modified {
+                            let _ = AThumb::delete(file_id);
+                            // remove embeds data
+                            let conn = open_conn()?;
+                            let _ =
+                                conn.execute("UPDATE afiles SET embeds = NULL WHERE id = ?1", params![file_id]);
+                            updated_file.has_embedding = Some(false);
+                        }
+                        return Ok((updated_file, 2));
                     }
-                    return Ok((updated_file, 2));
+                } else {
+                    return Err(format!(
+                        "Existing DB record is missing file id, skipping '{}'",
+                        file_path
+                    ));
                 }
             }
             return Ok((file, 0));
@@ -1321,7 +1335,9 @@ impl AFile {
 
         // return the newly inserted file
         let new_file = Self::fetch(folder_id, file_path)?;
-        Ok((new_file.unwrap(), 1))
+        new_file
+            .map(|f| (f, 1))
+            .ok_or_else(|| format!("Inserted file missing from DB: {}", file_path))
     }
 
     /// get a file info from db by file_id
