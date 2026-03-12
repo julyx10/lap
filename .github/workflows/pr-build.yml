@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - name: Checkout repository
@@ -39,7 +39,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 8
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -50,12 +50,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: pr-macos-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            pr-macos-pnpm-store-
+            ${{ runner.os }}-pnpm-store-
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -66,12 +68,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             src-tauri/target/
-          key: pr-macos-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-aarch64-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            pr-macos-cargo-
+            ${{ runner.os }}-aarch64-cargo-
 
       - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
         working-directory: src-vite
 
       - name: Download AI Models
@@ -84,13 +86,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: .
-          args: --verbose --bundles app,dmg --config '{"bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":null}}'
+          args: --target aarch64-apple-darwin --verbose --bundles app,dmg --config '{"bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":null}}'
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: lap-pr-macos-${{ github.event.pull_request.number || github.run_number }}
           path: |
+            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz
             src-tauri/target/release/bundle/dmg/*.dmg
             src-tauri/target/release/bundle/macos/*.app.tar.gz
           if-no-files-found: error
