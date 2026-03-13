@@ -93,7 +93,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           projectPath: .
-          args: --target aarch64-apple-darwin --verbose --bundles app,dmg --config '{"bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":null}}'
+          args: --target aarch64-apple-darwin --verbose --bundles app,dmg --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
       - name: Notarize and Staple
         env:
