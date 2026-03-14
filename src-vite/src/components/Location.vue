@@ -2,7 +2,11 @@
 
   <div class="sidebar-panel">
     <div class="sidebar-panel-header">
-      <span class="sidebar-panel-header-title">{{ localeMsg.sidebar.location }}</span>
+      <div role="tablist" class="sidebar-header-tabs">
+        <button role="tab" class="sidebar-header-tab tab-active">
+          {{ localeMsg.sidebar.location }}
+        </button>
+      </div>
       <ContextMenu :menuItems="locationPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 

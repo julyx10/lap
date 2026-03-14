@@ -53,10 +53,13 @@ pub struct FavoriteState {
     pub rating: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TagState {
     pub id: Option<i64>,
+    pub smart_id: Option<String>,
+    #[serde(default = "default_tag_tab")]
+    pub tab: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -67,7 +70,7 @@ pub struct CalendarState {
     pub date: Option<i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CameraState {
     #[serde(default = "default_camera_tab")]
@@ -80,6 +83,32 @@ pub struct CameraState {
 
 fn default_camera_tab() -> String {
     "camera".to_string()
+}
+
+fn default_tag_tab() -> String {
+    "custom".to_string()
+}
+
+impl Default for TagState {
+    fn default() -> Self {
+        Self {
+            id: None,
+            smart_id: None,
+            tab: default_tag_tab(),
+        }
+    }
+}
+
+impl Default for CameraState {
+    fn default() -> Self {
+        Self {
+            tab: default_camera_tab(),
+            make: None,
+            model: None,
+            lens_make: None,
+            lens_model: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

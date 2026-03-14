@@ -2296,7 +2296,7 @@ watch(
     libConfig.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
     libConfig.person.id,                                                              // person
     libConfig.calendar.year, libConfig.calendar.month, libConfig.calendar.date,       // calendar
-    libConfig.tag.id, libConfig.tag.smartId,                                          // tag
+    libConfig.tag.id, libConfig.tag.smartId, (libConfig.tag as any).tab,             // tag
     libConfig.location.admin1, libConfig.location.name,                               // location
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
     (libConfig.camera as any).tab, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel, // lens
@@ -2910,28 +2910,36 @@ async function updateContent(force = false) {
     }
   } 
   else if(newIndex === 4) {   // tag
-    if (libConfig.tag.smartId) {
-      const smartTag = getSmartTagById(libConfig.tag.smartId);
-      if (!smartTag) {
+    const tagTab = (libConfig.tag as any).tab === 'smart' ? 'smart' : 'custom';
+    if (tagTab === 'smart') {
+      const smartId = libConfig.tag.smartId;
+      if (!smartId) {
         contentTitle.value = "";
-        return;
-      }
-      contentTitle.value =
-        localeMsg.value.tag.smart_items?.[smartTag.id]
-        || smartTag.id;
-      getImageSearchFileList(smartTag.prompt, 0, requestId, false, SMART_TAG_SEARCH_THRESHOLD);
-    } else if (libConfig.tag.id === null) {
-      contentTitle.value = "";
-    } else {
-      getTagName(libConfig.tag.id).then(tagName => {
-        if (requestId !== currentContentRequestId) return;
-        if (tagName) {
-          contentTitle.value = tagName;
-          getFileList({ tagId: libConfig.tag.id || 0 }, requestId);
-        } else {
+      } else {
+        const smartTag = getSmartTagById(smartId);
+        if (!smartTag) {
           contentTitle.value = "";
+          return;
         }
-      });
+        contentTitle.value =
+          localeMsg.value.tag.smart_items?.[smartTag.id]
+          || smartTag.id;
+        getImageSearchFileList(smartTag.prompt, 0, requestId, false, SMART_TAG_SEARCH_THRESHOLD);
+      }
+    } else {
+      if (libConfig.tag.id === null) {
+        contentTitle.value = "";
+      } else {
+        getTagName(libConfig.tag.id).then(tagName => {
+          if (requestId !== currentContentRequestId) return;
+          if (tagName) {
+            contentTitle.value = tagName;
+            getFileList({ tagId: libConfig.tag.id || 0 }, requestId);
+          } else {
+            contentTitle.value = "";
+          }
+        });
+      }
     }
   }
   else if(newIndex === 5) {   // person

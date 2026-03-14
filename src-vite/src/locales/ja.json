@@ -87,11 +87,14 @@
     "smart_group": "スマートタグ",
     "custom_group": "カスタムタグ",
     "smart_items": {
-      "people": "人物",
+      "family": "家族",
+      "portraits": "ポートレート",
       "kids": "子ども",
       "pets": "ペット",
       "food": "料理",
-      "travel": "旅行"
+      "sports": "スポーツ",
+      "landscape": "風景",
+      "night": "夜景"
     }
   },
   "calendar": {

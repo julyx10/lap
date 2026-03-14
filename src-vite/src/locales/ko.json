@@ -87,11 +87,14 @@
     "smart_group": "스마트 태그",
     "custom_group": "사용자 태그",
     "smart_items": {
-      "people": "인물",
+      "family": "가족",
+      "portraits": "인물 사진",
       "kids": "아이",
       "pets": "반려동물",
       "food": "음식",
-      "travel": "여행"
+      "sports": "스포츠",
+      "landscape": "풍경",
+      "night": "야경"
     }
   },
   "calendar": {

@@ -87,11 +87,14 @@
     "smart_group": "Умные теги",
     "custom_group": "Пользовательские теги",
     "smart_items": {
-      "people": "Люди",
+      "family": "Семья",
+      "portraits": "Портреты",
       "kids": "Дети",
       "pets": "Питомцы",
       "food": "Еда",
-      "travel": "Путешествия"
+      "sports": "Спорт",
+      "landscape": "Пейзаж",
+      "night": "Ночь"
     }
   },
   "calendar": {

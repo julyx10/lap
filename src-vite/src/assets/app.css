@@ -87,11 +87,15 @@ html, body {
 }
 
 @utility sidebar-header-tabs {
-  @apply tabs tabs-sm tabs-border flex-1 items-center;
+  @apply tabs tabs-sm flex-1 flex-nowrap items-center;
 }
 
 @utility sidebar-header-tab {
-  @apply tab h-8 px-2 text-[13px] font-medium text-base-content/55;
+  @apply tab whitespace-nowrap;
+}
+
+.sidebar-header-tab.tab-active {
+  @apply text-primary;
 }
 
 /* sidebar list items */

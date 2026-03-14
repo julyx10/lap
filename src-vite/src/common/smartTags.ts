@@ -13,11 +13,14 @@ export interface SmartTagCategoryDef {
 }
 
 export const SMART_TAG_CATEGORIES: SmartTagCategoryDef[] = [
-  { id: 'people', items: [{ id: 'people', prompt: 'a photo of a person' }] },
-  { id: 'kids', items: [{ id: 'kids', prompt: 'a photo of a child or baby' }] },
-  { id: 'pets', items: [{ id: 'pets', prompt: 'a photo of a pet cat or dog' }] },
-  { id: 'food', items: [{ id: 'food', prompt: 'a photo of food on a table' }] },
-  { id: 'travel', items: [{ id: 'travel', prompt: 'a photo from a travel destination' }] },
+  { id: 'family', items: [{ id: 'family', prompt: 'a family photo with parents children and relatives together' }] },
+  { id: 'kids', items: [{ id: 'kids', prompt: 'a photo of children or baby' }] },
+  { id: 'pets', items: [{ id: 'pets', prompt: 'a photo of a pet dog or cat' }] },
+  { id: 'portraits', items: [{ id: 'portraits', prompt: 'a portrait photo of one person' }] },
+  { id: 'food', items: [{ id: 'food', prompt: 'a close-up photo of food dish meal on table' }] },
+  { id: 'sports', items: [{ id: 'sports', prompt: 'a sports action photo of people running playing or exercising' }] },
+  { id: 'landscape', items: [{ id: 'landscape', prompt: 'a natural landscape photo with mountain lake ocean forest or sky' }] },
+  { id: 'night', items: [{ id: 'night', prompt: 'a night scene photo in low light with lights or stars' }] },
 ];
 
 export function getSmartTagById(id: string | null | undefined): SmartTagDef | null {

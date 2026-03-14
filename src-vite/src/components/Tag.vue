@@ -1,44 +1,24 @@
 <template>
 
   <div class="sidebar-panel">
-    <div class="grow overflow-x-hidden overflow-y-auto">
-      <!-- smart tags -->
-      <ul>
-        <li>
-          <div
-            :class="[
-              'sidebar-item',
-              selectedSmartTagId ? 'text-primary' : '',
-              'sidebar-item-hover',
-            ]"
-            @click="isSmartExpanded = !isSmartExpanded"
-          >
-            <IconBolt class="mx-1 h-5 shrink-0" />
-            <span class="sidebar-item-label">{{ localeMsg.tag.smart_group }}</span>
-            <IconArrowDown
-              class="mx-1 h-4 w-4 shrink-0 transition-transform duration-200"
-              :style="{ transform: isSmartExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }"
-            />
-          </div>
-        </li>
-
-        <li v-for="item in smartTagItems" v-show="isSmartExpanded" :key="item.id" :id="'smart-tag-' + item.id">
-          <div
-            :class="[
-              'sidebar-item ml-7',
-              selectedSmartTagId === item.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
-            ]"
-            @click="selectSmartTag(item.id)"
-          >
-            <IconTag class="mx-1 h-4 shrink-0" />
-            <span class="sidebar-item-label">{{ item.label }}</span>
-          </div>
-        </li>
-      </ul>
-
-      <!-- custom tags -->
-      <div class="sidebar-panel-header">
-        <span class="sidebar-panel-header-title flex-1">{{ localeMsg.tag.custom_group }}</span>
+    <div class="sidebar-panel-header">
+      <div role="tablist" class="sidebar-header-tabs">
+        <button
+          role="tab"
+          :class="['sidebar-header-tab', activeTab === 'smart' ? 'tab-active' : '']"
+          @click="activeTab = 'smart'"
+        >
+          {{ localeMsg.tag.smart_group }}
+        </button>
+        <button
+          role="tab"
+          :class="['sidebar-header-tab', activeTab === 'custom' ? 'tab-active' : '']"
+          @click="activeTab = 'custom'"
+        >
+          {{ localeMsg.tag.custom_group }}
+        </button>
+      </div>
+      <div v-if="activeTab === 'custom'" class="flex items-center gap-1">
         <TButton
           :icon="IconAdd"
           :buttonSize="'small'"
@@ -51,8 +31,25 @@
           :smallIcon="true"
         />
       </div>
+    </div>
 
-      <ul v-if="allTags.length > 0">
+    <div class="grow overflow-x-hidden overflow-y-auto">
+      <ul v-if="activeTab === 'smart'">
+        <li v-for="item in smartTagItems" :key="item.id" :id="'smart-tag-' + item.id">
+          <div
+            :class="[
+              'sidebar-item',
+              selectedSmartTagId === item.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
+            ]"
+            @click="selectSmartTag(item.id)"
+          >
+            <IconBolt class="mx-1 h-5 shrink-0" />
+            <span class="sidebar-item-label">{{ item.label }}</span>
+          </div>
+        </li>
+      </ul>
+
+      <ul v-else-if="allTags.length > 0">
         <li v-for="tag in sortedTags" :key="tag.id" :id="'tag-' + tag.id">
           <div
             :class="[
@@ -91,12 +88,11 @@
         </li>
       </ul>
 
-      <div v-if="allTags.length === 0" class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
+      <div v-else class="mt-8 px-2 flex flex-col items-center justify-center text-base-content/30">
         <IconTag class="w-8 h-8 mb-2" />
         <span class="text-sm text-center">{{ $t('tooltip.not_found.tag') }}</span>
       </div>
     </div>
-
   </div>
   
   <!-- new tag -->
@@ -136,7 +132,6 @@ import {
   IconTag,
   IconBolt,
   IconDot,
-  IconArrowDown,
   IconMore, 
   IconRename, 
   IconTrash,
@@ -164,7 +159,12 @@ const emit = defineEmits(['editDataChanged']);
 const allTags = ref<any[]>([]);
 const selectedTag = ref<any>(null);
 const selectedSmartTagId = ref<string | null>(libConfig.tag.smartId || null);
-const isSmartExpanded = ref(Boolean(libConfig.tag.smartId));
+const activeTab = computed<'smart' | 'custom'>({
+  get: () => (libConfig.tag.tab === 'smart' ? 'smart' : 'custom'),
+  set: (value) => {
+    libConfig.tag.tab = value;
+  },
+});
 const isRenamingTag = ref(false);
 const originalTagName = ref('');
 const tagInputRef = ref<HTMLInputElement[]>([]);
@@ -231,6 +231,9 @@ onMounted(() => {
   if (selectedSmartTagId.value && !getSmartTagById(selectedSmartTagId.value)) {
     selectedSmartTagId.value = null;
     libConfig.tag.smartId = null;
+    if (activeTab.value === 'smart') {
+      activeTab.value = 'custom';
+    }
   }
   loadTags();
 });
@@ -239,31 +242,32 @@ async function loadTags() {
   const tags = await getAllTags();
   if (tags) {
     allTags.value = tags;
-    if (selectedSmartTagId.value) {
-      return;
-    }
-    if (allTags.value.length > 0 && !selectedTag.value) {
+    if (allTags.value.length > 0) {
       const index = allTags.value.findIndex(tag => tag.id === libConfig.tag.id);
-      selectTag(allTags.value[index >= 0 ? index : 0]);
+      if (index >= 0) {
+        selectedTag.value = allTags.value[index];
+      } else if (!selectedTag.value) {
+        selectedTag.value = allTags.value[0];
+        libConfig.tag.id = selectedTag.value.id;
+      }
     }
   } else {
     libConfig.tag.id = null;
+    selectedTag.value = null;
   }
 }
 
 function selectTag(tag: any) {
   if (isRenamingTag.value) return;
+  activeTab.value = 'custom';
   selectedTag.value = tag;
-  selectedSmartTagId.value = null;
-  libConfig.tag.smartId = null;
   libConfig.tag.id = tag.id;
 }
 
 function selectSmartTag(smartTagId: string) {
   if (isRenamingTag.value) return;
+  activeTab.value = 'smart';
   selectedSmartTagId.value = smartTagId;
-  selectedTag.value = null;
-  libConfig.tag.id = null;
   libConfig.tag.smartId = smartTagId;
 }
 
@@ -339,12 +343,10 @@ async function clickDeleteTag() {
         } else {
           selectedTag.value = null;
           libConfig.tag.id = null;
-          libConfig.tag.smartId = null;
         }
       } else {
         selectedTag.value = null;
         libConfig.tag.id = null;
-        libConfig.tag.smartId = null;
       }
     }
   }

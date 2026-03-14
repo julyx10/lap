@@ -87,11 +87,14 @@
     "smart_group": "智能标签",
     "custom_group": "自定义标签",
     "smart_items": {
-      "people": "人物",
+      "family": "家庭",
+      "portraits": "人像",
       "kids": "孩子",
       "pets": "宠物",
       "food": "美食",
-      "travel": "旅行"
+      "sports": "运动",
+      "landscape": "风景",
+      "night": "夜景"
     }
   },
   "calendar": {

@@ -87,11 +87,14 @@
     "smart_group": "Tags intelligents",
     "custom_group": "Tags personnalisés",
     "smart_items": {
-      "people": "Personnes",
+      "family": "Famille",
+      "portraits": "Portraits",
       "kids": "Enfants",
       "pets": "Animaux de compagnie",
       "food": "Cuisine",
-      "travel": "Voyage"
+      "sports": "Sport",
+      "landscape": "Paysage",
+      "night": "Nuit"
     }
   },
   "calendar": {

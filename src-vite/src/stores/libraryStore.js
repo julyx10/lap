@@ -28,10 +28,11 @@ export const useLibraryStore = defineStore('libraryStore', {
       rating: 0,
     },
 
-    /** @type {{ id: number | null, smartId: string | null }} */
+    /** @type {{ id: number | null, smartId: string | null, tab: 'smart' | 'custom' }} */
     tag: {
       id: null,
       smartId: null,
+      tab: 'custom',
     },
 
     /** @type {{ year: number | null, month: number | null, date: number | null }} */

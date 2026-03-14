@@ -16,23 +16,22 @@
     </div>
 
     <template v-if="Object.keys(calendar_dates).length > 0" >
-      <div class="sidebar-panel-header gap-2">
-        <span class="sidebar-panel-header-title">{{ localeMsg.sidebar.calendar }}</span>
-        <div role="tablist" class="tabs tabs-xs tabs-border ml-auto">
-          <a
+      <div class="sidebar-panel-header">
+        <div role="tablist" class="sidebar-header-tabs">
+          <button
             role="tab"
-            :class="['tab mx-1', { 'tab-active': config.calendar.isMonthly }]"
+            :class="['sidebar-header-tab', { 'tab-active': config.calendar.isMonthly }]"
             @click="switchToMonthlyView()"
           >
             {{ localeMsg.menu.calendar.monthly }}
-          </a>
-          <a
+          </button>
+          <button
             role="tab"
-            :class="['tab mx-1', { 'tab-active': !config.calendar.isMonthly }]"
+            :class="['sidebar-header-tab', { 'tab-active': !config.calendar.isMonthly }]"
             @click="switchToDailyView()"
           >
             {{ localeMsg.menu.calendar.daily }}
-          </a>
+          </button>
         </div>
         <ContextMenu :menuItems="calendarMenuItems" :iconMenu="IconMore" :smallIcon="true" />
       </div>

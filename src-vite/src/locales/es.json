@@ -87,11 +87,14 @@
     "smart_group": "Etiquetas inteligentes",
     "custom_group": "Etiquetas personalizadas",
     "smart_items": {
-      "people": "Personas",
+      "family": "Familia",
+      "portraits": "Retratos",
       "kids": "Niños",
       "pets": "Mascotas",
       "food": "Comida",
-      "travel": "Viajes"
+      "sports": "Deportes",
+      "landscape": "Paisaje",
+      "night": "Noche"
     }
   },
   "calendar": {

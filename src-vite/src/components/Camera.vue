@@ -2,15 +2,17 @@
 
   <div class="sidebar-panel">
     <div class="sidebar-panel-header">
-      <div class="tabs tabs-box h-8 p-1">
+      <div role="tablist" class="sidebar-header-tabs">
         <button
-          :class="['tab px-3 min-h-6 h-6 text-xs', activeTab === 'camera' ? 'tab-active' : '']"
+          role="tab"
+          :class="['sidebar-header-tab', activeTab === 'camera' ? 'tab-active' : '']"
           @click="setActiveTab('camera')"
         >
           {{ localeMsg.sidebar.camera }}
         </button>
         <button
-          :class="['tab px-3 min-h-6 h-6 text-xs', activeTab === 'lens' ? 'tab-active' : '']"
+          role="tab"
+          :class="['sidebar-header-tab', activeTab === 'lens' ? 'tab-active' : '']"
           @click="setActiveTab('lens')"
         >
           {{ $t('file_info.lens') }}
