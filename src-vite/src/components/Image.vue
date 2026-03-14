@@ -1297,8 +1297,18 @@ function wheelZoom(event: WheelEvent, zoomFactor: number) {
   
   let newScale = currentScale * multiplier;
   newScale = Math.min(Math.max(newScale, minScale.value), maxScale.value);
-  
-  // zoom at cursor position
+
+  // Zoom at cursor position in container layout coordinates.
+  if (container.value) {
+    const rect = (container.value as HTMLElement).getBoundingClientRect();
+    const containerSizeVal = containerSize.value;
+    const x = ((event.clientX - rect.left) * containerSizeVal.width) / rect.width;
+    const y = ((event.clientY - rect.top) * containerSizeVal.height) / rect.height;
+    zoomImage(x, y, newScale);
+    return;
+  }
+
+  // Fallback for rare lifecycle gaps.
   const containerPosVal = containerPos.value;
   zoomImage(event.clientX - containerPosVal.x, event.clientY - containerPosVal.y, newScale);
 }

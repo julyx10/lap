@@ -39,7 +39,7 @@
                   'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
                   item.disabled ? 'text-base-content/30' : 'hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer',
                 ]"
-                @click="handleClick(item, $event)"
+                @click="handleMainItemClick(index, item, $event)"
               >
                 <div class="w-full flex items-center">
                   <div class="w-5">
@@ -80,7 +80,7 @@
                   'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
                   child.disabled ? 'text-base-content/30' : 'hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer',
                 ]"
-                @click="handleClick(child)"
+                @click="handleLeafClick(child)"
               >
                 <div class="w-full flex items-center">
                   <div class="w-5">
@@ -101,12 +101,10 @@
 </template>
   
 <script setup>
-import { ref, shallowRef, onMounted, onBeforeUnmount, nextTick, useSlots, watch, computed, markRaw } from 'vue';
+import { ref, shallowRef, onBeforeUnmount, nextTick, watch, computed, markRaw } from 'vue';
 
 import TButton from '@/components/TButton.vue';
 import { IconRight } from '@/common/icons';
-
-const slots = useSlots();
 
 // Props
 const props = defineProps({
@@ -136,7 +134,7 @@ const rawIconMenu = computed(() => (props.iconMenu ? markRaw(props.iconMenu) : n
 const resolvedMenuItems = shallowRef([]);
 
 // Emits
-const emit = defineEmits(['select', 'open-change']);
+const emit = defineEmits(['open-change']);
 
 // State
 const dropdown = ref(null);
@@ -149,11 +147,6 @@ const activeSubmenuIndex = ref(null);
 const activeSubmenuItem = ref(null);
 let submenuCloseTimeout = null;
 let submenuOpenTimeout = null;
-
-// Add event listener when the component is mounted
-onMounted(() => {
-  // Wait to attach until open
-});
 
 // Remove event listener when the component is destroyed
 onBeforeUnmount(() => {
@@ -334,16 +327,17 @@ const handleItemMouseEnter = (index, item, event) => {
   cancelSubmenuOpen();
   activeSubmenuIndex.value = item.children?.length ? index : null;
   if (item.children?.length) {
+    const targetEl = event?.currentTarget;
     const openDelay = Number(item.submenuOpenDelay || 0);
     if (openDelay > 0) {
       submenuOpenTimeout = window.setTimeout(() => {
         activeSubmenuItem.value = item;
-        void positionSubmenu(event.currentTarget);
+        void positionSubmenu(targetEl);
         submenuOpenTimeout = null;
       }, openDelay);
     } else {
       activeSubmenuItem.value = item;
-      void positionSubmenu(event.currentTarget);
+      void positionSubmenu(targetEl);
     }
   } else {
     activeSubmenuItem.value = null;
@@ -382,20 +376,25 @@ const cancelSubmenuOpen = () => {
   }
 };
 
-const handleClick = (item, event) => {
-  if (item.children?.length) {
-    cancelSubmenuClose();
-    cancelSubmenuOpen();
-    activeSubmenuItem.value = item;
-    const target = event?.currentTarget?.closest('.relative') || event?.currentTarget;
-    void positionSubmenu(target);
-    return;
-  }
+const handleLeafClick = (item) => {
   if (!item.disabled && item.action && typeof item.action === 'function') {
     item.action();
     activeSubmenuItem.value = null;
     isDropDown.value = false;
   }
+};
+
+const handleMainItemClick = (index, item, event) => {
+  if (item.children?.length) {
+    cancelSubmenuClose();
+    cancelSubmenuOpen();
+    activeSubmenuIndex.value = index;
+    activeSubmenuItem.value = item;
+    const target = event?.currentTarget?.closest('.relative') || event?.currentTarget;
+    void positionSubmenu(target);
+    return;
+  }
+  handleLeafClick(item);
 };
 
 defineExpose({

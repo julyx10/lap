@@ -80,6 +80,9 @@ listen('settings-showToolTip-changed', (event) => {
 listen('settings-showStatusBar-changed', (event) => {
   config.setShowStatusBar(event.payload)
 })
+listen('settings-uiScale-changed', (event) => {
+  config.setUiScale(event.payload)
+})
 listen('settings-debugMode-changed', (event) => {
   config.setDebugMode(event.payload)
 })

@@ -46,7 +46,7 @@
     "filename_search_tips": "ファイル名を入力して検索",
     "index": {
       "wait_index": "スキャンを待機中...",
-      "indexing": "'{album}' をスキャン中... {count} / {total}",
+      "indexing": "スキャン中... {count} / {total}",
       "paused": "スキャンを一時停止中",
       "description": "検索とプレビューのためにサムネイルを生成しています。大きなアルバムの場合は数分かかることがあります。",
       "cancel": "スキャンをキャンセル"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "顔をインデックス",
-    "indexing": "顔をインデックス中... {current} / {total}",
+    "indexing": "顔をインデックス中... {current}/{total}",
     "clustering": "顔をクラスタリング中...",
     "faces_found": "{count} 個の顔が見つかりました",
     "cluster_graph": "類似度グラフを構築中: {percent}%",
@@ -199,6 +199,7 @@
       "調整"
     ],
     "select_hint": "クリックで選択・解除。⇧ Shift キーを押しながら範囲選択できます。",
+    "select_limit_hint": "全選択では先頭 {count} 件のファイルのみ選択されます。",
     "edit_disabled": "編集するには画像を1つ選択してください",
     "type_image": "枚の画像",
     "type_images": "枚の画像",
@@ -331,7 +332,8 @@
       "delete": "削除",
       "reveal_in_finder": "Finderで表示...",
       "reveal_in_file_explorer": "エクスプローラーで表示...",
-      "set_album_cover": "アルバムの表紙に設定"
+      "set_album_cover": "アルバムの表紙に設定",
+      "show_info": "情報を表示"
     },
     "calendar": {
       "monthly": "月別",
@@ -619,6 +621,7 @@
   },
   "file_info": {
     "title": "ファイル情報",
+    "general": "一般",
     "metadata": "メタデータ",
     "location": "場所",
     "map": "地図",
@@ -776,12 +779,20 @@
       "show_button_text": "ボタンテキスト",
       "show_tool_tip": "ツールチップ",
       "show_status_bar": "ステータスバー",
+      "interface_scale": "インターフェースの拡大率",
+      "interface_scale_options": [
+        "80%（小）",
+        "90%",
+        "100%（既定）",
+        "110%",
+        "120%（大）"
+      ],
       "show_map": "地図を表示",
       "show_map_hint": "インターネット接続が必要です",
       "debug_mode": "デバッグモード"
     },
-    "gallery_view": {
-      "title": "ギャラリー表示",
+    "grid_view": {
+      "title": "グリッド表示",
       "style": "グリッド表示レイアウト",
       "style_options": [
         "カード表示",
@@ -884,6 +895,7 @@
         "link": "リンク",
         "website": "ウェブサイト",
         "github": "GitHub でスター",
+        "feedback": "フィードバック",
         "privacy": "プライバシー"
       },
       "auto_update": {

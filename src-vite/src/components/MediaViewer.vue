@@ -42,6 +42,7 @@
             :tooltip="!canSlideShow
               ? $t('image_viewer.toolbar.slide_show')
               : (isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show'))"
+            shortcut="P"
             @click="handleToggleSlideShow"
           />
           <ContextMenu v-if="isSlideShow && canSlideShow"
@@ -71,19 +72,22 @@
         <TButton
           :icon="IconZoomOut"
           :disabled="fileIndex < 0 || imageScale <= imageMinScale || isSlideShow || !canInteract"
-          :tooltip="$t('image_viewer.toolbar.zoom_out') + ` (${(imageScale * 100).toFixed(0)}%)`"
+          :tooltip="$t('image_viewer.toolbar.zoom_out')"
+          shortcut="-"
           @click="handleZoomOut"
         />
         <TButton
           :icon="IconZoomIn"
           :disabled="fileIndex < 0 || imageScale >= imageMaxScale || isSlideShow || !canInteract"
-          :tooltip="$t('image_viewer.toolbar.zoom_in') + ` (${(imageScale * 100).toFixed(0)}%)`"
+          :tooltip="$t('image_viewer.toolbar.zoom_in')"
+          shortcut="="
           @click="handleZoomIn" 
         />
         <TButton
           :icon="!isZoomFit ? IconZoomFit : IconZoomActual"
           :disabled="fileIndex < 0 || isSlideShow || !canInteract"
-          :tooltip="(!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')) + ` (${(imageScale * 100).toFixed(0)}%)`"
+          :tooltip="!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
+          shortcut="Space"
           @click="$emit('update:isZoomFit', !isZoomFit)"
         />
         <template v-if="showExtraIcons">
@@ -93,6 +97,7 @@
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="file?.is_favorite && !isSlideShow"
             :tooltip="file?.is_favorite ? $t('menu.meta.unfavorite') : $t('menu.meta.favorite')"
+            shortcut="F"
             @click="$emit('item-action', { action: 'favorite', index: fileIndex })"
           />
           <ContextMenu
@@ -106,7 +111,8 @@
                 :icon="Number(file?.rating || 0) > 0 ? IconStarFilled : IconStar"
                 :disabled="fileIndex < 0 || isSlideShow || !canInteract"
                 :selected="Number(file?.rating || 0) > 0 && !isSlideShow"
-                :tooltip="ratingButtonTooltip"
+                :tooltip="$t('favorite.ratings')"
+                shortcut="0-5"
                 @click.stop="toggle"
               />
             </template>
@@ -116,6 +122,7 @@
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="file?.has_tags && !isSlideShow"
             :tooltip="$t('menu.meta.tag')"
+            shortcut="T"
             @click="$emit('item-action', { action: 'tag', index: fileIndex })"
           />
           <TButton
@@ -123,6 +130,7 @@
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="!!file?.comments && !isSlideShow"
             :tooltip="$t('menu.meta.comment')"
+            shortcut="C"
             @click="$emit('item-action', { action: 'comment', index: fileIndex })"
           />
           <TButton
@@ -131,8 +139,17 @@
             :iconStyle="{ transform: `rotate(${file?.rotate ?? 0}deg)`, transition: 'transform 0.3s' }"
             :selected="file?.rotate % 360 > 0 && !isSlideShow"
             :tooltip="$t('menu.meta.rotate')"
+            shortcut="R"
             @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
           />
+          <!-- <TButton
+            v-if="mode !== 2"
+            :icon="IconFileInfo"
+            :disabled="fileIndex < 0 || isSlideShow || !canInteract"
+            :tooltip="$t('menu.meta.info')"
+            shortcut="I"
+            @click="$emit('item-action', { action: 'info', index: fileIndex })"
+          /> -->
         </template>
         <!-- Split/Sync Viewport Buttons (ImageViewer mode only) -->
         <template v-if="mode === 2">
@@ -203,34 +220,6 @@
 
     <!-- Elements below only rendered when not toolbar-only -->
     <template v-if="!toolbarOnly">
-    <!-- Previous Button (Overlay) -->
-    <button 
-      v-if="!isSlideShow"
-      class="absolute left-2 top-1/2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
-      :class="[ 
-        isHoverLeft ? (hasPrevious ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
-      ]"
-      :disabled="!hasPrevious"
-      @click.stop="triggerPrev"
-      @dblclick.stop
-    >
-      <IconLeft class="w-8 h-8" />
-    </button>
-
-    <!-- Next Button (Overlay) -->
-    <button 
-      v-if="!isSlideShow"
-      class="absolute right-2 top-1/2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
-      :class="[ 
-        isHoverRight ? (hasNext ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
-      ]"
-      :disabled="!hasNext"
-      @click.stop="triggerNext"
-      @dblclick.stop
-    >
-      <IconRight class="w-8 h-8" />
-    </button>
-
     <!-- Close Button (Top Right) -->
     <button 
       v-if="mode === 0 && !config.mediaViewer.isPinned"
@@ -266,7 +255,37 @@
       </div>
     </div>
 
-    <div class="flex-1 w-full min-h-0 relative" @dblclick="$emit('media-dblclick')">
+    <div ref="mediaAreaRef" class="flex-1 w-full min-h-0 relative" @dblclick="$emit('media-dblclick')">
+      <!-- Previous Button (Overlay, media-area anchored) -->
+      <button 
+        v-if="!isSlideShow && showOverlayNav"
+        class="absolute left-2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
+        :style="{ top: navButtonsTop }"
+        :class="[ 
+          isHoverLeft ? (hasPrevious ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
+        ]"
+        :disabled="!hasPrevious"
+        @click.stop="triggerPrev"
+        @dblclick.stop
+      >
+        <IconLeft class="w-8 h-8" />
+      </button>
+
+      <!-- Next Button (Overlay, media-area anchored) -->
+      <button 
+        v-if="!isSlideShow && showOverlayNav"
+        class="absolute right-2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
+        :style="{ top: navButtonsTop }"
+        :class="[ 
+          isHoverRight ? (hasNext ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
+        ]"
+        :disabled="!hasNext"
+        @click.stop="triggerNext"
+        @dblclick.stop
+      >
+        <IconRight class="w-8 h-8" />
+      </button>
+
       <Image v-if="file?.file_type === 1"
         ref="mediaRef"
         :filePath="file?.file_path" 
@@ -336,6 +355,7 @@ import {
   IconTag,
   IconComment,
   IconRotate,
+  IconFileInfo,
   IconDot,
   IconWinMinus,
   IconWinMaximize,
@@ -432,6 +452,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  showOverlayNav: {
+    type: Boolean,
+    default: true
+  },
   toolbarOnly: {
     type: Boolean,
     default: false
@@ -458,6 +482,7 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const contextMenuRef = ref<any>(null);
 const containerRef = ref<HTMLElement | null>(null);
+const mediaAreaRef = ref<HTMLElement | null>(null);
 const mediaRef = ref<any>(null);
 const toolTipRef = ref<any>(null);
 const isHoverLeft = ref(false);
@@ -466,6 +491,7 @@ const isHoverTop = ref(false);
 const isHoverBottom = ref(false);
 const toolbarPosition = ref<'top' | 'bottom'>('top');
 const hasOpenMenu = ref(false);
+const navButtonsTop = ref('50%');
 
 // Responsive toolbar
 const containerWidth = ref(0);
@@ -501,10 +527,10 @@ const effectiveSlideShowIntervalIndex = computed(() => {
 });
 const currentSlideShowIntervalLabel = computed(() => `${getSlideShowInterval(effectiveSlideShowIntervalIndex.value)}s`);
 const slideShowTransitionMode = computed(() => Number(config.settings.slideShowTransition ?? 0));
-const ratingButtonTooltip = computed(() => {
-  const rating = Number(props.file?.rating || 0);
-  return rating > 0 ? `${localeMsg.value.favorite.ratings}: ${rating}` : localeMsg.value.favorite.ratings;
-});
+// const ratingButtonTooltip = computed(() => {
+//   const rating = Number(props.file?.rating || 0);
+//   return rating > 0 ? `${localeMsg.value.favorite.ratings}: ${rating}` : localeMsg.value.favorite.ratings;
+// });
 const ratingMenuItems = computed(() => {
   const rating = Number(props.file?.rating || 0);
   return [
@@ -591,6 +617,20 @@ const showStatusBadges = computed(() => {
   return props.mode === 0 || props.mode === 1 || props.mode === 2;
 });
 let resizeObserver: ResizeObserver | null = null;
+const updateNavButtonsTop = () => {
+  if (!containerRef.value || !mediaAreaRef.value) {
+    navButtonsTop.value = '50%';
+    return;
+  }
+  const containerRect = containerRef.value.getBoundingClientRect();
+  const mediaRect = mediaAreaRef.value.getBoundingClientRect();
+  if (containerRect.height <= 0 || mediaRect.height <= 0) {
+    navButtonsTop.value = '50%';
+    return;
+  }
+  const centerY = mediaRect.top - containerRect.top + mediaRect.height / 2;
+  navButtonsTop.value = `${Math.round(centerY)}px`;
+};
 
 onMounted(() => {
   resizeObserver = new ResizeObserver((entries) => {
@@ -601,17 +641,24 @@ onMounted(() => {
         buttonsWidth.value = entry.contentRect.width;
       }
     }
+    updateNavButtonsTop();
   });
 
   if (containerRef.value) {
     resizeObserver.observe(containerRef.value);
   }
+  if (mediaAreaRef.value) {
+    resizeObserver.observe(mediaAreaRef.value);
+  }
   if (buttonsRef.value) {
     resizeObserver.observe(buttonsRef.value);
   }
+  updateNavButtonsTop();
+  window.addEventListener('resize', updateNavButtonsTop);
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateNavButtonsTop);
   if (resizeObserver) {
     resizeObserver.disconnect();
   }
@@ -619,25 +666,31 @@ onBeforeUnmount(() => {
 
 function handleMouseMove(e: MouseEvent) {
   if (!containerRef.value) return;
-  
-  const rect = containerRef.value.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const width = rect.width;
-  const height = rect.height;
-  
-  if (width > 0 && height > 0) {
-    isHoverLeft.value = x < width * 0.1;
-    isHoverRight.value = x > width * 0.9;
-    isHoverTop.value = y < 60;
-    isHoverBottom.value = y > height - 60;
 
-    if (y < height * 0.5) {
-      toolbarPosition.value = 'top';
-    } else {
-      toolbarPosition.value = 'bottom';
-    }
+  // Toolbar hover logic: based on the full viewer container.
+  const containerRect = containerRef.value.getBoundingClientRect();
+  if (containerRect.width > 0 && containerRect.height > 0) {
+    const containerY = e.clientY - containerRect.top;
+    const containerHeight = containerRect.height;
+    isHoverTop.value = containerY < 60;
+    isHoverBottom.value = containerY > containerHeight - 60;
+    toolbarPosition.value = containerY < containerHeight * 0.5 ? 'top' : 'bottom';
   }
+
+  // Prev/next hover logic: based on actual media display area (accounts for panels/toolbar layout).
+  if (!mediaAreaRef.value) return;
+  const mediaRect = mediaAreaRef.value.getBoundingClientRect();
+  if (mediaRect.width <= 0 || mediaRect.height <= 0) {
+    isHoverLeft.value = false;
+    isHoverRight.value = false;
+    return;
+  }
+
+  const mediaX = e.clientX - mediaRect.left;
+  const mediaY = e.clientY - mediaRect.top;
+  const withinMediaY = mediaY >= 0 && mediaY <= mediaRect.height;
+  isHoverLeft.value = withinMediaY && mediaX >= 0 && mediaX < mediaRect.width * 0.1;
+  isHoverRight.value = withinMediaY && mediaX <= mediaRect.width && mediaX > mediaRect.width * 0.9;
 }
 
 function handleMouseLeave() {

@@ -46,7 +46,7 @@
     "filename_search_tips": "输入文件名进行搜索",
     "index": {
       "wait_index": "等待扫描...",
-      "indexing": "正在扫描 '{album}'... {count} / {total}",
+      "indexing": "正在扫描... {count}/{total}",
       "paused": "扫描已暂停",
       "description": "生成缩略图用于搜索和快速预览。大型相册可能需要几分钟。",
       "cancel": "取消扫描"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "索引人脸",
-    "indexing": "正在索引人脸... {current} / {total}",
+    "indexing": "正在索引人脸... {current}/{total}",
     "clustering": "正在聚类人脸...",
     "faces_found": "已发现 {count} 张人脸",
     "cluster_graph": "正在构建相似图: {percent}%",
@@ -332,7 +332,8 @@
       "delete": "删除",
       "reveal_in_finder": "在访达中显示...",
       "reveal_in_file_explorer": "在文件资源管理器中显示...",
-      "set_album_cover": "设置为相册封面"
+      "set_album_cover": "设置为相册封面",
+      "show_info": "显示信息"
     },
     "calendar": {
       "monthly": "按月",
@@ -778,12 +779,20 @@
       "show_button_text": "显示按钮文本",
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",
+      "interface_scale": "界面缩放",
+      "interface_scale_options": [
+        "80%（更小）",
+        "90%",
+        "100%（默认）",
+        "110%",
+        "120%（更大）"
+      ],
       "show_map": "显示地图",
       "show_map_hint": "需要网络访问",
       "debug_mode": "调试模式"
     },
-    "gallery_view": {
-      "title": "画廊视图",
+    "grid_view": {
+      "title": "网格视图",
       "style": "网格视图布局",
       "style_options": [
         "卡片视图",

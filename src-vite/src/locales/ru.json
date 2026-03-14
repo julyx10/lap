@@ -46,7 +46,7 @@
     "filename_search_tips": "Введите имя файла",
     "index": {
       "wait_index": "Ожидание сканирования...",
-      "indexing": "Сканирование '{album}'... {count} / {total}",
+      "indexing": "Сканирование... {count} / {total}",
       "paused": "Сканирование приостановлено",
       "description": "Генерация миниатюр для поиска и предпросмотра. Это может занять несколько минут.",
       "cancel": "Отменить сканирование"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "Индексировать лица",
-    "indexing": "Индексация... {current} / {total}",
+    "indexing": "Индексация... {current}/{total}",
     "clustering": "Кластеризация...",
     "faces_found": "Найдено {count} лиц",
     "cluster_graph": "Построение графа: {percent}%",
@@ -199,6 +199,7 @@
       "Настройка"
     ],
     "select_hint": "Нажмите на элемент, чтобы выбрать или отменить выбор. Удерживайте ⇧ Shift для выбора диапазона.",
+    "select_limit_hint": "Выбрать все выбирает только первые {count} файлов.",
     "edit_disabled": "Выберите одно изображение для редактирования",
     "type_image": "Изображение",
     "type_images": "Изображения",
@@ -331,7 +332,8 @@
       "delete": "Удалить",
       "reveal_in_finder": "Показать в Finder...",
       "reveal_in_file_explorer": "Показать в Проводнике...",
-      "set_album_cover": "Сделать обложкой"
+      "set_album_cover": "Сделать обложкой",
+      "show_info": "Показать инфо"
     },
     "calendar": {
       "monthly": "Месяц",
@@ -619,6 +621,7 @@
   },
   "file_info": {
     "title": "Информация",
+    "general": "Общее",
     "metadata": "Метаданные",
     "location": "Место",
     "map": "Карта",
@@ -776,12 +779,20 @@
       "show_button_text": "Текст кнопок",
       "show_tool_tip": "Подсказки",
       "show_status_bar": "Строка состояния",
+      "interface_scale": "Масштаб интерфейса",
+      "interface_scale_options": [
+        "80% (Меньше)",
+        "90%",
+        "100% (По умолчанию)",
+        "110%",
+        "120% (Больше)"
+      ],
       "show_map": "Карта",
       "show_map_hint": "Нужен интернет",
       "debug_mode": "Режим отладки"
     },
-    "gallery_view": {
-      "title": "Галерея",
+    "grid_view": {
+      "title": "Сетка",
       "style": "Макет сетки",
       "style_options": [
         "Карточки",
@@ -884,6 +895,7 @@
         "link": "Ссылки",
         "website": "Сайт",
         "github": "Поставить звезду на GitHub",
+        "feedback": "Обратная связь",
         "privacy": "Конфиденциальность"
       },
       "auto_update": {

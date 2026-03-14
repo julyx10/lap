@@ -790,11 +790,21 @@ pub async fn index_album_worker(
         count_folder_files(&album.path);
     let total_files = image_count + video_count;
 
+    // Resume only when totals match and previous indexed is a valid in-progress value.
+    // This avoids breaking normal re-scan behavior after a completed run.
+    let previous_indexed = album.indexed.unwrap_or(0);
+    let previous_total = album.total.unwrap_or(0);
+    let resume_from = if previous_total == total_files && previous_indexed > 0 && previous_indexed < total_files {
+        previous_indexed
+    } else {
+        0
+    };
+
     // Get all existing files in DB for this album to track deletions
     let mut all_files_map = AFile::get_all_ids_in_album(album_id).unwrap_or_default();
 
     // 3. Emit start progress
-    let mut current_progress = 0;
+    let mut current_progress = resume_from;
     app_handle
         .emit(
             "index_progress",
@@ -807,10 +817,11 @@ pub async fn index_album_worker(
         .map_err(|e| e.to_string())?;
 
     // update progress to db
-    let _ = Album::update_progress(album_id, 0, total_files);
+    let _ = Album::update_progress(album_id, current_progress, total_files);
 
     // 4. Traverse and index
     let mut is_cancelled = false;
+    let mut traversed_count = 0u64;
     for entry in WalkDir::new(&album.path).into_iter().filter_map(Result::ok) {
         // Check cancellation
         if let Some(&true) = cancellation_token.lock().unwrap().get(&album_id) {
@@ -822,6 +833,14 @@ pub async fn index_album_worker(
         if entry.file_type().is_file() {
             let path_str = entry.path().to_string_lossy().to_string();
             if let Some(ftype) = get_file_type(&path_str) {
+                // Resume mode: skip already-indexed prefix files and mark them as existing
+                // so they are not considered deleted in the final cleanup step.
+                if traversed_count < resume_from {
+                    all_files_map.remove(&path_str);
+                    traversed_count += 1;
+                    continue;
+                }
+
                 // Persist current file pointer for post-crash diagnosis.
                 write_index_trace(index_trace_enabled, album_id, &path_str);
 
@@ -877,6 +896,8 @@ pub async fn index_album_worker(
                 if current_progress % 50 == 0 {
                     let _ = Album::update_progress(album_id, current_progress, total_files);
                 }
+
+                traversed_count += 1;
             }
         }
     }

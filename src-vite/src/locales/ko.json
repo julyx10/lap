@@ -46,7 +46,7 @@
     "filename_search_tips": "파일 이름 입력",
     "index": {
       "wait_index": "스캔 대기 중...",
-      "indexing": "'{album}' 스캔 중... {count} / {total}",
+      "indexing": "스캔 중... {count} / {total}",
       "paused": "스캔 일시중지됨",
       "description": "검색 및 미리보기를 위한 썸네일을 생성 중입니다. 대규모 앨범의 경우 몇 분 정도 걸릴 수 있습니다.",
       "cancel": "스캔 취소"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "얼굴 인덱싱",
-    "indexing": "얼굴 인덱싱 중... {current} / {total}",
+    "indexing": "얼굴 인덱싱 중... {current}/{total}",
     "clustering": "얼굴 클러스터링 중...",
     "faces_found": "{count}개의 얼굴 찾음",
     "cluster_graph": "유사도 그래프 생성 중: {percent}%",
@@ -199,6 +199,7 @@
       "조정"
     ],
     "select_hint": "항목을 클릭하여 선택하거나 해제합니다. ⇧ Shift 키를 눌러 범위를 선택할 수 있습니다.",
+    "select_limit_hint": "모두 선택은 처음 {count}개 파일만 선택합니다.",
     "edit_disabled": "편집하려면 이미지를 하나만 선택하세요",
     "type_image": "개 이미지",
     "type_images": "개 이미지",
@@ -331,7 +332,8 @@
       "delete": "삭제",
       "reveal_in_finder": "Finder에서 보기...",
       "reveal_in_file_explorer": "탐색기에서 보기...",
-      "set_album_cover": "앨범 커버로 설정"
+      "set_album_cover": "앨범 커버로 설정",
+      "show_info": "정보 보기"
     },
     "calendar": {
       "monthly": "월별",
@@ -619,6 +621,7 @@
   },
   "file_info": {
     "title": "파일 정보",
+    "general": "일반",
     "metadata": "메타데이터",
     "location": "위치",
     "map": "지도",
@@ -776,12 +779,20 @@
       "show_button_text": "버튼 텍스트 표시",
       "show_tool_tip": "툴팁 표시",
       "show_status_bar": "상태 표시줄",
+      "interface_scale": "인터페이스 크기",
+      "interface_scale_options": [
+        "80% (작게)",
+        "90%",
+        "100% (기본)",
+        "110%",
+        "120% (크게)"
+      ],
       "show_map": "지도 표시",
       "show_map_hint": "인터넷 필요",
       "debug_mode": "디버그 모드"
     },
-    "gallery_view": {
-      "title": "갤러리 보기",
+    "grid_view": {
+      "title": "그리드 보기",
       "style": "그리드 뷰 레이아웃",
       "style_options": [
         "카드 보기",
@@ -884,6 +895,7 @@
         "link": "링크",
         "website": "웹사이트",
         "github": "GitHub 에서 스타",
+        "feedback": "피드백",
         "privacy": "개인정보"
       },
       "auto_update": {

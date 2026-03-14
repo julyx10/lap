@@ -7,7 +7,7 @@
       <!-- Sidebar -->
       <div class="w-40 m-1 p-2 bg-base-200/30 flex flex-col rounded-box overflow-y-auto shrink-0 select-none">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.gallery_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.about.title']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.about.title']"
           :key="index"
           :class="[
             'px-3 py-2 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
@@ -54,6 +54,15 @@
                 <option v-for="(option, index) in themeOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
+            <!-- Interface Scale -->
+            <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5">
+                <div>{{ $t('settings.general.interface_scale') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.uiScale">
+                <option v-for="(option, index) in uiScaleOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
             <!-- Show Button Text -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
@@ -82,7 +91,7 @@
              <!-- Style -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.gallery_view.style') }}</div>
+                <div>{{ $t('settings.grid_view.style') }}</div>
               </div>
               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.style">
                 <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
@@ -91,7 +100,7 @@
             <!-- Size -->
             <!-- <div class="flex items-center justify-between p-2 min-h-12 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.gallery_view.size') }}</div>
+                <div>{{ $t('settings.grid_view.size') }}</div>
               </div>
               <div class="w-48 flex justify-end">
                 <SliderInput v-model="config.settings.grid.size" :min="120" :max="320" :step="10" label="" />
@@ -100,7 +109,7 @@
              <!-- Scaling -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.gallery_view.scaling') }}</div>
+                <div>{{ $t('settings.grid_view.scaling') }}</div>
               </div>
               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling" :disabled="config.settings.grid.style !== 0 && config.settings.grid.style !== 1">
                 <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
@@ -109,7 +118,7 @@
             <!-- Primary Label -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.gallery_view.label_primary') }}</div>
+                <div>{{ $t('settings.grid_view.label_primary') }}</div>
               </div>
               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary" :disabled="config.settings.grid.style !== 0">
                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
@@ -118,7 +127,7 @@
             <!-- Secondary Label -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
-                <div>{{ $t('settings.gallery_view.label_secondary') }}</div>
+                <div>{{ $t('settings.grid_view.label_secondary') }}</div>
               </div>
               <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary" :disabled="config.settings.grid.style !== 0">
                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
@@ -304,6 +313,15 @@ const currentTheme = computed({
   }
 });
 
+const uiScaleOptions = computed(() => {
+  const options = localeMsg.value.settings.general.interface_scale_options;
+  const values = [0.8, 0.9, 1, 1.1, 1.2];
+  return values.map((value, index) => ({
+    value,
+    label: options[index] ?? `${Math.round(value * 100)}%`,
+  }));
+});
+
 // Define the wheel options using computed to react to language changes
 // const wheelOptions = computed(() => {
 //   const options = localeMsg.value.settings.image_view.mouse_wheel_options; // returns an array
@@ -315,7 +333,7 @@ const currentTheme = computed({
 
 // Define the grid scaling options
 const gridScalingOptions = computed(() => {
-  const options = localeMsg.value.settings.gallery_view.scaling_options;
+  const options = localeMsg.value.settings.grid_view.scaling_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -327,7 +345,7 @@ const gridScalingOptions = computed(() => {
 
 // Define the grid style options
 const gridStyleOptions = computed(() => {
-  const options = localeMsg.value.settings.gallery_view.style_options;
+  const options = localeMsg.value.settings.grid_view.style_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -339,7 +357,7 @@ const gridStyleOptions = computed(() => {
 
 // Define the grid label options
 const gridLabelOptions = computed(() => {
-  const options = localeMsg.value.settings.gallery_view.label_options;
+  const options = localeMsg.value.settings.grid_view.label_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -451,6 +469,9 @@ watch(() => config.settings.showToolTip, (newValue) => {
 });
 watch(() => config.settings.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
+});
+watch(() => config.settings.uiScale, (newValue) => {
+  emit('settings-uiScale-changed', newValue);
 });
 watch(() => config.settings.showComment, (newValue) => {
   emit('settings-showComment-changed', newValue);

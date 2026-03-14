@@ -385,8 +385,10 @@ function stopDraggingSplitter(event: MouseEvent) {
 // Handle mouse move event
 function handleMouseMove(event: MouseEvent) {
   if (isDraggingSplitter.value) {
-    const maxLeftPaneWidth = window.innerWidth / 2;
-    config.leftPanel.width = Math.max(160, Math.min(event.clientX - 6, maxLeftPaneWidth)); // -2: border width(2px)
+    const uiScale = Number(config.settings.uiScale || 1) || 1;
+    const pointerX = event.clientX / uiScale;
+    const maxLeftPaneWidth = (window.innerWidth / uiScale) / 2;
+    config.leftPanel.width = Math.max(160, Math.min(pointerX - 6, maxLeftPaneWidth)); // -2: border width(2px)
   }
 }
 

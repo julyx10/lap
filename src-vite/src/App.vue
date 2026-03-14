@@ -15,6 +15,10 @@ import { setTheme } from '@/common/utils';
 
 const libConfig = useLibraryStore();
 const isReady = ref(false);
+const config = useConfigStore();
+const UI_SCALE_STEP = 0.1;
+const UI_SCALE_MIN = 0.8;
+const UI_SCALE_MAX = 1.2;
 
 // Auto-save library state when any config changes
 watch(() => libConfig.$state, () => {
@@ -23,16 +27,26 @@ watch(() => libConfig.$state, () => {
   }
 }, { deep: true });
 
+watch(
+  () => Number(config.settings.uiScale || 1),
+  (newScale) => {
+    const win = getCurrentWebviewWindow();
+    if (win.label === 'main') {
+      void applyMainWindowScale(newScale);
+    }
+  }
+);
+
 onMounted(async () => {
   const win = getCurrentWebviewWindow();
   if (win.label === 'main') {
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    void applyMainWindowScale(Number(config.settings.uiScale || 1));
     if (import.meta.env.PROD) {
       window.addEventListener('contextmenu', handleContextMenu);
     }
   }
 
-  const config = useConfigStore();
   setTheme(config.settings.appearance, 
     config.settings.appearance === 0 ? config.settings.lightTheme : config.settings.darkTheme);
 
@@ -54,7 +68,7 @@ onMounted(async () => {
 onUnmounted(async () => {
   const win = getCurrentWebviewWindow();
   if (win.label === 'main') {
-    window.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener('keydown', handleKeyDown, { capture: true });
     if (import.meta.env.PROD) {
       window.removeEventListener('contextmenu', handleContextMenu);
     }
@@ -62,6 +76,10 @@ onUnmounted(async () => {
 });
 
 const handleKeyDown = (event) => {
+  if (handleMainWindowZoomShortcut(event)) {
+    return;
+  }
+
   emit('global-keydown', {
     key: event.key,
     altKey: event.altKey,
@@ -70,6 +88,49 @@ const handleKeyDown = (event) => {
     shiftKey: event.shiftKey,
   });
 };
+
+function clampScale(value) {
+  return Math.max(UI_SCALE_MIN, Math.min(UI_SCALE_MAX, Number(value.toFixed(2))));
+}
+
+function applyMainWindowScale(scale) {
+  const clampedScale = clampScale(scale);
+  document.documentElement.style.zoom = String(clampedScale);
+}
+
+function handleMainWindowZoomShortcut(event) {
+  const win = getCurrentWebviewWindow();
+  if (win.label !== 'main') return false;
+
+  const isCmdOrCtrl = event.metaKey || event.ctrlKey;
+  if (!isCmdOrCtrl || event.altKey) return false;
+
+  const key = event.key;
+  const code = event.code;
+  const isZoomIn = key === '+' || key === '=' || code === 'NumpadAdd';
+  const isZoomOut = key === '-' || key === '_' || code === 'NumpadSubtract';
+  const isZoomReset = key === '0' || code === 'Numpad0';
+
+  if (!isZoomIn && !isZoomOut && !isZoomReset) return false;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  let nextScale = Number(config.settings.uiScale || 1);
+  if (isZoomIn) {
+    nextScale = clampScale(nextScale + UI_SCALE_STEP);
+  } else if (isZoomOut) {
+    nextScale = clampScale(nextScale - UI_SCALE_STEP);
+  } else {
+    nextScale = 1;
+  }
+
+  if (nextScale !== Number(config.settings.uiScale || 1)) {
+    config.setUiScale(nextScale);
+  }
+  void applyMainWindowScale(nextScale);
+  return true;
+}
 
 const handleContextMenu = (e) => {
   e.preventDefault();

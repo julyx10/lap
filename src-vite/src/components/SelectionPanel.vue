@@ -171,7 +171,7 @@
               @click="$emit('rotateAll')"
             >
               <IconRotate class="w-3.5 h-3.5" />
-              <span>{{ $t('menu.meta.rotate') }}</span>
+              <span>{{ rotateDisplayLabel }}</span>
             </button>
           </div>
         </div>
@@ -276,6 +276,25 @@ const multiSelectFavorite = computed(() => {
   const favorites = props.selectedFiles.map((f: any) => Boolean(f.is_favorite));
   const first = favorites[0];
   return favorites.every((favorite: boolean) => favorite === first) ? first : false;
+});
+
+const multiSelectRotate = computed(() => {
+  if (!props.selectedFiles.length) return 0;
+  const normalizeRotate = (rotate: number) => {
+    const normalized = rotate % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  };
+  const rotates = props.selectedFiles.map((f: any) => normalizeRotate(Number(f.rotate || 0)));
+  const first = rotates[0];
+  return rotates.every((rotate: number) => rotate === first) ? first : null;
+});
+
+const rotateDisplayLabel = computed(() => {
+  const rotateText = localeMsg.value.menu.meta.rotate;
+  if (multiSelectRotate.value === null || multiSelectRotate.value === 0) {
+    return rotateText;
+  }
+  return `${rotateText} - ${multiSelectRotate.value}°`;
 });
 
 function getRatingLabel(rating: number) {

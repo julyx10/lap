@@ -130,6 +130,7 @@ export { default as IconRestore } from '@/assets/icons/restore.svg';
 // ======================
 // SELECTION & TOGGLE ICONS
 // ======================
+export { default as IconSelection } from '@/assets/icons/selection.svg';
 export { default as IconChecked } from '@/assets/icons/checkbox-checked.svg';
 export { default as IconUnChecked } from '@/assets/icons/checkbox-unchecked.svg';
 export { default as IconCheckAll } from '@/assets/icons/checkbox-checkall.svg';

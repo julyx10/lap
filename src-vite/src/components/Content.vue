@@ -105,7 +105,7 @@
           <!-- grid styles cycle -->
           <TButton
             :icon="[IconCard, IconTile, IconJustified][config.settings.grid.style]"
-            :tooltip="localeMsg.settings.gallery_view.style_options[config.settings.grid.style]"
+            :tooltip="localeMsg.settings.grid_view.style_options[config.settings.grid.style]"
             :disabled="showQuickView"
             @click="cycleGridStyle"
           />
@@ -126,7 +126,7 @@
           <IconSeparator class="t-icon-size text-base-content/30" />
           <!-- toggle select mode -->
           <TButton
-            :icon="IconCheckAll"
+            :icon="IconSelection"
             :tooltip="$t('toolbar.filter.select_mode')"
             :selected="selectMode"
             :disabled="fileList.length === 0 || showQuickView"
@@ -146,6 +146,7 @@
           <TButton
             :icon="IconInformation"
             :tooltip="isInfoPanelOpen ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
+            shortcut="I"
             :selected="isInfoPanelOpen"
             @click="toggleInfoPanel"
           />
@@ -276,7 +277,43 @@
             !uiStore.isFullScreen ? (config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12 mb-1') : ''
           ]"
         >
-          <div class="relative w-full h-full flex items-center justify-center">
+          <div
+            class="relative w-full h-full flex items-center justify-center"
+            @mousemove="handleQuickViewMouseMove"
+            @mouseleave="handleQuickViewMouseLeave"
+          >
+            <div class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none">
+              <button
+                :class="[
+                  'p-2 rounded-full bg-base-100/30 transition-opacity duration-200',
+                  quickViewHoverLeft
+                    ? (selectedItemIndex > 0
+                      ? 'opacity-100 pointer-events-auto text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer'
+                      : 'opacity-30 pointer-events-none cursor-default text-base-content/30')
+                    : 'opacity-0 pointer-events-none'
+                ]"
+                :disabled="selectedItemIndex <= 0"
+                @click="requestNavigate('prev')"
+                @dblclick.stop
+              >
+                <IconLeft class="w-8 h-8" />
+              </button>
+              <button
+                :class="[
+                  'p-2 rounded-full bg-base-100/30 transition-opacity duration-200',
+                  quickViewHoverRight
+                    ? (selectedItemIndex < fileList.length - 1
+                      ? 'opacity-100 pointer-events-auto text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer'
+                      : 'opacity-30 pointer-events-none cursor-default text-base-content/30')
+                    : 'opacity-0 pointer-events-none'
+                ]"
+                :disabled="selectedItemIndex >= fileList.length - 1"
+                @click="requestNavigate('next')"
+                @dblclick.stop
+              >
+                <IconRight class="w-8 h-8" />
+              </button>
+            </div>
             <MediaViewer
               ref="quickViewMediaRef"
               :mode="0"
@@ -292,6 +329,7 @@
               :imageScale="imageScale"
               :imageMinScale="imageMinScale"
               :imageMaxScale="imageMaxScale"
+              :showOverlayNav="false"
               v-model:isZoomFit="quickViewZoomFit"
               @prev="performNavigate('prev')"
               @next="performNavigate('next')"
@@ -329,7 +367,7 @@
       >
         <div v-if="(config.rightPanel.show || selectMode) && !uiStore.isFullScreen"
           :class="[ 'pt-12 pr-1', config.settings.showStatusBar ? 'pb-8' : 'pb-1' ]" 
-          :style="{ width: activeRightPanelWidth + '%' }">
+          :style="{ width: activeRightPanelWidth + 'px' }">
           <DedupPane
             v-if="isDedupPanelOpen"
             :file-list="fileList"
@@ -575,6 +613,7 @@ import {
   IconFilmstrip,
   IconRestore,
   IconRefresh,
+  IconSelection,
   IconInformation,
   IconPhotoSearch,
   IconSimilar,
@@ -717,6 +756,23 @@ const selectedFiles = computed(() => selectMode.value ? getActionableSelectedIte
 const showQuickView = ref(false);
 const quickViewMediaRef = ref<any>(null);
 const quickViewZoomFit = ref(true);
+const quickViewHoverLeft = ref(false);
+const quickViewHoverRight = ref(false);
+
+function handleQuickViewMouseMove(event: MouseEvent) {
+  const target = event.currentTarget as HTMLElement | null;
+  if (!target) return;
+  const rect = target.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+  const x = event.clientX - rect.left;
+  quickViewHoverLeft.value = x >= 0 && x < rect.width * 0.1;
+  quickViewHoverRight.value = x <= rect.width && x > rect.width * 0.9;
+}
+
+function handleQuickViewMouseLeave() {
+  quickViewHoverLeft.value = false;
+  quickViewHoverRight.value = false;
+}
 
 // film strip view
 const filmStripMediaRef = ref<any>(null);
@@ -746,6 +802,8 @@ const videoRef = ref<HTMLVideoElement | null>(null);             // preview vide
 
 // info panel splitter
 const isDraggingInfoPanel = ref(false);
+const rightPanelDragStartX = ref(0);
+const rightPanelDragStartWidth = ref(0);
 
 // message box
 const showRenameMsgbox = ref(false);  // show rename message box
@@ -777,7 +835,42 @@ const pendingAction = ref<(() => void) | null>(null);
 const fileInfoRef = ref<any>(null);
 const isDedupPanelOpen = computed(() => config.rightPanel.show && config.rightPanel.mode === 'dedup');
 const isInfoPanelOpen = computed(() => config.rightPanel.show && config.rightPanel.mode === 'info');
-const activeRightPanelWidth = computed(() => config.rightPanel.width);
+const RIGHT_PANEL_MIN_WIDTH = 160; // Keep aligned with left panel minimum width.
+const activeRightPanelWidth = computed(() => Number(config.rightPanel.width || 360));
+
+function getRightPanelMaxWidth() {
+  const uiScale = Number(config.settings.uiScale || 1) || 1;
+  const mainWindowWidth = window.innerWidth / uiScale;
+  return Math.max(RIGHT_PANEL_MIN_WIDTH, Math.floor(mainWindowWidth / 3));
+}
+
+function clampRightPanelWidth(width: number) {
+  return Math.round(Math.min(Math.max(width, RIGHT_PANEL_MIN_WIDTH), getRightPanelMaxWidth()));
+}
+
+function migrateRightPanelWidthToPixels() {
+  if (!contentViewDiv.value) return;
+  const layoutWidth = contentViewDiv.value.clientWidth;
+  if (layoutWidth <= 0) return;
+
+  const rawWidth = Number(config.rightPanel.width || 0);
+  if (rawWidth <= 0) {
+    config.rightPanel.width = clampRightPanelWidth(layoutWidth * 0.3);
+    return;
+  }
+
+  // Backward compatibility: old config persisted width in percent (20-80).
+  if (rawWidth <= 100) {
+    config.rightPanel.width = clampRightPanelWidth((rawWidth / 100) * layoutWidth);
+    return;
+  }
+
+  config.rightPanel.width = clampRightPanelWidth(rawWidth);
+}
+
+function handleWindowResize() {
+  config.rightPanel.width = clampRightPanelWidth(Number(config.rightPanel.width || 360));
+}
 
 const confirmSave = async () => {
   showUnsavedChangesMsgbox.value = false;
@@ -1032,10 +1125,14 @@ onMounted(() => {
     containerHeight.value = gridScrollContainerRef.value.clientHeight;
     containerWidth.value = gridScrollContainerRef.value.clientWidth;
   }
+
+  migrateRightPanelWidthToPixels();
+  window.addEventListener('resize', handleWindowResize);
 });
 
 onBeforeUnmount(() => {
   stopSlideShow();
+  window.removeEventListener('resize', handleWindowResize);
   if (resizeObserver) {
     resizeObserver.disconnect();
   }
@@ -1166,6 +1263,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'reveal': () => revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path)),
     'favorite': toggleFavorite,
     'rotate': clickRotate,
+    'info': toggleInfoPanel,
     'tag': clickTag,
     'comment': () => showCommentMsgbox.value = true,
     'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
@@ -1447,6 +1545,18 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       return;
     }
 
+    if (!showQuickView.value && event.key === '=') {
+      event.preventDefault();
+      config.settings.grid.size = Math.min(360, Number(config.settings.grid.size || 160) + 10);
+      return;
+    }
+
+    if (!showQuickView.value && event.key === '-') {
+      event.preventDefault();
+      config.settings.grid.size = Math.max(120, Number(config.settings.grid.size || 160) - 10);
+      return;
+    }
+
     if (lowerKey === 'f') {
       event.preventDefault();
       void toggleFavorite();
@@ -1468,6 +1578,12 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     if (lowerKey === 'r') {
       event.preventDefault();
       void clickRotate();
+      return;
+    }
+
+    if (lowerKey === 'i') {
+      event.preventDefault();
+      toggleInfoPanel();
       return;
     }
   }
@@ -1651,18 +1767,19 @@ const statusBarIsUpdateAnimating = computed(() =>
 );
 
 const statusBarScanText = computed(() => {
+  const album = libConfig.index.albumName || '';
+  const count = Number(libConfig.index.indexed || 0).toLocaleString();
+  const total = Number(libConfig.index.total || 0).toLocaleString();
+
   if (statusBarScanMode.value === 'waiting') {
     return localeMsg.value.search.index.wait_index || 'Wait for scan...';
   }
   if (statusBarScanMode.value === 'paused') {
-    return localeMsg.value.search.index.paused || '扫描已暂停';
+    return localeMsg.value.search.index.paused || 'Scan paused';
   }
   if (statusBarScanMode.value !== 'current') return '';
-  const album = libConfig.index.albumName || '';
-  const count = Number(libConfig.index.indexed || 0).toLocaleString();
-  const total = Number(libConfig.index.total || 0).toLocaleString();
+
   return localeMsg.value.search.index.indexing
-    .replace('{album}', album)
     .replace('{count}', count)
     .replace('{total}', total);
 });
@@ -2206,6 +2323,15 @@ watch(
     }, 0);
   }, 
   { immediate: true }
+);
+
+watch(
+  () => Number(libConfig.album.activateTick || 0),
+  () => {
+    if (!showQuickView.value) return;
+    showQuickView.value = false;
+    stopSlideShow();
+  }
 );
 
 // watch for selected item (not in select mode)
@@ -4068,29 +4194,27 @@ async function openImageViewer(
 /// Dragging the info panel splitter
 function startDraggingInfoPanelSplitter(event: MouseEvent) {
   isDraggingInfoPanel.value = true;
+  rightPanelDragStartX.value = event.clientX;
+  rightPanelDragStartWidth.value = Number(config.rightPanel.width || 360);
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', stopDragging);
 }
 
 /// handle mouse move event
 function handleMouseMove(event: MouseEvent) {
-  if (!contentViewDiv.value || !gridViewDiv.value) {
-    return;
-  }
   if (isDraggingInfoPanel.value) {
-    const contentViewWidth = contentViewDiv.value.clientWidth;
-    const newWidth = contentViewDiv.value.getBoundingClientRect().right - event.clientX - 2; // -2: border width(2px)
-    const newWidthPercent = (newWidth * 100) / contentViewWidth;
-
-    // Limit width between 20% and 80%
-    const clampedWidth = Math.min(Math.max(newWidthPercent, 20), 80);
-    config.rightPanel.width = clampedWidth;
+    const uiScale = Number(config.settings.uiScale || 1) || 1;
+    const deltaX = (rightPanelDragStartX.value - event.clientX) / uiScale;
+    const newWidth = rightPanelDragStartWidth.value + deltaX;
+    config.rightPanel.width = clampRightPanelWidth(newWidth);
   }
 }
 
 function stopDragging() {
   // isDraggingFilmStripView.value = false;
   isDraggingInfoPanel.value = false;
+  rightPanelDragStartX.value = 0;
+  rightPanelDragStartWidth.value = 0;
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', stopDragging);
 }

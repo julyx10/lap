@@ -24,7 +24,7 @@ export const useConfigStore = defineStore('configStore', {
 
     rightPanel: {
       show: false,                // show right panel
-      width: 30,                  // panel width(20-80%)
+      width: 360,                 // panel width in px
       mode: 'info',               // right panel mode ('info' | 'dedup')
     },
 
@@ -83,6 +83,7 @@ export const useConfigStore = defineStore('configStore', {
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
       debugMode: false,           // debug mode
+      uiScale: 1,                 // main window UI zoom scale (0.7-1.8)
 
       // grid view settings
       thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
@@ -155,6 +156,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setDebugMode(debugMode) {
       this.settings.debugMode = debugMode;
+    },
+    setUiScale(uiScale) {
+      this.settings.uiScale = uiScale;
     },
     setSettingsTabIndex(tabIndex) {
       this.settings.tabIndex = tabIndex;

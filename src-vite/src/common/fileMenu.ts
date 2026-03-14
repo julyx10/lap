@@ -7,6 +7,7 @@ import {
   IconStarFilled,
   IconTag,
   IconRotate,
+  IconInformation,
   IconCopy,
   IconRename,
   IconMoveTo,
@@ -102,8 +103,12 @@ export const useFileMenuItems = (
       },
       {
         label: localeMsg.value.menu.file.copy_to,
-        icon: markRaw(IconFiles),
+        // icon: markRaw(IconFiles),
         action: createAction('copy-to')
+      },
+      {
+        label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
+        action: createAction('reveal')
       },
       {
         label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
@@ -111,10 +116,12 @@ export const useFileMenuItems = (
         shortcut: isMac ? '⌘⌫' : 'Del',
         action: createAction('trash')
       },
-      {
-        label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
-        action: createAction('reveal')
-      },
+      // {
+      //   label: localeMsg.value.menu.file.show_info,
+      //   icon: markRaw(IconInformation),
+      //   shortcut: 'I',
+      //   action: createAction('info')
+      // },
       { label: "-", action: null },
       {
         label: f.is_favorite ? localeMsg.value.menu.meta.unfavorite : localeMsg.value.menu.meta.favorite,

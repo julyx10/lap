@@ -46,7 +46,7 @@
     "filename_search_tips": "Digite um nome de arquivo",
     "index": {
       "wait_index": "Aguardando escaneamento...",
-      "indexing": "Escaneando '{album}'... {count} / {total}",
+      "indexing": "Escaneando... {count} / {total}",
       "paused": "Varredura em pausa",
       "description": "Gerando miniaturas para pesquisa e pré-visualização. Pode levar alguns minutos.",
       "cancel": "Cancelar escaneamento"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "Indexar rostos",
-    "indexing": "Indexando rostos... {current} / {total}",
+    "indexing": "Indexando rostos... {current}/{total}",
     "clustering": "Agrupando rostos...",
     "faces_found": "{count} rostos encontrados",
     "cluster_graph": "Construindo gráfico: {percent}%",
@@ -199,6 +199,7 @@
       "Ajustar"
     ],
     "select_hint": "Clique em um item para selecionar ou desmarcar. Segure ⇧ Shift para selecionar um intervalo.",
+    "select_limit_hint": "Selecionar tudo seleciona apenas os primeiros {count} arquivos.",
     "edit_disabled": "Selecione uma única imagem para editar",
     "type_image": "Imagem",
     "type_images": "Imagens",
@@ -331,7 +332,8 @@
       "delete": "Excluir",
       "reveal_in_finder": "Mostrar no Finder...",
       "reveal_in_file_explorer": "Mostrar no Explorer...",
-      "set_album_cover": "Definir como capa"
+      "set_album_cover": "Definir como capa",
+      "show_info": "Mostrar info"
     },
     "calendar": {
       "monthly": "Mensal",
@@ -619,6 +621,7 @@
   },
   "file_info": {
     "title": "Info do arquivo",
+    "general": "Geral",
     "metadata": "Metadados",
     "location": "Localização",
     "map": "Mapa",
@@ -776,12 +779,20 @@
       "show_button_text": "Texto nos botões",
       "show_tool_tip": "Dicas de ferramenta",
       "show_status_bar": "Barra de status",
+      "interface_scale": "Escala da interface",
+      "interface_scale_options": [
+        "80% (Menor)",
+        "90%",
+        "100% (Padrão)",
+        "110%",
+        "120% (Maior)"
+      ],
       "show_map": "Mostrar mapa",
       "show_map_hint": "Requer internet",
       "debug_mode": "Modo debug"
     },
-    "gallery_view": {
-      "title": "Galeria",
+    "grid_view": {
+      "title": "Grade",
       "style": "Layout da grade",
       "style_options": [
         "Visualização em cartões",
@@ -884,6 +895,7 @@
         "link": "Link",
         "website": "Site",
         "github": "Dar estrela no GitHub",
+        "feedback": "Feedback",
         "privacy": "Privacidade"
       },
       "auto_update": {

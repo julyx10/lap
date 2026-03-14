@@ -16,6 +16,11 @@ export function useAlbumSelectionProvider(
     source: SelectionSource,
     onExpandAndSelect?: (albumId: number, folderPath: string) => Promise<void>
 ) {
+    const markAlbumActivated = () => {
+        if (source !== 'album') return;
+        libConfig.album.activateTick = Number(libConfig.album.activateTick || 0) + 1;
+    };
+
     // Create refs that stay in sync with libConfig
     const albumId = computed({
         get: () => source === 'album' ? (libConfig.album.id ?? 0) : (libConfig.destFolder.albumId ?? 0),
@@ -68,12 +73,14 @@ export function useAlbumSelectionProvider(
         albumId.value = album.id;
         folderPath.value = album.path;
         selected.value = true;
+        markAlbumActivated();
     };
 
     /**
      * Select a folder within an album
      */
     const selectFolder = async (albumIdVal: number, folder: Folder) => {
+        markAlbumActivated();
         const result = await apiSelectFolder(albumIdVal, folder.path);
         if (result) {
             albumId.value = albumIdVal;

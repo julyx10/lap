@@ -1,7 +1,6 @@
 <template>
   <div>
     <div 
-      ref="buttonRef"
       class="relative inline-block"
       @mouseenter="showTooltip"
       @mouseleave="hideTooltip"
@@ -46,26 +45,20 @@
           {{ text }}
         </span>
       </button>
-    </div>
-
-    <!-- Teleported tooltip -->
-    <teleport to="body">
       <transition name="fade">
         <div 
-          v-if="isHovered && tooltip && config.settings.showToolTip"
-          ref="tooltipRef"
-          class="fixed z-1000 px-2 py-1 text-xs whitespace-nowrap rounded-box bg-neutral text-neutral-content shadow-lg pointer-events-none"
-          :style="tooltipStyle"
+          v-if="isHovered && tooltipText && config.settings.showToolTip"
+          class="absolute z-1000 left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 text-xs whitespace-nowrap rounded-box bg-neutral text-neutral-content shadow-lg pointer-events-none"
         >
-          {{ tooltip }}
+          {{ tooltipText }}
         </div>
       </transition>
-    </teleport>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onBeforeUnmount } from 'vue';
+import { computed, ref, onBeforeUnmount } from 'vue';
 import { config } from '@/common/config';
 import type { Component } from 'vue';
 
@@ -110,6 +103,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  shortcut: {
+    type: String,
+    default: ''
+  },
   tooltipClasses: {
     type: String,
     default: 'tooltip-bottom'
@@ -117,11 +114,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['click']);
+const tooltipText = computed(() => {
+  if (!props.shortcut) return props.tooltip;
+  return props.tooltip ? `${props.tooltip} (${props.shortcut})` : props.shortcut;
+});
 
-const buttonRef = ref<HTMLElement | null>(null);
-const tooltipRef = ref<HTMLElement | null>(null);
 const isHovered = ref(false);
-const tooltipStyle = ref<Record<string, string>>({});
 let tooltipTimer: ReturnType<typeof setTimeout> | null = null;
 
 const clearTooltipTimer = () => {
@@ -131,40 +129,11 @@ const clearTooltipTimer = () => {
   }
 };
 
-const showTooltip = async () => {
-  if (!props.tooltip || !config.settings.showToolTip) return;
+const showTooltip = () => {
+  if (!tooltipText.value || !config.settings.showToolTip) return;
 
   clearTooltipTimer();
   isHovered.value = true;
-  await nextTick();
-  
-  if (buttonRef.value && tooltipRef.value) {
-    const rect = buttonRef.value.getBoundingClientRect();
-    const tooltipRect = tooltipRef.value.getBoundingClientRect();
-    const padding = 4;
-    
-    // Default: position below
-    let top = rect.bottom + padding;
-    let left = rect.left + (rect.width - tooltipRect.width) / 2;
-    
-    // Check if tooltip goes off right edge
-    if (left + tooltipRect.width > window.innerWidth - padding) {
-      left = window.innerWidth - tooltipRect.width - padding;
-    }
-    // Check if tooltip goes off left edge
-    if (left < padding) {
-      left = padding;
-    }
-    // Check if tooltip goes off bottom, place above instead
-    if (top + tooltipRect.height > window.innerHeight - padding) {
-      top = rect.top - tooltipRect.height - padding;
-    }
-    
-    tooltipStyle.value = {
-      top: `${top}px`,
-      left: `${left}px`,
-    };
-  }
 
   tooltipTimer = setTimeout(() => {
     isHovered.value = false;

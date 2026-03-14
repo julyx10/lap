@@ -46,7 +46,7 @@
     "filename_search_tips": "Entrez un nom de fichier",
     "index": {
       "wait_index": "En attente du scan...",
-      "indexing": "Scan de '{album}'... {count} / {total}",
+      "indexing": "Scan en cours... {count} / {total}",
       "paused": "Scan en pause",
       "description": "Génération des miniatures pour la recherche et l'aperçu. Cela peut prendre quelques minutes.",
       "cancel": "Annuler le scan"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "Indexer visages",
-    "indexing": "Indexation... {current} / {total}",
+    "indexing": "Indexation... {current}/{total}",
     "clustering": "Regroupement...",
     "faces_found": "{count} visages trouvés",
     "cluster_graph": "Graphe de similarité: {percent}%",
@@ -199,6 +199,7 @@
       "Ajuster"
     ],
     "select_hint": "Cliquez sur un élément pour le sélectionner ou le désélectionner. Maintenez ⇧ Maj pour sélectionner une plage.",
+    "select_limit_hint": "Tout sélectionner ne sélectionne que les {count} premiers fichiers.",
     "edit_disabled": "Sélectionnez une seule image pour l'éditer",
     "type_image": "Image",
     "type_images": "Images",
@@ -331,7 +332,8 @@
       "delete": "Supprimer",
       "reveal_in_finder": "Afficher dans le Finder...",
       "reveal_in_file_explorer": "Afficher dans l'Explorateur...",
-      "set_album_cover": "Définir comme couverture"
+      "set_album_cover": "Définir comme couverture",
+      "show_info": "Afficher info"
     },
     "calendar": {
       "monthly": "Mensuel",
@@ -619,6 +621,7 @@
   },
   "file_info": {
     "title": "Info fichier",
+    "general": "Général",
     "metadata": "Métadonnées",
     "location": "Lieu",
     "map": "Carte",
@@ -776,12 +779,20 @@
       "show_button_text": "Texte boutons",
       "show_tool_tip": "Bulles aide",
       "show_status_bar": "Barre d'état",
+      "interface_scale": "Échelle de l'interface",
+      "interface_scale_options": [
+        "80% (Plus petit)",
+        "90%",
+        "100% (Par défaut)",
+        "110%",
+        "120% (Plus grand)"
+      ],
       "show_map": "Afficher carte",
       "show_map_hint": "Requiert internet",
       "debug_mode": "Mode débogage"
     },
-    "gallery_view": {
-      "title": "Vue galerie",
+    "grid_view": {
+      "title": "Vue en grille",
       "style": "Disposition de la grille",
       "style_options": [
         "Vue carte",
@@ -884,6 +895,7 @@
         "link": "Lien",
         "website": "Site web",
         "github": "Mettre une etoile sur GitHub",
+        "feedback": "Retour",
         "privacy": "Confidentialite"
       },
       "auto_update": {

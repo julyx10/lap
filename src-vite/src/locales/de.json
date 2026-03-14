@@ -46,7 +46,7 @@
     "filename_search_tips": "Dateinamen eingeben",
     "index": {
       "wait_index": "Warte auf Scan...",
-      "indexing": "Scanne '{album}'... {count} / {total}",
+      "indexing": "Scanne... {count} / {total}",
       "paused": "Scan pausiert",
       "description": "Generiere Vorschaubilder für Suche und Vorschau. Dies kann einige Minuten dauern.",
       "cancel": "Scan abbrechen"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "Gesichter indexieren",
-    "indexing": "Indexiere Gesichter... {current} / {total}",
+    "indexing": "Indexiere Gesichter... {current}/{total}",
     "clustering": "Gruppiere Gesichter...",
     "faces_found": "{count} Gesichter gefunden",
     "cluster_graph": "Erstelle Graph: {percent}%",
@@ -199,6 +199,7 @@
       "Anpassen"
     ],
     "select_hint": "Klicken Sie auf ein Element, um es auszuwählen oder abzuwählen. Halten Sie ⇧ Umschalttaste für eine Bereichsauswahl.",
+    "select_limit_hint": "Alles auswählen wählt nur die ersten {count} Dateien aus.",
     "edit_disabled": "Wählen Sie ein einzelnes Bild zum Bearbeiten",
     "type_image": "Bild",
     "type_images": "Bilder",
@@ -331,7 +332,8 @@
       "delete": "Löschen",
       "reveal_in_finder": "Im Finder anzeigen...",
       "reveal_in_file_explorer": "Im Explorer anzeigen...",
-      "set_album_cover": "Als Albumcover setzen"
+      "set_album_cover": "Als Albumcover setzen",
+      "show_info": "Info anzeigen"
     },
     "calendar": {
       "monthly": "Monatlich",
@@ -619,6 +621,7 @@
   },
   "file_info": {
     "title": "Datei-Info",
+    "general": "Allgemein",
     "metadata": "Metadaten",
     "location": "Ort",
     "map": "Karte",
@@ -776,12 +779,20 @@
       "show_button_text": "Button-Text",
       "show_tool_tip": "Tooltips",
       "show_status_bar": "Statusleiste",
+      "interface_scale": "Oberflächenskalierung",
+      "interface_scale_options": [
+        "80% (Kleiner)",
+        "90%",
+        "100% (Standard)",
+        "110%",
+        "120% (Größer)"
+      ],
       "show_map": "Karte anzeigen",
       "show_map_hint": "Benötigt Internet",
       "debug_mode": "Debug-Modus"
     },
-    "gallery_view": {
-      "title": "Galerieansicht",
+    "grid_view": {
+      "title": "Rasteransicht",
       "style": "Rasteransicht-Layout",
       "style_options": [
         "Kartenansicht",
@@ -884,6 +895,7 @@
         "link": "Link",
         "website": "Webseite",
         "github": "Auf GitHub einen Stern geben",
+        "feedback": "Feedback",
         "privacy": "Datenschutz"
       },
       "auto_update": {

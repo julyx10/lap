@@ -11,12 +11,13 @@ export const useLibraryStore = defineStore('libraryStore', {
     _initialized: false,
 
     // Per-library state
-    /** @type {{ id: number, folderId: number | null, folderPath: string, selected: boolean }} */
+    /** @type {{ id: number, folderId: number | null, folderPath: string, selected: boolean, activateTick: number }} */
     album: {
       id: 0,                  // current album id (0: show all files)
       folderId: null,         // current folder id
       folderPath: '',         // current folder path
       selected: false,        // album is selected
+      activateTick: 0,        // increments on each album/folder click (even same target)
     },
 
     /** @type {{ albumId: number | null, folderId: number, folderPath: string, rating: number }} */

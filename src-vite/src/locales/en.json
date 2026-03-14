@@ -46,7 +46,7 @@
     "filename_search_tips": "Enter a filename to search",
     "index": {
       "wait_index": "Wait for scan...",
-      "indexing": "Scanning '{album}'... {count} / {total}",
+      "indexing": "Scanning... {count} / {total}",
       "paused": "Scanning paused",
       "description": "Generating thumbnails for search and quick preview. Large albums may take a few minutes.",
       "cancel": "Cancel scan"
@@ -54,7 +54,7 @@
   },
   "face_index": {
     "start": "Index Faces",
-    "indexing": "Indexing faces... {current} / {total}",
+    "indexing": "Indexing faces... {current}/{total}",
     "clustering": "Clustering faces...",
     "faces_found": "{count} faces found",
     "cluster_graph": "Building similarity graph: {percent}%",
@@ -332,7 +332,8 @@
       "delete": "Delete",
       "reveal_in_finder": "Reveal in Finder...",
       "reveal_in_file_explorer": "Reveal in File Explorer...",
-      "set_album_cover": "Set as album cover"
+      "set_album_cover": "Set as album cover",
+      "show_info": "Show info"
     },
     "calendar": {
       "monthly": "Monthly",
@@ -778,12 +779,20 @@
       "show_button_text": "Show button text",
       "show_tool_tip": "Show tooltips",
       "show_status_bar": "Show status bar",
+      "interface_scale": "Interface scale",
+      "interface_scale_options": [
+        "80% (Smaller)",
+        "90%",
+        "100% (Default)",
+        "110%",
+        "120% (Larger)"
+      ],
       "show_map": "Show map",
       "show_map_hint": "Requires network access",
       "debug_mode": "Debug mode"
     },
-    "gallery_view": {
-      "title": "Gallery view",
+    "grid_view": {
+      "title": "Grid view",
       "style": "Grid view layout",
       "style_options": [
         "Card view",
