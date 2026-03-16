@@ -93,7 +93,7 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.file.rename,
         icon: markRaw(IconRename),
-        shortcut: isMac ? 'Return' : 'F2',
+        shortcut: isMac ? '⏎' : 'F2',
         action: createAction('rename')
       },
       {

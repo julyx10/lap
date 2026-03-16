@@ -34,6 +34,11 @@ It is built as a privacy-focused alternative to cloud photo services: no forced 
 - **Keep folders in sync** with filesystem-aware operations and refresh support.
 - **Use local search tools** such as text/image search, similar-image search, face clustering, and smart tags.
 
+## Planned Features
+
+- **Support more image and video formats** such as RAW photo formats, Live Photos, Motion Photos.
+- **Expand metadata support** for standards commonly used in photography workflows, including EXIF, XMP, and IPTC.
+
 ## Download Lap
 
 | Platform | Download | Notes |
