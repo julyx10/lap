@@ -63,6 +63,8 @@
                 <option v-for="(option, index) in scaleOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
+            <div class="m-2 border-t border-base-content/10"></div>
+
             <!-- Show Button Text -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
@@ -133,6 +135,8 @@
                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
+            <div class="m-2 border-t border-base-content/10"></div>
+
             <!-- Preview Position -->
              <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
@@ -197,6 +201,8 @@
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showComment" />
             </div>
             -->
+            <div class="m-2 border-t border-base-content/10"></div>
+
             <div class="flex items-center justify-between gap-4 p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="min-w-0 flex flex-col gap-0.5">
                 <div>{{ $t('settings.image_view.external_image_editor') }}</div>
@@ -204,16 +210,21 @@
                   {{ externalImageAppName }}
                 </div>
               </div>
-              <div class="shrink-0 flex items-center gap-2">
-                <button class="btn btn-sm btn-ghost" @click="selectExternalApp('image')">
+              <div class="shrink-0 flex items-center gap-1">
+                <button 
+                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
+                  @click="selectExternalApp('image')"
+                >
                   {{ $t('settings.image_view.choose_app') }}
                 </button>
                 <button
-                  class="btn btn-sm btn-ghost"
+                  class="btn btn-sm btn-ghost "
                   :disabled="!config.settings.externalImageAppPath"
+                  :title="$t('settings.image_view.clear_app')"
+                  :aria-label="$t('settings.image_view.clear_app')"
                   @click="clearExternalApp('image')"
                 >
-                  {{ $t('settings.image_view.clear_app') }}
+                  <IconClose class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -224,16 +235,21 @@
                   {{ externalVideoAppName }}
                 </div>
               </div>
-              <div class="shrink-0 flex items-center gap-2">
-                <button class="btn btn-sm btn-ghost" @click="selectExternalApp('video')">
+              <div class="shrink-0 flex items-center gap-1">
+                <button 
+                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
+                  @click="selectExternalApp('video')"
+                >
                   {{ $t('settings.image_view.choose_app') }}
                 </button>
                 <button
                   class="btn btn-sm btn-ghost"
                   :disabled="!config.settings.externalVideoAppPath"
+                  :title="$t('settings.image_view.clear_app')"
+                  :aria-label="$t('settings.image_view.clear_app')"
                   @click="clearExternalApp('video')"
                 >
-                  {{ $t('settings.image_view.clear_app') }}
+                  <IconClose class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -251,6 +267,9 @@
                  <option v-for="(option, index) in similarityOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
+
+            <div class="m-2 border-t border-base-content/10"></div>
+
             <!-- Face Recognition Toggle -->
             <div class="flex items-center justify-between p-2 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5">
@@ -303,6 +322,7 @@ import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getExternalAppDisplayName } from '@/common/api';
 import { isMac, setTheme, getSlideShowInterval } from '@/common/utils';
+import { IconClose } from '@/common/icons';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SliderInput from '@/components/SliderInput.vue';

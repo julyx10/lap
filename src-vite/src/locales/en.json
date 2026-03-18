@@ -256,7 +256,7 @@
       "albums": "No albums found. Try to add an existing folder which contains images or videos",
       "files": "No files found",
       "folder_files": "This folder has no files",
-      "folder_files_hint": "Subfolders are not included. Try a subfolder. Lap reads files directly from the file system and updates the album automatically.",
+      "folder_files_hint": "Try a subfolder. Lap reads files directly from the file system and updates the album automatically.",
       "folders": "No folders found",
       "tag": "No tags found",
       "calendar": "No calendar data found",
@@ -796,10 +796,6 @@
         "Large",
         "Larger"
       ],
-      "external_editor": "External editor",
-      "external_editor_not_selected": "No app selected",
-      "choose_app": "Choose App",
-      "clear_app": "Clear",
       "show_button_text": "Show button text",
       "show_tool_tip": "Show tooltips",
       "show_status_bar": "Show status bar",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "Image view",
+      "title": "Viewer",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": [
         "Previous / Next image (Ctrl to zoom)",
@@ -864,7 +860,7 @@
       "external_image_editor": "External image app",
       "external_video_app": "External video app",
       "external_app_not_selected": "No app selected",
-      "choose_app": "Choose App",
+      "choose_app": "Choose",
       "clear_app": "Clear",
       "navigator_view": "Navigator visibility",
       "navigator_view_options": [

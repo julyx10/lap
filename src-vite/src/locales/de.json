@@ -256,7 +256,7 @@
       "albums": "Keine Alben gefunden",
       "files": "Keine Dateien gefunden",
       "folder_files": "Dieser Ordner enthält keine Dateien",
-      "folder_files_hint": "Unterordner sind nicht eingeschlossen. Versuchen Sie einen Unterordner. Lap liest Dateien direkt aus dem Dateisystem und aktualisiert das Album automatisch.",
+      "folder_files_hint": "Versuchen Sie einen Unterordner. Lap liest Dateien direkt aus dem Dateisystem und aktualisiert das Album automatisch.",
       "folders": "Keine Ordner gefunden",
       "tag": "Keine Tags gefunden",
       "calendar": "Keine Kalenderdaten",
@@ -796,10 +796,6 @@
         "Groß",
         "Größer"
       ],
-      "external_editor": "Externer Editor",
-      "external_editor_not_selected": "Keine App ausgewählt",
-      "choose_app": "App wählen",
-      "clear_app": "Zurücksetzen",
       "show_button_text": "Button-Text",
       "show_tool_tip": "Tooltips",
       "show_status_bar": "Statusleiste",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "Bildansicht",
+      "title": "Viewer",
       "mouse_wheel": "Mausrad",
       "mouse_wheel_options": [
         "Vorher/Nächst (Strg Zoom)",
@@ -864,7 +860,7 @@
       "external_image_editor": "Externe Bild-App",
       "external_video_app": "Externe Video-App",
       "external_app_not_selected": "Keine App ausgewählt",
-      "choose_app": "App wählen",
+      "choose_app": "Auswählen",
       "clear_app": "Zurücksetzen",
       "navigator_view": "Navigator-Sichtbarkeit",
       "navigator_view_options": [

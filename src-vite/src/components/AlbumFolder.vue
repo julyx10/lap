@@ -256,6 +256,10 @@ const getMenuItemsForFolder = (folder: any) => {
       }
     },
     {
+      label: "-",
+      action: null
+    },
+    {
       label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
       icon: IconTrash,
       disabled: isRoot,

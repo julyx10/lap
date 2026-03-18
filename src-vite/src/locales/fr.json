@@ -256,7 +256,7 @@
       "albums": "Aucun album trouvé",
       "files": "Aucun fichier trouvé",
       "folder_files": "Ce dossier ne contient aucun fichier",
-      "folder_files_hint": "Les sous-dossiers ne sont pas inclus. Essayez un sous-dossier. Lap lit directement les fichiers du système et met à jour l’album automatiquement.",
+      "folder_files_hint": "Essayez un sous-dossier. Lap lit directement les fichiers du système et met à jour l’album automatiquement.",
       "folders": "Aucun dossier trouvé",
       "tag": "Aucun tag trouvé",
       "calendar": "Aucune donnée calendrier",
@@ -796,10 +796,6 @@
         "Grand",
         "Plus grand"
       ],
-      "external_editor": "Editeur externe",
-      "external_editor_not_selected": "Aucune app selectionnee",
-      "choose_app": "Choisir une app",
-      "clear_app": "Effacer",
       "show_button_text": "Texte boutons",
       "show_tool_tip": "Bulles aide",
       "show_status_bar": "Barre d'état",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "Vue image",
+      "title": "Visionneuse",
       "mouse_wheel": "Molette",
       "mouse_wheel_options": [
         "Préc/Suiv (Ctrl zoom)",
@@ -864,7 +860,7 @@
       "external_image_editor": "App image externe",
       "external_video_app": "App video externe",
       "external_app_not_selected": "Aucune app selectionnee",
-      "choose_app": "Choisir une app",
+      "choose_app": "Choisir",
       "clear_app": "Effacer",
       "navigator_view": "Visibilité du navigateur",
       "navigator_view_options": [

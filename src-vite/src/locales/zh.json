@@ -256,7 +256,7 @@
       "albums": "未找到相册。尝试添加一个包含图片或视频的文件夹",
       "files": "未找到文件",
       "folder_files": "此文件夹中没有文件",
-      "folder_files_hint": "不包含子文件夹。请继续查看子文件夹。Lap 会直接读取文件系统中的文件，并自动更新相册。",
+      "folder_files_hint": "请继续查看子文件夹。Lap 会直接读取文件系统中的文件，并自动更新相册。",
       "folders": "未找到文件夹",
       "tag": "未找到标签",
       "calendar": "未找到日历数据",
@@ -796,10 +796,6 @@
         "大",
         "更大"
       ],
-      "external_editor": "外部编辑器",
-      "external_editor_not_selected": "未选择应用",
-      "choose_app": "选择应用",
-      "clear_app": "清除",
       "show_button_text": "显示按钮文本",
       "show_tool_tip": "显示工具提示",
       "show_status_bar": "显示状态栏",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "图片查看",
+      "title": "查看器",
       "mouse_wheel": "鼠标滚轮",
       "mouse_wheel_options": [
         "上一张/下一张图片 (Ctrl 缩放)",
@@ -864,7 +860,7 @@
       "external_image_editor": "外部图片应用",
       "external_video_app": "外部视频应用",
       "external_app_not_selected": "未选择应用",
-      "choose_app": "选择应用",
+      "choose_app": "选择",
       "clear_app": "清除",
       "navigator_view": "导航器显示",
       "navigator_view_options": [

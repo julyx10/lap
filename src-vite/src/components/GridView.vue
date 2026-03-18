@@ -50,10 +50,10 @@
     </VirtualScroll>
     <!-- Empty State / Loading -->
     <div v-else class="absolute inset-0 flex flex-col items-center justify-center">
-      <div class="text-base-content/30 flex flex-col items-center gap-1 text-center px-4">
+      <div class="text-base-content/30 flex flex-col items-center gap-2 text-center px-4">
         <template v-if="!loading && showFolderFiles">
           <span>{{ $t('tooltip.not_found.folder_files') }}</span>
-          <span class="text-sm">{{ $t('tooltip.not_found.folder_files_hint') }}</span>
+          <span class="text-xs">{{ $t('tooltip.not_found.folder_files_hint') }}</span>
         </template>
         <span v-else-if="!loading">{{ $t('tooltip.not_found.files') }}</span>
       </div>

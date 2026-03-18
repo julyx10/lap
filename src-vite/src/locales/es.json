@@ -256,7 +256,7 @@
       "albums": "No se encontraron álbumes",
       "files": "No se encontraron archivos",
       "folder_files": "Esta carpeta no contiene archivos",
-      "folder_files_hint": "Las subcarpetas no están incluidas. Prueba una subcarpeta. Lap lee los archivos directamente del sistema y actualiza el álbum automáticamente.",
+      "folder_files_hint": "Prueba una subcarpeta. Lap lee los archivos directamente del sistema y actualiza el álbum automáticamente.",
       "folders": "No se encontraron carpetas",
       "tag": "No se encontraron etiquetas",
       "calendar": "Sin datos de calendario",
@@ -796,10 +796,6 @@
         "Grande",
         "Más grande"
       ],
-      "external_editor": "Editor externo",
-      "external_editor_not_selected": "Ninguna app seleccionada",
-      "choose_app": "Elegir app",
-      "clear_app": "Borrar",
       "show_button_text": "Mostrar texto botones",
       "show_tool_tip": "Mostrar tooltips",
       "show_status_bar": "Mostrar barra estado",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "Vista imagen",
+      "title": "Visualizador",
       "mouse_wheel": "Rueda ratón",
       "mouse_wheel_options": [
         "Ant/Sig (Ctrl zoom)",
@@ -864,7 +860,7 @@
       "external_image_editor": "App de imagen externa",
       "external_video_app": "App de video externa",
       "external_app_not_selected": "Ninguna app seleccionada",
-      "choose_app": "Elegir app",
+      "choose_app": "Elegir",
       "clear_app": "Borrar",
       "navigator_view": "Visibilidad del navegador",
       "navigator_view_options": [

@@ -51,19 +51,19 @@
             {{ $t('menu.select.invert') }}
           </button>
         </div>
-        <div v-if="showSelectionLimitHint" class="pt-0.5 text-xs font-medium leading-relaxed text-warning">
+        <div v-if="showSelectionLimitHint" class="mx-2 text-xs font-medium leading-relaxed text-warning">
           {{ $t('info_panel.select_limit_hint', { count: selectionLimit }) }}
         </div>
         <div class="border-t border-base-content/10"></div>
 
-        <div class="space-y-2 text-xs">
-          <div class="flex items-center gap-1 text-base-content/55 font-semibold">
-            <span>{{ $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) }} ({{ formatFileSize(selectedSize) }})</span>
+        <div class="mx-2 pt-1 space-y-2 text-xs text-base-content/50 font-medium">
+          <div class="font-semibold">
+            <span>{{ selectedCount > 0 ? `${$t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() })} (${formatFileSize(selectedSize)})` : $t('info_panel.select_hint') }}</span>
           </div>
-          <div class="flex items-center gap-1 text-base-content/50 font-medium">
+          <div>
             <span>{{ multiSelectTypeBreakdown }}</span>
           </div>
-          <div v-if="multiSelectDateRange" class="flex items-center gap-1 text-base-content/50 font-medium">
+          <div v-if="multiSelectDateRange">
             <span>{{ multiSelectDateRange }}</span>
           </div>
         </div>

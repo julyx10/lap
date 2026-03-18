@@ -256,7 +256,7 @@
       "albums": "Nenhum álbum encontrado",
       "files": "Nenhum arquivo encontrado",
       "folder_files": "Esta pasta não contém arquivos",
-      "folder_files_hint": "As subpastas não estão incluídas. Tente uma subpasta. O Lap lê os arquivos diretamente do sistema e atualiza o álbum automaticamente.",
+      "folder_files_hint": "Tente uma subpasta. O Lap lê os arquivos diretamente do sistema e atualiza o álbum automaticamente.",
       "folders": "Nenhuma pasta encontrada",
       "tag": "Nenhuma tag encontrada",
       "calendar": "Sem dados de calendário",
@@ -796,10 +796,6 @@
         "Grande",
         "Maior"
       ],
-      "external_editor": "Editor externo",
-      "external_editor_not_selected": "Nenhum app selecionado",
-      "choose_app": "Escolher app",
-      "clear_app": "Limpar",
       "show_button_text": "Texto nos botões",
       "show_tool_tip": "Dicas de ferramenta",
       "show_status_bar": "Barra de status",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "Visualizar",
+      "title": "Visualizador",
       "mouse_wheel": "Roda do mouse",
       "mouse_wheel_options": [
         "Ant/Próx (Ctrl zoom)",
@@ -864,7 +860,7 @@
       "external_image_editor": "App de imagem externa",
       "external_video_app": "App de vídeo externa",
       "external_app_not_selected": "Nenhum app selecionado",
-      "choose_app": "Escolher app",
+      "choose_app": "Escolher",
       "clear_app": "Limpar",
       "navigator_view": "Visibilidade do navegador",
       "navigator_view_options": [

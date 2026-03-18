@@ -256,7 +256,7 @@
       "albums": "앨범을 찾을 수 없습니다",
       "files": "파일을 찾을 수 없습니다",
       "folder_files": "이 폴더에는 파일이 없습니다",
-      "folder_files_hint": "하위 폴더는 포함되지 않습니다. 하위 폴더를 확인하세요. Lap은 파일 시스템에서 파일을 직접 읽고 앨범을 자동으로 업데이트합니다.",
+      "folder_files_hint": "하위 폴더를 확인하세요. Lap은 파일 시스템에서 파일을 직접 읽고 앨범을 자동으로 업데이트합니다.",
       "folders": "폴더를 찾을 수 없습니다",
       "tag": "태그를 찾을 수 없습니다",
       "calendar": "달력 데이터가 없습니다",
@@ -796,10 +796,6 @@
         "크게",
         "더 크게"
       ],
-      "external_editor": "외부 편집기",
-      "external_editor_not_selected": "선택된 앱이 없습니다",
-      "choose_app": "앱 선택",
-      "clear_app": "지우기",
       "show_button_text": "버튼 텍스트 표시",
       "show_tool_tip": "툴팁 표시",
       "show_status_bar": "상태 표시줄",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "이미지 보기",
+      "title": "뷰어",
       "mouse_wheel": "마우스 휠",
       "mouse_wheel_options": [
         "이전/다음 (Ctrl 확대)",
@@ -864,7 +860,7 @@
       "external_image_editor": "외부 이미지 앱",
       "external_video_app": "외부 비디오 앱",
       "external_app_not_selected": "선택된 앱이 없습니다",
-      "choose_app": "앱 선택",
+      "choose_app": "선택",
       "clear_app": "지우기",
       "navigator_view": "내비게이터 표시",
       "navigator_view_options": [

@@ -256,7 +256,7 @@
       "albums": "アルバムが見つかりません",
       "files": "ファイルが見つかりません",
       "folder_files": "このフォルダーにはファイルがありません",
-      "folder_files_hint": "サブフォルダーは含まれません。サブフォルダーを確認してください。Lap はファイルシステムから直接読み取り、アルバムを自動で更新します。",
+      "folder_files_hint": "サブフォルダーを確認してください。Lap はファイルシステムから直接読み取り、アルバムを自動で更新します。",
       "folders": "フォルダーが見つかりません",
       "tag": "タグが見つかりません",
       "calendar": "カレンダーデータがありません",
@@ -796,10 +796,6 @@
         "大",
         "大きめ"
       ],
-      "external_editor": "外部エディター",
-      "external_editor_not_selected": "アプリが選択されていません",
-      "choose_app": "アプリを選択",
-      "clear_app": "クリア",
       "show_button_text": "ボタンテキスト",
       "show_tool_tip": "ツールチップ",
       "show_status_bar": "ステータスバー",
@@ -845,7 +841,7 @@
       ]
     },
     "image_view": {
-      "title": "画像表示",
+      "title": "ビューア",
       "mouse_wheel": "マウスホイール",
       "mouse_wheel_options": [
         "前/次へ (Ctrlで拡大)",
@@ -864,7 +860,7 @@
       "external_image_editor": "外部画像アプリ",
       "external_video_app": "外部動画アプリ",
       "external_app_not_selected": "アプリが選択されていません",
-      "choose_app": "アプリを選択",
+      "choose_app": "選択",
       "clear_app": "クリア",
       "navigator_view": "ナビゲーターの表示",
       "navigator_view_options": [
