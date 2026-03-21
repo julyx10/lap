@@ -59,7 +59,7 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 
 ## Planned Features
 
-- **Support more image and video formats** such as RAW photo formats, Live Photos, Motion Photos.
+- **Support more image and video formats** such as Live Photos and Motion Photos.
 - **Expand metadata support** for standards commonly used in photography workflows, including EXIF, XMP, and IPTC.
 
 ## Build from Source
@@ -88,7 +88,8 @@ cargo tauri dev
 
 | Type | Formats |
 | :--- | :--- |
-| Images | JPG, PNG, GIF, BMP, TIFF, WebP, HEIC(macOS) |
+| Images | JPG, JPEG, PNG, GIF, BMP, TIFF, WebP, AVIF, HEIC, HEIF |
+| RAW photos | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
 | Videos | MP4, MOV, MKV, WebM |
 
 ## Architecture
