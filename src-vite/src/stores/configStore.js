@@ -80,6 +80,7 @@ export const useConfigStore = defineStore('configStore', {
     imageViewer: {
       isSplit: false,           // split view
       isSyncViewport: false,    // sync viewport
+      isFullScreen: false,      // native fullscreen in image viewer window
     },
 
     settings: {

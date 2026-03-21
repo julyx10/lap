@@ -2,6 +2,7 @@ import { computed, markRaw, Ref } from 'vue';
 import { config } from '@/common/config';
 import {
   IconMonitor,
+  IconPrint,
   IconHeart,
   IconStar,
   IconStarFilled,
@@ -78,6 +79,12 @@ export const useFileMenuItems = (
         disabled: !((isImage && imageAppName) || (isVideo && videoAppName)),
         icon: markRaw(IconExternal),
         action: createAction('open-external-app')
+      },
+      {
+        label: localeMsg.value.menu.file.print,
+        icon: markRaw(IconPrint),
+        disabled: !isImage,
+        action: createAction('print')
       },
       {
         label: localeMsg.value.menu.meta.rotate,

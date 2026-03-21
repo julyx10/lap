@@ -8,7 +8,7 @@
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
     @click="(event: MouseEvent) => $emit('clicked', event.shiftKey)"
-    @dblclick="$emit('dblclicked')"
+    @dblclick="(event: MouseEvent) => $emit('dblclicked', { shiftKey: event.shiftKey, metaKey: event.metaKey, ctrlKey: event.ctrlKey })"
     @contextmenu="handleContextMenu"
   >
     <div v-if="file.thumbnail" 

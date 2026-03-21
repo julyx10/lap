@@ -548,7 +548,7 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
          setFileRotate, getFileHasTags, setFileFavorite, setFileRating, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, addFileToDb, cancelIndexing as cancelIndexingApi, getFacesForFile, listenFaceIndexProgress,
-         openFileWithApp,
+         openFileWithApp, printImage,
          dedupGetGroup, dedupDeleteSelected, getQueryFilePosition } from '@/common/api';  
 import { config, libConfig } from '@/common/config';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
@@ -1155,6 +1155,33 @@ onBeforeUnmount(() => {
 
 // New event handlers for GridView
 function handleItemClicked(index: number, shiftKey: boolean = false) {
+  if (!selectMode.value && shiftKey && selectedItemIndex.value >= 0 && selectedItemIndex.value !== index) {
+    checkUnsavedChanges(() => {
+      selectMode.value = true;
+      showQuickView.value = false;
+      stopSlideShow();
+      config.rightPanel.show = false;
+
+      const anchorIndex = selectedItemIndex.value;
+      const start = Math.min(anchorIndex, index);
+      const end = Math.max(anchorIndex, index);
+
+      for (let i = 0; i < fileList.value.length; i++) {
+        fileList.value[i].isSelected = false;
+      }
+
+      for (let i = start; i <= end; i++) {
+        if (isRealFileItem(fileList.value[i])) {
+          fileList.value[i].isSelected = true;
+        }
+      }
+
+      selectedItemIndex.value = index;
+      lastSelectedIndex.value = index;
+    });
+    return;
+  }
+
   if (index === selectedItemIndex.value) {
     if (selectMode.value) {
       handleItemSelectToggled(index, shiftKey);
@@ -1164,6 +1191,7 @@ function handleItemClicked(index: number, shiftKey: boolean = false) {
   
   checkUnsavedChanges(() => {
     selectedItemIndex.value = index;
+    lastSelectedIndex.value = index;
     if (selectMode.value) {
       handleItemSelectToggled(index, shiftKey);
     }
@@ -1171,7 +1199,19 @@ function handleItemClicked(index: number, shiftKey: boolean = false) {
 }
 
 // Double click grid view item
-function handleItemDblClicked(index: number) {
+function handleItemDblClicked(
+  index: number,
+  modifiers: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean } = {}
+) {
+  const openInNewWindow = !!(modifiers.shiftKey || modifiers.metaKey || modifiers.ctrlKey);
+  if (openInNewWindow) {
+    checkUnsavedChanges(() => {
+      selectedItemIndex.value = index;
+      openImageViewer(index, true);
+    });
+    return;
+  }
+
   if (index === selectedItemIndex.value) {
     if (!config.settings.grid.showFilmStrip) {
       // quick view
@@ -1260,6 +1300,11 @@ function handleItemAction(payload: { action: string, index: number }) {
 
   const actionMap = {
     'open': () => openImageViewer(selectedItemIndex.value, true),
+    'print': () => {
+      const selectedFile = fileList.value[selectedItemIndex.value];
+      if (!selectedFile?.file_path) return;
+      void printImage(selectedFile.file_path);
+    },
     'edit': () => {
       editImageInitialTab.value = config.imageEditor.tab === 'adjust' ? 'adjust' : 'edit';
       showEditImage.value = true;
@@ -3869,7 +3914,18 @@ const handleSelectMode = (value: any) => {
     }
   } else {
     if (fileList.value.length > 0) {
-      selectedItemIndex.value = 0;
+      const fallbackIndex = fileList.value.findIndex(item => isRealFileItem(item));
+      const targetIndex =
+        selectedItemIndex.value >= 0 &&
+        selectedItemIndex.value < fileList.value.length &&
+        isRealFileItem(fileList.value[selectedItemIndex.value])
+          ? selectedItemIndex.value
+          : fallbackIndex;
+
+      if (targetIndex >= 0) {
+        selectedItemIndex.value = targetIndex;
+        fileList.value[targetIndex].isSelected = true;
+      }
     }
     showQuickView.value = false;
     stopSlideShow();

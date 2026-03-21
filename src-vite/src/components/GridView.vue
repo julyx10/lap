@@ -41,7 +41,7 @@
           :select-mode="selectMode"
           :show-folder-files="showFolderFiles"
           @clicked="(shiftKey) => $emit('item-clicked', index, shiftKey)"
-          @dblclicked="$emit('item-dblclicked', index)"
+          @dblclicked="(modifiers) => $emit('item-dblclicked', index, modifiers)"
           @select-toggled="(shiftKey) => $emit('item-select-toggled', index, shiftKey)"
           @action="(actionName) => $emit('item-action', { action: actionName, index: index })"
         />

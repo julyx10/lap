@@ -418,6 +418,7 @@ onMounted(async() => {
   rightFileInfo.value = null;
   rightIsZoomFit.value = true;
   activePane.value = 'left';
+  isFullScreen.value = !!config.imageViewer?.isFullScreen;
 
   // Listen 
   unlistenImg = await listen('update-img', async (event: any) => {
@@ -625,6 +626,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
   const key = event.key;
   if ((keyActions as any)[key]) {
+    event.preventDefault();
     (keyActions as any)[key]();
   }
 }
@@ -747,6 +749,11 @@ watch(() => config.settings.language, (newLanguage) => {
 
 // watch full screen
 watch(() => isFullScreen.value, async (newFullScreen) => {
+  if (!config.imageViewer) {
+    (config as any).imageViewer = { isSplit: false, isSyncViewport: false, isFullScreen: false };
+  }
+  config.imageViewer.isFullScreen = newFullScreen;
+
   if(isWin) {
     await appWindow.setFullscreen(newFullScreen);
     await appWindow.setResizable(!newFullScreen);
@@ -864,7 +871,7 @@ watch(() => isSplit.value, (val) => {
     return;
   }
   if (!config.imageViewer) {
-    (config as any).imageViewer = { isSplit: false, isSyncViewport: false };
+    (config as any).imageViewer = { isSplit: false, isSyncViewport: false, isFullScreen: false };
   }
   config.imageViewer.isSplit = val;
   if (!val) {
@@ -877,7 +884,7 @@ watch(() => isSplit.value, (val) => {
 watch(() => isSyncViewport.value, (val) => {
   if (isCompareModeSession.value) return;
   if (!config.imageViewer) {
-    (config as any).imageViewer = { isSplit: false, isSyncViewport: false };
+    (config as any).imageViewer = { isSplit: false, isSyncViewport: false, isFullScreen: false };
   }
   config.imageViewer.isSyncViewport = val;
 });
@@ -987,12 +994,7 @@ const toggleNativeFullScreen = () => {
 };
 
 const closeWindow = () => {
-  if(isFullScreen.value) {
-    isFullScreen.value = false;
-    appWindow.setFocus();
-  } else {
-    appWindow.close();
-  }
+  appWindow.close();
 }
 
 const clickScale = (event: any, pane: 'left' | 'right' = 'left') => {
