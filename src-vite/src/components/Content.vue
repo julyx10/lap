@@ -536,6 +536,20 @@
     @third="confirmDiscard"
   />
 
+  <IndexRecoveryDialog
+    v-if="showIndexRecoveryMsgbox"
+    :title="indexRecoveryTitle"
+    :message="indexRecoveryMessage"
+    :fileLabel="indexRecoveryFileLabel"
+    :filePath="recoverySkipFilePath"
+    :continueText="indexRecoveryOkText"
+    :skipText="indexRecoverySkipText"
+    :cancelText="$t('msgbox.cancel')"
+    @continue="confirmIndexRecoveryRetry"
+    @skip="confirmIndexRecoverySkip"
+    @cancel="cancelIndexRecovery"
+  />
+
   <ToolTip ref="toolTipRef" />
 
 </template>
@@ -552,8 +566,8 @@ import { getAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, getFold
          setFileRotate, getFileHasTags, setFileFavorite, setFileRating, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, addFileToDb, cancelIndexing as cancelIndexingApi, getFacesForFile, listenFaceIndexProgress,
-         openFileWithApp,
-         dedupGetGroup, dedupDeleteSelected, getQueryFilePosition } from '@/common/api';  
+         openFileWithApp, getIndexRecoveryInfo, clearIndexRecoveryInfo,
+         dedupGetGroup, dedupDeleteSelected, getQueryFilePosition } from '@/common/api'; 
 import { config, libConfig } from '@/common/config';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
@@ -567,6 +581,7 @@ import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
 import MessageBox from '@/components/MessageBox.vue';
+import IndexRecoveryDialog from '@/components/IndexRecoveryDialog.vue';
 import MoveTo from '@/components/MoveTo.vue';
 import ToolTip from '@/components/ToolTip.vue';
 import TButton from '@/components/TButton.vue';
@@ -1741,12 +1756,31 @@ let unlistenIndexFinished: (() => void) | undefined;
 let unlistenTriggerNextAlbum: (() => void) | undefined;
 let unlistenRefreshContent: (() => void) | undefined;
 let unlistenFilesDeleted: (() => void) | undefined;
+const showIndexRecoveryMsgbox = ref(false);
+const recoverySkipFilePath = ref('');  // local: file path from crash trace
+const indexRecoveryTitle = computed(() => localeMsg.value.search.index.recovery.title);
+const indexRecoveryOkText = computed(() => localeMsg.value.search.index.recovery.continue);
+const indexRecoverySkipText = computed(() => localeMsg.value.search.index.recovery.skip);
+const indexRecoveryFileLabel = computed(() => localeMsg.value.search.index.recovery.file_label);
+const indexRecoveryMessage = computed(() => {
+  return localeMsg.value.search.index.recovery.message;
+});
 
-async function processNextAlbum() {
+async function processNextAlbum(skipFilePath: string | null = null) {
   if (libConfig.index.albumQueue.length > 0) {
     const albumId = libConfig.index.albumQueue[0];
     const album = await getAlbum(albumId);
     if (album) {
+      // Check for crash recovery: if trace file exists and matches this album
+      if (!skipFilePath) {
+        const recoveryInfo = await getIndexRecoveryInfo();
+        if (recoveryInfo && Number(recoveryInfo.album_id) === Number(albumId)) {
+          recoverySkipFilePath.value = String(recoveryInfo.file_path || '');
+          libConfig.index.status = 2;
+          showIndexRecoveryMsgbox.value = true;
+          return;
+        }
+      }
       libConfig.index.status = 1;
       libConfig.index.pausedAlbumIds = (libConfig.index.pausedAlbumIds as any[]).filter(
         id => Number(id) !== Number(albumId)
@@ -1754,7 +1788,7 @@ async function processNextAlbum() {
       libConfig.index.albumName = album.name;
       libConfig.index.indexed = 0;
       libConfig.index.total = 0;
-      await indexAlbum(albumId);
+      await indexAlbum(albumId, skipFilePath || null);
     } else {
       // album not found (maybe deleted), remove from queue and process next
       libConfig.index.albumQueue.shift();
@@ -1771,11 +1805,12 @@ async function processNextAlbum() {
 const isIndexing = computed(() => {
   return config.main.sidebarIndex === 0 && // Album mode
          !!libConfig.album.id && libConfig.album.id > 0 && // Valid album
-         libConfig.index.albumQueue.includes(libConfig.album.id);
+         libConfig.index.albumQueue.includes(libConfig.album.id) &&
+         Number(libConfig.index.status || 0) !== 2;
 });
 
 const isAnyIndexing = computed(() =>
-  libConfig.index.albumQueue.length > 0
+  libConfig.index.albumQueue.length > 0 && Number(libConfig.index.status || 0) !== 2
 );
 
 const isScanStreamingMode = computed(() =>
@@ -1800,6 +1835,26 @@ const syncIndexStatus = () => {
     libConfig.index.status = 0;
   }
 };
+
+const confirmIndexRecoveryRetry = async () => {
+  showIndexRecoveryMsgbox.value = false;
+  recoverySkipFilePath.value = '';
+  await clearIndexRecoveryInfo();  // delete trace file first to prevent re-detection
+  await processNextAlbum(null); // passing null means retry the file
+};
+
+const confirmIndexRecoverySkip = async () => {
+  showIndexRecoveryMsgbox.value = false;
+  const skipFilePath = recoverySkipFilePath.value;
+  recoverySkipFilePath.value = '';
+  await clearIndexRecoveryInfo();  // delete trace file first to prevent re-detection
+  await processNextAlbum(skipFilePath || null); // passing path means skip it
+};
+
+const cancelIndexRecovery = () => {
+  showIndexRecoveryMsgbox.value = false;
+  libConfig.index.status = 2;
+};
 const activeScanningAlbumId = computed(() => Number(libConfig.index.albumQueue[0] || 0));
 const suppressNextIndexingIdleRefresh = ref(false);
 const selectedAlbumIdForStatusBar = computed(() => Number(libConfig.album.id || 0));
@@ -1807,6 +1862,7 @@ const selectedAlbumScanState = computed(() => getAlbumScanState({
   albumId: selectedAlbumIdForStatusBar.value,
   albumQueue: libConfig.index.albumQueue as any[],
   pausedAlbumIds: libConfig.index.pausedAlbumIds as any[],
+  status: Number(libConfig.index.status || 0),
 }));
 const selectedAlbumScanIcon = computed(() => getAlbumScanIcon(selectedAlbumScanState.value));
 const selectedAlbumScanAnimating = computed(() => shouldAnimateAlbumScanIcon(selectedAlbumScanState.value));
@@ -2081,6 +2137,8 @@ async function cancelIndexing() {
   const index = normalizedAlbumQueue.value.findIndex(id => id === Number(albumId || 0));
   if (index === -1) return;
 
+  showIndexRecoveryMsgbox.value = false;
+
   if (index === 0) {
       libConfig.index.albumQueue.shift();
       await cancelIndexingApi(albumId);
@@ -2237,12 +2295,8 @@ onMounted( async() => {
     await updateSelectedImage(selectedItemIndex.value);
   });
 
-  if (libConfig.index.albumQueue.length > 0) {
-     if (libConfig.index.status === 1) {
-        processNextAlbum();
-     } else if (libConfig.index.status === 0) {
-        libConfig.index.status = 1;
-     }
+  if (libConfig.index.albumQueue.length > 0 && libConfig.index.status === 1) {
+    processNextAlbum();
   }
 
   // Face Indexing listeners

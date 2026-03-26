@@ -1085,9 +1085,13 @@ export async function searchSimilarImages(params) {
 // indexing
 
 // index album
-export async function indexAlbum(albumId) {
+export async function indexAlbum(albumId, skipFilePath = null) {
   try {
-    await invoke('index_album', { albumId, thumbnailSize: config.settings.thumbnailSize || 512 });
+    await invoke('index_album', {
+      albumId,
+      thumbnailSize: config.settings.thumbnailSize || 512,
+      skipFilePath,
+    });
   } catch (error) {
     console.error('indexAlbum error:', error);
   }
@@ -1100,6 +1104,25 @@ export async function cancelIndexing(albumId) {
   } catch (error) {
     console.error('cancelIndexing error:', error);
   }
+}
+
+export async function getIndexRecoveryInfo() {
+  try {
+    return await invoke('get_index_recovery_info');
+  } catch (error) {
+    console.error('getIndexRecoveryInfo error:', error);
+  }
+  return null;
+}
+
+export async function clearIndexRecoveryInfo() {
+  try {
+    await invoke('clear_index_recovery_info');
+    return true;
+  } catch (error) {
+    console.error('Failed to clear index recovery info:', error);
+  }
+  return false;
 }
 
 // listen index progress

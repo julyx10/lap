@@ -293,12 +293,14 @@ const getAlbumStatus = (album: any) =>
     albumId: album?.id,
     albumQueue: libConfig.index.albumQueue as any[],
     pausedAlbumIds: libConfig.index.pausedAlbumIds as any[],
+    status: Number(libConfig.index.status || 0),
   });
 const isAlbumScanning = (albumId: number) =>
   getAlbumScanState({
     albumId,
     albumQueue: libConfig.index.albumQueue as any[],
     pausedAlbumIds: libConfig.index.pausedAlbumIds as any[],
+    status: Number(libConfig.index.status || 0),
   }) === 'scanning';
 const getAlbumIcon = (album: any) => getAlbumScanIcon(getAlbumStatus(album));
 const shouldAnimateAlbumIcon = (album: any) => shouldAnimateAlbumScanIcon(getAlbumStatus(album));
@@ -518,12 +520,14 @@ const clickIndexAlbum = async (albumId: number) => {
   removePausedAlbum(albumId);
   if (getAlbumQueueIndex(albumId, libConfig.index.albumQueue as any[]) === -1) {
     libConfig.index.albumQueue.push(albumId);
-    libConfig.index.status = 1;
   }
+  // Always set status to 1 — handles both fresh start and resume from paused-in-queue
+  libConfig.index.status = 1;
 }
 
 const toggleIndexAlbum = async (albumId: number) => {
-  if (isAlbumQueued(albumId)) {
+  const state = getAlbumStatus({ id: albumId });
+  if (state === 'scanning' || state === 'queued') {
     await clickCancelIndexAlbum(albumId);
   } else {
     await clickIndexAlbum(albumId);

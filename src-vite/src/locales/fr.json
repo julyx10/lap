@@ -49,7 +49,15 @@
       "indexing": "Scan en cours... {count} / {total}",
       "paused": "Scan en pause",
       "description": "Génération des miniatures pour la recherche et l'aperçu. Cela peut prendre quelques minutes.",
-      "cancel": "Annuler le scan"
+      "cancel": "Annuler le scan",
+      "recovery": {
+        "title": "Analyse interrompue",
+        "continue": "Continuer",
+        "skip": "Ignorer",
+        "file_label": "Dernier fichier analysé",
+        "message": "La précédente analyse ne s'est pas terminée normalement.\n\nVous pouvez continuer ou ignorer le dernier fichier pour reprendre l’analyse.",
+        "message_with_file": "L’analyse précédente ne s’est pas terminée correctement.\n\nDernier fichier analysé :\n{file}\n\nSi vous continuez, Lap ignorera ce fichier une fois et reprendra l’analyse."
+      }
     }
   },
   "face_index": {

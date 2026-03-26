@@ -49,7 +49,15 @@
       "indexing": "Scanne... {count} / {total}",
       "paused": "Scan pausiert",
       "description": "Generiere Vorschaubilder für Suche und Vorschau. Dies kann einige Minuten dauern.",
-      "cancel": "Scan abbrechen"
+      "cancel": "Scan abbrechen",
+      "recovery": {
+        "title": "Scan unterbrochen",
+        "continue": "Weiter",
+        "skip": "Überspringen",
+        "file_label": "Zuletzt gescannte Datei",
+        "message": "Der letzte Scan wurde nicht normal beendet.\n\nSie können fortfahren oder die letzte Datei überspringen, um den Scan fortzusetzen.",
+        "message_with_file": "Der vorherige Scan wurde nicht sauber beendet.\n\nZuletzt gescannte Datei:\n{file}\n\nWenn Sie fortfahren, überspringt Lap diese Datei einmal und setzt den Scan fort."
+      }
     }
   },
   "face_index": {

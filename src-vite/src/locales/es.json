@@ -49,7 +49,15 @@
       "indexing": "Escaneando... {count} / {total}",
       "paused": "Escaneo en pausa",
       "description": "Generando miniaturas para búsqueda y vista previa. Puede tardar unos minutos.",
-      "cancel": "Cancelar escaneo"
+      "cancel": "Cancelar escaneo",
+      "recovery": {
+        "title": "Escaneo interrumpido",
+        "continue": "Continuar",
+        "skip": "Omitir",
+        "file_label": "Último archivo escaneado",
+        "message": "El último escaneo no terminó correctamente.\n\nPuedes continuar u omitir el último archivo para reanudar el escaneo.",
+        "message_with_file": "El escaneo anterior no finalizó correctamente.\n\nÚltimo archivo escaneado:\n{file}\n\nSi continúas, Lap omitirá este archivo una vez y reanudará el escaneo."
+      }
     }
   },
   "face_index": {

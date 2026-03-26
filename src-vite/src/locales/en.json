@@ -49,7 +49,15 @@
       "indexing": "Scanning... {count} / {total}",
       "paused": "Scanning paused",
       "description": "Generating thumbnails for search and quick preview. Large albums may take a few minutes.",
-      "cancel": "Cancel scan"
+      "cancel": "Cancel scan",
+      "recovery": {
+        "title": "Scanning Interrupted",
+        "continue": "Continue",
+        "skip": "Skip",
+        "file_label": "Last scanned file",
+        "message": "The previous scan did not close normally.\n\nYou can continue, or skip the last file and resume scanning.",
+        "message_with_file": "The previous scanning task did not exit cleanly.\n\nLast scanned file:\n{file}\n\nIf you continue, Lap will skip this file once and resume scanning."
+      }
     }
   },
   "face_index": {

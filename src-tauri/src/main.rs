@@ -152,6 +152,8 @@ fn main() {
             t_cmds::set_album_cover,
             t_cmds::index_album,
             t_cmds::cancel_indexing,
+            t_cmds::get_index_recovery_info,
+            t_cmds::clear_index_recovery_info,
             // folder
             t_cmds::select_folder,
             t_cmds::fetch_folder,

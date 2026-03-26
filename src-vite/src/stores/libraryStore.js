@@ -119,6 +119,12 @@ export const useLibraryStore = defineStore('libraryStore', {
           : [];
 
         this._initialized = true;
+
+        // Always pause on restart — never auto-resume scanning
+        if (this.index.status === 1) {
+          this.index.status = 2;
+          await this.save();
+        }
       } catch (error) {
         console.error('Failed to initialize library state:', error);
         this._initialized = true;

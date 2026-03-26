@@ -1016,17 +1016,53 @@ struct FinishedPayload {
     album_id: i64,
 }
 
-fn write_index_trace(enabled: bool, album_id: i64, file_path: &str) {
-    if !enabled {
-        return;
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+pub struct IndexRecoveryInfo {
+    pub album_id: i64,
+    pub file_name: String,
+    pub file_path: String,
+    pub time: String,
+}
+
+fn get_index_trace_path() -> Result<PathBuf, String> {
+    let app_dir = crate::t_config::get_app_data_dir()?;
+    fs::create_dir_all(&app_dir)
+        .map_err(|e| format!("Failed to create AppData directory for index recovery: {}", e))?;
+    
+    // Make trace library-specific so switching libraries doesn't overwrite it
+    let config = crate::t_config::load_app_config().map_err(|e| e.to_string())?;
+    let prefix = if config.current_library_id.is_empty() {
+        "default".to_string()
+    } else {
+        config.current_library_id
+    };
+    
+    Ok(app_dir.join(format!("index-recovery-{}.json", prefix)))
+}
+
+fn write_index_trace(album_id: i64, file_path: &str) {
+    let payload = IndexRecoveryInfo {
+        album_id,
+        file_name: get_file_name(file_path),
+        file_path: file_path.to_string(),
+        time: Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string(),
+    };
+    if let (Ok(path), Ok(content)) = (get_index_trace_path(), serde_json::to_string(&payload)) {
+        let _ = fs::write(path, content);
     }
-    let file_name = get_file_name(file_path);
-    let now = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
-    let content = format!(
-        "time: {}\nalbum_id: {}\nfile_name: {}\nfile_path: {}\n",
-        now, album_id, file_name, file_path
-    );
-    let _ = fs::write("/tmp/lap-index-current.log", content);
+}
+
+pub fn read_index_trace() -> Option<IndexRecoveryInfo> {
+    let path = get_index_trace_path().ok()?;
+    fs::read_to_string(path)
+        .ok()
+        .and_then(|content| serde_json::from_str::<IndexRecoveryInfo>(&content).ok())
+}
+
+pub fn clear_index_trace() {
+    if let Ok(path) = get_index_trace_path() {
+        let _ = fs::remove_file(path);
+    }
 }
 
 pub async fn index_album_worker(
@@ -1034,11 +1070,8 @@ pub async fn index_album_worker(
     cancellation_token: Arc<Mutex<HashMap<i64, bool>>>,
     album_id: i64,
     thumbnail_size: u32,
+    skip_file_path: Option<String>,
 ) -> Result<(), String> {
-    let index_trace_enabled = crate::t_config::load_app_config()
-        .map(|c| c.debug)
-        .unwrap_or(false);
-
     // 1. Get album info
     let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
 
@@ -1102,7 +1135,26 @@ pub async fn index_album_worker(
                 }
 
                 // Persist current file pointer for post-crash diagnosis.
-                write_index_trace(index_trace_enabled, album_id, &path_str);
+                write_index_trace(album_id, &path_str);
+
+                if skip_file_path.as_deref() == Some(path_str.as_str()) {
+                    eprintln!(
+                        "Skipping suspected problematic file during recovered indexing: {}",
+                        path_str
+                    );
+                    all_files_map.remove(&path_str);
+                    current_progress += 1;
+                    let _ = app_handle.emit(
+                        "index_progress",
+                        ProgressPayload {
+                            album_id,
+                            current: current_progress,
+                            total: total_files,
+                        },
+                    );
+                    traversed_count += 1;
+                    continue;
+                }
 
                 let parent_path = entry
                     .path()
@@ -1165,6 +1217,8 @@ pub async fn index_album_worker(
             }
         }
     }
+
+    clear_index_trace();
 
     // Delete files that are in DB but not in file system
     if !is_cancelled && !all_files_map.is_empty() {

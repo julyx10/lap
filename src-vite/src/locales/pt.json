@@ -49,7 +49,15 @@
       "indexing": "Escaneando... {count} / {total}",
       "paused": "Varredura em pausa",
       "description": "Gerando miniaturas para pesquisa e pré-visualização. Pode levar alguns minutos.",
-      "cancel": "Cancelar escaneamento"
+      "cancel": "Cancelar escaneamento",
+      "recovery": {
+        "title": "Varredura interrompida",
+        "continue": "Continuar",
+        "skip": "Ignorar",
+        "file_label": "Último arquivo verificado",
+        "message": "A verificação anterior não foi encerrada normalmente.\n\nVocê pode continuar ou ignorar o último arquivo para retomar a verificação.",
+        "message_with_file": "A varredura anterior não foi encerrada corretamente.\n\nÚltimo arquivo verificado:\n{file}\n\nSe continuar, o Lap irá pular este arquivo uma vez e retomar a varredura."
+      }
     }
   },
   "face_index": {

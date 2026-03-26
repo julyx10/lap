@@ -1,10 +1,10 @@
 <template>
   <ModalDialog :title="title" :width="400" @cancel="clickCancel">
-    <div v-if="message" class="text-sm text-wrap wrap-break-word">
+    <div v-if="message" class="text-sm whitespace-pre-line wrap-break-word">
       {{ message }}
     </div>
 
-    <div class="flex flex-row items-center">
+    <div class="flex flex-row items-center text-sm">
       <input v-if="showInput && !multiLine"
         ref="inputRef"
         v-model="inputValue"
@@ -14,7 +14,7 @@
         class="px-2 py-1 flex-1 min-w-0 input"
         @input="validateInput"
       />
-      <span v-if="inputExtension" class="label px-2">.{{ inputExtension }}</span>
+      <span v-if="inputExtension" class="label px-2 text-sm">.{{ inputExtension }}</span>
     </div>
 
     <textarea v-if="showInput && multiLine"

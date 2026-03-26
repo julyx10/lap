@@ -164,15 +164,21 @@ pub fn index_album(
     state: State<IndexCancellation>,
     album_id: i64,
     thumbnail_size: u32,
+    skip_file_path: Option<String>,
 ) -> Result<(), String> {
     // Reset cancellation flag
     state.0.lock().unwrap().insert(album_id, false);
     let cancellation_token = state.0.clone();
 
     tauri::async_runtime::spawn(async move {
-        if let Err(e) =
-            t_utils::index_album_worker(&app_handle, cancellation_token, album_id, thumbnail_size)
-                .await
+        if let Err(e) = t_utils::index_album_worker(
+            &app_handle,
+            cancellation_token,
+            album_id,
+            thumbnail_size,
+            skip_file_path,
+        )
+        .await
         {
             eprintln!("Error indexing album {}: {}", album_id, e);
         }
@@ -184,6 +190,17 @@ pub fn index_album(
 #[tauri::command]
 pub fn cancel_indexing(state: State<IndexCancellation>, album_id: i64) -> Result<(), String> {
     state.0.lock().unwrap().insert(album_id, true);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_index_recovery_info() -> Option<crate::t_utils::IndexRecoveryInfo> {
+    crate::t_utils::read_index_trace()
+}
+
+#[tauri::command]
+pub fn clear_index_recovery_info() -> Result<(), String> {
+    t_utils::clear_index_trace();
     Ok(())
 }
 
