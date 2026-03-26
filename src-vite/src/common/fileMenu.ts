@@ -3,6 +3,7 @@ import { config } from '@/common/config';
 import {
   IconMonitor,
   IconPrint,
+  IconRefresh,
   IconHeart,
   IconStar,
   IconStarFilled,
@@ -60,7 +61,7 @@ export const useFileMenuItems = (
         label: localeMsg.value.menu.file.edit_image,
         icon: markRaw(IconImageEdit),
         shortcut: isMac ? '⌘E' : 'Ctrl+E',
-        disabled: f.file_type !== 1,
+        disabled: !isImage,
         action: createAction('edit')
       },
       {
@@ -73,7 +74,7 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.file.find_similar_images,
         icon: markRaw(IconPhotoSearch),
-        shortcut: isMac ? '⌘F' : 'Ctrl+F',
+        shortcut: 'S',
         disabled: !isImage,
         action: createAction('search-similar')
       },
@@ -167,13 +168,6 @@ export const useFileMenuItems = (
         action: createAction('rename')
       },
       {
-        label: localeMsg.value.menu.file.copy,
-        icon: markRaw(IconCopy),
-        shortcut: isMac ? '⌘C' : 'Ctrl+C',
-        disabled: !isImage,
-        action: createAction('copy')
-      },
-      {
         label: localeMsg.value.menu.file.move_to,
         icon: markRaw(IconMoveTo),
         action: createAction('move-to')
@@ -183,19 +177,31 @@ export const useFileMenuItems = (
         action: createAction('copy-to')
       },
       {
+        label: localeMsg.value.menu.file.copy,
+        icon: markRaw(IconCopy),
+        shortcut: isMac ? '⌘C' : 'Ctrl+C',
+        disabled: !isImage,
+        action: createAction('copy')
+      },
+      {
         label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
         action: createAction('reveal')
       },
       {
-        label: localeMsg.value.menu.file.set_album_cover,
-        action: createAction('set-album-cover')
+        label: localeMsg.value.menu.file.refresh_file_info,
+        icon: markRaw(IconRefresh),
+        action: createAction('refresh-file-info')
       },
-      { label: "-", action: null },
       {
         label: isMac ? localeMsg.value.menu.file.move_to_trash : localeMsg.value.menu.file.delete,
         icon: markRaw(IconTrash),
         shortcut: isMac ? '⌘⌫' : 'Del',
         action: createAction('trash')
+      },
+      { label: "-", action: null },
+      {
+        label: localeMsg.value.menu.file.set_album_cover,
+        action: createAction('set-album-cover')
       },
     ];
   });

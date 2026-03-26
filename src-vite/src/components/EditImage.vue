@@ -76,7 +76,10 @@
         </div>
       </div>
 
-      <div class="w-[268px] flex flex-col gap-3 overflow-y-auto">
+      <div
+        class="w-[268px] flex flex-col gap-3 overflow-y-auto"
+        :class="isProcessing ? 'pointer-events-none opacity-60' : ''"
+      >
         <div class="border-b border-base-content/10 pb-2">
           <div role="tablist" class="sidebar-header-tabs">
             <button
@@ -84,9 +87,9 @@
               :class="[
                 'sidebar-header-tab',
                 activeEditorTab === 'edit' ? 'tab-active' : '',
-                cropStatus === 1 ? 'opacity-50 cursor-default' : '',
+                cropStatus === 1 || isProcessing ? 'opacity-50 cursor-default' : '',
               ]"
-              :disabled="cropStatus === 1"
+              :disabled="cropStatus === 1 || isProcessing"
               @click="setActiveEditorTab('edit')"
             >{{ $t('msgbox.image_editor.tab_edit') }}</button>
             <button
@@ -94,9 +97,9 @@
               :class="[
                 'sidebar-header-tab',
                 activeEditorTab === 'adjust' ? 'tab-active' : '',
-                cropStatus === 1 ? 'opacity-50 cursor-default' : '',
+                cropStatus === 1 || isProcessing ? 'opacity-50 cursor-default' : '',
               ]"
-              :disabled="cropStatus === 1"
+              :disabled="cropStatus === 1 || isProcessing"
               @click="setActiveEditorTab('adjust')"
             >{{ $t('msgbox.image_editor.tab_adjust') }}</button>
           </div>
@@ -385,9 +388,9 @@
 
           <div class="space-y-3">
             <div class="form-control w-full">
-              <select v-model="config.imageEditor.saveAs" class="select select-bordered select-sm w-full" :disabled="cropStatus===1">
-                <option v-for="option in fileSaveAsOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-              </select>
+                <select v-model="config.imageEditor.saveAs" class="select select-bordered select-sm w-full" :disabled="cropStatus===1 || isRawFile">
+                  <option v-for="option in fileSaveAsOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                </select>
             </div>
 
             <div v-if="config.imageEditor.saveAs !== 0" class="grid grid-cols-2 gap-2">
@@ -427,7 +430,7 @@
             : 'hover:bg-primary hover:text-base-100 cursor-pointer'
         ]"
         @click="clickSave"
-      >{{ config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}</button>
+      >{{ isRawFile || config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}</button>
     </div>
   </ModalDialog>
 
@@ -449,7 +452,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
 import { getFolderPath, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
-import { editImage, checkFileExists } from '@/common/api';
+import { editImage, checkFileExists, getFileImage } from '@/common/api';
 
 import ModalDialog from '@/components/ModalDialog.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -501,8 +504,23 @@ const imageRef = ref<HTMLImageElement | null>(null);
 const imageRect = ref<DOMRect | null>(null);
 const imageRectOriginal = ref<DOMRect | null>(null);
 const imageSrc = ref('');
+const imageObjectUrl = ref('');
 const imageWidth = ref(0);
 const imageHeight = ref(0);
+const isRawFile = computed(() => Number(props.fileInfo?.file_type || 0) === 3);
+const normalizeRotate = (value: number) => {
+  const normalized = Number(value || 0) % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
+};
+const initialDisplayRotate = computed(() => normalizeRotate(Number(props.fileInfo?.rotate || 0)));
+const isPortraitForRotation = (width: number, height: number, rotation: number) => {
+  const normalized = normalizeRotate(rotation);
+  return normalized % 180 !== 0 ? width > height : height > width;
+};
+const isTiffFile = computed(() => {
+  const ext = getFileExtension(props.fileInfo?.name || props.fileInfo?.file_path || '').toLowerCase();
+  return ext === 'tif' || ext === 'tiff';
+});
 
 const enableTransition = ref(false);
 const position = ref({ left: 0, top: 0 });
@@ -652,7 +670,7 @@ const resizeOutput = computed(() => {
   };
 });
 const hasEditImageChanges = computed(() =>
-  rotate.value % 360 !== 0 ||
+  normalizeRotate(rotate.value) !== initialDisplayRotate.value ||
   isFlippedX.value ||
   isFlippedY.value
 );
@@ -832,7 +850,10 @@ const cropShapeOptions = computed(() => {
 
 const newFileName = ref(props.fileInfo.name.substring(0, props.fileInfo.name.lastIndexOf('.')) || props.fileInfo.name);
 
-const fileSaveAsOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.save_as_options));
+const fileSaveAsOptions = computed(() => {
+  const options = getSelectOptions(localeMsg.value.msgbox.image_editor.save_as_options);
+  return isRawFile.value ? options.filter((option: any) => Number(option.value) === 1) : options;
+});
 const fileFormatOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.format_options));
 const fileQualityOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.quality_options));
 
@@ -891,8 +912,8 @@ const resetResize = () => {
 watch(
   () => [baseOutputWidth.value, baseOutputHeight.value],
   ([width, height]) => {
-    resizeWidthInput.value = String(width);
-    resizeHeightInput.value = String(height);
+    resizeWidthInput.value = width > 0 ? String(width) : '';
+    resizeHeightInput.value = height > 0 ? String(height) : '';
   },
   { immediate: true }
 );
@@ -984,12 +1005,9 @@ watch([brightness, contrast, saturation, hue, blur, selectedFilter], () => {
 });
 
 watch(
-  [rotate, isFlippedX, isFlippedY, brightness, contrast, saturation, hue, blur, selectedFilter, () => resizeOutput.value.width, () => resizeOutput.value.height],
+  [brightness, contrast, saturation, hue, blur, selectedFilter, () => resizeOutput.value.width, () => resizeOutput.value.height],
   () => {
     uiStore.setActiveAdjustments(props.fileInfo.file_path, {
-      rotate: rotate.value,
-      flipX: isFlippedX.value,
-      flipY: isFlippedY.value,
       brightness: brightness.value,
       contrast: contrast.value,
       saturation: saturation.value,
@@ -1020,6 +1038,10 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
   uiStore.removeInputHandler('EditImage');
+  if (imageObjectUrl.value) {
+    URL.revokeObjectURL(imageObjectUrl.value);
+    imageObjectUrl.value = '';
+  }
   if (histogramToneAnimationFrame !== null) {
     cancelAnimationFrame(histogramToneAnimationFrame);
     histogramToneAnimationFrame = null;
@@ -1029,9 +1051,10 @@ onUnmounted(() => {
 const onImageLoad = async () => {
   await nextTick();
 
-  if (imageRef.value && (imageWidth.value === 0 || imageHeight.value === 0)) {
+  if (imageRef.value && imageRef.value.naturalWidth > 0 && imageRef.value.naturalHeight > 0) {
     imageWidth.value = imageRef.value.naturalWidth;
     imageHeight.value = imageRef.value.naturalHeight;
+    isPortrait.value = isPortraitForRotation(imageWidth.value, imageHeight.value, rotate.value);
   }
 
   fitImageToContainer();
@@ -1042,11 +1065,55 @@ const onImageLoad = async () => {
   });
 };
 
-const initEditImage = () => {
-  imageSrc.value = getAssetSrc(props.fileInfo.file_path);
+function parseBase64ImagePayload(input: string): { mime: string; base64: string } | null {
+  if (!input) return null;
+  if (input.startsWith('data:')) {
+    const marker = ';base64,';
+    const splitIndex = input.indexOf(marker);
+    if (splitIndex <= 5) return null;
+    const mime = input.slice(5, splitIndex);
+    const base64 = input.slice(splitIndex + marker.length);
+    if (!base64) return null;
+    return { mime: mime || 'image/jpeg', base64 };
+  }
+  return { mime: 'image/jpeg', base64: input };
+}
+
+function createObjectUrlFromBase64(base64: string, mime: string): string {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: mime || 'image/jpeg' });
+  return URL.createObjectURL(blob);
+}
+
+const initEditImage = async () => {
+  if (imageObjectUrl.value) {
+    URL.revokeObjectURL(imageObjectUrl.value);
+    imageObjectUrl.value = '';
+  }
+
+  if (isRawFile.value || isTiffFile.value) {
+    const result = await getFileImage(props.fileInfo.file_path);
+    const payload = parseBase64ImagePayload(result || '');
+    if (payload) {
+      imageObjectUrl.value = createObjectUrlFromBase64(payload.base64, payload.mime);
+      imageSrc.value = imageObjectUrl.value;
+    } else {
+      imageSrc.value = getAssetSrc(props.fileInfo.file_path);
+    }
+  } else {
+    imageSrc.value = getAssetSrc(props.fileInfo.file_path);
+  }
+
   imageWidth.value = props.fileInfo.width;
   imageHeight.value = props.fileInfo.height;
-  isPortrait.value = imageHeight.value > imageWidth.value;
+  isPortrait.value = isPortraitForRotation(imageWidth.value, imageHeight.value, initialDisplayRotate.value);
+  if (isRawFile.value) {
+    config.imageEditor.saveAs = 1;
+  }
 
   containerRect.value = containerRef.value?.getBoundingClientRect() || null;
   if (!containerRect.value) return;
@@ -1062,9 +1129,9 @@ const initEditImage = () => {
 
   if (uiStore.activeAdjustments.filePath === props.fileInfo.file_path) {
     const adj = uiStore.activeAdjustments;
-    rotate.value = adj.rotate || 0;
-    isFlippedX.value = !!adj.flipX;
-    isFlippedY.value = !!adj.flipY;
+    rotate.value = initialDisplayRotate.value;
+    isFlippedX.value = false;
+    isFlippedY.value = false;
     brightness.value = adj.brightness || 0;
     contrast.value = adj.contrast || 0;
     saturation.value = adj.saturation ?? 100;
@@ -1084,7 +1151,7 @@ const initEditImage = () => {
     }
     selectedPreset.value = restoredPreset;
   } else {
-    rotate.value = 0;
+    rotate.value = initialDisplayRotate.value;
     isFlippedX.value = false;
     isFlippedY.value = false;
     resetAdjustments();
@@ -1293,10 +1360,10 @@ const clearCrop = () => {
 const clickRestoreAll = () => {
   if (cropStatus.value === 1 || cropApplied.value) return;
 
-  rotate.value = 0;
+  rotate.value = initialDisplayRotate.value;
   isFlippedX.value = false;
   isFlippedY.value = false;
-  isPortrait.value = imageHeight.value > imageWidth.value;
+  isPortrait.value = isPortraitForRotation(imageWidth.value, imageHeight.value, initialDisplayRotate.value);
   fitImageToContainer();
 };
 

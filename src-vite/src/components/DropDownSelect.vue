@@ -11,7 +11,7 @@
       :disabled="disabled"
       @click="toggleDropdown"
     >
-      {{ options[optionIndex].label }}{{ extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}
+      {{ triggerLabel }}{{ !multiSelect && extendOptions.length > 0 ? (extendIndex == 0 ? '↑' : '↓') : '' }}
       <IconArrowDown class="ml-1 w-3 h-3 shrink-0 opacity-50" />
     </button>
 
@@ -24,16 +24,19 @@
           :style="menuStyle"
         >
           <!-- menu group 1 -->
-          <button v-for="(option, index) in options"
-            class="p-1 flex flex-row hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer text-sm whitespace-nowrap "
-            :key="index"
-            @click="selectOption(index)"
-          >
-            <div class="w-5">
-              <IconDot v-if="optionIndex === index" class="w-5" /> 
-            </div>
-            <span class="mr-4">{{ option.label }}</span>
-          </button>
+          <template v-for="(option, index) in options" :key="index">
+            <button
+              class="p-1 flex flex-row hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer text-sm whitespace-nowrap "
+              @click="selectOption(index)"
+            >
+              <div class="w-5">
+                <IconOk v-if="multiSelect ? normalizedSelectedValues.includes(Number(option.value)) : false" class="w-4 h-4" />
+                <IconDot v-else-if="!multiSelect && optionIndex === index" class="w-5" />
+              </div>
+              <span class="mr-4">{{ option.label }}</span>
+            </button>
+            <div v-if="separatorsAfter.includes(index)" class="mx-2 my-1 border-t border-base-content/10"></div>
+          </template>
 
           <!-- seperator -->
           <div v-if="extendOptions.length > 0 " class="mx-2 my-1 border-t border-base-content/10"></div>
@@ -58,10 +61,8 @@
 </template>
   
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { IconArrowDown, IconDot } from '@/common/icons';
-
-import TButton from '@/components/TButton.vue';
+import { computed, ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
+import { IconArrowDown, IconDot, IconOk } from '@/common/icons';
 
   // Props
 const props = defineProps({
@@ -88,11 +89,27 @@ const props = defineProps({
   selected: {
     type: Boolean,
     default: false,
-  }
+  },
+  multiSelect: {
+    type: Boolean,
+    default: false,
+  },
+  selectedValues: {
+    type: Array,
+    default: () => [],
+  },
+  summaryLabel: {
+    type: String,
+    default: '',
+  },
+  separatorsAfter: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 // Emits
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'multi-select']);
 
 // State
 const dropdown = ref(null);
@@ -101,6 +118,23 @@ const isDropDown = ref(false);
 const menuStyle = ref({});
 const optionIndex = ref(props.defaultIndex);
 const extendIndex = ref(props.defaultExtendIndex);
+const normalizedSelectedValues = computed(() =>
+  Array.isArray(props.selectedValues) ? props.selectedValues.map(value => Number(value)) : []
+);
+const triggerLabel = computed(() => {
+  if (props.multiSelect) {
+    return props.summaryLabel || props.options[0]?.label || '';
+  }
+  return props.options[optionIndex.value]?.label || '';
+});
+
+watch(() => props.defaultIndex, (value) => {
+  optionIndex.value = value;
+});
+
+watch(() => props.defaultExtendIndex, (value) => {
+  extendIndex.value = value;
+});
 
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside, { capture: true });
@@ -175,6 +209,20 @@ const handleClickOutside = (event) => {
 };
 
 const selectOption = (index) => {
+  if (props.multiSelect) {
+    const optionValue = Number(props.options[index]?.value);
+    if (Number.isNaN(optionValue)) return;
+    let nextValues = normalizedSelectedValues.value;
+    if (optionValue === 0) {
+      nextValues = [0];
+    } else if (normalizedSelectedValues.value.includes(optionValue)) {
+      nextValues = normalizedSelectedValues.value.filter(value => value !== optionValue && value !== 0);
+    } else {
+      nextValues = [...normalizedSelectedValues.value.filter(value => value !== 0), optionValue];
+    }
+    emit('multi-select', nextValues);
+    return;
+  }
   optionIndex.value = index;
   emit('select', optionIndex.value, extendIndex.value);
   isDropDown.value = false;

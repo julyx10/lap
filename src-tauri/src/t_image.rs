@@ -1,4 +1,3 @@
-use crate::t_libraw;
 /**
  * Image processing utilities.
  * project: Lap
@@ -17,6 +16,8 @@ use std::panic;
 use std::path::Path;
 #[cfg(target_os = "macos")]
 use std::process::Command;
+
+use crate::{t_libraw, t_utils};
 
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
@@ -357,7 +358,20 @@ pub fn get_raw_preview_image(file_path: &str) -> Result<Option<Vec<u8>>, String>
 }
 
 pub fn get_raw_dimensions(file_path: &str) -> Result<(u32, u32), String> {
-    if let Ok((width, height)) = t_libraw::get_raw_dimensions(file_path) {
+    let should_swap_dimensions = |orientation: i32, raw_flip: i32| -> bool {
+        match orientation {
+            5 | 6 | 7 | 8 => true,
+            1 => matches!(raw_flip, 5 | 6),
+            _ => false,
+        }
+    };
+
+    if let Ok((mut width, mut height, raw_flip)) = t_libraw::get_raw_dimensions_with_flip(file_path)
+    {
+        let orientation = get_image_orientation(file_path);
+        if should_swap_dimensions(orientation, raw_flip) {
+            std::mem::swap(&mut width, &mut height);
+        }
         if width > 0 && height > 0 {
             return Ok((width, height));
         }
@@ -521,11 +535,19 @@ pub fn copy_edited_image_to_clipboard(params: EditParams) -> bool {
 
 /// get an edited image
 fn get_edited_image(params: &EditParams) -> Result<DynamicImage, String> {
-    let path = Path::new(&params.source_file_path);
-    let mut img = image::open(path).map_err(|e| e.to_string())?;
-
-    // orientaion adjustment based on exif orientation value
-    img = apply_orientation(img, params.orientation);
+    let mut img = if t_utils::get_file_type(&params.source_file_path).unwrap_or(0) == 3
+        || crate::t_libraw::is_tiff_path(&params.source_file_path)
+    {
+        let preview = get_raw_preview_image(&params.source_file_path)?
+            .ok_or_else(|| "Failed to resolve editable RAW preview".to_string())?;
+        image::load_from_memory(&preview).map_err(|e| e.to_string())?
+    } else {
+        let path = Path::new(&params.source_file_path);
+        let mut img = image::open(path).map_err(|e| e.to_string())?;
+        // orientation adjustment based on exif orientation value
+        img = apply_orientation(img, params.orientation);
+        img
+    };
 
     // 1. Flip
     if params.flip_horizontal {

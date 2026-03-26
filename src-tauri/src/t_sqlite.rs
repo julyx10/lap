@@ -1305,6 +1305,29 @@ impl AFile {
         Ok(result)
     }
 
+    fn build_file_type_condition(mask: i64) -> Option<String> {
+        if mask <= 0 {
+            return None;
+        }
+
+        let mut conditions = Vec::new();
+        if mask & 1 == 1 {
+            conditions.push("a.file_type = 1".to_string());
+        }
+        if mask & 2 == 2 {
+            conditions.push("a.file_type = 2".to_string());
+        }
+        if mask & 4 == 4 {
+            conditions.push("a.file_type = 3".to_string());
+        }
+
+        if conditions.is_empty() || conditions.len() == 3 {
+            None
+        } else {
+            Some(format!("({})", conditions.join(" OR ")))
+        }
+    }
+
     /// insert a file into db if not exists
     /// Returns (file, status)
     /// status: 0 - existing, 1 - new, 2 - updated
@@ -1463,27 +1486,21 @@ impl AFile {
     // Returns (joins_clause, where_clause, params)
     fn build_search_query_parts(params: &QueryParams) -> (String, String, Vec<Box<dyn ToSql>>) {
         let mut joins = Vec::new();
-        let mut conditions = Vec::new();
+        let mut conditions: Vec<String> = Vec::new();
         let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
 
         if !params.search_file_name.is_empty() {
-            conditions.push("a.name LIKE ? COLLATE NOCASE");
+            conditions.push("a.name LIKE ? COLLATE NOCASE".to_string());
             sql_params.push(Box::new(format!("%{}%", params.search_file_name)));
         }
 
-        if params.search_file_type > 0 {
-            if params.search_file_type == 1 {
-                // "Image" filter should include both normal images and RAW files.
-                conditions.push("(a.file_type = 1 OR a.file_type = 3)");
-            } else {
-                conditions.push("a.file_type = ?");
-                sql_params.push(Box::new(params.search_file_type));
-            }
+        if let Some(condition) = Self::build_file_type_condition(params.search_file_type) {
+            conditions.push(condition);
         }
 
         if !params.search_all_subfolders.is_empty() {
             // Match path that starts with search_folder followed by '/' or end of string
-            conditions.push("(b.path = ? OR b.path LIKE ?)");
+            conditions.push("(b.path = ? OR b.path LIKE ?)".to_string());
             sql_params.push(Box::new(params.search_all_subfolders.clone()));
             sql_params.push(Box::new(format!(
                 "{}{}%",
@@ -1493,69 +1510,70 @@ impl AFile {
         }
 
         if !params.search_folder.is_empty() {
-            conditions.push("(b.path = ?)");
+            conditions.push("(b.path = ?)".to_string());
             sql_params.push(Box::new(params.search_folder.clone()));
         }
 
         if params.start_date > 0 && params.end_date > 0 {
-            conditions.push("a.taken_date >= ? AND a.taken_date < ?");
+            conditions.push("a.taken_date >= ? AND a.taken_date < ?".to_string());
             sql_params.push(Box::new(params.start_date));
             sql_params.push(Box::new(params.end_date));
         } else if params.start_date == -1 && params.end_date == -1 {
             // "On This Day" feature: find all photos taken on the same month and day as today
             let now = chrono::Local::now();
             let today_month_day = now.format("%m-%d").to_string();
-            conditions.push("strftime('%m-%d', a.taken_date, 'unixepoch', 'localtime') = ?");
+            conditions
+                .push("strftime('%m-%d', a.taken_date, 'unixepoch', 'localtime') = ?".to_string());
             sql_params.push(Box::new(today_month_day));
         }
 
         if !params.make.is_empty() {
-            conditions.push("UPPER(a.e_make) = UPPER(?)");
+            conditions.push("UPPER(a.e_make) = UPPER(?)".to_string());
             sql_params.push(Box::new(params.make.clone()));
             if !params.model.is_empty() {
-                conditions.push("a.e_model = ?");
+                conditions.push("a.e_model = ?".to_string());
                 sql_params.push(Box::new(params.model.clone()));
             }
         }
 
         if !params.lens_make.is_empty() {
-            conditions.push("UPPER(a.e_lens_make) = UPPER(?)");
+            conditions.push("UPPER(a.e_lens_make) = UPPER(?)".to_string());
             sql_params.push(Box::new(params.lens_make.clone()));
             if !params.lens_model.is_empty() {
-                conditions.push("a.e_lens_model = ?");
+                conditions.push("a.e_lens_model = ?".to_string());
                 sql_params.push(Box::new(params.lens_model.clone()));
             }
         }
 
         if !params.location_admin1.is_empty() {
-            conditions.push("a.geo_admin1 = ?");
+            conditions.push("a.geo_admin1 = ?".to_string());
             sql_params.push(Box::new(params.location_admin1.clone()));
             if !params.location_name.is_empty() {
-                conditions.push("a.geo_name = ?");
+                conditions.push("a.geo_name = ?".to_string());
                 sql_params.push(Box::new(params.location_name.clone()));
             }
         }
 
         if params.is_favorite {
-            conditions.push("a.is_favorite = 1");
+            conditions.push("a.is_favorite = 1".to_string());
         }
 
         if params.rating == 0 {
-            conditions.push("(a.rating = 0 OR a.rating IS NULL)");
+            conditions.push("(a.rating = 0 OR a.rating IS NULL)".to_string());
         } else if params.rating > 0 {
-            conditions.push("a.rating = ?");
+            conditions.push("a.rating = ?".to_string());
             sql_params.push(Box::new(params.rating));
         }
 
         if params.tag_id > 0 {
             joins.push("INNER JOIN afile_tags at ON a.id = at.file_id");
-            conditions.push("at.tag_id = ?");
+            conditions.push("at.tag_id = ?".to_string());
             sql_params.push(Box::new(params.tag_id));
         }
 
         if params.person_id > 0 {
             joins.push("INNER JOIN faces f ON a.id = f.file_id");
-            conditions.push("f.person_id = ?");
+            conditions.push("f.person_id = ?".to_string());
             sql_params.push(Box::new(params.person_id));
         }
 
@@ -2193,19 +2211,14 @@ impl AThumb {
     pub fn get_folder_thumb_count(file_type: i64, folder_id: i64) -> Result<i64, String> {
         let conn = open_conn()?;
 
-        let mut conditions = Vec::new();
+        let mut conditions: Vec<String> = Vec::new();
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
 
-        conditions.push("a.folder_id = ?");
+        conditions.push("a.folder_id = ?".to_string());
         params.push(&folder_id);
 
-        if file_type > 0 {
-            if file_type == 1 {
-                conditions.push("(a.file_type = 1 OR a.file_type = 3)");
-            } else {
-                conditions.push("a.file_type = ?");
-                params.push(&file_type);
-            }
+        if let Some(condition) = AFile::build_file_type_condition(file_type) {
+            conditions.push(condition);
         }
 
         let mut query =

@@ -178,8 +178,9 @@
       ],
       "file_type_options": [
         "All",
-        "Images",
-        "Videos"
+        "Image",
+        "RAW",
+        "Video"
       ]
     },
     "tooltip": {
@@ -340,6 +341,7 @@
       "delete": "Delete",
       "reveal_in_finder": "Reveal in Finder...",
       "reveal_in_file_explorer": "Reveal in File Explorer...",
+      "refresh_file_info": "Refresh file info",
       "set_album_cover": "Set as album cover",
       "show_info": "Show info"
     },
@@ -702,6 +704,7 @@
   "image_viewer": {
     "title": "Image viewer",
     "loading": "Loading...",
+    "loading_original": "Loading original image...",
     "failed": "Failed to load image. No such file or file is corrupted.",
     "toolbar": {
       "prev": "Previous",

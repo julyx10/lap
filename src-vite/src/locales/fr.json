@@ -178,8 +178,9 @@
       ],
       "file_type_options": [
         "Tous",
-        "Images",
-        "Vidéos"
+        "Image",
+        "RAW",
+        "Vidéo"
       ]
     },
     "tooltip": {
@@ -340,6 +341,7 @@
       "delete": "Supprimer",
       "reveal_in_finder": "Afficher dans le Finder...",
       "reveal_in_file_explorer": "Afficher dans l'Explorateur...",
+      "refresh_file_info": "Actualiser les informations du fichier",
       "set_album_cover": "Définir comme couverture",
       "show_info": "Afficher info"
     },
@@ -702,6 +704,7 @@
   "image_viewer": {
     "title": "Visionneuse",
     "loading": "Chargement...",
+    "loading_original": "Chargement de l’image originale...",
     "failed": "Échec chargement.",
     "toolbar": {
       "prev": "Précédent",

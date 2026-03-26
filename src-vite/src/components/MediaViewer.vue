@@ -292,6 +292,7 @@
         :filePath="file?.file_path" 
         :fileId="file?.id"
         :fileType="file?.file_type"
+        :thumbnailSrc="file?.thumbnail || ''"
         :nextFilePath="nextFilePath"
         :rotate="file?.rotate ?? 0" 
         :isZoomFit="isZoomFit"

@@ -41,7 +41,7 @@ export const useConfigStore = defineStore('configStore', {
     search: {
       searchType: 0,           // 0: ai search, 1: similar image, 2: filename search
       maxSearchHistory: 20,    // max search history
-      fileType: 0,              // filter file type (0: all, 1: image, 2: video)
+      fileType: 0,              // filter file type bitmask (0: all, 1: image, 2: video, 4: raw)
       sortType: 0,              // sort type (default to time)
       sortOrder: 0,             // sort order(0: ascending, 1: descending)
     },

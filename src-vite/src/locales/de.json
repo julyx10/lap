@@ -178,8 +178,9 @@
       ],
       "file_type_options": [
         "Alle",
-        "Bilder",
-        "Videos"
+        "Bild",
+        "RAW",
+        "Video"
       ]
     },
     "tooltip": {
@@ -340,6 +341,7 @@
       "delete": "Löschen",
       "reveal_in_finder": "Im Finder anzeigen...",
       "reveal_in_file_explorer": "Im Explorer anzeigen...",
+      "refresh_file_info": "Dateiinformationen aktualisieren",
       "set_album_cover": "Als Albumcover setzen",
       "show_info": "Info anzeigen"
     },
@@ -702,6 +704,7 @@
   "image_viewer": {
     "title": "Bildbetrachter",
     "loading": "Lade...",
+    "loading_original": "Originalbild wird geladen...",
     "failed": "Fehler beim Laden.",
     "toolbar": {
       "prev": "Vorheriges",

@@ -636,12 +636,30 @@ pub fn get_folder_files(
     folder_path: &str,
     from_db_only: bool,
 ) -> (Vec<AFile>, u32, u32) {
+    fn matches_file_type_filter(filter: i64, file_type: i64) -> bool {
+        if filter <= 0 {
+            return true;
+        }
+
+        let bit = match file_type {
+            1 => 1,
+            2 => 2,
+            3 => 4,
+            _ => 0,
+        };
+
+        bit > 0 && (filter & bit) == bit
+    }
+
     let mut new_count = 0;
     let mut updated_count = 0;
 
     let mut files: Vec<AFile> = if from_db_only {
         match AFile::get_files_by_folder_id(folder_id) {
-            Ok(files) => files,
+            Ok(files) => files
+                .into_iter()
+                .filter(|file| matches_file_type_filter(file_type, file.file_type.unwrap_or_default()))
+                .collect(),
             Err(e) => {
                 eprintln!("Failed to get files from DB: {}", e);
                 Vec::new()
@@ -663,7 +681,7 @@ pub fn get_folder_files(
             };
 
             if let Some(ftype) = get_file_type(file_path_str) {
-                if file_type == 0 || file_type == ftype {
+                if matches_file_type_filter(file_type, ftype) {
                     match AFile::add_to_db(folder_id, file_path_str, ftype) {
                         Ok((file, status)) => {
                             if status == 1 {

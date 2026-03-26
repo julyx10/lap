@@ -68,10 +68,13 @@
         <!-- file type options -->
         <DropDownSelect
           :options="fileTypeOptions"
-          :defaultIndex="config.search.fileType"
+          :multiSelect="true"
+          :selectedValues="fileTypeSelectedValues"
+          :summaryLabel="fileTypeSummaryLabel"
+          :separatorsAfter="[0]"
           :disabled="isSearchLikeView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
           :selected="config.search.fileType !== 0"
-          @select="handleFileTypeSelect"
+          @multi-select="handleFileTypeSelect"
         />
 
         <!-- sort type options -->
@@ -410,6 +413,7 @@
             @quick-edit-tag="clickTag"
             @quick-edit-comment="openCommentEditor"
             @navigate-folder="handleInfoNavigateFolder"
+            @refresh-file-info="updateFile(fileList[selectedItemIndex])"
           />
         </div>
       </transition>
@@ -1320,6 +1324,7 @@ function handleItemAction(payload: { action: string, index: number }) {
       }
     },
     'reveal': () => revealFolder(getFolderPath(fileList.value[selectedItemIndex.value].file_path)),
+    'refresh-file-info': () => void updateFile(fileList.value[selectedItemIndex.value]),
     'favorite': toggleFavorite,
     'rotate': clickRotate,
     'info': toggleInfoPanel,
@@ -1531,13 +1536,6 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
-  if (isCmdKey && event.key.toLowerCase() === 'f') {
-    event.preventDefault();
-    if (selectedItemIndex.value >= 0 && fileList.value.length > 0) {
-      enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
-    }
-    return;
-  }
 
   if (isCmdKey && event.key.toLowerCase() === 'i') {
     event.preventDefault();
@@ -1585,6 +1583,12 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
   if (!hasModifier) {
+    if (lowerKey === 's') {
+      event.preventDefault();
+      enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
+      return;
+    }
+
     if ((showQuickView.value || config.settings.grid.showFilmStrip) && lowerKey === 'p') {
       event.preventDefault();
       toggleSlideShow();
@@ -1719,7 +1723,7 @@ const handleKeyDown = (e: any) => {
     openImageViewer(selectedItemIndex.value, true);
   } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
     clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
-  } else if (isCmdKey && key.toLowerCase() === 'f') {
+  } else if (!metaKey && !e.payload.ctrlKey && key.toLowerCase() === 's') {
     enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
   } else if (isCmdKey && key.toLowerCase() === 'e') {
     editImageInitialTab.value = config.imageEditor.tab === 'adjust' ? 'adjust' : 'edit';
@@ -3361,6 +3365,12 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
       }
       toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.save_as_success || localeMsg.value.tooltip.save_image.success);
     } else {
+      const savedFile = fileList.value[selectedItemIndex.value];
+      if (savedFile && Number(savedFile.rotate || 0) !== 0) {
+        savedFile.rotate = 0;
+        await setFileRotate(savedFile.id, 0);
+        await syncFileMetaToImageViewer(savedFile.id, { rotate: 0 });
+      }
       updateFile(fileList.value[selectedItemIndex.value]);
       toolTipRef.value.showTip(localeMsg.value.tooltip.save_image.success);
     }
@@ -3665,7 +3675,7 @@ const insertIndexedFileIntoList = async (indexedFile: any) => {
   }
   await updateThumbForFile(insertedFile);
   updateSelectedImage(position);
-  openImageViewer(position, false, true);
+  openImageViewer(position, false, false);
   return true;
 };
 
@@ -3953,10 +3963,43 @@ const handleInfoNavigateFolder = (folderPath: string) => {
   enterAlbumPreviewMode(targetFile, folderPath);
 };
 
-const handleFileTypeSelect = (option: any, extendOption: any) => {
+const FILE_TYPE_IMAGE = 1;
+const FILE_TYPE_VIDEO = 2;
+const FILE_TYPE_RAW = 4;
+const FILE_TYPE_ALL_MASK = FILE_TYPE_IMAGE | FILE_TYPE_VIDEO | FILE_TYPE_RAW;
+
+function normalizeFileTypeMask(mask: number): number {
+  if (!Number.isFinite(mask) || mask <= 0) return 0;
+  const normalized = mask & FILE_TYPE_ALL_MASK;
+  return normalized === 0 || normalized === FILE_TYPE_ALL_MASK ? 0 : normalized;
+}
+
+const fileTypeSelectedValues = computed(() => {
+  const mask = normalizeFileTypeMask(Number(config.search.fileType || 0));
+  if (mask === 0) return [0];
+  return [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO].filter(value => (mask & value) === value);
+});
+
+const fileTypeSummaryLabel = computed(() => {
+  const options = fileTypeOptions.value;
+  const mask = normalizeFileTypeMask(Number(config.search.fileType || 0));
+  if (mask === 0) return options[0]?.label || '';
+
+  const labels = [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO]
+    .filter(value => (mask & value) === value)
+    .map(value => options.find(option => option.value === value)?.label)
+    .filter(Boolean);
+
+  return labels.length > 0 ? labels.join(' + ') : (options[0]?.label || '');
+});
+
+const handleFileTypeSelect = (values: any[]) => {
   if (isScanStreamingMode.value) return;
   selectMode.value = false;   // exit multi-select mode
-  config.search.fileType = option;
+  const nextValues = (Array.isArray(values) ? values : []).map(value => Number(value));
+  const hasAll = nextValues.includes(0);
+  const mask = hasAll ? 0 : nextValues.reduce((acc, value) => acc | value, 0);
+  config.search.fileType = normalizeFileTypeMask(mask);
 };
 
 const handleSortTypeSelect = (option: any, extendOption: any) => {
@@ -4092,7 +4135,13 @@ const handleDedupTrashSelectedDuplicates = (groupKey: string, fileIds: number[],
 
 // file type options
 const fileTypeOptions = computed(() => {
-  return getSelectOptions(localeMsg.value.toolbar.filter?.file_type_options);
+  const options = localeMsg.value.toolbar.filter?.file_type_options || [];
+  return [
+    { label: options[0] || 'All', value: 0 },
+    { label: options[1] || 'Image', value: FILE_TYPE_IMAGE },
+    { label: options[2] || 'RAW', value: FILE_TYPE_RAW },
+    { label: options[3] || 'Video', value: FILE_TYPE_VIDEO },
+  ];
 });
 
 // sort type options

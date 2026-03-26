@@ -178,8 +178,9 @@
       ],
       "file_type_options": [
         "Todos",
-        "Imágenes",
-        "Vídeos"
+        "Imagen",
+        "RAW",
+        "Vídeo"
       ]
     },
     "tooltip": {
@@ -340,6 +341,7 @@
       "delete": "Eliminar",
       "reveal_in_finder": "Mostrar en Finder...",
       "reveal_in_file_explorer": "Mostrar en Explorador...",
+      "refresh_file_info": "Actualizar información del archivo",
       "set_album_cover": "Establecer como portada",
       "show_info": "Ver info"
     },
@@ -702,6 +704,7 @@
   "image_viewer": {
     "title": "Visor",
     "loading": "Cargando...",
+    "loading_original": "Cargando imagen original...",
     "failed": "Fallo al cargar imagen.",
     "toolbar": {
       "prev": "Anterior",

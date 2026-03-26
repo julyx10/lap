@@ -1,7 +1,7 @@
 <template>
   <div
     ref="container"
-    class="relative w-full h-full overflow-hidden cursor-pointer"
+    class="relative isolate w-full h-full overflow-hidden cursor-pointer"
     @wheel="handleImageWheel"
   >
 
@@ -18,8 +18,20 @@
 
     <!-- Loading overlay -->
     <transition name="fade">
-      <div v-if="isLoading" class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box">
+      <div
+        v-if="isLoading && !showInlineLoading"
+        class="absolute inset-0 bg-base-100/50 flex items-center justify-center z-50 rounded-box"
+      >
         <span class="loading loading-dots text-primary"></span>
+      </div>
+    </transition>
+
+    <transition name="fade">
+      <div
+        v-if="isLoading && showInlineLoading"
+        class="absolute left-2.5 bottom-2.5 z-50 pointer-events-none"
+      >
+        <span class="loading loading-spinner loading-xs text-primary/70"></span>
       </div>
     </transition>
 
@@ -208,6 +220,10 @@ const props = defineProps({
     type: Number,
     default: 1,
   },
+  thumbnailSrc: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit', 'viewport-change']);
@@ -295,9 +311,7 @@ const getImageStyle = (index: number) => ({
   minHeight: `${imageSize.value[index].height}px`,
   transform: `translate3d(${position.value[index].x}px, ${position.value[index].y}px, 0)
               scale(${scale.value[index]})
-              rotate(${imageRotate.value[index] + (uiStore.activeAdjustments.filePath === props.filePath ? uiStore.activeAdjustments.rotate : 0)}deg)
-              scaleX(${uiStore.activeAdjustments.filePath === props.filePath && uiStore.activeAdjustments.flipX ? -1 : 1})
-              scaleY(${uiStore.activeAdjustments.filePath === props.filePath && uiStore.activeAdjustments.flipY ? -1 : 1})`,
+              rotate(${imageRotate.value[index]}deg)`,
   transition: !isSliding.value && !isDraggingImage.value && !noTransition.value && !isWheelZooming.value
     ? (isDraggingNavBox.value ? 'transform 0.2s ease-out' : 'transform 0.3s ease-in-out')
     : 'none',
@@ -320,6 +334,9 @@ const rawBlobUrlMap = new Map<string, string>();
 let resizeObserver: ResizeObserver | null = null;
 let positionObserver: number | null = null;
 const suppressViewportEmit = ref(false);
+
+// inline loading for RAW preview
+const showInlineLoading = computed(() => shouldUseBackendPreview(props.filePath) && !!props.thumbnailSrc);
 
 function shouldUseBackendPreview(filePath?: string): boolean {
   if (!filePath) return false;
@@ -510,6 +527,34 @@ function warmImage(filePath?: string) {
     }
   }).catch(() => {
     // Ignore preload failures and let the main load path surface errors.
+  });
+}
+
+function loadPlaceholderResource(src?: string) {
+  return new Promise<{ src: string; naturalWidth: number; naturalHeight: number }>((resolve, reject) => {
+    if (!src) {
+      reject(new Error('Missing placeholder src'));
+      return;
+    }
+
+    const img = new Image();
+    img.onload = async () => {
+      try {
+        if (typeof img.decode === 'function') {
+          await img.decode();
+        }
+      } catch {
+        // ignore decode failures and keep loaded image
+      }
+
+      resolve({
+        src,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+      });
+    };
+    img.onerror = () => reject(new Error('Failed to load placeholder image'));
+    img.src = src;
   });
 }
 
@@ -854,7 +899,39 @@ watch(() => props.filePath, async (newFilePath) => {
   // Set timeout to show loading overlay if loading takes too long
   loadingTimeout = setTimeout(() => {
     isLoading.value = true;
-  }, 200);
+  }, 500);
+
+  const usesBackendPreview = shouldUseBackendPreview(newFilePath);
+  const hasPreviewPlaceholder = usesBackendPreview && !!props.thumbnailSrc;
+  if (hasPreviewPlaceholder) {
+    try {
+      const placeholder = await loadPlaceholderResource(props.thumbnailSrc);
+      if (loadingId === currentLoadingId.value) {
+        const nextImageIndex = activeImage.value ^ 1;
+        imageSrc.value[nextImageIndex] = placeholder.src;
+        imageFilePath.value[nextImageIndex] = newFilePath;
+        imageRotate.value[nextImageIndex] = props.rotate;
+        imageSize.value[nextImageIndex] = {
+          width: placeholder.naturalWidth,
+          height: placeholder.naturalHeight,
+        };
+        if (props.rotate % 180 === 90) {
+          imageSizeRotated.value[nextImageIndex] = {
+            width: placeholder.naturalHeight,
+            height: placeholder.naturalWidth,
+          };
+        } else {
+          imageSizeRotated.value[nextImageIndex] = {
+            width: placeholder.naturalWidth,
+            height: placeholder.naturalHeight,
+          };
+        }
+        showPlaceholderImage(nextImageIndex);
+      }
+    } catch {
+      // ignore placeholder failures and continue to full preview load
+    }
+  }
 
   try {
     const loaded = await loadImageResource(newFilePath);
@@ -1087,6 +1164,35 @@ const onImageReady = (nextIndex: number) => {
       }
     });
   }
+};
+
+// show placeholder image for RAW preview
+const showPlaceholderImage = (nextIndex: number) => {
+  noTransition.value = true;
+  activeImage.value = nextIndex;
+
+  if (containerSize.value.width > 0) {
+    if (isZoomFit.value) {
+      updateZoomFit(true);
+    } else {
+      clampPosition(true);
+    }
+  } else {
+    const unwatch = watch(containerSize, (newSize) => {
+      if (newSize.width > 0) {
+        if (isZoomFit.value) {
+          updateZoomFit(true);
+        } else {
+          clampPosition(true);
+        }
+        unwatch();
+      }
+    });
+  }
+
+  setTimeout(() => {
+    noTransition.value = false;
+  }, 500);
 };
 
 const rotateRight = () => {

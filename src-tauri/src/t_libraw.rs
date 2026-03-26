@@ -352,6 +352,10 @@ pub fn get_raw_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     RawHandle::open(file_path)?.dimensions()
 }
 
+pub fn get_raw_dimensions_with_flip(file_path: &str) -> Result<(u32, u32, i32), String> {
+    RawHandle::open(file_path)?.dimensions_with_flip()
+}
+
 /// Read the EXIF Orientation tag from in-memory JPEG bytes.
 /// Returns 1 (normal) when absent or unparseable.
 fn jpeg_exif_orientation(data: &[u8]) -> i32 {

@@ -178,7 +178,8 @@
       ],
       "file_type_options": [
         "Все",
-        "Изображения",
+        "Изображение",
+        "RAW",
         "Видео"
       ]
     },
@@ -340,6 +341,7 @@
       "delete": "Удалить",
       "reveal_in_finder": "Показать в Finder...",
       "reveal_in_file_explorer": "Показать в Проводнике...",
+      "refresh_file_info": "Обновить сведения о файле",
       "set_album_cover": "Сделать обложкой",
       "show_info": "Показать инфо"
     },
@@ -702,6 +704,7 @@
   "image_viewer": {
     "title": "Просмотр",
     "loading": "Загрузка...",
+    "loading_original": "Загрузка исходного изображения...",
     "failed": "Ошибка загрузки.",
     "toolbar": {
       "prev": "Пред.",

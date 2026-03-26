@@ -14,9 +14,6 @@ export const useUIStore = defineStore('ui', {
       saturation: 100,
       hue: 0,
       blur: 0,
-      rotate: 0,
-      flipX: false,
-      flipY: false,
       filter: null,
       resize: null
     }
@@ -39,16 +36,14 @@ export const useUIStore = defineStore('ui', {
                              adj.hue !== 0 || 
                              adj.blur !== 0 || 
                              !!adj.filter;
-      
-      const hasTransform = adj.rotate !== 0 || adj.flipX || adj.flipY;
-      
+
       let hasResize = false;
       if (adj.resize) {
         hasResize = Math.round(adj.resize.width) !== Math.round(fileInfo.width) || 
                     Math.round(adj.resize.height) !== Math.round(fileInfo.height);
       }
-      
-      return hasAdjustments || hasTransform || hasResize;
+
+      return hasAdjustments || hasResize;
     }
   },
   actions: {
@@ -89,9 +84,6 @@ export const useUIStore = defineStore('ui', {
         saturation: 100,
         hue: 0,
         blur: 0,
-        rotate: 0,
-        flipX: false,
-        flipY: false,
         filter: null,
         resize: null
       };

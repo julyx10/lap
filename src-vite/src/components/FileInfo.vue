@@ -9,6 +9,13 @@
       </div>
       <div class="mt-2 flex items-center gap-1">
         <TButton
+          :icon="IconRefresh"
+          :tooltip="$t('menu.file.refresh_file_info')"
+          :buttonSize="'small'"
+          :disabled="!fileInfo"
+          @click.stop="emit('refreshFileInfo')"
+        />
+        <TButton
           :icon="IconClose"
           :tooltip="$t('msgbox.close')"
           :buttonSize="'small'"
@@ -72,6 +79,7 @@
                   v-if="fileInfo?.thumbnail"
                   :src="fileInfo.thumbnail"
                   class="h-full w-full object-contain bg-base-100/20"
+                  :style="previewImageStyle"
                 />
                 <div v-else class="flex h-full w-full items-center justify-center bg-base-content/5">
                   <component
@@ -411,6 +419,7 @@ import {
   IconFile, IconFolderSearch, IconHeart, IconHeartFilled, IconStar, IconStarFilled, IconEdit,
   IconFolderExpanded,
   IconPhoto,
+  IconRefresh,
   IconRotate,
   IconVideo,
   IconZoomIn,
@@ -441,6 +450,7 @@ const emit = defineEmits([
   'quickEditTag',
   'quickEditComment',
   'navigateFolder',
+  'refreshFileInfo',
 ]);
 
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
@@ -459,6 +469,14 @@ const showMapPanel = computed(() => config.infoPanel.showMap);
 const normalizedRotate = computed(() => {
   const rotate = Number(props.fileInfo?.rotate || 0) % 360;
   return rotate < 0 ? rotate + 360 : rotate;
+});
+const previewImageStyle = computed(() => {
+  const rotate = normalizedRotate.value;
+  const isQuarterTurn = rotate % 180 !== 0;
+  return {
+    transform: `rotate(${rotate}deg) scale(${isQuarterTurn ? 0.84 : 1})`,
+    transformOrigin: 'center center',
+  };
 });
 const previewFormatLabel = computed(() => {
   const formatLabel = (props.fileInfo?.format_label || '').trim();
@@ -530,9 +548,9 @@ const quickSave = async (): Promise<boolean> => {
     outputFormat,
     quality: 80,
     orientation: props.fileInfo.e_orientation || 1,
-    flipHorizontal: !!adj.flipX,
-    flipVertical: !!adj.flipY,
-    rotate: adj.rotate || 0,
+    flipHorizontal: false,
+    flipVertical: false,
+    rotate: 0,
     crop: { x: 0, y: 0, width: 0, height: 0 },
     resize: {
       width: adj.resize?.width ?? props.fileInfo.width,

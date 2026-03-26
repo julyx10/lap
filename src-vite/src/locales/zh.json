@@ -179,6 +179,7 @@
       "file_type_options": [
         "全部",
         "图片",
+        "RAW",
         "视频"
       ]
     },
@@ -340,6 +341,7 @@
       "delete": "删除",
       "reveal_in_finder": "在访达中显示...",
       "reveal_in_file_explorer": "在文件资源管理器中显示...",
+      "refresh_file_info": "刷新文件信息",
       "set_album_cover": "设置为相册封面",
       "show_info": "显示信息"
     },
@@ -702,6 +704,7 @@
   "image_viewer": {
     "title": "图片查看器",
     "loading": "加载中...",
+    "loading_original": "加载原图...",
     "failed": "加载图片失败。文件可能不存在或文件已损坏。",
     "toolbar": {
       "prev": "上一张",

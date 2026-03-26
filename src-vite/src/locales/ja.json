@@ -179,6 +179,7 @@
       "file_type_options": [
         "すべて",
         "画像",
+        "RAW",
         "動画"
       ]
     },
@@ -340,6 +341,7 @@
       "delete": "削除",
       "reveal_in_finder": "Finderで表示...",
       "reveal_in_file_explorer": "エクスプローラーで表示...",
+      "refresh_file_info": "ファイル情報を更新",
       "set_album_cover": "アルバムの表紙に設定",
       "show_info": "情報を表示"
     },
@@ -702,6 +704,7 @@
   "image_viewer": {
     "title": "画像ビューア",
     "loading": "読み込み中...",
+    "loading_original": "元画像を読み込み中...",
     "failed": "読み込みに失敗しました。",
     "toolbar": {
       "prev": "前へ",
