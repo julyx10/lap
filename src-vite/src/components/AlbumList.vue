@@ -183,7 +183,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { listen, emit as tauriEmit } from '@tauri-apps/api/event';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
-import { scrollToFolder, formatTimestamp } from '@/common/utils';
+import { scrollToFolder, formatTimestamp, getThumbUrl } from '@/common/utils';
 import { getAlbumQueueIndex, getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
          fetchFolder, expandFinalFolder, getFileThumb,
@@ -340,13 +340,9 @@ const getMoreMenuItems = (album: any) => {
 // Load cover thumbnail for a single album
 const loadAlbumCover = async (albumId: number, coverFileId: number | null) => {
   if (coverFileId) {
-    try {
-      const thumb = await getFileThumb(coverFileId, "", 0, 0, config.settings.thumbnailSize, false);
-      if (thumb && thumb.error_code === 0) {
-        albumCovers.value[albumId] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-      }
-    } catch (error) {
-      console.error(`Failed to load cover for album ${albumId}:`, error);
+    const url = getThumbUrl(coverFileId);
+    if (url) {
+      albumCovers.value[albumId] = url;
     }
   } else {
     delete albumCovers.value[albumId];

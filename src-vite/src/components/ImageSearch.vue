@@ -208,6 +208,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
 import { getFileThumb, getFileInfo } from '@/common/api';
+import { getThumbUrl } from '@/common/utils';
 
 import { IconMore, IconTrash, IconSearch, IconDot, IconClose } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -423,15 +424,7 @@ async function fetchThumbnailsForIds(ids: number[]) {
     }
 
     if (historyItems.value[fileId] && !thumbnails.value[fileId]) {
-      try {
-        const file = historyItems.value[fileId];
-        const thumb = await getFileThumb(file.id, file.file_path, file.file_type || 1, file.e_orientation || 0, config.settings.thumbnailSize, false);
-        if (thumb && thumb.error_code === 0) {
-          thumbnails.value[file.id] = `data:image/jpeg;base64,${thumb.thumb_data_base64}`;
-        }
-      } catch (e) {
-        console.error('Failed to load thumbnail for history item', fileId, e);
-      }
+      thumbnails.value[fileId] = getThumbUrl(fileId);
     }
   }
 }

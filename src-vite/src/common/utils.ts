@@ -285,14 +285,27 @@ export function formatFolderBreadcrumb(
     .join(' > ');
 }
 
+let _thumbLibraryId = 'default';
+
+export function setThumbLibraryId(id: string) {
+  _thumbLibraryId = id || 'default';
+}
+
+export function getThumbUrl(fileId: number | null | undefined, bustCache = false): string {
+  if (!fileId || fileId <= 0) return '';
+  const base = `thumb://localhost/${_thumbLibraryId}/${fileId}`;
+  return bustCache ? `${base}?t=${Date.now()}` : base;
+}
+
 export function getThumbnailDataUrl(
-  thumb: { thumb_data_base64?: string | null; thumb_mime_type?: string | null } | null | undefined,
-  placeholder = ''
+  thumb: { file_id?: number | null; error_code?: number | null } | null | undefined,
+  placeholder = '',
+  bustCache = false
 ): string {
-  if (!thumb?.thumb_data_base64) {
+  if (!thumb || thumb.error_code !== 0 || !thumb.file_id) {
     return placeholder;
   }
-  return `data:${thumb.thumb_mime_type || 'image/jpeg'};base64,${thumb.thumb_data_base64}`;
+  return getThumbUrl(thumb.file_id, bustCache) || placeholder;
 }
 
 export function getRelativePath(path: string, basePath: string): string {

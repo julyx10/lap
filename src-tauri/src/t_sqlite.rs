@@ -2217,6 +2217,23 @@ impl AThumb {
         Self::fetch(file_id)
     }
 
+    /// fetch raw thumbnail bytes from db (no base64 encoding) for protocol handler
+    pub fn fetch_raw(file_id: i64) -> Result<Option<Vec<u8>>, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .query_row(
+                "SELECT thumb_data FROM athumbs WHERE file_id = ?1 AND error_code = 0",
+                params![file_id],
+                |row| {
+                    let data: Option<Vec<u8>> = row.get(0)?;
+                    Ok(data)
+                },
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+        Ok(result.flatten())
+    }
+
     /// delete a thumbnail from db
     pub fn delete(file_id: i64) -> Result<usize, String> {
         let conn = open_conn()?;

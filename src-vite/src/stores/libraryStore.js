@@ -3,6 +3,7 @@
  */
 import { defineStore } from 'pinia';
 import { getCurrentLibraryState, saveLibraryState, getAppConfig } from '@/common/api';
+import { setThumbLibraryId } from '@/common/utils';
 
 export const useLibraryStore = defineStore('libraryStore', {
   state: () => ({
@@ -102,6 +103,7 @@ export const useLibraryStore = defineStore('libraryStore', {
         const appConfig = await getAppConfig();
         if (appConfig) {
           this._libraryId = appConfig.current_library_id;
+          setThumbLibraryId(appConfig.current_library_id);
         }
 
         // Load library state from backend

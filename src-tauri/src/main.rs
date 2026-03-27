@@ -47,6 +47,43 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .register_uri_scheme_protocol("thumb", |_ctx, request| {
+            // URL format: thumb://localhost/{library_id}/{file_id}
+            // library_id is for browser cache isolation only; file_id is the last segment
+            let path = request.uri().path();
+            let file_id_str = path.rsplit('/').next().unwrap_or("");
+            let file_id: i64 = file_id_str.parse().unwrap_or(0);
+
+            if file_id <= 0 {
+                return http::Response::builder()
+                    .status(http::StatusCode::BAD_REQUEST)
+                    .header(http::header::CONTENT_TYPE, "text/plain")
+                    .body("invalid file_id".as_bytes().to_vec())
+                    .unwrap();
+            }
+
+            match t_sqlite::AThumb::fetch_raw(file_id) {
+                Ok(Some(data)) => {
+                    // Detect format: PNG starts with 0x89504E47, else assume JPEG
+                    let mime = if data.starts_with(&[0x89, 0x50, 0x4E, 0x47]) {
+                        "image/png"
+                    } else {
+                        "image/jpeg"
+                    };
+                    http::Response::builder()
+                        .status(http::StatusCode::OK)
+                        .header(http::header::CONTENT_TYPE, mime)
+                        .header(http::header::CACHE_CONTROL, "max-age=31536000, immutable")
+                        .body(data)
+                        .unwrap()
+                }
+                _ => http::Response::builder()
+                    .status(http::StatusCode::NOT_FOUND)
+                    .header(http::header::CONTENT_TYPE, "text/plain")
+                    .body("thumbnail not found".as_bytes().to_vec())
+                    .unwrap(),
+            }
+        })
         .manage(t_ai::AiState(std::sync::Mutex::new(t_ai::AiEngine::new())))
         .manage(t_face::FaceState(std::sync::Arc::new(
             std::sync::Mutex::new(t_face::FaceEngine::new()),

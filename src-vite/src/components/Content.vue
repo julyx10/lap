@@ -3747,7 +3747,7 @@ const updateThumbForFile = async (file: any) => {
   const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, true);
   if(thumb) {
     if(thumb.error_code === 0) {
-      file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder);
+      file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true);
     } else if(thumb.error_code === 1) {
       file.thumbnail = thumbnailPlaceholder;
     }
