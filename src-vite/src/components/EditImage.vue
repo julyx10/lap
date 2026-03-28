@@ -452,9 +452,8 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch, type CSSPropert
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { getFolderPath, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc } from '@/common/utils';
-import { editImage, checkFileExists, getFileImage } from '@/common/api';
-import { clearFileImageCache } from '@/common/utils';
+import { getFolderPath, shortenFilename, getFullPath, combineFileName, getSelectOptions, getFileExtension, getAssetSrc, getPreviewUrl } from '@/common/utils';
+import { editImage, checkFileExists } from '@/common/api';
 
 import ModalDialog from '@/components/ModalDialog.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -510,7 +509,6 @@ const imageRef = ref<HTMLImageElement | null>(null);
 const imageRect = ref<DOMRect | null>(null);
 const imageRectOriginal = ref<DOMRect | null>(null);
 const imageSrc = ref('');
-const imageObjectUrl = ref('');
 const imageWidth = ref(0);
 const imageHeight = ref(0);
 const isRawFile = computed(() => Number(props.fileInfo?.file_type || 0) === 3);
@@ -1044,10 +1042,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
   uiStore.removeInputHandler('EditImage');
-  if (imageObjectUrl.value) {
-    URL.revokeObjectURL(imageObjectUrl.value);
-    imageObjectUrl.value = '';
-  }
   if (histogramToneAnimationFrame !== null) {
     cancelAnimationFrame(histogramToneAnimationFrame);
     histogramToneAnimationFrame = null;
@@ -1071,38 +1065,9 @@ const onImageLoad = async () => {
   });
 };
 
-function parseBase64ImagePayload(input: string): { mime: string; base64: string } | null {
-  if (!input) return null;
-  if (input.startsWith('data:')) {
-    const marker = ';base64,';
-    const splitIndex = input.indexOf(marker);
-    if (splitIndex <= 5) return null;
-    const mime = input.slice(5, splitIndex);
-    const base64 = input.slice(splitIndex + marker.length);
-    if (!base64) return null;
-    return { mime: mime || 'image/jpeg', base64 };
-  }
-  return { mime: 'image/jpeg', base64: input };
-}
-
-function createObjectUrlFromBase64(base64: string, mime: string): string {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  const blob = new Blob([bytes], { type: mime || 'image/jpeg' });
-  return URL.createObjectURL(blob);
-}
-
 const initEditImageLoadingId = ref(0);
 
 const initEditImage = async () => {
-  if (imageObjectUrl.value) {
-    URL.revokeObjectURL(imageObjectUrl.value);
-    imageObjectUrl.value = '';
-  }
-
   initEditImageLoadingId.value++;
   const loadingId = initEditImageLoadingId.value;
 
@@ -1113,15 +1078,10 @@ const initEditImage = async () => {
 
     void (async () => {
       try {
-        const result = await getFileImage(props.fileInfo.file_path);
         if (loadingId !== initEditImageLoadingId.value) return;
-        const payload = parseBase64ImagePayload(result || '');
-        if (payload) {
-          if (imageObjectUrl.value) {
-            URL.revokeObjectURL(imageObjectUrl.value);
-          }
-          imageObjectUrl.value = createObjectUrlFromBase64(payload.base64, payload.mime);
-          imageSrc.value = imageObjectUrl.value;
+        const previewSrc = getPreviewUrl(props.fileInfo.id, props.fileInfo.file_path);
+        if (previewSrc) {
+          imageSrc.value = previewSrc;
         }
       } catch {
         if (loadingId !== initEditImageLoadingId.value) return;
@@ -1822,10 +1782,6 @@ const executeSave = async (overrides: { fileName?: string; destFilePath?: string
   } finally {
     isProcessing.value = false;
     if (success) {
-      clearFileImageCache(props.fileInfo.file_path);
-      if (saveAsNew) {
-        clearFileImageCache(savedFilePath);
-      }
       uiStore.updateFileVersion(props.fileInfo.file_path);
       if (uiStore.activeAdjustments.filePath === props.fileInfo.file_path) {
         uiStore.clearActiveAdjustments();

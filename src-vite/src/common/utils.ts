@@ -293,8 +293,33 @@ export function setThumbLibraryId(id: string) {
 
 export function getThumbUrl(fileId: number | null | undefined, bustCache = false): string {
   if (!fileId || fileId <= 0) return '';
-  const base = `thumb://localhost/${_thumbLibraryId}/${fileId}`;
+  const scheme = (isWin || isLinux) ? 'http://thumb.localhost' : 'thumb://localhost';
+  const base = `${scheme}/${_thumbLibraryId}/${fileId}`;
   return bustCache ? `${base}?t=${Date.now()}` : base;
+}
+
+export function getPreviewUrl(
+  fileId: number | null | undefined,
+  filePath?: string | null,
+  bustCache = false,
+): string {
+  if (!fileId || fileId <= 0) return '';
+  const scheme = (isWin || isLinux) ? 'http://preview.localhost' : 'preview://localhost';
+  const base = `${scheme}/${_thumbLibraryId}/${fileId}`;
+
+  if (bustCache) {
+    return `${base}?t=${Date.now()}`;
+  }
+
+  if (filePath) {
+    const uiStore = useUIStore();
+    const version = uiStore.getFileVersion(filePath);
+    if (version > 0) {
+      return `${base}?v=${version}`;
+    }
+  }
+
+  return base;
 }
 
 export function getThumbnailDataUrl(
@@ -427,99 +452,4 @@ export function getCountryName(cc: string, lang: string = 'en'): string {
   } catch (e) {
     return cc;
   }
-}
-
-// file image cache (LRU, keeps current plus nearby images warm)
-const FILE_IMAGE_CACHE_MAX = 7;
-const fileImageCache = new Map<string, any>();
-const fileImagePending = new Map<string, Promise<any>>();
-const fileImageObjectUrlCache = new Map<string, string>();
-
-function touchFileImageCache(filePath: string) {
-  if (!fileImageCache.has(filePath)) return;
-  const value = fileImageCache.get(filePath);
-  fileImageCache.delete(filePath);
-  fileImageCache.set(filePath, value);
-}
-
-export function getFileImageFromCache(filePath: string): any | undefined {
-  if (fileImageCache.has(filePath)) {
-    touchFileImageCache(filePath);
-    return fileImageCache.get(filePath);
-  }
-  return undefined;
-}
-
-export function setFileImageToCache(filePath: string, value: any) {
-  if (fileImageCache.has(filePath)) {
-    fileImageCache.delete(filePath);
-  }
-  fileImageCache.set(filePath, value);
-  while (fileImageCache.size > FILE_IMAGE_CACHE_MAX) {
-    const oldest = fileImageCache.keys().next().value;
-    if (oldest !== undefined) {
-      fileImageCache.delete(oldest);
-      const objectUrl = fileImageObjectUrlCache.get(oldest);
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        fileImageObjectUrlCache.delete(oldest);
-      }
-    }
-  }
-}
-
-export function getFileImagePending(filePath: string): Promise<any> | undefined {
-  return fileImagePending.get(filePath);
-}
-
-export function setFileImagePending(filePath: string, promise: Promise<any>) {
-  fileImagePending.set(filePath, promise);
-}
-
-export function deleteFileImagePending(filePath: string) {
-  fileImagePending.delete(filePath);
-}
-
-export function clearFileImageCache(filePath: string) {
-  if (!filePath) return;
-  fileImageCache.delete(filePath);
-  fileImagePending.delete(filePath);
-  const objectUrl = fileImageObjectUrlCache.get(filePath);
-  if (objectUrl) {
-    URL.revokeObjectURL(objectUrl);
-    fileImageObjectUrlCache.delete(filePath);
-  }
-}
-
-export function clearAllFileImageCache() {
-  fileImageCache.clear();
-  fileImagePending.clear();
-  fileImageObjectUrlCache.forEach((objectUrl) => URL.revokeObjectURL(objectUrl));
-  fileImageObjectUrlCache.clear();
-}
-
-export function hasFileImageCache(filePath: string): boolean {
-  return !!filePath && fileImageCache.has(filePath);
-}
-
-export function getFileImageObjectUrlFromCache(filePath: string): string | undefined {
-  if (!filePath || !fileImageObjectUrlCache.has(filePath)) {
-    return undefined;
-  }
-  const objectUrl = fileImageObjectUrlCache.get(filePath)!;
-  fileImageObjectUrlCache.delete(filePath);
-  fileImageObjectUrlCache.set(filePath, objectUrl);
-  return objectUrl;
-}
-
-export function setFileImageObjectUrlToCache(filePath: string, objectUrl: string) {
-  if (!filePath || !objectUrl) return;
-
-  const existing = fileImageObjectUrlCache.get(filePath);
-  if (existing && existing !== objectUrl) {
-    URL.revokeObjectURL(existing);
-  }
-
-  fileImageObjectUrlCache.delete(filePath);
-  fileImageObjectUrlCache.set(filePath, objectUrl);
 }

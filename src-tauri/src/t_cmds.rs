@@ -548,12 +548,6 @@ pub fn add_file_to_db(folder_id: i64, file_path: &str) -> Result<Option<AFile>, 
     Ok(Some(file))
 }
 
-/// get a file's image
-#[tauri::command]
-pub async fn get_file_image(file_path: String) -> Result<String, String> {
-    t_image::get_file_image_cached(&file_path).await
-}
-
 /// check if file exists
 #[tauri::command]
 pub fn check_file_exists(file_path: &str) -> bool {

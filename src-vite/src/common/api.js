@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { config } from '@/common/config';
-import { separator, localeComp, getFileImageFromCache, setFileImageToCache, getFileImagePending, setFileImagePending, deleteFileImagePending } from '@/common/utils';
+import { separator, localeComp } from '@/common/utils';
 
 // library
 
@@ -741,40 +741,6 @@ export async function addFileToDb(folderId, filePath) {
     console.log('Failed to add file to db:', error);
   }
   return null;
-}
-
-// get file image
-export async function getFileImage(filePath) {
-  if (!filePath) return null;
-
-  const cached = getFileImageFromCache(filePath);
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  const existing = getFileImagePending(filePath);
-  if (existing) {
-    return await existing;
-  }
-
-  const pending = (async () => {
-    try {
-      const result = await invoke('get_file_image', { filePath });
-      if(result) {
-        setFileImageToCache(filePath, result);
-        return result;
-      };
-    } catch (error) {
-      console.log('Failed to get file image:', error);
-    } finally {
-      deleteFileImagePending(filePath);
-    }
-    return null;
-  })();
-
-  setFileImagePending(filePath, pending);
-
-  return await pending;
 }
 
 // check if file exists

@@ -398,7 +398,6 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { renameFile, editImage, getAlbum } from '@/common/api';
-import { clearFileImageCache } from '@/common/utils';
 import { 
   extractFileName, 
   getFileExtension,
@@ -573,7 +572,6 @@ const quickSave = async (): Promise<boolean> => {
     }
 
     uiStore.updateFileVersion(props.fileInfo.file_path);
-    clearFileImageCache(props.fileInfo.file_path);
     uiStore.clearActiveAdjustments();
     emit('success');
     toolTipRef.value?.showTip(localeMsg.value.tooltip.save_image.success);

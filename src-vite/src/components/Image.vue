@@ -169,9 +169,8 @@
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
-import { getAssetSrc, getFileImageObjectUrlFromCache, setFileImageObjectUrlToCache } from '@/common/utils';
-import { getFacesForFile, getFileImage } from '@/common/api';
-import { hasFileImageCache } from '@/common/utils';
+import { getAssetSrc, getPreviewUrl } from '@/common/utils';
+import { getFacesForFile } from '@/common/api';
 import { RawFace, Face } from '@/common/types';
 
 import { IconError } from '@/common/icons';
@@ -324,6 +323,12 @@ const suppressViewportEmit = ref(false);
 let warmImageTimeout: NodeJS.Timeout | null = null;
 let warmImageIdleId: number | null = null;
 
+function waitForNextPaint() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
 // inline loading for RAW preview
 const showInlineLoading = computed(() => shouldUseBackendPreview(props.filePath) && !!props.thumbnailSrc);
 
@@ -332,31 +337,6 @@ function shouldUseBackendPreview(filePath?: string): boolean {
   if (Number(props.fileType || 0) === 3) return true;
   const extension = filePath.split('.').pop()?.toLowerCase() || '';
   return extension === 'tif' || extension === 'tiff';
-}
-
-function parseBase64ImagePayload(input: string): { mime: string; base64: string } | null {
-  if (!input) return null;
-  if (input.startsWith('data:')) {
-    const marker = ';base64,';
-    const splitIndex = input.indexOf(marker);
-    if (splitIndex <= 5) return null;
-    const mime = input.slice(5, splitIndex);
-    const base64 = input.slice(splitIndex + marker.length);
-    if (!base64) return null;
-    return { mime: mime || 'image/jpeg', base64 };
-  }
-
-  return { mime: 'image/jpeg', base64: input };
-}
-
-function createObjectUrlFromBase64(base64: string, mime: string): string {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  const blob = new Blob([bytes], { type: mime || 'image/jpeg' });
-  return URL.createObjectURL(blob);
 }
 
 // navigator view mode
@@ -445,33 +425,13 @@ function loadImageResource(filePath?: string) {
     };
 
     if (shouldUseBackendPreview(filePath)) {
-      getFileImage(filePath)
-        .then((result) => {
-          if (!result) {
-            preloadCache.delete(filePath);
-            reject(new Error(`Failed to get RAW preview image: ${filePath}`));
-            return;
-          }
-          const payload = parseBase64ImagePayload(result);
-          if (!payload) {
-            preloadCache.delete(filePath);
-            reject(new Error(`Invalid RAW preview payload: ${filePath}`));
-            return;
-          }
-
-          const cachedObjectUrl = getFileImageObjectUrlFromCache(filePath);
-          if (cachedObjectUrl) {
-            src = cachedObjectUrl;
-          } else {
-            src = createObjectUrlFromBase64(payload.base64, payload.mime);
-            setFileImageObjectUrlToCache(filePath, src);
-          }
-          img.src = src;
-        })
-        .catch((error) => {
-          preloadCache.delete(filePath);
-          reject(error);
-        });
+      src = getPreviewUrl(props.fileId, filePath);
+      if (!src) {
+        preloadCache.delete(filePath);
+        reject(new Error(`Failed to resolve RAW/TIFF preview source: ${filePath}`));
+        return;
+      }
+      img.src = src;
       return;
     }
 
@@ -935,8 +895,7 @@ watch(() => props.filePath, async (newFilePath) => {
   }, 500);
 
   const usesBackendPreview = shouldUseBackendPreview(newFilePath);
-  const hasCachedPreview = usesBackendPreview && hasFileImageCache(newFilePath);
-  const hasPreviewPlaceholder = usesBackendPreview && !hasCachedPreview && !!props.thumbnailSrc;
+  const hasPreviewPlaceholder = usesBackendPreview && !!props.thumbnailSrc;
   if (hasPreviewPlaceholder) {
     try {
       const placeholder = await loadPlaceholderResource(props.thumbnailSrc);
@@ -950,6 +909,8 @@ watch(() => props.filePath, async (newFilePath) => {
           placeholder.naturalHeight,
         );
         showPlaceholderImage(nextImageIndex);
+        await nextTick();
+        await waitForNextPaint();
       }
     } catch {
       // ignore placeholder failures and continue to full preview load

@@ -65,8 +65,7 @@ import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { getFileImage } from '@/common/api';
-import { getAssetSrc, getFileExtension, setTheme, SCALE_VALUES, shortenFilename } from '@/common/utils';
+import { getAssetSrc, getFileExtension, getPreviewUrl, setTheme, SCALE_VALUES, shortenFilename } from '@/common/utils';
 import TitleBar from '@/components/TitleBar.vue';
 
 const { locale, t } = useI18n();
@@ -74,6 +73,7 @@ const appWindow = getCurrentWebviewWindow();
 
 const imageSrc = ref('');
 const filePath = ref('');
+const fileId = ref(0);
 const fileType = ref(1);
 const isLoading = ref(false);
 const loadError = ref(false);
@@ -101,49 +101,18 @@ function applyWindowScale(scale: number) {
   document.documentElement.style.fontSize = `${normalizedScale * 16}px`;
 }
 
-function parseBase64ImagePayload(input: string): { mime: string; base64: string } | null {
-  if (!input) return null;
-  if (input.startsWith('data:')) {
-    const marker = ';base64,';
-    const splitIndex = input.indexOf(marker);
-    if (splitIndex <= 5) return null;
-    const mime = input.slice(5, splitIndex);
-    const base64 = input.slice(splitIndex + marker.length);
-    if (!base64) return null;
-    return { mime: mime || 'image/jpeg', base64 };
-  }
-
-  return { mime: 'image/jpeg', base64: input };
-}
-
-function createObjectUrlFromBase64(base64: string, mime: string): string {
-  const binary = atob(base64);
-  const length = binary.length;
-  const bytes = new Uint8Array(length);
-  for (let i = 0; i < length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return URL.createObjectURL(new Blob([bytes], { type: mime }));
-}
-
 function shouldUseBackendPreview(targetPath: string, targetFileType: number): boolean {
   if (targetFileType === 3) return true;
   const extension = getFileExtension(targetPath || '').toLowerCase();
   return extension === 'tif' || extension === 'tiff';
 }
 
-function revokeImageSrc() {
-  if (imageSrc.value.startsWith('blob:')) {
-    URL.revokeObjectURL(imageSrc.value);
-  }
-}
-
-async function resolvePrintSource(targetPath: string, targetFileType: number) {
+async function resolvePrintSource(targetPath: string, targetFileType: number, targetFileId: number) {
   isLoading.value = true;
   loadError.value = false;
-  revokeImageSrc();
   imageSrc.value = '';
   filePath.value = targetPath;
+  fileId.value = targetFileId;
   fileType.value = targetFileType;
 
   if (!targetPath) {
@@ -154,13 +123,12 @@ async function resolvePrintSource(targetPath: string, targetFileType: number) {
 
   try {
     if (shouldUseBackendPreview(targetPath, targetFileType)) {
-      const result = await getFileImage(targetPath);
-      const payload = result ? parseBase64ImagePayload(result) : null;
-      if (!payload) {
+      const previewSrc = getPreviewUrl(targetFileId, targetPath);
+      if (!previewSrc) {
         loadError.value = true;
         return;
       }
-      imageSrc.value = createObjectUrlFromBase64(payload.base64, payload.mime);
+      imageSrc.value = previewSrc;
       return;
     }
 
@@ -173,10 +141,11 @@ async function resolvePrintSource(targetPath: string, targetFileType: number) {
   }
 }
 
-async function handlePrintPayload(payload: { filePath?: string; fileType?: number }) {
+async function handlePrintPayload(payload: { fileId?: number; filePath?: string; fileType?: number }) {
+  const targetFileId = Number(payload?.fileId || 0);
   const targetPath = String(payload?.filePath || '');
   const targetFileType = Number(payload?.fileType || 1);
-  await resolvePrintSource(targetPath, targetFileType);
+  await resolvePrintSource(targetPath, targetFileType, targetFileId);
 }
 
 function openPrintDialog() {
@@ -217,11 +186,12 @@ onMounted(async () => {
   updateWindowTitle();
 
   unlistenUpdatePrint = await listen('update-print', async (event) => {
-    await handlePrintPayload((event.payload || {}) as { filePath?: string; fileType?: number });
+    await handlePrintPayload((event.payload || {}) as { fileId?: number; filePath?: string; fileType?: number });
   });
 
   const search = new URLSearchParams(window.location.search);
   await handlePrintPayload({
+    fileId: Number(search.get('fileId') || 0),
     filePath: search.get('filePath') || '',
     fileType: Number(search.get('fileType') || 1),
   });

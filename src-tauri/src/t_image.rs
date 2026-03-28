@@ -5,7 +5,6 @@
  * date:    2024-08-08
  */
 use arboard::Clipboard;
-use base64::Engine;
 use exif::{In, Reader, Tag};
 use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader};
 use once_cell::sync::Lazy;
@@ -795,7 +794,7 @@ const FILE_IMAGE_RESULT_CACHE_MAX: usize = 8;
 #[derive(Clone)]
 struct FileImageCacheEntry {
     signature: (u64, u128),
-    encoded: String,
+    data: Vec<u8>,
 }
 
 struct FileImageResultCache {
@@ -811,7 +810,7 @@ impl FileImageResultCache {
         }
     }
 
-    fn get(&mut self, file_path: &str, signature: (u64, u128)) -> Option<String> {
+    fn get(&mut self, file_path: &str, signature: (u64, u128)) -> Option<Vec<u8>> {
         let entry = self.entries.get(file_path)?;
         if entry.signature != signature {
             self.entries.remove(file_path);
@@ -821,13 +820,13 @@ impl FileImageResultCache {
 
         self.order.retain(|item| item != file_path);
         self.order.push_back(file_path.to_string());
-        Some(entry.encoded.clone())
+        Some(entry.data.clone())
     }
 
-    fn insert(&mut self, file_path: String, signature: (u64, u128), encoded: String) {
+    fn insert(&mut self, file_path: String, signature: (u64, u128), data: Vec<u8>) {
         self.entries.insert(
             file_path.clone(),
-            FileImageCacheEntry { signature, encoded },
+            FileImageCacheEntry { signature, data },
         );
         self.order.retain(|item| item != &file_path);
         self.order.push_back(file_path);
@@ -859,7 +858,7 @@ fn should_cache_file_image_result(file_path: &str, file_type: i64) -> bool {
     file_type == 3 || crate::t_libraw::is_tiff_path(file_path)
 }
 
-pub async fn get_file_image_cached(file_path: &str) -> Result<String, String> {
+pub async fn get_file_image_bytes_cached(file_path: &str) -> Result<Vec<u8>, String> {
     let file_type = t_utils::get_file_type(file_path).unwrap_or(0);
     let cache_signature = if should_cache_file_image_result(file_path, file_type) {
         Some(get_file_signature(file_path)?)
@@ -891,13 +890,11 @@ pub async fn get_file_image_cached(file_path: &str) -> Result<String, String> {
             .map_err(|e| format!("Failed to read the image: {}", e))?
     };
 
-    let encoded = base64::engine::general_purpose::STANDARD.encode(image_data);
-
     if let Some(signature) = cache_signature {
         if let Ok(mut cache) = FILE_IMAGE_RESULT_CACHE.lock() {
-            cache.insert(file_path.to_string(), signature, encoded.clone());
+            cache.insert(file_path.to_string(), signature, image_data.clone());
         }
     }
 
-    Ok(encoded)
+    Ok(image_data)
 }

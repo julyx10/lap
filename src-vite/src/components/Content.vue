@@ -574,7 +574,7 @@ import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from 
 import { isWin, isMac, setTheme, separator,
          formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getSelectOptions, 
-         shortenFilename, getSlideShowInterval, clearFileImageCache } from '@/common/utils';
+         shortenFilename, getSlideShowInterval } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -3423,7 +3423,6 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
   if (success) {
     showEditImage.value = false;
     if (payload.saveAsNew && payload.filePath) {
-      clearFileImageCache(payload.filePath);
       clearPreviewPreloadCache(payload.filePath);
       const inserted = await indexAndInsertSavedFile(payload.filePath);
       if (!inserted) {
@@ -3433,7 +3432,6 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
     } else {
       const savedFile = fileList.value[selectedItemIndex.value];
       if (savedFile?.file_path) {
-        clearFileImageCache(savedFile.file_path);
         clearPreviewPreloadCache(savedFile.file_path);
       }
       if (savedFile && Number(savedFile.rotate || 0) !== 0) {
@@ -4526,12 +4524,13 @@ async function openPrintWindow(index: number) {
 
   const webViewLabel = 'print';
   const encodedFilePath = encodeURIComponent(selectedFile.file_path);
+  const fileId = Number(selectedFile.id || 0);
   const fileType = Number(selectedFile.file_type || 1);
 
   let printWindow = await WebviewWindow.getByLabel(webViewLabel);
   if (!printWindow) {
     printWindow = new WebviewWindow(webViewLabel, {
-      url: `/print-view?filePath=${encodedFilePath}&fileType=${fileType}`,
+      url: `/print-view?fileId=${fileId}&filePath=${encodedFilePath}&fileType=${fileType}`,
       title: localeMsg.value.menu.file.print,
       width: 960,
       height: 720,
@@ -4557,6 +4556,7 @@ async function openPrintWindow(index: number) {
 
   await printWindow.setTitle(localeMsg.value.menu.file.print);
   await printWindow.emit('update-print', {
+    fileId,
     filePath: selectedFile.file_path,
     fileType,
   });
