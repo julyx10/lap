@@ -118,7 +118,7 @@ jobs:
 
           cargo fetch --manifest-path src-tauri/Cargo.toml
 
-          BUILD_RS=$(find ~/.cargo/registry/src -type f -path "*/ffmpeg-sys-next-8.0.1/build.rs" | head -n 1)
+          BUILD_RS=$(find ~/.cargo/registry/src -type f -path "*/ffmpeg-sys-next-*/build.rs" | head -n 1)
           if [ -z "${BUILD_RS}" ]; then
             echo "Could not find ffmpeg-sys-next build.rs"
             exit 1
