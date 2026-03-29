@@ -412,11 +412,21 @@ function loadImageResource(filePath?: string) {
     img.decoding = 'async';
 
     img.onload = () => {
-      resolve({
-        src,
-        naturalWidth: img.naturalWidth,
-        naturalHeight: img.naturalHeight,
-      });
+      img.decode()
+        .then(() => {
+          resolve({
+            src,
+            naturalWidth: img.naturalWidth,
+            naturalHeight: img.naturalHeight,
+          });
+        })
+        .catch(() => {
+          resolve({
+            src,
+            naturalWidth: img.naturalWidth,
+            naturalHeight: img.naturalHeight,
+          });
+        });
     };
 
     img.onerror = () => {
@@ -526,11 +536,9 @@ function loadPlaceholderResource(src?: string) {
     const img = new Image();
     img.decoding = 'async';
     img.onload = () => {
-      resolve({
-        src,
-        naturalWidth: img.naturalWidth,
-        naturalHeight: img.naturalHeight,
-      });
+      img.decode()
+        .then(() => resolve({ src, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight }))
+        .catch(() => resolve({ src, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight }));
     };
     img.onerror = () => reject(new Error('Failed to load placeholder image'));
     img.src = src;
