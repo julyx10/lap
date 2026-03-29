@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@aptabase/tauri": "^0.4.1",
-    "@tailwindcss/vite": "^4.1.18",
+    "@tailwindcss/vite": "^4.2.2",
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
@@ -26,26 +26,26 @@
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "prettier": "^3.8.1",
-    "video.js": "^8.23.4",
-    "vue": "^3.5.27",
+    "video.js": "^8.23.7",
+    "vue": "^3.5.31",
     "vue-draggable-plus": "^0.6.1",
-    "vue-i18n": "^11.2.8",
+    "vue-i18n": "^11.3.0",
     "vue-lazyload": "^3.0.0",
-    "vue-router": "^4.6.4"
+    "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
-    "@types/node": "^22.19.8",
-    "@vitejs/plugin-vue": "^5.2.4",
-    "@vue/compiler-sfc": "^3.5.27",
-    "autoprefixer": "^10.4.24",
-    "daisyui": "5.0.54",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3",
-    "vite": "^6.4.1",
-    "vite-plugin-vue-devtools": "^8.0.5",
-    "vite-svg-loader": "^5.1.0"
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.5.0",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "@vue/compiler-sfc": "^3.5.31",
+    "autoprefixer": "^10.4.27",
+    "daisyui": "5.5.19",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3",
+    "vite-plugin-vue-devtools": "^8.1.1",
+    "vite-svg-loader": "^5.1.1"
   },
   "license": "GPL-3.0-or-later"
 }

@@ -8,7 +8,7 @@ use ndarray::Array;
 use ort::{
     inputs,
     session::{Session, builder::GraphOptimizationLevel},
-    value::Value,
+    value::Tensor,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
@@ -213,7 +213,7 @@ impl FaceEngine {
             }
         }
 
-        let input_value = Value::from_array(array).map_err(|e| e.to_string())?;
+        let input_value = Tensor::from_array(array).map_err(|e| e.to_string())?;
 
         // Use block scope to ensure outputs is dropped before calling nms
         let mut faces = {
@@ -412,7 +412,7 @@ impl FaceEngine {
             }
         }
 
-        let input_value = Value::from_array(array).map_err(|e| e.to_string())?;
+        let input_value = Tensor::from_array(array).map_err(|e| e.to_string())?;
 
         let outputs = self
             .embedding_model

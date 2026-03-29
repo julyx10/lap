@@ -1,12 +1,9 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  /* themes: winter --default, dark --prefersdark; */
-  themes: all;
+  /* Explicit list: `themes: all` adds prefers-color-scheme dark on :root and can override data-theme after CSS minify. Order matches daisyUI themeOrder. */
+  themes: light --default, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro, cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel, fantasy, wireframe, black, luxury, dracula, cmyk, autumn, business, acid, lemonade, night, coffee, winter, dim, nord, sunset, caramellatte, abyss, silk;
   root: ":root";
-  include: ;
-  exclude: ;
-  prefix: ;
-  logs: true;
+  logs: false;
 }
 
 html, body {

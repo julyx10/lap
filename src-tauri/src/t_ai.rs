@@ -8,7 +8,7 @@ use ndarray::{Array, Array4};
 use ort::{
     inputs,
     session::{Session, builder::GraphOptimizationLevel},
-    value::Value,
+    value::Tensor,
 };
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
@@ -111,7 +111,7 @@ impl AiEngine {
         )
         .map_err(|e| e.to_string())?;
 
-        let input_ids_value = Value::from_array(input_ids_array).map_err(|e| e.to_string())?;
+        let input_ids_value = Tensor::from_array(input_ids_array).map_err(|e| e.to_string())?;
 
         let outputs = self
             .text_model
@@ -159,7 +159,7 @@ impl AiEngine {
     }
 
     fn run_vision_model(&mut self, image_input: Array4<f32>) -> Result<Vec<f32>, String> {
-        let image_input_value = Value::from_array(image_input).map_err(|e| e.to_string())?;
+        let image_input_value = Tensor::from_array(image_input).map_err(|e| e.to_string())?;
 
         let outputs = self
             .vision_model
