@@ -301,7 +301,7 @@ jobs:
           $work = Join-Path $env:RUNNER_TEMP "directml"
           $zip = Join-Path $work "directml.zip"
           $pkg = Join-Path $work "pkg"
-          $releaseDir = "src-tauri/target/x86_64-pc-windows-msvc/release"
+          $releaseDir = Join-Path $env:GITHUB_WORKSPACE "src-tauri/target/x86_64-pc-windows-msvc/release"
 
           New-Item -ItemType Directory -Force -Path $work | Out-Null
           New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
@@ -314,7 +314,8 @@ jobs:
             throw "DirectML.dll not found in package: $dll"
           }
 
-          Copy-Item $dll (Join-Path $releaseDir "DirectML.dll") -Force
+          $dest = Join-Path $releaseDir "DirectML.dll"
+          Copy-Item -Path $dll -Destination $dest -Force
 
       - name: Build and Sign (Windows x64)
         uses: tauri-apps/tauri-action@v0.5
