@@ -79,6 +79,7 @@ brew install nasm pkg-config autoconf automake libtool
 # Clone and build
 git clone --recursive https://github.com/julyx10/lap.git
 cd lap
+cargo install tauri-cli --version "^2.0.0" --locked
 ./scripts/download_models.sh            # Windows: .\scripts\download_models.ps1
 cd src-vite && pnpm install && cd ..
 cargo tauri dev
