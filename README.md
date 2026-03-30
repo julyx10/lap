@@ -70,15 +70,16 @@ Requirements: Node.js 20+, pnpm, Rust stable.
 ```bash
 # macOS system deps
 xcode-select --install
-brew install nasm pkg-config autoconf automake libtool
+brew install nasm pkg-config autoconf automake libtool cmake
 
 # Linux system deps (Ubuntu/Debian)
 # sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
-#   patchelf nasm clang pkg-config autoconf automake libtool
+#   patchelf nasm clang pkg-config autoconf automake libtool cmake
 
 # Clone and build
 git clone --recursive https://github.com/julyx10/lap.git
 cd lap
+git submodule update --init --recursive
 cargo install tauri-cli --version "^2.0.0" --locked
 ./scripts/download_models.sh            # Windows: .\scripts\download_models.ps1
 cd src-vite && pnpm install && cd ..
