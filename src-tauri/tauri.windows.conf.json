@@ -13,8 +13,7 @@
   "bundle": {
     "resources": {
       "resources/models/*": "resources/models",
-      "resources/ffmpeg/*.dll": "",
-      "resources/onnx/DirectML.dll": ""
+      "resources/ffmpeg/*.dll": ""
     }
   }
 }

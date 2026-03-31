@@ -21,7 +21,17 @@ concurrency:
 jobs:
   build-macos:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: macos-15
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-15
+            target: aarch64-apple-darwin
+            arch: aarch64
+          - platform: macos-15-intel
+            target: x86_64-apple-darwin
+            arch: x86_64
 
     steps:
       - name: Checkout repository
@@ -59,7 +69,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: ${{ matrix.target }}
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -70,11 +80,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             src-tauri/target/
-          key: ${{ runner.os }}-aarch64-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-aarch64-cargo-
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-
 
       - name: Patch ffmpeg-sys-next (macOS arm64 compatibility)
+        if: matrix.target == 'aarch64-apple-darwin'
         shell: bash
         run: |
           set -euo pipefail
@@ -97,10 +108,11 @@ jobs:
           grep -n "CARGO_CFG_TARGET_OS\\|disable-asm\\|march=native" "$BUILD_RS"
 
       - name: Clear cached ffmpeg-sys-next build artifacts
+        if: matrix.target == 'aarch64-apple-darwin'
         shell: bash
         run: |
-          rm -rf src-tauri/target/aarch64-apple-darwin/release/build/ffmpeg-sys-next-*
-          rm -rf src-tauri/target/aarch64-apple-darwin/debug/build/ffmpeg-sys-next-*
+          rm -rf src-tauri/target/${{ matrix.target }}/release/build/ffmpeg-sys-next-*
+          rm -rf src-tauri/target/${{ matrix.target }}/debug/build/ffmpeg-sys-next-*
           rm -rf src-tauri/target/release/build/ffmpeg-sys-next-*
           rm -rf src-tauri/target/debug/build/ffmpeg-sys-next-*
 
@@ -125,9 +137,10 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           projectPath: .
-          args: --target aarch64-apple-darwin --verbose --bundles app,dmg --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          args: --target ${{ matrix.target }} --verbose --bundles dmg --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
       - name: Verify ffmpeg configure flags
+        if: matrix.target == 'aarch64-apple-darwin'
         shell: bash
         run: |
           set -euo pipefail
@@ -160,7 +173,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           echo "Finding DMG for notarization..."
-          DMG_PATH=$(find src-tauri/target/aarch64-apple-darwin/release/bundle/dmg -name "*.dmg" 2>/dev/null | head -n 1)
+          DMG_PATH=$(find src-tauri/target/${{ matrix.target }}/release/bundle/dmg -name "*.dmg" 2>/dev/null | head -n 1)
           if [ -z "$DMG_PATH" ]; then
             DMG_PATH=$(find src-tauri/target/release/bundle/dmg -name "*.dmg" 2>/dev/null | head -n 1)
           fi
@@ -180,14 +193,29 @@ jobs:
           export TAURI_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}"
           npx -y @tauri-apps/cli signer sign "$DMG_PATH"
 
+      - name: Rename macOS package for PR build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SUFFIX="pr-${{ github.event.pull_request.number || github.run_number }}"
+          DMG_PATH=$(find src-tauri/target/${{ matrix.target }}/release/bundle/dmg -name "*.dmg" 2>/dev/null | head -n 1)
+          if [ -z "$DMG_PATH" ]; then
+            echo "Error: Could not find generated DMG file."
+            exit 1
+          fi
+
+          DMG_DIR="$(dirname "$DMG_PATH")"
+          DMG_NAME="$(basename "$DMG_PATH")"
+          DMG_BASE="${DMG_NAME%.dmg}"
+          mv "$DMG_PATH" "$DMG_DIR/${DMG_BASE}-${SUFFIX}.dmg"
+
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lap-pr-macos-aarch64-${{ github.event.pull_request.number || github.run_number }}
+          name: lap-pr-macos-${{ matrix.arch }}-${{ github.event.pull_request.number || github.run_number }}
           path: |
-            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
-            src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz
-            src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
           if-no-files-found: error
 
   build-windows:
@@ -301,7 +329,7 @@ jobs:
           $work = Join-Path $env:RUNNER_TEMP "directml"
           $zip = Join-Path $work "directml.zip"
           $pkg = Join-Path $work "pkg"
-          $dest = Join-Path $env:GITHUB_WORKSPACE "src-tauri/resources/onnx/DirectML.dll"
+          $dest = Join-Path $env:GITHUB_WORKSPACE "src-tauri/resources/ffmpeg/DirectML.dll"
           $destDir = Split-Path $dest -Parent
 
           New-Item -ItemType Directory -Force -Path $work | Out-Null
@@ -319,6 +347,9 @@ jobs:
           }
 
           Copy-Item -Path $dll -Destination $dest -Force
+          if (-not (Test-Path $dest)) {
+            throw "DirectML.dll was not copied to: $dest"
+          }
 
       - name: Build and Sign (Windows x64)
         uses: tauri-apps/tauri-action@v0.5
@@ -330,6 +361,24 @@ jobs:
         with:
           projectPath: .
           args: --verbose --target x86_64-pc-windows-msvc --bundles msi --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      - name: Rename Windows package for PR build
+        shell: pwsh
+        run: |
+          $suffix = "pr-${{ github.event.pull_request.number || github.run_number }}"
+          $msi = Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi" -Filter "*.msi" -File | Select-Object -First 1
+          if (-not $msi) {
+            throw "Could not find generated MSI file."
+          }
+
+          $newMsiName = "{0}-{1}{2}" -f [System.IO.Path]::GetFileNameWithoutExtension($msi.Name), $suffix, $msi.Extension
+          $newMsiPath = Join-Path $msi.DirectoryName $newMsiName
+          Move-Item -Path $msi.FullName -Destination $newMsiPath -Force
+
+          $sigPath = "$($msi.FullName).sig"
+          if (Test-Path $sigPath) {
+            Move-Item -Path $sigPath -Destination "$newMsiPath.sig" -Force
+          }
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4

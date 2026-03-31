@@ -117,12 +117,9 @@ impl AiEngine {
             .text_model
             .as_mut()
             .unwrap()
-            .run(
-                inputs![
-                    "input_ids" => input_ids_value,
-                ]
-                .map_err(|e| e.to_string())?,
-            )
+            .run(inputs![
+                "input_ids" => input_ids_value,
+            ])
             .map_err(|e| format!("Inference error: {}", e))?;
 
         let embedding = if let Some(vals) = outputs.get("pooler_output") {
@@ -133,11 +130,11 @@ impl AiEngine {
             &outputs[0]
         };
 
-        let embedding_data = embedding
+        let (_, embedding_data) = embedding
             .try_extract_tensor::<f32>()
             .map_err(|e| format!("Failed to extract tensor: {}", e))?;
 
-        Ok(embedding_data.iter().copied().collect())
+        Ok(embedding_data.to_vec())
     }
 
     pub fn encode_image(&mut self, image_path: &str) -> Result<Vec<f32>, String> {
@@ -168,12 +165,9 @@ impl AiEngine {
             .vision_model
             .as_mut()
             .unwrap()
-            .run(
-                inputs![
-                    "pixel_values" => image_input_value,
-                ]
-                .map_err(|e| e.to_string())?,
-            )
+            .run(inputs![
+                "pixel_values" => image_input_value,
+            ])
             .map_err(|e| format!("Inference error: {}", e))?;
 
         let embedding = if let Some(vals) = outputs.get("pooler_output") {
@@ -184,11 +178,11 @@ impl AiEngine {
             &outputs[0]
         };
 
-        let embedding_data = embedding
+        let (_, embedding_data) = embedding
             .try_extract_tensor::<f32>()
             .map_err(|e| format!("Failed to extract tensor: {}", e))?;
 
-        Ok(embedding_data.iter().copied().collect())
+        Ok(embedding_data.to_vec())
     }
 
     fn preprocess_image(&self, path: &str) -> Result<Array4<f32>, String> {

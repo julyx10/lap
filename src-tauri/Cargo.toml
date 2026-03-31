@@ -56,7 +56,7 @@ arboard = "3.6.1"
 pinyin = "0.10.0"
 once_cell = "1.21.4"
 rand = "0.8"
-ort = { version = "=2.0.0-rc.9", features = ["download-binaries"] }
+ort = { version = "=2.0.0-rc.10", default-features = false, features = ["std", "ndarray", "download-binaries", "copy-dylibs"] }
 ndarray = "0.16"
 tokenizers = { version = "0.20", default-features = false, features = ["onig"] }
 uuid = { version = "1", features = ["v4"] }

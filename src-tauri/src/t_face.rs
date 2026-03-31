@@ -221,7 +221,7 @@ impl FaceEngine {
                 .detection_model
                 .as_mut()
                 .unwrap()
-                .run(inputs!["input.1" => input_value].map_err(|e| e.to_string())?)
+                .run(inputs!["input.1" => input_value])
                 .map_err(|e| format!("Detection inference error: {}", e))?;
 
             let mut all_detections = Vec::new();
@@ -244,10 +244,10 @@ impl FaceEngine {
                 let scores_tensor = &outputs[score_idx];
                 let boxes_tensor = &outputs[box_idx];
 
-                let scores_data = scores_tensor
+                let (_, scores_data) = scores_tensor
                     .try_extract_tensor::<f32>()
                     .map_err(|e| format!("Failed stride {} scores: {}", stride, e))?;
-                let boxes_data = boxes_tensor
+                let (_, boxes_data) = boxes_tensor
                     .try_extract_tensor::<f32>()
                     .map_err(|e| format!("Failed stride {} boxes: {}", stride, e))?;
 
@@ -418,16 +418,16 @@ impl FaceEngine {
             .embedding_model
             .as_mut()
             .unwrap()
-            .run(inputs!["input.1" => input_value].map_err(|e| e.to_string())?)
+            .run(inputs!["input.1" => input_value])
             .map_err(|e| format!("Embedding inference error: {}", e))?;
 
         let embedding = &outputs[0];
-        let embedding_data = embedding
+        let (_, embedding_data) = embedding
             .try_extract_tensor::<f32>()
             .map_err(|e| format!("Failed to extract embedding: {}", e))?;
 
         // Normalize embedding to unit vector
-        let emb_vec: Vec<f32> = embedding_data.iter().copied().collect();
+        let emb_vec = embedding_data.to_vec();
         let norm: f32 = emb_vec.iter().map(|x| x * x).sum::<f32>().sqrt();
         if !norm.is_finite() || norm <= f32::EPSILON {
             return Err("Invalid face embedding norm".to_string());
