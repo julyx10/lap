@@ -4,7 +4,7 @@
 
 // Image support
 pub const NORMAL_IMGS: &[&str] = &[
-    "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp", "avif", "heic", "heif",
+    "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp", "avif", "heic", "heif", "jxl",
 ];
 // RAW support
 pub const RAW_IMGS: &[&str] = &[

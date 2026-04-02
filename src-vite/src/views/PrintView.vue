@@ -106,7 +106,7 @@ function applyWindowScale(scale: number) {
 function shouldUseBackendPreview(targetPath: string, targetFileType: number): boolean {
   if (targetFileType === 3) return true;
   const extension = getFileExtension(targetPath || '').toLowerCase();
-  return extension === 'tif' || extension === 'tiff';
+  return extension === 'tif' || extension === 'tiff' || extension === 'jxl';
 }
 
 async function resolvePrintSource(targetPath: string, targetFileType: number, targetFileId: number) {

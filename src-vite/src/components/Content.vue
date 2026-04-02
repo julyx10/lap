@@ -1507,6 +1507,7 @@ function handleScrollUpdate(newIndex: number) {
 // Keyboard navigation actions
 const keyActions = {
   ArrowDown: () => {
+    if (getActivePreviewMode() !== 'none') return;
     checkUnsavedChanges(() => {
       if (gridViewRef.value) {
         if (config.settings.grid.style === 2) {
@@ -1520,6 +1521,7 @@ const keyActions = {
     });
   },
   ArrowUp: () => {
+    if (getActivePreviewMode() !== 'none') return;
     checkUnsavedChanges(() => {
       if (gridViewRef.value) {
         if (config.settings.grid.style === 2) {
@@ -1610,6 +1612,18 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
   if (!hasModifier) {
+    if (getActivePreviewMode() !== 'none' && event.key === 'ArrowUp') {
+      event.preventDefault();
+      getActivePreviewMediaRef()?.zoomIn?.();
+      return;
+    }
+
+    if (getActivePreviewMode() !== 'none' && event.key === 'ArrowDown') {
+      event.preventDefault();
+      getActivePreviewMediaRef()?.zoomOut?.();
+      return;
+    }
+
     if (lowerKey === 's') {
       event.preventDefault();
       enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);

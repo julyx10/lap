@@ -525,6 +525,10 @@ const isTiffFile = computed(() => {
   const ext = getFileExtension(props.fileInfo?.name || props.fileInfo?.file_path || '').toLowerCase();
   return ext === 'tif' || ext === 'tiff';
 });
+const isJxlFile = computed(() => {
+  const ext = getFileExtension(props.fileInfo?.name || props.fileInfo?.file_path || '').toLowerCase();
+  return ext === 'jxl';
+});
 
 const enableTransition = ref(false);
 const position = ref({ left: 0, top: 0 });
@@ -1074,7 +1078,7 @@ const initEditImage = async () => {
   initEditImageLoadingId.value++;
   const loadingId = initEditImageLoadingId.value;
 
-  if (isRawFile.value || isTiffFile.value) {
+  if (isRawFile.value || isTiffFile.value || isJxlFile.value) {
     if (props.initialImageSrc) {
       imageSrc.value = props.initialImageSrc;
     }

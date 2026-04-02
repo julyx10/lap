@@ -903,6 +903,18 @@ fn detect_label_from_header(header: &[u8], file_type: i64) -> Option<String> {
             return Some("TIFF".to_string());
         }
     }
+    // JPEG XL codestream
+    if header.starts_with(&[0xFF, 0x0A]) {
+        return Some("JXL".to_string());
+    }
+    // JPEG XL container
+    if header.len() >= 12
+        && &header[0..4] == [0x00, 0x00, 0x00, 0x0C]
+        && &header[4..8] == b"JXL "
+        && &header[8..12] == [0x0D, 0x0A, 0x87, 0x0A]
+    {
+        return Some("JXL".to_string());
+    }
     // Matroska / WebM (EBML)
     if header.starts_with(&[0x1A, 0x45, 0xDF, 0xA3]) {
         return Some("MKV".to_string());

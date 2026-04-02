@@ -329,14 +329,14 @@ function waitForNextPaint() {
   });
 }
 
-// inline loading for RAW preview
+// inline loading for formats that require backend preview decoding
 const showInlineLoading = computed(() => shouldUseBackendPreview(props.filePath) && !!props.thumbnailSrc);
 
 function shouldUseBackendPreview(filePath?: string): boolean {
   if (!filePath) return false;
   if (Number(props.fileType || 0) === 3) return true;
   const extension = filePath.split('.').pop()?.toLowerCase() || '';
-  return extension === 'tif' || extension === 'tiff';
+  return extension === 'tif' || extension === 'tiff' || extension === 'jxl';
 }
 
 // navigator view mode

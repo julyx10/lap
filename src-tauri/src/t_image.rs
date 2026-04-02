@@ -23,10 +23,14 @@ use std::time::UNIX_EPOCH;
 #[cfg(target_os = "macos")]
 use std::process::Command;
 
-use crate::{t_libraw, t_utils};
+use crate::{t_jxl, t_libraw, t_utils};
 
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
+    if t_jxl::is_jxl_path(file_path) {
+        return t_jxl::get_jxl_dimensions(file_path);
+    }
+
     // Catch potential panics in the third-party imagesize crate
     let result = panic::catch_unwind(|| imagesize::size(file_path));
 
@@ -123,6 +127,10 @@ pub fn get_image_thumbnail(
     orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
+    if t_jxl::is_jxl_path(file_path) {
+        return t_jxl::get_jxl_thumbnail(file_path, thumbnail_size);
+    }
+
     if crate::t_libraw::is_tiff_path(file_path) {
         if let Ok(Some(data)) = crate::t_libraw::get_raw_thumbnail(file_path, thumbnail_size) {
             return Ok(Some(data));
@@ -853,7 +861,7 @@ fn get_file_signature(file_path: &str) -> Result<(u64, u128), String> {
 }
 
 fn should_cache_file_image_result(file_path: &str, file_type: i64) -> bool {
-    file_type == 3 || crate::t_libraw::is_tiff_path(file_path)
+    file_type == 3 || crate::t_libraw::is_tiff_path(file_path) || t_jxl::is_jxl_path(file_path)
 }
 
 pub async fn get_file_image_bytes_cached(file_path: &str) -> Result<Vec<u8>, String> {
@@ -875,6 +883,9 @@ pub async fn get_file_image_bytes_cached(file_path: &str) -> Result<Vec<u8>, Str
     let image_data = if file_type == 3 {
         get_raw_preview_image(file_path)?
             .ok_or_else(|| format!("Failed to resolve RAW preview image: {}", file_path))?
+    } else if t_jxl::is_jxl_path(file_path) {
+        t_jxl::get_jxl_preview_image(file_path, 4096)?
+            .ok_or_else(|| format!("Failed to resolve JXL preview image: {}", file_path))?
     } else if crate::t_libraw::is_tiff_path(file_path) {
         match get_raw_preview_image(file_path) {
             Ok(Some(data)) => data,
