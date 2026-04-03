@@ -28,14 +28,8 @@ fn ffmpeg_catch_panic<T>(
     match panic::catch_unwind(AssertUnwindSafe(op)) {
         Ok(inner) => inner,
         Err(_) => {
-            eprintln!(
-                "Panic caught during {} for video file: {}",
-                context, path
-            );
-            Err(format!(
-                "{}{}: {}",
-                FFMPEG_PANIC_ERR_PREFIX, context, path
-            ))
+            eprintln!("Panic caught during {} for video file: {}", context, path);
+            Err(format!("{}{}: {}", FFMPEG_PANIC_ERR_PREFIX, context, path))
         }
     }
 }
@@ -97,7 +91,10 @@ pub fn get_video_dimensions(file_path: &str) -> Result<(u32, u32), String> {
     }) {
         Ok(dims) => Ok(dims),
         Err(e) if is_ffmpeg_panic_err(&e) => {
-            eprintln!("Degrading video dimensions to 0×0 after FFmpeg panic: {}", e);
+            eprintln!(
+                "Degrading video dimensions to 0×0 after FFmpeg panic: {}",
+                e
+            );
             Ok((0, 0))
         }
         Err(e) => Err(e),
@@ -132,7 +129,9 @@ fn get_video_dimensions_inner(file_path: &str) -> Result<(u32, u32), String> {
 
 /// get video duration using ffmpeg
 pub fn get_video_duration(file_path: &str) -> Result<u64, String> {
-    match ffmpeg_catch_panic(file_path, "reading duration", || get_video_duration_inner(file_path)) {
+    match ffmpeg_catch_panic(file_path, "reading duration", || {
+        get_video_duration_inner(file_path)
+    }) {
         Ok(d) => Ok(d),
         Err(e) if is_ffmpeg_panic_err(&e) => {
             eprintln!("Degrading video duration to 0 after FFmpeg panic: {}", e);
@@ -324,10 +323,15 @@ pub struct VideoMetadata {
 }
 
 pub fn get_video_metadata(file_path: &str) -> Result<VideoMetadata, String> {
-    match ffmpeg_catch_panic(file_path, "reading metadata", || get_video_metadata_inner(file_path)) {
+    match ffmpeg_catch_panic(file_path, "reading metadata", || {
+        get_video_metadata_inner(file_path)
+    }) {
         Ok(m) => Ok(m),
         Err(e) if is_ffmpeg_panic_err(&e) => {
-            eprintln!("Degrading video metadata to empty after FFmpeg panic: {}", e);
+            eprintln!(
+                "Degrading video metadata to empty after FFmpeg panic: {}",
+                e
+            );
             Ok(VideoMetadata::default())
         }
         Err(e) => Err(e),
@@ -441,7 +445,6 @@ fn get_video_metadata_inner(file_path: &str) -> Result<VideoMetadata, String> {
 
     Ok(m)
 }
-
 
 /// Pick the first valid entry from a list of possible tag keys
 fn first_exist(meta: &HashMap<String, String>, keys: &[&str]) -> Option<String> {

@@ -14,14 +14,26 @@ use crate::t_sqlite::{
 use crate::t_utils;
 use crate::{t_ai, t_sqlite};
 
+use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use tauri::State;
 
 // cancellation token for indexing
 pub struct IndexCancellation(pub Arc<Mutex<HashMap<i64, bool>>>);
+
+// active indexing workers
+pub struct IndexActivity(pub Arc<Mutex<HashMap<i64, usize>>>);
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexingActivity {
+    pub running: bool,
+    pub album_id: Option<i64>,
+}
 
 // build info
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
@@ -36,39 +48,101 @@ pub fn get_app_config() -> Result<AppConfig, String> {
 
 #[tauri::command]
 pub fn add_library(name: &str) -> Result<Library, String> {
+    ensure_library_storage_mutation_allowed()?;
     t_config::add_library(name)
 }
 
 /// hide a library
 #[tauri::command]
 pub fn hide_library(id: &str, hidden: bool) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     t_config::hide_library(id, hidden)
 }
 
 /// reorder libraries
 #[tauri::command]
 pub fn reorder_libraries(ids: Vec<String>) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     t_config::reorder_libraries(ids)
 }
 
 /// edit library name
 #[tauri::command]
 pub fn edit_library(id: &str, name: &str) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     t_config::edit_library(id, name)
 }
 
 /// remove a library (also deletes the database file)
 #[tauri::command]
 pub fn remove_library(id: &str) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     t_config::remove_library(id)
 }
 
 /// switch to a different library
 #[tauri::command]
 pub fn switch_library(app_handle: tauri::AppHandle, id: &str) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
+    t_sqlite::create_db_for_library(id)?;
     t_config::switch_library(id)?;
-    t_sqlite::create_db()?;
     t_utils::restore_album_scopes(&app_handle)
+}
+
+/// move a library database to a different storage directory
+#[tauri::command]
+pub async fn move_library_storage(
+    app_handle: tauri::AppHandle,
+    index_activity_state: State<'_, IndexActivity>,
+    dedup_state: State<'_, crate::t_dedup::DedupState>,
+    face_status_state: State<'_, t_face::FaceIndexingStatus>,
+    id: String,
+    storage_dir: Option<String>,
+) -> Result<LibraryInfo, String> {
+    ensure_library_storage_move_idle(&index_activity_state, &dedup_state, &face_status_state)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        t_config::move_library_storage(&app_handle, &id, storage_dir)
+    })
+    .await
+    .map_err(|e| format!("Failed to join library storage move task: {}", e))?
+}
+
+fn ensure_library_storage_move_idle(
+    index_activity_state: &State<'_, IndexActivity>,
+    dedup_state: &State<'_, crate::t_dedup::DedupState>,
+    face_status_state: &State<'_, t_face::FaceIndexingStatus>,
+) -> Result<(), String> {
+    let indexing_running = !index_activity_state.0.lock().unwrap().is_empty();
+    let dedup_running = dedup_state.is_scanning.load(Ordering::SeqCst);
+    let face_running = *face_status_state.0.lock().unwrap();
+
+    if indexing_running || dedup_running || face_running {
+        return Err(
+            "Cannot move library storage while indexing, dedup, or face indexing is still running."
+                .to_string(),
+        );
+    }
+
+    Ok(())
+}
+
+fn ensure_library_storage_mutation_allowed() -> Result<(), String> {
+    t_config::ensure_library_storage_write_allowed()
+}
+
+fn ensure_library_storage_mutation_allowed_or_none() -> bool {
+    match ensure_library_storage_mutation_allowed() {
+        Ok(_) => true,
+        Err(error) => {
+            eprintln!("{}", error);
+            false
+        }
+    }
+}
+
+#[tauri::command]
+pub fn cancel_library_storage_move(id: &str) -> Result<(), String> {
+    t_config::cancel_library_storage_move(id)
 }
 
 /// get library statistics
@@ -82,6 +156,7 @@ pub async fn get_library_info(id: String) -> Result<LibraryInfo, String> {
 /// save library state
 #[tauri::command]
 pub fn save_library_state(id: &str, state: LibraryState) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     t_config::save_library_state(id, state)
 }
 
@@ -114,12 +189,14 @@ pub fn get_album(album_id: i64) -> Result<Album, String> {
 /// recount files for an album and return updated album
 #[tauri::command]
 pub fn recount_album(album_id: i64) -> Result<Album, String> {
+    ensure_library_storage_mutation_allowed()?;
     Album::recount_album(album_id).map_err(|e| format!("Error while recounting album: {}", e))
 }
 
 /// add an album
 #[tauri::command]
 pub fn add_album(app_handle: tauri::AppHandle, folder_path: &str) -> Result<Album, String> {
+    ensure_library_storage_mutation_allowed()?;
     t_utils::authorize_directory_scope(&app_handle, folder_path).map_err(|e| {
         format!(
             "Error while authorizing album folder '{}': {}",
@@ -134,6 +211,7 @@ pub fn add_album(app_handle: tauri::AppHandle, folder_path: &str) -> Result<Albu
 /// edit an album
 #[tauri::command]
 pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     let _ = Album::update_column(id, "name", &name)
         .map_err(|e| format!("Error while editing album with id {}: {}", id, e));
 
@@ -144,6 +222,7 @@ pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, Strin
 /// remove an album
 #[tauri::command]
 pub fn remove_album(id: i64) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     Album::delete_from_db(id)
         .map_err(|e| format!("Error while removing album with id {}: {}", id, e))
 }
@@ -151,6 +230,7 @@ pub fn remove_album(id: i64) -> Result<usize, String> {
 /// set album display order
 #[tauri::command]
 pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     Album::update_column(id, "display_order_id", &display_order)
         .map_err(|e| format!("Error while setting album display order: {}", e))
 }
@@ -158,6 +238,7 @@ pub fn set_album_display_order(id: i64, display_order: i32) -> Result<usize, Str
 /// set album cover
 #[tauri::command]
 pub fn set_album_cover(id: i64, file_id: i64) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     Album::update_column(id, "cover_file_id", &file_id)
         .map_err(|e| format!("Error while setting album cover: {}", e))
 }
@@ -167,13 +248,21 @@ pub fn set_album_cover(id: i64, file_id: i64) -> Result<usize, String> {
 pub fn index_album(
     app_handle: tauri::AppHandle,
     state: State<IndexCancellation>,
+    activity_state: State<IndexActivity>,
     album_id: i64,
     thumbnail_size: u32,
     skip_file_path: Option<String>,
 ) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     // Reset cancellation flag
     state.0.lock().unwrap().insert(album_id, false);
     let cancellation_token = state.0.clone();
+    let cancellation_cleanup_token = state.0.clone();
+    {
+        let mut activity = activity_state.0.lock().unwrap();
+        *activity.entry(album_id).or_insert(0) += 1;
+    }
+    let activity_token = activity_state.0.clone();
 
     tauri::async_runtime::spawn(async move {
         if let Err(e) = t_utils::index_album_worker(
@@ -187,6 +276,15 @@ pub fn index_album(
         {
             eprintln!("Error indexing album {}: {}", album_id, e);
         }
+        cancellation_cleanup_token.lock().unwrap().remove(&album_id);
+        let mut activity = activity_token.lock().unwrap();
+        if let Some(count) = activity.get_mut(&album_id) {
+            if *count <= 1 {
+                activity.remove(&album_id);
+            } else {
+                *count -= 1;
+            }
+        }
     });
     Ok(())
 }
@@ -196,6 +294,16 @@ pub fn index_album(
 pub fn cancel_indexing(state: State<IndexCancellation>, album_id: i64) -> Result<(), String> {
     state.0.lock().unwrap().insert(album_id, true);
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_indexing_activity(state: State<IndexActivity>) -> Result<IndexingActivity, String> {
+    let activity = state.0.lock().unwrap();
+    let album_id = activity.keys().next().copied();
+    Ok(IndexingActivity {
+        running: !activity.is_empty(),
+        album_id,
+    })
 }
 
 #[tauri::command]
@@ -218,6 +326,7 @@ pub fn select_folder(
     album_id: i64,
     folder_path: &str,
 ) -> Result<AFolder, String> {
+    ensure_library_storage_mutation_allowed()?;
     t_utils::authorize_directory_scope(&app_handle, folder_path)
         .map_err(|e| format!("Error while authorizing folder '{}': {}", folder_path, e))?;
 
@@ -247,6 +356,9 @@ pub fn create_folder(path: &str, folder_name: &str) -> Option<String> {
 /// rename a folder
 #[tauri::command]
 pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String> {
+    if !ensure_library_storage_mutation_allowed_or_none() {
+        return None;
+    }
     let new_folder_path = t_utils::rename_folder(folder_path, new_folder_name);
 
     match new_folder_path {
@@ -264,6 +376,9 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
 /// move a folder
 #[tauri::command]
 pub fn move_folder(folder_path: &str, new_album_id: i64, new_folder_path: &str) -> Option<String> {
+    if !ensure_library_storage_mutation_allowed_or_none() {
+        return None;
+    }
     // Move the folder in the file system
     let result = t_utils::move_folder(folder_path, new_folder_path);
 
@@ -287,6 +402,7 @@ pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
 /// delete a folder
 #[tauri::command]
 pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     // trash the folder
     trash::delete(folder_path).map_err(|e| e.to_string())?;
 
@@ -435,6 +551,9 @@ pub async fn copy_image(file_path: String) -> Result<bool, String> {
 /// rename a file
 #[tauri::command]
 pub fn rename_file(file_id: i64, file_path: &str, new_name: &str) -> Option<String> {
+    if !ensure_library_storage_mutation_allowed_or_none() {
+        return None;
+    }
     match t_utils::rename_file(file_path, new_name) {
         Some(new_file_path) => {
             let name_pinyin = t_utils::convert_to_pinyin(new_name);
@@ -463,6 +582,9 @@ pub fn move_file(
     new_folder_id: i64,
     new_folder_path: &str,
 ) -> Option<String> {
+    if !ensure_library_storage_mutation_allowed_or_none() {
+        return None;
+    }
     let moved_file = t_utils::move_file(file_path, new_folder_path);
     match moved_file {
         Some(new_path) => {
@@ -484,6 +606,7 @@ pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
 /// delete a file
 #[tauri::command]
 pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     // trash the file
     trash::delete(file_path).map_err(|e| e.to_string())?;
 
@@ -494,6 +617,7 @@ pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {
 /// delete a file from db
 #[tauri::command]
 pub fn delete_db_file(file_id: i64) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     // delete the file from db
     AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))
 }
@@ -501,6 +625,7 @@ pub fn delete_db_file(file_id: i64) -> Result<usize, String> {
 /// edit a file's comment
 #[tauri::command]
 pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     AFile::update_column(file_id, "comments", &comment)
         .map_err(|e| format!("Error while editing file comment: {}", e))
 }
@@ -515,6 +640,7 @@ pub async fn get_file_thumb(
     thumbnail_size: u32,
     force_regenerate: bool,
 ) -> Result<Option<AThumb>, String> {
+    ensure_library_storage_mutation_allowed()?;
     AThumb::get_or_create_thumb(
         file_id,
         file_path,
@@ -535,6 +661,7 @@ pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
 /// update a file's info
 #[tauri::command]
 pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<AFile>, String> {
+    ensure_library_storage_mutation_allowed()?;
     AFile::update_file_info(file_id, file_path)
         .map_err(|e| format!("Error while updating file info: {}", e))
 }
@@ -542,6 +669,7 @@ pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<AFile>, 
 /// add or refresh a file in db and return the indexed file info
 #[tauri::command]
 pub fn add_file_to_db(folder_id: i64, file_path: &str) -> Result<Option<AFile>, String> {
+    ensure_library_storage_mutation_allowed()?;
     let file_type = t_utils::get_file_type(file_path)
         .ok_or_else(|| format!("Unsupported file type: {}", file_path))?;
     let (file, _) = AFile::add_to_db(folder_id, file_path, file_type)?;
@@ -557,6 +685,7 @@ pub fn check_file_exists(file_path: &str) -> bool {
 /// set a file's rotate status
 #[tauri::command]
 pub fn set_file_rotate(file_id: i64, rotate: i32) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     AFile::update_column(file_id, "rotate", &rotate)
         .map_err(|e| format!("Error while setting file rotate: {}", e))
 }
@@ -592,6 +721,7 @@ pub fn get_folder_favorite(folder_path: &str) -> Result<bool, String> {
 /// set a folder's favorite status (true or false)
 #[tauri::command]
 pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     AFolder::update_column(folder_id, "is_favorite", &is_favorite)
         .map_err(|e| format!("Error while setting folder favorite: {}", e))
 }
@@ -599,6 +729,7 @@ pub fn set_folder_favorite(folder_id: i64, is_favorite: bool) -> Result<usize, S
 /// set a file's favorite status (true or false)
 #[tauri::command]
 pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     AFile::update_column(file_id, "is_favorite", &is_favorite)
         .map_err(|e| format!("Error while setting file favorite: {}", e))
 }
@@ -606,6 +737,7 @@ pub fn set_file_favorite(file_id: i64, is_favorite: bool) -> Result<usize, Strin
 /// set a file's rating (0-5)
 #[tauri::command]
 pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     let clamped = rating.clamp(0, 5);
     AFile::update_column(file_id, "rating", &clamped)
         .map_err(|e| format!("Error while setting file rating: {}", e))
@@ -628,18 +760,21 @@ pub fn get_tag_name(tag_id: i64) -> Result<String, String> {
 /// create a new tag
 #[tauri::command]
 pub fn create_tag(name: &str) -> Result<ATag, String> {
+    ensure_library_storage_mutation_allowed()?;
     ATag::add(name).map_err(|e| format!("Error while creating tag: {}", e))
 }
 
 /// rename a tag
 #[tauri::command]
 pub fn rename_tag(tag_id: i64, new_name: &str) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     ATag::rename(tag_id, new_name).map_err(|e| format!("Error while renaming tag: {}", e))
 }
 
 /// delete a tag
 #[tauri::command]
 pub fn delete_tag(tag_id: i64) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     ATag::delete(tag_id).map_err(|e| format!("Error while deleting tag: {}", e))
 }
 
@@ -653,6 +788,7 @@ pub fn get_tags_for_file(file_id: i64) -> Result<Vec<ATag>, String> {
 /// add a tag to a file
 #[tauri::command]
 pub fn add_tag_to_file(file_id: i64, tag_id: i64) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     ATag::add_tag_to_file(file_id, tag_id)
         .map_err(|e| format!("Error while adding tag to file: {}", e))
 }
@@ -660,6 +796,7 @@ pub fn add_tag_to_file(file_id: i64, tag_id: i64) -> Result<(), String> {
 /// remove a tag from a file
 #[tauri::command]
 pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     ATag::remove_tag_from_file(file_id, tag_id)
         .map_err(|e| format!("Error while removing tag from file: {}", e))
 }
@@ -732,6 +869,7 @@ pub fn check_ai_status(state: State<t_ai::AiState>) -> String {
 /// generate embedding for a file
 #[tauri::command]
 pub fn generate_embedding(state: State<t_ai::AiState>, file_id: i64) -> Result<String, String> {
+    ensure_library_storage_mutation_allowed()?;
     AFile::generate_embedding(&state, file_id)
 }
 
@@ -757,6 +895,7 @@ pub fn index_faces(
     progress_state: State<t_face::FaceIndexProgressState>,
     cluster_epsilon: Option<f32>,
 ) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     t_face::run_face_indexing(
         app_handle,
         (*state).clone(),
@@ -792,6 +931,7 @@ pub fn cancel_face_index(state: State<t_face::FaceIndexCancellation>) -> Result<
 /// reset all faces (delete all faces and persons)
 #[tauri::command]
 pub fn reset_faces() -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     t_sqlite::Face::reset_all().map_err(|e| format!("Error while resetting faces: {}", e))
 }
 
@@ -819,12 +959,14 @@ pub fn get_persons() -> Result<Vec<Person>, String> {
 /// rename a person
 #[tauri::command]
 pub fn rename_person(person_id: i64, name: String) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     Person::rename(person_id, &name).map_err(|e| format!("Error while renaming person: {}", e))
 }
 
 /// delete a person
 #[tauri::command]
 pub fn delete_person(person_id: i64) -> Result<usize, String> {
+    ensure_library_storage_mutation_allowed()?;
     Person::delete(person_id).map_err(|e| format!("Error while deleting person: {}", e))
 }
 
@@ -845,6 +987,7 @@ pub fn dedup_start_scan(
     state: tauri::State<'_, crate::t_dedup::DedupState>,
     params: Option<crate::t_sqlite::QueryParams>,
 ) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     crate::t_dedup::start_scan(app_handle, state, params)
 }
 
@@ -888,6 +1031,7 @@ pub fn dedup_get_group(group_id: i64) -> Result<crate::t_dedup::DedupGroup, Stri
 
 #[tauri::command]
 pub fn dedup_set_keep(group_id: i64, file_id: i64) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     crate::t_dedup::set_keep(group_id, file_id)
 }
 
@@ -896,5 +1040,6 @@ pub fn dedup_delete_selected(
     group_ids: Option<Vec<i64>>,
     file_ids: Option<Vec<i64>>,
 ) -> Result<(), String> {
+    ensure_library_storage_mutation_allowed()?;
     crate::t_dedup::delete_selected(group_ids, file_ids)
 }

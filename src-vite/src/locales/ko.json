@@ -440,7 +440,19 @@
       "calculating_stats": "라이브러리 크기 계산 중...",
       "library_file_path": "파일 경로",
       "library_file_size": "파일 크기",
-      "created_at": "생성일"
+      "created_at": "생성일",
+      "metadata_storage": "메타데이터 저장소",
+      "default_storage_badge": "기본 저장소",
+      "custom_storage_badge": "사용자 지정 저장소",
+      "storage_folder": "저장 폴더",
+      "storage_status": "저장소 상태",
+      "storage_available": "사용 가능",
+      "storage_unavailable": "연결 끊김",
+      "storage_reconnect_hint": "이 라이브러리를 이동하려면 먼저 선택한 저장소를 다시 연결하세요.",
+      "choose_folder": "폴더 선택...",
+      "use_default_storage": "기본 저장소 사용",
+      "moving_storage": "라이브러리 메타데이터 이동 중...",
+      "moving_to_default_storage": "라이브러리 메타데이터를 기본 저장소로 이동 중..."
     },
     "remove_library": {
       "title": "라이브러리 제거",

@@ -440,7 +440,19 @@
       "calculating_stats": "Вычисляется размер библиотеки...",
       "library_file_path": "Путь к файлу",
       "library_file_size": "Размер файла",
-      "created_at": "Создано"
+      "created_at": "Создано",
+      "metadata_storage": "Metadata storage",
+      "default_storage_badge": "Default storage",
+      "custom_storage_badge": "Custom storage",
+      "storage_folder": "Storage folder",
+      "storage_status": "Storage status",
+      "storage_available": "Available",
+      "storage_unavailable": "Disconnected",
+      "storage_reconnect_hint": "Reconnect the selected storage before moving this library.",
+      "choose_folder": "Choose folder...",
+      "use_default_storage": "Use default storage",
+      "moving_storage": "Moving library metadata...",
+      "moving_to_default_storage": "Moving library metadata to default storage..."
     },
     "remove_library": {
       "title": "Удалить библиотеку",
