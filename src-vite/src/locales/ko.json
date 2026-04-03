@@ -484,12 +484,14 @@
       "title": "'{source}' 이동",
       "content": "대상 폴더 선택:",
       "ok": "이동",
+      "success": "'{source}'을(를) '{dest}'(으)로 이동했습니다.",
       "error": "'{source}'을(를) '{dest}'(으)로 이동하지 못했습니다."
     },
     "copy_to": {
       "title": "'{source}' 복사",
       "content": "대상 폴더 선택:",
       "ok": "복사",
+      "success": "'{source}'을(를) '{dest}'(으)로 복사했습니다.",
       "error": "'{source}'을(를) '{dest}'(으)로 복사하지 못했습니다."
     },
     "rename_file": {

@@ -484,12 +484,14 @@
       "title": "Verschiebe '{source}' nach",
       "content": "Zielordner wählen:",
       "ok": "Verschieben",
+      "success": "'{source}' wurde nach '{dest}' verschoben.",
       "error": "'{source}' konnte nicht nach '{dest}' verschoben werden."
     },
     "copy_to": {
       "title": "Kopiere '{source}' nach",
       "content": "Zielordner wählen:",
       "ok": "Kopieren",
+      "success": "'{source}' wurde nach '{dest}' kopiert.",
       "error": "'{source}' konnte nicht nach '{dest}' kopiert werden."
     },
     "rename_file": {

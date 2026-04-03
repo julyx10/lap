@@ -484,12 +484,14 @@
       "title": "Déplacer '{source}' vers",
       "content": "Choisir destination:",
       "ok": "Déplacer",
+      "success": "'{source}' a été déplacé vers '{dest}'.",
       "error": "Impossible de déplacer '{source}' vers '{dest}'."
     },
     "copy_to": {
       "title": "Copier '{source}' vers",
       "content": "Choisir destination:",
       "ok": "Copier",
+      "success": "'{source}' a été copié vers '{dest}'.",
       "error": "Impossible de copier '{source}' vers '{dest}'."
     },
     "rename_file": {

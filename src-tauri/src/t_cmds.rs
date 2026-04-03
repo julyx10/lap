@@ -65,9 +65,15 @@ pub fn remove_library(id: &str) -> Result<(), String> {
 
 /// switch to a different library
 #[tauri::command]
-pub fn switch_library(app_handle: tauri::AppHandle, id: &str) -> Result<(), String> {
-    t_config::switch_library(id)?;
-    t_sqlite::create_db()?;
+pub async fn switch_library(app_handle: tauri::AppHandle, id: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+        t_config::switch_library(&id)?;
+        t_sqlite::create_db()?;
+        Ok(())
+    })
+    .await
+    .map_err(|e| format!("Failed to join switch library task: {}", e))??;
+
     t_utils::restore_album_scopes(&app_handle)
 }
 

@@ -484,12 +484,14 @@
       "title": "'{source}' を移動",
       "content": "移動先を選択:",
       "ok": "移動",
+      "success": "'{source}' を '{dest}' に移動しました。",
       "error": "'{source}' を '{dest}' に移動できませんでした。"
     },
     "copy_to": {
       "title": "'{source}' をコピー",
       "content": "コピー先を選択:",
       "ok": "コピー",
+      "success": "'{source}' を '{dest}' にコピーしました。",
       "error": "'{source}' を '{dest}' にコピーできませんでした。"
     },
     "rename_file": {

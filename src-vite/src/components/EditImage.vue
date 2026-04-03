@@ -389,7 +389,7 @@
 
           <div class="space-y-3">
             <div class="form-control w-full">
-                <select v-model="config.imageEditor.saveAs" class="select select-bordered select-sm w-full" :disabled="cropStatus===1 || isRawFile">
+                <select v-model="config.imageEditor.saveAs" class="select select-bordered select-sm w-full" :disabled="cropStatus===1 || !canOverwriteOriginal">
                   <option v-for="option in fileSaveAsOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
                 </select>
             </div>
@@ -431,7 +431,7 @@
             : 'hover:bg-primary hover:text-base-100 cursor-pointer'
         ]"
         @click="clickSave"
-      >{{ isRawFile || config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}</button>
+      >{{ !canOverwriteOriginal || config.imageEditor.saveAs === 1 ? $t('msgbox.image_editor.save_as_new') : $t('msgbox.image_editor.overwrite') }}</button>
     </div>
   </ModalDialog>
 
@@ -452,7 +452,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch, type CSSPropert
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { getFolderPath, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, shouldUseBackendPreview } from '@/common/utils';
+import { getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, shouldUseBackendPreview } from '@/common/utils';
 import { editImage, checkFileExists } from '@/common/api';
 
 import ModalDialog from '@/components/ModalDialog.vue';
@@ -860,15 +860,24 @@ const newFileName = ref(props.fileInfo.name.substring(0, props.fileInfo.name.las
 
 const fileSaveAsOptions = computed(() => {
   const options = getSelectOptions(localeMsg.value.msgbox.image_editor.save_as_options);
-  return isRawFile.value ? options.filter((option: any) => Number(option.value) === 1) : options;
+  return canOverwriteOriginal.value ? options : options.filter((option: any) => Number(option.value) === 1);
 });
 const fileFormatOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.format_options));
 const fileQualityOptions = computed(() => getSelectOptions(localeMsg.value.msgbox.image_editor.quality_options));
+
+const canOverwriteOriginal = computed(() => {
+  const ext = getFileExtension(props.fileInfo?.name || props.fileInfo?.file_path || '').toLowerCase();
+  return ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
+});
 
 const showOverwriteConfirm = ref(false);
 
 const handleOverwriteConfirm = () => {
   showOverwriteConfirm.value = false;
+
+  if (!canOverwriteOriginal.value) {
+    return;
+  }
 
   const originalPath = props.fileInfo.file_path;
   const ext = getFileExtension(props.fileInfo.name).toLowerCase();

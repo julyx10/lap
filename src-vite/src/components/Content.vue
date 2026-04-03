@@ -571,7 +571,7 @@ import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags'
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { isWin, isMac, setTheme, separator,
          formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl,
-         extractFileName, combineFileName, getFolderPath, getSelectOptions, 
+         extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
          shortenFilename, getSlideShowInterval } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
@@ -637,7 +637,7 @@ const props = defineProps({
 });
 
 /// i18n
-const { locale, messages } = useI18n();
+const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
@@ -3547,6 +3547,8 @@ const refreshLibraryTotalCount = async () => {
 
 const onMoveTo = async () => {
   const affectedAlbumIds = new Set<number>();
+  const destLabel = getFolderName(libConfig.destFolder.folderPath || '') || libConfig.destFolder.folderPath || '';
+  let successCount = 0;
 
   // Resolve destination folder ID: when the user selects an album root (not a
   // subfolder), destFolder.folderId is null. Ensure the root folder record
@@ -3564,6 +3566,7 @@ const onMoveTo = async () => {
 
   if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
     const successIds: number[] = [];
+    const sourceLabel = t('toolbar.filter.select_count', { count: selectedCount.value.toLocaleString() });
     const moves = getActionableSelectedItems()
       .map(async item => {
         const movedFile = await moveFile(item.id, item.file_path, destFolderId, libConfig.destFolder.folderPath);
@@ -3575,19 +3578,24 @@ const onMoveTo = async () => {
       });
     await Promise.all(moves); // parallelize DB updates
     if (successIds.length > 0) {
+      successCount = successIds.length;
       fileList.value = fileList.value.filter((f) => !successIds.includes(f.id));
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
+      toast.success(t('msgbox.move_to.success', { source: sourceLabel, dest: destLabel }));
     }
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
+    const sourceLabel = file.name;
     const movedFile = await moveFile(file.id, file.file_path, destFolderId, libConfig.destFolder.folderPath);
     if(movedFile) {
       console.log('onMoveTo:', movedFile);
       affectedAlbumIds.add(Number(file.album_id || 0));
       removeFromFileList(selectedItemIndex.value);
+      successCount = 1;
+      toast.success(t('msgbox.move_to.success', { source: sourceLabel, dest: destLabel }));
     }
   }
 
@@ -3596,31 +3604,56 @@ const onMoveTo = async () => {
   await refreshAffectedAlbums(Array.from(affectedAlbumIds));
   await refreshLibraryTotalCount();
 
+  if (successCount === 0) {
+    const sourceLabel = selectMode.value
+      ? t('toolbar.filter.select_count', { count: selectedCount.value.toLocaleString() })
+      : (fileList.value[selectedItemIndex.value]?.name || '');
+    toast.error(t('msgbox.move_to.error', { source: sourceLabel, dest: destLabel }));
+  }
+
   showMoveTo.value = false;
 }
 
 const onCopyTo = async () => {
   const affectedAlbumIds = new Set<number>();
+  const destLabel = getFolderName(libConfig.destFolder.folderPath || '') || libConfig.destFolder.folderPath || '';
+  let successCount = 0;
   if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
+    const sourceLabel = t('toolbar.filter.select_count', { count: selectedCount.value.toLocaleString() });
     const copies = getActionableSelectedItems()
       .map(async item => {
         const copiedFile = await copyFile(item.file_path, libConfig.destFolder.folderPath);
         if(copiedFile) {
           console.log('onCopyTo:', copiedFile);
           affectedAlbumIds.add(Number(libConfig.destFolder.albumId || 0));
+          successCount += 1;
         }
       });
     await Promise.all(copies); // parallelize DB updates
+    if (successCount > 0) {
+      toast.success(t('msgbox.copy_to.success', { source: sourceLabel, dest: destLabel }));
+    }
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
+    const sourceLabel = file.name;
     const copiedFile = await copyFile(file.file_path, libConfig.destFolder.folderPath);
     if(copiedFile) {
       console.log('onCopyTo:', copiedFile);
       affectedAlbumIds.add(Number(libConfig.destFolder.albumId || 0));
+      successCount = 1;
+      toast.success(t('msgbox.copy_to.success', { source: sourceLabel, dest: destLabel }));
     }
   }
   await refreshAffectedAlbums(Array.from(affectedAlbumIds));
+
+  if (successCount === 0) {
+    const sourceLabel = selectMode.value
+      ? t('toolbar.filter.select_count', { count: selectedCount.value.toLocaleString() })
+      : (fileList.value[selectedItemIndex.value]?.name || '');
+    toast.error(t('msgbox.copy_to.error', { source: sourceLabel, dest: destLabel }));
+  }
+
   showCopyTo.value = false;
 }
 

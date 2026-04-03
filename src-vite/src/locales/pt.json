@@ -484,12 +484,14 @@
       "title": "Mover '{source}' para",
       "content": "Selecione o destino:",
       "ok": "Mover",
+      "success": "'{source}' foi movido para '{dest}'.",
       "error": "Falha ao mover '{source}' para '{dest}'."
     },
     "copy_to": {
       "title": "Copiar '{source}' para",
       "content": "Selecione o destino:",
       "ok": "Copiar",
+      "success": "'{source}' foi copiado para '{dest}'.",
       "error": "Falha ao copiar '{source}' para '{dest}'."
     },
     "rename_file": {
