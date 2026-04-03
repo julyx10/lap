@@ -63,6 +63,9 @@ async fn main() {
         .manage(t_cmds::IndexCancellation(std::sync::Arc::new(
             std::sync::Mutex::new(std::collections::HashMap::new()),
         )))
+        .manage(t_cmds::IndexActivity(std::sync::Arc::new(
+            std::sync::Mutex::new(std::collections::HashMap::new()),
+        )))
         .manage(t_face::FaceIndexCancellation(std::sync::Arc::new(
             std::sync::Mutex::new(false),
         )))
@@ -147,6 +150,8 @@ async fn main() {
             t_cmds::hide_library,
             t_cmds::reorder_libraries,
             t_cmds::switch_library,
+            t_cmds::move_library_storage,
+            t_cmds::cancel_library_storage_move,
             t_cmds::get_library_info,
             t_cmds::save_library_state,
             t_cmds::get_library_state,
@@ -162,6 +167,7 @@ async fn main() {
             t_cmds::set_album_cover,
             t_cmds::index_album,
             t_cmds::cancel_indexing,
+            t_cmds::get_indexing_activity,
             t_cmds::get_index_recovery_info,
             t_cmds::clear_index_recovery_info,
             // folder

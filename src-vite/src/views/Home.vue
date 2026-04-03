@@ -10,6 +10,27 @@
       </div>
     </transition>
 
+    <transition name="fade">
+      <div
+        v-if="libraryMoveState.active"
+        class="absolute inset-0 z-[550] bg-base-300/50 backdrop-blur-sm flex items-center justify-center pointer-events-auto"
+      >
+        <div class="rounded-box border border-base-content/10 bg-base-200/80 px-4 py-3 min-w-72 shadow-lg">
+          <div class="flex items-center gap-3">
+            <span class="loading loading-spinner loading-md text-primary"></span>
+            <div class="min-w-0">
+              <div class="text-sm text-base-content/80 truncate">
+                {{ libraryMoveState.message }}
+              </div>
+              <div class="mt-1 text-xs text-base-content/50">
+                {{ libraryMoveState.percent }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- Title Bar -->
     <TitleBar v-if="isWin" titlebar="Lap" viewName="Home" :icon="iconLogo"/>
 
@@ -127,14 +148,14 @@
         @mouseup="stopDraggingSplitter"
       ></div>
        
-      <!-- content area -->
+        <!-- content area -->
       <div 
         :class="[
           'flex-1 flex relative',
           isWin ? 'rounded-tl-box' : '',
         ]"
       >
-        <Content :titlebar="buttons[config.main.sidebarIndex].text"/>
+        <Content ref="contentRef" :titlebar="buttons[config.main.sidebarIndex].text"/>
       </div>
     </div>
 
@@ -146,6 +167,9 @@
     <!-- Manage Libraries Dialog -->
     <ManageLibraries
       v-if="showManageLibraries"
+      :move-storage="handleMoveLibraryStorage"
+      :cancel-move-storage="handleCancelLibraryMove"
+      :move-storage-state="libraryMoveState"
       @ok="onManageLibrariesOk"
       @cancel="showManageLibraries = false"
     />
@@ -162,10 +186,27 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { getName } from '@tauri-apps/api/app';
 import { config, libConfig } from '@/common/config';
+import {
+  LIBRARY_MOVE_CANCELLED_ERROR,
+  pickLibraryMoveError,
+  shouldResumeFace,
+  sleep,
+  waitForFaceIndexIdle,
+} from '@/common/libraryMove';
 import { useAppUpdater } from '@/common/updater';
 import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac, SCALE_VALUES } from '@/common/utils';
-import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
+import {
+  getAppConfig,
+  switchLibrary,
+  moveLibraryStorage,
+  cancelLibraryStorageMove,
+  cancelIndexing,
+  cancelFaceIndex,
+  isFaceIndexing,
+  indexFaces,
+  listenLibraryStorageMoveProgress,
+} from '@/common/api';
 
 // vue components
 import Library from '@/components/Library.vue';
@@ -212,6 +253,7 @@ const uiStore = useUIStore();
 
 // Panel component ref
 const panelRef = ref<any>(null);
+const contentRef = ref<any>(null);
 const showPanel = ref(true);
 
 // Library state
@@ -227,13 +269,71 @@ interface AppConfig {
   libraries: Library[];
 }
 
+interface LibraryMoveState {
+  active: boolean;
+  libraryId: string;
+  phase: string;
+  percent: number;
+  bytesCopied: number;
+  totalBytes: number;
+  message: string;
+  cancellable: boolean;
+  cancelRequested: boolean;
+  status: string;
+}
+
+interface FaceMoveState {
+  wasRunning: boolean;
+  stoppedCleanly: boolean;
+}
+
 const appConfig = ref<AppConfig | null>(null);
+
+function getCurrentFaceClusterEpsilon() {
+  const face = config.settings.face;
+  const thresholdIndex = face?.clusterThresholdIndex ?? 2;
+  const thresholds = config.faceClusterThresholds ?? [0.35, 0.45, 0.55, 0.65];
+  return thresholds[thresholdIndex] ?? 0.55;
+}
+
+function resetLibraryMoveState() {
+  libraryMoveState.value = {
+    active: false,
+    libraryId: '',
+    phase: '',
+    percent: 0,
+    bytesCopied: 0,
+    totalBytes: 0,
+    message: '',
+    cancellable: false,
+    cancelRequested: false,
+    status: 'idle',
+  };
+}
+
+function assertLibraryMoveNotCancelled() {
+  if (libraryMoveState.value.cancelRequested) {
+    throw new Error(LIBRARY_MOVE_CANCELLED_ERROR);
+  }
+}
 const currentLibrary = computed(() => 
   appConfig.value?.libraries.find(l => l.id === appConfig.value?.current_library_id) || null
 );
 
 // Manage Libraries dialog state
 const showManageLibraries = ref(false);
+const libraryMoveState = ref<LibraryMoveState>({
+  active: false,
+  libraryId: '',
+  phase: '',
+  percent: 0,
+  bytesCopied: 0,
+  totalBytes: 0,
+  message: '',
+  cancellable: false,
+  cancelRequested: false,
+  status: 'idle',
+});
 
 /// Splitter for resizing the left pane
 const isDraggingSplitter = ref(false);
@@ -243,6 +343,7 @@ const showDebugBadge = import.meta.env.DEV;
 const toolTipRef = ref<InstanceType<typeof ToolTip> | null>(null);
 let unlistenOpenPreferences: (() => void) | null = null;
 let unlistenOpenAbout: (() => void) | null = null;
+let unlistenStorageMoveProgress: (() => void) | null = null;
 const {
   updateAvailable,
   isCheckingUpdate,
@@ -320,6 +421,23 @@ onMounted(async () => {
   unlistenOpenAbout = await listen('app-open-about', () => {
     void clickSettings(5);
   });
+  unlistenStorageMoveProgress = await listenLibraryStorageMoveProgress((event: any) => {
+    const payload = event?.payload || {};
+    if (!libraryMoveState.value.active) return;
+    if (String(payload.libraryId || '') !== libraryMoveState.value.libraryId) return;
+
+    libraryMoveState.value = {
+      ...libraryMoveState.value,
+      phase: String(payload.phase || libraryMoveState.value.phase || ''),
+      percent: Number(payload.percent || 0),
+      bytesCopied: Number(payload.bytesCopied || 0),
+      totalBytes: Number(payload.totalBytes || 0),
+      message: String(payload.message || libraryMoveState.value.message || ''),
+      cancellable: Boolean(payload.cancellable),
+      cancelRequested: Boolean(payload.cancelRequested),
+      status: String(payload.status || libraryMoveState.value.status || 'running'),
+    };
+  });
 
   appConfig.value = await getAppConfig();
   
@@ -338,6 +456,8 @@ onBeforeUnmount(() => {
   unlistenOpenPreferences = null;
   unlistenOpenAbout?.();
   unlistenOpenAbout = null;
+  unlistenStorageMoveProgress?.();
+  unlistenStorageMoveProgress = null;
 });
 
 const doSwitchLibrary = async (libraryId: string) => {
@@ -368,6 +488,134 @@ const doSwitchLibrary = async (libraryId: string) => {
     libConfig._initialized = true;
     isSwitchingLibrary.value = false;
     console.error('Failed to switch library:', error);
+  }
+};
+
+const handleMoveLibraryStorage = async (libraryId: string, storageDir: string | null) => {
+  const shouldQuiesceWrites = Boolean(appConfig.value?.current_library_id);
+  const previousInitialized = Boolean(libConfig._initialized);
+  let moveSnapshot: any = null;
+  let moveInfo: any = null;
+  let primaryError: any = null;
+  let cleanupError: any = null;
+  const faceMoveState: FaceMoveState = {
+    wasRunning: false,
+    stoppedCleanly: false,
+  };
+
+  try {
+    libraryMoveState.value = {
+      active: true,
+      libraryId,
+      phase: 'quiescing',
+      percent: 0,
+      bytesCopied: 0,
+      totalBytes: 0,
+      message: storageDir
+        ? localeMsg.value.msgbox.manage_libraries.moving_storage
+        : localeMsg.value.msgbox.manage_libraries.moving_to_default_storage,
+      cancellable: true,
+      cancelRequested: false,
+      status: 'running',
+    };
+
+    if (shouldQuiesceWrites) {
+      await libConfig.save();
+      libConfig._initialized = false;
+
+      if (contentRef.value?.prepareForLibraryStorageMove) {
+        moveSnapshot = await contentRef.value.prepareForLibraryStorageMove();
+      }
+      assertLibraryMoveNotCancelled();
+
+      const faceState = await isFaceIndexing({ strict: true });
+      faceMoveState.wasRunning = Array.isArray(faceState) ? Boolean(faceState[0]) : Boolean(faceState);
+      if (faceMoveState.wasRunning) {
+        await cancelFaceIndex();
+        await waitForFaceIndexIdle(isFaceIndexing);
+        faceMoveState.stoppedCleanly = true;
+      }
+      assertLibraryMoveNotCancelled();
+    }
+
+    assertLibraryMoveNotCancelled();
+    libraryMoveState.value = {
+      ...libraryMoveState.value,
+      phase: 'dispatching',
+      cancellable: false,
+    };
+    moveInfo = await moveLibraryStorage(libraryId, storageDir);
+    appConfig.value = await getAppConfig();
+  } catch (error: any) {
+    if (!moveSnapshot && error?.libraryMoveSnapshot) {
+      moveSnapshot = error.libraryMoveSnapshot;
+    }
+    primaryError = error;
+  } finally {
+    if (shouldQuiesceWrites) {
+      try {
+        if (contentRef.value?.resumeAfterLibraryStorageMove) {
+          await contentRef.value.resumeAfterLibraryStorageMove(moveSnapshot);
+        }
+        if (shouldResumeFace(faceMoveState)) {
+          await indexFaces(getCurrentFaceClusterEpsilon());
+        }
+      } catch (error: any) {
+        cleanupError = cleanupError || error;
+        if (primaryError) {
+          console.error('Failed to resume background work after library storage move error:', error);
+        }
+      } finally {
+        libConfig._initialized = previousInitialized;
+        if (libConfig._initialized) {
+          try {
+            await libConfig.save();
+          } catch (error: any) {
+            cleanupError = cleanupError || error;
+            if (primaryError) {
+              console.error('Failed to persist library config after library storage move error:', error);
+            }
+          }
+        }
+      }
+    }
+
+    resetLibraryMoveState();
+  }
+
+  const finalError = pickLibraryMoveError(primaryError, cleanupError);
+  if (finalError) {
+    throw finalError;
+  }
+
+  return moveInfo;
+};
+
+const handleCancelLibraryMove = async () => {
+  if (!libraryMoveState.value.active || !libraryMoveState.value.libraryId) return;
+  if (libraryMoveState.value.cancelRequested || !libraryMoveState.value.cancellable) return;
+
+  libraryMoveState.value = {
+    ...libraryMoveState.value,
+    cancelRequested: true,
+  };
+
+  if (libraryMoveState.value.phase === 'quiescing') {
+    return;
+  }
+
+  try {
+    await cancelLibraryStorageMove(libraryMoveState.value.libraryId);
+  } catch (error: any) {
+    const message = error?.message || error?.toString?.() || String(error || '');
+    if (message.includes('No active storage move')) {
+      await sleep(100);
+      if (libraryMoveState.value.active && libraryMoveState.value.phase !== 'quiescing') {
+        await cancelLibraryStorageMove(libraryMoveState.value.libraryId);
+      }
+      return;
+    }
+    throw error;
   }
 };
 

@@ -18,7 +18,7 @@
         class="flex-1 overflow-x-hidden overflow-y-auto p-1 rounded-box select-none"
         :animation="200"
         handle=".drag-handle"
-        :disabled="showAddInput || isRenaming"
+        :disabled="showAddInput || isRenaming || isMovingStorage"
         @end="onDragEnd"
       >
         <div 
@@ -30,7 +30,7 @@
             selectedLibraryId === lib.id
               ? 'text-base-content bg-base-100 hover:bg-base-100 selected-item'
               : 'text-base-content/70 hover:bg-base-100/30',
-            showAddInput || (isRenaming && editingId !== lib.id) ? 'opacity-50' : 'cursor-pointer',
+            showAddInput || isMovingStorage || (isRenaming && editingId !== lib.id) ? 'opacity-50' : 'cursor-pointer',
           ]"
           @click="selectLibrary(lib)"
         >
@@ -79,35 +79,121 @@
             <TButton
               :icon="IconEdit"
               :buttonSize="'small'"
-              :disabled="showAddInput || isRenaming"
+              :disabled="showAddInput || isRenaming || isMovingStorage"
               :tooltip="$t('msgbox.manage_libraries.rename')"
               @click.stop="startRename(lib)"
             />
             <TButton
               :icon="lib.hidden ? IconHide : IconUnhide"
               :buttonSize="'small'"
-              :disabled="lib.id === 'default' || showAddInput || isRenaming"
+              :disabled="lib.id === 'default' || showAddInput || isRenaming || isMovingStorage"
               :tooltip="lib.hidden ? $t('msgbox.manage_libraries.show') : $t('msgbox.manage_libraries.hide')"
               @click.stop="toggleVisibility(lib)"
             />
             <TButton
               :icon="IconTrash"
               :buttonSize="'small'"
-              :disabled="lib.id === 'default' || showAddInput || isRenaming"
+              :disabled="isDeleteDisabled(lib)"
               :tooltip="$t('msgbox.manage_libraries.delete')"
               @click.stop="confirmDelete(lib)"
             />
-            <div class="drag-handle cursor-move" :class="{ 'cursor-not-allowed opacity-50': showAddInput || isRenaming }">
+            <div class="drag-handle cursor-move" :class="{ 'cursor-not-allowed opacity-50': showAddInput || isRenaming || isMovingStorage }">
               <TButton
                 :icon="IconDragHandle"
                 :buttonSize="'small'"
-                :disabled="showAddInput || isRenaming"
+                :disabled="showAddInput || isRenaming || isMovingStorage"
                 :tooltip="$t('msgbox.manage_libraries.reorder')"
               />
             </div>
           </div>
         </div>
       </VueDraggable>
+    </div>
+
+    <div v-if="selectedLibrary" class="mt-2 shrink-0 rounded-box border border-base-content/10 bg-base-100/20 px-3 py-2">
+      <div class="flex items-center justify-between gap-3">
+        <div class="text-xs uppercase tracking-wide text-base-content/40">
+          {{ $t('msgbox.manage_libraries.metadata_storage') }}
+        </div>
+        <div v-if="selectedLibraryInfo" class="text-[11px] text-base-content/40">
+          {{ selectedLibraryInfo.usesDefaultStorage
+            ? $t('msgbox.manage_libraries.default_storage_badge')
+            : $t('msgbox.manage_libraries.custom_storage_badge') }}
+        </div>
+      </div>
+
+      <div class="mt-2 text-xs text-base-content/60">
+        <div class="font-medium text-base-content/80">
+          {{ $t('msgbox.manage_libraries.storage_folder') }}
+        </div>
+        <div class="break-all">
+          {{ selectedLibraryInfo?.storageDir || '—' }}
+        </div>
+      </div>
+
+      <div class="mt-2 grid grid-cols-1 gap-2 text-xs text-base-content/60">
+        <div>
+          <div class="font-medium text-base-content/80">
+            {{ $t('msgbox.manage_libraries.library_file_path') }}
+          </div>
+          <div class="break-all">
+            {{ selectedLibraryInfo?.dbFilePath || '—' }}
+          </div>
+        </div>
+        <div>
+          <div class="font-medium text-base-content/80">
+            {{ $t('msgbox.manage_libraries.storage_status') }}
+          </div>
+          <div :class="selectedLibraryInfo?.storageAvailable ? 'text-success' : 'text-warning'">
+            {{ selectedLibraryInfo?.storageAvailable
+              ? $t('msgbox.manage_libraries.storage_available')
+              : $t('msgbox.manage_libraries.storage_unavailable') }}
+          </div>
+          <div
+            v-if="selectedLibraryRequiresReconnect"
+            class="mt-1 text-warning"
+          >
+            {{ $t('msgbox.manage_libraries.storage_reconnect_hint') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          class="px-3 py-1 rounded-box text-sm transition-colors border border-base-content/10"
+          :class="canChangeSelectedStorage ? 'text-base-content/80 hover:bg-base-100/40 cursor-pointer' : 'text-base-content/30 cursor-default'"
+          :disabled="!canChangeSelectedStorage"
+          @click="chooseStorageFolder"
+        >
+          {{ $t('msgbox.manage_libraries.choose_folder') }}
+        </button>
+        <button
+          class="px-3 py-1 rounded-box text-sm transition-colors border border-base-content/10"
+          :class="canResetSelectedStorage ? 'text-base-content/80 hover:bg-base-100/40 cursor-pointer' : 'text-base-content/30 cursor-default'"
+          :disabled="!canResetSelectedStorage"
+          @click="resetStorageFolder"
+        >
+          {{ $t('msgbox.manage_libraries.use_default_storage') }}
+        </button>
+      </div>
+
+      <div v-if="isMovingStorage" class="mt-3">
+        <div class="flex items-center justify-between text-xs text-base-content/50">
+          <span>{{ storageMoveProgress.message || $t('msgbox.manage_libraries.moving_storage') }}</span>
+          <span>{{ storageMoveProgress.percent }}%</span>
+        </div>
+        <ProgressBar :percent="storageMoveProgress.percent" />
+        <div class="mt-2 flex justify-end">
+          <button
+            class="px-3 py-1 rounded-box text-sm transition-colors border border-base-content/10"
+            :class="canCancelStorageMove ? 'text-base-content/80 hover:bg-base-100/40 cursor-pointer' : 'text-base-content/30 cursor-default'"
+            :disabled="!canCancelStorageMove"
+            @click="cancelStorageMove"
+          >
+            {{ $t('msgbox.cancel') }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- button area -->
@@ -117,11 +203,11 @@
         <button
           v-if="!showAddInput" 
           class="inline-flex h-8 items-center gap-2 px-3 py-2 rounded-box border border-base-content/10 text-sm transition-colors"
-          :class="isMaxLibraryReached || isRenaming
+          :class="isMaxLibraryReached || isRenaming || isMovingStorage
             ? 'text-base-content/30 cursor-default'
             : 'text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer'"
           :title="isMaxLibraryReached ? $t('msgbox.manage_libraries.max_limit_reached') : $t('msgbox.manage_libraries.add_new')"
-          :disabled="isMaxLibraryReached || isRenaming"
+          :disabled="isMaxLibraryReached || isRenaming || isMovingStorage"
           @click="showAddInput = true"
         >
           <IconAdd class="w-5 h-5" />
@@ -136,22 +222,22 @@
               class="input input-sm flex-1 min-w-0"
               maxlength="32"
               :placeholder="$t('msgbox.manage_libraries.placeholder')"
-              :disabled="isAddingLibrary"
+              :disabled="isAddingLibrary || isMovingStorage"
               @keydown.enter="doAddLibrary"
               @keydown.esc.stop="cancelAddLibrary"
             />
             <button
               class="px-3 py-1 rounded-box text-sm transition-colors shrink-0"
-              :class="isAddingLibrary ? 'text-base-content/30 cursor-default' : 'text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer'"
-              :disabled="isAddingLibrary"
+              :class="isAddingLibrary || isMovingStorage ? 'text-base-content/30 cursor-default' : 'text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer'"
+              :disabled="isAddingLibrary || isMovingStorage"
               @click="cancelAddLibrary"
             >
               {{ $t('msgbox.cancel') }}
             </button>
             <button
               class="px-3 py-1 rounded-box text-sm transition-colors shrink-0"
-              :class="canSubmitNewLibrary ? 'bg-primary text-primary-content hover:opacity-90 cursor-pointer' : 'bg-base-100/40 text-base-content/30 cursor-default'"
-              :disabled="!canSubmitNewLibrary"
+              :class="canSubmitNewLibrary && !isMovingStorage ? 'bg-primary text-primary-content hover:opacity-90 cursor-pointer' : 'bg-base-100/40 text-base-content/30 cursor-default'"
+              :disabled="!canSubmitNewLibrary || isMovingStorage"
               @click="doAddLibrary"
             >
               {{ isAddingLibrary ? $t('tooltip.loading') : $t('msgbox.manage_libraries.add') }}
@@ -165,6 +251,7 @@
 
       <button
         class="px-4 py-1 rounded-box text-base-content/70 hover:bg-primary hover:text-base-100 cursor-pointer shrink-0"
+        :class="{ 'opacity-40 cursor-default pointer-events-none': isMovingStorage }"
         @click="clickOk"
       >
         {{ $t('msgbox.ok') }}
@@ -202,10 +289,12 @@ import {
   getLibraryInfo,
   switchLibrary,
 } from '@/common/api';
-import { formatTimestamp, isValidFileName, formatFileSize } from '@/common/utils';
+import { formatTimestamp, isValidFileName, formatFileSize, openFolderDialog } from '@/common/utils';
+import { requiresConnectedMetadataStorage } from '@/common/libraryMove';
 import ModalDialog from '@/components/ModalDialog.vue';
 import TButton from '@/components/TButton.vue';
-import MessageBox from '@/components/MessageBox.vue'; // Need to import or ensure it is available
+import MessageBox from '@/components/MessageBox.vue';
+import ProgressBar from '@/components/ProgressBar.vue';
 import {
   IconDragHandle,
   IconEdit,
@@ -218,6 +307,9 @@ import {
 // Props are less relevant now but kept for compatibility logic if needed
 const props = defineProps({
   isNewLibrary: { type: Boolean, default: false },
+  moveStorage: { type: Function, default: null },
+  cancelMoveStorage: { type: Function, default: null },
+  moveStorageState: { type: Object, default: () => null },
 });
 
 const emit = defineEmits(['ok', 'cancel']);
@@ -241,6 +333,49 @@ let statsLoadToken = 0;
 
 const isRenaming = computed(() => !!editingId.value);
 const canSubmitNewLibrary = computed(() => !!newLibraryName.value.trim() && !inputErrorMessage.value && !isAddingLibrary.value);
+const selectedLibrary = computed(() => libraries.value.find(lib => lib.id === selectedLibraryId.value) || null);
+const selectedLibraryInfo = computed(() => selectedLibraryId.value ? libraryStats.value[selectedLibraryId.value] || null : null);
+const isMovingStorage = computed(() => Boolean((props.moveStorageState as any)?.active));
+const storageMoveProgress = computed(() => (props.moveStorageState as any) || {
+  phase: '',
+  percent: 0,
+  bytesCopied: 0,
+  totalBytes: 0,
+  message: '',
+  cancellable: false,
+  cancelRequested: false,
+  status: 'idle',
+});
+const selectedLibraryRequiresReconnect = computed(() =>
+  requiresConnectedMetadataStorage(selectedLibraryInfo.value)
+);
+const canChangeSelectedStorage = computed(() =>
+  !!selectedLibrary.value &&
+  !isMovingStorage.value &&
+  !showAddInput.value &&
+  !isRenaming.value &&
+  !selectedLibraryRequiresReconnect.value
+);
+const canResetSelectedStorage = computed(() =>
+  canChangeSelectedStorage.value &&
+  !!selectedLibraryInfo.value &&
+  !selectedLibraryInfo.value.usesDefaultStorage
+);
+const canCancelStorageMove = computed(() =>
+  isMovingStorage.value &&
+  Boolean(storageMoveProgress.value?.cancellable) &&
+  !Boolean(storageMoveProgress.value?.cancelRequested)
+);
+
+const isDeleteBlockedForLibrary = (libraryId: string) =>
+  requiresConnectedMetadataStorage(libraryStats.value[libraryId]);
+
+const isDeleteDisabled = (lib: any) =>
+  lib.id === 'default' ||
+  showAddInput.value ||
+  isRenaming.value ||
+  isMovingStorage.value ||
+  isDeleteBlockedForLibrary(lib.id);
 
 const isMaxLibraryReached = computed(() => {
   const max = (config as any).main?.maxLibraryCount || 10;
@@ -375,6 +510,28 @@ const loadLibraryStats = async (libs: any[]) => {
   });
 };
 
+const refreshLibraryInfo = async (libraryId: string) => {
+  libraryStatsLoading.value = {
+    ...libraryStatsLoading.value,
+    [libraryId]: true,
+  };
+
+  try {
+    const info = await getLibraryInfo(libraryId);
+    if (info) {
+      libraryStats.value = {
+        ...libraryStats.value,
+        [libraryId]: info,
+      };
+    }
+  } finally {
+    libraryStatsLoading.value = {
+      ...libraryStatsLoading.value,
+      [libraryId]: false,
+    };
+  }
+};
+
 // --- Actions ---
 
 const startRename = (lib: any) => {
@@ -445,7 +602,7 @@ const doAddLibrary = async () => {
 };
 
 const cancelAddLibrary = () => {
-  if (isAddingLibrary.value) return;
+  if (isAddingLibrary.value || isMovingStorage.value) return;
   showAddInput.value = false;
   newLibraryName.value = '';
   inputErrorMessage.value = '';
@@ -460,7 +617,7 @@ const focusLibrary = async (libraryId: string) => {
 };
 
 const selectLibrary = async (lib: any) => {
-  if (showAddInput.value || isRenaming.value || editingId.value === lib.id) return;
+  if (showAddInput.value || isRenaming.value || isMovingStorage.value || editingId.value === lib.id) return;
   selectedLibraryId.value = lib.id;
   await focusLibrary(lib.id);
 };
@@ -477,12 +634,13 @@ const toggleVisibility = async (lib: any) => {
 };
 
 const confirmDelete = (lib: any) => {
+  if (isDeleteDisabled(lib)) return;
   libraryToDelete.value = lib;
   showDeleteConfirm.value = true;
 };
 
 const doDeleteLibrary = async () => {
-  if (!libraryToDelete.value) return;
+  if (!libraryToDelete.value || isMovingStorage.value || isDeleteBlockedForLibrary(libraryToDelete.value.id)) return;
   try {
     await removeLibrary(libraryToDelete.value.id);
     showDeleteConfirm.value = false;
@@ -495,13 +653,16 @@ const doDeleteLibrary = async () => {
 };
 
 const clickOk = async () => {
+  if (isMovingStorage.value) return;
   if (selectedLibraryId.value && selectedLibraryId.value !== currentLibraryId.value) {
     try {
+      inputErrorMessage.value = '';
       await switchLibrary(selectedLibraryId.value);
       emit('ok', { type: 'switch', id: selectedLibraryId.value });
       return;
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      inputErrorMessage.value = error?.message || error?.toString?.() || String(error);
       return;
     }
   }
@@ -509,12 +670,54 @@ const clickOk = async () => {
 };
 
 const clickCancel = () => {
+  if (isMovingStorage.value) return;
   emit('cancel');
+};
+
+const moveSelectedLibraryStorage = async (storageDir: string | null) => {
+  if (!selectedLibrary.value || !props.moveStorage || isMovingStorage.value) return;
+
+  try {
+    inputErrorMessage.value = '';
+    await props.moveStorage(selectedLibrary.value.id, storageDir);
+    await loadLibraries();
+    await refreshLibraryInfo(selectedLibrary.value.id);
+    emit('ok', { type: 'move-storage', id: selectedLibrary.value.id });
+  } catch (error: any) {
+    const message = error?.message || error?.toString?.() || String(error);
+    if (message.includes('Library storage move cancelled.')) {
+      inputErrorMessage.value = '';
+      return;
+    }
+    inputErrorMessage.value = message;
+  }
+};
+
+const cancelStorageMove = async () => {
+  if (!canCancelStorageMove.value || !props.cancelMoveStorage) return;
+  try {
+    await props.cancelMoveStorage();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const chooseStorageFolder = async () => {
+  if (!canChangeSelectedStorage.value) return;
+  const selected = await openFolderDialog();
+  if (!selected || Array.isArray(selected)) return;
+  await moveSelectedLibraryStorage(String(selected));
+};
+
+const resetStorageFolder = async () => {
+  if (!canResetSelectedStorage.value) return;
+  await moveSelectedLibraryStorage(null);
 };
 
 // --- Drag and Drop ---
 
 const onDragEnd = async () => {
+  if (isMovingStorage.value) return;
   // Persist order
   const ids = libraries.value.map(l => l.id);
   try {

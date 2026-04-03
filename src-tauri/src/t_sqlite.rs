@@ -3245,11 +3245,15 @@ impl ALocation {
 
 /// get connection to the db
 fn open_conn() -> Result<Connection, String> {
-    let path = t_config::get_current_db_path()
+    let path = t_config::get_current_db_path_for_open()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
-    let conn = Connection::open(&path)
-        .map_err(|e| format!("Failed to open database connection: {}", e))?;
+    open_conn_at_path(&path)
+}
+
+fn open_conn_at_path(path: &str) -> Result<Connection, String> {
+    let conn =
+        Connection::open(path).map_err(|e| format!("Failed to open database connection: {}", e))?;
 
     conn.busy_timeout(Duration::from_secs(5))
         .map_err(|e| format!("Failed to set SQLite busy timeout: {}", e))?;
@@ -3271,18 +3275,50 @@ fn open_conn() -> Result<Connection, String> {
 
 /// create all tables if not exists
 pub fn create_db() -> Result<(), String> {
-    match create_db_internal() {
+    let library_id = t_config::load_app_config()
+        .map_err(|e| format!("Failed to load app config: {}", e))?
+        .current_library_id;
+    let path = t_config::get_current_db_path_for_open()
+        .map_err(|e| format!("Failed to get the database file path: {}", e))?;
+    let result = match create_db_internal_at_path(&path) {
         Ok(_) => Ok(()),
         Err(err) => {
             eprintln!("create_db failed: {}. Trying recovery...", err);
-            recover_current_db_file()?;
-            create_db_internal().map_err(|e| format!("Database recovery retry failed: {}", e))
+            recover_db_file_at_path(Path::new(&path))?;
+            create_db_internal_at_path(&path)
+                .map_err(|e| format!("Database recovery retry failed: {}", e))
         }
+    };
+
+    if result.is_ok() {
+        t_config::mark_library_metadata_initialized(&library_id)?;
     }
+
+    result
 }
 
-fn create_db_internal() -> Result<(), String> {
-    let conn = open_conn()?;
+pub fn create_db_for_library(library_id: &str) -> Result<(), String> {
+    let path = t_config::get_library_db_path_for_open(library_id)
+        .map_err(|e| format!("Failed to get library database path: {}", e))?;
+    let result = match create_db_internal_at_path(&path) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            eprintln!("create_db_for_library failed: {}. Trying recovery...", err);
+            recover_db_file_at_path(Path::new(&path))?;
+            create_db_internal_at_path(&path)
+                .map_err(|e| format!("Database recovery retry failed: {}", e))
+        }
+    };
+
+    if result.is_ok() {
+        t_config::mark_library_metadata_initialized(library_id)?;
+    }
+
+    result
+}
+
+fn create_db_internal_at_path(path: &str) -> Result<(), String> {
+    let conn = open_conn_at_path(path)?;
 
     // albums table
     conn.execute(
@@ -3674,11 +3710,8 @@ fn create_db_internal() -> Result<(), String> {
     Ok(())
 }
 
-fn recover_current_db_file() -> Result<(), String> {
-    let db_path = t_config::get_current_db_path()
-        .map_err(|e| format!("Failed to get current db path during recovery: {}", e))?;
-    let db_path = PathBuf::from(db_path);
-
+fn recover_db_file_at_path(db_path: &Path) -> Result<(), String> {
+    let db_path = db_path.to_path_buf();
     if !db_path.exists() {
         // Nothing to quarantine, next create_db_internal will create a new DB.
         return Ok(());

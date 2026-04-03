@@ -7,6 +7,7 @@
     "dev": "vite --config vite.config.js",
     "dev:clean": "vite --config vite.config.js --force",
     "build": "vite build",
+    "test": "vitest run",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -38,14 +39,17 @@
     "@types/node": "^25.5.0",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/compiler-sfc": "^3.5.31",
+    "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.27",
     "daisyui": "5.5.19",
+    "jsdom": "^29.0.1",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",
     "vite-plugin-vue-devtools": "^8.1.1",
-    "vite-svg-loader": "^5.1.1"
+    "vite-svg-loader": "^5.1.1",
+    "vitest": "^4.1.2"
   },
   "license": "GPL-3.0-or-later"
 }

@@ -87,6 +87,26 @@ export async function switchLibrary(id) {
   }
 }
 
+// move a library database to a different storage folder
+export async function moveLibraryStorage(id, storageDir = null) {
+  try {
+    return await invoke('move_library_storage', { id, storageDir });
+  } catch (error) {
+    console.error('Failed to move library storage:', error);
+    throw error;
+  }
+}
+
+export async function cancelLibraryStorageMove(id) {
+  try {
+    await invoke('cancel_library_storage_move', { id });
+    return true;
+  } catch (error) {
+    console.error('Failed to cancel library storage move:', error);
+    throw error;
+  }
+}
+
 // get library info
 export async function getLibraryInfo(id) {
   try {
@@ -1143,12 +1163,16 @@ export async function dedupStartScan(params = null) {
 }
 
 // get deduplication scan status
-export async function dedupGetScanStatus() {
+export async function dedupGetScanStatus(options = {}) {
+  const strict = Boolean(options?.strict);
   try {
     const status = await invoke('dedup_get_scan_status');
     return status;
   } catch (error) {
     console.error('dedupGetScanStatus error:', error);
+    if (strict) {
+      throw error;
+    }
   }
 }
 
@@ -1217,9 +1241,27 @@ export async function listenDedupScanProgress(callback) {
   return await listen('dedup-scan-progress', callback);
 }
 
+// listen library storage move progress
+export async function listenLibraryStorageMoveProgress(callback) {
+  return await listen('library-storage-move-progress', callback);
+}
+
 // listen index finished
 export async function listenIndexFinished(callback) {
   return await listen('index_finished', callback);
+}
+
+export async function getIndexingActivity(options = {}) {
+  const strict = Boolean(options?.strict);
+  try {
+    return await invoke('get_indexing_activity');
+  } catch (error) {
+    console.error('Failed to get indexing activity:', error);
+    if (strict) {
+      throw error;
+    }
+    return { running: false, albumId: null };
+  }
 }
 
 // index faces for all images in library
@@ -1254,11 +1296,15 @@ export async function resetFaces() {
 }
 
 // check if face indexing is running
-export async function isFaceIndexing() {
+export async function isFaceIndexing(options = {}) {
+  const strict = Boolean(options?.strict);
   try {
     return await invoke('is_face_indexing');
   } catch (error) {
     console.error('Failed to check face indexing status:', error);
+    if (strict) {
+      throw error;
+    }
     return false;
   }
 }

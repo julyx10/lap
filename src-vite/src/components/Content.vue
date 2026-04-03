@@ -567,8 +567,17 @@ import { getAlbum, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQuery
          revealFolder, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, addFileToDb, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getIndexRecoveryInfo, clearIndexRecoveryInfo,
-         dedupGetGroup, dedupDeleteSelected, getQueryFilePosition } from '@/common/api'; 
+         dedupGetGroup, dedupDeleteSelected, dedupStartScan, dedupGetScanStatus, dedupCancelScan,
+         getQueryFilePosition, getIndexingActivity } from '@/common/api';
 import { config, libConfig } from '@/common/config';
+import {
+  createIndexMoveSnapshot,
+  pauseIndexStateForLibraryMove,
+  restoreIndexStateAfterLibraryMove,
+  shouldResumeDedup,
+  waitForDedupIdle,
+  waitForIndexingIdle,
+} from '@/common/libraryMove';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { isWin, isMac, setTheme, separator,
@@ -2179,6 +2188,54 @@ async function cancelIndexing() {
       (libConfig.index.pausedAlbumIds as any[]).push(Number(albumId || 0));
     }
     syncIndexStatus();
+  }
+}
+
+async function prepareForLibraryStorageMove() {
+  const indexSnapshot = createIndexMoveSnapshot(libConfig.index);
+  const snapshot = {
+    ...indexSnapshot,
+    dedupWasRunning: false,
+    dedupStoppedCleanly: false,
+    dedupParams: null,
+  };
+
+  try {
+    pauseIndexStateForLibraryMove(libConfig.index, indexSnapshot);
+
+    if (indexSnapshot.activeAlbumId > 0 && indexSnapshot.indexStatus === 1) {
+      await cancelIndexingApi(indexSnapshot.activeAlbumId);
+      await waitForIndexingIdle(getIndexingActivity);
+    }
+
+    const dedupStatus = await dedupGetScanStatus({ strict: true });
+    const dedupWasRunning = dedupStatus?.state === 'running';
+    const dedupParams = dedupWasRunning ? { ...dedupQueryParams.value } : null;
+    snapshot.dedupWasRunning = dedupWasRunning;
+    snapshot.dedupParams = dedupParams;
+
+    if (dedupWasRunning) {
+      await dedupCancelScan();
+      await waitForDedupIdle(dedupGetScanStatus);
+      snapshot.dedupStoppedCleanly = true;
+    }
+
+    return snapshot;
+  } catch (error: any) {
+    if (error && typeof error === 'object') {
+      error.libraryMoveSnapshot = snapshot;
+    }
+    throw error;
+  }
+}
+
+async function resumeAfterLibraryStorageMove(snapshot: any) {
+  if (!snapshot || typeof snapshot !== 'object') return;
+
+  restoreIndexStateAfterLibraryMove(libConfig.index, snapshot);
+
+  if (shouldResumeDedup(snapshot)) {
+    await dedupStartScan(snapshot.dedupParams);
   }
 }
 
@@ -4613,4 +4670,9 @@ function stopDragging() {
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', stopDragging);
 }
+
+defineExpose({
+  prepareForLibraryStorageMove,
+  resumeAfterLibraryStorageMove,
+});
 </script>
