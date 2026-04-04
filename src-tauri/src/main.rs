@@ -83,6 +83,13 @@ async fn main() {
             t_config::set_app_identifier(&_app.config().identifier);
             t_menu::install_app_menu(&_app.handle())?;
 
+            #[cfg(not(target_os = "macos"))]
+            if let Some(window) = _app.get_webview_window("main") {
+                if let Err(e) = window.set_decorations(false) {
+                    eprintln!("Failed to disable main window decorations: {}", e);
+                }
+            }
+
             // Create the database on startup
             if let Err(e) = t_sqlite::create_db() {
                 eprintln!("Failed to initialize database: {}", e);
