@@ -761,9 +761,9 @@
     "general": {
       "title": "일반",
       "section_language": "언어",
-      "section_appearance": "화면",
+      "section_appearance": "외관",
       "section_interface": "표시",
-      "appearance": "외관",
+      "appearance": "색상 모드",
       "appearance_options": [
         "라이트",
         "다크"
