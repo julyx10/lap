@@ -26,7 +26,7 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 | **macOS (Apple Silicon)** | `aarch64.dmg` | Notarized by Apple |
 | **macOS (Intel)** | `x64.dmg` | Notarized by Apple |
 | **Windows 10/11 (x64)** | `.msi` | Currently unsigned (SmartScreen warning may appear) |
-| **Ubuntu/Debian (amd64)** | `amd64.deb` | Linux adaptation and testing are not completed yet |
+| **Ubuntu/Debian (amd64)** | `amd64.deb` | Sanity-checked on Linux Mint |
 
 ## Screenshots
 
@@ -56,6 +56,7 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 - **Edit in place** with crop, rotate, flip, resize, and basic adjustments.
 - **Keep folders in sync** with filesystem-aware operations and refresh support.
 - **Use local search tools** such as text/image search, similar-image search, face clustering, and smart tags.
+- **Open modern image formats** including WebP, HEIC/HEIF, AVIF, and JXL (JPEG XL).
 - **View RAW photos** with built-in decoding for 20+ camera RAW formats (CR2, NEF, ARW, DNG, etc.).
 
 ## Planned Features
@@ -90,7 +91,7 @@ cargo tauri dev
 
 | Type | Formats |
 | :--- | :--- |
-| Images | JPG, JPEG, PNG, GIF, BMP, TIFF, WebP, AVIF, HEIC, HEIF |
+| Images | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF, AVIF, JXL |
 | RAW photos | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
 | Videos | MP4, MOV, MKV, WebM |
 
