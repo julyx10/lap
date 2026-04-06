@@ -185,7 +185,6 @@ onBeforeUnmount(() => {
 .VPHero .tagline {
   font-size: 1.05rem;
   line-height: 1.75;
-  color: rgba(255, 255, 255, 0.72);
 }
 
 .VPHero .actions {
