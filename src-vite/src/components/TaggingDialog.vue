@@ -125,9 +125,8 @@ onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
   uiStore.pushInputHandler('TaggingDialog');
 
-  setTimeout(() => {
-    tagSearchInputRef.value?.focus();
-  }, 50); // 50ms delay
+  await nextTick();
+  tagSearchInputRef.value?.focus();
 
   loadAllTags();
   loadExistingTagsForFiles();
