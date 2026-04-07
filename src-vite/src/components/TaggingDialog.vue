@@ -291,16 +291,15 @@ const handleKeyDown = (e: KeyboardEvent) => {
   if (isInTagList.value && filteredTags.value.length > 0) {
     const lastIndex = filteredTags.value.length - 1;
 
-    if (key === 'ArrowRight' || key === 'ArrowDown') {
+    if (key === 'ArrowRight') {
       e.preventDefault();
       focusedTagIndex.value = focusedTagIndex.value >= lastIndex ? 0 : focusedTagIndex.value + 1;
-    } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
+    } else if (key === 'ArrowLeft') {
       e.preventDefault();
-      if (focusedTagIndex.value <= 0) {
-        exitTagList(); // first tag → back to search
-      } else {
-        focusedTagIndex.value -= 1;
-      }
+      focusedTagIndex.value = focusedTagIndex.value <= 0 ? lastIndex : focusedTagIndex.value - 1;
+    } else if (key === 'ArrowUp') {
+      e.preventDefault();
+      exitTagList();
     } else if (key === ' ') {
       e.preventDefault();
       const tag = filteredTags.value[focusedTagIndex.value];
