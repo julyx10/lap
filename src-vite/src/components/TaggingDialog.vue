@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { 
   getAllTags, 
   getTagsForFile, 
@@ -104,6 +104,8 @@ const newTagNameInputRef = ref<HTMLInputElement | null>(null);
 const tagSearch = ref('');
 const newTagName = ref('');
 const isSearchFocused = ref(false);
+const focusedTagIndex = ref(-1); // -1 = no tag focused
+const isInTagList = ref(false); // true = keyboard focus is in tag list
 
 // Sets to track tag states
 const selectedTags = ref<Set<number>>(new Set()); // Tags present on ALL selected files
