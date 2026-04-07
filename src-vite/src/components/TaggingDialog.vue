@@ -270,6 +270,16 @@ const handleKeyDown = (e: KeyboardEvent) => {
   const active = document.activeElement;
   const isInAnyInput = active === tagSearchInputRef.value || active === newTagNameInputRef.value;
 
+  if (key === 'Tab' && active === newTagNameInputRef.value && !e.shiftKey) {
+    e.preventDefault();
+    if (filteredTags.value.length > 0) {
+      enterTagList();
+    } else {
+      tagSearchInputRef.value?.focus();
+    }
+    return;
+  }
+
   // Escape: tag list → search input → close dialog
   if (key === 'Escape') {
     if (isInTagList.value) {
@@ -309,7 +319,13 @@ const handleKeyDown = (e: KeyboardEvent) => {
       clickOk();
     } else if (key === 'Tab') {
       e.preventDefault();
-      exitTagList(); // Tab → back to search input (keep focus inside dialog)
+      if (e.shiftKey) {
+        isInTagList.value = false;
+        focusedTagIndex.value = -1;
+        newTagNameInputRef.value?.focus();
+      } else {
+        exitTagList(); // Tab → back to search input (keep focus inside dialog)
+      }
     }
     return;
   }
