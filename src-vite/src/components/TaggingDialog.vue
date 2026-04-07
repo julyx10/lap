@@ -37,7 +37,7 @@
       <div class="max-h-[180px] overflow-y-auto rounded-box p-2 bg-base-100/40 border border-base-content/5">
         <div v-if="filteredTags.length > 0" class="flex flex-wrap gap-2">
           <div
-            v-for="tag in filteredTags"
+            v-for="(tag, index) in filteredTags"
             :key="tag.id"
             :class="[
               'badge badge-lg overflow-hidden whitespace-pre text-ellipsis cursor-pointer transition-colors duration-200',
@@ -45,6 +45,7 @@
                 'badge-primary': selectedTags.has(tag.id),
                 'badge-outline border-base-content/30 bg-base-content/30': intermediateTags.has(tag.id) && !selectedTags.has(tag.id),
                 'badge-outline text-base-content/30 hover:text-base-content hover:bg-base-100': !selectedTags.has(tag.id) && !intermediateTags.has(tag.id),
+                'ring-2 ring-primary ring-offset-1 ring-offset-base-100': focusedTagIndex === index,
               }
             ]"
             @click="toggleTag(tag.id)"
