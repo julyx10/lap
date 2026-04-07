@@ -231,13 +231,94 @@ function clickCancel() {
   emit('cancel');
 }
 
-// handle escape key
+// Reset tag focus when search results change
+watch(filteredTags, () => {
+  focusedTagIndex.value = -1;
+  isInTagList.value = false;
+});
+
+function onSearchFocus() {
+  isSearchFocused.value = true;
+  isInTagList.value = false;
+  focusedTagIndex.value = -1;
+}
+
+function onSearchBlur() {
+  isSearchFocused.value = false;
+}
+
+function enterTagList() {
+  if (filteredTags.value.length > 0) {
+    isInTagList.value = true;
+    focusedTagIndex.value = 0;
+    tagSearchInputRef.value?.blur();
+    newTagNameInputRef.value?.blur();
+  }
+}
+
+function exitTagList() {
+  isInTagList.value = false;
+  focusedTagIndex.value = -1;
+  tagSearchInputRef.value?.focus();
+}
+
+// Keyboard: ArrowDown→tag list, Space→toggle, Enter→OK, Escape→back/close
 const handleKeyDown = (e: KeyboardEvent) => {
   if (!uiStore.isInputActive('TaggingDialog')) return;
 
   const { key } = e;
-  if(key === 'Escape') {
-    clickCancel();
+  const active = document.activeElement;
+  const isInAnyInput = active === tagSearchInputRef.value || active === newTagNameInputRef.value;
+
+  // Escape: tag list → search input → close dialog
+  if (key === 'Escape') {
+    if (isInTagList.value) {
+      exitTagList();
+    } else {
+      clickCancel();
+    }
+    return;
+  }
+
+  // ArrowDown → enter tag list (from any state, unless already navigating)
+  if (key === 'ArrowDown' && !isInTagList.value) {
+    e.preventDefault();
+    enterTagList();
+    return;
+  }
+
+  // Tag list keyboard navigation
+  if (isInTagList.value && filteredTags.value.length > 0) {
+    const lastIndex = filteredTags.value.length - 1;
+
+    if (key === 'ArrowRight' || key === 'ArrowDown') {
+      e.preventDefault();
+      focusedTagIndex.value = focusedTagIndex.value >= lastIndex ? 0 : focusedTagIndex.value + 1;
+    } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
+      e.preventDefault();
+      if (focusedTagIndex.value <= 0) {
+        exitTagList(); // first tag → back to search
+      } else {
+        focusedTagIndex.value -= 1;
+      }
+    } else if (key === ' ') {
+      e.preventDefault();
+      const tag = filteredTags.value[focusedTagIndex.value];
+      if (tag) toggleTag(tag.id);
+    } else if (key === 'Enter') {
+      e.preventDefault();
+      clickOk();
+    } else if (key === 'Tab') {
+      e.preventDefault();
+      exitTagList(); // Tab → back to search input (keep focus inside dialog)
+    }
+    return;
+  }
+
+  // Enter → confirm dialog (when not typing in any input)
+  if (key === 'Enter' && !isInAnyInput) {
+    e.preventDefault();
+    clickOk();
   }
 };
 </script>
