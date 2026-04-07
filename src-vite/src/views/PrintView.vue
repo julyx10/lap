@@ -172,7 +172,7 @@ function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     event.preventDefault();
     closeWindow();
-  } else if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'p') {
+  } else if ((event.metaKey || event.ctrlKey) && !event.altKey && event.code === 'KeyP') {
     event.preventDefault();
     openPrintDialog();
   }

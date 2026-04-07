@@ -572,11 +572,10 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 
   // Disable keyboard events during slideshow except the toggle shortcut.
-  if (isSlideShow.value && event.key !== 'Escape' && event.key.toLowerCase() !== 'p') {
+  if (isSlideShow.value && event.key !== 'Escape' && event.code !== 'KeyP') {
     return;
   }
 
-  const lowerKey = event.key.toLowerCase();
   const ratingShortcut = Number.parseInt(event.key, 10);
   const hasModifier = event.metaKey || event.ctrlKey || event.altKey;
 
@@ -587,31 +586,31 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 
   if (!hasModifier) {
-    if (lowerKey === 'p') {
+    if (event.code === 'KeyP') {
       event.preventDefault();
       clickSlideShow(getActiveFilePane());
       return;
     }
 
-    if (lowerKey === 'f') {
+    if (event.code === 'KeyF') {
       event.preventDefault();
       void toggleFavorite(getActiveFilePane());
       return;
     }
 
-    if (lowerKey === 't') {
+    if (event.code === 'KeyT') {
       event.preventDefault();
       clickTag(getActiveFilePane());
       return;
     }
 
-    if (lowerKey === 'c') {
+    if (event.code === 'KeyC') {
       event.preventDefault();
       openCommentEditor(getActiveFilePane());
       return;
     }
 
-    if (lowerKey === 'r') {
+    if (event.code === 'KeyR') {
       event.preventDefault();
       void clickRotate(getActiveFilePane());
       return;

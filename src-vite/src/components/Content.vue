@@ -1563,7 +1563,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
 
-  if (isCmdKey && event.key.toLowerCase() === 'i') {
+  if (isCmdKey && event.code === 'KeyI') {
     event.preventDefault();
     toggleInfoPanel();
     return;
@@ -1590,12 +1590,11 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
   // Disable keyboard events during slideshow except the toggle shortcut.
-  if (isSlideShow.value && event.key !== 'Escape' && event.key.toLowerCase() !== 'p') {
+  if (isSlideShow.value && event.key !== 'Escape' && event.code !== 'KeyP') {
     return;
   }
 
   const hasModifier = event.metaKey || event.ctrlKey || event.altKey;
-  const lowerKey = event.key.toLowerCase();
   const ratingShortcut = Number.parseInt(event.key, 10);
 
   if (!hasModifier && Number.isInteger(ratingShortcut) && ratingShortcut >= 0 && ratingShortcut <= 5) {
@@ -1621,13 +1620,13 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       return;
     }
 
-    if (lowerKey === 's') {
+    if (event.code === 'KeyS') {
       event.preventDefault();
       enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
       return;
     }
 
-    if ((showQuickView.value || config.settings.grid.showFilmStrip) && lowerKey === 'p') {
+    if ((showQuickView.value || config.settings.grid.showFilmStrip) && event.code === 'KeyP') {
       event.preventDefault();
       toggleSlideShow();
       return;
@@ -1659,31 +1658,31 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       return;
     }
 
-    if (lowerKey === 'f') {
+    if (event.code === 'KeyF') {
       event.preventDefault();
       void toggleFavorite();
       return;
     }
 
-    if (lowerKey === 't') {
+    if (event.code === 'KeyT') {
       event.preventDefault();
       void clickTag();
       return;
     }
 
-    if (lowerKey === 'c') {
+    if (event.code === 'KeyC') {
       event.preventDefault();
       showCommentMsgbox.value = true;
       return;
     }
 
-    if (lowerKey === 'r') {
+    if (event.code === 'KeyR') {
       event.preventDefault();
       void clickRotate();
       return;
     }
 
-    if (lowerKey === 'i') {
+    if (event.code === 'KeyI') {
       event.preventDefault();
       toggleInfoPanel();
       return;
