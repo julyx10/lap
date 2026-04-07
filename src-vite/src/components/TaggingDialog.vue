@@ -15,8 +15,8 @@
             v-model="tagSearch"
             :placeholder="$t('tag.search_tags')"
             class="w-full bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none"
-            @focus="isSearchFocused = true"
-            @blur="isSearchFocused = false"
+            @focus="onSearchFocus"
+            @blur="onSearchBlur"
           />
         </div>
         <input
