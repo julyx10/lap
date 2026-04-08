@@ -824,6 +824,31 @@
       "show_map_hint": "Benötigt Internetzugang",
       "debug_mode": "Debug-Modus"
     },
+    "navigation": {
+      "title": "Navigation",
+      "section_sorting": "Sortierung",
+      "folder_sort": "Ordner",
+      "folder_sort_hint": "Sortierreihenfolge für unter Alben angezeigte Ordner",
+      "folder_sort_options": [
+        "Name (A bis Z)",
+        "Name (Z bis A)",
+        "Datum (Älteste zuerst)",
+        "Datum (Neueste zuerst)"
+      ],
+      "calendar_sort": "Kalender",
+      "calendar_sort_options": [
+        "Älteste zuerst",
+        "Neueste zuerst"
+      ],
+      "category_sort": "Kategorien",
+      "category_sort_hint": "Tags, Orte, Personen und Kameras",
+      "category_sort_options": [
+        "Name (A bis Z)",
+        "Name (Z bis A)",
+        "Anzahl (Aufsteigend)",
+        "Anzahl (Absteigend)"
+      ]
+    },
     "grid_view": {
       "title": "Rasteransicht",
       "section_layout": "Layout",

@@ -824,6 +824,31 @@
       "show_map_hint": "인터넷 연결이 필요합니다",
       "debug_mode": "디버그 모드"
     },
+    "navigation": {
+      "title": "탐색",
+      "section_sorting": "정렬",
+      "folder_sort": "폴더",
+      "folder_sort_hint": "앨범 아래에 표시되는 폴더의 정렬 순서입니다",
+      "folder_sort_options": [
+        "이름 (A-Z)",
+        "이름 (Z-A)",
+        "날짜 (오래된 순)",
+        "날짜 (최신 순)"
+      ],
+      "calendar_sort": "캘린더",
+      "calendar_sort_options": [
+        "오래된 순",
+        "최신 순"
+      ],
+      "category_sort": "카테고리",
+      "category_sort_hint": "태그, 위치, 인물 및 카메라",
+      "category_sort_options": [
+        "이름 (A-Z)",
+        "이름 (Z-A)",
+        "개수 (낮은 순)",
+        "개수 (높은 순)"
+      ]
+    },
     "grid_view": {
       "title": "그리드 보기",
       "section_layout": "레이아웃",

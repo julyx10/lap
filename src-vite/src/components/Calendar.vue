@@ -33,7 +33,6 @@
           {{ localeMsg.menu.calendar.daily }}
         </button>
       </div>
-      <ContextMenu :menuItems="calendarMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 
     <!-- calendar -->
@@ -51,7 +50,7 @@
         :key="item.year"
         :class="[
           'flex min-w-48',
-          config.calendar.sortingAsc ? 'flex-col' : 'flex-col-reverse'
+          config.settings.calendarSort === 0 ? 'flex-col' : 'flex-col-reverse'
         ]"
       >
         <CalendarMonthly v-if="config.calendar.isMonthly"
@@ -82,10 +81,9 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getTakenDates } from '@/common/api';
 
-import { IconCalendar, IconDot, IconHistory, IconMore } from '@/common/icons';
+import { IconHistory } from '@/common/icons';
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
-import ContextMenu from '@/components/ContextMenu.vue';
 
 // props
 const props = defineProps({
@@ -110,7 +108,7 @@ const sorted_calendar_items = computed(() => {
   const years = Object.keys(dates).map(Number);
   
   // Sort years based on config
-  if (config.calendar.sortingAsc) {
+  if (config.settings.calendarSort === 0) {
     years.sort((a, b) => a - b);
   } else {
     years.sort((a, b) => b - a);
@@ -121,19 +119,6 @@ const sorted_calendar_items = computed(() => {
     months: dates[year]
   }));
 });
-
-const calendarMenuItems = computed(() => [
-  {
-    label: localeMsg.value.menu.calendar.time_asc,
-    icon: config.calendar.sortingAsc ? IconDot : null,
-    action: () => { config.calendar.sortingAsc = true; },
-  },
-  {
-    label: localeMsg.value.menu.calendar.time_desc,
-    icon: config.calendar.sortingAsc ? null : IconDot,
-    action: () => { config.calendar.sortingAsc = false; },
-  },
-]);
 
 onMounted(async () => {
   console.log('Calendar.vue mounted');
@@ -149,8 +134,12 @@ onMounted(async () => {
   // }
 });
 
-watch(() => [config.calendar.isMonthly, config.calendar.sortingAsc], () => {
+watch(() => [config.calendar.isMonthly, config.settings.calendarSort], () => {
   scrollToSelected();
+});
+
+watch(() => config.settings.calendarSort, async () => {
+  await getCalendarDates();
 });
 
 function scrollToSelected() {
@@ -179,7 +168,7 @@ function switchToDailyView() {
     if (year !== null && year !== undefined && calendar_dates.value[year]) {
       const months = Object.keys(calendar_dates.value[year]).map(Number);
       if (months.length > 0) {
-        if (config.calendar.sortingAsc) {
+        if (config.settings.calendarSort === 0) {
           libConfig.calendar.month = Math.min(...months);
         } else {
           libConfig.calendar.month = Math.max(...months);
@@ -190,13 +179,9 @@ function switchToDailyView() {
   config.calendar.isMonthly = false;
 }
 
-const toggleSortingOrder = () => {
-  config.calendar.sortingAsc = !config.calendar.sortingAsc;
-}
-
 /// fetch calendar dates
 async function getCalendarDates() {
-  const taken_dates = await getTakenDates();
+  const taken_dates = await getTakenDates(config.settings.calendarSort);
   if(taken_dates) {
     calendar_dates.value = transformArray(taken_dates);
   }

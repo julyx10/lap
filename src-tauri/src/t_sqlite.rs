@@ -1475,10 +1475,10 @@ impl AFile {
     }
 
     /// get all taken dates from db
-    pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
+    pub fn get_taken_dates(sort: i64) -> Result<Vec<(String, i64)>, String> {
         let conn = open_conn()?;
 
-        let order_clause = if ascending { "ASC" } else { "DESC" };
+        let order_clause = if sort == 0 { "ASC" } else { "DESC" };
         let query = format!(
             "SELECT strftime('%Y-%m-%d', a.taken_date, 'unixepoch', 'localtime') AS taken_date, COUNT(1) 
             FROM afiles a
@@ -2326,14 +2326,22 @@ impl ATag {
     }
 
     /// Get all tags from the db
-    pub fn get_all() -> Result<Vec<Self>, String> {
+    pub fn get_all(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
+        let order_clause = match sort {
+            1 => "atags.name DESC",
+            2 => "count ASC, atags.name ASC",
+            3 => "count DESC, atags.name ASC",
+            _ => "atags.name ASC",
+        };
         let query = "SELECT atags.id, atags.name, SUM(CASE WHEN afiles.id IS NOT NULL THEN 1 ELSE 0 END) AS count 
             FROM atags 
             LEFT JOIN afile_tags ON atags.id = afile_tags.tag_id
             LEFT JOIN afiles ON afile_tags.file_id = afiles.id
             GROUP BY atags.id
-            ORDER BY atags.name ASC".to_string();
+            ORDER BY "
+            .to_string()
+            + order_clause;
         let mut stmt = conn.prepare(query.as_str()).map_err(|e| e.to_string())?;
 
         let tags_iter = stmt
@@ -2466,7 +2474,7 @@ pub struct Person {
 impl Person {
     /// Get all persons with face counts and pre-stored thumbnail
     /// Optimized: single query, no runtime image processing
-    pub fn get_all() -> Result<Vec<Self>, String> {
+    pub fn get_all(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
         // Single query with JOIN for count, directly fetch pre-stored thumbnail
@@ -2475,10 +2483,16 @@ impl Person {
             FROM persons p
             LEFT JOIN faces f ON f.person_id = p.id
             GROUP BY p.id
-            ORDER BY count DESC, p.name ASC
+            ORDER BY {order_clause}
         ";
-
-        let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+        let order_clause = match sort {
+            1 => "p.name DESC",
+            2 => "count ASC, p.name ASC",
+            3 => "count DESC, p.name ASC",
+            _ => "p.name ASC",
+        };
+        let query = query.replace("{order_clause}", order_clause);
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
         let persons_iter = stmt
             .query_map([], |row| {
@@ -3086,9 +3100,28 @@ pub struct ACamera {
     pub counts: Vec<i64>,
 }
 
+fn sort_labeled_counts(labels: &mut Vec<String>, counts: &mut Vec<i64>, sort: i64) {
+    let mut pairs: Vec<(String, i64)> = labels
+        .drain(..)
+        .zip(counts.drain(..))
+        .collect();
+
+    match sort {
+        1 => pairs.sort_by(|a, b| b.0.cmp(&a.0)),
+        2 => pairs.sort_by(|a, b| a.1.cmp(&b.1).then_with(|| a.0.cmp(&b.0))),
+        3 => pairs.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0))),
+        _ => pairs.sort_by(|a, b| a.0.cmp(&b.0)),
+    }
+
+    for (label, count) in pairs {
+        labels.push(label);
+        counts.push(count);
+    }
+}
+
 impl ACamera {
     // get all camera makes and models from db
-    pub fn get_from_db() -> Result<Vec<Self>, String> {
+    pub fn get_from_db(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let query = "SELECT UPPER(a.e_make), a.e_model, count(a.id) as count
             FROM afiles a
@@ -3121,15 +3154,22 @@ impl ACamera {
 
         let mut cameras: Vec<Self> = hash_map
             .into_iter()
-            .map(|(make, (models, counts))| Self {
+            .map(|(make, (mut models, mut counts))| {
+                sort_labeled_counts(&mut models, &mut counts, sort);
+                Self {
                 make,
                 models,
                 counts,
+            }
             })
             .collect();
 
-        // Sort the cameras by make
-        cameras.sort_by(|a, b| a.make.cmp(&b.make));
+        match sort {
+            1 => cameras.sort_by(|a, b| b.make.cmp(&a.make)),
+            2 => cameras.sort_by(|a, b| a.counts.iter().sum::<i64>().cmp(&b.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
+            3 => cameras.sort_by(|a, b| b.counts.iter().sum::<i64>().cmp(&a.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
+            _ => cameras.sort_by(|a, b| a.make.cmp(&b.make)),
+        }
 
         Ok(cameras)
     }
@@ -3144,7 +3184,7 @@ pub struct ALens {
 
 impl ALens {
     // get all lens makes and models from db
-    pub fn get_from_db() -> Result<Vec<Self>, String> {
+    pub fn get_from_db(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
         let query = "SELECT UPPER(a.e_lens_make), a.e_lens_model, count(a.id) as count
             FROM afiles a
@@ -3177,14 +3217,22 @@ impl ALens {
 
         let mut lenses: Vec<Self> = hash_map
             .into_iter()
-            .map(|(make, (models, counts))| Self {
+            .map(|(make, (mut models, mut counts))| {
+                sort_labeled_counts(&mut models, &mut counts, sort);
+                Self {
                 make,
                 models,
                 counts,
+            }
             })
             .collect();
 
-        lenses.sort_by(|a, b| a.make.cmp(&b.make));
+        match sort {
+            1 => lenses.sort_by(|a, b| b.make.cmp(&a.make)),
+            2 => lenses.sort_by(|a, b| a.counts.iter().sum::<i64>().cmp(&b.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
+            3 => lenses.sort_by(|a, b| b.counts.iter().sum::<i64>().cmp(&a.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
+            _ => lenses.sort_by(|a, b| a.make.cmp(&b.make)),
+        }
 
         Ok(lenses)
     }
@@ -3200,7 +3248,7 @@ pub struct ALocation {
 
 impl ALocation {
     // get all location admin1 and names from db
-    pub fn get_from_db() -> Result<Vec<Self>, String> {
+    pub fn get_from_db(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
         let query = "SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
@@ -3235,16 +3283,24 @@ impl ALocation {
 
         let mut locations: Vec<Self> = hash_map
             .into_iter()
-            .map(|((cc, admin1), (names, counts))| Self {
+            .map(|((cc, admin1), (mut names, mut counts))| {
+                sort_labeled_counts(&mut names, &mut counts, sort);
+                Self {
                 cc,
                 admin1,
                 names,
                 counts,
+            }
             })
             .collect();
 
         // Sort the locations by admin1
-        locations.sort_by(|a, b| a.admin1.cmp(&b.admin1));
+        match sort {
+            1 => locations.sort_by(|a, b| b.admin1.cmp(&a.admin1)),
+            2 => locations.sort_by(|a, b| a.counts.iter().sum::<i64>().cmp(&b.counts.iter().sum::<i64>()).then_with(|| a.admin1.cmp(&b.admin1))),
+            3 => locations.sort_by(|a, b| b.counts.iter().sum::<i64>().cmp(&a.counts.iter().sum::<i64>()).then_with(|| a.admin1.cmp(&b.admin1))),
+            _ => locations.sort_by(|a, b| a.admin1.cmp(&b.admin1)),
+        }
 
         Ok(locations)
     }

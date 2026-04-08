@@ -103,6 +103,15 @@ listen('settings-debugMode-changed', (event) => {
 listen('settings-settingsTabIndex-changed', (event) => {
   config.setSettingsTabIndex(event.payload)
 })
+listen('settings-folderSort-changed', (event) => {
+  config.setFolderSort(event.payload)
+})
+listen('settings-calendarSort-changed', (event) => {
+  config.setCalendarSort(event.payload)
+})
+listen('settings-categorySort-changed', (event) => {
+  config.setCategorySort(event.payload)
+})
 listen('settings-gridSize-changed', (event) => {
   config.setGridSize(event.payload)
 })

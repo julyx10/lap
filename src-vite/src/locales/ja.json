@@ -824,6 +824,31 @@
       "show_map_hint": "インターネット接続が必要です",
       "debug_mode": "デバッグモード"
     },
+    "navigation": {
+      "title": "ナビゲーション",
+      "section_sorting": "並べ替え",
+      "folder_sort": "フォルダ",
+      "folder_sort_hint": "アルバム配下に表示されるフォルダの並び順です",
+      "folder_sort_options": [
+        "名前 (A から Z)",
+        "名前 (Z から A)",
+        "日付 (古い順)",
+        "日付 (新しい順)"
+      ],
+      "calendar_sort": "カレンダー",
+      "calendar_sort_options": [
+        "古い順",
+        "新しい順"
+      ],
+      "category_sort": "カテゴリ",
+      "category_sort_hint": "タグ、場所、人物、カメラ",
+      "category_sort_options": [
+        "名前 (A から Z)",
+        "名前 (Z から A)",
+        "件数 (少ない順)",
+        "件数 (多い順)"
+      ]
+    },
     "grid_view": {
       "title": "グリッド表示",
       "section_layout": "レイアウト",

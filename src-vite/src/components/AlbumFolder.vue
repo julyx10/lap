@@ -128,7 +128,7 @@
 import { ref, nextTick, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
-import { libConfig } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { isMac, shortenFilename, isValidFileName } from '@/common/utils';
 import { createFolder, renameFolder, fetchFolder, moveFolder, copyFolder, revealPath, deleteFolder } from '@/common/api';
 import { setFolderFavorite } from '@/common/api';
@@ -305,7 +305,7 @@ const expandFolder = async (folder: any, forceRefresh = false) => {
   folder.is_expanded = forceRefresh ? true : !folder.is_expanded;
 
   if (folder.is_expanded && (!folder.children || forceRefresh)) {
-    const subFolders = await fetchFolder(folder.path, false);
+    const subFolders = await fetchFolder(folder.path, false, config.settings.folderSort);
     if (subFolders) {
       folder.children = subFolders.children;
     }
@@ -402,7 +402,7 @@ const handleTreeKeyDown = async (event: { payload: { key: string } }) => {
       break;
     case 'ArrowRight':
       if (!currentFolder.children || currentFolder.children.length === 0) {
-        const subFolders = await fetchFolder(currentFolder.path, false);
+        const subFolders = await fetchFolder(currentFolder.path, false, config.settings.folderSort);
         if (subFolders) {
           currentFolder.children = subFolders.children;
         }

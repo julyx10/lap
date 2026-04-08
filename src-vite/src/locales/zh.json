@@ -824,6 +824,31 @@
       "show_map_hint": "需要互联网连接",
       "debug_mode": "调试模式"
     },
+    "navigation": {
+      "title": "导航",
+      "section_sorting": "排序",
+      "folder_sort": "文件夹",
+      "folder_sort_hint": "相册下显示的文件夹排序方式",
+      "folder_sort_options": [
+        "名称（A 到 Z）",
+        "名称（Z 到 A）",
+        "日期（最早优先）",
+        "日期（最新优先）"
+      ],
+      "calendar_sort": "日历",
+      "calendar_sort_options": [
+        "最早优先",
+        "最新优先"
+      ],
+      "category_sort": "分类",
+      "category_sort_hint": "标签、地点、人物和相机",
+      "category_sort_options": [
+        "名称（A 到 Z）",
+        "名称（Z 到 A）",
+        "数量（从低到高）",
+        "数量（从高到低）"
+      ]
+    },
     "grid_view": {
       "title": "网格视图",
       "section_layout": "布局",

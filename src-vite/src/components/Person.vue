@@ -173,13 +173,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getPersons, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress, resetFaces, getFaceStats } from '@/common/api';
 import { 
   IconPerson, 
-  IconDot,
   IconMore, 
   IconRename, 
   IconTrash,
@@ -236,13 +235,7 @@ let unlistenProgress: (() => void) | null = null;
 let unlistenFinished: (() => void) | null = null;
 let unlistenCluster: (() => void) | null = null;
 
-const sortedPersons = computed(() => {
-  if (config.leftPanel.sortCount) {
-    return [...allPersons.value].sort((a, b) => (b.count || 0) - (a.count || 0));
-  } else {
-    return [...allPersons.value].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-  }
-});
+const sortedPersons = computed(() => allPersons.value);
 
 // Computed property to format cluster progress text using i18n
 const { t } = useI18n();
@@ -276,17 +269,6 @@ const personPanelMenuItems = computed(() => [
     icon: IconTrash,
     action: () => clickResetFaces(),
     disabled: isIndexing.value,
-  },
-  { label: '-' },
-  {
-    label: localeMsg.value.menu.sort.sort_by_name,
-    icon: config.leftPanel.sortCount ? null : IconDot,
-    action: () => { config.leftPanel.sortCount = false; },
-  },
-  {
-    label: localeMsg.value.menu.sort.sort_by_count,
-    icon: config.leftPanel.sortCount ? IconDot : null,
-    action: () => { config.leftPanel.sortCount = true; },
   },
 ]);
 
@@ -352,6 +334,10 @@ onMounted(async () => {
   });
 });
 
+watch(() => config.settings.categorySort, () => {
+  loadPersons();
+});
+
 onUnmounted(() => {
   if (unlistenProgress) unlistenProgress();
   if (unlistenFinished) unlistenFinished();
@@ -359,7 +345,7 @@ onUnmounted(() => {
 });
 
 async function loadPersons() {
-  const persons = await getPersons();
+  const persons = await getPersons(config.settings.categorySort);
   if (persons) {
     allPersons.value = persons;
     if (allPersons.value.length > 0 && !selectedPerson.value) {

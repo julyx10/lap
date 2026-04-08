@@ -7,7 +7,6 @@
           {{ localeMsg.sidebar.location }}
         </button>
       </div>
-      <ContextMenu :menuItems="locationPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 
     <!-- location -->
@@ -60,13 +59,12 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
 import { getCountryName } from '@/common/utils';
-import { IconDot, IconLocation, IconMore, IconRight } from '@/common/icons';
-import ContextMenu from '@/components/ContextMenu.vue';
+import { IconRight } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {
@@ -80,29 +78,7 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const locations = ref<any[]>([]);
 
-const sortedLocations = computed(() => {
-  if (config.leftPanel.sortCount) {
-    return [...locations.value].sort((a, b) => {
-      const countA = (a.counts || []).reduce((sum: number, c: number) => sum + c, 0);
-      const countB = (b.counts || []).reduce((sum: number, c: number) => sum + c, 0);
-      return countB - countA;
-    });
-  }
-  return locations.value;
-});
-
-const locationPanelMenuItems = computed(() => [
-  {
-    label: localeMsg.value.menu.sort.sort_by_name,
-    icon: config.leftPanel.sortCount ? null : IconDot,
-    action: () => { config.leftPanel.sortCount = false; },
-  },
-  {
-    label: localeMsg.value.menu.sort.sort_by_count,
-    icon: config.leftPanel.sortCount ? IconDot : null,
-    action: () => { config.leftPanel.sortCount = true; },
-  },
-]);
+const sortedLocations = computed(() => locations.value);
 
 onMounted(async () => {
   if (locations.value.length === 0) {
@@ -127,6 +103,31 @@ onMounted(async () => {
   }
 });
 
+watch(() => config.settings.categorySort, async () => {
+  await getLocations();
+});
+
+function restoreLocationSelection() {
+  if (!libConfig.location.admin1) return;
+
+  const location = locations.value.find((item: any) =>
+    item.admin1 === libConfig.location.admin1 && item.cc === (libConfig.location.cc || '')
+  );
+
+  if (!location) {
+    (libConfig.location as any).cc = null;
+    (libConfig.location as any).admin1 = null;
+    (libConfig.location as any).name = null;
+    return;
+  }
+
+  location.is_expanded = true;
+
+  if (libConfig.location.name && !location.names.includes(libConfig.location.name)) {
+    (libConfig.location as any).name = null;
+  }
+}
+
 /// click location icon to expand or collapse names
 function clickExpandLocation(location: any) {
   location.is_expanded = !location.is_expanded; 
@@ -150,12 +151,13 @@ function clickLocationName(location: any, name: string) {
 
 /// get locations from db
 async function getLocations() {
-  const fetchedLocations = await getLocationInfo();
+  const fetchedLocations = await getLocationInfo(config.settings.categorySort);
   if (fetchedLocations) {
     locations.value = fetchedLocations.map((location: any) => ({
       ...location, 
       is_expanded: false,
     }));
+    restoreLocationSelection();
   }
 };
 

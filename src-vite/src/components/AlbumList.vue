@@ -450,6 +450,22 @@ onMounted( async () => {
 
 });
 
+watch(() => config.settings.folderSort, async () => {
+  const selectedAlbumId = selection.albumId.value;
+  const selectedFolderPath = selection.folderPath.value;
+  const shouldRestoreFolderSelection = !selection.selected.value && !!selectedFolderPath;
+
+  for (const album of albums.value) {
+    if (album.is_expanded) {
+      await expandAlbum(album, true);
+    }
+  }
+
+  if (shouldRestoreFolderSelection && selectedAlbumId > 0) {
+    await clickFinalSubFolder(selectedAlbumId, selectedFolderPath);
+  }
+});
+
 onBeforeUnmount(() => {
   if (unlistenKeydown) unlistenKeydown();
   if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
@@ -638,7 +654,7 @@ const expandAlbum = async (album: any, forceRefresh = false) => {
   album.is_expanded = willExpand; 
   
   if (album.is_expanded && (!album.children || forceRefresh)) {
-    const subFolders = await fetchFolder(album.path, false);
+    const subFolders = await fetchFolder(album.path, false, config.settings.folderSort);
     if(subFolders) {
       album.children = [subFolders];
     }

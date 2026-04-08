@@ -321,9 +321,9 @@ export async function selectFolder(albumId, folderPath) {
 }
 
 // fetch folder and build a FileNode
-export async function fetchFolder(path, isRecursive) {
+export async function fetchFolder(path, isRecursive, sort = 0) {
   try {
-    const folder = await invoke('fetch_folder', { path, isRecursive });
+    const folder = await invoke('fetch_folder', { path, isRecursive, sort });
     if(folder) {
       // get folder children's favorite status
       for (let i = 0; i < folder.children.length; i++) {
@@ -361,7 +361,7 @@ export async function expandFinalFolder(rootFolder, finalPath) {
   
   // Load its children if not already loaded
   if (!currentFolder.children) {
-    const subFolders = await fetchFolder(currentFolder.path, false);
+    const subFolders = await fetchFolder(currentFolder.path, false, config.settings.folderSort);
     if (subFolders) {
       currentFolder.children = subFolders.children;
     }
@@ -374,7 +374,7 @@ export async function expandFinalFolder(rootFolder, finalPath) {
           if( i < pathArray.length - 1) {
             child.is_expanded = true;
             // fetch sub-folders for this child
-            const subFolders = await fetchFolder(child.path, false);
+            const subFolders = await fetchFolder(child.path, false, config.settings.folderSort);
             if(subFolders) {
               child.children = subFolders.children;
             }
@@ -851,9 +851,9 @@ export async function setFileRating(fileId, rating) {
 // tags
 
 // get all tags
-export async function getAllTags() {
+export async function getAllTags(sort = 0) {
   try {
-    const tags = await invoke('get_all_tags');
+    const tags = await invoke('get_all_tags', { sort });
     console.log('getAllTags:', tags);
     if (tags) {
       return tags;
@@ -948,9 +948,9 @@ export async function removeTagFromFile(fileId, tagId) {
 // calendar
 
 // get taken dates
-export async function getTakenDates(ascending = true) {
+export async function getTakenDates(sort = 0) {
   try {
-    const taken_dates = await invoke('get_taken_dates', { ascending });
+    const taken_dates = await invoke('get_taken_dates', { sort });
     if (taken_dates) {
       return taken_dates;
     }
@@ -963,9 +963,9 @@ export async function getTakenDates(ascending = true) {
 // camera
 
 // get camera info
-export async function getCameraInfo() {
+export async function getCameraInfo(sort = 0) {
   try {
-    const cameraInfo = await invoke('get_camera_info');
+    const cameraInfo = await invoke('get_camera_info', { sort });
     if (cameraInfo) {
       return cameraInfo;
     }
@@ -976,9 +976,9 @@ export async function getCameraInfo() {
 }
 
 // get lens info
-export async function getLensInfo() {
+export async function getLensInfo(sort = 0) {
   try {
-    const lensInfo = await invoke('get_lens_info');
+    const lensInfo = await invoke('get_lens_info', { sort });
     if (lensInfo) {
       return lensInfo;
     }
@@ -991,9 +991,9 @@ export async function getLensInfo() {
 // location
 
 // get location info
-export async function getLocationInfo() {
+export async function getLocationInfo(sort = 0) {
   try {
-    const locationInfo = await invoke('get_location_info');
+    const locationInfo = await invoke('get_location_info', { sort });
     if (locationInfo) {
       return locationInfo;
     }
@@ -1291,9 +1291,9 @@ export async function listenClusterProgress(callback) {
 // person (face recognition)
 
 // get all persons
-export async function getPersons() {
+export async function getPersons(sort = 0) {
   try {
-    const persons = await invoke('get_persons');
+    const persons = await invoke('get_persons', { sort });
     if (persons) {
       return persons;
     }

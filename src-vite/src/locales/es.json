@@ -824,6 +824,31 @@
       "show_map_hint": "Requiere acceso a internet",
       "debug_mode": "Modo depuración"
     },
+    "navigation": {
+      "title": "Navegación",
+      "section_sorting": "Orden",
+      "folder_sort": "Carpetas",
+      "folder_sort_hint": "Orden de clasificación para las carpetas mostradas dentro de los álbumes",
+      "folder_sort_options": [
+        "Nombre (A a Z)",
+        "Nombre (Z a A)",
+        "Fecha (Más antiguo primero)",
+        "Fecha (Más reciente primero)"
+      ],
+      "calendar_sort": "Calendario",
+      "calendar_sort_options": [
+        "Más antiguo primero",
+        "Más reciente primero"
+      ],
+      "category_sort": "Categorías",
+      "category_sort_hint": "Etiquetas, ubicaciones, personas y cámaras",
+      "category_sort_options": [
+        "Nombre (A a Z)",
+        "Nombre (Z a A)",
+        "Cantidad (De menor a mayor)",
+        "Cantidad (De mayor a menor)"
+      ]
+    },
     "grid_view": {
       "title": "Vista de cuadrícula",
       "section_layout": "Diseño",

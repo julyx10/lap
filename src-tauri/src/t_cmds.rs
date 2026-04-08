@@ -233,8 +233,8 @@ pub fn select_folder(
 
 /// fetch folder and build a FileNode
 #[tauri::command]
-pub fn fetch_folder(path: &str, is_recursive: bool) -> Result<t_utils::FileNode, String> {
-    t_utils::FileNode::build_nodes(path, is_recursive)
+pub fn fetch_folder(path: &str, is_recursive: bool, sort: i64) -> Result<t_utils::FileNode, String> {
+    t_utils::FileNode::build_nodes(path, is_recursive, sort)
 }
 
 /// count all files in a folder (include all sub-folders)
@@ -615,8 +615,8 @@ pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
 
 /// get all tags
 #[tauri::command]
-pub fn get_all_tags() -> Result<Vec<ATag>, String> {
-    ATag::get_all().map_err(|e| format!("Error while getting all tags: {}", e))
+pub fn get_all_tags(sort: i64) -> Result<Vec<ATag>, String> {
+    ATag::get_all(sort).map_err(|e| format!("Error while getting all tags: {}", e))
 }
 
 /// get tag name by id
@@ -668,30 +668,30 @@ pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> 
 
 /// get camera's taken dates
 #[tauri::command]
-pub fn get_taken_dates(ascending: bool) -> Result<Vec<(String, i64)>, String> {
-    AFile::get_taken_dates(ascending).map_err(|e| format!("Error while getting taken dates: {}", e))
+pub fn get_taken_dates(sort: i64) -> Result<Vec<(String, i64)>, String> {
+    AFile::get_taken_dates(sort).map_err(|e| format!("Error while getting taken dates: {}", e))
 }
 
 // camera
 
 /// get a file's camera make and model info
 #[tauri::command]
-pub fn get_camera_info() -> Result<Vec<ACamera>, String> {
-    ACamera::get_from_db().map_err(|e| format!("Error while getting camera info: {}", e))
+pub fn get_camera_info(sort: i64) -> Result<Vec<ACamera>, String> {
+    ACamera::get_from_db(sort).map_err(|e| format!("Error while getting camera info: {}", e))
 }
 
 /// get a file's lens make and model info
 #[tauri::command]
-pub fn get_lens_info() -> Result<Vec<ALens>, String> {
-    ALens::get_from_db().map_err(|e| format!("Error while getting lens info: {}", e))
+pub fn get_lens_info(sort: i64) -> Result<Vec<ALens>, String> {
+    ALens::get_from_db(sort).map_err(|e| format!("Error while getting lens info: {}", e))
 }
 
 // location
 
 /// get a file's location info
 #[tauri::command]
-pub fn get_location_info() -> Result<Vec<ALocation>, String> {
-    ALocation::get_from_db().map_err(|e| format!("Error while getting location info: {}", e))
+pub fn get_location_info(sort: i64) -> Result<Vec<ALocation>, String> {
+    ALocation::get_from_db(sort).map_err(|e| format!("Error while getting location info: {}", e))
 }
 
 // settings
@@ -812,8 +812,8 @@ pub fn is_face_indexing(
 
 /// get all persons with face counts
 #[tauri::command]
-pub fn get_persons() -> Result<Vec<Person>, String> {
-    Person::get_all().map_err(|e| format!("Error while getting persons: {}", e))
+pub fn get_persons(sort: i64) -> Result<Vec<Person>, String> {
+    Person::get_all(sort).map_err(|e| format!("Error while getting persons: {}", e))
 }
 
 /// rename a person

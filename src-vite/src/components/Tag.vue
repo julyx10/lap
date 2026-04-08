@@ -25,11 +25,6 @@
           :tooltip="$t('menu.tag.add')"
           @click="clickAddTag"
         />
-        <ContextMenu
-          :menuItems="panelMenuItems"
-          :iconMenu="IconMore"
-          :smallIcon="true"
-        />
       </div>
     </div>
 
@@ -123,16 +118,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getAllTags, renameTag, deleteTag, createTag } from '@/common/api';
 import { 
   IconAdd,
+  IconMore,
   IconSmartTag,
   IconTag,
-  IconDot,
-  IconMore, 
   IconRename, 
   IconTrash,
 } from '@/common/icons';
@@ -169,12 +163,7 @@ const isRenamingTag = ref(false);
 const originalTagName = ref('');
 const tagInputRef = ref<HTMLInputElement[]>([]);
 
-const sortedTags = computed(() => {
-  if (config.leftPanel.sortCount) {
-    return [...allTags.value].sort((a, b) => (b.count || 0) - (a.count || 0));
-  }
-  return allTags.value;
-});
+const sortedTags = computed(() => allTags.value);
 
 const smartTagItems = computed(() => {
   return SMART_TAG_CATEGORIES.map(category => {
@@ -185,19 +174,6 @@ const smartTagItems = computed(() => {
     };
   });
 });
-
-const panelMenuItems = computed(() => [
-  {
-    label: localeMsg.value.menu.sort.sort_by_name,
-    icon: config.leftPanel.sortCount ? null : IconDot,
-    action: () => { config.leftPanel.sortCount = false; },
-  },
-  {
-    label: localeMsg.value.menu.sort.sort_by_count,
-    icon: config.leftPanel.sortCount ? IconDot : null,
-    action: () => { config.leftPanel.sortCount = true; },
-  },
-]);
 
 // message boxes
 const showDeleteTagMsgbox = ref(false);
@@ -238,8 +214,12 @@ onMounted(() => {
   loadTags();
 });
 
+watch(() => config.settings.categorySort, () => {
+  loadTags();
+});
+
 async function loadTags() {
-  const tags = await getAllTags();
+  const tags = await getAllTags(config.settings.categorySort);
   if (tags) {
     allTags.value = tags;
     if (allTags.value.length > 0) {

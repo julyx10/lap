@@ -69,6 +69,8 @@ pub struct FileNode {
     id: Option<i64>, // unique id(in database)
     name: String,    // folder name
     path: String,    // folder path
+    created_at: Option<i64>,
+    modified_at: Option<i64>,
     is_dir: bool,    // is directory
     is_expanded: bool,
     children: Option<Vec<Self>>,
@@ -76,11 +78,13 @@ pub struct FileNode {
 
 impl FileNode {
     /// Create a new FileNode
-    fn new(path: &str, is_dir: bool, is_expanded: bool) -> Self {
+    fn new(path: &str, is_dir: bool, is_expanded: bool, created_at: Option<i64>, modified_at: Option<i64>) -> Self {
         FileNode {
             id: None,
             name: get_file_name(path),
             path: path.to_string(),
+            created_at,
+            modified_at,
             is_dir,
             is_expanded,
             children: None,
@@ -88,7 +92,7 @@ impl FileNode {
     }
 
     /// Read folders from a path and build a FileNode
-    pub fn build_nodes(path: &str, is_recursive: bool) -> Result<Self, String> {
+    pub fn build_nodes(path: &str, is_recursive: bool, sort: i64) -> Result<Self, String> {
         let root_path = Path::new(&path);
 
         // Check if the path exists and is a directory
@@ -101,16 +105,23 @@ impl FileNode {
         }
 
         // Create the root FileNode
-        let mut root_node = FileNode::new(path, root_path.is_dir(), false);
+        let root_meta = fs::metadata(root_path).ok();
+        let mut root_node = FileNode::new(
+            path,
+            root_path.is_dir(),
+            false,
+            root_meta.as_ref().and_then(|m| systemtime_to_timestamp(m.created().ok())),
+            root_meta.as_ref().and_then(|m| systemtime_to_timestamp(m.modified().ok())),
+        );
 
         // Recursively read subfolders and files
-        root_node.children = Some(Self::recurse_nodes(root_path, is_recursive)?);
+        root_node.children = Some(Self::recurse_nodes(root_path, is_recursive, sort)?);
 
         Ok(root_node)
     }
 
     /// Recurse sub-folders
-    fn recurse_nodes(path: &Path, is_recursive: bool) -> Result<Vec<Self>, String> {
+    fn recurse_nodes(path: &Path, is_recursive: bool, sort: i64) -> Result<Vec<Self>, String> {
         let mut nodes: Vec<FileNode> = Vec::new();
 
         for entry in WalkDir::new(path)
@@ -124,22 +135,47 @@ impl FileNode {
             let path_str = entry_path.to_string_lossy().to_string();
 
             if entry.file_type().is_dir() {
-                let mut node = FileNode::new(&path_str, true, false);
+                let metadata = fs::metadata(entry_path).ok();
+                let mut node = FileNode::new(
+                    &path_str,
+                    true,
+                    false,
+                    metadata.as_ref().and_then(|m| systemtime_to_timestamp(m.created().ok())),
+                    metadata.as_ref().and_then(|m| systemtime_to_timestamp(m.modified().ok())),
+                );
 
                 if is_recursive {
-                    node.children = Some(Self::recurse_nodes(entry_path, is_recursive)?);
+                    node.children = Some(Self::recurse_nodes(entry_path, is_recursive, sort)?);
                 }
 
                 nodes.push(node);
             }
         }
 
-        // Sort the nodes by name
-        nodes.sort_by(|a, b| {
-            convert_to_pinyin(&a.name)
-                .to_lowercase()
-                .cmp(&convert_to_pinyin(&b.name).to_lowercase())
-        });
+        match sort {
+            1 => nodes.sort_by(|a, b| {
+                convert_to_pinyin(&b.name)
+                    .to_lowercase()
+                    .cmp(&convert_to_pinyin(&a.name).to_lowercase())
+            }),
+            2 => nodes.sort_by(|a, b| {
+                a.modified_at
+                    .or(a.created_at)
+                    .unwrap_or(0)
+                    .cmp(&b.modified_at.or(b.created_at).unwrap_or(0))
+            }),
+            3 => nodes.sort_by(|a, b| {
+                b.modified_at
+                    .or(b.created_at)
+                    .unwrap_or(0)
+                    .cmp(&a.modified_at.or(a.created_at).unwrap_or(0))
+            }),
+            _ => nodes.sort_by(|a, b| {
+                convert_to_pinyin(&a.name)
+                    .to_lowercase()
+                    .cmp(&convert_to_pinyin(&b.name).to_lowercase())
+            }),
+        }
         Ok(nodes)
     }
 

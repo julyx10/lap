@@ -7,6 +7,8 @@ export interface Folder {
     id: number;
     name: string;
     path: string;
+    created_at?: number;
+    modified_at?: number;
     is_expanded?: boolean;
     is_favorite?: boolean;
     children?: Folder[];
@@ -85,4 +87,3 @@ export interface RawFace {
 export interface Face extends Omit<RawFace, 'bbox'> {
     bbox: BBox;
 }
-

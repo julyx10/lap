@@ -18,7 +18,6 @@
           {{ $t('file_info.lens') }}
         </button>
       </div>
-      <ContextMenu :menuItems="cameraPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 
     <div v-if="activeItems.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
@@ -71,12 +70,11 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getCameraInfo, getLensInfo } from '@/common/api';
-import { IconCamera, IconDot, IconMore, IconRight } from '@/common/icons';
-import ContextMenu from '@/components/ContextMenu.vue';
+import { IconRight } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {
@@ -99,29 +97,7 @@ const activeItems = computed(() => {
   return activeTab.value === 'lens' ? lenses.value : cameras.value;
 });
 
-const sortedItems = computed(() => {
-  if (config.leftPanel.sortCount) {
-    return [...activeItems.value].sort((a, b) => {
-      const countA = (a.counts || []).reduce((sum: number, c: number) => sum + c, 0);
-      const countB = (b.counts || []).reduce((sum: number, c: number) => sum + c, 0);
-      return countB - countA;
-    });
-  }
-  return activeItems.value;
-});
-
-const cameraPanelMenuItems = computed(() => [
-  {
-    label: localeMsg.value.menu.sort.sort_by_name,
-    icon: config.leftPanel.sortCount ? null : IconDot,
-    action: () => { config.leftPanel.sortCount = false; },
-  },
-  {
-    label: localeMsg.value.menu.sort.sort_by_count,
-    icon: config.leftPanel.sortCount ? IconDot : null,
-    action: () => { config.leftPanel.sortCount = true; },
-  },
-]);
+const sortedItems = computed(() => activeItems.value);
 
 onMounted(async () => {
   if ((libConfig.camera as any).tab !== 'lens' && (libConfig.camera as any).tab !== 'camera') {
@@ -136,6 +112,27 @@ onMounted(async () => {
   expandSelectedItem(cameras.value, (libConfig.camera as any).make, (libConfig.camera as any).model);
   expandSelectedItem(lenses.value, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel);
 });
+
+watch(() => config.settings.categorySort, async () => {
+  await Promise.all([getCameras(), getLenses()]);
+});
+
+function restoreExpandedItem(items: any[], selectedMake: string | null, selectedModel: string | null) {
+  if (!selectedMake) return;
+
+  const item = items.find(data => data.make === selectedMake);
+  if (!item) return;
+
+  item.is_expanded = true;
+
+  if (selectedModel && !item.models.includes(selectedModel)) {
+    if (items === cameras.value) {
+      (libConfig.camera as any).model = null;
+    } else {
+      (libConfig.camera as any).lensModel = null;
+    }
+  }
+}
 
 function setActiveTab(tab: 'camera' | 'lens') {
   (libConfig.camera as any).tab = tab;
@@ -182,22 +179,24 @@ function clickModel(make: string, model: string) {
 
 /// get cameras from db
 async function getCameras() {
-  const fetchedCameras = await getCameraInfo();
+  const fetchedCameras = await getCameraInfo(config.settings.categorySort);
   if (fetchedCameras) {
     cameras.value = fetchedCameras.map((camera: any) => ({
       ...camera, 
       is_expanded: false,
     }));
+    restoreExpandedItem(cameras.value, (libConfig.camera as any).make, (libConfig.camera as any).model);
   }
 }
 
 async function getLenses() {
-  const fetchedLenses = await getLensInfo();
+  const fetchedLenses = await getLensInfo(config.settings.categorySort);
   if (fetchedLenses) {
     lenses.value = fetchedLenses.map((lens: any) => ({
       ...lens,
       is_expanded: false,
     }));
+    restoreExpandedItem(lenses.value, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel);
   }
 }
 

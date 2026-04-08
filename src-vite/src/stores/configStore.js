@@ -19,7 +19,6 @@ export const useConfigStore = defineStore('configStore', {
     leftPanel: {
       show: true,                 // show left pane
       width: 320,                 // left pane width
-      sortCount: false,           // false: default sort by name, true: sort by count
     },
 
     rightPanel: {
@@ -48,7 +47,6 @@ export const useConfigStore = defineStore('configStore', {
 
     calendar: {
       isMonthly: true,    // display monthly or daily calendar
-      sortingAsc: false,   // sorting order
     },
 
     mediaViewer: {
@@ -84,7 +82,7 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     settings: {
-      tabIndex: 0,               // settings tab index (0: general, 1: grid view, 2: image view, 3: image search, 4: privacy, 5: about)
+      tabIndex: 0,               // settings tab index (0: general, 1: navigation, 2: grid view, 3: image view, 4: image search, 5: privacy, 6: about)
 
       // general settings
       language: 'en',             // default language
@@ -96,6 +94,12 @@ export const useConfigStore = defineStore('configStore', {
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
       debugMode: false,           // debug mode
+
+      // navigation settings
+      folderSort: 0,              // folder_sort_options: 0=name asc, 1=name desc, 2=date asc(oldest first), 3=date desc(newest first)
+      calendarSort: 0,            // calendar_sort_options: 0=oldest first, 1=newest first
+      categorySort: 0,            // category_sort_options: 0=name asc, 1=name desc, 2=count asc, 3=count desc
+      
 
       // grid view settings
       thumbnailSize: 512,         // thumbnail image size (small: 128, medium: 256, large: 512, extra large: 1024)
@@ -127,17 +131,17 @@ export const useConfigStore = defineStore('configStore', {
         thresholdIndex: 3,         // image search threshold index (default is Low)
         limit: 1000,               // image search limit
       },
-
-      telemetry: {
-        enabled: true,             // anonymous usage analytics
-        lastDailyActiveDate: '',   // local day bucket already reported
-      },
       
       // face recognition settings
       face: {
         enabled: false, // enable face recognition in image search
         // Cluster threshold index: 0=Very High, 1=High, 2=Medium, 3=Low
         clusterThresholdIndex: 2, // Default: Medium
+      },
+
+      telemetry: {
+        enabled: true,             // anonymous usage analytics
+        lastDailyActiveDate: '',   // local day bucket already reported
       },
     },
   }),
@@ -195,6 +199,15 @@ export const useConfigStore = defineStore('configStore', {
     },
     setSettingsTabIndex(tabIndex) {
       this.settings.tabIndex = tabIndex;
+    },
+    setFolderSort(folderSort) {
+      this.settings.folderSort = folderSort;
+    },
+    setCalendarSort(calendarSort) {
+      this.settings.calendarSort = calendarSort;
+    },
+    setCategorySort(categorySort) {
+      this.settings.categorySort = categorySort;
     },
 
     // video settings

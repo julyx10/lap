@@ -824,6 +824,31 @@
       "show_map_hint": "Nécessite un accès à internet",
       "debug_mode": "Mode débogage"
     },
+    "navigation": {
+      "title": "Navigation",
+      "section_sorting": "Tri",
+      "folder_sort": "Dossiers",
+      "folder_sort_hint": "Ordre de tri des dossiers affichés sous les albums",
+      "folder_sort_options": [
+        "Nom (A à Z)",
+        "Nom (Z à A)",
+        "Date (Les plus anciens d'abord)",
+        "Date (Les plus récents d'abord)"
+      ],
+      "calendar_sort": "Calendrier",
+      "calendar_sort_options": [
+        "Les plus anciens d'abord",
+        "Les plus récents d'abord"
+      ],
+      "category_sort": "Catégories",
+      "category_sort_hint": "Tags, lieux, personnes et appareils photo",
+      "category_sort_options": [
+        "Nom (A à Z)",
+        "Nom (Z à A)",
+        "Nombre (Croissant)",
+        "Nombre (Décroissant)"
+      ]
+    },
     "grid_view": {
       "title": "Vue en grille",
       "section_layout": "Disposition",

@@ -824,6 +824,31 @@
       "show_map_hint": "Requer acesso à internet",
       "debug_mode": "Modo debug"
     },
+    "navigation": {
+      "title": "Navegação",
+      "section_sorting": "Ordenação",
+      "folder_sort": "Pastas",
+      "folder_sort_hint": "Ordem de classificação das pastas exibidas dentro dos álbuns",
+      "folder_sort_options": [
+        "Nome (A a Z)",
+        "Nome (Z a A)",
+        "Data (Mais antigos primeiro)",
+        "Data (Mais recentes primeiro)"
+      ],
+      "calendar_sort": "Calendário",
+      "calendar_sort_options": [
+        "Mais antigos primeiro",
+        "Mais recentes primeiro"
+      ],
+      "category_sort": "Categorias",
+      "category_sort_hint": "Tags, locais, pessoas e câmeras",
+      "category_sort_options": [
+        "Nome (A a Z)",
+        "Nome (Z a A)",
+        "Contagem (Menor para maior)",
+        "Contagem (Maior para menor)"
+      ]
+    },
     "grid_view": {
       "title": "Grade",
       "section_layout": "Layout",

@@ -7,7 +7,7 @@
       <!-- Sidebar -->
       <div class="w-40 m-1 p-2 bg-base-200/30 flex flex-col rounded-box overflow-y-auto shrink-0 select-none">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.privacy.title', 'settings.about.title']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.navigation.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.privacy.title', 'settings.about.title']"
           :key="index"
           :class="[
             'px-3 py-2 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
@@ -97,8 +97,43 @@
             </div>
           </div>
 
-          <!-- Gallery View Tab -->
+          <!-- Navigation Tab -->
           <div v-else-if="config.settings.tabIndex === 1" class="flex flex-col space-y-2">
+            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+              <div class="flex items-center gap-2 text-base-content/70">
+                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.navigation.section_sorting') }}</span>
+              </div>
+              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.navigation.folder_sort') }}</div>
+                  <div class="text-xs text-base-content/30">{{ $t('settings.navigation.folder_sort_hint') }}</div>
+                </div>
+                <select class="select select-bordered select-sm min-w-40" v-model="config.settings.folderSort">
+                  <option v-for="option in folderSortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.navigation.calendar_sort') }}</div>
+                </div>
+                <select class="select select-bordered select-sm min-w-40" v-model="config.settings.calendarSort">
+                  <option v-for="option in calendarSortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+                <div class="flex flex-col gap-0.5 text-sm leading-5">
+                  <div>{{ $t('settings.navigation.category_sort') }}</div>
+                  <div class="text-xs text-base-content/30">{{ $t('settings.navigation.category_sort_hint') }}</div>
+                </div>
+                <select class="select select-bordered select-sm min-w-40" v-model="config.settings.categorySort">
+                  <option v-for="option in categorySortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gallery View Tab -->
+          <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col space-y-2">
             <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
               <div class="flex items-center gap-2 text-base-content/70">
                 <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid_view.section_layout') }}</span>
@@ -154,7 +189,7 @@
           </div>
 
           <!-- Image View Tab -->
-          <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col space-y-2">
+          <div v-else-if="config.settings.tabIndex === 3" class="flex flex-col space-y-2">
             <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
               <div class="flex items-center gap-2 text-base-content/70">
                 <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_viewing') }}</span>
@@ -259,7 +294,7 @@
           </div>
 
           <!-- Image Search Tab -->
-          <div v-else-if="config.settings.tabIndex === 3" class="flex flex-col overflow-hidden space-y-2">
+          <div v-else-if="config.settings.tabIndex === 4" class="flex flex-col overflow-hidden space-y-2">
             <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
               <div class="flex items-center gap-2 text-base-content/70">
                 <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_search.section_search') }}</span>
@@ -309,7 +344,7 @@
           </div>
 
           <!-- Privacy Tab -->
-          <div v-else-if="config.settings.tabIndex === 4" class="flex flex-col space-y-2">
+          <div v-else-if="config.settings.tabIndex === 5" class="flex flex-col space-y-2">
             <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
               <div class="flex items-center gap-2 text-base-content/70">
                 <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.privacy.section_usage') }}</span>
@@ -340,7 +375,7 @@
           </div>
 
           <!-- About Tab -->
-          <div v-else-if="config.settings.tabIndex === 5" class="py-2">
+          <div v-else-if="config.settings.tabIndex === 6" class="py-2">
              <SettingsAbout />
           </div>
 
@@ -424,6 +459,39 @@ const scaleOptions = computed(() => {
     value,
     label: options[index] ?? String(value),
   }));
+});
+
+const folderSortOptions = computed(() => {
+  const options = localeMsg.value.settings.navigation.folder_sort_options || [];
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
+const calendarSortOptions = computed(() => {
+  const options = localeMsg.value.settings.navigation.calendar_sort_options || [];
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
+});
+
+const categorySortOptions = computed(() => {
+  const options = localeMsg.value.settings.navigation.category_sort_options || [];
+  const result = [];
+
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+
+  return result;
 });
 
 const externalImageAppName = computed(() =>
@@ -627,6 +695,15 @@ watch(() => config.settings.showStatusBar, (newValue) => {
 watch(() => config.settings.debugMode, (newValue) => {
   emit('settings-debugMode-changed', newValue);
 });
+watch(() => config.settings.folderSort, (newValue) => {
+  emit('settings-folderSort-changed', newValue);
+});
+watch(() => config.settings.calendarSort, (newValue) => {
+  emit('settings-calendarSort-changed', newValue);
+});
+watch(() => config.settings.categorySort, (newValue) => {
+  emit('settings-categorySort-changed', newValue);
+});
 
 // grid view settings
 watch(() => config.settings.grid.size, (newValue: number) => {
@@ -705,7 +782,7 @@ function handleKeyDown(event: KeyboardEvent) {
   switch (event.key) {
     case 'Tab':
       config.settings.tabIndex += 1;
-      config.settings.tabIndex = config.settings.tabIndex % 6; // 6 tabs
+      config.settings.tabIndex = config.settings.tabIndex % 7; // 7 tabs
       break;
     case 'Escape':
       appWindow.close(); // Close the window
