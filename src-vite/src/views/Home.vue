@@ -148,6 +148,7 @@
     <ManageLibraries
       v-if="showManageLibraries"
       @ok="onManageLibrariesOk"
+      @updated="onManageLibrariesUpdated"
       @cancel="showManageLibraries = false"
     />
   </div>
@@ -391,6 +392,10 @@ const onManageLibrariesOk = async () => {
       isSwitchingLibrary.value = false;
     }
   }
+};
+
+const onManageLibrariesUpdated = async () => {
+  appConfig.value = await getAppConfig();
 };
 
 // click sidebar

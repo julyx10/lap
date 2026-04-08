@@ -430,6 +430,7 @@ const saveRename = async (lib: any) => {
   try {
     await editLibrary(lib.id, newName);
     lib.name = newName;
+    emit('updated', { type: 'rename', id: lib.id, name: newName });
     cancelRename();
   } catch (error) {
     console.error(error);
