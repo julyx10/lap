@@ -53,6 +53,11 @@ fn get_migrations() -> Vec<Migration> {
             description: "Add afiles.format_label column",
             sql: "",
         },
+        Migration {
+            version: 3,
+            description: "Add thumbnail cache metadata columns",
+            sql: "",
+        },
     ]
 }
 
@@ -94,6 +99,28 @@ pub fn check_and_migrate(conn: &Connection) -> Result<(), String> {
                     conn.execute("ALTER TABLE afiles ADD COLUMN format_label TEXT", [])
                         .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;
                 }
+            } else if migration.version == 3 {
+                if !table_has_column(conn, "athumbs", "thumb_key")? {
+                    conn.execute("ALTER TABLE athumbs ADD COLUMN thumb_key TEXT", [])
+                        .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;
+                }
+                if !table_has_column(conn, "athumbs", "thumb_mtime")? {
+                    conn.execute("ALTER TABLE athumbs ADD COLUMN thumb_mtime INTEGER", [])
+                        .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;
+                }
+                if !table_has_column(conn, "athumbs", "thumb_size")? {
+                    conn.execute("ALTER TABLE athumbs ADD COLUMN thumb_size INTEGER", [])
+                        .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;
+                }
+                if !table_has_column(conn, "athumbs", "updated_at")? {
+                    conn.execute("ALTER TABLE athumbs ADD COLUMN updated_at INTEGER", [])
+                        .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;
+                }
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_athumbs_thumb_key ON athumbs(thumb_key)",
+                    [],
+                )
+                .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;
             } else if !migration.sql.trim().is_empty() {
                 conn.execute_batch(migration.sql)
                     .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;

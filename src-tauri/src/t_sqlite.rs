@@ -15,15 +15,39 @@ use exif::{In, Reader, Tag, Value};
 use image::{GenericImageView, ImageFormat};
 use rusqlite::{Connection, OptionalExtension, Result, ToSql, params};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::fs::File;
 use std::io::{BufReader, Cursor};
 use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::State;
+use tauri::{Emitter, State};
+
+static THUMB_GENERATION_LOCKS: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
+static THUMB_BACKGROUND_TASKS: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
+
+fn thumb_generation_locks() -> &'static Mutex<HashSet<String>> {
+    THUMB_GENERATION_LOCKS.get_or_init(|| Mutex::new(HashSet::new()))
+}
+
+fn thumb_background_tasks() -> &'static Mutex<HashSet<String>> {
+    THUMB_BACKGROUND_TASKS.get_or_init(|| Mutex::new(HashSet::new()))
+}
+
+struct ThumbGenerationGuard {
+    key: String,
+}
+
+impl Drop for ThumbGenerationGuard {
+    fn drop(&mut self) {
+        if let Ok(mut locks) = thumb_generation_locks().lock() {
+            locks.remove(&self.key);
+        }
+    }
+}
 
 /// Face Bounding Box struct (matching JSON storage)
 #[derive(Debug, Deserialize)]
@@ -367,6 +391,22 @@ impl AFolder {
                 FROM afolders
                 WHERE path = ?1",
                 params![folder_path],
+                Self::from_row,
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// fetch a folder row from db (by id)
+    pub fn get_by_id(id: i64) -> Result<Option<Self>, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .query_row(
+                "SELECT id, album_id, name, path, created_at, modified_at, is_favorite
+                FROM afolders
+                WHERE id = ?1",
+                params![id],
                 Self::from_row,
             )
             .optional()
@@ -1137,6 +1177,7 @@ impl AFile {
 
     // delete a file from db
     pub fn delete(id: i64) -> Result<usize, String> {
+        let _ = AThumb::delete(id);
         let conn = open_conn()?;
         let result = conn
             .execute("DELETE FROM afiles WHERE id = ?1", params![id])
@@ -2064,18 +2105,188 @@ pub struct AThumb {
     #[serde(skip)]
     pub thumb_data: Option<Vec<u8>>, // thumbnail data (store into db as BLOB)
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thumb_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thumb_mtime: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thumb_size: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<i64>,
+
     // output only
     pub thumb_data_base64: Option<String>, // fetch thumbnail data as base64 string (for webview)
 }
 
 impl AThumb {
+    fn is_png_bytes(data: &[u8]) -> bool {
+        data.starts_with(&[0x89, 0x50, 0x4E, 0x47])
+    }
+
+    fn generation_lock_key(file_id: i64, thumbnail_size: u32) -> String {
+        format!("{}:{}", file_id, thumbnail_size)
+    }
+
+    fn acquire_generation_guard(file_id: i64, thumbnail_size: u32) -> ThumbGenerationGuard {
+        let key = Self::generation_lock_key(file_id, thumbnail_size);
+        loop {
+            if let Ok(mut locks) = thumb_generation_locks().lock() {
+                if !locks.contains(&key) {
+                    locks.insert(key.clone());
+                    return ThumbGenerationGuard { key };
+                }
+            }
+            std::thread::sleep(Duration::from_millis(15));
+        }
+    }
+
+    pub(crate) fn try_begin_background_task(file_id: i64, thumbnail_size: u32) -> bool {
+        let key = Self::generation_lock_key(file_id, thumbnail_size);
+        let Ok(mut tasks) = thumb_background_tasks().lock() else {
+            return false;
+        };
+        if tasks.contains(&key) {
+            return false;
+        }
+        tasks.insert(key);
+        true
+    }
+
+    pub(crate) fn finish_background_task(file_id: i64, thumbnail_size: u32) {
+        let key = Self::generation_lock_key(file_id, thumbnail_size);
+        if let Ok(mut tasks) = thumb_background_tasks().lock() {
+            tasks.remove(&key);
+        }
+    }
+
+    fn now_ts() -> i64 {
+        chrono::Utc::now().timestamp()
+    }
+
+    fn get_source_mtime(file_path: &str) -> Option<i64> {
+        fs::metadata(file_path)
+            .ok()
+            .and_then(|m| m.modified().ok())
+            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+            .map(|d| d.as_secs() as i64)
+    }
+
+    fn get_current_library_id() -> String {
+        t_config::load_app_config()
+            .map(|c| c.current_library_id)
+            .unwrap_or_else(|_| "default".to_string())
+    }
+
+    fn build_thumb_key(
+        library_id: &str,
+        file_id: i64,
+        thumbnail_size: u32,
+        source_mtime: Option<i64>,
+        orientation: i32,
+    ) -> String {
+        let mut hasher = blake3::Hasher::new();
+        hasher.update(b"lap-thumb-v1");
+        hasher.update(library_id.as_bytes());
+        hasher.update(&file_id.to_le_bytes());
+        hasher.update(&thumbnail_size.to_le_bytes());
+        hasher.update(&orientation.to_le_bytes());
+        hasher.update(&source_mtime.unwrap_or_default().to_le_bytes());
+        hasher.finalize().to_hex().to_string()
+    }
+
+    fn get_file_album_id(file_id: i64) -> Result<Option<i64>, String> {
+        AFile::get_file_info(file_id)
+            .map(|file| file.and_then(|f| f.album_id))
+            .map_err(|e| e.to_string())
+    }
+
+    fn get_thumb_cache_path_for_key(
+        library_id: &str,
+        album_id: i64,
+        thumb_key: &str,
+    ) -> Result<PathBuf, String> {
+        if thumb_key.len() < 2 {
+            return Err("Invalid thumbnail cache key".to_string());
+        }
+
+        let cache_root = t_config::get_app_cache_dir()?
+            .join(library_id)
+            .join(album_id.to_string());
+        Ok(cache_root
+            .join(&thumb_key[0..2])
+            .join(format!("{}.jpg", thumb_key)))
+    }
+
+    fn read_thumb_cache_bytes(
+        library_id: &str,
+        album_id: i64,
+        thumb_key: &str,
+    ) -> Result<Option<Vec<u8>>, String> {
+        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key)?;
+        if !path.exists() {
+            return Ok(None);
+        }
+        fs::read(path).map(Some).map_err(|e| e.to_string())
+    }
+
+    fn write_thumb_cache_bytes(
+        library_id: &str,
+        album_id: i64,
+        thumb_key: &str,
+        data: &[u8],
+    ) -> Result<PathBuf, String> {
+        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key)?;
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        fs::write(&path, data).map_err(|e| e.to_string())?;
+        Ok(path)
+    }
+
+    fn delete_thumb_cache_for_key(library_id: &str, album_id: i64, thumb_key: &str) {
+        if let Ok(path) = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key) {
+            let _ = fs::remove_file(path);
+        }
+    }
+
+    pub fn relocate_for_file(file_id: i64, old_album_id: i64, new_album_id: i64) -> Result<(), String> {
+        if old_album_id == new_album_id {
+            return Ok(());
+        }
+
+        let Some(thumb_key) = Self::fetch_thumb_key(file_id)? else {
+            return Ok(());
+        };
+
+        let library_id = Self::get_current_library_id();
+        let old_path = Self::get_thumb_cache_path_for_key(&library_id, old_album_id, &thumb_key)?;
+        if !old_path.exists() {
+            return Ok(());
+        }
+
+        let new_path = Self::get_thumb_cache_path_for_key(&library_id, new_album_id, &thumb_key)?;
+        if let Some(parent) = new_path.parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+
+        match fs::rename(&old_path, &new_path) {
+            Ok(_) => Ok(()),
+            Err(_) => {
+                fs::copy(&old_path, &new_path).map_err(|e| e.to_string())?;
+                let _ = fs::remove_file(old_path);
+                Ok(())
+            }
+        }
+    }
+
     /// Create a new thumbnail struct
-    pub fn new(
+    fn new_for_library(
         file_id: i64,
         file_path: &str,
         file_type: i64,
         orientation: i32,
         thumbnail_size: u32,
+        library_id: &str,
     ) -> Result<Option<Self>, String> {
         let (thumb_data, error_code) = match file_type {
             1 => {
@@ -2133,53 +2344,352 @@ impl AThumb {
             _ => (None, 1),
         };
 
+        let thumb_mtime = Self::get_source_mtime(file_path);
+        let thumb_key = thumb_data.as_ref().map(|_| {
+            Self::build_thumb_key(
+                library_id,
+                file_id,
+                thumbnail_size,
+                thumb_mtime,
+                orientation,
+            )
+        });
+
         Ok(Some(Self {
             id: None,
             file_id,
             error_code,
             thumb_data,
+            thumb_key,
+            thumb_mtime,
+            thumb_size: Some(thumbnail_size as i64),
+            updated_at: Some(Self::now_ts()),
             thumb_data_base64: None,
         }))
     }
+
+    // pub fn new(
+    //     file_id: i64,
+    //     file_path: &str,
+    //     file_type: i64,
+    //     orientation: i32,
+    //     thumbnail_size: u32,
+    // ) -> Result<Option<Self>, String> {
+    //     let library_id = Self::get_current_library_id();
+    //     Self::new_for_library(
+    //         file_id,
+    //         file_path,
+    //         file_type,
+    //         orientation,
+    //         thumbnail_size,
+    //         &library_id,
+    //     )
+    // }
 
     /// insert a thumbnail into db
     fn insert(&self) -> Result<usize, String> {
         let conn = open_conn()?;
         let result = conn
             .execute(
-                "INSERT OR IGNORE INTO athumbs (file_id, error_code, thumb_data) 
-                VALUES (?1, ?2, ?3)",
-                params![self.file_id, self.error_code, self.thumb_data,],
+                "INSERT OR REPLACE INTO athumbs (file_id, error_code, thumb_data, thumb_key, thumb_mtime, thumb_size, updated_at) 
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![
+                    self.file_id,
+                    self.error_code,
+                    self.thumb_data,
+                    self.thumb_key,
+                    self.thumb_mtime,
+                    self.thumb_size,
+                    self.updated_at,
+                ],
             )
             .map_err(|e| e.to_string())?;
         Ok(result) // 0: already exists, ignore, 1: inserted
     }
 
+    fn hydrate_output_bytes_for_library(mut thumb: Self, library_id: &str) -> Result<Self, String> {
+        if thumb.thumb_data.is_none() {
+            if let Some(key) = thumb.thumb_key.as_ref() {
+                if let Some(album_id) = Self::get_file_album_id(thumb.file_id)? {
+                    thumb.thumb_data = Self::read_thumb_cache_bytes(library_id, album_id, key)?;
+                }
+            }
+        }
+        thumb.thumb_data_base64 = thumb
+            .thumb_data
+            .as_ref()
+            .map(|data| general_purpose::STANDARD.encode(data));
+        Ok(thumb)
+    }
+
     /// fetch a thumbnail from db by file_id
     pub fn fetch(file_id: i64) -> Result<Option<Self>, String> {
+        let library_id = Self::get_current_library_id();
+        Self::fetch_for_library(file_id, &library_id)
+    }
+
+    pub fn fetch_for_library(file_id: i64, library_id: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         let result = conn
             .query_row(
-                "SELECT id, file_id, error_code, thumb_data 
+                "SELECT id, file_id, error_code, thumb_data, thumb_key, thumb_mtime, thumb_size, updated_at
                 FROM athumbs WHERE file_id = ?1",
                 params![file_id],
                 |row| {
-                    let thumb_data: Option<Vec<u8>> = row.get(3)?;
-                    let thumb_data_base64 = thumb_data
-                        .as_ref()
-                        .map(|data| general_purpose::STANDARD.encode(data));
                     Ok(Self {
                         id: Some(row.get(0)?),
                         file_id: row.get(1)?,
                         error_code: row.get(2)?,
-                        thumb_data,
-                        thumb_data_base64,
+                        thumb_data: row.get(3)?,
+                        thumb_key: row.get(4)?,
+                        thumb_mtime: row.get(5)?,
+                        thumb_size: row.get(6)?,
+                        updated_at: row.get(7)?,
+                        thumb_data_base64: None,
                     })
                 },
             )
             .optional()
             .map_err(|e| e.to_string())?;
-        Ok(result)
+        result
+            .map(|thumb| Self::hydrate_output_bytes_for_library(thumb, library_id))
+            .transpose()
+    }
+
+    fn is_stale(&self, file_path: &str, thumbnail_size: u32) -> bool {
+        let current_mtime = Self::get_source_mtime(file_path);
+        self.thumb_size != Some(thumbnail_size as i64) || self.thumb_mtime != current_mtime
+    }
+
+    fn fetch_thumb_key(file_id: i64) -> Result<Option<String>, String> {
+        let conn = open_conn()?;
+        conn.query_row(
+            "SELECT thumb_key FROM athumbs WHERE file_id = ?1",
+            params![file_id],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| e.to_string())
+    }
+
+    fn persist_cache_and_clear_blob(
+        mut thumbnail: Self,
+        file_path: &str,
+        thumbnail_size: u32,
+        orientation: i32,
+    ) -> Result<Self, String> {
+        let Some(data) = thumbnail.thumb_data.as_ref() else {
+            return Self::hydrate_output_bytes_for_library(thumbnail, &Self::get_current_library_id());
+        };
+
+        if Self::is_png_bytes(data) {
+            return Ok(Self {
+                thumb_data: None,
+                thumb_key: None,
+                thumb_data_base64: None,
+                ..thumbnail
+            });
+        }
+
+        let library_id = Self::get_current_library_id();
+        let thumb_mtime = Self::get_source_mtime(file_path);
+        let now = Self::now_ts();
+        let thumb_key = thumbnail.thumb_key.clone().unwrap_or_else(|| {
+            Self::build_thumb_key(
+                &library_id,
+                thumbnail.file_id,
+                thumbnail_size,
+                thumb_mtime,
+                orientation,
+            )
+        });
+
+        let album_id = Self::get_file_album_id(thumbnail.file_id)?
+            .ok_or_else(|| format!("Album not found for thumbnail file: {}", thumbnail.file_id))?;
+        Self::write_thumb_cache_bytes(&library_id, album_id, &thumb_key, data)?;
+
+        let conn = open_conn()?;
+        conn.execute(
+            "UPDATE athumbs
+            SET thumb_key = ?2, thumb_mtime = ?3, thumb_size = ?4, updated_at = ?5, thumb_data = NULL
+            WHERE file_id = ?1",
+            params![
+                thumbnail.file_id,
+                thumb_key,
+                thumb_mtime,
+                thumbnail_size as i64,
+                now,
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+
+        thumbnail.thumb_key = Some(thumb_key);
+        thumbnail.thumb_mtime = thumb_mtime;
+        thumbnail.thumb_size = Some(thumbnail_size as i64);
+        thumbnail.updated_at = Some(now);
+        Self::hydrate_output_bytes_for_library(thumbnail, &library_id)
+    }
+
+    fn ensure_cached(
+        thumbnail: Self,
+        file_path: &str,
+        thumbnail_size: u32,
+        orientation: i32,
+    ) -> Result<Self, String> {
+        if thumbnail.error_code != 0 {
+            return Ok(thumbnail);
+        }
+
+        if thumbnail.thumb_data.is_some() {
+            return Self::persist_cache_and_clear_blob(
+                thumbnail,
+                file_path,
+                thumbnail_size,
+                orientation,
+            );
+        }
+
+        if thumbnail.thumb_key.is_some() {
+            return Self::hydrate_output_bytes_for_library(thumbnail, &Self::get_current_library_id());
+        }
+
+        Ok(thumbnail)
+    }
+
+    fn create_cache_backed_thumb_for_library(
+        file_id: i64,
+        file_path: &str,
+        file_type: i64,
+        orientation: i32,
+        thumbnail_size: u32,
+        library_id: &str,
+    ) -> Result<Option<Self>, String> {
+        let mut athumb = match Self::new_for_library(
+            file_id,
+            file_path,
+            file_type,
+            orientation,
+            thumbnail_size,
+            library_id,
+        ) {
+            Ok(Some(athumb)) => athumb,
+            _ => Self {
+                id: None,
+                file_id,
+                error_code: 1,
+                thumb_data: None,
+                thumb_key: None,
+                thumb_mtime: None,
+                thumb_size: Some(thumbnail_size as i64),
+                updated_at: Some(Self::now_ts()),
+                thumb_data_base64: None,
+            },
+        };
+
+        if athumb.error_code == 0 {
+            if let (Some(data), Some(key)) = (athumb.thumb_data.as_ref(), athumb.thumb_key.as_ref())
+            {
+                let album_id = Self::get_file_album_id(file_id)?
+                    .ok_or_else(|| format!("Album not found for thumbnail file: {}", file_id))?;
+                Self::write_thumb_cache_bytes(library_id, album_id, key, data)?;
+                athumb.thumb_data = None;
+            }
+        }
+
+        athumb.insert()?;
+        Self::fetch_for_library(file_id, library_id)
+    }
+
+    fn create_cache_backed_thumb(
+        file_id: i64,
+        file_path: &str,
+        file_type: i64,
+        orientation: i32,
+        thumbnail_size: u32,
+    ) -> Result<Option<Self>, String> {
+        let library_id = Self::get_current_library_id();
+        Self::create_cache_backed_thumb_for_library(
+            file_id,
+            file_path,
+            file_type,
+            orientation,
+            thumbnail_size,
+            &library_id,
+        )
+    }
+
+    pub fn get_thumb_if_available(
+        file_id: i64,
+        file_path: &str,
+        thumbnail_size: u32,
+        orientation: i32,
+        force_regenerate: bool,
+    ) -> Result<Option<Self>, String> {
+        if force_regenerate {
+            let _ = Self::delete(file_id);
+            return Ok(None);
+        }
+
+        if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
+            if thumbnail.error_code != 0 {
+                return Ok(Some(thumbnail));
+            }
+
+            if thumbnail.is_stale(file_path, thumbnail_size) {
+                let _ = Self::delete(file_id);
+                return Ok(None);
+            }
+
+            let hydrated = Self::ensure_cached(thumbnail, file_path, thumbnail_size, orientation)?;
+            if hydrated.thumb_data.is_some() || hydrated.thumb_key.is_some() {
+                return Ok(Some(hydrated));
+            }
+
+            let _ = Self::delete(file_id);
+        }
+
+        Ok(None)
+    }
+
+    pub fn schedule_background_generation_for_library(
+        app_handle: tauri::AppHandle,
+        file_id: i64,
+        file_path: String,
+        file_type: i64,
+        orientation: i32,
+        thumbnail_size: u32,
+        album_id: i64,
+        force_regenerate: bool,
+    ) {
+        if !Self::try_begin_background_task(file_id, thumbnail_size) {
+            return;
+        }
+
+        tauri::async_runtime::spawn(async move {
+            let generated = tauri::async_runtime::spawn_blocking(move || {
+                Self::get_or_create_thumb(
+                    file_id,
+                    &file_path,
+                    file_type,
+                    orientation,
+                    thumbnail_size,
+                    force_regenerate,
+                )
+            })
+            .await;
+
+            if matches!(generated, Ok(Ok(Some(_)))) && album_id > 0 {
+                let _ = app_handle.emit(
+                    "thumbnail_ready",
+                    serde_json::json!({
+                        "album_id": album_id,
+                        "file_ids": [file_id],
+                    }),
+                );
+            }
+
+            Self::finish_background_task(file_id, thumbnail_size);
+        });
     }
 
     /// get or create a thumbnail
@@ -2191,58 +2701,70 @@ impl AThumb {
         thumbnail_size: u32,
         force_regenerate: bool,
     ) -> Result<Option<Self>, String> {
-        // If force_regenerate is true, delete the existing thumbnail if any
         if force_regenerate {
             let _ = Self::delete(file_id);
-        } else {
-            // Check if the thumbnail exists
-            if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
-                if thumbnail.error_code != 0 || thumbnail.thumb_data.is_none() {
-                    let _ = Self::delete(file_id);
-                } else {
-                    return Ok(Some(thumbnail));
-                }
+        } else if let Some(thumb) =
+            Self::get_thumb_if_available(file_id, file_path, thumbnail_size, orientation, false)?
+        {
+            return Ok(Some(thumb));
+        }
+
+        let _generation_guard = Self::acquire_generation_guard(file_id, thumbnail_size);
+
+        if !force_regenerate {
+            if let Some(hydrated) =
+                Self::get_thumb_if_available(file_id, file_path, thumbnail_size, orientation, false)?
+            {
+                return Ok(Some(hydrated));
             }
         }
 
-        // Try to create a new thumbnail.
-        let athumb = match Self::new(file_id, file_path, file_type, orientation, thumbnail_size) {
-            Ok(Some(athumb)) => athumb,
-            _ => {
-                // If `new` fails for any reason, create a thumbnail with an error code.
-                Self {
-                    id: None,
-                    file_id,
-                    error_code: 1,
-                    thumb_data: None,
-                    thumb_data_base64: None,
-                }
-            }
-        };
-        athumb.insert()?;
-
-        Self::fetch(file_id)
+        Self::create_cache_backed_thumb(file_id, file_path, file_type, orientation, thumbnail_size)
     }
 
-    /// fetch raw thumbnail bytes from db (no base64 encoding) for protocol handler
-    pub fn fetch_raw(file_id: i64) -> Result<Option<Vec<u8>>, String> {
-        let conn = open_conn()?;
-        let result = conn
-            .query_row(
-                "SELECT thumb_data FROM athumbs WHERE file_id = ?1 AND error_code = 0",
-                params![file_id],
-                |row| {
-                    let data: Option<Vec<u8>> = row.get(0)?;
-                    Ok(data)
-                },
-            )
-            .optional()
-            .map_err(|e| e.to_string())?;
-        Ok(result.flatten())
+    /// fetch raw thumbnail bytes for protocol handler
+    pub fn fetch_raw_for_library(file_id: i64, library_id: &str) -> Result<Option<Vec<u8>>, String> {
+        if let Some(thumb) = Self::fetch_for_library(file_id, library_id)?
+            .filter(|thumb| thumb.error_code == 0)
+        {
+            if let Some(data) = thumb.thumb_data {
+                return Ok(Some(data));
+            }
+
+            let file = AFile::get_file_info(file_id)
+                .map_err(|e| e.to_string())?
+                .ok_or_else(|| format!("File not found for thumbnail: {}", file_id))?;
+            let file_path = file
+                .file_path
+                .ok_or_else(|| format!("File path not found for thumbnail: {}", file_id))?;
+            let file_type = file.file_type.unwrap_or(0);
+            let orientation = file.e_orientation.unwrap_or(1) as i32;
+            let thumbnail_size = thumb.thumb_size.unwrap_or(200).max(1) as u32;
+
+            return Ok(
+                Self::create_cache_backed_thumb_for_library(
+                    file_id,
+                    &file_path,
+                    file_type,
+                    orientation,
+                    thumbnail_size,
+                    library_id,
+                )?
+                .and_then(|thumb| thumb.thumb_data),
+            );
+        }
+
+        Ok(None)
     }
 
     /// delete a thumbnail from db
     pub fn delete(file_id: i64) -> Result<usize, String> {
+        if let Ok(Some(key)) = Self::fetch_thumb_key(file_id) {
+            let library_id = Self::get_current_library_id();
+            if let Ok(Some(album_id)) = Self::get_file_album_id(file_id) {
+                Self::delete_thumb_cache_for_key(&library_id, album_id, &key);
+            }
+        }
         let conn = open_conn()?;
         let result = conn
             .execute("DELETE FROM athumbs WHERE file_id = ?1", params![file_id])
@@ -2619,17 +3141,9 @@ impl Person {
             Some((dyn_img, w, h))
         };
 
-        // Helper to load thumbnail from DB
+        // Helper to load thumbnail from cache-backed thumbnail storage
         let load_thumbnail = || -> Option<(image::DynamicImage, u32, u32)> {
-            let thumb_data: Option<Vec<u8>> = conn
-                .query_row(
-                    "SELECT thumb_data FROM athumbs WHERE file_id = ?1",
-                    params![file_id],
-                    |row| row.get(0),
-                )
-                .ok()?;
-
-            let data = thumb_data?;
+            let data = AThumb::fetch(file_id).ok()??.thumb_data?;
             let img = image::load_from_memory(&data).ok()?;
             let (w, h) = img.dimensions();
             Some((img, w, h))
@@ -3101,10 +3615,7 @@ pub struct ACamera {
 }
 
 fn sort_labeled_counts(labels: &mut Vec<String>, counts: &mut Vec<i64>, sort: i64) {
-    let mut pairs: Vec<(String, i64)> = labels
-        .drain(..)
-        .zip(counts.drain(..))
-        .collect();
+    let mut pairs: Vec<(String, i64)> = labels.drain(..).zip(counts.drain(..)).collect();
 
     match sort {
         1 => pairs.sort_by(|a, b| b.0.cmp(&a.0)),
@@ -3157,17 +3668,29 @@ impl ACamera {
             .map(|(make, (mut models, mut counts))| {
                 sort_labeled_counts(&mut models, &mut counts, sort);
                 Self {
-                make,
-                models,
-                counts,
-            }
+                    make,
+                    models,
+                    counts,
+                }
             })
             .collect();
 
         match sort {
             1 => cameras.sort_by(|a, b| b.make.cmp(&a.make)),
-            2 => cameras.sort_by(|a, b| a.counts.iter().sum::<i64>().cmp(&b.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
-            3 => cameras.sort_by(|a, b| b.counts.iter().sum::<i64>().cmp(&a.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
+            2 => cameras.sort_by(|a, b| {
+                a.counts
+                    .iter()
+                    .sum::<i64>()
+                    .cmp(&b.counts.iter().sum::<i64>())
+                    .then_with(|| a.make.cmp(&b.make))
+            }),
+            3 => cameras.sort_by(|a, b| {
+                b.counts
+                    .iter()
+                    .sum::<i64>()
+                    .cmp(&a.counts.iter().sum::<i64>())
+                    .then_with(|| a.make.cmp(&b.make))
+            }),
             _ => cameras.sort_by(|a, b| a.make.cmp(&b.make)),
         }
 
@@ -3220,17 +3743,29 @@ impl ALens {
             .map(|(make, (mut models, mut counts))| {
                 sort_labeled_counts(&mut models, &mut counts, sort);
                 Self {
-                make,
-                models,
-                counts,
-            }
+                    make,
+                    models,
+                    counts,
+                }
             })
             .collect();
 
         match sort {
             1 => lenses.sort_by(|a, b| b.make.cmp(&a.make)),
-            2 => lenses.sort_by(|a, b| a.counts.iter().sum::<i64>().cmp(&b.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
-            3 => lenses.sort_by(|a, b| b.counts.iter().sum::<i64>().cmp(&a.counts.iter().sum::<i64>()).then_with(|| a.make.cmp(&b.make))),
+            2 => lenses.sort_by(|a, b| {
+                a.counts
+                    .iter()
+                    .sum::<i64>()
+                    .cmp(&b.counts.iter().sum::<i64>())
+                    .then_with(|| a.make.cmp(&b.make))
+            }),
+            3 => lenses.sort_by(|a, b| {
+                b.counts
+                    .iter()
+                    .sum::<i64>()
+                    .cmp(&a.counts.iter().sum::<i64>())
+                    .then_with(|| a.make.cmp(&b.make))
+            }),
             _ => lenses.sort_by(|a, b| a.make.cmp(&b.make)),
         }
 
@@ -3286,19 +3821,31 @@ impl ALocation {
             .map(|((cc, admin1), (mut names, mut counts))| {
                 sort_labeled_counts(&mut names, &mut counts, sort);
                 Self {
-                cc,
-                admin1,
-                names,
-                counts,
-            }
+                    cc,
+                    admin1,
+                    names,
+                    counts,
+                }
             })
             .collect();
 
         // Sort the locations by admin1
         match sort {
             1 => locations.sort_by(|a, b| b.admin1.cmp(&a.admin1)),
-            2 => locations.sort_by(|a, b| a.counts.iter().sum::<i64>().cmp(&b.counts.iter().sum::<i64>()).then_with(|| a.admin1.cmp(&b.admin1))),
-            3 => locations.sort_by(|a, b| b.counts.iter().sum::<i64>().cmp(&a.counts.iter().sum::<i64>()).then_with(|| a.admin1.cmp(&b.admin1))),
+            2 => locations.sort_by(|a, b| {
+                a.counts
+                    .iter()
+                    .sum::<i64>()
+                    .cmp(&b.counts.iter().sum::<i64>())
+                    .then_with(|| a.admin1.cmp(&b.admin1))
+            }),
+            3 => locations.sort_by(|a, b| {
+                b.counts
+                    .iter()
+                    .sum::<i64>()
+                    .cmp(&a.counts.iter().sum::<i64>())
+                    .then_with(|| a.admin1.cmp(&b.admin1))
+            }),
             _ => locations.sort_by(|a, b| a.admin1.cmp(&b.admin1)),
         }
 
@@ -3559,12 +4106,20 @@ fn create_db_internal() -> Result<(), String> {
     .map_err(|e| e.to_string())?;
 
     // file thumbnail table
+    // NOTE: New columns (thumb_key, thumb_mtime, thumb_size, updated_at) are added
+    // by migration v3. They are included here so that fresh databases get the full
+    // schema immediately; for existing databases CREATE TABLE IF NOT EXISTS is a
+    // no-op and migration v3 will ALTER TABLE to add them.
     conn.execute(
         "CREATE TABLE IF NOT EXISTS athumbs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_id INTEGER NOT NULL UNIQUE,
             error_code INTEGER NOT NULL,
             thumb_data BLOB,
+            thumb_key TEXT,
+            thumb_mtime INTEGER,
+            thumb_size INTEGER,
+            updated_at INTEGER,
             FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
         )",
         [],
@@ -3575,6 +4130,12 @@ fn create_db_internal() -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
+    // thumb_key index: may fail on pre-migration DBs where the column doesn't
+    // exist yet. Migration v3 will create it after adding the column.
+    let _ = conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_athumbs_thumb_key ON athumbs(thumb_key)",
+        [],
+    );
 
     // tags table
     conn.execute(

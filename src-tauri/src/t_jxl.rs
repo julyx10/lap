@@ -1,9 +1,8 @@
 use exif::{In, Reader, Tag};
-use image::{DynamicImage, ImageDecoder, ImageFormat};
+use image::{DynamicImage, ImageDecoder};
 use jxl_oxide::integration::JxlDecoder;
 use std::fs::File;
 use std::io::BufReader;
-use std::io::Cursor;
 use std::path::Path;
 
 fn apply_orientation(img: DynamicImage, orientation: i32) -> DynamicImage {
@@ -75,28 +74,10 @@ pub fn get_jxl_dimensions(file_path: &str) -> Result<(u32, u32), String> {
 
 pub fn get_jxl_preview_image(file_path: &str, max_edge: u32) -> Result<Option<Vec<u8>>, String> {
     let image = decode_jxl_image(file_path)?;
-    let image = if max_edge > 0 {
-        image.resize(max_edge, max_edge, image::imageops::FilterType::Lanczos3)
-    } else {
-        image
-    };
-
-    let mut buf = Vec::new();
-    image
-        .to_rgb8()
-        .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
-        .map_err(|e| format!("Failed to encode JXL preview: {}", e))?;
-    Ok(Some(buf))
+    crate::t_image::resize_dynamic_image_to_jpeg(image, 1, max_edge).map(Some)
 }
 
 pub fn get_jxl_thumbnail(file_path: &str, thumbnail_size: u32) -> Result<Option<Vec<u8>>, String> {
     let image = decode_jxl_image(file_path)?;
-    let thumbnail = image.thumbnail(u32::MAX, thumbnail_size);
-
-    let mut buf = Vec::new();
-    thumbnail
-        .to_rgb8()
-        .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
-        .map_err(|e| format!("Failed to encode JXL thumbnail: {}", e))?;
-    Ok(Some(buf))
+    crate::t_image::resize_dynamic_image_to_jpeg(image, 1, thumbnail_size).map(Some)
 }

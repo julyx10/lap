@@ -48,7 +48,7 @@
   },
   "bundle": {
     "active": true,
-    "category": "Graphics",
+    "category": "Graphics and Design",
     "targets": "all",
     "createUpdaterArtifacts": true,
     "icon": [

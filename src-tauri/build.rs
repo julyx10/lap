@@ -44,6 +44,7 @@ fn build_libraw() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
 
     println!("cargo:rerun-if-changed=src/libraw_shim.cpp");
+    println!("cargo:rerun-if-changed=src/jpeg_shim.cpp");
     println!("cargo:rerun-if-changed=third_party/LibRaw");
     println!("cargo:rerun-if-changed=third_party/libjpeg-turbo");
 
@@ -119,7 +120,14 @@ fn build_libraw() {
         .include(&libraw_source)
         .include(libraw_source.join("libraw"))
         .warnings(false)
-        .file("src/libraw_shim.cpp");
+        .file("src/libraw_shim.cpp")
+        .file("src/jpeg_shim.cpp");
+
+    if let Some(jpeg) = &jpeg_build {
+        for inc in &jpeg.include_dirs {
+            shim.include(inc);
+        }
+    }
 
     if is_windows {
         shim.flag("/std:c++17")

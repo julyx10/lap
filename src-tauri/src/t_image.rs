@@ -6,8 +6,10 @@
  */
 use arboard::Clipboard;
 use exif::{In, Reader, Tag};
-use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader};
+use fast_image_resize as fir;
+use image::{DynamicImage, GenericImageView, ImageReader};
 use once_cell::sync::Lazy;
+use rayon::prelude::*;
 use rusqlite::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
@@ -16,9 +18,10 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::Cursor;
 use std::panic;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
+use walkdir::WalkDir;
 
 #[cfg(target_os = "macos")]
 use std::process::Command;
@@ -123,6 +126,123 @@ fn apply_orientation(img: DynamicImage, orientation: i32) -> DynamicImage {
     }
 }
 
+fn compute_thumbnail_dimensions(width: u32, height: u32, thumbnail_size: u32) -> (u32, u32) {
+    if width == 0 || height == 0 || thumbnail_size == 0 {
+        return (1, 1);
+    }
+
+    if width <= thumbnail_size && height <= thumbnail_size {
+        return (width.max(1), height.max(1));
+    }
+
+    let max_edge = width.max(height) as f32;
+    let scale = thumbnail_size as f32 / max_edge;
+    let dst_w = ((width as f32) * scale).round().max(1.0) as u32;
+    let dst_h = ((height as f32) * scale).round().max(1.0) as u32;
+    (dst_w, dst_h)
+}
+
+fn encode_jpeg_rgb8(rgb: &image::RgbImage) -> Result<Vec<u8>, String> {
+    crate::t_jpeg::encode_rgb8(rgb, 85)
+        .map_err(|e| format!("Failed to encode JPEG thumbnail: {}", e))
+}
+
+pub(crate) fn resize_dynamic_image_to_jpeg(
+    img: DynamicImage,
+    orientation: i32,
+    thumbnail_size: u32,
+) -> Result<Vec<u8>, String> {
+    let adjusted = apply_orientation(img, orientation);
+    let rgba = adjusted.to_rgba8();
+    let (src_w, src_h) = rgba.dimensions();
+    let (dst_w, dst_h) = compute_thumbnail_dimensions(src_w, src_h, thumbnail_size);
+
+    if src_w == dst_w && src_h == dst_h {
+        return encode_jpeg_rgb8(&DynamicImage::ImageRgba8(rgba).to_rgb8());
+    }
+
+    let src_image = fir::images::Image::from_vec_u8(src_w, src_h, rgba.into_raw(), fir::PixelType::U8x4)
+        .map_err(|e| format!("Failed to prepare source image for resize: {}", e))?;
+    let mut dst_image = fir::images::Image::new(dst_w, dst_h, fir::PixelType::U8x4);
+    let mut resizer = fir::Resizer::new();
+    let options =
+        fir::ResizeOptions::new().resize_alg(fir::ResizeAlg::Convolution(fir::FilterType::Bilinear));
+
+    resizer
+        .resize(&src_image, &mut dst_image, &options)
+        .map_err(|e| format!("Failed to resize thumbnail: {}", e))?;
+
+    let resized = image::RgbaImage::from_raw(dst_w, dst_h, dst_image.into_vec())
+        .ok_or_else(|| "Failed to build resized RGBA image".to_string())?;
+    encode_jpeg_rgb8(&DynamicImage::ImageRgba8(resized).to_rgb8())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchThumbnailStats {
+    pub processed: usize,
+    pub succeeded: usize,
+    pub failed: usize,
+}
+
+pub fn generate_directory_thumbnails(
+    dir_path: &str,
+    output_dir: &str,
+    thumbnail_size: u32,
+) -> Result<BatchThumbnailStats, String> {
+    let dir_root = Path::new(dir_path);
+    let files: Vec<PathBuf> = WalkDir::new(dir_path)
+        .into_iter()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().is_file())
+        .map(|entry| entry.into_path())
+        .collect();
+
+    fs::create_dir_all(output_dir)
+        .map_err(|e| format!("Failed to create thumbnail output directory: {}", e))?;
+
+    let processed = files.len();
+    let results: Vec<bool> = files
+        .par_iter()
+        .map(|path| {
+            let path_str = path.to_string_lossy().to_string();
+            let Some(file_type) = t_utils::get_file_type(&path_str) else {
+                return false;
+            };
+            if file_type != 1 && file_type != 3 {
+                return false;
+            }
+
+            let orientation = get_image_orientation(&path_str);
+            let thumb = if file_type == 3 {
+                get_raw_thumbnail(&path_str, orientation, thumbnail_size)
+            } else {
+                get_image_thumbnail(&path_str, orientation, thumbnail_size)
+            };
+
+            let Ok(Some(data)) = thumb else {
+                return false;
+            };
+
+            let relative_path = path.strip_prefix(dir_root).ok().unwrap_or(path.as_path());
+            let output_path = Path::new(output_dir).join(relative_path).with_extension("jpg");
+            if let Some(parent) = output_path.parent() {
+                if fs::create_dir_all(parent).is_err() {
+                    return false;
+                }
+            }
+            fs::write(output_path, data).is_ok()
+        })
+        .collect();
+
+    let succeeded = results.iter().filter(|ok| **ok).count();
+    Ok(BatchThumbnailStats {
+        processed,
+        succeeded,
+        failed: processed.saturating_sub(succeeded),
+    })
+}
+
 /// Get a thumbnail from an image file path
 pub fn get_image_thumbnail(
     file_path: &str,
@@ -143,52 +263,10 @@ pub fn get_image_thumbnail(
         // Open and decode the image
         let img_reader =
             ImageReader::open(file_path).map_err(|e| format!("Failed to open image: {}", e))?;
-        let img_format = img_reader.format().ok_or("Could not detect image format")?;
         let img = img_reader
             .decode()
             .map_err(|e| format!("Failed to decode image: {}", e))?;
-        let thumbnail = img.thumbnail(u32::MAX, thumbnail_size);
-
-        // Adjust the image orientation based on the EXIF orientation value
-        let adjusted_thumbnail = apply_orientation(thumbnail, orientation);
-
-        // Determine output format based on input format
-        let output_format = if img_format == ImageFormat::Png {
-            ImageFormat::Png
-        } else {
-            ImageFormat::Jpeg
-        };
-
-        // Save the thumbnail to an in-memory buffer
-        let mut buf = Vec::new();
-
-        if output_format == ImageFormat::Jpeg {
-            // For JPEG, convert to RGB8 to remove alpha channel
-            let rgb_image = adjusted_thumbnail.to_rgb8();
-            match rgb_image.write_to(&mut Cursor::new(&mut buf), output_format) {
-                Ok(()) => Ok(Some(buf)),
-                Err(e) => {
-                    eprintln!(
-                        "Failed to write thumbnail to buffer as {:?}: {}",
-                        output_format, e
-                    );
-                    Ok(None)
-                }
-            }
-        } else {
-            // For PNG, keep RGBA8 to preserve alpha channel
-            let rgba_image = adjusted_thumbnail.to_rgba8();
-            match rgba_image.write_to(&mut Cursor::new(&mut buf), output_format) {
-                Ok(()) => Ok(Some(buf)),
-                Err(e) => {
-                    eprintln!(
-                        "Failed to write thumbnail to buffer as {:?}: {}",
-                        output_format, e
-                    );
-                    Ok(None)
-                }
-            }
-        }
+        resize_dynamic_image_to_jpeg(img, orientation, thumbnail_size).map(Some)
     });
 
     match result {
@@ -350,10 +428,7 @@ pub fn get_raw_preview_image(file_path: &str) -> Result<Option<Vec<u8>>, String>
         let image = image::load_from_memory(&preview)
             .map_err(|e| format!("Failed to decode embedded RAW preview: {}", e))?;
         let image = apply_orientation(image, get_jpeg_orientation_from_bytes(&preview));
-        let mut buf = Vec::new();
-        image
-            .to_rgb8()
-            .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
+        let buf = crate::t_jpeg::encode_rgb8(&image.to_rgb8(), 85)
             .map_err(|e| format!("Failed to encode embedded RAW preview: {}", e))?;
         return Ok(Some(buf));
     }
@@ -431,16 +506,12 @@ pub fn get_raw_thumbnail(
     if let Ok(Some(preview)) = select_embedded_jpeg_for_thumbnail(file_path, thumbnail_size) {
         let img = image::load_from_memory(&preview)
             .map_err(|e| format!("Failed to decode RAW preview image: {}", e))?;
-        let thumbnail = img.thumbnail(u32::MAX, thumbnail_size);
-        let adjusted_thumbnail =
-            apply_orientation(thumbnail, get_jpeg_orientation_from_bytes(&preview));
-
-        let rgb_image = adjusted_thumbnail.to_rgb8();
-        let mut buf = Vec::new();
-        rgb_image
-            .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
-            .map_err(|e| format!("Failed to encode RAW thumbnail as JPEG: {}", e))?;
-        return Ok(Some(buf));
+        return resize_dynamic_image_to_jpeg(
+            img,
+            get_jpeg_orientation_from_bytes(&preview),
+            thumbnail_size,
+        )
+        .map(Some);
     }
 
     #[cfg(target_os = "macos")]

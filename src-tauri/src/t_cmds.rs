@@ -111,6 +111,16 @@ pub fn get_all_albums() -> Result<Vec<Album>, String> {
     Album::get_all_albums().map_err(|e| format!("Error while getting all albums: {}", e))
 }
 
+/// batch-generate thumbnails for a directory into an output folder
+#[tauri::command]
+pub fn generate_directory_thumbnails(
+    dir_path: &str,
+    output_dir: &str,
+    thumbnail_size: u32,
+) -> Result<t_image::BatchThumbnailStats, String> {
+    t_image::generate_directory_thumbnails(dir_path, output_dir, thumbnail_size)
+}
+
 /// get one album
 #[tauri::command]
 pub fn get_album(album_id: i64) -> Result<Album, String> {
@@ -150,8 +160,22 @@ pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, Strin
 /// remove an album
 #[tauri::command]
 pub fn remove_album(id: i64) -> Result<usize, String> {
-    Album::delete_from_db(id)
+    let result = Album::delete_from_db(id)
         .map_err(|e| format!("Error while removing album with id {}: {}", id, e))
+        ?;
+
+    let library_id = crate::t_config::load_app_config()
+        .map(|c| c.current_library_id)
+        .unwrap_or_else(|_| "default".to_string());
+    let album_cache_dir = crate::t_config::get_app_cache_dir()
+        .map(|dir| dir.join(library_id).join(id.to_string()))
+        .map_err(|e| format!("Error while resolving album thumbnail cache path: {}", e))?;
+    if album_cache_dir.exists() {
+        std::fs::remove_dir_all(&album_cache_dir)
+            .map_err(|e| format!("Error while removing album thumbnail cache: {}", e))?;
+    }
+
+    Ok(result)
 }
 
 /// set album display order
@@ -463,12 +487,25 @@ pub fn move_file(
     new_folder_id: i64,
     new_folder_path: &str,
 ) -> Option<String> {
+    let old_album_id = AFile::get_file_info(file_id)
+        .ok()
+        .flatten()
+        .and_then(|file| file.album_id);
+    let new_album_id = AFolder::get_by_id(new_folder_id)
+        .ok()
+        .flatten()
+        .map(|folder| folder.album_id);
+
     let moved_file = t_utils::move_file(file_path, new_folder_path);
     match moved_file {
         Some(new_path) => {
             // update the file's folder_id in the database
             let _ = AFile::update_column(file_id, "folder_id", &new_folder_id)
                 .map_err(|e| format!("Error while moving file in DB: {}", e));
+            if let (Some(old_album_id), Some(new_album_id)) = (old_album_id, new_album_id) {
+                let _ = AThumb::relocate_for_file(file_id, old_album_id, new_album_id)
+                    .map_err(|e| format!("Error while relocating thumbnail cache: {}", e));
+            }
             Some(new_path)
         }
         None => None,
@@ -508,6 +545,7 @@ pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
 /// get a file's thumb image, if not exist, create a new one
 #[tauri::command]
 pub async fn get_file_thumb(
+    app_handle: tauri::AppHandle,
     file_id: i64,
     file_path: &str,
     file_type: i64,
@@ -515,15 +553,30 @@ pub async fn get_file_thumb(
     thumbnail_size: u32,
     force_regenerate: bool,
 ) -> Result<Option<AThumb>, String> {
-    AThumb::get_or_create_thumb(
+    if let Some(thumb) =
+        AThumb::get_thumb_if_available(file_id, file_path, thumbnail_size, orientation, force_regenerate)
+            .map_err(|e| format!("Error while getting thumbnail: {}", e))?
+    {
+        return Ok(Some(thumb));
+    }
+
+    let album_id = AFile::get_file_info(file_id)
+        .map_err(|e| format!("Error while getting file info for thumbnail: {}", e))?
+        .and_then(|file| file.album_id)
+        .unwrap_or(0);
+
+    AThumb::schedule_background_generation_for_library(
+        app_handle,
         file_id,
-        file_path,
+        file_path.to_string(),
         file_type,
         orientation,
         thumbnail_size,
+        album_id,
         force_regenerate,
-    )
-    .map_err(|e| format!("Error while getting or creating thumbnail: {}", e))
+    );
+
+    Ok(None)
 }
 
 /// get a file's info

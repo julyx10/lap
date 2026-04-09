@@ -1,5 +1,5 @@
 use exif;
-use image::{DynamicImage, ImageBuffer, ImageFormat, Luma, Rgb, Rgba};
+use image::{DynamicImage, ImageBuffer, Luma, Rgb, Rgba};
 use std::ffi::CStr;
 use std::fs;
 use std::io::Cursor;
@@ -78,11 +78,8 @@ fn file_extension(file_path: &str) -> Option<String> {
 }
 
 fn encode_as_jpeg(img: &DynamicImage) -> Result<Vec<u8>, String> {
-    let mut buf = Vec::new();
-    DynamicImage::ImageRgb8(img.to_rgb8())
-        .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
-        .map_err(|e| format!("Failed to encode image as JPEG: {}", e))?;
-    Ok(buf)
+    crate::t_jpeg::encode_rgb8(&img.to_rgb8(), 85)
+        .map_err(|e| format!("Failed to encode image as JPEG: {}", e))
 }
 
 fn orient_image(img: DynamicImage, orientation: i32) -> DynamicImage {
