@@ -1110,11 +1110,18 @@ struct ProgressPayload {
     album_id: i64,
     current: u64,
     total: u64,
+    current_size: u64,
 }
 
 #[derive(serde::Serialize, Clone)]
 struct FinishedPayload {
     album_id: i64,
+}
+
+#[derive(serde::Serialize, Clone)]
+struct ThumbnailReadyPayload {
+    album_id: i64,
+    file_ids: Vec<i64>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
@@ -1177,7 +1184,11 @@ struct ThumbnailTask {
     file_type: i64,
     orientation: i32,
     thumbnail_size: u32,
+    file_size: u64,
 }
+
+const INDEX_THUMBNAIL_BATCH_SIZE: usize = 24;
+const INDEX_THUMBNAIL_FIRST_BATCH_SIZE: usize = 4;
 
 fn index_single_file(
     album_path: &str,
@@ -1206,6 +1217,7 @@ fn index_single_file(
                             file_type: ftype,
                             orientation: file.e_orientation.unwrap_or(1) as i32,
                             thumbnail_size,
+                            file_size: file.size.max(0) as u64,
                         });
                     } else {
                         eprintln!(
@@ -1228,6 +1240,61 @@ fn index_single_file(
             None
         }
     }
+}
+
+fn spawn_thumbnail_batch(
+    app_handle: &tauri::AppHandle,
+    album_id: i64,
+    thumbnail_tasks: &mut Vec<ThumbnailTask>,
+) -> tauri::async_runtime::JoinHandle<Result<(), String>> {
+    let tasks = std::mem::take(thumbnail_tasks);
+    let app_handle = app_handle.clone();
+    tauri::async_runtime::spawn(async move {
+        if tasks.is_empty() {
+            return Ok(());
+        }
+
+        let completed_ids = tauri::async_runtime::spawn_blocking(move || {
+            tasks
+                .par_iter()
+                .map(|task| {
+                    let _ = crate::t_sqlite::AThumb::get_or_create_thumb(
+                        task.file_id,
+                        &task.file_path,
+                        task.file_type,
+                        task.orientation,
+                        task.thumbnail_size,
+                        false,
+                    );
+                    task.file_id
+                })
+                .collect::<Vec<_>>()
+        })
+        .await
+        .map_err(|e| format!("Thumbnail batch task failed: {}", e))?;
+
+        let ready_ids = completed_ids.clone();
+        let _ = app_handle.emit(
+            "thumbnail_ready",
+            ThumbnailReadyPayload {
+                album_id,
+                file_ids: ready_ids,
+            },
+        );
+
+        let app_handle_for_embedding = app_handle.clone();
+        let embedding_ids = completed_ids;
+        tauri::async_runtime::spawn(async move {
+            let _ = tauri::async_runtime::spawn_blocking(move || {
+                let ai_state: State<crate::t_ai::AiState> = app_handle_for_embedding.state();
+                for file_id in &embedding_ids {
+                    let _ = crate::t_sqlite::AFile::generate_embedding(&ai_state, *file_id);
+                }
+            })
+            .await;
+        });
+        Ok(())
+    })
 }
 
 pub async fn index_album_worker(
@@ -1263,6 +1330,7 @@ pub async fn index_album_worker(
 
     // 3. Emit start progress
     let mut current_progress = resume_from;
+    let mut current_size = 0u64;
     app_handle
         .emit(
             "index_progress",
@@ -1270,6 +1338,7 @@ pub async fn index_album_worker(
                 album_id,
                 current: current_progress,
                 total: total_files,
+                current_size,
             },
         )
         .map_err(|e| e.to_string())?;
@@ -1281,6 +1350,7 @@ pub async fn index_album_worker(
     let mut is_cancelled = false;
     let mut traversed_count = 0u64;
     let mut thumbnail_tasks: Vec<ThumbnailTask> = Vec::new();
+    let mut thumbnail_batch_handles = Vec::new();
     for entry in WalkDir::new(&album.path).into_iter().filter_map(Result::ok) {
         // Check cancellation
         if let Some(&true) = cancellation_token.lock().unwrap().get(&album_id) {
@@ -1316,6 +1386,7 @@ pub async fn index_album_worker(
                             album_id,
                             current: current_progress,
                             total: total_files,
+                            current_size,
                         },
                     );
                     traversed_count += 1;
@@ -1330,7 +1401,33 @@ pub async fn index_album_worker(
                     thumbnail_size,
                     &mut all_files_map,
                 ) {
+                    current_size += task.file_size;
                     thumbnail_tasks.push(task);
+                    current_progress += 1;
+                    let _ = app_handle.emit(
+                        "index_progress",
+                        ProgressPayload {
+                            album_id,
+                            current: current_progress,
+                            total: total_files,
+                            current_size,
+                        },
+                    );
+                    if current_progress % 50 == 0 {
+                        let _ = Album::update_progress(album_id, current_progress, total_files);
+                    }
+                    let batch_threshold = if thumbnail_batch_handles.is_empty() {
+                        INDEX_THUMBNAIL_FIRST_BATCH_SIZE
+                    } else {
+                        INDEX_THUMBNAIL_BATCH_SIZE
+                    };
+                    if thumbnail_tasks.len() >= batch_threshold {
+                        thumbnail_batch_handles.push(spawn_thumbnail_batch(
+                            app_handle,
+                            album_id,
+                            &mut thumbnail_tasks,
+                        ));
+                    }
                 }
 
                 traversed_count += 1;
@@ -1339,50 +1436,20 @@ pub async fn index_album_worker(
     }
 
     if !thumbnail_tasks.is_empty() {
-        let completed_count = thumbnail_tasks
-            .par_iter()
-            .map(|task| {
-                let _ = crate::t_sqlite::AThumb::get_or_create_thumb(
-                    task.file_id,
-                    &task.file_path,
-                    task.file_type,
-                    task.orientation,
-                    task.thumbnail_size,
-                    false,
-                );
-                task.file_id
-            })
-            .collect::<Vec<_>>();
-
-        let ai_state: State<crate::t_ai::AiState> = app_handle.state();
-        for file_id in &completed_count {
-            let _ = crate::t_sqlite::AFile::generate_embedding(&ai_state, *file_id);
-        }
-
-        current_progress += completed_count.len() as u64;
-        let _ = app_handle.emit(
-            "index_progress",
-            ProgressPayload {
-                album_id,
-                current: current_progress,
-                total: total_files,
-            },
-        );
-        let _ = Album::update_progress(album_id, current_progress, total_files);
+        thumbnail_batch_handles.push(spawn_thumbnail_batch(
+            app_handle,
+            album_id,
+            &mut thumbnail_tasks,
+        ));
     }
 
-    if current_progress < total_files {
-        current_progress = total_files;
-        let _ = app_handle.emit(
-            "index_progress",
-            ProgressPayload {
-                album_id,
-                current: current_progress,
-                total: total_files,
-            },
-        );
-        let _ = Album::update_progress(album_id, current_progress, total_files);
+    for handle in thumbnail_batch_handles {
+        handle
+            .await
+            .map_err(|e| format!("Thumbnail batch join failed: {}", e))??;
     }
+
+    let _ = Album::update_progress(album_id, current_progress, total_files);
 
     clear_index_trace();
 

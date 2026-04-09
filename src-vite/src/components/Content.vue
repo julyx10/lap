@@ -1786,6 +1786,7 @@ const handleKeyDown = (e: any) => {
 // --- Indexing Logic ---
 let unlistenIndexProgress: (() => void) | undefined;
 let unlistenIndexFinished: (() => void) | undefined;
+let unlistenThumbnailReady: (() => void) | undefined;
 let unlistenTriggerNextAlbum: (() => void) | undefined;
 let unlistenRefreshContent: (() => void) | undefined;
 let unlistenFilesDeleted: (() => void) | undefined;
@@ -2233,10 +2234,16 @@ onMounted( async() => {
 
   // Indexing listeners
   unlistenIndexProgress = await listenIndexProgress(async (event: any) => {
-    const { album_id, current, total } = event.payload;
+    const { album_id, current, total, current_size } = event.payload;
     if (libConfig.index.albumQueue.length > 0 && libConfig.index.albumQueue[0] === album_id) {
         libConfig.index.indexed = current;
         libConfig.index.total = total;
+        if (
+          config.main.sidebarIndex === 0 &&
+          Number(libConfig.album.id || 0) === Number(album_id || 0)
+        ) {
+          totalFileSize.value = Number(current_size || 0);
+        }
     }
   });
 
@@ -2281,6 +2288,24 @@ onMounted( async() => {
         updateContent(true);
       }, 200);
     }
+  });
+
+  unlistenThumbnailReady = await listen('thumbnail_ready', async (event: any) => {
+    const { file_ids } = event.payload || {};
+    if (!Array.isArray(file_ids) || file_ids.length === 0) return;
+    if (fileList.value.length === 0) return;
+
+    const readyIds = new Set(
+      file_ids.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id) && id > 0)
+    );
+    if (readyIds.size === 0) return;
+
+    const loadedFiles = fileList.value.filter(
+      (file: any) => !file?.isPlaceholder && readyIds.has(Number(file.id || 0))
+    );
+    if (loadedFiles.length === 0) return;
+
+    getFileListThumb(loadedFiles, 0, 8);
   });
 
   // listen for external refresh requests (e.g. from folder context menu)
@@ -2362,6 +2387,7 @@ onBeforeUnmount(() => {
   if (unlistenTriggerNextAlbum) unlistenTriggerNextAlbum();
   if (unlistenIndexProgress) unlistenIndexProgress();
   if (unlistenIndexFinished) unlistenIndexFinished();
+  if (unlistenThumbnailReady) unlistenThumbnailReady();
   if (unlistenRefreshContent) unlistenRefreshContent();
   if (unlistenFilesDeleted) unlistenFilesDeleted();
   if (unlistenFaceIndexProgress) unlistenFaceIndexProgress();

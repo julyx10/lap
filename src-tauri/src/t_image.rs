@@ -147,7 +147,7 @@ fn encode_jpeg_rgb8(rgb: &image::RgbImage) -> Result<Vec<u8>, String> {
         .map_err(|e| format!("Failed to encode JPEG thumbnail: {}", e))
 }
 
-fn resize_dynamic_image_to_jpeg(
+pub(crate) fn resize_dynamic_image_to_jpeg(
     img: DynamicImage,
     orientation: i32,
     thumbnail_size: u32,

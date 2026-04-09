@@ -641,6 +641,12 @@ pub fn remove_library(id: &str) -> Result<(), String> {
         fs::remove_file(&db_path).map_err(|e| format!("Failed to delete database file: {}", e))?;
     }
 
+    let thumb_cache_dir = get_app_cache_dir()?.join(id);
+    if thumb_cache_dir.exists() {
+        fs::remove_dir_all(&thumb_cache_dir)
+            .map_err(|e| format!("Failed to delete thumbnail cache directory: {}", e))?;
+    }
+
     Ok(())
 }
 

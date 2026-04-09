@@ -24,12 +24,17 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::State;
+use tauri::{Emitter, State};
 
 static THUMB_GENERATION_LOCKS: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
+static THUMB_BACKGROUND_TASKS: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
 
 fn thumb_generation_locks() -> &'static Mutex<HashSet<String>> {
     THUMB_GENERATION_LOCKS.get_or_init(|| Mutex::new(HashSet::new()))
+}
+
+fn thumb_background_tasks() -> &'static Mutex<HashSet<String>> {
+    THUMB_BACKGROUND_TASKS.get_or_init(|| Mutex::new(HashSet::new()))
 }
 
 struct ThumbGenerationGuard {
@@ -386,6 +391,22 @@ impl AFolder {
                 FROM afolders
                 WHERE path = ?1",
                 params![folder_path],
+                Self::from_row,
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// fetch a folder row from db (by id)
+    pub fn get_by_id(id: i64) -> Result<Option<Self>, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .query_row(
+                "SELECT id, album_id, name, path, created_at, modified_at, is_favorite
+                FROM afolders
+                WHERE id = ?1",
+                params![id],
                 Self::from_row,
             )
             .optional()
@@ -1156,6 +1177,7 @@ impl AFile {
 
     // delete a file from db
     pub fn delete(id: i64) -> Result<usize, String> {
+        let _ = AThumb::delete(id);
         let conn = open_conn()?;
         let result = conn
             .execute("DELETE FROM afiles WHERE id = ?1", params![id])
@@ -2118,6 +2140,25 @@ impl AThumb {
         }
     }
 
+    pub(crate) fn try_begin_background_task(file_id: i64, thumbnail_size: u32) -> bool {
+        let key = Self::generation_lock_key(file_id, thumbnail_size);
+        let Ok(mut tasks) = thumb_background_tasks().lock() else {
+            return false;
+        };
+        if tasks.contains(&key) {
+            return false;
+        }
+        tasks.insert(key);
+        true
+    }
+
+    pub(crate) fn finish_background_task(file_id: i64, thumbnail_size: u32) {
+        let key = Self::generation_lock_key(file_id, thumbnail_size);
+        if let Ok(mut tasks) = thumb_background_tasks().lock() {
+            tasks.remove(&key);
+        }
+    }
+
     fn now_ts() -> i64 {
         chrono::Utc::now().timestamp()
     }
@@ -2153,14 +2194,24 @@ impl AThumb {
         hasher.finalize().to_hex().to_string()
     }
 
-    fn get_thumb_cache_path_for_key(library_id: &str, thumb_key: &str) -> Result<PathBuf, String> {
+    fn get_file_album_id(file_id: i64) -> Result<Option<i64>, String> {
+        AFile::get_file_info(file_id)
+            .map(|file| file.and_then(|f| f.album_id))
+            .map_err(|e| e.to_string())
+    }
+
+    fn get_thumb_cache_path_for_key(
+        library_id: &str,
+        album_id: i64,
+        thumb_key: &str,
+    ) -> Result<PathBuf, String> {
         if thumb_key.len() < 2 {
             return Err("Invalid thumbnail cache key".to_string());
         }
 
         let cache_root = t_config::get_app_cache_dir()?
-            .join("thumbs")
-            .join(library_id);
+            .join(library_id)
+            .join(album_id.to_string());
         Ok(cache_root
             .join(&thumb_key[0..2])
             .join(format!("{}.jpg", thumb_key)))
@@ -2168,9 +2219,10 @@ impl AThumb {
 
     fn read_thumb_cache_bytes(
         library_id: &str,
+        album_id: i64,
         thumb_key: &str,
     ) -> Result<Option<Vec<u8>>, String> {
-        let path = Self::get_thumb_cache_path_for_key(library_id, thumb_key)?;
+        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key)?;
         if !path.exists() {
             return Ok(None);
         }
@@ -2179,10 +2231,11 @@ impl AThumb {
 
     fn write_thumb_cache_bytes(
         library_id: &str,
+        album_id: i64,
         thumb_key: &str,
         data: &[u8],
     ) -> Result<PathBuf, String> {
-        let path = Self::get_thumb_cache_path_for_key(library_id, thumb_key)?;
+        let path = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key)?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
@@ -2190,9 +2243,39 @@ impl AThumb {
         Ok(path)
     }
 
-    fn delete_thumb_cache_for_key(library_id: &str, thumb_key: &str) {
-        if let Ok(path) = Self::get_thumb_cache_path_for_key(library_id, thumb_key) {
+    fn delete_thumb_cache_for_key(library_id: &str, album_id: i64, thumb_key: &str) {
+        if let Ok(path) = Self::get_thumb_cache_path_for_key(library_id, album_id, thumb_key) {
             let _ = fs::remove_file(path);
+        }
+    }
+
+    pub fn relocate_for_file(file_id: i64, old_album_id: i64, new_album_id: i64) -> Result<(), String> {
+        if old_album_id == new_album_id {
+            return Ok(());
+        }
+
+        let Some(thumb_key) = Self::fetch_thumb_key(file_id)? else {
+            return Ok(());
+        };
+
+        let library_id = Self::get_current_library_id();
+        let old_path = Self::get_thumb_cache_path_for_key(&library_id, old_album_id, &thumb_key)?;
+        if !old_path.exists() {
+            return Ok(());
+        }
+
+        let new_path = Self::get_thumb_cache_path_for_key(&library_id, new_album_id, &thumb_key)?;
+        if let Some(parent) = new_path.parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+
+        match fs::rename(&old_path, &new_path) {
+            Ok(_) => Ok(()),
+            Err(_) => {
+                fs::copy(&old_path, &new_path).map_err(|e| e.to_string())?;
+                let _ = fs::remove_file(old_path);
+                Ok(())
+            }
         }
     }
 
@@ -2327,7 +2410,9 @@ impl AThumb {
     fn hydrate_output_bytes_for_library(mut thumb: Self, library_id: &str) -> Result<Self, String> {
         if thumb.thumb_data.is_none() {
             if let Some(key) = thumb.thumb_key.as_ref() {
-                thumb.thumb_data = Self::read_thumb_cache_bytes(library_id, key)?;
+                if let Some(album_id) = Self::get_file_album_id(thumb.file_id)? {
+                    thumb.thumb_data = Self::read_thumb_cache_bytes(library_id, album_id, key)?;
+                }
             }
         }
         thumb.thumb_data_base64 = thumb
@@ -2419,7 +2504,9 @@ impl AThumb {
             )
         });
 
-        Self::write_thumb_cache_bytes(&library_id, &thumb_key, data)?;
+        let album_id = Self::get_file_album_id(thumbnail.file_id)?
+            .ok_or_else(|| format!("Album not found for thumbnail file: {}", thumbnail.file_id))?;
+        Self::write_thumb_cache_bytes(&library_id, album_id, &thumb_key, data)?;
 
         let conn = open_conn()?;
         conn.execute(
@@ -2502,7 +2589,9 @@ impl AThumb {
         if athumb.error_code == 0 {
             if let (Some(data), Some(key)) = (athumb.thumb_data.as_ref(), athumb.thumb_key.as_ref())
             {
-                Self::write_thumb_cache_bytes(library_id, key, data)?;
+                let album_id = Self::get_file_album_id(file_id)?
+                    .ok_or_else(|| format!("Album not found for thumbnail file: {}", file_id))?;
+                Self::write_thumb_cache_bytes(library_id, album_id, key, data)?;
                 athumb.thumb_data = None;
             }
         }
@@ -2529,6 +2618,80 @@ impl AThumb {
         )
     }
 
+    pub fn get_thumb_if_available(
+        file_id: i64,
+        file_path: &str,
+        thumbnail_size: u32,
+        orientation: i32,
+        force_regenerate: bool,
+    ) -> Result<Option<Self>, String> {
+        if force_regenerate {
+            let _ = Self::delete(file_id);
+            return Ok(None);
+        }
+
+        if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
+            if thumbnail.error_code != 0 {
+                return Ok(Some(thumbnail));
+            }
+
+            if thumbnail.is_stale(file_path, thumbnail_size) {
+                let _ = Self::delete(file_id);
+                return Ok(None);
+            }
+
+            let hydrated = Self::ensure_cached(thumbnail, file_path, thumbnail_size, orientation)?;
+            if hydrated.thumb_data.is_some() || hydrated.thumb_key.is_some() {
+                return Ok(Some(hydrated));
+            }
+
+            let _ = Self::delete(file_id);
+        }
+
+        Ok(None)
+    }
+
+    pub fn schedule_background_generation_for_library(
+        app_handle: tauri::AppHandle,
+        file_id: i64,
+        file_path: String,
+        file_type: i64,
+        orientation: i32,
+        thumbnail_size: u32,
+        album_id: i64,
+        force_regenerate: bool,
+    ) {
+        if !Self::try_begin_background_task(file_id, thumbnail_size) {
+            return;
+        }
+
+        tauri::async_runtime::spawn(async move {
+            let generated = tauri::async_runtime::spawn_blocking(move || {
+                Self::get_or_create_thumb(
+                    file_id,
+                    &file_path,
+                    file_type,
+                    orientation,
+                    thumbnail_size,
+                    force_regenerate,
+                )
+            })
+            .await;
+
+            if matches!(generated, Ok(Ok(Some(_)))) && album_id > 0 {
+                let _ = app_handle.emit(
+                    "thumbnail_ready",
+                    serde_json::json!({
+                        "album_id": album_id,
+                        "file_ids": [file_id],
+                    }),
+                );
+            }
+
+            Self::finish_background_task(file_id, thumbnail_size);
+        });
+    }
+
     /// get or create a thumbnail
     pub fn get_or_create_thumb(
         file_id: i64,
@@ -2538,37 +2701,21 @@ impl AThumb {
         thumbnail_size: u32,
         force_regenerate: bool,
     ) -> Result<Option<Self>, String> {
-        // If force_regenerate is true, delete the existing thumbnail if any
         if force_regenerate {
             let _ = Self::delete(file_id);
-        } else {
-            // Check if the thumbnail exists
-            if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
-                if thumbnail.error_code != 0 || thumbnail.is_stale(file_path, thumbnail_size) {
-                    let _ = Self::delete(file_id);
-                } else {
-                    let hydrated =
-                        Self::ensure_cached(thumbnail, file_path, thumbnail_size, orientation)?;
-                    if hydrated.thumb_data.is_some() || hydrated.thumb_key.is_some() {
-                        return Ok(Some(hydrated));
-                    }
-                    let _ = Self::delete(file_id);
-                }
-            }
+        } else if let Some(thumb) =
+            Self::get_thumb_if_available(file_id, file_path, thumbnail_size, orientation, false)?
+        {
+            return Ok(Some(thumb));
         }
 
         let _generation_guard = Self::acquire_generation_guard(file_id, thumbnail_size);
 
         if !force_regenerate {
-            if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
-                if thumbnail.error_code == 0 && !thumbnail.is_stale(file_path, thumbnail_size) {
-                    let hydrated =
-                        Self::ensure_cached(thumbnail, file_path, thumbnail_size, orientation)?;
-                    if hydrated.thumb_data.is_some() || hydrated.thumb_key.is_some() {
-                        return Ok(Some(hydrated));
-                    }
-                    let _ = Self::delete(file_id);
-                }
+            if let Some(hydrated) =
+                Self::get_thumb_if_available(file_id, file_path, thumbnail_size, orientation, false)?
+            {
+                return Ok(Some(hydrated));
             }
         }
 
@@ -2614,7 +2761,9 @@ impl AThumb {
     pub fn delete(file_id: i64) -> Result<usize, String> {
         if let Ok(Some(key)) = Self::fetch_thumb_key(file_id) {
             let library_id = Self::get_current_library_id();
-            Self::delete_thumb_cache_for_key(&library_id, &key);
+            if let Ok(Some(album_id)) = Self::get_file_album_id(file_id) {
+                Self::delete_thumb_cache_for_key(&library_id, album_id, &key);
+            }
         }
         let conn = open_conn()?;
         let result = conn
