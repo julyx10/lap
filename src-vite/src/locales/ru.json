@@ -612,6 +612,8 @@
       "restore": "Восстановить",
       "transform": "Преобразование",
       "original": "Исходное",
+      "adjusted": "Изменено",
+      "compare_view": "Режим сравнения",
       "output": "Результат",
       "resize": "Размер",
       "keep_aspect_ratio": "Сохранять пропорции",

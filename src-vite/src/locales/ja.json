@@ -612,6 +612,8 @@
       "restore": "元に戻す",
       "transform": "変形",
       "original": "元画像",
+      "adjusted": "調整後",
+      "compare_view": "比較表示",
       "output": "出力",
       "resize": "サイズ変更",
       "keep_aspect_ratio": "縦横比を維持",

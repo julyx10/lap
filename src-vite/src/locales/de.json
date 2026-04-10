@@ -612,6 +612,8 @@
       "restore": "Wiederherstellen",
       "transform": "Transformieren",
       "original": "Original",
+      "adjusted": "Angepasst",
+      "compare_view": "Vergleichsansicht",
       "output": "Ausgabe",
       "resize": "Größe ändern",
       "keep_aspect_ratio": "Seitenverhältnis beibehalten",

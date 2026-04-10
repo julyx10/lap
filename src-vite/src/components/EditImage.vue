@@ -2,86 +2,130 @@
 
   <ModalDialog :title="`${$t('msgbox.image_editor.title')} - ${shortenFilename(props.fileInfo.name, 32)}`" :width="1040" @cancel="clickCancel">
     <div class="h-[560px] flex gap-4 select-none">
-      <div class="flex-1 min-w-0 h-full flex items-start">
-        <div ref="containerRef" class="relative w-full aspect-4/3 max-h-full rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm cursor-default">
-          <transition name="fade">
-            <div v-if="isProcessing" class="absolute inset-0 z-50 flex items-center justify-center bg-base-100/55 backdrop-blur-sm">
-              <span class="loading loading-dots text-primary"></span>
-            </div>
-          </transition>
-
+      <div class="flex-1 min-w-0 h-full flex flex-col items-center gap-3">
+        <div class="w-full flex items-start">
           <div
-            v-if="activeEditorTab === 'adjust'"
-            class="absolute top-2 right-2 z-40"
-            @pointerdown.stop="handleComparePointerDown"
-            @pointerup.stop="handleComparePointerUp"
-            @pointerleave.stop="handleComparePointerUp"
-            @pointercancel.stop="handleComparePointerUp"
+            ref="containerRef"
+            class="relative w-full aspect-4/3 max-h-full rounded-box overflow-hidden border border-base-content/5 bg-base-300/30 shadow-sm cursor-default"
+            @pointerdown="handlePreviewPointerDown"
+            @pointerup="handlePreviewPointerUp"
+            @pointerleave="handlePreviewPointerUp"
+            @pointercancel="handlePreviewPointerUp"
           >
-            <TButton
-              buttonSize="small"
-              :icon="IconInformation"
-              :selected="isComparingOriginal"
-              :disabled="!hasAdjustmentChanges"
-              :tooltip="$t('msgbox.image_editor.compare')"
-            />
-          </div>
-
-          <img
-            v-if="imageSrc"
-            ref="imageRef"
-            :src="imageSrc"
-            :style="imageStyle"
-            class="block"
-            draggable="false"
-            @load="onImageLoad"
-          />
-
-          <div v-if="cropStatus === 1 || cropApplied"
-            :class="[
-              cropStatus === 1 ? 'crop-box-active' : 'crop-box-done',
-              cropStatus === 1
-                ? (
-                  cropBoxFixed
-                    ? (isDragging ? 'cursor-grabbing no-transition' : 'cursor-grab')
-                    : (isDragging ? 'cursor-move no-transition' : 'cursor-move')
-                )
-                : ''
-            ]"
-            :style="cropBoxStyle"
-            @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
-            @dblclick="clickDoCrop"
-          >
-            <template v-if="cropStatus===1 && isDragging">
-              <div class="crop-dimensions-display">
-                {{ crop.width }} x {{ crop.height }}
+            <transition name="fade">
+              <div v-if="isProcessing" class="absolute inset-0 z-50 flex items-center justify-center bg-base-100/55 backdrop-blur-sm">
+                <span class="loading loading-dots text-primary"></span>
               </div>
-              <div class="grid-lines">
-                <div class="grid-line-h grid-line-h-1"></div>
-                <div class="grid-line-h grid-line-h-2"></div>
-                <div class="grid-line-v grid-line-v-1"></div>
-                <div class="grid-line-v grid-line-v-2"></div>
-              </div>
+            </transition>
+
+            <template v-if="imageSrc">
+              <figure
+                v-if="showDiffPreview && canShowDiffPreview"
+                class="diff absolute inset-0 z-20 h-full w-full"
+                tabindex="0"
+              >
+                <div class="diff-item-1 relative h-full w-full">
+                  <img
+                    :src="imageSrc"
+                    :style="originalImageStyle"
+                    class="block"
+                    draggable="false"
+                  />
+                </div>
+                <div class="diff-item-2 relative h-full w-full">
+                  <img
+                    :src="imageSrc"
+                    :style="adjustedImageStyle"
+                    class="block"
+                    draggable="false"
+                  />
+                </div>
+                <div class="diff-resizer"></div>
+                
+                <div 
+                  class="pointer-events-none absolute z-30 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60"
+                  :style="cropApplied ? { left: `${cropBox.left + 12}px`, top: `${cropBox.top + 12}px` } : { left: '12px', top: '12px' }"
+                >
+                  {{ $t('msgbox.image_editor.original') }}
+                </div>
+                <div 
+                  class="pointer-events-none absolute z-30 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60"
+                  :style="cropApplied ? { left: `${cropBox.left + cropBox.width - (locale === 'zh' ? 52 : 64)}px`, top: `${cropBox.top + 12}px` } : { right: '12px', top: '12px' }"
+                >
+                  {{ $t('msgbox.image_editor.adjusted') }}
+                </div>
+              </figure>
+
+              <img
+                v-show="!(showDiffPreview && canShowDiffPreview)"
+                ref="imageRef"
+                :src="imageSrc"
+                :style="imageStyle"
+                class="block"
+                draggable="false"
+                @load="onImageLoad"
+              />
             </template>
-            <template v-if="cropStatus===1 && !cropBoxFixed">
-              <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
-              <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
-              <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
-              <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
-              <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
-              <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
-              <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
-              <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
-            </template>
+
+            <div v-if="cropStatus === 1 || cropApplied"
+              :class="[
+                cropStatus === 1 ? 'crop-box-active' : 'crop-box-done',
+                cropStatus === 1
+                  ? (
+                    cropBoxFixed
+                      ? (isDragging ? 'cursor-grabbing no-transition' : 'cursor-grab')
+                      : (isDragging ? 'cursor-move no-transition' : 'cursor-move')
+                  )
+                  : ''
+              ]"
+              :style="[
+                cropBoxStyle,
+                activeEditorTab === 'adjust' ? { pointerEvents: 'none', zIndex: 30 } : { zIndex: 40 }
+              ]"
+              @mousedown="cropStatus===1 ? startDrag('move', $event) : null"
+              @dblclick="clickDoCrop"
+            >
+              <template v-if="cropStatus===1 && isDragging">
+                <div class="crop-dimensions-display">
+                  {{ crop.width }} x {{ crop.height }}
+                </div>
+                <div class="grid-lines">
+                  <div class="grid-line-h grid-line-h-1"></div>
+                  <div class="grid-line-h grid-line-h-2"></div>
+                  <div class="grid-line-v grid-line-v-1"></div>
+                  <div class="grid-line-v grid-line-v-2"></div>
+                </div>
+              </template>
+              <template v-if="cropStatus===1 && !cropBoxFixed">
+                <div class="drag-handle top-left" @mousedown.stop="startDrag('top-left', $event)"></div>
+                <div class="drag-handle top" @mousedown.stop="startDrag('top', $event)"></div>
+                <div class="drag-handle top-right" @mousedown.stop="startDrag('top-right', $event)"></div>
+                <div class="drag-handle left" @mousedown.stop="startDrag('left', $event)"></div>
+                <div class="drag-handle right" @mousedown.stop="startDrag('right', $event)"></div>
+                <div class="drag-handle bottom-left" @mousedown.stop="startDrag('bottom-left', $event)"></div>
+                <div class="drag-handle bottom" @mousedown.stop="startDrag('bottom', $event)"></div>
+                <div class="drag-handle bottom-right" @mousedown.stop="startDrag('bottom-right', $event)"></div>
+              </template>
+            </div>
           </div>
         </div>
+
+        <TButton
+          v-if="activeEditorTab === 'adjust'"
+          buttonSize="small"
+          :icon="IconSplitOn"
+          :selected="showDiffPreview && canShowDiffPreview"
+          :disabled="!hasAdjustmentChanges"
+          :tooltip="$t('msgbox.image_editor.compare_view')"
+          @click="toggleDiffPreview"
+        />
       </div>
 
       <div
         class="w-[268px] flex flex-col gap-3 overflow-y-auto"
         :class="isProcessing ? 'pointer-events-none opacity-60' : ''"
       >
-        <div class="border-b border-base-content/10 pb-2">
+        <div class="border-b border-base-content/5 pb-1">
           <div role="tablist" class="sidebar-header-tabs">
             <button
               role="tab"
@@ -207,9 +251,6 @@
                 @click="clickDoCrop"
               />
             </div>
-
-
-
           </div>
         </section>
 
@@ -225,7 +266,7 @@
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-1">
             <div class="form-control w-full">
               <label class="label py-1">
                 <span class="label-text text-xs font-medium opacity-70">{{ $t('msgbox.image_editor.width') }}</span>
@@ -240,6 +281,16 @@
                 class="input input-bordered input-sm w-full"
                 :disabled="cropStatus === 1"
                 @input="handleResizeWidthInput"
+              />
+            </div>
+
+            <div class="pb-0.5">
+              <TButton
+                buttonSize="small"
+                :icon="keepAspectRatio ? IconLink : IconLinkOff"
+                :disabled="cropStatus === 1"
+                :tooltip="$t('msgbox.image_editor.keep_aspect_ratio')"
+                @click="keepAspectRatio = !keepAspectRatio"
               />
             </div>
 
@@ -259,11 +310,6 @@
                 @input="handleResizeHeightInput"
               />
             </div>
-          </div>
-
-          <div class="flex items-center justify-between rounded-box bg-base-100/35 px-3 py-2">
-            <span class="text-xs text-base-content/65">{{ $t('msgbox.image_editor.keep_aspect_ratio') }}</span>
-            <input type="checkbox" class="toggle toggle-primary toggle-sm shrink-0" v-model="keepAspectRatio" :disabled="cropStatus === 1" />
           </div>
         </section>
         </template>
@@ -472,8 +518,10 @@ import {
   IconClose,
   IconOk,
   IconRestore,
+  IconLink,
+  IconLinkOff,
   IconPalette,
-  IconInformation,
+  IconSplitOn,
 } from '@/common/icons';
 
 const props = defineProps({
@@ -534,7 +582,8 @@ const isFlippedX = ref(false);
 const isFlippedY = ref(false);
 const scale = ref(1);
 const rotate = ref(0);
-const compareHold = ref(false);
+const showDiffPreview = ref(false);
+const showOriginalWhilePressed = ref(false);
 const brightness = ref(0);
 const contrast = ref(0);
 const saturation = ref(100);
@@ -559,7 +608,7 @@ const imageStyle = computed((): CSSProperties => ({
   maxWidth: 'none',
   maxHeight: 'none',
   position: 'absolute',
-  filter: isComparingOriginal.value ? 'none' : adjustmentFilter.value,
+  filter: showOriginalWhilePressed.value ? 'none' : adjustmentFilter.value,
   transform: `
     translate(${position.value.left}px, ${position.value.top}px)
     rotate(${rotate.value}deg)
@@ -571,7 +620,15 @@ const imageStyle = computed((): CSSProperties => ({
   backfaceVisibility: 'hidden',
   willChange: 'transform, filter',
 }));
-const isComparingOriginal = computed(() => compareHold.value);
+const originalImageStyle = computed((): CSSProperties => ({
+  ...imageStyle.value,
+  filter: 'none',
+}));
+const adjustedImageStyle = computed((): CSSProperties => ({
+  ...imageStyle.value,
+  filter: adjustmentFilter.value,
+}));
+const canShowDiffPreview = computed(() => activeEditorTab.value === 'adjust' && hasAdjustmentChanges.value);
 const adjustmentFilter = computed(() => {
   const filters = [
     `brightness(${100 + brightness.value}%)`,
@@ -984,7 +1041,11 @@ watch(selectedPreset, () => {
 });
 
 watch(activeEditorTab, (tab) => {
-  if (tab !== 'adjust') return;
+  if (tab !== 'adjust') {
+    showDiffPreview.value = false;
+    showOriginalWhilePressed.value = false;
+    return;
+  }
   nextTick(() => {
     scrollSelectedPresetIntoView();
   });
@@ -999,6 +1060,10 @@ watch([brightness, contrast, saturation, hue, blur, selectedFilter], () => {
 
   const currentValues = getCurrentAdjustmentValues();
   const resolvedPreset = resolvePresetKey(currentValues);
+
+  if (resolvedPreset === 'natural') {
+    showDiffPreview.value = false;
+  }
 
   if (resolvedPreset === 'custom') {
     persistCustomPreset(currentValues);
@@ -1070,7 +1135,7 @@ const onImageLoad = async () => {
     isPortrait.value = isPortraitForRotation(imageWidth.value, imageHeight.value, rotate.value);
   }
 
-  fitImageToContainer();
+  autoFitVisualArea();
   updateRealHistogram();
 
   requestAnimationFrame(() => {
@@ -1156,6 +1221,14 @@ const initEditImage = async () => {
 
   displayedHistogramBrightness.value = brightness.value;
   displayedHistogramContrast.value = contrast.value;
+
+  await nextTick();
+  autoFitVisualArea();
+  updateRealHistogram();
+
+  setTimeout(() => {
+    isProcessing.value = false;
+  }, 100);
 };
 
 function clearHistogram() {
@@ -1337,7 +1410,7 @@ function animateHistogramTone() {
 }
 
 const getPresetThumbnailStyle = (presetKey: string): CSSProperties => {
-  const p = presets[presetKey];
+  const p = presetKey === 'custom' ? getConfiguredCustomPreset() : presets[presetKey];
   if (!p) return {};
   return {
     filter: `
@@ -1369,13 +1442,29 @@ const resetAdjustments = () => {
   blur.value = p.blur;
   selectedFilter.value = p.filter;
   selectedPreset.value = 'natural';
-  compareHold.value = false;
+  showDiffPreview.value = false;
+  showOriginalWhilePressed.value = false;
 };
 
 function setActiveEditorTab(tab: 'edit' | 'adjust') {
   if (cropStatus.value === 1) return;
   activeEditorTab.value = tab;
   config.imageEditor.tab = tab;
+}
+
+function handlePreviewPointerDown() {
+  if (activeEditorTab.value !== 'adjust' || showDiffPreview.value || !hasAdjustmentChanges.value) return;
+  showOriginalWhilePressed.value = true;
+}
+
+function handlePreviewPointerUp() {
+  showOriginalWhilePressed.value = false;
+}
+
+function toggleDiffPreview() {
+  if (!hasAdjustmentChanges.value) return;
+  showOriginalWhilePressed.value = false;
+  showDiffPreview.value = !showDiffPreview.value;
 }
 
 const clickStartCrop = () => {
@@ -1408,7 +1497,7 @@ const clearCrop = () => {
   cropBoxFixed.value = false;
   crop.value = { left: 0, top: 0, width: 0, height: 0 };
   cropBox.value = { left: 0, top: 0, width: 0, height: 0 };
-  fitImageToContainer();
+  autoFitVisualArea();
 };
 
 const clickRestoreAll = () => {
@@ -1418,7 +1507,7 @@ const clickRestoreAll = () => {
   isFlippedX.value = false;
   isFlippedY.value = false;
   isPortrait.value = isPortraitForRotation(imageWidth.value, imageHeight.value, initialDisplayRotate.value);
-  fitImageToContainer();
+  autoFitVisualArea();
 };
 
 const clickCancelCrop = () => {
@@ -1426,13 +1515,21 @@ const clickCancelCrop = () => {
   cropApplied.value = false;
   crop.value = { left: 0, top: 0, width: 0, height: 0 };
   cropBox.value = { left: 0, top: 0, width: 0, height: 0 };
-  fitImageToContainer();
+  autoFitVisualArea();
 };
 
 const clickRestoreCrop = () => {
   cropStatus.value = 1;
   cropBoxFixed.value = false;
-  fitImageToContainer();
+  autoFitVisualArea();
+};
+
+const autoFitVisualArea = () => {
+  if (cropApplied.value) {
+    fitCropBoxToContainer();
+  } else {
+    fitImageToContainer();
+  }
 };
 
 const clickDoCrop = () => {
@@ -1741,20 +1838,21 @@ function handleKeyDown(event: KeyboardEvent) {
 
   switch (event.key) {
     case 'ArrowLeft':
-      if (activeEditorTab.value === 'adjust') {
+      if (activeEditorTab.value === 'adjust' && !isProcessing.value && cropStatus.value !== 1) {
         movePresetSelection(-1);
         event.preventDefault();
         event.stopPropagation();
       }
       break;
     case 'ArrowRight':
-      if (activeEditorTab.value === 'adjust') {
+      if (activeEditorTab.value === 'adjust' && !isProcessing.value && cropStatus.value !== 1) {
         movePresetSelection(1);
         event.preventDefault();
         event.stopPropagation();
       }
       break;
     case 'Enter':
+      if (isProcessing.value) break;
       if (cropStatus.value === 1) {
         clickDoCrop();
       } else {
@@ -1764,7 +1862,9 @@ function handleKeyDown(event: KeyboardEvent) {
       event.stopPropagation();
       break;
     case 'Escape':
-      if (cropStatus.value === 1) {
+      if (showDiffPreview.value) {
+        showDiffPreview.value = false;
+      } else if (cropStatus.value === 1) {
         clickCancelCrop();
       } else {
         clickCancel();
@@ -1790,14 +1890,6 @@ const clickCancel = () => {
   }
   emit('cancel');
 };
-
-function handleComparePointerDown() {
-  compareHold.value = true;
-}
-
-function handleComparePointerUp() {
-  compareHold.value = false;
-}
 
 function movePresetSelection(direction: number) {
   const currentIndex = presetOptions.value.findIndex(option => option.value === selectedPreset.value);
@@ -1831,8 +1923,8 @@ const setEditParams = (overrides: { fileName?: string; destFilePath?: string; ou
       height: crop.value.height,
     },
     resize: {
-      width: resizeOutput.value.hasResize && resizeOutput.value.width !== baseOutputWidth.value ? resizeOutput.value.width : null,
-      height: resizeOutput.value.hasResize && resizeOutput.value.height !== baseOutputHeight.value ? resizeOutput.value.height : null,
+      width: resizeOutput.value.hasResize ? resizeOutput.value.width : null,
+      height: resizeOutput.value.hasResize ? resizeOutput.value.height : null,
     },
     filter: selectedFilter.value || null,
     brightness: brightness.value !== 0 ? brightness.value : null,

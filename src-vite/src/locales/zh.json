@@ -612,6 +612,8 @@
       "restore": "还原",
       "transform": "变换",
       "original": "原始",
+      "adjusted": "调整后",
+      "compare_view": "对比视图",
       "output": "输出",
       "resize": "调整尺寸",
       "keep_aspect_ratio": "保持纵横比",

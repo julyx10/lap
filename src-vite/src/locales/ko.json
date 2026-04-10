@@ -612,6 +612,8 @@
       "restore": "복원",
       "transform": "변형",
       "original": "원본",
+      "adjusted": "조정됨",
+      "compare_view": "비교 보기",
       "output": "출력",
       "resize": "크기 조절",
       "keep_aspect_ratio": "비율 유지",

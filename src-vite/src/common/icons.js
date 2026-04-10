@@ -33,6 +33,7 @@ export { default as IconFileInfo } from '@/assets/icons/file-info.svg';
 export { default as IconFileSearch } from '@/assets/icons/file-search.svg';
 export { default as IconError } from '@/assets/icons/error.svg';
 export { default as IconLink } from '@/assets/icons/link.svg';
+export { default as IconLinkOff } from '@/assets/icons/link-off.svg';
 export { default as IconGoto } from '@/assets/icons/goto.svg';
 export { default as IconHistory } from '@/assets/icons/history.svg';
 export { default as IconSimilar } from '@/assets/icons/similar.svg';

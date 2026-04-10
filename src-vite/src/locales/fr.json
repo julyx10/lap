@@ -612,6 +612,8 @@
       "restore": "Restaurer",
       "transform": "Transformer",
       "original": "Original",
+      "adjusted": "Ajusté",
+      "compare_view": "Vue de comparaison",
       "output": "Sortie",
       "resize": "Redimensionner",
       "keep_aspect_ratio": "Conserver les proportions",
