@@ -6,7 +6,7 @@
  */
 use crate::t_common;
 use crate::t_sqlite::{AFile, Album};
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local, TimeZone, Utc};
 use once_cell::sync::Lazy;
 use pinyin::ToPinyin;
 use rayon::prelude::*;
@@ -14,15 +14,16 @@ use reverse_geocoder::ReverseGeocoder;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{Emitter, Manager, State};
+use tokio::sync::Semaphore;
 use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
-#[cfg(target_os = "windows")]
-use std::os::windows::process::CommandExt;
 
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
@@ -72,14 +73,20 @@ pub struct FileNode {
     path: String,    // folder path
     created_at: Option<i64>,
     modified_at: Option<i64>,
-    is_dir: bool,    // is directory
+    is_dir: bool, // is directory
     is_expanded: bool,
     children: Option<Vec<Self>>,
 }
 
 impl FileNode {
     /// Create a new FileNode
-    fn new(path: &str, is_dir: bool, is_expanded: bool, created_at: Option<i64>, modified_at: Option<i64>) -> Self {
+    fn new(
+        path: &str,
+        is_dir: bool,
+        is_expanded: bool,
+        created_at: Option<i64>,
+        modified_at: Option<i64>,
+    ) -> Self {
         FileNode {
             id: None,
             name: get_file_name(path),
@@ -111,8 +118,12 @@ impl FileNode {
             path,
             root_path.is_dir(),
             false,
-            root_meta.as_ref().and_then(|m| systemtime_to_timestamp(m.created().ok())),
-            root_meta.as_ref().and_then(|m| systemtime_to_timestamp(m.modified().ok())),
+            root_meta
+                .as_ref()
+                .and_then(|m| systemtime_to_timestamp(m.created().ok())),
+            root_meta
+                .as_ref()
+                .and_then(|m| systemtime_to_timestamp(m.modified().ok())),
         );
 
         // Recursively read subfolders and files
@@ -141,8 +152,12 @@ impl FileNode {
                     &path_str,
                     true,
                     false,
-                    metadata.as_ref().and_then(|m| systemtime_to_timestamp(m.created().ok())),
-                    metadata.as_ref().and_then(|m| systemtime_to_timestamp(m.modified().ok())),
+                    metadata
+                        .as_ref()
+                        .and_then(|m| systemtime_to_timestamp(m.created().ok())),
+                    metadata
+                        .as_ref()
+                        .and_then(|m| systemtime_to_timestamp(m.modified().ok())),
                 );
 
                 if is_recursive {
@@ -771,7 +786,8 @@ pub fn get_folder_files(
 
             if let Some(ftype) = get_file_type(file_path_str) {
                 if matches_file_type_filter(file_type, ftype) {
-                    match AFile::add_to_db(folder_id, file_path_str, ftype) {
+                    let now = Utc::now().timestamp_millis();
+                    match AFile::add_to_db(folder_id, file_path_str, ftype, now) {
                         Ok((file, status)) => {
                             if status == 1 {
                                 new_count += 1;
@@ -1196,7 +1212,7 @@ fn index_single_file(
     path_str: &str,
     ftype: i64,
     thumbnail_size: u32,
-    all_files_map: &mut HashMap<String, i64>,
+    last_scan_time: i64,
 ) -> Option<ThumbnailTask> {
     let result = panic::catch_unwind(AssertUnwindSafe(|| {
         let parent_path = Path::new(path_str)
@@ -1207,10 +1223,10 @@ fn index_single_file(
 
         if let Ok(folder) = crate::t_sqlite::AFolder::add_to_db(album_id, &parent_path) {
             if let Some(folder_id) = folder.id {
-                if let Ok((file, _)) = crate::t_sqlite::AFile::add_to_db(folder_id, path_str, ftype)
+                if let Ok((file, _)) =
+                    crate::t_sqlite::AFile::add_to_db(folder_id, path_str, ftype, last_scan_time)
                 {
                     if let Some(file_id) = file.id {
-                        all_files_map.remove(path_str);
                         return Some(ThumbnailTask {
                             file_id,
                             file_path: path_str.to_string(),
@@ -1246,6 +1262,7 @@ fn spawn_thumbnail_batch(
     app_handle: &tauri::AppHandle,
     album_id: i64,
     thumbnail_tasks: &mut Vec<ThumbnailTask>,
+    semaphore: Arc<Semaphore>,
 ) -> tauri::async_runtime::JoinHandle<Result<(), String>> {
     let tasks = std::mem::take(thumbnail_tasks);
     let app_handle = app_handle.clone();
@@ -1253,6 +1270,13 @@ fn spawn_thumbnail_batch(
         if tasks.is_empty() {
             return Ok(());
         }
+
+        // Acquire a permit from the semaphore before starting processing.
+        // This provides backpressure and limits CPU/Memory spikes.
+        let _permit = semaphore
+            .acquire()
+            .await
+            .map_err(|e| format!("Failed to acquire thumbnail semaphore: {}", e))?;
 
         let completed_ids = tauri::async_runtime::spawn_blocking(move || {
             tasks
@@ -1304,6 +1328,10 @@ pub async fn index_album_worker(
     thumbnail_size: u32,
     skip_file_path: Option<String>,
 ) -> Result<(), String> {
+    // Generate a unique scan time for this session (current timestamp)
+    let current_scan_time = Utc::now().timestamp_millis();
+    // Bounded concurrency: max 2 simultaneous thumbnail batches.
+    let semaphore = Arc::new(Semaphore::new(2));
     // 1. Get album info
     let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
 
@@ -1324,9 +1352,6 @@ pub async fn index_album_worker(
     } else {
         0
     };
-
-    // Get all existing files in DB for this album to track deletions
-    let mut all_files_map = AFile::get_all_ids_in_album(album_id).unwrap_or_default();
 
     // 3. Emit start progress
     let mut current_progress = resume_from;
@@ -1362,10 +1387,8 @@ pub async fn index_album_worker(
         if entry.file_type().is_file() {
             let path_str = entry.path().to_string_lossy().to_string();
             if let Some(ftype) = get_file_type(&path_str) {
-                // Resume mode: skip already-indexed prefix files and mark them as existing
-                // so they are not considered deleted in the final cleanup step.
+                // Resume mode: skip already-indexed prefix files.
                 if traversed_count < resume_from {
-                    all_files_map.remove(&path_str);
                     traversed_count += 1;
                     continue;
                 }
@@ -1378,7 +1401,6 @@ pub async fn index_album_worker(
                         "Skipping suspected problematic file during recovered indexing: {}",
                         path_str
                     );
-                    all_files_map.remove(&path_str);
                     current_progress += 1;
                     let _ = app_handle.emit(
                         "index_progress",
@@ -1399,7 +1421,7 @@ pub async fn index_album_worker(
                     &path_str,
                     ftype,
                     thumbnail_size,
-                    &mut all_files_map,
+                    current_scan_time,
                 ) {
                     current_size += task.file_size;
                     thumbnail_tasks.push(task);
@@ -1426,8 +1448,14 @@ pub async fn index_album_worker(
                             app_handle,
                             album_id,
                             &mut thumbnail_tasks,
+                            semaphore.clone(),
                         ));
                     }
+                } else {
+                    // Mark file as seen even if it didn't trigger a new thumbnail task
+                    // (e.g. metadata unchanged and thumb exists).
+                    // This is handled inside index_single_file -> AFile::add_to_db for existing files.
+                    current_progress += 1;
                 }
 
                 traversed_count += 1;
@@ -1440,6 +1468,7 @@ pub async fn index_album_worker(
             app_handle,
             album_id,
             &mut thumbnail_tasks,
+            semaphore.clone(),
         ));
     }
 
@@ -1453,17 +1482,17 @@ pub async fn index_album_worker(
 
     clear_index_trace();
 
-    // Delete files that are in DB but not in file system
-    if !is_cancelled && !all_files_map.is_empty() {
-        println!(
-            "Deleting {} files from DB that are no longer in file system for album {}",
-            all_files_map.len(),
-            album_id
-        );
-        for (_, file_id) in all_files_map {
-            let _ = AFile::delete(file_id);
+    // Delete files that are in DB but not in file system (Mark-and-Sweep)
+    if !is_cancelled {
+        println!("Cleaning up removed files from DB for album {}", album_id);
+        let deleted_count = AFile::delete_unseen_in_album(album_id, current_scan_time).unwrap_or(0);
+        if deleted_count > 0 {
+            println!("Deleted {} stale records from DB.", deleted_count);
         }
     }
+
+    // Update last scan time
+    let _ = Album::update_last_scan_time(album_id, current_scan_time);
 
     // index finished – recount from the database to get the true total
     // (some files may have been skipped or failed to insert).

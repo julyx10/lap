@@ -316,6 +316,7 @@ fn get_files_by_sizes(conn: &Connection, _sizes: &[i64]) -> Result<Vec<AFile>, S
                 album_name: None,
                 has_thumbnail: None,
                 has_embedding: None,
+                last_scan_time: Some(0),
             })
         })
         .map_err(|e| e.to_string())?;

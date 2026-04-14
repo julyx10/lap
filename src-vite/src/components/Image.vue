@@ -169,7 +169,7 @@
 import { ref, shallowRef, triggerRef, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
-import { getAssetSrc, getPreviewUrl, shouldUseBackendPreview } from '@/common/utils';
+import { getAssetSrc, getPreviewUrl, shouldUseBackendPreview, getThumbUrl } from '@/common/utils';
 import { getFacesForFile } from '@/common/api';
 import { RawFace, Face } from '@/common/types';
 
@@ -898,10 +898,12 @@ watch(() => props.filePath, async (newFilePath) => {
   }, 500);
 
   const usesBackendPreview = shouldUseBackendPreview(newFilePath, Number(props.fileType || 0));
-  const hasPreviewPlaceholder = usesBackendPreview && !!props.thumbnailSrc;
+  const effectiveThumbSrc = props.thumbnailSrc || getThumbUrl(props.fileId);
+  const hasPreviewPlaceholder = usesBackendPreview && !!effectiveThumbSrc;
+
   if (hasPreviewPlaceholder) {
     try {
-      const placeholder = await loadPlaceholderResource(props.thumbnailSrc);
+      const placeholder = await loadPlaceholderResource(effectiveThumbSrc);
       if (loadingId === currentLoadingId.value) {
         const nextImageIndex = activeImage.value ^ 1;
         setImageSlot(
@@ -982,6 +984,65 @@ watch(() => props.filePath, async (newFilePath) => {
     loadError.value = true;
   }
 }, { immediate: true });
+
+// watch thumbnailSrc changes to update placeholder if original is still loading
+watch(() => props.thumbnailSrc, async (newThumbSrc) => {
+  if (!newThumbSrc) return;
+  const currentFilePath = props.filePath;
+  if (!currentFilePath) return;
+
+  const usesBackendPreview = shouldUseBackendPreview(currentFilePath, Number(props.fileType || 0));
+  if (!usesBackendPreview) return;
+
+  // Only update if we are still waiting for the full image OR if we are currently showing a stale placeholder
+  const activeIndex = activeImage.value;
+  
+  // We check if it's the full original image by checking the src. 
+  // For backend preview, the full image src is from getPreviewUrl.
+  const isCurrentlyShowingFullImage = imageSrc.value[activeIndex] === getPreviewUrl(props.fileId, currentFilePath);
+  
+  if (isCurrentlyShowingFullImage) return;
+
+  try {
+    const placeholder = await loadPlaceholderResource(newThumbSrc);
+    // Check if we haven't switched files since we started loading the placeholder
+    if (props.filePath === currentFilePath) {
+      // If we are currently showing a placeholder for this file, just update it in place
+      if (imageFilePath.value[activeIndex] === currentFilePath) {
+        noTransition.value = true;
+        setImageSlot(
+          activeIndex,
+          currentFilePath,
+          placeholder.src,
+          placeholder.naturalWidth,
+          placeholder.naturalHeight,
+        );
+        // Important: update layout after size change
+        if (isZoomFit.value) {
+          updateZoomFit(true);
+        } else {
+          clampPosition(true);
+        }
+        setTimeout(() => { noTransition.value = false; }, 150);
+      } else {
+        // We might be in a slot transition, but showing the other slot's placeholder?
+        // Let's just update the target slot if it's assigned to this file
+        const targetIndex = imageFilePath.value[0] === currentFilePath ? 0 : (imageFilePath.value[1] === currentFilePath ? 1 : -1);
+        if (targetIndex !== -1) {
+          setImageSlot(
+            targetIndex,
+            currentFilePath,
+            placeholder.src,
+            placeholder.naturalWidth,
+            placeholder.naturalHeight,
+          );
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+});
 
 // watch fileId / face toggle changes to fetch faces
 watch(() => [props.fileId, config.settings.face.enabled], async ([newFileId, faceEnabled]) => {

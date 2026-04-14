@@ -588,7 +588,8 @@ pub fn get_file_info(file_id: i64) -> Result<Option<AFile>, String> {
 /// update a file's info
 #[tauri::command]
 pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<AFile>, String> {
-    AFile::update_file_info(file_id, file_path)
+    let now = chrono::Utc::now().timestamp_millis();
+    AFile::update_file_info(file_id, file_path, now)
         .map_err(|e| format!("Error while updating file info: {}", e))
 }
 
@@ -597,7 +598,8 @@ pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<AFile>, 
 pub fn add_file_to_db(folder_id: i64, file_path: &str) -> Result<Option<AFile>, String> {
     let file_type = t_utils::get_file_type(file_path)
         .ok_or_else(|| format!("Unsupported file type: {}", file_path))?;
-    let (file, _) = AFile::add_to_db(folder_id, file_path, file_type)?;
+    let now = chrono::Utc::now().timestamp_millis();
+    let (file, _) = AFile::add_to_db(folder_id, file_path, file_type, now)?;
     Ok(Some(file))
 }
 

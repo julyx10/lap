@@ -75,6 +75,7 @@ pub struct Album {
     pub description: Option<String>,   // album description
     pub indexed: Option<u64>,          // indexed files count
     pub total: Option<u64>,            // total files count
+    pub last_scan_time: Option<i64>,   // last scan time
 }
 
 impl Album {
@@ -92,6 +93,7 @@ impl Album {
             description: Some(String::new()),
             indexed: Some(0),
             total: Some(0),
+            last_scan_time: Some(0),
         })
     }
 
@@ -108,6 +110,7 @@ impl Album {
             description: row.get(7)?,
             indexed: row.get(8)?,
             total: row.get(9)?,
+            last_scan_time: row.get(10)?,
         })
     }
 
@@ -115,7 +118,7 @@ impl Album {
     fn fetch(path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total, last_scan_time
             FROM albums WHERE path = ?1",
             params![path],
             Self::from_row
@@ -138,8 +141,8 @@ impl Album {
 
         // Insert the new album into the db
         let result = conn.execute(
-            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO albums (name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total, last_scan_time) 
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             params![
                 self.name,
                 self.path,
@@ -150,6 +153,7 @@ impl Album {
                 self.description,
                 self.indexed,
                 self.total,
+                self.last_scan_time,
             ],
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -188,7 +192,7 @@ impl Album {
         let conn = open_conn()?;
 
         let query =
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total, last_scan_time
             FROM albums
             ORDER BY display_order_id ASC";
 
@@ -214,7 +218,7 @@ impl Album {
     pub fn get_album_by_id(id: i64) -> Result<Self, String> {
         let conn = open_conn()?;
         let result = conn.query_row(
-            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total
+            "SELECT id, name, path, created_at, modified_at, display_order_id, cover_file_id, description, indexed, total, last_scan_time
             FROM albums WHERE id = ?1",
             params![id],
             Self::from_row
@@ -234,6 +238,11 @@ impl Album {
             .execute(&query, params![value, id])
             .map_err(|e| e.to_string())?;
         Ok(result)
+    }
+
+    /// update last scan time
+    pub fn update_last_scan_time(album_id: i64, scan_time: i64) -> Result<usize, String> {
+        Self::update_column(album_id, "last_scan_time", &scan_time)
     }
 
     /// rename the album root metadata and matching folders in one transaction
@@ -621,6 +630,7 @@ pub struct AFile {
     pub album_name: Option<String>,  // album name (for webview)
     pub has_thumbnail: Option<bool>, // has thumbnail (for webview)
     pub has_embedding: Option<bool>, // has embedding (for webview)
+    pub last_scan_time: Option<i64>, // last scan timestamp
 }
 
 /// Define the timeline marker struct for scrollbar markers
@@ -876,6 +886,7 @@ impl AFile {
             album_name: None,
             has_thumbnail: None,
             has_embedding: None,
+            last_scan_time: Some(0),
         };
 
         Ok(file)
@@ -1061,9 +1072,10 @@ impl AFile {
                 width, height, duration,
                 is_favorite, rating, rotate, comments, has_tags,
                 e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description, e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
-                gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc
+                gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc,
+                last_scan_time
             ) 
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41)",
             params![
                 self.folder_id,
 
@@ -1111,6 +1123,7 @@ impl AFile {
                 self.geo_admin1,
                 self.geo_admin2,
                 self.geo_cc,
+                self.last_scan_time,
             ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -1126,8 +1139,9 @@ impl AFile {
                 width = ?9, height = ?10, duration = ?11,
                 rating = ?12,
                 e_make = ?13, e_model = ?14, e_date_time = ?15, e_software = ?16, e_artist = ?17, e_copyright = ?18, e_description = ?19, e_lens_make = ?20, e_lens_model = ?21, e_exposure_bias = ?22, e_exposure_time = ?23, e_f_number = ?24, e_focal_length = ?25, e_iso_speed = ?26, e_flash = ?27, e_orientation = ?28,
-                gps_latitude = ?29, gps_longitude = ?30, gps_altitude = ?31, geo_name = ?32, geo_admin1 = ?33, geo_admin2 = ?34, geo_cc = ?35
-            WHERE id = ?36",
+                gps_latitude = ?29, gps_longitude = ?30, gps_altitude = ?31, geo_name = ?32, geo_admin1 = ?33, geo_admin2 = ?34, geo_cc = ?35,
+                last_scan_time = ?36
+            WHERE id = ?37",
             params![
                 file.name,
                 file.name_pinyin,
@@ -1168,7 +1182,7 @@ impl AFile {
                 file.geo_admin1,
                 file.geo_admin2,
                 file.geo_cc,
-
+                file.last_scan_time,
                 file_id,
             ]
         ).map_err(|e| e.to_string())?;
@@ -1187,36 +1201,36 @@ impl AFile {
 
     /// get all file IDs for a specific album
     /// Returns a map of file path to file ID
-    pub fn get_all_ids_in_album(album_id: i64) -> Result<HashMap<String, i64>, String> {
-        let conn = open_conn()?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT a.id, b.path, a.name
-                FROM afiles a
-                JOIN afolders b ON a.folder_id = b.id
-                WHERE b.album_id = ?1",
-            )
-            .map_err(|e| e.to_string())?;
+    // pub fn get_all_ids_in_album(album_id: i64) -> Result<HashMap<String, i64>, String> {
+    //     let conn = open_conn()?;
+    //     let mut stmt = conn
+    //         .prepare(
+    //             "SELECT a.id, b.path, a.name
+    //             FROM afiles a
+    //             JOIN afolders b ON a.folder_id = b.id
+    //             WHERE b.album_id = ?1",
+    //         )
+    //         .map_err(|e| e.to_string())?;
 
-        let rows = stmt
-            .query_map(params![album_id], |row| {
-                Ok((
-                    row.get::<_, i64>(0)?,
-                    row.get::<_, String>(1)?,
-                    row.get::<_, String>(2)?,
-                ))
-            })
-            .map_err(|e| e.to_string())?;
+    //     let rows = stmt
+    //         .query_map(params![album_id], |row| {
+    //             Ok((
+    //                 row.get::<_, i64>(0)?,
+    //                 row.get::<_, String>(1)?,
+    //                 row.get::<_, String>(2)?,
+    //             ))
+    //         })
+    //         .map_err(|e| e.to_string())?;
 
-        let mut files = HashMap::new();
-        for row in rows {
-            if let Ok((id, folder_path, name)) = row {
-                let full_path = t_utils::get_file_path(&folder_path, &name);
-                files.insert(full_path, id);
-            }
-        }
-        Ok(files)
-    }
+    //     let mut files = HashMap::new();
+    //     for row in rows {
+    //         if let Ok((id, folder_path, name)) = row {
+    //             let full_path = t_utils::get_file_path(&folder_path, &name);
+    //             files.insert(full_path, id);
+    //         }
+    //     }
+    //     Ok(files)
+    // }
 
     // Helper function to build the count SQL query
     fn build_count_query() -> String {
@@ -1242,7 +1256,8 @@ impl AFile {
                 c.id AS album_id, c.name AS album_name,
                 (SELECT 1 FROM athumbs t WHERE t.file_id = a.id LIMIT 1) AS has_thumbnail,
                 CASE WHEN a.embeds IS NOT NULL THEN 1 ELSE 0 END AS has_embedding,
-                a.has_faces
+                a.has_faces,
+                a.last_scan_time
             FROM afiles a 
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id"
@@ -1309,6 +1324,7 @@ impl AFile {
             has_thumbnail: row.get::<_, Option<i64>>(44)?.map(|v| v == 1),
             has_embedding: row.get::<_, Option<i64>>(45)?.map(|v| v == 1),
             has_faces: row.get::<_, Option<i32>>(46)?,
+            last_scan_time: row.get(47)?,
         })
     }
 
@@ -1402,6 +1418,7 @@ impl AFile {
         folder_id: i64,
         file_path: &str,
         file_type: i64,
+        last_scan_time: i64,
     ) -> Result<(Self, i32), String> {
         // Check if the file exists
         let existing_file = Self::fetch(folder_id, file_path)?;
@@ -1413,7 +1430,9 @@ impl AFile {
 
             if modified || missing_thumb {
                 if let Some(file_id) = file.id {
-                    if let Some(mut updated_file) = Self::update_file_info(file_id, file_path)? {
+                    if let Some(mut updated_file) =
+                        Self::update_file_info(file_id, file_path, last_scan_time)?
+                    {
                         // If modified, delete old thumbnail and remove embeds data
                         if modified {
                             let _ = AThumb::delete(file_id);
@@ -1433,12 +1452,20 @@ impl AFile {
                         file_path
                     ));
                 }
+            } else {
+                // Not modified and thumb exists, but we still need to update last_scan_time
+                // for the mark-and-sweep deletion logic.
+                if let Some(file_id) = file.id {
+                    let _ = Self::update_column(file_id, "last_scan_time", &last_scan_time);
+                }
             }
             return Ok((file, 0));
         }
 
         // insert the new file into the database
-        Self::new(folder_id, file_path, file_type)?.insert()?;
+        let mut new_file_struct = Self::new(folder_id, file_path, file_type)?;
+        new_file_struct.last_scan_time = Some(last_scan_time);
+        new_file_struct.insert()?;
 
         // return the newly inserted file
         let new_file = Self::fetch(folder_id, file_path)?;
@@ -1464,7 +1491,11 @@ impl AFile {
     }
 
     /// update a file info
-    pub fn update_file_info(file_id: i64, file_path: &str) -> Result<Option<Self>, String> {
+    pub fn update_file_info(
+        file_id: i64,
+        file_path: &str,
+        last_scan_time: i64,
+    ) -> Result<Option<Self>, String> {
         // get old file info
         let old_file_info =
             Self::get_file_info(file_id)?.ok_or_else(|| "File not found".to_string())?;
@@ -1481,6 +1512,7 @@ impl AFile {
         new_file_info.rotate = old_file_info.rotate;
         new_file_info.comments = old_file_info.comments;
         new_file_info.has_tags = old_file_info.has_tags;
+        new_file_info.last_scan_time = Some(last_scan_time);
 
         // update the file info
         Self::update(file_id, &new_file_info)?;
@@ -1499,6 +1531,20 @@ impl AFile {
         let result = conn
             .execute(&query, params![value, file_id])
             .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    /// delete unseen files in an album (database only)
+    pub fn delete_unseen_in_album(album_id: i64, current_scan_time: i64) -> Result<usize, String> {
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let query = "DELETE FROM afiles 
+            WHERE last_scan_time < ?1 
+            AND folder_id IN (SELECT id FROM afolders WHERE album_id = ?2)";
+        let result = tx
+            .execute(query, params![current_scan_time, album_id])
+            .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -2249,7 +2295,11 @@ impl AThumb {
         }
     }
 
-    pub fn relocate_for_file(file_id: i64, old_album_id: i64, new_album_id: i64) -> Result<(), String> {
+    pub fn relocate_for_file(
+        file_id: i64,
+        old_album_id: i64,
+        new_album_id: i64,
+    ) -> Result<(), String> {
         if old_album_id == new_album_id {
             return Ok(());
         }
@@ -2302,7 +2352,8 @@ impl AThumb {
                                 Err(_) => (None, 1),   // error
                             }
                             #[cfg(not(target_os = "macos"))]
-                            match t_video::get_video_thumbnail_sync(file_path, thumbnail_size, None) {
+                            match t_video::get_video_thumbnail_sync(file_path, thumbnail_size, None)
+                            {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1), // empty thumb
                                 Err(_) => (None, 1),   // error
@@ -2479,7 +2530,10 @@ impl AThumb {
         orientation: i32,
     ) -> Result<Self, String> {
         let Some(data) = thumbnail.thumb_data.as_ref() else {
-            return Self::hydrate_output_bytes_for_library(thumbnail, &Self::get_current_library_id());
+            return Self::hydrate_output_bytes_for_library(
+                thumbnail,
+                &Self::get_current_library_id(),
+            );
         };
 
         if Self::is_png_bytes(data) {
@@ -2550,7 +2604,10 @@ impl AThumb {
         }
 
         if thumbnail.thumb_key.is_some() {
-            return Self::hydrate_output_bytes_for_library(thumbnail, &Self::get_current_library_id());
+            return Self::hydrate_output_bytes_for_library(
+                thumbnail,
+                &Self::get_current_library_id(),
+            );
         }
 
         Ok(thumbnail)
@@ -2712,9 +2769,13 @@ impl AThumb {
         let _generation_guard = Self::acquire_generation_guard(file_id, thumbnail_size);
 
         if !force_regenerate {
-            if let Some(hydrated) =
-                Self::get_thumb_if_available(file_id, file_path, thumbnail_size, orientation, false)?
-            {
+            if let Some(hydrated) = Self::get_thumb_if_available(
+                file_id,
+                file_path,
+                thumbnail_size,
+                orientation,
+                false,
+            )? {
                 return Ok(Some(hydrated));
             }
         }
@@ -2723,9 +2784,12 @@ impl AThumb {
     }
 
     /// fetch raw thumbnail bytes for protocol handler
-    pub fn fetch_raw_for_library(file_id: i64, library_id: &str) -> Result<Option<Vec<u8>>, String> {
-        if let Some(thumb) = Self::fetch_for_library(file_id, library_id)?
-            .filter(|thumb| thumb.error_code == 0)
+    pub fn fetch_raw_for_library(
+        file_id: i64,
+        library_id: &str,
+    ) -> Result<Option<Vec<u8>>, String> {
+        if let Some(thumb) =
+            Self::fetch_for_library(file_id, library_id)?.filter(|thumb| thumb.error_code == 0)
         {
             if let Some(data) = thumb.thumb_data {
                 return Ok(Some(data));
@@ -2741,17 +2805,15 @@ impl AThumb {
             let orientation = file.e_orientation.unwrap_or(1) as i32;
             let thumbnail_size = thumb.thumb_size.unwrap_or(200).max(1) as u32;
 
-            return Ok(
-                Self::create_cache_backed_thumb_for_library(
-                    file_id,
-                    &file_path,
-                    file_type,
-                    orientation,
-                    thumbnail_size,
-                    library_id,
-                )?
-                .and_then(|thumb| thumb.thumb_data),
-            );
+            return Ok(Self::create_cache_backed_thumb_for_library(
+                file_id,
+                &file_path,
+                file_type,
+                orientation,
+                thumbnail_size,
+                library_id,
+            )?
+            .and_then(|thumb| thumb.thumb_data));
         }
 
         Ok(None)
@@ -3906,7 +3968,8 @@ fn create_db_internal() -> Result<(), String> {
             cover_file_id INTEGER,
             description TEXT,
             indexed INTEGER DEFAULT 0,
-            total INTEGER DEFAULT 0
+            total INTEGER DEFAULT 0,
+            last_scan_time INTEGER DEFAULT 0
         )",
         [],
     )
@@ -4004,6 +4067,7 @@ fn create_db_internal() -> Result<(), String> {
             geo_admin2 TEXT,
             geo_cc TEXT,
             embeds BLOB,
+            last_scan_time INTEGER DEFAULT 0,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
