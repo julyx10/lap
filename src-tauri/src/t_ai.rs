@@ -37,6 +37,20 @@ impl AiEngine {
         println!("Loading AI Models...");
 
         // Resolve paths
+        #[cfg(debug_assertions)]
+        let resource_dir = {
+            let manifest_dir = env!("CARGO_MANIFEST_DIR");
+            let dev_path = std::path::PathBuf::from(manifest_dir).join("resources/models");
+            if dev_path.exists() {
+                dev_path
+            } else {
+                app.path()
+                    .resolve("resources/models", tauri::path::BaseDirectory::Resource)
+                    .map_err(|e| format!("Failed to resolve resource path: {}", e))?
+            }
+        };
+
+        #[cfg(not(debug_assertions))]
         let resource_dir = app
             .path()
             .resolve("resources/models", tauri::path::BaseDirectory::Resource)

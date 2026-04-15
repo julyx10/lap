@@ -22,6 +22,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::sync::Mutex;
 use tauri::{AppHandle, Manager};
+use once_cell::sync::Lazy;
 
 /// Manages active FFmpeg/FFprobe processes, allowing per-player cancellation.
 pub struct VideoManager { 
@@ -38,15 +39,125 @@ impl Default for VideoManager {
     } 
 }
 
+static FFMPEG_SIDECAR_DIR: Lazy<Option<PathBuf>> = Lazy::new(|| {
+    // 1. In development, prioritize the source directory to avoid using stale 'cached' files in the target folder.
+    #[cfg(debug_assertions)]
+    {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let dev_path = PathBuf::from(manifest_dir).join("resources").join("ffmpeg");
+        if dev_path.exists() {
+            return Some(dev_path);
+        }
+    }
+
+    // 2. Try to find sidecar in standard resource locations (Production/Bundled):
+    // - macOS: inside .app bundle
+    // - Linux/Windows: relative to executable
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            // Check common patterns (Windows/Linux)
+            let candidates: Vec<PathBuf> = vec![
+                exe_dir.join("resources").join("ffmpeg"),
+                exe_dir.join("ffmpeg"),
+            ];
+            for candidate in candidates {
+                if candidate.exists() {
+                    return Some(candidate);
+                }
+            }
+            // macOS bundle Resources pattern: Contents/Resources/ffmpeg
+            if let Some(parent) = exe_dir.parent() {
+                let candidate = parent.join("Resources").join("ffmpeg");
+                if candidate.exists() {
+                    return Some(candidate);
+                }
+            }
+        }
+    }
+    None
+});
+
+fn ffmpeg_sidecar_name() -> &'static str {
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    { "ffmpeg-x86_64-apple-darwin" }
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    { "ffmpeg-aarch64-apple-darwin" }
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    { "ffmpeg-x86_64-unknown-linux-gnu" }
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    { "ffmpeg-aarch64-unknown-linux-gnu" }
+    #[cfg(target_os = "windows")]
+    { "ffmpeg-x86_64-pc-windows-msvc.exe" }
+}
+
+fn ffprobe_sidecar_name() -> &'static str {
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    { "ffprobe-x86_64-apple-darwin" }
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    { "ffprobe-aarch64-apple-darwin" }
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    { "ffprobe-x86_64-unknown-linux-gnu" }
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    { "ffprobe-aarch64-unknown-linux-gnu" }
+    #[cfg(target_os = "windows")]
+    { "ffprobe-x86_64-pc-windows-msvc.exe" }
+}
+
+fn find_sidecar(name: &str) -> Option<PathBuf> {
+    FFMPEG_SIDECAR_DIR.as_ref().and_then(|dir| {
+        let path = dir.join(name);
+        if path.exists() { Some(path) } else { None }
+    })
+}
+
+fn ffprobe_command() -> tokio::process::Command {
+    #[cfg(unix)]
+    {
+        let mut cmd = tokio::process::Command::new("nice");
+        cmd.arg("-n").arg("19");
+        if let Some(path) = find_sidecar(ffprobe_sidecar_name()) {
+            cmd.arg(path);
+        } else {
+            cmd.arg("ffprobe");
+        }
+        cmd
+    }
+    #[cfg(not(unix))]
+    {
+        if let Some(path) = find_sidecar(ffprobe_sidecar_name()) {
+            tokio::process::Command::new(path)
+        } else {
+            tokio::process::Command::new("ffprobe")
+        }
+    }
+}
+
+fn ffmpeg_command() -> tokio::process::Command {
+    #[cfg(unix)]
+    {
+        let mut cmd = tokio::process::Command::new("nice");
+        cmd.arg("-n").arg("19");
+        if let Some(path) = find_sidecar(ffmpeg_sidecar_name()) {
+            cmd.arg(path);
+        } else {
+            cmd.arg("ffmpeg");
+        }
+        cmd
+    }
+    #[cfg(not(unix))]
+    {
+        if let Some(path) = find_sidecar(ffmpeg_sidecar_name()) {
+            tokio::process::Command::new(path)
+        } else {
+            tokio::process::Command::new("ffmpeg")
+        }
+    }
+}
+
 /// Internal: Get probe JSON via async command with 10s hard timeout.
 /// This prevents malformed headers from hanging the backend.
 async fn probe_json_async(file_path: &str) -> Result<serde_json::Value, String> {
-    #[cfg(unix)]
-    let mut cmd = tokio::process::Command::new("nice");
-    #[cfg(unix)]
-    cmd.arg("-n").arg("19").arg("ffprobe");
-    #[cfg(not(unix))]
-    let mut cmd = tokio::process::Command::new("ffprobe");
+    let mut cmd = ffprobe_command();
 
     cmd.args(["-v", "quiet", "-show_format", "-show_streams", "-of", "json", file_path]);
     
@@ -123,11 +234,7 @@ pub async fn get_video_thumbnail(file_path: &str, thumbnail_size: u32, known_dur
     let duration = if let Some(d) = known_duration { d } else { get_video_duration(file_path).await.unwrap_or(0) };
     let seek_time = if duration > 10 { duration / 10 } else { 0 };
 
-    #[cfg(unix)]
-    let mut cmd = tokio::process::Command::new("nice");
-    #[cfg(unix)] cmd.arg("-n").arg("19").arg("ffmpeg");
-    #[cfg(not(unix))]
-    let mut cmd = tokio::process::Command::new("ffmpeg");
+    let mut cmd = ffmpeg_command();
 
     cmd.args(["-ss", &seek_time.to_string(), "-i", file_path, "-vframes", "1", "-f", "image2", "-update", "1",
               "-vf", &format!("scale=w={}:h={}:force_original_aspect_ratio=increase,crop={}:{}", thumbnail_size, thumbnail_size, thumbnail_size, thumbnail_size),
@@ -143,12 +250,7 @@ pub async fn get_video_thumbnail(file_path: &str, thumbnail_size: u32, known_dur
     match tokio::time::timeout(std::time::Duration::from_secs(10), child.wait_with_output()).await {
         Ok(Ok(output)) if output.status.success() => Ok(Some(output.stdout)),
         _ => {
-            #[cfg(unix)]
-            let mut fallback = tokio::process::Command::new("nice");
-            #[cfg(unix)] fallback.arg("-n").arg("19").arg("ffmpeg");
-            #[cfg(not(unix))]
-            let mut fallback = tokio::process::Command::new("ffmpeg");
-
+            let mut fallback = ffmpeg_command();
             fallback.args(["-i", file_path, "-vframes", "1", "-f", "image2", "-update", "1",
                            "-vf", &format!("scale=w={}:h={}:force_original_aspect_ratio=increase,crop={}:{}", thumbnail_size, thumbnail_size, thumbnail_size, thumbnail_size),
                            "-c:v", "mjpeg", "pipe:1"]);
@@ -267,11 +369,7 @@ pub async fn prepare_video(app: AppHandle, state: tauri::State<'_, VideoManager>
 
     // Loop for automatic Remux-to-Transcode fallback without re-probing.
     loop {
-        #[cfg(unix)]
-        let mut cmd = tokio::process::Command::new("nice");
-        #[cfg(unix)] cmd.arg("-n").arg("19").arg("ffmpeg");
-        #[cfg(not(unix))]
-        let mut cmd = tokio::process::Command::new("ffmpeg");
+        let mut cmd = ffmpeg_command();
 
         cmd.arg("-i").arg(&file_path);
         if current_action == VideoAction::Remux { 

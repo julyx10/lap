@@ -12,8 +12,8 @@
   },
   "bundle": {
     "resources": {
-      "resources/models/*": "resources/models",
-      "resources/ffmpeg/*.dll": ""
+      "resources/models/*": "models",
+      "resources/ffmpeg/*": "ffmpeg"
     }
   }
 }

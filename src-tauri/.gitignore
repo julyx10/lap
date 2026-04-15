@@ -6,8 +6,7 @@
 # will have schema files for capabilities auto-completion
 /gen/schemas
 
-# ignore AI models
-resources/models
+/resources
 
 # ignore dynamic libraries (e.g. onnxruntime)
 *.dylib
