@@ -44,18 +44,12 @@ importers:
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
-      lodash:
-        specifier: ^4.17.23
-        version: 4.17.23
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@6.0.2)(vue@3.5.31(typescript@6.0.2))
       pinia-plugin-persistedstate:
         specifier: ^4.7.1
         version: 4.7.1(@nuxt/kit@3.17.4)(pinia@3.0.4(typescript@6.0.2)(vue@3.5.31(typescript@6.0.2)))
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
       video.js:
         specifier: ^8.23.7
         version: 8.23.7
@@ -96,6 +90,9 @@ importers:
       postcss:
         specifier: ^8.5.8
         version: 8.5.8
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
       tailwindcss:
         specifier: ^4.2.2
         version: 4.2.2
@@ -1025,9 +1022,6 @@ packages:
   local-pkg@1.1.2:
     resolution: {integrity: sha512-arhlxbFRmoQHl33a0Zkle/YWlmNwoyt6QNZEIJcqNbdrsix5Lvc4HyyI3EnwxTYlZYc32EbYrQ8SzEZ7dqgg9A==}
     engines: {node: '>=14'}
-
-  lodash@4.17.23:
-    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
@@ -2393,8 +2387,6 @@ snapshots:
       mlly: 1.8.2
       pkg-types: 2.3.0
       quansync: 0.2.11
-
-  lodash@4.17.23: {}
 
   lru-cache@5.1.1:
     dependencies:
