@@ -1,9 +1,9 @@
 <template>
   <div
     :class="[
-      'border-2 flex flex-col items-center cursor-pointer group',
+      'border-2 rounded-box flex flex-col items-center cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
-      config.settings.grid.style === 0 ? 'p-1 rounded-box w-fit h-fit' : 'w-full h-full',
+      config.settings.grid.style === 0 ? 'p-1 w-fit h-fit' : 'w-full h-full',
       isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
@@ -13,10 +13,7 @@
   >
     <div v-if="file.thumbnail" 
       ref="containerRef"
-      :class="[
-        'relative flex items-center justify-center overflow-hidden', 
-        config.settings.grid.style === 0 ? 'rounded-box' : 'w-full h-full',
-      ]"
+      class="rounded-box relative flex items-center justify-center overflow-hidden"
       :style="layoutStyle">
       <!-- image -->
       <img :src="file.thumbnail"
