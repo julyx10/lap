@@ -773,10 +773,11 @@
       "aborted": "中止されました",
       "network": "ネットワークエラー",
       "decode": "デコードエラー",
-      "format": "この動画は再生できません",
+      "format": "サポートされていないビデオ形式か、ファイルが破損している可能性があります。",
       "open_in_external_app": "外部プレイヤーで開く",
       "open_in_external_app_named": "{app} で開く...",
       "use_external": "未対応の形式を開くには、設定で外部プレイヤーを設定してください。",
+      "use_external_generic": "外部プレイヤーで開いてみてください。",
       "use_external_with_app": "代わりに {app} で開いてみてください。",
       "unknown": "不明なエラー"
     }

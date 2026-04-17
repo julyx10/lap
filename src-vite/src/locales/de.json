@@ -773,10 +773,11 @@
       "aborted": "Abgebrochen",
       "network": "Netzwerkfehler",
       "decode": "Dekodierfehler",
-      "format": "Dieses Video konnte nicht abgespielt werden",
+      "format": "Nicht unterstütztes Videoformat oder die Datei ist möglicherweise beschädigt.",
       "open_in_external_app": "In externem Player öffnen",
       "open_in_external_app_named": "Video in {app} öffnen...",
       "use_external": "Um nicht unterstützte Formate zu öffnen, konfigurieren Sie einen externen Player in den Einstellungen.",
+      "use_external_generic": "Versuchen Sie, es im externen Player zu öffnen.",
       "use_external_with_app": "Versuchen Sie stattdessen, es in {app} zu öffnen.",
       "unknown": "Unbekannter Fehler"
     }

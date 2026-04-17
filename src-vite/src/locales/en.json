@@ -773,10 +773,11 @@
       "aborted": "Video loading was canceled",
       "network": "Network error while loading video",
       "decode": "Video decoding error",
-      "format": "Unable to play this video",
+      "format": "Unsupported video format or the file might be corrupted.",
       "open_in_external_app": "Open in external player",
       "open_in_external_app_named": "Open video in {app}...",
       "use_external": "To open unsupported formats, set up an external player in Settings.",
+      "use_external_generic": "Try opening it in the external player.",
       "use_external_with_app": "Try opening in {app} instead.",
       "unknown": "Unknown error"
     }

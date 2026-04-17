@@ -773,10 +773,11 @@
       "aborted": "Abortado",
       "network": "Erro de rede",
       "decode": "Erro de decodificação",
-      "format": "Não é possível reproduzir este vídeo",
+      "format": "Formato de vídeo não suportado ou o arquivo pode estar corrompido.",
       "open_in_external_app": "Abrir no player externo",
       "open_in_external_app_named": "Abrir vídeo em {app}...",
       "use_external": "Para abrir formatos não suportados, configure um player externo nas Configurações.",
+      "use_external_generic": "Tente abrir no player externo.",
       "use_external_with_app": "Tente abrir no {app} em vez disso.",
       "unknown": "Erro desconhecido"
     }

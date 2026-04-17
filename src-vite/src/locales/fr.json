@@ -773,10 +773,11 @@
       "aborted": "Annulé",
       "network": "Erreur réseau",
       "decode": "Erreur décodage",
-      "format": "Impossible de lire cette vidéo",
+      "format": "Format vidéo non pris en charge ou le fichier est peut-être corrompu.",
       "open_in_external_app": "Ouvrir dans un lecteur externe",
       "open_in_external_app_named": "Ouvrir la vidéo dans {app}...",
       "use_external": "Pour ouvrir les formats non pris en charge, configurez un lecteur externe dans les Paramètres.",
+      "use_external_generic": "Essayez de l'ouvrir dans le lecteur externe.",
       "use_external_with_app": "Essayez d'ouvrir dans {app} à la place.",
       "unknown": "Erreur inconnue"
     }

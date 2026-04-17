@@ -773,10 +773,11 @@
       "aborted": "Abortado",
       "network": "Error red",
       "decode": "Error decodificación",
-      "format": "No se puede reproducir este vídeo",
+      "format": "Formato de vídeo no compatible o el archivo podría estar dañado.",
       "open_in_external_app": "Abrir en un reproductor externo",
       "open_in_external_app_named": "Abrir vídeo en {app}...",
       "use_external": "Para abrir formatos no compatibles, configure un reproductor externo en Configuración.",
+      "use_external_generic": "Intente abrirlo en el reproductor externo.",
       "use_external_with_app": "Intente abrir en {app} en su lugar.",
       "unknown": "Error desconocido"
     }

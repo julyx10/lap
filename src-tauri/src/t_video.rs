@@ -370,7 +370,7 @@ async fn analyze_strategy(json: &Value, file_path: &str) -> VideoAction {
 
     // 1. Video Codec Support logic
     let v_ok = match v_codec {
-        "h264" => true,
+        "h264" => !cfg!(target_os = "linux"), // Linux WebKitGTK often lacks H.264, force Remux
         "hevc" | "vp9" => cfg!(target_os = "macos"), 
         _ => false,
     };
@@ -383,7 +383,9 @@ async fn analyze_strategy(json: &Value, file_path: &str) -> VideoAction {
         _ => false,
     };
 
-    if !v_ok { return VideoAction::Transcode; }
+    if !v_ok {
+        return VideoAction::Transcode;
+    }
 
     // 3. Container & Platform Specifics
     let is_mp4 = fmt.contains("mp4") || fmt.contains("m4v");
@@ -400,11 +402,13 @@ async fn analyze_strategy(json: &Value, file_path: &str) -> VideoAction {
                 return VideoAction::Remux;
             }
         }
-        // MKV, AVI, etc -> Remux
+        // Linux: if we reached here, it's probably H.264 which we disabled v_ok for earlier
+        // Force Remux to standard MP4 with faststart
         return VideoAction::Remux;
     }
 
     // Video OK but Audio Incompatible -> Remux (FFmpeg CLI will encode to AAC)
+    // For Linux, if video wasn't v_ok, it already went to Transcode above.
     VideoAction::Remux
 }
 
@@ -469,9 +473,10 @@ pub async fn prepare_video(app: AppHandle, state: tauri::State<'_, VideoManager>
         Err(e) => return Err(format!("Probe failed: {}", e)),
     };
 
-    // Rule: Reject transcoding for videos longer than 10 minutes (600s).
-    if (action == VideoAction::Transcode || force.as_deref() == Some("process")) && duration > 600 {
-        return Err("Video too long for transcoding (>10 min).".to_string());
+    // Only reject explicit user-forced processing for very long videos.
+    // Automatic platform compatibility processing must remain available.
+    if force.as_deref() == Some("process") && duration > 900 {
+        return Err("Video too long for transcoding (>15 min).".to_string());
     }
 
     if action == VideoAction::Direct && force.as_deref() != Some("process") {
@@ -487,7 +492,8 @@ pub async fn prepare_video(app: AppHandle, state: tauri::State<'_, VideoManager>
     let temp_dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("video_cache");
     if !temp_dir.exists() { let _ = tokio::fs::create_dir_all(&temp_dir).await; }
     
-    let cache_name = get_cache_filename_async(&file_path).await;
+    let ext = if current_action == VideoAction::Transcode && cfg!(target_os = "linux") { "webm" } else { "mp4" };
+    let cache_name = get_cache_filename_async(&file_path, ext).await;
     let output_path = temp_dir.join(&cache_name);
     // Fixed Concurrency: include player_id in tmp name to avoid contention
     let tmp_path = temp_dir.join(format!("{}.{}.tmp", cache_name, &player_id));
@@ -509,15 +515,17 @@ pub async fn prepare_video(app: AppHandle, state: tauri::State<'_, VideoManager>
         let mut cmd = ffmpeg_command();
         
         // Define deadline for THIS specific stage (Dynamic based on duration for Transcode)
-        let stage_timeout_secs = if current_action == VideoAction::Remux { 
-            40 
-        } else { 
-            // Give 30s per minute of video, min 120s, max 600s
-            let mut base = (duration * 30 / 60).clamp(120, 600);
+        let stage_timeout_secs = if current_action == VideoAction::Remux {
+            40
+        } else {
+            // Give automatic compatibility transcodes enough time for long videos.
+            // Keep user-forced processing more conservative to avoid runaway jobs.
+            let max_transcode_timeout = if force.as_deref() == Some("process") { 900 } else { 3600 };
+            let mut base = (duration * 30 / 60).clamp(120, max_transcode_timeout);
             
             // macOS: Software encoding (libx264) is significantly slower than hardware (videotoolbox)
             #[cfg(target_os = "macos")]
-            if try_software_enc { base = (base * 3).min(480); }
+            if try_software_enc { base = (base * 3).min(max_transcode_timeout); }
             
             base
         };
@@ -525,21 +533,27 @@ pub async fn prepare_video(app: AppHandle, state: tauri::State<'_, VideoManager>
 
         cmd.arg("-i").arg(&file_path);
         if current_action == VideoAction::Remux { 
-            cmd.args(["-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "faststart", "-f", "mp4", "-y"]); 
+            cmd.args(["-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-f", "mp4", "-y"]); 
         } else {
-            // macOS Fallback Logic: Try Hardware accelerated videotoolbox, fallback to libx264
+            // Linux: Use WebM/VP8 for maximum compatibility as H.264 support is unreliable
+            #[cfg(target_os = "linux")]
+            {
+                cmd.args(["-c:v", "libvpx", "-b:v", "2M", "-crf", "10", "-quality", "good", "-cpu-used", "5", "-c:a", "libvorbis", "-f", "webm", "-y"]);
+            }
+            // macOS: Use Hardware acceleration
             #[cfg(target_os = "macos")]
             {
                 if try_software_enc {
-                    cmd.args(["-c:v", "libx264", "-preset", "superfast", "-crf", "23"]);
+                    cmd.args(["-c:v", "libx264", "-preset", "superfast", "-crf", "23", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-f", "mp4", "-y"]);
                 } else {
-                    cmd.args(["-c:v", "h264_videotoolbox", "-b:v", "4000k"]);
+                    cmd.args(["-c:v", "h264_videotoolbox", "-b:v", "4000k", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-f", "mp4", "-y"]);
                 }
             }
-            #[cfg(not(target_os = "macos"))] 
-            { cmd.args(["-c:v", "libx264", "-preset", "superfast", "-crf", "23"]); }
-
-            cmd.args(["-c:a", "aac", "-b:a", "192k", "-movflags", "faststart", "-f", "mp4", "-y"]);
+            // Windows: Use standard libx264
+            #[cfg(target_os = "windows")]
+            { 
+                cmd.args(["-c:v", "libx264", "-preset", "superfast", "-crf", "23", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-f", "mp4", "-y"]); 
+            }
         }
         cmd.arg(&tmp_path);
         #[cfg(target_os = "windows")] { cmd.creation_flags(0x08000000); }
@@ -657,11 +671,11 @@ async fn auto_cleanup_video_cache_async(dir: PathBuf) {
     for (p, s, _) in files { if total <= target { break; } if tokio::fs::remove_file(&p).await.is_ok() { total -= s; } }
 }
 
-async fn get_cache_filename_async(p: &str) -> String {
+async fn get_cache_filename_async(p: &str, ext: &str) -> String {
     let meta = tokio::fs::metadata(p).await.ok();
     let size = meta.as_ref().map(|m| m.len()).unwrap_or(0);
     let mtime = meta.as_ref().and_then(|m| m.modified().ok()).and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_secs()).unwrap_or(0);
     let path_sum: u64 = p.bytes().fold(5381u64, |acc, b| acc.wrapping_mul(33).wrapping_add(b as u64));
     let len_mix = (p.len() as u64).wrapping_mul(0x517cc1b727220a95);
-    format!("{:x}_{}_{}.mp4", path_sum ^ len_mix, size, mtime)
+    format!("{:x}_{}_{}.{}", path_sum ^ len_mix, size, mtime, ext)
 }

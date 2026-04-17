@@ -322,14 +322,14 @@ const loadVideo = async (filePath: string) => {
 
   const tryPlayProcessed = async () => {
     try {
-      // Force processing since direct play already failed
-      const result = await prepareVideo(filePath, String(nextUpIndex), "process");
+      // Let the backend choose remux vs transcode for the current platform.
+      const result = await prepareVideo(filePath, String(nextUpIndex));
       if (currentLoadId !== currentLoadingId) return;
 
       player.reset();
       player.src({
         src: getAssetSrc(result.url),
-        type: result.is_remuxed ? 'video/mp4' : undefined,
+        type: result.action === 'remux' ? 'video/mp4' : (result.url.endsWith('.webm') ? 'video/webm' : 'video/mp4'),
       });
 
       const onLoadedFallback = () => {
@@ -397,7 +397,13 @@ const loadVideo = async (filePath: string) => {
 
 function getFallbackErrorMessage() {
   const formatMsg = $t('video.errors.format');
-  return canOpenExternalApp.value ? formatMsg : `${formatMsg}\n${$t('video.errors.use_external')}`;
+  if (canOpenExternalApp.value && externalVideoAppName.value) {
+    return `${formatMsg}\n${$t('video.errors.use_external_with_app', { app: externalVideoAppName.value })}`;
+  }
+  if (canOpenExternalApp.value) {
+    return `${formatMsg}\n${$t('video.errors.use_external_generic')}`;
+  }
+  return `${formatMsg}\n${$t('video.errors.use_external')}`;
 }
 
 function handlePlayerError(playerInstance: ReturnType<typeof videojs>) {

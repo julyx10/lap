@@ -773,10 +773,11 @@
       "aborted": "중단됨",
       "network": "네트워크 오류",
       "decode": "디코딩 오류",
-      "format": "이 동영상을 재생할 수 없습니다",
+      "format": "지원되지 않는 비디오 형식 이거나 파일이 손상되었을 수 있습니다.",
       "open_in_external_app": "외부 플레이어에서 열기",
       "open_in_external_app_named": "{app}에서 열기...",
       "use_external": "지원하지 않는 형식을 열려면 설정에서 외부 플레이어를 구성하세요.",
+      "use_external_generic": "외부 플레이어에서 열어보세요.",
       "use_external_with_app": "대신 {app}에서 열어보세요.",
       "unknown": "알 수 없는 오류"
     }
