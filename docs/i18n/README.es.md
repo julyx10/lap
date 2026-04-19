@@ -27,8 +27,8 @@ Abra la [página de las últimas versiones](https://github.com/julyx10/lap/relea
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | `aarch64.dmg` | Notarizado por Apple |
 | **macOS (Intel)** | `x64.dmg` | Notarizado por Apple |
-| **Windows 10/11 (x64)** | `.msi` | Actualmente sin firmar (puede aparecer la advertencia de SmartScreen) |
-| **Ubuntu/Debian (amd64)** | `amd64.deb` | Verificado en Linux Mint. Para un mejor soporte de reproducción de vídeo, consulte la nota de Linux a continuación. |
+| **Windows 10/11 (x64)** | `.msi` | Probado en Windows 11. Actualmente sin firmar (puede aparecer la advertencia de SmartScreen) |
+| **Ubuntu/Debian (amd64)** | `amd64.deb` | Probado en Linux Mint. Para un mejor soporte de reproducción de vídeo, consulte la nota de Linux a continuación. |
 
 ### Notas sobre la reproducción de vídeo en Linux
 
@@ -56,7 +56,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Privacidad por defecto**: el procesamiento se realiza localmente, por lo que sus fotos permanecen bajo su control.
 - **Uso gratuito**: sin planes de suscripción ni cuotas recurrentes.
 - **Centrado en carpetas**: trabaje directamente con sus carpetas actuales, sin necesidad de pasos de importación.
-- **Diseñado para grandes bibliotecas**: navegación y organización fluidas a través de miles de fotos y vídeos.
+- **Alto rendimiento para grandes bibliotecas**: optimizado para una navegación y organización fluida de grandes colecciones de medios (más de 100 000 archivos por biblioteca).
 
 ## Características
 
@@ -68,6 +68,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Herramientas de búsqueda local** como búsqueda de texto/imagen, búsqueda de imágenes similares, agrupación de rostros y etiquetas inteligentes.
 - **Abrir formatos de imagen modernos** incluyendo WebP, HEIC/HEIF, AVIF y JXL (JPEG XL).
 - **Ver fotos RAW** con decodificación integrada para más de 20 formatos RAW de cámaras (CR2, NEF, ARW, DNG, etc.).
+- **Amplia compatibilidad de video**: soporte para MP4, MOV, AVI, MKV y más de 20 otros formatos con optimización multiplataforma.
 
 ## Características planeadas
 

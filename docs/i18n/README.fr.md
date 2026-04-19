@@ -27,8 +27,8 @@ Ouvrez la [page des dernières versions](https://github.com/julyx10/lap/releases
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | `aarch64.dmg` | Notarié par Apple |
 | **macOS (Intel)** | `x64.dmg` | Notarié par Apple |
-| **Windows 10/11 (x64)** | `.msi` | Actuellement non signé (un avertissement SmartScreen peut apparaître) |
-| **Ubuntu/Debian (amd64)** | `amd64.deb` | Vérifié sur Linux Mint. Pour un meilleur support de la lecture vidéo, voir la note Linux ci-dessous. |
+| **Windows 10/11 (x64)** | `.msi` | Testé sur Windows 11. Actuellement non signé (un avertissement SmartScreen peut apparaître) |
+| **Ubuntu/Debian (amd64)** | `amd64.deb` | Testé sur Linux Mint. Pour un meilleur support de la lecture vidéo, voir la note Linux ci-dessous. |
 
 ### Note sur la lecture vidéo sous Linux
 
@@ -56,7 +56,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Privé par défaut** : le traitement se fait localement, vos photos restent donc sous votre contrôle.
 - **Gratuit** : pas d'abonnement ni de frais récurrents.
 - **Dossiers d'abord** : travaillez directement avec vos dossiers existants, aucune étape d'importation n'est requise.
-- **Conçu pour les grandes bibliothèques** : navigation et organisation fluides parmi des milliers de photos et vidéos.
+- **Haute performance pour les grandes bibliothèques** : optimisé pour une navigation et une organisation fluides de vastes collections de médias (plus de 100 000 fichiers par bibliothèque).
 
 ## Fonctionnalités
 
@@ -68,6 +68,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Utiliser les outils de recherche locaux** tels que la recherche texte/image, la recherche d'images similaires, le regroupement de visages et les tags intelligents.
 - **Ouvrir les formats d'image modernes** y compris WebP, HEIC/HEIF, AVIF et JXL (JPEG XL).
 - **Consulter les photos RAW** avec un décodage intégré pour plus de 20 formats RAW d'appareils photo (CR2, NEF, ARW, DNG, etc.).
+- **Large compatibilité vidéo** : prise en charge des formats MP4, MOV, AVI, MKV et de plus de 20 autres formats avec optimisation multiplateforme.
 
 ## Fonctionnalités prévues
 

@@ -27,8 +27,8 @@ Es ist eine datenschutzorientierte Alternative zu Cloud-Fotodiensten: kein erzwu
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | `aarch64.dmg` | Von Apple notarisiert |
 | **macOS (Intel)** | `x64.dmg` | Von Apple notarisiert |
-| **Windows 10/11 (x64)** | `.msi` | Derzeit nicht signiert (SmartScreen-Warnung kann erscheinen) |
-| **Ubuntu/Debian (amd64)** | `amd64.deb` | Auf Linux Mint geprüft. Für bessere Video-Unterstützung siehe die Linux-Hinweise unten. |
+| **Windows 10/11 (x64)** | `.msi` | Unter Windows 11 getestet. Derzeit nicht signiert (SmartScreen-Warnung kann erscheinen) |
+| **Ubuntu/Debian (amd64)** | `amd64.deb` | Unter Linux Mint getestet. Für bessere Video-Unterstützung siehe die Linux-Hinweise unten. |
 
 ### Linux Video-Wiedergabe Hinweise
 
@@ -56,7 +56,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Standardmäßig privat**: Die Verarbeitung erfolgt lokal, sodass Ihre Fotos unter Ihrer Kontrolle bleiben.
 - **Kostenlos nutzbar**: Kein Abonnement oder wiederkehrende Gebühren.
 - **Ordner-fokussiert**: Arbeiten Sie direkt mit Ihren vorhandenen Ordnern, kein Importschritt erforderlich.
-- **Für große Bibliotheken gebaut**: Reibungsloses Durchsuchen und Organisieren von Tausenden von Fotos und Videos.
+- **Hohe Performance für große Bibliotheken**: Optimiert für flüssiges Durchsuchen und Organisieren riesiger Mediensammlungen (100.000+ Dateien pro Bibliothek).
 
 ## Funktionen
 
@@ -68,6 +68,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Lokale KI-Werkzeuge nutzen** wie Text-/Bildsuche, Suche nach ähnlichen Bildern, Gesichts-Clustering und intelligente Schlagworte.
 - **Moderne Bildformate öffnen** einschließlich WebP, HEIC/HEIF, AVIF and JXL (JPEG XL).
 - **RAW-Fotos anzeigen** mit integrierter Dekodierung für über 20 Kamera-RAW-Formate (CR2, NEF, ARW, DNG usw.).
+- **Breite Videokompatibilität**: Unterstützung für MP4, MOV, AVI, MKV und über 20 weitere Formate mit plattformübergreifender Optimierung.
 
 ## Geplante Funktionen
 

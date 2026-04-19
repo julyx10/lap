@@ -27,8 +27,8 @@ Lap은 오픈 소스 기반의 '로컬 우선(local-first)' 사진 관리 도구
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | `aarch64.dmg` | Apple 공증 완료 |
 | **macOS (Intel)** | `x64.dmg` | Apple 공증 완료 |
-| **Windows 10/11 (x64)** | `.msi` | 현재 서명되지 않음 (SmartScreen 경고가 나타날 수 있음) |
-| **Ubuntu/Debian (amd64)** | `amd64.deb` | Linux Mint에서 동작 확인됨. 비디오 재생 지원에 대해서는 아래 Linux 참고 사항을 확인하세요. |
+| **Windows 10/11 (x64)** | `.msi` | Windows 11에서 테스트 완료. 현재 서명되지 않음 (SmartScreen 경고가 나타날 수 있음) |
+| **Ubuntu/Debian (amd64)** | `amd64.deb` | Linux Mint에서 테스트 완료. 비디오 재생 지원에 대해서는 아래 Linux 참고 사항을 확인하세요. |
 
 ### Linux 비디오 재생 참고 사항
 
@@ -56,7 +56,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **기본적으로 프라이빗**: 모든 처리가 로컬에서 이루어지므로 사진이 항상 사용자의 제어 하에 있습니다.
 - **무료 사용**: 구독 플랜이나 정기 결제가 없습니다.
 - **폴더 중심**: 기존 폴더 구조를 직접 활용하므로 번거로운 '가져오기' 단계가 필요 없습니다.
-- **대규모 라이브러리 설계**: 수만 장의 사진과 비디오를 부드럽게 탐색하고 정리할 수 있습니다.
+- **대규모 라이브러리를 위한 고성능**: 대규모 미디어 컬렉션(라이브러리당 10만 개 이상의 파일)에서도 부드러운 탐색과 정리가 가능하도록 최적화되었습니다.
 
 ## 주요 기능
 
@@ -68,6 +68,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **로컬 AI 검색 도구**: 텍스트/이미지 검색, 유사 이미지 검색, 얼굴 클러스터링, 스마트 태그 기능을 사용할 수 있습니다.
 - **현대적 이미지 포맷 지원**: WebP, HEIC/HEIF, AVIF 및 JXL (JPEG XL) 형식을 지원합니다.
 - **RAW 사진 보기**: 20개 이상의 카메라 제조사 RAW 포맷(CR2, NEF, ARW, DNG 등)에 대한 내장 디코딩을 지원합니다.
+- **광범위한 비디오 호환성**: MP4, MOV, AVI, MKV 및 20개 이상의 다양한 형식을 지원하며 교차 플랫폼 최적화를 제공합니다.
 
 ## 향후 계획
 

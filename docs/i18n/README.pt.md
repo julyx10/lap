@@ -27,8 +27,8 @@ Abra a [página de lançamentos recentes](https://github.com/julyx10/lap/release
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | `aarch64.dmg` | Notarizado pela Apple |
 | **macOS (Intel)** | `x64.dmg` | Notarizado pela Apple |
-| **Windows 10/11 (x64)** | `.msi` | Atualmente sem assinatura (um aviso do SmartScreen pode aparecer) |
-| **Ubuntu/Debian (amd64)** | `amd64.deb` | Verificado no Linux Mint. Para melhor suporte a reprodução de vídeo, veja a nota sobre Linux abaixo. |
+| **Windows 10/11 (x64)** | `.msi` | Testado no Windows 11. Atualmente sem assinatura (um aviso do SmartScreen pode aparecer) |
+| **Ubuntu/Debian (amd64)** | `amd64.deb` | Testado no Linux Mint. Para melhor suporte a reprodução de vídeo, veja a nota sobre Linux abaixo. |
 
 ### Notas sobre reprodução de vídeo no Linux
 
@@ -56,7 +56,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Privado por padrão**: o processamento ocorre localmente, portanto, suas fotos permanecem sob seu controle.
 - **Gratuito para usar**: sem planos de assinatura ou taxas recorrentes.
 - **Pastas primeiro**: trabalhe diretamente com suas pastas existentes, sem etapa de importação necessária.
-- **Feito para grandes bibliotecas**: navegação e organização fluidas em milhares de fotos e vídeos.
+- **Alto desempenho para grandes bibliotecas**: otimizado para navegação e organização fluidas de grandes coleções de mídia (mais de 100 mil arquivos por biblioteca).
 
 ## Recursos
 
@@ -68,6 +68,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Usar ferramentas de busca local** como busca por texto/imagem, busca por imagens semelhantes, agrupamento de rostos e tags inteligentes.
 - **Abrir formatos de imagem modernos** incluindo WebP, HEIC/HEIF, AVIF e JXL (JPEG XL).
 - **Visualizar fotos RAW** com decodificação integrada para mais de 20 formatos RAW de câmeras (CR2, NEF, ARW, DNG, etc.).
+- **Ampla compatibilidade de vídeo**: suporte para MP4, MOV, AVI, MKV e mais de 20 outros formatos com otimização multiplataforma.
 
 ## Recursos planejados
 

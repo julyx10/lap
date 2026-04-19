@@ -27,8 +27,8 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 | :-- | :-- | :-- |
 | **macOS (Apple Silicon)** | `aarch64.dmg` | Notarized by Apple |
 | **macOS (Intel)** | `x64.dmg` | Notarized by Apple |
-| **Windows 10/11 (x64)** | `.msi` | Currently unsigned (SmartScreen warning may appear) |
-| **Ubuntu/Debian (amd64)** | `amd64.deb` | Sanity-checked on Linux Mint. For better video playback support, see the Linux note below. |
+| **Windows 10/11 (x64)** | `.msi` | Tested on Windows 11. Currently unsigned (SmartScreen warning may appear) |
+| **Ubuntu/Debian (amd64)** | `amd64.deb` | Tested on Linux Mint. For better video playback support, see the Linux note below. |
 
 ### Linux Video Playback Notes
 
@@ -56,7 +56,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Private by default**: processing happens locally, so your photos stay under your control.
 - **Free to use**: no subscription plan or recurring fee.
 - **Folder-first**: work directly with your existing folders, no import step required.
-- **Built for large libraries**: smooth browsing and organization across thousands of photos and videos.
+- **High performance for large libraries**: optimized for smooth browsing and organization across huge media collections (100k+ files per library).
 
 ## Features
 
@@ -68,6 +68,7 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 - **Use local search tools** such as text/image search, similar-image search, face clustering, and smart tags.
 - **Open modern image formats** including WebP, HEIC/HEIF, AVIF, and JXL (JPEG XL).
 - **View RAW photos** with built-in decoding for 20+ camera RAW formats (CR2, NEF, ARW, DNG, etc.).
+- **Broad video compatibility** supporting MP4, MOV, AVI, MKV, and 20+ other formats with cross-platform optimization.
 
 ## Planned Features
 
