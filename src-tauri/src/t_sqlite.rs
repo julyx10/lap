@@ -2289,7 +2289,7 @@ impl AFile {
 pub struct AThumb {
     pub id: Option<i64>, // unique id (autoincrement by db)
     pub file_id: i64,    // file id (from files table)
-    pub error_code: i64, // error code (0: success, 1: error)
+    pub error_code: i64, // error code (0: success, 1: error, 2: use original)
 
     #[serde(skip)]
     pub thumb_data: Option<Vec<u8>>, // thumbnail data (store into db as BLOB)
@@ -2308,6 +2308,22 @@ pub struct AThumb {
 }
 
 impl AThumb {
+    fn should_use_original_image(file_id: i64, file_type: i64, thumbnail_size: u32) -> bool {
+        if file_type != 1 || thumbnail_size == 0 {
+            return false;
+        }
+
+        AFile::get_file_info(file_id)
+            .ok()
+            .flatten()
+            .map(|file| {
+                let width = file.width.unwrap_or(0).max(0) as u32;
+                let height = file.height.unwrap_or(0).max(0) as u32;
+                width > 0 && height > 0 && width <= thumbnail_size && height <= thumbnail_size
+            })
+            .unwrap_or(false)
+    }
+
     fn is_png_bytes(data: &[u8]) -> bool {
         data.starts_with(&[0x89, 0x50, 0x4E, 0x47])
     }
@@ -2769,6 +2785,22 @@ impl AThumb {
         library_id: &str,
         known_duration: Option<u64>,
     ) -> Result<Option<Self>, String> {
+        if Self::should_use_original_image(file_id, file_type, thumbnail_size) {
+            let athumb = Self {
+                id: None,
+                file_id,
+                error_code: 2,
+                thumb_data: None,
+                thumb_key: None,
+                thumb_mtime: Self::get_source_mtime(file_path),
+                thumb_size: Some(thumbnail_size as i64),
+                updated_at: Some(Self::now_ts()),
+                thumb_data_base64: None,
+            };
+            athumb.insert()?;
+            return Self::fetch_for_library(file_id, library_id);
+        }
+
         let mut athumb = match Self::new_for_library(
             file_id,
             file_path,
@@ -2839,7 +2871,7 @@ impl AThumb {
         }
 
         if let Ok(Some(thumbnail)) = Self::fetch(file_id) {
-            if thumbnail.error_code != 0 {
+            if thumbnail.error_code == 1 || thumbnail.error_code == 2 {
                 return Ok(Some(thumbnail));
             }
 
@@ -2925,7 +2957,7 @@ impl AThumb {
         } else if let Some(thumb) =
             Self::get_thumb_if_available(file_id, file_path, thumbnail_size, orientation, false)?
         {
-            if thumb.error_code == 0 {
+            if thumb.error_code != 1 {
                 return Ok(Some(thumb));
             }
         }
@@ -2940,7 +2972,7 @@ impl AThumb {
                 orientation,
                 false,
             )? {
-                if hydrated.error_code == 0 {
+                if hydrated.error_code != 1 {
                     return Ok(Some(hydrated));
                 }
             }

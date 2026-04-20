@@ -32,12 +32,12 @@
               <div
                 v-if="item.label === '-'"
                 class="mx-2 my-1 border-t border-base-content/5"
-              />
+              ></div>
               <button
                 v-else
                 :class="[
                   'w-full px-2 py-1 flex justify-between text-sm whitespace-nowrap',
-                  item.disabled ? 'text-base-content/30' : 'hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer',
+                  item.disabled ? 'text-base-content/30' : 'hover:bg-base-100/30 hover:text-base-content hover:rounded-box cursor-pointer group',
                 ]"
                 @click="handleMainItemClick(index, item, $event)"
               >
@@ -47,7 +47,7 @@
                   </div>
                   <span class="ml-2 mr-4">{{ item.label }}</span>
                   <span class="ml-auto text-base-content/30">{{ item.shortcut }}</span>
-                  <IconRight v-if="item.children?.length" class="ml-2 w-3 h-3 text-base-content/30" />
+                  <IconRight v-if="item.children?.length" class="ml-2 w-3 h-3 text-base-content/70 group-hover:text-base-content"/>
                 </div>
               </button>
             </div>

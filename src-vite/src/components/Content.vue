@@ -576,7 +576,7 @@ import { config, libConfig } from '@/common/config';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { isWin, isMac, setTheme, separator,
-         formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl,
+         formatFileSize, formatDate, getCalendarDateRange, formatFolderBreadcrumb, getThumbnailDataUrl, getAssetSrc,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
          shortenFilename, getSlideShowInterval } from '@/common/utils';
 
@@ -3905,6 +3905,8 @@ const updateThumbForFile = async (file: any) => {
   if (thumb) {
     if (thumb.error_code === 0) {
       file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, true);
+    } else if (thumb.error_code === 2) {
+      file.thumbnail = getAssetSrc(file.file_path);
     } else if (thumb.error_code === 1) {
       file.thumbnail = thumbnailPlaceholder;
     }
@@ -4492,6 +4494,8 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 4, 
     if(thumb) {
       if(thumb.error_code === 0) {
         file.thumbnail = getThumbnailDataUrl(thumb, thumbnailPlaceholder, bustCache);
+      } else if (thumb.error_code === 2) {
+        file.thumbnail = getAssetSrc(file.file_path);
       } else if(thumb.error_code === 1) {
         file.thumbnail = thumbnailPlaceholder;
       }

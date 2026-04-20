@@ -756,23 +756,25 @@ const resizeOutput = computed(() => {
     return { width: baseWidth, height: baseHeight, hasResize: false };
   }
 
+  const buildResizeResult = (width: number, height: number) => ({
+    width,
+    height,
+    hasResize: width !== baseWidth || height !== baseHeight,
+  });
+
   if (keepAspectRatio.value) {
     if (widthInput && heightInput) {
-      return { width: widthInput, height: heightInput, hasResize: true };
+      return buildResizeResult(widthInput, heightInput);
     }
     if (widthInput) {
-      return { width: widthInput, height: Math.max(1, Math.round(widthInput / ratio)), hasResize: true };
+      return buildResizeResult(widthInput, Math.max(1, Math.round(widthInput / ratio)));
     }
     if (heightInput) {
-      return { width: Math.max(1, Math.round(heightInput * ratio)), height: heightInput, hasResize: true };
+      return buildResizeResult(Math.max(1, Math.round(heightInput * ratio)), heightInput);
     }
   }
 
-  return {
-    width: widthInput || baseWidth,
-    height: heightInput || baseHeight,
-    hasResize: !!widthInput || !!heightInput,
-  };
+  return buildResizeResult(widthInput || baseWidth, heightInput || baseHeight);
 });
 const hasEditImageChanges = computed(() =>
   normalizeRotate(rotate.value) !== initialDisplayRotate.value ||
