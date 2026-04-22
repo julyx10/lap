@@ -170,6 +170,7 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.file.move_to,
         icon: markRaw(IconMoveTo),
+        shortcut: 'M',
         action: createAction('move-to')
       },
       {

@@ -1694,6 +1694,12 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       toggleInfoPanel();
       return;
     }
+
+    if (event.code === 'KeyM') {
+      event.preventDefault();
+      showMoveTo.value = true;
+      return;
+    }
   }
 
   if ((isMac && event.key === 'Enter' && !hasModifier) || (!isMac && event.key === 'F2')) {
@@ -1787,6 +1793,8 @@ const handleKeyDown = (e: any) => {
       editImageInitialImageSrc.value = getCurrentPreviewImageSrc();
       showEditImage.value = true;
     }
+  } else if (!metaKey && !e.payload.ctrlKey && key.toLowerCase() === 'm') {
+    showMoveTo.value = true;
   } else if ((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
     openTrashMsgbox();
   } else if ((keyActions as any)[key]) {
