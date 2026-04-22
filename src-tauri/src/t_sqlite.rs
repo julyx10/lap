@@ -2512,10 +2512,10 @@ impl AThumb {
                                 Err(_) => (None, 1),   // error
                             }
                             #[cfg(not(target_os = "macos"))]
-                            match t_video::get_still_image_thumbnail_sync(
+                            match t_video::get_video_thumbnail_sync(
                                 file_path,
                                 thumbnail_size,
-                                true,
+                                known_duration,
                             ) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1), // empty thumb
