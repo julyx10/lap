@@ -65,13 +65,18 @@ fn build_libheif() {
     configure
         .arg("-DCMAKE_BUILD_TYPE=Release")
         .arg("-DBUILD_SHARED_LIBS=OFF")
+        .arg("-DBUILD_DOCUMENTATION=OFF")
+        .arg("-DBUILD_TESTING=OFF")
+        .arg("-DENABLE_PLUGIN_LOADING=OFF")
         .arg("-DWITH_EXAMPLES=OFF")
         .arg("-DWITH_GDK_PIXBUF=OFF")
         .arg("-DWITH_RAV1E=OFF")
+        .arg("-DWITH_X265=OFF")
         .arg("-DWITH_AOM_DECODER=OFF")
         .arg("-DWITH_AOM_ENCODER=OFF")
-        .arg("-DWITH_DAV1D=ON")
+        .arg("-DWITH_DAV1D=OFF")
         .arg("-DWITH_LIBDE265=ON")
+        .arg("-DWITH_LIBSHARPYUV=OFF")
         .arg(format!(
             "-DLIBDE265_INCLUDE_DIR={}",
             libde265.include_dir.display()
@@ -385,11 +390,13 @@ fn build_libde265(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Opti
             configure.arg("-G").arg("Unix Makefiles");
         }
         configure
-            .arg("-DCMAKE_BUILD_TYPE=Release")
             .arg("-DBUILD_SHARED_LIBS=OFF")
             .arg("-DENABLE_SDL=OFF")
-            .arg("-DENABLE_DEC265=OFF")
+            .arg("-DENABLE_DECODER=ON")
+            .arg("-DENABLE_ENCODER=OFF")
             .arg("-DENABLE_SHERLOCK265=OFF")
+            .arg("-DENABLE_INTERNAL_DEVELOPMENT_TOOLS=OFF")
+            .arg("-DWITH_FUZZERS=OFF")
             .arg(source_dir.as_os_str())
             .current_dir(&binary_dir);
 
