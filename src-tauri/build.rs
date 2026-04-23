@@ -103,6 +103,10 @@ fn build_libheif() {
         ))
         .arg(source_dir.as_os_str())
         .current_dir(&binary_dir);
+    if is_windows {
+        configure.arg("-DCMAKE_C_FLAGS=/DLIBDE265_STATIC_BUILD");
+        configure.arg("-DCMAKE_CXX_FLAGS=/DLIBDE265_STATIC_BUILD");
+    }
 
     run_command(&mut configure, "configure libheif");
 
@@ -486,11 +490,19 @@ fn build_libde265(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Opti
         }
     };
 
-    let include_dir = if source_dir.join("libde265").join("de265.h").exists() {
-        source_dir.clone()
-    } else {
-        binary_dir.clone()
-    };
+    let include_dir = out_dir.join("libde265-include");
+    let include_libde265_dir = include_dir.join("libde265");
+    fs::create_dir_all(&include_libde265_dir).unwrap();
+    fs::copy(
+        source_dir.join("libde265").join("de265.h"),
+        include_libde265_dir.join("de265.h"),
+    )
+    .unwrap();
+    fs::copy(
+        binary_dir.join("libde265").join("de265-version.h"),
+        include_libde265_dir.join("de265-version.h"),
+    )
+    .unwrap();
     let lib_dir = lib_path.parent().unwrap_or(&binary_dir).to_path_buf();
 
     Some(LibDe265Build {
