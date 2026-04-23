@@ -279,7 +279,7 @@
 
         <!-- Quick View Overlay -->
         <div v-if="showQuickView && fileList[selectedItemIndex]" 
-          class="absolute inset-0 z-60 flex items-center justify-center bg-base-200/80 backdrop-blur-md overflow-hidden"
+          class="absolute inset-0 z-60 flex items-center justify-center bg-base-200/95 backdrop-blur-lg overflow-hidden"
           :class="[ config.settings.showStatusBar ? 'mt-12 mb-8': 'mt-12' ]"
         >
           <div
