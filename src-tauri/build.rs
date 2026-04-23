@@ -27,6 +27,7 @@ fn main() {
 
 fn build_libheif() {
     println!("cargo:rerun-if-changed=third_party/libheif");
+    println!("cargo:rerun-if-changed=third_party/libde265");
 
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let source_dir = manifest_dir.join("third_party").join("libheif");
@@ -46,6 +47,15 @@ fn build_libheif() {
     fs::create_dir_all(&binary_dir).unwrap();
 
     let is_windows = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default() == "windows";
+    let libde265 = match build_libde265(&manifest_dir, &out_dir, is_windows) {
+        Some(build) => build,
+        None => {
+            println!(
+                "cargo:warning=libde265 is unavailable, so libheif will be built without a working HEIC decoder backend."
+            );
+            return;
+        }
+    };
 
     // Configure
     let mut configure = Command::new("cmake");
@@ -62,6 +72,14 @@ fn build_libheif() {
         .arg("-DWITH_AOM_ENCODER=OFF")
         .arg("-DWITH_DAV1D=ON")
         .arg("-DWITH_LIBDE265=ON")
+        .arg(format!(
+            "-DLIBDE265_INCLUDE_DIR={}",
+            libde265.include_dir.display()
+        ))
+        .arg(format!(
+            "-DLIBDE265_LIBRARY={}",
+            libde265.lib_path.display()
+        ))
         .arg(source_dir.as_os_str())
         .current_dir(&binary_dir);
 
@@ -82,13 +100,21 @@ fn build_libheif() {
 
     // Link - locate the static library output.
     // libheif's output name differs across platforms/build systems; keep it permissive.
-    let candidates: [(&str, PathBuf); 6] = [
+    let candidates: [(&str, PathBuf); 8] = [
         ("heif", binary_dir.join("libheif.a")),
         ("heif", binary_dir.join("Release").join("libheif.a")),
         ("heif", binary_dir.join("heif.lib")),
         ("heif", binary_dir.join("Release").join("heif.lib")),
         ("libheif", binary_dir.join("libheif.lib")),
         ("libheif", binary_dir.join("Release").join("libheif.lib")),
+        ("heif", binary_dir.join("libheif").join("Release").join("heif.lib")),
+        (
+            "libheif",
+            binary_dir
+                .join("libheif")
+                .join("Release")
+                .join("libheif.lib"),
+        ),
     ];
 
     let (lib_name, lib_path) = match candidates.iter().find(|(_, p)| p.exists()) {
@@ -105,6 +131,8 @@ fn build_libheif() {
     let lib_dir = lib_path.parent().unwrap_or(&binary_dir);
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=static={}", lib_name);
+    println!("cargo:rustc-link-search=native={}", libde265.lib_dir.display());
+    println!("cargo:rustc-link-lib=static={}", libde265.lib_name);
     if !is_windows {
         // Some libheif builds depend on stdc++.
         println!("cargo:rustc-link-lib=stdc++");
@@ -243,6 +271,13 @@ struct JpegBuild {
     lib_name: String,
 }
 
+struct LibDe265Build {
+    include_dir: PathBuf,
+    lib_dir: PathBuf,
+    lib_name: String,
+    lib_path: PathBuf,
+}
+
 fn build_libjpeg(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Option<JpegBuild> {
     let source_dir = manifest_dir.join("third_party/libjpeg-turbo");
     if !source_dir.exists() {
@@ -306,6 +341,97 @@ fn build_libjpeg(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Optio
         include_dirs: vec![binary_dir, source_dir.join("src")],
         lib_dir: final_lib_dir,
         lib_name: lib_name.to_string(),
+    })
+}
+
+fn build_libde265(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Option<LibDe265Build> {
+    let source_dir = manifest_dir.join("third_party/libde265");
+    if !source_dir.exists() {
+        println!(
+            "cargo:warning=libde265 submodule not found at {}. Run: git submodule update --init --recursive",
+            source_dir.display()
+        );
+        return None;
+    }
+
+    let build_root = out_dir.join("libde265-build");
+    let binary_dir = build_root.join("build");
+    fs::create_dir_all(&binary_dir).unwrap();
+
+    let candidates: [(&str, PathBuf); 8] = [
+        ("de265", binary_dir.join("libde265.a")),
+        ("de265", binary_dir.join("Release").join("libde265.a")),
+        ("de265", binary_dir.join("de265.lib")),
+        ("de265", binary_dir.join("Release").join("de265.lib")),
+        ("libde265", binary_dir.join("libde265.lib")),
+        ("libde265", binary_dir.join("Release").join("libde265.lib")),
+        (
+            "de265",
+            binary_dir.join("libde265").join("Release").join("de265.lib"),
+        ),
+        (
+            "libde265",
+            binary_dir
+                .join("libde265")
+                .join("Release")
+                .join("libde265.lib"),
+        ),
+    ];
+
+    let have_existing = candidates.iter().any(|(_, path)| path.exists());
+    if !have_existing {
+        let mut configure = Command::new("cmake");
+        if !is_windows {
+            configure.arg("-G").arg("Unix Makefiles");
+        }
+        configure
+            .arg("-DCMAKE_BUILD_TYPE=Release")
+            .arg("-DBUILD_SHARED_LIBS=OFF")
+            .arg("-DENABLE_SDL=OFF")
+            .arg("-DENABLE_DEC265=OFF")
+            .arg("-DENABLE_SHERLOCK265=OFF")
+            .arg(source_dir.as_os_str())
+            .current_dir(&binary_dir);
+
+        run_command(&mut configure, "configure libde265");
+
+        let jobs = env::var("NUM_JOBS").unwrap_or_else(|_| "1".to_string());
+        run_command(
+            Command::new("cmake")
+                .arg("--build")
+                .arg(".")
+                .arg("--config")
+                .arg("Release")
+                .arg("--parallel")
+                .arg(jobs)
+                .current_dir(&binary_dir),
+            "build libde265",
+        );
+    }
+
+    let (lib_name, lib_path) = match candidates.iter().find(|(_, path)| path.exists()) {
+        Some((name, path)) => (name.to_string(), path.clone()),
+        None => {
+            println!(
+                "cargo:warning=libde265 build completed but static library was not found under {}",
+                binary_dir.display()
+            );
+            return None;
+        }
+    };
+
+    let include_dir = if source_dir.join("libde265").join("de265.h").exists() {
+        source_dir.clone()
+    } else {
+        binary_dir.clone()
+    };
+    let lib_dir = lib_path.parent().unwrap_or(&binary_dir).to_path_buf();
+
+    Some(LibDe265Build {
+        include_dir,
+        lib_dir,
+        lib_name,
+        lib_path,
     })
 }
 

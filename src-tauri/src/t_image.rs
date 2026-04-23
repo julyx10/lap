@@ -1493,7 +1493,7 @@ pub async fn get_file_image_bytes_cached(file_path: &str) -> Result<Vec<u8>, Str
         }
         #[cfg(all(not(target_os = "macos"), lap_has_libheif))]
         {
-            crate::t_heif::get_heif_preview(file_path, orientation, 4096)?
+            crate::t_heif::get_heif_preview(file_path, get_image_orientation(file_path), 4096)?
                 .ok_or_else(|| format!("Failed to resolve HEIC preview image: {}", file_path))?
         }
         #[cfg(all(not(target_os = "macos"), not(lap_has_libheif)))]
