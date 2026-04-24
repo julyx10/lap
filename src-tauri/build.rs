@@ -127,31 +127,21 @@ fn build_libheif() {
 
     // Link - locate the static library output.
     // libheif's output name differs across platforms/build systems; keep it permissive.
-    let candidates: [(&str, PathBuf); 12] = [
+    let candidates: [(&str, PathBuf); 14] = [
         ("heif", binary_dir.join("libheif.a")),
         ("heif", binary_dir.join("Release").join("libheif.a")),
+        ("heif", binary_dir.join("libheif").join("libheif.a")),
+        ("heif", binary_dir.join("libheif").join("Release").join("libheif.a")),
         ("heif", binary_dir.join("heif.lib")),
         ("heif", binary_dir.join("Release").join("heif.lib")),
         ("heif", binary_dir.join("Debug").join("heif.lib")),
+        ("heif", binary_dir.join("libheif").join("Release").join("heif.lib")),
+        ("heif", binary_dir.join("libheif").join("Debug").join("heif.lib")),
         ("libheif", binary_dir.join("libheif.lib")),
         ("libheif", binary_dir.join("Release").join("libheif.lib")),
         ("libheif", binary_dir.join("Debug").join("libheif.lib")),
-        ("heif", binary_dir.join("libheif").join("Release").join("heif.lib")),
-        ("heif", binary_dir.join("libheif").join("Debug").join("heif.lib")),
-        (
-            "libheif",
-            binary_dir
-                .join("libheif")
-                .join("Release")
-                .join("libheif.lib"),
-        ),
-        (
-            "libheif",
-            binary_dir
-                .join("libheif")
-                .join("Debug")
-                .join("libheif.lib"),
-        ),
+        ("libheif", binary_dir.join("libheif").join("Release").join("libheif.lib")),
+        ("libheif", binary_dir.join("libheif").join("Debug").join("libheif.lib")),
     ];
 
     let (lib_name, lib_path) = match candidates.iter().find(|(_, p)| p.exists()) {
@@ -405,10 +395,7 @@ fn build_libde265(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Opti
         binary_dir.join("libde265.lib"),
         binary_dir.join("Release").join("libde265.lib"),
         binary_dir.join("libde265").join("Release").join("de265.lib"),
-        binary_dir
-            .join("libde265")
-            .join("Release")
-            .join("libde265.lib"),
+        binary_dir.join("libde265").join("Release").join("libde265.lib"),
     ];
 
     let candidates: [(&str, PathBuf); 13] = [
@@ -418,31 +405,13 @@ fn build_libde265(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Opti
         ("de265", binary_dir.join("de265.lib")),
         ("de265", binary_dir.join("Release").join("de265.lib")),
         ("de265", binary_dir.join("Debug").join("de265.lib")),
+        ("de265", binary_dir.join("libde265").join("Release").join("de265.lib")),
+        ("de265", binary_dir.join("libde265").join("Debug").join("de265.lib")),
         ("libde265", binary_dir.join("libde265.lib")),
         ("libde265", binary_dir.join("Release").join("libde265.lib")),
         ("libde265", binary_dir.join("Debug").join("libde265.lib")),
-        (
-            "de265",
-            binary_dir.join("libde265").join("Release").join("de265.lib"),
-        ),
-        (
-            "de265",
-            binary_dir.join("libde265").join("Debug").join("de265.lib"),
-        ),
-        (
-            "libde265",
-            binary_dir
-                .join("libde265")
-                .join("Release")
-                .join("libde265.lib"),
-        ),
-        (
-            "libde265",
-            binary_dir
-                .join("libde265")
-                .join("Debug")
-                .join("libde265.lib"),
-        ),
+        ("libde265", binary_dir.join("libde265").join("Release").join("libde265.lib")),
+        ("libde265", binary_dir.join("libde265").join("Debug").join("libde265.lib")),
     ];
 
     let have_existing = release_candidates.iter().any(|path| path.exists());
