@@ -45,7 +45,8 @@ fn detect_isobmff_mime(data: &[u8]) -> &'static str {
 
     match &data[8..12] {
         b"avif" | b"avis" => "image/avif",
-        b"heic" | b"heix" | b"hevc" | b"hevx" | b"mif1" | b"heif" => "image/heic",
+        b"heic" | b"heix" | b"hevc" | b"hevx" => "image/heic",
+        b"mif1" | b"heif" => "image/heif",
         _ => {
             for brand in data[16..box_size].chunks(4) {
                 if brand.len() < 4 {
@@ -53,9 +54,10 @@ fn detect_isobmff_mime(data: &[u8]) -> &'static str {
                 }
                 match brand {
                     b"avif" | b"avis" => return "image/avif",
-                    b"heic" | b"heix" | b"hevc" | b"hevx" | b"mif1" | b"heif" => {
+                    b"heic" | b"heix" | b"hevc" | b"hevx" => {
                         return "image/heic";
                     }
+                    b"mif1" | b"heif" => return "image/heif",
                     _ => {}
                 }
             }
