@@ -181,7 +181,19 @@ jobs:
     if: |
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows')) ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: windows-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            msvc_arch: x64
+          - arch: arm64
+            runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            msvc_arch: arm64
 
     steps:
       - name: Checkout repository
@@ -209,14 +221,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: windows-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: windows-${{ matrix.arch }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            windows-pnpm-store-
+            windows-${{ matrix.arch }}-pnpm-store-
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.target }}
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -227,9 +239,9 @@ jobs:
             ~\.cargo\registry\cache\
             ~\.cargo\git\db\
             src-tauri\target\
-          key: windows-x86_64-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: windows-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            windows-x86_64-cargo-
+            windows-${{ matrix.arch }}-cargo-
 
       - name: Install frontend dependencies
         working-directory: src-vite
@@ -250,21 +262,21 @@ jobs:
       - name: Setup MSVC build environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64
+          arch: ${{ matrix.msvc_arch }}
 
       - name: Clear cached Windows bundle artifacts
         shell: pwsh
         run: |
-          $bundleDir = "src-tauri/target/x86_64-pc-windows-msvc/release/bundle"
+          $bundleDir = "src-tauri/target/${{ matrix.target }}/release/bundle"
           if (Test-Path $bundleDir) {
             Remove-Item -Recurse -Force $bundleDir
           }
 
       - name: Download FFmpeg Sidecars (Windows)
         shell: pwsh
-        run: .\scripts\download_ffmpeg_sidecar.ps1
+        run: .\scripts\download_ffmpeg_sidecar.ps1 -Arch ${{ matrix.arch }}
 
-      - name: Build and Sign (Windows x64)
+      - name: Build and Sign (Windows ${{ matrix.arch }})
         uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -273,13 +285,13 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: .
-          args: --verbose --target x86_64-pc-windows-msvc --bundles msi --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          args: --verbose --target ${{ matrix.target }} --bundles msi --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
       - name: Rename Windows package for PR build
         shell: pwsh
         run: |
           $suffix = "pr-${{ github.event.pull_request.number || github.run_number }}"
-          $msi = Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi" -Filter "*.msi" -File | Select-Object -First 1
+          $msi = Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle/msi" -Filter "*.msi" -File | Select-Object -First 1
           if (-not $msi) {
             throw "Could not find generated MSI file."
           }
@@ -296,10 +308,10 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lap-pr-windows-x64-${{ github.event.pull_request.number || github.run_number }}
+          name: lap-pr-windows-${{ matrix.arch }}-${{ github.event.pull_request.number || github.run_number }}
           path: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi.sig
           if-no-files-found: error
  
   build-linux:

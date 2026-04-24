@@ -98,9 +98,13 @@ fn ffmpeg_sidecar_name() -> &'static str {
     {
         "ffmpeg-aarch64-unknown-linux-gnu"
     }
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
     {
         "ffmpeg-x86_64-pc-windows-msvc.exe"
+    }
+    #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
+    {
+        "ffmpeg-aarch64-pc-windows-msvc.exe"
     }
 }
 
@@ -121,9 +125,13 @@ fn ffprobe_sidecar_name() -> &'static str {
     {
         "ffprobe-aarch64-unknown-linux-gnu"
     }
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
     {
         "ffprobe-x86_64-pc-windows-msvc.exe"
+    }
+    #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
+    {
+        "ffprobe-aarch64-pc-windows-msvc.exe"
     }
 }
 

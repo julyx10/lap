@@ -7,13 +7,55 @@ on:
         description: "Existing release tag to publish Windows assets to"
         required: true
         type: string
+      build_target:
+        description: "Architecture to build"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - x64
+          - arm64
 
 permissions:
   contents: write
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          ALL='[
+            {"arch":"x64","runner":"windows-latest","target":"x86_64-pc-windows-msvc","msvc_arch":"x64","platform_key":"windows-x86_64","artifact_name":"windows-x86_64","msi_glob":"*_x64_*.msi"},
+            {"arch":"arm64","runner":"windows-11-arm","target":"aarch64-pc-windows-msvc","msvc_arch":"arm64","platform_key":"windows-aarch64","artifact_name":"windows-aarch64","msi_glob":"*_arm64_*.msi"}
+          ]'
+
+          INPUT="${{ github.event.inputs.build_target }}"
+          if [ -z "$INPUT" ] || [ "$INPUT" = "all" ]; then
+            SEL="$ALL"
+          else
+            SEL=$(echo "$ALL" | jq -c --arg a "$INPUT" '[.[] | select(.arch == $a)]')
+            if [ "$SEL" = "[]" ]; then
+              echo "Unknown build_target: $INPUT"
+              exit 1
+            fi
+          fi
+
+          MATRIX=$(echo "$SEL" | jq -c '{include: .}')
+          echo "Generated matrix: $MATRIX"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
   build-windows:
-    runs-on: windows-latest
+    needs: setup
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -40,14 +82,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: windows-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: windows-${{ matrix.arch }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            windows-pnpm-store-
+            windows-${{ matrix.arch }}-pnpm-store-
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.target }}
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -58,9 +100,9 @@ jobs:
             ~\.cargo\registry\cache\
             ~\.cargo\git\db\
             src-tauri\target\
-          key: windows-x86_64-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: windows-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            windows-x86_64-cargo-
+            windows-${{ matrix.arch }}-cargo-
 
       - name: Install frontend dependencies
         working-directory: src-vite
@@ -81,22 +123,21 @@ jobs:
       - name: Setup MSVC build environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64
+          arch: ${{ matrix.msvc_arch }}
 
       - name: Clear cached Windows bundle artifacts
         shell: pwsh
         run: |
-          $bundleDir = "src-tauri/target/x86_64-pc-windows-msvc/release/bundle"
+          $bundleDir = "src-tauri/target/${{ matrix.target }}/release/bundle"
           if (Test-Path $bundleDir) {
             Remove-Item -Recurse -Force $bundleDir
           }
 
-
       - name: Download FFmpeg Sidecars (Windows)
         shell: pwsh
-        run: .\scripts\download_ffmpeg_sidecar.ps1
+        run: .\scripts\download_ffmpeg_sidecar.ps1 -Arch ${{ matrix.arch }}
 
-      - name: Build and Sign (Windows x64)
+      - name: Build and Sign (Windows ${{ matrix.arch }})
         uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -105,15 +146,15 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: .
-          args: --verbose --target x86_64-pc-windows-msvc --bundles msi
+          args: --verbose --target ${{ matrix.target }} --bundles msi
 
-      - name: Upload Build Artifact (Windows)
+      - name: Upload Build Artifact (Windows ${{ matrix.arch }})
         uses: actions/upload-artifact@v4
         with:
-          name: windows-x86_64
+          name: ${{ matrix.artifact_name }}
           path: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi.sig
           if-no-files-found: error
 
   publish-windows:
@@ -124,8 +165,9 @@ jobs:
       - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows-x86_64
+          pattern: windows-*
           path: release-files
+          merge-multiple: true
 
       - name: Show release files
         run: ls -la release-files
@@ -156,7 +198,7 @@ jobs:
           echo "Timed out waiting for latest.json on release $TAG."
           exit 1
 
-      - name: Update latest.json with Windows updater entry
+      - name: Update latest.json with Windows updater entries
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -164,20 +206,8 @@ jobs:
           set -euo pipefail
           TAG="${{ github.event.inputs.release_tag }}"
           VERSION="${TAG#v}"
-
-          MSI_FILE="$(find release-files -maxdepth 1 -name '*.msi' | head -n 1)"
-          MSI_SIG_FILE="$(find release-files -maxdepth 1 -name '*.msi.sig' | head -n 1)"
-          if [ -z "${MSI_FILE}" ] || [ ! -f "${MSI_FILE}" ]; then
-            echo "No MSI installer (*.msi) found."
-            exit 1
-          fi
-          if [ -z "${MSI_SIG_FILE}" ] || [ ! -f "${MSI_SIG_FILE}" ]; then
-            echo "Missing MSI updater signature file (*.msi.sig)."
-            exit 1
-          fi
-
-          MSI_NAME="$(basename "${MSI_FILE}")"
-          WINDOWS_SIG="$(cat "${MSI_SIG_FILE}")"
+          REPO="${{ github.repository }}"
+          PUB_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           rm -f release-files/latest.json
           gh release download "$TAG" -R "$GH_REPO" -p "latest.json" -D release-files >/dev/null 2>&1
@@ -186,19 +216,52 @@ jobs:
             exit 1
           fi
 
-          tmp="$(mktemp)"
-          jq \
-            --arg version "${VERSION}" \
-            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg sig "${WINDOWS_SIG}" \
-            --arg url "https://github.com/${{ github.repository }}/releases/download/${TAG}/${MSI_NAME}" \
-            '
-            .version = $version
-            | .pub_date = $pub_date
-            | .platforms = (.platforms // {})
-            | .platforms["windows-x86_64"] = {"signature": $sig, "url": $url}
-            ' release-files/latest.json > "$tmp"
-          mv "$tmp" release-files/latest.json
+          # merge_entry <platform_key> <msi_glob>
+          # Tauri's MSI filename embeds the architecture: "Lap_<version>_x64_en-US.msi"
+          # or "Lap_<version>_arm64_en-US.msi", so we can separate architectures by glob.
+          merge_entry() {
+            local key="$1"
+            local glob="$2"
+
+            local msi
+            msi="$(find release-files -maxdepth 1 -type f -name "$glob" ! -name '*.sig' | head -n 1)"
+            if [ -z "${msi}" ]; then
+              echo "No MSI found matching '$glob' for $key — skipping."
+              return 0
+            fi
+
+            local sig_file="${msi}.sig"
+            if [ ! -f "$sig_file" ]; then
+              echo "Missing updater signature file for $msi ($key)."
+              exit 1
+            fi
+
+            local name sig_content tmp
+            name="$(basename "$msi")"
+            sig_content="$(cat "$sig_file")"
+            tmp="$(mktemp)"
+
+            jq \
+              --arg version "$VERSION" \
+              --arg pub_date "$PUB_DATE" \
+              --arg key "$key" \
+              --arg sig "$sig_content" \
+              --arg url "https://github.com/${REPO}/releases/download/${TAG}/${name}" \
+              '
+              .version = $version
+              | .pub_date = $pub_date
+              | .platforms = (.platforms // {})
+              | .platforms[$key] = {"signature": $sig, "url": $url}
+              ' release-files/latest.json > "$tmp"
+            mv "$tmp" release-files/latest.json
+            echo "Recorded $key -> $name"
+          }
+
+          merge_entry "windows-x86_64" "*_x64_*.msi"
+          merge_entry "windows-aarch64" "*_arm64_*.msi"
+
+          echo "Final latest.json:"
+          cat release-files/latest.json
 
       - name: Upload Windows assets to GitHub Release
         env:
