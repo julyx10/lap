@@ -1093,6 +1093,15 @@ fn should_generate_preview_for_file(file_path: &str, file_type: i64) -> bool {
         || cfg!(target_os = "linux") && is_avif_path(file_path)
 }
 
+fn get_linux_avif_preview(file_path: &str) -> Result<Option<Vec<u8>>, String> {
+    let img = ImageReader::open(file_path)
+        .map_err(|e| format!("Failed to open AVIF image: {}", e))?
+        .decode()
+        .map_err(|e| format!("Failed to decode AVIF image: {}", e))?;
+
+    resize_dynamic_image_to_jpeg(img, get_image_orientation(file_path), 4096).map(Some)
+}
+
 async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>, String> {
     let file_type = t_utils::get_file_type(file_path).unwrap_or(0);
 
@@ -1137,7 +1146,7 @@ async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>,
 
     #[cfg(target_os = "linux")]
     if is_avif_path(file_path) {
-        return get_image_thumbnail(file_path, get_image_orientation(file_path), 4096);
+        return get_linux_avif_preview(file_path);
     }
 
     Ok(None)
@@ -1518,7 +1527,7 @@ pub async fn get_file_image_bytes_cached(file_path: &str) -> Result<Vec<u8>, Str
                 .ok_or_else(|| format!("Failed to resolve HEIC preview image: {}", file_path))?
         }
     } else if cfg!(target_os = "linux") && is_avif_path(file_path) {
-        get_image_thumbnail(file_path, get_image_orientation(file_path), 4096)?
+        get_linux_avif_preview(file_path)?
             .ok_or_else(|| format!("Failed to resolve AVIF preview image: {}", file_path))?
     } else if crate::t_libraw::is_tiff_path(file_path) {
         match get_raw_preview_image(file_path) {
