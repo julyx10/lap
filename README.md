@@ -120,6 +120,7 @@ cargo tauri dev
 | Library | Purpose |
 | :-- | :-- |
 | [LibRaw](https://github.com/LibRaw/LibRaw) | RAW image decoding and thumbnail extraction |
+| [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF image decoding and preview generation |
 | [FFmpeg](https://ffmpeg.org/) | Video processing and thumbnail generation |
 | [ONNX Runtime](https://onnxruntime.ai/) | Local AI model inference engine |
 | [CLIP](https://github.com/openai/CLIP) | Image-text similarity search |
