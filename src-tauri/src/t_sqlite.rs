@@ -2317,6 +2317,15 @@ impl AThumb {
             .ok()
             .flatten()
             .map(|file| {
+                #[cfg(target_os = "linux")]
+                if file
+                    .file_path
+                    .as_deref()
+                    .is_some_and(|path| path.to_ascii_lowercase().ends_with(".avif"))
+                {
+                    return false;
+                }
+
                 let width = file.width.unwrap_or(0).max(0) as u32;
                 let height = file.height.unwrap_or(0).max(0) as u32;
                 width > 0 && height > 0 && width <= thumbnail_size && height <= thumbnail_size

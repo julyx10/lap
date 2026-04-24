@@ -1075,11 +1075,22 @@ fn is_heic_path(file_path: &str) -> bool {
     )
 }
 
+fn is_avif_path(file_path: &str) -> bool {
+    matches!(
+        t_utils::get_file_extension(file_path)
+            .unwrap_or_default()
+            .to_lowercase()
+            .as_str(),
+        "avif"
+    )
+}
+
 fn should_generate_preview_for_file(file_path: &str, file_type: i64) -> bool {
     file_type == 3
         || crate::t_libraw::is_tiff_path(file_path)
         || t_jxl::is_jxl_path(file_path)
         || is_heic_path(file_path)
+        || cfg!(target_os = "linux") && is_avif_path(file_path)
 }
 
 async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>, String> {
@@ -1122,6 +1133,11 @@ async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>,
         {
             return t_video::get_video_thumbnail(file_path, 4096, None).await;
         }
+    }
+
+    #[cfg(target_os = "linux")]
+    if is_avif_path(file_path) {
+        return get_image_thumbnail(file_path, get_image_orientation(file_path), 4096);
     }
 
     Ok(None)
@@ -1501,6 +1517,9 @@ pub async fn get_file_image_bytes_cached(file_path: &str) -> Result<Vec<u8>, Str
             t_video::get_video_thumbnail(file_path, 4096, None).await?
                 .ok_or_else(|| format!("Failed to resolve HEIC preview image: {}", file_path))?
         }
+    } else if cfg!(target_os = "linux") && is_avif_path(file_path) {
+        get_image_thumbnail(file_path, get_image_orientation(file_path), 4096)?
+            .ok_or_else(|| format!("Failed to resolve AVIF preview image: {}", file_path))?
     } else if crate::t_libraw::is_tiff_path(file_path) {
         match get_raw_preview_image(file_path) {
             Ok(Some(data)) => data,
