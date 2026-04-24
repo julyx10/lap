@@ -9,7 +9,7 @@ use crate::t_sqlite::{AFile, Album};
 use chrono::{DateTime, Local, TimeZone, Utc};
 use once_cell::sync::Lazy;
 use pinyin::ToPinyin;
-use reverse_geocoder::ReverseGeocoder;
+use rstar::{AABB, PointDistance, RTree, RTreeObject};
 use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
@@ -29,6 +29,86 @@ use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 // reverse geocoder
+#[derive(serde::Deserialize)]
+pub struct GeoRecord {
+    pub lat: f64,
+    pub lon: f64,
+    pub name: String,
+    pub admin1: String,
+    pub admin2: String,
+    pub cc: String,
+}
+
+struct CityPoint {
+    xyz: [f64; 3],
+    idx: u32,
+}
+
+impl RTreeObject for CityPoint {
+    type Envelope = AABB<[f64; 3]>;
+    fn envelope(&self) -> Self::Envelope {
+        AABB::from_point(self.xyz)
+    }
+}
+
+impl PointDistance for CityPoint {
+    fn distance_2(&self, point: &[f64; 3]) -> f64 {
+        let dx = self.xyz[0] - point[0];
+        let dy = self.xyz[1] - point[1];
+        let dz = self.xyz[2] - point[2];
+        dx * dx + dy * dy + dz * dz
+    }
+}
+
+fn lat_lon_to_xyz(lat: f64, lon: f64) -> [f64; 3] {
+    let lat = lat.to_radians();
+    let lon = lon.to_radians();
+    [lat.cos() * lon.cos(), lat.cos() * lon.sin(), lat.sin()]
+}
+
+pub struct ReverseGeocoder {
+    records: Vec<GeoRecord>,
+    tree: RTree<CityPoint>,
+}
+
+pub struct SearchResult<'a> {
+    pub record: &'a GeoRecord,
+}
+
+impl ReverseGeocoder {
+    pub fn new() -> ReverseGeocoder {
+        let cities = include_str!("../data/cities.csv");
+        let mut reader = csv::ReaderBuilder::new()
+            .has_headers(true)
+            .from_reader(cities.as_bytes());
+        let mut records: Vec<GeoRecord> = Vec::with_capacity(150_000);
+        let mut points: Vec<CityPoint> = Vec::with_capacity(150_000);
+        for row in reader.deserialize() {
+            let r: GeoRecord = row.expect("malformed cities.csv row");
+            points.push(CityPoint {
+                xyz: lat_lon_to_xyz(r.lat, r.lon),
+                idx: records.len() as u32,
+            });
+            records.push(r);
+        }
+        ReverseGeocoder {
+            records,
+            tree: RTree::bulk_load(points),
+        }
+    }
+
+    pub fn search(&self, loc: (f64, f64)) -> SearchResult<'_> {
+        let query = lat_lon_to_xyz(loc.0, loc.1);
+        let nearest = self
+            .tree
+            .nearest_neighbor(&query)
+            .expect("cities tree is empty");
+        SearchResult {
+            record: &self.records[nearest.idx as usize],
+        }
+    }
+}
+
 pub static GEOCODER: Lazy<ReverseGeocoder> = Lazy::new(|| {
     println!("Initializing ReverseGeocoder...");
     ReverseGeocoder::new()
