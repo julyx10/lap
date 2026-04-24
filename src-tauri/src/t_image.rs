@@ -368,6 +368,7 @@ pub fn generate_directory_thumbnails(
     let dir_root = Path::new(dir_path);
     let files: Vec<PathBuf> = WalkDir::new(dir_path)
         .into_iter()
+        .filter_entry(|e| !crate::t_utils::is_hidden(e))
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.file_type().is_file())
         .map(|entry| entry.into_path())

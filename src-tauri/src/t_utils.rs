@@ -140,7 +140,7 @@ impl FileNode {
             .min_depth(1)
             .max_depth(1)
             .into_iter()
-            .filter_entry(|e| !Self::is_hidden(e))
+            .filter_entry(|e| !is_hidden(e))
         {
             let entry = entry.map_err(|e| e.to_string())?;
             let entry_path = entry.path();
@@ -195,13 +195,14 @@ impl FileNode {
         Ok(nodes)
     }
 
-    fn is_hidden(entry: &walkdir::DirEntry) -> bool {
-        entry
-            .file_name()
-            .to_str()
-            .map(|s| s.starts_with('.'))
-            .unwrap_or(false)
-    }
+}
+
+pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .map(|s| s.starts_with('.'))
+        .unwrap_or(false)
 }
 
 // file metadata struct
@@ -775,6 +776,7 @@ pub fn get_folder_files(
             .min_depth(1)
             .max_depth(1)
             .into_iter()
+            .filter_entry(|e| !is_hidden(e))
             .filter_map(Result::ok)
             .filter(|entry| entry.file_type().is_file())
         {
@@ -848,7 +850,11 @@ pub fn count_folder_files(path: &str) -> (u64, u64, u64, u64, u64) {
     let mut total_video_size = 0;
 
     // Use WalkDir to iterate over directory entries
-    for entry in WalkDir::new(path).into_iter().filter_map(Result::ok) {
+    for entry in WalkDir::new(path)
+        .into_iter()
+        .filter_entry(|e| !is_hidden(e))
+        .filter_map(Result::ok)
+    {
         let entry_type = entry.file_type();
 
         if entry_type.is_dir() {
@@ -1642,7 +1648,11 @@ pub async fn index_album_worker(
     let mut is_cancelled = false;
     let mut traversed_count = 0u64;
     let mut thumbnail_join_set: JoinSet<Result<bool, String>> = JoinSet::new();
-    for entry in WalkDir::new(&album.path).into_iter().filter_map(Result::ok) {
+    for entry in WalkDir::new(&album.path)
+        .into_iter()
+        .filter_entry(|e| !is_hidden(e))
+        .filter_map(Result::ok)
+    {
         // Check cancellation
         if let Some(&true) = cancellation_token.lock().unwrap().get(&album_id) {
             println!("Indexing cancelled for album {}", album_id);
