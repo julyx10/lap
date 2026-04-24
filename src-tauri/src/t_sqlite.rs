@@ -2526,8 +2526,8 @@ impl AThumb {
                 // image
                 if let Some(ext) = t_utils::get_file_extension(file_path) {
                     match ext.to_lowercase().as_str() {
-                        "heic" | "heif" => {
-                            // heic/heif
+                        "heic" | "heif" | "hif" => {
+                            // heic/heif/hif
                             #[cfg(target_os = "macos")]
                             match t_image::get_heic_thumbnail_with_sips(file_path, thumbnail_size) {
                                 Ok(Some(data)) => (Some(data), 0),

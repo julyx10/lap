@@ -1072,7 +1072,7 @@ fn is_heic_path(file_path: &str) -> bool {
             .unwrap_or_default()
             .to_lowercase()
             .as_str(),
-        "heic" | "heif"
+        "heic" | "heif" | "hif"
     )
 }
 
