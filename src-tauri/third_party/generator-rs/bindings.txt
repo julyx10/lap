@@ -1,0 +1,16 @@
+--out src/stack/windows_bindings.rs
+--specific-deps
+
+--filter
+    Windows.Win32.Foundation.EXCEPTION_STACK_OVERFLOW
+    Windows.Win32.System.Diagnostics.Debug.AddVectoredExceptionHandler
+    Windows.Win32.System.Memory.MEM_COMMIT
+    Windows.Win32.System.Memory.MEM_RELEASE
+    Windows.Win32.System.Memory.MEM_RESERVE
+    Windows.Win32.System.Memory.PAGE_GUARD
+    Windows.Win32.System.Memory.PAGE_READONLY
+    Windows.Win32.System.Memory.PAGE_READWRITE
+    Windows.Win32.System.Memory.VirtualAlloc
+    Windows.Win32.System.Memory.VirtualFree
+    Windows.Win32.System.Memory.VirtualProtect
+    Windows.Win32.System.SystemInformation.GetSystemInfo

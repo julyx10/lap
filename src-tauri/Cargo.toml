@@ -76,3 +76,11 @@ libc = "0.2"
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
 devtools = ["tauri/devtools"]
+
+# Redirect `generator` to a vendored copy that adds a Windows ARM64 stub.
+# Upstream 0.8.8 references `detail/aarch64_windows.rs` via cfg_attr but does
+# not ship the file, and has no PE AAPCS64 asm backend. See issue #53:
+# https://github.com/Xudong-Huang/generator-rs/issues/53
+# Remove this patch once upstream lands native aarch64-pc-windows-msvc support.
+[patch.crates-io]
+generator = { path = "third_party/generator-rs" }
