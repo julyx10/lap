@@ -210,7 +210,7 @@ fn decode_primary_rgb(file_path: &str) -> Result<(Vec<u8>, u32, u32, u32), Strin
 
 pub fn get_heif_thumbnail(
     file_path: &str,
-    orientation: i32,
+    _orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
     mark_heif_hit("thumbnail", file_path);
@@ -220,13 +220,13 @@ pub fn get_heif_thumbnail(
     let img = image::RgbImage::from_raw(width, height, rgb)
         .ok_or_else(|| "Failed to build RGB image from libheif buffer".to_string())?;
     let dyn_img = DynamicImage::ImageRgb8(img);
-    // Reuse existing pipeline for consistent orientation behavior.
-    resize_dynamic_image_to_jpeg(dyn_img, orientation, thumbnail_size).map(Some)
+    // libheif already applies HEIF geometric transformations (rotation/mirroring/crop).
+    resize_dynamic_image_to_jpeg(dyn_img, 1, thumbnail_size).map(Some)
 }
 
 pub fn get_heif_preview(
     file_path: &str,
-    orientation: i32,
+    _orientation: i32,
     max_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
     mark_heif_hit("preview", file_path);
@@ -234,6 +234,6 @@ pub fn get_heif_preview(
     let img = image::RgbImage::from_raw(width, height, rgb)
         .ok_or_else(|| "Failed to build RGB image from libheif buffer".to_string())?;
     // Preview path: keep it JPEG encoded at up to max_size (same as thumbnail sizing semantics).
-    // This uses the same resizing logic as thumbnails.
-    resize_dynamic_image_to_jpeg(DynamicImage::ImageRgb8(img), orientation, max_size).map(Some)
+    // libheif already applies HEIF geometric transformations (rotation/mirroring/crop).
+    resize_dynamic_image_to_jpeg(DynamicImage::ImageRgb8(img), 1, max_size).map(Some)
 }
