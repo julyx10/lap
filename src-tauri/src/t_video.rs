@@ -417,8 +417,8 @@ pub async fn get_video_thumbnail(
     let seek_time = if duration > 10 { duration / 10 } else { 0 };
     let ffmpeg_threads = thumbnail_ffmpeg_threads().to_string();
     let filter = format!(
-        "scale=w={}:h={}:force_original_aspect_ratio=increase,crop={}:{}",
-        thumbnail_size, thumbnail_size, thumbnail_size, thumbnail_size
+        "scale=w={}:h={}:force_original_aspect_ratio=decrease",
+        thumbnail_size, thumbnail_size
     );
 
     let primary_strategy = probe

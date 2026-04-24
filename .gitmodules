@@ -10,3 +10,6 @@
 	path = src-tauri/third_party/libheif
 	url = https://github.com/strukturag/libheif.git
 	branch = v1.21.x-releases
+[submodule "src-tauri/third_party/libde265"]
+	path = src-tauri/third_party/libde265
+	url = https://github.com/strukturag/libde265.git

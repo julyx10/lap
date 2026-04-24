@@ -365,6 +365,9 @@ export function shouldUseBackendPreview(filePath = '', fileType = 0): boolean {
   if (Number(fileType) === 3) return true;
 
   const extension = getFileExtension(filePath).toLowerCase();
+  if (isLinux && extension === 'avif') {
+    return true;
+  }
   return ['tif', 'tiff', 'jxl', 'heic', 'heif'].includes(extension);
 }
 
