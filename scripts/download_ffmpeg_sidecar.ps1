@@ -37,7 +37,7 @@ switch ($Arch) {
 }
 
 #$originalReleaseBase = "https://github.com/julyx10/lap-binaries/releases/download/ffmpeg-8.1"
-$ReleaseBase = "https://github.com/talynone/lap-binaries/releases/tag/ffmpeg-8.1"
+$ReleaseBase = "https://github.com/talynone/lap-binaries/releases/download/ffmpeg-8.1"
 
 $Downloads = @(
     "ffmpeg-$TripleSuffix.exe",
