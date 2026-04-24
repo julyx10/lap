@@ -396,9 +396,10 @@ fn build_libde265(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Opti
     let binary_dir = build_root.join("build");
     fs::create_dir_all(&binary_dir).unwrap();
 
-    let release_candidates: [PathBuf; 8] = [
+    let release_candidates: [PathBuf; 9] = [
         binary_dir.join("libde265.a"),
         binary_dir.join("Release").join("libde265.a"),
+        binary_dir.join("libde265").join("libde265.a"),
         binary_dir.join("de265.lib"),
         binary_dir.join("Release").join("de265.lib"),
         binary_dir.join("libde265.lib"),
@@ -410,9 +411,10 @@ fn build_libde265(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Opti
             .join("libde265.lib"),
     ];
 
-    let candidates: [(&str, PathBuf); 12] = [
+    let candidates: [(&str, PathBuf); 13] = [
         ("de265", binary_dir.join("libde265.a")),
         ("de265", binary_dir.join("Release").join("libde265.a")),
+        ("de265", binary_dir.join("libde265").join("libde265.a")),
         ("de265", binary_dir.join("de265.lib")),
         ("de265", binary_dir.join("Release").join("de265.lib")),
         ("de265", binary_dir.join("Debug").join("de265.lib")),
