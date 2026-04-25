@@ -293,7 +293,6 @@ fn is_jpeg_path(file_path: &str) -> bool {
         .unwrap_or(false)
 }
 
-
 fn decode_scaled_jpeg_image(
     file_path: &str,
     _orientation: i32,

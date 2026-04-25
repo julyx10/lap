@@ -42,21 +42,6 @@ async fn main() {
         eprintln!("Unhandled panic: {}", panic_info);
     }));
 
-    #[cfg(lap_has_libheif)]
-    {
-        let _ = std::fs::write(
-            std::env::temp_dir().join("lap-has-libheif.txt"),
-            "lap_has_libheif enabled",
-        );
-    }
-    #[cfg(not(lap_has_libheif))]
-    {
-        let _ = std::fs::write(
-            std::env::temp_dir().join("lap-no-libheif.txt"),
-            "lap_has_libheif disabled",
-        );
-    }
-
     let builder = tauri::Builder::default();
     let builder = t_protocol::register_protocols(builder);
 

@@ -804,10 +804,10 @@ pub fn delete_selected(
             let mut stmt = tx
                 .prepare(
                     "SELECT a.id, f.path || '/' || a.name
-                 FROM duplicate_group_items dgi
-                 JOIN afiles a ON dgi.file_id = a.id
-                 JOIN afolders f ON a.folder_id = f.id
-                 WHERE dgi.group_id = ?1 AND dgi.is_keep = 0 AND dgi.is_selected = 1",
+                    FROM duplicate_group_items dgi
+                    JOIN afiles a ON dgi.file_id = a.id
+                    JOIN afolders f ON a.folder_id = f.id
+                    WHERE dgi.group_id = ?1 AND dgi.is_keep = 0 AND dgi.is_selected = 1",
                 )
                 .map_err(|e| e.to_string())?;
 

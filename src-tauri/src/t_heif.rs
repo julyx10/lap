@@ -90,11 +90,6 @@ fn fmt_heif_error(err: HeifError) -> String {
     }
 }
 
-fn mark_heif_hit(kind: &str, file_path: &str) {
-    let path = std::env::temp_dir().join(format!("lap-heif-{}-hit.txt", kind));
-    let _ = fs::write(path, file_path);
-}
-
 fn decode_primary_rgb(file_path: &str) -> Result<(Vec<u8>, u32, u32, u32), String> {
     let c_path = CString::new(file_path).map_err(|_| "Invalid file path".to_string())?;
     unsafe {
@@ -131,11 +126,6 @@ fn decode_primary_rgb(file_path: &str) -> Result<(Vec<u8>, u32, u32, u32), Strin
         let handle_w = heif_image_handle_get_width(handle);
         let handle_h = heif_image_handle_get_height(handle);
         let has_alpha = heif_image_handle_has_alpha_channel(handle) != 0;
-        eprintln!("[heif] file: {}", file_path);
-        eprintln!(
-            "[heif] handle: {}x{}, has_alpha: {}",
-            handle_w, handle_h, has_alpha
-        );
 
         let mut img: *mut HeifImage = ptr::null_mut();
         let chroma = if has_alpha {
@@ -144,7 +134,6 @@ fn decode_primary_rgb(file_path: &str) -> Result<(Vec<u8>, u32, u32, u32), Strin
             HEIF_CHROMA_INTERLEAVED_RGB
         };
         let err = heif_decode_image(handle, &mut img, HEIF_COLORSPACE_RGB, chroma, ptr::null());
-        eprintln!("[heif] decode err.code: {}", err.code);
         if err.code != 0 || img.is_null() {
             return Err(fmt_heif_error(err));
         }
@@ -166,19 +155,6 @@ fn decode_primary_rgb(file_path: &str) -> Result<(Vec<u8>, u32, u32, u32), Strin
         let ptr_plane = heif_image_get_plane_readonly(img, HEIF_CHANNEL_INTERLEAVED, &mut stride);
         if ptr_plane.is_null() || stride <= 0 {
             return Err("libheif returned empty plane".to_string());
-        }
-        eprintln!(
-            "[heif] decoded: {}x{}, stride: {}, bpp: {}",
-            width,
-            height,
-            stride,
-            if has_alpha { 4 } else { 3 }
-        );
-        if handle_w != width as c_int || handle_h != height as c_int {
-            eprintln!(
-                "[heif] size mismatch: handle={}x{} decoded={}x{}",
-                handle_w, handle_h, width, height
-            );
         }
 
         let stride_u = stride as u32;
@@ -213,7 +189,6 @@ pub fn get_heif_thumbnail(
     _orientation: i32,
     thumbnail_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
-    mark_heif_hit("thumbnail", file_path);
     let (rgb, width, height, _row_bytes) = decode_primary_rgb(file_path)?;
     // Build a DynamicImage to reuse existing orientation + alpha handling logic.
     // libheif decode gives us RGB, no alpha here.
@@ -229,7 +204,6 @@ pub fn get_heif_preview(
     _orientation: i32,
     max_size: u32,
 ) -> Result<Option<Vec<u8>>, String> {
-    mark_heif_hit("preview", file_path);
     let (rgb, width, height, _row_bytes) = decode_primary_rgb(file_path)?;
     let img = image::RgbImage::from_raw(width, height, rgb)
         .ok_or_else(|| "Failed to build RGB image from libheif buffer".to_string())?;
