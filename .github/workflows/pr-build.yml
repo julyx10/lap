@@ -108,6 +108,10 @@ jobs:
         shell: bash
         run: bash scripts/download_models.sh
 
+      - name: Clear cached macOS bundle artifacts
+        shell: bash
+        run: rm -rf "src-tauri/target/${{ matrix.target }}/release/bundle"
+
       - name: Build and Sign
         uses: tauri-apps/tauri-action@v0.5
         env:
@@ -384,6 +388,10 @@ jobs:
       - name: Download AI Models
         shell: bash
         run: bash scripts/download_models.sh
+
+      - name: Clear cached Linux bundle artifacts
+        shell: bash
+        run: rm -rf src-tauri/target/x86_64-unknown-linux-gnu/release/bundle
 
       - name: Build and Sign
         uses: tauri-apps/tauri-action@v0.5
