@@ -15,6 +15,7 @@ use crate::t_utils;
 use crate::{t_ai, t_sqlite};
 
 use std::collections::HashMap;
+use std::fs;
 use std::path::Path;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -954,4 +955,131 @@ pub fn dedup_delete_selected(
     file_ids: Option<Vec<i64>>,
 ) -> Result<(), String> {
     crate::t_dedup::delete_selected(group_ids, file_ids)
+}
+
+// batch operations
+
+/// batch rename files
+#[tauri::command]
+pub fn batch_rename(params: serde_json::Value) -> Result<bool, String> {
+    let file_id = params["file_id"].as_i64().ok_or("Missing file_id")?;
+    let source_path = params["source_path"].as_str().ok_or("Missing source_path")?;
+    let new_name = params["new_name"].as_str().ok_or("Missing new_name")?;
+
+    match t_utils::rename_file(source_path, new_name) {
+        Some(new_file_path) => {
+            let name_pinyin = t_utils::convert_to_pinyin(new_name);
+            if let Err(e) = AFile::update_column(file_id, "name_pinyin", &name_pinyin) {
+                eprintln!("Error while renaming file in DB: {}", e);
+                return Ok(false);
+            }
+
+            match AFile::update_column(file_id, "name", &new_name) {
+                Ok(_) => {
+                    println!("Batch renamed file: {} -> {}", source_path, new_file_path);
+                    Ok(true)
+                }
+                Err(e) => {
+                    eprintln!("Error while renaming file in DB: {}", e);
+                    Ok(false)
+                }
+            }
+        }
+        None => Ok(false),
+    }
+}
+
+/// batch resize images
+#[tauri::command]
+pub async fn batch_resize(params: serde_json::Value) -> Result<bool, String> {
+    let file_id = params["file_id"].as_i64().ok_or("Missing file_id")?;
+    let file_path = params["file_path"].as_str().ok_or("Missing file_path")?;
+    let width = params["width"].as_i64();
+    let height = params["height"].as_i64();
+    let percentage = params["percentage"].as_i64();
+    let keep_aspect_ratio = params["keep_aspect_ratio"].as_bool().unwrap_or(true);
+    let quality = params["quality"].as_i64().unwrap_or(80) as u8;
+    let output_format = params["output_format"].as_str();
+    let output_folder = params["output_folder"].as_str();
+
+    let result = tauri::async_runtime::spawn_blocking(move || -> Result<bool, String> {
+        // Get source and destination paths
+        let source = Path::new(file_path);
+        let file_stem = source.file_stem()
+            .and_then(|s| s.to_str())
+            .ok_or("Invalid file name")?;
+        let ext = source.extension()
+            .and_then(|s| s.to_str())
+            .unwrap_or("jpg");
+
+        let dest_dir = if let Some(folder) = output_folder {
+            Path::new(&folder).to_path_buf()
+        } else {
+            source.parent()
+                .ok_or("No parent directory")?
+                .to_path_buf()
+        };
+
+        let new_ext = output_format.unwrap_or(ext);
+        let dest_path = dest_dir.join(format!("{}_resized.{}", file_stem, new_ext));
+
+        // Load image
+        let img = image::open(source)
+            .map_err(|e| format!("Failed to open image: {}", e))?;
+
+        let (orig_width, orig_height) = img.dimensions();
+
+        // Calculate new dimensions
+        let (new_width, new_height) = if let Some(pct) = percentage {
+            let scale = pct as f32 / 100.0;
+            ((orig_width as f32 * scale) as u32, (orig_height as f32 * scale) as u32)
+        } else if let (Some(w), Some(h)) = (width, height) {
+            if keep_aspect_ratio {
+                let ratio = (w as f32 / orig_width as f32).min(h as f32 / orig_height as f32);
+                ((orig_width as f32 * ratio) as u32, (orig_height as f32 * ratio) as u32)
+            } else {
+                (w as u32, h as u32)
+            }
+        } else {
+            (orig_width, orig_height)
+        };
+
+        // Resize image
+        let resized = img.resize_exact(
+            new_width,
+            new_height,
+            image::imageops::FilterType::Lanczos3,
+        );
+
+        // Save with quality
+        match new_ext.to_lowercase().as_str() {
+            "jpg" | "jpeg" => {
+                let rgb_img = resized.to_rgb8();
+                let mut output = Vec::new();
+                let mut cursor = std::io::Cursor::new(&mut output);
+                let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut cursor, quality);
+                encoder.encode_image(&rgb_img)
+                    .map_err(|e| format!("Failed to encode JPEG: {}", e))?;
+                fs::write(&dest_path, &output)
+                    .map_err(|e| format!("Failed to write file: {}", e))?;
+            },
+            "png" => {
+                resized.save(&dest_path)
+                    .map_err(|e| format!("Failed to save PNG: {}", e))?;
+            },
+            "webp" => {
+                resized.save(&dest_path)
+                    .map_err(|e| format!("Failed to save WebP: {}", e))?;
+            },
+            _ => {
+                resized.save(&dest_path)
+                    .map_err(|e| format!("Failed to save image: {}", e))?;
+            }
+        }
+
+        println!("Batch resized file: {} -> {:?}", file_path, dest_path);
+        Ok(true)
+    }).await.map_err(|e| format!("Failed to join task: {}", e))?;
+
+    result
 }

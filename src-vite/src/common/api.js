@@ -1348,3 +1348,27 @@ export async function getFacesForFile(fileId) {
   }
   return null;
 }
+
+// batch operations
+
+// batch rename files
+export async function batchRename(params) {
+  try {
+    const result = await invoke('batch_rename', { params });
+    return result;
+  } catch (error) {
+    console.error('batchRename error:', error);
+    return false;
+  }
+}
+
+// batch resize images
+export async function batchResize(params) {
+  try {
+    const result = await invoke('batch_resize', { params });
+    return result;
+  } catch (error) {
+    console.error('batchResize error:', error);
+    return false;
+  }
+}
