@@ -288,6 +288,9 @@ let isPinching = false;
 // Single-finger pan
 let panPointerId: number | null = null;
 let panLastPos = { x: 0, y: 0 };
+// Single-finger swipe navigation (only used when image fits / cannot pan)
+let touchSwipeStart = { x: 0, y: 0 };
+let touchSwipeTriggered = false;
 // Suppresses synthesized mouse events while any touch is active so the
 // existing mouse drag handler doesn't double-pan with our pointer logic.
 const isTouchActive = ref(false);
@@ -992,6 +995,8 @@ function handlePinchPointerDown(event: PointerEvent) {
     // finger in real time (the existing mouse drag relies on the same flag).
     panPointerId = event.pointerId;
     panLastPos = { x: event.clientX, y: event.clientY };
+    touchSwipeStart = { x: event.clientX, y: event.clientY };
+    touchSwipeTriggered = false;
     isDraggingImage.value = true;
   } else if (activeTouchPointers.size === 2) {
     // Promote to pinch: cancel any in-flight pan
@@ -1037,10 +1042,28 @@ function handlePinchPointerMove(event: PointerEvent) {
     return;
   }
 
-  // Single-finger pan path
+  // Single-finger path: pan when the image is bigger than the container,
+  // otherwise interpret horizontal motion as a swipe to navigate prev/next.
   if (panPointerId === event.pointerId && activeTouchPointers.size === 1) {
     event.preventDefault();
     const imgIndex = activeImage.value;
+
+    if (!isGrabbing.value && !props.isSlideShow) {
+      if (touchSwipeTriggered) return;
+      const totalX = event.clientX - touchSwipeStart.x;
+      const totalY = event.clientY - touchSwipeStart.y;
+      const absX = Math.abs(totalX);
+      const absY = Math.abs(totalY);
+      if (absX >= MOUSE_DRAG_NAV_THRESHOLD && absX > absY) {
+        const direction = totalX < 0 ? 'next' : 'prev';
+        navDirection.value = direction;
+        emit('message-from-image-viewer', { message: direction });
+        touchSwipeTriggered = true;
+        isDraggingImage.value = false;
+      }
+      return;
+    }
+
     const scaleVal = scale.value[imgIndex];
     const imgRotatedSize = imageSizeRotated.value[imgIndex];
     const containerSizeVal = containerSize.value;
