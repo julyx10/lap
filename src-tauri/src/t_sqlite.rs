@@ -36,6 +36,13 @@ fn thumb_background_tasks() -> &'static Mutex<HashSet<String>> {
     THUMB_BACKGROUND_TASKS.get_or_init(|| Mutex::new(HashSet::new()))
 }
 
+pub fn has_active_thumb_background_tasks() -> bool {
+    thumb_background_tasks()
+        .lock()
+        .map(|tasks| !tasks.is_empty())
+        .unwrap_or(false)
+}
+
 struct ThumbGenerationGuard {
     key: String,
 }

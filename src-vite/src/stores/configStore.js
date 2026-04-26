@@ -82,7 +82,7 @@ export const useConfigStore = defineStore('configStore', {
     },
 
     settings: {
-      tabIndex: 0,               // settings tab index (0: general, 1: navigation, 2: grid view, 3: image view, 4: image search, 5: privacy, 6: about)
+      tabIndex: 0,               // settings tab index (0: general, 1: view, 2: library, 3: image search, 4: about)
 
       // general settings
       language: 'en',             // default language

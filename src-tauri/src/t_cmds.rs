@@ -43,6 +43,61 @@ pub fn set_last_selected_item_index(index: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn get_db_storage_dir() -> Result<String, String> {
+    t_config::get_db_storage_dir()
+}
+
+#[tauri::command]
+pub fn is_using_custom_db_storage() -> Result<bool, String> {
+    t_config::is_using_custom_db_storage()
+}
+
+fn ensure_db_storage_change_allowed(
+    status_state: &State<t_face::FaceIndexingStatus>,
+) -> Result<(), String> {
+    if t_config::is_db_migration_in_progress() {
+        return Err("Database storage migration is already in progress.".to_string());
+    }
+
+    let is_library_indexing = t_config::get_current_library_state()
+        .map(|state| state.index.status == 1)
+        .unwrap_or(false);
+    if is_library_indexing {
+        return Err("Cannot change database storage while library indexing is running.".to_string());
+    }
+
+    if *status_state.0.lock().unwrap() {
+        return Err("Cannot change database storage while face indexing is running.".to_string());
+    }
+
+    if t_sqlite::has_active_thumb_background_tasks() {
+        return Err(
+            "Cannot change database storage while thumbnails are still being generated."
+                .to_string(),
+        );
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn change_db_storage_dir(
+    new_dir: &str,
+    status_state: State<t_face::FaceIndexingStatus>,
+) -> Result<String, String> {
+    ensure_db_storage_change_allowed(&status_state)?;
+    t_config::change_db_storage_dir(new_dir)
+}
+
+#[tauri::command]
+pub fn reset_db_storage_dir(
+    status_state: State<t_face::FaceIndexingStatus>,
+) -> Result<String, String> {
+    ensure_db_storage_change_allowed(&status_state)?;
+    t_config::reset_db_storage_dir()
+}
+
+#[tauri::command]
 pub fn add_library(name: &str) -> Result<Library, String> {
     t_config::add_library(name)
 }

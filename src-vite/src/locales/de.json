@@ -852,8 +852,8 @@
       "show_map_hint": "Benötigt Internetzugang",
       "debug_mode": "Debug-Modus"
     },
-    "navigation": {
-      "title": "Navigation",
+        "library": {
+      "title": "Bibliothek",
       "section_sorting": "Sortierung",
       "folder_sort": "Ordner",
       "folder_sort_hint": "Sortierreihenfolge für unter Alben angezeigte Ordner",
@@ -878,10 +878,10 @@
         "Anzahl (Absteigend)"
       ]
     },
-    "grid_view": {
-      "title": "Rasteransicht",
-      "section_layout": "Layout",
-      "style": "Layoutmodus",
+    "view": {
+      "title": "Ansicht",
+      "section_layout": "Rasteransicht",
+      "style": "Stil",
       "style_options": [
         "Kartenansicht",
         "Kachelansicht",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "Viewer",
-      "section_viewing": "Ansicht",
+      "section_viewing": "Bildbetrachter",
       "section_external_apps": "Externe Apps",
       "mouse_wheel": "Mausrad",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "Bildsuche",
-      "section_search": "Suche",
+      "title": "Intelligente Suche",
+      "section_search": "Ähnliche Bilder finden",
       "similarity": "Ähnlichkeit",
       "similarity_hint": "Höher = ähnlicher, weniger Ergebnisse. Niedriger = weniger ähnlich, mehr Ergebnisse",
       "similarity_options": [
@@ -969,8 +969,25 @@
         "Niedrig"
       ]
     },
+    "database": {
+      "title": "Speicher",
+      "section_storage": "Datenort",
+      "current_location": "Speicherort der Bibliotheksdaten",
+      "system_default": "Systemstandard",
+      "change_location": "Speicherort ändern",
+      "change_location_confirm": "Ordner wählen",
+      "prechange_title": "Speicherort ändern",
+      "prechange_message": "Bibliotheksdaten enthalten Metadaten, Favoriten, Bewertungen, Tags und andere Organisationsdaten. Der Standardspeicherort wird empfohlen. Wenn Sie ihn ändern, verwenden Sie für beste Leistung einen lokalen Ordner.",
+      "restore_default_location": "Auf Standard zurücksetzen",
+      "restore_default_confirm_title": "Standardspeicherort wiederherstellen",
+      "restore_default_confirm_message": "Alle Bibliotheksdaten werden an den Standardspeicherort zurückverschoben. Fortfahren?",
+      "busy_library_indexing": "Der Speicherort kann während der Bibliotheksindizierung nicht geändert werden.",
+      "busy_face_indexing": "Der Speicherort kann während der Gesichtserkennung nicht geändert werden.",
+      "change_success": "Bibliotheksdaten wurden erfolgreich verschoben",
+      "restore_default_success": "Bibliotheksdaten wurden an den Standardspeicherort zurückverschoben"
+    },
     "face_recognition": {
-      "title": "Gesichtserkennung",
+      "title": "Personensuche",
       "enable": "Gesichtserkennung aktivieren",
       "beta_hint": "Beta: noch in Entwicklung",
       "similarity": "Gesichtsähnlichkeit",
@@ -985,20 +1002,14 @@
     },
     "privacy": {
       "title": "Datenschutz",
-      "section_usage": "Anonyme Nutzungsstatistik",
-      "enable_analytics": "Anonyme Nutzungsstatistik teilen",
-      "enable_analytics_hint": "Hilft, die Stabilität und Nutzererfahrung von Lap zu verbessern",
-      "section_collected": "Geteilte Informationen",
-      "collected_intro": "Lap verwendet Aptabase, einen datenschutzfreundlichen Analysedienst fuer Apps. Die Ereignisse sind anonym und enthalten weder Ihre Fotos noch Dateipfade oder persoenliche Kennungen. Wenn aktiviert, sendet Lap nur:",
-      "collected_activity": "Anonyme Aktivitätszähler der App",
-      "collected_app_version": "Lap-Version",
-      "collected_platform": "Geraeteplattform und Betriebssystem",
-      "collected_region": "Ungefähre Region (grob vom Analysedienst abgeleitet)",
-      "section_not_collected": "Nicht erfasst",
-      "not_collected_file_paths": "Dateipfade",
-      "not_collected_filenames": "Dateinamen",
-      "not_collected_search_text": "Suchtexte oder Eingaben",
-      "not_collected_precise_location": "Genauer Standort"
+      "section_privacy": "Lap verbessern",
+      "enable_analytics": "Anonyme Nutzungsdaten teilen",
+      "enable_analytics_hint": "Wenn aktiviert, erfasst Lap grundlegende Nutzungsstatistiken, um Probleme schneller zu beheben. Fotos, Dateipfade und personenbezogene Daten verlassen Ihr Gerät nie.",
+      "collected_title": "Lap erfasst nur:",
+      "collected_activity": "Zähler für App-Aktivitäten",
+      "collected_app_version": "Lap-Version und Betriebssystem",
+      "collected_region": "Ungefähre Region",
+      "powered_byaptabase": "Bereitgestellt von Aptabase, einer datenschutzfreundlichen Analyseplattform."
     },
     "about": {
       "title": "Über",

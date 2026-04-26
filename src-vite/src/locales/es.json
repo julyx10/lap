@@ -852,8 +852,8 @@
       "show_map_hint": "Requiere acceso a internet",
       "debug_mode": "Modo depuración"
     },
-    "navigation": {
-      "title": "Navegación",
+    "library": {
+      "title": "Biblioteca",
       "section_sorting": "Orden",
       "folder_sort": "Carpetas",
       "folder_sort_hint": "Orden de clasificación para las carpetas mostradas dentro de los álbumes",
@@ -878,10 +878,10 @@
         "Cantidad (De mayor a menor)"
       ]
     },
-    "grid_view": {
-      "title": "Vista de cuadrícula",
-      "section_layout": "Diseño",
-      "style": "Modo de diseño",
+    "view": {
+      "title": "Vista",
+      "section_layout": "Vista de cuadrícula",
+      "style": "Estilo",
       "style_options": [
         "Vista de tarjeta",
         "Vista mosaico",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "Visualizador",
-      "section_viewing": "Visualización",
+      "section_viewing": "Visor de imágenes",
       "section_external_apps": "Apps externas",
       "mouse_wheel": "Rueda ratón",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "Búsqueda img",
-      "section_search": "Búsqueda",
+      "title": "Búsqueda inteligente",
+      "section_search": "Buscar imágenes similares",
       "similarity": "Similitud",
       "similarity_hint": "Más alto = más similitud, menos resultados. Más bajo = menos similitud, más resultados",
       "similarity_options": [
@@ -969,8 +969,25 @@
         "Baja"
       ]
     },
+    "database": {
+      "title": "Almacenamiento",
+      "section_storage": "Ubicación de datos",
+      "current_location": "Ubicación de los datos de la biblioteca",
+      "system_default": "Predeterminado del sistema",
+      "change_location": "Cambiar ubicación",
+      "change_location_confirm": "Elegir carpeta",
+      "prechange_title": "Cambiar ubicación",
+      "prechange_message": "Los datos de la biblioteca guardan metadatos, favoritos, calificaciones, etiquetas y otra información de organización. Se recomienda la ubicación predeterminada del sistema. Si la cambias, usa una carpeta local para obtener mejor rendimiento.",
+      "restore_default_location": "Restablecer ubicación predeterminada",
+      "restore_default_confirm_title": "Restablecer ubicación predeterminada",
+      "restore_default_confirm_message": "Todos los archivos de datos de la biblioteca volverán a la ubicación predeterminada. ¿Continuar?",
+      "busy_library_indexing": "No se puede cambiar la ubicación de los datos mientras el indexado de la biblioteca está en ejecución.",
+      "busy_face_indexing": "No se puede cambiar la ubicación de los datos mientras el indexado de rostros está en ejecución.",
+      "change_success": "Los datos de la biblioteca se movieron correctamente",
+      "restore_default_success": "Los datos de la biblioteca volvieron a la ubicación predeterminada"
+    },
     "face_recognition": {
-      "title": "Reconocimiento facial",
+      "title": "Búsqueda de personas",
       "enable": "Activar reconocimiento facial",
       "beta_hint": "Beta: aún en desarrollo",
       "similarity": "Similitud cara",
@@ -985,20 +1002,14 @@
     },
     "privacy": {
       "title": "Privacidad",
-      "section_usage": "Estadísticas de uso anónimas",
-      "enable_analytics": "Compartir estadísticas de uso anónimas",
-      "enable_analytics_hint": "Ayuda a mejorar la estabilidad y la experiencia de uso de Lap",
-      "section_collected": "Informacion compartida",
-      "collected_intro": "Lap usa Aptabase, un servicio de analitica para apps centrado en la privacidad. Los eventos son anonimos y no incluyen tus fotos, rutas de archivos ni identificadores personales. Cuando esta activado, Lap solo envia:",
-      "collected_activity": "Contadores anónimos de actividad de la app",
-      "collected_app_version": "Versión de Lap",
-      "collected_platform": "Plataforma del dispositivo y sistema operativo",
-      "collected_region": "Región aproximada (derivada de forma general por el servicio analítico)",
-      "section_not_collected": "No recopilado",
-      "not_collected_file_paths": "Rutas de archivos",
-      "not_collected_filenames": "Nombres de archivos",
-      "not_collected_search_text": "Texto de búsqueda o indicaciones",
-      "not_collected_precise_location": "Ubicación precisa"
+      "section_privacy": "Ayuda a mejorar Lap",
+      "enable_analytics": "Compartir datos de uso anónimos",
+      "enable_analytics_hint": "Cuando está activado, Lap recopila estadísticas básicas de uso para ayudar a corregir problemas más rápido. Ninguna foto, ruta de archivo o información personal sale de tu dispositivo.",
+      "collected_title": "Lap solo recopila:",
+      "collected_activity": "Contadores de actividad de la aplicación",
+      "collected_app_version": "Versión de Lap y sistema operativo",
+      "collected_region": "Región aproximada",
+      "powered_byaptabase": "Con tecnología de Aptabase, una plataforma de analítica centrada en la privacidad."
     },
     "about": {
       "title": "Acerca de",

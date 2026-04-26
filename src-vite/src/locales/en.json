@@ -852,8 +852,8 @@
       "show_map_hint": "Requires internet access",
       "debug_mode": "Debug mode"
     },
-    "navigation": {
-      "title": "Navigation",
+    "library": {
+      "title": "Library",
       "section_sorting": "Sorting",
       "folder_sort": "Folders",
       "folder_sort_hint": "Sort order for folders shown under albums",
@@ -878,10 +878,10 @@
         "Count (High to low)"
       ]
     },
-    "grid_view": {
-      "title": "Grid view",
-      "section_layout": "Layout",
-      "style": "Layout mode",
+    "view": {
+      "title": "View",
+      "section_layout": "Grid view",
+      "style": "Style",
       "style_options": [
         "Card view",
         "Tile view",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "Viewer",
-      "section_viewing": "Viewing",
+      "section_viewing": "Image viewer",
       "section_external_apps": "External Apps",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "Image search",
-      "section_search": "Search",
+      "title": "Smart search",
+      "section_search": "Find similar images",
       "similarity": "Image similarity",
       "similarity_hint": "Higher = more similar, fewer results. Lower = less similar, more results",
       "similarity_options": [
@@ -969,8 +969,25 @@
         "Low"
       ]
     },
+    "database": {
+      "title": "Storage",
+      "section_storage": "Data Location",
+      "current_location": "Library data location",
+      "system_default": "System default",
+      "change_location": "Change location",
+      "change_location_confirm": "Choose folder",
+      "prechange_title": "Change location",
+      "prechange_message": "Library data stores metadata, favorites, ratings, tags, and other organization data. The system default location is recommended. If you move it, use a local folder for better performance.",
+      "restore_default_location": "Reset default location",
+      "restore_default_confirm_title": "Restore Default Data Location",
+      "restore_default_confirm_message": "All library data files will be moved back to the default location. Continue?",
+      "busy_library_indexing": "Cannot change the data location while library indexing is running.",
+      "busy_face_indexing": "Cannot change the data location while face indexing is running.",
+      "change_success": "Library data has been moved successfully",
+      "restore_default_success": "Library data has been moved back to the default location"
+    },
     "face_recognition": {
-      "title": "Face Recognition",
+      "title": "People search",
       "enable": "Enable face recognition",
       "beta_hint": "Beta: still in development",
       "similarity": "Face similarity",
@@ -985,20 +1002,14 @@
     },
     "privacy": {
       "title": "Privacy",
-      "section_usage": "Anonymous Usage Statistics",
-      "enable_analytics": "Share anonymous usage statistics",
-      "enable_analytics_hint": "Helps improve Lap’s stability and user experience",
-      "section_collected": "Shared info",
-      "collected_intro": "Lap uses Aptabase, a privacy-first analytics service for apps. Events are anonymous and do not include your photos, file paths, or personal identifiers. When enabled, Lap sends only:",
-      "collected_activity": "Anonymous app activity counters",
-      "collected_app_version": "Lap version",
-      "collected_platform": "Device platform and operating system",
-      "collected_region": "Approximate region (coarse, derived by the analytics service)",
-      "section_not_collected": "Not Collected",
-      "not_collected_file_paths": "File paths",
-      "not_collected_filenames": "File names",
-      "not_collected_search_text": "Search text or prompts",
-      "not_collected_precise_location": "Precise location"
+      "section_privacy": "Help improve Lap",
+      "enable_analytics": "Share anonymous usage data",
+      "enable_analytics_hint": "When enabled, Lap collects basic usage statistics to help fix issues faster. No photos, file paths, or personal information ever leave your device.",
+      "collected_title": "Lap collects only:",
+      "collected_activity": "App activity counters",
+      "collected_app_version": "Lap version and OS",
+      "collected_region": "Approximate region",
+      "powered_byaptabase": "Powered by Aptabase, a privacy-first analytics platform."
     },
     "about": {
       "title": "About",

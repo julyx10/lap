@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, OnceLock};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -244,8 +245,29 @@ pub struct AppConfig {
     pub debug: bool,
     #[serde(default = "default_last_selected_item_index")]
     pub last_selected_item_index: i64,
+    #[serde(default)]
+    pub db_storage_dir: Option<String>,
     pub current_library_id: String,
     pub libraries: Vec<Library>,
+}
+
+static DB_MIGRATION_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+
+struct DbMigrationGuard;
+
+impl DbMigrationGuard {
+    fn acquire() -> Result<Self, String> {
+        DB_MIGRATION_IN_PROGRESS
+            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+            .map_err(|_| "Database storage migration is already in progress.".to_string())?;
+        Ok(Self)
+    }
+}
+
+impl Drop for DbMigrationGuard {
+    fn drop(&mut self) {
+        DB_MIGRATION_IN_PROGRESS.store(false, Ordering::SeqCst);
+    }
 }
 
 fn default_last_selected_item_index() -> i64 {
@@ -258,6 +280,7 @@ impl Default for AppConfig {
         Self {
             debug: false,
             last_selected_item_index: default_last_selected_item_index(),
+            db_storage_dir: None,
             current_library_id: "default".to_string(),
             libraries: vec![Library {
                 id: "default".to_string(),
@@ -550,22 +573,194 @@ fn recover_app_config_from_library_dbs() -> Result<AppConfig, String> {
     Ok(AppConfig {
         debug: false,
         last_selected_item_index: default_last_selected_item_index(),
+        db_storage_dir: None,
         current_library_id,
         libraries,
     })
 }
 
+fn get_db_storage_dir_from_config(config: &AppConfig) -> Result<PathBuf, String> {
+    if let Some(dir) = config.db_storage_dir.as_deref() {
+        let path = PathBuf::from(dir);
+        fs::create_dir_all(&path)
+            .map_err(|e| format!("Failed to create database storage directory: {}", e))?;
+        Ok(path)
+    } else {
+        get_libraries_dir()
+    }
+}
+
+fn get_library_db_path_from_config(config: &AppConfig, library_id: &str) -> Result<String, String> {
+    let db_dir = get_db_storage_dir_from_config(config)?;
+    Ok(db_dir
+        .join(format!("{}.db", library_id))
+        .to_string_lossy()
+        .into_owned())
+}
+
+pub fn get_db_storage_dir() -> Result<String, String> {
+    let config = load_app_config()?;
+    get_db_storage_dir_from_config(&config).map(|p| p.to_string_lossy().into_owned())
+}
+
+pub fn is_using_custom_db_storage() -> Result<bool, String> {
+    let config = load_app_config()?;
+    Ok(config.db_storage_dir.is_some())
+}
+
+pub fn is_db_migration_in_progress() -> bool {
+    DB_MIGRATION_IN_PROGRESS.load(Ordering::SeqCst)
+}
+
 /// Get the database file path for a library
 pub fn get_library_db_path(library_id: &str) -> Result<String, String> {
-    let lib_dir = get_libraries_dir()?;
-    let db_path = lib_dir.join(format!("{}.db", library_id));
-    Ok(db_path.to_string_lossy().into_owned())
+    if is_db_migration_in_progress() {
+        return Err("Database storage migration is in progress.".to_string());
+    }
+    let config = load_app_config()?;
+    get_library_db_path_from_config(&config, library_id)
 }
 
 /// Get the current library's database file path
 pub fn get_current_db_path() -> Result<String, String> {
+    if is_db_migration_in_progress() {
+        return Err("Database storage migration is in progress.".to_string());
+    }
     let config = load_app_config()?;
-    get_library_db_path(&config.current_library_id)
+    get_library_db_path_from_config(&config, &config.current_library_id)
+}
+
+fn checkpoint_db(path: &Path) -> Result<(), String> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let conn = rusqlite::Connection::open(path)
+        .map_err(|e| format!("Failed to open database for checkpoint: {}", e))?;
+    conn.busy_timeout(Duration::from_secs(5))
+        .map_err(|e| format!("Failed to set SQLite busy timeout: {}", e))?;
+
+    let run_checkpoint = |mode: &str| -> Result<(), String> {
+        let pragma = format!("PRAGMA wal_checkpoint({})", mode);
+        conn.query_row(&pragma, [], |_| Ok(()))
+            .map_err(|e| format!("Failed to checkpoint database with mode {}: {}", mode, e))
+    };
+
+    if let Err(truncate_err) = run_checkpoint("TRUNCATE") {
+        eprintln!("{}", truncate_err);
+        run_checkpoint("RESTART")?;
+    }
+
+    Ok(())
+}
+
+pub fn change_db_storage_dir(new_dir: &str) -> Result<String, String> {
+    let _migration_guard = DbMigrationGuard::acquire()?;
+    let mut config = load_app_config()?;
+    let target_dir = PathBuf::from(new_dir);
+
+    fs::create_dir_all(&target_dir)
+        .map_err(|e| format!("Failed to create target database directory: {}", e))?;
+
+    let current_dir = get_db_storage_dir_from_config(&config)?;
+    let current_dir_canon = fs::canonicalize(&current_dir).unwrap_or(current_dir.clone());
+    let target_dir_canon = fs::canonicalize(&target_dir).unwrap_or(target_dir.clone());
+    if current_dir_canon == target_dir_canon {
+        return Ok(target_dir_canon.to_string_lossy().into_owned());
+    }
+
+    for library in &config.libraries {
+        let source_path = PathBuf::from(get_library_db_path_from_config(&config, &library.id)?);
+        let target_path = target_dir.join(format!("{}.db", library.id));
+
+        if !source_path.exists() {
+            continue;
+        }
+
+        checkpoint_db(&source_path)?;
+
+        if target_path.exists() {
+            fs::remove_file(&target_path)
+                .map_err(|e| format!("Failed to replace existing target database: {}", e))?;
+        }
+
+        fs::copy(&source_path, &target_path)
+            .map_err(|e| format!("Failed to migrate database '{}': {}", library.name, e))?;
+    }
+
+    config.db_storage_dir = Some(target_dir_canon.to_string_lossy().into_owned());
+    save_app_config(&config)?;
+
+    for library in &config.libraries {
+        let source_path = PathBuf::from(current_dir.join(format!("{}.db", library.id)));
+        if source_path.exists() {
+            let _ = fs::remove_file(&source_path);
+        }
+        let wal_path = current_dir.join(format!("{}.db-wal", library.id));
+        if wal_path.exists() {
+            let _ = fs::remove_file(&wal_path);
+        }
+        let shm_path = current_dir.join(format!("{}.db-shm", library.id));
+        if shm_path.exists() {
+            let _ = fs::remove_file(&shm_path);
+        }
+    }
+
+    Ok(target_dir_canon.to_string_lossy().into_owned())
+}
+
+pub fn reset_db_storage_dir() -> Result<String, String> {
+    let _migration_guard = DbMigrationGuard::acquire()?;
+    let mut config = load_app_config()?;
+    let target_dir = get_libraries_dir()?;
+    let current_dir = get_db_storage_dir_from_config(&config)?;
+    let current_dir_canon = fs::canonicalize(&current_dir).unwrap_or(current_dir.clone());
+    let target_dir_canon = fs::canonicalize(&target_dir).unwrap_or(target_dir.clone());
+
+    if current_dir_canon == target_dir_canon {
+        config.db_storage_dir = None;
+        save_app_config(&config)?;
+        return Ok(target_dir_canon.to_string_lossy().into_owned());
+    }
+
+    for library in &config.libraries {
+        let source_path = PathBuf::from(get_library_db_path_from_config(&config, &library.id)?);
+        let target_path = target_dir.join(format!("{}.db", library.id));
+
+        if !source_path.exists() {
+            continue;
+        }
+
+        checkpoint_db(&source_path)?;
+
+        if target_path.exists() {
+            fs::remove_file(&target_path)
+                .map_err(|e| format!("Failed to replace existing target database: {}", e))?;
+        }
+
+        fs::copy(&source_path, &target_path)
+            .map_err(|e| format!("Failed to migrate database '{}': {}", library.name, e))?;
+    }
+
+    config.db_storage_dir = None;
+    save_app_config(&config)?;
+
+    for library in &config.libraries {
+        let source_path = PathBuf::from(current_dir.join(format!("{}.db", library.id)));
+        if source_path.exists() {
+            let _ = fs::remove_file(&source_path);
+        }
+        let wal_path = current_dir.join(format!("{}.db-wal", library.id));
+        if wal_path.exists() {
+            let _ = fs::remove_file(&wal_path);
+        }
+        let shm_path = current_dir.join(format!("{}.db-shm", library.id));
+        if shm_path.exists() {
+            let _ = fs::remove_file(&shm_path);
+        }
+    }
+
+    Ok(target_dir_canon.to_string_lossy().into_owned())
 }
 
 /// Add a new library

@@ -110,7 +110,7 @@
           <!-- grid styles cycle -->
           <TButton
             :icon="[IconCard, IconTile, IconJustified][config.settings.grid.style]"
-            :tooltip="localeMsg.settings.grid_view.style_options[config.settings.grid.style]"
+            :tooltip="localeMsg.settings.view.style_options[config.settings.grid.style]"
             @click="cycleGridStyle"
           />
 

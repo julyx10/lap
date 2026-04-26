@@ -29,6 +29,42 @@ export async function setLastSelectedItemIndex(index) {
   return false;
 }
 
+export async function getDbStorageDir() {
+  try {
+    return await invoke('get_db_storage_dir');
+  } catch (error) {
+    console.error('Failed to get DB storage dir:', error);
+  }
+  return null;
+}
+
+export async function isUsingCustomDbStorage() {
+  try {
+    return await invoke('is_using_custom_db_storage');
+  } catch (error) {
+    console.error('Failed to check custom DB storage:', error);
+  }
+  return false;
+}
+
+export async function changeDbStorageDir(newDir) {
+  try {
+    return await invoke('change_db_storage_dir', { newDir });
+  } catch (error) {
+    console.error('Failed to change DB storage dir:', error);
+    throw error;
+  }
+}
+
+export async function resetDbStorageDir() {
+  try {
+    return await invoke('reset_db_storage_dir');
+  } catch (error) {
+    console.error('Failed to reset DB storage dir:', error);
+    throw error;
+  }
+}
+
 // add a new library
 export async function addLibrary(name) {
   try {

@@ -164,6 +164,10 @@ async fn main() {
             // library
             t_cmds::get_app_config,
             t_cmds::set_last_selected_item_index,
+            t_cmds::get_db_storage_dir,
+            t_cmds::is_using_custom_db_storage,
+            t_cmds::change_db_storage_dir,
+            t_cmds::reset_db_storage_dir,
             t_cmds::add_library,
             t_cmds::edit_library,
             t_cmds::remove_library,

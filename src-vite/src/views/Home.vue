@@ -202,7 +202,7 @@ const isAlbumReorderMode = ref(false);
 const isSwitchingLibrary = ref(false);
 const libraryVersion = ref(0);
 const SETTINGS_BASE_WIDTH = 600;
-const SETTINGS_BASE_HEIGHT = 450;
+const SETTINGS_BASE_HEIGHT = 600;
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -319,7 +319,7 @@ onMounted(async () => {
     void clickSettings();
   });
   unlistenOpenAbout = await listen('app-open-about', () => {
-    void clickSettings(5);
+    void clickSettings(4);
   });
 
   appConfig.value = await getAppConfig();

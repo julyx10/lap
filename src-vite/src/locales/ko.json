@@ -852,8 +852,8 @@
       "show_map_hint": "인터넷 연결이 필요합니다",
       "debug_mode": "디버그 모드"
     },
-    "navigation": {
-      "title": "탐색",
+        "library": {
+      "title": "라이브러리",
       "section_sorting": "정렬",
       "folder_sort": "폴더",
       "folder_sort_hint": "앨범 아래에 표시되는 폴더의 정렬 순서입니다",
@@ -878,10 +878,10 @@
         "개수 (높은 순)"
       ]
     },
-    "grid_view": {
-      "title": "그리드 보기",
-      "section_layout": "레이아웃",
-      "style": "레이아웃 모드",
+    "view": {
+      "title": "보기",
+      "section_layout": "그리드 보기",
+      "style": "스타일",
       "style_options": [
         "카드 보기",
         "타일 보기",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "뷰어",
-      "section_viewing": "보기",
+      "section_viewing": "이미지 뷰어",
       "section_external_apps": "외부 앱",
       "mouse_wheel": "마우스 휠",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "이미지 검색",
-      "section_search": "검색",
+      "title": "스마트 검색",
+      "section_search": "유사한 이미지 찾기",
       "similarity": "유사도",
       "similarity_hint": "높을수록 더 비슷하고 결과가 적습니다. 낮을수록 덜 비슷하고 결과가 많습니다",
       "similarity_options": [
@@ -969,8 +969,25 @@
         "낮음"
       ]
     },
+    "database": {
+      "title": "저장소",
+      "section_storage": "데이터 위치",
+      "current_location": "라이브러리 데이터 위치",
+      "system_default": "시스템 기본값",
+      "change_location": "위치 변경",
+      "change_location_confirm": "폴더 선택",
+      "prechange_title": "위치 변경",
+      "prechange_message": "라이브러리 데이터에는 메타데이터, 즐겨찾기, 평점, 태그 및 기타 정리 정보가 포함됩니다. 기본 시스템 위치 사용을 권장합니다. 위치를 바꾸려면 성능을 위해 로컬 폴더를 사용하세요.",
+      "restore_default_location": "기본 위치로 재설정",
+      "restore_default_confirm_title": "기본 위치로 복원",
+      "restore_default_confirm_message": "모든 라이브러리 데이터를 기본 위치로 다시 이동합니다. 계속하시겠습니까?",
+      "busy_library_indexing": "라이브러리 인덱싱이 실행 중일 때는 데이터 위치를 변경할 수 없습니다.",
+      "busy_face_indexing": "얼굴 인덱싱이 실행 중일 때는 데이터 위치를 변경할 수 없습니다.",
+      "change_success": "라이브러리 데이터가 성공적으로 이동되었습니다",
+      "restore_default_success": "라이브러리 데이터가 기본 위치로 다시 이동되었습니다"
+    },
     "face_recognition": {
-      "title": "얼굴 인식",
+      "title": "인물 검색",
       "enable": "얼굴 인식 활성화",
       "beta_hint": "베타: 아직 개발 중입니다",
       "similarity": "얼굴 유사도",
@@ -985,20 +1002,14 @@
     },
     "privacy": {
       "title": "개인정보",
-      "section_usage": "익명 사용 통계",
-      "enable_analytics": "익명 사용 통계 공유",
-      "enable_analytics_hint": "Lap의 안정성과 사용자 경험 개선에 도움이 됩니다",
-      "section_collected": "공유 정보",
-      "collected_intro": "Lap 은 앱용 개인정보 보호 중심 분석 서비스인 Aptabase 를 사용합니다. 이벤트는 익명이며 사진, 파일 경로, 개인 식별자를 포함하지 않습니다. 활성화하면 Lap 은 다음만 전송합니다:",
-      "collected_activity": "익명 앱 활동 카운터",
-      "collected_app_version": "Lap 버전",
-      "collected_platform": "기기 플랫폼 및 운영체제",
-      "collected_region": "대략적인 지역(분석 서비스가 대략 추정)",
-      "section_not_collected": "수집하지 않음",
-      "not_collected_file_paths": "파일 경로",
-      "not_collected_filenames": "파일 이름",
-      "not_collected_search_text": "검색 텍스트 또는 프롬프트",
-      "not_collected_precise_location": "정확한 위치"
+      "section_privacy": "Lap 개선에 도움 주기",
+      "enable_analytics": "익명 사용 데이터 공유",
+      "enable_analytics_hint": "활성화하면 Lap은 문제를 더 빠르게 수정하기 위해 기본 사용 통계를 수집합니다. 사진, 파일 경로 또는 개인 정보는 기기를 벗어나지 않습니다.",
+      "collected_title": "Lap이 수집하는 항목:",
+      "collected_activity": "앱 활동 카운터",
+      "collected_app_version": "Lap 버전 및 운영체제",
+      "collected_region": "대략적인 지역",
+      "powered_byaptabase": "Aptabase 기반의 개인정보 보호 중심 분석 플랫폼입니다."
     },
     "about": {
       "title": "정보",
