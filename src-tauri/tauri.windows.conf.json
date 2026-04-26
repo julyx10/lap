@@ -2,11 +2,14 @@
   "app": {
     "windows": [
       {
+        "label": "main",
+        "title": "Lap",
         "minWidth": 800,
         "minHeight": 600,
         "decorations": false,
         "transparent": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "zoomHotkeysEnabled": true
       }
     ]
   },

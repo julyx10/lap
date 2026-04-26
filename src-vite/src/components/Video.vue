@@ -1,5 +1,5 @@
 <template>
-  <div ref="videoContainer" class="relative w-full h-full overflow-hidden cursor-pointer" @wheel.prevent="handleWheel">
+  <div ref="videoContainer" class="relative w-full h-full overflow-hidden cursor-pointer" style="touch-action: none;" @wheel.prevent="handleWheel">
     <TransitionGroup :name="transitionName" @after-leave="handleTransitionEnd">
       <div
         v-for="index in [0, 1]"
@@ -428,6 +428,85 @@ function handlePlayerError(playerInstance: ReturnType<typeof videojs>) {
 
 let resizeObserver: ResizeObserver | null = null;
 
+// Touchscreen pinch zoom state (two-finger gesture)
+const activeTouchPointers = new Map<number, { x: number; y: number }>();
+let pinchStartDistance = 0;
+let pinchStartScale = 1;
+let isPinching = false;
+
+function handlePinchPointerDown(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return;
+  activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (activeTouchPointers.size === 2) {
+    const pts = Array.from(activeTouchPointers.values());
+    pinchStartDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    pinchStartScale = scale.value;
+    isPinching = true;
+    // Suppress CSS transition so video tracks fingers in real time.
+    noTransition.value = true;
+  }
+}
+
+function handlePinchPointerMove(event: PointerEvent) {
+  if (event.pointerType !== 'touch' || !isPinching) return;
+  if (!activeTouchPointers.has(event.pointerId)) return;
+  activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (activeTouchPointers.size !== 2 || pinchStartDistance <= 0) return;
+  event.preventDefault();
+  const pts = Array.from(activeTouchPointers.values());
+  const distance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  if (distance < 1) return;
+  const newScale = Math.max(0.1, Math.min(10, pinchStartScale * (distance / pinchStartDistance)));
+  scale.value = newScale;
+  isFit.value = false;
+  updateTransform();
+}
+
+function handlePinchPointerEnd(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return;
+  activeTouchPointers.delete(event.pointerId);
+  if (activeTouchPointers.size < 2) {
+    pinchStartDistance = 0;
+  }
+  if (activeTouchPointers.size === 0) {
+    isPinching = false;
+    requestAnimationFrame(() => {
+      noTransition.value = false;
+    });
+  }
+}
+
+function handleGlobalPinchWheel(event: WheelEvent) {
+  if (!event.ctrlKey) return;
+  if (!videoContainer.value) return;
+  const rect = (videoContainer.value as HTMLElement).getBoundingClientRect();
+  if (
+    event.clientX < rect.left || event.clientX > rect.right ||
+    event.clientY < rect.top || event.clientY > rect.bottom
+  ) return;
+  event.preventDefault();
+  event.stopPropagation();
+  noTransition.value = true;
+  applyZoomFromWheel(event);
+  requestAnimationFrame(() => { noTransition.value = false; });
+}
+
+// Browser-matching exp formula for touchpad pinch (small deltaY); coarser fixed
+// step for Ctrl+mouse-wheel (deltaY ~100 per notch).
+function applyZoomFromWheel(event: WheelEvent) {
+  const isPinch = event.ctrlKey && event.deltaMode === 0 && Math.abs(event.deltaY) < 50;
+  if (isPinch) {
+    scale.value = Math.max(0.1, Math.min(10, scale.value * Math.exp(-event.deltaY / 96)));
+  } else {
+    const zoomFactor = 0.1;
+    scale.value = event.deltaY < 0
+      ? Math.min(scale.value * (1 + zoomFactor), 10)
+      : Math.max(scale.value * (1 - zoomFactor), 0.1);
+  }
+  isFit.value = false;
+  updateTransform();
+}
+
 onMounted(() => {
   nextTick(() => {
     setupPlayer(0);
@@ -443,11 +522,28 @@ onMounted(() => {
       updateTransform({ recalcScale: true });
     });
     resizeObserver.observe(videoContainer.value);
+    const el = videoContainer.value as HTMLElement;
+    el.addEventListener('pointerdown', handlePinchPointerDown);
+    el.addEventListener('pointermove', handlePinchPointerMove, { passive: false });
+    el.addEventListener('pointerup', handlePinchPointerEnd);
+    el.addEventListener('pointercancel', handlePinchPointerEnd);
+    el.addEventListener('pointerleave', handlePinchPointerEnd);
   }
+  // Global capture-phase fallback for touchpad pinch (see Image.vue).
+  window.addEventListener('wheel', handleGlobalPinchWheel, { capture: true, passive: false });
 });
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
+  if (videoContainer.value) {
+    const el = videoContainer.value as HTMLElement;
+    el.removeEventListener('pointerdown', handlePinchPointerDown);
+    el.removeEventListener('pointermove', handlePinchPointerMove);
+    el.removeEventListener('pointerup', handlePinchPointerEnd);
+    el.removeEventListener('pointercancel', handlePinchPointerEnd);
+    el.removeEventListener('pointerleave', handlePinchPointerEnd);
+  }
+  window.removeEventListener('wheel', handleGlobalPinchWheel, { capture: true });
   players.value.forEach((p) => {
     if (p) {
       p.off();
@@ -551,6 +647,14 @@ defineExpose({
 
 function handleWheel(event: WheelEvent) {
   event.preventDefault();
+
+  // Touchpad pinch (and Ctrl+wheel) arrives as a wheel event with ctrlKey=true.
+  // Treat it as a direct zoom, bypassing the swipe/nav gesture-detection path.
+  if (event.ctrlKey) {
+    applyZoomFromWheel(event);
+    return;
+  }
+
   if (event.deltaX !== 0) {
     isTouchpadDevice = true;
   }

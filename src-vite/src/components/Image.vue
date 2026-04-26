@@ -2,6 +2,7 @@
   <div
     ref="container"
     class="relative isolate w-full h-full overflow-hidden cursor-pointer"
+    style="touch-action: none;"
     @wheel="handleImageWheel"
   >
 
@@ -273,6 +274,13 @@ let wheelZoomTimeout: NodeJS.Timeout | null = null;
 
 // Touchpad detection - sticky once detected
 let isTouchpadDevice = false;
+
+// Touchscreen pinch zoom state (two-finger gesture)
+const activeTouchPointers = new Map<number, { x: number; y: number }>();
+let pinchStartDistance = 0;
+let pinchStartScale = 1;
+let pinchCenter = { x: 0, y: 0 };
+let isPinching = false;
 
 // Swipe state
 const navDirection = ref<'next' | 'prev' | ''>('');
@@ -852,7 +860,17 @@ onMounted(() => {
   if (container.value) {
     resizeObserver.observe(container.value);  // Observe container size changes
     updatePosition();   // Initial position calculation
+    const el = container.value as HTMLElement;
+    el.addEventListener('pointerdown', handlePinchPointerDown);
+    el.addEventListener('pointermove', handlePinchPointerMove, { passive: false });
+    el.addEventListener('pointerup', handlePinchPointerEnd);
+    el.addEventListener('pointercancel', handlePinchPointerEnd);
+    el.addEventListener('pointerleave', handlePinchPointerEnd);
   }
+  // Global capture-phase fallback: in WebView2 some touchpad pinch events can
+  // be intercepted before they bubble to the container element. Listening at
+  // window with capture+passive:false guarantees we see them and can preventDefault.
+  window.addEventListener('wheel', handleGlobalPinchWheel, { capture: true, passive: false });
 });
 
 onBeforeUnmount(() => {
@@ -860,11 +878,115 @@ onBeforeUnmount(() => {
     resizeObserver.unobserve(container.value);
     resizeObserver.disconnect();
   }
+  if (container.value) {
+    const el = container.value as HTMLElement;
+    el.removeEventListener('pointerdown', handlePinchPointerDown);
+    el.removeEventListener('pointermove', handlePinchPointerMove);
+    el.removeEventListener('pointerup', handlePinchPointerEnd);
+    el.removeEventListener('pointercancel', handlePinchPointerEnd);
+    el.removeEventListener('pointerleave', handlePinchPointerEnd);
+  }
+  window.removeEventListener('wheel', handleGlobalPinchWheel, { capture: true });
   if (loadingTimeout) { // Clear timeout on unmount
     clearTimeout(loadingTimeout);
   }
   cancelWarmImageScheduling();
 });
+
+function handleGlobalPinchWheel(event: WheelEvent) {
+  if (!event.ctrlKey) return;
+  if (!container.value) return;
+  const rect = (container.value as HTMLElement).getBoundingClientRect();
+  if (
+    event.clientX < rect.left || event.clientX > rect.right ||
+    event.clientY < rect.top || event.clientY > rect.bottom
+  ) return;
+  event.preventDefault();
+  event.stopPropagation();
+  isWheelZooming.value = true;
+  if (wheelZoomTimeout) clearTimeout(wheelZoomTimeout);
+  wheelZoomTimeout = setTimeout(() => { isWheelZooming.value = false; }, 200);
+  applyZoomFromWheel(event);
+}
+
+// Touchpad pinch is dispatched by Chromium as small-delta ctrl+wheel events
+// (deltaY = -log(scale_change) * 96), while Ctrl+mouse-wheel sends deltaY ~100
+// per notch. Use the browser-matching exp formula for pinch and the gentler
+// notch-based wheelZoom for mouse so each input feels native.
+function applyZoomFromWheel(event: WheelEvent) {
+  const isPinch = event.ctrlKey && event.deltaMode === 0 && Math.abs(event.deltaY) < 50;
+  if (!isPinch) {
+    wheelZoom(event, 1);
+    return;
+  }
+  const currentScale = scale.value[activeImage.value];
+  let newScale = currentScale * Math.exp(-event.deltaY / 96);
+  newScale = Math.min(Math.max(newScale, minScale.value), maxScale.value);
+  if (container.value) {
+    const rect = (container.value as HTMLElement).getBoundingClientRect();
+    const containerSizeVal = containerSize.value;
+    const x = ((event.clientX - rect.left) * containerSizeVal.width) / rect.width;
+    const y = ((event.clientY - rect.top) * containerSizeVal.height) / rect.height;
+    zoomImage(x, y, newScale);
+  }
+}
+
+function handlePinchPointerDown(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return;
+  activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (activeTouchPointers.size === 2) {
+    const pts = Array.from(activeTouchPointers.values());
+    pinchStartDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    pinchStartScale = scale.value[activeImage.value];
+    pinchCenter = {
+      x: (pts[0].x + pts[1].x) / 2,
+      y: (pts[0].y + pts[1].y) / 2,
+    };
+    isPinching = true;
+    isDraggingImage.value = false;
+    // Suppress CSS transitions so the image tracks fingers in real time.
+    isWheelZooming.value = true;
+    if (wheelZoomTimeout) {
+      clearTimeout(wheelZoomTimeout);
+      wheelZoomTimeout = null;
+    }
+  }
+}
+
+function handlePinchPointerMove(event: PointerEvent) {
+  if (event.pointerType !== 'touch' || !isPinching) return;
+  if (!activeTouchPointers.has(event.pointerId)) return;
+  activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (activeTouchPointers.size !== 2 || pinchStartDistance <= 0) return;
+  event.preventDefault();
+  const pts = Array.from(activeTouchPointers.values());
+  const distance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  if (distance < 1) return;
+  let newScale = pinchStartScale * (distance / pinchStartDistance);
+  newScale = Math.min(Math.max(newScale, minScale.value), maxScale.value);
+  if (container.value) {
+    const rect = (container.value as HTMLElement).getBoundingClientRect();
+    const containerSizeVal = containerSize.value;
+    const x = ((pinchCenter.x - rect.left) * containerSizeVal.width) / rect.width;
+    const y = ((pinchCenter.y - rect.top) * containerSizeVal.height) / rect.height;
+    zoomImage(x, y, newScale);
+  }
+}
+
+function handlePinchPointerEnd(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return;
+  activeTouchPointers.delete(event.pointerId);
+  if (activeTouchPointers.size < 2) {
+    pinchStartDistance = 0;
+  }
+  if (activeTouchPointers.size === 0) {
+    isPinching = false;
+    if (wheelZoomTimeout) clearTimeout(wheelZoomTimeout);
+    wheelZoomTimeout = setTimeout(() => {
+      isWheelZooming.value = false;
+    }, 50);
+  }
+}
 
 const updatePosition = () => {
   if (container.value) {
@@ -1436,6 +1558,18 @@ function handleImageWheel(event: WheelEvent) {
   event.preventDefault();
   event.stopPropagation();
   updatePosition();
+
+  // Touchpad pinch (and Ctrl+wheel) arrives as a wheel event with ctrlKey=true.
+  // Treat it as a direct zoom, bypassing the swipe/nav gesture-detection path.
+  if (event.ctrlKey) {
+    isWheelZooming.value = true;
+    if (wheelZoomTimeout) clearTimeout(wheelZoomTimeout);
+    wheelZoomTimeout = setTimeout(() => {
+      isWheelZooming.value = false;
+    }, 200);
+    applyZoomFromWheel(event);
+    return;
+  }
 
   // Simple touchpad detection: if there's horizontal delta, it's a touchpad
   // Mouse wheels only scroll vertically (deltaY only)
