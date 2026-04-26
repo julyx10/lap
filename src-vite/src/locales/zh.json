@@ -1036,5 +1036,35 @@
         "failed_install": "安装更新失败"
       }
     }
+  },
+  "batch_rename": {
+    "title": "批量重命名",
+    "pattern": "命名模式",
+    "pattern_placeholder": "例如: {name}_{index}",
+    "variables": "可用变量:",
+    "preview": "预览"
+  },
+  "batch_resize": {
+    "title": "批量调整大小",
+    "width": "宽度",
+    "height": "高度",
+    "keep_aspect_ratio": "保持宽高比",
+    "mode": "模式",
+    "mode_pixels": "像素",
+    "mode_percentage": "百分比",
+    "percentage": "百分比",
+    "quality": "质量",
+    "output_format": "输出格式",
+    "format_original": "原始格式"
+  },
+  "batch_operation": {
+    "output_folder": "输出文件夹",
+    "browse": "浏览",
+    "selected_files": "已选择 {count} 个文件",
+    "cancel": "取消",
+    "rename": "重命名",
+    "resize": "调整大小",
+    "processing": "处理中...",
+    "cancel_operation": "取消操作"
   }
 }

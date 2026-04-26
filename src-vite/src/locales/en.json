@@ -1036,5 +1036,35 @@
         "failed_install": "Failed to install update"
       }
     }
+  },
+  "batch_rename": {
+    "title": "Batch Rename",
+    "pattern": "Naming Pattern",
+    "pattern_placeholder": "e.g., {name}_{index}",
+    "variables": "Available variables:",
+    "preview": "Preview"
+  },
+  "batch_resize": {
+    "title": "Batch Resize",
+    "width": "Width",
+    "height": "Height",
+    "keep_aspect_ratio": "Keep aspect ratio",
+    "mode": "Mode",
+    "mode_pixels": "Pixels",
+    "mode_percentage": "Percentage",
+    "percentage": "Percentage",
+    "quality": "Quality",
+    "output_format": "Output Format",
+    "format_original": "Original Format"
+  },
+  "batch_operation": {
+    "output_folder": "Output Folder",
+    "browse": "Browse",
+    "selected_files": "{count} files selected",
+    "cancel": "Cancel",
+    "rename": "Rename",
+    "resize": "Resize",
+    "processing": "Processing...",
+    "cancel_operation": "Cancel Operation"
   }
 }
