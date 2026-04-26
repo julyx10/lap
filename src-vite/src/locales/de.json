@@ -255,11 +255,11 @@
       "group_limit_hint": "Es werden bis zu {count} Gruppen angezeigt",
       "group_label": "Gruppe {index}",
       "items": "Elemente",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "Standard-Regel zum Behalten",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "Beste Qualität",
+        "oldest_created": "Älteste nach Erstellung bevorzugen",
+        "oldest_modified": "Älteste nach Änderung bevorzugen"
       },
       "keep_label": "Behalten",
       "select_group_duplicates": "Alle Duplikate auswählen",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "Bild bearbeiten",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "Bearbeiten",
+      "tab_adjust": "Anpassen",
       "histogram": "Histogramm",
       "light": "Licht",
       "color": "Farbe",
@@ -601,7 +601,7 @@
       "blur": "Unschärfe",
       "hue_rotate": "Farbton",
       "saturation": "Sättigung",
-      "reset": "Reset",
+      "reset": "Zurücksetzen",
       "crop": "Zuschneiden",
       "cancel_crop": "Abbrechen",
       "confirm_crop": "Bestätigen",

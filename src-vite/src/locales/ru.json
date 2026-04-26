@@ -255,11 +255,11 @@
       "group_limit_hint": "Показано до {count} групп",
       "group_label": "Группа {index}",
       "items": "элементов",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "Правило сохранения по умолчанию",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "Лучшее качество",
+        "oldest_created": "Самые старые по созданию",
+        "oldest_modified": "Самые старые по изменению"
       },
       "keep_label": "Оставить",
       "select_group_duplicates": "Выбрать все дубликаты",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "Редактор",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "Правка",
+      "tab_adjust": "Настройка",
       "histogram": "Гистограмма",
       "light": "Свет",
       "color": "Цвет",

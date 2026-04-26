@@ -255,11 +255,11 @@
       "group_limit_hint": "最大 {count} グループを表示",
       "group_label": "グループ {index}",
       "items": "件",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "デフォルトの保持ルール",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "最高品質優先",
+        "oldest_created": "作成日が最も古いものを優先",
+        "oldest_modified": "修正日が最も古いものを優先"
       },
       "keep_label": "保持",
       "select_group_duplicates": "すべての重複を選択",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "画像を編集",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "編集",
+      "tab_adjust": "調整",
       "histogram": "ヒストグラム",
       "light": "ライト",
       "color": "カラー",

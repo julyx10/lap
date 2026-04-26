@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "编辑图片",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "编辑",
+      "tab_adjust": "调整",
       "histogram": "直方图",
       "light": "光影",
       "color": "颜色",
