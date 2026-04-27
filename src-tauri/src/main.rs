@@ -98,6 +98,12 @@ async fn main() {
                 }
             }
 
+            // tauri.windows.conf.json sets zoomHotkeysEnabled=true so wry sets
+            // both IsZoomControlEnabled and IsPinchZoomEnabled to true at WebView
+            // creation. That combination is what allows Chromium to synthesize
+            // wheel+ctrlKey events for touchpad pinch. Touchscreen pinch is still
+            // handled by our pointer-event logic (with `touch-action: none`).
+
             // Create the database on startup
             if let Err(e) = t_sqlite::create_db() {
                 eprintln!("Failed to initialize database: {}", e);

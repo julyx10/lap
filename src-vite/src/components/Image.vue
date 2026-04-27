@@ -2,6 +2,7 @@
   <div
     ref="container"
     class="relative isolate w-full h-full overflow-hidden cursor-pointer"
+    style="touch-action: none;"
     @wheel="handleImageWheel"
   >
 
@@ -152,12 +153,16 @@
         <!-- nav image -->
         <img :src="thumbnailSrc || imageSrc[activeImage]" :style="navImageStyle" draggable="false" />
         <!-- nav box -->
-        <div class="absolute top-0 left-0 border-2 border-primary cursor-move" 
-          :style="navBoxStyle" 
+        <div class="absolute top-0 left-0 border-2 border-primary cursor-move"
+          :style="navBoxStyle"
           @mousedown="handleNavBoxMouseDown"
           @mousemove="handleNavBoxMouseMove"
           @mouseup="handleNavBoxMouseUp"
           @mouseleave="handleNavBoxMouseLeave"
+          @pointerdown="handleNavBoxPointerDown"
+          @pointermove="handleNavBoxPointerMove"
+          @pointerup="handleNavBoxPointerEnd"
+          @pointercancel="handleNavBoxPointerEnd"
         ></div>
       </div>
     </transition>
@@ -273,6 +278,22 @@ let wheelZoomTimeout: NodeJS.Timeout | null = null;
 
 // Touchpad detection - sticky once detected
 let isTouchpadDevice = false;
+
+// Touchscreen gesture state
+const activeTouchPointers = new Map<number, { x: number; y: number }>();
+let pinchStartDistance = 0;
+let pinchStartScale = 1;
+let pinchCenter = { x: 0, y: 0 };
+let isPinching = false;
+// Single-finger pan
+let panPointerId: number | null = null;
+let panLastPos = { x: 0, y: 0 };
+// Single-finger swipe navigation (only used when image fits / cannot pan)
+let touchSwipeStart = { x: 0, y: 0 };
+let touchSwipeTriggered = false;
+// Suppresses synthesized mouse events while any touch is active so the
+// existing mouse drag handler doesn't double-pan with our pointer logic.
+const isTouchActive = ref(false);
 
 // Swipe state
 const navDirection = ref<'next' | 'prev' | ''>('');
@@ -666,6 +687,7 @@ const navBoxStyle = computed(() => {
     height: `${boxHeight}px`,
     transform: `translate(${boxX}px, ${boxY}px)`,
     boxShadow: `0 0 0 9999px color-mix(in srgb, var(--color-base-200) 20%, transparent)`,
+    touchAction: 'none',
   };
 });
 
@@ -674,6 +696,7 @@ const initialNavBoxClickPos = ref({ x: 0, y: 0 });
 const isDraggingNavBoxMoved = ref(false);
 
 const handleNavBoxMouseDown = (event: MouseEvent) => {
+  if (isTouchActive.value) return;
   event.preventDefault();
   event.stopPropagation();
   isDraggingNavBox.value = true;
@@ -683,6 +706,7 @@ const handleNavBoxMouseDown = (event: MouseEvent) => {
 };
 
 const handleNavBoxMouseMove = (event: MouseEvent) => {
+  if (isTouchActive.value) return;
   if (!isDraggingNavBox.value) return;
 
   // Check if mouse has moved significantly to consider it a drag
@@ -714,6 +738,44 @@ const handleNavBoxMouseLeave = () => {
   // reset mouse position to the center of the container
   const container = containerSize.value;
   mousePosition.value = { x: container.width / 2, y: container.height / 2 };
+};
+
+// Touch equivalents of the nav-box mouse drag — single finger only.
+let navBoxPanPointerId: number | null = null;
+const handleNavBoxPointerDown = (event: PointerEvent) => {
+  if (event.pointerType !== 'touch') return;
+  event.preventDefault();
+  event.stopPropagation();
+  navBoxPanPointerId = event.pointerId;
+  isDraggingNavBox.value = true;
+  isTouchActive.value = true;
+  lastMousePosition.value = { x: event.clientX, y: event.clientY };
+  initialNavBoxClickPos.value = { x: event.clientX, y: event.clientY };
+  isDraggingNavBoxMoved.value = false;
+};
+const handleNavBoxPointerMove = (event: PointerEvent) => {
+  if (event.pointerType !== 'touch' || event.pointerId !== navBoxPanPointerId) return;
+  if (!isDraggingNavBox.value) return;
+  event.preventDefault();
+  const dx = event.clientX - initialNavBoxClickPos.value.x;
+  const dy = event.clientY - initialNavBoxClickPos.value.y;
+  if (Math.sqrt(dx * dx + dy * dy) > 5) {
+    isDraggingNavBoxMoved.value = true;
+  }
+  mousePosition.value = { x: event.clientX, y: event.clientY };
+  latestMouseEvent.value = event;
+  if (animationFrameId) return;
+  animationFrameId = requestAnimationFrame(() => {
+    updateNavBoxDragPosition();
+    animationFrameId = null;
+  });
+};
+const handleNavBoxPointerEnd = (event: PointerEvent) => {
+  if (event.pointerType !== 'touch' || event.pointerId !== navBoxPanPointerId) return;
+  navBoxPanPointerId = null;
+  isDraggingNavBox.value = false;
+  isTouchActive.value = false;
+  handleImageMouseLeave();
 };
 
 const handleNavBoxWheel = (event: WheelEvent) => {
@@ -852,7 +914,17 @@ onMounted(() => {
   if (container.value) {
     resizeObserver.observe(container.value);  // Observe container size changes
     updatePosition();   // Initial position calculation
+    const el = container.value as HTMLElement;
+    el.addEventListener('pointerdown', handlePinchPointerDown);
+    el.addEventListener('pointermove', handlePinchPointerMove, { passive: false });
+    el.addEventListener('pointerup', handlePinchPointerEnd);
+    el.addEventListener('pointercancel', handlePinchPointerEnd);
+    el.addEventListener('pointerleave', handlePinchPointerEnd);
   }
+  // Global capture-phase fallback: in WebView2 some touchpad pinch events can
+  // be intercepted before they bubble to the container element. Listening at
+  // window with capture+passive:false guarantees we see them and can preventDefault.
+  window.addEventListener('wheel', handleGlobalPinchWheel, { capture: true, passive: false });
 });
 
 onBeforeUnmount(() => {
@@ -860,11 +932,170 @@ onBeforeUnmount(() => {
     resizeObserver.unobserve(container.value);
     resizeObserver.disconnect();
   }
+  if (container.value) {
+    const el = container.value as HTMLElement;
+    el.removeEventListener('pointerdown', handlePinchPointerDown);
+    el.removeEventListener('pointermove', handlePinchPointerMove);
+    el.removeEventListener('pointerup', handlePinchPointerEnd);
+    el.removeEventListener('pointercancel', handlePinchPointerEnd);
+    el.removeEventListener('pointerleave', handlePinchPointerEnd);
+  }
+  window.removeEventListener('wheel', handleGlobalPinchWheel, { capture: true });
   if (loadingTimeout) { // Clear timeout on unmount
     clearTimeout(loadingTimeout);
   }
   cancelWarmImageScheduling();
 });
+
+function handleGlobalPinchWheel(event: WheelEvent) {
+  if (!event.ctrlKey) return;
+  if (!container.value) return;
+  const rect = (container.value as HTMLElement).getBoundingClientRect();
+  if (
+    event.clientX < rect.left || event.clientX > rect.right ||
+    event.clientY < rect.top || event.clientY > rect.bottom
+  ) return;
+  event.preventDefault();
+  event.stopPropagation();
+  isWheelZooming.value = true;
+  if (wheelZoomTimeout) clearTimeout(wheelZoomTimeout);
+  wheelZoomTimeout = setTimeout(() => { isWheelZooming.value = false; }, 200);
+  applyZoomFromWheel(event);
+}
+
+// Touchpad pinch is dispatched by Chromium as small-delta ctrl+wheel events
+// (deltaY = -log(scale_change) * 96), while Ctrl+mouse-wheel sends deltaY ~100
+// per notch. Use the browser-matching exp formula for pinch and the gentler
+// notch-based wheelZoom for mouse so each input feels native.
+function applyZoomFromWheel(event: WheelEvent) {
+  const isPinch = event.ctrlKey && event.deltaMode === 0 && Math.abs(event.deltaY) < 50;
+  if (!isPinch) {
+    wheelZoom(event, 1);
+    return;
+  }
+  const currentScale = scale.value[activeImage.value];
+  let newScale = currentScale * Math.exp(-event.deltaY / 96);
+  newScale = Math.min(Math.max(newScale, minScale.value), maxScale.value);
+  if (container.value) {
+    const rect = (container.value as HTMLElement).getBoundingClientRect();
+    const containerSizeVal = containerSize.value;
+    const x = ((event.clientX - rect.left) * containerSizeVal.width) / rect.width;
+    const y = ((event.clientY - rect.top) * containerSizeVal.height) / rect.height;
+    zoomImage(x, y, newScale);
+  }
+}
+
+function handlePinchPointerDown(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return;
+  activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  isTouchActive.value = true;
+  if (activeTouchPointers.size === 1) {
+    // Single-finger pan: track this pointer. Mark isDraggingImage so the
+    // 0.3s CSS transform transition is suppressed and the image follows the
+    // finger in real time (the existing mouse drag relies on the same flag).
+    panPointerId = event.pointerId;
+    panLastPos = { x: event.clientX, y: event.clientY };
+    touchSwipeStart = { x: event.clientX, y: event.clientY };
+    touchSwipeTriggered = false;
+    isDraggingImage.value = true;
+  } else if (activeTouchPointers.size === 2) {
+    // Promote to pinch: cancel any in-flight pan
+    panPointerId = null;
+    const pts = Array.from(activeTouchPointers.values());
+    pinchStartDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    pinchStartScale = scale.value[activeImage.value];
+    pinchCenter = {
+      x: (pts[0].x + pts[1].x) / 2,
+      y: (pts[0].y + pts[1].y) / 2,
+    };
+    isPinching = true;
+    isDraggingImage.value = false;
+    // Suppress CSS transitions so the image tracks fingers in real time.
+    isWheelZooming.value = true;
+    if (wheelZoomTimeout) {
+      clearTimeout(wheelZoomTimeout);
+      wheelZoomTimeout = null;
+    }
+  }
+}
+
+function handlePinchPointerMove(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return;
+  if (!activeTouchPointers.has(event.pointerId)) return;
+  activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+  // Pinch path
+  if (isPinching && activeTouchPointers.size === 2 && pinchStartDistance > 0) {
+    event.preventDefault();
+    const pts = Array.from(activeTouchPointers.values());
+    const distance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    if (distance < 1) return;
+    let newScale = pinchStartScale * (distance / pinchStartDistance);
+    newScale = Math.min(Math.max(newScale, minScale.value), maxScale.value);
+    if (container.value) {
+      const rect = (container.value as HTMLElement).getBoundingClientRect();
+      const containerSizeVal = containerSize.value;
+      const x = ((pinchCenter.x - rect.left) * containerSizeVal.width) / rect.width;
+      const y = ((pinchCenter.y - rect.top) * containerSizeVal.height) / rect.height;
+      zoomImage(x, y, newScale);
+    }
+    return;
+  }
+
+  // Single-finger path: pan when the image is bigger than the container,
+  // otherwise interpret horizontal motion as a swipe to navigate prev/next.
+  if (panPointerId === event.pointerId && activeTouchPointers.size === 1) {
+    event.preventDefault();
+    const imgIndex = activeImage.value;
+
+    if (!isGrabbing.value && !props.isSlideShow) {
+      if (touchSwipeTriggered) return;
+      const totalX = event.clientX - touchSwipeStart.x;
+      const totalY = event.clientY - touchSwipeStart.y;
+      const absX = Math.abs(totalX);
+      const absY = Math.abs(totalY);
+      if (absX >= MOUSE_DRAG_NAV_THRESHOLD && absX > absY) {
+        const direction = totalX < 0 ? 'next' : 'prev';
+        navDirection.value = direction;
+        emit('message-from-image-viewer', { message: direction });
+        touchSwipeTriggered = true;
+        isDraggingImage.value = false;
+      }
+      return;
+    }
+
+    const scaleVal = scale.value[imgIndex];
+    const imgRotatedSize = imageSizeRotated.value[imgIndex];
+    const containerSizeVal = containerSize.value;
+    const scaledWidth = imgRotatedSize.width * scaleVal;
+    const scaledHeight = imgRotatedSize.height * scaleVal;
+    const dx = scaledWidth <= containerSizeVal.width ? 0 : event.clientX - panLastPos.x;
+    const dy = scaledHeight <= containerSizeVal.height ? 0 : event.clientY - panLastPos.y;
+    panLastPos = { x: event.clientX, y: event.clientY };
+    if (dx === 0 && dy === 0) return;
+    position.value[imgIndex].x += dx;
+    position.value[imgIndex].y += dy;
+    clampPosition();
+  }
+}
+
+function handlePinchPointerEnd(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return;
+  activeTouchPointers.delete(event.pointerId);
+  if (event.pointerId === panPointerId) panPointerId = null;
+  if (activeTouchPointers.size < 2) {
+    pinchStartDistance = 0;
+  }
+  if (activeTouchPointers.size === 0) {
+    isPinching = false;
+    isTouchActive.value = false;
+    isDraggingImage.value = false;
+    if (wheelZoomTimeout) clearTimeout(wheelZoomTimeout);
+    wheelZoomTimeout = setTimeout(() => {
+      isWheelZooming.value = false;
+    }, 50);
+  }
+}
 
 const updatePosition = () => {
   if (container.value) {
@@ -1305,6 +1536,7 @@ const zoomReset = (force: boolean = false) => {
 
 // start dragging
 const handleImageMouseDown = (event: MouseEvent) => {
+  if (isTouchActive.value) return; // touch path owns this gesture
   event.preventDefault();
   updatePosition();
 
@@ -1328,6 +1560,7 @@ const handleImageMouseDown = (event: MouseEvent) => {
 };
 
 const handleImageMouseMove = (event: MouseEvent) => {
+  if (isTouchActive.value) return; // touch path owns this gesture
   // update mouse position
   mousePosition.value = { x: event.clientX, y: event.clientY };
   updatePosition();
@@ -1436,6 +1669,18 @@ function handleImageWheel(event: WheelEvent) {
   event.preventDefault();
   event.stopPropagation();
   updatePosition();
+
+  // Touchpad pinch (and Ctrl+wheel) arrives as a wheel event with ctrlKey=true.
+  // Treat it as a direct zoom, bypassing the swipe/nav gesture-detection path.
+  if (event.ctrlKey) {
+    isWheelZooming.value = true;
+    if (wheelZoomTimeout) clearTimeout(wheelZoomTimeout);
+    wheelZoomTimeout = setTimeout(() => {
+      isWheelZooming.value = false;
+    }, 200);
+    applyZoomFromWheel(event);
+    return;
+  }
 
   // Simple touchpad detection: if there's horizontal delta, it's a touchpad
   // Mouse wheels only scroll vertically (deltaY only)
