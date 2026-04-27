@@ -109,7 +109,7 @@
       "family": "Família",
       "portraits": "Retratos",
       "kids": "Crianças",
-      "pets": "Pets",
+      "pets": "Animais de estimação",
       "food": "Comida",
       "sports": "Esportes",
       "landscape": "Paisagem",
@@ -255,11 +255,11 @@
       "group_limit_hint": "Mostrando ate {count} grupos",
       "group_label": "Grupo {index}",
       "items": "itens",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "Regra de retenção padrão",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "Melhor qualidade",
+        "oldest_created": "Preferir mais antigo (criação)",
+        "oldest_modified": "Preferir mais antigo (modificação)"
       },
       "keep_label": "Manter",
       "select_group_duplicates": "Selecionar todos os duplicados",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "Editor de imagem",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "Editar",
+      "tab_adjust": "Ajustar",
       "histogram": "Histograma",
       "light": "Luz",
       "color": "Cor",
@@ -613,8 +613,8 @@
       "crop_applied_hint": "Corte aplicado. Clique em Restaurar para revisar ou ajustar.",
       "zoom": "Zoom",
       "aspect_ratio": "Proporção",
-      "zoom_in": "Zoom in",
-      "zoom_out": "Zoom out",
+      "zoom_in": "Ampliar",
+      "zoom_out": "Reduzir",
       "rotate_left": "Girar esq",
       "rotate_right": "Girar dir",
       "flip_horizontal": "Espelhar hor",
@@ -686,7 +686,7 @@
     "taken_by": "Por",
     "software": "Software",
     "artist": "Artista",
-    "copyright": "Copyright",
+    "copyright": "Direitos autorais",
     "description": "Descrição",
     "lens": "Lente",
     "lens_make": "Fabr. lente",
@@ -711,8 +711,8 @@
   "map": {
     "show_map": "Mostrar mapa",
     "hide_map": "Ocultar mapa",
-    "zoom_in": "Zoom in",
-    "zoom_out": "Zoom out",
+    "zoom_in": "Ampliar",
+    "zoom_out": "Reduzir",
     "zoom_center": "Centralizar",
     "standard": "Padrão",
     "satellite": "Satélite"
@@ -752,8 +752,8 @@
       "next": "Próximo",
       "slide_show": "Apresentação",
       "pause": "Pausa",
-      "zoom_in": "Zoom in",
-      "zoom_out": "Zoom out",
+      "zoom_in": "Ampliar",
+      "zoom_out": "Reduzir",
       "zoom_fit": "Ajustar",
       "zoom_actual": "Tamanho real",
       "fullscreen": "Tela cheia",
@@ -852,8 +852,8 @@
       "show_map_hint": "Requer acesso à internet",
       "debug_mode": "Modo debug"
     },
-    "navigation": {
-      "title": "Navegação",
+    "library": {
+      "title": "Biblioteca",
       "section_sorting": "Ordenação",
       "folder_sort": "Pastas",
       "folder_sort_hint": "Ordem de classificação das pastas exibidas dentro dos álbuns",
@@ -878,10 +878,10 @@
         "Contagem (Maior para menor)"
       ]
     },
-    "grid_view": {
-      "title": "Grade",
-      "section_layout": "Layout",
-      "style": "Modo de layout",
+    "view": {
+      "title": "Visualização",
+      "section_layout": "Vista em grade",
+      "style": "Estilo",
       "style_options": [
         "Visualização em cartões",
         "Visualização em mosaico",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "Visualizador",
-      "section_viewing": "Visualização",
+      "section_viewing": "Visualizador de imagem",
       "section_external_apps": "Apps externas",
       "mouse_wheel": "Roda do mouse",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "Pesquisa img",
-      "section_search": "Pesquisa",
+      "title": "Pesquisa inteligente",
+      "section_search": "Encontrar imagens semelhantes",
       "similarity": "Similaridade",
       "similarity_hint": "Mais alto = mais similar, menos resultados. Mais baixo = menos similar, mais resultados",
       "similarity_options": [
@@ -969,8 +969,48 @@
         "Baixa"
       ]
     },
+    "database": {
+      "title": "Armazenamento",
+      "section_storage": "Manutenção dos dados",
+      "current_location": "Alterar local dos dados",
+      "system_default": "Padrão do sistema",
+      "change_location": "Alterar",
+      "change_location_confirm": "Escolher pasta",
+      "prechange_title": "Alterar local dos dados",
+      "prechange_message": "Os dados da biblioteca armazenam metadados, favoritos, classificações, tags e outras informações de organização. O local padrão do sistema é o recomendado. Se você mudar, use uma pasta local para obter melhor desempenho.",
+      "restore_default_location": "Redefinir local padrão",
+      "restore_default_confirm_title": "Redefinir local padrão",
+      "restore_default_confirm_message": "Todos os dados da biblioteca serão movidos de volta para o local padrão.",
+      "restore_default_confirm_ok": "Redefinir",
+      "busy_library_indexing": "Não é possível alterar o local dos dados enquanto a indexação da biblioteca estiver em execução.",
+      "busy_face_indexing": "Não é possível alterar o local dos dados enquanto a indexação facial estiver em execução.",
+      "change_success": "Os dados da biblioteca foram movidos com sucesso",
+      "restore_default_success": "Os dados da biblioteca foram movidos de volta para o local padrão",
+      "backup": "Backup",
+      "backup_title": "Fazer backup das bibliotecas",
+      "backup_hint": "Salvar os bancos de dados selecionados em um arquivo ZIP",
+      "backup_dialog_title": "Fazer backup das bibliotecas",
+      "backup_select_hint": "Selecione as bibliotecas para incluir no arquivo de backup:",
+      "backup_estimated_size": "Tamanho estimado: {size}",
+      "backup_select_all": "Selecionar tudo",
+      "backup_creating": "Criando backup...",
+      "backup_success": "Backup salvo em {path} ({size})",
+      "restore": "Restaurar",
+      "restore_title": "Restaurar do Backup",
+      "restore_hint": "Restaurar bibliotecas de um arquivo ZIP de backup",
+      "restore_dialog_title": "Restaurar do Backup",
+      "restore_select_file": "Selecionar arquivo de backup",
+      "restore_file_info": "Arquivo de backup: {path}",
+      "restore_created_at": "Criado em: {date}",
+      "restore_libraries": "Bibliotecas: {count} ({size})",
+      "restore_new_library": "Nova biblioteca",
+      "restore_conflict": "Já existe → será renomeada",
+      "restore_restoring": "Restaurando...",
+      "restore_success": "Restauração concluída. {count} bibliotecas restauradas: {names}",
+      "restore_note": "As bibliotecas restauradas são adicionadas às existentes. Os dados existentes não são sobrescritos."
+    },
     "face_recognition": {
-      "title": "Reconhecimento facial",
+      "title": "Pesquisa de pessoas",
       "enable": "Ativar reconhecimento facial",
       "beta_hint": "Beta: ainda em desenvolvimento",
       "similarity": "Similaridade facial",
@@ -985,20 +1025,14 @@
     },
     "privacy": {
       "title": "Privacidade",
-      "section_usage": "Estatisticas de uso anonimas",
-      "enable_analytics": "Compartilhar estatisticas de uso anonimas",
-      "enable_analytics_hint": "Ajuda a melhorar a estabilidade e a experiência do utilizador no Lap",
-      "section_collected": "Informacoes compartilhadas",
-      "collected_intro": "Lap usa o Aptabase, um servico de analise para aplicativos com foco em privacidade. Os eventos sao anonimos e nao incluem suas fotos, caminhos de arquivos nem identificadores pessoais. Quando ativado, o Lap envia apenas:",
-      "collected_activity": "Contadores anonimos de atividade do aplicativo",
-      "collected_app_version": "Versao do Lap",
-      "collected_platform": "Plataforma do dispositivo e sistema operacional",
-      "collected_region": "Regiao aproximada (inferida de forma ampla pelo servico de analise)",
-      "section_not_collected": "Nao coletado",
-      "not_collected_file_paths": "Caminhos de arquivos",
-      "not_collected_filenames": "Nomes de arquivos",
-      "not_collected_search_text": "Texto de busca ou prompts",
-      "not_collected_precise_location": "Localizacao precisa"
+      "section_privacy": "Ajude a melhorar o Lap",
+      "enable_analytics": "Compartilhar dados de uso anônimos",
+      "enable_analytics_hint": "Quando ativado, o Lap coleta estatísticas básicas de uso para ajudar a corrigir problemas mais rapidamente. Nenhuma foto, caminho de arquivo ou informação pessoal sai do seu dispositivo.",
+      "collected_title": "O Lap coleta apenas:",
+      "collected_activity": "Contadores de atividade do aplicativo",
+      "collected_app_version": "Versão do Lap e sistema operacional",
+      "collected_region": "Região aproximada",
+      "powered_byaptabase": "Desenvolvido com Aptabase, uma plataforma de análise focada em privacidade."
     },
     "about": {
       "title": "Sobre",

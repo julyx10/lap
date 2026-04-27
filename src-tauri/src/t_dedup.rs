@@ -219,7 +219,7 @@ fn scan_and_hash_files(
 }
 
 fn get_db_conn() -> Result<Connection, String> {
-    let path = crate::t_config::get_current_db_path()
+    let path = crate::t_storage::get_current_db_path()
         .map_err(|e| format!("Failed to get db path: {}", e))?;
     let conn = Connection::open(&path).map_err(|e| format!("Failed to open db: {}", e))?;
     conn.execute("PRAGMA foreign_keys = ON", [])

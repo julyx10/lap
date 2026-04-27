@@ -110,7 +110,7 @@
           <!-- grid styles cycle -->
           <TButton
             :icon="[IconCard, IconTile, IconJustified][config.settings.grid.style]"
-            :tooltip="localeMsg.settings.grid_view.style_options[config.settings.grid.style]"
+            :tooltip="localeMsg.settings.view.style_options[config.settings.grid.style]"
             @click="cycleGridStyle"
           />
 
@@ -4658,6 +4658,7 @@ async function openImageViewer(
         visible: false, // Start hidden, will show after mount
         transparent: true, // Prevent white flash on show (Tauri 2.x workaround)
         decorations: isMac,
+        zoomHotkeysEnabled: true, // Windows WebView2: needed for touchpad pinch-to-zoom
         ...(isMac && {
           titleBarStyle: 'overlay',
           hiddenTitle: true,

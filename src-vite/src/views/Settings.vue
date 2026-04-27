@@ -7,7 +7,7 @@
       <!-- Sidebar -->
       <div class="w-40 m-1 p-2 bg-base-200/30 flex flex-col rounded-box overflow-y-auto shrink-0 select-none">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.navigation.title', 'settings.grid_view.title', 'settings.image_view.title', 'settings.image_search.title', 'settings.privacy.title', 'settings.about.title']"
+          v-for="(tab, index) in ['settings.general.title', 'settings.view.title', 'settings.library.title', 'settings.image_search.title', 'settings.about.title']"
           :key="index"
           :class="[
             'px-3 py-2 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
@@ -23,366 +23,431 @@
 
       <!-- Main Content -->
       <div class="p-2 mr-1 flex-1 overflow-y-auto scrollbar-hide bg-base-300 cursor-default">
-        <div class="">
           
-          <!-- General Tab -->
-          <div v-if="config.settings.tabIndex === 0" class="flex flex-col space-y-2">
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_language') }}</span>
+        <!-- General Tab -->
+        <div v-if="config.settings.tabIndex === 0" class="flex flex-col space-y-2">
+          
+          <!-- languange -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_language') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.general.select_language') }}</div>
+                <div v-if="config.settings.language !== 'en'" class="text-xs text-base-content/30">Select language</div>
               </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.general.select_language') }}</div>
-                  <div v-if="config.settings.language !== 'en'" class="text-xs text-base-content/30">Select language</div>
+              <select class="select  select-bordered select-sm min-w-32" v-model="config.settings.language">
+                <option v-for="(lang, index) in languages" :key="index" :value="lang.value">{{ lang.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- appearance -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_appearance') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.general.appearance') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.appearance">
+                <option v-for="(item, index) in appearanceOptions" :key="index" :value="item.value">{{ item.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.general.theme') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="currentTheme">
+                <option v-for="(option, index) in themeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.general.font_size') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.scale">
+                <option v-for="(option, index) in scaleOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- external app -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_external_apps') }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.external_image_editor') }}</div>
+                <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalImageAppPath || ''">
+                  {{ externalImageAppName }}
                 </div>
-                <select class="select  select-bordered select-sm min-w-32" v-model="config.settings.language">
-                  <option v-for="(lang, index) in languages" :key="index" :value="lang.value">{{ lang.label }}</option>
-                </select>
+              </div>
+              <div class="shrink-0 flex items-center gap-1">
+                <button 
+                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
+                  @click="selectExternalApp('image')"
+                >
+                  {{ $t('settings.image_view.choose_app') }}
+                </button>
+                <button
+                  class="btn btn-sm btn-ghost "
+                  :disabled="!config.settings.externalImageAppPath"
+                  :title="$t('settings.image_view.clear_app')"
+                  :aria-label="$t('settings.image_view.clear_app')"
+                  @click="clearExternalApp('image')"
+                >
+                  <IconClose class="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
-
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_appearance') }}</span>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.general.appearance') }}</div>
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.external_video_app') }}</div>
+                <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalVideoAppPath || ''">
+                  {{ externalVideoAppName }}
                 </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.appearance">
-                  <option v-for="(item, index) in appearanceOptions" :key="index" :value="item.value">{{ item.label }}</option>
-                </select>
               </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.general.theme') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="currentTheme">
-                  <option v-for="(option, index) in themeOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.general.font_size') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.scale">
-                  <option v-for="(option, index) in scaleOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_interface') }}</span>
-              </div>
-              <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.general.show_button_text') }}</div>
-                </div>
-                <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showButtonText" />
-              </div>
-              <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.general.show_tool_tip') }}</div>
-                </div>
-                <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showToolTip" />
-              </div>
-              <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.general.show_status_bar') }}</div>
-                </div>
-                <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showStatusBar" />
+              <div class="shrink-0 flex items-center gap-1">
+                <button 
+                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
+                  @click="selectExternalApp('video')"
+                >
+                  {{ $t('settings.image_view.choose_app') }}
+                </button>
+                <button
+                  class="btn btn-sm btn-ghost"
+                  :disabled="!config.settings.externalVideoAppPath"
+                  :title="$t('settings.image_view.clear_app')"
+                  :aria-label="$t('settings.image_view.clear_app')"
+                  @click="clearExternalApp('video')"
+                >
+                  <IconClose class="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>
 
-          <!-- Navigation Tab -->
-          <div v-else-if="config.settings.tabIndex === 1" class="flex flex-col space-y-2">
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.navigation.section_sorting') }}</span>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.navigation.folder_sort') }}</div>
-                  <div class="text-xs text-base-content/30">{{ $t('settings.navigation.folder_sort_hint') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-40" v-model="config.settings.folderSort">
-                  <option v-for="option in folderSortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.navigation.calendar_sort') }}</div>
-                  <div class="text-xs text-base-content/30">{{ $t('settings.navigation.calendar_sort_hint') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-40" v-model="config.settings.calendarSort">
-                  <option v-for="option in calendarSortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.navigation.category_sort') }}</div>
-                  <div class="text-xs text-base-content/30">{{ $t('settings.navigation.category_sort_hint') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-40" v-model="config.settings.categorySort">
-                  <option v-for="option in categorySortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
+          <!-- display -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_interface') }}</span>
             </div>
-          </div>
-
-          <!-- Gallery View Tab -->
-          <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col space-y-2">
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.grid_view.section_layout') }}</span>
+            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.general.show_button_text') }}</div>
               </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.grid_view.style') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.style">
-                  <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.grid_view.scaling') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling" :disabled="config.settings.grid.style !== 0 && config.settings.grid.style !== 1">
-                  <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.grid_view.label_primary') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary" :disabled="config.settings.grid.style !== 0">
-                   <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.grid_view.label_secondary') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary" :disabled="config.settings.grid.style !== 0">
-                   <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showButtonText" />
             </div>
-
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.filmstrip_view.title') }}</span>
+            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.general.show_tool_tip') }}</div>
               </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
-                  <!-- <div class="text-xs text-base-content/30">{{ $t('settings.filmstrip_view.preview_position_hint') }}</div> -->
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.previewPosition">
-                   <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showToolTip" />
             </div>
-          </div>
-
-          <!-- Image View Tab -->
-          <div v-else-if="config.settings.tabIndex === 3" class="flex flex-col space-y-2">
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_viewing') }}</span>
+            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.general.show_status_bar') }}</div>
               </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_view.mouse_wheel') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.mouseWheelMode">
-                  <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">
-                    {{ item.label }}
-                  </option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_view.navigator_view') }}</div>
-                </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewMode">
-                   <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_view.navigator_view__size') }}</div>
-                </div>
-                 <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewSize">
-                   <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_view.slide_show_transition') }}</div>
-                </div>
-                 <select class="select select-bordered select-sm min-w-32" v-model="config.settings.slideShowTransition">
-                   <option v-for="(option, index) in slideShowTransitionOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_view.auto_play_video') }}</div>
-                </div>
-                <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.autoPlayVideo" />
-              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showStatusBar" />
             </div>
-
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_external_apps') }}</span>
-              </div>
-              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_view.external_image_editor') }}</div>
-                  <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalImageAppPath || ''">
-                    {{ externalImageAppName }}
-                  </div>
-                </div>
-                <div class="shrink-0 flex items-center gap-1">
-                  <button 
-                    class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
-                    @click="selectExternalApp('image')"
-                  >
-                    {{ $t('settings.image_view.choose_app') }}
-                  </button>
-                  <button
-                    class="btn btn-sm btn-ghost "
-                    :disabled="!config.settings.externalImageAppPath"
-                    :title="$t('settings.image_view.clear_app')"
-                    :aria-label="$t('settings.image_view.clear_app')"
-                    @click="clearExternalApp('image')"
-                  >
-                    <IconClose class="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_view.external_video_app') }}</div>
-                  <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalVideoAppPath || ''">
-                    {{ externalVideoAppName }}
-                  </div>
-                </div>
-                <div class="shrink-0 flex items-center gap-1">
-                  <button 
-                    class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
-                    @click="selectExternalApp('video')"
-                  >
-                    {{ $t('settings.image_view.choose_app') }}
-                  </button>
-                  <button
-                    class="btn btn-sm btn-ghost"
-                    :disabled="!config.settings.externalVideoAppPath"
-                    :title="$t('settings.image_view.clear_app')"
-                    :aria-label="$t('settings.image_view.clear_app')"
-                    @click="clearExternalApp('video')"
-                  >
-                    <IconClose class="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Image Search Tab -->
-          <div v-else-if="config.settings.tabIndex === 4" class="flex flex-col overflow-hidden space-y-2">
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_search.section_search') }}</span>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.image_search.similarity') }}</div>
-                  <div class="text-xs text-base-content/30">{{ $t('settings.image_search.similarity_hint') }}</div>
-                </div>
-                 <select class="select select-bordered select-sm min-w-32" v-model="config.settings.imageSearch.thresholdIndex">
-                   <option v-for="(option, index) in similarityOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.face_recognition.title') }}</span>
-              </div>
-              <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div class="flex items-center">
-                    <div>{{ $t('settings.face_recognition.enable') }}</div>
-                    <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
-                      BETA
-                    </span>
-                  </div>
-                  <div class="text-xs text-base-content/30">{{ $t('settings.face_recognition.beta_hint') }}</div>
-                </div>
-                <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.face.enabled" />
-              </div>
-              <div v-if="config.settings.face.enabled" class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div class="flex items-center">
-                    <div>{{ $t('settings.face_recognition.similarity') }}</div>
-                    <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
-                      BETA
-                    </span>
-                  </div>
-                  <div class="text-xs text-base-content/30">{{ $t('settings.face_recognition.cluster_threshold_hint') }}</div>
-                </div>
-                 <select class="select select-bordered select-sm min-w-32" v-model="config.settings.face.clusterThresholdIndex" :disabled="!config.settings.face.enabled">
-                   <option v-for="(option, index) in faceClusterOptions" :key="index" :value="option.value">{{ option.label }}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Privacy Tab -->
-          <div v-else-if="config.settings.tabIndex === 5" class="flex flex-col space-y-2">
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.privacy.section_usage') }}</span>
-              </div>
-              <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-                <div class="flex flex-col gap-0.5 text-sm leading-5">
-                  <div>{{ $t('settings.privacy.enable_analytics') }}</div>
-                  <div class="text-xs text-base-content/30">{{ $t('settings.privacy.enable_analytics_hint') }}</div>
-                </div>
-                <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.telemetry.enabled" />
-              </div>
-            </div>
-
-            <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-              <div class="flex items-center gap-2 text-base-content/70">
-                <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.privacy.section_collected') }}</span>
-              </div>
-              <div class="px-1 text-xs leading-6 text-base-content/30">
-                <div>{{ $t('settings.privacy.collected_intro') }}</div>
-                <ul class="mt-2 space-y-1 list-disc pl-5 text-xs text-base-content/30">
-                  <li>{{ $t('settings.privacy.collected_activity') }}</li>
-                  <li>{{ $t('settings.privacy.collected_app_version') }}</li>
-                  <li>{{ $t('settings.privacy.collected_platform') }}</li>
-                  <li>{{ $t('settings.privacy.collected_region') }}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- About Tab -->
-          <div v-else-if="config.settings.tabIndex === 6" class="py-2">
-             <SettingsAbout />
           </div>
 
         </div>
+
+        <!-- View Tab -->
+        <div v-else-if="config.settings.tabIndex === 1" class="flex flex-col space-y-2">
+
+          <!-- grid view -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.view.section_layout') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.view.style') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.style">
+                <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.view.scaling') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling" :disabled="config.settings.grid.style !== 0 && config.settings.grid.style !== 1">
+                <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.view.label_primary') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary" :disabled="config.settings.grid.style !== 0">
+                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.view.label_secondary') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary" :disabled="config.settings.grid.style !== 0">
+                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
+                <!-- <div class="text-xs text-base-content/30">{{ $t('settings.filmstrip_view.preview_position_hint') }}</div> -->
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.previewPosition">
+                  <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- preview -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_viewing') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.mouse_wheel') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.mouseWheelMode">
+                <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">
+                  {{ item.label }}
+                </option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.navigator_view') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewMode">
+                  <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.navigator_view__size') }}</div>
+              </div>
+                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewSize">
+                  <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.slide_show_transition') }}</div>
+              </div>
+                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.slideShowTransition">
+                  <option v-for="(option, index) in slideShowTransitionOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.auto_play_video') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.autoPlayVideo" />
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Library Tab -->
+        <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col space-y-2">
+
+          <!-- sorting -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.library.section_sorting') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.library.folder_sort') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.library.folder_sort_hint') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-40" v-model="config.settings.folderSort">
+                <option v-for="option in folderSortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.library.calendar_sort') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.library.calendar_sort_hint') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-40" v-model="config.settings.calendarSort">
+                <option v-for="option in calendarSortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.library.category_sort') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.library.category_sort_hint') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-40" v-model="config.settings.categorySort">
+                <option v-for="option in categorySortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- storage -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.database.section_storage') }}</span>
+            </div>
+
+            <!-- current location -->
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.current_location') }}</div>
+                <div class="text-xs text-base-content/30 truncate" :title="dbStorageDir || ''">
+                  {{ hasCustomDbStorage ? (dbStorageDir || '-') : $t('settings.database.system_default') }}
+                </div>
+              </div>
+              <div class="shrink-0 flex items-center">
+                <button
+                  class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                  :disabled="isChangingDbStorage"
+                  @click="selectDbStorageDir"
+                >
+                  {{ isChangingDbStorage ? $t('tooltip.loading') : $t('settings.database.change_location') }}
+                </button>
+                <button
+                  v-if="hasCustomDbStorage"
+                  class="btn btn-sm btn-ghost"
+                  :disabled="isChangingDbStorage"
+                  :title="$t('settings.database.restore_default_location')"
+                  :aria-label="$t('settings.database.restore_default_location')"
+                  @click="restoreDefaultDbStorageDir"
+                >
+                  <IconRestore class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <!-- backup / restore buttons -->
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.backup_title') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.database.backup_hint') }}</div>
+              </div>
+              <button
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                @click="showBackupDialog = true"
+              >
+                {{ $t('settings.database.backup') }}
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.restore_title') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.database.restore_hint') }}</div>
+              </div>
+              <button
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                @click="showRestoreDialog = true"
+              >
+                {{ $t('settings.database.restore') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Search Tab -->
+        <div v-else-if="config.settings.tabIndex === 3" class="flex flex-col overflow-hidden space-y-2">
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_search.section_search') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_search.similarity') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.image_search.similarity_hint') }}</div>
+              </div>
+                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.imageSearch.thresholdIndex">
+                  <option v-for="(option, index) in similarityOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.face_recognition.title') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div class="flex items-center">
+                  <div>{{ $t('settings.face_recognition.enable') }}</div>
+                  <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
+                    BETA
+                  </span>
+                </div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.face_recognition.beta_hint') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.face.enabled" />
+            </div>
+            <div v-if="config.settings.face.enabled" class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div class="flex items-center">
+                  <div>{{ $t('settings.face_recognition.similarity') }}</div>
+                  <span class="ml-2 px-1.5 h-5 inline-flex items-center rounded-box text-[10px] font-semibold tracking-[0.08em] text-warning border border-warning/30 bg-warning/10 cursor-default">
+                    BETA
+                  </span>
+                </div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.face_recognition.cluster_threshold_hint') }}</div>
+              </div>
+                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.face.clusterThresholdIndex" :disabled="!config.settings.face.enabled">
+                  <option v-for="(option, index) in faceClusterOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- About Tab -->
+        <div v-else-if="config.settings.tabIndex === 4" class="py-2">
+            <SettingsAbout />
+        </div>
+
       </div>
     </div>
+
+    <MessageBox
+      v-if="showChangeDbStorageDialog"
+      :title="$t('settings.database.prechange_title')"
+      :message="$t('settings.database.prechange_message')"
+      :OkText="$t('settings.database.change_location_confirm')"
+      :cancelText="$t('msgbox.cancel')"
+      @ok="chooseDbStorageDir"
+      @cancel="showChangeDbStorageDialog = false"
+    />
+
+    <MessageBox
+      v-if="showResetDbStorageDialog"
+      :title="$t('settings.database.restore_default_confirm_title')"
+      :message="$t('settings.database.restore_default_confirm_message')"
+      :OkText="$t('settings.database.restore_default_confirm_ok')"
+      :cancelText="$t('msgbox.cancel')"
+      @ok="confirmResetDbStorageDir"
+      @cancel="showResetDbStorageDialog = false"
+    />
+
+    <BackupDialog
+      v-if="showBackupDialog"
+      @done="showBackupDialog = false"
+      @cancel="showBackupDialog = false"
+    />
+
+    <RestoreDialog
+      v-if="showRestoreDialog"
+      @done="onRestoreDone"
+      @cancel="showRestoreDialog = false"
+    />
   </div>
 </template>
 
@@ -394,22 +459,39 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { useI18n } from 'vue-i18n';
-import { config } from '@/common/config';
-import { getExternalAppDisplayName } from '@/common/api';
+import { config, libConfig } from '@/common/config';
+import { getExternalAppDisplayName, getDbStorageDir, changeDbStorageDir, resetDbStorageDir, isFaceIndexing, isUsingCustomDbStorage } from '@/common/api';
 import { isMac, setTheme, SCALE_VALUES } from '@/common/utils';
-import { IconClose } from '@/common/icons';
+import { useToast } from '@/common/toast';
+import { IconClose, IconRestore } from '@/common/icons';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SettingsAbout from '@/components/SettingsAbout.vue';
+import MessageBox from '@/components/MessageBox.vue';
+import BackupDialog from '@/components/BackupDialog.vue';
+import RestoreDialog from '@/components/RestoreDialog.vue';
 
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.settings.language] as any);
+const toast = useToast();
 
 const appWindow = getCurrentWebviewWindow()
 let gridSizeEmitTimer: number | null = null;
 const SETTINGS_BASE_WIDTH = 600;
-const SETTINGS_BASE_HEIGHT = 450;
+const SETTINGS_BASE_HEIGHT = 600;
+const dbStorageDir = ref('');
+const isChangingDbStorage = ref(false);
+const hasCustomDbStorage = ref(false);
+const showChangeDbStorageDialog = ref(false);
+const showResetDbStorageDialog = ref(false);
+const showBackupDialog = ref(false);
+const showRestoreDialog = ref(false);
+
+const onRestoreDone = () => {
+  showRestoreDialog.value = false;
+  emit('libraries-changed');
+};
 
 const languages = [
   { label: 'English', value: 'en' },
@@ -463,7 +545,7 @@ const scaleOptions = computed(() => {
 });
 
 const folderSortOptions = computed(() => {
-  const options = localeMsg.value.settings.navigation.folder_sort_options || [];
+  const options = localeMsg.value.settings.library.folder_sort_options || [];
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -474,7 +556,7 @@ const folderSortOptions = computed(() => {
 });
 
 const calendarSortOptions = computed(() => {
-  const options = localeMsg.value.settings.navigation.calendar_sort_options || [];
+  const options = localeMsg.value.settings.library.calendar_sort_options || [];
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -485,7 +567,7 @@ const calendarSortOptions = computed(() => {
 });
 
 const categorySortOptions = computed(() => {
-  const options = localeMsg.value.settings.navigation.category_sort_options || [];
+  const options = localeMsg.value.settings.library.category_sort_options || [];
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -514,7 +596,7 @@ const wheelOptions = computed(() => {
 
 // Define the grid scaling options
 const gridScalingOptions = computed(() => {
-  const options = localeMsg.value.settings.grid_view.scaling_options;
+  const options = localeMsg.value.settings.view.scaling_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -526,7 +608,7 @@ const gridScalingOptions = computed(() => {
 
 // Define the grid style options
 const gridStyleOptions = computed(() => {
-  const options = localeMsg.value.settings.grid_view.style_options;
+  const options = localeMsg.value.settings.view.style_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -538,7 +620,7 @@ const gridStyleOptions = computed(() => {
 
 // Define the grid label options
 const gridLabelOptions = computed(() => {
-  const options = localeMsg.value.settings.grid_view.label_options;
+  const options = localeMsg.value.settings.view.label_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -607,7 +689,12 @@ const faceClusterOptions = computed(() => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
+  if (typeof config.settings.tabIndex !== 'number' || config.settings.tabIndex < 0 || config.settings.tabIndex > 4) {
+    config.settings.tabIndex = 0;
+  }
   applyWindowScale(Number(config.settings.scale || 1));
+  dbStorageDir.value = (await getDbStorageDir()) || '';
+  hasCustomDbStorage.value = await isUsingCustomDbStorage();
 
   if (config.settings.externalImageAppPath) {
     try {
@@ -777,11 +864,86 @@ function handleKeyDown(event: KeyboardEvent) {
   switch (event.key) {
     case 'Tab':
       config.settings.tabIndex += 1;
-      config.settings.tabIndex = config.settings.tabIndex % 7; // 7 tabs
+      config.settings.tabIndex = config.settings.tabIndex % 5; // 5 tabs
       break;
     case 'Escape':
+      // Close the topmost dialog first
+      if (showBackupDialog.value) { showBackupDialog.value = false; return; }
+      if (showRestoreDialog.value) { showRestoreDialog.value = false; return; }
+      if (showChangeDbStorageDialog.value) { showChangeDbStorageDialog.value = false; return; }
+      if (showResetDbStorageDialog.value) { showResetDbStorageDialog.value = false; return; }
       appWindow.close(); // Close the window
       break;
+  }
+}
+
+async function selectDbStorageDir() {
+  if (Number(libConfig.index.status || 0) === 1) {
+    toast.error(localeMsg.value.settings?.database?.busy_library_indexing || 'Cannot change the data location while library indexing is running.');
+    return;
+  }
+
+  const faceIndexState = await isFaceIndexing();
+  if (Array.isArray(faceIndexState) && faceIndexState[0] === true) {
+    toast.error(localeMsg.value.settings?.database?.busy_face_indexing || 'Cannot change the data location while face indexing is running.');
+    return;
+  }
+
+  showChangeDbStorageDialog.value = true;
+}
+
+async function chooseDbStorageDir() {
+  showChangeDbStorageDialog.value = false;
+
+  const result = await openDialog({
+    title: localeMsg.value.settings?.database?.change_location || 'Move data to another folder',
+    multiple: false,
+    directory: true,
+  });
+
+  if (!result || Array.isArray(result) || isChangingDbStorage.value) return;
+
+  try {
+    isChangingDbStorage.value = true;
+    const newPath = await changeDbStorageDir(result);
+    dbStorageDir.value = String(newPath || result);
+    hasCustomDbStorage.value = true;
+    toast.success(localeMsg.value.settings?.database?.change_success || 'Library data has been moved successfully');
+  } catch (error: any) {
+    toast.error(error?.message || String(error));
+  } finally {
+    isChangingDbStorage.value = false;
+  }
+}
+
+async function restoreDefaultDbStorageDir() {
+  if (Number(libConfig.index.status || 0) === 1) {
+    toast.error(localeMsg.value.settings?.database?.busy_library_indexing || 'Cannot change the data location while library indexing is running.');
+    return;
+  }
+
+  const faceIndexState = await isFaceIndexing();
+  if (Array.isArray(faceIndexState) && faceIndexState[0] === true) {
+    toast.error(localeMsg.value.settings?.database?.busy_face_indexing || 'Cannot change the data location while face indexing is running.');
+    return;
+  }
+
+  showResetDbStorageDialog.value = true;
+}
+
+async function confirmResetDbStorageDir() {
+  showResetDbStorageDialog.value = false;
+
+  try {
+    isChangingDbStorage.value = true;
+    const newPath = await resetDbStorageDir();
+    dbStorageDir.value = String(newPath || '');
+    hasCustomDbStorage.value = false;
+    toast.success(localeMsg.value.settings?.database?.restore_default_success || 'Library data has been moved back to the default location');
+  } catch (error: any) {
+    toast.error(error?.message || String(error));
+  } finally {
+    isChangingDbStorage.value = false;
   }
 }
 

@@ -13,6 +13,7 @@ use std::sync::{Mutex, OnceLock};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+use crate::t_storage;
 
 static APP_IDENTIFIER: OnceLock<String> = OnceLock::new();
 static CONFIG_IO_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
@@ -244,6 +245,8 @@ pub struct AppConfig {
     pub debug: bool,
     #[serde(default = "default_last_selected_item_index")]
     pub last_selected_item_index: i64,
+    #[serde(default)]
+    pub db_storage_dir: Option<String>,
     pub current_library_id: String,
     pub libraries: Vec<Library>,
 }
@@ -258,6 +261,7 @@ impl Default for AppConfig {
         Self {
             debug: false,
             last_selected_item_index: default_last_selected_item_index(),
+            db_storage_dir: None,
             current_library_id: "default".to_string(),
             libraries: vec![Library {
                 id: "default".to_string(),
@@ -550,22 +554,10 @@ fn recover_app_config_from_library_dbs() -> Result<AppConfig, String> {
     Ok(AppConfig {
         debug: false,
         last_selected_item_index: default_last_selected_item_index(),
+        db_storage_dir: None,
         current_library_id,
         libraries,
     })
-}
-
-/// Get the database file path for a library
-pub fn get_library_db_path(library_id: &str) -> Result<String, String> {
-    let lib_dir = get_libraries_dir()?;
-    let db_path = lib_dir.join(format!("{}.db", library_id));
-    Ok(db_path.to_string_lossy().into_owned())
-}
-
-/// Get the current library's database file path
-pub fn get_current_db_path() -> Result<String, String> {
-    let config = load_app_config()?;
-    get_library_db_path(&config.current_library_id)
 }
 
 /// Add a new library
@@ -644,7 +636,7 @@ pub fn remove_library(id: &str) -> Result<(), String> {
     save_app_config(&config)?;
 
     // Delete the database file and SQLite WAL/SHM companion files
-    let db_path = get_library_db_path(id)?;
+    let db_path = t_storage::get_library_db_path(id)?;
     let db = std::path::Path::new(&db_path);
     for path in [
         db.to_path_buf(),
@@ -690,7 +682,7 @@ pub struct LibraryInfo {
 }
 
 pub fn get_library_info(id: &str) -> Result<LibraryInfo, String> {
-    let db_path = get_library_db_path(id)?;
+    let db_path = t_storage::get_library_db_path(id)?;
 
     // Get db file size
     let db_file_size = if std::path::Path::new(&db_path).exists() {

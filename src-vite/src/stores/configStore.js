@@ -81,8 +81,10 @@ export const useConfigStore = defineStore('configStore', {
       isFullScreen: false,      // native fullscreen in image viewer window
     },
 
+    libraryChangedVersion: 0,
+
     settings: {
-      tabIndex: 0,               // settings tab index (0: general, 1: navigation, 2: grid view, 3: image view, 4: image search, 5: privacy, 6: about)
+      tabIndex: 0,               // settings tab index (0: general, 1: view, 2: library, 3: image search, 4: about)
 
       // general settings
       language: 'en',             // default language
@@ -294,6 +296,10 @@ export const useConfigStore = defineStore('configStore', {
       } else {
         this.settings.face.clusterThresholdIndex = index;
       }
+    },
+
+    notifyLibrariesChanged() {
+      this.libraryChangedVersion++;
     },
 
   },

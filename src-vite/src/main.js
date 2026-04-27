@@ -166,6 +166,9 @@ listen('settings-faceClusterThresholdIndex-changed', (event) => {
 listen('settings-faceEnabled-changed', (event) => {
   config.setFaceEnabled(event.payload)
 })
+listen('libraries-changed', () => {
+  config.notifyLibrariesChanged()
+})
 
 if (getCurrentWebviewWindow().label === 'main') {
   void trackAppLifecycleEvents()

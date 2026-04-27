@@ -255,11 +255,11 @@
       "group_limit_hint": "Показано до {count} групп",
       "group_label": "Группа {index}",
       "items": "элементов",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "Правило сохранения по умолчанию",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "Лучшее качество",
+        "oldest_created": "Самые старые по созданию",
+        "oldest_modified": "Самые старые по изменению"
       },
       "keep_label": "Оставить",
       "select_group_duplicates": "Выбрать все дубликаты",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "Редактор",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "Правка",
+      "tab_adjust": "Настройка",
       "histogram": "Гистограмма",
       "light": "Свет",
       "color": "Цвет",
@@ -852,8 +852,8 @@
       "show_map_hint": "Требуется доступ к интернету",
       "debug_mode": "Режим отладки"
     },
-    "navigation": {
-      "title": "Навигация",
+    "library": {
+      "title": "Библиотека",
       "section_sorting": "Сортировка",
       "folder_sort": "Папки",
       "folder_sort_hint": "Порядок сортировки папок, отображаемых внутри альбомов",
@@ -878,10 +878,10 @@
         "Количество (По убыванию)"
       ]
     },
-    "grid_view": {
-      "title": "Сетка",
-      "section_layout": "Макет",
-      "style": "Режим макета",
+    "view": {
+      "title": "Вид",
+      "section_layout": "Сетка",
+      "style": "Стиль",
       "style_options": [
         "Карточки",
         "Плитка",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "Просмотрщик",
-      "section_viewing": "Просмотр",
+      "section_viewing": "Просмотр изображений",
       "section_external_apps": "Внешние приложения",
       "mouse_wheel": "Колесо мыши",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "Поиск",
-      "section_search": "Поиск",
+      "title": "Умный поиск",
+      "section_search": "Поиск похожих изображений",
       "similarity": "Сходство",
       "similarity_hint": "Выше = больше сходства, меньше результатов. Ниже = меньше сходства, больше результатов",
       "similarity_options": [
@@ -969,8 +969,48 @@
         "Низкое"
       ]
     },
+    "database": {
+      "title": "Хранилище",
+      "section_storage": "Обслуживание данных библиотеки",
+      "current_location": "Изменить расположение данных",
+      "system_default": "Системное по умолчанию",
+      "change_location": "Изменить",
+      "change_location_confirm": "Выбрать папку",
+      "prechange_title": "Изменить расположение данных",
+      "prechange_message": "Данные библиотеки содержат метаданные, избранное, оценки, теги и другую информацию для организации. Рекомендуется использовать системное расположение по умолчанию. Если вы меняете его, используйте локальную папку для лучшей производительности.",
+      "restore_default_location": "Сбросить к умолчанию",
+      "restore_default_confirm_title": "Сбросить расположение по умолчанию",
+      "restore_default_confirm_message": "Все файлы данных библиотеки будут перемещены обратно в расположение по умолчанию.",
+      "restore_default_confirm_ok": "Сбросить",
+      "busy_library_indexing": "Нельзя изменить расположение данных во время индексации библиотеки.",
+      "busy_face_indexing": "Нельзя изменить расположение данных во время индексации лиц.",
+      "change_success": "Данные библиотеки успешно перемещены",
+      "restore_default_success": "Данные библиотеки возвращены в стандартное расположение",
+      "backup": "Резервное копирование",
+      "backup_title": "Резервное копирование библиотек",
+      "backup_hint": "Сохранить выбранные базы данных библиотек в ZIP-файл",
+      "backup_dialog_title": "Резервное копирование библиотек",
+      "backup_select_hint": "Выберите библиотеки для включения в резервную копию:",
+      "backup_estimated_size": "Примерный размер: {size}",
+      "backup_select_all": "Выбрать все",
+      "backup_creating": "Создание резервной копии...",
+      "backup_success": "Резервная копия сохранена: {path} ({size})",
+      "restore": "Восстановить",
+      "restore_title": "Восстановить из резервной копии",
+      "restore_hint": "Восстановить библиотеки из ZIP-файла резервной копии",
+      "restore_dialog_title": "Восстановить из резервной копии",
+      "restore_select_file": "Выбрать файл резервной копии",
+      "restore_file_info": "Файл резервной копии: {path}",
+      "restore_created_at": "Создан: {date}",
+      "restore_libraries": "Библиотеки: {count} ({size})",
+      "restore_new_library": "Новая библиотека",
+      "restore_conflict": "Уже существует → будет переименована",
+      "restore_restoring": "Восстановление...",
+      "restore_success": "Восстановление завершено. {count} библиотек восстановлено: {names}",
+      "restore_note": "Восстановленные библиотеки добавляются к существующим. Существующие данные не перезаписываются."
+    },
     "face_recognition": {
-      "title": "Распознавание лиц",
+      "title": "Поиск людей",
       "enable": "Включить распознавание лиц",
       "beta_hint": "Бета: всё ещё в разработке",
       "similarity": "Сходство лиц",
@@ -985,20 +1025,14 @@
     },
     "privacy": {
       "title": "Конфиденциальность",
-      "section_usage": "Анонимная статистика использования",
-      "enable_analytics": "Делиться анонимной статистикой использования",
-      "enable_analytics_hint": "Помогает улучшать стабильность и пользовательский опыт Lap",
-      "section_collected": "Передаваемая информация",
-      "collected_intro": "Lap использует Aptabase, аналитический сервис для приложений с упором на приватность. События анонимны и не включают ваши фотографии, пути к файлам или персональные идентификаторы. Если функция включена, Lap отправляет только:",
-      "collected_activity": "Анонимные счетчики активности приложения",
-      "collected_app_version": "Версия Lap",
-      "collected_platform": "Платформа устройства и операционная система",
-      "collected_region": "Примерный регион (грубо определяется аналитическим сервисом)",
-      "section_not_collected": "Не собирается",
-      "not_collected_file_paths": "Пути к файлам",
-      "not_collected_filenames": "Имена файлов",
-      "not_collected_search_text": "Текст поиска или запросы",
-      "not_collected_precise_location": "Точное местоположение"
+      "section_privacy": "Помочь улучшить Lap",
+      "enable_analytics": "Делиться анонимными данными об использовании",
+      "enable_analytics_hint": "Если включено, Lap собирает базовую статистику использования, чтобы быстрее исправлять проблемы. Фотографии, пути к файлам и личные данные никогда не покидают ваше устройство.",
+      "collected_title": "Lap собирает только:",
+      "collected_activity": "Счётчики активности приложения",
+      "collected_app_version": "Версия Lap и ОС",
+      "collected_region": "Примерный регион",
+      "powered_byaptabase": "Работает на Aptabase — аналитической платформе с приоритетом конфиденциальности."
     },
     "about": {
       "title": "О программе",

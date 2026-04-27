@@ -255,11 +255,11 @@
       "group_limit_hint": "Es werden bis zu {count} Gruppen angezeigt",
       "group_label": "Gruppe {index}",
       "items": "Elemente",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "Standard-Regel zum Behalten",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "Beste Qualität",
+        "oldest_created": "Älteste nach Erstellung bevorzugen",
+        "oldest_modified": "Älteste nach Änderung bevorzugen"
       },
       "keep_label": "Behalten",
       "select_group_duplicates": "Alle Duplikate auswählen",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "Bild bearbeiten",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "Bearbeiten",
+      "tab_adjust": "Anpassen",
       "histogram": "Histogramm",
       "light": "Licht",
       "color": "Farbe",
@@ -601,7 +601,7 @@
       "blur": "Unschärfe",
       "hue_rotate": "Farbton",
       "saturation": "Sättigung",
-      "reset": "Reset",
+      "reset": "Zurücksetzen",
       "crop": "Zuschneiden",
       "cancel_crop": "Abbrechen",
       "confirm_crop": "Bestätigen",
@@ -852,8 +852,8 @@
       "show_map_hint": "Benötigt Internetzugang",
       "debug_mode": "Debug-Modus"
     },
-    "navigation": {
-      "title": "Navigation",
+        "library": {
+      "title": "Bibliothek",
       "section_sorting": "Sortierung",
       "folder_sort": "Ordner",
       "folder_sort_hint": "Sortierreihenfolge für unter Alben angezeigte Ordner",
@@ -878,10 +878,10 @@
         "Anzahl (Absteigend)"
       ]
     },
-    "grid_view": {
-      "title": "Rasteransicht",
-      "section_layout": "Layout",
-      "style": "Layoutmodus",
+    "view": {
+      "title": "Ansicht",
+      "section_layout": "Rasteransicht",
+      "style": "Stil",
       "style_options": [
         "Kartenansicht",
         "Kachelansicht",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "Viewer",
-      "section_viewing": "Ansicht",
+      "section_viewing": "Bildbetrachter",
       "section_external_apps": "Externe Apps",
       "mouse_wheel": "Mausrad",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "Bildsuche",
-      "section_search": "Suche",
+      "title": "Intelligente Suche",
+      "section_search": "Ähnliche Bilder finden",
       "similarity": "Ähnlichkeit",
       "similarity_hint": "Höher = ähnlicher, weniger Ergebnisse. Niedriger = weniger ähnlich, mehr Ergebnisse",
       "similarity_options": [
@@ -969,8 +969,48 @@
         "Niedrig"
       ]
     },
+    "database": {
+      "title": "Speicher",
+      "section_storage": "Bibliotheksdatenverwaltung",
+      "current_location": "Datenort ändern",
+      "system_default": "Systemstandard",
+      "change_location": "Ändern",
+      "change_location_confirm": "Ordner wählen",
+      "prechange_title": "Datenort ändern",
+      "prechange_message": "Bibliotheksdaten enthalten Metadaten, Favoriten, Bewertungen, Tags und andere Organisationsdaten. Der Standardspeicherort wird empfohlen. Wenn Sie ihn ändern, verwenden Sie für beste Leistung einen lokalen Ordner.",
+      "restore_default_location": "Auf Standard zurücksetzen",
+      "restore_default_confirm_title": "Standard zurücksetzen",
+      "restore_default_confirm_message": "Alle Bibliotheksdaten werden an den Standardspeicherort zurückverschoben.",
+      "restore_default_confirm_ok": "Zurücksetzen",
+      "busy_library_indexing": "Der Speicherort kann während der Bibliotheksindizierung nicht geändert werden.",
+      "busy_face_indexing": "Der Speicherort kann während der Gesichtserkennung nicht geändert werden.",
+      "change_success": "Bibliotheksdaten wurden erfolgreich verschoben",
+      "restore_default_success": "Bibliotheksdaten wurden an den Standardspeicherort zurückverschoben",
+      "backup": "Backup",
+      "backup_title": "Bibliotheken sichern",
+      "backup_hint": "Ausgewählte Bibliotheksdatenbanken als ZIP-Datei speichern",
+      "backup_dialog_title": "Bibliotheken sichern",
+      "backup_select_hint": "Wählen Sie die Bibliotheken für das Backup aus:",
+      "backup_estimated_size": "Größe geschätzt: {size}",
+      "backup_select_all": "Alle auswählen",
+      "backup_creating": "Backup wird erstellt...",
+      "backup_success": "Backup gespeichert unter {path} ({size})",
+      "restore": "Wiederherstellen",
+      "restore_title": "Aus Backup wiederherstellen",
+      "restore_hint": "Bibliotheken aus einer ZIP-Backupdatei wiederherstellen",
+      "restore_dialog_title": "Aus Backup wiederherstellen",
+      "restore_select_file": "Backupdatei auswählen",
+      "restore_file_info": "Backupdatei: {path}",
+      "restore_created_at": "Erstellt: {date}",
+      "restore_libraries": "Bibliotheken: {count} ({size})",
+      "restore_new_library": "Neue Bibliothek",
+      "restore_conflict": "Bereits vorhanden → wird umbenannt",
+      "restore_restoring": "Wiederherstellen...",
+      "restore_success": "Wiederherstellung abgeschlossen. {count} Bibliotheken wiederhergestellt: {names}",
+      "restore_note": "Wiederhergestellte Bibliotheken werden zu den vorhandenen hinzugefügt. Vorhandene Daten werden nicht überschrieben."
+    },
     "face_recognition": {
-      "title": "Gesichtserkennung",
+      "title": "Personensuche",
       "enable": "Gesichtserkennung aktivieren",
       "beta_hint": "Beta: noch in Entwicklung",
       "similarity": "Gesichtsähnlichkeit",
@@ -985,20 +1025,14 @@
     },
     "privacy": {
       "title": "Datenschutz",
-      "section_usage": "Anonyme Nutzungsstatistik",
-      "enable_analytics": "Anonyme Nutzungsstatistik teilen",
-      "enable_analytics_hint": "Hilft, die Stabilität und Nutzererfahrung von Lap zu verbessern",
-      "section_collected": "Geteilte Informationen",
-      "collected_intro": "Lap verwendet Aptabase, einen datenschutzfreundlichen Analysedienst fuer Apps. Die Ereignisse sind anonym und enthalten weder Ihre Fotos noch Dateipfade oder persoenliche Kennungen. Wenn aktiviert, sendet Lap nur:",
-      "collected_activity": "Anonyme Aktivitätszähler der App",
-      "collected_app_version": "Lap-Version",
-      "collected_platform": "Geraeteplattform und Betriebssystem",
-      "collected_region": "Ungefähre Region (grob vom Analysedienst abgeleitet)",
-      "section_not_collected": "Nicht erfasst",
-      "not_collected_file_paths": "Dateipfade",
-      "not_collected_filenames": "Dateinamen",
-      "not_collected_search_text": "Suchtexte oder Eingaben",
-      "not_collected_precise_location": "Genauer Standort"
+      "section_privacy": "Lap verbessern",
+      "enable_analytics": "Anonyme Nutzungsdaten teilen",
+      "enable_analytics_hint": "Wenn aktiviert, erfasst Lap grundlegende Nutzungsstatistiken, um Probleme schneller zu beheben. Fotos, Dateipfade und personenbezogene Daten verlassen Ihr Gerät nie.",
+      "collected_title": "Lap erfasst nur:",
+      "collected_activity": "Zähler für App-Aktivitäten",
+      "collected_app_version": "Lap-Version und Betriebssystem",
+      "collected_region": "Ungefähre Region",
+      "powered_byaptabase": "Bereitgestellt von Aptabase, einer datenschutzfreundlichen Analyseplattform."
     },
     "about": {
       "title": "Über",

@@ -255,11 +255,11 @@
       "group_limit_hint": "最大 {count} グループを表示",
       "group_label": "グループ {index}",
       "items": "件",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "デフォルトの保持ルール",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "最高品質優先",
+        "oldest_created": "作成日が最も古いものを優先",
+        "oldest_modified": "修正日が最も古いものを優先"
       },
       "keep_label": "保持",
       "select_group_duplicates": "すべての重複を選択",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "画像を編集",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "編集",
+      "tab_adjust": "調整",
       "histogram": "ヒストグラム",
       "light": "ライト",
       "color": "カラー",
@@ -852,8 +852,8 @@
       "show_map_hint": "インターネット接続が必要です",
       "debug_mode": "デバッグモード"
     },
-    "navigation": {
-      "title": "ナビゲーション",
+        "library": {
+      "title": "ライブラリ",
       "section_sorting": "並べ替え",
       "folder_sort": "フォルダ",
       "folder_sort_hint": "アルバム配下に表示されるフォルダの並び順です",
@@ -878,10 +878,10 @@
         "件数 (多い順)"
       ]
     },
-    "grid_view": {
-      "title": "グリッド表示",
-      "section_layout": "レイアウト",
-      "style": "レイアウトモード",
+    "view": {
+      "title": "表示",
+      "section_layout": "グリッド表示",
+      "style": "スタイル",
       "style_options": [
         "カード表示",
         "タイル表示",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "ビューア",
-      "section_viewing": "表示",
+      "section_viewing": "画像ビューア",
       "section_external_apps": "外部アプリ",
       "mouse_wheel": "マウスホイール",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "画像検索",
-      "section_search": "検索",
+      "title": "スマート検索",
+      "section_search": "類似画像を探す",
       "similarity": "類似度",
       "similarity_hint": "高いほど類似度が高く、結果は少なくなります。低いほど類似度が低く、結果は多くなります",
       "similarity_options": [
@@ -969,8 +969,48 @@
         "低い"
       ]
     },
+    "database": {
+      "title": "ストレージ",
+      "section_storage": "ライブラリデータの管理",
+      "current_location": "データ保存場所を変更",
+      "system_default": "システム既定",
+      "change_location": "変更",
+      "change_location_confirm": "フォルダーを選択",
+      "prechange_title": "データ保存場所を変更",
+      "prechange_message": "ライブラリデータには、メタデータ、お気に入り、評価、タグ、その他の整理情報が含まれます。通常はシステム既定の保存場所を推奨します。変更する場合は、性能のためローカルフォルダーを使用してください。",
+      "restore_default_location": "既定の保存場所に戻す",
+      "restore_default_confirm_title": "既定の保存場所にリセット",
+      "restore_default_confirm_message": "すべてのライブラリデータを既定の保存場所に戻します。",
+      "restore_default_confirm_ok": "リセット",
+      "busy_library_indexing": "ライブラリの索引作成中は保存場所を変更できません。",
+      "busy_face_indexing": "顔インデックス作成中は保存場所を変更できません。",
+      "change_success": "ライブラリデータを移動しました",
+      "restore_default_success": "ライブラリデータを既定の保存場所に戻しました",
+      "backup": "バックアップ",
+      "backup_title": "ライブラリをバックアップ",
+      "backup_hint": "選択したライブラリデータベースをZIPファイルに保存",
+      "backup_dialog_title": "ライブラリをバックアップ",
+      "backup_select_hint": "バックアップに含めるライブラリを選択：",
+      "backup_estimated_size": "推定サイズ：{size}",
+      "backup_select_all": "すべて選択",
+      "backup_creating": "バックアップを作成中...",
+      "backup_success": "バックアップを保存しました：{path}（{size}）",
+      "restore": "復元",
+      "restore_title": "バックアップから復元",
+      "restore_hint": "ZIPバックアップファイルからライブラリを復元",
+      "restore_dialog_title": "バックアップから復元",
+      "restore_select_file": "バックアップファイルを選択",
+      "restore_file_info": "バックアップファイル：{path}",
+      "restore_created_at": "作成日時：{date}",
+      "restore_libraries": "ライブラリ：{count} 個（{size}）",
+      "restore_new_library": "新しいライブラリ",
+      "restore_conflict": "既存 → 自動的に名前変更",
+      "restore_restoring": "復元中...",
+      "restore_success": "復元完了。{count} 個のライブラリを復元：{names}",
+      "restore_note": "復元されたライブラリは既存のものに追加されます。既存のデータは上書きされません。"
+    },
     "face_recognition": {
-      "title": "顔認識",
+      "title": "人物検索",
       "enable": "顔認識を有効化",
       "beta_hint": "ベータ版: まだ開発中です",
       "similarity": "顔類似度",
@@ -985,20 +1025,14 @@
     },
     "privacy": {
       "title": "プライバシー",
-      "section_usage": "匿名利用統計",
-      "enable_analytics": "匿名利用統計を共有する",
-      "enable_analytics_hint": "Lap の安定性とユーザー体験の向上に役立ちます",
-      "section_collected": "共有情報",
-      "collected_intro": "Lap は、アプリ向けのプライバシー重視の分析サービス Aptabase を利用します。イベントは匿名で送信され、写真、ファイルパス、個人識別子は含まれません。有効にすると、Lap は次のみを送信します：",
-      "collected_activity": "匿名のアプリ利用カウンター",
-      "collected_app_version": "Lap のバージョン",
-      "collected_platform": "デバイスのプラットフォームと OS",
-      "collected_region": "おおまかな地域（分析サービスが粗く推定）",
-      "section_not_collected": "収集しないもの",
-      "not_collected_file_paths": "ファイルパス",
-      "not_collected_filenames": "ファイル名",
-      "not_collected_search_text": "検索テキストまたはプロンプト",
-      "not_collected_precise_location": "正確な位置情報"
+      "section_privacy": "Lap の改善に協力する",
+      "enable_analytics": "匿名の利用データを共有する",
+      "enable_analytics_hint": "有効にすると、Lap は問題の修正を早めるために基本的な利用統計を収集します。写真、ファイルパス、個人情報が端末の外に送信されることはありません。",
+      "collected_title": "Lap が収集するのは次のみです:",
+      "collected_activity": "アプリの利用カウンター",
+      "collected_app_version": "Lap のバージョンと OS",
+      "collected_region": "おおまかな地域",
+      "powered_byaptabase": "Aptabase による、プライバシー重視の分析プラットフォームです。"
     },
     "about": {
       "title": "情報",

@@ -255,11 +255,11 @@
       "group_limit_hint": "Affichage jusqu a {count} groupes",
       "group_label": "Groupe {index}",
       "items": "éléments",
-      "keep_strategy": "Default keep rule",
+      "keep_strategy": "Règle de conservation par défaut",
       "keep_strategy_options": {
-        "best_quality": "Best quality",
-        "oldest_created": "Prefer oldest created",
-        "oldest_modified": "Prefer oldest modified"
+        "best_quality": "Meilleure qualité",
+        "oldest_created": "Préférer le plus ancien (création)",
+        "oldest_modified": "Préférer le plus ancien (modification)"
       },
       "keep_label": "Conserver",
       "select_group_duplicates": "Sélectionner tous les doublons",
@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "Éditer image",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "Éditer",
+      "tab_adjust": "Ajuster",
       "histogram": "Histogramme",
       "light": "Lumière",
       "color": "Couleur",
@@ -613,8 +613,8 @@
       "crop_applied_hint": "Recadrage appliqué. Cliquez sur Restaurer pour le revoir ou l'ajuster.",
       "zoom": "Zoom",
       "aspect_ratio": "Ratio",
-      "zoom_in": "Zoom in",
-      "zoom_out": "Zoom out",
+      "zoom_in": "Zoom avant",
+      "zoom_out": "Zoom arrière",
       "rotate_left": "Pivoter gauche",
       "rotate_right": "Pivoter droite",
       "flip_horizontal": "Miroir H",
@@ -686,7 +686,7 @@
     "taken_by": "Pris par",
     "software": "Logiciel",
     "artist": "Artiste",
-    "copyright": "Copyright",
+    "copyright": "Droits d'auteur",
     "description": "Description",
     "lens": "Objectif",
     "lens_make": "Marque obj.",
@@ -852,8 +852,8 @@
       "show_map_hint": "Nécessite un accès à internet",
       "debug_mode": "Mode débogage"
     },
-    "navigation": {
-      "title": "Navigation",
+    "library": {
+      "title": "Bibliothèque",
       "section_sorting": "Tri",
       "folder_sort": "Dossiers",
       "folder_sort_hint": "Ordre de tri des dossiers affichés sous les albums",
@@ -878,10 +878,10 @@
         "Nombre (Décroissant)"
       ]
     },
-    "grid_view": {
-      "title": "Vue en grille",
-      "section_layout": "Disposition",
-      "style": "Mode de disposition",
+    "view": {
+      "title": "Affichage",
+      "section_layout": "Vue en grille",
+      "style": "Style",
       "style_options": [
         "Vue carte",
         "Vue mosaïque",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "Visionneuse",
-      "section_viewing": "Affichage",
+      "section_viewing": "Visionneuse d’images",
       "section_external_apps": "Applications externes",
       "mouse_wheel": "Molette",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "Recherche img",
-      "section_search": "Recherche",
+      "title": "Recherche intelligente",
+      "section_search": "Trouver des images similaires",
       "similarity": "Similitude",
       "similarity_hint": "Plus élevé = plus similaire, moins de résultats. Plus bas = moins similaire, plus de résultats",
       "similarity_options": [
@@ -969,8 +969,48 @@
         "Faible"
       ]
     },
+    "database": {
+      "title": "Stockage",
+      "section_storage": "Maintenance des données",
+      "current_location": "Changer l’emplacement des données",
+      "system_default": "Valeur système par défaut",
+      "change_location": "Modifier",
+      "change_location_confirm": "Choisir un dossier",
+      "prechange_title": "Changer l’emplacement des données",
+      "prechange_message": "Les données de la bibliothèque contiennent les métadonnées, favoris, notes, tags et autres informations d’organisation. L’emplacement système par défaut est recommandé. Si vous le changez, utilisez un dossier local pour de meilleures performances.",
+      "restore_default_location": "Réinitialiser l’emplacement par défaut",
+      "restore_default_confirm_title": "Réinitialiser l’emplacement par défaut",
+      "restore_default_confirm_message": "Toutes les données de la bibliothèque seront replacées dans l’emplacement par défaut.",
+      "restore_default_confirm_ok": "Réinitialiser",
+      "busy_library_indexing": "Impossible de changer l’emplacement des données pendant l’indexation de la bibliothèque.",
+      "busy_face_indexing": "Impossible de changer l’emplacement des données pendant l’indexation des visages.",
+      "change_success": "Les données de la bibliothèque ont été déplacées avec succès",
+      "restore_default_success": "Les données de la bibliothèque ont été rétablies à l’emplacement par défaut",
+      "backup": "Sauvegarder",
+      "backup_title": "Sauvegarder les bibliothèques",
+      "backup_hint": "Enregistrer les bases de données sélectionnées dans un fichier ZIP",
+      "backup_dialog_title": "Sauvegarder les bibliothèques",
+      "backup_select_hint": "Sélectionnez les bibliothèques à inclure dans la sauvegarde :",
+      "backup_estimated_size": "Taille estimée : {size}",
+      "backup_select_all": "Tout sélectionner",
+      "backup_creating": "Création de la sauvegarde...",
+      "backup_success": "Sauvegarde enregistrée dans {path} ({size})",
+      "restore": "Restaurer",
+      "restore_title": "Restaurer depuis une sauvegarde",
+      "restore_hint": "Restaurer les bibliothèques depuis un fichier ZIP",
+      "restore_dialog_title": "Restaurer depuis une sauvegarde",
+      "restore_select_file": "Sélectionner le fichier de sauvegarde",
+      "restore_file_info": "Fichier de sauvegarde : {path}",
+      "restore_created_at": "Créé le : {date}",
+      "restore_libraries": "Bibliothèques : {count} ({size})",
+      "restore_new_library": "Nouvelle bibliothèque",
+      "restore_conflict": "Existe déjà → sera renommée",
+      "restore_restoring": "Restauration en cours...",
+      "restore_success": "Restauration terminée. {count} bibliothèques restaurées : {names}",
+      "restore_note": "Les bibliothèques restaurées sont ajoutées aux bibliothèques existantes. Les données existantes ne sont pas écrasées."
+    },
     "face_recognition": {
-      "title": "Reconnaissance faciale",
+      "title": "Recherche de personnes",
       "enable": "Activer la reconnaissance faciale",
       "beta_hint": "Bêta : encore en développement",
       "similarity": "Similitude visage",
@@ -984,21 +1024,15 @@
       ]
     },
     "privacy": {
-      "title": "Confidentialite",
-      "section_usage": "Statistiques d'utilisation anonymes",
-      "enable_analytics": "Partager des statistiques d'utilisation anonymes",
-      "enable_analytics_hint": "Aide à améliorer la stabilité et l'expérience utilisateur de Lap",
-      "section_collected": "Informations partagees",
-      "collected_intro": "Lap utilise Aptabase, un service d'analyse pour applications respectueux de la vie privee. Les evenements sont anonymes et n'incluent ni vos photos, ni les chemins de fichiers, ni des identifiants personnels. Lorsqu'elle est activee, Lap envoie uniquement :",
-      "collected_activity": "Compteurs anonymes d'activite de l'application",
-      "collected_app_version": "Version de Lap",
-      "collected_platform": "Plateforme de l'appareil et systeme d'exploitation",
-      "collected_region": "Region approximative (deduite grossierement par le service d'analyse)",
-      "section_not_collected": "Non collecte",
-      "not_collected_file_paths": "Chemins de fichiers",
-      "not_collected_filenames": "Noms de fichiers",
-      "not_collected_search_text": "Texte de recherche ou invites",
-      "not_collected_precise_location": "Localisation precise"
+      "title": "Confidentialité",
+      "section_privacy": "Aider à améliorer Lap",
+      "enable_analytics": "Partager des données d’utilisation anonymes",
+      "enable_analytics_hint": "Lorsqu’il est activé, Lap collecte des statistiques d’utilisation de base pour corriger plus rapidement les problèmes. Aucune photo, aucun chemin de fichier ni aucune information personnelle ne quitte votre appareil.",
+      "collected_title": "Lap collecte uniquement :",
+      "collected_activity": "Compteurs d’activité de l’application",
+      "collected_app_version": "Version de Lap et système d’exploitation",
+      "collected_region": "Région approximative",
+      "powered_byaptabase": "Propulsé par Aptabase, une plateforme d’analyse respectueuse de la vie privée."
     },
     "about": {
       "title": "À propos",

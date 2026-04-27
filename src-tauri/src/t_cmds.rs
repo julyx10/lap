@@ -5,6 +5,7 @@
  * date:    2024-08-08
  */
 use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
+use crate::t_storage;
 use crate::t_face;
 use crate::t_image;
 use crate::t_sqlite::{
@@ -41,6 +42,61 @@ pub fn set_last_selected_item_index(index: i64) -> Result<(), String> {
     let mut config = t_config::load_app_config()?;
     config.last_selected_item_index = index;
     t_config::save_app_config(&config)
+}
+
+#[tauri::command]
+pub fn get_db_storage_dir() -> Result<String, String> {
+    t_storage::get_db_storage_dir()
+}
+
+#[tauri::command]
+pub fn is_using_custom_db_storage() -> Result<bool, String> {
+    t_storage::is_using_custom_db_storage()
+}
+
+fn ensure_db_storage_change_allowed(
+    status_state: &State<t_face::FaceIndexingStatus>,
+) -> Result<(), String> {
+    if t_storage::is_db_migration_in_progress() {
+        return Err("Database storage migration is already in progress.".to_string());
+    }
+
+    let is_library_indexing = t_config::get_current_library_state()
+        .map(|state| state.index.status == 1)
+        .unwrap_or(false);
+    if is_library_indexing {
+        return Err("Cannot change database storage while library indexing is running.".to_string());
+    }
+
+    if *status_state.0.lock().unwrap() {
+        return Err("Cannot change database storage while face indexing is running.".to_string());
+    }
+
+    if t_sqlite::has_active_thumb_background_tasks() {
+        return Err(
+            "Cannot change database storage while thumbnails are still being generated."
+                .to_string(),
+        );
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn change_db_storage_dir(
+    new_dir: &str,
+    status_state: State<t_face::FaceIndexingStatus>,
+) -> Result<String, String> {
+    ensure_db_storage_change_allowed(&status_state)?;
+    t_storage::change_db_storage_dir(new_dir)
+}
+
+#[tauri::command]
+pub fn reset_db_storage_dir(
+    status_state: State<t_face::FaceIndexingStatus>,
+) -> Result<String, String> {
+    ensure_db_storage_change_allowed(&status_state)?;
+    t_storage::reset_db_storage_dir()
 }
 
 #[tauri::command]
@@ -770,7 +826,7 @@ pub fn get_build_time() -> u64 {
 #[tauri::command]
 pub fn get_storage_file_info() -> Result<t_utils::FileInfo, String> {
     // Get the database file path
-    let db_file_path = t_config::get_current_db_path()
+    let db_file_path = t_storage::get_current_db_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
     match t_utils::FileInfo::new(&db_file_path) {
@@ -957,7 +1013,9 @@ pub fn dedup_delete_selected(
     crate::t_dedup::delete_selected(group_ids, file_ids)
 }
 
-// batch operations
+// ----------------------------------------------------------------------------
+// Batch Operations (rename, resize)
+// ----------------------------------------------------------------------------
 
 /// batch rename files
 #[tauri::command]
@@ -1082,4 +1140,31 @@ pub async fn batch_resize(params: serde_json::Value) -> Result<bool, String> {
     }).await.map_err(|e| format!("Failed to join task: {}", e))?;
 
     result
+}
+
+// ----------------------------------------------------------------------------
+// Backup / Restore Commands
+// ----------------------------------------------------------------------------
+
+#[tauri::command]
+pub fn get_db_storage_info() -> Result<Vec<t_storage::DbStorageInfo>, String> {
+    t_storage::get_db_storage_info()
+}
+
+#[tauri::command]
+pub fn backup_databases(library_ids: Vec<String>, dest_path: String) -> Result<t_storage::BackupResult, String> {
+    t_storage::backup_databases(&library_ids, &dest_path)
+}
+
+#[tauri::command]
+pub fn parse_backup_file(path: String) -> Result<t_storage::BackupMetaData, String> {
+    t_storage::parse_backup_file(&path)
+}
+
+#[tauri::command]
+pub fn restore_databases(
+    backup_path: String,
+    selections: Vec<t_storage::RestoreSelection>,
+) -> Result<t_storage::RestoreResult, String> {
+    t_storage::restore_databases(&backup_path, &selections)
 }

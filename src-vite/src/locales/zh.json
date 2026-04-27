@@ -564,8 +564,8 @@
     },
     "image_editor": {
       "title": "编辑图片",
-      "tab_edit": "Edit",
-      "tab_adjust": "Adjust",
+      "tab_edit": "编辑",
+      "tab_adjust": "调整",
       "histogram": "直方图",
       "light": "光影",
       "color": "颜色",
@@ -852,8 +852,8 @@
       "show_map_hint": "需要互联网连接",
       "debug_mode": "调试模式"
     },
-    "navigation": {
-      "title": "导航",
+    "library": {
+      "title": "资料库",
       "section_sorting": "排序",
       "folder_sort": "文件夹",
       "folder_sort_hint": "相册下显示的文件夹排序方式",
@@ -878,10 +878,10 @@
         "数量（从高到低）"
       ]
     },
-    "grid_view": {
-      "title": "网格视图",
-      "section_layout": "布局",
-      "style": "布局模式",
+    "view": {
+      "title": "视图",
+      "section_layout": "网格视图",
+      "style": "样式",
       "style_options": [
         "卡片视图",
         "平铺视图",
@@ -921,7 +921,7 @@
     },
     "image_view": {
       "title": "查看器",
-      "section_viewing": "查看",
+      "section_viewing": "图片查看器",
       "section_external_apps": "外部应用",
       "mouse_wheel": "鼠标滚轮",
       "mouse_wheel_options": [
@@ -958,8 +958,8 @@
       ]
     },
     "image_search": {
-      "title": "图片搜索",
-      "section_search": "搜索",
+      "title": "智能搜索",
+      "section_search": "查找相似图片",
       "similarity": "图片相似度",
       "similarity_hint": "越高越相似，结果越少。越低越不相似，结果越多",
       "similarity_options": [
@@ -969,8 +969,48 @@
         "低"
       ]
     },
+    "database": {
+      "title": "存储",
+      "section_storage": "资料库数据维护",
+      "current_location": "更改数据位置",
+      "system_default": "系统默认",
+      "change_location": "更改",
+      "change_location_confirm": "选择目录",
+      "prechange_title": "更改数据位置",
+      "prechange_message": "资料库数据包含元数据、收藏、评分、标签等整理信息。建议使用系统默认位置。如需更改，请使用本地文件夹以保证性能。",
+      "restore_default_location": "恢复默认位置",
+      "restore_default_confirm_title": "重置默认位置",
+      "restore_default_confirm_message": "所有资料库数据文件将迁回默认位置。",
+      "restore_default_confirm_ok": "重置",
+      "busy_library_indexing": "资料库索引进行中，无法更改数据位置。",
+      "busy_face_indexing": "人脸索引进行中，无法更改数据位置。",
+      "change_success": "资料库数据已成功迁移",
+      "restore_default_success": "资料库数据已迁回默认位置",
+      "backup": "备份",
+      "backup_title": "备份资料库",
+      "backup_hint": "将选中的资料库数据库保存为ZIP备份文件",
+      "backup_dialog_title": "备份资料库",
+      "backup_select_hint": "选择要包含在备份文件中的资料库：",
+      "backup_estimated_size": "预计大小：{size}",
+      "backup_select_all": "全选",
+      "backup_creating": "正在创建备份...",
+      "backup_success": "备份已保存到 {path}（{size}）",
+      "restore": "恢复",
+      "restore_title": "从备份恢复",
+      "restore_hint": "从ZIP备份文件恢复资料库",
+      "restore_dialog_title": "从备份恢复",
+      "restore_select_file": "选择备份文件",
+      "restore_file_info": "备份文件：{path}",
+      "restore_created_at": "创建时间：{date}",
+      "restore_libraries": "资料库：{count} 个（{size}）",
+      "restore_new_library": "新资料库",
+      "restore_conflict": "已存在 → 将自动重命名",
+      "restore_restoring": "正在恢复...",
+      "restore_success": "恢复完成。已恢复 {count} 个资料库：{names}",
+      "restore_note": "恢复的资料库将添加至现有资料库旁，不会覆盖现有数据。"
+    },
     "face_recognition": {
-      "title": "人脸识别",
+      "title": "人物搜索",
       "enable": "启用人脸识别",
       "beta_hint": "Beta：仍在开发中",
       "similarity": "人脸相似度",
@@ -985,20 +1025,14 @@
     },
     "privacy": {
       "title": "隐私",
-      "section_usage": "匿名使用统计",
-      "enable_analytics": "分享匿名使用统计",
-      "enable_analytics_hint": "用于改进 Lap 的稳定性和用户体验",
-      "section_collected": "共享信息",
-      "collected_intro": "Lap 使用 Aptabase，一款面向应用的隐私优先统计服务。统计事件是匿名的，不包含你的照片、文件路径或个人身份标识。开启后，Lap 只会发送：",
-      "collected_activity": "匿名应用活跃计数",
-      "collected_app_version": "Lap 版本",
-      "collected_platform": "设备平台和操作系统",
-      "collected_region": "大概地区（由统计服务粗略推断）",
-      "section_not_collected": "不会收集",
-      "not_collected_file_paths": "文件路径",
-      "not_collected_filenames": "文件名",
-      "not_collected_search_text": "搜索文本或提示词",
-      "not_collected_precise_location": "精确位置"
+      "section_privacy": "帮助改进 Lap",
+      "enable_analytics": "分享匿名使用数据",
+      "enable_analytics_hint": "启用后，Lap 会收集基础使用统计，以便更快修复问题。照片、文件路径和个人信息都不会离开你的设备。",
+      "collected_title": "Lap 仅收集：",
+      "collected_activity": "应用活跃计数",
+      "collected_app_version": "Lap 版本和操作系统",
+      "collected_region": "大概地区",
+      "powered_byaptabase": "由 Aptabase 提供支持，这是一款隐私优先的分析平台。"
     },
     "about": {
       "title": "关于",
