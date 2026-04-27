@@ -2372,7 +2372,11 @@ onMounted( async() => {
     );
     if (loadedFiles.length === 0) return;
 
-    getFileListThumb(loadedFiles, 0, 8, true);
+    // Only fetch thumbnails for files that don't already have one loaded
+    const pendingFiles = loadedFiles.filter((f: any) => !f.thumbnail);
+    if (pendingFiles.length === 0) return;
+
+    getFileListThumb(pendingFiles, 0, 8, true);
   });
 
   // listen for external refresh requests (e.g. from folder context menu)
@@ -3099,8 +3103,15 @@ async function updateContent(force = false) {
               }
             });
 
-            // Always get all thumbnails for a folder (generate if not exist)
-            getFileListThumb(fileList.value);
+            // Only fetch thumbnails for files that don't already have one loaded
+            const filesWithoutThumb = fileList.value.filter((f: any) => !f.thumbnail);
+            const filesAlreadyHaveThumb = fileList.value.length - filesWithoutThumb.length;
+            if (filesAlreadyHaveThumb > 0) {
+              thumbCount.value += filesAlreadyHaveThumb;
+            }
+            if (filesWithoutThumb.length > 0) {
+              getFileListThumb(filesWithoutThumb);
+            }
           }
         } else {
           contentTitle.value = "";
@@ -4508,11 +4519,17 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 4, 
   let activeRequests = 0;
 
   const getThumbForFile = async (file: any) => {
+    // Skip if file already has a thumbnail — prevents redundant re-fetching
+    // that would trigger viewport thumbnail refreshes during scanning.
+    if (file.thumbnail) {
+      return file;
+    }
+
     // Check if this request is still valid before fetching
     if (requestId !== currentThumbRequestId) {
       return null; // Request cancelled
     }
-    
+
     const thumb = await getFileThumb(file.id, file.file_path, file.file_type, file.e_orientation || 0, config.settings.thumbnailSize, false);
     
     // Check again after async operation

@@ -491,6 +491,7 @@ const toggleVisibility = async (lib: any) => {
   try {
     await hideLibrary(lib.id, newHidden);
     lib.hidden = newHidden;
+    emit('updated');
   } catch (error) {
     console.error(error);
   }
