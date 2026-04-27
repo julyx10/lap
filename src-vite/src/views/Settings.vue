@@ -300,6 +300,8 @@
             <div class="flex items-center gap-2 text-base-content/70">
               <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.database.section_storage') }}</span>
             </div>
+
+            <!-- current location -->
             <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.database.current_location') }}</div>
@@ -307,9 +309,9 @@
                   {{ hasCustomDbStorage ? (dbStorageDir || '-') : $t('settings.database.system_default') }}
                 </div>
               </div>
-              <div class="shrink-0 flex items-center gap-2">
+              <div class="shrink-0 flex items-center">
                 <button
-                  class="btn btn-sm btn-ghost min-w-28 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                  class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
                   :disabled="isChangingDbStorage"
                   @click="selectDbStorageDir"
                 >
@@ -326,6 +328,33 @@
                   <IconRestore class="w-3.5 h-3.5" />
                 </button>
               </div>
+            </div>
+
+            <!-- backup / restore buttons -->
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.backup_title') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.database.backup_hint') }}</div>
+              </div>
+              <button
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                @click="showBackupDialog = true"
+              >
+                {{ $t('settings.database.backup') }}
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.restore_title') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.database.restore_hint') }}</div>
+              </div>
+              <button
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                @click="showRestoreDialog = true"
+              >
+                {{ $t('settings.database.restore') }}
+              </button>
             </div>
           </div>
         </div>
@@ -402,10 +431,22 @@
       v-if="showResetDbStorageDialog"
       :title="$t('settings.database.restore_default_confirm_title')"
       :message="$t('settings.database.restore_default_confirm_message')"
-      :OkText="$t('settings.database.restore_default_location')"
+      :OkText="$t('settings.database.restore_default_confirm_ok')"
       :cancelText="$t('msgbox.cancel')"
       @ok="confirmResetDbStorageDir"
       @cancel="showResetDbStorageDialog = false"
+    />
+
+    <BackupDialog
+      v-if="showBackupDialog"
+      @done="showBackupDialog = false"
+      @cancel="showBackupDialog = false"
+    />
+
+    <RestoreDialog
+      v-if="showRestoreDialog"
+      @done="onRestoreDone"
+      @cancel="showRestoreDialog = false"
     />
   </div>
 </template>
@@ -427,6 +468,8 @@ import { IconClose, IconRestore } from '@/common/icons';
 import TitleBar from '@/components/TitleBar.vue';
 import SettingsAbout from '@/components/SettingsAbout.vue';
 import MessageBox from '@/components/MessageBox.vue';
+import BackupDialog from '@/components/BackupDialog.vue';
+import RestoreDialog from '@/components/RestoreDialog.vue';
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -442,6 +485,13 @@ const isChangingDbStorage = ref(false);
 const hasCustomDbStorage = ref(false);
 const showChangeDbStorageDialog = ref(false);
 const showResetDbStorageDialog = ref(false);
+const showBackupDialog = ref(false);
+const showRestoreDialog = ref(false);
+
+const onRestoreDone = () => {
+  showRestoreDialog.value = false;
+  emit('libraries-changed');
+};
 
 const languages = [
   { label: 'English', value: 'en' },
@@ -817,6 +867,11 @@ function handleKeyDown(event: KeyboardEvent) {
       config.settings.tabIndex = config.settings.tabIndex % 5; // 5 tabs
       break;
     case 'Escape':
+      // Close the topmost dialog first
+      if (showBackupDialog.value) { showBackupDialog.value = false; return; }
+      if (showRestoreDialog.value) { showRestoreDialog.value = false; return; }
+      if (showChangeDbStorageDialog.value) { showChangeDbStorageDialog.value = false; return; }
+      if (showResetDbStorageDialog.value) { showResetDbStorageDialog.value = false; return; }
       appWindow.close(); // Close the window
       break;
   }

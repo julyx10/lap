@@ -454,6 +454,7 @@ const doAddLibrary = async () => {
       showAddInput.value = false;
       inputErrorMessage.value = '';
       await loadLibraries();
+      emit('updated');
       selectedLibraryId.value = newLib.id;
       await focusLibrary(newLib.id);
     }
@@ -509,6 +510,7 @@ const doDeleteLibrary = async () => {
     showDeleteConfirm.value = false;
     libraryToDelete.value = null;
     await loadLibraries();
+    emit('updated');
 
     // If we just deleted the active library, the backend has already switched
     // current_library_id. Emit 'ok' so Home.vue reloads the new library's state.

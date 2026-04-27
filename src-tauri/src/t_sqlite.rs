@@ -6,6 +6,7 @@
  */
 use crate::t_ai;
 use crate::t_config;
+use crate::t_storage;
 use crate::t_image;
 use crate::t_lens;
 use crate::t_utils;
@@ -4159,7 +4160,7 @@ impl ALocation {
 
 /// get connection to the db
 fn open_conn() -> Result<Connection, String> {
-    let path = t_config::get_current_db_path()
+    let path = t_storage::get_current_db_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
     let conn = Connection::open(&path)
@@ -4605,7 +4606,7 @@ fn create_db_internal() -> Result<(), String> {
 }
 
 fn recover_current_db_file() -> Result<(), String> {
-    let db_path = t_config::get_current_db_path()
+    let db_path = t_storage::get_current_db_path()
         .map_err(|e| format!("Failed to get current db path during recovery: {}", e))?;
     let db_path = PathBuf::from(db_path);
 

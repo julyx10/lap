@@ -65,6 +65,44 @@ export async function resetDbStorageDir() {
   }
 }
 
+// backup / restore
+
+export async function getDbStorageInfo() {
+  try {
+    return await invoke('get_db_storage_info');
+  } catch (error) {
+    console.error('Failed to get DB storage info:', error);
+  }
+  return [];
+}
+
+export async function backupDatabases(libraryIds, destPath) {
+  try {
+    return await invoke('backup_databases', { libraryIds, destPath });
+  } catch (error) {
+    console.error('Failed to backup databases:', error);
+    throw error;
+  }
+}
+
+export async function parseBackupFile(path) {
+  try {
+    return await invoke('parse_backup_file', { path });
+  } catch (error) {
+    console.error('Failed to parse backup file:', error);
+    throw error;
+  }
+}
+
+export async function restoreDatabases(backupPath, selections) {
+  try {
+    return await invoke('restore_databases', { backupPath, selections });
+  } catch (error) {
+    console.error('Failed to restore databases:', error);
+    throw error;
+  }
+}
+
 // add a new library
 export async function addLibrary(name) {
   try {

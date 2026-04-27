@@ -13,6 +13,7 @@
 use tauri::Manager;
 use tauri_plugin_aptabase::EventTracker;
 
+mod t_storage;
 mod t_ai;
 mod t_cluster;
 mod t_cmds;
@@ -282,6 +283,11 @@ async fn main() {
             t_video::prepare_video,
             t_video::cancel_video_prepare,
             t_video::clear_video_cache,
+            // backup / restore
+            t_cmds::get_db_storage_info,
+            t_cmds::backup_databases,
+            t_cmds::parse_backup_file,
+            t_cmds::restore_databases,
         ])
         .build(tauri::generate_context!());
 

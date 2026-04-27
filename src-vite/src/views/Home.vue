@@ -280,6 +280,10 @@ watch(() => config.settings.face.enabled, (enabled) => {
   }
 });
 
+watch(() => config.libraryChangedVersion, () => {
+  appConfig.value = getAppConfig();
+});
+
 const libraryMenuItems = computed(() => {
   const items: any[] = [];
   

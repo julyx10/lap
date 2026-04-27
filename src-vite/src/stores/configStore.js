@@ -81,6 +81,8 @@ export const useConfigStore = defineStore('configStore', {
       isFullScreen: false,      // native fullscreen in image viewer window
     },
 
+    libraryChangedVersion: 0,
+
     settings: {
       tabIndex: 0,               // settings tab index (0: general, 1: view, 2: library, 3: image search, 4: about)
 
@@ -294,6 +296,10 @@ export const useConfigStore = defineStore('configStore', {
       } else {
         this.settings.face.clusterThresholdIndex = index;
       }
+    },
+
+    notifyLibrariesChanged() {
+      this.libraryChangedVersion++;
     },
 
   },
