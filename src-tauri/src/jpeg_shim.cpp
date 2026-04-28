@@ -2,8 +2,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <csetjmp>
+#include <vector>
 
 #include "jpeglib.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 extern "C" {
 
@@ -17,6 +22,50 @@ static void lap_jpeg_error_exit(j_common_ptr cinfo) {
   auto *err = reinterpret_cast<LapJpegErrorManager *>(cinfo->err);
   (*cinfo->err->format_message)(cinfo, err->message);
   longjmp(err->setjmp_buffer, 1);
+}
+
+static FILE *lap_fopen_utf8(const char *file_path, const char *mode) {
+#ifdef _WIN32
+  int path_len = MultiByteToWideChar(CP_UTF8, 0, file_path, -1, nullptr, 0);
+  int mode_len = MultiByteToWideChar(CP_UTF8, 0, mode, -1, nullptr, 0);
+  if (path_len <= 0 || mode_len <= 0) {
+    return nullptr;
+  }
+
+  std::vector<wchar_t> wide_path(static_cast<size_t>(path_len));
+  std::vector<wchar_t> wide_mode(static_cast<size_t>(mode_len));
+  if (MultiByteToWideChar(CP_UTF8, 0, file_path, -1, wide_path.data(),
+                          path_len) <= 0 ||
+      MultiByteToWideChar(CP_UTF8, 0, mode, -1, wide_mode.data(), mode_len) <=
+          0) {
+    return nullptr;
+  }
+
+  return _wfopen(wide_path.data(), wide_mode.data());
+#else
+  return std::fopen(file_path, mode);
+#endif
+}
+
+static bool lap_read_file(const char *file_path,
+                          std::vector<unsigned char> &out) {
+  FILE *file = lap_fopen_utf8(file_path, "rb");
+  if (!file) {
+    return false;
+  }
+
+  unsigned char buffer[64 * 1024];
+  while (true) {
+    size_t bytes_read = std::fread(buffer, 1, sizeof(buffer), file);
+    if (bytes_read > 0) {
+      out.insert(out.end(), buffer, buffer + bytes_read);
+    }
+    if (bytes_read < sizeof(buffer)) {
+      bool ok = std::feof(file) != 0;
+      std::fclose(file);
+      return ok;
+    }
+  }
 }
 
 int lap_jpeg_encode_rgb8(const unsigned char *rgb_data, unsigned int width,
@@ -93,10 +142,17 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
   // Initialize early to prevent leak in setjmp handler
   *out_data = nullptr;
 
-  FILE *infile = std::fopen(file_path, "rb");
-  if (!infile) {
+  std::vector<unsigned char> file_data;
+  if (!lap_read_file(file_path, file_data)) {
     if (err_buf && err_buf_len > 0) {
       std::snprintf(err_buf, err_buf_len, "Could not open file: %s", file_path);
+    }
+    return 0;
+  }
+
+  if (file_data.empty()) {
+    if (err_buf && err_buf_len > 0) {
+      std::snprintf(err_buf, err_buf_len, "File is empty: %s", file_path);
     }
     return 0;
   }
@@ -110,7 +166,6 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
 
   if (setjmp(jerr.setjmp_buffer)) {
     jpeg_destroy_decompress(&cinfo);
-    std::fclose(infile);
     if (*out_data) {
       std::free(*out_data);
       *out_data = nullptr;
@@ -122,7 +177,8 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
   }
 
   jpeg_create_decompress(&cinfo);
-  jpeg_stdio_src(&cinfo, infile);
+  jpeg_mem_src(&cinfo, file_data.data(),
+               static_cast<unsigned long>(file_data.size()));
   jpeg_read_header(&cinfo, TRUE);
 
   // Calculate scaling factor (libjpeg supports 1/1, 1/2, 1/4, 1/8)
@@ -144,11 +200,10 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
   *out_height = cinfo.output_height;
   size_t row_stride = static_cast<size_t>(cinfo.output_width) * 3;
   size_t total_size = row_stride * cinfo.output_height;
-  
+
   *out_data = static_cast<unsigned char *>(std::malloc(total_size));
   if (!(*out_data)) {
     jpeg_destroy_decompress(&cinfo);
-    std::fclose(infile);
     if (err_buf && err_buf_len > 0) {
       std::snprintf(err_buf, err_buf_len, "Memory allocation failed for JPEG decode");
     }
@@ -163,7 +218,6 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
 
   jpeg_finish_decompress(&cinfo);
   jpeg_destroy_decompress(&cinfo);
-  std::fclose(infile);
   return 1;
 }
 
