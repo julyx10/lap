@@ -2,9 +2,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <csetjmp>
-#include <filesystem>
-#include <fstream>
-#include <vector>
 
 #include "jpeglib.h"
 
@@ -96,25 +93,10 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
   // Initialize early to prevent leak in setjmp handler
   *out_data = nullptr;
 
-  // Use std::filesystem::u8path to correctly handle UTF-8 paths on all platforms.
-  // On Windows this converts to wide characters internally; on POSIX it's a pass-through.
-  namespace fs = std::filesystem;
-  std::ifstream file;
-  file.open(fs::u8path(file_path), std::ios::binary);
-  if (!file) {
+  FILE *infile = std::fopen(file_path, "rb");
+  if (!infile) {
     if (err_buf && err_buf_len > 0) {
       std::snprintf(err_buf, err_buf_len, "Could not open file: %s", file_path);
-    }
-    return 0;
-  }
-
-  std::vector<unsigned char> file_data((std::istreambuf_iterator<char>(file)),
-                                        std::istreambuf_iterator<char>());
-  file.close();
-
-  if (file_data.empty()) {
-    if (err_buf && err_buf_len > 0) {
-      std::snprintf(err_buf, err_buf_len, "File is empty: %s", file_path);
     }
     return 0;
   }
@@ -128,6 +110,7 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
 
   if (setjmp(jerr.setjmp_buffer)) {
     jpeg_destroy_decompress(&cinfo);
+    std::fclose(infile);
     if (*out_data) {
       std::free(*out_data);
       *out_data = nullptr;
@@ -139,8 +122,7 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
   }
 
   jpeg_create_decompress(&cinfo);
-  jpeg_mem_src(&cinfo, file_data.data(),
-               static_cast<unsigned long>(file_data.size()));
+  jpeg_stdio_src(&cinfo, infile);
   jpeg_read_header(&cinfo, TRUE);
 
   // Calculate scaling factor (libjpeg supports 1/1, 1/2, 1/4, 1/8)
@@ -162,10 +144,11 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
   *out_height = cinfo.output_height;
   size_t row_stride = static_cast<size_t>(cinfo.output_width) * 3;
   size_t total_size = row_stride * cinfo.output_height;
-
+  
   *out_data = static_cast<unsigned char *>(std::malloc(total_size));
   if (!(*out_data)) {
     jpeg_destroy_decompress(&cinfo);
+    std::fclose(infile);
     if (err_buf && err_buf_len > 0) {
       std::snprintf(err_buf, err_buf_len, "Memory allocation failed for JPEG decode");
     }
@@ -180,6 +163,7 @@ int lap_jpeg_decode_rgb8(const char *file_path, unsigned int target_width,
 
   jpeg_finish_decompress(&cinfo);
   jpeg_destroy_decompress(&cinfo);
+  std::fclose(infile);
   return 1;
 }
 
