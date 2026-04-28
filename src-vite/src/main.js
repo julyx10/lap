@@ -4,11 +4,9 @@ import { createPinia } from 'pinia'
 import piniaPersistedState from 'pinia-plugin-persistedstate'
 import { listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
-import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import router from '@/common/router'
 import App from '@/App.vue'
 import { useConfigStore } from '@/stores/configStore'
-import { trackAppLifecycleEvents } from '@/common/telemetry'
 import '@/assets/app.css'
 
 // I18n
@@ -157,9 +155,6 @@ listen('settings-imageSearchThresholdIndex-changed', (event) => {
 listen('settings-imageSearchLimit-changed', (event) => {
   config.setImageSearchLimit(event.payload)
 })
-listen('settings-telemetryEnabled-changed', (event) => {
-  config.setTelemetryEnabled(event.payload)
-})
 listen('settings-faceClusterThresholdIndex-changed', (event) => {
   config.setFaceClusterThresholdIndex(event.payload)
 })
@@ -169,7 +164,3 @@ listen('settings-faceEnabled-changed', (event) => {
 listen('libraries-changed', () => {
   config.notifyLibrariesChanged()
 })
-
-if (getCurrentWebviewWindow().label === 'main') {
-  void trackAppLifecycleEvents()
-}

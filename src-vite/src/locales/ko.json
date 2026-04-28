@@ -1023,17 +1023,6 @@
         "낮음"
       ]
     },
-    "privacy": {
-      "title": "개인정보",
-      "section_privacy": "Lap 개선에 도움 주기",
-      "enable_analytics": "익명 사용 데이터 공유",
-      "enable_analytics_hint": "활성화하면 Lap은 문제를 더 빠르게 수정하기 위해 기본 사용 통계를 수집합니다. 사진, 파일 경로 또는 개인 정보는 기기를 벗어나지 않습니다.",
-      "collected_title": "Lap이 수집하는 항목:",
-      "collected_activity": "앱 활동 카운터",
-      "collected_app_version": "Lap 버전 및 운영체제",
-      "collected_region": "대략적인 지역",
-      "powered_byaptabase": "Aptabase 기반의 개인정보 보호 중심 분석 플랫폼입니다."
-    },
     "about": {
       "title": "정보",
       "package": {

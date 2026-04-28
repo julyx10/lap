@@ -1023,17 +1023,6 @@
         "Niedrig"
       ]
     },
-    "privacy": {
-      "title": "Datenschutz",
-      "section_privacy": "Lap verbessern",
-      "enable_analytics": "Anonyme Nutzungsdaten teilen",
-      "enable_analytics_hint": "Wenn aktiviert, erfasst Lap grundlegende Nutzungsstatistiken, um Probleme schneller zu beheben. Fotos, Dateipfade und personenbezogene Daten verlassen Ihr Gerät nie.",
-      "collected_title": "Lap erfasst nur:",
-      "collected_activity": "Zähler für App-Aktivitäten",
-      "collected_app_version": "Lap-Version und Betriebssystem",
-      "collected_region": "Ungefähre Region",
-      "powered_byaptabase": "Bereitgestellt von Aptabase, einer datenschutzfreundlichen Analyseplattform."
-    },
     "about": {
       "title": "Über",
       "package": {

@@ -1023,17 +1023,6 @@
         "Bajo"
       ]
     },
-    "privacy": {
-      "title": "Privacidad",
-      "section_privacy": "Ayuda a mejorar Lap",
-      "enable_analytics": "Compartir datos de uso anónimos",
-      "enable_analytics_hint": "Cuando está activado, Lap recopila estadísticas básicas de uso para ayudar a corregir problemas más rápido. Ninguna foto, ruta de archivo o información personal sale de tu dispositivo.",
-      "collected_title": "Lap solo recopila:",
-      "collected_activity": "Contadores de actividad de la aplicación",
-      "collected_app_version": "Versión de Lap y sistema operativo",
-      "collected_region": "Región aproximada",
-      "powered_byaptabase": "Con tecnología de Aptabase, una plataforma de analítica centrada en la privacidad."
-    },
     "about": {
       "title": "Acerca de",
       "package": {

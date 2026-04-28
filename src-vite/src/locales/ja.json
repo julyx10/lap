@@ -1023,17 +1023,6 @@
         "低い"
       ]
     },
-    "privacy": {
-      "title": "プライバシー",
-      "section_privacy": "Lap の改善に協力する",
-      "enable_analytics": "匿名の利用データを共有する",
-      "enable_analytics_hint": "有効にすると、Lap は問題の修正を早めるために基本的な利用統計を収集します。写真、ファイルパス、個人情報が端末の外に送信されることはありません。",
-      "collected_title": "Lap が収集するのは次のみです:",
-      "collected_activity": "アプリの利用カウンター",
-      "collected_app_version": "Lap のバージョンと OS",
-      "collected_region": "おおまかな地域",
-      "powered_byaptabase": "Aptabase による、プライバシー重視の分析プラットフォームです。"
-    },
     "about": {
       "title": "情報",
       "package": {

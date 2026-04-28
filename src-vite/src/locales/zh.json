@@ -1023,17 +1023,6 @@
         "低 (宽松)"
       ]
     },
-    "privacy": {
-      "title": "隐私",
-      "section_privacy": "帮助改进 Lap",
-      "enable_analytics": "分享匿名使用数据",
-      "enable_analytics_hint": "启用后，Lap 会收集基础使用统计，以便更快修复问题。照片、文件路径和个人信息都不会离开你的设备。",
-      "collected_title": "Lap 仅收集：",
-      "collected_activity": "应用活跃计数",
-      "collected_app_version": "Lap 版本和操作系统",
-      "collected_region": "大概地区",
-      "powered_byaptabase": "由 Aptabase 提供支持，这是一款隐私优先的分析平台。"
-    },
     "about": {
       "title": "关于",
       "package": {

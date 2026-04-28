@@ -1023,17 +1023,6 @@
         "Low (Loose)"
       ]
     },
-    "privacy": {
-      "title": "Privacy",
-      "section_privacy": "Help improve Lap",
-      "enable_analytics": "Share anonymous usage data",
-      "enable_analytics_hint": "When enabled, Lap collects basic usage statistics to help fix issues faster. No photos, file paths, or personal information ever leave your device.",
-      "collected_title": "Lap collects only:",
-      "collected_activity": "App activity counters",
-      "collected_app_version": "Lap version and OS",
-      "collected_region": "Approximate region",
-      "powered_byaptabase": "Powered by Aptabase, a privacy-first analytics platform."
-    },
     "about": {
       "title": "About",
       "package": {

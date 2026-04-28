@@ -140,11 +140,6 @@ export const useConfigStore = defineStore('configStore', {
         // Cluster threshold index: 0=Very High, 1=High, 2=Medium, 3=Low
         clusterThresholdIndex: 2, // Default: Medium
       },
-
-      telemetry: {
-        enabled: true,             // anonymous usage analytics
-        lastDailyActiveDate: '',   // local day bucket already reported
-      },
     },
   }),
 
@@ -271,15 +266,6 @@ export const useConfigStore = defineStore('configStore', {
     },
     setImageSearchLimit(imageSearchLimit) {
       this.settings.imageSearch.limit = imageSearchLimit;
-    },
-
-    // telemetry settings
-    setTelemetryEnabled(enabled) {
-      if (!this.settings.telemetry) {
-        this.settings.telemetry = { enabled, lastDailyActiveDate: '' };
-      } else {
-        this.settings.telemetry.enabled = enabled;
-      }
     },
 
     // face recognition settings

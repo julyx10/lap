@@ -1023,17 +1023,6 @@
         "Faible"
       ]
     },
-    "privacy": {
-      "title": "Confidentialité",
-      "section_privacy": "Aider à améliorer Lap",
-      "enable_analytics": "Partager des données d’utilisation anonymes",
-      "enable_analytics_hint": "Lorsqu’il est activé, Lap collecte des statistiques d’utilisation de base pour corriger plus rapidement les problèmes. Aucune photo, aucun chemin de fichier ni aucune information personnelle ne quitte votre appareil.",
-      "collected_title": "Lap collecte uniquement :",
-      "collected_activity": "Compteurs d’activité de l’application",
-      "collected_app_version": "Version de Lap et système d’exploitation",
-      "collected_region": "Région approximative",
-      "powered_byaptabase": "Propulsé par Aptabase, une plateforme d’analyse respectueuse de la vie privée."
-    },
     "about": {
       "title": "À propos",
       "package": {

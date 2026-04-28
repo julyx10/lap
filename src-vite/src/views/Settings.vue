@@ -839,11 +839,6 @@ watch(() => config.settings.imageSearch.limit, (newValue) => {
   emit('settings-imageSearchLimit-changed', newValue);
 });
 
-// telemetry settings
-watch(() => config.settings.telemetry.enabled, (newValue) => {
-  emit('settings-telemetryEnabled-changed', newValue);
-});
-
 // face settings
 watch(() => config.settings.face.enabled, (newValue) => {
   emit('settings-faceEnabled-changed', newValue);
