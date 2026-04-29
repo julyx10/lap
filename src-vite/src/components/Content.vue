@@ -1596,10 +1596,6 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       closeQuickPreview();
       event.preventDefault();
       return;
-    } else if (selectMode.value) {
-      handleSelectMode(false);
-      event.preventDefault();
-      return;
     } else if (tempViewMode.value !== 'none') {
       exitTempViewMode();
       event.preventDefault();
