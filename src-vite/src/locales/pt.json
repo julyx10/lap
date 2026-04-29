@@ -1028,7 +1028,7 @@
       "package": {
         "name": "Nome do pacote",
         "description": "Descrição",
-        "app_description": "Um gerenciador de fotos offline-first para grandes bibliotecas locais.",
+        "app_description": "Um gerenciador de fotos local e offline para grandes bibliotecas.",
         "version": "Versão",
         "build_time": "Hora do build",
         "author": "Autor",

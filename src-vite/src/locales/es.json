@@ -926,7 +926,7 @@
       "mouse_wheel": "Rueda ratón",
       "mouse_wheel_options": [
         "Ant/Sig (Ctrl zoom)",
-        "Zoom in/out"
+        "Acercar/Alejar"
       ],
       "slide_show_interval": "Intervalo: {second} s",
       "slide_show_transition": "Transición de presentación",
@@ -1028,7 +1028,7 @@
       "package": {
         "name": "Nombre paquete",
         "description": "Descripción",
-        "app_description": "Un gestor de fotos local, con enfoque offline-first, para bibliotecas grandes.",
+        "app_description": "Un gestor de fotos local, sin conexión primero, para bibliotecas grandes.",
         "version": "Versión",
         "build_time": "Tiempo compilación",
         "author": "Autor",
