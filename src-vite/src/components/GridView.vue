@@ -51,11 +51,14 @@
     <!-- Empty State / Loading -->
     <div v-else class="absolute inset-0 flex flex-col items-center justify-center">
       <div class="text-base-content/30 flex flex-col items-center gap-2 text-center px-4">
-        <template v-if="!loading && showFolderFiles">
+        <template v-if="!contentReady">
+          <!-- <span>{{ $t('tooltip.loading') }}</span> -->
+        </template>
+        <template v-else-if="showFolderFiles">
           <span>{{ $t('tooltip.not_found.folder_files') }}</span>
           <span class="text-xs">{{ $t('tooltip.not_found.folder_files_hint') }}</span>
         </template>
-        <span v-else-if="!loading">{{ $t('tooltip.not_found.files') }}</span>
+        <span v-else>{{ $t('tooltip.not_found.files') }}</span>
       </div>
     </div>
 
@@ -77,13 +80,13 @@ const props = withDefaults(defineProps<{
   fileList: any[];
   showFolderFiles?: boolean;
   selectMode?: boolean;
-  loading?: boolean;
+  contentReady?: boolean;
   layoutVersion?: number;
 }>(), {
   selectedItemIndex: -1,
   showFolderFiles: false,
   selectMode: false,
-  loading: false,
+  contentReady: false,
   layoutVersion: 0,
 });
 

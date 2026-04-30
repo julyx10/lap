@@ -184,7 +184,7 @@
                 :fileList="fileList"
                 :showFolderFiles="showFolderFiles"
                 :selectMode="selectMode"
-                :loading="isLoading || !hasLoadedInitialResult"
+                :content-ready="contentReady"
                 :layout-version="layoutVersion"
                 @item-clicked="handleItemClicked"
                 @item-dblclicked="handleItemDblClicked"
@@ -1066,6 +1066,7 @@ const toast = useToast();
 const isProcessing = ref(false);  // show processing status
 const isLoading = ref(false);     // show loading status in GridView (for empty file list)
 const hasLoadedInitialResult = ref(false); // avoid showing "No files found" before first real result returns
+const contentReady = ref(false);  // true after current view's content has loaded (empty or not), reset on navigation
 const dedupSourceVersion = ref(0);
 
 const searchBoxRef = ref<any>(null);
@@ -2034,9 +2035,11 @@ function enterScanStreamingMode(albumId: number) {
   showProgressBar.value = false;
   isLoading.value = false;
   hasLoadedInitialResult.value = true;
+  contentReady.value = true;
   currentQueryParams.value = buildScanStreamQueryParams();
   timelineData.value = [];
   lastVisibleRange = { start: -1, end: -1 };
+  visibleRangeSeqId++;
   markDedupSourceUpdated();
 }
 
@@ -2657,7 +2660,7 @@ function cycleGridStyle() {
 // Track pending requests to avoid duplicates
 const pendingRequests = new Set();
 
-async function fetchDataRange(start: number, end: number) {
+async function fetchDataRange(start: number, end: number, reverse = false) {
   // Clamp range
   start = Math.max(0, start);
   end = Math.min(totalFileCount.value, end);
@@ -2668,8 +2671,11 @@ async function fetchDataRange(start: number, end: number) {
   const chunkSize = selectionChunkSize.value;
   const startChunk = Math.floor(start / chunkSize);
   const endChunk = Math.floor((end - 1) / chunkSize);
+  const chunkPromises: Promise<void>[] = [];
 
-  for (let i = startChunk; i <= endChunk; i++) {
+  const chunkStartIdx = reverse ? endChunk : startChunk;
+  const chunkEndIdx = reverse ? startChunk : endChunk;
+  for (let i = chunkStartIdx; reverse ? i >= chunkEndIdx : i <= chunkEndIdx; reverse ? i-- : i++) {
     const chunkStart = i * chunkSize;
     const chunkEnd = Math.min(totalFileCount.value, chunkStart + chunkSize);
     
@@ -2690,10 +2696,8 @@ async function fetchDataRange(start: number, end: number) {
       
       pendingRequests.add(key);
       
-      // We don't await here to allow parallel fetching of chunks, 
-      // but we track pending requests to avoid duplicate fetches.
-      getQueryFiles(currentQueryParams.value, chunkStart, chunkSize)
-        .then(newFiles => {
+      const promise = getQueryFiles(currentQueryParams.value, chunkStart, chunkSize)
+        .then(async (newFiles) => {
           if (newFiles) {
             // Update fileList and collect reactive references
             const filesToFetch = [];
@@ -2735,12 +2739,13 @@ async function fetchDataRange(start: number, end: number) {
                 updateSelectedImage(selectedItemIndex.value);
               }
             }
-            // Fetch thumbnails for these files
-            if (filesToFetch.length > 0) {
-              getFileListThumb(filesToFetch);
-            }
-            // Trigger layout update in throttled mode to avoid visible flicker.
+            // Trigger layout update as soon as metadata is available
             scheduleLayoutRefresh();
+            // Fetch thumbnails for these files; await so the phase completes only when images are ready
+            if (filesToFetch.length > 0) {
+              if (reverse) filesToFetch.reverse();
+              await getFileListThumb(filesToFetch);
+            }
           }
         })
         .catch(err => {
@@ -2749,9 +2754,15 @@ async function fetchDataRange(start: number, end: number) {
         .finally(() => {
           pendingRequests.delete(key);
         });
+
+      chunkPromises.push(promise);
     } else {
         // console.log(`Chunk already loaded or invalid: ${chunkStart}`);
     }
+  }
+
+  if (chunkPromises.length > 0) {
+    await Promise.all(chunkPromises);
   }
 }
 
@@ -2791,18 +2802,31 @@ async function hydrateRangeForSelection(targetCount: number) {
 
 // Track last visible range to avoid redundant fetches
 let lastVisibleRange = { start: -1, end: -1 };
+let visibleRangeSeqId = 0;
 
 function handleVisibleRangeUpdate({ startIndex, endIndex }: { startIndex: number, endIndex: number }) {
   // Skip if the range hasn't changed significantly
   if (lastVisibleRange.start === startIndex && lastVisibleRange.end === endIndex) {
     return;
   }
-  
+
   lastVisibleRange = { start: startIndex, end: endIndex };
-  
-  // Fetch data for visible range + buffer
+
   const buffer = Math.max(40, Math.min(visibleItemCount.value, 120));
-  fetchDataRange(startIndex - buffer, endIndex + buffer);
+  const seqId = ++visibleRangeSeqId;
+
+  // Phase 1: viewport thumbnails first (immediately visible)
+  fetchDataRange(startIndex, endIndex + 1).then(() => {
+    if (seqId !== visibleRangeSeqId) return;
+
+    // Phase 2: below viewport (most likely scroll direction)
+    fetchDataRange(endIndex + 1, endIndex + 1 + buffer).then(() => {
+      if (seqId !== visibleRangeSeqId) return;
+
+      // Phase 3: above viewport (least likely, reverse: load closest to viewport first)
+      fetchDataRange(Math.max(0, startIndex - buffer), startIndex, true);
+    });
+  });
 }
 
 // get file list 
@@ -2890,6 +2914,7 @@ async function getFileList(
       
       // Reset visible range tracking when changing views
       lastVisibleRange = { start: -1, end: -1 };
+      visibleRangeSeqId++;
     } else {
       fileList.value = [];
       markDedupSourceUpdated(requestId);
@@ -2907,6 +2932,7 @@ async function getFileList(
     if (requestId === currentContentRequestId) {
       isLoading.value = false;
       hasLoadedInitialResult.value = true;
+      contentReady.value = true;
     }
   }
 }
@@ -2948,7 +2974,8 @@ async function getImageSearchFileList(
 
         // Reset visible range tracking when changing views
         lastVisibleRange = { start: -1, end: -1 };
-        
+        visibleRangeSeqId++;
+
         // Update search history with the first result's file_id
         if (updateHistory && searchText && result.length > 0) {
           const history = libConfig.search.searchHistory as any[];
@@ -2992,6 +3019,7 @@ async function getImageSearchFileList(
     if (requestId === currentContentRequestId) {
       isLoading.value = false;
       hasLoadedInitialResult.value = true;
+      contentReady.value = true;
     }
   }
 }
@@ -3030,6 +3058,8 @@ async function updateContent(force = false) {
 
   const requestId = ++currentContentRequestId;
 
+  contentReady.value = false;
+
   // Reset file list immediately to reflect UI change
   fileList.value = [];
   isLoading.value = true;
@@ -3066,6 +3096,7 @@ async function updateContent(force = false) {
             restoreScrollAfterRefresh();
             isLoading.value = false;
             hasLoadedInitialResult.value = true;
+            contentReady.value = true;
             openImageViewer(0, false, true);
 
             // Fetch timeline data for the folder
@@ -4655,13 +4686,7 @@ async function getFileListThumb(files: any[], offset = 0, concurrencyLimit = 4, 
     }
   };
 
-  // Run in background - don't block caller
-  runWithConcurrencyLimit(files).then(() => {
-    // Only log if this request wasn't cancelled
-    if (requestId === currentThumbRequestId) {
-      console.log('All thumbnails fetched successfully.');
-    }
-  });
+  return runWithConcurrencyLimit(files);
 }
 
 // Open the image viewer window
