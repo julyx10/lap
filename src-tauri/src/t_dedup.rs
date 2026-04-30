@@ -52,7 +52,7 @@ pub struct DedupState {
 struct KeepCandidate {
     id: i64,
     taken_date: i64,
-    modified_at: i64,
+    created_at: i64,
 }
 
 // ----------------------------------------------------------------------------
@@ -498,13 +498,13 @@ fn rebuild_duplicate_groups(
 
         // Let's get the files for this group
         let item_query = if scope_file_ids.is_some() {
-            "SELECT a.id, a.taken_date, a.modified_at
+            "SELECT a.id, a.taken_date, a.created_at
              FROM file_hashes fh
              JOIN afiles a ON fh.file_id = a.id
              JOIN temp_scope_ids ts ON ts.file_id = a.id
              WHERE fh.hash = ?1 AND fh.file_size = ?2"
         } else {
-            "SELECT a.id, a.taken_date, a.modified_at
+            "SELECT a.id, a.taken_date, a.created_at
              FROM file_hashes fh
              JOIN afiles a ON fh.file_id = a.id
              WHERE fh.hash = ?1 AND fh.file_size = ?2"
@@ -517,17 +517,17 @@ fn rebuild_duplicate_groups(
             .query_map(params![hash, size], |row| {
                 let id: i64 = row.get(0)?;
                 let tk: i64 = row.get(1).unwrap_or(0);
-                let mt: i64 = row.get(2).unwrap_or(0);
-                Ok((id, tk, mt))
+                let ca: i64 = row.get(2).unwrap_or(0);
+                Ok((id, tk, ca))
             })
             .map_err(|e| e.to_string())?;
 
         for r in iter {
-            let (id, tk, mt) = r.map_err(|e| e.to_string())?;
+            let (id, tk, ca) = r.map_err(|e| e.to_string())?;
             keep_candidates.push(KeepCandidate {
                 id,
                 taken_date: tk,
-                modified_at: mt,
+                created_at: ca,
             });
         }
 
@@ -555,7 +555,7 @@ fn rebuild_duplicate_groups(
 fn compare_best_quality(a: &KeepCandidate, b: &KeepCandidate) -> std::cmp::Ordering {
     (b.taken_date > 0)
         .cmp(&(a.taken_date > 0))
-        .then_with(|| b.modified_at.cmp(&a.modified_at))
+        .then_with(|| a.created_at.cmp(&b.created_at))
         .then_with(|| a.id.cmp(&b.id))
 }
 
