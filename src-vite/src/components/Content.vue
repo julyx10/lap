@@ -4756,7 +4756,7 @@ async function openImageViewer(
         visible: false, // Start hidden, will show after mount
         transparent: true, // Prevent white flash on show (Tauri 2.x workaround)
         decorations: isMac,
-        zoomHotkeysEnabled: isWin, // Windows WebView2: needed for touchpad pinch-to-zoom; Linux must be false to prevent WebKitGTK from intercepting pinch as page zoom
+        zoomHotkeysEnabled: true, // Windows WebView2: needed for touchpad pinch-to-zoom
         ...(isMac && {
           titleBarStyle: 'overlay',
           hiddenTitle: true,
