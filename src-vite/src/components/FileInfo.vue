@@ -355,7 +355,7 @@
       <!-- Map View -->
       <div v-if="fileInfo?.gps_latitude && fileInfo?.gps_longitude" 
         class="rounded-box p-3 space-y-3 bg-base-300/30 border border-base-content/5 shadow-sm flex flex-col transition-[flex-grow]" 
-        :class="{ 'flex-1 min-h-[300px]': showMapPanel }">
+        :class="{ 'flex-1 min-h-[300px] flex-shrink-0': showMapPanel }">
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content shrink-0" @click.stop="toggleMapPanel">
           <IconLocation class="w-4 h-4 " /> 
           <span class="font-bold mr-auto uppercase text-xs tracking-wide">{{ $t('file_info.map') }}</span>
@@ -371,8 +371,8 @@
           @after-enter="onAfterEnter"
           @leave="onLeave"
         >
-          <div v-if="showMapPanel" class="overflow-hidden flex-1 flex flex-col min-h-0">
-            <div class="w-full rounded-box overflow-hidden relative z-0 flex-1 min-h-[220px] border border-base-content/5">
+          <div v-if="showMapPanel" class="flex-1 flex flex-col min-h-0">
+            <div class="w-full rounded-box relative z-0 flex-1 min-h-0 border border-base-content/5">
               <MapView
                 :lat="fileInfo.gps_latitude ? Number(fileInfo.gps_latitude) : 0"
                 :lon="fileInfo.gps_longitude ? Number(fileInfo.gps_longitude) : 0"
