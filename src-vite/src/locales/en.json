@@ -190,6 +190,7 @@
         "Name",
         "Size",
         "Dimension",
+        "Rating",
         "Random"
       ],
       "sort_order_options": [

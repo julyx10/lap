@@ -1927,8 +1927,9 @@ impl AFile {
             3 => format!("a.name_pinyin {}, a.id {}", dir, dir),
             4 => format!("a.size {}, a.id {}", dir, dir),
             5 => format!("a.width {}, a.height {}, a.id {}", dir, dir, dir),
-            6 => "RANDOM()".to_string(),
-            7 => "a.id ASC".to_string(), // internal: stable append order during scanning
+            6 => format!("a.rating {}, a.id {}", dir, dir),
+            7 => "RANDOM()".to_string(),
+            8 => "a.id ASC".to_string(), // internal: stable append order during scanning
             _ => format!("a.taken_date {}, a.id {}", dir, dir),
         }
     }

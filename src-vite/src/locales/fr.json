@@ -190,6 +190,7 @@
         "Nom",
         "Taille",
         "Dimension",
+        "Note",
         "Aléatoire"
       ],
       "sort_order_options": [
