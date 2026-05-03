@@ -218,6 +218,45 @@ export function calculateLinearRowLayout(
     };
 }
 
+export function calculateMasonryLayout(
+    items: any[],
+    containerWidth: number,
+    targetWidth: number,
+    spacing: number
+): JustifiedLayoutResult {
+    const columnCount = Math.max(1, Math.floor(containerWidth / targetWidth));
+    const columnWidth = (containerWidth - (columnCount - 1) * spacing) / columnCount;
+    const columnHeights = new Array(columnCount).fill(0);
+    const boxes: Geometry[] = [];
+
+    for (const item of items) {
+        let w = item.width || 100;
+        let h = item.height || 100;
+        if (item.rotate && item.rotate % 180 !== 0) {
+            [w, h] = [h, w];
+        }
+        const itemHeight = columnWidth / (w / h);
+
+        let shortestCol = 0;
+        for (let i = 1; i < columnCount; i++) {
+            if (columnHeights[i] < columnHeights[shortestCol]) shortestCol = i;
+        }
+
+        boxes.push({
+            x: shortestCol * (columnWidth + spacing),
+            y: columnHeights[shortestCol],
+            width: columnWidth,
+            height: itemHeight,
+        });
+        columnHeights[shortestCol] += itemHeight + spacing;
+    }
+
+    return {
+        boxes,
+        containerHeight: boxes.length > 0 ? Math.max(...columnHeights) - spacing : 0,
+    };
+}
+
 export interface LinearColumnLayoutResult {
     boxes: Geometry[];
     containerHeight: number;

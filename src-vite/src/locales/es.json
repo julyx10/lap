@@ -907,6 +907,11 @@
         "Cámara",
         "Lente",
         "Ajustes captura"
+      ],
+      "justify_mode": "Modo justificado",
+      "justify_mode_options": [
+        "Altura igual",
+        "Ancho igual (Masonry)"
       ]
     },
     "filmstrip_view": {

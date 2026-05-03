@@ -73,7 +73,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import Thumbnail from '@/components/Thumbnail.vue';
 import VirtualScroll from '@/components/VirtualScroll.vue';
-import { calculateJustifiedLayout, calculateLinearRowLayout, calculateLinearColumnLayout, type Geometry } from '@/common/layout';
+import { calculateJustifiedLayout, calculateLinearRowLayout, calculateLinearColumnLayout, calculateMasonryLayout, type Geometry } from '@/common/layout';
 
 const props = withDefaults(defineProps<{
   selectedItemIndex: number;
@@ -130,7 +130,10 @@ const layoutGeometryResult = computed(() => {
     }
     return { boxes: [], contentSize: 0 };
   } else if (style === 2 && containerWidth.value > 0) {
-    // Justified Layout (Vertical)
+    if (config.settings.grid.justifyMode === 1) {
+      const result = calculateMasonryLayout(props.fileList, containerWidth.value, size, 0);
+      return { boxes: result.boxes, contentSize: result.containerHeight };
+    }
     const result = calculateJustifiedLayout(
       props.fileList,
       containerWidth.value,
@@ -202,7 +205,7 @@ function updateLayout() {
   emit('layout-update', { height: layoutContentHeight.value });
 }
 
-watch(() => [config.settings.grid.size, config.settings.grid.style, config.settings.grid.showFilmStrip], () => {
+watch(() => [config.settings.grid.size, config.settings.grid.style, config.settings.grid.showFilmStrip, config.settings.grid.justifyMode], () => {
   isLayoutTransitioning.value = true;
   updateColumnCount();
   

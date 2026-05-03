@@ -200,6 +200,14 @@
             </div>
             <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.view.justify_mode') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.justifyMode" :disabled="config.settings.grid.style !== 2">
+                <option v-for="(option, index) in justifyModeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
                 <!-- <div class="text-xs text-base-content/30">{{ $t('settings.filmstrip_view.preview_position_hint') }}</div> -->
               </div>
@@ -665,6 +673,15 @@ const slideShowTransitionOptions = computed(() => {
   return result;
 });
 
+const justifyModeOptions = computed(() => {
+  const options = localeMsg.value.settings.view.justify_mode_options;
+  const result = [];
+  for (let i = 0; i < options.length; i++) {
+    result.push({ label: options[i], value: i });
+  }
+  return result;
+});
+
 const filmStripViewPreviewPositionOptions = computed(() => {
   const options = localeMsg.value.settings.filmstrip_view.preview_position_options;
   return options.map((label, i) => ({ label, value: i }));
@@ -812,6 +829,9 @@ watch(() => config.settings.grid.labelSecondary, (newValue) => {
 });
 watch(() => config.settings.grid.previewPosition, (newValue) => {
   emit('settings-filmStripViewPreviewPosition-changed', newValue);
+});
+watch(() => config.settings.grid.justifyMode, (newValue) => {
+  emit('settings-justifyMode-changed', newValue);
 });
 
 // image viewer settings

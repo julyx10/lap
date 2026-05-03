@@ -112,6 +112,7 @@ export const useConfigStore = defineStore('configStore', {
         scaling: 1,              // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
         labelPrimary: 1,         // card view: primary label (1: Name)
         labelSecondary: 3,       // card view: secondary label (3: Dimension)
+        justifyMode: 0,          // justified view mode: 0: equal height, 1: equal width (masonry)
         previewPosition: 0,      // filmstrip view: preview position (0: top, 1: bottom, 2: left, 3: right)
       },
       
@@ -230,6 +231,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setGridLabelSecondary(gridLabelSecondary) {
       this.settings.grid.labelSecondary = gridLabelSecondary;
+    },
+    setJustifyMode(justifyMode) {
+      this.settings.grid.justifyMode = justifyMode;
     },
     setShowFilmStrip(showFilmStrip) {
       this.settings.grid.showFilmStrip = showFilmStrip;

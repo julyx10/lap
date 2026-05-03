@@ -907,6 +907,11 @@
         "카메라",
         "렌즈",
         "설정"
+      ],
+      "justify_mode": "양쪽 맞춤 모드",
+      "justify_mode_options": [
+        "높이 균등",
+        "너비 균등 (메이슨리)"
       ]
     },
     "filmstrip_view": {

@@ -907,6 +907,11 @@
         "カメラ",
         "レンズ",
         "設定"
+      ],
+      "justify_mode": "整列モード",
+      "justify_mode_options": [
+        "等高",
+        "等幅 (メイソンリー)"
       ]
     },
     "filmstrip_view": {

@@ -907,6 +907,11 @@
         "相机",
         "镜头",
         "拍摄设置"
+      ],
+      "justify_mode": "自适应模式",
+      "justify_mode_options": [
+        "等高",
+        "等宽 (瀑布流)"
       ]
     },
     "filmstrip_view": {

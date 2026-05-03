@@ -907,6 +907,11 @@
         "Camera",
         "Lens",
         "Capture settings"
+      ],
+      "justify_mode": "Justify mode",
+      "justify_mode_options": [
+        "Equal height",
+        "Equal width (Masonry)"
       ]
     },
     "filmstrip_view": {

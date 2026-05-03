@@ -907,6 +907,11 @@
         "Appareil",
         "Objectif",
         "Paramètres"
+      ],
+      "justify_mode": "Mode justifié",
+      "justify_mode_options": [
+        "Hauteur égale",
+        "Largeur égale (Masonry)"
       ]
     },
     "filmstrip_view": {

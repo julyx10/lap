@@ -907,6 +907,11 @@
         "Kamera",
         "Objektiv",
         "Einstellungen"
+      ],
+      "justify_mode": "Blocksatzmodus",
+      "justify_mode_options": [
+        "Gleiche Höhe",
+        "Gleiche Breite (Masonry)"
       ]
     },
     "filmstrip_view": {

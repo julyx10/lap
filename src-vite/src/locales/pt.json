@@ -907,6 +907,11 @@
         "Câmera",
         "Lente",
         "Configurações"
+      ],
+      "justify_mode": "Modo justificado",
+      "justify_mode_options": [
+        "Altura igual",
+        "Largura igual (Masonry)"
       ]
     },
     "filmstrip_view": {
