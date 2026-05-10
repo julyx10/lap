@@ -30,6 +30,7 @@ mod t_lens;
 mod t_libraw;
 mod t_menu;
 mod t_migration;
+mod t_pasteboard;
 mod t_protocol;
 mod t_sqlite;
 mod t_utils;
@@ -254,6 +255,9 @@ async fn main() {
             t_cmds::rename_file,
             t_cmds::move_file,
             t_cmds::copy_file,
+            t_cmds::import_file,
+            t_cmds::import_url,
+            t_cmds::import_from_drag,
             t_cmds::delete_file,
             t_cmds::delete_db_file,
             t_cmds::edit_file_comment,

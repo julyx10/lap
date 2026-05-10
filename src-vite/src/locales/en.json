@@ -430,6 +430,13 @@
       "content": "Are you sure you want to delete '{person}'?",
       "ok": "Delete"
     },
+    "drop_import": {
+      "title": "Cannot import files",
+      "message": "Please select an album folder first. Files can only be imported into a specific album folder.",
+      "success": "{count} file(s) imported",
+      "overlay": "Drop files to import",
+      "no_files": "No files could be imported. Make sure you are dropping image files."
+    },
     "manage_libraries": {
       "title": "Manage libraries",
       "name": "Name",

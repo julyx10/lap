@@ -658,6 +658,13 @@
       "overwrite": "上書き",
       "save_as_new": "名前を付けて保存",
       "overwrite_confirm": "元のファイルを上書きしますか？この操作は取り消せません。"
+    },
+    "drop_import": {
+      "title": "インポートできません",
+      "message": "最初にアルバムフォルダを選択してください。ファイルは特定のアルバムフォルダにのみインポートできます。",
+      "success": "{count} ファイルをインポートしました",
+      "overlay": "ファイルをドロップしてインポート",
+      "no_files": "ファイルをインポートできませんでした。画像ファイルをドロップしてください。"
     }
   },
   "file_info": {
@@ -853,7 +860,7 @@
       "show_map_hint": "インターネット接続が必要です",
       "debug_mode": "デバッグモード"
     },
-        "library": {
+    "library": {
       "title": "ライブラリ",
       "section_sorting": "並べ替え",
       "folder_sort": "フォルダ",

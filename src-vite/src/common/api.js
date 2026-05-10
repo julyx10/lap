@@ -837,6 +837,36 @@ export async function updateFileInfo(fileId, filePath) {
   return null;
 }
 
+export async function importFile(filePath, folderId, folderPath) {
+  try {
+    const result = await invoke('import_file', { filePath, folderId, folderPath });
+    return result;
+  } catch (error) {
+    console.error('importFile error:', error);
+    return null;
+  }
+}
+
+export async function importUrl(url, folderId, folderPath) {
+  try {
+    const result = await invoke('import_url', { url, folderId, folderPath });
+    return result;
+  } catch (error) {
+    console.error('importUrl error:', error);
+    return null;
+  }
+}
+
+export async function importFromDrag(folderId, folderPath) {
+  try {
+    const result = await invoke('import_from_drag', { folderId, folderPath });
+    return result;
+  } catch (error) {
+    console.error('importFromDrag error:', error);
+    return null;
+  }
+}
+
 export async function addFileToDb(folderId, filePath) {
   try {
     const result = await invoke('add_file_to_db', { folderId, filePath });

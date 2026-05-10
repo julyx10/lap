@@ -658,6 +658,13 @@
       "overwrite": "Écraser",
       "save_as_new": "Enregistrer sous",
       "overwrite_confirm": "Écraser le fichier original ? Irréversible."
+    },
+    "drop_import": {
+      "title": "Importation impossible",
+      "message": "Veuillez d'abord sélectionner un dossier d'album. Les fichiers ne peuvent être importés que dans un dossier d'album spécifique.",
+      "success": "{count} fichier(s) importé(s)",
+      "overlay": "Déposez les fichiers pour les importer",
+      "no_files": "Aucun fichier n'a pu être importé. Assurez-vous de déposer des fichiers image."
     }
   },
   "file_info": {

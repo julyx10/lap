@@ -658,6 +658,13 @@
       "overwrite": "Sobrescrever",
       "save_as_new": "Salvar como",
       "overwrite_confirm": "Sobrescrever arquivo original? Irreversível."
+    },
+    "drop_import": {
+      "title": "Não é possível importar arquivos",
+      "message": "Selecione primeiro uma pasta de álbum. Os arquivos só podem ser importados para uma pasta de álbum específica.",
+      "success": "{count} arquivo(s) importado(s)",
+      "overlay": "Solte os arquivos para importar",
+      "no_files": "Nenhum arquivo pôde ser importado. Certifique-se de soltar arquivos de imagem."
     }
   },
   "file_info": {

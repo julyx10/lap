@@ -291,6 +291,14 @@ fn build_libraw() {
     }
 
     shim.compile("lap_libraw_shim");
+
+    // macOS pasteboard shim for drag-drop URL extraction
+    if target_os == "macos" {
+        cc::Build::new()
+            .file("src/pasteboard.mm")
+            .compile("lap_pasteboard");
+        println!("cargo:rustc-link-lib=framework=AppKit");
+    }
 }
 
 struct JpegBuild {

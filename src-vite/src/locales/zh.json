@@ -658,6 +658,13 @@
       "overwrite": "覆盖",
       "save_as_new": "另存为",
       "overwrite_confirm": "确定覆盖现有文件吗？该操作无法撤销。"
+    },
+    "drop_import": {
+      "title": "无法导入文件",
+      "message": "请先选择一个相册文件夹。文件只能导入到指定的相册文件夹中。",
+      "success": "已导入 {count} 个文件",
+      "overlay": "拖放文件以导入",
+      "no_files": "无法导入文件。请确保拖放的是图片文件。"
     }
   },
   "file_info": {

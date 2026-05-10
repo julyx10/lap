@@ -762,6 +762,92 @@ pub fn copy_file(file_path: &str, dest_folder: &str) -> Option<String> {
     }
 }
 
+/// Import a file into a destination folder with auto-generated name.
+/// Naming uses IMG_YYYYMMDD_HHMMSS.ext with the current time.
+pub fn import_file(source_path: &str, dest_folder: &str) -> Option<String> {
+    let source = Path::new(source_path);
+    let ext = source
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("jpg")
+        .to_ascii_lowercase();
+
+    let now = chrono::Local::now();
+    let name = format!("IMG_{}.{}", now.format("%Y%m%d_%H%M%S"), ext);
+    let mut destination = PathBuf::from(dest_folder);
+    destination.push(&name);
+    let destination = get_unique_path(destination);
+
+    match fs::copy(source, &destination) {
+        Ok(_) => {
+            println!("File imported successfully: {}", destination.display());
+            destination.to_str().map(|s| s.to_string())
+        }
+        Err(e) => {
+            eprintln!("Failed to import file: {}", e);
+            None
+        }
+    }
+}
+
+/// Map an image MIME type to the canonical file extension.
+/// Returns `None` for unsupported formats so callers can reject them
+/// before writing a file.
+pub fn image_mime_to_ext(content_type: &str) -> Option<&'static str> {
+    let mime = content_type.split(';').next().unwrap_or(content_type).trim();
+    match mime {
+        "image/jpeg" => Some("jpg"),
+        "image/png" => Some("png"),
+        "image/gif" => Some("gif"),
+        "image/webp" => Some("webp"),
+        "image/avif" => Some("avif"),
+        "image/bmp" => Some("bmp"),
+        _ => None,
+    }
+}
+
+/// Validate that `bytes` starts with the expected magic bytes for `ext`.
+fn validate_image_bytes(ext: &str, bytes: &[u8]) -> bool {
+    match ext {
+        "jpg" => bytes.len() >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
+        "png" => bytes.len() >= 8 && &bytes[..8] == b"\x89PNG\r\n\x1a\n",
+        "gif" => bytes.len() >= 4 && (&bytes[..3] == b"GIF"),
+        "webp" => bytes.len() >= 12 && &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WEBP",
+        "bmp" => bytes.len() >= 2 && &bytes[..2] == b"BM",
+        "avif" => {
+            // ISOBMFF: 4 bytes size, then 'ftyp' box with 'avif' or 'avis' brand
+            bytes.len() >= 12
+                && &bytes[4..8] == b"ftyp"
+                && (&bytes[8..12] == b"avif" || &bytes[8..12] == b"avis")
+        }
+        _ => false,
+    }
+}
+
+/// Save downloaded bytes to a folder with auto-generated name.
+/// Content type is used to determine the file extension.
+/// Byte-level magic-number validation is performed before writing.
+pub fn save_bytes_to_folder(bytes: &[u8], content_type: &str, dest_folder: &str) -> Option<String> {
+    let ext = image_mime_to_ext(content_type)?;
+    if !validate_image_bytes(ext, bytes) {
+        eprintln!("Downloaded bytes do not match expected format for .{}", ext);
+        return None;
+    }
+
+    let now = chrono::Local::now();
+    let name = format!("IMG_{}.{}", now.format("%Y%m%d_%H%M%S"), ext);
+    let mut destination = PathBuf::from(dest_folder);
+    destination.push(&name);
+    let destination = get_unique_path(destination);
+
+    let mut file = fs::File::create(&destination)
+        .map_err(|e| eprintln!("Failed to create file: {}", e)).ok()?;
+    std::io::Write::write_all(&mut file, bytes)
+        .map_err(|e| eprintln!("Failed to write file: {}", e)).ok()?;
+    println!("File saved from URL: {}", destination.display());
+    destination.to_str().map(|s| s.to_string())
+}
+
 /// rename a file
 pub fn rename_file(file_path: &str, new_file_name: &str) -> Option<String> {
     let path = Path::new(file_path);

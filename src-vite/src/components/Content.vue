@@ -6,6 +6,7 @@
     @mouseenter="isContentHovered = true"
     @mouseleave="isContentHovered = false"
     @keydown="handleLocalKeyDown"
+    @dragover.prevent
   >
 
     <!-- Loading overlay -->
@@ -560,6 +561,23 @@
     @continue="confirmIndexRecoveryContinue"
     @cancel="cancelIndexRecovery"
   />
+
+  <!-- Drag-drop warning -->
+  <MessageBox
+    v-if="showDropWarning"
+    :title="$t('msgbox.drop_import.title')"
+    :message="$t('msgbox.drop_import.message')"
+    :cancelText="''"
+    @ok="showDropWarning = false"
+  />
+
+  <!-- Drop overlay -->
+  <div v-if="isDragOver && acceptDrops" class="drop-overlay">
+    <div class="drop-overlay-content">
+      <IconDownload class="w-16 h-16"/>
+      <span>{{ $t('msgbox.drop_import.overlay') }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -567,6 +585,7 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
@@ -574,7 +593,7 @@ import { getAlbum, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQuery
          copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, setFileRating, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
-         updateFileInfo, addFileToDb, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
+         updateFileInfo, importFile, importFromDrag, addFileToDb, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupGetGroup, dedupDeleteSelected, getQueryFilePosition } from '@/common/api'; 
 import { config, libConfig } from '@/common/config';
@@ -643,6 +662,7 @@ import {
   IconCalendarDay,
   IconArrowUp,
   IconArrowDown,
+  IconDownload,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -1070,6 +1090,18 @@ const visibleItemCount = computed(() => {
 const timelineData = ref<any[]>([]);  // timeline markers for scrollbar
 
 const toast = useToast();
+
+// Drag-drop file import
+const isDragOver = ref(false);
+const dragOverCount = ref(0);
+const showDropWarning = ref(false);
+const acceptDrops = computed(() =>
+  tempViewMode.value === 'none'
+  && config.main.sidebarIndex === 0
+  && libConfig.album.id > 0
+  && !libConfig.album.selected
+);
+
 const isProcessing = ref(false);  // show processing status
 const isLoading = ref(false);     // show loading status in GridView (for empty file list)
 const hasLoadedInitialResult = ref(false); // avoid showing "No files found" before first real result returns
@@ -1178,6 +1210,7 @@ const backupState = ref<any>(null);
 
 let unlistenKeydown: () => void;
 let unlistenImageViewer: () => void;
+let unlistenDragDrop: () => void;
 let unlistenFaceIndexProgress: (() => void) | null = null;
 
 let resizeObserver: ResizeObserver | null = null;
@@ -2266,6 +2299,32 @@ onMounted( async() => {
   window.addEventListener('keydown', handleLocalKeyDown);
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
+  // Drag-drop file import
+  unlistenDragDrop = await getCurrentWebview().onDragDropEvent((event: any) => {
+    const { type, paths } = event.payload;
+    if (type === 'enter') {
+      if (acceptDrops.value) {
+        dragOverCount.value++;
+        isDragOver.value = true;
+      }
+    } else if (type === 'leave') {
+      dragOverCount.value = Math.max(0, dragOverCount.value - 1);
+      if (dragOverCount.value === 0) isDragOver.value = false;
+    } else if (type === 'drop') {
+      dragOverCount.value = 0;
+      isDragOver.value = false;
+      if (!acceptDrops.value) {
+        showDropWarning.value = true;
+        return;
+      }
+      if (paths && paths.length > 0) {
+        handleDropFiles(paths);
+      } else {
+        handleBrowserDropFromTauri();
+      }
+    }
+  });
+
   unlistenImageViewer = await listen('message-from-image-viewer', async (event) => {
     const { message } = event.payload as any;
     switch (message) {
@@ -2488,6 +2547,7 @@ onBeforeUnmount(() => {
   if (unlistenRefreshContent) unlistenRefreshContent();
   if (unlistenFilesDeleted) unlistenFilesDeleted();
   if (unlistenFaceIndexProgress) unlistenFaceIndexProgress();
+  if (unlistenDragDrop) unlistenDragDrop();
 });
 
 /// watch appearance
@@ -3818,6 +3878,43 @@ const onCopyTo = async () => {
   showCopyTo.value = false;
 }
 
+async function handleDropFiles(paths: string[]) {
+  const folderId = libConfig.album.folderId;
+  const folderPath = libConfig.album.folderPath;
+  if (!folderId || !folderPath) return;
+
+  let imported = 0;
+  for (const sourcePath of paths) {
+    try {
+      const file = await importFile(sourcePath, folderId, folderPath);
+      if (file) imported++;
+    } catch (e) {
+      console.error('Failed to import file:', sourcePath, e);
+    }
+  }
+
+  if (imported > 0) {
+    await updateContent();
+    toast.success(t('msgbox.drop_import.success', { count: imported }));
+  } else {
+    toast.warning(t('msgbox.drop_import.no_files'));
+  }
+}
+
+async function handleBrowserDropFromTauri() {
+  const folderId = libConfig.album.folderId;
+  const folderPath = libConfig.album.folderPath;
+  if (!folderId || !folderPath) return;
+
+  const file = await importFromDrag(folderId, folderPath);
+  if (file) {
+    await updateContent();
+    toast.success(t('msgbox.drop_import.success', { count: 1 }));
+  } else {
+    toast.warning(t('msgbox.drop_import.no_files'));
+  }
+}
+
 const onTrashFile = async () => {
   const deletedFileIds: number[] = [];
   const affectedAlbumIds = new Set<number>();
@@ -4913,3 +5010,29 @@ function stopDragging() {
   document.removeEventListener('mouseup', stopDragging);
 }
 </script>
+
+<style scoped>
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.12);
+  border: 3px dashed rgba(59, 130, 246, 0.5);
+  border-radius: 8px;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.drop-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: rgba(59, 130, 246, 0.9);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+</style>

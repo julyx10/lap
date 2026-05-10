@@ -658,6 +658,13 @@
       "overwrite": "Überschreiben",
       "save_as_new": "Speichern unter",
       "overwrite_confirm": "Originaldatei überschreiben? Kann nicht rückgängig gemacht werden."
+    },
+    "drop_import": {
+      "title": "Import nicht möglich",
+      "message": "Bitte wähle zuerst einen Albumordner aus. Dateien können nur in einen bestimmten Albumordner importiert werden.",
+      "success": "{count} Datei(en) importiert",
+      "overlay": "Dateien zum Importieren ablegen",
+      "no_files": "Keine Dateien konnten importiert werden. Stelle sicher, dass du Bilddateien ablegst."
     }
   },
   "file_info": {
@@ -853,7 +860,7 @@
       "show_map_hint": "Benötigt Internetzugang",
       "debug_mode": "Debug-Modus"
     },
-        "library": {
+    "library": {
       "title": "Bibliothek",
       "section_sorting": "Sortierung",
       "folder_sort": "Ordner",

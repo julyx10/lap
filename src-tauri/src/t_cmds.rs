@@ -587,6 +587,80 @@ pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
     t_utils::copy_file(file_path, new_folder_path)
 }
 
+/// import a file into a folder with auto-generated name (IMG_YYYYMMDD_HHMMSS.ext)
+#[tauri::command]
+pub fn import_file(file_path: &str, folder_id: i64, folder_path: &str) -> Result<Option<AFile>, String> {
+    // Validate the source is a supported type *before* copying.
+    t_utils::get_file_type(file_path)
+        .ok_or_else(|| format!("Unsupported file type: {}", file_path))?;
+
+    let new_path = t_utils::import_file(file_path, folder_path)
+        .ok_or_else(|| format!("Failed to copy file: {}", file_path))?;
+    let file_type = t_utils::get_file_type(&new_path)
+        .ok_or_else(|| {
+            // The renamed file should have a valid extension; if not, remove
+            // the orphan so the album folder stays clean.
+            let _ = std::fs::remove_file(&new_path);
+            format!("Unsupported file type after copy: {}", new_path)
+        })?;
+    let now = chrono::Utc::now().timestamp_millis();
+    let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
+    Ok(Some(file))
+}
+
+/// import an image from a URL into a folder with auto-generated name
+#[tauri::command]
+pub async fn import_url(url: &str, folder_id: i64, folder_path: String) -> Result<Option<AFile>, String> {
+    import_url_inner(url, folder_id, folder_path).await
+}
+
+/// Import an image from the macOS drag pasteboard (for browser-sourced drags
+/// where Tauri cannot provide file paths).
+#[tauri::command]
+pub async fn import_from_drag(folder_id: i64, folder_path: String) -> Result<Option<AFile>, String> {
+    let url = crate::t_pasteboard::get_drag_image_url()
+        .ok_or_else(|| "No image URL found in drag pasteboard".to_string())?;
+    import_url_inner(&url, folder_id, folder_path).await
+}
+
+async fn import_url_inner(url: &str, folder_id: i64, folder_path: String) -> Result<Option<AFile>, String> {
+    let response = reqwest::get(url).await
+        .map_err(|e| format!("Failed to download image: {}", e))?;
+
+    // Reject HTTP error statuses
+    let status = response.status();
+    if !status.is_success() {
+        return Err(format!("Server returned {} {}", status.as_u16(), status.canonical_reason().unwrap_or("")));
+    }
+
+    // Require a supported image content type — validate via the shared
+    // MIME→extension table so the response form the importer can name.
+    let mime = {
+        let ct = response.headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .ok_or_else(|| "Response missing Content-Type header".to_string())?;
+        let m = ct.split(';').next().unwrap_or(ct).trim().to_string();
+        t_utils::image_mime_to_ext(&m)
+            .ok_or_else(|| format!("Unsupported image format: {}", m))?;
+        m
+    };
+
+    let bytes = response.bytes().await
+        .map_err(|e| format!("Failed to read response: {}", e))?;
+
+    let dest_folder = folder_path.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let new_path = t_utils::save_bytes_to_folder(&bytes, &mime, &dest_folder)
+            .ok_or_else(|| "Failed to save downloaded image".to_string())?;
+        let file_type = t_utils::get_file_type(&new_path)
+            .ok_or_else(|| format!("Unsupported file type: {}", new_path))?;
+        let now = chrono::Utc::now().timestamp_millis();
+        let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
+        Ok(Some(file))
+    }).await.map_err(|e| format!("Failed to save file: {}", e))?
+}
+
 /// delete a file
 #[tauri::command]
 pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {

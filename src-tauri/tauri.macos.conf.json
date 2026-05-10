@@ -9,7 +9,7 @@
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "acceptFirstMouse": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": true
       }
     ]
   }

@@ -8,7 +8,7 @@
         "minHeight": 600,
         "decorations": false,
         "transparent": true,
-        "dragDropEnabled": false,
+        "dragDropEnabled": true,
         "zoomHotkeysEnabled": true
       }
     ]
