@@ -541,6 +541,20 @@
       "success": "{count}개 파일 휴지통으로 이동됨.",
       "error": "선택한 파일을 휴지통으로 이동하지 못했습니다."
     },
+    "permanent_delete": {
+      "checkbox": "영구 삭제(되돌릴 수 없음)",
+      "hint": "휴지통을 사용하지 않고 디스크에서 바로 삭제합니다.",
+      "file_title": "영구 삭제",
+      "files_title": "영구 삭제",
+      "file_content": "'{file}' 파일을 영구 삭제합니다.",
+      "files_content": "선택한 {count}개 파일을 영구 삭제합니다.",
+      "ok_file": "영구 삭제",
+      "ok_files": "영구 삭제",
+      "file_success": "'{file}' 파일을 영구 삭제했습니다.",
+      "files_success": "선택한 {count}개 파일을 영구 삭제했습니다.",
+      "file_error": "파일을 영구 삭제하지 못했습니다.",
+      "files_error": "선택한 파일을 영구 삭제하지 못했습니다."
+    },
     "new_tag": {
       "title": "새 태그",
       "content": "태그 이름:",

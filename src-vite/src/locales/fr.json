@@ -541,6 +541,20 @@
       "success": "{count} fichiers mis à la corbeille.",
       "error": "Impossible de mettre les fichiers sélectionnés à la corbeille."
     },
+    "permanent_delete": {
+      "checkbox": "Supprimer définitivement (action irréversible)",
+      "hint": "Les fichiers seront supprimés du disque sans passer par la corbeille.",
+      "file_title": "Supprimer définitivement",
+      "files_title": "Supprimer définitivement",
+      "file_content": "Le fichier '{file}' sera supprimé définitivement.",
+      "files_content": "{count} fichiers sélectionnés seront supprimés définitivement.",
+      "ok_file": "Supprimer définitivement",
+      "ok_files": "Supprimer définitivement",
+      "file_success": "Le fichier '{file}' a été supprimé définitivement.",
+      "files_success": "{count} fichiers sélectionnés ont été supprimés définitivement.",
+      "file_error": "Impossible de supprimer définitivement le fichier.",
+      "files_error": "Impossible de supprimer définitivement les fichiers sélectionnés."
+    },
     "new_tag": {
       "title": "Nouveau tag",
       "content": "Nom tag:",

@@ -541,6 +541,20 @@
       "success": "{count} archivos en papelera.",
       "error": "No se pudieron mover los archivos seleccionados a la papelera."
     },
+    "permanent_delete": {
+      "checkbox": "Eliminar permanentemente (no se puede deshacer)",
+      "hint": "Esto elimina los archivos del disco sin usar la papelera.",
+      "file_title": "Eliminar permanentemente",
+      "files_title": "Eliminar permanentemente",
+      "file_content": "El archivo '{file}' se eliminará permanentemente.",
+      "files_content": "{count} archivos seleccionados se eliminarán permanentemente.",
+      "ok_file": "Eliminar permanentemente",
+      "ok_files": "Eliminar permanentemente",
+      "file_success": "El archivo '{file}' se eliminó permanentemente.",
+      "files_success": "{count} archivos seleccionados se eliminaron permanentemente.",
+      "file_error": "No se pudo eliminar permanentemente el archivo.",
+      "files_error": "No se pudieron eliminar permanentemente los archivos seleccionados."
+    },
     "new_tag": {
       "title": "Nueva etiqueta",
       "content": "Nombre etiqueta:",

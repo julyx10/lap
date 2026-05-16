@@ -4,6 +4,23 @@
       {{ message }}
     </div>
 
+    <label
+      v-if="checkboxText"
+      class="mt-3 flex items-start gap-2 text-sm cursor-pointer"
+    >
+      <input
+        v-model="checkboxValue"
+        type="checkbox"
+        class="checkbox checkbox-xs checkbox-error mt-0.5"
+        @change="emit('checkbox-change', checkboxValue)"
+      />
+      <span class="leading-5">{{ checkboxText }}</span>
+    </label>
+
+    <p v-if="checkboxHint && checkboxValue" class="mt-2 text-xs text-error whitespace-pre-line">
+      {{ checkboxHint }}
+    </p>
+
     <div class="flex flex-row items-center text-sm">
       <input v-if="showInput && !multiLine"
         ref="inputRef"
@@ -115,6 +132,18 @@ const props = defineProps({
   warningThird: {
     type: Boolean,
     default: false
+  },
+  checkboxText: {
+    type: String,
+    default: ''
+  },
+  checkboxHint: {
+    type: String,
+    default: ''
+  },
+  checkboxChecked: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -123,13 +152,14 @@ const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
-const emit = defineEmits(['ok', 'cancel', 'reset', 'third']);
+const emit = defineEmits(['ok', 'cancel', 'reset', 'third', 'checkbox-change']);
 
 // input 
 const inputRef = ref<HTMLInputElement | null>(null);
 const inputValue = ref(props.inputText);
 const needValidateInput = ref(props.needValidateInput);
 const inputErrorMessage = ref('');
+const checkboxValue = ref(props.checkboxChecked);
 
 const okButtonClasses = computed(() => {
   return !props.showInput || !props.needValidateInput || inputValue.value.trim().length > 0
@@ -160,6 +190,10 @@ watch(() => props.errorMessage, (newValue) => {
     inputErrorMessage.value = newValue;
     emit('reset'); // reset error message
   }
+});
+
+watch(() => props.checkboxChecked, (newValue) => {
+  checkboxValue.value = newValue;
 });
 
 const validateInput = () => {

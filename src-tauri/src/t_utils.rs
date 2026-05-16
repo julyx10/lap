@@ -49,6 +49,34 @@ pub fn trash_path(path: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub fn delete_file_permanently(path: &str) -> Result<(), String> {
+    let metadata = fs::symlink_metadata(path).map_err(|e| {
+        format!(
+            "Failed to read metadata before permanent delete: {} ({})",
+            path, e
+        )
+    })?;
+
+    if metadata.is_dir() {
+        return Err(format!(
+            "Permanent delete only supports files, not directories: {}",
+            path
+        ));
+    }
+
+    fs::remove_file(path)
+        .map_err(|e| format!("Failed to permanently delete file: {} ({})", path, e))?;
+
+    if path_exists(path) {
+        return Err(format!(
+            "Failed to permanently delete file. The path still exists on disk: {}",
+            path
+        ));
+    }
+
+    Ok(())
+}
+
 // reverse geocoder
 #[derive(serde::Deserialize)]
 pub struct GeoRecord {

@@ -548,6 +548,20 @@
       "success": "{count} selected files have been trashed.",
       "error": "Failed to move selected files to Trash."
     },
+    "permanent_delete": {
+      "checkbox": "Delete permanently (cannot be undone)",
+      "hint": "This removes files from disk without using Trash.",
+      "file_title": "Delete permanently",
+      "files_title": "Delete permanently",
+      "file_content": "The file '{file}' will be permanently deleted.",
+      "files_content": "{count} selected files will be permanently deleted.",
+      "ok_file": "Delete permanently",
+      "ok_files": "Delete permanently",
+      "file_success": "The file '{file}' has been permanently deleted.",
+      "files_success": "{count} selected files have been permanently deleted.",
+      "file_error": "Failed to permanently delete file.",
+      "files_error": "Failed to permanently delete selected files."
+    },
     "new_tag": {
       "title": "New tag",
       "content": "Enter the name for the new tag:",

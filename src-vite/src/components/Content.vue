@@ -509,8 +509,12 @@
     :OkText="trashMsgboxOkText"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
+    :checkboxText="$t('msgbox.permanent_delete.checkbox')"
+    :checkboxHint="$t('msgbox.permanent_delete.hint')"
+    :checkboxChecked="permanentDeleteChecked"
     @ok="onTrashFile"
     @cancel="closeTrashMsgbox"
+    @checkbox-change="permanentDeleteChecked = $event"
   />
 
   <!-- tag -->
@@ -591,7 +595,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles,
-         copyImage, renameFile, moveFile, copyFile, deleteFile, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
+         copyImage, renameFile, moveFile, copyFile, deleteFile, deleteFilePermanently, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, setFileRating, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, importFile, importFromDrag, importUrl, importFileBytes, addFileToDb, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
@@ -893,6 +897,7 @@ const editImageInitialImageSrc = ref('');
 const editImageInitialTab = ref<'edit' | 'adjust'>('edit');
 const showCopyTo = ref(false);
 const showTrashMsgbox = ref(false);
+const permanentDeleteChecked = ref(false);
 const dedupReclaimBytes = ref(0);
 const dedupTrashGroupKey = ref('');
 const dedupDeleteFileIds = ref<number[]>([]);
@@ -992,15 +997,17 @@ const checkUnsavedChanges = (action: () => void) => {
   }
 };
 
-const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = []) => {
+const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = [], permanentDefault = false) => {
   dedupReclaimBytes.value = Math.max(0, reclaimBytes);
   dedupTrashGroupKey.value = groupKey || '';
   dedupDeleteFileIds.value = Array.isArray(fileIds) ? [...new Set(fileIds)] : [];
+  permanentDeleteChecked.value = permanentDefault;
   showTrashMsgbox.value = true;
 };
 
 const closeTrashMsgbox = () => {
   showTrashMsgbox.value = false;
+  permanentDeleteChecked.value = false;
   dedupReclaimBytes.value = 0;
   dedupTrashGroupKey.value = '';
   dedupDeleteFileIds.value = [];
@@ -1008,19 +1015,33 @@ const closeTrashMsgbox = () => {
 
 const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0);
 
-const trashMsgboxTitle = computed(() =>
-  (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.title : localeMsg.value.msgbox.trash_file.title
-);
+const trashMsgboxTitle = computed(() => {
+  if (permanentDeleteChecked.value) {
+    return (isDedupTrash.value || selectMode.value)
+      ? localeMsg.value.msgbox.permanent_delete.files_title
+      : localeMsg.value.msgbox.permanent_delete.file_title;
+  }
+  return (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.title : localeMsg.value.msgbox.trash_file.title;
+});
 
-const trashMsgboxOkText = computed(() =>
-  (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.ok : localeMsg.value.msgbox.trash_file.ok
-);
+const trashMsgboxOkText = computed(() => {
+  if (permanentDeleteChecked.value) {
+    return (isDedupTrash.value || selectMode.value)
+      ? localeMsg.value.msgbox.permanent_delete.ok_files
+      : localeMsg.value.msgbox.permanent_delete.ok_file;
+  }
+  return (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.ok : localeMsg.value.msgbox.trash_file.ok;
+});
 
 const trashMsgboxMessage = computed(() => {
   const deleteCount = isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value;
-  const base = (isDedupTrash.value || selectMode.value)
-    ? localeMsg.value.msgbox.trash_files.content.replace('{count}', deleteCount.toLocaleString())
-    : localeMsg.value.msgbox.trash_file.content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || '');
+  const base = permanentDeleteChecked.value
+    ? ((isDedupTrash.value || selectMode.value)
+        ? localeMsg.value.msgbox.permanent_delete.files_content.replace('{count}', deleteCount.toLocaleString())
+        : localeMsg.value.msgbox.permanent_delete.file_content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''))
+    : ((isDedupTrash.value || selectMode.value)
+        ? localeMsg.value.msgbox.trash_files.content.replace('{count}', deleteCount.toLocaleString())
+        : localeMsg.value.msgbox.trash_file.content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''));
   if (dedupReclaimBytes.value <= 0 || !(isDedupTrash.value || selectMode.value)) return base;
   return `${base}\n${localeMsg.value.info_panel.dedup.reclaimable_size}: ${formatFileSize(dedupReclaimBytes.value)}`;
 });
@@ -1838,7 +1859,7 @@ const handleKeyDown = (e: any) => {
     return;
   }
 
-  const { key, metaKey } = e.payload;
+  const { key, metaKey, shiftKey } = e.payload;
 
   // Disable global shortcuts during slideshow (except Escape for safety, though handled in local)
   if (isSlideShow.value && key !== 'Escape') {
@@ -1863,7 +1884,7 @@ const handleKeyDown = (e: any) => {
   } else if (!metaKey && !e.payload.ctrlKey && key.toLowerCase() === 'm') {
     showMoveTo.value = true;
   } else if ((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
-    openTrashMsgbox();
+    openTrashMsgbox(0, '', [], !!shiftKey);
   } else if ((keyActions as any)[key]) {
     (keyActions as any)[key]();
   }
@@ -3986,7 +4007,28 @@ async function handleDropUrls(urls: string[]) {
   }
 }
 
+const getDeleteFileSuccessMessage = (fileName: string, permanently: boolean) =>
+  permanently
+    ? localeMsg.value.msgbox.permanent_delete.file_success.replace('{file}', fileName)
+    : localeMsg.value.msgbox.trash_file.success.replace('{file}', fileName);
+
+const getDeleteFilesSuccessMessage = (count: number, permanently: boolean) =>
+  permanently
+    ? localeMsg.value.msgbox.permanent_delete.files_success.replace('{count}', count.toLocaleString())
+    : localeMsg.value.msgbox.trash_files.success.replace('{count}', count.toLocaleString());
+
+const getDeleteFileErrorMessage = (permanently: boolean) =>
+  permanently
+    ? localeMsg.value.msgbox.permanent_delete.file_error
+    : localeMsg.value.msgbox.trash_file.error;
+
+const getDeleteFilesErrorMessage = (permanently: boolean) =>
+  permanently
+    ? localeMsg.value.msgbox.permanent_delete.files_error
+    : localeMsg.value.msgbox.trash_files.error;
+
 const onTrashFile = async () => {
+  const permanently = permanentDeleteChecked.value;
   const deletedFileIds: number[] = [];
   const affectedAlbumIds = new Set<number>();
   let failedDeleteCount = 0;
@@ -3998,41 +4040,60 @@ const onTrashFile = async () => {
   try {
     if (dedupDeleteFileIds.value.length > 0) {
       const ids = [...dedupDeleteFileIds.value];
-      const result = await dedupDeleteSelected(null, ids);
-      if (result !== undefined) {
-        const resultDeletedIds = Array.isArray(result?.deletedFileIds)
-          ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
-          : [];
-        deletedFileIds.push(...resultDeletedIds);
-        fileList.value
-          .filter(file => deletedFileIds.includes(file.id))
-          .forEach(file => affectedAlbumIds.add(Number(file.album_id || 0)));
-        closeTrashMsgbox();
-        await updateContent();
-        if (deletedFileIds.length > 0) {
-          await refreshAffectedAlbums(Array.from(affectedAlbumIds));
-          tauriEmit('files-deleted', {
-            source: 'content',
-            fileIds: deletedFileIds,
-            fileCount: fileList.value.length,
-            selectedIndex: selectedItemIndex.value,
-          });
-          toast.success(
-            localeMsg.value.msgbox.trash_files.success.replace('{count}', deletedFileIds.length.toLocaleString())
-          );
+      if (permanently) {
+        const selectedItems = ids
+          .map(id => fileList.value.find(file => Number(file.id) === id))
+          .filter((file): file is any => !!file);
+        const deleteResults = await Promise.allSettled(
+          selectedItems.map(async item => {
+            await deleteFileAlways(item, permanently);
+            return item;
+          })
+        );
+        const deletedItems = deleteResults
+          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+          .map(result => result.value);
+        failedDeleteCount = ids.length - deletedItems.length;
+
+        if (failedDeleteCount > 0 && deletedItems.length === 0) {
+          throw new Error('Failed to permanently delete dedup files');
         }
-        if (Number(result?.failedCount || 0) > 0 || deletedFileIds.length === 0) {
-          toast.error(localeMsg.value.msgbox.trash_files.error);
+
+        deletedItems.forEach(item => affectedAlbumIds.add(Number(item.album_id || 0)));
+        deletedFileIds.push(...deletedItems.map(item => item.id));
+      } else {
+        const result = await dedupDeleteSelected(null, ids);
+        if (result !== undefined) {
+          const resultDeletedIds = Array.isArray(result?.deletedFileIds)
+            ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
+            : [];
+          deletedFileIds.push(...resultDeletedIds);
+          fileList.value
+            .filter(file => deletedFileIds.includes(file.id))
+            .forEach(file => affectedAlbumIds.add(Number(file.album_id || 0)));
+          failedDeleteCount = Number(result?.failedCount || 0);
+          if (deletedFileIds.length === 0) {
+            failedDeleteCount = Math.max(1, failedDeleteCount);
+          }
+        } else {
+          throw new Error('Failed to trash dedup files');
         }
-        return;
       }
-      throw new Error('Failed to trash dedup files');
+
+      if (failedDeleteCount > 0 && deletedFileIds.length === 0) {
+        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
+      }
+
+      fileList.value = fileList.value.filter((f) => !deletedFileIds.includes(f.id));
+      totalFileCount.value = fileList.value.length;
+      totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+      selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
     }
     else if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
       const selectedItems = getActionableSelectedItems();
       const deleteResults = await Promise.allSettled(
         selectedItems.map(async item => {
-          await deleteFileAlways(item);
+          await deleteFileAlways(item, permanently);
           return item;
         })
       );
@@ -4042,7 +4103,7 @@ const onTrashFile = async () => {
       failedDeleteCount = deleteResults.length - deletedItems.length;
 
       if (failedDeleteCount > 0 && deletedItems.length === 0) {
-        throw new Error('Failed to trash selected files');
+        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} selected files`);
       }
 
       deletedItems.forEach(item => affectedAlbumIds.add(Number(item.album_id || 0)));
@@ -4056,10 +4117,10 @@ const onTrashFile = async () => {
       const deletedFileName = fileList.value[selectedItemIndex.value]?.name || '';
       affectedAlbumIds.add(Number(fileList.value[selectedItemIndex.value].album_id || 0));
       deletedFileIds.push(fileList.value[selectedItemIndex.value].id);
-      await deleteFileAlways(fileList.value[selectedItemIndex.value]);
+      await deleteFileAlways(fileList.value[selectedItemIndex.value], permanently);
       removeFromFileList(selectedItemIndex.value);
       toast.success(
-        localeMsg.value.msgbox.trash_file.success.replace('{file}', deletedFileName)
+        getDeleteFileSuccessMessage(deletedFileName, permanently)
       );
     }
 
@@ -4075,14 +4136,14 @@ const onTrashFile = async () => {
       });
     }
 
-    if (selectMode.value && deletedFileIds.length > 0) {
+    if ((selectMode.value || isDedupTrash.value) && deletedFileIds.length > 0) {
       toast.success(
-        localeMsg.value.msgbox.trash_files.success.replace('{count}', deletedFileIds.length.toLocaleString())
+        getDeleteFilesSuccessMessage(deletedFileIds.length, permanently)
       );
     }
 
     if (failedDeleteCount > 0) {
-      toast.error(localeMsg.value.msgbox.trash_files.error);
+      toast.error(getDeleteFilesErrorMessage(permanently));
     }
 
     closeTrashMsgbox();
@@ -4113,22 +4174,24 @@ const onTrashFile = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to trash file(s):', error);
+    console.error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file(s):`, error);
     toast.error(
       (dedupDeleteFileIds.value.length > 0 || selectMode.value)
-        ? localeMsg.value.msgbox.trash_files.error
-        : localeMsg.value.msgbox.trash_file.error
+        ? getDeleteFilesErrorMessage(permanently)
+        : getDeleteFileErrorMessage(permanently)
     );
   }
 }
 
-// Trash a file. Keep the DB row if the filesystem operation fails.
-async function deleteFileAlways(file: any) {
-  const deletedFile = await deleteFile(file.id, file.file_path);
+// Remove a file from disk first. Keep the DB row if the filesystem operation fails.
+async function deleteFileAlways(file: any, permanently = false) {
+  const deletedFile = permanently
+    ? await deleteFilePermanently(file.id, file.file_path)
+    : await deleteFile(file.id, file.file_path);
   if(deletedFile) {
-    console.log('clickDeleteFile - trashed file:', file.file_path);
+    console.log(`clickDeleteFile - ${permanently ? 'permanently deleted' : 'trashed'} file:`, file.file_path);
   } else {
-    throw new Error(`Failed to trash file: ${file.file_path}`);
+    throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file: ${file.file_path}`);
   }
 }
 

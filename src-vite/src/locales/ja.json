@@ -541,6 +541,20 @@
       "success": "{count} 個のファイルをゴミ箱に移動しました。",
       "error": "選択したファイルをゴミ箱に移動できませんでした。"
     },
+    "permanent_delete": {
+      "checkbox": "完全に削除する（元に戻せません）",
+      "hint": "ゴミ箱を使わず、ディスクから直接削除します。",
+      "file_title": "完全に削除",
+      "files_title": "完全に削除",
+      "file_content": "ファイル '{file}' を完全に削除します。",
+      "files_content": "選択した {count} 個のファイルを完全に削除します。",
+      "ok_file": "完全に削除",
+      "ok_files": "完全に削除",
+      "file_success": "ファイル '{file}' を完全に削除しました。",
+      "files_success": "選択した {count} 個のファイルを完全に削除しました。",
+      "file_error": "ファイルを完全に削除できませんでした。",
+      "files_error": "選択したファイルを完全に削除できませんでした。"
+    },
     "new_tag": {
       "title": "新しいタグ",
       "content": "タグ名:",

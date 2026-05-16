@@ -541,6 +541,20 @@
       "success": "{count} Dateien in Papierkorb.",
       "error": "Ausgewählte Dateien konnten nicht in den Papierkorb verschoben werden."
     },
+    "permanent_delete": {
+      "checkbox": "Endgültig löschen (kann nicht rückgängig gemacht werden)",
+      "hint": "Dateien werden direkt vom Datenträger gelöscht, ohne den Papierkorb zu verwenden.",
+      "file_title": "Endgültig löschen",
+      "files_title": "Endgültig löschen",
+      "file_content": "Die Datei '{file}' wird endgültig gelöscht.",
+      "files_content": "{count} ausgewählte Dateien werden endgültig gelöscht.",
+      "ok_file": "Endgültig löschen",
+      "ok_files": "Endgültig löschen",
+      "file_success": "Die Datei '{file}' wurde endgültig gelöscht.",
+      "files_success": "{count} ausgewählte Dateien wurden endgültig gelöscht.",
+      "file_error": "Datei konnte nicht endgültig gelöscht werden.",
+      "files_error": "Ausgewählte Dateien konnten nicht endgültig gelöscht werden."
+    },
     "new_tag": {
       "title": "Neuer Tag",
       "content": "Tag-Name:",

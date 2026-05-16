@@ -696,6 +696,16 @@ pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {
     AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))
 }
 
+/// delete a file permanently
+#[tauri::command]
+pub fn delete_file_permanently(file_id: i64, file_path: &str) -> Result<usize, String> {
+    // delete the file from disk first
+    t_utils::delete_file_permanently(file_path)?;
+
+    // delete the file from db
+    AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))
+}
+
 /// delete a file from db
 #[tauri::command]
 pub fn delete_db_file(file_id: i64) -> Result<usize, String> {

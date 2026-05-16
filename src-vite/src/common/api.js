@@ -757,6 +757,16 @@ export async function deleteFile(fileId, filePath) {
   }
 }
 
+// delete a file permanently
+export async function deleteFilePermanently(fileId, filePath) {
+  try {
+    return await invoke('delete_file_permanently', { fileId, filePath });
+  } catch (error) {
+    console.error('deleteFilePermanently error:', error);
+    return null;
+  }
+}
+
 // delete a file from db
 export async function deleteDbFile(fileId) {
   try {

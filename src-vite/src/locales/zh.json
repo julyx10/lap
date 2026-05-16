@@ -541,6 +541,20 @@
       "success": "{count} 个选择的文件已移到废纸篓。",
       "error": "将所选文件移到废纸篓失败。"
     },
+    "permanent_delete": {
+      "checkbox": "永久删除（无法撤销）",
+      "hint": "文件将直接从磁盘删除，不会进入废纸篓。",
+      "file_title": "永久删除",
+      "files_title": "永久删除",
+      "file_content": "文件 '{file}' 将被永久删除。",
+      "files_content": "{count} 个选择的文件将被永久删除。",
+      "ok_file": "永久删除",
+      "ok_files": "永久删除",
+      "file_success": "文件 '{file}' 已永久删除。",
+      "files_success": "{count} 个选择的文件已永久删除。",
+      "file_error": "永久删除文件失败。",
+      "files_error": "永久删除所选文件失败。"
+    },
     "new_tag": {
       "title": "新建标签",
       "content": "输入新标签的名称:",

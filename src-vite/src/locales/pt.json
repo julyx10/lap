@@ -541,6 +541,20 @@
       "success": "{count} arquivos na lixeira.",
       "error": "Falha ao mover os arquivos selecionados para a lixeira."
     },
+    "permanent_delete": {
+      "checkbox": "Excluir permanentemente (não pode ser desfeito)",
+      "hint": "Isso remove os arquivos do disco sem usar a lixeira.",
+      "file_title": "Excluir permanentemente",
+      "files_title": "Excluir permanentemente",
+      "file_content": "O arquivo '{file}' será excluído permanentemente.",
+      "files_content": "{count} arquivos selecionados serão excluídos permanentemente.",
+      "ok_file": "Excluir permanentemente",
+      "ok_files": "Excluir permanentemente",
+      "file_success": "O arquivo '{file}' foi excluído permanentemente.",
+      "files_success": "{count} arquivos selecionados foram excluídos permanentemente.",
+      "file_error": "Falha ao excluir o arquivo permanentemente.",
+      "files_error": "Falha ao excluir permanentemente os arquivos selecionados."
+    },
     "new_tag": {
       "title": "Nova tag",
       "content": "Nome da tag:",
