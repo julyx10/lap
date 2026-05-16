@@ -281,6 +281,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { isWin, isMac, setTheme, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import {
   editFileComment,
   getFileInfo,
@@ -308,6 +309,7 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
 const appWindow = getCurrentWebviewWindow()
+const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : 'windows';
 
 // input parameters
 const fileId = ref(0);       // File ID
@@ -571,77 +573,108 @@ function handleKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  // Disable keyboard events during slideshow except the toggle shortcut.
-  if (isSlideShow.value && event.key !== 'Escape' && event.code !== 'KeyP') {
+  // Disable keyboard events during slideshow except close and toggle slideshow.
+  if (
+    isSlideShow.value &&
+    !matchesShortcut('view.close', event, shortcutPlatform) &&
+    !matchesShortcut('slideshow.toggle', event, shortcutPlatform)
+  ) {
     return;
   }
 
-  const ratingShortcut = Number.parseInt(event.key, 10);
-  const hasModifier = event.metaKey || event.ctrlKey || event.altKey;
-
-  if (!hasModifier && Number.isInteger(ratingShortcut) && ratingShortcut >= 0 && ratingShortcut <= 5) {
+  const ratingShortcut = getMatchedRating(event);
+  if (ratingShortcut !== null) {
     event.preventDefault();
     void setCurrentFileRating(ratingShortcut, getActiveFilePane());
     return;
   }
 
-  if (!hasModifier) {
-    if (event.code === 'KeyP') {
-      event.preventDefault();
-      clickSlideShow(getActiveFilePane());
-      return;
-    }
-
-    if (event.code === 'KeyF') {
-      event.preventDefault();
-      void toggleFavorite(getActiveFilePane());
-      return;
-    }
-
-    if (event.code === 'KeyT') {
-      event.preventDefault();
-      clickTag(getActiveFilePane());
-      return;
-    }
-
-    if (event.code === 'KeyC') {
-      event.preventDefault();
-      openCommentEditor(getActiveFilePane());
-      return;
-    }
-
-    if (event.code === 'KeyR') {
-      event.preventDefault();
-      void clickRotate(getActiveFilePane());
-      return;
-    }
+  if (matchesShortcut('slideshow.toggle', event, shortcutPlatform)) {
+    event.preventDefault();
+    clickSlideShow(getActiveFilePane());
+    return;
   }
 
-  if (event.key === 'Tab' && isSplit.value) {
+  if (matchesShortcut('meta.favorite', event, shortcutPlatform)) {
+    event.preventDefault();
+    void toggleFavorite(getActiveFilePane());
+    return;
+  }
+
+  if (matchesShortcut('meta.tag', event, shortcutPlatform)) {
+    event.preventDefault();
+    clickTag(getActiveFilePane());
+    return;
+  }
+
+  if (matchesShortcut('meta.comment', event, shortcutPlatform)) {
+    event.preventDefault();
+    openCommentEditor(getActiveFilePane());
+    return;
+  }
+
+  if (matchesShortcut('meta.rotate', event, shortcutPlatform)) {
+    event.preventDefault();
+    void clickRotate(getActiveFilePane());
+    return;
+  }
+
+  if (matchesShortcut('view.togglePane', event, shortcutPlatform) && isSplit.value) {
     event.preventDefault();
     setActivePane(activePane.value === 'left' ? 'right' : 'left');
     return;
   }
 
-  const key = event.key;
-  if ((keyActions as any)[key]) {
+  const matchedAction = getMatchedViewAction(event);
+  if (matchedAction) {
     event.preventDefault();
-    (keyActions as any)[key]();
+    viewActions[matchedAction]?.();
   }
 }
 
-const keyActions = {
-  ArrowLeft:  () => clickPrev(getActivePane()),
-  ArrowRight: () => clickNext(getActivePane()),
-  Home:       () => clickHome(getActivePane()),
-  End:        () => clickEnd(getActivePane()),
-  ArrowUp:    () => clickZoomIn(getActivePane()),
-  ArrowDown:  () => clickZoomOut(getActivePane()),
-  '=':        () => clickZoomIn(getActivePane()),
-  '-':        () => clickZoomOut(getActivePane()),
-  ' ':        () => toggleZoomFit(getActivePane()),
-  Escape:     () => closeWindow(),
+const ratingActions: Array<{ actionId: ShortcutActionId; rating: number }> = [
+  { actionId: 'meta.rating.clear', rating: 0 },
+  { actionId: 'meta.rating.one', rating: 1 },
+  { actionId: 'meta.rating.two', rating: 2 },
+  { actionId: 'meta.rating.three', rating: 3 },
+  { actionId: 'meta.rating.four', rating: 4 },
+  { actionId: 'meta.rating.five', rating: 5 },
+];
+
+function getMatchedRating(event: KeyboardEvent) {
+  const match = ratingActions.find(({ actionId }) => matchesShortcut(actionId, event, shortcutPlatform));
+  return match ? match.rating : null;
+}
+
+const viewActions: Partial<Record<ShortcutActionId, () => void>> = {
+  'view.previous': () => clickPrev(getActivePane()),
+  'view.next': () => clickNext(getActivePane()),
+  'view.first': () => clickHome(getActivePane()),
+  'view.last': () => clickEnd(getActivePane()),
+  'view.zoomIn': () => clickZoomIn(getActivePane()),
+  'view.zoomOut': () => clickZoomOut(getActivePane()),
+  'view.zoomInDirectional': () => clickZoomIn(getActivePane()),
+  'view.zoomOutDirectional': () => clickZoomOut(getActivePane()),
+  'view.zoomFit': () => toggleZoomFit(getActivePane()),
+  'view.close': () => closeWindow(),
 };
+
+const viewActionOrder: ShortcutActionId[] = [
+  'view.previous',
+  'view.next',
+  'view.first',
+  'view.last',
+  'view.zoomIn',
+  'view.zoomOut',
+  'view.zoomInDirectional',
+  'view.zoomOutDirectional',
+  'view.zoomFit',
+  'view.close',
+];
+
+function getMatchedViewAction(event: KeyboardEvent) {
+  return viewActionOrder.find((actionId) => matchesShortcut(actionId, event, shortcutPlatform));
+}
 
 function getActivePane(): 'left' | 'right' {
   return isSplit.value ? activePane.value : 'left';

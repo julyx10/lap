@@ -152,7 +152,7 @@
           <TButton
             :icon="IconInformation"
             :tooltip="isInfoPanelOpen ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
-            shortcut="I"
+            :shortcut="shortcut('meta.info')"
             :selected="isInfoPanelOpen"
             @click="toggleInfoPanel"
           />
@@ -605,6 +605,7 @@ import { getAlbum, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQuery
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupGetGroup, dedupDeleteSelected, getQueryFilePosition } from '@/common/api'; 
 import { config, libConfig } from '@/common/config';
+import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { isWin, isMac, setTheme, separator,
@@ -1115,6 +1116,21 @@ const visibleItemCount = computed(() => {
 const timelineData = ref<any[]>([]);  // timeline markers for scrollbar
 
 const toast = useToast();
+const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : 'windows';
+const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, shortcutPlatform);
+const ratingActions: Array<{ actionId: ShortcutActionId; rating: number }> = [
+  { actionId: 'meta.rating.clear', rating: 0 },
+  { actionId: 'meta.rating.one', rating: 1 },
+  { actionId: 'meta.rating.two', rating: 2 },
+  { actionId: 'meta.rating.three', rating: 3 },
+  { actionId: 'meta.rating.four', rating: 4 },
+  { actionId: 'meta.rating.five', rating: 5 },
+];
+
+function getMatchedRating(event: KeyboardEvent) {
+  const match = ratingActions.find(({ actionId }) => matchesShortcut(actionId, event, shortcutPlatform));
+  return match ? match.rating : null;
+}
 
 // Drag-drop file import
 const isDragOver = ref(false);
@@ -1690,15 +1706,13 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  const isCmdKey = isMac ? event.metaKey : event.ctrlKey;
-
-  if (isCmdKey && event.code === 'KeyI') {
+  if (matchesShortcut('meta.info', event, shortcutPlatform)) {
     event.preventDefault();
     toggleInfoPanel();
     return;
   }
 
-  if (event.key === 'Escape') {
+  if (matchesShortcut('view.close', event, shortcutPlatform)) {
     if (showQuickView.value) {
       closeQuickPreview();
       event.preventDefault();
@@ -1714,15 +1728,17 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  // Disable keyboard events during slideshow except the toggle shortcut.
-  if (isSlideShow.value && event.key !== 'Escape' && event.code !== 'KeyP') {
+  // Disable keyboard events during slideshow except close and toggle slideshow.
+  if (
+    isSlideShow.value &&
+    !matchesShortcut('view.close', event, shortcutPlatform) &&
+    !matchesShortcut('slideshow.toggle', event, shortcutPlatform)
+  ) {
     return;
   }
 
-  const hasModifier = event.metaKey || event.ctrlKey || event.altKey;
-  const ratingShortcut = Number.parseInt(event.key, 10);
-
-  if (!hasModifier && Number.isInteger(ratingShortcut) && ratingShortcut >= 0 && ratingShortcut <= 5) {
+  const ratingShortcut = getMatchedRating(event);
+  if (ratingShortcut !== null) {
     event.preventDefault();
     if (selectMode.value) {
       void selectModeSetRatings(ratingShortcut);
@@ -1732,89 +1748,81 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  if (!hasModifier) {
-    if (event.code === 'KeyS') {
-      event.preventDefault();
-      enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
-      return;
-    }
-
-    if ((showQuickView.value || config.settings.grid.showFilmStrip) && event.code === 'KeyP') {
-      event.preventDefault();
-      toggleSlideShow();
-      return;
-    }
-
-    if (getActivePreviewMode() !== 'none' && event.key === '=') {
-      event.preventDefault();
-      getActivePreviewMediaRef()?.zoomIn?.();
-      return;
-    }
-
-    if (getActivePreviewMode() !== 'none' && event.key === '-') {
-      event.preventDefault();
-      getActivePreviewMediaRef()?.zoomOut?.();
-      return;
-    }
-
-    if (getActivePreviewMode() === 'none' && event.key === '=') {
-      if (!isContentInteractionActive()) return;
-      event.preventDefault();
-      config.settings.grid.size = Math.min(360, Number(config.settings.grid.size || 160) + 10);
-      return;
-    }
-
-    if (getActivePreviewMode() === 'none' && event.key === '-') {
-      if (!isContentInteractionActive()) return;
-      event.preventDefault();
-      config.settings.grid.size = Math.max(120, Number(config.settings.grid.size || 160) - 10);
-      return;
-    }
-
-    if (event.code === 'KeyF') {
-      event.preventDefault();
-      void toggleFavorite();
-      return;
-    }
-
-    if (event.code === 'KeyT') {
-      event.preventDefault();
-      void clickTag();
-      return;
-    }
-
-    if (event.code === 'KeyC') {
-      event.preventDefault();
-      showCommentMsgbox.value = true;
-      return;
-    }
-
-    if (event.code === 'KeyR' && event.shiftKey) {
-      event.preventDefault();
-      void updateFile(fileList.value[selectedItemIndex.value], true);
-      return;
-    }
-
-    if (event.code === 'KeyR') {
-      event.preventDefault();
-      void clickRotate();
-      return;
-    }
-
-    if (event.code === 'KeyI') {
-      event.preventDefault();
-      toggleInfoPanel();
-      return;
-    }
-
-    if (event.code === 'KeyM') {
-      event.preventDefault();
-      showMoveTo.value = true;
-      return;
-    }
+  if (matchesShortcut('file.searchSimilar', event, shortcutPlatform)) {
+    event.preventDefault();
+    enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
+    return;
   }
 
-  if ((isMac && event.key === 'Enter' && !hasModifier) || (!isMac && event.key === 'F2')) {
+  if ((showQuickView.value || config.settings.grid.showFilmStrip) && matchesShortcut('slideshow.toggle', event, shortcutPlatform)) {
+    event.preventDefault();
+    toggleSlideShow();
+    return;
+  }
+
+  if (getActivePreviewMode() !== 'none' && matchesShortcut('view.zoomIn', event, shortcutPlatform) && event.key === '=') {
+    event.preventDefault();
+    getActivePreviewMediaRef()?.zoomIn?.();
+    return;
+  }
+
+  if (getActivePreviewMode() !== 'none' && matchesShortcut('view.zoomOut', event, shortcutPlatform) && event.key === '-') {
+    event.preventDefault();
+    getActivePreviewMediaRef()?.zoomOut?.();
+    return;
+  }
+
+  if (getActivePreviewMode() === 'none' && matchesShortcut('view.zoomIn', event, shortcutPlatform) && event.key === '=') {
+    if (!isContentInteractionActive()) return;
+    event.preventDefault();
+    config.settings.grid.size = Math.min(360, Number(config.settings.grid.size || 160) + 10);
+    return;
+  }
+
+  if (getActivePreviewMode() === 'none' && matchesShortcut('view.zoomOut', event, shortcutPlatform) && event.key === '-') {
+    if (!isContentInteractionActive()) return;
+    event.preventDefault();
+    config.settings.grid.size = Math.max(120, Number(config.settings.grid.size || 160) - 10);
+    return;
+  }
+
+  if (matchesShortcut('meta.favorite', event, shortcutPlatform)) {
+    event.preventDefault();
+    void toggleFavorite();
+    return;
+  }
+
+  if (matchesShortcut('meta.tag', event, shortcutPlatform)) {
+    event.preventDefault();
+    void clickTag();
+    return;
+  }
+
+  if (matchesShortcut('file.refreshInfo', event, shortcutPlatform)) {
+    event.preventDefault();
+    void updateFile(fileList.value[selectedItemIndex.value], true);
+    return;
+  }
+
+  if (matchesShortcut('meta.comment', event, shortcutPlatform)) {
+    event.preventDefault();
+    showCommentMsgbox.value = true;
+    return;
+  }
+
+  if (matchesShortcut('meta.rotate', event, shortcutPlatform)) {
+    event.preventDefault();
+    void clickRotate();
+    return;
+  }
+
+  if (matchesShortcut('file.moveTo', event, shortcutPlatform)) {
+    event.preventDefault();
+    showMoveTo.value = true;
+    return;
+  }
+
+  if (matchesShortcut('file.rename', event, shortcutPlatform)) {
     event.preventDefault();
     clickRename();
     return;
@@ -1822,13 +1830,13 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
-  if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
+  if (matchesShortcut('view.quickPreview', event, shortcutPlatform) && event.key === 'Enter') {
     if (!showQuickView.value && !config.settings.grid.showFilmStrip) {
       showQuickView.value = true;
       quickViewZoomFit.value = true;
     }
   } 
-  else if (event.key === 'Space' || event.key === ' ') {
+  else if (matchesShortcut('view.quickPreview', event, shortcutPlatform) && (event.key === 'Space' || event.key === ' ')) {
     if (getActivePreviewMode() === 'quick-view') {
       if (fileList.value[selectedItemIndex.value]?.file_type === 2) {
         getActivePreviewMediaRef()?.togglePlay?.();
@@ -1883,31 +1891,30 @@ const handleKeyDown = (e: any) => {
     return;
   }
 
-  const { key, metaKey, shiftKey } = e.payload;
+  const event = e.payload;
+  const { key, shiftKey } = event;
 
-  // Disable global shortcuts during slideshow (except Escape for safety, though handled in local)
-  if (isSlideShow.value && key !== 'Escape') {
+  // Disable global shortcuts during slideshow except close for safety.
+  if (isSlideShow.value && !matchesShortcut('view.close', event, shortcutPlatform)) {
     return;
   }
 
-  const isCmdKey = isMac ? metaKey : e.payload.ctrlKey;
-
-  if (isCmdKey && key === 'Enter') {   // Open shortcut
+  if (matchesShortcut('file.openNewWindow', event, shortcutPlatform)) {
     openImageViewer(selectedItemIndex.value, true);
-  } else if (isCmdKey && key.toLowerCase() === 'c') {   // Copy shortcut
+  } else if (matchesShortcut('file.copy', event, shortcutPlatform)) {
     clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
-  } else if (!metaKey && !e.payload.ctrlKey && key.toLowerCase() === 's') {
+  } else if (matchesShortcut('file.searchSimilar', event, shortcutPlatform)) {
     enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
-  } else if (isCmdKey && key.toLowerCase() === 'e') {
+  } else if (matchesShortcut('file.editImage', event, shortcutPlatform)) {
     const file = fileList.value[selectedItemIndex.value];
     if (file && (file.file_type === 1 || file.file_type === 3)) {
       editImageInitialTab.value = config.imageEditor.tab === 'adjust' ? 'adjust' : 'edit';
       editImageInitialImageSrc.value = getCurrentPreviewImageSrc();
       showEditImage.value = true;
     }
-  } else if (!metaKey && !e.payload.ctrlKey && key.toLowerCase() === 'm') {
+  } else if (matchesShortcut('file.moveTo', event, shortcutPlatform)) {
     showMoveTo.value = true;
-  } else if ((isMac && metaKey && key === 'Backspace') || (!isMac && key === 'Delete')) {
+  } else if (matchesShortcut('file.trash', event, shortcutPlatform)) {
     openTrashMsgbox(0, '', [], !!shiftKey);
   } else if ((keyActions as any)[key]) {
     (keyActions as any)[key]();

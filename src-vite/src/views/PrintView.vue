@@ -67,6 +67,7 @@ import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
+import { matchesShortcut } from '@/common/shortcuts';
 import { getAssetSrc, getPreviewUrl, setTheme, SCALE_VALUES, shortenFilename, shouldUseBackendPreview } from '@/common/utils';
 import TitleBar from '@/components/TitleBar.vue';
 
@@ -169,10 +170,10 @@ function updateWindowTitle() {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
+  if (matchesShortcut('view.close', event)) {
     event.preventDefault();
     closeWindow();
-  } else if ((event.metaKey || event.ctrlKey) && !event.altKey && event.code === 'KeyP') {
+  } else if (matchesShortcut('file.print', event)) {
     event.preventDefault();
     openPrintDialog();
   }

@@ -41,7 +41,7 @@
             :tooltip="!canSlideShow
               ? $t('image_viewer.toolbar.slide_show')
               : (isSlideShow ? $t('image_viewer.toolbar.pause') : $t('image_viewer.toolbar.slide_show'))"
-            shortcut="P"
+            :shortcut="shortcut('slideshow.toggle')"
             @click="handleToggleSlideShow"
           />
           <ContextMenu v-if="isSlideShow && canSlideShow"
@@ -72,21 +72,21 @@
           :icon="IconZoomOut"
           :disabled="fileIndex < 0 || imageScale <= imageMinScale || isSlideShow || !canInteract"
           :tooltip="$t('image_viewer.toolbar.zoom_out')"
-          shortcut="-"
+          :shortcut="shortcut('view.zoomOut')"
           @click="handleZoomOut"
         />
         <TButton
           :icon="IconZoomIn"
           :disabled="fileIndex < 0 || imageScale >= imageMaxScale || isSlideShow || !canInteract"
           :tooltip="$t('image_viewer.toolbar.zoom_in')"
-          shortcut="="
+          :shortcut="shortcut('view.zoomIn')"
           @click="handleZoomIn" 
         />
         <TButton
           :icon="!isZoomFit ? IconZoomFit : IconZoomActual"
           :disabled="fileIndex < 0 || isSlideShow || !canInteract"
           :tooltip="!isZoomFit ? $t('image_viewer.toolbar.zoom_fit') : $t('image_viewer.toolbar.zoom_actual')"
-          shortcut="Space"
+          :shortcut="shortcut('view.zoomFit')"
           @click="$emit('update:isZoomFit', !isZoomFit)"
         />
         <template v-if="showExtraIcons">
@@ -96,7 +96,7 @@
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="file?.is_favorite && !isSlideShow"
             :tooltip="file?.is_favorite ? $t('menu.meta.unfavorite') : $t('menu.meta.favorite')"
-            shortcut="F"
+            :shortcut="shortcut('meta.favorite')"
             @click="$emit('item-action', { action: 'favorite', index: fileIndex })"
           />
           <ContextMenu
@@ -111,7 +111,7 @@
                 :disabled="fileIndex < 0 || isSlideShow || !canInteract"
                 :selected="Number(file?.rating || 0) > 0 && !isSlideShow"
                 :tooltip="$t('favorite.ratings')"
-                shortcut="0-5"
+                :shortcut="ratingShortcutLabel"
                 @click.stop="toggle"
               />
             </template>
@@ -121,7 +121,7 @@
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="file?.has_tags && !isSlideShow"
             :tooltip="$t('menu.meta.tag')"
-            shortcut="T"
+            :shortcut="shortcut('meta.tag')"
             @click="$emit('item-action', { action: 'tag', index: fileIndex })"
           />
           <TButton
@@ -129,7 +129,7 @@
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :selected="!!file?.comments && !isSlideShow"
             :tooltip="$t('menu.meta.comment')"
-            shortcut="C"
+            :shortcut="shortcut('meta.comment')"
             @click="$emit('item-action', { action: 'comment', index: fileIndex })"
           />
           <TButton
@@ -138,7 +138,7 @@
             :iconStyle="{ transform: `rotate(${file?.rotate ?? 0}deg)`, transition: 'transform 0.3s' }"
             :selected="file?.rotate % 360 > 0 && !isSlideShow"
             :tooltip="$t('menu.meta.rotate')"
-            shortcut="R"
+            :shortcut="shortcut('meta.rotate')"
             @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
           />
           <!-- <TButton
@@ -146,7 +146,7 @@
             :icon="IconFileInfo"
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
             :tooltip="$t('menu.meta.info')"
-            shortcut="I"
+            :shortcut="shortcut('meta.info')"
             @click="$emit('item-action', { action: 'info', index: fileIndex })"
           /> -->
         </template>
@@ -326,6 +326,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { config, libConfig } from '@/common/config';
 import { useToast } from '@/common/toast';
 import { isWin, isLinux, getSlideShowInterval } from '@/common/utils';
+import { getShortcutLabel, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 
 import Image from '@/components/Image.vue';
 import TButton from '@/components/TButton.vue';
@@ -527,6 +528,13 @@ const toggleMaximizeWindow = () => {
   });
 };
 const closeWindow = () => desktopAppWindow?.close();
+const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : 'windows';
+const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, shortcutPlatform);
+const ratingShortcutLabel = computed(() => {
+  const first = shortcut('meta.rating.clear');
+  const last = shortcut('meta.rating.five');
+  return first && last ? `${first}-${last}` : '';
+});
 const effectiveSlideShowIntervalIndex = computed(() => {
   return props.slideShowIntervalIndex ?? config.settings.slideShowInterval;
 });
@@ -542,38 +550,38 @@ const ratingMenuItems = computed(() => {
     {
       label: localeMsg.value.favorite.clear_rating,
       icon: IconStar,
-      shortcut: '0',
+      shortcut: shortcut('meta.rating.clear'),
       action: () => emit('item-action', { action: 'rating-0', index: props.fileIndex }),
     },
     { label: '-', action: null },
     {
       label: localeMsg.value.favorite.five_stars,
       icon: rating === 5 ? IconStarFilled : IconStar,
-      shortcut: '5',
+      shortcut: shortcut('meta.rating.five'),
       action: () => emit('item-action', { action: 'rating-5', index: props.fileIndex }),
     },
     {
       label: localeMsg.value.favorite.four_stars,
       icon: rating === 4 ? IconStarFilled : IconStar,
-      shortcut: '4',
+      shortcut: shortcut('meta.rating.four'),
       action: () => emit('item-action', { action: 'rating-4', index: props.fileIndex }),
     },
     {
       label: localeMsg.value.favorite.three_stars,
       icon: rating === 3 ? IconStarFilled : IconStar,
-      shortcut: '3',
+      shortcut: shortcut('meta.rating.three'),
       action: () => emit('item-action', { action: 'rating-3', index: props.fileIndex }),
     },
     {
       label: localeMsg.value.favorite.two_stars,
       icon: rating === 2 ? IconStarFilled : IconStar,
-      shortcut: '2',
+      shortcut: shortcut('meta.rating.two'),
       action: () => emit('item-action', { action: 'rating-2', index: props.fileIndex }),
     },
     {
       label: localeMsg.value.favorite.one_star,
       icon: rating === 1 ? IconStarFilled : IconStar,
-      shortcut: '1',
+      shortcut: shortcut('meta.rating.one'),
       action: () => emit('item-action', { action: 'rating-1', index: props.fileIndex }),
     },
   ];
