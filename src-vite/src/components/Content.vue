@@ -2070,7 +2070,7 @@ const topProgressPercent = computed(() => thumbProgressPercent.value);
 function buildScanStreamQueryParams() {
   return {
     searchFileType: 0,
-    sortType: 8, // internal sort: by id asc (insert/scan order)
+    sortType: 9, // internal sort: by id asc (insert/scan order)
     sortOrder: 0,
     searchFileName: "",
     searchAllSubfolders: libConfig.album.folderPath || "",

@@ -35,11 +35,12 @@
       <video
         v-if="showVideoPreview"
         ref="previewVideoRef"
-        class="pointer-events-none absolute inset-0 transition-opacity duration-100 scale-115"
+        class="pointer-events-none absolute inset-0 transition-opacity duration-100"
         :class="{
           'object-contain': config.settings.grid.style !== 2 && config.settings.grid.scaling === 0,
           'object-cover': config.settings.grid.style === 2 || config.settings.grid.scaling === 1,
           'object-fill': config.settings.grid.style !== 2 && config.settings.grid.scaling === 2,
+          'scale-115': config.settings.grid.style === 1 || config.settings.grid.style === 2,
           'opacity-100': isVideoPreviewReady,
           'opacity-0': !isVideoPreviewReady,
         }"

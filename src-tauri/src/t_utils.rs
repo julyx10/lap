@@ -1032,7 +1032,7 @@ pub fn get_folder_files(
     };
 
     // sort
-    if sort_type == 6 {
+    if sort_type == 8 {
         // random
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
@@ -1053,7 +1053,9 @@ pub fn get_folder_files(
                         a.width.cmp(&b.width)
                     }
                 } // dimension
-                7 => a.id.cmp(&b.id),                 // ID sort
+                6 => a.duration.cmp(&b.duration),     // duration
+                7 => a.rating.cmp(&b.rating),         // rating
+                9 => a.id.cmp(&b.id),                 // ID sort
                 _ => a.taken_date.cmp(&b.taken_date), // Default to taken date
             };
             if sort_order == 1 {

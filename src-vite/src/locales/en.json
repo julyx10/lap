@@ -190,6 +190,7 @@
         "Name",
         "Size",
         "Dimension",
+        "Duration",
         "Rating",
         "Random"
       ],
