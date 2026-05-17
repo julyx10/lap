@@ -201,6 +201,7 @@ fn build_libraw() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
     let is_windows = target_os == "windows";
+    let is_linux_aarch64 = target_os == "linux" && target_arch == "aarch64";
     const LIBRAW_LINK_NAME: &str = "raw";
     const SHIM_LINK_NAME: &str = "lap_libraw_shim";
 
@@ -245,6 +246,12 @@ fn build_libraw() {
             .flag_if_supported("-std=c++17")
             .flag_if_supported("-w");
     }
+    if is_linux_aarch64 {
+        // Avoid GCC's AArch64 outline atomics helpers
+        // (__aarch64_swp8_sync / __aarch64_ldadd8_sync), which are not
+        // resolved by libatomic on the GitHub Actions ARM runner.
+        build.flag_if_supported("-mno-outline-atomics");
+    }
 
     if let Some(jpeg) = &jpeg_build {
         for inc in &jpeg.include_dirs {
@@ -284,6 +291,9 @@ fn build_libraw() {
     } else {
         shim.flag_if_supported("-std=c++17");
     }
+    if is_linux_aarch64 {
+        shim.flag_if_supported("-mno-outline-atomics");
+    }
 
     shim.compile(SHIM_LINK_NAME);
 
@@ -305,11 +315,6 @@ fn build_libraw() {
             println!("cargo:rustc-link-arg=-l{}", jpeg.lib_name);
         }
         println!("cargo:rustc-link-arg=-l{}", SHIM_LINK_NAME);
-        if target_arch == "aarch64" {
-            // libatomic must be inside the group so the linker can resolve
-            // __aarch64_*_sync symbols from libraw.a iteratively.
-            println!("cargo:rustc-link-arg=-latomic");
-        }
         println!("cargo:rustc-link-arg=-Wl,--end-group");
     } else {
         println!("cargo:rustc-link-lib=static={}", LIBRAW_LINK_NAME);
