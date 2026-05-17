@@ -229,6 +229,7 @@ fn build_libraw() {
     let mut build = cc::Build::new();
     build
         .cpp(true)
+        .cargo_metadata(false)
         .include(&libraw_source)
         .warnings(false)
         .define("LIBRAW_BUILDLIB", None);
@@ -262,6 +263,7 @@ fn build_libraw() {
     // processes libjpeg after liblap_libraw_shim, which references jpeg).
     let mut shim = cc::Build::new();
     shim.cpp(true)
+        .cargo_metadata(false)
         .include(&libraw_source)
         .include(libraw_source.join("libraw"))
         .warnings(false)
@@ -285,8 +287,9 @@ fn build_libraw() {
 
     shim.compile(SHIM_LINK_NAME);
 
-    // Emit jpeg search path early (even if Cargo deduplicates, the search
-    // path is needed for the linker to find libjpeg.a later via -l flag).
+    // cc::Build is compiled with cargo_metadata(false), so emit the search
+    // path and link directives explicitly to preserve linker ordering.
+    println!("cargo:rustc-link-search=native={}", out_dir.display());
     if let Some(jpeg) = &jpeg_build {
         println!("cargo:rustc-link-search=native={}", jpeg.lib_dir.display());
     }
@@ -302,15 +305,18 @@ fn build_libraw() {
             println!("cargo:rustc-link-arg=-l{}", jpeg.lib_name);
         }
         println!("cargo:rustc-link-arg=-l{}", SHIM_LINK_NAME);
-        println!("cargo:rustc-link-arg=-Wl,--end-group");
         if target_arch == "aarch64" {
-            // LibRaw's std::atomic usage can emit __aarch64_*_sync symbols
-            // that live in libatomic on Linux AArch64.
-            println!("cargo:rustc-link-lib=atomic");
+            // libatomic must be inside the group so the linker can resolve
+            // __aarch64_*_sync symbols from libraw.a iteratively.
+            println!("cargo:rustc-link-arg=-latomic");
         }
-    } else if let Some(jpeg) = &jpeg_build {
-        // Non-Linux: just link jpeg normally (cc already emitted -lraw & -llap_libraw_shim).
-        println!("cargo:rustc-link-lib=static={}", jpeg.lib_name);
+        println!("cargo:rustc-link-arg=-Wl,--end-group");
+    } else {
+        println!("cargo:rustc-link-lib=static={}", LIBRAW_LINK_NAME);
+        println!("cargo:rustc-link-lib=static={}", SHIM_LINK_NAME);
+        if let Some(jpeg) = &jpeg_build {
+            println!("cargo:rustc-link-lib=static={}", jpeg.lib_name);
+        }
     }
 
     if is_windows {
