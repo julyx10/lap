@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue';
+import { ref, computed, onBeforeUnmount, onMounted, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -259,6 +259,7 @@ const showDebugBadge = import.meta.env.DEV;
 let unlistenOpenPreferences: (() => void) | null = null;
 let unlistenOpenAbout: (() => void) | null = null;
 let unlistenAlbumsRefreshed: (() => void) | null = null;
+let unlistenAddAlbumRequested: (() => void) | null = null;
 const {
   updateAvailable,
   isCheckingUpdate,
@@ -346,6 +347,13 @@ onMounted(async () => {
 
   void checkLibraryEmpty();
 
+  unlistenAddAlbumRequested = await listen('add-album-requested', async () => {
+    if (config.main.sidebarIndex !== 0) config.main.sidebarIndex = 0;
+    showPanel.value = true;
+    await nextTick();
+    (panelRef.value as any)?.albumListRef?.clickNewAlbum();
+  });
+
   unlistenAlbumsRefreshed = await listen('albums-refreshed', () => {
     void checkLibraryEmpty();
   });
@@ -367,6 +375,8 @@ onBeforeUnmount(() => {
   unlistenOpenAbout = null;
   unlistenAlbumsRefreshed?.();
   unlistenAlbumsRefreshed = null;
+  unlistenAddAlbumRequested?.();
+  unlistenAddAlbumRequested = null;
 });
 
 const doSwitchLibrary = async (libraryId: string) => {

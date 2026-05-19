@@ -1277,7 +1277,6 @@ let unlistenImageViewer: () => void;
 let unlistenDragDrop: () => void;
 let unlistenFaceIndexProgress: (() => void) | null = null;
 let unlistenLibraryTotalRefreshed: (() => void) | null = null;
-let isEmittingTotalRefreshed = false;
 
 let resizeObserver: ResizeObserver | null = null;
 
@@ -2388,8 +2387,8 @@ onMounted( async() => {
   window.addEventListener('keydown', handleLocalKeyDown);
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
-  unlistenLibraryTotalRefreshed = await listen('library-total-refreshed', () => {
-    if (isEmittingTotalRefreshed) return;
+  unlistenLibraryTotalRefreshed = await listen('library-total-refreshed', (event: any) => {
+    if (event?.payload?.source === 'content') return;
     if (config.main.sidebarIndex === 0) updateContent(true);
   });
 
@@ -3909,9 +3908,7 @@ const refreshAffectedAlbums = async (albumIds: Array<number | null | undefined>)
 };
 
 const refreshLibraryTotalCount = async () => {
-  isEmittingTotalRefreshed = true;
-  await tauriEmit('library-total-refreshed');
-  isEmittingTotalRefreshed = false;
+  await tauriEmit('library-total-refreshed', { source: 'content' });
 };
 
 const onMoveTo = async () => {

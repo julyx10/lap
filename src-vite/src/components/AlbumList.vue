@@ -136,16 +136,6 @@
 
     </ul>
 
-    <!-- No Albums Found Message -->
-    <div v-else-if="!isLoading && !isEditList" class="mt-4 px-2 flex flex-col items-center justify-center gap-2 text-base-content/30">
-      <!-- <span class="text-center">{{ $t('album.no_albums.title') }}</span> -->
-      <span class="text-sm text-center">{{ $t('album.no_albums.description') }}</span>
-      <button class="mt-2 btn btn-primary btn-sm rounded-box" @click="clickNewAlbum">
-        <IconAdd class="w-5 h-5" />
-        {{ $t('menu.album.add') }}
-      </button>
-    </div>
-
     <!-- edit album information -->
     <AlbumEdit
       v-if="showAlbumEdit"
@@ -548,6 +538,7 @@ const clickEditAlbum = async (folderPathParam: string, newName: string, newDescr
       showAlbumEdit.value = false;
 
       tauriEmit('albums-refreshed');
+      tauriEmit('library-total-refreshed');
 
       // add the new album to the index queue
       libConfig.index.status = 1;
@@ -644,6 +635,7 @@ const clickRemoveAlbum = async () => {
     showAlbumEdit.value = false; // Close the edit dialog if it's open
 
     tauriEmit('albums-refreshed');
+    tauriEmit('library-total-refreshed');
 
     selection.resetSelection();
   }
