@@ -487,7 +487,10 @@ pub async fn download_multilingual_text_model(app: AppHandle) -> Result<(), Stri
             "tokenizer",
         ),
     ];
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(3))
+        .build()
+        .map_err(|e| format!("Failed to create download client: {}", e))?;
     let total_files = files.len() as f64;
     let mut downloaded_total = 0u64;
     let expected_total = get_download_total_size(&client, &files).await;

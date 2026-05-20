@@ -7,7 +7,7 @@ import { useToast, type ToastPlacement } from '@/common/toast';
 const UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000;
 const UPDATE_CHECK_KEY = 'lap_last_update_check';
 const UPDATE_RELEASE_NOTE_KEY = 'lap_update_release_note_version';
-const UPDATE_CHECK_TIMEOUT_MS = 30_000;
+const UPDATE_CHECK_TIMEOUT_MS = 8_000;
 
 function extractRawErrorMessage(error: unknown) {
   if (typeof error === 'string') return error.trim();
@@ -147,7 +147,7 @@ export function useAppUpdater(localeMsg: Ref<any>, options: AppUpdaterOptions = 
         check(),
         new Promise<never>((_, reject) => {
           timeoutId = window.setTimeout(() => {
-            reject(new Error('Update check timed out after 30 seconds'));
+            reject(new Error('Update check timed out after 8 seconds'));
           }, UPDATE_CHECK_TIMEOUT_MS);
         }),
       ]);
