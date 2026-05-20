@@ -66,6 +66,7 @@ fn build_libheif() {
     }
     configure
         .arg("-DCMAKE_BUILD_TYPE=Release")
+        .arg("-DCMAKE_POSITION_INDEPENDENT_CODE=ON")
         .arg("-DBUILD_SHARED_LIBS=OFF")
         .arg("-DBUILD_DOCUMENTATION=OFF")
         .arg("-DBUILD_TESTING=OFF")
@@ -388,6 +389,7 @@ fn build_libjpeg(manifest_dir: &Path, out_dir: &Path, is_windows: bool) -> Optio
         }
         configure
             .arg("-DCMAKE_BUILD_TYPE=Release")
+            .arg("-DCMAKE_POSITION_INDEPENDENT_CODE=ON")
             .arg("-DENABLE_SHARED=FALSE")
             .arg("-DENABLE_STATIC=TRUE")
             .arg(source_dir.as_os_str())
@@ -467,6 +469,7 @@ fn build_libde265(
             configure.arg("-G").arg("Unix Makefiles");
         }
         configure
+            .arg("-DCMAKE_POSITION_INDEPENDENT_CODE=ON")
             .arg("-DBUILD_SHARED_LIBS=OFF")
             .arg("-DENABLE_SDL=OFF")
             .arg("-DENABLE_DECODER=ON")
