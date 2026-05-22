@@ -611,6 +611,7 @@
       "presets": {
         "title": "プリセット",
         "custom": "カスタム",
+        "auto": "自動",
         "natural": "ナチュラル",
         "vivid": "ビビッド",
         "muted": "落ち着いた",

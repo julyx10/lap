@@ -611,6 +611,7 @@
       "presets": {
         "title": "预设",
         "custom": "自定义",
+        "auto": "自动",
         "natural": "自然",
         "vivid": "鲜艳",
         "muted": "柔和",

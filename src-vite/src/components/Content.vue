@@ -2521,6 +2521,9 @@ onMounted( async() => {
   unlistenImageEditor = await listen('message-from-image-editor', async (event: any) => {
     const { type, saveAsNew, filePath } = event.payload as any;
     if (type === 'success') {
+      if (!saveAsNew && filePath) {
+        uiStore.updateFileVersion(filePath);
+      }
       await onFileSaved(true, { saveAsNew, filePath });
     } else if (type === 'failed') {
       await onFileSaved(false);
@@ -3804,15 +3807,21 @@ function handleTitleClick() {
 const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => {
   if (success) {
     if (payload.saveAsNew && payload.filePath) {
+      uiStore.updateFileVersion(payload.filePath);
       clearPreviewPreloadCache(payload.filePath);
       const inserted = await indexAndInsertSavedFile(payload.filePath);
       if (!inserted) {
         updateContent();
+      } else {
+        getQueryTimeLine(currentQueryParams.value).then(data => {
+          timelineData.value = data;
+        });
       }
       toast.success(localeMsg.value.tooltip.save_image.save_as_success || localeMsg.value.tooltip.save_image.success);
     } else {
       const savedFile = fileList.value[selectedItemIndex.value];
       if (savedFile?.file_path) {
+        uiStore.updateFileVersion(savedFile.file_path);
         clearPreviewPreloadCache(savedFile.file_path);
       }
       if (savedFile && Number(savedFile.rotate || 0) !== 0) {
@@ -4417,6 +4426,30 @@ const insertIndexedFileIntoList = async (indexedFile: any) => {
     isSelected: false,
     rotate: indexedFile.rotate || 0,
   };
+
+  const existingIndex = fileList.value.findIndex((file: any) => {
+    const sameId = Number(file?.id || 0) === Number(indexedFile.id || 0);
+    const samePath = file?.file_path && indexedFile.file_path && file.file_path === indexedFile.file_path;
+    return sameId || samePath;
+  });
+
+  if (existingIndex >= 0) {
+    const previousSize = Number(fileList.value[existingIndex]?.size || 0);
+    fileList.value.splice(existingIndex, 1, nextFile);
+    totalFileSize.value += Number(nextFile.size || 0) - previousSize;
+    selectedItemIndex.value = existingIndex;
+    markDedupSourceUpdated(currentContentRequestId);
+
+    await nextTick();
+    const updatedFile = fileList.value[existingIndex];
+    if (!updatedFile) {
+      return false;
+    }
+    await updateThumbForFile(updatedFile);
+    updateSelectedImage(existingIndex);
+    openImageViewer(existingIndex, false, false);
+    return true;
+  }
 
   totalFileCount.value += 1;
   totalFileSize.value += nextFile.size || 0;

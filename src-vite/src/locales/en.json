@@ -618,6 +618,7 @@
       "presets": {
         "title": "Presets",
         "custom": "Custom",
+        "auto": "Auto",
         "natural": "Natural",
         "vivid": "Vivid",
         "muted": "Muted",

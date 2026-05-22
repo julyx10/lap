@@ -792,7 +792,7 @@ pub async fn edit_image(params: EditParams) -> bool {
             return false;
         }
 
-        if format == image::ImageFormat::Jpeg {
+        if format == image::ImageFormat::Jpeg || format == image::ImageFormat::WebP {
             let metadata_backup_path = match prepare_metadata_backup_path(
                 &params.source_file_path,
                 &params.dest_file_path,

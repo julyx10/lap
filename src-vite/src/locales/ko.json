@@ -611,6 +611,7 @@
       "presets": {
         "title": "프리셋",
         "custom": "커스텀",
+        "auto": "자동",
         "natural": "자연",
         "vivid": "선명",
         "muted": "부드러움",

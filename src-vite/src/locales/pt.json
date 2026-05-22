@@ -611,6 +611,7 @@
       "presets": {
         "title": "Predefinições",
         "custom": "Personalizado",
+        "auto": "Auto",
         "natural": "Natural",
         "vivid": "Vívido",
         "muted": "Suave",

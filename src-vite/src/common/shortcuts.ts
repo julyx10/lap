@@ -128,7 +128,7 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     id: 'file.editImage',
     contexts: ['content'],
     defaultBindings: [
-      { code: 'KeyE', modifiers: ['cmdOrCtrl'], allowShift: true, label: { mac: '⌘E', windows: 'Ctrl+E', linux: 'Ctrl+E' } },
+      { code: 'KeyE', allowShift: true, label: 'E' },
     ],
   },
   {
