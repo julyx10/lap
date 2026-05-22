@@ -16,6 +16,7 @@ on:
           - aarch64-apple-darwin
           - x86_64-apple-darwin
           - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
 
 permissions:
   contents: write
@@ -28,7 +29,7 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          ALL_TARGETS='[{"platform":"macos-15","target":"aarch64-apple-darwin","arch":"aarch64"},{"platform":"macos-15-intel","target":"x86_64-apple-darwin","arch":"x86_64"},{"platform":"ubuntu-22.04","target":"x86_64-unknown-linux-gnu","arch":"x86_64"}]'
+          ALL_TARGETS='[{"platform":"macos-15","target":"aarch64-apple-darwin","arch":"aarch64"},{"platform":"macos-15-intel","target":"x86_64-apple-darwin","arch":"x86_64"},{"platform":"ubuntu-22.04","target":"x86_64-unknown-linux-gnu","arch":"x86_64"},{"platform":"ubuntu-24.04-arm","target":"aarch64-unknown-linux-gnu","arch":"aarch64"}]'
           
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_target }}" != "all" ]; then
             SELECTED_TARGET=$(echo "$ALL_TARGETS" | jq -c "[.[] | select(.target == \"${{ github.event.inputs.build_target }}\")]")
@@ -61,12 +62,11 @@ jobs:
         run: brew install nasm pkg-config
 
       - name: Install system dependencies (Linux only)
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.target, 'x86_64-unknown-linux') || startsWith(matrix.target, 'aarch64-unknown-linux')
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
-            nasm clang pkg-config libssl-dev libglib2.0-dev libgtk-3-dev \
-            libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev libjpeg-turbo8-dev \
+            nasm clang pkg-config libglib2.0-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev patchelf
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -121,8 +121,13 @@ jobs:
         shell: bash
         run: bash scripts/download_models.sh
 
-      # Build for specific target
-      - name: Build and Sign (${{ matrix.arch }})
+      - name: Clear cached Linux bundle artifacts
+        if: startsWith(matrix.target, 'x86_64-unknown-linux') || startsWith(matrix.target, 'aarch64-unknown-linux')
+        shell: bash
+        run: rm -rf src-tauri/target/${{ matrix.target }}/release/bundle
+
+      - name: Build and Sign (macOS ${{ matrix.arch }})
+        if: contains(matrix.platform, 'macos')
         uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -135,6 +140,18 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           args: --verbose --target ${{ matrix.target }}
+
+      - name: Build and Sign (Linux ${{ matrix.arch }})
+        if: startsWith(matrix.target, 'x86_64-unknown-linux') || startsWith(matrix.target, 'aarch64-unknown-linux')
+        uses: tauri-apps/tauri-action@v0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APTABASE_KEY: ${{ secrets.APTABASE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: .
+          args: --verbose --target ${{ matrix.target }} --bundles deb,appimage
 
       # Notarize and Staple (Sync)
       - name: Notarize and Staple
@@ -180,13 +197,14 @@ jobs:
 
       # Specific for Linux: upload .deb as artifact
       - name: Upload Build Artifact (Linux)
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.target, 'x86_64-unknown-linux') || startsWith(matrix.target, 'aarch64-unknown-linux')
         uses: actions/upload-artifact@v4
         with:
-          name: deb-${{ matrix.arch }}
+          name: linux-${{ matrix.arch }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
           if-no-files-found: error
 
       # Rename .app.tar.gz to include architecture so they don't overwrite each other
@@ -245,6 +263,7 @@ jobs:
           mkdir -p release-files
           find artifacts -name "*.dmg" -exec cp {} release-files/ \;
           find artifacts -name "*.deb" -exec cp {} release-files/ \;
+          find artifacts -name "*.AppImage" -exec cp {} release-files/ \;
           find artifacts -name "*.app.tar.gz" -exec cp {} release-files/ \;
           find artifacts -name "*.sig" -exec cp {} release-files/ \; 2>/dev/null || true
           ls -la release-files/
@@ -257,32 +276,38 @@ jobs:
           # Find files for each architecture
           AARCH64_DMG=$(find release-files \( -name "*aarch64*.dmg" -o -name "*arm64*.dmg" \) | head -n 1)
           X86_64_DMG=$(find release-files \( -name "*x86_64*.dmg" -o -name "*x64*.dmg" \) | head -n 1)
-          LINUX_DEB=$(find release-files -name "*.deb" | head -n 1)
+          LINUX_X86_64_DEB=$(find release-files \( -name "*amd64*.deb" -o -name "*x86_64*.deb" \) | head -n 1)
+          LINUX_AARCH64_DEB=$(find release-files \( -name "*arm64*.deb" -o -name "*aarch64*.deb" \) | head -n 1)
           AARCH64_APP=$(find release-files \( -name "*aarch64*.app.tar.gz" -o -name "*arm64*.app.tar.gz" \) | head -n 1)
           X86_64_APP=$(find release-files \( -name "*x86_64*.app.tar.gz" -o -name "*x64*.app.tar.gz" \) | head -n 1)
           
           echo "Found artifacts:"
           echo "  AARCH64_DMG: $AARCH64_DMG"
           echo "  X86_64_DMG: $X86_64_DMG"
-          echo "  LINUX_DEB: $LINUX_DEB"
+          echo "  LINUX_X86_64_DEB: $LINUX_X86_64_DEB"
+          echo "  LINUX_AARCH64_DEB: $LINUX_AARCH64_DEB"
           echo "  AARCH64_APP: $AARCH64_APP"
           echo "  X86_64_APP: $X86_64_APP"
           
-          LINUX_DEB_NAME=$(basename "$LINUX_DEB" 2>/dev/null || echo "")
+          LINUX_X86_64_DEB_NAME=$(basename "$LINUX_X86_64_DEB" 2>/dev/null || echo "")
+          LINUX_AARCH64_DEB_NAME=$(basename "$LINUX_AARCH64_DEB" 2>/dev/null || echo "")
           AARCH64_APP_NAME=$(basename "$AARCH64_APP" 2>/dev/null || echo "")
           X86_64_APP_NAME=$(basename "$X86_64_APP" 2>/dev/null || echo "")
           
           # Get signatures from .sig files (generated by tauri signer)
-          LINUX_SIG=""
+          LINUX_X86_64_SIG=""
+          LINUX_AARCH64_SIG=""
           AARCH64_APP_SIG=""
           X86_64_APP_SIG=""
           
-          [ -f "${LINUX_DEB}.sig" ] && LINUX_SIG=$(cat "${LINUX_DEB}.sig")
+          [ -f "${LINUX_X86_64_DEB}.sig" ] && LINUX_X86_64_SIG=$(cat "${LINUX_X86_64_DEB}.sig")
+          [ -f "${LINUX_AARCH64_DEB}.sig" ] && LINUX_AARCH64_SIG=$(cat "${LINUX_AARCH64_DEB}.sig")
           [ -f "${AARCH64_APP}.sig" ] && AARCH64_APP_SIG=$(cat "${AARCH64_APP}.sig")
           [ -f "${X86_64_APP}.sig" ] && X86_64_APP_SIG=$(cat "${X86_64_APP}.sig")
           
           echo "Signatures found: "
-          echo "  LINUX: ${#LINUX_SIG} chars"
+          echo "  LINUX_X86_64: ${#LINUX_X86_64_SIG} chars"
+          echo "  LINUX_AARCH64: ${#LINUX_AARCH64_SIG} chars"
           echo "  AARCH64_APP: ${#AARCH64_APP_SIG} chars"
           echo "  X86_64_APP: ${#X86_64_APP_SIG} chars"
           
@@ -302,8 +327,12 @@ jobs:
                 "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${X86_64_APP_NAME}"
               },
               "linux-x86_64": {
-                "signature": "${LINUX_SIG}",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${LINUX_DEB_NAME}"
+                "signature": "${LINUX_X86_64_SIG}",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${LINUX_X86_64_DEB_NAME}"
+              },
+              "linux-aarch64": {
+                "signature": "${LINUX_AARCH64_SIG}",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${LINUX_AARCH64_DEB_NAME}"
               }
             }
           }
