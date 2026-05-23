@@ -53,20 +53,26 @@
                   />
                 </div>
                 <div class="diff-resizer"></div>
-                
-                <div 
-                  class="pointer-events-none absolute z-30 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60"
-                  :style="cropApplied ? { left: `${cropBox.left + 12}px`, top: `${cropBox.top + 12}px` } : { left: '12px', top: '12px' }"
-                >
-                  {{ $t('msgbox.image_editor.original') }}
-                </div>
-                <div 
-                  class="pointer-events-none absolute z-30 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60"
-                  :style="cropApplied ? { left: `${cropBox.left + cropBox.width - (locale === 'zh' ? 52 : 64)}px`, top: `${cropBox.top + 12}px` } : { right: '12px', top: '12px' }"
-                >
-                  {{ $t('msgbox.image_editor.adjusted') }}
-                </div>
               </figure>
+
+              <div
+                v-if="showDiffPreview && canShowDiffPreview"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60 left-3 top-3"
+              >
+                {{ $t('msgbox.image_editor.original') }}
+              </div>
+              <div
+                v-if="showDiffPreview && canShowDiffPreview"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60 right-3 top-3"
+              >
+                {{ currentPresetLabel || $t('msgbox.image_editor.adjusted') }}
+              </div>
+              <div
+                v-if="imageReady && !(showDiffPreview && canShowDiffPreview) && currentPresetLabel"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60 right-3 top-3"
+              >
+                {{ currentPresetLabel }}
+              </div>
 
               <img
                 v-show="imageReady && !(showDiffPreview && canShowDiffPreview)"
@@ -666,6 +672,13 @@ const adjustedImageStyle = computed((): CSSProperties => ({
   filter: adjustmentFilter.value,
 }));
 const canShowDiffPreview = computed(() => activeEditorTab.value === 'adjust' && hasAdjustmentChanges.value);
+const currentPresetLabel = computed(() => {
+  if (showOriginalWhilePressed.value) {
+    return presetOptions.value.find(o => o.value === 'natural')?.label || '';
+  }
+  const key = resolvePresetKey(getCurrentAdjustmentValues());
+  return presetOptions.value.find(o => o.value === key)?.label || '';
+});
 const adjustmentFilter = computed(() => {
   return buildAdjustmentFilter({
     brightness: brightness.value,
