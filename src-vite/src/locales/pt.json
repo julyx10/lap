@@ -704,7 +704,9 @@
   },
   "file_info": {
     "title": "Info do arquivo",
-    "preview": "Miniatura",
+    "preview": "Pré-visualização",
+    "thumbnail": "Miniatura",
+    "histogram": "Histograma",
     "preview_size": "Tamanho da miniatura",
     "general": "Geral",
     "metadata": "Metadados",

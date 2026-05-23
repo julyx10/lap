@@ -29,11 +29,11 @@ export const useConfigStore = defineStore('configStore', {
 
     infoPanel: {
       showPreview: true,         // show preview thumbnail
+      previewMode: 'thumbnail',  // preview section mode ('thumbnail' | 'histogram')
       previewScale: 1,           // preview thumbnail scale (1, 0.5, 0.25)
       showBasicInfo: true,       // show basic info
       showMetadata: true,        // show metadata
       showMap: true,             // show map
-      showHistogram: true,       // show image histogram
       mapTheme: 0,               // 0: standard, 2: satellite
     },
 

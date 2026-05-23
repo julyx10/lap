@@ -48,11 +48,42 @@
           @leave="onLeave"
         >
           <div v-if="showPreviewPanel" class="overflow-hidden">
+            <div class="mb-2 flex items-center gap-2">
+              <div role="tablist" class="tabs tabs-xs flex-1">
+                <button
+                  role="tab"
+                  :class="['tab', !isHistogramPreview ? 'tab-active text-primary' : '']"
+                  @click.stop="setPreviewMode('thumbnail')"
+                >
+                  {{ $t('file_info.thumbnail') }}
+                </button>
+                <button
+                  v-if="canShowHistogram"
+                  role="tab"
+                  :class="['tab', isHistogramPreview ? 'tab-active text-primary' : '']"
+                  @click.stop="setPreviewMode('histogram')"
+                >
+                  {{ $t('file_info.histogram') }}
+                </button>
+              </div>
+              <span
+                v-if="previewFormatLabel"
+                class="inline-flex shrink-0 items-center rounded-box border border-base-content/20 bg-base-300/80 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/80"
+              >
+                {{ previewFormatLabel }}
+              </span>
+            </div>
+
             <div
+              v-if="!isHistogramPreview"
               class="relative w-full overflow-hidden rounded-box border border-base-content/5 shadow-sm transition-[padding-top] duration-200 ease-out"
               :style="{ paddingTop: `${75 * previewScale}%` }"
+              @pointerleave="stopPreviewVideo"
             >
-              <div class="absolute top-2 left-2 flex bg-base-100/30 hover:bg-base-100/70 rounded-box z-10 cursor-pointer opacity-0 pointer-events-none transition-opacity duration-150 group-hover/thumbnail:opacity-100 group-hover/thumbnail:pointer-events-auto">
+              <div
+                v-if="!showVideoPreview"
+                class="absolute top-2 left-2 flex bg-base-100/30 hover:bg-base-100/70 rounded-box z-10 cursor-pointer opacity-0 pointer-events-none transition-opacity duration-150 group-hover/thumbnail:opacity-100 group-hover/thumbnail:pointer-events-auto"
+              >
                 <TButton
                   :icon="IconZoomOut"
                   :tooltip="$t('map.zoom_out')"
@@ -66,14 +97,6 @@
                   @click.stop="increasePreviewScale"
                 />
               </div>
-              <div class="absolute top-2 right-2 z-10">
-                <span
-                  v-if="previewFormatLabel"
-                  class="inline-flex items-center rounded-box border border-base-content/20 bg-base-300/80 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/80 backdrop-blur-sm"
-                >
-                  {{ previewFormatLabel }}
-                </span>
-              </div>
               <div class="absolute inset-0">
                 <img
                   v-if="fileInfo?.thumbnail"
@@ -81,13 +104,39 @@
                   class="h-full w-full object-contain"
                   :style="previewImageStyle"
                 />
-                <div v-else class="flex h-full w-full items-center justify-center bg-base-content/5">
+                <video
+                  v-if="showVideoPreview"
+                  ref="previewVideoRef"
+                  class="pointer-events-none absolute inset-0 h-full w-full object-contain bg-black transition-opacity duration-100"
+                  :class="isVideoPreviewReady ? 'opacity-100' : 'opacity-0'"
+                  :style="previewImageStyle"
+                  :poster="fileInfo?.thumbnail"
+                  muted
+                  autoplay
+                  loop
+                  playsinline
+                  preload="metadata"
+                  @canplay="isVideoPreviewReady = true"
+                  @playing="isVideoPreviewReady = true"
+                  @error="stopPreviewVideo"
+                />
+                <div v-if="!fileInfo?.thumbnail && !showVideoPreview" class="flex h-full w-full items-center justify-center bg-base-content/5">
                   <component
                     :is="fileInfo?.file_type === 2 ? IconVideo : IconPhoto"
                     class="w-10 h-10 text-base-content/20"
                   />
                 </div>
               </div>
+              <button
+                v-if="isVideoFile && !showVideoPreview"
+                type="button"
+                class="absolute inset-0 z-10 flex items-center justify-center bg-black/10 text-base-content/70 opacity-0 pointer-events-none transition-all duration-150 group-hover/thumbnail:opacity-100 group-hover/thumbnail:pointer-events-auto hover:bg-black/20"
+                @click.stop="playPreviewVideo"
+              >
+                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-base-100/70 shadow-sm transition-transform hover:scale-105">
+                  <IconVideoPlay class="h-7 w-7" />
+                </span>
+              </button>
 
               <!-- <div
                 v-if="fileInfo?.is_favorite"
@@ -95,6 +144,9 @@
               >
                 <IconHeartFilled class="w-3.5 h-3.5 text-white" />
               </div> -->
+            </div>
+            <div v-else class="rounded-box border border-base-content/5 bg-base-300/30 p-3 shadow-sm">
+              <ImageHistogram :source="fileInfo?.thumbnail || ''" />
             </div>
           </div>
         </Transition>
@@ -397,7 +449,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, computed, watch } from 'vue';
+import { ref, nextTick, computed, watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
@@ -418,7 +470,8 @@ import {
   formatCameraInfo,
   getCountryName,
   combineFileName,
-  isValidFileName
+  isValidFileName,
+  getAssetSrc
 } from '@/common/utils';
 import { 
   IconClose, IconLocation, IconArrowDown, IconArrowUp, IconCameraAperture, 
@@ -428,10 +481,12 @@ import {
   IconRefresh,
   IconRotate,
   IconVideo,
+  IconVideoPlay,
   IconZoomIn,
   IconZoomOut,
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
+import ImageHistogram from '@/components/ImageHistogram.vue';
 import MapView from '@/components/MapView.vue';
 
 const props = defineProps({
@@ -471,6 +526,13 @@ const previewScale = computed({
 const showBasicInfoPanel = computed(() => config.infoPanel.showBasicInfo);
 const showMetadataPanel = computed(() => config.infoPanel.showMetadata);
 const showMapPanel = computed(() => config.infoPanel.showMap);
+const isVideoFile = computed(() => Number(props.fileInfo?.file_type || 0) === 2);
+const canShowHistogram = computed(() => !isVideoFile.value);
+const activePreviewMode = computed(() => canShowHistogram.value ? config.infoPanel.previewMode : 'thumbnail');
+const isHistogramPreview = computed(() => activePreviewMode.value === 'histogram');
+const previewVideoRef = ref<HTMLVideoElement | null>(null);
+const showVideoPreview = ref(false);
+const isVideoPreviewReady = ref(false);
 const normalizedRotate = computed(() => {
   const rotate = Number(props.fileInfo?.rotate || 0) % 360;
   return rotate < 0 ? rotate + 360 : rotate;
@@ -496,10 +558,52 @@ const previewFormatLabel = computed(() => {
   if (Number(props.fileInfo?.file_type || 0) === 3) return 'RAW';
   return extension.toUpperCase();
 });
-
 function togglePreview() {
   config.infoPanel.showPreview = !config.infoPanel.showPreview;
 }
+
+function setPreviewMode(mode: 'thumbnail' | 'histogram') {
+  if (mode === 'histogram' && !canShowHistogram.value) return;
+  config.infoPanel.previewMode = mode;
+}
+
+async function playPreviewVideo() {
+  if (!isVideoFile.value || !props.fileInfo?.file_path || showVideoPreview.value) return;
+  isVideoPreviewReady.value = false;
+  showVideoPreview.value = true;
+  await nextTick();
+
+  const video = previewVideoRef.value;
+  if (!video) return;
+
+  video.src = getAssetSrc(props.fileInfo.file_path);
+  video.muted = true;
+
+  try {
+    await video.play();
+  } catch {
+    stopPreviewVideo();
+  }
+}
+
+function stopPreviewVideo() {
+  const video = previewVideoRef.value;
+  if (video) {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  }
+
+  isVideoPreviewReady.value = false;
+  showVideoPreview.value = false;
+}
+
+watch(
+  () => [props.fileInfo?.id, props.fileInfo?.file_path, showPreviewPanel.value, isHistogramPreview.value],
+  stopPreviewVideo
+);
+
+onBeforeUnmount(stopPreviewVideo);
 
 function increasePreviewScale() {
   const index = previewScaleOptions.indexOf(previewScale.value);

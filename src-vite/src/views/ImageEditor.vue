@@ -325,31 +325,12 @@
             <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.histogram') }}</div>
           </div>
 
-          <div class="relative w-full aspect-4/1 px-0.5">
-            <svg viewBox="0 0 256 64" class="w-full h-full text-primary" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="histGradientEdit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="currentColor" stop-opacity="0.6" />
-                  <stop offset="100%" stop-color="currentColor" stop-opacity="0.1" />
-                </linearGradient>
-              </defs>
-              <g class="text-base-content/20">
-                <line x1="64" y1="0" x2="64" y2="64" stroke="currentColor" stroke-width="0.5" />
-                <line x1="128" y1="0" x2="128" y2="64" stroke="currentColor" stroke-width="0.5" />
-                <line x1="192" y1="0" x2="192" y2="64" stroke="currentColor" stroke-width="0.5" />
-              </g>
-              <path :d="histogramPath" fill="url(#histGradientEdit)" />
-              <path :d="histogramPathR" fill="rgba(239,68,68,0.35)" style="mix-blend-mode: screen" />
-              <path :d="histogramPathG" fill="rgba(34,197,94,0.35)" style="mix-blend-mode: screen" />
-              <path :d="histogramPathB" fill="rgba(59,130,246,0.35)" style="mix-blend-mode: screen" />
-            </svg>
-          </div>
-
-          <div class="flex justify-between px-0.5 text-[8px] uppercase tracking-tighter font-black text-base-content/25">
-            <span>{{ $t('msgbox.image_editor.shadows') }}</span>
-            <span>{{ $t('msgbox.image_editor.midtones') }}</span>
-            <span>{{ $t('msgbox.image_editor.highlights') }}</span>
-          </div>
+          <ImageHistogram
+            ref="histogramRef"
+            :source="histogramSource"
+            :adjustments="histogramAdjustments"
+            :apply-adjustments="true"
+          />
         </section>
 
         <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
@@ -519,6 +500,7 @@ import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';
 import SliderInput from '@/components/SliderInput.vue';
+import ImageHistogram from '@/components/ImageHistogram.vue';
 
 import {
   IconCrop,
@@ -616,25 +598,8 @@ const blur = ref(0);
 const selectedFilter = ref('');
 const selectedPreset = ref('natural');
 const autoPresetValues = ref<AdjustmentValues | null>(null);
-const HISTOGRAM_BIN_COUNT = 256;
-const HISTOGRAM_HEIGHT = 58;
-const histogramData = new Float32Array(HISTOGRAM_BIN_COUNT);
-const histogramDataR = new Float32Array(HISTOGRAM_BIN_COUNT);
-const histogramDataG = new Float32Array(HISTOGRAM_BIN_COUNT);
-const histogramDataB = new Float32Array(HISTOGRAM_BIN_COUNT);
-const displayedHistData = new Float32Array(HISTOGRAM_BIN_COUNT);
-const displayedHistDataR = new Float32Array(HISTOGRAM_BIN_COUNT);
-const displayedHistDataG = new Float32Array(HISTOGRAM_BIN_COUNT);
-const displayedHistDataB = new Float32Array(HISTOGRAM_BIN_COUNT);
-const smoothedHistData = new Float32Array(HISTOGRAM_BIN_COUNT);
-const smoothedHistDataR = new Float32Array(HISTOGRAM_BIN_COUNT);
-const smoothedHistDataG = new Float32Array(HISTOGRAM_BIN_COUNT);
-const smoothedHistDataB = new Float32Array(HISTOGRAM_BIN_COUNT);
-const histogramVersion = ref(0);
-let histogramAnimRaf: number | null = null;
 let isApplyingPreset = false;
 let skipNextCustomPresetLoad = false;
-let histogramLoadId = 0;
 let autoPresetRequestId = 0;
 
 let containerResizeObserver: ResizeObserver | null = null;
@@ -648,6 +613,18 @@ type AdjustmentValues = {
   blur: number;
   filter: string;
 };
+
+const histogramRef = ref<InstanceType<typeof ImageHistogram> | null>(null);
+const histogramSource = computed(() => imageSrc.value || fileInfo.value?.thumbnail || '');
+const histogramAdjustments = computed<AdjustmentValues>(() => ({
+  brightness: brightness.value,
+  contrast: contrast.value,
+  saturation: saturation.value,
+  hue: hue.value,
+  blur: blur.value,
+  filter: selectedFilter.value,
+}));
+
 function buildAdjustmentFilter(values: AdjustmentValues) {
   return `
     brightness(${100 + values.brightness}%)
@@ -1136,10 +1113,12 @@ watch(activeEditorTab, (tab) => {
   }
 });
 
+watch(histogramSource, () => {
+  autoPresetValues.value = null;
+});
+
 
 watch([brightness, contrast, saturation, hue, blur, selectedFilter], () => {
-  scheduleHistogramRecompute();
-
   if (isApplyingPreset) return;
 
   const currentValues = getCurrentAdjustmentValues();
@@ -1233,7 +1212,6 @@ onMounted(async () => {
 
   isProcessing.value = true;
   initEditImage();
-  updateRealHistogram();
 
   unlistenUpdateFile = await listen('update-file', async (event: any) => {
     const newFileId = Number(event?.payload?.fileId || 0);
@@ -1241,7 +1219,6 @@ onMounted(async () => {
       await loadFileInfo(newFileId);
       if (fileInfo.value) {
         initEditImage();
-        updateRealHistogram();
       }
     }
   });
@@ -1280,15 +1257,6 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
   uiStore.removeInputHandler('EditImage');
-  if (histogramAnimRaf !== null) {
-    cancelAnimationFrame(histogramAnimRaf);
-    histogramAnimRaf = null;
-  }
-  if (recomputeHistogramTimer !== null) {
-    clearTimeout(recomputeHistogramTimer);
-    recomputeHistogramTimer = null;
-  }
-  releaseHistogramSourceImage();
   if (containerResizeObserver) {
     containerResizeObserver.disconnect();
     containerResizeObserver = null;
@@ -1309,7 +1277,6 @@ const onImageLoad = async () => {
   }
 
   autoFitVisualArea();
-  updateRealHistogram();
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -1399,375 +1366,10 @@ const initEditImage = async () => {
 
 };
 
-function clearHistogram() {
-  releaseHistogramSourceImage();
-  autoPresetValues.value = null;
-  if (histogramAnimRaf !== null) {
-    cancelAnimationFrame(histogramAnimRaf);
-    histogramAnimRaf = null;
-  }
-  histogramData.fill(0);
-  histogramDataR.fill(0);
-  histogramDataG.fill(0);
-  histogramDataB.fill(0);
-  displayedHistData.fill(0);
-  displayedHistDataR.fill(0);
-  displayedHistDataG.fill(0);
-  displayedHistDataB.fill(0);
-  smoothedHistData.fill(0);
-  smoothedHistDataR.fill(0);
-  smoothedHistDataG.fill(0);
-  smoothedHistDataB.fill(0);
-  histogramVersion.value++;
-}
-
-function resolveHistogramSource() {
-  return imageSrc.value || fileInfo.value?.thumbnail || '';
-}
-
-function writeNormalizedHistogram(counts: Float32Array, output: Float32Array) {
-  let maxVal = 0;
-  for (let i = 0; i < HISTOGRAM_BIN_COUNT; i++) {
-    if (counts[i] > maxVal) maxVal = counts[i];
-  }
-
-  if (maxVal <= 0) {
-    output.fill(0);
-    return;
-  }
-
-  for (let i = 0; i < HISTOGRAM_BIN_COUNT; i++) {
-    output[i] = (counts[i] / maxVal) * HISTOGRAM_HEIGHT;
-  }
-}
-
-function updateHistogramTargets(data: Uint8ClampedArray) {
-  const hist = new Float32Array(HISTOGRAM_BIN_COUNT);
-  const histR = new Float32Array(HISTOGRAM_BIN_COUNT);
-  const histG = new Float32Array(HISTOGRAM_BIN_COUNT);
-  const histB = new Float32Array(HISTOGRAM_BIN_COUNT);
-
-  for (let i = 0; i < data.length; i += 4) {
-    const alpha = data[i + 3] / 255;
-    if (alpha <= 0) continue;
-
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const gray = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
-    hist[gray] += alpha;
-    histR[r] += alpha;
-    histG[g] += alpha;
-    histB[b] += alpha;
-  }
-
-  writeNormalizedHistogram(hist, histogramData);
-  writeNormalizedHistogram(histR, histogramDataR);
-  writeNormalizedHistogram(histG, histogramDataG);
-  writeNormalizedHistogram(histB, histogramDataB);
-}
-
-function clampColor(value: number) {
-  return Math.max(0, Math.min(255, value));
-}
-
-function clampNumber(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function applyPerPixel(data: Uint8ClampedArray, transform: (r: number, g: number, b: number) => [number, number, number]) {
-  for (let i = 0; i < data.length; i += 4) {
-    const [r, g, b] = transform(data[i], data[i + 1], data[i + 2]);
-    data[i] = clampColor(r);
-    data[i + 1] = clampColor(g);
-    data[i + 2] = clampColor(b);
-  }
-}
-
-function applyBoxBlur(data: Uint8ClampedArray, width: number, height: number, radius: number) {
-  if (radius <= 0) return;
-
-  const temp = new Uint8ClampedArray(data.length);
-  const output = new Uint8ClampedArray(data.length);
-  const windowSize = radius * 2 + 1;
-
-  for (let y = 0; y < height; y++) {
-    let r = 0, g = 0, b = 0, a = 0;
-    for (let x = -radius; x <= radius; x++) {
-      const clampedX = Math.max(0, Math.min(width - 1, x));
-      const idx = (y * width + clampedX) * 4;
-      r += data[idx];
-      g += data[idx + 1];
-      b += data[idx + 2];
-      a += data[idx + 3];
-    }
-
-    for (let x = 0; x < width; x++) {
-      const idx = (y * width + x) * 4;
-      temp[idx] = r / windowSize;
-      temp[idx + 1] = g / windowSize;
-      temp[idx + 2] = b / windowSize;
-      temp[idx + 3] = a / windowSize;
-
-      const removeX = Math.max(0, Math.min(width - 1, x - radius));
-      const addX = Math.max(0, Math.min(width - 1, x + radius + 1));
-      const removeIdx = (y * width + removeX) * 4;
-      const addIdx = (y * width + addX) * 4;
-      r += data[addIdx] - data[removeIdx];
-      g += data[addIdx + 1] - data[removeIdx + 1];
-      b += data[addIdx + 2] - data[removeIdx + 2];
-      a += data[addIdx + 3] - data[removeIdx + 3];
-    }
-  }
-
-  for (let x = 0; x < width; x++) {
-    let r = 0, g = 0, b = 0, a = 0;
-    for (let y = -radius; y <= radius; y++) {
-      const clampedY = Math.max(0, Math.min(height - 1, y));
-      const idx = (clampedY * width + x) * 4;
-      r += temp[idx];
-      g += temp[idx + 1];
-      b += temp[idx + 2];
-      a += temp[idx + 3];
-    }
-
-    for (let y = 0; y < height; y++) {
-      const idx = (y * width + x) * 4;
-      output[idx] = r / windowSize;
-      output[idx + 1] = g / windowSize;
-      output[idx + 2] = b / windowSize;
-      output[idx + 3] = a / windowSize;
-
-      const removeY = Math.max(0, Math.min(height - 1, y - radius));
-      const addY = Math.max(0, Math.min(height - 1, y + radius + 1));
-      const removeIdx = (removeY * width + x) * 4;
-      const addIdx = (addY * width + x) * 4;
-      r += temp[addIdx] - temp[removeIdx];
-      g += temp[addIdx + 1] - temp[removeIdx + 1];
-      b += temp[addIdx + 2] - temp[removeIdx + 2];
-      a += temp[addIdx + 3] - temp[removeIdx + 3];
-    }
-  }
-
-  data.set(output);
-}
-
-function applyHistogramAdjustments(data: Uint8ClampedArray, width: number, height: number) {
-  // Keep this order aligned with buildAdjustmentFilter() so the histogram
-  // represents the previewed pixels instead of a separate editor pipeline.
-  const br = (100 + brightness.value) / 100;
-  const ct = (100 + contrast.value) / 100;
-
-  applyPerPixel(data, (r, g, b) => [r * br, g * br, b * br]);
-  applyPerPixel(data, (r, g, b) => [
-    (r - 128) * ct + 128,
-    (g - 128) * ct + 128,
-    (b - 128) * ct + 128,
-  ]);
-
-  applyBoxBlur(data, width, height, Math.round(blur.value));
-
-  const hueRad = hue.value * Math.PI / 180;
-  const cos = Math.cos(hueRad);
-  const sin = Math.sin(hueRad);
-  const sat = saturation.value / 100;
-
-  applyPerPixel(data, (r, g, b) => [
-    (0.213 + 0.787 * cos - 0.213 * sin) * r + (0.715 - 0.715 * cos - 0.715 * sin) * g + (0.072 - 0.072 * cos + 0.928 * sin) * b,
-    (0.213 - 0.213 * cos + 0.143 * sin) * r + (0.715 + 0.285 * cos + 0.140 * sin) * g + (0.072 - 0.072 * cos - 0.283 * sin) * b,
-    (0.213 - 0.213 * cos - 0.787 * sin) * r + (0.715 - 0.715 * cos + 0.715 * sin) * g + (0.072 + 0.928 * cos + 0.072 * sin) * b,
-  ]);
-
-  applyPerPixel(data, (r, g, b) => [
-    (0.213 + 0.787 * sat) * r + (0.715 - 0.715 * sat) * g + (0.072 - 0.072 * sat) * b,
-    (0.213 - 0.213 * sat) * r + (0.715 + 0.285 * sat) * g + (0.072 - 0.072 * sat) * b,
-    (0.213 - 0.213 * sat) * r + (0.715 - 0.715 * sat) * g + (0.072 + 0.928 * sat) * b,
-  ]);
-
-  if (selectedFilter.value === 'grayscale') {
-    applyPerPixel(data, (r, g, b) => {
-      const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      return [gray, gray, gray];
-    });
-  } else if (selectedFilter.value === 'sepia') {
-    applyPerPixel(data, (r, g, b) => [
-      0.393 * r + 0.769 * g + 0.189 * b,
-      0.349 * r + 0.686 * g + 0.168 * b,
-      0.272 * r + 0.534 * g + 0.131 * b,
-    ]);
-  } else if (selectedFilter.value === 'invert') {
-    applyPerPixel(data, (r, g, b) => [255 - r, 255 - g, 255 - b]);
-  }
-}
-
-function buildHistogramData(img: HTMLImageElement, applyAdjustments = true) {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) {
-    clearHistogram();
-    return;
-  }
-
-  const size = 512;
-  canvas.width = size;
-  canvas.height = size;
-  ctx.drawImage(img, 0, 0, size, size);
-
-  try {
-    const imageData = ctx.getImageData(0, 0, size, size);
-    if (applyAdjustments) {
-      applyHistogramAdjustments(imageData.data, size, size);
-    }
-    const data = imageData.data;
-    updateHistogramTargets(data);
-  } catch {
-    clearHistogram();
-  }
-  startHistogramAnimation();
-}
-
-async function loadHistogramImage(source: string) {
-  const response = await fetch(source);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch histogram source: ${response.status}`);
-  }
-
-  const blob = await response.blob();
-
-  return await new Promise<{ img: HTMLImageElement; objectUrl: string }>((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(blob);
-    const img = new Image();
-
-    img.onload = () => resolve({ img, objectUrl });
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Failed to decode histogram source'));
-    };
-    img.src = objectUrl;
-  });
-}
-
-function percentileFromCounts(counts: Float32Array, total: number, percentile: number) {
-  if (total <= 0) return 0;
-  const target = total * percentile;
-  let cumulative = 0;
-  for (let i = 0; i < counts.length; i++) {
-    cumulative += counts[i];
-    if (cumulative >= target) return i;
-  }
-  return counts.length - 1;
-}
-
-function computeAutoPresetValues(img: HTMLImageElement): AdjustmentValues {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) return presets.natural;
-
-  const size = 256;
-  canvas.width = size;
-  canvas.height = size;
-  ctx.drawImage(img, 0, 0, size, size);
-
-  try {
-    const data = ctx.getImageData(0, 0, size, size).data;
-    const lumaCounts = new Float32Array(HISTOGRAM_BIN_COUNT);
-    let total = 0;
-    let lumaSum = 0;
-    let saturationSum = 0;
-
-    for (let i = 0; i < data.length; i += 4) {
-      const alpha = data[i + 3] / 255;
-      if (alpha <= 0) continue;
-
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      const luma = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
-      const maxChannel = Math.max(r, g, b);
-      const minChannel = Math.min(r, g, b);
-      const chroma = maxChannel > 0 ? (maxChannel - minChannel) / maxChannel : 0;
-
-      lumaCounts[luma] += alpha;
-      total += alpha;
-      lumaSum += luma * alpha;
-      saturationSum += chroma * alpha;
-    }
-
-    if (total <= 0) return presets.natural;
-
-    const low = percentileFromCounts(lumaCounts, total, 0.01);
-    const high = percentileFromCounts(lumaCounts, total, 0.99);
-    const range = Math.max(1, high - low);
-    const mean = Math.max(1, lumaSum / total);
-    const avgSaturation = saturationSum / total;
-
-    const isUnderexposed = mean < 92 && high < 210;
-    const isOverexposed = mean > 168 && low > 35;
-    const isFlat = range < 150;
-    const isHealthyExposure = !isUnderexposed && !isOverexposed && mean >= 108 && mean <= 148;
-
-    let contrastFactor = 1;
-    if (isFlat) {
-      contrastFactor = clampNumber(170 / range, 1, 1.28);
-    }
-
-    let targetMean = mean;
-    if (isUnderexposed) {
-      targetMean = 126;
-    } else if (isOverexposed) {
-      targetMean = 136;
-    } else if (isFlat && !isHealthyExposure) {
-      targetMean = 132;
-    }
-
-    const brightnessFactor = targetMean === mean
-      ? 1
-      : clampNumber((((targetMean - 128) / contrastFactor) + 128) / mean, 0.82, 1.22);
-
-    let saturationBoost = 0;
-    if (avgSaturation >= 0.04 && avgSaturation < 0.16) {
-      saturationBoost = 10;
-    } else if (avgSaturation >= 0.16 && avgSaturation < 0.24) {
-      saturationBoost = 5;
-    } else if (avgSaturation > 0.62) {
-      saturationBoost = -4;
-    }
-
-    return {
-      brightness: Math.round((brightnessFactor - 1) * 100),
-      contrast: Math.round((contrastFactor - 1) * 100),
-      saturation: clampNumber(Math.round(100 + saturationBoost), 85, 120),
-      hue: 0,
-      blur: 0,
-      filter: '',
-    };
-  } catch {
-    return presets.natural;
-  }
-}
-
 async function getAutoPresetValues() {
   if (autoPresetValues.value) return autoPresetValues.value;
-  if (histogramSourceImage) {
-    autoPresetValues.value = computeAutoPresetValues(histogramSourceImage);
-    return autoPresetValues.value;
-  }
-
-  const source = resolveHistogramSource();
-  if (!source) return presets.natural;
-
-  try {
-    const loaded = await loadHistogramImage(source);
-    try {
-      autoPresetValues.value = computeAutoPresetValues(loaded.img);
-      return autoPresetValues.value;
-    } finally {
-      URL.revokeObjectURL(loaded.objectUrl);
-    }
-  } catch {
-    autoPresetValues.value = presets.natural;
-    return autoPresetValues.value;
-  }
+  autoPresetValues.value = await histogramRef.value?.getAutoPresetValues() || presets.natural;
+  return autoPresetValues.value;
 }
 
 async function applyAutoPreset() {
@@ -1784,172 +1386,6 @@ async function applyAutoPreset() {
       });
     }
   }
-}
-
-let histogramSourceImage: HTMLImageElement | null = null;
-let histogramSourceObjectUrl = '';
-let recomputeHistogramTimer: ReturnType<typeof setTimeout> | null = null;
-
-function releaseHistogramSourceImage() {
-  histogramSourceImage = null;
-  if (histogramSourceObjectUrl) {
-    URL.revokeObjectURL(histogramSourceObjectUrl);
-    histogramSourceObjectUrl = '';
-  }
-}
-
-function recomputeHistogramWithFilter() {
-  if (!histogramSourceImage) return;
-  buildHistogramData(histogramSourceImage);
-}
-
-function scheduleHistogramRecompute() {
-  if (recomputeHistogramTimer !== null) return;
-  recomputeHistogramTimer = setTimeout(() => {
-    recomputeHistogramTimer = null;
-    recomputeHistogramWithFilter();
-  }, 32);
-}
-
-const updateRealHistogram = async () => {
-  const histogramSource = resolveHistogramSource();
-  if (!histogramSource) {
-    clearHistogram();
-    return;
-  }
-
-  const loadId = ++histogramLoadId;
-
-  try {
-    const loaded = await loadHistogramImage(histogramSource);
-    if (loadId !== histogramLoadId) {
-      URL.revokeObjectURL(loaded.objectUrl);
-      return;
-    }
-
-    releaseHistogramSourceImage();
-    histogramSourceObjectUrl = loaded.objectUrl;
-    histogramSourceImage = loaded.img;
-    autoPresetValues.value = computeAutoPresetValues(loaded.img);
-    buildHistogramData(loaded.img);
-  } catch {
-    if (loadId !== histogramLoadId) return;
-    clearHistogram();
-  }
-};
-
-
-function gaussianSmooth(source: Float32Array, target: Float32Array, radius = 5, sigma = 2.6) {
-  for (let i = 0; i < HISTOGRAM_BIN_COUNT; i++) {
-    let sum = 0, weight = 0;
-    for (let j = -radius; j <= radius; j++) {
-      const idx = i + j;
-      if (idx < 0 || idx >= HISTOGRAM_BIN_COUNT) continue;
-      const w = Math.exp(-(j * j) / (2 * sigma * sigma));
-      sum += source[idx] * w;
-      weight += w;
-    }
-    target[i] = sum / weight;
-  }
-}
-
-function sampleSmoothedHistogram(smoothed: Float32Array, center: number, radius = 2) {
-  let sum = 0;
-  let count = 0;
-  for (let i = Math.max(0, center - radius); i <= Math.min(HISTOGRAM_BIN_COUNT - 1, center + radius); i++) {
-    sum += smoothed[i];
-    count++;
-  }
-  return count > 0 ? sum / count : 0;
-}
-
-function buildPathFromSmoothed(smoothed: Float32Array) {
-  const width = 256;
-  const height = 64;
-  const sampledPoints: { x: number; y: number }[] = [];
-
-  for (let i = 0; i < HISTOGRAM_BIN_COUNT; i += 4) {
-    const val = Math.max(0, sampleSmoothedHistogram(smoothed, i));
-    const x = i;
-    const y = height - val;
-    sampledPoints.push({ x, y });
-  }
-  const lastVal = Math.max(0, sampleSmoothedHistogram(smoothed, HISTOGRAM_BIN_COUNT - 1));
-  sampledPoints.push({ x: width, y: height - lastVal });
-
-  if (sampledPoints.length < 2) return '';
-
-  let path = `M 0,${height}`;
-  for (let i = 0; i < sampledPoints.length; i++) {
-    const p = sampledPoints[i];
-    if (i === 0) {
-      path += ` L ${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-    } else {
-      const prev = sampledPoints[i - 1];
-      const cp1x = prev.x + (p.x - prev.x) / 2;
-      const cp1y = prev.y;
-      const cp2x = prev.x + (p.x - prev.x) / 2;
-      const cp2y = p.y;
-      path += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-    }
-  }
-  path += ` L ${width},${height} Z`;
-  return path;
-}
-
-const histogramPath = computed(() => {
-  histogramVersion.value;
-  return buildPathFromSmoothed(smoothedHistData);
-});
-const histogramPathR = computed(() => {
-  histogramVersion.value;
-  return buildPathFromSmoothed(smoothedHistDataR);
-});
-const histogramPathG = computed(() => {
-  histogramVersion.value;
-  return buildPathFromSmoothed(smoothedHistDataG);
-});
-const histogramPathB = computed(() => {
-  histogramVersion.value;
-  return buildPathFromSmoothed(smoothedHistDataB);
-});
-
-function lerpHistogram(target: Float32Array, display: Float32Array): boolean {
-  let changed = false;
-  for (let i = 0; i < HISTOGRAM_BIN_COUNT; i++) {
-    const diff = target[i] - display[i];
-    if (Math.abs(diff) < 0.5) {
-      display[i] = target[i];
-    } else {
-      display[i] += diff * 0.3;
-      changed = true;
-    }
-  }
-  return changed;
-}
-
-function startHistogramAnimation() {
-  if (histogramAnimRaf !== null) {
-    cancelAnimationFrame(histogramAnimRaf);
-    histogramAnimRaf = null;
-  }
-  const step = () => {
-    const changedL = lerpHistogram(histogramData, displayedHistData);
-    const changedR = lerpHistogram(histogramDataR, displayedHistDataR);
-    const changedG = lerpHistogram(histogramDataG, displayedHistDataG);
-    const changedB = lerpHistogram(histogramDataB, displayedHistDataB);
-    gaussianSmooth(displayedHistData, smoothedHistData);
-    gaussianSmooth(displayedHistDataR, smoothedHistDataR);
-    gaussianSmooth(displayedHistDataG, smoothedHistDataG);
-    gaussianSmooth(displayedHistDataB, smoothedHistDataB);
-    histogramVersion.value++;
-    if (changedL || changedR || changedG || changedB) {
-      histogramAnimRaf = requestAnimationFrame(step);
-    } else {
-      histogramAnimRaf = null;
-    }
-  };
-  histogramAnimRaf = requestAnimationFrame(step);
 }
 
 function presetThumbnailFilter(presetKey: string) {

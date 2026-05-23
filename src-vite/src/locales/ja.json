@@ -704,7 +704,9 @@
   },
   "file_info": {
     "title": "ファイル情報",
-    "preview": "サムネイル",
+    "preview": "プレビュー",
+    "thumbnail": "サムネイル",
+    "histogram": "ヒストグラム",
     "preview_size": "サムネイルサイズ",
     "general": "一般",
     "metadata": "メタデータ",

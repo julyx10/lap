@@ -704,7 +704,9 @@
   },
   "file_info": {
     "title": "파일 정보",
-    "preview": "썸네일",
+    "preview": "미리보기",
+    "thumbnail": "썸네일",
+    "histogram": "히스토그램",
     "preview_size": "썸네일 크기",
     "general": "일반",
     "metadata": "메타데이터",

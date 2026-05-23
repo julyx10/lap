@@ -704,7 +704,9 @@
   },
   "file_info": {
     "title": "Информация",
-    "preview": "Миниатюра",
+    "preview": "Предпросмотр",
+    "thumbnail": "Миниатюра",
+    "histogram": "Гистограмма",
     "preview_size": "Размер миниатюры",
     "general": "Общее",
     "metadata": "Метаданные",

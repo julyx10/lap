@@ -704,7 +704,9 @@
   },
   "file_info": {
     "title": "信息",
-    "preview": "缩略图",
+    "preview": "预览",
+    "thumbnail": "缩略图",
+    "histogram": "直方图",
     "preview_size": "缩略图大小",
     "general": "常规",
     "metadata": "元数据",
