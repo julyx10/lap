@@ -3199,7 +3199,7 @@ impl AThumb {
             }
 
             let hydrated = Self::ensure_cached(thumbnail, file_path, thumbnail_size, orientation)?;
-            if hydrated.thumb_data.is_some() || hydrated.thumb_key.is_some() {
+            if hydrated.thumb_data.is_some() {
                 return Ok(Some(hydrated));
             }
 
@@ -3239,7 +3239,7 @@ impl AThumb {
         }
 
         let hydrated = Self::ensure_cached(thumbnail, file_path, thumbnail_size, orientation)?;
-        if hydrated.thumb_data.is_some() || hydrated.thumb_key.is_some() {
+        if hydrated.thumb_data.is_some() {
             return Ok(Some(hydrated));
         }
 

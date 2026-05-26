@@ -3391,7 +3391,16 @@ async function updateContent(force = false) {
                   console.log(
                     `folder sync: ${syncResult.new_file_count} new, ${syncResult.updated_file_count} updated, ${syncResult.deleted_file_count} deleted, ${syncResult.rename_count || 0} renamed`
                   );
-                  getFileList(folderQueryParams(), requestId);
+                  const visibleRange = { ...lastVisibleRange };
+                  const refreshRequestId = ++currentContentRequestId;
+                  getFileList(folderQueryParams(), refreshRequestId).then(() => {
+                    if (
+                      refreshRequestId !== currentContentRequestId ||
+                      visibleRange.start < 0 ||
+                      visibleRange.end <= visibleRange.start
+                    ) return;
+                    fetchDataRange(visibleRange.start, visibleRange.end + 1);
+                  });
                 }
               }).catch(error => {
                 if (pendingFolderSyncs.get(folderId) === syncPromise) {
