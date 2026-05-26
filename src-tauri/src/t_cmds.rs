@@ -505,13 +505,17 @@ pub fn get_folder_files(
 
 /// sync a single folder's mtime and DB records with the filesystem
 #[tauri::command]
-pub fn sync_album_folder_mtimes(
+pub async fn sync_album_folder_mtimes(
     app_handle: tauri::AppHandle,
     album_id: i64,
     folder_id: i64,
-    folder_path: &str,
+    folder_path: String,
 ) -> Result<crate::t_utils::FolderMtimeSyncResult, String> {
-    crate::t_utils::sync_single_folder(&app_handle, album_id, folder_id, folder_path)
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::t_utils::sync_single_folder(&app_handle, album_id, folder_id, &folder_path)
+    })
+    .await
+    .map_err(|e| format!("folder sync task failed: {}", e))?
 }
 
 /// get the thumbnail count of the folder

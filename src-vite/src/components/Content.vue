@@ -3369,26 +3369,38 @@ async function updateContent(force = false) {
             });
             contentTitle.value = formatFolderBreadcrumb(folderPath, album.path);
             const folderId = Number(libConfig.album.folderId || 0);
+            const folderQueryParams = () => config.settings.showSubfolderFiles
+              ? { searchAllSubfolders: folderPath }
+              : { searchFolder: folderPath };
             if (folderId > 0 && folderPath) {
               // Debounce: if a sync is already in-flight for this folder, reuse it.
               const existing = pendingFolderSyncs.get(folderId);
               const syncPromise = existing ?? syncAlbumFolderMtimes(album.id, folderId, folderPath);
               if (!existing) pendingFolderSyncs.set(folderId, syncPromise);
-              const syncResult = await syncPromise;
-              pendingFolderSyncs.delete(folderId);
-              if (requestId !== currentContentRequestId) return;
-              if (syncResult?.current_folder_synced) {
-                console.log(
-                  `folder sync: ${syncResult.new_file_count} new, ${syncResult.updated_file_count} updated, ${syncResult.deleted_file_count} deleted, ${syncResult.rename_count || 0} renamed`
-                );
-              }
+              syncPromise.then(syncResult => {
+                if (pendingFolderSyncs.get(folderId) === syncPromise) {
+                  pendingFolderSyncs.delete(folderId);
+                }
+                if (
+                  requestId !== currentContentRequestId ||
+                  config.main.sidebarIndex !== 0 ||
+                  libConfig.album.folderId !== folderId ||
+                  libConfig.album.folderPath !== folderPath
+                ) return;
+                if (syncResult?.current_folder_synced) {
+                  console.log(
+                    `folder sync: ${syncResult.new_file_count} new, ${syncResult.updated_file_count} updated, ${syncResult.deleted_file_count} deleted, ${syncResult.rename_count || 0} renamed`
+                  );
+                  getFileList(folderQueryParams(), requestId);
+                }
+              }).catch(error => {
+                if (pendingFolderSyncs.get(folderId) === syncPromise) {
+                  pendingFolderSyncs.delete(folderId);
+                }
+                console.error('folder sync failed:', error);
+              });
             }
-            getFileList(
-              config.settings.showSubfolderFiles
-                ? { searchAllSubfolders: folderPath }
-                : { searchFolder: folderPath },
-              requestId
-            );
+            getFileList(folderQueryParams(), requestId);
           }
         } else {
           contentTitle.value = "";
