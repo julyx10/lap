@@ -28,6 +28,13 @@ use walkdir::WalkDir; // https://docs.rs/walkdir/2.5.0/walkdir/
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WindowsInstalledApp {
+    pub app_id: String,
+    pub name: String,
+}
+
 pub fn path_exists(path: &str) -> bool {
     fs::symlink_metadata(path).is_ok()
 }
@@ -541,6 +548,19 @@ fn command_stdout(mut command: Command) -> Option<String> {
     }
 }
 
+fn command_stdout_result(mut command: Command) -> Result<String, String> {
+    let output = command.output().map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        if stderr.is_empty() {
+            return Err(format!("Command failed with status {}", output.status));
+        }
+        return Err(stderr);
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
 #[cfg(target_os = "macos")]
 fn resolve_external_app_display_name(app_path: &str) -> Option<String> {
     command_stdout({
@@ -634,6 +654,98 @@ pub fn get_external_app_display_name(app_path: &str) -> Result<String, String> {
         .filter(|name| !name.trim().is_empty())
         .map(|name| normalize_external_app_name(&name))
         .unwrap_or_else(|| fallback_external_app_name(app_path)))
+}
+
+#[cfg(target_os = "windows")]
+pub fn list_windows_installed_apps() -> Result<Vec<WindowsInstalledApp>, String> {
+    let script = r#"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$apps = Get-StartApps |
+  Where-Object { $_.AppID -and $_.AppID.Contains('!') } |
+  Sort-Object Name, AppID -Unique |
+  ForEach-Object {
+    [PSCustomObject]@{
+      name = $_.Name
+      appId = $_.AppID
+    }
+  }
+
+@($apps) | ConvertTo-Json -Compress
+"#;
+
+    let stdout = command_stdout_result({
+        let mut command = Command::new("powershell");
+        command
+            .args(["-NoProfile", "-NonInteractive", "-Command", script])
+            .creation_flags(CREATE_NO_WINDOW);
+        command
+    })?;
+
+    if stdout.trim().is_empty() {
+        return Ok(Vec::new());
+    }
+
+    serde_json::from_str::<Vec<WindowsInstalledApp>>(&stdout)
+        .map_err(|e| format!("Failed to parse installed app list: {}", e))
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn list_windows_installed_apps() -> Result<Vec<WindowsInstalledApp>, String> {
+    Err("Windows installed apps are only supported on Windows.".to_string())
+}
+
+#[cfg(target_os = "windows")]
+pub fn open_file_with_windows_aumid(file_path: &str, app_aumid: &str) -> Result<(), String> {
+    let package_family_name = app_aumid
+        .split('!')
+        .next()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| "Invalid Windows app AUMID".to_string())?;
+
+    let script = r#"
+$packageFamilyName = $env:LAP_PACKAGE_FAMILY_NAME
+$filePath = $env:LAP_FILE_PATH
+if (-not $packageFamilyName) { throw 'Missing package family name.' }
+if (-not $filePath) { throw 'Missing file path.' }
+
+$source = @"
+using System;
+using System.WindowsRuntime;
+using Windows.Storage;
+using Windows.System;
+
+public static class LapExternalAppLauncher {
+  public static bool OpenFile(string path, string packageFamilyName) {
+    var file = StorageFile.GetFileFromPathAsync(path).AsTask().GetAwaiter().GetResult();
+    var options = new LauncherOptions();
+    options.TargetApplicationPackageFamilyName = packageFamilyName;
+    return Launcher.LaunchFileAsync(file, options).AsTask().GetAwaiter().GetResult();
+  }
+}
+"@
+
+Add-Type -TypeDefinition $source -Language CSharp -ReferencedAssemblies System.Runtime.WindowsRuntime
+$result = [LapExternalAppLauncher]::OpenFile($filePath, $packageFamilyName)
+if (-not $result) { throw 'Failed to launch file with the selected Windows app.' }
+"#;
+
+    command_stdout_result({
+        let mut command = Command::new("powershell");
+        command
+            .args(["-NoProfile", "-NonInteractive", "-Sta", "-Command", script])
+            .env("LAP_PACKAGE_FAMILY_NAME", package_family_name)
+            .env("LAP_FILE_PATH", file_path)
+            .creation_flags(CREATE_NO_WINDOW);
+        command
+    })?;
+
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn open_file_with_windows_aumid(_file_path: &str, _app_aumid: &str) -> Result<(), String> {
+    Err("Windows AUMID targets are only supported on Windows.".to_string())
 }
 
 /// create a new folder at a given path

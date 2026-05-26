@@ -419,6 +419,11 @@ pub fn get_external_app_display_name(app_path: &str) -> Result<String, String> {
     t_utils::get_external_app_display_name(app_path)
 }
 
+#[tauri::command]
+pub fn list_windows_installed_apps() -> Result<Vec<t_utils::WindowsInstalledApp>, String> {
+    t_utils::list_windows_installed_apps()
+}
+
 /// open a file with a specific external application
 #[tauri::command]
 pub fn open_file_with_app(file_path: &str, app_path: &str) -> Result<(), String> {
@@ -445,6 +450,11 @@ pub fn open_file_with_app(file_path: &str, app_path: &str) -> Result<(), String>
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn open_file_with_windows_app(file_path: &str, app_aumid: &str) -> Result<(), String> {
+    t_utils::open_file_with_windows_aumid(file_path, app_aumid)
 }
 
 // file

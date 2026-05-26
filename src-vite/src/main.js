@@ -83,6 +83,18 @@ listen('settings-externalVideoAppPath-changed', (event) => {
 listen('settings-externalVideoAppName-changed', (event) => {
   config.setExternalVideoAppName(event.payload)
 })
+listen('settings-externalImageAppAumid-changed', (event) => {
+  config.setExternalImageAppAumid(event.payload)
+})
+listen('settings-externalImageAppAumidName-changed', (event) => {
+  config.setExternalImageAppAumidName(event.payload)
+})
+listen('settings-externalVideoAppAumid-changed', (event) => {
+  config.setExternalVideoAppAumid(event.payload)
+})
+listen('settings-externalVideoAppAumidName-changed', (event) => {
+  config.setExternalVideoAppAumidName(event.payload)
+})
 listen('settings-language-changed', (event) => {
   config.setLanguage(event.payload)
 })

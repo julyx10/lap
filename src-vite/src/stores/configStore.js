@@ -129,6 +129,10 @@ export const useConfigStore = defineStore('configStore', {
       externalImageAppName: '',    // external image app display name
       externalVideoAppPath: '',    // external video app path
       externalVideoAppName: '',    // external video app display name
+      externalImageAppAumid: '',   // Windows installed image app AUMID
+      externalImageAppAumidName: '', // Windows installed image app display name
+      externalVideoAppAumid: '',   // Windows installed video app AUMID
+      externalVideoAppAumidName: '', // Windows installed video app display name
 
       // image search settings
       imageSearch: {
@@ -181,6 +185,18 @@ export const useConfigStore = defineStore('configStore', {
     },
     setExternalVideoAppName(externalVideoAppName) {
       this.settings.externalVideoAppName = externalVideoAppName;
+    },
+    setExternalImageAppAumid(externalImageAppAumid) {
+      this.settings.externalImageAppAumid = externalImageAppAumid;
+    },
+    setExternalImageAppAumidName(externalImageAppAumidName) {
+      this.settings.externalImageAppAumidName = externalImageAppAumidName;
+    },
+    setExternalVideoAppAumid(externalVideoAppAumid) {
+      this.settings.externalVideoAppAumid = externalVideoAppAumid;
+    },
+    setExternalVideoAppAumidName(externalVideoAppAumidName) {
+      this.settings.externalVideoAppAumidName = externalVideoAppAumidName;
     },
     setLanguage(language) {
       this.settings.language = language;

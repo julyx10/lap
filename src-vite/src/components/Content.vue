@@ -602,7 +602,7 @@ import { getAlbum, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQuery
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, importUrl, importFileBytes, addFileToDb, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
-         dedupGetGroup, dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded } from '@/common/api'; 
+         dedupGetGroup, dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded, openFileWithWindowsApp } from '@/common/api'; 
 import { config, libConfig } from '@/common/config';
 import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
@@ -3911,13 +3911,20 @@ const openSelectedFileInExternalApp = async () => {
   if (!file?.file_path) return;
 
   const isImageFile = file.file_type === 1 || file.file_type === 3;
+  const appAumid = isImageFile
+    ? String(config.settings.externalImageAppAumid || '')
+    : String(config.settings.externalVideoAppAumid || '');
   const appPath = isImageFile
     ? String(config.settings.externalImageAppPath || '')
     : String(config.settings.externalVideoAppPath || '');
 
-  if (!appPath) return;
+  if (!appAumid && !appPath) return;
 
   try {
+    if (isWin && appAumid) {
+      await openFileWithWindowsApp(file.file_path, appAumid);
+      return;
+    }
     await openFileWithApp(file.file_path, appPath);
   } catch (error) {
     console.error('Failed to open external app:', error);

@@ -36,8 +36,8 @@ export const useFileMenuItems = (
     if (!f) return [];
 
     const createAction = (actionName: string) => () => onAction(actionName);
-    const imageAppName = String(config.settings.externalImageAppName || '');
-    const videoAppName = String(config.settings.externalVideoAppName || '');
+    const imageAppName = String(config.settings.externalImageAppAumidName || config.settings.externalImageAppName || '');
+    const videoAppName = String(config.settings.externalVideoAppAumidName || config.settings.externalVideoAppName || '');
     const isImage = f.file_type === 1 || f.file_type === 3;
     const isVideo = f.file_type === 2;
     const platform: ShortcutPlatform = isMac ? 'mac' : 'windows';

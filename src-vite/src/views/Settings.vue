@@ -86,7 +86,7 @@
                   {{ externalImageAppName }}
                 </div>
               </div>
-              <div class="shrink-0 flex items-center gap-1">
+              <div class="shrink-0 flex items-center gap-1 relative external-app-menu-anchor">
                 <button 
                   class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
                   @click="selectExternalApp('image')"
@@ -94,8 +94,27 @@
                   {{ $t('settings.image_view.choose_app') }}
                 </button>
                 <button
+                  v-if="isWin"
+                  class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content px-2"
+                  :title="$t('settings.image_view.choose_app')"
+                  @click.stop="toggleExternalAppMenu('image')"
+                >
+                  <IconArrowDown class="w-3 h-3" />
+                </button>
+                <div
+                  v-if="isWin && activeExternalAppMenu === 'image'"
+                  class="absolute right-0 top-full mt-1 min-w-36 rounded-box border border-base-content/10 bg-base-200 shadow-lg z-50 overflow-hidden"
+                >
+                  <button class="w-full px-3 py-2 text-left text-sm cursor-pointer hover:bg-base-100/40" @click="selectInstalledApp('image')">
+                    {{ $t('settings.image_view.installed_apps') }}
+                  </button>
+                  <button class="w-full px-3 py-2 text-left text-sm cursor-pointer hover:bg-base-100/40" @click="selectExternalApp('image')">
+                    {{ $t('settings.image_view.browse_exe') }}
+                  </button>
+                </div>
+                <button
                   class="btn btn-sm btn-ghost "
-                  :disabled="!config.settings.externalImageAppPath"
+                  :disabled="!hasExternalApp('image')"
                   :title="$t('settings.image_view.clear_app')"
                   :aria-label="$t('settings.image_view.clear_app')"
                   @click="clearExternalApp('image')"
@@ -111,7 +130,7 @@
                   {{ externalVideoAppName }}
                 </div>
               </div>
-              <div class="shrink-0 flex items-center gap-1">
+              <div class="shrink-0 flex items-center gap-1 relative external-app-menu-anchor">
                 <button 
                   class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
                   @click="selectExternalApp('video')"
@@ -119,8 +138,27 @@
                   {{ $t('settings.image_view.choose_app') }}
                 </button>
                 <button
+                  v-if="isWin"
+                  class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content px-2"
+                  :title="$t('settings.image_view.choose_app')"
+                  @click.stop="toggleExternalAppMenu('video')"
+                >
+                  <IconArrowDown class="w-3 h-3" />
+                </button>
+                <div
+                  v-if="isWin && activeExternalAppMenu === 'video'"
+                  class="absolute right-0 top-full mt-1 min-w-36 rounded-box border border-base-content/10 bg-base-200 shadow-lg z-50 overflow-hidden"
+                >
+                  <button class="w-full px-3 py-2 text-left text-sm cursor-pointer hover:bg-base-100/40" @click="selectInstalledApp('video')">
+                    {{ $t('settings.image_view.installed_apps') }}
+                  </button>
+                  <button class="w-full px-3 py-2 text-left text-sm cursor-pointer hover:bg-base-100/40" @click="selectExternalApp('video')">
+                    {{ $t('settings.image_view.browse_exe') }}
+                  </button>
+                </div>
+                <button
                   class="btn btn-sm btn-ghost"
-                  :disabled="!config.settings.externalVideoAppPath"
+                  :disabled="!hasExternalApp('video')"
                   :title="$t('settings.image_view.clear_app')"
                   :aria-label="$t('settings.image_view.clear_app')"
                   @click="clearExternalApp('video')"
@@ -524,6 +562,15 @@
       @done="onRestoreDone"
       @cancel="showRestoreDialog = false"
     />
+
+    <ExternalAppPicker
+      v-if="showExternalAppPicker"
+      :title="externalAppPickerTitle"
+      :apps="windowsInstalledApps"
+      :loading="isLoadingWindowsApps"
+      @cancel="showExternalAppPicker = false"
+      @select="applyWindowsExternalAppSelection"
+    />
   </div>
 </template>
 
@@ -548,16 +595,18 @@ import {
   downloadMultilingualImageSearchModel,
   cancelMultilingualImageSearchModelDownload,
   listenImageSearchModelDownloadProgress,
+  listWindowsInstalledApps,
 } from '@/common/api';
-import { formatFileSize, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { formatFileSize, isMac, isWin, setTheme, SCALE_VALUES } from '@/common/utils';
 import { useToast } from '@/common/toast';
-import { IconClose, IconRestore } from '@/common/icons';
+import { IconArrowDown, IconClose, IconRestore } from '@/common/icons';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SettingsAbout from '@/components/SettingsAbout.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import BackupDialog from '@/components/BackupDialog.vue';
 import RestoreDialog from '@/components/RestoreDialog.vue';
+import ExternalAppPicker from '@/components/ExternalAppPicker.vue';
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -575,6 +624,11 @@ const showChangeDbStorageDialog = ref(false);
 const showResetDbStorageDialog = ref(false);
 const showBackupDialog = ref(false);
 const showRestoreDialog = ref(false);
+const showExternalAppPicker = ref(false);
+const externalAppPickerKind = ref<'image' | 'video'>('image');
+const isLoadingWindowsApps = ref(false);
+const windowsInstalledApps = ref<{ appId: string; name: string }[]>([]);
+const activeExternalAppMenu = ref<'image' | 'video' | ''>('');
 const isDownloadingMultilingualModel = ref(false);
 const isCancelingMultilingualModelDownload = ref(false);
 const multilingualModelDownloadProgress = ref(0);
@@ -672,12 +726,18 @@ const categorySortOptions = computed(() => {
   return result;
 });
 
-const externalImageAppName = computed(() =>
-  String(config.settings.externalImageAppName || '') || localeMsg.value.settings.image_view.external_app_not_selected
+const externalVideoAppName = computed(() =>
+  String(config.settings.externalVideoAppAumidName || config.settings.externalVideoAppName || '') || localeMsg.value.settings.image_view.external_app_not_selected
 );
 
-const externalVideoAppName = computed(() =>
-  String(config.settings.externalVideoAppName || '') || localeMsg.value.settings.image_view.external_app_not_selected
+const externalImageAppName = computed(() =>
+  String(config.settings.externalImageAppAumidName || config.settings.externalImageAppName || '') || localeMsg.value.settings.image_view.external_app_not_selected
+);
+
+const externalAppPickerTitle = computed(() =>
+  externalAppPickerKind.value === 'image'
+    ? (localeMsg.value.settings.image_view.external_image_editor || 'Open image in')
+    : (localeMsg.value.settings.image_view.external_video_app || 'Open video in')
 );
 
 // Define the wheel options using computed to react to language changes
@@ -920,6 +980,7 @@ const cancelMultilingualModelDownload = async () => {
 };
 
 onMounted(async () => {
+  document.addEventListener('mousedown', handleDocumentMouseDown, { capture: true });
   window.addEventListener('keydown', handleKeyDown);
   if (typeof config.settings.tabIndex !== 'number' || config.settings.tabIndex < 0 || config.settings.tabIndex > 4) {
     config.settings.tabIndex = 0;
@@ -959,6 +1020,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  document.removeEventListener('mousedown', handleDocumentMouseDown, { capture: true });
   if (isDownloadingMultilingualModel.value) {
     void cancelMultilingualImageSearchModelDownload();
   }
@@ -1006,6 +1068,18 @@ watch(() => config.settings.externalVideoAppPath, (newValue) => {
 });
 watch(() => config.settings.externalVideoAppName, (newValue) => {
   emit('settings-externalVideoAppName-changed', newValue);
+});
+watch(() => config.settings.externalImageAppAumid, (newValue) => {
+  emit('settings-externalImageAppAumid-changed', newValue);
+});
+watch(() => config.settings.externalImageAppAumidName, (newValue) => {
+  emit('settings-externalImageAppAumidName-changed', newValue);
+});
+watch(() => config.settings.externalVideoAppAumid, (newValue) => {
+  emit('settings-externalVideoAppAumid-changed', newValue);
+});
+watch(() => config.settings.externalVideoAppAumidName, (newValue) => {
+  emit('settings-externalVideoAppAumidName-changed', newValue);
 });
 watch(() => config.settings.language, (newValue) => {
   locale.value = newValue;
@@ -1106,6 +1180,14 @@ watch(() => config.settings.face.clusterThresholdIndex, (newValue) => {
 });
 
 // Handle keyboard shortcuts
+function handleDocumentMouseDown(event: MouseEvent) {
+  if (!activeExternalAppMenu.value) return;
+  const target = event.target as HTMLElement | null;
+  if (!target) return;
+  if (target.closest('.external-app-menu-anchor')) return;
+  activeExternalAppMenu.value = '';
+}
+
 function handleKeyDown(event: KeyboardEvent) {
   const navigationKeys = ['Tab', 'Escape'];
   
@@ -1121,6 +1203,8 @@ function handleKeyDown(event: KeyboardEvent) {
       break;
     case 'Escape':
       // Close the topmost dialog first
+      if (activeExternalAppMenu.value) { activeExternalAppMenu.value = ''; return; }
+      if (showExternalAppPicker.value) { showExternalAppPicker.value = false; return; }
       if (showBackupDialog.value) { showBackupDialog.value = false; return; }
       if (showRestoreDialog.value) { showRestoreDialog.value = false; return; }
       if (showChangeDbStorageDialog.value) { showChangeDbStorageDialog.value = false; return; }
@@ -1201,6 +1285,7 @@ async function confirmResetDbStorageDir() {
 }
 
 async function selectExternalApp(kind: 'image' | 'video') {
+  activeExternalAppMenu.value = '';
   const result = await openDialog({
     title: kind === 'image'
       ? localeMsg.value.settings.image_view.external_image_editor
@@ -1224,20 +1309,73 @@ async function selectExternalApp(kind: 'image' | 'video') {
   if (kind === 'image') {
     config.settings.externalImageAppPath = result;
     config.settings.externalImageAppName = displayName;
+    config.settings.externalImageAppAumid = '';
+    config.settings.externalImageAppAumidName = '';
   } else {
     config.settings.externalVideoAppPath = result;
     config.settings.externalVideoAppName = displayName;
+    config.settings.externalVideoAppAumid = '';
+    config.settings.externalVideoAppAumidName = '';
   }
 }
 
 function clearExternalApp(kind: 'image' | 'video') {
+  activeExternalAppMenu.value = '';
   if (kind === 'image') {
     config.settings.externalImageAppPath = '';
     config.settings.externalImageAppName = '';
+    config.settings.externalImageAppAumid = '';
+    config.settings.externalImageAppAumidName = '';
   } else {
     config.settings.externalVideoAppPath = '';
     config.settings.externalVideoAppName = '';
+    config.settings.externalVideoAppAumid = '';
+    config.settings.externalVideoAppAumidName = '';
   }
+}
+
+function hasExternalApp(kind: 'image' | 'video') {
+  return kind === 'image'
+    ? !!(config.settings.externalImageAppAumid || config.settings.externalImageAppPath)
+    : !!(config.settings.externalVideoAppAumid || config.settings.externalVideoAppPath);
+}
+
+function toggleExternalAppMenu(kind: 'image' | 'video') {
+  activeExternalAppMenu.value = activeExternalAppMenu.value === kind ? '' : kind;
+}
+
+async function selectInstalledApp(kind: 'image' | 'video') {
+  activeExternalAppMenu.value = '';
+  externalAppPickerKind.value = kind;
+  showExternalAppPicker.value = true;
+
+  if (!windowsInstalledApps.value.length && !isLoadingWindowsApps.value) {
+    isLoadingWindowsApps.value = true;
+    try {
+      windowsInstalledApps.value = await listWindowsInstalledApps();
+    } catch (error: any) {
+      showExternalAppPicker.value = false;
+      toast.error(error?.message || String(error));
+    } finally {
+      isLoadingWindowsApps.value = false;
+    }
+  }
+}
+
+function applyWindowsExternalAppSelection(app: { appId: string; name: string }) {
+  if (externalAppPickerKind.value === 'image') {
+    config.settings.externalImageAppAumid = app.appId;
+    config.settings.externalImageAppAumidName = app.name;
+    config.settings.externalImageAppPath = '';
+    config.settings.externalImageAppName = '';
+  } else {
+    config.settings.externalVideoAppAumid = app.appId;
+    config.settings.externalVideoAppAumidName = app.name;
+    config.settings.externalVideoAppPath = '';
+    config.settings.externalVideoAppName = '';
+  }
+
+  showExternalAppPicker.value = false;
 }
 
 function normalizeScale(value: number) {

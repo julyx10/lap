@@ -48,7 +48,7 @@ import { IconVideoSlash, IconVideoPlay, IconVideoReplay } from '@/common/icons';
 import videojs from 'video.js/core';
 import 'video.js/dist/video-js.min.css';
 import { getAssetSrc, isLinux } from '@/common/utils';
-import { openFileWithApp } from '@/common/api';
+import { openFileWithApp, openFileWithWindowsApp } from '@/common/api';
 import zhCN from 'video.js/dist/lang/zh-CN.json';
 import { prepareVideo, cancelVideoPrepare } from '@/common/video';
 
@@ -83,8 +83,9 @@ const activeVideo = ref(0);
 let currentLoadingId = 0;
 
 const externalVideoAppPath = computed(() => String(config.settings?.externalVideoAppPath || '').trim());
-const externalVideoAppName = computed(() => String(config.settings?.externalVideoAppName || '').trim());
-const canOpenExternalApp = computed(() => !!(props.filePath && externalVideoAppPath.value));
+const externalVideoAppAumid = computed(() => String(config.settings?.externalVideoAppAumid || '').trim());
+const externalVideoAppName = computed(() => String(config.settings?.externalVideoAppAumidName || config.settings?.externalVideoAppName || '').trim());
+const canOpenExternalApp = computed(() => !!(props.filePath && (externalVideoAppAumid.value || externalVideoAppPath.value)));
 const externalOpenLabel = computed(() => {
   if (externalVideoAppName.value) {
     return $t('video.errors.open_in_external_app_named', { app: externalVideoAppName.value }) || `Open in ${externalVideoAppName.value}`;
@@ -93,7 +94,12 @@ const externalOpenLabel = computed(() => {
 });
 
 async function openInExternalApp() {
-  if (!props.filePath || !externalVideoAppPath.value) return;
+  if (!props.filePath) return;
+  if (externalVideoAppAumid.value) {
+    await openFileWithWindowsApp(props.filePath, externalVideoAppAumid.value);
+    return;
+  }
+  if (!externalVideoAppPath.value) return;
   await openFileWithApp(props.filePath, externalVideoAppPath.value);
 }
 

@@ -353,6 +353,25 @@ export async function openFileWithApp(filePath, appPath) {
   }
 }
 
+export async function listWindowsInstalledApps() {
+  try {
+    return await invoke('list_windows_installed_apps');
+  } catch (error) {
+    console.error('Failed to list Windows installed apps:', error);
+    throw error;
+  }
+}
+
+export async function openFileWithWindowsApp(filePath, appAumid) {
+  try {
+    await invoke('open_file_with_windows_app', { filePath, appAumid });
+    return true;
+  } catch (error) {
+    console.error('Failed to open file with Windows app:', error);
+    throw error;
+  }
+}
+
 // get external app display name from platform metadata
 export async function getExternalAppDisplayName(appPath) {
   try {
