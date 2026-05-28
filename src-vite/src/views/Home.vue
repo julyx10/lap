@@ -167,6 +167,7 @@ import { config, libConfig } from '@/common/config';
 import { useAppUpdater } from '@/common/updater';
 import { useUIStore } from '@/stores/uiStore';
 import { isWin, isMac, isLinux, SCALE_VALUES } from '@/common/utils';
+import { matchesShortcut, ShortcutPlatform } from '@/common/shortcuts';
 import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
 
 // vue components
@@ -260,6 +261,7 @@ let unlistenOpenPreferences: (() => void) | null = null;
 let unlistenOpenAbout: (() => void) | null = null;
 let unlistenAlbumsRefreshed: (() => void) | null = null;
 let unlistenAddAlbumRequested: (() => void) | null = null;
+const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : (isLinux ? 'linux' : 'windows');
 const {
   updateAvailable,
   isCheckingUpdate,
@@ -336,11 +338,12 @@ const libraryMenuItems = computed(() => {
 
 
 onMounted(async () => {
+  window.addEventListener('keydown', handleHomeKeyDown);
   unlistenOpenPreferences = await listen('app-open-preferences', () => {
     void clickSettings();
   });
   unlistenOpenAbout = await listen('app-open-about', () => {
-    void clickSettings(4);
+    void clickSettings(5);
   });
 
   appConfig.value = await getAppConfig();
@@ -369,6 +372,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleHomeKeyDown);
   unlistenOpenPreferences?.();
   unlistenOpenPreferences = null;
   unlistenOpenAbout?.();
@@ -378,6 +382,23 @@ onBeforeUnmount(() => {
   unlistenAddAlbumRequested?.();
   unlistenAddAlbumRequested = null;
 });
+
+function handleHomeKeyDown(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null;
+  if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable) {
+    return;
+  }
+
+  if (!matchesShortcut('app.sidebar.toggle', event, shortcutPlatform)) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  if (!libraryEmpty.value) {
+    showPanel.value = !showPanel.value;
+  }
+}
 
 const doSwitchLibrary = async (libraryId: string) => {
   try {

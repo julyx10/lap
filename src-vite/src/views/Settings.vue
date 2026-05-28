@@ -7,7 +7,7 @@
       <!-- Sidebar -->
       <div class="w-40 m-1 p-2 bg-base-200/30 flex flex-col rounded-box overflow-y-auto shrink-0 select-none">
         <div
-          v-for="(tab, index) in ['settings.general.title', 'settings.view.title', 'settings.library.title', 'settings.image_search.title', 'settings.about.title']"
+          v-for="(tab, index) in settingsTabs"
           :key="index"
           :class="[
             'px-3 py-2 rounded-box cursor-pointer transition-all duration-200 font-medium flex items-center',
@@ -22,7 +22,7 @@
       </div>
 
       <!-- Main Content -->
-      <div class="p-2 mr-1 flex-1 overflow-y-auto scrollbar-hide bg-base-300 cursor-default select-none">
+      <div class="p-2 mr-1 mb-2 flex-1 overflow-y-auto scrollbar-hide bg-base-300 cursor-default select-none">
           
         <!-- General Tab -->
         <div v-if="config.settings.tabIndex === 0" class="flex flex-col space-y-2">
@@ -485,8 +485,39 @@
           </div>
         </div>
 
+        <!-- Shortcuts Tab -->
+        <div v-else-if="config.settings.tabIndex === 4" class="flex flex-col space-y-2">
+          <div
+            v-for="section in shortcutSections"
+            :key="section.key"
+            class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm"
+          >
+            <div class="flex items-center gap-2 text-base-content/70">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ section.title }}</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-4 gap-y-1">
+              <div
+                v-for="item in section.items"
+                :key="item.actionId"
+                class="min-h-9 flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200"
+              >
+                <div class="min-w-0 text-sm leading-5 truncate">{{ item.label }}</div>
+                <div class="shrink-0 flex items-center gap-1">
+                  <span
+                    v-for="(key, keyIndex) in item.keys"
+                    :key="`${item.actionId}-${keyIndex}-${key}`"
+                    class="min-w-7 h-7 px-2 inline-flex items-center justify-center rounded-box border border-base-content/15 bg-base-100 text-xs font-semibold text-base-content/70 shadow-sm"
+                  >
+                    {{ key }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- About Tab -->
-        <div v-else-if="config.settings.tabIndex === 4" class="py-2">
+        <div v-else-if="config.settings.tabIndex === 5" class="py-2">
             <SettingsAbout />
         </div>
 
@@ -549,7 +580,8 @@ import {
   cancelMultilingualImageSearchModelDownload,
   listenImageSearchModelDownloadProgress,
 } from '@/common/api';
-import { formatFileSize, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { useToast } from '@/common/toast';
 import { IconClose, IconRestore } from '@/common/icons';
 
@@ -563,6 +595,15 @@ import RestoreDialog from '@/components/RestoreDialog.vue';
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[config.settings.language] as any);
 const toast = useToast();
+const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : (isLinux ? 'linux' : 'windows');
+const settingsTabs = [
+  'settings.general.title',
+  'settings.view.title',
+  'settings.library.title',
+  'settings.image_search.title',
+  'settings.shortcuts.title',
+  'settings.about.title',
+];
 
 const appWindow = getCurrentWebviewWindow()
 let gridSizeEmitTimer: number | null = null;
@@ -827,6 +868,164 @@ const faceClusterOptions = computed(() => {
   return options.map((label: string, i: number) => ({ label, value: i }));
 });
 
+type ShortcutDisplayItem = {
+  actionId: ShortcutActionId;
+  labelKey: string;
+  shortcutVariant?: 'shift';
+};
+
+const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[] }> = [
+  {
+    key: 'global',
+    items: [
+      { actionId: 'app.sidebar.toggle', labelKey: 'toggle_sidebar' },
+      { actionId: 'app.preferences', labelKey: 'open_settings' },
+      { actionId: 'app.scale.increase', labelKey: 'font_increase' },
+      { actionId: 'app.scale.decrease', labelKey: 'font_decrease' },
+      { actionId: 'app.scale.reset', labelKey: 'font_reset' },
+    ],
+  },
+  {
+    key: 'image_browsing',
+    items: [
+      { actionId: 'view.previous', labelKey: 'previous_image' },
+      { actionId: 'view.next', labelKey: 'next_image' },
+      { actionId: 'view.first', labelKey: 'first_image' },
+      { actionId: 'view.last', labelKey: 'last_image' },
+      { actionId: 'view.quickPreview', labelKey: 'quick_preview' },
+      { actionId: 'view.close', labelKey: 'close_viewer' },
+      { actionId: 'file.openNewWindow', labelKey: 'open_new_window' },
+      { actionId: 'file.editImage', labelKey: 'edit_image' },
+      { actionId: 'file.searchSimilar', labelKey: 'search_similar' },
+    ],
+  },
+  {
+    key: 'viewing',
+    items: [
+      { actionId: 'view.zoomIn', labelKey: 'zoom_in' },
+      { actionId: 'view.zoomOut', labelKey: 'zoom_out' },
+      { actionId: 'view.zoomFit', labelKey: 'zoom_fit' },
+      { actionId: 'slideshow.toggle', labelKey: 'toggle_slideshow' },
+    ],
+  },
+  {
+    key: 'file_actions',
+    items: [
+
+      { actionId: 'file.rename', labelKey: 'rename_file' },
+      { actionId: 'file.moveTo', labelKey: 'move_to' },
+      { actionId: 'file.copy', labelKey: 'copy_file' },
+      { actionId: 'file.refreshInfo', labelKey: 'refresh_file_info' },
+      { actionId: 'file.trash', labelKey: 'move_to_trash' },
+      { actionId: 'file.trash', labelKey: 'delete_permanently', shortcutVariant: 'shift' },
+    ],
+  },
+  {
+    key: 'metadata',
+    items: [
+      { actionId: 'meta.favorite', labelKey: 'toggle_favorite' },
+      { actionId: 'meta.rating.clear', labelKey: 'clear_rating' },
+      { actionId: 'meta.rating.one', labelKey: 'rate_one' },
+      { actionId: 'meta.rating.two', labelKey: 'rate_two' },
+      { actionId: 'meta.rating.three', labelKey: 'rate_three' },
+      { actionId: 'meta.rating.four', labelKey: 'rate_four' },
+      { actionId: 'meta.rating.five', labelKey: 'rate_five' },
+      { actionId: 'meta.tag', labelKey: 'edit_tags' },
+      { actionId: 'meta.comment', labelKey: 'edit_comment' },
+      { actionId: 'meta.rotate', labelKey: 'rotate' },
+      { actionId: 'meta.info', labelKey: 'show_info' },
+    ],
+  },
+];
+
+const shortcutSections = computed(() => {
+  const shortcutMessages = localeMsg.value.settings.shortcuts;
+  return shortcutDisplaySections.map((section) => ({
+    key: section.key,
+    title: shortcutMessages.sections[section.key],
+    items: section.items
+      .map((item) => ({
+        actionId: item.actionId,
+        label: shortcutMessages.actions[item.labelKey],
+        keys: getDisplayShortcutKeys(item.actionId, item.shortcutVariant),
+      }))
+      .filter((item) => item.keys.length > 0),
+  }));
+});
+
+function getDisplayShortcutKeys(actionId: ShortcutActionId, shortcutVariant?: 'shift'): string[] {
+  const labels = getShortcutLabels(actionId, shortcutPlatform);
+  const label = getPreferredShortcutLabel(actionId, labels);
+  const keys = splitShortcutLabel(label);
+  if (shortcutVariant === 'shift') {
+    return addShiftKey(keys);
+  }
+  return keys;
+}
+
+function getPreferredShortcutLabel(actionId: ShortcutActionId, labels: string[]): string {
+  if (actionId === 'app.scale.increase') {
+    return labels.find((label) => label.includes('+')) || labels[0] || '';
+  }
+  return labels[0] || '';
+}
+
+function splitShortcutLabel(label: string): string[] {
+  if (!label) return [];
+  if (shortcutPlatform === 'mac') {
+    return splitMacShortcutLabel(label);
+  }
+
+  let normalized = label
+    .replace(/←/g, 'Left')
+    .replace(/→/g, 'Right')
+    .replace(/↑/g, 'Up')
+    .replace(/↓/g, 'Down');
+
+  normalized = normalized
+    .replace(/\+\+$/, '+Plus')
+    .replace(/\+=$/, '+=')
+    .replace(/\+-$/, '+Minus')
+    .replace(/\+0$/, '+0')
+    .replace(/\+,/g, '+Comma');
+
+  return normalized
+    .split('+')
+    .filter(Boolean)
+    .map((key) => {
+      if (key === 'Plus') return '+';
+      if (key === 'Minus') return '-';
+      if (key === 'Comma') return ',';
+      if (key === 'Del') return 'Delete';
+      return key;
+    });
+}
+
+function splitMacShortcutLabel(label: string): string[] {
+  const modifierKeys = ['⌘', '⌥', '⇧', '⌃'];
+  const keys: string[] = [];
+  let remaining = label;
+
+  for (const modifierKey of modifierKeys) {
+    if (remaining.startsWith(modifierKey)) {
+      keys.push(modifierKey);
+      remaining = remaining.slice(modifierKey.length);
+    }
+  }
+
+  if (remaining.length > 0) {
+    keys.push(remaining);
+  }
+
+  return keys;
+}
+
+function addShiftKey(keys: string[]): string[] {
+  if (keys.length === 0) return keys;
+  const shiftKey = shortcutPlatform === 'mac' ? '⇧' : 'Shift';
+  return keys.includes(shiftKey) ? keys : [shiftKey, ...keys];
+}
+
 const onImageSearchModelChange = async (event: Event) => {
   const select = event.target as HTMLSelectElement;
   const nextModel = Number(select.value || 0);
@@ -921,7 +1120,7 @@ const cancelMultilingualModelDownload = async () => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
-  if (typeof config.settings.tabIndex !== 'number' || config.settings.tabIndex < 0 || config.settings.tabIndex > 4) {
+  if (typeof config.settings.tabIndex !== 'number' || config.settings.tabIndex < 0 || config.settings.tabIndex > 5) {
     config.settings.tabIndex = 0;
   }
   if (typeof config.settings.imageSearch.model !== 'number') {
@@ -1117,7 +1316,7 @@ function handleKeyDown(event: KeyboardEvent) {
   switch (event.key) {
     case 'Tab':
       config.settings.tabIndex += 1;
-      config.settings.tabIndex = config.settings.tabIndex % 5; // 5 tabs
+      config.settings.tabIndex = config.settings.tabIndex % settingsTabs.length;
       break;
     case 'Escape':
       // Close the topmost dialog first

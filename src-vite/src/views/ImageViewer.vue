@@ -675,6 +675,10 @@ const viewActionOrder: ShortcutActionId[] = [
 ];
 
 function getMatchedViewAction(event: KeyboardEvent) {
+  if (isMac && event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey) {
+    if (event.key === 'ArrowUp') return 'view.first';
+    if (event.key === 'ArrowDown') return 'view.last';
+  }
   return viewActionOrder.find((actionId) => matchesShortcut(actionId, event, shortcutPlatform));
 }
 

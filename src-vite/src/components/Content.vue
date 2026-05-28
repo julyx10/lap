@@ -1923,6 +1923,22 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
+  if (matchesShortcut('view.first', event, shortcutPlatform)) {
+    event.preventDefault();
+    checkUnsavedChanges(() => {
+      selectedItemIndex.value = 0;
+    });
+    return;
+  }
+
+  if (matchesShortcut('view.last', event, shortcutPlatform)) {
+    event.preventDefault();
+    checkUnsavedChanges(() => {
+      selectedItemIndex.value = fileList.value.length - 1;
+    });
+    return;
+  }
+
   const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', 'Space', ' '];
 
   if (matchesShortcut('view.quickPreview', event, shortcutPlatform) && event.key === 'Enter') {
@@ -2009,6 +2025,10 @@ const handleKeyDown = (e: any) => {
     showMoveTo.value = true;
   } else if (matchesShortcut('file.trash', event, shortcutPlatform)) {
     openTrashMsgbox(0, '', [], !!shiftKey);
+  } else if (matchesShortcut('view.first', event, shortcutPlatform)) {
+    (keyActions as any).Home();
+  } else if (matchesShortcut('view.last', event, shortcutPlatform)) {
+    (keyActions as any).End();
   } else if ((keyActions as any)[key]) {
     (keyActions as any)[key]();
   }
