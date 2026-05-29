@@ -462,6 +462,8 @@
       "add": "Добавить",
       "placeholder": "Имя библиотеки",
       "max_limit_reached": "Лимит достигнут",
+      "summary": "Библиотек: {count} · {size}",
+      "summary_loading": "Библиотек: {count} · вычисляется размер...",
       "created_at_lower": "создано",
       "calculating_stats": "Вычисляется размер библиотеки...",
       "library_file_path": "Путь к файлу",

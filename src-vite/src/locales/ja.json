@@ -462,6 +462,8 @@
       "add": "追加",
       "placeholder": "ライブラリ名",
       "max_limit_reached": "上限に達しました",
+      "summary": "{count} 個のライブラリ · {size}",
+      "summary_loading": "{count} 個のライブラリ · サイズを計算中...",
       "created_at_lower": "作成日時",
       "calculating_stats": "ライブラリサイズを計算中...",
       "library_file_path": "ファイルパス",

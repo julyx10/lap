@@ -462,6 +462,8 @@
       "add": "Adicionar",
       "placeholder": "Nome da biblioteca",
       "max_limit_reached": "Limite atingido",
+      "summary": "{count} bibliotecas · {size}",
+      "summary_loading": "{count} bibliotecas · calculando tamanho...",
       "created_at_lower": "criado em",
       "calculating_stats": "Calculando o tamanho da biblioteca...",
       "library_file_path": "Caminho do arquivo",

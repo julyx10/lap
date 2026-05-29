@@ -469,6 +469,8 @@
       "add": "Add",
       "placeholder": "Enter library name",
       "max_limit_reached": "Library limit reached",
+      "summary": "{count} libraries · {size}",
+      "summary_loading": "{count} libraries · calculating size...",
       "created_at_lower": "created at",
       "calculating_stats": "Calculating library size...",
       "library_file_path": "Library file path",

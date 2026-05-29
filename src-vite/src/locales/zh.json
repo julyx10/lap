@@ -462,6 +462,8 @@
       "add": "添加",
       "placeholder": "输入库的名称",
       "max_limit_reached": "已达到库数量限制",
+      "summary": "{count} 个库 · {size}",
+      "summary_loading": "{count} 个库 · 正在计算大小...",
       "created_at_lower": "创建于",
       "calculating_stats": "正在计算库大小...",
       "library_file_path": "库文件路径",

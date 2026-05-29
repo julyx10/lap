@@ -462,6 +462,8 @@
       "add": "추가",
       "placeholder": "라이브러리 이름",
       "max_limit_reached": "제한 도달",
+      "summary": "라이브러리 {count}개 · {size}",
+      "summary_loading": "라이브러리 {count}개 · 크기 계산 중...",
       "created_at_lower": "생성일",
       "calculating_stats": "라이브러리 크기 계산 중...",
       "library_file_path": "파일 경로",
