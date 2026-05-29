@@ -1,0 +1,96 @@
+name: Release Homebrew
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (without v prefix, e.g. 0.2.3)'
+        required: true
+        type: string
+
+concurrency:
+  group: homebrew-update
+  cancel-in-progress: true
+
+jobs:
+  update-homebrew:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout homebrew-lap
+        uses: actions/checkout@v4
+        with:
+          repository: julyx10/homebrew-lap
+          token: ${{ secrets.HOMEBREW_REPO_TOKEN }}
+
+      - name: Get version
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ ! "$INPUT_VERSION" =~ ^[0-9]+(\.[0-9]+){2}$ ]]; then
+              echo "::error::Input version '$INPUT_VERSION' is not valid (expected X.Y.Z)"
+              exit 1
+            fi
+            VERSION="$INPUT_VERSION"
+          else
+            TAG="$RELEASE_TAG"
+            if [[ ! "$TAG" =~ ^v[0-9]+(\.[0-9]+){2}$ ]]; then
+              echo "::error::Release tag '$TAG' is not a valid semver tag (expected vX.Y.Z)"
+              exit 1
+            fi
+            VERSION="${TAG#v}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Download and hash DMGs
+        id: download
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          BASE="https://github.com/${APP_REPO}/releases/download/v${VERSION}"
+
+          curl -fsSL "${BASE}/Lap_${VERSION}_aarch64.dmg" -o /tmp/aarch64.dmg
+          [[ $(stat -f%z /tmp/aarch64.dmg) -gt 1000000 ]] || { echo "::error::aarch64.dmg too small, download may have failed"; exit 1; }
+          ARM_SHA=$(shasum -a 256 /tmp/aarch64.dmg | cut -d' ' -f1)
+          echo "arm_sha=${ARM_SHA}" >> $GITHUB_OUTPUT
+
+          curl -fsSL "${BASE}/Lap_${VERSION}_x64.dmg" -o /tmp/x64.dmg
+          [[ $(stat -f%z /tmp/x64.dmg) -gt 1000000 ]] || { echo "::error::x64.dmg too small, download may have failed"; exit 1; }
+          INTEL_SHA=$(shasum -a 256 /tmp/x64.dmg | cut -d' ' -f1)
+          echo "intel_sha=${INTEL_SHA}" >> $GITHUB_OUTPUT
+
+          echo "ARM SHA256:  ${ARM_SHA}"
+          echo "INTEL SHA256: ${INTEL_SHA}"
+
+      - name: Update lap.rb
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.version }}
+          ARM_SHA: ${{ steps.download.outputs.arm_sha }}
+          INTEL_SHA: ${{ steps.download.outputs.intel_sha }}
+        run: |
+          ruby -e '
+            content = File.read("lap.rb")
+            content.sub!(/version "[\d.]+"/, %(version "#{ENV["NEW_VERSION"]}")) or raise "version pattern not found in lap.rb"
+            content.sub!(
+              /sha256 arm:\s+"[a-f0-9]+",\s*\n\s+intel:\s+"[a-f0-9]+"/,
+              %(sha256 arm:   "#{ENV["ARM_SHA"]}",\n         intel: "#{ENV["INTEL_SHA"]}")
+            ) or raise "sha256 block pattern not found in lap.rb"
+            File.write("lap.rb", content)
+            puts File.read("lap.rb")
+          '
+
+      - name: Commit and push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lap.rb
+          git diff --cached --quiet || git commit -m "Update Lap to v${VERSION}"
+          git push
