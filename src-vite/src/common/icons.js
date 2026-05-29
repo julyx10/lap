@@ -75,6 +75,7 @@ export { default as IconLeftPaneOn } from '@/assets/icons/left-pane-on.svg';
 export { default as IconLeftPaneOff } from '@/assets/icons/left-pane-off.svg';
 export { default as IconSplitOn } from '@/assets/icons/layout-split.svg';
 export { default as IconSplitOff } from '@/assets/icons/layout-split-off.svg';
+export { default as IconSplitOn4 } from '@/assets/icons/layout-split-4.svg';
 
 // ======================
 // WINDOW ONLY CONTROL ICONS

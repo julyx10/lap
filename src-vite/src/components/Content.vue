@@ -1994,7 +1994,7 @@ function activateContentPane() {
 }
 
 function handleContentWheel(event: WheelEvent) {
-  if (!isWin || !event.ctrlKey) return;
+  if (!event.ctrlKey) return;
   if (getActivePreviewMode() !== 'none') return;
   if (!isContentInteractionActive()) return;
 

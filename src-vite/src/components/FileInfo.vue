@@ -28,7 +28,7 @@
     <div v-if="fileInfo" class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
 
       <!-- Preview Section -->
-      <div class="group/thumbnail border-t border-base-content/10 px-1 py-3 space-y-3">
+      <div class="group/thumbnail border-t border-base-content/5 px-1 py-3 space-y-3">
         <div
           class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out"
           @click.stop="togglePreview"
@@ -153,7 +153,7 @@
       </div>
 
       <!-- File Info Section -->
-      <div class="border-t border-base-content/10 px-1 py-4 space-y-3">
+      <div class="border-t border-base-content/5 px-1 py-4 space-y-3">
 
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
           @click.stop="toggleBasicInfo"
@@ -347,7 +347,7 @@
       </div>
 
       <!-- Metadata Section -->
-      <div class="border-t border-base-content/10 px-1 py-4 space-y-3">
+      <div class="border-t border-base-content/5 px-1 py-4 space-y-3">
 
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content" @click.stop="toggleMetadata">
           <IconCameraAperture class="w-4 h-4 " /> 
@@ -406,7 +406,7 @@
 
       <!-- Map View -->
       <div v-if="fileInfo?.gps_latitude && fileInfo?.gps_longitude" 
-        class="border-t border-base-content/10 px-1 py-4 space-y-3 flex flex-col transition-[flex-grow]" 
+        class="border-t border-base-content/5 px-1 py-4 space-y-3 flex flex-col transition-[flex-grow]" 
         :class="{ 'flex-1 min-h-[300px] shrink-0': showMapPanel }">
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content shrink-0" @click.stop="toggleMapPanel">
           <IconLocation class="w-4 h-4 " /> 

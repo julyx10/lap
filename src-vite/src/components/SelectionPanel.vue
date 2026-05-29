@@ -17,7 +17,7 @@
     </div>
 
     <div class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
-      <div class="border-t border-base-content/10 px-1 py-3 space-y-3">
+      <div class="border-t border-base-content/5 px-1 py-3 space-y-3">
         <div class="flex items-center gap-2 text-base-content/70">
           <span class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
             {{ $t('info_panel.select_title') }}
@@ -59,7 +59,7 @@
             <button
               v-for="file in visibleSelectedFiles"
               :key="file.id"
-              class="group/thumb relative h-20 w-20 shrink-0 overflow-hidden rounded-box border border-base-content/10 bg-base-100/50"
+              class="group/thumb relative h-20 w-20 shrink-0 overflow-hidden rounded-box border border-base-content/5 bg-base-100/50"
               :title="file.name || file.file_path"
               @click="$emit('unselectFile', file.id)"
             >
@@ -98,7 +98,7 @@
         </div>
       </div>
 
-      <div class="border-t border-base-content/10 px-1 py-4 space-y-3">
+      <div class="border-t border-base-content/5 px-1 py-4 space-y-3">
         <!-- <div class="text-base-content/70">
           <span class="font-bold uppercase text-xs tracking-wide">{{ $t('info_panel.action') }}</span>
         </div> -->
@@ -149,7 +149,7 @@
           <div class="text-[10px] uppercase tracking-widest font-bold text-base-content/30">
             {{ $t('info_panel.labels_and_display') }}
           </div>
-          <div class="rounded-box border border-base-content/10 bg-base-100/30 px-2 py-1.5">
+          <div class="rounded-box border border-base-content/5 bg-base-100/30 px-2 py-1.5">
             <div class="flex items-center gap-0.5">
               <button
                 class="btn btn-ghost btn-xs min-h-0 h-6 w-6 p-0 mr-1"

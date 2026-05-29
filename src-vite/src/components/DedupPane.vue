@@ -22,14 +22,14 @@
     </div>
 
     <div class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
-      <div v-if="isDedupLoading" class="border-t border-base-content/10 p-4 flex-1 flex items-center justify-center">
+      <div v-if="isDedupLoading" class="border-t border-base-content/5 p-4 flex-1 flex items-center justify-center">
         <div class="text-center text-base-content/40 space-y-3 max-w-[260px]">
           <span class="loading loading-spinner text-primary w-8 h-8 mx-auto"></span>
           <p class="text-xs font-medium">{{ $t('info_panel.dedup.scanning') }}</p>
         </div>
       </div>
 
-      <div v-else-if="duplicateGroups.length === 0" class="border-t border-base-content/10 p-4 flex-1 flex items-center justify-center">
+      <div v-else-if="duplicateGroups.length === 0" class="border-t border-base-content/5 p-4 flex-1 flex items-center justify-center">
         <div class="text-center text-base-content/40 space-y-3 max-w-[260px]">
           <IconSimilar class="w-8 h-8 mx-auto text-base-content/30" />
           <p class="text-xs font-medium">{{ $t('info_panel.dedup.empty_title') }}</p>
@@ -38,7 +38,7 @@
       </div>
 
       <template v-else>
-        <div class="border-t border-base-content/10 px-1 py-3 space-y-3">
+        <div class="border-t border-base-content/5 px-1 py-3 space-y-3">
           <div class="flex items-center gap-2 text-base-content/70">
             <span class="font-bold uppercase text-xs tracking-wide">{{ $t('info_panel.dedup.groups_title') }}</span>
           </div>
@@ -57,10 +57,10 @@
               class="w-full flex items-center gap-2 text-left rounded-box p-2.5 border transition-colors cursor-pointer"
               :class="selectedGroupId === group.id
                 ? 'border-primary/50 bg-primary/8'
-                : 'border-base-content/8 bg-base-100/30 hover:border-base-content/18 hover:bg-base-100/50'"
+                : 'border-base-content/5 bg-base-100/30 hover:border-base-content/10 hover:bg-base-100/50'"
               @click="selectedGroupId = group.id"
             >
-              <div class="w-8 h-8 rounded-box overflow-hidden bg-base-content/5 border border-base-content/10 shrink-0">
+              <div class="w-8 h-8 rounded-box overflow-hidden shrink-0">
                 <img v-if="group.keepItem?.file?.thumbnail" :src="group.keepItem.file.thumbnail" class="w-full h-full object-cover" />
                 <div v-else class="w-full h-full skeleton"></div>
               </div>
@@ -76,7 +76,7 @@
           </div>
         </div>
 
-        <div v-if="activeGroup" class="border-t border-base-content/10 px-1 py-4 space-y-3">
+        <div v-if="activeGroup" class="border-t border-base-content/5 px-1 py-4 space-y-3">
           <div class="flex items-center gap-2 text-base-content/70">
             <span class="font-bold uppercase text-xs tracking-wide">{{ $t('info_panel.dedup.group_label', { index: activeGroupIndex + 1 }) }}</span>
           </div>
@@ -108,7 +108,7 @@
               :class="[
                 selectedFileId === activeGroup.keepItem.file_id
                   ? 'border-primary/50 bg-primary/8'
-                  : 'border-base-content/8 bg-base-100/30 hover:border-base-content/18 hover:bg-base-100/50'
+                  : 'border-base-content/5 bg-base-100/30 hover:border-base-content/10 hover:bg-base-100/50'
               ]"
               @click="emit('select-file', activeGroup.keepItem.file_id)"
               @dblclick="emit('preview-file', activeGroup.keepItem.file_id)"
@@ -117,7 +117,7 @@
                 <div class="shrink-0 text-primary/80" :title="$t('info_panel.dedup.keep_label')">
                   <IconLock class="w-4 h-4" />
                 </div>
-                <div class="w-10 h-10 rounded-box overflow-hidden bg-base-content/5 border border-base-content/15 shrink-0">
+                <div class="w-10 h-10 rounded-box overflow-hidden shrink-0">
                   <img v-if="activeGroup.keepItem.file.thumbnail" :src="activeGroup.keepItem.file.thumbnail" class="w-full h-full object-cover" />
                   <div v-else class="w-full h-full skeleton"></div>
                 </div>
@@ -143,7 +143,7 @@
               :class="[
                 (selectedFileId === item.file_id && !isDupSelected(activeGroup.id, item.file_id))
                   ? 'border-primary/50 bg-primary/8'
-                  : 'border-base-content/8 bg-base-100/30 hover:border-base-content/18 hover:bg-base-100/50',
+                  : 'border-base-content/5 bg-base-100/30 hover:border-base-content/10 hover:bg-base-100/50',
                 (isDupSelected(activeGroup.id, item.file_id) && selectedFileId === item.file_id)
                   ? 'border-error/30 bg-error/5 hover:border-error/30 hover:bg-error/10'
                   : (isDupSelected(activeGroup.id, item.file_id)
@@ -165,7 +165,7 @@
                     @change="toggleDupSelected(activeGroup.id, item.file_id)"
                   />
                 </label>
-                <div class="w-10 h-10 rounded-box overflow-hidden bg-base-content/5 border border-base-content/10 shrink-0">
+                <div class="w-10 h-10 rounded-box overflow-hidden shrink-0">
                   <img v-if="item.file?.thumbnail" :src="item.file.thumbnail" class="w-full h-full object-cover" />
                   <div v-else class="w-full h-full skeleton"></div>
                 </div>

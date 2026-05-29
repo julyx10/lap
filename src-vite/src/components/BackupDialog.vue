@@ -19,7 +19,7 @@
       </div>
 
       <!-- Library list -->
-      <div class="flex-1 overflow-y-auto border border-base-content/10 bg-base-300/30 shadow-sm rounded-box p-1">
+      <div class="flex-1 overflow-y-auto border border-base-content/5 bg-base-300/30 shadow-sm rounded-box p-1">
         <div
           v-for="lib in libraries"
           :key="lib.libraryId"

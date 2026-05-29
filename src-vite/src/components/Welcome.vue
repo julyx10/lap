@@ -14,7 +14,7 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
-        <div class="rounded-box border border-base-content/10 bg-base-100/60 p-4">
+        <div class="rounded-box border border-base-content/5 bg-base-100/60 p-4">
           <IconFolder class="w-5 h-5 mb-3" />
           <h3 class="text-sm font-medium text-base-content">{{ $t('welcome.add_album_title') }}</h3>
           <p class="mt-2 text-xs leading-5 text-base-content/55">{{ $t('welcome.add_album_description') }}</p>
@@ -23,12 +23,12 @@
             {{ $t('menu.album.add') }}
           </button>
         </div>
-        <div class="rounded-box border border-base-content/10 bg-base-100/60 p-4">
+        <div class="rounded-box border border-base-content/5 bg-base-100/60 p-4">
           <IconSearch class="w-5 h-5 mb-3" />
           <h3 class="text-sm font-medium text-base-content">{{ $t('welcome.search_title') }}</h3>
           <p class="mt-2 text-xs leading-5 text-base-content/55">{{ $t('welcome.search_description') }}</p>
         </div>
-        <div class="rounded-box border border-base-content/10 bg-base-100/60 p-4">
+        <div class="rounded-box border border-base-content/5 bg-base-100/60 p-4">
           <IconDragDrop class="w-5 h-5 mb-3" />
           <h3 class="text-sm font-medium text-base-content">{{ $t('welcome.drag_title') }}</h3>
           <p class="mt-2 text-xs leading-5 text-base-content/55">{{ $t('welcome.drag_description') }}</p>

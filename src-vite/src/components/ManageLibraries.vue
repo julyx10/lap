@@ -6,7 +6,7 @@
     @cancel="clickCancel"
   >
     <!-- Library list -->
-    <div class="flex flex-col flex-1 min-h-0 border border-base-content/10 bg-base-300/30 shadow-sm rounded-box overflow-hidden relative">
+    <div class="flex flex-col flex-1 min-h-0 border border-base-content/5 bg-base-300/30 shadow-sm rounded-box overflow-hidden relative">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 pt-2 text-sm text-base-content/30 border-base-content/10 mr-9">
         <div>{{ $t('msgbox.manage_libraries.name') }}</div>
@@ -111,21 +111,17 @@
     </div>
 
     <!-- button area -->
-    <div class="flex justify-between items-center shrink-0 pt-2 min-h-[64px]">
+    <div class="flex justify-between items-center shrink-0 pt-2 min-h-[56px]">
       <!-- Add New Library -->
       <div class="flex flex-col items-start justify-center p-2 w-2/3 min-h-[48px] rounded-box border border-transparent transition-colors" :class="showAddInput ? 'border-base-content/10 bg-base-100/20' : ''">
         <button
           v-if="!showAddInput" 
-          class="inline-flex h-8 items-center gap-2 px-3 py-2 rounded-box border border-base-content/10 text-sm transition-colors"
-          :class="isMaxLibraryReached || isRenaming
-            ? 'text-base-content/30 cursor-default'
-            : 'text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer'"
-          :title="isMaxLibraryReached ? $t('msgbox.manage_libraries.max_limit_reached') : $t('msgbox.manage_libraries.add_new')"
+          class="btn btn-primary btn-sm rounded-box"
           :disabled="isMaxLibraryReached || isRenaming"
           @click="showAddInput = true"
         >
-          <IconAdd class="w-5 h-5" />
-          <span>{{ $t('msgbox.manage_libraries.add_new') }}</span>
+          <IconAdd v-if="!isMaxLibraryReached" class="w-5 h-5" />
+          <span>{{ isMaxLibraryReached ? $t('msgbox.manage_libraries.max_limit_reached') : $t('msgbox.manage_libraries.add_new') }}</span>
         </button>
         <template v-else>
           <div class="w-full flex min-h-8 items-center gap-2">
