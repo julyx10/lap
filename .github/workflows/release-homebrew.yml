@@ -53,7 +53,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           REPO: ${{ github.repository }}
         run: |
-          BASE="https://github.com/${APP_REPO}/releases/download/v${VERSION}"
+          BASE="https://github.com/${REPO}/releases/download/v${VERSION}"
 
           curl -fsSL "${BASE}/Lap_${VERSION}_aarch64.dmg" -o /tmp/aarch64.dmg
           [[ $(stat -f%z /tmp/aarch64.dmg) -gt 1000000 ]] || { echo "::error::aarch64.dmg too small, download may have failed"; exit 1; }
