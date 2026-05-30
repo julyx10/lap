@@ -411,6 +411,9 @@ export async function fetchFolder(path, isRecursive, sort = 0) {
   try {
     const folder = await invoke('fetch_folder', { path, isRecursive, sort });
     if(folder) {
+      // get root folder status
+      folder.is_favorite = await getFolderFavorite(folder.path);
+      folder.is_excluded_from_search = await getFolderSearchExcluded(folder.path);
       // get folder children's favorite status
       for (let i = 0; i < folder.children.length; i++) {
         const child = folder.children[i];

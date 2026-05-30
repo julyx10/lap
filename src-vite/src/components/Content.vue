@@ -800,6 +800,7 @@ const totalFileSize = ref(0);     // total files' size
 const selectedItemIndex = ref(-1);
 let pendingInitialSelectedIndex = -1;
 let hasRestoredInitialSelection = false;
+let pendingSelectedFileIds: Set<number> | null = null;
 
 // mutil select mode
 const selectMode = ref(false);
@@ -2513,7 +2514,11 @@ onMounted( async() => {
   unlistenLibraryTotalRefreshed = await listen('library-total-refreshed', (event: any) => {
     if (event?.payload?.source === 'content') return;
     if (isScanStreamingMode.value) return;
-    if (config.main.sidebarIndex === 0) updateContent(true);
+    if (config.main.sidebarIndex === 0) {
+      pendingInitialSelectedIndex = selectedItemIndex.value;
+      hasRestoredInitialSelection = false;
+      updateContent(true);
+    }
   });
 
   // Drag-drop file import. Tauri native drag/drop is disabled so internal
@@ -3072,7 +3077,8 @@ async function fetchDataRange(start: number, end: number, reverse = false) {
               }
 
               // Preserve client-side state when upgrading placeholder -> real item.
-              const isSelected = existingItem ? existingItem.isSelected : false;
+              const isSelected = existingItem?.isSelected
+                || (pendingSelectedFileIds?.has(newFiles[j].id) ?? false);
               const rotate = existingItem ? (existingItem.rotate || 0) : 0;
               const thumbnail = existingItem?.thumbnail;
 
@@ -3261,6 +3267,17 @@ async function getFileList(
         }
       });
       
+      // Preserve selection state before replacing file list
+      if (selectMode.value) {
+        const ids = new Set<number>();
+        for (const f of fileList.value) {
+          if (f.isSelected && typeof f.id === 'number') ids.add(f.id);
+        }
+        pendingSelectedFileIds = ids.size > 0 ? ids : null;
+      } else {
+        pendingSelectedFileIds = null;
+      }
+
       // Initialize fileList with placeholders
       fileList.value = Array.from({ length: totalFileCount.value }).map((_, i) => ({
         id: 'ph-' + i,
@@ -3474,6 +3491,10 @@ async function updateContent(force = false) {
                   );
                   const visibleRange = { ...lastVisibleRange };
                   const refreshRequestId = ++currentContentRequestId;
+                  if (pendingInitialSelectedIndex < 0) {
+                    pendingInitialSelectedIndex = selectedItemIndex.value;
+                    hasRestoredInitialSelection = false;
+                  }
                   getFileList(folderQueryParams(), refreshRequestId).then(() => {
                     if (
                       refreshRequestId !== currentContentRequestId ||
