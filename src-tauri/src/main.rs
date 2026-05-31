@@ -169,30 +169,52 @@ async fn main() {
 
             Ok(())
         })
-        .on_window_event(|window, event| {
+        .on_window_event(move |window, event| {
             if window.label() != "main" {
                 return;
             }
 
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                // Prevent the window from closing immediately
                 api.prevent_close();
 
                 let app_handle = window.app_handle();
 
-                // Get all open windows
                 let windows = app_handle.webview_windows();
                 for (_, other_window) in windows {
-                    // Skip the main window (we'll close it last)
                     if other_window.label() != "main" {
-                        // Close each window
                         if let Err(err) = other_window.close() {
                             eprintln!("Failed to close window: {}", err);
                         }
                     }
                 }
 
-                app_handle.exit(0);
+                // Release AI engine before process teardown to prevent
+                // ONNX Runtime DLL unload-order crash on Windows
+                let ai_state = app_handle.state::<t_ai::AiState>();
+                for attempt in 0..20 {
+                    match ai_state.0.try_lock() {
+                        Ok(mut engine) => {
+                            engine.unload();
+                            break;
+                        }
+                        Err(std::sync::TryLockError::Poisoned(poison)) => {
+                            poison.into_inner().unload();
+                            break;
+                        }
+                        Err(std::sync::TryLockError::WouldBlock) => {
+                            if attempt == 19 {
+                                break;
+                            }
+                            std::thread::sleep(std::time::Duration::from_millis(200));
+                        }
+                    }
+                }
+
+                if aptabase_enabled {
+                    let _ = app_handle.track_event("app_exited", None);
+                }
+
+                std::process::exit(0);
             }
         })
         .on_menu_event(|app, event| {
@@ -350,12 +372,7 @@ async fn main() {
                         let _ = app_handle.track_event("app_started", None);
                     }
                 }
-                tauri::RunEvent::Exit { .. } => {
-                    if aptabase_enabled {
-                        let _ = app_handle.track_event("app_exited", None);
-                    }
-                    app_handle.flush_events_blocking();
-                }
+                tauri::RunEvent::Exit { .. } => {}
                 _ => {}
             });
         }

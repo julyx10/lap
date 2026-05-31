@@ -10,6 +10,7 @@ use ort::{
     session::{Session, builder::GraphOptimizationLevel},
     value::Value,
 };
+#[cfg(not(target_os = "macos"))]
 use ort::execution_providers::CUDAExecutionProvider;
 use reqwest::header::{CONTENT_RANGE, RANGE, USER_AGENT};
 use serde::Serialize;
@@ -112,16 +113,26 @@ impl AiEngine {
         Ok(())
     }
 
+    pub fn unload(&mut self) {
+        self.text_model = None;
+        self.vision_model = None;
+        self.tokenizer = None;
+    }
+
     fn load_session(path: &Path, model_name: &str) -> Result<Session, String> {
-        #[cfg(not(target_os = "macos"))]
-        {
-            let ep = CUDAExecutionProvider::default().build();
-            if let Ok(session) = Session::builder()
+        let builder = || -> Result<ort::session::builder::SessionBuilder, String> {
+            Session::builder()
                 .map_err(|e| e.to_string())?
                 .with_optimization_level(GraphOptimizationLevel::Level3)
                 .map_err(|e| e.to_string())?
                 .with_intra_threads(AI_INTRA_THREADS)
-                .map_err(|e| e.to_string())?
+                .map_err(|e| e.to_string())
+        };
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            let ep = CUDAExecutionProvider::default().build();
+            if let Ok(session) = builder()?
                 .with_execution_providers([ep])
                 .map_err(|e| e.to_string())?
                 .commit_from_file(path)
@@ -132,12 +143,7 @@ impl AiEngine {
             println!("CUDA unavailable for {} model, falling back to CPU", model_name);
         }
 
-        Session::builder()
-            .map_err(|e| e.to_string())?
-            .with_optimization_level(GraphOptimizationLevel::Level3)
-            .map_err(|e| e.to_string())?
-            .with_intra_threads(AI_INTRA_THREADS)
-            .map_err(|e| e.to_string())?
+        builder()?
             .commit_from_file(path)
             .map_err(|e| format!("Failed to load {} model from {:?}: {}", model_name, path, e))
     }
