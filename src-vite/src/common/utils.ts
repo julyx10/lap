@@ -197,38 +197,37 @@ export function formatDimensionText(
 
   const pixel = width * height;
   let pixelText: string;
-  if (pixel > 1_000_000) {
+  if (pixel >= 1_000_000) {
     pixelText = `(${(pixel / 1_000_000).toFixed(1)} MP)`;
-  } else if (pixel > 1_000) {
-    pixelText = `(${(pixel / 1_000).toFixed(1)} KP)`;
   } else {
-    pixelText = `(${pixel} P)`;
+    pixelText = `(${pixel.toLocaleString()} px)`;
   }
 
   const ratioText = showRatio ? formatAspectRatio(width, height) : null;
-  const ratioStr = ratioText ? ` • ${ratioText}` : '';
+  const ratioStr = ratioText ? ` · ${ratioText}` : '';
 
-  return `${width} x ${height}${ratioStr} ${pixelText}`;
+  return `${width} × ${height}${ratioStr} ${pixelText}`;
 }
 
 // ---- internal helpers ----
 
 const COMMON_RATIOS: { w: number; h: number; label: string }[] = [
-  { w: 1,  h: 1,  label: '1:1'  },
-  { w: 2,  h: 1,  label: '2:1'  },
-  { w: 1,  h: 2,  label: '1:2'  },
-  { w: 4,  h: 3,  label: '4:3'  },
-  { w: 3,  h: 4,  label: '3:4'  },
-  { w: 3,  h: 2,  label: '3:2'  },
-  { w: 2,  h: 3,  label: '2:3'  },
-  { w: 16, h: 9,  label: '16:9' },
-  { w: 9,  h: 16, label: '9:16' },
-  { w: 16, h: 10, label: '16:10'},
-  { w: 10, h: 16, label: '10:16'},
+  { w: 1,  h: 1,  label: '1:1'   },
+  { w: 2,  h: 1,  label: '2:1'   },
+  { w: 1,  h: 2,  label: '1:2'   },
+  { w: 4,  h: 3,  label: '4:3'   },
+  { w: 3,  h: 4,  label: '3:4'   },
+  { w: 3,  h: 2,  label: '3:2'   },
+  { w: 2,  h: 3,  label: '2:3'   },
+  { w: 16, h: 9,  label: '16:9'  },
+  { w: 9,  h: 16, label: '9:16'  },
+  { w: 16, h: 10, label: '16:10' },
+  { w: 10, h: 16, label: '10:16' },
+  { w: 5,  h: 4,  label: '5:4'   },
 ];
 
-const APPROX_THRESHOLD = 0.02; // 2% tolerance
-const MAX_SIMPLIFIED_DENOMINATOR = 20; // beyond this, skip ratio display
+const FLOAT_EPSILON = 0.001;
+const MAX_SIMPLIFIED_DENOMINATOR = 20;
 
 function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
@@ -237,30 +236,20 @@ function gcd(a: number, b: number): number {
 function formatAspectRatio(width: number, height: number): string | null {
   const actualRatio = width / height;
 
-  // 1. Try exact match with common ratios
   for (const { w, h, label } of COMMON_RATIOS) {
-    if (Math.abs(actualRatio - w / h) < Number.EPSILON) {
+    if (Math.abs(actualRatio - w / h) < FLOAT_EPSILON) {
       return label;
     }
   }
 
-  // 2. Try approximate match within threshold
-  for (const { w, h, label } of COMMON_RATIOS) {
-    if (Math.abs(actualRatio - w / h) / (w / h) <= APPROX_THRESHOLD) {
-      return `~${label}`;
-    }
-  }
-
-  // 3. Try simplified fraction
   const divisor = gcd(width, height);
   const sw = width / divisor;
   const sh = height / divisor;
-  if (sh <= MAX_SIMPLIFIED_DENOMINATOR && sw <= MAX_SIMPLIFIED_DENOMINATOR) {
+  if (sw <= MAX_SIMPLIFIED_DENOMINATOR && sh <= MAX_SIMPLIFIED_DENOMINATOR) {
     return `${sw}:${sh}`;
   }
 
-  // 4. Too irregular — skip
-  return null;
+  return `${actualRatio.toFixed(2)}:1`;
 }
 
 /// format duration to string
