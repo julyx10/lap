@@ -65,6 +65,7 @@ ort = { version = "=2.0.0-rc.10", default-features = false, features = [
     "ndarray",
     "download-binaries",
     "copy-dylibs",
+    "cuda",
 ] }
 ndarray = "0.16"
 tokenizers = { version = "0.20", default-features = false, features = ["onig"] }

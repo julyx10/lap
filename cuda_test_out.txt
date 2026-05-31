@@ -1,0 +1,7 @@
+Current DB version: 5
+Database is up to date.
+Loading AI Models...
+vision model loaded on CUDA
+text model loaded on CUDA
+AI Models Loaded Successfully!
+AI Engine started successfully

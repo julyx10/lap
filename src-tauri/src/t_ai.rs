@@ -10,6 +10,7 @@ use ort::{
     session::{Session, builder::GraphOptimizationLevel},
     value::Value,
 };
+use ort::execution_providers::CUDAExecutionProvider;
 use reqwest::header::{CONTENT_RANGE, RANGE, USER_AGENT};
 use serde::Serialize;
 use std::{
@@ -112,6 +113,25 @@ impl AiEngine {
     }
 
     fn load_session(path: &Path, model_name: &str) -> Result<Session, String> {
+        #[cfg(not(target_os = "macos"))]
+        {
+            let ep = CUDAExecutionProvider::default().build();
+            if let Ok(session) = Session::builder()
+                .map_err(|e| e.to_string())?
+                .with_optimization_level(GraphOptimizationLevel::Level3)
+                .map_err(|e| e.to_string())?
+                .with_intra_threads(AI_INTRA_THREADS)
+                .map_err(|e| e.to_string())?
+                .with_execution_providers([ep])
+                .map_err(|e| e.to_string())?
+                .commit_from_file(path)
+            {
+                println!("{} model loaded on CUDA", model_name);
+                return Ok(session);
+            }
+            println!("CUDA unavailable for {} model, falling back to CPU", model_name);
+        }
+
         Session::builder()
             .map_err(|e| e.to_string())?
             .with_optimization_level(GraphOptimizationLevel::Level3)
