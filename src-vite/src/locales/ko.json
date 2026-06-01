@@ -336,7 +336,7 @@
   "menu": {
     "select": {
       "all": "모두 선택",
-      "none": "선택 해제",
+      "none": "모두 선택 해제",
       "invert": "선택 반전"
     },
     "home": {
@@ -410,7 +410,7 @@
       "unfavorite": "즐겨찾기 해제",
       "tag": "태그...",
       "comment": "메모...",
-      "rotate": "회전"
+      "rotate": "미리보기 회전"
     },
     "sort": {
       "sort_by_name": "이름순",
@@ -1054,6 +1054,7 @@
         "image_browsing": "이미지 탐색",
         "viewing": "보기",
         "file_actions": "파일 작업",
+        "selection": "선택",
         "metadata": "메타데이터"
       },
       "actions": {
@@ -1078,6 +1079,9 @@
         "open_new_window": "새 창에서 보기",
         "edit_image": "이미지 편집",
         "copy_file": "클립보드에 복사",
+        "select_all": "모두 선택",
+        "select_none": "모두 선택 해제",
+        "invert_selection": "선택 반전",
         "rename_file": "파일 이름 변경",
         "move_to": "폴더로 이동",
         "move_to_trash": "휴지통으로 이동",
@@ -1085,6 +1089,7 @@
         "refresh_file_info": "파일 정보 새로고침",
         "print": "인쇄",
         "toggle_favorite": "즐겨찾기 전환",
+        "set_clear_rating": "별점 설정 / 지우기",
         "clear_rating": "별점 지우기",
         "rate_one": "별점 1개",
         "rate_two": "별점 2개",
@@ -1093,7 +1098,7 @@
         "rate_five": "별점 5개",
         "edit_tags": "태그 편집",
         "edit_comment": "메모 편집",
-        "rotate": "회전"
+        "rotate": "미리보기 회전"
       }
     },
     "database": {

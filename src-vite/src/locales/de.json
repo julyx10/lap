@@ -410,7 +410,7 @@
       "unfavorite": "Entfavorisieren",
       "tag": "Taggen...",
       "comment": "Kommentieren...",
-      "rotate": "Ansicht drehen"
+      "rotate": "Vorschau drehen"
     },
     "sort": {
       "sort_by_name": "Nach Name",
@@ -1054,6 +1054,7 @@
         "image_browsing": "Bildnavigation",
         "viewing": "Anzeige",
         "file_actions": "Dateiaktionen",
+        "selection": "Auswahl",
         "metadata": "Metadaten"
       },
       "actions": {
@@ -1078,6 +1079,9 @@
         "open_new_window": "In neuem Fenster öffnen",
         "edit_image": "Bild bearbeiten",
         "copy_file": "In Zwischenablage kopieren",
+        "select_all": "Alle auswählen",
+        "select_none": "Auswahl aufheben",
+        "invert_selection": "Auswahl umkehren",
         "rename_file": "Datei umbenennen",
         "move_to": "In Ordner verschieben",
         "move_to_trash": "In Papierkorb verschieben",
@@ -1085,6 +1089,7 @@
         "refresh_file_info": "Dateiinfo aktualisieren",
         "print": "Drucken",
         "toggle_favorite": "Favorit umschalten",
+        "set_clear_rating": "Bewertung setzen / löschen",
         "clear_rating": "Bewertung löschen",
         "rate_one": "1 Stern bewerten",
         "rate_two": "2 Sterne bewerten",
@@ -1093,7 +1098,7 @@
         "rate_five": "5 Sterne bewerten",
         "edit_tags": "Tags bearbeiten",
         "edit_comment": "Kommentar bearbeiten",
-        "rotate": "Ansicht drehen"
+        "rotate": "Vorschau drehen"
       }
     },
     "database": {

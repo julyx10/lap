@@ -410,7 +410,7 @@
       "unfavorite": "取消收藏",
       "tag": "标签...",
       "comment": "备注...",
-      "rotate": "旋转视图"
+      "rotate": "旋转预览"
     },
     "sort": {
       "sort_by_name": "按名称排序",
@@ -1054,6 +1054,7 @@
         "image_browsing": "图片浏览",
         "viewing": "查看",
         "file_actions": "文件操作",
+        "selection": "选择",
         "metadata": "元数据"
       },
       "actions": {
@@ -1078,6 +1079,9 @@
         "open_new_window": "在新窗口中查看",
         "edit_image": "编辑图片",
         "copy_file": "复制到剪贴板",
+        "select_all": "全选",
+        "select_none": "取消全选",
+        "invert_selection": "反选",
         "rename_file": "重命名文件",
         "move_to": "移动到文件夹",
         "move_to_trash": "移至废纸篓",
@@ -1085,6 +1089,7 @@
         "refresh_file_info": "刷新文件信息",
         "print": "打印",
         "toggle_favorite": "切换收藏",
+        "set_clear_rating": "设置 / 清除评分",
         "clear_rating": "清除评分",
         "rate_one": "评分 1 星",
         "rate_two": "评分 2 星",
@@ -1093,7 +1098,7 @@
         "rate_five": "评分 5 星",
         "edit_tags": "编辑标签",
         "edit_comment": "编辑备注",
-        "rotate": "旋转视图"
+        "rotate": "旋转预览"
       }
     },
     "database": {

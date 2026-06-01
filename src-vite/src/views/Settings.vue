@@ -878,6 +878,7 @@ type ShortcutDisplayItem = {
   actionId: ShortcutActionId;
   labelKey: string;
   shortcutVariant?: 'shift';
+  keys?: string[];
 };
 
 const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[] }> = [
@@ -928,15 +929,18 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
     ],
   },
   {
+    key: 'selection',
+    items: [
+      { actionId: 'file.selectAll', labelKey: 'select_all' },
+      { actionId: 'file.selectNone', labelKey: 'select_none' },
+      { actionId: 'file.invertSelection', labelKey: 'invert_selection' },
+    ],
+  },
+  {
     key: 'metadata',
     items: [
       { actionId: 'meta.favorite', labelKey: 'toggle_favorite' },
-      { actionId: 'meta.rating.clear', labelKey: 'clear_rating' },
-      { actionId: 'meta.rating.one', labelKey: 'rate_one' },
-      { actionId: 'meta.rating.two', labelKey: 'rate_two' },
-      { actionId: 'meta.rating.three', labelKey: 'rate_three' },
-      { actionId: 'meta.rating.four', labelKey: 'rate_four' },
-      { actionId: 'meta.rating.five', labelKey: 'rate_five' },
+      { actionId: 'meta.rating.clear', labelKey: 'set_clear_rating', keys: ['0 – 5'] },
       { actionId: 'meta.tag', labelKey: 'edit_tags' },
       { actionId: 'meta.comment', labelKey: 'edit_comment' },
       { actionId: 'meta.rotate', labelKey: 'rotate' },
@@ -954,7 +958,7 @@ const shortcutSections = computed(() => {
       .map((item) => ({
         actionId: item.actionId,
         label: shortcutMessages.actions[item.labelKey],
-        keys: getDisplayShortcutKeys(item.actionId, item.shortcutVariant),
+        keys: item.keys ?? getDisplayShortcutKeys(item.actionId, item.shortcutVariant),
       }))
       .filter((item) => item.keys.length > 0),
   }));

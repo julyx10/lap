@@ -336,7 +336,7 @@
   "menu": {
     "select": {
       "all": "すべて選択",
-      "none": "選択解除",
+      "none": "すべての選択を解除",
       "invert": "選択を反転"
     },
     "home": {
@@ -410,7 +410,7 @@
       "unfavorite": "お気に入り解除",
       "tag": "タグ付け...",
       "comment": "コメント...",
-      "rotate": "ビューを回転"
+      "rotate": "プレビューを回転"
     },
     "sort": {
       "sort_by_name": "名前順",
@@ -1054,6 +1054,7 @@
         "image_browsing": "画像閲覧",
         "viewing": "表示",
         "file_actions": "ファイル操作",
+        "selection": "選択",
         "metadata": "メタデータ"
       },
       "actions": {
@@ -1078,6 +1079,9 @@
         "open_new_window": "新しいウィンドウで表示",
         "edit_image": "画像を編集",
         "copy_file": "クリップボードにコピー",
+        "select_all": "すべて選択",
+        "select_none": "すべて選択解除",
+        "invert_selection": "選択を反転",
         "rename_file": "ファイル名を変更",
         "move_to": "フォルダに移動",
         "move_to_trash": "ゴミ箱に移動",
@@ -1085,6 +1089,7 @@
         "refresh_file_info": "ファイル情報を更新",
         "print": "印刷",
         "toggle_favorite": "お気に入りの切り替え",
+        "set_clear_rating": "評価を設定 / クリア",
         "clear_rating": "評価をクリア",
         "rate_one": "1つ星評価",
         "rate_two": "2つ星評価",
@@ -1093,7 +1098,7 @@
         "rate_five": "5つ星評価",
         "edit_tags": "タグを編集",
         "edit_comment": "コメントを編集",
-        "rotate": "ビューを回転"
+        "rotate": "プレビューを回転"
       }
     },
     "database": {

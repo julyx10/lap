@@ -336,7 +336,7 @@
   "menu": {
     "select": {
       "all": "Tout sélectionner",
-      "none": "Désélectionner",
+      "none": "Tout désélectionner",
       "invert": "Inverser sélection"
     },
     "home": {
@@ -410,7 +410,7 @@
       "unfavorite": "Retirer favori",
       "tag": "Tagger...",
       "comment": "Commenter...",
-      "rotate": "Pivoter la vue"
+      "rotate": "Pivoter l'aperçu"
     },
     "sort": {
       "sort_by_name": "Par nom",
@@ -1054,6 +1054,7 @@
         "image_browsing": "Navigation dans les images",
         "viewing": "Affichage",
         "file_actions": "Actions sur les fichiers",
+        "selection": "Sélection",
         "metadata": "Métadonnées"
       },
       "actions": {
@@ -1078,6 +1079,9 @@
         "open_new_window": "Détacher la fenêtre",
         "edit_image": "Modifier l'image",
         "copy_file": "Copier dans le presse-papier",
+        "select_all": "Tout sélectionner",
+        "select_none": "Tout désélectionner",
+        "invert_selection": "Inverser la sélection",
         "rename_file": "Renommer le fichier",
         "move_to": "Déplacer vers le dossier",
         "move_to_trash": "Déplacer vers la corbeille",
@@ -1085,6 +1089,7 @@
         "refresh_file_info": "Actualiser les informations du fichier",
         "print": "Imprimer",
         "toggle_favorite": "Basculer le favori",
+        "set_clear_rating": "Définir / effacer la note",
         "clear_rating": "Effacer la note",
         "rate_one": "Noter 1 étoile",
         "rate_two": "Noter 2 étoiles",
@@ -1093,7 +1098,7 @@
         "rate_five": "Noter 5 étoiles",
         "edit_tags": "Modifier les étiquettes",
         "edit_comment": "Modifier le commentaire",
-        "rotate": "Pivoter la vue"
+        "rotate": "Pivoter l'aperçu"
       }
     },
     "database": {

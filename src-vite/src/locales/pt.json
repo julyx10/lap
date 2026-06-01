@@ -336,7 +336,7 @@
   "menu": {
     "select": {
       "all": "Selecionar tudo",
-      "none": "Desmarcar",
+      "none": "Desmarcar tudo",
       "invert": "Inverter seleção"
     },
     "home": {
@@ -410,7 +410,7 @@
       "unfavorite": "Desfavoritar",
       "tag": "Tag...",
       "comment": "Comentar...",
-      "rotate": "Girar visualização"
+      "rotate": "Girar pré-visualização"
     },
     "sort": {
       "sort_by_name": "Por nome",
@@ -1054,6 +1054,7 @@
         "image_browsing": "Navegação de imagens",
         "viewing": "Visualização",
         "file_actions": "Ações de arquivo",
+        "selection": "Seleção",
         "metadata": "Metadados"
       },
       "actions": {
@@ -1078,6 +1079,9 @@
         "open_new_window": "Abrir em nova janela",
         "edit_image": "Editar imagem",
         "copy_file": "Copiar para a área de transferência",
+        "select_all": "Selecionar tudo",
+        "select_none": "Desmarcar tudo",
+        "invert_selection": "Inverter seleção",
         "rename_file": "Renomear arquivo",
         "move_to": "Mover para pasta",
         "move_to_trash": "Mover para o lixo",
@@ -1085,6 +1089,7 @@
         "refresh_file_info": "Atualizar informações do arquivo",
         "print": "Imprimir",
         "toggle_favorite": "Alternar favorito",
+        "set_clear_rating": "Definir / limpar classificação",
         "clear_rating": "Limpar classificação",
         "rate_one": "Avaliar 1 estrela",
         "rate_two": "Avaliar 2 estrelas",
@@ -1093,7 +1098,7 @@
         "rate_five": "Avaliar 5 estrelas",
         "edit_tags": "Editar tags",
         "edit_comment": "Editar comentário",
-        "rotate": "Girar visualização"
+        "rotate": "Girar pré-visualização"
       }
     },
     "database": {

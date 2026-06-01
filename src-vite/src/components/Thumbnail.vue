@@ -4,7 +4,9 @@
       'border-2 rounded-box flex flex-col items-center cursor-pointer group',
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
       config.settings.grid.style === 0 ? 'p-1 w-fit h-fit' : 'w-full h-full',
-      isSelected && !isTransitionDisabled ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary') : 'border-transparent',
+      isActive && !isTransitionDisabled
+        ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary')
+        : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
     @click="(event: MouseEvent) => $emit('clicked', event.shiftKey)"
@@ -178,6 +180,10 @@ const props = defineProps({
     required: true,
   },
   isSelected: {
+    type: Boolean,
+    default: false,
+  },
+  isActive: {
     type: Boolean,
     default: false,
   },

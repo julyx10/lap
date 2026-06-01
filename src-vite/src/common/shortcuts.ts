@@ -23,6 +23,9 @@ export type ShortcutActionId =
   | 'file.editImage'
   | 'file.print'
   | 'file.copy'
+  | 'file.selectAll'
+  | 'file.selectNone'
+  | 'file.invertSelection'
   | 'file.rename'
   | 'file.moveTo'
   | 'file.trash'
@@ -159,6 +162,27 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     contexts: ['content'],
     defaultBindings: [
       { code: 'KeyC', modifiers: ['cmdOrCtrl'], allowShift: true, label: { mac: '⌘C', windows: 'Ctrl+C', linux: 'Ctrl+C' } },
+    ],
+  },
+  {
+    id: 'file.selectAll',
+    contexts: ['content'],
+    defaultBindings: [
+      { code: 'KeyA', modifiers: ['cmdOrCtrl'], label: { mac: '⌘A', windows: 'Ctrl+A', linux: 'Ctrl+A' } },
+    ],
+  },
+  {
+    id: 'file.selectNone',
+    contexts: ['content'],
+    defaultBindings: [
+      { code: 'KeyD', modifiers: ['cmdOrCtrl'], label: { mac: '⌘D', windows: 'Ctrl+D', linux: 'Ctrl+D' } },
+    ],
+  },
+  {
+    id: 'file.invertSelection',
+    contexts: ['content'],
+    defaultBindings: [
+      { code: 'KeyI', modifiers: ['cmdOrCtrl'], label: { mac: '⌘I', windows: 'Ctrl+I', linux: 'Ctrl+I' } },
     ],
   },
   {

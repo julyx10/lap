@@ -336,7 +336,7 @@
   "menu": {
     "select": {
       "all": "Select all",
-      "none": "Select none",
+      "none": "Deselect All",
       "invert": "Invert selection"
     },
     "home": {
@@ -410,7 +410,7 @@
       "unfavorite": "Unfavorite",
       "tag": "Tag...",
       "comment": "Comment...",
-      "rotate": "Rotate view"
+      "rotate": "Rotate preview"
     },
     "sort": {
       "sort_by_name": "Sort by name",
@@ -1054,6 +1054,7 @@
         "image_browsing": "Image browsing",
         "viewing": "Viewing",
         "file_actions": "File actions",
+        "selection": "Selection",
         "metadata": "Metadata"
       },
       "actions": {
@@ -1078,6 +1079,9 @@
         "open_new_window": "View in new window",
         "edit_image": "Edit image",
         "copy_file": "Copy to clipboard",
+        "select_all": "Select all",
+        "select_none": "Deselect all",
+        "invert_selection": "Invert selection",
         "rename_file": "Rename file",
         "move_to": "Move to folder",
         "move_to_trash": "Move to trash",
@@ -1085,6 +1089,7 @@
         "refresh_file_info": "Refresh file info",
         "print": "Print",
         "toggle_favorite": "Toggle favorite",
+        "set_clear_rating": "Set / clear rating",
         "clear_rating": "Clear rating",
         "rate_one": "Rate 1 star",
         "rate_two": "Rate 2 stars",
@@ -1093,7 +1098,7 @@
         "rate_five": "Rate 5 stars",
         "edit_tags": "Edit tags",
         "edit_comment": "Edit comment",
-        "rotate": "Rotate"
+        "rotate": "Rotate preview"
       }
     },
     "database": {

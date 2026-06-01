@@ -1484,6 +1484,7 @@ function handleItemDblClicked(
 
 // Track last selected index for shift-click range selection
 const lastSelectedIndex = ref(-1);
+const keyboardSelectionAnchorIndex = ref(-1);
 
 function handleItemSelectToggled(index: number, shiftKey: boolean = false) {
   if (shiftKey && lastSelectedIndex.value !== -1 && lastSelectedIndex.value !== index) {
@@ -1503,6 +1504,38 @@ function handleItemSelectToggled(index: number, shiftKey: boolean = false) {
   
   // Update last selected index
   lastSelectedIndex.value = index;
+}
+
+function toggleKeyboardSelection(direction: 'prev' | 'next') {
+  if (getActivePreviewMode() !== 'none') return false;
+
+  const currentIndex = selectedItemIndex.value;
+  const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= fileList.value.length) return false;
+
+  checkUnsavedChanges(() => {
+    if (keyboardSelectionAnchorIndex.value < 0) {
+      keyboardSelectionAnchorIndex.value = currentIndex;
+    }
+
+    if (!selectMode.value) {
+      handleSelectMode(true, { notify: true });
+    }
+
+    const start = Math.min(keyboardSelectionAnchorIndex.value, nextIndex);
+    const end = Math.max(keyboardSelectionAnchorIndex.value, nextIndex);
+    const targetState = !fileList.value[nextIndex].isSelected;
+    for (let i = start; i <= end; i++) {
+      if (isRealFileItem(fileList.value[i])) {
+        fileList.value[i].isSelected = targetState;
+      }
+    }
+
+    selectedItemIndex.value = nextIndex;
+    lastSelectedIndex.value = nextIndex;
+    showSelectionLimitHint.value = false;
+  });
+  return true;
 }
 
 async function handleDateGroupSelect({ startIndex, endIndex, selected }: { startIndex: number; endIndex: number; selected: boolean }) {
@@ -1794,6 +1827,8 @@ const keyActions = {
 
 // Local keydown handler for navigation (prevents default browser behavior)
 function handleLocalKeyDown(event: KeyboardEvent) {
+  if (event.defaultPrevented) return;
+
   if (uiStore.activePane === 'left-sidebar') {
     return;
   }
@@ -1809,6 +1844,25 @@ function handleLocalKeyDown(event: KeyboardEvent) {
     return;
   }
 
+  if (event.key === 'Shift') {
+    if (selectedItemIndex.value >= 0) {
+      keyboardSelectionAnchorIndex.value = selectedItemIndex.value;
+    }
+    return;
+  }
+
+  if (selectMode.value && matchesShortcut('file.selectNone', event, shortcutPlatform)) {
+    event.preventDefault();
+    selectNoneInCurrentList();
+    return;
+  }
+
+  if (selectMode.value && matchesShortcut('file.invertSelection', event, shortcutPlatform)) {
+    event.preventDefault();
+    void invertSelectionInCurrentList();
+    return;
+  }
+
   if (matchesShortcut('meta.info', event, shortcutPlatform)) {
     event.preventDefault();
     toggleInfoPanel();
@@ -1816,7 +1870,11 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
   if (matchesShortcut('view.close', event, shortcutPlatform)) {
-    if (showQuickView.value) {
+    if (selectMode.value) {
+      handleSelectMode(false);
+      event.preventDefault();
+      return;
+    } else if (showQuickView.value) {
       closeQuickPreview();
       event.preventDefault();
       return;
@@ -1824,7 +1882,17 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       exitTempViewMode();
       event.preventDefault();
       return;
+    } else if (config.rightPanel.show) {
+      config.rightPanel.show = false;
+      event.preventDefault();
+      return;
     }
+  }
+
+  if (matchesShortcut('file.selectAll', event, shortcutPlatform)) {
+    event.preventDefault();
+    void selectAllInCurrentList();
+    return;
   }
 
   if (selectedItemIndex.value < 0 || fileList.value.length === 0) {
@@ -1975,10 +2043,27 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
   const isFilmstrip = config.settings.grid.showFilmStrip;
+  const selectionDirection =
+    event.key === 'ArrowRight' || (isFilmstrip && event.key === 'ArrowDown')
+      ? 'next'
+      : event.key === 'ArrowLeft' || (isFilmstrip && event.key === 'ArrowUp')
+        ? 'prev'
+        : null;
+
+  if (event.shiftKey && selectionDirection && toggleKeyboardSelection(selectionDirection)) {
+    return;
+  }
+
   if (event.key === 'ArrowRight' || (isFilmstrip && event.key === 'ArrowDown')) {
     requestNavigate('next');
   } else if (event.key === 'ArrowLeft' || (isFilmstrip && event.key === 'ArrowUp')) {
     requestNavigate('prev');
+  }
+}
+
+function handleLocalKeyUp(event: KeyboardEvent) {
+  if (event.key === 'Shift') {
+    keyboardSelectionAnchorIndex.value = -1;
   }
 }
 
@@ -2509,6 +2594,7 @@ onMounted( async() => {
   hasRestoredInitialSelection = false;
 
   window.addEventListener('keydown', handleLocalKeyDown);
+  window.addEventListener('keyup', handleLocalKeyUp);
   unlistenKeydown = await listen('global-keydown', handleKeyDown);
 
   unlistenLibraryTotalRefreshed = await listen('library-total-refreshed', (event: any) => {
@@ -2841,6 +2927,7 @@ onBeforeUnmount(() => {
     layoutRefreshTimer = null;
   }
   window.removeEventListener('keydown', handleLocalKeyDown);
+  window.removeEventListener('keyup', handleLocalKeyUp);
   // unlisten
   unlistenImageViewer();
   if (unlistenImageEditor) unlistenImageEditor();
