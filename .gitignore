@@ -10,3 +10,4 @@ build.sh
 set_version.py
 publish_release.sh
 release-downloads.sh
+resources/
