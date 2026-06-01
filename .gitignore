@@ -11,3 +11,5 @@ set_version.py
 publish_release.sh
 release-downloads.sh
 resources/
+cuda_test_err.txt
+cuda_test_out.txt
