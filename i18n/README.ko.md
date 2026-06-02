@@ -59,6 +59,60 @@ Lap은 오픈 소스 기반의 '로컬 우선(local-first)' 사진 관리 도구
 - **RAW 사진 보기**: 20개 이상의 카메라 제조사 RAW 포맷(CR2, NEF, ARW, DNG 등)에 대한 내장 디코딩을 지원합니다.
 - **광범위한 비디오 호환성**: MP4, MOV, AVI, MKV 및 20개 이상의 다양한 형식을 지원하며 교차 플랫폼 최적화를 제공합니다.
 
+## Lap 제거
+
+Lap은 기존 사진 폴더를 직접 사용합니다. Lap을 제거하거나 데이터베이스 및 캐시 파일을 삭제해도 원본 사진은 삭제되지 않습니다.
+
+일반 제거 절차는 애플리케이션만 제거합니다. Lap을 완전히 제거하려면 먼저 Lap을 종료하고 애플리케이션을 제거한 다음, 사용 중인 플랫폼에 맞는 명령으로 로컬 데이터베이스, 썸네일 캐시 및 설정 파일을 삭제하세요.
+
+### macOS
+
+Homebrew로 Lap을 설치한 경우:
+
+```bash
+brew uninstall --cask lap
+```
+
+수동으로 설치한 경우 Lap을 종료하고 `Applications` 폴더의 `Lap.app`을 휴지통으로 이동하세요.
+
+Lap 데이터베이스, 캐시 및 설정 파일을 모두 삭제하려면:
+
+```bash
+rm -rf "$HOME/Library/Application Support/com.julyx10.lap" \
+       "$HOME/Library/Caches/com.julyx10.lap" \
+       "$HOME/Library/WebKit/com.julyx10.lap"
+rm -f "$HOME/Library/Preferences/com.julyx10.lap.plist"
+```
+
+### Windows
+
+**설정 > 앱 > 설치된 앱**을 열고 **Lap**을 찾아 **제거**를 선택하세요.
+
+그런 다음 PowerShell을 열고 Lap 데이터베이스, 캐시 및 설정 파일을 모두 삭제하세요:
+
+```powershell
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:LOCALAPPDATA\com.julyx10.lap"
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:APPDATA\com.julyx10.lap"
+```
+
+### Linux
+
+Debian 기반 배포판에서는 패키지를 제거하세요:
+
+```bash
+sudo apt remove lap
+```
+
+그런 다음 Lap 데이터베이스, 캐시 및 설정 파일을 모두 삭제하세요:
+
+```bash
+rm -rf "$HOME/.local/share/com.julyx10.lap" \
+       "$HOME/.cache/com.julyx10.lap" \
+       "$HOME/.config/com.julyx10.lap"
+```
+
+Lap 설정에서 사용자 지정 데이터베이스 저장 폴더를 선택했다면, 해당 폴더에 Lap 데이터베이스 파일만 포함되어 있는지 확인한 후 별도로 삭제하세요.
+
 ## 소스에서 빌드하기
 
 요구 사양: Node.js 20+, pnpm, Rust stable.
@@ -111,7 +165,9 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | :-- | :-- |
 | [LibRaw](https://github.com/LibRaw/LibRaw) | RAW 이미지 디코딩 및 썸네일 추출 |
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF 이미지 디코딩 및 미리보기 생성 |
+| [libjpeg-turbo](https://libjpeg-turbo.org/) | 빠른 JPEG 디코딩 및 썸네일 생성 |
 | [FFmpeg](https://ffmpeg.org/) | 비디오 처리 및 썸네일 생성 |
+| [Video.js](https://videojs.com/) | 교차 플랫폼 비디오 재생 UI |
 | [ONNX Runtime](https://onnxruntime.ai/) | 로컬 AI 모델 추론 엔진 |
 | [CLIP](https://github.com/openai/CLIP) | 이미지-텍스트 유사도 검색 |
 | [InsightFace](https://github.com/deepinsight/insightface) | 얼굴 감지 및 인식 |

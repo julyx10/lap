@@ -37,6 +37,7 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Notarized by Apple |
 | **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Unsigned — if SmartScreen blocks the download, click **Keep anyway** |
 | **Linux (amd64 / arm64)** | `_amd64.deb` / `_arm64.deb` | For Debian-based distros (Ubuntu, Debian, Linux Mint, etc.) |
+
 ## Screenshots
 
 <p align="center">
@@ -46,7 +47,6 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 <p align="center">
   <img src="docs/public/screenshots/lap-home-0.1.10_2.png" alt="Lap local AI photo search screenshot" width="900">
 </p>
-
 
 ## Press
 - **Windows Central** — [After testing LAP Photo Manager on Windows 11, I'm convinced it outperforms the built-in Photos app in all the ways that matter](https://www.windowscentral.com/microsoft/windows-11/lap-photo-manager-for-windows-11-is-it-better-than-photos-i-think-so)
@@ -71,6 +71,60 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 - **Open modern image formats** including WebP, HEIC/HEIF/HIF, AVIF, and JXL (JPEG XL).
 - **View RAW photos** with built-in decoding for 20+ camera RAW formats (CR2, NEF, ARW, DNG, etc.).
 - **Broad video compatibility** supporting MP4, MOV, AVI, MKV, and 20+ other formats with cross-platform optimization.
+
+## Uninstall Lap
+
+Lap works directly with your existing photo folders. Uninstalling Lap, or deleting its database and cache files, does **not** delete your original photos.
+
+The standard uninstall steps remove the application. To remove Lap completely, quit Lap first, uninstall the application, then delete its local database, thumbnail cache, and configuration files using the cleanup command for your platform.
+
+### macOS
+
+If you installed Lap with Homebrew:
+
+```bash
+brew uninstall --cask lap
+```
+
+For a manual installation, quit Lap and move `Lap.app` from the `Applications` folder to the Trash.
+
+To remove all Lap database, cache, and configuration files:
+
+```bash
+rm -rf "$HOME/Library/Application Support/com.julyx10.lap" \
+       "$HOME/Library/Caches/com.julyx10.lap" \
+       "$HOME/Library/WebKit/com.julyx10.lap"
+rm -f "$HOME/Library/Preferences/com.julyx10.lap.plist"
+```
+
+### Windows
+
+Open **Settings > Apps > Installed apps**, find **Lap**, and select **Uninstall**.
+
+Then open PowerShell and remove all Lap database, cache, and configuration files:
+
+```powershell
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:LOCALAPPDATA\com.julyx10.lap"
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:APPDATA\com.julyx10.lap"
+```
+
+### Linux
+
+For Debian-based distributions, uninstall the package:
+
+```bash
+sudo apt remove lap
+```
+
+Then remove all Lap database, cache, and configuration files:
+
+```bash
+rm -rf "$HOME/.local/share/com.julyx10.lap" \
+       "$HOME/.cache/com.julyx10.lap" \
+       "$HOME/.config/com.julyx10.lap"
+```
+
+If you selected a custom database storage directory in Lap settings, delete that directory separately after confirming that it contains only Lap database files.
 
 ## Build from Source
 

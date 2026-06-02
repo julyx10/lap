@@ -59,6 +59,60 @@ Es ist eine datenschutzorientierte Alternative zu Cloud-Fotodiensten: kein erzwu
 - **RAW-Fotos anzeigen** mit integrierter Dekodierung für über 20 Kamera-RAW-Formate (CR2, NEF, ARW, DNG usw.).
 - **Breite Videokompatibilität**: Unterstützung für MP4, MOV, AVI, MKV und über 20 weitere Formate mit plattformübergreifender Optimierung.
 
+## Lap deinstallieren
+
+Lap arbeitet direkt mit Ihren vorhandenen Fotoordnern. Die Deinstallation von Lap oder das Löschen der Datenbank- und Cache-Dateien löscht **nicht** Ihre Originalfotos.
+
+Die normale Deinstallation entfernt die Anwendung. Um Lap vollständig zu entfernen, beenden Sie Lap zuerst, deinstallieren Sie die Anwendung und löschen Sie anschließend die lokale Datenbank, den Thumbnail-Cache und die Konfigurationsdateien mit den Befehlen für Ihre Plattform.
+
+### macOS
+
+Wenn Sie Lap mit Homebrew installiert haben:
+
+```bash
+brew uninstall --cask lap
+```
+
+Bei einer manuellen Installation beenden Sie Lap und verschieben Sie `Lap.app` aus dem Ordner `Applications` in den Papierkorb.
+
+So entfernen Sie alle Datenbank-, Cache- und Konfigurationsdateien von Lap:
+
+```bash
+rm -rf "$HOME/Library/Application Support/com.julyx10.lap" \
+       "$HOME/Library/Caches/com.julyx10.lap" \
+       "$HOME/Library/WebKit/com.julyx10.lap"
+rm -f "$HOME/Library/Preferences/com.julyx10.lap.plist"
+```
+
+### Windows
+
+Öffnen Sie **Einstellungen > Apps > Installierte Apps**, suchen Sie **Lap** und wählen Sie **Deinstallieren**.
+
+Öffnen Sie anschließend PowerShell und entfernen Sie alle Datenbank-, Cache- und Konfigurationsdateien von Lap:
+
+```powershell
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:LOCALAPPDATA\com.julyx10.lap"
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:APPDATA\com.julyx10.lap"
+```
+
+### Linux
+
+Deinstallieren Sie das Paket auf Debian-basierten Distributionen:
+
+```bash
+sudo apt remove lap
+```
+
+Entfernen Sie anschließend alle Datenbank-, Cache- und Konfigurationsdateien von Lap:
+
+```bash
+rm -rf "$HOME/.local/share/com.julyx10.lap" \
+       "$HOME/.cache/com.julyx10.lap" \
+       "$HOME/.config/com.julyx10.lap"
+```
+
+Wenn Sie in den Lap-Einstellungen ein benutzerdefiniertes Verzeichnis für die Datenbank ausgewählt haben, löschen Sie dieses Verzeichnis separat, nachdem Sie geprüft haben, dass es nur Lap-Datenbankdateien enthält.
+
 ## Aus dem Quellcode erstellen
 
 Anforderungen: Node.js 20+, pnpm, Rust stabil.
@@ -111,7 +165,9 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | :-- | :-- |
 | [LibRaw](https://github.com/LibRaw/LibRaw) | RAW-Bilddekodierung und Thumbnail-Extraktion |
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF-Bilddekodierung und Vorschaugenerierung |
+| [libjpeg-turbo](https://libjpeg-turbo.org/) | Schnelle JPEG-Dekodierung und Thumbnail-Generierung |
 | [FFmpeg](https://ffmpeg.org/) | Videoverarbeitung und Thumbnail-Generierung |
+| [Video.js](https://videojs.com/) | Plattformübergreifende Benutzeroberfläche für die Videowiedergabe |
 | [ONNX Runtime](https://onnxruntime.ai/) | Lokale KI-Modell-Inferenz-Engine |
 | [CLIP](https://github.com/openai/CLIP) | Bild-Text-Ähnlichkeitssuche |
 | [InsightFace](https://github.com/deepinsight/insightface) | Gesichtserkennung und -identifizierung |
