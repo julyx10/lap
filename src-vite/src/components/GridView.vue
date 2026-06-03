@@ -376,6 +376,7 @@ const isLayoutTransitioning = ref(false);
 const startGridSize = ref(0);
 let layoutTransitionTimer: ReturnType<typeof setTimeout> | null = null;
 let layoutAnchorVersion = 0;
+let isInitialLayout = true;
 
 const gap = 8; // Gap between items
 const isVerticalFilmstrip = computed(() => config.settings.grid.showFilmStrip && config.settings.grid.previewPosition >= 2);
@@ -434,6 +435,12 @@ function updateLayout() {
 }
 
 watch(() => [config.settings.grid.size, config.settings.grid.style, config.settings.grid.showFilmStrip, config.settings.grid.dateGrouping, props.sortType], async () => {
+  if (isInitialLayout) {
+    isInitialLayout = false;
+    updateColumnCount();
+    return;
+  }
+
   const anchorVersion = ++layoutAnchorVersion;
   isLayoutTransitioning.value = true;
   updateColumnCount();
