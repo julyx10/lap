@@ -4530,11 +4530,14 @@ const onTrashFile = async () => {
     await refreshAffectedAlbums(Array.from(affectedAlbumIds));
     await refreshLibraryTotalCount();
 
-    // Refresh timeline markers so date group headers stay in sync
-    // with the updated file list after deletion.
-    getQueryTimeLine(currentQueryParams.value).then(data => {
-      timelineData.value = data;
-    });
+    // Search results keep their relevance order and never use date groups.
+    if (isSearchLikeView.value || tempViewMode.value === 'similar') {
+      timelineData.value = [];
+    } else {
+      getQueryTimeLine(currentQueryParams.value).then(data => {
+        timelineData.value = data;
+      });
+    }
 
     if (deletedFileIds.length > 0) {
       tauriEmit('files-deleted', {
