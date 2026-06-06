@@ -1,37 +1,43 @@
 <template>
   <div class="space-y-1.5">
-    <div class="relative w-full aspect-4/1 px-0.5">
+    <div
+      class="relative w-full aspect-4/1 px-0.5"
+      @mousemove="onHistogramMove"
+      @mouseleave="onHistogramLeave"
+    >
       <div
         v-if="hoverBin !== null"
-        class="pointer-events-none absolute right-1 top-1 z-10 rounded-md border border-base-content/5 bg-base-100/95 px-2 py-1 text-[9px] font-semibold leading-tight shadow-sm backdrop-blur-sm"
+        class="absolute right-1 top-1 z-10 rounded-md border border-base-content/5 bg-base-100/95 px-2 py-1 text-[9px] font-semibold leading-tight shadow-sm backdrop-blur-sm"
       >
-        <div class="mb-1 text-[8px] uppercase tracking-[0.18em] text-base-content/30">
+        <button
+          type="button"
+          class="mb-1 cursor-pointer text-[8px] uppercase tracking-[0.18em] transition-colors hover:text-base-content/80"
+          :class="allChannelsVisible ? 'text-base-content/80' : 'text-base-content/30'"
+          :aria-pressed="allChannelsVisible"
+          @click.stop="showAllChannels"
+        >
           {{ $t('msgbox.image_editor.tone') }} {{ hoverBin }}
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-slate-400/30">L</span>
-          <span class="w-10 text-right tabular-nums text-base-content/30">{{ formatLegendValue(hoveredValues.luma) }}</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-red-500/30">R</span>
-          <span class="w-10 text-right tabular-nums text-base-content/30">{{ formatLegendValue(hoveredValues.red) }}</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-green-500/30">G</span>
-          <span class="w-10 text-right tabular-nums text-base-content/30">{{ formatLegendValue(hoveredValues.green) }}</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-blue-500/30">B</span>
-          <span class="w-10 text-right tabular-nums text-base-content/30">{{ formatLegendValue(hoveredValues.blue) }}</span>
-        </div>
+        </button>
+        <button
+          v-for="item in legendItems"
+          :key="item.key"
+          type="button"
+          class="flex w-full cursor-pointer items-center gap-1.5 rounded-sm transition-colors hover:bg-base-content/5"
+          :aria-pressed="visibleChannels[item.key]"
+          @click.stop="toggleChannel(item.key)"
+        >
+          <span :class="visibleChannels[item.key] ? item.activeClass : item.inactiveClass">{{ item.label }}</span>
+          <span
+            class="w-10 text-right tabular-nums transition-colors"
+            :class="visibleChannels[item.key] ? 'text-base-content/70' : 'text-base-content/25'"
+          >{{ formatLegendValue(item.value) }}</span>
+        </button>
       </div>
 
       <svg
         viewBox="0 0 256 64"
         class="h-full w-full"
         preserveAspectRatio="none"
-        @mousemove="onHistogramMove"
-        @mouseleave="onHistogramLeave"
       >
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
@@ -44,10 +50,10 @@
           <line x1="128" y1="0" x2="128" y2="64" stroke="currentColor" stroke-width="0.5" />
           <line x1="192" y1="0" x2="192" y2="64" stroke="currentColor" stroke-width="0.5" />
         </g>
-        <path :d="histogramPath" :fill="`url(#${gradientId})`" />
-        <path :d="histogramPathR" fill="rgba(239,68,68,0.35)" style="mix-blend-mode: screen" />
-        <path :d="histogramPathG" fill="rgba(34,197,94,0.35)" style="mix-blend-mode: screen" />
-        <path :d="histogramPathB" fill="rgba(59,130,246,0.35)" style="mix-blend-mode: screen" />
+        <path v-if="visibleChannels.luma" :d="histogramPath" :fill="`url(#${gradientId})`" />
+        <path v-if="visibleChannels.red" :d="histogramPathR" fill="rgba(239,68,68,0.35)" style="mix-blend-mode: screen" />
+        <path v-if="visibleChannels.green" :d="histogramPathG" fill="rgba(34,197,94,0.35)" style="mix-blend-mode: screen" />
+        <path v-if="visibleChannels.blue" :d="histogramPathB" fill="rgba(59,130,246,0.35)" style="mix-blend-mode: screen" />
         <line
           v-if="hoverBin !== null"
           :x1="hoverX"
@@ -71,7 +77,9 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { useConfigStore } from '@/stores/configStore';
 
+const config = useConfigStore();
 const props = defineProps({
   source: {
     type: String,
@@ -130,6 +138,32 @@ const histogramVersion = ref(0);
 const gradientId = `histGradient-${Math.random().toString(36).slice(2)}`;
 const hoverBin = ref<number | null>(null);
 const hoverX = ref(0);
+type HistogramChannel = 'luma' | 'red' | 'green' | 'blue';
+const HISTOGRAM_ALL_CHANNELS = 15;
+const HISTOGRAM_CHANNEL_BITS: Record<HistogramChannel, number> = {
+  luma: 1,
+  red: 2,
+  green: 4,
+  blue: 8,
+};
+const histogramChannelMask = computed(() => {
+  const storedMask = Number(config.infoPanel.histogramChannels);
+  if (storedMask === 16) return HISTOGRAM_ALL_CHANNELS;
+  if (!Number.isInteger(storedMask) || storedMask < 0 || storedMask > HISTOGRAM_ALL_CHANNELS) {
+    return HISTOGRAM_ALL_CHANNELS;
+  }
+  return storedMask;
+});
+const visibleChannels = computed<Record<HistogramChannel, boolean>>(() => {
+  const mask = histogramChannelMask.value;
+  return {
+    luma: Boolean(mask & HISTOGRAM_CHANNEL_BITS.luma),
+    red: Boolean(mask & HISTOGRAM_CHANNEL_BITS.red),
+    green: Boolean(mask & HISTOGRAM_CHANNEL_BITS.green),
+    blue: Boolean(mask & HISTOGRAM_CHANNEL_BITS.blue),
+  };
+});
+const allChannelsVisible = computed(() => histogramChannelMask.value === HISTOGRAM_ALL_CHANNELS);
 let histogramAnimRaf: number | null = null;
 let histogramLoadId = 0;
 let histogramSourceImage: HTMLImageElement | null = null;
@@ -702,6 +736,45 @@ const hoveredValues = computed(() => {
   };
 });
 
+const legendItems = computed(() => [
+  {
+    key: 'luma' as const,
+    label: 'L',
+    value: hoveredValues.value.luma,
+    activeClass: 'text-base-content/80',
+    inactiveClass: 'text-base-content/25',
+  },
+  {
+    key: 'red' as const,
+    label: 'R',
+    value: hoveredValues.value.red,
+    activeClass: 'text-red-500',
+    inactiveClass: 'text-red-500/25',
+  },
+  {
+    key: 'green' as const,
+    label: 'G',
+    value: hoveredValues.value.green,
+    activeClass: 'text-green-500',
+    inactiveClass: 'text-green-500/25',
+  },
+  {
+    key: 'blue' as const,
+    label: 'B',
+    value: hoveredValues.value.blue,
+    activeClass: 'text-blue-500',
+    inactiveClass: 'text-blue-500/25',
+  },
+]);
+
+function toggleChannel(channel: HistogramChannel) {
+  config.infoPanel.histogramChannels = histogramChannelMask.value ^ HISTOGRAM_CHANNEL_BITS[channel];
+}
+
+function showAllChannels() {
+  config.infoPanel.histogramChannels = HISTOGRAM_ALL_CHANNELS;
+}
+
 const histogramPath = computed(() => {
   histogramVersion.value;
   return buildPathFromSmoothed(smoothedHistData);
@@ -758,7 +831,7 @@ function startHistogramAnimation() {
 }
 
 function onHistogramMove(event: MouseEvent) {
-  const target = event.currentTarget as SVGElement | null;
+  const target = event.currentTarget as HTMLElement | null;
   if (!target) return;
   const rect = target.getBoundingClientRect();
   if (rect.width <= 0) return;

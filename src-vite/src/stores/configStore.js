@@ -31,6 +31,7 @@ export const useConfigStore = defineStore('configStore', {
       showPreview: true,         // show preview thumbnail
       previewMode: 'thumbnail',  // preview section mode ('thumbnail' | 'histogram')
       previewScale: 1,           // preview thumbnail scale (1, 0.5, 0.25)
+      histogramChannels: 15,     // histogram channel mask (L=1, R=2, G=4, B=8; 0=none, 15=all)
       showBasicInfo: true,       // show basic info
       showMetadata: true,        // show metadata
       showMap: true,             // show map

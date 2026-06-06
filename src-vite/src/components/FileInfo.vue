@@ -146,7 +146,7 @@
       </div>
 
       <!-- File Info Section -->
-      <div class="border-t border-base-content/5 px-1 py-4 space-y-3">
+      <div class="group/general border-t border-base-content/5 px-1 py-4 space-y-3">
 
         <div class="flex items-center gap-2 cursor-pointer text-base-content/70 hover:text-base-content transition-all duration-200 ease-in-out" 
           @click.stop="toggleBasicInfo"
@@ -168,7 +168,7 @@
           <div v-if="showBasicInfoPanel" class="grid grid-cols-[80px_1fr] gap-y-1 gap-x-4 text-xs overflow-hidden">
             <!-- Name -->
             <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.name') }}</div>
-            <div class="group flex items-center gap-1">
+            <div class="group/field flex items-center gap-1">
               <div
                 v-if="isRenaming"
                 class="flex items-center w-full min-w-0"
@@ -195,27 +195,27 @@
                 :icon="IconEdit"
                 :tooltip="$t('menu.file.rename')"
                 :buttonSize="'small'"
-                :class="['opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out']"
+                class="opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
                 @click.stop="startRename"
               />
             </div>
 
             <!-- Album -->
             <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.album_name') }}</div>
-            <div class="group/album flex items-center gap-1 min-w-0">
+            <div class="group/field flex items-center gap-1 min-w-0">
               <span class="flex-1 min-w-0 text-xs font-semibold text-base-content/65 break-all">{{ fileInfo?.album_name }}</span>
               <TButton
                 :icon="IconEdit"
                 :tooltip="$t('menu.album.edit')"
                 :buttonSize="'small'"
-                class="shrink-0 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/album:opacity-100 group-hover/album:pointer-events-auto"
+                class="shrink-0 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
                 @click.stop="emit('editAlbum', fileInfo?.album_id)"
               />
             </div>
 
             <!-- Path -->
             <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.folder') }}</div>
-            <div class="group/path flex items-center gap-1 min-w-0">
+            <div class="group/field flex items-center gap-1 min-w-0">
               <IconFolderExpanded class="w-3.5 h-3.5 shrink-0 text-base-content/65" />
               <div ref="folderBreadcrumbContainerRef" class="relative min-w-0 flex-1 overflow-hidden">
                 <div class="flex items-center whitespace-nowrap text-xs font-semibold text-base-content/65">
@@ -257,7 +257,7 @@
                 :icon="IconExternal"
                 :tooltip="isMac ? $t('menu.file.reveal_in_finder') : $t('menu.file.reveal_in_file_explorer')"
                 :buttonSize="'small'"
-                class="shrink-0 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/path:opacity-100 group-hover/path:pointer-events-auto"
+                class="shrink-0 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
                 @click.stop="revealFileInFolder"
               />
             </div>
@@ -300,7 +300,7 @@
 
             <!-- Tags -->
             <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 min-h-6 py-1">{{ $t('file_info.tags') }}</div>
-            <div class="group flex items-center min-h-6 gap-1">
+            <div class="group/field flex items-center min-h-6 gap-1">
               <div class="text-xs font-semibold text-base-content/65 flex flex-wrap gap-1 flex-1 min-w-0">
                 <template v-if="fileInfo?.tags && fileInfo.tags.length">
                   <span
@@ -314,20 +314,20 @@
                 :icon="IconEdit"
                 :tooltip="$t('menu.meta.tag')"
                 :buttonSize="'small'"
-                :class="['opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out']"
+                class="opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
                 @click.stop="emit('quickEditTag')"
               />
             </div>
 
             <!-- Comment -->
             <div class="flex items-start text-[10px] uppercase tracking-widest font-bold text-base-content/25 py-1">{{ $t('file_info.comment') }}</div>
-            <div class="group flex items-start gap-1">
+            <div class="group/field flex items-start gap-1">
               <div class="text-xs font-semibold text-base-content/65 wrap-break-words whitespace-pre-wrap flex-1 min-w-0">{{ fileInfo?.comments }}</div>
               <TButton
                 :icon="IconEdit"
                 :tooltip="$t('menu.meta.comment')"
                 :buttonSize="'small'"
-                :class="['opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out']"
+                class="opacity-0 pointer-events-none transition-opacity duration-200 ease-in-out group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
                 @click.stop="emit('quickEditComment')"
               />
             </div>
