@@ -723,6 +723,23 @@ pub fn run_face_indexing(
 
         // 3. Image Processing Loop
         let mut cancelled = false;
+        let db_conn = match t_sqlite::open_conn() {
+            Ok(conn) => conn,
+            Err(e) => {
+                eprintln!("Failed to open DB connection for face indexing: {}", e);
+                let _ = app_handle.emit(
+                    "face_index_finished",
+                    serde_json::json!({
+                        "total_faces": 0,
+                        "total_persons": 0,
+                        "cancelled": false,
+                        "error": e
+                    }),
+                );
+                reset_status();
+                return;
+            }
+        };
 
         for (file_id, file_path, width, height) in files {
             if *cancel_token.lock().unwrap() {
@@ -765,7 +782,7 @@ pub fn run_face_indexing(
                     let has_faces = !faces.is_empty();
                     let status = if has_faces { 1 } else { 2 };
 
-                    if let Err(e) = t_sqlite::Face::mark_scanned(file_id, status) {
+                    if let Err(e) = t_sqlite::Face::mark_scanned_with_conn(&db_conn, file_id, status) {
                         eprintln!("Failed to mark file {} as scanned: {}", file_id, e);
                     }
 
@@ -780,7 +797,7 @@ pub fn run_face_indexing(
                             })
                             .to_string();
 
-                            match t_sqlite::Face::add(file_id, &bbox_json, &face_data.embedding) {
+                            match t_sqlite::Face::add_with_conn(&db_conn, file_id, &bbox_json, &face_data.embedding) {
                                 Ok(_) => total_faces += 1,
                                 Err(e) => eprintln!("Failed to store face: {}", e),
                             }

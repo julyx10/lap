@@ -54,12 +54,30 @@ struct Edge {
     weight: f32, // Edge weight (similarity = 1 - distance)
 }
 
+/// Insert edge into candidate list, maintaining at most max_edges entries sorted by weight descending.
+/// If list is full and new weight is smaller than the smallest, it is dropped.
+fn insert_top_k(candidates: &mut Vec<(usize, f32)>, edge: (usize, f32), max_edges: usize) {
+    if candidates.len() < max_edges {
+        candidates.push(edge);
+        candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    } else {
+        // Find the smallest weight (last element after sort)
+        if let Some(&(_, min_weight)) = candidates.last() {
+            if edge.1 > min_weight {
+                candidates.pop();
+                candidates.push(edge);
+                candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+            }
+        }
+    }
+}
+
 /// Run Chinese Whispers clustering on ALL faces
 ///
-/// Re-implemented with performance optimizations:
-/// 1. Pre-parses all embeddings to avoid allocations in inner loop (O(n) memory alloc)
-/// 2. Uses zero-allocation distance calculation
-/// 3. Returns Chinese Whispers algorithm for better quality (less chaining)
+/// Memory-optimized:
+/// 1. Uses slim face data (id, file_id, embedding_bytes) instead of full Face structs
+/// 2. Prunes candidate edges to Top-K during build (not after), bounding memory at N * K_NEIGHBORS
+/// 3. Pre-parses all embeddings once to avoid allocations in inner loop
 pub fn cluster_faces<F, C>(
     threshold: f32,
     mut progress_fn: F,
@@ -69,30 +87,29 @@ where
     F: FnMut(ClusterProgress),
     C: Fn() -> bool,
 {
+    const K_NEIGHBORS: usize = t_common::K_NEIGHBORS;
+
     // 1. Reset all existing assignments and delete persons
     Face::reset_all_assignments()?;
 
-    // 2. Get ALL faces for clustering
-    let faces = Face::get_all()?;
-    let n = faces.len();
+    // 2. Get ALL faces for clustering — slim: (face_id, file_id, embedding_bytes)
+    let mut slim_faces = Face::get_all_for_clustering()?;
+    let n = slim_faces.len();
     if n == 0 {
         return Ok(0);
     }
 
-    // 3. Pre-parse embeddings (Optimize: do this once)
+    // 3. Pre-parse embeddings (do this once)
     let mut parsed_embeddings: Vec<Option<Vec<f32>>> = Vec::with_capacity(n);
-    for face in &faces {
-        if let Some(bytes) = &face.embedding {
-            parsed_embeddings.push(parse_embedding(bytes));
-        } else {
-            parsed_embeddings.push(None);
-        }
+    for (_id, _file_id, embedding_bytes) in &mut slim_faces {
+        parsed_embeddings.push(embedding_bytes.as_deref().and_then(parse_embedding));
+        embedding_bytes.take();
     }
 
-    // 4. Build K-NN Graph
-    // Step A: Collect all potential edges (candidates)
+    // 4. Build K-NN Graph with early Top-K pruning
+    //    candidate_lists memory is bounded at N * K_NEIGHBORS entries
     let mut candidate_lists: Vec<Vec<(usize, f32)>> = vec![Vec::new(); n];
-    let total_pairs = n * (n - 1) / 2;
+    let total_pairs = n.saturating_mul(n.saturating_sub(1)) / 2;
     let mut pairs_done: usize = 0;
     let mut last_pct = 0;
 
@@ -106,7 +123,7 @@ where
             for j in (i + 1)..n {
                 if let Some(emb_j) = &parsed_embeddings[j] {
                     // Faces in the same file cannot be edges (prevents merging distinct people in same photo)
-                    if faces[i].file_id == faces[j].file_id {
+                    if slim_faces[i].1 == slim_faces[j].1 {
                         pairs_done += 1;
                         continue;
                     }
@@ -115,17 +132,17 @@ where
 
                     if dist < threshold {
                         let weight = 1.0 - dist;
-                        // Square weight to punish weak links further (optional but recommended)
+                        // Square weight to punish weak links further
                         let adjusted_weight = weight * weight;
 
-                        candidate_lists[i].push((j, adjusted_weight));
-                        candidate_lists[j].push((i, adjusted_weight));
+                        insert_top_k(&mut candidate_lists[i], (j, adjusted_weight), K_NEIGHBORS);
+                        insert_top_k(&mut candidate_lists[j], (i, adjusted_weight), K_NEIGHBORS);
                     }
                 }
                 pairs_done += 1;
             }
         } else {
-            pairs_done += n - 1 - i;
+            pairs_done += n.saturating_sub(i + 1);
         }
 
         // Report progress every 5%
@@ -144,24 +161,20 @@ where
         }
     }
 
-    // Step B: Prune edges to Top-K (K-NN)
-    const K_NEIGHBORS: usize = t_common::K_NEIGHBORS;
+    // 5. Build final graph from pruned candidate lists (edges already Top-K)
     let mut graph: Vec<Vec<Edge>> = vec![Vec::new(); n];
 
-    for (i, candidates) in candidate_lists.iter_mut().enumerate() {
-        // Sort by weight descending (strongest similarity first)
-        candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-        // Keep only Top-K
-        let count = std::cmp::min(candidates.len(), K_NEIGHBORS);
-
-        for k in 0..count {
-            let (target, weight) = candidates[k];
-            graph[i].push(Edge { to: target, weight });
+    for (i, candidates) in candidate_lists.iter().enumerate() {
+        for &(to, weight) in candidates {
+            graph[i].push(Edge { to, weight });
         }
     }
 
-    // 5. Run Chinese Whispers Algorithm
+    // Free graph-building allocations before Chinese Whispers
+    drop(candidate_lists);
+    drop(parsed_embeddings);
+
+    // 6. Run Chinese Whispers Algorithm
     let mut labels: Vec<usize> = (0..n).collect();
     let mut order: Vec<usize> = (0..n).collect();
     let mut rng = rand::thread_rng();
@@ -230,6 +243,9 @@ where
         cluster_map.entry(label).or_default().push(i);
         // }
     }
+    drop(graph);
+    drop(labels);
+    drop(order);
 
     // 7. Filter clusters
     const MIN_SAMPLES: usize = t_common::MIN_SAMPLES;
@@ -258,10 +274,12 @@ where
         let person_id = Person::create(Some(&person_name))?;
 
         for face_idx in cluster_face_indices {
-            Face::assign_to_person(faces[face_idx].id, person_id)?;
+            Face::assign_to_person(slim_faces[face_idx].0, person_id)?;
             total_assigned += 1;
         }
     }
+
+    drop(slim_faces);
 
     // 9. Generate thumbnails
     progress_fn(ClusterProgress {

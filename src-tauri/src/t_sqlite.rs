@@ -4036,6 +4036,11 @@ impl Face {
     /// Add a new face to the database
     pub fn add(file_id: i64, bbox: &str, embedding: &[f32]) -> Result<i64, String> {
         let conn = open_conn()?;
+        Self::add_with_conn(&conn, file_id, bbox, embedding)
+    }
+
+    /// Add a new face using an existing connection (avoids repeated open_conn during batch indexing)
+    pub fn add_with_conn(conn: &Connection, file_id: i64, bbox: &str, embedding: &[f32]) -> Result<i64, String> {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_secs() as i64)
@@ -4159,6 +4164,28 @@ impl Face {
         Ok(faces)
     }
 
+    /// Get slim face data for clustering: (face_id, file_id, embedding_bytes)
+    /// Avoids loading full Face structs (bbox JSON, person_id, created_at) to reduce memory
+    pub fn get_all_for_clustering() -> Result<Vec<(i64, i64, Option<Vec<u8>>)>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare("SELECT id, file_id, embedding FROM faces")
+            .map_err(|e| e.to_string())?;
+
+        let faces = stmt
+            .query_map([], |row| {
+                let id: i64 = row.get(0)?;
+                let file_id: i64 = row.get(1)?;
+                let embedding: Option<Vec<u8>> = row.get(2)?;
+                Ok((id, file_id, embedding))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+
+        Ok(faces)
+    }
+
     /// Reset all face assignments and delete all persons (for re-clustering)
     pub fn reset_all_assignments() -> Result<(), String> {
         let conn = open_conn()?;
@@ -4217,6 +4244,11 @@ impl Face {
     /// status: 1 = has faces, 2 = no faces found
     pub fn mark_scanned(file_id: i64, status: i32) -> Result<(), String> {
         let conn = open_conn()?;
+        Self::mark_scanned_with_conn(&conn, file_id, status)
+    }
+
+    /// Mark a file as scanned using an existing connection
+    pub fn mark_scanned_with_conn(conn: &Connection, file_id: i64, status: i32) -> Result<(), String> {
         conn.execute(
             "UPDATE afiles SET has_faces = ?1 WHERE id = ?2",
             params![status, file_id],
@@ -4530,7 +4562,7 @@ impl ALocation {
 }
 
 /// get connection to the db
-fn open_conn() -> Result<Connection, String> {
+pub(crate) fn open_conn() -> Result<Connection, String> {
     let path = t_storage::get_current_db_path()
         .map_err(|e| format!("Failed to get the database file path: {}", e))?;
 
