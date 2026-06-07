@@ -379,7 +379,9 @@
       "rename": "重命名",
       "move_to": "移动到...",
       "copy_to": "复制到...",
-      "export_to": "导出到...",
+      "move_within_library": "在库内移动...",
+      "move_to_folder": "移动到文件夹...",
+      "copy_to_folder": "复制到文件夹...",
       "move_to_trash": "移到废纸篓",
       "delete": "删除",
       "reveal_in_finder": "在访达中显示...",
@@ -523,10 +525,27 @@
       "success": "已将 '{source}' 复制到 '{dest}'。",
       "error": "将 '{source}' 复制到 '{dest}' 失败。"
     },
-    "export_to": {
-      "title": "导出到文件夹",
-      "success": "已将 '{source}' 导出到 '{dest}'。",
-      "error": "将 '{source}' 导出到 '{dest}' 失败。"
+    "move_to_folder": {
+      "title": "移动到文件夹",
+      "confirm_title": "移动到库外？",
+      "warning": "将 '{source}' 移动到：\n{dest}\n\n这些项目将从当前库中移除。",
+      "ok": "移动",
+      "success": "已将 '{source}' 移动到 '{dest}'。",
+      "error": "将 '{source}' 移动到 '{dest}' 失败。"
+    },
+    "copy_to_folder": {
+      "title": "复制到文件夹",
+      "success": "已将 '{source}' 复制到 '{dest}'。",
+      "error": "将 '{source}' 复制到 '{dest}' 失败。"
+    },
+    "file_conflict": {
+      "title": "文件已存在",
+      "message": "名为 '{name}' 的项目已存在于：\n{destination}",
+      "skip": "跳过",
+      "keep_both": "保留两者",
+      "replace": "替换",
+      "apply_all": "应用到所有冲突",
+      "same_folder": "该项目已在所选文件夹中。"
     },
     "rename_file": {
       "title": "重命名文件",
@@ -1084,7 +1103,7 @@
         "select_none": "取消全选",
         "invert_selection": "反选",
         "rename_file": "重命名文件",
-        "move_to": "移动到文件夹",
+        "move_to": "在库内移动文件",
         "move_to_trash": "移至废纸篓",
         "delete_permanently": "永久删除",
         "refresh_file_info": "刷新文件信息",

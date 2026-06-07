@@ -101,25 +101,23 @@
           </div>
           <div class="flex flex-wrap items-center gap-1">
             <PanelActionButton
-              :icon="IconMoveTo"
+              :icon="IconMove"
               :disabled="selectedCount === 0"
-              @click="$emit('moveTo')"
+              @click="$emit('moveWithinLibrary')"
+            >
+              {{ $t('menu.file.move_within_library') }}
+            </PanelActionButton>
+            <PanelActionButton
+              :disabled="selectedCount === 0"
+              @click="$emit('moveToFolder')"
             >
               {{ $t('menu.file.move_to') }}
             </PanelActionButton>
             <PanelActionButton
-              :icon="IconCopyTo"
               :disabled="selectedCount === 0"
-              @click="$emit('copyTo')"
+              @click="$emit('copyToFolder')"
             >
               {{ $t('menu.file.copy_to') }}
-            </PanelActionButton>
-            <PanelActionButton
-              :icon="IconDownload"
-              :disabled="selectedCount === 0"
-              @click="$emit('exportTo')"
-            >
-              {{ $t('menu.file.export_to') }}
             </PanelActionButton>
             <PanelActionButton
               :icon="IconTrash"
@@ -186,10 +184,8 @@ import {
   IconCheckNone,
   IconClose,
   IconComment,
-  IconCopyTo,
-  IconDownload,
   IconInformation,
-  IconMoveTo,
+  IconMove,
   IconRotate,
   IconTag,
   IconTrash,
@@ -230,9 +226,9 @@ defineEmits([
   'selectAll',
   'selectNone',
   'selectInvert',
-  'moveTo',
-  'copyTo',
-  'exportTo',
+  'moveWithinLibrary',
+  'moveToFolder',
+  'copyToFolder',
   'trash',
   'favoriteAll',
   'unfavoriteAll',

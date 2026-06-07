@@ -379,7 +379,9 @@
       "rename": "Umbenennen",
       "move_to": "Verschieben nach...",
       "copy_to": "Kopieren nach...",
-      "export_to": "Exportieren nach...",
+      "move_within_library": "In der Bibliothek verschieben...",
+      "move_to_folder": "In Ordner verschieben...",
+      "copy_to_folder": "In Ordner kopieren...",
       "move_to_trash": "In Papierkorb",
       "delete": "Löschen",
       "reveal_in_finder": "Im Finder anzeigen...",
@@ -523,10 +525,27 @@
       "success": "'{source}' wurde nach '{dest}' kopiert.",
       "error": "'{source}' konnte nicht nach '{dest}' kopiert werden."
     },
-    "export_to": {
-      "title": "In Ordner exportieren",
-      "success": "'{source}' nach '{dest}' exportiert.",
-      "error": "Fehler beim Exportieren von '{source}' nach '{dest}'."
+    "move_to_folder": {
+      "title": "In Ordner verschieben",
+      "confirm_title": "Außerhalb der Bibliothek verschieben?",
+      "warning": "'{source}' verschieben nach:\n{dest}\n\nDiese Elemente werden aus der aktuellen Bibliothek entfernt.",
+      "ok": "Verschieben",
+      "success": "'{source}' nach '{dest}' verschoben.",
+      "error": "Fehler beim Verschieben von '{source}' nach '{dest}'."
+    },
+    "copy_to_folder": {
+      "title": "In Ordner kopieren",
+      "success": "'{source}' nach '{dest}' kopiert.",
+      "error": "Fehler beim Kopieren von '{source}' nach '{dest}'."
+    },
+    "file_conflict": {
+      "title": "Datei existiert bereits",
+      "message": "Ein Element namens '{name}' existiert bereits in:\n{destination}",
+      "skip": "Überspringen",
+      "keep_both": "Beide behalten",
+      "replace": "Ersetzen",
+      "apply_all": "Auf alle Konflikte anwenden",
+      "same_folder": "Das Element befindet sich bereits im ausgewählten Ordner."
     },
     "rename_file": {
       "title": "Datei umbenennen",
@@ -1084,7 +1103,7 @@
         "select_none": "Auswahl aufheben",
         "invert_selection": "Auswahl umkehren",
         "rename_file": "Datei umbenennen",
-        "move_to": "In Ordner verschieben",
+        "move_to": "Dateien in der Bibliothek verschieben",
         "move_to_trash": "In Papierkorb verschieben",
         "delete_permanently": "Endgültig löschen",
         "refresh_file_info": "Dateiinfo aktualisieren",

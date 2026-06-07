@@ -12,7 +12,7 @@
     "settings": "Settings"
   },
   "album": {
-    "all_files": "All Files",
+    "all_files": "All files",
     "album_list": "Albums",
     "edit": {
       "title_add": "Add album",
@@ -48,12 +48,12 @@
     "drag_description": "Drag photos from Finder, Explorer, or your browser directly into any open album folder."
   },
   "search": {
-    "title": "Image Search",
+    "title": "Image search",
     "search_images": "Search",
     "similar_images": "Similar",
     "filename_search": "Filename",
     "image_search_placeholder": "Search images by text",
-    "image_search_history": "Search History",
+    "image_search_history": "Search history",
     "image_search_tips": "Enter a description to search images",
     "similar_images_tips": "Select an image to find similar ones",
     "filename_search_tips": "Enter a filename to search",
@@ -69,7 +69,7 @@
       "description": "Generating thumbnails for search and quick preview. Large albums may take a few minutes.",
       "cancel": "Cancel scan",
       "recovery": {
-        "title": "Scanning Interrupted",
+        "title": "Scanning interrupted",
         "continue": "Continue",
         "skip": "Skip",
         "skip_once": "Skip this file and continue",
@@ -80,7 +80,7 @@
     }
   },
   "face_index": {
-    "start": "Index Faces",
+    "start": "Index faces",
     "indexing": "Indexing faces... {current}/{total}",
     "clustering": "Clustering faces...",
     "faces_found": "{count} faces found",
@@ -91,7 +91,7 @@
     "cluster_thumbnail": "Generating thumbnails...",
     "cancel": "Cancel",
     "incomplete": "Face indexing incomplete ({count} photos unprocessed)",
-    "resume": "Resume Indexing"
+    "resume": "Resume indexing"
   },
   "favorite": {
     "tab_favorite": "Favorite",
@@ -227,8 +227,8 @@
       "sort": "Sort",
       "monthly": "Monthly",
       "daily": "Daily",
-      "time_asc": "Time Asc",
-      "time_desc": "Time Desc"
+      "time_asc": "Time asc",
+      "time_desc": "Time desc"
     }
   },
   "info_panel": {
@@ -250,8 +250,8 @@
     "favorite_all": "Favorite",
     "unfavorite_all": "Unfavorite",
     "action": "Action",
-    "file_actions": "File Actions",
-    "labels_and_display": "Labels & Display",
+    "file_actions": "File actions",
+    "labels_and_display": "Labels & display",
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplicates",
@@ -277,7 +277,7 @@
         "oldest_modified": "Prefer oldest modified"
       },
       "keep_label": "Keep",
-      "move_selected_to_trash": "Move selected to Trash",
+      "move_selected_to_trash": "Move selected to trash",
       "set_keep": "Keep this",
       "duplicate_files_summary": "{count} duplicates ({size})"
     }
@@ -337,7 +337,7 @@
   "menu": {
     "select": {
       "all": "Select all",
-      "none": "Deselect All",
+      "none": "Deselect all",
       "invert": "Invert selection"
     },
     "home": {
@@ -379,7 +379,9 @@
       "rename": "Rename",
       "move_to": "Move to...",
       "copy_to": "Copy to...",
-      "export_to": "Export to...",
+      "move_within_library": "Move in library...",
+      "move_to_folder": "Move to folder...",
+      "copy_to_folder": "Copy to folder...",
       "move_to_trash": "Move to trash",
       "delete": "Delete",
       "reveal_in_finder": "Reveal in Finder...",
@@ -391,8 +393,8 @@
     "calendar": {
       "monthly": "Monthly",
       "daily": "Daily",
-      "time_asc": "Time Asc",
-      "time_desc": "Time Desc"
+      "time_asc": "Time asc",
+      "time_desc": "Time desc"
     },
     "search": {
       "clear_history": "Clear search history"
@@ -425,7 +427,7 @@
     "cancel": "Cancel",
     "close": "Close",
     "unsaved_changes": {
-      "title": "Unsaved Changes",
+      "title": "Unsaved changes",
       "message": "You have unsaved changes. Do you want to save them?"
     },
     "input": {
@@ -530,10 +532,27 @@
       "success": "Copied '{source}' to '{dest}'.",
       "error": "Failed to copy '{source}' to '{dest}'."
     },
-    "export_to": {
-      "title": "Export to folder",
-      "success": "Exported '{source}' to '{dest}'.",
-      "error": "Failed to export '{source}' to '{dest}'."
+    "move_to_folder": {
+      "title": "Move to folder",
+      "confirm_title": "Move outside the library?",
+      "warning": "Move '{source}' to:\n{dest}\n\nThese items will be removed from the current library.",
+      "ok": "Move",
+      "success": "Moved '{source}' to '{dest}'.",
+      "error": "Failed to move '{source}' to '{dest}'."
+    },
+    "copy_to_folder": {
+      "title": "Copy to folder",
+      "success": "Copied '{source}' to '{dest}'.",
+      "error": "Failed to copy '{source}' to '{dest}'."
+    },
+    "file_conflict": {
+      "title": "File already exists",
+      "message": "An item named '{name}' already exists in:\n{destination}",
+      "skip": "Skip",
+      "keep_both": "Keep both",
+      "replace": "Replace",
+      "apply_all": "Apply to all conflicts",
+      "same_folder": "The item is already in the selected folder."
     },
     "rename_file": {
       "title": "Rename file",
@@ -670,7 +689,7 @@
       "transform": "Transform",
       "original": "Original",
       "adjusted": "Adjusted",
-      "compare_view": "Compare View",
+      "compare_view": "Compare view",
       "output": "Output",
       "resize": "Resize",
       "keep_aspect_ratio": "Keep aspect ratio",
@@ -812,8 +831,8 @@
       "close": "Close",
       "split_on": "Enable split view",
       "split_off": "Disable split view",
-      "sync_viewport_on": "Enable Linked zoom",
-      "sync_viewport_off": "Disable Linked zoom",
+      "sync_viewport_on": "Enable linked zoom",
+      "sync_viewport_off": "Disable linked zoom",
       "sync_viewport_need_split": "Enable split view first"
     }
   },
@@ -986,7 +1005,7 @@
     "image_view": {
       "title": "Viewer",
       "section_viewing": "Image viewer",
-      "section_external_apps": "External Apps",
+      "section_external_apps": "External apps",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": [
         "Previous / Next image (Ctrl to zoom)",
@@ -1084,7 +1103,7 @@
         "select_none": "Deselect all",
         "invert_selection": "Invert selection",
         "rename_file": "Rename file",
-        "move_to": "Move to folder",
+        "move_to": "Move files in library",
         "move_to_trash": "Move to trash",
         "delete_permanently": "Delete permanently",
         "refresh_file_info": "Refresh file info",
@@ -1129,10 +1148,10 @@
       "backup_creating": "Creating backup...",
       "backup_success": "Backup saved to {path} ({size})",
       "restore": "Restore",
-      "restore_title": "Restore from Backup",
+      "restore_title": "Restore from backup",
       "restore_hint": "Restore libraries from a backup ZIP file",
-      "restore_dialog_title": "Restore from Backup",
-      "restore_select_file": "Select Backup File",
+      "restore_dialog_title": "Restore from backup",
+      "restore_select_file": "Select backup file",
       "restore_file_info": "Backup file: {path}",
       "restore_created_at": "Created: {date}",
       "restore_libraries": "Libraries: {count} ({size})",
@@ -1174,9 +1193,9 @@
       },
       "auto_update": {
         "update": "Update",
-        "check": "Check for Updates",
+        "check": "Check for updates",
         "checking": "Checking...",
-        "install": "Install & Restart",
+        "install": "Install & restart",
         "installing": "Installing...",
         "new_version_available": "New version available: {version}",
         "latest_version": "You are on the latest version.",
@@ -1186,7 +1205,7 @@
         "download_finished": "Download finished. Installing...",
         "update_installed": "Update installed. Restarting...",
         "update_installed_waiting_restart": "Update installed. Please restart the app.",
-        "release_note": "Release Note",
+        "release_note": "Release note",
         "restart": "Restart",
         "failed_check": "Failed to check for updates",
         "failed_install": "Failed to install update"

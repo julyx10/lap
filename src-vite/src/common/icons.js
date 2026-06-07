@@ -23,6 +23,7 @@ export { default as IconFolderFavorite } from '@/assets/icons/folder-heart.svg';
 export { default as IconFolderSearch } from '@/assets/icons/folder-search.svg';
 export { default as IconOrder } from '@/assets/icons/order.svg';
 export { default as IconCopy } from '@/assets/icons/copy.svg';
+export { default as IconMove } from '@/assets/icons/arrow-move.svg';
 export { default as IconMoveTo } from '@/assets/icons/move-to.svg';
 export { default as IconCopyTo } from '@/assets/icons/copy-to.svg';
 export { default as IconDragDrop } from '@/assets/icons/drag-drop.svg';

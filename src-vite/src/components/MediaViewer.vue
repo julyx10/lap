@@ -482,7 +482,7 @@ const emit = defineEmits([
   'viewport-change'
 ]);
 
-const { locale, messages } = useI18n();
+const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const contextMenuRef = ref<any>(null);
@@ -862,6 +862,7 @@ const singleFileMenuItems = computed(() => {
     localeMsg,
     isMac,
     showFolderFiles,
+    t,
     (action) => emit('item-action', { action, index: props.fileIndex })
   ).value;
 });

@@ -227,8 +227,8 @@
       "sort": "Ordenar",
       "monthly": "Mensual",
       "daily": "Diario",
-      "time_asc": "Tiempo Asc",
-      "time_desc": "Tiempo Desc"
+      "time_asc": "Tiempo asc",
+      "time_desc": "Tiempo desc"
     }
   },
   "info_panel": {
@@ -379,7 +379,9 @@
       "rename": "Renombrar",
       "move_to": "Mover a...",
       "copy_to": "Copiar a...",
-      "export_to": "Exportar a...",
+      "move_within_library": "Mover en la biblioteca...",
+      "move_to_folder": "Mover a carpeta...",
+      "copy_to_folder": "Copiar a carpeta...",
       "move_to_trash": "Mover a papelera",
       "delete": "Eliminar",
       "reveal_in_finder": "Mostrar en Finder...",
@@ -391,8 +393,8 @@
     "calendar": {
       "monthly": "Mensual",
       "daily": "Diario",
-      "time_asc": "Tiempo Asc",
-      "time_desc": "Tiempo Desc"
+      "time_asc": "Tiempo asc",
+      "time_desc": "Tiempo desc"
     },
     "search": {
       "clear_history": "Borrar historial"
@@ -523,10 +525,27 @@
       "success": "Se copió '{source}' a '{dest}'.",
       "error": "No se pudo copiar '{source}' a '{dest}'."
     },
-    "export_to": {
-      "title": "Exportar a carpeta",
-      "success": "Se exportó '{source}' a '{dest}'.",
-      "error": "Error al exportar '{source}' a '{dest}'."
+    "move_to_folder": {
+      "title": "Mover a carpeta",
+      "confirm_title": "¿Mover fuera de la biblioteca?",
+      "warning": "Mover '{source}' a:\n{dest}\n\nEstos elementos se eliminarán de la biblioteca actual.",
+      "ok": "Mover",
+      "success": "Se movió '{source}' a '{dest}'.",
+      "error": "Error al mover '{source}' a '{dest}'."
+    },
+    "copy_to_folder": {
+      "title": "Copiar a carpeta",
+      "success": "Se copió '{source}' a '{dest}'.",
+      "error": "Error al copiar '{source}' a '{dest}'."
+    },
+    "file_conflict": {
+      "title": "El archivo ya existe",
+      "message": "Un elemento llamado '{name}' ya existe en:\n{destination}",
+      "skip": "Omitir",
+      "keep_both": "Conservar ambos",
+      "replace": "Reemplazar",
+      "apply_all": "Aplicar a todos los conflictos",
+      "same_folder": "El elemento ya está en la carpeta seleccionada."
     },
     "rename_file": {
       "title": "Renombrar archivo",
@@ -1084,7 +1103,7 @@
         "select_none": "Deseleccionar todo",
         "invert_selection": "Invertir selección",
         "rename_file": "Renombrar archivo",
-        "move_to": "Mover a carpeta",
+        "move_to": "Mover archivos en la biblioteca",
         "move_to_trash": "Mover a la papelera",
         "delete_permanently": "Eliminar permanentemente",
         "refresh_file_info": "Actualizar información del archivo",

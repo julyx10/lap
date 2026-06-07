@@ -227,8 +227,8 @@
       "sort": "Ordenar",
       "monthly": "Mensal",
       "daily": "Diário",
-      "time_asc": "Tempo Asc",
-      "time_desc": "Tempo Desc"
+      "time_asc": "Tempo asc",
+      "time_desc": "Tempo desc"
     }
   },
   "info_panel": {
@@ -379,7 +379,9 @@
       "rename": "Renomear",
       "move_to": "Mover para...",
       "copy_to": "Copiar para...",
-      "export_to": "Exportar para...",
+      "move_within_library": "Mover na biblioteca...",
+      "move_to_folder": "Mover para pasta...",
+      "copy_to_folder": "Copiar para pasta...",
       "move_to_trash": "Mover para lixeira",
       "delete": "Excluir",
       "reveal_in_finder": "Mostrar no Finder...",
@@ -391,8 +393,8 @@
     "calendar": {
       "monthly": "Mensal",
       "daily": "Diário",
-      "time_asc": "Tempo Asc",
-      "time_desc": "Tempo Desc"
+      "time_asc": "Tempo asc",
+      "time_desc": "Tempo desc"
     },
     "search": {
       "clear_history": "Limpar histórico"
@@ -523,10 +525,27 @@
       "success": "'{source}' foi copiado para '{dest}'.",
       "error": "Falha ao copiar '{source}' para '{dest}'."
     },
-    "export_to": {
-      "title": "Exportar para pasta",
-      "success": "'{source}' exportado para '{dest}'.",
-      "error": "Falha ao exportar '{source}' para '{dest}'."
+    "move_to_folder": {
+      "title": "Mover para pasta",
+      "confirm_title": "Mover para fora da biblioteca?",
+      "warning": "Mover '{source}' para:\n{dest}\n\nEstes itens serão removidos da biblioteca atual.",
+      "ok": "Mover",
+      "success": "'{source}' movido para '{dest}'.",
+      "error": "Falha ao mover '{source}' para '{dest}'."
+    },
+    "copy_to_folder": {
+      "title": "Copiar para pasta",
+      "success": "'{source}' copiado para '{dest}'.",
+      "error": "Falha ao copiar '{source}' para '{dest}'."
+    },
+    "file_conflict": {
+      "title": "Arquivo já existe",
+      "message": "Um item chamado '{name}' já existe em:\n{destination}",
+      "skip": "Pular",
+      "keep_both": "Manter ambos",
+      "replace": "Substituir",
+      "apply_all": "Aplicar a todos os conflitos",
+      "same_folder": "O item já está na pasta selecionada."
     },
     "rename_file": {
       "title": "Renomear arquivo",
@@ -1084,7 +1103,7 @@
         "select_none": "Desmarcar tudo",
         "invert_selection": "Inverter seleção",
         "rename_file": "Renomear arquivo",
-        "move_to": "Mover para pasta",
+        "move_to": "Mover arquivos na biblioteca",
         "move_to_trash": "Mover para o lixo",
         "delete_permanently": "Excluir permanentemente",
         "refresh_file_info": "Atualizar informações do arquivo",

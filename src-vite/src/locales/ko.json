@@ -379,7 +379,9 @@
       "rename": "이름 변경",
       "move_to": "이동...",
       "copy_to": "복사...",
-      "export_to": "내보내기...",
+      "move_within_library": "라이브러리 내에서 이동...",
+      "move_to_folder": "폴더로 이동...",
+      "copy_to_folder": "폴더로 복사...",
       "move_to_trash": "휴지통으로 이동",
       "delete": "삭제",
       "reveal_in_finder": "Finder에서 보기...",
@@ -523,10 +525,27 @@
       "success": "'{source}'을(를) '{dest}'(으)로 복사했습니다.",
       "error": "'{source}'을(를) '{dest}'(으)로 복사하지 못했습니다."
     },
-    "export_to": {
-      "title": "폴더로 내보내기",
-      "success": "'{source}'을(를) '{dest}'(으)로 내보냈습니다.",
-      "error": "'{source}'을(를) '{dest}'(으)로 내보내지 못했습니다."
+    "move_to_folder": {
+      "title": "폴더로 이동",
+      "confirm_title": "라이브러리 밖으로 이동하시겠습니까?",
+      "warning": "'{source}'을(를) 다음으로 이동:\n{dest}\n\n이 항목들은 현재 라이브러리에서 제거됩니다.",
+      "ok": "이동",
+      "success": "'{source}'을(를) '{dest}'(으)로 이동했습니다.",
+      "error": "'{source}'을(를) '{dest}'(으)로 이동하지 못했습니다."
+    },
+    "copy_to_folder": {
+      "title": "폴더로 복사",
+      "success": "'{source}'을(를) '{dest}'(으)로 복사했습니다.",
+      "error": "'{source}'을(를) '{dest}'(으)로 복사하지 못했습니다."
+    },
+    "file_conflict": {
+      "title": "파일이 이미 존재합니다",
+      "message": "'{name}' 항목이 이미 존재합니다:\n{destination}",
+      "skip": "건너뛰기",
+      "keep_both": "둘 다 유지",
+      "replace": "대체",
+      "apply_all": "모든 충돌에 적용",
+      "same_folder": "항목이 이미 선택한 폴더에 있습니다."
     },
     "rename_file": {
       "title": "파일 이름 변경",
@@ -1084,7 +1103,7 @@
         "select_none": "모두 선택 해제",
         "invert_selection": "선택 반전",
         "rename_file": "파일 이름 변경",
-        "move_to": "폴더로 이동",
+        "move_to": "라이브러리 내에서 파일 이동",
         "move_to_trash": "휴지통으로 이동",
         "delete_permanently": "영구 삭제",
         "refresh_file_info": "파일 정보 새로고침",

@@ -9,8 +9,14 @@ pub const NORMAL_IMGS: &[&str] = &[
 
 // Image formats decoded through the bundled FFmpeg sidecar.
 pub const FFMPEG_BACKED_IMGS: &[&str] = &[
-    "exr", "hdr", "rgbe", "psd", "jp2", "j2k", "j2c", "jpc", "jpf", "jpx", "dpx", "dds", "tga",
-    "qoi", "fits", "fit", "fts",
+    "psd", // Photoshop native format; preview only (merged composite), no edit support
+    "exr", // HDR industry standard (VFX/rendering/Resolve output)
+    "hdr", "rgbe", // Radiance RGBE format; HDR panoramas and tonemapped output
+    "tga", // Legacy format; some cameras/scanners/game asset pipelines
+    "dds", // DirectDraw Surface; game texture format; relevant only for game-dev users
+    "qoi", // Fast lossless format (2021); ecosystem still immature
+    "jp2", "j2k", "j2c", "jpc", "jpf", "jpx", // JPEG 2000 family; medical/satellite use only; no mature pure-Rust decoder
+    "dpx", // Digital cinema intermediate format; niche film/grading pipeline only
 ];
 
 // RAW support

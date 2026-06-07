@@ -474,6 +474,9 @@ onMounted( async () => {
       if (updatedAlbum.cover_file_id !== undefined) {
         album.cover_file_id = updatedAlbum.cover_file_id;
       }
+      if (album.is_expanded) {
+        await expandAlbum(album, true);
+      }
     }
   });
 

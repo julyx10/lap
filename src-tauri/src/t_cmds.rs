@@ -370,25 +370,95 @@ pub fn rename_folder(folder_path: &str, new_folder_name: &str) -> Option<String>
 
 /// move a folder
 #[tauri::command]
-pub fn move_folder(folder_path: &str, new_album_id: i64, new_folder_path: &str) -> Option<String> {
-    // Move the folder in the file system
-    let result = t_utils::move_folder(folder_path, new_folder_path);
-
-    match result {
-        Some(new_path) => {
-            // Update the folder path in the database
-            let _ = AFolder::move_folder(folder_path, new_album_id, &new_path)
-                .map_err(|e| format!("Error while moving folder in DB: {}", e));
-            Some(new_path)
-        }
-        None => None,
+pub fn move_folder(
+    folder_path: &str,
+    new_album_id: i64,
+    new_folder_path: &str,
+    conflict_policy: &str,
+) -> Result<String, String> {
+    let transfer = t_utils::move_folder_with_policy(
+        folder_path,
+        new_folder_path,
+        t_utils::FileConflictPolicy::from_str(conflict_policy),
+    )?;
+    let new_path = transfer.path.clone();
+    let db_result = if conflict_policy == "replace" {
+        AFolder::replace_moved_folder(folder_path, new_album_id, &new_path)
+    } else {
+        AFolder::move_folder(folder_path, new_album_id, &new_path)
+    };
+    if let Err(error) = db_result {
+        let rollback_error = transfer.rollback_move(Path::new(folder_path)).err();
+        return Err(match rollback_error {
+            Some(rollback_error) => format!(
+                "Error while moving folder in DB: {}; rollback also failed: {}",
+                error, rollback_error
+            ),
+            None => format!("Error while moving folder in DB: {}", error),
+        });
     }
+    transfer.finalize()
+}
+
+/// move a folder outside the library and remove its database records
+#[tauri::command]
+pub fn move_folder_outside_library(
+    folder_path: &str,
+    new_folder_path: &str,
+    conflict_policy: &str,
+) -> Result<String, String> {
+    let transfer = t_utils::move_folder_with_policy(
+        folder_path,
+        new_folder_path,
+        t_utils::FileConflictPolicy::from_str(conflict_policy),
+    )?;
+
+    if let Err(error) = AFolder::delete_folder(folder_path) {
+        let rollback_error = transfer.rollback_move(Path::new(folder_path)).err();
+        return Err(match rollback_error {
+            Some(rollback_error) => format!(
+                "Error while removing folder from DB: {}; rollback also failed: {}",
+                error, rollback_error
+            ),
+            None => format!("Error while removing folder from DB: {}", error),
+        });
+    }
+
+    transfer.finalize()
 }
 
 /// copy a folder
 #[tauri::command]
-pub fn copy_folder(folder_path: &str, new_folder_path: &str) -> Option<String> {
-    t_utils::copy_folder(folder_path, new_folder_path)
+pub fn copy_folder(
+    folder_path: &str,
+    new_folder_path: &str,
+    new_album_id: i64,
+    conflict_policy: &str,
+) -> Result<String, String> {
+    let transfer = t_utils::copy_folder_with_policy(
+        folder_path,
+        new_folder_path,
+        t_utils::FileConflictPolicy::from_str(conflict_policy),
+    )?;
+    let new_path = transfer.path.clone();
+    if new_album_id > 0 {
+        let db_result = if conflict_policy == "replace" {
+            AFolder::replace_copied_folder(new_album_id, &new_path)
+        } else {
+            AFolder::add_to_db(new_album_id, &new_path)
+        };
+        if let Err(error) = db_result {
+            let rollback_error = transfer.rollback_copy().err();
+            return Err(match rollback_error {
+                Some(rollback_error) => format!(
+                    "Error while adding copied folder to DB: {}; rollback also failed: {}",
+                    error, rollback_error
+                ),
+                None => format!("Error while adding copied folder to DB: {}", error),
+            });
+        }
+    }
+    transfer.finalize()
 }
 
 /// delete a folder
@@ -572,7 +642,8 @@ pub fn move_file(
     file_path: &str,
     new_folder_id: i64,
     new_folder_path: &str,
-) -> Option<String> {
+    conflict_policy: &str,
+) -> Result<String, String> {
     let old_album_id = AFile::get_file_info(file_id)
         .ok()
         .flatten()
@@ -581,27 +652,84 @@ pub fn move_file(
         .ok()
         .flatten()
         .map(|folder| folder.album_id);
+    let replaced_file_id = if conflict_policy == "replace" {
+        AFile::fetch(new_folder_id, file_path)
+            .ok()
+            .flatten()
+            .and_then(|file| file.id)
+            .filter(|id| *id != file_id)
+    } else {
+        None
+    };
 
-    let moved_file = t_utils::move_file(file_path, new_folder_path);
-    match moved_file {
-        Some(new_path) => {
-            // update the file's folder_id in the database
-            let _ = AFile::update_column(file_id, "folder_id", &new_folder_id)
-                .map_err(|e| format!("Error while moving file in DB: {}", e));
-            if let (Some(old_album_id), Some(new_album_id)) = (old_album_id, new_album_id) {
-                let _ = AThumb::relocate_for_file(file_id, old_album_id, new_album_id)
-                    .map_err(|e| format!("Error while relocating thumbnail cache: {}", e));
-            }
-            Some(new_path)
-        }
-        None => None,
+    let transfer = t_utils::move_file_with_policy(
+        file_path,
+        new_folder_path,
+        t_utils::FileConflictPolicy::from_str(conflict_policy),
+    )?;
+    let db_result = if let Some(replaced_file_id) = replaced_file_id {
+        AFile::replace_moved_file(file_id, replaced_file_id, new_folder_id)
+    } else {
+        AFile::update_column(file_id, "folder_id", &new_folder_id)
+    };
+    if let Err(error) = db_result {
+        let rollback_error = transfer.rollback_move(Path::new(file_path)).err();
+        return Err(match rollback_error {
+            Some(rollback_error) => format!(
+                "Error while moving file in DB: {}; rollback also failed: {}",
+                error, rollback_error
+            ),
+            None => format!("Error while moving file in DB: {}", error),
+        });
     }
+    if let (Some(old_album_id), Some(new_album_id)) = (old_album_id, new_album_id) {
+        let _ = AThumb::relocate_for_file(file_id, old_album_id, new_album_id)
+            .map_err(|e| format!("Error while relocating thumbnail cache: {}", e));
+    }
+    transfer.finalize()
+}
+
+/// move a file outside the library and remove its database record
+#[tauri::command]
+pub fn move_file_outside_library(
+    file_id: i64,
+    file_path: &str,
+    new_folder_path: &str,
+    conflict_policy: &str,
+) -> Result<String, String> {
+    let transfer = t_utils::move_file_with_policy(
+        file_path,
+        new_folder_path,
+        t_utils::FileConflictPolicy::from_str(conflict_policy),
+    )?;
+
+    if let Err(error) = AFile::delete(file_id) {
+        let rollback_error = transfer.rollback_move(Path::new(file_path)).err();
+        return Err(match rollback_error {
+            Some(rollback_error) => format!(
+                "Error while removing file from DB: {}; rollback also failed: {}",
+                error, rollback_error
+            ),
+            None => format!("Error while removing file from DB: {}", error),
+        });
+    }
+
+    transfer.finalize()
 }
 
 /// copy a file to dest folder
 #[tauri::command]
-pub fn copy_file(file_path: &str, new_folder_path: &str) -> Option<String> {
-    t_utils::copy_file(file_path, new_folder_path)
+pub fn copy_file(
+    file_path: &str,
+    new_folder_path: &str,
+    conflict_policy: &str,
+) -> Result<String, String> {
+    t_utils::copy_file_with_policy(
+        file_path,
+        new_folder_path,
+        t_utils::FileConflictPolicy::from_str(conflict_policy),
+    )?
+    .finalize()
 }
 
 /// import a file into a folder with auto-generated name (IMG_YYYYMMDD_HHMMSS.ext)

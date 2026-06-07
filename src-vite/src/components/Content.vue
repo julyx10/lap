@@ -413,9 +413,9 @@
             @select-all="selectAllInCurrentList"
             @select-none="selectNoneInCurrentList"
             @select-invert="invertSelectionInCurrentList"
-            @move-to="showMoveTo = true"
-            @copy-to="showCopyTo = true"
-            @export-to="onExportTo"
+            @move-within-library="showMoveTo = true"
+            @move-to-folder="onMoveToFolder"
+            @copy-to-folder="onCopyToFolder"
             @trash="openTrashMsgbox()"
             @favorite-all="selectModeSetFavorites(true)"
             @unfavorite-all="selectModeSetFavorites(false)"
@@ -493,15 +493,13 @@
     @cancel="showMoveTo = false"
   />
 
-  <!-- copy to -->
-  <MoveTo
-    v-if="showCopyTo"
-    :title="`${$t('msgbox.copy_to.title', { source: selectMode ? $t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() }) : shortenFilename(fileList[selectedItemIndex].name, 32) })}`"
-    :message="$t('msgbox.copy_to.content')"
-    :OkText="$t('msgbox.copy_to.ok')"
-    :cancelText="$t('msgbox.cancel')"
-    @ok="onCopyTo"
-    @cancel="showCopyTo = false"
+  <FileConflictDialog
+    v-if="fileConflictDialog.show"
+    :name="fileConflictDialog.name"
+    :destination="fileConflictDialog.destination"
+    :showApplyAll="fileConflictDialog.showApplyAll"
+    :allowReplace="fileConflictDialog.allowReplace"
+    @resolve="resolveFileConflict"
   />
 
   <!-- move to trash -->
@@ -592,16 +590,16 @@
 
 import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { ask, open as openDialog } from '@tauri-apps/plugin-dialog';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
-import { getAlbum, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, syncAlbumFolderMtimes,
-         copyImage, renameFile, moveFile, copyFile, deleteFile, deleteFilePermanently, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
+import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, syncAlbumFolderMtimes,
+         copyImage, renameFile, moveFile, moveFileOutsideLibrary, copyFile, deleteFile, deleteFilePermanently, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, getFileHasTags, setFileFavorite, setFileRating, getTagsForFile, searchSimilarImages, generateEmbedding, 
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
-         updateFileInfo, importUrl, importFileBytes, addFileToDb, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
+         updateFileInfo, importUrl, importFileBytes, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded } from '@/common/api';
 import { config, libConfig } from '@/common/config';
@@ -613,7 +611,7 @@ import { isWin, isMac, setTheme, separator,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         shortenFilename, getSlideShowInterval } from '@/common/utils';
+         shortenFilename, getSlideShowInterval, getFullPath, normalizePathForCompare, isWithinRootPath } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -628,6 +626,7 @@ import TaggingDialog from '@/components/TaggingDialog.vue';
 import FileInfo from '@/components/FileInfo.vue';
 import DedupPane from '@/components/DedupPane.vue';
 import SelectionPanel from '@/components/SelectionPanel.vue';
+import FileConflictDialog from '@/components/FileConflictDialog.vue';
 import ScrollBar from '@/components/ScrollBar.vue';
 import SliderInput from '@/components/SliderInput.vue';
 import StatusBar from '@/components/StatusBar.vue';
@@ -902,7 +901,15 @@ const showRenameMsgbox = ref(false);  // show rename message box
 const renamingFileName = ref<{name?: string, ext?: string}>({}); // extract the file name to {name, ext}
 
 const showMoveTo = ref(false);
-const showCopyTo = ref(false);
+type FileConflictPolicy = 'skip' | 'keep_both' | 'replace';
+const fileConflictDialog = ref({
+  show: false,
+  name: '',
+  destination: '',
+  showApplyAll: false,
+  allowReplace: true,
+});
+let fileConflictResolver: ((result: { policy: FileConflictPolicy; applyAll: boolean }) => void) | null = null;
 const showTrashMsgbox = ref(false);
 const permanentDeleteChecked = ref(false);
 const dedupReclaimBytes = ref(0);
@@ -1695,9 +1702,9 @@ function handleItemAction(payload: { action: string, index: number }) {
     },
     'copy': () => clickCopyImage(fileList.value[selectedItemIndex.value].file_path),
     'rename': clickRename,
-    'move-to': () => showMoveTo.value = true,
-    'copy-to': () => showCopyTo.value = true,
-    'export-to': () => void onExportTo(),
+    'move-within-library': () => showMoveTo.value = true,
+    'move-to-folder': () => void onMoveToFolder(),
+    'copy-to-folder': () => void onCopyToFolder(),
     'trash': () => openTrashMsgbox(),
     'album-folder': () => {
       const selectedFile = fileList.value[selectedItemIndex.value];
@@ -4328,79 +4335,188 @@ const onMoveTo = async () => {
   showMoveTo.value = false;
 }
 
-const onCopyTo = async () => {
-  const affectedAlbumIds = new Set<number>();
-  const destLabel = getFolderName(libConfig.destFolder.folderPath || '') || libConfig.destFolder.folderPath || '';
-  let successCount = 0;
-  if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
-    const sourceLabel = t('toolbar.filter.select_count', { count: selectedCount.value.toLocaleString() });
-    const copies = getActionableSelectedItems()
-      .map(async item => {
-        const copiedFile = await copyFile(item.file_path, libConfig.destFolder.folderPath);
-        if(copiedFile) {
-          console.log('onCopyTo:', copiedFile);
-          affectedAlbumIds.add(Number(libConfig.destFolder.albumId || 0));
-          successCount += 1;
-        }
-      });
-    await Promise.all(copies); // parallelize DB updates
-    if (successCount > 0) {
-      toast.success(t('msgbox.copy_to.success', { source: sourceLabel, dest: destLabel }));
-    }
-  } 
-  else if(selectedItemIndex.value >= 0) {               // single select mode
-    const file = fileList.value[selectedItemIndex.value];
-    const sourceLabel = file.name;
-    const copiedFile = await copyFile(file.file_path, libConfig.destFolder.folderPath);
-    if(copiedFile) {
-      console.log('onCopyTo:', copiedFile);
-      affectedAlbumIds.add(Number(libConfig.destFolder.albumId || 0));
-      successCount = 1;
-      toast.success(t('msgbox.copy_to.success', { source: sourceLabel, dest: destLabel }));
-    }
-  }
-  await refreshAffectedAlbums(Array.from(affectedAlbumIds));
-
-  if (successCount === 0) {
-    const sourceLabel = selectMode.value
-      ? t('toolbar.filter.select_count', { count: selectedCount.value.toLocaleString() })
-      : (fileList.value[selectedItemIndex.value]?.name || '');
-    toast.error(t('msgbox.copy_to.error', { source: sourceLabel, dest: destLabel }));
-  }
-
-  showCopyTo.value = false;
-}
-
-const onExportTo = async () => {
+const selectSystemDestination = async (title: string) => {
   const destination = await openDialog({
-    title: t('msgbox.export_to.title'),
+    title,
     multiple: false,
     directory: true,
   });
-  if (!destination || Array.isArray(destination)) return;
+  return !destination || Array.isArray(destination) ? null : String(destination);
+}
 
-  const files = selectMode.value && selectedCount.value > 0
+const requestFileConflict = (
+  name: string,
+  destination: string,
+  showApplyAll: boolean,
+  allowReplace = true,
+): Promise<{ policy: FileConflictPolicy; applyAll: boolean }> => {
+  fileConflictDialog.value = { show: true, name, destination, showApplyAll, allowReplace };
+  return new Promise(resolve => {
+    fileConflictResolver = resolve;
+  });
+}
+
+const resolveFileConflict = (result: { policy: FileConflictPolicy; applyAll: boolean }) => {
+  fileConflictDialog.value.show = false;
+  fileConflictResolver?.(result);
+  fileConflictResolver = null;
+}
+
+const resolveConflictPolicy = async (
+  sourcePath: string,
+  name: string,
+  destPath: string,
+  applyAllPolicy: FileConflictPolicy | null,
+  showApplyAll: boolean,
+  sameDestinationMeansSkip: boolean,
+) => {
+  const destinationPath = getFullPath(destPath, name);
+  const isSamePath =
+    normalizePathForCompare(sourcePath) === normalizePathForCompare(destinationPath);
+  if (isSamePath && sameDestinationMeansSkip) {
+    toast.info(t('msgbox.file_conflict.same_folder'));
+    return { policy: 'skip' as FileConflictPolicy, applyAll: false };
+  }
+  if (!await checkFileExists(destinationPath)) {
+    return { policy: 'keep_both' as FileConflictPolicy, applyAll: false };
+  }
+  if (applyAllPolicy && !(isSamePath && applyAllPolicy === 'replace')) {
+    return { policy: applyAllPolicy, applyAll: true };
+  }
+  return requestFileConflict(name, destPath, showApplyAll, !isSamePath);
+}
+
+const getFilesForFolderAction = () => {
+  return selectMode.value && selectedCount.value > 0
     ? getActionableSelectedItems()
     : (selectedItemIndex.value >= 0 ? [fileList.value[selectedItemIndex.value]] : []);
+}
+
+const resolveLibraryDestination = async (destPath: string) => {
+  const albums = await getAllAlbums();
+  const album = Array.isArray(albums)
+    ? albums.find(item => isWithinRootPath(destPath, item.path))
+    : null;
+  if (!album) return null;
+
+  const folder = await selectFolder(album.id, destPath);
+  return folder?.id ? { albumId: Number(album.id), folderId: Number(folder.id) } : null;
+}
+
+const onMoveToFolder = async () => {
+  const files = getFilesForFolderAction();
   if (files.length === 0) return;
 
-  const destPath = String(destination);
+  const destPath = await selectSystemDestination(t('msgbox.move_to_folder.title'));
+  if (!destPath) return;
+
+  const sourceLabel = selectMode.value
+    ? t('toolbar.filter.select_count', { count: files.length.toLocaleString() })
+    : (files[0]?.name || '');
+  const libraryDestination = await resolveLibraryDestination(destPath);
+  if (!libraryDestination) {
+    const confirmed = await ask(
+      t('msgbox.move_to_folder.warning', { source: sourceLabel, dest: destPath }),
+      {
+        title: t('msgbox.move_to_folder.confirm_title'),
+        kind: 'warning',
+        okLabel: t('msgbox.move_to_folder.ok'),
+        cancelLabel: t('msgbox.cancel'),
+      },
+    );
+    if (!confirmed) return;
+  }
+
+  const affectedAlbumIds = new Set<number>();
+  const successIds: number[] = [];
+  let applyAllPolicy: FileConflictPolicy | null = null;
+  let attemptedCount = 0;
+  for (const file of files) {
+    if (!file?.file_path) continue;
+    const conflict = await resolveConflictPolicy(
+      file.file_path,
+      file.name,
+      destPath,
+      applyAllPolicy,
+      files.length > 1,
+      true,
+    );
+    if (conflict.applyAll) applyAllPolicy = conflict.policy;
+    if (conflict.policy === 'skip') continue;
+    attemptedCount += 1;
+    const movedFile = libraryDestination
+      ? await moveFile(file.id, file.file_path, libraryDestination.folderId, destPath, conflict.policy)
+      : await moveFileOutsideLibrary(file.id, file.file_path, destPath, conflict.policy);
+    if (movedFile) {
+      successIds.push(file.id);
+      affectedAlbumIds.add(Number(file.album_id || 0));
+      if (libraryDestination) affectedAlbumIds.add(libraryDestination.albumId);
+    }
+  }
+
+  if (successIds.length > 0) {
+    fileList.value = fileList.value.filter(file => !successIds.includes(file.id));
+    totalFileCount.value = fileList.value.length;
+    totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+    selectedItemIndex.value = fileList.value.length > 0
+      ? Math.min(selectedItemIndex.value, fileList.value.length - 1)
+      : -1;
+    toast.success(t('msgbox.move_to_folder.success', { source: sourceLabel, dest: getFolderName(destPath) || destPath }));
+    await refreshAffectedAlbums(Array.from(affectedAlbumIds));
+    await refreshLibraryTotalCount();
+  }
+  if (successIds.length !== attemptedCount) {
+    toast.error(t('msgbox.move_to_folder.error', { source: sourceLabel, dest: getFolderName(destPath) || destPath }));
+  }
+}
+
+const onCopyToFolder = async () => {
+  const destPath = await selectSystemDestination(t('msgbox.copy_to_folder.title'));
+  if (!destPath) return;
+
+  const files = getFilesForFolderAction();
+  if (files.length === 0) return;
+
+  const libraryDestination = await resolveLibraryDestination(destPath);
   const destLabel = getFolderName(destPath) || destPath;
   const sourceLabel = selectMode.value
     ? t('toolbar.filter.select_count', { count: files.length.toLocaleString() })
     : (files[0]?.name || '');
   let successCount = 0;
+  let attemptedCount = 0;
+  let applyAllPolicy: FileConflictPolicy | null = null;
 
   for (const file of files) {
     if (!file?.file_path) continue;
-    const copiedFile = await copyFile(file.file_path, destPath);
-    if (copiedFile) successCount += 1;
+    const conflict = await resolveConflictPolicy(
+      file.file_path,
+      file.name,
+      destPath,
+      applyAllPolicy,
+      files.length > 1,
+      false,
+    );
+    if (conflict.applyAll) applyAllPolicy = conflict.policy;
+    if (conflict.policy === 'skip') continue;
+    attemptedCount += 1;
+    const copiedFile = await copyFile(file.file_path, destPath, conflict.policy);
+    if (!copiedFile) continue;
+    successCount += 1;
+    if (libraryDestination) {
+      await addFileToDb(libraryDestination.folderId, copiedFile);
+    }
   }
 
   if (successCount > 0) {
-    toast.success(t('msgbox.export_to.success', { source: sourceLabel, dest: destLabel }));
-  } else {
-    toast.error(t('msgbox.export_to.error', { source: sourceLabel, dest: destLabel }));
+    toast.success(t('msgbox.copy_to_folder.success', { source: sourceLabel, dest: destLabel }));
+    if (libraryDestination) {
+      await refreshAffectedAlbums([libraryDestination.albumId]);
+      await refreshLibraryTotalCount();
+      await tauriEmit('refresh-content');
+    }
+  }
+  if (successCount !== attemptedCount) {
+    toast.error(t('msgbox.copy_to_folder.error', { source: sourceLabel, dest: destLabel }));
   }
 }
 

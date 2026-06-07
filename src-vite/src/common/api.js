@@ -519,9 +519,9 @@ export async function renameFolder(folderPath, newFolderName) {
 }
 
 // move a folder, return new folder path
-export async function moveFolder(folderPath, newAlbumId, newFolderPath) {
+export async function moveFolder(folderPath, newAlbumId, newFolderPath, conflictPolicy = 'keep_both') {
   try {
-    const result = await invoke('move_folder', { folderPath, newAlbumId, newFolderPath });
+    const result = await invoke('move_folder', { folderPath, newAlbumId, newFolderPath, conflictPolicy });
     if(result) {
       return result;
     };
@@ -531,10 +531,19 @@ export async function moveFolder(folderPath, newAlbumId, newFolderPath) {
   return null;
 }
 
-// copy a folder, return new folder path
-export async function copyFolder(folderPath, newFolderPath) {
+export async function moveFolderOutsideLibrary(folderPath, newFolderPath, conflictPolicy = 'keep_both') {
   try {
-    const result = await invoke('copy_folder', { folderPath, newFolderPath });
+    return await invoke('move_folder_outside_library', { folderPath, newFolderPath, conflictPolicy });
+  } catch (error) {
+    console.log('Failed to move folder outside library:', error);
+  }
+  return null;
+}
+
+// copy a folder, return new folder path
+export async function copyFolder(folderPath, newFolderPath, newAlbumId = 0, conflictPolicy = 'keep_both') {
+  try {
+    const result = await invoke('copy_folder', { folderPath, newFolderPath, newAlbumId, conflictPolicy });
     if(result) {
       return result;
     };
@@ -745,9 +754,9 @@ export async function renameFile(fileId, filePath, newName) {
 }
 
 // move a file
-export async function moveFile(fileId, filePath, newFolderId, newFolderPath) {
+export async function moveFile(fileId, filePath, newFolderId, newFolderPath, conflictPolicy = 'keep_both') {
   try {
-    const result = await invoke('move_file', { fileId, filePath, newFolderId, newFolderPath });
+    const result = await invoke('move_file', { fileId, filePath, newFolderId, newFolderPath, conflictPolicy });
     if(result) {
       return result;
     };
@@ -757,10 +766,19 @@ export async function moveFile(fileId, filePath, newFolderId, newFolderPath) {
   return null;
 }
 
-// copy a file
-export async function copyFile(filePath, newFolderPath) {
+export async function moveFileOutsideLibrary(fileId, filePath, newFolderPath, conflictPolicy = 'keep_both') {
   try {
-    const result = await invoke('copy_file', { filePath, newFolderPath });
+    return await invoke('move_file_outside_library', { fileId, filePath, newFolderPath, conflictPolicy });
+  } catch (error) {
+    console.log('Failed to move file outside library:', error);
+  }
+  return null;
+}
+
+// copy a file
+export async function copyFile(filePath, newFolderPath, conflictPolicy = 'keep_both') {
+  try {
+    const result = await invoke('copy_file', { filePath, newFolderPath, conflictPolicy });
     if(result) {
       return result;
     };

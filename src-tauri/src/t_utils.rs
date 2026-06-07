@@ -49,6 +49,62 @@ pub fn trash_path(path: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(test)]
+mod transfer_tests {
+    use super::*;
+
+    fn test_dir() -> PathBuf {
+        std::env::temp_dir().join(format!("lap-transfer-test-{}", uuid::Uuid::new_v4()))
+    }
+
+    #[test]
+    fn file_move_to_same_folder_is_rejected() {
+        let root = test_dir();
+        fs::create_dir_all(&root).unwrap();
+        let source = root.join("photo.jpg");
+        fs::write(&source, b"source").unwrap();
+
+        let result = move_file_with_policy(
+            source.to_str().unwrap(),
+            root.to_str().unwrap(),
+            FileConflictPolicy::KeepBoth,
+        );
+
+        assert!(result.is_err());
+        assert_eq!(fs::read(&source).unwrap(), b"source");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn file_copy_to_same_folder_only_allows_keep_both() {
+        let root = test_dir();
+        fs::create_dir_all(&root).unwrap();
+        let source = root.join("photo.jpg");
+        fs::write(&source, b"source").unwrap();
+
+        let replace_result = copy_file_with_policy(
+            source.to_str().unwrap(),
+            root.to_str().unwrap(),
+            FileConflictPolicy::Replace,
+        );
+        assert!(replace_result.is_err());
+        assert_eq!(fs::read(&source).unwrap(), b"source");
+
+        let copied_path = copy_file_with_policy(
+            source.to_str().unwrap(),
+            root.to_str().unwrap(),
+            FileConflictPolicy::KeepBoth,
+        )
+        .unwrap()
+        .finalize()
+        .unwrap();
+        assert_ne!(Path::new(&copied_path), source);
+        assert_eq!(fs::read(copied_path).unwrap(), b"source");
+
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+
 #[cfg(target_os = "macos")]
 fn move_to_trash(path: &str) -> Result<(), trash::Error> {
     use trash::macos::{DeleteMethod, TrashContextExtMacos};
@@ -743,160 +799,343 @@ fn get_unique_path(path: PathBuf) -> PathBuf {
     }
 }
 
-/// move a folder to a new location
-/// Returns the new folder path if successful
-pub fn move_folder(folder_path: &str, dest_folder: &str) -> Option<String> {
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum FileConflictPolicy {
+    KeepBoth,
+    Replace,
+}
+
+impl FileConflictPolicy {
+    pub fn from_str(value: &str) -> Self {
+        match value {
+            "replace" => Self::Replace,
+            _ => Self::KeepBoth,
+        }
+    }
+}
+
+fn transfer_temp_path(destination: &Path, label: &str) -> PathBuf {
+    let parent = destination.parent().unwrap_or_else(|| Path::new(""));
+    parent.join(format!(".lap-{}-{}", label, uuid::Uuid::new_v4()))
+}
+
+fn resolve_transfer_destination(
+    source: &Path,
+    dest_folder: &str,
+    policy: FileConflictPolicy,
+) -> Result<PathBuf, String> {
+    let mut destination = PathBuf::from(dest_folder);
+    destination.push(
+        source
+            .file_name()
+            .ok_or_else(|| format!("Invalid source path: {}", source.display()))?,
+    );
+    Ok(if destination.exists() && policy == FileConflictPolicy::KeepBoth {
+        get_unique_path(destination)
+    } else {
+        destination
+    })
+}
+
+fn paths_refer_to_same_item(left: &Path, right: &Path) -> bool {
+    match (left.canonicalize(), right.canonicalize()) {
+        (Ok(left), Ok(right)) => left == right,
+        _ => left == right,
+    }
+}
+
+#[derive(Debug)]
+pub struct TransferResult {
+    pub path: String,
+    backup: Option<PathBuf>,
+}
+
+impl TransferResult {
+    fn new(destination: &Path, backup: Option<PathBuf>) -> Self {
+        Self {
+            path: destination.to_string_lossy().into_owned(),
+            backup,
+        }
+    }
+
+    pub fn finalize(self) -> Result<String, String> {
+        if let Some(backup) = self.backup {
+            let result = if backup.is_dir() {
+                fs::remove_dir_all(&backup)
+            } else {
+                fs::remove_file(&backup)
+            };
+            if let Err(error) = result {
+                eprintln!(
+                    "Transfer completed but backup cleanup failed for '{}': {}",
+                    backup.display(),
+                    error
+                );
+            }
+        }
+        Ok(self.path)
+    }
+
+    pub fn rollback_move(self, source: &Path) -> Result<(), String> {
+        let destination = PathBuf::from(&self.path);
+        if fs::rename(&destination, source).is_err() {
+            if destination.is_dir() {
+                copy_folder_to(&destination, source).map_err(|e| {
+                    format!(
+                        "Failed to restore source folder '{}' from '{}': {}",
+                        source.display(),
+                        destination.display(),
+                        e
+                    )
+                })?;
+                fs::remove_dir_all(&destination)
+                    .map_err(|e| format!("Failed to clean rollback source folder: {}", e))?;
+            } else {
+                copy_file_to_path(&destination, source).map_err(|e| {
+                    format!(
+                        "Failed to restore source file '{}' from '{}': {}",
+                        source.display(),
+                        destination.display(),
+                        e
+                    )
+                })?;
+                fs::remove_file(&destination)
+                    .map_err(|e| format!("Failed to clean rollback source file: {}", e))?;
+            }
+        }
+        self.restore_backup(&destination)
+    }
+
+    pub fn rollback_copy(self) -> Result<(), String> {
+        let destination = PathBuf::from(&self.path);
+        if destination.is_dir() {
+            fs::remove_dir_all(&destination)
+        } else {
+            fs::remove_file(&destination)
+        }
+        .map_err(|e| format!("Failed to remove copied destination: {}", e))?;
+        self.restore_backup(&destination)
+    }
+
+    fn restore_backup(self, destination: &Path) -> Result<(), String> {
+        if let Some(backup) = self.backup {
+            fs::rename(&backup, destination).map_err(|e| {
+                format!(
+                    "Failed to restore previous destination '{}' from '{}': {}",
+                    destination.display(),
+                    backup.display(),
+                    e
+                )
+            })?;
+        }
+        Ok(())
+    }
+}
+
+fn replace_path_with_staged(
+    staged: &Path,
+    destination: &Path,
+) -> Result<Option<PathBuf>, std::io::Error> {
+    if !destination.exists() {
+        fs::rename(staged, destination)?;
+        return Ok(None);
+    }
+
+    let backup = transfer_temp_path(destination, "backup");
+    fs::rename(destination, &backup)?;
+    if let Err(error) = fs::rename(staged, destination) {
+        let _ = fs::rename(&backup, destination);
+        return Err(error);
+    }
+    Ok(Some(backup))
+}
+
+pub fn move_folder_with_policy(
+    folder_path: &str,
+    dest_folder: &str,
+    policy: FileConflictPolicy,
+) -> Result<TransferResult, String> {
     let path = Path::new(folder_path);
-    let mut destination = Path::new(dest_folder).to_path_buf();
+    let destination_parent = Path::new(dest_folder);
 
     // Ensure the source folder exists
     if !path.exists() {
-        eprintln!("Folder does not exist: {}", folder_path);
-        return None;
+        return Err(format!("Folder does not exist: {}", folder_path));
+    }
+    if destination_parent.starts_with(path) || path.parent() == Some(destination_parent) {
+        return Err(format!("Invalid folder move destination: {}", dest_folder));
     }
 
-    // Append the folder name to the new folder path
-    if let Some(folder_name) = path.file_name() {
-        destination.push(folder_name);
-    } else {
-        eprintln!("Invalid folder name: {}", folder_path);
-        return None;
+    let destination = resolve_transfer_destination(path, dest_folder, policy)?;
+    if paths_refer_to_same_item(path, &destination) {
+        return Err("Source and destination are the same folder".to_string());
     }
 
-    let destination = get_unique_path(destination);
-
-    // Attempt to move the folder and return result
-    fs::rename(path, &destination).map_or_else(
-        |e| {
-            eprintln!("Failed to move folder: {}", e);
-            None
-        },
-        |_| {
+    if policy != FileConflictPolicy::Replace || !destination.exists() {
+        if fs::rename(path, &destination).is_ok() {
             println!("Folder moved to: {}", destination.display());
-            Some(destination.to_string_lossy().into_owned())
-        },
-    )
+            return Ok(TransferResult::new(&destination, None));
+        }
+    }
+
+    let staged = transfer_temp_path(&destination, "move");
+    if let Err(copy_error) = copy_folder_to(path, &staged) {
+        let _ = fs::remove_dir_all(&staged);
+        return Err(format!("Failed to stage folder move: {}", copy_error));
+    }
+
+    let backup = replace_path_with_staged(&staged, &destination).map_err(|replace_error| {
+        let _ = fs::remove_dir_all(&staged);
+        format!("Failed to finalize folder move: {}", replace_error)
+    })?;
+
+    if let Err(remove_error) = fs::remove_dir_all(path) {
+        let rollback_error = TransferResult::new(&destination, backup)
+            .rollback_move(path)
+            .err();
+        return Err(match rollback_error {
+            Some(rollback_error) => format!(
+                "Folder source cleanup failed: {}; rollback also failed: {}",
+                remove_error, rollback_error
+            ),
+            None => format!("Folder source cleanup failed; move was rolled back: {}", remove_error),
+        });
+    }
+
+    println!("Folder moved to: {}", destination.display());
+    Ok(TransferResult::new(&destination, backup))
 }
 
-/// Recursively copies a folder and all its contents to a new location.
-/// Returns Some(new_folder_path) if successful, or None on failure.
-pub fn copy_folder(folder_path: &str, dest_folder: &str) -> Option<String> {
-    let src = Path::new(folder_path);
-    let mut dst = Path::new(dest_folder).to_path_buf();
+fn copy_folder_to(src: &Path, dst: &Path) -> Result<(), std::io::Error> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let source_path = entry.path();
+        let destination_path = dst.join(entry.file_name());
+        if source_path.is_dir() {
+            copy_folder_to(&source_path, &destination_path)?;
+        } else if let Err(error) = fs::copy(&source_path, &destination_path) {
+            return Err(error);
+        }
+    }
+    Ok(())
+}
 
-    // Check if the source folder exists and is a directory
+pub fn copy_folder_with_policy(
+    folder_path: &str,
+    dest_folder: &str,
+    policy: FileConflictPolicy,
+) -> Result<TransferResult, String> {
+    let src = Path::new(folder_path);
+    let destination_parent = Path::new(dest_folder);
+
     if !src.exists() || !src.is_dir() {
-        eprintln!(
+        return Err(format!(
             "Source folder does not exist or is not a directory: {}",
             folder_path
-        );
-        return None;
+        ));
+    }
+    if destination_parent.starts_with(src) {
+        return Err(format!("Invalid folder copy destination: {}", dest_folder));
     }
 
-    // Get the name of the folder from folder_path
-    if let Some(folder_name) = src.file_name() {
-        // Append the folder name to the new folder path
-        dst.push(folder_name);
-    } else {
-        eprintln!("Failed to get the folder name from path: {}", folder_path);
-        return None;
+    let destination = resolve_transfer_destination(src, dest_folder, policy)?;
+    if policy == FileConflictPolicy::Replace && paths_refer_to_same_item(src, &destination) {
+        return Err("Cannot replace a folder with itself".to_string());
+    }
+    let staged = transfer_temp_path(&destination, "copy");
+    if let Err(copy_error) = copy_folder_to(src, &staged) {
+        let _ = fs::remove_dir_all(&staged);
+        return Err(format!("Failed to copy folder: {}", copy_error));
     }
 
-    let dst = get_unique_path(dst);
+    let backup = replace_path_with_staged(&staged, &destination).map_err(|replace_error| {
+        let _ = fs::remove_dir_all(&staged);
+        format!("Failed to finalize folder copy: {}", replace_error)
+    })?;
 
-    // Create the destination folder if it does not exist
-    if let Err(e) = fs::create_dir_all(&dst) {
-        eprintln!(
-            "Failed to create destination folder '{}': {}",
-            dst.display(),
-            e
-        );
-        return None;
-    }
-
-    // Walk through the source folder and copy its contents
-    for entry in WalkDir::new(src) {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(e) => {
-                eprintln!("Error reading entry: {}", e);
-                return None;
-            }
-        };
-
-        let relative_path = match entry.path().strip_prefix(src) {
-            Ok(p) => p,
-            Err(e) => {
-                eprintln!("Error computing relative path: {}", e);
-                return None;
-            }
-        };
-
-        let dest_path = dst.join(relative_path);
-
-        if entry.file_type().is_dir() {
-            if let Err(e) = fs::create_dir_all(&dest_path) {
-                eprintln!(
-                    "Failed to create directory '{}': {}",
-                    dest_path.display(),
-                    e
-                );
-                return None;
-            }
-        } else if let Err(e) = fs::copy(entry.path(), &dest_path) {
-            eprintln!("Failed to copy file to '{}': {}", dest_path.display(), e);
-            return None;
-        }
-    }
-
-    println!("Folder copied successfully to: {}", dst.display());
-    Some(dst.to_string_lossy().into_owned())
+    println!("Folder copied successfully to: {}", destination.display());
+    Ok(TransferResult::new(&destination, backup))
 }
 
-/// move file to dest folder, if dest file already exists, find a new name
-/// Returns the new file path if successful, or None on failure.
-pub fn move_file(file_path: &str, dest_folder: &str) -> Option<String> {
+fn copy_file_to_path(source: &Path, destination: &Path) -> Result<(), std::io::Error> {
+    if let Err(error) = fs::copy(source, destination) {
+        let _ = fs::remove_file(destination);
+        return Err(error);
+    }
+    Ok(())
+}
+
+pub fn move_file_with_policy(
+    file_path: &str,
+    dest_folder: &str,
+    policy: FileConflictPolicy,
+) -> Result<TransferResult, String> {
     let source = Path::new(file_path);
-    let file_name = source.file_name()?;
-    let mut destination = PathBuf::from(dest_folder);
-    destination.push(file_name);
+    if source.parent() == Some(Path::new(dest_folder)) {
+        return Err(format!(
+            "Source file is already in destination folder: {}",
+            dest_folder
+        ));
+    }
+    let destination = resolve_transfer_destination(source, dest_folder, policy)?;
+    if paths_refer_to_same_item(source, &destination) {
+        return Err("Source and destination are the same file".to_string());
+    }
 
-    let destination = get_unique_path(destination);
-
-    // Try to move the file
-    match fs::rename(source, &destination) {
-        Ok(_) => {
+    if policy != FileConflictPolicy::Replace || !destination.exists() {
+        if fs::rename(source, &destination).is_ok() {
             println!("File moved successfully: {}", destination.display());
-            destination.to_str().map(|s| s.to_string())
-        }
-        Err(e) => {
-            eprintln!("Failed to move file: {}", e);
-            None
+            return Ok(TransferResult::new(&destination, None));
         }
     }
+
+    let staged = transfer_temp_path(&destination, "move");
+    if let Err(copy_error) = copy_file_to_path(source, &staged) {
+        return Err(format!("Failed to stage file move: {}", copy_error));
+    }
+    let backup = replace_path_with_staged(&staged, &destination).map_err(|replace_error| {
+        let _ = fs::remove_file(&staged);
+        format!("Failed to finalize file move: {}", replace_error)
+    })?;
+    if let Err(remove_error) = fs::remove_file(source) {
+        let rollback_error = TransferResult::new(&destination, backup)
+            .rollback_move(source)
+            .err();
+        return Err(match rollback_error {
+            Some(rollback_error) => format!(
+                "File source cleanup failed: {}; rollback also failed: {}",
+                remove_error, rollback_error
+            ),
+            None => format!("File source cleanup failed; move was rolled back: {}", remove_error),
+        });
+    }
+
+    println!("File moved successfully: {}", destination.display());
+    Ok(TransferResult::new(&destination, backup))
 }
 
-/// copy file to dest folder, if dest file already exists, find a new name
-/// Returns the new file path if successful, or None on failure.
-pub fn copy_file(file_path: &str, dest_folder: &str) -> Option<String> {
+pub fn copy_file_with_policy(
+    file_path: &str,
+    dest_folder: &str,
+    policy: FileConflictPolicy,
+) -> Result<TransferResult, String> {
     let source = Path::new(file_path);
-    let file_name = source.file_name()?;
-    let mut destination = PathBuf::from(dest_folder);
-    destination.push(file_name);
-
-    let destination = get_unique_path(destination);
-
-    // Try to copy the file
-    match fs::copy(source, &destination) {
-        Ok(_) => {
-            println!("File copied successfully: {}", destination.display());
-            destination.to_str().map(|s| s.to_string())
-        }
-        Err(e) => {
-            eprintln!("Failed to copy file: {}", e);
-            None
-        }
+    let destination = resolve_transfer_destination(source, dest_folder, policy)?;
+    if policy == FileConflictPolicy::Replace && paths_refer_to_same_item(source, &destination) {
+        return Err("Cannot replace a file with itself".to_string());
     }
+    let staged = transfer_temp_path(&destination, "copy");
+    if let Err(copy_error) = copy_file_to_path(source, &staged) {
+        return Err(format!("Failed to copy file: {}", copy_error));
+    }
+    let backup = replace_path_with_staged(&staged, &destination).map_err(|replace_error| {
+        let _ = fs::remove_file(&staged);
+        format!("Failed to finalize file copy: {}", replace_error)
+    })?;
+
+    println!("File copied successfully: {}", destination.display());
+    Ok(TransferResult::new(&destination, backup))
 }
 
 /// Import a file into a destination folder with auto-generated name.

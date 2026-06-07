@@ -227,8 +227,8 @@
       "sort": "Trier",
       "monthly": "Mensuel",
       "daily": "Quotidien",
-      "time_asc": "Temps Crois",
-      "time_desc": "Temps Décrois"
+      "time_asc": "Temps crois",
+      "time_desc": "Temps décrois"
     }
   },
   "info_panel": {
@@ -379,7 +379,9 @@
       "rename": "Renommer",
       "move_to": "Déplacer vers...",
       "copy_to": "Copier vers...",
-      "export_to": "Exporter vers...",
+      "move_within_library": "Déplacer dans la bibliothèque...",
+      "move_to_folder": "Déplacer vers le dossier...",
+      "copy_to_folder": "Copier vers le dossier...",
       "move_to_trash": "Mettre à la corbeille",
       "delete": "Supprimer",
       "reveal_in_finder": "Afficher dans le Finder...",
@@ -391,8 +393,8 @@
     "calendar": {
       "monthly": "Mensuel",
       "daily": "Quotidien",
-      "time_asc": "Temps Crois",
-      "time_desc": "Temps Décrois"
+      "time_asc": "Temps crois",
+      "time_desc": "Temps décrois"
     },
     "search": {
       "clear_history": "Effacer historique"
@@ -523,10 +525,27 @@
       "success": "'{source}' a été copié vers '{dest}'.",
       "error": "Impossible de copier '{source}' vers '{dest}'."
     },
-    "export_to": {
-      "title": "Exporter vers le dossier",
-      "success": "'{source}' exporté vers '{dest}'.",
-      "error": "Échec de l'exportation de '{source}' vers '{dest}'."
+    "move_to_folder": {
+      "title": "Déplacer vers le dossier",
+      "confirm_title": "Déplacer hors de la bibliothèque ?",
+      "warning": "Déplacer '{source}' vers :\n{dest}\n\nCes éléments seront supprimés de la bibliothèque actuelle.",
+      "ok": "Déplacer",
+      "success": "'{source}' déplacé vers '{dest}'.",
+      "error": "Échec du déplacement de '{source}' vers '{dest}'."
+    },
+    "copy_to_folder": {
+      "title": "Copier vers le dossier",
+      "success": "'{source}' copié vers '{dest}'.",
+      "error": "Échec de la copie de '{source}' vers '{dest}'."
+    },
+    "file_conflict": {
+      "title": "Le fichier existe déjà",
+      "message": "Un élément nommé '{name}' existe déjà dans :\n{destination}",
+      "skip": "Ignorer",
+      "keep_both": "Garder les deux",
+      "replace": "Remplacer",
+      "apply_all": "Appliquer à tous les conflits",
+      "same_folder": "L'élément est déjà dans le dossier sélectionné."
     },
     "rename_file": {
       "title": "Renommer fichier",
@@ -1084,7 +1103,7 @@
         "select_none": "Tout désélectionner",
         "invert_selection": "Inverser la sélection",
         "rename_file": "Renommer le fichier",
-        "move_to": "Déplacer vers le dossier",
+        "move_to": "Déplacer des fichiers dans la bibliothèque",
         "move_to_trash": "Déplacer vers la corbeille",
         "delete_permanently": "Supprimer définitivement",
         "refresh_file_info": "Actualiser les informations du fichier",

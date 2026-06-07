@@ -522,20 +522,118 @@ impl AFolder {
             .execute(
                 "UPDATE afolders
                 SET path = CONCAT(?3, SUBSTRING(path, LENGTH(?1) + 1)), album_id = ?2
-                WHERE path LIKE ?1 || '%'",
-                params![old_path, new_album_id, new_path],
+                WHERE path = ?1 OR path LIKE ?1 || ?4",
+                params![
+                    old_path,
+                    new_album_id,
+                    new_path,
+                    format!("{}%", std::path::MAIN_SEPARATOR)
+                ],
             )
             .map_err(|e| e.to_string())?;
         Ok(result)
     }
 
+    /// Replace an existing destination folder subtree and move the source
+    /// subtree in one transaction.
+    pub fn replace_moved_folder(
+        old_path: &str,
+        new_album_id: i64,
+        new_path: &str,
+    ) -> Result<usize, String> {
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let destination_pattern = format!("{}{}%", new_path, std::path::MAIN_SEPARATOR);
+
+        let destination_folder_ids: Vec<i64> = {
+            let mut stmt = tx
+                .prepare("SELECT id FROM afolders WHERE path = ?1 OR path LIKE ?2")
+                .map_err(|e| e.to_string())?;
+            let rows = stmt
+                .query_map(params![new_path, destination_pattern], |row| row.get(0))
+                .map_err(|e| e.to_string())?;
+            rows.filter_map(|row| row.ok()).collect()
+        };
+
+        for folder_id in destination_folder_ids {
+            tx.execute("DELETE FROM afiles WHERE folder_id = ?1", params![folder_id])
+                .map_err(|e| e.to_string())?;
+        }
+        tx.execute(
+            "DELETE FROM afolders WHERE path = ?1 OR path LIKE ?2",
+            params![new_path, destination_pattern],
+        )
+        .map_err(|e| e.to_string())?;
+
+        let result = tx
+            .execute(
+                "UPDATE afolders
+                SET path = CONCAT(?3, SUBSTRING(path, LENGTH(?1) + 1)), album_id = ?2
+                WHERE path = ?1 OR path LIKE ?1 || ?4",
+                params![
+                    old_path,
+                    new_album_id,
+                    new_path,
+                    format!("{}%", std::path::MAIN_SEPARATOR)
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    pub fn replace_copied_folder(album_id: i64, folder_path: &str) -> Result<Self, String> {
+        let folder = Self::new(album_id, folder_path)?;
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let destination_pattern = format!("{}{}%", folder_path, std::path::MAIN_SEPARATOR);
+
+        let destination_folder_ids: Vec<i64> = {
+            let mut stmt = tx
+                .prepare("SELECT id FROM afolders WHERE path = ?1 OR path LIKE ?2")
+                .map_err(|e| e.to_string())?;
+            let rows = stmt
+                .query_map(params![folder_path, destination_pattern], |row| row.get(0))
+                .map_err(|e| e.to_string())?;
+            rows.filter_map(|row| row.ok()).collect()
+        };
+        for folder_id in destination_folder_ids {
+            tx.execute("DELETE FROM afiles WHERE folder_id = ?1", params![folder_id])
+                .map_err(|e| e.to_string())?;
+        }
+        tx.execute(
+            "DELETE FROM afolders WHERE path = ?1 OR path LIKE ?2",
+            params![folder_path, destination_pattern],
+        )
+        .map_err(|e| e.to_string())?;
+        tx.execute(
+            "INSERT INTO afolders
+            (album_id, name, path, created_at, modified_at, is_favorite, is_excluded_from_search)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![
+                folder.album_id,
+                folder.name,
+                folder.path,
+                folder.created_at,
+                folder.modified_at,
+                folder.is_favorite,
+                folder.is_excluded_from_search
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Self::fetch(folder_path)?
+            .ok_or_else(|| format!("Copied folder missing from DB: {}", folder_path))
+    }
+
     /// delete a folder and all its child folders and files from db
     pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
-        let conn = open_conn()?;
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
 
         // First, get all folder IDs that will be deleted (the folder itself and all children)
         let folder_ids: Vec<i64> = {
-            let mut stmt = conn
+            let mut stmt = tx
                 .prepare("SELECT id FROM afolders WHERE path = ?1 OR path LIKE ?2")
                 .map_err(|e| e.to_string())?;
 
@@ -549,7 +647,7 @@ impl AFolder {
 
         // Delete all files in those folders
         for folder_id in &folder_ids {
-            conn.execute(
+            tx.execute(
                 "DELETE FROM afiles WHERE folder_id = ?1",
                 params![folder_id],
             )
@@ -558,13 +656,14 @@ impl AFolder {
 
         // Delete the folders (the folder and all its children)
         let path_pattern = format!("{}{}%", folder_path, std::path::MAIN_SEPARATOR);
-        let result = conn
+        let result = tx
             .execute(
                 "DELETE FROM afolders WHERE path = ?1 OR path LIKE ?2",
                 params![folder_path, path_pattern],
             )
             .map_err(|e| e.to_string())?;
 
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -1499,11 +1598,41 @@ impl AFile {
 
     // delete a file from db
     pub fn delete(id: i64) -> Result<usize, String> {
-        let _ = AThumb::delete(id);
-        let conn = open_conn()?;
-        let result = conn
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        tx.execute("DELETE FROM athumbs WHERE file_id = ?1", params![id])
+            .map_err(|e| e.to_string())?;
+        let result = tx
             .execute("DELETE FROM afiles WHERE id = ?1", params![id])
             .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    pub fn replace_moved_file(
+        file_id: i64,
+        replaced_file_id: i64,
+        new_folder_id: i64,
+    ) -> Result<usize, String> {
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        tx.execute(
+            "DELETE FROM athumbs WHERE file_id = ?1",
+            params![replaced_file_id],
+        )
+        .map_err(|e| e.to_string())?;
+        tx.execute(
+            "DELETE FROM afiles WHERE id = ?1",
+            params![replaced_file_id],
+        )
+        .map_err(|e| e.to_string())?;
+        let result = tx
+            .execute(
+                "UPDATE afiles SET folder_id = ?1 WHERE id = ?2",
+                params![new_folder_id, file_id],
+            )
+            .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(result)
     }
 
@@ -4033,12 +4162,6 @@ pub struct Face {
 }
 
 impl Face {
-    /// Add a new face to the database
-    pub fn add(file_id: i64, bbox: &str, embedding: &[f32]) -> Result<i64, String> {
-        let conn = open_conn()?;
-        Self::add_with_conn(&conn, file_id, bbox, embedding)
-    }
-
     /// Add a new face using an existing connection (avoids repeated open_conn during batch indexing)
     pub fn add_with_conn(conn: &Connection, file_id: i64, bbox: &str, embedding: &[f32]) -> Result<i64, String> {
         let now = std::time::SystemTime::now()
@@ -4138,32 +4261,6 @@ impl Face {
         Ok(faces)
     }
 
-    /// Get ALL faces (for re-clustering)
-    pub fn get_all() -> Result<Vec<Self>, String> {
-        let conn = open_conn()?;
-        let mut stmt = conn
-            .prepare("SELECT id, file_id, bbox, embedding, person_id, created_at FROM faces")
-            .map_err(|e| e.to_string())?;
-
-        let faces = stmt
-            .query_map([], |row| {
-                Ok(Self {
-                    id: row.get(0)?,
-                    file_id: row.get(1)?,
-                    bbox: row.get(2)?,
-                    embedding: row.get(3)?,
-                    person_id: row.get(4)?,
-                    created_at: row.get(5)?,
-                    person_name: None,
-                })
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?;
-
-        Ok(faces)
-    }
-
     /// Get slim face data for clustering: (face_id, file_id, embedding_bytes)
     /// Avoids loading full Face structs (bbox JSON, person_id, created_at) to reduce memory
     pub fn get_all_for_clustering() -> Result<Vec<(i64, i64, Option<Vec<u8>>)>, String> {
@@ -4238,13 +4335,6 @@ impl Face {
             .map_err(|e| e.to_string())?;
 
         Ok(files)
-    }
-
-    /// Mark a file as scanned for faces
-    /// status: 1 = has faces, 2 = no faces found
-    pub fn mark_scanned(file_id: i64, status: i32) -> Result<(), String> {
-        let conn = open_conn()?;
-        Self::mark_scanned_with_conn(&conn, file_id, status)
     }
 
     /// Mark a file as scanned using an existing connection

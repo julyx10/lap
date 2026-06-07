@@ -389,7 +389,7 @@ const imgStyle = computed((): CSSProperties => {
 });
 
 const uiStore = useUIStore();
-const { locale, messages } = useI18n();
+const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
 const menuItems = useFileMenuItems(
@@ -397,6 +397,7 @@ const menuItems = useFileMenuItems(
   localeMsg,
   isMac,
   toRef(props, 'showFolderFiles'),
+  t,
   (action) => emit('action', action)
 );
 

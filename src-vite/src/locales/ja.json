@@ -379,7 +379,9 @@
       "rename": "名前を変更",
       "move_to": "移動...",
       "copy_to": "コピー...",
-      "export_to": "エクスポート...",
+      "move_within_library": "ライブラリ内で移動...",
+      "move_to_folder": "フォルダに移動...",
+      "copy_to_folder": "フォルダにコピー...",
       "move_to_trash": "ゴミ箱に入れる",
       "delete": "削除",
       "reveal_in_finder": "Finderで表示...",
@@ -523,10 +525,27 @@
       "success": "'{source}' を '{dest}' にコピーしました。",
       "error": "'{source}' を '{dest}' にコピーできませんでした。"
     },
-    "export_to": {
-      "title": "フォルダにエクスポート",
-      "success": "'{source}' を '{dest}' にエクスポートしました。",
-      "error": "'{source}' の '{dest}' へのエクスポートに失敗しました。"
+    "move_to_folder": {
+      "title": "フォルダに移動",
+      "confirm_title": "ライブラリ外に移動しますか？",
+      "warning": "'{source}' を次に移動:\n{dest}\n\nこれらのアイテムは現在のライブラリから削除されます。",
+      "ok": "移動",
+      "success": "'{source}' を '{dest}' に移動しました。",
+      "error": "'{source}' の '{dest}' への移動に失敗しました。"
+    },
+    "copy_to_folder": {
+      "title": "フォルダにコピー",
+      "success": "'{source}' を '{dest}' にコピーしました。",
+      "error": "'{source}' の '{dest}' へのコピーに失敗しました。"
+    },
+    "file_conflict": {
+      "title": "ファイルが既に存在します",
+      "message": "'{name}' というアイテムが既に存在します:\n{destination}",
+      "skip": "スキップ",
+      "keep_both": "両方保持",
+      "replace": "置き換え",
+      "apply_all": "すべての競合に適用",
+      "same_folder": "アイテムは既に選択されたフォルダにあります。"
     },
     "rename_file": {
       "title": "ファイル名を変更",
@@ -1084,7 +1103,7 @@
         "select_none": "すべて選択解除",
         "invert_selection": "選択を反転",
         "rename_file": "ファイル名を変更",
-        "move_to": "フォルダに移動",
+        "move_to": "ライブラリ内でファイルを移動",
         "move_to_trash": "ゴミ箱に移動",
         "delete_permanently": "完全に削除",
         "refresh_file_info": "ファイル情報を更新",

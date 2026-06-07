@@ -12,9 +12,7 @@ import {
   IconRotate,
   IconCopy,
   IconRename,
-  IconMoveTo,
-  IconCopyTo,
-  IconDownload,
+  IconMove,
   IconTrash,
   IconComment,
   IconPhotoSearch,
@@ -29,6 +27,7 @@ export const useFileMenuItems = (
   localeMsg: Ref<any>,
   isMac: boolean,
   showFolderFiles: Ref<boolean>,
+  translate: (key: string) => string,
   onAction: (action: string) => void
 ) => {
   return computed(() => {
@@ -172,20 +171,18 @@ export const useFileMenuItems = (
         action: createAction('rename')
       },
       {
-        label: localeMsg.value.menu.file.move_to,
-        icon: markRaw(IconMoveTo),
+        label: translate('menu.file.move_within_library'),
+        icon: markRaw(IconMove),
         shortcut: shortcut('file.moveTo'),
-        action: createAction('move-to')
+        action: createAction('move-within-library')
       },
       {
-        label: localeMsg.value.menu.file.copy_to,
-        icon: markRaw(IconCopyTo),
-        action: createAction('copy-to')
+        label: translate('menu.file.move_to'),
+        action: createAction('move-to-folder')
       },
       {
-        label: localeMsg.value.menu.file.export_to,
-        icon: markRaw(IconDownload),
-        action: createAction('export-to')
+        label: translate('menu.file.copy_to'),
+        action: createAction('copy-to-folder')
       },
       {
         label: localeMsg.value.menu.file.copy,
