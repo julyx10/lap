@@ -361,9 +361,7 @@
       "include_in_search": "검색에 포함",
       "exclude_from_search": "검색에서 제외",
       "remove": "앨범 제거",
-      "refresh": "폴더 새로고침",
-      "reorder": "순서 변경",
-      "reorder_exit": "순서 변경 종료"
+      "refresh": "폴더 새로고침"
     },
     "file": {
       "new_folder": "새 폴더...",

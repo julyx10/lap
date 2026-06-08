@@ -361,9 +361,7 @@
       "include_in_search": "Incluir en búsqueda",
       "exclude_from_search": "Excluir de búsqueda",
       "remove": "Eliminar álbum",
-      "refresh": "Actualizar carpeta",
-      "reorder": "Reordenar",
-      "reorder_exit": "Salir de reordenar"
+      "refresh": "Actualizar carpeta"
     },
     "file": {
       "new_folder": "Nueva carpeta...",

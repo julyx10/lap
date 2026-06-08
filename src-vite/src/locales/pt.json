@@ -361,9 +361,7 @@
       "include_in_search": "Incluir na pesquisa",
       "exclude_from_search": "Excluir da pesquisa",
       "remove": "Remover álbum",
-      "refresh": "Atualizar pasta",
-      "reorder": "Reordenar",
-      "reorder_exit": "Sair de reordenar"
+      "refresh": "Atualizar pasta"
     },
     "file": {
       "new_folder": "Nova pasta...",

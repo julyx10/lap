@@ -113,7 +113,6 @@
                 :key="libraryVersion"
                 :is="buttons[config.main.sidebarIndex].component" 
                 :titlebar="buttons[config.main.sidebarIndex].text"
-                @editDataChanged="onEditDataChanged"
               />
             </div>
           </div>
@@ -202,7 +201,6 @@ import {
   IconPhotoAll,
 } from '@/common/icons';
 
-const isAlbumReorderMode = ref(false);
 const isSwitchingLibrary = ref(false);
 const libraryVersion = ref(0);
 const libraryEmpty = ref(false);
@@ -627,11 +625,5 @@ async function clickSettings(tabIndex?: number) {
 function getSettingsWindowScale() {
   return SCALE_VALUES.find((item) => item === Number(config.settings.scale)) ?? 1;
 }
-
-const onEditDataChanged = (isEdit: boolean) => {
-  if (config.main.sidebarIndex === 0) { // Album tab
-    isAlbumReorderMode.value = isEdit;
-  }
-};
 
 </script>

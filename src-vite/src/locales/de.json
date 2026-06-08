@@ -361,9 +361,7 @@
       "include_in_search": "In Suche einbeziehen",
       "exclude_from_search": "Vom Suchen ausschließen",
       "remove": "Album entfernen",
-      "refresh": "Ordner aktualisieren",
-      "reorder": "Neu ordnen",
-      "reorder_exit": "Neu ordnen beenden"
+      "refresh": "Ordner aktualisieren"
     },
     "file": {
       "new_folder": "Neuer Ordner...",

@@ -361,9 +361,7 @@
       "include_in_search": "Include in search",
       "exclude_from_search": "Exclude from search",
       "remove": "Remove album",
-      "refresh": "Refresh folder",
-      "reorder": "Reorder",
-      "reorder_exit": "Exit reorder"
+      "refresh": "Refresh folder"
     },
     "file": {
       "new_folder": "New folder...",

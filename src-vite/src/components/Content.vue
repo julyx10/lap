@@ -1,7 +1,7 @@
 <template>
 
   <div class="relative flex-1 flex flex-col select-none"
-    :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('AlbumList-edit') }"
+    :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('ManageLibraries') }"
     @mousedown.capture="activateContentPane"
     @mouseenter="isContentHovered = true"
     @mouseleave="isContentHovered = false"
@@ -1243,7 +1243,7 @@ function hasExternalDragIntent(event: DragEvent) {
 }
 
 function isInternalReorderActive() {
-  return uiStore.isInputActive('ManageLibraries') || uiStore.isInputActive('AlbumList-edit');
+  return uiStore.isInputActive('ManageLibraries');
 }
 
 function markContentInternalDrag() {

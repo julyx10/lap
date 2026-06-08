@@ -361,9 +361,7 @@
       "include_in_search": "検索に含める",
       "exclude_from_search": "検索から除外",
       "remove": "アルバムを削除",
-      "refresh": "フォルダーを更新",
-      "reorder": "並べ替え",
-      "reorder_exit": "並べ替え終了"
+      "refresh": "フォルダーを更新"
     },
     "file": {
       "new_folder": "新しいフォルダー...",

@@ -14,37 +14,28 @@
       <div v-if="isMainPane" class="sidebar-panel-header">
         <span class="sidebar-panel-header-title flex-1">{{ $t('album.album_list') }}</span>
         <TButton
-          v-if="isEditList"
-          :icon="IconRestore"
+          :icon="IconAdd"
           :buttonSize="'small'"
-          :selected="true"
-          @click="clickCloseEditList"
+          :tooltip="$t('menu.album.add')"
+          @click="clickNewAlbum"
         />
-        <template v-else>
-          <TButton
-            :icon="IconAdd"
-            :buttonSize="'small'"
-            :tooltip="$t('menu.album.add')"
-            @click="clickNewAlbum"
-          />
-        </template>
       </div>
-      
+
       <!-- drag to change albums' display order -->
-      <VueDraggable 
-        v-model="albums" 
-        :disabled="!isMainPane || !isEditList"
+      <VueDraggable
+        v-model="albums"
+        :disabled="!isMainPane"
         group="album-folder"
-        :handle="'.drag-handle'" 
+        :handle="'.album-drag-handle'"
         :animation="200"
         @start="onDragStart"
-        @end="onDragEnd" 
+        @end="onDragEnd"
       >
         <li v-for="album in albums" :key="album.id" :data-album-id="album.id">
-          <div 
+          <div
             :class="[
-              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out', 
-              selection.albumId.value === album.id && !isEditList 
+              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out album-drag-handle',
+              selection.albumId.value === album.id
                 ? (selection.selected.value ? 'text-primary bg-base-100 hover:bg-base-100' : 'text-primary')
                 : 'hover:text-base-content hover:bg-base-100/30',
             ]"
@@ -62,9 +53,9 @@
             </div>
             <div v-else class="skeleton w-10 h-10 mr-2 shrink-0"></div>
 
-            <div class="flex flex-col overflow-hidden" :class="{'text-base-content/30': isEditList }">  
+            <div class="flex flex-col overflow-hidden">
               <div class="overflow-hidden whitespace-pre text-ellipsis">
-                {{ album.name }} 
+                {{ album.name }}
               </div>
               <div v-if="album.description" class="text-xs overflow-hidden whitespace-nowrap text-ellipsis">
                 {{ album.description }}
@@ -95,7 +86,7 @@
             </div>  
 
             <div class="flex flex-row items-center text-base-content/30">
-              <div v-if="isMainPane && !isEditList"
+              <div v-if="isMainPane"
                 :class="[
                   selection.albumId.value === album.id && selection.selected.value ? '' : 'hidden group-hover:block'
                 ]"
@@ -106,14 +97,6 @@
                   :smallIcon="true"
                 />
               </div>
-              <!-- dragging handle -->
-              <div v-if="isEditList" class="drag-handle">
-                <TButton 
-                  :icon="IconDragHandle"
-                  :buttonSize="'small'"
-                  :selected="true"
-                />
-              </div>
             </div>
           </div>
           <transition
@@ -122,7 +105,7 @@
             enter-to-class="max-h-96"
           >
             <div
-              v-if="album.is_expanded && !isEditList && getAlbumQueueIndex(album.id, libConfig.index.albumQueue as any[]) === -1"
+              v-if="album.is_expanded && getAlbumQueueIndex(album.id, libConfig.index.albumQueue as any[]) === -1"
               class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5 shadow-sm"
             >
               <AlbumFolder 
@@ -202,10 +185,8 @@ import TButton from '@/components/TButton.vue';
 import {
   IconAdd,
   IconMore,
-  IconDragHandle,
   IconEdit,
   IconRemove,
-  IconRestore,
   IconUpdate,
   IconUpdateOff,
   IconUpdateDot,
@@ -218,8 +199,6 @@ const props = withDefaults(defineProps<{
 }>(), {
   showTotalCount: true,
 });
-
-const emit = defineEmits(['editDataChanged']);
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -235,8 +214,6 @@ const selection = useAlbumSelectionProvider(
   }
 );
 
-let unlistenKeydown: () => void;
-
 let unlistenAlbumCoverChanged: () => void;
 let unlistenExpandAlbumFolder: (() => void) | undefined;
 let unlistenIndexProgress: (() => void) | undefined;
@@ -247,14 +224,6 @@ let unlistenAlbumsRefreshed: (() => void) | undefined;
 const isMainPane = computed(() => props.selectionSource === 'album');
 const albumListRootRef = ref<HTMLElement | null>(null);
 
-const panelMenuItems = computed(() => [
-  {
-    label: localeMsg.value.menu.album.reorder || 'Reorder',
-    icon: IconDragHandle,
-    action: () => clickReorder(),
-  },
-]);
-
 // message boxes
 const showAlbumEdit = ref(false);           // show edit album
 const showRemoveAlbumMsgbox = ref(false);   // show remove album
@@ -263,7 +232,6 @@ const albums = ref<Album[]>([]);
 const albumCovers = ref<Record<number, string>>({});
 const isNewAlbum = ref(false);
 const editingAlbumId = ref(0);
-const isEditList = ref(false);  // edit album list
 const isLoading = ref(true);    // loading albums
 const isDragging = ref(false);  // dragging albums
 
@@ -342,11 +310,6 @@ const getMoreMenuItems = (album: any) => {
       action: () => {}
     },
     {
-      label: localeMsg.value.menu.album.reorder || 'Reorder',
-      icon: IconDragHandle,
-      action: () => clickReorder(),
-    },
-    {
       label: localeMsg.value.menu.album.remove,
       icon: IconRemove,
       action: () => {
@@ -385,8 +348,6 @@ const loadAlbumCovers = async () => {
 };
 
 onMounted( async () => {
-  unlistenKeydown = await listen('global-keydown', handleKeyDown);
-
   if (albums.value.length === 0) {
     albums.value = await getAllAlbums();
     await loadAlbumCovers();
@@ -503,7 +464,6 @@ watch(() => config.settings.folderSort, async () => {
 });
 
 onBeforeUnmount(() => {
-  if (unlistenKeydown) unlistenKeydown();
   if (unlistenAlbumCoverChanged) unlistenAlbumCoverChanged();
   if (unlistenExpandAlbumFolder) unlistenExpandAlbumFolder();
   if (unlistenIndexProgress) unlistenIndexProgress();
@@ -664,10 +624,6 @@ const clickRemoveAlbum = async () => {
 
 /// click a album to select it
 const clickAlbum = async (album: Album) => {
-  if(isEditList.value) {
-    return;
-  }
-
   if (isMainPane.value) {
     uiStore.setActivePane('left-sidebar');
   }
@@ -747,7 +703,7 @@ const focusExpandedFolderTree = async (albumId: number) => {
 };
 
 const shouldHandleAlbumListNavigation = (key: string) => {
-  if (uiStore.inputStack.length > 0 || isEditList.value || isDragging.value) return false;
+  if (uiStore.inputStack.length > 0 || isDragging.value) return false;
   if (isMainPane.value && uiStore.activePane !== 'left-sidebar') return false;
   if (document.activeElement !== albumListRootRef.value) return false;
 
@@ -858,34 +814,13 @@ const onDragEnd = async () => {
   }
 }
 
-const clickCloseEditList = () => {
-  isEditList.value = false;
-  uiStore.removeInputHandler('AlbumList-edit');
-  emit('editDataChanged', false);
-};
-
-const clickReorder = () => {
-  isEditList.value = true;
-  uiStore.pushInputHandler('AlbumList-edit');
-  emit('editDataChanged', true);
-};
-
-const handleKeyDown = (event: { payload: { key: string } }) => {
-  if (isEditList.value && event.payload.key === 'Escape') {
-    clickCloseEditList();
-  }
-};
-
 // Expose methods
-defineExpose({ 
+defineExpose({
   albums,
-  isEditList,
   clickNewAlbum,
   openAlbumEdit,
   refreshAlbums,
   clickFinalSubFolder,
-  clickReorder,
-  clickCloseEditList,
 });
 
 </script>
