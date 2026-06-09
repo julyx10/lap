@@ -447,6 +447,13 @@
       "content": "Tem certeza que deseja excluir '{person}'?",
       "ok": "Excluir"
     },
+    "drop_import": {
+      "title": "Não é possível importar arquivos",
+      "message": "Selecione primeiro uma pasta de álbum. Os arquivos só podem ser importados para uma pasta de álbum específica.",
+      "success": "{count} arquivo(s) importado(s)",
+      "overlay": "Solte os arquivos para importar",
+      "no_files": "Nenhum arquivo pôde ser importado. Certifique-se de soltar arquivos de imagem."
+    },
     "manage_libraries": {
       "title": "Gerenciar bibliotecas",
       "name": "Nome",
@@ -496,20 +503,6 @@
       "ok": "Criar",
       "error": "Falha ao criar a pasta."
     },
-    "delete_folder": {
-      "title": "Excluir pasta",
-      "content": "'{folder}' e conteúdo serão excluídos.",
-      "ok": "Excluir",
-      "success": "'{folder}' excluída.",
-      "error": "Falha ao excluir a pasta."
-    },
-    "trash_folder": {
-      "title": "Mover para lixeira",
-      "content": "'{folder}' irá para a lixeira.",
-      "ok": "Lixeira",
-      "success": "'{folder}' movida para a lixeira.",
-      "error": "Falha ao mover a pasta para a lixeira."
-    },
     "move_to": {
       "title": "Mover '{source}' para",
       "content": "Selecione o destino:",
@@ -552,47 +545,32 @@
       "ok": "Renomear",
       "error": "Falha ao renomear o arquivo."
     },
-    "delete_file": {
-      "title": "Excluir arquivo",
-      "content": "O arquivo '{file}' será excluído.",
-      "ok": "Excluir",
-      "success": "'{file}' excluído.",
-      "error": "Falha ao excluir o arquivo."
-    },
-    "delete_files": {
-      "title": "Excluir arquivos",
-      "content": "{count} arquivos serão excluídos.",
-      "ok": "Excluir tudo",
-      "success": "{count} arquivos excluídos.",
-      "error": "Falha ao excluir os arquivos selecionados."
-    },
-    "trash_file": {
-      "title": "Mover para lixeira",
-      "content": "O arquivo '{file}' irá para a lixeira.",
-      "ok": "Lixeira",
-      "success": "'{file}' na lixeira.",
-      "error": "Falha ao mover o arquivo para a lixeira."
-    },
-    "trash_files": {
-      "title": "Mover para lixeira",
-      "content": "{count} arquivos irão para a lixeira.",
-      "ok": "Lixeira",
-      "success": "{count} arquivos na lixeira.",
-      "error": "Falha ao mover os arquivos selecionados para a lixeira."
+    "move_to_trash": {
+      "title": "Mover para o lixo",
+      "file_content": "O arquivo '{file}' será movido para o lixo.",
+      "files_content": "{count} arquivos selecionados serão movidos para o lixo.",
+      "folder_content": "A pasta '{folder}' será movida para o lixo.",
+      "ok": "Mover",
+      "file_success": "O arquivo '{file}' foi movido para o lixo.",
+      "files_success": "{count} arquivos selecionados foram movidos para o lixo.",
+      "folder_success": "A pasta '{folder}' foi movida para o lixo.",
+      "file_error": "Falha ao mover o arquivo para o lixo.",
+      "files_error": "Falha ao mover os arquivos selecionados para o lixo.",
+      "folder_error": "Falha ao mover a pasta para o lixo."
     },
     "permanent_delete": {
-      "checkbox": "Excluir permanentemente (não pode ser desfeito)",
-      "hint": "Isso remove os arquivos do disco sem usar a lixeira.",
-      "file_title": "Excluir permanentemente",
-      "files_title": "Excluir permanentemente",
+      "title": "Excluir permanentemente",
       "file_content": "O arquivo '{file}' será excluído permanentemente.",
       "files_content": "{count} arquivos selecionados serão excluídos permanentemente.",
-      "ok_file": "Excluir permanentemente",
-      "ok_files": "Excluir permanentemente",
+      "folder_content": "A pasta '{folder}' será excluída permanentemente.",
+      "checkbox": "Excluir permanentemente (não pode ser desfeito)",
+      "ok": "Excluir",
       "file_success": "O arquivo '{file}' foi excluído permanentemente.",
       "files_success": "{count} arquivos selecionados foram excluídos permanentemente.",
+      "folder_success": "A pasta '{folder}' foi excluída permanentemente.",
       "file_error": "Falha ao excluir o arquivo permanentemente.",
-      "files_error": "Falha ao excluir permanentemente os arquivos selecionados."
+      "files_error": "Falha ao excluir permanentemente os arquivos selecionados.",
+      "folder_error": "Falha ao excluir permanentemente a pasta."
     },
     "new_tag": {
       "title": "Nova tag",
@@ -715,13 +693,6 @@
       "overwrite": "Sobrescrever",
       "save_as_new": "Salvar como",
       "overwrite_confirm": "Sobrescrever arquivo original? Irreversível."
-    },
-    "drop_import": {
-      "title": "Não é possível importar arquivos",
-      "message": "Selecione primeiro uma pasta de álbum. Os arquivos só podem ser importados para uma pasta de álbum específica.",
-      "success": "{count} arquivo(s) importado(s)",
-      "overlay": "Solte os arquivos para importar",
-      "no_files": "Nenhum arquivo pôde ser importado. Certifique-se de soltar arquivos de imagem."
     }
   },
   "file_info": {

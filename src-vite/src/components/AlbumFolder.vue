@@ -98,13 +98,16 @@
   <!-- trash folder -->
   <MessageBox
     v-if="showTrashFolderMsgbox"
-    :title="$t('msgbox.trash_folder.title')"
-    :message="`${$t('msgbox.trash_folder.content', { folder: selectedFolder?.name })}`"
-    :OkText="$t('msgbox.trash_folder.ok')"
+    :title="trashFolderDialogTitle"
+    :message="trashFolderDialogMessage"
+    :OkText="trashFolderDialogOkText"
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
+    :checkboxText="$t('msgbox.permanent_delete.checkbox')"
+    :checkboxChecked="deletePermanently"
     @ok="clickTrashFolder"
     @cancel="showTrashFolderMsgbox = false"
+    @checkbox-change="deletePermanently = $event"
   />
 
   <!-- move within library -->
@@ -134,7 +137,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isMac, shortenFilename, isValidFileName, getFolderPath, getFullPath, normalizePathForCompare, isWithinRootPath } from '@/common/utils';
-import { createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary, copyFolder, checkFileExists, revealPath, deleteFolder } from '@/common/api';
+import { createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary, copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently } from '@/common/api';
 import { recountAlbum, setFolderFavorite, setFolderSearchExcluded } from '@/common/api';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelection } from '@/composables/useAlbumSelection';
@@ -206,6 +209,22 @@ const getFolderByPath = (children: Folder[] | undefined, path: string): Folder |
 
 const selectedFolder = computed(() => getFolderByPath(props.children, selection.folderPath.value));
 
+const trashFolderDialogTitle = computed(() =>
+  deletePermanently.value
+    ? t('msgbox.permanent_delete.title')
+    : t('msgbox.move_to_trash.title')
+);
+const trashFolderDialogOkText = computed(() =>
+  deletePermanently.value
+    ? t('msgbox.permanent_delete.ok')
+    : t('msgbox.move_to_trash.ok')
+);
+const trashFolderDialogMessage = computed(() =>
+  deletePermanently.value
+    ? t('msgbox.permanent_delete.folder_content', { folder: selectedFolder.value?.name || '' })
+    : t('msgbox.move_to_trash.folder_content', { folder: selectedFolder.value?.name || '' })
+);
+
 // rename folder
 const isRenamingFolder = ref(false);
 const folderInputRef = ref<HTMLInputElement[]>([]);     // input text box ref
@@ -215,6 +234,8 @@ const originalFolderName = ref(''); // restore original folder name when cancel 
 const showNewFolderMsgbox = ref(false);
 const showTrashFolderMsgbox = ref(false);
 const showMoveTo = ref(false);
+const permanentDeleteChecked = ref(false);
+const deletePermanently = ref(false);
 type FileConflictPolicy = 'skip' | 'keep_both' | 'replace';
 const fileConflictDialog = ref({
   show: false,
@@ -314,6 +335,7 @@ const getMenuItemsForFolder = (folder: any) => {
       icon: IconTrash,
       disabled: isRoot,
       action: () => {
+        deletePermanently.value = permanentDeleteChecked.value;
         showTrashFolderMsgbox.value = true;
       }
     },
@@ -728,10 +750,12 @@ const clickCopyToFolder = async () => {
   }
 };
 
-/// trash selected folder
+/// trash or permanently delete selected folder
 const clickTrashFolder = async () => {
   const folderName = selectedFolder.value?.name || '';
-  const isDeleted = await deleteFolder(selection.folderPath.value);
+  permanentDeleteChecked.value = deletePermanently.value;
+  const deleteFn = deletePermanently.value ? deleteFolderPermanently : deleteFolder;
+  const isDeleted = await deleteFn(selection.folderPath.value);
   if (isDeleted) {
     const deletedFolderPath = selection.folderPath.value;
 
@@ -758,11 +782,16 @@ const clickTrashFolder = async () => {
 
     showTrashFolderMsgbox.value = false;
     toast.success(
-      localeMsg.value.msgbox.trash_folder.success.replace('{folder}', folderName)
+      deletePermanently.value
+        ? t('msgbox.permanent_delete.folder_success', { folder: folderName })
+        : t('msgbox.move_to_trash.folder_success', { folder: folderName })
     );
   } else {
-    console.log('AlbumFolder.vue-clickTrashFolder', localeMsg.value.msgbox.trash_folder.error);
-    toast.error(localeMsg.value.msgbox.trash_folder.error);
+    toast.error(
+      deletePermanently.value
+        ? t('msgbox.permanent_delete.folder_error')
+        : t('msgbox.move_to_trash.folder_error')
+    );
   }
 };
 

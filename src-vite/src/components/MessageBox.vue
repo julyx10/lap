@@ -1,12 +1,12 @@
 <template>
   <ModalDialog :title="title" :width="400" @cancel="clickCancel">
-    <div v-if="message" class="text-sm whitespace-pre-line wrap-break-word">
+    <div v-if="message" class="text-sm whitespace-pre-line wrap-break-word select-none">
       {{ message }}
     </div>
 
     <label
       v-if="checkboxText"
-      class="mt-3 flex items-start gap-2 text-sm cursor-pointer"
+      class="mt-3 flex items-start gap-2 text-sm cursor-pointer select-none"
     >
       <input
         v-model="checkboxValue"
@@ -16,10 +16,6 @@
       />
       <span class="leading-5">{{ checkboxText }}</span>
     </label>
-
-    <p v-if="checkboxHint && checkboxValue" class="mt-2 text-xs text-error whitespace-pre-line">
-      {{ checkboxHint }}
-    </p>
 
     <div class="flex flex-row items-center text-sm">
       <input v-if="showInput && !multiLine"
@@ -134,10 +130,6 @@ const props = defineProps({
     default: false
   },
   checkboxText: {
-    type: String,
-    default: ''
-  },
-  checkboxHint: {
     type: String,
     default: ''
   },

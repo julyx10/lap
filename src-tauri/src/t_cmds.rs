@@ -461,13 +461,22 @@ pub fn copy_folder(
     transfer.finalize()
 }
 
-/// delete a folder
+/// delete a folder (move to trash)
 #[tauri::command]
 pub fn delete_folder(folder_path: &str) -> Result<usize, String> {
     // trash the folder
     t_utils::trash_path(folder_path)?;
 
     // delete the folder and all children from db
+    AFolder::delete_folder(folder_path)
+        .map_err(|e| format!("Error while deleting folder from DB: {}", e))
+}
+
+/// permanently delete a folder (skip trash)
+#[tauri::command]
+pub fn delete_folder_permanently(folder_path: &str) -> Result<usize, String> {
+    t_utils::delete_folder_permanently(folder_path)?;
+
     AFolder::delete_folder(folder_path)
         .map_err(|e| format!("Error while deleting folder from DB: {}", e))
 }

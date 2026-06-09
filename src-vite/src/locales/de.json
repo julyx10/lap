@@ -447,6 +447,13 @@
       "content": "Sicher, dass Sie '{person}' löschen wollen?",
       "ok": "Löschen"
     },
+    "drop_import": {
+      "title": "Import nicht möglich",
+      "message": "Bitte wähle zuerst einen Albumordner aus. Dateien können nur in einen bestimmten Albumordner importiert werden.",
+      "success": "{count} Datei(en) importiert",
+      "overlay": "Dateien zum Importieren ablegen",
+      "no_files": "Keine Dateien konnten importiert werden. Stelle sicher, dass du Bilddateien ablegst."
+    },
     "manage_libraries": {
       "title": "Bibliotheken verwalten",
       "name": "Name",
@@ -496,20 +503,6 @@
       "ok": "Erstellen",
       "error": "Ordner konnte nicht erstellt werden."
     },
-    "delete_folder": {
-      "title": "Ordner löschen",
-      "content": "'{folder}' und Inhalt werden gelöscht.",
-      "ok": "Löschen",
-      "success": "'{folder}' gelöscht.",
-      "error": "Ordner konnte nicht gelöscht werden."
-    },
-    "trash_folder": {
-      "title": "In Papierkorb",
-      "content": "'{folder}' wird in den Papierkorb verschoben.",
-      "ok": "Papierkorb",
-      "success": "'{folder}' in Papierkorb.",
-      "error": "Ordner konnte nicht in den Papierkorb verschoben werden."
-    },
     "move_to": {
       "title": "Verschiebe '{source}' nach",
       "content": "Zielordner wählen:",
@@ -552,47 +545,32 @@
       "ok": "Umbenennen",
       "error": "Datei konnte nicht umbenannt werden."
     },
-    "delete_file": {
-      "title": "Datei löschen",
-      "content": "'{file}' wird gelöscht.",
-      "ok": "Löschen",
-      "success": "'{file}' gelöscht.",
-      "error": "Datei konnte nicht gelöscht werden."
-    },
-    "delete_files": {
-      "title": "Dateien löschen",
-      "content": "{count} Dateien werden gelöscht.",
-      "ok": "Alle löschen",
-      "success": "{count} Dateien gelöscht.",
-      "error": "Ausgewählte Dateien konnten nicht gelöscht werden."
-    },
-    "trash_file": {
-      "title": "In Papierkorb",
-      "content": "'{file}' wird in den Papierkorb verschoben.",
-      "ok": "Papierkorb",
-      "success": "'{file}' in Papierkorb.",
-      "error": "Datei konnte nicht in den Papierkorb verschoben werden."
-    },
-    "trash_files": {
-      "title": "In Papierkorb",
-      "content": "{count} Dateien werden in den Papierkorb verschoben.",
-      "ok": "Papierkorb",
-      "success": "{count} Dateien in Papierkorb.",
-      "error": "Ausgewählte Dateien konnten nicht in den Papierkorb verschoben werden."
+    "move_to_trash": {
+      "title": "In Papierkorb verschieben",
+      "file_content": "Die Datei '{file}' wird in den Papierkorb verschoben.",
+      "files_content": "{count} ausgewählte Dateien werden in den Papierkorb verschoben.",
+      "folder_content": "Der Ordner '{folder}' wird in den Papierkorb verschoben.",
+      "ok": "In Papierkorb",
+      "file_success": "Die Datei '{file}' wurde in den Papierkorb verschoben.",
+      "files_success": "{count} ausgewählte Dateien wurden in den Papierkorb verschoben.",
+      "folder_success": "Der Ordner '{folder}' wurde in den Papierkorb verschoben.",
+      "file_error": "Datei konnte nicht in den Papierkorb verschoben werden.",
+      "files_error": "Ausgewählte Dateien konnten nicht in den Papierkorb verschoben werden.",
+      "folder_error": "Ordner konnte nicht in den Papierkorb verschoben werden."
     },
     "permanent_delete": {
-      "checkbox": "Endgültig löschen (kann nicht rückgängig gemacht werden)",
-      "hint": "Dateien werden direkt vom Datenträger gelöscht, ohne den Papierkorb zu verwenden.",
-      "file_title": "Endgültig löschen",
-      "files_title": "Endgültig löschen",
+      "title": "Endgültig löschen",
       "file_content": "Die Datei '{file}' wird endgültig gelöscht.",
       "files_content": "{count} ausgewählte Dateien werden endgültig gelöscht.",
-      "ok_file": "Endgültig löschen",
-      "ok_files": "Endgültig löschen",
+      "folder_content": "Der Ordner '{folder}' wird endgültig gelöscht.",
+      "checkbox": "Endgültig löschen (kann nicht rückgängig gemacht werden)",
+      "ok": "Löschen",
       "file_success": "Die Datei '{file}' wurde endgültig gelöscht.",
       "files_success": "{count} ausgewählte Dateien wurden endgültig gelöscht.",
+      "folder_success": "Der Ordner '{folder}' wurde endgültig gelöscht.",
       "file_error": "Datei konnte nicht endgültig gelöscht werden.",
-      "files_error": "Ausgewählte Dateien konnten nicht endgültig gelöscht werden."
+      "files_error": "Ausgewählte Dateien konnten nicht endgültig gelöscht werden.",
+      "folder_error": "Ordner konnte nicht endgültig gelöscht werden."
     },
     "new_tag": {
       "title": "Neuer Tag",
@@ -715,13 +693,6 @@
       "overwrite": "Überschreiben",
       "save_as_new": "Speichern unter",
       "overwrite_confirm": "Originaldatei überschreiben? Kann nicht rückgängig gemacht werden."
-    },
-    "drop_import": {
-      "title": "Import nicht möglich",
-      "message": "Bitte wähle zuerst einen Albumordner aus. Dateien können nur in einen bestimmten Albumordner importiert werden.",
-      "success": "{count} Datei(en) importiert",
-      "overlay": "Dateien zum Importieren ablegen",
-      "no_files": "Keine Dateien konnten importiert werden. Stelle sicher, dass du Bilddateien ablegst."
     }
   },
   "file_info": {

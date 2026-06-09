@@ -447,6 +447,13 @@
       "content": "Supprimer '{person}' ?",
       "ok": "Supprimer"
     },
+    "drop_import": {
+      "title": "Importation impossible",
+      "message": "Veuillez d'abord sélectionner un dossier d'album. Les fichiers ne peuvent être importés que dans un dossier d'album spécifique.",
+      "success": "{count} fichier(s) importé(s)",
+      "overlay": "Déposez les fichiers pour les importer",
+      "no_files": "Aucun fichier n'a pu être importé. Assurez-vous de déposer des fichiers image."
+    },
     "manage_libraries": {
       "title": "Gérer bibliothèques",
       "name": "Nom",
@@ -496,20 +503,6 @@
       "ok": "Créer",
       "error": "Impossible de créer le dossier."
     },
-    "delete_folder": {
-      "title": "Supprimer dossier",
-      "content": "'{folder}' et son contenu seront supprimés.",
-      "ok": "Supprimer",
-      "success": "'{folder}' supprimé.",
-      "error": "Impossible de supprimer le dossier."
-    },
-    "trash_folder": {
-      "title": "Mettre à la corbeille",
-      "content": "'{folder}' ira à la corbeille.",
-      "ok": "Corbeille",
-      "success": "'{folder}' mis à la corbeille.",
-      "error": "Impossible de mettre le dossier à la corbeille."
-    },
     "move_to": {
       "title": "Déplacer '{source}' vers",
       "content": "Choisir destination:",
@@ -552,47 +545,32 @@
       "ok": "Renommer",
       "error": "Impossible de renommer le fichier."
     },
-    "delete_file": {
-      "title": "Supprimer fichier",
-      "content": "'{file}' sera supprimé.",
-      "ok": "Supprimer",
-      "success": "'{file}' supprimé.",
-      "error": "Impossible de supprimer le fichier."
-    },
-    "delete_files": {
-      "title": "Supprimer fichiers",
-      "content": "{count} fichiers seront supprimés.",
-      "ok": "Supprimer tout",
-      "success": "{count} fichiers supprimés.",
-      "error": "Impossible de supprimer les fichiers sélectionnés."
-    },
-    "trash_file": {
+    "move_to_trash": {
       "title": "Mettre à la corbeille",
-      "content": "'{file}' ira à la corbeille.",
-      "ok": "Corbeille",
-      "success": "'{file}' mis à la corbeille.",
-      "error": "Impossible de mettre le fichier à la corbeille."
-    },
-    "trash_files": {
-      "title": "Mettre à la corbeille",
-      "content": "{count} fichiers iront à la corbeille.",
-      "ok": "Corbeille",
-      "success": "{count} fichiers mis à la corbeille.",
-      "error": "Impossible de mettre les fichiers sélectionnés à la corbeille."
+      "file_content": "Le fichier '{file}' sera mis à la corbeille.",
+      "files_content": "{count} fichiers sélectionnés seront mis à la corbeille.",
+      "folder_content": "Le dossier '{folder}' sera mis à la corbeille.",
+      "ok": "Mettre",
+      "file_success": "Le fichier '{file}' a été mis à la corbeille.",
+      "files_success": "{count} fichiers sélectionnés ont été mis à la corbeille.",
+      "folder_success": "Le dossier '{folder}' a été mis à la corbeille.",
+      "file_error": "Impossible de mettre le fichier à la corbeille.",
+      "files_error": "Impossible de mettre les fichiers sélectionnés à la corbeille.",
+      "folder_error": "Impossible de mettre le dossier à la corbeille."
     },
     "permanent_delete": {
-      "checkbox": "Supprimer définitivement (action irréversible)",
-      "hint": "Les fichiers seront supprimés du disque sans passer par la corbeille.",
-      "file_title": "Supprimer définitivement",
-      "files_title": "Supprimer définitivement",
+      "title": "Supprimer définitivement",
       "file_content": "Le fichier '{file}' sera supprimé définitivement.",
       "files_content": "{count} fichiers sélectionnés seront supprimés définitivement.",
-      "ok_file": "Supprimer définitivement",
-      "ok_files": "Supprimer définitivement",
+      "folder_content": "Le dossier '{folder}' sera supprimé définitivement.",
+      "checkbox": "Supprimer définitivement (action irréversible)",
+      "ok": "Supprimer",
       "file_success": "Le fichier '{file}' a été supprimé définitivement.",
       "files_success": "{count} fichiers sélectionnés ont été supprimés définitivement.",
+      "folder_success": "Le dossier '{folder}' a été supprimé définitivement.",
       "file_error": "Impossible de supprimer définitivement le fichier.",
-      "files_error": "Impossible de supprimer définitivement les fichiers sélectionnés."
+      "files_error": "Impossible de supprimer définitivement les fichiers sélectionnés.",
+      "folder_error": "Impossible de supprimer définitivement le dossier."
     },
     "new_tag": {
       "title": "Nouveau tag",
@@ -715,13 +693,6 @@
       "overwrite": "Écraser",
       "save_as_new": "Enregistrer sous",
       "overwrite_confirm": "Écraser le fichier original ? Irréversible."
-    },
-    "drop_import": {
-      "title": "Importation impossible",
-      "message": "Veuillez d'abord sélectionner un dossier d'album. Les fichiers ne peuvent être importés que dans un dossier d'album spécifique.",
-      "success": "{count} fichier(s) importé(s)",
-      "overlay": "Déposez les fichiers pour les importer",
-      "no_files": "Aucun fichier n'a pu être importé. Assurez-vous de déposer des fichiers image."
     }
   },
   "file_info": {

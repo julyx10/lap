@@ -511,11 +511,10 @@
     :cancelText="$t('msgbox.cancel')"
     :warningOk="true"
     :checkboxText="$t('msgbox.permanent_delete.checkbox')"
-    :checkboxHint="$t('msgbox.permanent_delete.hint')"
-    :checkboxChecked="permanentDeleteChecked"
+    :checkboxChecked="deletePermanently"
     @ok="onTrashFile"
     @cancel="closeTrashMsgbox"
-    @checkbox-change="permanentDeleteChecked = $event"
+    @checkbox-change="deletePermanently = $event"
   />
 
   <!-- tag -->
@@ -913,6 +912,7 @@ const fileConflictDialog = ref({
 let fileConflictResolver: ((result: { policy: FileConflictPolicy; applyAll: boolean }) => void) | null = null;
 const showTrashMsgbox = ref(false);
 const permanentDeleteChecked = ref(false);
+const deletePermanently = ref(false);
 const dedupReclaimBytes = ref(0);
 const dedupTrashGroupKey = ref('');
 const dedupDeleteFileIds = ref<number[]>([]);
@@ -1067,17 +1067,16 @@ const checkUnsavedChanges = (action: () => void) => {
   }
 };
 
-const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = [], permanentDefault = false) => {
+const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = []) => {
   dedupReclaimBytes.value = Math.max(0, reclaimBytes);
   dedupTrashGroupKey.value = groupKey || '';
   dedupDeleteFileIds.value = Array.isArray(fileIds) ? [...new Set(fileIds)] : [];
-  permanentDeleteChecked.value = permanentDefault;
+  deletePermanently.value = permanentDeleteChecked.value;
   showTrashMsgbox.value = true;
 };
 
 const closeTrashMsgbox = () => {
   showTrashMsgbox.value = false;
-  permanentDeleteChecked.value = false;
   dedupReclaimBytes.value = 0;
   dedupTrashGroupKey.value = '';
   dedupDeleteFileIds.value = [];
@@ -1086,32 +1085,28 @@ const closeTrashMsgbox = () => {
 const isDedupTrash = computed(() => dedupDeleteFileIds.value.length > 0);
 
 const trashMsgboxTitle = computed(() => {
-  if (permanentDeleteChecked.value) {
-    return (isDedupTrash.value || selectMode.value)
-      ? localeMsg.value.msgbox.permanent_delete.files_title
-      : localeMsg.value.msgbox.permanent_delete.file_title;
+  if (deletePermanently.value) {
+    return localeMsg.value.msgbox.permanent_delete.title;
   }
-  return (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.title : localeMsg.value.msgbox.trash_file.title;
+  return localeMsg.value.msgbox.move_to_trash.title;
 });
 
 const trashMsgboxOkText = computed(() => {
-  if (permanentDeleteChecked.value) {
-    return (isDedupTrash.value || selectMode.value)
-      ? localeMsg.value.msgbox.permanent_delete.ok_files
-      : localeMsg.value.msgbox.permanent_delete.ok_file;
+  if (deletePermanently.value) {
+    return localeMsg.value.msgbox.permanent_delete.ok;
   }
-  return (isDedupTrash.value || selectMode.value) ? localeMsg.value.msgbox.trash_files.ok : localeMsg.value.msgbox.trash_file.ok;
+  return localeMsg.value.msgbox.move_to_trash.ok;
 });
 
 const trashMsgboxMessage = computed(() => {
   const deleteCount = isDedupTrash.value ? dedupDeleteFileIds.value.length : selectedCount.value;
-  const base = permanentDeleteChecked.value
+  const base = deletePermanently.value
     ? ((isDedupTrash.value || selectMode.value)
         ? localeMsg.value.msgbox.permanent_delete.files_content.replace('{count}', deleteCount.toLocaleString())
         : localeMsg.value.msgbox.permanent_delete.file_content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''))
     : ((isDedupTrash.value || selectMode.value)
-        ? localeMsg.value.msgbox.trash_files.content.replace('{count}', deleteCount.toLocaleString())
-        : localeMsg.value.msgbox.trash_file.content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''));
+        ? localeMsg.value.msgbox.move_to_trash.files_content.replace('{count}', deleteCount.toLocaleString())
+        : localeMsg.value.msgbox.move_to_trash.file_content.replace('{file}', fileList.value[selectedItemIndex.value]?.name || ''));
   if (dedupReclaimBytes.value <= 0 || !(isDedupTrash.value || selectMode.value)) return base;
   return `${base}\n${localeMsg.value.info_panel.dedup.reclaimable_size}: ${formatFileSize(dedupReclaimBytes.value)}`;
 });
@@ -2272,7 +2267,7 @@ const handleKeyDown = (e: any) => {
   } else if (matchesShortcut('file.moveTo', event, shortcutPlatform)) {
     showMoveTo.value = true;
   } else if (matchesShortcut('file.trash', event, shortcutPlatform)) {
-    openTrashMsgbox(0, '', [], !!shiftKey);
+    openTrashMsgbox();
   } else if (matchesShortcut('view.first', event, shortcutPlatform)) {
     (keyActions as any).Home();
   } else if (matchesShortcut('view.last', event, shortcutPlatform)) {
@@ -4595,25 +4590,26 @@ async function handleDropUrls(urls: string[]) {
 const getDeleteFileSuccessMessage = (fileName: string, permanently: boolean) =>
   permanently
     ? localeMsg.value.msgbox.permanent_delete.file_success.replace('{file}', fileName)
-    : localeMsg.value.msgbox.trash_file.success.replace('{file}', fileName);
+    : localeMsg.value.msgbox.move_to_trash.file_success.replace('{file}', fileName);
 
 const getDeleteFilesSuccessMessage = (count: number, permanently: boolean) =>
   permanently
     ? localeMsg.value.msgbox.permanent_delete.files_success.replace('{count}', count.toLocaleString())
-    : localeMsg.value.msgbox.trash_files.success.replace('{count}', count.toLocaleString());
+    : localeMsg.value.msgbox.move_to_trash.files_success.replace('{count}', count.toLocaleString());
 
 const getDeleteFileErrorMessage = (permanently: boolean) =>
   permanently
     ? localeMsg.value.msgbox.permanent_delete.file_error
-    : localeMsg.value.msgbox.trash_file.error;
+    : localeMsg.value.msgbox.move_to_trash.file_error;
 
 const getDeleteFilesErrorMessage = (permanently: boolean) =>
   permanently
     ? localeMsg.value.msgbox.permanent_delete.files_error
-    : localeMsg.value.msgbox.trash_files.error;
+    : localeMsg.value.msgbox.move_to_trash.files_error;
 
 const onTrashFile = async () => {
-  const permanently = permanentDeleteChecked.value;
+  permanentDeleteChecked.value = deletePermanently.value;
+  const permanently = deletePermanently.value;
   const deletedFileIds: number[] = [];
   const affectedAlbumIds = new Set<number>();
   let failedDeleteCount = 0;

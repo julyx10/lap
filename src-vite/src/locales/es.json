@@ -447,6 +447,13 @@
       "content": "¿Seguro que quieres eliminar a '{person}'?",
       "ok": "Eliminar"
     },
+    "drop_import": {
+      "title": "No se pueden importar archivos",
+      "message": "Selecciona primero una carpeta de álbum. Los archivos solo se pueden importar en una carpeta de álbum específica.",
+      "success": "{count} archivo(s) importado(s)",
+      "overlay": "Suelta los archivos para importar",
+      "no_files": "No se pudieron importar archivos. Asegúrate de soltar archivos de imagen."
+    },
     "manage_libraries": {
       "title": "Gestionar bibliotecas",
       "name": "Nombre",
@@ -496,20 +503,6 @@
       "ok": "Crear",
       "error": "No se pudo crear la carpeta."
     },
-    "delete_folder": {
-      "title": "Eliminar carpeta",
-      "content": "'{folder}' y su contenido serán eliminados.",
-      "ok": "Eliminar",
-      "success": "'{folder}' eliminada.",
-      "error": "No se pudo eliminar la carpeta."
-    },
-    "trash_folder": {
-      "title": "Mover a papelera",
-      "content": "'{folder}' irá a la papelera.",
-      "ok": "A papelera",
-      "success": "'{folder}' movida a papelera.",
-      "error": "No se pudo mover la carpeta a la papelera."
-    },
     "move_to": {
       "title": "Mover '{source}' a",
       "content": "Elige destino:",
@@ -552,47 +545,32 @@
       "ok": "Renombrar",
       "error": "No se pudo renombrar el archivo."
     },
-    "delete_file": {
-      "title": "Eliminar archivo",
-      "content": "'{file}' será eliminado.",
-      "ok": "Eliminar",
-      "success": "'{file}' eliminado.",
-      "error": "No se pudo eliminar el archivo."
-    },
-    "delete_files": {
-      "title": "Eliminar archivos",
-      "content": "{count} archivos serán eliminados.",
-      "ok": "Eliminar todo",
-      "success": "{count} archivos eliminados.",
-      "error": "No se pudieron eliminar los archivos seleccionados."
-    },
-    "trash_file": {
-      "title": "A papelera",
-      "content": "'{file}' irá a la papelera.",
-      "ok": "A papelera",
-      "success": "'{file}' en papelera.",
-      "error": "No se pudo mover el archivo a la papelera."
-    },
-    "trash_files": {
-      "title": "A papelera",
-      "content": "{count} archivos irán a la papelera.",
-      "ok": "A papelera",
-      "success": "{count} archivos en papelera.",
-      "error": "No se pudieron mover los archivos seleccionados a la papelera."
+    "move_to_trash": {
+      "title": "Mover a la papelera",
+      "file_content": "El archivo '{file}' se moverá a la papelera.",
+      "files_content": "{count} archivos seleccionados se moverán a la papelera.",
+      "folder_content": "La carpeta '{folder}' se moverá a la papelera.",
+      "ok": "Mover",
+      "file_success": "El archivo '{file}' se movió a la papelera.",
+      "files_success": "{count} archivos seleccionados se movieron a la papelera.",
+      "folder_success": "La carpeta '{folder}' se movió a la papelera.",
+      "file_error": "No se pudo mover el archivo a la papelera.",
+      "files_error": "No se pudieron mover los archivos seleccionados a la papelera.",
+      "folder_error": "No se pudo mover la carpeta a la papelera."
     },
     "permanent_delete": {
-      "checkbox": "Eliminar permanentemente (no se puede deshacer)",
-      "hint": "Esto elimina los archivos del disco sin usar la papelera.",
-      "file_title": "Eliminar permanentemente",
-      "files_title": "Eliminar permanentemente",
+      "title": "Eliminar permanentemente",
       "file_content": "El archivo '{file}' se eliminará permanentemente.",
       "files_content": "{count} archivos seleccionados se eliminarán permanentemente.",
-      "ok_file": "Eliminar permanentemente",
-      "ok_files": "Eliminar permanentemente",
+      "folder_content": "La carpeta '{folder}' se eliminará permanentemente.",
+      "checkbox": "Eliminar permanentemente (no se puede deshacer)",
+      "ok": "Eliminar",
       "file_success": "El archivo '{file}' se eliminó permanentemente.",
       "files_success": "{count} archivos seleccionados se eliminaron permanentemente.",
+      "folder_success": "La carpeta '{folder}' se eliminó permanentemente.",
       "file_error": "No se pudo eliminar permanentemente el archivo.",
-      "files_error": "No se pudieron eliminar permanentemente los archivos seleccionados."
+      "files_error": "No se pudieron eliminar permanentemente los archivos seleccionados.",
+      "folder_error": "No se pudo eliminar permanentemente la carpeta."
     },
     "new_tag": {
       "title": "Nueva etiqueta",
@@ -715,13 +693,6 @@
       "overwrite": "Sobrescribir",
       "save_as_new": "Guardar como",
       "overwrite_confirm": "¿Sobrescribir archivo original? No se puede deshacer."
-    },
-    "drop_import": {
-      "title": "No se pueden importar archivos",
-      "message": "Selecciona primero una carpeta de álbum. Los archivos solo se pueden importar en una carpeta de álbum específica.",
-      "success": "{count} archivo(s) importado(s)",
-      "overlay": "Suelta los archivos para importar",
-      "no_files": "No se pudieron importar archivos. Asegúrate de soltar archivos de imagen."
     }
   },
   "file_info": {

@@ -877,7 +877,6 @@ const faceClusterOptions = computed(() => {
 type ShortcutDisplayItem = {
   actionId: ShortcutActionId;
   labelKey: string;
-  shortcutVariant?: 'shift';
   keys?: string[];
 };
 
@@ -928,7 +927,6 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'file.copy', labelKey: 'copy_file' },
       { actionId: 'file.reveal', labelKey: 'reveal_in_file_manager' },
       { actionId: 'file.trash', labelKey: 'move_to_trash' },
-      { actionId: 'file.trash', labelKey: 'delete_permanently', shortcutVariant: 'shift' },
     ],
   },
   {
@@ -961,7 +959,7 @@ const shortcutSections = computed(() => {
       .map((item) => ({
         actionId: item.actionId,
         label: shortcutMessages.actions[getShortcutActionLabelKey(item)],
-        keys: item.keys ?? getDisplayShortcutKeys(item.actionId, item.shortcutVariant),
+        keys: item.keys ?? getDisplayShortcutKeys(item.actionId),
       }))
       .filter((item) => item.keys.length > 0),
   }));
@@ -974,14 +972,10 @@ function getShortcutActionLabelKey(item: ShortcutDisplayItem): string {
   return item.labelKey;
 }
 
-function getDisplayShortcutKeys(actionId: ShortcutActionId, shortcutVariant?: 'shift'): string[] {
+function getDisplayShortcutKeys(actionId: ShortcutActionId): string[] {
   const labels = getShortcutLabels(actionId, shortcutPlatform);
   const label = getPreferredShortcutLabel(actionId, labels);
-  const keys = splitShortcutLabel(label);
-  if (shortcutVariant === 'shift') {
-    return addShiftKey(keys);
-  }
-  return keys;
+  return splitShortcutLabel(label);
 }
 
 function getPreferredShortcutLabel(actionId: ShortcutActionId, labels: string[]): string {
@@ -1038,12 +1032,6 @@ function splitMacShortcutLabel(label: string): string[] {
   }
 
   return keys;
-}
-
-function addShiftKey(keys: string[]): string[] {
-  if (keys.length === 0) return keys;
-  const shiftKey = shortcutPlatform === 'mac' ? '⇧' : 'Shift';
-  return keys.includes(shiftKey) ? keys : [shiftKey, ...keys];
 }
 
 const onImageSearchModelChange = async (event: Event) => {

@@ -503,20 +503,6 @@
       "ok": "Create",
       "error": "Failed to create folder."
     },
-    "delete_folder": {
-      "title": "Delete folder",
-      "content": "The folder '{folder}' and all its contents will be deleted.",
-      "ok": "Delete",
-      "success": "The folder '{folder}' has been deleted.",
-      "error": "Failed to delete folder."
-    },
-    "trash_folder": {
-      "title": "Move to trash",
-      "content": "The folder '{folder}' will be trashed.",
-      "ok": "Trash",
-      "success": "The folder '{folder}' has been trashed.",
-      "error": "Failed to move folder to Trash."
-    },
     "move_to": {
       "title": "Move '{source}' to",
       "content": "Select the destination folder:",
@@ -559,47 +545,32 @@
       "ok": "Rename",
       "error": "Failed to rename file."
     },
-    "delete_file": {
-      "title": "Delete file",
-      "content": "The file '{file}' will be deleted.",
-      "ok": "Delete",
-      "success": "The file '{file}' has been deleted.",
-      "error": "Failed to delete file."
-    },
-    "delete_files": {
-      "title": "Delete files",
-      "content": "{count} selected files will be deleted.",
-      "ok": "Delete all",
-      "success": "{count} selected files have been deleted.",
-      "error": "Failed to delete selected files."
-    },
-    "trash_file": {
+    "move_to_trash": {
       "title": "Move to trash",
-      "content": "The file '{file}' will be trashed.",
+      "file_content": "The file '{file}' will be trashed.",
+      "files_content": "{count} selected files will be trashed.",
+      "folder_content": "The folder '{folder}' will be trashed.",
       "ok": "Trash",
-      "success": "The file '{file}' has been trashed.",
-      "error": "Failed to move file to Trash."
-    },
-    "trash_files": {
-      "title": "Move to trash",
-      "content": "{count} selected files will be trashed.",
-      "ok": "Trash all",
-      "success": "{count} selected files have been trashed.",
-      "error": "Failed to move selected files to Trash."
+      "file_success": "The file '{file}' has been trashed.",
+      "files_success": "{count} selected files have been trashed.",
+      "folder_success": "The folder '{folder}' has been trashed.",
+      "file_error": "Failed to move the file to trash.",
+      "files_error": "Failed to move selected files to trash.",
+      "folder_error": "Failed to move the folder to trash."
     },
     "permanent_delete": {
-      "checkbox": "Delete permanently (cannot be undone)",
-      "hint": "This removes files from disk without using Trash.",
-      "file_title": "Delete permanently",
-      "files_title": "Delete permanently",
+      "title": "Delete permanently",
       "file_content": "The file '{file}' will be permanently deleted.",
       "files_content": "{count} selected files will be permanently deleted.",
-      "ok_file": "Delete permanently",
-      "ok_files": "Delete permanently",
+      "folder_content": "The folder '{folder}' will be permanently deleted.",
+      "checkbox": "Delete permanently (cannot be undone)",
+      "ok": "Delete",
       "file_success": "The file '{file}' has been permanently deleted.",
       "files_success": "{count} selected files have been permanently deleted.",
-      "file_error": "Failed to permanently delete file.",
-      "files_error": "Failed to permanently delete selected files."
+      "folder_success": "The folder '{folder}' has been permanently deleted.",
+      "file_error": "Failed to permanently delete the file.",
+      "files_error": "Failed to permanently delete selected files.",
+      "folder_error": "Failed to permanently delete the folder."
     },
     "new_tag": {
       "title": "New tag",

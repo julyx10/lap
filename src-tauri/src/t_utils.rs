@@ -109,10 +109,18 @@ mod transfer_tests {
 fn move_to_trash(path: &str) -> Result<(), trash::Error> {
     use trash::macos::{DeleteMethod, TrashContextExtMacos};
 
-    // Finder-based trashing requires an Automation permission that users may deny.
+    // NsFileManager is fast but requires Automation permission that users may deny.
+    // When denied, Put Back metadata is lost. Fall back to Finder (AppleScript) which
+    // always preserves Put Back metadata and does not require special permissions.
     let mut context = trash::TrashContext::default();
     context.set_delete_method(DeleteMethod::NsFileManager);
-    context.delete(path)
+    if context.delete(path).is_err() {
+        let mut fallback = trash::TrashContext::default();
+        fallback.set_delete_method(DeleteMethod::Finder);
+        fallback.delete(path)
+    } else {
+        Ok(())
+    }
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -141,6 +149,34 @@ pub fn delete_file_permanently(path: &str) -> Result<(), String> {
     if path_exists(path) {
         return Err(format!(
             "Failed to permanently delete file. The path still exists on disk: {}",
+            path
+        ));
+    }
+
+    Ok(())
+}
+
+pub fn delete_folder_permanently(path: &str) -> Result<(), String> {
+    let metadata = fs::symlink_metadata(path).map_err(|e| {
+        format!(
+            "Failed to read metadata before permanent delete: {} ({})",
+            path, e
+        )
+    })?;
+
+    if !metadata.is_dir() {
+        return Err(format!(
+            "Permanent folder delete only supports directories, not files: {}",
+            path
+        ));
+    }
+
+    fs::remove_dir_all(path)
+        .map_err(|e| format!("Failed to permanently delete folder: {} ({})", path, e))?;
+
+    if path_exists(path) {
+        return Err(format!(
+            "Failed to permanently delete folder. The path still exists on disk: {}",
             path
         ));
     }

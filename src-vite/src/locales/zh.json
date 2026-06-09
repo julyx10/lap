@@ -447,6 +447,13 @@
       "content": "确定要删除 '{person}' 吗？",
       "ok": "删除"
     },
+    "drop_import": {
+      "title": "无法导入文件",
+      "message": "请先选择一个相册文件夹。文件只能导入到指定的相册文件夹中。",
+      "success": "已导入 {count} 个文件",
+      "overlay": "拖放文件以导入",
+      "no_files": "无法导入文件。请确保拖放的是图片文件。"
+    },
     "manage_libraries": {
       "title": "管理库",
       "name": "名称",
@@ -496,20 +503,6 @@
       "ok": "创建",
       "error": "创建文件夹失败。"
     },
-    "delete_folder": {
-      "title": "删除文件夹",
-      "content": "文件夹 '{folder}' 及其所有内容将被删除。",
-      "ok": "删除",
-      "success": "文件夹 '{folder}' 已删除。",
-      "error": "删除文件夹失败。"
-    },
-    "trash_folder": {
-      "title": "移到废纸篓",
-      "content": "文件夹 '{folder}' 将被移到废纸篓。",
-      "ok": "移到废纸篓",
-      "success": "文件夹 '{folder}' 已移到废纸篓。",
-      "error": "将文件夹移到废纸篓失败。"
-    },
     "move_to": {
       "title": "移动 '{source}' 到",
       "content": "选择目标文件夹:",
@@ -552,47 +545,32 @@
       "ok": "重命名",
       "error": "重命名文件失败。"
     },
-    "delete_file": {
-      "title": "删除文件",
-      "content": "文件 '{file}' 将被删除。",
-      "ok": "删除",
-      "success": "文件 '{file}' 已删除。",
-      "error": "删除文件失败。"
-    },
-    "delete_files": {
-      "title": "删除文件",
-      "content": "{count} 个选择的文件将被删除。",
-      "ok": "全部删除",
-      "success": "{count} 个选择的文件已删除。",
-      "error": "删除所选文件失败。"
-    },
-    "trash_file": {
+    "move_to_trash": {
       "title": "移到废纸篓",
-      "content": "文件 '{file}' 将被移到废纸篓。",
+      "file_content": "文件 '{file}' 将被移到废纸篓。",
+      "files_content": "{count} 个选择的文件将被移到废纸篓。",
+      "folder_content": "文件夹 '{folder}' 将被移到废纸篓。",
       "ok": "移到废纸篓",
-      "success": "文件 '{file}' 已移到废纸篓。",
-      "error": "将文件移到废纸篓失败。"
-    },
-    "trash_files": {
-      "title": "移到废纸篓",
-      "content": "{count} 个选择的文件将被移到废纸篓。",
-      "ok": "全部移到废纸篓",
-      "success": "{count} 个选择的文件已移到废纸篓。",
-      "error": "将所选文件移到废纸篓失败。"
+      "file_success": "文件 '{file}' 已移到废纸篓。",
+      "files_success": "{count} 个选择的文件已移到废纸篓。",
+      "folder_success": "文件夹 '{folder}' 已移到废纸篓。",
+      "file_error": "将文件移到废纸篓失败。",
+      "files_error": "将所选文件移到废纸篓失败。",
+      "folder_error": "将文件夹移到废纸篓失败。"
     },
     "permanent_delete": {
-      "checkbox": "永久删除（无法撤销）",
-      "hint": "文件将直接从磁盘删除，不会进入废纸篓。",
-      "file_title": "永久删除",
-      "files_title": "永久删除",
+      "title": "永久删除",
       "file_content": "文件 '{file}' 将被永久删除。",
       "files_content": "{count} 个选择的文件将被永久删除。",
-      "ok_file": "永久删除",
-      "ok_files": "永久删除",
+      "folder_content": "文件夹 '{folder}' 将被永久删除。",
+      "checkbox": "永久删除（无法撤销）",
+      "ok": "删除",
       "file_success": "文件 '{file}' 已永久删除。",
       "files_success": "{count} 个选择的文件已永久删除。",
+      "folder_success": "文件夹 '{folder}' 已永久删除。",
       "file_error": "永久删除文件失败。",
-      "files_error": "永久删除所选文件失败。"
+      "files_error": "永久删除所选文件失败。",
+      "folder_error": "永久删除文件夹失败。"
     },
     "new_tag": {
       "title": "新建标签",
@@ -715,13 +693,6 @@
       "overwrite": "覆盖",
       "save_as_new": "另存为",
       "overwrite_confirm": "确定覆盖现有文件吗？该操作无法撤销。"
-    },
-    "drop_import": {
-      "title": "无法导入文件",
-      "message": "请先选择一个相册文件夹。文件只能导入到指定的相册文件夹中。",
-      "success": "已导入 {count} 个文件",
-      "overlay": "拖放文件以导入",
-      "no_files": "无法导入文件。请确保拖放的是图片文件。"
     }
   },
   "file_info": {
