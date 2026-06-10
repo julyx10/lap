@@ -58,7 +58,7 @@
     "similar_images_tips": "画像を選択して類似する画像を検索",
     "filename_search_tips": "ファイル名を入力して検索",
     "index": {
-      "wait_index": "スキャンを待機中...",
+      "wait_index": "スキャン待機中",
       "indexing": "スキャン中... {count} / {total}",
       "discovering": "アルバムをスキャン中... {count} / {total}",
       "preparing_previews": "プレビューを生成中... {count} / {total}",
@@ -229,7 +229,10 @@
       "daily": "日別",
       "time_asc": "古い順",
       "time_desc": "新しい順",
-      "back": "戻る"
+      "back": "戻る",
+      "scanning": "スキャン中…",
+      "scan_paused": "スキャン一時停止",
+      "scan_queued": "スキャン待機中"
     }
   },
   "info_panel": {
@@ -356,7 +359,7 @@
     "album": {
       "add": "アルバムを追加...",
       "edit": "アルバムを編集...",
-      "index": "アルバムをスキャン",
+      "scan": "アルバムをスキャン",
       "pause_scan": "スキャンを一時停止",
       "include_in_search": "検索に含める",
       "exclude_from_search": "検索から除外",

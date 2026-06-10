@@ -58,7 +58,7 @@
     "similar_images_tips": "이미지를 선택해 비슷한 항목을 찾으세요",
     "filename_search_tips": "파일 이름 입력",
     "index": {
-      "wait_index": "스캔 대기 중...",
+      "wait_index": "스캔 대기 중",
       "indexing": "스캔 중... {count} / {total}",
       "discovering": "앨범 스캔 중... {count} / {total}",
       "preparing_previews": "미리보기 생성 중... {count} / {total}",
@@ -229,7 +229,10 @@
       "daily": "일별",
       "time_asc": "오래된 순",
       "time_desc": "최신 순",
-      "back": "뒤로"
+      "back": "뒤로",
+      "scanning": "스캔 중…",
+      "scan_paused": "스캔 일시 중지",
+      "scan_queued": "스캔 대기 중"
     }
   },
   "info_panel": {
@@ -356,7 +359,7 @@
     "album": {
       "add": "앨범 추가...",
       "edit": "앨범 편집...",
-      "index": "앨범 스캔",
+      "scan": "앨범 스캔",
       "pause_scan": "스캔 일시중지",
       "include_in_search": "검색에 포함",
       "exclude_from_search": "검색에서 제외",

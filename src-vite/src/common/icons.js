@@ -186,11 +186,3 @@ export { default as IconPause } from '@/assets/icons/pause.svg';
 export { default as IconVideoPlay } from '@/assets/icons/video-play.svg';
 export { default as IconVideoReplay } from '@/assets/icons/video-replay.svg';
 export { default as IconVideoFill } from '@/assets/icons/video-fill.svg';
-
-// ======================
-// AI ICONS
-// ======================
-export { default as IconBolt } from '@/assets/icons/bolt.svg';
-export { default as IconIndexReady } from '@/assets/icons/index-ready.svg';
-export { default as IconIndexWaiting } from '@/assets/icons/index-waiting.svg';
-export { default as IconIndexRunning } from '@/assets/icons/index-running.svg';

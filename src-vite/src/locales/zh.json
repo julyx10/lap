@@ -58,7 +58,7 @@
     "similar_images_tips": "选择一张图片以查找相似项",
     "filename_search_tips": "输入文件名进行搜索",
     "index": {
-      "wait_index": "等待扫描...",
+      "wait_index": "排队等待扫描",
       "indexing": "正在扫描... {count}/{total}",
       "discovering": "正在扫描相册... {count}/{total}",
       "preparing_previews": "正在生成预览... {count}/{total}",
@@ -229,7 +229,10 @@
       "daily": "按日",
       "time_asc": "时间升序",
       "time_desc": "时间降序",
-      "back": "返回"
+      "back": "返回",
+      "scanning": "扫描中…",
+      "scan_paused": "扫描已暂停",
+      "scan_queued": "排队等待扫描"
     }
   },
   "info_panel": {
@@ -356,7 +359,7 @@
     "album": {
       "add": "添加相册...",
       "edit": "编辑相册...",
-      "index": "扫描相册文件",
+      "scan": "扫描相册文件",
       "pause_scan": "暂停扫描",
       "include_in_search": "包含在搜索中",
       "exclude_from_search": "从搜索中排除",

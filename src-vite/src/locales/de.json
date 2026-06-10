@@ -58,7 +58,7 @@
     "similar_images_tips": "Wählen Sie ein Bild, um ähnliche zu finden",
     "filename_search_tips": "Dateinamen eingeben",
     "index": {
-      "wait_index": "Warte auf Scan...",
+      "wait_index": "Scan anstehend",
       "indexing": "Scanne... {count} / {total}",
       "discovering": "Album scannen... {count} / {total}",
       "preparing_previews": "Vorschaubilder generieren... {count} / {total}",
@@ -229,7 +229,10 @@
       "daily": "Täglich",
       "time_asc": "Zeit Auf",
       "time_desc": "Zeit Ab",
-      "back": "Zurück"
+      "back": "Zurück",
+      "scanning": "Scanne…",
+      "scan_paused": "Scan pausiert",
+      "scan_queued": "Scan anstehend"
     }
   },
   "info_panel": {
@@ -356,7 +359,7 @@
     "album": {
       "add": "Album hinzufügen...",
       "edit": "Album bearbeiten...",
-      "index": "Album scannen",
+      "scan": "Album scannen",
       "pause_scan": "Scannen pausieren",
       "include_in_search": "In Suche einbeziehen",
       "exclude_from_search": "Vom Suchen ausschließen",

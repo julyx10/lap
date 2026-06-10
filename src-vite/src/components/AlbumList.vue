@@ -49,10 +49,45 @@
               @click.stop="expandAlbum(album)"
               @dblclick.stop
             />
-            <div v-if="album.cover_file_id && albumCovers[album.id]" class="w-10 h-10 mr-2 shrink-0" @click.stop="clickAlbum(album)">
-              <img :src="albumCovers[album.id]" class="w-full h-full object-cover rounded-box">
+            <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5" @click.stop>
+              <!-- Scanning / Paused / Queued -->
+              <div v-if="isAlbumScanning(album.id)"
+                class="w-full h-full flex items-center justify-center cursor-pointer"
+                :title="$t('toolbar.tooltip.scanning')"
+                @click="toggleIndexAlbum(album.id)"
+              >
+                <IconUpdate class="w-6 h-6 animate-spin" />
+              </div>
+              <div v-else-if="isAlbumPaused(album.id) || (Number(album.indexed) > 0 && Number(album.indexed) < Number(album.total))"
+                class="w-full h-full flex items-center justify-center cursor-pointer"
+                :title="$t('toolbar.tooltip.scan_paused')"
+                @click="toggleIndexAlbum(album.id)"
+              >
+                <IconUpdateDot class="w-6 h-6" />
+              </div>
+              <div v-else-if="getAlbumIcon(album) === 'update'"
+                class="w-full h-full flex items-center justify-center cursor-pointer hover:bg-base-100/30"
+                :title="$t('toolbar.tooltip.scan_queued')"
+                @click="toggleIndexAlbum(album.id)"
+              >
+                <IconUpdate class="w-6 h-6" />
+              </div>
+              <!-- Cover -->
+              <img
+                v-else-if="album.cover_file_id && albumCovers[album.id] && !albumCoverErrors[album.id]"
+                :src="albumCovers[album.id]"
+                class="w-full h-full object-cover"
+                @error="albumCoverErrors[album.id] = true"
+                @click="clickAlbum(album)"
+              >
+              <!-- Fallback -->
+              <div v-else
+                class="w-full h-full flex items-center justify-center cursor-pointer"
+                @click="clickAlbum(album)"
+              >
+                <IconPhotoAll class="w-6 h-6" />
+              </div>
             </div>
-            <div v-else class="skeleton w-10 h-10 mr-2 shrink-0"></div>
 
             <div class="flex flex-col overflow-hidden">
               <div class="overflow-hidden whitespace-pre text-ellipsis">
@@ -65,19 +100,6 @@
 
             <!-- Right side: Count and Status Icons -->
             <div class="ml-auto pl-1 flex items-center justify-center text-xs text-base-content/30">
-              <!-- <TButton v-if="album.indexed !== undefined && album.total !== undefined && album.indexed < album.total" 
-                :icon="IconUpdate"
-                :iconClasses="(libConfig.index.albumQueue as any).includes(album.id) ? ['animate-spin'] : []"
-                :buttonSize="'small'"
-                @click="clickIndexAlbum(album.id)"
-              /> -->
-              <div v-if="getAlbumIcon(album) !== 'none'" @click="toggleIndexAlbum(album.id)">
-                <component 
-                  :is="getAlbumIcon(album) === 'update' ? IconUpdate : IconUpdateDot"
-                  class="mx-1 w-4 h-4 hover:text-base-content" 
-                  :class="shouldAnimateAlbumIcon(album) ? 'animate-spin' : ''" 
-                />
-              </div>
               <span
                 v-if="props.showTotalCount !== false && album.total"
                 :class="selection.albumId.value === album.id && selection.selected.value ? 'hidden' : 'group-hover:hidden'"
@@ -194,6 +216,7 @@ import {
   IconUpdateOff,
   IconUpdateDot,
   IconRight,
+  IconPhotoAll,
 } from '@/common/icons';
 
 const props = withDefaults(defineProps<{
@@ -238,6 +261,7 @@ const newAlbumFolderPath = ref('');
 const editingAlbumId = ref(0);
 const isLoading = ref(true);    // loading albums
 const isDragging = ref(false);  // dragging albums
+const albumCoverErrors = ref<Record<number, boolean>>({});
 const albumContextMenus = ref<Record<number, any>>({});
 
 function handleAlbumContextMenu(album: Album, event: MouseEvent) {
@@ -311,7 +335,7 @@ const getMoreMenuItems = (album: any) => {
     {
       label: isAlbumQueued(album.id)
         ? localeMsg.value.menu.album.pause_scan
-        : localeMsg.value.menu.album.index,
+        : localeMsg.value.menu.album.scan,
       icon: isAlbumQueued(album.id) ? IconUpdateOff : IconUpdate,
       action: () => toggleIndexAlbum(album.id)
     },

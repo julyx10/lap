@@ -58,7 +58,7 @@
     "similar_images_tips": "Sélectionnez une image pour trouver des images similaires",
     "filename_search_tips": "Entrez un nom de fichier",
     "index": {
-      "wait_index": "En attente du scan...",
+      "wait_index": "En attente de scan",
       "indexing": "Scan en cours... {count} / {total}",
       "discovering": "Analyse de l'album... {count} / {total}",
       "preparing_previews": "Génération des aperçus... {count} / {total}",
@@ -229,7 +229,10 @@
       "daily": "Quotidien",
       "time_asc": "Temps crois",
       "time_desc": "Temps décrois",
-      "back": "Retour"
+      "back": "Retour",
+      "scanning": "Scan en cours…",
+      "scan_paused": "Scan en pause",
+      "scan_queued": "En attente de scan"
     }
   },
   "info_panel": {
@@ -356,7 +359,7 @@
     "album": {
       "add": "Ajouter album...",
       "edit": "Modifier album...",
-      "index": "Scanner l'album",
+      "scan": "Scanner l'album",
       "pause_scan": "Mettre en pause le scan",
       "include_in_search": "Inclure dans recherche",
       "exclude_from_search": "Exclure de recherche",
