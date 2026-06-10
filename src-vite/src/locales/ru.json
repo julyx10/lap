@@ -756,7 +756,8 @@
     "zoom_out": "Зум -",
     "zoom_center": "Центр",
     "standard": "Стандарт",
-    "satellite": "Спутник"
+    "satellite": "Спутник",
+    "heatmap": "Тепловая карта"
   },
   "format": {
     "year": "yyyy",

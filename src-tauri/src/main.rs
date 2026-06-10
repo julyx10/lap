@@ -302,6 +302,7 @@ async fn main() {
             t_cmds::get_lens_info,
             // location
             t_cmds::get_location_info,
+            t_cmds::get_gps_coordinates,
             // settings
             t_cmds::get_package_info,
             t_cmds::get_build_time,

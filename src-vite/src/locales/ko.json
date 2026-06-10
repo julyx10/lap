@@ -756,7 +756,8 @@
     "zoom_out": "축소",
     "zoom_center": "중심",
     "standard": "표준",
-    "satellite": "위성"
+    "satellite": "위성",
+    "heatmap": "히트맵"
   },
   "format": {
     "year": "yyyy년",

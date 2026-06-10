@@ -756,7 +756,8 @@
     "zoom_out": "缩小",
     "zoom_center": "中心",
     "standard": "标准",
-    "satellite": "卫星"
+    "satellite": "卫星",
+    "heatmap": "热力图"
   },
   "format": {
     "year": "yyyy年",

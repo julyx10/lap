@@ -756,7 +756,8 @@
     "zoom_out": "Zoom arr.",
     "zoom_center": "Centrer",
     "standard": "Standard",
-    "satellite": "Satellite"
+    "satellite": "Satellite",
+    "heatmap": "Carte thermique"
   },
   "format": {
     "year": "yyyy",

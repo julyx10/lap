@@ -756,7 +756,8 @@
     "zoom_out": "Zoom -",
     "zoom_center": "Zentrieren",
     "standard": "Standard",
-    "satellite": "Satellit"
+    "satellite": "Satellit",
+    "heatmap": "Heatmap"
   },
   "format": {
     "year": "yyyy",

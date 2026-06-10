@@ -4681,6 +4681,38 @@ impl ALocation {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AGpsPoint {
+    pub lat: f64,
+    pub lon: f64,
+}
+
+impl AGpsPoint {
+    pub fn get_all_from_db() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+
+        let mut stmt = conn
+            .prepare(
+                "SELECT gps_latitude, gps_longitude FROM afiles
+                 WHERE gps_latitude IS NOT NULL AND gps_longitude IS NOT NULL",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let points = stmt
+            .query_map(params![], |row| {
+                Ok(Self {
+                    lat: row.get(0)?,
+                    lon: row.get(1)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(points)
+    }
+}
+
 /// get connection to the db
 static CONN_POOL: Mutex<Vec<(String, Connection)>> = Mutex::new(Vec::new());
 

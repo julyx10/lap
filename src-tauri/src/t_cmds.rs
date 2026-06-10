@@ -1332,6 +1332,13 @@ pub fn get_location_info(sort: i64) -> Result<Vec<ALocation>, String> {
     ALocation::get_from_db(sort).map_err(|e| format!("Error while getting location info: {}", e))
 }
 
+/// get all GPS coordinates for heatmap
+#[tauri::command]
+pub fn get_gps_coordinates() -> Result<Vec<t_sqlite::AGpsPoint>, String> {
+    t_sqlite::AGpsPoint::get_all_from_db()
+        .map_err(|e| format!("Error while getting GPS coordinates: {}", e))
+}
+
 // settings
 
 /// get package info

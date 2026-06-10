@@ -21,6 +21,7 @@
     "@tauri-apps/plugin-window-state": "2.4.1",
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "video.js": "^8.23.7",
@@ -31,7 +32,6 @@
     "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "prettier": "^3.8.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "^25.5.0",
     "@vitejs/plugin-vue": "^6.0.5",
@@ -39,6 +39,7 @@
     "autoprefixer": "^10.4.27",
     "daisyui": "5.5.19",
     "postcss": "^8.5.8",
+    "prettier": "^3.8.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",

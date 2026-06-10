@@ -1238,6 +1238,19 @@ export async function getLocationInfo(sort = 0) {
   return null;
 }
 
+// get all GPS coordinates for heatmap
+export async function getGpsCoordinates() {
+  try {
+    const coords = await invoke('get_gps_coordinates');
+    if (coords) {
+      return coords;
+    }
+  } catch (error) {
+    console.error('Failed to get GPS coordinates:', error);
+  }
+  return [];
+}
+
 // settings
 
 // get package info

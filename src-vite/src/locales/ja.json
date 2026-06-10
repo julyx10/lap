@@ -756,7 +756,8 @@
     "zoom_out": "縮小",
     "zoom_center": "中心",
     "standard": "標準",
-    "satellite": "衛星"
+    "satellite": "衛星",
+    "heatmap": "ヒートマップ"
   },
   "format": {
     "year": "yyyy年",
