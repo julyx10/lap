@@ -9,6 +9,7 @@
     "location": "Ubicación",
     "people": "Personas",
     "camera": "Cámaras",
+    "map": "Mapa",
     "settings": "Ajustes"
   },
   "album": {
@@ -757,7 +758,11 @@
     "zoom_center": "Centrar",
     "standard": "Estándar",
     "satellite": "Satélite",
-    "heatmap": "Mapa de calor"
+    "heatmap": "Mapa de calor",
+    "photo_count": "{count} fotos",
+    "no_photos_in_view": "No hay fotos en esta área",
+    "photos_in_view": "{count} fotos en esta área",
+    "photos_in_view_limited": "Mostrando las primeras {count} fotos - acerca el zoom para más"
   },
   "format": {
     "year": "yyyy",

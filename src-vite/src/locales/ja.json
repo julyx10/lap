@@ -9,6 +9,7 @@
     "location": "場所",
     "people": "人物",
     "camera": "カメラ",
+    "map": "マップ",
     "settings": "設定"
   },
   "album": {
@@ -757,7 +758,11 @@
     "zoom_center": "中心",
     "standard": "標準",
     "satellite": "衛星",
-    "heatmap": "ヒートマップ"
+    "heatmap": "ヒートマップ",
+    "photo_count": "{count} 枚の写真",
+    "no_photos_in_view": "この範囲に写真はありません",
+    "photos_in_view": "この範囲に {count} 枚の写真",
+    "photos_in_view_limited": "最初の {count} 枚を表示中 - さらに拡大すると絞り込めます"
   },
   "format": {
     "year": "yyyy年",

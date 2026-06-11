@@ -9,6 +9,7 @@
     "location": "Local",
     "people": "Pessoas",
     "camera": "Câmeras",
+    "map": "Mapa",
     "settings": "Ajustes"
   },
   "album": {
@@ -757,7 +758,11 @@
     "zoom_center": "Centralizar",
     "standard": "Padrão",
     "satellite": "Satélite",
-    "heatmap": "Mapa de calor"
+    "heatmap": "Mapa de calor",
+    "photo_count": "{count} fotos",
+    "no_photos_in_view": "Nenhuma foto nesta área",
+    "photos_in_view": "{count} fotos nesta área",
+    "photos_in_view_limited": "Mostrando as primeiras {count} fotos - aproxime para mais"
   },
   "format": {
     "year": "yyyy",

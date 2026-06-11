@@ -9,6 +9,7 @@
     "location": "위치",
     "people": "인물",
     "camera": "카메라",
+    "map": "지도",
     "settings": "설정"
   },
   "album": {
@@ -757,7 +758,11 @@
     "zoom_center": "중심",
     "standard": "표준",
     "satellite": "위성",
-    "heatmap": "히트맵"
+    "heatmap": "히트맵",
+    "photo_count": "사진 {count}장",
+    "no_photos_in_view": "이 영역에 사진이 없습니다",
+    "photos_in_view": "이 영역에 사진 {count}장",
+    "photos_in_view_limited": "처음 {count}장 표시 중 - 더 보려면 확대하세요"
   },
   "format": {
     "year": "yyyy년",

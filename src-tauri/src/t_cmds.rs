@@ -1332,11 +1332,11 @@ pub fn get_location_info(sort: i64) -> Result<Vec<ALocation>, String> {
     ALocation::get_from_db(sort).map_err(|e| format!("Error while getting location info: {}", e))
 }
 
-/// get all GPS coordinates for heatmap
+/// get GPS coordinates aggregated into grid cells for heatmap rendering
 #[tauri::command]
-pub fn get_gps_coordinates() -> Result<Vec<t_sqlite::AGpsPoint>, String> {
-    t_sqlite::AGpsPoint::get_all_from_db()
-        .map_err(|e| format!("Error while getting GPS coordinates: {}", e))
+pub fn get_gps_heatmap_points() -> Result<Vec<t_sqlite::AGpsHeatPoint>, String> {
+    t_sqlite::AGpsHeatPoint::get_heatmap_from_db()
+        .map_err(|e| format!("Error while getting GPS heatmap points: {}", e))
 }
 
 // settings

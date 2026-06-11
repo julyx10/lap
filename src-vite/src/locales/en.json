@@ -9,6 +9,7 @@
     "location": "Location",
     "people": "People",
     "camera": "Cameras",
+    "map": "Map",
     "settings": "Settings"
   },
   "album": {
@@ -757,7 +758,11 @@
     "zoom_center": "Center",
     "standard": "Standard",
     "satellite": "Satellite",
-    "heatmap": "Heatmap"
+    "heatmap": "Heatmap",
+    "photo_count": "{count} photos",
+    "no_photos_in_view": "No photos in this area",
+    "photos_in_view": "{count} photos in this area",
+    "photos_in_view_limited": "Showing first {count} photos - zoom in for more"
   },
   "format": {
     "year": "yyyy",

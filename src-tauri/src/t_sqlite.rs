@@ -854,6 +854,15 @@ pub struct QueryParams {
     pub rating: i64,
     pub tag_id: i64,
     pub person_id: i64,
+    // GPS bounding box filter (e.g. for "photos in this map area")
+    #[serde(default)]
+    pub gps_min_lat: Option<f64>,
+    #[serde(default)]
+    pub gps_max_lat: Option<f64>,
+    #[serde(default)]
+    pub gps_min_lon: Option<f64>,
+    #[serde(default)]
+    pub gps_max_lon: Option<f64>,
 }
 
 /// Define the AI image search parameters struct
@@ -2162,6 +2171,28 @@ impl AFile {
             if !params.location_name.is_empty() {
                 conditions.push("a.geo_name = ?".to_string());
                 sql_params.push(Box::new(params.location_name.clone()));
+            }
+        }
+
+        if let (Some(min_lat), Some(max_lat), Some(min_lon), Some(max_lon)) = (
+            params.gps_min_lat,
+            params.gps_max_lat,
+            params.gps_min_lon,
+            params.gps_max_lon,
+        ) {
+            conditions.push("a.gps_latitude BETWEEN ? AND ?".to_string());
+            sql_params.push(Box::new(min_lat));
+            sql_params.push(Box::new(max_lat));
+
+            if min_lon <= max_lon {
+                conditions.push("a.gps_longitude BETWEEN ? AND ?".to_string());
+                sql_params.push(Box::new(min_lon));
+                sql_params.push(Box::new(max_lon));
+            } else {
+                // map view crosses the antimeridian (e.g. min=170, max=-170)
+                conditions.push("(a.gps_longitude >= ? OR a.gps_longitude <= ?)".to_string());
+                sql_params.push(Box::new(min_lon));
+                sql_params.push(Box::new(max_lon));
             }
         }
 
@@ -4681,20 +4712,29 @@ impl ALocation {
     }
 }
 
+/// A grid cell of aggregated GPS density, used for heatmap rendering.
+/// `lat`/`lon` are the average coordinates of the photos within that
+/// cell (cells are ~1.1km, grouped by rounded coordinates), `count` is
+/// the number of photos within that cell.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct AGpsPoint {
+pub struct AGpsHeatPoint {
     pub lat: f64,
     pub lon: f64,
+    pub count: i64,
 }
 
-impl AGpsPoint {
-    pub fn get_all_from_db() -> Result<Vec<Self>, String> {
+impl AGpsHeatPoint {
+    /// Aggregate all GPS coordinates into grid cells on the backend, so the
+    /// frontend never has to handle one row per photo (important for large libraries).
+    pub fn get_heatmap_from_db() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
 
         let mut stmt = conn
             .prepare(
-                "SELECT gps_latitude, gps_longitude FROM afiles
-                 WHERE gps_latitude IS NOT NULL AND gps_longitude IS NOT NULL",
+                "SELECT AVG(gps_latitude) AS lat, AVG(gps_longitude) AS lon, COUNT(*) AS cnt
+                 FROM afiles
+                 WHERE gps_latitude IS NOT NULL AND gps_longitude IS NOT NULL
+                 GROUP BY ROUND(gps_latitude, 2), ROUND(gps_longitude, 2)",
             )
             .map_err(|e| e.to_string())?;
 
@@ -4703,6 +4743,7 @@ impl AGpsPoint {
                 Ok(Self {
                     lat: row.get(0)?,
                     lon: row.get(1)?,
+                    count: row.get(2)?,
                 })
             })
             .map_err(|e| e.to_string())?

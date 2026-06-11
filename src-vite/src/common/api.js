@@ -1238,15 +1238,15 @@ export async function getLocationInfo(sort = 0) {
   return null;
 }
 
-// get all GPS coordinates for heatmap
-export async function getGpsCoordinates() {
+// get GPS coordinates aggregated into grid cells for heatmap rendering
+export async function getGpsHeatmapPoints() {
   try {
-    const coords = await invoke('get_gps_coordinates');
-    if (coords) {
-      return coords;
+    const points = await invoke('get_gps_heatmap_points');
+    if (points) {
+      return points;
     }
   } catch (error) {
-    console.error('Failed to get GPS coordinates:', error);
+    console.error('Failed to get GPS heatmap points:', error);
   }
   return [];
 }

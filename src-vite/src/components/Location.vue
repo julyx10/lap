@@ -3,66 +3,56 @@
   <div class="sidebar-panel">
     <div class="sidebar-panel-header">
       <div role="tablist" class="sidebar-header-tabs">
-        <button role="tab" :class="['sidebar-header-tab', activeTab === 'list' ? 'tab-active' : '']" @click="activeTab = 'list'">
+        <button role="tab" class="sidebar-header-tab tab-active">
           {{ localeMsg.sidebar.location }}
-        </button>
-        <button role="tab" :class="['sidebar-header-tab', activeTab === 'map' ? 'tab-active' : '']" @click="activeTab = 'map'">
-          {{ $t('map.heatmap') }}
         </button>
       </div>
     </div>
 
     <!-- list view -->
-    <template v-if="activeTab === 'list'">
-      <div v-if="locations.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
-        <ul>
-          <li v-for="location in sortedLocations">
-            <div
+    <div v-if="locations.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
+      <ul>
+        <li v-for="location in sortedLocations">
+          <div
+            :class="[
+              'sidebar-item',
+              libConfig.location.admin1 === location.admin1 && !libConfig.location.name ? 'sidebar-item-selected' : 'sidebar-item-hover',
+            ]"
+            @click="clickLocationAdmin1(location)"
+          >
+            <IconRight
               :class="[
-                'sidebar-item',
-                libConfig.location.admin1 === location.admin1 && !libConfig.location.name ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                'p-1 w-6 h-6 shrink-0 transition-transform',
+                location.is_expanded ? 'rotate-90' : ''
               ]"
-              @click="clickLocationAdmin1(location)"
-            >
-              <IconRight
+              @click.stop="clickExpandLocation(location)"
+            />
+            <span class="sidebar-item-label">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
+            <span class="sidebar-item-count">{{ location.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
+          </div>
+          <ul v-if="location.is_expanded && location.names.length > 0">
+            <li v-for="(name, index) in location.names" class="pl-4">
+              <div
                 :class="[
-                  'p-1 w-6 h-6 shrink-0 transition-transform',
-                  location.is_expanded ? 'rotate-90' : ''
+                  'sidebar-item sidebar-item-compact ml-3',
+                  libConfig.location.name === name ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
-                @click.stop="clickExpandLocation(location)"
-              />
-              <span class="sidebar-item-label">{{ location.admin1 + (location.cc ? ', ' + getCountryName(location.cc, locale) : '') }}</span>
-              <span class="sidebar-item-count">{{ location.counts.reduce((a: number, b: number) => a + b, 0).toLocaleString() }}</span>
-            </div>
-            <ul v-if="location.is_expanded && location.names.length > 0">
-              <li v-for="(name, index) in location.names" class="pl-4">
-                <div
-                  :class="[
-                    'sidebar-item sidebar-item-compact ml-3',
-                    libConfig.location.name === name ? 'sidebar-item-selected' : 'sidebar-item-hover',
-                  ]"
-                  @click="clickLocationName(location, name)"
-                >
-                  <span class="sidebar-item-label">{{ name }}</span>
-                  <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
-                </div>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </div>
+                @click="clickLocationName(location, name)"
+              >
+                <span class="sidebar-item-label">{{ name }}</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ location.counts[index].toLocaleString() }})</span>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
 
-      <!-- Display message if no data are found -->
-      <div v-else class="mt-2 px-2 flex flex-col items-center justify-center text-base-content/30">
-          <!-- <IconLocation class="w-8 h-8 mb-2" /> -->
-          <span class="text-sm text-center">{{ $t('tooltip.not_found.location_hint') }}</span>
-      </div>
-    </template>
-
-    <!-- heatmap view -->
-    <template v-else-if="activeTab === 'map'">
-      <LocationHeatMap />
-    </template>
+    <!-- Display message if no data are found -->
+    <div v-else class="mt-2 px-2 flex flex-col items-center justify-center text-base-content/30">
+        <!-- <IconLocation class="w-8 h-8 mb-2" /> -->
+        <span class="text-sm text-center">{{ $t('tooltip.not_found.location_hint') }}</span>
+    </div>
   </div>
 
 </template>
@@ -75,7 +65,6 @@ import { config, libConfig } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
 import { getCountryName } from '@/common/utils';
 import { IconRight } from '@/common/icons';
-import LocationHeatMap from '@/components/LocationHeatMap.vue';
 
 const props = defineProps({
   titlebar: {
@@ -87,7 +76,6 @@ const props = defineProps({
 const { locale, messages } = useI18n(); // get locale for country name translation
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
-const activeTab = ref<'list' | 'map'>('list');
 const locations = ref<any[]>([]);
 
 const sortedLocations = computed(() => locations.value);

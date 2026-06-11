@@ -9,6 +9,7 @@
     "location": "地点",
     "people": "人物",
     "camera": "相机",
+    "map": "地图",
     "settings": "设置"
   },
   "album": {
@@ -757,7 +758,11 @@
     "zoom_center": "中心",
     "standard": "标准",
     "satellite": "卫星",
-    "heatmap": "热力图"
+    "heatmap": "热力图",
+    "photo_count": "{count} 张照片",
+    "no_photos_in_view": "此区域内没有照片",
+    "photos_in_view": "此区域内有 {count} 张照片",
+    "photos_in_view_limited": "显示前 {count} 张照片 - 放大以查看更多"
   },
   "format": {
     "year": "yyyy年",
