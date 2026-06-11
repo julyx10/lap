@@ -1,5 +1,4 @@
 use std::ffi::CString;
-use std::fs;
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
 use std::slice;
@@ -123,8 +122,8 @@ fn decode_primary_rgb(file_path: &str) -> Result<(Vec<u8>, u32, u32, u32), Strin
         }
         let _handle_guard = HandleGuard(handle);
 
-        let handle_w = heif_image_handle_get_width(handle);
-        let handle_h = heif_image_handle_get_height(handle);
+        let _handle_w = heif_image_handle_get_width(handle);
+        let _handle_h = heif_image_handle_get_height(handle);
         let has_alpha = heif_image_handle_has_alpha_channel(handle) != 0;
 
         let mut img: *mut HeifImage = ptr::null_mut();

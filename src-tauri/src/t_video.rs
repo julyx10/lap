@@ -834,6 +834,7 @@ pub async fn prepare_video(
     } else {
         action
     };
+    #[cfg(target_os = "macos")]
     let mut try_software_enc = false;
 
     let temp_dir = app

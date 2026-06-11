@@ -29,8 +29,6 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 
 use crate::{t_jxl, t_libraw, t_utils};
-#[cfg(not(target_os = "macos"))]
-use crate::t_video;
 
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
@@ -1142,7 +1140,7 @@ async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>,
         }
         #[cfg(all(not(target_os = "macos"), not(lap_has_libheif)))]
         {
-            return t_video::get_video_thumbnail(file_path, 4096, None, None).await;
+            return crate::t_video::get_video_thumbnail(file_path, 4096, None, None).await;
         }
     }
 
@@ -1543,7 +1541,7 @@ pub async fn get_file_image_bytes_cached(file_path: &str) -> Result<Vec<u8>, Str
         }
         #[cfg(all(not(target_os = "macos"), not(lap_has_libheif)))]
         {
-            t_video::get_video_thumbnail(file_path, 4096, None, None).await?
+            crate::t_video::get_video_thumbnail(file_path, 4096, None, None).await?
                 .ok_or_else(|| format!("Failed to resolve HEIC preview image: {}", file_path))?
         }
     } else if is_ffmpeg_backed_image_path(file_path) {
