@@ -2269,27 +2269,13 @@ const handleKeyDown = (e: any) => {
     openImageViewer(selectedItemIndex.value, true);
   } else if (matchesShortcut('file.copy', event, shortcutPlatform)) {
     clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
-  } else if (matchesShortcut('file.searchSimilar', event, shortcutPlatform)) {
-    enterSimilarSearchMode(fileList.value[selectedItemIndex.value]);
-  } else if (matchesShortcut('file.openExternalApp', event, shortcutPlatform)) {
-    void openSelectedFileInExternalApp();
-  } else if (matchesShortcut('file.reveal', event, shortcutPlatform)) {
-    revealPath(fileList.value[selectedItemIndex.value].file_path);
   } else if (matchesShortcut('file.editImage', event, shortcutPlatform)) {
     const file = fileList.value[selectedItemIndex.value];
     if (file && (file.file_type === 1 || file.file_type === 3)) {
       void openImageEditor(selectedItemIndex.value);
     }
-  } else if (matchesShortcut('file.moveToFolder', event, shortcutPlatform)) {
-    void onMoveToFolder();
-  } else if (matchesShortcut('file.moveTo', event, shortcutPlatform)) {
-    showMoveTo.value = true;
   } else if (matchesShortcut('file.trash', event, shortcutPlatform)) {
     openTrashMsgbox();
-  } else if (matchesShortcut('view.first', event, shortcutPlatform)) {
-    (keyActions as any).Home();
-  } else if (matchesShortcut('view.last', event, shortcutPlatform)) {
-    (keyActions as any).End();
   } else if ((keyActions as any)[key]) {
     (keyActions as any)[key]();
   }
