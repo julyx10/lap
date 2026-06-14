@@ -917,6 +917,7 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
       { actionId: 'file.moveTo', labelKey: 'move_within_library' },
       { actionId: 'file.moveToFolder', labelKey: 'move_to_folder' },
       { actionId: 'file.copy', labelKey: 'copy_file' },
+      { actionId: 'file.paste', labelKey: 'paste_file' },
       { actionId: 'file.reveal', labelKey: 'reveal_in_file_manager' },
       { actionId: 'file.trash', labelKey: 'move_to_trash' },
     ],
@@ -933,7 +934,7 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
     key: 'metadata',
     items: [
       { actionId: 'meta.favorite', labelKey: 'toggle_favorite' },
-      { actionId: 'meta.rating.clear', labelKey: 'set_clear_rating', keys: ['0 – 5'] },
+      { actionId: 'meta.rating.clear', labelKey: 'set_clear_rating', keys: ['0 ~ 5'] },
       { actionId: 'meta.tag', labelKey: 'edit_tags' },
       { actionId: 'meta.comment', labelKey: 'edit_comment' },
       { actionId: 'meta.rotate', labelKey: 'rotate' },

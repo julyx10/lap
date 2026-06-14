@@ -333,7 +333,8 @@
       "failed": "无法设置相册封面"
     },
     "copy_image": {
-      "success": "图片已复制到剪贴板",
+      "success": "已复制 {count} 个文件到剪贴板",
+      "limit": "每次最多复制 {count} 个文件。",
       "failed": "复制图片失败。不支持的格式或文件已损坏。"
     },
     "save_image": {
@@ -386,17 +387,18 @@
       "new_folder": "新建文件夹...",
       "view_in_new_window": "在新窗口中查看...",
       "copy": "复制到剪贴板",
+      "paste": "粘贴",
       "edit_image": "编辑图片...",
       "open_image_in_app": "在 {app} 中打开图片...",
       "open_video_in_app": "在 {app} 中打开视频...",
       "find_similar_images": "查找相似图片",
       "find_person_images": "查找人物图片",
-      "find_album_folder": "查找相册文件夹",
       "on_this_day": "历史上的今天",
       "print": "打印图片...",
       "rename": "重命名",
       "move_to": "移动到...",
       "copy_to": "复制到...",
+      "move_copy": "移动 / 复制",
       "move_within_library": "在库内移动...",
       "move_to_folder": "移动到文件夹...",
       "copy_to_folder": "复制到文件夹...",
@@ -470,6 +472,7 @@
       "title": "无法导入文件",
       "message": "请先选择一个相册。文件只能导入到指定的相册中。",
       "success": "已导入 {count} 个文件",
+      "no_clipboard_image": "剪贴板中没有图片。",
       "overlay": "拖放文件以导入",
       "no_files": "无法导入文件。请确保拖放的是图片文件。"
     },
@@ -1085,6 +1088,7 @@
         "open_external_app": "在外部应用中打开",
         "edit_image": "编辑图片",
         "copy_file": "复制到剪贴板",
+        "paste_file": "粘贴",
         "reveal_in_finder": "在访达中显示",
         "reveal_in_file_manager": "在文件管理器中显示",
         "select_all": "全选",

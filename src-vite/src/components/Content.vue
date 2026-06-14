@@ -606,10 +606,10 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, syncAlbumFolderMtimes,
-         copyImage, renameFile, moveFile, moveFileOutsideLibrary, copyFile, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
+         copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
-         updateFileInfo, importUrl, importFileBytes, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
+         updateFileInfo, importUrl, importFileBytes, importClipboard, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded } from '@/common/api';
 import { config, libConfig } from '@/common/config';
@@ -643,37 +643,26 @@ import StatusBar from '@/components/StatusBar.vue';
 
 import {
   IconPhotoAll,
-  IconClose,
-  IconCheckAll,
-  IconCheckNone,
   IconHeart,
-  IconHeartFilled,
   IconFolderFavorite,
-  IconMoveTo,
+  IconFileArrowRight,
   IconFiles,
   IconFolder,
-  IconChecked,
   IconTag,
   IconSmartTag,
   IconLocation,
   IconCameraAperture,
-  IconTrash,
   IconLeft,
   IconRight,
   IconSeparator,
-  IconUpdate,
-  IconCopyTo,
   IconCard,
   IconTile,
   IconJustified,
   IconFilmstrip,
-  IconRestore,
-  IconRefresh,
   IconSelection,
   IconInformation,
   IconPhotoSearch,
   IconSimilar,
-  IconImageEdit,
   IconPersonSearch,
   IconFolderSearch,
   IconCalendarMonth,
@@ -1293,6 +1282,7 @@ const isDragOver = ref(false);
 const dragOverCount = ref(0);
 const showDropWarning = ref(false);
 const isContentInternalDrag = ref(false);
+const isPastingClipboard = ref(false);
 const acceptDrops = computed(() =>
   tempViewMode.value === 'none'
   && config.main.sidebarIndex === 0
@@ -1340,6 +1330,66 @@ function hasExternalDragIntent(event: DragEvent) {
 
 function isInternalReorderActive() {
   return uiStore.isInputActive('ManageLibraries');
+}
+
+async function resolveAlbumImportDestination(albumId: number, folderPath?: string) {
+  if (albumId <= 0) return null;
+  const album = await getAlbum(albumId);
+  const destinationPath = folderPath || album?.path;
+  if (!destinationPath) return null;
+
+  const folder = await selectFolder(albumId, destinationPath);
+  return folder?.id
+    ? { albumId, folderId: Number(folder.id), folderPath: String(folder.path) }
+    : null;
+}
+
+async function resolveCurrentAlbumImportDestination() {
+  const albumId = Number(libConfig.album.id || 0);
+  if (config.main.sidebarIndex !== 0 || albumId <= 0) return null;
+
+  const folderPath = !libConfig.album.selected && libConfig.album.folderPath
+    ? libConfig.album.folderPath
+    : undefined;
+  return resolveAlbumImportDestination(albumId, folderPath);
+}
+
+async function refreshImportedFiles(albumId: number) {
+  await refreshAffectedAlbums([albumId]);
+  await refreshLibraryTotalCount();
+  await updateContent();
+}
+
+async function pasteClipboardImage(target?: { albumId: number; folderPath?: string }) {
+  if (isPastingClipboard.value) return;
+  if (!target && !acceptDrops.value) {
+    showDropWarning.value = true;
+    return;
+  }
+
+  const destination = target
+    ? await resolveAlbumImportDestination(Number(target.albumId || 0), target.folderPath)
+    : await resolveCurrentAlbumImportDestination();
+  if (!destination) {
+    showDropWarning.value = true;
+    return;
+  }
+
+  isPastingClipboard.value = true;
+  try {
+    const files = await importClipboard(destination.folderId, destination.folderPath);
+    if (!Array.isArray(files) || files.length === 0) {
+      toast.warning(t('msgbox.drop_import.no_clipboard_image'));
+      return;
+    }
+    await refreshImportedFiles(destination.albumId);
+    toast.success(t('msgbox.drop_import.success', { count: files.length }));
+  } catch (error) {
+    console.error('Failed to import clipboard image:', error);
+    toast.warning(t('msgbox.drop_import.no_clipboard_image'));
+  } finally {
+    isPastingClipboard.value = false;
+  }
 }
 
 function removeDragGhost() {
@@ -1803,6 +1853,7 @@ let unlistenImageViewer: () => void;
 let unlistenImageEditor: (() => void) | null = null;
 let unlistenFaceIndexProgress: (() => void) | null = null;
 let unlistenLibraryTotalRefreshed: (() => void) | null = null;
+let unlistenPasteClipboard: (() => void) | null = null;
 
 let resizeObserver: ResizeObserver | null = null;
 let contentUpdateTimer: ReturnType<typeof setTimeout> | null = null;
@@ -2106,18 +2157,12 @@ function handleItemAction(payload: { action: string, index: number }) {
     'open-external-app': () => {
       void openSelectedFileInExternalApp();
     },
-    'copy': () => clickCopyImage(fileList.value[selectedItemIndex.value].file_path),
+    'copy': () => void clickCopyImages(fileList.value[selectedItemIndex.value].file_path),
     'rename': clickRename,
     'move-within-library': () => showMoveTo.value = true,
     'move-to-folder': () => void onMoveToFolder(),
     'copy-to-folder': () => void onCopyToFolder(),
     'trash': () => openTrashMsgbox(),
-    'album-folder': () => {
-      const selectedFile = fileList.value[selectedItemIndex.value];
-      if (selectedFile) {
-        enterAlbumPreviewMode(selectedFile);
-      }
-    },
     'reveal': () => revealPath(fileList.value[selectedItemIndex.value].file_path),
     'refresh-file-info': () => void updateFile(fileList.value[selectedItemIndex.value], true),
     'favorite': toggleFavorite,
@@ -2318,11 +2363,7 @@ const keyActions = {
 function handleLocalKeyDown(event: KeyboardEvent) {
   if (event.defaultPrevented) return;
 
-  if (uiStore.activePane === 'left-sidebar') {
-    return;
-  }
-
-  // Check for input targets (prevent toggle while typing)
+  // Do not intercept editing shortcuts while typing.
   const target = event.target as HTMLElement;
   if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
     return;
@@ -2330,6 +2371,16 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   // Check if there are modal dialogs
   if (uiStore.inputStack.length > 0) {
+    return;
+  }
+
+  if (matchesShortcut('file.paste', event, shortcutPlatform)) {
+    event.preventDefault();
+    void pasteClipboardImage();
+    return;
+  }
+
+  if (uiStore.activePane === 'left-sidebar') {
     return;
   }
 
@@ -2650,7 +2701,7 @@ const handleKeyDown = (e: any) => {
   if (matchesShortcut('file.openNewWindow', event, shortcutPlatform)) {
     openImageViewer(selectedItemIndex.value, true);
   } else if (matchesShortcut('file.copy', event, shortcutPlatform)) {
-    clickCopyImage(fileList.value[selectedItemIndex.value].file_path);
+    void clickCopyImages(fileList.value[selectedItemIndex.value].file_path);
   // macOS handles Cmd+Arrow in App's capture listener before the content DOM handler.
   } else if (isMac && matchesShortcut('view.first', event, shortcutPlatform)) {
     keyActions.Home();
@@ -3136,6 +3187,13 @@ onMounted( async() => {
       updateContent(true);
     }
   });
+  unlistenPasteClipboard = await listen('paste-clipboard-to-folder', (event: any) => {
+    const albumId = Number(event.payload?.albumId || 0);
+    const folderPath = String(event.payload?.folderPath || '');
+    if (albumId > 0 && folderPath) {
+      void pasteClipboardImage({ albumId, folderPath });
+    }
+  });
 
   // Drag-drop file import. Tauri native drag/drop is disabled so internal
   // HTML5 drag interactions (e.g. sortable lists) keep their drop events.
@@ -3175,20 +3233,9 @@ onMounted( async() => {
     }
     const dt = e.dataTransfer;
     if (!dt) return;
-    let folderId = libConfig.album.folderId;
-    let folderPath = libConfig.album.folderPath;
-    // Resolve root folder ID when only album is selected (no subfolder)
-    if (!folderId && folderPath) {
-      const album = await getAlbum(libConfig.album.id);
-      if (album?.path) {
-        const resolved = await selectFolder(libConfig.album.id, album.path);
-        if (resolved?.id) {
-          folderId = resolved.id;
-          folderPath = resolved.path;
-        }
-      }
-    }
-    if (!folderId || !folderPath) return;
+    const destination = await resolveCurrentAlbumImportDestination();
+    if (!destination) return;
+    const { albumId, folderId, folderPath } = destination;
     if (dt.files.length > 0) {
       const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB
       const extRE = /\.(\w+)$/i;
@@ -3209,7 +3256,7 @@ onMounted( async() => {
         }
       }
       if (imported > 0) {
-        await updateContent();
+        await refreshImportedFiles(albumId);
         toast.success(t('msgbox.drop_import.success', { count: imported }));
         return;
       }
@@ -3218,7 +3265,7 @@ onMounted( async() => {
     }
     const url = getExternalDropUrl(dt);
     if (url) {
-      handleDropUrls([url]);
+      handleDropUrls([url], destination);
       return;
     }
     toast.warning(t('msgbox.drop_import.no_files'));
@@ -3492,6 +3539,7 @@ onBeforeUnmount(() => {
   if (unlistenFilesDeleted) unlistenFilesDeleted();
   if (unlistenAlbumUpdated) unlistenAlbumUpdated();
   if (unlistenFaceIndexProgress) unlistenFaceIndexProgress();
+  if (unlistenPasteClipboard) unlistenPasteClipboard();
   if (domDragEnter) document.removeEventListener('dragenter', domDragEnter);
   if (domDragLeave) document.removeEventListener('dragleave', domDragLeave);
   if (domDragOver) document.removeEventListener('dragover', domDragOver);
@@ -3838,6 +3886,30 @@ async function getActionableSelectedItemsForAction() {
     return null;
   }
   return getActionableSelectedItems();
+}
+
+async function getSelectedItemsForClipboard(limit = 10) {
+  const selectedItems: any[] = [];
+  const chunkSize = Math.max(1, selectionChunkSize.value);
+
+  for (let chunkStart = 0; chunkStart < fileList.value.length && selectedItems.length < limit; chunkStart += chunkSize) {
+    const chunkEnd = Math.min(fileList.value.length, chunkStart + chunkSize);
+    const chunk = fileList.value.slice(chunkStart, chunkEnd);
+    if (chunk.some(item => item?.isSelected && item?.isPlaceholder)) {
+      if (!await hydrateRangeForSelection(chunkStart, chunkEnd)) {
+        toast.error(t('info_panel.selection_load_failed'));
+        return null;
+      }
+    }
+    for (let index = chunkStart; index < chunkEnd && selectedItems.length < limit; index++) {
+      const item = fileList.value[index];
+      if (item?.isSelected && isRealFileItem(item)) {
+        selectedItems.push(item);
+      }
+    }
+  }
+
+  return selectedItems;
 }
 
 // Track last visible range to avoid redundant fetches
@@ -4667,18 +4739,43 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
   }
 }
 
-const clickCopyImage = async (filePath: string) => {
+const clickCopyImages = async (fallbackPath?: string) => {
   if (isProcessing.value) return;
 
-  isProcessing.value = true;
-
-  let success = false;
+  let copiedCount = 0;
+  let requestedCount = 0;
+  let cancelled = false;
+  let filePaths: string[] = [];
   try {
-    success = await copyImage(filePath);
+    if (selectMode.value && selectedCount.value > 0) {
+      requestedCount = selectedCount.value;
+      const selectedItems = await getSelectedItemsForClipboard(10);
+      if (!selectedItems) {
+        cancelled = true;
+        return;
+      }
+      filePaths = selectedItems
+        .map((file: any) => String(file.file_path || ''))
+        .filter(Boolean);
+    } else if (fallbackPath) {
+      filePaths = [fallbackPath];
+      requestedCount = 1;
+    }
+    if (filePaths.length === 0) {
+      cancelled = true;
+      return;
+    }
+    isProcessing.value = true;
+    copiedCount = Number(await copyImages(filePaths)) || 0;
   } finally {
     isProcessing.value = false;
-    if (success) {
-      toast.success(localeMsg.value.tooltip.copy_image.success);
+    if (cancelled) {
+      return;
+    } else if (copiedCount > 0) {
+      toast.success(t('tooltip.copy_image.success', { count: copiedCount.toLocaleString() }));
+      if (requestedCount > 10) {
+        toast.warning(t('tooltip.copy_image.limit', { count: 10 }));
+      }
     } else {
       toast.error(localeMsg.value.tooltip.copy_image.failed);
     }
@@ -5078,10 +5175,13 @@ const onCopyToFolder = async () => {
   }
 }
 
-async function handleDropUrls(urls: string[]) {
-  const folderId = libConfig.album.folderId;
-  const folderPath = libConfig.album.folderPath;
-  if (!folderId || !folderPath) return;
+async function handleDropUrls(
+  urls: string[],
+  resolvedDestination?: { albumId: number; folderId: number; folderPath: string },
+) {
+  const destination = resolvedDestination || await resolveCurrentAlbumImportDestination();
+  if (!destination) return;
+  const { albumId, folderId, folderPath } = destination;
   let imported = 0;
   for (const url of urls) {
     try {
@@ -5092,7 +5192,7 @@ async function handleDropUrls(urls: string[]) {
     }
   }
   if (imported > 0) {
-    await updateContent();
+    await refreshImportedFiles(albumId);
     toast.success(t('msgbox.drop_import.success', { count: imported }));
   } else {
     toast.warning(t('msgbox.drop_import.no_files'));

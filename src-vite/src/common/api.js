@@ -740,13 +740,13 @@ export async function copyEditedImage(params) {
   }
 }
 
-// copy an image to clipboard
-export async function copyImage(filePath) {
+// copy up to 10 files to clipboard
+export async function copyImages(filePaths) {
   try {
-    return await invoke('copy_image', { filePath });
+    return await invoke('copy_images', { filePaths });
   } catch (error) {
-    console.error('Failed to copy image to clipboard:', error);
-    return false;
+    console.error('Failed to copy files to clipboard:', error);
+    return 0;
   }
 }
 
@@ -937,6 +937,19 @@ export async function importFileBytes(bytes, name, folderId, folderPath) {
     console.error('importFileBytes error:', error);
     return null;
   }
+}
+
+export async function hasImportableClipboard() {
+  try {
+    return Boolean(await invoke('has_importable_clipboard'));
+  } catch (error) {
+    console.error('hasImportableClipboard error:', error);
+    return false;
+  }
+}
+
+export async function importClipboard(folderId, folderPath) {
+  return await invoke('import_clipboard', { folderId, folderPath });
 }
 
 export async function importFromDrag(folderId, folderPath) {

@@ -194,10 +194,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  showFolderFiles: {
-    type: Boolean,
-    default: false,
-  }
 });
 
 const emit = defineEmits([
@@ -398,7 +394,6 @@ const menuItems = useFileMenuItems(
   toRef(props, 'file'),
   localeMsg,
   isMac,
-  toRef(props, 'showFolderFiles'),
   t,
   (action) => emit('action', action)
 );

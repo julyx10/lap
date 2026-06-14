@@ -199,7 +199,8 @@ import {
 import { getAlbumQueueIndex, getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
          fetchFolder, expandFinalFolder, getFileThumbById,
-         getAlbum, cancelIndexing as cancelIndexingApi, listenIndexProgress, listenIndexFinished } from '@/common/api';
+         getAlbum, hasImportableClipboard, cancelIndexing as cancelIndexingApi, listenIndexProgress, listenIndexFinished } from '@/common/api';
+import { DEFAULT_PLATFORM, getShortcutLabel } from '@/common/shortcuts';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelectionProvider, SelectionSource } from '@/composables/useAlbumSelection';
 
@@ -219,6 +220,7 @@ import {
   IconUpdateDot,
   IconRight,
   IconPhotoAll,
+  IconClipboard,
 } from '@/common/icons';
 
 const props = withDefaults(defineProps<{
@@ -328,12 +330,25 @@ const openAlbumEdit = async (albumId: number) => {
 };
 
 // Get menu items for a specific album (function for lazy evaluation)
-const getMoreMenuItems = (album: any) => {
+const getMoreMenuItems = async (album: any) => {
+  const canPaste = await hasImportableClipboard();
   return [
     {
       label: localeMsg.value.menu.album.edit,
       icon: IconEdit,
       action: () => openAlbumEdit(album.id)
+    },
+    {
+      label: t('menu.file.paste'),
+      icon: IconClipboard,
+      shortcut: getShortcutLabel('file.paste', DEFAULT_PLATFORM),
+      disabled: !canPaste,
+      action: () => {
+        void tauriEmit('paste-clipboard-to-folder', {
+          albumId: album.id,
+          folderPath: album.path,
+        });
+      }
     },
     {
       label: isAlbumQueued(album.id)
@@ -427,7 +442,7 @@ onMounted( async () => {
     }
   });
 
-  // listen for expand-album-folder event (from Content.vue "Find Album Folder" action)
+  // Keep the sidebar folder selection in sync with content navigation.
   unlistenExpandAlbumFolder = await listen('expand-album-folder', async (event: any) => {
     const { albumId, folderPath } = event.payload;
     if (albumId && folderPath) {

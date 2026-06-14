@@ -847,10 +847,6 @@ defineExpose({
   triggerNext
 });
 
-const showFolderFiles = computed(() => {
-  return !!(config.main.sidebarIndex === 0 && libConfig.album.id && libConfig.album.id !== 0);
-});
-
 const selectedFile = computed(() => props.file);
 
 const singleFileMenuItems = computed(() => {
@@ -860,7 +856,6 @@ const singleFileMenuItems = computed(() => {
     selectedFile,
     localeMsg,
     isMac,
-    showFolderFiles,
     t,
     (action) => emit('item-action', { action, index: props.fileIndex })
   ).value;

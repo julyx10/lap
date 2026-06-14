@@ -64,7 +64,6 @@
           :is-selected="selectMode ? Boolean(getFileItem(item).isSelected) : getFileIndex(item, index) === selectedItemIndex"
           :is-active="getFileIndex(item, index) === selectedItemIndex"
           :select-mode="selectMode"
-          :show-folder-files="showFolderFiles"
           @clicked="(modifiers) => $emit('item-clicked', getFileIndex(item, index), modifiers)"
           @dblclicked="(modifiers) => $emit('item-dblclicked', getFileIndex(item, index), modifiers)"
           @select-toggled="(shiftKey) => $emit('item-select-toggled', getFileIndex(item, index), shiftKey)"

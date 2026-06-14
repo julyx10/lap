@@ -333,7 +333,8 @@
       "failed": "Failed to set album cover"
     },
     "copy_image": {
-      "success": "Image copied to clipboard",
+      "success": "{count} file(s) copied to clipboard",
+      "limit": "You can copy up to {count} files at a time.",
       "failed": "Failed to copy image. Unsupported format or corrupted file."
     },
     "save_image": {
@@ -386,17 +387,18 @@
       "new_folder": "New folder...",
       "view_in_new_window": "View in new window...",
       "copy": "Copy to clipboard",
+      "paste": "Paste",
       "edit_image": "Edit image...",
       "open_image_in_app": "Open image in {app}...",
       "open_video_in_app": "Open video in {app}...",
       "find_similar_images": "Find similar images",
       "find_person_images": "Find person images",
-      "find_album_folder": "Find album folder",
       "on_this_day": "On this day",
       "print": "Print image...",
       "rename": "Rename",
       "move_to": "Move to...",
       "copy_to": "Copy to...",
+      "move_copy": "Move / Copy",
       "move_within_library": "Move in library...",
       "move_to_folder": "Move to folder...",
       "copy_to_folder": "Copy to folder...",
@@ -470,6 +472,7 @@
       "title": "Cannot import files",
       "message": "Please select an album first. Files can only be imported into a specific album.",
       "success": "{count} file(s) imported",
+      "no_clipboard_image": "The clipboard does not contain an image.",
       "overlay": "Drop files to import",
       "no_files": "No files could be imported. Make sure you are dropping image files."
     },
@@ -1085,6 +1088,7 @@
         "open_external_app": "Open in external app",
         "edit_image": "Edit image",
         "copy_file": "Copy to clipboard",
+        "paste_file": "Paste",
         "reveal_in_finder": "Reveal in Finder",
         "reveal_in_file_manager": "Reveal in file manager",
         "select_all": "Select all",

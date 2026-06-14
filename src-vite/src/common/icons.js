@@ -21,11 +21,14 @@ export { default as IconFolderCollapsed } from '@/assets/icons/folder-collapsed.
 export { default as IconNewFolder } from '@/assets/icons/folder-plus.svg';
 export { default as IconFolderFavorite } from '@/assets/icons/folder-heart.svg';
 export { default as IconFolderSearch } from '@/assets/icons/folder-search.svg';
+export { default as IconFolderMoveTo } from '@/assets/icons/folder-move-to.svg';
 export { default as IconOrder } from '@/assets/icons/order.svg';
 export { default as IconCopy } from '@/assets/icons/copy.svg';
 export { default as IconMove } from '@/assets/icons/arrow-move.svg';
-export { default as IconMoveTo } from '@/assets/icons/move-to.svg';
-export { default as IconCopyTo } from '@/assets/icons/copy-to.svg';
+export { default as IconClipboard } from '@/assets/icons/clipboard.svg';
+export { default as IconFileArrowRight } from '@/assets/icons/file-arrow-right.svg';
+export { default as IconFilePlus } from '@/assets/icons/file-plus.svg';
+export { default as IconFileMinus } from '@/assets/icons/file-minus.svg';
 export { default as IconDragDrop } from '@/assets/icons/drag-drop.svg';
 export { default as IconRename } from '@/assets/icons/rename.svg';
 export { default as IconTrash } from '@/assets/icons/trash.svg';

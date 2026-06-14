@@ -1155,19 +1155,49 @@ async fn get_generated_preview_bytes(file_path: &str) -> Result<Option<Vec<u8>>,
     Ok(None)
 }
 
-pub async fn copy_file_to_clipboard(file_path: &str) -> Result<bool, String> {
-    if should_generate_preview_for_file(file_path, t_utils::get_file_type(file_path).unwrap_or(0))
-    {
-        let preview = get_generated_preview_bytes(file_path).await?
-            .ok_or_else(|| format!("Failed to resolve preview image: {}", file_path))?;
-        let img = image::load_from_memory(&preview)
-            .map_err(|e| format!("Failed to decode preview image: {}", e))?;
-        return Ok(copy_image_to_clipboard(img));
+async fn clipboard_preview_png(file_paths: &[String]) -> Option<Vec<u8>> {
+    for file_path in file_paths {
+        let file_type = t_utils::get_file_type(file_path).unwrap_or(0);
+        if file_type != 1 && file_type != 3 {
+            continue;
+        }
+        let img = if should_generate_preview_for_file(file_path, file_type) {
+            let Some(preview) = get_generated_preview_bytes(file_path).await.ok().flatten() else {
+                continue;
+            };
+            let Ok(img) = image::load_from_memory(&preview) else {
+                continue;
+            };
+            img
+        } else {
+            let Ok(img) = image::open(Path::new(file_path)) else {
+                continue;
+            };
+            img
+        };
+        let mut png = std::io::Cursor::new(Vec::new());
+        if img.write_to(&mut png, image::ImageFormat::Png).is_ok() {
+            return Some(png.into_inner());
+        }
     }
+    None
+}
 
-    let img = image::open(Path::new(file_path))
-        .map_err(|e| format!("Failed to open image: {}", e))?;
-    Ok(copy_image_to_clipboard(img))
+pub async fn copy_files_to_clipboard(
+    app_handle: &tauri::AppHandle,
+    file_paths: Vec<String>,
+) -> Result<usize, String> {
+    let file_paths = file_paths
+        .into_iter()
+        .filter(|path| Path::new(path).is_file())
+        .take(10)
+        .collect::<Vec<_>>();
+    if file_paths.is_empty() {
+        return Err("No valid files to copy".to_string());
+    }
+    let preview = clipboard_preview_png(&file_paths).await;
+    crate::t_pasteboard::copy_files_and_image(app_handle, &file_paths, preview.as_deref()).await?;
+    Ok(file_paths.len())
 }
 
 /// copy an edited image to clipboard

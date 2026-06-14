@@ -333,7 +333,8 @@
       "failed": "Fallo al establecer portada"
     },
     "copy_image": {
-      "success": "Imagen copiada",
+      "success": "{count} archivo(s) copiado(s) al portapapeles",
+      "limit": "Puedes copiar hasta {count} archivos a la vez.",
       "failed": "No se pudo copiar la imagen. Formato no compatible o archivo dañado."
     },
     "save_image": {
@@ -386,17 +387,18 @@
       "new_folder": "Nueva carpeta...",
       "view_in_new_window": "Ver en nueva ventana...",
       "copy": "Copiar a portapapeles",
+      "paste": "Pegar",
       "edit_image": "Editar imagen...",
       "open_image_in_app": "Abrir imagen en {app}...",
       "open_video_in_app": "Abrir video en {app}...",
       "find_similar_images": "Buscar similares",
       "find_person_images": "Buscar fotos de persona",
-      "find_album_folder": "Buscar carpeta de álbum",
       "on_this_day": "Un día como hoy",
       "print": "Imprimir imagen...",
       "rename": "Renombrar",
       "move_to": "Mover a...",
       "copy_to": "Copiar a...",
+      "move_copy": "Mover / Copiar",
       "move_within_library": "Mover en la biblioteca...",
       "move_to_folder": "Mover a carpeta...",
       "copy_to_folder": "Copiar a carpeta...",
@@ -470,6 +472,7 @@
       "title": "No se pueden importar archivos",
       "message": "Selecciona primero un álbum. Los archivos solo se pueden importar en un álbum específico.",
       "success": "{count} archivo(s) importado(s)",
+      "no_clipboard_image": "El portapapeles no contiene ninguna imagen.",
       "overlay": "Suelta los archivos para importar",
       "no_files": "No se pudieron importar archivos. Asegúrate de soltar archivos de imagen."
     },
@@ -1085,6 +1088,7 @@
         "open_external_app": "Abrir en app externa",
         "edit_image": "Editar imagen",
         "copy_file": "Copiar al portapapeles",
+        "paste_file": "Pegar",
         "reveal_in_finder": "Mostrar en Finder",
         "reveal_in_file_manager": "Mostrar en el administrador de archivos",
         "select_all": "Seleccionar todo",

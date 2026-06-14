@@ -22,6 +22,7 @@ export type ShortcutActionId =
   | 'file.openExternalApp'
   | 'file.editImage'
   | 'file.copy'
+  | 'file.paste'
   | 'file.selectAll'
   | 'file.selectNone'
   | 'file.invertSelection'
@@ -167,6 +168,13 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     contexts: ['content'],
     defaultBindings: [
       { code: 'KeyC', modifiers: ['cmdOrCtrl'], allowShift: true, label: { mac: '⌘C', windows: 'Ctrl+C', linux: 'Ctrl+C' } },
+    ],
+  },
+  {
+    id: 'file.paste',
+    contexts: ['content', 'album-list', 'album-folder'],
+    defaultBindings: [
+      { code: 'KeyV', modifiers: ['cmdOrCtrl'], label: { mac: '⌘V', windows: 'Ctrl+V', linux: 'Ctrl+V' } },
     ],
   },
   {

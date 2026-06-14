@@ -333,7 +333,8 @@
       "failed": "앨범 커버 설정 실패"
     },
     "copy_image": {
-      "success": "이미지 복사됨",
+      "success": "{count}개 파일을 클립보드에 복사했습니다",
+      "limit": "한 번에 최대 {count}개 파일을 복사할 수 있습니다.",
       "failed": "이미지를 복사하지 못했습니다. 지원되지 않는 형식이거나 파일이 손상되었습니다."
     },
     "save_image": {
@@ -386,17 +387,18 @@
       "new_folder": "새 폴더...",
       "view_in_new_window": "새 창에서 보기...",
       "copy": "클립보드에 복사",
+      "paste": "붙여넣기",
       "edit_image": "이미지 편집...",
       "open_image_in_app": "{app}에서 이미지 열기...",
       "open_video_in_app": "{app}에서 동영상 열기...",
       "find_similar_images": "유사 이미지 찾기",
       "find_person_images": "인물 이미지 찾기",
-      "find_album_folder": "앨범 폴더 찾기",
       "on_this_day": "과거의 오늘",
       "print": "이미지 인쇄...",
       "rename": "이름 변경",
       "move_to": "이동...",
       "copy_to": "복사...",
+      "move_copy": "이동 / 복사",
       "move_within_library": "라이브러리 내에서 이동...",
       "move_to_folder": "폴더로 이동...",
       "copy_to_folder": "폴더로 복사...",
@@ -470,6 +472,7 @@
       "title": "파일을 가져올 수 없습니다",
       "message": "먼저 앨범을 선택하세요. 파일은 특정 앨범으로만 가져올 수 있습니다.",
       "success": "{count}개 파일을 가져왔습니다",
+      "no_clipboard_image": "클립보드에 이미지가 없습니다.",
       "overlay": "파일을 드롭하여 가져오기",
       "no_files": "파일을 가져올 수 없습니다. 이미지 파일을 드롭하세요."
     },
@@ -1085,6 +1088,7 @@
         "open_external_app": "외부 앱에서 열기",
         "edit_image": "이미지 편집",
         "copy_file": "클립보드에 복사",
+        "paste_file": "붙여넣기",
         "reveal_in_finder": "Finder에서 보기",
         "reveal_in_file_manager": "파일 관리자에서 보기",
         "select_all": "모두 선택",
