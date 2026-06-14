@@ -25,8 +25,15 @@
         >
           {{ $t('search.filename_search') }}
         </a>
+        <a
+          role="tab"
+          :class="['sidebar-header-tab', { 'tab-active': libConfig.search.searchType === 3 }]"
+          @click="handleTabClick(3)"
+        >
+          Civitai
+        </a>
       </div>
-      <ContextMenu :menuItems="searchPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
+      <ContextMenu v-if="searchPanelMenuItems.length" :menuItems="searchPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 
     <!-- 0: search text -->
@@ -189,6 +196,11 @@
         />
       </div>
     </template>
+
+    <!-- 3: Civitai prompt import -->
+    <template v-else-if="libConfig.search.searchType === 3">
+      <CivitaiImport />
+    </template>
   </div>
 
   <!-- clear history messagebox -->
@@ -211,6 +223,7 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import MessageBox from '@/components/MessageBox.vue';
+import CivitaiImport from '@/components/CivitaiImport.vue';
 import { getFileInfo, getFileThumbById } from '@/common/api';
 import {
   getThumbUrl,
@@ -237,13 +250,16 @@ const uiStore = useUIStore();
 
 const showClearHistoryMsgbox = ref(false);
 
-const searchPanelMenuItems = computed(() => [
-  {
-    label: localeMsg.value.menu.search.clear_history,
-    icon: IconTrash,
-    action: () => showClearConfirmation(),
-  },
-]);
+const searchPanelMenuItems = computed(() => {
+  if (libConfig.search.searchType === 3) return [];
+  return [
+    {
+      label: localeMsg.value.menu.search.clear_history,
+      icon: IconTrash,
+      action: () => showClearConfirmation(),
+    },
+  ];
+});
 
 function getSearchHistoryMenuItems(index: number) {
   return [

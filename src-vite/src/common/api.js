@@ -929,6 +929,15 @@ export async function importUrl(url, folderId, folderPath) {
   }
 }
 
+export async function analyzeCivitaiImageUrl(url, modelRoots = []) {
+  try {
+    return await invoke('analyze_civitai_image_url', { url, modelRoots });
+  } catch (error) {
+    console.error('analyzeCivitaiImageUrl error:', error);
+    throw error;
+  }
+}
+
 export async function importFileBytes(bytes, name, folderId, folderPath) {
   try {
     const result = await invoke('import_file_bytes', { bytes, name, folderId, folderPath });

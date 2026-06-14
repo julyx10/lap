@@ -13,7 +13,7 @@ use crate::t_sqlite::{
 };
 use crate::t_storage;
 use crate::t_utils;
-use crate::{t_ai, t_sqlite};
+use crate::{t_ai, t_civitai, t_sqlite};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -53,6 +53,14 @@ pub fn set_last_selected_item_index(index: i64) -> Result<(), String> {
     let mut config = t_config::load_app_config()?;
     config.last_selected_item_index = index;
     t_config::save_app_config(&config)
+}
+
+#[tauri::command]
+pub async fn analyze_civitai_image_url(
+    url: String,
+    model_roots: Vec<String>,
+) -> Result<t_civitai::CivitaiImageReport, String> {
+    t_civitai::analyze_civitai_image_url(&url, &model_roots).await
 }
 
 #[tauri::command]

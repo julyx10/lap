@@ -68,7 +68,7 @@ export const useLibraryStore = defineStore('libraryStore', {
 
     /** @type {{ searchType: number, searchText: string, searchHistory: (string | { text: string, fileId: number | null })[], searchHistoryIndex: number, similarImageHistory: number[], similarImageHistoryIndex: number, fileName: string }} */
     search: {
-      searchType: 0,            // 0: ai search, 1: similar image, 2: filename search
+      searchType: 0,            // 0: ai search, 1: similar image, 2: filename search, 3: Civitai import
       searchText: '',         // AI search text
       searchHistory: [],      // AI search history
       searchHistoryIndex: -1, // current AI search history index

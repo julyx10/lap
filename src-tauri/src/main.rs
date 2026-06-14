@@ -19,6 +19,7 @@ mod t_cluster;
 mod t_cmds;
 mod t_common;
 mod t_config;
+mod t_civitai;
 mod t_dedup;
 mod t_face;
 mod t_image;
@@ -202,6 +203,7 @@ async fn main() {
             // library
             t_cmds::get_app_config,
             t_cmds::set_last_selected_item_index,
+            t_cmds::analyze_civitai_image_url,
             t_cmds::get_db_storage_dir,
             t_cmds::is_using_custom_db_storage,
             t_cmds::change_db_storage_dir,
