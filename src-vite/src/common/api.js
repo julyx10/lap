@@ -952,6 +952,10 @@ export async function importClipboard(folderId, folderPath) {
   return await invoke('import_clipboard', { folderId, folderPath });
 }
 
+export async function reversePromptImage(request) {
+  return await invoke('reverse_prompt_image', { request });
+}
+
 export async function importFromDrag(folderId, folderPath) {
   try {
     const result = await invoke('import_from_drag', { folderId, folderPath });

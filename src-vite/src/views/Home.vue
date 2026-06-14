@@ -53,6 +53,14 @@
 
             <div class="flex-1"></div>
 
+            <TButton
+              :buttonSize="'large'"
+              :icon="IconSmartTag"
+              :text="reversePrompterLabel"
+              :tooltip="reversePrompterTitle"
+              @click="clickReversePrompter"
+            />
+
             <TButton 
               class="mt-auto"
               :class="showDebugBadge ? 'text-warning': ''"
@@ -199,6 +207,7 @@ import {
   IconArrowDown,
   IconCalendarDay,
   IconPhotoAll,
+  IconSmartTag,
 } from '@/common/icons';
 
 const isSwitchingLibrary = ref(false);
@@ -218,10 +227,14 @@ const checkLibraryEmpty = async () => {
 };
 const SETTINGS_BASE_WIDTH = 600;
 const SETTINGS_BASE_HEIGHT = 620;
+const REVERSE_PROMPTER_BASE_WIDTH = 1040;
+const REVERSE_PROMPTER_BASE_HEIGHT = 720;
 
 /// i18n
 const { locale, messages } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
+const reversePrompterTitle = computed(() => localeMsg.value.sidebar?.reverse_prompt || 'Reverse Prompter');
+const reversePrompterLabel = computed(() => config.settings.showButtonText ? reversePrompterTitle.value : '');
 
 const uiStore = useUIStore();
 
@@ -619,6 +632,46 @@ async function clickSettings(tabIndex?: number) {
   newSettingsWindow.once('tauri://close-requested', () => {
     newSettingsWindow.close();
     console.log('settings window closed');
+  });
+}
+
+async function clickReversePrompter() {
+  const existingWindow = await WebviewWindow.getByLabel('reverseprompter');
+  if (existingWindow) {
+    if (isWin && await existingWindow.isMinimized()) {
+      await existingWindow.unminimize();
+    }
+    await existingWindow.show();
+    if (isWin) {
+      await existingWindow.setFocus();
+    }
+    return;
+  }
+
+  const options: any = {
+    url: '/reverse-prompter',
+    title: reversePrompterTitle.value,
+    width: Math.round(REVERSE_PROMPTER_BASE_WIDTH * getSettingsWindowScale()),
+    height: Math.round(REVERSE_PROMPTER_BASE_HEIGHT * getSettingsWindowScale()),
+    minWidth: Math.round(720 * getSettingsWindowScale()),
+    minHeight: Math.round(520 * getSettingsWindowScale()),
+    resizable: true,
+    maximizable: true,
+    visible: false,
+    transparent: true,
+    decorations: isMac,
+    ...(isMac && {
+      titleBarStyle: 'Overlay',
+      hiddenTitle: true,
+    }),
+  };
+
+  const reverseWindow = new WebviewWindow('reverseprompter', options);
+  reverseWindow.once('tauri://created', () => {
+    console.log('reverse prompter window created');
+  });
+  reverseWindow.once('tauri://close-requested', () => {
+    reverseWindow.close();
   });
 }
 

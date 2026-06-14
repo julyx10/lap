@@ -9,6 +9,7 @@
     "location": "Location",
     "people": "People",
     "camera": "Cameras",
+    "reverse_prompt": "Reverse Prompter",
     "settings": "Settings"
   },
   "album": {

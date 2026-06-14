@@ -32,6 +32,7 @@ mod t_menu;
 mod t_migration;
 mod t_pasteboard;
 mod t_protocol;
+mod t_reverse_prompt;
 mod t_sqlite;
 mod t_utils;
 mod t_http;
@@ -342,6 +343,8 @@ async fn main() {
             t_video::prepare_video,
             t_video::cancel_video_prepare,
             t_video::clear_video_cache,
+            // reverse prompt
+            t_reverse_prompt::reverse_prompt_image,
             // backup / restore
             t_cmds::get_db_storage_info,
             t_cmds::backup_databases,

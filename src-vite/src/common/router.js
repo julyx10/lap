@@ -18,6 +18,11 @@ const routes = [
     component: () => import('@/views/ImageEditor.vue'),
   },
   {
+    path: '/reverse-prompter',
+    name: 'ReversePrompter',
+    component: () => import('@/views/ReversePrompter.vue'),
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/Settings.vue'),
