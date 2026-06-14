@@ -332,7 +332,7 @@
                   {{ hasCustomDbStorage ? (dbStorageDir || '-') : $t('settings.database.system_default') }}
                 </div>
               </div>
-              <div class="shrink-0 flex items-center">
+              <div class="shrink-0 flex items-center gap-2">
                 <button
                   class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
                   :disabled="isChangingDbStorage"
@@ -340,16 +340,14 @@
                 >
                   {{ isChangingDbStorage ? $t('tooltip.loading') : $t('settings.database.change_location') }}
                 </button>
-                <button
+                <TButton
                   v-if="hasCustomDbStorage"
-                  class="btn btn-sm btn-ghost"
+                  :icon="IconRestore"
+                  :buttonSize="'small'"
                   :disabled="isChangingDbStorage"
-                  :title="$t('settings.database.restore_default_location')"
-                  :aria-label="$t('settings.database.restore_default_location')"
+                  :tooltip="$t('settings.database.restore_default_location')"
                   @click="restoreDefaultDbStorageDir"
-                >
-                  <IconRestore class="w-3.5 h-3.5" />
-                </button>
+                />
               </div>
             </div>
 

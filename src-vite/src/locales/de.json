@@ -114,6 +114,7 @@
     "search_tags": "Tags suchen",
     "enter_new_tag_name": "Neuer Tag-Name",
     "not_found": "Keine Tags gefunden",
+    "load_failed": "Tag-Status konnte nicht geladen werden. Schließen Sie diesen Dialog und versuchen Sie es erneut.",
     "smart_group": "Intelligente Tags",
     "custom_group": "Benutzerdefinierte Tags",
     "smart_items": {
@@ -244,7 +245,16 @@
     "empty_desc": "Fügen Sie Dateien hinzu oder aktualisieren Sie den aktuellen Filter, damit hier Inhalte angezeigt werden.",
     "select_hint": "Keine Dateien ausgewählt",
     "select_mode_entered": "Mehrfachauswahl ist aktiviert",
-    "select_limit_hint": "Die ersten {count} Dateien wurden ausgewählt",
+    "selection_load_failed": "Nicht alle Dateien konnten für die Auswahl geladen werden. Versuchen Sie es erneut.",
+    "large_batch": {
+      "title": "Massenvorgang bestätigen",
+      "content": "Dieser Vorgang verarbeitet {count} Dateien und kann einige Zeit dauern. Fortfahren?",
+      "ok": "Fortfahren"
+    },
+    "drag_action": {
+      "copy": "Kopieren",
+      "move": "Verschieben"
+    },
     "edit_disabled": "Wählen Sie ein einzelnes Bild zum Bearbeiten",
     "type_image": "Bild",
     "type_images": "Bilder",
@@ -537,7 +547,8 @@
     "copy_to_folder": {
       "title": "In Ordner kopieren",
       "success": "'{source}' nach '{dest}' kopiert.",
-      "error": "Fehler beim Kopieren von '{source}' nach '{dest}'."
+      "error": "Fehler beim Kopieren von '{source}' nach '{dest}'.",
+      "index_error": "{count} Datei(en) wurden kopiert, konnten aber nicht zum Bibliotheksindex hinzugefügt werden."
     },
     "file_conflict": {
       "title": "Datei existiert bereits",

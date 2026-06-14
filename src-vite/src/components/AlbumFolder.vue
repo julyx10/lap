@@ -14,18 +14,15 @@
       :class="{ 'pl-4': child.path !== rootPath }"
     >
       <div v-if="child.id != 0 || selection.folderPath.value == rootPath"
+        :data-file-drop-path="child.path"
+        :data-file-drop-album-id="albumId"
         :class="[
           'p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2',
           !selection.selected.value && selection.folderPath.value === child.path && !isRenamingFolder ? 'text-primary bg-base-100 hover:bg-base-100 border-transparent' : 'hover:text-base-content hover:bg-base-100/30 border-transparent',
-          dropHighlightPath === child.path ? '!bg-primary/10 !border-primary/60' : '',
         ]"
         @click="clickFolder(albumId, child)"
         @dblclick="expandFolder(child)"
         @contextmenu.prevent.stop="(e: MouseEvent) => handleFolderContextMenu(child, e)"
-        @dragover="onFolderDragOver"
-        @dragenter="onFolderDragEnter($event, child.path)"
-        @dragleave="onFolderDragLeave"
-        @drop.stop="onFolderDrop($event, child.path, child.id)"
       >
         <IconRight
           :class="[
@@ -144,9 +141,11 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isMac, shortenFilename, isValidFileName, getFolderPath, getFullPath, normalizePathForCompare, isWithinRootPath } from '@/common/utils';
-import { createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary, copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently, moveFile, copyFile, selectFolder as apiSelectFolder } from '@/common/api';
-import { dragState } from '@/common/dragState';
-import { recountAlbum, setFolderFavorite, setFolderSearchExcluded } from '@/common/api';
+import {
+  createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary,
+  copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently, recountAlbum,
+  setFolderFavorite, setFolderSearchExcluded,
+} from '@/common/api';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelection } from '@/composables/useAlbumSelection';
 
@@ -244,7 +243,6 @@ const showTrashFolderMsgbox = ref(false);
 const showMoveTo = ref(false);
 const permanentDeleteChecked = ref(false);
 const deletePermanently = ref(false);
-const dropHighlightPath = ref('');
 const folderContextMenus = ref<Record<string, any>>({});
 
 function handleFolderContextMenu(folder: Folder, event: MouseEvent) {
@@ -809,53 +807,6 @@ const clickTrashFolder = async () => {
     );
   }
 };
-
-// ---- file drop handling ----
-
-function onFolderDragOver(e: DragEvent) {
-  if (!dragState.files?.length) return;
-  e.preventDefault();
-  e.dataTransfer!.dropEffect = (e.altKey || e.ctrlKey) ? 'copy' : 'move';
-}
-
-function onFolderDragEnter(_e: DragEvent, folderPath: string) {
-  if (!dragState.files?.length) return;
-  dropHighlightPath.value = folderPath;
-}
-
-function onFolderDragLeave(e: DragEvent) {
-  const el = e.currentTarget as HTMLElement;
-  if (e.relatedTarget && el.contains(e.relatedTarget as Node)) return;
-  dropHighlightPath.value = '';
-}
-
-async function onFolderDrop(e: DragEvent, destPath: string, _folderId: number) {
-  dropHighlightPath.value = '';
-  if (!dragState.files?.length) return;
-  const files = dragState.files;
-
-  // Resolve real DB folder ID via same API "Move in library" uses.
-  const selected = await apiSelectFolder(props.albumId, destPath);
-  if (!selected?.id) return;
-  const resolvedId = selected.id;
-
-  const copy = e.altKey || e.ctrlKey;
-  const actionFn = copy ? copyFile : moveFile;
-  const verb = copy ? 'copied' : 'moved';
-
-  let done = 0;
-  for (const f of files) {
-    if (!copy && f.folder_id === resolvedId) continue;
-    const result = copy
-      ? await actionFn(f.file_path, destPath)
-      : await actionFn(f.id, f.file_path, resolvedId, destPath);
-    if (result) done++;
-  }
-  if (done > 0) {
-    tauriEmit('refresh-content');
-    toast.success(`${done} file(s) ${verb}`);
-  }
-}
 
 /// toggle folder favorite
 const toggleFavorite = async () => {

@@ -268,6 +268,7 @@ async fn main() {
             t_cmds::delete_file,
             t_cmds::delete_file_permanently,
             t_cmds::delete_db_file,
+            t_cmds::batch_delete_files,
             t_cmds::edit_file_comment,
             t_cmds::get_file_thumb,
             t_cmds::get_file_thumb_by_id,
@@ -286,6 +287,7 @@ async fn main() {
             t_cmds::set_folder_search_excluded,
             t_cmds::set_file_favorite,
             t_cmds::set_file_rating,
+            t_cmds::batch_update_file_metadata,
             // tag
             t_cmds::get_all_tags,
             t_cmds::get_tag_name,
@@ -295,6 +297,8 @@ async fn main() {
             t_cmds::get_tags_for_file,
             t_cmds::add_tag_to_file,
             t_cmds::remove_tag_from_file,
+            t_cmds::get_tag_selection_counts,
+            t_cmds::apply_tags_to_files,
             // calendar
             t_cmds::get_taken_dates,
             // camera

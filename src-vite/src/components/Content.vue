@@ -7,8 +7,6 @@
     @mouseleave="isContentHovered = false"
     @wheel.capture="handleContentWheel"
     @keydown="handleLocalKeyDown"
-    @dragstart.capture="markContentInternalDrag"
-    @dragend.capture="clearContentInternalDrag"
     @dragover.prevent
   >
 
@@ -209,6 +207,9 @@
                 @visible-range-update="handleVisibleRangeUpdate"
                 @scroll="handleGridScroll"
                 @layout-update="handleLayoutUpdate"
+                @item-drag-start="markContentInternalDrag"
+                @item-drag="updateContentDragPosition"
+                @item-drag-end="clearContentInternalDrag"
               />
               <!-- Navigation buttons -->
               <div v-if="!showWelcomeContent && config.settings.grid.showFilmStrip && fileList.length > 0" 
@@ -408,8 +409,6 @@
             :selected-files="selectedFiles"
             :selected-count="selectedCount"
             :selected-size="selectedSize"
-            :selection-limit="selectionMaxFiles"
-            :show-selection-limit-hint="showSelectionLimitHint"
             @close="handleSelectMode(false)"
             @select-all="selectAllInCurrentList"
             @select-none="selectNoneInCurrentList"
@@ -599,7 +598,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, watch, computed, createVNode, onMounted, onBeforeUnmount, nextTick, render } from 'vue';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { ask, open as openDialog } from '@tauri-apps/plugin-dialog';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -607,14 +606,13 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, syncAlbumFolderMtimes,
-         copyImage, renameFile, moveFile, moveFileOutsideLibrary, copyFile, deleteFile, deleteFilePermanently, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
-         setFileRotate, getFileHasTags, setFileFavorite, setFileRating, getTagsForFile, searchSimilarImages, generateEmbedding, 
+         copyImage, renameFile, moveFile, moveFileOutsideLibrary, copyFile, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
+         setFileRotate, setFileFavorite, setFileRating, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, importUrl, importFileBytes, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded } from '@/common/api';
 import { config, libConfig } from '@/common/config';
-import { dragState } from '@/common/dragState';
 import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
 import { getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
@@ -684,6 +682,7 @@ import {
   IconArrowDown,
   IconDownload,
   IconPrev,
+  IconAdd,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -813,19 +812,97 @@ const totalFileSize = ref(0);     // total files' size
 const selectedItemIndex = ref(-1);
 let pendingInitialSelectedIndex = -1;
 let hasRestoredInitialSelection = false;
-let pendingSelectedFileIds: Set<number> | null = null;
 
 // mutil select mode
 const selectMode = ref(false);
 const selectedCount = ref(0);
 const selectedSize = ref(0);  // selected files size
-const showSelectionLimitHint = ref(false);
 const selectionChunkSize = computed(() => Number(config.main?.selectionChunkSize) || 200);
-const selectionMaxFiles = computed(() => Number(config.main?.selectionMaxFiles) || 400);
 const isRealFileItem = (item: any) => !!item && !item.isPlaceholder && typeof item.id === 'number';
+const setItemSelected = (index: number, selected: boolean) => {
+  if (index < 0 || index >= fileList.value.length) return;
+  fileList.value[index].isSelected = selected;
+};
 const getActionableSelectedItems = () =>
   fileList.value.filter(item => item.isSelected && isRealFileItem(item));
 const selectedFiles = computed(() => selectMode.value ? getActionableSelectedItems() : []);
+const LARGE_BATCH_CONFIRM_THRESHOLD = 1000;
+const FILE_OPERATION_CONCURRENCY = 8;
+
+function clearSelectionForFileListUpdate() {
+  selectMode.value = false;
+  selectedCount.value = 0;
+  selectedSize.value = 0;
+  lastSelectedIndex.value = -1;
+  keyboardSelectionAnchorIndex.value = -1;
+}
+
+class CopyIndexError extends Error {}
+
+async function confirmLargeBatch(count: number) {
+  if (count <= LARGE_BATCH_CONFIRM_THRESHOLD) return true;
+  return ask(
+    t('info_panel.large_batch.content', { count: count.toLocaleString() }),
+    {
+      title: t('info_panel.large_batch.title'),
+      kind: 'warning',
+      okLabel: t('info_panel.large_batch.ok'),
+      cancelLabel: t('msgbox.cancel'),
+    },
+  );
+}
+
+async function runWithConcurrency<T, R>(
+  items: T[],
+  worker: (item: T) => Promise<R>,
+  concurrency = FILE_OPERATION_CONCURRENCY,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(Math.max(1, concurrency), items.length);
+
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      try {
+        results[index] = { status: 'fulfilled', value: await worker(items[index]) };
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason };
+      }
+    }
+  }));
+  return results;
+}
+
+async function runWithKeyedConcurrency<T, R>(
+  items: T[],
+  getKey: (item: T) => string,
+  worker: (item: T) => Promise<R>,
+  concurrency = FILE_OPERATION_CONCURRENCY,
+): Promise<PromiseSettledResult<R>[]> {
+  const groups = new Map<string, Array<{ item: T; index: number }>>();
+  items.forEach((item, index) => {
+    const key = getKey(item);
+    const group = groups.get(key);
+    if (group) {
+      group.push({ item, index });
+    } else {
+      groups.set(key, [{ item, index }]);
+    }
+  });
+
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  await runWithConcurrency(Array.from(groups.values()), async group => {
+    for (const { item, index } of group) {
+      try {
+        results[index] = { status: 'fulfilled', value: await worker(item) };
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason };
+      }
+    }
+  }, concurrency);
+  return results;
+}
 
 // quick view
 const showQuickView = ref(false);
@@ -1227,6 +1304,18 @@ let domDragEnter: ((e: DragEvent) => void) | null = null;
 let domDragLeave: ((e: DragEvent) => void) | null = null;
 let domDragOver: ((e: DragEvent) => void) | null = null;
 let domDrop: ((e: DragEvent) => void) | null = null;
+let dragGhost: HTMLElement | null = null;
+let dragGhostAction: HTMLElement | null = null;
+let pointerDropTarget: HTMLElement | null = null;
+let pointerDragUsesSelection = false;
+let pointerDragFiles: Array<{
+  id: number;
+  file_path: string;
+  folder_id: number;
+  album_id: number;
+}> | null = null;
+let dragGhostHotspotX = 0;
+let dragGhostHotspotY = 0;
 
 function getExternalDropUrl(dt: DataTransfer | null) {
   const url = (dt?.getData('text/uri-list') || dt?.getData('text/plain') || '').trim();
@@ -1253,32 +1342,320 @@ function isInternalReorderActive() {
   return uiStore.isInputActive('ManageLibraries');
 }
 
-function markContentInternalDrag(event: DragEvent) {
-  isContentInternalDrag.value = true;
-  const target = event.target as HTMLElement;
-  const fileItem = target.closest('[id^="item-"]');
-  if (!fileItem || !event.dataTransfer) return;
-  const selected = getActionableSelectedItems();
-  const files = selected.length > 0 ? selected : [fileList.value[selectedItemIndex.value]];
-  if (!files.length || !files[0]) return;
-  const dt = event.dataTransfer;
-
-  // Internal payload via reactive state (WebKit strips custom MIME types from DataTransfer)
-  dragState.files = files.map((f: any) => ({ id: f.id, file_path: f.file_path, folder_id: f.folder_id }));
-
-  // External payload: file:// URIs for Finder / Explorer
-  const uris = files
-    .map((f: any) => f.file_path)
-    .filter(Boolean)
-    .map((p: string) => encodeURI(`file://${p}`));
-  if (uris.length) dt.setData('text/uri-list', uris.join('\n'));
-
-  dt.effectAllowed = 'copyMove';
+function removeDragGhost() {
+  if (dragGhostAction?.firstElementChild) {
+    render(null, dragGhostAction.firstElementChild as HTMLElement);
+  }
+  dragGhost?.remove();
+  dragGhost = null;
+  dragGhostAction = null;
+  setPointerDropTarget(null);
+  document.removeEventListener('pointermove', updateContentDragPosition);
+  document.removeEventListener('keydown', updateDragGhostModifier);
+  document.removeEventListener('keyup', updateDragGhostModifier);
 }
 
-function clearContentInternalDrag() {
+function setPointerDropTarget(target: HTMLElement | null) {
+  if (pointerDropTarget === target) return;
+  pointerDropTarget?.classList.remove('!bg-primary/10', '!border-primary/60');
+  pointerDropTarget = target;
+  pointerDropTarget?.classList.add('!bg-primary/10', '!border-primary/60');
+}
+
+function isCopyDragModifier(event: Pick<MouseEvent, 'altKey' | 'ctrlKey'>) {
+  return isMac ? event.altKey : event.ctrlKey;
+}
+
+function updateDragGhostAction(event: Pick<MouseEvent, 'altKey' | 'ctrlKey'>) {
+  if (!dragGhostAction) return;
+  const copy = isCopyDragModifier(event);
+  const icon = dragGhostAction.firstElementChild as HTMLElement | null;
+  const label = dragGhostAction.lastElementChild as HTMLElement | null;
+  if (icon) {
+    render(createVNode(copy ? IconAdd : IconPrev, {
+      class: 'w-4 h-4',
+    }), icon);
+  }
+  if (label) label.textContent = copy
+    ? t('info_panel.drag_action.copy')
+    : t('info_panel.drag_action.move');
+  dragGhostAction.style.background = copy
+    ? 'var(--color-success)'
+    : 'color-mix(in oklab, var(--color-base-300) 94%, transparent)';
+  dragGhostAction.style.color = copy
+    ? 'var(--color-success-content)'
+    : 'var(--color-base-content)';
+}
+
+function updateDragGhostModifier(event: KeyboardEvent) {
+  updateDragGhostAction(event);
+}
+
+function sanitizeDragGhostClone(element: HTMLElement) {
+  const clone = element.cloneNode(true) as HTMLElement;
+  clone.removeAttribute('id');
+  clone.querySelectorAll('[id]').forEach(child => child.removeAttribute('id'));
+  clone.querySelectorAll('button, input, [role="button"]').forEach(child => child.remove());
+  clone.style.pointerEvents = 'none';
+  clone.style.margin = '0';
+  clone.style.width = `${element.getBoundingClientRect().width}px`;
+  clone.style.height = `${element.getBoundingClientRect().height}px`;
+  return clone;
+}
+
+function createDragGhost(
+  draggedElement: HTMLElement,
+  draggedFile: any,
+  files: any[],
+  fileCount = files.length,
+  hotspot = { xRatio: 0.5, yRatio: 0.5 },
+) {
+  removeDragGhost();
+
+  const firstFile = files[0] || draggedFile;
+  const firstIndex = fileList.value.findIndex(file => Number(file?.id) === Number(firstFile?.id));
+  const renderedFirst = firstIndex >= 0
+    ? document.getElementById(`item-${firstIndex}`)
+    : null;
+  const sourceElement = renderedFirst || draggedElement;
+  const front = sanitizeDragGhostClone(sourceElement);
+
+  if (!renderedFirst && firstFile?.thumbnail) {
+    const image = front.querySelector('img');
+    if (image) image.src = firstFile.thumbnail;
+  }
+
+  const sourceRect = sourceElement.getBoundingClientRect();
+  const scale = Math.min(1, 200 / Math.max(sourceRect.width, sourceRect.height, 1));
+  const width = Math.max(1, Math.round(sourceRect.width * scale));
+  const height = Math.max(1, Math.round(sourceRect.height * scale));
+  dragGhostHotspotX = width * hotspot.xRatio;
+  dragGhostHotspotY = height * hotspot.yRatio;
+  const thumbnailElement = sourceElement.querySelector('.rounded-box') as HTMLElement | null;
+  const computedRadius = Number.parseFloat(
+    getComputedStyle(thumbnailElement || sourceElement).borderTopLeftRadius,
+  );
+  const radius = Math.max(6, Math.round((Number.isFinite(computedRadius) ? computedRadius : 8) * scale));
+  const clipPath = `inset(0 round ${radius}px)`;
+  front.style.width = `${sourceRect.width}px`;
+  front.style.height = `${sourceRect.height}px`;
+  front.style.transform = `scale(${scale})`;
+  front.style.transformOrigin = 'top left';
+  front.style.borderRadius = `${radius / scale}px`;
+  front.style.overflow = 'hidden';
+  front.querySelectorAll('img, video').forEach(media => {
+    (media as HTMLElement).style.borderRadius = `${radius / scale}px`;
+  });
+
+  const ghost = document.createElement('div');
+  ghost.style.position = 'fixed';
+  ghost.style.left = '0';
+  ghost.style.top = '0';
+  ghost.style.width = `${width + (fileCount > 1 ? 12 : 0)}px`;
+  ghost.style.height = `${height + (fileCount > 1 ? 12 : 0)}px`;
+  ghost.style.pointerEvents = 'none';
+  ghost.style.zIndex = '2147483647';
+  ghost.style.willChange = 'transform';
+
+  if (fileCount > 1) {
+    for (const offset of [12, 6]) {
+      const layer = document.createElement('div');
+      layer.style.position = 'absolute';
+      layer.style.inset = `${offset}px 0 0 ${offset}px`;
+      layer.style.width = `${width}px`;
+      layer.style.height = `${height}px`;
+      layer.style.borderRadius = `${radius}px`;
+      layer.style.clipPath = clipPath;
+      layer.style.background = 'color-mix(in oklab, var(--color-base-200) 92%, transparent)';
+      layer.style.border = '1px solid color-mix(in oklab, var(--color-base-content) 25%, transparent)';
+      layer.style.boxShadow = '0 4px 12px rgb(0 0 0 / 0.2)';
+      ghost.appendChild(layer);
+    }
+  }
+
+  const frontWrapper = document.createElement('div');
+  frontWrapper.style.position = 'absolute';
+  frontWrapper.style.left = '0';
+  frontWrapper.style.top = '0';
+  frontWrapper.style.width = `${width}px`;
+  frontWrapper.style.height = `${height}px`;
+  frontWrapper.style.overflow = 'hidden';
+  frontWrapper.style.borderRadius = `${radius}px`;
+  frontWrapper.style.clipPath = clipPath;
+  frontWrapper.style.boxShadow = '0 8px 20px rgb(0 0 0 / 0.3)';
+  frontWrapper.appendChild(front);
+  ghost.appendChild(frontWrapper);
+
+  if (fileCount > 1) {
+    const badge = document.createElement('div');
+    badge.textContent = fileCount.toLocaleString();
+    badge.style.position = 'absolute';
+    badge.style.right = '0';
+    badge.style.bottom = '0';
+    badge.style.minWidth = '24px';
+    badge.style.height = '24px';
+    badge.style.padding = '0 7px';
+    badge.style.display = 'flex';
+    badge.style.alignItems = 'center';
+    badge.style.justifyContent = 'center';
+    badge.style.borderRadius = '9999px';
+    badge.style.background = 'var(--color-primary)';
+    badge.style.color = 'var(--color-primary-content)';
+    badge.style.border = '2px solid var(--color-base-100)';
+    badge.style.fontSize = '12px';
+    badge.style.fontWeight = '700';
+    badge.style.lineHeight = '1';
+    badge.style.boxShadow = '0 3px 10px rgb(0 0 0 / 0.35)';
+    ghost.appendChild(badge);
+  }
+
+  const action = document.createElement('div');
+  action.style.position = 'absolute';
+  action.style.left = `${width / 2}px`;
+  action.style.top = `${height / 2}px`;
+  action.style.transform = 'translate(-50%, -50%)';
+  action.style.height = '24px';
+  action.style.padding = '0 9px 0 6px';
+  action.style.display = 'inline-flex';
+  action.style.alignItems = 'center';
+  action.style.gap = '5px';
+  action.style.borderRadius = '9999px';
+  action.style.border = '1px solid color-mix(in oklab, var(--color-base-content) 18%, transparent)';
+  action.style.fontSize = '12px';
+  action.style.fontWeight = '650';
+  action.style.lineHeight = '1';
+  action.style.whiteSpace = 'nowrap';
+  action.style.boxShadow = '0 3px 12px rgb(0 0 0 / 0.3)';
+  action.style.backdropFilter = 'blur(8px)';
+
+  const actionIcon = document.createElement('span');
+  actionIcon.style.width = '14px';
+  actionIcon.style.height = '14px';
+  actionIcon.style.display = 'inline-flex';
+  actionIcon.style.alignItems = 'center';
+  actionIcon.style.justifyContent = 'center';
+  actionIcon.style.fontSize = '15px';
+  actionIcon.style.fontWeight = '800';
+
+  const actionLabel = document.createElement('span');
+  action.append(actionIcon, actionLabel);
+  ghost.appendChild(action);
+
+  document.body.appendChild(ghost);
+  dragGhost = ghost;
+  dragGhostAction = action;
+}
+
+function updateContentDragPosition(event: PointerEvent) {
+  if (!dragGhost || (event.clientX === 0 && event.clientY === 0)) return;
+  dragGhost.style.transform = `translate3d(${Math.round(event.clientX - dragGhostHotspotX)}px, ${Math.round(event.clientY - dragGhostHotspotY)}px, 0)`;
+  updateDragGhostAction(event);
+  const target = document
+    .elementFromPoint(event.clientX, event.clientY)
+    ?.closest('[data-file-drop-path][data-file-drop-album-id]') as HTMLElement | null;
+  setPointerDropTarget(target);
+}
+
+function markContentInternalDrag({
+  event,
+  index,
+  hotspotXRatio,
+  hotspotYRatio,
+}: {
+  event: PointerEvent;
+  index: number;
+  hotspotXRatio: number;
+  hotspotYRatio: number;
+}) {
+  const draggedFile = fileList.value[index];
+  const fileItem = document.getElementById(`item-${index}`);
+  if (!fileItem || !isRealFileItem(draggedFile)) return;
+  isContentInternalDrag.value = true;
+  const selected = getActionableSelectedItems();
+  pointerDragUsesSelection = Boolean(draggedFile.isSelected && selectedCount.value > 0);
+  const files = pointerDragUsesSelection && selected.length > 0 ? selected : [draggedFile];
+
+  pointerDragFiles = files.map((f: any) => ({
+    id: f.id,
+    file_path: f.file_path,
+    folder_id: f.folder_id,
+    album_id: f.album_id,
+  }));
+  createDragGhost(
+    fileItem,
+    draggedFile,
+    files,
+    pointerDragUsesSelection ? selectedCount.value : files.length,
+    { xRatio: hotspotXRatio, yRatio: hotspotYRatio },
+  );
+  updateContentDragPosition(event);
+  document.addEventListener('pointermove', updateContentDragPosition);
+  document.addEventListener('keydown', updateDragGhostModifier);
+  document.addEventListener('keyup', updateDragGhostModifier);
+}
+
+async function clearContentInternalDrag(event?: PointerEvent) {
+  const target = pointerDropTarget;
+  let files = pointerDragFiles;
+  const usesSelection = pointerDragUsesSelection;
+  const copy = event ? isCopyDragModifier(event) : false;
+  const shouldDrop = event?.type !== 'pointercancel';
   isContentInternalDrag.value = false;
-  dragState.files = null;
+  pointerDragUsesSelection = false;
+  pointerDragFiles = null;
+  removeDragGhost();
+
+  if (shouldDrop && event && target && files?.length) {
+    if (usesSelection) {
+      const selectedItems = await getActionableSelectedItemsForAction();
+      if (!selectedItems) return;
+      files = selectedItems.map((file: any) => ({
+        id: file.id,
+        file_path: file.file_path,
+        folder_id: file.folder_id,
+        album_id: file.album_id,
+      }));
+    }
+    if (!await confirmLargeBatch(files.length)) return;
+
+    const destPath = String(target.dataset.fileDropPath || '');
+    const albumId = Number(target.dataset.fileDropAlbumId || 0);
+    const selected = destPath && albumId > 0 ? await selectFolder(albumId, destPath) : null;
+    if (selected?.id) {
+      let done = 0;
+      let indexFailureCount = 0;
+      const affectedAlbumIds = new Set<number>([albumId]);
+      for (const file of files) {
+        if (!copy && file.folder_id === selected.id) continue;
+        if (copy) {
+          const copiedPath = await copyFile(file.file_path, destPath);
+          if (copiedPath) {
+            if (await addFileToDb(selected.id, copiedPath)) {
+              done++;
+            } else {
+              indexFailureCount++;
+            }
+          }
+        } else {
+          const movedPath = await moveFile(file.id, file.file_path, selected.id, destPath);
+          if (movedPath) {
+            done++;
+            affectedAlbumIds.add(Number(file.album_id || 0));
+          }
+        }
+      }
+      if (done > 0) {
+        await refreshAffectedAlbums(Array.from(affectedAlbumIds));
+        await refreshLibraryTotalCount();
+        await tauriEmit('refresh-content');
+      }
+      if (indexFailureCount > 0) {
+        toast.error(t('msgbox.copy_to_folder.index_error', {
+          count: indexFailureCount.toLocaleString(),
+        }));
+      }
+    }
+  }
 }
 
 const isProcessing = ref(false);  // show processing status
@@ -1350,6 +1727,7 @@ const currentImageSearchParams = ref({
 
 function showEmptyContent(requestId: number) {
   if (requestId !== currentContentRequestId) return;
+  clearSelectionForFileListUpdate();
   fileList.value = [];
   totalFileCount.value = 0;
   totalFileSize.value = 0;
@@ -1365,6 +1743,7 @@ function showEmptyContent(requestId: number) {
 
 function showLoadingContent(requestId: number) {
   if (requestId !== currentContentRequestId) return;
+  clearSelectionForFileListUpdate();
   fileList.value = [];
   totalFileCount.value = 0;
   totalFileSize.value = 0;
@@ -1510,12 +1889,12 @@ function handleItemClicked(
       const end = Math.max(anchorIndex, index);
 
       for (let i = 0; i < fileList.value.length; i++) {
-        fileList.value[i].isSelected = false;
+        setItemSelected(i, false);
       }
 
       for (let i = start; i <= end; i++) {
         if (isRealFileItem(fileList.value[i])) {
-          fileList.value[i].isSelected = true;
+          setItemSelected(i, true);
         }
       }
 
@@ -1532,7 +1911,7 @@ function handleItemClicked(
     checkUnsavedChanges(() => {
       const anchorIndex = selectedItemIndex.value;
       handleSelectMode(true, { notify: true });
-      fileList.value[anchorIndex].isSelected = true;
+      setItemSelected(anchorIndex, true);
 
       selectedItemIndex.value = index;
       if (index !== anchorIndex) {
@@ -1606,11 +1985,11 @@ function handleItemSelectToggled(index: number, shiftKey: boolean = false) {
     // Set all items in range to the same selection state as the target item
     const targetState = !fileList.value[index].isSelected;
     for (let i = start; i <= end; i++) {
-      fileList.value[i].isSelected = targetState;
+      setItemSelected(i, targetState);
     }
   } else {
     // Single toggle
-    fileList.value[index].isSelected = !fileList.value[index].isSelected;
+    setItemSelected(index, !fileList.value[index].isSelected);
   }
   
   // Update last selected index
@@ -1638,13 +2017,12 @@ function toggleKeyboardSelection(direction: 'prev' | 'next') {
     const targetState = !fileList.value[nextIndex].isSelected;
     for (let i = start; i <= end; i++) {
       if (isRealFileItem(fileList.value[i])) {
-        fileList.value[i].isSelected = targetState;
+        setItemSelected(i, targetState);
       }
     }
 
     selectedItemIndex.value = nextIndex;
     lastSelectedIndex.value = nextIndex;
-    showSelectionLimitHint.value = false;
   });
   return true;
 }
@@ -1662,11 +2040,10 @@ async function handleDateGroupSelect({ startIndex, endIndex, selected }: { start
 
   for (let i = start; i < end; i++) {
     if (isRealFileItem(fileList.value[i])) {
-      fileList.value[i].isSelected = selected;
+      setItemSelected(i, selected);
     }
   }
 
-  showSelectionLimitHint.value = false;
   lastSelectedIndex.value = selected ? start : -1;
 }
 
@@ -1674,8 +2051,8 @@ function unselectFileFromSelection(fileId: number) {
   const targetId = Number(fileId);
   const file = fileList.value.find(item => Number(item?.id || 0) === targetId);
   if (!file) return;
-  file.isSelected = false;
-  showSelectionLimitHint.value = false;
+  const index = fileList.value.indexOf(file);
+  setItemSelected(index, false);
 }
 
 function handleTimelineSelectItem(index: number) {
@@ -1698,7 +2075,8 @@ async function clickSetAlbumCover() {
   
   if (file && albumId) {
     try {
-      await setAlbumCover(albumId, file.id);
+      const result = await setAlbumCover(albumId, file.id);
+      if (result === null) throw new Error('Failed to update album cover');
       await tauriEmit('album-cover-changed', { albumId: albumId, fileId: file.id });
       toast.success(localeMsg.value.tooltip.set_album_cover.success);
     } catch (error) {
@@ -2523,6 +2901,7 @@ function buildScanStreamQueryParams() {
 
 function enterScanStreamingMode(albumId: number) {
   scanStreamAlbumId.value = albumId;
+  clearSelectionForFileListUpdate();
   fileList.value = [];
   totalFileCount.value = 0;
   totalFileSize.value = 0;
@@ -3117,6 +3496,7 @@ onBeforeUnmount(() => {
   if (domDragLeave) document.removeEventListener('dragleave', domDragLeave);
   if (domDragOver) document.removeEventListener('dragover', domDragOver);
   if (domDrop) document.removeEventListener('drop', domDrop);
+  removeDragGhost();
 });
 
 /// watch appearance
@@ -3242,12 +3622,14 @@ watch(() => selectedItemIndex.value, (newIndex, oldIndex) => {
 watch(
   () => fileList.value.map(file => ({ isSelected: file.isSelected, size: file.size })),
   () => {
-    const selectedItems = getActionableSelectedItems();
+    const selectedItems = fileList.value.filter(item => item.isSelected);
     selectedCount.value = selectedItems.length;
-    selectedSize.value = selectedItems.reduce((total, item) => total + (item.size || 0), 0);
-    if (selectedItems.length === 0) {
-      showSelectionLimitHint.value = false;
-    }
+    selectedSize.value = selectedItems.length === fileList.value.length
+      ? totalFileSize.value
+      : selectedItems.reduce(
+          (total, item) => total + (isRealFileItem(item) ? Number(item.size || 0) : 0),
+          0,
+        );
   }
 );
 
@@ -3341,8 +3723,7 @@ async function fetchDataRange(start: number, end: number, reverse = false) {
               }
 
               // Preserve client-side state when upgrading placeholder -> real item.
-              const isSelected = existingItem?.isSelected
-                || (pendingSelectedFileIds?.has(newFiles[j].id) ?? false);
+              const isSelected = Boolean(existingItem?.isSelected);
               const rotate = existingItem ? (existingItem.rotate || 0) : 0;
               const thumbnail = existingItem?.thumbnail;
 
@@ -3397,24 +3778,34 @@ async function fetchDataRange(start: number, end: number, reverse = false) {
   }
 }
 
-async function hydrateRangeForSelection(targetCount: number) {
-  if (fileList.value.length === 0 || targetCount <= 0) return;
+async function hydrateRangeForSelection(startIndex: number, endIndex: number) {
+  if (fileList.value.length === 0 || endIndex <= startIndex) return true;
   const requestId = currentContentRequestId;
   const chunkSize = selectionChunkSize.value;
-  const cappedTarget = Math.min(targetCount, fileList.value.length);
+  const cappedStart = Math.max(0, Math.min(startIndex, fileList.value.length));
+  const cappedEnd = Math.max(cappedStart, Math.min(endIndex, fileList.value.length));
+  let hydratedPlaceholders = false;
   isProcessing.value = true;
 
   try {
-    for (let chunkStart = 0; chunkStart < cappedTarget; chunkStart += chunkSize) {
-      if (requestId !== currentContentRequestId) break;
-      if (!fileList.value[chunkStart]?.isPlaceholder) continue;
+    const firstChunkStart = Math.floor(cappedStart / chunkSize) * chunkSize;
+    for (let chunkStart = firstChunkStart; chunkStart < cappedEnd; chunkStart += chunkSize) {
+      if (requestId !== currentContentRequestId) return false;
+      const chunkEnd = Math.min(cappedEnd, chunkStart + chunkSize);
+      const selectionStart = Math.max(cappedStart, chunkStart);
+      const needsLoad = fileList.value
+        .slice(selectionStart, chunkEnd)
+        .some(item => item?.isPlaceholder);
+      if (!needsLoad) continue;
 
       const loadedFiles = await getQueryFiles(currentQueryParams.value, chunkStart, chunkSize);
-      if (!loadedFiles || loadedFiles.length === 0) continue;
+      if (!loadedFiles || loadedFiles.length === 0) return false;
+      hydratedPlaceholders = true;
 
       for (let i = 0; i < loadedFiles.length; i++) {
         const targetIndex = chunkStart + i;
-        if (targetIndex >= fileList.value.length || targetIndex >= cappedTarget) break;
+        if (targetIndex >= fileList.value.length || targetIndex >= cappedEnd) break;
+        if (targetIndex < cappedStart) continue;
         const existingItem = fileList.value[targetIndex];
         fileList.value[targetIndex] = {
           ...loadedFiles[i],
@@ -3422,13 +3813,31 @@ async function hydrateRangeForSelection(targetCount: number) {
           rotate: existingItem?.rotate || loadedFiles[i].rotate || 0,
         };
       }
+      if (fileList.value.slice(selectionStart, chunkEnd).some(item => item?.isPlaceholder)) {
+        return false;
+      }
     }
+    return requestId === currentContentRequestId;
   } catch (err) {
     console.error('hydrateRangeForSelection error:', err);
+    return false;
   } finally {
     isProcessing.value = false;
-    scheduleLayoutRefresh();
+    if (hydratedPlaceholders) {
+      scheduleLayoutRefresh();
+    }
   }
+}
+
+async function getActionableSelectedItemsForAction() {
+  const hasSelectedPlaceholders = fileList.value.some(
+    item => item?.isSelected && item?.isPlaceholder,
+  );
+  if (hasSelectedPlaceholders && !await hydrateRangeForSelection(0, fileList.value.length)) {
+    toast.error(t('info_panel.selection_load_failed'));
+    return null;
+  }
+  return getActionableSelectedItems();
 }
 
 // Track last visible range to avoid redundant fetches
@@ -3521,6 +3930,7 @@ async function getFileList(
     }
 
     if (result) {
+      clearSelectionForFileListUpdate();
       totalFileCount.value = result[0];
       totalFileSize.value = result[1];
       
@@ -3531,17 +3941,6 @@ async function getFileList(
         }
       });
       
-      // Preserve selection state before replacing file list
-      if (selectMode.value) {
-        const ids = new Set<number>();
-        for (const f of fileList.value) {
-          if (f.isSelected && typeof f.id === 'number') ids.add(f.id);
-        }
-        pendingSelectedFileIds = ids.size > 0 ? ids : null;
-      } else {
-        pendingSelectedFileIds = null;
-      }
-
       // Initialize fileList with placeholders
       fileList.value = Array.from({ length: totalFileCount.value }).map((_, i) => ({
         id: 'ph-' + i,
@@ -3560,6 +3959,7 @@ async function getFileList(
       lastVisibleRange = { start: -1, end: -1 };
       visibleRangeSeqId++;
     } else {
+      clearSelectionForFileListUpdate();
       fileList.value = [];
       markDedupSourceUpdated(requestId);
       openImageViewer(0, false, true);
@@ -3567,6 +3967,7 @@ async function getFileList(
   } catch (err) {
     console.error('getFileList error:', err);
     if (requestId === currentContentRequestId) {
+      clearSelectionForFileListUpdate();
       fileList.value = [];
       markDedupSourceUpdated(requestId);
       openImageViewer(0, false, true);
@@ -3609,6 +4010,7 @@ async function getImageSearchFileList(
     if (requestId !== currentContentRequestId) return;
 
     if (result) {
+      clearSelectionForFileListUpdate();
       fileList.value = preserveLoadedThumbnails(result);
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
@@ -3644,6 +4046,7 @@ async function getImageSearchFileList(
       // Fetch thumbnails for the search results
       getFileListThumb(fileList.value);
     } else {
+      clearSelectionForFileListUpdate();
       fileList.value = [];
       totalFileCount.value = 0;
       totalFileSize.value = 0;
@@ -3652,6 +4055,7 @@ async function getImageSearchFileList(
   } catch (err) {
     console.error('getImageSearchFileList error:', err);
     if (requestId === currentContentRequestId) {
+      clearSelectionForFileListUpdate();
       fileList.value = [];
       totalFileCount.value = 0;
       totalFileSize.value = 0;
@@ -3691,7 +4095,6 @@ async function updateContent(force = false) {
   tempViewMode.value = 'none';
   showQuickView.value = false;
   isSlideShow.value = false;
-  showSelectionLimitHint.value = false;
   stopSlideShow();
 
   backupState.value = null;
@@ -3707,6 +4110,7 @@ async function updateContent(force = false) {
   isCurrentFolderExcluded.value = false;
 
   // Reset file list immediately to reflect UI change
+  clearSelectionForFileListUpdate();
   fileList.value = [];
   isLoading.value = true;
 
@@ -4160,6 +4564,10 @@ function exitTempViewMode() {
   const state = backupState.value;
   
   // 1. Restore State
+  clearSelectionForFileListUpdate();
+  for (const file of state.fileList) {
+    if (file) file.isSelected = false;
+  }
   fileList.value = state.fileList;
   totalFileCount.value = state.totalFileCount;
   totalFileSize.value = state.totalFileSize;
@@ -4336,19 +4744,35 @@ const refreshLibraryTotalCount = async () => {
   await tauriEmit('library-total-refreshed', { source: 'content' });
 };
 
+function rebuildSelectionAfterListMutation(selectedIds: Set<number>) {
+  let remainingCount = 0;
+  for (const file of fileList.value) {
+    const selected = isRealFileItem(file) && selectedIds.has(Number(file.id));
+    file.isSelected = selected;
+    if (selected) remainingCount++;
+  }
+
+  if (remainingCount === 0) {
+    selectMode.value = false;
+    lastSelectedIndex.value = -1;
+    keyboardSelectionAnchorIndex.value = -1;
+  }
+}
+
 const onMoveTo = async () => {
   const affectedAlbumIds = new Set<number>();
-  const destLabel = getFolderName(libConfig.destFolder.folderPath || '') || libConfig.destFolder.folderPath || '';
+  const destPath = String(libConfig.destFolder.folderPath || '');
+  const destAlbumId = Number(libConfig.destFolder.albumId || 0);
+  const destLabel = getFolderName(destPath) || destPath;
   let successCount = 0;
 
   // Resolve destination folder ID: when the user selects an album root (not a
   // subfolder), destFolder.folderId is null. Ensure the root folder record
   // exists in afolders so that moved files keep a valid folder_id.
   let destFolderId = Number(libConfig.destFolder.folderId || 0);
-  if (destFolderId <= 0 && libConfig.destFolder.folderPath) {
-    const destAlbumId = Number(libConfig.destFolder.albumId || 0);
+  if (destFolderId <= 0 && destPath) {
     if (destAlbumId > 0) {
-      const resolved = await selectFolder(destAlbumId, libConfig.destFolder.folderPath);
+      const resolved = await selectFolder(destAlbumId, destPath);
       if (resolved?.id) {
         destFolderId = resolved.id;
       }
@@ -4356,31 +4780,52 @@ const onMoveTo = async () => {
   }
 
   if (selectMode.value && selectedCount.value > 0) {    // multi-select mode
-    const successIds: number[] = [];
     const sourceLabel = t('toolbar.filter.select_count', { count: selectedCount.value.toLocaleString() });
-    const moves = getActionableSelectedItems()
-      .map(async item => {
-        const movedFile = await moveFile(item.id, item.file_path, destFolderId, libConfig.destFolder.folderPath);
-        if(movedFile) {
-          console.log('onMoveTo:', movedFile);
-          affectedAlbumIds.add(Number(item.album_id || 0));
-          successIds.push(item.id);
-        }
-      });
-    await Promise.all(moves); // parallelize DB updates
+    const items = await getActionableSelectedItemsForAction();
+    if (!items) return;
+    if (!await confirmLargeBatch(items.length)) return;
+    const moves = await runWithKeyedConcurrency(
+      items,
+      item => getTransferDestinationKey(item),
+      async item => {
+        const movedFile = await moveFile(item.id, item.file_path, destFolderId, destPath);
+        return { item, movedFile };
+      },
+    );
+    const successfulMoves = moves.flatMap(result =>
+      result.status === 'fulfilled' && result.value.movedFile ? [result.value] : [],
+    );
+    const successIds = successfulMoves.map(({ item }) => item.id);
+    successfulMoves.forEach(({ item, movedFile }) => {
+      console.log('onMoveTo:', movedFile);
+      affectedAlbumIds.add(Number(item.album_id || 0));
+    });
+    const failedCount = moves.filter(
+      result => result.status === 'rejected' || !result.value.movedFile,
+    ).length;
     if (successIds.length > 0) {
       successCount = successIds.length;
-      fileList.value = fileList.value.filter((f) => !successIds.includes(f.id));
+      const successIdSet = new Set(successIds);
+      const remainingSelectedIds = new Set(
+        items
+          .filter(item => !successIdSet.has(item.id))
+          .map(item => Number(item.id)),
+      );
+      fileList.value = fileList.value.filter((f) => !successIdSet.has(f.id));
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
+      rebuildSelectionAfterListMutation(remainingSelectedIds);
       toast.success(t('msgbox.move_to.success', { source: sourceLabel, dest: destLabel }));
+    }
+    if (failedCount > 0 && successCount > 0) {
+      toast.error(t('msgbox.move_to.error', { source: sourceLabel, dest: destLabel }));
     }
   } 
   else if(selectedItemIndex.value >= 0) {               // single select mode
     const file = fileList.value[selectedItemIndex.value];
     const sourceLabel = file.name;
-    const movedFile = await moveFile(file.id, file.file_path, destFolderId, libConfig.destFolder.folderPath);
+    const movedFile = await moveFile(file.id, file.file_path, destFolderId, destPath);
     if(movedFile) {
       console.log('onMoveTo:', movedFile);
       affectedAlbumIds.add(Number(file.album_id || 0));
@@ -4390,7 +4835,6 @@ const onMoveTo = async () => {
     }
   }
 
-  const destAlbumId = Number(libConfig.destFolder.albumId || 0);
   if (destAlbumId > 0) affectedAlbumIds.add(destAlbumId);
   await refreshAffectedAlbums(Array.from(affectedAlbumIds));
   await refreshLibraryTotalCount();
@@ -4456,11 +4900,14 @@ const resolveConflictPolicy = async (
   return requestFileConflict(name, destPath, showApplyAll, !isSamePath);
 }
 
-const getFilesForFolderAction = () => {
+const getFilesForFolderAction = async () => {
   return selectMode.value && selectedCount.value > 0
-    ? getActionableSelectedItems()
+    ? await getActionableSelectedItemsForAction()
     : (selectedItemIndex.value >= 0 ? [fileList.value[selectedItemIndex.value]] : []);
 }
+
+const getTransferDestinationKey = (file: any) =>
+  String(file?.name || getFolderName(file?.file_path || '')).normalize('NFC').toLowerCase();
 
 const resolveLibraryDestination = async (destPath: string) => {
   const albums = await getAllAlbums();
@@ -4474,11 +4921,12 @@ const resolveLibraryDestination = async (destPath: string) => {
 }
 
 const onMoveToFolder = async () => {
-  const files = getFilesForFolderAction();
-  if (files.length === 0) return;
+  const files = await getFilesForFolderAction();
+  if (!files || files.length === 0) return;
 
   const destPath = await selectSystemDestination(t('msgbox.move_to_folder.title'));
   if (!destPath) return;
+  if (!await confirmLargeBatch(files.length)) return;
 
   const sourceLabel = selectMode.value
     ? t('toolbar.filter.select_count', { count: files.length.toLocaleString() })
@@ -4498,9 +4946,8 @@ const onMoveToFolder = async () => {
   }
 
   const affectedAlbumIds = new Set<number>();
-  const successIds: number[] = [];
   let applyAllPolicy: FileConflictPolicy | null = null;
-  let attemptedCount = 0;
+  const operations: Array<{ file: any; policy: FileConflictPolicy }> = [];
   for (const file of files) {
     if (!file?.file_path) continue;
     const conflict = await resolveConflictPolicy(
@@ -4513,29 +4960,49 @@ const onMoveToFolder = async () => {
     );
     if (conflict.applyAll) applyAllPolicy = conflict.policy;
     if (conflict.policy === 'skip') continue;
-    attemptedCount += 1;
-    const movedFile = libraryDestination
-      ? await moveFile(file.id, file.file_path, libraryDestination.folderId, destPath, conflict.policy)
-      : await moveFileOutsideLibrary(file.id, file.file_path, destPath, conflict.policy);
-    if (movedFile) {
-      successIds.push(file.id);
-      affectedAlbumIds.add(Number(file.album_id || 0));
-      if (libraryDestination) affectedAlbumIds.add(libraryDestination.albumId);
-    }
+    operations.push({ file, policy: conflict.policy });
+  }
+  const moveResults = await runWithKeyedConcurrency(
+    operations,
+    ({ file }) => getTransferDestinationKey(file),
+    async ({ file, policy }) => {
+      const movedFile = libraryDestination
+        ? await moveFile(file.id, file.file_path, libraryDestination.folderId, destPath, policy)
+        : await moveFileOutsideLibrary(file.id, file.file_path, destPath, policy);
+      if (!movedFile) throw new Error(`Failed to move ${file.file_path}`);
+      return { file, movedFile };
+    },
+  );
+  const successfulMoves = moveResults.flatMap(result =>
+    result.status === 'fulfilled' ? [result.value] : [],
+  );
+  const successIds = successfulMoves.map(({ file }) => file.id);
+  successfulMoves.forEach(({ file }) => {
+    affectedAlbumIds.add(Number(file.album_id || 0));
+  });
+  if (libraryDestination && successfulMoves.length > 0) {
+    affectedAlbumIds.add(libraryDestination.albumId);
   }
 
   if (successIds.length > 0) {
-    fileList.value = fileList.value.filter(file => !successIds.includes(file.id));
+    const successIdSet = new Set(successIds);
+    const remainingSelectedIds = new Set(
+      files
+        .filter(file => !successIdSet.has(file.id))
+        .map(file => Number(file.id)),
+    );
+    fileList.value = fileList.value.filter(file => !successIdSet.has(file.id));
     totalFileCount.value = fileList.value.length;
     totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
     selectedItemIndex.value = fileList.value.length > 0
       ? Math.min(selectedItemIndex.value, fileList.value.length - 1)
       : -1;
+    rebuildSelectionAfterListMutation(remainingSelectedIds);
     toast.success(t('msgbox.move_to_folder.success', { source: sourceLabel, dest: getFolderName(destPath) || destPath }));
     await refreshAffectedAlbums(Array.from(affectedAlbumIds));
     await refreshLibraryTotalCount();
   }
-  if (successIds.length !== attemptedCount) {
+  if (moveResults.some(result => result.status === 'rejected')) {
     toast.error(t('msgbox.move_to_folder.error', { source: sourceLabel, dest: getFolderName(destPath) || destPath }));
   }
 }
@@ -4544,17 +5011,17 @@ const onCopyToFolder = async () => {
   const destPath = await selectSystemDestination(t('msgbox.copy_to_folder.title'));
   if (!destPath) return;
 
-  const files = getFilesForFolderAction();
-  if (files.length === 0) return;
+  const files = await getFilesForFolderAction();
+  if (!files || files.length === 0) return;
+  if (!await confirmLargeBatch(files.length)) return;
 
   const libraryDestination = await resolveLibraryDestination(destPath);
   const destLabel = getFolderName(destPath) || destPath;
   const sourceLabel = selectMode.value
     ? t('toolbar.filter.select_count', { count: files.length.toLocaleString() })
     : (files[0]?.name || '');
-  let successCount = 0;
-  let attemptedCount = 0;
   let applyAllPolicy: FileConflictPolicy | null = null;
+  const operations: Array<{ file: any; policy: FileConflictPolicy }> = [];
 
   for (const file of files) {
     if (!file?.file_path) continue;
@@ -4568,14 +5035,30 @@ const onCopyToFolder = async () => {
     );
     if (conflict.applyAll) applyAllPolicy = conflict.policy;
     if (conflict.policy === 'skip') continue;
-    attemptedCount += 1;
-    const copiedFile = await copyFile(file.file_path, destPath, conflict.policy);
-    if (!copiedFile) continue;
-    successCount += 1;
-    if (libraryDestination) {
-      await addFileToDb(libraryDestination.folderId, copiedFile);
-    }
+    operations.push({ file, policy: conflict.policy });
   }
+  const copyResults = await runWithKeyedConcurrency(
+    operations,
+    ({ file }) => getTransferDestinationKey(file),
+    async ({ file, policy }) => {
+      const copiedFile = await copyFile(file.file_path, destPath, policy);
+      if (!copiedFile) throw new Error(`Failed to copy ${file.file_path}`);
+      if (libraryDestination) {
+        const indexedFile = await addFileToDb(libraryDestination.folderId, copiedFile);
+        if (!indexedFile) {
+          throw new CopyIndexError(`Copied but failed to index ${copiedFile}`);
+        }
+      }
+      return { file, copiedFile };
+    },
+  );
+  const successCount = copyResults.filter(result => result.status === 'fulfilled').length;
+  const indexFailureCount = copyResults.filter(
+    result => result.status === 'rejected' && result.reason instanceof CopyIndexError,
+  ).length;
+  const copyFailureCount = copyResults.filter(
+    result => result.status === 'rejected' && !(result.reason instanceof CopyIndexError),
+  ).length;
 
   if (successCount > 0) {
     toast.success(t('msgbox.copy_to_folder.success', { source: sourceLabel, dest: destLabel }));
@@ -4585,8 +5068,13 @@ const onCopyToFolder = async () => {
       await tauriEmit('refresh-content');
     }
   }
-  if (successCount !== attemptedCount) {
+  if (copyFailureCount > 0) {
     toast.error(t('msgbox.copy_to_folder.error', { source: sourceLabel, dest: destLabel }));
+  }
+  if (indexFailureCount > 0) {
+    toast.error(t('msgbox.copy_to_folder.index_error', {
+      count: indexFailureCount.toLocaleString(),
+    }));
   }
 }
 
@@ -4648,16 +5136,14 @@ const onTrashFile = async () => {
         const selectedItems = ids
           .map(id => fileList.value.find(file => Number(file.id) === id))
           .filter((file): file is any => !!file);
-        const deleteResults = await Promise.allSettled(
-          selectedItems.map(async item => {
-            await deleteFileAlways(item, permanently);
-            return item;
-          })
+        const result = await batchDeleteFiles(
+          selectedItems.map(item => ({ fileId: item.id, filePath: item.file_path })),
+          true,
         );
-        const deletedItems = deleteResults
-          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-          .map(result => result.value);
-        failedDeleteCount = ids.length - deletedItems.length;
+        if (!result) throw new Error('Failed to permanently delete dedup files');
+        const deletedIdSet = new Set(result.deletedFileIds.map((id: any) => Number(id)));
+        const deletedItems = selectedItems.filter(item => deletedIdSet.has(Number(item.id)));
+        failedDeleteCount = Number(result.failedCount || 0) + (ids.length - selectedItems.length);
 
         if (failedDeleteCount > 0 && deletedItems.length === 0) {
           throw new Error('Failed to permanently delete dedup files');
@@ -4672,8 +5158,9 @@ const onTrashFile = async () => {
             ? result.deletedFileIds.map((id: any) => Number(id)).filter((id: number) => id > 0)
             : [];
           deletedFileIds.push(...resultDeletedIds);
+          const deletedIdSet = new Set(deletedFileIds);
           fileList.value
-            .filter(file => deletedFileIds.includes(file.id))
+            .filter(file => deletedIdSet.has(file.id))
             .forEach(file => affectedAlbumIds.add(Number(file.album_id || 0)));
           failedDeleteCount = Number(result?.failedCount || 0);
           if (deletedFileIds.length === 0) {
@@ -4688,23 +5175,25 @@ const onTrashFile = async () => {
         throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} dedup files`);
       }
 
-      fileList.value = fileList.value.filter((f) => !deletedFileIds.includes(f.id));
+      const deletedIdSet = new Set(deletedFileIds);
+      fileList.value = fileList.value.filter((f) => !deletedIdSet.has(f.id));
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
     }
     else if (selectMode.value && selectedCount.value > 0) {     // multi-select mode
-      const selectedItems = getActionableSelectedItems();
-      const deleteResults = await Promise.allSettled(
-        selectedItems.map(async item => {
-          await deleteFileAlways(item, permanently);
-          return item;
-        })
+      const selectedItems = await getActionableSelectedItemsForAction();
+      if (!selectedItems) return;
+      const result = await batchDeleteFiles(
+        selectedItems.map(item => ({ fileId: item.id, filePath: item.file_path })),
+        permanently,
       );
-      const deletedItems = deleteResults
-        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-        .map(result => result.value);
-      failedDeleteCount = deleteResults.length - deletedItems.length;
+      if (!result) {
+        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} selected files`);
+      }
+      const deletedIdSet = new Set(result.deletedFileIds.map((id: any) => Number(id)));
+      const deletedItems = selectedItems.filter(item => deletedIdSet.has(Number(item.id)));
+      failedDeleteCount = Number(result.failedCount || 0);
 
       if (failedDeleteCount > 0 && deletedItems.length === 0) {
         throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} selected files`);
@@ -4712,10 +5201,16 @@ const onTrashFile = async () => {
 
       deletedItems.forEach(item => affectedAlbumIds.add(Number(item.album_id || 0)));
       deletedFileIds.push(...deletedItems.map(item => item.id));
-      fileList.value = fileList.value.filter((f) => !deletedFileIds.includes(f.id));
+      const remainingSelectedIds = new Set(
+        selectedItems
+          .filter(item => !deletedIdSet.has(Number(item.id)))
+          .map(item => Number(item.id)),
+      );
+      fileList.value = fileList.value.filter((f) => !deletedIdSet.has(f.id));
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
       selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
+      rebuildSelectionAfterListMutation(remainingSelectedIds);
     } 
     else if(selectedItemIndex.value >= 0) {               // single select mode
       const deletedFileName = fileList.value[selectedItemIndex.value]?.name || '';
@@ -4968,20 +5463,28 @@ const toggleFavorite = async () => {
 // set selected files' favorite status (selectMode = true)
 const selectModeSetFavorites = async (isFavorite: boolean) => {
   if (selectMode.value && selectedCount.value > 0) {
-    const updates = getActionableSelectedItems()
-      .map(async item => {
-        item.is_favorite = isFavorite;
-        // update the favorite status in the database
-        return setFileFavorite(item.id, isFavorite);
-      }); 
-    await Promise.all(updates); // parallelize DB updates
+    const items = await getActionableSelectedItemsForAction();
+    if (!items) return;
+    if (!await confirmLargeBatch(items.length)) return;
+    const result = await batchUpdateFileMetadata({
+      fileIds: items.map(item => item.id),
+      isFavorite,
+    });
+    if (result === null) return;
+    items.forEach(item => {
+      item.is_favorite = isFavorite;
+    });
+    const activeItem = fileList.value[selectedItemIndex.value];
+    if (activeItem?.isSelected) {
+      syncFileMetaToImageViewer(activeItem.id, { is_favorite: isFavorite });
+    }
   }
 }
 
 const toggleSelectModeFavorite = async () => {
   if (!selectMode.value || selectedCount.value === 0) return;
-  const selectedItems = getActionableSelectedItems();
-  if (selectedItems.length === 0) return;
+  const selectedItems = await getActionableSelectedItemsForAction();
+  if (!selectedItems || selectedItems.length === 0) return;
   const shouldFavorite = !selectedItems.every(item => Boolean(item.is_favorite));
   await selectModeSetFavorites(shouldFavorite);
 };
@@ -4999,12 +5502,21 @@ const setSelectedFileRating = async (rating: number) => {
 const selectModeSetRatings = async (rating: number) => {
   if (selectMode.value && selectedCount.value > 0) {
     const normalized = Math.max(0, Math.min(5, rating));
-    const updates = getActionableSelectedItems()
-      .map(async item => {
-        item.rating = normalized;
-        return setFileRating(item.id, normalized);
-      });
-    await Promise.all(updates);
+    const items = await getActionableSelectedItemsForAction();
+    if (!items) return;
+    if (!await confirmLargeBatch(items.length)) return;
+    const result = await batchUpdateFileMetadata({
+      fileIds: items.map(item => item.id),
+      rating: normalized,
+    });
+    if (result === null) return;
+    items.forEach(item => {
+      item.rating = normalized;
+    });
+    const activeItem = fileList.value[selectedItemIndex.value];
+    if (activeItem?.isSelected) {
+      syncFileMetaToImageViewer(activeItem.id, { rating: normalized });
+    }
   }
 }
 
@@ -5090,13 +5602,22 @@ watch(() => config.settings.slideShowInterval, () => {
 // set file rotate
 const clickRotate = async () => {
   if (selectMode.value && selectedCount.value > 0) {
-    const updates = getActionableSelectedItems().map(async item => {
-      item.rotate = (Number(item.rotate) || 0) + 90;
-      tauriEmit('message-from-content', { message: 'rotate', fileId: item.id });
-      syncFileMetaToImageViewer(item.id, { rotate: item.rotate });
-      return setFileRotate(item.id, item.rotate);
+    const items = await getActionableSelectedItemsForAction();
+    if (!items) return;
+    if (!await confirmLargeBatch(items.length)) return;
+    const result = await batchUpdateFileMetadata({
+      fileIds: items.map(item => item.id),
+      rotateDelta: 90,
     });
-    await Promise.all(updates);
+    if (result === null) return;
+    items.forEach(item => {
+      item.rotate = ((Number(item.rotate) || 0) + 90) % 360;
+    });
+    const activeItem = fileList.value[selectedItemIndex.value];
+    if (activeItem?.isSelected) {
+      tauriEmit('message-from-content', { message: 'rotate', fileId: activeItem.id });
+      syncFileMetaToImageViewer(activeItem.id, { rotate: activeItem.rotate });
+    }
     return;
   }
 
@@ -5118,7 +5639,11 @@ const clickRotate = async () => {
 const clickTag = async () => {
   console.log('clickTag');
   if (selectMode.value) {
-    fileIdsToTag.value = getActionableSelectedItems().map(file => file.id);
+    const items = await getActionableSelectedItemsForAction();
+    if (!items) return;
+    const fileIds = items.map(file => file.id);
+    if (!await confirmLargeBatch(fileIds.length)) return;
+    fileIdsToTag.value = fileIds;
   } else if (selectedItemIndex.value >= 0) {
     fileIdsToTag.value = [fileList.value[selectedItemIndex.value].id];
   } else {
@@ -5129,14 +5654,21 @@ const clickTag = async () => {
 
 const onEditComment = async (newComment: any) => {
   if (selectMode.value && selectedCount.value > 0) {
-    const updates = getActionableSelectedItems().map(async item => {
-      const result = await editFileComment(item.id, newComment);
-      if (result) {
-        item.comments = newComment;
-        syncFileMetaToImageViewer(item.id, { comments: newComment });
-      }
+    const items = await getActionableSelectedItemsForAction();
+    if (!items) return;
+    if (!await confirmLargeBatch(items.length)) return;
+    const result = await batchUpdateFileMetadata({
+      fileIds: items.map(item => item.id),
+      comment: newComment,
     });
-    await Promise.all(updates);
+    if (result === null) return;
+    items.forEach(item => {
+      item.comments = newComment;
+    });
+    const activeItem = fileList.value[selectedItemIndex.value];
+    if (activeItem?.isSelected) {
+      syncFileMetaToImageViewer(activeItem.id, { comments: newComment });
+    }
     showCommentMsgbox.value = false;
     return;
   }
@@ -5160,27 +5692,13 @@ const openCommentEditor = () => {
 }
 
 const selectAllInCurrentList = async () => {
-  showSelectionLimitHint.value = false;
-  const isOverLimit = totalFileCount.value > selectionMaxFiles.value;
-  const selectionCap = isOverLimit ? selectionMaxFiles.value : fileList.value.length;
-  await hydrateRangeForSelection(selectionCap);
-
-  for (let i = 0; i < fileList.value.length; i++) {
-    fileList.value[i].isSelected = false;
+  for (const file of fileList.value) {
+    file.isSelected = true;
   }
-
-  let selected = 0;
-  for (let i = 0; i < fileList.value.length && selected < selectionCap; i++) {
-    if (!isRealFileItem(fileList.value[i])) continue;
-    fileList.value[i].isSelected = true;
-    selected += 1;
-  }
-  showSelectionLimitHint.value = selected === selectionMaxFiles.value;
   selectMode.value = true;
 };
 
 const selectNoneInCurrentList = () => {
-  showSelectionLimitHint.value = false;
   for (let i = 0; i < fileList.value.length; i++) {
     fileList.value[i].isSelected = false;
   }
@@ -5188,16 +5706,8 @@ const selectNoneInCurrentList = () => {
 };
 
 const invertSelectionInCurrentList = async () => {
-  showSelectionLimitHint.value = false;
-  const isOverLimit = totalFileCount.value > selectionMaxFiles.value;
-  const selectionCap = isOverLimit ? selectionMaxFiles.value : fileList.value.length;
-  await hydrateRangeForSelection(selectionCap);
-
-  let processed = 0;
-  for (let i = 0; i < fileList.value.length && processed < selectionCap; i++) {
-    if (!isRealFileItem(fileList.value[i])) continue;
+  for (let i = 0; i < fileList.value.length; i++) {
     fileList.value[i].isSelected = !fileList.value[i].isSelected;
-    processed += 1;
   }
   selectMode.value = true;
 };
@@ -5207,7 +5717,6 @@ const handleSelectMode = (value: any, options: { notify?: boolean } = {}) => {
   const wasSelectMode = selectMode.value;
   selectMode.value = value;
   if(!selectMode.value) {
-    showSelectionLimitHint.value = false;
     for (let i = 0; i < fileList.value.length; i++) {
       fileList.value[i].isSelected = false;
     }
@@ -5223,7 +5732,7 @@ const handleSelectMode = (value: any, options: { notify?: boolean } = {}) => {
 
       if (targetIndex >= 0) {
         selectedItemIndex.value = targetIndex;
-        fileList.value[targetIndex].isSelected = true;
+        setItemSelected(targetIndex, true);
       }
     }
     showQuickView.value = false;
@@ -5409,20 +5918,29 @@ async function updateSelectedImage(index: number) {
 }
 
 // click ok in tagging dialog
-function updateFileHasTags(fileIds: number[]) {
-  for (const fileId of fileIds) {
-    const index = fileList.value.findIndex(f => f.id === fileId);
-    if (index !== -1) {
-      const newFile = fileList.value[index];
-      getFileHasTags(fileId).then(async hasTags => {
-        newFile.has_tags = hasTags;
-        // Keep Info tab in sync after tagging dialog closes.
-        newFile.tags = hasTags ? ((await getTagsForFile(fileId)) || []) : [];
-        syncFileMetaToImageViewer(fileId, { has_tags: newFile.has_tags, tags: newFile.tags });
-      });
-    }
-  }
+async function updateFileHasTags(fileStates: Array<{ file_id: number; has_tags: boolean }>) {
   showTaggingDialog.value = false;
+  const filesById = new Map(
+    fileList.value
+      .filter(file => isRealFileItem(file))
+      .map(file => [Number(file.id), file]),
+  );
+  for (const state of fileStates) {
+    const file = filesById.get(Number(state.file_id));
+    if (!file) continue;
+    file.has_tags = Boolean(state.has_tags);
+    file.tags = undefined;
+  }
+
+  const activeFile = fileList.value[selectedItemIndex.value];
+  const activeState = fileStates.find(state => Number(state.file_id) === Number(activeFile?.id));
+  if (activeFile && activeState) {
+    activeFile.tags = activeState.has_tags ? ((await getTagsForFile(activeFile.id)) || []) : [];
+    syncFileMetaToImageViewer(activeFile.id, {
+      has_tags: activeFile.has_tags,
+      tags: activeFile.tags,
+    });
+  }
 }
 
 // Helper to yield to main thread

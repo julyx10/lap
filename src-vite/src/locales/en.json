@@ -114,6 +114,7 @@
     "search_tags": "Search tags",
     "enter_new_tag_name": "Enter new tag name",
     "not_found": "No tags found",
+    "load_failed": "Failed to load tag states. Close this dialog and try again.",
     "smart_group": "Smart tags",
     "custom_group": "Custom tags",
     "smart_items": {
@@ -244,7 +245,16 @@
     "empty_desc": "Add files or update the current filter to show items here.",
     "select_hint": "No files selected",
     "select_mode_entered": "Multi-select mode is on",
-    "select_limit_hint": "Selected the first {count} files",
+    "selection_load_failed": "Could not load all files for selection. Try again.",
+    "large_batch": {
+      "title": "Confirm bulk operation",
+      "content": "This operation will process {count} files and may take some time. Continue?",
+      "ok": "Continue"
+    },
+    "drag_action": {
+      "copy": "Copy",
+      "move": "Move"
+    },
     "edit_disabled": "Select a single image to edit",
     "type_image": "Image",
     "type_images": "Images",
@@ -537,7 +547,8 @@
     "copy_to_folder": {
       "title": "Copy to folder",
       "success": "Copied '{source}' to '{dest}'.",
-      "error": "Failed to copy '{source}' to '{dest}'."
+      "error": "Failed to copy '{source}' to '{dest}'.",
+      "index_error": "{count} file(s) were copied but could not be added to the library index."
     },
     "file_conflict": {
       "title": "File already exists",

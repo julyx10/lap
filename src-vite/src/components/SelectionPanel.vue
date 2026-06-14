@@ -50,13 +50,6 @@
             {{ $t('menu.select.invert') }}
           </PanelActionButton>
         </div>
-        <div
-          v-if="showSelectionLimitHint"
-          class="flex items-center gap-1.5 rounded-box px-2  text-[11px] font-medium leading-snug text-base-content/30"
-        >
-          <IconInformation class="h-3.5 w-3.5 shrink-0 text-base-content/30" />
-          <span>{{ $t('info_panel.select_limit_hint', { count: selectionLimit }) }}</span>
-        </div>
         <div v-if="selectedFiles.length > 0">
           <div class="mx-2 grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-1.5">
             <button
@@ -183,7 +176,6 @@ import {
   IconCheckNone,
   IconClose,
   IconComment,
-  IconInformation,
   IconMove,
   IconRotate,
   IconTag,
@@ -210,14 +202,6 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  selectionLimit: {
-    type: Number,
-    default: 400,
-  },
-  showSelectionLimitHint: {
-    type: Boolean,
-    default: false,
-  },
 });
 
 defineEmits([
@@ -243,7 +227,7 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 const SELECTED_THUMBNAIL_LIMIT = 19;
 
 const visibleSelectedFiles = computed(() => props.selectedFiles.slice(0, SELECTED_THUMBNAIL_LIMIT));
-const hiddenSelectedCount = computed(() => Math.max(0, props.selectedFiles.length - SELECTED_THUMBNAIL_LIMIT));
+const hiddenSelectedCount = computed(() => Math.max(0, props.selectedCount - visibleSelectedFiles.value.length));
 const selectionSummaryText = computed(() => {
   if (props.selectedCount <= 0) return localeMsg.value.info_panel.select_hint;
   const countText = t('toolbar.filter.select_count', { count: props.selectedCount.toLocaleString() });

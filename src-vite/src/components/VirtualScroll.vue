@@ -8,7 +8,7 @@
     <div :style="wrapperStyle">
       <div 
         v-for="poolItem in visibleItems" 
-        :key="poolItem.index"
+        :key="getItemKey(poolItem)"
         class="absolute"
         :class="{ 'transition-all duration-500 ease-in-out': transition }"
         :style="getItemStyle(poolItem)"
@@ -88,8 +88,9 @@ const geometryAxisMetrics = computed(() => {
 
 const visibleRange = computed(() => {
   if (props.geometry) {
-    const viewportStart = scrollOffset.value;
-    const viewportEnd = viewportStart + containerSize.value;
+    const bufferSize = Math.max(0, props.buffer * props.itemSize);
+    const viewportStart = Math.max(0, scrollOffset.value - bufferSize);
+    const viewportEnd = scrollOffset.value + containerSize.value + bufferSize;
     const { starts, prefixMaxEnds } = geometryAxisMetrics.value;
 
     // Find the first item whose cumulative maximum end reaches the viewport.
@@ -112,12 +113,10 @@ const visibleRange = computed(() => {
       else low = mid + 1;
     }
     const end = low;
-
-    const bufferCount = props.buffer * (props.gridItems || 4);
     
     return {
-      start: Math.max(0, start - bufferCount),
-      end: Math.min(totalCount.value, end + bufferCount)
+      start,
+      end: Math.min(totalCount.value, end)
     };
   }
 
@@ -161,6 +160,11 @@ const visibleItems = computed(() => {
   
   return result;
 });
+
+function getItemKey(poolItem: { item: any, index: number }) {
+  const value = poolItem.item?.[props.keyField];
+  return value === undefined || value === null ? poolItem.index : value;
+}
 
 function getItemStyle(poolItem: { item: any, index: number }): CSSProperties {
   const { index } = poolItem;

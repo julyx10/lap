@@ -114,6 +114,7 @@
     "search_tags": "Rechercher tags",
     "enter_new_tag_name": "Nouveau nom",
     "not_found": "Aucun tag trouvé",
+    "load_failed": "Impossible de charger l’état des tags. Fermez cette boîte de dialogue et réessayez.",
     "smart_group": "Tags intelligents",
     "custom_group": "Tags personnalisés",
     "smart_items": {
@@ -244,7 +245,16 @@
     "empty_desc": "Ajoutez des fichiers ou mettez à jour le filtre actuel pour afficher des éléments ici.",
     "select_hint": "Aucun fichier sélectionné",
     "select_mode_entered": "Le mode de sélection multiple est activé",
-    "select_limit_hint": "Les {count} premiers fichiers ont été sélectionnés",
+    "selection_load_failed": "Impossible de charger tous les fichiers pour la sélection. Réessayez.",
+    "large_batch": {
+      "title": "Confirmer l’opération groupée",
+      "content": "Cette opération traitera {count} fichiers et peut prendre du temps. Continuer ?",
+      "ok": "Continuer"
+    },
+    "drag_action": {
+      "copy": "Copier",
+      "move": "Déplacer"
+    },
     "edit_disabled": "Sélectionnez une seule image pour l'éditer",
     "type_image": "Image",
     "type_images": "Images",
@@ -537,7 +547,8 @@
     "copy_to_folder": {
       "title": "Copier vers le dossier",
       "success": "'{source}' copié vers '{dest}'.",
-      "error": "Échec de la copie de '{source}' vers '{dest}'."
+      "error": "Échec de la copie de '{source}' vers '{dest}'.",
+      "index_error": "{count} fichier(s) ont été copiés, mais n’ont pas pu être ajoutés à l’index de la bibliothèque."
     },
     "file_conflict": {
       "title": "Le fichier existe déjà",

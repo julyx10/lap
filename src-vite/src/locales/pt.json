@@ -114,6 +114,7 @@
     "search_tags": "Pesquisar tags",
     "enter_new_tag_name": "Novo nome da tag",
     "not_found": "Tags não encontradas",
+    "load_failed": "Não foi possível carregar o estado das tags. Feche esta caixa de diálogo e tente novamente.",
     "smart_group": "Tags inteligentes",
     "custom_group": "Tags personalizados",
     "smart_items": {
@@ -244,7 +245,16 @@
     "empty_desc": "Adicione arquivos ou atualize o filtro atual para mostrar itens aqui.",
     "select_hint": "Nenhum arquivo selecionado",
     "select_mode_entered": "O modo de seleção múltipla está ativado",
-    "select_limit_hint": "Os primeiros {count} arquivos foram selecionados",
+    "selection_load_failed": "Não foi possível carregar todos os arquivos para seleção. Tente novamente.",
+    "large_batch": {
+      "title": "Confirmar operação em massa",
+      "content": "Esta operação processará {count} arquivos e pode demorar. Continuar?",
+      "ok": "Continuar"
+    },
+    "drag_action": {
+      "copy": "Copiar",
+      "move": "Mover"
+    },
     "edit_disabled": "Selecione uma única imagem para editar",
     "type_image": "Imagem",
     "type_images": "Imagens",
@@ -537,7 +547,8 @@
     "copy_to_folder": {
       "title": "Copiar para pasta",
       "success": "'{source}' copiado para '{dest}'.",
-      "error": "Falha ao copiar '{source}' para '{dest}'."
+      "error": "Falha ao copiar '{source}' para '{dest}'.",
+      "index_error": "{count} arquivo(s) foram copiados, mas não puderam ser adicionados ao índice da biblioteca."
     },
     "file_conflict": {
       "title": "Arquivo já existe",

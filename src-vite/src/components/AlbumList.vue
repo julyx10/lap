@@ -33,10 +33,12 @@
       >
         <li v-for="album in albums" :key="album.id" :data-album-id="album.id">
           <div
+            :data-file-drop-path="album.path"
+            :data-file-drop-album-id="album.id"
             :class="[
-              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group transition-all duration-200 ease-in-out album-drag-handle',
+              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2 border-transparent transition-all duration-200 ease-in-out album-drag-handle',
               selection.albumId.value === album.id
-                ? (selection.selected.value ? 'text-primary bg-base-100 hover:bg-base-100' : 'text-primary')
+                ? (selection.selected.value ? 'text-primary bg-base-100 hover:bg-base-100' : 'text-base-content')
                 : 'hover:text-base-content hover:bg-base-100/30',
             ]"
             @click.stop="clickAlbum(album)"
@@ -269,7 +271,8 @@ function handleAlbumContextMenu(album: Album, event: MouseEvent) {
   albumContextMenus.value[album.id]?.open?.(event.clientX, event.clientY);
 }
 
-const getAlbumById = (id: number) => albums.value.find(album => album.id === id);
+const getAlbumById = (id: number) =>
+  albums.value.find(album => Number(album.id) === Number(id));
 const selectedAlbum = computed(() => getAlbumById(selection.albumId.value)) || {};
 const editingAlbum = computed(() => getAlbumById(editingAlbumId.value));
 const isAlbumQueued = (albumId: number) =>
@@ -354,9 +357,14 @@ const getMoreMenuItems = (album: any) => {
 };
 
 // Load cover thumbnail for a single album
-const loadAlbumCover = async (albumId: number, coverFileId: number | null) => {
+const loadAlbumCover = async (
+  albumId: number,
+  coverFileId: number | null,
+  bustCache = false,
+) => {
+  delete albumCoverErrors.value[albumId];
   if (coverFileId) {
-    let url = getThumbUrl(coverFileId, false, config.settings.thumbnailSize);
+    let url = getThumbUrl(coverFileId, bustCache, config.settings.thumbnailSize);
     if (isWin && !url.startsWith('data:')) {
       const inflight = getThumbnailDataUrlInflight(coverFileId, config.settings.thumbnailSize);
       const dataUrl = await (inflight || setThumbnailDataUrlInflight(
@@ -368,7 +376,10 @@ const loadAlbumCover = async (albumId: number, coverFileId: number | null) => {
       url = dataUrl || url;
     }
     if (url) {
-      albumCovers.value[albumId] = url;
+      albumCovers.value = {
+        ...albumCovers.value,
+        [albumId]: url,
+      };
     }
   } else {
     delete albumCovers.value[albumId];
@@ -395,7 +406,8 @@ onMounted( async () => {
 
   // listen for album-cover-changed event
   unlistenAlbumCoverChanged = await listen('album-cover-changed', async (event: any) => {
-    const { albumId: eventAlbumId, fileId } = event.payload;
+    const eventAlbumId = Number(event.payload?.albumId || 0);
+    const fileId = Number(event.payload?.fileId || 0);
     const album = getAlbumById(eventAlbumId);
     if (album) {
       if (fileId) {
@@ -411,7 +423,7 @@ onMounted( async () => {
       }
       
       // Update the cover in albumCovers
-      await loadAlbumCover(eventAlbumId, album.cover_file_id ?? null);
+      await loadAlbumCover(eventAlbumId, album.cover_file_id ?? null, true);
     }
   });
 
@@ -460,6 +472,10 @@ onMounted( async () => {
   unlistenAlbumsRefreshed = await listen('albums-refreshed', async (event: any) => {
     const refreshedAlbums = Array.isArray(event.payload?.albums) ? event.payload.albums : [];
     const refreshFolders = event.payload?.refreshFolders !== false;
+    const selectedAlbumId = selection.albumId.value;
+    const selectedFolderPath = selection.folderPath.value;
+    const shouldRestoreSelectedFolder = !selection.selected.value && !!selectedFolderPath;
+
     for (const updatedAlbum of refreshedAlbums) {
       const albumId = Number(updatedAlbum?.id || 0);
       if (albumId <= 0) continue;
@@ -470,11 +486,19 @@ onMounted( async () => {
       album.indexed = updatedAlbum.indexed;
       album.last_scan_time = updatedAlbum.last_scan_time;
       album.last_scan_count = updatedAlbum.last_scan_count;
+      const previousCoverFileId = Number(album.cover_file_id || 0);
       if (updatedAlbum.cover_file_id !== undefined) {
         album.cover_file_id = updatedAlbum.cover_file_id;
       }
+      if (Number(album.cover_file_id || 0) !== previousCoverFileId) {
+        await loadAlbumCover(albumId, album.cover_file_id ?? null, true);
+      }
       if (refreshFolders && album.is_expanded) {
-        await expandAlbum(album, true);
+        if (shouldRestoreSelectedFolder && albumId === selectedAlbumId) {
+          await clickFinalSubFolder(albumId, selectedFolderPath);
+        } else {
+          await expandAlbum(album, true);
+        }
       }
     }
   });
@@ -683,17 +707,7 @@ const dlbClickAlbum = async (album: any) => {
 /// click album icon to expand or collapse next level folders
 const expandAlbum = async (album: any, forceRefresh = false) => {
   const willExpand = forceRefresh ? true : !album.is_expanded;
-  
-  // Collapse all other albums when expanding one (accordion behavior)
-  // Only enabled in Main Pane to keep UI clean. In MoveTo dialog, allow multiple expansions.
-  if (willExpand && isMainPane.value) {
-    albums.value.forEach(a => {
-      if (a.id !== album.id) {
-        a.is_expanded = false;
-      }
-    });
-  }
-  
+
   album.is_expanded = willExpand; 
   
   if (album.is_expanded && (!album.children || forceRefresh)) {

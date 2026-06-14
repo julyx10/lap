@@ -114,6 +114,7 @@
     "search_tags": "搜索标签",
     "enter_new_tag_name": "输入新标签名称",
     "not_found": "未找到标签",
+    "load_failed": "无法加载标签状态，请关闭对话框后重试。",
     "smart_group": "智能标签",
     "custom_group": "自定义标签",
     "smart_items": {
@@ -244,7 +245,16 @@
     "empty_desc": "请添加文件，或更新当前筛选范围以在此显示内容。",
     "select_hint": "未选择文件",
     "select_mode_entered": "已进入多选模式",
-    "select_limit_hint": "已选择前 {count} 个文件",
+    "selection_load_failed": "无法加载全部文件进行选择，请重试。",
+    "large_batch": {
+      "title": "确认批量操作",
+      "content": "此操作将处理 {count} 个文件，可能需要一些时间。是否继续？",
+      "ok": "继续"
+    },
+    "drag_action": {
+      "copy": "复制",
+      "move": "移动"
+    },
     "edit_disabled": "请选择单个图片进行编辑",
     "type_image": "张图片",
     "type_images": "张图片",
@@ -537,7 +547,8 @@
     "copy_to_folder": {
       "title": "复制到文件夹",
       "success": "已将 '{source}' 复制到 '{dest}'。",
-      "error": "将 '{source}' 复制到 '{dest}' 失败。"
+      "error": "将 '{source}' 复制到 '{dest}' 失败。",
+      "index_error": "{count} 个文件已复制，但无法添加到库索引。"
     },
     "file_conflict": {
       "title": "文件已存在",

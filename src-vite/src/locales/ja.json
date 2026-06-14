@@ -114,6 +114,7 @@
     "search_tags": "タグを検索",
     "enter_new_tag_name": "新しいタグ名を入力",
     "not_found": "タグが見つかりません",
+    "load_failed": "タグの状態を読み込めませんでした。ダイアログを閉じて再試行してください。",
     "smart_group": "スマートタグ",
     "custom_group": "カスタムタグ",
     "smart_items": {
@@ -244,7 +245,16 @@
     "empty_desc": "ファイルを追加するか、現在の絞り込み条件を更新してここに項目を表示してください。",
     "select_hint": "ファイルが選択されていません",
     "select_mode_entered": "複数選択モードがオンになりました",
-    "select_limit_hint": "先頭 {count} 件のファイルを選択しました",
+    "selection_load_failed": "選択するすべてのファイルを読み込めませんでした。再試行してください。",
+    "large_batch": {
+      "title": "一括操作の確認",
+      "content": "{count} 個のファイルを処理します。時間がかかる場合があります。続行しますか？",
+      "ok": "続行"
+    },
+    "drag_action": {
+      "copy": "コピー",
+      "move": "移動"
+    },
     "edit_disabled": "編集するには画像を1つ選択してください",
     "type_image": "枚の画像",
     "type_images": "枚の画像",
@@ -537,7 +547,8 @@
     "copy_to_folder": {
       "title": "フォルダにコピー",
       "success": "'{source}' を '{dest}' にコピーしました。",
-      "error": "'{source}' の '{dest}' へのコピーに失敗しました。"
+      "error": "'{source}' の '{dest}' へのコピーに失敗しました。",
+      "index_error": "{count} 個のファイルはコピーされましたが、ライブラリのインデックスに追加できませんでした。"
     },
     "file_conflict": {
       "title": "ファイルが既に存在します",

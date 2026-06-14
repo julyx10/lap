@@ -2,7 +2,7 @@
   <div class="absolute inset-0 flex items-center justify-center px-6" data-tauri-drag-region>
     <div class="max-w-3xl w-full text-center">
       <div class="mb-8 flex flex-col items-center gap-3">
-        <img :src="iconLogo" class="w-14 h-14 select-none [-webkit-app-region:no-drag]" draggable="false" />
+        <img :src="iconLogo" class="w-20 h-20 select-none [-webkit-app-region:no-drag]" draggable="false" />
         <div>
           <h2 class="text-xl font-semibold text-base-content/70">
             {{ $t('welcome.title') }}

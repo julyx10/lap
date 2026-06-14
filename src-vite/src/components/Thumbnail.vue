@@ -23,6 +23,7 @@
       <!-- image -->
       <img
         :src="thumbnailSrc"
+        draggable="false"
         :class="{
           'group-hover:scale-115': shouldScaleThumbnail,
           'scale-115': shouldScaleThumbnail && isSelected,
@@ -49,6 +50,7 @@
         }"
         :style="imgStyle"
         :poster="thumbnailSrc"
+        draggable="false"
         muted
         autoplay
         loop
@@ -102,8 +104,8 @@
           <input
             type="checkbox"
             class="checkbox checkbox-sm"
-            :class="file?.isSelected ? 'checkbox-primary' : ''"
-            :checked="Boolean(file?.isSelected)"
+            :class="isSelected ? 'checkbox-primary' : ''"
+            :checked="isSelected"
             @click.stop="(event: MouseEvent) => $emit('select-toggled', event.shiftKey)"
           />
         </label>

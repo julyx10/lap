@@ -6,6 +6,7 @@
       'pointer-events-none': uiStore.inputStack.length > 0,
     }"
     @wheel="onWheel"
+    @dragstart.capture.prevent
   >
     <VirtualScroll
       v-if="fileList.length > 0"
@@ -51,12 +52,16 @@
         <span>{{ item.label }}</span>
         <span class="text-base-content/30 text-xs">({{ (item.endIndex - item.startIndex).toLocaleString() }})</span>
       </div>
-      <div v-else class="w-full h-full flex items-center justify-center" draggable="true">
+      <div
+        v-else
+        class="w-full h-full flex items-center justify-center"
+        @pointerdown="onItemPointerDown($event, getFileIndex(item, index))"
+      >
         <Thumbnail
           v-if="getFileItem(item) && !getFileItem(item).isPlaceholder"
           :id="'item-' + getFileIndex(item, index)"
           :file="getFileItem(item)"
-          :is-selected="selectMode ? getFileItem(item).isSelected : getFileIndex(item, index) === selectedItemIndex"
+          :is-selected="selectMode ? Boolean(getFileItem(item).isSelected) : getFileIndex(item, index) === selectedItemIndex"
           :is-active="getFileIndex(item, index) === selectedItemIndex"
           :select-mode="selectMode"
           :show-folder-files="showFolderFiles"
@@ -137,6 +142,9 @@ const emit = defineEmits([
   'visible-range-update',
   'scroll',
   'layout-update',
+  'item-drag-start',
+  'item-drag',
+  'item-drag-end',
 ]);
 
 const uiStore = useUIStore();
@@ -147,6 +155,83 @@ const scroller = ref<any>(null);
 const columnCount = ref(4);
 const containerWidth = ref(0);
 const headerHeight = 48;
+let pendingPointerDrag: {
+  pointerId: number;
+  index: number;
+  startX: number;
+  startY: number;
+  hotspotXRatio: number;
+  hotspotYRatio: number;
+  active: boolean;
+} | null = null;
+
+function clearPointerDragListeners() {
+  document.removeEventListener('pointermove', onDocumentPointerMove, true);
+  document.removeEventListener('pointerup', onDocumentPointerUp, true);
+  document.removeEventListener('pointercancel', onDocumentPointerUp, true);
+}
+
+function onItemPointerDown(event: PointerEvent, index: number) {
+  const target = event.target as HTMLElement;
+  if (
+    event.button !== 0
+    || event.pointerType === 'touch'
+    || target.closest('button, input, a, [role="button"]')
+    || !props.fileList[index]
+    || props.fileList[index].isPlaceholder
+  ) return;
+  const itemElement = document.getElementById(`item-${index}`);
+  const itemRect = itemElement?.getBoundingClientRect();
+  pendingPointerDrag = {
+    pointerId: event.pointerId,
+    index,
+    startX: event.clientX,
+    startY: event.clientY,
+    hotspotXRatio: itemRect?.width
+      ? Math.max(0, Math.min(1, (event.clientX - itemRect.left) / itemRect.width))
+      : 0.5,
+    hotspotYRatio: itemRect?.height
+      ? Math.max(0, Math.min(1, (event.clientY - itemRect.top) / itemRect.height))
+      : 0.5,
+    active: false,
+  };
+  document.addEventListener('pointermove', onDocumentPointerMove, true);
+  document.addEventListener('pointerup', onDocumentPointerUp, true);
+  document.addEventListener('pointercancel', onDocumentPointerUp, true);
+}
+
+function onDocumentPointerMove(event: PointerEvent) {
+  const drag = pendingPointerDrag;
+  if (!drag || event.pointerId !== drag.pointerId) return;
+  if (!drag.active) {
+    if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 6) return;
+    drag.active = true;
+    document.documentElement.style.userSelect = 'none';
+    document.documentElement.style.webkitUserSelect = 'none';
+    emit('item-drag-start', {
+      event,
+      index: drag.index,
+      hotspotXRatio: drag.hotspotXRatio,
+      hotspotYRatio: drag.hotspotYRatio,
+    });
+  }
+  event.preventDefault();
+  emit('item-drag', event);
+}
+
+function onDocumentPointerUp(event: PointerEvent) {
+  const drag = pendingPointerDrag;
+  if (!drag || event.pointerId !== drag.pointerId) return;
+  if (drag.active) {
+    event.preventDefault();
+    event.stopPropagation();
+    emit('item-drag-end', event);
+  }
+  pendingPointerDrag = null;
+  document.documentElement.style.userSelect = '';
+  document.documentElement.style.webkitUserSelect = '';
+  clearPointerDragListeners();
+}
 
 function isGeometryGridStyle(style: number) {
   return style === 2 || style === 3;
@@ -526,6 +611,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeyDown);
+  clearPointerDragListeners();
+  pendingPointerDrag = null;
+  document.documentElement.style.userSelect = '';
+  document.documentElement.style.webkitUserSelect = '';
   if (loadingDelayTimer) {
     clearTimeout(loadingDelayTimer);
     loadingDelayTimer = null;
@@ -804,14 +893,18 @@ function getNearestFileIndexFromDisplayIndex(displayIndex: number) {
 function getDateGroupSelectionState(item: any) {
   const startIndex = Number(item?.startIndex ?? 0);
   const endIndex = Number(item?.endIndex ?? startIndex);
-  const files = props.fileList.slice(startIndex, endIndex).filter(file => file && !file.isPlaceholder);
-  if (files.length === 0) {
+  const fileCount = Math.max(0, endIndex - startIndex);
+  if (fileCount === 0) {
     return { allSelected: false, partialSelected: false };
   }
-  const selectedCount = files.filter(file => file.isSelected).length;
+  let selectedCount = 0;
+  for (let index = startIndex; index < endIndex; index++) {
+    const file = props.fileList[index];
+    if (file?.isSelected) selectedCount++;
+  }
   return {
-    allSelected: selectedCount === files.length,
-    partialSelected: selectedCount > 0 && selectedCount < files.length,
+    allSelected: selectedCount === fileCount,
+    partialSelected: selectedCount > 0 && selectedCount < fileCount,
   };
 }
 

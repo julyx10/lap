@@ -8,14 +8,14 @@ use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
 use crate::t_face;
 use crate::t_image;
 use crate::t_sqlite::{
-    ACamera, AFile, AFolder, ALens, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams,
-    Person, QueryParams,
+    ACamera, AFile, AFolder, ALens, ALocation, ATag, ATagFileState, ATagSelectionCount, AThumb,
+    ATimeLine, Album, ImageSearchParams, Person, QueryParams,
 };
 use crate::t_storage;
 use crate::t_utils;
 use crate::{t_ai, t_sqlite};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
@@ -942,6 +942,49 @@ pub fn delete_db_file(file_id: i64) -> Result<usize, String> {
     AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchDeleteFile {
+    pub file_id: i64,
+    pub file_path: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchDeleteResult {
+    pub deleted_file_ids: Vec<i64>,
+    pub failed_count: usize,
+}
+
+#[tauri::command]
+pub async fn batch_delete_files(
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+) -> Result<BatchDeleteResult, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut deleted_file_ids = Vec::with_capacity(files.len());
+        for file in &files {
+            let result = if permanently {
+                t_utils::delete_file_permanently(&file.file_path)
+            } else {
+                t_utils::trash_path(&file.file_path)
+            };
+            if result.is_ok() {
+                deleted_file_ids.push(file.file_id);
+            }
+        }
+
+        AFile::batch_delete(&deleted_file_ids)
+            .map_err(|e| format!("Error while deleting files from DB: {}", e))?;
+        Ok(BatchDeleteResult {
+            failed_count: files.len().saturating_sub(deleted_file_ids.len()),
+            deleted_file_ids,
+        })
+    })
+    .await
+    .map_err(|e| format!("Failed to run batch delete: {}", e))?
+}
+
 /// edit a file's comment
 #[tauri::command]
 pub fn edit_file_comment(file_id: i64, comment: &str) -> Result<usize, String> {
@@ -1249,6 +1292,28 @@ pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
         .map_err(|e| format!("Error while setting file rating: {}", e))
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchFileMetadataUpdate {
+    pub file_ids: Vec<i64>,
+    pub is_favorite: Option<bool>,
+    pub rating: Option<i32>,
+    pub rotate_delta: Option<i32>,
+    pub comment: Option<String>,
+}
+
+#[tauri::command]
+pub fn batch_update_file_metadata(params: BatchFileMetadataUpdate) -> Result<usize, String> {
+    AFile::batch_update_metadata(
+        &params.file_ids,
+        params.is_favorite,
+        params.rating,
+        params.rotate_delta,
+        params.comment.as_deref(),
+    )
+    .map_err(|e| format!("Error while updating file metadata: {}", e))
+}
+
 // tag
 
 /// get all tags
@@ -1300,6 +1365,22 @@ pub fn add_tag_to_file(file_id: i64, tag_id: i64) -> Result<(), String> {
 pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> {
     ATag::remove_tag_from_file(file_id, tag_id)
         .map_err(|e| format!("Error while removing tag from file: {}", e))
+}
+
+#[tauri::command]
+pub fn get_tag_selection_counts(file_ids: Vec<i64>) -> Result<Vec<ATagSelectionCount>, String> {
+    ATag::get_selection_counts(&file_ids)
+        .map_err(|e| format!("Error while getting tag selection counts: {}", e))
+}
+
+#[tauri::command]
+pub fn apply_tags_to_files(
+    file_ids: Vec<i64>,
+    add_tag_ids: Vec<i64>,
+    remove_tag_ids: Vec<i64>,
+) -> Result<Vec<ATagFileState>, String> {
+    ATag::apply_to_files(&file_ids, &add_tag_ids, &remove_tag_ids)
+        .map_err(|e| format!("Error while applying tags to files: {}", e))
 }
 
 // calendar

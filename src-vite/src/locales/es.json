@@ -114,6 +114,7 @@
     "search_tags": "Buscar etiquetas",
     "enter_new_tag_name": "Introduce nuevo nombre",
     "not_found": "No se encontraron etiquetas",
+    "load_failed": "No se pudo cargar el estado de las etiquetas. Cierra este diálogo e inténtalo de nuevo.",
     "smart_group": "Etiquetas inteligentes",
     "custom_group": "Etiquetas personalizadas",
     "smart_items": {
@@ -244,7 +245,16 @@
     "empty_desc": "Agrega archivos o actualiza el filtro actual para mostrar elementos aquí.",
     "select_hint": "No hay archivos seleccionados",
     "select_mode_entered": "El modo de selección múltiple está activado",
-    "select_limit_hint": "Se seleccionaron los primeros {count} archivos",
+    "selection_load_failed": "No se pudieron cargar todos los archivos para seleccionarlos. Inténtalo de nuevo.",
+    "large_batch": {
+      "title": "Confirmar operación masiva",
+      "content": "Esta operación procesará {count} archivos y puede tardar. ¿Continuar?",
+      "ok": "Continuar"
+    },
+    "drag_action": {
+      "copy": "Copiar",
+      "move": "Mover"
+    },
     "edit_disabled": "Selecciona una sola imagen para editar",
     "type_image": "Imagen",
     "type_images": "Imágenes",
@@ -537,7 +547,8 @@
     "copy_to_folder": {
       "title": "Copiar a carpeta",
       "success": "Se copió '{source}' a '{dest}'.",
-      "error": "Error al copiar '{source}' a '{dest}'."
+      "error": "Error al copiar '{source}' a '{dest}'.",
+      "index_error": "Se copiaron {count} archivo(s), pero no se pudieron añadir al índice de la biblioteca."
     },
     "file_conflict": {
       "title": "El archivo ya existe",

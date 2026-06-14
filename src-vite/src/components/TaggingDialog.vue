@@ -66,6 +66,9 @@
           {{ $t('tag.not_found') }}
         </div>
       </div>
+      <div v-if="tagLoadFailed" class="text-sm text-error">
+        {{ $t('tag.load_failed') }}
+      </div>
     </section>
 
     <!-- cancel and OK buttons -->
@@ -77,6 +80,7 @@
       
       <button 
         class="t-button-primary" 
+        :disabled="isLoadingTags || isApplyingTags || tagLoadFailed"
         @click="clickOk"
       >{{ $t('msgbox.ok') }}</button>
 
@@ -88,10 +92,9 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { 
   getAllTags, 
-  getTagsForFile, 
   createTag, 
-  addTagToFile, 
-  removeTagFromFile 
+  getTagSelectionCounts,
+  applyTagsToFiles,
 } from '@/common/api';
 import { IconAdd, IconSearch } from '@/common/icons';
 import TButton from './TButton.vue';
@@ -117,6 +120,9 @@ const isSearchFocused = ref(false);
 const isNewTagFocused = ref(false);
 const focusedTagIndex = ref(-1); // -1 = no tag focused
 const isInTagList = ref(false); // true = keyboard focus is in tag list
+const isLoadingTags = ref(false);
+const isApplyingTags = ref(false);
+const tagLoadFailed = ref(false);
 
 // Sets to track tag states
 const selectedTags = ref<Set<number>>(new Set()); // Tags present on ALL selected files
@@ -155,36 +161,30 @@ async function loadAllTags() {
 async function loadExistingTagsForFiles() {
   selectedTags.value.clear();
   intermediateTags.value.clear();
+  tagLoadFailed.value = false;
 
   if (props.fileIds.length === 0) {
     return;
   }
 
-  const tagsPerFile: Map<number, Set<number>> = new Map();
-  const allUniqueTagIds = new Set<number>();
-
-  // Fetch tags for each file
-  for (const fileId of props.fileIds) {
-    const tags = (await getTagsForFile(fileId)) || [];
-    const tagIdsForFile = new Set<number>(tags.map((tag: any) => tag.id));
-    tagsPerFile.set(fileId, tagIdsForFile);
-    tags.forEach((tag: any) => allUniqueTagIds.add(tag.id));
-  }
-
-  // Determine selected and intermediate tags
-  for (const tagId of allUniqueTagIds) {
-    let count = 0;
-    for (const fileId of props.fileIds) {
-      if (tagsPerFile.get(fileId)?.has(tagId)) {
-        count++;
+  isLoadingTags.value = true;
+  try {
+    const counts = await getTagSelectionCounts(props.fileIds);
+    if (counts === null) {
+      tagLoadFailed.value = true;
+      return;
+    }
+    for (const entry of counts) {
+      const tagId = Number(entry.tag_id);
+      const count = Number(entry.count);
+      if (count === props.fileIds.length) {
+        selectedTags.value.add(tagId);
+      } else if (count > 0) {
+        intermediateTags.value.add(tagId);
       }
     }
-
-    if (count === props.fileIds.length) {
-      selectedTags.value.add(tagId);
-    } else if (count > 0) {
-      intermediateTags.value.add(tagId);
-    }
+  } finally {
+    isLoadingTags.value = false;
   }
 }
 
@@ -217,24 +217,18 @@ function toggleTag(tagId: number) {
 }
 
 async function clickOk() {
-  // For each file, determine which tags to add/remove
-  for (const fileId of props.fileIds) {
-    const existingTagsForFile = new Set((await getTagsForFile(fileId))?.map((tag: any) => tag.id) || []);
-
-    for (const tag of allTags.value) {
-      const shouldBeSelected = selectedTags.value.has(tag.id);
-      const isCurrentlySelected = existingTagsForFile.has(tag.id);
-
-      if (shouldBeSelected && !isCurrentlySelected) {
-        // Add tag to file
-        await addTagToFile(fileId, tag.id);
-      } else if (!shouldBeSelected && isCurrentlySelected && !intermediateTags.value.has(tag.id)) {
-        // Remove tag from file (only if not in intermediate state for multi-select)
-        await removeTagFromFile(fileId, tag.id);
-      }
-    }
+  if (isLoadingTags.value || isApplyingTags.value || tagLoadFailed.value) return;
+  isApplyingTags.value = true;
+  const addTagIds = Array.from(selectedTags.value);
+  const removeTagIds = allTags.value
+    .map((tag: any) => Number(tag.id))
+    .filter((tagId: number) => !selectedTags.value.has(tagId) && !intermediateTags.value.has(tagId));
+  const result = await applyTagsToFiles(props.fileIds, addTagIds, removeTagIds);
+  if (result !== null) {
+    emit('ok', result);
+  } else {
+    isApplyingTags.value = false;
   }
-  emit('ok', props.fileIds);
 }
 
 function clickCancel() {

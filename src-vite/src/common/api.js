@@ -827,6 +827,15 @@ export async function deleteDbFile(fileId) {
   }
 }
 
+export async function batchDeleteFiles(files, permanently = false) {
+  try {
+    return await invoke('batch_delete_files', { files, permanently });
+  } catch (error) {
+    console.error('batchDeleteFiles error:', error);
+    return null;
+  }
+}
+
 // edit file comment
 export async function editFileComment(fileId, comment) {
   try {
@@ -1083,6 +1092,15 @@ export async function setFileRating(fileId, rating) {
   return null;
 }
 
+export async function batchUpdateFileMetadata(params) {
+  try {
+    return await invoke('batch_update_file_metadata', { params });
+  } catch (error) {
+    console.error('Failed to update file metadata:', error);
+    return null;
+  }
+}
+
 // tags
 
 // get all tags
@@ -1178,6 +1196,24 @@ export async function removeTagFromFile(fileId, tagId) {
     console.error('Failed to remove tag from file:', error);
   }
   return null;
+}
+
+export async function getTagSelectionCounts(fileIds) {
+  try {
+    return await invoke('get_tag_selection_counts', { fileIds });
+  } catch (error) {
+    console.error('Failed to get tag selection counts:', error);
+    return null;
+  }
+}
+
+export async function applyTagsToFiles(fileIds, addTagIds, removeTagIds) {
+  try {
+    return await invoke('apply_tags_to_files', { fileIds, addTagIds, removeTagIds });
+  } catch (error) {
+    console.error('Failed to apply tags to files:', error);
+    return null;
+  }
 }
 
 // calendar
