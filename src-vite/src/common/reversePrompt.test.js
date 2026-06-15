@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import {
   buildFallbackPrompt,
@@ -41,4 +42,19 @@ test('buildFallbackPrompt summarizes format, dimensions, color, and visual quali
   assert.match(prompt, /saturated/i);
   assert.match(prompt, /#0f172a, #f59e0b, #f8fafc/i);
   assert.doesNotMatch(prompt, /undefined|null|NaN/);
+});
+
+test('reverse prompter view shows its hidden Tauri window after mount', async () => {
+  const source = await readFile(new URL('../views/ReversePrompter.vue', import.meta.url), 'utf8');
+
+  assert.match(source, /getCurrentWebviewWindow/);
+  assert.match(source, /const\s+appWindow\s*=\s*getCurrentWebviewWindow\(\)/);
+  assert.match(source, /onMounted\(\s*async\s*\(\)\s*=>[\s\S]*await\s+appWindow\.show\(\)/);
+});
+
+test('tauri capabilities allow the reverse prompter window label', async () => {
+  const source = await readFile(new URL('../../../src-tauri/capabilities/default.json', import.meta.url), 'utf8');
+  const capabilities = JSON.parse(source);
+
+  assert.ok(capabilities.windows.includes('reverseprompter'));
 });

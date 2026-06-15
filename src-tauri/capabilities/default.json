@@ -6,6 +6,7 @@
     "main",
     "imageviewer",
     "imageeditor",
+    "reverseprompter",
     "settings"
   ],
   "permissions": [

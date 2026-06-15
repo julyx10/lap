@@ -143,6 +143,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import TitleBar from '@/components/TitleBar.vue';
 import { reversePromptImage } from '@/common/api';
 import {
@@ -190,6 +191,7 @@ const statusText = ref('Ready');
 const statusKind = ref<'idle' | 'ok' | 'error' | 'loading'>('idle');
 const isGenerating = ref(false);
 const isDragging = ref(false);
+const appWindow = getCurrentWebviewWindow();
 
 const canGenerate = computed(() => Boolean(imageDataUrl.value) && !isGenerating.value);
 const statusDotClass = computed(() => ({
@@ -218,8 +220,9 @@ const metadataItems = computed(() => {
   ];
 });
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('paste', handlePaste);
+  await appWindow.show();
 });
 
 onBeforeUnmount(() => {
