@@ -429,6 +429,15 @@ export async function fetchFolder(path, isRecursive, sort = 0) {
   return null;
 }
 
+export async function isDirectoryAccessible(path) {
+  try {
+    return Boolean(await invoke('is_directory_accessible', { path }));
+  } catch (error) {
+    console.error('isDirectoryAccessible error:', error);
+    return false;
+  }
+}
+
 // expand the final folder path, return the final folder
 export async function expandFinalFolder(rootFolder, finalPath) {
   let relativePath = finalPath.replace(rootFolder.path, '');

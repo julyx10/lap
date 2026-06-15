@@ -14,6 +14,10 @@
   "album": {
     "all_files": "Todos los archivos",
     "album_list": "Álbumes",
+    "folder_unavailable": {
+      "title": "Carpeta no disponible",
+      "description": "Vuelve a conectar el dispositivo de almacenamiento o comprueba la ubicación de la carpeta."
+    },
     "edit": {
       "title_add": "Añadir álbum",
       "title": "Editar álbum",

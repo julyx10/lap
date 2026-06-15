@@ -14,6 +14,10 @@
   "album": {
     "all_files": "所有文件",
     "album_list": "相册",
+    "folder_unavailable": {
+      "title": "无法访问文件夹",
+      "description": "请重新连接存储设备，或检查文件夹位置。"
+    },
     "edit": {
       "title_add": "添加相册",
       "title": "编辑相册",

@@ -599,6 +599,11 @@ pub async fn sync_album_folder_mtimes(
     .map_err(|e| format!("folder sync task failed: {}", e))?
 }
 
+#[tauri::command]
+pub fn is_directory_accessible(path: &str) -> bool {
+    t_utils::directory_accessible(path)
+}
+
 /// get the thumbnail count of the folder
 #[tauri::command]
 pub fn get_folder_thumb_count(file_type: i64, folder_id: i64) -> i64 {

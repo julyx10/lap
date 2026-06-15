@@ -40,8 +40,8 @@
           "
         >
           <div
-            :data-file-drop-path="album.path"
-            :data-file-drop-album-id="album.id"
+            :data-file-drop-path="album.is_accessible === false ? undefined : album.path"
+            :data-file-drop-album-id="album.is_accessible === false ? undefined : album.id"
             :class="[
               'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2 border-transparent transition-all duration-200 ease-in-out album-drag-handle',
               selection.albumId.value === album.id
@@ -68,7 +68,8 @@
                 <IconUpdate class="w-6 h-6 animate-spin" />
               </div>
               <div v-else-if="isAlbumPaused(album.id) || (Number(album.indexed) > 0 && Number(album.indexed) < Number(album.total))"
-                class="w-full h-full flex items-center justify-center cursor-pointer"
+                class="w-full h-full flex items-center justify-center"
+                :class="album.is_accessible === false ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'"
                 :title="$t('toolbar.tooltip.scan_paused')"
                 @click="toggleIndexAlbum(album.id)"
               >
@@ -141,7 +142,18 @@
               v-if="album.is_expanded && getAlbumQueueIndex(album.id, libConfig.index.albumQueue as any[]) === -1"
               class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5 shadow-sm"
             >
-              <AlbumFolder 
+              <div
+                v-if="album.is_accessible === false"
+                class="px-2 py-3 flex items-start gap-2 text-base-content/50"
+              >
+                <IconFolderError class="mt-0.5 w-4 h-4 shrink-0" />
+                <div class="min-w-0">
+                  <div class="text-sm text-base-content/70">{{ $t('album.folder_unavailable.title') }}</div>
+                  <div class="text-xs">{{ $t('album.folder_unavailable.description') }}</div>
+                </div>
+              </div>
+              <AlbumFolder
+                v-else
                 :children="album.children" 
                 :albumId="album.id"
                 :rootPath="album.path"
@@ -206,7 +218,7 @@ import {
 import { getAlbumQueueIndex, getAlbumScanState, getAlbumScanIcon, shouldAnimateAlbumScanIcon } from '@/common/scanStatus';
 import { getAllAlbums, setDisplayOrder, addAlbum, editAlbum, removeAlbum, 
          fetchFolder, expandFinalFolder, getFileThumbById,
-         getAlbum, hasImportableClipboard, cancelIndexing as cancelIndexingApi, listenIndexProgress, listenIndexFinished } from '@/common/api';
+         getAlbum, hasImportableClipboard, isDirectoryAccessible, cancelIndexing as cancelIndexingApi, listenIndexProgress, listenIndexFinished } from '@/common/api';
 import { DEFAULT_PLATFORM, getShortcutLabel } from '@/common/shortcuts';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelectionProvider, SelectionSource } from '@/composables/useAlbumSelection';
@@ -228,6 +240,7 @@ import {
   IconRight,
   IconPhotoAll,
   IconClipboard,
+  IconFolderError,
 } from '@/common/icons';
 
 const props = withDefaults(defineProps<{
@@ -276,8 +289,10 @@ const albumCoverErrors = ref<Record<number, boolean>>({});
 const albumContextMenus = ref<Record<number, any>>({});
 
 function handleAlbumContextMenu(album: Album, event: MouseEvent) {
-  clickAlbum(album);
-  albumContextMenus.value[album.id]?.open?.(event.clientX, event.clientY);
+  void (async () => {
+    await clickAlbum(album);
+    albumContextMenus.value[album.id]?.open?.(event.clientX, event.clientY);
+  })();
 }
 
 const getAlbumById = (id: number) =>
@@ -322,6 +337,13 @@ const isAlbumScanning = (albumId: number) =>
   }) === 'scanning';
 const getAlbumIcon = (album: any) => getAlbumScanIcon(getAlbumStatus(album));
 const shouldAnimateAlbumIcon = (album: any) => shouldAnimateAlbumScanIcon(getAlbumStatus(album));
+const refreshAlbumAccess = async (album: Album) => {
+  album.is_accessible = await isDirectoryAccessible(album.path);
+  if (!album.is_accessible) {
+    album.children = undefined;
+  }
+  return album.is_accessible;
+};
 
 const openAlbumEdit = async (albumId: number) => {
   if (!getAlbumById(albumId)) {
@@ -338,7 +360,10 @@ const openAlbumEdit = async (albumId: number) => {
 
 // Get menu items for a specific album (function for lazy evaluation)
 const getMoreMenuItems = async (album: any) => {
-  const canPaste = await hasImportableClipboard();
+  const [canPaste, isAccessible] = await Promise.all([
+    hasImportableClipboard(),
+    refreshAlbumAccess(album),
+  ]);
   return [
     {
       label: localeMsg.value.menu.album.edit,
@@ -349,7 +374,7 @@ const getMoreMenuItems = async (album: any) => {
       label: t('menu.file.paste'),
       icon: IconClipboard,
       shortcut: getShortcutLabel('file.paste', DEFAULT_PLATFORM),
-      disabled: !canPaste,
+      disabled: !canPaste || !isAccessible,
       action: () => {
         void tauriEmit('paste-clipboard-to-folder', {
           albumId: album.id,
@@ -362,6 +387,7 @@ const getMoreMenuItems = async (album: any) => {
         ? localeMsg.value.menu.album.pause_scan
         : localeMsg.value.menu.album.scan,
       icon: isAlbumQueued(album.id) ? IconUpdateOff : IconUpdate,
+      disabled: !isAccessible && !isAlbumQueued(album.id),
       action: () => toggleIndexAlbum(album.id)
     },
     {
@@ -635,6 +661,8 @@ const toggleIndexAlbum = async (albumId: number) => {
   if (state === 'scanning' || state === 'queued') {
     await clickCancelIndexAlbum(albumId);
   } else {
+    const album = getAlbumById(albumId);
+    if (!album || !(await refreshAlbumAccess(album))) return;
     await clickIndexAlbum(albumId);
   }
 }
@@ -713,17 +741,24 @@ const clickAlbum = async (album: Album) => {
 
   // In MoveTo dialog, disable album selection and toggle expansion instead
   if (!isMainPane.value) {
-    expandAlbum(album);
+    await expandAlbum(album);
     return;
   }
 
+  const isAccessible = await refreshAlbumAccess(album);
+  if (isAccessible && album.is_expanded && !album.children) {
+    const subFolders = await fetchFolder(album.path, false, config.settings.folderSort);
+    if (subFolders) {
+      album.children = [subFolders];
+    }
+  }
   selection.selectAlbum(album);
 };
 
 /// dlb click album to select it and expand/collapse its folders
 const dlbClickAlbum = async (album: any) => {
-  clickAlbum(album);
-  expandAlbum(album);
+  await clickAlbum(album);
+  await expandAlbum(album);
 };
 
 /// click album icon to expand or collapse next level folders
@@ -732,6 +767,9 @@ const expandAlbum = async (album: any, forceRefresh = false) => {
 
   album.is_expanded = willExpand; 
   
+  if (album.is_expanded && !(await refreshAlbumAccess(album))) {
+    return;
+  }
   if (album.is_expanded && (!album.children || forceRefresh)) {
     const subFolders = await fetchFolder(album.path, false, config.settings.folderSort);
     if(subFolders) {

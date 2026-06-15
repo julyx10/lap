@@ -253,6 +253,7 @@ async fn main() {
             t_cmds::get_query_file_position,
             t_cmds::get_folder_files,
             t_cmds::sync_album_folder_mtimes,
+            t_cmds::is_directory_accessible,
             t_cmds::get_folder_thumb_count,
             t_cmds::edit_image,
             t_cmds::copy_edited_image,

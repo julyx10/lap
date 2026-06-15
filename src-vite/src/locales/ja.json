@@ -14,6 +14,10 @@
   "album": {
     "all_files": "すべてのファイル",
     "album_list": "アルバム",
+    "folder_unavailable": {
+      "title": "フォルダーを利用できません",
+      "description": "ストレージデバイスを再接続するか、フォルダーの場所を確認してください。"
+    },
     "edit": {
       "title_add": "アルバムを追加",
       "title": "アルバムを編集",

@@ -22,6 +22,7 @@ export { default as IconNewFolder } from '@/assets/icons/folder-plus.svg';
 export { default as IconFolderFavorite } from '@/assets/icons/folder-heart.svg';
 export { default as IconFolderSearch } from '@/assets/icons/folder-search.svg';
 export { default as IconFolderMoveTo } from '@/assets/icons/folder-move-to.svg';
+export { default as IconFolderError } from '@/assets/icons/folder-error.svg';
 export { default as IconOrder } from '@/assets/icons/order.svg';
 export { default as IconCopy } from '@/assets/icons/copy.svg';
 export { default as IconMove } from '@/assets/icons/arrow-move.svg';

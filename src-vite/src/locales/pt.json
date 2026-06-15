@@ -14,6 +14,10 @@
   "album": {
     "all_files": "Todos os arquivos",
     "album_list": "Álbuns",
+    "folder_unavailable": {
+      "title": "Pasta indisponível",
+      "description": "Reconecte o dispositivo de armazenamento ou verifique a localização da pasta."
+    },
     "edit": {
       "title_add": "Adicionar álbum",
       "title": "Editar álbum",

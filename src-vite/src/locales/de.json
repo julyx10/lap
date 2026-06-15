@@ -14,6 +14,10 @@
   "album": {
     "all_files": "Alle Dateien",
     "album_list": "Alben",
+    "folder_unavailable": {
+      "title": "Ordner nicht verfügbar",
+      "description": "Verbinden Sie das Speichergerät erneut oder prüfen Sie den Ordnerpfad."
+    },
     "edit": {
       "title_add": "Album hinzufügen",
       "title": "Album bearbeiten",

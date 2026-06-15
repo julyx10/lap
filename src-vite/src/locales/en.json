@@ -14,6 +14,10 @@
   "album": {
     "all_files": "All files",
     "album_list": "Albums",
+    "folder_unavailable": {
+      "title": "Folder unavailable",
+      "description": "Reconnect the storage device or check the folder location."
+    },
     "edit": {
       "title_add": "Add album",
       "title": "Edit album",

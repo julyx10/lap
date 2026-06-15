@@ -14,6 +14,10 @@
   "album": {
     "all_files": "Tous les fichiers",
     "album_list": "Albums",
+    "folder_unavailable": {
+      "title": "Dossier indisponible",
+      "description": "Reconnectez le périphérique de stockage ou vérifiez l’emplacement du dossier."
+    },
     "edit": {
       "title_add": "Ajouter album",
       "title": "Modifier album",
