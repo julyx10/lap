@@ -17,13 +17,17 @@
     <div class="flex-1 flex overflow-hidden">
 
       <!-- left pane -->
-      <div v-if="config.leftPanel.show && !uiStore.isFullScreen"
+      <div
+        v-if="config.leftPanel.show && !uiStore.isFullScreen"
+        ref="leftPanelRootRef"
+        tabindex="-1"
         :class="[
-          'relative flex my-1 ml-1 z-10 select-none',
+          'relative flex my-1 ml-1 z-10 select-none outline-none',
           !leftPanelLayoutExpanded && isMac ? 'mt-12 mb-8': '',
         ]"
         :style="{ width: leftPanelLayoutExpanded ? config.leftPanel.width + 'px' : '64px' }"
         data-tauri-drag-region
+        @focus="uiStore.setActivePane('left-sidebar')"
       >
           <div
             class="absolute inset-y-0 left-0 bg-base-200 rounded-box"
@@ -228,6 +232,7 @@ const uiStore = useUIStore();
 // Panel component ref
 const panelRef = ref<any>(null);
 const contentRef = ref<any>(null);
+const leftPanelRootRef = ref<HTMLElement | null>(null);
 const showPanel = ref(true);
 const LEFT_PANEL_ANIMATION_MS = 200;
 const leftPanelMounted = ref(showPanel.value);
@@ -446,6 +451,22 @@ onBeforeUnmount(() => {
 function handleHomeKeyDown(event: KeyboardEvent) {
   const target = event.target as HTMLElement | null;
   if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable) {
+    return;
+  }
+
+  if (event.key === 'Tab' && uiStore.inputStack.length === 0) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (uiStore.activePane === 'left-sidebar' || !leftPanelRootRef.value) {
+      contentRef.value?.focusContent?.();
+    } else {
+      uiStore.setActivePane('left-sidebar');
+      const albumListRoot = leftPanelRootRef.value.querySelector<HTMLElement>('[data-album-list-root="true"]');
+      const folderTreeRoot = albumListRoot?.querySelector<HTMLElement>(
+        '[data-selected-album-folder="true"] [data-folder-tree-root="true"]',
+      );
+      (folderTreeRoot || albumListRoot || leftPanelRootRef.value).focus({ preventScroll: true });
+    }
     return;
   }
 

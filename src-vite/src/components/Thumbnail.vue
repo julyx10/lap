@@ -5,7 +5,7 @@
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
       config.settings.grid.style === 0 ? 'p-1 w-fit h-fit' : 'w-full h-full',
       isActive && !isTransitionDisabled
-        ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary')
+        ? (isContentActive ? 'border-primary' : 'border-primary/50')
         : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
@@ -104,7 +104,7 @@
           <input
             type="checkbox"
             class="checkbox checkbox-sm"
-            :class="isSelected ? 'checkbox-primary' : ''"
+            :class="isSelected ? (isContentActive ? 'checkbox-primary' : 'checkbox-primary opacity-50') : ''"
             :checked="isSelected"
             @click.stop="(event: MouseEvent) => $emit('select-toggled', event.shiftKey)"
           />
@@ -138,7 +138,10 @@
     <div 
       v-if="config.settings.grid.style === 0" 
       class="flex flex-col items-center" 
-      :class="{ 'text-primary': isSelected }"
+      :class="{ 
+        'text-primary': isSelected && isContentActive,
+        'text-primary/50': isSelected && !isContentActive,
+      }"
       :style="{ width: layoutStyle.width }"
     >
       <span 
@@ -387,6 +390,9 @@ const imgStyle = computed((): CSSProperties => {
 });
 
 const uiStore = useUIStore();
+const isContentActive = computed(() =>
+  uiStore.activePane === 'content' && uiStore.inputStack.length === 0
+);
 const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 

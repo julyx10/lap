@@ -1,7 +1,11 @@
 <template>
 
-  <div class="relative flex-1 flex flex-col select-none"
+  <div
+    ref="contentRootRef"
+    tabindex="-1"
+    class="relative flex-1 flex flex-col select-none outline-none"
     :class="{ 'opacity-50 pointer-events-none': uiStore.isInputActive('ManageLibraries') }"
+    @focus="activateContentPane"
     @mousedown.capture="activateContentPane"
     @mouseenter="isContentHovered = true"
     @mouseleave="isContentHovered = false"
@@ -789,6 +793,7 @@ const thumbCount = ref(0);      // thumbnail count (from 0 to fileList.length)
 const showProgressBar = ref(false); // show progress bar
 
 // div elements
+const contentRootRef = ref<HTMLElement | null>(null);
 const contentViewDiv = ref<HTMLDivElement | null>(null);
 const gridViewDiv = ref<HTMLDivElement | null>(null);
 const isContentHovered = ref(false);
@@ -2649,6 +2654,7 @@ function isContentInteractionActive() {
 
 function activateContentPane() {
   uiStore.setActivePane('content');
+  contentRootRef.value?.focus({ preventScroll: true });
 }
 
 function handleContentWheel(event: WheelEvent) {
@@ -6415,6 +6421,7 @@ function stopDragging() {
 }
 
 defineExpose({
+  focusContent: activateContentPane,
   refreshCenteredGridLayout,
 });
 </script>

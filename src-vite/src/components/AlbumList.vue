@@ -31,7 +31,14 @@
         @start="onDragStart"
         @end="onDragEnd"
       >
-        <li v-for="album in albums" :key="album.id" :data-album-id="album.id">
+        <li
+          v-for="album in albums"
+          :key="album.id"
+          :data-album-id="album.id"
+          :data-selected-album-folder="
+            selection.albumId.value === album.id && !selection.selected.value ? 'true' : undefined
+          "
+        >
           <div
             :data-file-drop-path="album.path"
             :data-file-drop-album-id="album.id"
