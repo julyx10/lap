@@ -28,6 +28,13 @@ Es ist eine datenschutzorientierte Alternative zu Cloud-Fotodiensten: kein erzwu
 | **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Nicht signiert — falls SmartScreen den Download blockiert, klicken Sie auf **Trotzdem behalten** |
 | **Linux (amd64 / arm64)** | `_amd64.deb` / `_arm64.deb` | Für Debian-basierte Distributionen (Ubuntu, Debian, Linux Mint, etc.) |
 
+### macOS mit Homebrew
+
+```bash
+brew tap julyx10/lap
+brew install --cask lap
+```
+
 ## Screenshots
 
 <p align="center">
@@ -40,24 +47,20 @@ Es ist eine datenschutzorientierte Alternative zu Cloud-Fotodiensten: kein erzwu
 
 ## Warum Lap
 
-- **Keine Cloud erforderlich**: Speichern Sie Ihre Bibliothek auf Ihrer eigenen Festplatte, anstatt sie bei einem Dienst hochzuladen.
-- **Standardmäßig privat**: Die Verarbeitung erfolgt lokal, sodass Ihre Fotos unter Ihrer Kontrolle bleiben.
-- **Kostenlos nutzbar**: Kein Abonnement oder wiederkehrende Gebühren.
-- **Ordner-fokussiert**: Arbeiten Sie direkt mit Ihren vorhandenen Ordnern, kein Importschritt erforderlich.
-- **Hohe Performance für große Bibliotheken**: Optimiert für flüssiges Durchsuchen und Organisieren riesiger Mediensammlungen (100.000+ Dateien pro Bibliothek).
+- **Lokal zuerst konzipiert**: Ihre Fotos bleiben auf Ihrer eigenen Festplatte, ohne erforderliches Cloud-Konto oder Upload.
+- **Kein Bibliotheks-Lock-in**: Arbeiten Sie direkt mit Ihren vorhandenen Ordnern, statt alles in eine geschlossene Datenbank zu importieren.
+- **Private KI-Werkzeuge**: Suche, Ähnlichkeit, intelligente Schlagworte und Gesichtsfunktionen laufen lokal auf Ihrem Gerät.
+- **Für große Sammlungen gebaut**: Optimiert für flüssiges Durchsuchen und Organisieren von Bibliotheken mit 100.000+ Dateien.
+- **Open Source und kostenlos**: Kein Abonnement, kein erzwungenes Ökosystem und Code, den Sie prüfen können.
 
 ## Funktionen
 
-- **Durchsuchen und Filtern** nach Datum, Ort, Kamera, Objektiv, Schlagworten, Favoriten, Bewertungen und Gesichtern (BETA).
-- **Mehrere Bibliotheken verwalten** und schnell zwischen ihnen wechseln.
-- **Duplikate finden** und unerwünschte Kopien stapelweise in den Papierkorb verschieben.
-- **Direkt bearbeiten** mit Zuschneiden, Drehen, Spiegeln, Skalieren und grundlegenden Anpassungen.
-- **Ordner synchron halten** mit dateisystembasierten Operationen und Aktualisierungsunterstützung.
-- **Lokale KI-Werkzeuge nutzen** wie Text-/Bildsuche, Suche nach ähnlichen Bildern, Gesichts-Clustering und intelligente Schlagworte.
-- **In über 50 Sprachen suchen** mit optionalen mehrsprachigen Modellen, die bei Bedarf als zusätzlicher Download verfügbar sind.
-- **Moderne Bildformate öffnen** einschließlich WebP, HEIC/HEIF/HIF, AVIF and JXL (JPEG XL).
-- **RAW-Fotos anzeigen** mit integrierter Dekodierung für über 20 Kamera-RAW-Formate (CR2, NEF, ARW, DNG usw.).
-- **Breite Videokompatibilität**: Unterstützung für MP4, MOV, AVI, MKV und über 20 weitere Formate mit plattformübergreifender Optimierung.
+- **Schnelles Durchsuchen der Bibliothek** mit Timeline-, Ordner-, Standort-, Kamera-, Objektiv-, Schlagwort-, Favoriten-, Bewertungs- und Gesichtsfiltern.
+- **Lokale KI-Suche** für Textanfragen, visuelle Ähnlichkeit, intelligente Schlagworte, Gesichts-Clustering und optionale mehrsprachige Suche in über 50 Sprachen.
+- **Ordnerorientierter Workflow** mit mehreren Bibliotheken, Drag-and-drop-Import, Kopieren-und-Einfügen-Import, Dateisystem-Synchronisierung und sicheren Verschiebe-/Kopier-/Löschvorgängen.
+- **Aufräumwerkzeuge** zum Finden von Duplikaten und zum stapelweisen Verschieben unerwünschter Dateien in den Papierkorb.
+- **Integrierte Bearbeitung** für Zuschneiden, Drehen, Spiegeln, Größenänderung und grundlegende Bildanpassungen.
+- **Breite Formatunterstützung** für über 60 Foto-, RAW- und Videoformate.
 
 ## Lap deinstallieren
 
@@ -139,9 +142,11 @@ cargo tauri dev
 
 ## Unterstützte Formate
 
+Lap unterstützt über 60 Foto-, RAW- und Videoformate.
+
 | Typ | Formate |
 | :--- | :--- |
-| Bilder | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL |
+| Bilder | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
 | RAW-Fotos | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
 | Videos | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX und weitere. Die H.264-Wiedergabe wird auf allen Plattformen unterstützt, mit automatischer Kompatibilitätsverarbeitung, wenn die native Wiedergabe nicht verfügbar ist. HEVC/H.265 und VP9 werden nativ auf macOS unterstützt. |
 

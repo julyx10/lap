@@ -21,15 +21,6 @@ It is a privacy-focused alternative to cloud photo services: no forced upload, l
 
 ## Download Lap
 
-### macOS with Homebrew
-
-```bash
-brew tap julyx10/lap
-brew install --cask lap
-```
-
-### Manual Download
-
 Open the [latest release page](https://github.com/julyx10/lap/releases/latest), then download the file that matches your system:
 
 | Platform | Package | Note |
@@ -37,6 +28,13 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
 | **macOS (Apple Silicon / Intel)** | `_aarch64.dmg` / `_x64.dmg` | Notarized by Apple |
 | **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Unsigned — if SmartScreen blocks the download, click **Keep anyway** |
 | **Linux (amd64 / arm64)** | `_amd64.deb` / `_arm64.deb` | For Debian-based distros (Ubuntu, Debian, Linux Mint, etc.) |
+
+### macOS with Homebrew
+
+```bash
+brew tap julyx10/lap
+brew install --cask lap
+```
 
 ## Screenshots
 
@@ -48,29 +46,22 @@ Open the [latest release page](https://github.com/julyx10/lap/releases/latest), 
   <img src="docs/public/screenshots/lap-home-0.1.10_2.png" alt="Lap local AI photo search screenshot" width="900">
 </p>
 
-## Press
-- **Windows Central** — [After testing LAP Photo Manager on Windows 11, I'm convinced it outperforms the built-in Photos app in all the ways that matter](https://www.windowscentral.com/microsoft/windows-11/lap-photo-manager-for-windows-11-is-it-better-than-photos-i-think-so)
-
 ## Why Lap
 
-- **No cloud required**: keep your library on your own disk instead of uploading it to a hosted service.
-- **Private by default**: processing happens locally, so your photos stay under your control.
-- **Free to use**: no subscription plan or recurring fee.
-- **Folder-first**: work directly with your existing folders, no import step required.
-- **High performance for large libraries**: optimized for smooth browsing and organization across huge media collections (100k+ files per library).
+- **Local-first by design**: your photos stay on your own disk, with no required cloud account or upload.
+- **No library lock-in**: work directly with your existing folders instead of importing everything into a closed database.
+- **Private AI tools**: search, similarity, smart tags, and face features run locally on your machine.
+- **Built for large collections**: optimized for smooth browsing and organization across libraries with 100k+ files.
+- **Open source and free**: no subscription, no forced ecosystem, and code you can inspect.
 
 ## Features
 
-- **Browse and filter** by date, location, camera, lens, tags, favorites, ratings, and faces (BETA).
-- **Manage multiple libraries** and switch between them quickly.
-- **Find duplicates** and batch move unwanted copies to trash.
-- **Edit in place** with crop, rotate, flip, resize, and basic adjustments.
-- **Keep folders in sync** with filesystem-aware operations and refresh support.
-- **Use local search tools** such as text/image search, similar-image search, face clustering, and smart tags.
-- **Search in 50+ languages** with optional multilingual models, available as an additional download when needed.
-- **Open modern image formats** including WebP, HEIC/HEIF/HIF, AVIF, and JXL (JPEG XL).
-- **View RAW photos** with built-in decoding for 20+ camera RAW formats (CR2, NEF, ARW, DNG, etc.).
-- **Broad video compatibility** supporting MP4, MOV, AVI, MKV, and 20+ other formats with cross-platform optimization.
+- **Fast library browsing** with timeline, folder, location, camera, lens, tag, favorite, rating, and face filters.
+- **Local AI search** for text prompts, visual similarity, smart tags, face clustering, and optional multilingual search in 50+ languages.
+- **Folder-first workflow** with multiple libraries, drag-and-drop import, copy-paste import, filesystem sync, and safe move/copy/delete operations.
+- **Cleanup tools** to find duplicates and batch move unwanted files to trash.
+- **Built-in editing** for crop, rotate, flip, resize, and basic image adjustments.
+- **Broad format support** for 60+ photo, RAW, and video formats.
 
 ## Uninstall Lap
 
@@ -152,9 +143,11 @@ cargo tauri dev
 
 ## Supported Formats
 
+Lap supports 60+ photo, RAW, and video formats.
+
 | Type | Formats |
 | :--- | :--- |
-| Images | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL |
+| Images | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
 | RAW photos | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
 | Videos | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX and more. H.264 playback is supported on all platforms, with automatic compatibility processing when native playback is unavailable. HEVC/H.265 and VP9 are natively supported on macOS. |
 
@@ -178,7 +171,9 @@ sudo apt install gstreamer1.0-libav gstreamer1.0-plugins-good
 | :-- | :-- |
 | [LibRaw](https://github.com/LibRaw/LibRaw) | RAW image decoding and thumbnail extraction |
 | [libheif](https://github.com/strukturag/libheif) | HEIC/HEIF/HIF image decoding and preview generation |
+| [libjpeg-turbo](https://libjpeg-turbo.org/) | Fast JPEG decoding and thumbnail generation |
 | [FFmpeg](https://ffmpeg.org/) | Video processing and thumbnail generation |
+| [Video.js](https://videojs.com/) | Cross-platform video playback UI |
 | [ONNX Runtime](https://onnxruntime.ai/) | Local AI model inference engine |
 | [CLIP](https://github.com/openai/CLIP) | Image-text similarity search |
 | [InsightFace](https://github.com/deepinsight/insightface) | Face detection and recognition |

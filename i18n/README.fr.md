@@ -28,6 +28,13 @@ Ouvrez la [page des dernières versions](https://github.com/julyx10/lap/releases
 | **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Non signé — si SmartScreen bloque le téléchargement, cliquez sur **Conserver quand même** |
 | **Linux (amd64 / arm64)** | `_amd64.deb` / `_arm64.deb` | Pour les distributions basées sur Debian (Ubuntu, Debian, Linux Mint, etc.) |
 
+### macOS avec Homebrew
+
+```bash
+brew tap julyx10/lap
+brew install --cask lap
+```
+
 ## Captures d'écran
 
 <p align="center">
@@ -40,24 +47,20 @@ Ouvrez la [page des dernières versions](https://github.com/julyx10/lap/releases
 
 ## Pourquoi Lap
 
-- **Pas de cloud requis** : conservez votre bibliothèque sur votre propre disque au lieu de la télécharger sur un service hébergé.
-- **Privé par défaut** : le traitement se fait localement, vos photos restent donc sous votre contrôle.
-- **Gratuit** : pas d'abonnement ni de frais récurrents.
-- **Dossiers d'abord** : travaillez directement avec vos dossiers existants, aucune étape d'importation n'est requise.
-- **Haute performance pour les grandes bibliothèques** : optimisé pour une navigation et une organisation fluides de vastes collections de médias (plus de 100 000 fichiers par bibliothèque).
+- **Conçu en local-first** : vos photos restent sur votre propre disque, sans compte cloud ni téléversement obligatoire.
+- **Pas de verrouillage de bibliothèque** : travaillez directement avec vos dossiers existants au lieu de tout importer dans une base de données fermée.
+- **Outils d'IA privés** : recherche, similarité, tags intelligents et fonctions de visages s'exécutent localement sur votre machine.
+- **Conçu pour les grandes collections** : optimisé pour parcourir et organiser des bibliothèques de plus de 100 000 fichiers.
+- **Open source et gratuit** : pas d'abonnement, pas d'écosystème imposé, et un code que vous pouvez inspecter.
 
 ## Fonctionnalités
 
-- **Parcourir et filtrer** par date, lieu, appareil photo, objectif, tags, favoris, notes et visages (BETA).
-- **Gérer plusieurs bibliothèques** et passer de l'une à l'autre rapidement.
-- **Trouver les doublons** et déplacer par lots les copies indésirables vers la corbeille.
-- **Édition sur place** avec recadrage, rotation, retournement, redimensionnement et ajustements de base.
-- **Garder les dossiers synchronisés** avec des opérations sensibles au système de fichiers et un support de rafraîchissement.
-- **Utiliser les outils de recherche locaux** tels que la recherche texte/image, la recherche d'images similaires, le regroupement de visages et les tags intelligents.
-- **Rechercher dans plus de 50 langues** avec des modèles multilingues optionnels, disponibles en téléchargement supplémentaire si nécessaire.
-- **Ouvrir les formats d'image modernes** y compris WebP, HEIC/HEIF/HIF, AVIF et JXL (JPEG XL).
-- **Consulter les photos RAW** avec un décodage intégré pour plus de 20 formats RAW d'appareils photo (CR2, NEF, ARW, DNG, etc.).
-- **Large compatibilité vidéo** : prise en charge des formats MP4, MOV, AVI, MKV et de plus de 20 autres formats avec optimisation multiplateforme.
+- **Navigation rapide dans la bibliothèque** avec filtres par chronologie, dossier, lieu, appareil photo, objectif, tag, favori, note et visage.
+- **Recherche IA locale** pour les requêtes texte, la similarité visuelle, les tags intelligents, le regroupement de visages et la recherche multilingue optionnelle dans plus de 50 langues.
+- **Flux de travail centré sur les dossiers** avec plusieurs bibliothèques, import par glisser-déposer, import par copier-coller, synchronisation du système de fichiers et opérations sûres de déplacement/copie/suppression.
+- **Outils de nettoyage** pour trouver les doublons et déplacer par lots les fichiers indésirables vers la corbeille.
+- **Édition intégrée** pour recadrer, faire pivoter, retourner, redimensionner et appliquer des ajustements d'image de base.
+- **Large prise en charge des formats** pour plus de 60 formats photo, RAW et vidéo.
 
 ## Désinstaller Lap
 
@@ -139,9 +142,11 @@ cargo tauri dev
 
 ## Formats supportés
 
+Lap prend en charge plus de 60 formats photo, RAW et vidéo.
+
 | Type | Formats |
 | :--- | :--- |
-| Images | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL |
+| Images | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
 | Photos RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
 | Vidéos | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX et plus. La lecture H.264 est supportée sur toutes les plateformes, avec un traitement automatique de compatibilité lorsque la lecture native n'est pas disponible. HEVC/H.265 et VP9 sont supportés nativement sur macOS. |
 

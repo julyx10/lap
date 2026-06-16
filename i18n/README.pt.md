@@ -28,6 +28,13 @@ Abra a [página de lançamentos recentes](https://github.com/julyx10/lap/release
 | **Windows 10/11 (x64 / ARM64)** | `_x64_en-US.msi` / `_arm64_en-US.msi` | Não assinado — se o SmartScreen bloquear o download, clique em **Manter mesmo assim** |
 | **Linux (amd64 / arm64)** | `_amd64.deb` / `_arm64.deb` | Para distribuições baseadas em Debian (Ubuntu, Debian, Linux Mint, etc.) |
 
+### macOS com Homebrew
+
+```bash
+brew tap julyx10/lap
+brew install --cask lap
+```
+
 ## Capturas de tela
 
 <p align="center">
@@ -40,24 +47,20 @@ Abra a [página de lançamentos recentes](https://github.com/julyx10/lap/release
 
 ## Por que Lap
 
-- **Sem necessidade de nuvem**: mantenha sua biblioteca em seu próprio disco em vez de enviá-la para um serviço hospedado.
-- **Privado por padrão**: o processamento ocorre localmente, portanto, suas fotos permanecem sob seu controle.
-- **Gratuito para usar**: sem planos de assinatura ou taxas recorrentes.
-- **Pastas primeiro**: trabalhe diretamente com suas pastas existentes, sem etapa de importação necessária.
-- **Alto desempenho para grandes bibliotecas**: otimizado para navegação e organização fluidas de grandes coleções de mídia (mais de 100 mil arquivos por biblioteca).
+- **Local-first por design**: suas fotos ficam no seu próprio disco, sem conta na nuvem ou upload obrigatório.
+- **Sem aprisionamento de biblioteca**: trabalhe diretamente com suas pastas existentes em vez de importar tudo para um banco de dados fechado.
+- **Ferramentas privadas de IA**: busca, similaridade, tags inteligentes e recursos de rostos rodam localmente na sua máquina.
+- **Feito para grandes coleções**: otimizado para navegar e organizar bibliotecas com mais de 100 mil arquivos.
+- **Código aberto e gratuito**: sem assinatura, sem ecossistema obrigatório e com código que você pode inspecionar.
 
 ## Recursos
 
-- **Navegar e filtrar** por data, local, câmera, lente, tags, favoritos, classificações e rostos (BETA).
-- **Gerenciar várias bibliotecas** e alternar entre elas rapidamente.
-- **Encontrar duplicados** e mover cópias indesejadas para a lixeira em lote.
-- **Editar no local** com cortar, girar, inverter, redimensionar e ajustes básicos.
-- **Manter pastas sincronizadas** com operações sensíveis ao sistema de arquivos e suporte a atualização.
-- **Usar ferramentas de busca local** como busca por texto/imagem, busca por imagens semelhantes, agrupamento de rostos e tags inteligentes.
-- **Buscar em mais de 50 idiomas** com modelos multilíngues opcionais, disponíveis como download adicional quando necessário.
-- **Abrir formatos de imagem modernos** incluindo WebP, HEIC/HEIF/HIF, AVIF e JXL (JPEG XL).
-- **Visualizar fotos RAW** com decodificação integrada para mais de 20 formatos RAW de câmeras (CR2, NEF, ARW, DNG, etc.).
-- **Ampla compatibilidade de vídeo**: suporte para MP4, MOV, AVI, MKV e mais de 20 outros formatos com otimização multiplataforma.
+- **Navegação rápida na biblioteca** com filtros por linha do tempo, pasta, local, câmera, lente, tag, favorito, classificação e rosto.
+- **Busca local com IA** para comandos de texto, similaridade visual, tags inteligentes, agrupamento de rostos e busca multilíngue opcional em mais de 50 idiomas.
+- **Fluxo de trabalho baseado em pastas** com várias bibliotecas, importação por arrastar e soltar, importação por copiar e colar, sincronização do sistema de arquivos e operações seguras de mover/copiar/excluir.
+- **Ferramentas de limpeza** para encontrar duplicados e mover arquivos indesejados para a lixeira em lote.
+- **Edição integrada** para cortar, girar, inverter, redimensionar e aplicar ajustes básicos de imagem.
+- **Amplo suporte a formatos** para mais de 60 formatos de foto, RAW e vídeo.
 
 ## Desinstalar Lap
 
@@ -139,9 +142,11 @@ cargo tauri dev
 
 ## Formatos Suportados
 
+O Lap suporta mais de 60 formatos de foto, RAW e vídeo.
+
 | Tipo | Formatos |
 | :--- | :--- |
-| Imagens | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL |
+| Imagens | JPG/JPEG, PNG, GIF, BMP, TIFF, WebP, HEIC/HEIF/HIF, AVIF, JXL, PSD, EXR, HDR/RGBE, TGA, JPEG 2000 (JP2/J2K/J2C/JPC/JPF/JPX), DDS, DPX, QOI |
 | Fotos RAW | CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, RAF, RW2, ORF, PEF, DNG, SRW, RWL, MRW, 3FR, MOS, DCR, KDC, ERF, MEF, RAW, MDC |
 | Vídeos | MP4, MOV, M4V, MKV, AVI, FLV, TS/M2TS, WMV, WebM, 3GP/3G2, F4V, VOB, MPG/MPEG, ASF, DIVX e mais. A reprodução H.264 é suportada em todas as plataformas, com processamento de compatibilidade automático quando a reprodução nativa não estiver disponível. HEVC/H.265 e VP9 são suportados nativamente no macOS. |
 
