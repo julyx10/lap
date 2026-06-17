@@ -186,16 +186,34 @@ fn write_build_info() {
     // This intentionally records the real build time for About/version
     // metadata, so Cargo will rewrite build_info.rs on each build.
     let timestamp = now.as_secs();
+    let commit_hash = current_git_commit_hash().unwrap_or_default();
 
     let mut formatted = String::new();
     write!(
         &mut formatted,
-        "pub const BUILD_UNIX_TIME: u64 = {};",
-        timestamp
+        "pub const BUILD_UNIX_TIME: u64 = {};\npub const GIT_COMMIT_HASH: &str = {:?};",
+        timestamp, commit_hash
     )
     .unwrap();
 
     fs::write(dest_path, formatted).unwrap();
+}
+
+fn current_git_commit_hash() -> Option<String> {
+    println!("cargo:rerun-if-changed=../.git/HEAD");
+    println!("cargo:rerun-if-changed=../.git/refs/heads");
+    println!("cargo:rerun-if-changed=../.git/packed-refs");
+
+    let output = Command::new("git")
+        .args(["rev-parse", "--short=7", "HEAD"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+
+    let hash = String::from_utf8(output.stdout).ok()?.trim().to_string();
+    (!hash.is_empty()).then_some(hash)
 }
 
 fn build_libraw() {

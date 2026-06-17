@@ -1638,7 +1638,7 @@ pub fn get_location_info(sort: i64) -> Result<Vec<ALocation>, String> {
 /// get package info
 #[tauri::command]
 pub fn get_package_info() -> t_utils::PackageInfo {
-    t_utils::PackageInfo::new()
+    t_utils::PackageInfo::new(GIT_COMMIT_HASH)
 }
 
 /// get the build time

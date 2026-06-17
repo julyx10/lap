@@ -324,6 +324,7 @@ pub static GEOCODER: Lazy<ReverseGeocoder> = Lazy::new(|| {
 pub struct PackageInfo {
     name: String,
     version: String,
+    commit_hash: Option<String>,
     description: String,
     authors: Vec<String>,
     repository: Option<String>,
@@ -332,10 +333,11 @@ pub struct PackageInfo {
 }
 
 impl PackageInfo {
-    pub fn new() -> Self {
+    pub fn new(commit_hash: &str) -> Self {
         Self {
             name: env!("CARGO_PKG_NAME").to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            commit_hash: (!commit_hash.is_empty()).then(|| commit_hash.to_string()),
             description: env!("CARGO_PKG_DESCRIPTION").to_string(),
             authors: env!("CARGO_PKG_AUTHORS")
                 .split(':')
