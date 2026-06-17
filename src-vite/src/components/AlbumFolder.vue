@@ -14,18 +14,15 @@
       :class="{ 'pl-4': child.path !== rootPath }"
     >
       <div v-if="child.id != 0 || selection.folderPath.value == rootPath"
+        :data-file-drop-path="child.path"
+        :data-file-drop-album-id="albumId"
         :class="[
-          'mx-1 p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2',
+          'p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2',
           !selection.selected.value && selection.folderPath.value === child.path && !isRenamingFolder ? 'text-primary bg-base-100 hover:bg-base-100 border-transparent' : 'hover:text-base-content hover:bg-base-100/30 border-transparent',
-          dropHighlightPath === child.path ? '!bg-primary/10 !border-primary/60' : '',
         ]"
         @click="clickFolder(albumId, child)"
         @dblclick="expandFolder(child)"
         @contextmenu.prevent.stop="(e: MouseEvent) => handleFolderContextMenu(child, e)"
-        @dragover="onFolderDragOver"
-        @dragenter="onFolderDragEnter($event, child.path)"
-        @dragleave="onFolderDragLeave"
-        @drop.stop="onFolderDrop($event, child.path, child.id)"
       >
         <IconRight
           :class="[
@@ -144,9 +141,12 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config, libConfig } from '@/common/config';
 import { isMac, shortenFilename, isValidFileName, getFolderPath, getFullPath, normalizePathForCompare, isWithinRootPath } from '@/common/utils';
-import { createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary, copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently, moveFile, copyFile, selectFolder as apiSelectFolder } from '@/common/api';
-import { dragState } from '@/common/dragState';
-import { recountAlbum, setFolderFavorite, setFolderSearchExcluded } from '@/common/api';
+import {
+  createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary,
+  copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently, recountAlbum,
+  setFolderFavorite, setFolderSearchExcluded, hasImportableClipboard,
+} from '@/common/api';
+import { DEFAULT_PLATFORM, getShortcutLabel } from '@/common/shortcuts';
 import { Album, Folder } from '@/common/types';
 import { useAlbumSelection } from '@/composables/useAlbumSelection';
 
@@ -165,16 +165,14 @@ import {
   IconNewFolder,
   IconRename,
   IconMove,
-  IconCopyTo,
-  IconExternal,
   IconTrash,
   IconHeart,
+  IconHeartFilled,
   IconFolder,
   IconHide,
   IconUnhide,
   IconRefresh,
-  IconStar,
-  IconUnFavorite
+  IconClipboard
 } from '@/common/icons';
 
 // used for cross-component communication (Content.vue listens for this event)
@@ -244,7 +242,6 @@ const showTrashFolderMsgbox = ref(false);
 const showMoveTo = ref(false);
 const permanentDeleteChecked = ref(false);
 const deletePermanently = ref(false);
-const dropHighlightPath = ref('');
 const folderContextMenus = ref<Record<string, any>>({});
 
 function handleFolderContextMenu(folder: Folder, event: MouseEvent) {
@@ -264,8 +261,9 @@ const toast = useToast();
 const treeRootRef = ref<HTMLElement | null>(null);
 
 // more menuitems - function that takes the folder being right-clicked
-const getMenuItemsForFolder = (folder: any) => {
+const getMenuItemsForFolder = async (folder: any) => {
   const isRoot = folder.path === props.rootPath;
+  const canPaste = await hasImportableClipboard();
   return [
     {
       label: localeMsg.value.menu.file.new_folder,
@@ -273,6 +271,22 @@ const getMenuItemsForFolder = (folder: any) => {
       action: () => {
         showNewFolderMsgbox.value = true;
       }
+    },
+    {
+      label: t('menu.file.paste'),
+      icon: IconClipboard,
+      shortcut: getShortcutLabel('file.paste', DEFAULT_PLATFORM),
+      disabled: !canPaste,
+      action: () => {
+        void tauriEmit('paste-clipboard-to-folder', {
+          albumId: props.albumId,
+          folderPath: folder.path,
+        });
+      }
+    },
+    {
+      label: "-",
+      action: null
     },
     {
       label: localeMsg.value.menu.file.rename,
@@ -289,31 +303,55 @@ const getMenuItemsForFolder = (folder: any) => {
       }
     },
     {
-      label: t('menu.file.move_within_library'),
-      icon: IconMove,
+      label: t('menu.file.move_copy'),
       disabled: isRoot,
-      action: () => {
-        showMoveTo.value = true;
-      }
-    },
-    {
-      label: t('menu.file.move_to'),
-      disabled: isRoot,
-      action: () => {
-        void clickMoveToFolder();
-      }
-    },
-    {
-      label: t('menu.file.copy_to'),
-      disabled: isRoot,
-      action: () => {
-        void clickCopyToFolder();
-      }
+      children: [
+        {
+          label: t('menu.file.move_within_library'),
+          icon: IconMove,
+          disabled: isRoot,
+          action: () => {
+            showMoveTo.value = true;
+          }
+        },
+        {
+          label: t('menu.file.move_to_folder'),
+          disabled: isRoot,
+          action: () => {
+            void clickMoveToFolder();
+          }
+        },
+        {
+          label: t('menu.file.copy_to_folder'),
+          disabled: isRoot,
+          action: () => {
+            void clickCopyToFolder();
+          }
+        },
+      ]
     },
     {
       label: isMac ? localeMsg.value.menu.file.reveal_in_finder : localeMsg.value.menu.file.reveal_in_file_explorer,
       action: () => {
         revealPath(folder.path);
+      }
+    },
+    {
+      label: "-",
+      action: null
+    },
+    {
+      label: !folder?.is_favorite ? localeMsg.value.menu.meta.favorite : localeMsg.value.menu.meta.unfavorite,
+      icon: !folder?.is_favorite ? IconHeart : IconHeartFilled,
+      action: () => {
+        toggleFavorite();
+      }
+    },
+    {
+      label: folder?.is_excluded_from_search ? localeMsg.value.menu.album.include_in_search : localeMsg.value.menu.album.exclude_from_search,
+      icon: folder?.is_excluded_from_search ? IconUnhide : IconHide,
+      action: () => {
+        toggleFolderSearchExcluded(folder);
       }
     },
     {
@@ -326,32 +364,16 @@ const getMenuItemsForFolder = (folder: any) => {
       }
     },
     {
+      label: "-",
+      action: null
+    },
+    {
       label: localeMsg.value.menu.file.move_to_trash,
       icon: IconTrash,
       disabled: isRoot,
       action: () => {
         deletePermanently.value = permanentDeleteChecked.value;
         showTrashFolderMsgbox.value = true;
-      }
-    },
-    {
-      label: "-",
-      action: null
-    },
-    {
-      label: !folder?.is_favorite ? localeMsg.value.menu.meta.favorite : localeMsg.value.menu.meta.unfavorite,
-      icon: !folder?.is_favorite ? IconHeart : IconHeart,
-      // disabled: isRoot,
-      action: () => {
-        toggleFavorite();
-      }
-    },
-    {
-      label: folder?.is_excluded_from_search ? localeMsg.value.menu.album.include_in_search : localeMsg.value.menu.album.exclude_from_search,
-      icon: folder?.is_excluded_from_search ? IconUnhide : IconHide,
-      // disabled: isRoot,
-      action: () => {
-        toggleFolderSearchExcluded(folder);
       }
     },
   ];
@@ -809,53 +831,6 @@ const clickTrashFolder = async () => {
     );
   }
 };
-
-// ---- file drop handling ----
-
-function onFolderDragOver(e: DragEvent) {
-  if (!dragState.files?.length) return;
-  e.preventDefault();
-  e.dataTransfer!.dropEffect = (e.altKey || e.ctrlKey) ? 'copy' : 'move';
-}
-
-function onFolderDragEnter(_e: DragEvent, folderPath: string) {
-  if (!dragState.files?.length) return;
-  dropHighlightPath.value = folderPath;
-}
-
-function onFolderDragLeave(e: DragEvent) {
-  const el = e.currentTarget as HTMLElement;
-  if (e.relatedTarget && el.contains(e.relatedTarget as Node)) return;
-  dropHighlightPath.value = '';
-}
-
-async function onFolderDrop(e: DragEvent, destPath: string, _folderId: number) {
-  dropHighlightPath.value = '';
-  if (!dragState.files?.length) return;
-  const files = dragState.files;
-
-  // Resolve real DB folder ID via same API "Move in library" uses.
-  const selected = await apiSelectFolder(props.albumId, destPath);
-  if (!selected?.id) return;
-  const resolvedId = selected.id;
-
-  const copy = e.altKey || e.ctrlKey;
-  const actionFn = copy ? copyFile : moveFile;
-  const verb = copy ? 'copied' : 'moved';
-
-  let done = 0;
-  for (const f of files) {
-    if (!copy && f.folder_id === resolvedId) continue;
-    const result = copy
-      ? await actionFn(f.file_path, destPath)
-      : await actionFn(f.id, f.file_path, resolvedId, destPath);
-    if (result) done++;
-  }
-  if (done > 0) {
-    tauriEmit('refresh-content');
-    toast.success(`${done} file(s) ${verb}`);
-  }
-}
 
 /// toggle folder favorite
 const toggleFavorite = async () => {

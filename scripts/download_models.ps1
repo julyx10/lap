@@ -23,7 +23,11 @@ foreach ($model in $Models) {
         Write-Host "# $($model.File) already exists, skipping."
     } else {
         Write-Host "Downloading $($model.File)..."
-        Invoke-WebRequest -Uri $model.Url -OutFile $FilePath -UseBasicParsing
+        $Headers = @{}
+        if ($env:HF_TOKEN) {
+            $Headers["Authorization"] = "Bearer $($env:HF_TOKEN)"
+        }
+        Invoke-WebRequest -Uri $model.Url -OutFile $FilePath -UseBasicParsing -Headers $Headers
         Write-Host "# $($model.File) done."
     }
 }

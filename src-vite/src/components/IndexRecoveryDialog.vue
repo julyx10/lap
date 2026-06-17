@@ -1,14 +1,22 @@
 <template>
   <ModalDialog :title="title" :width="440" @cancel="clickCancel">
-    <div class="flex flex-col gap-3">
-      <div v-if="message" class="text-sm wrap-break-word">
+    <div class="flex flex-col gap-2 select-none">
+      <div v-if="message" class="text-sm wrap-break-word text-base-content/30">
         {{ message }}
       </div>
 
-      <div v-if="filePath" class="flex flex-col gap-1 rounded-box bg-base-100/40 px-3 py-2">
-        <div class="text-xs text-base-content/50">{{ fileLabel }}</div>
-        <div class="text-sm text-base-content font-medium break-all">{{ fileName }}</div>
-        <div class="text-xs text-base-content/60 break-all">{{ filePath }}</div>
+      <div class="text-sm text-base-content/30">{{ fileLabel }}</div>
+      <div v-if="filePath" class="flex items-start gap-2 rounded-box border border-base-content/5 px-3 py-2">
+        <div class="min-w-0 flex-1 flex flex-col gap-1">
+          <div class="text-sm text-base-content/70 font-medium break-all">{{ fileName }}</div>
+          <div class="text-xs text-base-content/30 break-all">{{ filePath }}</div>
+        </div>
+        <TButton
+          :icon="IconExternal"
+          buttonSize="small"
+          :tooltip="isMac ? $t('menu.file.reveal_in_finder') : $t('menu.file.reveal_in_file_explorer')"
+          @click.stop="revealCurrentFile"
+        />
       </div>
 
       <label class="mt-1 flex items-center gap-2 text-sm cursor-pointer">
@@ -18,14 +26,14 @@
 
       <div class="mt-2 flex justify-end space-x-4">
         <button
-          class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer"
+          class="t-button-default"
           @click="clickCancel"
         >
           {{ cancelText }}
         </button>
 
         <button
-          class="px-4 py-1 rounded-box hover:bg-primary hover:text-primary-content cursor-pointer"
+          class="t-button-primary"
           @click="clickContinue"
         >
           {{ continueText }}
@@ -38,7 +46,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useUIStore } from '@/stores/uiStore';
+import { revealPath } from '@/common/api';
+import { isMac } from '@/common/utils';
+import { IconExternal } from '@/common/icons';
 import ModalDialog from '@/components/ModalDialog.vue';
+import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   title: {
@@ -101,6 +113,12 @@ function clickContinue() {
 
 function clickCancel() {
   emit('cancel');
+}
+
+function revealCurrentFile() {
+  if (props.filePath) {
+    void revealPath(props.filePath);
+  }
 }
 
 onMounted(() => {

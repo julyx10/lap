@@ -11,15 +11,13 @@
     <!-- action buttons -->
     <div class="mt-4 flex justify-end space-x-4">
       <button v-if="cancelText.length > 0" 
-        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
+        class="t-button-default" 
         @click="clickCancel"
       >{{ cancelText }}</button>
 
       <button 
-        :class="[
-          'px-4 py-1 rounded-box', 
-          (libConfig.destFolder.albumId ?? 0) > 0 && !libConfig.destFolder.selected ? 'hover:bg-primary hover:text-base-100 cursor-pointer' : 'text-base-content/30 cursor-default'
-        ]" 
+        class="t-button-primary" 
+        :disabled="(libConfig.destFolder.albumId ?? 0) == 0 || libConfig.destFolder.selected"
         @click="clickOk"
       >{{ OkText }}</button>
     </div>

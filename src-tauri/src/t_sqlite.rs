@@ -345,9 +345,9 @@ impl Album {
         Ok(())
     }
 
-    /// Recount files for an album from the database and update stored total.
-    /// Indexed is preserved but clamped so partially processed albums are not
-    /// incorrectly marked as fully indexed.
+    /// Recount files for an album from the database and update stored progress.
+    /// A completed album stays completed after moving, copying, or deleting
+    /// already-indexed files. Partial scan progress is preserved and clamped.
     pub fn recount_album(id: i64) -> Result<Self, String> {
         let conn = open_conn()?;
         let total: i64 = conn
@@ -361,17 +361,22 @@ impl Album {
                 |row| row.get(0),
             )
             .map_err(|e| e.to_string())?;
-        let indexed: i64 = conn
+        let (indexed, previous_total): (i64, i64) = conn
             .query_row(
-                "SELECT COALESCE(indexed, 0) FROM albums WHERE id = ?1",
+                "SELECT COALESCE(indexed, 0), COALESCE(total, 0)
+                 FROM albums WHERE id = ?1",
                 params![id],
-                |row| row.get(0),
+                |row| Ok((row.get(0)?, row.get(1)?)),
             )
             .map_err(|e| e.to_string())?;
-        let clamped_indexed = indexed.min(total).max(0);
+        let next_indexed = if indexed >= previous_total {
+            total
+        } else {
+            indexed.min(total).max(0)
+        };
         conn.execute(
             "UPDATE albums SET total = ?1, indexed = ?2 WHERE id = ?3",
-            params![total, clamped_indexed, id],
+            params![total, next_indexed, id],
         )
         .map_err(|e| e.to_string())?;
         let result = Self::get_album_by_id(id)?;
@@ -1649,6 +1654,30 @@ impl AFile {
         Ok(result)
     }
 
+    pub fn batch_delete(ids: &[i64]) -> Result<usize, String> {
+        if ids.is_empty() {
+            return Ok(0);
+        }
+
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let mut deleted = 0;
+        {
+            let mut thumb_stmt = tx
+                .prepare_cached("DELETE FROM athumbs WHERE file_id = ?1")
+                .map_err(|e| e.to_string())?;
+            let mut file_stmt = tx
+                .prepare_cached("DELETE FROM afiles WHERE id = ?1")
+                .map_err(|e| e.to_string())?;
+            for id in ids {
+                thumb_stmt.execute(params![id]).map_err(|e| e.to_string())?;
+                deleted += file_stmt.execute(params![id]).map_err(|e| e.to_string())?;
+            }
+        }
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(deleted)
+    }
+
     pub fn replace_moved_file(
         file_id: i64,
         replaced_file_id: i64,
@@ -2013,6 +2042,63 @@ impl AFile {
     ) -> Result<usize, String> {
         let query = format!("UPDATE afiles SET {} = ?1 WHERE id = ?2", column);
         conn.execute(&query, params![value, file_id]).map_err(|e| e.to_string())
+    }
+
+    pub fn batch_update_metadata(
+        file_ids: &[i64],
+        is_favorite: Option<bool>,
+        rating: Option<i32>,
+        rotate_delta: Option<i32>,
+        comment: Option<&str>,
+    ) -> Result<usize, String> {
+        if file_ids.is_empty() {
+            return Ok(0);
+        }
+
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let mut updated = 0;
+
+        if let Some(value) = is_favorite {
+            let mut stmt = tx
+                .prepare_cached("UPDATE afiles SET is_favorite = ?1 WHERE id = ?2")
+                .map_err(|e| e.to_string())?;
+            for file_id in file_ids {
+                updated += stmt.execute(params![value, file_id]).map_err(|e| e.to_string())?;
+            }
+        }
+        if let Some(value) = rating {
+            let clamped = value.clamp(0, 5);
+            let mut stmt = tx
+                .prepare_cached("UPDATE afiles SET rating = ?1 WHERE id = ?2")
+                .map_err(|e| e.to_string())?;
+            for file_id in file_ids {
+                updated += stmt.execute(params![clamped, file_id]).map_err(|e| e.to_string())?;
+            }
+        }
+        if let Some(value) = rotate_delta {
+            let mut stmt = tx
+                .prepare_cached(
+                    "UPDATE afiles
+                     SET rotate = ((COALESCE(rotate, 0) + ?1) % 360 + 360) % 360
+                     WHERE id = ?2",
+                )
+                .map_err(|e| e.to_string())?;
+            for file_id in file_ids {
+                updated += stmt.execute(params![value, file_id]).map_err(|e| e.to_string())?;
+            }
+        }
+        if let Some(value) = comment {
+            let mut stmt = tx
+                .prepare_cached("UPDATE afiles SET comments = ?1 WHERE id = ?2")
+                .map_err(|e| e.to_string())?;
+            for file_id in file_ids {
+                updated += stmt.execute(params![value, file_id]).map_err(|e| e.to_string())?;
+            }
+        }
+
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(updated)
     }
 
     /// delete unseen files in an album (database only)
@@ -3675,6 +3761,18 @@ pub struct ATag {
     pub count: Option<i64>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct ATagSelectionCount {
+    pub tag_id: i64,
+    pub count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ATagFileState {
+    pub file_id: i64,
+    pub has_tags: bool,
+}
+
 impl ATag {
     /// Function to construct `Self` from a database row
     fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
@@ -3826,6 +3924,123 @@ impl ATag {
             .map_err(|e| e.to_string())?;
         }
         Ok(result)
+    }
+
+    pub fn get_selection_counts(file_ids: &[i64]) -> Result<Vec<ATagSelectionCount>, String> {
+        if file_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        tx.execute(
+            "CREATE TEMP TABLE IF NOT EXISTS selected_file_ids (id INTEGER PRIMARY KEY)",
+            [],
+        )
+        .map_err(|e| e.to_string())?;
+        tx.execute("DELETE FROM selected_file_ids", [])
+            .map_err(|e| e.to_string())?;
+        {
+            let mut stmt = tx
+                .prepare_cached("INSERT OR IGNORE INTO selected_file_ids (id) VALUES (?1)")
+                .map_err(|e| e.to_string())?;
+            for file_id in file_ids {
+                stmt.execute(params![file_id]).map_err(|e| e.to_string())?;
+            }
+        }
+
+        let counts = {
+            let mut stmt = tx
+                .prepare(
+                    "SELECT ft.tag_id, COUNT(*)
+                     FROM afile_tags ft
+                     INNER JOIN selected_file_ids selected ON selected.id = ft.file_id
+                     GROUP BY ft.tag_id",
+                )
+                .map_err(|e| e.to_string())?;
+            let rows = stmt
+                .query_map([], |row| {
+                    Ok(ATagSelectionCount {
+                        tag_id: row.get(0)?,
+                        count: row.get(1)?,
+                    })
+                })
+                .map_err(|e| e.to_string())?;
+            rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?
+        };
+
+        tx.execute("DELETE FROM selected_file_ids", [])
+            .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(counts)
+    }
+
+    pub fn apply_to_files(
+        file_ids: &[i64],
+        add_tag_ids: &[i64],
+        remove_tag_ids: &[i64],
+    ) -> Result<Vec<ATagFileState>, String> {
+        if file_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        {
+            let mut add_stmt = tx
+                .prepare_cached(
+                    "INSERT OR IGNORE INTO afile_tags (file_id, tag_id) VALUES (?1, ?2)",
+                )
+                .map_err(|e| e.to_string())?;
+            let mut remove_stmt = tx
+                .prepare_cached(
+                    "DELETE FROM afile_tags WHERE file_id = ?1 AND tag_id = ?2",
+                )
+                .map_err(|e| e.to_string())?;
+            for file_id in file_ids {
+                for tag_id in add_tag_ids {
+                    add_stmt
+                        .execute(params![file_id, tag_id])
+                        .map_err(|e| e.to_string())?;
+                }
+                for tag_id in remove_tag_ids {
+                    remove_stmt
+                        .execute(params![file_id, tag_id])
+                        .map_err(|e| e.to_string())?;
+                }
+            }
+        }
+
+        let mut states = Vec::with_capacity(file_ids.len());
+        {
+            let mut update_stmt = tx
+                .prepare_cached(
+                "UPDATE afiles
+                 SET has_tags = EXISTS (
+                     SELECT 1 FROM afile_tags WHERE afile_tags.file_id = afiles.id
+                 )
+                 WHERE id = ?1",
+                )
+                .map_err(|e| e.to_string())?;
+            let mut state_stmt = tx
+                .prepare_cached("SELECT COALESCE(has_tags, 0) FROM afiles WHERE id = ?1")
+                .map_err(|e| e.to_string())?;
+            for file_id in file_ids {
+                update_stmt
+                    .execute(params![file_id])
+                    .map_err(|e| e.to_string())?;
+                let has_tags = state_stmt
+                    .query_row(params![file_id], |row| row.get(0))
+                    .map_err(|e| e.to_string())?;
+                states.push(ATagFileState {
+                    file_id: *file_id,
+                    has_tags,
+                });
+            }
+        }
+
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(states)
     }
 
     /// Delete a tag from the database. This will also remove all its associations with files.

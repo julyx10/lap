@@ -8,9 +8,8 @@
     <!-- Library list -->
     <div class="flex flex-col flex-1 min-h-0 border border-base-content/5 bg-base-300/30 shadow-sm rounded-box overflow-hidden relative">
       <!-- Header -->
-      <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 pt-2 text-sm text-base-content/30 border-base-content/10 mr-9">
+      <div class="flex items-center justify-between px-3 pt-2 text-sm text-base-content/30 border-base-content/10 mr-5 select-none">
         <div>{{ $t('msgbox.manage_libraries.name') }}</div>
-        <div class="text-xs text-base-content/40 truncate max-w-60">{{ librarySummary }}</div>
         <div class="text-right">{{ $t('msgbox.manage_libraries.action') }}</div>
       </div>
 
@@ -26,7 +25,7 @@
           v-for="(lib, index) in libraries" 
           :key="lib.id"
           :ref="(el) => setLibraryItemRef(el, lib.id)"
-          class="flex items-center justify-between mx-1 px-1 h-12 rounded-box group transition-all duration-200 ease-in-out"
+          class="flex items-center justify-between px-1 h-12 rounded-box group transition-all duration-200 ease-in-out"
           :class="[
             selectedLibraryId === lib.id
               ? 'text-base-content bg-base-100 hover:bg-base-100 selected-item'
@@ -59,8 +58,8 @@
                 >
                   {{ lib.name }}
                 </span>
-                <span v-if="lib.id === 'default'" class="shrink-0 text-xs px-2 py-1 ml-2 rounded-box bg-base-100/30">{{ $t('msgbox.manage_libraries.default') }}</span>
-                <span v-if="lib.hidden" class="shrink-0 text-xs px-2 py-1 ml-2 rounded-box bg-base-100/30">{{ $t('msgbox.manage_libraries.hidden') }}</span>
+                <span v-if="lib.id === 'default'" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.default') }}</span>
+                <span v-if="lib.hidden" class="ml-2 shrink-0 rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/30">{{ $t('msgbox.manage_libraries.hidden') }}</span>
               </div>
             </div>
             <div class="text-xs text-base-content/30 truncate">
@@ -111,13 +110,17 @@
       </VueDraggable>
     </div>
 
+    <div class="shrink-0 px-4 pt-3 text-xs text-base-content/30 select-none">
+      {{ librarySummary }}
+    </div>
+
     <!-- button area -->
     <div class="flex justify-between items-center shrink-0 pt-2 min-h-[56px]">
       <!-- Add New Library -->
       <div class="flex flex-col items-start justify-center p-2 w-2/3 min-h-[48px] rounded-box border border-transparent transition-colors" :class="showAddInput ? 'border-base-content/10 bg-base-100/20' : ''">
         <button
           v-if="!showAddInput" 
-          class="btn btn-primary btn-sm rounded-box"
+          class="t-button-primary"
           :disabled="isMaxLibraryReached || isRenaming"
           @click="showAddInput = true"
         >
@@ -138,16 +141,14 @@
               @keydown.esc.stop="cancelAddLibrary"
             />
             <button
-              class="px-3 py-1 rounded-box text-sm transition-colors shrink-0"
-              :class="isAddingLibrary ? 'text-base-content/30 cursor-default' : 'text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer'"
+              class="t-button-default"
               :disabled="isAddingLibrary"
               @click="cancelAddLibrary"
             >
               {{ $t('msgbox.cancel') }}
             </button>
             <button
-              class="px-3 py-1 rounded-box text-sm transition-colors shrink-0"
-              :class="canSubmitNewLibrary ? 'bg-primary text-primary-content hover:opacity-90 cursor-pointer' : 'bg-base-100/40 text-base-content/30 cursor-default'"
+              class="t-button-primary"
               :disabled="!canSubmitNewLibrary"
               @click="doAddLibrary"
             >
@@ -161,7 +162,8 @@
       </div>
 
       <button
-        class="px-4 py-1 rounded-box text-base-content/70 hover:bg-primary hover:text-base-100 cursor-pointer shrink-0"
+        class="t-button-primary"
+        :disabled="showAddInput"
         @click="clickOk"
       >
         {{ $t('msgbox.ok') }}
@@ -251,6 +253,13 @@ const libraryTotalSize = computed(() => (
   }, 0)
 ));
 
+const libraryTotalFileCount = computed(() => (
+  libraries.value.reduce((total, lib) => {
+    const stats = libraryStats.value[lib.id];
+    return total + Number(stats?.fileCount ?? 0);
+  }, 0)
+));
+
 const libraryStatsPending = computed(() => (
   libraries.value.some(lib => !libraryStats.value[lib.id] || libraryStatsLoading.value[lib.id])
 ));
@@ -262,6 +271,7 @@ const librarySummary = computed(() => {
 
   return t('msgbox.manage_libraries.summary', {
     count: libraries.value.length,
+    files: libraryTotalFileCount.value.toLocaleString(),
     size: formatFileSize(libraryTotalSize.value),
   });
 });

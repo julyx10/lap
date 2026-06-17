@@ -31,7 +31,7 @@ jobs:
         run: |
           set -euo pipefail
           ALL='[
-            {"arch":"x64","runner":"windows-latest","target":"x86_64-pc-windows-msvc","msvc_arch":"x64","platform_key":"windows-x86_64","artifact_name":"windows-x86_64","msi_glob":"*_x64_*.msi"},
+            {"arch":"x64","runner":"windows-2022","target":"x86_64-pc-windows-msvc","msvc_arch":"x64","platform_key":"windows-x86_64","artifact_name":"windows-x86_64","msi_glob":"*_x64_*.msi"},
             {"arch":"arm64","runner":"windows-11-arm","target":"aarch64-pc-windows-msvc","msvc_arch":"arm64","platform_key":"windows-aarch64","artifact_name":"windows-aarch64","msi_glob":"*_arm64_*.msi"}
           ]'
 
@@ -99,17 +99,26 @@ jobs:
             ~\.cargo\registry\index\
             ~\.cargo\registry\cache\
             ~\.cargo\git\db\
-            src-tauri\target\
-          key: windows-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: windows-${{ matrix.arch }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            windows-${{ matrix.arch }}-cargo-
+            windows-${{ matrix.arch }}-cargo-release-
 
       - name: Install frontend dependencies
         working-directory: src-vite
         run: pnpm install --frozen-lockfile
 
+      - name: Cache AI Models
+        id: cache-ai-models
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/resources/models
+          key: ${{ runner.os }}-models-${{ hashFiles('scripts/download_models.sh', 'scripts/download_models.ps1') }}
+
       - name: Download AI Models (Windows)
+        if: steps.cache-ai-models.outputs.cache-hit != 'true'
         shell: pwsh
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: .\scripts\download_models.ps1
 
       - name: Force app frontend build command (Windows CI only)
@@ -124,6 +133,16 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.msvc_arch }}
+          vsversion: "2022"
+
+      - name: Remove ranlib from PATH
+        shell: pwsh
+        run: |
+          $paths = $env:PATH -split ';' | Where-Object {
+            $_ -and
+            -not (Test-Path (Join-Path $_ 'ranlib.exe'))
+          }
+          "PATH=$($paths -join ';')" >> $env:GITHUB_ENV
 
       - name: Clear cached Windows bundle artifacts
         shell: pwsh

@@ -50,15 +50,13 @@
       >{{ thirdText }}</button>
 
       <button v-if="cancelText.length > 0"
-        class="px-4 py-1 rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer" 
+        class="t-button-default" 
         @click="clickCancel"
       >{{ cancelText }}</button>
       
       <button 
-        :class="[
-          'px-4 py-1 rounded-box', 
-          okButtonClasses,
-        ]" 
+        :class="warningOk ? 't-button-error' : 't-button-primary'" 
+        :disabled="showInput && !isInputValid"
         @click="clickOk"
       >{{ OkText }}</button>
     </div>
@@ -153,13 +151,9 @@ const needValidateInput = ref(props.needValidateInput);
 const inputErrorMessage = ref('');
 const checkboxValue = ref(props.checkboxChecked);
 
-const okButtonClasses = computed(() => {
-  return !props.showInput || !props.needValidateInput || inputValue.value.trim().length > 0
-    ? (props.warningOk
-      ? 'bg-error text-error-content hover:bg-error/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error cursor-pointer'
-      : 'bg-primary text-primary-content hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer')
-    : 'text-base-content/30 cursor-default';
-});
+const isInputValid = computed(() =>
+  !needValidateInput.value || (inputValue.value.trim().length > 0 && isValidFileName(inputValue.value))
+);
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);

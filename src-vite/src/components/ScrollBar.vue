@@ -8,7 +8,7 @@
     <IconScrollUp 
       :class="[
         'w-4 h-4 text-base-content/30',
-        total > pageSize ? 'hover:text-base-content/50 cursor-pointer' : '' 
+        total > pageSize ? 'hover:text-base-content/70 cursor-pointer' : '' 
       ]" 
       @click="clickPreviousPage"
     />
@@ -80,7 +80,7 @@
     <IconScrollDown 
       :class="[
         'w-4 h-4 text-base-content/30',
-        total > pageSize ? 'hover:text-base-content/50 cursor-pointer' : '' 
+        total > pageSize ? 'hover:text-base-content/70 cursor-pointer' : '' 
       ]" 
       @click="clickNextPage"
     />

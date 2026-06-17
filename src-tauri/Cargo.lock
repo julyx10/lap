@@ -4,13 +4,14 @@ version = 4
 
 [[package]]
 name = "Lap"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "arboard",
  "base64 0.22.1",
  "blake3",
  "cc",
  "chrono",
+ "clipboard-win",
  "csv",
  "dirs 5.0.1",
  "fast_image_resize",
@@ -25,7 +26,9 @@ dependencies = [
  "once_cell",
  "opener",
  "ort",
+ "percent-encoding",
  "pinyin",
+ "pkg-config",
  "rand 0.8.5",
  "reqwest 0.12.28",
  "rstar",

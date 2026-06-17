@@ -21,11 +21,6 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/Settings.vue'),
-  },
-  {
-    path: '/print-view',
-    name: 'PrintView',
-    component: () => import('@/views/PrintView.vue'),
   }
 ];
 

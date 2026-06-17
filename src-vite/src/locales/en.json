@@ -15,6 +15,10 @@
   "album": {
     "all_files": "All files",
     "album_list": "Albums",
+    "folder_unavailable": {
+      "title": "Folder unavailable",
+      "description": "Reconnect the storage device or check the folder location."
+    },
     "edit": {
       "title_add": "Add album",
       "title": "Edit album",
@@ -115,6 +119,7 @@
     "search_tags": "Search tags",
     "enter_new_tag_name": "Enter new tag name",
     "not_found": "No tags found",
+    "load_failed": "Failed to load tag states. Close this dialog and try again.",
     "smart_group": "Smart tags",
     "custom_group": "Custom tags",
     "smart_items": {
@@ -244,8 +249,18 @@
     "empty_title": "This list is empty",
     "empty_desc": "Add files or update the current filter to show items here.",
     "select_hint": "No files selected",
+    "deselect": "Deselect",
     "select_mode_entered": "Multi-select mode is on",
-    "select_limit_hint": "Selected the first {count} files",
+    "selection_load_failed": "Could not load all files for selection. Try again.",
+    "large_batch": {
+      "title": "Confirm bulk operation",
+      "content": "This operation will process {count} files and may take some time. Continue?",
+      "ok": "Continue"
+    },
+    "drag_action": {
+      "copy": "Copy",
+      "move": "Move"
+    },
     "edit_disabled": "Select a single image to edit",
     "type_image": "Image",
     "type_images": "Images",
@@ -256,7 +271,7 @@
     "unfavorite_all": "Unfavorite",
     "action": "Action",
     "file_actions": "File actions",
-    "labels_and_display": "Labels & display",
+    "organize": "Organize",
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplicates",
@@ -295,6 +310,12 @@
     "not_found": {
       "albums": "No albums found. Add a folder with images or videos",
       "files": "No files found",
+      "image_files": "No image files found",
+      "raw_files": "No RAW files found",
+      "video_files": "No video files found",
+      "image_raw_files": "No image or RAW files found",
+      "image_video_files": "No image or video files found",
+      "raw_video_files": "No RAW or video files found",
       "folder_files": "This folder has no files",
       "folder_files_hint": "Try browsing subfolders, or enable 'Show files from subfolders' in Settings.",
       "folders": "No folders found",
@@ -318,7 +339,8 @@
       "failed": "Failed to set album cover"
     },
     "copy_image": {
-      "success": "Image copied to clipboard",
+      "success": "{count} file(s) copied to clipboard",
+      "limit": "You can copy up to {count} files at a time.",
       "failed": "Failed to copy image. Unsupported format or corrupted file."
     },
     "save_image": {
@@ -371,17 +393,18 @@
       "new_folder": "New folder...",
       "view_in_new_window": "View in new window...",
       "copy": "Copy to clipboard",
+      "paste": "Paste",
       "edit_image": "Edit image...",
       "open_image_in_app": "Open image in {app}...",
       "open_video_in_app": "Open video in {app}...",
       "find_similar_images": "Find similar images",
       "find_person_images": "Find person images",
-      "find_album_folder": "Find album folder",
       "on_this_day": "On this day",
       "print": "Print image...",
       "rename": "Rename",
       "move_to": "Move to...",
       "copy_to": "Copy to...",
+      "move_copy": "Move / Copy",
       "move_within_library": "Move in library...",
       "move_to_folder": "Move to folder...",
       "copy_to_folder": "Copy to folder...",
@@ -453,8 +476,9 @@
     },
     "drop_import": {
       "title": "Cannot import files",
-      "message": "Please select an album folder first. Files can only be imported into a specific album folder.",
+      "message": "Please select an album first. Files can only be imported into a specific album.",
       "success": "{count} file(s) imported",
+      "no_clipboard_image": "The clipboard does not contain an image.",
       "overlay": "Drop files to import",
       "no_files": "No files could be imported. Make sure you are dropping image files."
     },
@@ -475,8 +499,8 @@
       "add": "Add",
       "placeholder": "Enter library name",
       "max_limit_reached": "Library limit reached",
-      "summary": "{count} libraries · {size}",
-      "summary_loading": "{count} libraries · calculating size...",
+      "summary": "{count} libraries · {files} files · {size}",
+      "summary_loading": "{count} libraries · calculating file count and size...",
       "created_at_lower": "created at",
       "calculating_stats": "Calculating library size...",
       "library_file_path": "Library file path",
@@ -532,7 +556,8 @@
     "copy_to_folder": {
       "title": "Copy to folder",
       "success": "Copied '{source}' to '{dest}'.",
-      "error": "Failed to copy '{source}' to '{dest}'."
+      "error": "Failed to copy '{source}' to '{dest}'.",
+      "index_error": "{count} file(s) were copied but could not be added to the library index."
     },
     "file_conflict": {
       "title": "File already exists",
@@ -783,11 +808,6 @@
       "months": "{count} months ago",
       "years": "{count} years ago"
     }
-  },
-  "print_view": {
-    "title": "Print...",
-    "loading": "Loading preview...",
-    "load_failed": "Failed to load image for printing."
   },
   "image_viewer": {
     "title": "Image viewer",
@@ -1079,6 +1099,7 @@
         "open_external_app": "Open in external app",
         "edit_image": "Edit image",
         "copy_file": "Copy to clipboard",
+        "paste_file": "Paste",
         "reveal_in_finder": "Reveal in Finder",
         "reveal_in_file_manager": "Reveal in file manager",
         "select_all": "Select all",
@@ -1136,14 +1157,14 @@
       "restore_hint": "Restore libraries from a backup ZIP file",
       "restore_dialog_title": "Restore from backup",
       "restore_select_file": "Select backup file",
-      "restore_file_info": "Backup file: {path}",
+      "restore_file_info": "Backup: {path}",
       "restore_created_at": "Created: {date}",
-      "restore_libraries": "Libraries: {count} ({size})",
+      "restore_libraries": "{count} libraries ({size})",
       "restore_new_library": "New library",
       "restore_conflict": "Already exists → will be renamed",
       "restore_restoring": "Restoring...",
       "restore_success": "Restore completed. {count} libraries restored: {names}",
-      "restore_note": "Restored libraries are added alongside existing ones. Existing data is not overwritten."
+      "restore_note": "Libraries with conflicting names will be renamed, and existing data will not be overwritten."
     },
     "face_recognition": {
       "title": "People search",

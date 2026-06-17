@@ -104,8 +104,18 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: src-vite
 
+      - name: Cache AI Models
+        id: cache-ai-models
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/resources/models
+          key: ${{ runner.os }}-models-${{ hashFiles('scripts/download_models.sh', 'scripts/download_models.ps1') }}
+
       - name: Download AI Models
+        if: steps.cache-ai-models.outputs.cache-hit != 'true'
         shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: bash scripts/download_models.sh
 
       - name: Clear cached macOS bundle artifacts
@@ -191,7 +201,7 @@ jobs:
       matrix:
         include:
           - arch: x64
-            runner: windows-latest
+            runner: windows-2022
             target: x86_64-pc-windows-msvc
             msvc_arch: x64
           - arch: arm64
@@ -242,17 +252,26 @@ jobs:
             ~\.cargo\registry\index\
             ~\.cargo\registry\cache\
             ~\.cargo\git\db\
-            src-tauri\target\
-          key: windows-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: windows-${{ matrix.arch }}-cargo-pr-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            windows-${{ matrix.arch }}-cargo-
+            windows-${{ matrix.arch }}-cargo-pr-
 
       - name: Install frontend dependencies
         working-directory: src-vite
         run: pnpm install --frozen-lockfile
 
+      - name: Cache AI Models
+        id: cache-ai-models
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/resources/models
+          key: ${{ runner.os }}-models-${{ hashFiles('scripts/download_models.sh', 'scripts/download_models.ps1') }}
+
       - name: Download AI Models (Windows)
+        if: steps.cache-ai-models.outputs.cache-hit != 'true'
         shell: pwsh
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: .\scripts\download_models.ps1
 
       - name: Force app frontend build command (Windows CI only)
@@ -267,6 +286,16 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.msvc_arch }}
+          vsversion: "2022"
+
+      - name: Remove ranlib from PATH
+        shell: pwsh
+        run: |
+          $paths = $env:PATH -split ';' | Where-Object {
+            $_ -and
+            -not (Test-Path (Join-Path $_ 'ranlib.exe'))
+          }
+          "PATH=$($paths -join ';')" >> $env:GITHUB_ENV
 
       - name: Clear cached Windows bundle artifacts
         shell: pwsh
@@ -395,8 +424,18 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: src-vite
 
+      - name: Cache AI Models
+        id: cache-ai-models
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/resources/models
+          key: ${{ runner.os }}-models-${{ hashFiles('scripts/download_models.sh', 'scripts/download_models.ps1') }}
+
       - name: Download AI Models
+        if: steps.cache-ai-models.outputs.cache-hit != 'true'
         shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: bash scripts/download_models.sh
 
       - name: Clear cached Linux bundle artifacts

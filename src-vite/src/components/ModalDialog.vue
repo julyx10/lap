@@ -1,17 +1,22 @@
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 bg-black/30 z-600">
-      <div 
-        ref="modalDialogRef"
-        class="text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box overflow-hidden flex flex-col"
-        :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
-      >
+    <Transition name="modal">
+      <div v-if="visible" class="fixed inset-0 bg-black/30 z-600">
+        <div
+          ref="modalDialogRef"
+          class="modal-dialog text-base-content/70 bg-base-200/80 backdrop-blur-md border border-base-content/30 rounded-box overflow-hidden flex flex-col"
+          :style="{ position: 'fixed', top: y + 'px', left: x + 'px', width: width + 'px', ...(height !== undefined && { height: height + 'px' }) }"
+        >
         <!-- title bar -->
-        <div ref="titleBarRef" class="p-3 flex items-center justify-between select-none cursor-default shrink-0">
+        <div
+          class="p-3 flex items-center justify-between select-none cursor-default shrink-0"
+          @mousedown="dragStart"
+        >
           {{ title }}
           <TButton
             :icon="IconClose"
             :buttonSize="'small'"
+            @mousedown.stop
             @click="clickCancel"
           />
         </div>
@@ -22,6 +27,7 @@
         </div>
       </div>
     </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -48,7 +54,8 @@ const props = defineProps({
 const emit = defineEmits(['cancel']);
 
 const modalDialogRef = ref<HTMLDivElement | null>(null);
-const titleBarRef = ref<HTMLDivElement | null>(null);
+const visible = ref(false);
+onMounted(() => { visible.value = true; });
 
 const x = ref(0);
 const y = ref(0);
@@ -61,6 +68,7 @@ let initialX = 0;
 let initialY = 0;
 
 const dragStart = (event: MouseEvent) => {
+  if (event.button !== 0) return;
   isDragging.value = true;
   startX = event.clientX;
   startY = event.clientY;
@@ -121,17 +129,11 @@ onMounted(() => {
   nextTick(() => {
     centerDialog(); // Center on mount
   });
-  if (titleBarRef.value) {
-      titleBarRef.value.addEventListener('mousedown', dragStart as EventListener);
-  }
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', clampPosition);
 
-  if (titleBarRef.value) {
-      titleBarRef.value.removeEventListener('mousedown', dragStart as EventListener);
-  }
   // In case component is unmounted while dragging
   if (isDragging.value) {
     dragEnd();
@@ -166,3 +168,24 @@ const clickCancel = () => {
   emit('cancel');
 };
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease-out;
+}
+.modal-enter-active .modal-dialog,
+.modal-leave-active .modal-dialog {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-from .modal-dialog,
+.modal-leave-to .modal-dialog {
+  opacity: 0;
+  transform: translateY(10px);
+}
+</style>

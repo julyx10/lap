@@ -17,13 +17,17 @@
     <div class="flex-1 flex overflow-hidden">
 
       <!-- left pane -->
-      <div v-if="config.leftPanel.show && !uiStore.isFullScreen"
+      <div
+        v-if="config.leftPanel.show && !uiStore.isFullScreen"
+        ref="leftPanelRootRef"
+        tabindex="-1"
         :class="[
-          'relative flex my-1 ml-1 z-10 select-none',
+          'relative flex my-1 ml-1 z-10 select-none outline-none',
           !leftPanelLayoutExpanded && isMac ? 'mt-12 mb-8': '',
         ]"
         :style="{ width: leftPanelLayoutExpanded ? config.leftPanel.width + 'px' : '64px' }"
         data-tauri-drag-region
+        @focus="uiStore.setActivePane('left-sidebar')"
       >
           <div
             class="absolute inset-y-0 left-0 bg-base-200 rounded-box"
@@ -142,7 +146,7 @@
     </div>
 
     <!-- logo -->
-    <div class="fixed bottom-2 left-6 text-[12px] text-base-content/10">
+    <div class="fixed bottom-2 left-6 text-[12px] text-base-content/30">
       <span>{{ appName }}</span>
     </div>
 
@@ -200,7 +204,7 @@ import {
   IconStack,
   IconArrowDown,
   IconCalendarDay,
-  IconPhotoAll,
+  IconFolders,
   IconMapDefault,
 } from '@/common/icons';
 
@@ -231,6 +235,7 @@ const uiStore = useUIStore();
 // Panel component ref
 const panelRef = ref<any>(null);
 const contentRef = ref<any>(null);
+const leftPanelRootRef = ref<HTMLElement | null>(null);
 const showPanel = ref(true);
 const LEFT_PANEL_ANIMATION_MS = 200;
 const leftPanelMounted = ref(showPanel.value);
@@ -328,7 +333,7 @@ const {
 
 // buttons
 const buttons = computed(() =>  [
-  { icon: IconPhotoAll, component: Library, text: localeMsg.value.sidebar.album },
+  { icon: IconFolders, component: Library, text: localeMsg.value.sidebar.album },
   { icon: IconHeart, component: Favorite, text: localeMsg.value.sidebar.favorite },
   { icon: IconSearch, component: ImageSearch, text: localeMsg.value.sidebar.search },
   { icon: IconCalendarDay, component: Calendar, text: localeMsg.value.sidebar.calendar },
@@ -453,6 +458,22 @@ onBeforeUnmount(() => {
 function handleHomeKeyDown(event: KeyboardEvent) {
   const target = event.target as HTMLElement | null;
   if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable) {
+    return;
+  }
+
+  if (event.key === 'Tab' && uiStore.inputStack.length === 0) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (uiStore.activePane === 'left-sidebar' || !leftPanelRootRef.value) {
+      contentRef.value?.focusContent?.();
+    } else {
+      uiStore.setActivePane('left-sidebar');
+      const albumListRoot = leftPanelRootRef.value.querySelector<HTMLElement>('[data-album-list-root="true"]');
+      const folderTreeRoot = albumListRoot?.querySelector<HTMLElement>(
+        '[data-selected-album-folder="true"] [data-folder-tree-root="true"]',
+      );
+      (folderTreeRoot || albumListRoot || leftPanelRootRef.value).focus({ preventScroll: true });
+    }
     return;
   }
 

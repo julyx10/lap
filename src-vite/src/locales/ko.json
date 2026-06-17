@@ -15,6 +15,10 @@
   "album": {
     "all_files": "모든 파일",
     "album_list": "앨범",
+    "folder_unavailable": {
+      "title": "폴더를 사용할 수 없음",
+      "description": "저장 장치를 다시 연결하거나 폴더 위치를 확인하세요."
+    },
     "edit": {
       "title_add": "앨범 추가",
       "title": "앨범 편집",
@@ -115,6 +119,7 @@
     "search_tags": "태그 검색",
     "enter_new_tag_name": "새 태그 이름 입력",
     "not_found": "태그를 찾을 수 없음",
+    "load_failed": "태그 상태를 불러오지 못했습니다. 대화 상자를 닫고 다시 시도하세요.",
     "smart_group": "스마트 태그",
     "custom_group": "사용자 태그",
     "smart_items": {
@@ -244,8 +249,18 @@
     "empty_title": "현재 목록이 비어 있습니다",
     "empty_desc": "파일을 추가하거나 현재 필터를 업데이트해 여기에 항목을 표시하세요.",
     "select_hint": "선택한 파일이 없습니다",
+    "deselect": "선택 해제",
     "select_mode_entered": "다중 선택 모드가 켜졌습니다",
-    "select_limit_hint": "처음 {count}개 파일을 선택했습니다",
+    "selection_load_failed": "선택할 모든 파일을 불러오지 못했습니다. 다시 시도하세요.",
+    "large_batch": {
+      "title": "일괄 작업 확인",
+      "content": "이 작업은 {count}개 파일을 처리하며 시간이 걸릴 수 있습니다. 계속하시겠습니까?",
+      "ok": "계속"
+    },
+    "drag_action": {
+      "copy": "복사",
+      "move": "이동"
+    },
     "edit_disabled": "편집하려면 이미지를 하나만 선택하세요",
     "type_image": "개 이미지",
     "type_images": "개 이미지",
@@ -256,7 +271,7 @@
     "unfavorite_all": "즐겨찾기 해제",
     "action": "작업",
     "file_actions": "파일 작업",
-    "labels_and_display": "태그 및 표시",
+    "organize": "정리",
     "tag_all": "태그",
     "dedup": {
       "title": "중복",
@@ -295,6 +310,12 @@
     "not_found": {
       "albums": "앨범을 찾을 수 없습니다. 이미지나 비디오가 있는 폴더를 추가하세요",
       "files": "파일을 찾을 수 없습니다",
+      "image_files": "이미지 파일을 찾을 수 없습니다",
+      "raw_files": "RAW 파일을 찾을 수 없습니다",
+      "video_files": "비디오 파일을 찾을 수 없습니다",
+      "image_raw_files": "이미지 또는 RAW 파일을 찾을 수 없습니다",
+      "image_video_files": "이미지 또는 비디오 파일을 찾을 수 없습니다",
+      "raw_video_files": "RAW 또는 비디오 파일을 찾을 수 없습니다",
       "folder_files": "이 폴더에는 파일이 없습니다",
       "folder_files_hint": "하위 폴더를 찾아보거나 설정에서 '하위 폴더의 파일 표시'를 활성화하세요.",
       "folders": "폴더를 찾을 수 없습니다",
@@ -318,7 +339,8 @@
       "failed": "앨범 커버 설정 실패"
     },
     "copy_image": {
-      "success": "이미지 복사됨",
+      "success": "{count}개 파일을 클립보드에 복사했습니다",
+      "limit": "한 번에 최대 {count}개 파일을 복사할 수 있습니다.",
       "failed": "이미지를 복사하지 못했습니다. 지원되지 않는 형식이거나 파일이 손상되었습니다."
     },
     "save_image": {
@@ -371,17 +393,18 @@
       "new_folder": "새 폴더...",
       "view_in_new_window": "새 창에서 보기...",
       "copy": "클립보드에 복사",
+      "paste": "붙여넣기",
       "edit_image": "이미지 편집...",
       "open_image_in_app": "{app}에서 이미지 열기...",
       "open_video_in_app": "{app}에서 동영상 열기...",
       "find_similar_images": "유사 이미지 찾기",
       "find_person_images": "인물 이미지 찾기",
-      "find_album_folder": "앨범 폴더 찾기",
       "on_this_day": "과거의 오늘",
       "print": "이미지 인쇄...",
       "rename": "이름 변경",
       "move_to": "이동...",
       "copy_to": "복사...",
+      "move_copy": "이동 / 복사",
       "move_within_library": "라이브러리 내에서 이동...",
       "move_to_folder": "폴더로 이동...",
       "copy_to_folder": "폴더로 복사...",
@@ -453,8 +476,9 @@
     },
     "drop_import": {
       "title": "파일을 가져올 수 없습니다",
-      "message": "먼저 앨범 폴더를 선택하세요. 파일은 특정 앨범 폴더로만 가져올 수 있습니다.",
+      "message": "먼저 앨범을 선택하세요. 파일은 특정 앨범으로만 가져올 수 있습니다.",
       "success": "{count}개 파일을 가져왔습니다",
+      "no_clipboard_image": "클립보드에 이미지가 없습니다.",
       "overlay": "파일을 드롭하여 가져오기",
       "no_files": "파일을 가져올 수 없습니다. 이미지 파일을 드롭하세요."
     },
@@ -475,8 +499,8 @@
       "add": "추가",
       "placeholder": "라이브러리 이름",
       "max_limit_reached": "제한 도달",
-      "summary": "라이브러리 {count}개 · {size}",
-      "summary_loading": "라이브러리 {count}개 · 크기 계산 중...",
+      "summary": "라이브러리 {count}개 · 파일 {files}개 · {size}",
+      "summary_loading": "라이브러리 {count}개 · 파일 수와 크기 계산 중...",
       "created_at_lower": "생성일",
       "calculating_stats": "라이브러리 크기 계산 중...",
       "library_file_path": "파일 경로",
@@ -532,7 +556,8 @@
     "copy_to_folder": {
       "title": "폴더로 복사",
       "success": "'{source}'을(를) '{dest}'(으)로 복사했습니다.",
-      "error": "'{source}'을(를) '{dest}'(으)로 복사하지 못했습니다."
+      "error": "'{source}'을(를) '{dest}'(으)로 복사하지 못했습니다.",
+      "index_error": "{count}개 파일은 복사되었지만 라이브러리 인덱스에 추가하지 못했습니다."
     },
     "file_conflict": {
       "title": "파일이 이미 존재합니다",
@@ -783,11 +808,6 @@
       "months": "{count}개월 전",
       "years": "{count}년 전"
     }
-  },
-  "print_view": {
-    "title": "인쇄...",
-    "loading": "미리 보기를 불러오는 중...",
-    "load_failed": "인쇄할 이미지를 불러오지 못했습니다."
   },
   "image_viewer": {
     "title": "이미지 뷰어",
@@ -1079,6 +1099,7 @@
         "open_external_app": "외부 앱에서 열기",
         "edit_image": "이미지 편집",
         "copy_file": "클립보드에 복사",
+        "paste_file": "붙여넣기",
         "reveal_in_finder": "Finder에서 보기",
         "reveal_in_file_manager": "파일 관리자에서 보기",
         "select_all": "모두 선택",
@@ -1136,14 +1157,14 @@
       "restore_hint": "ZIP 백업 파일에서 라이브러리 복원",
       "restore_dialog_title": "백업에서 복원",
       "restore_select_file": "백업 파일 선택",
-      "restore_file_info": "백업 파일: {path}",
+      "restore_file_info": "백업: {path}",
       "restore_created_at": "생성일: {date}",
-      "restore_libraries": "라이브러리: {count}개 ({size})",
+      "restore_libraries": "{count}개 라이브러리 ({size})",
       "restore_new_library": "새 라이브러리",
       "restore_conflict": "이미 존재함 → 자동 이름 변경",
       "restore_restoring": "복원 중...",
       "restore_success": "복원 완료. {count}개 라이브러리 복원됨: {names}",
-      "restore_note": "복원된 라이브러리는 기존 라이브러리 옆에 추가됩니다. 기존 데이터는 덮어쓰지 않습니다."
+      "restore_note": "이름이 충돌하는 라이브러리는 이름이 변경되며 기존 데이터는 덮어쓰지 않습니다."
     },
     "face_recognition": {
       "title": "인물 검색",

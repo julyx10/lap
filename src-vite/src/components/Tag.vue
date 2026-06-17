@@ -32,10 +32,10 @@
       <div
         :class="[
           'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
-          isTagSearchFocused ? 'border border-primary' : 'border border-base-content/10 hover:border-base-content/30',
+          isTagSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
         ]"
       >
-        <IconSearch class="ml-2 w-4 h-4 shrink-0 text-base-content/40" />
+        <IconSearch class="ml-2 w-4 h-4 shrink-0" :class="isTagSearchFocused ? 'text-primary/70' : 'text-base-content/30'" />
         <input
           type="text"
           v-model="tagSearch"

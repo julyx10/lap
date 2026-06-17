@@ -15,6 +15,10 @@
   "album": {
     "all_files": "所有文件",
     "album_list": "相册",
+    "folder_unavailable": {
+      "title": "无法访问文件夹",
+      "description": "请重新连接存储设备，或检查文件夹位置。"
+    },
     "edit": {
       "title_add": "添加相册",
       "title": "编辑相册",
@@ -115,6 +119,7 @@
     "search_tags": "搜索标签",
     "enter_new_tag_name": "输入新标签名称",
     "not_found": "未找到标签",
+    "load_failed": "无法加载标签状态，请关闭对话框后重试。",
     "smart_group": "智能标签",
     "custom_group": "自定义标签",
     "smart_items": {
@@ -244,8 +249,18 @@
     "empty_title": "当前列表为空",
     "empty_desc": "请添加文件，或更新当前筛选范围以在此显示内容。",
     "select_hint": "未选择文件",
+    "deselect": "取消选择",
     "select_mode_entered": "已进入多选模式",
-    "select_limit_hint": "已选择前 {count} 个文件",
+    "selection_load_failed": "无法加载全部文件进行选择，请重试。",
+    "large_batch": {
+      "title": "确认批量操作",
+      "content": "此操作将处理 {count} 个文件，可能需要一些时间。是否继续？",
+      "ok": "继续"
+    },
+    "drag_action": {
+      "copy": "复制",
+      "move": "移动"
+    },
     "edit_disabled": "请选择单个图片进行编辑",
     "type_image": "张图片",
     "type_images": "张图片",
@@ -256,7 +271,7 @@
     "unfavorite_all": "取消收藏",
     "action": "操作",
     "file_actions": "文件操作",
-    "labels_and_display": "标记与显示",
+    "organize": "整理",
     "tag_all": "标签",
     "dedup": {
       "title": "重复项",
@@ -295,6 +310,12 @@
     "not_found": {
       "albums": "未找到相册。添加包含图片或视频的文件夹",
       "files": "未找到文件",
+      "image_files": "未找到图片文件",
+      "raw_files": "未找到 RAW 文件",
+      "video_files": "未找到视频文件",
+      "image_raw_files": "未找到图片或 RAW 文件",
+      "image_video_files": "未找到图片或视频文件",
+      "raw_video_files": "未找到 RAW 或视频文件",
       "folder_files": "此文件夹中没有文件",
       "folder_files_hint": "尝试浏览子文件夹，或在设置中开启'显示子文件夹中的文件'以查看所有文件。",
       "folders": "未找到文件夹",
@@ -318,7 +339,8 @@
       "failed": "无法设置相册封面"
     },
     "copy_image": {
-      "success": "图片已复制到剪贴板",
+      "success": "已复制 {count} 个文件到剪贴板",
+      "limit": "每次最多复制 {count} 个文件。",
       "failed": "复制图片失败。不支持的格式或文件已损坏。"
     },
     "save_image": {
@@ -371,17 +393,18 @@
       "new_folder": "新建文件夹...",
       "view_in_new_window": "在新窗口中查看...",
       "copy": "复制到剪贴板",
+      "paste": "粘贴",
       "edit_image": "编辑图片...",
       "open_image_in_app": "在 {app} 中打开图片...",
       "open_video_in_app": "在 {app} 中打开视频...",
       "find_similar_images": "查找相似图片",
       "find_person_images": "查找人物图片",
-      "find_album_folder": "查找相册文件夹",
       "on_this_day": "历史上的今天",
       "print": "打印图片...",
       "rename": "重命名",
       "move_to": "移动到...",
       "copy_to": "复制到...",
+      "move_copy": "移动 / 复制",
       "move_within_library": "在库内移动...",
       "move_to_folder": "移动到文件夹...",
       "copy_to_folder": "复制到文件夹...",
@@ -453,8 +476,9 @@
     },
     "drop_import": {
       "title": "无法导入文件",
-      "message": "请先选择一个相册文件夹。文件只能导入到指定的相册文件夹中。",
+      "message": "请先选择一个相册。文件只能导入到指定的相册中。",
       "success": "已导入 {count} 个文件",
+      "no_clipboard_image": "剪贴板中没有图片。",
       "overlay": "拖放文件以导入",
       "no_files": "无法导入文件。请确保拖放的是图片文件。"
     },
@@ -475,8 +499,8 @@
       "add": "添加",
       "placeholder": "输入库的名称",
       "max_limit_reached": "已达到库数量限制",
-      "summary": "{count} 个库 · {size}",
-      "summary_loading": "{count} 个库 · 正在计算大小...",
+      "summary": "{count} 个库 · {files} 个文件 · {size}",
+      "summary_loading": "{count} 个库 · 正在计算文件数量和大小...",
       "created_at_lower": "创建于",
       "calculating_stats": "正在计算库大小...",
       "library_file_path": "库文件路径",
@@ -532,7 +556,8 @@
     "copy_to_folder": {
       "title": "复制到文件夹",
       "success": "已将 '{source}' 复制到 '{dest}'。",
-      "error": "将 '{source}' 复制到 '{dest}' 失败。"
+      "error": "将 '{source}' 复制到 '{dest}' 失败。",
+      "index_error": "{count} 个文件已复制，但无法添加到库索引。"
     },
     "file_conflict": {
       "title": "文件已存在",
@@ -783,11 +808,6 @@
       "months": "{count} 个月前",
       "years": "{count} 年前"
     }
-  },
-  "print_view": {
-    "title": "打印...",
-    "loading": "正在加载预览...",
-    "load_failed": "无法加载用于打印的图片。"
   },
   "image_viewer": {
     "title": "图片查看器",
@@ -1079,6 +1099,7 @@
         "open_external_app": "在外部应用中打开",
         "edit_image": "编辑图片",
         "copy_file": "复制到剪贴板",
+        "paste_file": "粘贴",
         "reveal_in_finder": "在访达中显示",
         "reveal_in_file_manager": "在文件管理器中显示",
         "select_all": "全选",
@@ -1136,14 +1157,14 @@
       "restore_hint": "从ZIP备份文件恢复资料库",
       "restore_dialog_title": "从备份恢复",
       "restore_select_file": "选择备份文件",
-      "restore_file_info": "备份文件：{path}",
+      "restore_file_info": "备份：{path}",
       "restore_created_at": "创建时间：{date}",
-      "restore_libraries": "资料库：{count} 个（{size}）",
+      "restore_libraries": "{count} 个资料库（{size}）",
       "restore_new_library": "新资料库",
       "restore_conflict": "已存在 → 将自动重命名",
       "restore_restoring": "正在恢复...",
       "restore_success": "恢复完成。已恢复 {count} 个资料库：{names}",
-      "restore_note": "恢复的资料库将添加至现有资料库旁，不会覆盖现有数据。"
+      "restore_note": "名称冲突的资料库将被重命名，现有数据不会被覆盖。"
     },
     "face_recognition": {
       "title": "人物搜索",

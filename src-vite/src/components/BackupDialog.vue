@@ -5,17 +5,20 @@
     :height="380"
     @cancel="clickCancel"
   >
-    <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div class="text-sm text-base-content/50 mb-2">
+    <div class="flex flex-col flex-1 min-h-0 overflow-hidden select-none">
+      <div class="text-sm text-base-content/30 mb-2">
         {{ $t('settings.database.backup_select_hint') }}
       </div>
 
       <!-- Select all -->
-      <div class="flex items-center gap-2 px-1 mb-1">
+      <div class="flex items-center justify-between gap-2 px-1 h-8">
         <label class="flex items-center gap-2 cursor-pointer text-sm text-base-content/70 hover:text-base-content">
           <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" :checked="allSelected" :indeterminate="someSelected && !allSelected" @change="toggleAll" />
           {{ $t('settings.database.backup_select_all') }}
         </label>
+        <div class="text-sm text-base-content/30">
+          {{ $t('settings.database.backup_estimated_size', { size: formatFileSize(estimatedSize) }) }}
+        </div>
       </div>
 
       <!-- Library list -->
@@ -31,18 +34,14 @@
             <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" :checked="selectedIds.has(lib.libraryId)" @click.stop @change="toggleLib(lib.libraryId)" />
             <span class="truncate text-sm">{{ lib.libraryName }}</span>
           </div>
-          <span class="shrink-0 text-xs text-base-content/40">{{ formatFileSize(lib.dbFileSize) }}</span>
+          <span class="shrink-0 text-xs text-base-content/30">{{ formatFileSize(lib.dbFileSize) }}</span>
         </div>
       </div>
 
-      <!-- Estimated size -->
-      <div class="text-xs text-base-content/40 mt-2">
-        {{ $t('settings.database.backup_estimated_size', { size: formatFileSize(estimatedSize) }) }}
-      </div>
     </div>
 
     <!-- Buttons -->
-    <div class="flex justify-end items-center gap-2 shrink-0 pt-2">
+    <div class="flex justify-end items-center gap-2 shrink-0 pt-4">
       <button
         class="px-4 py-1.5 rounded-box text-base-content/70 hover:bg-base-100/30 cursor-pointer text-sm"
         @click="clickCancel"

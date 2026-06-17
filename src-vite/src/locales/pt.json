@@ -15,6 +15,10 @@
   "album": {
     "all_files": "Todos os arquivos",
     "album_list": "Álbuns",
+    "folder_unavailable": {
+      "title": "Pasta indisponível",
+      "description": "Reconecte o dispositivo de armazenamento ou verifique a localização da pasta."
+    },
     "edit": {
       "title_add": "Adicionar álbum",
       "title": "Editar álbum",
@@ -115,6 +119,7 @@
     "search_tags": "Pesquisar tags",
     "enter_new_tag_name": "Novo nome da tag",
     "not_found": "Tags não encontradas",
+    "load_failed": "Não foi possível carregar o estado das tags. Feche esta caixa de diálogo e tente novamente.",
     "smart_group": "Tags inteligentes",
     "custom_group": "Tags personalizados",
     "smart_items": {
@@ -244,8 +249,18 @@
     "empty_title": "Esta lista está vazia",
     "empty_desc": "Adicione arquivos ou atualize o filtro atual para mostrar itens aqui.",
     "select_hint": "Nenhum arquivo selecionado",
+    "deselect": "Desmarcar",
     "select_mode_entered": "O modo de seleção múltipla está ativado",
-    "select_limit_hint": "Os primeiros {count} arquivos foram selecionados",
+    "selection_load_failed": "Não foi possível carregar todos os arquivos para seleção. Tente novamente.",
+    "large_batch": {
+      "title": "Confirmar operação em massa",
+      "content": "Esta operação processará {count} arquivos e pode demorar. Continuar?",
+      "ok": "Continuar"
+    },
+    "drag_action": {
+      "copy": "Copiar",
+      "move": "Mover"
+    },
     "edit_disabled": "Selecione uma única imagem para editar",
     "type_image": "Imagem",
     "type_images": "Imagens",
@@ -256,7 +271,7 @@
     "unfavorite_all": "Remover",
     "action": "Ação",
     "file_actions": "Ações de arquivo",
-    "labels_and_display": "Marcações e exibição",
+    "organize": "Organizar",
     "tag_all": "Tag",
     "dedup": {
       "title": "Duplicados",
@@ -295,6 +310,12 @@
     "not_found": {
       "albums": "Nenhum álbum encontrado. Adicione uma pasta com imagens ou vídeos",
       "files": "Nenhum arquivo encontrado",
+      "image_files": "Nenhum arquivo de imagem encontrado",
+      "raw_files": "Nenhum arquivo RAW encontrado",
+      "video_files": "Nenhum arquivo de vídeo encontrado",
+      "image_raw_files": "Nenhum arquivo de imagem ou RAW encontrado",
+      "image_video_files": "Nenhum arquivo de imagem ou vídeo encontrado",
+      "raw_video_files": "Nenhum arquivo RAW ou de vídeo encontrado",
       "folder_files": "Esta pasta não contém arquivos",
       "folder_files_hint": "Navegue pelas subpastas ou ative 'Mostrar arquivos de subpastas' nas Configurações.",
       "folders": "Nenhuma pasta encontrada",
@@ -318,7 +339,8 @@
       "failed": "Falha ao definir capa"
     },
     "copy_image": {
-      "success": "Imagem copiada",
+      "success": "{count} arquivo(s) copiado(s) para a área de transferência",
+      "limit": "Você pode copiar até {count} arquivos por vez.",
       "failed": "Falha ao copiar a imagem. Formato não suportado ou arquivo corrompido."
     },
     "save_image": {
@@ -371,17 +393,18 @@
       "new_folder": "Nova pasta...",
       "view_in_new_window": "Ver em nova janela...",
       "copy": "Copiar para área de transferência",
+      "paste": "Colar",
       "edit_image": "Editar imagem...",
       "open_image_in_app": "Abrir imagem em {app}...",
       "open_video_in_app": "Abrir vídeo em {app}...",
       "find_similar_images": "Encontrar semelhantes",
       "find_person_images": "Encontrar fotos de pessoa",
-      "find_album_folder": "Encontrar pasta do álbum",
       "on_this_day": "Neste dia",
       "print": "Imprimir imagem...",
       "rename": "Renomear",
       "move_to": "Mover para...",
       "copy_to": "Copiar para...",
+      "move_copy": "Mover / Copiar",
       "move_within_library": "Mover na biblioteca...",
       "move_to_folder": "Mover para pasta...",
       "copy_to_folder": "Copiar para pasta...",
@@ -453,8 +476,9 @@
     },
     "drop_import": {
       "title": "Não é possível importar arquivos",
-      "message": "Selecione primeiro uma pasta de álbum. Os arquivos só podem ser importados para uma pasta de álbum específica.",
+      "message": "Selecione primeiro um álbum. Os arquivos só podem ser importados para um álbum específico.",
       "success": "{count} arquivo(s) importado(s)",
+      "no_clipboard_image": "A área de transferência não contém uma imagem.",
       "overlay": "Solte os arquivos para importar",
       "no_files": "Nenhum arquivo pôde ser importado. Certifique-se de soltar arquivos de imagem."
     },
@@ -475,8 +499,8 @@
       "add": "Adicionar",
       "placeholder": "Nome da biblioteca",
       "max_limit_reached": "Limite atingido",
-      "summary": "{count} bibliotecas · {size}",
-      "summary_loading": "{count} bibliotecas · calculando tamanho...",
+      "summary": "{count} bibliotecas · {files} arquivos · {size}",
+      "summary_loading": "{count} bibliotecas · calculando arquivos e tamanho...",
       "created_at_lower": "criado em",
       "calculating_stats": "Calculando o tamanho da biblioteca...",
       "library_file_path": "Caminho do arquivo",
@@ -532,7 +556,8 @@
     "copy_to_folder": {
       "title": "Copiar para pasta",
       "success": "'{source}' copiado para '{dest}'.",
-      "error": "Falha ao copiar '{source}' para '{dest}'."
+      "error": "Falha ao copiar '{source}' para '{dest}'.",
+      "index_error": "{count} arquivo(s) foram copiados, mas não puderam ser adicionados ao índice da biblioteca."
     },
     "file_conflict": {
       "title": "Arquivo já existe",
@@ -783,11 +808,6 @@
       "months": "há {count} meses",
       "years": "há {count} anos"
     }
-  },
-  "print_view": {
-    "title": "Imprimir...",
-    "loading": "Carregando visualização...",
-    "load_failed": "Falha ao carregar a imagem para impressão."
   },
   "image_viewer": {
     "title": "Visualizador",
@@ -1079,6 +1099,7 @@
         "open_external_app": "Abrir em app externo",
         "edit_image": "Editar imagem",
         "copy_file": "Copiar para a área de transferência",
+        "paste_file": "Colar",
         "reveal_in_finder": "Mostrar no Finder",
         "reveal_in_file_manager": "Mostrar no gerenciador de arquivos",
         "select_all": "Selecionar tudo",
@@ -1136,14 +1157,14 @@
       "restore_hint": "Restaurar bibliotecas de um arquivo ZIP de backup",
       "restore_dialog_title": "Restaurar do Backup",
       "restore_select_file": "Selecionar arquivo de backup",
-      "restore_file_info": "Arquivo de backup: {path}",
+      "restore_file_info": "Backup: {path}",
       "restore_created_at": "Criado em: {date}",
-      "restore_libraries": "Bibliotecas: {count} ({size})",
+      "restore_libraries": "{count} bibliotecas ({size})",
       "restore_new_library": "Nova biblioteca",
       "restore_conflict": "Já existe → será renomeada",
       "restore_restoring": "Restaurando...",
       "restore_success": "Restauração concluída. {count} bibliotecas restauradas: {names}",
-      "restore_note": "As bibliotecas restauradas são adicionadas às existentes. Os dados existentes não são sobrescritos."
+      "restore_note": "Bibliotecas com nomes conflitantes serão renomeadas e os dados existentes não serão sobrescritos."
     },
     "face_recognition": {
       "title": "Pesquisa de pessoas",

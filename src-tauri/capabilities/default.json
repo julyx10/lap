@@ -6,8 +6,7 @@
     "main",
     "imageviewer",
     "imageeditor",
-    "settings",
-    "print"
+    "settings"
   ],
   "permissions": [
     "core:default",

@@ -24,7 +24,7 @@
 
     <div v-if="showSpinner" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 bg-base-200/20">
       <span class="loading loading-spinner loading-lg text-primary opacity-80"></span>
-      <div class="mt-4 text-sm font-medium text-base-content/80 drop-shadow-md">{{ $t('video.loading') }}</div>
+      <div class="mt-4 text-sm font-medium text-base-content/70 drop-shadow-md">{{ $t('video.loading') }}</div>
     </div>
 
     <div v-if="hasError && !isLoading" class="absolute inset-0 flex flex-col items-center justify-center z-10 px-6 text-center overflow-hidden bg-black/50">
@@ -47,7 +47,7 @@ import { config } from '@/common/config';
 import { IconVideoSlash, IconVideoPlay, IconVideoReplay } from '@/common/icons';
 import videojs from 'video.js/core';
 import 'video.js/dist/video-js.min.css';
-import { getAssetSrc, isLinux } from '@/common/utils';
+import { getAssetSrc, isLinux, isMac, isWin } from '@/common/utils';
 import { openFileWithApp } from '@/common/api';
 import zhCN from 'video.js/dist/lang/zh-CN.json';
 import { prepareVideo, cancelVideoPrepare } from '@/common/video';
@@ -81,6 +81,7 @@ const rotate = ref(0);
 const noTransition = ref(false);
 const activeVideo = ref(0);
 let currentLoadingId = 0;
+const loadAttemptCleanups: Array<(() => void) | null> = [null, null];
 
 const externalVideoAppPath = computed(() => String(config.settings?.externalVideoAppPath || '').trim());
 const externalVideoAppName = computed(() => String(config.settings?.externalVideoAppName || '').trim());
@@ -154,6 +155,22 @@ const playerOptions = computed(() => ({
 }));
 
 const getActivePlayer = () => players.value[activeVideo.value];
+const DIRECT_PLAYBACK_TIMEOUT_MS = 2000;
+const PREPARED_PLAYBACK_TIMEOUT_MS = 5000;
+const directPlaybackTypes: Record<string, string> = {
+  mp4: 'video/mp4',
+  m4v: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+};
+
+function getDirectPlaybackType(filePath: string): string | null {
+  const extension = filePath.split('.').pop()?.toLowerCase() || '';
+  const supportedExtensions = isMac
+    ? ['mp4', 'm4v', 'mov', 'webm']
+    : (isWin || isLinux ? ['mp4', 'm4v', 'webm'] : []);
+  return supportedExtensions.includes(extension) ? directPlaybackTypes[extension] : null;
+}
 
 const updateTransform = (options: boolean | { resetRotation?: boolean, recalcScale?: boolean } = false) => {
   const resetRotation = typeof options === 'boolean' ? options : (options.resetRotation ?? false);
@@ -280,6 +297,14 @@ const loadVideo = async (filePath: string) => {
   const player = players.value[nextUpIndex];
   if (!player) return;
 
+  loadAttemptCleanups[nextUpIndex]?.();
+  try {
+    await cancelVideoPrepare(String(nextUpIndex));
+  } catch (error) {
+    console.warn('[Video] Failed to cancel previous prepare task:', error);
+  }
+  if (currentLoadId !== currentLoadingId) return;
+
   // Sync audio state IMMEDIATELY so the UI reflects the user settings during loading
   player.muted(config.video.muted);
   player.volume(config.video.volume);
@@ -336,15 +361,27 @@ const loadVideo = async (filePath: string) => {
         type: result.action === 'remux' ? 'video/mp4' : (result.url.endsWith('.webm') ? 'video/webm' : 'video/mp4'),
       });
 
-      const onLoaded = () => {
+      let preparedLoadTimer: ReturnType<typeof setTimeout> | null = null;
+      const cleanupLoadAttempt = () => {
+        if (preparedLoadTimer) {
+          clearTimeout(preparedLoadTimer);
+          preparedLoadTimer = null;
+        }
+        player.off('loadeddata', onLoaded);
         player.off('error', onError);
+        if (loadAttemptCleanups[nextUpIndex] === cleanupLoadAttempt) {
+          loadAttemptCleanups[nextUpIndex] = null;
+        }
+      };
+
+      const onLoaded = () => {
+        cleanupLoadAttempt();
         handleSuccessfulLoad();
       };
 
       const onError = () => {
+        cleanupLoadAttempt();
         if (currentLoadId !== currentLoadingId) return;
-        player.off('loadeddata', onLoaded);
-        player.off('error', onError);
 
         const err = player.error();
         if (err && err.code === 1) {
@@ -364,6 +401,16 @@ const loadVideo = async (filePath: string) => {
 
       player.one('loadeddata', onLoaded);
       player.one('error', onError);
+      loadAttemptCleanups[nextUpIndex]?.();
+      loadAttemptCleanups[nextUpIndex] = cleanupLoadAttempt;
+      preparedLoadTimer = setTimeout(() => {
+        cleanupLoadAttempt();
+        if (currentLoadId !== currentLoadingId) return;
+        isLoading.value = false;
+        showSpinner.value = false;
+        hasError.value = true;
+        errorMessage.value = getFallbackErrorMessage();
+      }, PREPARED_PLAYBACK_TIMEOUT_MS);
       player.load();
     } catch (e) {
       if (currentLoadId !== currentLoadingId) return;
@@ -374,7 +421,73 @@ const loadVideo = async (filePath: string) => {
       errorMessage.value = getPrepareErrorMessage(e);
     }
   };
-  loadPrepared();
+
+  const loadDirect = (type: string) => {
+    player.reset();
+    player.src({
+      src: getAssetSrc(filePath),
+      type,
+    });
+
+    let directLoadTimer: ReturnType<typeof setTimeout> | null = null;
+    const cleanupDirectAttempt = () => {
+      if (directLoadTimer) {
+        clearTimeout(directLoadTimer);
+        directLoadTimer = null;
+      }
+      player.off('loadeddata', onLoaded);
+      player.off('error', onError);
+      if (loadAttemptCleanups[nextUpIndex] === cleanupDirectAttempt) {
+        loadAttemptCleanups[nextUpIndex] = null;
+      }
+    };
+
+    const fallbackToPrepared = () => {
+      cleanupDirectAttempt();
+      if (currentLoadId !== currentLoadingId) return;
+      player.reset();
+      console.warn('[Video] Direct playback failed, preparing a compatible source...');
+      loadPrepared();
+    };
+
+    const onLoaded = () => {
+      if (!player.videoWidth() || !player.videoHeight()) {
+        fallbackToPrepared();
+        return;
+      }
+      cleanupDirectAttempt();
+      handleSuccessfulLoad();
+    };
+
+    const onError = () => {
+      if (currentLoadId !== currentLoadingId) {
+        cleanupDirectAttempt();
+        return;
+      }
+
+      const err = player.error();
+      if (err && err.code === 1) {
+        cleanupDirectAttempt();
+        return;
+      }
+
+      fallbackToPrepared();
+    };
+
+    player.one('loadeddata', onLoaded);
+    player.one('error', onError);
+    loadAttemptCleanups[nextUpIndex]?.();
+    loadAttemptCleanups[nextUpIndex] = cleanupDirectAttempt;
+    directLoadTimer = setTimeout(fallbackToPrepared, DIRECT_PLAYBACK_TIMEOUT_MS);
+    player.load();
+  };
+
+  const directPlaybackType = getDirectPlaybackType(filePath);
+  if (directPlaybackType) {
+    loadDirect(directPlaybackType);
+  } else {
+    loadPrepared();
+  }
 };
 
 function getFallbackErrorMessage() {
@@ -556,6 +669,7 @@ onBeforeUnmount(() => {
       }, 0);
     }
   });
+  loadAttemptCleanups.forEach((cleanup) => cleanup?.());
   players.value = [null, null];
   cancelVideoPrepare('0');
   cancelVideoPrepare('1');

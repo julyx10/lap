@@ -2,7 +2,7 @@
   <div :class="containerClass">
     <div
       v-if="hasData"
-      class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap"
+      class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap text-base-content/70"
     >
       <div class="flex items-center shink-0">
         <IconFileSearch class="t-icon-size-xs mr-1" />
@@ -26,6 +26,11 @@
           <span>{{ formatDimensionText(currentFile?.width, currentFile?.height, true) }}</span>
         </div>
 
+        <div class="flex items-center gap-1 shink-0">
+          <IconClock class="t-icon-size-xs" />
+          <span>{{ formatTimestamp(currentFile?.taken_date, $t('format.date_time')) }}</span>
+        </div>
+        
         <div v-if="showFilmStrip || showQuickView || showScale" class="flex items-center gap-1 shink-0">
           <component :is="imageScale >= 1 ? IconZoomIn : IconZoomOut" class="t-icon-size-xs" />
           <span>{{ (imageScale * 100).toFixed(0) }}%</span>
@@ -47,11 +52,6 @@
         <div v-if="currentFile?.geo_name" class="flex items-center gap-1 shink-0">
           <IconLocation class="t-icon-size-xs" />
           <span>{{ currentFile?.geo_name }}</span>
-        </div>
-
-        <div class="flex items-center gap-1 shink-0">
-          <IconClock class="t-icon-size-xs" />
-          <span>{{ formatTimestamp(currentFile?.taken_date, $t('format.date_time')) }}</span>
         </div>
       </template>
     </div>

@@ -9,7 +9,7 @@
       ]"
       @click="clickAllFiles"
     >
-      <IconPhotoAll class="mx-1 w-5 h-5 shrink-0" />
+      <IconFolders class="mx-1 w-5 h-5 shrink-0" />
       <div class="sidebar-item-label">
         <span>{{ $t('album.all_files') }}</span>
       </div>
@@ -33,7 +33,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { libConfig } from '@/common/config';
 
-import { IconPhotoAll } from '@/common/icons';
+import { IconFolders } from '@/common/icons';
 import { getTotalCountAndSum } from '@/common/api';
 import AlbumList from '@/components/AlbumList.vue';
 

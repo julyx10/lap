@@ -56,7 +56,7 @@
                 :class="[
                   fileIndex < 0 || !canSlideShow || !canInteract
                     ? 'cursor-default text-base-content/30'
-                    : 'text-base-content/45 hover:bg-base-100/30 hover:text-base-content/75'
+                    : 'text-base-content/30 hover:bg-base-100/30 hover:text-base-content/70'
                 ]"
                 :disabled="fileIndex < 0 || !canSlideShow || !canInteract"
                 :title="$t('settings.image_view.slide_show_interval', { second: getSlideShowInterval(effectiveSlideShowIntervalIndex) })"
@@ -325,7 +325,7 @@ import { useI18n } from 'vue-i18n';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { config, libConfig } from '@/common/config';
 import { useToast } from '@/common/toast';
-import { isWin, isLinux, getSlideShowInterval } from '@/common/utils';
+import { isWin, isMac, isLinux, getSlideShowInterval } from '@/common/utils';
 import { getShortcutLabel, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 
 import Image from '@/components/Image.vue';
@@ -364,7 +364,6 @@ import {
   IconLink,
   IconSplitOn,
 } from '@/common/icons';
-import { isMac } from '@/common/utils';
 import ContextMenu from '@/components/ContextMenu.vue';
 import iconLogo from '@/assets/images/icon.png';
 import { useFileMenuItems } from '@/common/fileMenu';
@@ -528,7 +527,7 @@ const toggleMaximizeWindow = () => {
   });
 };
 const closeWindow = () => desktopAppWindow?.close();
-const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : 'windows';
+const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : (isLinux ? 'linux' : 'windows');
 const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, shortcutPlatform);
 const ratingShortcutLabel = computed(() => {
   const first = shortcut('meta.rating.clear');
@@ -848,10 +847,6 @@ defineExpose({
   triggerNext
 });
 
-const showFolderFiles = computed(() => {
-  return !!(config.main.sidebarIndex === 0 && libConfig.album.id && libConfig.album.id !== 0);
-});
-
 const selectedFile = computed(() => props.file);
 
 const singleFileMenuItems = computed(() => {
@@ -861,7 +856,6 @@ const singleFileMenuItems = computed(() => {
     selectedFile,
     localeMsg,
     isMac,
-    showFolderFiles,
     t,
     (action) => emit('item-action', { action, index: props.fileIndex })
   ).value;

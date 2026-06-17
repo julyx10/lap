@@ -5,7 +5,6 @@ export type ShortcutContext =
   | 'content'
   | 'media-viewer'
   | 'image-viewer'
-  | 'print'
   | 'settings'
   | 'album-list'
   | 'album-folder'
@@ -22,8 +21,8 @@ export type ShortcutActionId =
   | 'file.openNewWindow'
   | 'file.openExternalApp'
   | 'file.editImage'
-  | 'file.print'
   | 'file.copy'
+  | 'file.paste'
   | 'file.selectAll'
   | 'file.selectNone'
   | 'file.invertSelection'
@@ -87,8 +86,13 @@ export interface ShortcutEventLike {
   shiftKey?: boolean;
 }
 
-export const DEFAULT_PLATFORM: ShortcutPlatform =
-  typeof navigator !== 'undefined' && /mac/i.test(navigator.platform) ? 'mac' : 'windows';
+export const DEFAULT_PLATFORM: ShortcutPlatform = (() => {
+  if (typeof navigator === 'undefined') return 'windows';
+  const platform = `${navigator.platform || ''} ${navigator.userAgent || ''}`;
+  if (/mac/i.test(platform)) return 'mac';
+  if (/linux|x11/i.test(platform)) return 'linux';
+  return 'windows';
+})();
 
 export const SHORTCUTS: readonly ShortcutDefinition[] = [
   {
@@ -160,17 +164,17 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
     ],
   },
   {
-    id: 'file.print',
-    contexts: ['content', 'print'],
-    defaultBindings: [
-      { code: 'KeyP', modifiers: ['cmdOrCtrl'], label: { mac: '⌘P', windows: 'Ctrl+P', linux: 'Ctrl+P' } },
-    ],
-  },
-  {
     id: 'file.copy',
     contexts: ['content'],
     defaultBindings: [
       { code: 'KeyC', modifiers: ['cmdOrCtrl'], allowShift: true, label: { mac: '⌘C', windows: 'Ctrl+C', linux: 'Ctrl+C' } },
+    ],
+  },
+  {
+    id: 'file.paste',
+    contexts: ['content', 'album-list', 'album-folder'],
+    defaultBindings: [
+      { code: 'KeyV', modifiers: ['cmdOrCtrl'], label: { mac: '⌘V', windows: 'Ctrl+V', linux: 'Ctrl+V' } },
     ],
   },
   {
@@ -301,7 +305,7 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
   },
   {
     id: 'view.close',
-    contexts: ['content', 'image-viewer', 'settings', 'print'],
+    contexts: ['content', 'image-viewer', 'settings'],
     defaultBindings: [{ key: 'Escape', label: 'Esc' }],
   },
   {

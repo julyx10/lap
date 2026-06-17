@@ -280,7 +280,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { isWin, isMac, setTheme, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, setTheme, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import {
   editFileComment,
@@ -309,7 +309,7 @@ const localeMsg = computed(() => messages.value[locale.value] as any);
 const uiStore = useUIStore();
 
 const appWindow = getCurrentWebviewWindow()
-const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : 'windows';
+const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : (isLinux ? 'linux' : 'windows');
 
 // input parameters
 const fileId = ref(0);       // File ID

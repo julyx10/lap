@@ -8,7 +8,7 @@
     <div :style="wrapperStyle">
       <div 
         v-for="poolItem in visibleItems" 
-        :key="poolItem.index"
+        :key="getItemKey(poolItem)"
         class="absolute"
         :class="{ 'transition-all duration-500 ease-in-out': transition }"
         :style="getItemStyle(poolItem)"
@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick, type CSSProperties } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, type CSSProperties } from 'vue';
 
 const props = withDefaults(defineProps<{
   items: any[];
@@ -70,60 +70,53 @@ const wrapperStyle = computed((): CSSProperties => {
     : { width: `${totalSize.value}px`, height: '100%', position: 'relative' };
 });
 
+const geometryAxisMetrics = computed(() => {
+  const starts: number[] = [];
+  const prefixMaxEnds: number[] = [];
+  let maxEnd = 0;
+
+  props.geometry?.forEach((box) => {
+    const start = isVertical.value ? box.y : box.x;
+    const size = isVertical.value ? box.height : box.width;
+    starts.push(start);
+    maxEnd = Math.max(maxEnd, start + size);
+    prefixMaxEnds.push(maxEnd);
+  });
+
+  return { starts, prefixMaxEnds };
+});
+
 const visibleRange = computed(() => {
   if (props.geometry) {
-    // Binary search for start and end indices
-    const scrollTop = scrollOffset.value;
-    const viewportHeight = containerSize.value;
-    const scrollBottom = scrollTop + viewportHeight;
-    
-    // Find start index: first item where y + height >= scrollTop
-    let start = props.geometry.length; // Default to end (none visible)
-    let low = 0; 
-    let high = props.geometry.length - 1;
-    
-    while (low <= high) {
+    const bufferSize = Math.max(0, props.buffer * props.itemSize);
+    const viewportStart = Math.max(0, scrollOffset.value - bufferSize);
+    const viewportEnd = scrollOffset.value + containerSize.value + bufferSize;
+    const { starts, prefixMaxEnds } = geometryAxisMetrics.value;
+
+    // Find the first item whose cumulative maximum end reaches the viewport.
+    let low = 0;
+    let high = prefixMaxEnds.length;
+    while (low < high) {
       const mid = Math.floor((low + high) / 2);
-      const box = props.geometry[mid];
-      const boxStart = isVertical.value ? box.y : box.x;
-      const boxSize = isVertical.value ? box.height : box.width;
-      
-      if (boxStart + boxSize >= scrollOffset.value) {
-        start = mid;
-        high = mid - 1;
-      } else {
-        low = mid + 1;
-      }
+      if (prefixMaxEnds[mid] >= viewportStart) high = mid;
+      else low = mid + 1;
     }
-    
-    // Find end index: first item where y > scrollBottom
-    let end = props.geometry.length;
+    const start = low;
+
+    // Item starts are monotonic for justified and shortest-column masonry
+    // layouts, so the first start beyond the viewport is a valid upper bound.
     low = start;
-    high = props.geometry.length - 1;
-    
-    // Simple linear scan for end optimization since usually not too far?
-    // Or binary search again.
-    // Let's do binary search for consistency.
-    while (low <= high) {
+    high = starts.length;
+    while (low < high) {
       const mid = Math.floor((low + high) / 2);
-      const box = props.geometry[mid];
-      const boxStart = isVertical.value ? box.y : box.x;
-      if (boxStart > scrollOffset.value + containerSize.value) {
-        end = mid;
-        high = mid - 1;
-      } else {
-        low = mid + 1;
-      }
+      if (starts[mid] > viewportEnd) high = mid;
+      else low = mid + 1;
     }
-    
-    // Apply buffer (approximate rows logic)
-    // We don't have rows, so just add buffer * gridItems?
-    // Using gridItems as rough "items per row" estimate
-    const bufferCount = props.buffer * (props.gridItems || 4); 
+    const end = low;
     
     return {
-      start: Math.max(0, start - bufferCount),
-      end: Math.min(totalCount.value, end + bufferCount)
+      start,
+      end: Math.min(totalCount.value, end)
     };
   }
 
@@ -167,6 +160,11 @@ const visibleItems = computed(() => {
   
   return result;
 });
+
+function getItemKey(poolItem: { item: any, index: number }) {
+  const value = poolItem.item?.[props.keyField];
+  return value === undefined || value === null ? poolItem.index : value;
+}
 
 function getItemStyle(poolItem: { item: any, index: number }): CSSProperties {
   const { index } = poolItem;
@@ -221,12 +219,16 @@ function getItemStyle(poolItem: { item: any, index: number }): CSSProperties {
 }
 
 const emitUpdate = () => {
-  if (props.emitUpdate) {
-    const isGeometry = !!props.geometry;
-    const startIdx = visibleRange.value.start * (isGeometry ? 1 : props.gridItems);
-    const endIdx = Math.min(totalCount.value, visibleRange.value.end * (isGeometry ? 1 : props.gridItems));
-    emit('update', startIdx, endIdx);
+  if (!props.emitUpdate) return;
+
+  if (props.geometry) {
+    emit('update', visibleRange.value.start, visibleRange.value.end);
+    return;
   }
+
+  const startIndex = visibleRange.value.start * props.gridItems;
+  const endIndex = Math.min(totalCount.value, visibleRange.value.end * props.gridItems);
+  emit('update', startIndex, endIndex);
 };
 
 watch(() => visibleRange.value, () => {
@@ -237,6 +239,105 @@ watch(() => visibleRange.value, () => {
 watch(totalCount, () => {
     emitUpdate();
 });
+
+function findGeometryAnchor(
+  geometry: { x: number, y: number, width: number, height: number }[],
+  viewportStart: number,
+) {
+  if (geometry.length === 0) return -1;
+
+  // Geometry starts are monotonic for the currently supported layouts.
+  // If a future layout emits non-monotonic starts, use a linear/local scan.
+  // Find the nearest start in O(log n).
+  let low = 0;
+  let high = geometry.length;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    const start = isVertical.value ? geometry[mid].y : geometry[mid].x;
+    if (start < viewportStart) low = mid + 1;
+    else high = mid;
+  }
+
+  if (low === 0) return 0;
+  if (low === geometry.length) return geometry.length - 1;
+
+  const previousStart = isVertical.value ? geometry[low - 1].y : geometry[low - 1].x;
+  const nextStart = isVertical.value ? geometry[low].y : geometry[low].x;
+  return viewportStart - previousStart <= nextStart - viewportStart ? low - 1 : low;
+}
+
+let geometryAnchorVersion = 0;
+let pendingGeometryAnchor: {
+  index: number;
+  viewportStart: number;
+  oldStart: number;
+} | null = null;
+
+watch(
+  () => props.geometry,
+  async (_newGeometry, oldGeometry) => {
+    const scroller = scrollerRef.value;
+    if (
+      !scroller ||
+      !props.geometry ||
+      !oldGeometry ||
+      props.transition ||
+      props.geometry.length !== oldGeometry.length ||
+      props.geometry.length === 0
+    ) {
+      pendingGeometryAnchor = null;
+      // Cancel any anchor correction already waiting on nextTick.
+      geometryAnchorVersion++;
+      return;
+    }
+
+    const viewportStart = isVertical.value ? scroller.scrollTop : scroller.scrollLeft;
+    if (viewportStart <= 0) {
+      pendingGeometryAnchor = null;
+      // Cancel any anchor correction already waiting on nextTick.
+      geometryAnchorVersion++;
+      return;
+    }
+
+    if (!pendingGeometryAnchor) {
+      const anchorIndex = findGeometryAnchor(oldGeometry, viewportStart);
+      const oldAnchor = oldGeometry[anchorIndex];
+      if (!oldAnchor) return;
+      pendingGeometryAnchor = {
+        index: anchorIndex,
+        viewportStart,
+        oldStart: isVertical.value ? oldAnchor.y : oldAnchor.x,
+      };
+    }
+
+    // Keep the first old geometry as the batch baseline. Replacing it on a
+    // subsequent update would lose displacement that has not been applied yet.
+    const version = ++geometryAnchorVersion;
+    await nextTick();
+    if (version !== geometryAnchorVersion || !pendingGeometryAnchor || !props.geometry) return;
+
+    const anchor = pendingGeometryAnchor;
+    pendingGeometryAnchor = null;
+    const newAnchor = props.geometry[anchor.index];
+    if (!newAnchor) return;
+
+    const currentOffset = isVertical.value ? scroller.scrollTop : scroller.scrollLeft;
+    if (Math.abs(currentOffset - anchor.viewportStart) >= 0.5) return;
+
+    const newStart = isVertical.value ? newAnchor.y : newAnchor.x;
+    const delta = newStart - anchor.oldStart;
+    if (!Number.isFinite(delta) || Math.abs(delta) < 0.5) return;
+
+    const targetOffset = Math.max(0, anchor.viewportStart + delta);
+    if (isVertical.value) {
+      scroller.scrollTop = targetOffset;
+    } else {
+      scroller.scrollLeft = targetOffset;
+    }
+    scrollOffset.value = targetOffset;
+  },
+  { flush: 'pre' },
+);
 
 function onScroll(e: Event) {
   const target = e.target as HTMLElement;
@@ -258,21 +359,28 @@ watch(() => props.direction, () => {
   nextTick(updateContainerSize);
 });
 
+let resizeObserver: ResizeObserver | null = null;
+
 onMounted(() => {
   updateContainerSize();
   emitUpdate();
-  const observer = new ResizeObserver(updateContainerSize);
+  resizeObserver = new ResizeObserver(updateContainerSize);
   if (scrollerRef.value) {
-    observer.observe(scrollerRef.value);
+    resizeObserver.observe(scrollerRef.value);
   }
+});
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
 });
 
 // Expose scroll to item / position
 function scrollToPosition(value: number) {
-   if (scrollerRef.value) {
-     if (isVertical.value) scrollerRef.value.scrollTop = value;
-     else scrollerRef.value.scrollLeft = value;
-   }
+  if (!scrollerRef.value) return;
+  if (isVertical.value) scrollerRef.value.scrollTop = value;
+  else scrollerRef.value.scrollLeft = value;
+  scrollOffset.value = value;
 }
 
 defineExpose({

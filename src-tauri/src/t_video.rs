@@ -69,6 +69,7 @@ fn platform_video_url(file_path: &str) -> Result<String, String> {
 /// Manages active FFmpeg/FFprobe processes, allowing per-player cancellation.
 pub struct VideoManager {
     pub active_processes: Mutex<HashMap<String, (u64, tokio::process::Child)>>,
+    pub active_requests: Mutex<HashMap<String, u64>>,
     pub task_counter: std::sync::atomic::AtomicU64,
 }
 
@@ -76,8 +77,24 @@ impl Default for VideoManager {
     fn default() -> Self {
         Self {
             active_processes: Mutex::new(HashMap::new()),
+            active_requests: Mutex::new(HashMap::new()),
             task_counter: std::sync::atomic::AtomicU64::new(0),
         }
+    }
+}
+
+async fn is_video_request_active(
+    state: &VideoManager,
+    player_id: &str,
+    request_id: u64,
+) -> bool {
+    state.active_requests.lock().await.get(player_id) == Some(&request_id)
+}
+
+async fn finish_video_request(state: &VideoManager, player_id: &str, request_id: u64) {
+    let mut requests = state.active_requests.lock().await;
+    if requests.get(player_id) == Some(&request_id) {
+        requests.remove(player_id);
     }
 }
 
@@ -784,8 +801,8 @@ pub async fn cancel_video_prepare(
     state: tauri::State<'_, VideoManager>,
     player_id: String,
 ) -> Result<(), String> {
-    let mut guard = state.active_processes.lock().await;
-    guard.remove(&player_id);
+    state.active_requests.lock().await.remove(&player_id);
+    state.active_processes.lock().await.remove(&player_id);
     Ok(())
 }
 
@@ -798,7 +815,15 @@ pub async fn prepare_video(
     player_id: String,
     force: Option<String>,
 ) -> Result<VideoPrepareResult, String> {
+    let request_id = state
+        .task_counter
+        .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     {
+        state
+            .active_requests
+            .lock()
+            .await
+            .insert(player_id.clone(), request_id);
         state.active_processes.lock().await.remove(&player_id);
     }
 
@@ -810,17 +835,26 @@ pub async fn prepare_video(
     // Step 1: Single Probe
     let action = match probe_json_async(&file_path).await {
         Ok(json) => analyze_strategy(&json, &file_path).await,
-        Err(e) => return Err(format!("Probe failed: {}", e)),
+        Err(e) => {
+            finish_video_request(&state, &player_id, request_id).await;
+            return Err(format!("Probe failed: {}", e));
+        }
     };
+
+    if !is_video_request_active(&state, &player_id, request_id).await {
+        return Err("Cancelled".to_string());
+    }
 
     let force_process = force.as_deref() == Some("process");
     let force_fallback = force.as_deref() == Some("fallback");
 
     if action == VideoAction::Direct && !force_process && !force_fallback {
-        return Ok(VideoPrepareResult {
+        let result = VideoPrepareResult {
             url: platform_video_url(&file_path)?,
             action: VideoAction::Direct,
-        });
+        };
+        finish_video_request(&state, &player_id, request_id).await;
+        return Ok(result);
     }
 
     let mut current_action = if force_process {
@@ -834,6 +868,7 @@ pub async fn prepare_video(
     } else {
         action
     };
+    #[cfg(target_os = "macos")]
     let mut try_software_enc = false;
 
     let temp_dir = app
@@ -854,10 +889,12 @@ pub async fn prepare_video(
     // Cache validation: check if exists and size > 32KB (avoid broken/truncated files)
     if let Ok(meta) = tokio::fs::metadata(&output_path).await {
         if meta.len() > 32 * 1024 && force.is_none() {
-            return Ok(VideoPrepareResult {
+            let result = VideoPrepareResult {
                 url: platform_video_url(output_path.to_string_lossy().as_ref())?,
                 action: current_action,
-            });
+            };
+            finish_video_request(&state, &player_id, request_id).await;
+            return Ok(result);
         }
         // If file is broken (<32KB) or we are forcing, remove it to regenerate
         let _ = tokio::fs::remove_file(&output_path).await;
@@ -911,9 +948,6 @@ pub async fn prepare_video(
 
         cmd.stderr(debug_stderr());
 
-        let this_task_id = state
-            .task_counter
-            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         #[allow(unused_mut)]
         let mut t_child = cmd
             .stdin(std::process::Stdio::null())
@@ -932,11 +966,16 @@ pub async fn prepare_video(
         });
 
         {
+            let requests = state.active_requests.lock().await;
+            if requests.get(&player_id) != Some(&request_id) {
+                let _ = tokio::fs::remove_file(&tmp_path).await;
+                return Err("Cancelled".to_string());
+            }
             state
                 .active_processes
                 .lock()
                 .await
-                .insert(player_id.clone(), (this_task_id, t_child));
+                .insert(player_id.clone(), (request_id, t_child));
         }
 
         let final_status = loop {
@@ -951,7 +990,7 @@ pub async fn prepare_video(
             {
                 let mut guard = state.active_processes.lock().await;
                 if let Some((pid, child)) = guard.get_mut(&player_id) {
-                    if *pid != this_task_id {
+                    if *pid != request_id {
                         return Err("Task preempted".to_string());
                     }
 
@@ -986,6 +1025,9 @@ pub async fn prepare_video(
                 });
             }
 
+            // Windows: rename fails if destination exists
+            #[cfg(target_os = "windows")]
+            let _ = tokio::fs::remove_file(&output_path).await;
             if tokio::fs::rename(&tmp_path, &output_path).await.is_ok() {
                 let td = temp_dir.clone();
                 tokio::spawn(async move {

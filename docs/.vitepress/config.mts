@@ -1,11 +1,13 @@
 import { defineConfig } from 'vitepress'
 
+const base = '/lap/'
+
 export default defineConfig({
-    base: '/lap/',
+    base,
     title: "Lap",
     description: "Local-first, AI-powered photo manager",
     head: [
-        ['link', { rel: 'icon', href: '/logo.png' }],
+        ['link', { rel: 'icon', type: 'image/png', sizes: '512x512', href: `${base}icon.png` }],
         [
             'script',
             { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-SVT0K4C2ET' }
@@ -37,6 +39,7 @@ export default defineConfig({
             {
                 text: 'Release Notes',
                 items: [
+                    { text: 'v0.2.4', link: '/guide/release-notes/v0.2.4' },
                     { text: 'v0.2.3', link: '/guide/release-notes/v0.2.3' },
                     { text: 'v0.2.2', link: '/guide/release-notes/v0.2.2' },
                     { text: 'v0.2.1', link: '/guide/release-notes/v0.2.1' },

@@ -31,6 +31,19 @@ html, body {
   @apply h-8 w-fit rounded-box focus:outline-none focus:rounded-box hover:bg-base-100 hover:text-base-content cursor-pointer transition-colors duration-200;
 }
 
+/* button */
+.t-button-default {
+  @apply btn btn-sm rounded-box min-w-20;
+}
+
+.t-button-primary {
+  @apply btn btn-sm rounded-box min-w-20 btn-primary;
+}
+
+.t-button-error {
+  @apply btn btn-sm rounded-box min-w-20 btn-error;
+}
+
 /* icon */
 .t-icon-size-xs {
   @apply w-4 h-4;

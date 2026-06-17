@@ -8,15 +8,16 @@ use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
 use crate::t_face;
 use crate::t_image;
 use crate::t_sqlite::{
-    ACamera, AFile, AFolder, ALens, ALocation, ATag, AThumb, ATimeLine, Album, ImageSearchParams,
-    Person, QueryParams,
+    ACamera, AFile, AFolder, ALens, ALocation, ATag, ATagFileState, ATagSelectionCount, AThumb,
+    ATimeLine, Album, ImageSearchParams, Person, QueryParams,
 };
 use crate::t_storage;
 use crate::t_utils;
 use crate::{t_ai, t_sqlite};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::io::Cursor;
 use std::path::Path;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -598,6 +599,11 @@ pub async fn sync_album_folder_mtimes(
     .map_err(|e| format!("folder sync task failed: {}", e))?
 }
 
+#[tauri::command]
+pub fn is_directory_accessible(path: &str) -> bool {
+    t_utils::directory_accessible(path)
+}
+
 /// get the thumbnail count of the folder
 #[tauri::command]
 pub fn get_folder_thumb_count(file_type: i64, folder_id: i64) -> i64 {
@@ -616,10 +622,13 @@ pub async fn copy_edited_image(params: t_image::EditParams) -> Result<bool, Stri
     Ok(t_image::copy_edited_image_to_clipboard(params).await)
 }
 
-/// copy image to clipboard
+/// copy up to 10 files to the clipboard
 #[tauri::command]
-pub async fn copy_image(file_path: String) -> Result<bool, String> {
-    t_image::copy_file_to_clipboard(&file_path).await
+pub async fn copy_images(
+    app_handle: tauri::AppHandle,
+    file_paths: Vec<String>,
+) -> Result<usize, String> {
+    t_image::copy_files_to_clipboard(&app_handle, file_paths).await
 }
 
 /// rename a file
@@ -778,6 +787,21 @@ pub async fn import_from_drag(folder_id: i64, folder_path: String) -> Result<Opt
     import_url_inner(&url, folder_id, folder_path).await
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DragPayload {
+    pub file_paths: Vec<String>,
+    pub url: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_drag_payload() -> DragPayload {
+    DragPayload {
+        file_paths: crate::t_pasteboard::get_drag_file_paths(),
+        url: crate::t_pasteboard::get_drag_image_url(),
+    }
+}
+
 async fn import_url_inner(url: &str, folder_id: i64, folder_path: String) -> Result<Option<AFile>, String> {
     let response = reqwest::get(url).await
         .map_err(|e| format!("Failed to download image: {}", e))?;
@@ -900,6 +924,9 @@ pub async fn import_file_bytes(
     folder_id: i64,
     folder_path: String,
 ) -> Result<Option<AFile>, String> {
+    if bytes.is_empty() {
+        return Err("Dropped file is empty".to_string());
+    }
     let dest_folder = folder_path.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let new_path = t_utils::save_bytes_with_name(&bytes, &name, &dest_folder)
@@ -913,6 +940,199 @@ pub async fn import_file_bytes(
         let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
         Ok(Some(file))
     }).await.map_err(|e| format!("Failed to save file: {}", e))?
+}
+
+fn import_clipboard_file(
+    file_path: &Path,
+    folder_id: i64,
+    folder_path: &str,
+) -> Result<AFile, String> {
+    let source = file_path
+        .to_str()
+        .ok_or_else(|| format!("Invalid clipboard file path: {}", file_path.display()))?;
+    t_utils::get_file_type(source)
+        .ok_or_else(|| format!("Unsupported file type: {}", file_path.display()))?;
+    let new_path = t_utils::import_file(source, folder_path)
+        .ok_or_else(|| format!("Failed to copy file: {}", file_path.display()))?;
+    let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
+        let _ = std::fs::remove_file(&new_path);
+        format!("Unsupported file type after copy: {}", new_path)
+    })?;
+    let now = chrono::Utc::now().timestamp_millis();
+    match AFile::add_to_db(folder_id, &new_path, file_type, now) {
+        Ok((file, _)) => Ok(file),
+        Err(error) => {
+            let _ = std::fs::remove_file(&new_path);
+            Err(error)
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn has_importable_clipboard(
+    _app_handle: tauri::AppHandle,
+) -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        let Ok(clipboard_data) = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await else {
+            return false;
+        };
+
+        if clipboard_data
+            .file_paths
+            .iter()
+            .any(|path| {
+                std::path::Path::new(path).is_file()
+                    && t_utils::get_file_type(path).is_some()
+            })
+        {
+            return true;
+        }
+
+        if clipboard_data.png.is_some() {
+            return true;
+        }
+    }
+
+    let Ok(mut clipboard) = arboard::Clipboard::new() else {
+        return false;
+    };
+
+    if let Ok(file_paths) = clipboard.get().file_list() {
+        if file_paths.iter().any(|path| {
+            path.is_file()
+                && path
+                    .to_str()
+                    .and_then(t_utils::get_file_type)
+                    .is_some()
+        }) {
+            return true;
+        }
+    }
+
+    clipboard.get_image().is_ok()
+}
+
+/// Import copied image files while preserving their original format and
+/// metadata. Fall back to a PNG only when the clipboard contains pixels
+/// without a backing file, such as a screenshot.
+#[tauri::command]
+pub async fn import_clipboard(
+    _app_handle: tauri::AppHandle,
+    folder_id: i64,
+    folder_path: &str,
+) -> Result<Vec<AFile>, String> {
+    #[cfg(target_os = "linux")]
+    {
+        let clipboard_data = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await?;
+        if !clipboard_data.file_paths.is_empty() {
+            let mut imported = Vec::new();
+            for path in clipboard_data
+                .file_paths
+                .iter()
+                .map(std::path::Path::new)
+                .filter(|path| path.is_file())
+            {
+                let supported = path
+                    .to_str()
+                    .and_then(t_utils::get_file_type)
+                    .is_some();
+                if !supported {
+                    continue;
+                }
+                match import_clipboard_file(path, folder_id, folder_path) {
+                    Ok(file) => imported.push(file),
+                    Err(error) => eprintln!(
+                        "Failed to import clipboard file {}: {}",
+                        path.display(),
+                        error
+                    ),
+                }
+            }
+            if !imported.is_empty() {
+                return Ok(imported);
+            }
+        }
+
+        if let Some(png) = clipboard_data.png {
+            let new_path = t_utils::save_bytes_to_folder(&png, "image/png", folder_path)
+                .ok_or_else(|| "Failed to save clipboard image".to_string())?;
+            let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
+                let _ = std::fs::remove_file(&new_path);
+                format!("Unsupported file type: {}", new_path)
+            })?;
+            let now = chrono::Utc::now().timestamp_millis();
+            return match AFile::add_to_db(folder_id, &new_path, file_type, now) {
+                Ok((file, _)) => Ok(vec![file]),
+                Err(error) => {
+                    let _ = std::fs::remove_file(&new_path);
+                    Err(error)
+                }
+            };
+        }
+
+        if !clipboard_data.file_paths.is_empty() {
+            return Err("Clipboard does not contain supported image files".to_string());
+        }
+    }
+
+    let mut clipboard =
+        arboard::Clipboard::new().map_err(|e| format!("Failed to open clipboard: {}", e))?;
+    if let Ok(file_paths) = clipboard.get().file_list() {
+        if !file_paths.is_empty() {
+            let mut imported = Vec::new();
+            for path in file_paths.iter().filter(|path| path.is_file()) {
+                let supported = path
+                    .to_str()
+                    .and_then(t_utils::get_file_type)
+                    .is_some();
+                if !supported {
+                    continue;
+                }
+                match import_clipboard_file(path, folder_id, folder_path) {
+                    Ok(file) => imported.push(file),
+                    Err(error) => eprintln!(
+                        "Failed to import clipboard file {}: {}",
+                        path.display(),
+                        error
+                    ),
+                }
+            }
+            if !imported.is_empty() {
+                return Ok(imported);
+            }
+            return Err("Clipboard does not contain supported image files".to_string());
+        }
+    }
+
+    let clipboard_image = clipboard
+        .get_image()
+        .map_err(|e| format!("No image found in clipboard: {}", e))?;
+    let width = u32::try_from(clipboard_image.width)
+        .map_err(|_| "Clipboard image width is too large".to_string())?;
+    let height = u32::try_from(clipboard_image.height)
+        .map_err(|_| "Clipboard image height is too large".to_string())?;
+    let rgba = image::RgbaImage::from_raw(width, height, clipboard_image.bytes.into_owned())
+        .ok_or_else(|| "Clipboard image data is invalid".to_string())?;
+
+    let mut bytes = Cursor::new(Vec::new());
+    image::DynamicImage::ImageRgba8(rgba)
+        .write_to(&mut bytes, image::ImageFormat::Png)
+        .map_err(|e| format!("Failed to encode clipboard image: {}", e))?;
+    let new_path = t_utils::save_bytes_to_folder(bytes.get_ref(), "image/png", folder_path)
+        .ok_or_else(|| "Failed to save clipboard image".to_string())?;
+    let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
+        let _ = std::fs::remove_file(&new_path);
+        format!("Unsupported file type: {}", new_path)
+    })?;
+    let now = chrono::Utc::now().timestamp_millis();
+    match AFile::add_to_db(folder_id, &new_path, file_type, now) {
+        Ok((file, _)) => Ok(vec![file]),
+        Err(error) => {
+            let _ = std::fs::remove_file(&new_path);
+            Err(error)
+        }
+    }
 }
 
 /// delete a file
@@ -940,6 +1160,49 @@ pub fn delete_file_permanently(file_id: i64, file_path: &str) -> Result<usize, S
 pub fn delete_db_file(file_id: i64) -> Result<usize, String> {
     // delete the file from db
     AFile::delete(file_id).map_err(|e| format!("Error while deleting file from DB: {}", e))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchDeleteFile {
+    pub file_id: i64,
+    pub file_path: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchDeleteResult {
+    pub deleted_file_ids: Vec<i64>,
+    pub failed_count: usize,
+}
+
+#[tauri::command]
+pub async fn batch_delete_files(
+    files: Vec<BatchDeleteFile>,
+    permanently: bool,
+) -> Result<BatchDeleteResult, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut deleted_file_ids = Vec::with_capacity(files.len());
+        for file in &files {
+            let result = if permanently {
+                t_utils::delete_file_permanently(&file.file_path)
+            } else {
+                t_utils::trash_path(&file.file_path)
+            };
+            if result.is_ok() {
+                deleted_file_ids.push(file.file_id);
+            }
+        }
+
+        AFile::batch_delete(&deleted_file_ids)
+            .map_err(|e| format!("Error while deleting files from DB: {}", e))?;
+        Ok(BatchDeleteResult {
+            failed_count: files.len().saturating_sub(deleted_file_ids.len()),
+            deleted_file_ids,
+        })
+    })
+    .await
+    .map_err(|e| format!("Failed to run batch delete: {}", e))?
 }
 
 /// edit a file's comment
@@ -1249,6 +1512,28 @@ pub fn set_file_rating(file_id: i64, rating: i32) -> Result<usize, String> {
         .map_err(|e| format!("Error while setting file rating: {}", e))
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchFileMetadataUpdate {
+    pub file_ids: Vec<i64>,
+    pub is_favorite: Option<bool>,
+    pub rating: Option<i32>,
+    pub rotate_delta: Option<i32>,
+    pub comment: Option<String>,
+}
+
+#[tauri::command]
+pub fn batch_update_file_metadata(params: BatchFileMetadataUpdate) -> Result<usize, String> {
+    AFile::batch_update_metadata(
+        &params.file_ids,
+        params.is_favorite,
+        params.rating,
+        params.rotate_delta,
+        params.comment.as_deref(),
+    )
+    .map_err(|e| format!("Error while updating file metadata: {}", e))
+}
+
 // tag
 
 /// get all tags
@@ -1302,6 +1587,22 @@ pub fn remove_tag_from_file(file_id: i64, tag_id: i64) -> Result<usize, String> 
         .map_err(|e| format!("Error while removing tag from file: {}", e))
 }
 
+#[tauri::command]
+pub fn get_tag_selection_counts(file_ids: Vec<i64>) -> Result<Vec<ATagSelectionCount>, String> {
+    ATag::get_selection_counts(&file_ids)
+        .map_err(|e| format!("Error while getting tag selection counts: {}", e))
+}
+
+#[tauri::command]
+pub fn apply_tags_to_files(
+    file_ids: Vec<i64>,
+    add_tag_ids: Vec<i64>,
+    remove_tag_ids: Vec<i64>,
+) -> Result<Vec<ATagFileState>, String> {
+    ATag::apply_to_files(&file_ids, &add_tag_ids, &remove_tag_ids)
+        .map_err(|e| format!("Error while applying tags to files: {}", e))
+}
+
 // calendar
 
 /// get camera's taken dates
@@ -1344,7 +1645,7 @@ pub fn get_gps_heatmap_points() -> Result<Vec<t_sqlite::AGpsHeatPoint>, String> 
 /// get package info
 #[tauri::command]
 pub fn get_package_info() -> t_utils::PackageInfo {
-    t_utils::PackageInfo::new()
+    t_utils::PackageInfo::new(GIT_COMMIT_HASH)
 }
 
 /// get the build time

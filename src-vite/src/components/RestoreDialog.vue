@@ -5,17 +5,16 @@
     :height="420"
     @cancel="clickCancel"
   >
-    <div v-if="!parsed" class="flex flex-col items-center justify-center flex-1 text-base-content/50">
-      <button class="mt-3 px-4 py-1.5 rounded-box bg-primary text-primary-content hover:opacity-90 cursor-pointer text-sm" @click="selectFile">
+    <div v-if="!parsed" class="flex flex-col items-center justify-center flex-1">
+      <button class="t-button-primary" @click="selectFile">
         {{ $t('settings.database.restore_select_file') }}
       </button>
     </div>
 
-    <div v-else class="flex flex-col flex-1 min-h-0 overflow-hidden">
+    <div v-else class="flex flex-col flex-1 min-h-0 overflow-hidden select-none">
       <!-- Backup file info -->
-      <div class="text-xs text-base-content/40 mb-2 space-y-0.5">
+      <div class="flex justify-between mb-2 px-1 text-sm text-base-content/30">
         <div>{{ $t('settings.database.restore_file_info', { path: backupFileName }) }}</div>
-        <div>{{ $t('settings.database.restore_created_at', { date: formatTimestamp(parsed.createdAt, t('format.date_time_long')) }) }}</div>
         <div>{{ $t('settings.database.restore_libraries', { count: parsed.libraries.length, size: formatFileSize(totalBackupSize) }) }}</div>
       </div>
 
@@ -35,23 +34,23 @@
           <div class="shrink-0 flex items-center gap-2">
             <span
               v-if="isNewLibrary(lib.name)"
-              class="text-xs px-1.5 py-0.5 rounded bg-success/10 text-success"
+              class="text-xs px-1.5 py-0.5 rounded bg-success/10 text-success/70"
             >
               {{ $t('settings.database.restore_new_library') }}
             </span>
             <span
               v-else
-              class="text-xs px-1.5 py-0.5 rounded bg-warning/10 text-warning"
+              class="text-xs px-1.5 py-0.5 rounded bg-warning/10 text-warning/70"
             >
               {{ $t('settings.database.restore_conflict') }}
             </span>
-            <span class="text-xs text-base-content/40 w-16 text-right">{{ formatFileSize(lib.dbSize) }}</span>
+            <span class="text-xs text-base-content/30 w-16 text-right">{{ formatFileSize(lib.dbSize) }}</span>
           </div>
         </div>
       </div>
 
       <!-- Note -->
-      <div class="text-xs text-base-content/40 mt-2">
+      <div class="text-sm text-warning/70 px-1 mt-2">
         ⚠ {{ $t('settings.database.restore_note') }}
       </div>
     </div>

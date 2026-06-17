@@ -147,9 +147,11 @@ const activeSubmenuIndex = ref(null);
 const activeSubmenuItem = ref(null);
 let submenuCloseTimeout = null;
 let submenuOpenTimeout = null;
+let openRequestId = 0;
 
 // Remove event listener when the component is destroyed
 onBeforeUnmount(() => {
+  openRequestId++;
   document.removeEventListener('mousedown', handleClickOutside, { capture: true });
   document.removeEventListener('keydown', handleKeyDown);
   cancelSubmenuClose();
@@ -184,12 +186,23 @@ const handleKeyDown = (event) => {
 const open = async (x, y) => {
   if (props.disabled) return;
 
-  isDropDown.value = true;
+  const requestId = ++openRequestId;
+  const cancelPendingOpen = () => {
+    if (openRequestId === requestId) openRequestId++;
+  };
+  document.addEventListener('mousedown', cancelPendingOpen, { capture: true, once: true });
 
   // Resolve menu items (call function if provided)
-  resolvedMenuItems.value = typeof props.menuItems === 'function' 
-    ? props.menuItems() 
-    : props.menuItems;
+  try {
+    const menuItems = typeof props.menuItems === 'function'
+      ? props.menuItems()
+      : props.menuItems;
+    resolvedMenuItems.value = await Promise.resolve(menuItems);
+  } finally {
+    document.removeEventListener('mousedown', cancelPendingOpen, { capture: true });
+  }
+  if (openRequestId !== requestId) return;
+  isDropDown.value = true;
 
   await nextTick(); // Ensure menu is rendered before measuring
 
@@ -325,8 +338,8 @@ const positionSubmenu = async (targetEl) => {
 const handleItemMouseEnter = (index, item, event) => {
   cancelSubmenuClose();
   cancelSubmenuOpen();
-  activeSubmenuIndex.value = item.children?.length ? index : null;
-  if (item.children?.length) {
+  activeSubmenuIndex.value = !item.disabled && item.children?.length ? index : null;
+  if (!item.disabled && item.children?.length) {
     const targetEl = event?.currentTarget;
     const openDelay = Number(item.submenuOpenDelay || 0);
     if (openDelay > 0) {
@@ -385,6 +398,7 @@ const handleLeafClick = (item) => {
 };
 
 const handleMainItemClick = (index, item, event) => {
+  if (item.disabled) return;
   if (item.children?.length) {
     cancelSubmenuClose();
     cancelSubmenuOpen();

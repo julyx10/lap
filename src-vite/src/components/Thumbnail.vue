@@ -5,7 +5,7 @@
       isTransitionDisabled ? 'transition-none' : 'transition-all ease-in-out duration-300 ',
       config.settings.grid.style === 0 ? 'p-1 w-fit h-fit' : 'w-full h-full',
       isActive && !isTransitionDisabled
-        ? (uiStore.inputStack.length > 0 ? 'border-base-content/30' : 'border-primary')
+        ? (isContentActive ? 'border-primary' : 'border-primary/50')
         : 'border-transparent',
       config.settings.grid.style === 0 && isSelected ? 'bg-base-100 hover:bg-base-100' : 'hover:bg-base-100/30 hover:text-base-content ',
     ]"
@@ -13,16 +13,18 @@
     @dblclick="(event: MouseEvent) => $emit('dblclicked', { shiftKey: event.shiftKey, metaKey: event.metaKey, ctrlKey: event.ctrlKey })"
     @contextmenu="handleContextMenu"
   >
-    <div v-if="file.thumbnail" 
+    <div
       ref="containerRef"
-      class="rounded-box relative flex items-center justify-center overflow-hidden"
+      class="rounded-box relative flex items-center justify-center overflow-hidden bg-base-200/70"
       :style="layoutStyle"
       @pointerenter="startVideoPreview"
       @pointerleave="stopVideoPreview"
     >
       <!-- image -->
       <img
+        v-if="thumbnailSrc"
         :src="thumbnailSrc"
+        draggable="false"
         :class="{
           'group-hover:scale-115': shouldScaleThumbnail,
           'scale-115': shouldScaleThumbnail && isSelected,
@@ -30,9 +32,12 @@
           'object-cover': isGeometryGridStyle || config.settings.grid.scaling === 1,
           'object-fill': !isGeometryGridStyle && config.settings.grid.scaling === 2,
           'transition-all': !isTransitionDisabled && normalizedRotate === 0,
+          'opacity-0': !isThumbnailLoaded,
+          'opacity-100': isThumbnailLoaded,
         }"
         :style="imgStyle"
         loading="lazy"
+        @load="handleThumbnailLoad"
         @error="retryThumbnail"
       />
       <video
@@ -49,6 +54,7 @@
         }"
         :style="imgStyle"
         :poster="thumbnailSrc"
+        draggable="false"
         muted
         autoplay
         loop
@@ -63,7 +69,7 @@
       <div
         v-if="statusBadges.length > 0"
         class="pointer-events-none absolute inset-x-0 top-0 h-16"
-      />
+      ></div>
       <div
         v-if="statusBadges.length > 0"
         class="pointer-events-none absolute left-0.5 top-0.5 z-10 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-1"
@@ -102,8 +108,8 @@
           <input
             type="checkbox"
             class="checkbox checkbox-sm"
-            :class="file?.isSelected ? 'checkbox-primary' : ''"
-            :checked="Boolean(file?.isSelected)"
+            :class="isSelected ? (isContentActive ? 'checkbox-primary' : 'checkbox-primary opacity-50') : ''"
+            :checked="isSelected"
             @click.stop="(event: MouseEvent) => $emit('select-toggled', event.shiftKey)"
           />
         </label>
@@ -122,21 +128,15 @@
         />
       </div>
     </div>
-    
-    <!-- skeleton for loading thumbnail -->
-    <div v-else 
-      :class="[
-        'relative flex items-center justify-center overflow-hidden skeleton', 
-        config.settings.grid.style === 0 ? 'rounded-box' : '',
-      ]"
-      :style="layoutStyle"
-    ></div>
 
     <!-- label -->
     <div 
       v-if="config.settings.grid.style === 0" 
       class="flex flex-col items-center" 
-      :class="{ 'text-primary': isSelected }"
+      :class="{ 
+        'text-primary': isSelected && isContentActive,
+        'text-primary/50': isSelected && !isContentActive,
+      }"
       :style="{ width: layoutStyle.width }"
     >
       <span 
@@ -192,10 +192,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  showFolderFiles: {
-    type: Boolean,
-    default: false,
-  }
 });
 
 const emit = defineEmits([
@@ -221,12 +217,18 @@ const isVideoFile = computed(() => props.file?.file_type === 2);
 const isGeometryGridStyle = computed(() => config.settings.grid.style === 2 || config.settings.grid.style === 3);
 const shouldScaleThumbnail = computed(() => config.settings.grid.style === 1 || isGeometryGridStyle.value);
 const thumbnailSrc = ref(props.file.thumbnail || '');
+const isThumbnailLoaded = ref(false);
 let thumbnailRetryCount = 0;
 
-watch(() => props.file.thumbnail, (src) => {
-  thumbnailSrc.value = src || '';
+watch(() => props.file.thumbnail, (src = '') => {
+  thumbnailSrc.value = src;
+  isThumbnailLoaded.value = false;
   thumbnailRetryCount = 0;
 });
+
+function handleThumbnailLoad() {
+  isThumbnailLoaded.value = true;
+}
 
 function retryThumbnail() {
   const isThumbnailProtocol = thumbnailSrc.value.startsWith('thumb://localhost')
@@ -236,6 +238,7 @@ function retryThumbnail() {
     return;
   }
   thumbnailRetryCount++;
+  isThumbnailLoaded.value = false;
   thumbnailSrc.value = getThumbUrl(props.file.id, true, config.settings.thumbnailSize);
 }
 
@@ -389,6 +392,9 @@ const imgStyle = computed((): CSSProperties => {
 });
 
 const uiStore = useUIStore();
+const isContentActive = computed(() =>
+  uiStore.activePane === 'content' && uiStore.inputStack.length === 0
+);
 const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
@@ -396,7 +402,6 @@ const menuItems = useFileMenuItems(
   toRef(props, 'file'),
   localeMsg,
   isMac,
-  toRef(props, 'showFolderFiles'),
   t,
   (action) => emit('action', action)
 );
@@ -464,7 +469,7 @@ const statusBadges = computed<ThumbnailBadge[]>(() => {
   if (isVideo) {
     badges.push({
       key: 'duration',
-      icon: IconClock,
+      // icon: IconClock,
       label: formatDuration(props.file.duration),
     });
   }

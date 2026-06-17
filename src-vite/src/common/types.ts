@@ -33,6 +33,7 @@ export interface Album {
     created_at?: number;
     modified_at?: number;
     children?: Folder[];
+    is_accessible?: boolean;
 }
 
 /**

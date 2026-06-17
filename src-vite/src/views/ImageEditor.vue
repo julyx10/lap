@@ -11,11 +11,10 @@
     />
     <div
       v-else
-      class="h-10 shrink-0 flex items-center justify-between px-4 select-none"
-      :class="isMac ? 'pl-20' : ''"
+      class="h-10 shrink-0 flex items-center justify-center px-20 select-none"
       data-tauri-drag-region
     >
-      <div class="text-sm font-medium text-base-content/70 truncate">
+      <div class="min-w-0 max-w-full text-center text-sm font-medium text-base-content/70 truncate" data-tauri-drag-region>
         {{ $t('msgbox.image_editor.title') }} - {{ shortenFilename(fileInfo?.name || '', 32) }}
       </div>
     </div>
@@ -65,19 +64,19 @@
 
               <div
                 v-if="showDiffPreview && canShowDiffPreview"
-                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60 left-3 top-3"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/70 left-3 top-3"
               >
                 {{ $t('msgbox.image_editor.original') }}
               </div>
               <div
                 v-if="showDiffPreview && canShowDiffPreview"
-                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60 right-3 top-3"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/70 right-3 top-3"
               >
                 {{ currentPresetLabel || $t('msgbox.image_editor.adjusted') }}
               </div>
               <div
                 v-if="imageReady && !(showDiffPreview && canShowDiffPreview) && currentPresetLabel"
-                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/60 right-3 top-3"
+                class="pointer-events-none absolute z-50 rounded-box bg-base-100/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-base-content/70 right-3 top-3"
               >
                 {{ currentPresetLabel }}
               </div>
@@ -170,7 +169,7 @@
         <template v-if="activeEditorTab === 'edit'">
         <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
           <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.transform') }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.transform') }}</div>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -210,7 +209,7 @@
 
         <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
           <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.crop') }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.crop') }}</div>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -227,7 +226,7 @@
               :tooltip="cropApplied ? $t('msgbox.image_editor.restore') : $t('msgbox.image_editor.crop')"
               @click="toggleCropMode"
             />
-            <div class="text-xs leading-5 text-base-content/45">
+            <div class="text-xs leading-5 text-base-content/30">
               {{ cropApplied ? $t('msgbox.image_editor.crop_applied_hint') : $t('msgbox.image_editor.crop_hint') }}
             </div>
           </div>
@@ -275,7 +274,7 @@
 
         <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
           <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.resize') }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.resize') }}</div>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -336,7 +335,7 @@
         <template v-else>
         <section class="rounded-box p-3 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
           <div class="flex items-center justify-between gap-2">
-            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.histogram') }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.histogram') }}</div>
           </div>
 
           <ImageHistogram
@@ -353,7 +352,7 @@
 
         <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.presets.title') }}</span>
+            <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.presets.title') }}</span>
             <div class="flex items-center gap-1">
               <TButton
                 buttonSize="small"
@@ -398,7 +397,7 @@
               </div>
               <div
                 class="mt-1 text-[9px] text-center truncate font-medium transition-colors uppercase tracking-tight"
-                :class="selectedPreset === option.value ? 'text-primary' : 'text-base-content/50 group-hover:text-base-content'"
+                :class="selectedPreset === option.value ? 'text-primary' : 'text-base-content/70 group-hover:text-base-content'"
               >
                 {{ option.label }}
               </div>
@@ -408,7 +407,7 @@
 
         <section class="rounded-box p-3 space-y-2 border border-base-content/5 shadow-sm bg-base-300/30">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">{{ $t('msgbox.image_editor.adjustments') }}</span>
+            <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/30">{{ $t('msgbox.image_editor.adjustments') }}</span>
             <TButton
               buttonSize="small"
               :icon="IconRestore"
@@ -421,10 +420,10 @@
           <div class="space-y-4 overflow-hidden">
             <div class="space-y-3">
               <div v-for="adj in lightSliders" :key="adj.key" class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 items-center">
-                <div class="font-medium text-base-content/40 tracking-wide text-xs">{{ adj.label }}</div>
+                <div class="font-medium text-base-content/70 tracking-wide text-xs">{{ adj.label }}</div>
                 <div class="flex items-center gap-2 pr-2 min-w-0">
                   <SliderInput v-model="adj.model.value" :min="adj.min" :max="adj.max" :step="adj.step" class="flex-1 min-w-0 w-full" />
-                  <span class="text-[10px] font-mono text-base-content/60 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
+                  <span class="text-[10px] font-mono text-base-content/70 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
                 </div>
               </div>
             </div>
@@ -433,10 +432,10 @@
 
             <div class="space-y-3">
               <div v-for="adj in colorSliders" :key="adj.key" class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 items-center">
-                <div class="font-medium text-base-content/40 tracking-wide text-xs">{{ adj.label }}</div>
+                <div class="font-medium text-base-content/70 tracking-wide text-xs">{{ adj.label }}</div>
                 <div class="flex items-center gap-2 pr-2 min-w-0">
                   <SliderInput v-model="adj.model.value" :min="adj.min" :max="adj.max" :step="adj.step" class="flex-1 min-w-0 w-full" />
-                  <span class="text-[10px] font-mono text-base-content/60 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
+                  <span class="text-[10px] font-mono text-base-content/70 w-8 text-right shrink-0">{{ adj.valueDisplay }}</span>
                 </div>
               </div>
             </div>
@@ -510,7 +509,7 @@ import { useRouter } from 'vue-router';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { isWin, isMac, isLinux, setTheme, SCALE_VALUES, getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, getThumbUrl, shouldUseBackendPreview } from '@/common/utils';
+import { isWin, isLinux, setTheme, SCALE_VALUES, getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, getThumbUrl, shouldUseBackendPreview } from '@/common/utils';
 import { editImage, checkFileExists, getFileInfo } from '@/common/api';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit as tauriEmit, listen } from '@tauri-apps/api/event';

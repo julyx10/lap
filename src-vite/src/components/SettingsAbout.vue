@@ -20,7 +20,7 @@
             {{ $t('settings.about.package.version') }}
           </div>
           <div class="flex items-center gap-2">
-            <span>{{ packageInfo.version }}</span>
+            <span>{{ displayVersion }}</span>
             <button
               class="badge badge-sm border-0 px-2 py-2 font-medium transition-colors hover:text-primary"
               :class="isUpdateActionEnabled ? 'badge-primary cursor-pointer' : 'badge-neutral/60 cursor-pointer'"
@@ -104,12 +104,18 @@ const packageInfo = ref<any>({
   name: '',
   description: '',
   version: '',
+  commit_hash: '',
   license: '',
   authors: [],
   homepage: '',
   repository: ''
 });
 const buildTime = ref('');
+const displayVersion = computed(() => {
+  const version = packageInfo.value.version || '';
+  const commitHash = packageInfo.value.commit_hash || packageInfo.value.commitHash || '';
+  return commitHash ? `${version} (${commitHash})` : version;
+});
 const privacyUrl = computed(() => {
   const repo = packageInfo.value.repository || '';
   if (!repo) return 'https://github.com/julyx10/lap/blob/main/PRIVACY.md';

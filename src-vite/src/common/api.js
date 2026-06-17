@@ -429,6 +429,15 @@ export async function fetchFolder(path, isRecursive, sort = 0) {
   return null;
 }
 
+export async function isDirectoryAccessible(path) {
+  try {
+    return Boolean(await invoke('is_directory_accessible', { path }));
+  } catch (error) {
+    console.error('isDirectoryAccessible error:', error);
+    return false;
+  }
+}
+
 // expand the final folder path, return the final folder
 export async function expandFinalFolder(rootFolder, finalPath) {
   let relativePath = finalPath.replace(rootFolder.path, '');
@@ -740,13 +749,13 @@ export async function copyEditedImage(params) {
   }
 }
 
-// copy an image to clipboard
-export async function copyImage(filePath) {
+// copy up to 10 files to clipboard
+export async function copyImages(filePaths) {
   try {
-    return await invoke('copy_image', { filePath });
+    return await invoke('copy_images', { filePaths });
   } catch (error) {
-    console.error('Failed to copy image to clipboard:', error);
-    return false;
+    console.error('Failed to copy files to clipboard:', error);
+    return 0;
   }
 }
 
@@ -824,6 +833,15 @@ export async function deleteDbFile(fileId) {
     return await invoke('delete_db_file', { fileId });
   } catch (error) {
     console.error('deleteDbFile error:', error);
+  }
+}
+
+export async function batchDeleteFiles(files, permanently = false) {
+  try {
+    return await invoke('batch_delete_files', { files, permanently });
+  } catch (error) {
+    console.error('batchDeleteFiles error:', error);
+    return null;
   }
 }
 
@@ -930,6 +948,19 @@ export async function importFileBytes(bytes, name, folderId, folderPath) {
   }
 }
 
+export async function hasImportableClipboard() {
+  try {
+    return Boolean(await invoke('has_importable_clipboard'));
+  } catch (error) {
+    console.error('hasImportableClipboard error:', error);
+    return false;
+  }
+}
+
+export async function importClipboard(folderId, folderPath) {
+  return await invoke('import_clipboard', { folderId, folderPath });
+}
+
 export async function importFromDrag(folderId, folderPath) {
   try {
     const result = await invoke('import_from_drag', { folderId, folderPath });
@@ -937,6 +968,15 @@ export async function importFromDrag(folderId, folderPath) {
   } catch (error) {
     console.error('importFromDrag error:', error);
     return null;
+  }
+}
+
+export async function getDragPayload() {
+  try {
+    return await invoke('get_drag_payload');
+  } catch (error) {
+    console.error('getDragPayload error:', error);
+    return { filePaths: [], url: null };
   }
 }
 
@@ -1083,6 +1123,15 @@ export async function setFileRating(fileId, rating) {
   return null;
 }
 
+export async function batchUpdateFileMetadata(params) {
+  try {
+    return await invoke('batch_update_file_metadata', { params });
+  } catch (error) {
+    console.error('Failed to update file metadata:', error);
+    return null;
+  }
+}
+
 // tags
 
 // get all tags
@@ -1178,6 +1227,24 @@ export async function removeTagFromFile(fileId, tagId) {
     console.error('Failed to remove tag from file:', error);
   }
   return null;
+}
+
+export async function getTagSelectionCounts(fileIds) {
+  try {
+    return await invoke('get_tag_selection_counts', { fileIds });
+  } catch (error) {
+    console.error('Failed to get tag selection counts:', error);
+    return null;
+  }
+}
+
+export async function applyTagsToFiles(fileIds, addTagIds, removeTagIds) {
+  try {
+    return await invoke('apply_tags_to_files', { fileIds, addTagIds, removeTagIds });
+  } catch (error) {
+    console.error('Failed to apply tags to files:', error);
+    return null;
+  }
 }
 
 // calendar

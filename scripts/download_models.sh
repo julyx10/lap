@@ -25,7 +25,11 @@ for entry in "${MODELS[@]}"; do
     echo "✓ $FILENAME already exists, skipping."
   else
     echo "⬇ Downloading $FILENAME..."
-    curl -L -o "$FILEPATH" "$URL"
+    CURL_ARGS=(-L)
+    if [ -n "${HF_TOKEN:-}" ]; then
+      CURL_ARGS+=(-H "Authorization: Bearer $HF_TOKEN")
+    fi
+    curl "${CURL_ARGS[@]}" -o "$FILEPATH" "$URL"
     echo "✓ $FILENAME done."
   fi
 done

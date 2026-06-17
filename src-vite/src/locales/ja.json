@@ -15,6 +15,10 @@
   "album": {
     "all_files": "すべてのファイル",
     "album_list": "アルバム",
+    "folder_unavailable": {
+      "title": "フォルダーを利用できません",
+      "description": "ストレージデバイスを再接続するか、フォルダーの場所を確認してください。"
+    },
     "edit": {
       "title_add": "アルバムを追加",
       "title": "アルバムを編集",
@@ -115,6 +119,7 @@
     "search_tags": "タグを検索",
     "enter_new_tag_name": "新しいタグ名を入力",
     "not_found": "タグが見つかりません",
+    "load_failed": "タグの状態を読み込めませんでした。ダイアログを閉じて再試行してください。",
     "smart_group": "スマートタグ",
     "custom_group": "カスタムタグ",
     "smart_items": {
@@ -244,8 +249,18 @@
     "empty_title": "このリストは空です",
     "empty_desc": "ファイルを追加するか、現在の絞り込み条件を更新してここに項目を表示してください。",
     "select_hint": "ファイルが選択されていません",
+    "deselect": "選択解除",
     "select_mode_entered": "複数選択モードがオンになりました",
-    "select_limit_hint": "先頭 {count} 件のファイルを選択しました",
+    "selection_load_failed": "選択するすべてのファイルを読み込めませんでした。再試行してください。",
+    "large_batch": {
+      "title": "一括操作の確認",
+      "content": "{count} 個のファイルを処理します。時間がかかる場合があります。続行しますか？",
+      "ok": "続行"
+    },
+    "drag_action": {
+      "copy": "コピー",
+      "move": "移動"
+    },
     "edit_disabled": "編集するには画像を1つ選択してください",
     "type_image": "枚の画像",
     "type_images": "枚の画像",
@@ -256,7 +271,7 @@
     "unfavorite_all": "お気に入り解除",
     "action": "操作",
     "file_actions": "ファイル操作",
-    "labels_and_display": "ラベルと表示",
+    "organize": "整理",
     "tag_all": "タグ",
     "dedup": {
       "title": "重複",
@@ -295,6 +310,12 @@
     "not_found": {
       "albums": "アルバムが見つかりません。画像や動画を含むフォルダーを追加してください",
       "files": "ファイルが見つかりません",
+      "image_files": "画像ファイルが見つかりません",
+      "raw_files": "RAWファイルが見つかりません",
+      "video_files": "動画ファイルが見つかりません",
+      "image_raw_files": "画像またはRAWファイルが見つかりません",
+      "image_video_files": "画像または動画ファイルが見つかりません",
+      "raw_video_files": "RAWまたは動画ファイルが見つかりません",
       "folder_files": "このフォルダーにはファイルがありません",
       "folder_files_hint": "サブフォルダを閲覧するか、設定で「サブフォルダー内のファイルを表示」を有効にしてください。",
       "folders": "フォルダーが見つかりません",
@@ -318,7 +339,8 @@
       "failed": "表紙の設定に失敗しました"
     },
     "copy_image": {
-      "success": "画像をコピーしました",
+      "success": "{count} 件のファイルをクリップボードにコピーしました",
+      "limit": "一度にコピーできるファイルは最大 {count} 件です。",
       "failed": "画像のコピーに失敗しました。未対応の形式か、ファイルが破損しています。"
     },
     "save_image": {
@@ -371,17 +393,18 @@
       "new_folder": "新しいフォルダー...",
       "view_in_new_window": "新しいウィンドウで表示...",
       "copy": "クリップボードにコピー",
+      "paste": "ペースト",
       "edit_image": "画像を編集...",
       "open_image_in_app": "{app} で画像を開く...",
       "open_video_in_app": "{app} で動画を開く...",
       "find_similar_images": "類似画像を検索",
       "find_person_images": "この人の画像を検索",
-      "find_album_folder": "アルバムフォルダーを開く",
       "on_this_day": "この日",
       "print": "画像を印刷...",
       "rename": "名前を変更",
       "move_to": "移動...",
       "copy_to": "コピー...",
+      "move_copy": "移動 / コピー",
       "move_within_library": "ライブラリ内で移動...",
       "move_to_folder": "フォルダに移動...",
       "copy_to_folder": "フォルダにコピー...",
@@ -453,8 +476,9 @@
     },
     "drop_import": {
       "title": "インポートできません",
-      "message": "最初にアルバムフォルダを選択してください。ファイルは特定のアルバムフォルダにのみインポートできます。",
+      "message": "最初にアルバムを選択してください。ファイルは特定のアルバムにのみインポートできます。",
       "success": "{count} ファイルをインポートしました",
+      "no_clipboard_image": "クリップボードに画像がありません。",
       "overlay": "ファイルをドロップしてインポート",
       "no_files": "ファイルをインポートできませんでした。画像ファイルをドロップしてください。"
     },
@@ -475,8 +499,8 @@
       "add": "追加",
       "placeholder": "ライブラリ名",
       "max_limit_reached": "上限に達しました",
-      "summary": "{count} 個のライブラリ · {size}",
-      "summary_loading": "{count} 個のライブラリ · サイズを計算中...",
+      "summary": "{count} 個のライブラリ · {files} 個のファイル · {size}",
+      "summary_loading": "{count} 個のライブラリ · ファイル数とサイズを計算中...",
       "created_at_lower": "作成日時",
       "calculating_stats": "ライブラリサイズを計算中...",
       "library_file_path": "ファイルパス",
@@ -532,7 +556,8 @@
     "copy_to_folder": {
       "title": "フォルダにコピー",
       "success": "'{source}' を '{dest}' にコピーしました。",
-      "error": "'{source}' の '{dest}' へのコピーに失敗しました。"
+      "error": "'{source}' の '{dest}' へのコピーに失敗しました。",
+      "index_error": "{count} 個のファイルはコピーされましたが、ライブラリのインデックスに追加できませんでした。"
     },
     "file_conflict": {
       "title": "ファイルが既に存在します",
@@ -783,11 +808,6 @@
       "months": "{count} ヶ月前",
       "years": "{count} 年前"
     }
-  },
-  "print_view": {
-    "title": "印刷...",
-    "loading": "プレビューを読み込み中...",
-    "load_failed": "印刷用の画像を読み込めませんでした。"
   },
   "image_viewer": {
     "title": "画像ビューア",
@@ -1079,6 +1099,7 @@
         "open_external_app": "外部アプリで開く",
         "edit_image": "画像を編集",
         "copy_file": "クリップボードにコピー",
+        "paste_file": "ペースト",
         "reveal_in_finder": "Finderで表示",
         "reveal_in_file_manager": "ファイルマネージャーで表示",
         "select_all": "すべて選択",
@@ -1136,14 +1157,14 @@
       "restore_hint": "ZIPバックアップファイルからライブラリを復元",
       "restore_dialog_title": "バックアップから復元",
       "restore_select_file": "バックアップファイルを選択",
-      "restore_file_info": "バックアップファイル：{path}",
+      "restore_file_info": "バックアップ：{path}",
       "restore_created_at": "作成日時：{date}",
-      "restore_libraries": "ライブラリ：{count} 個（{size}）",
+      "restore_libraries": "{count} 個のライブラリ（{size}）",
       "restore_new_library": "新しいライブラリ",
       "restore_conflict": "既存 → 自動的に名前変更",
       "restore_restoring": "復元中...",
       "restore_success": "復元完了。{count} 個のライブラリを復元：{names}",
-      "restore_note": "復元されたライブラリは既存のものに追加されます。既存のデータは上書きされません。"
+      "restore_note": "名前が重複するライブラリは名前が変更され、既存のデータは上書きされません。"
     },
     "face_recognition": {
       "title": "人物検索",

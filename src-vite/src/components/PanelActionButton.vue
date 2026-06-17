@@ -39,9 +39,9 @@ const emit = defineEmits<{
 
 const buttonClass = computed(() => {
   if (props.disabled) return 'text-base-content/30';
-  if (props.danger) return 'text-error hover:bg-error/10';
-  if (props.primary) return 'bg-primary text-primary-content hover:bg-primary/90 cursor-pointer';
-  if (props.selected) return 'bg-base-100/30 text-base-content';
-  return 'text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer';
+  if (props.danger) return 'text-error/70 hover:text-error hover:bg-error/10 cursor-pointer';
+  if (props.primary) return 'text-base-content/70 bg-primary/70 hover:text-base-content hover:bg-primary cursor-pointer';
+  if (props.selected) return 'text-base-content/70 bg-base-100/30 hover:text-base-content cursor-pointer';
+  return 'text-base-content/70 hover:bg-base-100 hover:text-base-content cursor-pointer';
 });
 </script>

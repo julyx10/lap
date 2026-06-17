@@ -15,6 +15,10 @@
   "album": {
     "all_files": "Todos los archivos",
     "album_list": "Álbumes",
+    "folder_unavailable": {
+      "title": "Carpeta no disponible",
+      "description": "Vuelve a conectar el dispositivo de almacenamiento o comprueba la ubicación de la carpeta."
+    },
     "edit": {
       "title_add": "Añadir álbum",
       "title": "Editar álbum",
@@ -115,6 +119,7 @@
     "search_tags": "Buscar etiquetas",
     "enter_new_tag_name": "Introduce nuevo nombre",
     "not_found": "No se encontraron etiquetas",
+    "load_failed": "No se pudo cargar el estado de las etiquetas. Cierra este diálogo e inténtalo de nuevo.",
     "smart_group": "Etiquetas inteligentes",
     "custom_group": "Etiquetas personalizadas",
     "smart_items": {
@@ -244,8 +249,18 @@
     "empty_title": "Esta lista está vacía",
     "empty_desc": "Agrega archivos o actualiza el filtro actual para mostrar elementos aquí.",
     "select_hint": "No hay archivos seleccionados",
+    "deselect": "Desmarcar",
     "select_mode_entered": "El modo de selección múltiple está activado",
-    "select_limit_hint": "Se seleccionaron los primeros {count} archivos",
+    "selection_load_failed": "No se pudieron cargar todos los archivos para seleccionarlos. Inténtalo de nuevo.",
+    "large_batch": {
+      "title": "Confirmar operación masiva",
+      "content": "Esta operación procesará {count} archivos y puede tardar. ¿Continuar?",
+      "ok": "Continuar"
+    },
+    "drag_action": {
+      "copy": "Copiar",
+      "move": "Mover"
+    },
     "edit_disabled": "Selecciona una sola imagen para editar",
     "type_image": "Imagen",
     "type_images": "Imágenes",
@@ -256,7 +271,7 @@
     "unfavorite_all": "Quitar",
     "action": "Acción",
     "file_actions": "Acciones de archivo",
-    "labels_and_display": "Etiquetas y visualización",
+    "organize": "Organizar",
     "tag_all": "Etiqueta",
     "dedup": {
       "title": "Duplicados",
@@ -295,6 +310,12 @@
     "not_found": {
       "albums": "No se encontraron álbumes. Añade una carpeta con imágenes o videos",
       "files": "No se encontraron archivos",
+      "image_files": "No se encontraron archivos de imagen",
+      "raw_files": "No se encontraron archivos RAW",
+      "video_files": "No se encontraron archivos de video",
+      "image_raw_files": "No se encontraron archivos de imagen ni RAW",
+      "image_video_files": "No se encontraron archivos de imagen ni video",
+      "raw_video_files": "No se encontraron archivos RAW ni de video",
       "folder_files": "Esta carpeta no contiene archivos",
       "folder_files_hint": "Explore las subcarpetas o active 'Mostrar archivos de subcarpetas' en Configuración.",
       "folders": "No se encontraron carpetas",
@@ -318,7 +339,8 @@
       "failed": "Fallo al establecer portada"
     },
     "copy_image": {
-      "success": "Imagen copiada",
+      "success": "{count} archivo(s) copiado(s) al portapapeles",
+      "limit": "Puedes copiar hasta {count} archivos a la vez.",
       "failed": "No se pudo copiar la imagen. Formato no compatible o archivo dañado."
     },
     "save_image": {
@@ -371,17 +393,18 @@
       "new_folder": "Nueva carpeta...",
       "view_in_new_window": "Ver en nueva ventana...",
       "copy": "Copiar a portapapeles",
+      "paste": "Pegar",
       "edit_image": "Editar imagen...",
       "open_image_in_app": "Abrir imagen en {app}...",
       "open_video_in_app": "Abrir video en {app}...",
       "find_similar_images": "Buscar similares",
       "find_person_images": "Buscar fotos de persona",
-      "find_album_folder": "Buscar carpeta de álbum",
       "on_this_day": "Un día como hoy",
       "print": "Imprimir imagen...",
       "rename": "Renombrar",
       "move_to": "Mover a...",
       "copy_to": "Copiar a...",
+      "move_copy": "Mover / Copiar",
       "move_within_library": "Mover en la biblioteca...",
       "move_to_folder": "Mover a carpeta...",
       "copy_to_folder": "Copiar a carpeta...",
@@ -453,8 +476,9 @@
     },
     "drop_import": {
       "title": "No se pueden importar archivos",
-      "message": "Selecciona primero una carpeta de álbum. Los archivos solo se pueden importar en una carpeta de álbum específica.",
+      "message": "Selecciona primero un álbum. Los archivos solo se pueden importar en un álbum específico.",
       "success": "{count} archivo(s) importado(s)",
+      "no_clipboard_image": "El portapapeles no contiene ninguna imagen.",
       "overlay": "Suelta los archivos para importar",
       "no_files": "No se pudieron importar archivos. Asegúrate de soltar archivos de imagen."
     },
@@ -475,8 +499,8 @@
       "add": "Añadir",
       "placeholder": "Nombre de biblioteca",
       "max_limit_reached": "Límite alcanzado",
-      "summary": "{count} bibliotecas · {size}",
-      "summary_loading": "{count} bibliotecas · calculando tamaño...",
+      "summary": "{count} bibliotecas · {files} archivos · {size}",
+      "summary_loading": "{count} bibliotecas · calculando archivos y tamaño...",
       "created_at_lower": "creado el",
       "calculating_stats": "Calculando el tamano de la biblioteca...",
       "library_file_path": "Ruta archivo",
@@ -532,7 +556,8 @@
     "copy_to_folder": {
       "title": "Copiar a carpeta",
       "success": "Se copió '{source}' a '{dest}'.",
-      "error": "Error al copiar '{source}' a '{dest}'."
+      "error": "Error al copiar '{source}' a '{dest}'.",
+      "index_error": "Se copiaron {count} archivo(s), pero no se pudieron añadir al índice de la biblioteca."
     },
     "file_conflict": {
       "title": "El archivo ya existe",
@@ -783,11 +808,6 @@
       "months": "hace {count} meses",
       "years": "hace {count} años"
     }
-  },
-  "print_view": {
-    "title": "Imprimir...",
-    "loading": "Cargando vista previa...",
-    "load_failed": "No se pudo cargar la imagen para imprimir."
   },
   "image_viewer": {
     "title": "Visor",
@@ -1079,6 +1099,7 @@
         "open_external_app": "Abrir en app externa",
         "edit_image": "Editar imagen",
         "copy_file": "Copiar al portapapeles",
+        "paste_file": "Pegar",
         "reveal_in_finder": "Mostrar en Finder",
         "reveal_in_file_manager": "Mostrar en el administrador de archivos",
         "select_all": "Seleccionar todo",
@@ -1136,14 +1157,14 @@
       "restore_hint": "Restaurar bibliotecas desde un archivo ZIP",
       "restore_dialog_title": "Restaurar desde copia de seguridad",
       "restore_select_file": "Seleccionar archivo de copia",
-      "restore_file_info": "Archivo de copia: {path}",
+      "restore_file_info": "Copia: {path}",
       "restore_created_at": "Creado: {date}",
-      "restore_libraries": "Bibliotecas: {count} ({size})",
+      "restore_libraries": "{count} bibliotecas ({size})",
       "restore_new_library": "Nueva biblioteca",
       "restore_conflict": "Ya existe → se renombrará",
       "restore_restoring": "Restaurando...",
       "restore_success": "Restauración completada. {count} bibliotecas restauradas: {names}",
-      "restore_note": "Las bibliotecas restauradas se agregan junto a las existentes. Los datos existentes no se sobrescriben."
+      "restore_note": "Las bibliotecas con nombres conflictivos se renombrarán y los datos existentes no se sobrescribirán."
     },
     "face_recognition": {
       "title": "Búsqueda de personas",

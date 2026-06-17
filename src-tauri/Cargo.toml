@@ -1,7 +1,7 @@
 [package]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 name = "Lap"
-version = "0.2.3"
+version = "0.2.4"
 description = "An offline-first photo manager for large local libraries."
 homepage = "https://julyx10.github.io/lap"
 repository = "https://github.com/julyx10/lap"
@@ -12,6 +12,7 @@ build = "build.rs"
 
 [build-dependencies]
 cc = "1"
+pkg-config = "0.3"
 tauri-build = { version = "2", features = [] }
 
 [profile.release]
@@ -73,6 +74,12 @@ blake3 = "1.8.3"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 jxl-oxide = { version = "0.12.5", features = ["image"] }
 libc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+percent-encoding = "2.3.1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+clipboard-win = "5.4.1"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

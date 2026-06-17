@@ -3,7 +3,7 @@
     <!-- Header & Close -->
     <div class="flex items-center w-full shrink-0 px-2 mb-2">
       <div class="flex-1 pl-1">
-        <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-base-content/35">
+        <span class="text-sm font-semibold text-base-content/70">
           {{ $t('file_info.title') }}
         </span>
       </div>
@@ -61,7 +61,7 @@
               </div>
               <span
                 v-if="previewTagLabel"
-                class="inline-flex shrink-0 items-center rounded-box border border-base-content/20 bg-base-300/80 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/80"
+                class="inline-flex shrink-0 items-center rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/30"
               >
                 {{ previewTagLabel }}
               </span>
@@ -116,7 +116,7 @@
                 <div v-if="!fileInfo?.thumbnail && !showVideoPreview" class="flex h-full w-full items-center justify-center bg-base-content/5">
                   <component
                     :is="fileInfo?.file_type === 2 ? IconVideo : IconPhoto"
-                    class="w-10 h-10 text-base-content/20"
+                    class="w-10 h-10 text-base-content/30"
                   />
                 </div>
               </div>
@@ -165,9 +165,9 @@
           @after-enter="onAfterEnter"
           @leave="onLeave"
         >
-          <div v-if="showBasicInfoPanel" class="grid grid-cols-[80px_1fr] gap-y-1 gap-x-4 text-xs overflow-hidden">
+          <div v-if="showBasicInfoPanel" class="grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4 text-xs overflow-hidden">
             <!-- Name -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.name') }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.name') }}</div>
             <div class="group/field flex items-center gap-1">
               <div
                 v-if="isRenaming"
@@ -176,7 +176,7 @@
                 <input
                   ref="renameInputRef"
                   v-model="renamingName"
-                  class="font-bold text-xs text-base-content input input-xs input-bordered p-1 h-6 leading-6 w-full min-w-0"
+                  class="text-[12px] text-base-content input input-xs input-bordered p-1 h-6 leading-6 w-full min-w-0"
                   @blur="finishRename"
                   @keydown.enter="finishRename"
                   @keydown.esc="cancelRename"
@@ -184,11 +184,11 @@
                 />
                 <span
                   v-if="renamingExt"
-                  class="ml-1 text-xs font-semibold text-base-content/45 whitespace-nowrap"
+                  class="ml-1 text-[12px] text-base-content/70 whitespace-nowrap"
                 >.{{ renamingExt }}</span>
               </div>
               <span v-else 
-                class="font-semibold text-xs text-base-content/65 break-all flex-1 min-w-0"
+                class="text-[12px] font-medium text-base-content/80 break-all flex-1 min-w-0"
               >{{ fileInfo?.name }}</span>
               <TButton
                 v-if="!isRenaming"
@@ -200,25 +200,12 @@
               />
             </div>
 
-            <!-- Album -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.album_name') }}</div>
-            <div class="group/field flex items-center gap-1 min-w-0">
-              <span class="flex-1 min-w-0 text-xs font-semibold text-base-content/65 break-all">{{ fileInfo?.album_name }}</span>
-              <TButton
-                :icon="IconEdit"
-                :tooltip="$t('menu.album.edit')"
-                :buttonSize="'small'"
-                class="shrink-0 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
-                @click.stop="emit('editAlbum', fileInfo?.album_id)"
-              />
-            </div>
-
             <!-- Path -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.folder') }}</div>
-            <div class="group/field flex items-center gap-1 min-w-0">
-              <IconFolderExpanded class="w-3.5 h-3.5 shrink-0 text-base-content/65" />
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.folder') }}</div>
+            <div class="group/field flex items-center gap-1 min-w-0 min-h-6">
+              <IconFolderExpanded class="w-3.5 h-3.5 shrink-0 text-base-content/70" />
               <div ref="folderBreadcrumbContainerRef" class="relative min-w-0 flex-1 overflow-hidden">
-                <div class="flex items-center whitespace-nowrap text-xs font-semibold text-base-content/65">
+                <div class="flex items-center whitespace-nowrap text-[12px] font-medium text-base-content/75">
                   <template v-if="folderBreadcrumbStartIndex > 0">
                     <span>…</span>
                     <span class="mx-1 text-base-content/30">&gt;</span>
@@ -240,7 +227,7 @@
                 </div>
                 <div
                   ref="folderBreadcrumbMeasureRef"
-                  class="pointer-events-none invisible absolute left-0 top-0 flex items-center whitespace-nowrap text-xs font-semibold"
+                  class="pointer-events-none invisible absolute left-0 top-0 flex items-center whitespace-nowrap"
                   aria-hidden="true"
                 >
                   <span data-breadcrumb-ellipsis>…<span class="mx-1">&gt;</span></span>
@@ -253,60 +240,82 @@
                   ><span v-if="idx > 0" class="mx-1">&gt;</span>{{ item.label }}</span>
                 </div>
               </div>
-              <TButton
+              <!-- <TButton
                 :icon="IconExternal"
                 :tooltip="isMac ? $t('menu.file.reveal_in_finder') : $t('menu.file.reveal_in_file_explorer')"
                 :buttonSize="'small'"
                 class="shrink-0 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
                 @click.stop="revealFileInFolder"
+              /> -->
+            </div>
+
+            <!-- Album -->
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.album_name') }}</div>
+            <div class="group/field flex items-center gap-1 min-w-0">
+              <span class="flex-1 min-w-0 text-[12px] font-medium text-base-content/80 break-all">{{ fileInfo?.album_name }}</span>
+              <TButton
+                :icon="IconEdit"
+                :tooltip="$t('menu.album.edit')"
+                :buttonSize="'small'"
+                class="shrink-0 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/general:opacity-30 group-hover/general:pointer-events-auto group-hover/field:opacity-100! group-focus-within/field:opacity-100! group-focus-within/field:pointer-events-auto"
+                @click.stop="emit('editAlbum', fileInfo?.album_id)"
               />
             </div>
 
             <!-- Size -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.size') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatFileSize(fileInfo?.size) }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.size') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ formatFileSize(fileInfo?.size) }}</div>
 
             <!-- Dimension -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.dimension') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatDimensionText(fileInfo?.width, fileInfo?.height, true) }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.dimension') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ formatDimensionText(fileInfo?.width, fileInfo?.height, true) }}</div>
 
             <!-- Duration -->
             <template v-if="fileInfo?.file_type === 2">
-              <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.duration') }}</div>
-              <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatDuration(fileInfo?.duration) }}</div>
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.duration') }}</div>
+              <div class="flex items-center text-[12px] text-base-content/75">{{ formatDuration(fileInfo?.duration) }}</div>
             </template>
 
-            <!-- Created At -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.created_at') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatTimestamp(fileInfo?.created_at, $t('format.date_time')) }}</div>
+            <div class="col-span-2 mt-2 border-t border-base-content/5 pt-2">
+              <div class="grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4">
+                <!-- Created At -->
+                <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.created_at') }}</div>
+                <div class="flex items-center text-[12px] text-base-content/75">{{ formatTimestamp(fileInfo?.created_at, $t('format.date_time')) }}</div>
 
-            <!-- Modified At -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.modified_at') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatTimestamp(fileInfo?.modified_at, $t('format.date_time')) }}</div>
+                <!-- Modified At -->
+                <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.modified_at') }}</div>
+                <div class="flex items-center text-[12px] text-base-content/75">{{ formatTimestamp(fileInfo?.modified_at, $t('format.date_time')) }}</div>
 
-            <!-- Last Scan -->
-            <template v-if="fileInfo?.last_scan_time && fileInfo.last_scan_time > 0">
-              <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.last_scan_time') }}</div>
-              <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatRelativeTime(fileInfo.last_scan_time / 1000, $t) }}</div>
-            </template>
+                <!-- Last Scan -->
+                <template v-if="fileInfo?.last_scan_time && fileInfo.last_scan_time > 0">
+                  <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.last_scan_time') }}</div>
+                  <div class="flex min-h-6 items-center gap-2">
+                    <span class="text-[12px] text-base-content/75">{{ formatTimestamp(fileInfo.last_scan_time / 1000, $t('format.date_time')) }}</span>
+                    <span class="text-[11px] text-base-content/40">{{ formatRelativeTime(fileInfo.last_scan_time / 1000, $t) }}</span>
+                  </div>
+                </template>
+              </div>
+            </div>
 
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('menu.meta.favorite') }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('menu.meta.favorite') }}</div>
             <FavoriteRatingControl
               :favorite="Boolean(fileInfo?.is_favorite)"
               :rating="Number(fileInfo?.rating || 0)"
+              label-class="text-base-content/30"
+              inactive-rating-class="text-base-content/70"
               @favorite="emit('toggleFavorite')"
               @rating="(rating) => emit('setRating', rating)"
             />
 
             <!-- Tags -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 min-h-6 py-1">{{ $t('file_info.tags') }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 min-h-6 py-1.5">{{ $t('file_info.tags') }}</div>
             <div class="group/field flex items-center min-h-6 gap-1">
-              <div class="text-xs font-semibold text-base-content/65 flex flex-wrap gap-1 flex-1 min-w-0">
+              <div class="text-[12px] text-base-content/75 flex flex-wrap gap-1 flex-1 min-w-0">
                 <template v-if="fileInfo?.tags && fileInfo.tags.length">
                   <span
                     v-for="tag in fileInfo.tags"
                     :key="tag.id"
-                    class="badge badge-sm badge-outline border-base-content/30 bg-base-content/30 font-medium"
+                    class="badge badge-sm badge-outline border-base-content/20 bg-base-content/5 font-medium text-base-content/75"
                   >{{ tag.name }}</span>
                 </template>
               </div>
@@ -320,9 +329,9 @@
             </div>
 
             <!-- Comment -->
-            <div class="flex items-start text-[10px] uppercase tracking-widest font-bold text-base-content/25 py-1">{{ $t('file_info.comment') }}</div>
+            <div class="flex items-start text-[11px] text-base-content/45 py-1.5">{{ $t('file_info.comment') }}</div>
             <div class="group/field flex items-start gap-1">
-              <div class="text-xs font-semibold text-base-content/65 wrap-break-words whitespace-pre-wrap flex-1 min-w-0">{{ fileInfo?.comments }}</div>
+              <div class="text-[12px] leading-5 text-base-content/75 wrap-break-words whitespace-pre-wrap flex-1 min-w-0">{{ fileInfo?.comments }}</div>
               <TButton
                 :icon="IconEdit"
                 :tooltip="$t('menu.meta.comment')"
@@ -334,9 +343,9 @@
 
             <!-- Rotate Display -->
             <template v-if="fileInfo?.rotate && fileInfo?.rotate !== 0">
-              <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25">{{ $t('menu.meta.rotate') }}</div>
+              <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('menu.meta.rotate') }}</div>
               <div class="flex items-center gap-2 min-h-6">
-                <span class="text-xs font-semibold text-base-content/65">{{ normalizedRotate }}°</span>
+                <span class="text-[12px] text-base-content/75">{{ normalizedRotate }}°</span>
                 <TButton
                   :icon="IconRotate"
                   :tooltip="$t('menu.meta.rotate')"
@@ -345,6 +354,7 @@
                 />
               </div>
             </template>
+            
           </div>
         </Transition>
       </div>
@@ -367,42 +377,42 @@
           @after-enter="onAfterEnter"
           @leave="onLeave"
         >
-          <div v-if="showMetadataPanel" class="grid grid-cols-[80px_1fr] gap-y-1 gap-x-4 text-xs overflow-hidden">
+          <div v-if="showMetadataPanel" class="grid grid-cols-[84px_1fr] gap-y-1.5 gap-x-4 text-xs overflow-hidden">
             <!-- Camera -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.camera') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatCameraInfo(fileInfo?.e_make, fileInfo?.e_model) }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.camera') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ formatCameraInfo(fileInfo?.e_make, fileInfo?.e_model) }}</div>
 
             <!-- Lens -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.lens') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ fileInfo?.e_lens_model }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.lens') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ fileInfo?.e_lens_model }}</div>
 
             <!-- Capture Settings -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.capture_settings') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatCaptureSettings(fileInfo?.e_focal_length, fileInfo?.e_exposure_time, fileInfo?.e_f_number, fileInfo?.e_iso_speed, fileInfo?.e_exposure_bias) }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.capture_settings') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ formatCaptureSettings(fileInfo?.e_focal_length, fileInfo?.e_exposure_time, fileInfo?.e_f_number, fileInfo?.e_iso_speed, fileInfo?.e_exposure_bias) }}</div>
 
             <!-- Software -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.software') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ fileInfo?.e_software }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.software') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ fileInfo?.e_software }}</div>
 
             <!-- Taken By -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.taken_by') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ fileInfo?.e_artist }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.taken_by') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ fileInfo?.e_artist }}</div>
 
             <!-- Copyright -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.copyright') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ fileInfo?.e_copyright }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.copyright') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ fileInfo?.e_copyright }}</div>
 
             <!-- Taken At -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.taken_at') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ fileInfo?.e_date_time }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.taken_at') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ fileInfo?.e_date_time }}</div>
 
             <!-- Description -->
-            <div class="flex items-start text-[10px] uppercase tracking-widest font-bold text-base-content/25 py-1">{{ $t('file_info.description') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65 wrap-break-words py-1">{{ fileInfo?.e_description }}</div>
+            <div class="flex items-start text-[11px] text-base-content/45 py-1.5">{{ $t('file_info.description') }}</div>
+            <div class="flex items-center text-[12px] leading-5 text-base-content/75 wrap-break-words py-1.5">{{ fileInfo?.e_description }}</div>
 
             <!-- Geo Location -->
-            <div class="flex items-center text-[10px] uppercase tracking-widest font-bold text-base-content/25 h-6">{{ $t('file_info.geo_location') }}</div>
-            <div class="flex items-center text-xs font-semibold text-base-content/65">{{ formatGeoLocation() }}</div>
+            <div class="flex items-center text-[11px] text-base-content/45 h-6">{{ $t('file_info.geo_location') }}</div>
+            <div class="flex items-center text-[12px] text-base-content/75">{{ formatGeoLocation() }}</div>
           </div>
         </Transition>
       </div>
@@ -441,10 +451,10 @@
 
     <div v-else class="mb-2 px-2 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
       <div class="p-4 flex-1 flex items-center justify-center">
-        <div class="text-center text-base-content/40 space-y-3 max-w-[260px]">
+        <div class="text-center text-base-content/30 space-y-3 max-w-[260px]">
           <IconFile class="w-8 h-8 mx-auto text-base-content/30" />
           <p class="text-xs font-medium">{{ $t('file_info.empty_title') }}</p>
-          <p class="text-xs text-base-content/40">{{ $t('file_info.empty_desc') }}</p>
+          <p class="text-xs text-base-content/30">{{ $t('file_info.empty_desc') }}</p>
         </div>
       </div>
     </div>

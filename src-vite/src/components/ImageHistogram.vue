@@ -29,7 +29,7 @@
           <span :class="visibleChannels[item.key] ? item.activeClass : item.inactiveClass">{{ item.label }}</span>
           <span
             class="w-10 text-right tabular-nums transition-colors"
-            :class="visibleChannels[item.key] ? 'text-base-content/70' : 'text-base-content/25'"
+            :class="visibleChannels[item.key] ? 'text-base-content/70' : 'text-base-content/30'"
           >{{ formatLegendValue(item.value) }}</span>
         </button>
       </div>
@@ -45,7 +45,7 @@
             <stop offset="100%" stop-color="rgba(148,163,184,0.12)" />
           </linearGradient>
         </defs>
-        <g class="text-base-content/20">
+        <g class="text-base-content/30">
           <line x1="64" y1="0" x2="64" y2="64" stroke="currentColor" stroke-width="0.5" />
           <line x1="128" y1="0" x2="128" y2="64" stroke="currentColor" stroke-width="0.5" />
           <line x1="192" y1="0" x2="192" y2="64" stroke="currentColor" stroke-width="0.5" />
@@ -760,29 +760,29 @@ const legendItems = computed(() => [
     key: 'luma' as const,
     label: 'L',
     value: hoveredValues.value.luma,
-    activeClass: 'text-base-content/80',
-    inactiveClass: 'text-base-content/25',
+    activeClass: 'text-base-content/70',
+    inactiveClass: 'text-base-content/30',
   },
   {
     key: 'red' as const,
     label: 'R',
     value: hoveredValues.value.red,
     activeClass: 'text-red-500',
-    inactiveClass: 'text-red-500/25',
+    inactiveClass: 'text-red-500/30',
   },
   {
     key: 'green' as const,
     label: 'G',
     value: hoveredValues.value.green,
     activeClass: 'text-green-500',
-    inactiveClass: 'text-green-500/25',
+    inactiveClass: 'text-green-500/30',
   },
   {
     key: 'blue' as const,
     label: 'B',
     value: hoveredValues.value.blue,
     activeClass: 'text-blue-500',
-    inactiveClass: 'text-blue-500/25',
+    inactiveClass: 'text-blue-500/30',
   },
 ]);
 

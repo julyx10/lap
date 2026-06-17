@@ -32,6 +32,20 @@ pub fn path_exists(path: &str) -> bool {
     fs::symlink_metadata(path).is_ok()
 }
 
+pub fn directory_accessible(path: &str) -> bool {
+    if !fs::metadata(path)
+        .map(|metadata| metadata.is_dir())
+        .unwrap_or(false)
+    {
+        return false;
+    }
+
+    match fs::read_dir(path) {
+        Ok(mut entries) => !matches!(entries.next(), Some(Err(_))),
+        Err(_) => false,
+    }
+}
+
 pub fn trash_path(path: &str) -> Result<(), String> {
     if !path_exists(path) {
         return Err(format!("Path does not exist: {}", path));
@@ -55,6 +69,22 @@ mod transfer_tests {
 
     fn test_dir() -> PathBuf {
         std::env::temp_dir().join(format!("lap-transfer-test-{}", uuid::Uuid::new_v4()))
+    }
+
+    #[test]
+    fn directory_accessibility_requires_a_readable_directory() {
+        let root = test_dir();
+        fs::create_dir_all(&root).unwrap();
+        let file = root.join("photo.jpg");
+        fs::write(&file, b"image").unwrap();
+
+        assert!(directory_accessible(root.to_str().unwrap()));
+        assert!(!directory_accessible(file.to_str().unwrap()));
+        assert!(!directory_accessible(
+            root.join("missing").to_str().unwrap()
+        ));
+
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -294,6 +324,7 @@ pub static GEOCODER: Lazy<ReverseGeocoder> = Lazy::new(|| {
 pub struct PackageInfo {
     name: String,
     version: String,
+    commit_hash: Option<String>,
     description: String,
     authors: Vec<String>,
     repository: Option<String>,
@@ -302,10 +333,11 @@ pub struct PackageInfo {
 }
 
 impl PackageInfo {
-    pub fn new() -> Self {
+    pub fn new(commit_hash: &str) -> Self {
         Self {
             name: env!("CARGO_PKG_NAME").to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            commit_hash: (!commit_hash.is_empty()).then(|| commit_hash.to_string()),
             description: env!("CARGO_PKG_DESCRIPTION").to_string(),
             authors: env!("CARGO_PKG_AUTHORS")
                 .split(':')
@@ -1650,19 +1682,35 @@ fn sync_dirty_folders_by_mtime(
     let mut deleted_folder_count = 0u32;
     let mut tasks = Vec::new();
     let mut queue = Vec::new();
+    let mut album_accessibility = HashMap::new();
 
     for folder in AFolder::get_all()? {
         if !sync_generation_valid(generation) {
             return Ok((FolderMtimeSyncResult::default(), Vec::new()));
         }
+        let root_accessible = *album_accessibility.entry(folder.album_id).or_insert_with(|| {
+            Album::get_album_by_id(folder.album_id)
+                .map(|album| directory_accessible(&album.path))
+                .unwrap_or(false)
+        });
+        if !root_accessible {
+            continue;
+        }
         let info = match FileInfo::new(&folder.path) {
             Ok(info) => info,
             Err(e) => {
                 if is_path_not_found(&e) {
-                    if let Err(e2) = remove_missing_folder(&folder) {
-                        eprintln!("sync_dirty_folders_by_mtime: failed to remove missing folder {}: {}", folder.path, e2);
-                    } else {
-                        deleted_folder_count += 1;
+                    let can_remove = Album::get_album_by_id(folder.album_id)
+                        .map(|album| {
+                            folder.path != album.path && directory_accessible(&album.path)
+                        })
+                        .unwrap_or(false);
+                    if can_remove {
+                        if let Err(e2) = remove_missing_folder(&folder) {
+                            eprintln!("sync_dirty_folders_by_mtime: failed to remove missing folder {}: {}", folder.path, e2);
+                        } else {
+                            deleted_folder_count += 1;
+                        }
                     }
                 } else {
                     eprintln!("sync_dirty_folders_by_mtime: failed to stat {} ({})", folder.path, e);
@@ -1674,8 +1722,6 @@ fn sync_dirty_folders_by_mtime(
             queue.push((folder, info.modified));
         }
     }
-
-    let total_deleted_folder_count = deleted_folder_count;
 
     while let Some((folder, latest_mtime)) = queue.pop() {
         if !sync_generation_valid(generation) {
@@ -1713,7 +1759,7 @@ fn sync_dirty_folders_by_mtime(
             updated_file_count,
             deleted_file_count,
             rename_count,
-            deleted_folder_count: total_deleted_folder_count,
+            deleted_folder_count,
         },
         tasks,
     ))
@@ -1723,7 +1769,8 @@ fn scan_new_child_folders(album_id: i64, folder_path: &str) -> Result<Vec<AFolde
     let entries = fs::read_dir(folder_path).map_err(|e| e.to_string())?;
     let mut new_folders = Vec::new();
 
-    for entry in entries.flatten() {
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
         if is_fs_entry_hidden(&entry) {
             continue;
         }
@@ -1783,9 +1830,11 @@ fn sync_folder_direct_files(
         .max_depth(1)
         .into_iter()
         .filter_entry(|e| !is_hidden(e))
-        .filter_map(Result::ok)
-        .filter(|entry| entry.file_type().is_file())
     {
+        let entry = entry.map_err(|e| e.to_string())?;
+        if !entry.file_type().is_file() {
+            continue;
+        }
         let path = entry.path();
         let file_path_str = match path.to_str() {
             Some(p) => p,
@@ -1861,6 +1910,10 @@ fn sync_folder_direct_files(
     // Uses the stored inode so rename detection works even when the old path
     // no longer exists on disk.
     if is_cancelled() { return Ok(FolderSyncOutcome::default()); }
+    let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
+    if !directory_accessible(&album.path) || !directory_accessible(folder_path) {
+        return Err(format!("Folder became inaccessible during sync: {}", folder_path));
+    }
     let deleted_count: u32 = {
         let mut count = 0u32;
         if let Ok(files) = AFile::get_files_by_folder_id(folder_id) {
@@ -1896,13 +1949,22 @@ pub fn sync_single_folder(
     folder_id: i64,
     folder_path: &str,
 ) -> Result<FolderMtimeSyncResult, String> {
+    let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
+    if !directory_accessible(&album.path) {
+        return Err(format!("Album folder is not accessible: {}", album.path));
+    }
+
     let info = match FileInfo::new(folder_path) {
         Ok(info) => info,
         Err(e) => {
             if is_path_not_found(&e) {
-                // Folder was deleted from disk: clean up DB records.
-                if let Ok(Some(folder)) = AFolder::fetch(folder_path) {
-                    remove_missing_folder(&folder).ok();
+                // Only clean up a missing child while the album root is still
+                // readable. A missing root may be a disconnected external disk.
+                let mut removed = false;
+                if folder_path != album.path && directory_accessible(&album.path) {
+                    if let Ok(Some(folder)) = AFolder::fetch(folder_path) {
+                        removed = remove_missing_folder(&folder).is_ok();
+                    }
                 }
                 return Ok(FolderMtimeSyncResult {
                     dirty_folder_count: 0,
@@ -1911,7 +1973,7 @@ pub fn sync_single_folder(
                     updated_file_count: 0,
                     deleted_file_count: 0,
                     rename_count: 0,
-                    deleted_folder_count: 1,
+                    deleted_folder_count: u32::from(removed),
                 });
             }
             return Err(e);
@@ -2826,6 +2888,26 @@ pub async fn index_album_worker(
     let processing_budget = ProcessingBudget::new();
     // 1. Get album info
     let album = Album::get_album_by_id(album_id).map_err(|e| e.to_string())?;
+    let previous_indexed = album.indexed.unwrap_or(0).max(0) as u64;
+    let previous_total = album.total.unwrap_or(0).max(0) as u64;
+    if !directory_accessible(&album.path) {
+        app_handle
+            .emit(
+                "index_finished",
+                FinishedPayload {
+                    album_id,
+                    phase: "complete".to_string(),
+                    indexed: previous_indexed,
+                    processed: previous_indexed,
+                    search_ready: previous_indexed,
+                    total: previous_total,
+                    search_total: previous_total,
+                    failed: 1,
+                },
+            )
+            .map_err(|e| e.to_string())?;
+        return Ok(());
+    }
 
     // 2. Count total files
     let (_folders, image_count, _image_size, video_count, _video_size) =
@@ -2835,8 +2917,6 @@ pub async fn index_album_worker(
 
     // Resume only when totals match and previous indexed is a valid in-progress value.
     // This avoids breaking normal re-scan behavior after a completed run.
-    let previous_indexed = album.indexed.unwrap_or(0);
-    let previous_total = album.total.unwrap_or(0);
     let resume_from = if previous_total == total_files
         && previous_indexed > 0
         && previous_indexed < total_files
@@ -2861,13 +2941,10 @@ pub async fn index_album_worker(
 
     // 4. Traverse and index
     let mut is_cancelled = false;
+    let mut traversal_failed = false;
     let mut traversed_count = 0u64;
     let mut thumbnail_join_set: JoinSet<Result<bool, String>> = JoinSet::new();
-    for entry in WalkDir::new(&album.path)
-        .into_iter()
-        .filter_entry(|e| !is_hidden(e))
-        .filter_map(Result::ok)
-    {
+    for entry in WalkDir::new(&album.path).into_iter().filter_entry(|e| !is_hidden(e)) {
         // Check cancellation
         if let Some(&true) = cancellation_token.lock().unwrap().get(&album_id) {
             println!("Indexing cancelled for album {}", album_id);
@@ -2875,6 +2952,16 @@ pub async fn index_album_worker(
             thumbnail_join_set.abort_all();
             break;
         }
+
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(error) => {
+                eprintln!("Album traversal failed for {}: {}", album.path, error);
+                traversal_failed = true;
+                thumbnail_join_set.abort_all();
+                break;
+            }
+        };
 
         if entry.file_type().is_file() {
             let path_str = entry.path().to_string_lossy().to_string();
@@ -2989,13 +3076,20 @@ pub async fn index_album_worker(
     }
 
     with_progress_tracker(&tracker, |tracker| tracker.emit_now());
-    let final_snapshot = with_progress_tracker(&tracker, |tracker| tracker.snapshot());
-    let _ = Album::update_progress(album_id, final_snapshot.processed, total_files);
+    let mut final_snapshot = with_progress_tracker(&tracker, |tracker| tracker.snapshot());
+    let scan_failed = traversal_failed || !directory_accessible(&album.path);
+    let scan_complete = !is_cancelled && !scan_failed;
+    if scan_complete {
+        let _ = Album::update_progress(album_id, final_snapshot.processed, total_files);
+    } else if scan_failed {
+        final_snapshot.failed += 1;
+        let _ = Album::update_progress(album_id, previous_indexed, previous_total);
+    }
 
     clear_index_trace();
 
     // Delete files that are in DB but not in file system (Mark-and-Sweep)
-    if !is_cancelled {
+    if scan_complete {
         println!("Cleaning up removed files from DB for album {}", album_id);
         let deleted_count = AFile::delete_unseen_in_album(album_id, current_scan_time).unwrap_or(0);
         if deleted_count > 0 {
@@ -3003,18 +3097,20 @@ pub async fn index_album_worker(
         }
     }
 
-    // Update last scan time
-    let _ = Album::update_last_scan_time(album_id, current_scan_time);
+    if scan_complete {
+        // Update last scan time only after a complete filesystem traversal.
+        let _ = Album::update_last_scan_time(album_id, current_scan_time);
 
-    // index finished – recount from the database to get the true total
-    // (some files may have been skipped or failed to insert).
-    let _ = Album::recount_album(album_id);
+        // Recount only after a complete traversal so an offline disk cannot
+        // replace the existing album totals with a partial result.
+        let _ = Album::recount_album(album_id);
+    }
 
     // After a clean completed scan, align indexed with total so the next
     // scan does not incorrectly resume from a progress-milestone value
     // (update_progress writes indexed every 50 files during the scan,
     // and recount_album clamps without distinguishing complete vs partial).
-    if !is_cancelled {
+    if scan_complete {
         if let Ok(album) = Album::get_album_by_id(album_id) {
             let total = album.total.unwrap_or(0) as u64;
             let _ = Album::update_progress(album_id, total, total);
@@ -3023,7 +3119,9 @@ pub async fn index_album_worker(
 
     // 5. Set album cover if needed (must happen before index_finished event)
     // so frontend refresh gets the latest cover_file_id immediately.
-    let _ = Album::auto_set_cover(album_id);
+    if scan_complete {
+        let _ = Album::auto_set_cover(album_id);
+    }
 
     // Summary log
     let elapsed = scan_start.elapsed().as_secs_f64();
@@ -3039,10 +3137,10 @@ pub async fn index_album_worker(
             FinishedPayload {
                 album_id,
                 phase: final_snapshot.phase().to_string(),
-                indexed: final_snapshot.processed,
-                processed: final_snapshot.processed,
+                indexed: if scan_failed { previous_indexed } else { final_snapshot.processed },
+                processed: if scan_failed { previous_indexed } else { final_snapshot.processed },
                 search_ready: final_snapshot.search_ready,
-                total: final_snapshot.total,
+                total: if scan_failed { previous_total } else { final_snapshot.total },
                 search_total: final_snapshot.search_total,
                 failed: final_snapshot.failed,
             },
