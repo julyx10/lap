@@ -19,6 +19,7 @@
     "@tauri-apps/plugin-shell": "2.3.5",
     "@tauri-apps/plugin-updater": "2.10.0",
     "@tauri-apps/plugin-window-state": "2.4.1",
+    "cally": "^0.9.2",
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",

@@ -43,6 +43,8 @@
         <div class="h-8 flex items-start pt-2 text-[10px] uppercase tracking-widest font-bold text-base-content/70">{{ $t('album.edit.description') }}</div>
         <div>
           <textarea
+            v-if="showDescription"
+            ref="descriptionRef"
             v-model="inputDescriptionValue"
             rows="2"
             maxlength="1024"
@@ -50,6 +52,14 @@
             :disabled="selectedFolder === ''"
             class="w-full textarea textarea-sm min-h-[56px] max-h-[200px] text-xs font-semibold"
           ></textarea>
+          <TButton
+            v-else
+            :icon="IconEdit"
+            :buttonSize="'small'"
+            :tooltip="$t('album.edit.description')"
+            :disabled="selectedFolder === ''"
+            @click="showDescriptionInput"
+          />
         </div>
 
         <template v-if="selectedFolder !== ''">
@@ -154,7 +164,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { countFolder, getAllAlbums, listenIndexProgress, listenIndexFinished } from '@/common/api';
 import { useToast } from '@/common/toast';
@@ -165,7 +175,7 @@ import { getAlbumScanState } from '@/common/scanStatus';
 
 import ModalDialog from '@/components/ModalDialog.vue';
 import TButton from '@/components/TButton.vue';
-import { IconNewFolder } from '@/common/icons';
+import { IconEdit, IconNewFolder } from '@/common/icons';
 
 const props = defineProps({
   isNewAlbum: {
@@ -218,8 +228,10 @@ const selectedFolder = ref('');
 
 // input 
 const inputNameRef = ref<HTMLInputElement | null>(null);
+const descriptionRef = ref<HTMLTextAreaElement | null>(null);
 const inputNameValue = ref(props.inputName);
 const inputDescriptionValue = ref(props.inputDescription);
+const showDescription = ref(inputDescriptionValue.value.trim().length > 0);
 
 // total file count of the album (from disk probe)
 const totalFolderCount = ref(0);
@@ -259,6 +271,7 @@ watch(() => selectedFolder.value, (newPath) => {
       // get folder name
       inputNameValue.value = getFolderName(newPath);
       inputDescriptionValue.value = '';
+      showDescription.value = false;
     }
 
     countFolder(newPath).then((res) => {
@@ -318,6 +331,12 @@ const clickSelectFolder = async () => {
     }, 100);
   }
 };
+
+async function showDescriptionInput() {
+  showDescription.value = true;
+  await nextTick();
+  descriptionRef.value?.focus();
+}
 
 function handleKeyDown(event: KeyboardEvent) {
   if (!uiStore.isInputActive('AlbumEdit')) return;

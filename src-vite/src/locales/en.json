@@ -49,6 +49,64 @@
     },
     "no_smart_albums": {
       "description": "Create smart albums from custom query rules."
+    },
+    "smart_edit": {
+      "title_add": "Add smart album",
+      "title_edit": "Edit smart album",
+      "name": "Name",
+      "description": "Description",
+      "match": "Match",
+      "match_all": "All rules",
+      "match_any": "Any rule",
+      "rules": "Rules",
+      "add_rule": "Add rule",
+      "remove_rule": "Remove rule",
+      "sort": "Sort",
+      "delete": "Delete",
+      "delete_message": "The smart album '{name}' will be deleted.",
+      "validation_name": "Enter a smart album name.",
+      "validation_rule": "Add at least one complete rule.",
+      "fields": {
+        "file_type": "File type",
+        "extension": "Extension",
+        "favorite": "Favorite",
+        "rating": "Rating",
+        "date": "Date",
+        "size": "Size",
+        "width": "Width",
+        "height": "Height",
+        "duration": "Duration",
+        "has_gps": "GPS",
+        "tag": "Tag",
+        "person": "Person",
+        "camera": "Camera",
+        "lens": "Lens",
+        "location": "Location"
+      },
+      "operators": {
+        "is": "=",
+        "is_not": "≠",
+        "gt": ">",
+        "gte": "≥",
+        "lt": "<",
+        "lte": "≤",
+        "between": "between",
+        "empty": "empty",
+        "not_empty": "not empty",
+        "before": "before",
+        "after": "after",
+        "has": "has",
+        "not_has": "not has"
+      },
+      "boolean": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "date_fields": {
+        "taken": "Taken",
+        "added": "Added",
+        "modified": "Modified"
+      }
     }
   },
   "welcome": {

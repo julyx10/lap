@@ -201,6 +201,7 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![
             // library
             t_cmds::get_app_config,
+            t_cmds::get_supported_format_extensions,
             t_cmds::set_last_selected_item_index,
             t_cmds::get_db_storage_dir,
             t_cmds::is_using_custom_db_storage,
@@ -251,6 +252,10 @@ async fn main() {
             t_cmds::get_query_time_line,
             t_cmds::get_query_files,
             t_cmds::get_query_file_position,
+            t_cmds::get_smart_query_count_and_sum,
+            t_cmds::get_smart_query_time_line,
+            t_cmds::get_smart_query_files,
+            t_cmds::get_smart_query_file_position,
             t_cmds::get_folder_files,
             t_cmds::sync_album_folder_mtimes,
             t_cmds::is_directory_accessible,

@@ -17,6 +17,7 @@ use exif::{In, Tag, Value};
 use image::{GenericImageView, ImageFormat};
 use rusqlite::{Connection, OptionalExtension, Result, ToSql, params, params_from_iter};
 use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::Cursor;
@@ -868,6 +869,36 @@ pub struct QueryParams {
     pub gps_min_lon: Option<f64>,
     #[serde(default)]
     pub gps_max_lon: Option<f64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartRule {
+    pub id: String,
+    pub field: String,
+    pub operator: String,
+    pub value: JsonValue,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartQueryParams {
+    #[serde(default = "default_smart_query_version")]
+    pub version: i32,
+    #[serde(default = "default_smart_query_match")]
+    pub r#match: String,
+    #[serde(default)]
+    pub rules: Vec<SmartRule>,
+    pub sort_type: i64,
+    pub sort_order: i64,
+}
+
+fn default_smart_query_version() -> i32 {
+    1
+}
+
+fn default_smart_query_match() -> String {
+    "all".to_string()
 }
 
 /// Define the AI image search parameters struct
@@ -2329,9 +2360,9 @@ impl AFile {
         let sql = if params.person_id > 0 {
             // Use subquery with GROUP BY to handle potential duplicate rows when joining faces
             format!(
-                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a 
-                LEFT JOIN afolders b ON a.folder_id = b.id 
-                LEFT JOIN albums c ON b.album_id = c.id 
+                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id
                 {}{} GROUP BY a.id)",
                 joins, where_clause
             )
@@ -2372,13 +2403,13 @@ impl AFile {
         Self::query_files(&query, &final_params)
     }
 
-    fn build_order_clause(params: &QueryParams) -> String {
-        let dir = if params.sort_order == 1 {
+    fn build_order_clause_values(sort_type: i64, sort_order: i64) -> String {
+        let dir = if sort_order == 1 {
             "DESC"
         } else {
             "ASC"
         };
-        match params.sort_type {
+        match sort_type {
             0 => format!("a.taken_date {}, a.id {}", dir, dir),
             1 => format!("a.created_at {}, a.id {}", dir, dir),
             2 => format!("a.modified_at {}, a.id {}", dir, dir),
@@ -2391,6 +2422,522 @@ impl AFile {
             9 => "a.id ASC".to_string(), // internal: stable append order during scanning
             _ => format!("a.taken_date {}, a.id {}", dir, dir),
         }
+    }
+
+    fn build_order_clause(params: &QueryParams) -> String {
+        Self::build_order_clause_values(params.sort_type, params.sort_order)
+    }
+
+    fn smart_rule_string(value: &JsonValue) -> Option<String> {
+        value.as_str().map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
+    }
+
+    fn smart_rule_i64(value: &JsonValue) -> Option<i64> {
+        if let Some(value) = value.as_i64() {
+            return Some(value);
+        }
+        value.as_str().and_then(|v| v.trim().parse::<i64>().ok())
+    }
+
+    fn smart_rule_bool(value: &JsonValue) -> Option<bool> {
+        if let Some(value) = value.as_bool() {
+            return Some(value);
+        }
+        match value.as_str()?.trim().to_ascii_lowercase().as_str() {
+            "true" | "yes" | "1" => Some(true),
+            "false" | "no" | "0" => Some(false),
+            _ => None,
+        }
+    }
+
+    fn smart_rule_array(value: &JsonValue) -> Vec<JsonValue> {
+        value.as_array().cloned().unwrap_or_else(|| vec![value.clone()])
+    }
+
+    fn smart_rule_string_array(value: &JsonValue) -> Vec<String> {
+        Self::smart_rule_array(value)
+            .iter()
+            .filter_map(Self::smart_rule_string)
+            .collect()
+    }
+
+    fn build_smart_extension_condition(
+        value: &JsonValue,
+        sql_params: &mut Vec<Box<dyn ToSql>>,
+    ) -> Result<String, String> {
+        let values = Self::smart_rule_string_array(value);
+        if values.is_empty() {
+            return Err("Extension value required".to_string());
+        }
+        let mut parts = Vec::new();
+        for ext in values {
+            let ext = ext.trim().trim_start_matches('.').to_ascii_lowercase();
+            if ext.is_empty() {
+                continue;
+            }
+            parts.push("LOWER(a.name) LIKE ?".to_string());
+            sql_params.push(Box::new(format!("%.{}", ext)));
+        }
+        if parts.is_empty() {
+            return Err("Extension value required".to_string());
+        }
+        Ok(format!("({})", parts.join(" OR ")))
+    }
+
+    fn smart_rule_date_field(value: &JsonValue) -> Result<&'static str, String> {
+        let field = value
+            .get("field")
+            .and_then(JsonValue::as_str)
+            .unwrap_or("taken");
+        match field {
+            "taken" | "date_taken" => Ok("a.taken_date"),
+            "added" | "created" | "date_added" => Ok("a.created_at"),
+            "modified" | "date_modified" => Ok("a.modified_at"),
+            _ => Err(format!("Unsupported date field: {}", field)),
+        }
+    }
+
+    fn smart_rule_date_value(value: &JsonValue, key: &str) -> Option<i64> {
+        value.get(key).and_then(Self::smart_rule_i64)
+    }
+
+    fn push_numeric_rule(
+        conditions: &mut Vec<String>,
+        sql_params: &mut Vec<Box<dyn ToSql>>,
+        column: &str,
+        operator: &str,
+        value: &JsonValue,
+    ) -> Result<(), String> {
+        match operator {
+            "eq" | "is" => {
+                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                conditions.push(format!("{} = ?", column));
+                sql_params.push(Box::new(v));
+            }
+            "neq" | "is_not" => {
+                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                conditions.push(format!("{} != ?", column));
+                sql_params.push(Box::new(v));
+            }
+            "gt" => {
+                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                conditions.push(format!("{} > ?", column));
+                sql_params.push(Box::new(v));
+            }
+            "gte" => {
+                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                conditions.push(format!("{} >= ?", column));
+                sql_params.push(Box::new(v));
+            }
+            "lt" => {
+                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                conditions.push(format!("{} < ?", column));
+                sql_params.push(Box::new(v));
+            }
+            "lte" => {
+                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                conditions.push(format!("{} <= ?", column));
+                sql_params.push(Box::new(v));
+            }
+            "between" => {
+                let start = value.get("min").or_else(|| value.get("start")).and_then(Self::smart_rule_i64)
+                    .ok_or_else(|| "Range start value required".to_string())?;
+                let end = value.get("max").or_else(|| value.get("end")).and_then(Self::smart_rule_i64)
+                    .ok_or_else(|| "Range end value required".to_string())?;
+                conditions.push(format!("{} BETWEEN ? AND ?", column));
+                sql_params.push(Box::new(start));
+                sql_params.push(Box::new(end));
+            }
+            "empty" => conditions.push(format!("({} IS NULL OR {} = 0)", column, column)),
+            "not_empty" => conditions.push(format!("({} IS NOT NULL AND {} > 0)", column, column)),
+            _ => return Err(format!("Unsupported numeric operator: {}", operator)),
+        }
+        Ok(())
+    }
+
+    fn build_smart_rule_condition(
+        rule: &SmartRule,
+        _joins: &mut Vec<String>,
+        _needs_group: &mut bool,
+        sql_params: &mut Vec<Box<dyn ToSql>>,
+    ) -> Result<String, String> {
+        let field = rule.field.as_str();
+        let operator = rule.operator.as_str();
+        let value = &rule.value;
+
+        match field {
+            "file_type" => {
+                let mask_value = value
+                    .get("fileType")
+                    .or_else(|| value.get("file_type"))
+                    .unwrap_or(value);
+                let mask = Self::smart_rule_i64(mask_value).ok_or_else(|| "File type value required".to_string())?;
+                let condition = Self::build_file_type_condition(mask).unwrap_or_else(|| "1 = 1".to_string());
+                let condition = if let Some(extension_value) = value.get("extension") {
+                    if Self::smart_rule_string(extension_value).is_some() {
+                        let extension_condition = Self::build_smart_extension_condition(extension_value, sql_params)?;
+                        format!("({} AND {})", condition, extension_condition)
+                    } else {
+                        condition
+                    }
+                } else {
+                    condition
+                };
+                Ok(if matches!(operator, "is_not" | "neq" | "not_in") {
+                    format!("NOT {}", condition)
+                } else {
+                    condition
+                })
+            }
+            "extension" => {
+                let condition = Self::build_smart_extension_condition(value, sql_params)?;
+                Ok(if matches!(operator, "is_not" | "not_in" | "neq") {
+                    format!("NOT {}", condition)
+                } else {
+                    condition
+                })
+            }
+            "favorite" => {
+                let desired = Self::smart_rule_bool(value).unwrap_or(true);
+                let is_positive = matches!(operator, "is" | "eq");
+                let value = if is_positive { desired } else { !desired };
+                Ok(if value {
+                    "a.is_favorite = 1".to_string()
+                } else {
+                    "(a.is_favorite = 0 OR a.is_favorite IS NULL)".to_string()
+                })
+            }
+            "rating" => {
+                let mut conditions = Vec::new();
+                Self::push_numeric_rule(&mut conditions, sql_params, "a.rating", operator, value)?;
+                Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
+            }
+            "date" => {
+                let date_col = Self::smart_rule_date_field(value)?;
+                match operator {
+                    "before" | "lt" => {
+                        let v = Self::smart_rule_date_value(value, "value")
+                            .ok_or_else(|| "Date value required".to_string())?;
+                        sql_params.push(Box::new(v));
+                        Ok(format!("{} < ?", date_col))
+                    }
+                    "after" | "gt" => {
+                        let v = Self::smart_rule_date_value(value, "value")
+                            .ok_or_else(|| "Date value required".to_string())?;
+                        sql_params.push(Box::new(v));
+                        Ok(format!("{} > ?", date_col))
+                    }
+                    "between" => {
+                        let start = Self::smart_rule_date_value(value, "start")
+                            .ok_or_else(|| "Date start value required".to_string())?;
+                        let end = Self::smart_rule_date_value(value, "end")
+                            .ok_or_else(|| "Date end value required".to_string())?;
+                        sql_params.push(Box::new(start));
+                        sql_params.push(Box::new(end));
+                        Ok(format!("{} >= ? AND {} < ?", date_col, date_col))
+                    }
+                    "empty" => Ok(format!("({} IS NULL OR {} < 86400)", date_col, date_col)),
+                    "not_empty" => Ok(format!("({} IS NOT NULL AND {} >= 86400)", date_col, date_col)),
+                    _ => Err(format!("Unsupported date operator: {}", operator)),
+                }
+            }
+            "size" => {
+                let mut conditions = Vec::new();
+                Self::push_numeric_rule(&mut conditions, sql_params, "a.size", operator, value)?;
+                Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
+            }
+            "width" => {
+                let mut conditions = Vec::new();
+                Self::push_numeric_rule(&mut conditions, sql_params, "a.width", operator, value)?;
+                Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
+            }
+            "height" => {
+                let mut conditions = Vec::new();
+                Self::push_numeric_rule(&mut conditions, sql_params, "a.height", operator, value)?;
+                Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
+            }
+            "duration" => {
+                let mut conditions = Vec::new();
+                Self::push_numeric_rule(&mut conditions, sql_params, "a.duration", operator, value)?;
+                Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
+            }
+            "has_gps" => {
+                let desired = Self::smart_rule_bool(value).unwrap_or(true);
+                let is_positive = matches!(operator, "is" | "eq");
+                let value = if is_positive { desired } else { !desired };
+                Ok(if value {
+                    "(a.gps_latitude IS NOT NULL AND a.gps_longitude IS NOT NULL)".to_string()
+                } else {
+                    "(a.gps_latitude IS NULL OR a.gps_longitude IS NULL)".to_string()
+                })
+            }
+            "tag" => {
+                let id = Self::smart_rule_i64(value).ok_or_else(|| "Tag id required".to_string())?;
+                if matches!(operator, "has" | "is" | "eq") {
+                    sql_params.push(Box::new(id));
+                    Ok("EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id AND at2.tag_id = ?)".to_string())
+                } else if matches!(operator, "not_has" | "is_not" | "neq") {
+                    sql_params.push(Box::new(id));
+                    Ok("NOT EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id AND at2.tag_id = ?)".to_string())
+                } else {
+                    Err(format!("Unsupported tag operator: {}", operator))
+                }
+            }
+            "person" => {
+                let id = Self::smart_rule_i64(value).ok_or_else(|| "Person id required".to_string())?;
+                if matches!(operator, "has" | "is" | "eq") {
+                    sql_params.push(Box::new(id));
+                    Ok("EXISTS (SELECT 1 FROM faces f2 WHERE f2.file_id = a.id AND f2.person_id = ?)".to_string())
+                } else if matches!(operator, "not_has" | "is_not" | "neq") {
+                    sql_params.push(Box::new(id));
+                    Ok("NOT EXISTS (SELECT 1 FROM faces f2 WHERE f2.file_id = a.id AND f2.person_id = ?)".to_string())
+                } else {
+                    Err(format!("Unsupported person operator: {}", operator))
+                }
+            }
+            "camera" | "lens" | "location" => {
+                let id = Self::smart_rule_string(value).ok_or_else(|| format!("{} id required", field))?;
+                let parts: Vec<&str> = id.split("||").collect();
+                let mut conditions = Vec::new();
+                match field {
+                    "camera" => {
+                        if let Some(make) = parts.get(0).filter(|v| !v.is_empty()) {
+                            conditions.push("UPPER(a.e_make) = UPPER(?)".to_string());
+                            sql_params.push(Box::new((*make).to_string()));
+                        }
+                        if let Some(model) = parts.get(1).filter(|v| !v.is_empty()) {
+                            conditions.push("a.e_model = ?".to_string());
+                            sql_params.push(Box::new((*model).to_string()));
+                        }
+                    }
+                    "lens" => {
+                        if let Some(make) = parts.get(0).filter(|v| !v.is_empty()) {
+                            conditions.push("UPPER(a.e_lens_make) = UPPER(?)".to_string());
+                            sql_params.push(Box::new((*make).to_string()));
+                        }
+                        if let Some(model) = parts.get(1).filter(|v| !v.is_empty()) {
+                            conditions.push("a.e_lens_model = ?".to_string());
+                            sql_params.push(Box::new((*model).to_string()));
+                        }
+                    }
+                    "location" => {
+                        if let Some(cc) = parts.get(0).filter(|v| !v.is_empty()) {
+                            conditions.push("a.geo_cc = ?".to_string());
+                            sql_params.push(Box::new((*cc).to_string()));
+                        }
+                        if let Some(admin1) = parts.get(1).filter(|v| !v.is_empty()) {
+                            conditions.push("a.geo_admin1 = ?".to_string());
+                            sql_params.push(Box::new((*admin1).to_string()));
+                        }
+                        if let Some(name) = parts.get(2).filter(|v| !v.is_empty()) {
+                            conditions.push("a.geo_name = ?".to_string());
+                            sql_params.push(Box::new((*name).to_string()));
+                        }
+                    }
+                    _ => {}
+                }
+                if conditions.is_empty() {
+                    return Err(format!("{} id required", field));
+                }
+                let condition = format!("({})", conditions.join(" AND "));
+                Ok(if matches!(operator, "not_has" | "is_not" | "neq") {
+                    format!("NOT {}", condition)
+                } else {
+                    condition
+                })
+            }
+            _ => Err(format!("Unsupported smart rule field: {}", field)),
+        }
+    }
+
+    fn build_smart_query_parts(params: &SmartQueryParams) -> Result<(String, String, Vec<Box<dyn ToSql>>, bool), String> {
+        if params.rules.is_empty() {
+            return Err("Smart query requires at least one rule".to_string());
+        }
+
+        let mut joins = Vec::new();
+        let mut conditions = Vec::new();
+        let mut sql_params: Vec<Box<dyn ToSql>> = Vec::new();
+        let mut needs_group = false;
+
+        for rule in &params.rules {
+            conditions.push(Self::build_smart_rule_condition(rule, &mut joins, &mut needs_group, &mut sql_params)?);
+        }
+
+        conditions.push(Self::search_exclusion_condition("b"));
+
+        let joiner = if params.r#match == "any" { " OR " } else { " AND " };
+        let rule_count = params.rules.len();
+        let where_clause = if conditions.is_empty() {
+            String::new()
+        } else if rule_count > 0 {
+            let (rule_conditions, trailing_conditions) = conditions.split_at(rule_count);
+            let mut grouped = vec![format!("({})", rule_conditions.join(joiner))];
+            grouped.extend(trailing_conditions.iter().cloned());
+            format!(" WHERE {}", grouped.join(" AND "))
+        } else {
+            format!(" WHERE {}", conditions.join(" AND "))
+        };
+
+        let joins_clause = if joins.is_empty() {
+            String::new()
+        } else {
+            format!(" {}", joins.join(" "))
+        };
+
+        Ok((joins_clause, where_clause, sql_params, needs_group))
+    }
+
+    pub fn get_smart_query_count_and_sum(params: &SmartQueryParams) -> Result<(i64, i64), String> {
+        let (joins, where_clause, sql_params, needs_group) = Self::build_smart_query_parts(params)?;
+        let sql = if needs_group {
+            format!(
+                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id
+                {}{} GROUP BY a.id)",
+                joins, where_clause
+            )
+        } else {
+            format!("{}{}{}", Self::build_count_query(), joins, where_clause)
+        };
+        let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        Self::query_count_and_sum(&sql, &final_params)
+    }
+
+    pub fn get_smart_query_files(
+        params: &SmartQueryParams,
+        offset: i64,
+        limit: i64,
+    ) -> Result<Vec<Self>, String> {
+        let (joins, where_clause, sql_params, needs_group) = Self::build_smart_query_parts(params)?;
+        let mut query = Self::build_base_query();
+        query.push_str(&joins);
+        query.push_str(&where_clause);
+        if needs_group {
+            query.push_str(" GROUP BY a.id");
+        }
+        query.push_str(&format!(
+            " ORDER BY {}",
+            Self::build_order_clause_values(params.sort_type, params.sort_order)
+        ));
+        query.push_str(" LIMIT ? OFFSET ?");
+
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&limit);
+        final_params.push(&offset);
+        Self::query_files(&query, &final_params)
+    }
+
+    pub fn get_smart_query_file_position(
+        params: &SmartQueryParams,
+        file_id: i64,
+    ) -> Result<Option<i64>, String> {
+        if file_id <= 0 {
+            return Ok(None);
+        }
+        let (joins, where_clause, sql_params, needs_group) = Self::build_smart_query_parts(params)?;
+        let query = format!(
+            "WITH ranked_files AS (
+                SELECT
+                    a.id,
+                    ROW_NUMBER() OVER (ORDER BY {}) - 1 AS position
+                FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id
+                {}
+                {}
+                {}
+            )
+            SELECT position FROM ranked_files WHERE id = ?",
+            Self::build_order_clause_values(params.sort_type, params.sort_order),
+            joins,
+            where_clause,
+            if needs_group { " GROUP BY a.id" } else { "" }
+        );
+
+        let conn = open_conn()?;
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&file_id);
+
+        stmt.query_row(final_params.as_slice(), |row| row.get(0))
+            .optional()
+            .map_err(|e| e.to_string())
+    }
+
+    pub fn get_smart_query_time_line(params: &SmartQueryParams) -> Result<Vec<ATimeLine>, String> {
+        if params.sort_type > 2 {
+            return Ok(Vec::new());
+        }
+
+        let (joins, where_clause, sql_params, needs_group) = Self::build_smart_query_parts(params)?;
+        let (date_field, year_extract, month_extract, date_extract) = match params.sort_type {
+            0 => (
+                "a.taken_date",
+                "CAST(strftime('%Y', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%m', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%d', a.taken_date, 'unixepoch', 'localtime') AS INTEGER)",
+            ),
+            1 => (
+                "a.created_at",
+                "CAST(strftime('%Y', a.created_at, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%m', a.created_at, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%d', a.created_at, 'unixepoch', 'localtime') AS INTEGER)",
+            ),
+            2 => (
+                "a.modified_at",
+                "CAST(strftime('%Y', a.modified_at, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%m', a.modified_at, 'unixepoch', 'localtime') AS INTEGER)",
+                "CAST(strftime('%d', a.modified_at, 'unixepoch', 'localtime') AS INTEGER)",
+            ),
+            _ => unreachable!(),
+        };
+        let order_clause = if params.sort_order == 0 { "ASC" } else { "DESC" };
+        let query = format!(
+            "WITH ranked_files AS (
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY {} {}) - 1 AS position,
+                    {} AS year,
+                    {} AS month,
+                    {} AS date
+                FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                {}
+                {}
+                {}
+            )
+            SELECT year, month, date, MIN(position) as position
+            FROM ranked_files
+            WHERE year IS NOT NULL
+            GROUP BY year, month, date
+            ORDER BY position ASC",
+            date_field,
+            order_clause,
+            year_extract,
+            month_extract,
+            date_extract,
+            joins,
+            where_clause,
+            if needs_group { " GROUP BY a.id" } else { "" }
+        );
+
+        let conn = open_conn()?;
+        let final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let timelines = stmt
+            .query_map(final_params.as_slice(), |row| {
+                Ok(ATimeLine {
+                    year: row.get(0)?,
+                    month: row.get(1)?,
+                    date: row.get(2)?,
+                    position: row.get(3)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        Ok(timelines)
     }
 
     pub fn get_query_file_position(

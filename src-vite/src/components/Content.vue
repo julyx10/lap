@@ -610,6 +610,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTimeLine, getQueryFiles, syncAlbumFolderMtimes,
+         getSmartQueryCountAndSum, getSmartQueryTimeLine, getSmartQueryFiles, getSmartQueryFilePosition,
          copyImages, renameFile, moveFile, moveFileOutsideLibrary, copyFile, deleteFile, deleteFilePermanently, batchDeleteFiles, editFileComment, getFileThumb, getFileThumbs, getFileInfo,
          setFileRotate, setFileFavorite, setFileRating, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
@@ -1776,6 +1777,8 @@ const currentQueryParams = ref({
   tagId: 0,
   personId: 0,
 });
+const currentQuerySource = ref<'query' | 'smart'>('query');
+const currentSmartQueryParams = ref<any | null>(null);
 
 const scanStreamRequestInFlight = ref(false);
 const scanStreamPullPending = ref(false);
@@ -3685,7 +3688,7 @@ watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
     libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected, // album
-    libConfig.smartAlbum.type, libConfig.smartAlbum.id,                         // smart album
+    libConfig.smartAlbum.type, libConfig.smartAlbum.id, JSON.stringify(libConfig.smartAlbums || []), // smart album
     (libConfig.favorite as any).tab, libConfig.favorite.albumId, libConfig.favorite.folderId, libConfig.favorite.folderPath, libConfig.favorite.rating, // favorite files and rating
     libConfig.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
     config.settings.showSubfolderFiles,                                            // album folder view
@@ -3786,6 +3789,34 @@ function cycleGridStyle() {
 // Track pending requests to avoid duplicates
 const pendingRequests = new Set();
 
+const getCurrentQueryCountAndSum = () => {
+  if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
+    return getSmartQueryCountAndSum(currentSmartQueryParams.value);
+  }
+  return getQueryCountAndSum(currentQueryParams.value);
+};
+
+const getCurrentQueryTimeLine = () => {
+  if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
+    return getSmartQueryTimeLine(currentSmartQueryParams.value);
+  }
+  return getQueryTimeLine(currentQueryParams.value);
+};
+
+const getCurrentQueryFiles = (offset: number, limit: number) => {
+  if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
+    return getSmartQueryFiles(currentSmartQueryParams.value, offset, limit);
+  }
+  return getQueryFiles(currentQueryParams.value, offset, limit);
+};
+
+const getCurrentQueryFilePosition = (fileId: number) => {
+  if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
+    return getSmartQueryFilePosition(currentSmartQueryParams.value, fileId);
+  }
+  return getQueryFilePosition(currentQueryParams.value, fileId);
+};
+
 async function fetchDataRange(start: number, end: number, reverse = false) {
   const requestId = currentContentRequestId;
 
@@ -3824,7 +3855,7 @@ async function fetchDataRange(start: number, end: number, reverse = false) {
       
       pendingRequests.add(key);
       
-      const promise = getQueryFiles(currentQueryParams.value, chunkStart, chunkSize)
+      const promise = getCurrentQueryFiles(chunkStart, chunkSize)
         .then(async (newFiles) => {
           if (requestId !== currentContentRequestId) return;
           if (newFiles) {
@@ -3916,7 +3947,7 @@ async function hydrateRangeForSelection(startIndex: number, endIndex: number) {
         .some(item => item?.isPlaceholder);
       if (!needsLoad) continue;
 
-      const loadedFiles = await getQueryFiles(currentQueryParams.value, chunkStart, chunkSize);
+      const loadedFiles = await getCurrentQueryFiles(chunkStart, chunkSize);
       if (!loadedFiles || loadedFiles.length === 0) return false;
       hydratedPlaceholders = true;
 
@@ -4036,6 +4067,9 @@ async function getFileList(
   } = {},
   requestId: number, 
 ) { 
+  currentQuerySource.value = 'query';
+  currentSmartQueryParams.value = null;
+
   // Update current query params with all fields
   currentQueryParams.value = {
     searchFileType,
@@ -4064,7 +4098,7 @@ async function getFileList(
 
   try {
     // Get count and sum first
-    const result = await getQueryCountAndSum(currentQueryParams.value);
+    const result = await getCurrentQueryCountAndSum();
     
     // Check if the request is still valid. 
     if (requestId !== currentContentRequestId) {
@@ -4077,7 +4111,7 @@ async function getFileList(
       totalFileSize.value = result[1];
       
       // Get timeline data for date-based sorts
-      getQueryTimeLine(currentQueryParams.value).then(data => {
+      getCurrentQueryTimeLine().then(data => {
         if (requestId === currentContentRequestId) {
           timelineData.value = data;
         }
@@ -4116,6 +4150,78 @@ async function getFileList(
     }
   } finally {
     // Only clear loading state if this is still the active request
+    if (requestId === currentContentRequestId) {
+      isLoading.value = false;
+      hasLoadedInitialResult.value = true;
+      contentReady.value = true;
+    }
+  }
+}
+
+async function getSmartFileList(smartAlbum: any, requestId: number) {
+  const query = smartAlbum?.query;
+  const rules = Array.isArray(query?.rules) ? query.rules : [];
+  if (!query || rules.length === 0) {
+    showEmptyContent(requestId);
+    return;
+  }
+
+  currentQuerySource.value = 'smart';
+  currentSmartQueryParams.value = {
+    version: Number(query.version || 1),
+    match: query.match === 'any' ? 'any' : 'all',
+    rules,
+    sortType: Number(smartAlbum?.sort?.type ?? 0),
+    sortOrder: Number(smartAlbum?.sort?.order ?? 1),
+  };
+
+  isLoading.value = true;
+
+  try {
+    const result = await getCurrentQueryCountAndSum();
+    if (requestId !== currentContentRequestId) return;
+
+    if (result) {
+      clearSelectionForFileListUpdate();
+      totalFileCount.value = result[0];
+      totalFileSize.value = result[1];
+
+      getCurrentQueryTimeLine().then(data => {
+        if (requestId === currentContentRequestId) {
+          timelineData.value = data;
+        }
+      });
+
+      fileList.value = Array.from({ length: totalFileCount.value }).map((_, i) => ({
+        id: 'ph-' + i,
+        isPlaceholder: true,
+        name: '',
+        size: 0,
+      }));
+      markDedupSourceUpdated(requestId);
+      restoreInitialSelectionIfNeeded();
+      restoreScrollAfterRefresh();
+      if (totalFileCount.value === 0) {
+        openImageViewer(0, false, true);
+      }
+
+      lastVisibleRange = { start: -1, end: -1 };
+      visibleRangeSeqId++;
+    } else {
+      clearSelectionForFileListUpdate();
+      fileList.value = [];
+      markDedupSourceUpdated(requestId);
+      openImageViewer(0, false, true);
+    }
+  } catch (err) {
+    console.error('getSmartFileList error:', err);
+    if (requestId === currentContentRequestId) {
+      clearSelectionForFileListUpdate();
+      fileList.value = [];
+      markDedupSourceUpdated(requestId);
+      openImageViewer(0, false, true);
+    }
+  } finally {
     if (requestId === currentContentRequestId) {
       isLoading.value = false;
       hasLoadedInitialResult.value = true;
@@ -4339,6 +4445,15 @@ async function updateContent(force = false) {
     } else if (smartAlbumType === 'system' && smartAlbumId === 'on-this-day') {
       contentTitle.value = localeMsg.value.album.smart_items.on_this_day;
       getFileList({ startDate: -1, endDate: -1 }, requestId);
+    } else if (smartAlbumType === 'custom' && smartAlbumId) {
+      const smartAlbum = (libConfig.smartAlbums || []).find((item: any) => item.id === smartAlbumId);
+      if (smartAlbum) {
+        contentTitle.value = smartAlbum.name || '';
+        getSmartFileList(smartAlbum, requestId);
+      } else {
+        contentTitle.value = "";
+        showEmptyContent(requestId);
+      }
     } else {
       contentTitle.value = "";
       showEmptyContent(requestId);
@@ -4796,7 +4911,7 @@ const onFileSaved = async (success: boolean, payload: SavedFilePayload = {}) => 
       if (!inserted) {
         updateContent();
       } else {
-        getQueryTimeLine(currentQueryParams.value).then(data => {
+        getCurrentQueryTimeLine().then(data => {
           timelineData.value = data;
         });
       }
@@ -5411,7 +5526,7 @@ const onTrashFile = async () => {
     if (isSearchLikeView.value || tempViewMode.value === 'similar') {
       timelineData.value = [];
     } else {
-      getQueryTimeLine(currentQueryParams.value).then(data => {
+      getCurrentQueryTimeLine().then(data => {
         timelineData.value = data;
       });
     }
@@ -5568,7 +5683,7 @@ type SavedFilePayload = {
 };
 
 const insertIndexedFileIntoList = async (indexedFile: any) => {
-  const position = await getQueryFilePosition(currentQueryParams.value, indexedFile.id);
+  const position = await getCurrentQueryFilePosition(indexedFile.id);
   if (position === null || position < 0) {
     return false;
   }
@@ -6024,7 +6139,7 @@ async function resolveFileIndexForDedup(fileId: number): Promise<number> {
   const loadedIndex = fileList.value.findIndex(file => file.id === fileId);
   if (loadedIndex !== -1) return loadedIndex;
 
-  const position = await getQueryFilePosition(currentQueryParams.value, fileId);
+  const position = await getCurrentQueryFilePosition(fileId);
   if (position === null || position < 0 || position >= totalFileCount.value) {
     return -1;
   }
@@ -6079,7 +6194,7 @@ const sortExtendOptions = computed(() => {
 });
 
 const isSearchLikeView = computed(() => {
-  return config.main.sidebarIndex === 3 || (
+  return config.main.sidebarIndex === 1 || config.main.sidebarIndex === 3 || (
     config.main.sidebarIndex === 5 && (libConfig.tag as any).tab === 'smart'
   );
 });

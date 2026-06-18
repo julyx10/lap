@@ -9,11 +9,11 @@ use crate::t_face;
 use crate::t_image;
 use crate::t_sqlite::{
     ACamera, AFile, AFolder, ALens, ALocation, ATag, ATagFileState, ATagSelectionCount, AThumb,
-    ATimeLine, Album, ImageSearchParams, Person, QueryParams,
+    ATimeLine, Album, ImageSearchParams, Person, QueryParams, SmartQueryParams,
 };
 use crate::t_storage;
 use crate::t_utils;
-use crate::{t_ai, t_sqlite};
+use crate::{t_ai, t_common, t_sqlite};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -36,6 +36,22 @@ pub struct ThumbRequest {
     pub album_id: Option<i64>,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtensionOption {
+    pub value: String,
+    pub label: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SupportedFormatExtensions {
+    pub image: Vec<String>,
+    pub raw: Vec<String>,
+    pub video: Vec<String>,
+    pub options: Vec<ExtensionOption>,
+}
+
 // build info
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
 
@@ -45,6 +61,114 @@ include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
 #[tauri::command]
 pub fn get_app_config() -> Result<AppConfig, String> {
     t_config::load_app_config()
+}
+
+fn extension_description(ext: &str) -> &'static str {
+    match ext {
+        "3fr" => "Hasselblad RAW",
+        "3gp" => "3GPP Multimedia",
+        "arw" => "Sony Alpha RAW",
+        "asf" => "Advanced Systems Format",
+        "avi" => "Audio Video Interleave",
+        "avif" => "AV1 Image File Format",
+        "bmp" => "Bitmap Image File",
+        "cr2" => "Canon RAW 2",
+        "cr3" => "Canon RAW 3",
+        "crw" => "Canon RAW",
+        "dcr" => "Kodak RAW",
+        "dds" => "DirectDraw Surface",
+        "dng" => "Digital Negative",
+        "dpx" => "Digital Picture Exchange",
+        "erf" => "Epson RAW",
+        "exr" => "OpenEXR High Dynamic Range Image",
+        "flv" => "Flash Video",
+        "gif" => "Graphics Interchange Format",
+        "hdr" => "Radiance High Dynamic Range Image",
+        "heic" => "High Efficiency Image Container",
+        "heif" => "High Efficiency Image File",
+        "hevc" => "High Efficiency Video Coding",
+        "hif" => "HEIF Image File",
+        "j2c" => "JPEG 2000 Codestream",
+        "j2k" => "JPEG 2000 Codestream",
+        "jp2" => "JPEG 2000 Image",
+        "jpc" => "JPEG 2000 Codestream",
+        "jpeg" => "Joint Photographic Experts Group",
+        "jpf" => "JPEG 2000 Image",
+        "jpg" => "Joint Photographic Experts Group",
+        "jpx" => "JPEG 2000 Extended Image",
+        "jxl" => "JPEG XL",
+        "kdc" => "Kodak Digital Camera RAW",
+        "m2ts" => "Blu-ray BDAV Video",
+        "m4v" => "MPEG-4 Video",
+        "mdc" => "Minolta RAW",
+        "mef" => "Mamiya RAW",
+        "mkv" => "Matroska Video",
+        "mod" => "Camcorder Video",
+        "mos" => "Leaf RAW",
+        "mov" => "QuickTime Movie",
+        "mp4" => "MPEG-4 Video",
+        "mpeg" => "Moving Picture Experts Group Video",
+        "mpg" => "MPEG Video",
+        "mrw" => "Minolta RAW",
+        "mts" => "AVCHD Video",
+        "nef" => "Nikon Electronic Format",
+        "nrw" => "Nikon RAW",
+        "orf" => "Olympus RAW Format",
+        "pef" => "Pentax Electronic File",
+        "png" => "Portable Network Graphics",
+        "psd" => "Photoshop Document",
+        "qoi" => "Quite OK Image",
+        "raf" => "Fujifilm RAW",
+        "raw" => "Generic Camera RAW",
+        "rgbe" => "Radiance RGBE Image",
+        "rw2" => "Panasonic RAW 2",
+        "rwl" => "Leica RAW",
+        "sr2" => "Sony RAW 2",
+        "srf" => "Sony RAW Format",
+        "srw" => "Samsung RAW",
+        "tga" => "Truevision Targa Image",
+        "tif" => "Tagged Image File",
+        "tiff" => "Tagged Image File Format",
+        "tod" => "JVC HD Camcorder Video",
+        "ts" => "MPEG Transport Stream",
+        "webm" => "WebM Video",
+        "webp" => "Web Picture Format",
+        "wmv" => "Windows Media Video",
+        _ => "File Format",
+    }
+}
+
+fn extension_option(ext: &str) -> ExtensionOption {
+    ExtensionOption {
+        value: ext.to_string(),
+        label: format!("{} ({})", ext.to_ascii_uppercase(), extension_description(ext)),
+    }
+}
+
+/// get supported file format extensions for smart album filters
+#[tauri::command]
+pub fn get_supported_format_extensions() -> SupportedFormatExtensions {
+    let image: Vec<String> = t_common::NORMAL_IMGS
+        .iter()
+        .chain(t_common::FFMPEG_BACKED_IMGS.iter())
+        .map(|ext| ext.to_string())
+        .collect();
+    let raw: Vec<String> = t_common::RAW_IMGS.iter().map(|ext| ext.to_string()).collect();
+    let video: Vec<String> = t_common::VIDEOS.iter().map(|ext| ext.to_string()).collect();
+    let mut options: Vec<ExtensionOption> = image
+        .iter()
+        .chain(raw.iter())
+        .chain(video.iter())
+        .map(|ext| extension_option(ext))
+        .collect();
+    options.sort_by(|a, b| a.value.cmp(&b.value));
+
+    SupportedFormatExtensions {
+        image,
+        raw,
+        video,
+        options,
+    }
 }
 
 /// set last selected item index
@@ -562,6 +686,30 @@ pub fn get_query_files(params: QueryParams, offset: i64, limit: i64) -> Result<V
 pub fn get_query_file_position(params: QueryParams, file_id: i64) -> Result<Option<i64>, String> {
     AFile::get_query_file_position(&params, file_id)
         .map_err(|e| format!("Error while getting query file position: {}", e))
+}
+
+#[tauri::command]
+pub fn get_smart_query_count_and_sum(params: SmartQueryParams) -> Result<(i64, i64), String> {
+    AFile::get_smart_query_count_and_sum(&params)
+        .map_err(|e| format!("Error while getting smart query files count: {}", e))
+}
+
+#[tauri::command]
+pub fn get_smart_query_time_line(params: SmartQueryParams) -> Result<Vec<ATimeLine>, String> {
+    AFile::get_smart_query_time_line(&params)
+        .map_err(|e| format!("Error while getting smart query timeline: {}", e))
+}
+
+#[tauri::command]
+pub fn get_smart_query_files(params: SmartQueryParams, offset: i64, limit: i64) -> Result<Vec<AFile>, String> {
+    AFile::get_smart_query_files(&params, offset, limit)
+        .map_err(|e| format!("Error while getting smart query files: {}", e))
+}
+
+#[tauri::command]
+pub fn get_smart_query_file_position(params: SmartQueryParams, file_id: i64) -> Result<Option<i64>, String> {
+    AFile::get_smart_query_file_position(&params, file_id)
+        .map_err(|e| format!("Error while getting smart query file position: {}", e))
 }
 
 /// get all files from the folder

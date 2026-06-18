@@ -18,6 +18,15 @@ export async function getAppConfig() {
   return null;
 }
 
+export async function getSupportedFormatExtensions() {
+  try {
+    return await invoke('get_supported_format_extensions');
+  } catch (error) {
+    console.error('Failed to get supported format extensions:', error);
+  }
+  return { image: [], raw: [], video: [], options: [] };
+}
+
 // set last selected item index
 export async function setLastSelectedItemIndex(index) {
   try {
@@ -218,6 +227,42 @@ export async function getCurrentLibraryState() {
     }
   } catch (error) {
     console.error('Failed to get current library state:', error);
+  }
+  return null;
+}
+
+export async function getSmartQueryCountAndSum(params) {
+  try {
+    return await invoke('get_smart_query_count_and_sum', { params });
+  } catch (error) {
+    console.error('Failed to get smart query count and sum:', error);
+  }
+  return null;
+}
+
+export async function getSmartQueryTimeLine(params) {
+  try {
+    return await invoke('get_smart_query_time_line', { params });
+  } catch (error) {
+    console.error('Failed to get smart query timeline:', error);
+  }
+  return null;
+}
+
+export async function getSmartQueryFiles(params, offset, limit) {
+  try {
+    return await invoke('get_smart_query_files', { params, offset, limit });
+  } catch (error) {
+    console.error('Failed to get smart query files:', error);
+  }
+  return null;
+}
+
+export async function getSmartQueryFilePosition(params, fileId) {
+  try {
+    return await invoke('get_smart_query_file_position', { params, fileId });
+  } catch (error) {
+    console.error('Failed to get smart query file position:', error);
   }
   return null;
 }

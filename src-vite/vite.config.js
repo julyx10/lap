@@ -8,7 +8,13 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith('calendar-'),
+        },
+      },
+    }),
     mode === 'development' && vueDevTools(),
     tailwindcss(),
     svgLoader()

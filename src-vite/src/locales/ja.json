@@ -49,6 +49,64 @@
     },
     "no_smart_albums": {
       "description": "カスタムクエリ条件からスマートアルバムを作成できます。"
+    },
+    "smart_edit": {
+      "title_add": "スマートアルバムを追加",
+      "title_edit": "スマートアルバムを編集",
+      "name": "名前",
+      "description": "説明",
+      "match": "一致条件",
+      "match_all": "すべてのルール",
+      "match_any": "いずれかのルール",
+      "rules": "ルール",
+      "add_rule": "ルールを追加",
+      "remove_rule": "ルールを削除",
+      "sort": "並び替え",
+      "delete": "削除",
+      "delete_message": "スマートアルバム「{name}」を削除します。",
+      "validation_name": "スマートアルバム名を入力してください。",
+      "validation_rule": "完全なルールを少なくとも 1 つ追加してください。",
+      "fields": {
+        "file_type": "ファイルタイプ",
+        "extension": "拡張子",
+        "favorite": "お気に入り",
+        "rating": "評価",
+        "date": "日付",
+        "size": "サイズ",
+        "width": "幅",
+        "height": "高さ",
+        "duration": "長さ",
+        "has_gps": "GPS",
+        "tag": "タグ",
+        "person": "人物",
+        "camera": "カメラ",
+        "lens": "レンズ",
+        "location": "場所"
+      },
+      "operators": {
+        "is": "=",
+        "is_not": "≠",
+        "gt": ">",
+        "gte": "≥",
+        "lt": "<",
+        "lte": "≤",
+        "between": "範囲内",
+        "empty": "空",
+        "not_empty": "空ではない",
+        "before": "以前",
+        "after": "以後",
+        "has": "含む",
+        "not_has": "含まない"
+      },
+      "boolean": {
+        "yes": "はい",
+        "no": "いいえ"
+      },
+      "date_fields": {
+        "taken": "撮影日",
+        "added": "追加日",
+        "modified": "変更日"
+      }
     }
   },
   "welcome": {

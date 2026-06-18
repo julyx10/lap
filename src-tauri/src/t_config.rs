@@ -54,6 +54,80 @@ fn default_smart_album_type() -> String {
     "system".to_string()
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartAlbumRuleState {
+    pub id: String,
+    pub field: String,
+    pub operator: String,
+    pub value: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartAlbumQueryState {
+    #[serde(default = "default_smart_album_query_version")]
+    pub version: i32,
+    #[serde(default = "default_smart_album_match")]
+    pub r#match: String,
+    #[serde(default)]
+    pub rules: Vec<SmartAlbumRuleState>,
+}
+
+fn default_smart_album_query_version() -> i32 {
+    1
+}
+
+fn default_smart_album_match() -> String {
+    "all".to_string()
+}
+
+impl Default for SmartAlbumQueryState {
+    fn default() -> Self {
+        Self {
+            version: default_smart_album_query_version(),
+            r#match: default_smart_album_match(),
+            rules: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartAlbumSortState {
+    pub r#type: i64,
+    pub order: i64,
+}
+
+impl Default for SmartAlbumSortState {
+    fn default() -> Self {
+        Self { r#type: 0, order: 1 }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CustomSmartAlbumState {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default = "default_smart_album_source")]
+    pub source: String,
+    #[serde(default)]
+    pub query: SmartAlbumQueryState,
+    #[serde(default)]
+    pub sort: SmartAlbumSortState,
+    #[serde(default)]
+    pub created_at: i64,
+    #[serde(default)]
+    pub updated_at: i64,
+}
+
+fn default_smart_album_source() -> String {
+    "rules".to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FavoriteState {
@@ -224,6 +298,8 @@ pub struct LibraryState {
     pub album: AlbumState,
     #[serde(default)]
     pub smart_album: SmartAlbumState,
+    #[serde(default)]
+    pub smart_albums: Vec<CustomSmartAlbumState>,
     pub favorite: FavoriteState,
     pub tag: TagState,
     pub calendar: CalendarState,

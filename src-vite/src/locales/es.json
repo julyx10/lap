@@ -49,6 +49,64 @@
     },
     "no_smart_albums": {
       "description": "Crea álbumes inteligentes con reglas de consulta personalizadas."
+    },
+    "smart_edit": {
+      "title_add": "Añadir álbum inteligente",
+      "title_edit": "Editar álbum inteligente",
+      "name": "Nombre",
+      "description": "Descripción",
+      "match": "Coincidir",
+      "match_all": "Todas las reglas",
+      "match_any": "Cualquier regla",
+      "rules": "Reglas",
+      "add_rule": "Añadir regla",
+      "remove_rule": "Eliminar regla",
+      "sort": "Ordenar",
+      "delete": "Eliminar",
+      "delete_message": "Se eliminará el álbum inteligente “{name}”.",
+      "validation_name": "Introduce un nombre para el álbum inteligente.",
+      "validation_rule": "Añade al menos una regla completa.",
+      "fields": {
+        "file_type": "Tipo de archivo",
+        "extension": "Extensión",
+        "favorite": "Favorito",
+        "rating": "Valoración",
+        "date": "Fecha",
+        "size": "Tamaño",
+        "width": "Anchura",
+        "height": "Altura",
+        "duration": "Duración",
+        "has_gps": "GPS",
+        "tag": "Etiqueta",
+        "person": "Persona",
+        "camera": "Cámara",
+        "lens": "Lente",
+        "location": "Ubicación"
+      },
+      "operators": {
+        "is": "=",
+        "is_not": "≠",
+        "gt": ">",
+        "gte": "≥",
+        "lt": "<",
+        "lte": "≤",
+        "between": "entre",
+        "empty": "vacío",
+        "not_empty": "no vacío",
+        "before": "antes",
+        "after": "después",
+        "has": "tiene",
+        "not_has": "no tiene"
+      },
+      "boolean": {
+        "yes": "Sí",
+        "no": "No"
+      },
+      "date_fields": {
+        "taken": "Tomada",
+        "added": "Añadida",
+        "modified": "Modificada"
+      }
     }
   },
   "welcome": {

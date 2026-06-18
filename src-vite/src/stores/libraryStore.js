@@ -27,6 +27,9 @@ export const useLibraryStore = defineStore('libraryStore', {
       id: null,               // selected smart album id
     },
 
+    /** @type {Array<{ id: string, name: string, description: string, source: 'rules', query: { version: number, match: 'all' | 'any', rules: Array<{ id: string, field: string, operator: string, value: any }> }, sort: { type: number, order: number }, createdAt: number, updatedAt: number }>} */
+    smartAlbums: [],          // custom smart albums
+
     /** @type {{ tab: 'favorite' | 'rating', albumId: number | null, folderId: number, folderPath: string, rating: number | null }} */
     favorite: {
       tab: 'favorite',
@@ -165,6 +168,7 @@ export const useLibraryStore = defineStore('libraryStore', {
           const stateToSave = {
             album: this.album,
             smartAlbum: this.smartAlbum,
+            smartAlbums: this.smartAlbums,
             favorite: this.favorite,
             tag: this.tag,
             calendar: this.calendar,

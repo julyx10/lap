@@ -49,6 +49,64 @@
     },
     "no_smart_albums": {
       "description": "通过自定义查询条件创建智能相册。"
+    },
+    "smart_edit": {
+      "title_add": "添加智能相册",
+      "title_edit": "编辑智能相册",
+      "name": "名称",
+      "description": "描述",
+      "match": "匹配",
+      "match_all": "全部规则",
+      "match_any": "任一规则",
+      "rules": "规则",
+      "add_rule": "添加规则",
+      "remove_rule": "移除规则",
+      "sort": "排序",
+      "delete": "删除",
+      "delete_message": "将删除智能相册“{name}”。",
+      "validation_name": "请输入智能相册名称。",
+      "validation_rule": "请至少添加一条完整规则。",
+      "fields": {
+        "file_type": "文件类型",
+        "extension": "扩展名",
+        "favorite": "收藏",
+        "rating": "评分",
+        "date": "日期",
+        "size": "大小",
+        "width": "宽度",
+        "height": "高度",
+        "duration": "时长",
+        "has_gps": "GPS",
+        "tag": "标签",
+        "person": "人物",
+        "camera": "相机",
+        "lens": "镜头",
+        "location": "地点"
+      },
+      "operators": {
+        "is": "=",
+        "is_not": "≠",
+        "gt": ">",
+        "gte": "≥",
+        "lt": "<",
+        "lte": "≤",
+        "between": "介于",
+        "empty": "为空",
+        "not_empty": "不为空",
+        "before": "早于",
+        "after": "晚于",
+        "has": "包含",
+        "not_has": "不包含"
+      },
+      "boolean": {
+        "yes": "是",
+        "no": "否"
+      },
+      "date_fields": {
+        "taken": "拍摄时间",
+        "added": "添加时间",
+        "modified": "修改时间"
+      }
     }
   },
   "welcome": {
