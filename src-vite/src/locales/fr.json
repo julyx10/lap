@@ -958,6 +958,7 @@
       "section_language": "Langue",
       "section_appearance": "Apparence",
       "section_interface": "Affichage",
+      "section_updates": "Mises à jour",
       "appearance": "Apparence",
       "appearance_options": [
         "Clair",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "Conseils des boutons",
       "show_status_bar": "Barre d'état",
-      "auto_check_updates": "Rechercher automatiquement les mises à jour",
-      "show_map": "Afficher carte",
-      "show_map_hint": "Nécessite un accès à internet",
-      "debug_mode": "Mode débogage"
+      "auto_check_updates": "Rechercher automatiquement les mises à jour"
     },
     "library": {
       "title": "Bibliothèque",
@@ -1052,9 +1050,9 @@
         "Nombre (Décroissant)"
       ]
     },
-    "view": {
-      "title": "Affichage",
-      "section_layout": "Vue en grille",
+    "browse": {
+      "title": "Parcourir",
+      "section_grid": "Grille",
       "style": "Style",
       "style_options": [
         "Vue carte",
@@ -1082,50 +1080,41 @@
         "Objectif",
         "Paramètres"
       ],
-      "date_grouping": "Afficher les groupes par date",
-      "date_grouping_hint": "S'applique uniquement au tri par date",
-      "date_grouping_options": [
+      "section_grouping": "Regroupement",
+      "group_by": "Regrouper par",
+      "group_by_hint": "Organise les éléments de la grille en sections",
+      "group_unknown_folder": "Dossier inconnu",
+      "group_by_options": [
         "Aucun",
-        "Jour",
-        "Mois"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "Pellicule",
-      "preview_position": "Position de la pellicule",
-      "preview_position_hint": "S'applique uniquement lorsque la vue pellicule est activée",
-      "preview_position_options": [
-        "Haut",
-        "Bas",
-        "Gauche",
-        "Droite"
-      ]
+        "Date (jour)",
+        "Date (mois)",
+        "Date (année)",
+        "Chemin du dossier",
+        "Type de fichier",
+        "Note",
+        "Appareil photo",
+        "Lieu"
+      ],
+      "filmstrip_view": {
+        "title": "Pellicule",
+        "enable_filmstrip": "Activer la vue pellicule",
+        "preview_position": "Position de la pellicule",
+        "preview_position_options": [
+          "Haut",
+          "Bas",
+          "Gauche",
+          "Droite"
+        ]
+      }
     },
     "image_view": {
       "title": "Visionneuse",
-      "section_viewing": "Visionneuse d’images",
-      "section_external_apps": "Applications externes",
+      "section_navigation": "Navigation",
       "mouse_wheel": "Molette",
       "mouse_wheel_options": [
         "Préc/Suiv (Ctrl zoom)",
         "Zoom +/-"
       ],
-      "slide_show_interval": "Intervalle: {second} s",
-      "slide_show_transition": "Transition du diaporama",
-      "slide_show_transition_options": [
-        "Glissement",
-        "Fondu",
-        "Aucune"
-      ],
-      "auto_play_video": "Lecture auto vidéo",
-      "loop_video": "Vidéo en boucle",
-      "show_comment": "Afficher commentaire",
-      "show_comment_hint": "Afficher les commentaires dans le visualiseur",
-      "external_image_editor": "Ouvrir l'image avec",
-      "external_video_app": "Ouvrir la vidéo avec",
-      "external_app_not_selected": "Aucune app selectionnee",
-      "choose_app": "Choisir",
-      "clear_app": "Effacer",
       "navigator_view": "Navigateur",
       "navigator_view_options": [
         "Auto",
@@ -1138,13 +1127,24 @@
         "Moyen(240px)",
         "Grand(320px)",
         "Très Grand(400px)"
-      ]
+      ],
+      "section_slideshow": "Diaporama",
+      "slide_show_interval": "Intervalle: {second} s",
+      "slide_show_transition": "Transition du diaporama",
+      "slide_show_transition_options": [
+        "Glissement",
+        "Fondu",
+        "Aucune"
+      ],
+      "section_video": "Vidéo",
+      "auto_play_video": "Lecture auto vidéo",
+      "loop_video": "Vidéo en boucle"
     },
     "image_search": {
-      "title": "Recherche intelligente",
+      "title": "Recherche",
       "search_image": "Recherche d'images",
       "search_model": "Choisir le modèle (redémarrage requis)",
-      "default_model_hint": "Recherche d'images en anglais uniquement",
+      "default_model_hint": "Le modèle par défaut prend uniquement en charge la recherche d'images en anglais",
       "multilingual_model_hint": "Recherche dans plus de 50 langues",
       "search_model_options": [
         "Par défaut (anglais)",
@@ -1225,6 +1225,20 @@
         "edit_comment": "Modifier le commentaire",
         "rotate": "Pivoter l'aperçu"
       }
+    },
+    "advanced": {
+      "title": "Avancé",
+      "section_organization": "Organisation",
+      "show_collections": "Afficher les collections",
+      "show_collections_hint": "Active un volet de collections pour regrouper des éléments par glisser-déposer.",
+      "section_external_apps": "Applications externes",
+      "external_image_editor": "Ouvrir l'image avec",
+      "external_video_app": "Ouvrir la vidéo avec",
+      "external_app_not_selected": "Aucune app selectionnee",
+      "choose_app": "Choisir",
+      "clear_app": "Effacer",
+      "section_diagnostics": "Diagnostics",
+      "debug_mode": "Mode débogage"
     },
     "database": {
       "title": "Stockage",

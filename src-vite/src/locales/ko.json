@@ -958,6 +958,7 @@
       "section_language": "언어",
       "section_appearance": "외관",
       "section_interface": "표시",
+      "section_updates": "업데이트",
       "appearance": "색상 모드",
       "appearance_options": [
         "라이트",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "버튼 팁 표시",
       "show_status_bar": "상태 표시줄",
-      "auto_check_updates": "업데이트 자동 확인",
-      "show_map": "지도 표시",
-      "show_map_hint": "인터넷 연결이 필요합니다",
-      "debug_mode": "디버그 모드"
+      "auto_check_updates": "업데이트 자동 확인"
     },
     "library": {
       "title": "라이브러리",
@@ -1052,9 +1050,9 @@
         "개수 (높은 순)"
       ]
     },
-    "view": {
-      "title": "보기",
-      "section_layout": "그리드 보기",
+    "browse": {
+      "title": "탐색",
+      "section_grid": "그리드",
       "style": "스타일",
       "style_options": [
         "카드 보기",
@@ -1082,50 +1080,41 @@
         "렌즈",
         "설정"
       ],
-      "date_grouping": "날짜 그룹 표시",
-      "date_grouping_hint": "시간순 정렬에서만 적용됩니다",
-      "date_grouping_options": [
+      "section_grouping": "그룹화",
+      "group_by": "그룹 기준",
+      "group_by_hint": "그리드 항목을 섹션으로 정리합니다",
+      "group_unknown_folder": "알 수 없는 폴더",
+      "group_by_options": [
         "없음",
-        "일",
-        "월"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "필름스트립",
-      "preview_position": "필름스트립 위치",
-      "preview_position_hint": "필름스트립 보기가 켜져 있을 때만 적용됩니다",
-      "preview_position_options": [
-        "위",
-        "아래",
-        "왼쪽",
-        "오른쪽"
-      ]
+        "날짜(일)",
+        "날짜(월)",
+        "날짜(연도)",
+        "폴더 경로",
+        "파일 유형",
+        "평점",
+        "카메라",
+        "위치"
+      ],
+      "filmstrip_view": {
+        "title": "필름스트립",
+        "enable_filmstrip": "필름스트립 보기 활성화",
+        "preview_position": "필름스트립 위치",
+        "preview_position_options": [
+          "위",
+          "아래",
+          "왼쪽",
+          "오른쪽"
+        ]
+      }
     },
     "image_view": {
       "title": "뷰어",
-      "section_viewing": "이미지 뷰어",
-      "section_external_apps": "외부 앱",
+      "section_navigation": "탐색",
       "mouse_wheel": "마우스 휠",
       "mouse_wheel_options": [
         "이전/다음 (Ctrl 확대)",
         "확대/축소"
       ],
-      "slide_show_interval": "간격: {second}초",
-      "slide_show_transition": "슬라이드쇼 전환",
-      "slide_show_transition_options": [
-        "슬라이드",
-        "페이드",
-        "없음"
-      ],
-      "auto_play_video": "비디오 자동 재생",
-      "loop_video": "비디오 반복 재생",
-      "show_comment": "메모 표시",
-      "show_comment_hint": "뷰어에 메모 표시",
-      "external_image_editor": "이미지 열기 앱",
-      "external_video_app": "동영상 열기 앱",
-      "external_app_not_selected": "선택된 앱이 없습니다",
-      "choose_app": "선택",
-      "clear_app": "지우기",
       "navigator_view": "내비게이터",
       "navigator_view_options": [
         "자동",
@@ -1138,13 +1127,24 @@
         "중간(240px)",
         "크게(320px)",
         "아주 크게(400px)"
-      ]
+      ],
+      "section_slideshow": "슬라이드쇼",
+      "slide_show_interval": "간격: {second}초",
+      "slide_show_transition": "슬라이드쇼 전환",
+      "slide_show_transition_options": [
+        "슬라이드",
+        "페이드",
+        "없음"
+      ],
+      "section_video": "비디오",
+      "auto_play_video": "비디오 자동 재생",
+      "loop_video": "비디오 반복 재생"
     },
     "image_search": {
-      "title": "스마트 검색",
+      "title": "검색",
       "search_image": "이미지 검색",
       "search_model": "모델 선택(재시작 후 적용)",
-      "default_model_hint": "영어 이미지 검색만 지원",
+      "default_model_hint": "기본 모델은 영어 이미지 검색만 지원합니다",
       "multilingual_model_hint": "50개 이상 언어 검색 지원",
       "search_model_options": [
         "기본값(영어)",
@@ -1225,6 +1225,20 @@
         "edit_comment": "메모 편집",
         "rotate": "미리보기 회전"
       }
+    },
+    "advanced": {
+      "title": "고급",
+      "section_organization": "구성",
+      "show_collections": "컬렉션 표시",
+      "show_collections_hint": "드래그 앤 드롭으로 항목을 그룹화하는 컬렉션 트레이를 활성화합니다.",
+      "section_external_apps": "외부 앱",
+      "external_image_editor": "이미지 열기 앱",
+      "external_video_app": "동영상 열기 앱",
+      "external_app_not_selected": "선택된 앱이 없습니다",
+      "choose_app": "선택",
+      "clear_app": "지우기",
+      "section_diagnostics": "진단",
+      "debug_mode": "디버그 모드"
     },
     "database": {
       "title": "저장소",

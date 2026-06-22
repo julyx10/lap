@@ -958,6 +958,7 @@
       "section_language": "Sprache",
       "section_appearance": "Erscheinungsbild",
       "section_interface": "Anzeige",
+      "section_updates": "Updates",
       "appearance": "Erscheinungsbild",
       "appearance_options": [
         "Hell",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "Button-Hinweise",
       "show_status_bar": "Statusleiste",
-      "auto_check_updates": "Automatisch nach Updates suchen",
-      "show_map": "Karte anzeigen",
-      "show_map_hint": "Benötigt Internetzugang",
-      "debug_mode": "Debug-Modus"
+      "auto_check_updates": "Automatisch nach Updates suchen"
     },
     "library": {
       "title": "Bibliothek",
@@ -1052,9 +1050,9 @@
         "Anzahl (Absteigend)"
       ]
     },
-    "view": {
-      "title": "Ansicht",
-      "section_layout": "Rasteransicht",
+    "browse": {
+      "title": "Durchsuchen",
+      "section_grid": "Raster",
       "style": "Stil",
       "style_options": [
         "Kartenansicht",
@@ -1082,50 +1080,41 @@
         "Objektiv",
         "Einstellungen"
       ],
-      "date_grouping": "Datumsgruppen anzeigen",
-      "date_grouping_hint": "Gilt nur bei Sortierung nach Zeit",
-      "date_grouping_options": [
+      "section_grouping": "Gruppierung",
+      "group_by": "Gruppieren nach",
+      "group_by_hint": "Rasterelemente in Abschnitte gliedern",
+      "group_unknown_folder": "Unbekannter Ordner",
+      "group_by_options": [
         "Keine",
-        "Tag",
-        "Monat"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "Filmstreifen",
-      "preview_position": "Position des Filmstreifens",
-      "preview_position_hint": "Gilt nur, wenn die Filmstreifenansicht aktiviert ist",
-      "preview_position_options": [
-        "Oben",
-        "Unten",
-        "Links",
-        "Rechts"
-      ]
+        "Datum (Tag)",
+        "Datum (Monat)",
+        "Datum (Jahr)",
+        "Ordnerpfad",
+        "Dateityp",
+        "Bewertung",
+        "Kamera",
+        "Ort"
+      ],
+      "filmstrip_view": {
+        "title": "Filmstreifen",
+        "enable_filmstrip": "Filmstreifenansicht aktivieren",
+        "preview_position": "Position des Filmstreifens",
+        "preview_position_options": [
+          "Oben",
+          "Unten",
+          "Links",
+          "Rechts"
+        ]
+      }
     },
     "image_view": {
       "title": "Viewer",
-      "section_viewing": "Bildbetrachter",
-      "section_external_apps": "Externe Apps",
+      "section_navigation": "Navigation",
       "mouse_wheel": "Mausrad",
       "mouse_wheel_options": [
         "Vorher/Nächst (Strg Zoom)",
         "Zoom +/-"
       ],
-      "slide_show_interval": "Intervall: {second} s",
-      "slide_show_transition": "Diashow-Übergang",
-      "slide_show_transition_options": [
-        "Schieben",
-        "Überblenden",
-        "Keine"
-      ],
-      "auto_play_video": "Video Autoplay",
-      "loop_video": "Video wiederholen",
-      "show_comment": "Kommentar zeigen",
-      "show_comment_hint": "Kommentare im Betrachter anzeigen",
-      "external_image_editor": "Bild öffnen mit",
-      "external_video_app": "Video öffnen mit",
-      "external_app_not_selected": "Keine App ausgewählt",
-      "choose_app": "Auswählen",
-      "clear_app": "Zurücksetzen",
       "navigator_view": "Navigator",
       "navigator_view_options": [
         "Auto",
@@ -1138,13 +1127,24 @@
         "Mittel(240px)",
         "Groß(320px)",
         "Extra Groß(400px)"
-      ]
+      ],
+      "section_slideshow": "Diashow",
+      "slide_show_interval": "Intervall: {second} s",
+      "slide_show_transition": "Diashow-Übergang",
+      "slide_show_transition_options": [
+        "Schieben",
+        "Überblenden",
+        "Keine"
+      ],
+      "section_video": "Video",
+      "auto_play_video": "Video Autoplay",
+      "loop_video": "Video wiederholen"
     },
     "image_search": {
-      "title": "Intelligente Suche",
+      "title": "Suche",
       "search_image": "Bildsuche",
       "search_model": "Modell auswählen (Neustart erforderlich)",
-      "default_model_hint": "Bildsuche nur auf Englisch",
+      "default_model_hint": "Das Standardmodell unterstützt nur die Bildsuche auf Englisch",
       "multilingual_model_hint": "Suche in über 50 Sprachen",
       "search_model_options": [
         "Standard (Englisch)",
@@ -1225,6 +1225,20 @@
         "edit_comment": "Kommentar bearbeiten",
         "rotate": "Vorschau drehen"
       }
+    },
+    "advanced": {
+      "title": "Erweitert",
+      "section_organization": "Organisation",
+      "show_collections": "Sammlungen anzeigen",
+      "show_collections_hint": "Aktiviert eine Sammlungsleiste zum Gruppieren von Elementen per Drag-and-drop.",
+      "section_external_apps": "Externe Apps",
+      "external_image_editor": "Bild öffnen mit",
+      "external_video_app": "Video öffnen mit",
+      "external_app_not_selected": "Keine App ausgewählt",
+      "choose_app": "Auswählen",
+      "clear_app": "Zurücksetzen",
+      "section_diagnostics": "Diagnose",
+      "debug_mode": "Debug-Modus"
     },
     "database": {
       "title": "Speicher",

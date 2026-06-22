@@ -958,6 +958,7 @@
       "section_language": "言語",
       "section_appearance": "外観",
       "section_interface": "表示",
+      "section_updates": "アップデート",
       "appearance": "外観",
       "appearance_options": [
         "ライト",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "ボタンのヒント",
       "show_status_bar": "ステータスバー",
-      "auto_check_updates": "更新を自動確認",
-      "show_map": "地図を表示",
-      "show_map_hint": "インターネット接続が必要です",
-      "debug_mode": "デバッグモード"
+      "auto_check_updates": "更新を自動確認"
     },
     "library": {
       "title": "ライブラリ",
@@ -1052,9 +1050,9 @@
         "件数 (多い順)"
       ]
     },
-    "view": {
-      "title": "表示",
-      "section_layout": "グリッド表示",
+    "browse": {
+      "title": "ブラウズ",
+      "section_grid": "グリッド",
       "style": "スタイル",
       "style_options": [
         "カード表示",
@@ -1082,50 +1080,41 @@
         "レンズ",
         "設定"
       ],
-      "date_grouping": "日付グループを表示",
-      "date_grouping_hint": "時間で並べ替えている場合のみ適用されます",
-      "date_grouping_options": [
+      "section_grouping": "グループ化",
+      "group_by": "グループ化",
+      "group_by_hint": "グリッド項目をセクションに整理します",
+      "group_unknown_folder": "不明なフォルダ",
+      "group_by_options": [
         "なし",
-        "日",
-        "月"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "フィルムストリップ",
-      "preview_position": "フィルムストリップの位置",
-      "preview_position_hint": "フィルムストリップ表示が有効なときのみ適用されます",
-      "preview_position_options": [
-        "上",
-        "下",
-        "左",
-        "右"
-      ]
+        "日付（日）",
+        "日付（月）",
+        "日付（年）",
+        "フォルダパス",
+        "ファイル形式",
+        "評価",
+        "カメラ",
+        "場所"
+      ],
+      "filmstrip_view": {
+        "title": "フィルムストリップ",
+        "enable_filmstrip": "フィルムストリップ表示を有効にする",
+        "preview_position": "フィルムストリップの位置",
+        "preview_position_options": [
+          "上",
+          "下",
+          "左",
+          "右"
+        ]
+      }
     },
     "image_view": {
       "title": "ビューア",
-      "section_viewing": "画像ビューア",
-      "section_external_apps": "外部アプリ",
+      "section_navigation": "ナビゲーション",
       "mouse_wheel": "マウスホイール",
       "mouse_wheel_options": [
         "前/次へ (Ctrlで拡大)",
         "拡大/縮小"
       ],
-      "slide_show_interval": "間隔: {second} 秒",
-      "slide_show_transition": "スライドショーの切り替え",
-      "slide_show_transition_options": [
-        "スライド",
-        "フェード",
-        "なし"
-      ],
-      "auto_play_video": "動画自動再生",
-      "loop_video": "動画を繰り返す",
-      "show_comment": "コメントを表示",
-      "show_comment_hint": "ビューアにコメントを表示",
-      "external_image_editor": "画像を開くアプリ",
-      "external_video_app": "動画を開くアプリ",
-      "external_app_not_selected": "アプリが選択されていません",
-      "choose_app": "選択",
-      "clear_app": "クリア",
       "navigator_view": "ナビゲーター",
       "navigator_view_options": [
         "自動",
@@ -1138,13 +1127,24 @@
         "中(240px)",
         "大(320px)",
         "特大(400px)"
-      ]
+      ],
+      "section_slideshow": "スライドショー",
+      "slide_show_interval": "間隔: {second} 秒",
+      "slide_show_transition": "スライドショーの切り替え",
+      "slide_show_transition_options": [
+        "スライド",
+        "フェード",
+        "なし"
+      ],
+      "section_video": "ビデオ",
+      "auto_play_video": "動画自動再生",
+      "loop_video": "動画を繰り返す"
     },
     "image_search": {
-      "title": "スマート検索",
+      "title": "検索",
       "search_image": "画像検索",
       "search_model": "モデルを選択（再起動後に反映）",
-      "default_model_hint": "英語のみの画像検索",
+      "default_model_hint": "デフォルトモデルは英語の画像検索のみ対応しています",
       "multilingual_model_hint": "50以上の言語で検索できます",
       "search_model_options": [
         "デフォルト（英語）",
@@ -1225,6 +1225,20 @@
         "edit_comment": "コメントを編集",
         "rotate": "プレビューを回転"
       }
+    },
+    "advanced": {
+      "title": "詳細",
+      "section_organization": "整理",
+      "show_collections": "コレクションを表示",
+      "show_collections_hint": "ドラッグ＆ドロップで項目をグループ化するコレクショントレイを有効にします。",
+      "section_external_apps": "外部アプリ",
+      "external_image_editor": "画像を開くアプリ",
+      "external_video_app": "動画を開くアプリ",
+      "external_app_not_selected": "アプリが選択されていません",
+      "choose_app": "選択",
+      "clear_app": "クリア",
+      "section_diagnostics": "診断",
+      "debug_mode": "デバッグモード"
     },
     "database": {
       "title": "ストレージ",

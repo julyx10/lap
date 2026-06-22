@@ -958,6 +958,7 @@
       "section_language": "Idioma",
       "section_appearance": "Apariencia",
       "section_interface": "Visualización",
+      "section_updates": "Actualizaciones",
       "appearance": "Apariencia",
       "appearance_options": [
         "Claro",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "Mostrar sugerencias de botones",
       "show_status_bar": "Mostrar barra estado",
-      "auto_check_updates": "Buscar actualizaciones automáticamente",
-      "show_map": "Mostrar mapa",
-      "show_map_hint": "Requiere acceso a internet",
-      "debug_mode": "Modo depuración"
+      "auto_check_updates": "Buscar actualizaciones automáticamente"
     },
     "library": {
       "title": "Biblioteca",
@@ -1052,9 +1050,9 @@
         "Cantidad (De mayor a menor)"
       ]
     },
-    "view": {
-      "title": "Vista",
-      "section_layout": "Vista de cuadrícula",
+    "browse": {
+      "title": "Explorar",
+      "section_grid": "Cuadrícula",
       "style": "Estilo",
       "style_options": [
         "Vista de tarjeta",
@@ -1082,50 +1080,41 @@
         "Lente",
         "Ajustes captura"
       ],
-      "date_grouping": "Mostrar grupos por fecha",
-      "date_grouping_hint": "Solo se aplica al ordenar por tiempo",
-      "date_grouping_options": [
+      "section_grouping": "Agrupación",
+      "group_by": "Agrupar por",
+      "group_by_hint": "Organiza los elementos de la cuadrícula en secciones",
+      "group_unknown_folder": "Carpeta desconocida",
+      "group_by_options": [
         "Ninguno",
-        "Día",
-        "Mes"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "Tira de película",
-      "preview_position": "Posición de la tira de película",
-      "preview_position_hint": "Solo se aplica cuando la vista de tira de película está activada",
-      "preview_position_options": [
-        "Arriba",
-        "Abajo",
-        "Izquierda",
-        "Derecha"
-      ]
+        "Fecha (día)",
+        "Fecha (mes)",
+        "Fecha (año)",
+        "Ruta de carpeta",
+        "Tipo de archivo",
+        "Calificación",
+        "Cámara",
+        "Ubicación"
+      ],
+      "filmstrip_view": {
+        "title": "Tira de película",
+        "enable_filmstrip": "Activar vista de tira de película",
+        "preview_position": "Posición de la tira de película",
+        "preview_position_options": [
+          "Arriba",
+          "Abajo",
+          "Izquierda",
+          "Derecha"
+        ]
+      }
     },
     "image_view": {
       "title": "Visualizador",
-      "section_viewing": "Visor de imágenes",
-      "section_external_apps": "Apps externas",
+      "section_navigation": "Navegación",
       "mouse_wheel": "Rueda ratón",
       "mouse_wheel_options": [
         "Ant/Sig (Ctrl zoom)",
         "Acercar/Alejar"
       ],
-      "slide_show_interval": "Intervalo: {second} s",
-      "slide_show_transition": "Transición de presentación",
-      "slide_show_transition_options": [
-        "Deslizar",
-        "Fundido",
-        "Ninguna"
-      ],
-      "auto_play_video": "Autoreproducir vídeo",
-      "loop_video": "Repetir vídeo",
-      "show_comment": "Mostrar comentario",
-      "show_comment_hint": "Mostrar comentarios en el visor",
-      "external_image_editor": "Abrir imagen con",
-      "external_video_app": "Abrir video con",
-      "external_app_not_selected": "Ninguna app seleccionada",
-      "choose_app": "Elegir",
-      "clear_app": "Borrar",
       "navigator_view": "Navegador",
       "navigator_view_options": [
         "Auto",
@@ -1138,13 +1127,24 @@
         "Medio(240px)",
         "Grande(320px)",
         "Extra Grande(400px)"
-      ]
+      ],
+      "section_slideshow": "Presentación",
+      "slide_show_interval": "Intervalo: {second} s",
+      "slide_show_transition": "Transición de presentación",
+      "slide_show_transition_options": [
+        "Deslizar",
+        "Fundido",
+        "Ninguna"
+      ],
+      "section_video": "Vídeo",
+      "auto_play_video": "Autoreproducir vídeo",
+      "loop_video": "Repetir vídeo"
     },
     "image_search": {
-      "title": "Búsqueda inteligente",
+      "title": "Buscar",
       "search_image": "Búsqueda de imágenes",
       "search_model": "Elegir modelo (requiere reinicio)",
-      "default_model_hint": "Búsqueda de imágenes solo en inglés",
+      "default_model_hint": "El modelo predeterminado solo admite búsqueda de imágenes en inglés",
       "multilingual_model_hint": "Busca en más de 50 idiomas",
       "search_model_options": [
         "Predeterminado (inglés)",
@@ -1225,6 +1225,20 @@
         "edit_comment": "Editar comentario",
         "rotate": "Rotar vista previa"
       }
+    },
+    "advanced": {
+      "title": "Avanzado",
+      "section_organization": "Organización",
+      "show_collections": "Mostrar colecciones",
+      "show_collections_hint": "Activa una bandeja de colecciones para agrupar elementos arrastrando y soltando.",
+      "section_external_apps": "Apps externas",
+      "external_image_editor": "Abrir imagen con",
+      "external_video_app": "Abrir video con",
+      "external_app_not_selected": "Ninguna app seleccionada",
+      "choose_app": "Elegir",
+      "clear_app": "Borrar",
+      "section_diagnostics": "Diagnóstico",
+      "debug_mode": "Modo depuración"
     },
     "database": {
       "title": "Almacenamiento",

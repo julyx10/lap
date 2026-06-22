@@ -88,7 +88,7 @@ export const useConfigStore = defineStore('configStore', {
     libraryChangedVersion: 0,
 
     settings: {
-      tabIndex: 0,               // settings tab index (0: general, 1: view, 2: library, 3: image search, 4: shortcuts, 5: about)
+      tabIndex: 0,               // settings tab index (0: general, 1: library, 2: browse, 3: viewer, 4: search, 5: shortcuts, 6: advanced, 7: about)
 
       // general settings
       language: 'en',             // default language
@@ -99,6 +99,7 @@ export const useConfigStore = defineStore('configStore', {
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
       autoCheckUpdates: true,      // automatically check for updates
+      showCollections: false,      // show collection tray in left panel
       debugMode: false,           // debug mode
 
       // navigation settings
@@ -117,7 +118,7 @@ export const useConfigStore = defineStore('configStore', {
         labelPrimary: 1,         // card view: primary label (1: Name)
         labelSecondary: 3,       // card view: secondary label (3: Dimension)
         previewPosition: 0,      // filmstrip view: preview position (0: top, 1: bottom, 2: left, 3: right)
-        dateGrouping: 0,         // show date groups: 0: none, 1: day, 2: month
+        groupBy: 0,         // group by: 0: none, 1: date day, 2: date month, 3: folder path, 4: rating
       },
       
       // image view settings
@@ -198,6 +199,9 @@ export const useConfigStore = defineStore('configStore', {
     setAutoCheckUpdates(autoCheckUpdates) {
       this.settings.autoCheckUpdates = autoCheckUpdates;
     },
+    setShowCollections(showCollections) {
+      this.settings.showCollections = showCollections;
+    },
     setDebugMode(debugMode) {
       this.settings.debugMode = debugMode;
     },
@@ -241,8 +245,8 @@ export const useConfigStore = defineStore('configStore', {
     setGridLabelSecondary(gridLabelSecondary) {
       this.settings.grid.labelSecondary = gridLabelSecondary;
     },
-    setGridDateGrouping(dateGrouping) {
-      this.settings.grid.dateGrouping = dateGrouping;
+    setGridGroupBy(groupBy) {
+      this.settings.grid.groupBy = groupBy;
     },
     setShowFilmStrip(showFilmStrip) {
       this.settings.grid.showFilmStrip = showFilmStrip;

@@ -120,7 +120,7 @@
             :iconStyle="{
               transform: `rotate(${config.settings.grid.style === 3 ? 90 : 0}deg)`,
             }"
-            :tooltip="localeMsg.settings.view.style_options[config.settings.grid.style]"
+            :tooltip="localeMsg.settings.browse.style_options[config.settings.grid.style]"
             @click="cycleGridStyle"
           />
 
@@ -131,7 +131,7 @@
               transform: `rotate(${config.settings.grid.previewPosition === 0 ? 180 : (config.settings.grid.previewPosition === 2 ? 90 : (config.settings.grid.previewPosition === 3 ? 270 : 0))}deg)`, 
               transition: 'transform 0.3s ease-in-out' 
             }" 
-            :tooltip="localeMsg.settings.filmstrip_view.title"
+            :tooltip="localeMsg.settings.browse.filmstrip_view.title"
             :selected="config.settings.grid.showFilmStrip"
             @click="toggleFilmstripView"
           />
@@ -1891,7 +1891,7 @@ const currentTitleIcon = computed(() => {
           case 0:
             switch (libConfig.album.id) {
               case 0: return IconFolders;
-              default: return libConfig.album.selected ? IconFolders : IconFolder;
+              default: return libConfig.album.selected || config.settings.showSubfolderFiles ? IconFolders : IconFolder;
             }
           case 1:
             if (libConfig.smartAlbum.type === 'system') {
@@ -3802,6 +3802,7 @@ watch(() => config.settings.grid.size, (newSize, oldSize) => {
 function toggleFilmstripView() {
   showQuickView.value = false;
   config.settings.grid.showFilmStrip = !config.settings.grid.showFilmStrip;
+  void tauriEmit('settings-showFilmStrip-changed', config.settings.grid.showFilmStrip);
   if (config.settings.grid.showFilmStrip) {
     filmStripZoomFit.value = true;
   }
@@ -3811,6 +3812,7 @@ function cycleGridStyle() {
   showQuickView.value = false;
   // Cycle between card, tile, justified, and masonry.
   config.settings.grid.style = (config.settings.grid.style + 1) % 4;
+  void tauriEmit('settings-gridStyle-changed', config.settings.grid.style);
 }
 
 // Track pending requests to avoid duplicates

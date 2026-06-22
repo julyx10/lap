@@ -74,57 +74,6 @@
             </div>
           </div>
 
-          <!-- external app -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_external_apps') }}</span>
-            </div>
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.external_image_editor') }}</div>
-                <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalImageAppPath || ''">
-                  {{ externalImageAppName }}
-                </div>
-              </div>
-              <div class="shrink-0 flex items-center gap-1">
-                <button 
-                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
-                  @click="selectExternalApp('image')"
-                >
-                  {{ $t('settings.image_view.choose_app') }}
-                </button>
-                <TButton v-if="config.settings.externalImageAppPath"
-                  :icon="IconTrash"
-                  :buttonSize="'small'"
-                  :tooltip="$t('settings.image_view.clear_app')"
-                  @click="clearExternalApp('image')"
-                />
-              </div>
-            </div>
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.external_video_app') }}</div>
-                <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalVideoAppPath || ''">
-                  {{ externalVideoAppName }}
-                </div>
-              </div>
-              <div class="shrink-0 flex items-center gap-1">
-                <button 
-                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content" 
-                  @click="selectExternalApp('video')"
-                >
-                  {{ $t('settings.image_view.choose_app') }}
-                </button>
-                <TButton v-if="config.settings.externalVideoAppPath"
-                  :icon="IconTrash"
-                  :buttonSize="'small'"
-                  :tooltip="$t('settings.image_view.clear_app')"
-                  @click="clearExternalApp('video')"
-                />
-              </div>
-            </div>
-          </div>
-
           <!-- display -->
           <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
             <div class="flex items-center gap-2 text-base-content/30">
@@ -142,6 +91,13 @@
               </div>
               <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showStatusBar" />
             </div>
+          </div>
+
+          <!-- updates -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_updates') }}</span>
+            </div>
             <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
               <div class="flex flex-col gap-0.5 text-sm leading-5">
                 <div>{{ $t('settings.general.auto_check_updates') }}</div>
@@ -152,123 +108,8 @@
 
         </div>
 
-        <!-- View Tab -->
-        <div v-else-if="config.settings.tabIndex === 1" class="flex flex-col space-y-2">
-
-          <!-- grid view -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.view.section_layout') }}</span>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.view.style') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.style">
-                <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.view.scaling') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling" :disabled="config.settings.grid.style !== 0 && config.settings.grid.style !== 1">
-                <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.view.label_primary') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary" :disabled="config.settings.grid.style !== 0">
-                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.view.label_secondary') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary" :disabled="config.settings.grid.style !== 0">
-                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.view.date_grouping') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.view.date_grouping_hint') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.dateGrouping">
-                <option v-for="(option, index) in dateGroupingOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.filmstrip_view.preview_position') }}</div>
-                <!-- <div class="text-xs text-base-content/30">{{ $t('settings.filmstrip_view.preview_position_hint') }}</div> -->
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.previewPosition">
-                  <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- preview -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_viewing') }}</span>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.mouse_wheel') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.mouseWheelMode">
-                <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">
-                  {{ item.label }}
-                </option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.navigator_view') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewMode">
-                  <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.navigator_view__size') }}</div>
-              </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewSize">
-                  <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.slide_show_transition') }}</div>
-              </div>
-                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.slideShowTransition">
-                  <option v-for="(option, index) in slideShowTransitionOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.auto_play_video') }}</div>
-              </div>
-              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.autoPlayVideo" />
-            </div>
-            <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.image_view.loop_video') }}</div>
-              </div>
-              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.loopVideo" />
-            </div>
-          </div>
-
-        </div>
-
         <!-- Library Tab -->
-        <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col space-y-2">
+        <div v-else-if="config.settings.tabIndex === 1" class="flex flex-col space-y-2">
 
           <!-- album -->
           <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
@@ -318,70 +159,163 @@
             </div>
           </div>
 
-          <!-- storage -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.database.section_storage') }}</span>
-            </div>
-
-            <!-- current location -->
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.database.current_location') }}</div>
-                <div class="text-xs text-base-content/30 truncate" :title="dbStorageDir || ''">
-                  {{ hasCustomDbStorage ? (dbStorageDir || '-') : $t('settings.database.system_default') }}
-                </div>
-              </div>
-              <div class="shrink-0 flex items-center gap-2">
-                <button
-                  class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
-                  :disabled="isChangingDbStorage"
-                  @click="selectDbStorageDir"
-                >
-                  {{ isChangingDbStorage ? $t('tooltip.loading') : $t('settings.database.change_location') }}
-                </button>
-                <TButton
-                  v-if="hasCustomDbStorage"
-                  :icon="IconRestore"
-                  :buttonSize="'small'"
-                  :disabled="isChangingDbStorage"
-                  :tooltip="$t('settings.database.restore_default_location')"
-                  @click="restoreDefaultDbStorageDir"
-                />
-              </div>
-            </div>
-
-            <!-- backup / restore buttons -->
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.database.backup_title') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.database.backup_hint') }}</div>
-              </div>
-              <button
-                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
-                @click="showBackupDialog = true"
-              >
-                {{ $t('settings.database.backup') }}
-              </button>
-            </div>
-
-            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.database.restore_title') }}</div>
-                <div class="text-xs text-base-content/30">{{ $t('settings.database.restore_hint') }}</div>
-              </div>
-              <button
-                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
-                @click="showRestoreDialog = true"
-              >
-                {{ $t('settings.database.restore') }}
-              </button>
-            </div>
-          </div>
         </div>
 
-        <!-- Image Search Tab -->
-        <div v-else-if="config.settings.tabIndex === 3" class="flex flex-col overflow-hidden space-y-2">
+        <!-- Browse Tab -->
+        <div v-else-if="config.settings.tabIndex === 2" class="flex flex-col space-y-2">
+
+          <!-- grid view -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.browse.section_grid') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.style') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.style">
+                <option v-for="(option, index) in gridStyleOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.scaling') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.scaling" :disabled="config.settings.grid.style !== 0 && config.settings.grid.style !== 1">
+                <option v-for="(option, index) in gridScalingOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.label_primary') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary" :disabled="config.settings.grid.style !== 0">
+                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.label_secondary') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary" :disabled="config.settings.grid.style !== 0">
+                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- grouping -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.browse.section_grouping') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.group_by') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.browse.group_by_hint') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-40" v-model="config.settings.grid.groupBy">
+                <option v-for="(option, index) in groupByOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- filmstrip -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.browse.filmstrip_view.title') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.filmstrip_view.enable_filmstrip') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.grid.showFilmStrip" />
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.filmstrip_view.preview_position') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.previewPosition" :disabled="!config.settings.grid.showFilmStrip">
+                <option v-for="(option, index) in filmStripViewPreviewPositionOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Viewer Tab -->
+        <div v-else-if="config.settings.tabIndex === 3" class="flex flex-col space-y-2">
+
+          <!-- navigation -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_navigation') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.mouse_wheel') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.mouseWheelMode">
+                <option v-for="(item, index) in wheelOptions" :key="index" :value="item.value">
+                  {{ item.label }}
+                </option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.navigator_view') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewMode">
+                  <option v-for="(option, index) in navigatorViewModeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.navigator_view__size') }}</div>
+              </div>
+                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.navigatorViewSize">
+                  <option v-for="(option, index) in navigatorViewSizeOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- slideshow -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_slideshow') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.slide_show_transition') }}</div>
+              </div>
+                <select class="select select-bordered select-sm min-w-32" v-model="config.settings.slideShowTransition">
+                  <option v-for="(option, index) in slideShowTransitionOptions" :key="index" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- video -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.image_view.section_video') }}</span>
+            </div>
+            <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.auto_play_video') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.autoPlayVideo" />
+            </div>
+            <div class="flex items-center justify-between px-1 h-8 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.image_view.loop_video') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.loopVideo" />
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Search Tab -->
+        <div v-else-if="config.settings.tabIndex === 4" class="flex flex-col overflow-hidden space-y-2">
 
           <!-- image search -->
           <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
@@ -484,7 +418,7 @@
         </div>
 
         <!-- Shortcuts Tab -->
-        <div v-else-if="config.settings.tabIndex === 4" class="flex flex-col space-y-2">
+        <div v-else-if="config.settings.tabIndex === 5" class="flex flex-col space-y-2">
           <div
             v-for="section in shortcutSections"
             :key="section.key"
@@ -514,8 +448,149 @@
           </div>
         </div>
 
+        <!-- Advanced Tab -->
+        <div v-else-if="config.settings.tabIndex === 6" class="flex flex-col space-y-2">
+
+          <!-- organization -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.section_organization') }}</span>
+            </div>
+            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.advanced.show_collections') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.advanced.show_collections_hint') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.showCollections" />
+            </div>
+          </div>
+
+          <!-- external app -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.section_external_apps') }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.advanced.external_image_editor') }}</div>
+                <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalImageAppPath || ''">
+                  {{ externalImageAppName }}
+                </div>
+              </div>
+              <div class="shrink-0 flex items-center gap-1">
+                <button
+                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                  @click="selectExternalApp('image')"
+                >
+                  {{ $t('settings.advanced.choose_app') }}
+                </button>
+                <TButton v-if="config.settings.externalImageAppPath"
+                  :icon="IconTrash"
+                  :buttonSize="'small'"
+                  :tooltip="$t('settings.advanced.clear_app')"
+                  @click="clearExternalApp('image')"
+                />
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.advanced.external_video_app') }}</div>
+                <div class="text-xs text-base-content/30 truncate" :title="config.settings.externalVideoAppPath || ''">
+                  {{ externalVideoAppName }}
+                </div>
+              </div>
+              <div class="shrink-0 flex items-center gap-1">
+                <button
+                  class="btn btn-sm btn-ghost min-w-20 rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                  @click="selectExternalApp('video')"
+                >
+                  {{ $t('settings.advanced.choose_app') }}
+                </button>
+                <TButton v-if="config.settings.externalVideoAppPath"
+                  :icon="IconTrash"
+                  :buttonSize="'small'"
+                  :tooltip="$t('settings.advanced.clear_app')"
+                  @click="clearExternalApp('video')"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- data -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.database.section_storage') }}</span>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="min-w-0 flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.current_location') }}</div>
+                <div class="text-xs text-base-content/30 truncate" :title="dbStorageDir || ''">
+                  {{ hasCustomDbStorage ? (dbStorageDir || '-') : $t('settings.database.system_default') }}
+                </div>
+              </div>
+              <div class="shrink-0 flex items-center gap-2">
+                <button
+                  class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                  :disabled="isChangingDbStorage"
+                  @click="selectDbStorageDir"
+                >
+                  {{ isChangingDbStorage ? $t('tooltip.loading') : $t('settings.database.change_location') }}
+                </button>
+                <TButton
+                  v-if="hasCustomDbStorage"
+                  :icon="IconRestore"
+                  :buttonSize="'small'"
+                  :disabled="isChangingDbStorage"
+                  :tooltip="$t('settings.database.restore_default_location')"
+                  @click="restoreDefaultDbStorageDir"
+                />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.backup_title') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.database.backup_hint') }}</div>
+              </div>
+              <button
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                @click="showBackupDialog = true"
+              >
+                {{ $t('settings.database.backup') }}
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.database.restore_title') }}</div>
+                <div class="text-xs text-base-content/30">{{ $t('settings.database.restore_hint') }}</div>
+              </div>
+              <button
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                @click="showRestoreDialog = true"
+              >
+                {{ $t('settings.database.restore') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- diagnostics -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.advanced.section_diagnostics') }}</span>
+            </div>
+            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.advanced.debug_mode') }}</div>
+              </div>
+              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.debugMode" />
+            </div>
+          </div>
+        </div>
+
         <!-- About Tab -->
-        <div v-else-if="config.settings.tabIndex === 5" class="py-2">
+        <div v-else-if="config.settings.tabIndex === 7" class="py-2">
             <SettingsAbout />
         </div>
 
@@ -581,7 +656,7 @@ import {
 import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
 import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { useToast } from '@/common/toast';
-import { IconTrash, IconRestore } from '@/common/icons';
+import { IconTrash, IconRestore, IconClose } from '@/common/icons';
 
 import TitleBar from '@/components/TitleBar.vue';
 import SettingsAbout from '@/components/SettingsAbout.vue';
@@ -597,10 +672,12 @@ const toast = useToast();
 const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : (isLinux ? 'linux' : 'windows');
 const settingsTabs = [
   'settings.general.title',
-  'settings.view.title',
   'settings.library.title',
+  'settings.browse.title',
+  'settings.image_view.title',
   'settings.image_search.title',
   'settings.shortcuts.title',
+  'settings.advanced.title',
   'settings.about.title',
 ];
 
@@ -713,11 +790,11 @@ const categorySortOptions = computed(() => {
 });
 
 const externalImageAppName = computed(() =>
-  String(config.settings.externalImageAppName || '') || localeMsg.value.settings.image_view.external_app_not_selected
+  String(config.settings.externalImageAppName || '') || localeMsg.value.settings.advanced.external_app_not_selected
 );
 
 const externalVideoAppName = computed(() =>
-  String(config.settings.externalVideoAppName || '') || localeMsg.value.settings.image_view.external_app_not_selected
+  String(config.settings.externalVideoAppName || '') || localeMsg.value.settings.advanced.external_app_not_selected
 );
 
 // Define the wheel options using computed to react to language changes
@@ -731,7 +808,7 @@ const wheelOptions = computed(() => {
 
 // Define the grid scaling options
 const gridScalingOptions = computed(() => {
-  const options = localeMsg.value.settings.view.scaling_options;
+  const options = localeMsg.value.settings.browse.scaling_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -743,7 +820,7 @@ const gridScalingOptions = computed(() => {
 
 // Define the grid style options
 const gridStyleOptions = computed(() => {
-  const options = localeMsg.value.settings.view.style_options;
+  const options = localeMsg.value.settings.browse.style_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -755,7 +832,7 @@ const gridStyleOptions = computed(() => {
 
 // Define the grid label options
 const gridLabelOptions = computed(() => {
-  const options = localeMsg.value.settings.view.label_options;
+  const options = localeMsg.value.settings.browse.label_options;
   const result = [];
 
   for (let i = 0; i < options.length; i++) {
@@ -800,13 +877,13 @@ const slideShowTransitionOptions = computed(() => {
   return result;
 });
 
-const dateGroupingOptions = computed(() => {
-  const options = localeMsg.value.settings.view.date_grouping_options;
+const groupByOptions = computed(() => {
+  const options = localeMsg.value.settings.browse.group_by_options;
   return options.map((label: string, i: number) => ({ label, value: i }));
 });
 
 const filmStripViewPreviewPositionOptions = computed(() => {
-  const options = localeMsg.value.settings.filmstrip_view.preview_position_options;
+  const options = localeMsg.value.settings.browse.filmstrip_view.preview_position_options;
   return options.map((label, i) => ({ label, value: i }));
 });
 
@@ -1121,7 +1198,7 @@ const cancelMultilingualModelDownload = async () => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
-  if (typeof config.settings.tabIndex !== 'number' || config.settings.tabIndex < 0 || config.settings.tabIndex > 5) {
+  if (typeof config.settings.tabIndex !== 'number' || config.settings.tabIndex < 0 || config.settings.tabIndex > 7) {
     config.settings.tabIndex = 0;
   }
   if (typeof config.settings.imageSearch.model !== 'number') {
@@ -1220,6 +1297,9 @@ watch(() => config.settings.showStatusBar, (newValue) => {
 watch(() => config.settings.autoCheckUpdates, (newValue) => {
   emit('settings-autoCheckUpdates-changed', newValue);
 });
+watch(() => config.settings.showCollections, (newValue) => {
+  emit('settings-showCollections-changed', newValue);
+});
 // watch(() => config.settings.showComment, (newValue) => {
 //   emit('settings-showComment-changed', newValue);
 // });
@@ -1262,11 +1342,14 @@ watch(() => config.settings.grid.labelPrimary, (newValue) => {
 watch(() => config.settings.grid.labelSecondary, (newValue) => {
   emit('settings-gridLabelSecondary-changed', newValue);
 });
+watch(() => config.settings.grid.showFilmStrip, (newValue) => {
+  emit('settings-showFilmStrip-changed', newValue);
+});
 watch(() => config.settings.grid.previewPosition, (newValue) => {
   emit('settings-filmStripViewPreviewPosition-changed', newValue);
 });
-watch(() => config.settings.grid.dateGrouping, (newValue) => {
-  emit('settings-gridDateGrouping-changed', newValue);
+watch(() => config.settings.grid.groupBy, (newValue) => {
+  emit('settings-gridGroupBy-changed', newValue);
 });
 
 // image viewer settings

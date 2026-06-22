@@ -958,6 +958,7 @@
       "section_language": "语言",
       "section_appearance": "外观",
       "section_interface": "显示",
+      "section_updates": "更新",
       "appearance": "配色模式",
       "appearance_options": [
         "明亮",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "显示按钮提示",
       "show_status_bar": "显示状态栏",
-      "auto_check_updates": "自动检查更新",
-      "show_map": "显示地图",
-      "show_map_hint": "需要互联网连接",
-      "debug_mode": "调试模式"
+      "auto_check_updates": "自动检查更新"
     },
     "library": {
       "title": "资料库",
@@ -1052,9 +1050,9 @@
         "数量（从高到低）"
       ]
     },
-    "view": {
-      "title": "视图",
-      "section_layout": "网格视图",
+    "browse": {
+      "title": "浏览",
+      "section_grid": "网格",
       "style": "样式",
       "style_options": [
         "卡片视图",
@@ -1082,50 +1080,41 @@
         "镜头",
         "拍摄设置"
       ],
-      "date_grouping": "显示日期分组",
-      "date_grouping_hint": "仅在按时间排序时生效",
-      "date_grouping_options": [
-        "不显示",
-        "按日",
-        "按月"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "胶片栏",
-      "preview_position": "胶片栏位置",
-      "preview_position_hint": "仅在开启胶片视图时生效",
-      "preview_position_options": [
-        "顶部",
-        "底部",
-        "左侧",
-        "右侧"
-      ]
+      "section_grouping": "分组",
+      "group_by": "分组方式",
+      "group_by_hint": "将网格项目按条件分组显示",
+      "group_unknown_folder": "未知文件夹",
+      "group_by_options": [
+        "不分组",
+        "日期（按日）",
+        "日期（按月）",
+        "日期（按年）",
+        "文件夹路径",
+        "文件类型",
+        "评分",
+        "相机",
+        "地点"
+      ],
+      "filmstrip_view": {
+        "title": "胶片栏",
+        "enable_filmstrip": "启用胶片栏视图",
+        "preview_position": "胶片栏位置",
+        "preview_position_options": [
+          "顶部",
+          "底部",
+          "左侧",
+          "右侧"
+        ]
+      }
     },
     "image_view": {
       "title": "查看器",
-      "section_viewing": "图片查看器",
-      "section_external_apps": "外部应用",
+      "section_navigation": "导航",
       "mouse_wheel": "鼠标滚轮",
       "mouse_wheel_options": [
         "上一张/下一张图片 (Ctrl 缩放)",
         "放大/缩小"
       ],
-      "slide_show_interval": "幻灯片放映间隔: {second} 秒",
-      "slide_show_transition": "幻灯片过场",
-      "slide_show_transition_options": [
-        "滑动",
-        "淡入淡出",
-        "无"
-      ],
-      "auto_play_video": "自动播放视频",
-      "loop_video": "循环播放视频",
-      "show_comment": "显示备注",
-      "show_comment_hint": "在查看器中显示备注",
-      "external_image_editor": "打开图片使用",
-      "external_video_app": "打开视频使用",
-      "external_app_not_selected": "未选择应用",
-      "choose_app": "选择",
-      "clear_app": "清除",
       "navigator_view": "导航器",
       "navigator_view_options": [
         "自动",
@@ -1138,13 +1127,24 @@
         "中(240px)",
         "大(320px)",
         "特大(400px)"
-      ]
+      ],
+      "section_slideshow": "幻灯片",
+      "slide_show_interval": "幻灯片放映间隔: {second} 秒",
+      "slide_show_transition": "幻灯片过场",
+      "slide_show_transition_options": [
+        "滑动",
+        "淡入淡出",
+        "无"
+      ],
+      "section_video": "视频",
+      "auto_play_video": "自动播放视频",
+      "loop_video": "循环播放视频"
     },
     "image_search": {
-      "title": "智能搜索",
+      "title": "搜索",
       "search_image": "图片搜索",
       "search_model": "选择模型（重启生效）",
-      "default_model_hint": "仅支持英文的图片搜索",
+      "default_model_hint": "默认模型仅支持英文的图片搜索",
       "multilingual_model_hint": "支持 50+ 语言搜索",
       "search_model_options": [
         "默认（英文）",
@@ -1225,6 +1225,20 @@
         "edit_comment": "编辑备注",
         "rotate": "旋转预览"
       }
+    },
+    "advanced": {
+      "title": "高级",
+      "section_organization": "组织",
+      "show_collections": "显示合集",
+      "show_collections_hint": "启用合集托盘，用于通过拖放对项目进行分组。",
+      "section_external_apps": "外部应用",
+      "external_image_editor": "打开图片使用",
+      "external_video_app": "打开视频使用",
+      "external_app_not_selected": "未选择应用",
+      "choose_app": "选择",
+      "clear_app": "清除",
+      "section_diagnostics": "诊断",
+      "debug_mode": "调试模式"
     },
     "database": {
       "title": "存储",

@@ -958,6 +958,7 @@
       "section_language": "Язык",
       "section_appearance": "Внешний вид",
       "section_interface": "Отображение",
+      "section_updates": "Обновления",
       "appearance": "Внешний вид",
       "appearance_options": [
         "Светлый",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "Подсказки кнопок",
       "show_status_bar": "Строка состояния",
-      "auto_check_updates": "Автоматически проверять обновления",
-      "show_map": "Карта",
-      "show_map_hint": "Требуется доступ к интернету",
-      "debug_mode": "Режим отладки"
+      "auto_check_updates": "Автоматически проверять обновления"
     },
     "library": {
       "title": "Библиотека",
@@ -1052,9 +1050,9 @@
         "Количество (По убыванию)"
       ]
     },
-    "view": {
-      "title": "Вид",
-      "section_layout": "Сетка",
+    "browse": {
+      "title": "Просмотр",
+      "section_grid": "Сетка",
       "style": "Стиль",
       "style_options": [
         "Карточки",
@@ -1082,50 +1080,41 @@
         "Объектив",
         "Настройки"
       ],
-      "date_grouping": "Показывать группы по дате",
-      "date_grouping_hint": "Применяется только при сортировке по времени",
-      "date_grouping_options": [
+      "section_grouping": "Группировка",
+      "group_by": "Группировать по",
+      "group_by_hint": "Организует элементы сетки по разделам",
+      "group_unknown_folder": "Неизвестная папка",
+      "group_by_options": [
         "Нет",
-        "День",
-        "Месяц"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "Фотопленка",
-      "preview_position": "Положение фотопленки",
-      "preview_position_hint": "Применяется только при включенном режиме фотопленки",
-      "preview_position_options": [
-        "Сверху",
-        "Снизу",
-        "Слева",
-        "Справа"
-      ]
+        "Дата (день)",
+        "Дата (месяц)",
+        "Дата (год)",
+        "Путь к папке",
+        "Тип файла",
+        "Оценка",
+        "Камера",
+        "Местоположение"
+      ],
+      "filmstrip_view": {
+        "title": "Фотопленка",
+        "enable_filmstrip": "Включить вид фотопленки",
+        "preview_position": "Положение фотопленки",
+        "preview_position_options": [
+          "Сверху",
+          "Снизу",
+          "Слева",
+          "Справа"
+        ]
+      }
     },
     "image_view": {
       "title": "Просмотрщик",
-      "section_viewing": "Просмотр изображений",
-      "section_external_apps": "Внешние приложения",
+      "section_navigation": "Навигация",
       "mouse_wheel": "Колесо мыши",
       "mouse_wheel_options": [
         "Пред/След (Ctrl зум)",
         "Зум +/-"
       ],
-      "slide_show_interval": "Интервал: {second} сек",
-      "slide_show_transition": "Переход слайд-шоу",
-      "slide_show_transition_options": [
-        "Сдвиг",
-        "Затухание",
-        "Нет"
-      ],
-      "auto_play_video": "Автовоспроизведение видео",
-      "loop_video": "Зациклить видео",
-      "show_comment": "Показывать комментарий",
-      "show_comment_hint": "Показывать комментарии в просмотрщике",
-      "external_image_editor": "Открывать изображение в",
-      "external_video_app": "Открывать видео в",
-      "external_app_not_selected": "Приложение не выбрано",
-      "choose_app": "Выбрать",
-      "clear_app": "Очистить",
       "navigator_view": "Навигатор",
       "navigator_view_options": [
         "Авто",
@@ -1138,13 +1127,24 @@
         "Сред(240px)",
         "Бол(320px)",
         "Огр(400px)"
-      ]
+      ],
+      "section_slideshow": "Слайд-шоу",
+      "slide_show_interval": "Интервал: {second} сек",
+      "slide_show_transition": "Переход слайд-шоу",
+      "slide_show_transition_options": [
+        "Сдвиг",
+        "Затухание",
+        "Нет"
+      ],
+      "section_video": "Видео",
+      "auto_play_video": "Автовоспроизведение видео",
+      "loop_video": "Зациклить видео"
     },
     "image_search": {
-      "title": "Умный поиск",
+      "title": "Поиск",
       "search_image": "Поиск изображений",
       "search_model": "Выберите модель (требуется перезапуск)",
-      "default_model_hint": "Поиск изображений только на английском",
+      "default_model_hint": "Модель по умолчанию поддерживает поиск изображений только на английском",
       "multilingual_model_hint": "Поиск на 50+ языках",
       "search_model_options": [
         "По умолчанию (английский)",
@@ -1225,6 +1225,20 @@
         "edit_comment": "Редактировать комментарий",
         "rotate": "Повернуть предпросмотр"
       }
+    },
+    "advanced": {
+      "title": "Дополнительно",
+      "section_organization": "Организация",
+      "show_collections": "Показывать коллекции",
+      "show_collections_hint": "Включает панель коллекций для группировки элементов перетаскиванием.",
+      "section_external_apps": "Внешние приложения",
+      "external_image_editor": "Открывать изображение в",
+      "external_video_app": "Открывать видео в",
+      "external_app_not_selected": "Приложение не выбрано",
+      "choose_app": "Выбрать",
+      "clear_app": "Очистить",
+      "section_diagnostics": "Диагностика",
+      "debug_mode": "Режим отладки"
     },
     "database": {
       "title": "Хранилище",

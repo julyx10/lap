@@ -96,6 +96,9 @@ listen('settings-showStatusBar-changed', (event) => {
 listen('settings-autoCheckUpdates-changed', (event) => {
   config.setAutoCheckUpdates(event.payload)
 })
+listen('settings-showCollections-changed', (event) => {
+  config.setShowCollections(event.payload)
+})
 listen('settings-debugMode-changed', (event) => {
   config.setDebugMode(event.payload)
 })
@@ -129,8 +132,11 @@ listen('settings-gridLabelPrimary-changed', (event) => {
 listen('settings-gridLabelSecondary-changed', (event) => {
   config.setGridLabelSecondary(event.payload)
 })
-listen('settings-gridDateGrouping-changed', (event) => {
-  config.setGridDateGrouping(event.payload)
+listen('settings-gridGroupBy-changed', (event) => {
+  config.setGridGroupBy(event.payload)
+})
+listen('settings-showFilmStrip-changed', (event) => {
+  config.setShowFilmStrip(event.payload)
 })
 listen('settings-filmStripViewPreviewPosition-changed', (event) => {
   config.setFilmStripViewPreviewPosition(event.payload)
@@ -156,9 +162,6 @@ listen('settings-navigatorViewSize-changed', (event) => {
 listen('settings-slideShowTransition-changed', (event) => {
   config.setSlideShowTransition(event.payload)
 })
-// listen('settings-showComment-changed', (event) => {
-//   config.setShowComment(event.payload)
-// })
 listen('settings-imageSearchThresholdIndex-changed', (event) => {
   config.setImageSearchThresholdIndex(event.payload)
 })

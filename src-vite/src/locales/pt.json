@@ -958,6 +958,7 @@
       "section_language": "Idioma",
       "section_appearance": "Aparência",
       "section_interface": "Exibição",
+      "section_updates": "Atualizações",
       "appearance": "Aparência",
       "appearance_options": [
         "Claro",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "Dicas dos botões",
       "show_status_bar": "Barra de status",
-      "auto_check_updates": "Verificar atualizações automaticamente",
-      "show_map": "Mostrar mapa",
-      "show_map_hint": "Requer acesso à internet",
-      "debug_mode": "Modo debug"
+      "auto_check_updates": "Verificar atualizações automaticamente"
     },
     "library": {
       "title": "Biblioteca",
@@ -1052,9 +1050,9 @@
         "Contagem (Maior para menor)"
       ]
     },
-    "view": {
-      "title": "Visualização",
-      "section_layout": "Vista em grade",
+    "browse": {
+      "title": "Navegar",
+      "section_grid": "Grade",
       "style": "Estilo",
       "style_options": [
         "Visualização em cartões",
@@ -1082,50 +1080,41 @@
         "Lente",
         "Configurações"
       ],
-      "date_grouping": "Mostrar grupos por data",
-      "date_grouping_hint": "Aplica-se apenas ao ordenar por tempo",
-      "date_grouping_options": [
+      "section_grouping": "Agrupamento",
+      "group_by": "Agrupar por",
+      "group_by_hint": "Organiza os itens da grade em seções",
+      "group_unknown_folder": "Pasta desconhecida",
+      "group_by_options": [
         "Nenhum",
-        "Dia",
-        "Mês"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "Película",
-      "preview_position": "Posição da película",
-      "preview_position_hint": "Aplica-se apenas quando a vista em película está ativada",
-      "preview_position_options": [
-        "Em cima",
-        "Em baixo",
-        "À esquerda",
-        "À direita"
-      ]
+        "Data (dia)",
+        "Data (mês)",
+        "Data (ano)",
+        "Caminho da pasta",
+        "Tipo de arquivo",
+        "Avaliação",
+        "Câmera",
+        "Localização"
+      ],
+      "filmstrip_view": {
+        "title": "Tira de filme",
+        "enable_filmstrip": "Ativar visualização em tira de filme",
+        "preview_position": "Posição da tira de filme",
+        "preview_position_options": [
+          "Em cima",
+          "Em baixo",
+          "À esquerda",
+          "À direita"
+        ]
+      }
     },
     "image_view": {
       "title": "Visualizador",
-      "section_viewing": "Visualizador de imagem",
-      "section_external_apps": "Apps externas",
+      "section_navigation": "Navegação",
       "mouse_wheel": "Roda do mouse",
       "mouse_wheel_options": [
         "Ant/Próx (Ctrl zoom)",
         "Zoom +/-"
       ],
-      "slide_show_interval": "Intervalo: {second} s",
-      "slide_show_transition": "Transição da apresentação",
-      "slide_show_transition_options": [
-        "Deslizar",
-        "Fade",
-        "Nenhuma"
-      ],
-      "auto_play_video": "Auto reproduzir vídeo",
-      "loop_video": "Repetir vídeo",
-      "show_comment": "Mostrar comentário",
-      "show_comment_hint": "Mostrar comentários no visualizador",
-      "external_image_editor": "Abrir imagem com",
-      "external_video_app": "Abrir vídeo com",
-      "external_app_not_selected": "Nenhum app selecionado",
-      "choose_app": "Escolher",
-      "clear_app": "Limpar",
       "navigator_view": "Navegador",
       "navigator_view_options": [
         "Auto",
@@ -1138,13 +1127,24 @@
         "Méd(240px)",
         "Grd(320px)",
         "XG(400px)"
-      ]
+      ],
+      "section_slideshow": "Apresentação",
+      "slide_show_interval": "Intervalo: {second} s",
+      "slide_show_transition": "Transição da apresentação",
+      "slide_show_transition_options": [
+        "Deslizar",
+        "Fade",
+        "Nenhuma"
+      ],
+      "section_video": "Vídeo",
+      "auto_play_video": "Auto reproduzir vídeo",
+      "loop_video": "Repetir vídeo"
     },
     "image_search": {
-      "title": "Pesquisa inteligente",
+      "title": "Pesquisa",
       "search_image": "Pesquisa de imagens",
       "search_model": "Escolher modelo (requer reinicialização)",
-      "default_model_hint": "Pesquisa de imagens somente em inglês",
+      "default_model_hint": "O modelo padrão só oferece suporte à pesquisa de imagens em inglês",
       "multilingual_model_hint": "Pesquisa em mais de 50 idiomas",
       "search_model_options": [
         "Padrão (inglês)",
@@ -1225,6 +1225,20 @@
         "edit_comment": "Editar comentário",
         "rotate": "Girar pré-visualização"
       }
+    },
+    "advanced": {
+      "title": "Avançado",
+      "section_organization": "Organização",
+      "show_collections": "Mostrar coleções",
+      "show_collections_hint": "Ativa uma bandeja de coleções para agrupar itens com arrastar e soltar.",
+      "section_external_apps": "Apps externos",
+      "external_image_editor": "Abrir imagem com",
+      "external_video_app": "Abrir vídeo com",
+      "external_app_not_selected": "Nenhum app selecionado",
+      "choose_app": "Escolher",
+      "clear_app": "Limpar",
+      "section_diagnostics": "Diagnóstico",
+      "debug_mode": "Modo debug"
     },
     "database": {
       "title": "Armazenamento",

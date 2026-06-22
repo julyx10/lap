@@ -957,7 +957,8 @@
       "title": "General",
       "section_language": "Language",
       "section_appearance": "Appearance",
-      "section_interface": "Display",
+      "section_interface": "Interface",
+      "section_updates": "Updates",
       "appearance": "Color mode",
       "appearance_options": [
         "Light",
@@ -1014,10 +1015,7 @@
       ],
       "show_tool_tip": "Show button tips",
       "show_status_bar": "Show status bar",
-      "auto_check_updates": "Auto-check for updates",
-      "show_map": "Show map",
-      "show_map_hint": "Requires internet access",
-      "debug_mode": "Debug mode"
+      "auto_check_updates": "Auto-check for updates"
     },
     "library": {
       "title": "Library",
@@ -1052,9 +1050,9 @@
         "Count (High to low)"
       ]
     },
-    "view": {
-      "title": "View",
-      "section_layout": "Grid view",
+    "browse": {
+      "title": "Browse",
+      "section_grid": "Grid",
       "style": "Style",
       "style_options": [
         "Card view",
@@ -1082,50 +1080,41 @@
         "Lens",
         "Capture settings"
       ],
-      "date_grouping": "Show date groups",
-      "date_grouping_hint": "Only applies when sorting by time",
-      "date_grouping_options": [
+      "section_grouping": "Grouping",
+      "group_by": "Group by",
+      "group_by_hint": "Organize grid items into sections",
+      "group_unknown_folder": "Unknown folder",
+      "group_by_options": [
         "None",
-        "Day",
-        "Month"
-      ]
-    },
-    "filmstrip_view": {
-      "title": "Filmstrip",
-      "preview_position": "Filmstrip placement",
-      "preview_position_hint": "Only applies when Filmstrip view is enabled",
-      "preview_position_options": [
-        "Top",
-        "Bottom",
-        "Left",
-        "Right"
-      ]
+        "Date (Day)",
+        "Date (Month)",
+        "Date (Year)",
+        "Folder path",
+        "File type",
+        "Rating",
+        "Camera",
+        "Location"
+      ],
+      "filmstrip_view": {
+        "title": "Filmstrip",
+        "enable_filmstrip": "Enable filmstrip view",
+        "preview_position": "Filmstrip placement",
+        "preview_position_options": [
+          "Top",
+          "Bottom",
+          "Left",
+          "Right"
+        ]
+      }
     },
     "image_view": {
       "title": "Viewer",
-      "section_viewing": "Image viewer",
-      "section_external_apps": "External apps",
+      "section_navigation": "Navigation",
       "mouse_wheel": "Mouse wheel",
       "mouse_wheel_options": [
         "Previous / Next image (Ctrl to zoom)",
         "Zoom in / out"
       ],
-      "slide_show_interval": "Slide show interval: {second} second(s)",
-      "slide_show_transition": "Slide show transition",
-      "slide_show_transition_options": [
-        "Slide",
-        "Fade",
-        "None"
-      ],
-      "auto_play_video": "Auto play video",
-      "loop_video": "Loop video",
-      "show_comment": "Show comments",
-      "show_comment_hint": "Show comments in the viewer",
-      "external_image_editor": "Open image in",
-      "external_video_app": "Open video in",
-      "external_app_not_selected": "No app selected",
-      "choose_app": "Choose",
-      "clear_app": "Clear",
       "navigator_view": "Navigator",
       "navigator_view_options": [
         "Auto",
@@ -1138,13 +1127,24 @@
         "Medium(240px)",
         "Large(320px)",
         "Extra Large(400px)"
-      ]
+      ],
+      "section_slideshow": "Slideshow",
+      "slide_show_interval": "Slide show interval: {second} second(s)",
+      "slide_show_transition": "Slide show transition",
+      "slide_show_transition_options": [
+        "Slide",
+        "Fade",
+        "None"
+      ],
+      "section_video": "Video",
+      "auto_play_video": "Auto play video",
+      "loop_video": "Loop video"
     },
     "image_search": {
-      "title": "Smart search",
+      "title": "Search",
       "search_image": "Image search",
       "search_model": "Choose model (restart required)",
-      "default_model_hint": "English-only image search",
+      "default_model_hint": "The default model only supports English image search",
       "multilingual_model_hint": "Search across 50+ languages",
       "search_model_options": [
         "Default (English)",
@@ -1225,6 +1225,20 @@
         "edit_comment": "Edit comment",
         "rotate": "Rotate preview"
       }
+    },
+    "advanced": {
+      "title": "Advanced",
+      "section_organization": "Organization",
+      "show_collections": "Show Collections",
+      "show_collections_hint": "Enable a collection tray for grouping items with drag and drop",
+      "section_external_apps": "External apps",
+      "external_image_editor": "Open image in",
+      "external_video_app": "Open video in",
+      "external_app_not_selected": "No app selected",
+      "choose_app": "Choose",
+      "clear_app": "Clear",
+      "section_diagnostics": "Diagnostics",
+      "debug_mode": "Debug mode"
     },
     "database": {
       "title": "Storage",

@@ -22,7 +22,7 @@
       :grid-items="config.settings.grid.showFilmStrip ? 1 : columnCount"
       :item-size="config.settings.grid.showFilmStrip ? (config.settings.grid.previewPosition < 2 ? filmStripItemSize : itemHeight) : itemHeight"
       :item-secondary-size="!config.settings.grid.showFilmStrip ? itemWidth : (config.settings.grid.previewPosition >= 2 ? itemWidth : undefined)"
-      :key="`${config.settings.grid.showFilmStrip}-${dateGroupingEnabled}`"
+      :key="`${config.settings.grid.showFilmStrip}`"
       :geometry="virtualScrollGeometry"
       :content-height="virtualScrollContentHeight"
       :transition="isLayoutTransitioning"
@@ -34,26 +34,6 @@
       @scroll="onScroll"
     >
       <div
-        v-if="isDateHeader(item)"
-        class="w-full h-full flex items-center gap-1 px-1 text-base-content/70 select-none group"
-        :class="{ 'cursor-pointer hover:text-base-content': selectMode }"
-        @click="selectMode && toggleDateGroupSelection(item)"
-      >
-        <input
-          v-if="selectMode"
-          type="checkbox"
-          class="checkbox checkbox-sm border-base-content/30 group-hover:border-base-content/70"
-          :checked="getDateGroupSelectionState(item).allSelected"
-          :indeterminate.prop="getDateGroupSelectionState(item).partialSelected"
-          @click.stop
-          @change="(event) => toggleDateGroupSelection(item, (event.target as HTMLInputElement).checked)"
-        />
-        <component :is="config.settings.grid.dateGrouping === 1 ? IconCalendarDay : IconCalendarMonth" v-if="!selectMode" class="w-5 h-5" />
-        <span>{{ item.label }}</span>
-        <span class="text-base-content/30 text-xs">({{ (item.endIndex - item.startIndex).toLocaleString() }})</span>
-      </div>
-      <div
-        v-else
         class="w-full h-full flex items-center justify-center overflow-hidden"
         @pointerdown="onItemPointerDown($event, getFileIndex(item, index))"
       >
@@ -102,11 +82,9 @@ import { watch, ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { formatDate } from '@/common/utils';
 import Thumbnail from '@/components/Thumbnail.vue';
 import VirtualScroll from '@/components/VirtualScroll.vue';
 import { calculateJustifiedLayout, calculateLinearRowLayout, calculateLinearColumnLayout, calculateMasonryLayout, type Geometry } from '@/common/layout';
-import { IconCalendarDay, IconCalendarMonth } from '@/common/icons';
 
 const props = withDefaults(defineProps<{
   selectedItemIndex: number;
@@ -153,7 +131,6 @@ const containerRef = ref<HTMLElement | null>(null);
 const scroller = ref<any>(null);
 const columnCount = ref(4);
 const containerWidth = ref(0);
-const headerHeight = 48;
 let pendingPointerDrag: {
   pointerId: number;
   index: number;
@@ -236,179 +213,7 @@ function isGeometryGridStyle(style: number) {
   return style === 2 || style === 3;
 }
 
-const isTimeSort = computed(() => [0, 1, 2].includes(Number(props.sortType)));
-const dateGroupingEnabled = computed(() =>
-  !config.settings.grid.showFilmStrip &&
-  isTimeSort.value &&
-  Number(config.settings.grid.dateGrouping || 0) > 0 &&
-  props.timelineData.length > 0
-);
-
-function formatDateGroupLabel(marker: any, mode: number) {
-  const year = Number(marker.year || 0);
-  const month = Number(marker.month || 0);
-  const date = Number(marker.date || 1);
-  if (!year || !month) return '';
-
-  if (mode === 1) {
-    return formatDate(year, month, date, localeMsg.value.format.date_long);
-  }
-  return formatDate(year, month, 1, localeMsg.value.format.month);
-}
-
-const dateGroupMarkers = computed(() => {
-  if (!dateGroupingEnabled.value) return [];
-  const mode = Number(config.settings.grid.dateGrouping || 0);
-  const seen = new Set<string>();
-  const markers: any[] = [];
-
-  for (const marker of props.timelineData) {
-    const position = Number(marker.position);
-    if (!Number.isFinite(position) || position < 0 || position >= props.fileList.length) continue;
-    const year = Number(marker.year || 0);
-    const month = Number(marker.month || 0);
-    const date = Number(marker.date || 0);
-    if (!year || !month || (mode === 1 && !date)) continue;
-    const key = mode === 1 ? `${year}-${month}-${date}` : `${year}-${month}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    markers.push({
-      ...marker,
-      key,
-      position,
-      label: formatDateGroupLabel(marker, mode),
-    });
-  }
-
-  return markers.sort((a, b) => a.position - b.position);
-});
-
-const renderItems = computed(() => {
-  if (!dateGroupingEnabled.value) return props.fileList;
-
-  const markersByPosition = new Map<number, any[]>();
-  dateGroupMarkers.value.forEach(marker => {
-    if (!markersByPosition.has(marker.position)) markersByPosition.set(marker.position, []);
-    markersByPosition.get(marker.position)!.push(marker);
-  });
-
-  const markerEndIndex = new Map<string, number>();
-  dateGroupMarkers.value.forEach((marker, i) => {
-    const nextMarker = dateGroupMarkers.value[i + 1];
-    markerEndIndex.set(marker.key, nextMarker ? nextMarker.position : props.fileList.length);
-  });
-
-  const items: any[] = [];
-  props.fileList.forEach((file, fileIndex) => {
-    const markers = markersByPosition.get(fileIndex) || [];
-    markers.forEach(marker => {
-      items.push({
-        id: `date-header-${marker.key}-${marker.position}`,
-        isDateHeader: true,
-        label: marker.label,
-        fileIndex,
-        startIndex: marker.position,
-        endIndex: markerEndIndex.get(marker.key) ?? props.fileList.length,
-      });
-    });
-    items.push({
-      id: `date-file-${file?.id ?? fileIndex}-${fileIndex}`,
-      isDateFile: true,
-      file,
-      fileIndex,
-    });
-  });
-
-  return items;
-});
-
-const fileIndexToDisplayIndex = computed(() => {
-  const map = new Map<number, number>();
-  if (!dateGroupingEnabled.value) return map;
-  renderItems.value.forEach((item, displayIndex) => {
-    if (item?.isDateFile) map.set(item.fileIndex, displayIndex);
-  });
-  return map;
-});
-
-// Layout Geometry Calculation
-const groupedLayoutGeometryResult = computed(() => {
-  if (!dateGroupingEnabled.value || renderItems.value.length === 0 || containerWidth.value <= 0) {
-    return { boxes: [], contentSize: 0 };
-  }
-
-  const { style, size, showFilmStrip } = config.settings.grid;
-  const boxes: Geometry[] = new Array(renderItems.value.length);
-
-  if (showFilmStrip) return { boxes: [], contentSize: 0 };
-
-  if (!isGeometryGridStyle(style)) {
-    let y = 0;
-    let col = 0;
-
-    renderItems.value.forEach((item, displayIndex) => {
-      if (item?.isDateHeader) {
-        if (col > 0) {
-          y += itemHeight.value;
-          col = 0;
-        }
-        boxes[displayIndex] = { x: 0, y, width: containerWidth.value, height: headerHeight };
-        y += headerHeight;
-        return;
-      }
-
-      boxes[displayIndex] = {
-        x: col * itemWidth.value,
-        y,
-        width: itemWidth.value,
-        height: itemHeight.value,
-      };
-      col += 1;
-      if (col >= columnCount.value) {
-        y += itemHeight.value;
-        col = 0;
-      }
-    });
-
-    if (col > 0) y += itemHeight.value;
-    return { boxes, contentSize: y };
-  }
-
-  let y = 0;
-  let groupFiles: any[] = [];
-  let groupDisplayIndices: number[] = [];
-
-  const flushGroup = () => {
-    if (groupFiles.length === 0) return;
-    const result = config.settings.grid.style === 3
-      ? calculateMasonryLayout(groupFiles, containerWidth.value, size, 0)
-      : calculateJustifiedLayout(groupFiles, containerWidth.value, size, 0);
-    result.boxes.forEach((box, index) => {
-      boxes[groupDisplayIndices[index]] = {
-        ...box,
-        y: box.y + y,
-      };
-    });
-    y += result.containerHeight;
-    groupFiles = [];
-    groupDisplayIndices = [];
-  };
-
-  renderItems.value.forEach((item, displayIndex) => {
-    if (item?.isDateHeader) {
-      flushGroup();
-      boxes[displayIndex] = { x: 0, y, width: containerWidth.value, height: headerHeight };
-      y += headerHeight;
-      return;
-    }
-
-    groupFiles.push(item.file);
-    groupDisplayIndices.push(displayIndex);
-  });
-  flushGroup();
-
-  return { boxes, contentSize: y };
-});
+const renderItems = computed(() => props.fileList);
 
 const layoutGeometryResult = computed(() => {
   if (props.fileList.length === 0) {
@@ -416,10 +221,6 @@ const layoutGeometryResult = computed(() => {
   }
 
   const { style, size, showFilmStrip } = config.settings.grid;
-
-  if (dateGroupingEnabled.value) {
-    return groupedLayoutGeometryResult.value;
-  }
 
   if (showFilmStrip) {
     if (isGeometryGridStyle(style)) {
@@ -448,7 +249,6 @@ const layoutGeometryResult = computed(() => {
 const layoutGeometry = computed(() => layoutGeometryResult.value.boxes);
 const layoutContentHeight = computed(() => layoutGeometryResult.value.contentSize);
 const usesGeometryLayout = computed(() =>
-  dateGroupingEnabled.value ||
   isGeometryGridStyle(config.settings.grid.style)
 );
 const virtualScrollGeometry = computed(() =>
@@ -520,7 +320,7 @@ function updateLayout() {
   emit('layout-update', { height: layoutContentHeight.value });
 }
 
-watch(() => [config.settings.grid.size, config.settings.grid.style, config.settings.grid.showFilmStrip, config.settings.grid.dateGrouping, props.sortType], async () => {
+watch(() => [config.settings.grid.size, config.settings.grid.style, config.settings.grid.showFilmStrip], async () => {
   if (isInitialLayout) {
     isInitialLayout = false;
     updateColumnCount();
@@ -647,22 +447,6 @@ function onGestureChange(e: any) {
 }
 
 function onUpdate(startIndex: number, endIndex: number) {
-  if (dateGroupingEnabled.value) {
-    const visibleFiles = renderItems.value
-      .slice(startIndex, endIndex)
-      .filter(item => item?.isDateFile)
-      .map(item => item.fileIndex);
-    if (visibleFiles.length === 0) {
-      const fallback = getNearestFileIndexFromDisplayIndex(startIndex);
-      emit('visible-range-update', { startIndex: fallback, endIndex: fallback + 1 });
-      return;
-    }
-    emit('visible-range-update', {
-      startIndex: Math.min(...visibleFiles),
-      endIndex: Math.max(...visibleFiles) + 1,
-    });
-    return;
-  }
   emit('visible-range-update', { startIndex, endIndex });
 }
 
@@ -700,8 +484,7 @@ function scrollToItem(index: number, center = false) {
   if (!scroller.value) return;
   
   const el = scroller.value.$el;
-  const displayIndex = dateGroupingEnabled.value ? fileIndexToDisplayIndex.value.get(index) : index;
-  if (displayIndex === undefined) return;
+  const displayIndex = index;
 
   const renderedItem = center ? containerRef.value?.querySelector(`#item-${index}`) : null;
   if (renderedItem && !virtualScrollGeometry.value) {
@@ -817,8 +600,7 @@ function getNextItemIndex(currentIndex: number, direction: 'up' | 'down'): numbe
     return -1;
   }
 
-  const currentDisplayIndex = dateGroupingEnabled.value ? fileIndexToDisplayIndex.value.get(currentIndex) : currentIndex;
-  if (currentDisplayIndex === undefined) return currentIndex;
+  const currentDisplayIndex = currentIndex;
 
   const currentBox = layoutGeometry.value[currentDisplayIndex];
   if (!currentBox) return currentIndex;
@@ -830,15 +612,13 @@ function getNextItemIndex(currentIndex: number, direction: 'up' | 'down'): numbe
   let candidates: { index: number; box: Geometry; diffY: number }[] = [];
 
   layoutGeometry.value.forEach((box, displayIndex) => {
-    const item = renderItems.value[displayIndex];
-    if (dateGroupingEnabled.value && !item?.isDateFile) return;
     if (direction === 'down') {
       if (box.y > currentY + 1) { // +1 for tolerance
-         candidates.push({ index: dateGroupingEnabled.value ? item.fileIndex : displayIndex, box, diffY: box.y - currentY });
+         candidates.push({ index: displayIndex, box, diffY: box.y - currentY });
       }
     } else {
       if (box.y < currentY - 1) { // -1 for tolerance
-         candidates.push({ index: dateGroupingEnabled.value ? item.fileIndex : displayIndex, box, diffY: currentY - box.y });
+         candidates.push({ index: displayIndex, box, diffY: currentY - box.y });
       }
     }
   });
@@ -867,53 +647,12 @@ function getNextItemIndex(currentIndex: number, direction: 'up' | 'down'): numbe
   return closestIndex !== -1 ? closestIndex : currentIndex;
 }
 
-function isDateHeader(item: any) {
-  return Boolean(item?.isDateHeader);
-}
-
 function getFileItem(item: any) {
-  return dateGroupingEnabled.value ? item?.file : item;
+  return item;
 }
 
 function getFileIndex(item: any, displayIndex: number) {
-  return dateGroupingEnabled.value ? item?.fileIndex : displayIndex;
-}
-
-function getNearestFileIndexFromDisplayIndex(displayIndex: number) {
-  for (let i = displayIndex; i < renderItems.value.length; i++) {
-    if (renderItems.value[i]?.isDateFile) return renderItems.value[i].fileIndex;
-  }
-  for (let i = displayIndex - 1; i >= 0; i--) {
-    if (renderItems.value[i]?.isDateFile) return renderItems.value[i].fileIndex;
-  }
-  return 0;
-}
-
-function getDateGroupSelectionState(item: any) {
-  const startIndex = Number(item?.startIndex ?? 0);
-  const endIndex = Number(item?.endIndex ?? startIndex);
-  const fileCount = Math.max(0, endIndex - startIndex);
-  if (fileCount === 0) {
-    return { allSelected: false, partialSelected: false };
-  }
-  let selectedCount = 0;
-  for (let index = startIndex; index < endIndex; index++) {
-    const file = props.fileList[index];
-    if (file?.isSelected) selectedCount++;
-  }
-  return {
-    allSelected: selectedCount === fileCount,
-    partialSelected: selectedCount > 0 && selectedCount < fileCount,
-  };
-}
-
-function toggleDateGroupSelection(item: any, selected?: boolean) {
-  const state = getDateGroupSelectionState(item);
-  emit('date-group-select', {
-    startIndex: item.startIndex,
-    endIndex: item.endIndex,
-    selected: selected ?? !state.allSelected,
-  });
+  return displayIndex;
 }
 
 defineExpose({

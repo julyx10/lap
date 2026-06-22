@@ -124,12 +124,12 @@
               />
             </div>
             <div
-              v-if="!libraryEmpty && config.collectionTray.expanded"
+              v-if="!libraryEmpty && config.settings.showCollections && config.collectionTray.expanded"
               class="h-1 shrink-0 cursor-row-resize transition-colors hover:bg-primary"
               @mousedown="startDraggingCollectionSplitter"
             ></div>
             <CollectionTray
-              v-if="!libraryEmpty"
+              v-if="!libraryEmpty && config.settings.showCollections"
               class="overflow-hidden transition-[height] duration-200 ease-out"
               :class="config.collectionTray.expanded ? '' : 'h-10'"
               :style="collectionTrayStyle"
@@ -378,6 +378,12 @@ const visibleButtons = computed(() =>
 watch(() => config.settings.face.enabled, (enabled) => {
   if (!enabled && config.main.sidebarIndex === 6) {
     config.main.sidebarIndex = 0;
+  }
+});
+
+watch(() => config.settings.showCollections, (showCollections) => {
+  if (!showCollections && libConfig.activePane === 'collection') {
+    libConfig.activePane = 'main';
   }
 });
 
