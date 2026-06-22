@@ -1095,6 +1095,12 @@
         "相机",
         "地点"
       ],
+      "group_order": "分组顺序",
+      "group_order_options": [
+        "自动",
+        "升序",
+        "降序"
+      ],
       "filmstrip_view": {
         "title": "胶片栏",
         "enable_filmstrip": "启用胶片栏视图",

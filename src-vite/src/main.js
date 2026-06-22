@@ -135,6 +135,9 @@ listen('settings-gridLabelSecondary-changed', (event) => {
 listen('settings-gridGroupBy-changed', (event) => {
   config.setGridGroupBy(event.payload)
 })
+listen('settings-gridGroupOrder-changed', (event) => {
+  config.setGridGroupOrder(event.payload)
+})
 listen('settings-showFilmStrip-changed', (event) => {
   config.setShowFilmStrip(event.payload)
 })

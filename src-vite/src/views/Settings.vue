@@ -217,6 +217,14 @@
                 <option v-for="(option, index) in groupByOptions" :key="index" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
+            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>{{ $t('settings.browse.group_order') }}</div>
+              </div>
+              <select class="select select-bordered select-sm min-w-40" v-model="config.settings.grid.groupOrder" :disabled="config.settings.grid.groupBy === 0">
+                <option v-for="option in groupOrderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+              </select>
+            </div>
           </div>
 
           <!-- filmstrip -->
@@ -882,6 +890,12 @@ const groupByOptions = computed(() => {
   return options.map((label: string, i: number) => ({ label, value: i }));
 });
 
+const groupOrderOptions = computed(() => {
+  const options = localeMsg.value.settings.browse.group_order_options;
+  const values = ['auto', 'asc', 'desc'];
+  return options.map((label: string, i: number) => ({ label, value: values[i] }));
+});
+
 const filmStripViewPreviewPositionOptions = computed(() => {
   const options = localeMsg.value.settings.browse.filmstrip_view.preview_position_options;
   return options.map((label, i) => ({ label, value: i }));
@@ -1350,6 +1364,9 @@ watch(() => config.settings.grid.previewPosition, (newValue) => {
 });
 watch(() => config.settings.grid.groupBy, (newValue) => {
   emit('settings-gridGroupBy-changed', newValue);
+});
+watch(() => config.settings.grid.groupOrder, (newValue) => {
+  emit('settings-gridGroupOrder-changed', newValue);
 });
 
 // image viewer settings

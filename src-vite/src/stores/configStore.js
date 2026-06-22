@@ -118,7 +118,8 @@ export const useConfigStore = defineStore('configStore', {
         labelPrimary: 1,         // card view: primary label (1: Name)
         labelSecondary: 3,       // card view: secondary label (3: Dimension)
         previewPosition: 0,      // filmstrip view: preview position (0: top, 1: bottom, 2: left, 3: right)
-        groupBy: 0,         // group by: 0: none, 1: date day, 2: date month, 3: folder path, 4: rating
+        groupBy: 0,              // group by: 0: none, 1: date day, 2: date month, 3: date year, 4: folder path, 5: file type, 6: rating, 7: camera, 8: location
+        groupOrder: 'auto',      // group order: auto, asc, desc
       },
       
       // image view settings
@@ -247,6 +248,9 @@ export const useConfigStore = defineStore('configStore', {
     },
     setGridGroupBy(groupBy) {
       this.settings.grid.groupBy = groupBy;
+    },
+    setGridGroupOrder(groupOrder) {
+      this.settings.grid.groupOrder = groupOrder;
     },
     setShowFilmStrip(showFilmStrip) {
       this.settings.grid.showFilmStrip = showFilmStrip;

@@ -1095,6 +1095,12 @@
         "Camera",
         "Location"
       ],
+      "group_order": "Group order",
+      "group_order_options": [
+        "Auto",
+        "Ascending",
+        "Descending"
+      ],
       "filmstrip_view": {
         "title": "Filmstrip",
         "enable_filmstrip": "Enable filmstrip view",

@@ -1095,6 +1095,12 @@
         "Kamera",
         "Ort"
       ],
+      "group_order": "Gruppenreihenfolge",
+      "group_order_options": [
+        "Automatisch",
+        "Aufsteigend",
+        "Absteigend"
+      ],
       "filmstrip_view": {
         "title": "Filmstreifen",
         "enable_filmstrip": "Filmstreifenansicht aktivieren",

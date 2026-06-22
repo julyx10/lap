@@ -1095,6 +1095,12 @@
         "カメラ",
         "場所"
       ],
+      "group_order": "グループ順序",
+      "group_order_options": [
+        "自動",
+        "昇順",
+        "降順"
+      ],
       "filmstrip_view": {
         "title": "フィルムストリップ",
         "enable_filmstrip": "フィルムストリップ表示を有効にする",

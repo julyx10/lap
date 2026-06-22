@@ -1095,6 +1095,12 @@
         "Câmera",
         "Localização"
       ],
+      "group_order": "Ordem dos grupos",
+      "group_order_options": [
+        "Automático",
+        "Crescente",
+        "Decrescente"
+      ],
       "filmstrip_view": {
         "title": "Tira de filme",
         "enable_filmstrip": "Ativar visualização em tira de filme",

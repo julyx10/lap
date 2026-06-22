@@ -1095,6 +1095,12 @@
         "카메라",
         "위치"
       ],
+      "group_order": "그룹 순서",
+      "group_order_options": [
+        "자동",
+        "오름차순",
+        "내림차순"
+      ],
       "filmstrip_view": {
         "title": "필름스트립",
         "enable_filmstrip": "필름스트립 보기 활성화",

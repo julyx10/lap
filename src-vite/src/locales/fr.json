@@ -1095,6 +1095,12 @@
         "Appareil photo",
         "Lieu"
       ],
+      "group_order": "Ordre des groupes",
+      "group_order_options": [
+        "Automatique",
+        "Croissant",
+        "Décroissant"
+      ],
       "filmstrip_view": {
         "title": "Pellicule",
         "enable_filmstrip": "Activer la vue pellicule",

@@ -1095,6 +1095,12 @@
         "Cámara",
         "Ubicación"
       ],
+      "group_order": "Orden de grupos",
+      "group_order_options": [
+        "Automático",
+        "Ascendente",
+        "Descendente"
+      ],
       "filmstrip_view": {
         "title": "Tira de película",
         "enable_filmstrip": "Activar vista de tira de película",
