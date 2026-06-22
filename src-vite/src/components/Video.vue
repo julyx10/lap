@@ -82,6 +82,7 @@ const noTransition = ref(false);
 const activeVideo = ref(0);
 let currentLoadingId = 0;
 const loadAttemptCleanups: Array<(() => void) | null> = [null, null];
+const videoClickCleanups = ref<Array<(() => void) | null>>([null, null]);
 
 const externalVideoAppPath = computed(() => String(config.settings?.externalVideoAppPath || '').trim());
 const externalVideoAppName = computed(() => String(config.settings?.externalVideoAppName || '').trim());
@@ -269,6 +270,22 @@ const setupPlayer = (index: number) => {
       if (activeVideo.value === index && !isLoading.value) {
         config.setVideoVolume(player.volume());
         config.setVideoMuted(player.muted());
+      }
+    });
+
+    player.ready(() => {
+      const videoEl = player.el();
+      if (videoEl) {
+        const clickHandler = (e: Event) => {
+          if (e.target !== e.currentTarget) {
+            return; // Exit early, allowing the child element to function normally
+          }
+          e.stopPropagation();
+          emit('message-from-video-viewer', { message: 'close' });
+        };
+        videoEl.addEventListener('click', clickHandler, false);
+        const cleanup = () => videoEl.removeEventListener('click', clickHandler, false);
+        videoClickCleanups.value[index] = cleanup;
       }
     });
   }
@@ -670,6 +687,7 @@ onBeforeUnmount(() => {
     }
   });
   loadAttemptCleanups.forEach((cleanup) => cleanup?.());
+  videoClickCleanups.value.forEach(cleanup => cleanup?.());
   players.value = [null, null];
   cancelVideoPrepare('0');
   cancelVideoPrepare('1');

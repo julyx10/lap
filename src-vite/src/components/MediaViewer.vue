@@ -301,6 +301,7 @@
         @scale="(e) => $emit('scale', e)"
         @viewport-change="(e) => $emit('viewport-change', e)"
         @message-from-image-viewer="handleMessageFromImageViewer"
+        @click.self.stop="handleOverlayClick"
       ></Image>
       
       <Video v-if="file?.file_type === 2"
@@ -824,11 +825,19 @@ const handleZoomOut = () => {
   zoomOut();
 };
 
+const handleOverlayClick = () =>{
+  if(props.mode === 0){
+    emit('close')
+  }
+}
+
 const handleMessageFromImageViewer = (payload: { message: string }) => {
   if (payload.message === 'prev') {
     triggerPrev();
   } else if (payload.message === 'next') {
     triggerNext();
+  } else if (payload.message === 'close') {
+    handleOverlayClick();
   }
 };
 
