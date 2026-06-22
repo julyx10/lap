@@ -20,7 +20,8 @@
     "rename": "Rename",
     "delete": "Delete",
     "drop_action": "Add",
-    "drop_title_hint": "Drop to add"
+    "drop_title_hint": "Drop to add",
+    "empty_drop_hint": "Drag items onto the collection above to add them."
   },
   "album": {
     "all_files": "All files",

@@ -20,7 +20,8 @@
     "rename": "Renommer",
     "delete": "Supprimer",
     "drop_action": "Ajouter",
-    "drop_title_hint": "Déposer pour ajouter"
+    "drop_title_hint": "Déposer pour ajouter",
+    "empty_drop_hint": "Faites glisser des éléments sur la collection ci-dessus pour les ajouter."
   },
   "album": {
     "all_files": "Tous les fichiers",

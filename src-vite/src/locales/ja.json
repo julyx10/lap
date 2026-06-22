@@ -20,7 +20,8 @@
     "rename": "名前を変更",
     "delete": "削除",
     "drop_action": "追加",
-    "drop_title_hint": "ドロップして追加"
+    "drop_title_hint": "ドロップして追加",
+    "empty_drop_hint": "上のコレクションにアイテムをドラッグして追加します。"
   },
   "album": {
     "all_files": "すべてのファイル",

@@ -20,7 +20,8 @@
     "rename": "이름 변경",
     "delete": "삭제",
     "drop_action": "추가",
-    "drop_title_hint": "드롭하여 추가"
+    "drop_title_hint": "드롭하여 추가",
+    "empty_drop_hint": "위의 컬렉션으로 항목을 드래그하여 추가하세요."
   },
   "album": {
     "all_files": "모든 파일",

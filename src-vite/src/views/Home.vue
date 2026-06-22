@@ -130,7 +130,7 @@
             ></div>
             <CollectionTray
               v-if="!libraryEmpty"
-              class="shrink-0 border-t border-base-content/5"
+              class="overflow-hidden transition-[height] duration-200 ease-out"
               :class="config.collectionTray.expanded ? '' : 'h-10'"
               :style="collectionTrayStyle"
               :expanded="config.collectionTray.expanded"
@@ -157,8 +157,8 @@
           showDesktopTitleBar ? 'rounded-tl-box' : '',
         ]"
       >
-        <MapHeatmapView v-if="config.main.sidebarIndex === MAP_SIDEBAR_INDEX" />
-        <Content v-else ref="contentRef" :key="libraryVersion" :titlebar="buttons[config.main.sidebarIndex].text" :libraryEmpty="libraryEmpty"/>
+        <!-- <MapHeatmapView v-if="config.main.sidebarIndex === MAP_SIDEBAR_INDEX" /> -->
+        <Content ref="contentRef" :key="libraryVersion" :titlebar="buttons[config.main.sidebarIndex].text" :libraryEmpty="libraryEmpty"/>
       </div>
     </div>
 
@@ -193,7 +193,7 @@ import { matchesShortcut, ShortcutPlatform } from '@/common/shortcuts';
 import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
 
 // vue components
-import Library from '@/components/Library.vue';
+import Album from '@/components/Album.vue';
 import SmartAlbumList from '@/components/SmartAlbumList.vue';
 import ImageSearch from '@/components/ImageSearch.vue';
 import Favorite from '@/components/Favorite.vue';
@@ -202,7 +202,7 @@ import Calendar from '@/components/Calendar.vue';
 import Location from '@/components/Location.vue';
 import Person from '@/components/Person.vue';
 import Camera from '@/components/Camera.vue';
-import MapHeatmapView from '@/components/MapHeatmapView.vue';
+// import MapHeatmapView from '@/components/MapHeatmapView.vue';
 import TitleBar from '@/components/TitleBar.vue';
 import TButton from '@/components/TButton.vue';
 import Content from '@/components/Content.vue';
@@ -354,7 +354,7 @@ const {
 
 // buttons
 const buttons = computed(() =>  [
-  { icon: IconFolders, component: Library, text: localeMsg.value.sidebar.album },
+  { icon: IconFolders, component: Album, text: localeMsg.value.sidebar.album },
   { icon: IconBolt, component: SmartAlbumList, text: localeMsg.value.album.smart_album_list },
   { icon: IconHeart, component: Favorite, text: localeMsg.value.sidebar.favorite },
   { icon: IconSearch, component: ImageSearch, text: localeMsg.value.sidebar.search },
@@ -363,7 +363,7 @@ const buttons = computed(() =>  [
   { icon: IconPerson, component: Person, text: localeMsg.value.sidebar.people, hidden: !config.settings.face.enabled },
   { icon: IconLocation, component: Location, text: localeMsg.value.sidebar.location },
   { icon: IconCameraAperture, component: Camera, text: localeMsg.value.sidebar.camera },
-  { icon: IconMapDefault, component: null, text: localeMsg.value.sidebar.map },
+  // { icon: IconMapDefault, component: null, text: localeMsg.value.sidebar.map },
 ]);
 
 // dedicated full-area heatmap view, shown instead of Content

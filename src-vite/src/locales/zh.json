@@ -20,7 +20,8 @@
     "rename": "重命名",
     "delete": "删除",
     "drop_action": "添加",
-    "drop_title_hint": "拖入即可添加"
+    "drop_title_hint": "拖入即可添加",
+    "empty_drop_hint": "拖动项目到上方合集，即可添加。"
   },
   "album": {
     "all_files": "所有文件",

@@ -81,15 +81,11 @@ html, body {
 
 /* sidebar panel header */
 @utility sidebar-panel-header {
-  @apply px-2 h-10 mb-2 flex items-center justify-between gap-1 whitespace-nowrap shrink-0;
-  background-image: linear-gradient(to right, color-mix(in srgb, currentColor 6%, transparent), color-mix(in srgb, currentColor 6%, transparent));
-  background-repeat: no-repeat;
-  background-position: center bottom;
-  background-size: calc(100% - 1rem) 1px;
+  @apply px-2 h-12 flex items-center justify-between gap-1 whitespace-nowrap shrink-0 border-t border-base-content/5;
 }
 
 @utility sidebar-panel-header-title {
-  @apply h-5 text-sm text-base-content/30;
+  @apply h-5 font-bold mr-auto uppercase text-xs tracking-wide;
 }
 
 @utility sidebar-panel-action {

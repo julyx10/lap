@@ -4,7 +4,7 @@
     <!-- All Files -->
     <div
       :class="[
-        'sidebar-item',
+        'sidebar-item mb-2',
         libConfig.album.id === 0 ? 'sidebar-item-selected' : 'sidebar-item-hover',
       ]"
       @click="clickAllFiles"

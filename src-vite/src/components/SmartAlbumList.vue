@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <div class="sidebar-panel-header">
+    <div class="sidebar-panel-header mt-2">
       <span class="sidebar-panel-header-title flex-1">{{ $t('album.smart_album_list') }}</span>
       <TButton
         :icon="IconAdd"

@@ -4,20 +4,13 @@
     class="collection-tray min-h-0 flex flex-col"
     :class="libConfig.activePane === 'collection' ? '' : 'sidebar-pane-inactive'"
   >
-    <div class="h-10 px-2 flex items-center gap-1 shrink-0">
-      <button
-        type="button"
-        class="min-w-0 flex-1 flex items-center gap-2 rounded-box px-1.5 py-1 text-left text-sm text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
-        @click="$emit('toggle-expanded')"
-      >
-        <span class="overflow-hidden text-ellipsis whitespace-nowrap">{{ $t('collection.title') }}</span>
-        <span
-          v-if="isItemDragging"
-          class="ml-auto shrink-0 rounded-box border border-primary/5 bg-base-100 px-1.5 py-0.5 text-[11px] leading-none text-primary/70"
-        >
-          {{ $t('collection.drop_title_hint') }}
-        </span>
-      </button>
+    <div class="sidebar-panel-header cursor-pointer" @click="$emit('toggle-expanded')">
+      <span class="sidebar-panel-header-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+        {{ $t('collection.title') }}
+      </span>
+      <span v-if="isItemDragging" class="badge badge-sm badge-primary badge-outline shrink-0">
+        {{ $t('collection.drop_title_hint') }}
+      </span>
       <TButton
         :icon="IconAdd"
         :buttonSize="'small'"
@@ -32,59 +25,74 @@
       />
     </div>
 
-    <div v-if="expanded" class="min-h-0 flex-1 overflow-y-auto pb-1">
-      <div
-        v-for="collection in collections"
-        :key="collection.id"
-        :data-collection-drop-id="renamingId === collection.id ? undefined : collection.id"
-        :class="[
-          'sidebar-item group border-2 border-transparent',
-          selectedId === collection.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
-        ]"
-        @click="selectCollection(collection)"
-      >
-        <IconBookmark class="mx-1 w-5 h-5 shrink-0" />
-        <input
-          v-if="renamingId === collection.id"
-          ref="renameInputRef"
-          v-model="renameValue"
-          class="input px-1 min-w-0 flex-1 text-base"
-          maxlength="80"
-          @click.stop
-          @mousedown.stop
-          @keydown.enter.prevent="commitRename(collection)"
-          @keydown.escape.prevent="cancelRename"
-          @blur="commitRename(collection)"
-        />
-        <span v-else class="sidebar-item-label">{{ collection.name }}</span>
-        <span
-          v-if="renamingId !== collection.id"
-          :class="[
-            'sidebar-item-count ml-auto',
-            selectedId === collection.id ? 'hidden' : 'group-hover:hidden',
-          ]"
-        >
-          {{ collection.count.toLocaleString() }}
-        </span>
+    <transition
+      enter-active-class="transition-all duration-200 ease-out"
+      enter-from-class="opacity-0 -translate-y-1"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-150 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 -translate-y-1"
+    >
+      <div v-if="expanded" class="min-h-0 flex-1 overflow-y-auto pb-1">
         <div
-          v-if="renamingId !== collection.id"
+          v-for="collection in collections"
+          :key="collection.id"
+          :data-collection-drop-id="renamingId === collection.id ? undefined : collection.id"
           :class="[
-            selectedId === collection.id ? '' : 'hidden group-hover:block',
+            'sidebar-item group border-2 border-transparent',
+            selectedId === collection.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
           ]"
+          @click="selectCollection(collection)"
         >
-          <ContextMenu
-            :iconMenu="IconMore"
-            :menuItems="collectionMenuItems(collection)"
-            :smallIcon="true"
+          <IconBookmark class="mx-1 w-5 h-5 shrink-0" />
+          <input
+            v-if="renamingId === collection.id"
+            ref="renameInputRef"
+            v-model="renameValue"
+            class="input px-1 min-w-0 flex-1 text-base"
+            maxlength="80"
+            @click.stop
+            @mousedown.stop
+            @keydown.enter.prevent="commitRename(collection)"
+            @keydown.escape.prevent="cancelRename"
+            @blur="commitRename(collection)"
           />
+          <span v-else class="sidebar-item-label">{{ collection.name }}</span>
+          <span
+            v-if="renamingId !== collection.id"
+            :class="[
+              'sidebar-item-count ml-auto',
+              selectedId === collection.id ? 'hidden' : 'group-hover:hidden',
+            ]"
+          >
+            {{ collection.count.toLocaleString() }}
+          </span>
+          <div
+            v-if="renamingId !== collection.id"
+            :class="[
+              selectedId === collection.id ? '' : 'hidden group-hover:block',
+            ]"
+          >
+            <ContextMenu
+              :iconMenu="IconMore"
+              :menuItems="collectionMenuItems(collection)"
+              :smallIcon="true"
+            />
+          </div>
+        </div>
+        <div
+          v-if="allCollectionsEmpty && !renamingId"
+          class="mt-2 text-xs text-center text-base-content/30"
+        >
+          {{ $t('collection.empty_drop_hint') }}
         </div>
       </div>
-    </div>
+    </transition>
   </section>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
@@ -117,6 +125,7 @@ const renamingId = ref<string | null>(null);
 const renameValue = ref('');
 const renameInputRef = ref<HTMLInputElement | HTMLInputElement[] | null>(null);
 const isItemDragging = ref(false);
+const allCollectionsEmpty = computed(() => collections.value.every(collection => collection.count === 0));
 let unlistenCollectionFilesDropped: (() => void) | null = null;
 let unlistenContentItemsDragState: (() => void) | null = null;
 

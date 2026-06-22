@@ -5056,7 +5056,7 @@ const refreshAffectedAlbums = async (albumIds: Array<number | null | undefined>)
   ).filter(Boolean);
 
   if (albums.length > 0) {
-    await tauriEmit('albums-refreshed', { albums });
+    await tauriEmit('albums-refreshed', { albums, refreshFolders: false });
   }
 };
 
