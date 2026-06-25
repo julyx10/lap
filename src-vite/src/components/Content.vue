@@ -4638,9 +4638,9 @@ function applyGroupedRows(rows: any[], rowOffset: number) {
     const rowIndex = rowOffset + j;
     if (rowIndex >= groupedRows.value.length) continue;
     const row = normalizeGridRow(rows[j], rowIndex);
-    groupedRows.value[rowIndex] = row;
 
     if (isGroupRow(row)) {
+      groupedRows.value[rowIndex] = row;
       const groupId = String(row.group_id || '');
       if (groupId) {
         groupMetaMap.set(groupId, {
@@ -4660,7 +4660,10 @@ function applyGroupedRows(rows: any[], rowOffset: number) {
     if (isItemRow(row)) {
       const fileIndex = Number(row.file_index);
       const file = row.file;
-      if (!Number.isFinite(fileIndex) || fileIndex < 0 || fileIndex >= fileList.value.length || !file) continue;
+      if (!Number.isFinite(fileIndex) || fileIndex < 0 || fileIndex >= fileList.value.length || !file) {
+        groupedRows.value[rowIndex] = row;
+        continue;
+      }
 
       const existingItem = fileList.value[fileIndex];
       const fileId = Number(file?.id || 0);
@@ -4674,15 +4677,16 @@ function applyGroupedRows(rows: any[], rowOffset: number) {
         thumbnail,
       };
       fileList.value[fileIndex] = nextFile;
-      row.file = nextFile;
+      row.file = fileList.value[fileIndex];
+      groupedRows.value[rowIndex] = row;
       if (isSelected && fileId > 0 && !selectedFileIds.has(fileId)) {
         selectedFileIds.add(fileId);
-        applySelectionDelta(nextFile, 1);
+        applySelectionDelta(fileList.value[fileIndex], 1);
       }
 
       const groupId = String(row.group_id || '');
       if (groupId && fileId) fileIdToGroupId.set(fileId, groupId);
-      filesToFetch.push(nextFile);
+      filesToFetch.push(fileList.value[fileIndex]);
 
       if (fileIndex === selectedItemIndex.value) {
         openImageViewer(selectedItemIndex.value, false, selectedItemIndex.value === 0);
