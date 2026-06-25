@@ -22,8 +22,8 @@ use std::{
     time::Duration,
 };
 use tauri::{AppHandle, Emitter, Manager};
-use tokio::io::AsyncWriteExt;
 use tokenizers::Tokenizer;
+use tokio::io::AsyncWriteExt;
 
 pub struct AiEngine {
     text_model: Option<Session>,
@@ -141,7 +141,10 @@ impl AiEngine {
         crate::t_config::get_app_data_dir().map(|dir| dir.join("models").join("multilingual"))
     }
 
-    fn text_model_paths(app: &AppHandle, model: ImageSearchTextModel) -> Result<TextModelPaths, String> {
+    fn text_model_paths(
+        app: &AppHandle,
+        model: ImageSearchTextModel,
+    ) -> Result<TextModelPaths, String> {
         let model_dir = match model {
             ImageSearchTextModel::Default => Self::resource_model_dir(app)?,
             ImageSearchTextModel::Multilingual => Self::multilingual_model_dir(app)?,
@@ -177,7 +180,10 @@ impl AiEngine {
 
         let paths = Self::text_model_paths(app, model)?;
         if !paths.model.exists() || !paths.tokenizer.exists() {
-            return Err(format!("Image search model files are missing for {:?}", model));
+            return Err(format!(
+                "Image search model files are missing for {:?}",
+                model
+            ));
         }
 
         let tokenizer = Tokenizer::from_file(&paths.tokenizer)
@@ -271,7 +277,10 @@ impl AiEngine {
                 .ok_or_else(|| format!("Invalid text embedding shape: {}", shape))?
                 as usize;
             if embedding_data.len() < hidden_size {
-                return Err(format!("Text embedding data is shorter than shape {}", shape));
+                return Err(format!(
+                    "Text embedding data is shorter than shape {}",
+                    shape
+                ));
             }
             return Ok(embedding_data[..hidden_size].to_vec());
         }
@@ -543,8 +552,7 @@ pub async fn download_multilingual_text_model(app: AppHandle) -> Result<(), Stri
                 0.0
             };
             let progress = if expected_total > 0 {
-                ((downloaded_total as f64 / expected_total as f64).min(1.0) * 100.0).round()
-                    as i64
+                ((downloaded_total as f64 / expected_total as f64).min(1.0) * 100.0).round() as i64
             } else {
                 (((index as f64 + file_progress) / total_files) * 100.0).round() as i64
             };

@@ -16,10 +16,16 @@
   "collection": {
     "title": "Collections",
     "add": "Add collection",
+    "default_name": "Collection {index}",
     "expand": "Expand",
     "collapse": "Collapse",
     "rename": "Rename",
     "delete": "Delete",
+    "delete_confirm_title": "Delete collection",
+    "delete_confirm_message": "Delete \"{name}\"? Files in the collection will not be deleted.",
+    "delete_confirm_ok": "Delete",
+    "empty_content": "Collection is empty",
+    "drop_here": "Drop files here",
     "drop_action": "Add",
     "drop_title_hint": "Drop to add",
     "empty_drop_hint": "Drag items onto the collection above to add them."

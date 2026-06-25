@@ -16,10 +16,16 @@
   "collection": {
     "title": "合集",
     "add": "添加合集",
+    "default_name": "合集 {index}",
     "expand": "展开",
     "collapse": "折叠",
     "rename": "重命名",
     "delete": "删除",
+    "delete_confirm_title": "删除合集",
+    "delete_confirm_message": "删除“{name}”？合集中的文件不会被删除。",
+    "delete_confirm_ok": "删除",
+    "empty_content": "合集为空",
+    "drop_here": "将文件拖放到这里",
     "drop_action": "添加",
     "drop_title_hint": "拖放以添加",
     "empty_drop_hint": "将项目拖到收藏集中以添加。"

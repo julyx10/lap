@@ -4,7 +4,7 @@
  * This module provides a simple, high-performance local HTTP server specifically
  * for serving video files on Linux platforms. It bypasses WebView (WebKitGTK)
  * limitations regarding range requests and asset protocols.
- * 
+ *
  * Performance:
  * - Uses tokio::io::copy for efficient, zero-buffer streaming from disk to socket.
  * - Supports HTTP 206 Partial Content for precise seeking.
@@ -122,7 +122,7 @@ fn video_content_type(file_path: &str) -> &'static str {
         .unwrap_or("")
         .to_ascii_lowercase()
         .as_str()
-  {
+    {
         "mp4" | "m4v" => "video/mp4",
         "mov" => "video/quicktime",
         "webm" => "video/webm",

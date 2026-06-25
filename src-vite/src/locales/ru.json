@@ -16,10 +16,16 @@
   "collection": {
     "title": "Коллекции",
     "add": "Добавить коллекцию",
+    "default_name": "Коллекция {index}",
     "expand": "Развернуть",
     "collapse": "Свернуть",
     "rename": "Переименовать",
     "delete": "Удалить",
+    "delete_confirm_title": "Удалить коллекцию",
+    "delete_confirm_message": "Удалить «{name}»? Файлы в коллекции не будут удалены.",
+    "delete_confirm_ok": "Удалить",
+    "empty_content": "Коллекция пуста",
+    "drop_here": "Перетащите файлы сюда",
     "drop_action": "Добавить",
     "drop_title_hint": "Бросить для добавления",
     "empty_drop_hint": "Перетащите элементы в коллекцию, чтобы добавить их."

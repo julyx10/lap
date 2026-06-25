@@ -42,9 +42,9 @@ export const useLibraryStore = defineStore('libraryStore', {
     /** @type {Array<{ id: string, name: string, description: string, source: 'rules', query: { version: number, match: 'all' | 'any', rules: Array<{ id: string, field: string, operator: string, value: any }> }, sort: { type: number, order: number }, createdAt: number, updatedAt: number }>} */
     smartAlbums: [],          // custom smart albums
 
-    /** @type {{ selectedId: string | null }} */
+    /** @type {{ selectedId: number | null }} */
     collection: {
-      selectedId: 'default',      // selected collection id
+      selectedId: null,      // selected collection id
     },
 
     /** @type {{ item: number | null }} */
@@ -147,6 +147,9 @@ export const useLibraryStore = defineStore('libraryStore', {
         this.index.pausedAlbumIds = Array.isArray(this.index.pausedAlbumIds)
           ? Array.from(new Set(this.index.pausedAlbumIds.map(id => Number(id)).filter(id => id > 0)))
           : [];
+        this.collection.selectedId = Number(this.collection.selectedId || 0) > 0
+          ? Number(this.collection.selectedId)
+          : null;
 
         this._initialized = true;
 

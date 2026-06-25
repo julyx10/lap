@@ -8,8 +8,9 @@ use crate::t_config::{self, AppConfig, Library, LibraryInfo, LibraryState};
 use crate::t_face;
 use crate::t_image;
 use crate::t_sqlite::{
-    ACamera, AFile, AFolder, ALens, ALocation, ATag, ATagFileState, ATagSelectionCount, AThumb,
-    ATimeLine, Album, GroupedQueryResult, ImageSearchParams, Person, QueryParams, SmartQueryParams,
+    ACamera, ACollection, ACollectionOrder, AFile, AFolder, ALens, ALocation, ATag, ATagFileState,
+    ATagSelectionCount, AThumb, ATimeLine, Album, GroupedQueryResult, ImageSearchParams, Person,
+    QueryParams, SmartQueryParams,
 };
 use crate::t_storage;
 use crate::t_utils;
@@ -141,7 +142,11 @@ fn extension_description(ext: &str) -> &'static str {
 fn extension_option(ext: &str) -> ExtensionOption {
     ExtensionOption {
         value: ext.to_string(),
-        label: format!("{} ({})", ext.to_ascii_uppercase(), extension_description(ext)),
+        label: format!(
+            "{} ({})",
+            ext.to_ascii_uppercase(),
+            extension_description(ext)
+        ),
     }
 }
 
@@ -153,7 +158,10 @@ pub fn get_supported_format_extensions() -> SupportedFormatExtensions {
         .chain(t_common::FFMPEG_BACKED_IMGS.iter())
         .map(|ext| ext.to_string())
         .collect();
-    let raw: Vec<String> = t_common::RAW_IMGS.iter().map(|ext| ext.to_string()).collect();
+    let raw: Vec<String> = t_common::RAW_IMGS
+        .iter()
+        .map(|ext| ext.to_string())
+        .collect();
     let video: Vec<String> = t_common::VIDEOS.iter().map(|ext| ext.to_string()).collect();
     let mut options: Vec<ExtensionOption> = image
         .iter()
@@ -200,7 +208,9 @@ fn ensure_db_storage_change_allowed(
         .map(|state| state.index.status == 1)
         .unwrap_or(false);
     if is_library_indexing {
-        return Err("Cannot change database storage while library indexing is running.".to_string());
+        return Err(
+            "Cannot change database storage while library indexing is running.".to_string(),
+        );
     }
 
     if *status_state.0.lock().unwrap() {
@@ -364,8 +374,7 @@ pub fn edit_album(id: i64, name: &str, description: &str) -> Result<usize, Strin
 #[tauri::command]
 pub fn remove_album(id: i64) -> Result<usize, String> {
     let result = Album::delete_from_db(id)
-        .map_err(|e| format!("Error while removing album with id {}: {}", id, e))
-        ?;
+        .map_err(|e| format!("Error while removing album with id {}: {}", id, e))?;
 
     let library_id = crate::t_config::load_app_config()
         .map(|c| c.current_library_id)
@@ -460,7 +469,11 @@ pub fn select_folder(
 
 /// fetch folder and build a FileNode
 #[tauri::command]
-pub fn fetch_folder(path: &str, is_recursive: bool, sort: i64) -> Result<t_utils::FileNode, String> {
+pub fn fetch_folder(
+    path: &str,
+    is_recursive: bool,
+    sort: i64,
+) -> Result<t_utils::FileNode, String> {
     t_utils::FileNode::build_nodes(path, is_recursive, sort)
 }
 
@@ -716,6 +729,79 @@ pub fn get_query_file_position(params: QueryParams, file_id: i64) -> Result<Opti
         .map_err(|e| format!("Error while getting query file position: {}", e))
 }
 
+// collection
+
+#[tauri::command]
+pub fn list_collections() -> Result<Vec<ACollection>, String> {
+    ACollection::list().map_err(|e| format!("Error while listing collections: {}", e))
+}
+
+#[tauri::command]
+pub fn create_collection(name: &str) -> Result<ACollection, String> {
+    ACollection::create(name).map_err(|e| format!("Error while creating collection: {}", e))
+}
+
+#[tauri::command]
+pub fn rename_collection(id: i64, name: &str) -> Result<usize, String> {
+    ACollection::rename(id, name).map_err(|e| format!("Error while renaming collection: {}", e))
+}
+
+#[tauri::command]
+pub fn delete_collection(id: i64) -> Result<usize, String> {
+    ACollection::delete(id).map_err(|e| format!("Error while deleting collection: {}", e))
+}
+
+#[tauri::command]
+pub fn reorder_collections(items: Vec<ACollectionOrder>) -> Result<usize, String> {
+    ACollection::reorder(items).map_err(|e| format!("Error while reordering collections: {}", e))
+}
+
+#[tauri::command]
+pub fn add_files_to_collection(collection_id: i64, file_ids: Vec<i64>) -> Result<usize, String> {
+    ACollection::add_files(collection_id, file_ids)
+        .map_err(|e| format!("Error while adding files to collection: {}", e))
+}
+
+#[tauri::command]
+pub fn remove_files_from_collection(
+    collection_id: i64,
+    file_ids: Vec<i64>,
+) -> Result<usize, String> {
+    ACollection::remove_files(collection_id, file_ids)
+        .map_err(|e| format!("Error while removing files from collection: {}", e))
+}
+
+#[tauri::command]
+pub fn clear_collection(collection_id: i64) -> Result<usize, String> {
+    ACollection::clear(collection_id).map_err(|e| format!("Error while clearing collection: {}", e))
+}
+
+#[tauri::command]
+pub fn get_collection_file_ids(collection_id: i64) -> Result<Vec<i64>, String> {
+    ACollection::file_ids(collection_id)
+        .map_err(|e| format!("Error while getting collection file ids: {}", e))
+}
+
+#[tauri::command]
+pub fn get_collection_count_and_sum(
+    collection_id: i64,
+    params: QueryParams,
+) -> Result<(i64, i64), String> {
+    AFile::get_collection_count_and_sum(collection_id, &params)
+        .map_err(|e| format!("Error while getting collection count: {}", e))
+}
+
+#[tauri::command]
+pub fn get_collection_files(
+    collection_id: i64,
+    params: QueryParams,
+    offset: i64,
+    limit: i64,
+) -> Result<Vec<AFile>, String> {
+    AFile::get_collection_files(collection_id, &params, offset, limit)
+        .map_err(|e| format!("Error while getting collection files: {}", e))
+}
+
 #[tauri::command]
 pub fn get_smart_query_count_and_sum(params: SmartQueryParams) -> Result<(i64, i64), String> {
     AFile::get_smart_query_count_and_sum(&params)
@@ -729,7 +815,11 @@ pub fn get_smart_query_time_line(params: SmartQueryParams) -> Result<Vec<ATimeLi
 }
 
 #[tauri::command]
-pub fn get_smart_query_files(params: SmartQueryParams, offset: i64, limit: i64) -> Result<Vec<AFile>, String> {
+pub fn get_smart_query_files(
+    params: SmartQueryParams,
+    offset: i64,
+    limit: i64,
+) -> Result<Vec<AFile>, String> {
     AFile::get_smart_query_files(&params, offset, limit)
         .map_err(|e| format!("Error while getting smart query files: {}", e))
 }
@@ -749,7 +839,10 @@ pub fn get_smart_grouped_query_rows(
 /// Get all file ids in one group for a smart query.
 /// Used by the group header checkbox so selecting a group is not limited to loaded rows.
 #[tauri::command]
-pub fn get_smart_group_file_ids(params: SmartQueryParams, group_id: String) -> Result<Vec<i64>, String> {
+pub fn get_smart_group_file_ids(
+    params: SmartQueryParams,
+    group_id: String,
+) -> Result<Vec<i64>, String> {
     AFile::get_smart_group_file_ids(&params, &group_id)
         .map_err(|e| format!("Error while getting smart group file ids: {}", e))
 }
@@ -763,7 +856,10 @@ pub fn get_smart_query_file_ids(params: SmartQueryParams) -> Result<Vec<i64>, St
 }
 
 #[tauri::command]
-pub fn get_smart_query_file_position(params: SmartQueryParams, file_id: i64) -> Result<Option<i64>, String> {
+pub fn get_smart_query_file_position(
+    params: SmartQueryParams,
+    file_id: i64,
+) -> Result<Option<i64>, String> {
     AFile::get_smart_query_file_position(&params, file_id)
         .map_err(|e| format!("Error while getting smart query file position: {}", e))
 }
@@ -957,20 +1053,23 @@ pub fn copy_file(
 
 /// import a file into a folder preserving the original file name
 #[tauri::command]
-pub fn import_file(file_path: &str, folder_id: i64, folder_path: &str) -> Result<Option<AFile>, String> {
+pub fn import_file(
+    file_path: &str,
+    folder_id: i64,
+    folder_path: &str,
+) -> Result<Option<AFile>, String> {
     // Validate the source is a supported type *before* copying.
     t_utils::get_file_type(file_path)
         .ok_or_else(|| format!("Unsupported file type: {}", file_path))?;
 
     let new_path = t_utils::import_file(file_path, folder_path)
         .ok_or_else(|| format!("Failed to copy file: {}", file_path))?;
-    let file_type = t_utils::get_file_type(&new_path)
-        .ok_or_else(|| {
-            // The renamed file should have a valid extension; if not, remove
-            // the orphan so the album folder stays clean.
-            let _ = std::fs::remove_file(&new_path);
-            format!("Unsupported file type after copy: {}", new_path)
-        })?;
+    let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
+        // The renamed file should have a valid extension; if not, remove
+        // the orphan so the album folder stays clean.
+        let _ = std::fs::remove_file(&new_path);
+        format!("Unsupported file type after copy: {}", new_path)
+    })?;
     let now = chrono::Utc::now().timestamp_millis();
     let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
     Ok(Some(file))
@@ -978,14 +1077,21 @@ pub fn import_file(file_path: &str, folder_id: i64, folder_path: &str) -> Result
 
 /// import an image from a URL into a folder preserving the original file name when possible
 #[tauri::command]
-pub async fn import_url(url: &str, folder_id: i64, folder_path: String) -> Result<Option<AFile>, String> {
+pub async fn import_url(
+    url: &str,
+    folder_id: i64,
+    folder_path: String,
+) -> Result<Option<AFile>, String> {
     import_url_inner(url, folder_id, folder_path).await
 }
 
 /// Import an image from the macOS drag pasteboard (for browser-sourced drags
 /// where Tauri cannot provide file paths).
 #[tauri::command]
-pub async fn import_from_drag(folder_id: i64, folder_path: String) -> Result<Option<AFile>, String> {
+pub async fn import_from_drag(
+    folder_id: i64,
+    folder_path: String,
+) -> Result<Option<AFile>, String> {
     let url = crate::t_pasteboard::get_drag_image_url()
         .ok_or_else(|| "No image URL found in drag pasteboard".to_string())?;
     import_url_inner(&url, folder_id, folder_path).await
@@ -1006,26 +1112,35 @@ pub fn get_drag_payload() -> DragPayload {
     }
 }
 
-async fn import_url_inner(url: &str, folder_id: i64, folder_path: String) -> Result<Option<AFile>, String> {
-    let response = reqwest::get(url).await
+async fn import_url_inner(
+    url: &str,
+    folder_id: i64,
+    folder_path: String,
+) -> Result<Option<AFile>, String> {
+    let response = reqwest::get(url)
+        .await
         .map_err(|e| format!("Failed to download image: {}", e))?;
 
     // Reject HTTP error statuses
     let status = response.status();
     if !status.is_success() {
-        return Err(format!("Server returned {} {}", status.as_u16(), status.canonical_reason().unwrap_or("")));
+        return Err(format!(
+            "Server returned {} {}",
+            status.as_u16(),
+            status.canonical_reason().unwrap_or("")
+        ));
     }
 
     // Require a supported image content type — validate via the shared
     // MIME→extension table so the response form the importer can name.
     let mime = {
-        let ct = response.headers()
+        let ct = response
+            .headers()
             .get("content-type")
             .and_then(|v| v.to_str().ok())
             .ok_or_else(|| "Response missing Content-Type header".to_string())?;
         let m = ct.split(';').next().unwrap_or(ct).trim().to_string();
-        t_utils::image_mime_to_ext(&m)
-            .ok_or_else(|| format!("Unsupported image format: {}", m))?;
+        t_utils::image_mime_to_ext(&m).ok_or_else(|| format!("Unsupported image format: {}", m))?;
         m
     };
     let original_name = response
@@ -1036,7 +1151,9 @@ async fn import_url_inner(url: &str, folder_id: i64, folder_path: String) -> Res
         .or_else(|| filename_from_url(response.url().as_str()))
         .or_else(|| filename_from_url(url));
 
-    let bytes = response.bytes().await
+    let bytes = response
+        .bytes()
+        .await
         .map_err(|e| format!("Failed to read response: {}", e))?;
 
     let dest_folder = folder_path.clone();
@@ -1052,7 +1169,9 @@ async fn import_url_inner(url: &str, folder_id: i64, folder_path: String) -> Res
         let now = chrono::Utc::now().timestamp_millis();
         let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
         Ok(Some(file))
-    }).await.map_err(|e| format!("Failed to save file: {}", e))?
+    })
+    .await
+    .map_err(|e| format!("Failed to save file: {}", e))?
 }
 
 fn filename_from_content_disposition(value: &str) -> Option<String> {
@@ -1060,7 +1179,9 @@ fn filename_from_content_disposition(value: &str) -> Option<String> {
         if let Some((key, raw_value)) = part.trim().split_once('=') {
             if key.trim().eq_ignore_ascii_case("filename*") {
                 let raw_value = raw_value.trim().trim_matches('"');
-                let encoded = raw_value.split_once("''").map_or(raw_value, |(_, value)| value);
+                let encoded = raw_value
+                    .split_once("''")
+                    .map_or(raw_value, |(_, value)| value);
                 return clean_import_filename(&percent_decode_utf8(encoded));
             }
         }
@@ -1118,7 +1239,6 @@ fn percent_decode_utf8(value: &str) -> String {
     String::from_utf8(decoded).unwrap_or_else(|_| value.to_string())
 }
 
-
 /// Import a file from raw bytes (used by DOM-based drag-drop on Windows
 /// where Tauri native file paths are unavailable).
 #[tauri::command]
@@ -1135,15 +1255,16 @@ pub async fn import_file_bytes(
     tauri::async_runtime::spawn_blocking(move || {
         let new_path = t_utils::save_bytes_with_name(&bytes, &name, &dest_folder)
             .ok_or_else(|| "Failed to save dropped file".to_string())?;
-        let file_type = t_utils::get_file_type(&new_path)
-            .ok_or_else(|| {
-                let _ = std::fs::remove_file(&new_path);
-                format!("Unsupported file type: {}", new_path)
-            })?;
+        let file_type = t_utils::get_file_type(&new_path).ok_or_else(|| {
+            let _ = std::fs::remove_file(&new_path);
+            format!("Unsupported file type: {}", new_path)
+        })?;
         let now = chrono::Utc::now().timestamp_millis();
         let (file, _) = AFile::add_to_db(folder_id, &new_path, file_type, now)?;
         Ok(Some(file))
-    }).await.map_err(|e| format!("Failed to save file: {}", e))?
+    })
+    .await
+    .map_err(|e| format!("Failed to save file: {}", e))?
 }
 
 fn import_clipboard_file(
@@ -1173,23 +1294,17 @@ fn import_clipboard_file(
 }
 
 #[tauri::command]
-pub async fn has_importable_clipboard(
-    _app_handle: tauri::AppHandle,
-) -> bool {
+pub async fn has_importable_clipboard(_app_handle: tauri::AppHandle) -> bool {
     #[cfg(target_os = "linux")]
     {
-        let Ok(clipboard_data) = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await else {
+        let Ok(clipboard_data) = crate::t_pasteboard::get_clipboard_import_data(&_app_handle).await
+        else {
             return false;
         };
 
-        if clipboard_data
-            .file_paths
-            .iter()
-            .any(|path| {
-                std::path::Path::new(path).is_file()
-                    && t_utils::get_file_type(path).is_some()
-            })
-        {
+        if clipboard_data.file_paths.iter().any(|path| {
+            std::path::Path::new(path).is_file() && t_utils::get_file_type(path).is_some()
+        }) {
             return true;
         }
 
@@ -1203,13 +1318,10 @@ pub async fn has_importable_clipboard(
     };
 
     if let Ok(file_paths) = clipboard.get().file_list() {
-        if file_paths.iter().any(|path| {
-            path.is_file()
-                && path
-                    .to_str()
-                    .and_then(t_utils::get_file_type)
-                    .is_some()
-        }) {
+        if file_paths
+            .iter()
+            .any(|path| path.is_file() && path.to_str().and_then(t_utils::get_file_type).is_some())
+        {
             return true;
         }
     }
@@ -1237,10 +1349,7 @@ pub async fn import_clipboard(
                 .map(std::path::Path::new)
                 .filter(|path| path.is_file())
             {
-                let supported = path
-                    .to_str()
-                    .and_then(t_utils::get_file_type)
-                    .is_some();
+                let supported = path.to_str().and_then(t_utils::get_file_type).is_some();
                 if !supported {
                     continue;
                 }
@@ -1286,10 +1395,7 @@ pub async fn import_clipboard(
         if !file_paths.is_empty() {
             let mut imported = Vec::new();
             for path in file_paths.iter().filter(|path| path.is_file()) {
-                let supported = path
-                    .to_str()
-                    .and_then(t_utils::get_file_type)
-                    .is_some();
+                let supported = path.to_str().and_then(t_utils::get_file_type).is_some();
                 if !supported {
                     continue;
                 }
@@ -2035,9 +2141,7 @@ pub fn dedup_get_scan_status(
     state: tauri::State<'_, crate::t_dedup::DedupState>,
 ) -> Result<crate::t_dedup::DedupScanStatus, String> {
     let mut status = state.status.lock().unwrap().clone();
-    status.is_scanning = state
-        .is_scanning
-        .load(std::sync::atomic::Ordering::SeqCst);
+    status.is_scanning = state.is_scanning.load(std::sync::atomic::Ordering::SeqCst);
     Ok(status.clone())
 }
 
@@ -2089,7 +2193,10 @@ pub fn get_db_storage_info() -> Result<Vec<t_storage::DbStorageInfo>, String> {
 }
 
 #[tauri::command]
-pub fn backup_databases(library_ids: Vec<String>, dest_path: String) -> Result<t_storage::BackupResult, String> {
+pub fn backup_databases(
+    library_ids: Vec<String>,
+    dest_path: String,
+) -> Result<t_storage::BackupResult, String> {
     t_storage::backup_databases(&library_ids, &dest_path)
 }
 

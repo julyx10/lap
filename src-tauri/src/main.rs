@@ -13,7 +13,6 @@
 use tauri::Manager;
 use tauri_plugin_aptabase::EventTracker;
 
-mod t_storage;
 mod t_ai;
 mod t_cluster;
 mod t_cmds;
@@ -21,9 +20,10 @@ mod t_common;
 mod t_config;
 mod t_dedup;
 mod t_face;
-mod t_image;
 #[cfg(all(not(target_os = "macos"), lap_has_libheif))]
 mod t_heif;
+mod t_http;
+mod t_image;
 mod t_jpeg;
 mod t_jxl;
 mod t_lens;
@@ -33,8 +33,8 @@ mod t_migration;
 mod t_pasteboard;
 mod t_protocol;
 mod t_sqlite;
+mod t_storage;
 mod t_utils;
-mod t_http;
 mod t_video;
 
 /// The main function is the entry point for the Tauri application.
@@ -256,7 +256,7 @@ async fn main() {
             t_cmds::open_external_url,
             t_cmds::get_external_app_display_name,
             t_cmds::open_file_with_app,
-            // file
+            // file query
             t_cmds::get_total_count_and_sum,
             t_cmds::get_query_count_and_sum,
             t_cmds::get_query_time_line,
@@ -265,6 +265,7 @@ async fn main() {
             t_cmds::get_group_file_ids,
             t_cmds::get_query_file_ids,
             t_cmds::get_query_file_position,
+            // smart album
             t_cmds::get_smart_query_count_and_sum,
             t_cmds::get_smart_query_time_line,
             t_cmds::get_smart_query_files,
@@ -272,10 +273,24 @@ async fn main() {
             t_cmds::get_smart_group_file_ids,
             t_cmds::get_smart_query_file_ids,
             t_cmds::get_smart_query_file_position,
+            // collection
+            t_cmds::list_collections,
+            t_cmds::create_collection,
+            t_cmds::rename_collection,
+            t_cmds::delete_collection,
+            t_cmds::reorder_collections,
+            t_cmds::add_files_to_collection,
+            t_cmds::remove_files_from_collection,
+            t_cmds::clear_collection,
+            t_cmds::get_collection_file_ids,
+            t_cmds::get_collection_count_and_sum,
+            t_cmds::get_collection_files,
+            // folder file query
             t_cmds::get_folder_files,
             t_cmds::sync_album_folder_mtimes,
             t_cmds::is_directory_accessible,
             t_cmds::get_folder_thumb_count,
+            // file operations
             t_cmds::edit_image,
             t_cmds::copy_edited_image,
             t_cmds::copy_images,
@@ -294,6 +309,7 @@ async fn main() {
             t_cmds::delete_file_permanently,
             t_cmds::delete_db_file,
             t_cmds::batch_delete_files,
+            // file metadata
             t_cmds::edit_file_comment,
             t_cmds::get_file_thumb,
             t_cmds::get_file_thumb_by_id,

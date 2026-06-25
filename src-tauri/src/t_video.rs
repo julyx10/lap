@@ -83,11 +83,7 @@ impl Default for VideoManager {
     }
 }
 
-async fn is_video_request_active(
-    state: &VideoManager,
-    player_id: &str,
-    request_id: u64,
-) -> bool {
+async fn is_video_request_active(state: &VideoManager, player_id: &str, request_id: u64) -> bool {
     state.active_requests.lock().await.get(player_id) == Some(&request_id)
 }
 
@@ -515,7 +511,12 @@ pub fn get_video_thumbnail_sync(
 ) -> Result<Option<Vec<u8>>, String> {
     let handle = tokio::runtime::Handle::try_current().map_err(|_| "No runtime handle")?;
     tokio::task::block_in_place(|| {
-        handle.block_on(get_video_thumbnail(file_path, sz, known_duration, seek_percent))
+        handle.block_on(get_video_thumbnail(
+            file_path,
+            sz,
+            known_duration,
+            seek_percent,
+        ))
     })
 }
 

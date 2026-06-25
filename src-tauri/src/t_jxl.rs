@@ -29,9 +29,7 @@ pub fn is_jxl_path(file_path: &str) -> bool {
     )
 }
 
-fn open_decoder(
-    file_path: &str,
-) -> Result<JxlDecoder<BufReader<File>>, String> {
+fn open_decoder(file_path: &str) -> Result<JxlDecoder<BufReader<File>>, String> {
     let file = File::open(file_path).map_err(|e| format!("Failed to open JXL image: {}", e))?;
     let reader = BufReader::new(file);
     JxlDecoder::new(reader).map_err(|e| format!("Failed to initialize JXL decoder: {}", e))
@@ -51,7 +49,10 @@ fn get_jxl_orientation(file_path: &str) -> i32 {
     Reader::new()
         .read_raw(exif)
         .ok()
-        .and_then(|exif| exif.get_field(Tag::Orientation, In::PRIMARY).and_then(|field| field.value.get_uint(0)))
+        .and_then(|exif| {
+            exif.get_field(Tag::Orientation, In::PRIMARY)
+                .and_then(|field| field.value.get_uint(0))
+        })
         .map(|value| value as i32)
         .unwrap_or(1)
 }

@@ -90,7 +90,10 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
             let file_id: i64 = file_id_str.parse().unwrap_or(0);
 
             if library_id.is_empty() || file_id <= 0 {
-                responder.respond(text_response(http::StatusCode::BAD_REQUEST, "invalid file_id"));
+                responder.respond(text_response(
+                    http::StatusCode::BAD_REQUEST,
+                    "invalid file_id",
+                ));
                 return;
             }
 

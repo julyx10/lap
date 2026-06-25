@@ -16,10 +16,16 @@
   "collection": {
     "title": "Colecciones",
     "add": "Añadir colección",
+    "default_name": "Colección {index}",
     "expand": "Expandir",
     "collapse": "Contraer",
     "rename": "Renombrar",
     "delete": "Eliminar",
+    "delete_confirm_title": "Eliminar colección",
+    "delete_confirm_message": "¿Eliminar \"{name}\"? Los archivos de la colección no se eliminarán.",
+    "delete_confirm_ok": "Eliminar",
+    "empty_content": "La colección está vacía",
+    "drop_here": "Suelta archivos aquí",
     "drop_action": "Añadir",
     "drop_title_hint": "Soltar para añadir",
     "empty_drop_hint": "Arrastra elementos a la colección para añadirlos."

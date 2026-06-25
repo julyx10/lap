@@ -863,7 +863,10 @@ pub fn delete_selected(
                 failures.push(format!("Failed to clean up empty duplicate groups: {}", e));
             }
         }
-        Err(e) => failures.push(format!("Failed to open DB for duplicate group cleanup: {}", e)),
+        Err(e) => failures.push(format!(
+            "Failed to open DB for duplicate group cleanup: {}",
+            e
+        )),
     }
 
     Ok(DedupDeleteResult {

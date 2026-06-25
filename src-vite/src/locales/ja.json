@@ -16,10 +16,16 @@
   "collection": {
     "title": "コレクション",
     "add": "コレクションを追加",
+    "default_name": "コレクション {index}",
     "expand": "展開",
     "collapse": "折りたたむ",
     "rename": "名前を変更",
     "delete": "削除",
+    "delete_confirm_title": "コレクションを削除",
+    "delete_confirm_message": "「{name}」を削除しますか？コレクション内のファイルは削除されません。",
+    "delete_confirm_ok": "削除",
+    "empty_content": "コレクションは空です",
+    "drop_here": "ここにファイルをドロップ",
     "drop_action": "追加",
     "drop_title_hint": "ドロップして追加",
     "empty_drop_hint": "アイテムをコレクションにドラッグして追加します。"

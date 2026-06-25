@@ -1,6 +1,7 @@
 <template>
   <section
     data-collection-tray-root="true"
+    :data-collection-drop-new="collections.length === 0 && isItemDragging ? 'true' : undefined"
     class="collection-tray min-h-0 flex flex-col rounded-box bg-base-300/70 border border-base-content/5 shadow-sm"
     :class="libConfig.activePane === 'collection' ? '' : 'sidebar-pane-inactive'"
   >
@@ -82,23 +83,36 @@
           </div>
         </div>
         <div
-          v-if="allCollectionsEmpty && !renamingId"
-          class="mt-2 text-xs text-center text-base-content/30"
+          v-if="collections.length === 0 && !renamingId"
+          class="mt-2 px-3 py-3 flex flex-col items-center gap-1 text-center text-base-content/30"
         >
-          {{ $t('collection.empty_drop_hint') }}
+          <span class="text-sm">{{ $t('collection.empty_content') }}</span>
+          <span class="text-xs">{{ $t('collection.drop_here') }}</span>
         </div>
       </div>
     </transition>
+
+    <MessageBox
+      v-if="deleteTarget"
+      :title="$t('collection.delete_confirm_title')"
+      :message="$t('collection.delete_confirm_message', { name: deleteTarget.name })"
+      :OkText="$t('collection.delete_confirm_ok')"
+      :cancelText="$t('msgbox.cancel')"
+      @ok="confirmDelete"
+      @cancel="deleteTarget = null"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { listen } from '@tauri-apps/api/event';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
+import { createCollection, deleteCollection as deleteCollectionApi, listCollections, renameCollection } from '@/common/api';
 import { IconAdd, IconArrowDown, IconArrowUp, IconEdit, IconMore, IconBookmarks, IconTrash } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
+import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';
 
 defineProps({
@@ -114,34 +128,37 @@ const { t } = useI18n();
 const MAX_COLLECTIONS = 10;
 
 type Collection = {
-  id: string;
+  id: number;
   name: string;
   count: number;
+  sortOrder?: number;
 };
 
-const collections = ref<Collection[]>([
-  { id: 'default', name: 'Collection 1', count: 0 },
-]);
-const selectedId = ref(libConfig.collection.selectedId || collections.value[0].id);
-const renamingId = ref<string | null>(null);
+const collections = ref<Collection[]>([]);
+const selectedId = ref<number | null>(Number(libConfig.collection.selectedId || 0) || null);
+const renamingId = ref<number | null>(null);
 const renameValue = ref('');
 const renameInputRef = ref<HTMLInputElement | HTMLInputElement[] | null>(null);
 const isItemDragging = ref(false);
-const allCollectionsEmpty = computed(() => collections.value.every(collection => collection.count === 0));
+const deleteTarget = ref<Collection | null>(null);
 let unlistenCollectionFilesDropped: (() => void) | null = null;
 let unlistenContentItemsDragState: (() => void) | null = null;
+let unlistenLibrarySwitched: (() => void) | null = null;
 
 onMounted(async () => {
-  unlistenCollectionFilesDropped = await listen('collection-files-dropped', (event: any) => {
-    const collectionId = String(event.payload?.collectionId || '');
-    const count = Number(event.payload?.count || 0);
-    if (!collectionId || count <= 0) return;
-    const collection = collections.value.find(item => item.id === collectionId);
-    if (!collection) return;
-    collection.count += count;
+  await loadCollections();
+  unlistenCollectionFilesDropped = await listen('collection-files-dropped', async () => {
+    await loadCollections();
   });
   unlistenContentItemsDragState = await listen('content-items-drag-state', (event: any) => {
     isItemDragging.value = Boolean(event.payload?.dragging);
+  });
+  unlistenLibrarySwitched = await listen('library-switched', async () => {
+    selectedId.value = Number(libConfig.collection.selectedId || 0) || null;
+    renamingId.value = null;
+    renameValue.value = '';
+    deleteTarget.value = null;
+    await loadCollections();
   });
 });
 
@@ -150,7 +167,31 @@ onBeforeUnmount(() => {
   unlistenCollectionFilesDropped = null;
   unlistenContentItemsDragState?.();
   unlistenContentItemsDragState = null;
+  unlistenLibrarySwitched?.();
+  unlistenLibrarySwitched = null;
 });
+
+async function loadCollections(preferredId?: number) {
+  const result = await listCollections();
+  collections.value = Array.isArray(result)
+    ? result.map((item: any) => ({
+      id: Number(item.id),
+      name: String(item.name || ''),
+      count: Number(item.count || 0),
+      sortOrder: Number(item.sortOrder || 0),
+    }))
+    : [];
+
+  const nextSelectedId = Number(preferredId || libConfig.collection.selectedId || selectedId.value || 0);
+  const selected = collections.value.find(item => item.id === nextSelectedId) || null;
+  if (selected) {
+    selectedId.value = selected.id;
+    libConfig.collection.selectedId = selected.id;
+  } else {
+    selectedId.value = null;
+    libConfig.collection.selectedId = null;
+  }
+}
 
 function selectCollection(collection: Collection) {
   libConfig.activePane = 'collection';
@@ -160,14 +201,14 @@ function selectCollection(collection: Collection) {
 
 async function addCollection() {
   if (collections.value.length >= MAX_COLLECTIONS) return;
-  const collection: Collection = {
-    id: crypto.randomUUID?.() || `${Date.now()}`,
-    name: `Collection ${collections.value.length + 1}`,
-    count: 0,
-  };
-  collections.value = [...collections.value, collection];
-  selectCollection(collection);
-  startRename(collection);
+  const collection = await createCollection(t('collection.default_name', { index: collections.value.length + 1 }));
+  if (!collection?.id) return;
+  await loadCollections(Number(collection.id));
+  const created = collections.value.find(item => item.id === Number(collection.id));
+  if (created) {
+    selectCollection(created);
+    startRename(created);
+  }
 }
 
 async function startRename(collection: Collection) {
@@ -182,11 +223,13 @@ async function startRename(collection: Collection) {
   input?.select();
 }
 
-function commitRename(collection: Collection) {
+async function commitRename(collection: Collection) {
   if (renamingId.value !== collection.id) return;
   const nextName = renameValue.value.trim();
-  if (nextName) {
-    collection.name = nextName;
+  if (nextName && nextName !== collection.name) {
+    await renameCollection(collection.id, nextName);
+    await loadCollections(collection.id);
+    await tauriEmit('refresh-content');
   }
   cancelRename();
 }
@@ -197,11 +240,25 @@ function cancelRename() {
 }
 
 function deleteCollection(collection: Collection) {
-  if (collections.value.length <= 1) return;
-  collections.value = collections.value.filter(item => item.id !== collection.id);
-  if (selectedId.value === collection.id) {
-    selectCollection(collections.value[0]);
+  deleteTarget.value = collection;
+}
+
+async function confirmDelete() {
+  const target = deleteTarget.value;
+  if (!target) return;
+  const wasSelected = Number(libConfig.collection.selectedId || 0) === target.id;
+  deleteTarget.value = null;
+  await deleteCollectionApi(target.id);
+  await loadCollections();
+  if (wasSelected) {
+    const first = collections.value[0] || null;
+    if (first) selectCollection(first);
+    else {
+      selectedId.value = null;
+      libConfig.collection.selectedId = null;
+    }
   }
+  await tauriEmit('refresh-content');
 }
 
 function collectionMenuItems(collection: Collection) {
@@ -214,7 +271,6 @@ function collectionMenuItems(collection: Collection) {
     {
       label: t('collection.delete'),
       icon: IconTrash,
-      disabled: collections.value.length <= 1,
       action: () => deleteCollection(collection),
     },
   ];

@@ -101,7 +101,10 @@ pub struct SmartAlbumSortState {
 
 impl Default for SmartAlbumSortState {
     fn default() -> Self {
-        Self { r#type: 0, order: 1 }
+        Self {
+            r#type: 0,
+            order: 1,
+        }
     }
 }
 
@@ -195,9 +198,7 @@ pub struct CameraState {
 
 impl Default for TagState {
     fn default() -> Self {
-        Self {
-            id: None,
-        }
+        Self { id: None }
     }
 }
 
@@ -255,6 +256,13 @@ pub struct SearchState {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
+pub struct CollectionState {
+    #[serde(default, alias = "selected_id")]
+    pub selected_id: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct DestFolderState {
     #[serde(alias = "album_id")]
     pub album_id: Option<i64>,
@@ -305,6 +313,8 @@ pub struct LibraryState {
     pub location: LocationState,
     #[serde(default)]
     pub person: PersonState,
+    #[serde(default)]
+    pub collection: CollectionState,
     pub search: SearchState,
     #[serde(alias = "dest_folder")]
     pub dest_folder: DestFolderState,

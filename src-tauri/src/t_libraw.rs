@@ -468,19 +468,14 @@ fn format_lens_model_from_numbers(
     max_ap_min_focal: f32,
     max_ap_max_focal: f32,
 ) -> Option<String> {
-    if min_focal <= 0.0 || max_focal <= 0.0 || max_ap_min_focal <= 0.0 || max_ap_max_focal <= 0.0
-    {
+    if min_focal <= 0.0 || max_focal <= 0.0 || max_ap_min_focal <= 0.0 || max_ap_max_focal <= 0.0 {
         return None;
     }
 
     let focal = if (min_focal - max_focal).abs() < 0.05 {
         format!("{}mm", format_float(min_focal))
     } else {
-        format!(
-            "{}-{}mm",
-            format_float(min_focal),
-            format_float(max_focal)
-        )
+        format!("{}-{}mm", format_float(min_focal), format_float(max_focal))
     };
     let aperture = if (max_ap_min_focal - max_ap_max_focal).abs() < 0.05 {
         format!("f/{}", format_float(max_ap_min_focal))

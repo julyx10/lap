@@ -10,7 +10,7 @@
 
 #[cfg(target_os = "macos")]
 mod imp {
-    use std::ffi::{c_char, CStr};
+    use std::ffi::{CStr, c_char};
 
     unsafe extern "C" {
         fn lap_get_drag_image_url() -> *const c_char;
@@ -72,7 +72,7 @@ pub async fn copy_files_and_image(
     file_paths: &[String],
     image_bytes: Option<&[u8]>,
 ) -> Result<(), String> {
-    use std::ffi::{c_char, c_uchar, CString};
+    use std::ffi::{CString, c_char, c_uchar};
 
     unsafe extern "C" {
         fn lap_copy_files_and_image_to_clipboard(
@@ -90,11 +90,7 @@ pub async fn copy_files_and_image(
         .map(|bytes| (bytes.as_ptr(), bytes.len()))
         .unwrap_or((std::ptr::null(), 0));
     let success = unsafe {
-        lap_copy_files_and_image_to_clipboard(
-            file_paths_json.as_ptr(),
-            image_ptr,
-            image_len,
-        )
+        lap_copy_files_and_image_to_clipboard(file_paths_json.as_ptr(), image_ptr, image_len)
     };
     if success {
         Ok(())
@@ -135,7 +131,7 @@ pub async fn copy_files_and_image(
     file_paths: &[String],
     image_bytes: Option<&[u8]>,
 ) -> Result<(), String> {
-    use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
+    use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
     use std::ffi::c_uchar;
 
     const URI_PATH_ENCODE_SET: &AsciiSet = &CONTROLS
@@ -167,10 +163,14 @@ pub async fn copy_files_and_image(
     let uri_list = file_paths
         .iter()
         .filter_map(|path| std::fs::canonicalize(path).ok())
-        .filter_map(|path| path.to_str().map(|path| format!(
-            "file://{}\r\n",
-            utf8_percent_encode(path, URI_PATH_ENCODE_SET),
-        )))
+        .filter_map(|path| {
+            path.to_str().map(|path| {
+                format!(
+                    "file://{}\r\n",
+                    utf8_percent_encode(path, URI_PATH_ENCODE_SET),
+                )
+            })
+        })
         .collect::<String>()
         .into_bytes();
     if uri_list.is_empty() {

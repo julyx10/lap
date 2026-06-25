@@ -16,10 +16,16 @@
   "collection": {
     "title": "컬렉션",
     "add": "컬렉션 추가",
+    "default_name": "컬렉션 {index}",
     "expand": "펼치기",
     "collapse": "접기",
     "rename": "이름 변경",
     "delete": "삭제",
+    "delete_confirm_title": "컬렉션 삭제",
+    "delete_confirm_message": "\"{name}\"을 삭제할까요? 컬렉션의 파일은 삭제되지 않습니다.",
+    "delete_confirm_ok": "삭제",
+    "empty_content": "컬렉션이 비어 있습니다",
+    "drop_here": "여기에 파일 드롭",
     "drop_action": "추가",
     "drop_title_hint": "추가하려면 드롭",
     "empty_drop_hint": "항목을 컬렉션으로 드래그하여 추가하세요."

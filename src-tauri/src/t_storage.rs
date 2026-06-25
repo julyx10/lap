@@ -12,9 +12,9 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+use zip::ZipWriter;
 use zip::read::ZipArchive;
 use zip::write::FileOptions;
-use zip::ZipWriter;
 
 use crate::t_config::{self, AppConfig, Library, LibraryState};
 
@@ -313,8 +313,8 @@ pub fn backup_databases(library_ids: &[String], dest_path: &str) -> Result<Backu
         checkpoint_db(Path::new(&db_path))?;
     }
 
-    let file = fs::File::create(dest_path)
-        .map_err(|e| format!("Failed to create backup file: {}", e))?;
+    let file =
+        fs::File::create(dest_path).map_err(|e| format!("Failed to create backup file: {}", e))?;
     let mut zip = ZipWriter::new(file);
 
     let backup_info = serde_json::json!({
@@ -335,8 +335,8 @@ pub fn backup_databases(library_ids: &[String], dest_path: &str) -> Result<Backu
     let info_json = serde_json::to_string_pretty(&backup_info)
         .map_err(|e| format!("Failed to serialize backup info: {}", e))?;
 
-    let options = FileOptions::<'_, ()>::default()
-        .compression_method(zip::CompressionMethod::Deflated);
+    let options =
+        FileOptions::<'_, ()>::default().compression_method(zip::CompressionMethod::Deflated);
     zip.start_file("backup-info.json", options)
         .map_err(|e| format!("Failed to write backup-info.json to zip: {}", e))?;
     zip.write_all(info_json.as_bytes())
@@ -350,8 +350,8 @@ pub fn backup_databases(library_ids: &[String], dest_path: &str) -> Result<Backu
             .read_to_string(&mut config_content)
             .map_err(|e| format!("Failed to read config file: {}", e))?;
 
-        let options = FileOptions::<'_, ()>::default()
-            .compression_method(zip::CompressionMethod::Deflated);
+        let options =
+            FileOptions::<'_, ()>::default().compression_method(zip::CompressionMethod::Deflated);
         zip.start_file("app-config.json", options)
             .map_err(|e| format!("Failed to write app-config.json to zip: {}", e))?;
         zip.write_all(config_content.as_bytes())
@@ -375,8 +375,8 @@ pub fn backup_databases(library_ids: &[String], dest_path: &str) -> Result<Backu
         let safe_name = sanitize_filename(&lib.name);
         let zip_path = format!("{}.db", safe_name);
 
-        let options = FileOptions::<'_, ()>::default()
-            .compression_method(zip::CompressionMethod::Deflated);
+        let options =
+            FileOptions::<'_, ()>::default().compression_method(zip::CompressionMethod::Deflated);
         zip.start_file(&zip_path, options)
             .map_err(|e| format!("Failed to write {} to zip: {}", zip_path, e))?;
         zip.write_all(&db_content)
@@ -388,10 +388,7 @@ pub fn backup_databases(library_ids: &[String], dest_path: &str) -> Result<Backu
     let file = zip
         .finish()
         .map_err(|e| format!("Failed to finalize backup zip: {}", e))?;
-    let final_size = file
-        .metadata()
-        .map(|m| m.len() as i64)
-        .unwrap_or(0);
+    let final_size = file.metadata().map(|m| m.len() as i64).unwrap_or(0);
 
     Ok(BackupResult {
         file_path: dest_path.to_string(),
@@ -402,17 +399,19 @@ pub fn backup_databases(library_ids: &[String], dest_path: &str) -> Result<Backu
 }
 
 pub fn parse_backup_file(path: &str) -> Result<BackupMetaData, String> {
-    let file = fs::File::open(path)
-        .map_err(|e| format!("Failed to open backup file: {}", e))?;
-    let mut archive = ZipArchive::new(file)
-        .map_err(|e| format!("Failed to read backup zip: {}", e))?;
+    let file = fs::File::open(path).map_err(|e| format!("Failed to open backup file: {}", e))?;
+    let mut archive =
+        ZipArchive::new(file).map_err(|e| format!("Failed to read backup zip: {}", e))?;
 
-    let info_index = archive.index_for_name("backup-info.json")
+    let info_index = archive
+        .index_for_name("backup-info.json")
         .ok_or_else(|| "Invalid backup file: missing backup-info.json".to_string())?;
-    let mut info_file = archive.by_index(info_index)
+    let mut info_file = archive
+        .by_index(info_index)
         .map_err(|e| format!("Failed to read backup-info.json: {}", e))?;
     let mut info_content = String::new();
-    info_file.read_to_string(&mut info_content)
+    info_file
+        .read_to_string(&mut info_content)
         .map_err(|e| format!("Failed to read backup-info.json: {}", e))?;
 
     let info: BackupMetaData = serde_json::from_str(&info_content)
@@ -428,14 +427,16 @@ pub fn restore_databases(
     let _migration_guard = DbMigrationGuard::acquire()?;
     let mut config = t_config::load_app_config()?;
 
-    let file = fs::File::open(backup_path)
-        .map_err(|e| format!("Failed to open backup file: {}", e))?;
-    let mut archive = ZipArchive::new(file)
-        .map_err(|e| format!("Failed to read backup zip: {}", e))?;
+    let file =
+        fs::File::open(backup_path).map_err(|e| format!("Failed to open backup file: {}", e))?;
+    let mut archive =
+        ZipArchive::new(file).map_err(|e| format!("Failed to read backup zip: {}", e))?;
 
-    let mut db_entries: std::collections::HashMap<String, Vec<u8>> = std::collections::HashMap::new();
+    let mut db_entries: std::collections::HashMap<String, Vec<u8>> =
+        std::collections::HashMap::new();
     for i in 0..archive.len() {
-        let mut entry = archive.by_index(i)
+        let mut entry = archive
+            .by_index(i)
             .map_err(|e| format!("Failed to read zip entry: {}", e))?;
         let entry_name = entry.name().to_string();
         if !entry_name.ends_with(".db") {
@@ -443,17 +444,15 @@ pub fn restore_databases(
         }
         let lib_name = entry_name.trim_end_matches(".db").to_string();
         let mut content = Vec::new();
-        entry.read_to_end(&mut content)
+        entry
+            .read_to_end(&mut content)
             .map_err(|e| format!("Failed to read zip entry '{}': {}", entry_name, e))?;
         db_entries.insert(lib_name, content);
     }
 
     let mut restored_names = Vec::new();
-    let mut existing_names: std::collections::HashSet<String> = config
-        .libraries
-        .iter()
-        .map(|l| l.name.clone())
-        .collect();
+    let mut existing_names: std::collections::HashSet<String> =
+        config.libraries.iter().map(|l| l.name.clone()).collect();
 
     for selection in selections {
         let zip_lib_name = sanitize_filename(&selection.library_name);
@@ -483,8 +482,12 @@ pub fn restore_databases(
             fs::create_dir_all(parent)
                 .map_err(|e| format!("Failed to create directory for library: {}", e))?;
         }
-        fs::write(db_path_obj, &db_content)
-            .map_err(|e| format!("Failed to write database file for '{}': {}", final_lib_name, e))?;
+        fs::write(db_path_obj, &db_content).map_err(|e| {
+            format!(
+                "Failed to write database file for '{}': {}",
+                final_lib_name, e
+            )
+        })?;
 
         config.libraries.push(new_lib);
         existing_names.insert(final_lib_name.clone());

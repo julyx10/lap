@@ -16,10 +16,16 @@
   "collection": {
     "title": "Sammlungen",
     "add": "Sammlung hinzufügen",
+    "default_name": "Sammlung {index}",
     "expand": "Ausklappen",
     "collapse": "Einklappen",
     "rename": "Umbenennen",
     "delete": "Löschen",
+    "delete_confirm_title": "Sammlung löschen",
+    "delete_confirm_message": "\"{name}\" löschen? Dateien in der Sammlung werden nicht gelöscht.",
+    "delete_confirm_ok": "Löschen",
+    "empty_content": "Sammlung ist leer",
+    "drop_here": "Dateien hier ablegen",
     "drop_action": "Hinzufügen",
     "drop_title_hint": "Zum Hinzufügen ablegen",
     "empty_drop_hint": "Ziehen Sie Elemente in die Sammlung, um sie hinzuzufügen."

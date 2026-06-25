@@ -790,6 +790,107 @@ export async function getQueryFilePosition(params, fileId) {
   return null;
 }
 
+// collection
+
+export async function listCollections() {
+  try {
+    return await invoke('list_collections');
+  } catch (error) {
+    console.error('Failed to list collections:', error);
+  }
+  return null;
+}
+
+export async function createCollection(name) {
+  try {
+    return await invoke('create_collection', { name });
+  } catch (error) {
+    console.error('Failed to create collection:', error);
+    throw error;
+  }
+}
+
+export async function renameCollection(id, name) {
+  try {
+    return await invoke('rename_collection', { id, name });
+  } catch (error) {
+    console.error('Failed to rename collection:', error);
+    throw error;
+  }
+}
+
+export async function deleteCollection(id) {
+  try {
+    return await invoke('delete_collection', { id });
+  } catch (error) {
+    console.error('Failed to delete collection:', error);
+    throw error;
+  }
+}
+
+export async function reorderCollections(items) {
+  try {
+    return await invoke('reorder_collections', { items });
+  } catch (error) {
+    console.error('Failed to reorder collections:', error);
+    throw error;
+  }
+}
+
+export async function addFilesToCollection(collectionId, fileIds) {
+  try {
+    return await invoke('add_files_to_collection', { collectionId, fileIds });
+  } catch (error) {
+    console.error('Failed to add files to collection:', error);
+    throw error;
+  }
+}
+
+export async function removeFilesFromCollection(collectionId, fileIds) {
+  try {
+    return await invoke('remove_files_from_collection', { collectionId, fileIds });
+  } catch (error) {
+    console.error('Failed to remove files from collection:', error);
+    throw error;
+  }
+}
+
+export async function clearCollection(collectionId) {
+  try {
+    return await invoke('clear_collection', { collectionId });
+  } catch (error) {
+    console.error('Failed to clear collection:', error);
+    throw error;
+  }
+}
+
+export async function getCollectionFileIds(collectionId) {
+  try {
+    return await invoke('get_collection_file_ids', { collectionId });
+  } catch (error) {
+    console.error('Failed to get collection file ids:', error);
+  }
+  return null;
+}
+
+export async function getCollectionCountAndSum(collectionId, params) {
+  try {
+    return await invoke('get_collection_count_and_sum', { collectionId, params });
+  } catch (error) {
+    console.error('Failed to get collection count and sum:', error);
+  }
+  return null;
+}
+
+export async function getCollectionFiles(collectionId, params, offset, limit) {
+  try {
+    return await invoke('get_collection_files', { collectionId, params, offset, limit });
+  } catch (error) {
+    console.error('Failed to get collection files:', error);
+  }
+  return null;
+}
+
 // get all files from the folder (no pagination)
 export async function getFolderFiles(folderId, folderPath, fromDbOnly) {
   try {

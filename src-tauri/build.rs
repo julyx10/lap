@@ -134,17 +134,35 @@ fn build_libheif() {
         ("heif", binary_dir.join("libheif.a")),
         ("heif", binary_dir.join("Release").join("libheif.a")),
         ("heif", binary_dir.join("libheif").join("libheif.a")),
-        ("heif", binary_dir.join("libheif").join("Release").join("libheif.a")),
+        (
+            "heif",
+            binary_dir.join("libheif").join("Release").join("libheif.a"),
+        ),
         ("heif", binary_dir.join("heif.lib")),
         ("heif", binary_dir.join("Release").join("heif.lib")),
         ("heif", binary_dir.join("Debug").join("heif.lib")),
-        ("heif", binary_dir.join("libheif").join("Release").join("heif.lib")),
-        ("heif", binary_dir.join("libheif").join("Debug").join("heif.lib")),
+        (
+            "heif",
+            binary_dir.join("libheif").join("Release").join("heif.lib"),
+        ),
+        (
+            "heif",
+            binary_dir.join("libheif").join("Debug").join("heif.lib"),
+        ),
         ("libheif", binary_dir.join("libheif.lib")),
         ("libheif", binary_dir.join("Release").join("libheif.lib")),
         ("libheif", binary_dir.join("Debug").join("libheif.lib")),
-        ("libheif", binary_dir.join("libheif").join("Release").join("libheif.lib")),
-        ("libheif", binary_dir.join("libheif").join("Debug").join("libheif.lib")),
+        (
+            "libheif",
+            binary_dir
+                .join("libheif")
+                .join("Release")
+                .join("libheif.lib"),
+        ),
+        (
+            "libheif",
+            binary_dir.join("libheif").join("Debug").join("libheif.lib"),
+        ),
     ];
 
     let (lib_name, lib_path) = match candidates.iter().find(|(_, p)| p.exists()) {
@@ -162,7 +180,10 @@ fn build_libheif() {
     let lib_dir = lib_path.parent().unwrap_or(&binary_dir);
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=static={}", lib_name);
-    println!("cargo:rustc-link-search=native={}", libde265.lib_dir.display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        libde265.lib_dir.display()
+    );
     println!("cargo:rustc-link-lib=static={}", libde265.lib_name);
     match target_os.as_str() {
         "macos" => println!("cargo:rustc-link-lib=c++"),
@@ -481,13 +502,34 @@ fn build_libde265(
         ("de265", binary_dir.join("de265.lib")),
         ("de265", binary_dir.join("Release").join("de265.lib")),
         ("de265", binary_dir.join("Debug").join("de265.lib")),
-        ("de265", binary_dir.join("libde265").join("Release").join("de265.lib")),
-        ("de265", binary_dir.join("libde265").join("Debug").join("de265.lib")),
+        (
+            "de265",
+            binary_dir
+                .join("libde265")
+                .join("Release")
+                .join("de265.lib"),
+        ),
+        (
+            "de265",
+            binary_dir.join("libde265").join("Debug").join("de265.lib"),
+        ),
         ("libde265", binary_dir.join("libde265.lib")),
         ("libde265", binary_dir.join("Release").join("libde265.lib")),
         ("libde265", binary_dir.join("Debug").join("libde265.lib")),
-        ("libde265", binary_dir.join("libde265").join("Release").join("libde265.lib")),
-        ("libde265", binary_dir.join("libde265").join("Debug").join("libde265.lib")),
+        (
+            "libde265",
+            binary_dir
+                .join("libde265")
+                .join("Release")
+                .join("libde265.lib"),
+        ),
+        (
+            "libde265",
+            binary_dir
+                .join("libde265")
+                .join("Debug")
+                .join("libde265.lib"),
+        ),
     ];
 
     let have_existing = candidates.iter().any(|(_, path)| path.exists());

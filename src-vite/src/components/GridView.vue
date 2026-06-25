@@ -134,7 +134,7 @@
           <span>{{ $t('tooltip.not_found.folder_files') }}</span>
           <span class="text-xs">{{ $t('tooltip.not_found.folder_files_hint') }}</span>
         </template>
-        <span v-else>{{ emptyMessage || $t('tooltip.not_found.files') }}</span>
+        <span v-else class="whitespace-pre-line">{{ emptyMessage || $t('tooltip.not_found.files') }}</span>
       </div>
     </div>
 

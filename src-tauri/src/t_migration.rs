@@ -68,6 +68,32 @@ fn get_migrations() -> Vec<Migration> {
             description: "Post v0.2.2 schema updates",
             sql: "",
         },
+        Migration {
+            version: 6,
+            description: "Create collection tables",
+            sql: "
+                CREATE TABLE IF NOT EXISTS acollections (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    sort_order INTEGER NOT NULL DEFAULT 0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_acollections_sort ON acollections(sort_order, id);
+
+                CREATE TABLE IF NOT EXISTS acollections_files (
+                    collection_id INTEGER NOT NULL,
+                    file_id INTEGER NOT NULL,
+                    added_at INTEGER NOT NULL,
+                    PRIMARY KEY (collection_id, file_id),
+                    FOREIGN KEY (collection_id) REFERENCES acollections(id) ON DELETE CASCADE,
+                    FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_acollections_files_file ON acollections_files(file_id);
+                CREATE INDEX IF NOT EXISTS idx_acollections_files_collection_added
+                    ON acollections_files(collection_id, added_at DESC, file_id);
+            ",
+        },
     ]
 }
 
@@ -133,12 +159,28 @@ pub fn check_and_migrate(conn: &Connection) -> Result<(), String> {
                 .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;
             } else if migration.version == 4 {
                 if !table_has_column(conn, "afiles", "last_scan_time")? {
-                    conn.execute("ALTER TABLE afiles ADD COLUMN last_scan_time INTEGER DEFAULT 0", [])
-                        .map_err(|e| format!("Migration {} failed adding last_scan_time: {}", migration.version, e))?;
+                    conn.execute(
+                        "ALTER TABLE afiles ADD COLUMN last_scan_time INTEGER DEFAULT 0",
+                        [],
+                    )
+                    .map_err(|e| {
+                        format!(
+                            "Migration {} failed adding last_scan_time: {}",
+                            migration.version, e
+                        )
+                    })?;
                 }
                 if !table_has_column(conn, "albums", "last_scan_time")? {
-                    conn.execute("ALTER TABLE albums ADD COLUMN last_scan_time INTEGER DEFAULT 0", [])
-                        .map_err(|e| format!("Migration {} failed adding last_scan_time: {}", migration.version, e))?;
+                    conn.execute(
+                        "ALTER TABLE albums ADD COLUMN last_scan_time INTEGER DEFAULT 0",
+                        [],
+                    )
+                    .map_err(|e| {
+                        format!(
+                            "Migration {} failed adding last_scan_time: {}",
+                            migration.version, e
+                        )
+                    })?;
                 }
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_afiles_last_scan_time ON afiles(last_scan_time)",
@@ -161,10 +203,7 @@ pub fn check_and_migrate(conn: &Connection) -> Result<(), String> {
                 if !table_has_column(conn, "afiles", "inode")? {
                     conn.execute("ALTER TABLE afiles ADD COLUMN inode INTEGER", [])
                         .map_err(|e| {
-                            format!(
-                                "Migration {} failed adding inode: {}",
-                                migration.version, e
-                            )
+                            format!("Migration {} failed adding inode: {}", migration.version, e)
                         })?;
                 }
                 conn.execute(

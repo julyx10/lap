@@ -22,10 +22,10 @@ use serde_json::Value as JsonValue;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::Cursor;
+use std::ops::{Deref, DerefMut};
 use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
 use std::process;
-use std::ops::{Deref, DerefMut};
 use std::sync::{Condvar, Mutex, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{Emitter, State};
@@ -509,7 +509,11 @@ impl AFolder {
         Self::add_to_db_with_conn(&conn, album_id, folder_path)
     }
 
-    pub fn add_to_db_with_conn(conn: &Connection, album_id: i64, folder_path: &str) -> Result<Self, String> {
+    pub fn add_to_db_with_conn(
+        conn: &Connection,
+        album_id: i64,
+        folder_path: &str,
+    ) -> Result<Self, String> {
         if let Ok(Some(folder)) = Self::fetch_with_conn(conn, folder_path) {
             return Ok(folder);
         }
@@ -559,8 +563,11 @@ impl AFolder {
         };
 
         for folder_id in destination_folder_ids {
-            tx.execute("DELETE FROM afiles WHERE folder_id = ?1", params![folder_id])
-                .map_err(|e| e.to_string())?;
+            tx.execute(
+                "DELETE FROM afiles WHERE folder_id = ?1",
+                params![folder_id],
+            )
+            .map_err(|e| e.to_string())?;
         }
         tx.execute(
             "DELETE FROM afolders WHERE path = ?1 OR path LIKE ?2",
@@ -601,8 +608,11 @@ impl AFolder {
             rows.filter_map(|row| row.ok()).collect()
         };
         for folder_id in destination_folder_ids {
-            tx.execute("DELETE FROM afiles WHERE folder_id = ?1", params![folder_id])
-                .map_err(|e| e.to_string())?;
+            tx.execute(
+                "DELETE FROM afiles WHERE folder_id = ?1",
+                params![folder_id],
+            )
+            .map_err(|e| e.to_string())?;
         }
         tx.execute(
             "DELETE FROM afolders WHERE path = ?1 OR path LIKE ?2",
@@ -829,6 +839,274 @@ pub struct AFile {
     pub last_scan_time: Option<i64>, // last scan timestamp
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ACollection {
+    pub id: i64,
+    pub name: String,
+    pub sort_order: i64,
+    pub count: i64,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ACollectionOrder {
+    pub id: i64,
+    pub sort_order: i64,
+}
+
+impl ACollection {
+    const MAX_COLLECTIONS: i64 = 10;
+
+    fn now_ts() -> i64 {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.as_secs() as i64)
+            .unwrap_or(0)
+    }
+
+    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error> {
+        Ok(Self {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            sort_order: row.get(2)?,
+            count: row.get(3)?,
+            created_at: row.get(4)?,
+            updated_at: row.get(5)?,
+        })
+    }
+
+    fn ensure_exists(conn: &Connection, id: i64) -> Result<(), String> {
+        let exists: Option<i64> = conn
+            .query_row(
+                "SELECT id FROM acollections WHERE id = ?1",
+                params![id],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+
+        if exists.is_some() {
+            Ok(())
+        } else {
+            Err("Collection not found".to_string())
+        }
+    }
+
+    pub fn list() -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT c.id, c.name, c.sort_order, COUNT(cf.file_id) AS count, c.created_at, c.updated_at
+                FROM acollections c
+                LEFT JOIN acollections_files cf ON cf.collection_id = c.id
+                GROUP BY c.id
+                ORDER BY c.sort_order ASC, c.id ASC",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map([], Self::from_row)
+            .map_err(|e| e.to_string())?;
+        let mut collections = Vec::new();
+        for row in rows {
+            collections.push(row.map_err(|e| e.to_string())?);
+        }
+        Ok(collections)
+    }
+
+    pub fn create(name: &str) -> Result<Self, String> {
+        let trimmed = name.trim();
+        if trimmed.is_empty() {
+            return Err("Collection name cannot be empty".to_string());
+        }
+
+        let conn = open_conn()?;
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM acollections", [], |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+        if count >= Self::MAX_COLLECTIONS {
+            return Err("Maximum collection count reached".to_string());
+        }
+
+        let sort_order: i64 = conn
+            .query_row(
+                "SELECT COALESCE(MAX(sort_order), -1) + 1 FROM acollections",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+        let now = Self::now_ts();
+        conn.execute(
+            "INSERT INTO acollections (name, sort_order, created_at, updated_at) VALUES (?1, ?2, ?3, ?4)",
+            params![trimmed, sort_order, now, now],
+        )
+        .map_err(|e| e.to_string())?;
+
+        let id = conn.last_insert_rowid();
+        Self::get(id)
+    }
+
+    pub fn get(id: i64) -> Result<Self, String> {
+        let conn = open_conn()?;
+        conn.query_row(
+            "SELECT c.id, c.name, c.sort_order, COUNT(cf.file_id) AS count, c.created_at, c.updated_at
+            FROM acollections c
+            LEFT JOIN acollections_files cf ON cf.collection_id = c.id
+            WHERE c.id = ?1
+            GROUP BY c.id",
+            params![id],
+            Self::from_row,
+        )
+        .map_err(|e| e.to_string())
+    }
+
+    pub fn rename(id: i64, name: &str) -> Result<usize, String> {
+        let trimmed = name.trim();
+        if trimmed.is_empty() {
+            return Err("Collection name cannot be empty".to_string());
+        }
+
+        let conn = open_conn()?;
+        let changed = conn
+            .execute(
+                "UPDATE acollections SET name = ?1, updated_at = ?2 WHERE id = ?3",
+                params![trimmed, Self::now_ts(), id],
+            )
+            .map_err(|e| e.to_string())?;
+        if changed == 0 {
+            Err("Collection not found".to_string())
+        } else {
+            Ok(changed)
+        }
+    }
+
+    pub fn delete(id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        let changed = conn
+            .execute("DELETE FROM acollections WHERE id = ?1", params![id])
+            .map_err(|e| e.to_string())?;
+        if changed == 0 {
+            Err("Collection not found".to_string())
+        } else {
+            Ok(changed)
+        }
+    }
+
+    pub fn reorder(items: Vec<ACollectionOrder>) -> Result<usize, String> {
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let now = Self::now_ts();
+        let mut changed = 0;
+        for item in items {
+            changed += tx
+                .execute(
+                    "UPDATE acollections SET sort_order = ?1, updated_at = ?2 WHERE id = ?3",
+                    params![item.sort_order, now, item.id],
+                )
+                .map_err(|e| e.to_string())?;
+        }
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(changed)
+    }
+
+    pub fn add_files(collection_id: i64, file_ids: Vec<i64>) -> Result<usize, String> {
+        let unique_file_ids: HashSet<i64> = file_ids.into_iter().filter(|id| *id > 0).collect();
+        if unique_file_ids.is_empty() {
+            return Ok(0);
+        }
+
+        let mut conn = open_conn()?;
+        Self::ensure_exists(&conn, collection_id)?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let now = Self::now_ts();
+        let mut changed = 0;
+        for file_id in unique_file_ids {
+            changed += tx
+                .execute(
+                    "INSERT OR IGNORE INTO acollections_files (collection_id, file_id, added_at)
+                    SELECT ?1, id, ?3 FROM afiles WHERE id = ?2",
+                    params![collection_id, file_id, now],
+                )
+                .map_err(|e| e.to_string())?;
+        }
+        tx.execute(
+            "UPDATE acollections SET updated_at = ?1 WHERE id = ?2",
+            params![now, collection_id],
+        )
+        .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(changed)
+    }
+
+    pub fn remove_files(collection_id: i64, file_ids: Vec<i64>) -> Result<usize, String> {
+        let unique_file_ids: HashSet<i64> = file_ids.into_iter().filter(|id| *id > 0).collect();
+        if unique_file_ids.is_empty() {
+            return Ok(0);
+        }
+
+        let mut conn = open_conn()?;
+        Self::ensure_exists(&conn, collection_id)?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let now = Self::now_ts();
+        let mut changed = 0;
+        for file_id in unique_file_ids {
+            changed += tx
+                .execute(
+                    "DELETE FROM acollections_files WHERE collection_id = ?1 AND file_id = ?2",
+                    params![collection_id, file_id],
+                )
+                .map_err(|e| e.to_string())?;
+        }
+        tx.execute(
+            "UPDATE acollections SET updated_at = ?1 WHERE id = ?2",
+            params![now, collection_id],
+        )
+        .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(changed)
+    }
+
+    pub fn clear(collection_id: i64) -> Result<usize, String> {
+        let conn = open_conn()?;
+        Self::ensure_exists(&conn, collection_id)?;
+        let changed = conn
+            .execute(
+                "DELETE FROM acollections_files WHERE collection_id = ?1",
+                params![collection_id],
+            )
+            .map_err(|e| e.to_string())?;
+        conn.execute(
+            "UPDATE acollections SET updated_at = ?1 WHERE id = ?2",
+            params![Self::now_ts(), collection_id],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(changed)
+    }
+
+    pub fn file_ids(collection_id: i64) -> Result<Vec<i64>, String> {
+        let conn = open_conn()?;
+        Self::ensure_exists(&conn, collection_id)?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT file_id FROM acollections_files
+                WHERE collection_id = ?1
+                ORDER BY added_at DESC, file_id DESC",
+            )
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(params![collection_id], |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+        let mut ids = Vec::new();
+        for id in rows {
+            ids.push(id.map_err(|e| e.to_string())?);
+        }
+        Ok(ids)
+    }
+}
+
 /// Define the timeline marker struct for scrollbar markers
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ATimeLine {
@@ -850,11 +1128,11 @@ pub struct QueryParams {
     pub search_folder: String,
     pub start_date: i64,
     pub end_date: i64,
-    pub calendar_sort: i64,     // 0=taken asc … 5=modified desc (sort / 2 → column)
+    pub calendar_sort: i64, // 0=taken asc … 5=modified desc (sort / 2 → column)
     #[serde(default)]
-    pub folder_sort: i64,       // 0=name asc, 1=name desc, 2=date asc, 3=date desc
+    pub folder_sort: i64, // 0=name asc, 1=name desc, 2=date asc, 3=date desc
     #[serde(default)]
-    pub category_sort: i64,     // 0=name asc, 1=name desc, 2=count asc, 3=count desc
+    pub category_sort: i64, // 0=name asc, 1=name desc, 2=count asc, 3=count desc
     pub make: String,
     pub model: String,
     pub lens_make: String,
@@ -1035,9 +1313,14 @@ impl AFile {
             std::fs::File::open(file_path).ok().and_then(|mut f| {
                 use std::io::Read;
                 let mut buf = vec![0u8; 128 * 1024];
-                f.read(&mut buf).ok().map(|n| { buf.truncate(n); buf })
+                f.read(&mut buf).ok().map(|n| {
+                    buf.truncate(n);
+                    buf
+                })
             })
-        } else { None };
+        } else {
+            None
+        };
         let file_header_deref = file_header.as_deref();
 
         match file_type {
@@ -1068,8 +1351,11 @@ impl AFile {
         };
 
         let format_label = if let Some(hdr) = file_header_deref {
-            if file_type == 3 { Some("RAW".to_string()) }
-            else { t_utils::detect_label_from_header(hdr, file_type) }
+            if file_type == 3 {
+                Some("RAW".to_string())
+            } else {
+                t_utils::detect_label_from_header(hdr, file_type)
+            }
         } else {
             t_utils::detect_file_format_label(file_path, file_type)
         };
@@ -1217,7 +1503,6 @@ impl AFile {
                 || e_lens_model.is_none()
             {
                 if let Some(data) = file_header_deref {
-
                     if e_make.is_none() {
                         e_make = Self::scrape_ascii_from_tag(data, 0x010f);
                     }
@@ -1975,20 +2260,95 @@ impl AFile {
         Ok(files)
     }
 
+    fn append_condition(where_clause: String, condition: &str) -> String {
+        if where_clause.trim().is_empty() {
+            format!(" WHERE {}", condition)
+        } else {
+            format!("{} AND {}", where_clause, condition)
+        }
+    }
+
+    pub fn get_collection_count_and_sum(
+        collection_id: i64,
+        params: &QueryParams,
+    ) -> Result<(i64, i64), String> {
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
+        let collection_join = " INNER JOIN acollections_files cf ON a.id = cf.file_id";
+
+        let sql = if params.person_id > 0 {
+            format!(
+                "SELECT COUNT(*), SUM(size) FROM (SELECT a.id, a.size FROM afiles a
+                LEFT JOIN afolders b ON a.folder_id = b.id
+                LEFT JOIN albums c ON b.album_id = c.id
+                {}{}{} GROUP BY a.id)",
+                collection_join, joins, where_clause
+            )
+        } else {
+            format!(
+                "{}{}{}{}",
+                Self::build_count_query(),
+                collection_join,
+                joins,
+                where_clause
+            )
+        };
+
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&collection_id);
+        Self::query_count_and_sum(&sql, &final_params)
+    }
+
+    pub fn get_collection_files(
+        collection_id: i64,
+        params: &QueryParams,
+        offset: i64,
+        limit: i64,
+    ) -> Result<Vec<Self>, String> {
+        let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
+        let where_clause = Self::append_condition(where_clause, "cf.collection_id = ?");
+
+        let mut query = Self::build_base_query();
+        query.push_str(" INNER JOIN acollections_files cf ON a.id = cf.file_id");
+        query.push_str(&joins);
+        query.push_str(&where_clause);
+
+        if params.person_id > 0 {
+            query.push_str(" GROUP BY a.id");
+        }
+
+        query.push_str(&format!(" ORDER BY {}", Self::build_order_clause(params)));
+        query.push_str(" LIMIT ? OFFSET ?");
+
+        let mut final_params: Vec<&dyn ToSql> = sql_params.iter().map(|p| p.as_ref()).collect();
+        final_params.push(&collection_id);
+        final_params.push(&limit);
+        final_params.push(&offset);
+        Self::query_files(&query, &final_params)
+    }
+
     /// fetch a file info from db by folder_id and file name
     pub fn fetch(folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
         let conn = open_conn()?;
         Self::fetch_with_conn(&conn, folder_id, file_path)
     }
 
-    pub fn fetch_with_conn(conn: &Connection, folder_id: i64, file_path: &str) -> Result<Option<Self>, String> {
+    pub fn fetch_with_conn(
+        conn: &Connection,
+        folder_id: i64,
+        file_path: &str,
+    ) -> Result<Option<Self>, String> {
         let sql = format!(
             "{} WHERE a.folder_id = ?1 AND a.name = ?2",
             Self::build_base_query()
         );
-        conn.query_row(&sql, params![folder_id, t_utils::get_file_name(file_path)], Self::from_row)
-            .optional()
-            .map_err(|e| e.to_string())
+        conn.query_row(
+            &sql,
+            params![folder_id, t_utils::get_file_name(file_path)],
+            Self::from_row,
+        )
+        .optional()
+        .map_err(|e| e.to_string())
     }
 
     fn build_file_type_condition(mask: i64) -> Option<String> {
@@ -2144,7 +2504,8 @@ impl AFile {
         value: &dyn rusqlite::ToSql,
     ) -> Result<usize, String> {
         let query = format!("UPDATE afiles SET {} = ?1 WHERE id = ?2", column);
-        conn.execute(&query, params![value, file_id]).map_err(|e| e.to_string())
+        conn.execute(&query, params![value, file_id])
+            .map_err(|e| e.to_string())
     }
 
     pub fn batch_update_metadata(
@@ -2167,7 +2528,9 @@ impl AFile {
                 .prepare_cached("UPDATE afiles SET is_favorite = ?1 WHERE id = ?2")
                 .map_err(|e| e.to_string())?;
             for file_id in file_ids {
-                updated += stmt.execute(params![value, file_id]).map_err(|e| e.to_string())?;
+                updated += stmt
+                    .execute(params![value, file_id])
+                    .map_err(|e| e.to_string())?;
             }
         }
         if let Some(value) = rating {
@@ -2176,7 +2539,9 @@ impl AFile {
                 .prepare_cached("UPDATE afiles SET rating = ?1 WHERE id = ?2")
                 .map_err(|e| e.to_string())?;
             for file_id in file_ids {
-                updated += stmt.execute(params![clamped, file_id]).map_err(|e| e.to_string())?;
+                updated += stmt
+                    .execute(params![clamped, file_id])
+                    .map_err(|e| e.to_string())?;
             }
         }
         if let Some(value) = rotate_delta {
@@ -2188,7 +2553,9 @@ impl AFile {
                 )
                 .map_err(|e| e.to_string())?;
             for file_id in file_ids {
-                updated += stmt.execute(params![value, file_id]).map_err(|e| e.to_string())?;
+                updated += stmt
+                    .execute(params![value, file_id])
+                    .map_err(|e| e.to_string())?;
             }
         }
         if let Some(value) = comment {
@@ -2196,7 +2563,9 @@ impl AFile {
                 .prepare_cached("UPDATE afiles SET comments = ?1 WHERE id = ?2")
                 .map_err(|e| e.to_string())?;
             for file_id in file_ids {
-                updated += stmt.execute(params![value, file_id]).map_err(|e| e.to_string())?;
+                updated += stmt
+                    .execute(params![value, file_id])
+                    .map_err(|e| e.to_string())?;
             }
         }
 
@@ -2531,11 +2900,23 @@ impl AFile {
         }
     }
 
-    fn group_order_clause_values(group_by: i64, folder_sort: i64, calendar_sort: i64, category_sort: i64) -> String {
+    fn group_order_clause_values(
+        group_by: i64,
+        folder_sort: i64,
+        calendar_sort: i64,
+        category_sort: i64,
+    ) -> String {
         match group_by {
             GROUP_BY_DATE_DAY | GROUP_BY_DATE_MONTH | GROUP_BY_DATE_YEAR => {
-                let dir = if calendar_sort % 2 == 1 { "DESC" } else { "ASC" };
-                format!("CAST(group_id AS INTEGER) {}, label COLLATE NOCASE ASC", dir)
+                let dir = if calendar_sort % 2 == 1 {
+                    "DESC"
+                } else {
+                    "ASC"
+                };
+                format!(
+                    "CAST(group_id AS INTEGER) {}, label COLLATE NOCASE ASC",
+                    dir
+                )
             }
             GROUP_BY_FOLDER_PATH => match folder_sort {
                 1 => "label COLLATE NOCASE DESC".to_string(),
@@ -2555,15 +2936,27 @@ impl AFile {
     }
 
     fn group_order_clause(params: &QueryParams) -> String {
-        Self::group_order_clause_values(params.group_by, params.folder_sort, params.calendar_sort, params.category_sort)
+        Self::group_order_clause_values(
+            params.group_by,
+            params.folder_sort,
+            params.calendar_sort,
+            params.category_sort,
+        )
     }
 
     fn smart_group_order_clause(params: &SmartQueryParams) -> String {
-        Self::group_order_clause_values(params.group_by, params.folder_sort, params.calendar_sort, params.category_sort)
+        Self::group_order_clause_values(
+            params.group_by,
+            params.folder_sort,
+            params.calendar_sort,
+            params.category_sort,
+        )
     }
 
     fn query_groups(params: &QueryParams) -> Result<Vec<QueryGroup>, String> {
-        let Some((group_id_expr, sort_expr)) = Self::group_key_and_sort_expr(params.group_by, params.calendar_sort) else {
+        let Some((group_id_expr, sort_expr)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
             return Ok(Vec::new());
         };
         let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
@@ -2610,7 +3003,9 @@ impl AFile {
         if limit <= 0 {
             return Ok(Vec::new());
         }
-        let Some((group_id_expr, _)) = Self::group_key_and_sort_expr(params.group_by, params.calendar_sort) else {
+        let Some((group_id_expr, _)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
             return Ok(Vec::new());
         };
         let (joins, where_clause, mut sql_params) = Self::build_search_query_parts(params);
@@ -2725,13 +3120,25 @@ impl AFile {
         limit: i64,
     ) -> Result<GroupedQueryResult, String> {
         let groups = Self::query_groups(params)?;
-        Self::build_grouped_query_result(groups, offset, limit, |group, group_file_offset, group_file_limit| {
-            Self::get_query_files_in_group(params, &group.id, group_file_offset, group_file_limit)
-        })
+        Self::build_grouped_query_result(
+            groups,
+            offset,
+            limit,
+            |group, group_file_offset, group_file_limit| {
+                Self::get_query_files_in_group(
+                    params,
+                    &group.id,
+                    group_file_offset,
+                    group_file_limit,
+                )
+            },
+        )
     }
 
     pub fn get_group_file_ids(params: &QueryParams, group_id: &str) -> Result<Vec<i64>, String> {
-        let Some((group_id_expr, _)) = Self::group_key_and_sort_expr(params.group_by, params.calendar_sort) else {
+        let Some((group_id_expr, _)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
             return Ok(Vec::new());
         };
         let (joins, where_clause, mut sql_params) = Self::build_search_query_parts(params);
@@ -2794,11 +3201,7 @@ impl AFile {
     }
 
     fn build_order_clause_values(sort_type: i64, sort_order: i64) -> String {
-        let dir = if sort_order == 1 {
-            "DESC"
-        } else {
-            "ASC"
-        };
+        let dir = if sort_order == 1 { "DESC" } else { "ASC" };
         match sort_type {
             0 => format!("a.taken_date {}, a.id {}", dir, dir),
             1 => format!("a.created_at {}, a.id {}", dir, dir),
@@ -2819,7 +3222,10 @@ impl AFile {
     }
 
     fn smart_rule_string(value: &JsonValue) -> Option<String> {
-        value.as_str().map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
+        value
+            .as_str()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty())
     }
 
     fn smart_rule_i64(value: &JsonValue) -> Option<i64> {
@@ -2841,7 +3247,10 @@ impl AFile {
     }
 
     fn smart_rule_array(value: &JsonValue) -> Vec<JsonValue> {
-        value.as_array().cloned().unwrap_or_else(|| vec![value.clone()])
+        value
+            .as_array()
+            .cloned()
+            .unwrap_or_else(|| vec![value.clone()])
     }
 
     fn smart_rule_string_array(value: &JsonValue) -> Vec<String> {
@@ -2879,7 +3288,8 @@ impl AFile {
         value: &JsonValue,
         sql_params: &mut Vec<Box<dyn ToSql>>,
     ) -> Result<String, String> {
-        let name = Self::smart_rule_string(value).ok_or_else(|| "Name value required".to_string())?;
+        let name =
+            Self::smart_rule_string(value).ok_or_else(|| "Name value required".to_string())?;
         match operator {
             "contains" | "has" => {
                 sql_params.push(Box::new(format!("%{}%", name)));
@@ -2935,7 +3345,9 @@ impl AFile {
             .ok_or_else(|| "Date period value required".to_string())?;
         let today = chrono::Local::now().date_naive();
         let start_date = match period {
-            "this_week" => today - chrono::Duration::days(today.weekday().num_days_from_monday() as i64),
+            "this_week" => {
+                today - chrono::Duration::days(today.weekday().num_days_from_monday() as i64)
+            }
             "this_month" => chrono::NaiveDate::from_ymd_opt(today.year(), today.month(), 1)
                 .ok_or_else(|| "Invalid month date".to_string())?,
             "this_year" => chrono::NaiveDate::from_ymd_opt(today.year(), 1, 1)
@@ -2944,12 +3356,20 @@ impl AFile {
         };
         let end_date = today + chrono::Duration::days(1);
         let start = chrono::Local
-            .from_local_datetime(&start_date.and_hms_opt(0, 0, 0).ok_or_else(|| "Invalid date period start".to_string())?)
+            .from_local_datetime(
+                &start_date
+                    .and_hms_opt(0, 0, 0)
+                    .ok_or_else(|| "Invalid date period start".to_string())?,
+            )
             .earliest()
             .ok_or_else(|| "Invalid local date period start".to_string())?
             .timestamp();
         let end = chrono::Local
-            .from_local_datetime(&end_date.and_hms_opt(0, 0, 0).ok_or_else(|| "Invalid date period end".to_string())?)
+            .from_local_datetime(
+                &end_date
+                    .and_hms_opt(0, 0, 0)
+                    .ok_or_else(|| "Invalid date period end".to_string())?,
+            )
             .earliest()
             .ok_or_else(|| "Invalid local date period end".to_string())?
             .timestamp();
@@ -2976,39 +3396,57 @@ impl AFile {
     ) -> Result<(), String> {
         match operator {
             "eq" | "is" => {
-                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                let Some(v) = Self::smart_rule_i64(value) else {
+                    return Err("Numeric value required".to_string());
+                };
                 conditions.push(format!("{} = ?", column));
                 sql_params.push(Box::new(v));
             }
             "neq" | "is_not" => {
-                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                let Some(v) = Self::smart_rule_i64(value) else {
+                    return Err("Numeric value required".to_string());
+                };
                 conditions.push(format!("{} != ?", column));
                 sql_params.push(Box::new(v));
             }
             "gt" => {
-                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                let Some(v) = Self::smart_rule_i64(value) else {
+                    return Err("Numeric value required".to_string());
+                };
                 conditions.push(format!("{} > ?", column));
                 sql_params.push(Box::new(v));
             }
             "gte" => {
-                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                let Some(v) = Self::smart_rule_i64(value) else {
+                    return Err("Numeric value required".to_string());
+                };
                 conditions.push(format!("{} >= ?", column));
                 sql_params.push(Box::new(v));
             }
             "lt" => {
-                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                let Some(v) = Self::smart_rule_i64(value) else {
+                    return Err("Numeric value required".to_string());
+                };
                 conditions.push(format!("{} < ?", column));
                 sql_params.push(Box::new(v));
             }
             "lte" => {
-                let Some(v) = Self::smart_rule_i64(value) else { return Err("Numeric value required".to_string()); };
+                let Some(v) = Self::smart_rule_i64(value) else {
+                    return Err("Numeric value required".to_string());
+                };
                 conditions.push(format!("{} <= ?", column));
                 sql_params.push(Box::new(v));
             }
             "between" => {
-                let start = value.get("min").or_else(|| value.get("start")).and_then(Self::smart_rule_i64)
+                let start = value
+                    .get("min")
+                    .or_else(|| value.get("start"))
+                    .and_then(Self::smart_rule_i64)
                     .ok_or_else(|| "Range start value required".to_string())?;
-                let end = value.get("max").or_else(|| value.get("end")).and_then(Self::smart_rule_i64)
+                let end = value
+                    .get("max")
+                    .or_else(|| value.get("end"))
+                    .and_then(Self::smart_rule_i64)
                     .ok_or_else(|| "Range end value required".to_string())?;
                 conditions.push(format!("{} BETWEEN ? AND ?", column));
                 sql_params.push(Box::new(start));
@@ -3034,8 +3472,10 @@ impl AFile {
         match field {
             "name" => Self::build_smart_name_condition(operator, value, sql_params),
             "file_type" => {
-                let mask = Self::smart_rule_i64(value).ok_or_else(|| "File type value required".to_string())?;
-                let condition = Self::build_file_type_condition(mask).unwrap_or_else(|| "1 = 1".to_string());
+                let mask = Self::smart_rule_i64(value)
+                    .ok_or_else(|| "File type value required".to_string())?;
+                let condition =
+                    Self::build_file_type_condition(mask).unwrap_or_else(|| "1 = 1".to_string());
                 Ok(if matches!(operator, "is_not" | "neq" | "not_in") {
                     format!("NOT {}", condition)
                 } else {
@@ -3125,7 +3565,13 @@ impl AFile {
             }
             "duration" => {
                 let mut conditions = Vec::new();
-                Self::push_numeric_rule(&mut conditions, sql_params, "a.duration", operator, value)?;
+                Self::push_numeric_rule(
+                    &mut conditions,
+                    sql_params,
+                    "a.duration",
+                    operator,
+                    value,
+                )?;
                 Ok(conditions.pop().unwrap_or_else(|| "1 = 1".to_string()))
             }
             "has_gps" => {
@@ -3146,12 +3592,19 @@ impl AFile {
             }
             "tag" => {
                 if operator == "empty" {
-                    return Ok("NOT EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id)".to_string());
+                    return Ok(
+                        "NOT EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id)"
+                            .to_string(),
+                    );
                 }
                 if operator == "not_empty" {
-                    return Ok("EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id)".to_string());
+                    return Ok(
+                        "EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id)"
+                            .to_string(),
+                    );
                 }
-                let id = Self::smart_rule_i64(value).ok_or_else(|| "Tag id required".to_string())?;
+                let id =
+                    Self::smart_rule_i64(value).ok_or_else(|| "Tag id required".to_string())?;
                 if matches!(operator, "has" | "is" | "eq") {
                     sql_params.push(Box::new(id));
                     Ok("EXISTS (SELECT 1 FROM afile_tags at2 WHERE at2.file_id = a.id AND at2.tag_id = ?)".to_string())
@@ -3169,7 +3622,8 @@ impl AFile {
                 if operator == "not_empty" {
                     return Ok("EXISTS (SELECT 1 FROM faces f2 WHERE f2.file_id = a.id AND f2.person_id IS NOT NULL)".to_string());
                 }
-                let id = Self::smart_rule_i64(value).ok_or_else(|| "Person id required".to_string())?;
+                let id =
+                    Self::smart_rule_i64(value).ok_or_else(|| "Person id required".to_string())?;
                 if matches!(operator, "has" | "is" | "eq") {
                     sql_params.push(Box::new(id));
                     Ok("EXISTS (SELECT 1 FROM faces f2 WHERE f2.file_id = a.id AND f2.person_id = ?)".to_string())
@@ -3181,7 +3635,8 @@ impl AFile {
                 }
             }
             "camera" | "lens" | "location" => {
-                let id = Self::smart_rule_string(value).ok_or_else(|| format!("{} id required", field))?;
+                let id = Self::smart_rule_string(value)
+                    .ok_or_else(|| format!("{} id required", field))?;
                 let parts: Vec<&str> = id.split("||").collect();
                 let mut conditions = Vec::new();
                 match field {
@@ -3235,7 +3690,9 @@ impl AFile {
         }
     }
 
-    fn build_smart_query_parts(params: &SmartQueryParams) -> Result<(String, String, Vec<Box<dyn ToSql>>, bool), String> {
+    fn build_smart_query_parts(
+        params: &SmartQueryParams,
+    ) -> Result<(String, String, Vec<Box<dyn ToSql>>, bool), String> {
         if params.rules.is_empty() {
             return Err("Smart query requires at least one rule".to_string());
         }
@@ -3246,12 +3703,21 @@ impl AFile {
         let mut needs_group = false;
 
         for rule in &params.rules {
-            conditions.push(Self::build_smart_rule_condition(rule, &mut joins, &mut needs_group, &mut sql_params)?);
+            conditions.push(Self::build_smart_rule_condition(
+                rule,
+                &mut joins,
+                &mut needs_group,
+                &mut sql_params,
+            )?);
         }
 
         conditions.push(Self::search_exclusion_condition("b"));
 
-        let joiner = if params.r#match == "any" { " OR " } else { " AND " };
+        let joiner = if params.r#match == "any" {
+            " OR "
+        } else {
+            " AND "
+        };
         let rule_count = params.rules.len();
         let where_clause = if conditions.is_empty() {
             String::new()
@@ -3315,10 +3781,13 @@ impl AFile {
     }
 
     fn query_smart_groups(params: &SmartQueryParams) -> Result<Vec<QueryGroup>, String> {
-        let Some((group_id_expr, sort_expr)) = Self::group_key_and_sort_expr(params.group_by, params.calendar_sort) else {
+        let Some((group_id_expr, sort_expr)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
             return Ok(Vec::new());
         };
-        let (joins, where_clause, sql_params, _needs_group) = Self::build_smart_query_parts(params)?;
+        let (joins, where_clause, sql_params, _needs_group) =
+            Self::build_smart_query_parts(params)?;
         let sql = format!(
             "SELECT group_id, group_id AS label, COUNT(*), COALESCE(SUM(size), 0)
              FROM (
@@ -3362,10 +3831,13 @@ impl AFile {
         if limit <= 0 {
             return Ok(Vec::new());
         }
-        let Some((group_id_expr, _)) = Self::group_key_and_sort_expr(params.group_by, params.calendar_sort) else {
+        let Some((group_id_expr, _)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
             return Ok(Vec::new());
         };
-        let (joins, where_clause, mut sql_params, _needs_group) = Self::build_smart_query_parts(params)?;
+        let (joins, where_clause, mut sql_params, _needs_group) =
+            Self::build_smart_query_parts(params)?;
 
         let mut query = Self::build_base_query();
         query.push_str(&joins);
@@ -3396,16 +3868,32 @@ impl AFile {
         limit: i64,
     ) -> Result<GroupedQueryResult, String> {
         let groups = Self::query_smart_groups(params)?;
-        Self::build_grouped_query_result(groups, offset, limit, |group, group_file_offset, group_file_limit| {
-            Self::get_smart_query_files_in_group(params, &group.id, group_file_offset, group_file_limit)
-        })
+        Self::build_grouped_query_result(
+            groups,
+            offset,
+            limit,
+            |group, group_file_offset, group_file_limit| {
+                Self::get_smart_query_files_in_group(
+                    params,
+                    &group.id,
+                    group_file_offset,
+                    group_file_limit,
+                )
+            },
+        )
     }
 
-    pub fn get_smart_group_file_ids(params: &SmartQueryParams, group_id: &str) -> Result<Vec<i64>, String> {
-        let Some((group_id_expr, _)) = Self::group_key_and_sort_expr(params.group_by, params.calendar_sort) else {
+    pub fn get_smart_group_file_ids(
+        params: &SmartQueryParams,
+        group_id: &str,
+    ) -> Result<Vec<i64>, String> {
+        let Some((group_id_expr, _)) =
+            Self::group_key_and_sort_expr(params.group_by, params.calendar_sort)
+        else {
             return Ok(Vec::new());
         };
-        let (joins, where_clause, mut sql_params, _needs_group) = Self::build_smart_query_parts(params)?;
+        let (joins, where_clause, mut sql_params, _needs_group) =
+            Self::build_smart_query_parts(params)?;
         let mut query = format!(
             "SELECT a.id
              FROM afiles a
@@ -3534,7 +4022,11 @@ impl AFile {
             ),
             _ => unreachable!(),
         };
-        let order_clause = if params.sort_order == 0 { "ASC" } else { "DESC" };
+        let order_clause = if params.sort_order == 0 {
+            "ASC"
+        } else {
+            "DESC"
+        };
         let query = format!(
             "WITH ranked_files AS (
                 SELECT
@@ -4238,7 +4730,10 @@ impl AThumb {
                         "heic" | "heif" | "hif" => {
                             // heic/heif/hif
                             #[cfg(target_os = "macos")]
-                            let res = match t_image::get_heic_thumbnail_with_sips(file_path, thumbnail_size) {
+                            let res = match t_image::get_heic_thumbnail_with_sips(
+                                file_path,
+                                thumbnail_size,
+                            ) {
                                 Ok(Some(data)) => (Some(data), 0),
                                 Ok(None) => (None, 1), // empty thumb
                                 Err(_) => (None, 1),   // error
@@ -4285,7 +4780,12 @@ impl AThumb {
             }
             2 => {
                 // video
-                match t_video::get_video_thumbnail_sync(file_path, thumbnail_size, known_duration, seek_percent) {
+                match t_video::get_video_thumbnail_sync(
+                    file_path,
+                    thumbnail_size,
+                    known_duration,
+                    seek_percent,
+                ) {
                     Ok(Some(data)) => (Some(data), 0),
                     Ok(None) => (None, 1),
                     Err(_) => (None, 1),
@@ -5155,7 +5655,8 @@ impl ATag {
                     })
                 })
                 .map_err(|e| e.to_string())?;
-            rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?
+            rows.collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?
         };
 
         tx.execute("DELETE FROM selected_file_ids", [])
@@ -5182,9 +5683,7 @@ impl ATag {
                 )
                 .map_err(|e| e.to_string())?;
             let mut remove_stmt = tx
-                .prepare_cached(
-                    "DELETE FROM afile_tags WHERE file_id = ?1 AND tag_id = ?2",
-                )
+                .prepare_cached("DELETE FROM afile_tags WHERE file_id = ?1 AND tag_id = ?2")
                 .map_err(|e| e.to_string())?;
             for file_id in file_ids {
                 for tag_id in add_tag_ids {
@@ -5204,11 +5703,11 @@ impl ATag {
         {
             let mut update_stmt = tx
                 .prepare_cached(
-                "UPDATE afiles
-                 SET has_tags = EXISTS (
-                     SELECT 1 FROM afile_tags WHERE afile_tags.file_id = afiles.id
-                 )
-                 WHERE id = ?1",
+                    "UPDATE afiles
+                    SET has_tags = EXISTS (
+                        SELECT 1 FROM afile_tags WHERE afile_tags.file_id = afiles.id
+                    )
+                    WHERE id = ?1",
                 )
                 .map_err(|e| e.to_string())?;
             let mut state_stmt = tx
@@ -5628,7 +6127,12 @@ pub struct Face {
 
 impl Face {
     /// Add a new face using an existing connection (avoids repeated open_conn during batch indexing)
-    pub fn add_with_conn(conn: &Connection, file_id: i64, bbox: &str, embedding: &[f32]) -> Result<i64, String> {
+    pub fn add_with_conn(
+        conn: &Connection,
+        file_id: i64,
+        bbox: &str,
+        embedding: &[f32],
+    ) -> Result<i64, String> {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_secs() as i64)
@@ -5803,7 +6307,11 @@ impl Face {
     }
 
     /// Mark a file as scanned using an existing connection
-    pub fn mark_scanned_with_conn(conn: &Connection, file_id: i64, status: i32) -> Result<(), String> {
+    pub fn mark_scanned_with_conn(
+        conn: &Connection,
+        file_id: i64,
+        status: i32,
+    ) -> Result<(), String> {
         conn.execute(
             "UPDATE afiles SET has_faces = ?1 WHERE id = ?2",
             params![status, file_id],
@@ -6176,18 +6684,24 @@ impl Drop for PooledConn {
 
 impl Deref for PooledConn {
     type Target = Connection;
-    fn deref(&self) -> &Connection { &self.0.as_ref().unwrap().1 }
+    fn deref(&self) -> &Connection {
+        &self.0.as_ref().unwrap().1
+    }
 }
 
 impl DerefMut for PooledConn {
-    fn deref_mut(&mut self) -> &mut Connection { &mut self.0.as_mut().unwrap().1 }
+    fn deref_mut(&mut self) -> &mut Connection {
+        &mut self.0.as_mut().unwrap().1
+    }
 }
 
 fn setup_conn(conn: &Connection) -> Result<(), String> {
     conn.busy_timeout(Duration::from_secs(5))
         .map_err(|e| format!("Failed to set SQLite busy timeout: {}", e))?;
-    conn.query_row("PRAGMA journal_mode = WAL", [], |row| row.get::<_, String>(0))
-        .map_err(|e| format!("Failed to enable WAL mode: {}", e))?;
+    conn.query_row("PRAGMA journal_mode = WAL", [], |row| {
+        row.get::<_, String>(0)
+    })
+    .map_err(|e| format!("Failed to enable WAL mode: {}", e))?;
     conn.execute("PRAGMA synchronous = NORMAL", [])
         .map_err(|e| format!("Failed to set SQLite synchronous mode: {}", e))?;
     conn.execute("PRAGMA foreign_keys = ON", [])
@@ -6525,6 +7039,48 @@ fn create_db_internal() -> Result<(), String> {
     .map_err(|e| e.to_string())?;
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_afile_tags_tag_id ON afile_tags(tag_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // collections table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS acollections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_acollections_sort ON acollections(sort_order, id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // collection files table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS acollections_files (
+            collection_id INTEGER NOT NULL,
+            file_id INTEGER NOT NULL,
+            added_at INTEGER NOT NULL,
+            PRIMARY KEY (collection_id, file_id),
+            FOREIGN KEY (collection_id) REFERENCES acollections(id) ON DELETE CASCADE,
+            FOREIGN KEY (file_id) REFERENCES afiles(id) ON DELETE CASCADE
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_acollections_files_file ON acollections_files(file_id)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_acollections_files_collection_added ON acollections_files(collection_id, added_at DESC, file_id)",
         [],
     )
     .map_err(|e| e.to_string())?;

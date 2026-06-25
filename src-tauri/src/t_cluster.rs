@@ -66,7 +66,8 @@ fn insert_top_k(candidates: &mut Vec<(usize, f32)>, edge: (usize, f32), max_edge
             if edge.1 > min_weight {
                 candidates.pop();
                 candidates.push(edge);
-                candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+                candidates
+                    .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
             }
         }
     }

@@ -621,7 +621,8 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTime
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, importFile, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
-         dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded } from '@/common/api';
+         dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded,
+         listCollections, createCollection, addFilesToCollection, getCollectionCountAndSum, getCollectionFiles, getCollectionFileIds } from '@/common/api';
 import { config, libConfig } from '@/common/config';
 import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
@@ -689,6 +690,7 @@ import {
   IconCamera,
   IconHeartFilled,
   IconHistory,
+  IconBookmarks,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -917,6 +919,7 @@ function createViewBackup() {
     currentQueryParams: { ...currentQueryParams.value },
     currentQuerySource: currentQuerySource.value,
     currentSmartQueryParams: currentSmartQueryParams.value ? { ...currentSmartQueryParams.value } : null,
+    currentCollectionId: currentCollectionId.value,
     thumbCount: thumbCount.value,
     showProgressBar: showProgressBar.value,
     scrollTop: gridViewRef.value ? gridViewRef.value.getScrollTop() : 0,
@@ -924,6 +927,7 @@ function createViewBackup() {
 }
 
 function getAutoGroupByForCurrentView() {
+  if (libConfig.activePane === 'collection') return GROUP.NONE;
   switch (Number(config.main.sidebarIndex)) {
     case SIDEBAR.LIBRARY:
       if (libConfig.library.item === LIB_ITEM.TODAY) return GROUP.YEAR;
@@ -1889,7 +1893,7 @@ function updateDragGhostAction(event: Pick<MouseEvent, 'altKey' | 'ctrlKey'>) {
   if (!dragGhostAction) return;
   const copy = isCopyDragModifier(event);
   const showLabel = !!pointerDropTarget;
-  const isCollectionDropTarget = !!pointerDropTarget?.dataset.collectionDropId;
+  const isCollectionDropTarget = !!pointerDropTarget?.dataset.collectionDropId || pointerDropTarget?.dataset.collectionDropNew === 'true';
   const icon = dragGhostAction.firstElementChild as HTMLElement | null;
   const label = dragGhostAction.lastElementChild as HTMLElement | null;
   if (icon) {
@@ -2084,7 +2088,7 @@ function updateContentDragPosition(event: PointerEvent) {
     config.collectionTray.expanded = true;
   }
   const target = elementAtPointer
-    ?.closest('[data-file-drop-path][data-file-drop-album-id], [data-collection-drop-id]') as HTMLElement | null;
+    ?.closest('[data-file-drop-path][data-file-drop-album-id], [data-collection-drop-id], [data-collection-drop-new]') as HTMLElement | null;
   setPointerDropTarget(target);
   updateDragGhostAction(event);
 }
@@ -2153,12 +2157,23 @@ async function clearContentInternalDrag(event?: PointerEvent) {
     }
 
     const collectionId = target.dataset.collectionDropId;
-    if (collectionId) {
+    const collectionDropNew = target.dataset.collectionDropNew === 'true';
+    if (collectionId || collectionDropNew) {
+      let targetCollectionId = Number(collectionId || 0);
+      if (collectionDropNew) {
+        const collection = await createCollection(t('collection.default_name', { index: 1 }));
+        targetCollectionId = Number(collection?.id || 0);
+      }
+      if (targetCollectionId <= 0) return;
+      const addedCount = await addFilesToCollection(targetCollectionId, files.map((file: any) => Number(file.id)).filter((id: number) => id > 0));
       await tauriEmit('collection-files-dropped', {
-        collectionId,
-        count: files.length,
+        collectionId: targetCollectionId,
+        count: Number(addedCount || 0),
         fileIds: files.map((file: any) => file.id),
       });
+      if (libConfig.activePane === 'collection' && Number(libConfig.collection.selectedId || 0) === targetCollectionId) {
+        await updateContent(true);
+      }
       return;
     }
 
@@ -2234,8 +2249,9 @@ const currentQueryParams = ref({
   tagId: 0,
   personId: 0,
 });
-const currentQuerySource = ref<'query' | 'smart'>('query');
+const currentQuerySource = ref<'query' | 'smart' | 'collection'>('query');
 const currentSmartQueryParams = ref<any | null>(null);
+const currentCollectionId = ref<number | null>(null);
 
 const scanStreamRequestInFlight = ref(false);
 const scanStreamPullPending = ref(false);
@@ -2314,6 +2330,7 @@ const dedupScanKey = computed(() => {
 });
 
 const currentTitleIcon = computed(() => {
+  if (libConfig.activePane === 'collection') return IconBookmarks;
   switch (tempViewMode.value) {
     case 'none':
       if (contentTitle.value) {
@@ -4283,6 +4300,8 @@ watch(
 watch(
   () => [
     config.main.sidebarIndex,      // toolbar index
+    libConfig.activePane,          // main content or collection tray
+    libConfig.collection.selectedId, // collection
     (libConfig.library as any).item, // library
     libConfig.library.smartId,
     libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected, // album
@@ -4384,6 +4403,9 @@ function cycleGridStyle() {
 const pendingRequests = new Set();
 
 const getCurrentQueryCountAndSum = () => {
+  if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+    return getCollectionCountAndSum(currentCollectionId.value, currentQueryParams.value);
+  }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
     return getSmartQueryCountAndSum(currentSmartQueryParams.value);
   }
@@ -4391,6 +4413,9 @@ const getCurrentQueryCountAndSum = () => {
 };
 
 const getCurrentQueryTimeLine = () => {
+  if (currentQuerySource.value === 'collection') {
+    return Promise.resolve([]);
+  }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
     return getSmartQueryTimeLine(currentSmartQueryParams.value);
   }
@@ -4398,6 +4423,9 @@ const getCurrentQueryTimeLine = () => {
 };
 
 const getCurrentQueryFiles = (offset: number, limit: number) => {
+  if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+    return getCollectionFiles(currentCollectionId.value, currentQueryParams.value, offset, limit);
+  }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
     return getSmartQueryFiles(currentSmartQueryParams.value, offset, limit);
   }
@@ -4412,13 +4440,20 @@ const getCurrentGroupedQueryRows = (offset: number, limit: number) => {
 };
 
 const getCurrentQueryFileIds = () => {
+  if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+    return getCollectionFileIds(currentCollectionId.value);
+  }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
     return getSmartQueryFileIds(getGroupingQueryParams());
   }
   return getQueryFileIds(getGroupingQueryParams());
 };
 
-const getCurrentQueryFilePosition = (fileId: number) => {
+const getCurrentQueryFilePosition = async (fileId: number) => {
+  if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+    const ids = await getCollectionFileIds(currentCollectionId.value);
+    return Array.isArray(ids) ? ids.findIndex((id: number) => Number(id) === Number(fileId)) : null;
+  }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
     return getSmartQueryFilePosition(currentSmartQueryParams.value, fileId);
   }
@@ -5000,6 +5035,7 @@ async function getFileList(
 ) { 
   currentQuerySource.value = 'query';
   currentSmartQueryParams.value = null;
+  currentCollectionId.value = null;
 
   // Update current query params with all fields
   currentQueryParams.value = {
@@ -5093,6 +5129,86 @@ async function getFileList(
   }
 }
 
+async function getCollectionFileList(collectionId: number, requestId: number) {
+  currentQuerySource.value = 'collection';
+  currentCollectionId.value = collectionId;
+  currentSmartQueryParams.value = null;
+  currentQueryParams.value = {
+    ...currentQueryParams.value,
+    searchFileType: config.search.fileType,
+    sortType: config.search.sortType,
+    sortOrder: config.search.sortOrder,
+    searchFileName: '',
+    searchAllSubfolders: '',
+    searchFolder: '',
+    startDate: 0,
+    endDate: 0,
+    calendarSort: config.settings.calendarSort,
+    folderSort: config.settings.folderSort,
+    categorySort: config.settings.categorySort,
+    make: '',
+    model: '',
+    lensMake: '',
+    lensModel: '',
+    locationAdmin1: '',
+    locationName: '',
+    isFavorite: false,
+    rating: -1,
+    tagId: 0,
+    personId: 0,
+  };
+
+  isLoading.value = true;
+
+  try {
+    const result = await getCurrentQueryCountAndSum();
+    if (requestId !== currentContentRequestId) return;
+
+    if (result) {
+      clearSelectionForFileListUpdate();
+      resetGroupingState();
+      totalFileCount.value = result[0];
+      totalFileSize.value = result[1];
+      timelineData.value = [];
+
+      fileList.value = Array.from({ length: totalFileCount.value }).map((_, i) => ({
+        id: 'ph-' + i,
+        isPlaceholder: true,
+        name: '',
+        size: 0,
+      }));
+      markDedupSourceUpdated(requestId);
+      restoreInitialSelectionIfNeeded();
+      restoreScrollAfterRefresh();
+      if (totalFileCount.value === 0) {
+        openImageViewer(0, false, true);
+      }
+
+      lastVisibleRange = { start: -1, end: -1 };
+      visibleRangeSeqId++;
+    } else {
+      clearSelectionForFileListUpdate();
+      clearContentRows();
+      markDedupSourceUpdated(requestId);
+      openImageViewer(0, false, true);
+    }
+  } catch (err) {
+    console.error('getCollectionFileList error:', err);
+    if (requestId === currentContentRequestId) {
+      clearSelectionForFileListUpdate();
+      clearContentRows();
+      markDedupSourceUpdated(requestId);
+      openImageViewer(0, false, true);
+    }
+  } finally {
+    if (requestId === currentContentRequestId) {
+      isLoading.value = false;
+      hasLoadedInitialResult.value = true;
+      contentReady.value = true;
+    }
+  }
+}
+
 async function getSmartFileList(smartAlbum: any, requestId: number) {
   const query = smartAlbum?.query;
   const rules = Array.isArray(query?.rules) ? query.rules : [];
@@ -5102,6 +5218,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
   }
 
   currentQuerySource.value = 'smart';
+  currentCollectionId.value = null;
   currentSmartQueryParams.value = {
     version: Number(query.version || 1),
     match: query.match === 'any' ? 'any' : 'all',
@@ -5183,6 +5300,7 @@ async function getImageSearchFileList(
     threshold: thresholdOverride ?? config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
     limit: config.settings.imageSearch.limit,
   };
+  currentCollectionId.value = null;
 
   // set loading state
   isLoading.value = true;
@@ -5302,6 +5420,30 @@ async function updateContent(force = false) {
   clearSelectionForFileListUpdate();
   clearContentRows();
   isLoading.value = true;
+
+  if (libConfig.activePane === 'collection') {
+    const collectionId = Number(libConfig.collection.selectedId || 0);
+    if (collectionId <= 0) {
+      contentTitle.value = localeMsg.value.collection.title;
+      showEmptyContent(requestId);
+      return;
+    }
+
+    const collections = await listCollections();
+    const collection = Array.isArray(collections)
+      ? collections.find((item: any) => Number(item.id) === collectionId)
+      : null;
+    if (!collection) {
+      libConfig.collection.selectedId = null;
+      contentTitle.value = localeMsg.value.collection.title;
+      showEmptyContent(requestId);
+      return;
+    }
+
+    contentTitle.value = collection.name || localeMsg.value.collection.title;
+    getCollectionFileList(collectionId, requestId);
+    return;
+  }
 
   if(newIndex === SIDEBAR.LIBRARY) {
     switch ((libConfig.library as any).item) {
@@ -5753,6 +5895,7 @@ function exitTempViewMode() {
   currentQueryParams.value = state.currentQueryParams;
   currentQuerySource.value = state.currentQuerySource || 'query';
   currentSmartQueryParams.value = state.currentSmartQueryParams || null;
+  currentCollectionId.value = state.currentCollectionId || null;
   thumbCount.value = state.thumbCount;
   showProgressBar.value = state.showProgressBar;
 
@@ -7062,6 +7205,9 @@ function normalizeFileTypeMask(mask: number): number {
 }
 
 const emptyFilesMessage = computed(() => {
+  if (currentQuerySource.value === 'collection') {
+    return `${localeMsg.value.collection.empty_content}\n${localeMsg.value.collection.drop_here}`;
+  }
   const notFound = localeMsg.value.tooltip.not_found;
   const mask = normalizeFileTypeMask(Number(config.search.fileType || 0));
   const messageKey = {
