@@ -398,7 +398,7 @@
             'absolute right-0 z-40 pr-1 transition-transform duration-200 ease-in-out',
             rightPanelVisualVisible ? 'translate-x-0' : 'translate-x-full pointer-events-none',
           ]"
-          :style="{ width: activeRightPanelWidth + 'px', top: '48px', bottom: config.settings.showStatusBar ? '32px' : '4px' }"
+          :style="{ width: activeRightPanelWidth + 'px', top: '3rem', bottom: config.settings.showStatusBar ? '2rem' : '0.25rem' }"
         >
           <DedupPane
             v-if="!selectMode && config.rightPanel.mode === 'dedup'"

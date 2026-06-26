@@ -59,7 +59,7 @@
         <div
           v-if="isHovered && hasTooltip"
           ref="tooltipRef"
-          class="fixed z-1000 px-2 py-1 text-xs leading-tight max-w-xs whitespace-normal text-center rounded-box bg-neutral text-neutral-content shadow-lg pointer-events-none"
+          class="fixed z-1000 px-2 py-1 text-xs leading-tight max-w-xs whitespace-normal text-center rounded-box bg-base-100 shadow-lg pointer-events-none"
           :style="tooltipStyle"
         >
           {{ tooltipText }}
@@ -126,7 +126,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['click']);
-const TOOLTIP_GAP = 2;
+const TOOLTIP_GAP = 4;
 const TOOLTIP_PADDING = 8;
 const TOOLTIP_AUTO_HIDE_MS = 3000;
 

@@ -25,14 +25,14 @@
           'relative flex my-1 ml-1 z-10 select-none outline-none',
           !leftPanelLayoutExpanded && isMac ? 'mt-12 mb-8': '',
         ]"
-        :style="{ width: leftPanelLayoutExpanded ? config.leftPanel.width + 'px' : '64px' }"
+        :style="{ width: leftPanelLayoutExpanded ? leftPanelWidth : '4rem' }"
         data-tauri-drag-region
         @focus="uiStore.setActivePane('left-sidebar')"
       >
           <div
             class="absolute inset-y-0 left-0 bg-base-200 rounded-box"
             :class="isDraggingSplitter ? '' : 'transition-[width] duration-200 ease-in-out'"
-            :style="{ width: leftPanelVisualExpanded ? config.leftPanel.width + 'px' : '64px' }"
+            :style="{ width: leftPanelVisualExpanded ? leftPanelWidth : '4rem' }"
           ></div>
 
           <!-- side bar -->
@@ -67,49 +67,44 @@
             />
           </div>
 
+          <!-- library title -->
+          <div
+            v-if="leftPanelMounted"
+            class="absolute top-0 left-[72px] right-0 z-10 h-10 flex items-center"
+            data-tauri-drag-region
+          >
+            <ContextMenu :menuItems="libraryMenuItems">
+              <template #trigger="{ toggle }">
+                <button
+                  class="px-2 py-1 flex items-center gap-1 rounded-box text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer transition-colors"
+                  @click="toggle"
+                >
+                  <span class="overflow-hidden whitespace-pre text-ellipsis max-w-32">{{ currentLibrary?.name || 'Library' }}</span>
+                  <IconArrowDown class="w-3 h-3 shrink-0 opacity-50" />
+                </button>
+              </template>
+            </ContextMenu>
+            <div class="flex-1"></div>
+            <button
+              v-if="updateAvailable || isInstallingUpdate || isUpdateReadyToRestart || isReleaseNoteVisible"
+              class="badge badge-sm border-0 px-2 py-2 font-medium transition-colors shrink-0"
+              :class="isUpdateActionEnabled ? 'badge-primary cursor-pointer' : 'badge-neutral/60 cursor-default'"
+              :disabled="isInstallingUpdate"
+              :title="updateButtonTooltip"
+              @click="handleUpdateAction"
+            >
+              <span v-if="isInstallingUpdate" class="loading loading-spinner loading-xs"></span>
+              <span>{{ updateButtonText }}</span>
+            </button>
+          </div>
+
           <!-- panel-->
           <div
             v-if="leftPanelMounted"
-            class="absolute inset-y-0 left-16 pr-0.5 flex flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-in-out"
+            class="absolute inset-y-0 left-16 pt-10 pr-0.5 flex flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-in-out"
             :class="leftPanelVisualExpanded ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'"
-            :style="{ width: Math.max(0, config.leftPanel.width - 64) + 'px' }"
+            :style="{ width: `calc(${Number(config.leftPanel.width || 260) / 16}rem - 4rem)` }"
           >
-            <!-- library title -->
-            <div 
-              class="mb-2 h-10 flex items-center justify-between whitespace-nowrap shrink-0"
-              :class="config.settings.scale < 1 ? 'p-3' : 'p-1'"
-              data-tauri-drag-region
-            >
-              
-              <!-- Library dropdown selector -->
-              <ContextMenu
-                :menuItems="libraryMenuItems"
-              >
-                <template #trigger="{ toggle }">
-                  <button 
-                    class="px-2 py-1 flex items-center gap-1 rounded-box text-base-content/70 hover:bg-base-100/30 hover:text-base-content cursor-pointer transition-colors"
-                    @click="toggle"
-                  >
-                    <!-- <IconStack class="w-5 h-5 shrink-0" /> -->
-                    <span class="overflow-hidden whitespace-pre text-ellipsis max-w-32">{{ currentLibrary?.name || 'Library' }}</span>
-                    <IconArrowDown class="w-3 h-3 shrink-0 opacity-50" />
-                  </button>
-                </template>
-              </ContextMenu>
-
-              <button
-                v-if="updateAvailable || isInstallingUpdate || isUpdateReadyToRestart || isReleaseNoteVisible"
-                class="badge badge-sm border-0 px-2 py-2 font-medium transition-colors"
-                :class="isUpdateActionEnabled ? 'badge-primary cursor-pointer' : 'badge-neutral/60 cursor-default'"
-                :disabled="isInstallingUpdate"
-                :title="updateButtonTooltip"
-                @click="handleUpdateAction"
-              >
-                <span v-if="isInstallingUpdate" class="loading loading-spinner loading-xs"></span>
-                <span>{{ updateButtonText }}</span>
-              </button>
-
-            </div>
 
             <!-- Component panel (flex-1 to fill remaining space) -->
             <div
@@ -373,6 +368,10 @@ const buttons = computed(() =>  [
 
 const activeSidebarButton = computed(() =>
   buttons.value.find(item => item.index === config.main.sidebarIndex) || buttons.value[SIDEBAR.LIBRARY]
+);
+
+const leftPanelWidth = computed(() =>
+  `${(Number(config.leftPanel.width || 260) / 16).toFixed(2)}rem`
 );
 
 const visibleButtons = computed(() =>
@@ -644,7 +643,8 @@ function handleMouseMove(event: MouseEvent) {
   if (isDraggingSplitter.value) {
     const pointerX = event.clientX;
     const maxLeftPaneWidth = window.innerWidth / 2;
-    config.leftPanel.width = Math.max(160, Math.min(pointerX - 6, maxLeftPaneWidth)); // -2: border width(2px)
+    const scale = Number(config.settings.scale || 1);
+    config.leftPanel.width = Math.round(Math.max(160, Math.min(pointerX, maxLeftPaneWidth)) / scale) - 5;
   }
 }
 

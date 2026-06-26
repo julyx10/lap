@@ -222,7 +222,7 @@ const scroller = ref<any>(null);
 const columnCount = ref(4);
 const containerWidth = ref(0);
 const localScrollTop = ref(0);
-const groupHeaderHeight = 48;
+const groupHeaderHeight = computed(() => 48 * Number(config.settings.scale || 1));
 let pendingPointerDrag: {
   pointerId: number;
   index: number;
@@ -347,8 +347,8 @@ const groupedLayoutGeometryResult = computed(() => {
           y += itemHeight.value;
           col = 0;
         }
-        boxes[rowIndex] = { x: 0, y, width: containerWidth.value, height: groupHeaderHeight };
-        y += groupHeaderHeight;
+        boxes[rowIndex] = { x: 0, y, width: containerWidth.value, height: groupHeaderHeight.value };
+        y += groupHeaderHeight.value;
         return;
       }
 
@@ -392,8 +392,8 @@ const groupedLayoutGeometryResult = computed(() => {
   renderItems.value.forEach((item, rowIndex) => {
     if (isGroupRow(item)) {
       flushGroup();
-      boxes[rowIndex] = { x: 0, y, width: containerWidth.value, height: groupHeaderHeight };
-      y += groupHeaderHeight;
+      boxes[rowIndex] = { x: 0, y, width: containerWidth.value, height: groupHeaderHeight.value };
+      y += groupHeaderHeight.value;
       return;
     }
     groupFiles.push(getFileItem(item));
@@ -738,7 +738,7 @@ function scrollToItem(index: number, center = false) {
     const clientHeight = el.clientHeight;
     
     // Account for top and bottom padding
-    const topPadding = 48; // pt-12 = 48px
+    const topPadding = 48 * Number(config.settings.scale || 1);
     const bottomPadding = config.settings.showStatusBar ? 32 : 4; // pb-8 = 32px, pb-1 = 4px
 
     if (center) {
