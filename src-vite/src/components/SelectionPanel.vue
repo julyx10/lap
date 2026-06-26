@@ -150,12 +150,12 @@
             {{ $t('menu.file.copy_to_folder') }}
           </PanelActionButton>
           <PanelActionButton
-            :icon="IconTrash"
+            :icon="querySource === 'collection' ? IconBookmarkOff : IconTrash"
             :disabled="selectedCount === 0"
-            danger
-            @click="$emit('trash')"
+            :danger="querySource !== 'collection'"
+            @click="$emit(querySource === 'collection' ? 'removeFromCollection' : 'trash')"
           >
-            {{ $t('menu.file.move_to_trash') }}
+            {{ querySource === 'collection' ? $t('menu.file.remove_from_collection') : $t('menu.file.move_to_trash') }}
           </PanelActionButton>
         </div>
 
@@ -177,6 +177,7 @@ import {
   IconRotate,
   IconTag,
   IconTrash,
+  IconBookmarkOff,
 } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import FavoriteRatingControl from '@/components/FavoriteRatingControl.vue';
@@ -199,6 +200,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  querySource: {
+    type: String,
+    default: '',
+  },
 });
 
 defineEmits([
@@ -216,6 +221,7 @@ defineEmits([
   'tagAll',
   'commentAll',
   'rotateAll',
+  'removeFromCollection',
   'unselectFile',
 ]);
 

@@ -192,6 +192,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  querySource: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits([
@@ -402,12 +406,15 @@ const isContentActive = computed(() =>
 const { locale, messages, t } = useI18n();
 const localeMsg = computed(() => messages.value[locale.value] as any);
 
+const isCollectionView = computed(() => props.querySource === 'collection');
+
 const menuItems = useFileMenuItems(
   toRef(props, 'file'),
   localeMsg,
   isMac,
   t,
-  (action) => emit('action', action)
+  (action) => emit('action', action),
+  { isCollectionView },
 );
 
 const getGridLabelText = (file: any, option: number) => {

@@ -183,6 +183,7 @@ export { default as IconGithub } from '@/assets/icons/github.svg';
 export { default as IconBolt } from '@/assets/icons/bolt.svg';
 export { default as IconBookmark } from '@/assets/icons/bookmark.svg';
 export { default as IconBookmarks } from '@/assets/icons/bookmarks.svg';
+export { default as IconBookmarkOff } from '@/assets/icons/bookmark-off.svg';
 
 // ======================
 // MEDIA CONTROL ICONS

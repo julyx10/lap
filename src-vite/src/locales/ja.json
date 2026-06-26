@@ -34,7 +34,8 @@
     "clear": "クリア",
     "clear_confirm_title": "コレクションをクリア",
     "clear_confirm_message": "\"{name}\" からすべてのファイルを削除しますか？ファイル自体は削除されません。",
-    "clear_confirm_ok": "クリア"
+    "clear_confirm_ok": "クリア",
+    "removed_toast": "{count} 件のファイルをコレクションから削除しました"
   },
   "library": {
     "all_files": "すべてのファイル",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "エクスプローラーで表示...",
       "refresh_file_info": "ファイル情報を更新",
       "set_album_cover": "アルバムの表紙に設定",
-      "show_info": "情報を表示"
+      "show_info": "情報を表示",
+      "remove_from_collection": "コレクションから削除"
     },
     "calendar": {
       "monthly": "月別",

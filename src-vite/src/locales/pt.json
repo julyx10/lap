@@ -34,7 +34,8 @@
     "clear": "Limpar",
     "clear_confirm_title": "Limpar coleção",
     "clear_confirm_message": "Remover todos os arquivos de \"{name}\"? Os arquivos em si não serão excluídos.",
-    "clear_confirm_ok": "Limpar"
+    "clear_confirm_ok": "Limpar",
+    "removed_toast": "{count} arquivo(s) removido(s) da coleção"
   },
   "library": {
     "all_files": "Todos os arquivos",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "Mostrar no Explorer...",
       "refresh_file_info": "Atualizar informações do arquivo",
       "set_album_cover": "Definir como capa",
-      "show_info": "Mostrar info"
+      "show_info": "Mostrar info",
+      "remove_from_collection": "Remover da coleção"
     },
     "calendar": {
       "monthly": "Mensal",

@@ -34,7 +34,8 @@
     "clear": "Leeren",
     "clear_confirm_title": "Sammlung leeren",
     "clear_confirm_message": "Alle Dateien aus \"{name}\" entfernen? Die Dateien selbst werden nicht gelöscht.",
-    "clear_confirm_ok": "Leeren"
+    "clear_confirm_ok": "Leeren",
+    "removed_toast": "{count} Datei(en) aus Sammlung entfernt"
   },
   "library": {
     "all_files": "Alle Dateien",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "Im Explorer anzeigen...",
       "refresh_file_info": "Dateiinformationen aktualisieren",
       "set_album_cover": "Als Albumcover setzen",
-      "show_info": "Info anzeigen"
+      "show_info": "Info anzeigen",
+      "remove_from_collection": "Aus Sammlung entfernen"
     },
     "calendar": {
       "monthly": "Monatlich",

@@ -34,7 +34,8 @@
     "clear": "Clear",
     "clear_confirm_title": "Clear collection",
     "clear_confirm_message": "Remove all files from \"{name}\"? Files themselves will not be deleted.",
-    "clear_confirm_ok": "Clear"
+    "clear_confirm_ok": "Clear",
+    "removed_toast": "{count} file(s) removed from collection"
   },
   "library": {
     "all_files": "All files",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "Reveal in File Explorer...",
       "refresh_file_info": "Refresh file info",
       "set_album_cover": "Set as album cover",
-      "show_info": "Show info"
+      "show_info": "Show info",
+      "remove_from_collection": "Remove from Collection"
     },
     "calendar": {
       "monthly": "Monthly",

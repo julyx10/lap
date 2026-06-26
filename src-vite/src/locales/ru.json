@@ -34,7 +34,8 @@
     "clear": "Очистить",
     "clear_confirm_title": "Очистить коллекцию",
     "clear_confirm_message": "Удалить все файлы из \"{name}\"? Сами файлы не будут удалены.",
-    "clear_confirm_ok": "Очистить"
+    "clear_confirm_ok": "Очистить",
+    "removed_toast": "{count} файл(ов) удалено из коллекции"
   },
   "library": {
     "all_files": "Все файлы",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "Показать в Проводнике...",
       "refresh_file_info": "Обновить сведения о файле",
       "set_album_cover": "Сделать обложкой",
-      "show_info": "Показать инфо"
+      "show_info": "Показать инфо",
+      "remove_from_collection": "Удалить из коллекции"
     },
     "calendar": {
       "monthly": "Месяц",

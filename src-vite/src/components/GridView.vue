@@ -82,6 +82,7 @@
           :is-selected="selectMode ? Boolean(getFileItem(item).isSelected) : getFileIndex(item, index) === selectedItemIndex"
           :is-active="getFileIndex(item, index) === selectedItemIndex"
           :select-mode="selectMode"
+          :query-source="querySource"
           @clicked="(modifiers) => $emit('item-clicked', getFileIndex(item, index), modifiers)"
           @dblclicked="(modifiers) => $emit('item-dblclicked', getFileIndex(item, index), modifiers)"
           @select-toggled="(shiftKey) => $emit('item-select-toggled', getFileIndex(item, index), shiftKey)"
@@ -179,6 +180,7 @@ const props = withDefaults(defineProps<{
   groupSelectedCounts?: Record<string, number>;
   groupSelectionLoading?: Record<string, boolean>;
   folderGroupRoots?: Array<{ path: string; name?: string }>;
+  querySource?: string;
 }>(), {
   selectedItemIndex: -1,
   timelineData: () => [],
@@ -193,6 +195,7 @@ const props = withDefaults(defineProps<{
   groupSelectedCounts: () => ({}),
   groupSelectionLoading: () => ({}),
   folderGroupRoots: () => [],
+  querySource: '',
 });
 
 const emit = defineEmits([

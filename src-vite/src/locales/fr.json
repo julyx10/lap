@@ -34,7 +34,8 @@
     "clear": "Vider",
     "clear_confirm_title": "Vider la collection",
     "clear_confirm_message": "Supprimer tous les fichiers de \"{name}\" ? Les fichiers eux-mêmes ne seront pas supprimés.",
-    "clear_confirm_ok": "Vider"
+    "clear_confirm_ok": "Vider",
+    "removed_toast": "{count} fichier(s) retiré(s) de la collection"
   },
   "library": {
     "all_files": "Tous les fichiers",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "Afficher dans l'Explorateur...",
       "refresh_file_info": "Actualiser les informations du fichier",
       "set_album_cover": "Définir comme couverture",
-      "show_info": "Afficher info"
+      "show_info": "Afficher info",
+      "remove_from_collection": "Retirer de la collection"
     },
     "calendar": {
       "monthly": "Mensuel",

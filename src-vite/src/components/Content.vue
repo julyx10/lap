@@ -207,6 +207,7 @@
                 :group-selected-counts="groupSelectedCounts"
                 :group-selection-loading="groupSelectionLoading"
                 :folder-group-roots="folderGroupRoots"
+                :query-source="currentQuerySource"
                 @item-clicked="handleItemClicked"
                 @item-dblclicked="handleItemDblClicked"
                 @item-select-toggled="handleItemSelectToggled"
@@ -418,6 +419,7 @@
             :selected-files="selectedFiles"
             :selected-count="selectedCount"
             :selected-size="selectedSize"
+            :query-source="currentQuerySource"
             @close="handleSelectMode(false)"
             @select-all="selectAllInCurrentList"
             @select-none="selectNoneInCurrentList"
@@ -425,6 +427,7 @@
             @move-within-library="showMoveTo = true"
             @move-to-folder="onMoveToFolder"
             @copy-to-folder="onCopyToFolder"
+            @remove-from-collection="removeSelectedFromCollection"
             @trash="openTrashMsgbox()"
             @favorite-all="selectModeSetFavorites(true)"
             @unfavorite-all="selectModeSetFavorites(false)"
@@ -622,7 +625,7 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTime
          updateFileInfo, importFile, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
          openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded,
-         listCollections, createCollection, addFilesToCollection, getCollectionCountAndSum, getCollectionFiles, getCollectionFileIds } from '@/common/api';
+         listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getCollectionCountAndSum, getCollectionFiles, getCollectionFileIds } from '@/common/api';
 import { config, libConfig } from '@/common/config';
 import { getShortcutLabel, matchesShortcut, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { getSmartTagById, SMART_TAG_SEARCH_THRESHOLD } from '@/common/smartTags';
@@ -1555,6 +1558,37 @@ const checkUnsavedChanges = (action: () => void) => {
     action();
   }
 };
+
+async function removeFileFromCurrentCollection(index: number) {
+  const file = fileList.value[index];
+  if (!file || !currentCollectionId.value) return;
+  await removeFilesFromCollection(currentCollectionId.value, [file.id]);
+  fileList.value.splice(index, 1);
+  totalFileCount.value = fileList.value.length;
+  totalFileSize.value -= file.size || 0;
+  if (selectedItemIndex.value >= fileList.value.length) {
+    selectedItemIndex.value = fileList.value.length - 1;
+  }
+  void tauriEmit('collection-files-dropped', { collectionId: currentCollectionId.value });
+  toast.success(t('collection.removed_toast', { count: 1 }));
+}
+
+async function removeSelectedFromCollection() {
+  if (!selectMode.value || selectedCount.value === 0 || !currentCollectionId.value) return;
+  const selectedItems = getActionableSelectedItems();
+  const fileIds = selectedItems.map((item: any) => Number(item.id)).filter((id: number) => id > 0);
+  if (fileIds.length === 0) return;
+  await removeFilesFromCollection(currentCollectionId.value, fileIds);
+  const removedIdSet = new Set(fileIds);
+  fileList.value = fileList.value.filter(f => !removedIdSet.has(f.id));
+  totalFileCount.value = fileList.value.length;
+  totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
+  selectedItemIndex.value = fileList.value.length > 0 ? Math.min(selectedItemIndex.value, fileList.value.length - 1) : -1;
+  selectedCount.value = Math.max(0, selectedCount.value - fileIds.length);
+  selectedSize.value = Math.max(0, selectedSize.value - selectedItems.reduce((total, item) => total + Number(item.size || 0), 0));
+  void tauriEmit('collection-files-dropped', { collectionId: currentCollectionId.value });
+  toast.success(t('collection.removed_toast', { count: fileIds.length }));
+}
 
 const openTrashMsgbox = (reclaimBytes = 0, groupKey = '', fileIds: number[] = []) => {
   dedupReclaimBytes.value = Math.max(0, reclaimBytes);
@@ -2830,6 +2864,11 @@ function handleItemAction(payload: { action: string, index: number }) {
     'move-to-folder': () => void onMoveToFolder(),
     'copy-to-folder': () => void onCopyToFolder(),
     'trash': () => openTrashMsgbox(),
+    'remove-from-collection': () => {
+      if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+        void removeFileFromCurrentCollection(selectedItemIndex.value);
+      }
+    },
     'reveal': () => revealPath(fileList.value[selectedItemIndex.value].file_path),
     'refresh-file-info': () => void updateFile(fileList.value[selectedItemIndex.value], true),
     'favorite': toggleFavorite,
@@ -3381,7 +3420,11 @@ const handleKeyDown = (e: any) => {
       void openImageEditor(selectedItemIndex.value);
     }
   } else if (matchesShortcut('file.trash', event, shortcutPlatform)) {
-    openTrashMsgbox();
+    if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
+      void removeFileFromCurrentCollection(selectedItemIndex.value);
+    } else {
+      openTrashMsgbox();
+    }
   } else if (key === 'ArrowUp' || key === 'ArrowDown') {
     (keyActions as any)[key]();
   }

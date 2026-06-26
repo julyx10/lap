@@ -34,7 +34,8 @@
     "clear": "비우기",
     "clear_confirm_title": "컬렉션 비우기",
     "clear_confirm_message": "\"{name}\"에서 모든 파일을 제거하시겠습니까? 파일 자체는 삭제되지 않습니다.",
-    "clear_confirm_ok": "비우기"
+    "clear_confirm_ok": "비우기",
+    "removed_toast": "{count}개 파일을 컬렉션에서 제거했습니다"
   },
   "library": {
     "all_files": "모든 파일",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "탐색기에서 보기...",
       "refresh_file_info": "파일 정보 새로 고침",
       "set_album_cover": "앨범 커버로 설정",
-      "show_info": "정보 보기"
+      "show_info": "정보 보기",
+      "remove_from_collection": "컬렉션에서 제거"
     },
     "calendar": {
       "monthly": "월별",

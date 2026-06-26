@@ -34,7 +34,8 @@
     "clear": "清空",
     "clear_confirm_title": "清空合集",
     "clear_confirm_message": "移除 \"{name}\" 中的所有文件？文件本身不会被删除。",
-    "clear_confirm_ok": "清空"
+    "clear_confirm_ok": "清空",
+    "removed_toast": "已从合集移除 {count} 个文件"
   },
   "library": {
     "all_files": "所有文件",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "在文件资源管理器中显示...",
       "refresh_file_info": "刷新文件信息",
       "set_album_cover": "设置为相册封面",
-      "show_info": "显示信息"
+      "show_info": "显示信息",
+      "remove_from_collection": "从合集移除"
     },
     "calendar": {
       "monthly": "按月",

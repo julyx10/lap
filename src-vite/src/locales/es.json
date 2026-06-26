@@ -34,7 +34,8 @@
     "clear": "Vaciar",
     "clear_confirm_title": "Vaciar colección",
     "clear_confirm_message": "¿Eliminar todos los archivos de \"{name}\"? Los archivos en sí no se eliminarán.",
-    "clear_confirm_ok": "Vaciar"
+    "clear_confirm_ok": "Vaciar",
+    "removed_toast": "{count} archivo(s) quitado(s) de la colección"
   },
   "library": {
     "all_files": "Todos los archivos",
@@ -534,7 +535,8 @@
       "reveal_in_file_explorer": "Mostrar en Explorador...",
       "refresh_file_info": "Actualizar información del archivo",
       "set_album_cover": "Establecer como portada",
-      "show_info": "Ver info"
+      "show_info": "Ver info",
+      "remove_from_collection": "Quitar de la colección"
     },
     "calendar": {
       "monthly": "Mensual",

@@ -20,6 +20,7 @@ import {
   IconImageEdit,
   IconExternal,
   IconHeartFilled,
+  IconBookmarkOff,
 } from '@/common/icons';
 
 export const useFileMenuItems = (
@@ -27,7 +28,8 @@ export const useFileMenuItems = (
   localeMsg: Ref<any>,
   isMac: boolean,
   translate: (key: string) => string,
-  onAction: (action: string) => void
+  onAction: (action: string) => void,
+  options?: { isCollectionView?: Ref<boolean> }
 ) => {
   return computed(() => {
     const f = file.value;
@@ -207,10 +209,12 @@ export const useFileMenuItems = (
       },
       { label: "-", action: null },
       {
-        label: localeMsg.value.menu.file.move_to_trash,
-        icon: markRaw(IconTrash),
+        label: options?.isCollectionView?.value
+          ? translate('menu.file.remove_from_collection')
+          : localeMsg.value.menu.file.move_to_trash,
+        icon: markRaw(options?.isCollectionView?.value ? IconBookmarkOff : IconTrash),
         shortcut: shortcut('file.trash'),
-        action: createAction('trash')
+        action: createAction(options?.isCollectionView?.value ? 'remove-from-collection' : 'trash')
       },
     ];
   });
