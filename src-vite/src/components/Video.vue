@@ -82,7 +82,7 @@ const noTransition = ref(false);
 const activeVideo = ref(0);
 let currentLoadingId = 0;
 const loadAttemptCleanups: Array<(() => void) | null> = [null, null];
-const videoClickCleanups = ref<Array<(() => void) | null>>([null, null]);
+const videoBackdropCleanups = ref<Array<(() => void) | null>>([null, null]);
 
 const externalVideoAppPath = computed(() => String(config.settings?.externalVideoAppPath || '').trim());
 const externalVideoAppName = computed(() => String(config.settings?.externalVideoAppName || '').trim());
@@ -276,16 +276,39 @@ const setupPlayer = (index: number) => {
     player.ready(() => {
       const videoEl = player.el();
       if (videoEl) {
-        const clickHandler = (e: Event) => {
-          if (e.target !== e.currentTarget) {
-            return; // Exit early, allowing the child element to function normally
+        const CLICK_MOVE_TOLERANCE = 4;
+        let backdropPointer: { id: number; x: number; y: number } | null = null;
+        const pointerDownHandler = (event: PointerEvent) => {
+          backdropPointer = event.target === event.currentTarget
+            ? { id: event.pointerId, x: event.clientX, y: event.clientY }
+            : null;
+        };
+        const pointerUpHandler = (event: PointerEvent) => {
+          const pointer = backdropPointer;
+          backdropPointer = null;
+          if (
+            !pointer
+            || pointer.id !== event.pointerId
+            || event.target !== event.currentTarget
+            || Math.abs(event.clientX - pointer.x) > CLICK_MOVE_TOLERANCE
+            || Math.abs(event.clientY - pointer.y) > CLICK_MOVE_TOLERANCE
+          ) {
+            return;
           }
-          e.stopPropagation();
           emit('message-from-video-viewer', { message: 'close' });
         };
-        videoEl.addEventListener('click', clickHandler, false);
-        const cleanup = () => videoEl.removeEventListener('click', clickHandler, false);
-        videoClickCleanups.value[index] = cleanup;
+        const pointerCancelHandler = () => {
+          backdropPointer = null;
+        };
+        videoEl.addEventListener('pointerdown', pointerDownHandler, true);
+        videoEl.addEventListener('pointerup', pointerUpHandler, true);
+        videoEl.addEventListener('pointercancel', pointerCancelHandler, true);
+        const cleanup = () => {
+          videoEl.removeEventListener('pointerdown', pointerDownHandler, true);
+          videoEl.removeEventListener('pointerup', pointerUpHandler, true);
+          videoEl.removeEventListener('pointercancel', pointerCancelHandler, true);
+        };
+        videoBackdropCleanups.value[index] = cleanup;
       }
     });
   }
@@ -687,7 +710,7 @@ onBeforeUnmount(() => {
     }
   });
   loadAttemptCleanups.forEach((cleanup) => cleanup?.());
-  videoClickCleanups.value.forEach(cleanup => cleanup?.());
+  videoBackdropCleanups.value.forEach(cleanup => cleanup?.());
   players.value = [null, null];
   cancelVideoPrepare('0');
   cancelVideoPrepare('1');

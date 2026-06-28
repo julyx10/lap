@@ -301,7 +301,9 @@
         @scale="(e) => $emit('scale', e)"
         @viewport-change="(e) => $emit('viewport-change', e)"
         @message-from-image-viewer="handleMessageFromImageViewer"
-        @click.self.stop="handleOverlayClick"
+        @pointerdown.capture="handleOverlayPointerDown"
+        @pointerup.capture="handleOverlayPointerUp"
+        @pointercancel.capture="resetOverlayPointer"
       ></Image>
       
       <Video v-if="file?.file_type === 2"
@@ -830,6 +832,34 @@ const handleOverlayClick = () =>{
     emit('close')
   }
 }
+
+const OVERLAY_CLICK_MOVE_TOLERANCE = 4;
+let overlayPointer: { id: number; x: number; y: number } | null = null;
+
+const resetOverlayPointer = () => {
+  overlayPointer = null;
+};
+
+const handleOverlayPointerDown = (event: PointerEvent) => {
+  overlayPointer = event.target === event.currentTarget
+    ? { id: event.pointerId, x: event.clientX, y: event.clientY }
+    : null;
+};
+
+const handleOverlayPointerUp = (event: PointerEvent) => {
+  const pointer = overlayPointer;
+  resetOverlayPointer();
+  if (
+    !pointer
+    || pointer.id !== event.pointerId
+    || event.target !== event.currentTarget
+    || Math.abs(event.clientX - pointer.x) > OVERLAY_CLICK_MOVE_TOLERANCE
+    || Math.abs(event.clientY - pointer.y) > OVERLAY_CLICK_MOVE_TOLERANCE
+  ) {
+    return;
+  }
+  handleOverlayClick();
+};
 
 const handleMessageFromImageViewer = (payload: { message: string }) => {
   if (payload.message === 'prev') {
