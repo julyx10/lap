@@ -41,7 +41,7 @@
                 @click="clickModel(item.make, model)"
               >
                 <span class="sidebar-item-label">{{ model }}</span>
-                <span class="text-[10px] tabular-nums text-base-content/30 ml-1">({{ item.counts[index].toLocaleString() }})</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 ml-1">{{ item.counts[index].toLocaleString() }}</span>
               </div>
             </li>
           </ul>

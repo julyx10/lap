@@ -2,7 +2,7 @@
   <div 
     :class="[
       'h-full flex flex-col items-end justify-center',
-      markers.length > 0 ? 'w-14' : 'w-4.5'
+      isGroupingMarkers ? 'w-10' : (markers.length > 0 ? 'w-14' : 'w-4.5')
     ]"
   >
     <IconScrollUp 
@@ -26,7 +26,7 @@
       >
         <!-- Markers (Years and Months) -->
         <div v-for="(marker, index) in displayMarkers" :key="index"
-          class="absolute w-full right-1 tabular-nums pointer-events-none select-none flex items-center justify-end z-10"
+          class="absolute w-full right-0 tabular-nums pointer-events-none select-none flex items-center justify-end z-10"
           :class="[
             marker.isYear ? 'text-[10px] text-base-content/70' : 'text-[9px] text-base-content/30'
           ]"
@@ -46,13 +46,15 @@
 
         <!-- Hover Marker -->
         <div v-if="isHovering"
-          class="absolute left-1 right-0 h-[2px] bg-base-content/70 pointer-events-none rounded-full"
+          class="absolute h-[2px] bg-base-content/70 pointer-events-none rounded-full"
+          :class="isGroupingMarkers ? 'right-0 w-4' : 'left-1 right-0'"
           :style="{ top: (hoverY - 1) + 'px' }"
         ></div>
 
         <!-- Selected Marker -->
         <div v-if="selectedTop >= 0"
-          class="absolute left-1 right-0 h-[2px] bg-primary/70 pointer-events-none rounded-full"
+          class="absolute h-[2px] bg-primary/70 pointer-events-none rounded-full"
+          :class="isGroupingMarkers ? 'right-0 w-4' : 'left-1 right-0'"
           :style="{ top: (selectedTop - 1) + 'px', transition: 'all 0.2s ease-in-out' }"
         ></div>
 
@@ -140,6 +142,7 @@ const hoverDate = ref('');
 
 // Computed properties for thumb dimensions and position
 const trackHeight = ref(0);
+const isGroupingMarkers = computed(() => props.markers.some(marker => Boolean(marker.label)));
 
 // Process markers to show Year/Month changes
 const displayMarkers = computed(() => {
@@ -279,9 +282,12 @@ const displayMarkers = computed(() => {
   }
 
   return candidates
-    .filter(item => item.showTick) // Only return items that have at least a tick
+    .filter(item => hasLabelMarkers
+      ? item.showTick
+      : item.showLabel && Boolean(item.label)
+    )
     .map(item => ({
-      label: item.showLabel ? item.label : '', // Empty label if hidden
+      label: item.showLabel ? item.label : '',
       top: item.top,
       isYear: item.type === 'year',
       pixelPos: item.pixelPos,

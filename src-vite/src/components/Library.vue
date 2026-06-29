@@ -37,63 +37,63 @@
         />
       </div>
 
-      <ul v-if="libConfig.library.ratingsExpanded" class="mb-2">
-        <li>
-          <div
-            :class="[
-              'sidebar-item group border-2 border-transparent',
-              libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === RATE.ALL ? 'sidebar-item-selected' : 'sidebar-item-hover',
-            ]"
-            @click="selectRating(RATE.ALL)"
-          >
-            <IconRight
-              :class="[
-                'p-1 w-6 h-6 shrink-0 transition-transform',
-                ratedExpanded ? 'rotate-90' : '',
-              ]"
-              @click.stop="toggleRated"
-            />
-            <IconStarFilled class="mx-1 w-5 h-5 shrink-0" />
-            <span class="sidebar-item-label">{{ localeMsg.rating.all_rated || localeMsg.rating.rated }}</span>
-            <span v-if="ratedCount" class="sidebar-item-count ml-auto">{{ ratedCount.toLocaleString() }}</span>
-          </div>
-        </li>
-        <template v-if="ratedExpanded">
-          <li v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="pl-4">
-            <div
-              :class="[
-                'sidebar-item sidebar-item-compact group border-2 border-transparent ml-3',
-                libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === rating ? 'sidebar-item-selected' : 'sidebar-item-hover',
-              ]"
-              @click="selectRating(rating)"
-            >
-              <div class="mx-1 flex items-center gap-0.5">
-                <IconStarFilled
-                  v-for="index in rating"
-                  :key="index"
-                  class="w-5 h-5 shrink-0"
-                />
+      <Transition
+        @before-enter="onBeforeEnter"
+        @enter="onEnter"
+        @after-enter="onAfterEnter"
+        @leave="onLeave"
+      >
+        <div v-if="libConfig.library.ratingsExpanded" class="overflow-hidden">
+          <ul class="mb-2">
+            <li>
+              <div
+                :class="[
+                  'sidebar-item group border-2 border-transparent',
+                  libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === RATE.ALL ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                ]"
+                @click="selectRating(RATE.ALL)"
+              >
+                <IconStarFilled class="mx-1 w-5 h-5 shrink-0" />
+                <span class="sidebar-item-label">{{ localeMsg.rating.all_rated || localeMsg.rating.rated }}</span>
+                <span v-if="ratedCount" class="sidebar-item-count ml-auto">{{ ratedCount.toLocaleString() }}</span>
               </div>
-              <span v-if="ratingCounts[rating]" class="text-[10px] tabular-nums text-base-content/30 ml-auto">
-                ({{ ratingCounts[rating].toLocaleString() }})
-              </span>
-            </div>
-          </li>
-        </template>
-        <li>
-          <div
-            :class="[
-              'sidebar-item group border-2 border-transparent',
-              libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === RATE.UNRATED ? 'sidebar-item-selected' : 'sidebar-item-hover',
-            ]"
-            @click="selectRating(RATE.UNRATED)"
-          >
-            <IconStar class="mx-1 w-5 h-5 shrink-0" />
-            <span class="sidebar-item-label">{{ localeMsg.rating.unrated }}</span>
-            <span v-if="unratedCount" class="sidebar-item-count ml-auto">{{ unratedCount.toLocaleString() }}</span>
-          </div>
-        </li>
-      </ul>
+            </li>
+            <li v-for="rating in [5, 4, 3, 2, 1]" :key="rating">
+              <div
+                :class="[
+                  'sidebar-item group border-2 border-transparent',
+                  libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === rating ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                ]"
+                @click="selectRating(rating)"
+              >
+                <div class="mx-1 flex items-center gap-0.5">
+                  <IconStarFilled
+                    v-for="index in rating"
+                    :key="index"
+                    class="w-5 h-5 shrink-0"
+                  />
+                </div>
+                <span v-if="ratingCounts[rating]" class="text-[10px] tabular-nums text-base-content/30 ml-auto">
+                  {{ ratingCounts[rating].toLocaleString() }}
+                </span>
+              </div>
+            </li>
+            <li>
+              <div
+                :class="[
+                  'sidebar-item group border-2 border-transparent',
+                  libConfig.library.item === LIB_ITEM.RATINGS && libConfig.rating.item === RATE.UNRATED ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                ]"
+                @click="selectRating(RATE.UNRATED)"
+              >
+                <IconStar class="mx-1 w-5 h-5 shrink-0" />
+                <span class="sidebar-item-label">{{ localeMsg.rating.unrated }}</span>
+                <span v-if="unratedCount" class="sidebar-item-count ml-auto">{{ unratedCount.toLocaleString() }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </Transition>
 
       <div class="sidebar-panel-header cursor-pointer" @click="toggleSubjects">
         <span class="sidebar-panel-header-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -106,20 +106,29 @@
         />
       </div>
 
-      <ul v-if="libConfig.library.subjectsExpanded" class="mb-2">
-        <li v-for="item in smartTagItems" :key="item.id">
-          <div
-            :class="[
-              'sidebar-item group border-2 border-transparent',
-              libConfig.library.item === LIB_ITEM.SUBJECTS && libConfig.library.smartId === item.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
-            ]"
-            @click="selectSmartTag(item.id)"
-          >
-            <IconSmartTag class="mx-1 w-5 h-5 shrink-0" />
-            <span class="sidebar-item-label">{{ item.label }}</span>
-          </div>
-        </li>
-      </ul>
+      <Transition
+        @before-enter="onBeforeEnter"
+        @enter="onEnter"
+        @after-enter="onAfterEnter"
+        @leave="onLeave"
+      >
+        <div v-if="libConfig.library.subjectsExpanded" class="overflow-hidden">
+          <ul class="mb-2">
+            <li v-for="item in smartTagItems" :key="item.id">
+              <div
+                :class="[
+                  'sidebar-item group border-2 border-transparent',
+                  libConfig.library.item === LIB_ITEM.SUBJECTS && libConfig.library.smartId === item.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                ]"
+                @click="selectSmartTag(item.id)"
+              >
+                <IconSmartTag class="mx-1 w-5 h-5 shrink-0" />
+                <span class="sidebar-item-label">{{ item.label }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </Transition>
     </div>
 
   </div>
@@ -132,7 +141,7 @@ import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
 import { LIB_ITEM, RATE, type LibItem } from '@/common/constants';
 
-import { IconPhotoAll, IconHeartFilled, IconCalendarDay, IconArrowDown, IconArrowUp, IconRight, IconSmartTag, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
+import { IconPhotoAll, IconHeartFilled, IconCalendarDay, IconArrowDown, IconArrowUp, IconSmartTag, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
 import { getQueryCountAndSum, getTotalCountAndSum } from '@/common/api';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
 import TButton from '@/components/TButton.vue';
@@ -150,7 +159,6 @@ const totalCount = ref(0);
 const favoriteCount = ref(0);
 const todayCount = ref(0);
 const unratedCount = ref(0);
-const ratedExpanded = ref(true);
 const ratingCounts = ref<Record<number, number>>({
   1: 0,
   2: 0,
@@ -254,8 +262,30 @@ function toggleRatings() {
   libConfig.library.ratingsExpanded = !libConfig.library.ratingsExpanded;
 }
 
-function toggleRated() {
-  ratedExpanded.value = !ratedExpanded.value;
+function onBeforeEnter(el: Element) {
+  const element = el as HTMLElement;
+  element.style.opacity = '0';
+  element.style.height = '0';
+}
+
+function onEnter(el: Element) {
+  const element = el as HTMLElement;
+  element.style.transition = 'all 0.1s ease';
+  element.style.height = `${element.scrollHeight}px`;
+  element.style.opacity = '1';
+}
+
+function onAfterEnter(el: Element) {
+  (el as HTMLElement).style.height = '';
+}
+
+function onLeave(el: Element) {
+  const element = el as HTMLElement;
+  element.style.transition = 'all 0.1s ease';
+  element.style.height = `${element.scrollHeight}px`;
+  void element.offsetHeight;
+  element.style.height = '0';
+  element.style.opacity = '0';
 }
 
 function selectRating(rating: number) {
