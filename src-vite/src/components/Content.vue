@@ -62,7 +62,7 @@
           :selectedValues="fileTypeSelectedValues"
           :summaryLabel="fileTypeSummaryLabel"
           :separatorsAfter="[0]"
-          :disabled="isSearchLikeView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
+          :disabled="isToolbarFilterLockedView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
           :selected="config.search.fileType !== 0"
           @multi-select="handleFileTypeSelect"
         />
@@ -73,7 +73,7 @@
           :defaultIndex="config.search.sortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="config.search.sortOrder"
-          :disabled="isSearchLikeView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
+          :disabled="isToolbarFilterLockedView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
           @select="handleSortTypeSelect"
         />
 
@@ -4353,6 +4353,7 @@ watch(
     scheduleContentRefresh(() => {
       // Only update content if we are currently in the Image Search view
       if (config.main.sidebarIndex === SIDEBAR.SEARCH) {
+        if (isDedupPanelOpen.value) config.rightPanel.show = false;
         refreshContentFromSelectionChange();
       }
     });
@@ -4380,9 +4381,12 @@ watch(
     libConfig.camera.make, libConfig.camera.model,                                    // camera 
     config.camera.isCamera, (libConfig.camera as any).lensMake, (libConfig.camera as any).lensModel, // lens
   ], 
-  () => {
+  (_newValues, oldValues) => {
     // Clear active adjustments when the file list changes to avoid unnecessary confirmation dialogs
     uiStore.clearActiveAdjustments();
+    if (oldValues && isDedupPanelOpen.value) {
+      config.rightPanel.show = false;
+    }
 
     // If temp mode is active and query context changed, exit temp mode and refresh.
     if (tempViewMode.value === 'similar' || tempViewMode.value === 'album') {
@@ -7417,6 +7421,11 @@ const sortExtendOptions = computed(() => {
 const isSearchLikeView = computed(() => {
   return config.main.sidebarIndex === SIDEBAR.SMART_ALBUM ||
     config.main.sidebarIndex === SIDEBAR.SEARCH ||
+    (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS);
+});
+
+const isToolbarFilterLockedView = computed(() => {
+  return config.main.sidebarIndex === SIDEBAR.SEARCH ||
     (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS);
 });
 

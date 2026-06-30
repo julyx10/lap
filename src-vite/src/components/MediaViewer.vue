@@ -3,7 +3,7 @@
     :class="['w-full relative flex flex-col items-center justify-center', toolbarOnly ? '' : 'h-full group']"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
-    @contextmenu.prevent="handleContextMenu"
+    @contextmenu.prevent
     ref="containerRef"
   >
     <!-- Toolbar -->
@@ -244,12 +244,12 @@
       <div
         v-for="badge in quickViewStatusBadges"
         :key="badge.key"
-        :class="['thumb-badge', badge.highlight ? 'thumb-badge-highlight' : 'thumb-badge-muted']"
+        class="thumb-badge thumb-badge-muted"
       >
         <component
           v-if="badge.icon"
           :is="badge.icon"
-          class="h-3.5 w-3.5 shrink-0"
+          :class="['h-3.5 w-3.5 shrink-0', badge.iconClass]"
         />
         <span v-if="badge.label" class="leading-none">{{ badge.label }}</span>
       </div>
@@ -301,6 +301,7 @@
         @scale="(e) => $emit('scale', e)"
         @viewport-change="(e) => $emit('viewport-change', e)"
         @message-from-image-viewer="handleMessageFromImageViewer"
+        @context-menu="handleContextMenu"
         @pointerdown.capture="handleOverlayPointerDown"
         @pointerup.capture="handleOverlayPointerUp"
         @pointercancel.capture="resetOverlayPointer"
@@ -316,6 +317,7 @@
         @viewport-change="(e) => $emit('viewport-change', e)"
         @message-from-video-viewer="handleMessageFromImageViewer"
         @slideshow-next="emit('slideshow-next')"
+        @context-menu="handleContextMenu"
       ></Video>
     </div>
     </template>
@@ -606,22 +608,22 @@ const slideShowIntervalMenuItems = computed(() => {
 });
 
 const quickViewStatusBadges = computed(() => {
-  const badges: Array<{ key: string; icon: any; label?: string; highlight?: boolean }> = [];
+  const badges: Array<{ key: string; icon: any; label?: string; iconClass?: string }> = [];
   const rating = Number(props.file?.rating || 0);
 
   if (props.file?.is_favorite) {
     badges.push({
       key: 'favorite',
       icon: IconHeartFilled,
+      iconClass: 'text-error',
       label: rating > 0 ? `${rating}` : undefined,
-      highlight: true,
     });
   } else if (rating > 0) {
     badges.push({
       key: 'rating',
       icon: IconStarFilled,
+      iconClass: 'text-warning',
       label: `${rating}`,
-      highlight: true,
     });
   }
 

@@ -109,7 +109,7 @@
       >
         <div
           v-if="videoDurationBadge"
-          class="thumb-badge thumb-badge-muted text-base-content/50"
+          class="thumb-badge thumb-badge-muted"
         >
           {{ videoDurationBadge }}
         </div>

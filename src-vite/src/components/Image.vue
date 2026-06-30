@@ -54,6 +54,7 @@
           @mouseup="handleImageMouseUp"
           @mouseleave="handleImageMouseLeave"
           @dblclick.stop="toggleZoomFit"
+          @contextmenu.prevent.stop="$emit('context-menu', $event)"
         />
       </div>
     </TransitionGroup>
@@ -232,7 +233,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit', 'viewport-change']);
+const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit', 'viewport-change', 'context-menu']);
 
 const uiStore = useUIStore();
 

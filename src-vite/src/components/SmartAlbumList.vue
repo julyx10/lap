@@ -21,6 +21,7 @@
             libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id ? 'sidebar-item-selected' : 'sidebar-item-hover',
           ]"
           @click="clickCustomSmartAlbum(smartAlbum)"
+          @contextmenu.prevent.stop="(event: MouseEvent) => handleSmartAlbumContextMenu(smartAlbum, event)"
         >
           <IconBolt class="mx-1 w-5 h-5 shrink-0" />
           <span class="sidebar-item-label">{{ smartAlbum.name }}</span>
@@ -30,17 +31,11 @@
               libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id ? '' : 'hidden group-hover:flex'
             ]"
           >
-            <TButton
-              :icon="IconEdit"
-              :buttonSize="'small'"
-              :tooltip="$t('album.smart_edit.title_edit')"
-              @click.stop="clickEditSmartAlbum(smartAlbum)"
-            />
-            <TButton
-              :icon="IconTrash"
-              :buttonSize="'small'"
-              :tooltip="$t('album.smart_edit.delete')"
-              @click.stop="clickDeleteSmartAlbum(smartAlbum)"
+            <ContextMenu
+              :ref="(element: any) => { if (element) smartAlbumContextMenus[smartAlbum.id] = element }"
+              :iconMenu="IconMore"
+              :menuItems="getMoreMenuItems(smartAlbum)"
+              :smallIcon="true"
             />
           </div>
         </div>
@@ -71,17 +66,21 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
-import { IconAdd, IconBolt, IconEdit, IconTrash } from '@/common/icons';
+import { IconAdd, IconBolt, IconEdit, IconMore, IconTrash } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
 import SmartAlbumEdit from '@/components/SmartAlbumEdit.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
 const customSmartAlbums = computed(() => libConfig.smartAlbums || []);
+const { t } = useI18n();
 const showEditDialog = ref(false);
 const editingSmartAlbum = ref<any | null>(null);
 const showDeleteDialog = ref(false);
 const deletingSmartAlbum = ref<any | null>(null);
+const smartAlbumContextMenus = ref<Record<string, any>>({});
 
 function clickCustomSmartAlbum(smartAlbum: any) {
   libConfig.smartAlbum.type = 'custom';
@@ -92,6 +91,24 @@ function clickAddSmartAlbum() {
   editingSmartAlbum.value = null;
   showEditDialog.value = true;
 }
+
+function handleSmartAlbumContextMenu(smartAlbum: any, event: MouseEvent) {
+  clickCustomSmartAlbum(smartAlbum);
+  smartAlbumContextMenus.value[smartAlbum.id]?.open?.(event.clientX, event.clientY);
+}
+
+const getMoreMenuItems = (smartAlbum: any) => [
+  {
+    label: t('album.smart_edit.title_edit'),
+    icon: IconEdit,
+    action: () => clickEditSmartAlbum(smartAlbum),
+  },
+  {
+    label: t('album.smart_edit.delete'),
+    icon: IconTrash,
+    action: () => clickDeleteSmartAlbum(smartAlbum),
+  },
+];
 
 function clickEditSmartAlbum(smartAlbum: any) {
   editingSmartAlbum.value = smartAlbum;

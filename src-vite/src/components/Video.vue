@@ -1,5 +1,11 @@
 <template>
-  <div ref="videoContainer" class="relative w-full h-full overflow-hidden cursor-pointer" style="touch-action: none;" @wheel.prevent="handleWheel">
+  <div
+    ref="videoContainer"
+    class="relative w-full h-full overflow-hidden cursor-pointer"
+    style="touch-action: none;"
+    @wheel.prevent="handleWheel"
+    @contextmenu="handleContextMenu"
+  >
     <TransitionGroup :name="transitionName" @after-leave="handleTransitionEnd">
       <div
         v-for="index in [0, 1]"
@@ -61,7 +67,7 @@ const props = defineProps({
   isSlideShow: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['message-from-video-viewer', 'slideshow-next', 'scale', 'viewport-change']);
+const emit = defineEmits(['message-from-video-viewer', 'slideshow-next', 'scale', 'viewport-change', 'context-menu']);
 const { t: $t } = useI18n();
 
 const videoContainer = ref<HTMLDivElement | null>(null);
@@ -97,6 +103,13 @@ const externalOpenLabel = computed(() => {
 async function openInExternalApp() {
   if (!props.filePath || !externalVideoAppPath.value) return;
   await openFileWithApp(props.filePath, externalVideoAppPath.value);
+}
+
+function handleContextMenu(event: MouseEvent) {
+  if (!(event.target instanceof HTMLVideoElement)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  emit('context-menu', event);
 }
 
 let isTouchpadDevice = false;
