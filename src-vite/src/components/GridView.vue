@@ -127,7 +127,7 @@ import {
   IconFiles,
   IconFolder,
   IconLocation,
-  IconStar,
+  IconStarFilled,
 } from '@/common/icons';
 
 const props = withDefaults(defineProps<{
@@ -861,7 +861,7 @@ function getGroupIcon() {
     case GROUP.YEAR:
       return IconCalendarMonth;
     case GROUP.RATING:
-      return IconStar;
+      return IconStarFilled;
     case GROUP.LOCATION:
       return IconLocation;
     case GROUP.CAMERA:

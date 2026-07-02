@@ -1,7 +1,7 @@
 <template>
   <section
     data-collection-tray-root="true"
-    :data-collection-drop-new="collections.length === 0 && isItemDragging ? 'true' : undefined"
+    :data-collection-drop-new="collections.length === 0 ? 'true' : undefined"
     class="collection-tray min-h-0 flex flex-col rounded-box bg-base-300/70 border border-base-content/5 shadow-sm"
     :class="libConfig.activePane === 'collection' ? '' : 'sidebar-pane-inactive'"
   >

@@ -247,10 +247,22 @@
         :key="badge.key"
         class="thumb-badge thumb-badge-muted"
       >
+        <template v-if="badge.icons?.length">
+          <div class="flex items-center gap-0.5">
+            <component
+              :is="entry.icon"
+              v-for="(entry, index) in badge.icons"
+              :key="`${badge.key}-${index}`"
+              class="h-3.5 w-3.5 shrink-0"
+              :style="entry.style"
+            />
+          </div>
+        </template>
         <component
-          v-if="badge.icon"
+          v-else-if="badge.icon"
           :is="badge.icon"
           :class="['h-3.5 w-3.5 shrink-0', badge.iconClass]"
+          :style="badge.iconStyle"
         />
         <span v-if="badge.label" class="leading-none">{{ badge.label }}</span>
       </div>
@@ -326,7 +338,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { defineAsyncComponent, ref, computed, onMounted, onBeforeUnmount, type Component, type CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { config, libConfig } from '@/common/config';
@@ -612,9 +624,27 @@ const slideShowIntervalMenuItems = computed(() => {
   }));
 });
 
-const quickViewStatusBadges = computed(() => {
-  const badges: Array<{ key: string; icon: any; label?: string; iconClass?: string }> = [];
+type StatusBadge = {
+  key: string;
+  icon?: Component;
+  icons?: Array<{
+    icon: Component;
+    style?: CSSProperties;
+  }>;
+  label?: string;
+  iconClass?: string;
+  iconStyle?: CSSProperties;
+};
+
+const normalizedFileRotate = computed(() => {
+  const rotate = Number(props.file?.rotate || 0) % 360;
+  return rotate < 0 ? rotate + 360 : rotate;
+});
+
+const quickViewStatusBadges = computed<StatusBadge[]>(() => {
+  const badges: StatusBadge[] = [];
   const rating = Number(props.file?.rating || 0);
+  const metaIcons: StatusBadge['icons'] = [];
 
   if (props.file?.is_favorite) {
     badges.push({
@@ -629,6 +659,30 @@ const quickViewStatusBadges = computed(() => {
       icon: IconStarFilled,
       iconClass: 'text-warning',
       label: `${rating}`,
+    });
+  }
+
+  if (props.file?.has_tags) {
+    metaIcons.push({ icon: IconTag });
+  }
+
+  if (props.file?.comments?.length > 0) {
+    metaIcons.push({ icon: IconComment });
+  }
+
+  if (normalizedFileRotate.value > 0) {
+    metaIcons.push({
+      icon: IconRotate,
+      style: {
+        transform: `rotate(${normalizedFileRotate.value}deg)`,
+      },
+    });
+  }
+
+  if (metaIcons.length > 0) {
+    badges.push({
+      key: 'meta',
+      icons: metaIcons.slice(0, 3),
     });
   }
 

@@ -2130,6 +2130,12 @@ function updateContentDragPosition(event: PointerEvent) {
   const elementAtPointer = document.elementFromPoint(event.clientX, event.clientY);
   if (elementAtPointer?.closest('[data-collection-tray-root]') && !config.collectionTray.expanded) {
     config.collectionTray.expanded = true;
+    requestAnimationFrame(() => {
+      if (dragGhost) {
+        setPointerDropTarget(null);
+        updateContentDragPosition(event);
+      }
+    });
   }
   const target = elementAtPointer
     ?.closest('[data-file-drop-path][data-file-drop-album-id], [data-collection-drop-id], [data-collection-drop-new]') as HTMLElement | null;
@@ -2327,7 +2333,7 @@ watch(() => props.libraryEmpty, () => {
 }, { immediate: true });
 
 watch(contentReady, (ready) => {
-  if (!ready || config.main.sidebarIndex !== SIDEBAR.LIBRARY) return;
+  if (!ready || config.main.sidebarIndex !== SIDEBAR.LIBRARY || libConfig.activePane !== 'main') return;
   void tauriEmit('library-item-count-updated', {
     item: libConfig.library.item,
     rating: libConfig.rating.item,
