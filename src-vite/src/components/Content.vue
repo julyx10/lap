@@ -393,6 +393,7 @@
             :dedup-scan-key="dedupScanKey"
             :dedup-query-params="dedupQueryParams"
             :dedup-collection-id="dedupCollectionId"
+            :dedup-file-ids="dedupFileIds"
             @close="config.rightPanel.show = false"
             @select-file="handleDedupSelectFile"
             @preview-file="handleDedupPreviewFile"
@@ -2400,10 +2401,13 @@ const dedupQueryParams = computed(() => {
 const dedupCollectionId = computed(() =>
   currentQuerySource.value === 'collection' ? currentCollectionId.value : null
 );
+const dedupFileIds = computed(() =>
+  currentQuerySource.value === 'search' ? [...currentSearchFileIds.value] : null
+);
 
 const dedupScanKey = computed(() => {
   if (dedupSourceVersion.value <= 0) return '';
-  return `query:${JSON.stringify(dedupQueryParams.value)}|collection:${dedupCollectionId.value ?? ''}|version:${dedupSourceVersion.value}`;
+  return `query:${JSON.stringify(dedupQueryParams.value)}|collection:${dedupCollectionId.value ?? ''}|files:${JSON.stringify(dedupFileIds.value)}|version:${dedupSourceVersion.value}`;
 });
 
 const currentTitleIcon = computed(() => {

@@ -2497,6 +2497,36 @@ impl AFile {
         Ok(result)
     }
 
+    pub fn get_files_by_ids(file_ids: &[i64]) -> Result<Vec<Self>, String> {
+        let conn = open_conn()?;
+        let valid_ids = file_ids
+            .iter()
+            .copied()
+            .filter(|id| *id > 0)
+            .collect::<Vec<_>>();
+        let mut files = Vec::with_capacity(valid_ids.len());
+
+        for ids in valid_ids.chunks(500) {
+            let placeholders = std::iter::repeat_n("?", ids.len())
+                .collect::<Vec<_>>()
+                .join(",");
+            let sql = format!(
+                "{} WHERE a.id IN ({})",
+                Self::build_base_query(),
+                placeholders
+            );
+            let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+            let rows = stmt
+                .query_map(rusqlite::params_from_iter(ids.iter()), Self::from_row)
+                .map_err(|e| e.to_string())?;
+            for row in rows {
+                files.push(row.map_err(|e| e.to_string())?);
+            }
+        }
+
+        Ok(files)
+    }
+
     /// update a file info
     pub fn update_file_info(
         file_id: i64,

@@ -67,7 +67,12 @@ pub fn start_scan(
     dedup_state: tauri::State<'_, DedupState>,
     query_params: Option<QueryParams>,
     collection_id: Option<i64>,
+    file_ids: Option<Vec<i64>>,
 ) -> Result<(), String> {
+    if file_ids.is_some() && (collection_id.is_some() || query_params.is_some()) {
+        return Err("File ID scope cannot be combined with query or collection scope.".into());
+    }
+
     if dedup_state
         .is_scanning
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
@@ -98,6 +103,7 @@ pub fn start_scan(
             &cancel_flag_clone,
             query_params,
             collection_id,
+            file_ids,
         );
 
         let mut final_status = status_clone.lock().unwrap();
@@ -129,11 +135,14 @@ fn scan_and_hash_files(
     cancel_flag: &Arc<AtomicBool>,
     query_params: Option<QueryParams>,
     collection_id: Option<i64>,
+    file_ids: Option<Vec<i64>>,
 ) -> Result<(), String> {
     let mut conn = get_db_conn()?;
-    let has_scope = collection_id.is_some() || query_params.is_some();
+    let has_scope = collection_id.is_some() || file_ids.is_some() || query_params.is_some();
 
-    let files_to_check = if let Some(collection_id) = collection_id {
+    let files_to_check = if let Some(file_ids) = file_ids {
+        AFile::get_files_by_ids(&file_ids)?
+    } else if let Some(collection_id) = collection_id {
         get_files_by_collection(collection_id, query_params.as_ref())?
     } else if let Some(params) = query_params.as_ref() {
         get_files_by_query(params)?

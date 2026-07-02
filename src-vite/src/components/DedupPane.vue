@@ -216,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted, nextTick, PropType } from 'vue';
 import { formatFileSize, getFolderName, getFolderPath, formatFolderBreadcrumb, getThumbnailDataUrl, isMac, formatTimestamp } from '@/common/utils';
 import TButton from '@/components/TButton.vue';
 import PanelActionButton from '@/components/PanelActionButton.vue';
@@ -244,7 +244,11 @@ const props = defineProps({
     default: null,
   },
   dedupCollectionId: {
-    type: Number,
+    type: Number as PropType<number | null>,
+    default: null,
+  },
+  dedupFileIds: {
+    type: Array as PropType<number[] | null>,
     default: null,
   },
 });
@@ -694,7 +698,12 @@ async function triggerBackendDedup(force = false) {
       return;
     }
 
-    await dedupStartScan(props.dedupQueryParams || null, props.dedupCollectionId);
+    const hasFileIdScope = props.dedupFileIds !== null;
+    await dedupStartScan(
+      hasFileIdScope ? null : (props.dedupQueryParams || null),
+      hasFileIdScope ? null : props.dedupCollectionId,
+      props.dedupFileIds,
+    );
     dedupPaneGlobalState.lastScanKey = props.dedupScanKey;
 
     const latest = await dedupGetScanStatus();
