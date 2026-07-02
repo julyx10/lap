@@ -5476,8 +5476,8 @@ async function getImageSearchFileList(
         }
       }
 
-      // Fetch thumbnails for the search results
-      getFileListThumb(fileList.value);
+      // Thumbnail loading is driven by visible-range updates. Avoid requesting
+      // every semantic-search result before the user scrolls to it.
     } else {
       clearSelectionForFileListUpdate();
       clearContentRows();

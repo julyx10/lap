@@ -4485,18 +4485,12 @@ impl AFile {
         } else {
             params.threshold
         };
+        let query_norm = embedding.iter().map(|value| value * value).sum::<f32>().sqrt();
 
         // Calculate similarity
         for row in rows {
             let (id, embeds_blob) = row.map_err(|e| e.to_string())?;
-
-            // Convert blob back to Vec<f32>
-            let file_embedding: Vec<f32> = embeds_blob
-                .chunks_exact(4)
-                .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
-                .collect();
-
-            let score = Self::cosine_similarity(&embedding, &file_embedding);
+            let score = Self::cosine_similarity_blob(&embedding, query_norm, &embeds_blob);
 
             if score > threshold {
                 scores.push((id, score));
@@ -4519,30 +4513,46 @@ impl AFile {
             &scores[..]
         };
 
-        // Fetch full file info
-        let mut results = Vec::new();
-        for (id, _) in final_scores {
-            if let Ok(Some(file)) = Self::get_file_info(*id) {
-                results.push(file);
-            }
-        }
+        // Fetch full file info in batches, then restore similarity order.
+        let result_ids = final_scores.iter().map(|(id, _)| *id).collect::<Vec<_>>();
+        let files = Self::get_files_by_ids(&result_ids)?;
+        let mut files_by_id = files
+            .into_iter()
+            .filter_map(|file| file.id.map(|id| (id, file)))
+            .collect::<HashMap<_, _>>();
+        let results = result_ids
+            .into_iter()
+            .filter_map(|id| files_by_id.remove(&id))
+            .collect::<Vec<_>>();
 
         println!("Returning {} files", results.len());
 
         Ok(results)
     }
 
-    fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
-        let dot_product: f32 = a.iter().zip(b).map(|(x, y)| x * y).sum();
-        let norm_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
-        let norm_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
+    fn cosine_similarity_blob(query: &[f32], query_norm: f32, blob: &[u8]) -> f32 {
+        if query_norm == 0.0 {
+            return 0.0;
+        }
 
-        if norm_a == 0.0 || norm_b == 0.0 {
+        let mut dot_product = 0.0_f32;
+        let mut file_norm_squared = 0.0_f32;
+        for (index, chunk) in blob.chunks_exact(4).enumerate() {
+            let value = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+            if let Some(query_value) = query.get(index) {
+                dot_product += query_value * value;
+            }
+            file_norm_squared += value * value;
+        }
+
+        let file_norm = file_norm_squared.sqrt();
+        if file_norm == 0.0 {
             0.0
         } else {
-            dot_product / (norm_a * norm_b)
+            dot_product / (query_norm * file_norm)
         }
     }
+
 }
 
 /// Define the album thumbnail struct
