@@ -169,14 +169,10 @@
   },
   "search": {
     "title": "画像検索",
-    "search_images": "検索",
     "similar_images": "類似画像",
-    "filename_search": "ファイル名",
-    "image_search_placeholder": "テキストで画像を検索",
-    "image_search_history": "検索履歴",
-    "image_search_tips": "説明を入力して画像を検索",
-    "similar_images_tips": "画像を選択して類似する画像を検索",
-    "filename_search_tips": "ファイル名を入力して検索",
+    "image_search_placeholder": "画像内容またはファイル名で検索",
+    "semantic_matches": "画像の一致",
+    "filename_matches": "ファイル名の一致",
     "index": {
       "wait_index": "スキャン待機中",
       "indexing": "スキャン中... {count} / {total}",

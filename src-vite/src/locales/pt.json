@@ -169,14 +169,10 @@
   },
   "search": {
     "title": "Pesquisa de imagem",
-    "search_images": "Pesquisar",
     "similar_images": "Semelhantes",
-    "filename_search": "Nome do arquivo",
-    "image_search_placeholder": "Pesquisar imagens por texto",
-    "image_search_history": "Histórico",
-    "image_search_tips": "Digite uma descrição para buscar imagens",
-    "similar_images_tips": "Selecione uma imagem para encontrar imagens semelhantes",
-    "filename_search_tips": "Digite um nome de arquivo",
+    "image_search_placeholder": "Pesquisar por conteúdo ou nome de arquivo",
+    "semantic_matches": "Correspondências visuais",
+    "filename_matches": "Correspondências de nome",
     "index": {
       "wait_index": "Na fila para escanear",
       "indexing": "Escaneando... {count} / {total}",

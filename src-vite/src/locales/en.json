@@ -168,15 +168,11 @@
     "drag_description": "Drag photos from your file manager or browser directly into an album."
   },
   "search": {
-    "title": "Image search",
-    "search_images": "Search",
+    "title": "Search",
     "similar_images": "Similar",
-    "filename_search": "Filename",
-    "image_search_placeholder": "Search images by text",
-    "image_search_history": "Search history",
-    "image_search_tips": "Enter a description to search images",
-    "similar_images_tips": "Select an image to find similar ones",
-    "filename_search_tips": "Enter a filename to search",
+    "image_search_placeholder": "Search by content or filename",
+    "semantic_matches": "Visual matches",
+    "filename_matches": "Filename matches",
     "index": {
       "wait_index": "Queued for scan",
       "indexing": "Scanning... {count} / {total}",

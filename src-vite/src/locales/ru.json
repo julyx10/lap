@@ -169,14 +169,10 @@
   },
   "search": {
     "title": "Поиск изображений",
-    "search_images": "Поиск",
     "similar_images": "Похожие",
-    "filename_search": "Имя файла",
-    "image_search_placeholder": "Поиск по тексту",
-    "image_search_history": "История поиска",
-    "image_search_tips": "Введите описание для поиска изображений",
-    "similar_images_tips": "Выберите изображение, чтобы найти похожие",
-    "filename_search_tips": "Введите имя файла",
+    "image_search_placeholder": "Поиск по содержимому или имени файла",
+    "semantic_matches": "Визуальные совпадения",
+    "filename_matches": "Совпадения по имени",
     "index": {
       "wait_index": "В очереди на сканирование",
       "indexing": "Сканирование... {count} / {total}",

@@ -169,14 +169,10 @@
   },
   "search": {
     "title": "이미지 검색",
-    "search_images": "검색",
     "similar_images": "유사 이미지",
-    "filename_search": "파일 이름",
-    "image_search_placeholder": "텍스트로 이미지 검색",
-    "image_search_history": "검색 기록",
-    "image_search_tips": "설명을 입력해 이미지를 검색하세요",
-    "similar_images_tips": "이미지를 선택해 비슷한 항목을 찾으세요",
-    "filename_search_tips": "파일 이름 입력",
+    "image_search_placeholder": "이미지 내용 또는 파일 이름으로 검색",
+    "semantic_matches": "화면 일치",
+    "filename_matches": "파일 이름 일치",
     "index": {
       "wait_index": "스캔 대기 중",
       "indexing": "스캔 중... {count} / {total}",

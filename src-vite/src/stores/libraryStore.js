@@ -85,15 +85,11 @@ export const useLibraryStore = defineStore('libraryStore', {
       name: null,             // selected person name
     },
 
-    /** @type {{ searchType: number, searchText: string, searchHistory: (string | { text: string, fileId: number | null })[], searchHistoryIndex: number, similarImageHistory: number[], similarImageHistoryIndex: number, fileName: string }} */
+    /** @type {{ searchText: string, searchHistory: (string | { text: string, fileId: number | null })[], searchHistoryIndex: number }} */
     search: {
-      searchType: 0,            // 0: ai search, 1: similar image, 2: filename search
       searchText: '',         // AI search text
       searchHistory: [],      // AI search history
       searchHistoryIndex: -1, // current AI search history index
-      similarImageHistory: [],// similar image history
-      similarImageHistoryIndex: -1, // current similar image history index
-      fileName: '',           // filename search text
     },
 
     /** @type {{ albumId: number | null, folderId: number | null, folderPath: string | null, selected: boolean }} */

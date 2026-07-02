@@ -169,14 +169,10 @@
   },
   "search": {
     "title": "Bildsuche",
-    "search_images": "Suche",
     "similar_images": "Ähnliche",
-    "filename_search": "Dateiname",
-    "image_search_placeholder": "Nach Text suchen",
-    "image_search_history": "Suchverlauf",
-    "image_search_tips": "Geben Sie eine Beschreibung ein, um Bilder zu suchen",
-    "similar_images_tips": "Wählen Sie ein Bild, um ähnliche zu finden",
-    "filename_search_tips": "Dateinamen eingeben",
+    "image_search_placeholder": "Nach Bildinhalt oder Dateiname suchen",
+    "semantic_matches": "Visuelle Treffer",
+    "filename_matches": "Dateinamen-Treffer",
     "index": {
       "wait_index": "Scan anstehend",
       "indexing": "Scanne... {count} / {total}",

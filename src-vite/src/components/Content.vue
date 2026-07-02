@@ -662,6 +662,7 @@ import {
   IconFilmstrip,
   IconSelection,
   IconInformation,
+  IconSearch,
   IconPhotoSearch,
   IconPersonSearch,
   IconFolderSearch,
@@ -930,6 +931,7 @@ function createViewBackup() {
     currentQuerySource: currentQuerySource.value,
     currentSmartQueryParams: currentSmartQueryParams.value ? { ...currentSmartQueryParams.value } : null,
     currentCollectionId: currentCollectionId.value,
+    currentSearchFileIds: [...currentSearchFileIds.value],
     thumbCount: thumbCount.value,
     showProgressBar: showProgressBar.value,
     scrollTop: gridViewRef.value ? gridViewRef.value.getScrollTop() : 0,
@@ -2310,9 +2312,10 @@ const currentQueryParams = ref({
   tagId: 0,
   personId: 0,
 });
-const currentQuerySource = ref<'query' | 'smart' | 'collection'>('query');
+const currentQuerySource = ref<'query' | 'smart' | 'collection' | 'search'>('query');
 const currentSmartQueryParams = ref<any | null>(null);
 const currentCollectionId = ref<number | null>(null);
+const currentSearchFileIds = ref<number[]>([]);
 
 const scanStreamRequestInFlight = ref(false);
 const scanStreamPullPending = ref(false);
@@ -2421,7 +2424,7 @@ const currentTitleIcon = computed(() => {
           case SIDEBAR.ALBUM:
               return libConfig.album.selected || config.settings.showSubfolderFiles ? IconFolders : IconFolder;
           case SIDEBAR.SMART_ALBUM: return IconBolt;
-          case SIDEBAR.SEARCH: return IconPhotoSearch;
+          case SIDEBAR.SEARCH: return IconSearch;
           case SIDEBAR.CALENDAR: return config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay;
           case SIDEBAR.TAG: return IconTag;
           case SIDEBAR.PERSON: return IconPersonSearch;
@@ -4379,9 +4382,7 @@ watch(() => libConfig.index.albumQueue.length, (newLength) => {
 /// watch image search params
 watch(
   () => [
-    libConfig.search.searchText, 
-    libConfig.search.similarImageHistoryIndex, 
-    libConfig.search.searchType
+    libConfig.search.searchText,
   ],
   () => {
     scheduleContentRefresh(() => {
@@ -4405,7 +4406,7 @@ watch(
     libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected, // album
     libConfig.smartAlbum.type, libConfig.smartAlbum.id, JSON.stringify(libConfig.smartAlbums || []), // smart album
     libConfig.rating.item, // rating
-    libConfig.search.fileName, config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
+    config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
     config.settings.showSubfolderFiles,                                            // album folder view
     config.settings.folderSort, config.settings.calendarSort, config.settings.categorySort, // group sorting
     libConfig.person.id,                                                              // person
@@ -4504,6 +4505,12 @@ function cycleGridStyle() {
 const pendingRequests = new Set();
 
 const getCurrentQueryCountAndSum = () => {
+  if (currentQuerySource.value === 'search') {
+    return Promise.resolve([
+      currentSearchFileIds.value.length,
+      fileList.value.reduce((total, file) => total + Number(file?.size || 0), 0),
+    ]);
+  }
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
     return getCollectionCountAndSum(currentCollectionId.value, currentQueryParams.value);
   }
@@ -4514,7 +4521,7 @@ const getCurrentQueryCountAndSum = () => {
 };
 
 const getCurrentQueryTimeLine = () => {
-  if (currentQuerySource.value === 'collection') {
+  if (currentQuerySource.value === 'collection' || currentQuerySource.value === 'search') {
     return Promise.resolve([]);
   }
   if (currentQuerySource.value === 'smart' && currentSmartQueryParams.value) {
@@ -4524,6 +4531,9 @@ const getCurrentQueryTimeLine = () => {
 };
 
 const getCurrentQueryFiles = (offset: number, limit: number) => {
+  if (currentQuerySource.value === 'search') {
+    return Promise.resolve(fileList.value.slice(offset, offset + limit));
+  }
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
     return getCollectionFiles(currentCollectionId.value, currentQueryParams.value, offset, limit);
   }
@@ -4541,6 +4551,9 @@ const getCurrentGroupedQueryRows = (offset: number, limit: number) => {
 };
 
 const getCurrentQueryFileIds = () => {
+  if (currentQuerySource.value === 'search') {
+    return Promise.resolve([...currentSearchFileIds.value]);
+  }
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
     return getCollectionFileIds(currentCollectionId.value);
   }
@@ -4551,6 +4564,9 @@ const getCurrentQueryFileIds = () => {
 };
 
 const getCurrentQueryFilePosition = async (fileId: number) => {
+  if (currentQuerySource.value === 'search') {
+    return currentSearchFileIds.value.findIndex(id => Number(id) === Number(fileId));
+  }
   if (currentQuerySource.value === 'collection' && currentCollectionId.value) {
     const ids = await getCollectionFileIds(currentCollectionId.value);
     return Array.isArray(ids) ? ids.findIndex((id: number) => Number(id) === Number(fileId)) : null;
@@ -5137,6 +5153,7 @@ async function getFileList(
   currentQuerySource.value = 'query';
   currentSmartQueryParams.value = null;
   currentCollectionId.value = null;
+  currentSearchFileIds.value = [];
 
   // Update current query params with all fields
   currentQueryParams.value = {
@@ -5234,6 +5251,7 @@ async function getCollectionFileList(collectionId: number, requestId: number) {
   currentQuerySource.value = 'collection';
   currentCollectionId.value = collectionId;
   currentSmartQueryParams.value = null;
+  currentSearchFileIds.value = [];
   currentQueryParams.value = {
     ...currentQueryParams.value,
     searchFileType: config.search.fileType,
@@ -5320,6 +5338,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
 
   currentQuerySource.value = 'smart';
   currentCollectionId.value = null;
+  currentSearchFileIds.value = [];
   currentSmartQueryParams.value = {
     version: Number(query.version || 1),
     match: query.match === 'any' ? 'any' : 'all',
@@ -5395,6 +5414,8 @@ async function getImageSearchFileList(
   updateHistory = true,
   thresholdOverride?: number,
 ) {
+  currentQuerySource.value = 'search';
+  currentSmartQueryParams.value = null;
   currentImageSearchParams.value = {
     searchText,
     fileId,
@@ -5402,6 +5423,7 @@ async function getImageSearchFileList(
     limit: config.settings.imageSearch.limit,
   };
   currentCollectionId.value = null;
+  currentSearchFileIds.value = [];
 
   // set loading state
   isLoading.value = true;
@@ -5420,6 +5442,9 @@ async function getImageSearchFileList(
       clearSelectionForFileListUpdate();
       resetGroupingState();
       fileList.value = preserveLoadedThumbnails(result);
+      currentSearchFileIds.value = fileList.value
+        .map(file => Number(file.id))
+        .filter(id => Number.isFinite(id) && id > 0);
       totalFileCount.value = fileList.value.length;
       totalFileSize.value = fileList.value.reduce((total, file) => total + file.size, 0);
       markDedupSourceUpdated(requestId);
@@ -5471,6 +5496,172 @@ async function getImageSearchFileList(
     }
   } finally {
     // Only clear loading state if this is still the active request
+    if (requestId === currentContentRequestId) {
+      isLoading.value = false;
+      hasLoadedInitialResult.value = true;
+      contentReady.value = true;
+    }
+  }
+}
+
+async function getUnifiedSearchFileList(searchText: string, requestId: number) {
+  const filenameParams = {
+    searchFileType: config.search.fileType,
+    sortType: 3,
+    sortOrder: 0,
+    searchFileName: searchText,
+    searchAllSubfolders: '',
+    searchFolder: '',
+    startDate: 0,
+    endDate: 0,
+    calendarSort: config.settings.calendarSort,
+    folderSort: config.settings.folderSort,
+    categorySort: config.settings.categorySort,
+    make: '',
+    model: '',
+    lensMake: '',
+    lensModel: '',
+    locationAdmin1: '',
+    locationName: '',
+    isFavorite: false,
+    rating: -1,
+    tagId: 0,
+    personId: 0,
+    groupBy: 0,
+  };
+  currentQueryParams.value = filenameParams;
+  currentQuerySource.value = 'search';
+  currentSmartQueryParams.value = null;
+  currentCollectionId.value = null;
+  currentSearchFileIds.value = [];
+  currentImageSearchParams.value = {
+    searchText,
+    fileId: 0,
+    threshold: config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
+    limit: config.settings.imageSearch.limit,
+  };
+  isLoading.value = true;
+  timelineData.value = [];
+
+  try {
+    const [filenameResult, filenameIdResult, visualResult] = await Promise.all([
+      getQueryFiles(filenameParams, 0, 10).catch(error => {
+        console.error('Filename search failed:', error);
+        return [];
+      }),
+      getQueryFileIds(filenameParams).catch(error => {
+        console.error('Filename ID search failed:', error);
+        return [];
+      }),
+      searchSimilarImages(currentImageSearchParams.value).catch(error => {
+        console.error('Visual search failed:', error);
+        return [];
+      }),
+    ]);
+    if (requestId !== currentContentRequestId) return;
+
+    const filenameMatches = Array.isArray(filenameResult) ? filenameResult : [];
+    const allFilenameIds = Array.isArray(filenameIdResult) ? filenameIdResult : [];
+    const filenameHasMore = allFilenameIds.length > 10;
+    const filenameIds = new Set(allFilenameIds.map((id: any) => Number(id)));
+    const visualMatches = (Array.isArray(visualResult) ? visualResult : [])
+      .filter((file: any) => !filenameIds.has(Number(file.id)));
+    const files = preserveLoadedThumbnails([...filenameMatches, ...visualMatches]);
+
+    clearSelectionForFileListUpdate();
+    resetGroupingState();
+    fileList.value = files;
+    currentSearchFileIds.value = fileList.value
+      .map(file => Number(file.id))
+      .filter(id => Number.isFinite(id) && id > 0);
+    totalFileCount.value = fileList.value.length;
+    totalFileSize.value = fileList.value.reduce((total, file) => total + Number(file.size || 0), 0);
+
+    const groups = [
+      filenameMatches.length > 0
+        ? {
+            id: 'search-filename',
+            label: localeMsg.value.search.filename_matches,
+            files: filenameMatches,
+            countLabel: filenameHasMore ? '10+' : String(filenameMatches.length),
+          }
+        : null,
+      visualMatches.length > 0
+        ? {
+            id: 'search-visual',
+            label: localeMsg.value.search.semantic_matches,
+            files: visualMatches,
+            countLabel: String(visualMatches.length),
+          }
+        : null,
+    ].filter(Boolean) as Array<{ id: string; label: string; files: any[]; countLabel: string }>;
+
+    let fileIndex = 0;
+    for (const group of groups) {
+      const rowIndex = groupedRows.value.length;
+      const size = group.files.reduce((total, file) => total + Number(file.size || 0), 0);
+      groupedRows.value.push({
+        type: 'group',
+        id: `group-row-${group.id}`,
+        group_id: group.id,
+        label: group.label,
+        count: group.files.length,
+        countLabel: group.countLabel,
+        size,
+      });
+      groupedTimelineGroups.value.push({
+        groupId: group.id,
+        label: group.label,
+        count: group.files.length,
+        size,
+        rowIndex,
+      });
+      groupMetaMap.set(group.id, { count: group.files.length, size });
+      groupFileIdsCache.set(group.id, group.files.map(file => Number(file.id)));
+
+      for (let groupFileIndex = 0; groupFileIndex < group.files.length; groupFileIndex++) {
+        // Always reference the reactive object stored in fileList. Thumbnail
+        // updates made through the raw search result do not trigger a rerender.
+        const loadedFile = fileList.value[fileIndex];
+        const id = Number(loadedFile?.id || 0);
+        if (id > 0) fileIdToGroupId.set(id, group.id);
+        groupedRows.value.push({
+          type: 'item',
+          id: `search-item-${group.id}-${id}`,
+          group_id: group.id,
+          file_index: fileIndex,
+          file: loadedFile,
+        });
+        fileIndex++;
+      }
+    }
+
+    groupedModeActive.value = groups.length > 0;
+    totalRowCount.value = groupedRows.value.length;
+    selectedItemIndex.value = fileList.value.length > 0 ? 0 : -1;
+    scrollPosition.value = 0;
+    markDedupSourceUpdated(requestId);
+    openImageViewer(0, false, true);
+
+    const firstHistoryFile = visualMatches[0] || filenameMatches[0];
+    if (firstHistoryFile) {
+      const history = libConfig.search.searchHistory as any[];
+      const historyIndex = history.findIndex((item: any) =>
+        (typeof item === 'string' ? item : item.text) === searchText
+      );
+      if (historyIndex >= 0) {
+        const item = history[historyIndex];
+        history[historyIndex] = {
+          text: typeof item === 'string' ? item : item.text,
+          fileId: Number(firstHistoryFile.id),
+        };
+      }
+    }
+
+    if (fileList.value.length > 0) {
+      getFileListThumb(fileList.value);
+    }
+  } finally {
     if (requestId === currentContentRequestId) {
       isLoading.value = false;
       hasLoadedInitialResult.value = true;
@@ -5696,32 +5887,12 @@ async function updateContent(force = false) {
     }
   }
   else if(newIndex === SIDEBAR.SEARCH) {
-    if(libConfig.search.searchType === 0) {   // search
-      if (libConfig.search.searchText) {
-        contentTitle.value = localeMsg.value.search.search_images + ' - ' + libConfig.search.searchText;
-        getImageSearchFileList(libConfig.search.searchText, 0, requestId);
-      } else {
-        contentTitle.value = localeMsg.value.search.search_images;
-        showEmptyContent(requestId);
-      }
-    } else if (libConfig.search.searchType === 1) { // similar
-      const index = libConfig.search.similarImageHistoryIndex;
-      if (index >= 0 && index < libConfig.search.similarImageHistory.length) {
-        const file = await getFileInfo(libConfig.search.similarImageHistory[index]);
-        contentTitle.value = localeMsg.value.search.similar_images + ' - ' + shortenFilename(file.name, 32);
-        getImageSearchFileList("", libConfig.search.similarImageHistory[index], requestId);
-      } else {
-        contentTitle.value = localeMsg.value.search.similar_images;
-        showEmptyContent(requestId);
-      }
-    } else {   // filename search
-      if (libConfig.search.fileName) {
-        contentTitle.value = localeMsg.value.search.filename_search + ' - ' + libConfig.search.fileName;
-        getFileList({ searchFileName: libConfig.search.fileName, sortType: 3, sortOrder: 0 }, requestId); // sort by name
-      } else {
-        contentTitle.value = localeMsg.value.search.filename_search;
-        showEmptyContent(requestId);
-      }
+    if (libConfig.search.searchText) {
+      contentTitle.value = localeMsg.value.search.title + ' - ' + libConfig.search.searchText;
+      getUnifiedSearchFileList(libConfig.search.searchText, requestId);
+    } else {
+      contentTitle.value = localeMsg.value.search.title;
+      showEmptyContent(requestId);
     }
   }
   else if(newIndex === SIDEBAR.CALENDAR) {
@@ -5834,20 +6005,6 @@ function enterSimilarSearchMode(file: any) {
   
   // 3. Update Title to indicate context
   contentTitle.value = localeMsg.value.search.similar_images + ' - ' + file.name;
-
-  // Update similar image search history
-  const existingIndex = (libConfig.search.similarImageHistory as any[]).findIndex(item => item === file.id);
-  
-  if (existingIndex !== -1) {
-    libConfig.search.similarImageHistoryIndex = existingIndex;
-  } else {
-    (libConfig.search.similarImageHistory as any[]).unshift(file.id);
-    libConfig.search.similarImageHistoryIndex = 0;
-    
-    if (libConfig.search.similarImageHistory.length > config.search.maxSearchHistory) {
-      (libConfig.search.similarImageHistory as any[]).pop();
-    }
-  }
 
   // 4. Perform Search (reusing existing API call logic)
   const requestId = ++currentContentRequestId;
@@ -6004,6 +6161,7 @@ function exitTempViewMode() {
   currentQuerySource.value = state.currentQuerySource || 'query';
   currentSmartQueryParams.value = state.currentSmartQueryParams || null;
   currentCollectionId.value = state.currentCollectionId || null;
+  currentSearchFileIds.value = [...(state.currentSearchFileIds || [])];
   thumbCount.value = state.thumbCount;
   showProgressBar.value = state.showProgressBar;
 
@@ -6030,8 +6188,7 @@ function exitTempViewMode() {
 function handleTitleClick() {
   switch (tempViewMode.value) {
     case 'similar':
-      config.main.sidebarIndex = SIDEBAR.SEARCH;
-      libConfig.search.searchType = 1;   // similar image 
+      exitTempViewMode();
       break;
     case 'person':
       config.main.sidebarIndex = SIDEBAR.PERSON;

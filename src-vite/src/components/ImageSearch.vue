@@ -7,77 +7,43 @@
       <ContextMenu :menuItems="searchPanelMenuItems" :iconMenu="IconMore" :smallIcon="true" />
     </div>
 
-    <div class="px-2 mb-2">
-      <div role="tablist" class="sidebar-header-tabs">
-        <a
-          role="tab"
-          :class="['sidebar-header-tab', { 'tab-active': libConfig.search.searchType === 0 }]"
-          @click="handleTabClick(0)"
-        >
-          {{ $t('search.search_images') }}
-        </a>
-        <a
-          role="tab"
-          :class="['sidebar-header-tab', { 'tab-active': libConfig.search.searchType === 1 }]"
-          @click="handleTabClick(1)"
-        >
-          {{ $t('search.similar_images') }}
-        </a>
-        <a
-          role="tab"
-          :class="['sidebar-header-tab', { 'tab-active': libConfig.search.searchType === 2 }]"
-          @click="handleTabClick(2)"
-        >
-          {{ $t('search.filename_search') }}
-        </a>
-      </div>
-    </div>
-
-    <!-- 0: search text -->
-    <template v-if="libConfig.search.searchType === 0">
+    <div class="mx-1 mb-2 px-1 shrink-0">
       <div
-        :class="[ 
-          'mb-1 p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
-          isSearchFocused ? 'text-base-content/70' : 'text-base-content/30 hover:text-base-content/70 hover:bg-base-100',
+        :class="[
+          'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
+          isSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
         ]"
         @click="focusSearchInput"
       >
-        <IconSearch 
-          :class="[
-            'absolute left-2 ml-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
-            isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
-          ]"
+        <IconSearch
+          class="ml-2 w-4 h-4 shrink-0"
+          :class="isSearchFocused ? 'text-primary/70' : 'text-base-content/30'"
         />
         <input 
           ref="searchInputRef"
           type="text"
           v-model="searchQuery"
           :placeholder="$t('search.image_search_placeholder')"
-          :class="[
-            'pl-7 pr-7 w-full input bg-transparent rounded-box',
-            isSearchFocused ? 'border-primary' : 'border-base-content/30 group-hover:border-base-content/70 cursor-pointer',
-          ]"
+          class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none"
           maxlength="255"
           @focus="isSearchFocused = true"
+          @blur="isSearchFocused = false"
           @keydown.enter = "handleSearch()"
           @keydown.esc = "handleEscKey()"
         >
-        <IconClose 
-           v-if="searchQuery"
-          :class="[
-            'absolute right-2 mr-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
-            isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
-          ]"
+        <button
+          v-if="searchQuery"
+          type="button"
+          class="mr-1 p-1 rounded-box text-base-content/30 hover:text-base-content/70"
           @click.stop="searchQuery = ''; focusSearchInput()"
-        />
+        >
+          <IconClose class="w-4 h-4" />
+        </button>
       </div>
+    </div>
 
-      <!-- search history -->
-      <div class="overflow-y-auto flex-1" >
-        <div v-if="libConfig.search.searchHistory.length === 0" class="sidebar-empty text-sm">
-          <span class="text-center">{{ $t('search.image_search_tips') }}</span>
-        </div>  
-
+    <!-- search history -->
+    <div class="overflow-y-auto flex-1" >
         <div v-for="(item, index) in searchHistoryList" :key="index"
           :class="[ 
             'sidebar-item sidebar-item-media text-sm group',
@@ -111,88 +77,8 @@
 	            :smallIcon="true"
 	          />
         </div>  
-      </div>
+    </div>
 
-    </template>
-
-    <!-- 1: similar images -->
-    <template v-else-if="libConfig.search.searchType === 1">
-      <div class="overflow-x-hidden overflow-y-auto flex-1">
-        <div v-if="similarImageHistory.length === 0" class="sidebar-empty text-sm">
-          <span class="text-center">{{ $t('search.similar_images_tips') }}</span>
-        </div>
-        
-        <div v-for="(fileId, index) in similarImageHistory" :key="index"
-          :class="[ 
-            'sidebar-item sidebar-item-media text-sm gap-2 group',
-            libConfig.search.similarImageHistoryIndex === index ? 'sidebar-item-selected' : 'hover:text-base-content hover:bg-base-100/70',
-          ]"
-          @click="handleSimilarHistoryClick(index, fileId)"
-        >
-          <div class="relative w-10 h-10 shrink-0 overflow-hidden rounded-box">
-             <img 
-               v-if="thumbnails[fileId]"
-               class="w-full h-full object-cover" 
-               :src="thumbnails[fileId]" 
-             />
-             <div v-else class="w-full h-full bg-base-300 animate-pulse"></div>
-          </div>
-          <div class="flex-1 flex flex-col justify-center overflow-hidden">
-             <span class="font-medium truncate">{{ historyItems[fileId]?.name || $t('tooltip.loading') }}</span>
-             <!-- <span class="text-xs opacity-70 truncate">{{ historyItems[fileId]?.file_path }}</span> -->
-          </div>
-          <ContextMenu
-            :class="[
-              'ml-auto flex flex-row items-center text-base-content/30',
-              libConfig.search.similarImageHistoryIndex != index ? 'invisible group-hover:visible' : ''
-            ]"
-            :iconMenu="IconMore"
-            :menuItems="getSimilarHistoryMenuItems(index)"
-            :smallIcon="true"
-          />
-        </div>
-      </div>
-    </template>
-
-    <!-- 2: filename search -->
-    <template v-else-if="libConfig.search.searchType === 2">
-      <div
-        :class="[ 
-          'p-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer group relative',
-          isSearchFocused ? 'text-base-content/70' : 'text-base-content/30 hover:text-base-content/70 hover:bg-base-100',
-        ]"
-        @click="focusSearchInput"
-      >
-        <IconSearch 
-          :class="[
-            'absolute left-2 mx-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
-            isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
-          ]"
-        />
-        <input 
-          ref="searchInputRef"
-          type="text"
-          v-model="libConfig.search.fileName"
-          :placeholder="$t('search.filename_search_tips')"
-          :class="[
-            'pl-7 pr-7 w-full input bg-transparent rounded-box',
-            isSearchFocused ? 'border-primary' : 'border-base-content/30 group-hover:border-base-content/70 cursor-pointer',
-          ]"
-          maxlength="255"
-          @focus="isSearchFocused = true"
-          @keydown.enter = "handleEscKey()"
-          @keydown.esc = "handleEscKey()"
-        >
-        <IconClose 
-           v-if="libConfig.search.fileName"
-          :class="[
-            'absolute right-2 mr-1 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer rounded-box z-10',
-            isSearchFocused ? 'text-primary group-hover:text-primary' : 'text-base-content/30 group-hover:text-base-content/70' 
-          ]"
-          @click.stop="libConfig.search.fileName = ''; focusSearchInput()"
-        />
-      </div>
-    </template>
   </div>
 
   <!-- clear history messagebox -->
@@ -224,7 +110,7 @@ import {
   setThumbnailDataUrlInflight,
 } from '@/common/utils';
 
-import { IconMore, IconTrash, IconSearch, IconDot, IconClose, IconError } from '@/common/icons';
+import { IconMore, IconTrash, IconSearch, IconClose, IconError } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({
@@ -267,18 +153,16 @@ const searchQuery = ref('');
 const isSearchFocused = ref(false);
 
 function syncSearchState() {
-  if (libConfig.search.searchType === 0) {
-    if (libConfig.search.searchHistoryIndex !== -1) {
-      const history = libConfig.search.searchHistory as any[];
-      const item = history[libConfig.search.searchHistoryIndex];
-      if (item) {
-        const text = typeof item === 'string' ? item : item.text;
-        libConfig.search.searchText = text;
-        searchQuery.value = text;
-      }
-    } else {
-      searchQuery.value = libConfig.search.searchText || '';
+  if (libConfig.search.searchHistoryIndex !== -1) {
+    const history = libConfig.search.searchHistory as any[];
+    const item = history[libConfig.search.searchHistoryIndex];
+    if (item) {
+      const text = typeof item === 'string' ? item : item.text;
+      libConfig.search.searchText = text;
+      searchQuery.value = text;
     }
+  } else {
+    searchQuery.value = libConfig.search.searchText || '';
   }
 }
 
@@ -291,12 +175,6 @@ watch(
 
 function focusSearchInput() {
   searchInputRef.value?.focus();
-}
-
-function handleTabClick(type: number) {
-  libConfig.search.searchType = type;
-  syncSearchState();
-  nextTick(() => focusSearchInput());
 }
 
 onMounted(() => {
@@ -315,16 +193,9 @@ function handleSearchHistoryClick(index: number) {
 }
 
 function clearHistory() {
-  if(libConfig.search.searchType === 0) {
-    libConfig.search.searchText = '';
-    libConfig.search.searchHistory = [];
-    libConfig.search.searchHistoryIndex = -1;
-  } else if (libConfig.search.searchType === 1) {
-    libConfig.search.similarImageHistory = [];
-    libConfig.search.similarImageHistoryIndex = -1;
-  } else if (libConfig.search.searchType === 2) {
-    libConfig.search.fileName = '';
-  }
+  libConfig.search.searchText = '';
+  libConfig.search.searchHistory = [];
+  libConfig.search.searchHistoryIndex = -1;
 
   showClearHistoryMsgbox.value = false;
 }
@@ -374,28 +245,9 @@ function handleEscKey() {
   searchInputRef.value?.blur();
 }
 
-// similar image search history
 const historyItems = ref<Record<number, any>>({});
-const thumbnails = ref<Record<number, string>>({}); // Shared for both now? Or we should check if we need separate. 
-// Ideally we can share the thumbnails cache by ID. 
-// But let's check how usage differs. 
-// 'thumbnails' is currently keyed by fileId. So it can be shared!
-
-const similarImageHistory = computed(() => libConfig.search.similarImageHistory as number[]);
-const searchHistory = computed(() => libConfig.search.searchHistory);
+const thumbnails = ref<Record<number, string>>({});
 const searchHistoryList = computed(() => libConfig.search.searchHistory as any[]);
-
-const emit = defineEmits(['search-similar-from-history', 'editDataChanged']);
-
-// Watcher for Similar Image History
-watch(
-  () => libConfig.search.similarImageHistory,
-  (newHistory) => {
-    const history = newHistory as number[]; 
-    fetchThumbnailsForIds(history);
-  },
-  { immediate: true, deep: true }
-);
 
 // Watcher for Text Search History (to fetch thumbnails)
 watch(
@@ -438,40 +290,6 @@ async function fetchThumbnailsForIds(ids: number[]) {
       }
       thumbnails.value[fileId] = thumbSrc;
     }
-  }
-}
-
-function handleSimilarHistoryClick(index: number, fileId: number) {
-  if(libConfig.search.similarImageHistoryIndex === index) {
-    return;
-  }
-  libConfig.search.similarImageHistoryIndex = index;
-  
-  if (historyItems.value[fileId]) {
-    nextTick(() => {
-      emit('search-similar-from-history', historyItems.value[fileId]);
-    });
-  }
-}
-
-function getSimilarHistoryMenuItems(index: number) {
-  return [
-    {
-      label: localeMsg.value.menu.home.delete,
-      icon: IconTrash,
-      action: () => {
-        deleteSimilarHistoryItem(index);
-      }
-    },
-  ];
-}
-
-function deleteSimilarHistoryItem(index: number) {
-  (libConfig.search.similarImageHistory as any[]).splice(index, 1);
-  if (libConfig.search.similarImageHistoryIndex === index) {
-    libConfig.search.similarImageHistoryIndex = -1;
-  } else if (libConfig.search.similarImageHistoryIndex > index) {
-    libConfig.search.similarImageHistoryIndex--;
   }
 }
 

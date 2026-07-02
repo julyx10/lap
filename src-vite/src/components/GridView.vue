@@ -55,7 +55,9 @@
           class="min-w-0 flex-1 overflow-hidden"
         />
         <span v-else class="min-w-0 flex-1 truncate text-sm text-base-content/30">{{ item.label }}</span>
-        <span class="badge badge-xs shrink-0 text-xs  bg-base-100 text-base-content/30">{{ Number(item.count || 0).toLocaleString() }}</span>
+        <span class="badge badge-xs shrink-0 text-xs bg-base-100 text-base-content/30">
+          {{ item.countLabel || Number(item.count || 0).toLocaleString() }}
+        </span>
       </div>
       <div
         v-else
