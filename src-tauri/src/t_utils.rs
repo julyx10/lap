@@ -1672,6 +1672,31 @@ fn remove_missing_folder(folder: &AFolder) -> Result<(), String> {
 /// Guard to ensure only one folder sync runs at a time. When a new sync
 /// starts the previous one is cancelled (its generation is invalidated).
 static FOLDER_SYNC_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+static ACTIVE_ALBUM_SCANS: Lazy<Mutex<HashSet<i64>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+
+struct AlbumScanGuard {
+    album_id: i64,
+}
+
+impl AlbumScanGuard {
+    fn acquire(album_id: i64) -> Result<Self, String> {
+        let mut active = ACTIVE_ALBUM_SCANS.lock().unwrap();
+        if !active.insert(album_id) {
+            return Err(format!("Album {} is already being scanned", album_id));
+        }
+        Ok(Self { album_id })
+    }
+}
+
+impl Drop for AlbumScanGuard {
+    fn drop(&mut self) {
+        ACTIVE_ALBUM_SCANS.lock().unwrap().remove(&self.album_id);
+    }
+}
+
+fn album_scan_active(album_id: i64) -> bool {
+    ACTIVE_ALBUM_SCANS.lock().unwrap().contains(&album_id)
+}
 
 fn sync_generation_valid(generation: u64) -> bool {
     FOLDER_SYNC_GENERATION.load(std::sync::atomic::Ordering::SeqCst) == generation
@@ -1721,6 +1746,9 @@ fn sync_dirty_folders_by_mtime(
         if !sync_generation_valid(generation) {
             return Ok((FolderMtimeSyncResult::default(), Vec::new()));
         }
+        if album_scan_active(folder.album_id) {
+            continue;
+        }
         let root_accessible = *album_accessibility
             .entry(folder.album_id)
             .or_insert_with(|| {
@@ -1765,6 +1793,9 @@ fn sync_dirty_folders_by_mtime(
     while let Some((folder, latest_mtime)) = queue.pop() {
         if !sync_generation_valid(generation) {
             return Ok((FolderMtimeSyncResult::default(), Vec::new()));
+        }
+        if album_scan_active(folder.album_id) {
+            continue;
         }
         let folder_id = match folder.id {
             Some(id) => id,
@@ -1850,7 +1881,8 @@ fn sync_folder_direct_files(
     let mut tasks = Vec::new();
 
     // Helper to check background cancellation (generation 0 = foreground, never cancels).
-    let is_cancelled = || generation != 0 && !sync_generation_valid(generation);
+    let is_cancelled =
+        || generation != 0 && (!sync_generation_valid(generation) || album_scan_active(album_id));
 
     // Build a map of file_id → (db_id, db_name) for rename detection.
     // Use the stored inode from the DB record — this works even when the
@@ -2952,6 +2984,7 @@ pub async fn index_album_worker(
     thumbnail_size: u32,
     skip_file_path: Option<String>,
 ) -> Result<(), String> {
+    let _album_scan_guard = AlbumScanGuard::acquire(album_id)?;
     let scan_start = std::time::Instant::now();
     // Generate a unique scan time for this session (current timestamp)
     let current_scan_time = Utc::now().timestamp_millis();

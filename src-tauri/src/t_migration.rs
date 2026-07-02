@@ -94,7 +94,70 @@ fn get_migrations() -> Vec<Migration> {
                     ON acollections_files(collection_id, added_at DESC, file_id);
             ",
         },
+        Migration {
+            version: 7,
+            description: "Deduplicate album files and enforce unique folder names",
+            sql: "",
+        },
     ]
+}
+
+fn migrate_unique_album_files(conn: &Connection) -> Result<(), String> {
+    let tx = conn
+        .unchecked_transaction()
+        .map_err(|e| format!("Migration 7 failed starting transaction: {}", e))?;
+
+    tx.execute_batch(
+        "
+        CREATE TEMP TABLE duplicate_afile_map (
+            old_id INTEGER PRIMARY KEY,
+            new_id INTEGER NOT NULL
+        );
+
+        INSERT INTO duplicate_afile_map (old_id, new_id)
+        SELECT a.id, duplicates.new_id
+        FROM afiles a
+        JOIN (
+            SELECT folder_id, name, MAX(id) AS new_id
+            FROM afiles
+            GROUP BY folder_id, name
+            HAVING COUNT(*) > 1
+        ) duplicates
+          ON duplicates.folder_id = a.folder_id
+         AND duplicates.name = a.name
+        WHERE a.id <> duplicates.new_id;
+
+        UPDATE albums
+        SET cover_file_id = (
+            SELECT new_id
+            FROM duplicate_afile_map
+            WHERE old_id = albums.cover_file_id
+        )
+        WHERE cover_file_id IN (SELECT old_id FROM duplicate_afile_map);
+
+        UPDATE persons
+        SET cover_face_id = NULL
+        WHERE cover_face_id IN (
+            SELECT faces.id
+            FROM faces
+            JOIN duplicate_afile_map ON duplicate_afile_map.old_id = faces.file_id
+        );
+
+        DELETE FROM afiles
+        WHERE id IN (SELECT old_id FROM duplicate_afile_map);
+
+        DROP INDEX IF EXISTS idx_afiles_folder_id_name;
+        CREATE UNIQUE INDEX uidx_afiles_folder_id_name
+            ON afiles(folder_id, name);
+
+        DROP TABLE duplicate_afile_map;
+        PRAGMA user_version = 7;
+        ",
+    )
+    .map_err(|e| format!("Migration 7 failed: {}", e))?;
+
+    tx.commit()
+        .map_err(|e| format!("Migration 7 failed committing transaction: {}", e))
 }
 
 fn table_has_column(conn: &Connection, table: &str, column: &str) -> Result<bool, String> {
@@ -216,6 +279,8 @@ pub fn check_and_migrate(conn: &Connection) -> Result<(), String> {
                         migration.version, e
                     )
                 })?;
+            } else if migration.version == 7 {
+                migrate_unique_album_files(conn)?;
             } else if !migration.sql.trim().is_empty() {
                 conn.execute_batch(migration.sql)
                     .map_err(|e| format!("Migration {} failed: {}", migration.version, e))?;

@@ -187,9 +187,7 @@ onUnmounted(() => {
 });
 
 function handleSearchHistoryClick(index: number) {
-  isSearchFocused.value = true;
   libConfig.search.searchHistoryIndex = index;
-  nextTick(() => focusSearchInput());
 }
 
 function clearHistory() {

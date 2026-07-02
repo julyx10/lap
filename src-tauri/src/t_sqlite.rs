@@ -1955,7 +1955,8 @@ impl AFile {
                 gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc,
                 last_scan_time
             )
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42)
+            ON CONFLICT(folder_id, name) DO NOTHING",
             params![
                 self.folder_id,
 
@@ -2472,9 +2473,16 @@ impl AFile {
         // insert the new file into the database
         let mut new_file_struct = Self::new(folder_id, file_path, file_type)?;
         new_file_struct.last_scan_time = Some(last_scan_time);
-        new_file_struct.insert()?;
+        let inserted = new_file_struct.insert()?;
 
-        // return the newly inserted file
+        // A concurrent folder sync or album scan may have inserted the same
+        // path after the SELECT above. Re-enter the existing-file path so the
+        // winning row is marked as seen by this scan and receives any required
+        // metadata or thumbnail refresh.
+        if inserted == 0 {
+            return Self::add_to_db(folder_id, file_path, file_type, last_scan_time);
+        }
+
         let new_file = Self::fetch(folder_id, file_path)?;
         new_file
             .map(|f| (f, 1))
@@ -6946,11 +6954,6 @@ fn create_db_internal() -> Result<(), String> {
             last_scan_time INTEGER DEFAULT 0,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
-        [],
-    )
-    .map_err(|e| e.to_string())?;
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_afiles_folder_id_name ON afiles(folder_id, name)",
         [],
     )
     .map_err(|e| e.to_string())?;
