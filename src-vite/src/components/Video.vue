@@ -2,6 +2,7 @@
   <div
     ref="videoContainer"
     class="relative w-full h-full overflow-hidden cursor-pointer"
+    :class="{ 'pointer-events-none': !isActive }"
     style="touch-action: none;"
     @wheel.prevent="handleWheel"
     @contextmenu="handleContextMenu"
@@ -65,6 +66,7 @@ const props = defineProps({
   rotate: { type: Number, default: 0 },
   isZoomFit: { type: Boolean, default: false },
   isSlideShow: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(['message-from-video-viewer', 'slideshow-next', 'scale', 'viewport-change', 'context-menu']);
@@ -253,6 +255,10 @@ const setupPlayer = (index: number) => {
 
     player.on('play', () => {
       if (activeVideo.value === index) {
+        if (!props.isActive) {
+          player.pause();
+          return;
+        }
         isPlaying.value = true;
         isReplaying.value = false;
       }
@@ -280,7 +286,7 @@ const setupPlayer = (index: number) => {
     });
 
     player.on('volumechange', () => {
-      if (activeVideo.value === index && !isLoading.value) {
+      if (activeVideo.value === index && !isLoading.value && props.isActive) {
         config.setVideoVolume(player.volume());
         config.setVideoMuted(player.muted());
       }
@@ -327,7 +333,10 @@ const setupPlayer = (index: number) => {
   }
 };
 
-const clickPlayVideo = () => getActivePlayer()?.play();
+const clickPlayVideo = () => {
+  if (!props.isActive) return;
+  getActivePlayer()?.play();
+};
 
 const loadVideo = async (filePath: string) => {
   if (!filePath) return;
@@ -391,7 +400,7 @@ const loadVideo = async (filePath: string) => {
       noTransition.value = false;
     }, 100);
 
-    if (config.settings.autoPlayVideo || props.isSlideShow) {
+    if (props.isActive && (config.settings.autoPlayVideo || props.isSlideShow)) {
       // Restore user audio settings right before playback starts
       player.volume(config.video.volume);
       player.muted(config.video.muted);
@@ -744,12 +753,24 @@ watch(() => props.isZoomFit, (val) => {
 });
 
 watch(() => props.isSlideShow, (newVal) => {
-  if (newVal) {
+  if (newVal && props.isActive) {
     const player = getActivePlayer();
     if (player && !isPlaying.value) {
       player.play();
     }
   }
+});
+
+watch(() => props.isActive, (isActive) => {
+  const player = getActivePlayer();
+  if (!player) return;
+  if (!isActive) {
+    player.pause();
+    player.muted(true);
+    return;
+  }
+  player.volume(config.video.volume);
+  player.muted(config.video.muted);
 });
 
 const zoomIn = () => {

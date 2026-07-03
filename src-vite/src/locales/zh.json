@@ -954,6 +954,10 @@
       "close": "关闭",
       "split_on": "开启分屏视图",
       "split_off": "关闭分屏视图",
+      "split_2_on": "开启双分屏",
+      "split_2_off": "关闭双分屏",
+      "split_4_on": "开启四分屏",
+      "split_4_off": "关闭四分屏",
       "sync_viewport_on": "开启联动缩放",
       "sync_viewport_off": "关闭联动缩放",
       "sync_viewport_need_split": "请先开启分屏视图"

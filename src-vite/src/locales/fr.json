@@ -954,6 +954,10 @@
       "close": "Fermer",
       "split_on": "Activer la vue fractionnée",
       "split_off": "Désactiver la vue fractionnée",
+      "split_2_on": "Activer la vue à deux volets",
+      "split_2_off": "Désactiver la vue à deux volets",
+      "split_4_on": "Activer la vue à quatre volets",
+      "split_4_off": "Désactiver la vue à quatre volets",
       "sync_viewport_on": "Activer le zoom lié",
       "sync_viewport_off": "Désactiver le zoom lié",
       "sync_viewport_need_split": "Activez d'abord la vue fractionnée"

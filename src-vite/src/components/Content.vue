@@ -4085,9 +4085,18 @@ onMounted( async() => {
     switch (message) {
       case 'request-file-at-index':
         const requestIndex = (event.payload as any).index;
-        const pane = (event.payload as any).pane === 'right' ? 'right' : 'left';
+        const requestedPane = String((event.payload as any).pane || 'left');
+        const pane = ['left', 'right', 'bottomLeft', 'bottomRight'].includes(requestedPane)
+          ? requestedPane
+          : 'left';
+        if (!isRealFileItem(fileList.value[requestIndex])) {
+          ensureGroupedFileAtIndex(requestIndex);
+        }
+        if (!isRealFileItem(fileList.value[requestIndex])) {
+          await fetchDataRange(requestIndex, requestIndex + 2);
+        }
         const file = fileList.value[requestIndex];
-        if (file) {
+        if (isRealFileItem(file)) {
            const imageWindow = await WebviewWindow.getByLabel('imageviewer');
            if (imageWindow) {
              imageWindow.emit('update-img', {

@@ -16,7 +16,7 @@
         showEmbeddedStatusBar ? 'pb-8' : '',
       ]"
     >
-      <template v-if="!isSplit && fileIndex >= 0">
+      <template v-if="splitCount === 1 && fileIndex >= 0">
         <MediaViewer
           ref="mediaViewerRef"
           :mode="2"
@@ -35,7 +35,7 @@
           :imageMinScale="imageMinScale"
           :imageMaxScale="imageMaxScale"
           :isZoomFit="isZoomFit"
-          :isSplit="isSplit"
+          :splitCount="splitCount"
           :isSyncViewport="isSyncViewport"
           :showWindowControls="true"
           @prev="clickPrev()"
@@ -61,7 +61,7 @@
         -->
       </template>
 
-      <template v-else-if="isSplit && fileIndex >= 0">
+      <template v-else-if="splitCount > 1 && fileIndex >= 0">
         <div class="w-full h-full flex flex-col">
           <!-- Shared toolbar above both panes -->
           <MediaViewer
@@ -70,20 +70,20 @@
             :showToolbar="true"
             :showWindowControls="true"
             :isFullScreen="isFullScreen"
-            :file="activePane === 'left' ? fileInfo : rightFileInfo"
-            :nextFilePath="activePane === 'left' ? nextFilePath : rightNextFilePath"
-            :hasPrevious="activePane === 'left' ? fileIndex > 0 : rightFileIndex > 0"
-            :hasNext="activePane === 'left' ? fileIndex < fileCount - 1 : rightFileIndex < fileCount - 1"
-            :fileIndex="activePane === 'left' ? fileIndex : rightFileIndex"
+            :file="getFileInfoByPane(activePane)"
+            :nextFilePath="getNextFilePathByPane(activePane)"
+            :hasPrevious="getFileIndexByPane(activePane) > 0"
+            :hasNext="getFileIndexByPane(activePane) < fileCount - 1"
+            :fileIndex="getFileIndexByPane(activePane)"
             :fileCount="fileCount"
             :isSlideShow="false"
             :canSlideShow="false"
             :canInteract="true"
-            :imageScale="activePane === 'left' ? imageScale : rightImageScale"
-            :imageMinScale="activePane === 'left' ? imageMinScale : rightImageMinScale"
-            :imageMaxScale="activePane === 'left' ? imageMaxScale : rightImageMaxScale"
-            :isZoomFit="activePane === 'left' ? isZoomFit : rightIsZoomFit"
-            :isSplit="isSplit"
+            :imageScale="getPaneScale(activePane).scale"
+            :imageMinScale="getPaneScale(activePane).min"
+            :imageMaxScale="getPaneScale(activePane).max"
+            :isZoomFit="getZoomFitByPane(activePane)"
+            :splitCount="splitCount"
             :isSyncViewport="isSyncViewport"
             :forceToolbarVisible="isFullScreen && splitToolbarVisible"
             @prev="clickPrev(activePane)"
@@ -98,101 +98,52 @@
           />
 
           <!-- Split Panes -->
-          <div class="flex-1 flex min-h-0">
+          <div
+            class="flex-1 grid min-h-0"
+            :class="splitCount === 4 ? 'grid-cols-2 grid-rows-2' : 'grid-cols-2 grid-rows-1'"
+          >
             <div
-              class="relative w-1/2 h-full border-r border-base-content/10"
-              @mousedown="setActivePane('left')"
+              v-for="pane in visiblePanes"
+              :key="pane"
+              class="relative min-w-0 min-h-0"
+              :class="paneBorderClass(pane)"
+              @mousedown="setActivePane(pane)"
             >
-              <IconDot
-                v-if="activePane === 'left'"
-                class="absolute right-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
-              />
               <MediaViewer
-                ref="mediaViewerRef"
+                :ref="(el) => setPaneViewerRef(pane, el)"
                 :mode="2"
                 :isFullScreen="isFullScreen"
-                :file="fileInfo"
-                :nextFilePath="nextFilePath"
-                :hasPrevious="fileIndex > 0"
-                :hasNext="fileIndex < fileCount - 1"
-                :fileIndex="fileIndex"
+                :file="getFileInfoByPane(pane)"
+                :nextFilePath="getNextFilePathByPane(pane)"
+                :hasPrevious="getFileIndexByPane(pane) > 0"
+                :hasNext="getFileIndexByPane(pane) < fileCount - 1"
+                :fileIndex="getFileIndexByPane(pane)"
                 :fileCount="fileCount"
                 :isSlideShow="false"
                 :canSlideShow="false"
-                :canInteract="activePane === 'left'"
+                :canInteract="activePane === pane"
+                :isPlaybackActive="activePane === pane"
                 :showToolbar="false"
-                :imageScale="imageScale"
-                :imageMinScale="imageMinScale"
-                :imageMaxScale="imageMaxScale"
-                :isZoomFit="isZoomFit"
-                @prev="clickPrev('left')"
-                @next="clickNext('left')"
-                @toggle-slide-show="clickSlideShow('left')"
+                :imageScale="getPaneScale(pane).scale"
+                :imageMinScale="getPaneScale(pane).min"
+                :imageMaxScale="getPaneScale(pane).max"
+                :isZoomFit="getZoomFitByPane(pane)"
+                @prev="clickPrev(pane)"
+                @next="clickNext(pane)"
+                @toggle-slide-show="clickSlideShow(pane)"
                 @item-action="handleItemAction"
-                @scale="clickScale($event, 'left')"
-                @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'left')"
-                @media-dblclick="toggleZoomFit('left')"
-                @viewport-change="handleViewportChange($event, 'left')"
+                @scale="clickScale($event, pane)"
+                @update:isZoomFit="(val) => handleZoomFitUpdate(val, pane)"
+                @media-dblclick="toggleZoomFit(pane)"
+                @viewport-change="handleViewportChange($event, pane)"
                 @toggle-full-screen="toggleNativeFullScreen"
                 @close="closeWindow"
                 @slideshow-next="handleSlideshowNext"
               />
-              <!--
-              <div v-if="config.settings.showComment && fileInfo?.comments?.length > 0" 
-                class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
-              >
-                <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
-                {{ fileInfo?.comments }}
-              </div>
-              -->
-            </div>
-
-            <div
-              class="relative w-1/2 h-full"
-              @mousedown="setActivePane('right')"
-            >
-              <IconDot
-                v-if="activePane === 'right'"
-                class="absolute left-2 top-2 z-90 t-icon-size-sm text-primary pointer-events-none"
+              <div
+                v-if="activePane === pane"
+                class="absolute inset-0 z-90 border border-primary/70 pointer-events-none"
               />
-              <MediaViewer
-                ref="rightMediaViewerRef"
-                :mode="2"
-                :isFullScreen="isFullScreen"
-                :file="rightFileInfo"
-                :nextFilePath="rightNextFilePath"
-                :hasPrevious="rightFileIndex > 0"
-                :hasNext="rightFileIndex < fileCount - 1"
-                :fileIndex="rightFileIndex"
-                :fileCount="fileCount"
-                :isSlideShow="false"
-                :canSlideShow="false"
-                :canInteract="activePane === 'right'"
-                :showToolbar="false"
-                :imageScale="rightImageScale"
-                :imageMinScale="rightImageMinScale"
-                :imageMaxScale="rightImageMaxScale"
-                :isZoomFit="rightIsZoomFit"
-                @prev="clickPrev('right')"
-                @next="clickNext('right')"
-                @toggle-slide-show="clickSlideShow('right')"
-                @item-action="handleItemAction"
-                @scale="clickScale($event, 'right')"
-                @update:isZoomFit="(val) => handleZoomFitUpdate(val, 'right')"
-                @media-dblclick="toggleZoomFit('right')"
-                @viewport-change="handleViewportChange($event, 'right')"
-                @toggle-full-screen="toggleNativeFullScreen"
-                @close="closeWindow"
-                @slideshow-next="handleSlideshowNext"
-              />
-              <!--
-              <div v-if="config.settings.showComment && rightFileInfo?.comments?.length > 0" 
-                class="absolute flex m-2 p-2 bottom-0 left-0 right-0 text-sm bg-base-100/30 rounded-box select-text"
-              >
-                <IconComment class="t-icon-size-sm shrink-0 mr-2"></IconComment>
-                {{ rightFileInfo?.comments }}
-              </div>
-              -->
             </div>
           </div>
         </div>
@@ -209,43 +160,15 @@
       v-if="showEmbeddedStatusBar"
       class="absolute bottom-0 left-0 right-0 z-30 h-8 bg-base-300/80 backdrop-blur-md"
     >
-      <template v-if="!isSplit">
-        <StatusBar
-          :selected-file="fileInfo"
-          :selected-item-index="fileIndex"
-          :total-file-count="fileCount"
-          :total-file-size="fileInfo?.size || 0"
-          :image-scale="imageDisplayScale"
-          :show-scale="true"
-          :is-embedded="true"
-        />
-      </template>
-      <template v-else>
-        <div class="h-8 flex">
-          <div class="w-1/2 border-r border-base-content/10">
-            <StatusBar
-              :selected-file="fileInfo"
-              :selected-item-index="fileIndex"
-              :total-file-count="fileCount"
-              :total-file-size="fileInfo?.size || 0"
-              :image-scale="imageDisplayScale"
-              :show-scale="true"
-              :is-embedded="true"
-            />
-          </div>
-          <div class="w-1/2">
-            <StatusBar
-              :selected-file="rightFileInfo"
-              :selected-item-index="rightFileIndex"
-              :total-file-count="fileCount"
-              :total-file-size="rightFileInfo?.size || 0"
-              :image-scale="rightImageDisplayScale"
-              :show-scale="true"
-              :is-embedded="true"
-            />
-          </div>
-        </div>
-      </template>
+      <StatusBar
+        :selected-file="activeFileInfo"
+        :selected-item-index="getFileIndexByPane(statusPane)"
+        :total-file-count="fileCount"
+        :total-file-size="activeFileInfo?.size || 0"
+        :image-scale="getPaneScale(statusPane).display"
+        :show-scale="true"
+        :is-embedded="true"
+      />
     </div>
 
     <TaggingDialog
@@ -274,7 +197,7 @@
 
 <script setup lang="ts">
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
@@ -300,7 +223,6 @@ import TaggingDialog from '@/components/TaggingDialog.vue';
 import { 
   IconSearch,
   IconComment,
-  IconDot,
  } from '@/common/icons';
 
 /// i18n
@@ -323,14 +245,17 @@ const isTransitionDisabled = ref(true);
 
 const mediaViewerRef = ref<any>(null); // media viewer reference
 const rightMediaViewerRef = ref<any>(null); // right media viewer reference (split mode)
+type Pane = 'left' | 'right' | 'bottomLeft' | 'bottomRight';
+const allPanes: Pane[] = ['left', 'right', 'bottomLeft', 'bottomRight'];
+const paneViewerRefs = new Map<Pane, any>();
 const isFullScreen = ref(false);
 const isZoomFit = ref(true);
 const rightIsZoomFit = ref(true);
-const isSplit = ref(false);
-const activePane = ref<'left' | 'right'>('left');
+const splitCount = ref<1 | 2 | 4>(1);
+const activePane = ref<Pane>('left');
 const isSyncViewport = ref(false);
 const isCompareModeSession = ref(false);
-const syncingPane = ref<'left' | 'right' | ''>('');
+const syncingPane = ref<Pane | ''>('');
 const animateSyncOnce = ref(false);
 const splitToolbarVisible = ref(false);
 
@@ -351,6 +276,29 @@ const rightFileId = ref(0);         // Right file ID
 const rightFileIndex = ref(-1);     // Right file index
 const rightFileInfo = ref<any>(null);
 const rightNextFilePath = ref('');
+const extraPaneState = reactive<Record<'bottomLeft' | 'bottomRight', {
+  fileId: number;
+  fileIndex: number;
+  fileInfo: any;
+  nextFilePath: string;
+  isZoomFit: boolean;
+  scale: number;
+  displayScale: number;
+  minScale: number;
+  maxScale: number;
+}>>({
+  bottomLeft: {
+    fileId: 0, fileIndex: -1, fileInfo: null, nextFilePath: '',
+    isZoomFit: true, scale: 1, displayScale: 1, minScale: 0, maxScale: 10,
+  },
+  bottomRight: {
+    fileId: 0, fileIndex: -1, fileInfo: null, nextFilePath: '',
+    isZoomFit: true, scale: 1, displayScale: 1, minScale: 0, maxScale: 10,
+  },
+});
+const visiblePanes = computed<Pane[]>(() =>
+  splitCount.value === 4 ? allPanes : ['left', 'right']
+);
 const showTaggingDialog = ref(false);
 const showCommentMsgbox = ref(false);
 const taggingFileIds = ref<number[]>([]);
@@ -360,16 +308,22 @@ let unlistenGridView: () => void;
 let unlistenFilesDeleted: (() => void) | null = null;
 
 const activeFileInfo = computed(() => {
-  return isSplit.value && activePane.value === 'right' ? rightFileInfo.value : fileInfo.value;
+  return getFileInfoByPane(splitCount.value > 1 ? activePane.value : 'left');
 });
 
 const activeFileId = computed(() => {
-  return isSplit.value && activePane.value === 'right' ? rightFileId.value : fileId.value;
+  return getFileIdByPane(splitCount.value > 1 ? activePane.value : 'left');
 });
+const statusPane = computed<Pane>(() => splitCount.value > 1 ? activePane.value : 'left');
 const showEmbeddedStatusBar = computed(() => config.settings.showStatusBar && !isFullScreen.value);
 
 function normalizeScale(value: number) {
   return SCALE_VALUES.find((item) => item === Number(value)) ?? 1;
+}
+
+function normalizeSplitCount(value: unknown): 1 | 2 | 4 {
+  const count = Number(value);
+  return count === 2 || count === 4 ? count : 1;
 }
 
 function applyViewerScale(scale: number) {
@@ -378,7 +332,7 @@ function applyViewerScale(scale: number) {
 }
 
 function handleRootMouseMove(event: MouseEvent) {
-  if (!isFullScreen.value || !isSplit.value) {
+  if (!isFullScreen.value || splitCount.value === 1) {
     splitToolbarVisible.value = false;
     return;
   }
@@ -410,12 +364,12 @@ onMounted(async() => {
   const forceSplit = urlParams.get('forceSplit') === '1';
   isCompareModeSession.value = urlParams.get('compareMode') === '1';
 
-  isSplit.value = forceSplit ? true : !!config.imageViewer?.isSplit;
+  splitCount.value = forceSplit ? 2 : normalizeSplitCount(config.imageViewer?.splitCount);
   if (isCompareModeSession.value) {
-    isSplit.value = true;
+    splitCount.value = 2;
     isSyncViewport.value = true;
   } else {
-    isSyncViewport.value = isSplit.value ? !!config.imageViewer?.isSyncViewport : false;
+    isSyncViewport.value = splitCount.value > 1 ? !!config.imageViewer?.isSyncViewport : false;
   }
   rightFileId.value = initialRightFileId > 0 ? initialRightFileId : 0;
   rightFileIndex.value = initialRightFileId > 0 ? initialRightFileIndex : -1;
@@ -430,37 +384,30 @@ onMounted(async() => {
       return;
     }
 
-    const pane = event.payload?.pane === 'right' ? 'right' : 'left';
+    const requestedPane = String(event.payload?.pane || 'left');
+    const pane: Pane = allPanes.includes(requestedPane as Pane) ? requestedPane as Pane : 'left';
     if (typeof event.payload?.compareMode === 'boolean') {
       isCompareModeSession.value = !!event.payload.compareMode;
     }
     if (typeof event.payload?.forceSplit === 'boolean') {
-      isSplit.value = !!event.payload.forceSplit;
-      if (isSplit.value && typeof event.payload?.forceSyncViewport === 'boolean') {
+      splitCount.value = event.payload.forceSplit ? 2 : 1;
+      if (splitCount.value > 1 && typeof event.payload?.forceSyncViewport === 'boolean') {
         isSyncViewport.value = !!event.payload.forceSyncViewport;
       }
-      if (!isSplit.value) {
-        rightFileId.value = 0;
-        rightFileIndex.value = -1;
-        rightFileInfo.value = null;
-        rightNextFilePath.value = '';
-        rightIsZoomFit.value = true;
+      if (splitCount.value === 1) {
+        clearSecondaryPanes();
       }
     }
     if (event.payload?.resetSplit) {
       if (isCompareModeSession.value) {
-        isSplit.value = true;
+        splitCount.value = 2;
         isSyncViewport.value = true;
       } else {
-        isSplit.value = !!config.imageViewer?.isSplit;
-        isSyncViewport.value = isSplit.value ? !!config.imageViewer?.isSyncViewport : false;
+        splitCount.value = normalizeSplitCount((config.imageViewer as any)?.splitCount);
+        isSyncViewport.value = splitCount.value > 1 ? !!config.imageViewer?.isSyncViewport : false;
       }
-      if (!isSplit.value) {
-        rightFileId.value = 0;
-        rightFileIndex.value = -1;
-        rightFileInfo.value = null;
-        rightNextFilePath.value = '';
-        rightIsZoomFit.value = true;
+      if (splitCount.value === 1) {
+        clearSecondaryPanes();
       }
     }
 
@@ -469,12 +416,17 @@ onMounted(async() => {
       rightFileId.value = Number(event.payload.fileId);
       rightFileIndex.value = Number(event.payload.fileIndex);
       rightNextFilePath.value = event.payload.nextFilePath || '';
+    } else if (pane === 'bottomLeft' || pane === 'bottomRight') {
+      extraPaneState[pane].fileId = Number(event.payload.fileId);
+      extraPaneState[pane].fileIndex = Number(event.payload.fileIndex);
+      extraPaneState[pane].nextFilePath = event.payload.nextFilePath || '';
     } else {
       fileId.value = Number(event.payload.fileId);
       fileIndex.value = Number(event.payload.fileIndex);
       nextFilePath.value = event.payload.nextFilePath || '';
     }
   });
+  ensureFourPanesLoaded();
 
 
   unlistenGridView = await listen('message-from-content', (event) => {
@@ -482,25 +434,22 @@ onMounted(async() => {
     console.log('message-from-content:', message, targetFileId);
     switch (message) {
       case 'rotate':
+        for (const pane of allPanes) {
+          if (targetFileId !== getFileIdByPane(pane)) continue;
+          getViewerRef(pane)?.rotateRight();
+          const target = getFileInfoByPane(pane);
+          if (target) target.rotate = (target.rotate || 0) + 90;
+        }
         if (targetFileId === fileId.value) {
-          mediaViewerRef.value?.rotateRight();
           iconRotate.value += 90;
-          if (fileInfo.value) {
-            fileInfo.value.rotate = (fileInfo.value.rotate || 0) + 90;
-          }
-        } else if (targetFileId === rightFileId.value) {
-          rightMediaViewerRef.value?.rotateRight();
-          if (rightFileInfo.value) {
-            rightFileInfo.value.rotate = (rightFileInfo.value.rotate || 0) + 90;
-          }
         }
         break;
       case 'update-file-meta':
-        if (targetFileId === fileId.value && fileInfo.value) {
-          Object.assign(fileInfo.value, changes || {});
-        }
-        if (targetFileId === rightFileId.value && rightFileInfo.value) {
-          Object.assign(rightFileInfo.value, changes || {});
+        for (const pane of allPanes) {
+          const target = getFileInfoByPane(pane);
+          if (targetFileId === getFileIdByPane(pane) && target) {
+            Object.assign(target, changes || {});
+          }
         }
         break;
       default:
@@ -525,6 +474,12 @@ onMounted(async() => {
       rightFileIndex.value = -1;
       rightFileInfo.value = null;
       rightNextFilePath.value = '';
+      for (const pane of ['bottomLeft', 'bottomRight'] as const) {
+        extraPaneState[pane].fileId = 0;
+        extraPaneState[pane].fileIndex = -1;
+        extraPaneState[pane].fileInfo = null;
+        extraPaneState[pane].nextFilePath = '';
+      }
       return;
     }
 
@@ -536,10 +491,17 @@ onMounted(async() => {
       requestFileAtIndex(targetIndex, 'left');
     }
 
-    if (isSplit.value && (rightDeleted || rightFileIndex.value >= fileCount.value)) {
+    if (splitCount.value > 1 && (rightDeleted || rightFileIndex.value >= fileCount.value)) {
       const fallbackBase = rightFileIndex.value >= 0 ? rightFileIndex.value : (fileIndex.value + 1);
       const targetIndex = Math.max(0, Math.min(fallbackBase, fileCount.value - 1));
       requestFileAtIndex(targetIndex, 'right');
+    }
+
+    for (const pane of ['bottomLeft', 'bottomRight'] as const) {
+      const state = extraPaneState[pane];
+      if (splitCount.value !== 4 || (!deletedIds.includes(state.fileId) && state.fileIndex < fileCount.value)) continue;
+      const targetIndex = Math.max(0, Math.min(state.fileIndex, fileCount.value - 1));
+      requestFileAtIndex(targetIndex, pane);
     }
   });
 
@@ -572,6 +534,15 @@ onUnmounted(() => {
 // Handle keyboard shortcuts
 function handleKeyDown(event: KeyboardEvent) {
   if(uiStore.inputStack.length > 0) {
+    return;
+  }
+
+  if (event.key === 'Tab' && splitCount.value > 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    event.preventDefault();
+    const panes = visiblePanes.value;
+    const currentIndex = panes.indexOf(activePane.value);
+    const direction = event.shiftKey ? -1 : 1;
+    setActivePane(panes[(currentIndex + direction + panes.length) % panes.length]);
     return;
   }
 
@@ -629,9 +600,10 @@ function handleKeyDown(event: KeyboardEvent) {
     return;
   }
 
-  if (matchesShortcut('view.togglePane', event, shortcutPlatform) && isSplit.value) {
+  if (matchesShortcut('view.togglePane', event, shortcutPlatform) && splitCount.value > 1) {
     event.preventDefault();
-    setActivePane(activePane.value === 'left' ? 'right' : 'left');
+    const panes = visiblePanes.value;
+    setActivePane(panes[(panes.indexOf(activePane.value) + 1) % panes.length]);
     return;
   }
 
@@ -690,71 +662,90 @@ function getMatchedViewAction(event: KeyboardEvent) {
   return viewActionOrder.find((actionId) => matchesShortcut(actionId, event, shortcutPlatform));
 }
 
-function getActivePane(): 'left' | 'right' {
-  return isSplit.value ? activePane.value : 'left';
+function getActivePane(): Pane {
+  return splitCount.value > 1 ? activePane.value : 'left';
 }
 
-function setActivePane(pane: 'left' | 'right') {
+function setActivePane(pane: Pane) {
   activePane.value = pane;
 }
 
-function getViewerRef(pane: 'left' | 'right') {
-  return pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+function setPaneViewerRef(pane: Pane, viewer: any) {
+  if (viewer) paneViewerRefs.set(pane, viewer);
+  else paneViewerRefs.delete(pane);
+  if (pane === 'left') mediaViewerRef.value = viewer;
+  if (pane === 'right') rightMediaViewerRef.value = viewer;
 }
 
-function haveMatchingSyncableMedia() {
-  const leftType = fileInfo.value?.file_type;
-  const rightType = rightFileInfo.value?.file_type;
-  const isImageType = (t: number) => t === 1 || t === 3;
-  if (isImageType(leftType) && isImageType(rightType)) return true;
-  return leftType === 2 && rightType === 2;
+function getViewerRef(pane: Pane) {
+  return paneViewerRefs.get(pane)
+    || (pane === 'right' ? rightMediaViewerRef.value : pane === 'left' ? mediaViewerRef.value : null);
 }
 
-function syncViewportFrom(pane: 'left' | 'right', animate = false) {
-  if (!isSplit.value || !isSyncViewport.value) return;
-  if (!haveMatchingSyncableMedia()) return;
+function paneBorderClass(pane: Pane) {
+  if (splitCount.value !== 4) return pane === 'left' ? 'border-r border-base-content/10' : '';
+  return {
+    left: 'border-r border-b border-base-content/10',
+    right: 'border-b border-base-content/10',
+    bottomLeft: 'border-r border-base-content/10',
+    bottomRight: '',
+  }[pane];
+}
+
+function syncViewportFrom(pane: Pane, animate = false) {
+  if (splitCount.value === 1 || !isSyncViewport.value) return;
 
   const sourceRef = getViewerRef(pane);
-  const targetPane = pane === 'left' ? 'right' : 'left';
-  const targetRef = getViewerRef(targetPane);
   const viewport = sourceRef?.getViewportState?.();
   if (!viewport) return;
 
   syncingPane.value = pane;
-  targetRef?.applyViewportState?.(viewport, !animate);
+  for (const targetPane of visiblePanes.value) {
+    if (targetPane !== pane) {
+      getViewerRef(targetPane)?.applyViewportState?.(viewport, !animate);
+    }
+  }
   syncingPane.value = '';
 }
 
-function handleViewportChange(viewport: any, pane: 'left' | 'right') {
-  if (!isSplit.value || !isSyncViewport.value) return;
+function handleViewportChange(viewport: any, pane: Pane) {
+  if (splitCount.value === 1 || !isSyncViewport.value) return;
   if (syncingPane.value) return;
-  if (!haveMatchingSyncableMedia()) return;
 
-  const targetPane = pane === 'left' ? 'right' : 'left';
   const shouldAnimate = animateSyncOnce.value;
   animateSyncOnce.value = false;
   syncingPane.value = pane;
   // Drag/wheel sync stays no-animation; zoom-fit sync can opt-in animation.
-  getViewerRef(targetPane)?.applyViewportState?.(viewport, !shouldAnimate);
+  for (const targetPane of visiblePanes.value) {
+    if (targetPane !== pane) {
+      getViewerRef(targetPane)?.applyViewportState?.(viewport, !shouldAnimate);
+    }
+  }
   syncingPane.value = '';
 }
 
-function getZoomFitByPane(pane: 'left' | 'right') {
-  return pane === 'right' ? rightIsZoomFit.value : isZoomFit.value;
+function getZoomFitByPane(pane: Pane) {
+  if (pane === 'right') return rightIsZoomFit.value;
+  if (pane === 'bottomLeft' || pane === 'bottomRight') return extraPaneState[pane].isZoomFit;
+  return isZoomFit.value;
 }
 
-function setZoomFitByPane(pane: 'left' | 'right', val: boolean) {
+function setZoomFitByPane(pane: Pane, val: boolean) {
   if (pane === 'right') {
     rightIsZoomFit.value = val;
+    return;
+  }
+  if (pane === 'bottomLeft' || pane === 'bottomRight') {
+    extraPaneState[pane].isZoomFit = val;
     return;
   }
   isZoomFit.value = val;
 }
 
-function handleZoomFitUpdate(val: boolean, pane: 'left' | 'right') {
+function handleZoomFitUpdate(val: boolean, pane: Pane) {
   setActivePane(pane);
   setZoomFitByPane(pane, val);
-  if (isSplit.value && isSyncViewport.value && haveMatchingSyncableMedia()) {
+  if (splitCount.value > 1 && isSyncViewport.value) {
     animateSyncOnce.value = true;
   }
 }
@@ -798,7 +789,7 @@ watch(() => config.settings.language, (newLanguage) => {
 // watch full screen
 watch(() => isFullScreen.value, async (newFullScreen) => {
   if (!config.imageViewer) {
-    (config as any).imageViewer = { isSplit: false, isSyncViewport: false, isFullScreen: false };
+    (config as any).imageViewer = { splitCount: 1, isSyncViewport: false, isFullScreen: false };
   }
   config.imageViewer.isFullScreen = newFullScreen;
 
@@ -830,6 +821,12 @@ watch(() => rightFileId.value, async () => {
     rightFileInfo.value = null;
   }
 });
+
+for (const pane of ['bottomLeft', 'bottomRight'] as const) {
+  watch(() => extraPaneState[pane].fileId, async (newFileId) => {
+    extraPaneState[pane].fileInfo = newFileId > 0 ? await getFileInfo(newFileId) : null;
+  });
+}
 
 // watch file index
 watch(() => fileIndex.value, async (newIndex) => {
@@ -901,7 +898,7 @@ watch(() => slideShowIntervalIndex.value, () => {
 });
 
 function ensureRightPaneLoaded() {
-  if (!isSplit.value) return;
+  if (splitCount.value === 1) return;
   if (rightFileIndex.value >= 0 && rightFileId.value > 0) return;
   if (fileCount.value <= 0 || fileIndex.value < 0) return;
 
@@ -909,9 +906,32 @@ function ensureRightPaneLoaded() {
   requestFileAtIndex(nextIndex, 'right');
 }
 
-watch(() => isSplit.value, (val) => {
+function ensureFourPanesLoaded() {
+  if (splitCount.value !== 4 || fileCount.value <= 0 || fileIndex.value < 0) return;
+  ensureRightPaneLoaded();
+  for (const [pane, offset] of [['bottomLeft', 2], ['bottomRight', 3]] as const) {
+    if (extraPaneState[pane].fileIndex >= 0 && extraPaneState[pane].fileId > 0) continue;
+    requestFileAtIndex(Math.min(fileIndex.value + offset, fileCount.value - 1), pane);
+  }
+}
+
+function clearSecondaryPanes() {
+  rightFileId.value = 0;
+  rightFileIndex.value = -1;
+  rightFileInfo.value = null;
+  rightNextFilePath.value = '';
+  rightIsZoomFit.value = true;
+  for (const pane of ['bottomLeft', 'bottomRight'] as const) {
+    Object.assign(extraPaneState[pane], {
+      fileId: 0, fileIndex: -1, fileInfo: null, nextFilePath: '',
+      isZoomFit: true, scale: 1, displayScale: 1, minScale: 0, maxScale: 10,
+    });
+  }
+}
+
+watch(() => splitCount.value, (count) => {
   if (isCompareModeSession.value) {
-    if (!val) {
+    if (count === 1) {
       isSyncViewport.value = false;
     } else {
       ensureRightPaneLoaded();
@@ -919,42 +939,80 @@ watch(() => isSplit.value, (val) => {
     return;
   }
   if (!config.imageViewer) {
-    (config as any).imageViewer = { isSplit: false, isSyncViewport: false, isFullScreen: false };
+    (config as any).imageViewer = { splitCount: 1, isSyncViewport: false, isFullScreen: false };
   }
-  config.imageViewer.isSplit = val;
-  if (!val) {
+  (config.imageViewer as any).splitCount = count;
+  if (count === 1) {
     isSyncViewport.value = false;
   } else {
     ensureRightPaneLoaded();
+    ensureFourPanesLoaded();
   }
 });
 
 watch(() => isSyncViewport.value, (val) => {
   if (isCompareModeSession.value) return;
   if (!config.imageViewer) {
-    (config as any).imageViewer = { isSplit: false, isSyncViewport: false, isFullScreen: false };
+    (config as any).imageViewer = { splitCount: 1, isSyncViewport: false, isFullScreen: false };
   }
   config.imageViewer.isSyncViewport = val;
 });
 
 watch(() => [fileIndex.value, fileCount.value], () => {
   ensureRightPaneLoaded();
+  ensureFourPanesLoaded();
 });
 
-function requestFileAtIndex(index: number, pane: 'left' | 'right' = 'left') {
+function requestFileAtIndex(index: number, pane: Pane = 'left') {
   emit('message-from-image-viewer', { message: 'request-file-at-index', index, pane });
 }
 
-function getFileInfoByPane(pane: 'left' | 'right' = 'left') {
-  return pane === 'right' ? rightFileInfo.value : fileInfo.value;
+function getFileInfoByPane(pane: Pane = 'left') {
+  if (pane === 'right') return rightFileInfo.value;
+  if (pane === 'bottomLeft' || pane === 'bottomRight') return extraPaneState[pane].fileInfo;
+  return fileInfo.value;
 }
 
-function getFileIdByPane(pane: 'left' | 'right' = 'left') {
-  return pane === 'right' ? rightFileId.value : fileId.value;
+function getFileIdByPane(pane: Pane = 'left') {
+  if (pane === 'right') return rightFileId.value;
+  if (pane === 'bottomLeft' || pane === 'bottomRight') return extraPaneState[pane].fileId;
+  return fileId.value;
+}
+
+function getFileIndexByPane(pane: Pane = 'left') {
+  if (pane === 'right') return rightFileIndex.value;
+  if (pane === 'bottomLeft' || pane === 'bottomRight') return extraPaneState[pane].fileIndex;
+  return fileIndex.value;
+}
+
+function getNextFilePathByPane(pane: Pane = 'left') {
+  if (pane === 'right') return rightNextFilePath.value;
+  if (pane === 'bottomLeft' || pane === 'bottomRight') return extraPaneState[pane].nextFilePath;
+  return nextFilePath.value;
+}
+
+function getPaneScale(pane: Pane) {
+  if (pane === 'right') {
+    return {
+      scale: rightImageScale.value, display: rightImageDisplayScale.value,
+      min: rightImageMinScale.value, max: rightImageMaxScale.value,
+    };
+  }
+  if (pane === 'bottomLeft' || pane === 'bottomRight') {
+    const state = extraPaneState[pane];
+    return {
+      scale: state.scale, display: state.displayScale,
+      min: state.minScale, max: state.maxScale,
+    };
+  }
+  return {
+    scale: imageScale.value, display: imageDisplayScale.value,
+    min: imageMinScale.value, max: imageMaxScale.value,
+  };
 }
 
 function getActiveFilePane() {
-  return isSplit.value ? activePane.value : 'left';
+  return splitCount.value > 1 ? activePane.value : 'left';
 }
 
 function syncFileMetaToContent(targetFileId: number, changes: Record<string, any>) {
@@ -965,10 +1023,19 @@ function syncFileMetaToContent(targetFileId: number, changes: Record<string, any
   });
 }
 
-function clickPrev(pane: 'left' | 'right' = 'left') {
+function applyFileMetaToPanes(targetFileId: number, changes: Record<string, any>) {
+  for (const pane of allPanes) {
+    const target = getFileInfoByPane(pane);
+    if (targetFileId === getFileIdByPane(pane) && target) {
+      Object.assign(target, changes);
+    }
+  }
+}
+
+function clickPrev(pane: Pane = 'left') {
   setActivePane(pane);
-  const currentIndex = pane === 'right' ? rightFileIndex.value : fileIndex.value;
-  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+  const currentIndex = getFileIndexByPane(pane);
+  const viewerRef = getViewerRef(pane);
   if (currentIndex > 0) {
     requestFileAtIndex(currentIndex - 1, pane);
   } else {
@@ -976,10 +1043,10 @@ function clickPrev(pane: 'left' | 'right' = 'left') {
   }
 }
 
-function clickNext(pane: 'left' | 'right' = 'left') {
+function clickNext(pane: Pane = 'left') {
   setActivePane(pane);
-  const currentIndex = pane === 'right' ? rightFileIndex.value : fileIndex.value;
-  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
+  const currentIndex = getFileIndexByPane(pane);
+  const viewerRef = getViewerRef(pane);
 
   // Fix loop for slideshow
   if (isSlideShow.value && currentIndex >= fileCount.value - 1) {
@@ -994,17 +1061,17 @@ function clickNext(pane: 'left' | 'right' = 'left') {
   }
 }
 
-function clickHome(pane: 'left' | 'right' = 'left') {
+function clickHome(pane: Pane = 'left') {
   setActivePane(pane);
   requestFileAtIndex(0, pane);
 }
 
-function clickEnd(pane: 'left' | 'right' = 'left') {
+function clickEnd(pane: Pane = 'left') {
   setActivePane(pane);
   requestFileAtIndex(fileCount.value - 1, pane);
 }
 
-function clickSlideShow(pane: 'left' | 'right' = 'left') {
+function clickSlideShow(pane: Pane = 'left') {
   setActivePane(pane);
   isSlideShow.value = !isSlideShow.value;
   if (isSlideShow.value) {
@@ -1014,25 +1081,22 @@ function clickSlideShow(pane: 'left' | 'right' = 'left') {
   }
 }
 
-const clickZoomIn = (pane: 'left' | 'right' = 'left') => {
+const clickZoomIn = (pane: Pane = 'left') => {
   setActivePane(pane);
-  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
-  viewerRef?.zoomIn();
+  getViewerRef(pane)?.zoomIn();
 };
 
-const clickZoomOut = (pane: 'left' | 'right' = 'left') => {
+const clickZoomOut = (pane: Pane = 'left') => {
   setActivePane(pane);
-  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
-  viewerRef?.zoomOut();
+  getViewerRef(pane)?.zoomOut();
 };
 
-const clickZoomActual = (pane: 'left' | 'right' = 'left') => {
+const clickZoomActual = (pane: Pane = 'left') => {
   setActivePane(pane);
-  const viewerRef = pane === 'right' ? rightMediaViewerRef.value : mediaViewerRef.value;
-  viewerRef?.zoomActual();
+  getViewerRef(pane)?.zoomActual();
 };
 
-const toggleZoomFit = (pane: 'left' | 'right' = 'left') => {
+const toggleZoomFit = (pane: Pane = 'left') => {
   const current = getZoomFitByPane(pane);
   handleZoomFitUpdate(!current, pane);
 };
@@ -1045,12 +1109,20 @@ const closeWindow = () => {
   appWindow.close();
 }
 
-const clickScale = (event: any, pane: 'left' | 'right' = 'left') => {
+const clickScale = (event: any, pane: Pane = 'left') => {
   if (pane === 'right') {
     rightImageScale.value = event.scale;
     rightImageDisplayScale.value = event.displayScale ?? event.scale;
     rightImageMinScale.value = event.minScale;
     rightImageMaxScale.value = event.maxScale;
+    return;
+  }
+  if (pane === 'bottomLeft' || pane === 'bottomRight') {
+    const state = extraPaneState[pane];
+    state.scale = event.scale;
+    state.displayScale = event.displayScale ?? event.scale;
+    state.minScale = event.minScale;
+    state.maxScale = event.maxScale;
     return;
   }
 
@@ -1060,76 +1132,77 @@ const clickScale = (event: any, pane: 'left' | 'right' = 'left') => {
   imageMaxScale.value = event.maxScale;
 };
 
-const toggleSplit = () => {
-  const willEnable = !isSplit.value;
-  isSplit.value = willEnable;
+const setSplitCount = (count: 1 | 2 | 4) => {
+  if (splitCount.value === count) return;
+  splitCount.value = count;
   activePane.value = 'left';
-  if (!willEnable) {
+
+  if (count === 1) {
     isSyncViewport.value = false;
+    clearSecondaryPanes();
+    return;
   }
 
-  if (willEnable) {
-    if (isSlideShow.value) {
-      stopSlideShow();
-    }
-    rightIsZoomFit.value = true;
-    rightImageScale.value = 1;
-    rightImageMinScale.value = 0;
-    rightImageMaxScale.value = 10;
-
-    if (fileCount.value > 0) {
-      const nextIndex = Math.min(fileIndex.value + 1, fileCount.value - 1);
-      requestFileAtIndex(nextIndex, 'right');
-    }
+  if (isSlideShow.value) stopSlideShow();
+  rightIsZoomFit.value = true;
+  rightImageScale.value = 1;
+  rightImageDisplayScale.value = 1;
+  rightImageMinScale.value = 0;
+  rightImageMaxScale.value = 10;
+  if (count === 2) {
+    ensureRightPaneLoaded();
   } else {
-    if (isSlideShow.value) {
-      scheduleNextSlide();
-    }
+    ensureFourPanesLoaded();
   }
 };
 
 const toggleSyncViewport = () => {
-  if (!isSplit.value) return;
+  if (splitCount.value === 1) return;
   isSyncViewport.value = !isSyncViewport.value;
   if (isSyncViewport.value) {
     syncViewportFrom(activePane.value);
   }
 };
 
-const toggleFavorite = async (pane: 'left' | 'right' = 'left') => {
+const toggleFavorite = async (pane: Pane = 'left') => {
   const target = getFileInfoByPane(pane);
   const currentFileId = getFileIdByPane(pane);
   if (!target || currentFileId <= 0) return;
 
-  target.is_favorite = !target.is_favorite;
-  await setFileFavorite(currentFileId, target.is_favorite);
-  syncFileMetaToContent(currentFileId, { is_favorite: target.is_favorite });
+  const isFavorite = !target.is_favorite;
+  applyFileMetaToPanes(currentFileId, { is_favorite: isFavorite });
+  await setFileFavorite(currentFileId, isFavorite);
+  syncFileMetaToContent(currentFileId, { is_favorite: isFavorite });
 };
 
-const setCurrentFileRating = async (rating: number, pane: 'left' | 'right' = 'left') => {
+const setCurrentFileRating = async (rating: number, pane: Pane = 'left') => {
   const target = getFileInfoByPane(pane);
   const currentFileId = getFileIdByPane(pane);
   if (!target || currentFileId <= 0) return;
 
   const normalized = Number(target.rating || 0) === rating ? 0 : rating;
-  target.rating = normalized;
+  applyFileMetaToPanes(currentFileId, { rating: normalized });
   await setFileRating(currentFileId, normalized);
   syncFileMetaToContent(currentFileId, { rating: normalized });
 };
 
-const clickRotate = async (pane: 'left' | 'right' = 'left') => {
+const clickRotate = async (pane: Pane = 'left') => {
   const target = getFileInfoByPane(pane);
   const currentFileId = getFileIdByPane(pane);
-  const viewerRef = getViewerRef(pane);
   if (!target || currentFileId <= 0) return;
 
-  target.rotate = (Number(target.rotate) || 0) + 90;
-  viewerRef?.rotateRight?.();
-  await setFileRotate(currentFileId, target.rotate);
-  syncFileMetaToContent(currentFileId, { rotate: target.rotate });
+  const rotate = (Number(target.rotate) || 0) + 90;
+  applyFileMetaToPanes(currentFileId, { rotate });
+  for (const targetPane of allPanes) {
+    if (getFileIdByPane(targetPane) === currentFileId) {
+      getViewerRef(targetPane)?.rotateRight?.();
+    }
+  }
+  await setFileRotate(currentFileId, rotate);
+  syncFileMetaToContent(currentFileId, { rotate });
 };
 
-const clickTag = (pane: 'left' | 'right' = 'left') => {
+const clickTag = (pane: Pane = 'left') => {
   const currentFileId = getFileIdByPane(pane);
   if (currentFileId <= 0) return;
 
@@ -1138,7 +1211,7 @@ const clickTag = (pane: 'left' | 'right' = 'left') => {
   showTaggingDialog.value = true;
 };
 
-const openCommentEditor = (pane: 'left' | 'right' = 'left') => {
+const openCommentEditor = (pane: Pane = 'left') => {
   const currentFileId = getFileIdByPane(pane);
   if (currentFileId <= 0) return;
 
@@ -1153,38 +1226,32 @@ const onEditComment = async (newComment: any) => {
 
   const result = await editFileComment(currentFileId, newComment);
   if (result) {
-    target.comments = newComment;
+    applyFileMetaToPanes(currentFileId, { comments: newComment });
     showCommentMsgbox.value = false;
     syncFileMetaToContent(currentFileId, { comments: newComment });
   }
 };
 
-async function updateFileHasTags(fileIds: number[]) {
-  if (!Array.isArray(fileIds) || fileIds.length === 0) {
+async function updateFileHasTags(fileStates: Array<{ file_id: number; has_tags: boolean }>) {
+  if (!Array.isArray(fileStates) || fileStates.length === 0) {
     showTaggingDialog.value = false;
     return;
   }
 
-  for (const taggedFileId of fileIds) {
-    if (taggedFileId === fileId.value && fileInfo.value) {
-      const tags = (await getTagsForFile(taggedFileId)) || [];
-      fileInfo.value.has_tags = tags.length > 0;
-      fileInfo.value.tags = tags;
-      syncFileMetaToContent(taggedFileId, { has_tags: fileInfo.value.has_tags, tags });
-    }
-
-    if (taggedFileId === rightFileId.value && rightFileInfo.value) {
-      const tags = (await getTagsForFile(taggedFileId)) || [];
-      rightFileInfo.value.has_tags = tags.length > 0;
-      rightFileInfo.value.tags = tags;
-      syncFileMetaToContent(taggedFileId, { has_tags: rightFileInfo.value.has_tags, tags });
-    }
+  for (const state of fileStates) {
+    const taggedFileId = Number(state.file_id);
+    if (taggedFileId <= 0) continue;
+    const hasTags = Boolean(state.has_tags);
+    const tags = hasTags ? ((await getTagsForFile(taggedFileId)) || []) : [];
+    const changes = { has_tags: hasTags, tags };
+    applyFileMetaToPanes(taggedFileId, changes);
+    syncFileMetaToContent(taggedFileId, changes);
   }
 
   showTaggingDialog.value = false;
 }
 
-const handleItemAction = async (payload: { action: string }) => {
+const handleItemAction = async (payload: { action: string; splitCount?: number }) => {
   const pane = getActiveFilePane();
 
   switch (payload.action) {
@@ -1217,8 +1284,10 @@ const handleItemAction = async (payload: { action: string }) => {
     case 'zoom-actual':
       clickZoomActual(pane);
       break;
-    case 'toggle-split':
-      toggleSplit();
+    case 'set-split-count':
+      if (payload.splitCount === 1 || payload.splitCount === 2 || payload.splitCount === 4) {
+        setSplitCount(payload.splitCount);
+      }
       break;
     case 'toggle-sync-viewport':
       toggleSyncViewport();

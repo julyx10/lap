@@ -954,6 +954,10 @@
       "close": "閉じる",
       "split_on": "分割表示を有効にする",
       "split_off": "分割表示を無効にする",
+      "split_2_on": "2分割表示を有効にする",
+      "split_2_off": "2分割表示を無効にする",
+      "split_4_on": "4分割表示を有効にする",
+      "split_4_off": "4分割表示を無効にする",
       "sync_viewport_on": "連動ズームを有効にする",
       "sync_viewport_off": "連動ズームを無効にする",
       "sync_viewport_need_split": "先に分割表示を有効にしてください"

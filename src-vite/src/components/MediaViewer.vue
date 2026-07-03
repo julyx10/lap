@@ -154,20 +154,40 @@
         <!-- Split/Sync Viewport Buttons (ImageViewer mode only) -->
         <template v-if="mode === 2">
           <IconSeparator class="t-icon-size-sm text-base-content/30" />
+          <div class="flex h-8 items-center gap-1 rounded-box border border-base-content/10 bg-base-100/30 px-1 shadow-inner">
+            <TButton
+              class="flex items-center"
+              :icon="IconSplitOff"
+              :buttonSize="'small'"
+              :selected="splitCount === 1"
+              :tooltip="$t('image_viewer.toolbar.split_off')"
+              @click="$emit('item-action', { action: 'set-split-count', splitCount: 1 })"
+            />
+            <TButton
+              class="flex items-center"
+              :icon="IconSplitOn"
+              :buttonSize="'small'"
+              :selected="splitCount === 2"
+              :tooltip="$t('image_viewer.toolbar.split_2_on')"
+              @click="$emit('item-action', { action: 'set-split-count', splitCount: 2 })"
+            />
+            <TButton
+              class="flex items-center"
+              :icon="IconSplitOn4"
+              :buttonSize="'small'"
+              :selected="splitCount === 4"
+              :tooltip="$t('image_viewer.toolbar.split_4_on')"
+              @click="$emit('item-action', { action: 'set-split-count', splitCount: 4 })"
+            />
+          </div>
           <TButton
             :icon="IconLink"
-            :selected="isSplit && isSyncViewport"
-            :disabled="!isSplit"
-            :tooltip="isSplit
+            :selected="splitCount > 1 && isSyncViewport"
+            :disabled="splitCount === 1"
+            :tooltip="splitCount > 1
               ? (isSyncViewport ? $t('image_viewer.toolbar.sync_viewport_off') : $t('image_viewer.toolbar.sync_viewport_on'))
               : $t('image_viewer.toolbar.sync_viewport_need_split')"
             @click="$emit('item-action', { action: 'toggle-sync-viewport' })"
-          />
-          <TButton
-            :icon="IconSplitOn"
-            :selected="isSplit"
-            :tooltip="isSplit ? $t('image_viewer.toolbar.split_off') : $t('image_viewer.toolbar.split_on')"
-            @click="$emit('item-action', { action: 'toggle-split' })"
           />
         </template>
         <ContextMenu v-if="mode !== 2"
@@ -231,44 +251,41 @@
       <IconClose class="w-5 h-5" />
     </button>
 
-    <div
-      v-if="showStatusBadges && quickViewStatusBadges.length > 0"
-      class="pointer-events-none absolute inset-x-0 top-0 z-80 h-16"
-    ></div>
-    <div
-      v-if="showStatusBadges && quickViewStatusBadges.length > 0"
-      :class="[
-        'pointer-events-none absolute left-2 z-90 flex max-w-[calc(100%-4rem)] flex-wrap gap-1',
-        props.mode === 2 || config.mediaViewer.isPinned || isFullScreen ? 'top-12' : 'top-2',
-      ]"
-    >
-      <div
-        v-for="badge in quickViewStatusBadges"
-        :key="badge.key"
-        class="thumb-badge thumb-badge-muted"
-      >
-        <template v-if="badge.icons?.length">
-          <div class="flex items-center gap-0.5">
-            <component
-              :is="entry.icon"
-              v-for="(entry, index) in badge.icons"
-              :key="`${badge.key}-${index}`"
-              class="h-3.5 w-3.5 shrink-0"
-              :style="entry.style"
-            />
-          </div>
-        </template>
-        <component
-          v-else-if="badge.icon"
-          :is="badge.icon"
-          :class="['h-3.5 w-3.5 shrink-0', badge.iconClass]"
-          :style="badge.iconStyle"
-        />
-        <span v-if="badge.label" class="leading-none">{{ badge.label }}</span>
-      </div>
-    </div>
-
     <div ref="mediaAreaRef" class="flex-1 w-full min-h-0 relative" @dblclick="$emit('media-dblclick')">
+      <div
+        v-if="showStatusBadges && quickViewStatusBadges.length > 0"
+        class="pointer-events-none absolute inset-x-0 top-0 z-80 h-16"
+      ></div>
+      <div
+        v-if="showStatusBadges && quickViewStatusBadges.length > 0"
+        class="pointer-events-none absolute left-1 top-1 z-80 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-1"
+      >
+        <div
+          v-for="badge in quickViewStatusBadges"
+          :key="badge.key"
+          class="thumb-badge thumb-badge-muted"
+        >
+          <template v-if="badge.icons?.length">
+            <div class="flex items-center gap-0.5">
+              <component
+                :is="entry.icon"
+                v-for="(entry, index) in badge.icons"
+                :key="`${badge.key}-${index}`"
+                class="h-3.5 w-3.5 shrink-0"
+                :style="entry.style"
+              />
+            </div>
+          </template>
+          <component
+            v-else-if="badge.icon"
+            :is="badge.icon"
+            :class="['h-3.5 w-3.5 shrink-0', badge.iconClass]"
+            :style="badge.iconStyle"
+          />
+          <span v-if="badge.label" class="leading-none">{{ badge.label }}</span>
+        </div>
+      </div>
+
       <!-- Previous Button (Overlay, media-area anchored) -->
       <button 
         v-if="!isSlideShow && showOverlayNav"
@@ -326,6 +343,7 @@
         :rotate="file?.rotate ?? 0"
         :isZoomFit="isZoomFit"
         :isSlideShow="isSlideShow"
+        :isActive="isPlaybackActive"
         @scale="(e) => $emit('scale', e)"
         @viewport-change="(e) => $emit('viewport-change', e)"
         @message-from-video-viewer="handleMessageFromImageViewer"
@@ -380,7 +398,9 @@ import {
   IconWinMaximize,
   IconWinRestore,
   IconLink,
+  IconSplitOff,
   IconSplitOn,
+  IconSplitOn4,
 } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 import iconLogo from '@/assets/images/icon.png';
@@ -454,9 +474,13 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  isSplit: {
+  splitCount: {
+    type: Number,
+    default: 1
+  },
+  isPlaybackActive: {
     type: Boolean,
-    default: false
+    default: true
   },
   isSyncViewport: {
     type: Boolean,
@@ -680,9 +704,12 @@ const quickViewStatusBadges = computed<StatusBadge[]>(() => {
   }
 
   if (metaIcons.length > 0) {
+    const visibleIcons = metaIcons.slice(0, 3);
+    const extraCount = metaIcons.length - visibleIcons.length;
     badges.push({
       key: 'meta',
-      icons: metaIcons.slice(0, 3),
+      icons: visibleIcons,
+      label: extraCount > 0 ? `+${extraCount}` : undefined,
     });
   }
 
@@ -690,7 +717,7 @@ const quickViewStatusBadges = computed<StatusBadge[]>(() => {
 });
 
 const showStatusBadges = computed(() => {
-  return !props.isFullScreen && (props.mode === 0 || props.mode === 1 || props.mode === 2);
+  return props.mode === 0 || props.mode === 1 || props.mode === 2;
 });
 
 const showWindowControlsBar = computed(() => {

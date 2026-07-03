@@ -954,6 +954,10 @@
       "close": "Fechar",
       "split_on": "Ativar visualização dividida",
       "split_off": "Desativar visualização dividida",
+      "split_2_on": "Ativar visualização em dois painéis",
+      "split_2_off": "Desativar visualização em dois painéis",
+      "split_4_on": "Ativar visualização em quatro painéis",
+      "split_4_off": "Desativar visualização em quatro painéis",
       "sync_viewport_on": "Ativar zoom vinculado",
       "sync_viewport_off": "Desativar zoom vinculado",
       "sync_viewport_need_split": "Ative primeiro a visualização dividida"

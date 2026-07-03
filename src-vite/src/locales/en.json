@@ -954,6 +954,10 @@
       "close": "Close",
       "split_on": "Enable split view",
       "split_off": "Disable split view",
+      "split_2_on": "Enable two-pane view",
+      "split_2_off": "Disable two-pane view",
+      "split_4_on": "Enable four-pane view",
+      "split_4_off": "Disable four-pane view",
       "sync_viewport_on": "Enable linked zoom",
       "sync_viewport_off": "Disable linked zoom",
       "sync_viewport_need_split": "Enable split view first"
