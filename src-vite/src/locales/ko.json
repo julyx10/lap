@@ -965,6 +965,7 @@
   },
   "video": {
     "loading": "비디오 로딩 중...",
+    "loading_compatible": "호환 재생을 준비 중...",
     "failed": "재생 실패",
     "errors": {
       "aborted": "중단됨",
@@ -972,6 +973,7 @@
       "decode": "디코딩 오류",
       "format": "지원되지 않는 비디오 형식 이거나 파일이 손상되었습니다.",
       "external_player_recommended": "이 비디오는 여기서 재생하기 위해 호환성 트랜스코딩이 필요합니다. 긴 비디오의 경우, 백그라운드 처리를 기다리는 대신 외부 플레이어를 사용하는 것이 좋습니다.",
+      "unsafe_webview": "이 비디오 형식은 재생을 지원하지 않습니다.",
       "open_in_external_app": "외부 플레이어에서 열기",
       "open_in_external_app_named": "{app}에서 열기...",
       "use_external": "지원하지 않는 형식을 열려면 설정에서 외부 플레이어를 구성하세요.",

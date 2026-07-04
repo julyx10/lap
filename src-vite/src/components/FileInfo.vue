@@ -120,7 +120,7 @@
                 </div>
               </div>
               <button
-                v-if="isVideoFile && !showVideoPreview"
+                v-if="canPreviewVideo && !showVideoPreview"
                 type="button"
                 class="absolute inset-0 z-10 flex items-center justify-center text-base-content/70 cursor-pointer"
                 @click.stop="playPreviewVideo"
@@ -426,6 +426,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
+import { isWebViewVideoPlaybackDisabled } from '@/common/video';
 import { renameFile, editImage, getAlbum, revealPath } from '@/common/api';
 import { 
   extractFileName, 
@@ -501,6 +502,11 @@ const showBasicInfoPanel = computed(() => config.infoPanel.showBasicInfo);
 const showMetadataPanel = computed(() => config.infoPanel.showMetadata);
 const showMapPanel = computed(() => config.infoPanel.showMap);
 const isVideoFile = computed(() => Number(props.fileInfo?.file_type || 0) === 2);
+const canPreviewVideo = computed(() => (
+  isVideoFile.value
+  && !!props.fileInfo?.file_path
+  && !isWebViewVideoPlaybackDisabled(props.fileInfo.file_path)
+));
 const canShowHistogram = computed(() => !isVideoFile.value);
 const activePreviewMode = computed(() => canShowHistogram.value ? config.infoPanel.previewMode : 'thumbnail');
 const isHistogramPreview = computed(() => activePreviewMode.value === 'histogram');
@@ -561,7 +567,7 @@ function setPreviewMode(mode: 'thumbnail' | 'histogram') {
 }
 
 async function playPreviewVideo() {
-  if (!isVideoFile.value || !props.fileInfo?.file_path || showVideoPreview.value) return;
+  if (!canPreviewVideo.value || !props.fileInfo?.file_path || showVideoPreview.value) return;
   isVideoPreviewReady.value = false;
   showVideoPreview.value = true;
   await nextTick();

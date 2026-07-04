@@ -965,6 +965,7 @@
   },
   "video": {
     "loading": "Chargement vidéo...",
+    "loading_compatible": "Préparation de la lecture compatible...",
     "failed": "Erreur lecture",
     "errors": {
       "aborted": "Annulé",
@@ -972,6 +973,7 @@
       "decode": "Erreur décodage",
       "format": "Format vidéo non supporté ou fichier corrompu.",
       "external_player_recommended": "Cette vidéo nécessite un transcodage de compatibilité pour être lue ici. Pour les vidéos longues, Lap recommande d'utiliser un lecteur externe au lieu d'attendre le traitement en arrière-plan.",
+      "unsafe_webview": "Ce format vidéo n’est pas pris en charge pour la lecture.",
       "open_in_external_app": "Ouvrir dans un lecteur externe",
       "open_in_external_app_named": "Ouvrir la vidéo dans {app}...",
       "use_external": "Pour ouvrir les formats non pris en charge, configurez un lecteur externe dans les Paramètres.",

@@ -965,6 +965,7 @@
   },
   "video": {
     "loading": "動画を読み込み中...",
+    "loading_compatible": "互換再生を準備中...",
     "failed": "再生できません",
     "errors": {
       "aborted": "中止されました",
@@ -972,6 +973,7 @@
       "decode": "デコードエラー",
       "format": "サポートされていないビデオ形式か、ファイルが破損しています。",
       "external_player_recommended": "この動画はこちらで再生するために互換性トランスコードが必要です。長い動画の場合は、バックグラウンド処理を待つ代わりに外部プレイヤーの使用をお勧めします。",
+      "unsafe_webview": "この動画形式の再生には対応していません。",
       "open_in_external_app": "外部プレイヤーで開く",
       "open_in_external_app_named": "{app} で開く...",
       "use_external": "未対応の形式を開くには、設定で外部プレイヤーを設定してください。",

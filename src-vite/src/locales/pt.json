@@ -965,6 +965,7 @@
   },
   "video": {
     "loading": "Carregando vídeo...",
+    "loading_compatible": "Preparando reprodução compatível...",
     "failed": "Erro na reprodução",
     "errors": {
       "aborted": "Abortado",
@@ -972,6 +973,7 @@
       "decode": "Erro de decodificação",
       "format": "Formato de vídeo não suportado ou o arquivo está corrompido.",
       "external_player_recommended": "Este vídeo precisa de transcodificação de compatibilidade antes de ser reproduzido aqui. Para vídeos longos, o Lap recomenda o uso de um player externo em vez de aguardar o processamento em segundo plano.",
+      "unsafe_webview": "Este formato de vídeo não é compatível com a reprodução.",
       "open_in_external_app": "Abrir no player externo",
       "open_in_external_app_named": "Abrir vídeo em {app}...",
       "use_external": "Para abrir formatos não suportados, configure um player externo nas Configurações.",

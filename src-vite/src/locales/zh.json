@@ -965,6 +965,7 @@
   },
   "video": {
     "loading": "正在加载视频...",
+    "loading_compatible": "正在准备兼容播放...",
     "failed": "视频无法播放",
     "errors": {
       "aborted": "视频加载被中止",
@@ -972,6 +973,7 @@
       "decode": "视频解码错误",
       "format": "视频格式暂不支持，或者文件已损坏。",
       "external_player_recommended": "该视频需要先做兼容转码后才能在这里播放。对于长视频，Lap 更建议直接使用外部播放器，而不是等待后台处理。",
+      "unsafe_webview": "不支持播放此视频格式。",
       "open_in_external_app": "使用外部播放器打开",
       "open_in_external_app_named": "在 {app} 中打开...",
       "use_external": "若要打开不支持的格式，请在设置中配置外部播放器。",

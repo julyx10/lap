@@ -182,6 +182,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCameraInfo, getAssetSrc, getThumbUrl } from '@/common/utils';
+import { isWebViewVideoPlaybackDisabled } from '@/common/video';
 import ContextMenu from '@/components/ContextMenu.vue';
 import { useFileMenuItems } from '@/common/fileMenu';
 
@@ -241,6 +242,11 @@ let previewTimer: ReturnType<typeof setTimeout> | null = null;
 const showVideoPreview = ref(false);
 const isVideoPreviewReady = ref(false);
 const isVideoFile = computed(() => props.file?.file_type === 2);
+const canPreviewVideo = computed(() => (
+  isVideoFile.value
+  && !!props.file?.file_path
+  && !isWebViewVideoPlaybackDisabled(props.file.file_path)
+));
 const isGeometryGridStyle = computed(() => config.settings.grid.style === 2 || config.settings.grid.style === 3);
 const shouldScaleThumbnail = computed(() => config.settings.grid.style === 1 || isGeometryGridStyle.value);
 const thumbnailSrc = ref(props.file.thumbnail || '');
@@ -322,11 +328,11 @@ watch(() => props.file.file_path, () => {
 });
 
 function startVideoPreview() {
-  if (!isVideoFile.value || !props.file?.file_path || previewTimer || showVideoPreview.value) return;
+  if (!canPreviewVideo.value || previewTimer || showVideoPreview.value) return;
 
   previewTimer = setTimeout(async () => {
     previewTimer = null;
-    if (!isVideoFile.value || !props.file?.file_path) return;
+    if (!canPreviewVideo.value || !props.file?.file_path) return;
 
     isVideoPreviewReady.value = false;
     showVideoPreview.value = true;

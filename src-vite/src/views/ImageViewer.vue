@@ -369,7 +369,7 @@ onMounted(async() => {
     splitCount.value = 2;
     isSyncViewport.value = true;
   } else {
-    isSyncViewport.value = splitCount.value > 1 ? !!config.imageViewer?.isSyncViewport : false;
+    isSyncViewport.value = !!config.imageViewer?.isSyncViewport;
   }
   rightFileId.value = initialRightFileId > 0 ? initialRightFileId : 0;
   rightFileIndex.value = initialRightFileId > 0 ? initialRightFileIndex : -1;
@@ -404,7 +404,7 @@ onMounted(async() => {
         isSyncViewport.value = true;
       } else {
         splitCount.value = normalizeSplitCount((config.imageViewer as any)?.splitCount);
-        isSyncViewport.value = splitCount.value > 1 ? !!config.imageViewer?.isSyncViewport : false;
+        isSyncViewport.value = !!config.imageViewer?.isSyncViewport;
       }
       if (splitCount.value === 1) {
         clearSecondaryPanes();
@@ -931,9 +931,7 @@ function clearSecondaryPanes() {
 
 watch(() => splitCount.value, (count) => {
   if (isCompareModeSession.value) {
-    if (count === 1) {
-      isSyncViewport.value = false;
-    } else {
+    if (count > 1) {
       ensureRightPaneLoaded();
     }
     return;
@@ -942,9 +940,7 @@ watch(() => splitCount.value, (count) => {
     (config as any).imageViewer = { splitCount: 1, isSyncViewport: false, isFullScreen: false };
   }
   (config.imageViewer as any).splitCount = count;
-  if (count === 1) {
-    isSyncViewport.value = false;
-  } else {
+  if (count > 1) {
     ensureRightPaneLoaded();
     ensureFourPanesLoaded();
   }
@@ -1138,7 +1134,6 @@ const setSplitCount = (count: 1 | 2 | 4) => {
   activePane.value = 'left';
 
   if (count === 1) {
-    isSyncViewport.value = false;
     clearSecondaryPanes();
     return;
   }
