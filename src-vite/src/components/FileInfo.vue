@@ -74,8 +74,7 @@
               @pointerleave="stopPreviewVideo"
             >
               <div
-                v-if="!showVideoPreview"
-                class="absolute top-2 left-2 flex bg-base-100/30 hover:bg-base-100/70 rounded-box z-10 cursor-pointer opacity-0 pointer-events-none transition-opacity duration-150 group-hover/thumbnail:opacity-100 group-hover/thumbnail:pointer-events-auto"
+                class="absolute top-2 left-2 flex bg-base-100/30 hover:bg-base-100/70 rounded-box z-20 cursor-pointer opacity-0 pointer-events-none transition-opacity duration-150 group-hover/thumbnail:opacity-100 group-hover/thumbnail:pointer-events-auto"
               >
                 <TButton
                   :icon="IconZoomOut"
