@@ -82,10 +82,15 @@
       "match": "匹配",
       "match_all": "全部规则",
       "match_any": "任一规则",
+      "match_and": "且",
+      "match_or": "或",
       "rules": "规则",
       "add_rule": "添加规则",
+      "rules_count": "{count}/{max} 条规则",
       "remove_rule": "移除规则",
+      "group": "分组",
       "sort": "排序",
+      "order": "顺序",
       "delete": "删除",
       "delete_message": "将删除智能相册“{name}”。",
       "validation_name": "请输入智能相册名称。",
@@ -318,6 +323,7 @@
     "filter": {
       "select_mode": "多选模式",
       "select_count": "已选择 {count}",
+      "group_type_options": ["不分组", "文件夹", "日", "月", "评分", "位置", "相机", "镜头", "年"],
       "sort_type_options": [
         "拍摄日期",
         "创建日期",

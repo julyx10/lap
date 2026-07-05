@@ -82,10 +82,15 @@
       "match": "Match",
       "match_all": "All rules",
       "match_any": "Any rule",
+      "match_and": "And",
+      "match_or": "Or",
       "rules": "Rules",
       "add_rule": "Add rule",
+      "rules_count": "{count}/{max} rules",
       "remove_rule": "Remove rule",
+      "group": "Group",
       "sort": "Sort",
+      "order": "Order",
       "delete": "Delete",
       "delete_message": "The smart album '{name}' will be deleted.",
       "validation_name": "Enter a smart album name.",
@@ -318,6 +323,7 @@
     "filter": {
       "select_mode": "Multi-select mode",
       "select_count": "{count} selected",
+      "group_type_options": ["None", "Folder", "Day", "Month", "Rating", "Location", "Camera", "Lens", "Year"],
       "sort_type_options": [
         "Taken Date",
         "Created Date",

@@ -70,9 +70,9 @@
         <!-- sort type options -->
         <DropDownSelect
           :options="sortOptions"
-          :defaultIndex="config.search.sortType"
+          :defaultIndex="toolbarSortType"
           :extendOptions="sortExtendOptions"
-          :defaultExtendIndex="config.search.sortOrder"
+          :defaultExtendIndex="toolbarSortOrder"
           :disabled="isToolbarFilterLockedView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
           @select="handleSortTypeSelect"
         />
@@ -944,6 +944,13 @@ function createViewBackup() {
   };
 }
 
+function getActiveCustomSmartAlbum() {
+  if (libConfig.smartAlbum.type !== 'custom' || !libConfig.smartAlbum.id) return null;
+  return (libConfig.smartAlbums || []).find(
+    (item: any) => item.id === libConfig.smartAlbum.id
+  ) || null;
+}
+
 function getAutoGroupByForCurrentView() {
   if (libConfig.activePane === 'collection') return GROUP.NONE;
   switch (Number(config.main.sidebarIndex)) {
@@ -956,7 +963,7 @@ function getAutoGroupByForCurrentView() {
         ? GROUP.NONE
         : GROUP.FOLDER;
     case SIDEBAR.SMART_ALBUM:
-      return GROUP.NONE; // Smart album: disabled
+      return Number(getActiveCustomSmartAlbum()?.group?.type ?? GROUP.NONE);
     case SIDEBAR.CALENDAR:
       if (config.calendar.isMonthly) {
         return libConfig.calendar.year !== null && libConfig.calendar.month === -1 ? GROUP.MONTH : GROUP.NONE;
@@ -5372,6 +5379,7 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
     folderSort: Number(config.settings.folderSort || 0),
     calendarSort: Number(config.settings.calendarSort || 0),
     categorySort: Number(config.settings.categorySort || 0),
+    groupBy: Number(smartAlbum?.group?.type ?? GROUP.NONE),
   };
 
   isLoading.value = true;
@@ -7632,6 +7640,18 @@ const sortExtendOptions = computed(() => {
   return getSelectOptions(localeMsg.value.toolbar.filter?.sort_order_options);
 });
 
+const toolbarSortType = computed(() => (
+  config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+    ? Number(getActiveCustomSmartAlbum()?.sort?.type ?? 0)
+    : Number(config.search.sortType || 0)
+));
+
+const toolbarSortOrder = computed(() => (
+  config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+    ? Number(getActiveCustomSmartAlbum()?.sort?.order ?? 1)
+    : Number(config.search.sortOrder || 0)
+));
+
 const isSearchLikeView = computed(() => {
   return config.main.sidebarIndex === SIDEBAR.SMART_ALBUM ||
     config.main.sidebarIndex === SIDEBAR.SEARCH ||
@@ -7640,6 +7660,7 @@ const isSearchLikeView = computed(() => {
 
 const isToolbarFilterLockedView = computed(() => {
   return config.main.sidebarIndex === SIDEBAR.SEARCH ||
+    config.main.sidebarIndex === SIDEBAR.SMART_ALBUM ||
     (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS);
 });
 

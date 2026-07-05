@@ -82,10 +82,15 @@
       "match": "Coincidir",
       "match_all": "Todas las reglas",
       "match_any": "Cualquier regla",
+      "match_and": "Y",
+      "match_or": "O",
       "rules": "Reglas",
       "add_rule": "Añadir regla",
+      "rules_count": "{count}/{max} reglas",
       "remove_rule": "Eliminar regla",
+      "group": "Agrupar",
       "sort": "Ordenar",
+      "order": "Orden",
       "delete": "Eliminar",
       "delete_message": "Se eliminará el álbum inteligente “{name}”.",
       "validation_name": "Introduce un nombre para el álbum inteligente.",
@@ -318,6 +323,7 @@
     "filter": {
       "select_mode": "Selección",
       "select_count": "{count} seleccionados",
+      "group_type_options": ["Ninguno", "Carpeta", "Día", "Mes", "Calificación", "Ubicación", "Cámara", "Objetivo", "Año"],
       "sort_type_options": [
         "Fecha de toma",
         "Fecha de creación",

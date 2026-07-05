@@ -82,10 +82,15 @@
       "match": "일치",
       "match_all": "모든 규칙",
       "match_any": "일부 규칙",
+      "match_and": "그리고",
+      "match_or": "또는",
       "rules": "규칙",
       "add_rule": "규칙 추가",
+      "rules_count": "{count}/{max} 규칙",
       "remove_rule": "규칙 제거",
+      "group": "그룹",
       "sort": "정렬",
+      "order": "순서",
       "delete": "삭제",
       "delete_message": "스마트 앨범 “{name}”이 삭제됩니다.",
       "validation_name": "스마트 앨범 이름을 입력하세요.",
@@ -318,6 +323,7 @@
     "filter": {
       "select_mode": "선택 항목",
       "select_count": "{count}개 선택됨",
+      "group_type_options": ["없음", "폴더", "일", "월", "평점", "위치", "카메라", "렌즈", "년"],
       "sort_type_options": [
         "촬영일",
         "생성일",

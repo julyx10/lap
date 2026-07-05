@@ -110,6 +110,12 @@ impl Default for SmartAlbumSortState {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
+pub struct SmartAlbumGroupState {
+    pub r#type: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct CustomSmartAlbumState {
     pub id: String,
     pub name: String,
@@ -121,6 +127,8 @@ pub struct CustomSmartAlbumState {
     pub query: SmartAlbumQueryState,
     #[serde(default)]
     pub sort: SmartAlbumSortState,
+    #[serde(default)]
+    pub group: SmartAlbumGroupState,
     #[serde(default)]
     pub created_at: i64,
     #[serde(default)]

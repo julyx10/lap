@@ -82,10 +82,15 @@
       "match": "Correspondance",
       "match_all": "Toutes les règles",
       "match_any": "Une règle",
+      "match_and": "Et",
+      "match_or": "Ou",
       "rules": "Règles",
       "add_rule": "Ajouter une règle",
+      "rules_count": "{count}/{max} règles",
       "remove_rule": "Supprimer la règle",
+      "group": "Regrouper",
       "sort": "Tri",
+      "order": "Ordre",
       "delete": "Supprimer",
       "delete_message": "L’album intelligent « {name} » sera supprimé.",
       "validation_name": "Saisissez un nom d’album intelligent.",
@@ -318,6 +323,7 @@
     "filter": {
       "select_mode": "Sélection",
       "select_count": "{count} sélectionnés",
+      "group_type_options": ["Aucun", "Dossier", "Jour", "Mois", "Note", "Lieu", "Appareil", "Objectif", "Année"],
       "sort_type_options": [
         "Date de prise",
         "Date de création",

@@ -82,10 +82,15 @@
       "match": "一致条件",
       "match_all": "すべてのルール",
       "match_any": "いずれかのルール",
+      "match_and": "かつ",
+      "match_or": "または",
       "rules": "ルール",
       "add_rule": "ルールを追加",
+      "rules_count": "{count}/{max} ルール",
       "remove_rule": "ルールを削除",
+      "group": "グループ",
       "sort": "並び替え",
+      "order": "順序",
       "delete": "削除",
       "delete_message": "スマートアルバム「{name}」を削除します。",
       "validation_name": "スマートアルバム名を入力してください。",
@@ -318,6 +323,7 @@
     "filter": {
       "select_mode": "選択項目",
       "select_count": "{count} 個選択中",
+      "group_type_options": ["なし", "フォルダー", "日", "月", "評価", "場所", "カメラ", "レンズ", "年"],
       "sort_type_options": [
         "撮影日",
         "作成日",

@@ -82,10 +82,15 @@
       "match": "Correspondência",
       "match_all": "Todas as regras",
       "match_any": "Qualquer regra",
+      "match_and": "E",
+      "match_or": "Ou",
       "rules": "Regras",
       "add_rule": "Adicionar regra",
+      "rules_count": "{count}/{max} regras",
       "remove_rule": "Remover regra",
+      "group": "Agrupar",
       "sort": "Ordenar",
+      "order": "Ordem",
       "delete": "Excluir",
       "delete_message": "O álbum inteligente “{name}” será excluído.",
       "validation_name": "Insira um nome para o álbum inteligente.",
@@ -318,6 +323,7 @@
     "filter": {
       "select_mode": "Seleção",
       "select_count": "{count} selecionados",
+      "group_type_options": ["Nenhum", "Pasta", "Dia", "Mês", "Classificação", "Localização", "Câmera", "Lente", "Ano"],
       "sort_type_options": [
         "Data de captura",
         "Data de criação",
