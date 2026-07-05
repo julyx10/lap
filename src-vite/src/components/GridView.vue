@@ -47,7 +47,7 @@
           @change="(event) => $emit('group-select-toggled', item, (event.target as HTMLInputElement).checked)"
         />
         <span v-if="selectMode && isGroupSelectionLoading(item)" class="loading loading-spinner loading-xs text-primary"></span>
-        <component :is="getGroupIcon()" class="w-4 h-4 shrink-0 text-base-content/30" />
+        <component :is="getGroupIcon(item)" class="w-4 h-4 shrink-0 text-base-content/30" />
         <Breadcrumb
           v-if="isFolderPathGroup()"
           :items="getFolderGroupBreadcrumbItems(item)"
@@ -861,7 +861,8 @@ function isGroupSelectionLoading(item: any) {
   return Boolean(props.groupSelectionLoading[String(item?.group_id || '')]);
 }
 
-function getGroupIcon() {
+function getGroupIcon(item: any) {
+  if (item?.icon) return item.icon;
   switch (Number(props.groupBy || 0)) {
     case GROUP.FOLDER:
       return IconFolder;

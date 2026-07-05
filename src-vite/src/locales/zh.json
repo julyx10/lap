@@ -323,7 +323,17 @@
     "filter": {
       "select_mode": "多选模式",
       "select_count": "已选择 {count}",
-      "group_type_options": ["不分组", "文件夹", "日", "月", "评分", "位置", "相机", "镜头", "年"],
+      "group_type_options": [
+        "不分组",
+        "文件夹",
+        "日",
+        "月",
+        "评分",
+        "位置",
+        "相机",
+        "镜头",
+        "年"
+      ],
       "sort_type_options": [
         "拍摄日期",
         "创建日期",

@@ -323,7 +323,17 @@
     "filter": {
       "select_mode": "Sélection",
       "select_count": "{count} sélectionnés",
-      "group_type_options": ["Aucun", "Dossier", "Jour", "Mois", "Note", "Lieu", "Appareil", "Objectif", "Année"],
+      "group_type_options": [
+        "Aucun",
+        "Dossier",
+        "Jour",
+        "Mois",
+        "Note",
+        "Lieu",
+        "Appareil",
+        "Objectif",
+        "Année"
+      ],
       "sort_type_options": [
         "Date de prise",
         "Date de création",

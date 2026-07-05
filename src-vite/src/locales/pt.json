@@ -323,7 +323,17 @@
     "filter": {
       "select_mode": "Seleção",
       "select_count": "{count} selecionados",
-      "group_type_options": ["Nenhum", "Pasta", "Dia", "Mês", "Classificação", "Localização", "Câmera", "Lente", "Ano"],
+      "group_type_options": [
+        "Nenhum",
+        "Pasta",
+        "Dia",
+        "Mês",
+        "Classificação",
+        "Localização",
+        "Câmera",
+        "Lente",
+        "Ano"
+      ],
       "sort_type_options": [
         "Data de captura",
         "Data de criação",

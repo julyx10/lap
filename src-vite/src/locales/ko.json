@@ -323,7 +323,17 @@
     "filter": {
       "select_mode": "선택 항목",
       "select_count": "{count}개 선택됨",
-      "group_type_options": ["없음", "폴더", "일", "월", "평점", "위치", "카메라", "렌즈", "년"],
+      "group_type_options": [
+        "없음",
+        "폴더",
+        "일",
+        "월",
+        "평점",
+        "위치",
+        "카메라",
+        "렌즈",
+        "년"
+      ],
       "sort_type_options": [
         "촬영일",
         "생성일",

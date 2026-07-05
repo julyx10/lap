@@ -62,18 +62,19 @@
           :selectedValues="fileTypeSelectedValues"
           :summaryLabel="fileTypeSummaryLabel"
           :separatorsAfter="[0]"
-          :disabled="isToolbarFilterLockedView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
-          :selected="config.search.fileType !== 0"
+          :disabled="tempViewMode === 'album' || tempViewMode === 'person' || isScanStreamingMode"
+          :selected="activeFileTypeMask !== 0"
           @multi-select="handleFileTypeSelect"
         />
 
-        <!-- sort type options -->
+        <!-- sort type options (hidden in AI search mode and similar temp mode) -->
         <DropDownSelect
+          v-if="!isAiSearchMode && tempViewMode !== 'similar'"
           :options="sortOptions"
           :defaultIndex="toolbarSortType"
           :extendOptions="sortExtendOptions"
           :defaultExtendIndex="toolbarSortOrder"
-          :disabled="isToolbarFilterLockedView || tempViewMode !== 'none' || showQuickView || isScanStreamingMode"
+          :disabled="tempViewMode === 'album' || tempViewMode === 'person' || isScanStreamingMode"
           @select="handleSortTypeSelect"
         />
 
@@ -683,6 +684,8 @@ import {
   IconHeartFilled,
   IconHistory,
   IconBookmarks,
+  IconSparkles,
+  IconFile,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -1766,6 +1769,7 @@ const scrollbarSelectedIndex = computed(() => (
 const toast = useToast();
 const shortcutPlatform: ShortcutPlatform = isMac ? 'mac' : (isLinux ? 'linux' : 'windows');
 const pendingFolderSyncs = new Map<number, Promise<any>>();
+let lastSyncedAlbumFolder = '';
 const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, shortcutPlatform);
 const ratingActions: Array<{ actionId: ShortcutActionId; rating: number }> = [
   { actionId: 'meta.rating.clear', rating: 0 },
@@ -2443,7 +2447,7 @@ const currentTitleIcon = computed(() => {
               case LIB_ITEM.ALL: return IconPhotoAll;
               case LIB_ITEM.FAV: return IconHeartFilled;
               case LIB_ITEM.RATINGS: return libConfig.rating.item > 0 || libConfig.rating.item === RATE.ALL ? IconStarFilled : IconStar;
-              case LIB_ITEM.SUBJECTS: return IconSmartTag;
+              case LIB_ITEM.SUBJECTS: return IconSparkles;
               case LIB_ITEM.TODAY: return IconHistory;
               default: return IconPhotoAll;
             }
@@ -4459,7 +4463,15 @@ watch(
     }
 
     // If temp mode is active and query context changed, exit temp mode and refresh.
-    if (tempViewMode.value === 'similar' || tempViewMode.value === 'album') {
+    if (tempViewMode.value === 'similar') {
+      const params = currentImageSearchParams.value;
+      if (params && (params.searchText || params.fileId)) {
+        const requestId = ++currentContentRequestId;
+        getImageSearchFileList(params.searchText, params.fileId || 0, requestId, false);
+      }
+      return;
+    }
+    if (tempViewMode.value === 'album') {
       updateContent();
       return;
     }
@@ -5448,6 +5460,7 @@ async function getImageSearchFileList(
     fileId,
     threshold: thresholdOverride ?? config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
     limit: config.settings.imageSearch.limit,
+    fileType: Number(config.search.fileType || 0),
   };
   currentCollectionId.value = null;
   currentSearchFileIds.value = [];
@@ -5566,6 +5579,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
     fileId: 0,
     threshold: config.imageSearchThresholds[config.settings.imageSearch.thresholdIndex],
     limit: config.settings.imageSearch.limit,
+    fileType: Number(config.search.fileType || 0),
   };
   isLoading.value = true;
   timelineData.value = [];
@@ -5609,6 +5623,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
         ? {
             id: 'search-filename',
             label: localeMsg.value.search.filename_matches,
+            icon: IconFile,
             files: filenameMatches,
             countLabel: filenameHasMore ? '10+' : String(filenameMatches.length),
           }
@@ -5617,11 +5632,12 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
         ? {
             id: 'search-visual',
             label: localeMsg.value.search.semantic_matches,
+            icon: IconSparkles,
             files: visualMatches,
             countLabel: String(visualMatches.length),
           }
         : null,
-    ].filter(Boolean) as Array<{ id: string; label: string; files: any[]; countLabel: string }>;
+    ].filter(Boolean) as Array<{ id: string; label: string; icon: any; files: any[]; countLabel: string }>;
 
     let fileIndex = 0;
     for (const group of groups) {
@@ -5632,6 +5648,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
         id: `group-row-${group.id}`,
         group_id: group.id,
         label: group.label,
+        icon: group.icon,
         count: group.files.length,
         countLabel: group.countLabel,
         size,
@@ -5639,6 +5656,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
       groupedTimelineGroups.value.push({
         groupId: group.id,
         label: group.label,
+        icon: group.icon,
         count: group.files.length,
         size,
         rowIndex,
@@ -5697,9 +5715,11 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
   }
 }
 
+let contentUpdateSeq = 0;
+
 async function updateContent(force = false) {
+  const updateSeq = ++contentUpdateSeq;
   const newIndex = config.main.sidebarIndex;
-  const nextAlbumId = newIndex === SIDEBAR.ALBUM ? Number(libConfig.album.id || 0) : 0;
   const isCurrentAlbumIndexing =
     newIndex === SIDEBAR.ALBUM &&
     !!libConfig.album.id &&
@@ -5741,6 +5761,7 @@ async function updateContent(force = false) {
   isLoading.value = true;
 
   await nextTick();
+  if (updateSeq !== contentUpdateSeq) return; // superseded by a later updateContent call
   await waitForContentLoadingPaint();
   if (requestId !== currentContentRequestId) return;
 
@@ -5847,7 +5868,9 @@ async function updateContent(force = false) {
             const folderQueryParams = () => config.settings.showSubfolderFiles
               ? { searchAllSubfolders: folderPath }
               : { searchFolder: folderPath };
-            if (folderId > 0 && folderPath) {
+            const syncKey = `${album.id}:${folderId}:${folderPath}`;
+            if (folderId > 0 && folderPath && lastSyncedAlbumFolder !== syncKey) {
+              lastSyncedAlbumFolder = syncKey;
               // Debounce: if a sync is already in-flight for this folder, reuse it.
               const existing = pendingFolderSyncs.get(folderId);
               const syncPromise = existing ?? syncAlbumFolderMtimes(album.id, folderId, folderPath);
@@ -7521,15 +7544,29 @@ const emptyFilesMessage = computed(() => {
   return (messageKey && notFound[messageKey]) || notFound.files;
 });
 
+const smartAlbumFileTypeMask = computed(() => {
+  if (!isSmartAlbumView.value) return 0;
+  const album = getActiveCustomSmartAlbum();
+  if (!album) return 0;
+  const ftRules = (album.query?.rules || []).filter((r: any) => r.field === 'file_type' && r.operator === 'is');
+  return ftRules.reduce((mask: number, r: any) => mask | Number(r.value || 0), 0);
+});
+
+const activeFileTypeMask = computed(() =>
+  isSmartAlbumView.value
+    ? smartAlbumFileTypeMask.value
+    : Number(config.search.fileType || 0)
+);
+
 const fileTypeSelectedValues = computed(() => {
-  const mask = normalizeFileTypeMask(Number(config.search.fileType || 0));
+  const mask = normalizeFileTypeMask(activeFileTypeMask.value);
   if (mask === 0) return [0];
   return [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO].filter(value => (mask & value) === value);
 });
 
 const fileTypeSummaryLabel = computed(() => {
   const options = fileTypeOptions.value;
-  const mask = normalizeFileTypeMask(Number(config.search.fileType || 0));
+  const mask = normalizeFileTypeMask(activeFileTypeMask.value);
   if (mask === 0) return options[0]?.label || '';
 
   const labels = [FILE_TYPE_IMAGE, FILE_TYPE_RAW, FILE_TYPE_VIDEO]
@@ -7546,14 +7583,36 @@ const handleFileTypeSelect = (values: any[]) => {
   const nextValues = (Array.isArray(values) ? values : []).map(value => Number(value));
   const hasAll = nextValues.includes(0);
   const mask = hasAll ? 0 : nextValues.reduce((acc, value) => acc | value, 0);
+  if (isSmartAlbumView.value) {
+    const album = getActiveCustomSmartAlbum();
+    if (!album) return;
+    album.query.rules = (album.query.rules || []).filter((r: any) => r.field !== 'file_type');
+    if (mask !== 0) {
+      album.query.rules.push({
+        id: crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+        field: 'file_type',
+        operator: 'is',
+        value: mask,
+      });
+    }
+    return;
+  }
   config.search.fileType = normalizeFileTypeMask(mask);
 };
 
 const handleSortTypeSelect = (option: any, extendOption: any) => {
   if (isScanStreamingMode.value) return;
   selectMode.value = false;   // exit multi-select mode
-  config.search.sortType = option;
-  config.search.sortOrder = extendOption;
+  if (isSmartAlbumView.value) {
+    const album = getActiveCustomSmartAlbum();
+    if (album) {
+      album.sort.type = option;
+      album.sort.order = extendOption;
+    }
+  } else {
+    config.search.sortType = option;
+    config.search.sortOrder = extendOption;
+  }
 };
 
 const toggleInfoPanel = () => {
@@ -7658,11 +7717,14 @@ const isSearchLikeView = computed(() => {
     (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS);
 });
 
-const isToolbarFilterLockedView = computed(() => {
-  return config.main.sidebarIndex === SIDEBAR.SEARCH ||
-    config.main.sidebarIndex === SIDEBAR.SMART_ALBUM ||
-    (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS);
-});
+const isAiSearchMode = computed(() =>
+  config.main.sidebarIndex === SIDEBAR.SEARCH ||
+  (config.main.sidebarIndex === SIDEBAR.LIBRARY && libConfig.library.item === LIB_ITEM.SUBJECTS)
+);
+
+const isSmartAlbumView = computed(() =>
+  config.main.sidebarIndex === SIDEBAR.SMART_ALBUM
+);
 
 // update image when the select file is changed
 async function updateSelectedImage(index: number) {

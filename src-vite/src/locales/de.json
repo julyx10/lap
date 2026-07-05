@@ -323,7 +323,17 @@
     "filter": {
       "select_mode": "Auswahl",
       "select_count": "{count} ausgewählt",
-      "group_type_options": ["Keine", "Ordner", "Tag", "Monat", "Bewertung", "Standort", "Kamera", "Objektiv", "Jahr"],
+      "group_type_options": [
+        "Keine",
+        "Ordner",
+        "Tag",
+        "Monat",
+        "Bewertung",
+        "Standort",
+        "Kamera",
+        "Objektiv",
+        "Jahr"
+      ],
       "sort_type_options": [
         "Aufnahmedatum",
         "Erstellungsdatum",

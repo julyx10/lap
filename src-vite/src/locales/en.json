@@ -323,7 +323,17 @@
     "filter": {
       "select_mode": "Multi-select mode",
       "select_count": "{count} selected",
-      "group_type_options": ["None", "Folder", "Day", "Month", "Rating", "Location", "Camera", "Lens", "Year"],
+      "group_type_options": [
+        "None",
+        "Folder",
+        "Day",
+        "Month",
+        "Rating",
+        "Location",
+        "Camera",
+        "Lens",
+        "Year"
+      ],
       "sort_type_options": [
         "Taken Date",
         "Created Date",

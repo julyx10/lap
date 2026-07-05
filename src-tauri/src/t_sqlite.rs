@@ -1301,6 +1301,8 @@ pub struct ImageSearchParams {
     pub file_id: Option<i64>, // file id (for similar image search)
     pub threshold: f32,       // search threshold
     pub limit: i64,           // search limit
+    #[serde(default)]
+    pub file_type: i64,       // file type bitmask (0=all, 1=image, 2=video, 4=raw)
 }
 
 impl AFile {
@@ -4458,7 +4460,7 @@ impl AFile {
         // 2. Perform Vector Search
         let conn = open_conn()?;
 
-        let mut query = "SELECT a.id, a.embeds 
+        let mut query = "SELECT a.id, a.embeds
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             WHERE a.embeds IS NOT NULL"
@@ -4466,6 +4468,11 @@ impl AFile {
 
         query.push_str(" AND ");
         query.push_str(&Self::search_exclusion_condition("b"));
+
+        if let Some(ft_condition) = Self::build_file_type_condition(params.file_type) {
+            query.push_str(" AND ");
+            query.push_str(&ft_condition);
+        }
 
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 

@@ -323,7 +323,17 @@
     "filter": {
       "select_mode": "Selección",
       "select_count": "{count} seleccionados",
-      "group_type_options": ["Ninguno", "Carpeta", "Día", "Mes", "Calificación", "Ubicación", "Cámara", "Objetivo", "Año"],
+      "group_type_options": [
+        "Ninguno",
+        "Carpeta",
+        "Día",
+        "Mes",
+        "Calificación",
+        "Ubicación",
+        "Cámara",
+        "Objetivo",
+        "Año"
+      ],
       "sort_type_options": [
         "Fecha de toma",
         "Fecha de creación",
