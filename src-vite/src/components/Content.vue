@@ -197,6 +197,7 @@
                 @item-dblclicked="handleItemDblClicked"
                 @item-select-toggled="handleItemSelectToggled"
                 @item-action="handleItemAction"
+                @item-select-contextmenu="handleSelectionContextMenu"
                 @date-group-select="handleDateGroupSelect"
                 @group-select-toggled="handleGroupSelectToggled"
                 @visible-range-update="handleVisibleRangeUpdate"
@@ -594,6 +595,20 @@
       />
     </div>
   </Teleport>
+
+  <!-- Single shared context menu for multi-select right-click. It acts on the
+       whole selection, so one instance lives here rather than one per thumbnail.
+       The trigger is empty; it's opened at cursor coordinates by
+       handleSelectionContextMenu, and its popup teleports to <body>. -->
+  <div class="hidden">
+    <ContextMenu
+      ref="selectionMenuRef"
+      :iconMenu="null"
+      :menuItems="selectionMenuItems"
+    >
+      <template #trigger><span></span></template>
+    </ContextMenu>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -611,7 +626,7 @@ import { getAlbum, getAllAlbums, recountAlbum, getQueryCountAndSum, getQueryTime
          setFileRotate, setFileFavorite, setFileRating, batchUpdateFileMetadata, getTagsForFile, searchSimilarImages, generateEmbedding,
          revealPath, getTagName, indexAlbum, listenIndexProgress, listenIndexFinished, setAlbumCover,
          updateFileInfo, importFile, importUrl, importFileBytes, getDragPayload, importClipboard, addFileToDb, checkFileExists, cancelIndexing as cancelIndexingApi, selectFolder, getFacesForFile, listenFaceIndexProgress,
-         openFileWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
+         openFilesWithApp, getAppConfig, getIndexRecoveryInfo, clearIndexRecoveryInfo, setLastSelectedItemIndex,
          dedupDeleteSelected, getQueryFilePosition, getFolderSearchExcluded,
          listCollections, createCollection, addFilesToCollection, removeFilesFromCollection, getCollectionCountAndSum, getCollectionFiles, getCollectionFileIds, fetchFolder } from '@/common/api';
 import { config, libConfig } from '@/common/config';
@@ -629,6 +644,8 @@ import { isWin, isMac, isLinux, setTheme, separator,
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
 import GridView  from '@/components/GridView.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
+import { useFileMenuItems } from '@/common/fileMenu';
 import Welcome from '@/components/Welcome.vue';
 import MediaViewer from '@/components/MediaViewer.vue';
 import MessageBox from '@/components/MessageBox.vue';
@@ -872,6 +889,55 @@ const selectedFiles = computed(() => {
   selectedFilesVersion.value;
   return selectMode.value ? getActionableSelectedItems() : [];
 });
+const getMediaKind = (items: any[]): 'image' | 'video' | 'mixed' | 'empty' => {
+  let hasImage = false;
+  let hasVideo = false;
+  for (const item of items) {
+    if (item?.file_type === 1 || item?.file_type === 3) hasImage = true;
+    else if (item?.file_type === 2) hasVideo = true;
+    if (hasImage && hasVideo) return 'mixed';
+  }
+  if (hasImage) return 'image';
+  if (hasVideo) return 'video';
+  return 'empty';
+};
+const selectionMediaKind = computed(() => getMediaKind(selectedFiles.value));
+
+const selectionMenuRef = ref<InstanceType<typeof ContextMenu> | null>(null);
+const selectionMenuIndex = ref(-1);
+const selectionMenuItems = useFileMenuItems(
+  ref<any>(null),
+  localeMsg,
+  isMac,
+  t,
+  (action: string) => handleItemAction({ action, index: selectionMenuIndex.value }),
+  {
+    selectMode: ref(true),
+    selectionMediaKind,
+    selectionCount: selectedCount,
+  },
+);
+
+// Opens the shared selection menu for a right-clicked thumbnail. Mirrors the
+// per-thumbnail behavior: when a selection already exists, only open from an
+// item that's part of it; when nothing is selected, select the clicked item
+// first so the menu has a target, then wait a tick for that selection to flow
+// into the menu before opening.
+async function handleSelectionContextMenu({ x, y, index, isSelected }: { x: number; y: number; index: number; isSelected: boolean }) {
+  if (!selectMode.value) return;
+  if (!isSelected) {
+    if (selectedCount.value > 0) return;
+    handleItemClicked(index, false);
+    await nextTick();
+  }
+  selectionMenuIndex.value = index;
+  // Skip when there's no visible entry (empty/non-media selection), otherwise the
+  // menu would render as an empty box.
+  const hasVisibleItem = (selectionMenuItems.value ?? []).some((m: any) => !m.hidden);
+  if (!hasVisibleItem) return;
+  selectionMenuRef.value?.open?.(x, y);
+}
+
 const groupedModeActive = ref(false);
 const selectedFolderHasChildren = ref(true);
 const gridRows = computed(() => groupedModeActive.value ? groupedRows.value : fileList.value);
@@ -2925,7 +2991,7 @@ function handleItemAction(payload: { action: string, index: number }) {
     'print': () => void printImage(selectedItemIndex.value),
     'edit': () => void openImageEditor(selectedItemIndex.value),
     'open-external-app': () => {
-      void openSelectedFileInExternalApp();
+      void openInExternalApp();
     },
     'copy': () => void clickCopyImages(fileList.value[selectedItemIndex.value].file_path),
     'rename': clickRename,
@@ -3254,7 +3320,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
 
   if (matchesShortcut('file.openExternalApp', event, shortcutPlatform)) {
     event.preventDefault();
-    void openSelectedFileInExternalApp();
+    void openInExternalApp();
     return;
   }
 
@@ -6352,21 +6418,38 @@ const clickCopyImages = async (fallbackPath?: string) => {
   }
 }
 
-const openSelectedFileInExternalApp = async () => {
-  const file = fileList.value[selectedItemIndex.value];
-  if (!file?.file_path) return;
-
-  const isImageFile = file.file_type === 1 || file.file_type === 3;
-  const appPath = isImageFile
+const appPathForMediaKind = (kind: 'image' | 'video') =>
+  kind === 'image'
     ? String(config.settings.externalImageAppPath || '')
     : String(config.settings.externalVideoAppPath || '');
 
-  if (!appPath) return;
+const openInExternalApp = async () => {
+  const items = selectMode.value && selectedCount.value > 0
+    ? await getActionableSelectedItemsForAction()
+    : [fileList.value[selectedItemIndex.value]].filter(Boolean);
+  if (!items || items.length === 0) return;
+
+  const kind = getMediaKind(items);
+  if (kind === 'empty') return;
+  if (kind === 'mixed') {
+    toast.warning(t('tooltip.open_external.mixed_selection'));
+    return;
+  }
+
+  const appPath = appPathForMediaKind(kind);
+  if (!appPath) {
+    toast.warning(t('tooltip.open_external.no_app'));
+    return;
+  }
+
+  const paths = items.map((item: any) => item.file_path).filter(Boolean);
+  if (paths.length === 0) return;
 
   try {
-    await openFileWithApp(file.file_path, appPath);
+    await openFilesWithApp(paths, appPath);
   } catch (error) {
     console.error('Failed to open external app:', error);
+    toast.error(t('tooltip.open_external.failed'));
   }
 }
 

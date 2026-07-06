@@ -477,6 +477,11 @@
       "limit": "한 번에 최대 {count}개 파일을 복사할 수 있습니다.",
       "failed": "이미지를 복사하지 못했습니다. 지원되지 않는 형식이거나 파일이 손상되었습니다."
     },
+    "open_external": {
+      "mixed_selection": "외부 편집기에서 열려면 이미지만 또는 동영상만 선택하세요.",
+      "no_app": "외부 편집기가 설정되지 않았습니다. 설정에서 선택하세요.",
+      "failed": "외부 편집기를 열지 못했습니다."
+    },
     "save_image": {
       "success": "이미지 저장됨",
       "save_as_success": "이미지가 새 파일로 저장됨",
@@ -531,6 +536,9 @@
       "edit_image": "이미지 편집...",
       "open_image_in_app": "{app}에서 이미지 열기...",
       "open_video_in_app": "{app}에서 동영상 열기...",
+      "open_selected_images_in_app": "{app}에서 선택한 이미지 열기...",
+      "open_selected_videos_in_app": "{app}에서 선택한 동영상 열기...",
+      "open_in_app": "외부 앱에서 열기...",
       "find_similar_images": "유사 이미지 찾기",
       "find_person_images": "인물 이미지 찾기",
       "print": "이미지 인쇄...",

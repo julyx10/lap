@@ -135,7 +135,8 @@
         </label>
       </div>
 
-      <!-- context menu -->
+      <!-- context menu (non-select only; in select mode a single shared menu is
+           owned by the parent and opened via the select-contextmenu event) -->
       <div v-if="!selectMode" class="absolute right-0.5 top-0.5">
         <ContextMenu
           ref="contextMenuRef"
@@ -223,10 +224,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-    'clicked', 
-    'dblclicked', 
-    'select-toggled', 
-    'action'
+    'clicked',
+    'dblclicked',
+    'select-toggled',
+    'action',
+    'select-contextmenu'
 ]);
 
 const isTransitionDisabled = ref(false);
@@ -370,9 +372,17 @@ function stopVideoPreview() {
 }
 
 function handleContextMenu(event: MouseEvent) {
-  if (props.selectMode) return;
   event.preventDefault();
   event.stopPropagation();
+  // In multi-select mode a single shared menu (owned by the parent) acts on the
+  // whole selection; just forward the cursor position and let the parent decide
+  // whether and where to open it.
+  if (props.selectMode) {
+    // Pass this thumbnail's own selection state up; the parent shouldn't re-derive
+    // it from an index (which can disagree under grouping/virtualization).
+    emit('select-contextmenu', { x: event.clientX, y: event.clientY, isSelected: props.isSelected });
+    return;
+  }
   if (!props.isSelected) {
     emit('clicked', false);
   }

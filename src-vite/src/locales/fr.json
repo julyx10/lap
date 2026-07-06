@@ -477,6 +477,11 @@
       "limit": "Vous pouvez copier jusqu'à {count} fichiers à la fois.",
       "failed": "Impossible de copier l'image. Format non pris en charge ou fichier corrompu."
     },
+    "open_external": {
+      "mixed_selection": "Sélectionnez uniquement des images ou uniquement des vidéos pour les ouvrir dans un éditeur externe.",
+      "no_app": "Aucun éditeur externe n'est défini. Choisissez-en un dans les Paramètres.",
+      "failed": "Impossible d'ouvrir l'éditeur externe."
+    },
     "save_image": {
       "success": "Image enregistrée",
       "save_as_success": "Image enregistrée comme nouveau fichier",
@@ -531,6 +536,9 @@
       "edit_image": "Modifier l'image...",
       "open_image_in_app": "Ouvrir l'image dans {app}...",
       "open_video_in_app": "Ouvrir la vidéo dans {app}...",
+      "open_selected_images_in_app": "Ouvrir les images sélectionnées dans {app}...",
+      "open_selected_videos_in_app": "Ouvrir les vidéos sélectionnées dans {app}...",
+      "open_in_app": "Ouvrir dans une app externe...",
       "find_similar_images": "Trouver similaires",
       "find_person_images": "Trouver photos personne",
       "print": "Imprimer l'image...",

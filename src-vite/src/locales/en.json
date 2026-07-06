@@ -477,6 +477,11 @@
       "limit": "You can copy up to {count} files at a time.",
       "failed": "Failed to copy image. Unsupported format or corrupted file."
     },
+    "open_external": {
+      "mixed_selection": "Select only images or only videos to open them in an external editor.",
+      "no_app": "No external editor is set. Choose one in Settings.",
+      "failed": "Failed to open the external editor."
+    },
     "save_image": {
       "success": "The image has been saved",
       "save_as_success": "The image has been saved as a new file",
@@ -531,6 +536,9 @@
       "edit_image": "Edit image...",
       "open_image_in_app": "Open image in {app}...",
       "open_video_in_app": "Open video in {app}...",
+      "open_selected_images_in_app": "Open selected images in {app}...",
+      "open_selected_videos_in_app": "Open selected videos in {app}...",
+      "open_in_app": "Open in external app...",
       "find_similar_images": "Find similar images",
       "find_person_images": "Find person images",
       "print": "Print image...",

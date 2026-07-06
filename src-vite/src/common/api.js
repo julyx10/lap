@@ -425,6 +425,17 @@ export async function openFileWithApp(filePath, appPath) {
   }
 }
 
+// open one or more files with a specific external app
+export async function openFilesWithApp(filePaths, appPath) {
+  try {
+    await invoke('open_files_with_app', { filePaths, appPath });
+    return true;
+  } catch (error) {
+    console.error('Failed to open files with app:', error);
+    throw error;
+  }
+}
+
 // get external app display name from platform metadata
 export async function getExternalAppDisplayName(appPath) {
   try {

@@ -640,7 +640,18 @@ pub fn get_external_app_display_name(app_path: &str) -> Result<String, String> {
 /// open a file with a specific external application
 #[tauri::command]
 pub fn open_file_with_app(file_path: &str, app_path: &str) -> Result<(), String> {
-    if file_path.is_empty() || app_path.is_empty() {
+    open_files_with_app(vec![file_path.to_string()], app_path)
+}
+
+/// open one or more files with a specific external application
+#[tauri::command]
+pub fn open_files_with_app(file_paths: Vec<String>, app_path: &str) -> Result<(), String> {
+    let file_paths: Vec<String> = file_paths
+        .into_iter()
+        .filter(|p| !p.is_empty())
+        .collect();
+
+    if file_paths.is_empty() || app_path.is_empty() {
         return Err("Missing file path or app path".to_string());
     }
 
@@ -649,7 +660,7 @@ pub fn open_file_with_app(file_path: &str, app_path: &str) -> Result<(), String>
         Command::new("open")
             .arg("-a")
             .arg(app_path)
-            .arg(file_path)
+            .args(&file_paths)
             .spawn()
             .map_err(|e| e.to_string())?;
     }
@@ -657,7 +668,7 @@ pub fn open_file_with_app(file_path: &str, app_path: &str) -> Result<(), String>
     #[cfg(not(target_os = "macos"))]
     {
         Command::new(app_path)
-            .arg(file_path)
+            .args(&file_paths)
             .spawn()
             .map_err(|e| e.to_string())?;
     }

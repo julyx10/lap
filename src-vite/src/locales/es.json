@@ -477,6 +477,11 @@
       "limit": "Puedes copiar hasta {count} archivos a la vez.",
       "failed": "No se pudo copiar la imagen. Formato no compatible o archivo dañado."
     },
+    "open_external": {
+      "mixed_selection": "Selecciona solo imágenes o solo videos para abrirlos en un editor externo.",
+      "no_app": "No hay ningún editor externo configurado. Elige uno en Ajustes.",
+      "failed": "No se pudo abrir el editor externo."
+    },
     "save_image": {
       "success": "Imagen guardada",
       "save_as_success": "Imagen guardada como archivo nuevo",
@@ -531,6 +536,9 @@
       "edit_image": "Editar imagen...",
       "open_image_in_app": "Abrir imagen en {app}...",
       "open_video_in_app": "Abrir video en {app}...",
+      "open_selected_images_in_app": "Abrir imágenes seleccionadas en {app}...",
+      "open_selected_videos_in_app": "Abrir videos seleccionados en {app}...",
+      "open_in_app": "Abrir en app externa...",
       "find_similar_images": "Buscar similares",
       "find_person_images": "Buscar fotos de persona",
       "print": "Imprimir imagen...",

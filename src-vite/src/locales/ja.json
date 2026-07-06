@@ -477,6 +477,11 @@
       "limit": "一度にコピーできるファイルは最大 {count} 件です。",
       "failed": "画像のコピーに失敗しました。未対応の形式か、ファイルが破損しています。"
     },
+    "open_external": {
+      "mixed_selection": "外部エディターで開くには、画像のみ、または動画のみを選択してください。",
+      "no_app": "外部エディターが設定されていません。設定で選択してください。",
+      "failed": "外部エディターを開けませんでした。"
+    },
     "save_image": {
       "success": "画像を保存しました",
       "save_as_success": "画像を新しいファイルとして保存しました",
@@ -531,6 +536,9 @@
       "edit_image": "画像を編集...",
       "open_image_in_app": "{app} で画像を開く...",
       "open_video_in_app": "{app} で動画を開く...",
+      "open_selected_images_in_app": "選択した画像を {app} で開く...",
+      "open_selected_videos_in_app": "選択した動画を {app} で開く...",
+      "open_in_app": "外部アプリで開く...",
       "find_similar_images": "類似画像を検索",
       "find_person_images": "この人の画像を検索",
       "print": "画像を印刷...",

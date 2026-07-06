@@ -23,25 +23,82 @@ import {
   IconBookmarkOff,
 } from '@/common/icons';
 
+// Label lookup table for "open in external app" command based on media type
+// and item count.
+const OPEN_IN_APP_LABELS = {
+  image: {
+    one: ['open_image_in_app', 'Open image in {app}...'],
+    many: ['open_selected_images_in_app', 'Open selected images in {app}...'],
+  },
+  video: {
+    one: ['open_video_in_app', 'Open video in {app}...'],
+    many: ['open_selected_videos_in_app', 'Open selected videos in {app}...'],
+  },
+  generic: ['open_in_app', 'Open in external app...'],
+} as const;
+
 export const useFileMenuItems = (
   file: Ref<any>,
   localeMsg: Ref<any>,
   isMac: boolean,
   translate: (key: string) => string,
   onAction: (action: string) => void,
-  options?: { isCollectionView?: Ref<boolean> }
+  options?: {
+    isCollectionView?: Ref<boolean>;
+    selectMode?: Ref<boolean>;
+    selectionMediaKind?: Ref<'image' | 'video' | 'mixed' | 'empty'>;
+    selectionCount?: Ref<number>;
+  }
 ) => {
-  return computed(() => {
-    const f = file.value;
-    if (!f) return [];
+  const createAction = (actionName: string) => () => onAction(actionName);
+  const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, DEFAULT_PLATFORM);
 
-    const createAction = (actionName: string) => () => onAction(actionName);
-    const imageAppName = String(config.settings.externalImageAppName || '');
-    const videoAppName = String(config.settings.externalVideoAppName || '');
+  // Resolves a label string against the current locale, or returns the fallback if none was found.
+  const menuLabel = ([key, fallback]: readonly [string, string]) =>
+    String(localeMsg.value.menu.file[key] || fallback);
+
+  // Constructs a label for the "open in external app" entry, depending on media type
+  // and item count.
+  const openInAppLabel = (kind: 'image' | 'video' | 'mixed' | 'empty', count = 1) => {
+    if (kind !== 'image' && kind !== 'video') return menuLabel(OPEN_IN_APP_LABELS.generic);
+    const name = String(
+      (kind === 'video' ? config.settings.externalVideoAppName : config.settings.externalImageAppName) || '',
+    );
+    if (!name) return menuLabel(OPEN_IN_APP_LABELS.generic);
+    const variant = OPEN_IN_APP_LABELS[kind][count > 1 ? 'many' : 'one'];
+    return menuLabel(variant).replace('{app}', name);
+  };
+
+  // Creates a context menu for multi-select mode. Currently only shows the "open in external app" entry.
+  //
+  // If more entries are added in the future, we could refactor this to filter entries based on
+  // selection instead of having two completely separate menus.
+  const buildSelectionMenu = () => {
+    const kind = options?.selectionMediaKind?.value ?? 'empty';
+    const selectionIsVideo = kind === 'video';
+    const selectionIsMixed = kind === 'mixed';
+    // Gate on the app *path* (what actually launches), not the display name.
+    const appPath = String(
+      (selectionIsVideo ? config.settings.externalVideoAppPath : config.settings.externalImageAppPath) || '',
+    );
+    return [
+      {
+        label: openInAppLabel(kind, options?.selectionCount?.value ?? 0),
+        icon: markRaw(IconExternal),
+        hidden: kind === 'empty',
+        disabled: selectionIsMixed || !appPath,
+        shortcut: shortcut('file.openExternalApp'),
+        action: createAction('open-external-app'),
+      },
+    ];
+  };
+
+  // Creates a context menu for a single focused file.
+  const buildSingleFileMenu = (f: any) => {
     const isImage = f.file_type === 1 || f.file_type === 3;
     const isVideo = f.file_type === 2;
-    const shortcut = (actionId: ShortcutActionId) => getShortcutLabel(actionId, DEFAULT_PLATFORM);
-
+    const imageAppPath = String(config.settings.externalImageAppPath || '');
+    const videoAppPath = String(config.settings.externalVideoAppPath || '');
     return [
       {
         label: localeMsg.value.menu.file.view_in_new_window,
@@ -50,12 +107,9 @@ export const useFileMenuItems = (
         action: createAction('open')
       },
       {
-        label: (
-          isVideo
-            ? (localeMsg.value.menu.file.open_video_in_app || 'Open video in {app}...')
-            : (localeMsg.value.menu.file.open_image_in_app || 'Open image in {app}...')
-        ).replace('{app}', isVideo ? videoAppName : imageAppName),
-        hidden: !((isImage && imageAppName) || (isVideo && videoAppName)),
+        label: openInAppLabel(isVideo ? 'video' : 'image'),
+        hidden: !isImage && !isVideo,
+        disabled: !((isImage && imageAppPath) || (isVideo && videoAppPath)),
         icon: markRaw(IconExternal),
         shortcut: shortcut('file.openExternalApp'),
         action: createAction('open-external-app')
@@ -217,5 +271,12 @@ export const useFileMenuItems = (
         action: createAction(options?.isCollectionView?.value ? 'remove-from-collection' : 'trash')
       },
     ];
+  };
+
+  return computed(() => {
+    if (options?.selectMode?.value) return buildSelectionMenu();
+    const f = file.value;
+    if (!f) return [];
+    return buildSingleFileMenu(f);
   });
 };

@@ -477,6 +477,11 @@
       "limit": "每次最多复制 {count} 个文件。",
       "failed": "复制图片失败。不支持的格式或文件已损坏。"
     },
+    "open_external": {
+      "mixed_selection": "请仅选择图片或仅选择视频，以在外部编辑器中打开。",
+      "no_app": "未设置外部编辑器。请在设置中选择一个。",
+      "failed": "无法打开外部编辑器。"
+    },
     "save_image": {
       "success": "图片已保存",
       "save_as_success": "图片已另存为新文件",
@@ -531,6 +536,9 @@
       "edit_image": "编辑图片...",
       "open_image_in_app": "在 {app} 中打开图片...",
       "open_video_in_app": "在 {app} 中打开视频...",
+      "open_selected_images_in_app": "在 {app} 中打开所选图片...",
+      "open_selected_videos_in_app": "在 {app} 中打开所选视频...",
+      "open_in_app": "在外部应用中打开...",
       "find_similar_images": "查找相似图片",
       "find_person_images": "查找人物图片",
       "print": "打印图片...",

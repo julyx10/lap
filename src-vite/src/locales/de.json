@@ -477,6 +477,11 @@
       "limit": "Es können höchstens {count} Dateien gleichzeitig kopiert werden.",
       "failed": "Bild konnte nicht kopiert werden. Nicht unterstütztes Format oder beschädigte Datei."
     },
+    "open_external": {
+      "mixed_selection": "Wählen Sie nur Bilder oder nur Videos aus, um sie in einem externen Editor zu öffnen.",
+      "no_app": "Es ist kein externer Editor festgelegt. Wählen Sie einen in den Optionen aus.",
+      "failed": "Der externe Editor konnte nicht geöffnet werden."
+    },
     "save_image": {
       "success": "Bild gespeichert",
       "save_as_success": "Bild als neue Datei gespeichert",
@@ -531,6 +536,9 @@
       "edit_image": "Bild bearbeiten...",
       "open_image_in_app": "Bild in {app} öffnen...",
       "open_video_in_app": "Video in {app} öffnen...",
+      "open_selected_images_in_app": "Ausgewählte Bilder in {app} öffnen...",
+      "open_selected_videos_in_app": "Ausgewählte Videos in {app} öffnen...",
+      "open_in_app": "In externer App öffnen...",
       "find_similar_images": "Ähnliche finden",
       "find_person_images": "Personenbilder finden",
       "print": "Bild drucken...",
