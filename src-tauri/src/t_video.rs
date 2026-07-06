@@ -654,6 +654,20 @@ pub async fn get_video_metadata_async(file_path: &str) -> Result<VideoMetadata, 
         HashMap::new()
     };
 
+    // Extract GPS from ISO 6709 location tag (e.g. "+40.6892-074.0445+000.000/").
+    // Some cameras store it in format tags, others in stream-level video tags.
+    let (mut gps_latitude, mut gps_longitude, mut gps_altitude) =
+        parse_iso6709_location(&meta);
+    if gps_latitude.is_none() {
+        if let Some(tags) = video["tags"].as_object() {
+            let stream_meta: HashMap<String, String> = tags
+                .iter()
+                .map(|(k, v)| (k.to_lowercase(), v.as_str().unwrap_or("").to_string()))
+                .collect();
+            (gps_latitude, gps_longitude, gps_altitude) = parse_iso6709_location(&stream_meta);
+        }
+    }
+
     Ok(VideoMetadata {
         width: w,
         height: h,
@@ -662,10 +676,87 @@ pub async fn get_video_metadata_async(file_path: &str) -> Result<VideoMetadata, 
         e_model: first_exist(&meta, &["model", "camera_model"]),
         e_software: first_exist(&meta, &["software", "encoder"]),
         e_date_time: first_exist(&meta, &["creation_time"]),
-        gps_latitude: None,
-        gps_longitude: None,
-        gps_altitude: None,
+        gps_latitude,
+        gps_longitude,
+        gps_altitude,
     })
+}
+
+/// Parse GPS coordinates from ffprobe format tags using ISO 6709 notation.
+/// Common tag keys: "location", "com.apple.quicktime.location.ISO6709"
+/// Format: "+40.6892-074.0445+000.000/" (lat, lon, optional alt)
+fn parse_iso6709_location(meta: &HashMap<String, String>) -> (Option<f64>, Option<f64>, Option<f64>) {
+    let raw = meta
+        .get("location")
+        .or_else(|| meta.get("com.apple.quicktime.location.iso6709"))
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty());
+
+    let raw = match raw {
+        Some(v) => v,
+        None => return (None, None, None),
+    };
+
+    // Strip trailing '/' if present
+    let cleaned = raw.trim_end_matches('/');
+    if cleaned.len() < 2 {
+        return (None, None, None);
+    }
+
+    // ISO 6709: ±DD.MMMM±DDD.MMMM[±EEE.EEE]
+    // Latitude starts at position 0 with a sign
+    let bytes = cleaned.as_bytes();
+    let mut pos = 0;
+
+    // Parse latitude: sign + digits
+    let lat_end = find_iso6709_number_end(bytes, pos + 1);
+    if lat_end <= pos + 1 {
+        return (None, None, None);
+    }
+    let lat: f64 = match cleaned[pos..lat_end].parse().ok() {
+        Some(v) => v,
+        None => return (None, None, None),
+    };
+    pos = lat_end;
+
+    // Parse longitude: sign + digits
+    if pos >= bytes.len() {
+        return (Some(lat), None, None);
+    }
+    let lon_end = find_iso6709_number_end(bytes, pos + 1);
+    if lon_end <= pos + 1 {
+        return (Some(lat), None, None);
+    }
+    let lon: f64 = match cleaned[pos..lon_end].parse().ok() {
+        Some(v) => v,
+        None => return (Some(lat), None, None),
+    };
+    pos = lon_end;
+
+    // Parse optional altitude
+    let alt = if pos < bytes.len() {
+        let alt_end = find_iso6709_number_end(bytes, pos + 1);
+        if alt_end > pos + 1 {
+            cleaned[pos..alt_end].parse::<f64>().ok()
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    (Some(lat), Some(lon), alt)
+}
+
+/// Find the end index of an ISO 6709 numeric token (sign followed by digits
+/// and an optional decimal point).
+fn find_iso6709_number_end(bytes: &[u8], start: usize) -> usize {
+    let mut i = start;
+    // Skip sign (already consumed or at start)
+    while i < bytes.len() && (bytes[i].is_ascii_digit() || bytes[i] == b'.') {
+        i += 1;
+    }
+    i
 }
 
 /// Checks if MOOV atom is within the first 1MB of the file (faststart).
