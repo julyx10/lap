@@ -1269,7 +1269,9 @@
         "rate_five": "별점 5개",
         "edit_tags": "태그 편집",
         "edit_comment": "메모 편집",
-        "rotate": "미리보기 회전"
+        "rotate": "미리보기 회전",
+        "thumbnail_increase": "썸네일 확대",
+        "thumbnail_decrease": "썸네일 축소"
       }
     },
     "advanced": {

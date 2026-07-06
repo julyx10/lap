@@ -50,35 +50,42 @@
             {{ $t('menu.select.invert') }}
           </PanelActionButton>
         </div>
-        <div v-if="selectedFiles.length > 0">
-          <div class="mx-2 grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-1.5">
-            <div
-              v-for="file in visibleSelectedFiles"
-              :key="file.id"
-              class="group/thumb relative h-20 min-w-0 overflow-hidden rounded-box border border-base-content/5 cursor-pointer"
-              :title="file.name || file.file_path"
-              @click="$emit('unselectFile', file.id)"
-            >
-              <img
-                v-if="file.thumbnail"
-                :src="file.thumbnail"
-                class="h-full w-full object-cover"
-                :style="getSelectedThumbnailStyle(file)"
-                loading="lazy"
-              />
-              <div v-else class="h-full w-full skeleton"></div>
-              <div class="absolute inset-0 flex items-center justify-center bg-base-content/5 opacity-0 transition-opacity group-hover/thumb:opacity-100">
-                <span class="badge badge-sm badge-primary">{{ $t('info_panel.deselect') }}</span>
+        <div
+          class="min-h-20 flex items-center justify-center overflow-hidden"
+        >
+          <template v-if="selectedFiles.length > 0">
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-1.5 w-full">
+              <div
+                v-for="file in visibleSelectedFiles"
+                :key="file.id"
+                class="group/thumb relative h-20 min-w-0 overflow-hidden rounded-box border border-base-content/5 cursor-pointer"
+                :title="file.name || file.file_path"
+                @click="$emit('unselectFile', file.id)"
+              >
+                <img
+                  v-if="file.thumbnail"
+                  :src="file.thumbnail"
+                  class="h-full w-full object-cover"
+                  :style="getSelectedThumbnailStyle(file)"
+                  loading="lazy"
+                />
+                <div v-else class="h-full w-full skeleton"></div>
+                <div class="absolute inset-0 flex items-center justify-center bg-base-content/5 opacity-0 transition-opacity group-hover/thumb:opacity-100">
+                  <span class="badge badge-sm badge-primary">{{ $t('info_panel.deselect') }}</span>
+                </div>
+              </div>
+              <div
+                v-if="hiddenSelectedCount > 0"
+                class="flex h-20 min-w-0 items-center justify-center rounded-box border border-dashed border-base-content/20 bg-base-100/50 text-xs font-semibold text-base-content/70"
+                :title="$t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() })"
+              >
+                +{{ hiddenSelectedCount }}
               </div>
             </div>
-            <div
-              v-if="hiddenSelectedCount > 0"
-              class="flex h-20 min-w-0 items-center justify-center rounded-box border border-dashed border-base-content/20 bg-base-100/50 text-xs font-semibold text-base-content/70"
-              :title="$t('toolbar.filter.select_count', { count: selectedCount.toLocaleString() })"
-            >
-              +{{ hiddenSelectedCount }}
-            </div>
-          </div>
+          </template>
+          <span v-else class="text-sm text-base-content/30 select-none">
+            {{ $t('info_panel.select_hint') }}
+          </span>
         </div>
 
       </div>
@@ -232,7 +239,7 @@ const SELECTED_THUMBNAIL_LIMIT = 19;
 const visibleSelectedFiles = computed(() => props.selectedFiles.slice(0, SELECTED_THUMBNAIL_LIMIT));
 const hiddenSelectedCount = computed(() => Math.max(0, props.selectedCount - visibleSelectedFiles.value.length));
 const selectionSummaryText = computed(() => {
-  if (props.selectedCount <= 0) return localeMsg.value.info_panel.select_hint;
+  if (props.selectedCount <= 0) return '';
   const countText = t('toolbar.filter.select_count', { count: props.selectedCount.toLocaleString() });
   return `${countText} (${formatFileSize(props.selectedSize)})`;
 });

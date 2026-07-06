@@ -963,6 +963,8 @@ const shortcutDisplaySections: Array<{ key: string; items: ShortcutDisplayItem[]
   {
     key: 'image_browsing',
     items: [
+      { actionId: 'view.zoomIn', labelKey: 'thumbnail_increase' },
+      { actionId: 'view.zoomOut', labelKey: 'thumbnail_decrease' },
       { actionId: 'view.previous', labelKey: 'previous_image' },
       { actionId: 'view.next', labelKey: 'next_image' },
       { actionId: 'view.first', labelKey: 'first_image' },

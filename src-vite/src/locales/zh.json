@@ -1269,7 +1269,9 @@
         "rate_five": "评分 5 星",
         "edit_tags": "编辑标签",
         "edit_comment": "编辑备注",
-        "rotate": "旋转预览"
+        "rotate": "旋转预览",
+        "thumbnail_increase": "放大缩略图",
+        "thumbnail_decrease": "缩小缩略图"
       }
     },
     "advanced": {

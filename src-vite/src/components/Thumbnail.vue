@@ -124,7 +124,7 @@
 
       <!-- select checkbox -->
       <div v-if="selectMode" class="absolute right-0.5 top-0.5">
-        <label class="flex items-center text-primary cursor-pointer" @click.stop>
+        <label class="flex items-center text-primary cursor-pointer" @click.stop @dblclick.stop>
           <input
             type="checkbox"
             class="checkbox checkbox-sm"

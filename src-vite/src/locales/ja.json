@@ -1269,7 +1269,9 @@
         "rate_five": "5つ星評価",
         "edit_tags": "タグを編集",
         "edit_comment": "コメントを編集",
-        "rotate": "プレビューを回転"
+        "rotate": "プレビューを回転",
+        "thumbnail_increase": "サムネイルを拡大",
+        "thumbnail_decrease": "サムネイルを縮小"
       }
     },
     "advanced": {

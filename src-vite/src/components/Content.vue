@@ -3185,6 +3185,11 @@ function handleLocalKeyDown(event: KeyboardEvent) {
   }
 
   if (matchesShortcut('view.close', event, shortcutPlatform)) {
+    if (selectMode.value && showQuickView.value) {
+      closeQuickPreview();
+      event.preventDefault();
+      return;
+    }
     if (selectMode.value) {
       if (selectedCount.value > 0) {
         selectNoneInCurrentList();
@@ -3193,11 +3198,13 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       }
       event.preventDefault();
       return;
-    } else if (showQuickView.value) {
+    }
+    if (showQuickView.value) {
       closeQuickPreview();
       event.preventDefault();
       return;
-    } else if (tempViewMode.value !== 'none') {
+    }
+    if (tempViewMode.value !== 'none') {
       exitTempViewMode();
       event.preventDefault();
       return;

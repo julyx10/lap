@@ -1269,7 +1269,9 @@
         "rate_five": "Calificar 5 estrellas",
         "edit_tags": "Editar etiquetas",
         "edit_comment": "Editar comentario",
-        "rotate": "Rotar vista previa"
+        "rotate": "Rotar vista previa",
+        "thumbnail_increase": "Aumentar miniaturas",
+        "thumbnail_decrease": "Reducir miniaturas"
       }
     },
     "advanced": {
