@@ -538,22 +538,68 @@ fn build_aae_rename_plan(
 // Content identifier helpers (Apple Live Photo pairing)
 // ---------------------------------------------------------------------------
 
-/// Scan a file's first 2 MB for a token that looks like an Apple content
-/// identifier (UUID or hex string, 32-64 chars). Used to pair HEIC images
-/// with their companion MOV video.
-pub(crate) fn scan_apple_content_identifier(file_path: &str) -> Option<String> {
-    let mut file = fs::File::open(file_path).ok()?;
+/// Read the XMP area of a filename-matched image candidate. Apple Photos can
+/// place HEIF XMP metadata beyond the small header used for regular EXIF work.
+pub(crate) fn scan_apple_content_identifiers(file_path: &str) -> Vec<String> {
+    let Ok(mut file) = fs::File::open(file_path) else {
+        return Vec::new();
+    };
     let mut buf = vec![0u8; 2 * 1024 * 1024];
-    let n = file.read(&mut buf).ok()?;
+    let Ok(n) = file.read(&mut buf) else {
+        return Vec::new();
+    };
     buf.truncate(n);
+    apple_content_identifiers_from_bytes(&buf)
+}
 
+pub(crate) fn apple_content_identifier_from_bytes(buf: &[u8]) -> Option<String> {
+    apple_content_identifiers_from_bytes(buf).into_iter().next()
+}
+
+pub(crate) fn apple_content_identifiers_from_bytes(buf: &[u8]) -> Vec<String> {
     let text = String::from_utf8_lossy(&buf);
-    for token in text.split(|c: char| !(c.is_ascii_alphanumeric() || c == '-' || c == '_')) {
-        if looks_like_content_identifier(token) {
-            return Some(token.to_string());
+    let mut identifiers = Vec::new();
+    for marker in [
+        "com.apple.quicktime.content.identifier",
+        "ContentIdentifier",
+    ] {
+        if let Some(identifier) = identifier_after_marker(&text, marker) {
+            identifiers.push(identifier);
         }
     }
-    None
+
+    // Some Photos-exported HEIC files keep the identifier in an HEIF metadata
+    // item without the XMP property name as a plain-text neighbour. The caller
+    // only accepts this value when it exactly matches the filename-paired MOV.
+    for token in text.split(|c: char| !(c.is_ascii_alphanumeric() || c == '-' || c == '_')) {
+        let mut add_identifier = |identifier: &str| {
+            if looks_like_content_identifier(identifier)
+                && !identifiers
+                    .iter()
+                    .any(|existing| existing.eq_ignore_ascii_case(identifier))
+            {
+                identifiers.push(identifier.to_string());
+            }
+        };
+        add_identifier(token);
+
+        // HEIF item payloads can prefix the UUID with a non-metadata byte
+        // that still decodes as ASCII. Search the token for an embedded UUID.
+        for start in 0..token.len().saturating_sub(35) {
+            add_identifier(&token[start..start + 36]);
+        }
+    }
+    identifiers
+}
+
+fn identifier_after_marker(text: &str, marker: &str) -> Option<String> {
+    let marker_offset = text.find(marker)? + marker.len();
+    let value_area = text.get(marker_offset..)?;
+    let value_area = &value_area[..value_area.len().min(256)];
+    value_area
+        .split(|c: char| !(c.is_ascii_alphanumeric() || c == '-' || c == '_'))
+        .find(|token| looks_like_content_identifier(token))
+        .map(str::to_string)
 }
 
 pub(crate) fn looks_like_content_identifier(value: &str) -> bool {

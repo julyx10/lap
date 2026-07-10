@@ -1630,17 +1630,24 @@ pub async fn import_clipboard(
 
 /// delete a file
 #[tauri::command]
-pub fn delete_file(file_id: i64, file_path: &str) -> Result<usize, String> {
+pub fn delete_file(file_id: i64, file_path: &str) -> Result<BatchDeleteResult, String> {
     delete_file_group(file_id, file_path, false)
 }
 
 /// delete a file permanently
 #[tauri::command]
-pub fn delete_file_permanently(file_id: i64, file_path: &str) -> Result<usize, String> {
+pub fn delete_file_permanently(
+    file_id: i64,
+    file_path: &str,
+) -> Result<BatchDeleteResult, String> {
     delete_file_group(file_id, file_path, true)
 }
 
-fn delete_file_group(file_id: i64, file_path: &str, permanently: bool) -> Result<usize, String> {
+fn delete_file_group(
+    file_id: i64,
+    file_path: &str,
+    permanently: bool,
+) -> Result<BatchDeleteResult, String> {
     let component_files = AFile::live_photo_component_files(file_id)?;
     let mut deleted_file_ids = Vec::with_capacity(component_files.len() + 1);
     let mut delete_errors = Vec::new();
@@ -1678,13 +1685,17 @@ fn delete_file_group(file_id: i64, file_path: &str, permanently: bool) -> Result
         delete_errors.push(format!("Failed to delete Apple sidecar: {}", error));
     }
 
-    let deleted = AFile::batch_delete(&deleted_file_ids)
+    AFile::batch_delete(&deleted_file_ids)
         .map_err(|e| format!("Error while deleting removed files from DB: {}", e))?;
 
+    let failed_count = usize::from(!delete_errors.is_empty());
     for error in delete_errors {
         eprintln!("{}", error);
     }
-    Ok(deleted)
+    Ok(BatchDeleteResult {
+        failed_count,
+        deleted_file_ids,
+    })
 }
 
 /// delete a file from db

@@ -6983,14 +6983,20 @@ const onTrashFile = async () => {
       rebuildSelectionAfterListMutation(remainingSelectedIds);
     } 
     else if(selectedItemIndex.value >= 0) {               // single select mode
-      const deletedFileName = fileList.value[selectedItemIndex.value]?.name || '';
-      affectedAlbumIds.add(Number(fileList.value[selectedItemIndex.value].album_id || 0));
-      deletedFileIds.push(fileList.value[selectedItemIndex.value].id);
-      await deleteFileAlways(fileList.value[selectedItemIndex.value], permanently);
+      const selectedFile = fileList.value[selectedItemIndex.value];
+      const deletedFileName = selectedFile?.name || '';
+      const result = await deleteFileAlways(selectedFile, permanently);
+      const deletedIdSet = new Set(result.deletedFileIds.map((id: any) => Number(id)));
+      if (!deletedIdSet.has(Number(selectedFile.id))) {
+        throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file: ${selectedFile.file_path}`);
+      }
+      affectedAlbumIds.add(Number(selectedFile.album_id || 0));
+      deletedFileIds.push(selectedFile.id);
+      failedDeleteCount = Number(result.failedCount || 0);
       removeFromFileList(selectedItemIndex.value);
-      toast.success(
-        getDeleteFileSuccessMessage(deletedFileName, permanently)
-      );
+      if (failedDeleteCount === 0) {
+        toast.success(getDeleteFileSuccessMessage(deletedFileName, permanently));
+      }
     }
 
     await refreshGroupedRowsAfterDelete(deletedFileIds);
@@ -7022,7 +7028,11 @@ const onTrashFile = async () => {
     }
 
     if (failedDeleteCount > 0) {
-      toast.error(getDeleteFilesErrorMessage(permanently));
+      toast.error(
+        (dedupDeleteFileIds.value.length > 0 || selectMode.value)
+          ? getDeleteFilesErrorMessage(permanently)
+          : getDeleteFileErrorMessage(permanently)
+      );
     }
 
     closeTrashMsgbox();
@@ -7046,8 +7056,9 @@ async function deleteFileAlways(file: any, permanently = false) {
   const deletedFile = permanently
     ? await deleteFilePermanently(file.id, file.file_path)
     : await deleteFile(file.id, file.file_path);
-  if(deletedFile) {
+  if (deletedFile && Array.isArray(deletedFile.deletedFileIds)) {
     console.log(`clickDeleteFile - ${permanently ? 'permanently deleted' : 'trashed'} file:`, file.file_path);
+    return deletedFile;
   } else {
     throw new Error(`Failed to ${permanently ? 'permanently delete' : 'trash'} file: ${file.file_path}`);
   }

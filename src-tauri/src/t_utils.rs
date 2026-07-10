@@ -5,7 +5,7 @@
  * date:    2024-08-08
  */
 use crate::t_common;
-use crate::t_sqlite::{AFile, AFolder, AThumb, Album};
+use crate::t_sqlite::{AFile, AFolder, AThumb, Album, FolderScanState};
 use chrono::{DateTime, Local, TimeZone, Utc};
 use once_cell::sync::Lazy;
 use pinyin::ToPinyin;
@@ -1532,22 +1532,7 @@ pub fn get_folder_files(
                 }
             }
         }
-        let _ = AFile::pair_live_photos_in_folder(resolved_folder_id).map_err(|e| {
-            eprintln!(
-                "Failed to pair Live Photos in folder {}: {}",
-                folder_path, e
-            )
-        });
-        match AFile::get_files_by_folder_id(resolved_folder_id) {
-            Ok(files) => files,
-            Err(e) => {
-                eprintln!(
-                    "Failed to reload files from DB after Live Photo pairing: {}",
-                    e
-                );
-                file_list
-            }
-        }
+        file_list
     };
 
     files = hide_live_photo_companion_videos(files);
@@ -1714,6 +1699,10 @@ fn sync_dirty_folders_by_mtime(
     let mut tasks = Vec::new();
     let mut queue = Vec::new();
     let mut album_accessibility = HashMap::new();
+    let pending_live_photo_folders = FolderScanState::folders_needing_version(
+        FolderScanState::LIVE_PHOTO_PAIRING,
+        FolderScanState::LIVE_PHOTO_PAIRING_VERSION,
+    )?;
 
     for folder in AFolder::get_all()? {
         if !sync_generation_valid(generation) {
@@ -1758,12 +1747,16 @@ fn sync_dirty_folders_by_mtime(
                 continue;
             }
         };
-        if info.modified != folder.modified_at {
-            queue.push((folder, info.modified));
+        let needs_live_photo_reindex = folder
+            .id
+            .map(|id| pending_live_photo_folders.contains(&id))
+            .unwrap_or(true);
+        if info.modified != folder.modified_at || needs_live_photo_reindex {
+            queue.push((folder, info.modified, needs_live_photo_reindex));
         }
     }
 
-    while let Some((folder, latest_mtime)) = queue.pop() {
+    while let Some((folder, latest_mtime, needs_live_photo_reindex)) = queue.pop() {
         if !sync_generation_valid(generation) {
             return Ok((FolderMtimeSyncResult::default(), Vec::new()));
         }
@@ -1779,11 +1772,16 @@ fn sync_dirty_folders_by_mtime(
         let child_folders = scan_new_child_folders(folder.album_id, &folder.path)?;
         new_folder_count += child_folders.len() as u32;
         for child in child_folders {
-            queue.push((child, None));
+            queue.push((child, None, true));
         }
 
-        let outcome =
-            sync_folder_direct_files(folder_id, folder.album_id, &folder.path, generation)?;
+        let outcome = sync_folder_direct_files(
+            folder_id,
+            folder.album_id,
+            &folder.path,
+            generation,
+            needs_live_photo_reindex,
+        )?;
         new_file_count += outcome.new_file_count;
         updated_file_count += outcome.updated_file_count;
         deleted_file_count += outcome.deleted_file_count;
@@ -1839,11 +1837,24 @@ fn scan_new_child_folders(album_id: i64, folder_path: &str) -> Result<Vec<AFolde
     Ok(new_folders)
 }
 
+fn is_live_photo_candidate_name(name: &str) -> bool {
+    matches!(
+        Path::new(name)
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase()
+            .as_str(),
+        "heic" | "heif" | "hif" | "jpg" | "jpeg" | "mov"
+    )
+}
+
 fn sync_folder_direct_files(
     folder_id: i64,
     album_id: i64,
     folder_path: &str,
     generation: u64,
+    full_live_photo_reindex: bool,
 ) -> Result<FolderSyncOutcome, String> {
     let scan_time = Utc::now().timestamp_millis();
     let mut seen_names = HashSet::new();
@@ -1852,6 +1863,7 @@ fn sync_folder_direct_files(
     let mut updated_count = 0u32;
     let mut rename_count = 0u32;
     let mut tasks = Vec::new();
+    let mut live_photo_affected_names = HashSet::new();
 
     // Helper to check background cancellation (generation 0 = foreground, never cancels).
     let is_cancelled =
@@ -1900,11 +1912,11 @@ fn sync_folder_direct_files(
         if let Some(ftype) = get_file_type(file_path_str) {
             // Check for rename: a file whose file_id matches a known DB record
             // with a different name.
-            let renamed: Option<i64> = file_id(path).and_then(|fid| {
+            let renamed: Option<(i64, String)> = file_id(path).and_then(|fid| {
                 if fid > 0 {
                     db_inodes.get(&fid).and_then(|(db_id, db_name)| {
                         if db_name != &file_name {
-                            Some(*db_id)
+                            Some((*db_id, db_name.clone()))
                         } else {
                             None
                         }
@@ -1914,7 +1926,7 @@ fn sync_folder_direct_files(
                 }
             });
 
-            if let Some(db_id) = renamed {
+            if let Some((db_id, old_file_name)) = renamed {
                 if is_cancelled() {
                     return Ok(FolderSyncOutcome::default());
                 }
@@ -1923,6 +1935,12 @@ fn sync_folder_direct_files(
                     AFile::update_file_info(db_id, file_path_str, scan_time)
                 {
                     rename_count += 1;
+                    if is_live_photo_candidate_name(&file_name) {
+                        live_photo_affected_names.insert(file_name.clone());
+                    }
+                    if is_live_photo_candidate_name(&old_file_name) {
+                        live_photo_affected_names.insert(old_file_name);
+                    }
                     if should_process_synced_file(&updated_file, ftype) {
                         tasks.push(SyncedFileTask {
                             file_id: db_id,
@@ -1941,8 +1959,14 @@ fn sync_folder_direct_files(
                     Ok((file, status)) => {
                         if status == 1 {
                             new_count += 1;
+                            if is_live_photo_candidate_name(&file_name) {
+                                live_photo_affected_names.insert(file_name.clone());
+                            }
                         } else if status == 2 {
                             updated_count += 1;
+                            if is_live_photo_candidate_name(&file_name) {
+                                live_photo_affected_names.insert(file_name.clone());
+                            }
                         }
                         if should_process_synced_file(&file, ftype) {
                             if let Some(file_id) = file.id {
@@ -2000,6 +2024,9 @@ fn sync_folder_direct_files(
                     }
                     if AFile::delete(id).is_ok() {
                         count += 1;
+                        if is_live_photo_candidate_name(&file.name) {
+                            live_photo_affected_names.insert(file.name.clone());
+                        }
                     }
                 }
             }
@@ -2007,12 +2034,50 @@ fn sync_folder_direct_files(
         count
     };
 
-    let _ = AFile::pair_live_photos_in_folder(folder_id).map_err(|e| {
+    if full_live_photo_reindex {
+        let files = AFile::get_files_by_folder_id(folder_id).map_err(|error| {
+            format!(
+                "Failed to load Live Photo reindex candidates for folder {}: {}",
+                folder_path, error
+            )
+        })?;
+        for file in files {
+            if is_live_photo_candidate_name(&file.name) {
+                live_photo_affected_names.insert(file.name);
+            }
+        }
+    }
+
+    let pairing_result =
+        AFile::pair_live_photos_in_folder(
+            folder_id,
+            &live_photo_affected_names,
+            full_live_photo_reindex,
+        );
+    if full_live_photo_reindex {
+        pairing_result.map_err(|error| {
+            format!(
+                "Failed to complete Live Photo reindex for folder {}: {}",
+                folder_path, error
+            )
+        })?;
+        FolderScanState::mark_completed(
+            folder_id,
+            FolderScanState::LIVE_PHOTO_PAIRING,
+            FolderScanState::LIVE_PHOTO_PAIRING_VERSION,
+        )
+        .map_err(|error| {
+            format!(
+                "Failed to mark Live Photo reindex complete for folder {}: {}",
+                folder_path, error
+            )
+        })?;
+    } else if let Err(error) = pairing_result {
         eprintln!(
             "Failed to pair Live Photos in folder {}: {}",
-            folder_path, e
-        )
-    });
+            folder_path, error
+        );
+    }
 
     Ok(FolderSyncOutcome {
         new_file_count: new_count,
@@ -2021,6 +2086,36 @@ fn sync_folder_direct_files(
         rename_count,
         tasks,
     })
+}
+
+fn pair_live_photos_after_album_index(album_id: i64) -> Result<(), String> {
+    for folder in AFolder::get_all()?.into_iter().filter(|folder| folder.album_id == album_id) {
+        let folder_id = folder
+            .id
+            .ok_or_else(|| format!("Folder has no id: {}", folder.path))?;
+        let files = AFile::get_files_by_folder_id(folder_id)?;
+        let affected_names = files
+            .into_iter()
+            .filter_map(|file| is_live_photo_candidate_name(&file.name).then_some(file.name))
+            .collect::<HashSet<_>>();
+
+        let refresh_missing_identifiers = FolderScanState::needs_version(
+            folder_id,
+            FolderScanState::LIVE_PHOTO_PAIRING,
+            FolderScanState::LIVE_PHOTO_PAIRING_VERSION,
+        )?;
+        AFile::pair_live_photos_in_folder(
+            folder_id,
+            &affected_names,
+            refresh_missing_identifiers,
+        )?;
+        FolderScanState::mark_completed(
+            folder_id,
+            FolderScanState::LIVE_PHOTO_PAIRING,
+            FolderScanState::LIVE_PHOTO_PAIRING_VERSION,
+        )?;
+    }
+    Ok(())
 }
 
 /// Sync a single folder if its directory mtime has changed since the last scan.
@@ -2080,7 +2175,12 @@ pub fn sync_single_folder(
         ));
     }
 
-    if info.modified == folder.modified_at {
+    let needs_live_photo_reindex = FolderScanState::needs_version(
+        resolved_folder_id,
+        FolderScanState::LIVE_PHOTO_PAIRING,
+        FolderScanState::LIVE_PHOTO_PAIRING_VERSION,
+    )?;
+    if info.modified == folder.modified_at && !needs_live_photo_reindex {
         return Ok(FolderMtimeSyncResult {
             dirty_folder_count: 0,
             new_folder_count: 0,
@@ -2095,7 +2195,13 @@ pub fn sync_single_folder(
     let child_folders = scan_new_child_folders(album_id, folder_path)?;
     let new_folder_count = child_folders.len() as u32;
 
-    let outcome = sync_folder_direct_files(resolved_folder_id, album_id, folder_path, 0)?; // 0 = foreground, never cancel
+    let outcome = sync_folder_direct_files(
+        resolved_folder_id,
+        album_id,
+        folder_path,
+        0,
+        needs_live_photo_reindex,
+    )?; // 0 = foreground, never cancel
     for task in outcome.tasks {
         schedule_synced_file_processing(app_handle.clone(), task);
     }
@@ -3182,6 +3288,13 @@ pub async fn index_album_worker(
         let deleted_count = AFile::delete_unseen_in_album(album_id, current_scan_time).unwrap_or(0);
         if deleted_count > 0 {
             println!("Deleted {} stale records from DB.", deleted_count);
+        }
+
+        if let Err(error) = pair_live_photos_after_album_index(album_id) {
+            eprintln!(
+                "Failed to pair Live Photos after indexing album {}: {}",
+                album_id, error
+            );
         }
     }
 
