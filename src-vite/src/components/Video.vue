@@ -24,7 +24,7 @@
       </div>
     </TransitionGroup>
 
-    <div v-if="!hasError && !isPlaying && !isLoading" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+    <div v-if="showPlayOverlay && !hasError && !isPlaying && !isLoading" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
       <div
         class="w-16 h-16 rounded-full bg-base-100/70 flex items-center justify-center hover:scale-110 transition-all duration-300 ease-out group pointer-events-auto cursor-pointer"
         @click.stop="clickPlayVideo"
@@ -90,6 +90,10 @@ const props = defineProps({
   isZoomFit: { type: Boolean, default: false },
   isSlideShow: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+  playOnActivate: { type: Boolean, default: false },
+  viewportState: { type: Object, default: null },
+  showControls: { type: Boolean, default: true },
+  showPlayOverlay: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(['message-from-video-viewer', 'slideshow-next', 'scale', 'viewport-change', 'context-menu']);
@@ -110,6 +114,7 @@ const isPlaying = ref(false);
 const isReplaying = ref(false);
 const isFit = ref(false);
 const scale = ref(1);
+const viewportOffset = ref({ x: 0, y: 0 });
 const rotate = ref(0);
 const noTransition = ref(false);
 const activeVideo = ref(0);
@@ -188,7 +193,7 @@ const playerOptions = computed(() => ({
   height: '100%',
   autoplay: false,
   muted: config.video.muted,
-  controls: true,
+  controls: props.showControls,
   preload: 'auto',
   language: videoJsLang.value,
   playbackRates: [0.5, 1, 1.25, 1.5, 2],
@@ -302,7 +307,7 @@ const updateTransform = (options: boolean | { resetRotation?: boolean, recalcSca
     }
   }
 
-  video.style.transform = `translate(-50%, -50%) rotate(${rotate.value}deg) scale(${scale.value})`;
+  video.style.transform = `translate(calc(-50% + ${viewportOffset.value.x}px), calc(-50% + ${viewportOffset.value.y}px)) rotate(${rotate.value}deg) scale(${scale.value})`;
 
   emit('scale', { scale: scale.value, displayScale: scale.value, minScale: 0.1, maxScale: 10 });
   emit('viewport-change', { scale: scale.value, isZoomFit: isFit.value, fileType: 2 });
@@ -525,7 +530,10 @@ const loadVideo = async (filePath: string) => {
     noTransition.value = true;
     isFit.value = props.isZoomFit;
     rotate.value = props.rotate;
-    updateTransform({ resetRotation: true, recalcScale: true });
+    viewportOffset.value = { x: 0, y: 0 };
+    if (!applyViewportState(props.viewportState)) {
+      updateTransform({ resetRotation: true, recalcScale: true });
+    }
 
     setTimeout(() => {
       noTransition.value = false;
@@ -885,7 +893,14 @@ watch(() => props.rotate, (val) => {
 
 watch(() => props.isZoomFit, (val) => {
   isFit.value = val;
+  viewportOffset.value = { x: 0, y: 0 };
   updateTransform({ recalcScale: true });
+});
+
+watch(() => props.viewportState, (viewport) => {
+  if (viewport) {
+    void nextTick(() => applyViewportState(viewport, true));
+  }
 });
 
 watch(() => props.isSlideShow, (newVal) => {
@@ -907,6 +922,9 @@ watch(() => props.isActive, (isActive) => {
   }
   player.volume(config.video.volume);
   player.muted(config.video.muted);
+  if (props.playOnActivate && !isPlaying.value) {
+    player.play().catch(() => {});
+  }
 });
 
 const zoomIn = () => {
@@ -936,29 +954,74 @@ function getViewportState() {
   return { scale: scale.value, isZoomFit: isFit.value, fileType: 2 };
 }
 
-function applyViewportState(viewport: { scale?: number; isZoomFit?: boolean }, silent = false) {
-  if (!viewport) return;
+function applyViewportState(
+  viewport: {
+    scale?: number;
+    isZoomFit?: boolean;
+    normX?: number;
+    normY?: number;
+    sourceWidth?: number;
+    sourceHeight?: number;
+  },
+  silent = false,
+): boolean {
+  if (!viewport) return false;
+
+  const nextScale = Number(viewport.scale);
+  const hasScale = Number.isFinite(nextScale) && nextScale > 0;
+  const hasPosition = Number.isFinite(Number(viewport.normX)) || Number.isFinite(Number(viewport.normY));
+
   if (typeof viewport.isZoomFit === 'boolean') {
     isFit.value = viewport.isZoomFit;
-    if (viewport.isZoomFit) {
+    if (viewport.isZoomFit && !hasScale) {
+      viewportOffset.value = { x: 0, y: 0 };
       updateTransform({ recalcScale: true });
-      return;
+      return true;
     }
   }
 
-  if (typeof viewport.scale === 'number') {
-    scale.value = Math.max(0.1, Math.min(10, viewport.scale));
+  if (!hasScale) return false;
+
+  const player = getActivePlayer();
+  const videoWidth = player?.videoWidth();
+  const videoHeight = player?.videoHeight();
+  const containerWidth = videoContainer.value?.clientWidth;
+  const containerHeight = videoContainer.value?.clientHeight;
+  const sourceWidth = Number(viewport.sourceWidth);
+  const sourceHeight = Number(viewport.sourceHeight);
+  const sourceScale = sourceWidth > 0 && videoWidth
+    ? sourceWidth / videoWidth
+    : (sourceHeight > 0 && videoHeight ? sourceHeight / videoHeight : 1);
+
+  scale.value = Math.max(0.1, Math.min(10, nextScale * sourceScale));
+  if (typeof viewport.isZoomFit !== 'boolean') {
     isFit.value = false;
-    if (silent) {
-      noTransition.value = true;
-      updateTransform();
-      requestAnimationFrame(() => {
-        noTransition.value = false;
-      });
-      return;
-    }
+  }
+
+  if (hasPosition && videoWidth && videoHeight && containerWidth && containerHeight) {
+    const isRotated = rotate.value % 180 !== 0;
+    const width = (isRotated ? videoHeight : videoWidth) * scale.value;
+    const height = (isRotated ? videoWidth : videoHeight) * scale.value;
+    const normX = Math.min(Math.max(Number(viewport.normX ?? 0.5), 0), 1);
+    const normY = Math.min(Math.max(Number(viewport.normY ?? 0.5), 0), 1);
+    viewportOffset.value = {
+      x: width > containerWidth ? (normX - 0.5) * (width - containerWidth) : 0,
+      y: height > containerHeight ? (normY - 0.5) * (height - containerHeight) : 0,
+    };
+  } else {
+    viewportOffset.value = { x: 0, y: 0 };
+  }
+
+  if (silent) {
+    noTransition.value = true;
+    updateTransform();
+    requestAnimationFrame(() => {
+      noTransition.value = false;
+    });
+  } else {
     updateTransform();
   }
+  return true;
 }
 
 defineExpose({

@@ -61,7 +61,7 @@
               </div>
               <span
                 v-if="previewTagLabel"
-                class="inline-flex shrink-0 items-center rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/30"
+                class="inline-flex shrink-0 items-center rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/70"
               >
                 {{ previewTagLabel }}
               </span>
@@ -71,6 +71,7 @@
               v-if="!isHistogramPreview"
               class="relative w-full overflow-hidden rounded-box border border-base-content/5 shadow-sm transition-[padding-top] duration-200 ease-out"
               :style="{ paddingTop: `${75 * previewScale}%` }"
+              @pointerenter="playVideoPreviewOnHover"
               @pointerleave="stopPreviewVideo"
             >
               <div
@@ -119,17 +120,6 @@
                   />
                 </div>
               </div>
-              <button
-                v-if="canPreviewVideo && !showVideoPreview"
-                type="button"
-                class="absolute inset-0 z-10 flex items-center justify-center text-base-content/70 cursor-pointer"
-                @click.stop="playPreviewVideo"
-              >
-                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-base-100/70 shadow-sm transition-transform hover:scale-110">
-                  <IconVideoPlay class="h-7 w-7" />
-                </span>
-              </button>
-
               <!-- <div
                 v-if="fileInfo?.is_favorite"
                 class="absolute top-2 right-2 rounded-full bg-error/90 p-1 shadow-sm"
@@ -453,7 +443,6 @@ import {
   IconPhoto,
   IconRotate,
   IconVideo,
-  IconVideoPlay,
   IconZoomIn,
   IconZoomOut,
   IconExternal,
@@ -502,10 +491,16 @@ const showBasicInfoPanel = computed(() => config.infoPanel.showBasicInfo);
 const showMetadataPanel = computed(() => config.infoPanel.showMetadata);
 const showMapPanel = computed(() => config.infoPanel.showMap);
 const isVideoFile = computed(() => Number(props.fileInfo?.file_type || 0) === 2);
+const isLivePhoto = computed(() => (
+  props.fileInfo?.media_subtype === 'live_photo' && !!props.fileInfo?.live_photo_video_path
+));
+const previewVideoPath = computed(() => (
+  isLivePhoto.value ? props.fileInfo?.live_photo_video_path : props.fileInfo?.file_path
+));
 const canPreviewVideo = computed(() => (
-  isVideoFile.value
-  && !!props.fileInfo?.file_path
-  && !isWebViewVideoPlaybackDisabled(props.fileInfo.file_path)
+  (isVideoFile.value || isLivePhoto.value)
+  && !!previewVideoPath.value
+  && !isWebViewVideoPlaybackDisabled(previewVideoPath.value)
 ));
 const canShowHistogram = computed(() => !isVideoFile.value);
 const activePreviewMode = computed(() => canShowHistogram.value ? config.infoPanel.previewMode : 'thumbnail');
@@ -542,6 +537,10 @@ const previewImageStyle = computed(() => {
   };
 });
 const previewFormatLabel = computed(() => {
+  if (props.fileInfo?.media_subtype === 'live_photo') {
+    return 'LIVE';
+  }
+
   const formatLabel = (props.fileInfo?.format_label || '').trim();
   if (formatLabel) {
     return formatLabel.toUpperCase();
@@ -567,7 +566,7 @@ function setPreviewMode(mode: 'thumbnail' | 'histogram') {
 }
 
 async function playPreviewVideo() {
-  if (!canPreviewVideo.value || !props.fileInfo?.file_path || showVideoPreview.value) return;
+  if (!canPreviewVideo.value || !previewVideoPath.value || showVideoPreview.value) return;
   isVideoPreviewReady.value = false;
   showVideoPreview.value = true;
   await nextTick();
@@ -575,13 +574,19 @@ async function playPreviewVideo() {
   const video = previewVideoRef.value;
   if (!video) return;
 
-  video.src = getAssetSrc(props.fileInfo.file_path);
+  video.src = getAssetSrc(previewVideoPath.value);
   video.muted = true;
 
   try {
     await video.play();
   } catch {
     stopPreviewVideo();
+  }
+}
+
+function playVideoPreviewOnHover() {
+  if (canPreviewVideo.value) {
+    void playPreviewVideo();
   }
 }
 
@@ -598,7 +603,13 @@ function stopPreviewVideo() {
 }
 
 watch(
-  () => [props.fileInfo?.id, props.fileInfo?.file_path, showPreviewPanel.value, isHistogramPreview.value],
+  () => [
+    props.fileInfo?.id,
+    props.fileInfo?.file_path,
+    props.fileInfo?.live_photo_video_path,
+    showPreviewPanel.value,
+    isHistogramPreview.value,
+  ],
   stopPreviewVideo
 );
 

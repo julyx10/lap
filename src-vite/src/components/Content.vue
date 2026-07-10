@@ -299,38 +299,6 @@
             @mousemove="handleQuickViewMouseMove"
             @mouseleave="handleQuickViewMouseLeave"
           >
-            <div class="absolute z-10 inset-1 flex items-center justify-between pointer-events-none">
-              <button
-                :class="[
-                  'p-2 rounded-full bg-base-100/30 transition-opacity duration-200',
-                  quickViewHoverLeft
-                    ? (selectedItemIndex > 0
-                      ? 'opacity-100 pointer-events-auto text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer'
-                      : 'opacity-30 pointer-events-none cursor-default text-base-content/30')
-                    : 'opacity-0 pointer-events-none'
-                ]"
-                :disabled="selectedItemIndex <= 0"
-                @click="requestNavigate('prev')"
-                @dblclick.stop
-              >
-                <IconLeft class="w-8 h-8" />
-              </button>
-              <button
-                :class="[
-                  'p-2 rounded-full bg-base-100/30 transition-opacity duration-200',
-                  quickViewHoverRight
-                    ? (selectedItemIndex < fileList.length - 1
-                      ? 'opacity-100 pointer-events-auto text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer'
-                      : 'opacity-30 pointer-events-none cursor-default text-base-content/30')
-                    : 'opacity-0 pointer-events-none'
-                ]"
-                :disabled="selectedItemIndex >= fileList.length - 1"
-                @click="requestNavigate('next')"
-                @dblclick.stop
-              >
-                <IconRight class="w-8 h-8" />
-              </button>
-            </div>
             <MediaViewer
               ref="quickViewMediaRef"
               :mode="0"
@@ -356,6 +324,40 @@
               @close="closeQuickPreview()"
               @slideshow-next="handleSlideshowNext"
             />
+            <div class="absolute inset-1 z-90 flex items-center justify-between pointer-events-none">
+              <button
+                :class="[
+                  'p-2 rounded-full bg-base-100/30 transition-opacity duration-200',
+                  quickViewHoverLeft
+                    ? (selectedItemIndex > 0
+                      ? 'opacity-100 pointer-events-auto text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer'
+                      : 'opacity-30 pointer-events-none cursor-default text-base-content/30')
+                    : 'opacity-0 pointer-events-none'
+                ]"
+                :disabled="selectedItemIndex <= 0"
+                @pointerdown.stop
+                @click.stop="requestNavigate('prev')"
+                @dblclick.stop
+              >
+                <IconLeft class="w-8 h-8" />
+              </button>
+              <button
+                :class="[
+                  'p-2 rounded-full bg-base-100/30 transition-opacity duration-200',
+                  quickViewHoverRight
+                    ? (selectedItemIndex < fileList.length - 1
+                      ? 'opacity-100 pointer-events-auto text-base-content/70 hover:text-base-content hover:bg-base-100/70 cursor-pointer'
+                      : 'opacity-30 pointer-events-none cursor-default text-base-content/30')
+                    : 'opacity-0 pointer-events-none'
+                ]"
+                :disabled="selectedItemIndex >= fileList.length - 1"
+                @pointerdown.stop
+                @click.stop="requestNavigate('next')"
+                @dblclick.stop
+              >
+                <IconRight class="w-8 h-8" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

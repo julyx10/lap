@@ -287,12 +287,12 @@
       </div>
 
       <!-- Previous Button (Overlay, media-area anchored) -->
-      <button 
+      <button
         v-if="!isSlideShow && showOverlayNav"
         class="absolute left-2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
         :style="{ top: navButtonsTop }"
-        :class="[ 
-          isHoverLeft ? (hasPrevious ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
+        :class="[
+          isHoverLeft ? (hasPrevious ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none'
         ]"
         :disabled="!hasPrevious"
         @click.stop="triggerPrev"
@@ -302,12 +302,12 @@
       </button>
 
       <!-- Next Button (Overlay, media-area anchored) -->
-      <button 
+      <button
         v-if="!isSlideShow && showOverlayNav"
         class="absolute right-2 -translate-y-1/2 z-70 p-2 rounded-full bg-base-100/30 backdrop-blur-md transition-opacity duration-200"
         :style="{ top: navButtonsTop }"
-        :class="[ 
-          isHoverRight ? (hasNext ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none' 
+        :class="[
+          isHoverRight ? (hasNext ? 'opacity-100 pointer-events-auto hover:text-base-content hover:bg-base-100/80 cursor-pointer' : 'opacity-30 cursor-default') : 'opacity-0 pointer-events-none'
         ]"
         :disabled="!hasNext"
         @click.stop="triggerNext"
@@ -316,51 +316,73 @@
         <IconRight class="w-8 h-8" />
       </button>
 
-      <Image v-if="(file?.file_type === 1 || file?.file_type === 3) && !isLivePhotoPlaying"
-        ref="mediaRef"
-        :filePath="file?.file_path" 
-        :fileId="file?.id"
-        :fileType="file?.file_type"
-        :thumbnailSrc="file?.thumbnail || ''"
-        :nextFilePath="nextFilePath"
-        :rotate="file?.rotate ?? 0" 
-        :isZoomFit="isZoomFit"
-        :isSlideShow="isSlideShow"
-        :slideShowTransitionMode="slideShowTransitionMode"
-        @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
-        @scale="(e) => $emit('scale', e)"
-        @viewport-change="(e) => $emit('viewport-change', e)"
-        @message-from-image-viewer="handleMessageFromImageViewer"
-        @context-menu="handleContextMenu"
-        @pointerdown.capture="handleOverlayPointerDown"
-        @pointerup.capture="handleOverlayPointerUp"
-        @pointercancel.capture="resetOverlayPointer"
-      ></Image>
+      <div
+        v-if="isLivePhoto"
+        :class="[
+          'absolute inset-0 z-10 transition-opacity duration-150',
+          isLivePhotoPlaying ? 'opacity-100' : 'pointer-events-none opacity-0',
+        ]"
+      >
+        <Video
+          class="h-full w-full"
+          :filePath="file?.live_photo_video_path"
+          :rotate="file?.rotate ?? 0"
+          :isZoomFit="isZoomFit"
+          :isSlideShow="isSlideShow"
+          :isActive="isPlaybackActive && isLivePhotoPlaying"
+          :playOnActivate="true"
+          :viewportState="livePhotoViewport"
+          :showControls="false"
+          :showPlayOverlay="false"
+          @scale="(e) => $emit('scale', e)"
+          @viewport-change="(e) => $emit('viewport-change', e)"
+          @message-from-video-viewer="handleMessageFromImageViewer"
+          @slideshow-next="emit('slideshow-next')"
+          @context-menu="handleContextMenu"
+        ></Video>
+      </div>
 
-      <Video v-if="isLivePhotoPlaying"
-        class="absolute inset-0 z-50"
-        :filePath="file?.live_photo_video_path"
-        :rotate="file?.rotate ?? 0"
-        :isZoomFit="isZoomFit"
-        :isSlideShow="isSlideShow"
-        :isActive="isPlaybackActive"
-        @scale="(e) => $emit('scale', e)"
-        @viewport-change="(e) => $emit('viewport-change', e)"
-        @message-from-video-viewer="handleMessageFromImageViewer"
-        @slideshow-next="emit('slideshow-next')"
-        @context-menu="handleContextMenu"
-      ></Video>
+      <div
+        v-if="file?.file_type === 1 || file?.file_type === 3"
+        :class="[
+          'absolute inset-0 z-20 transition-opacity duration-150',
+          isLivePhotoPlaying ? 'pointer-events-none opacity-0' : 'opacity-100',
+        ]"
+      >
+        <Image
+          ref="mediaRef"
+          :filePath="file?.file_path"
+          :fileId="file?.id"
+          :fileType="file?.file_type"
+          :thumbnailSrc="file?.thumbnail || ''"
+          :nextFilePath="nextFilePath"
+          :rotate="file?.rotate ?? 0"
+          :isZoomFit="isZoomFit"
+          :isSlideShow="isSlideShow"
+          :slideShowTransitionMode="slideShowTransitionMode"
+          @update:isZoomFit="(val: boolean) => $emit('update:isZoomFit', val)"
+          @scale="(e) => $emit('scale', e)"
+          @viewport-change="(e) => $emit('viewport-change', e)"
+          @message-from-image-viewer="handleMessageFromImageViewer"
+          @context-menu="handleContextMenu"
+          @pointerdown.capture="handleOverlayPointerDown"
+          @pointerup.capture="handleOverlayPointerUp"
+          @pointercancel.capture="resetOverlayPointer"
+        ></Image>
+      </div>
 
       <button
-        v-if="isLivePhoto && !isLivePhotoPlaying"
-        class="absolute left-4 bottom-4 z-60 inline-flex h-10 items-center gap-2 rounded-box bg-base-100/70 px-3 text-sm font-medium text-base-content/80 shadow hover:bg-base-100 hover:text-base-content"
-        @click.stop="isLivePhotoPlaying = true"
+        v-if="isLivePhoto"
+        class="absolute left-4 bottom-4 z-60 inline-flex h-10 items-center gap-2 rounded-box bg-base-100/70 px-3 text-sm font-medium text-base-content/70 shadow hover:bg-base-100 hover:text-base-content cursor-pointer"
+        @mouseenter="startLivePhotoPreview"
+        @mouseleave="isLivePhotoPlaying = false"
+        @click.stop
         @dblclick.stop
       >
         <IconLivePhoto class="h-4 w-4" />
         <span>LIVE</span>
       </button>
-      
+
       <Video v-if="file?.file_type === 2"
         ref="mediaRef"
         :filePath="file?.file_path"
@@ -375,6 +397,7 @@
         @context-menu="handleContextMenu"
       ></Video>
     </div>
+
     </template>
   </div>
 </template>
@@ -536,11 +559,21 @@ const props = defineProps({
 
 const isLivePhotoPlaying = ref(false);
 const isLivePhoto = computed(() => props.file?.media_subtype === 'live_photo' && !!props.file?.live_photo_video_path);
+const livePhotoViewport = ref<Record<string, number | boolean> | null>(null);
+
+function startLivePhotoPreview() {
+  const viewport = mediaRef.value?.getViewportState?.();
+  livePhotoViewport.value = viewport
+    ? { ...viewport, isZoomFit: props.isZoomFit }
+    : null;
+  isLivePhotoPlaying.value = true;
+}
 
 watch(
   () => [props.file?.id, props.file?.live_photo_video_path],
   () => {
     isLivePhotoPlaying.value = false;
+    livePhotoViewport.value = null;
   },
 );
 
@@ -810,22 +843,25 @@ onBeforeUnmount(() => {
 function handleMouseMove(e: MouseEvent) {
   if (!containerRef.value) return;
 
-  // Toolbar hover logic: based on the full viewer container.
   const containerRect = containerRef.value.getBoundingClientRect();
-  if (containerRect.width > 0 && containerRect.height > 0) {
-    const containerY = e.clientY - containerRect.top;
-    const containerHeight = containerRect.height;
+  if (containerRect.width <= 0 || containerRect.height <= 0) return;
+  const containerY = e.clientY - containerRect.top;
+  const containerHeight = containerRect.height;
+  toolbarPosition.value = containerY < containerHeight * 0.5 ? 'top' : 'bottom';
+
+  if (!mediaAreaRef.value) {
     isHoverTop.value = containerY < 60;
     isHoverBottom.value = containerY > containerHeight - 60;
-    toolbarPosition.value = containerY < containerHeight * 0.5 ? 'top' : 'bottom';
+    return;
   }
 
   // Prev/next hover logic: based on actual media display area (accounts for panels/toolbar layout).
-  if (!mediaAreaRef.value) return;
   const mediaRect = mediaAreaRef.value.getBoundingClientRect();
   if (mediaRect.width <= 0 || mediaRect.height <= 0) {
     isHoverLeft.value = false;
     isHoverRight.value = false;
+    isHoverTop.value = containerY < 60;
+    isHoverBottom.value = containerY > containerHeight - 60;
     return;
   }
 
@@ -834,6 +870,9 @@ function handleMouseMove(e: MouseEvent) {
   const withinMediaY = mediaY >= 0 && mediaY <= mediaRect.height;
   isHoverLeft.value = withinMediaY && mediaX >= 0 && mediaX < mediaRect.width * 0.1;
   isHoverRight.value = withinMediaY && mediaX <= mediaRect.width && mediaX > mediaRect.width * 0.9;
+  const isHoveringNavigation = isHoverLeft.value || isHoverRight.value;
+  isHoverTop.value = !isHoveringNavigation && containerY < 60;
+  isHoverBottom.value = !isHoveringNavigation && containerY > containerHeight - 60;
 }
 
 function handleMouseLeave() {

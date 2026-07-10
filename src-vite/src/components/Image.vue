@@ -1971,6 +1971,8 @@ function getViewportState() {
     scale: scaleVal,
     normX: Math.min(Math.max(normX, 0), 1),
     normY: Math.min(Math.max(normY, 0), 1),
+    sourceWidth: imgSize.width,
+    sourceHeight: imgSize.height,
   };
 }
 
