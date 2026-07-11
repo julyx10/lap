@@ -52,7 +52,7 @@
             ref="renameInputRef"
             v-model="renameValue"
             class="input px-1 min-w-0 flex-1 text-base"
-            maxlength="80"
+            maxlength="64"
             @click.stop
             @mousedown.stop
             @keydown.enter.prevent="commitRename(collection)"

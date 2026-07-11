@@ -35,6 +35,7 @@
       v-model="inputValue"
       rows="4"
       minrows="1"
+      maxlength="2048"
       :placeholder="inputPlaceholder"
       class="px-2 py-1 w-full textarea min-h-[30px] max-h-[200px]"
       @input="validateInput"
