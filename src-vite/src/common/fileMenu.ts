@@ -1,5 +1,5 @@
 import { computed, markRaw, Ref } from 'vue';
-import { config } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { SIDEBAR } from '@/common/constants';
 import { DEFAULT_PLATFORM, getShortcutLabel, ShortcutActionId } from '@/common/shortcuts';
 import {
@@ -263,7 +263,7 @@ export const useFileMenuItems = (
       },
       {
         label: localeMsg.value.menu.file.set_album_cover,
-        hidden: config.main.sidebarIndex !== SIDEBAR.ALBUM || !isImage || !Number(f.album_id),
+        hidden: config.main.sidebarIndex !== SIDEBAR.ALBUM || libConfig.activePane === 'collection' || !isImage || !Number(f.album_id),
         action: createAction('set-album-cover')
       },
       { label: "-", action: null },

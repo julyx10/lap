@@ -30,13 +30,13 @@
             <li v-for="(name, index) in location.names" class="pl-4">
               <div
                 :class="[
-                  'sidebar-item sidebar-item-compact ml-3',
+                  'sidebar-item sidebar-item-compact ml-2',
                   libConfig.location.name === name ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="clickLocationName(location, name)"
               >
-                <span class="sidebar-item-label">{{ name }}</span>
-                <span class="text-[10px] tabular-nums text-base-content/30 ml-1">{{ location.counts[index].toLocaleString() }}</span>
+                <span class="ml-1 sidebar-item-label text-base-content/30">{{ name }}</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 mr-1">{{ location.counts[index].toLocaleString() }}</span>
               </div>
             </li>
           </ul>

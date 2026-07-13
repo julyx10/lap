@@ -47,7 +47,7 @@
             ]"
             :title="$t('msgbox.manage_libraries.reorder')"
           >
-            <IconDragHandle class="w-4 h-4" />
+            <IconDragHandle class="w-4 h-4 text-base-content/70 hover:text-base-content" />
           </div>
 
           <!-- Name & Info -->

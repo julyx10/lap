@@ -35,12 +35,14 @@
             </div>
           </div>
           <span class="sidebar-item-label">{{ smartAlbum.name }}</span>
-          <div
-            :class="[
-              'ml-auto flex items-center text-base-content/30',
-              libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id ? '' : 'hidden group-hover:flex'
-            ]"
-          >
+          <div class="ml-auto">
+            <span
+              v-if="hasSmartAlbumCount(smartAlbum)"
+              class="sidebar-item-count"
+              :class="isSmartAlbumSelected(smartAlbum) ? 'hidden' : 'group-hover:hidden'"
+            >{{ getSmartAlbumCount(smartAlbum).toLocaleString() }}</span>
+          </div>
+          <div :class="['flex items-center text-base-content/30', isSmartAlbumSelected(smartAlbum) ? '' : 'hidden group-hover:flex']">
             <ContextMenu
               :ref="(element: any) => { if (element) smartAlbumContextMenus[smartAlbum.id] = element }"
               :iconMenu="IconMore"
@@ -78,6 +80,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
+import { useUIStore } from '@/stores/uiStore';
 import { getThumbUrl, getThumbnailDataUrl, getThumbnailDataUrlInflight, isWin, setThumbnailDataUrlInflight } from '@/common/utils';
 import { getFileThumbById } from '@/common/api';
 import { IconAdd, IconEdit, IconMore, IconPhoto, IconTrash } from '@/common/icons';
@@ -87,6 +90,7 @@ import SmartAlbumEdit from '@/components/SmartAlbumEdit.vue';
 import MessageBox from '@/components/MessageBox.vue';
 
 const customSmartAlbums = computed(() => libConfig.smartAlbums || []);
+const uiStore = useUIStore();
 const { t } = useI18n();
 const showEditDialog = ref(false);
 const editingSmartAlbum = ref<any | null>(null);
@@ -132,9 +136,15 @@ watch(
 );
 
 function clickCustomSmartAlbum(smartAlbum: any) {
+  uiStore.smartAlbumCountRequestedFor = String(smartAlbum.id);
+  uiStore.smartAlbumCountRequestTick++;
   libConfig.smartAlbum.type = 'custom';
   libConfig.smartAlbum.id = smartAlbum.id;
 }
+
+const isSmartAlbumSelected = (smartAlbum: any) => libConfig.smartAlbum.type === 'custom' && libConfig.smartAlbum.id === smartAlbum.id;
+const getSmartAlbumCount = (smartAlbum: any) => Number(smartAlbum?.count || 0);
+const hasSmartAlbumCount = (smartAlbum: any) => smartAlbum?.count !== null && smartAlbum?.count !== undefined;
 
 function clickAddSmartAlbum() {
   editingSmartAlbum.value = null;

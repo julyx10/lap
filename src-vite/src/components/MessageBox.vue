@@ -26,6 +26,7 @@
         :placeholder="inputPlaceholder"
         class="px-2 py-1 flex-1 min-w-0 input"
         @input="validateInput"
+        @keydown.enter.prevent="clickOk"
       />
       <span v-if="inputExtension" class="label px-2 text-sm">.{{ inputExtension }}</span>
     </div>

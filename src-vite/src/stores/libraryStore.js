@@ -16,12 +16,13 @@ export const useLibraryStore = defineStore('libraryStore', {
     /** @type {'main' | 'collection'} */
     activePane: 'main',
 
-    /** @type {{ item: 'all-files' | 'favorites' | 'ratings' | 'subjects' | 'on-this-day', smartId: string | null, ratingsExpanded: boolean, subjectsExpanded: boolean }} */
+    /** @type {{ item: 'all-files' | 'favorites' | 'ratings' | 'subjects' | 'on-this-day', smartId: string | null, ratingsExpanded: boolean, subjectsExpanded: boolean, subjectCounts: Record<string, number> }} */
     library: {
       item: LIB_ITEM.ALL,
       smartId: null,
       ratingsExpanded: true,
       subjectsExpanded: true,
+      subjectCounts: {},
     },
 
     /** @type {{ id: number, folderId: number | null, folderPath: string, selected: boolean, activateTick: number }} */
@@ -39,7 +40,7 @@ export const useLibraryStore = defineStore('libraryStore', {
       id: null,               // selected smart album id
     },
 
-    /** @type {Array<{ id: string, name: string, description: string, source: 'rules', query: { version: number, match: 'all' | 'any', rules: Array<{ id: string, field: string, operator: string, value: any }> }, sort: { type: number, order: number }, coverFileId: number | null, createdAt: number, updatedAt: number }>} */
+    /** @type {Array<{ id: string, name: string, description: string, source: 'rules', query: { version: number, match: 'all' | 'any', rules: Array<{ id: string, field: string, operator: string, value: any }> }, sort: { type: number, order: number }, coverFileId: number | null, count: number | null, createdAt: number, updatedAt: number }>} */
     smartAlbums: [],          // custom smart albums
 
     /** @type {{ selectedId: number | null }} */
@@ -85,7 +86,7 @@ export const useLibraryStore = defineStore('libraryStore', {
       name: null,             // selected person name
     },
 
-    /** @type {{ searchText: string, searchHistory: (string | { text: string, fileId: number | null })[], searchHistoryIndex: number }} */
+    /** @type {{ searchText: string, searchHistory: (string | { text: string, fileId: number | null, count: number | null })[], searchHistoryIndex: number }} */
     search: {
       searchText: '',         // AI search text
       searchHistory: [],      // AI search history

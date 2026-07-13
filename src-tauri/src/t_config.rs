@@ -7,6 +7,7 @@
  */
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -132,6 +133,8 @@ pub struct CustomSmartAlbumState {
     #[serde(default)]
     pub cover_file_id: Option<i64>,
     #[serde(default)]
+    pub count: Option<i64>,
+    #[serde(default)]
     pub created_at: i64,
     #[serde(default)]
     pub updated_at: i64,
@@ -152,6 +155,8 @@ pub struct LibraryPanelState {
     pub ratings_expanded: bool,
     #[serde(default = "default_subjects_expanded", alias = "subjects_expanded")]
     pub subjects_expanded: bool,
+    #[serde(default, alias = "subject_counts")]
+    pub subject_counts: HashMap<String, i64>,
 }
 
 fn default_library_item() -> String {
@@ -173,6 +178,7 @@ impl Default for LibraryPanelState {
             smart_id: None,
             ratings_expanded: default_ratings_expanded(),
             subjects_expanded: default_subjects_expanded(),
+            subject_counts: HashMap::new(),
         }
     }
 }
@@ -243,6 +249,8 @@ pub enum SearchHistoryEntry {
 pub struct SearchHistoryItem {
     pub text: String,
     pub file_id: Option<i64>,
+    #[serde(default)]
+    pub count: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

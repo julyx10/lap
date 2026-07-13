@@ -6,6 +6,10 @@ export const useUIStore = defineStore('ui', {
     activePane: 'content',
     inputStack: [],
     fileVersions: {},
+    smartAlbumCountRequestedFor: null,
+    smartAlbumCountRequestTick: 0,
+    searchCountRequestedFor: null,
+    searchCountRequestTick: 0,
     mapActive: false,
     activeAdjustments: {
       filePath: null,

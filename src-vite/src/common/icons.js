@@ -169,7 +169,7 @@ export { default as IconVideo } from '@/assets/icons/video.svg';
 export { default as IconVideoSlash } from '@/assets/icons/video-slash.svg';
 export { default as IconMusic } from '@/assets/icons/musical.svg';
 export { default as IconTag } from '@/assets/icons/tag.svg';
-export { default as IconSmartTag } from '@/assets/icons/tag-smart.svg';
+export { default as IconBox } from '@/assets/icons/box.svg';
 export { default as IconCalendar } from '@/assets/icons/calendar.svg';
 export { default as IconLocation } from '@/assets/icons/map-pin.svg';
 export { default as IconPerson } from '@/assets/icons/user.svg';

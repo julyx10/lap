@@ -35,13 +35,13 @@
             <li v-for="(model, index) in item.models" :key="`${item.make}-${model}`" class="pl-4">
               <div
                 :class="[
-                  'sidebar-item sidebar-item-compact ml-3',
+                  'sidebar-item sidebar-item-compact ml-2',
                   isModelSelected(model) ? 'sidebar-item-selected' : 'sidebar-item-hover',
                 ]"
                 @click="clickModel(item.make, model)"
               >
-                <span class="sidebar-item-label">{{ model }}</span>
-                <span class="text-[10px] tabular-nums text-base-content/30 ml-1">{{ item.counts[index].toLocaleString() }}</span>
+                <span class="ml-1 sidebar-item-label text-base-content/30">{{ model }}</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 mr-1">{{ item.counts[index].toLocaleString() }}</span>
               </div>
             </li>
           </ul>

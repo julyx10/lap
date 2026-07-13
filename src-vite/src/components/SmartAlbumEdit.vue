@@ -400,6 +400,7 @@ function clickOk() {
     group: { type: groupType.value },
     sort: { type: sortType.value, order: sortOrder.value },
     coverFileId: props.smartAlbum?.coverFileId || null,
+    count: props.smartAlbum?.count ?? null,
     createdAt: props.smartAlbum?.createdAt || now,
     updatedAt: now,
   });

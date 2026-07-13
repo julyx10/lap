@@ -135,7 +135,7 @@ html, body {
 }
 
 @utility sidebar-item-count {
-  @apply ml-1 text-xs tabular-nums text-base-content/30;
+  @apply badge badge-xs tabular-nums border-0 bg-base-100/30 text-base-content/30;
 }
 
 /* sidebar empty state */

@@ -683,7 +683,7 @@ import {
   IconFiles,
   IconFolder,
   IconTag,
-  IconSmartTag,
+  IconBox,
   IconBolt,
   IconLocation,
   IconCameraAperture,
@@ -4531,6 +4531,7 @@ watch(() => libConfig.index.albumQueue.length, (newLength) => {
 watch(
   () => [
     libConfig.search.searchText,
+    uiStore.searchCountRequestTick,
   ],
   () => {
     scheduleContentRefresh(() => {
@@ -4553,6 +4554,7 @@ watch(
     libConfig.library.smartId,
     libConfig.album.id, libConfig.album.folderId, libConfig.album.folderPath, libConfig.album.selected, // album
     libConfig.smartAlbum.type, libConfig.smartAlbum.id, JSON.stringify(libConfig.smartAlbums || []), // smart album
+    uiStore.smartAlbumCountRequestTick,
     libConfig.rating.item, // rating
     config.search.fileType, config.search.sortType, config.search.sortOrder, // search and sort 
     config.settings.showSubfolderFiles,                                            // album folder view
@@ -5484,6 +5486,10 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
   const query = smartAlbum?.query;
   const rules = Array.isArray(query?.rules) ? query.rules : [];
   if (!query || rules.length === 0) {
+    if (uiStore.smartAlbumCountRequestedFor === String(smartAlbum?.id)) {
+      updateSmartAlbumCount(smartAlbum.id, 0);
+      uiStore.smartAlbumCountRequestedFor = null;
+    }
     showEmptyContent(requestId);
     return;
   }
@@ -5507,12 +5513,25 @@ async function getSmartFileList(smartAlbum: any, requestId: number) {
   isLoading.value = true;
 
   try {
-    if (await initializeGroupedFileList(requestId)) return;
+    if (await initializeGroupedFileList(requestId)) {
+      if (
+        requestId === currentContentRequestId &&
+        uiStore.smartAlbumCountRequestedFor === String(smartAlbum?.id)
+      ) {
+        updateSmartAlbumCount(smartAlbum.id, totalFileCount.value);
+        uiStore.smartAlbumCountRequestedFor = null;
+      }
+      return;
+    }
 
     const result = await getCurrentQueryCountAndSum();
     if (requestId !== currentContentRequestId) return;
 
     if (result) {
+      if (uiStore.smartAlbumCountRequestedFor === String(smartAlbum?.id)) {
+        updateSmartAlbumCount(smartAlbum.id, Number(result[0] || 0));
+        uiStore.smartAlbumCountRequestedFor = null;
+      }
       clearSelectionForFileListUpdate();
       totalFileCount.value = result[0];
       totalFileSize.value = result[1];
@@ -5575,6 +5594,35 @@ async function updateSmartAlbumCover(smartAlbum: any, requestId: number) {
     coverFileId,
   };
   libConfig.smartAlbums = albums;
+}
+
+function updateSmartAlbumCount(smartAlbumId: string | number, count: number) {
+  const albums = [...(libConfig.smartAlbums || [])];
+  const albumIndex = albums.findIndex((album: any) => String(album.id) === String(smartAlbumId));
+  const currentCount = albums[albumIndex]?.count;
+  if (albumIndex < 0 || (currentCount !== null && currentCount !== undefined && Number(currentCount) === count)) return;
+
+  albums[albumIndex] = {
+    ...albums[albumIndex],
+    count,
+  };
+  libConfig.smartAlbums = albums;
+}
+
+function updateSearchHistoryCount(searchText: string, count: number) {
+  const history = libConfig.search.searchHistory as any[];
+  const historyIndex = history.findIndex((item: any) =>
+    (typeof item === 'string' ? item : item?.text) === searchText
+  );
+  if (historyIndex < 0) return;
+
+  const item = history[historyIndex];
+  if (typeof item !== 'string' && item.count !== null && item.count !== undefined && Number(item.count) === count) return;
+  history[historyIndex] = {
+    text: typeof item === 'string' ? item : item.text,
+    fileId: typeof item === 'string' ? null : item.fileId ?? null,
+    count,
+  };
 }
 
 async function getImageSearchFileList(
@@ -5740,6 +5788,11 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
       .filter((file: any) => !filenameIds.has(Number(file.id)));
     const files = preserveLoadedThumbnails([...filenameMatches, ...visualMatches]);
 
+    if (uiStore.searchCountRequestedFor === searchText) {
+      updateSearchHistoryCount(searchText, files.length);
+      uiStore.searchCountRequestedFor = null;
+    }
+
     clearSelectionForFileListUpdate();
     resetGroupingState();
     fileList.value = files;
@@ -5830,6 +5883,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
         history[historyIndex] = {
           text: typeof item === 'string' ? item : item.text,
           fileId: Number(firstHistoryFile.id),
+          count: typeof item === 'string' ? null : item.count ?? null,
         };
       }
     }
@@ -5932,7 +5986,7 @@ async function updateContent(force = false) {
         break;
       case LIB_ITEM.RATINGS:
         if (libConfig.rating.item === RATE.ALL) {
-          contentTitle.value = localeMsg.value.rating.all_rated || localeMsg.value.rating.rated;
+          contentTitle.value = localeMsg.value.rating.rated;
           getFileList({ rating: RATE.ALL }, requestId);
         } else if (libConfig.rating.item === RATE.UNRATED) {
           contentTitle.value = localeMsg.value.rating.unrated;

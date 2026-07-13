@@ -114,9 +114,10 @@
             </div>
 
             <!-- Right side: Count and Status Icons -->
-            <div class="ml-auto pl-1 flex items-center justify-center text-xs text-base-content/30">
+            <div class="ml-auto">
               <span
                 v-if="props.showTotalCount !== false && album.total"
+                class="sidebar-item-count"
                 :class="selection.albumId.value === album.id && selection.selected.value ? 'hidden' : 'group-hover:hidden'"
               >
                 {{ album.total.toLocaleString() }}

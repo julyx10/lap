@@ -66,16 +66,26 @@
             <IconError class="w-5 h-5 text-base-content/30" />
           </div>
           
-	          <span class="sidebar-item-label">{{ typeof item === 'string' ? item : item.text }}</span>
-	          <ContextMenu
-	            :class="[
-	              'ml-auto flex flex-row items-center text-base-content/30',
-	              libConfig.search.searchHistoryIndex != index ? 'invisible group-hover:visible' : ''
-	            ]"
-	            :iconMenu="IconMore"
-	            :menuItems="() => getSearchHistoryMenuItems(index)"
-	            :smallIcon="true"
-	          />
+          <span class="sidebar-item-label">{{ typeof item === 'string' ? item : item.text }}</span>
+          <div class="ml-auto">
+            <span
+              v-if="hasSearchHistoryCount(item)"
+              class="sidebar-item-count"
+              :class="libConfig.search.searchHistoryIndex === index ? 'hidden' : 'group-hover:hidden'"
+            >{{ formatSearchResultCount(getSearchHistoryCount(item)) }}</span>
+          </div>
+          <div
+            :class="[
+              'flex items-center text-base-content/30',
+              libConfig.search.searchHistoryIndex === index ? '' : 'hidden group-hover:flex'
+            ]"
+          >
+            <ContextMenu
+              :iconMenu="IconMore"
+              :menuItems="() => getSearchHistoryMenuItems(index)"
+              :smallIcon="true"
+            />
+          </div>
         </div>  
     </div>
 
@@ -187,6 +197,12 @@ onUnmounted(() => {
 });
 
 function handleSearchHistoryClick(index: number) {
+  const item = libConfig.search.searchHistory[index];
+  const searchText = typeof item === 'string' ? item : item?.text;
+  if (searchText) {
+    uiStore.searchCountRequestedFor = searchText;
+    uiStore.searchCountRequestTick++;
+  }
   libConfig.search.searchHistoryIndex = index;
 }
 
@@ -215,6 +231,8 @@ function handleSearch() {
   if (searchQuery.value.trim().length === 0) return;
   
   const query = searchQuery.value.trim();
+  uiStore.searchCountRequestedFor = query;
+  uiStore.searchCountRequestTick++;
   const history = libConfig.search.searchHistory as any[];
   
   // Find existing index considering both string and object formats
@@ -227,7 +245,7 @@ function handleSearch() {
     libConfig.search.searchHistoryIndex = existingIndex;
   } else {
     // Add new item as object
-    history.unshift({ text: query, fileId: null });
+    history.unshift({ text: query, fileId: null, count: null });
     libConfig.search.searchHistoryIndex = 0;
 
     // Limit the history size
@@ -246,6 +264,14 @@ function handleEscKey() {
 const historyItems = ref<Record<number, any>>({});
 const thumbnails = ref<Record<number, string>>({});
 const searchHistoryList = computed(() => libConfig.search.searchHistory as any[]);
+const getSearchHistoryCount = (item: any) => Number(item?.count || 0);
+const hasSearchHistoryCount = (item: any) => typeof item !== 'string' && item?.count !== null && item?.count !== undefined;
+const formatSearchResultCount = (count: number) => {
+  const limit = Number(config.settings.imageSearch.limit || 0);
+  return limit > 0 && count >= limit
+    ? `${limit.toLocaleString()}+`
+    : count.toLocaleString();
+};
 
 // Watcher for Text Search History (to fetch thumbnails)
 watch(

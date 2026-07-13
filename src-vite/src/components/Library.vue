@@ -54,7 +54,7 @@
                 @click="selectRating(RATE.ALL)"
               >
                 <IconStarFilled class="mx-1 w-5 h-5 shrink-0" />
-                <span class="sidebar-item-label">{{ localeMsg.rating.all_rated || localeMsg.rating.rated }}</span>
+                <span class="sidebar-item-label">{{ localeMsg.rating.rated }}</span>
                 <span v-if="ratedCount" class="sidebar-item-count ml-auto">{{ ratedCount.toLocaleString() }}</span>
               </div>
             </li>
@@ -120,9 +120,9 @@
                 ]"
                 @click="selectSmartTag(item.id)"
               >
-                <IconSparkles class="mx-1 w-5 h-5 shrink-0" />
+                <IconBox class="mx-1 w-5 h-5 shrink-0" />
                 <span class="sidebar-item-label">{{ item.label }}</span>
-                <span v-if="item.count" class="sidebar-item-count ml-auto">{{ item.count.toLocaleString() }}</span>
+                <span v-if="item.count" class="sidebar-item-count ml-auto">{{ formatSearchResultCount(item.count) }}</span>
               </div>
             </li>
           </ul>
@@ -138,10 +138,10 @@
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { listen } from '@tauri-apps/api/event';
-import { libConfig } from '@/common/config';
+import { config, libConfig } from '@/common/config';
 import { LIB_ITEM, RATE, type LibItem } from '@/common/constants';
 
-import { IconPhotoAll, IconHeartFilled, IconCalendarDay, IconArrowDown, IconArrowUp, IconSmartTag, IconStar, IconStarFilled, IconHistory, IconSparkles } from '@/common/icons';
+import { IconPhotoAll, IconHeartFilled, IconCalendarDay, IconArrowDown, IconArrowUp, IconBox, IconStar, IconStarFilled, IconHistory, IconSparkles } from '@/common/icons';
 import { getQueryCountAndSum, getTotalCountAndSum } from '@/common/api';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
 import TButton from '@/components/TButton.vue';
@@ -159,7 +159,6 @@ const totalCount = ref(0);
 const favoriteCount = ref(0);
 const todayCount = ref(0);
 const unratedCount = ref(0);
-const subjectCounts = ref<Record<string, number>>({});
 const ratedCountOverride = ref<number | null>(null);
 let unlistenLibraryItemCount: (() => void) | null = null;
 const ratingCounts = ref<Record<number, number>>({
@@ -223,10 +222,17 @@ const smartTagItems = computed(() =>
     return {
       id: item.id,
       label: localeMsg.value.subject.items?.[item.id] || item.id,
-      count: Number(subjectCounts.value[item.id] || 0),
+      count: Number(libConfig.library.subjectCounts?.[item.id] || 0),
     };
   })
 );
+
+function formatSearchResultCount(count: number) {
+  const limit = Number(config.settings.imageSearch.limit || 0);
+  return limit > 0 && count >= limit
+    ? `${limit.toLocaleString()}+`
+    : count.toLocaleString();
+}
 
 const refreshTotalCount = async () => {
   const result = await getTotalCountAndSum();
@@ -333,7 +339,12 @@ const applyCountUpdate = (payload: any) => {
       case LIB_ITEM.SUBJECTS: {
         const smartId = String(payload?.smartId || '');
         if (smartId) {
-          subjectCounts.value = { ...subjectCounts.value, [smartId]: count };
+          const subjectCounts = libConfig.library.subjectCounts || {};
+          if (Object.hasOwn(subjectCounts, smartId) && Number(subjectCounts[smartId]) === count) break;
+          libConfig.library.subjectCounts = {
+            ...subjectCounts,
+            [smartId]: count,
+          };
         }
         break;
       }

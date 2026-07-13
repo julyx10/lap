@@ -61,8 +61,9 @@
               </div>
               <span
                 v-if="previewTagLabel"
-                class="inline-flex shrink-0 items-center rounded-box border border-base-content/5 px-1.5 text-[10px] font-bold uppercase tracking-wide text-base-content/70"
+                class="badge badge-xs flex items-center gap-0.5 bg-base-100/30 text-base-content/70"
               >
+                <IconLivePhoto v-if="isLivePhoto && !isHistogramPreview" class="h-3 w-3 shrink-0" />
                 {{ previewTagLabel }}
               </span>
             </div>
@@ -112,7 +113,7 @@
                   @canplay="isVideoPreviewReady = true"
                   @playing="isVideoPreviewReady = true"
                   @error="stopPreviewVideo"
-                />
+                ></video> 
                 <div v-if="!fileInfo?.thumbnail && !showVideoPreview" class="flex h-full w-full items-center justify-center bg-base-content/5">
                   <component
                     :is="fileInfo?.file_type === 2 ? IconVideo : IconPhoto"
@@ -120,12 +121,6 @@
                   />
                 </div>
               </div>
-              <!-- <div
-                v-if="fileInfo?.is_favorite"
-                class="absolute top-2 right-2 rounded-full bg-error/90 p-1 shadow-sm"
-              >
-                <IconHeartFilled class="w-3.5 h-3.5 text-white" />
-              </div> -->
             </div>
             <div v-else class="rounded-box border border-base-content/5 bg-base-300/30 p-3 shadow-sm">
               <ImageHistogram :source="fileInfo?.thumbnail || ''" />
@@ -446,6 +441,7 @@ import {
   IconZoomIn,
   IconZoomOut,
   IconExternal,
+  IconLivePhoto,
 } from '@/common/icons';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import TButton from '@/components/TButton.vue';
@@ -542,7 +538,8 @@ const previewFormatLabel = computed(() => {
   }
 
   const formatLabel = (props.fileInfo?.format_label || '').trim();
-  if (formatLabel) {
+  const isRaw = Number(props.fileInfo?.file_type || 0) === 3;
+  if (formatLabel && !(isRaw && formatLabel.toUpperCase() === 'RAW')) {
     return formatLabel.toUpperCase();
   }
 
@@ -550,7 +547,6 @@ const previewFormatLabel = computed(() => {
   const filePath = props.fileInfo?.file_path || '';
   const extension = getFileExtension(name || filePath).trim();
   if (!extension) return '';
-  if (Number(props.fileInfo?.file_type || 0) === 3) return 'RAW';
   return extension.toUpperCase();
 });
 const previewTagLabel = computed(() => (
