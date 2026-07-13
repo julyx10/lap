@@ -276,7 +276,8 @@ function isGeometryGridStyle(style: number) {
 
 const renderItems = computed(() => props.fileList);
 const hasGroupRows = computed(() =>
-  Number(props.groupBy || 0) > 0 || isGroupRow(renderItems.value[0])
+  !config.settings.grid.showFilmStrip &&
+  (Number(props.groupBy || 0) > 0 || isGroupRow(renderItems.value[0]))
 );
 const fileIndexToRowIndex = computed(() => {
   const map = new Map<number, number>();
