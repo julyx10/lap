@@ -31,7 +31,7 @@
               @error="smartAlbumCoverErrors[smartAlbum.id] = Number(smartAlbum.coverFileId)"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-base-content/30">
-              <IconPhoto class="w-5 h-5" />
+              <IconBolt class="w-5 h-5" />
             </div>
           </div>
           <span class="sidebar-item-label">{{ smartAlbum.name }}</span>
@@ -83,7 +83,7 @@ import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { getThumbUrl, getThumbnailDataUrl, getThumbnailDataUrlInflight, isWin, setThumbnailDataUrlInflight } from '@/common/utils';
 import { getFileThumbById } from '@/common/api';
-import { IconAdd, IconEdit, IconMore, IconPhoto, IconTrash } from '@/common/icons';
+import { IconAdd, IconEdit, IconMore, IconBolt, IconTrash } from '@/common/icons';
 import TButton from '@/components/TButton.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import SmartAlbumEdit from '@/components/SmartAlbumEdit.vue';

@@ -715,7 +715,7 @@ import {
   IconCamera,
   IconHeartFilled,
   IconHistory,
-  IconBookmarks,
+  IconBookmark,
   IconSparkles,
   IconFile,
 } from '@/common/icons';
@@ -2526,7 +2526,7 @@ const dedupScanKey = computed(() => {
 });
 
 const currentTitleIcon = computed(() => {
-  if (libConfig.activePane === 'collection') return IconBookmarks;
+  if (libConfig.activePane === 'collection') return IconBookmark;
   switch (tempViewMode.value) {
     case 'none':
       if (contentTitle.value) {
@@ -2536,7 +2536,7 @@ const currentTitleIcon = computed(() => {
               case LIB_ITEM.ALL: return IconPhotoAll;
               case LIB_ITEM.FAV: return IconHeartFilled;
               case LIB_ITEM.RATINGS: return libConfig.rating.item > 0 || libConfig.rating.item === RATE.ALL ? IconStarFilled : IconStar;
-              case LIB_ITEM.SUBJECTS: return IconSparkles;
+              case LIB_ITEM.SUBJECTS: return IconBox;
               case LIB_ITEM.TODAY: return IconHistory;
               default: return IconPhotoAll;
             }

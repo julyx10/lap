@@ -46,7 +46,7 @@
           ]"
           @click="selectCollection(collection)"
         >
-          <IconBookmarks class="mx-1 w-5 h-5 shrink-0" />
+          <IconBookmark class="mx-1 w-5 h-5 shrink-0" />
           <input
             v-if="renamingId === collection.id"
             ref="renameInputRef"
@@ -119,7 +119,7 @@ import { emit as tauriEmit, listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { libConfig } from '@/common/config';
 import { clearCollection, createCollection, deleteCollection as deleteCollectionApi, listCollections, renameCollection } from '@/common/api';
-import { IconAdd, IconArrowDown, IconArrowUp, IconEdit, IconMore, IconBookmarks, IconRemove, IconTrash } from '@/common/icons';
+import { IconAdd, IconArrowDown, IconArrowUp, IconEdit, IconMore, IconBookmark, IconRemove, IconTrash } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import TButton from '@/components/TButton.vue';

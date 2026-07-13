@@ -63,7 +63,7 @@
             v-else
             class="w-10 h-10 mr-2 shrink-0 rounded-box border border-base-content/5 flex items-center justify-center"
           >
-            <IconError class="w-5 h-5 text-base-content/30" />
+            <IconSearch class="w-5 h-5 text-base-content/30" />
           </div>
           
           <span class="sidebar-item-label">{{ typeof item === 'string' ? item : item.text }}</span>
@@ -120,7 +120,7 @@ import {
   setThumbnailDataUrlInflight,
 } from '@/common/utils';
 
-import { IconMore, IconTrash, IconSearch, IconClose, IconError } from '@/common/icons';
+import { IconMore, IconTrash, IconSearch, IconClose } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 
 const props = defineProps({

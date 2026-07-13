@@ -357,8 +357,9 @@ impl Album {
             .query_row(
                 &format!(
                     "SELECT COUNT(*) FROM afiles a JOIN afolders b ON a.folder_id = b.id
-                    WHERE b.album_id = ?1 AND {}",
-                    AFile::search_exclusion_condition("b")
+                    WHERE b.album_id = ?1 AND {} AND {}",
+                    AFile::search_exclusion_condition("b"),
+                    AFile::live_photo_companion_exclusion_condition()
                 ),
                 params![id],
                 |row| row.get(0),
@@ -738,7 +739,10 @@ impl AFolder {
                         OR instr(a.path, xf.path || '{}') = 1
                     )
                 ),
-                (SELECT COUNT(*) FROM afiles WHERE folder_id = a.id)
+                (SELECT COUNT(*) FROM afiles f
+                 WHERE f.folder_id = a.id AND f.id NOT IN (
+                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                 ))
             FROM afolders a
             WHERE a.is_favorite = 1
             ORDER BY a.name",
@@ -957,9 +961,13 @@ impl ACollection {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT c.id, c.name, c.sort_order, COUNT(cf.file_id) AS count, c.created_at, c.updated_at
+                "SELECT c.id, c.name, c.sort_order, COUNT(a.id) AS count, c.created_at, c.updated_at
                 FROM acollections c
                 LEFT JOIN acollections_files cf ON cf.collection_id = c.id
+                LEFT JOIN afiles a ON a.id = cf.file_id
+                    AND a.id NOT IN (
+                        SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                    )
                 GROUP BY c.id
                 ORDER BY c.sort_order ASC, c.id ASC",
             )
@@ -1010,9 +1018,13 @@ impl ACollection {
     pub fn get(id: i64) -> Result<Self, String> {
         let conn = open_conn()?;
         conn.query_row(
-            "SELECT c.id, c.name, c.sort_order, COUNT(cf.file_id) AS count, c.created_at, c.updated_at
+            "SELECT c.id, c.name, c.sort_order, COUNT(a.id) AS count, c.created_at, c.updated_at
             FROM acollections c
             LEFT JOIN acollections_files cf ON cf.collection_id = c.id
+            LEFT JOIN afiles a ON a.id = cf.file_id
+                AND a.id NOT IN (
+                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                )
             WHERE c.id = ?1
             GROUP BY c.id",
             params![id],
@@ -3241,10 +3253,15 @@ impl AFile {
         let query = format!(
             "SELECT {} AS group_date, COUNT(1)
             FROM afiles a
-            WHERE {} IS NOT NULL AND {} >= 86400
+            WHERE {} IS NOT NULL AND {} >= 86400 AND {}
             GROUP BY {}
             ORDER BY group_date {}",
-            date_expr, date_col, date_col, date_expr, order_clause
+            date_expr,
+            date_col,
+            date_col,
+            Self::live_photo_companion_exclusion_condition(),
+            date_expr,
+            order_clause
         );
 
         let mut stmt = conn
@@ -6151,6 +6168,9 @@ impl ATag {
             FROM atags 
             LEFT JOIN afile_tags ON atags.id = afile_tags.tag_id
             LEFT JOIN afiles ON afile_tags.file_id = afiles.id
+                AND afiles.id NOT IN (
+                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                )
             GROUP BY atags.id
             ORDER BY "
             .to_string()
@@ -7046,6 +7066,9 @@ impl ACamera {
         let query = "SELECT UPPER(a.e_make), a.e_model, count(a.id) as count
             FROM afiles a
             WHERE a.e_make IS NOT NULL AND a.e_model IS NOT NULL
+                AND a.id NOT IN (
+                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                )
             GROUP BY UPPER(a.e_make), a.e_model
             ORDER BY UPPER(a.e_make), a.e_model"
             .to_string();
@@ -7121,6 +7144,9 @@ impl ALens {
         let query = "SELECT UPPER(a.e_lens_make), a.e_lens_model, count(a.id) as count
             FROM afiles a
             WHERE a.e_lens_make IS NOT NULL AND a.e_lens_model IS NOT NULL
+                AND a.id NOT IN (
+                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                )
             GROUP BY UPPER(a.e_lens_make), a.e_lens_model
             ORDER BY UPPER(a.e_lens_make), a.e_lens_model"
             .to_string();
@@ -7198,6 +7224,9 @@ impl ALocation {
         let query = "SELECT COALESCE(a.geo_cc, ''), a.geo_admin1, a.geo_name, count(a.id) as count
             FROM afiles a
             WHERE COALESCE(a.geo_admin1, '') <> '' AND COALESCE(a.geo_name, '') <> ''
+                AND a.id NOT IN (
+                    SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                )
             GROUP BY a.geo_cc, a.geo_admin1, a.geo_name
             ORDER BY a.geo_cc, a.geo_admin1, a.geo_name"
             .to_string();
@@ -7282,8 +7311,11 @@ impl AGpsHeatPoint {
         let mut stmt = conn
             .prepare(
                 "SELECT AVG(gps_latitude) AS lat, AVG(gps_longitude) AS lon, COUNT(*) AS cnt
-                 FROM afiles
+                 FROM afiles a
                  WHERE gps_latitude IS NOT NULL AND gps_longitude IS NOT NULL
+                    AND a.id NOT IN (
+                        SELECT live_photo_video_id FROM afiles WHERE live_photo_video_id IS NOT NULL
+                    )
                  GROUP BY ROUND(gps_latitude, 2), ROUND(gps_longitude, 2)",
             )
             .map_err(|e| e.to_string())?;

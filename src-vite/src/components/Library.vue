@@ -141,7 +141,7 @@ import { listen } from '@tauri-apps/api/event';
 import { config, libConfig } from '@/common/config';
 import { LIB_ITEM, RATE, type LibItem } from '@/common/constants';
 
-import { IconPhotoAll, IconHeartFilled, IconCalendarDay, IconArrowDown, IconArrowUp, IconBox, IconStar, IconStarFilled, IconHistory, IconSparkles } from '@/common/icons';
+import { IconPhotoAll, IconHeartFilled, IconArrowDown, IconArrowUp, IconBox, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
 import { getQueryCountAndSum, getTotalCountAndSum } from '@/common/api';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
 import TButton from '@/components/TButton.vue';
