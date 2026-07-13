@@ -1144,8 +1144,8 @@
         "镜头",
         "拍摄设置"
       ],
-      "show_media_info": "显示媒体信息",
-      "media_info_options": [
+      "show_thumbnail_badges": "显示缩略图标记",
+      "thumbnail_badge_options": [
         "（空）",
         "文件格式",
         "ISO",

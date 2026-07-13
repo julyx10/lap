@@ -1144,8 +1144,8 @@
         "Lente",
         "Ajustes captura"
       ],
-      "show_media_info": "Mostrar información multimedia",
-      "media_info_options": [
+      "show_thumbnail_badges": "Mostrar insignias de miniaturas",
+      "thumbnail_badge_options": [
         "(Vacío)",
         "Formato de archivo",
         "ISO",

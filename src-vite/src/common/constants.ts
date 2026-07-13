@@ -32,8 +32,8 @@ export const RATE = {
   UNRATED: 0,
 } as const;
 
-// Thumbnail media info selection
-export const MEDIA_INFO = {
+// Thumbnail badge selection
+export const THUMBNAIL_BADGE = {
   EMPTY: 0,
   FILE_FORMAT: 1,
   ISO: 2,
@@ -43,7 +43,7 @@ export const MEDIA_INFO = {
   EXPOSURE: 6,
 } as const;
 
-export type MediaInfo = (typeof MEDIA_INFO)[keyof typeof MEDIA_INFO];
+export type ThumbnailBadge = (typeof THUMBNAIL_BADGE)[keyof typeof THUMBNAIL_BADGE];
 
 // date sort enum
 export const DATE_SORT = {

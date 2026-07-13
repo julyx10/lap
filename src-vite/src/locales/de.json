@@ -1144,8 +1144,8 @@
         "Objektiv",
         "Einstellungen"
       ],
-      "show_media_info": "Medieninformationen anzeigen",
-      "media_info_options": [
+      "show_thumbnail_badges": "Miniatur-Abzeichen anzeigen",
+      "thumbnail_badge_options": [
         "(Leer)",
         "Dateiformat",
         "ISO",

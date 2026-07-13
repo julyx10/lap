@@ -1144,8 +1144,8 @@
         "렌즈",
         "설정"
       ],
-      "show_media_info": "미디어 정보 표시",
-      "media_info_options": [
+      "show_thumbnail_badges": "썸네일 배지 표시",
+      "thumbnail_badge_options": [
         "(없음)",
         "파일 형식",
         "ISO",

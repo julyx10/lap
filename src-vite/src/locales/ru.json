@@ -1144,8 +1144,8 @@
         "Объектив",
         "Настройки"
       ],
-      "show_media_info": "Показывать информацию о медиа",
-      "media_info_options": [
+      "show_thumbnail_badges": "Показывать значки миниатюр",
+      "thumbnail_badge_options": [
         "(Пусто)",
         "Формат файла",
         "ISO",

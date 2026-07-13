@@ -1144,8 +1144,8 @@
         "Objectif",
         "Paramètres"
       ],
-      "show_media_info": "Afficher les informations du média",
-      "media_info_options": [
+      "show_thumbnail_badges": "Afficher les badges sur les miniatures",
+      "thumbnail_badge_options": [
         "(Vide)",
         "Format du fichier",
         "ISO",

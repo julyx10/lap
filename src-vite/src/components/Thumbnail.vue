@@ -104,14 +104,14 @@
 
       <!-- bottom badges -->
       <div
-        v-if="mediaInfoBadge"
+        v-if="thumbnailBadge"
         :class="[
           'pointer-events-none absolute left-0.5 z-10 flex items-center gap-0.5',
           hasBottomMediaBadges ? 'bottom-6' : 'bottom-0.5',
         ]"
       >
         <div class="thumb-badge thumb-badge-muted">
-          {{ mediaInfoBadge }}
+          {{ thumbnailBadge }}
         </div>
       </div>
       <div
@@ -200,7 +200,7 @@ import { computed, nextTick, ref, watch, toRef, onBeforeUnmount, type CSSPropert
 import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { MEDIA_INFO } from '@/common/constants';
+import { THUMBNAIL_BADGE } from '@/common/constants';
 import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension } from '@/common/utils';
 import { isWebViewVideoPlaybackDisabled } from '@/common/video';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -526,27 +526,27 @@ const videoDurationBadge = computed(() => {
   return formattedDuration;
 });
 
-const mediaInfoBadge = computed(() => {
-  const summary = Number(config.settings.grid.mediaInfo || 0);
-  if (summary === MEDIA_INFO.EMPTY) return '';
+const thumbnailBadge = computed(() => {
+  const summary = Number(config.settings.grid.thumbnailBadge || 0);
+  if (summary === THUMBNAIL_BADGE.EMPTY) return '';
 
   const file = props.file || {};
   switch (summary) {
-    case MEDIA_INFO.FILE_FORMAT: {
+    case THUMBNAIL_BADGE.FILE_FORMAT: {
       const extension = getFileExtension(file.name || file.file_path || '').trim();
       return extension ? extension.toUpperCase() : '';
     }
-    case MEDIA_INFO.ISO:
+    case THUMBNAIL_BADGE.ISO:
       return file.e_iso_speed ? `ISO ${file.e_iso_speed}` : '';
-    case MEDIA_INFO.SHUTTER_SPEED:
+    case THUMBNAIL_BADGE.SHUTTER_SPEED:
       return file.e_exposure_time || '';
-    case MEDIA_INFO.APERTURE: {
+    case THUMBNAIL_BADGE.APERTURE: {
       const fNumber = String(file.e_f_number || '').trim();
       return fNumber ? (fNumber.toLowerCase().startsWith('f/') ? fNumber : `f/${fNumber}`) : '';
     }
-    case MEDIA_INFO.FOCAL_LENGTH:
+    case THUMBNAIL_BADGE.FOCAL_LENGTH:
       return file.e_focal_length || '';
-    case MEDIA_INFO.EXPOSURE:
+    case THUMBNAIL_BADGE.EXPOSURE:
       return file.e_exposure_bias || '';
     default:
       return '';

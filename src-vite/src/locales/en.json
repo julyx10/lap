@@ -1144,8 +1144,8 @@
         "Lens",
         "Capture settings"
       ],
-      "show_media_info": "Show media info",
-      "media_info_options": [
+      "show_thumbnail_badges": "Show thumbnail badges",
+      "thumbnail_badge_options": [
         "(Empty)",
         "File format",
         "ISO",

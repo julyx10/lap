@@ -1144,8 +1144,8 @@
         "レンズ",
         "設定"
       ],
-      "show_media_info": "メディア情報を表示",
-      "media_info_options": [
+      "show_thumbnail_badges": "サムネイルバッジを表示",
+      "thumbnail_badge_options": [
         "（なし）",
         "ファイル形式",
         "ISO",
