@@ -4355,7 +4355,7 @@ onMounted( async() => {
     if (readyIds.size === 0) return;
 
     const loadedFiles = fileList.value.filter(
-      (file: any) => !file?.isPlaceholder && readyIds.has(Number(file.id || 0))
+      (file: any) => file && !file.isPlaceholder && readyIds.has(Number(file.id || 0))
     );
     if (loadedFiles.length === 0) return;
 
