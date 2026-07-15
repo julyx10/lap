@@ -4503,14 +4503,15 @@ watch(() => config.settings.language, (newLanguage) => {
 
 // Load tags when info panel is opened
 watch(() => isInfoPanelOpen.value, async (newShow) => {
-  if (newShow && selectedItemIndex.value >= 0 && selectedItemIndex.value < fileList.value.length) {
-    const file = fileList.value[selectedItemIndex.value];
-    if (file.has_tags && !file.tags) {
+  const index = selectedItemIndex.value;
+  if (newShow && index >= 0 && index < fileList.value.length) {
+    const file = fileList.value[index];
+    if (isRealFileItem(file) && file.has_tags && !file.tags) {
       // Load tags if has_tags is true but tags not yet loaded
-      fileList.value[selectedItemIndex.value] = {
-        ...file,
-        tags: await getTagsForFile(file.id)
-      };
+      const tags = await getTagsForFile(file.id);
+      if (fileList.value[index] === file) {
+        file.tags = tags;
+      }
     }
   }
 });
@@ -8025,9 +8026,14 @@ const isSmartAlbumView = computed(() =>
 async function updateSelectedImage(index: number) {
   if(index < 0 || index >= fileList.value.length) return;
 
-  // update the tags for the selected file
-  if(isInfoPanelOpen.value && fileList.value[index].has_tags) {
-    fileList.value[index].tags = await getTagsForFile(fileList.value[index].id);
+  const file = fileList.value[index];
+  if (!isRealFileItem(file) || !isInfoPanelOpen.value || !file.has_tags) return;
+
+  // Keep a stable reference because virtual-list slots can be replaced while
+  // the tag query is in flight.
+  const tags = await getTagsForFile(file.id);
+  if (fileList.value[index] === file) {
+    file.tags = tags;
   }
 }
 

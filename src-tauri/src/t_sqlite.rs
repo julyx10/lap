@@ -1503,9 +1503,16 @@ impl AFile {
         };
 
         if file_type == 1 || file_type == 3 {
-            // Image file — reuse pre-read header
+            // Image file — reuse the pre-read header when it contains EXIF.
+            // Some older JPEGs place EXIF after large APP segments (such as an
+            // ICC profile), beyond this header buffer. Fall back to scanning
+            // the full JPEG so their capture settings are indexed as well.
             let exif = if let Some(hdr) = file_header_deref {
-                t_image::read_exif_from_bytes_permissive(hdr)
+                t_image::read_exif_from_bytes_permissive(hdr).or_else(|| {
+                    (file_type == 1 && t_image::is_jpeg_path(file_path))
+                        .then(|| t_image::read_exif_permissive(file_path))
+                        .flatten()
+                })
             } else {
                 t_image::read_exif_permissive(file_path)
             };
@@ -1578,6 +1585,25 @@ impl AFile {
             e_f_number = Self::get_exif_field(&exif, Tag::FNumber);
             e_focal_length = Self::get_exif_field(&exif, Tag::FocalLength);
             e_iso_speed = Self::get_exif_field(&exif, Tag::PhotographicSensitivity);
+
+            // The editor uses little_exif to preserve metadata. Some legacy
+            // JPEGs are accepted by that reader but rejected by kamadak-exif,
+            // which previously made capture settings appear only after an edit
+            // was saved as a new image. Only use the same reader when
+            // kamadak-exif found none of the capture settings, so a record
+            // never combines partial values from two parsers.
+            if t_image::is_jpeg_path(file_path)
+                && e_exposure_time.is_none()
+                && e_f_number.is_none()
+                && e_focal_length.is_none()
+                && e_iso_speed.is_none()
+            {
+                let capture_settings = t_image::read_capture_settings_with_little_exif(file_path);
+                e_exposure_time = e_exposure_time.or(capture_settings.exposure_time);
+                e_f_number = e_f_number.or(capture_settings.f_number);
+                e_focal_length = e_focal_length.or(capture_settings.focal_length);
+                e_iso_speed = e_iso_speed.or(capture_settings.iso_speed);
+            }
 
             // Fallback: infer lens make from lens model prefix when LensMake is missing.
             if e_lens_make.is_none() {
@@ -1893,61 +1919,7 @@ impl AFile {
                 }
                 String::from_utf8_lossy(&bytes).into_owned()
             }
-            _ => {
-                let displayed_value = field.display_value().with_unit(exif.as_ref()?).to_string();
-                if displayed_value.starts_with("1/") {
-                    let parts: Vec<&str> = displayed_value.split(' ').collect();
-                    let fraction_part = &parts[0][2..];
-
-                    let new_fraction_part = if fraction_part.contains('.') {
-                        let decimal_part = fraction_part.split('.').nth(1).unwrap_or("");
-                        if decimal_part.len() > 2 {
-                            if let Ok(num) = fraction_part.parse::<f64>() {
-                                format!("{:.2}", num)
-                            } else {
-                                fraction_part.to_string()
-                            }
-                        } else {
-                            fraction_part.to_string()
-                        }
-                    } else {
-                        fraction_part.to_string()
-                    };
-
-                    let mut result = format!("1/{}", new_fraction_part);
-                    if parts.len() > 1 {
-                        result.push(' ');
-                        result.push_str(parts[1]);
-                    }
-                    result
-                } else {
-                    let parts: Vec<&str> = displayed_value.split(' ').collect();
-                    if parts.is_empty() {
-                        return None;
-                    }
-                    if let Ok(num) = parts[0].parse::<f64>() {
-                        let result = if parts[0].contains('.') {
-                            let decimal_part = parts[0].split('.').nth(1).unwrap_or("");
-                            if decimal_part.len() > 2 {
-                                format!("{:.2}", num)
-                            } else {
-                                parts[0].to_string()
-                            }
-                        } else {
-                            parts[0].to_string()
-                        };
-
-                        let mut final_result = result;
-                        if parts.len() > 1 {
-                            final_result.push(' ');
-                            final_result.push_str(parts[1]);
-                        }
-                        final_result
-                    } else {
-                        displayed_value
-                    }
-                }
-            }
+            _ => field.display_value().with_unit(exif.as_ref()?).to_string(),
         };
 
         let cleaned = raw

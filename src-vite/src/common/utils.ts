@@ -280,14 +280,25 @@ export function formatCameraInfo(make: string, model: string): string {
   return `${make} ${model}`;
 }
 
+/// Format EXIF numeric values for display without reducing the precision stored in the database.
+export function formatCaptureSettingValue(value: string | null | undefined): string {
+  if (!value) return '';
+
+  return String(value).replace(/-?\d+(?:\.\d+)?/g, (numberText) => {
+    const number = Number(numberText);
+    if (!Number.isFinite(number)) return numberText;
+    return Number(number.toFixed(2)).toString();
+  });
+}
+
 /// format capture settings to string
 export function formatCaptureSettings(focal_length: string, exposure_time: string, f_number: string, iso_speed: string, exposure_bias: string): string {
   let result = '';
-  result += focal_length ? `${focal_length}` : '';
-  result += exposure_time ? `, ${exposure_time}` : '';
-  result += f_number ? `, ${f_number}` : '';
-  result += iso_speed ? `, ISO ${iso_speed}` : '';
-  result += exposure_bias ? `, ${exposure_bias}` : '';
+  result += focal_length ? formatCaptureSettingValue(focal_length) : '';
+  result += exposure_time ? `, ${formatCaptureSettingValue(exposure_time)}` : '';
+  result += f_number ? `, ${formatCaptureSettingValue(f_number)}` : '';
+  result += iso_speed ? `, ISO ${formatCaptureSettingValue(iso_speed)}` : '';
+  result += exposure_bias ? `, ${formatCaptureSettingValue(exposure_bias)}` : '';
 
   // remove the first ',' if it exists
   if (result[0] === ',' && result.length > 1) {

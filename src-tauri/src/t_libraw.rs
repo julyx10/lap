@@ -293,10 +293,10 @@ impl RawHandle {
             artist: c_char_array_to_string(&out.artist),
             description: c_char_array_to_string(&out.desc),
             timestamp: (out.timestamp > 0).then_some(out.timestamp),
-            iso_speed: (out.iso_speed > 0.0).then(|| format_float(out.iso_speed)),
+            iso_speed: (out.iso_speed > 0.0).then(|| out.iso_speed.to_string()),
             shutter: (out.shutter > 0.0).then(|| format_shutter_speed(out.shutter)),
-            aperture: (out.aperture > 0.0).then(|| format!("f/{}", format_float(out.aperture))),
-            focal_len: (out.focal_len > 0.0).then(|| format!("{} mm", format_float(out.focal_len))),
+            aperture: (out.aperture > 0.0).then(|| format!("f/{}", out.aperture)),
+            focal_len: (out.focal_len > 0.0).then(|| format!("{} mm", out.focal_len)),
             flash_used: (out.flash_used != 0.0).then(|| {
                 if out.flash_used > 0.0 {
                     "Fired".to_string()
@@ -438,20 +438,11 @@ fn c_char_array_to_string(bytes: &[c_char]) -> Option<String> {
         .map(str::to_string)
 }
 
-fn format_float(value: f32) -> String {
-    if value.fract().abs() < 0.05 {
-        format!("{:.0}", value)
-    } else {
-        format!("{:.1}", value)
-    }
-}
-
 fn format_shutter_speed(shutter: f32) -> String {
     if shutter >= 1.0 {
-        format!("{} s", format_float(shutter))
+        format!("{} s", shutter)
     } else {
-        let denom = (1.0 / shutter).round();
-        format!("1/{} s", denom)
+        format!("1/{} s", 1.0 / shutter)
     }
 }
 

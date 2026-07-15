@@ -8,6 +8,7 @@ use arboard::Clipboard;
 use exif::{In, Reader, Tag};
 use fast_image_resize as fir;
 use image::{DynamicImage, GenericImageView, ImageReader, RgbImage};
+use little_exif::exif_tag::ExifTag;
 use little_exif::filetype::FileExtension;
 use little_exif::ifd::ExifTagGroup;
 use little_exif::metadata::Metadata as LittleExifMetadata;
@@ -29,6 +30,91 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 
 use crate::{t_jxl, t_libraw, t_utils};
+
+#[derive(Default)]
+pub struct CaptureSettings {
+    pub exposure_time: Option<String>,
+    pub f_number: Option<String>,
+    pub focal_length: Option<String>,
+    pub iso_speed: Option<String>,
+}
+
+/// Reads the core capture settings with the same EXIF reader used when image
+/// edits preserve metadata. This covers JPEGs that little_exif accepts but
+/// kamadak-exif cannot decode.
+pub fn read_capture_settings_with_little_exif(file_path: &str) -> CaptureSettings {
+    if !is_jpeg_path(file_path) {
+        return CaptureSettings::default();
+    }
+
+    panic::catch_unwind(AssertUnwindSafe(|| {
+        let metadata = match LittleExifMetadata::new_from_path(Path::new(file_path)) {
+            Ok(metadata) => metadata,
+            Err(_) => return CaptureSettings::default(),
+        };
+
+        CaptureSettings {
+            exposure_time: metadata
+                .get_tag_by_hex(0x829a, Some(ExifTagGroup::EXIF))
+                .next()
+                .and_then(little_exif_rational_value)
+                .and_then(format_little_exif_shutter_speed),
+            f_number: metadata
+                .get_tag_by_hex(0x829d, Some(ExifTagGroup::EXIF))
+                .next()
+                .and_then(little_exif_rational_value)
+                .map(|value| format!("f/{value}")),
+            focal_length: metadata
+                .get_tag_by_hex(0x920a, Some(ExifTagGroup::EXIF))
+                .next()
+                .and_then(little_exif_rational_value)
+                .map(|value| format!("{value} mm")),
+            iso_speed: metadata
+                .get_tag_by_hex(0x8827, Some(ExifTagGroup::EXIF))
+                .next()
+                .and_then(little_exif_iso_value)
+                .filter(|value| value != "0")
+                .or_else(|| {
+                    metadata
+                        .get_tag_by_hex(0x8833, Some(ExifTagGroup::EXIF))
+                        .next()
+                        .and_then(little_exif_iso_value)
+                        .filter(|value| value != "0")
+                }),
+        }
+    }))
+    .unwrap_or_default()
+}
+
+fn little_exif_rational_value(tag: &ExifTag) -> Option<f64> {
+    let values = match tag {
+        ExifTag::ExposureTime(values) | ExifTag::FNumber(values) | ExifTag::FocalLength(values) => {
+            values
+        }
+        _ => return None,
+    };
+    let value = values.first()?;
+    (value.denominator != 0).then(|| value.nominator as f64 / value.denominator as f64)
+}
+
+fn little_exif_iso_value(tag: &ExifTag) -> Option<String> {
+    match tag {
+        ExifTag::ISO(values) => values.first().map(ToString::to_string),
+        ExifTag::ISOSpeed(values) => values.first().map(ToString::to_string),
+        _ => None,
+    }
+}
+
+fn format_little_exif_shutter_speed(value: f64) -> Option<String> {
+    if !value.is_finite() || value <= 0.0 {
+        return None;
+    }
+    if value >= 1.0 {
+        Some(format!("{value} s"))
+    } else {
+        Some(format!("1/{} s", 1.0 / value))
+    }
+}
 
 /// Quick probing of image dimensions without loading the entire file
 pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32), String> {
@@ -103,20 +189,20 @@ fn get_raw_dimensions_from_exif(file_path: &str) -> Result<Option<(u32, u32)>, S
 pub fn read_exif_from_bytes_permissive(data: &[u8]) -> Option<exif::Exif> {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mut cursor = Cursor::new(data);
-        if let Ok(exif) = Reader::new().read_from_container(&mut cursor) {
+        if let Some(exif) = read_exif_container_with_recovery(&mut cursor) {
             return Some(exif);
         }
         if let Some(pos) = data.windows(6).position(|w| w == b"Exif\0\0") {
             let exif_start = pos + 6;
             if exif_start < data.len() {
-                if let Ok(exif) = Reader::new().read_raw(data[exif_start..].to_vec()) {
+                if let Some(exif) = read_exif_raw_with_recovery(data[exif_start..].to_vec()) {
                     return Some(exif);
                 }
             }
         }
         for sig in [b"II\x2a\x00", b"MM\x00\x2a"] {
             if let Some(pos) = data.windows(4).position(|w| w == sig) {
-                if let Ok(exif) = Reader::new().read_raw(data[pos..].to_vec()) {
+                if let Some(exif) = read_exif_raw_with_recovery(data[pos..].to_vec()) {
                     return Some(exif);
                 }
             }
@@ -124,6 +210,24 @@ pub fn read_exif_from_bytes_permissive(data: &[u8]) -> Option<exif::Exif> {
         None
     }))
     .unwrap_or_else(|_| None)
+}
+
+fn read_exif_container_with_recovery(cursor: &mut Cursor<&[u8]>) -> Option<exif::Exif> {
+    let mut reader = Reader::new();
+    reader.continue_on_error(true);
+    read_exif_result_with_recovery(reader.read_from_container(cursor))
+}
+
+fn read_exif_raw_with_recovery(data: Vec<u8>) -> Option<exif::Exif> {
+    let mut reader = Reader::new();
+    reader.continue_on_error(true);
+    read_exif_result_with_recovery(reader.read_raw(data))
+}
+
+fn read_exif_result_with_recovery(result: Result<exif::Exif, exif::Error>) -> Option<exif::Exif> {
+    result
+        .or_else(|error| error.distill_partial_result(|_| {}))
+        .ok()
 }
 
 /// A very aggressive binary scanner that looks for the EXIF Orientation tag (0x0112)
@@ -198,7 +302,7 @@ pub fn read_exif_permissive(file_path: &str) -> Option<exif::Exif> {
                     break;
                 }
                 if segment_data.starts_with(b"Exif\0\0") {
-                    if let Ok(exif) = Reader::new().read_raw(segment_data[6..].to_vec()) {
+                    if let Some(exif) = read_exif_raw_with_recovery(segment_data[6..].to_vec()) {
                         return Some(exif);
                     }
                 }
@@ -310,7 +414,7 @@ fn resize_rgb_image_to_jpeg(rgb: image::RgbImage, thumbnail_size: u32) -> Result
     encode_jpeg_rgb8(&resized)
 }
 
-fn is_jpeg_path(file_path: &str) -> bool {
+pub fn is_jpeg_path(file_path: &str) -> bool {
     Path::new(file_path)
         .extension()
         .and_then(|ext| ext.to_str())

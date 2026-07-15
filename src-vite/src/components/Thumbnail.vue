@@ -201,7 +201,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { THUMBNAIL_BADGE } from '@/common/constants';
-import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension } from '@/common/utils';
+import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension } from '@/common/utils';
 import { isWebViewVideoPlaybackDisabled } from '@/common/video';
 import ContextMenu from '@/components/ContextMenu.vue';
 import { useFileMenuItems } from '@/common/fileMenu';
@@ -537,17 +537,17 @@ const thumbnailBadge = computed(() => {
       return extension ? extension.toUpperCase() : '';
     }
     case THUMBNAIL_BADGE.ISO:
-      return file.e_iso_speed ? `ISO ${file.e_iso_speed}` : '';
+      return file.e_iso_speed ? `ISO ${formatCaptureSettingValue(file.e_iso_speed)}` : '';
     case THUMBNAIL_BADGE.SHUTTER_SPEED:
-      return file.e_exposure_time || '';
+      return formatCaptureSettingValue(file.e_exposure_time);
     case THUMBNAIL_BADGE.APERTURE: {
-      const fNumber = String(file.e_f_number || '').trim();
+      const fNumber = formatCaptureSettingValue(file.e_f_number).trim();
       return fNumber ? (fNumber.toLowerCase().startsWith('f/') ? fNumber : `f/${fNumber}`) : '';
     }
     case THUMBNAIL_BADGE.FOCAL_LENGTH:
-      return file.e_focal_length || '';
+      return formatCaptureSettingValue(file.e_focal_length);
     case THUMBNAIL_BADGE.EXPOSURE:
-      return file.e_exposure_bias || '';
+      return formatCaptureSettingValue(file.e_exposure_bias);
     default:
       return '';
   }
