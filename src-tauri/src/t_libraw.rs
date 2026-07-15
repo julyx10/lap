@@ -296,7 +296,7 @@ impl RawHandle {
             iso_speed: (out.iso_speed > 0.0).then(|| format_float(out.iso_speed)),
             shutter: (out.shutter > 0.0).then(|| format_shutter_speed(out.shutter)),
             aperture: (out.aperture > 0.0).then(|| format!("f/{}", format_float(out.aperture))),
-            focal_len: (out.focal_len > 0.0).then(|| format!("{}mm", format_float(out.focal_len))),
+            focal_len: (out.focal_len > 0.0).then(|| format!("{} mm", format_float(out.focal_len))),
             flash_used: (out.flash_used != 0.0).then(|| {
                 if out.flash_used > 0.0 {
                     "Fired".to_string()
@@ -455,10 +455,10 @@ fn format_float(value: f32) -> String {
 
 fn format_shutter_speed(shutter: f32) -> String {
     if shutter >= 1.0 {
-        format!("{}s", format_float(shutter))
+        format!("{} s", format_float(shutter))
     } else {
         let denom = (1.0 / shutter).round();
-        format!("1/{}s", denom)
+        format!("1/{} s", denom)
     }
 }
 
@@ -473,9 +473,9 @@ fn format_lens_model_from_numbers(
     }
 
     let focal = if (min_focal - max_focal).abs() < 0.05 {
-        format!("{}mm", format_float(min_focal))
+        format!("{} mm", format_float(min_focal))
     } else {
-        format!("{}-{}mm", format_float(min_focal), format_float(max_focal))
+        format!("{}-{} mm", format_float(min_focal), format_float(max_focal))
     };
     let aperture = if (max_ap_min_focal - max_ap_max_focal).abs() < 0.05 {
         format!("f/{}", format_float(max_ap_min_focal))
