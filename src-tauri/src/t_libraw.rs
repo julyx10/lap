@@ -305,14 +305,7 @@ impl RawHandle {
                 }
             }),
             lens_make: c_char_array_to_string(&out.lens_make),
-            lens_model: c_char_array_to_string(&out.lens_model).or_else(|| {
-                format_lens_model_from_numbers(
-                    out.min_focal,
-                    out.max_focal,
-                    out.max_ap_min_focal,
-                    out.max_ap_max_focal,
-                )
-            }),
+            lens_model: c_char_array_to_string(&out.lens_model),
         })
     }
 
@@ -460,33 +453,6 @@ fn format_shutter_speed(shutter: f32) -> String {
         let denom = (1.0 / shutter).round();
         format!("1/{} s", denom)
     }
-}
-
-fn format_lens_model_from_numbers(
-    min_focal: f32,
-    max_focal: f32,
-    max_ap_min_focal: f32,
-    max_ap_max_focal: f32,
-) -> Option<String> {
-    if min_focal <= 0.0 || max_focal <= 0.0 || max_ap_min_focal <= 0.0 || max_ap_max_focal <= 0.0 {
-        return None;
-    }
-
-    let focal = if (min_focal - max_focal).abs() < 0.05 {
-        format!("{} mm", format_float(min_focal))
-    } else {
-        format!("{}-{} mm", format_float(min_focal), format_float(max_focal))
-    };
-    let aperture = if (max_ap_min_focal - max_ap_max_focal).abs() < 0.05 {
-        format!("f/{}", format_float(max_ap_min_focal))
-    } else {
-        format!(
-            "f/{}-{}",
-            format_float(max_ap_min_focal),
-            format_float(max_ap_max_focal)
-        )
-    };
-    Some(format!("{} {}", focal, aperture))
 }
 
 fn render_processed_preview(file_path: &str, max_edge: u32) -> Result<Vec<u8>, String> {
