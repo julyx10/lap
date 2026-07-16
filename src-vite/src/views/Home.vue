@@ -216,7 +216,7 @@ import {
   IconTag,
   IconLocation,
   IconPerson,
-  IconCameraAperture,
+  IconCamera,
   IconSearch,
   IconSettings,
   IconDot,
@@ -224,8 +224,7 @@ import {
   IconArrowDown,
   IconCalendarDay,
   IconFolders,
-  IconMapDefault,
-  IconBolt,
+  IconFolderCog
 } from '@/common/icons';
 
 const isSwitchingLibrary = ref(false);
@@ -356,13 +355,13 @@ const {
 const buttons = computed(() =>  [
   { index: SIDEBAR.LIBRARY, icon: IconStack, component: Library, text: localeMsg.value.sidebar.library },
   { index: SIDEBAR.ALBUM, icon: IconFolders, component: AlbumList, text: localeMsg.value.sidebar.album, props: { selectionSource: 'album' } },
-  { index: SIDEBAR.SMART_ALBUM, icon: IconBolt, component: SmartAlbumList, text: localeMsg.value.album.smart_album_list },
+  { index: SIDEBAR.SMART_ALBUM, icon: IconFolderCog, component: SmartAlbumList, text: localeMsg.value.album.smart_album_list },
   { index: SIDEBAR.SEARCH, icon: IconSearch, component: ImageSearch, text: localeMsg.value.sidebar.search },
   { index: SIDEBAR.CALENDAR, icon: IconCalendarDay, component: Calendar, text: localeMsg.value.sidebar.calendar },
   { index: SIDEBAR.TAG, icon: IconTag, component: Tag, text: localeMsg.value.sidebar.tag },
   { index: SIDEBAR.PERSON, icon: IconPerson, component: Person, text: localeMsg.value.sidebar.people, hidden: !config.settings.face.enabled },
   { index: SIDEBAR.LOCATION, icon: IconLocation, component: Location, text: localeMsg.value.sidebar.location },
-  { index: SIDEBAR.CAMERA, icon: IconCameraAperture, component: Camera, text: localeMsg.value.sidebar.camera },
+  { index: SIDEBAR.CAMERA, icon: IconCamera, component: Camera, text: localeMsg.value.sidebar.camera },
   // { icon: IconMapDefault, component: null, text: localeMsg.value.sidebar.map },
 ]);
 

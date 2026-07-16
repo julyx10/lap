@@ -3,12 +3,19 @@
   <div class="sidebar-panel">
     <div class="sidebar-panel-header">
       <span class="sidebar-panel-header-title flex-1">{{ cameraTitle }}</span>
-      <TButton
-        :icon="activeTab === 'lens' ? IconCameraAperture : IconCamera"
-        :buttonSize="'small'"
-        :tooltip="cameraToggleTooltip"
-        @click="toggleCameraTab"
-      />
+      <label
+        class="swap swap-flip inline-grid w-6 h-6 place-items-center text-base-content/70 hover:text-base-content"
+        :title="config.settings.showToolTip ? cameraToggleTooltip : undefined"
+        :aria-label="cameraToggleTooltip"
+      >
+        <input
+          type="checkbox"
+          :checked="activeTab === 'lens'"
+          @change="toggleCameraTab"
+        />
+        <IconCamera class="swap-off col-start-1 row-start-1 self-center justify-self-center w-4 h-4" />
+        <IconCameraAperture class="swap-on col-start-1 row-start-1 self-center justify-self-center w-4 h-4" />
+      </label>
     </div>
 
     <div v-if="activeItems.length > 0" class="flex-1 overflow-x-hidden overflow-y-auto">
@@ -40,8 +47,9 @@
                 ]"
                 @click="clickModel(item.make, model)"
               >
-                <span class="ml-1 sidebar-item-label text-base-content/30">{{ model }}</span>
-                <span class="text-[10px] tabular-nums text-base-content/30 mr-1">{{ item.counts[index].toLocaleString() }}</span>
+                <component :is="activeTab === 'lens' ? IconCameraAperture : IconCamera" class="mx-1 w-4 h-4 shrink-0" />
+                <span class="sidebar-item-label">{{ model }}</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ item.counts[index].toLocaleString() }}</span>
               </div>
             </li>
           </ul>
@@ -66,7 +74,6 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getCameraInfo, getLensInfo } from '@/common/api';
 import { IconCamera, IconCameraAperture, IconRight } from '@/common/icons';
-import TButton from '@/components/TButton.vue';
 
 const props = defineProps({
   titlebar: {

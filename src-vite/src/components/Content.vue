@@ -679,11 +679,10 @@ import StatusBar from '@/components/StatusBar.vue';
 
 import {
   IconFolders,
-  IconHeart,
   IconFiles,
   IconFolder,
+  IconFolderCog,
   IconTag,
-  IconBox,
   IconBolt,
   IconLocation,
   IconCameraAperture,
@@ -708,7 +707,6 @@ import {
   IconPrev,
   IconAdd,
   IconPhotoAll,
-  IconStack,
   IconStar,
   IconStarFilled,
   IconSimilar,
@@ -716,8 +714,7 @@ import {
   IconHeartFilled,
   IconHistory,
   IconBookmark,
-  IconSparkles,
-  IconFile,
+  IconFileSearch,
 } from '@/common/icons';
 
 const thumbnailPlaceholder = new URL('@/assets/images/image-file.png', import.meta.url).href;
@@ -2536,13 +2533,13 @@ const currentTitleIcon = computed(() => {
               case LIB_ITEM.ALL: return IconPhotoAll;
               case LIB_ITEM.FAV: return IconHeartFilled;
               case LIB_ITEM.RATINGS: return libConfig.rating.item > 0 || libConfig.rating.item === RATE.ALL ? IconStarFilled : IconStar;
-              case LIB_ITEM.SUBJECTS: return IconBox;
+              case LIB_ITEM.SUBJECTS: return IconBolt;
               case LIB_ITEM.TODAY: return IconHistory;
               default: return IconPhotoAll;
             }
           case SIDEBAR.ALBUM:
               return libConfig.album.selected || config.settings.showSubfolderFiles ? IconFolders : IconFolder;
-          case SIDEBAR.SMART_ALBUM: return IconBolt;
+          case SIDEBAR.SMART_ALBUM: return IconFolderCog;
           case SIDEBAR.SEARCH: return IconSearch;
           case SIDEBAR.CALENDAR: return config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay;
           case SIDEBAR.TAG: return IconTag;
@@ -5808,7 +5805,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
         ? {
             id: 'search-filename',
             label: localeMsg.value.search.filename_matches,
-            icon: IconFile,
+            icon: IconFileSearch,
             files: filenameMatches,
             countLabel: filenameHasMore ? '10+' : String(filenameMatches.length),
           }
@@ -5817,7 +5814,7 @@ async function getUnifiedSearchFileList(searchText: string, requestId: number) {
         ? {
             id: 'search-visual',
             label: localeMsg.value.search.semantic_matches,
-            icon: IconSparkles,
+            icon: IconPhotoSearch,
             files: visualMatches,
             countLabel: String(visualMatches.length),
           }

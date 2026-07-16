@@ -16,6 +16,7 @@ export { default as IconScrollDown } from '@/assets/icons/scroll-down.svg';
 export { default as IconStack } from '@/assets/icons/stack.svg';
 export { default as IconFolders } from '@/assets/icons/folders.svg';
 export { default as IconFolder } from '@/assets/icons/folder.svg';
+export { default as IconFolderCog } from '@/assets/icons/folder-cog.svg';
 export { default as IconFolderExpanded } from '@/assets/icons/folder-expanded.svg';
 export { default as IconFolderCollapsed } from '@/assets/icons/folder-collapsed.svg';
 export { default as IconNewFolder } from '@/assets/icons/folder-plus.svg';
@@ -116,6 +117,7 @@ export { default as IconSeparator } from '@/assets/icons/separator.svg';
 export { default as IconDragHandle } from '@/assets/icons/drag-handle.svg';
 export { default as IconExternal } from '@/assets/icons/external.svg';
 export { default as IconOk } from '@/assets/icons/ok.svg';
+export { default as IconList } from '@/assets/icons/list.svg';
 
 // ======================
 // IMAGE EDITOR ICONS

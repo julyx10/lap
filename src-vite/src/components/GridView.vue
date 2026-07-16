@@ -125,6 +125,7 @@ import Breadcrumb from '@/components/Breadcrumb.vue';
 import {
   IconCalendarDay,
   IconCalendarMonth,
+  IconCamera,
   IconCameraAperture,
   IconFile,
   IconFiles,
@@ -877,7 +878,7 @@ function getGroupIcon(item: any) {
     case GROUP.LOCATION:
       return IconLocation;
     case GROUP.CAMERA:
-      return IconCameraAperture;
+      return IconCamera;
     case GROUP.LENS:
       return IconCameraAperture;
     default:

@@ -35,8 +35,9 @@
                 ]"
                 @click="clickLocationName(location, name)"
               >
-                <span class="ml-1 sidebar-item-label text-base-content/30">{{ name }}</span>
-                <span class="text-[10px] tabular-nums text-base-content/30 mr-1">{{ location.counts[index].toLocaleString() }}</span>
+                <IconLocation class="mx-1 w-4 h-4 shrink-0" />
+                <span class="sidebar-item-label">{{ name }}</span>
+                <span class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ location.counts[index].toLocaleString() }}</span>
               </div>
             </li>
           </ul>
@@ -60,7 +61,7 @@ import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { getLocationInfo } from '@/common/api';
 import { getCountryName } from '@/common/utils';
-import { IconRight } from '@/common/icons';
+import { IconLocation, IconRight } from '@/common/icons';
 
 const props = defineProps({
   titlebar: {

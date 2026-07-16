@@ -3,12 +3,19 @@
   <div class="sidebar-panel overflow-hidden">
     <div class="sidebar-panel-header">
       <span class="sidebar-panel-header-title flex-1">{{ calendarTitle }}</span>
-      <TButton
-        :icon="config.calendar.isMonthly ? IconCalendarMonth : IconCalendarDay"
-        :buttonSize="'small'"
-        :tooltip="calendarToggleTooltip"
-        @click="toggleCalendarView"
-      />
+      <label
+        class="swap swap-flip inline-grid w-6 h-6 place-items-center text-base-content/70 hover:text-base-content"
+        :title="config.settings.showToolTip ? calendarToggleTooltip : undefined"
+        :aria-label="calendarToggleTooltip"
+      >
+        <input
+          type="checkbox"
+          :checked="!config.calendar.isMonthly"
+          @change="toggleCalendarView"
+        />
+        <IconCalendarMonth class="swap-off col-start-1 row-start-1 self-center justify-self-center w-4 h-4" />
+        <IconCalendarDay class="swap-on col-start-1 row-start-1 self-center justify-self-center w-4 h-4" />
+      </label>
     </div>
 
     <!-- calendar -->
@@ -59,7 +66,6 @@ import { IconCalendarDay, IconCalendarMonth } from '@/common/icons';
 
 import CalendarMonthly from '@/components/CalendarMonthly.vue';
 import CalendarDaily from '@/components/CalendarDaily.vue';
-import TButton from '@/components/TButton.vue';
 
 // props
 const props = defineProps({

@@ -120,7 +120,7 @@
                 ]"
                 @click="selectSmartTag(item.id)"
               >
-                <IconBox class="mx-1 w-5 h-5 shrink-0" />
+                <IconBolt class="mx-1 w-5 h-5 shrink-0" />
                 <span class="sidebar-item-label">{{ item.label }}</span>
                 <span v-if="item.count" class="sidebar-item-count ml-auto">{{ formatSearchResultCount(item.count) }}</span>
               </div>
@@ -141,7 +141,7 @@ import { listen } from '@tauri-apps/api/event';
 import { config, libConfig } from '@/common/config';
 import { LIB_ITEM, RATE, type LibItem } from '@/common/constants';
 
-import { IconPhotoAll, IconHeartFilled, IconArrowDown, IconArrowUp, IconBox, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
+import { IconPhotoAll, IconHeartFilled, IconArrowDown, IconArrowUp, IconBolt, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
 import { getQueryCountAndSum, getTotalCountAndSum } from '@/common/api';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
 import TButton from '@/components/TButton.vue';

@@ -5,7 +5,7 @@
       class="flex gap-4 items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap text-base-content/70"
     >
       <div class="flex items-center shink-0">
-        <IconFileSearch class="t-icon-size-xs mr-1" />
+        <IconList class="t-icon-size-xs mr-1" />
         <span v-if="selectedItemIndex >= 0">{{ (selectedItemIndex + 1).toLocaleString() + '/' }}</span>
         <span>{{ $t('statusbar.files_summary', { count: totalFileCount.toLocaleString(), size: formatFileSize(totalFileSize) }) }}</span>
       </div>
@@ -27,7 +27,7 @@
         </div>
 
         <div class="flex items-center gap-1 shink-0">
-          <IconClock class="t-icon-size-xs" />
+          <IconCalendarDay class="t-icon-size-xs" />
           <span>{{ formatTimestamp(currentFile?.taken_date, $t('format.date_time')) }}</span>
         </div>
         
@@ -82,12 +82,12 @@ import {
   IconCamera,
   IconCameraAperture,
   IconLocation,
-  IconClock,
-  IconFileSearch,
+  IconList,
   IconZoomIn,
   IconZoomOut,
   IconUpdate,
   IconUpdateDot,
+  IconCalendarDay,
 } from '@/common/icons';
 
 const props = defineProps({
